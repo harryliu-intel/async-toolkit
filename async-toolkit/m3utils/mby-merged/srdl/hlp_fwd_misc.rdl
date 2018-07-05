@@ -1,0 +1,1073 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+// Enum: IeeeReservedMacAction_action
+enum ieee_reserved_mac_action_action_enum {
+  SwitchNormally       =  2'd0 { desc = ""; };
+  Trap                 =  2'd1 { desc = ""; };
+  Drop                 =  2'd2 { desc = ""; };
+  Log                  =  2'd3 { desc = ""; };
+};
+
+reg fwd_lag_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "LAG Configuration";
+  desc = "Configures LAG related configuration including port membership and LAG attributes";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines if the port is currently part of a LAG group (1) or not (0).
+           ";
+    ValRandomize = true;
+  } IN_LAG[9:9] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selects hash rotation A (0) or rotation B (1) for filtering.
+           ";
+    ValRandomize = true;
+  } HASH_ROTATION[8:8] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Index of this port in the link aggregation port, must be between 
+            0 and LAG_CFG:LagSize—1.
+           ";
+    ValRandomize = true;
+  } INDEX[7:4] = 4'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the number of ports in the link aggregation group. The 
+            value 0 means 16.
+           ";
+    ValRandomize = true;
+  } LAG_SIZE[3:0] = 4'h00;
+};
+
+
+reg fwd_port_cfg_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination bitmask per source port.";
+  desc = "
+          A destination mask ANDed with the glort destination mask result.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            If 1, source MAC addresses from this port will be learned.
+           ";
+    ValRandomize = true;
+  } LEARNING_ENABLE[25:25] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            If 1 and the source port does not match the VLAN membership, it is 
+            a VLAN boundary violation and the packet is dropped.
+           ";
+    ValRandomize = true;
+  } FILTER_VLAN_INGRESS[24:24] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            A vector for each port i, a bit for each port j.  Always applied 
+            on every frame.
+           ";
+    ValRandomize = true;
+  } DESTINATION_MASK[23:0] = 24'h0ffffff;
+};
+
+reg fwd_port_cfg_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  HandCoded = true;
+  name = "Destination bitmask per source port.";
+  desc = "
+          A destination mask ANDed with the glort destination mask result. 
+          This register is indexed by egress L2 domain.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            A vector containing one bit for each logical port. Always applied 
+            on every frame. This vector is ANDed into the glort destination mask.
+           ";
+    ValRandomize = true;
+  } DESTINATION_MASK[23:0] = 24'h0ffffff;
+};
+
+reg fwd_sys_cfg_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Layer 2 configuration";
+  desc = "Miscellaneous configuration related to L2 forwarding behaviors.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicate whether the 4b action code is stored in hte packet metadata. 
+            When set to 1, the 4b action code is stored inside bits 195:156 of metadata, 
+            which is the upper 4b of the flags field. in addition, a 1b presence flag 
+            is stored in bit 155. When set to 0, no change in metadata occurs.
+           ";
+    ValRandomize = true;
+  } STORE_TRAP_ACTION[4:4] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Drop MAC CTRL Ethertype 0x8808. This has no effect on PAUSE 
+            processing.
+           ";
+    ValRandomize = true;
+  } DROP_MAC_CTRL_ETHERTYPE[3:3] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Drop any frame with an invalid SMAC of all zeros (00:00:00:00:00:00), 
+            all ones (FF:FF:FF:FF:FF:FF) or multicast (bit 40 is a 1) and do not cause MAC learning.
+           ";
+    ValRandomize = true;
+  } DROP_INVALID_SMAC[2:2] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            If set to 1, then trapping and logging can both occur for a given 
+            frame. If set to 0, then trapping will take precedence over logging.
+           ";
+    ValRandomize = true;
+  } ENABLE_TRAP_PLUS_LOG[1:1] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines disposition for frames that exceed MTU size allowed on the
+            egress VLAN (only applicable for routed frames). If this bit is 
+            set, then the frames that exceed the MTU size are trapped to the 
+            CPU. If this bit is reset, then the frames are forwarded normally.
+           ";
+    ValRandomize = true;
+  } TRAP_MTU_VIOLATIONS[0:0] = 1'h01;
+};
+
+reg fwd_cpu_mac_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "CPU MAC Address";
+  desc = "The MAC address associated with the host CPU";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            CPU MAC address
+           ";
+    ValRandomize = true;
+  } MAC_ADDR[47:0] = 48'h00;
+};
+
+reg fwd_sys_cfg_router_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Global system configuration for ROUTER";
+  desc = "Miscellaneous configuration related to routing behaviors.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines disposition of IP frames with options:
+          
+            0: formware normally; 1: trap to CPU
+           ";
+    ValRandomize = true;
+  } TRAP_IP_OPTIONS[2:2] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines disposition of routed frames with TTL 1 or 0. The options 
+            are:
+          
+              0 : drop silently
+
+              1 : trap(unicast) or log(multicast) if protocol is ICMP and drop 
+                  otherwise
+
+              2 : trap(unicast) or log(multicast) all frames
+                  
+            Note that this field only applies to frames that are routed. If a 
+            unicast or multicast frame is not routed, then this frame is 
+            switched normally regardless of its TTL value. For multicast 
+            frames that are both switched and routed, then the frame is still 
+            switched within the VLAN it was received from regardless of its 
+            TTL value while the routing part is conditional to the TTL value 
+            received and the configuration of this field.
+           ";
+    ValRandomize = true;
+  } TRAP_TTL1[1:0] = 2'h00;
+};
+
+reg fwd_qcn_mirror_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Selects mirror profile index based on QCN mirror session.";
+  desc = "Selects mirror profile index based on QCN mirror session.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Set the mirror profile index for QCN mirrorring.
+           ";
+    ValRandomize = true;
+  } MIRROR_PROFILE_IDX[7:2] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Choose mirror session used for QCN. 2'b00 and 2'b11 to disable QCN mirror. 2'b01 to choose mirror0, 2'b10 to mirror1. 
+           ";
+    ValRandomize = true;
+  } MIRROR_SESSION[1:0] = 2'h00;
+};
+
+reg fwd_rx_mirror_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Selects the mirror 1 profile index for FFU RX Mirroring.";
+  desc = "Selects the mirror 1 profile index for FFU RX Mirroring.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Set the mirror 1 profile index to this value if the FFU RX Mirror 
+            action flag is set.
+           ";
+    ValRandomize = true;
+  } MIRROR_PROFILE_IDX[5:0] = 6'h00;
+};
+
+
+reg fwd_ieee_reserved_mac_action_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Reserved multicast MAC address action";
+  desc = "
+          Determines the action that will be taken upon receipt of one of the 
+          reserved MAC addresses in the range 01-80-C2-00-00-00 through 
+          01-80-C2-00-00-3F.
+         ";
+  regwidth = 128;
+  accesswidth = 64;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_63[127:126] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_62[125:124] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_61[123:122] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_60[121:120] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_59[119:118] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_58[117:116] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_57[115:114] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_56[113:112] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_55[111:110] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_54[109:108] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_53[107:106] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_52[105:104] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_51[103:102] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_50[101:100] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_49[99:98] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_48[97:96] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_47[95:94] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_46[93:92] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_45[91:90] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_44[89:88] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_43[87:86] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_42[85:84] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_41[83:82] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_40[81:80] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_39[79:78] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_38[77:76] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_37[75:74] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_36[73:72] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_35[71:70] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_34[69:68] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_33[67:66] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_32[65:64] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_31[63:62] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_30[61:60] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_29[59:58] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_28[57:56] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_27[55:54] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_26[53:52] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_25[51:50] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_24[49:48] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_23[47:46] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_22[45:44] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_21[43:42] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_20[41:40] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_19[39:38] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_18[37:36] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_17[35:34] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_16[33:32] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_15[31:30] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_14[29:28] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_13[27:26] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_12[25:24] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_11[23:22] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_10[21:20] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_9[19:18] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_8[17:16] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_7[15:14] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_6[13:12] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_5[11:10] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_4[9:8] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_3[7:6] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_2[5:4] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_1[3:2] = 2'h02;
+  field {
+    encode = ieee_reserved_mac_action_action_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits per destination MAC address indicating the action to take 
+            upon receipt of that address:
+           ";
+    ValRandomize = true;
+  } ACTION_0[1:0] = 2'h02;
+};
+
+reg fwd_ieee_reserved_mac_trap_priority_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Reserved multicast MAC addresses trap priority select";
+  desc = "Configures the default priority behavior for IEEE reserved traps.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            One bit per MAC address indicating the TC behavior for the 
+            frame sent to the CPU when trapped:
+          
+              0 : TC remains unchanged
+
+              1 : TC changed to the value specified in 
+                  IEEE_RESERVED_MAC_CFG
+           ";
+    ValRandomize = true;
+  } SELECT[63:0] = 64'h00;
+};
+
+reg fwd_ieee_reserved_mac_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Reserved multicast MAC addresses configuration";
+  desc = "Configures the associated TC when the forwarding action for a 
+          given IEEE reserved MAC is trap and FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY
+          indicates that the TC should be overridden.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            The TC of a frame with a reserved multicast MAC 
+            destination address that is trapped to the CPU when selected 
+            with IEEE_RESERVED_MAC_TRAP_PRIORITY
+           ";
+    ValRandomize = true;
+  } TRAP_TC[2:0] = 3'h00;
+};
+
+reg fwd_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Forward IP registers";
+  desc = "Pending bits for generated interrupts.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Interrupt pending bits, for parity error in writeback fifo of L2 lookup.
+           ";
+    ValRandomize = true;
+  } WB_FIFO_PERR[4:4] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Interrupt pending bit, for interrupt of triggers recorded in TRIGGER_IP register.
+           ";
+    ValRandomize = true;
+  } TRIGGER[3:3] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Interrupt pending bit, for interrupt of MA_TABLE lookup recorded in MA_TCAM_ERR_IP register.
+           ";
+    ValRandomize = true;
+  } TCAM_ERR[2:2] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Interrupt pending bit, for interrupt of MA_TABLE lookup recorded in ENTRY_COUNT_IP register.
+           ";
+    ValRandomize = true;
+  } ENTRY_COUNT[1:1] = 1'h00;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Interrupt pending bits, for uncorrectable error set in shell_ctrl.
+           ";
+    ValRandomize = true;
+  } SHELL_CTRL_U_ERR[0:0] = 1'h00;
+};
+
+reg fwd_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Forward IM registers";
+  desc = "Mask bits for generated interrupts.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bits, for parity error in writeback fifo of L2 lookup.
+           ";
+    ValRandomize = true;
+  } WB_FIFO_PERR[4:4] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bit, for interrupt of triggers recorded in TRIGGER_IP register.
+           ";
+
+    ValRandomize = true;
+  } TRIGGER[3:3] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bit, for interrupt of MA_TABLE lookup recorded in MA_TCAM_ERR_IP register.
+           ";
+    ValRandomize = true;
+  } TCAM_ERR[2:2] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bit, for interrupt MA_TABLE lookup recorded in ENTRY_COUNT_IP register.
+           ";
+    ValRandomize = true;
+  } ENTRY_COUNT[1:1] = 1'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt pending bits, for uncorrectable error set in shell_ctrl.
+           ";
+    ValRandomize = true;
+  } SHELL_CTRL_U_ERR[0:0] = 1'h01;
+};
+
+
+reg fwd_ma_table_dirty_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Forward MA_TABLE Dirty IP registers";
+  desc = "Pending bit specifically for the interrupt that dirty entries are available in
+          the MA_TABLE.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Interrupt pending bit, for interrupt indicating MA_TABLE have dirty entries.
+           ";
+    ValRandomize = true;
+  } PENDING[0:0] = 1'h00;
+};
+
+reg fwd_ma_table_dirty_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Forward MA_TABLE Dirty IM registers";
+  desc = "mask bit specifically for the interrupt that dirty entries are available in
+          the MA_TABLE.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bit, for interrupt indicating MA_TABLE have dirty entries.
+           ";
+    ValRandomize = true;
+  } MASK[0:0] = 1'h01;
+};
+
+addrmap hlp_FWD_MISC_map {
+  name = "FWD_MISC";
+  desc = "Miscellaneous Registers in FWD";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 16;
+  ResetDomains = "SWITCH,MGMT";
+
+  fwd_port_cfg_2_r             FWD_PORT_CFG_2[512]            @0x00000 += 8;
+  fwd_lag_cfg_r                FWD_LAG_CFG[24]                @0x01000 += 8;
+  fwd_port_cfg_1_r             FWD_PORT_CFG_1[24]             @0x01100 += 8;
+  fwd_sys_cfg_1_r              FWD_SYS_CFG_1                  @0x01200;
+  fwd_cpu_mac_r                FWD_CPU_MAC                    @0x01208;
+  fwd_sys_cfg_router_r         FWD_SYS_CFG_ROUTER             @0x01210;
+  fwd_rx_mirror_cfg_r          FWD_RX_MIRROR_CFG              @0x01218;
+  fwd_qcn_mirror_cfg_r         FWD_QCN_MIRROR_CFG             @0x01220;
+  fwd_ieee_reserved_mac_action_r        FWD_IEEE_RESERVED_MAC_ACTION        @0x01230;
+  fwd_ieee_reserved_mac_trap_priority_r FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY @0x01340;
+  fwd_ieee_reserved_mac_cfg_r           FWD_IEEE_RESERVED_MAC_CFG           @0x01350;
+  fwd_ip_r                              FWD_IP                              @0x01360;
+  fwd_im_r                              FWD_IM                              @0x01370;
+  fwd_ma_table_dirty_ip_r               FWD_MA_TABLE_DIRTY_IP               @0x01380;
+  fwd_ma_table_dirty_im_r               FWD_MA_TABLE_DIRTY_IM               @0x01390;
+};

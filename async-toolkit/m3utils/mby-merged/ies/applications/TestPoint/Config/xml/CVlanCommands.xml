@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+    <command>
+        <name>create</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>cVlan</name>
+            <help>Create a customer vlan instance</help>
+                <handler>tpHandleCreateCVlan</handler>
+                <argument>
+                    <name>!&lt;port&gt;</name>
+                    <help>The port to map from</help>
+                    <argument>
+                        <name>!&lt;cVlan&gt;</name>
+                        <help>
+                            The cVlan ID to map from
+                        </help>
+                        <argument>
+                            <name>!&lt;sVlan&gt;</name>
+                            <help>
+                                The sVlan ID to map to
+                            </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>
+                                    Create a cVlan instance    
+                                </help>
+                            </argument>
+                         </argument>
+                    </argument>
+                </argument>
+         </command>
+    </command>
+
+    <command>
+        <name>del</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>cVlan</name>
+            <help>Delete a cVlan instance</help>
+                <handler>tpHandleDeleteCVlan</handler>
+                <argument>
+                    <name>!&lt;port&gt;</name>
+                    <help>The port of the cVlan instance</help>
+                        <argument>
+                            <name>!&lt;cVlan&gt;</name>
+                            <help>The cVlan ID of the cVlan instance</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>
+                                    Delete the sFlow instance
+                                </help>
+                            </argument>
+                         </argument>
+                </argument>
+         </command>
+    </command>
+
+    <command>
+        <name>show</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>cVlans</name>
+            <help>List all cVlans </help>
+            <handler>tpHandleShowCVlans</handler>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show all cVlans</help>
+                </argument>
+        </command>
+    </command>
+
+</config>

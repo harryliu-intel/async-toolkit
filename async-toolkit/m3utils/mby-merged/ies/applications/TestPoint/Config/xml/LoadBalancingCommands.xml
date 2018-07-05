@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+    <!-- set -->
+    <command>
+        <name>set</name>
+
+        <!-- set loadbalancing -->
+        <command>
+            <filter type="family">
+                <allow>FM4000</allow>
+            </filter>
+            <filter type="switch-count">
+                <allow>1</allow>
+            </filter>
+
+            <name>loadbalancing</name>
+            <help>Set load balacing properties</help>
+            <handler>tpHandleSetLoadBalancing</handler>
+
+            <!-- set loadbalancing enable -->
+            <argument>
+                <name>enable</name>
+                <help>enable load balancing</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>enable load balancing</help>
+                </argument>
+            </argument><!--enable-->
+
+            <!-- set loadbalancing match -->
+            <argument>
+                <name>match</name>
+                <help>frame matching options</help>
+
+                <argument>
+                    <name>dip</name>
+                    <help>set matching condition with destination IP</help>
+                    <argument>
+                        <name>!&lt;dip&gt;</name>
+                        <help>destination IPv4 address e.g. 192.168.1.1</help>
+                    </argument>
+                </argument> <!-- dip -->
+            </argument> <!-- match -->
+
+            <!-- set loadbalancing distribution -->
+            <argument>
+                <name>distribution</name>
+                <help>load distribution options</help>
+
+                <argument>
+                    <name>uniform</name>
+                    <help>uniform bin to load balancing port assignment</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>set loadbalancing distribution uniform</help>
+                    </argument>
+                </argument> <!-- uniform -->
+
+                <argument>
+                    <name>custom</name>
+                    <help>custom bin to load balancing port assignment</help>
+
+                    <argument>
+                        <name>!&lt;bin&gt;</name>
+                        <help>bin number to set load balancing port for</help>
+                        <argument>
+                            <name>!&lt;loadbalport&gt;</name>
+                            <help>load balancing port to select for this
+                            bin</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>set loadbalancing distribution custom</help>
+                            </argument>
+                        </argument>
+                    </argument> <!-- <bin> -->
+                </argument> <!-- custom -->
+
+            </argument> <!-- distribution -->
+
+            <!-- set loadbalancing portlist -->
+            <argument>
+                <name>portlist</name>
+                <help>logical ports in load balancing group, e.g. 
+                set loadbalancing portlist 1,2,3,4</help>
+
+                <argument>
+                    <name>!&lt;portlist&gt;</name>
+                    <help>comma separated logical port list, e.g. 1,2,3,4
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>set loadbalancing portlist</help>
+                    </argument>
+                </argument> <!-- <portlist> -->
+            </argument> <!-- portlist -->
+            
+        </command>  <!-- end set loadbalancing -->
+
+    </command>  <!-- end set -->
+
+    <!-- show -->
+    <command>
+        <name>show</name>
+
+        <!-- show loadbalancing -->
+        <command>
+            <filter type="family">
+                <allow>FM4000</allow>
+            </filter>
+            <filter type="switch-count">
+                <allow>1</allow>
+            </filter>
+
+            <name>loadbalancing</name>
+            <help>Show load balancing properties</help>
+            <handler>tpHandleShowLoadBalancing</handler>
+
+            <!-- show loadbalancing distribution -->
+            <argument>
+                <name>distribution</name>
+                <help>show the bin to load balancing port distribution
+                </help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>show loadbalancing distribution</help>
+                </argument>
+            </argument>
+
+        </command>  <!-- end show loadbalancing -->
+    </command>  <!-- end show -->
+
+</config>

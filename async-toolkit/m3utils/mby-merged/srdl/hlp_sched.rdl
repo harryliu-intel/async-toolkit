@@ -1,0 +1,2985 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+`include "hlp_shell_ctl.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+reg txq_plink_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          TXQ control payload and pointer for a frame.  A full PLINK record
+          is 123 bits wide, of which 107 bits are payload and 16 bits are a
+          next pointer (within the PLINK memory). This contains the full 106b.
+         ";
+  regwidth = 128;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Next pointer.
+           ";
+    ValRandomize = true;
+  } NEXT_PTR[125:111] = 15'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            NAC jitter timestamp valid.
+           ";
+    ValRandomize = true;
+  } NAC_JITTER_TIMESTAMP_V[110:110] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            NAC jitter timestamp.
+           ";
+    ValRandomize = true;
+  } NAC_JITTER_TIMESTAMP[109:94] = 16'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Rx port.
+           ";
+    ValRandomize = true;
+  } RX_PORT[93:89] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Addr.
+           ";
+    ValRandomize = true;
+  } ADDR[88:71] = 18'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            L3 mcast idx.
+           ";
+    ValRandomize = true;
+  } L3_MCAST_IDX[70:56] = 15'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            L3 repcnt.
+           ";
+    ValRandomize = true;
+  } L3_REPCNT[55:44] = 12'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Mirror1.
+           ";
+    ValRandomize = true;
+  } MIRROR1[43:43] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Mirror0.
+           ";
+    ValRandomize = true;
+  } MIRROR0[42:42] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            L2 count.
+           ";
+    ValRandomize = true;
+  } L2_COUNT[41:37] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Tx drop.
+           ";
+    ValRandomize = true;
+  } TX_DROP[36:36] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            L4 checksum and packet length data.
+           ";
+    ValRandomize = true;
+  } TAIL_CSUM_LEN[35:3] = 33'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Packet timeout time.
+           ";
+    ValRandomize = true;
+  } PTOT[2:0] = 3'h0;
+};
+
+reg earb_fixed_schedule_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress Arbiter Fixed Schedule.";
+  desc = "Egress Arbiter Fixed Schedule.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Set to 1 if this entry is an idle entry, available for mgmt
+            or sweep operations; if so, no sched outputs are sent.
+           ";
+    ValRandomize = true;
+  } IDLE[10:10] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Logical fabric port.
+           ";
+    ValRandomize = true;
+  } PORT[9:5] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Physical fabric port.
+           ";
+    ValRandomize = true;
+  } PHYS_PORT[4:0] = 5'h00;
+};
+regfile earb_fixed_schedule_rf {
+  earb_fixed_schedule_r EARB_FIXED_SCHEDULE[512] += 8;
+};
+
+reg earb_adaptive_schedule_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress Arbiter Adaptive Schedule And Port Mapping.";
+  desc = "
+          One entry per-physical port. Describes which logical port each
+          physical port is mapped to, and which in which rounds the port is
+          eligible to be scheduled.
+
+          There are two separate earb_adaptive_schedule pages so that one can be
+          re-configured while the other is active. Switching from one page
+          to the other is controlled by the earb_ctrl_r.page field.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Logical port number mapped to this physical port.
+           ";
+    ValRandomize = true;
+  } PORT[20:16] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            One bit for each of the rounds (max 16 rounds). The port is
+            eligible to be scheduled in a round if the corresponding bit is
+            set. Should be configured to satisfy minimum bandwidth requirements
+            of the port.
+           ";
+    ValRandomize = true;
+  } ELIGIBLE[15:0] = 16'h00;
+};
+
+regfile earb_adaptive_schedule_rf {
+  earb_adaptive_schedule_r EARB_ADAPTIVE_SCHEDULE[32] += 8;
+};
+
+reg earb_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For The Egress Arbiter.";
+  desc = "Control Signals For The Egress Arbiter.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            If this bit is set to 1, then EARB will check the TXQ's and EARB's 
+            o_schedule_tx_v phase bits. If the phase bits do not match, then the 
+            EARB will assert the o_schedule_tx.ready_invalidate bit.
+            This prevents the next packet being scheduled by the EARB
+            from using the current packet's o_schedule_tx_v valid bits in the event that
+            the port's qid_ready signal was deasserted and then reasserted.
+            Hence, it forces a packet being scheduled after a qid_ready deassertion to 
+            wait for o_schedule_tx_v bits which it triggered. 
+           ";
+    ValRandomize = true;
+  } TXQ_EARB_PHASE_CHECK_ENABLE[21:21] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, determines the minimum spacing
+            allowed for scheduling a given quad. If the value is set to N, the minimum spacing
+	    for a quad to be scheduled is N+1. The valid range for N is from 3'h1 to 3'h5.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_MIN_SPACING[20:18] = 3'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, if this bit is set to 1, then
+            the Adaptive Schedule will use the skip fill algorithm to 
+            utilize potentially wasted bandwidth in the event that a scheduling
+            slot is available and there are ports which are ready to be transmitted
+            but not scheduled to be served in this round. 
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SKIP_FILL[17:17] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Highest index used in Fixed Scheduling Table. Minimum value is 1.
+           ";
+    ValRandomize = true;
+  } MAX_FIXED_SCHED_TABLE_INDEX[16:8] = 9'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Highest round number index used before looping back to 0. Since
+            the eligible table has a maximum of 16 round, the max round
+            index must be <=15. Minimum value is 1. 
+           ";
+    ValRandomize = true;
+  } MAX_ROUND_INDEX[7:4] = 4'hF;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Fixed Scheduling is active, defines which EARB Fixed
+            Schedule page is active (0 or 1). Transitions from one page to the
+            other occur when the round index loops back to 0.
+           ";
+    ValRandomize = true;
+  } FIXED_SCHED_PAGE[3:3] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, defines which EARB Adaptive
+            Schedule page is active (0 or 1). Transitions from one page to the
+            other occur when the round index loops back to 0.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SCHED_PAGE[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used to determine if Adaptive Scheduling or Fixed Scheduling is
+            active. If set to 0, Fixed Scheduling is active. If set to 1,
+            Adaptive Scheduling is active.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SCHED_ENABLE[1:1] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used to enable the egress arbiter. If set to 0, then
+            no egress ports are serviced.
+           ";
+    ValRandomize = true;
+  } ENABLE[0:0] = 1'h00;
+};
+
+reg earb_debug_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Used to access information about EARB's operation and current state.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Shows the current round index.
+           ";
+    ValRandomize = true;
+  } ROUND_INDEX[18:15] = 4'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates which physical port number was scheduled on the previous
+            EARB scheduling event.
+           ";
+    ValRandomize = true;
+  } SCHEDULED_LAST1[14:10] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates which physical port number was scheduled two EARB 
+            scheduling events ago.
+           ";
+    ValRandomize = true;
+  } SCHEDULED_LAST2[9:5] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates which physical port number was scheduled three EARB 
+            scheduling events ago.
+           ";
+    ValRandomize = true;
+  } SCHEDULED_LAST3[4:0] = 5'h0;
+};
+
+reg earb_debug_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Used to access information about EARB's operation and current state.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Current TX credit count.
+           ";
+    ValRandomize = true;
+  } CREDIT[5:0] = 6'h0;
+};
+
+reg iarb_adaptive_schedule_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Ingress Arbiter Adaptive Schedule And Port Mapping.";
+  desc = "
+          One entry per-physical port. Describes which logical port each
+          physical port is mapped to, and which in which rounds the port is
+          eligible to be scheduled.
+
+          There are two separate iarb_adaptive_schedule pages so that one can be
+          re-configured while the other is active. Switching from one page
+          to the other is controlled by the iarb_ctrl_r.page field.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Logical port number mapped to this physical port.
+           ";
+    ValRandomize = true;
+  } PORT[20:16] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            One bit for each of the rounds (max 16 rounds). The port is
+            eligible to be scheduled in a round if the corresponding bit is
+            set. Should be configured to satisfy minimum bandwidth requirements
+            of the port.
+           ";
+    ValRandomize = true;
+  } ELIGIBLE[15:0] = 16'h00;
+};
+
+regfile iarb_adaptive_schedule_rf {
+  iarb_adaptive_schedule_r IARB_ADAPTIVE_SCHEDULE[32] += 8;
+};
+
+reg iarb_parser_window_cfg_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Ingress Parser Window Config.";
+  desc = "
+          Provides configuration information for each of the windowed parser ports.
+          Each entry allows the user to configure the port, enable, and length of the widnow.
+          The user can cofigure up to 2 ports with the windowed parser feature.
+
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Ingress Window-Parser Enable. If set to 1, then window parsing is enable on the port configure in the PORT field.
+           ";
+    ValRandomize = true;
+  } ENABLE[13:13] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Physical port number of this windowed parser port.
+           ";
+    ValRandomize = true;
+  } PORT[12:8] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+          Ingress Window-Parser Length. Expected number of clock cycles between 2 consecutive _iarb_req pulses.
+          Provides the expected time in clock
+          cycles between 2 consecutive i_iarb_req pulses provided to the IARB.
+          If the IARB does not receive a i_iarb_req pulse after receiving
+          an i_iarb_req pulse windowed_parser_length cc earlier,
+          and the avalable credit count for that port was 0 or 1,
+          then IARB will increment that credit count by 1 which allow
+          the IARB to issue one more grant to the parser allowing it to
+          flush out the segment waiting in the parser's cache.
+           ";
+    ValRandomize = true;
+  } INGRESS_WP_LENGTH[7:0] = 8'h05;
+};
+
+reg iarb_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For The Ingress Arbiter.";
+  desc = "Control Signals For The Ingress Arbiter.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            The IARB's rx_sia_ripple output delay is programmable to values between 1 and 15. 
+            The default value is 5'h1.
+            Programming this field to some other value will delay the output by
+            (programmed value - 1) clock cycles relative to the default value of 5'h1.
+           ";
+    ValRandomize = true;
+  } RX_SIA_RIPPLE_PROG_DELAY[14:11] = 4'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, determines the minimum spacing
+            allowed for scheduling a given quad. If the value is set to N, the minimum spacing 
+	    for a quad to be scheduled is N+1. The valid range for N is from 3'h1 to 3'h5.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_MIN_SPACING[10:8] = 3'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, if this bit assert to 1, then
+            the Adaptive Schedule will use the skip fill algorithm to
+            utilize potentially wasted bandwidth in the event that a scheduling
+            slot is available and there are ports which are ready to be transmitted
+            but not scheduled to be served in this round.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SKIP_FILL[7:7] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Highest round number index used before looping back to 0. Since
+            the eligible table has a maximum of 16 round, the max round
+            index must be <=15. Minimum value is 1.
+           ";
+    ValRandomize = true;
+  } MAX_ROUND_INDEX[6:3] = 4'hF;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, defines which IARB Adaptive
+            Schedule page is active (0 or 1). Transitions from one page to the
+            other occur when the round index loops back to 0.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SCHED_PAGE[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used to determine if Adaptive Scheduling or Fixed Scheduling is
+            active. If set to 0, Fixed Scheduling is active. If set to 1,
+            Adaptive Scheduling is active.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SCHED_ENABLE[1:1] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used to enable the ingress arbiter. If set to 0, then
+            no ingress ports are serviced.
+           ";
+    ValRandomize = true;
+  } ENABLE[0:0] = 1'h00;
+};
+
+reg iarb_debug_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Used to access information about IARB's operation and current state.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Shows the current round index.
+           ";
+    ValRandomize = true;
+  } ROUND_INDEX[18:15] = 4'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates which physical port number was scheduled on the IARB 
+            scheduling event.
+           ";
+    ValRandomize = true;
+  } SCHEDULED_LAST1[14:10] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates which physical port number was scheduled two IARB
+            scheduling events ago.
+           ";
+    ValRandomize = true;
+  } SCHEDULED_LAST2[9:5] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates which physical port number was scheduled three IARB 
+            scheduling events ago.
+           ";
+    ValRandomize = true;
+  } SCHEDULED_LAST3[4:0] = 5'h0;
+};
+
+reg iarb_debug_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Used to access information about IARB's operation and current state.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Current TX credit count.
+           ";
+    ValRandomize = true;
+  } CREDIT[4:0] = 5'h0;
+};
+
+reg ssched_rx_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Internal state used by SSCHED to handle ingressing segments.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Address where the previous incoming segment on this port was
+            written in packet memory. Used to address linked list storage
+            on the next ingressing segment.";
+    ValRandomize = true;
+  } ADDR[26:9] = 18'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "An out-of-memory condition was seen while receiving this frame.";
+    ValRandomize = true;
+  } OOM[8:8] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Number of segments.";
+    ValRandomize = true;
+  } NUM_SEGS[7:0] = 8'h00;
+};
+
+reg ssched_tx_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Internal state used by SSCHED to handle egressing segments.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Indicates that a packet is currently being transmitted on this port.
+           ";
+    ValRandomize = true;
+  } ACTIVE[50:50] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Currently sending the first segment of a packet.
+           ";
+    ValRandomize = true;
+  } SOP[49:49] = 1'h00;
+
+  field {
+    AccessType = "RO/V";
+    desc = "Global ingress port that the packet was received on.
+           ";
+    ValRandomize = true;
+  } RX_PORT[48:44] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Address where the segment to transmit is stored.
+           ";
+    ValRandomize = true;
+  } TX_ADDR[43:26] = 18'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Address of the first segment of the packet being transmitted.
+           ";
+    ValRandomize = true;
+  } HEAD_ADDR[25:8] = 18'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Number of segment that have been transmitted.
+           ";
+    ValRandomize = true;
+  } NUM_SEGS[7:0] = 8'h00;
+};
+
+reg ssched_modify_pf_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved. ";
+  desc = "
+          Internal state used by SSCHED to store per-packet information.
+         ";
+  regwidth = 128;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Traffic  class.
+           ";
+    ValRandomize = true;
+  } TC[64:62] = 3'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Phase bit for DRR, to be sent back to monitor.
+           ";
+    ValRandomize = true;
+  } DRR_PHASE[61:61] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Set on the last copy of a packet for this tx_port.
+           ";
+    ValRandomize = true;
+  } TX_FREE[60:60] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Used for L3 lookup in monitor.
+           ";
+    ValRandomize = true;
+  } MCAST_PTR[59:45] = 15'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Egressing frame is a mirror copy (0: NORMAL 1: MIRROR0 2: MIRROR1).
+           ";
+    ValRandomize = true;
+  } MIR_TYPE[44:43] = 2'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Packet has timed out and must be dropped.
+           ";
+    ValRandomize = true;
+  } IS_TIMEOUT[42:42] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Precomputed number of copies (L2) MCAST will need to produce.
+           ";
+    ValRandomize = true;
+  } L2_COUNT[41:37] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates that the packet should be dropped by MODIFY before egress.
+           ";
+    ValRandomize = true;
+  } TX_DROP[36:36] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            L4 checksum and packet length data.
+           ";
+    ValRandomize = true;
+  } TAIL_CSUM_LEN[35:3] = 33'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Packet's ingress time, used for timeout.
+           ";
+    ValRandomize = true;
+  } PTOT[2:0] = 3'h00;
+
+};
+
+reg ssched_link_storage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved. ";
+  desc = "
+          Internal state used by SSCHED to store the linked-list of segments.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Out of Memory.  Indicates that an output of memory condition occurred for the current packet.
+           ";
+    ValRandomize = true;
+  } OOM[32:32] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Length of segment (in bytes).  0 indicates segment length is 256 bytes.
+           ";
+    ValRandomize = true;
+  } LENGTH[31:24] = 8'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Number of remaining bytes in packet after this segment (in bytes). 0 if eop or if ≥8B remaining.
+           ";
+    ValRandomize = true;
+  } NEXT_LEN[23:21] = 3'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Packet had an error on ingress.
+           ";
+    ValRandomize = true;
+  } ERR[20:19] = 2'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "End-of-packet. Indicates last segment in the the packet.
+           ";
+    ValRandomize = true;
+  } EOP[18:18] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Address location of the next segment in the packet.
+           ";
+    ValRandomize = true;
+  } NEXT_SEG[17:0] = 18'h00;
+};
+
+reg ssched_sop_storage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved. ";
+  desc = "
+          Internal state used by SSCHED to store sop segment info.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Length of segment (in bytes).
+           ";
+    ValRandomize = true;
+  } LENGTH[13:6] = 8'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Number of remaining bytes in packet after this segment (in bytes). 0 if eop or if ≥8B remaining.
+           ";
+    ValRandomize = true;
+  } NEXT_LEN[5:3] = 3'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Packet had an error on ingress.
+           ";
+    ValRandomize = true;
+  } ERR[2:1] = 2'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "End-of-packet. Indicates last segment in the the packet.
+           ";
+    ValRandomize = true;
+  } EOP[0:0] = 1'h00;
+};
+
+reg ssched_lock_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved. ";
+  desc = "
+          Internal state used by SSCHED to implement the interlock.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Head address of the last packet written into the PM.
+           ";
+    ValRandomize = true;
+  } HEAD_ADDR[25:8] = 18'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Number of segments received (0 indicates that the packet is
+            locked and can’t be transmitted yet).
+           ";
+    ValRandomize = true;
+  } NUM_SEGS[7:0] = 8'h00;
+};
+
+reg ssched_lock_cfg_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Locktimer Configuration Register. ";
+  desc = "
+          Sets the number of cycles after which the lock timer's expiration bit is set.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "Number of clock cycles after which the lock timer's expiration bit is set.
+            locked and can’t be transmitted yet).
+           ";
+    ValRandomize = true;
+  } EXP_TIME[12:0] = 13'h32;
+};
+
+reg ssched_oom_cntr_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "OOM Counter Register. ";
+  desc = "
+          Counts the number of ooms detected on the sop of a packet.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "Counts the number of ooms detected on the sop of a packet.
+           ";
+    ValRandomize = true;
+  } OOM_CNTR[31:0] = 32'h0;
+};
+
+reg ssched_oom_byte_cntr_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "OOM Byte Counter Register. ";
+  desc = "
+          Counts the number of lost bytes once an oom is detected on a packet.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "Counts the number of lost bytes once an oom is detected.
+           ";
+    ValRandomize = true;
+  } OOM_BYTE_CNTR[31:0] = 32'h0;
+};
+
+reg esched_cfg_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Scheduling Group Configuration.";
+  desc = "
+          This register defines the relative egress scheduling-priority
+          of the scheduler groups and which traffic-classes belong to
+          which group.
+
+          If written while traffic is flowing, temporary violation of DRR
+          limits may occur.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines groups of classes that use a common a deficit counter
+            for the purpose of delay-deficit round-robin scheduling.  Classes
+            within a scheduling group have strict priority relative to each
+            other.
+
+            There is 1 bit per class. If this bit cleared to 0 then the class
+            belongs to the same group as the class to the left (the class
+            with higher index).  If this bit is 1, then
+            the class is at the head of a new group.
+
+            Must be set the same as
+            MON_DRR_CFG_PERPORT.groupBoundary; the behavior of
+            the scheduler is undefined if this constraint is violated.
+           ";
+    ValRandomize = true;
+  } TC_GROUP_BOUNDARY[15:8] = 8'h0ff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Must be set to the bitwise OR of ESCHED_CFG_2.StrictPriority
+            and ESCHED_CFG_2.StrictPriority (for the same port) shifted
+            one position to the right.  The behavior of the scheduler is
+            undefined if this constraint is violated.
+           ";
+    ValRandomize = true;
+  } PRIORITY_SET_BOUNDARY[7:0] = 8'h0ff;
+};
+
+reg esched_cfg_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Traffic-Class Priority Behaviors.";
+  desc = "
+          This register defines the strict priority setting for each traffic
+          class and set the inner priority (used in DRR).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the relative strict 'inner' prioritization of the traffic
+            classes.  By default, higher-numbered TCs have higher priority
+            than lower-numbered TCs.  Setting TcInnerPriority to a non-zero
+            value changes this behavior.
+
+            Specifies one bit of inner priority per TC.  If TC1 and TC2
+            belong to the same scheduling group and TcInnerPriority[TC1] &gt;
+            TcInnerPriority[TC2], then TC1 will be serviced with strict
+            high priority relative to TC2.  Among all TCs of equal inner
+            priority in a scheduling group, higher-numbered TCs will still be
+            strictly preferred over lower-numbered TCs.
+           ";
+    ValRandomize = true;
+  } TC_INNER_PRIORITY[15:8] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            One bit per traffic class, true if strict-low or strict-high.
+            The strict-DRR classes must be between the strict-low and
+            strict-high classes (although any one of the three groups could
+            be empty).  ESCHED_CFG_1.PrioritySetBoundary for the same
+            port must be set to the bitwise OR of this register and this
+            register shifted right by one position.  The behavior of the
+            scheduler is undefined if these constraints are violated.
+           ";
+    ValRandomize = true;
+  } STRICT_PRIORITY[7:0] = 8'h0ff;
+};
+
+reg esched_cfg_en_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Traffic Class Egress Enable";
+  desc = "
+          Sets whether scheduling is enabled on a given traffic class.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bitmask of which TCs on each port are enabled. Writing 0x00 to
+            the field will stop egress on the port.
+     ";
+    ValRandomize = true;
+  } TC_ENABLE[7:0] = 8'h0ff;
+};
+
+reg esched_dc_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Current phase of the DRR algorithm (in MONITOR).";
+    ValRandomize = true;
+  } PHASE[8:8] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Traffic class mask. Setting to 1 indicates that a TC has exceeded
+            its DRR budget.";
+    ValRandomize = true;
+  } TC_VEC[7:0] = 8'h00;
+};
+
+reg esched_ub_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Pause state mask. Setting to 1 indicates that a TC has been
+            paused.";
+    ValRandomize = true;
+  } TC_VEC[7:0] = 8'h00;
+};
+
+reg esched_ptr_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Current phase of the DRR algorithm (in ESCHED).";
+    ValRandomize = true;
+  } PHASE[3:3] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Last TC that was scheduled on this port using DRR.";
+    ValRandomize = true;
+  } TC_PTR[2:0] = 3'h07;
+};
+
+reg esched_erl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Egress rate limiter mask. Setting to 1 indicates that a TC has
+            exceeded its ERL budget and won't be scheduled for egress.";
+    ValRandomize = true;
+  } TC_VEC[7:0] = 8'h00;
+};
+
+reg esched_pause_override_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Allows the user the force the pause state to ON on a per traffic class basis. 
+            This feature operate on all of the active ports.
+            This register will override the ForcePauseOff setting in the event that ForcePauseOff is asserted.";
+    ValRandomize = true;
+  } FORCE_PAUSE_ON[15:8] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "Allows the user the force the pause state to OFF on a per traffic class basis. 
+            This feature operate on all of the active ports.
+            This state of this register will overridden in the event that ForcePauseOn  is asserted.";
+    ValRandomize = true;
+  } FORCE_PAUSE_OFF[7:0] = 8'h00;
+};
+
+reg esched_nac_jc_sweeping_speed_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For NAC Jitter Function.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+              Sweeping Speed. Should be less than 16’h0fff ( 4k cycles ), and larger than 16’hff ( 256 cycles ).
+            ";
+    ValRandomize = true;
+  } SWEEPING_SPEED[15:0] = 16'h00;
+};
+
+reg esched_nac_jc_time_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For NAC Jitter Function.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of tokens (fractional part) which will be added to the token bucket every HLP clocks ( in CPK timestamp unit ).
+           ";
+    ValRandomize = true;
+  } TIME_FRAC[31:16] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of tokens (integer part) which will be added to the token bucket every HLP clocks ( in CPK timestamp unit ).
+           ";
+    ValRandomize = true;
+  } TIME_UNIT[15:0] = 16'h0;
+};
+
+regfile esched_nac_jc_time_rf {
+  esched_nac_jc_time_r ESCHED_NAC_JC_TIME[24] += 8;
+};
+
+reg esched_nac_jc_max_hlptimedelta_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Maximum delta between the hlp times of 2 successive nac jitter packets after the given port/traffic class exits the nac jitter idle state.
+            Each location is cleared by writing a 0 to the corresponding location.
+           ";
+    ValRandomize = true;
+  } MAX_DELTA[15:0] = 16'h0;
+};
+
+regfile esched_nac_jc_max_hlptimedelta_rf {
+  esched_nac_jc_max_hlptimedelta_r ESCHED_NAC_JC_MAX_HLPTIMEDELTA[24] += 8;
+};
+
+reg esched_nac_jc_max_cpktimedelta_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Maximum delta between the cpk timestamps of 2 successive nac jitter packets after the given port/traffic class exits the nac jitter idle state.
+            Each location is cleared by writing a 0 to the corresponding location.
+           ";
+    ValRandomize = true;
+  } MAX_DELTA[15:0] = 16'h0;
+};
+
+regfile esched_nac_jc_max_cpktimedelta_rf {
+  esched_nac_jc_max_cpktimedelta_r ESCHED_NAC_JC_MAX_CPKTIMEDELTA[24] += 8;
+};
+
+reg esched_nac_jc_max_cdt_r{
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For NAC Jitter Function.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Max credits allowed to accumulate.
+           ";
+    ValRandomize = true;
+  } MAX_CREDIT[31:0] = 32'h0;
+};
+
+regfile esched_nac_jc_max_cdt_rf {
+  esched_nac_jc_max_cdt_r ESCHED_NAC_JC_MAX_CDT[24] += 8;
+};
+
+reg esched_nac_jc_idle_max_cdt_r{
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For NAC Jitter Function.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Idle Max credits allowed to accumulate.
+           ";
+    ValRandomize = true;
+  } MAX_CREDIT[31:0] = 32'h0;
+};
+
+regfile esched_nac_jc_idle_max_cdt_rf {
+  esched_nac_jc_idle_max_cdt_r ESCHED_NAC_JC_IDLE_MAX_CDT[24] += 8;
+};
+
+ 
+reg esched_nac_jc_idle_value_r{
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For NAC Jitter Function.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+              Enables the IdleValueCtrlCounter function.
+           ";
+    ValRandomize = true;
+  } IDLE_VALUE_CTRL_COUNTER_ENABLE[16:16] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+              When the counter reaches this value, it resets to 0.
+           ";
+    ValRandomize = true;
+  } IDLE_VALUE_CTRL_MAX_COUNT[15:0] = 16'h00;
+};
+
+regfile esched_nac_jc_idle_value_rf {
+  esched_nac_jc_idle_value_r  ESCHED_NAC_JC_IDLE_VALUE[24] += 8;
+};
+
+reg esched_nac_jc_nac_jitter_tc_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Control Signals For NAC Jitter Function.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+               Enables NAC Jitter control for the TC indicated by NacJitterTcCtrlMapping.
+           ";
+    ValRandomize = true;
+  } NAC_JITTER_TC_CTRL_ENABLE1[7:7] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+              Indicates TC Mapping.
+           ";
+    ValRandomize = true;
+  } NAC_JITTER_TC_CTRL_MAPPING1[6:4] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+              Enables NAC Jitter control for the TC indicated by NacJitterTcCtrlMapping.
+          ";
+   ValRandomize = true;
+ } NAC_JITTER_TC_CTRL_ENABLE0[3:3] = 1'h0;
+ field {
+   AccessType = "RW";
+   desc = "
+             Indicates TC Mapping.
+          ";
+   ValRandomize = true;
+ } NAC_JITTER_TC_CTRL_MAPPING0[2:0] = 3'h0;
+};
+
+
+reg esched_nac_jc_state_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+             #1 TC DISABLE state.
+           ";
+    ValRandomize = true;
+  } TC1_DISABLE[50:50] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+             #1 TC IDLE state.
+           ";
+    ValRandomize = true;
+  } TC1_IDLE[49:49] = 1'h1;
+  field {
+    AccessType = "RO/V";
+    desc = "
+              #1 TC’s timestamp (CPK).
+           ";
+    ValRandomize = true;
+  } TC1_CPK[48:33] = 16'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           #1 TC’s counter ( 16 bits integer, 16 bits fraction), [32] sign bit.
+           ";
+    ValRandomize = true;
+  } TC1_TK[32:0] = 33'h0;
+};
+
+reg esched_nac_jc_state_0_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+             #0 TC DISABLE state.
+           ";
+    ValRandomize = true;
+  } TC0_DISABLE[50:50] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+             #0 TC IDLE state.
+           ";
+    ValRandomize = true;
+  } TC0_IDLE[49:49] = 1'h1;
+  field {
+    AccessType = "RO/V";
+    desc = "
+              #0 TC’s timestamp (CPK).
+           ";
+    ValRandomize = true;
+  } TC0_CPK[48:33] = 16'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           #0 TC’s counter ( 16 bits integer, 16 bits fraction), [32] sign bit.
+           ";
+    ValRandomize = true;
+  } TC0_TK[32:0] = 33'h0;
+};
+
+reg esched_nac_jc_state_time_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "Control Signals For NAC Jitter Function.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+               Stores the hlp 16-bit rising clock edge counter value each time a port event occurs.
+           ";
+    ValRandomize = true;
+  } HLP_TIME[15:0] = 16'h0;
+};
+
+reg mon_drr_q_perq_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Scheduling Group Configuration.";
+  desc = "
+          DRR quantum Q per queue.  The proportions of egress bandwidth
+          committed for each QID (port, traffic-class) depend on the
+          ratios of their Q values.  e.g., given two traffic-classes, one
+          with a committed rate of 90% and one with a committed rate of 10%,
+          the ratio of their respective Q values should be 9:1.
+
+          Indexed by QID = PORT*8 + TC.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            This register sets the number of credits (in bytes)
+            assigned to each queue.  To ensure reliable adherence to the
+            bandwidth weightings, Q should be set no lower than the
+            2*MTU of the frames in a given queue.
+           ";
+    ValRandomize = true;
+  } Q[23:0] = 24'h00;
+};
+
+reg mon_drr_cfg_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Scheduling Group Configuration.";
+  desc = "
+          This register defines the relative egress scheduling-priority
+          of the traffic-classses.
+
+          If written while traffic is flowing, temporary violation of DRR
+          limits may occur.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "The additional charge in bytes to apply per-frame for the purposes
+            of scheduling DRR
+           ";
+    ValRandomize = true;
+  } IFG_PENALTY[23:16] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines groups of classes that use a common a deficit counter,
+            for the purpose of delay-deficit round-robin scheduling.  Classes
+            within a scheduling group have strict priority relative to each
+            other.
+
+            There is 1 bit per class. If this bit cleared to 0 then the class
+            belongs to the same group as the class to the left (the class
+            with higher index).  If this bit is 1, then the class is at the
+            head of a new group.
+
+            Must be set the same as ESCHED_CFG_1.TcGroupBoundary; the behavior
+            of the scheduler is undefined if this constraint is violated.
+           ";
+    ValRandomize = true;
+  } GROUP_BOUNDARY[15:8] = 8'h0ff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Each bit corresponds to a traffic-class.  Setting the bit to
+            1 causes all associated segments to be counted as having
+            zero length.  No IFG charge is applied either.  Must be set
+            for strict-low or strict-high priorities; the behavior of the
+            scheduler is undefined if this constraint is violated.
+           ";
+    ValRandomize = true;
+  } ZERO_LENGTH[7:0] = 8'h0ff;
+};
+
+reg mon_drr_dc_perq_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          This register should not be accessed while traffic may be flowing.
+
+          Indexed by QID = PORT*8 + TC.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Deficit count.
+           ";
+    ValRandomize = true;
+  } DC[23:0] = 24'h00;
+};
+
+reg mon_drr_pep_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          This register should not be accessed while traffic may be flowing.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            DRR phase.
+           ";
+    ValRandomize = true;
+  } PHASE[16:16] = 1'h00;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Bitmask that, inverted, denotes which TCs are eligible for
+            scheduling.
+           ";
+    ValRandomize = true;
+  } ELIGIBLE_N[15:8] = 8'h00;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Bitmask that, inverted, denotes which TCs are pending a DC reset.
+           ";
+    ValRandomize = true;
+  } PENDING_N[7:0] = 8'h00;
+};
+
+reg mon_erl_global_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress Rate Limiter Global Configuration";
+  desc = "Egress Rate Limiter Global Configuration";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Used to determine if ERL sweeper should be enabled.
+           ";
+    ValRandomize = true;
+  } EN[5:5] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "The number of ports that the ERL sweeper should step through.
+           ";
+    ValRandomize = true;
+  } NUM_PORTS[4:0] = 5'h00;
+};
+
+reg mon_erl_cfg_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress Rate Limiter Configuration Per Port";
+  desc = "Egress Rate Limiter Configuration Per Port";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "The additional charge in bytes to apply per-packet for the purposes
+            of scheduling ERL
+           ";
+    ValRandomize = true;
+  } IFG_PENALTY[7:0] = 8'h14;
+};
+
+reg mon_erl_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress Rate Limiter Configuration Per (TX, BSG)";
+  desc = "Egress Rate Limiter Configuration Per (TX, BSG)";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            RateUnit bytes will be added to the token bucket every
+            MON_ERL_GLOBAL_CFG.NUM_PORTS+1 clocks. If RateFrac and RateUnit
+            are both set to their maximum value then the rate limiter is disabled.
+           ";
+    ValRandomize = true;
+  } RATE_UNIT[44:21] = 24'hffffff;
+  field {
+    AccessType = "RW";
+    desc = "
+            RateFrac/256 bytes will be added to the token bucket every
+            MON_ERL_GLOBAL_CFG.NUM_PORTS+1 clocks. If RateFrac and RateUnit
+            are both set to their maximum value then the rate limiter is disabled.
+           ";
+    ValRandomize = true;
+  } RATE_FRAC[20:13] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines saturation value in 1K-byte units
+           ";
+    ValRandomize = true;
+  } CAPACITY[12:0] = 13'h1fff;
+};
+regfile mon_erl_cfg_rf {
+  mon_erl_cfg_r MON_ERL_CFG[8] += 8;
+};
+
+reg mon_erl_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress Rate Limiter Token Bucket Credits Per (TX, BSG)";
+  desc = "Egress Rate Limiter Token Bucket Credits Per (TX, BSG)";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Bytes of credit in the token bucket.
+           ";
+    ValRandomize = true;
+  } UNITS[31:8] = 24'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Frac/256 bytes of credit in the token bucket.
+           ";
+    ValRandomize = true;
+  } FRAC[7:0] = 8'h00;
+};
+regfile mon_erl_usage_rf {
+  mon_erl_usage_r MON_ERL_USAGE[8] += 8;
+};
+
+reg mon_erl_bsg_map_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Maps TCs Into BSGs Per Port";
+  desc = "
+          Indexed by TC, provides the BSG number for that TC. Normally BSGs
+          are configured as supersets of scheduling groups, but the hardware
+          supports a fully general mapping.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=7.";
+    ValRandomize = true;
+  } BSG_7[23:21] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=6.";
+    ValRandomize = true;
+  } BSG_6[20:18] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=5.";
+    ValRandomize = true;
+  } BSG_5[17:15] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=4.";
+    ValRandomize = true;
+  } BSG_4[14:12] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=3.";
+    ValRandomize = true;
+  } BSG_3[11:9] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=2.";
+    ValRandomize = true;
+  } BSG_2[8:6] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=1.";
+    ValRandomize = true;
+  } BSG_1[5:3] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "BSG mapped to TC=0.";
+    ValRandomize = true;
+  } BSG_0[2:0] = 3'h0;
+};
+
+reg rxq_mcast_len_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "VLAN Configuration.";
+  desc = "
+          Defines the location and length for each VLAN list in
+          MOD_MCAST_VLAN_TABLE. To modify safely while traffic is flowing,
+          coordinate with MOD_MCAST_VLAN_TABLE.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the number of multicast copies to make (i.e. the length of
+            the VLAN list in MOD_MCAST_VLAN_TABLE).  The number of copies made
+            is one more than the value of this field, so that 0 indicates that
+            a single frame is made. Legal values are 0 through 4093, so that 1
+            to 4094 copies are made.
+           ";
+    ValRandomize = true;
+  } L3_REPCNT[26:15] = 12'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the base location of the VLAN list in MOD_MCAST_VLAN_TABLE.
+           ";
+    ValRandomize = true;
+  } L3_MCAST_IDX[14:0] = 15'h00;
+};
+
+reg rxq_mcast_dest_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "VLAN Configuration.";
+  desc = "
+          Indexed by GLORT_DEST_TABLE.IP_MulticastIndex. To modify safely
+          while traffic is flowing, coordinate with MCAST_LEN_TABLE.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the base location of the list of VLAN lists in
+            RXQ_MCAST_LEN_TABLE.
+           ";
+    ValRandomize = true;
+  } LEN_TABLE_IDX[37:24] = 14'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines which ports have a list of destination VLANs specified
+            in RXQ_MCAST_LEN_TABLE. If a port does not have a list and the
+            destination mask from the IPP is 1 for that port, then a packet
+            will be sent to that port without a VLAN replication attached
+            to it.
+           ";
+    ValRandomize = true;
+  } PORT_MASK[23:0] = 24'h00;
+};
+
+reg rxq_limited_skew_mcast_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Multicast Configuration.";
+  desc = "Multicast Configuration.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            One bit per traffic class. If set to 1, all copies of frames in this
+            traffic class queue will be made before moving to the next tc. This
+            only applies to round robin group defined by rxq_priority_cfg.
+           ";
+    ValRandomize = true;
+  } MCAST_TC_SKEW[7:0] = 8'h00;
+};
+
+reg rxq_priority_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Traffic-Class Priority Behaviors.";
+  desc = "
+          This register defines the strict priority setting for each traffic
+          class and set the inner priority (RR).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            One bit per traffic class, true if strict-low or strict-high.
+            The strict-RR classes must be between the strict-low and
+            strict-high classes (although any one of the three groups could
+            be empty).
+            The strict groups are identified by a continguous string of ones.
+            The round robin group is identified by a contiguous string of zeroes.
+            The behavior is undefined if this constraint is violated.
+           ";
+    ValRandomize = true;
+  } STRICT_PRIORITY[7:0] = 8'hff;
+};
+
+reg rxq_st_data_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          This contains the full rxq data entry, which is 127b.
+         ";
+  regwidth = 256;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            NAC jitter timestamp is valid.
+           ";
+    ValRandomize = true;
+  } NAC_JITTER_TIMESTAMP_V[129:129] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            NAC jitter timestamp.
+           ";
+    ValRandomize = true;
+  } NAC_JITTER_TIMESTAMP[128:113] = 16'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Port that the packet was received on.
+           ";
+    ValRandomize = true;
+  } RX_PORT[112:108] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Precomputed number of copies (L2) MCAST will need to produce.
+           ";
+    ValRandomize = true;
+  } L2_COUNT[107:103] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Address where the first segment of the packet is stored in PM.
+           ";
+    ValRandomize = true;
+  } ADDR[102:85] = 18'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Destination port mask.
+           ";
+    ValRandomize = true;
+  } FWD_MASK[84:61] = 24'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Pointer into RXQ_MCAST_DEST_TABLE.
+           ";
+    ValRandomize = true;
+  } DMASK_IDX[60:49] = 12'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Tx port number on which to send a mirror1 copy.
+           ";
+    ValRandomize = true;
+  } MIRROR_PORT1[48:44] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Tx port number on which to send a mirror0 copy.
+           ";
+    ValRandomize = true;
+  } MIRROR_PORT0[43:39] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Valid for mirror1 port.
+           ";
+    ValRandomize = true;
+  } MIRROR_PORT_V1[38:38] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Valid for mirror0 port.
+           ";
+    ValRandomize = true;
+  } MIRROR_PORT_V0[37:37] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates that the packet should be dropped by MODIFY before egress.
+           ";
+    ValRandomize = true;
+  } TX_DROP[36:36] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Packet's ingress time, used for timeout.
+           ";
+    ValRandomize = true;
+  } PTOT[35:33] = 3'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            L4 checksum and packet length data.
+           ";
+    ValRandomize = true;
+  } TAIL_CSUM_LEN[32:0] = 33'h0;
+};
+
+reg rxq_st_link_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "Next page address in the linked list.
+           ";
+    ValRandomize = true;
+  } PAGE[9:0] = 10'h00;
+};
+
+reg rxq_st_pointers_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Hold page addresses and index pointers for the RXQ_STORAGE queues.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Defines the next page for head pointer.
+           ";
+    ValRandomize = true;
+  } NEXT_PAGE[39:30] = 10'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Defines the index field of tail pointer in a page. Valid value is
+            from 0 to 15.
+           ";
+    ValRandomize = true;
+  } TAIL_IDX[29:25] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Defines the index field of head pointer in a page. Valid value is
+            from 0 to 15.
+           ";
+    ValRandomize = true;
+  } HEAD_IDX[24:20] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Defines the page field of tail pointer. Each page includes 24
+            pointers.
+           ";
+    ValRandomize = true;
+  } TAIL_PAGE[19:10] = 10'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Defines the page field of head pointer. Each page includes 24
+            pointers.
+           ";
+    ValRandomize = true;
+  } HEAD_PAGE[9:0] = 10'h00;
+};
+
+reg rxq_mcast_mgmt_timer_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Minimum Mgmt Bandwidth.";
+  desc = "
+          Ensures a minimum number of idle cycles for mgmt access to the
+          memories in RXQ_MCAST.LOOKINGGLASS as well as some memories in TXQ.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Max count value of TimerVal. Set to 0 to disable.
+           ";
+    ValRandomize = true;
+  } TIMER_MAX[31:16] = 16'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Resets to 0 on idle cycle and increments every non-idle cycle until
+            reaching TimerMax. When TimerMax is reached, a management cycle is
+            allowed and any other sram activity must wait. TimerVal then resets
+            to 0.
+           ";
+    ValRandomize = true;
+  } TIMER_VAL[15:0] = 16'h00;
+};
+
+reg txq_tail_perq_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Holds the tail pointers for each of the TXQ queues
+          (indexed by QID = {PORT,TC}). To create a 1W2R-ported memory, two
+          banks of memories are used, denoted by the TAIL0 and TAIL1 registers.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Tail pointer.
+           ";
+    ValRandomize = true;
+  } TAIL[15:0] = 16'h00;
+};
+regfile txq_tail_perq_rf {
+  txq_tail_perq_r TXQ_TAIL_PERQ[192] += 8;
+};
+
+reg txq_head_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Holds the head pointers for each of the TXQ queues
+          (indexed by QID = {PORT,TC}).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Head pointer.
+           ";
+    ValRandomize = true;
+  } HEAD[15:0] = 16'h00;
+};
+regfile txq_head_perport_rf {
+  txq_head_perport_r TXQ_HEAD_PERPORT[24] += 8;
+};
+
+reg txq_rep_perq_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Internal state used to track the number of L3 replicates to make
+          for each packet (indexed by QID = {PORT,TC}).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Complement of the remaining repetition count for L3 multicast
+            replication. Contains zero between frames (a count of all ones).
+           ";
+    ValRandomize = true;
+  } REP[15:0] = 16'h00;
+};
+
+reg txq_ptot_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Array of 3-bit PTOT (packet time out timestamp) values for each
+            traffic classes of a given TX port.
+           ";
+    ValRandomize = true;
+  } PTOT[23:0] = 24'h00;
+};
+
+reg txq_rdy_perport_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Array of 1-bit ready state each traffic classes of a given TX
+            port. A bit set to 1 indicates that the corresponding queue is
+            non-empty.
+           ";
+    ValRandomize = true;
+  } READY[7:0] = 8'h00;
+};
+
+reg txq_ptot_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "For Debug Only, Reserved.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            3-bit PTOT (packet time out timestamp) value corresponding to
+            the frame payloads stored in txq_plink_state_r.
+           ";
+    ValRandomize = true;
+  } PTOT[2:0] = 3'h0;
+};
+
+reg refcnt_txfree_cnt_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved. ";
+  desc = "
+          Per-address count incremented whenever tx_free is set.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Count.
+           ";
+    ValRandomize = true;
+  } CNT[4:0] = 5'h00;
+};
+
+reg refcnt_seg_mem_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved. ";
+  desc = "
+          Per-port (logical) segment storage.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Valid.
+           ";
+    ValRandomize = true;
+  } VALID[53:53] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Rx port.
+           ";
+    ValRandomize = true;
+  } RX_PORT[52:48] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Tx port.
+           ";
+    ValRandomize = true;
+  } TX_PORT[47:43] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Length.
+           ";
+    ValRandomize = true;
+  } LENGTH[42:34] = 9'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Start of packet.
+           ";
+    ValRandomize = true;
+  } SOP[33:33] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "End of packet.
+           ";
+    ValRandomize = true;
+  } EOP[32:32] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Address.
+           ";
+    ValRandomize = true;
+  } ADDR[31:14] = 18'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Out of memory.
+           ";
+    ValRandomize = true;
+  } OOM[13:13] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "L2 count.
+           ";
+    ValRandomize = true;
+  } L2_COUNT[12:8] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Tx free.
+           ";
+    ValRandomize = true;
+  } TX_FREE[7:7] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Shared memory parition.
+           ";
+    ValRandomize = true;
+  } SMP[6:6] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Traffic class.
+           ";
+    ValRandomize = true;
+  } TC[5:3] = 3'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Tx drop.
+           ";
+    ValRandomize = true;
+  } TX_DROP[2:2] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Drr phase.
+           ";
+    ValRandomize = true;
+  } DRR_PHASE[1:1] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Epoch.
+           ";
+    ValRandomize = true;
+  } EPOCH[0:0] = 1'h0;
+};
+
+reg refcnt_head_mem_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved. ";
+  desc = "
+          Per-port (logical) head storage, which must be freed last due to interlock in SSCHED.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Rx port.
+           ";
+    ValRandomize = true;
+  } RX_PORT[52:48] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Tx port.
+           ";
+    ValRandomize = true;
+  } TX_PORT[47:43] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Length.
+           ";
+    ValRandomize = true;
+  } LENGTH[42:34] = 9'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Start of packet.
+           ";
+    ValRandomize = true;
+  } SOP[33:33] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "End of packet.
+           ";
+    ValRandomize = true;
+  } EOP[32:32] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Address.
+           ";
+    ValRandomize = true;
+  } ADDR[31:14] = 18'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Out of memory.
+           ";
+    ValRandomize = true;
+  } OOM[13:13] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "L2 count.
+           ";
+    ValRandomize = true;
+  } L2_COUNT[12:8] = 5'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "Tx free.
+           ";
+    ValRandomize = true;
+  } TX_FREE[7:7] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Shared memory parition.
+           ";
+    ValRandomize = true;
+  } SMP[6:6] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Traffic class.
+           ";
+    ValRandomize = true;
+  } TC[5:3] = 3'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Tx drop.
+           ";
+    ValRandomize = true;
+  } TX_DROP[2:2] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Drr phase.
+           ";
+    ValRandomize = true;
+  } DRR_PHASE[1:1] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Epoch.
+           ";
+    ValRandomize = true;
+  } EPOCH[0:0] = 1'h0;
+};
+
+reg freelist_uerr_addr_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          FREELIST address with uncorrectable error.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            The last address that had a parity error.
+           ";
+    ValRandomize = true;
+  } ADDR[17:0] = 18'h0;
+};
+
+reg freelist_debug_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          FREELIST debug control. Control for push/pop of freelist addresses.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Push address for the selected sector. Valid addresses are 0-2047.
+           ";
+    ValRandomize = true;
+  } PUSH_ADDR[16:6] = 11'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The sector to issue a push/pop. Valid sectors are 0-11.
+           ";
+    ValRandomize = true;
+  } SECTOR[5:2] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indication to push or pop. When set to 0, pop. When set to 1, push.
+           ";
+    ValRandomize = true;
+  } PUSH_POP[1:1] = 1'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Enable push/pop. Will be cleared once push/pop is executed.
+           ";
+    ValRandomize = true;
+  } EN[0:0] = 1'h0;
+};
+
+reg freelist_debug_pop_addr_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          FREELIST debug pop address. Based on the settings of FREELIST_DEBUG_CTRL,
+          the address that was popped. Note that this register will be cleared when read.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Pop address is valid.
+           ";
+    ValRandomize = true;
+  } VALID[11:11] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Pop address for the selected sector.
+           ";
+    ValRandomize = true;
+  } POP_ADDR[10:0] = 11'h0;
+};
+
+reg rxq_freelist_debug_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          RXQ freelist debug control. Control for push/pop of RXQ freelist pages.
+          Note that pages 0-7 are pre-allocated for RXQ_STORAGE_POINTERS and are
+          automatically popped from the RXQ freelist after reset.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Push page. Valid pages are 0-1023.
+           ";
+    ValRandomize = true;
+  } PUSH_PAGE[11:2] = 10'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indication to push or pop. When set to 0, pop. When set to 1, push.
+           ";
+    ValRandomize = true;
+  } PUSH_POP[1:1] = 1'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Enable push/pop. Will be cleared once push/pop is executed.
+           ";
+    ValRandomize = true;
+  } EN[0:0] = 1'h0;
+};
+
+reg rxq_freelist_debug_pop_page_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          RXQ freelist debug pop page. Based on the settings of RXQ_FREELIST_DEBUG_CTRL,
+          the page that was popped. Note that this register will be cleared when read.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Pop page is valid.
+           ";
+    ValRandomize = true;
+  } VALID[10:10] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Pop page.
+           ";
+    ValRandomize = true;
+  } POP_PAGE[9:0] = 10'h0;
+};
+
+reg txq_freelist_debug_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          TXQ freelist debug control. Control for push/pop of TXQ freelist addresses.
+          Note that addresses 0-191 are pre-allocated for TXQ_TAIL_PERQ and TXQ_HEAD_PERPORT
+          and are automatically popped from the TXQ freelist after reset.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Push address. Valid addresses are 0-24575.
+           ";
+    ValRandomize = true;
+  } PUSH_ADDR[16:2] = 15'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indication to push or pop. When set to 0, pop. When set to 1, push.
+           ";
+    ValRandomize = true;
+  } PUSH_POP[1:1] = 1'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Enable push/pop. Will be cleared once push/pop is executed.
+           ";
+    ValRandomize = true;
+  } EN[0:0] = 1'h0;
+};
+
+reg txq_freelist_debug_pop_addr_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          TXQ freelist debug pop address. Based on the settings of TXQ_FREELIST_DEBUG_CTRL,
+          the address that was popped. Note that this register will be cleared when read.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Pop address is valid.
+           ";
+    ValRandomize = true;
+  } VALID[15:15] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Pop address.
+           ";
+    ValRandomize = true;
+  } POP_ADDR[14:0] = 15'h0;
+};
+
+reg sched_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Interrupt Pending.";
+  desc = "
+          Interrupt pending register for Scheduler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            RXQ overflow detected. Missed processing packet(s).
+           ";
+    ValRandomize = true;
+  } RXQ_OVERFLOW[8:8] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            RXQ mcast ctrl fifo overflow detected. Missed processing packet(s).
+           ";
+    ValRandomize = true;
+  } RXQ_MCAST_FIFO_OVERFLOW[7:7] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            REFCNT eop fifo overflow detected. Missed processing segment(s).
+           ";
+    ValRandomize = true;
+  } REFCNT_EOP_FIFO_OVERFLOW[6:6] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            REFCNT head fifo overflow detected. Missed processing segment(s).
+           ";
+    ValRandomize = true;
+  } REFCNT_HEAD_FIFO_OVERFLOW[5:5] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Parity error detected on address.
+           ";
+    ValRandomize = true;
+  } FREELIST_UERR[4:4] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Invalid logical port (port out of bounds).
+           ";
+    ValRandomize = true;
+  } PORT_INVALID[3:3] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Fixed schedule programming violates port spacing requirement.
+           ";
+    ValRandomize = true;
+  } PORT_SPACING[2:2] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Out of memory condition detected.
+           ";
+    ValRandomize = true;
+  } OUT_OF_MEMORY[1:1] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Shell controller memory error detected.
+           ";
+    ValRandomize = true;
+  } SHELL_CTL_ERR[0:0] = 1'h0;
+};
+
+reg sched_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Interrupt Mask.";
+  desc = "
+          The interrupt mask register controls if the corresponding interrupt
+          source is presented to the interrupt hierarchy (bit is set to 0) or
+          masked out (bit is set to 1).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            RXQ overflow detected. Missed processing packet(s).
+           ";
+    ValRandomize = true;
+  } RXQ_OVERFLOW[8:8] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            RXQ mcast ctrl fifo overflow detected. Missed processing packet(s).
+           ";
+    ValRandomize = true;
+  } RXQ_MCAST_FIFO_OVERFLOW[7:7] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            REFCNT eop fifo overflow detected. Missed processing segment(s).
+           ";
+    ValRandomize = true;
+  } REFCNT_EOP_FIFO_OVERFLOW[6:6] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            REFCNT head fifo overflow detected. Missed processing segment(s).
+           ";
+    ValRandomize = true;
+  } REFCNT_HEAD_FIFO_OVERFLOW[5:5] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Parity error detected on address.
+           ";
+    ValRandomize = true;
+  } FREELIST_UERR[4:4] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Invalid logical port (port out of bounds).
+           ";
+    ValRandomize = true;
+  } PORT_INVALID[3:3] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Fixed schedule programming violates port spacing requirement.
+           ";
+    ValRandomize = true;
+  } PORT_SPACING[2:2] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Out of memory condition detected.
+           ";
+    ValRandomize = true;
+  } OUT_OF_MEMORY[1:1] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Shell controller memory error detected.
+           ";
+    ValRandomize = true;
+  } SHELL_CTL_ERR[0:0] = 1'h1;
+};
+
+reg iarb_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Interrupt Pending.";
+  desc = "
+          Interrupt pending register for IARB
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Adaptive schedule invalid logical port (port out of bounds).
+           ";
+    ValRandomize = true;
+  } PORT_INVALID_ADAPTIVE[0:0] = 1'h0;
+};
+
+reg iarb_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Interrupt Mask.";
+  desc = "
+          The interrupt mask register controls if the corresponding interrupt
+          source is presented to the interrupt hierarchy (bit is set to 0) or
+          masked out (bit is set to 1).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Adaptive schedule invalid logical port (port out of bounds).
+           ";
+    ValRandomize = true;
+  } PORT_INVALID_ADAPTIVE[0:0] = 1'h1;
+};
+
+addrmap hlp_SCHED_map {
+  name = "hlp_SCHED";
+  desc = "Scheduler Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 20;
+  ResetDomains = "SWITCH,MGMT";
+
+  rxq_st_data_r             RXQ_STORAGE_DATA[24576]       @0x000000 += 32;
+  txq_plink_state_r         TXQ_PLINK_STATE[24576]        @0x100000 += 16;
+  txq_ptot_state_r          TXQ_PTOT_STATE[24576]         @0x180000 += 8;
+  ssched_link_storage_r     SSCHED_LINK_STORAGE[24576]    @0x1C0000 += 8;
+  ssched_sop_storage_r      SSCHED_SOP_STORAGE[24576]     @0x200000 += 8;
+  refcnt_txfree_cnt_r       REFCNT_TXFREE_CNT[24576]      @0x240000 += 8;
+  rxq_mcast_len_table_r     RXQ_MCAST_LEN_TABLE[16384]    @0x280000 += 8;
+  rxq_mcast_dest_table_r    RXQ_MCAST_DEST_TABLE[4096]    @0x2A0000 += 8;
+
+  txq_tail_perq_rf              TXQ_TAIL_PERQ[2]              @0x2E0000 += 2048;//[192]->[256]
+  txq_head_perport_rf           TXQ_HEAD_PERPORT[8]           @0x2E1000 += 256; // [24]->[32]
+  txq_rep_perq_r                TXQ_REP_PERQ[192]             @0x2E2000 += 8;
+  txq_ptot_perport_r            TXQ_PTOT_PERPORT[24]          @0x2E3000 += 8;
+  txq_rdy_perport_r             TXQ_RDY_PERPORT[24]           @0x2E3100 += 8;
+  txq_freelist_debug_ctrl_r     TXQ_FREELIST_DEBUG_CTRL       @0x2E3200;
+  txq_freelist_debug_pop_addr_r TXQ_FREELIST_DEBUG_POP_ADDR   @0x2E3210;
+
+  rxq_st_link_r                 RXQ_STORAGE_LINK[1024]        @0x2E4000 += 8;
+  rxq_st_pointers_r             RXQ_STORAGE_POINTERS[8]       @0x2E6000 += 8;
+  rxq_mcast_mgmt_timer_r        RXQ_MCAST_MGMT_TIMER          @0x2E7000;
+  rxq_limited_skew_mcast_r      RXQ_LIMITED_SKEW_MCAST        @0x2E7010;
+  rxq_priority_cfg_r            RXQ_PRIORITY_CFG              @0x2E7020;
+  rxq_freelist_debug_ctrl_r     RXQ_FREELIST_DEBUG_CTRL       @0x2E7030;
+  rxq_freelist_debug_pop_page_r RXQ_FREELIST_DEBUG_POP_PAGE   @0x2E7040;
+
+  freelist_uerr_addr_r      FREELIST_UERR_ADDR            @0x2E7100;
+  freelist_debug_ctrl_r     FREELIST_DEBUG_CTRL           @0x2E7110;
+  freelist_debug_pop_addr_r FREELIST_DEBUG_POP_ADDR       @0x2E7120;
+
+  ssched_modify_pf_r        SSCHED_MODIFY_PF[24]          @0x2E8000 += 16;
+  ssched_rx_perport_r       SSCHED_RX_PERPORT[24]         @0x2E8200 += 8;
+  ssched_lock_perport_r     SSCHED_LOCK_PERPORT[24]       @0x2E8300 += 8;
+  ssched_tx_perport_r       SSCHED_TX_PERPORT[24]         @0x2E8400 += 8;
+  ssched_lock_cfg_perport_r SSCHED_LOCK_CFG_PERPORT[24]   @0x2E8500 += 8;
+  ssched_oom_cntr_perport_r SSCHED_OOM_CNTR_PERPORT[24]   @0x2E8600 += 8;
+  ssched_oom_byte_cntr_r    SSCHED_OOM_BYTE_CNTR          @0x2E8700 ;
+
+  esched_cfg_1_r            ESCHED_CFG_1[24]              @0x2E8800 += 8;
+  esched_cfg_2_r            ESCHED_CFG_2[24]              @0x2E8900 += 8;
+  esched_cfg_en_r           ESCHED_CFG_EN[24]             @0x2E8A00 += 8;
+  esched_dc_r               ESCHED_DC[24]                 @0x2E8B00 += 8;
+  esched_ub_r               ESCHED_UB[24]                 @0x2E8C00 += 8;
+  esched_ptr_r              ESCHED_PTR[24]                @0x2E8D00 += 8;
+  esched_erl_r              ESCHED_ERL[24]                @0x2E8E00 += 8;
+  esched_pause_override_r   ESCHED_PAUSE_OVERRIDE         @0x2E8F00 ;
+
+  esched_nac_jc_sweeping_speed_r  ESCHED_NAC_JC_SWEEPING_SPEED    @0x2E9000;
+  esched_nac_jc_state_1_r         ESCHED_NAC_JC_STATE_1[24]       @0x2E9100 += 8;
+  esched_nac_jc_state_0_r         ESCHED_NAC_JC_STATE_0[24]       @0x2E9200 += 8;
+  esched_nac_jc_state_time_r      ESCHED_NAC_JC_STATE_TIME[24]    @0x2E9300 += 8;
+
+  esched_nac_jc_max_cdt_rf        ESCHED_NAC_JC_MAX_CDT[2]             @0x2E9400 += 256;  //[24] // 192 rounds up to 256
+  esched_nac_jc_idle_value_rf     ESCHED_NAC_JC_IDLE_VALUE[2]          @0x2E9600 += 256;  //[24] // 192 rounds up to 256
+  esched_nac_jc_time_rf           ESCHED_NAC_JC_TIME[2]                @0x2E9800 += 256;
+  esched_nac_jc_max_hlptimedelta_rf  ESCHED_NAC_JC_MAX_HLPTIMEDELTA[2] @0x2E9A00 += 256;
+  esched_nac_jc_max_cpktimedelta_rf  ESCHED_NAC_JC_MAX_CPKTIMEDELTA[2] @0x2E9C00 += 256;
+  esched_nac_jc_nac_jitter_tc_ctrl_r  ESCHED_NAC_JC_NAC_JITTER_TC_CTRL[24]    @0x2E9E00 += 8; // [24]
+
+  mon_drr_q_perq_r          MON_DRR_Q_PERQ[192]           @0x2EA000 += 8;
+  mon_drr_dc_perq_r         MON_DRR_DC_PERQ[192]          @0x2EB000 += 8;
+  mon_drr_cfg_perport_r     MON_DRR_CFG_PERPORT[24]       @0x2EC000 += 8;
+  mon_drr_pep_perport_r     MON_DRR_PEP_PERPORT[24]       @0x2EC100 += 8;
+  mon_erl_global_cfg_r      MON_ERL_GLOBAL_CFG            @0x2EC200;
+  mon_erl_bsg_map_r         MON_ERL_BSG_MAP[24]           @0x2EC300 += 8;
+  mon_erl_cfg_perport_r     MON_ERL_CFG_PERPORT[24]       @0x2EC400 += 8;
+  mon_erl_cfg_rf            MON_ERL_CFG[24]               @0x2ED000 += 64; //[8]
+  mon_erl_usage_rf          MON_ERL_USAGE[24]             @0x2EE000 += 64; //[8]
+
+  sched_ip_r                SCHED_IP                      @0x2EF000;
+  sched_im_r                SCHED_IM                      @0x2EF010;
+
+  refcnt_seg_mem_r          REFCNT_SEG_MEM[24]            @0x2F0000 += 8;
+  refcnt_head_mem_r         REFCNT_HEAD_MEM[24]           @0x2F0100 += 8;
+
+  earb_fixed_schedule_rf    EARB_FIXED_SCHEDULE[2]        @0x2F2000 += 4096; //[512]
+  earb_adaptive_schedule_rf EARB_ADAPTIVE_SCHEDULE[2]     @0x2F4000 += 256;  //[32]
+  earb_ctrl_r               EARB_CTRL                     @0x2F4200;
+  earb_debug_r              EARB_DEBUG                    @0x2F4210;
+  earb_debug_perport_r      EARB_DEBUG_PERPORT[32]        @0x2F4300 += 8;
+
+  iarb_adaptive_schedule_rf         IARB_ADAPTIVE_SCHEDULE[2]         @0x600000 += 256;  //[32]
+  iarb_ctrl_r                       IARB_CTRL                         @0x600200;
+  iarb_parser_window_cfg_perport_r  IARB_PARSER_WINDOW_CFG_PERPORT[2] @0x600300 += 8;
+  iarb_debug_r                      IARB_DEBUG                        @0x600400;
+  iarb_debug_perport_r              IARB_DEBUG_PERPORT[32]            @0x600500 += 8;
+  iarb_ip_r                         IARB_IP                           @0x600600;
+  iarb_im_r                         IARB_IM                           @0x600610;
+};
+

@@ -1,0 +1,97 @@
+# The install system works in two modes:
+# User:
+# 	Invoked through "make install [INSTALL_DIRECTORY=dir]
+# 	INSTALL_DIRECTORY defaults to BASE_USER_INSTALL_DIRECTORY/$USER/$BRANCH
+# 	TODO: Figure out auto/manual branch determination and tagging.
+# Model builder:
+# 	Invoked through the model builder system via the regression system.
+# 	"make install MODEL_BUILDER=true INSTALL_DIRECTORY=(model dir)
+# 	INSTALL_DIRECTORY is required
+
+ifneq ($(DEV_ENV_INTEL),)
+    BASE_USER_INSTALL_DIRECTORY := /nfs/site/disks/sqa
+else
+    BASE_USER_INSTALL_DIRECTORY := /mnt/fulcrum/SQA
+endif
+
+# this should include all API source code files for the profiler
+# it appears there are duplicate files listed in here, and that's okay.
+ALL_API_SRC =\
+$(API_SRC)\
+$(API_SRC_FM2000)\
+$(API_SRC_FM4000)\
+$(API_SRC_SWAG)\
+$(ALOS_SRC)\
+$(COMMON_SRC)\
+$(DEBUG_SRC)\
+$(DEBUG_SRC_FM2000)\
+$(DEBUG_SRC_FM4000)\
+$(DEBUG_SRC_FM6000)\
+$(DEBUG_SRC_SWAG)\
+$(PLAT_SRC)
+
+
+ifeq ($(MODEL_BUILDER),true)
+	ifeq ($(INSTALL_DIRECTORY),)
+		ERROR := $(error INSTALL_DIRECTORY must be set on make invocation)
+	endif
+
+	INSTALL_LOG_TEXT := "Now installing model to directory: $(INSTALL_DIRECTORY)"
+else
+	# BRANCH defaults to 'default'
+	ifeq ($(BRANCH),)
+		BRANCH := default
+	endif
+
+	ifeq ($(INSTALL_DIRECTORY),)
+		INSTALL_DIRECTORY := $(BASE_USER_INSTALL_DIRECTORY)/$(USER)/$(PLATFORM)/$(BRANCH)
+	endif
+
+	INSTALL_LOG_TEXT := "Installing developer build to: $(INSTALL_DIRECTORY)"
+endif
+
+install: sdk install-base $(INSTALL_TARGETS) install-platform install-perl
+	@echo Copying required resources
+	-test -d ../util/sqa-scripts && install ../util/sqa-scripts/* $(INSTALL_DIRECTORY)/
+	# copy API source code for profiler
+	# the SDK test source code and the testing c/h will be copied by the
+	# regression system.  Testing c/h will also be copied by Makefile.sdk_tests
+	# for other reasons.
+	if [ $(PROFILER) ]; then                                                        \
+		if [ $(PROFILER) != "" -a $(PROFILER) != "none" ]; then                     \
+	  		mkdir -p "$(INSTALL_DIRECTORY)/fulcrum/src" ;                           \
+			for i in $(ALL_API_SRC); do                                             \
+				if [ ! -d "$(INSTALL_DIRECTORY)/fulcrum/src/`dirname $$i`" ]; then  \
+					mkdir -p "$(INSTALL_DIRECTORY)/fulcrum/src/`dirname $$i`" ;     \
+				fi;                                                                 \
+				cp -pPR $$i "$(INSTALL_DIRECTORY)/fulcrum/src/$$i" ;                  \
+				chmod 666 "$(INSTALL_DIRECTORY)/fulcrum/src/$$i" ;                  \
+			done;                                                                   \
+		fi;                                                                         \
+	fi
+	../build/fix_perms $(INSTALL_DIRECTORY)
+	@echo Installed to: $(INSTALL_DIRECTORY)
+
+install-base: sdk
+	@echo "$(INSTALL_LOG_TEXT)"
+	@echo Creating directory if required
+	@echo Copying headers and SDK library.
+	mkdir -m g+rw -p $(INSTALL_DIRECTORY)
+	rm -rf $(INSTALL_DIRECTORY)/include
+	cp -R ../include $(INSTALL_DIRECTORY)
+	chmod -R a+r $(INSTALL_DIRECTORY)/include
+	-test -d ../testing && cp -r ../testing $(INSTALL_DIRECTORY)
+	-test -d ../testing && chmod -R a+rw $(INSTALL_DIRECTORY)/testing
+	rm -f $(INSTALL_DIRECTORY)/lib/*
+	mkdir -p $(INSTALL_DIRECTORY)/lib
+	cp ../build/fm_sdk.a $(INSTALL_DIRECTORY)/lib/
+	cp ../build/lib*.$(SO_EXTENSION) $(INSTALL_DIRECTORY)/lib/
+	chmod -R a+rx $(INSTALL_DIRECTORY)/lib
+	@echo export PLATFORM:=$(PLATFORM) | cat - ../build/Makefile.config > $(INSTALL_DIRECTORY)/Makefile.config
+	chmod a+rwx $(INSTALL_DIRECTORY)/Makefile.config
+
+install-platform: install-base $(PLAT_TARGETS)
+	@echo Copying platform targets: $(PLAT_TARGETS)
+	@for targ in $(PLAT_TARGETS); do if [ -e $$targ ]; then install $$targ $(INSTALL_DIRECTORY)/; fi; done
+	@#TODO: Don't always install the dev support
+	install ../build/Makefile.$(PLATFORM) $(INSTALL_DIRECTORY)/Makefile.platform

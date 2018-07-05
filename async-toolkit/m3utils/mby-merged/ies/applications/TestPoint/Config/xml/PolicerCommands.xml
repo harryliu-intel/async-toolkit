@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+<command>
+    <name>create</name>
+    <help>Create VLANs, LAGs, multicast groups, ACLs, etc.</help>
+
+    <command>
+        <filter type="family">
+           <deny>FM2000</deny>
+        </filter>
+        <name>policer</name>
+        <help>Create a Policer</help>
+        <handler>tpHandleCreatePolicer</handler>
+        <argument>
+            <name>!&lt;policer&gt;</name>
+            <help>The Policer number to create</help>
+            <argument>
+                <name>!&lt;bank&gt;</name>
+                <help>The Policer bank to use</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Create a Policer with the specified number, and bank</help>
+                </argument>
+            </argument>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Create a Policer with the specified number, and a compiler selected bank</help>
+            </argument>
+        </argument>
+    </command>
+</command>
+
+<command>
+    <name>show</name>
+    <help>Show a property</help>
+    <command>
+        <filter type="family">
+           <deny>FM2000</deny>
+        </filter>
+        <name>policer</name>
+        <help>Show a policer</help>
+        <handler>tpHandleShowPolicer</handler>
+        <argument>
+            <name>!&lt;policer&gt;</name>
+            <help>A policer number, a list of policer numbers, or all</help>
+        </argument>
+    </command>
+</command>
+
+<command>
+    <name>del</name>
+    <help>Delete MAC address, VLANs, LAGs, or ports from VLANs, or counters from VLANs or LAGs</help>
+
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+        </filter>
+        <name>policer</name>
+        <help>Delete the specified policer</help>
+        <handler>tpHandleDeletePolicer</handler>
+        <argument>
+            <name>!&lt;policer&gt;</name> 
+            <help>The policer to delete</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Compile and apply ACLs</help>
+            </argument>
+        </argument>
+    </command>
+</command>
+
+<command>
+    <name>set</name>
+    <help>Set a property</help>
+
+    <command>
+        <filter type="family">
+           <deny>FM2000</deny>
+        </filter>
+        <name>policer</name>
+        <help>Set a policer property</help>
+        <handler>tpHandleSetPolicerConfig</handler>
+        <argument>
+            <name>!&lt;policer&gt;</name>
+            <help>The policer to configure</help>
+            <argument>
+                <name>cir</name>
+                <help>Configure the committed policer parameters</help>
+
+                <argument>
+                    <name>rate</name>
+                    <help>Configure the committed policer rate</help>
+                    <argument>
+                        <name>&lt;rate&gt;</name>
+                        <help>The committed rate in Kb/s</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configures the committed policer rate</help>
+                        </argument>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>capacity</name>
+                    <help>Set the committed policer max capacity</help>
+                    <argument>
+                        <name>&lt;capacity&gt;</name>
+                        <help>The committed capacity in KB</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configures the committed policer capacity</help>
+                        </argument>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>action</name>
+                    <help>Set the committed policer action</help>
+                    <argument>
+                        <name>drop</name>
+                        <help>Configure the committed policer to drop when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configure the committed policer to drop</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM6000</deny>
+                        </filter>
+                        <name>markdown</name>
+                        <help>Configure the committed policer to mark down when above the programmed rate</help>
+                        <argument>
+                            <name>swpri</name>
+                            <help>Mark down the switch priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Configure the committed policer to markdown switch priority</help>
+                            </argument>
+                        </argument>
+                        <argument>
+                            <name>dscp</name>
+                            <help>Mark down the dscp priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Configure the committed policer to markdown dscp priority</help>
+                            </argument>
+                        </argument>
+                        <argument>
+                            <name>both</name>
+                            <help>Mark down both the switch and dscp priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Configure the committed policer to markdown both dscp and switch priority</help>
+                            </argument>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM4000</deny>
+                        </filter>
+                        <name>trap</name>
+                        <help>Configure the committed policer to trap when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configure the committed policer to trap</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM4000</deny>
+                        </filter>
+                        <name>swPri_DSCP</name>
+                        <help>Configure the committed policer to set switch priority and dscp when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;swpri&gt;</name>
+                            <help>New switch priority to set when above the programmed rate</help>
+                            <argument>
+                                <name>!&lt;dscp&gt;</name>
+                                <help>New DSCP priority to set when above the programmed rate</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Configure the committed policer to set the switch priority and dscp</help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM4000</deny>
+                        </filter>
+                        <name>swPri_VPri</name>
+                        <help>Configure the committed policer to set switch and vlan priority when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;swpri&gt;</name>
+                            <help>New switch priority to set when above the programmed rate</help>
+                            <argument>
+                                <name>!&lt;vpri&gt;</name>
+                                <help>New VLAN priority to set when above the programmed rate</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Configure the committed policer to set the switch and vlan priority</help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument>
+            <argument>
+                <name>eir</name>
+                <help>Configure the excess policer parameters</help>
+
+                <argument>
+                    <name>rate</name>
+                    <help>Configure the excess policer rate</help>
+                    <argument>
+                        <name>&lt;rate&gt;</name>
+                        <help>The excess rate in Kb/s</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configures the excess policer rate</help>
+                        </argument>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>capacity</name>
+                    <help>Set the excess policer max capacity</help>
+                    <argument>
+                        <name>&lt;capacity&gt;</name>
+                        <help>The excess capacity in KB</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configures the excess policer capacity</help>
+                        </argument>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>action</name>
+                    <help>Set the excess policer action</help>
+                    <argument>
+                        <name>drop</name>
+                        <help>Configure the excess policer to drop when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configure the excess policer to drop</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM6000</deny>
+                        </filter>
+                        <name>markdown</name>
+                        <help>Configure the excess policer to mark down when above the programmed rate</help>
+                        <argument>
+                            <name>swpri</name>
+                            <help>Mark down the switch priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Configure the excess policer to markdown switch priority</help>
+                            </argument>
+                        </argument>
+                        <argument>
+                            <name>dscp</name>
+                            <help>Mark down the dscp priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Configure the excess policer to markdown dscp priority</help>
+                            </argument>
+                        </argument>
+                        <argument>
+                            <name>both</name>
+                            <help>Mark down both the switch and dscp priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Configure the excess policer to markdown both dscp and switch priority</help>
+                            </argument>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM4000</deny>
+                        </filter>
+                        <name>trap</name>
+                        <help>Configure the excess policer to trap when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Configure the excess policer to trap</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM4000</deny>
+                        </filter>
+                        <name>swPri_DSCP</name>
+                        <help>Configure the excess policer to set switch priority and dscp when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;swpri&gt;</name>
+                            <help>New switch priority to set when above the programmed rate</help>
+                            <argument>
+                                <name>!&lt;dscp&gt;</name>
+                                <help>New DSCP priority to set when above the programmed rate</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Configure the excess policer to set the switch priority and dscp</help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                           <deny>FM4000</deny>
+                        </filter>
+                        <name>swPri_VPri</name>
+                        <help>Configure the excess policer to set switch and vlan priority when above the programmed rate</help>
+                        <argument>
+                            <name>!&lt;swpri&gt;</name>
+                            <help>New switch priority to set when above the programmed rate</help>
+                            <argument>
+                                <name>!&lt;vpri&gt;</name>
+                                <help>New VLAN priority to set when above the programmed rate</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Configure the excess policer to set the switch and vlan priority</help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument>
+            <argument>
+                <filter type="family">
+                   <deny>FM6000</deny>
+                </filter>
+                <name>color_source</name>
+                <help>Set the color source for the specified policer</help>
+                <argument>
+                    <name>green</name>
+                    <help>Assume all frames are green</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Policer assumes all frames are green</help>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>dscp</name>
+                    <help>Determine color from DSCP field</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Configures the policer to extract color from the DSCP field</help>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>swpri</name>
+                    <help>Determine color from switch priority</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Configures the policer to extract color from switch priority</help>
+                    </argument>
+                </argument>
+            </argument>
+
+            <argument>
+                <filter type="family">
+                   <deny>FM6000</deny>
+                </filter>
+                <name>swpri_markdown_map</name>
+                <help>Set the markdown switch priority map</help>
+
+                <argument>
+                    <name>!&lt;switch_pri&gt;</name>
+                    <help>The switch priority to configure (0-15)</help>
+                    <argument>
+                        <name>!&lt;downgraded_priority&gt;</name>
+                        <help>The new switch priority, when downgrading. Red
+                        priorities should downgrade to themselves (e.g. 5 -&gt;
+                        5)</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Assign the downgrade</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument>
+
+            <argument>
+                <filter type="family">
+                   <deny>FM6000</deny>
+                </filter>
+                <name>dscp_markdown_map</name>
+                <help>Set the markdown dscp codepoint map</help>
+
+                <argument>
+                    <name>!&lt;dscp&gt;</name>
+                    <help>The dscp codepoint to configure</help>
+                    <argument>
+                        <name>!&lt;downgraded_dscp&gt;</name>
+                        <help>The new dscp codepoint, when downgrading. Red
+                        codepoint should downgrade to themselves (e.g. 5 -&gt;
+                        5)</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Assign the downgrade</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument>
+
+        </argument>
+    </command>
+</command>
+
+</config>

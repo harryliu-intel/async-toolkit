@@ -1,0 +1,174 @@
+
+
+
+############################ PARSER REGISTER SET ##########################
+#
+
+--addressBase           0x000000
+--addressBits           16
+--atomic                64
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT
+
+-set hlp_PARSER  Parser Register Set
+
+
+-register PARSER_NH_CFG[0..1,0..255] Sets initial analyzer state
+  First indexed by one of the two port supported for window parsing.
+  Second indexed by NextHeader (8b L4 protocol of L3 extension header). Sets the
+  initial ptr/state/op, and indicates byte offsets of w0/w1/w2 in the packet.
+  Note that INITIAL_W0/W1/W2_OFFSET and INITIAL_PTR should be even.
+  Hardware will ignore the lsb of these fields.
+
+  >PG HLP_PG1
+  +INITIAL_W0_OFFSET:8:RW:0
+  +INITIAL_W1_OFFSET:8:RW:0
+  +INITIAL_W2_OFFSET:8:RW:0
+  +INITIAL_PTR:8:RW:0
+  +INITIAL_STATE:16:RW:0
+  +INITIAL_OP_MASK:12:RW:0
+  +INITIAL_OP_ROT:4:RW:0
+
+-register PARSER_PORT_CFG[0..23] Sets initial analyzer state
+  indexed by logical port number. Sets the initial ptr/state/op,
+  and indicates byte offsets of w0/w1/w2 in the packet.
+  Note that INITIAL_W0/W1/W2_OFFSET and INITIAL_PTR should be even.
+  Hardware will ignore the lsb of these fields.
+
+  >PG HLP_PG1
+  +INITIAL_W0_OFFSET:8:RW:0
+  +INITIAL_W1_OFFSET:8:RW:0
+  +INITIAL_W2_OFFSET:8:RW:0
+  +INITIAL_PTR:8:RW:0
+  +INITIAL_STATE:16:RW:0
+  +INITIAL_OP_MASK:12:RW:0
+  +INITIAL_OP_ROT:4:RW:0
+
+-register PARSER_CSUM_CFG[0..23] Per-port config for which csum calculations and length validation checks are enabled.
+  >PG HLP_PG1
+  +VALIDATE_L4_CSUM:2:RW:0
+        Enable checksum validation and/or drop on L4 checksum error (for TCP, UDP & SCTP).  
+        * DISABLE(0): Disable the check.
+        * DROP(1): Validate and drop in case of error.
+        * MARK(2): Validate and mark the result in metadata.
+  +STORE_L4_PARTIAL_CSUM:1:RW:0
+        Enable partial checksum write to metadata on fragments.
+  +COMPUTE_L4_CSUM:1:RW:0
+        Insert computed outer L4 UDP checksum into the packet.
+  +VALIDATE_L3_LENGTH:2:RW:0
+        Enable validation of the payload length field in the L3 header
+        * DISABLE(0): Disable the check.
+        * DROP(1): Validate and drop in case of error.
+        * MARK(2): Validate and mark the result in metadata.
+
+-register PARSER_WINDOW_CFG Configuration for the two window ports to allow parsing deeper into the packet.
+
+  >PG HLP_PG1
+  +MODE_1:1:RW:0
+        0: windowed parsing off, 1: windowed parsing enabled
+  +PORT_1:6:RW:0
+        Port number of the second window port
+  +MODE_0:1:RW:0
+        0: windowed parsing off, 1: windowed parsing enabled
+  +PORT_0:6:RW:0
+        Port number of the first window port
+
+-register PARSER_IP Parser Interrupt Pending
+  >PG HLP_PG1
+    +MEM_ERROR:1:CW1:0
+        Memory ECC or parity error reported by the local memory controller.
+        Check all PA_*_STATUS registers to find the source.
+
+-register PARSER_IM Parser Interrupt Mask
+  The interrupt mask register controls if the corresponding interrupt source
+  is presented to the interrupt hierarchy (bit is set to 0) or masked out
+  (bit is set to 1).
+  >PG HLP_PG1
+    +MEM_ERROR:1:RW:1
+        Memory ECC or parity error reported by the local memory controller.
+        Check all PA_*_STATUS registers to find the source.
+
+-register PARSER_KEY_W[0..31,0..15] Sets TCAM key W0/W1 per (stage, rule)
+  w0 matches if (w0 & w0_mask) == w0_value
+  w1 matches if (w1 & w1_mask) == w1_value
+  >PG HLP_PG1
+  +W1_VALUE:16:RW:ffff
+  +W1_MASK:16:RW:0
+  +W0_VALUE:16:RW:ffff
+  +W0_MASK:16:RW:0
+
+
+-register PARSER_KEY_S[0..31,0..15] Sets TCAM key STATE per (stage, rule)
+  state matches if (state & state_mask) == state_value.
+  To disable a rule, set state_mask=0 and state_value=1.
+  >PG HLP_PG1
+  +STATE_VALUE:16:RW:ffff
+  +STATE_MASK:16:RW:0
+
+
+-register PARSER_ANA_W[0..31,0..15] Sets Analyzer W0..2/skip action per (stage, rule)
+  Note that NEXTW0/W1/W2_OFFSET and SKIP should be even.
+  Hardware will ignore the lsb of these fields.
+  >PG HLP_PG1
+  +NEXT_W0_OFFSET:8:RW:0
+	Offset of next w0 relative to current ptr + op(w2).
+  +NEXT_W1_OFFSET:8:RW:0
+	Offset of next w1 relative to current ptr + op(w2).
+  +NEXT_W2_OFFSET:8:RW:0
+	Offset of next w2 relative to current ptr + op(w2).
+  +SKIP:8:RW:0
+	Next ptr relative to current ptr + op(w2).
+
+
+-register PARSER_ANA_S[0..31,0..15] Sets Analyzer State/Op action per (stage, rule)
+
+  >PG HLP_PG1
+  +NEXT_STATE:16:RW:0
+	Bit values to be written into next state.
+  +NEXT_STATE_MASK:16:RW:0
+  	Bitwise state write control.
+  +NEXT_OP:16:RW:0
+	ALU operation to apply to next w2.
+
+
+-register PARSER_EXC[0..31,0..15] Set Exception action per (stage, rule)
+
+  >PG HLP_PG1
+  +EX_OFFSET:8:RW:0
+	Raises an EOF exception if packet_len &lt; ptr + ex_offset.
+        On an EOF exception, this rule and all downstream rules are disabled.
+
+  +PARSING_DONE:1:RW:0
+	Raises a ParsingDone exception.
+        On a ParsingDone exception, all downstream rules are disabled.
+
+        A ParsingDone exception may be raised on either a good packet
+        or bad packet to prevent further parsing. In a good packet,
+        ParsingDone should be raised as the last header is parsed. In
+        a bad packet, ParsingDone should be raised and another flag
+        should be set (via ext_action) to indicate parsing failure.
+
+
+-register PARSER_EXT[0..31,0..31] Sets Extract action per (stage, 2*rule)
+  Two extract actions are at (stage, rule) and (stage, rule+16).
+  Note that KEY_OFFSET should be even.
+  Hardware will ignore the lsb of these fields.
+
+  >PG HLP_PG1
+  +KEY_START:7:RW:0
+	Index of first target 16-bit key (0..83)
+  +KEY_LEN:7:RW:0
+	Number of 16-bit keys to write (0..84). 
+  +KEY_OFFSET:8:RW:0
+	First source byte relative to ptr.
+  +FLAG_NUM:6:RW:0
+	Which flag to assign.
+        Use flag_num=0 to disable writing flags.
+  +FLAG_VALUE:1:RW:0
+	Value to assign to flag
+  +PTR_NUM:3:RW:0
+	Which ptrs register to save current ptr value to.
+        Use ptr_num=0 to disable writing ptr.

@@ -1,0 +1,292 @@
+// INTEL TOP SECRET
+// Copyright 2014- Intel Corporation. All Rights Reserved.
+//
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+`include "hlp_udp.rdl"
+
+`include "hlp_shell_ctl.rdl"
+
+
+// HASH_ENTRY0[0..65535]
+
+reg hash_entry0_r {
+  shared;
+  HandCoded = true;
+  name = "Hash Entry RAM row 0 only, 32B/line.";
+  desc = "Contains the first row of the entry RAM used for the exact-match hash.  See the HAS 
+          for details on the addressing of entries into the entry RAM.  Note that the 8B of
+          each entry is big endian, i.e. bits 63:56 are least significant.";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    64-bit word containing network-endian data.
+    Byte 0 is bits 63..56.
+
+           ";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+
+
+
+// HASH_ENTRY1[0..65535]
+
+reg hash_entry1_r {
+  shared;
+  HandCoded = true;
+  name = "Hash Entry RAM row 1 only, 32B/line.";
+  desc = "Contains the second row of the entry RAM used for the exact-match hash.  See the HAS 
+          for details on the addressing of entries into the entry RAM.  Note that the 8B of
+          each entry is big endian, i.e. bits 63:56 are least significant.";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    64-bit word containing network-endian data.
+    Byte 0 is bits 63..56.
+
+           ";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+
+
+
+// HASH_ENTRY_RAM_ALLOC[2]
+
+reg hash_entry_ram_alloc_r {
+  shared;
+  HandCoded = true;
+  name = "Hash Entry Allocate (Per Row)";
+  desc = "
+          Specifies which group is allowed to use each of the 8 columns.  See the
+          HAS for more detail on the structure.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+      Bit vector specifying the group allocated for each of the 8 columns, one bit per column
+      0x0=Group 0, 0x1=Group 1
+
+           ";
+    ValRandomize = true;
+  } GP_SEL[7:0] = 8'h0;
+};
+
+
+
+// HASH_ENTRY_RAM_ERR_WRITE[2][2]
+
+reg hash_entry_ram_err_write_r {
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Used to inject correctable or uncorrectable errors into the Hash Entry Ram
+          sram banks. 
+          Once this register has been written, the specified errors will 
+          be injected on every mgmt write. Only mgmt writes to the Hash Entry Ram.
+          There's one register per row per group. 
+          Address bit 3 selects which row.
+          Address bit 4 selects which group.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Error type (bytes 0-7). 0x1=Cerr, 0x3=Uerr
+
+           ";
+    ValRandomize = true;
+  } ERR_INJECT[1:0] = 2'h0;
+};
+regfile hash_entry_ram_err_write_rf {
+  hash_entry_ram_err_write_r HASH_ENTRY_RAM_ERR_WRITE[2] += 8;
+};
+
+
+
+// HASH_ENTRY_RAM_CERR_READ[2][2]
+
+reg hash_entry_ram_cerr_read_r {
+  shared;
+  HandCoded = true;
+  name = "Hash Entry Correctable Error (Per Group Per Row)";
+  desc = "
+        Captures a record of the most recent correctable error to be read
+        out of the Hash Entry RAM.
+        There's one register per row per group. 
+        Address bit 3 selects which row.
+        Address bit 4 selects which group.
+        The same address mapping applies to the correctable error count registers.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+    Hash Entry RAM instance column where the most recent error was found 
+
+           ";
+    ValRandomize = true;
+  } COL[18:16] = 3'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+    Hash Entry RAM instance address where the most recent error was found 
+
+           ";
+    ValRandomize = true;
+  } ADDR[15:5] = 11'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+    Hash Entry RAM instance lane where the most recent error was found 
+
+           ";
+    ValRandomize = true;
+  } LANE[4:3] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+    Reserved
+
+           ";
+    ValRandomize = true;
+  } RSVD[2:1] = 2'h0;
+  field {
+    AccessType = "RO/C/V";
+    desc = "
+    Indication of correctable ECC error.
+
+           ";
+    ValRandomize = true;
+  } ERROR[0:0] = 1'h0 ;
+};
+regfile hash_entry_ram_cerr_read_rf {
+  hash_entry_ram_cerr_read_r HASH_ENTRY_RAM_CERR_READ[2] += 8;
+};
+
+
+
+// HASH_ENTRY_RAM_UERR_READ[2][2]
+
+reg hash_entry_ram_uerr_read_r {
+  shared;
+  HandCoded = true;
+  name = "Hash Entry UnCorrectable Error (Per Group Per Row)";
+  desc = "
+        Captures a record of the most recent uncorrectable error to be read
+        out of the Hash Entry RAM.
+        There's one register per row per group. 
+        Address bit 3 selects which row.
+        Address bit 4 selects which group.
+        The same address mapping applies to the uncorrectable error count registers.
+        ";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+    Hash Entry RAM instance column where the most recent error was found 
+
+           ";
+    ValRandomize = true;
+  } COL[18:16] = 3'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+    Hash Entry RAM instance address where the most recent error was found 
+
+           ";
+    ValRandomize = true;
+  } ADDR[15:5] = 11'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+    Hash Entry RAM instance lane where the most recent error was found 
+
+           ";
+    ValRandomize = true;
+  } LANE[4:3] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+    Reserved
+
+           ";
+    ValRandomize = true;
+  } RSVD[2:1] = 2'h0;
+  field {
+    AccessType = "RO/C/V";
+    desc = "
+    Indication of uncorrectable ECC error.
+
+           ";
+    ValRandomize = true;
+  } ERROR[0:0] = 1'h0 ;
+};
+regfile hash_entry_ram_uerr_read_rf {
+  hash_entry_ram_uerr_read_r HASH_ENTRY_RAM_UERR_READ[2] += 8;
+};
+
+
+
+// HASH_ENTRY_RAM_CERR_CNT[2][2]
+regfile hash_entry_ram_cerr_cnt_rf {
+  shell_ctl_cerr_cnt_r HASH_ENTRY_RAM_CERR_CNT[2] += 8;
+};
+
+
+
+// HASH_ENTRY_RAM_UERR_CNT[2][2]
+regfile hash_entry_ram_uerr_cnt_rf {
+  shell_ctl_uerr_cnt_r HASH_ENTRY_RAM_UERR_CNT[2] += 8;
+};
+
+
+
+addrmap hlp_HASH_ENTRY_RAM_map {
+  name = "hlp_HASH_ENTRY_RAM";
+  desc = "FFU Hash Entry RAM Register Set";
+  AddressBits = 19;
+  ResetDomains = "SWITCH,MGMT";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  hash_entry0_r              HASH_ENTRY0[65536]            @0x0 += 8;
+  hash_entry1_r              HASH_ENTRY1[65536]            @0x80000 += 8;
+  hash_entry_ram_alloc_r     HASH_ENTRY_RAM_ALLOC[2]       @0x100000 += 8;
+  hash_entry_ram_err_write_rf HASH_ENTRY_RAM_ERR_WRITE[2]   @0x100020 += 16;
+  hash_entry_ram_cerr_read_rf HASH_ENTRY_RAM_CERR_READ[2]   @0x100040 += 16;
+  hash_entry_ram_uerr_read_rf HASH_ENTRY_RAM_UERR_READ[2]   @0x100060 += 16;
+  hash_entry_ram_cerr_cnt_rf HASH_ENTRY_RAM_CERR_CNT[2]    @0x1000c0 += 16;
+  hash_entry_ram_uerr_cnt_rf HASH_ENTRY_RAM_UERR_CNT[2]    @0x1000e0 += 16;
+}; // final size: 0x1000c0 <= 0x200000 = 8<<18

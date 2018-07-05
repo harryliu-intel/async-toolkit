@@ -1,0 +1,471 @@
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2015 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related 
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted, 
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+reg msec_scratch_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MSEC Scratchpad Register";
+  desc = "Scratchpad register for diagnostic purposes.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Scratchpad";
+    ValRandomize = true;
+  } SCRATCH[63:0] = 64'h0;
+}; // msec_scratch_r
+
+
+reg msec_bypass_status_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MSEC Bypass FIFO(s) Status Register";
+  desc = "Status of Bypass FIFO's for diagnostic purposes.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 RX SFIFO Level";
+    ValRandomize = true;
+  } LANE1_RX_SFIFO_LEVEL[63:56] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 RX EFIFO Level";
+    ValRandomize = true;
+  } LANE1_RX_EFIFO_LEVEL[55:48] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 TX SFIFO Level";
+    ValRandomize = true;
+  } LANE1_TX_SFIFO_LEVEL[47:40] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 TX EFIFO Level";
+    ValRandomize = true;
+  } LANE1_TX_EFIFO_LEVEL[39:32] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 RX SFIFO Level";
+    ValRandomize = true;
+  } LANE0_RX_SFIFO_LEVEL[31:24] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 RX EFIFO Level";
+    ValRandomize = true;
+  } LANE0_RX_EFIFO_LEVEL[23:16] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 TX SFIFO Level";
+    ValRandomize = true;
+  } LANE0_TX_SFIFO_LEVEL[15:8] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 TX EFIFO Level";
+    ValRandomize = true;
+  } LANE0_TX_EFIFO_LEVEL[7:0] = 8'h0;
+}; // msec_tx_bypass_status_r
+
+reg msec_bypass_max_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MSEC Bypass FIFO(s) Max Levels Register";
+  desc = "Max Levels of Bypass FIFO's for diagnostic purposes.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 RX SFIFO Max Level";
+    ValRandomize = true;
+  } LANE1_RX_SFIFO_LEVEL[63:56] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 RX EFIFO Max Level";
+    ValRandomize = true;
+  } LANE1_RX_EFIFO_LEVEL[55:48] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 TX SFIFO Max Level";
+    ValRandomize = true;
+  } LANE1_TX_SFIFO_LEVEL[47:40] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 1 TX EFIFO Max Level";
+    ValRandomize = true;
+  } LANE1_TX_EFIFO_LEVEL[39:32] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 RX SFIFO Max Level";
+    ValRandomize = true;
+  } LANE0_RX_SFIFO_LEVEL[31:24] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 RX EFIFO Max Level";
+    ValRandomize = true;
+  } LANE0_RX_EFIFO_LEVEL[23:16] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 TX SFIFO Max Level";
+    ValRandomize = true;
+  } LANE0_TX_SFIFO_LEVEL[15:8] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Lane 0 TX EFIFO Max Level";
+    ValRandomize = true;
+  } LANE0_TX_EFIFO_LEVEL[7:0] = 8'h0;
+}; // msec_tx_bypass_max_r
+
+reg msec_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MSEC Interrupt Pending Register";
+  desc = "Interrupt Pending Register for MSEC";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "Shell Control Memory Error Interrupt";
+    ValRandomize = true;
+  } SHELL_CTRL_ERR[0:0] = 1'h0;
+}; // msec_ip_r
+
+reg msec_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MSEC Interrupt Mask Register";
+  desc = "Interrupt Mask Register for MSEC";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Shell Control Memory Error Interrupt Mask";
+    ValRandomize = true;
+  } SHELL_CTRL_ERR[0:0] = 1'h1;
+}; // msec_im_r
+
+`include "hlp_msecv2.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+//------------------------------------------------------------------------------
+//
+// This file defines the entire register map for MSEC.
+//
+//------------------------------------------------------------------------------
+addrmap hlp_MSEC_map {
+  name = "hlp_MSEC";
+  desc = "MSEC Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  ArrayedMaps = 8;
+  AddressBits = 18;
+  ResetDomains = "PORTS,MGMT";
+
+  
+  msec_scratch_r                        MSEC_SCRATCH                                  @0x00000000;
+  msec_bypass_status_r                  MSEC_BYPASS_STATUS                            @0x00000008;
+  msec_bypass_max_r                     MSEC_BYPASS_MAX                               @0x00000010;
+  msec_ip_r                             MSEC_IP                                       @0x00000018;
+  msec_im_r                             MSEC_IM                                       @0x00000020;
+
+  msecv2_cport_en_r                     MSEC_GLOBAL_LANE_CPORT_EN[2]                @0x00001400 += 0x00002000;
+  msecv2_cport_oper_r                   MSEC_GLOBAL_LANE_CPORT_OPER[2]              @0x00001408 += 0x00002000;
+  msecv2_rly_mode_r                     MSEC_GLOBAL_LANE_RLY_MODE[2]                @0x00001410 += 0x00002000;
+  msecv2_src_et_r                       MSEC_GLOBAL_LANE_SRCH_ETYPE[2]              @0x00001418 += 0x00002000;
+  msecv2_dst_et_r                       MSEC_GLOBAL_LANE_RPLC_ETYPE[2]              @0x00001420 += 0x00002000;
+  msecv2_rly_len_r                      MSEC_GLOBAL_LANE_RLY_LEN[2]                 @0x00001428 += 0x00002000;
+  msecv2_top_stat_cport_tx_untag_r      MSEC_GLOBAL_LANE_STAT_CPORT_TX_UNTAG[2]     @0x00001480 += 0x00002000;
+  msecv2_top_stat_cport_tx_toolong_r    MSEC_GLOBAL_LANE_STAT_CPORT_TX_TOOLONG[2]   @0x00001488 += 0x00002000;
+  msecv2_top_stat_cport_rx_untag_r      MSEC_GLOBAL_LANE_STAT_CPORT_RX_UNTAG[2]     @0x00001490 += 0x00002000;
+  msecv2_top_stat_cport_rx_notag_r      MSEC_GLOBAL_LANE_STAT_CPORT_RX_NOTAG[2]     @0x00001498 += 0x00002000;
+  msecv2_top_stat_cport_rx_badtag_r     MSEC_GLOBAL_LANE_STAT_CPORT_RX_BADTAG[2]    @0x000014a0 += 0x00002000;
+  msecv2_top_stat_cport_rx_unksci_r     MSEC_GLOBAL_LANE_STAT_CPORT_RX_UNKSCI[2]    @0x000014a8 += 0x00002000;
+  msecv2_top_stat_cport_rx_nosci_r      MSEC_GLOBAL_LANE_STAT_CPORT_RX_NOSCI[2]     @0x000014b0 += 0x00002000;
+  //msecv2_top_stat_cport_rx_orun_r     MSEC_GLOBAL_LANE_STAT_CPORT_RX_ORUN[2]      @0x000014b8 += 0x00002000;
+
+  msecv2_key_len_r                      MSEC_GLOBAL_KEY_LEN                         @0x00009400;
+  msecv2_confid_off_r                   MSEC_GLOBAL_CONFID_OFF                      @0x00009408;
+  msecv2_zero_r                         MSEC_GLOBAL_ZERO                            @0x00009410;
+  msecv2_zero_sts_r                     MSEC_GLOBAL_ZERO_STS                        @0x00009418;
+  
+  msecv2_isr_status_r                   MSEC_GLOBAL_INTERRUPT_STATUS                @0x00009420;
+  msecv2_isr_enable_r                   MSEC_GLOBAL_INTERRUPT_EN                    @0x00009428;
+  msecv2_isr_force_r                    MSEC_GLOBAL_INTERRUPT_FRC                   @0x00009430;
+
+  msecv2_scratch_r                      MSEC_GLOBAL_SCRATCH                         @0x00009440;
+  msecv2_version_r                      MSEC_GLOBAL_VERSION                         @0x00009448;
+  msecv2_ciph_id_r                      MSEC_GLOBAL_CIPH_ID                         @0x00009450;
+  msecv2_sw_reset_r                     MSEC_GLOBAL_SW_RESET                        @0x00009458;
+  msecv2_bypass_r                       MSEC_GLOBAL_BYPASS                          @0x00009460;
+  msecv2_xpn_mode_r                     MSEC_GLOBAL_XPN_MODE                        @0x00009468;
+
+  msecv2_tx_sa_en_trn_r                 MSEC_TX_LANE_SC0_SA0_EN_TRN[2]              @0x00010000 += 0x00002000;
+  msecv2_tx_sa_inuse_r                  MSEC_TX_LANE_SC0_SA0_INUSE[2]               @0x00010008 += 0x00002000;
+  msecv2_tx_sa_confid_r                 MSEC_TX_LANE_SC0_SA0_CONFID[2]              @0x00010010 += 0x00002000;
+  msecv2_tx_sa_ssci_r                   MSEC_TX_LANE_SC0_SA0_SSCI[2]                @0x00010018 += 0x00002000;
+  msecv2_tx_stat_sa_prot_pckt_r         MSEC_TX_LANE_SC0_SA0_STAT_PROT_PCKT[2]      @0x00010020 += 0x00002000;
+  msecv2_tx_stat_sa_encr_pckt_r         MSEC_TX_LANE_SC0_SA0_STAT_ENCR_PCKT[2]      @0x00010028 += 0x00002000;
+  msecv2_tx_sa_key_r                    MSEC_TX_LANE_SC0_SA0_KEY[2]                 @0x00010080 += 0x00002000;
+  msecv2_tx_sa_next_pn_r                MSEC_TX_LANE_SC0_SA0_NEXT_PN[2]             @0x000100a0 += 0x00002000;
+  msecv2_tx_sa_salt_r                   MSEC_TX_LANE_SC0_SA0_SALT[2]                @0x000100b0 += 0x00002000;
+
+  msecv2_tx_sa_en_trn_r                 MSEC_TX_LANE_SC0_SA1_EN_TRN[2]              @0x00010100 += 0x00002000;
+  msecv2_tx_sa_inuse_r                  MSEC_TX_LANE_SC0_SA1_INUSE[2]               @0x00010108 += 0x00002000;
+  msecv2_tx_sa_confid_r                 MSEC_TX_LANE_SC0_SA1_CONFID[2]              @0x00010110 += 0x00002000;
+  msecv2_tx_sa_ssci_r                   MSEC_TX_LANE_SC0_SA1_SSCI[2]                @0x00010118 += 0x00002000;
+  msecv2_tx_stat_sa_prot_pckt_r         MSEC_TX_LANE_SC0_SA1_STAT_PROT_PCKT[2]      @0x00010120 += 0x00002000;
+  msecv2_tx_stat_sa_encr_pckt_r         MSEC_TX_LANE_SC0_SA1_STAT_ENCR_PCKT[2]      @0x00010128 += 0x00002000;
+  msecv2_tx_sa_key_r                    MSEC_TX_LANE_SC0_SA1_KEY[2]                 @0x00010180 += 0x00002000;
+  msecv2_tx_sa_next_pn_r                MSEC_TX_LANE_SC0_SA1_NEXT_PN[2]             @0x000101a0 += 0x00002000;
+  msecv2_tx_sa_salt_r                   MSEC_TX_LANE_SC0_SA1_SALT[2]                @0x000101b0 += 0x00002000;
+
+  msecv2_tx_sa_en_trn_r                 MSEC_TX_LANE_SC0_SA2_EN_TRN[2]              @0x00010200 += 0x00002000;
+  msecv2_tx_sa_inuse_r                  MSEC_TX_LANE_SC0_SA2_INUSE[2]               @0x00010208 += 0x00002000;
+  msecv2_tx_sa_confid_r                 MSEC_TX_LANE_SC0_SA2_CONFID[2]              @0x00010210 += 0x00002000;
+  msecv2_tx_sa_ssci_r                   MSEC_TX_LANE_SC0_SA2_SSCI[2]                @0x00010218 += 0x00002000;
+  msecv2_tx_stat_sa_prot_pckt_r         MSEC_TX_LANE_SC0_SA2_STAT_PROT_PCKT[2]      @0x00010220 += 0x00002000;
+  msecv2_tx_stat_sa_encr_pckt_r         MSEC_TX_LANE_SC0_SA2_STAT_ENCR_PCKT[2]      @0x00010228 += 0x00002000;
+  msecv2_tx_sa_key_r                    MSEC_TX_LANE_SC0_SA2_KEY[2]                 @0x00010280 += 0x00002000;
+  msecv2_tx_sa_next_pn_r                MSEC_TX_LANE_SC0_SA2_NEXT_PN[2]             @0x000102a0 += 0x00002000;
+  msecv2_tx_sa_salt_r                   MSEC_TX_LANE_SC0_SA2_SALT[2]                @0x000102b0 += 0x00002000;
+
+  msecv2_tx_sa_en_trn_r                 MSEC_TX_LANE_SC0_SA3_EN_TRN[2]              @0x00010300 += 0x00002000;
+  msecv2_tx_sa_inuse_r                  MSEC_TX_LANE_SC0_SA3_INUSE[2]               @0x00010308 += 0x00002000;
+  msecv2_tx_sa_confid_r                 MSEC_TX_LANE_SC0_SA3_CONFID[2]              @0x00010310 += 0x00002000;
+  msecv2_tx_sa_ssci_r                   MSEC_TX_LANE_SC0_SA3_SSCI[2]                @0x00010318 += 0x00002000;
+  msecv2_tx_stat_sa_prot_pckt_r         MSEC_TX_LANE_SC0_SA3_STAT_PROT_PCKT[2]      @0x00010320 += 0x00002000;
+  msecv2_tx_stat_sa_encr_pckt_r         MSEC_TX_LANE_SC0_SA3_STAT_ENCR_PCKT[2]      @0x00010328 += 0x00002000;
+  msecv2_tx_sa_key_r                    MSEC_TX_LANE_SC0_SA3_KEY[2]                 @0x00010380 += 0x00002000;
+  msecv2_tx_sa_next_pn_r                MSEC_TX_LANE_SC0_SA3_NEXT_PN[2]             @0x000103a0 += 0x00002000;
+  msecv2_tx_sa_salt_r                   MSEC_TX_LANE_SC0_SA3_SALT[2]                @0x000103b0 += 0x00002000;
+  
+  msecv2_tx_sc_transmit_r               MSEC_TX_LANE_SC0_TRANSMIT[2]                @0x00010400 += 0x00002000;
+  msecv2_tx_sc_encod_sa_r               MSEC_TX_LANE_SC0_ENCOD_SA[2]                @0x00010408 += 0x00002000;
+  msecv2_tx_sc_enciph_sa_r              MSEC_TX_LANE_SC0_ENCIPH_SA[2]               @0x00010410 += 0x00002000;
+  msecv2_tx_sc_sci_r                    MSEC_TX_LANE_SC0_SCI[2]                     @0x00010480 += 0x00002000;
+  msecv2_tx_stat_sc_prot_pckt_r         MSEC_TX_LANE_SC0_STAT_PROT_PCKT[2]          @0x00010490 += 0x00002000;
+  msecv2_tx_stat_sc_encr_pckt_r         MSEC_TX_LANE_SC0_STAT_ENCR_PCKT[2]          @0x00010498 += 0x00002000;
+  msecv2_tx_stat_sc_prot_byte_r         MSEC_TX_LANE_SC0_STAT_PROT_BYTE[2]          @0x000104a0 += 0x00002000;
+  msecv2_tx_stat_sc_encr_byte_r         MSEC_TX_LANE_SC0_STAT_ENCR_BYTE[2]          @0x000104a8 += 0x00002000;
+
+  msecv2_tx_rly_short_r                 MSEC_TX_LANE_RLY_SHORT[2]                   @0x00011410 += 0x00002000;
+
+  msecv2_pti_tx_dropped_r               MSEC_TX_LANE_DROPPED[2]                     @0x000114c0 += 0x00002000;
+  msecv2_pti_tx_discarded_r             MSEC_TX_LANE_DISCARDED[2]                   @0x000114c8 += 0x00002000;
+  msecv2_pti_tx_uncontrolled_r          MSEC_TX_LANE_UNCONTROLLED[2]                @0x000114d0 += 0x00002000;
+
+  msecv2_tx_cntrl_r                     MSEC_TX_CNTRL                               @0x00019400;
+  msecv2_tx_max_pckt_bytes_r            MSEC_TX_MAX_PCKT_BYTES                      @0x00019408;
+  msecv2_tx_add_fcs_r                   MSEC_TX_ADD_FCS                             @0x00019410;
+  msecv2_tx_jit_wm_r                    MSEC_TX_JIT_WM                              @0x00019418;
+  msecv2_tx_pn_limit_r                  MSEC_TX_PN_LIMIT                            @0x00019480;
+  msecv2_tx_diag_r                      MSEC_TX_DBG                                 @0x00019490;
+  msecv2_pti_tx_diag_r                  MSEC_TX_DBG_PTI                             @0x000194c0;
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC0_SA0_EN_RCV[2]              @0x00020000 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC0_SA0_INUSE[2]               @0x00020008 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC0_SA0_SSCI[2]                @0x00020010 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC0_SA0_STAT_UNUSED_SA[2]      @0x00020030 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC0_SA0_STAT_NO_USING_SA[2]    @0x00020038 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC0_SA0_STAT_NOT_VLD[2]        @0x00020040 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC0_SA0_STAT_INVLD[2]          @0x00020048 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC0_SA0_STAT_OK[2]             @0x00020050 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC0_SA0_KEY[2]                 @0x00020080 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC0_SA0_NEXT_PN[2]             @0x000200a0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC0_SA0_MIN_PN[2]              @0x000200a8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC0_SA0_UPDATE_NEXT_PN[2]      @0x000200b0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC0_SA0_UPDATE_MIN_PN[2]       @0x000200b8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC0_SA0_SALT[2]                @0x000200c0 += 0x00002000;
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC0_SA1_EN_RCV[2]              @0x00020100 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC0_SA1_INUSE[2]               @0x00020108 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC0_SA1_SSCI[2]                @0x00020110 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC0_SA1_STAT_UNUSED_SA[2]      @0x00020130 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC0_SA1_STAT_NO_USING_SA[2]    @0x00020138 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC0_SA1_STAT_NOT_VLD[2]        @0x00020140 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC0_SA1_STAT_INVLD[2]          @0x00020148 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC0_SA1_STAT_OK[2]             @0x00020150 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC0_SA1_KEY[2]                 @0x00020180 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC0_SA1_NEXT_PN[2]             @0x000201a0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC0_SA1_MIN_PN[2]              @0x000201a8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC0_SA1_UPDATE_NEXT_PN[2]      @0x000201b0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC0_SA1_UPDATE_MIN_PN[2]       @0x000201b8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC0_SA1_SALT[2]                @0x000201c0 += 0x00002000;
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC0_SA2_EN_RCV[2]              @0x00020200 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC0_SA2_INUSE[2]               @0x00020208 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC0_SA2_SSCI[2]                @0x00020210 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC0_SA2_STAT_UNUSED_SA[2]      @0x00020230 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC0_SA2_STAT_NO_USING_SA[2]    @0x00020238 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC0_SA2_STAT_NOT_VLD[2]        @0x00020240 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC0_SA2_STAT_INVLD[2]          @0x00020248 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC0_SA2_STAT_OK[2]             @0x00020250 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC0_SA2_KEY[2]                 @0x00020280 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC0_SA2_NEXT_PN[2]             @0x000202a0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC0_SA2_MIN_PN[2]              @0x000202a8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC0_SA2_UPDATE_NEXT_PN[2]      @0x000202b0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC0_SA2_UPDATE_MIN_PN[2]       @0x000202b8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC0_SA2_SALT[2]                @0x000202c0 += 0x00002000;
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC0_SA3_EN_RCV[2]              @0x00020300 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC0_SA3_INUSE[2]               @0x00020308 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC0_SA3_SSCI[2]                @0x00020310 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC0_SA3_STAT_UNUSED_SA[2]      @0x00020330 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC0_SA3_STAT_NO_USING_SA[2]    @0x00020338 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC0_SA3_STAT_NOT_VLD[2]        @0x00020340 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC0_SA3_STAT_INVLD[2]          @0x00020348 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC0_SA3_STAT_OK[2]             @0x00020350 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC0_SA3_KEY[2]                 @0x00020380 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC0_SA3_NEXT_PN[2]             @0x000203a0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC0_SA3_MIN_PN[2]              @0x000203a8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC0_SA3_UPDATE_NEXT_PN[2]      @0x000203b0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC0_SA3_UPDATE_MIN_PN[2]       @0x000203b8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC0_SA3_SALT[2]                @0x000203c0 += 0x00002000;
+ 
+  msecv2_rx_sc_rcv_r                    MSEC_RX_LANE_SC0_RCV[2]                     @0x00020400 += 0x00002000;
+  msecv2_rx_sc_sci_r                    MSEC_RX_LANE_SC0_SCI[2]                     @0x00020480 += 0x00002000;
+
+  msecv2_rx_stat_sc_unused_sa_r         MSEC_RX_LANE_SC0_STAT_UNUSED_SA[2]          @0x00020490 += 0x00002000;
+  msecv2_rx_stat_sc_no_using_sa_r       MSEC_RX_LANE_SC0_STAT_NO_USING[2]           @0x00020498 += 0x00002000;
+  msecv2_rx_stat_sc_late_r              MSEC_RX_LANE_SC0_STAT_LATE[2]               @0x000204a0 += 0x00002000;
+  msecv2_rx_stat_sc_not_vld_r           MSEC_RX_LANE_SC0_STAT_NOT_VLD[2]            @0x000204a8 += 0x00002000;
+  msecv2_rx_stat_sc_invld_r             MSEC_RX_LANE_SC0_STAT_INVLD[2]              @0x000204b0 += 0x00002000;
+  msecv2_rx_stat_sc_dly_r               MSEC_RX_LANE_SC0_STAT_DLY[2]                @0x000204b8 += 0x00002000;
+  msecv2_rx_stat_sc_unchk_r             MSEC_RX_LANE_SC0_STAT_UNCHK[2]              @0x000204c0 += 0x00002000;
+  msecv2_rx_stat_sc_ok_r                MSEC_RX_LANE_SC0_STAT_OK[2]                 @0x000204c8 += 0x00002000;
+  msecv2_rx_stat_sc_vldt_byte_r         MSEC_RX_LANE_SC0_STAT_VLDT_BYTE[2]          @0x000204d0 += 0x00002000;
+  msecv2_rx_stat_sc_decr_byte_r         MSEC_RX_LANE_SC0_STAT_DECR_BYTE[2]          @0x000204d8 += 0x00002000;
+
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC1_SA0_EN_RCV[2]              @0x00020800 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC1_SA0_INUSE[2]               @0x00020808 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC1_SA0_SSCI[2]                @0x00020810 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC1_SA0_STAT_UNUSED_SA[2]      @0x00020830 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC1_SA0_STAT_NO_USING_SA[2]    @0x00020838 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC1_SA0_STAT_NOT_VLD[2]        @0x00020840 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC1_SA0_STAT_INVLD[2]          @0x00020848 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC1_SA0_STAT_OK[2]             @0x00020850 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC1_SA0_KEY[2]                 @0x00020880 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC1_SA0_NEXT_PN[2]             @0x000208a0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC1_SA0_MIN_PN[2]              @0x000208a8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC1_SA0_UPDATE_NEXT_PN[2]      @0x000208b0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC1_SA0_UPDATE_MIN_PN[2]       @0x000208b8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC1_SA0_SALT[2]                @0x000208c0 += 0x00002000;
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC1_SA1_EN_RCV[2]              @0x00020900 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC1_SA1_INUSE[2]               @0x00020908 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC1_SA1_SSCI[2]                @0x00020910 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC1_SA1_STAT_UNUSED_SA[2]      @0x00020930 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC1_SA1_STAT_NO_USING_SA[2]    @0x00020938 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC1_SA1_STAT_NOT_VLD[2]        @0x00020940 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC1_SA1_STAT_INVLD[2]          @0x00020948 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC1_SA1_STAT_OK[2]             @0x00020950 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC1_SA1_KEY[2]                 @0x00020980 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC1_SA1_NEXT_PN[2]             @0x000209a0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC1_SA1_MIN_PN[2]              @0x000209a8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC1_SA1_UPDATE_NEXT_PN[2]      @0x000209b0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC1_SA1_UPDATE_MIN_PN[2]       @0x000209b8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC1_SA1_SALT[2]                @0x000209c0 += 0x00002000;
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC1_SA2_EN_RCV[2]              @0x00020a00 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC1_SA2_INUSE[2]               @0x00020a08 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC1_SA2_SSCI[2]                @0x00020a10 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC1_SA2_STAT_UNUSED_SA[2]      @0x00020a30 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC1_SA2_STAT_NO_USING_SA[2]    @0x00020a38 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC1_SA2_STAT_NOT_VLD[2]        @0x00020a40 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC1_SA2_STAT_INVLD[2]          @0x00020a48 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC1_SA2_STAT_OK[2]             @0x00020a50 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC1_SA2_KEY[2]                 @0x00020a80 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC1_SA2_NEXT_PN[2]             @0x00020aa0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC1_SA2_MIN_PN[2]              @0x00020aa8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC1_SA2_UPDATE_NEXT_PN[2]      @0x00020ab0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC1_SA2_UPDATE_MIN_PN[2]       @0x00020ab8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC1_SA2_SALT[2]                @0x00020ac0 += 0x00002000;
+
+  msecv2_rx_sa_en_rcv_r                 MSEC_RX_LANE_SC1_SA3_EN_RCV[2]              @0x00020b00 += 0x00002000;
+  msecv2_rx_sa_inuse_r                  MSEC_RX_LANE_SC1_SA3_INUSE[2]               @0x00020b08 += 0x00002000;
+  msecv2_rx_sa_ssci_r                   MSEC_RX_LANE_SC1_SA3_SSCI[2]                @0x00020b10 += 0x00002000;
+  msecv2_rx_stat_sa_unused_sa_r         MSEC_RX_LANE_SC1_SA3_STAT_UNUSED_SA[2]      @0x00020b30 += 0x00002000;
+  msecv2_rx_stat_sa_no_using_sa_r       MSEC_RX_LANE_SC1_SA3_STAT_NO_USING_SA[2]    @0x00020b38 += 0x00002000;
+  msecv2_rx_stat_sa_not_vld_r           MSEC_RX_LANE_SC1_SA3_STAT_NOT_VLD[2]        @0x00020b40 += 0x00002000;
+  msecv2_rx_stat_sa_invld_r             MSEC_RX_LANE_SC1_SA3_STAT_INVLD[2]          @0x00020b48 += 0x00002000;
+  msecv2_rx_stat_sa_ok_r                MSEC_RX_LANE_SC1_SA3_STAT_OK[2]             @0x00020b50 += 0x00002000;
+  msecv2_rx_sa_key_r                    MSEC_RX_LANE_SC1_SA3_KEY[2]                 @0x00020b80 += 0x00002000;
+  msecv2_rx_sa_next_pn_r                MSEC_RX_LANE_SC1_SA3_NEXT_PN[2]             @0x00020ba0 += 0x00002000;
+  msecv2_rx_sa_min_pn_r                 MSEC_RX_LANE_SC1_SA3_MIN_PN[2]              @0x00020ba8 += 0x00002000;
+  msecv2_rx_sa_update_next_pn_r         MSEC_RX_LANE_SC1_SA3_UPDATE_NEXT_PN[2]      @0x00020bb0 += 0x00002000;
+  msecv2_rx_sa_update_min_pn_r          MSEC_RX_LANE_SC1_SA3_UPDATE_MIN_PN[2]       @0x00020bb8 += 0x00002000;
+  msecv2_rx_sa_salt_r                   MSEC_RX_LANE_SC1_SA3_SALT[2]                @0x00020bc0 += 0x00002000;
+ 
+  msecv2_rx_sc_rcv_r                    MSEC_RX_LANE_SC1_RCV[2]                     @0x00020c00 += 0x00002000;
+  msecv2_rx_sc_sci_r                    MSEC_RX_LANE_SC1_SCI[2]                     @0x00020c80 += 0x00002000;
+
+  msecv2_rx_stat_sc_unused_sa_r         MSEC_RX_LANE_SC1_STAT_UNUSED_SA[2]          @0x00020c90 += 0x00002000;
+  msecv2_rx_stat_sc_no_using_sa_r       MSEC_RX_LANE_SC1_STAT_NO_USING[2]           @0x00020c98 += 0x00002000;
+  msecv2_rx_stat_sc_late_r              MSEC_RX_LANE_SC1_STAT_LATE[2]               @0x00020ca0 += 0x00002000;
+  msecv2_rx_stat_sc_not_vld_r           MSEC_RX_LANE_SC1_STAT_NOT_VLD[2]            @0x00020ca8 += 0x00002000;
+  msecv2_rx_stat_sc_invld_r             MSEC_RX_LANE_SC1_STAT_INVLD[2]              @0x00020cb0 += 0x00002000;
+  msecv2_rx_stat_sc_dly_r               MSEC_RX_LANE_SC1_STAT_DLY[2]                @0x00020cb8 += 0x00002000;
+  msecv2_rx_stat_sc_unchk_r             MSEC_RX_LANE_SC1_STAT_UNCHK[2]              @0x00020cc0 += 0x00002000;
+  msecv2_rx_stat_sc_ok_r                MSEC_RX_LANE_SC1_STAT_OK[2]                 @0x00020cc8 += 0x00002000;
+  msecv2_rx_stat_sc_vldt_byte_r         MSEC_RX_LANE_SC1_STAT_VLDT_BYTE[2]          @0x00020cd0 += 0x00002000;
+  msecv2_rx_stat_sc_decr_byte_r         MSEC_RX_LANE_SC1_STAT_DECR_BYTE[2]          @0x00020cd8 += 0x00002000;
+
+  msecv2_rx_sci_dflt_r                  MSEC_RX_LANE_SCI_DFLT[2]                    @0x00021400 += 0x00002000;
+  msecv2_pti_rx_through_r               MSEC_PTI_RX_LANE_THROUGH[2]                 @0x000214c0 += 0x00002000;
+  msecv2_pti_rx_uncontrolled_r          MSEC_PTI_RX_LANE_UNCONTROLLED[2]            @0x000214c8 += 0x00002000;
+
+  msecv2_rx_cntrl_r                     MSEC_RX_CNTRL                               @0x00029400;
+  msecv2_rx_rply_win_r                  MSEC_RX_RPLY_WIN                            @0x00029408;
+  msecv2_rx_add_fcs_r                   MSEC_RX_ADD_FCS                             @0x00029410;
+  msecv2_rx_keep_tag_r                  MSEC_RX_KEEP_TAG                            @0x00029418;
+  msecv2_rx_diag_r                      MSEC_RX_DBG                                 @0x00029480;
+  msecv2_pti_rx_diag_r                  MSEC_RX_DBG_PTI                             @0x000294c0;
+
+};

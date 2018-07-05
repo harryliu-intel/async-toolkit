@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+
+<config>
+    <command>    <!-- set -->
+        <name>set</name>
+        <command>    <!-- eeprom -->
+            <name>eeprom</name>
+            <help>Set an EEPROM image related property</help>
+            <command>    <!-- config -->
+                <name>config</name>
+                <help>Set an EEPROM image configuration property</help>
+                <handler>handleSetEepromConfig</handler>
+                <argument>    <!-- size -->
+                    <name>size</name>
+                    <help>Size of the EEPROM</help>
+                    <argument>    <!-- kbytes -->
+                        <name>!&lt;kbytes&gt;</name>
+                        <help>EEPROM size in Kbytes</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set EEPROM size</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- kbytes -->
+                </argument>    <!-- size -->
+                <argument>    <!-- block -->
+                    <name>block</name>
+                    <help>Size of an EEPROM block (for xml output)</help>
+                    <argument>    <!-- bytes -->
+                        <name>!&lt;bytes&gt;</name>
+                        <help>EEPROM block in bytes</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set EEPROM block size</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- bytes -->
+                </argument>    <!-- block -->
+                <argument>    <!-- type -->
+                    <name>type</name>
+                    <help>EEPROM type</help>
+                    <argument>    <!-- SPI_2 -->
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>SPI_2</name>
+                        <help>SPI EEPROM with 2-byte addressing</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set 2-byte addressing</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- SPI_2 -->
+                    <argument>    <!-- SPI_3 -->
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>SPI_3</name>
+                        <help>SPI EEPROM with 3-byte addressing</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set 3-byte addressing</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- SPI_3 -->
+                    <argument>    <!-- SPI-->
+                        <filter type="family">
+                            <allow>FM6000</allow>
+                        </filter>
+                        <name>SPI</name>
+                        <help>SPI EEPROM</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set SPI EEPROM type</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- SPI -->
+                    <argument>    <!-- I2C -->
+                        <name>I2C</name>
+                        <help>I2C EEPROM</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set I2C EEPROM</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- I2C -->
+                </argument>    <!-- type -->
+                <argument>    <!-- ebi_freq -->
+                    <name>ebi_freq</name>
+                    <help>EBI clock frequency (CPU_CLK pin)</help>
+                    <argument>    <!-- freq -->
+                        <name>!&lt;freq&gt;</name>
+                        <help>bus clock frequency in MHz</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set bus clock frequency</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- freq -->
+                </argument>    <!-- ebi_freq -->
+                <argument>    <!-- format -->
+                    <name>format</name>
+                    <help>EEPROM image file format</help>
+                    <argument>    <!-- intel-hex -->
+                        <name>intel-hex</name>
+                        <help>Intel hex format</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set intel-hex format</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- intel-hex -->
+                    <argument>    <!-- tp -->
+                        <name>tp</name>
+                        <help>TestPoint command format</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set TestPoint command format</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- tp -->
+                    <argument>    <!-- te -->
+                        <name>te</name>
+                        <help>TE command format</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set TE command format</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- te -->
+                    <argument>    <!-- xml -->
+                        <name>xml</name>
+                        <help>Aardvark XML format</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set Aardvark XML format</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- xml -->
+                </argument>    <!-- format -->
+                <argument>    <!-- include_header -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>include_header</name>
+                    <help>Include a eeprom header containing the image offset table</help>
+                    <argument>    <!-- yes -->
+                        <name>yes</name>
+                        <help>Include the eeprom header</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Include the eeprom header</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- yes -->
+                    <argument>    <!-- no -->
+                        <name>no</name>
+                        <help>Exclude the eeprom header</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Exclude the eeprom header</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- no -->
+                </argument>    <!-- include_header -->
+                <argument>    <!-- minimal -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>minimal</name>
+                    <help>Generate a minimal image to configure PCIe</help>
+                    <argument>    <!-- yes -->
+                        <name>yes</name>
+                        <help>Generate a minimal image to setup PCIe</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Generate a minimal image to setup PCIe</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- yes -->
+                    <argument>    <!-- no -->
+                        <name>no</name>
+                        <help>Generate a FIBM image</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Generate a FIBM image</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- no -->
+                </argument>    <!-- minimal -->
+                <argument>    <!-- image_number -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>image_number</name>
+                    <help>Target image number</help>
+                    <argument>    <!-- image -->
+                        <name>!&lt;image&gt;</name>
+                        <help>Target image [0..3]</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set target image</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- image -->
+                </argument>    <!-- image number -->
+                <argument>    <!-- include_cpu -->
+                    <name>include_cpu</name>
+                    <help>Include traffic to CPU port 0</help>
+                    <argument>    <!-- yes -->
+                        <name>yes</name>
+                        <help>Include traffic to CPU port 0</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Include traffic to CPU</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- yes -->
+                    <argument>    <!-- no -->
+                        <name>no</name>
+                        <help>Exclude traffic from CPU port 0</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Exclude traffic from CPU</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- no -->
+                </argument>    <!-- include_cpu -->
+                <argument>    <!-- ports -->
+                    <name>ports</name>
+                    <help>Which ports to configure</help>
+                    <argument>    <!-- ports -->
+                        <name>!&lt;ports&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Specify ports</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- ports -->
+                </argument>    <!-- ports -->
+                <argument>    <!-- unused_fids -->
+                    <name>unused_fids</name>
+                    <help>Include unused FID table entries</help>
+                    <argument>    <!-- yes -->
+                        <name>yes</name>
+                        <help>Include unused FID table entries</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Include unused FID entries</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- yes -->
+                    <argument>    <!-- no -->
+                        <name>no</name>
+                        <help>Include only used FID table entries</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Include only used FID entries</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- no -->
+                </argument>    <!-- unused_fids -->
+                <argument>    <!-- refclk -->
+                    <name>refclk</name>
+                    <help>Reference clock settings</help>
+                    <argument>    <!-- ports -->
+                        <name>!&lt;ports&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>    <!-- a -->
+                            <name>a</name>
+                            <help>Use REFCLKA</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Use REFCLKA</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- a -->
+                        <argument>    <!-- b -->
+                            <name>b</name>
+                            <help>Use REFCLKB</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Use REFCLKB</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- b -->
+                    </argument>    <!-- ports -->
+                </argument>    <!-- refclk -->
+                <argument>    <!-- lane_rev -->
+                    <name>lane_rev</name>
+                    <help>Lane reversal settings</help>
+                    <argument>    <!-- ports -->
+                        <name>!&lt;ports&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>    <!-- dir -->
+                            <name>!&lt;dir&gt;</name>
+                            <help>rx, tx, or both</help>
+                            <argument>    <!-- on -->
+                                <name>on</name>
+                                <help>Enable lane reversal</help>
+                                <argument>    <!-- cr -->
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Enable lane reversal</help>
+                                </argument>    <!-- cr -->
+                            </argument>    <!-- on -->
+                            <argument>    <!-- off -->
+                                <name>off</name>
+                                <help>Disable lane reversal</help>
+                                <argument>    <!-- cr -->
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Disable lane reversal</help>
+                                </argument>    <!-- cr -->
+                            </argument>    <!-- off -->
+                        </argument>    <!-- dir -->
+                    </argument>    <!-- ports -->
+                </argument>    <!-- lane_rev -->
+                <argument>    <!-- pcie_endianness -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>pcie_endianness</name>
+                    <help>Define PCIe endianness</help>
+                    <argument>    <!-- big_endian -->
+                        <name>big_endian</name>
+                        <help>Select big endian on the PCIe</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set big endian on PCIe</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- big_endian -->
+                    <argument>    <!-- little_endian -->
+                        <name>little_endian</name>
+                        <help>Select little endian on the PCIe</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set little endian on PCIe</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- little_endian -->
+                </argument>    <!-- pcie_endianness -->
+                <argument>    <!-- pcie_lane_rev -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>pcie_lane_rev</name>
+                    <help>PCIe lane reversal settings</help>
+                    <argument>    <!-- dir -->
+                        <name>!&lt;dir&gt;</name>
+                        <help>rx, tx, or both</help>
+                        <argument>    <!-- on -->
+                            <name>on</name>
+                            <help>Enable PCIe lane reversal</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Enable PCIe lane reversal</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- on -->
+                        <argument>    <!-- off -->
+                            <name>off</name>
+                            <help>Disable PCIe lane reversal</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Disable PCIe lane reversal</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- off -->
+                    </argument>    <!-- dir -->
+                </argument>    <!-- pcie_lane_rev -->
+
+                <argument>    <!-- image_offset -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>image_offset</name>
+                    <help>SPI eeprom image offsets</help>
+                    <argument>    <!-- image -->
+                        <name>!&lt;image&gt;</name>
+                        <help>Image number</help>
+                        <argument>    <!-- offset -->
+                            <name>!&lt;offset&gt;</name>
+                            <help>Image offset [hex]</help>
+                                <argument>    <!-- cr -->
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Set image offset</help>
+                                </argument>    <!-- cr -->
+                        </argument>    <!-- offset -->
+                    </argument>    <!-- image -->
+                </argument>    <!-- image_offset -->
+                
+                <argument>    <!-- eeprom_version -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>eeprom_version</name>
+                    <help>SPI eeprom image version</help>
+                    <argument>    <!-- version -->
+                        <name>!&lt;version&gt;</name>
+                        <help>Image version [hex]</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set image version</help>
+                            </argument>    <!-- cr -->
+                    </argument>    <!-- version --> 
+                </argument>    <!-- eeprom_version -->
+
+                <argument>    <!-- keep_tmp_files -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>keep_tmp_files</name>
+                    <help>For Intel internal use only.</help>
+                    <argument>    <!-- yes -->
+                        <name>yes</name>
+                        <help>Do keep temporary files</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Do keep temporary files</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- yes -->
+                    <argument>    <!-- no -->
+                        <name>no</name>
+                        <help>Do not keep temporary files</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Do not keep temporary files</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- no -->
+                </argument>    <!-- keep_tmp_files -->
+                
+                <argument>    <!-- image_spi_mode -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>image_spi_mode</name>
+                    <help>Image SPI mode</help>
+                    <argument>    <!-- image -->
+                        <name>!&lt;image&gt;</name>
+                        <help>Image number</help>
+                        <argument>    <!-- single -->
+                            <name>single</name>
+                            <help>SPI single mode</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set SPI single mode</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- single -->
+                        <argument>    <!-- dual -->
+                            <name>dual</name>
+                            <help>SPI dual mode</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set SPI dual mode</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- dual -->
+                        <argument>    <!-- quad -->
+                            <name>quad</name>
+                            <help>SPI quad mode</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set SPI quad mode</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- quad -->
+                        <argument>    <!-- single_fast -->
+                            <name>single_fast</name>
+                            <help>SPI single fast mode</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set SPI single fast mode</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- single_fast -->
+                    </argument>    <!-- image -->
+                </argument>    <!-- image_spi_mode -->
+
+                <argument>    <!-- image_spi_speed -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>image_spi_speed</name>
+                    <help>Image SPI speed</help>
+                    <argument>    <!-- image -->
+                        <name>!&lt;image&gt;</name>
+                        <help>Image number [0..3]</help>
+                        <argument>    <!-- speed -->
+                            <name>!&lt;speed&gt;</name>
+                            <help>speed: 0=0.5 1=1.0 2=2.0 3=3.9 
+                                4=7.8 5=15.6 6=31.2 7=62.5  [MHz]</help>
+                                <argument>    <!-- cr -->
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Set image SPI speed</help>
+                                </argument>    <!-- cr -->
+                        </argument>    <!-- speed -->
+                    </argument>    <!-- image -->
+                </argument>    <!-- image_spi_speed -->
+
+                <argument>    <!-- polarity -->
+                    <name>polarity</name>
+                    <help>Polarity reversal settings</help>
+                    <argument>    <!-- ports -->
+                        <name>!&lt;ports&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>    <!-- dir -->
+                            <name>!&lt;dir&gt;</name>
+                            <help>rx, tx, or both</help>
+                            <argument>    <!-- lanes -->
+                                <name>!&lt;lanes&gt;</name>
+                                <help>a, b, c, d, all, or a comma-separated list of lanes</help>
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Enable polarity reversal</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Enable polarity reversal</help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Disable polarity reversal</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Disable polarity reversal</help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                            </argument>    <!-- lanes -->
+                        </argument>    <!-- dir -->
+                    </argument>    <!-- ports -->
+                </argument>    <!-- polarity -->
+
+                <argument>    <!-- initialize_spico -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>initialize_spico</name>
+                    <help>Spico microcontroller initialization options</help>
+                    <argument>    <!-- yes -->
+                        <name>yes</name>
+                        <help>Include Spico microcontroller initialization</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Include Spico microcontroller initialization</help> 
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- yes -->
+                    <argument>    <!-- no -->
+                        <name>no</name>
+                        <help>Skip Spico microcontroller initialization</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Skip Spico initialization</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- no -->
+                </argument>    <!-- initialize_spico -->
+
+                <argument>    <!-- 40G_ports -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>40G_ports</name>
+                    <help>List of 40G capable ports</help>
+                    <argument>    <!-- ports -->
+                        <name>!&lt;40G_ports&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set 40G capable port list</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- ports -->
+                </argument>    <!-- 40G_ports -->
+
+                <argument>    <!-- 10G_ports -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>10G_ports</name>
+                    <help>List of 10G capable ports</help>
+                    <argument>    <!-- ports -->
+                        <name>!&lt;10G_ports&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set 10G capable port list</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- ports -->
+                </argument>    <!-- 10G_ports -->
+
+                <argument>    <!-- loopback_ports -->
+                    <filter type="family">
+                        <allow>FM6000</allow>
+                    </filter>
+                    <name>loopback_ports</name>
+                    <help>List ports with loopback</help>
+                    <argument>    <!-- ports -->
+                        <name>!&lt;loopback_ports&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set loopback port list</help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- ports -->
+                </argument>    <!-- loopback_ports -->
+
+            </command>    <!-- config -->
+        </command>    <!-- eeprom -->
+    </command>    <!-- set -->
+    <command>    <!-- show -->
+        <name>show</name>
+        <command>    <!-- eeprom -->
+            <name>eeprom</name>
+            <help>Show boot  EEPROM related information</help>
+            <command>    <!-- config -->
+                <name>config</name>
+                <help>Show the EEPROM image configuration</help>
+                <handler>handleShowEepromConfig</handler>
+                <argument>    <!-- cr -->
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show EEPROM image configuration</help>
+                </argument>    <!-- cr -->
+            </command>    <!-- config -->
+            <command>    <!-- part -->
+                <name>part</name>
+                <help>Show boot EEPROM part</help>
+                <handler>handleShowEepromPart</handler>
+                <argument>    <!-- cr -->
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show boot EEPROM part</help>
+                </argument>    <!-- cr -->
+            </command>    <!-- part -->
+        </command>    <!-- eeprom -->
+    </command>    <!-- show -->
+    <command>    <!-- reg -->
+        <name>reg</name>
+        <command>    <!-- dbg -->
+            <name>dbg</name>
+            <help>Debug register access functions</help>
+            <command>    <!-- capture -->
+                <name>capture</name>
+                <help>Capture register configuration</help>
+                <command>    <!-- text -->
+                    <name>text</name>
+                    <help>Dump registers to file</help>
+                    <handler>handleRegDbgCapture</handler>
+                    <argument>    <!-- switch -->
+                        <name>!&lt;switch&gt;</name>
+                        <help>A switch number</help>
+                        <argument>    <!-- filename -->
+                            <name>!&lt;filename&gt;</name>
+                            <help>Name of file to capture to</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Capture registers to file</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- filename -->
+                    </argument>    <!-- switch -->
+                </command>    <!-- text -->
+                <command>    <!-- eeprom -->
+                    <name>eeprom</name>
+                    <help>Generate an EEPROM image file</help>
+                    <handler>handleRegDbgEeprom</handler>
+                    <argument>    <!-- switch -->
+                        <name>!&lt;switch&gt;</name>
+                        <help>A switch number</help>
+                        <argument>    <!-- filename -->
+                            <name>!&lt;filename&gt;</name>
+                            <help>Name of file to capture to</help>
+                            <argument>    <!-- cr -->
+                                <name>!&lt;cr&gt;</name>
+                                <help>Generate EEPROM image file</help>
+                            </argument>    <!-- cr -->
+                        </argument>    <!-- filename -->
+                    </argument>    <!-- switch -->
+                </command>    <!-- eeprom -->
+            </command>    <!-- capture -->
+        </command>    <!-- dbg -->
+    </command>    <!-- reg -->
+    <command>    <!-- reset -->
+        <name>reset</name>
+        <command>    <!-- eeprom -->
+            <name>eeprom</name>
+            <help>Reset the EEPROM image configuration</help>
+            <command>    <!-- config -->
+                <name>config</name>
+                <help>Reset the EEPROM image configuration</help>
+                <handler>handleResetEepromConfig</handler>
+                <argument>    <!-- cr -->
+                    <name>!&lt;cr&gt;</name>
+                    <help>Reset EEPROM image configuration</help>
+                </argument>    <!-- cr -->
+            </command>    <!-- config -->
+        </command>    <!-- eeprom -->
+    </command>    <!-- reset -->
+
+</config>

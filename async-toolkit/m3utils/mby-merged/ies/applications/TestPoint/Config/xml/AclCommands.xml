@@ -1,0 +1,2070 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+<!-- show -->
+<command>
+    <name>show</name>
+    <help>Show a property</help>
+
+    <!-- show acl -->
+    <command>
+        <name>acl</name>
+        <help>Show an ACL or ACL rule</help>
+        <handler>tpHandleShowAcl</handler>
+
+        <!-- show acl <acls> -->
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers</help>
+
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Show all rules in the specified ACLs</help>
+            </argument>
+
+            <!-- show acl <acls> <rules> -->
+            <argument>
+                <name>!&lt;rules&gt;</name>
+                <help>Rule numbers</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show the specified rules</help>
+                </argument>
+            </argument>  <!-- <rule> -->
+        </argument> <!-- end show acl <acls> -->
+
+        <!-- show acl egress-counter -->
+        <command>
+            <name>egress-counter</name>
+            <help>Show an egress ACL counter</help>
+            <handler>tpHandleShowAclEgressCounter</handler>
+
+            <!-- show acl egress-counter <ports> -->
+            <argument>
+                <name>!&lt;ports&gt;</name>
+                <help>Port numbers</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show the specified counter</help>
+                </argument>
+            </argument>   <!-- <ports> -->
+        </command>  <!-- end show acl egress-counter -->
+
+        <!-- show acl port-set -->
+        <command>
+            <name>port-set</name>
+            <help>Show port-set</help>
+            <handler>tpHandleShowAclPortSet</handler>
+
+            <!-- show acl port-set <port-sets> -->
+            <argument>
+                <name>!&lt;port-sets&gt;</name>
+                <help>Port-set numbers</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show port-set</help>
+                </argument>
+            </argument>   <!-- <ports> -->
+        </command>  <!-- end show acl port-set -->
+
+    </command>  <!-- end show acl -->
+
+    <!-- show acl-counter -->
+    <command>
+        <name>acl-counter</name>
+        <help>Show an ACL counter</help>
+        <handler>tpHandleShowAclCounter</handler>
+
+        <!-- show acl-counter <acls> -->
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers</help>
+
+            <!-- show acl-counter <acls> <rules> -->
+            <argument>
+                <name>!&lt;rules&gt;</name>
+                <help>Rule numbers</help>
+                <argument>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                        <deny>FM4000</deny>
+                    </filter>
+                    <name>info</name>
+                    <help>Show the policer info</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show the specified counters with policer info</help>
+                    </argument> 
+                </argument> 
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show the specified counters</help>
+                </argument> 
+           </argument>  <!-- <rules> -->
+        </argument> <!-- <acls> -->
+    </command>  <!-- end show acl-counter -->
+
+</command>  <!-- end show -->
+
+<!-- del -->
+<command>
+    <name>del</name>
+    <help>Delete MAC address, VLANs, LAGs, or ports from VLANs, or counters from VLANs or LAGs</help>
+
+    <!-- del acl -->
+    <command>
+        <name>acl</name>
+        <help>Delete an ACL</help>
+        <handler>tpHandleDelAcl</handler>
+
+        <!-- del acl <acls> -->
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers to delete</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete the specified ACLs</help>
+            </argument>
+        </argument> <!-- <acls> -->
+    </command>  <!-- end del acl -->
+
+    <!-- del acl-rule -->
+    <command>
+        <name>acl-rule</name>
+        <help>Delete an ACL rule</help>
+        <handler>tpHandleDelAclRule</handler>
+
+        <!-- del acl-rule <acls> -->
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers containing the rules to delete</help>
+            <argument>
+                <name>!&lt;rules&gt;</name>
+                <help>The rule numbers to delete</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Delete the rules with the specified numbers</help>
+                </argument>
+            </argument> <!-- <rules> -->
+        </argument> <!-- <acls> -->
+    </command>  <!-- end del acl-rule -->
+
+    <!-- del acl-port-set -->
+    <command>
+        <name>acl-port-set</name>
+        <help>Delete an ACL port-set</help>
+        <handler>tpHandleDelAclPortSet</handler>
+
+        <!-- del acl-port-set <port-set> -->
+        <argument>
+            <name>!&lt;port set&gt;</name>
+            <help>The port-set to delete</help>
+
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete an ACL port-set</help>
+            </argument>
+        </argument>
+    </command>
+
+    <!-- del port -->
+    <command>
+        <name>port</name>
+        <help>Dissociate ACLs from ports</help>
+
+        <!-- del port acl -->
+        <command>
+            <name>acl</name>
+            <help>Dissociate ACLs from ports</help>
+            <handler>tpHandleDelPortAcl</handler>
+
+            <!-- del port acl <ports> -->
+            <argument>
+                <name>!&lt;ports&gt;</name>
+                <help>Logical port numbers to dissociate from ACLs</help>
+
+                <!-- del port acl <ports> <acls> -->
+                <argument>
+                    <name>!&lt;acls&gt;</name>
+                    <help>ACL numbers</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>dissociate ACLs from ports</help>
+                    </argument>
+                </argument> <!-- <acls> -->
+            </argument> <!-- <ports> -->
+        </command>  <!-- end del port acl -->
+
+        <!-- del port port-set -->
+        <command>
+           <name>port-set</name>
+            <help>Dissociate ports from port-set</help>
+            <handler>tpHandleDelPortSetPort</handler>
+
+            <!-- del port port-set <ports> -->
+            <argument>
+                <name>!&lt;ports&gt;</name>
+                <help>Logical port numbers to dissociate from port-set</help>
+
+                <!-- del port port-set <ports> <port-set> -->
+                <argument>
+                    <name>!&lt;port-sets&gt;</name>
+                    <help>Port-set numbers</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Dissociate ports from port-set</help>
+                    </argument>
+                </argument> <!-- <port-set> -->
+            </argument> <!-- <ports> -->
+
+        </command>  <!-- end add port port-set -->
+
+    </command>  <!-- end del port -->
+</command>  <!-- end del -->
+
+
+<!-- create -->
+<command>
+    <name>create</name>
+    <help>Create VLANs, LAGs, multicast groups, ACLs, etc.</help>
+
+    <!-- create acl -->
+    <command>
+        <name>acl</name>
+        <help>Create an ACL</help>
+        <handler>tpHandleCreateAcl</handler>
+
+        <!-- create acl <acls> -->
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers to create</help>
+
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Create the specified ACLs</help>
+            </argument>
+
+            <!-- create acl <acls> <frametypes> -->
+            <argument>
+                <name>!&lt;frametypes&gt;</name>
+                <help>Frame types to support (any, ipv4, ipv6, non-ip).</help>
+  
+                <!-- create acl <acls> <frametypes> <routingtypes> -->
+                <argument>
+                    <name>!&lt;routingtypes&gt;</name>
+                    <help>Routing types to support (any, switched, unicast, 
+                      multicast, any-glort, switched-glort, ucast-glort,
+                      mcast-glort)</help>
+
+                      <argument>
+                          <name>!&lt;cr&gt;</name>
+                          <help>Create ACLs with the specified scenarios</help>
+                      </argument>
+
+                      <!-- create acl <acls> <frametypes> <routingtypes> tunnel -->
+                      <argument>
+                          <name>tunnel</name>
+                          <help>Select tunneling types</help>
+
+                          <!-- create acl <acls> <frametypes> <routingtypes> tunnel <tunneltypes> -->
+                          <argument>
+                              <name>!&lt;tunneltypes&gt;</name>
+                              <help>Tunneling types to support (any, trill-unicast,
+                                trill-multicast, vn-tunnel)</help>
+
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Create ACLs with the specified scenarios</help>
+                            </argument>
+
+                            <!-- create acl <acls> <frametypes> <routingtypes> tunnel <tunneltypes> <precedence> -->
+                            <argument>
+                                <name>!&lt;precedence&gt;</name>
+                                <help>Precedence to assign to ACL</help>
+
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Create ACLs with the specified
+                                        precedence</help>
+                                </argument>
+                            </argument> <!-- <precedence> -->
+                          </argument> <!-- <tunneltypes> -->
+                      </argument> <!-- tunnel -->
+
+                      <!-- create acl <acls> <frametypes> <routingtypes> <precedence> -->
+                      <argument>
+                          <name>!&lt;precedence&gt;</name>
+                          <help>Precedence to assign to ACL</help>
+
+                          <argument>
+                              <name>!&lt;cr&gt;</name>
+                              <help>Create ACLs with the specified
+                                  precedence</help>
+                          </argument>
+                      </argument> <!-- <precedence> -->
+                </argument> <!-- <routingtypes> -->
+            </argument> <!-- <frametypes> -->
+
+        </argument> <!-- end create acl <acls> -->
+    </command>  <!-- end create acl -->
+
+    <!-- create acl-rule -->
+    <command>
+        <name>acl-rule</name>
+        <help>Create a rule in an ACL</help>
+        <handler>tpHandleCreateAclRule</handler>
+
+        <!-- create acl-rule <acls> -->
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers to create the new rule in</help>
+
+            <!-- create acl-rule <acls> <rules> -->
+            <argument>
+                <name>!&lt;rules&gt;</name>
+                <help>Rule numbers to create</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Create rules with the specified numbers</help>
+                </argument>
+            </argument> <!-- <rules> -->
+        </argument> <!-- <acls> -->
+    </command> <!-- end create acl-rule -->
+
+    <!-- create acl-port-set -->
+    <command>
+        <name>acl-port-set</name>
+        <help>Create a ACL port-set</help>
+        <handler>tpHandleCreateAclPortSet</handler>
+
+        <argument>
+            <name>!&lt;cr&gt;</name>
+            <help>Create an ACL port-set</help>
+        </argument>
+    </command> <!-- end create acl-rule -->
+
+</command>  <!-- end create -->
+
+<!-- apply -->
+<command>
+    <name>apply</name>
+    <help>Compile and apply ACLs</help>
+
+    <!-- apply acl -->
+    <command>
+        <name>acl</name>
+        <help>Compile and apply ACLs</help>
+        <handler>tpHandleApplyAcl</handler>
+
+        <!-- apply acl -->
+        <argument>
+            <name>!&lt;cr&gt;</name>
+            <help>Compile and apply ACLs</help>
+        </argument>
+
+        <!-- apply acl <options> -->
+        <argument>
+            <name>!&lt;options&gt;</name>
+            <help>Compiler options (e.g. quiet,nondisruptive,tryalloc 15:23)</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Compile and apply ACLs</help>
+            </argument>
+        </argument> <!-- <options> -->
+
+    </command>  <!-- end apply acl -->
+</command>  <!-- end apply -->
+
+<!-- add -->
+<command>
+    <name>add</name>
+    <help>Add mac addresses to MA table, or ports to VLANs or LAGs</help>
+
+    <!-- add acl-rule -->
+    <command>
+        <name>acl-rule</name>
+        <help>Add a condition or action to an ACL rule</help>
+        <handler>tpHandleAddAclRule</handler>
+
+        <!-- add acl-rule condition -->
+        <argument>
+            <name>condition</name>
+            <help>Add a condition to an ACL rule</help>
+
+            <!-- add acl-rule condition <acls> -->
+            <argument>
+                <name>!&lt;acls&gt;</name>
+                <help>ACL numbers</help>
+
+                <!-- add acl-rule condition <acls> <rules> -->
+                <argument>
+                    <name>!&lt;rules&gt;</name>
+                    <help>rule numbers</help>
+
+                    <!-- add acl-rule condition dip -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>dip</name>
+                        <help>Destination IP address</help>
+                        <argument>
+                            <name>!&lt;dstIp&gt;</name>
+                            <help>IP address and optional mask (e.g., 2001:db8::/32)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the dip condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition dmac -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>dmac</name>
+                        <help>Destination MAC address</help>
+                        <argument>
+                            <name>!&lt;dst&gt;</name>
+                            <help>MAC address and optional mask (e.g. 00:15:ed:00:00:00/ff:ff:ff:00:00:00)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the dmac condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition ethtype -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>ethtype</name>
+                        <help>EtherType</help>
+                        <argument>
+                            <name>!&lt;ethType&gt;</name>
+                            <help>EtherType and optional mask (e.g. 0x0800/0xff00)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the ethtype condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition flags -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flags</name>
+                        <help>Misc flags for fragmentation and IP options</help>
+                        <argument>
+                            <name>!&lt;flags&gt;</name>
+                            <help>flags value and optional mask (e.g. 1/3)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the flags condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition flow -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flow</name>
+                        <help>Flow Label (IPv6 only)</help>
+                        <argument>
+                            <name>!&lt;flow&gt;</name>
+                            <help>Flow Label and optional mask (e.g. 0x12340/0xffff0)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the flow condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition ftype -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>ftype</name>
+                        <help>Match ISL frame type</help>
+                        <argument>
+                            <name>!&lt;ftype&gt;</name>
+                            <help>ISL Frame Type: 0-normal, 1-routed, 2-special</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add ISL frame type match to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition ingress-port -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>ingress-port</name>
+                        <help>Ingress ports on which this rule is valid</help>
+                        <argument>
+                            <name>!&lt;port list&gt;</name>
+                            <help>List of ingress ports</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the ports to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition ip-length -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>ip-length</name>
+                        <help>Match IP length</help>
+                        <argument>
+                            <name>!&lt;ip-length&gt;</name>
+                            <help>Length of IP packet with optional mask (0x0094/0xFFFF)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add ip-length match to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition isl-user -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>isl-user</name>
+                        <help>Match ISL User </help>
+                        <argument>
+                            <name>!&lt;isl-user&gt;</name>
+                            <help>ISL User with optional mask (e.g. 0x14/0x1F) </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add ISL User field match to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition l4-deep-inspection -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>l4-deep-inspection</name>
+                        <help>64 bits of deep packet inspection</help>
+                        <argument>
+                            <name>!&lt;L4DeepInspection&gt;</name>
+                            <help>deep inspection value and optional mask (e.g. 0xabcdef1234567890/0xfffffffffffffff0)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the deep inspection condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition l4-deep-inspection-ext -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>l4-deep-inspection2</name>
+                        <help>32 bytes of deep packet inspection</help>
+                        <argument>
+                            <name>!&lt;Chunk ID&gt;</name>
+                            <help>ID for the 8 byte Chunk. In an IP frame,
+                                  where Chunk 0 would represent the 8 bytes starting 
+                                  at the 5th byte of the payload being sent.
+                                  Bit 63 of the chunk is sent first. 
+                                  Note that the first four bytes can be inspected
+                                  using l4-src-port and l4-dst-port. If IPv6 is used,
+                                  only chunk 0 can be defined
+                            </help>
+                            <argument>
+                                <name>!&lt;L4DeepInspection2&gt;</name>
+                                <help>Layer 4 deep inspection value and optional mask in a 
+                                      8 byte chunk (e.g. 0xabcdef1234567890/0xffffffffffffffff)
+                                </help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>add the deep inspection condition to the specified rule</help>
+                                </argument>
+                            </argument>
+                        </argument>                        
+                    </argument>
+
+                    <!-- add acl-rule condition l4-dst-port -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>l4-dst-port</name>
+                        <help>TCP/UDP destination port</help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>TCP/UDP port number with optional mask(e.g. 0x1F90/0xFFFF)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the l4-dst-port condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition l4-src-port -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>l4-src-port</name>
+                        <help>TCP/UDP source port</help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>TCP/UDP port number with optional mask(e.g. 0x1F90/0xFFFF)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the l4-src-port condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+                    
+                    <!-- add acl-rule confition non-ip-payload -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>non-ip-payload</name>
+                        <help>Layer 3 deep inspection</help>
+
+                        <argument>
+                            <name>!&lt;Chunk ID&gt;</name>
+                            <help>ID for the 8 byte Chunk. In an Ethernet frame,
+                                  where Chunk 0 would represent the first 8 bytes of
+                                  the payload being sent. Bit 63 of the chunk 
+                                  is sent first.
+                            </help>
+
+                            <argument>
+                                <name>!&lt;L3DeepInspection&gt;</name>
+                                <help>Layer 3 deep inspection value and optional mask in a 
+                                      8 byte chunk (e.g. 0xabcdef1234567890/0xffffffffffffffff)
+                                </help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>add the deep inspection condition to the specified rule</help>
+                                </argument>
+                            </argument>
+                        </argument>                        
+                    </argument>
+
+
+                    <!-- add acl-rule condition port-set -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>port-set</name>
+                        <help>Ingress port-set on which this rule is valid</help>
+                        <argument>
+                            <name>!&lt;portSet&gt;</name>
+                            <help>Port-set</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the port-set to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition priority -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>priority</name>
+                        <help>VLAN priority</help>
+                        <argument>
+                            <name>!&lt;vlanPri&gt;</name>
+                            <help>VLAN priority and optional mask (e.g. 2/3)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the priority condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition priority2 -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>priority2</name>
+                        <help>VLAN2 priority</help>
+                        <argument>
+                            <name>!&lt;vlanPri&gt;</name>
+                            <help>VLAN2 priority and optional mask (e.g. 2/3)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the priority2 condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition protocol -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>protocol</name>
+                        <help>IPv4 Protocol or IPv6 Next Header</help>
+                        <argument>
+                            <name>!&lt;protocol&gt;</name>
+                            <help>protocol value and optional mask (e.g. 59/127)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the protocol condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition sip -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>sip</name>
+                        <help>Source IP address</help>
+                        <argument>
+                            <name>!&lt;srcIp&gt;</name>
+                            <help>IP address and optional mask (e.g. 192.0.2.0/24)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the sip condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition smac -->
+                    <argument>
+                        <name>smac</name>
+                        <help>Source MAC address</help>
+                        <argument>
+                            <name>!&lt;src&gt;</name>
+                            <help>MAC address and optional mask (e.g. 00:15:ed:00:00:00/ff:ff:ff:00:00:00)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the smac condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition switch-priority -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>switch-priority</name>
+                        <help>switch priority</help>
+                        <argument>
+                            <name>!&lt;switchPri&gt;</name>
+                            <help>switch priority and optional mask (e.g. 6/14)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the switch-priority condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition tcp-flags -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>tcp-flags</name>
+                        <help>TCP flags</help>
+                        <argument>
+                            <name>!&lt;tcpFlags&gt;</name>
+                            <help>TCP flags and optional mask (e.g. 5/15)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the tcp-flags condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition l4-entry -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>l4-entry</name>
+                        <help>L4 Entry</help>
+                        <argument>
+                            <name>!&lt;entry&gt;</name>
+                            <help>L4 Entry data and optional mask (e.g. 5/15)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the l4-entry condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition traffic -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>traffic</name>
+                        <help>Differentiated Services Code Point</help>
+                        <argument>
+                            <name>!&lt;dscp&gt;</name>
+                            <help>DSCP value and optional mask (e.g. 0x3/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the traffic condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition tos -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>tos</name>
+                        <help>Type of Service octet</help>
+                        <argument>
+                            <name>!&lt;tos&gt;</name>
+                            <help>TOS value and optional mask (e.g. 0x3/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the traffic condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition ttl -->
+                    <argument>
+                        <filter type="family">
+                          <deny>FM2000</deny>
+                        </filter>
+                        <name>ttl</name>
+                        <help>IPv4 Time to Live or IPv6 Hop Limit</help>
+                        <argument>
+                            <name>!&lt;ttl&gt;</name>
+                            <help>Time to Live value and optional mask (e.g. 0/0xf0)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the ttl condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition vlan -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>vlan</name>
+                        <help>VLAN ID</help>
+                        <argument>
+                            <name>!&lt;vlanId&gt;</name>
+                            <help>VLAN ID and optional mask (e.g. 0x120/0xff0)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vlan condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition vlan2 -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>vlan2</name>
+                        <help>VLAN2 ID</help>
+                        <argument>
+                            <name>!&lt;vlanId&gt;</name>
+                            <help>VLAN2 ID and optional mask (e.g. 0x120/0xff0)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vlan2 condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition vlan tag -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>vlan-tag</name>
+                        <help>VLAN Tag Type</help>
+                        <argument>
+                            <name>!&lt;vlanTag&gt;</name>
+                            <help>VLAN Tag Type (none, standard, typeA, typeB, vlan1, vlan2, vlan1Only, vlan2Only, vlan1_vlan2)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vlan tag condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition src-glort -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>src-glort</name>
+                        <help>Source GLORT</help>
+                        <argument>
+                            <name>!&lt;srcGlort&gt;</name>
+                            <help>Source GLORT and optional mask (e.g. 0x1200/0xff00)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the source glort condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition dst-glort -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>dst-glort</name>
+                        <help>Destination GLORT</help>
+                        <argument>
+                            <name>!&lt;dstGlort&gt;</name>
+                            <help>Destination GLORT and optional mask (e.g. 0x1200/0xff00)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the destination glort condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition frag-type -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>frag-type</name>
+                        <help>Fragment Frame Type</help>
+                        <argument>
+                            <name>!&lt;fragType&gt;</name>
+                            <help>Fragment Type (complete, headFrag, subFrag, completeOrFrag)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the fragment type condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition frame-type -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>frame-type</name>
+                        <help>Frame Type</help>
+                        <argument>
+                            <name>!&lt;frameType&gt;</name>
+                            <help>Frame Type (nonIp, ipv4, ipv6)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the frame type condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-src -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-src</name>
+                        <help>Mapped Source Port</help>
+                        <argument>
+                            <name>!&lt;srcMap&gt;</name>
+                            <help>Mapped Source Port and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped source port condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-protocol -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-protocol</name>
+                        <help>Mapped Protocol</help>
+                        <argument>
+                            <name>!&lt;protocolMap&gt;</name>
+                            <help>Mapped Protocol and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped protocol condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-l4-src -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-l4-src</name>
+                        <help>Mapped L4 Source Port</help>
+                        <argument>
+                            <name>!&lt;l4SrcMap&gt;</name>
+                            <help>Mapped L4 Source Port and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped L4 source port condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-l4-dst -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-l4-dst</name>
+                        <help>Mapped L4 Destination Port</help>
+                        <argument>
+                            <name>!&lt;l4DstMap&gt;</name>
+                            <help>Mapped L4 Destination Port and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped L4 destination port condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-smac -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-smac</name>
+                        <help>Mapped Source MAC Address</help>
+                        <argument>
+                            <name>!&lt;smacMap&gt;</name>
+                            <help>Mapped Source MAC Address and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped source MAC condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-dmac -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-dmac</name>
+                        <help>Mapped Destination MAC Address</help>
+                        <argument>
+                            <name>!&lt;dmacMap&gt;</name>
+                            <help>Mapped Destination MAC Address and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped destination MAC condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-ethtype -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-ethtype</name>
+                        <help>Mapped Ethernet Type value</help>
+                        <argument>
+                            <name>!&lt;ethTypeMap&gt;</name>
+                            <help>Mapped Ethernet Type Value and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped ethertype condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-ip-length -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-ip-length</name>
+                        <help>Mapped IP Length</help>
+                        <argument>
+                            <name>!&lt;ipLengthMap&gt;</name>
+                            <help>Mapped IP Length Value and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped IP length condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-sip -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-sip</name>
+                        <help>Mapped Source IP Address</help>
+                        <argument>
+                            <name>!&lt;sipMap&gt;</name>
+                            <help>Mapped Source IP Address and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped sip condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-dip -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-dip</name>
+                        <help>Mapped Destination IP Address</help>
+                        <argument>
+                            <name>!&lt;dipMap&gt;</name>
+                            <help>Mapped Destination IP Address and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped dip condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition map-vlan -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>map-vlan</name>
+                        <help>Mapped VLAN ID</help>
+                        <argument>
+                            <name>!&lt;vlanId&gt;</name>
+                            <help>Mapped vlanId and optional mask (e.g. 0x2/0xf)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mapped vlan condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition trill-smac -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>trill-smac</name>
+                        <help>TRILL Source MAC address (Outer MAC)</help>
+                        <argument>
+                            <name>!&lt;trill-smac&gt;</name>
+                            <help>MAC address and optional mask (e.g. 00:15:ed:00:00:00/ff:ff:ff:00:00:00)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the trill-smac condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition trill-type -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>trill-type</name>
+                        <help>TRILL encapsulated frame</help>
+                        <argument>
+                            <name>!&lt;trillType&gt;</name>
+                            <help>TRILL Type (any, ucast, mcast)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the trill-type condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition trill-srb -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>trill-srb</name>
+                        <help>TRILL Source RBridge Nickname</help>
+                        <argument>
+                            <name>!&lt;trill-srb&gt;</name>
+                            <help>TRILL Src RBridge Nickname and optional mask (e.g. 0x1234/0xffff)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the trill-srb condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule condition trill-rrb -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>trill-rrb</name>
+                        <help>TRILL Remote RBridge Nickname</help>
+                        <argument>
+                            <name>!&lt;trill-rrb&gt;</name>
+                            <help>TRILL Remote RBridge Nickname and optional mask (e.g. 0x1234/0xffff)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the trill-rrb condition to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                </argument> <!-- <rules> -->
+            </argument> <!-- <acls> -->
+        </argument> <!-- end add acl-rule condition -->
+
+        <!-- add acl-rule action -->
+        <argument>
+            <name>action</name>
+            <help>Add an action to an ACL rule</help>
+
+            <!-- add acl-rule action <acls> -->
+            <argument>
+                <name>!&lt;acls&gt;</name>
+                <help>ACL numbers</help>
+
+                <!-- add acl-rule action <acls> <rules> -->
+                <argument>
+                    <name>!&lt;rules&gt;</name>
+                    <help>rule numbers</help>
+
+                    <!-- add acl-rule action count -->
+                    <argument>
+                        <name>count</name>
+                        <help>Count frames and octets</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the count action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action count-notify -->
+                    <argument>
+                        <filter type="family">
+                            <allow>none</allow>
+                        </filter>
+                        <name>count-notify</name>
+                        <help>Count frames and octets, and send interrupt to CPU</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the count-notify action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action deny -->
+                    <argument>
+                        <name>deny</name>
+                        <help>Drop the frame</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the deny action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action dscp -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>dscp</name>
+                        <help>Change the Differentiated Services Code Point</help>
+                        <argument>
+                            <name>!&lt;dscp&gt;</name>
+                            <help>New DSCP value</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the dscp action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action log -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>log</name>
+                        <help>Copy the frame to the CPU</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the log action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action mirror -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>mirror</name>
+                        <help>Copy the frame to the specified port</help>
+                        <argument>
+                            <name>!&lt;mirrorPort&gt;</name>
+                            <help>Logical port to mirror to</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mirror action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action permit -->
+                    <argument>
+                        <name>permit</name>
+                        <help>Prevent the frame from being dropped</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the permit action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action police -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>police</name>
+                        <help>Apply a policer to the frame</help>
+                        <argument>
+                            <name>!&lt;policer&gt;</name>
+                            <help>policer number</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the police action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action switch-priority -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>switch-priority</name>
+                        <help>Change the switch priority</help>
+                        <argument>
+                            <name>!&lt;switchPriority&gt;</name>
+                            <help>new switch priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the switch-priority action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action trap -->
+                    <argument>
+                        <name>trap</name>
+                        <help>Send the frame to the CPU instead of normal destination</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the trap action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action trap-always -->
+                    <argument>
+                        <name>trap-always</name>
+                        <help>Send the frame to the CPU instead of normal destination regardless of STP state</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the trap-always action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action user -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>user</name>
+                        <help>Change the user bits in the F64 tag</help>
+                        <argument>
+                            <name>!&lt;user&gt;</name>
+                            <help>New user bits and optional mask (e.g. 0b10110000/0b11110000)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the user action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action vlan -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>vlan</name>
+                        <help>Change the VLAN ID</help>
+                        <argument>
+                            <name>!&lt;vlan&gt;</name>
+                            <help>new VLAN ID</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vlan action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action vlan-priority -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>vlan-priority</name>
+                        <help>Change the VLAN priority</help>
+                        <argument>
+                            <name>!&lt;vlanPriority&gt;</name>
+                            <help>new VLAN priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vlan-priority action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action redirect -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>redirect</name>
+                        <help>Redirect the frame to the specified port</help>
+                        <argument>
+                            <name>!&lt;logicalPort&gt;</name>
+                            <help>Logical port to redirect to</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the redirect action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action flood-dest -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>flood-dest</name>
+                        <help>Redirect frame to a specified port on a MAC lookup miss</help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>Destination logical port to redirect to</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Add the flood-dest action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action l3-hash-prof -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>l3-hash-prof</name>
+                        <help>Set the L3 hashing profile (for use only on pre-remap stage ACLs)</help>
+                        <argument>
+                            <name>!&lt;profile&gt;</name>
+                            <help>Hashing profile index number</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Add the l3-hash-prof action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action noroute -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>noroute</name>
+                        <help>Ignore the route action</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>add the noroute action to the specified rule</help>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action lbg -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>lbg</name>
+                        <help>Redirect the frame to the specified lbg</help>
+                        <argument>
+                            <name>!&lt;lbgNumber&gt;</name>
+                            <help>Load Balancing Group logical port to redirect to</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the lbg action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action route -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>route</name>
+                        <help>Route the frame to the specified ECMP Group</help>
+                        <argument>
+                            <name>!&lt;groupId&gt;</name>
+                            <help>ECMP Group Id to route on</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the route action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action vlan2 -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>vlan2</name>
+                        <help>Change the VLAN2 ID</help>
+                        <argument>
+                            <name>!&lt;vlan&gt;</name>
+                            <help>new VLAN2 ID</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vlan2 action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action vlan2-priority -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>vlan2-priority</name>
+                        <help>Change the VLAN2 priority</help>
+                        <argument>
+                            <name>!&lt;vlanPriority&gt;</name>
+                            <help>new VLAN2 priority</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vlan2-priority action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action mirror-grp -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>mirror-grp</name>
+                        <help>Copy the frame to the specified mirror group(s)</help>
+                        <argument>
+                            <name>!&lt;mask&gt;</name>
+                            <help>Bit mask of mirror group numbers (e.g., 0xA for mirror groups 1 and 3)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the mirror-grp action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action srcGlort -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>srcGlort</name>
+                        <help>Change the Source GLORT</help>
+                        <argument>
+                            <name>!&lt;Glort&gt;</name>
+                            <help>new Source GLORT</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the Source GLORT action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action tunnelId -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>tunnelId</name>
+                        <help>Assign an Ingress Tunnel ID</help>
+                        <argument>
+                            <name>!&lt;tunnelId&gt;</name>
+                            <help>Ingress Tunnel ID</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the Tunnel ID action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action tunnelIdSrc -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>tunnelIdSrc</name>
+                        <help>Assign an Ingress Tunnel ID and Source GLORT</help>
+                        <argument>
+                            <name>!&lt;tunnelId&gt;</name>
+                            <help>Ingress Tunnel ID</help>
+                            <argument>
+                                <name>!&lt;Glort&gt;</name>
+                                <help>new Source GLORT</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>add the Tunnel ID and Source GLORT action to the specified rule</help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action distTree -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>distTree</name>
+                        <help>Assign a TRILL Distribution Tree value</help>
+                        <argument>
+                            <name>!&lt;distTree&gt;</name>
+                            <help>TRILL Distribution Tree value</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the TRILL Distribution Tree action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action precedence -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>precedence</name>
+                        <help>Assign a rule precedence value</help>
+                        <argument>
+                            <name>!&lt;precedence&gt;</name>
+                            <help>Rule Precedence value</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the rule precedence action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <!-- add acl-rule action vn-tunnel -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>vn-tunnel</name>
+                        <help>Change the virtual-network tunnel ID</help>
+                        <argument>
+                            <name>!&lt;vn-tunnel&gt;</name>
+                            <help>new VN Tunnel ID</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>add the vn-tunnel action to the specified rule</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                </argument> <!-- <rules> -->
+            </argument> <!-- <acls> -->
+        </argument> <!-- end add acl-rule action -->
+
+    </command>  <!-- end add acl-rule -->
+
+    <!-- add port -->
+    <command>
+        <name>port</name>
+        <help>Associate an ACL with a port</help>
+
+        <!-- add port acl -->
+        <command>
+            <name>acl</name>
+            <help>Associate ACLs with ports</help>
+            <handler>tpHandleAddPortAcl</handler>
+
+            <!-- add port acl <ports> -->
+            <argument>
+                <name>!&lt;ports&gt;</name>
+                <help>Logical port numbers to associate with ACLs</help>
+
+                <!-- add port acl <ports> <acls> -->
+                <argument>
+                    <name>!&lt;acls&gt;</name>
+                    <help>ACL numbers</help>
+
+                    <!-- add port acl <ports> <acls> ingress -->
+                    <argument>
+                        <name>ingress</name>
+                        <help>associate ACLs with ports on ingress</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>associate ACLs with ports on ingress</help>
+                        </argument>
+                    </argument> <!-- ingress -->
+
+                    <!-- add port acl <ports> <acls> egress -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>egress</name>
+                        <help>associate ACLs with ports on egress</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>associate ACLs with ports on egress</help>
+                        </argument>
+                    </argument> <!-- egress -->
+                </argument> <!-- <acls> -->
+            </argument> <!-- <ports> -->
+
+        </command>  <!-- end add port acl -->
+
+        <!-- add port port-set -->
+        <command>
+           <name>port-set</name>
+            <help>Associate ports to a port-set</help>
+            <handler>tpHandleAddPortSetPort</handler>
+
+            <!-- add port port-set <ports> -->
+            <argument>
+                <name>!&lt;ports&gt;</name>
+                <help>Logical port numbers to associate with port-set</help>
+
+                <!-- add port port-set <ports> <port-set> -->
+                <argument>
+                    <name>!&lt;port-sets&gt;</name>
+                    <help>Port-set numbers</help>
+                </argument> <!-- <port-set> -->
+            </argument> <!-- <ports> -->
+
+        </command>  <!-- end add port port-set -->
+
+    </command>  <!-- end add port -->
+
+</command>  <!-- end add -->
+
+<!-- renumber -->
+<command>
+    <name>renumber</name>
+    <help>Renumber an acl rule</help>
+
+    <!-- renumber acl-rule -->
+    <command>
+        <name>acl-rule</name>
+        <help>Renumber an ACL rule</help>
+        <handler>tpHandleRenumberAclRule</handler>
+
+        <!-- renumber acl-rule <acl> -->
+        <argument>
+            <name>!&lt;acl&gt;</name>
+            <help>An ACL number</help>
+
+            <!-- renumber acl-rule <acl> <oldRule> -->
+            <argument>
+                <name>!&lt;oldRule&gt;</name>
+                <help>The old rule number</help>
+
+                <!-- renumber acl-rule <acl> <oldRule> <newRule> -->
+                <argument>
+                    <name>!&lt;newRule&gt;</name>
+                    <help>The new rule number</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Renumber the specified acl rule</help>
+                    </argument>
+                </argument> <!-- <newRule> -->
+            </argument> <!-- <oldRule> -->
+        </argument> <!-- <acl> -->
+
+    </command>  <!-- end renumber acl-rule -->
+</command>  <!-- end renumber -->
+
+<!-- reset -->
+<command>
+    <name>reset</name>
+    <help>Reset switch, port, vlan, mac, lag properties</help>
+
+    <!-- reset acl -->
+    <command>
+        <name>acl</name>
+        <help>Reset acl properties</help>
+
+        <!-- reset acl egress-counter -->
+        <command>
+            <name>egress-counter</name>
+            <help>Reset an egress ACL counter</help>
+            <handler>tpHandleResetAclEgressCounter</handler>
+
+            <!-- reset acl egress-counter <ports> -->
+            <argument>
+                <name>!&lt;ports&gt;</name>
+                <help>Port numbesr</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Reset the specified acl counters</help>
+                </argument>
+            </argument> <!-- <ports> -->
+
+        </command>    <!-- end reset acl egress-counter -->
+    </command>  <!-- end reset acl -->
+
+    <!-- reset acl-counter -->
+    <command>
+        <name>acl-counter</name>
+        <help>Reset an ingress ACL counter</help>
+        <handler>tpHandleResetAclCounter</handler>
+
+        <!-- reset acl-counter <acls> -->
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers</help>
+
+            <!-- reset acl-counter <acls> <rules> -->
+            <argument>
+                <name>!&lt;rules&gt;</name>
+                <help>Rule numbers</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Reset the specified acl counter</help>
+                </argument>
+            </argument> <!-- <rules> -->
+        </argument> <!-- <acls> -->
+    </command>  <!-- end reset acl-counter -->
+
+    <!-- reset acl-rule -->
+    <command>
+        <name>acl-rule</name>
+        <help>Remove all conditions or actions from an ACL rule</help>
+        <handler>tpHandleResetAclRule</handler>
+
+        <!-- reset acl-rule condition -->
+        <argument>
+            <name>condition</name>
+            <help>Remove all conditions from an ACL rule</help>
+
+            <!-- reset acl-rule condition <acls> -->
+            <argument>
+                <name>!&lt;acls&gt;</name>
+                <help>ACL numbers</help>
+
+                <!-- reset acl-rule condition <acls> <rules> -->
+                <argument>
+                    <name>!&lt;rules&gt;</name>
+                    <help>rule numbers</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>remove all conditions from the specified 
+                            rules</help>
+                    </argument>
+                </argument> <!-- <rules> -->
+            </argument> <!-- <acls> -->
+        </argument> <!-- condition -->
+
+        <!-- reset acl-rule action -->
+        <argument>
+            <name>action</name>
+            <help>Remove all actions from an ACL rule</help>
+
+            <!-- reset acl-rule action <acls> -->
+            <argument>
+                <name>!&lt;acls&gt;</name>
+                <help>ACL numbers</help>
+
+                <!-- reset acl-rule action <acsl> <rules> -->
+                <argument>
+                    <name>!&lt;rules&gt;</name>
+                    <help>rule numbers</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>remove all actions from the specified rules</help>
+                    </argument>
+                </argument> <!-- <rule> -->
+            </argument> <!-- <acl> -->
+        </argument> <!-- action -->
+
+    </command>  <!-- end reset acl-rule -->
+</command>  <!-- end reset -->
+
+<!-- set -->
+<command>
+    <name>set</name>
+    <help>Set a property</help>
+
+    <!-- set acl -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+            <deny>FM4000</deny>
+        </filter>
+        <name>acl</name>
+        <help>Set acl properties</help>
+        <handler>tpHandleSetAclProp</handler>
+        <argument>
+            <name>!&lt;acls&gt;</name>
+            <help>ACL numbers</help>
+            <argument>
+                <name>table</name>
+                <help>Indicates which FFU or BST table to use</help>
+                <argument>
+                    <name>best-fit</name>
+                    <help>Use the next table ressource available (default)</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Use the next table ressource available (default)</help>
+                    </argument>
+                </argument>  <!-- end set acl <acl> table best-fit -->
+                <argument>
+                    <name>table0</name>
+                    <help>Use the FFU table located after the remap stage</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Use the FFU table located after the remap stage</help>
+                    </argument>
+                </argument>  <!-- end set acl <acl> table table0 -->
+                <argument>
+                    <name>table1</name>
+                    <help>Use the FFU table located before the remap stage</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Use the FFU table located before the remap stage</help>
+                    </argument>
+                </argument>  <!-- end set acl <acl> table table1 -->
+                <argument>
+                    <name>bst</name>
+                    <help>Use the BST table located after the remap stage</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Use the BST table located after the remap stage</help>
+                    </argument>
+                </argument>  <!-- end set acl <acl> table bst -->
+            </argument>  <!-- end set acl <acl> table -->
+        </argument>  <!-- end set acl <acl> -->
+    </command>  <!-- end set acl -->
+</command>  <!-- end set -->
+
+<!-- show -->
+<command>
+    <name>show</name>
+    <help>Show a property</help>
+
+    <!-- show port -->
+    <command>
+        <name>port</name>
+        <help>Show a port related property or state</help>
+        <handler>handleShowPort</handler>
+
+        <!-- show port acl -->
+        <command>
+            <name>acl</name>
+            <help>Show ACLs associated with this port</help>
+            <handler>tpHandleShowPortAcl</handler>
+
+            <!-- show port acl <ports> -->
+            <argument>
+                <name>!&lt;ports&gt;</name>
+                <help>Port numbers to show ACLs for</help>
+
+                <!-- show port acl <ports> ingress -->
+                <argument>
+                    <name>ingress</name>
+                    <help>Show ingress ACLs associated with this port</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show ingress ACLs associated with this port</help>
+                    </argument>
+                </argument> <!-- ingress -->
+
+                <!-- show port acl <ports> egress -->
+                <argument>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                    </filter>
+                    <name>egress</name>
+                    <help>Show egress ACLs associated with this port</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show egress ACLs associated with this port</help>
+                    </argument>
+                </argument> <!-- egress -->
+            </argument> <!-- <ports> -->
+
+        </command>  <!-- end show port acl -->
+    </command>  <!-- end show port -->
+</command>  <!-- end show -->
+
+</config>

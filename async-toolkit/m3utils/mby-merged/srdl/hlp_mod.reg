@@ -1,0 +1,867 @@
+################ EGRESS MODIFICATION REGISTER SET #############################
+
+--addressBase           0x400000
+--addressBits           23
+--implemented           true
+--resetDomains          SWITCH,MGMT
+--offset                0
+--atomic                64
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT
+
+-set hlp_MOD Egress Modification Registers
+
+-enum TX_STATS_BANK_7:4 TX Statistics Classification Bins
+  * TxEccDrop(0): Dropped due to uncorrectable error (incl scheduler memories) 
+  * TxErrorDrop(1): Dropped due to tx error (SNF error from FC)
+  * TimeoutDrop(2): Dropped due to timeout in switch memory
+  * LoopbackDrop(3): Dropped due to loopback suppression in modify
+  * TTL1Drop(4): Dropped due to routed frame having ttl 1 or 0
+  * EcnDrop(5): Dropped due to ECN ineligibility
+  * ModErrorDrop(6): Dropped due to modification error (see MOD_IP for details)
+	* TxError(7): Frames transmitted with bad CRC 
+	* L2Bcast(8): L2 broadcast DMAC transmitted (good CRC)
+	* L2Mcast(9): L2 multicast DMAC transmitted (good CRC)
+	* L2Ucast(10): L2 unicast DMAC transmitted (good CRC)
+
+-enum TX_STATS_BANK_8:4 TX Statistics Length Classification Bins
+	* Len_lt_64(0): length < 64
+	* Len_eq_64(1): length = 64
+	* Len_65_127(2): 64 < length < 128
+	* Len_128_255(3): 128 <= length <= 255
+	* Len_256_511(4): 256 <= length <= 511
+	* Len_512_1023(5): 512 <= length <= 1023
+	* Len_1024_1522(6): 1024 <= length <= 1522
+	* Len_1523_2047(7): 1523 <= length <= 2047
+	* Len_2048_4095(8): 2048 <= length <= 4095
+	* Len_4096_8191(9): 4096 <= length <= 8191
+	* Len_8192_10239(10): 8192 <= length <= 10239
+	* Len_ge_10240(11): length >= 10240
+
+
+
+#############################################################################
+# New MOD_IDX registers for HLP
+
+-register MOD_DESC[0..3][0..16383]  MOD_IDX descriptor tables
+  Indexed by the result of MOD_MASTER.
+  Provides 4 descriptors to the datapath for each packet.
+    >PG HLP_PG1
+    +DATA:64:RW:0
+      64-bit portion of big-endian-packed descriptors.
+
+
+-register MOD_MASTER[0..16383]  MOD_IDX master table
+  Indexed by MOD_IDX. Provides pointers for 4 descriptor banks.
+    >PG HLP_PG1
+    +MODE:6:RW:0
+      Selects how to distribute ptrs A and B to the 4 banks.
+      . mode    distribution to banks
+      .         0 1 2 3
+      .   0     0 0 0 0
+      .   1     B A 0 0
+      .   2     A B 0 0
+      .   3     B 0 A 0
+      .   4     B A A 0
+      .   5     0 B A 0
+      .   6     A B A 0
+      .   7     B B A 0
+      .   8     A 0 B 0
+      .   9     0 A B 0
+      .  10     A A B 0
+      .  11     B A B 0
+      .  12     A B B 0
+      .  13     B 0 0 A
+      .  14     B A 0 A
+      .  15     0 B 0 A
+      .  16     A B 0 A
+      .  17     B B 0 A
+      .  18     B 0 A A
+      .  19     A A A A
+      .  20     B A A A
+      .  21     0 B A A
+      .  22     A B A A
+      .  23     B B A A
+      .  24     0 0 B A
+      .  25     A 0 B A
+      .  26     B 0 B A
+      .  27     0 A B A
+      .  28     A A B A
+      .  29     B A B A
+      .  30     0 B B A
+      .  31     A B B A
+      .  32     B B B A
+      .  33     A 0 0 B
+      .  34     0 A 0 B
+      .  35     A A 0 B
+      .  36     B A 0 B
+      .  37     A B 0 B
+      .  38     0 0 A B
+      .  39     A 0 A B
+      .  40     B 0 A B
+      .  41     0 A A B
+      .  42     A A A B
+      .  43     B A A B
+      .  44     0 B A B
+      .  45     A B A B
+      .  46     B B A B
+      .  47     A 0 B B
+      .  48     0 A B B
+      .  49     A A B B
+      .  50     B A B B
+      .  51     A B B B
+      .  52-63  undefined
+    +B:16:RW:0
+      Second pointer
+    +A:16:RW:0
+      First pointer
+
+
+#############################################################################
+## Registers in the control path (generally ordered by address space size)
+
+-register MOD_MCAST_VLAN_TABLE[0..32767] Configures modification per multicast copy.
+  Table used during for packet replication on same port. The table indicates new VLAN and new DGLORT to use.  
+  Note that entry 32767 is not available and shall not be used.
+    >PG HLP_PG1
+    +REPLACE_DGLORT:1:RW:0
+        Indicates if the DGLORT must be updated or not.  
+    +REPLACE_VID:1:RW:0
+        Indicates if the VID must be updated or not. 
+    +DATA:28:RW:0
+        If either ReplaceVID or ReplaceDGLORT is asserted:
+        *   Data[27:12] = DGLORT - The new DGLORT to use if update is requested.
+        *   Data[11:0] = VID  - The new VID to use if update is requested.
+        
+        If neither ReplaceVID nor ReplaceDGLORT asserted:
+        *   Data[27] = ReplaceMODIDX - Indicates if the MOD_IDX must be updated or not.
+        *   Data[26:18] = reserved
+        *   Data[17:2] = MOD_IDX pointer - New pointer to use if an update is requested.
+        *   Data[1]   = decap
+        *   Data[0]   = encap
+
+
+-register MOD_VLAN_TAG[0..4095] VLAN tagging options
+  Defines for each VLAN and port if the packet leaves tagged or untagged.
+    >PG HLP_PG1
+    +TAG:24:RW:0
+      Each bit defines the egress tagging option for the corresponding port. This shall be combined with the VlanTagging bit from the MOD_PER_PORT_CFG2 for full interpretation. Check MODIFY chapter for details.
+
+
+-register MOD_VID1_MAP[0..4095] VID1 translation
+  Defines egress VID1 for a given EVIDb.
+  Index selection configurable per port.
+    >PG HLP_PG1
+    +VID:12:RW:0
+      New VID1 associated with VID.
+      If set to 0, then VID1 tag will not be transmitted regardless of the TAG bit. 
+
+
+-register MOD_VID2_MAP[0..4095] VID2 translation
+  Defines egress VID2 for a given EVIDb/DGLORT/SGLORT.
+  Index selection configurable per port.   
+    >PG HLP_PG1
+    +VID:12:RW:0
+      New VID2 associated with VID.
+      If set to 0, then VID2 tag will not be transmitted regardless of the TAG bit. 
+
+
+-register MOD_MIRROR_PROFILE_TABLE1[0..63] Mirror profiles
+  Defines mirror profiles in modify.
+    >PG HLP_PG1
+    +TRUNC:1:RW:0
+        Define whether mirror copies should be truncated or not.
+    +MOD_IDX:18:RW:0
+     The mod_idx to use.
+       * mod_idx[17:2] = ptr to MOD_MASTER table.
+       * mod_idx[1:0]  = reserved
+    +MIRROR_DGLORT:16:RW:0
+        New DGLORT to use for mirrored or logged copies.
+        If this glort hits in MOD_DGLORT_DEC, then any previous values in
+        the Queue/Function/Function_Type metadata fields will be overwritten
+        (including any value written by MOD_MIRROR_PROFILE_TABLE1).
+
+
+-register MOD_MIRROR_PROFILE_TABLE2[0..63] Mirror profiles
+  Defines mirror profiles in modify.
+    >PG HLP_PG1
+    +REPLACE_TYPE:1:RW:0
+        Set to override type field in Metadata
+    +TYPE_VALUE:8:RW:0
+        New Type value to use.
+        When mirroring a Tx frame, the type field should be set to the right type for Rx.
+    +METADATA_SET_MODE:1:RW:0
+        * 0 = Apply the 16b MetadataValue/Mask, for non-QCN mirroring
+        * 1 = Set to Queue level from (port, TC), for QCN mirroring
+    +METADATA_BYTE_OFFSET:5:RW:0
+        byte offset for starting byte for the metadata update.
+    +METADATA_VALUE:16:RW:0
+        Value to be updated in the specified location in Metadata staring from
+        the byte offset indicated above
+    +METADATA_MASK:16:RW:0
+        Mask value for the update in Metadata. For each bit, set to 1 to apply new MetadataValue. Otherwise, set to 0 for no change.
+    +MIRROR_VID:12:RW:0
+        New VID to use for mirrored or logged copies.
+    +MIRROR_VPRI:4:RW:0
+        New VPRI to use for mirrored or logged copies.
+
+
+-register MOD_PER_PORT_CFG1[0..23] Port configuration
+  Defines the port configuration. LOOPBACK_SUPPRESS: At the edge of the system, one must avoid retransmitting a frame over the same LAG it arrived on, even if the LAG is distributed across multiple edge chips.  This is done by comparing the frame's source glort against the port's LAG glort, not counting the port-specific  bits.  The test performed in MCAST_POST is applied only to L3-replicated multicast frames.  If the VID returned by MCAST_VLAN_TABLE matches either L2_VID, and the two glorts match, then the replicated copy will not be  comparison should be disabled on internal ports by setting Mask to 0 and  Glort to some non-zero value.
+
+    >PG HLP_PG1
+    +LOOPBACK_SUPPRESS_GLORT:16:RW:0000
+        
+        Loopback suppress GLORT. LAG glort to which the port belongs.  Comparison performed is MOD_DATA.W16A &amp; Mask == Glort.
+    
+    +LOOPBACK_SUPPRESS_MASK:16:RW:0000
+    
+        Canonicalization mask of loopback suppress.  Port-specific bits should be set to 0 in the mask.
+        
+    +VID2_MAP_INDEX:2:RW:0
+    
+        Defines which index to use for indexing the MOD_VID2_MAP table. 
+        
+           * VID(0): Index by VID from fabric after MCAST_TABLE. 
+           * SGLORT(1): Only lower 12 bits used.
+           * DGLORT(2): Index by DGLORT after MCAST_TABLE. Only lower 12 bits used.
+           
+    +ENABLE_VLAN_UPDATE:1:RW:0
+    
+        Defines if egress or ingress VID is used to update transmit VIDs. Set to 0 to use ingress VID and set to 1 to use egress VID (after multicast update).   
+
+
+-register MOD_PER_PORT_CFG2[0..23] Port configuration
+  Defines the port configuration. 
+
+    >PG HLP_PG1
+    +ENABLE_PCP1_UPDATE:1:RW:0
+    
+        Defines if the VLAN1 PCP is updated or not. If enabled, then the 4-bit VPRI received from the frame handler will be mapped to a new 3 bit  Priority Code Point using MOD_VPRI1_MAP, this new code will be used to update the priority (independent of whether or not the VID or DEI/CFI in the VLAN tag was updated). If disabled, then the VLAN priority is not updated, even if the VID or DEI/CFI is updated in the tag. 
+        
+        This bit is not used if the received VLAN 1 tag is removed or if a new VLAN tag is added. 
+        
+    +ENABLE_PCP2_UPDATE:1:RW:0
+    
+        Defines if the VLAN2 PCP is updated or not. If enabled, then the 4-bit VPRI received from the frame handler will be mapped to a new 3 bit Priority Code Point using MOD_VPRI2_MAP, this new code will be used to update the priority (independent of whether or not the VID or CFI in the VLAN tag was updated). If disabled, then the VLAN priority is not updated, even if the VID or DEI/CFI is updated in the tag.
+        
+        This bit is not used if the received VLAN 2 tag is removed or if a new VLAN tag is added. 
+        
+    +ENABLE_DEI1_UPDATE:1:RW:0
+    
+        Defines if the VLAN CFI/DEI field is updated or not. If enabled, then the 4-bit VPRI received from the frame handler will be mapped through the 1-bit code using MOD_VPRI1_MAP, and the new 1 bit code will be used to update the CFI/DEI (independent of whether or not the VID or CFI in the VLAN tag was updated). If disabled, then the VLAN CFI/DEI is not updated when the VLAN ID is updated.
+        
+        This bit is not used if the received VLAN 1 tag is removed or if a new VLAN tag is added. 
+        
+    +ENABLE_DEI2_UPDATE:1:RW:0
+    
+        Defines if the VLAN CFI/DEI field is updated or not. If enabled, then the 4-bit VPRI received from the frame handler will be mapped through the 1-bit code using MOD_VPRI2_MAP, and the new 1 bit code will be used to update the CFI/DEI (independent of whether or not the VID or CFI in the VLAN tag was updated). If disabled, then the VLAN CFI/DEI is not updated when the VLAN ID is updated.
+        
+        This bit is not used if the received VLAN 2 tag is removed or if a new VLAN tag is added. 
+        
+    +VLAN1_E_TYPE:2:RW:0
+    
+        Defines the VLAN 1 Ethernet type to use. 
+        
+    +VLAN2_E_TYPE:2:RW:0
+    
+        Defines the VLAN 2 Ethernet type to use. 
+    
+    +ENABLE_DMAC_ROUTING:1:RW:0
+    
+        When set, enables the replacement of Destination MAC addresses on
+        outgoing routed (unicast and multicast) frames.
+        
+    +ENABLE_SMAC_ROUTING:1:RW:0
+    
+        When set, enables the replacement of Source MAC addresses on
+        outgoing routed (unicast and multicast) frames.
+        
+    +ENABLE_TTL_DECREMENT:1:RW:0
+    
+        When set, enables the decrement of the TTL field on outgoing routed
+        frames.
+
+    +ENABLE_ECN_MODIFICATION:1:RW:0
+    
+        When set, enables the modification of the ECN field on outgoing IP
+        frames.
+
+    +VID2_FIRST:1:RW:0
+     
+        Indicates if VID2 is sent before VID1 or after VID1. 
+
+    +VLAN_TAGGING:3:RW:5
+     
+        Indicates how VLAN tagging is done. This shall be combined with the tagging bit from the MOD_VLAN_TAG_VID1_MAP for full interpretation. Check MODIFY chapter for details. Only values 0..5 are defined, values of 6..7 are undefined.
+
+    +MIN_FRAME_SIZE:1:RW:0
+
+        Indicates the minimum frame size of egress port. 1 indicates 64 bytes, 0 indicates no minimum frame size constraints. Affects both TX stats reporting and metadata packet length.
+
+
+-register MOD_ROUTER_SMAC[0..63] Router SMAC
+  Indexed by l3_domain in metadata.
+  Defines which SMAC to use for routed frames
+    >PG HLP_PG1
+    +SMAC:48:RW:0
+
+
+-register MOD_VLAN_ETYPE[0..3] VLAN tag type
+  Defines 4 unique VLAN tag type. Which one is used depends on port configuration. 
+    >PG HLP_PG1
+    +TAG_TYPE:16:RW:8100
+        Value to be used as ETYPE. 
+
+
+#############################################################################
+# New MOD_PRELOAD registers for HLP
+
+-register MOD_PRELOAD0[0..3][0..15]  Commands supplied by PRELOAD_CMD.
+
+  Indexed first by the descriptor bank number, then by the value of
+  BASE_CMD.PRELOAD_CMD retrieved from that bank.
+
+  The bits retrieved from this register are ORed into the unpacked
+  descriptor.
+
+    >PG HLP_PG1
+    +OTR1:16:RW:0
+      OTR1 command to supply. Values for this command must be in MOD_DESC.
+    +OTR2:16:RW:0
+      OTR2 command to supply. Values for this command must be in MOD_DESC.
+    +MPLS:16:RW:0
+      MPLS command to supply. Values for this command must be in MOD_DESC.
+    +QOS:16:RW:0
+      MISC command to supply. Values for this command must be in MOD_DESC.
+  
+
+-register MOD_PRELOAD1[0..3][0..15]  Commands supplied by PRELOAD_CMD.
+
+  Indexed first by the descriptor bank number, then by the value of
+  BASE_CMD.PRELOAD_CMD retrieved from that bank.
+
+  The bits retrieved from this register are ORed into the unpacked
+  descriptor.
+
+    >PG HLP_PG1
+    +INR:16:RW:0
+      INR command to supply. Values for this command must be in MOD_DESC.
+    +META0:16:RW:0
+      META0 command to supply.
+    +META1:16:RW:0
+      META1 command to supply.
+    +META2:16:RW:0
+      META2 command to supply.
+
+
+#########################################################################
+# New Domain Mapping registers for HLP
+
+-register MOD_DOMAIN_TCAM_KEY[0..63] Domain mapper TCAM entries
+  Indexed by MOD_DOMAIN rule number.
+  Each rule is compared against the {port, operator_id, vid1, vid2} key.
+  An index matches when the following expression is true:
+
+  . ( ({port, operator_id, vid1, vid2} & MOD_DOMAIN_TCAM_MASK) == MOD_DOMAIN_TCAM_KEY )
+
+    >PG HLP_PG1
+    +PORT:6:RW:3F
+       value to compare against logical egress port
+    +OPERATOR_ID:4:RW:F
+       value to compare against operator_id
+    +VID1:12:RW:FFF
+       value to compare against final VID1
+    +VID2:12:RW:FFF
+       value to compare against final VID2
+
+
+-register MOD_DOMAIN_TCAM_MASK[0..63] Domain mapper TCAM entries
+  Indexed by MOD_DOMAIN rule number.
+  Each rule is compared against the (port, operator_id, vid1, vid2) key.
+  An index matches when the following expression is true:
+
+  . ( ({port, operator_id, vid1, vid2} & MOD_DOMAIN_TCAM_MASK) == MOD_DOMAIN_TCAM_KEY )
+
+    >PG HLP_PG1
+    +PORT:6:RW:0
+       which bits of logical egress port to compare
+    +OPERATOR_ID:4:RW:0
+       which bits of operator_id to compare
+    +VID1:12:RW:0
+       which bits of egress VLAN1 to compare
+    +VID2:12:RW:0
+       which bits of egress VLAN2 to compare
+
+
+-register MOD_DOMAIN_ACTION[0..63] Dommain mapper Action entries
+  Indexed by the MOD_DOMAIN rule number of the highest-numbered matching rule.
+  If there is no match, then the value in index 0 will be used.
+    >PG HLP_PG1
+    +PRIORITY_PROFILE:5:RW:0
+       A profile index for remapping egress priorities.
+
+
+-register MOD_DSCP_MAP[0..255] Maps internal DSCP to egress DSCP
+  Indexed by {priority_profile[4:0], internal_dscp[5:3]}.
+  One field for each possible dscp[2:0] value.
+    >PG HLP_PG1
+    +EGRESS_DSCP[7..0]:6:RW:0
+      Defines the egress DSCP associated with each internal dscp[2:0].
+
+
+-register MOD_VPRI1_MAP[0..31] VPRI1 translation
+  Defines VPRI1 priority map per egress priority_profile. 
+    >PG HLP_PG1
+    +VPRI[15..0]:4:RW:0
+      Maps internal VPRI to transmit VPRI1 (PCP, DEI/CFI). Bits 3..1 is PCP and bit 0 is DEI/CFI.
+
+
+-register MOD_VPRI2_MAP[0..31] VPRI2 translation
+  Defines VPRI2 priority map per egress priority_profile. 
+    >PG HLP_PG1
+    +VPRI[15..0]:4:RW:0
+      Maps internal VPRI to transmit VPRI2 (PCP, DEI/CFI). Bits 3..1 is PCP and bit 0 is DEI/CFI. 
+
+
+#############################################################################
+# New metadata registers for HLP
+
+-register MOD_DGLORT_MAP[0..63] DGLORT Decoder Match
+  An index matches when the following expression is true:
+
+    ( (DGLORT & Mask) == Value )
+
+    >PG HLP_PG1
+    +VALUE:16:RW:FFFF
+       Value to compare against the egress DGLORT
+    +MASK:16:RW:0
+       Selects which bits to compare.
+
+
+-register MOD_DGLORT_DEC[0..63] DGLORT Decoder Action
+  Defines how to extract Queue, Function, and FunctionType from DGLORT.
+
+  The MOD_DGLORT_DEC corresponding to the highest-numbered matching MOD_DGLORT_MAP rule is used.
+  The calculated Queue, Function, and Funcion_Type are written into metadata, overwriting
+  any value that MOD_MIRROR_PROFILE_TABLE1 (and IPP) may have written to metadata.
+  
+  If there is no matching rule, then the metadata is not overwritten.
+
+  The outputs are calcualted as follows:
+        . Queue        = Entry.QueueBase + (DGLORT[Entry.QueueOffset] << NumPriorityBits)
+        .                + (TC & ((1 << NumPriorityBits) - 1))
+        . Function     = Entry.FunctionBase + DGLORT[Entry.FunctionOffset]
+        . FunctionType = Entry.FunctionType
+
+  To pick an explicit queue or explicit function set the length field to zero
+  and in the case of an explicit queue also set the NumPriorityBits to 0.
+    >PG HLP_PG1
+    +QUEUE_BASE:11:RW:0
+       The base value used to compute the output queue 
+    +QUEUE_OFFSET_START:4:RW:0
+       The bit offset into DGLORT to extract the queue offset 
+    +QUEUE_OFFSET_LEN:4:RW:0
+       The length of the bitfield in DGLORT to extract 
+    +NUM_PRIORITY_BITS:2:RW:0
+       Indicates how many bits of TC to use to further offset the queue (starting from LSB of TC)
+    +FUNCTION_BASE:8:RW:0
+       The base value used to compute the output function number 
+    +FUNCTION_OFFSET_START:4:RW:0
+       The bit offset into DGLORT to extract the function offset 
+    +FUNCTION_OFFSET_LEN:4:RW:0
+       The length of the bitfield in DGLORT to extract 
+    +FUNCTION_TYPE:1:RW:0
+       Sets the output function type to either PF (1) or VF (0) 
+
+
+-register MOD_RIMMON_FN  Enable RIMMON Egress ONPI translation per port.
+    >PG HLP_PG1
+    +PORT_MASK:24:RW:0
+      Bit i is set if the RIMMON Egress translation is enabled on port i.
+      When translation is enabled, the ONPI type is set to new_type, and
+      the capture_idx/v fields are moved from non-RIMMON position to RIMMON position.
+    +NEW_TYPE:8:RW:0
+      value to set ONPI type to when the RIMMON Egress translation is enabled.
+
+
+-register MOD_CPM_FN  Enable CPM Egress ONPI function per port.
+    >PG HLP_PG1
+    +PORT_MASK:24:RW:0
+      Bit i is set if the CPM Egress ONPI function is enabled on port i.
+      When this function is enabled, bits 119..104 of the ONPI metadata are overwritten
+      with the packet byte length, inclusive of the FCS.
+
+
+-register MOD_CD_FN  Enable metadata CD field update per port.
+  Contains one field for each possible logical tx_port.
+    * mode=0: CD field is not written.
+    * mode=1: TC is written into the CD field.
+    * mode=2: MOD_CD_MAP[cpk_cd] is written into the CD field. Used for CPM egress port.
+    >PG HLP_PG1
+    +MODE[23..0]:2:RW:0
+      CD write fn (NOP=0, TC=1, MOD_CD_MAP=2) for this port.
+
+
+-register MOD_CD_MAP[0..3]  Translate CPK CD to NAC CD.
+  Indexed by bits[5:4] of CPK CD.  Indices 2..3 are reserved for future expansion and should
+  always be zero. 
+    >PG HLP_PG1
+    +CD[15..0]:3:RW:0
+      The CD value to write into metadata for this CD[3:0].
+
+
+#############################################################################
+# New Modify Datapath registers for HLP
+
+-register MOD_DS_EXP[0..511]  DS to EXP mapping for MPLS2.ttlds_tgt
+  Uses the internal DS value selected by MPLS2 command and the egress priority_profile.
+  . index = {priority_profile[4:0], internal_ds[7:4]}
+    >PG HLP_PG1
+    +EXP[15..0]:3:RW:0
+      The EXP value to write into the MPLS label(s) for this ds[3:0].
+
+
+-register MOD_EXP_DS[0..15]  EXP to DS mapping for MPLS2.ds_src
+  Indexed via operator_id.
+  Select field via the EXP value from the MPLS label pointed to by MPLS_POP from FFU.
+    >PG HLP_PG1
+    +DS[7..0]:8:RW:0
+      The DS value to use for this EXP.
+
+
+-register MOD_CSUM_CFG Modify Checksum controls
+  Defines special checksum controls.
+    >PG HLP_PG1
+    +TCP_ZERO_TRANSMIT:1:RW:0
+      A zero-value TCP checksum can be transmitted as 0x0000 or 0xFFFF. If set, zero checksums will be 0xFFFF. The default is 0x0000. This setting is overridden when a packet arrives with a zero-value TCP checksum. In that case, the same received zero value will be used for transmit. 
+# We are assuming we can always strip the trailer.
+#    +Strip_Encap_Trailer:1:RW:0
+#      If set, then trailers (i.e., bytes exceeding l3_length) are always
+#      discarded when a packet is encapped.
+#      If clear, then trailers are preserved for packets processed SAF.
+#      Trailers are always discarded for packets encapped cut-through.
+
+
+-register MOD_MPLS_STACK_ET EtherType to preceed a new MPLS stack.
+  This register provides an EtherType to be applied to the outer packet
+  when creating a new MPLS stack. I.e., the EtherType field is set
+  to a value from this register when pushing MPLS labels to
+  a packet that ingressed with no MPLS stack.
+    >PG HLP_PG1
+    +USE_DMAC_MCAST:1:RW:1
+      Consider a packet multicast if the post-modification DMAC mcast bit is set.
+    +USE_IPP_MCAST:1:RW:1
+      Consider a packet multicast if the ingress processor indicates mcast.
+    +UCAST_ET:16:RW:8847
+      Ethertype to preceed MPLS in the unicast case.
+    +MCAST_ET:16:RW:8848
+      Ethertype to preceed MPLS in the multicast case.
+
+-register MOD_MPLS_RESTORE_ET EtherTypes to restore on MPLS removal.
+  This register is only consulted if the parser has not extracted
+  an outer IP header. It can be used to carry 2 non-IP EtherTypes
+  over MPLS, or it can enable Modify to restore the IP EtherTypes
+  in cases where the parser has not done L3 extraction.
+    >PG HLP_PG1
+    +SPLIT:20:RW:2
+      Label at which we change from ET1 to ET2.
+    +ET1:16:RW:0800
+      EtherType to use if label < split.
+    +ET2:16:RW:86dd
+      EtherType to use if label >= split.
+
+
+#############################################################################
+# New Modify Active Queue Management registers for HLP
+
+#-register MOD_QEWMA[0..23] Quantized EWMA per port
+#  Two QEWMA can be cached for each port.  For debug purposes only. 
+#    >PG HLP_PG1
+#    +QEWMA0:4:RW:0
+#      Quantized EWMA for index 0
+#    +QEWMA1:4:RW:0
+#      Quantized EWMA for index 1
+#
+#-register MOD_DCTCP_MARK[0..23] DCTCP mark per port
+#  Two DCTCP marks can be cached for each port.  For debug purposes only. 
+#    >PG HLP_PG1
+#    +DCTCP0:4:RW:0
+#      DCTCP mark for index 0
+#    +DCTCP1:4:RW:0
+#      DCTCP mark for index 1
+
+-register MOD_AQM_PROFILE[0..255] AQM profile for each (priority_profile, DSCP)
+  In Active Queue Management, the egress priority_profile and Differentiated Services Code Point (DSCP) are used to look up the profile in this register.
+  . index = {priority_profile[4:0], internal_dscp[5:3]}
+
+  One profile field for each possible internal dscp[2:0] value.
+  Each field is formatted as follows:
+      * bits[4:3] = Mode - Selects the AQM marking policy.
+      * bit[2] = SrcIdx - Provides either the ewma index or dctcp index.
+      * bit[1] = EcnEligibleMark - Set to check ECN eligibility before marking.
+      * bit[0] = DropNonEcn - TX drop non-ECN eligible packets if they are to be marked.
+
+  Mode is encoded as
+          * DISABLED(0): No AQM active on this profile. 
+          * RED(1): Use the QEWMA to determine probabilistic marking.
+          * DCTCP(2): Use the selected DCTCP mark bit to determine marking.
+
+    >PG HLP_PG1
+    +PROFILE[7..0]:5:RW:0
+      AQM profile associated with each internal dscp[2:0].
+
+
+-register MOD_WRED_LEVEL[0..15] QEWMA to drop probability conversion
+  When RED mode is selected in the AQM profile, the 16-bit WRED level value is
+  looked up in this register using the selected QEWMA as the index.
+    >PG HLP_PG1
+    +WRED_LEVEL:16:RW:0
+      ECN marking probability, where each increment is a 1/(2^16) step.
+      Marking is applied when (WredLevel >= 16-bit LFSR).
+        * When WredLevel==0xFFFF, the probability of marking is 1.
+        * When WredLevel==0x0000, the probability of marking is 0.
+
+
+#############################################################################
+# Stats-related
+
+-register MOD_STATS_BANK_FRAME[0..383] Modify stats frame counters
+  Defines modify stats frame counters. The index is the counter (16 per port) for the group.
+    
+    * Group 7: MOD_STATS_BANK_FRAME[port*16+type], type defined in TX_STATS_BANK_7 
+    
+    >PG HLP_PG1
+    +FRAME_COUNTER:48:vRW:0
+        Frame counter
+
+
+-register MOD_STATS_BANK_BYTE[0..383] Modify stats byte counters
+  Defines modify stats byte counters. The index is the counter (16 per port) for the group.
+    
+    * Group 7: MOD_STATS_BANK_BYTE[port*16+type], type defined in TX_STATS_BANK_7 
+    
+    >PG HLP_PG1
+    +BYTE_COUNTER:56:vRW:0
+        Byte Counter
+
+
+-register MOD_STATS_PER_PORT_LEN[0..23] For Debug Only, Reserved
+  Management to this register is for debugging purpose. Be cautions about writing. It records the length of a frame that is egressing for each port.
+    >PG HLP_PG1
+    +LENGTH:14:vRW:0
+      Length of current egressing frame
+
+
+-register MOD_SAVED_HDR[0..23] For Debug Only, Reserved
+  Management to this register is for debugging purpose. Be cautious about writing. It defines the per-port saved header information from sop (start of packet/frame) segment, which is used for non-sop segment.
+    >PG HLP_PG1
+    +ROT:9:vRW:0
+        Value of rotation offset for next segment. This field changes every segment and resets on sop.
+    +ERR:2:vRW:0
+        Value of error code.
+          NO_ERR(0): No error, normal packet.
+          FCS_ERR(1): Error in Ethernet FCS checksum.
+          FRAMING_ERR(2): Error in Ethernet framing.
+          INTERNAL_ERR(3): Internal HLP error, or termination due to reset
+    +TRUNC:1:vRW:0
+        Value for truncation
+    +TX_DISP:4:vRW:0
+        Value for tx_disp, same encoding as TX_STATS_BANK_7
+    +TX_DROP:1:vRW:0
+        Value for tx_drop
+    +L2_COUNT:5:vRW:0
+        Value for number of ports in L2 multicast, including mirror ports
+    +TX_FREE:1:vRW:0
+        Value for tx_free
+    +EPOCH:1:vRW:0
+        Value for epoch
+    +SMP:1:vRW:0
+        Value for Shared Memory Partition
+    +TC:3:vRW:0
+        Value for TC (traffic class)
+
+
+-register MOD_UPDATE_ERROR_RECORD Modify Update Error
+  Capture the last occuring error that is not filtered by the corresponding MOD_IM bit
+    >PG HLP_PG1
+    +WINDOW_PARSING:1:vRO:0
+        Asserted if packet is going through Window Parsing. Valid on all packets.
+    +MIRROR_PROFILE:6:vRO:0
+        Mux of mirror profiles from IPP. Set on all mirror frames.
+    +MIR_TYPE:2:vRO:0
+        Frame type. Set on VLAN tag errors.
+    +TX_TAG:2:vRO:0
+        VLAN tag egress action from IPP. Set on VLAN tag errors.
+    +MPLS_POP:3:vRO:0
+        Pop count from IPP. Set on all MPLS descriptor errors.
+    +MOD_IDX:18:vRO:0
+        MOD_IDX {pointer(16b), decap(1b), encap(1b)}. Set on descriptor errors.
+    +TX_PORT:5:vRO:0
+        Logical egress port. Set on all errors.
+    +REASON_CODE:8:vRO:0
+        Reason code corresponding to the error.
+
+
+-register MOD_IP Modify Interrupt Pending
+    >PG HLP_PG1
+    +ECN_DROP:1:vCW1:0
+        Dropped due to congestion.
+    +TTL1_DROP:1:vCW1:0
+        Dropped due to routed frame having TTL <= 1. 
+    +LOOPBACK_DROP:1:vCW1:0
+        Dropped due to MCAST loopback suppression. 
+    +TIMEOUT_DROP:1:vCW1:0
+        Dropped due to timeout in switch memory.
+    +L3_LEN_L4_CSUM_ERROR_MARK:1:vCW1:0
+        Marked in packet metadata due to L3 payload length or L4 checksum error.
+    +L4_CSUM_ERROR_DROP:1:vCW1:0
+        Dropped due to L4 checksum error.
+    +L3_LEN_ERROR_DROP:1:vCW1:0
+        Dropped due to L3 payload length error.
+    +MARKER_ERROR_DROP:1:vCW1:0
+        Dropped marker packet due to memory errors.
+    +TX_ERROR_DROP:1:vCW1:0
+        Dropped due to Tx error (SAF error from FC). 
+    +TX_ECC_DROP:1:vCW1:0
+        Dropped due to uncorrectable error (incl scheduler memories).
+    +INNER_L4_NONEXIST:1:vCW1:0
+        Descriptor L4 src/dst updates targeting an inner L4 header that is inaccessible.
+    +OUTER_L4_NONEXIST:1:vCW1:0
+        Descriptor L4 src/dst updates targeting an outer L4 header that is inaccessible.
+    +INNER_IP_NONEXIST:1:vCW1:0
+        IPP route, DSCP/ECN updates, or descriptor L3-header updates targeting an inner L3 header that is inaccessible.
+    +OUTER_IP_NONEXIST:1:vCW1:0
+        IPP route, DSCP/ECN updates, or descriptor L3-header updates targeting an outer L3 header that is inaccessible.
+    +INNER_MAC_NONEXIST:1:vCW1:0
+        IPP route or descriptor SMAC/DMAC updates targeting an inner L2 header that is inaccessible.
+    +OUTER_MAC_NONEXIST:1:vCW1:0
+        IPP route or descriptor SMAC/DMAC updates targeting an outer L2 header that is inaccessible.
+    +SIZE_ERROR_MIN:1:vCW1:0
+        Segment size < 18B after modification.
+    +SIZE_ERROR_MAX:1:vCW1:0
+        Segment size > 320B after modification.
+    +PKT_LEN_UPDATE:1:vCW1:0
+        Unable to update packet length in packet metadata due to mismatch of L4 checksum length input
+    +TTL_DEC_BELOW0:1:vCW1:0
+        TTL value after decrement below 0.
+    +TTLDS_SRC_NONEXIST:1:vCW1:0
+        DS_WR/TTL_WR indicated in QOS command but TTL_SRC or DS_SRC indicated to a location that does not exist.
+    +TTLDS_TGT_NONEXIST:1:vCW1:0
+        DS_WR/TTL_WR indicated in QOS command but TTLDS_TGT indicated to a location that does not exist.
+    +INNER_IP_MISMATCH:1:vCW1:0
+        Unable to perform frame transformation due to mismatch of inner IP version in packet and descriptor.
+    +OUTER_IP_MISMATCH:1:vCW1:0
+        Unable to perform frame transformation due to mismatch of outer IP version in packet and descriptor.
+    +MPLS_POP_EMPTY:1:vCW1:0
+        Unable to remove required number of MPLS labels with MPLS_POP descriptor command.
+    +POP_ELI_EMPTY:1:vCW1:0
+        Unable to perform POP_ELI MPLS descriptor command.
+    +POP_AL_EMPTY:1:vCW1:0
+        Unable to perform POP_AL MPLS descriptor command.
+    +MPLS_PUSH_FULL:1:vCW1:0
+        Unable to push the desired generic MPLS labels with the MPLS_PUSH descriptor command.
+    +PUSH_ELI_FULL:1:vCW1:0
+        Unable to perform PUSH_ELI MPLS descriptor command.
+    +PUSH_AL_FULL:1:vCW1:0
+        Unable to perform PUSH_AL MPLS descriptor command.
+    +INNER_TAG_EMPTY:1:vCW1:0
+        Unable to remove inner L2 tags with the descriptor command.
+    +OUTER_TAG_EMPTY:1:vCW1:0
+        Unable to remove outer L2 tags with the descriptor command.
+    +VLAN_TAG_EMPTY:1:vCW1:0
+        Unable to remove VLAN tags during the route step.
+    +INNER_TAG_FULL:1:vCW1:0
+        Unable to insert inner L2 tags with the descriptor command.
+    +OUTER_TAG_FULL:1:vCW1:0
+        Unable to insert outer L2 tags with the descriptor command
+    +VLAN_TAG_FULL:1:vCW1:0
+        Unable to add/insert VLAN tags during the route step.
+    +MEM_ERROR:1:vCW1:0
+        Memory ECC or parity error reported by the local memory controller.
+        Check all MOD_*_STATUS registers to find the source.
+
+
+-register MOD_IM Modify Interrupt Mask
+  The interrupt mask register controls if the corresponding interrupt source is presented to the interrupt hierarchy
+(bit is set to 0) or masked out (bit is set to 1).
+    >PG HLP_PG1
+    +ECN_DROP:1:RW:1
+        Dropped due to congestion.
+    +TTL1_DROP:1:RW:1
+        Dropped due to routed frame having TTL <= 1. 
+    +LOOPBACK_DROP:1:RW:1
+        Dropped due to MCAST loopback suppression. 
+    +TIMEOUT_DROP:1:RW:1
+        Dropped due to timeout in switch memory.
+    +L3_LEN_L4_CSUM_ERROR_MARK:1:RW:1
+        Marked in metadata due to L3 length or L4 checksum error.
+    +L4_CSUM_ERROR_DROP:1:RW:1
+        Dropped due to L4 checksum error.
+    +L3_LEN_ERROR_DROP:1:RW:1
+        Dropped due to L3 payload length error.
+    +MARKER_ERROR_DROP:1:RW:1
+        Dropped marker packet due to memory errors.
+    +TX_ERROR_DROP:1:RW:1
+        Dropped due to Tx error (SAF error from FC). 
+    +TX_ECC_DROP:1:RW:1
+        Dropped due to uncorrectable error (incl scheduler memories).
+    +INNER_L4_NONEXIST:1:RW:1
+        Descriptor L4 src/dst updates targeting an inner L4 header that is inaccessible.
+    +OUTER_L4_NONEXIST:1:RW:1
+        Descriptor L4 src/dst updates targeting an outer L4 header that is inaccessible.
+    +INNER_IP_NONEXIST:1:RW:1
+        IPP route, DSCP/ECN updates, or descriptor L3-header updates targeting an inner L3 header that is inaccessible.
+    +OUTER_IP_NONEXIST:1:RW:1
+        IPP route, DSCP/ECN updates, or descriptor L3-header updates targeting an outer L3 header that is inaccessible.
+    +INNER_MAC_NONEXIST:1:RW:1
+        IPP route or descriptor SMAC/DMAC updates targeting an inner L2 header that is inaccessible.
+    +OUTER_MAC_NONEXIST:1:RW:1
+        IPP route or descriptor SMAC/DMAC updates targeting an outer L2 header that is inaccessible.
+    +SIZE_ERROR_MIN:1:RW:1
+        Segment size < 18B after modification.
+    +SIZE_ERROR_MAX:1:RW:1
+        Segment size > 320B after modification.
+    +PKT_LEN_UPDATE:1:RW:1
+        Unable to update packet length in packet metadata due to mismatch of L4 checksum length input
+    +TTL_DEC_BELOW0:1:RW:1
+        TTL value after decrement below 0.
+    +TTLDS_SRC_NONEXIST:1:RW:1
+        DS_WR/TTL_WR indicated in QOS command but TTL_SRC or DS_SRC indicated to a location that does not exist.
+    +TTLDS_TGT_NONEXIST:1:RW:1
+        DS_WR/TTL_WR indicated in QOS command but TTLDS_TGT indicated to a location that does not exist.
+    +INNER_IP_MISMATCH:1:RW:1
+        Unable to perform frame transformation due to mismatch of inner IP version in packet and descriptor.
+    +OUTER_IP_MISMATCH:1:RW:1
+        Unable to perform frame transformation due to mismatch of outer IP version in packet and descriptor.
+    +MPLS_POP_EMPTY:1:RW:1
+        Unable to remove required number of MPLS labels with MPLS_POP descriptor command.
+    +POP_ELI_EMPTY:1:RW:1
+        Unable to perform POP_ELI MPLS descriptor command.
+    +POP_AL_EMPTY:1:RW:1
+        Unable to perform POP_AL MPLS descriptor command.
+    +MPLS_PUSH_FULL:1:RW:1
+        Unable to push the desired generic MPLS labels with the MPLS_PUSH descriptor command.
+    +PUSH_ELI_FULL:1:RW:1
+        Unable to perform PUSH_ELI MPLS descriptor command.
+    +PUSH_AL_FULL:1:RW:1
+        Unable to perform PUSH_AL MPLS descriptor command.
+    +INNER_TAG_EMPTY:1:RW:1
+        Unable to remove inner L2 tags with the descriptor command.
+    +OUTER_TAG_EMPTY:1:RW:1
+        Unable to remove outer L2 tags with the descriptor command.
+    +VLAN_TAG_EMPTY:1:RW:1
+        Unable to remove VLAN tags during the route step.
+    +INNER_TAG_FULL:1:RW:1
+        Unable to insert inner L2 tags with the descriptor command.
+    +OUTER_TAG_FULL:1:RW:1
+        Unable to insert outer L2 tags with the descriptor command.
+    +VLAN_TAG_FULL:1:RW:1
+        Unable to add/insert VLAN tags during the route step.
+    +MEM_ERROR:1:RW:1
+        Memory ECC or parity error reported by the local memory controller.
+        Check all MOD_*_STATUS registers to find the source.
+

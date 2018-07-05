@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+<!-- show -->
+<command>
+    <name>show</name>
+    <help>Show a property</help>
+
+    <!-- show rbridge -->
+    <command>
+        <filter type="family">
+            <allow>FM6000</allow>
+        </filter>
+        <name>rbridge</name>
+        <help>Show a remote RBridge</help>
+        <handler>tpHandleShowRBridge</handler>
+
+        <!-- show rbridge <tunnelId> -->
+        <argument>
+            <name>!&lt;tunnelId&gt;</name>
+            <help>Virtual tunnel ID</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Show all remote RBridges</help>
+            </argument>
+        </argument> <!-- end show rbridge <tunnelIds> -->
+    </command>  <!-- end show rbridge -->
+
+    <!-- show rbridge-disttree -->
+    <command>
+        <filter type="family">
+            <allow>FM6000</allow>
+        </filter>
+        <name>rbridge-disttree</name>
+        <help>Show a RBridge Distribution Tree</help>
+        <handler>tpHandleShowRBridgeDistTree</handler>
+
+        <!-- show rbridge-disttree <tunnelId> -->
+        <argument>
+            <name>!&lt;tunnelId&gt;</name>
+            <help>Virtual tunnel ID</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Show all RBridge Distribution Trees</help>
+            </argument>
+        </argument> <!-- end show rbridge-disttree <tunnelIds> -->
+    </command>  <!-- end show rbridge-disttree -->
+
+</command>  <!-- end show -->
+
+<!-- del -->
+<command>
+    <name>del</name>
+    <help>Delete MAC address, VLANs, LAGs, or ports from VLANs, or counters from VLANs or LAGs</help>
+
+    <!-- del rbridge -->
+    <command>
+        <name>rbridge</name>
+        <help>Delete a RBridge node</help>
+        <handler>tpHandleDeleteRBridge</handler>
+
+        <!-- del rbridge <tunnelId> -->
+        <argument>
+            <filter type="family">
+                <allow>FM6000</allow>
+            </filter>
+            <name>!&lt;tunnelId&gt;</name>
+            <help>Virtual tunnel ID to reference the specific RBridge node to delete</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete the RBridge referenced by this virtual tunneId</help>
+            </argument>
+        </argument> <!-- <tunnelId> -->
+    </command>  <!-- end del rbridge -->
+
+    <!-- del rbridge-disttree -->
+    <command>
+        <filter type="family">
+            <allow>FM6000</allow>
+        </filter>
+        <name>rbridge-disttree</name>
+        <help>Delete a RBridge Distribution Tree</help>
+        <handler>tpHandleDeleteRBridgeDistTree</handler>
+
+        <!-- del rbridge-disttree <tunnelId> -->
+        <argument>
+            <name>!&lt;tunnelId&gt;</name>
+            <help>Virtual tunnel ID to reference the specific RBridge Distribution Tree to delete</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete the RBridge Distribution Tree referenced by this virtual tunneId</help>
+            </argument>
+        </argument> <!-- <tunnelId> -->
+    </command>  <!-- end del rbridge -->
+
+</command>  <!-- end del -->
+
+
+<!-- create -->
+<command>
+    <name>create</name>
+    <help>Create VLANs, LAGs, multicast groups, ACLs, etc.</help>
+
+    <!-- create rbridge -->
+    <command>
+        <filter type="family">
+            <allow>FM6000</allow>
+        </filter>
+        <name>rbridge</name>
+        <help>Create a remote RBridge</help>
+        <handler>tpHandleCreateRBridge</handler>
+
+        <!-- create rbridge <mac> -->
+        <argument>
+            <name>!&lt;mac&gt;</name>
+            <help>NextHop RBridge MAC used to reach this remote RBridge</help>
+
+            <!-- create rbridge <mac> <nickname> -->
+            <argument>
+                <name>!&lt;nickname&gt;</name>
+                <help>Remote RBridge NickName (16-bit value)</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Create the specified remote RBridge</help>
+                </argument>
+            </argument> <!-- <nickname> -->
+        </argument> <!-- <mac> -->
+    </command> <!-- end create rbridge -->
+
+    <!-- create rbridge-disttree -->
+    <command>
+        <filter type="family">
+            <allow>FM6000</allow>
+        </filter>
+        <name>rbridge-disttree</name>
+        <help>Create a RBridge Distribution Tree</help>
+        <handler>tpHandleCreateRBridgeDistTree</handler>
+
+        <!-- create rbridge-disttree <nickname> -->
+        <argument>
+            <name>!&lt;nickname&gt;</name>
+            <help>RBridge Distribution Tree  (16-bit value) to create</help>
+            <!-- create rbridge-disttree <nickname> <hopcnt>-->
+            <argument>
+                <name>!&lt;hopcnt&gt;</name>
+                <help>Set RBridge Distribution Tree Hop Count</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Create the specified RBridge Distribution Tree</help>
+                </argument>
+            </argument> <!-- end create rbridge-disttree <nickname> <hopcnt> -->
+
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Create the specified RBridge Distribution Tree</help>
+            </argument>
+        </argument> <!-- end create rbridge-disttree <nickname> -->
+    </command>  <!-- end create rbridge-disttree -->
+
+</command>  <!-- end create -->
+
+<!-- set -->
+<command>
+    <name>set</name>
+    <help>Set a property</help>
+
+    <!-- set rbridge -->
+    <command>
+        <filter type="family">
+            <allow>FM6000</allow>
+        </filter>
+        <name>rbridge</name>
+        <help>Update a remote RBridge entry</help>
+        <handler>tpHandleUpdateRBridge</handler>
+
+        <!-- set rbridge <tunnelId> -->
+        <argument>
+        <name>!&lt;tunnelId&gt;</name>
+        <help>Virtual tunnel ID to reference the specific RBridge node to delete</help>
+
+            <!-- set rbridge <tunnelId> <mac> -->
+            <argument>
+                <name>!&lt;mac&gt;</name>
+                <help>NextHop RBridge MAC used to reach this remote RBridge</help>
+
+                <!-- set rbridge <tunnelId> <mac> <nickname> -->
+                <argument>
+                    <name>!&lt;nickname&gt;</name>
+                    <help>Remote RBridge NickName (16-bit value)</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Update the specified remote RBridge</help>
+                    </argument>
+                </argument> <!-- <nickname> -->
+            </argument> <!-- <mac> -->
+        </argument> <!-- <tunnelId> -->
+    </command> <!-- end set rbridge -->
+
+    <!-- set rbridge-disttree -->
+    <command>
+        <filter type="family">
+            <allow>FM6000</allow>
+        </filter>
+        <name>rbridge-disttree</name>
+        <help>Update a RBridge Distribution Tree entry</help>
+        <handler>tpHandleUpdateRBridgeDistTree</handler>
+
+        <argument>
+            <!-- set rbridge-disttree <tunnelId> -->
+            <name>!&lt;tunnelId&gt;</name>
+            <help>Virtual tunnel ID to reference the specific RBridge Distribution Tree to delete</help>
+
+            <!-- set rbridge-disttree <tunnelId> <nickname> -->
+            <argument>
+                <name>!&lt;nickname&gt;</name>
+                <help>RBridge Distribution Tree  (16-bit value) to update</help>
+                <!-- set rbridge-disttree <tunnelId> <nickname> <hopcnt>-->
+                <argument>
+                    <name>!&lt;hopcnt&gt;</name>
+                    <help>Update RBirdge Distribution Tree Hop Count</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Update the specified RBridge Distribution Tree</help>
+                    </argument>
+                </argument> <!-- <hopcnt> -->
+
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Update the specified RBridge Distribution Tree</help>
+                </argument>
+            </argument> <!-- <nickname> -->
+        </argument> <!-- <tunnelId> -->
+    </command>  <!-- end set rbridge-disttree -->
+
+</command>  <!-- end set -->
+
+</config>

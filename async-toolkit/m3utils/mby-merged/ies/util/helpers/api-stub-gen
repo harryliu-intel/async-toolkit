@@ -1,0 +1,370 @@
+#!/usr/bin/perl
+#
+# stubgen <xml> <log-category> <doc-category> <output-stub>
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use XML::Twig;
+
+my ($header, $logCategory, $docCategory, $outputStub, $apiEntry, $funcOnly);
+
+my $result = GetOptions("header=s"          => \$header,
+                        "log-cat=s"         => \$logCategory,
+                        "doc-cat=s"         => \$docCategory,
+                        "api-entry"         => \$apiEntry,
+                        "functions-only"    => \$funcOnly,
+                        "output=s"          => \$outputStub);
+
+if (!defined($header) || !defined($logCategory) ||
+    !defined($docCategory) || !defined($outputStub))
+{
+    printf <<EOF;
+Usage: api-stub-gen [ ... <options> ... ]
+
+Options:
+    --header=<file>         The header file to generate stubs for
+    --log-cat=<category>    The frament to add to FM_LOG_CAT_ to be use
+                            in calls to the logging API
+    --doc-cat=<category>    The doxygen group for documentation
+    --api-entry             These functions are customer exposted
+    --functions-only        Only generate outputs for functions
+    --output=<file>         The output C file to create
+
+EOF
+    exit(-1);
+}
+
+
+printf("Generating output stub $outputStub from header $header...\n");
+
+open(SWIGIF, ">stubgen.i");
+print SWIGIF "\%module STUBGEN";
+print SWIGIF "\%include \"$header\"";
+close(SWIGIF);
+
+system("swig -xml stubgen.i");
+
+my $twig = XML::Twig->new();
+$twig->parsefile("stubgen_wrap.xml");
+
+my $root = $twig->root();
+
+my $functionCount = 0;
+my $functionList = [];
+
+foreach my $cdecl (descend($root, "cdecl"))
+{
+    my ($attr, $param) = parseCDECL($cdecl);
+
+    if (defined($attr))
+    {
+        $functionList->[$functionCount]->{attributes} = $attr;
+        $functionList->[$functionCount]->{params} = $param;
+
+        $functionCount++;
+    }
+}
+
+system("rm -f stubgen.i stubgen_wrap.xml");
+
+my $date = `date '+%B %d, %Y'`; chomp($date);
+
+if ($date =~ m/(.*) (\d+), (.*)/)
+{
+    my $x = $1;
+    my $t = $2;
+    my $z = $3;
+    $t =~ s/^0+//;
+    $date = "$x $t, $z";
+}
+
+open(OUT, ">$outputStub");
+
+if (!$funcOnly)
+{
+    print OUT<<EOF;
+/* vim:ts=4:sw=4:expandtab
+ * (No tabs, indent level is 4 spaces)  */
+/*****************************************************************************
+ * File:            $outputStub 
+ * Author:          Fulcrum Microsystems
+ * Creation Date:   $date 
+ * Description:     
+ *
+ * Copyright (C) 2005-2007 Fulcrum Microsystems, Inc.  All rights reserved.
+ * Unauthorized disclosure is prohibited.
+ *****************************************************************************/
+
+#include <fm_sdk_int.h>
+
+/*****************************************************************************
+ * Macros, Constants & Types
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Global Variables
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Local Variables
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Local function prototypes.
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Local Functions
+ *****************************************************************************/
+
+/*****************************************************************************
+ * Public Functions
+ *****************************************************************************/
+
+EOF
+}
+
+for(my $f = 0; $f < $functionCount; $f++)
+{
+    my $attr = $functionList->[$f]->{attributes};
+    my $params = $functionList->[$f]->{params};
+
+    my $functionName = $attr->{'name'};
+    my $returnType = $attr->{'type'};
+
+print OUT<<EOF;
+/*****************************************************************************/
+/** $functionName
+ * \\ingroup $docCategory
+ *
+ * \\desc            Insert description here...
+ *
+EOF
+
+    foreach my $p (@$params)
+    {
+        my $pname = $p->{'name'}; 
+        my $defaultDesc = "";
+
+        if ($pname eq "sw")
+        {
+            $defaultDesc = "the switch number to operate on.";
+        }
+
+        my $ptype = $p->{'type'}; 
+        my $isPointer = ($ptype =~ m/^p\./) ? 1 : 0;
+
+        $ptype =~ s/^p.(.*)/$1/;
+
+        my $dir = "in";
+
+        if ($isPointer)
+        {
+            $dir = "out";
+        }
+
+        printf(OUT " * \\param%-10s $pname is $defaultDesc\n *\n", "[$dir]");
+    }
+print OUT<<EOF;
+ *
+ * \\return          FM_OK if successful.
+ *
+ *****************************************************************************/
+EOF
+    my $hasSwArg = 0;
+    my $tmp = sprintf("$returnType $functionName(");
+    printf(OUT "$tmp");
+    my $llen = length($tmp);
+    my @pargs = ();
+    for(my $pc = 0; $pc < scalar(@$params); $pc++)
+    {
+        my $p = $params->[$pc];
+
+        my $pname = $p->{'name'}; 
+        my $ptype = $p->{'type'}; 
+        my $isPointer = ($ptype =~ m/^p\./) ? 1 : 0;
+
+        if ($isPointer)
+        {
+            $ptype .= " *";
+            $ptype =~ s/^p.//;
+        }
+
+        if ($pname eq "sw")
+        {
+            $hasSwArg = 1;
+        }
+
+        my $paramStr = sprintf("$ptype%s$pname", ($isPointer ? "" : " "));
+
+        if ($llen + length("$paramStr, ") > 80)
+        {
+            printf(OUT "\n%s", " " x length($tmp));
+            $llen = length($tmp);
+        }
+        printf(OUT $paramStr);
+
+        $llen += length($paramStr);
+
+        if ($pc < (scalar(@$params) - 1))
+        {
+            printf(OUT ", ");
+            $llen += 2;
+        }
+    }
+    printf(OUT ")\n");
+
+    printf(OUT "{\n");
+
+    printf(OUT "    FM_LOG_ENTRY%s(FM_LOG_CAT_$logCategory,\n",
+           $apiEntry ? "_API" : "");
+    printf(OUT "                 %s", 
+           $apiEntry ? "    " : "");
+
+    my @fmtStrParts = ();
+    my @fmtArgParts = ();
+    for(my $pc = 0; $pc < scalar(@$params); $pc++)
+    {
+        my $p = $params->[$pc];
+
+        my $pname = $p->{'name'}; 
+
+        my $ptype = $p->{'type'}; 
+        my $isPointer = ($ptype =~ m/^p\./) ? 1 : 0;
+
+        if ($isPointer)
+        {
+            push(@fmtStrParts, "$pname=\%p"); 
+            push(@fmtArgParts, "(void *) $pname");
+        }
+        else
+        {
+            if ($ptype eq "fm_int")
+            {
+                push(@fmtStrParts, "$pname=\%d"); 
+                push(@fmtArgParts, "$pname");
+            }
+        }
+    }
+
+    printf(OUT "\"%s\\n\",\n", join(", ", @fmtStrParts));
+    printf(OUT "                 %s%s);\n", 
+           $apiEntry ? "    " : "",
+           join(", ", @fmtArgParts));
+    printf(OUT "\n");
+
+    if ($hasSwArg)
+    {
+        printf(OUT "    VALIDATE_AND_PROTECT_SWITCH(sw);\n\n");
+    }
+
+    for(my $pc = 0; $pc < scalar(@$params); $pc++)
+    {
+        my $p = $params->[$pc];
+
+        my $pname = $p->{'name'}; 
+        printf(OUT "    FM_NOT_USED($pname);\n");
+    }
+    printf(OUT "\n");
+    if ($hasSwArg)
+    {
+        printf(OUT "    UNPROTECT_SWITCH(sw);\n\n");
+    }
+
+    printf(OUT "    FM_LOG_EXIT%s(FM_LOG_CAT_$logCategory, FM_OK);\n\n",
+           $apiEntry ? "_API" : "");
+    printf(OUT "} /* end $functionName */\n\n");
+    
+}
+
+close(OUT);
+
+#############################################################################
+#                               Helper Functions                            #
+#############################################################################
+
+sub descend
+{
+    my ($node, $tag) = @_;
+    my $child;
+    my @results = ();
+
+    foreach $child ($node->children())
+    {
+        if ($child->tag() =~ m/include/i)
+        {
+            push (@results, descend($child, $tag));
+        }
+        elsif ($child->tag() =~ m/$tag/i)
+        {
+            push (@results, $child);
+        }
+    }
+
+    return @results;
+}
+
+sub parseCDECL
+{
+    my ($node) = @_;
+    my @alist = $node->children("attributelist");
+    my @list = $alist[0]->children();
+    my $fname;
+    my @fargs;
+    my $isf = 0;
+
+    my $attributes = handleAttributeList($alist[0]);
+    my $parameters = handleParameters($alist[0]->children("parmlist"));
+
+    if ($attributes->{'kind'} eq "function")
+    {
+        return ($attributes, $parameters);
+    }
+    else
+    {
+        return (undef, undef);
+    }
+}
+
+sub handleAttributeList
+{
+    my ($node) = @_;
+    my $attr = {};
+
+
+    foreach my $attrNode ($node->children())
+    {
+        if ($attrNode->tag eq "attribute")
+        {
+            $attr->{$attrNode->att('name')} = $attrNode->att('value');
+        }
+    }
+
+    return $attr;
+}
+
+sub handleParameters
+{
+    my (@alistNodes) = @_;
+
+    if (!@alistNodes)
+    {
+        return [];
+    }
+
+    my @parmNodes = $alistNodes[0]->children("parm");
+    my $params = [];
+
+    foreach my $pn (@parmNodes)
+    {
+        my @al = $pn->children("attributelist");
+
+        my $pattr = handleAttributeList($al[0]);
+
+        push (@$params, $pattr);
+    }
+
+    return $params;
+}

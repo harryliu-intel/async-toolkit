@@ -1,0 +1,10 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+
+`include "lib_udp.rdl"
+
+property AddressBits   { type = number; component = addrmap; };
+property ResetDomains  { type = string; component = addrmap; };
+property ArrayedMaps   { type = number; component = addrmap; };
+property ArrayedFields { type = number; component = field;   };

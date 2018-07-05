@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+<!-- add -->
+<command>
+    <name>add</name>
+
+    <!-- add lbg -->
+    <command>
+        <filter type="family">
+                <deny>FM2000</deny>
+        </filter>
+
+        <name>lbg</name>
+        <help>Add ports to load-balancing groups</help>
+
+        <!-- add lbg port -->
+        <command>
+            <name>port</name>
+            <help>Add member ports to a load-balancing group</help>
+            <handler>tpHandleAddLBGPort</handler>
+
+            <!-- add lbg port <lbg> -->
+            <argument>
+                <name>!&lt;lbg&gt;</name>
+                <help>The group to be updated</help>
+
+                <!-- add lbg port <lbg> <ports> -->
+                <argument>
+                    <name>!&lt;ports&gt;</name>
+                    <help>The port numbers to add to the group</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>add the ports to the group</help>
+                    </argument>
+                </argument> <!-- <ports> -->
+            </argument> <!-- <lbg> -->
+
+        </command>  <!-- end add lbg port -->
+    </command>  <!-- end add lbg -->
+
+</command>  <!-- end add -->
+
+<!-- create -->
+<command>
+    <name>create</name>
+
+    <!-- create lbg -->
+    <command>
+        <filter type="family">
+                <deny>FM2000</deny>
+        </filter>
+
+        <name>lbg</name>
+        <help>Create load-balancing group</help>
+        <handler>tpHandleCreateLBG</handler>
+
+        <!-- create lbg <lbgs> -->
+        <argument>
+            <name>!&lt;lbg&gt;</name>
+            <help>Group number to create</help>
+
+            <!-- create lbg <lbgs> nplus1 -->
+            <argument>
+                <name>nplus1</name>
+                <help>Failover is to one replacement port (N+1 redundancy)</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Create the load-balancing group</help>
+                </argument>
+            </argument>
+
+            <!-- create lbg <lbgs> redirect -->
+            <argument>
+                <name>redirect</name>
+                <help>Failover is to one replacement port</help>
+
+                <!-- create lbg <lbgs> redirect <bins> -->
+                <argument>
+                    <name>!&lt;bins&gt;</name>
+                    <help>Number of bins</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Create the load-balancing group</help>
+                    </argument>
+                </argument>
+            </argument>
+
+            <!-- create lbg <lbgs> mapped -->
+            <argument>
+                <name>mapped</name>
+                <help>Distribution is specified by a distribution map</help>
+
+                <!-- create lbg <lbgs> mapped <bins> -->
+                <argument>
+                    <name>!&lt;bins&gt;</name>
+                    <help>Number of bins</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Create the load-balancing group</help>
+                    </argument>
+                </argument>
+            </argument>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Create the load-balancing group</help>
+            </argument>
+        </argument>
+    </command>  <!-- end create lbg -->
+
+</command>  <!-- end create -->
+
+<!-- del -->
+<command>
+    <name>del</name>
+
+    <!-- del lbg -->
+    <command>
+        <filter type="family">
+                <deny>FM2000</deny>
+        </filter>
+
+        <name>lbg</name>
+        <help>Remove load-balancing groups or members</help>
+        <handler>tpHandleDeleteLBG</handler>
+
+        <!-- del lbg <lbgs> -->
+        <argument>
+            <name>!&lt;lbgs&gt;</name>
+            <help>The group numbers to delete</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete the LBGs with the specified numbers</help>
+            </argument>
+        </argument>
+
+        <!-- del lbg port -->
+        <command>
+            <name>port</name>
+            <help>Remove member ports from load-balancing groups</help>
+            <handler>tpHandleDeleteLBGPort</handler>
+
+            <!-- del lbg port <lbg> -->
+            <argument>
+                <name>!&lt;lbg&gt;</name>
+                <help>The group number to be updated</help>
+
+                <!-- del lbg port <lbg> <ports> -->
+                <argument>
+                    <name>!&lt;ports&gt;</name>
+                    <help>The port numbers to remove from the group</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>remove the ports from the group</help>
+                    </argument>
+                </argument> <!-- <ports> -->
+            </argument> <!-- <lbg> -->
+        </command>  <!-- end del lbg port -->
+
+    </command>  <!-- end del lbg -->
+
+</command>  <!-- end del -->
+
+<!-- set -->
+<command>
+    <name>set</name>
+
+    <!-- set lbg -->
+    <command>
+        <filter type="family">
+                <deny>FM2000</deny>
+        </filter>
+
+        <name>lbg</name>
+        <help>Set load-balancing group properties</help>
+        <handler>tpHandleSetLBGConfig</handler>
+
+        <!-- set lbg <lbg> -->
+        <argument>
+            <name>!&lt;lbg&gt;</name>
+            <help>The group to update</help>
+
+            <!-- set lbg <lbg> redirect-method -->
+            <argument>
+                <name>redirect-method</name>
+                <help>Set port failover method in redirect mode</help>
+
+                <argument>
+                    <name>port</name>
+                    <help>Redirect traffic to target port</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set redirect method</help>
+                    </argument>
+                </argument>
+
+                <argument>
+                    <name>standby</name>
+                    <help>Hash traffic across all standby ports</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set redirect method</help>
+                    </argument>
+                </argument>
+
+                <argument>
+                    <name>all-ports</name>
+                    <help>Hash traffic across all ports</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set redirect method</help>
+                    </argument>
+                </argument>
+
+                <argument>
+                    <name>prefer-standby</name>
+                    <help>Hash traffic across standby ports, then all 
+                        ports</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set redirect method</help>
+                    </argument>
+                </argument>
+            </argument> <!-- redirect-method -->
+
+            <!-- set lbg <lbg> state -->
+            <argument>
+                <name>state</name>
+                <help>Set state of group</help>
+
+                <argument>
+                    <name>active</name>
+                    <help>Group is active</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set group state</help>
+                    </argument>
+                </argument>
+
+                <argument>
+                    <name>inactive</name>
+                    <help>Group is inactive</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set group state</help>
+                    </argument>
+                </argument>
+            </argument> <!-- state -->
+
+            <!-- set lbg <lbg> vlan -->
+            <argument>
+                <name>vlan</name>
+                <help>Set vlan associated with group</help>
+
+                <argument>
+                    <name>!&lt;vlan&gt;</name>
+                    <help>vlan number</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set vlan associated with this group</help>
+                    </argument>
+                </argument>
+            </argument> <!-- vlan -->
+
+            <!-- set lbg <lbg> map -->
+            <argument>
+                <name>map</name>
+                <help>Set bin mapping associated with group</help>
+
+                <argument>
+                    <name>!&lt;bin&gt;</name>
+                    <help>bin to map</help>
+                    <argument>
+                        <name>!&lt;port&gt;</name>
+                        <help>port to map</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set bin mapping associated with this group</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument> <!-- map -->
+        </argument> <!-- end set lbg <lbg> -->
+
+        <!-- set lbg port -->
+        <command>
+            <name>port</name>
+            <help>Set member port properties</help>
+            <handler>tpHandleSetLBGPort</handler>
+
+            <!-- set lbg port <lbg> -->
+            <argument>
+                <name>!&lt;lbg&gt;</name>
+                <help>The group to update</help>
+
+                <!-- set lbg port <lbg> <ports> -->
+                <argument>
+                    <name>!&lt;ports&gt;</name>
+                    <help>The member ports to set</help>
+
+                    <!-- set lbg port <lbg> <ports> mode -->
+                    <argument>
+                        <name>mode</name>
+                        <help>
+                            Set role of port when active and inactive
+                        </help>
+
+                        <argument>
+                            <name>active</name>
+                            <help>Traffic is distributed to port</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set port mode</help>
+                            </argument>
+                        </argument>
+
+                        <argument>
+                            <name>failover</name>
+                            <help>
+                                Traffic is redirected to redirect-target
+                            </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set port mode</help>
+                            </argument>
+                        </argument>
+
+                        <argument>
+                            <name>standby</name>
+                            <help>
+                                Serve as redirect target for another port
+                            </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set port mode</help>
+                            </argument>
+                        </argument>
+
+                        <argument>
+                            <name>inactive</name>
+                            <help>
+                                Disable the port from participating in the LBG
+                            </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set port mode</help>
+                            </argument>
+                        </argument>
+
+                    </argument> <!-- mode -->
+
+                    <!-- set lbg port <lbg> <ports> redirect-target -->
+                    <argument>
+                        <name>redirect-target</name>
+                        <help>Set port to receive redirected traffic</help>
+
+                        <argument>
+                            <name>!&lt;target-port&gt;</name>
+                            <help>Target port number</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Set port mode</help>
+                            </argument>
+                        </argument>
+                    </argument> <!-- redirect-target -->
+
+                </argument> <!-- <ports> -->
+            </argument> <!-- <lbg> -->
+
+        </command>  <!-- end set lbg port -->
+
+    </command>  <!-- end set lbg -->
+
+</command>  <!-- end set -->
+
+<!-- show -->
+<command>
+    <name>show</name>
+
+    <!-- show lbg -->
+    <command>
+        <filter type="family">
+                <deny>FM2000</deny>
+        </filter>
+
+        <name>lbg</name>
+        <help>Show load balancing groups</help>
+        <handler>tpHandleShowLBG</handler>
+
+        <!-- show lbg <lbgs> -->
+        <argument>
+            <name>!&lt;lbgs&gt;</name>
+            <help>The groups to display</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Show the LBGs with the specified numbers</help>
+            </argument>
+        </argument> <!-- end show lbg <lbgs> -->
+
+        <!-- show lbg port -->
+        <command>
+            <name>port</name>
+            <help>Show member port properties</help>
+            <handler>tpHandleShowLBGPort</handler>
+
+            <!-- show lbg port <lbg> -->
+            <argument>
+                <name>!&lt;lbg&gt;</name>
+                <help>The load-balancing group number</help>
+
+                <!-- show lbg port <lbg> <ports> -->
+                <argument>
+                    <name>!&lt;ports&gt;</name>
+                    <help>The member ports to display</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show the member ports</help>
+                    </argument>
+                </argument>  <!-- <ports> -->
+            </argument> <!-- <lbg> -->
+
+        </command>  <!-- end show lbg port -->
+        
+        <!-- show lbg map -->
+        <command>
+            <name>map</name>
+            <help>Show LBG bin map</help>
+            <handler>tpHandleShowLBGMap</handler>
+
+            <!-- show lbg map <lbg> -->
+            <argument>
+                <name>!&lt;lbg&gt;</name>
+                <help>The load-balancing bin map</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show the member ports</help>
+                </argument>
+             </argument> <!-- <lbg> -->
+
+        </command>  <!-- end show lbg map -->
+
+    </command>  <!-- end show lbg -->
+
+</command>  <!-- end show -->
+
+</config>

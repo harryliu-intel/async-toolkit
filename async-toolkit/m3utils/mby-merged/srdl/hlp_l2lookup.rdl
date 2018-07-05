@@ -1,0 +1,896 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+enum ma_lookup_entry_type_enum {
+  NotUsed              = 3'd0 { desc = "Not Used"; };
+  Provisional          = 3'd1 { desc = "Provisional Entry"; };
+  Dynamic              = 3'd2 { desc = "Dynamic Entry"; };
+  Secure               = 3'd3 { desc = "Secure Entry"; };
+  Static               = 3'd4 { desc = "Static Entry"; };
+  SecureStatic         = 3'd5 { desc = "SecureStatic Entry"; };
+};
+
+reg ma_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MAC table";
+  desc = "
+          The MAC table is used for destination lookup and source lookup. Source lookup
+          is used for learning. For both types of lookup, they share the same fields in 
+          the register except DGlort and SGlort. DGlort is used by destination lookup and
+          SGlort is used by source lookup.
+
+          The lookup key is composed of L2Domain, VID and MAC. For destination lookup, they
+          are egress L2Domain, egress VID and destination MAC. For source lookup, they are
+          ingress L2Domain, ingress VID and source MAC.
+
+          MAC table is organized as [0..5,0..8191] entries, while [5,1024..8191]
+          are ignored.
+
+          MA_TABLE[5,0..1023] are stored in TCAM. A valid MA_TABLE_TCAM entry is 
+	  always written by HW with inverse Key and KeyInvert values, so as to perform
+	  exact match.  The SW-visible value is equal to the TCAM Key.
+                    
+         ";
+  regwidth = 128;
+  accesswidth = 128;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+    ValRandomize = true;
+  } _RSVD5_[127:125] = 3'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+       Old source port when the entry is written due to management direct write. The entry count uses old_port to decrement its value. 5'b11111 causes the skip of decrementing. If OldPort equals NewPort, the count is not updated.
+       When the entry is updated (including initialization), OldPort should be the same as NewPort. 
+       When an entry is added, OldPort should be greater than 23.
+           ";
+    ValRandomize = true;
+  } OLD_PORT[124:120] = 5'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+       Source port when the entry is written.
+       When the entry is updated (including initialization), NewPort should be the same as OldPort. 
+       When the entry is deleted, NewPort should be greater than 23.
+           ";
+    ValRandomize = true;
+  } NEW_PORT[119:115] = 5'h0;
+  field {
+    encode = ma_lookup_entry_type_enum;
+    AccessType = "RW/V";
+    desc = "
+      The entry type can be one of the following (low to high priority):
+        0 = not used / not match
+        1 = provisional
+        2 = dynamic
+        3 = secure
+        4 = static
+        5 = secure static
+        
+        When writing to MA_TABLE[5,*], EntryType=0 causes cam to set as always mismatch.
+           ";
+    ValRandomize = true;
+  } ENTRY_TYPE[114:112] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD3_[111:110] = 2'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Each trigger has a MAC address ID for source address and one for 
+            destination address, as defined in TRIGGER_CONDITION_PARAM, that 
+            may be compared to this field. The trigger may match the source 
+            MAC address trigId, the destination MAC address trigId (which may 
+            be different than the source's) or both.
+          
+            Note that two trigger ID's are pre-assigned and may not be 
+            changed: 0x0 and 0x3F. See TRIGGER_CONDITION_PARAM.
+           ";
+    ValRandomize = true;
+  } TRIG_ID[109:104] = 6'h00;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            The source glort associated with the entry, which is canonicalized.
+           ";
+    ValRandomize = true;
+  } S_GLORT[103:88] = 16'h00;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            The destionation glort associated with the entry, which is canonicalized.
+           ";
+    ValRandomize = true;
+  } D_GLORT[87:72] = 16'h00;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD2_[71:70] = 2'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD1_[69:69] = 1'h00;
+  field {
+    AccessType = "RW/V";
+    desc = "
+           L2 domain.
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[68:60] = 9'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            VID Learning Group. In shared spanning tree mode, it is zero.
+           ";
+    ValRandomize = true;
+  } VID[59:48] = 12'h00;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            MAC Address
+           ";
+    ValRandomize = true;
+  } MAC_ADDRESS[47:0] = 48'h00;
+};
+
+regfile ma_table_rf {
+  desc = "
+         Each ma_table holds 8K entries.
+         ";
+  ma_table_r MA_TABLE[8192] += 16;
+};
+
+reg ma_aging_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MA time table";
+  desc = "MA time table recodes the time of each entry when it is aged";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Source port associated with the ma_table entry. Used to decrement per-port entry count due to aging.
+           ";
+    ValRandomize = true;
+  } PORT[17:13] = 5'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicating the aging is enabled or not.
+           ";
+    ValRandomize = true;
+  } AGING_ENABLE[12:12] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Exponent of the age time indicating the precision of the time.
+            26 to 31 are invalid.
+           ";
+    ValRandomize = true;
+  } EXPONENT[11:7] = 5'h1f;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Mantissa of the age time.
+           ";
+    ValRandomize = true;
+  } MANTISSA[6:0] = 7'h0;
+};
+
+reg ma_table_aging_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Time table configuration for clock tick and sweeping";
+  desc = "Time table configuration register for clock tick and sweeping";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           Defines the idle cycles between two sweep operations.
+           ";
+    ValRandomize = true;
+  } SWEEP_IDLE_WAIT_CYCLES[63:32] = 32'h0000_ffff;
+  field {
+    AccessType = "RW";
+    desc = "
+           Defines the cycles per tick. For each tick, time counter increments by 1.
+           ";
+    ValRandomize = true;
+  } CYCLES_PER_TICK[31:0] = 32'hffff_ffff;
+};
+
+reg ma_entry_life_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Per-port based life for MA Table entries";
+  desc = "
+         Defines the life of MA Table entries based on rx port
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Exponent of the life, representing the precision of aging time. 26 to 31 are invalid";
+    ValRandomize = true;
+
+  } EXPONENT[11:7] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "The life of an entry, to be added to current time for the aging time, Maximum value of delta is 64";
+    ValRandomize = true;
+  } DELTA[6:0] = 7'h0;
+};
+
+reg ma_table_dirty_count_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  HandCoded = true;
+  name = "MA Table dirty count";
+  desc = "
+         Records the number of dirty entries in MA Table
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "The number of dirty entries in MA Table";
+    ValRandomize = true;
+
+  } COUNT[15:0] = 16'h0;
+};
+
+reg ma_table_indirect_read_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MAC table";
+  desc = "
+         This register is used for ma_table to report dirty entry to management. 
+         ";
+  regwidth = 128;
+  accesswidth = 128;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+    ValRandomize = true;
+  } _RSVD4_[127:120] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+      New port in MA_TABLE entry
+           ";
+    ValRandomize = true;
+  } NEW_PORT[119:115] = 5'h0;
+  field {
+    encode = ma_lookup_entry_type_enum;
+    AccessType = "RO/V";
+    desc = "
+      The entry type can be one of the following (low to high priority):
+        0 = not used / not match
+        1 = provisional
+        2 = dynamic
+        3 = secure
+        4 = static
+        5 = secure static
+           ";
+    ValRandomize = true;
+  } ENTRY_TYPE[114:112] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD3_[111:111] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Indicates that a dirty entry ie read.
+           ";
+    ValRandomize = true;
+  } DIRTY[110:110] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Each trigger has a MAC address ID for source address and one for 
+            destination address, as defined in TRIGGER_CONDITION_PARAM, that 
+            may be compared to this field. The trigger may match the source 
+            MAC address trigId, the destination MAC address trigId (which may 
+            be different than the source's) or both.
+          
+            Note that two trigger ID's are pre-assigned and may not be 
+            changed: 0x0 and 0x3F. See TRIGGER_CONDITION_PARAM.
+           ";
+    ValRandomize = true;
+  } TRIG_ID[109:104] = 6'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            The source glort associated with the entry, which is canonicalized.
+           ";
+    ValRandomize = true;
+  } S_GLORT[103:88] = 16'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Bank of a MA_TABLE entry.
+           ";
+    ValRandomize = true;
+  } BANK[87:85] = 3'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Index of a MA_TABLE entry.
+           ";
+    ValRandomize = true;
+  } INDEX[84:72] = 13'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD2_[71:70] = 2'h00;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD1_[69:69] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           L2 domain.
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[68:60] = 9'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            VID Learning Group. In shared spanning tree mode, it is zero.
+           ";
+    ValRandomize = true;
+  } VID[59:48] = 12'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            MAC Address
+           ";
+    ValRandomize = true;
+  } MAC_ADDRESS[47:0] = 48'h00;
+};
+
+reg ma_table_indirect_write_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MAC table";
+  desc = "
+         This register is used for ma_table to report dirty entry to management. 
+         ";
+  regwidth = 128;
+  accesswidth = 128;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+    ValRandomize = true;
+  } _RSVD5_[127:120] = 8'h0;
+  field {
+    AccessType = "WO";
+    desc = "
+            Associated port for indirect write to MA_TABLE.
+           ";
+    ValRandomize = true;
+  } PORT[119:115] = 5'h0;
+  field {
+    encode = ma_lookup_entry_type_enum;
+    AccessType = "WO";
+    desc = "
+      The entry type can be one of the following (low to high priority):
+        0 = not used / not match
+        1 = provisional
+        2 = dynamic
+        3 = secure
+        4 = static
+        5 = secure static
+           ";
+    ValRandomize = true;
+  } ENTRY_TYPE[114:112] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD4_[111:110] = 2'h0;
+  field {
+    AccessType = "WO";
+    desc = "
+            Each trigger has a MAC address ID for source address and one for 
+            destination address, as defined in TRIGGER_CONDITION_PARAM, that 
+            may be compared to this field. The trigger may match the source 
+            MAC address trigId, the destination MAC address trigId (which may 
+            be different than the source's) or both.
+          
+            Note that two trigger ID's are pre-assigned and may not be 
+            changed: 0x0 and 0x3F. See TRIGGER_CONDITION_PARAM.
+           ";
+    ValRandomize = true;
+  } TRIG_ID[109:104] = 6'h00;
+  field {
+    AccessType = "WO";
+    desc = "
+            The source glort associated with the entry, which is canonicalized.
+           ";
+    ValRandomize = true;
+  } S_GLORT[103:88] = 16'h00;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD3_[87:72] = 16'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD2_[71:70] = 2'h00;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bit.
+           ";
+    ValRandomize = true;
+  } _RSVD1_[69:69] = 1'h00;
+  field {
+    AccessType = "WO";
+    desc = "
+           L2 domain.
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[68:60] = 9'h0;
+  field {
+    AccessType = "WO";
+    desc = "
+            VID Learning Group. In shared spanning tree mode, it is zero.
+           ";
+    ValRandomize = true;
+  } VID[59:48] = 12'h00;
+  field {
+    AccessType = "WO";
+    desc = "
+            MAC Address
+           ";
+    ValRandomize = true;
+  } MAC_ADDRESS[47:0] = 48'h00;
+};
+
+reg ma_dirty_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MA dirty table";
+  desc = "
+         Dirty means ma_table is updated by hardward learning. Each MA_TABLE entry has a corresponding dirty bit saved
+         in dirty table. So there are 41K bits in dirty table. Each 64-bit forms an entry in dirty table register.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Indicates if a MA_TABLE entry is dirty. Bit i in dirty table is MA_TABLE index mod 64.
+           ";
+    ValRandomize = true;
+  } DIRTY[63:0] = 64'h00;
+};
+
+reg ma_table_security_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "MA Secure Port Configuration";
+  desc = "
+         Indicating whether a port is secure port or not.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           0 - indicates port is unsecure and a new learning event on this port is accepted by hardware
+	   
+	   1 - indicates port is secure and a new learning event has to be validated by software
+           ";
+    ValRandomize = true;
+  } SECURE[16:16] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicates if limit of entries in MA_TABLE belonging to a port.
+           ";
+    ValRandomize = true;
+  } ENTRY_LIMIT[15:0] = 16'h00;
+};
+
+reg fwd_canonical_glort_cam_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Canonical glort lookup CAM";
+  desc = "Canonical glort lookup CAM";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of low—order bits to clear in a source glort that matches
+            this entry's LagGlort.
+           ";
+    ValRandomize = true;
+  } PORT_FIELD_SIZE[22:20] = 3'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Comparison to LagGlort is performed by first AND—ing the source
+            glort by ~(2**MaskSize — 1).
+           ";
+    ValRandomize = true;
+  } MASK_SIZE[19:16] = 4'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Each source glort will be masked and compared to this LAG glort. 
+            If it matches, the lower PortFieldSize bits will be cleared.
+           ";
+    ValRandomize = true;
+  } LAG_GLORT[15:0] = 16'h00;
+};
+
+reg ma_table_entry_count_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Entry count of MA_TABLE";
+  desc = "Entry count of MA_TABLE for each port";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            The number of entries in MA_TABLE belonging to a same source port.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+
+
+reg entry_count_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE Entry Count Overflow IP registers";
+  desc = "MA_TABLE Entry Count Overflow IP registers";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Interrupt pending bits, set whenever the counter reaches limits of corresponding port .
+           ";
+    ValRandomize = true;
+  } PENDING[23:0] = 24'h00;
+};
+
+reg entry_count_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE Entry Count Overflow IM registers";
+  desc = "MA_TABLE Entry Count Overflow IM registers";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bits.
+           ";
+    ValRandomize = true;
+  } MASK[23:0] = 24'h0ffffff;
+};
+
+reg ma_table_full_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE Full register";
+  desc = "MA_TABLE Full register";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Counting the event when a new entry is learned but there is no free space in MA_TABLE.
+           ";
+    ValRandomize = true;
+  } COUNT[31:0] = 32'h0;
+};
+
+reg ma_tcam_direct_read_ctl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE Direct Read Configuration for TCAM Read";
+  desc = "MA_TABLE Direct Read Configuration for TCAM Read";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           Control the source of direct read when reading TCAM. 
+
+           00: retrieve key from destination TCAM.Key field. 
+
+           01: retrieve key from destination TCAM.KeyInv.
+
+           10: retrieve key from source TCAM.Key field.
+
+           11: retrieve key from source TCAM.KeyInv field.
+           ";
+    ValRandomize = true;
+  } SEL[1:0] = 2'h0;
+};
+
+reg ma_sweep_ctl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE TCAM Sweeper Control";
+  desc = "MA_TABLE TCAM Sweeper Control register";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           The sweeper runs when this bit is set to 1.
+           ";
+    ValRandomize = true;
+  } ENABLE[4:4] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Set sweeper speed limit to one operation every
+           2^SweeperSpeed cycles.
+           ";
+    ValRandomize = true;
+  } SPEED[3:0] = 4'hf;
+};
+
+reg ma_sweep_ptr_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "For Debug Only, Reserved.";
+  desc = "MA_TABLE TCAM Sweeper Poiner";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+           Sweep address for TCAM sweeper address. Software can write this register to reset the starting address
+
+           ";
+    ValRandomize = true;
+  } INDEX[10:1] = 10'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+           Indicates that KeyInv of TCAM is read for sweeper.
+	   This field should only be written when the sweeper is disabled.
+           
+           ";
+    ValRandomize = true;
+  } INV[0:0] = 1'h0;
+};
+
+reg ma_sweep_err_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE TCAM Error Entry";
+  desc = "MA_TABLE TCAM Error Entry";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Record the first index of errornous TCAM entry that sweeper finds after ma_tcam_error_ip is cleared. 
+           ";
+    ValRandomize = true;
+  } INDEX[10:1] = 10'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+           Indicates that KeyInv of TCAM is read for sweeper.
+
+           ";
+    ValRandomize = true;
+  } INV[0:0] = 1'h0;
+};
+
+reg ma_tcam_err_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE TCAM Error IP register";
+  desc = "MA_TABLE TCAM Error IP register";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Interrupt pending bits, set whenever the TCAM sweeper encounters an error. .
+           ";
+    ValRandomize = true;
+  } PENDING[0:0] = 1'h0;
+};
+
+reg ma_tcam_err_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "MA_TABLE TCAM Error IM register";
+  desc = "MA_TABLE TCAM Error IM register";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bits.
+           ";
+    ValRandomize = true;
+  } MASK[0:0] = 1'h1;
+};
+
+
+reg ma_tcam_learning_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Enable or Disable MA_TABLE TCAM sweep enable in MA_SWEEP_CTL";
+  desc = "Enable or Disable MA_TABLE TCAM sweep enable in MA_SWEEP_CTL";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            When set to 1, learning into TCAM is disabled. New entry can't be added and old entry can't be updated by learning.
+            SW can still write to TCAM through direct management write.
+           ";
+    ValRandomize = true;
+  } DISABLED[0:0] = 1'h0;
+};
+
+
+reg ma_table_invalid_write_count_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Tracks the number of invalid direct and indirect writes to MA_TABLE.";
+  desc = "Tracks the number of invalid direct and indirect writes to MA_TABLE.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Incremented when an indirect write to MA_TABLE is requested with invalid New Port ID or invalid Old Port ID.
+           ";
+    ValRandomize = true;
+  } INVALID_INDIRECT_WRITES[63:32] = 32'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Incremented when a direct write to MA_TABLE is performed with invalid New Port ID.
+           ";
+    ValRandomize = true;
+  } INVALID_DIRECT_WRITES[31:0] = 32'h0;
+};
+
+addrmap hlp_L2LOOKUP_map {
+  name = "L2LOOKUP";
+  desc = "L2 Lookup Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 21;
+  ResetDomains = "SWITCH,MGMT";
+
+  ma_table_rf                     MA_TABLE[6]                     @0x000000 += 131072;// [8k]
+  ma_aging_table_r                MA_AGING_TABLE[41984]           @0x100000 += 8;
+  ma_dirty_table_r                MA_DIRTY_TABLE[656]             @0x180000 += 8;
+  ma_table_indirect_read_r        MA_TABLE_INDIRECT_READ[32]      @0x182000 += 16;  // for block access
+  ma_table_indirect_write_r       MA_TABLE_INDIRECT_WRITE[32]     @0x184000 += 16;  // for block access
+  ma_entry_life_cfg_r             MA_ENTRY_LIFE_CFG[24]           @0x186000 += 8;
+  ma_table_entry_count_r          MA_TABLE_ENTRY_COUNT[24]        @0x186100 += 8;
+  ma_table_security_cfg_r         MA_TABLE_SECURITY_CFG[24]       @0x186200 += 8;
+  fwd_canonical_glort_cam_r       FWD_CANONICAL_GLORT_CAM[16]     @0x186300 += 8;
+  ma_table_aging_cfg_r            MA_TABLE_AGING_CFG              @0x186400;
+  ma_table_dirty_count_r          MA_TABLE_DIRTY_COUNT            @0x186408;
+  entry_count_ip_r                ENTRY_COUNT_IP                  @0x186410;
+  entry_count_im_r                ENTRY_COUNT_IM                  @0x186418;
+  ma_table_full_r                 MA_TABLE_FULL                   @0x186420;
+  ma_tcam_direct_read_ctl_r       MA_TCAM_DIRECT_READ_CTL         @0x186428;
+  ma_sweep_ctl_r                  MA_SWEEP_CTL                    @0x186430;
+  ma_sweep_ptr_r                  MA_SWEEP_PTR                    @0x186438;
+  ma_sweep_err_r                  MA_SWEEP_ERR                    @0x186440;
+  ma_tcam_err_ip_r                MA_TCAM_ERR_IP                  @0x186448;
+  ma_tcam_err_im_r                MA_TCAM_ERR_IM                  @0x186450;
+  ma_tcam_learning_r              MA_TCAM_LEARNING                @0x186458;
+  ma_table_invalid_write_count_r  MA_TABLE_INVALID_WRITE_COUNT    @0x186460;
+};
+

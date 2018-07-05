@@ -1,0 +1,1266 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+reg cm_sweeper_tc_to_smp_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines The SMP Membership Per Traffic Class";
+  desc = "      
+          Defines the SMP membership per traffic class. The choices are:
+          
+             0: SMP 0
+             1: SMP 1
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_7[7:7] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_6[6:6] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_5[5:5] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_4[4:4] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_3[3:3] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_2[2:2] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_1[1:1] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_0[0:0] = 1'h00;
+};
+
+reg cm_tx_tc_private_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Private Watermark Per Traffic Class Per Port";
+  desc = "
+          Defines the watermark above which a transmit frame copy on this 
+          port can potentially be dropped.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } WATERMARK[14:0] = 15'h07fff;
+};
+regfile cm_tx_tc_private_wm_rf {
+  cm_tx_tc_private_wm_r CM_TX_TC_PRIVATE_WM[8] += 8;
+};
+
+reg cm_tx_tc_hog_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TX Hog Watermark";
+  desc = "
+          Defines the hog watermark per port and per traffic class above which
+          frames are not queued on this port. 
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } WATERMARK[14:0] = 15'h07fff;
+};
+regfile cm_tx_tc_hog_wm_rf {
+  cm_tx_tc_hog_wm_r CM_TX_TC_HOG_WM[8] += 8;
+};
+
+reg cm_rx_smp_private_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX Private Watermark Per SMP";
+  desc = "
+          Defines the private watermark per SMP per RX above which frames 
+          can get potentially dropped.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } WATERMARK[14:0] = 15'h07fff;
+};
+regfile cm_rx_smp_private_wm_rf {
+  cm_rx_smp_private_wm_r CM_RX_SMP_PRIVATE_WM[2] += 8;
+};
+
+reg cm_rx_smp_hog_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Maximum Number Of Segments Allowed Per Receiver Per SMP";
+  desc = "
+          Defines the maximum number of segments allowed per receiver per SMP
+          before a new frame is discarded.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } WATERMARK[14:0] = 15'h07fff;
+};
+regfile cm_rx_smp_hog_wm_rf {
+  cm_rx_smp_hog_wm_r CM_RX_SMP_HOG_WM[2] += 8;
+};
+
+reg cm_rx_smp_pause_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX Pause Watermark Per SMP";
+  desc = "
+          Defines the watermark per SMP per RX above which pause frames are
+          started or stopped.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Level at which a pause OFF is sent.
+           ";
+    ValRandomize = true;
+  } PAUSE_OFF[29:15] = 15'h07fff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Level at which a pause ON is sent.
+           ";
+    ValRandomize = true;
+  } PAUSE_ON[14:0] = 15'h07fff;
+};
+regfile cm_rx_smp_pause_wm_rf {
+  cm_rx_smp_pause_wm_r CM_RX_SMP_PAUSE_WM[2] += 8;
+};
+
+reg cm_shared_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Defines The Shared Watermark Per Switch Priority";
+  desc = "
+          Defines the shared watermark per switch priority above which packets 
+          are dropped if the shared pool usage, CM_SHARED_SMP_USAGE for the SMP
+          used by this switch priority is above this limit.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } WATERMARK[14:0] = 15'h021c;
+};
+
+reg cm_global_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines The Global Watermark";
+  desc = "
+          Defines the global watermark above which no new frames are accepted.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } WATERMARK[14:0] = 15'h05e20;
+};
+
+reg cm_pause_phys_port_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Defines The Physical Port";
+  desc = "
+          Defines the physical port number for the corresponding logical port.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Physical port.
+           ";
+    ValRandomize = true;
+  } PHYS_PORT[4:0] = 5'h00;
+};
+
+reg cm_force_pause_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Defines force pause condition for the corresponding SMP.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Force pause off.
+           ";
+    ValRandomize = true;
+  } FORCE_OFF[3:2] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Force pause on.
+           ";
+    ValRandomize = true;
+  } FORCE_ON[1:0] = 2'h0;
+};
+
+reg cm_aqm_ewma_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "AQM EWMA Configuration";
+  desc = "
+          Defines the configuration for each of the Exponentially Weighted
+          Moving Average trackers.  The first index is the logical Tx port, 
+	  and the second index enables 2 different TCs to support EWMA.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Sweeper updates the EWMA calculations every 
+            UpdateInterval * CM_GLOBAL_CFG.NumSweeperPort cycles. Setting 
+            UpdateInterval==0 disables the EWMA updates.
+           ";
+    ValRandomize = true;
+  } UPDATE_INTERVAL[44:37] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Sets the Weight for the EWMA calculation, represented as a negative
+            power of 2 to simplify the implementation (i.e. Weight = 1/2^W). 
+	    It is recommended to set this field to a value less than or equal to 8.
+	    Setting this field to a value greater than 8 will lose accuracy in
+	    calculating the moving average queue size.   
+           ";
+    ValRandomize = true;
+  } W[36:33] = 4'h08;
+  field {
+    AccessType = "RW";
+    desc = "
+            Traffic class that is tracked in the EWMA calculation.
+           ";
+    ValRandomize = true;
+  } TC[32:30] = 3'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Min threshold (in units of segments) for EWMA quantization.
+           ";
+    ValRandomize = true;
+  } MIN_TH[29:15] = 15'h0096;
+  field {
+    AccessType = "RW";
+    desc = "
+            Max threshold (in units of segments) for EWMA quantization.
+           ";
+    ValRandomize = true;
+  } MAX_TH[14:0] = 15'h0384;
+};
+regfile cm_aqm_ewma_cfg_rf {
+  cm_aqm_ewma_cfg_r CM_AQM_EWMA_CFG[2] += 8;
+};
+
+reg cm_aqm_dctcp_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "AQM DCTCP Configuration";
+  desc = "
+          Defines the configuration for each of the DCTCP threshold comparisons.
+	  The first index is the logical Tx port, 
+	  and the second index enables 2 different TCs to support DCTCP.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Traffic class that is used in the DCTCP calculation.
+           ";
+    ValRandomize = true;
+  } TC[17:15] = 3'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the marking threshold (in units of segments) above which 
+            all packets will be marked.
+           ";
+    ValRandomize = true;
+  } THRESHOLD[14:0] = 15'h7FFF;
+};
+regfile cm_aqm_dctcp_cfg_rf {
+  cm_aqm_dctcp_cfg_r CM_AQM_DCTCP_CFG[2] += 8;
+};
+
+reg cm_global_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Global Congestion Management Configuration";
+  desc = "
+          Global Congestion Management Configuration
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Controls if the sweeper is enabled or not.
+           ";
+    ValRandomize = true;
+  } SWEEPER_EN[5:5] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of ports to sweep. Must be set to the number of ports (or a 
+            minimum of 4) for normal CM operation.
+           ";
+    ValRandomize = true;
+  } NUM_SWEEPER_PORTS[4:0] = 5'h00;
+};
+
+reg cm_shared_smp_pause_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX Shared Pool Pause Configuration Per SMP";
+  desc = "
+          Defines whether RX shared pool pause flow control is enabled per port.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Port mask that enables RX shared pool per port. Set to 1 to enable.
+           ";
+    ValRandomize = true;
+  } ENABLE_MASK[23:0] = 24'h00;
+};
+
+reg cm_softdrop_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Watermarks On RX Controlling TX Soft Drop";
+  desc = "
+          Configures TX soft dropping based on RX usage.  Whenever
+          the total RX usage within an SMP exceeds SoftDropSegmentLimit (plus 
+          a six-bit random jitter term), TX soft dropping will be enabled such 
+          that the TX_TC queues consuming the most memory (and exceeding their 
+          TX_TC watermarks) will be penalized most.  Frames will
+          be dropped with 100% probability if the RX SMP usage exceeds
+          HogSegmentLimit.  Indexed by ISL_PRI.  All watermarks are compared
+          to CM_SHARED_USAGE[SMP].SegmentCount where SMP is the value mapped
+          from the frame's ISL_PRI.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Frames belonging to this ISL_PRI will be dropped with 100%
+            probability whenever the total RX SMP segment usage exceeds
+            this watermark.
+           ";
+    ValRandomize = true;
+  } HOG_SEGMENT_LIMIT[29:15] = 15'h07fff;
+  field {
+    AccessType = "RW";
+    desc = "
+            TX soft dropping is enabled whenever the total RX SMP segment
+            usage exceeds this watermark plus a random six-bit jitter term.
+           ";
+    ValRandomize = true;
+  } SOFT_DROP_SEGMENT_LIMIT[14:0] = 15'h07fff;
+};
+
+reg cm_shared_smp_pause_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX Shared Pool Pause Watermark Per SMP";
+  desc = "
+          Defines the watermark per SMP compared against CM_SHARED_SMP_USAGE for
+          sending pause frames.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Level at which a pause OFF is sent.
+           ";
+    ValRandomize = true;
+  } PAUSE_OFF[29:15] = 15'h07fff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Level at which a pause ON is sent.
+           ";
+    ValRandomize = true;
+  } PAUSE_ON[14:0] = 15'h07fff;
+};
+
+reg cm_tx_tc_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores The Number Of Segments Per Traffic Class Per Tx";
+  desc = "
+          Stores the number of segments per TX port per traffic class.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+regfile cm_tx_tc_usage_rf {
+  cm_tx_tc_usage_r CM_TX_TC_USAGE[8] += 8;
+};
+
+reg cm_tx_ewma_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Stores the current Exponential Weighted Moving Average values
+          per tx port.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Number of times the sweeper has serviced this EWMA since the last
+            update. The EWMA values are updated when 
+            CM_AQM_EWMA_CFG.UpdateInterval intervals have passed, at which 
+            point Interval is reset to 0.
+           ";
+    ValRandomize = true;
+  } INTERVAL[31:24] = 8'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Whole digits of EWMA value.
+           ";
+    ValRandomize = true;
+  } EWMA_WHOLE[23:8] = 16'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Fractional digits of EWMA value (ewma_frac/256).
+           ";
+    ValRandomize = true;
+  } EWMA_FRAC[7:0] = 8'h00;
+};
+regfile cm_tx_ewma_rf {
+  cm_tx_ewma_r CM_TX_EWMA[2] += 8;
+};
+
+reg cm_rx_smp_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores The Number Of Segments Per Port Per SMPs";
+  desc = "
+          Stores the number of segments per port per SMPs
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+regfile cm_rx_smp_usage_rf {
+  cm_rx_smp_usage_r CM_RX_SMP_USAGE[2] += 8;
+};
+
+reg cm_rx_smp_usage_max_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Stores the maximum number of segments observed per port per SMPs
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+regfile cm_rx_smp_usage_max_rf {
+  cm_rx_smp_usage_max_r CM_RX_SMP_USAGE_MAX[2] += 8;
+};
+
+reg cm_rx_smp_usage_max_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Determines which 4 logical ports are used for CM_RX_SMP_USAGE_MAX registers
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Port used for CM_RX_SMP_USAGE_MAX[3].
+           ";
+    ValRandomize = true;
+  } PORT3[19:15] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Port used for CM_RX_SMP_USAGE_MAX[2].
+           ";
+    ValRandomize = true;
+  } PORT2[14:10] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Port used for CM_RX_SMP_USAGE_MAX[1].
+           ";
+    ValRandomize = true;
+  } PORT1[9:5] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Port used for CM_RX_SMP_USAGE_MAX[0].
+           ";
+    ValRandomize = true;
+  } PORT0[4:0] = 5'h00;
+};
+
+reg cm_mcast_epoch_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores Per-Epoch Usage";
+  desc = "
+          Tracks the total number of segments used currently in the switch
+          per value of MCAST_EPOCH. Used to safely garbage-collect old entries
+          from MCAST_VLAN_TABLE, after all frames using them have left the 
+          switch.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+
+reg cm_shared_smp_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores The Number Of Segments In The Shared Pool For Each SMP";
+  desc = "
+          Contains the current number of segments stored in each SMP excluding
+          those used in the RX private queues. A segment is only counted in this
+          shared pool if all private watermarks have been exceeded.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+
+reg cm_smp_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores The Number Of Segments For Each SMP";
+  desc = "
+          Contains the current number of segments stored in each SMP. 
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+
+reg cm_global_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Stores The Total Number Of Segments Used";
+  desc = "
+          Stores the total number of segments used currently in the switch.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+
+reg cm_global_usage_max_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Stores the maximum total number of segments observed to be used in the switch.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } COUNT[15:0] = 16'h00;
+};
+
+reg cm_pause_gen_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Specifies the pause state of each port per smp. For each port in 
+          each smp, 1 means it is paused and 0 means it is not paused
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "SMP1 is paused.
+           ";
+    ValRandomize = true;
+  } SMP1[1:1] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "SMP0 is paused.
+           ";
+    ValRandomize = true;
+  } SMP0[0:0] = 1'h00;
+};
+
+reg cm_tx_tc_nac_jc_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TX TC NAC JC Watermark";
+  desc = "
+          Defines the watermark for TX NAC Jitter Controlled congestion indication.
+          Indication to ESCHED to put Jitter Controlled queue to a state where the
+          jitter controlled mechanism is disabled due to transient congestion.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Number of segments.
+           ";
+    ValRandomize = true;
+  } WATERMARK[14:0] = 15'h07fff;
+};
+regfile cm_tx_tc_nac_jc_wm_rf {
+  cm_tx_tc_nac_jc_wm_r CM_TX_TC_NAC_JC_WM[8] += 8;
+};
+
+reg cm_tx_tc_cpk_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TX TC CPK Watermark";
+  desc = "
+          Defines the CPK watermark per port and per traffic class XOFF/XON
+          thresholds for pin based backpressure.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            XOFF threshold. May cause assertion of CPK xoff if tx tc usage is
+            greater than or equal to this value.
+           ";
+    ValRandomize = true;
+  } XOFF[29:15] = 15'h7fff;
+  field {
+    AccessType = "RW";
+    desc = "
+            XON threshold. May cause de-assertion of CPK xoff if tx tc usage is
+            less than this value.
+           ";
+    ValRandomize = true;
+  } XON[14:0] = 15'h7fff;
+};
+regfile cm_tx_tc_cpk_wm_rf {
+  cm_tx_tc_cpk_wm_r CM_TX_TC_CPK_WM[8] += 8;
+};
+
+reg cm_rx_smp_cpk_wm_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX SMP CPK Watermark";
+  desc = "
+          Defines the CPK watermark per SMP XOFF/XON thresholds for pin based
+          backpressure.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            XOFF threshold. May cause assertion of CPK xoff if rx smp usage is
+            greater than or equal to this value for the CPK port.
+           ";
+    ValRandomize = true;
+  } XOFF[29:15] = 15'h7fff;
+  field {
+    AccessType = "RW";
+    desc = "
+            XON threshold. May cause de-assertion of CPK xoff if rx smp usage is
+            less than this value for the CPK port.
+           ";
+    ValRandomize = true;
+  } XON[14:0] = 15'h7fff;
+};
+
+reg cm_cpk_cgd_debouncer_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "CPK Congestion Domains Debouncer";
+  desc = "
+          Defines the minimum time (in clock cycles) required before transitions
+          are allowed on CPK cgd_xoff pin based backpressure.
+          The expected minimum intervals for transitions are in the order of
+          2 PCIe round trip periods (2 x 1.25 us).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Enable de-bouncing feature.
+           ";
+    ValRandomize = true;
+  } EN[16:16] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Minimum time.
+           ";
+    ValRandomize = true;
+  } DEBOUNCER[15:0] = 16'h09c0;
+};
+
+reg cm_cpk_txfc_debouncer_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "CPK Tx Flow Controls Debouncer";
+  desc = "
+          Defines the minimum time (in clock cycles) required before transitions
+          are allowed on CPK txfc_xoff pin based backpressure.
+          The expected minimum intervals for transitions are in the order of
+          2 PCIe round trip periods (2 x 1.25 us).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Enable de-bouncing feature.
+           ";
+    ValRandomize = true;
+  } EN[16:16] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Minimum time.
+           ";
+    ValRandomize = true;
+  } DEBOUNCER[15:0] = 16'h09c0;
+};
+
+reg cm_cpk_port_num_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "CPK Port Number";
+  desc = "
+          The logical port number corresponding to CPK.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Port number.
+           ";
+    ValRandomize = true;
+  } PORT_NUM[4:0] = 5'h00;
+};
+
+reg cm_cpk_cgd_int_mask_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "CPK Congestion Domains Interrupt Mask";
+  desc = "
+          Bit mask for 64 CPK congestion domains interrupt pins to CPU. The
+          interrupts are used for notifying CPU for persistent congestion for
+          given CPK congestion domains.
+          There is one interrupt pin per CPK congestion domain, each can be
+          masked with setting the corresponding bit(s) in this register.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bit mask.
+           ";
+    ValRandomize = true;
+  } MASK[63:0] = 64'hffffffffffffffff;
+};
+
+reg cm_cpk_cgd_int_hyt_timer_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "CPK Congestion Domains Hysteresis Timer";
+  desc = "
+          Timer for providing hysteresis to prevent rapid interrupt events
+          changing for each interrupt pin (xon->xoff).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Timer.
+           ";
+    ValRandomize = true;
+  } HYT_TIMER[15:0] = 16'h0000;
+};
+
+reg cm_cpk_cgd_xoff_int_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Interrupt status for 64 CPK congestion domains.";
+  desc = "
+          Interrupt status for 64 CPK congestion domains.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Status.
+           ";
+    ValRandomize = true;
+  } INT_STATUS[63:0] = 64'h0;
+};
+
+reg cm_cpk_cgd_xoff_status_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "
+          Status for 64 CPK congestion domains xoff pins (cgd_xoff).
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Status.
+           ";
+    ValRandomize = true;
+  } XOFF_STATUS[63:0] = 64'h0;
+};
+
+reg cm_cpk_cgd_int_map_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "CPK XOFF Interrupt Bit Map";
+  desc = "
+          Bit map that maps the 64 congestion domain interrupts to
+          32 interrupts before driving the interrupt to Management Unit.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bit map.
+           ";
+    ValRandomize = true;
+  } BITMAP[31:0] = 32'hffffffff;
+};
+
+reg cm_rx_smp_cpk_cgd_map_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX SMP CPK Congestion Domain Bit Map";
+  desc = "
+          Bit map for 64 CPK congestion domains for CPK port's SMPs. Defines
+          the SMP map to CPK congestion domain for pin based flow control from
+          HLP to CPK.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bit map.
+           ";
+    ValRandomize = true;
+  } BITMAP[63:0] = 64'hffffffffffffffff;
+};
+
+reg cm_rx_smp_cpk_txfc_map_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX SMP CPK Tx Flow Control Bit Map";
+  desc = "
+          Bit map for 32 CPK Tx flow controls for CPK port's SMPs. Defines
+          the SMP map to CPK Tx flow control for pin based flow control from
+          HLP to CPK.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bit map.
+           ";
+    ValRandomize = true;
+  } BITMAP[31:0] = 32'hffffffff;
+};
+
+reg cm_tx_tc_cpk_cgd_map_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TX TC CPK Congestion Domain Bit Map";
+  desc = "
+          Bit map for 64 CPK congestion domains for each TX TC queue. Defines
+          the TX TC queue map to CPK congestion domain for pin based flow control
+          from HLP to CPK.          
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bit map.
+           ";
+    ValRandomize = true;
+  } BITMAP[63:0] = 64'hffffffffffffffff;
+};
+regfile cm_tx_tc_cpk_cgd_map_rf {
+  cm_tx_tc_cpk_cgd_map_r CM_TX_TC_CPK_CGD_MAP[8] += 8;
+};
+
+reg cm_tx_tc_cpk_txfc_map_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "TX TC CPK Tx Flow Control Bit Map";
+  desc = "
+          Bit map for 32 CPK Tx flow controls for each TX TC queue. Defines
+          the TX TC queue map to CPK Tx flow control for pin based flow control
+          from HLP to CPK.          
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bit map.
+           ";
+    ValRandomize = true;
+  } BITMAP[31:0] = 32'hffffffff;
+};
+regfile cm_tx_tc_cpk_txfc_map_rf {
+  cm_tx_tc_cpk_txfc_map_r CM_TX_TC_CPK_TXFC_MAP[8] += 8;
+};
+
+reg cm_rx_sia_cpk_txfc_map_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "RX SIA CPK Tx Flow Control Bit Map";
+  desc = "
+          Bit map for 32 CPK Tx flow controls for 64 RX SIA queues. Defines
+          the RX SIA queue map to CPK Tx flow control for pin based flow control
+          from HLP to CPK.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bit map.
+           ";
+    ValRandomize = true;
+  } BITMAP[31:0] = 32'hffffffff;
+};
+
+addrmap hlp_CM_USAGE_map {
+  name = "hlp_CM_USAGE";
+  desc = "Congestion Management Usage Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 16;
+  ResetDomains = "SWITCH,MGMT";
+
+  cm_tx_tc_private_wm_rf        CM_TX_TC_PRIVATE_WM[24]     @0x00000 += 64;//[8]
+  cm_tx_tc_hog_wm_rf            CM_TX_TC_HOG_WM[24]         @0x00800 += 64;//[8]
+  cm_rx_smp_private_wm_rf       CM_RX_SMP_PRIVATE_WM[24]    @0x01000 += 16;//[2]
+  cm_rx_smp_hog_wm_rf           CM_RX_SMP_HOG_WM[24]        @0x01200 += 16;//[2]
+  cm_rx_smp_pause_wm_rf         CM_RX_SMP_PAUSE_WM[24]      @0x01400 += 16;//[2]
+  cm_shared_wm_r                CM_SHARED_WM[8]             @0x01600 += 8;
+  cm_softdrop_wm_r              CM_SOFTDROP_WM[8]           @0x01700 += 8;
+  cm_shared_smp_pause_wm_r      CM_SHARED_SMP_PAUSE_WM[2]   @0x01800 += 8;
+  cm_global_wm_r                CM_GLOBAL_WM                @0x01900;
+  cm_pause_phys_port_cfg_r      CM_PAUSE_PHYS_PORT_CFG[24]  @0x01A00 += 8;
+  cm_force_pause_cfg_r          CM_FORCE_PAUSE_CFG          @0x01B00;
+  cm_aqm_ewma_cfg_rf            CM_AQM_EWMA_CFG[24]         @0x01C00 += 16;//[2]
+  cm_aqm_dctcp_cfg_rf           CM_AQM_DCTCP_CFG[24]        @0x01E00 += 16;//[2]
+  cm_global_cfg_r               CM_GLOBAL_CFG               @0x02000;
+  cm_shared_smp_pause_cfg_r     CM_SHARED_SMP_PAUSE_CFG[2]  @0x02100 += 8;
+  cm_sweeper_tc_to_smp_r        CM_SWEEPER_TC_TO_SMP        @0x02120;
+  cm_global_usage_r             CM_GLOBAL_USAGE             @0x02130;
+  cm_global_usage_max_r         CM_GLOBAL_USAGE_MAX         @0x02138;
+  cm_mcast_epoch_usage_r        CM_MCAST_EPOCH_USAGE[2]     @0x02140 += 8;
+  cm_shared_smp_usage_r         CM_SHARED_SMP_USAGE[2]      @0x02150 += 8;
+  cm_smp_usage_r                CM_SMP_USAGE[2]             @0x02160 += 8;
+  cm_rx_smp_usage_rf            CM_RX_SMP_USAGE[24]         @0x02200 += 16;//[2]
+  cm_rx_smp_usage_max_rf        CM_RX_SMP_USAGE_MAX[4]      @0x02400 += 16;//[2]
+  cm_rx_smp_usage_max_ctrl_r    CM_RX_SMP_USAGE_MAX_CTRL    @0x02500;
+  cm_pause_gen_state_r          CM_PAUSE_GEN_STATE[24]      @0x02600 += 8;
+  cm_tx_tc_usage_rf             CM_TX_TC_USAGE[24]          @0x02800 += 64;//[8]
+  cm_tx_ewma_rf                 CM_TX_EWMA[24]              @0x03000 += 16;//[2]
+  cm_tx_tc_nac_jc_wm_rf         CM_TX_TC_NAC_JC_WM[24]      @0x03800 += 64;//[8]
+  cm_tx_tc_cpk_wm_rf            CM_TX_TC_CPK_WM[24]         @0x04000 += 64;//[8]
+  cm_rx_smp_cpk_wm_r            CM_RX_SMP_CPK_WM[2]         @0x04800 += 8;
+  cm_cpk_cgd_debouncer_r        CM_CPK_CGD_DEBOUNCER        @0x04900;
+  cm_cpk_txfc_debouncer_r       CM_CPK_TXFC_DEBOUNCER       @0x04910;
+  cm_cpk_port_num_r             CM_CPK_PORT_NUM             @0x04920;
+  cm_cpk_cgd_int_mask_r         CM_CPK_CGD_INT_MASK         @0x04930;
+  cm_cpk_cgd_int_hyt_timer_r    CM_CPK_CGD_INT_HYT_TIMER    @0x04940;
+  cm_cpk_cgd_xoff_int_r         CM_CPK_CGD_XOFF_INT         @0x04950;
+  cm_cpk_cgd_xoff_status_r      CM_CPK_CGD_XOFF_STATUS      @0x04960;
+  cm_cpk_cgd_int_map_r          CM_CPK_CGD_INT_MAP[64]      @0x04A00 += 8;
+  cm_rx_sia_cpk_txfc_map_r      CM_RX_SIA_CPK_TXFC_MAP[64]  @0x04C00 += 8;
+  cm_rx_smp_cpk_cgd_map_r       CM_RX_SMP_CPK_CGD_MAP[2]    @0x04E00 += 8;
+  cm_rx_smp_cpk_txfc_map_r      CM_RX_SMP_CPK_TXFC_MAP[2]   @0x04F00 += 8;
+  cm_tx_tc_cpk_cgd_map_rf       CM_TX_TC_CPK_CGD_MAP[24]    @0x05000 += 64;//[8]
+  cm_tx_tc_cpk_txfc_map_rf      CM_TX_TC_CPK_TXFC_MAP[24]   @0x05800 += 64;//[8]
+};

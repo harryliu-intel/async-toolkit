@@ -1,0 +1,910 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+    <command>
+        <name>set</name>
+
+        <command>
+            <name>port</name>
+
+            <command>
+                <name>config</name>
+
+                <command>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                    </filter>
+                    <name>scheduler</name>
+                    <help>Configure the scheduler on a port</help>
+
+                    <command>
+                        <name>apply</name>
+                        <help>Apply the new scheduler configuration</help>
+                        <handler>tpHandleSchedApply</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Apply scheduler configuration</help>
+                            </argument>
+                        </argument>
+                    </command>  <!-- apply -->
+
+                    <command>
+                        <name>num_groups</name>
+                        <help>Set the number of scheduler groups</help>
+                        <handler>tpHandleSchedNumGroups</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;groups&gt;</name>
+                                <help>The total number of scheduling groups for this port (1-8) (FM6000 is 1-12)</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Set the number of groups</help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </command>  <!-- num_groups -->
+
+                    <command>
+                        <name>group</name>
+                        <help>Configure a port's scheduler group</help>
+                        <command>
+                            <name>strict</name>
+                            <help>Configure the scheduler group for strict or DRR dequeue mode</help>
+                            <handler>tpHandleSchedStrict</handler>
+                            <argument>
+                                <name>!&lt;port&gt;</name>
+                                <help>A port number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;group&gt;</name>
+                                    <help>A group number, list, range, or combination thereof (zero-based)</help>
+                                    <argument>
+                                        <name>on</name>
+                                        <help>Make this scheduler group strict</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Set scheduler group to strict mode</help>
+                                        </argument>
+                                    </argument>
+                                    <argument>
+                                        <name>off</name>
+                                        <help>Make this scheduler group a DRR group</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Set scheduler group to DRR mode</help>
+                                        </argument>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </command>  <!-- strict -->
+                        <command>
+                            <name>traffic_class</name>
+                            <help>Set the traffic class for a port's scheduler group</help>
+                            <handler>tpHandleSchedTrafficClass</handler>
+                            <argument>
+                                <name>!&lt;port&gt;</name>
+                                <help>A port number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;group&gt;</name>
+                                    <help>A group number, list, range, or combination thereof (zero-based)</help>
+                                    <argument>
+                                        <name>!&lt;tc&gt;</name>
+                                        <help> A traffic class number (0-7) (FM6000 is 0-11), list, range, or combination thereof</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Set scheduler group traffic class</help>
+                                        </argument>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </command>  <!-- traffic_class -->
+                        <command>
+                            <name>weight</name>
+                            <help>Set the DRR weight for the scheduler group</help>
+                            <handler>tpHandleSchedWeight</handler>
+                            <argument>
+                                <name>!&lt;port&gt;</name>
+                                <help>A port number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;group&gt;</name>
+                                    <help>A group number, list, range, or combination thereof (zero-based)</help>
+                                    <argument>
+                                        <name>!&lt;weight&gt;</name>
+                                        <help>Set the DRR weight. This must be larger than the port's MTU size</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Set scheduler group weight</help>
+                                        </argument>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </command>  <!-- weight -->
+                        <command>
+                            <name>priority</name>
+                            <help>Configure the scheduler group priority</help>
+                            <handler>tpHandleSchedPriority</handler>
+                            <argument>
+                                <name>!&lt;port&gt;</name>
+                                <help>A port number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;group&gt;</name>
+                                    <help>A group number, list, range, or combination thereof (zero-based)</help>
+                                    <argument>
+                                        <name>!&lt;priority&gt;</name>
+                                        <help>The scheduler group priority</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Set scheduler group priority</help>
+                                        </argument>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </command>  <!-- priority -->
+                    </command>  <!-- group -->
+
+                </command>  <!-- scheduler -->
+
+                <command>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                    </filter>
+                    <name>shaping</name>
+                    <help>Configure the egress shaper on a port</help>
+
+                    <command>
+                        <name>apply</name>
+                        <help>Apply the new shaping configuration</help>
+                        <handler>tpHandleShapingApply</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Apply shaping configuration</help>
+                            </argument>
+                        </argument>
+                    </command>  <!-- apply -->
+
+                    <command>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>num_groups</name>
+                        <help>Set the number of shaping groups</help>
+                        <handler>tpHandleShapingNumGroups</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;groups&gt;</name>
+                                <help>The total number of shaping groups for this port (1-8)</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Set the number of groups</help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </command>  <!-- num_groups -->
+
+                    <command>
+                        <name>group</name>
+                        <help>Configure a port's scheduler group</help>
+                        <command>
+                            <name>bandwidth</name>
+                            <help>Assign a bandwidth to a shaping group</help>
+                            <handler>tpHandleShapingBandwidth</handler>
+                            <argument>
+                                <name>!&lt;port&gt;</name>
+                                <help>A port number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;group&gt;</name>
+                                    <help>A group number, list, range, or combination thereof (zero-based)</help>
+                                    <argument>
+                                        <name>!&lt;bw&gt;</name>
+                                        <help>The bandwidth in Mb/s</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Assign a bandwidth to a shaping group</help>
+                                        </argument>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </command>  <!-- bandwidth -->
+                        <command>
+                            <name>capacity</name>
+                            <help>Assign a capacity to a shaping group</help>
+                            <handler>tpHandleShapingCapacity</handler>
+                            <argument>
+                                <name>!&lt;port&gt;</name>
+                                <help>A port number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;group&gt;</name>
+                                    <help>A group number, list, range, or combination thereof (zero-based)</help>
+                                    <argument>
+                                        <name>!&lt;capacity&gt;</name>
+                                        <help>The token bucket capacity in bytes. Allowed values are: 0, or a number > MTU</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Assign a capacity to a shaping group</help>
+                                        </argument>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </command>  <!-- capacity -->
+                        <command>
+                            <name>traffic_class</name>
+                            <help>Assign a traffic class to a shaping group</help>
+                            <handler>tpHandleShapingTrafficClass</handler>
+                            <argument>
+                                <name>!&lt;port&gt;</name>
+                                <help>A port number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;group&gt;</name>
+                                    <help>A group number, list, range, or combination thereof (zero-based)</help>
+                                    <argument>
+                                        <name>!&lt;tc&gt;</name>
+                                        <help> A traffic class number (0-7), list, range, or combination thereof</help>
+                                        <argument>
+                                            <name>!&lt;cr&gt;</name>
+                                            <help>Assign traffic class to shaping group</help>
+                                        </argument>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </command>  <!-- traffic_class -->
+                    </command>  <!-- group -->
+
+                </command>  <!-- shaping -->
+
+                <command>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                    </filter>
+                    <name>ingress-rate-limiter</name>
+                    <help>Configure the ingress rate limiter on a port</help>
+
+                    <command>
+                        <name>bandwidth</name>
+                        <help>Assign a bandwidth to an ingress rate limiter</help>
+                        <handler>tpHandleIngressRateLimiterBandwidth</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                           <argument>
+                                <name>!&lt;smp&gt;</name>
+                                <help>A smp number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;bw&gt;</name>
+                                    <help>The bandwidth in Mb/s</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Assign a bandwidth to an ingress rate limiter</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </command>  <!-- bandwidth -->
+                    <command>
+                        <name>capacity</name>
+                        <help>Assign a capacity to an ingress rate limiter</help>
+                        <handler>tpHandleIngressRateLimiterCapacity</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                           <argument>
+                                <name>!&lt;smp&gt;</name>
+                                <help>A smp number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;capacity&gt;</name>
+                                    <help>The token bucket capacity in bytes. Allowed values are: 0, or a number > MTU</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Assign a capacity to an ingress rate limiter</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </command>  <!-- capacity -->
+                    <command>
+                        <name>pause-threshold</name>
+                        <help>Assign a pause off threshold to an ingress rate limiter</help>
+                        <handler>tpHandleIngressRateLimiterPauseThreshold</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                           <argument>
+                                <name>!&lt;smp&gt;</name>
+                                <help>A smp number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;pause-threshold&gt;</name>
+                                    <help>The token bucket pause threshold value in bytes. Allowed values are: -32768 to 32767</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Assign a pause off threshold to an ingress rate limiter</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </command>  <!-- pause-threshold-->
+                    <command>
+                        <name>drop-threshold</name>
+                        <help>Assign a drop threshold to an ingress rate limiter</help>
+                        <handler>tpHandleIngressRateLimiterDropThreshold</handler>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                           <argument>
+                                <name>!&lt;smp&gt;</name>
+                                <help>A smp number, list, range, or combination thereof</help>
+                                <argument>
+                                    <name>!&lt;drop-threshold&gt;</name>
+                                    <help>The token bucket drop threshold value in bytes. Allowed values are: -32768 to 32767</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Assign a drop threshold to an ingress rate limiter</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </command>  <!-- drop-threshold-->
+                </command>  <!-- ingress-rate-limiter -->
+
+                <command>
+                    <name>qos</name>
+                    <help>Configure the qos on a port</help>
+                    <handler>tpHandleSetQos</handler>
+
+                    <!-- set port config qos private_pause_off_wm <port> <index> <integer> -->
+                    <argument>
+                        <name>private_pause_off_wm</name>
+                        <help>Set the private PAUSE off watermark.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM2000</allow>
+                                </filter>
+                                <name>!&lt;index&gt;</name>
+                                <help>Memory partition index: 0.</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private PAUSE off watermark in bytes: 0-4193280.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private PAUSE off watermark.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM4000</allow>
+                                </filter>
+                                <name>!&lt;index&gt;</name>
+                                <help>Memory partition index: 0-1.</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private PAUSE off watermark in bytes: 0-4193792.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private PAUSE off watermark.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM6000</allow>
+                                </filter>
+                                <name>!&lt;index&gt;</name>
+                                <help>Memory partition index: 0-11.</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private PAUSE off watermark in bytes: 480-10485600.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private PAUSE off watermark.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end private_pause_off_wm -->
+
+                    <!-- set port config qos private_pause_on_wm <port> <index> <integer> -->
+                    <argument>
+                        <name>private_pause_on_wm</name>
+                        <help>Set the private PAUSE on watermark.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM2000</allow>
+                                </filter>
+                                <name>!&lt;index&gt;</name>
+                                <help>Memory partition index: 0.</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private PAUSE on watermark in bytes: 0-4193280.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private PAUSE on watermark.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM4000</allow>
+                                </filter>
+                                <name>!&lt;index&gt;</name>
+                                <help>Memory partition index: 0-1.</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private PAUSE on watermark in bytes: 0-4193792.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private PAUSE on watermark.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM6000</allow>
+                                </filter>
+                                <name>!&lt;index&gt;</name>
+                                <help>Memory partition index: 0-11.</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private PAUSE on watermark in bytes: 0-10485600.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private PAUSE on watermark.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end private_pause_on_wm -->
+
+                    <!-- set port config qos rx_smp_hog_wm <port> <smp> <integer> -->
+                    <argument>
+                        <name>rx_smp_hog_wm</name>
+                        <help>Set the hog receive watermark per SMP.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM2000</allow>
+                                </filter>
+                                <name>!&lt;smp&gt;</name>
+                                <help>Shared memory protection - SMP (0).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Hog receive watermark in bytes: 0-1047552.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the hog receive watermark per SMP.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM4000</allow>
+                                </filter>
+                                <name>!&lt;smp&gt;</name>
+                                <help>Shared memory protection - SMP (0-1).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Hog receive watermark in bytes: 0-4193792.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the hog receive watermark per SMP.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM6000</allow>
+                                </filter>
+                                <name>!&lt;smp&gt;</name>
+                                <help>Shared memory protection - SMP (0-15).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Hog receive watermark in bytes: 0-10485600.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the hog receive watermark per SMP.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end rx_smp_hog_wm -->
+
+                    <!-- set port config qos rx_smp_private_wm <port> <smp> <integer> -->
+                    <argument>
+                        <name>rx_smp_private_wm</name>
+                        <help>Set the private receive watermark per SMP.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM2000</allow>
+                                </filter>
+                                <name>!&lt;smp&gt;</name>
+                                <help>Shared memory protection - SMP (0).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private receive watermark in bytes: 0-1047552.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private receive watermark per SMP.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM4000</allow>
+                                </filter>
+                                <name>!&lt;smp&gt;</name>
+                                <help>Shared memory protection - SMP (0-1).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private receive watermark in bytes: 0-4193792.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private receive watermark per SMP.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM6000</allow>
+                                </filter>
+                                <name>!&lt;smp&gt;</name>
+                                <help>Shared memory protection - SMP (0-11).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private receive watermark in bytes: 0-10485600.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private receive watermark per SMP.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end rx_smp_private_wm -->
+
+                    <!-- set port config qos tx_smp_hog_wm <port> <smp> <integer> -->
+                    <argument>
+                        <name>tx_smp_hog_wm</name>
+                        <help>Set the hog transmit watermark per index.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM2000</allow>
+                                </filter>
+                                <name>!&lt;hog index&gt;</name>
+                                <help>Hog watermark index (0).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Hog transmit watermark in bytes: 0-1047552.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the hog transmit watermark per index.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM4000</allow>
+                                </filter>
+                                <name>!&lt;hog index&gt;</name>
+                                <help>Hog watermark index (0-3).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Hog transmit watermark in bytes: 0-4193792.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the hog transmit watermark per index.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+
+                            <argument>
+                                <filter type="family">
+                                    <allow>FM6000</allow>
+                                </filter>
+                                <name>!&lt;hog index&gt;</name>
+                                <help>Hog watermark index (0-15).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Hog transmit watermark in bytes: 0-7863840.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the hog transmit watermark per index.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end tx_smp_hog_wm -->
+
+                    <!-- set port config qos tx_smp_private_wm <port> <smp> <integer> -->
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                        </filter>
+                        <name>tx_smp_private_wm</name>
+                        <help>Set the private transmit watermark per SMP.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <name>!&lt;smp&gt;</name>
+                                <help>Shared memory protection - SMP (0-1).</help>
+
+                                <argument>
+                                    <name>!&lt;integer&gt;</name>
+                                    <help>Private transmit watermark in bytes: 0-4193792.</help>
+
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Set the private transmit watermark per SMP.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end tx_smp_private_wm -->
+
+                    <!-- set port config qos tx_soft_drop_on_private <port> <index> <on/off> -->
+                    <argument>
+                        <filter type="family">
+                            <allow>FM6000</allow>
+                        </filter>
+                        <name>tx_soft_drop_on_private</name>
+                        <help>Enable or disable soft drop when the TX private watermark is surpassed.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <name>!&lt;index&gt;</name>
+                                <help>Index of ISL priority: 0-15.</help>
+
+                                <argument>
+                                    <name>on</name>
+                                    <help>Enable soft drop when the TX private watermark is surpassed.</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Soft drop when TX private watermark is surpassed: ON.</help>
+                                    </argument>
+                                </argument>
+
+                                <argument>
+                                    <name>off</name>
+                                    <help>Disable soft drop when the TX private watermark is surpassed.</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Soft drop when TX private watermark is surpassed: OFF.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end tx_soft_drop_on_private -->
+
+                    <!-- set port config qos tx_soft_drop_on_rxmp_free <port> <index> <on/off> -->
+                    <argument>
+                        <filter type="family">
+                            <allow>FM6000</allow>
+                        </filter>
+                        <name>tx_soft_drop_on_rxmp_free</name>
+                        <help>Enable or disable soft drop when the TX passes half of the free RXMP usage.</help>
+
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof.</help>
+
+                            <argument>
+                                <name>!&lt;index&gt;</name>
+                                <help>Index of ISL priority: 0-15.</help>
+
+                                <argument>
+                                    <name>on</name>
+                                    <help>Enable soft drop when the TX passes half of the free RXMP usage.</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Soft drop when TX passes half of the free RXMP usage: ON.</help>
+                                    </argument>
+                                </argument>
+
+                                <argument>
+                                    <name>off</name>
+                                    <help>Disable soft drop when the TX passes half of the free RXMP usage.</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Soft drop when TX passes half of the free RXMP usage: OFF.</help>
+                                    </argument>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument> <!-- end tx_soft_drop_on_rxmp_free -->
+
+                </command>  <!-- qos -->
+            </command>  <!-- config -->
+        </command>  <!-- port -->
+    </command>  <!-- set -->
+
+
+    <command>
+        <name>show</name>
+
+        <command>
+            <name>port</name>
+
+            <command>
+                <name>config</name>
+
+                <command>
+                    <name>scheduler</name>
+                    <help>Show port scheduler configuration</help>
+                    <handler>tpHandleShowSched</handler>
+
+                    <argument>
+                        <name>active</name>
+                        <help>Show the current port scheduler configuration</help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Show the current port scheduler configuration</help>
+                            </argument>
+                        </argument>
+                    </argument> <!-- active -->
+
+                    <argument>
+                        <name>new</name>
+                        <help>Show the new port scheduler configuration</help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Show the new port scheduler configuration</help>
+                            </argument>
+                        </argument>
+                    </argument> <!-- new -->
+
+                </command>  <!-- scheduler -->
+
+                <command>
+                    <name>shaping</name>
+                    <help>Show port shaping configuration</help>
+                    <handler>tpHandleShowShaping</handler>
+
+                    <argument>
+                        <name>active</name>
+                        <help>Show the current port shaping configuration</help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Show the current port shaping configuration</help>
+                            </argument>
+                        </argument>
+                    </argument> <!-- active -->
+
+                    <argument>
+                        <name>new</name>
+                        <help>Show the new port shaping configuration</help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>A port number, list, range, or combination thereof</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Show the new port shaping configuration</help>
+                            </argument>
+                        </argument>
+                    </argument> <!-- new -->
+
+                </command>  <!-- shaping -->
+
+                <command>
+                    <name>ingress-rate-limiter</name>
+                    <help>Show ingress port rate limiter configuration</help>
+                    <handler>tpHandleShowIngressRateLimiter</handler>
+
+                    <argument>
+                        <name>!&lt;port&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Show ingress port rate limiter configuration</help>
+                        </argument>
+                    </argument>
+
+                </command>  <!-- ingress-rate-limiter -->
+
+                <command>
+                    <name>qos</name>
+                    <help>Show port qos configuration</help>
+                    <handler>tpHandleShowQos</handler>
+
+                    <argument>
+                        <name>!&lt;port&gt;</name>
+                        <help>A port number, list, range, or combination thereof</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Show the current port qos configuration</help>
+                        </argument>
+                    </argument>
+
+                </command>  <!-- qos -->
+
+            </command>  <!-- config -->
+        </command>  <!-- port -->
+    </command>  <!-- show -->
+
+</config>

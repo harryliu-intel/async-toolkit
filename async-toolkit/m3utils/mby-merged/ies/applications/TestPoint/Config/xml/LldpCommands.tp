@@ -1,0 +1,108 @@
+#lvl arg                 type    mand    default                           help
+#--- --------------      ----    ----    ------------------                ----------------------------------
+
+# show port lldp <port> config|local|remote|counters
+
+ 1,  "show",             "c",    "m",    "",                               "Show a property"
+ 2,  "port",             "c",    "m",    "",                               "Show a port related property or state"
+ 3,  "lldp",             "c",    "m",    "tpHandleShowLldpPort",           "Show LLDP port information"
+ 4,  "port",             "v",    "m",    "",                               "Show LLDP port information (enter port number, list, range)"
+
+ 5,  "config",           "t",    "m",    "",                               "Show port configuration information"
+ 5,  "local",            "t",    "m",    "",                               "Show port local-data information"
+ 5,  "remote",           "t",    "m",    "",                               "Show port remote-data information"
+ 5,  "counters",         "t",    "m",    "",                               "Show port counters information"
+
+# show switch lldp config|local
+
+ 2,  "switch",           "c",    "m",    "",                               "Show a switch related property or state"
+ 3,  "lldp",             "c",    "m",    "",                               "Show LLDP switch information"
+
+ 4,  "config",           "c",    "m",    "tpHandleShowLldpConfig",         "Show switch configuration information"
+ 4,  "local",            "c",    "m",    "tpHandleShowLldpLocal",          "Show switch local-data information"
+
+# set switch config lldp {start <chassis-id>}|stop
+
+ 1,  "set",              "c",    "m",    "",                               "Set a property"
+ 2,  "switch",           "c",    "m",    "",                               "Set a switch related property"
+ 3,  "config",           "c",    "m",    "",                               "Sets a global switch configuration property"
+ 4,  "lldp",             "c",    "m",    "",                               "Control LLDP protocol"
+
+ 5,  "stop",             "c",    "m",    "tpHandleStopLldp",               "Stop LLDP protocol"
+
+ 5,  "start",            "c",    "m",    "tpHandleStartLldp",              "Start LLDP protocol"
+ 6,  "mac address",      "v",    "m",    "",                               "Start LLDP protocol (enter chassis MAC address)"
+
+# set switch config lldp system-name <system-name>
+# set switch config lldp system-desc <system-description>
+# set switch config lldp chassis-id <chassis-id>
+# set swtich config lldp timing <msg-tx-interval> <msg-tx-hold> <reinit-delay> <tx-delay>
+# set switch config lldp logging none|error|warning|info|debug
+
+ 5,  "system-name",      "c",    "m",    "tpHandleSetLldpSysName",         "Set system name"
+ 6,  "system-name",      "v",    "m",    "",                               "Set system name (enter name)"
+
+ 5,  "system-desc",      "c",    "m",    "tpHandleSetLldpSysDesc",         "Set system description"
+ 6,  "system-description", "v",  "m",    "",                               "Set system description (enter description)"
+
+ 5,  "chassis-id",       "c",    "m",    "tpHandleSetLldpChassisId",       "Set chassis id"
+ 6,  "chassis-id",       "v",    "m",    "",                               "Set chassis id (enter id)"
+
+ 5,  "timing",           "c",    "m",    "tpHandleSetLldpTiming",          "Set timing parameters"
+ 6,  "msg-tx-interval",  "v",    "m",    "",                               "Set timing parameters (enter msgTxInterval - def:30)"
+ 7,  "msg-tx-hold",      "v",    "m",    "",                               "Set timing parameters (enter msgTxHold - def:4)"
+ 8,  "reinit-delay",     "v",    "m",    "",                               "Set timing parameters (enter reinitDelay - def:2)"
+ 9,  "tx-delay",         "v",    "m",    "",                               "Set timing parameters (enter txDelay - def:2)"
+
+ 5,  "logging",          "c",    "m",    "tpHandleSetLldpLogging",         "Set logging level"
+ 6,  "none",             "t",    "m",    "",                               "Set logging level to NONE"
+ 6,  "error",            "t",    "m",    "",                               "Set logging level to ERROR"
+ 6,  "warning",          "t",    "m",    "",                               "Set logging level to WARNING"
+ 6,  "info",             "t",    "m",    "",                               "Set logging level to INFO"
+ 6,  "debug",            "t",    "m",    "",                               "Set logging level to DEBUG"
+
+# set port config lldp <port> port-id <port-id>
+# set port config lldp <port> port-desc <port-description>
+# set port config lldp <port> tx-enable port-desc|sys-name|sys-desc|sys-cap|all on|off
+# set port config lldp <port> admin tx_only|rx_only|tx_and_rx|disabled
+
+ 2,  "port",             "c",    "m",    "",                               "Set port specific properties"
+ 3,  "config",           "c",    "m",    "",                               "Set port specific configuration"
+ 4,  "lldp",             "c",    "m",    "tpHandleSetLldpPort",            "Set LLDP port config"
+ 5,  "port",             "v",    "m",    "",                               "Set LLDP port config (enter port number, list, range)"
+
+ 6,  "port-id",          "t",    "m",    "",                               "Set port id"
+ 7,  "port id",          "v",    "m",    "",                               "Set port id (enter id)"
+
+ 6,  "port-desc",        "t",    "m",    "",                               "Set port description"
+ 7,  "port-description", "v",    "m",    "",                               "Set port description (enter description)"
+
+ 6,  "tx-enable",        "t",    "m",    "",                               "Set port tx-enable"
+
+ 7,  "port-desc",        "t",    "m",    "",                               "Set port-description tx-enable"
+ 8,  "off",              "t",    "m",    "",                               "Set port-description tx-enable to OFF"
+ 8,  "on",               "t",    "m",    "",                               "Set port-description tx-enable to ON"
+
+ 7,  "sys-name",         "t",    "m",    "",                               "Set port system-name tx-enable"
+ 8,  "off",              "t",    "m",    "",                               "Set port system-name tx-enable to OFF"
+ 8,  "on",               "t",    "m",    "",                               "Set port system-name tx-enable to ON"
+
+ 7,  "sys-desc",         "t",    "m",    "",                               "Set port system-description tx-enable"
+ 8,  "off",              "t",    "m",    "",                               "Set port system-description tx-enable to OFF"
+ 8,  "on",               "t",    "m",    "",                               "Set port system-description tx-enable to ON"
+
+ 7,  "sys-cap",          "t",    "m",    "",                               "Set port system-capability tx-enable"
+ 8,  "off",              "t",    "m",    "",                               "Set port system-capability tx-enable to OFF"
+ 8,  "on",               "t",    "m",    "",                               "Set port system-capability tx-enable to ON"
+
+ 7,  "all",              "t",    "m",    "",                               "Set port global tx-enable"
+ 8,  "off",              "t",    "m",    "",                               "Set port global tx-enable to OFF"
+ 8,  "on",               "t",    "m",    "",                               "Set port global tx-enable to ON"
+
+ 6,  "admin",            "t",    "m",    "",                               "Set port admin state"
+
+ 7,  "tx_only",          "t",    "m",    "",                               "Set port admin to TX enabled, RX disabled"
+ 7,  "rx_only",          "t",    "m",    "",                               "Set port admin to TX disabled, RX enabled"
+ 7,  "tx_and_rx",        "t",    "m",    "",                               "Set port admin both TX and RX enabled"
+ 7,  "disabled",         "t",    "m",    "",                               "Set port admin both TX and RX disabled"
+

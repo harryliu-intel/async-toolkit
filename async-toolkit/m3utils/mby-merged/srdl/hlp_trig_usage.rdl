@@ -1,0 +1,85 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+reg trigger_rate_lim_cfg_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Rate limiter configuration (Capacity and Rate).";
+  desc = "Configuration related to the trigger rate limiting action.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Floating point exponent of the token bucket's refill rate. Amount 
+            of refill is (RateMantissa) << (7- RateExponent) per 16 
+            FH clock cycles, in units of 1/16th bytes.
+           ";
+    ValRandomize = true;
+  } RATE_EXPONENT[26:24] = 3'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Floating point mantissa of the token bucket's refill rate. Amount 
+            of refill is (RateMantissa) << (7- RateExponent) per 16 
+            FH clock cycles, in units of 1/16th bytes.
+           ";
+    ValRandomize = true;
+  } RATE_MANTISSA[23:12] = 12'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Capacity of rate limiter token bucket in 1024 byte units. (Maximum 
+            burst allowance is 4 MB, or 3.6MB for near-maximal rate limits.)
+          
+            This must not be set within refillAmount of the maximum:
+
+            Capacity <= ((0xfff << 14) - ((RateMantissa) << (7- RateExponent))) >> 14
+           ";
+    ValRandomize = true;
+  } CAPACITY[11:0] = 12'h00;
+};
+
+reg trigger_rate_lim_usage_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Rate limiter token-bucket levels (units of 1/16th bytes).";
+  desc = "Tracks the trigger rate limiter's token-bucket level in units of 1/16th bytes.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Current rate limiter token bucket level in units of 1/16th bytes. 
+            Value is signed two's complement notation.
+           ";
+    ValRandomize = true;
+  } LEVEL[26:0] = 27'h00;
+};
+
+
+addrmap hlp_TRIG_USAGE_map {
+  name = "hlp_TRIG_USAGE";
+  desc = "Trigger Usage Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 15;
+  ResetDomains = "SWITCH,MGMT";
+
+  trigger_rate_lim_cfg_1_r TRIGGER_RATE_LIM_CFG_1[16] @0x00000 += 8;
+  trigger_rate_lim_usage_r TRIGGER_RATE_LIM_USAGE[16] @0x00080 += 8;
+};
+

@@ -1,0 +1,44 @@
+Each source code file provided in this software distribution is licensed
+as described at the top of that file. There are three types of files:
+
+(1) Intel Proprietary License - These files contain the words,
+"INTEL CONFIDENTIAL" near the top of the file and are licensed as
+described in the document,
+
+    .../fulcrum/license/Intel_SRD_Propriety_License.pdf
+
+(2) GPL License - These files contain the following words near the top of
+the file:
+
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License version 2
+    as published by the Free Software Foundation.
+
+These files are licensed as described in the document,
+
+    .../fulcrum/license/gpl-2.0.txt
+    
+(3) GPL/BSD Dual License - These files contain the words, "This file is
+provided under a dual BSD/GPLv2 license" near the top of the file and are
+licensed according to the "BSD LICENSE" copyright notice near the top of the
+file, and also as described in the document,
+
+    .../fulcrum/license/bsd-3-clause.txt
+
+These files are dual licensed for use with GPL licensed software modules,
+as described in the document,
+
+    .../fulcrum/license/gpl-2.0.txt
+
+
+
+Source code files published under GPL License or GPL/BSD Dual License are
+located in these directories:
+
+    ../fulcrum/include/kernel
+    ../fulcrum/include/platforms/$(PLATFORM)/kernel
+    ../fulcrum/src/platforms/$(PLATFORM)/kernel
+
+where "$(PLATFORM)" is the name of one of the platform layer implementations
+included in the distribution (barcelona, fm85xxep, vegas, etc.), or "common".
+

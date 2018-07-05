@@ -1,0 +1,127 @@
+
+
+############################ FFU_GROUP REGISTER SET ##########################
+#
+
+--addressBase           0x000000
+--addressBits           17
+--atomic                64
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT    
+
+-set FFU_GROUP  FFU Group Register Set
+
+-register FFU_TCAM[0..15,0..511] Configures an entry in a slice's key TCAM
+
+    Configures an entry in the TCAM. The TCAM entries are readable but the
+    key returned will be masked out according to the mask originally written
+    along with the key.
+    
+    Note that the case bit is OR'd with !Valid before being written into TCAM
+    
+    All TCAM entries start out as invalid. Each entry becomes valid on the
+    first write to that entry, to either the Key or KeyInvert data. 
+    
+    A match occurs when the data searched is equal to the content, as defined
+    in the table below. Only valid entries are included in the compare.
+
+    A key is loaded by writing the key into 'Key' and loading its 1s
+    compliment in KeyInvert. Writing both 'Key' and 'KeyInvert' with 1
+    on same bit in both fields will invalidate the entry while writing
+    0 on same bit in both field is equivalent of ignoring this bit in
+    the seach.
+ 
+    The table below shows the encoded data value stored (Content)
+    based on the state of the data (Key) and mask (KeyInvert) values in the
+    TCAM bitcell.
+
+          .+-----------------------------------------------------+
+          .| Mask storage | Data storage |        Content        |
+          .=======================================================
+          .|      0       |      0       |   X (always match)    |
+          .+-----------------------------------------------------+
+          .|      0       |      1       |           1           |
+          .+-----------------------------------------------------+
+          .|      1       |      0       |           0           |
+          .+-----------------------------------------------------+
+          .|      1       |      1       | Always mismatch state |
+          .+-----------------------------------------------------+
+
+    The highest index has precedence in case there is more than one match in
+    the same slice.
+    
+    >PG HLP_PG1
+	+_RSVD1_:24:RV:0
+    +KEY_TOP_INVERT:8:RW:ff
+    +KEY_INVERT:32:RW:ffffffff
+	+_RSVD0_:24:RV:0
+    +KEY_TOP:8:RW:ff
+    +KEY:32:RW:ffffffff
+
+
+--atomic 64
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT    
+-register FFU_ACTION[0..19,0..511] Configures an entry in action RAM
+    >PG HLP_PG1
+  +ACTION1:32:RW:0
+  +ACTION0:32:RW:0
+
+
+-register FFU_TCAM_CFG[0..15,0..63] Configures TCAM slice
+
+    Configure each slice behavior for each scenario.
+    This register is indexed first by slice, then by scenario.
+    It provides configuration for the cascading and mux selection. 
+
+    >PG HLP_PG1
+    +CHUNK_MASK:8:RW:ff
+        Specifies the validity of 64-rule chunks:
+          . ChunkMask[0] enables rules 0..63.
+          . ChunkMask[1] enables rules 64..127, etc.
+        Used to create smaller per-scenario tables.       
+    +START_COMPARE:1:RW:1
+        Starts a compare cascade
+    +START_SET:1:RW:1
+        Starts an exclusion set
+    +SELECT_TOP:6:RW:0
+        Selects KEY8[SelectTop] as the top 8 bits of the lookup key. Only KEY8s can be selected
+        for this field.
+    +SELECT0:7:RW:0
+         Selects byte 0 of the lookup key. 
+         . If Select0 is in the range of 0-31, then the value is KEY16[Select0][7:0]. 
+         . If Select0 is in the range of 32-95, then the value is KEY8[Select0 - 32]. 
+         . If Select0 is in the range of 96-111, then the value is KEY32[Select0 - 96][7:0].
+
+    +SELECT1:7:RW:0
+        Selects byte 1 of the lookup key.
+        . If Select1 is in the range of 0-31, then the value is KEY16[Select1][15:8]. 
+        . If Select1 is in the range of 32-95, then the value is KEY8[Select1 - 32]. 
+        . If Select1 is in the range of 96-111, then the value is KEY32[Select1 - 96][15:8].
+
+    +SELECT2:7:RW:0
+        Selects byte 2 of the lookup key.
+        . If Select2 is in the range of 0-31, then the value is KEY16[Select2][7:0]. 
+        . If Select2 is in the range of 32-95, then the value is KEY8[Select2 - 32]. 
+        . If Select2 is in the range of 96-111, then the value is KEY32[Select2 - 96][23:16].
+    +SELECT3:7:RW:0
+        Selects byte 3 of the lookup key.
+        . If Select3 is in the range of 0-31, then the value is KEY16[Select3][15:8]. 
+        . If Select3 is in the range of 32-95, then the value is KEY8[Select3 - 32]. 
+        . If Select3 is in the range of 96-111, then the value is KEY32[Select3 - 96][31:24].
+-register FFU_ACTION_CFG[0..63] Configures action RAM source.
+
+  This register is indexed by scenario.
+
+    >PG HLP_PG1
+  +ENABLE[19..0]:1:RW:0
+    Enables the Nth action RAM bank.
+  +INDEX[19..0]:4:RW:0
+    Select which TCAM slice controls Nth action RAM bank.
+

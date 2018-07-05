@@ -1,0 +1,89 @@
+
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+// TAIL_IP
+reg tail_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Tail Interrupt Pending";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Fatal error.  Tail entered an error state caused by an uncorrectable
+        memory error in SAF_HEAD_CACHE or Parser memory.
+
+           ";
+    ValRandomize = true;
+  } STATE_ERROR[1:1] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Memory ECC or parity error reported by the local memory controller.
+        Check all TAIL_*_STATUS registers to find the source.
+
+           ";
+    ValRandomize = true;
+  } MEM_ERROR[0:0] = 1'h0;
+};
+
+
+
+// TAIL_IM
+
+reg tail_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Tail Interrupt Mask";
+  desc = "
+  The interrupt mask register controls if the corresponding interrupt source
+  is presented to the interrupt hierarchy (bit is set to 0) or masked out (bit
+  is set to 1).
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Mask for fatal error.
+
+           ";
+    ValRandomize = true;
+  } STATE_ERROR[1:1] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        Mask for memory ECC or parity error reported by the local memory controller.
+
+           ";
+    ValRandomize = true;
+  } MEM_ERROR[0:0] = 1'h1;
+};
+
+
+// Begin addrmap section
+
+addrmap hlp_TAIL_MISC_map {
+  name = "hlp_TAIL_MISC";
+  desc = "Tail Processing Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 16;
+  ResetDomains = "SWITCH,MGMT";
+
+  tail_ip_r              TAIL_IP                            @0x00000;
+  tail_im_r              TAIL_IM                            @0x00008;
+};

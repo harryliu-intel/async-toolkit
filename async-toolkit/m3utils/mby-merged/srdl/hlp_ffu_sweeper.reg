@@ -1,0 +1,53 @@
+
+
+# FFU Sweeper registers
+#
+###################### FFU_SWEEPER REGISTER SET ######################
+
+--addressBase           0x000000
+--addressBits           17
+--atomic                64
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT
+
+-set hlp_FFU_SWEEPER  FFU TCAM SWEEPER Register Set
+
+-register FFU_SWEEP_CTL  TCAM parity sweeper control
+  Control sweeper operation.
+
+    >PG HLP_PG1
+  +SWEEPER_ENABLE:1:RW:0
+     The sweeper runs when this bit is set to 1.
+     When this bit is written to 1, FFU_SWEEP_PTR.State will not be cleared.
+  +SWEEPER_SPEED:4:RW:0
+     Set sweeper speed limit to one operation every
+     2^SweeperSpeed cycles.  The value should be programmed to 7 or larger.
+
+
+-register FFU_SWEEP_PTR For Debug Only, Reserved.
+
+    >PG HLP_PG1
+  +INV:1:vRW:0
+     0=Key, 1=KeyInvert
+  +INDEX:16:vRW:0
+     0..16K-1 = FFU FGRP0 TCAM (slice# * 1024(HLP) + index(per TCAM slice))
+     0..32K-1 = FFU FGRP1 TCAM (slice# * 1024(HLP) + index(per TCAM slice))
+     0..48K-1 = FFU FGRP2 TCAM (slice# * 1024(HLP) + index(per TCAM slice))
+     48K..52K-1 = MAP_DOMAIN 
+     (52K..52K+144-1 = MAP_SCEN, if implemented in TCAM)
+      This field should only be written when the sweeper is disabled.
+
+-register FFU_SWEEP_ERR  TCAM error summary
+  This register indicates a parity error has been detected in the TCAM and its location.
+
+    >PG HLP_PG2
+  +ERR:1:vCR:0
+     Set by hardware when an error is found.
+  +INV:1:vRO:0
+     Same as FFU_SWEEP_PTR
+  +INDEX:16:vRO:0
+     Same as FFU_SWEEP_PTR
+

@@ -1,0 +1,981 @@
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2015 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related 
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted, 
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+// -- Authors      : George Guo, Mike Mangione
+// -- Project Name : Highland Park IP for Snow Ridge
+// -- Description  : This is RDL for the Segment Interface Adapter (SIA) block.
+//------------------------------------------------------------------------------
+
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+//  $SIA_NUM_QUEUES = 8;
+//  $SIA_NUM_PORTS  = 4;
+//  $SIA_SCRATCH_DFT         = 0xaaaa5555;
+
+
+
+// ============================ sia_scratch_r (width=32, linecache=0) =======================
+
+reg sia_scratch_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Scratch Register.";
+  desc = "
+          Scratch register for diagnostic purpose.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            This is a scratch register which can be written or read for diagnostic purpose.
+            ";
+    ValRandomize = true;
+  } SIA_SCRATCH[31:0] = 32'haaaa5555;
+}; // sia_scratch_r
+
+// ============================ ecc_test_reg (width=32, linecache=0) =======================
+
+//reg ecc_test_reg {
+  shared;
+
+//    name = "ECC Test";
+//    desc = "Provides the ability to create errors in ECC protected memory in order to verify the detection and correction logic.  This register is for testing purposes only.  It should remain clear during normal operation.";
+
+//  regwidth = 64;
+//  accesswidth = 64;
+
+//   field {AccessType = "RW";
+//          desc = "Disable ECC correction demote bp select table memory.";}   dis_ecc_correct_demote_bp_sel[0:0]      = 1'h0;
+//   field {AccessType = "RW";
+//          desc = "Disable ECC correction atpm counter memory.";}             dis_ecc_correct_atpm_cnt_mem[1:1]       = 1'h0;
+//   field {AccessType = "RW";
+//          desc = "Disable ECC correction atpm parameter memory.";}           dis_ecc_correct_atpm_param_mem[2:2]     = 1'h0;
+
+//   field {AccessType = "RW";
+//          desc = "ECC invert enable demote bp select table memory.";}       ecc_invert_en_demote_bp_sel[8:8]        = 1'h0;
+//   field {AccessType = "RW";
+//          desc = "ECC invert enable atpm counter memory.";}                 ecc_invert_en_atpm_cnt_mem[9:9]         = 1'h0;
+//   field {AccessType = "RW";
+//          desc = "ECC invert enable atpm parameter memory.";}               ecc_invert_en_atpm_param_mem[10:10]     = 1'h0;
+
+//   field {AccessType = "RW";
+//          desc = "ECC invert.  This is an inversion mask that is used to invert ECC bits written to memory when enabled by the ECC invert enable bits of this register.  Each memory type uses the appropriate number of bits in this field starting from right to left.  Set one bit to cause a single bit error, two bits to cause a double bit error.";}     ecc_invert[23:16]          = 8'h0;
+
+//}; //ecc_test_reg
+
+
+// ============================ sia_rx_q_bounds0_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds0_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 0 Queue 0 Memory Bound Register.";
+  desc = "
+          Rx port 0 queue 0 memory bound register. SIA reset is required whenever
+          this is changed.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'hbf;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'h0;
+}; // sia_rx_q_bounds0_r
+
+// ============================ sia_rx_q_bounds1_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 0 Queue 1 Memory Bound Register.";
+  desc = "
+          Rx port 0 queue 1 memory bound register. SIA reset is required whenever
+          this is changed.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'h17f;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'hc0;
+}; // sia_rx_q_bounds1_r
+
+// ============================ sia_rx_q_bounds2_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 1 Queue 0 Memory Bound Register.";
+  desc = "
+          Rx port 1 queue 0 memory bound register. SIA reset is required whenever
+          this is changed.
+          memory into 8 equal parts.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'h23f;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'h180;
+}; // sia_rx_q_bounds2_r
+
+// ============================ sia_rx_q_bounds3_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds3_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 1 Queue 1 Memory Bound Register.";
+  desc = "
+          Rx port 1 queue 1 memory bound register. SIA reset is required whenever
+          memory into 8 equal parts.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'h2ff;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'h240;
+}; // sia_rx_q_bounds3_r
+
+// ============================ sia_rx_q_bounds4_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds4_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 2 Queue 0 Memory Bound Register.";
+  desc = "
+          Rx port 2 queue 0 memory bound register. SIA reset is required whenever
+          this is changed.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'h3bf;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'h300;
+}; // sia_rx_q_bounds4_r
+
+// ============================ sia_rx_q_bounds5_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds5_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 2 Queue 1 Memory Bound Register.";
+  desc = "
+          Rx port 2 queue 1 memory bound register. SIA reset is required whenever
+          this is changed.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'h47f;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'h3c0;
+}; // sia_rx_q_bounds5_r
+
+// ============================ sia_rx_q_bounds6_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds6_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 3 Queue 0 Memory Bound Register.";
+  desc = "
+          Rx port 3 queue 0 memory bound register. SIA reset is required whenever
+          this is changed.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'h53f;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'h480;
+}; // sia_rx_q_bounds6_r
+
+// ============================ sia_rx_q_bounds7_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_bounds7_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Port 3 Queue 1 Memory Bound Register.";
+  desc = "
+          Rx port 3 queue 1 memory bound register. SIA reset is required whenever
+          this is changed.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Upper bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } UPPER_BOUND[26:16] = 11'h5ff;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:11] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Lower bound of the queue in the queue memory.
+           ";
+    ValRandomize = true;
+  } LOWER_BOUND[10:0] = 11'h540;
+}; // sia_rx_q_bounds7_r
+
+regfile sia_rx_q_bounds_rf {
+  sia_rx_q_bounds0_r SIA_RX_Q_BOUNDS0   @0x0;
+  sia_rx_q_bounds1_r SIA_RX_Q_BOUNDS1   @0x8;
+  sia_rx_q_bounds2_r SIA_RX_Q_BOUNDS2   @0x10;
+  sia_rx_q_bounds3_r SIA_RX_Q_BOUNDS3   @0x18;
+  sia_rx_q_bounds4_r SIA_RX_Q_BOUNDS4   @0x20;
+  sia_rx_q_bounds5_r SIA_RX_Q_BOUNDS5   @0x28;
+  sia_rx_q_bounds6_r SIA_RX_Q_BOUNDS6   @0x30;
+  sia_rx_q_bounds7_r SIA_RX_Q_BOUNDS7   @0x38;
+};
+
+// ============================ sia_rx_q_cfg_r (width=32, linecache=0) =======================
+
+reg sia_rx_q_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Per-queue Configuration Register.";
+  desc = "
+          Rx per-queue configuration register.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            This bit enables this queue to be lossless.
+           ";
+    ValRandomize = true;
+  } LOSSLESS_EN[31:31] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            When set, this bit enables the draining of the queue.
+           ";
+    ValRandomize = true;
+  } QUEUE_DRAIN[30:30] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+       Maps rx queue xoff to a pause class or classes.
+           ";
+    ValRandomize = true;
+  } RXQ_XOFF_TO_PC[29:22] = 8'h0;
+  field {
+    AccessType = "RW";
+      desc = "
+              Watermark for XOFF for this queue.
+             ";
+    ValRandomize = true;
+  } XOFF_WATERMARK[21:11] = 11'hb8;
+  field {
+    AccessType = "RW";
+      desc = "
+              Watermark for XON for this queue.
+             ";
+    ValRandomize = true;
+  } XON_WATERMARK[10:0] = 11'hb8;
+}; // sia_rx_q_cfg_r
+regfile sia_rx_q_cfg_rf {
+  sia_rx_q_cfg_r SIA_RX_Q_CFG[8] += 8;
+};
+
+// ============================ sia_rx_port_cfg_r (width=32, linecache=0) =======================
+
+reg sia_rx_port_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Per-port Configuration Register.";
+  desc = "
+          This is the Rx per-port configuration register.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//            Enable.  This enables packets be to accepted from the MAC.
+//            When off, the port is not scheduled for rxram/qram access, and packets
+//            from the MAC are dropped.
+//           ";
+//  } en[31:31] = 1'h1;
+//  field {
+//    AccessType = "RSV";
+//    desc = "
+//       Reserved bits
+//           ";
+//  } _rsvd_[30:11] = 20'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            This selects maximum number of segments that can be stored
+            in Rx Packet RAM for this port.
+           ";
+    ValRandomize = true;
+  } NUM_SEGMENTS[10:0] = 11'h0;
+}; // sia_rx_port_cfg_r
+regfile sia_rx_port_cfg_rf {
+  sia_rx_port_cfg_r SIA_RX_PORT_CFG[4] += 8;
+};
+
+// ============================ sia_rx_q_overrun_r (width=64, linecache=0) =======================
+
+reg sia_rx_q_overrun_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Per-Queue Overrun Dropped and Truncated Packet Count Register.";
+  desc = "
+          Rx per-queue overrun dropped and truncated packet count register.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            This counts the number of packets that were truncated because
+            of overrun.
+           ";
+    ValRandomize = true;
+  } TRUNCATE_PKT_COUNT[63:32] = 32'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            This counts the number of packets that were dropped because
+            of overrun.
+           ";
+    ValRandomize = true;
+  } DROP_PKT_COUNT[31:0] = 31'h0;
+}; // sia_rx_q_overrun_r
+regfile sia_rx_q_overrun_rf {
+  sia_rx_q_overrun_r SIA_RX_Q_OVERRUN[8] += 8;
+};
+
+// ============================ sia_rx_port_ptot_drop_r (width=32, linecache=0) =======================
+
+reg sia_rx_port_ptot_drop_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Per-port PTOT Drop Count Register.";
+  desc = "
+          This is the Rx per-port packet timeout timer (PTOT) drop count register.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            This counts the number of packets that were dropped from the port's
+            even numbered queue because of PTOT exppiration.
+           ";
+    ValRandomize = true;
+  } PTOT_DROP_COUNT_QUEUE_EVN[63:32] = 32'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            This counts the number of packets that were dropped from the port's
+            odd numbered queue because of PTOT exppiration.
+           ";
+    ValRandomize = true;
+  } PTOT_DROP_COUNT_QUEUE_ODD[31:0] = 32'h0;
+}; // sia_rx_port_ptot_drop_r
+regfile sia_rx_port_ptot_drop_rf {
+  sia_rx_port_ptot_drop_r SIA_RX_PORT_PTOT_DROP[4] += 8;
+};
+
+// ============================ sia_rx_tap_q_cfg_r (width=32, linecache=0) =======================
+
+reg sia_rx_tap_q_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Tap Per-queue Configuration Register.";
+  desc = "
+          This is the Rx Tap per-queue configuration register. This configures
+          local ripple tap in switch_clk domain.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            This selects to which SM XOFFs this queue responds.
+           ";
+    ValRandomize = true;
+  } SEL_SM_XOFF[10:8] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[7:3] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            This selects one of the Pause classes to assert in the
+            merged tx_pc_xoff when this queue is in the XOFF state.
+           ";
+    ValRandomize = true;
+  } SEL_PAUSE_CLASS[2:0] = 3'h0;
+}; // sia_rx_tap_q_cfg_r
+regfile sia_rx_tap_q_cfg_rf {
+  sia_rx_tap_q_cfg_r SIA_RX_TAP_Q_CFG[8] += 8;
+};
+
+// ============================ sia_rx_tap_port_cfg_r (width=32, linecache=0) =======================
+
+reg sia_rx_tap_port_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Tap Per-port Configuration Register.";
+  desc = "
+          Configures a per-port IARB token limit.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            IARB token limit this port can request.
+            ";
+    ValRandomize = true;
+  } IARB_TOKEN_LIMIT[3:0] = 4'h8;
+}; // sia_rx_tap_port_cfg_r
+regfile sia_rx_tap_port_cfg_rf {
+  sia_rx_tap_port_cfg_r SIA_RX_TAP_PORT_CFG[4] += 8;
+};
+
+// ============================ sia_map_port_cfg_r (width=63, linecache=0) =======================
+
+reg sia_map_port_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Map Per-port Configuration Register.";
+  desc = "
+          Maps rx queue and pause class (pc) to a shared memory partion (smp).
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 7 to pause class.
+            ";
+    ValRandomize = true;
+  } TC7_TO_PC[55:53] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 6 to pause class.
+            ";
+    ValRandomize = true;
+  } TC6_TO_PC[52:50] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 5 to pause class.
+            ";
+    ValRandomize = true;
+  } TC5_TO_PC[49:47] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 4 to pause class.
+            ";
+    ValRandomize = true;
+  } TC4_TO_PC[46:44] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 3 to pause class.
+            ";
+    ValRandomize = true;
+  } TC3_TO_PC[43:41] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 2 to pause class.
+            ";
+    ValRandomize = true;
+  } TC2_TO_PC[40:38] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 1 to pause class.
+            ";
+    ValRandomize = true;
+  } TC1_TO_PC[37:35] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mapping of internal traffic class 0 to pause class.
+            ";
+    ValRandomize = true;
+  } TC0_TO_PC[34:32] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[31:20] = 12'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Each bit from lsb to msb corresponds to rx queues 0 to 1.
+            A set bit maps the queue to smp1.
+            ";
+    ValRandomize = true;
+  } SMP1_TO_Q[19:18] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Each bit from lsb to msb corresponds to pause classes 0 to 7.
+            A set bit maps the class to smp1.
+            ";
+    ValRandomize = true;
+  } SMP1_TO_PC[17:10] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Each bit from lsb to msb corresponds to rx queues 0 to 1.
+            A set bit maps the queue to smp0.
+            ";
+    ValRandomize = true;
+  } SMP0_TO_Q[9:8] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Each bit from lsb to msb corresponds to pause classes 0 to 7.
+            A set bit maps the class to smp0.
+            ";
+    ValRandomize = true;
+  } SMP0_TO_PC[7:0] = 8'h0;
+}; // sia_map_port_cfg_r
+regfile sia_map_port_cfg_rf {
+  sia_map_port_cfg_r SIA_MAP_PORT_CFG[4] += 8;
+};
+
+reg sia_rx_pkt_meta_size_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Packet Meta Size Register.";
+  desc = "
+          Indicates the valid number in bytes of packet meta data for each queue.
+          These values are derived from the type byte of the packet meta data of
+          each packet that is enqueued.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT3_QUEUE1[15:14] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT3_QUEUE0[13:12] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT2_QUEUE1[11:10] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT2_QUEUE0[9:8] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT1_QUEUE1[7:6] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT1_QUEUE0[5:4] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT0_QUEUE1[3:2] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            00 - 8 bytes, 01 - 16 bytes, 10 - 24 bytes, 11 - 32 bytes
+            ";
+    ValRandomize = true;
+  } META_SIZE_PORT0_QUEUE0[1:0] = 2'h0;
+}; // sia_rx_pkt_meta_size_r
+
+reg sia_rx_q_stat_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Queue Status Register.";
+  desc = "
+          Provides status on the state of the RX queues.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            The queue xoff state as determined by the associated SIA_RX_Q_BOUNDS register setting.
+           ";
+    ValRandomize = true;
+  } RX_Q_XOFF[31:31] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            For even numbered queues only, indicates that an uncorrectable error occured when reading the qram during
+            tail drop processing.  Once set, the queue is frozen.  This can only be cleared by a reset of the sia.
+           ";
+    ValRandomize = true;
+  } QRAM_UER_TAIL_DROP[30:30] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Indicates that an uncorrectable error occured when reading the qram during a qram cache load.
+            Once set, the queue is frozen.  This can only be cleared by a reset of the sia.
+           ";
+    ValRandomize = true;
+  } QRAM_UER_CACHE_LOAD[29:29] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[28:11] = 19'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Current depth of the queue.
+           ";
+    ValRandomize = true;
+  } QUEUE_DEPTH[10:0] = 11'h0;
+}; // sia_rx_q_stat_r
+regfile sia_rx_q_stat_rf {
+  sia_rx_q_stat_r SIA_RX_Q_STAT[8] += 8;
+};
+
+// ============================ sia_rx_port_td_r (width=64, linecache=0) =======================
+
+reg sia_rx_port_td_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA Rx Per-port Tail Drop Register.";
+  desc = "
+          Rx per-port tail drop recovered buffers and dropped packets count register.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            A running count of the number of buffers that are recovered when
+            tail drops occur from the even numbered queue of a port.
+           ";
+    ValRandomize = true;
+  } TD_BUF_COUNT[63:32] = 32'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            A running count of the number of packets that are dropped when
+            tail drops occur from the even numbered queue of a port.
+           ";
+    ValRandomize = true;
+  } TD_PKT_COUNT[31:0] = 31'h0;
+}; // sia_rx_port_td_r
+regfile sia_rx_port_td_rf {
+  sia_rx_port_td_r SIA_RX_PORT_TD[4] += 8;
+};
+
+// ============================ sia_rx_iarb_token_rate_r (width=32, linecache=0) =======================
+
+reg sia_rx_iarb_token_rate_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "SIA IARB Token Rate Register.";
+  desc = "
+          Sets the minimum number of clocks between rx tokens issued per port on rx_ripple for slot requests.
+         "; 
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Each bit is set if a runt packet (packet <= 16 bytes) is received on the corresponding port.
+            ";
+    ValRandomize = true;
+  } RX_RUNT_RCVD[19:16] = 4'h0;
+
+  field {
+    AccessType = "RSV";
+    desc = "
+       Reserved bits
+           ";
+  } _RSVD_[15:6] = 10'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "
+            This should be set based on the number of active ports and the switch_clk frequency.
+            ";
+    ValRandomize = true;
+  } IARB_TOKEN_RATE[5:0] = 6'h3;
+}; // sia_rx_iarb_token_rate_r
+
+
+// ============================ SIA_RX Addr Map =======================
+
+addrmap hlp_SIA_RX_map {
+  name = "hlp_SIA_RX";
+  desc = "SIA_RX Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  ArrayedMaps = 8;
+  AddressBits = 9;
+  ResetDomains = "PORTS,MGMT";
+
+  sia_rx_q_bounds0_r        SIA_RX_Q_BOUNDS0              @0x0000000;
+  sia_rx_q_bounds1_r        SIA_RX_Q_BOUNDS1              @0x0000008;
+  sia_rx_q_bounds2_r        SIA_RX_Q_BOUNDS2              @0x0000010;
+  sia_rx_q_bounds3_r        SIA_RX_Q_BOUNDS3              @0x0000018;
+  sia_rx_q_bounds4_r        SIA_RX_Q_BOUNDS4              @0x0000020;
+  sia_rx_q_bounds5_r        SIA_RX_Q_BOUNDS5              @0x0000028;
+  sia_rx_q_bounds6_r        SIA_RX_Q_BOUNDS6              @0x0000030;
+  sia_rx_q_bounds7_r        SIA_RX_Q_BOUNDS7              @0x0000038;
+  sia_rx_q_cfg_rf           SIA_RX_Q_CFG                  @0x0000040;
+  sia_rx_q_stat_rf          SIA_RX_Q_STAT                 @0x0000080;
+  sia_rx_q_overrun_rf       SIA_RX_Q_OVERRUN              @0x00000C0;
+  sia_rx_port_td_rf         SIA_RX_PORT_TD                @0x0000100;
+  sia_rx_port_ptot_drop_rf  SIA_RX_PORT_PTOT_DROP         @0x0000120;
+  sia_rx_port_cfg_rf        SIA_RX_PORT_CFG               @0x0000140;
+  sia_rx_tap_port_cfg_rf    SIA_RX_TAP_PORT_CFG           @0x0000160;
+  sia_map_port_cfg_rf       SIA_MAP_PORT_CFG              @0x0000180;
+  sia_rx_pkt_meta_size_r    SIA_RX_PKT_META_SIZE          @0x00001a0;
+  sia_rx_iarb_token_rate_r  SIA_RX_IARB_TOKEN_RATE        @0x00001a8;
+  sia_scratch_r             SIA_RX_SCRATCH                @0x00001b0;
+
+}; // SIA_RX_map
+
+

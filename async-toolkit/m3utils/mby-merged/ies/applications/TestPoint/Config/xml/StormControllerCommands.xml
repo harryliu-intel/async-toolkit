@@ -1,0 +1,812 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+    <!-- add storm-ctrl -->
+    <command>
+        <name>add</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>storm-ctrl</name>
+            <help>Add a storm controller action or condition</help>
+
+            <!-- add storm-ctrl action -->
+            <command>
+              <filter type="family">
+                  <deny>FM6000</deny>
+              </filter>
+                <name>action</name>
+                <help>Add a storm controller action</help>
+                <handler>tpHandleAddStormControllerAction</handler>
+
+                <argument>
+                    <name>!&lt;storm controller&gt;</name>
+                    <help>The storm controller identifier</help>
+                    <argument>
+                        <name>filter_port</name>
+                        <help>
+                            Exclude the specified port as a valid destination
+                        </help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>The destination port</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>
+                                    Exclude the specified port as a valid
+                                    destination
+                                </help>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </command>
+
+            <!-- add storm-ctrl condition -->
+            <command>
+                <name>condition</name>
+                <help>Add a storm controller condition</help>
+                <handler>tpHandleAddStormControllerCondition</handler>
+
+                <argument>
+                    <name>!&lt;storm controller&gt;</name>
+                    <help>The storm controller identifier</help>
+
+                    <argument>
+                        <filter type="family">
+                          <deny>FM6000</deny>
+                        </filter>
+                        <name>802.1X</name>
+                        <help>
+                            Include 802.1X frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a 802.1X condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                          <deny>FM6000</deny>
+                        </filter>
+                        <name>bpdu</name>
+                        <help>
+                            Include BPDU frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a BPDU condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <name>broadcast</name>
+                        <help>
+                            Include broadcast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a broadcast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>cpu</name>
+                        <help>
+                            Include CPU addressed frames in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a CPU condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>egress_port</name>
+                        <help>
+                            Include frames sent to a specific port in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>The egress port</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Add an egress port condition</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flood</name>
+                        <help>
+                            Include flooded frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a flood condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flood_ucast</name>
+                        <help>
+                            Include flooded unicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a flood_ucast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flood_mcast</name>
+                        <help>
+                            Include flooded multicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a flood_mcast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>fid</name>
+                        <help>
+                            Include fid-forwarded frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a fid-forward condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>fid_ucast</name>
+                        <help>
+                            Include fid-fowarded unicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a fid_ucast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>fid_mcast</name>
+                        <help>
+                            Include fid-forwarded multicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a fid_mcast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>log_icmp</name>
+                        <help>
+                            Include the logged multicast ICMP frames with TTL
+                            at most 1 in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add an TRAP_ICMP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>trap_icmp</name>
+                        <help>
+                            Include the trapped unicast ICMP frames with TTL at
+                            most 1 in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add an TRAP_ICMP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>igmp</name>
+                        <help>
+                            Include IGMP frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add an IGMP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <name>ingress_port</name>
+                        <help>
+                            Include frames received on a specific port in the
+                            storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>The ingress port</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Add an ingress port condition</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>lacp</name>
+                        <help>
+                            Include LACP frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a LACP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <name>multicast</name>
+                        <help>
+                            Include multicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a multicast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>nexthop_miss</name>
+                        <help>
+                            Include frames routed to the cpu on a next-hop miss.
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a unicast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>unicast</name>
+                        <help>
+                            Include unicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a unicast condition</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </command>
+        </command>
+    </command>  <!-- end add storm-ctrl -->
+
+    <!-- create storm-ctrl -->
+    <command>
+        <name>create</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>storm-ctrl</name>
+            <help>Create a storm controller</help>
+            <handler>tpHandleCreateStormController</handler>
+
+            <argument>
+                <name>!&lt;storm controller&gt;</name>
+                <help>The storm controller identifier</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Create a storm controller</help>
+                </argument>
+            </argument>
+        </command>
+    </command>  <!-- end create storm-ctrl -->
+
+    <!-- del storm-ctrl -->
+    <command>
+        <name>del</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>storm-ctrl</name>
+            <help>Delete a storm controller</help>
+            <handler>tpHandleDelStormController</handler>
+
+            <argument>
+                <name>!&lt;storm controller&gt;</name>
+                <help>The storm controller identifier</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Delete a storm controller</help>
+                </argument>
+            </argument>
+
+            <!-- del storm-ctrl action -->
+            <command>
+                <filter type="family">
+                    <deny>FM6000</deny>
+                </filter>
+                <name>action</name>
+                <help>Delete a storm controller action</help>
+                <handler>tpHandleDelStormControllerAction</handler>
+                <argument>
+                    <name>!&lt;storm controller&gt;</name>
+                    <help>The storm controller identifier</help>
+                    <argument>
+                        <name>filter_port</name>
+                        <help>
+                            Reinstate the specified port as a valid destination
+                        </help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>The destination port</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>
+                                    Reinstate the specified port as a valid
+                                    destination
+                                </help>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </command>
+
+            <!-- del storm-ctrl condition -->
+            <command>
+                <name>condition</name>
+                <help>Delete a storm controller condition</help>
+                <handler>tpHandleDelStormControllerCondition</handler>
+
+                <argument>
+                    <name>!&lt;storm controller&gt;</name>
+                    <help>The storm controller identifier</help>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>802.1X</name>
+                        <help>
+                            Do not include 802.1X frames in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a 802.1X condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>bpdu</name>
+                        <help>
+                            Do not include BPDU frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a BPDU condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <name>broadcast</name>
+                        <help>
+                            Do not include broadcast frames in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a broadcast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>cpu</name>
+                        <help>
+                            Do not include CPU addressed frames in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a CPU condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>egress_port</name>
+                        <help>
+                            Do not include frames sent to a specific port in
+                            the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>The egress port</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Delete an egress port condition</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flood</name>
+                        <help>
+                            Do not include flooded frames in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a flood condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flood_ucast</name>
+                        <help>
+                            Do not include flooded unicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a flood_ucast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>flood_mcast</name>
+                        <help>
+                            Do not include flooded multicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a flood_mcast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>fid</name>
+                        <help>
+                            Do not include fid-forwarded frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a fid-forward condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>fid_ucast</name>
+                        <help>
+                            Do not include fid-fowarded unicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a fid_ucast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>fid_mcast</name>
+                        <help>
+                            Do not include fid-forwarded multicast frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a fid_mcast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>log_icmp</name>
+                        <help>
+                            Do not include logged ICMP frames with TTL at most
+                            1 in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete an ICMP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>trap_icmp</name>
+                        <help>
+                            Do not include trapped ICMP frames with TTL at most
+                            1 in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete an ICMP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>igmp</name>
+                        <help>
+                            Do not include IGMP frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete an IGMP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <name>ingress_port</name>
+                        <help>
+                            Do not include frames received on a specific port
+                            in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>The ingress port</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Delete an ingress port condition</help>
+                            </argument>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM6000</deny>
+                        </filter>
+                        <name>lacp</name>
+                        <help>
+                            Do not include LACP frames in the storm controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a LACP condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <name>multicast</name>
+                        <help>
+                            Do not include multicast frames in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a multicast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>nexthop_miss</name>
+                        <help>
+                            Do not include frames routed to the CPU on a   
+                            next-hop miss.
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a unicast condition</help>
+                        </argument>
+                    </argument>
+
+                    <argument>
+                        <filter type="family">
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>unicast</name>
+                        <help>
+                            Do not include unicast frames in the storm
+                            controller
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Delete a unicast condition</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </command>
+        </command>
+    </command>  <!-- end del storm-ctrl -->
+
+    <!-- reset storm-ctrl -->
+    <command>
+        <name>reset</name>
+        <command>
+            <filter type="family">
+              <deny>FM2000</deny>
+              <deny>FM6000</deny>
+            </filter>
+            <name>storm-ctrl</name>
+            <help>Reset storm controller properties</help>
+
+            <command>
+                <name>stats</name>
+                <help>Reset storm controller statistics</help>
+                <handler>tpHandleResetStormControllerStats</handler>
+
+                <argument>
+                    <name>!&lt;storm controller&gt;</name>
+                    <help>The storm controller identifier</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Reset storm controller statistics</help>
+                    </argument>
+                </argument>
+            </command>
+        </command>
+    </command>  <!-- end reset storm-ctrl -->
+
+    <!-- set storm-ctrl -->
+    <command>
+        <name>set</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>storm-ctrl</name>
+            <help>Set storm controller attribute</help>
+            <handler>tpHandleSetStormController</handler>
+
+            <argument>
+                <name>!&lt;storm controller&gt;</name>
+                <help>The storm controller identifier</help>
+
+                <argument>
+                    <name>capacity</name>
+                    <help>Set the maximum burst size</help>
+                    <argument>
+                        <name>!&lt;capacity&gt;</name>
+                        <help>The token bucket capacity in bytes</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set the maximum burst size</help>
+                        </argument>
+                    </argument>
+                </argument>
+
+                <argument>
+                    <name>rate</name>
+                    <help>Set the maximum bandwidth</help>
+                    <argument>
+                        <name>!&lt;rate&gt;</name>
+                        <help>
+                            The rate at which the token bucket is refilled in
+                            kilobits per second
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set the maximum bandwidth</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument>
+        </command>
+    </command>  <!-- end set storm-ctrl -->
+
+    <!-- show storm-ctrl -->
+    <command>
+        <name>show</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>storm-ctrl</name>
+            <help>Show storm controller properties</help>
+            <handler>tpHandleShowStormController</handler>
+
+            <command>
+                <filter type="family">
+                  <deny>FM2000</deny>
+                  <deny>FM6000</deny>
+                </filter>
+                <name>stats</name>
+                <help>Show storm controller statistics</help>
+                <handler>tpHandleShowStormControllerStats</handler>
+
+                <argument>
+                    <name>!&lt;storm controller&gt;</name>
+                    <help>The storm controller identifier</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show storm controller statistics</help>
+                    </argument>
+                </argument>
+            </command>
+
+            <argument>
+                <name>!&lt;storm controller&gt;</name>
+                <help>The storm controller identifier</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show storm controller state</help>
+                </argument>
+            </argument>
+        </command>
+    </command>  <!-- end show storm-ctrl -->
+</config>

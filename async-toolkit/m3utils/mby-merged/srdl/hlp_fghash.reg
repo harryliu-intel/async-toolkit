@@ -1,0 +1,224 @@
+
+# FFU registers structure
+#
+#  FFU (arch. partition) -----+----------------------+
+#  |                          |                      |
+#  FFU_GROUP (addrmap)        FGHASH (addrmap)       HASH_ENTRY_RAM (addrmap)
+#  |                          |                      |
+#  FFU_TCAM       (register)  FFU_HASH_LOOKUP (reg)  HASH_ENTRY  (reg)
+#  FFU_TCAM_CFG   (register)  FFU_HASH_CAM (reg)     HASH_ENTRY0 (reg)
+#  FFU_ACTION     (register)  :                      HASH_ENTRY1 (reg)
+#  FFU_ACTION_CFG (register)
+#  :
+
+######################## FGHASH REGISTER SET #########################
+#
+
+--addressBase           0x000000
+--addressBits           17
+--atomic                64
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT
+
+-set hlp_FGHASH  FFU Group Hash Register Set
+
+--atomic 128
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT
+-register FFU_HASH_LOOKUP[0..8191]  FFU hashing buckets.
+  In single lookup mode, there is one table using 8K buckets.
+  In split-4K lookup mode,
+  * LOOKUP0 = FFU_LOOKUP[0..4095]
+  * LOOKUP1 = FFU_LOOKUP[4096..8192]
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +PTR:20:RW:0
+    ptr*4 is the byte-location of the bucket's first entry in Hash Entry RAM.
+#'
+  +RSVD1_:12:RV:0
+
+  +SELECT[4..0]:4:RW:0
+    selects 'more' hash bits.
+    * bucket_hash[i] = more_hash[select[i]]
+
+  +MASK:32:RW:0
+    selects which bucket_hash values have entries.
+
+--atomic 64
+--addressing            fullalign 
+--space                 MSG       
+--opcode                MEM-SB    
+--No_IOSF_Primary       true      
+--resetDomains          SWITCH,MGMT
+
+
+-register FFU_HASH_CAM[0..31,0..7] CAM entries for hash overflow.
+
+  The second index is the entry number, and the third index
+  is the word number. The entry format is big-endian. Byte 0 is bits 63..56 of word 0.
+
+  In 64B entry mode, the entry is 64 bytes wide.
+  In 64B mode there is a single action resolution and the 1-2 actions from
+  the highest-numbered matching entry are used.
+  To form a 64B entry, a key 56B or less is padded with 0s to 56B and followed by two actions.
+  In the case of a 60B key, there is only 1 action at FFU_HASH_CAM[group][rule][7][31:0].
+
+  In 32B entry mode, FFU_HASH_CAM[group][rule][0..3] is the row0 entry,
+  and FFU_HASH_CAM[group][rule][4..7] is the row1 entry. The two rows are resolved
+  independently: the 1-2 actions from the highest-numbered matching entry within each row
+  are used. To form a 32B entry, a key 24B or less is padded with 0s to 24B and followed
+  by two actions. In the case of a 28B key in 32B mode, there is only 1 action.
+  
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +DATA:64:RW:0
+
+
+-register FFU_HASH_CAM_EN[0..1,0..31] Select FFU_HASH_CAM scenarios.
+
+  When FFU_HASH_CAM_EN[group][row][rule].mask[s] is set, then
+  FFU_HASH_CAM[group][rule][row*4 +: 4] is used in scenario s.
+  
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +MASK:64:RW:0
+    Select scenarios for this rule. Uses little-endian bit numbering.
+
+
+-register FFU_KEY_MASK0[0..1,0..63] Configures hash value calculation
+
+  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
+
+  This register is indexed first by hash number 0..1, then by scenario.
+
+  Before matching, the selected (Key32, Key16, Key8) are compacted
+  in big endian form. If the result is an odd number of bytes,
+  a padding 0 byte is added.
+  
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +KEY8_MASK:64:RW:0
+     Selects FFU key8s to participate in hashing and matching. 
+     Key8Mask[i] selects key8[i].
+
+
+-register FFU_KEY_MASK1[0..1,0..63] Configures hash value calculation
+
+  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
+
+  This register is indexed first by hash number 0..1, then by scenario.
+
+  Before matching, the selected (Key32, Key16, Key8) are compacted
+  in big endian form. If the result is an odd number of bytes,
+  a padding 0 byte is added.
+  
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +KEY_SUBMODE1:2:RW:0
+     Similar to KeySubmode0. Provides a second mask operation.
+  +KEY_SUBMODE0:2:RW:0
+     Controls FFU_KEY_MASK2[].KeySubmask0.
+   * if key_submode0=0, apply key_submask0 bitmask to keys 24..25 (MPLS 0)
+   * if key_submode0=1, apply key_submask0 bitmask to keys 26..27 (MPLS 1)
+   * if key_submode0=2, apply key_submask0 nybblemask to keys 24..31 (MPLS 0-3)
+   * if key_submode0=3, apply key_submask0 nybblemask to keys 48..55 (outer IPv4, or outer SIPv6)
+  +KEY32_MASK:16:RW:0
+     Selects FFU key32s to participate in hashing and matching. 
+     Key32Mask[i] selects key32[i].
+  +KEY16_MASK:32:RW:0
+     Selects FFU key16s to participate in hashing and matching. 
+     Key16Mask[i] selects key16[i].
+
+
+-register FFU_KEY_MASK2[0..1,0..63] Configures hash value calculation
+
+  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
+
+  This register is indexed first by hash number 0..1, then by scenario.
+
+  Before matching, the selected (Key32, Key16, Key8) are compacted
+  in big endian form. If the result is an odd number of bytes,
+  a padding 0 byte is added.
+  
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +KEY_SUBMASK1:32:RW:0
+     Similar to KeySubmask0. Provides a second mask operation.
+  +KEY_SUBMASK0:32:RW:0
+     Bit- or nybble-mask to apply to special keys.
+     Setting a mask bit to 0 causes the bit or nybble to be zeroed
+     out without shifting other bits/nybbles in the compacted key.
+
+
+-register FFU_HASH_MISS[0..1,0..63] Provides two hash-miss actions for each hashtable row.
+
+  FFU_HASH_MISS[r][scenario] provides 2 actions for row r=0..1.
+
+  If there is no key match in ENTRY_RAM or CAM, then both actions are taken.
+  The format of the action is the same as FFU_ACTION,
+  HASH_ENTRY_RAM, and FFU_HASH_CAM.
+  
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +ACTION1:32:RW:0
+  +ACTION0:32:RW:0
+
+
+-register FFU_HASH_CFG[0..63] Configure FFU hashing
+
+  This register is indexed by the scenario.
+  
+  Noted that per-group above explicitly implies only FFU groups 0..1.  
+  While these registers exist for FFU group 2, none of them should be 
+  written by software and should be considered reserved
+
+  >PG HLP_PG1
+  +MODE:1:RW:0
+     Define lookup (or entry) modes : split 4K (0) or one 8K (1).
+                                      32B      (0) or 64B    (1).
+
+  +BASE_PTR[0..1]:13:RW:0
+     Start of hash table.
+     Must be a multiple of 2^hash_size[ROW].
+
+  +HASH_SIZE[0..1]:5:RW:0
+     Number of hash bits to use in lookup address calculation.
+
+     * lookup_ptr = base_ptr[ROW] + hash % 2^hash_size[ROW]
+
+     For example, hash_size=10 yields a table with 1024 buckets.
+
+  +ENTRY_SIZE[0..1]:5:RW:0
+     Size of each entry, given as a multiple of 4B.
+     The entry size must be a multiple of 4 in the range 8..64.
+     The entry bytes following the padded key are actions.
+
+     Set entry_size[r]==0 to disable row r lookups in this scenario.
+

@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+
+<!--
+     ********************************************************
+       This file was auto-generated from the TestPoint command
+       specification file, DcbxCommands.tp, using ./build_tp_xml.pl.
+     ********************************************************
+-->
+
+<config>
+    <command>    <!-- show -->
+        <name>show</name>
+        <help>Show a property</help>
+        <command>    <!-- port -->
+            <name>port</name>
+            <help>Show a port related property or state</help>
+            <command>    <!-- dcbx -->
+                <name>dcbx</name>
+                <help>Show DCBX port information</help>
+                <handler>tpHandleShowDcbxPort</handler>
+                <argument>    <!-- port -->
+                    <name>!&lt;port&gt;</name>
+                    <help>Show DCBX port information (enter port number, list, range)</help>
+                    <argument>    <!-- config -->
+                        <name>config</name>
+                        <help>Show port configuration information</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- config -->
+                    <argument>    <!-- local -->
+                        <name>local</name>
+                        <help>Show port local-data information</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- local -->
+                    <argument>    <!-- admin -->
+                        <name>admin</name>
+                        <help>Show port admin-data information</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- admin -->
+                    <argument>    <!-- remote -->
+                        <name>remote</name>
+                        <help>Show port remote-data information</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- remote -->
+                    <argument>    <!-- counters -->
+                        <name>counters</name>
+                        <help>Show port counters information</help>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>    <!-- cr -->
+                    </argument>    <!-- counters -->
+                </argument>    <!-- port -->
+            </command>    <!-- dcbx -->
+        </command>    <!-- port -->
+    </command>    <!-- show -->
+    <command>    <!-- set -->
+        <name>set</name>
+        <help>Set a property</help>
+        <command>    <!-- switch -->
+            <name>switch</name>
+            <help>Set a switch related property</help>
+            <command>    <!-- config -->
+                <name>config</name>
+                <help>Sets a global switch configuration property</help>
+                <command>    <!-- dcbx -->
+                    <name>dcbx</name>
+                    <help>Control DCBX protocol</help>
+                    <command>    <!-- stop -->
+                        <name>stop</name>
+                        <help>Stop DCBX protocol</help>
+                        <handler>tpHandleStopDcbx</handler>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>    <!-- cr -->
+                    </command>    <!-- stop -->
+                    <command>    <!-- start -->
+                        <name>start</name>
+                        <help>Start DCBX protocol</help>
+                        <handler>tpHandleStartDcbx</handler>
+                        <argument>    <!-- cr -->
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>    <!-- cr -->
+                    </command>    <!-- start -->
+                </command>    <!-- dcbx -->
+            </command>    <!-- config -->
+        </command>    <!-- switch -->
+        <command>    <!-- port -->
+            <name>port</name>
+            <help>Set port specific properties</help>
+            <command>    <!-- config -->
+                <name>config</name>
+                <help>Set port specific configuration</help>
+                <command>    <!-- dcbx -->
+                    <name>dcbx</name>
+                    <help>Set DCBX port config</help>
+                    <handler>tpHandleSetDcbxPort</handler>
+                    <argument>    <!-- port -->
+                        <name>!&lt;port&gt;</name>
+                        <help>Set DCBX port config (enter port number, list, range)</help>
+                        <argument>    <!-- version -->
+                            <name>version</name>
+                            <help>Set port protocol version</help>
+                            <argument>    <!-- auto -->
+                                <name>auto</name>
+                                <help>Auto Detect Version from Peer Messages</help>
+                                <argument>    <!-- cr -->
+                                    <name>!&lt;cr&gt;</name>
+                                    <help> </help>
+                                </argument>    <!-- cr -->
+                            </argument>    <!-- auto -->
+                            <argument>    <!-- 0 -->
+                                <name>0</name>
+                                <help>DCBX Base Protocol V1.01 (Version 0)</help>
+                                <argument>    <!-- cr -->
+                                    <name>!&lt;cr&gt;</name>
+                                    <help> </help>
+                                </argument>    <!-- cr -->
+                            </argument>    <!-- 0 -->
+                            <argument>    <!-- 1 -->
+                                <name>1</name>
+                                <help>DCBX IEEE 802.1Qaz/D2.0  (Version 1)</help>
+                                <argument>    <!-- cr -->
+                                    <name>!&lt;cr&gt;</name>
+                                    <help> </help>
+                                </argument>    <!-- cr -->
+                            </argument>    <!-- 1 -->
+                        </argument>    <!-- version -->
+                        <argument>    <!-- tx-enable -->
+                            <name>tx-enable</name>
+                            <help>Set port tx-enable</help>
+                            <argument>    <!-- pfc -->
+                                <name>pfc</name>
+                                <help>Set port pfc tx-enable</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port pfc tx-enable to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port pfc tx-enable to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- pfc -->
+                            <argument>    <!-- ets-conf -->
+                                <name>ets-conf</name>
+                                <help>Set port ets-configuration tx-enable</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port ets-configuration tx-enable to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port ets-configuration tx-enable to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- ets-conf -->
+                            <argument>    <!-- ets-reco -->
+                                <name>ets-reco</name>
+                                <help>Set port ets-recommendation tx-enable</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port ets-recommendation tx-enable to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port ets-recommendation tx-enable to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- ets-reco -->
+                            <argument>    <!-- app -->
+                                <name>app</name>
+                                <help>Set port application-priority tx-enable</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port application-priority tx-enable to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port application-priority tx-enable to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- app -->
+                            <argument>    <!-- cn -->
+                                <name>cn</name>
+                                <help>Set port congestion-notification tx-enable</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port congestion-notification tx-enable to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port congestion-notification tx-enable to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- cn -->
+                            <argument>    <!-- all -->
+                                <name>all</name>
+                                <help>Set port global tx-enable</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port global tx-enable to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port global tx-enable to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- all -->
+                        </argument>    <!-- tx-enable -->
+                        <argument>    <!-- pfc -->
+                            <name>pfc</name>
+                            <help>Set DCBX/PFC port config</help>
+                            <argument>    <!-- willing -->
+                                <name>willing</name>
+                                <help>Set port willing</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port willing to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port willing to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- willing -->
+                            <argument>    <!-- mbc -->
+                                <name>mbc</name>
+                                <help>Set port MBC</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port MBC to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port MBC to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- mbc -->
+                            <argument>    <!-- capability -->
+                                <name>capability</name>
+                                <help>Set port max capability</help>
+                                <argument>    <!-- capability -->
+                                    <name>!&lt;capability&gt;</name>
+                                    <help>Set port max capability (enter value)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- capability -->
+                            </argument>    <!-- capability -->
+                            <argument>    <!-- enable -->
+                                <name>enable</name>
+                                <help>Set port priority enable</help>
+                                <argument>    <!-- enable -->
+                                    <name>!&lt;enable&gt;</name>
+                                    <help>Set port priority enable (enter off,on,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- enable -->
+                            </argument>    <!-- enable -->
+                        </argument>    <!-- pfc -->
+                        <argument>    <!-- ets-conf -->
+                            <name>ets-conf</name>
+                            <help>Set DCBX/ETS-configuration config</help>
+                            <argument>    <!-- willing -->
+                                <name>willing</name>
+                                <help>Set port willing</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port willing to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port willing to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- willing -->
+                            <argument>    <!-- cbs -->
+                                <name>cbs</name>
+                                <help>Set port CBS</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port CBS to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port CBS to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- cbs -->
+                            <argument>    <!-- max-tc -->
+                                <name>max-tc</name>
+                                <help>Set port max traffic classes</help>
+                                <argument>    <!-- max-tc -->
+                                    <name>!&lt;max-tc&gt;</name>
+                                    <help>Set port max traffic classes</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- max-tc -->
+                            </argument>    <!-- max-tc -->
+                            <argument>    <!-- bandwidth -->
+                                <name>bandwidth</name>
+                                <help>Set port bandwidth</help>
+                                <argument>    <!-- bandwidth -->
+                                    <name>!&lt;bandwidth&gt;</name>
+                                    <help>Set port bandwidth (enter 10,30,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- bandwidth -->
+                            </argument>    <!-- bandwidth -->
+                            <argument>    <!-- algorithm -->
+                                <name>algorithm</name>
+                                <help>Set port traffic algorithm</help>
+                                <argument>    <!-- algorithm -->
+                                    <name>!&lt;algorithm&gt;</name>
+                                    <help>Set port traffic algorithm (enter 1,3,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- algorithm -->
+                            </argument>    <!-- algorithm -->
+                            <argument>    <!-- priority -->
+                                <name>priority</name>
+                                <help>Set port priority assignment</help>
+                                <argument>    <!-- priority -->
+                                    <name>!&lt;priority&gt;</name>
+                                    <help>Set port priority assignment (enter 1,2,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- priority -->
+                            </argument>    <!-- priority -->
+                        </argument>    <!-- ets-conf -->
+                        <argument>    <!-- ets-reco -->
+                            <name>ets-reco</name>
+                            <help>Set DCBX/ETS-recommended config</help>
+                            <argument>    <!-- bandwidth -->
+                                <name>bandwidth</name>
+                                <help>Set port bandwidth</help>
+                                <argument>    <!-- bandwidth -->
+                                    <name>!&lt;bandwidth&gt;</name>
+                                    <help>Set port bandwidth (enter 10,30,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- bandwidth -->
+                            </argument>    <!-- bandwidth -->
+                            <argument>    <!-- algorithm -->
+                                <name>algorithm</name>
+                                <help>Set port traffic algorithm</help>
+                                <argument>    <!-- algorithm -->
+                                    <name>!&lt;algorithm&gt;</name>
+                                    <help>Set port traffic algorithm (enter 1,3,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- algorithm -->
+                            </argument>    <!-- algorithm -->
+                            <argument>    <!-- priority -->
+                                <name>priority</name>
+                                <help>Set port priority assignment</help>
+                                <argument>    <!-- priority -->
+                                    <name>!&lt;priority&gt;</name>
+                                    <help>Set port priority assignment (enter 1,2,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- priority -->
+                            </argument>    <!-- priority -->
+                        </argument>    <!-- ets-reco -->
+                        <argument>    <!-- app -->
+                            <name>app</name>
+                            <help>Add/Modify/Delete DCBX/Application-Priority entries</help>
+                            <argument>    <!-- willing -->
+                                <name>willing</name>
+                                <help>Set port willing</help>
+                                <argument>    <!-- off -->
+                                    <name>off</name>
+                                    <help>Set port willing to OFF</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- off -->
+                                <argument>    <!-- on -->
+                                    <name>on</name>
+                                    <help>Set port willing to ON</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- on -->
+                            </argument>    <!-- willing -->
+                            <argument>    <!-- sel -->
+                                <name>!&lt;sel&gt;</name>
+                                <help>Add/Modify/Delete entry (enter protocol selector)</help>
+                                <argument>    <!-- proto -->
+                                    <name>!&lt;proto&gt;</name>
+                                    <help>Add/Modify/Delete entry (enter protocol code)</help>
+                                    <argument>    <!-- priority -->
+                                        <name>!&lt;priority&gt;</name>
+                                        <help>Add/Modify entry (enter protocol priority)</help>
+                                        <argument>    <!-- cr -->
+                                            <name>!&lt;cr&gt;</name>
+                                            <help> </help>
+                                        </argument>    <!-- cr -->
+                                    </argument>    <!-- priority -->
+                                    <argument>    <!-- delete -->
+                                        <name>delete</name>
+                                        <help>Delete entry</help>
+                                        <argument>    <!-- cr -->
+                                            <name>!&lt;cr&gt;</name>
+                                            <help> </help>
+                                        </argument>    <!-- cr -->
+                                    </argument>    <!-- delete -->
+                                </argument>    <!-- proto -->
+                            </argument>    <!-- sel -->
+                        </argument>    <!-- app -->
+                        <argument>    <!-- cn -->
+                            <name>cn</name>
+                            <help>Set DCBX/Congestion-Notification config</help>
+                            <argument>    <!-- supported -->
+                                <name>supported</name>
+                                <help>Set port supported CNPV</help>
+                                <argument>    <!-- supported -->
+                                    <name>!&lt;supported&gt;</name>
+                                    <help>Set port supported CNPV (enter off,on,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- supported -->
+                            </argument>    <!-- supported -->
+                            <argument>    <!-- ready -->
+                                <name>ready</name>
+                                <help>Set port enabled CNPV</help>
+                                <argument>    <!-- ready -->
+                                    <name>!&lt;ready&gt;</name>
+                                    <help>Set port enabled CNPV (enter off,on,.. list)</help>
+                                    <argument>    <!-- cr -->
+                                        <name>!&lt;cr&gt;</name>
+                                        <help> </help>
+                                    </argument>    <!-- cr -->
+                                </argument>    <!-- ready -->
+                            </argument>    <!-- ready -->
+                        </argument>    <!-- cn -->
+                    </argument>    <!-- port -->
+                </command>    <!-- dcbx -->
+            </command>    <!-- config -->
+        </command>    <!-- port -->
+    </command>    <!-- set -->
+
+</config>

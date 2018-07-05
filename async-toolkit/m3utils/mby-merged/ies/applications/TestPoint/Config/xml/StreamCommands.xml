@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+<!--
+<argument>
+    <name>!&lt;cr&gt;</name>
+    <help></help>
+</argument>
+-->
+
+<command>
+    <name>set</name>
+
+    <command>
+        <name>stream</name>
+        <help>Modify stream mode or output ports</help>
+
+        <command>
+            <name>port</name>
+            <help>Set the output ports of a stream</help>
+            <handler>tpSetStreamPort</handler>
+
+            <argument>
+                <name>!&lt;streamId&gt;</name>
+                <help>The stream whose contents will be forwarded out this port</help>
+
+                <argument>
+                    <name>!&lt;port(s)&gt;</name>
+                    <help>The port or list of ports to add</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set output port(s) of a stream</help>
+                    </argument>
+
+                </argument>
+
+            </argument>
+
+        </command>
+
+        <command>
+            <name>mode</name>
+            <help>Start, stop or burst a stream contents out</help>
+            <handler>tpSetStreamMode</handler>
+
+            <argument>
+                <name>!&lt;streamId&gt;</name>
+                <help>The stream to start, stop or burst</help>
+
+                <argument>
+                    <name>loop-start</name>
+                    <help>Start looping the stream contents to output port(s)</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Start looping traffic</help>
+                    </argument>
+
+                </argument>
+
+                <argument>
+                    <name>loop-stop</name>
+                    <help>Stop transmit of stream contents to output port(s).</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Stop transmit of looping traffic</help>
+                    </argument>
+
+                </argument>
+
+                <argument>
+                    <name>release</name>
+                    <help>Empty the stream contents to output port(s)</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Burst one copy of traffic, emptying stream</help>
+                    </argument>
+
+                </argument>
+
+                <argument>
+                    <name>clear</name>
+                    <help>Flush contents of the stream</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Flush contents of the stream</help>
+                    </argument>
+
+                </argument>
+
+
+            </argument>
+
+        </command>
+
+    </command>
+</command>
+
+<command>
+    <name>del</name>
+
+    <command>
+        <name>stream</name>
+        <help>Delete a stream from the system</help>
+        <handler>tpDeleteStream</handler>
+
+            <argument>
+                <name>!&lt;streamId&gt;</name>
+                <help>The stream to delete (loopback port number)</help>
+
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Delete a stream</help>
+                </argument>
+
+            </argument>
+
+    </command>
+</command>
+
+<command>
+    <name>create</name>
+
+    <command>
+        <name>stream</name>
+        <help>Create a stream for traffic generation</help>
+        <handler>tpCreateStream</handler>
+
+        <argument>
+            <name>!&lt;port&gt;</name>
+            <help>Set the port to use in loopback (streamID)</help>
+            
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Loopback a port to use as a stream</help>
+            </argument>
+        
+        </argument>
+
+    </command>
+
+</command>
+
+<command>
+    <name>reset</name>
+
+    <command>
+        <name>stream</name>
+        <help>Drain any farmes in the stream</help>
+        <handler>tpResetStream</handler>
+
+          <argument>
+          <name>!&lt;port&gt;</name>
+          <help>Drain any traffic in the stream</help>
+
+              <argument>
+              <name>!&lt;cr&gt;</name>
+              <help>Drain the stream of traffic</help>
+              </argument>
+
+          </argument>
+
+    </command>
+
+</command>
+
+<command>
+    <name>add</name>
+
+    <command>
+        <name>stream</name>
+        <help>Add packets to a stream</help>
+
+        <command>
+            <name>packet</name>
+            <help>Add packets to a stream</help>
+            <handler>tpAddStreamPacket</handler>
+
+            <argument>
+                <name>!&lt;streamId&gt;</name>
+                <help>The stream to add the packet(s) to</help>
+
+                <argument>
+                    <name>file-pcap</name>
+                    <help>Add a sequence of packet in a PCAP file</help>
+
+                    <argument>
+                        <name>!&lt;filename&gt;</name>
+                        <help>File containing the frames (timestamps are ignored)</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Load these packets into the stream</help>
+                            </argument>
+                    </argument>
+                </argument>
+
+                <argument>
+                    <name>bytes</name>
+                    <help>Add the packet as bytes</help>
+
+                    <argument>
+                        <name>!&lt;length&gt;</name>
+                        <help>The packet length in bytes</help>
+
+
+                        <argument>
+                            <name>!&lt;DMAC&gt;</name>
+                            <help>The destination MAC in the form XX:XX:XX:XX:XX:XX</help>
+
+                            <argument>
+                                <name>!&lt;SMAC&gt;</name>
+                                <help>The source MAC in the form XX:XX:XX:XX:XX:XX</help>
+
+                                <argument>
+                                    <name>!&lt;value&gt;</name>
+                                    <help>Hexadecimal payload byte values</help>
+                                    <argument>
+                                        <name>!&lt;cr&gt;</name>
+                                        <help>Load this packet into the stream</help>
+                                    </argument>
+                                </argument>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>Send the packet, filling in the payload as needed</help>
+                                </argument>
+                            </argument>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Send the packet, filling in the payload as needed</help>
+                            </argument>
+                        </argument>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Send the packet, filling in the payload as needed</help>
+                        </argument>
+                    </argument>
+                </argument>
+
+            </argument>
+
+        </command>
+
+    </command>
+</command>
+
+</config>

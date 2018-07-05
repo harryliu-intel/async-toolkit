@@ -1,0 +1,642 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+reg cm_apply_tc_to_smp_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the SMP membership per traffic class";
+  desc = "
+          Defines the SMP membership per traffic class. The choices are:
+          0: SMP 0; 1: SMP 1
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_7[7:7] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_6[6:6] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_5[5:5] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_4[4:4] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_3[3:3] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_2[2:2] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_1[1:1] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            SMP Membership for traffic class N.
+           ";
+    ValRandomize = true;
+  } SMP_0[0:0] = 1'h00;
+};
+
+reg cm_apply_tx_softdrop_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Soft drop configuration per TX port, switch priority";
+  desc = "
+          Specifies soft drop configuration per TX port and switch priority.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            If SoftDropOnSmpFree is not set, then this enables soft drop when 
+            CM_TX_TC_PRIVATE_WM is exceeded.
+           ";
+    ValRandomize = true;
+  } SOFT_DROP_ON_PRIVATE[1:1] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Enables dynamic soft drop with drop probabilities proportional to
+            the remaining free space in the SMP.
+           ";
+    ValRandomize = true;
+  } SOFT_DROP_ON_SMP_FREE[0:0] = 1'h00;
+};
+regfile cm_apply_tx_softdrop_cfg_rf {
+  cm_apply_tx_softdrop_cfg_r CM_APPLY_TX_SOFTDROP_CFG[8] += 8;
+};
+
+reg cm_apply_softdrop_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Soft drop configuration";
+  desc = "
+          Specifies software configuration
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selects the number of random jitter bits that will be added to
+            SoftDropSegmentLimit (0..7).
+           ";
+    ValRandomize = true;
+  } JITTER_BITS[2:0] = 3'h00;
+};
+
+reg cm_apply_drop_count_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Per-port TX CM DROP counter";
+  desc = "
+  TX port CM drop frame counter register 
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/V";
+    desc = "
+            Per-port TX CM DROP frame counter
+           ";
+    ValRandomize = true;
+  } FRAMES[47:0] = 48'h00;
+};
+
+reg cm_apply_mcast_epoch_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines epoch";
+  desc = "
+  Register that defines current epoch for multicast garbage collection.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines current epoch for multicast garbage collection.
+           ";
+    ValRandomize = true;
+  } CURRENT[0:0] = 1'h00;
+};
+
+reg cm_apply_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Cached sweeper state";
+  desc = "
+  Cached sweeper state register
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_7[8:8] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_6[7:7] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_5[6:6] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_4[5:5] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_3[4:4] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_2[3:3] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_1[2:2] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_SHARED_WM exceeded, per tc.
+           ";
+    ValRandomize = true;
+  } RXS_0[1:1] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_GLOBAL_WM exceeded.
+           ";
+    ValRandomize = true;
+  } GLOBAL_EX[0:0] = 1'h00;
+};
+
+reg cm_apply_softdrop_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Softdrop state indexed by switch priority";
+  desc = "
+  Softdrop state register indexed by switch priority
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            True if CM_SHARED_SMP_USAGE in excess of the SoftDropSegmentLimit
+           ";
+    ValRandomize = true;
+  } OVER_LIMIT[8:8] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Amount of CM_SHARED_SMP_USAGE in excess of the 
+            SoftDropSegmentLimit. Data valid if overLimit==1.
+           ";
+    ValRandomize = true;
+  } USAGE_OVER_LIMIT[7:0] = 8'h00;
+};
+
+reg cm_apply_rx_smp_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Per rx port, smp watermark state";
+  desc = "
+  Rx Port SMP watermark state register
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_RX_SMP_HOG_WM exceeded.
+           ";
+    ValRandomize = true;
+  } RX_HOG[1:1] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_RX_SMP_PRIVATE_WM exceeded.
+           ";
+    ValRandomize = true;
+  } RX_PRIVATE[0:0] = 1'h00;
+};
+regfile cm_apply_rx_smp_state_rf {
+  cm_apply_rx_smp_state_r CM_APPLY_RX_SMP_STATE[2] += 8;
+};
+
+reg cm_apply_tx_tc_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Per tx port, tc watermark state";
+  desc = "
+  Tx port, TC watermark state register
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            TX TC queue depth from cm_usage.
+           ";
+    ValRandomize = true;
+  } QUEUE_DEPTH[18:4] = 15'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_TX_TC_USAGE over half of soft drop SMP free amount.
+           ";
+    ValRandomize = true;
+  } OVER_SMP_FREE2[3:3] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_TX_TC_USAGE over soft drop SMP free amount.
+           ";
+    ValRandomize = true;
+  } OVER_SMP_FREE[2:2] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_TX_SMP_HOG_WM exceeded.
+           ";
+    ValRandomize = true;
+  } TX_HOG[1:1] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_TX_TC_PRIVATE_WM exceeded.
+           ";
+    ValRandomize = true;
+  } TX_PRIVATE[0:0] = 1'h00;
+};
+regfile cm_apply_tx_tc_state_rf {
+  cm_apply_tx_tc_state_r CM_APPLY_TX_TC_STATE[8] += 8;
+};
+
+reg cm_apply_tx_tc_qcn_wm_threshold_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Per tx port, tc watermater threshold for QCN";
+  desc = "
+  Tx port, TC watermater threshold register for QCN
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Watermark threshold for QCN.
+           ";
+    ValRandomize = true;
+  } WM_THRESHOLD[14:0] = 15'h00;
+};
+
+regfile cm_apply_tx_tc_qcn_wm_threshold_rf {
+  cm_apply_tx_tc_qcn_wm_threshold_r CM_APPLY_TX_TC_QCN_WM_THRESHOLD[8] += 8;
+};
+
+reg cm_apply_tx_swpri_state_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Per tx port, tc watermark state";
+  desc = "
+  TX port, TC watermark state register
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_TX_TC_USAGE over half of soft drop SMP free amount.
+           ";
+    ValRandomize = true;
+  } OVER_SMP_FREE2[1:1] = 1'h00;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            CM_TX_TC_USAGE over soft drop SMP free amount.
+           ";
+    ValRandomize = true;
+  } OVER_SMP_FREE[0:0] = 1'h00;
+};
+regfile cm_apply_tx_swpri_state_rf {
+  cm_apply_tx_swpri_state_r CM_APPLY_TX_SWPRI_STATE[16] += 8;
+};
+
+reg cm_apply_cpu_trap_mask_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the CPU mask for trapping";
+  desc = "
+          When a trapped frame is sent to the CPU, it is sent out on these 
+          ports. (This is a mask rather than a single port number, so that it 
+          is possible to multicast to multiple CPUs if desired.)
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination mask for CPU.
+           ";
+    ValRandomize = true;
+  } DEST_MASK[23:0] = 24'h01;
+};
+
+reg cm_apply_trap_glort_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Defines the trap glort when a frame must be trapped.";
+  desc = "Trap glort when a frame must be trapped. It is indexed by operator id from metadata";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination glort for frames trapped to the CPU.";
+    ValRandomize = true;
+  } TRAP_GLORT[15:0] = 16'h00;
+};
+
+reg cm_apply_log_mirror_profile_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Selects the mirror 0 profile index for various logging conditions.";
+  desc = "
+  Mirror 0 profile index register for various logging conditions.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror 0 profile index when any multicast frame is logged because 
+            of trigger action.
+           ";
+    ValRandomize = true;
+  } TRIGGER[35:30] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror 0 profile index when any multicast frame is logged because 
+            TTL≤1.
+           ";
+    ValRandomize = true;
+  } TTL[29:24] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror 0 profile index when a multicast ICMP frame is logged 
+            because of ICMP.
+           ";
+    ValRandomize = true;
+  } ICMP[23:18] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror 0 profile index on an ARP log (unicast frame routed back to 
+            ingress VLAN).
+           ";
+    ValRandomize = true;
+  } ARP_REDIRECT[17:12] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror 0 profile index when a frame with an IEEE Reserved 
+            destination MAC address is logged, per IEEE_RESERVED_MAC_ACTION.
+           ";
+    ValRandomize = true;
+  } RESERVED_MAC[11:6] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Mirror 0 profile index due to an FFU log action.
+           ";
+    ValRandomize = true;
+  } FFU[5:0] = 6'h00;
+};
+
+reg cm_apply_mirror_profile_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } PORT[4:0] = 5'h00;
+};
+
+reg cm_apply_qcn_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "QCN Sample Rate";
+  desc = "Defining QCN sample rate";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            The mode of choosing 8b data from 15b QCN queue depth. 1: direct mode, 0: exponential mode.
+           ";
+    ValRandomize = true;
+  } QUEUE_DEPTH_MODE[9:9] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The starting bit position of choosing 8b data from 15b QCN queue depth.
+           ";
+    ValRandomize = true;
+  } QUEUE_DEPTH_START_BIT[8:6] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selection of comparision. 1 to use less-or-eq, 0 to use greater-or-eq
+           ";
+    ValRandomize = true;
+  } SELECT_COMP[5:5] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defining sample rate by its exponent. 2**SrampleRateExp is the real sample rate
+           ";
+    ValRandomize = true;
+  } SAMPLE_RATE_EXP[4:0] = 5'h0;
+};
+
+reg cm_apply_loopback_suppress_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "GloRTs used by loopback suppression algorithm";
+  desc = "
+          At the edge of the system, we must avoid retransmitting a frame over 
+          the same LAG it arrived on, even if the LAG is distributed across 
+          multiple edge chips. This is done by comparing the GloRTs for the 
+          source and destination LAG/port? if the GloRTs match, not counting the
+          port—specific bits, then the LAGs are the same. Note that the
+          destination port's GloRT is not necessarily the same as the 
+          destination GloRT (which might be multicast), so this comparison 
+          needs to be done for all external destination ports in parallel. The 
+          comparison is turned off for internal ports. This register is indexed
+          by logical port.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            GloRT mask
+           ";
+    ValRandomize = true;
+  } GLORT_MASK[31:16] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            GloRT value
+           ";
+    ValRandomize = true;
+  } GLORT[15:0] = 16'h0ffff;
+};
+
+addrmap hlp_CM_APPLY_map {
+  name = "CM_APPLY";
+  desc = "Congestion Management Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 16;
+  ResetDomains = "SWITCH,MGMT";
+
+  cm_apply_tx_softdrop_cfg_rf           CM_APPLY_TX_SOFTDROP_CFG[24]          @0x00000 += 64; //[8]
+  cm_apply_tx_tc_state_rf               CM_APPLY_TX_TC_STATE[24]              @0x02000 += 64;  //[8]
+  cm_apply_tx_tc_qcn_wm_threshold_rf    CM_APPLY_TX_TC_QCN_WM_THRESHOLD[24]   @0x02800 += 64;  //[8]
+  cm_apply_rx_smp_state_rf              CM_APPLY_RX_SMP_STATE[24]             @0x03000 += 16;  //[2]
+  cm_apply_mirror_profile_table_r       CM_APPLY_MIRROR_PROFILE_TABLE[64]     @0x03200 += 8;
+  cm_apply_drop_count_r                 CM_APPLY_DROP_COUNT[24]               @0x03400 += 8;
+  cm_apply_loopback_suppress_r          CM_APPLY_LOOPBACK_SUPPRESS[24]        @0x03500 += 8;
+  cm_apply_softdrop_cfg_r               CM_APPLY_SOFTDROP_CFG[8]              @0x03600 += 8;
+  cm_apply_softdrop_state_r             CM_APPLY_SOFTDROP_STATE[8]            @0x03700 += 8;
+  cm_apply_trap_glort_r                 CM_APPLY_TRAP_GLORT[16]               @0x03800 += 8;
+  cm_apply_tc_to_smp_r                  CM_APPLY_TC_TO_SMP                    @0x03900;
+  cm_apply_mcast_epoch_r                CM_APPLY_MCAST_EPOCH                  @0x03908;
+  cm_apply_state_r                      CM_APPLY_STATE                        @0x03910;
+  cm_apply_cpu_trap_mask_r              CM_APPLY_CPU_TRAP_MASK                @0x03918;
+  cm_apply_log_mirror_profile_r         CM_APPLY_LOG_MIRROR_PROFILE           @0x03920;
+  cm_apply_qcn_cfg_r                    CM_APPLY_QCN_CFG                      @0x03928;
+};
+

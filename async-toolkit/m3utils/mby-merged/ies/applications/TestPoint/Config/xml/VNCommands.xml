@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+
+<!-- create -->
+<command>
+    <name>create</name>
+    <help>Create VLANs, LAGs, multicast groups, ACLs, etc.</help>
+
+    <!-- create virtual-network -->
+    <command>
+        <name>virtual-network</name>
+        <help>Create a Virtual Network</help>
+        <handler>tpHandleCreateVN</handler>
+
+        <!-- create virtual-network <vsid> -->
+        <argument>
+            <name>!&lt;vsid&gt;</name>
+            <help>Virtual Subscriber ID</help>
+
+            <!-- create virtual-network <vsid> <internal-id> -->
+            <argument>
+                <name>!&lt;internalId&gt;</name>
+                <help>Internal ID number to associate with this vsid</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Create Virtual Network</help>
+                </argument>
+            </argument> <!-- <internal-id> -->
+        </argument> <!-- <vsid> -->
+    </command> <!-- end create virtual-network -->
+
+    <!-- create vn-tunnel -->
+    <command>
+        <name>vn-tunnel</name>
+        <help>Create a Virtual Network Tunnel</help>
+        <handler>tpHandleCreateVNTunnel</handler>
+
+        <!-- create vn-tunnel vxlan -->
+        <argument>
+            <name>vxlan</name>
+            <help>Create a VxLAN Virtual Network Tunnel</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Create Virtual Network Tunnel</help>
+            </argument>
+        </argument> <!-- vxlan -->
+
+        <!-- create vn-tunnel nvgre -->
+        <argument>
+            <name>nvgre</name>
+            <help>Create an NVGRE Virtual Network Tunnel</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Create Virtual Network Tunnel</help>
+            </argument>
+        </argument> <!-- vxlan -->
+    </command> <!-- end create vn-tunnel -->
+
+</command>  <!-- end create -->
+
+
+<!-- del -->
+<command>
+    <name>del</name>
+    <help>Delete VLANs, LAGs, multicast groups, ACLs, etc.</help>
+
+    <!-- del virtual-network -->
+    <command>
+        <name>virtual-network</name>
+        <help>Delete a Virtual Network</help>
+        <handler>tpHandleDeleteVN</handler>
+
+        <!-- del virtual-network <vsid> -->
+        <argument>
+            <name>!&lt;vsid&gt;</name>
+            <help>Virtual Subscriber ID</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete Virtual Network</help>
+            </argument>
+        </argument> <!-- <vsid> -->
+    </command> <!-- end del virtual-network -->
+
+    <!-- del vn-tunnel -->
+    <command>
+        <name>vn-tunnel</name>
+        <help>Delete a Virtual Network Tunnel</help>
+        <handler>tpHandleDeleteVNTunnel</handler>
+
+        <!-- del vn-tunnel <tunnel-id> -->
+        <argument>
+            <name>!&lt;tunnelid&gt;</name>
+            <help>VN Tunnel ID</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete Virtual Network Tunnel</help>
+            </argument>
+        </argument> <!-- <tunnel-id> -->
+    </command> <!-- end del vn-tunnel -->
+
+</command>  <!-- end del -->
+
+
+<!-- set -->
+<command>
+    <name>set</name>
+    <help>Set a property</help>
+
+    <!-- set virtual-network -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+            <deny>FM4000</deny>
+        </filter>
+        <name>virtual-network</name>
+        <help>Set a virtual network related property</help>
+
+        <!-- set virtual-network internal-id -->
+        <command>
+            <name>internal-id</name>
+            <help>Set the virtual network's internal ID</help>
+            <handler>tpHandleSetVNInternalID</handler>
+
+            <argument>
+                <name>vsid</name>
+                <help>The Virtual Network ID #</help>
+                <argument>
+                    <name>!&lt;vsid&gt;</name>
+                    <help>
+                        The virtual subscriber ID number
+                    </help>
+                    <argument>
+                        <name>!&lt;internalId&gt;</name>
+                        <help>
+                            The new internal ID for this virtual network.
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument> <!-- end internal-id -->
+        </command>  <!-- end set virtual-network internal-id -->
+    </command> <!-- end set virtual-network -->
+
+    <!-- set vn-tunnel -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+            <deny>FM4000</deny>
+        </filter>
+        <name>vn-tunnel</name>
+        <help>Set a virtual network tunnel-related property</help>
+        <handler>tpHandleSetVNTunnelAttribute</handler>
+
+        <!-- set vn-tunnel <tunnel-list> -->
+        <argument>
+            <name>!&lt;tunnelId&gt;</name>
+            <help>A tunnel number, list, range, or combination thereof)</help>
+
+            <!-- set vn-tunnel <tunnel> local-ip <localIp> -->
+            <argument>
+                <name>local-ip</name>
+                <help>Set the vn-tunnel's local IP address</help>
+                <argument>
+                    <name>!&lt;localIp&gt;</name>
+                    <help>
+                        The new local IP Address for this virtual network tunnel.
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help> </help>
+                    </argument>
+                </argument> <!-- end local-ip -->
+            </argument> <!--- end set vn-tunnel <tunnel> local-ip -->
+
+            <!-- set vn-tunnel <tunnel> remote-ip -->
+            <argument>
+                <name>remote-ip</name>
+                <help>Set the vn-tunnel's remote IP address</help>
+                <argument>
+                    <name>!&lt;remoteIp&gt;</name>
+                    <help>
+                        The new remote IP Address for this virtual network tunnel.
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help> </help>
+                    </argument>
+                </argument> <!-- end remote-ip -->
+            </argument>  <!-- end set vn-tunnel <tunnel> remote-ip -->
+
+            <!-- set vn-tunnel <tunnel> traffic-identifier -->
+            <argument>
+                <name>traffic-identifier</name>
+                <help>Set the vn-tunnel's traffic identifier</help>
+                <argument>
+                    <name>!&lt;trafficid&gt;</name>
+                    <help>
+                        The new traffic identifier for this virtual network tunnel.
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help> </help>
+                    </argument>
+                </argument> <!-- end trafficid -->
+            </argument>  <!-- end set vn-tunnel <tunnel> traffic-identifier -->
+
+            <!-- set vn-tunnel <tunnel> vrid -->
+            <argument>
+                <name>vrid</name>
+                <help>Set the vn-tunnel's virtual router ID number</help>
+                <argument>
+                    <name>!&lt;vrid&gt;</name>
+                    <help>
+                        The new virtual router ID for this virtual network tunnel.
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help> </help>
+                    </argument>
+                </argument> <!-- end vrid -->
+            </argument>  <!-- end set vn-tunnel <tunnel> vrid -->
+
+            <!-- set vn-tunnel mcast-group -->
+            <argument>
+                <name>mcast-group</name>
+                <help>Set the vn-tunnel's multicast group</help>
+                <argument>
+                    <name>!&lt;mcastGroup&gt;</name>
+                    <help>
+                        The new multicast group used with this virtual network tunnel.
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help> </help>
+                    </argument>
+                </argument> <!-- end mcast-group -->
+            </argument>  <!-- end set vn-tunnel <tunnel> mcast-group -->
+
+            <!-- set vn-tunnel <tunnel> mcast-dmac -->
+            <argument>
+                <name>mcast-dmac</name>
+                <help>Set the multicast vn-tunnel's destination MAC address</help>
+                <argument>
+                    <name>!&lt;dmacaddr&gt;</name>
+                    <help>
+                        The new destination MAC address for this multicast virtual network tunnel.
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help> </help>
+                    </argument>
+                </argument> <!-- end <dmacaddr> -->
+            </argument>  <!-- end set vn-tunnel <tunnel> mcast-dmac -->
+
+        </argument> <!-- end set vn-tunnel -->
+    </command> <!-- end set vn-tunnel -->
+
+</command> <!-- end set -->
+
+
+</config>
+

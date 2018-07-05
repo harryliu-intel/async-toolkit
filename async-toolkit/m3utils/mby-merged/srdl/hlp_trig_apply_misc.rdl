@@ -1,0 +1,122 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+`include "hlp_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+reg trigger_ip_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Trigger IP registers";
+  desc = "Pending bits indicating a corresponding trigger has fired.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+            Interrupt pending bits, set whenever the corresponding trigger 
+            fires.
+           ";
+    ValRandomize = true;
+  } PENDING[47:0] = 48'h00;
+};
+
+reg trigger_im_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Trigger IM registers";
+  desc = "Mask bits associated with the trigger inrrupts.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Interrupt mask bits.
+           ";
+    ValRandomize = true;
+  } MASK[47:0] = 48'h0ffffffffffff;
+};
+
+reg trigger_rate_lim_empty_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Rate limiter token-bucket status";
+  desc = "Tracks the token-bucket status of the trigger rate limiter.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+            Bit set for each rate limiter with an empty token bucket 
+            (TRIGGER_RATE_LIM_USAGE=0)
+           ";
+  } EMPTY[15:0] = 16'h0ffff;
+};
+
+reg trigger_rate_lim_cfg_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Rate limiter configuration (Drop mask).";
+  desc = "Configuration fields related to the trigger rate limiting action.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Drop mask to apply to the frame when the rate limiter exceeds its
+            configured rate.
+           ";
+    ValRandomize = true;
+  } DROP_MASK[23:0] = 24'h00;
+};
+
+reg trigger_action_metadata_mask_r {
+  Security_PolicyGroup     = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Metadata mask applied to the packet metadata.";
+  desc = "Metadata mask applied to the packet metadata on output from triggers.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Bitwise mask applied to the metadata output in the case that the NoModify action is set.
+           ";
+    ValRandomize = true;
+  } METADATA_MASK[63:0] = 64'h00;
+};
+
+regfile trigger_action_metadata_mask_rf {
+  trigger_action_metadata_mask_r TRIGGER_ACTION_METADATA_MASK[4] += 8;
+};
+
+addrmap hlp_TRIG_APPLY_MISC_map {
+  name = "TRIG_APPLY_MISC";
+  desc = "Trigger Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  AddressBits = 8;
+  ResetDomains = "SWITCH,MGMT";
+  
+  trigger_rate_lim_cfg_2_r            TRIGGER_RATE_LIM_CFG_2[16]            @0x00 += 8;
+  trigger_action_metadata_mask_rf     TRIGGER_ACTION_METADATA_MASK[2]       @0x80 += 32;
+  trigger_ip_r                        TRIGGER_IP[2]                         @0xC0 += 8;
+  trigger_im_r                        TRIGGER_IM[2]                         @0xD0 += 8;
+  trigger_rate_lim_empty_r            TRIGGER_RATE_LIM_EMPTY                @0xE0;
+};
+

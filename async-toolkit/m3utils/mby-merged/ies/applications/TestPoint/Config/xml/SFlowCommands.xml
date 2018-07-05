@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+    <command>
+        <name>add</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>sFlow</name>
+            <help>Add ports to the sFlow instance</help>
+                <handler>tpHandleAddSFlowPort</handler>
+
+                <argument>
+                    <name>!&lt;sFlow Id&gt;</name>
+                    <help>The sFlow identifier</help>
+                    <argument>
+                        <name>!&lt;port&gt;</name>
+                        <help>
+                            The port number
+                        </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>
+                                    Include the specified port in the
+                                    sFlow instance
+                                </help>
+                            </argument>
+                    </argument>
+                </argument>
+         </command>
+    </command>
+
+    <command>
+        <name>del</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>sFlow</name>
+            <help>Delete a sFlow instance</help>
+                <handler>tpHandleDeleteSFlow</handler>
+                <argument>
+                    <name>!&lt;sFlow Id&gt;</name>
+                    <help>The sFlow identifier</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>
+                                Delete the sFlow instance
+                            </help>
+                        </argument>
+                </argument>
+            <command>
+                <name> port </name>
+                <help> Delete ports from the sFlow </help>
+                    <handler>tpHandleDeleteSFlowPort</handler>
+                    <argument>
+                        <name>!&lt;sFlow id&gt;</name>
+                        <help> The sFlow id </help>
+                        <argument>
+                            <name>!&lt;port&gt;</name>
+                            <help>
+                                The port number
+                            </help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help>
+                                        Exclude the specified port in the
+                                        sFlow instance
+                                    </help>
+                                </argument>
+                        </argument>
+                    </argument>
+             </command>
+         </command>
+    </command>
+
+    <command>
+        <name>create</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>sFlow</name>
+            <help>Create a sFlow instance</help>
+            <handler>tpHandleCreateSFlow</handler>
+
+            <argument>
+                <name>!&lt;sFlow&gt;</name>
+                <help>The sFlow identifier</help>
+                <argument>
+                    <name>!&lt;type&gt;</name>
+                    <help>
+                        "ingress" or "egress"
+                    </help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Create a sFlow instance</help>
+                    </argument>
+                </argument>
+            </argument>
+        </command>
+    </command>
+
+    <command>
+        <name>set</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>sFlow</name>
+            <help>Set sFlow attribute</help>
+            <handler>tpHandleSetSFlowAttribute</handler>
+
+            <argument>
+                <name>!&lt;sFlow&gt;</name>
+                <help>The sFlow identifier</help>
+                <argument>
+                    <name>vlan</name>
+                    <help>Set the vlan for the sFlow</help>
+                    <argument>
+                        <name>!&lt;vlan id&gt;</name>
+                        <help>The vlan associated with the sFlow</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set the vlan for the sFlow</help>
+                        </argument>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>sampleRate</name>
+                    <help>Set the sampling rate</help>
+                    <argument>
+                        <name>!&lt;sampling rate&gt;</name>
+                        <help>
+                            The packet sampling rate in percentage
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set the sampling rate</help>
+                        </argument>
+                    </argument>
+                </argument>
+                <argument>
+                    <name>truncLength</name>
+                    <help>Set the truncation length</help>
+                    <argument>
+                        <name>!&lt;truncLength&gt;</name>
+                        <help>
+                            The packet truncation Length
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set the trunc Length</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument>
+        </command>
+    </command>
+
+    <command>
+        <name>show</name>
+        <command>
+            <filter type="family">
+                <deny>FM2000</deny>
+            </filter>
+            <name>sFlow</name>
+            <help>Show sFlow properties</help>
+            <handler>tpHandleShowSFlow</handler>
+
+            <argument>
+                <name>!&lt;sFlow&gt;</name>
+                <help>The sFlow identifier</help>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show sFlow properties</help>
+                </argument>
+            </argument>
+        </command>
+    </command>
+</config>

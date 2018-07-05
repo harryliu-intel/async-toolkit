@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+    <command>
+        <name>set</name>
+
+        <command>
+            <filter type="platform">
+                <allow>monaco</allow>
+            </filter>
+            <name>qcn</name>
+            <help>Configure QCN</help>
+
+            <command>
+                <name>cp</name>
+                <help>Configure congestion point parameters</help>
+                <handler>tpHandleSetQcnCpRp</handler>
+
+                <argument>
+                    <name>QSp</name>
+                    <help>Set point: Optimum congstion point queue length</help>
+                    <argument>
+                        <name>!&lt;bytes&gt;</name>
+                        <help>CP queue length</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set set-point</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- Qsp -->
+                
+                <argument>
+                    <name>QLenMax</name>
+                    <help>Maximum egress queue length</help>
+                    <argument>
+                        <name>!&lt;bytes&gt;</name>
+                        <help>Max queue length</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set max egress queue length</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- QLenMax -->
+                
+                <argument>
+                    <name>W</name>
+                    <help>CP weight to be given to change in queue length</help>
+                    <argument>
+                        <name>!&lt;weight&gt;</name>
+                        <help>Weight: 0 - 7</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set weight</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- W -->
+                
+                <argument>
+                    <name>SampleBase</name>
+                    <help>Min octets to enqueue between CNM PDU transmissions</help>
+                    <argument>
+                        <name>!&lt;bytes&gt;</name>
+                        <help>Number of octets</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set sample base</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- SampleBase -->
+                
+            </command>  <!-- cp -->
+                
+            <command>
+                <name>rp</name>
+                <help>Configure reaction point parameters</help>
+                <handler>tpHandleSetQcnCpRp</handler>
+
+                <argument>
+                    <name>TimeReset</name>
+                    <help>Rate control timeout value</help>
+                    <argument>
+                        <name>!&lt;ns&gt;</name>
+                        <help>Number of nanoseconds</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set timer reset</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- TimeReset -->
+                
+                <argument>
+                    <name>ByteReset</name>
+                    <help>Rate control byte counter reset value</help>
+                    <argument>
+                        <name>!&lt;bytes&gt;</name>
+                        <help>Number of octets</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set byte count reset</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- ByteReset -->
+                
+                <argument>
+                    <name>Threshold</name>
+                    <help>Times rpByteStage or rpTimeStage can count</help>
+                    <argument>
+                        <name>!&lt;count&gt;</name>
+                        <help>Value: 0 - 15</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set threshold</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- Threshold -->
+                
+                <argument>
+                    <name>AiRate</name>
+                    <help>Rate to increase rpTargetRate in RPR_ACTIVE_INCREASE state</help>
+                    <argument>
+                        <name>!&lt;bytes/s&gt;</name>
+                        <help>Rate in bytes per second</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set active increase rate</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- AiRate -->
+                
+                <argument>
+                    <name>HaiRate</name>
+                    <help>Rate to increase rpTargetRate in RPR_HYPER_INCREASE state</help>
+                    <argument>
+                        <name>!&lt;bytes/s&gt;</name>
+                        <help>Rate in bytes per second</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set hyperactive increase rate</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- HaiRate -->
+                
+                <argument>
+                    <name>Gd</name>
+                    <help>Bits the Fb field is shifted to the right to decrease rpTargetRate</help>
+                    <argument>
+                        <name>!&lt;bits&gt;</name>
+                        <help>Number of bits shifted</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set shift bits</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- Gd -->
+                
+                <argument>
+                    <name>MinDecFac</name>
+                    <help>Min factor by which rate can change by rx of CNM</help>
+                    <argument>
+                        <name>!&lt;fraction&gt;</name>
+                        <help>Decimal fraction (less than 1)</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set minimum factor</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- MinDecFac -->
+                
+                <argument>
+                    <name>MaxRate</name>
+                    <help>Max rate at which RP can transmit</help>
+                    <argument>
+                        <name>!&lt;bytes/s&gt;</name>
+                        <help>Rate in bytes per second</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set max rate</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- MaxRate -->
+                
+                <argument>
+                    <name>MinRate</name>
+                    <help>Min value for rpCurrentRate</help>
+                    <argument>
+                        <name>!&lt;bytes/s&gt;</name>
+                        <help>Minimum bytes per second</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set minimum rate value</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- MinRate -->
+                
+                <argument>
+                    <name>Enabled</name>
+                    <help>Controls RP rate control state machine</help>
+                    <argument>
+                        <name>yes</name>
+                        <help>Enable RP state machine</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Enable RP state machine</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>no</name>
+                        <help>Disable RP state machine</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Disable RP state machine</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- Enabled -->
+                
+                <argument>
+                    <name>active</name>
+                    <help>Activate or deactivate reaction point</help>
+                    <argument>
+                        <name>yes</name>
+                        <help>Make reaction point active</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Enable reaction point</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>no</name>
+                        <help>Make reaction point inactive</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Disable reaction point</help>
+                        </argument>
+                    </argument>
+                </argument> <!-- active -->
+                
+            </command>  <!-- rp -->
+                
+            <command>
+                <name>cnp</name>
+                    <help>Configure congestion notification priority</help>
+
+                <command>
+                    <name>vpri</name>
+                    <help>Configure CNP VLAN priority</help>
+                    <handler>tpHandleSetQcnCnpVPRI</handler>
+
+                    <argument>
+                        <name>!&lt;cnd&gt;</name>
+                        <help>The Congestion Notification Domain (0 - 1)</help>
+                        <argument>
+                            <name>!&lt;vpri&gt;</name>
+                            <help>The VLAN priority to associate</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Associate CNP with VPRI</help>
+                            </argument>
+                        </argument>
+                    </argument>
+                </command>  <!-- vpri -->
+                
+                <command>
+                    <name>tc</name>
+                    <help>Configure CNP traffic class</help>
+                    <handler>tpHandleSetQcnCnpTC</handler>
+
+                    <argument>
+                        <name>!&lt;cnd&gt;</name>
+                        <help>The Congestion Notification Domain (0 - 1)</help>
+                        <argument>
+                            <name>!&lt;tc&gt;</name>
+                            <help>The traffic class to associate</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help>Associate CNP with traffic class</help>
+                            </argument>
+                        </argument>
+                    </argument>
+                </command>  <!-- tc -->
+                
+            </command>  <!-- cnp -->
+            
+            <command>
+                <name>cnm</name>
+                    <help>Configure congestion notification message parameters</help>
+
+                <command>
+                    <name>mac</name>
+                    <help>Set SMAC used for CNM transmission by CP</help>
+                    <handler>tpHandleSetQcnCnmMac</handler>
+                    <argument>
+                        <name>auto</name>
+                        <help>Set SMAC to same value as switch</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set SMAC same as switch</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>!&lt;smac&gt;</name>
+                        <help>Set SMAC as xx:xx:xx:xx:xx:xx</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set specified SMAC</help>
+                        </argument>
+                    </argument>
+                </command>  <!-- mac -->
+                
+                <command>
+                    <name>ethertype</name>
+                    <help>Set CNM EtherType filtered by RP</help>
+                    <handler>tpHandleSetQcnCnmEthtype</handler>
+                    <argument>
+                        <name>!&lt;ethertype&gt;</name>
+                        <help>EtherType on which to filter (4 hex digits)</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set RP EtherType</help>
+                        </argument>
+                    </argument>
+                </command>  <!-- ethertype -->
+                
+                <command>
+                    <name>swpri</name>
+                    <help>Set switch priority to use for CNM transmissions</help>
+                    <handler>tpHandleSetQcnCnmSwpri</handler>
+                    <argument>
+                        <name>!&lt;priority&gt;</name>
+                        <help>Set switch priority</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set switch priority</help>
+                        </argument>
+                    </argument>
+                </command>  <!-- swpri -->
+                
+            </command>  <!-- cnm -->
+
+            <command>
+                <name>egress-queue</name>
+                <help>Initialize watermarks for QCN ports</help>
+                <handler>tpHandleSetQcnEgressQeueue</handler>
+
+                <argument>
+                    <name>!&lt;ports&gt;</name>
+                    <help>List or range of QCN ports</help>
+                    <argument>
+                        <name>!&lt;cnp-tc&gt;</name>
+                        <help>CNP traffic class (0 - 7)</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set egress queue watermarks</help>
+                        </argument>
+                    </argument> <!-- <cnp-tc> -->
+                </argument> <!-- <ports> -->
+            </command>  <!-- egress-queue -->
+            
+            <command>
+                <name>rate-lim</name>
+                <help>Initialize QCN port rate limiter</help>
+                <handler>tpHandleSetQcnRateLimiter</handler>
+
+                <argument>
+                    <name>!&lt;ports&gt;</name>
+                    <help>List or range of QCN RP ports</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set rate limiter</help>
+                    </argument>
+                </argument> <!-- <ports> -->
+            </command>  <!-- rate-lim -->
+            
+        </command>  <!-- qcn -->
+    </command>  <!-- set -->
+
+    <command>
+        <name>add</name>
+
+        <command>
+            <filter type="platform">
+                <allow>monaco</allow>
+            </filter>
+            <name>qcn</name>
+            <help>Add QCN triggers</help>
+
+            <command>
+                <name>cp-trigger</name>
+                <help>Add a congestion point trigger</help>
+                <handler>tpHandleAddQcnCpTrig</handler>
+
+                <argument>
+                    <name>!&lt;cnp-swpri&gt;</name>
+                    <help>Switch priority mapped to CNP VPRI (0 - 15)</help>
+                    <argument>
+                        <name>!&lt;port&gt;</name>
+                        <help>An individual port number</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Set up CP trigger</help>
+                        </argument>
+                    </argument> <!-- <port> -->
+                </argument> <!-- <cnp-swpri> -->
+            </command>  <!-- cp-trigger -->
+            
+            <command>
+                <name>rp-trigger</name>
+                <help>Configure reaction point trigger</help>
+                <handler>tpHandleAddQcnRpTrig</handler>
+
+                <argument>
+                    <name>!&lt;ports&gt;</name>
+                    <help>List or range of ports on edge of CN domain</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Set up RP trigger</help>
+                    </argument>
+                </argument> <!-- <ports> -->
+            </command>  <!-- rp-trigger -->
+            
+        </command>  <!-- qcn -->
+    </command>  <!-- add -->
+    
+    <command>
+        <name>del</name>
+
+        <command>
+            <filter type="platform">
+                <allow>monaco</allow>
+            </filter>
+            <name>qcn</name>
+            <help>Delete QCN trigger</help>
+
+            <command>
+                <name>trigger</name>
+                <help>Delete a CP or RP trigger</help>
+                <handler>tpHandleDelQcnTrig</handler>
+
+                <argument>
+                    <name>!&lt;trig-id&gt;</name>
+                    <help>Trigger number, list, range or all</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Delete trigger</help>
+                    </argument>
+                </argument> <!-- <trig-id> -->
+            </command>  <!-- trigger -->
+        
+        </command>  <!-- qcn -->
+    </command>  <!-- del -->
+    
+    <command>
+        <name>show</name>
+
+        <command>
+            <filter type="platform">
+                <allow>monaco</allow>
+            </filter>
+            <name>qcn</name>
+            <help>Show QCN parameters</help>
+
+            <command>
+                <name>cp</name>
+                <help>Show congestion point parameters</help>
+                <command>
+                    <name>config</name>
+                    <help>Show congestion point settable parameters</help>
+                    <handler>tpHandleShowQcnCpParm</handler>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show CP parameters</help>
+                    </argument>
+                </command>  <!-- config -->
+                <command>
+                    <name>status</name>
+                    <help>Show congestion point read-only parameters</help>
+                    <handler>tpHandleShowQcnCpStatus</handler>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show CP parameters</help>
+                    </argument>
+                </command>  <!-- status -->
+            </command>  <!-- cp -->
+
+            <command>
+                <name>rp</name>
+                <help>Show reaction point parameters</help>
+                <command>
+                    <name>config</name>
+                    <help>Show reaction point settable parameters</help>
+                    <handler>tpHandleShowQcnRpParm</handler>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show RP parameters</help>
+                    </argument>
+                </command>  <!-- config -->
+                <command>
+                    <name>status</name>
+                    <help>Show reaction point read-only parameters</help>
+                    <handler>tpHandleShowQcnRpStatus</handler>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show RP parameters</help>
+                    </argument>
+                </command>  <!-- status -->
+            </command>  <!-- rp -->
+
+            <command>
+                <name>cnp</name>
+                <help>Show congestion notification priority parameters</help>
+                <handler>tpHandleShowQcnCnp</handler>
+                <argument>
+                    <name>!&lt;cnd&gt;</name>
+                    <help>The Congestion Notification Domain (0 - 1)</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Show CNP parameters</help>
+                    </argument>
+                </argument>
+            </command>  <!-- cnp -->
+            
+            <command>
+                <name>cnm</name>
+                <help>Show congestion notification message parameters</help>
+                <handler>tpHandleShowQcnCnm</handler>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show CNM parameters</help>
+                </argument>
+            </command>  <!-- cnm -->
+            
+            <command>
+                <name>triggers</name>
+                <help>Show QCN trigger configuration</help>
+                <handler>tpHandleShowQcnTrig</handler>
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Show QCN trigger configuration</help>
+                </argument>
+            </command>  <!-- triggers -->
+        </command>  <!-- qcn -->
+    </command>  <!-- show -->
+
+    <command>
+        <name>reset</name>
+        <command>
+            <filter type="platform">
+                <allow>monaco</allow>
+            </filter>
+            <name>qcn</name>
+            <help>Reset QCN parameters to defaults</help>
+            <handler>tpHandleResetQcn</handler>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Reset QCN parameters</help>
+            </argument>
+        </command>  <!-- qcn -->
+    </command>  <!-- reset -->
+
+    
+</config>

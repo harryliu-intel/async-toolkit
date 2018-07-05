@@ -1,0 +1,225 @@
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2015 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+`include "hlp_udp.rdl"
+`include "hlp_imn.rdl"
+`include "hlp_mac.rdl"
+`include "hlp_mac4.rdl"
+`include "hlp_msec.rdl"
+`include "hlp_mapper.rdl"
+`include "hlp_mpls_mux.rdl"
+`include "hlp_entropy.rdl"
+`include "hlp_hash_entry_ram.rdl"
+`include "hlp_fghash.rdl"
+`include "hlp_ffu_group.rdl"
+`include "hlp_ffu_misc.rdl"
+`include "hlp_ffu_sweeper.rdl"
+`include "hlp_l2lookup.rdl"
+`include "hlp_arp_vlan.rdl"
+`include "hlp_mst_glort.rdl"
+`include "hlp_parser.rdl"
+`include "hlp_cm_apply.rdl"
+`include "hlp_fwd_misc.rdl"
+`include "hlp_trig_apply.rdl"
+`include "hlp_trig_apply_misc.rdl"
+`include "hlp_rx_stats.rdl"
+`include "hlp_policers.rdl"
+`include "hlp_trig_usage.rdl"
+`include "hlp_saf.rdl"
+`include "hlp_tail_misc.rdl"
+`include "hlp_cm_usage.rdl"
+`include "hlp_mod.rdl"
+`include "hlp_sched.rdl"
+`include "hlp_sia_rx.rdl"
+`include "hlp_sia_tx.rdl"
+`include "hlp_pm.rdl"
+`include "hlp_mem_gen.rdl"
+
+addrmap hlp_top_map {
+//  bridge;
+  name            = "HLP";
+  desc            = "HLP Top-Level Address Map";
+  addressing      = fullalign;
+  Space           = "MSG";
+  Opcode          = "MEM-SB";
+  No_IOSF_Primary = true;
+  ResetDomains    = "MGMT,SWITCH,PORTS";
+  IntelRsvd       = false; 
+
+  hlp_IMN_map              IMN                 @0x0000000;
+  hlp_IMN_SHELL_CTL_map    IMN_SHELL_CTL       @0x0040000;
+
+  hlp_MSEC_map             MSEC[8]             @0x0400000 += 262144; // 0x4_0000   
+
+<% for (my $i = 0; $i < 8; $i++) {
+%>
+      MSEC[<%=$i%>]->Infix = "MSEC<%=$i%>_";
+<%
+   }
+%>  
+  
+  hlp_MSEC_SHELL_CTL_map   MSEC_SHELL_CTL[8]   @0x0400100 += 262144; // 0x4_0000
+
+<% for (my $i = 0; $i < 8; $i++) {
+%>
+      MSEC_SHELL_CTL[<%=$i%>]->Infix = "MSEC_SHELL_CTL<%=$i%>_";
+<%
+   }
+%>  
+  
+  hlp_MAC_map              MAC[32]             @0x0600000 += 4096;   // 0x1000
+
+<% for (my $i = 0; $i < 32; $i++) {
+%>
+      MAC[<%=$i%>]->Infix = "MAC<%=$i%>_";
+<%
+   }
+%>
+
+  hlp_MAC4_map             MAC4[8]             @0x0600400 += 16384;  // 0x4000
+  
+<% for (my $i = 0; $i < 8; $i++) {
+%>
+      MAC4[<%=$i%>]->Infix = "MAC4<%=$i%>_";
+<%
+   }
+%>
+  
+  hlp_MAC4_SHELL_CTL_map   MAC4_SHELL_CTL[8]   @0x0600418 += 16384;  // 0x4000
+
+<% for (my $i = 0; $i < 8; $i++) {
+%>
+      MAC4_SHELL_CTL[<%=$i%>]->Infix = "MAC4_SHELL_CTL<%=$i%>_";
+<%
+   }
+%>
+  
+  hlp_SIA_RX_map           SIA_RX[8]           @0x0600800 += 16384;  // 0x4000
+  
+<% for (my $i = 0; $i < 8; $i++) {
+%>
+      SIA_RX[<%=$i%>]->Infix = "SIA_RX<%=$i%>_";
+<%
+   }
+%>
+    
+  hlp_SIA_TX_map           SIA_TX[8]           @0x0600A00 += 16384;  // 0x4000
+
+<% for (my $i = 0; $i < 8; $i++) {
+%>
+      SIA_TX[<%=$i%>]->Infix = "SIA_TX<%=$i%>_";
+<%
+   }
+%>
+    
+  hlp_SIA_SHELL_CTL_map    SIA_SHELL_CTL[8]    @0x0600C00 += 16384;  // 0x4000
+  
+<% for (my $i = 0; $i < 8; $i++) {
+%>
+      SIA_SHELL_CTL[<%=$i%>]->Infix = "SIA_SHELL_CTL<%=$i%>_";
+<%
+   }
+%>  
+
+  hlp_PARSER_map           PARSER              @0x2000000;
+  hlp_PARSER_SHELL_CTL_map PARSER_SHELL_CTL    @0x2010000;
+
+  hlp_FFU_GROUP_map        FFU_GROUP[3]        @0x3000000 += 1048576; // 0x10_0000
+
+<% for (my $i = 0; $i < 3; $i++) {
+%>
+      FFU_GROUP[<%=$i%>]->Infix = "FFU_GROUP<%=$i%>_";
+<%
+   }
+%>  
+  
+  hlp_FGHASH_map           FGHASH[3]           @0x3400000 += 262144;  // 0x4_0000
+
+<% for (my $i = 0; $i < 3; $i++) {
+%>
+      FGHASH[<%=$i%>]->Infix = "FGHASH<%=$i%>_";
+<%
+   }
+%>  
+  
+  hlp_HASH_ENTRY_RAM_map   HASH_ENTRY_RAM      @0x3500000;
+  hlp_ARP_VLAN_map         ARP_VLAN            @0x3700000;
+  hlp_MAPPER_map           MAPPER              @0x3780000;
+  hlp_FGHASH_SHELL_CTL_map FGHASH_SHELL_CTL[3] @0x37C0000 += 1024;    //0x400
+
+<% for (my $i = 0; $i < 3; $i++) {
+%>
+      FGHASH_SHELL_CTL[<%=$i%>]->Infix = "FGHASH_SHELL_CTL<%=$i%>_";
+<%
+   }
+%>  
+  
+  hlp_FGRP_SHELL_CTL_map   FGRP_SHELL_CTL[3]   @0x37D0000 += 2048;    //0x800
+
+<% for (my $i = 0; $i < 3; $i++) {
+%>
+      FGRP_SHELL_CTL[<%=$i%>]->Infix = "FGRP_SHELL_CTL<%=$i%>_";
+<%
+   }
+%>  
+  
+  hlp_ENTROPY_map          ENTROPY             @0x37E0000;
+  hlp_MPLS_MUX_map         MPLS_MUX            @0x37E1000;
+  hlp_FCMN_SHELL_CTL_map   FCMN_SHELL_CTL      @0x37E2000;
+  hlp_FFU_MISC_map         FFU_MISC_MAP        @0x37E3000;
+  hlp_FFU_SWEEPER_map      FFU_SWEEPER         @0x37E8000;
+
+  hlp_L2LOOKUP_map         L2LOOKUP            @0x3800000;
+  hlp_MST_GLORT_map        MST_GLORT           @0x3A00000;
+  hlp_CM_APPLY_map         CM_APPLY            @0x3A20000;
+  hlp_TRIG_APPLY_map       TRIG_APPLY[96]      @0x3A30000 += 256;
+
+<% for (my $i = 0; $i < 96; $i++) {
+%>
+      TRIG_APPLY[<%=$i%>]->Infix = "TRIG_APPLY<%=$i%>_";
+<%
+   }
+%>  
+    
+  hlp_TRIG_APPLY_MISC_map  TRIG_APPLY_MISC     @0x3A38000;
+  hlp_FWD_MISC_map         FWD_MISC            @0x3A40000;
+  hlp_FWD_SHELL_CTL_map    FWD_SHELL_CTL       @0x3A50000;
+
+  hlp_POLICERS_map         POLICERS            @0x3E00000;
+  hlp_SAF_map              SAF                 @0x3EB0000;
+  hlp_TRIG_USAGE_map       TRIG_USAGE          @0x3F00000;
+  hlp_TAIL_MISC_map        TAIL_MISC           @0x3F00200;
+  hlp_TAIL_SHELL_CTL_map   TAIL_SHELL_CTL      @0x3F00800;
+  hlp_RX_STATS_map         RX_STATS            @0x3F18000;
+
+  hlp_PM_map               PM                  @0x3F80000;
+
+  hlp_MOD_map              MOD                 @0x4000000;
+  hlp_MOD_SHELL_CTL_map    MOD_SHELL_CTL       @0x4FFF000;
+
+  hlp_SCHED_SHELL_CTL_map  SCHED_SHELL_CTL     @0x5000000;
+  hlp_CM_USAGE_map         CM_USAGE            @0x5100000;
+  hlp_SCHED_map            SCHED               @0x5200000;
+};

@@ -1,0 +1,14 @@
+# FocalPoint SDK Top-Level Makefile
+
+# Do not use make's built-in rules 
+MAKEFLAGS += -r
+
+# Include the makefile fragment that builds the core SDK
+.include "../build/BSD/Makefile.core"
+
+# Include other makefiles
+#.include "../build/BSD/Makefile.perl"
+#.include "../build/BSD/Makefile.sdk_tests"
+#.include "../build/BSD/Makefile.applications"
+#.include "../build/BSD/Makefile.install"
+

@@ -1,0 +1,2088 @@
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2015 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+`include "hlp_udp.rdl"
+
+enum time_scale {
+  T_100NS = 3'd0 { desc = "100 ns"; };
+  T_1US   = 3'd1 { desc = "1 us"; };
+  T_10US  = 3'd2 { desc = "10 us"; };
+  T_100US = 3'd3 { desc = "100 us"; };
+  T_1MS   = 3'd4 { desc = "1 ms"; };
+  T_10MS  = 3'd5 { desc = "10 ms"; };
+  T_100MS = 3'd6 { desc = "100 ms"; };
+  T_1S    = 3'd7 { desc = "1 s"; };
+};
+
+
+
+enum boot_stage_enum {
+  LEVEL0              =  2'd0 { desc = "HLP powered-downm"; };
+  LEVEL1              =  2'd1 { desc = "HLP powered-up, Fuses Pulled (Memories Repaired), SBIOSF access to LSM only, MAC + Fabric in reset"; };
+  LEVEL2              =  2'd2 { desc = "Level 1 + MAC logic out of reset"; };
+  LEVEL3              =  2'd3 { desc = "Level 2 + Switch logic out of reset"; };
+};
+
+reg soft_reset_r {
+  shared;
+  HandCoded = true;
+  name = "For Debug Only, Reserved.";
+  desc = "Soft reset for mac and switch";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG3_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG3_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW";
+    desc = "when set, causes the boot sequencer to proceed without having to wait for MACSIA_MEM_INIT_DONE";
+    ValRandomize = true;
+  } MASK_MACSIA_MEM_INIT_DONE[13:13] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "when set, causes the boot sequencer to proceed without having to wait for SWITCH_MEM_INIT_DONE";
+    ValRandomize = true;
+  } MASK_SWITCH_MEM_INIT_DONE[12:12] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "when set, causes the boot sequencer to proceed without having to wait for MACSIA_INIT_DONE";
+    ValRandomize = true;
+  } MASK_MACSIA_INIT_DONE[11:11] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "when set, causes the boot sequencer to proceed without having to wait for SWITCH_INIT_DONE";
+    ValRandomize = true;
+  } MASK_SWITCH_INIT_DONE[10:10] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "when set, causes the boot sequencer to proceed as if fuse acknowledgements have been received for functional, straps, repair and ip_ready";
+    ValRandomize = true;
+  } FORCE_FUSE_PHASE_DONE[9:9] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "request to force blocking management access to mac/sia";
+    ValRandomize = true;
+  } REQ_MACSIA_LL_OFF[8:8] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "request to force blocking management access to switch";
+    ValRandomize = true;
+  } REQ_SWITCH_LL_OFF[7:7] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "mask_ports_rst. When set, HLP ignores the assertion of ports_rst pin";
+    ValRandomize = true;
+  } MASK_PORTS_RST[6:6] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "mask_switch_rst. When set, HLP ignores the assertion of switch_rst pin";
+    ValRandomize = true;
+  } MASK_SWITCH_RST[5:5] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "request reset of the deepest mac-clock reset";
+    ValRandomize = true;
+  } REQ_PG_POWERGOOD_RST[4:4] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "request reset of the mac-clock memories";
+    ValRandomize = true;
+  } REQ_MAC_MEM_RST[3:3] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "request reset of the mac-clock logic";
+    ValRandomize = true;
+  } REQ_MAC_RST[2:2] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "request reset of the switch-clock memories";
+    ValRandomize = true;
+  } REQ_SWITCH_MEM_RST[1:1] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "request reset of the switch-clock logic";
+    ValRandomize = true;
+  } REQ_SWITCH_RST[0:0] = 1'h0;
+
+};
+
+
+reg device_status_r {
+  shared;
+  HandCoded = true;
+  name = "device status";
+  desc = "IMN root mgmt handler device status";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+  
+  field {
+    encode = boot_stage_enum;
+    AccessType = "RO/V";
+    desc = "Defines auto_seqr's boot step.
+      This indicates that the auto_seqr is transitioning from level N-1 to N, or N+1 to N, if defined, or is at level N.
+      Used in conjunction with the other DEVICE_STATUS fields to indicate:
+      * (0) Level 0 HLP powered-down 
+	    * (1) Level 1 HLP powered-up, Fuses Pulled, Memories Repaired, SBIOSF access to LSM only MAC and Fabric in reset
+	    * (2) Level 2 Level 1 and MAC logic out of reset
+	    * (3) Level 3 Level 2 + Switch logic out of reset";
+    ValRandomize = true;
+  } BOOT_STAGE[14:13] = 2'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "latched indication that the functional fuses were pulled";
+    ValRandomize = true;
+  } LOAD_DONE[12:12] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "latched indication that the repair fuses were pulled";
+    ValRandomize = true;
+  } REPAIR_DONE[11:11] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "latched indication that an ip_ready message was sent";
+    ValRandomize = true;
+  } IP_READY[10:10] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the global_rst_done pin";
+    ValRandomize = true;
+  } GLOBAL_RST_DONE[9:9] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the memory init done signal for the mac and sia";
+    ValRandomize = true;
+  } MACSIA_MEM_DONE[8:8] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the memory init done signal for the switch";
+    ValRandomize = true;
+  } SWITCH_MEM_DONE[7:7] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the functional init done signal for the mac and sia";
+    ValRandomize = true;
+  } MACSIA_INIT_DONE[6:6] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the functional init done signal for the switch";
+    ValRandomize = true;
+  } SWITCH_INIT_DONE[5:5] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the mac local-loop enable request";
+    ValRandomize = true;
+  } MAC_LL_REQ[4:4] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the mac local-loop enable acknowledge";
+    ValRandomize = true;
+  } MAC_LL_ACK[3:3] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the switch local-loop enable request";
+    ValRandomize = true;
+  } SWITCH_LL_REQ[2:2] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the switch local-loop enable acknowledge";
+    ValRandomize = true;
+  } SWITCH_LL_ACK[1:1] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "status of the hlp_ready pin";
+    ValRandomize = true;
+  } HLP_READY[0:0] = 1'h0;
+
+};
+
+
+// LSM_CFG
+
+reg lsm_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "LSM Configuration";
+  desc = "LSM Configuration";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Amount of time to wait before reseting SW_TEST_AND_SET.data to 0.
+            Units are specified in SW_TAS_TIMESCALE.  Accuracy is 0/+1 unit.
+            Setting this to 0 disables the sw_tas_timeout feature.";
+    ValRandomize = true;
+  } SW_TAS_TIMEOUT[21:12] = 10'h0;
+  field {
+    encode = time_scale;
+    AccessType = "RW";
+    desc = "Units for SW_TAS_TIMEOUT test-and-set:
+            * (0) 100 ns
+            * (1) 1 us
+            * (2) 10 us
+            * (3) 100 us
+            * (4) 1 ms
+            * (5) 10 ms
+            * (6) 100 ms
+            * (7) 1 s";
+    ValRandomize = true;
+  } SW_TAS_TIMESCALE[11:9] = 3'h7;
+  field {
+    AccessType = "RW";
+    desc = "Enable the timers. software should not enable timers if TICK_BASE_VAL has not be setup";
+    ValRandomize = true;
+  } TIMER_ENABLE[8:8] = 1'b0;
+  field {
+    AccessType = "RW";
+    desc = "A set of timers is provided to generate ticks from 100ns to 1s. The base timer should be configured to tick every 100ns by setting TICK_BASE_VAL appropriately. The other timers  (1us,10us,100us,1ms,10ms,100ms,1s) each create a time event spaced by 10 or 2 periods of the next fastest timer when TICK_SPEEDUP is 0 or 1 respectively.";
+    ValRandomize = true;
+  } TICK_SPEEDUP[7:7] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "A zero based number that specifies the number of ports_clk cycles in 100 ns, that is 79 for a 800MHz clock";
+    ValRandomize = true;
+  } TICK_BASE_VAL[6:0] = 7'h4f;
+};
+
+
+// CG_ENABLE
+
+reg cg_enable_r {
+  shared;
+  HandCoded = true;
+  name = "Clock Gate Enable";
+  desc = "Clock Gate Enable";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG3_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG3_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "CG_MSEC2";
+    ValRandomize = true;
+  } CG_MSEC2[15:8] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "CG_PORT4";
+    ValRandomize = true;
+  } CG_PORT4[7:0] = 8'hff;
+};
+
+
+
+// PORTS_IP
+
+reg ports_ip_r {
+  shared;
+  HandCoded = true;
+  name = "Interrupt Pending Register PORTS Interrupt Ripple Data Mapping";
+  desc = "Interrupt Pending Register PORTS Interrupt Ripple Data Mapping";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt source for MAC[31:0]";
+    ValRandomize = true;
+  } MAC[63:32] = 32'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt source for MAC4_ECC[7:0]";
+    ValRandomize = true;
+  } MAC4_ECC[31:24] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt source for MSEC[7:0]";
+    ValRandomize = true;
+  } MSEC[23:16] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt source for MSEC_ECC[7:0]";
+    ValRandomize = true;
+  } MSEC_ECC[15:8] = 8'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt source for SIA_[7:0]";
+    ValRandomize = true;
+  } SIA[7:0] = 8'h0;
+};
+
+
+
+// GLOBAL_INTERRUPT
+
+reg global_interrupt_r {
+  shared;
+  HandCoded = true;
+  name = "Global Interrupt";
+  desc = "Glocal Interrupt";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "Interrupt pending. Set to 1 by IMN immediately after control write message is sent.
+     CW1 set to 0 by software after interrupt handling completed by software.";
+    ValRandomize = true;
+  } INTERRUPT_PENDING[63:63] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "Completion pending, Set to 1 by IMN immediately after control write message is sent.  set to 0 by IMN upon receiving a completion message for the corresponding non-posted write.  can also be cleared by software for error handling purpose.";
+    ValRandomize = true;
+  } COMPLETION_PENDING[62:62] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Software Interrupt";
+    ValRandomize = true;
+  } SOFTWARE[61:61] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "RESERVED";
+    ValRandomize = true;
+  } RESERVED[60:43] = 18'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "IMN LSM Interrupt";
+    ValRandomize = true;
+  } IMN_LSM[42:42] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "PORTS Interrupt";
+    ValRandomize = true;
+  } PORTS[41:41] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Modify Interrupt";
+    ValRandomize = true;
+  } MODIFY[40:40] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Packet Memory Interrupt";
+    ValRandomize = true;
+  } PACKET_MEMORY[39:39] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "IPP Tail Interrupt";
+    ValRandomize = true;
+  } IPP_TAIL[38:38] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "MA_TABLE update Interrupt";
+    ValRandomize = true;
+  } L2_LOOKUP[37:37] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "FWD Interrupt";
+    ValRandomize = true;
+  } FWD[36:36] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "FFU";
+    ValRandomize = true;
+  } FFU[35:35] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Parser Interrupt";
+    ValRandomize = true;
+  } PARSER[34:34] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "IARB Interrupt";
+    ValRandomize = true;
+  } IARB[33:33] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Scheduler Interrupt";
+    ValRandomize = true;
+  } SCHEDULER[32:32] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "CPK Congestion Domains Interrupt, one per CPK congestion domain CM";
+    ValRandomize = true;
+  } CONGESTION[31:0] = 32'h0;
+};
+
+
+
+// LINK_EVENT
+
+reg link_event_r {
+  shared;
+  HandCoded = true;
+  name = "Port link state";
+  desc = "Port link state";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "Per physical port link state change
+     0) no change
+     1) link state changed";
+    ValRandomize = true;
+  } LINK_CHANGE[63:32] = 32'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Per physical port link state
+     0) link down 
+     1) link up";
+    ValRandomize = true;
+  } LINK_UP[31:0] = 32'h0;
+};
+
+
+
+// LINK_EVENT_CP
+
+reg link_event_cp_r {
+  shared;
+  HandCoded = true;
+  name = "Port link state";
+  desc = "Port link state";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "Completion pending, Set to 1 by IMN immediately after control write message is sent.  set to 0 by IMN upon receiving a completion message for the corresponding non-posted write.  can also be cleared by software for error handling purpose.";
+    ValRandomize = true;
+  } COMPLETION_PENDING[0:0] = 1'h0;
+};
+
+
+
+// LINK_ACTIVITY
+
+reg link_activity_r {
+  shared;
+  HandCoded = true;
+  name = "Link Activity";
+  desc = "Link Activity";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "The global register LINK_ACTIVITY is a 32-bit register reporting packet activity (detection of SFD) in either TX or RX. The register latch activity reported on each ONPI ports. CW1 set to 0 by software after read completed by software.";
+    ValRandomize = true;
+  } PORT[31:0] = 32'h0;
+};
+
+
+
+// PACKET_TIME_OUT
+
+reg packet_time_out_r {
+  shared;
+  HandCoded = true;
+  name = "packet timeout control and status";
+  desc = "packet timeout control and status";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "The current time counter value. This counter increments by one every frame timeout period.";
+    ValRandomize = true;
+  } CNT[26:24] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "Defines the frame time out duration in units of 2048 times the management clock. The time out is precised at +/- 50%. Writing a new value takes effect immediately and a write of any non-zero value triggers an immediate advance of the global time value. Therefore successive writes should not be made faster than the maximum time required to time out the entire memory (5ms).";
+    ValRandomize = true;
+  } TIMEOUT_MULT[23:0] = 24'h0;
+};
+
+// FUSE_CTRLR_STATUS
+reg fuse_ctrlr_status_r {
+  shared;
+  HandCoded = true;
+  name = "fuse ctrlr status";
+  desc = "Fuse CTRLR status";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RO/V";
+    desc = "The captured i_data error code when i_error is set";
+    ValRandomize = true;
+  } ERROR_CODE[9:2] = 8'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "i_error is set.";
+    ValRandomize = true;
+  } ERROR_STATUS[1:1] = 1'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "Set with i_ip_ready is raised. And o_ip_ready is pulsed for a single cycle. Write 1 to clear";
+    ValRandomize = true;
+  } IP_READY[0:0] = 1'h0;
+};
+
+//  FUSE_CTRL
+reg fuse_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "fuse ctrl";
+  desc = "fuse controller";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "load_done";
+    ValRandomize = true;
+  } LOAD_DONE[2:2] = 1'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "error";
+    ValRandomize = true;
+  } ERROR[1:1] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "Busy";
+    ValRandomize = true;
+  } BUSY[0:0] = 1'h0;
+};
+
+reg fuse_data_r {
+  shared;
+  HandCoded = true;
+  name = "fuse data";
+  desc = "Contains data from the completion data of fuse pulling";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RO/V";
+    desc = "Capture fuse data as the result of fuse pulling";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+
+
+};
+
+
+// SECURITY_CTL
+
+reg security_ctl_r {
+  shared;
+  HandCoded = true;
+  name = "Security Control";
+  desc = "Security Control";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG0'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG0_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG0_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "number of active policy groups";
+    ValRandomize = true;
+  } N_ACTIVE_PG[3:0] = 4'h0;
+};
+
+
+
+// SECURITY_RAC[0..7]
+
+reg security_rac_r_0 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG0'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG0_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_rac_r_1 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG1_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_rac_r_2 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG2_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_rac_r_3 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG3_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_rac_r_4 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG4'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG4_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_rac_r_5 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG5'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG5_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_rac_r_6 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG6'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG6_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_rac_r_7 {
+  shared;
+  HandCoded = true;
+  name = "Security Read Access Control";
+  desc = "Security Read Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG7'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG7_CP_AGENTS'}%>;
+  Security_PolicyRole   = "RAC";
+  field {
+    AccessType = "RW";
+    desc = "One Read Access Control bit per valid SAI";
+    ValRandomize = true;
+  } RAC_PER_SAI[63:0] = 64'h0;
+};
+
+
+
+// SECURITY_WAC[0..7]
+
+reg security_wac_r_0 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG0'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG0_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_wac_r_1 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG1_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_wac_r_2 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG2_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_wac_r_3 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG3_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_wac_r_4 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG4'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG4_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_wac_r_5 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG5'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG5_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_wac_r_6 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG6'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG6_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_wac_r_7 {
+  shared;
+  HandCoded = true;
+  name = "Security Write Access Control";
+  desc = "Security Write Access Control";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG7'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG7_CP_AGENTS'}%>;
+  Security_PolicyRole   = "WAC";
+  field {
+    AccessType = "RW";
+    desc = "One Write Access Control bit per valid SAI";
+    ValRandomize = true;
+  } WAC_PER_SAI[63:0] = 64'h0;
+};
+
+
+// SECURITY_CP[0..7]
+
+reg security_cp_r_0 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG0'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG0_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_cp_r_1 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG1_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_cp_r_2 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG2_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_cp_r_3 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG3_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_cp_r_4 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG4'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG4_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_cp_r_5 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG5'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG5_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_cp_r_6 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG6'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG6_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg security_cp_r_7 {
+  shared;
+  HandCoded = true;
+  name = "Security Control Policy";
+  desc = "Security Control Policy";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG7'}%>;
+  Security_PolicyAccess = <%=$Security_Props{'HLP_PG7_CP_AGENTS'}%>;
+  Security_PolicyRole   = "CP";
+  field {
+    AccessType = "RW";
+    desc = "One Control policy bit per valid SAI";
+    ValRandomize = true;
+  } CP_PER_SAI[63:0] = 64'h0;
+};
+
+reg classify_bsm_master_source_sai_r {
+  shared;
+  HandCoded = true;
+  name = "BSM MASTER SAI";
+  desc = "BSM MASTER SAI";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG0'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG0_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG0_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "BSM Master SAI for sending to ripple loop. Should be programmed to a SAI not used by IOSF-SB agents.";
+    ValRandomize = true;
+  } SAI[5:0] = 6'h0;
+};
+
+reg classify_bsm_master_sai_r {
+  shared;
+  HandCoded = true;
+  name = "BSM MASTER SAI";
+  desc = "BSM MASTER SAI";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG0'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG0_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG0_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "BSM Master SAI generated from classify depending which doorbell program executing";
+    ValRandomize = true;
+  } SAI[5:0] = 6'h0;
+};
+
+
+// SOFT_IP
+
+reg soft_ip_r {
+  shared;
+  HandCoded = true;
+  name = "Software Interrupt Pending";
+  desc = "Software Interrupt Pending";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  field {
+    AccessType = "RW";
+    desc = "Written exclusively by software to generate hardware interrupts";
+    ValRandomize = true;
+  } SOFT_IP[31:0] = 32'h0;
+};
+
+// SOFT_IM
+
+reg soft_im_r {
+  shared;
+  HandCoded = true;
+  name = "Software Interrupt Mask";
+  desc = "Software Interrupt Mask";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  field {
+    AccessType = "RW";
+    desc = "Written exclusively by software to mask software interrupts set by software in corresponding SOFT_IP";
+    ValRandomize = true;
+  } SOFT_IM[31:0] = 32'h0;
+};
+
+
+// SECURITY_PG_REMAP[0..63]
+
+reg security_pg_remap_r {
+  shared;
+  HandCoded = true;
+  name = "Security Policy Group Remap";
+  desc = "Security Policy Group Remap";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG0'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG0_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG0_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Address to which mgmt address is compared";
+    ValRandomize = true;
+  } ADDRESS[63:36] = 28'h0;
+  field {
+    AccessType = "RW";
+    desc = "This mask is applied to both the stored address and the mgmt address";
+    ValRandomize = true;
+  } MASK[35:8] = 28'h0;
+  field {
+    AccessType = "RW";
+    desc = "Policy group chosen when the address matches";
+    ValRandomize = true;
+  } POLICY_GROUP[7:5] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "This is a flag that indicates that this entry should be used for comparison";
+    ValRandomize = true;
+  } ACTIVE[4:4] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "RESERVED";
+    ValRandomize = true;
+  } RESERVED[3:0] = 4'h0;
+};
+
+
+// CDC_FIFO_STATUS_TO_SWITCH
+
+reg cdc_fifo_status_to_switch_r {
+  shared;
+  HandCoded = true;
+  name = "Status Flags for CDC fifos to switch clock";
+  desc = "Status Flags for CDC fifos to switch clock";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo instantaneous depth";
+    ValRandomize = true;
+  } MGMT_DEPTH[63:40] = 24'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo full flag";
+    ValRandomize = true;
+  } MGMT_FULL[39:39] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo almost full flag";
+    ValRandomize = true;
+  } MGMT_AFULL[38:38] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo almost empty flag";
+    ValRandomize = true;
+  } MGMT_AEMPTY[37:37] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo empty flag";
+    ValRandomize = true;
+  } MGMT_EMPTY[36:36] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Reserved";
+    ValRandomize = true;
+  } MGMT_RSVD[35:35] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo parity error flag";
+    ValRandomize = true;
+  } MGMT_PARITY_ERROR[34:34] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo overflow flag";
+    ValRandomize = true;
+  } MGMT_OVERFLOW[33:33] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo underflow flag";
+    ValRandomize = true;
+  } MGMT_UNDERFLOW[32:32] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo instantaneous depth";
+    ValRandomize = true;
+  } INT_DEPTH[31:8] = 24'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo full flag";
+    ValRandomize = true;
+  } INT_FULL[7:7] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo almost full flag";
+    ValRandomize = true;
+  } INT_AFULL[6:6] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo almost empty flag";
+    ValRandomize = true;
+  } INT_AEMPTY[5:5] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo empty flag";
+    ValRandomize = true;
+  } INT_EMPTY[4:4] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Reserved";
+    ValRandomize = true;
+  } INT_RSVD[3:3] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo parity error flag";
+    ValRandomize = true;
+  } INT_PARITY_ERROR[2:2] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo overflow flag";
+    ValRandomize = true;
+  } INT_OVERFLOW[1:1] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo underflow flag";
+    ValRandomize = true;
+  } INT_UNDERFLOW[0:0] = 1'h0;
+};
+
+
+
+// CDC_FIFO_STATUS_FROM_SWITCH
+
+reg cdc_fifo_status_from_switch_r {
+  shared;
+  HandCoded = true;
+  name = "Status Flags for CDC fifos from switch clock";
+  desc = "Status Flags for CDC fifos from switch clock";
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo instantaneous depth";
+    ValRandomize = true;
+  } MGMT_DEPTH[63:40] = 24'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo full flag";
+    ValRandomize = true;
+  } MGMT_FULL[39:39] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo almost full flag";
+    ValRandomize = true;
+  } MGMT_AFULL[38:38] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo almost empty flag";
+    ValRandomize = true;
+  } MGMT_AEMPTY[37:37] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo empty flag";
+    ValRandomize = true;
+  } MGMT_EMPTY[36:36] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Reserved";
+    ValRandomize = true;
+  } MGMT_RSVD[35:35] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo parity error flag";
+    ValRandomize = true;
+  } MGMT_PARITY_ERROR[34:34] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo overflow flag";
+    ValRandomize = true;
+  } MGMT_OVERFLOW[33:33] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Mgmt fifo underflow flag";
+    ValRandomize = true;
+  } MGMT_UNDERFLOW[32:32] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo instantaneous depth";
+    ValRandomize = true;
+  } INT_DEPTH[31:8] = 24'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo full flag";
+    ValRandomize = true;
+  } INT_FULL[7:7] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo almost full flag";
+    ValRandomize = true;
+  } INT_AFULL[6:6] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo almost empty flag";
+    ValRandomize = true;
+  } INT_AEMPTY[5:5] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo empty flag";
+    ValRandomize = true;
+  } INT_EMPTY[4:4] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Reserved";
+    ValRandomize = true;
+  } INT_RSVD[3:3] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo parity error flag";
+    ValRandomize = true;
+  } INT_PARITY_ERROR[2:2] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo overflow flag";
+    ValRandomize = true;
+  } INT_OVERFLOW[1:1] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "Interrupt fifo underflow flag";
+    ValRandomize = true;
+  } INT_UNDERFLOW[0:0] = 1'h0;
+};
+
+// start of mgmt_handler
+reg vital_product_data_r {
+  shared;
+  HandCoded = true;
+  name = "vital product data";
+  desc = "vital product data";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  
+  field {
+    AccessType = "RO";
+    desc = "32-bit constant value for part number";
+    ValRandomize = true;
+  } DATA[31:0] = 32'hae22;
+};
+
+reg chip_version_r {
+  shared;
+  HandCoded = true;
+  name = "chip version";
+  desc = "chip_version";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  
+  field {
+    AccessType = "RO";
+    desc = "8-bit constant, Returns the chip mask version.";
+    ValRandomize = true;
+  } DATA[7:0] = 8'h0;
+};
+
+// LSM_IP
+
+reg lsm_ip_r {
+  shared;
+  HandCoded = true;
+  name = "LSM Interrupt Pending";
+  desc = "LSM Interrupt Pending";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  //field {
+  //  AccessType = "RW/1C/V";
+  //  desc = "
+  //  CSR Security Violation Interrupts
+  //  
+  //  ";
+  //  ValRandomize = true;
+  //} CSR_SECURITY_VIO_INT[1:1] = 1'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "unsupported destination id for received completion message. This bit is only set when UNSUP_RX_POSTED_CMPL_SAI_INT is not set.";
+    ValRandomize = true;
+  } UNSUP_RX_CMPL_DEST_INT[4:4] = 1'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "unsupported source id for received completion message. This bit is only set when UNSUP_RX_POSTED_CMPL_SAI_INT is not set.";
+    ValRandomize = true;
+  } UNSUP_RX_CMPL_SRC_INT[3:3] = 1'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "unsupported SAI for received completion message.";
+    ValRandomize = true;
+  } UNSUP_RX_CMPL_SAI_INT[2:2] = 1'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "unsupported SAI posted non-register accesses messages (not including completion message)";
+    ValRandomize = true;
+  } UNSUP_POSTED_SAI_INT[1:1] = 1'h0;
+
+  field {
+    AccessType = "RW/1C/V";
+    desc = "Shell Control Memory Error Interrupts";
+    ValRandomize = true;
+  } SHELL_CTRL_ECC_INT[0:0] = 1'h0;
+};
+
+// LSM_IM
+
+reg lsm_im_r {
+  shared;
+  HandCoded = true;
+  name = "LSM Interrupt Pending";
+  desc = "LSM Interrupt Pending";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  
+  field {
+    AccessType = "RW";
+    desc = "unsupported destination id for received completion message interrupt mask.";
+    ValRandomize = true;
+  } UNSUP_RX_CMPL_DEST_MASK[4:4] = 1'h1;
+
+  field {
+    AccessType = "RW";
+    desc = "unsupported source id for received completion message interrupt mask.";
+    ValRandomize = true;
+  } UNSUP_RX_CMPL_SRC_MASK[3:3] = 1'h1;
+
+  field {
+    AccessType = "RW";
+    desc = "unsupported SAI for received completion message interrupt mask.";
+    ValRandomize = true;
+  } UNSUP_RX_CMPL_SAI_MASK[2:2] = 1'h1;
+
+  field {
+    AccessType = "RW";
+    desc = "unsupported SAI posted non-register accesses message (not including completion message) Interrupts Mask";
+    ValRandomize = true;
+  } UNSUP_SAI_POSTED_INT_MASK[1:1] = 1'h1;
+  
+  field {
+    AccessType = "RW";
+    desc = "Shell Control Memory Error Interrupts Mask";
+    ValRandomize = true;
+  } SHELL_CTRL_ECC_INT_MASK[0:0] = 1'h1;
+};
+
+reg soft_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "soft ctrl";
+  desc = "soft_ctrl";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  // default to 1'b1 now, but need to change when all test changed
+  field {
+    AccessType = "RW/V";
+    desc = "when device_status.switch_ll_req is set, the User can program switch_ready to indicate that thw fabric is configured and ready to pass traffic, reset by HW when device_status.switch_ll_req is 0";
+    ValRandomize = true;
+  } SWITCH_READY[0:0] = 1'h0;
+
+};
+
+reg transac_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "transac cnt";
+  desc = "Counter for Total number of IOSF-SB transactions received by HLP";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB transactions received by HLP";
+    ValRandomize = true;
+  } TRANSAC_CNT[31:0] = 32'h0;
+};
+
+reg read_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "read cnt";
+  desc = "Counter for Total number of IOSF-SB register read transactions received by HLP";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB register read transactions received by HLP";
+    ValRandomize = true;
+  } READ_CNT[31:0] = 32'h0;
+};
+
+reg np_write_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "np write cnt";
+  desc = "Counter for Total number of IOSF-SB non-posted register write transactions received by HLP";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB non-posted register write transactions received by HLP";
+    ValRandomize = true;
+  } NP_WRITE_CNT[31:0] = 32'h0;
+};
+
+reg p_write_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "p write cnt";
+  desc = "Counter for Total number of IOSF-SB posted register write transactions received by HLP";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB posted register write transactions received by HLP";
+    ValRandomize = true;
+  } P_WRITE_CNT[31:0] = 32'h0;
+};
+
+reg wcr_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "wcr cnt";
+  desc = "Counter for Total number of IOSF-SB posted register write transactions received by HLP";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB Write Private Control Message generated by HLP";
+    ValRandomize = true;
+  } WCR_CNT[31:0] = 32'h0;
+};
+
+reg unsup_opc_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "unsup opc cnt";
+  desc = "Counter for Total number of IOSF-SB transactions received by HLP with unsupported opcode";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB transactions received by HLP with unsupported opcode";
+    ValRandomize = true;
+  } UNSUP_OPC_CNT[31:0] = 32'h0;
+};
+
+reg unauthor_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "unauthor cnt";
+  desc = "Counter for Total number of IOSF-SB register access transactions received by HLP resulting in unauthorized access attempts";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB register access transactions received by HLP resulting in unauthorized access attempts";
+    ValRandomize = true;
+  } UNAUTHOR_CNT[31:0] = 32'h0;
+};
+
+reg unsup_sai_cnt_posted_r {
+
+  shared;
+  HandCoded = true;
+  name = "unsup sai cnt posted";
+  desc = "Counter for Total number of IOSF-SB non-register posted message (not including completion message) received by HLP
+          with unsupported SAI or no SAI. An interrupt will be generated in this case";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB non-register posted message (not including completion message) received by HLP with
+            unsupported SAI or no SAI. An interrupt will be generated in this case";
+    ValRandomize = true;
+  } UNSUP_SAI_CNT_POSTED[31:0] = 32'h0;
+};
+
+reg read_dataerr_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "read dataerr cnt";
+  desc = "Counter for Total number of IOSF-SB register access transactions with read data error";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB register access transactions with read data error";
+    ValRandomize = true;
+  } READ_DATAERR_CNT[31:0] = 32'h0;
+};
+
+reg unsup_cmpl_msg_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "unsupported completion message cnt";
+  desc = "Counter for Total number of received completion message with unsupported SAI, no SAI,  Source ID, or Destination ID";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of received completion message with unsupported SAI, no SAI, Source ID, or Destination ID";
+    ValRandomize = true;
+  } UNSUP_CMPL_MSG_CNT[31:0] = 32'h0;
+};
+
+reg malformed_msg_cnt_r {
+
+  shared;
+  HandCoded = true;
+  name = "write nodata cnt";
+  desc = "Counter for Total number of IOSF-SB register access transactions received by HLP for write without data";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "Total number of IOSF-SB register access transactions received by HLP considered as malformed messages";
+    ValRandomize = true;
+  } MALFORMED_MSG_CNT[31:0] = 32'h0;
+};
+
+reg error_log_r {
+
+  shared;
+  HandCoded = true;
+  name = "Error Log";
+  desc = "Error log register";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG2'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG2_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG2_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RO/C/V";
+    desc = "Error bit, set by haware when posted non-register accesses messages or received completion message 
+            contain unsupported SAI, or completion messages contains unsupported source.destination port ID";
+    ValRandomize = true;
+  } ERROR[32:32] = 1'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "OPCODE";
+    ValRandomize = true;
+  } OPCODE[31:24] = 8'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "Destination Port ID";
+    ValRandomize = true;
+  } DEST_PORT_ID[23:16] = 8'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "Source Port ID";
+    ValRandomize = true;
+  } SOURCE_PORT_ID[15:8] = 8'h0;
+
+  field {
+    AccessType = "RO/V";
+    desc = "SAI";
+    ValRandomize = true;
+  } SAI[7:0] = 8'h0;
+
+};
+
+// end of mgmt_handler
+
+reg sw_test_and_set_r {
+  shared;
+  HandCoded = true;
+  name = "Software Test and Set";
+  desc = "Software Test and Set, used as a semaphore.
+
+          The mask is used to exclude some bits from the operation. If the unmasked register
+          content is zero and the new value is not zero, then the new value is loaded into the register unmasked bits.
+          If the new value is zero, then this new value value is loaded into the register unmasked bits regardless of
+          its current content.
+
+          The operation is atomic and the pseudo code is:
+
+          if ( (SW_TEST_AND_SET.Data & ~Mask) == 0 || (Data & ~Mask) == 0 ) 
+          begin
+
+            SW_TEST_AND_SET.Data = (SW_TEST_AND_SET.Data & Mask) | (Data & ~Mask)
+
+            SW_TEST_AND_SET.Mask = Mask 
+
+          end
+  ";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  field {
+    AccessType = "RW";
+    desc = " Defines bits to keep unchanged in the register.  If mask bit i is set to 1, then the data bit i is not going to be affected during the TEST and SET operation. ";
+    ValRandomize = true;
+  } MASK[31:16] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "New value to write";
+    ValRandomize = true;
+  } DATA[15:0] = 16'h0;
+};
+
+
+
+// BSM Memory and registers
+reg bsm_scratch_r {
+  shared;
+  HandCoded = true;
+  name = "BSM scratch (data) memories";
+  desc = "BSM scratch (data) memories. This memory is not initialized.";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+  field {
+    AccessType = "RW";
+    desc = "Scratch Data";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+
+reg bsm_code_r {
+  shared;
+  HandCoded = true;
+  name = "BSM instruction code memories";
+  desc = "BSM instruction code memories. This memory is not initialized.";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG3_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG3_WAC_AGENTS'}%>;
+  field {
+    AccessType = "RW";
+    desc = "BSM Instruction Memory Data";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+
+reg bsm_args_r {
+  HandCoded = true;
+  name = "BSM ARGS";
+  desc = "BSM argument registers";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW";
+    desc = "Command Argument";
+    ValRandomize = true;
+  } DATA[31:0] = 32'h0;
+};
+
+
+reg bsm_active_r {
+  HandCoded = true;
+  name = "BSM ACTIVE";
+  desc = "active";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG3_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG3_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "active";
+    ValRandomize = true;
+  } ACTIVE[0:0] = 1'h0;
+};
+
+reg bsm_active_sai_index_r {
+  HandCoded = true;
+  name = "BSM ACTIVE SAI INDEX";
+  desc = "BSM active SAI Index";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG1_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RO/V";
+    desc = "BSM SAI Index";
+    ValRandomize = true;
+  } BSM_SAI_INDEX[1:0] = 2'h0;
+};
+
+reg bsm_suspend_r {
+  HandCoded = true;
+  name = "BSM SUSPEND";
+  desc = "suspend";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG3_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG3_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "suspend";
+    ValRandomize = true;
+  } SUSPEND[0:0] = 1'h0;
+};
+
+reg bsm_stop_r {
+  HandCoded = true;
+  name = "BSM STOP";
+  desc = "stop";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG3_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG3_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW";
+    desc = "software stop bsm";
+    ValRandomize = true;
+  } STOP[0:0] = 1'h1;
+};
+
+reg bsm_pc_r {
+  HandCoded = true;
+  name = "BSM PC";
+  desc = "BSM_PC";
+  regwidth = 64;
+  accesswidth = 64;
+  Security_PolicyGroup  = <%=$Security_Props{'HLP_PG3'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'HLP_PG3_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'HLP_PG3_WAC_AGENTS'}%>;
+
+  field {
+    AccessType = "RW/V";
+    desc = "pc";
+    ValRandomize = true;
+  } PC[23:0] = 24'h0;
+};
+
+// Begin reg2rdl addrmap section
+
+addrmap hlp_IMN_map {
+  name = "hlp IMN";
+  desc = "Imn Register Set";
+  AddressBits = 18;
+  ResetDomains = "MGMT";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  soft_reset_r               SOFT_RESET                           @0x00;
+  device_status_r            DEVICE_STATUS                        @0x08;  
+  cg_enable_r                CG_ENABLE                            @0x18;
+  ports_ip_r                 PORTS_IP                             @0x20;
+  global_interrupt_r         GLOBAL_INTERRUPT                     @0x28;
+  link_event_r               LINK_EVENT                           @0x30;
+  link_event_cp_r            LINK_EVENT_CP                        @0x38;
+  link_activity_r            LINK_ACTIVITY                        @0x40;
+  packet_time_out_r          PACKET_TIME_OUT                      @0x48;
+  fuse_ctrlr_status_r        FUSE_CTRLR_STATUS                    @0x70;
+  fuse_data_r                FUSE_DATA[4]                         @0x80 += 8;
+  fuse_ctrl_r                FUSE_CTRL                            @0xa0;
+  security_ctl_r             SECURITY_CTL                         @0xb0;
+  security_rac_r_0           SECURITY_RAC_0                       @0xb8;
+  security_rac_r_1           SECURITY_RAC_1                       @0xc0;
+  security_rac_r_2           SECURITY_RAC_2                       @0xc8;
+  security_rac_r_3           SECURITY_RAC_3                       @0xd0;
+  security_rac_r_4           SECURITY_RAC_4                       @0xd8;
+  security_rac_r_5           SECURITY_RAC_5                       @0xe0;
+  security_rac_r_6           SECURITY_RAC_6                       @0xe8;
+  security_rac_r_7           SECURITY_RAC_7                       @0xf0;
+  security_wac_r_0           SECURITY_WAC_0                       @0xf8;
+  security_wac_r_1           SECURITY_WAC_1                       @0x100;
+  security_wac_r_2           SECURITY_WAC_2                       @0x108;
+  security_wac_r_3           SECURITY_WAC_3                       @0x110;
+  security_wac_r_4           SECURITY_WAC_4                       @0x118;
+  security_wac_r_5           SECURITY_WAC_5                       @0x120;
+  security_wac_r_6           SECURITY_WAC_6                       @0x128;
+  security_wac_r_7           SECURITY_WAC_7                       @0x130;
+  security_cp_r_0            SECURITY_CP_0                        @0x138;
+  security_cp_r_1            SECURITY_CP_1                        @0x140;
+  security_cp_r_2            SECURITY_CP_2                        @0x148;
+  security_cp_r_3            SECURITY_CP_3                        @0x150;
+  security_cp_r_4            SECURITY_CP_4                        @0x158;
+  security_cp_r_5            SECURITY_CP_5                        @0x160;
+  security_cp_r_6            SECURITY_CP_6                        @0x168;
+  security_cp_r_7            SECURITY_CP_7                        @0x170;
+  classify_bsm_master_source_sai_r CLASSIFY_BSM_MASTER_SOURCE_SAI @0x178;
+  classify_bsm_master_sai_r  CLASSIFY_BSM_MASTER_SAI[4]           @0x180 += 8;
+  soft_ip_r                  SOFT_IP                              @0x1a0;
+  soft_im_r                  SOFT_IM                              @0x1a8;
+  security_pg_remap_r        SECURITY_PG_REMAP[64]                @0x200 += 8;
+  cdc_fifo_status_to_switch_r CDC_FIFO_STATUS_TO_SWITCH           @0x400;
+  cdc_fifo_status_from_switch_r CDC_FIFO_STATUS_FROM_SWITCH       @0x408;
+  vital_product_data_r       VITAL_PRODUCT_DATA                   @0x410;
+  chip_version_r             CHIP_VERSION                         @0x418;
+  lsm_ip_r                   LSM_IP                               @0x440;
+  lsm_im_r                   LSM_IM                               @0x448;
+  soft_ctrl_r                SOFT_CTRL                            @0x450;
+  lsm_cfg_r                  LSM_CFG                              @0x458;  // end of mgmt_handler
+  error_log_r                ERROR_LOG                            @0x460;
+  transac_cnt_r              TRANSAC_CNT                          @0x468;
+  read_cnt_r                 READ_CNT                             @0x490;
+  np_write_cnt_r             NP_WRITE_CNT                         @0x498;
+  p_write_cnt_r              P_WRITE_CNT                          @0x4a0;
+  wcr_cnt_r                  WCR_CNT                              @0x4a8;
+  malformed_msg_cnt_r        MALFORMED_MSG_CNT                    @0x4b0;
+  unsup_opc_cnt_r            UNSUP_OPC_CNT                        @0x4b8;
+  unauthor_cnt_r             UNAUTHOR_CNT                         @0x4c0;
+  unsup_sai_cnt_posted_r     UNSUP_SAI_CNT_POSTED                 @0x4c8;
+  read_dataerr_cnt_r         READ_DATAERR_CNT                     @0x4d0;
+  unsup_cmpl_msg_cnt_r       UNSUP_CMPL_MSG_CNT                   @0x4d8;
+  sw_test_and_set_r          SW_TEST_AND_SET                      @0x4e0;
+  bsm_args_r                 BSM_ARGS                             @0x00600;
+  bsm_active_r               BSM_ACTIVE                           @0x00608;
+  bsm_active_sai_index_r     BSM_ACTIVE_SAI_INDEX                 @0x00610;
+  bsm_suspend_r              BSM_SUSPEND                          @0x00618;
+  bsm_stop_r                 BSM_STOP                             @0x00620;
+  bsm_pc_r                   BSM_PC                               @0x00628;
+  bsm_scratch_r              BSM_SCRATCH_0[512]                   @0x10000 += 8;
+  bsm_scratch_r              BSM_SCRATCH_1[512]                   @0x14000 += 8;
+  bsm_scratch_r              BSM_SCRATCH_2[512]                   @0x18000 += 8;
+  bsm_scratch_r              BSM_SCRATCH_3[512]                   @0x1c000 += 8;
+  bsm_code_r                 BSM_CODE[8192]                       @0x20000 += 8; // 64KB ???
+
+
+}; // final size: 0x420 <= 0x800 = 8<<8

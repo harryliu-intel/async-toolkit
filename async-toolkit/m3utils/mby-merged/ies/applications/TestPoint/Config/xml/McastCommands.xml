@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE config PUBLIC "-//Fulcrum Microsystems//DTD DefaultCommands/EN" "DefaultCommands.dtd">
+<!--
+    vim:autoindent:et:sw=4:ts=4:tw=79:
+-->
+
+<config>
+
+<!-- set -->
+<command>
+    <name>set</name>
+    <help>Set a property</help>
+
+    <!-- set mcast-group -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+        </filter>
+        <name>mcast-group</name>
+        <help>Set a multicast group related property</help>
+
+        <!-- set mcast-group address -->
+        <command>
+            <name>address</name>
+            <help>Set the multicast group's address</help>
+            <handler>tpHandleSetMcastGroupAddress</handler>
+
+            <argument>
+                <name>dmac-vlan</name>
+                <help>Create a Layer 2 multicast group</help>
+                <argument>
+                    <name>!&lt;group&gt;</name>
+                    <help>
+                        The group (or range of groups) to set the group address
+                        for
+                    </help>
+                    <argument>
+                        <name>!&lt;DMAC&gt;</name>
+                        <help>
+                            The multicast destination MAC in the form
+                            XX:XX:XX:XX:XX:XX
+                        </help>
+                        <argument>
+                            <name>!&lt;vid&gt;</name>
+                            <help>A VLAN ID in the range 1-4095</help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help> </help>
+                            </argument>
+                            <argument>
+                                <filter type="family">
+                                    <deny>FM2000</deny>
+                                    <deny>FM4000</deny>
+                                </filter>
+                                <name>!&lt;vid2&gt;</name>
+                                <help>Optional VLAN ID2 in the range 0-4095</help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help> </help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument> <!-- end dmac-vlan -->
+
+            <argument>
+                <name>dip</name>
+                <help> </help>
+                <argument>
+                    <name>!&lt;group&gt;</name>
+                    <help>
+                        The group (or range of groups) to set the group address
+                        for
+                    </help>
+                    <argument>
+                        <name>!&lt;destination&gt;</name>
+                        <help>
+                            The multicast destination IP address in CIDR format
+                        </help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help> </help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument> <!-- end dip -->
+
+            <argument>
+                <name>dip-vlan</name>
+                <help> </help>
+                <argument>
+                    <name>!&lt;group&gt;</name>
+                    <help>
+                        The group (or range of groups) to set the group address
+                        for
+                    </help>
+                    <argument>
+                        <name>!&lt;destination&gt;</name>
+                        <help>
+                            The multicast destination IP address in CIDR format
+                        </help>
+                        <argument>
+                            <name>!&lt;vlan&gt;</name>
+                            <help>
+                                A VLAN ID (or range of VLAN IDs) in the form
+                                X/X
+                            </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help> </help>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument> <!-- end dip-vlan -->
+
+            <argument>
+                <name>dip-sip</name>
+                <help> </help>
+                <argument>
+                    <name>!&lt;group&gt;</name>
+                    <help>
+                        The group (or range of groups) set the group address
+                        for
+                    </help>
+                    <argument>
+                        <name>!&lt;destination&gt;</name>
+                        <help>
+                            The multicast destination IP address in CIDR format
+                        </help>
+                        <argument>
+                            <name>!&lt;source&gt;</name>
+                            <help>
+                                The source IP address in CIDR format
+                            </help>
+                            <argument>
+                                <name>!&lt;cr&gt;</name>
+                                <help> </help>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument> <!-- end dip-sip -->
+
+            <argument>
+                <name>dip-sip-vlan</name>
+                <help> </help>
+                <argument>
+                    <name>!&lt;group&gt;</name>
+                    <help>
+                        The group (or range of groups) set the group address
+                        for
+                    </help>
+                    <argument>
+                        <name>!&lt;destination&gt;</name>
+                        <help>
+                            The multicast destination IP address in CIDR format
+                        </help>
+                        <argument>
+                            <name>!&lt;source&gt;</name>
+                            <help>
+                                The source IP address in CIDR format
+                            </help>
+                            <argument>
+                                <name>!&lt;vlan&gt;</name>
+                                <help>
+                                    A VLAN ID (or range of VLAN IDs) in the
+                                    form X/X
+                                </help>
+                                <argument>
+                                    <name>!&lt;cr&gt;</name>
+                                    <help> </help>
+                                </argument>
+                            </argument>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument> <!-- end dip-sip-vlan -->
+        </command>  <!-- end set mcast-group address -->
+
+        <!-- set mcast-group attribute -->
+        <command>
+            <name>attribute</name>
+            <help>Set the multicast group's attribute</help>
+            <handler>tpHandleSetMcastGroupAttribute</handler>
+
+            <argument>
+                <name>!&lt;group&gt;</name>
+                <help>The group (or range of groups) to set the group address for</help>
+
+                <!-- set mcast-group attribute L2SwitchingOnly -->
+                <argument>
+                    <name>L2SwitchOnly</name>
+                    <help>Set if the multicast group will be use in L2 switching or L3 routing mode</help>
+                    <argument>
+                        <name>on</name>
+                        <help>Multicast group will run in L2 switch mode</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Multicast group will run in L2 switch mode</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>off</name>
+                        <help>Multicast group will run in L3 route mode</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Multicast group will run in L3 route mode</help>
+                        </argument>
+                    </argument>
+                </argument> <!--  L2SwitchingOnly -->
+
+                <!-- set mcast-group attribute L3SwitchingOnly -->
+                <argument>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                        <deny>FM4000</deny>
+                    </filter>
+                    <name>L3SwitchOnly</name>
+                    <help>Switching of L3 traffic with packet replication per VLAN</help>
+                    <argument>
+                        <name>on</name>
+                        <help>Enable switching with packet replication per VLAN</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Enable switching with packet replication per VLAN</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>off</name>
+                        <help>Disable switching with packet replication per VLAN</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Disable switching with packet replication per VLAN</help>
+                        </argument>
+                    </argument>
+                </argument> <!--  L3SwitchingOnly -->
+
+                <!-- set mcast-group attribute L3Flood-set -->
+                <argument>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                        <deny>FM4000</deny>
+                    </filter>
+                    <name>L3Flood-set</name>
+                    <help>Multicast group defines an L3 flood-set</help>
+                    <argument>
+                        <name>on</name>
+                        <help>Enable multicast group as an L3 flood-set</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Enable multicast group as an L3 flood-set</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>off</name>
+                        <help>Disable multicast group as an L3 flood-set</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Disable multicast group as an L3 flood-set</help>
+                        </argument>
+                    </argument>
+                </argument> <!--  L3Flood-set -->
+
+                <!-- set mcast-group attribute repli-group -->
+                <argument>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                        <deny>FM4000</deny>
+                    </filter>
+                    <name>repli-group</name>
+                    <help>Associate a replication group with this multicast group</help>
+                    <argument>
+                        <name>private</name>
+                        <help>Multicast group does not share a replication group</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Multicast group does not share a replication group</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>!&lt;repli-group&gt;</name>
+                        <help>Replication group to associate with the mcast group</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Associate replication group with this multicast group</help>
+                        </argument>
+                    </argument>
+                </argument> <!--  repli-group -->
+
+                <!-- set mcast-group attribute bypassEgressSTP -->
+                <argument>
+                    <filter type="family">
+                        <deny>FM2000</deny>
+                        <deny>FM4000</deny>
+                    </filter>
+                    <name>bypassEgressSTP</name>
+                    <help>Vlan replication should be added regardless of the egress STP state </help>
+                    <argument>
+                        <name>on</name>
+                        <help>Enable bypass of egress STP check</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Enable bypass of egress STP check</help>
+                        </argument>
+                    </argument>
+                    <argument>
+                        <name>off</name>
+                        <help>Disable bypass of egress STP check</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Disable bypass of egress STP check</help>
+                        </argument>
+                    </argument>
+                </argument> <!--  bypassEgressSTP -->
+            </argument>
+        </command>
+
+        <!-- set mcast-group state -->
+        <command>
+            <name>state</name>
+            <help>Set the multicast group's state</help>
+            <handler>tpHandleSetMcastGroupState</handler>
+
+            <argument>
+                <name>!&lt;group&gt;</name>
+                <help>The group (or range of groups) to activate/deactivate</help>
+
+                <!-- set mcast-group state active -->
+                <argument>
+                    <name>active</name>
+                    <help>Activate the specified Multicast group</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Activate the specified Multicast group</help>
+                    </argument>
+                </argument> <!--  active -->
+
+                <!-- set mcast-group state inactive -->
+                <argument>
+                    <name>inactive</name>
+                    <help>Deactivate the specified Multicast group</help>
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Activate the specified Multicast group</help>
+                    </argument>
+                </argument> <!--  active -->
+            </argument>
+        </command>
+    </command> <!-- end set mcast-group -->
+</command> <!-- end set -->
+
+<!-- show -->
+<command>
+    <name>show</name>
+    <help>Show a property</help>
+    <!-- show mcast-group -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+        </filter>
+        <name>mcast-group</name>
+        <help>Display multicast group information</help>
+        <handler>tpHandleShowMcastGroup</handler>
+
+        <argument>
+            <name>!&lt;group&gt;</name>
+            <help>A range of multicast groups</help>
+
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Display multicast group information</help>
+            </argument>
+        </argument>
+        <argument>
+            <name>all</name>
+            <help>Display multicast group information for all groups</help>
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Display multicast group information for all groups</help>
+            </argument>
+        </argument>
+    </command>
+    <!-- end show mcast-group -->
+</command>  <!-- end show -->
+
+<!-- del -->  
+<command>
+    <name>del</name>
+    <help>Delete MAC address, VLANs, LAGs, or ports from VLANs, or counters from VLANs or LAGs</help>
+
+    <!-- del mcast-group -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+        </filter>
+        <name>mcast-group</name>
+        <help>Delete a multicast group or listeners from a group</help>
+        <handler>tpHandleDelMcastGroup</handler>
+
+        <argument>
+            <name>!&lt;group&gt;</name>
+            <help>The group to delete</help>
+
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete a multicast group</help>
+            </argument>
+        </argument>
+    </command>
+
+    <!-- del mcast-listener -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+        </filter>
+        <name>mcast-listener</name>
+        <help>Delete a listener from a group</help>
+        <handler>tpHandleDelMulticastListener</handler>
+
+        <argument>
+            <name>!&lt;group&gt;</name>
+            <help>The group to delete a listener from</help>
+
+            <argument>
+                <name>!&lt;port&gt;</name>
+                <help>The listener's port</help>
+
+                <argument>
+                    <name>!&lt;vlan&gt;</name>
+                    <help>The listener's VLAN ID</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Delete a listener from a multicast group</help>
+                    </argument>
+                </argument>
+            </argument>
+        </argument>
+    </command>  <!-- end del mcast-listener -->
+
+    <!-- del repli-group -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+            <deny>FM4000</deny>
+        </filter>
+        <name>repli-group</name>
+        <help>Delete a replication group</help>
+        <handler>tpHandleDelRepliGroup</handler>
+
+        <argument>
+            <name>!&lt;group&gt;</name>
+            <help>The replication group to delete</help>
+
+            <argument>
+                <name>!&lt;cr&gt;</name>
+                <help>Delete a replication group</help>
+            </argument>
+        </argument>
+    </command>
+    <!-- del mcast-ecmp -->  
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+            <deny>FM4000</deny>
+        </filter>
+        <name>mcast-ecmp</name>
+        <help>Delete an ECMP from a multicast group</help>
+        <handler>tpHandleDeleteMulticastEcmp</handler>
+
+        <argument>
+            <name>!&lt;group&gt;</name>
+            <help>The multicast group to delete an ECMP from</help>
+
+            <argument>
+                <name>!&lt;ecmp&gt;</name>
+                <help>The ECMP to delete</help>
+
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Delete an ECMP from a multicast group</help>
+                </argument>
+            </argument>
+        </argument>
+    </command>  <!-- end add mcast-ecmp -->
+</command>  <!-- end del -->
+
+<!-- create -->
+<command>
+    <name>create</name>
+    <help>Create VLANs, LAGs, multicast groups, ACLs, etc.</help>
+
+    <!-- create mcast-group -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+        </filter>
+        <name>mcast-group</name>
+        <help>Create a multicast group</help>
+        <handler>tpHandleCreateMcastGroup</handler>
+
+        <argument>
+            <name>!&lt;cr&gt;</name>
+            <help>Create a multicast group</help>
+        </argument>
+    </command>
+
+    <!-- create repli-group -->
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+            <deny>FM4000</deny>
+        </filter>
+        <name>repli-group</name>
+        <help>Create a replication group</help>
+        <handler>tpHandleCreateRepliGroup</handler>
+
+        <argument>
+            <name>!&lt;cr&gt;</name>
+            <help>Create a replication group</help>
+        </argument>
+    </command>
+</command>  <!-- end create -->
+
+<!-- add -->
+<command>
+    <name>add</name>
+    <help>Add mac addresses to MA table, or ports to VLANs or LAGs</help>
+
+    <!-- add mcast-listener -->  
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+        </filter>
+        <name>mcast-listener</name>
+        <help>Add listeners to a multicast group</help>
+        <handler>tpHandleAddMulticastListener</handler>
+
+        <argument>
+            <name>!&lt;group&gt;</name>
+            <help>The group (or range of groups) to add a listener to</help>
+
+            <argument>
+                <name>!&lt;port&gt;</name>
+                <help>The listener's port</help>
+
+                <argument>
+                    <name>!&lt;vlan&gt;</name>
+                    <help>The listener's VLAN ID</help>
+
+                    <argument>
+                        <name>!&lt;cr&gt;</name>
+                        <help>Add a listener to a multicast group</help>
+                    </argument>
+                    <argument>
+                        <filter type="family">
+                            <deny>FM2000</deny>
+                            <deny>FM4000</deny>
+                        </filter>
+                        <name>!&lt;remote&gt;</name>
+                        <help>Remote Flag (on or off)</help>
+                        <argument>
+                            <name>!&lt;cr&gt;</name>
+                            <help>Add a listener to a multicast group</help>
+                        </argument>
+                    </argument>
+                </argument>
+            </argument>
+        </argument>
+    </command>  <!-- end add mcast-listener -->
+    <!-- add mcast-ecmp -->  
+    <command>
+        <filter type="family">
+            <deny>FM2000</deny>
+            <deny>FM4000</deny>
+        </filter>
+        <name>mcast-ecmp</name>
+        <help>Add an ecmp to a multicast group</help>
+        <handler>tpHandleAddMulticastEcmp</handler>
+
+        <argument>
+            <name>!&lt;group&gt;</name>
+            <help>The multicast group to add an ECMP to</help>
+
+            <argument>
+                <name>!&lt;vlan&gt;</name>
+                <help>Then VLAN ID to be used for loopback suppression</help>
+
+                <argument>
+                    <name>!&lt;cr&gt;</name>
+                    <help>Add an ECMP to a multicast group</help>
+                </argument>
+            </argument>
+        </argument>
+    </command>  <!-- end add mcast-ecmp -->
+</command>  <!-- end add -->
+
+</config>
