@@ -32,14 +32,16 @@
 #endif
 
 /* Error codes */
-#define OK		0
-#define ERR_INVALID_ARG 		1
-#define	ERR_NETWORK 			2
-#define	ERR_TIMEOUT 			3
-#define	ERR_NO_RESOURCE 		4
-#define	ERR_INVALID_RESPONSE	5
-#define	ERR_RUNTIME				6
-#define	ERR_NO_DATA				7
+enum wm_error {
+	WM_OK = 0,
+	WM_NO_DATA = 1,
+	WM_ERR_INVALID_ARG,
+	WM_ERR_NETWORK,
+	WM_ERR_TIMEOUT,
+	WM_ERR_NO_RESOURCE,
+	WM_ERR_INVALID_RESPONSE,
+	WM_ERR_RUNTIME
+};
 
 int wm_server_start(char *cmd);
 int wm_server_stop(void);

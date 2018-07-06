@@ -109,7 +109,7 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
  *
  * @param_in	type is a string with the type of server: "scala" or "m3"
  *
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 int wm_server_start(char *type)
 {
@@ -137,12 +137,12 @@ int wm_server_start(char *type)
 	model_root = getenv("MODEL_ROOT");
 	if (!model_root) {
 		LOG_ERROR("Env variable MODEL_ROOT is not set\n");
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	if (!type) {
 		LOG_ERROR("Server path string cannot be NULL\n");
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	/* TODO remove support for m3 code to cleanup this messy code */
@@ -151,7 +151,7 @@ int wm_server_start(char *type)
 		fd = popen("ToolConfig.pl get_tool_exec java", "r");
 		if (!fd) {
 			LOG_ERROR("Cannot get path of Java binaries\n");
-			return ERR_RUNTIME;
+			return WM_ERR_RUNTIME;
 		}
 		if (!fgets(cmd, sizeof(cmd), fd)) {
 			LOG_INFO("Workaround: try default java %s\n", DEFAULT_JAVA);
@@ -165,7 +165,7 @@ int wm_server_start(char *type)
 		sprintf(cmd, "%s/%s", model_root, M3_SERVER_PATH);
 	} else {
 		LOG_ERROR("Invalid type of server: %s\n", type);
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	/* Generate a temporary file name and extract directory name (infopath)
@@ -199,23 +199,23 @@ int wm_server_start(char *type)
 		waitpid(pid, &err, WNOHANG);
 		if (WIFEXITED(err)) {
 			LOG_ERROR("Server failed to start: pid %d has exited\n", pid);
-			return ERR_RUNTIME;
+			return WM_ERR_RUNTIME;
 		}
 		do {
 			sleep(1);
 			err = wm_connect(server_tmpfile);
 			++i;
-		} while (err == ERR_TIMEOUT && i < max_retries);
+		} while (err == WM_ERR_TIMEOUT && i < max_retries);
 		if (err) {
 			LOG_ERROR("Could not connect to the model_server\n");
 			return err;
 		}
 	} else {
 		LOG_ERROR("Could not start model_server: fork() failed\n");
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
-	return OK;
+	return WM_OK;
 }
 
 /**
@@ -225,7 +225,7 @@ int wm_server_start(char *type)
  * has been created to store the infopath, the file is deleted.
  * It also disconnects from the server by closing the socket.
  *
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 int wm_server_stop(void)
 {
@@ -252,7 +252,7 @@ int wm_server_stop(void)
  * @param_in	server_file path of the file created when the model_server is
  * 				started. If NULL, the env variable "SBIOSF_SERVER" is used.
  *
- * @retval	OK if successful.
+ * @retval	WM_OK if successful.
  */
 int wm_connect(const char *server_file)
 {
@@ -270,19 +270,19 @@ int wm_connect(const char *server_file)
 		filename = getenv("SBIOSF_SERVER");
 		if (!filename) {
 			LOG_ERROR("server_file is NULL and SBIOSF_SERVER env var is not set\n");
-			return ERR_INVALID_ARG;
+			return WM_ERR_INVALID_ARG;
 		}
 	}
 
 	if ((stat(filename, &sb) == 0) && !S_ISREG(sb.st_mode)) {
 		LOG_ERROR("Server path is not a valid file %s\n", filename);
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	fd = fopen(filename, "r");
 	if (!fd) {
 		LOG_ERROR("Unable to open file %s\n", filename);
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	bzero(serv_addr, sizeof(serv_addr));
@@ -310,13 +310,13 @@ int wm_connect(const char *server_file)
 			return err;
 	}
 
-	return OK;
+	return WM_OK;
 }
 
 /**
  * wm_disconnect() - Disconnect from WM server.
  *
- * @retval	OK if successful.
+ * @retval	WM_OK if successful.
  */
 int wm_disconnect(void)
 {
@@ -328,7 +328,7 @@ int wm_disconnect(void)
  *
  * @param_in	addr address of the register.
  * @param_out	val pointer to caller-allocated memory to store the result.
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 int wm_reg_read(const uint32_t addr, uint64_t *val)
 {
@@ -338,7 +338,7 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
 	int err;
 
 	if (!val)
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 
 	/* See SB-IOSF specs for details on the message format */
 	be = addr & 0x7 ? 0xf : 0xff;
@@ -357,7 +357,7 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
 
     *val = iosf_msg[3];
 	*val = (*val << 32) | iosf_msg[2];
-    return OK;
+    return WM_OK;
 }
 
 
@@ -366,7 +366,7 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
  *
  * @param_in	addr address of the register.
  * @param_in	val is the value to be written.
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 int wm_reg_write(const uint32_t addr, const uint64_t val)
 {
@@ -403,7 +403,7 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
  * @param_in	port is the phys port where the frame will be injected
  * @param_in	data pointer to the frame data
  * @param_in	len is the lenght of the frame
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len)
 {
@@ -414,12 +414,12 @@ int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len)
 
 	if (!data) {
 		LOG_ERROR("Input buffer data is NULL\n");
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	if (len > MAX_MSG_LEN) {
 		LOG_ERROR("Input length %d exceeds maximum: %d\n", len, MAX_MSG_LEN);
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	LOG_DEBUG("Pushing packet len=%d\n", len);
@@ -462,8 +462,8 @@ int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len)
  * @param_out	data pointer to caller-allocated storage where the frame will be
  * 				saved. It must be at least MAX_MSG_LEN bytes.
  * @param_out	len is the lenght of the frame
- * @retval		ERR_NO_DATA if there are no egress frames on any of the ports.
- * @retval		OK if successful
+ * @retval		WM_OK if successful
+ * @retval		NO_DATA if there are no egress frames on any of the ports.
  */
 int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
 {
@@ -476,12 +476,12 @@ int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
 
 	if (wm_egress_fd == -1) {
 		LOG_ERROR("Socket not initialized, call wm_connect()\n");
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	if (!data || !port || !len) {
 		LOG_ERROR("Input pointer to data/port/len is NULL\n");
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	err = wm_receive(wm_egress_fd, msg, &msg_len, &type, port);
@@ -492,18 +492,18 @@ int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
 		LOG_DEBUG("Received EOT packet\n");
 		*len = 0;
 		*port = -1;
-		return OK;
+		return NO_DATA;
 	}
 
 	if (type != MODEL_MSG_PACKET) {
 		LOG_ERROR("Received unexpected message types %d\n", type);
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	/* TODO do we need to support PACKET_META? */
 	if (msg[0] != WM_DATA_TYPE_PACKET) {
 		LOG_ERROR("Unsupported data type %d\n", msg[0]);
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	pkt_len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
@@ -512,14 +512,14 @@ int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
 		LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
 				pkt_len, msg_len - WM_DATA_TLV_SIZE);
 		*len = 0;
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 	*len = pkt_len;
 	memcpy(data, msg + WM_DATA_TLV_SIZE, *len);
 
 	/* TODO what to do with other TLVs in the message */
 
-	return OK;
+	return WM_OK;
 }
 
 #ifndef NO_SV
@@ -535,7 +535,7 @@ int wm_svpkt_push(int port, const svOpenArrayHandle sv_data, uint32_t len)
     data = (uint8_t*) svGetArrayPtr(sv_data);
 	if (!data) {
 		LOG_ERROR("Cannot convert data buffer from SV to C\n");
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	return wm_pkt_push(port, data, len);
@@ -552,7 +552,7 @@ int wm_svpkt_get(int *port, svOpenArrayHandle sv_data, uint32_t *len)
     data = (uint8_t*) svGetArrayPtr(sv_data);
 	if (!data) {
 		LOG_ERROR("Cannot convert data buffer from SV to C\n");
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	return wm_pkt_get(port, data, len);
@@ -577,7 +577,7 @@ int wm_svpkt_get(int *port, svOpenArrayHandle sv_data, uint32_t *len)
  * @param_in	tx_len length of the message to send.
  * @param_out	rx_msg caller-allocated buffer where the response will be stored
  * @param_out	rx_len caller-allocated used to store the length of the reposnse
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 							 uint8_t *rx_msg, uint32_t *rx_len)
@@ -604,17 +604,17 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 	 */
 	if (type != MODEL_MSG_IOSF) {
 		LOG_ERROR("Unexpected response message type: %d\n", type);
-		return ERR_INVALID_RESPONSE;
+		return WM_ERR_INVALID_RESPONSE;
 	}
 
 	/* Check the rsp field to validate the content of the response */
 	rsp = (((uint8_t *)rx_msg)[3] >> 3) & 0x3;
 	if (rsp) {
 		LOG_ERROR("Register write operation failed - rsp=%d", rsp);
-		return ERR_INVALID_RESPONSE;
+		return WM_ERR_INVALID_RESPONSE;
 	}
 
-	return OK;
+	return WM_OK;
 }
 
 /**
@@ -625,7 +625,7 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
  * @param_out	len caller-allocated storage where the length will be placed.
  * @param_out	type caller-allocated storage where the type will be placed.
  * @param_out	port caller-allocated storage where teh port will be placed.
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 					  uint16_t *port)
@@ -645,7 +645,7 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 	wm_len = ntohl(wm_msg.msg_length);
 	if (wm_len > sizeof(wm_msg)) {
 		LOG_ERROR("Message length %d exceeds max %ld\n", wm_len, sizeof(wm_msg));
-		return ERR_INVALID_RESPONSE;
+		return WM_ERR_INVALID_RESPONSE;
 	}
 
 	/* Receive the remaining bytes */
@@ -671,20 +671,20 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 	switch (*type) {
 	case MODEL_MSG_ERROR:
 		LOG_ERROR("Received error msg: %s", wm_msg.data);
-		return ERR_INVALID_RESPONSE;
+		return WM_ERR_INVALID_RESPONSE;
 	case MODEL_MSG_IOSF:
 	case MODEL_MSG_PACKET:
 	case MODEL_MSG_PACKET_EOT:
 		break;
 	default:
 		LOG_ERROR("Unexpected msg_type 0x%04x\n", *type);
-		return ERR_INVALID_RESPONSE;
+		return WM_ERR_INVALID_RESPONSE;
 	}
 
 	memcpy(msg, wm_msg.data, *len);
 	LOG_DEBUG("Message data  - len %d\n", *len);
 	LOG_HEX_DUMP(msg, *len, 0);
-	return OK;
+	return WM_OK;
 }
 
 /**
@@ -695,7 +695,7 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
  * @param_in	len the length of the message.
  * @param_in	type the type of the message (e.g. SB-IOSF).
  * @param_in	port the ingress port used when sending traffic to model.
- * @retval		OK if successful
+ * @retval		WM_OK if successful
  */
 static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 				   uint16_t port)
@@ -715,7 +715,7 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 	/* Type specific checks */
 	if (type == MODEL_MSG_IOSF && len > IOSF_MSG_MAX_LEN) {
 		LOG_ERROR("Message len %d is too large", len);
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 	}
 
 	wm_len = len + MODEL_MSG_HEADER_SIZE;
@@ -727,10 +727,10 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 	if (wm_len != wr_len) {
 		LOG_ERROR("ERROR: write %d to socket. Only %d written",
 				wm_len, wr_len);
-		return ERR_NETWORK;
+		return WM_ERR_NETWORK;
 	}
 
-	return OK;
+	return WM_OK;
 }
 
 /**
@@ -808,14 +808,14 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 	err = getaddrinfo(addr_str, port_str, &hints, &result);
 	if (err != 0) {
 		LOG_ERROR("Error in getaddrinfo: %s\n", gai_strerror(err));
-		return ERR_NETWORK;
+		return WM_ERR_NETWORK;
 	}
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		*server_fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (*server_fd == -1) {
 			LOG_ERROR("Error creating socket fd: %s\n", strerror(errno));
-			return ERR_NETWORK;
+			return WM_ERR_NETWORK;
 		}
 
 		if (connect(*server_fd, rp->ai_addr, rp->ai_addrlen) != -1)
@@ -829,7 +829,7 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 	LOG_DEBUG("Connected to model_server at %s:%s\n", addr_str, port_str);
 	setsockopt(*server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
 
-	return OK;
+	return WM_OK;
 }
 
 /* connect_egress() - Establish connection to receive egress frames
@@ -870,9 +870,9 @@ static int connect_egress(int phys_port, int server_fd, int client_fd,
 	if(*egress_fd  < 0) {
 		LOG_ERROR("Error accepting connection for egress port %d: %s\n",
 				phys_port, strerror(errno));
-		return ERR_NETWORK;
+		return WM_ERR_NETWORK;
 	}
-	return OK;
+	return WM_OK;
 }
 
 /* create_client_socket() - Create a socket to accept connection from WM
@@ -891,12 +891,12 @@ static int create_client_socket(int *fd, int *port)
 	int err;
 
 	if (!fd || !port)
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 
 	*fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (*fd < 0) {
 		printf("Error creating client socket: %s\n", strerror(errno));
-		return ERR_NETWORK;
+		return WM_ERR_NETWORK;
 	}
 
 	bzero(&addr, sizeof(addr));
@@ -907,25 +907,25 @@ static int create_client_socket(int *fd, int *port)
 	err = bind(*fd, (struct sockaddr *)&addr, sizeof(addr));
 	if(err == -1) {
 		printf("Error binding to port socket server: %s\n", strerror(errno));
-		return ERR_NETWORK;
+		return WM_ERR_NETWORK;
 	}
 
 	err = listen(*fd, NUM_PORTS);
 	if(err == -1) {
 		printf("Error listening on port socket server: %s\n", strerror(errno));
-		return ERR_NETWORK;
+		return WM_ERR_NETWORK;
 	}
 
 	addr_len = sizeof(addr);
 	err = getsockname(*fd, (struct sockaddr *)&addr, &addr_len);
 	if(err == -1) {
 		printf("Error getting port socket server name: %s\n", strerror(errno));
-		return ERR_NETWORK;
+		return WM_ERR_NETWORK;
 	}
 
 	*port = ntohs(addr.sin_port);
 	LOG_DEBUG("Client socket created - listen on port %d\n", *port);
-	return OK;
+	return WM_OK;
 }
 
 /**
@@ -936,7 +936,7 @@ static int create_client_socket(int *fd, int *port)
  * @param_in	fd is the file pointer to read from.
  * @param_out	host is buffer to store host name.
  * @param_out	port is buffer to store host port number.
- * @retval	IES_OK if successful.
+ * @retval		WM_OK if successful.
  */
 static int read_host_info(FILE *fd, char *host, char *port)
 {
@@ -944,11 +944,11 @@ static int read_host_info(FILE *fd, char *host, char *port)
 	char buffer[256];
 
 	if (!fd || !host || !port)
-		return ERR_INVALID_ARG;
+		return WM_ERR_INVALID_ARG;
 
 	if (!fgets(buffer, sizeof(buffer), fd)) {
 		LOG_ERROR("Could not read host info from file\n");
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	start = 0;
@@ -962,7 +962,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
 			buffer[start + cnt] != ':')
 		cnt++;
 	if (start + cnt >= sizeof(buffer) || cnt == 0)
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 
 	memcpy(host, &buffer[start], cnt);
 	printf("cnt = %d - host = %s\n", cnt, host);
@@ -973,7 +973,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
 			buffer[start + cnt] != ':')
 		cnt++;
 	if (start + cnt >= sizeof(buffer) || cnt == 0)
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 
 	/* Make sure to not copy the \n */
 	if (buffer[start + cnt - 1] == '\n')
@@ -981,7 +981,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
 
 	memcpy(port, &buffer[start], cnt);
 	fclose(fd);
-	return OK;
+	return WM_OK;
 }
 
 /**
@@ -991,7 +991,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
  * @param_out	data is the buffer to store received data.
  * @param_in	data_size is the size of data buffer.
  * @param_in	timeout_msec is the timeout to return if no response.
- * @return		OK if successful
+ * @return		WM_OK if successful
  */
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec)
@@ -1021,11 +1021,11 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 	if (!(fds[0].revents & POLLIN)) {
 		if (timeout_msec) {
 			LOG_ERROR("Connection timeout while receiving data\n");
-			return ERR_TIMEOUT;
+			return WM_ERR_TIMEOUT;
 		} else {
 
 			LOG_ERROR("Lost connection to WM\n");
-			return ERR_NO_RESOURCE;
+			return WM_ERR_NO_RESOURCE;
 		}
 	}
 
@@ -1034,7 +1034,7 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 		if (n == -1) {
 			LOG_ERROR("Error while reading data from socket %s\n",
 					strerror(errno));
-			return ERR_INVALID_RESPONSE;
+			return WM_ERR_INVALID_RESPONSE;
 		}
 		remaining_len -= n;
 		if (remaining_len <= 0)
@@ -1047,9 +1047,9 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 	if (remaining_len > 0) {
 		LOG_ERROR("Expected %d bytes but got %d\n", data_len,
 				data_len - remaining_len);
-		return ERR_INVALID_RESPONSE;
+		return WM_ERR_INVALID_RESPONSE;
 	}
 
-	return OK;
+	return WM_OK;
 }
 
