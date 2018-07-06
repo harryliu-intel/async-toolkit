@@ -8,6 +8,7 @@ import switch_wm.PrimitiveTypes.U64
 
 
 object WhiteModelServer {
+  val legacyProtocol = false
 
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
   // (we do not not provide subclasses or trait definitions in the scheme-based generator)
@@ -156,9 +157,28 @@ object WhiteModelServer {
   }
 
   import java.net._
-  val portToOs = new collection.mutable.HashMap[Int, DataOutputStream]
+  val egressPortToSocketMap = new collection.mutable.HashMap[Int, Socket]()
+  val socketToOs = new collection.mutable.HashMap[Socket, DataOutputStream]
+  def portToOs(i : Int) = socketToOs(egressPortToSocketMap(i))
 
-  def processEgressInfo(implicit is : DataInputStream, os : DataOutputStream, toGo : Int, hdr : FmModelMessageHdr ) : Unit = {
+
+  /** Implement configuration of an egress port
+    *
+    * In 'new' protocol, a port-machine tuple defines a socket as well as a connection. I.e. if ports 1 and 2 are
+    * connected to machine sccj0010 on port 8000 then only a single socket connection is created.
+    *
+    * After each ingress process is completed being processed, an Eot signal is sent on _all_ opened conections, including
+    * the 'original' server socket.
+    *
+    * The most typical usage of this should be that clients provide their own hostname and the port of the port of their
+    * _already opened_ socket (i.e. the IOSF, etc., communication channel). But this approach admits the possibility of
+    * communication against several 'clients' at the same time. A client timeout in this model (waiting for an EOT) indicates
+    * that an error condition exists.
+    *
+    * In the legacy protocol, new connections are opened on every egress info signal. No EOTs are sent, the model
+    * depends on timing out on the connections to decide there is no more data to receive.
+    */
+  def processEgressInfo(implicit is : DataInputStream, os : DataOutputStream, toGo : Int, hdr : FmModelMessageHdr) : Unit = {
     //val eih = is.readFmModelMsgSetEgressInfoHdr()
     val switchPort = hdr.Port
     val ei = is.readFmModelSetEgressInfoHdr()
@@ -166,11 +186,40 @@ object WhiteModelServer {
     val stringSize = toGo - 2
     val hostnameArray = Array.ofDim[Byte](stringSize)
     is.readFully(hostnameArray)
-    val hostname =  hostnameArray.map(_.toChar).mkString
-    println(s"Configuring = $hostname:$tcpPort as egress to switch port $switchPort")
-    val socket = new Socket(hostname, tcpPort)
 
-    portToOs(switchPort) = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()))
+    val hostname =  hostnameArray.map(_.toChar).mkString
+    val remote = (InetAddress.getByName(hostname), tcpPort)
+    println(s"Configuring = $hostname:$tcpPort as egress to switch port $switchPort")
+
+    // first determine whether we already have a connection to the client on this port
+    egressPortToSocketMap.get(switchPort) match {
+      case Some(s) => {
+        s.close()
+        egressPortToSocketMap.remove(switchPort)
+        assert(false, "Reassinging an egress port not tested functionality")
+      }
+      case None => { }
+    }
+
+    def matchingSocket(s: Socket) = {
+      (s.getInetAddress.getCanonicalHostName == remote._1.getCanonicalHostName) && (s.getPort == remote._2)
+    }
+    def alwaysNewSocket(s : Socket) = false
+    val newSocketFunc : Socket => Boolean = if (legacyProtocol) { alwaysNewSocket } else { matchingSocket }
+
+    egressPortToSocketMap(switchPort) = egressPortToSocketMap.values.filter(newSocketFunc).headOption match {
+      case Some(s) => {
+        println(" * Socket connection already exists!")
+        s
+      }
+      case None => {
+        val s = new Socket(hostname, tcpPort)
+        println(s" * Allocating new socket connection to $hostname:$tcpPort")
+        val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream()))
+        socketToOs(s) = os
+        s
+      }
+    }
   }
 
   def pushPacket(port: Short, contents : Array[Byte]): Unit = {
@@ -217,13 +266,15 @@ object WhiteModelServer {
         case (FmModelDataType.PacketMeta, contents) => {
           println("Ignoring " + contents.length + " bytes of meta data")
         }
-        case _ => { assert(false)}
+        case _ => { assert(false, "Unmatched packet fragment")}
       }
     }
-
+    //done 'reflecting', signal we are done with this packet on all ports (transmission size at 0, not sure
+    // what the point of this is)
+    if (!legacyProtocol) for (s <- socketToOs.values)  s.writeFmModelMsgPacketEot(FmModelMsgPacketEot(Transmissionsize = 0.shortValue))
   }
 
-    def processCommandQuit() = {
+  def processCommandQuit() = {
     println("Received quit operation!")
   }
 
@@ -244,7 +295,7 @@ object WhiteModelServer {
     }
   }
 
-  def runModelServer(fileName : String) = {
+  def runModelServer(file : File) = {
     val server = new ServerSocket(0) // 0 means pick any available port
 
     val port = server.getLocalPort()
@@ -254,21 +305,24 @@ object WhiteModelServer {
     checkoutCsr
     println("Scala White Model Server for Madison Bay Switch Chip")
     println("Socket port open at " +  descText)
-    println("Write server description file to " + fileName)
-    val psFile = new FileWriter(fileName)
+    println("Write server description file to " + file)
+    val psFile = new FileWriter(file)
     psFile.write(descText)
     psFile.write("\n")
     psFile.close()
+    file.deleteOnExit()
 
     var done = false
     while (!done) {
       val s : Socket = server.accept()
       s.setTcpNoDelay(true)
       println("Accepted new connection:" + s)
+      egressPortToSocketMap(-1) = s
       // for some reason, doesn't appear to work if Buffered* is removed from the stack
       // this is suspicious
       implicit val is = new DataInputStream(new BufferedInputStream(s.getInputStream))
       implicit val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
+      socketToOs(s) = os
 
       try {
         while (true) processMessage
@@ -278,10 +332,13 @@ object WhiteModelServer {
         }
       }
       println("Disconnected.")
+      // cleanup the socket, and remove any egress port mappings to that socket
       is.close()
       os.flush()
       os.close()
       s.close()
+      socketToOs.remove(s)
+      egressPortToSocketMap.retain((x, mapsock) => mapsock != s)
     }
     server.close()
   }
@@ -358,7 +415,7 @@ object WhiteModelServer {
     }
     parser.parse(args, Config()) match {
       case Some(config) => {
-        val fullyQualifiedFile = config.serverDir + "/" + config.serverName
+        val fullyQualifiedFile = new File(config.serverDir + "/" + config.serverName)
         runModelServer( fullyQualifiedFile )
       }
       case None =>  // arguments are bad, error message will have been displayed
