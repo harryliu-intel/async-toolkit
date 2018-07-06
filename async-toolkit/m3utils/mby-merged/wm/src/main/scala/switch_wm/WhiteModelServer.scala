@@ -222,6 +222,16 @@ object WhiteModelServer {
     }
   }
 
+  def pushEot(os : DataOutputStream): Unit = {
+    val resultHdr = new FmModelMessageHdr(
+      // outer header + inner header (type + integer) + size of contents
+      Msglength = 12 + 2,
+      Version = 2.shortValue(), Type = FmModelMsgType.PacketEot, Sw = 0.shortValue(), Port = 0.shortValue)
+    os.writeFmModelMessageHdr(resultHdr)
+    os.writeFmModelMsgPacketEot(FmModelMsgPacketEot(0.shortValue))
+    os.flush()
+  }
+
   def pushPacket(port: Short, contents : Array[Byte]): Unit = {
     val resultHdr = new FmModelMessageHdr(
       // outer header + inner header (type + integer) + size of contents
@@ -271,7 +281,7 @@ object WhiteModelServer {
     }
     //done 'reflecting', signal we are done with this packet on all ports (transmission size at 0, not sure
     // what the point of this is)
-    if (!legacyProtocol) for (s <- socketToOs.values)  s.writeFmModelMsgPacketEot(FmModelMsgPacketEot(Transmissionsize = 0.shortValue))
+    if (!legacyProtocol) for (os <- socketToOs.values) pushEot(os)
   }
 
   def processCommandQuit() = {
