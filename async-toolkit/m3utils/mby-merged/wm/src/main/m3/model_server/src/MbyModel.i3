@@ -6,7 +6,7 @@ IMPORT FmModelMessageHdr;
 IMPORT MbyModelServer;
 IMPORT ModelServer;
 
-PROCEDURE HandlePacket(server : ModelServer.T;
+PROCEDURE HandlePacket(server : MbyModelServer.T;
                        READONLY read : Map.T;
                        READONLY update : MapAddr.Update;
                        READONLY hdr : FmModelMessageHdr.T;

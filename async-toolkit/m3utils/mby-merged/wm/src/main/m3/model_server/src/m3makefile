@@ -36,6 +36,16 @@ module ("MbyModel")
 Generic_module("BaseModelServer")
 module("MbyModelServer")
 
+interface("BaseModelStage")
+interface("Metadata")
+Generic_interface("ModelStage")
+interface ("MbyModelStage")
+
+module ("MbyParserStage")
+interface ("MbyParserMeta")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 SchemeStubs ("ModelServer")
 
 ExportSchemeStubs("model_server")
