@@ -46,6 +46,9 @@ module ("MbyParserStageModel")
 interface ("MbyParserMeta")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% just testing stuff
+module ("HlpRepStageModel")
+module ("HlpRepStage")
 
 SchemeStubs ("ModelServer")
 
