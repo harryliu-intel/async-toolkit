@@ -528,7 +528,7 @@ int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
  *
  * Required to convert the memory buffer from SV to C format.
  */
-int wm_svpkt_push(int port, const svOpenArrayHandle sv_data, uint32_t len)
+int wm_svpkt_push(uint16_t port, const svOpenArrayHandle sv_data, uint32_t len)
 {
 	uint8_t *data;
 
@@ -545,7 +545,7 @@ int wm_svpkt_push(int port, const svOpenArrayHandle sv_data, uint32_t len)
  *
  * Required to convert the memory buffer from SV to C format.
  */
-int wm_svpkt_get(int *port, svOpenArrayHandle sv_data, uint32_t *len)
+int wm_svpkt_get(uint16_t *port, svOpenArrayHandle sv_data, uint32_t *len)
 {
 	uint8_t *data;
 
