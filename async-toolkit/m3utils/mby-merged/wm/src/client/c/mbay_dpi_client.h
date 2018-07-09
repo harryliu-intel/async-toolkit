@@ -52,12 +52,25 @@ int wm_disconnect(void);
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
-int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len);
-int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len);
+/* The pkt tx/rx from the WM */
+struct wm_pkt {
+	uint16_t port;
+	uint32_t len;
+	uint8_t *data;
+};
+
+int wm_pkt_push(const struct wm_pkt *pkt);
+int wm_pkt_get(struct wm_pkt *pkt);
 
 #ifndef NO_SV
-int wm_svpkt_push(uint16_t port, const svOpenArrayHandle sv_data, uint32_t len);
-int wm_svpkt_get(uint16_t *port, svOpenArrayHandle sv_data, uint32_t *len);
+struct wm_svpkt {
+	uint16_t port;
+	uint32_t len;
+	svOpenArrayHandle sv_data;
+};
+
+int wm_svpkt_push(const struct wm_svpkt *svpkt);
+int wm_svpkt_get(struct wm_svpkt *svpkt);
 #endif
 
 #endif /* __MBAY_DPI_CLIENT_H_ */

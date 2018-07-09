@@ -404,55 +404,53 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
  * Default metadata will be included for compatibility with HLP WM.
  * TODO check if this is the desired behavior.
  *
- * @param_in	port is the phys port where the frame will be injected
- * @param_in	data pointer to the frame data
- * @param_in	len is the lenght of the frame
+ * @param_in	pkt is the frame that will be injected in the WM
  * @retval		WM_OK if successful
  */
-int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len)
+int wm_pkt_push(const struct wm_pkt *pkt)
 {
-	uint8_t pkt_msg[MAX_MSG_LEN];
-	int pkt_len;
+	uint8_t msg[MAX_MSG_LEN];
+	uint32_t msg_len;
 	int off = 0;
 	int err;
 
-	if (!data) {
-		LOG_ERROR("Input buffer data is NULL\n");
+	if (!pkt || !pkt->data) {
+		LOG_ERROR("Input pointer to pkt or pkt->data is NULL\n");
 		return WM_ERR_INVALID_ARG;
 	}
 
-	if (len > MAX_MSG_LEN) {
-		LOG_ERROR("Input length %d exceeds maximum: %d\n", len, MAX_MSG_LEN);
+	if (pkt->len > MAX_MSG_LEN) {
+		LOG_ERROR("Pkt length %d exceeds max of %d\n", pkt->len, MAX_MSG_LEN);
 		return WM_ERR_INVALID_ARG;
 	}
 
-	LOG_DEBUG("Pushing packet len=%d\n", len);
-	LOG_HEX_DUMP(data, len, 0);
+	LOG_DEBUG("Pushing packet len=%d\n", pkt->len);
+	LOG_HEX_DUMP(pkt->data, pkt->len, 0);
 	/* First TLV is the meta-data. For now I will assume this is a frame
 	 * entering HLP from RMN. TODO this will need to be removed/updated
 	 */
-	pkt_msg[off] = WM_DATA_TYPE_META;
+	msg[off] = WM_DATA_TYPE_META;
 	off += WM_DATA_TYPE_SIZE;
-	*((uint32_t *)&pkt_msg[off]) = htonl(RIMMON_META_SIZE);
+	*((uint32_t *)&msg[off]) = htonl(RIMMON_META_SIZE);
 	off += WM_DATA_LENGTH_SIZE;
-	pkt_msg[off++] = 0x18;
-	pkt_msg[off++] = 0xa1;
-	pkt_msg[off++] = 0xb2;
-	pkt_msg[off++] = 0xc3;
-	pkt_msg[off++] = 0xd4;
-	pkt_msg[off++] = 0xe5;
-	pkt_msg[off++] = 0xf6;
-	pkt_msg[off++] = 0x07;
+	msg[off++] = 0x18;
+	msg[off++] = 0xa1;
+	msg[off++] = 0xb2;
+	msg[off++] = 0xc3;
+	msg[off++] = 0xd4;
+	msg[off++] = 0xe5;
+	msg[off++] = 0xf6;
+	msg[off++] = 0x07;
 
 	/* Second TLV is the actual packet payload */
-	pkt_msg[off] = WM_DATA_TYPE_PACKET;
+	msg[off] = WM_DATA_TYPE_PACKET;
 	off += WM_DATA_TYPE_SIZE;
-	*((uint32_t *)&pkt_msg[off]) = htonl(len);
+	*((uint32_t *)&msg[off]) = htonl(pkt->len);
 	off += WM_DATA_LENGTH_SIZE;
-	memcpy(pkt_msg + off, data, len);
-	pkt_len = off + len;
+	memcpy(msg + off, pkt->data, pkt->len);
+	msg_len = off + pkt->len;
 
-	err = wm_send(wm_server_fd, pkt_msg, pkt_len, MODEL_MSG_PACKET, port);
+	err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PACKET, pkt->port);
 	if (err) {
 		LOG_ERROR("Could not send data to WM: %d\n", err);
 	}
@@ -462,19 +460,15 @@ int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len)
 
 /* wm_pkt_get() - Receive a frame from the WM
  *
- * @param_out	port is the phys port where the frame egressed
- * @param_out	data pointer to caller-allocated storage where the frame will be
- * 				saved. It must be at least MAX_MSG_LEN bytes.
- * @param_out	len is the lenght of the frame
+ * @param_out	pkt is a pointer to caller-allocated storage that will contain
+ * 				the frame received from the model
  * @retval		WM_OK if successful
- * @retval		NO_DATA if there are no egress frames on any of the ports.
+ * @retval		WM_NO_DATA if there are no egress frames on any of the ports.
  */
-int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
+int wm_pkt_get(struct wm_pkt *pkt)
 {
 	uint8_t msg[MAX_MSG_LEN];
-	/*struct pollfd pfd;*/
 	uint32_t msg_len;
-	uint32_t pkt_len;
 	uint16_t type;
 	int err;
 
@@ -483,20 +477,20 @@ int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
 		return WM_ERR_RUNTIME;
 	}
 
-	if (!data || !port || !len) {
-		LOG_ERROR("Input pointer to data/port/len is NULL\n");
+	if (!pkt || !pkt->data) {
+		LOG_ERROR("Input pointer to pkt or pkt->data is NULL\n");
 		return WM_ERR_INVALID_ARG;
 	}
 
-	err = wm_receive(wm_egress_fd, msg, &msg_len, &type, port);
+	err = wm_receive(wm_egress_fd, msg, &msg_len, &type, &(pkt->port));
 	if (err)
 		return err;
 
 	if (type == MODEL_MSG_PACKET_EOT) {
 		LOG_DEBUG("Received EOT packet\n");
-		*len = 0;
-		*port = -1;
-		return NO_DATA;
+		pkt->len = 0;
+		pkt->port = -1;
+		return WM_NO_DATA;
 	}
 
 	if (type != MODEL_MSG_PACKET) {
@@ -510,16 +504,15 @@ int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
 		return WM_ERR_RUNTIME;
 	}
 
-	pkt_len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+	pkt->len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
 
-	if (pkt_len > msg_len - WM_DATA_TLV_SIZE) {
+	if (pkt->len > msg_len - WM_DATA_TLV_SIZE) {
 		LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
-				pkt_len, msg_len - WM_DATA_TLV_SIZE);
-		*len = 0;
+				pkt->len, msg_len - WM_DATA_TLV_SIZE);
+		pkt->len = 0;
 		return WM_ERR_RUNTIME;
 	}
-	*len = pkt_len;
-	memcpy(data, msg + WM_DATA_TLV_SIZE, *len);
+	memcpy(pkt->data, msg + WM_DATA_TLV_SIZE, pkt->len);
 
 	/* TODO what to do with other TLVs in the message */
 
@@ -532,34 +525,45 @@ int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len)
  *
  * Required to convert the memory buffer from SV to C format.
  */
-int wm_svpkt_push(uint16_t port, const svOpenArrayHandle sv_data, uint32_t len)
+int wm_svpkt_push(const struct wm_svpkt *svpkt)
 {
-	uint8_t *data;
+	struct wm_pkt pkt;
 
-    data = (uint8_t*) svGetArrayPtr(sv_data);
-	if (!data) {
+	pkt.port = svpkt->port;
+	pkt.len = svpkt->len;
+	pkt.data = (uint8_t*) svGetArrayPtr(svpkt->data);
+
+	if (!pkt.data) {
 		LOG_ERROR("Cannot convert data buffer from SV to C\n");
 		return WM_ERR_INVALID_ARG;
 	}
 
-	return wm_pkt_push(port, data, len);
+	return wm_pkt_push(pkt);
 }
 
 /* wm_svpkt_get() - SV wrapper for wm_pkt_get()
  *
  * Required to convert the memory buffer from SV to C format.
  */
-int wm_svpkt_get(uint16_t *port, svOpenArrayHandle sv_data, uint32_t *len)
+int wm_svpkt_get(struct wm_svpkt *svpkt)
 {
-	uint8_t *data;
+	struct wm_pkt pkt;
+	int err;
 
-    data = (uint8_t*) svGetArrayPtr(sv_data);
-	if (!data) {
+	pkt.port = svpkt->port;
+	pkt.len = svpkt->len;
+	pkt.data = (uint8_t*) svGetArrayPtr(svpkt->data);
+
+	if (!pkt.data) {
 		LOG_ERROR("Cannot convert data buffer from SV to C\n");
 		return WM_ERR_INVALID_ARG;
 	}
 
-	return wm_pkt_get(port, data, len);
+	err = wm_pkt_get(&sv_pkt);
+	svpkt->port = pkt.port;
+	svpkt->len = pkt.len;
+
+	return err;
 }
 #endif /* #ifndef NO_SV */
 
