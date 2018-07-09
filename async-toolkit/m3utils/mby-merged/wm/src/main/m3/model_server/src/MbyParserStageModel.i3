@@ -1,0 +1,23 @@
+INTERFACE MbyParserStageModel;
+IMPORT Coroutine;
+IMPORT ServerPacket AS Pkt;
+IMPORT mby_top_map_addr AS TopAddr;
+IMPORT Metadata;
+IMPORT ModelStageResult;
+IMPORT MbyParserMeta;
+
+TYPE
+  Indices = RECORD
+    MptIdx : [0..2-1];
+  END;
+
+PROCEDURE HandlePacket(from    : Coroutine.T;
+                       ipkt    : Pkt.T;
+                       h       : TopAddr.H;
+                       indices : Indices;
+                       imd     : Metadata.T;
+                       out     : ModelStageResult.T);
+
+TYPE Meta = MbyParserMeta.T;
+
+END MbyParserStageModel.

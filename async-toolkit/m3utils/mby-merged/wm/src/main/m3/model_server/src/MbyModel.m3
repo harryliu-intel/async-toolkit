@@ -7,11 +7,10 @@ IMPORT FmModelMessageHdr;
 IMPORT FmModelConstants;
 IMPORT MbyModelServer;
 IMPORT Debug;
-IMPORT ModelServer;
-IMPORT Coroutine;
 IMPORT MbyParserStage;
 IMPORT BaseModelStage;
 IMPORT Metadata;
+IMPORT MbyParserStageModel;
 
 TYPE
   Mode = { Reflect, Flood, Pipe };
@@ -80,7 +79,9 @@ PROCEDURE InitPipe(server : MbyModelServer.T) =
   BEGIN
     pipe := NEW(REF ARRAY OF BaseModelStage.T, 2);
     pipe[0] := NEW(InitialStage);
-    pipe[1] := NEW(MbyParserStage.T).init(server.h, pipe[0])
+    pipe[1] := NEW(MbyParserStage.T).init(server.h,
+                                          MbyParserStageModel.Indices { 0 },
+                                          pipe[0])
   END InitPipe;
 
 TYPE Sender = PROCEDURE(READONLY hHdr : FmModelMessageHdr.T;

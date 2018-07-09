@@ -1,21 +1,21 @@
-GENERIC INTERFACE ModelStage(MapAddr);
+GENERIC INTERFACE ModelStage(TopAddr, Model);
 IMPORT BaseModelStage;
 IMPORT ServerPacket AS Pkt;
-IMPORT Coroutine;
-IMPORT Metadata;
 
 TYPE
   Super = BaseModelStage.T;
   
-  T = Super OBJECT
-    h        : MapAddr.H;
+  T <: Public;
+
+  Public = Super OBJECT
+    h        : TopAddr.H;
     in, out  : Pkt.T;
     complete : BOOLEAN;
   METHODS
     (* called from outside the coroutine *)
-    init (h : MapAddr.H; prev : Super) : T;
+    init (h : TopAddr.H; indices : Model.Indices; prev : Super) : T;
   END;
 
-CONST Brand = "ModelStage(" & MapAddr.Brand & ")";
+CONST Brand = "ModelStage(" & TopAddr.Brand & ")";
 
 END ModelStage.

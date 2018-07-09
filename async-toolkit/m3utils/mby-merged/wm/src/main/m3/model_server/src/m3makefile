@@ -38,10 +38,11 @@ module("MbyModelServer")
 
 interface("BaseModelStage")
 interface("Metadata")
-Generic_interface("ModelStage")
-interface ("MbyModelStage")
-
+Generic_module("ModelStage")
+interface ("ModelStageResult")
 module ("MbyParserStage")
+
+module ("MbyParserStageModel")
 interface ("MbyParserMeta")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

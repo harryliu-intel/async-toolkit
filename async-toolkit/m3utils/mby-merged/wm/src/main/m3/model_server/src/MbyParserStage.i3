@@ -1,12 +1,2 @@
-INTERFACE MbyParserStage;
-IMPORT MbyModelStage;
-
-TYPE
-  T <: Public;
-
-  Public = MbyModelStage.T;
-
-CONST
-  Brand = "MbyParserStage";
-
+INTERFACE MbyParserStage = ModelStage(mby_top_map_addr, MbyParserStageModel)
 END MbyParserStage.

@@ -12,6 +12,7 @@ Sequence ("CompRange", "CompRange")
 Sequence ("CompAddr", "CompAddr")
 Module ("CompPath")
 Module ("CompMemory")
+Interface ("MemoryMap")
 
 Module ("CompMemoryListener")
 List ("CompMemoryListener","CompMemoryListener")

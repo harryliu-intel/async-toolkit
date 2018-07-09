@@ -928,13 +928,14 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
     qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
   BEGIN
     EVAL gs.i3imports.insert("CompMemory");
+    EVAL gs.i3imports.insert("MemoryMap");
     gs.put(Section.IMaintype,
            F("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine())));
     gs.put(Section.IMaintype, "TYPE\n");
     gs.put(Section.IMaintype, "  U = Update;\n");
     gs.put(Section.IMaintype, "  H <: PublicH;\n");
     gs.put(Section.IMaintype, "\n");
-    gs.put(Section.IMaintype, "  PublicH = CompMemory.T OBJECT\n");
+    gs.put(Section.IMaintype, "  PublicH = MemoryMap.T OBJECT\n");
     gs.put(Section.IMaintype,
                             F("    read   : %s;\n",qmtn));
     gs.put(Section.IMaintype, "    update : U;\n");
