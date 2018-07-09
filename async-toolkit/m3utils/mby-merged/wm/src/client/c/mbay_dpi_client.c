@@ -288,6 +288,7 @@ int wm_connect(const char *server_file)
 	bzero(serv_addr, sizeof(serv_addr));
 	bzero(serv_port, sizeof(serv_port));
 	err = read_host_info(fd, serv_addr, serv_port);
+	fclose(fd);
 	if (err) {
 		LOG_ERROR("Unable to get server connection info\n");
 		return err;
@@ -320,7 +321,10 @@ int wm_connect(const char *server_file)
  */
 int wm_disconnect(void)
 {
-	return close(wm_server_fd);
+	close(wm_client_fd);
+	close(wm_egress_fd);
+	close(wm_server_fd);
+	return WM_OK;
 }
 
 /**
@@ -980,7 +984,6 @@ static int read_host_info(FILE *fd, char *host, char *port)
 		cnt--;
 
 	memcpy(port, &buffer[start], cnt);
-	fclose(fd);
 	return WM_OK;
 }
 
