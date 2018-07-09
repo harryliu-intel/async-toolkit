@@ -56,8 +56,8 @@ int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len);
 int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len);
 
 #ifndef NO_SV
-int wm_svpkt_push(uint16_t  port, const svOpenArrayHandle sv_data, uint32_t len);
-int wm_svpkt_get(uint16_t  *port, svOpenArrayHandle sv_data, uint32_t *len);
+int wm_svpkt_push(uint16_t port, const svOpenArrayHandle sv_data, uint32_t len);
+int wm_svpkt_get(uint16_t *port, svOpenArrayHandle sv_data, uint32_t *len);
 #endif
 
 #endif /* __MBAY_DPI_CLIENT_H_ */
