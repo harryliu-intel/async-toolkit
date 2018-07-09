@@ -117,7 +117,7 @@ int test_regs(void)
 	err = wm_reg_write(addr, val);
 	if (err) {
 		printf("Error writing register: %d\n", err);
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	printf("OK\n");
@@ -125,7 +125,7 @@ int test_regs(void)
 	err = wm_reg_read(addr, &val);
 	if (err) {
 		printf("Error reading register: %d\n", err);
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	if (val != 0x1234567890abcdef)
@@ -133,7 +133,7 @@ int test_regs(void)
 	else
 		printf("OK\n");
 
-	return OK;
+	return WM_OK;
 }
 
 int test_pkts(void)
@@ -151,7 +151,7 @@ int test_pkts(void)
 	uint8_t rx_pkt[1000];
 	uint32_t pkt_len;
 	unsigned int i;
-	int port;
+	uint16_t port;
 	int err;
 
 	port = 1;
@@ -178,12 +178,19 @@ int test_pkts(void)
 	}
 
 	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
-	if (err == ERR_NO_DATA) {
+	if (err == WM_NO_DATA) {
 		printf("Did not receive any frame as expected\n");
 	} else {
 		printf("Unexpected error code %d\n", err);
 	}
 
-	return OK;
+	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
+	if (err != WM_NO_DATA && err != WM_OK) {
+		printf("Did not receive anything from WM as expected\n");
+	} else {
+		printf("Unexpected error code %d\n", err);
+	}
+
+	return WM_OK;
 }
 

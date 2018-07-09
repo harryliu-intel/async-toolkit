@@ -32,14 +32,16 @@
 #endif
 
 /* Error codes */
-#define OK		0
-#define ERR_INVALID_ARG 		1
-#define	ERR_NETWORK 			2
-#define	ERR_TIMEOUT 			3
-#define	ERR_NO_RESOURCE 		4
-#define	ERR_INVALID_RESPONSE	5
-#define	ERR_RUNTIME				6
-#define	ERR_NO_DATA				7
+enum wm_error {
+	WM_OK = 0,
+	WM_NO_DATA = 1,
+	WM_ERR_INVALID_ARG,
+	WM_ERR_NETWORK,
+	WM_ERR_TIMEOUT,
+	WM_ERR_NO_RESOURCE,
+	WM_ERR_INVALID_RESPONSE,
+	WM_ERR_RUNTIME
+};
 
 int wm_server_start(char *cmd);
 int wm_server_stop(void);
@@ -50,12 +52,12 @@ int wm_disconnect(void);
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
-int wm_pkt_push(int port, const uint8_t *data, uint32_t len);
-int wm_pkt_get(int *port, uint8_t *data, uint32_t *len);
+int wm_pkt_push(uint16_t port, const uint8_t *data, uint32_t len);
+int wm_pkt_get(uint16_t *port, uint8_t *data, uint32_t *len);
 
 #ifndef NO_SV
-int wm_svpkt_push(int port, const svOpenArrayHandle sv_data, uint32_t len);
-int wm_svpkt_get(int *port, svOpenArrayHandle sv_data, uint32_t *len);
+int wm_svpkt_push(uint16_t  port, const svOpenArrayHandle sv_data, uint32_t len);
+int wm_svpkt_get(uint16_t  *port, svOpenArrayHandle sv_data, uint32_t *len);
 #endif
 
 #endif /* __MBAY_DPI_CLIENT_H_ */
