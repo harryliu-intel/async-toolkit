@@ -1463,14 +1463,14 @@ reg map_profile_key_invert1_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[63:48] = 16'h0;
+  } _RSVD1_[63:50] = 14'h0;
   field {
     AccessType = "RW";
     desc = "
      From parser, representing a digest of the parser flags
            ";
     ValRandomize = true;
-  } PTYPE[47:40] = 8'h00;
+  } PTYPE[49:40] = 10'h00;
   field {
     AccessType = "RW";
     desc = "

@@ -39,7 +39,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include <libgen.h>
+#include <sys/param.h>
 #ifndef NO_SV
 #include "svdpi_src.h"
 #endif
@@ -194,8 +196,8 @@ int wm_server_start(char *type)
 				use_m3 ? "m3" : "Scala", cmd, strerror(errno));
 		exit(1);
 	} else if (pid > 0) {
-		/* Parent process: wait 10sec then if child is alive try to connect */
-		sleep(10);
+		/* Parent process: wait 5sec then if child is alive try to connect */
+		sleep(5);
 		waitpid(pid, &err, WNOHANG);
 		if (WIFEXITED(err)) {
 			LOG_ERROR("Server failed to start: pid %d has exited\n", pid);
@@ -470,7 +472,7 @@ int wm_pkt_get(int *port, uint8_t *data, uint32_t *len)
 	for (i = 0; i < NUM_PORTS; ++i) {
 
 		LOG_DEBUG("Checking rx frames on port %d\n", i);
-		err = receive_pkt(i, 10, data, len);
+		err = receive_pkt(i, 100, data, len);
 		if (err)
 			return err;
 
@@ -597,51 +599,60 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 					  uint16_t *port)
 {
-    uint8_t wm_msg[512];
+	struct wm_msg wm_msg;
 	uint32_t wm_len;
 	int err;
 
+	bzero(&wm_msg, sizeof(wm_msg));
 	/* Read the first 4 bytes to see the length of the message */
-	err = wm_read_data(fd, wm_msg, 4, READ_TIMEOUT);
+	err = wm_read_data(fd, (uint8_t *)&wm_msg, sizeof(wm_len), READ_TIMEOUT);
 	if (err) {
 		LOG_ERROR("Could not receive message preamble from WM\n");
 		return err;
 	}
 
-	wm_len = ntohl(*((unsigned int *)&wm_msg[0]));
-	if (wm_len > (sizeof(wm_msg) - MODEL_MSG_HEADER_SIZE)) {
-		LOG_ERROR("Length %d is out of bound\n", wm_len);
+	wm_len = ntohl(wm_msg.msg_length);
+	if (wm_len > sizeof(wm_msg)) {
+		LOG_ERROR("Message length %d exceeds max %ld\n", wm_len, sizeof(wm_msg));
 		return ERR_INVALID_RESPONSE;
 	}
 
 	/* Receive the remaining bytes */
-	err = wm_read_data(fd, wm_msg + 4, wm_len - 4, READ_TIMEOUT);
+	err = wm_read_data(fd, (uint8_t *)&wm_msg.version,
+			wm_len - sizeof(wm_len), READ_TIMEOUT);
 	if (err) {
 		LOG_ERROR("Could not receive message contents from WM\n");
 		return err;
 	}
 
-	// *len = (wm_msg[0] << 24) | (wm_msg[1] << 16) |
-	// 		(wm_msg[2] << 8) | wm_msg[3];
-	*len = wm_len - MODEL_MSG_ERROR;
-	*type = (wm_msg[6] << 8) | wm_msg[7];
-	*port = (wm_msg[10] << 8) | wm_msg[11];
+	*len = wm_len - offsetof(struct wm_msg, data);
+	*type = ntohs(wm_msg.type);
+	*port = ntohs(wm_msg.port);
+
+	LOG_DEBUG("Received message type %d - port %d - len %d\n", *type, *port, wm_len);
+	LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
+
+	if (ntohs(wm_msg.version) != MODEL_VERSION) {
+		LOG_WARNING("Model version mismatch: received %d - expected %d\n",
+				ntohs(wm_msg.version), MODEL_VERSION);
+	}
 
 	switch (*type) {
 	case MODEL_MSG_ERROR:
-		LOG_ERROR("%s: %s", __func__, wm_msg + 12);
+		LOG_ERROR("Received error msg: %s", wm_msg.data);
 		return ERR_INVALID_RESPONSE;
 	case MODEL_MSG_IOSF:
 	case MODEL_MSG_PACKET:
 	case MODEL_MSG_PACKET_EOT:
 		break;
 	default:
-		LOG_ERROR("Unexpected msg_type 0x%x\n", *type);
+		LOG_ERROR("Unexpected msg_type 0x%04x\n", *type);
 		return ERR_INVALID_RESPONSE;
 	}
 
-	// LOG_HEX_DUMP((uint8_t *)&wm_msg, wm_len, 0);
-	memcpy(msg, wm_msg + MODEL_MSG_HEADER_SIZE, *len);
+	memcpy(msg, wm_msg.data, *len);
+	LOG_DEBUG("Message data  - len %d\n", *len);
+	LOG_HEX_DUMP(msg, *len, 0);
 	return OK;
 }
 
@@ -783,7 +794,7 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 				port_str, strerror(errno));
 		close(*server_fd);
 	}
-
+        freeaddrinfo(result);
 	LOG_DEBUG("Connected to model_server at %s:%s\n", addr_str, port_str);
 	setsockopt(*server_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
 
@@ -802,11 +813,14 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 static int connect_egress(int phys_port, int server_fd, int client_fd,
 						  int client_port, int *egress_fd)
 {
-    char hostname[] = "localhost";
-    char buffer[256];
+    char hostname[MAXHOSTNAMELEN];
+    char buffer[MAXHOSTNAMELEN + 2];
     uint32_t len;
 
-    bzero(buffer, 256);
+    int ghnResult = gethostname(hostname, MAXHOSTNAMELEN);
+    if (ghnResult != 0) LOG_ERROR("Problem getting hostname!");
+
+    bzero(buffer, MAXHOSTNAMELEN + 2);
 
     /* Message format is: 2B tcp client port, 510B hostname */
     *((uint16_t *)buffer) = htons(client_port);
@@ -892,37 +906,38 @@ static int create_client_socket(int *fd, int *port)
  * @retval		OK if successful
  */
 static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
-					   uint32_t *len)
+		uint32_t *len)
 {
-    uint8_t msg[MAX_MSG_LEN];
-    struct pollfd pfd;
-    uint32_t msg_len;
+	uint8_t msg[MAX_MSG_LEN];
+	struct pollfd pfd;
+	uint32_t msg_len;
+	uint32_t pkt_len;
 	uint16_t type;
 	uint16_t port;
-    int err;
+	int err;
 
-    if (wm_egress_fd[phys_port] == -1) {
-        LOG_ERROR("Socket not initialized, call connect_egress on phys_port %d\n",
-            phys_port);
+	if (wm_egress_fd[phys_port] == -1) {
+		LOG_ERROR("Socket not initialized, call connect_egress on phys_port %d\n",
+				phys_port);
 		return ERR_RUNTIME;
-    }
+	}
 
-    bzero(&pfd, sizeof(struct pollfd));
-    pfd.fd = wm_egress_fd[phys_port];
-    pfd.events = POLLIN;
+	bzero(&pfd, sizeof(struct pollfd));
+	pfd.fd = wm_egress_fd[phys_port];
+	pfd.events = POLLIN;
 
-    err = poll(&pfd, 1, timeout);
+	err = poll(&pfd, 1, timeout);
 	if (err == -1) {
 		LOG_ERROR("Failed to poll on egress fd of phys port %d: %s\n",
-				  phys_port, strerror(errno));
+				phys_port, strerror(errno));
 		return ERR_NETWORK;
 	}
 
-    if(!(pfd.revents & POLLIN)) {
+	if(!(pfd.revents & POLLIN)) {
 		LOG_DEBUG("No events on fd associated to phys port %d\n", phys_port);
 		*len = 0;
-        return OK;
-    }
+		return OK;
+	}
 
 	err = wm_receive(pfd.fd, msg, &msg_len, &type, &port);
 	if (err)
@@ -934,23 +949,31 @@ static int receive_pkt(int phys_port, int timeout, uint8_t *packet,
 		return OK;
 	}
 
-    if (type != MODEL_MSG_PACKET) {
-        LOG_ERROR("Received unexpected message types %d\n", type);
+	if (type != MODEL_MSG_PACKET) {
+		LOG_ERROR("Received unexpected message types %d\n", type);
 		return ERR_RUNTIME;
-    }
+	}
 
 	if (port != phys_port) {
 		LOG_ERROR("Port should be %d instead of %d\n", phys_port, port);
 		return ERR_RUNTIME;
 	}
 
-    /* FIXME This needs to support PACKET_META */
-    if (msg[0] != WM_DATA_TYPE_PACKET) {
-        LOG_ERROR("Unsupported data type %d\n", msg[0]);
+	/* FIXME This needs to support PACKET_META */
+	if (msg[0] != WM_DATA_TYPE_PACKET) {
+		LOG_ERROR("Unsupported data type %d\n", msg[0]);
 		return ERR_RUNTIME;
-    }
+	}
 
-    *len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+	pkt_len = ntohl(*(uint32_t *)&msg[WM_DATA_TYPE_SIZE]);
+
+	if (pkt_len > msg_len - WM_DATA_TLV_SIZE) {
+		LOG_ERROR("Packet len is %d but I only received %d byte from server\n",
+				pkt_len, msg_len - WM_DATA_TLV_SIZE);
+		*len = 0;
+		return ERR_RUNTIME;
+	}
+	*len = pkt_len;
 	memcpy(packet, msg + WM_DATA_TLV_SIZE, *len);
 
 	/* TODO in theory there could be other TLVs in the message */

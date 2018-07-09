@@ -18,11 +18,13 @@ def makeWmCsrCode(targdir : File) : Seq[File] = {
   import sbt.io._
   println("Generating CSR set from RDL")
   val m3dir = new File("src/main/m3")
-  val targdir = new File("src/main/m3/genviews/build/mby")
-  val result : Int = s"make -C src/main/m3 scalagen".!
+  val targdir = new File(m3dir + "/genviews/src/build/mby")
+  val result : Int = "make -C src/main/m3 scalagen".!
   require(result == 0, "Failed to build views")
+  require(targdir.isDirectory, s"$targdir not a directory")
   val pf = targdir ** "*.scala"
-  pf.get.map(x => new File(x.getCanonicalPath))
+  println("Generation done")
+  pf.get.map(x => { /* println(x.getCanonicalFile) ; */ new File(x.getCanonicalPath) })
 }
 
 
@@ -55,9 +57,9 @@ mainClass in Compile := Some("switch_wm.WhiteModelServer")
 //)
 
 // below, to enable IDEA to automatically context-complete with content from these the scheme-based generator
+managedSourceDirectories in Compile += file(file("src/main/m3/genviews/src/build/mby/src").absolutePath)
 managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated")
 unmanagedSourceDirectories in Compile += file(file("src/main/m3/wm_net/scala_src").absolutePath)
-unmanagedSourceDirectories in Compile += file(file("src/main/m3/genviews/src/build/mby/src").absolutePath)
 
 
 parallelExecution in Test := false

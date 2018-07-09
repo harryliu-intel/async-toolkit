@@ -1,4 +1,4 @@
-package switch_wm
+package switch_wm.csr
 
 import switch_wm.PrimitiveTypes.U64
 
@@ -14,6 +14,44 @@ abstract class RdlHierarchy(val parent : Option[RdlHierarchy]) extends RdlElemen
   def children : List[IndexedSeq[_ <: RdlElement]]
   def foreachResetableField(f : RdlRegister[U64]#HardwareResetable => Unit) = {
     children foreach (_.foreach(_.foreachResetableField(f)))
+  }
+
+  def mySeq(s : IndexedSeq[RdlElement]) : Boolean  = {
+    s.contains()
+      true
+
+  }
+
+  /**
+    * Compute the hierarchical path to an RDL element
+    *
+    * Computes the hierarchical path to a hierarchical point in the CSR space. Implemented with
+    * Java-style runtime reflection. (Could this be better implement with Scala-reflection or
+    * by doing something at compile-time).
+    *
+    * This is probably a relatively slow method
+    *
+    * @return the path
+    */
+  def path : String = {
+    parent match {
+      case Some(p) => {
+        val parentClass = p.getClass
+        for (f <- parentClass.getDeclaredFields) {
+          // println("examining "  + f.getName + " which is" + f.getType.getName)
+          f.setAccessible(true)
+          val obj = f.get(p)
+          val m = obj.getClass.getMethod("indexOf",classOf[Object])
+          val res = m.invoke(obj, this).asInstanceOf[Int]
+          if ( res != -1 ) {
+            return(s"${p.path}.${f.getName}($res)")
+          }
+        }
+        assert(false, "Expected to find element in parent " + p +" but did not")
+        null
+      }
+      case None => ""
+    }
   }
 }
 trait RdlDegenerateHierarchy extends RdlHierarchy {

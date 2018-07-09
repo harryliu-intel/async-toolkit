@@ -47,9 +47,9 @@
       (dis nm dnl mf-wr)
       (wr-close mf-wr))
           
-    (dis "package switch_wm" dnl dnl wr)
+    (dis "package switch_wm.model_server" dnl dnl wr)
 	(dis "import java.io._" dnl dnl wr)
-	(dis "import PrimitiveTypes._" dnl dnl wr)
+	(dis "import switch_wm.PrimitiveTypes._" dnl dnl wr)
 	
     (dis "object " nm " extends " scala-super " {" dnl wr)
 
@@ -482,7 +482,7 @@
       )
 
     (add-tgt-type! nm scala-name)
-	(dis "package switch_wm" dnl dnl wr)
+	(dis "package switch_wm.model_server" dnl dnl wr)
 	(dis "import java.io._" dnl wr)
 
     ;; the matching Modula-3 declaration
@@ -615,9 +615,9 @@
     (add-tgt-type! nm scala-name)
     ;; (set! e import-intfs)
     ;; the matching Modula-3 declaration
-    (dis "package switch_wm" dnl dnl wr)
+    (dis "package switch_wm.model_server" dnl dnl wr)
     (dis "import java.io._" dnl wr)
-    (dis "import PrimitiveTypes._" dnl dnl wr)
+    (dis "import switch_wm.PrimitiveTypes._" dnl dnl wr)
     (dis "import Implicits._" dnl dnl wr)
 
     (dis "case class " scala-name dnl wr)

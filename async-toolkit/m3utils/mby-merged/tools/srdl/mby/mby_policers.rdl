@@ -72,10 +72,10 @@ reg pol_direct_map_ctrl_r {
 	    Register File Sub Index.
         [list]
         [*] For REG_ID=0 (POL_CNTR_STATE), this field indicates the memory bank. 
-            Valid values are 0 - 9, and data is written via POL_DIRECT_MAP_DATA_CTRn.
+            Valid values are 0 - 9, and data is written via POL_DIRECT_MAP_CTRn.
         [*] For REG_ID=1 (POL_STATE), this field indicates the policer metering function.
             Valid values are 0 (corresponding to memory banks 0, 1) and 1 (corresponding
-            to memory banks 5, 6), and data is written via POL_DIRECT_MAP_DATA_POLn.
+            to memory banks 5, 6), and data is written via POL_DIRECT_MAP_POLn.
         [/list]
            ";
     ValRandomize = true;
@@ -92,9 +92,9 @@ reg pol_direct_map_ctrl_r {
 
 
 
-// POL_DIRECT_MAP_DATA_CTR0
+// POL_DIRECT_MAP_CTR0
 
-reg pol_direct_map_data_ctr0_r {
+reg pol_direct_map_ctr0_r {
   shared;
   HandCoded = true;
   name = "Counter Direct Mapping Access Data Register 0";
@@ -110,14 +110,6 @@ reg pol_direct_map_data_ctr0_r {
   field {
     AccessType = "RW/V";
     desc = "
-      Lower order part of 36 bit packet count.
-
-           ";
-    ValRandomize = true;
-  } DATA_CNTP_LWR[63:44] = 20'h0;
-  field {
-    AccessType = "RW/V";
-    desc = "
       Byte count
 
            ";
@@ -127,9 +119,9 @@ reg pol_direct_map_data_ctr0_r {
 
 
 
-// POL_DIRECT_MAP_DATA_CTR1
+// POL_DIRECT_MAP_CTR1
 
-reg pol_direct_map_data_ctr1_r {
+reg pol_direct_map_ctr1_r {
   shared;
   HandCoded = true;
   name = "Counter Direct Mapping Access Data Register 1";
@@ -145,18 +137,18 @@ reg pol_direct_map_data_ctr1_r {
   field {
     AccessType = "RW/V";
     desc = "
-      Higher order part of 36 bit packet count.
+      Packet count.
 
            ";
     ValRandomize = true;
-  } DATA_CNTP_UPR[15:0] = 16'h0;
+  } DATA_CNTP[35:0] = 36'h0;
 };
 
 
 
-// POL_DIRECT_MAP_DATA_POL0
+// POL_DIRECT_MAP_POL0
 
-reg pol_direct_map_data_pol0_r {
+reg pol_direct_map_pol0_r {
   shared;
   HandCoded = true;
   name = "Policer Direct Mapping Access Data Register 0";
@@ -172,29 +164,19 @@ reg pol_direct_map_data_pol0_r {
   field {
     AccessType = "RW/V";
     desc = "
-     Lower order part of the bytes available in the committed bucket at time_stored
-
-           ";
-    ValRandomize = true;
-  } CTOK_HI_LWR[63:50] = 14'h0;
-  field {
-    AccessType = "RW/V";
-    desc = "
-     Tokens (fractional bytes) available in the committed bucket at time_stored.    [br]
-     1 bit = 1024 tokens.   [br]
-     1 byte = 8192 tokens.
-
-           ";
-    ValRandomize = true;
-  } CTOK_LO[49:37] = 13'h0;
-  field {
-    AccessType = "RW/V";
-    desc = "
      Bytes available in the excess bucket at time_stored
 
            ";
     ValRandomize = true;
-  } ETOK_HI[36:13] = 24'h0;
+  } ETOK_HI[63:40] = 24'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD_[39:37] = 3'h0;
   field {
     AccessType = "RW/V";
     desc = "
@@ -204,14 +186,25 @@ reg pol_direct_map_data_pol0_r {
 
            ";
     ValRandomize = true;
-  } ETOK_LO[12:0] = 13'h0;
+  } ETOK_LO[36:24] = 13'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+     Lower 24b of POL_TIME when this policer state was last written.  
+     When last written includes both management writing new configuration and 
+     token levels to the register and normal policer activity writing back 
+     updated token levels.
+
+           ";
+    ValRandomize = true;
+  } TIME_STORED[23:0] = 24'h0;
 };
 
 
 
-// POL_DIRECT_MAP_DATA_POL1
+// POL_DIRECT_MAP_POL1
 
-reg pol_direct_map_data_pol1_r {
+reg pol_direct_map_pol1_r {
   shared;
   HandCoded = true;
   name = "Policer Direct Mapping Access Data Register 1";
@@ -225,16 +218,39 @@ reg pol_direct_map_data_pol1_r {
   regwidth = 64;
   accesswidth = 64;
   field {
-    AccessType = "RW";
+    AccessType = "RW/V";
     desc = "
-     0: BS_1        [br]
-     1: BS_10       [br]
-     2: BS_100      [br]
-     3: BS_1000
+     Bytes available in the committed bucket at time_stored
 
            ";
     ValRandomize = true;
-  } EBS_UNIT[15:14] = 2'h0;
+  } CTOK_HI[63:40] = 24'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[39:37] = 3'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+     Tokens (fractional bytes) available in the committed bucket at time_stored.    [br]
+     1 bit = 1024 tokens.   [br]
+     1 byte = 8192 tokens.
+
+           ";
+    ValRandomize = true;
+  } CTOK_LO[36:24] = 13'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[23:4] = 20'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -242,22 +258,14 @@ reg pol_direct_map_data_pol1_r {
 
            ";
     ValRandomize = true;
-  } CFG[13:10] = 4'h0;
-  field {
-    AccessType = "RW/V";
-    desc = "
-     Higher order part of the bytes available in the committed bucket at time_stored
-
-           ";
-    ValRandomize = true;
-  } CTOK_HI_UPR[9:0] = 10'h0;
+  } CFG[3:0] = 4'h0;
 };
 
 
 
-// POL_DIRECT_MAP_DATA_POL2
+// POL_DIRECT_MAP_POL2
 
-reg pol_direct_map_data_pol2_r {
+reg pol_direct_map_pol2_r {
   shared;
   HandCoded = true;
   name = "Policer Direct Mapping Access Data Register 2";
@@ -271,65 +279,13 @@ reg pol_direct_map_data_pol2_r {
   regwidth = 64;
   accesswidth = 64;
   field {
-    AccessType = "RO/V";
+    AccessType = "RSV";
     desc = "
-     Lower order part of value of lower 24b of POL_TIME when this policer state was last written.  
-     When last written includes both management writing new configuration and 
-     token levels to the register and normal policer activity writing back 
-     updated token levels.
+      Reserved
 
            ";
     ValRandomize = true;
-  } TIME_STORED_LWR[63:56] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Ultimate commited rate = cir * 10^cir_unit.  Result in 100kbps.
-
-           ";
-    ValRandomize = true;
-  } CIR[55:45] = 11'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     0: IR_100K     [br]
-     1: IR_1M       [br]
-     2: IR_10M      [br]
-     3: IR_100M     [br]
-     4: IR_1G       [br]
-     Only value 0 - 4 are valid, setting the field with an invalid value is 
-     considered a programming error.
-
-           ";
-    ValRandomize = true;
-  } CIR_UNIT[44:42] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Configures committed burst size to cbs * 10^cbs_unit.  Result in bytes.
-
-           ";
-    ValRandomize = true;
-  } CBS[41:29] = 13'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     0: BS_1    [br]
-     1: BS_10   [br]
-     2: BS_100  [br]
-     3: BS_1000 [br]
-
-           ";
-    ValRandomize = true;
-  } CBS_UNIT[28:27] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Ultimate excess rate = eir * 10^eir_unit.  Result in 100kbps.
-
-           ";
-    ValRandomize = true;
-  } EIR[26:16] = 11'h0;
+  } _RSVD1_[63:30] = 34'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -343,7 +299,34 @@ reg pol_direct_map_data_pol2_r {
 
            ";
     ValRandomize = true;
-  } EIR_UNIT[15:13] = 3'h0;
+  } EIR_UNIT[29:27] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Ultimate excess rate = eir * 10^eir_unit.  Result in 100kbps.
+
+           ";
+    ValRandomize = true;
+  } EIR[26:16] = 11'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[15:15] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     0: BS_1        [br]
+     1: BS_10       [br]
+     2: BS_100      [br]
+     3: BS_1000
+
+           ";
+    ValRandomize = true;
+  } EBS_UNIT[14:13] = 2'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -356,9 +339,9 @@ reg pol_direct_map_data_pol2_r {
 
 
 
-// POL_DIRECT_MAP_DATA_POL3
+// POL_DIRECT_MAP_POL3
 
-reg pol_direct_map_data_pol3_r {
+reg pol_direct_map_pol3_r {
   shared;
   HandCoded = true;
   name = "Policer Direct Mapping Access Data Register 3";
@@ -372,16 +355,62 @@ reg pol_direct_map_data_pol3_r {
   regwidth = 64;
   accesswidth = 64;
   field {
-    AccessType = "RO/V";
+    AccessType = "RSV";
     desc = "
-     Higher order part of value of lower 24b of POL_TIME when this policer state was last written.  
-     When last written includes both management writing new configuration and 
-     token levels to the register and normal policer activity writing back 
-     updated token levels.
+      Reserved
 
            ";
     ValRandomize = true;
-  } TIME_STORED_UPR[15:0] = 16'h0;
+  } _RSVD1_[63:30] = 34'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     0: IR_100K     [br]
+     1: IR_1M       [br]
+     2: IR_10M      [br]
+     3: IR_100M     [br]
+     4: IR_1G       [br]
+     Only value 0 - 4 are valid, setting the field with an invalid value is 
+     considered a programming error.
+
+           ";
+    ValRandomize = true;
+  } CIR_UNIT[29:27] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Ultimate commited rate = cir * 10^cir_unit.  Result in 100kbps.
+
+           ";
+    ValRandomize = true;
+  } CIR[26:16] = 11'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[15:15] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     0: BS_1    [br]
+     1: BS_10   [br]
+     2: BS_100  [br]
+     3: BS_1000 [br]
+
+           ";
+    ValRandomize = true;
+  } CBS_UNIT[14:13] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Configures committed burst size to cbs * 10^cbs_unit.  Result in bytes.
+
+           ";
+    ValRandomize = true;
+  } CBS[12:0] = 13'h0;
 };
 
 
@@ -408,7 +437,7 @@ reg pol_cfg_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[63:23] = 41'h0;
+  } _RSVD2_[63:23] = 41'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -451,7 +480,7 @@ reg pol_cfg_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[18:17] = 2'h0;
+  } _RSVD1_[18:17] = 2'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -503,7 +532,7 @@ reg pol_cfg_r {
 
            ";
     ValRandomize = true;
-  } PRECEDENCEE[13:13] = 1'h0;
+  } PRECEDENCE[13:13] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -524,26 +553,13 @@ reg pol_cfg_r {
     ValRandomize = true;
   } L3_LEN_MODE[11:11] = 1'h0;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-     Adjust the packet length:  [br]
-     pkt_len = base_len - parse_ptrs[start_hdr] + sign_extend(adjust_len)
-     [br][br]
-     Here parse_ptrs[0]=0 for this calculation.  The adjustment is applied only on the 
-     first segment of the packet (if deducting) or on the total packet length 
-     (if crediting due to frame error).
+      Reserved
 
            ";
     ValRandomize = true;
-  } START_HDR[10:8] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     See description of start_hdr.
-
-           ";
-    ValRandomize = true;
-  } ADJUST_LEN[7:0] = 8'h0;
+  } _RSVD0_[10:0] = 11'h0;
 };
 regfile pol_cfg_rf {
   pol_cfg_r POL_CFG[16] += 8;
@@ -847,19 +863,19 @@ addrmap mby_ppe_policers_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  pol_direct_map_ctrl_r      POL_DIRECT_MAP_CTRL           @0x0;
-  pol_direct_map_data_ctr0_r POL_DIRECT_MAP_DATA_CTR0      @0x8;
-  pol_direct_map_data_ctr1_r POL_DIRECT_MAP_DATA_CTR1      @0x10;
-  pol_direct_map_data_pol0_r POL_DIRECT_MAP_DATA_POL0      @0x18;
-  pol_direct_map_data_pol1_r POL_DIRECT_MAP_DATA_POL1      @0x20;
-  pol_direct_map_data_pol2_r POL_DIRECT_MAP_DATA_POL2      @0x28;
-  pol_direct_map_data_pol3_r POL_DIRECT_MAP_DATA_POL3      @0x30;
-  pol_cfg_rf                 POL_CFG[2]                    @0x0040 += 128;
-  pol_dscp_rf                POL_DSCP[16]                  @0x2040 += 512;
-  pol_vpri_rf                POL_VPRI[16]                  @0x4040 += 128;
-  pol_time_unit_r            POL_TIME_UNIT                 @0x4840;
-  pol_time_r                 POL_TIME                      @0x4848;
-  pol_sweep_r                POL_SWEEP                     @0x4850;
-  pol_sweep_last_r           POL_SWEEP_LAST                @0x4858;
-  pol_sweep_period_max_r     POL_SWEEP_PERIOD_MAX          @0x4860;
+  pol_direct_map_ctrl_r      POL_DIRECT_MAP_CTRL      @0x0;
+  pol_direct_map_ctr0_r      POL_DIRECT_MAP_CTR0      @0x8;
+  pol_direct_map_ctr1_r      POL_DIRECT_MAP_CTR1      @0x10;
+  pol_direct_map_pol0_r      POL_DIRECT_MAP_POL0      @0x18;
+  pol_direct_map_pol1_r      POL_DIRECT_MAP_POL1      @0x20;
+  pol_direct_map_pol2_r      POL_DIRECT_MAP_POL2      @0x28;
+  pol_direct_map_pol3_r      POL_DIRECT_MAP_POL3      @0x30;
+  pol_cfg_rf                 POL_CFG[2]               @0x0040 += 128;
+  pol_dscp_rf                POL_DSCP[16]             @0x2040 += 512;
+  pol_vpri_rf                POL_VPRI[16]             @0x4040 += 128;
+  pol_time_unit_r            POL_TIME_UNIT            @0x4840;
+  pol_time_r                 POL_TIME                 @0x4848;
+  pol_sweep_r                POL_SWEEP                @0x4850;
+  pol_sweep_last_r           POL_SWEEP_LAST           @0x4858;
+  pol_sweep_period_max_r     POL_SWEEP_PERIOD_MAX     @0x4860;
 };

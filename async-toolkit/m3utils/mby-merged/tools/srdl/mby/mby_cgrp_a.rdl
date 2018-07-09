@@ -442,9 +442,9 @@ regfile em_a_hash_cam_en_rf {
 
 
 
-// EM_A_KEY_MASK0[0..1,0..63]
+// EM_A_KEY_SEL0[0..1,0..63]
 
-reg em_a_key_mask0_r {
+reg em_a_key_sel0_r {
   shared;
   HandCoded = true;
   name = "Configures hash value calculation";
@@ -474,17 +474,17 @@ reg em_a_key_mask0_r {
 
            ";
     ValRandomize = true;
-  } KEY8_MASK[63:0] = 64'h0;
+  } KEY8_MASK[31:0] = 32'h0;
 };
-regfile em_a_key_mask0_rf {
-  em_a_key_mask0_r EM_A_KEY_MASK0[64] += 8;
+regfile em_a_key_sel0_rf {
+  em_a_key_sel0_r EM_A_KEY_SEL0[64] += 8;
 };
 
 
 
-// EM_A_KEY_MASK1[0..1,0..63]
+// EM_A_KEY_SEL1[0..1,0..63]
 
-reg em_a_key_mask1_r {
+reg em_a_key_sel1_r {
   shared;
   HandCoded = true;
   name = "Configures hash value calculation";
@@ -509,23 +509,11 @@ reg em_a_key_mask1_r {
   field {
     AccessType = "RW";
     desc = "
-     Similar to KeySubmode0. Provides a second mask operation.
-
+     Selects one of 16 128 bit masks stored in EM_A_KEY_MASK to 
+     apply to the key during comparison.
            ";
     ValRandomize = true;
-  } KEY_SUBMODE1[51:50] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Controls EM_A_KEY_MASK2[].KeySubmask0.
-   * if key_submode0=0, apply key_submask0 bitmask to keys 24..25 (MPLS 0)
-   * if key_submode0=1, apply key_submask0 bitmask to keys 26..27 (MPLS 1)
-   * if key_submode0=2, apply key_submask0 nybblemask to keys 24..31 (MPLS 0-3)
-   * if key_submode0=3, apply key_submask0 nybblemask to keys 48..55 (outer IPv4, or outer SIPv6)
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMODE0[49:48] = 2'h0;
+  } KEY_MASK_SEL[51:48] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -545,30 +533,25 @@ reg em_a_key_mask1_r {
     ValRandomize = true;
   } KEY16_MASK[31:0] = 32'h0;
 };
-regfile em_a_key_mask1_rf {
-  em_a_key_mask1_r EM_A_KEY_MASK1[64] += 8;
+regfile em_a_key_sel1_rf {
+  em_a_key_sel1_r EM_A_KEY_SEL1[64] += 8;
 };
 
 
 
-// EM_A_KEY_MASK2[0..1,0..63]
+// EM_A_KEY_MASK[0..1,0..31]
 
-reg em_a_key_mask2_r {
+reg em_a_key_mask_r {
   shared;
   HandCoded = true;
-  name = "Configures hash value calculation";
+  name = "Hash key bit mask";
   desc = "
-  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
-
-  This register is indexed first by hash number 0..1, then by scenario.
-
-  Before matching, the selected (Key32, Key16, Key8) are compacted
-  in big endian form. If the result is an odd number of bytes,
-  a padding 0 byte is added.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
+  Provides a 128 bit hash key mask for each of 16 hash key profiles.
+  Indexed first by hash number, then by:
+  [code]
+  (KEY_MASK_SEL * 2) + DW
+  where there are 2 DWs per profile (128 bits)
+  [/code]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -578,139 +561,17 @@ reg em_a_key_mask2_r {
   field {
     AccessType = "RW";
     desc = "
-     Similar to KeySubmask0. Provides a second mask operation.
+     64 of the 128 bits in the mask.
+     Indicates which bits are included in the hash calculation.
 
            ";
     ValRandomize = true;
-  } KEY_SUBMASK1[63:32] = 32'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Bit- or nybble-mask to apply to special keys.
-     Setting a mask bit to 0 causes the bit or nybble to be zeroed
-     out without shifting other bits/nybbles in the compacted key.
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK0[31:0] = 32'h0;
+  } MASK[63:0] = 64'h0;
 };
-regfile em_a_key_mask2_rf {
-  em_a_key_mask2_r EM_A_KEY_MASK2[64] += 8;
+regfile em_a_key_mask_rf {
+  em_a_key_mask_r EM_A_KEY_MASK[32] += 8;
 };
 
-
-
-// EM_A_KEY_MASK3[0..1,0..63]
-
-reg em_a_key_mask3_r {
-  shared;
-  HandCoded = true;
-  name = "Configures hash value calculation";
-  desc = "
-  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
-
-  This register is indexed first by hash number 0..1, then by scenario.
-
-  Before matching, the selected (Key32, Key16, Key8) are compacted
-  in big endian form. If the result is an odd number of bytes,
-  a padding 0 byte is added.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-     Similar to KEY_SUBMASK2 but applies to inner VLAN2.
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK5[7:6] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Similar to KEY_SUBMASK2 but applies to inner VLAN1.
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK4[5:4] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Similar to KEY_SUBMASK2 but applies to outer VLAN2.
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK3[3:2] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Applies a mask to the outer VLAN1 key as follows:
-       * 00b: 0x0FFF
-       * 01b: 0xF000
-       * 10b: 0x7000
-       * 11b: Reserved (NOP)
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK2[1:0] = 2'h0;
-};
-regfile em_a_key_mask3_rf {
-  em_a_key_mask3_r EM_A_KEY_MASK3[64] += 8;
-};
-
-
-
-// EM_A_KEY_MASK4[0..1,0..63]
-
-reg em_a_key_mask4_r {
-  shared;
-  HandCoded = true;
-  name = "Configures hash value calculation";
-  desc = "
-  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
-
-  This register is indexed first by hash number 0..1, then by scenario.
-
-  Before matching, the selected (Key32, Key16, Key8) are compacted
-  in big endian form. If the result is an odd number of bytes,
-  a padding 0 byte is added.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-     A 32-bit mask applied over KEY8[39:36].
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK7[63:32] = 32'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     A 32-bit mask applied over KEY8[31:28].
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK6[31:0] = 32'h0;
-};
-regfile em_a_key_mask4_rf {
-  em_a_key_mask4_r EM_A_KEY_MASK4[64] += 8;
-};
 
 
 
@@ -865,11 +726,9 @@ addrmap mby_ppe_cgrp_a_map {
   em_a_hash_lookup_r          EM_A_HASH_LOOKUP[32768];
   em_a_hash_cam_rf            EM_A_HASH_CAM[32]     ;
   em_a_hash_cam_en_rf         EM_A_HASH_CAM_EN[2]   ;
-  em_a_key_mask0_rf           EM_A_KEY_MASK0[2]     ;
-  em_a_key_mask1_rf           EM_A_KEY_MASK1[2]     ;
-  em_a_key_mask2_rf           EM_A_KEY_MASK2[2]     ;
-  em_a_key_mask3_rf           EM_A_KEY_MASK3[2]     ;
-  em_a_key_mask4_rf           EM_A_KEY_MASK4[2]     ;
+  em_a_key_sel0_rf            EM_A_KEY_SEL0[2]      ;
+  em_a_key_sel1_rf            EM_A_KEY_SEL1[2]      ;
+  em_a_key_mask_rf            EM_A_KEY_MASK[2]      ;
   em_a_hash_miss_rf           EM_A_HASH_MISS[2]     ;
   em_a_hash_cfg_r             EM_A_HASH_CFG[64]     ;
 

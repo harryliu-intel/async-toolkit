@@ -1,8 +1,8 @@
 package switch_wm
-import Implicits._
-import SwitchModelImplicits._
+import switch_wm.model_server.Implicits._
 import java.io._
-
+import switch_wm.csr._
+import switch_wm.model_server._
 import switch_wm.PrimitiveTypes.U64
 
 
@@ -167,7 +167,7 @@ object WhiteModelServer {
     val hostnameArray = Array.ofDim[Byte](stringSize)
     is.readFully(hostnameArray)
     val hostname =  hostnameArray.map(_.toChar).mkString
-    println("Configuring port " + tcpPort + " of  " + " as egress to switch port "  + switchPort)
+    println(s"Configuring = $hostname:$tcpPort as egress to switch port $switchPort")
     val socket = new Socket(hostname, tcpPort)
 
     portToOs(switchPort) = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()))
@@ -301,6 +301,10 @@ object WhiteModelServer {
     /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
     val c = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
 
+    val test = theCsr.mpt(0).rx_ppe.policers
+    println("theCsr.mpt(0).rx_ppe.policers path is " + test.path)
+    val test1 = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1)
+    println("theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1) path is " + test1.path)
 
     //
     implicit class csum_convenience (val x : mby_ppe_modify_map) {
@@ -325,7 +329,10 @@ object WhiteModelServer {
     // or
     val group2 = theCsr.mpt(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
     //
-    val outputshift = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT
+    val outputshift = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT.reset()
+    val memoryMap = theCsr.addressRegisterMap(0)
+    //outputshift assign 1
+
 
 
     println("Created " + RegisterCounter.count + " registers in "+ elapsedTime + "ms")

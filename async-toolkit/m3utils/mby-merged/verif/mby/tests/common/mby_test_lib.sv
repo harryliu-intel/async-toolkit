@@ -24,7 +24,7 @@
 //
 //------------------------------------------------------------------------------
 //   Author        : Akshay Kotian
-//   Project       : MBY
+//   Project       : Madison Bay
 //   Description   : MBY Test Library
 //------------------------------------------------------------------------------
 
@@ -55,19 +55,6 @@ program  mby_test_lib;
     initial begin
         string testname;
 
-        if ($test$plusargs("WHITE_MODEL_EN")) begin
-            string model_server = "scala";                     	//Connect to Scala WM server by default
-
-            if ($value$plusargs("WHITE_MODEL_SERVER=%s", model_server)) begin
-                `uvm_info(get_full_name(), $sformatf("Using %s WM Server",model_server),UVM_FULL)
-            end
-            if(wm_server_start(model_server)) begin
-                `uvm_error(get_full_name(), "Error while connecting to the WM")
-            end
-            else
-                `uvm_info(get_full_name(), $sformatf("Connected to %s WM Server",model_server),UVM_HIGH)
-        end
-
         if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
 `ifndef XVM
             $display ("MBY_tb Started Running %s in UVM mode!\n",testname);
@@ -79,15 +66,6 @@ program  mby_test_lib;
     xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
 `endif
 
-end
-
-final begin
-
-    //Stop the White model server if it was started at the beginning of the test.
-    if ($test$plusargs("WHITE_MODEL_EN")) begin
-        wm_server_stop();
-         `uvm_info(get_full_name(), $sformatf("Disconnected from WM Server"),UVM_HIGH)
-    end
 end
 
 endprogram

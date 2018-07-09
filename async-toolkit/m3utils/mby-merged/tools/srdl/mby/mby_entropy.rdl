@@ -5,18 +5,15 @@
 
 
 
-// ENTROPY_HASH_CFG0[0..1][0..63]
+// ENTROPY_HASH_CFG0[0..2][0..63]
 
 reg entropy_hash_cfg0_r {
   shared;
   HandCoded = true;
   name = "Configures hash value calculation";
   desc = "
-  Configure how each of the 2 hash values (hash0/1) should be calculated.
-  The value in this register has the same format as FFU_HASH_CFG0.
-
-  * hash0 configuration is ENTROPY_HASH_CFG0[0][HASH_PROF[0]].
-  * hash1 configuration is ENTROPY_HASH_CFG0[1][HASH_PROF[1]].
+  Configure how each of the 3 hash values (hash0/1/2) should be calculated.
+  Indexed first by hash number, then by hash profile.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -26,12 +23,13 @@ reg entropy_hash_cfg0_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects Classifier KEY8s to participate in hashing and matching. 
-     key_mask8[i] selects key8[i].
+     Selects Classifier KEY8s to be included in the hash calculation.
+     key_mask8[i] selects key8[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
 
            ";
     ValRandomize = true;
-  } KEY_MASK8[63:0] = 64'h0;
+  } KEY_MASK8[31:0] = 32'h0;
 };
 regfile entropy_hash_cfg0_rf {
   entropy_hash_cfg0_r ENTROPY_HASH_CFG0[64] += 8;
@@ -39,19 +37,15 @@ regfile entropy_hash_cfg0_rf {
 
 
 
-// ENTROPY_HASH_CFG1[0..1][0..63]
+// ENTROPY_HASH_CFG1[0..2][0..63]
 
 reg entropy_hash_cfg1_r {
   shared;
   HandCoded = true;
   name = "Configures hash value calculation";
   desc = "
-  Configure how each of the 4 hash values (hash0/1) should be calculated.
-  The value in this register has the same format as FFU_HASH_CFG1.
-  [list]
-  [*] hash0 configuration is ENTROPY_HASH_CFG0[0][HASH_PROF[0]].
-  [*] hash1 configuration is ENTROPY_HASH_CFG0[1][HASH_PROF[1]].
-  [/list]
+  Configure how each of the 3 hash values (hash0/1/2) should be calculated.
+  Indexed first by hash number, then by hash profile.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -77,29 +71,18 @@ reg entropy_hash_cfg1_r {
   field {
     AccessType = "RW";
     desc = "
-     Controls KeySubmask1.
+     Selects the hash key mask profile to apply to the selected
+     KEY8s, KEY16s and KEY32s.
 
            ";
     ValRandomize = true;
-  } KEY_SUBMODE1[51:50] = 2'h0;
+  } KEY_MASK_PROFILE[51:48] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
-    [list]
-    [*] if key_submode0=0, apply key_submask0 bitmask to key16 24..25 (MPLS 0)
-    [*] if key_submode0=1, apply key_submask0 bitmask to key16 26..27 (MPLS 1)
-    [*] if key_submode0=2, apply key_submask0 nybblemask to key16 24..31 (MPLS 0-3)
-    [*] if key_submode0=3, apply key_submask0 nybblemask to key32 0..3 (outer SIP/DIP IPv4, or outer SIPv6)    
-    [/list]
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMODE0[49:48] = 2'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Selects Classifier KEY32s to participate in hashing and matching. 
-     key_mask32[i] selects key32[i].
+     Selects Classifier KEY32s to be included in the hash calculation.
+     key_mask32[i] selects key32[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
 
            ";
     ValRandomize = true;
@@ -107,8 +90,9 @@ reg entropy_hash_cfg1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects Classifier KEY16s to participate in hashing and matching. 
-     key_mask16[i] selects key16[i].
+     Selects Classifier KEY16s to be included in the hash calculation.
+     key_mask16[i] selects key16[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
 
            ";
     ValRandomize = true;
@@ -116,50 +100,6 @@ reg entropy_hash_cfg1_r {
 };
 regfile entropy_hash_cfg1_rf {
   entropy_hash_cfg1_r ENTROPY_HASH_CFG1[64] += 8;
-};
-
-
-
-// ENTROPY_HASH_CFG2[0..1][0..63]
-
-reg entropy_hash_cfg2_r {
-  shared;
-  HandCoded = true;
-  name = "Configures hash value calculation";
-  desc = "
-  Configure how each of the 4 hash values (hash0/1) should be calculated.
-  The value in this register has the same format as FFU_HASH_CFG2. 
-  [list]
-  [*] hash0 configuration is ENTROPY_HASH_CFG2[0][HASH_PROF[0]].
-  [*] hash1 configuration is ENTROPY_HASH_CFG2[1][HASH_PROF[1]]. 
-  [/list]
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-     Similar to KeySubmask0. Provides a second mask operation.
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK1[63:32] = 32'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-     Bit- or nybble-mask to apply to special keys.
-     Setting a mask bit to 0 causes the bit or nybble to be zeroed
-     out without shifting other bits/nybbles in the compacted key.
-
-           ";
-    ValRandomize = true;
-  } KEY_SUBMASK0[31:0] = 32'h0;
-};
-regfile entropy_hash_cfg2_rf {
-  entropy_hash_cfg2_r ENTROPY_HASH_CFG2[64] += 8;
 };
 
 
@@ -613,6 +553,42 @@ regfile entropy_hash_sym32_rf {
 
 
 
+// ENTROPY_HASH_KEY_MASK[0..2][0..128]
+
+reg entropy_hash_key_mask_r {
+  shared;
+  HandCoded = true;
+  name = "Hash key bit mask";
+  desc = "
+  Provides a 64 byte hash key mask for each of 16 hash key profiles.
+  Indexed first by hash number, then by:
+  [code]
+  (KEY_MASK_PROFILE * 8) + DW
+  where there are 8 DWs per profile (64 bytes)
+  [/code]
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Mask of 64 bits out of the 64 bytes of KEY8s, KEY16s
+     and KEY32s selected by ENTROPY_HASH_CFGn per hash profile. 
+     Indicates which bits are included in the hash calculation.
+
+           ";
+    ValRandomize = true;
+  } MASK[63:0] = 64'h0;
+};
+regfile entropy_hash_key_mask_rf {
+  entropy_hash_key_mask_r ENTROPY_HASH_KEY_MASK[128] += 8;
+};
+
+
+
 // Begin reg2rdl addrmap section
 
 addrmap mby_ppe_entropy_map {
@@ -625,9 +601,9 @@ addrmap mby_ppe_entropy_map {
 
   entropy_hash_cfg0_rf       ENTROPY_HASH_CFG0[3]          ;
   entropy_hash_cfg1_rf       ENTROPY_HASH_CFG1[3]          ;
-  entropy_hash_cfg2_rf       ENTROPY_HASH_CFG2[3]          ;
   entropy_meta_cfg_r         ENTROPY_META_CFG[64]          ;
   entropy_hash_sym8_rf       ENTROPY_HASH_SYM8[3]          ;
   entropy_hash_sym16_rf      ENTROPY_HASH_SYM16[3]         ;
   entropy_hash_sym32_rf      ENTROPY_HASH_SYM32[3]         ;
+  entropy_hash_key_mask_rf   ENTROPY_HASH_KEY_MASK[3]      ;
 }; // final size: 0xe00 <= 0x1000 = 8<<9

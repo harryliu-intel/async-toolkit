@@ -7,6 +7,7 @@ $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
      "verif/common/mby_wm_dpi_pkg/mby_wm_dpi_pkg.sv",
+     "verif/common/mby_wm_dpi_pkg/mby_wm_top.sv",
      ],
     
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
