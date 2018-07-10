@@ -115,7 +115,9 @@
 #define MBY_PARSER_CSUM_CFG_l_VALIDATE_L3_LENGTH                0
 #define MBY_PARSER_CSUM_CFG_h_VALIDATE_L3_LENGTH                1
 
-#define FM_LITERAL_U64(x) (x ## ULL)
+#define FM_LITERAL_U64(x)                                       (x ## ULL)
+
+#define MBY_REGISTER_ARRAY_SIZE                                 0x1800000
 
 // Basic Data Types:
 typedef char                  fm_char;
@@ -137,8 +139,10 @@ typedef char                 *fm_text;
 typedef fm_int                fm_status;
 
 // Constants:
-const fm_bool    TRUE  = 1;
-const fm_bool    FALSE = 0;
+const fm_status  FM_OK   = 0;
+const fm_status  FM_FAIL = 1;
+const fm_bool    TRUE    = 1;
+const fm_bool    FALSE   = 0;
 
 const fm_byte    MBY_PA_MAX_SEG_LEN             = 192;
 const fm_int     MBY_PA_MAX_PTR_LEN             = 255;
@@ -167,8 +171,6 @@ const fm_byte    MBY_PA_ANA_OP_ROT_SHIFT        = 0xC;
 // External function prototypes:
 
 fm_uint32 fmMultiWordBitfieldGet32(const fm_uint32 *array, fm_int hiBit, fm_int loBit);
-
-fm_status mbyModelReadCSRMult(fm_uint32 addr, fm_int n, fm_uint32 *value);
 
 // Get a named field of 2-32 bits within a >64-bit value
 #define FM_ARRAY_GET_FIELD(array, regname, fieldname)            \
@@ -233,8 +235,7 @@ typedef struct _mbyParserToMapper
      * Parser extract actions. */
     fm_bool                 PA_PTRS_VALID[8];
 
-    /* Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers.
-     * */
+    /* Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers. */
     fm_byte                 PA_CSUM_OK;
 
     /* Parser analyzer stage where exception was reached. */
@@ -252,19 +253,20 @@ typedef struct _mbyParserToMapper
     /* Checksum validation error, drop pkt in Tail. */
     fm_bool                 PA_DROP;
 
-    /* Checksum validation error. */
-    fm_bool                 PA_CSUM_ERR;
-
     /* L3 length error. */
     fm_bool                 PA_L3LEN_ERR;
-
-    /* L4 CSUM related information. */
-    fm_uint64               TAIL_CSUM_LEN;
 
     /* packet type (added for MBY) */
     fm_byte                 PA_PACKET_TYPE;
     
 } mbyParserToMapper;
 
-#endif // MBY_PARSER_H
+// Function prototypes:
+void Parser
+(
+    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyMacToParser    * const in, 
+          mbyParserToMapper * const out
+);
 
+#endif // MBY_PARSER_H
