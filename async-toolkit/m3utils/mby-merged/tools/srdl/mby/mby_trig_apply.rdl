@@ -85,7 +85,7 @@ reg trigger_condition_cfg_r {
 
            ";
     ValRandomize = true;
-  } _RSVD3_[63:36] = 28'h0;
+  } _RSVD4_[63:36] = 28'h0;
   field {
     encode = trigger_condition_cfg_match_tx_enum;
     AccessType = "RW";
@@ -149,7 +149,7 @@ reg trigger_condition_cfg_r {
 
            ";
     ValRandomize = true;
-  } _RSVD2_[25:22] = 4'h0;
+  } _RSVD3_[25:22] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -176,18 +176,13 @@ reg trigger_condition_cfg_r {
     ValRandomize = true;
   } MATCH_DEST_GLORT[19:18] = 2'h02;
   field {
-    AccessType = "RW";
+    AccessType = "RSV";
     desc = "
-            Match if the frame's first non-VLAN EtherType matches the
-            EtherType parameter in TRIGGER_CONDITION_TYPE when both are ANDed 
-            with EtherTypeMask.[br]
-            0 : match if not equal[br]
-            1 : match if equal[br]
-            2 : ignore this field[br]
-            3 : undefined         
+      Reserved
+
            ";
     ValRandomize = true;
-  } MATCH_ETHER_TYPE[17:16] = 2'h02;
+  } _RSVD2_[17:16] = 2'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -370,33 +365,6 @@ reg trigger_condition_cgrp_r {
   } CGRP_ID[7:0] = 8'h00;
 };
 
-reg trigger_condition_type_r {
-  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  shared;
-  HandCoded = true;
-  name = "EtherType match parameters.";
-  desc = "Match values for the ether type fields enabled by TRIGGER_CONDITION_CFG";
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-            Mask to be ANDed with both the EtherType trigger parameter and the
-            frame's first non-VLAN EtherType prior to comparison.
-           ";
-    ValRandomize = true;
-  } ETHER_TYPE_MASK[31:16] = 16'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-            Type value to compare against the frame's first non-VLAN
-            EtherType.
-           ";
-    ValRandomize = true;
-  } ETHER_TYPE[15:0] = 16'h00;
-};
 
 reg trigger_condition_glort_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -452,37 +420,219 @@ reg trigger_condition_rx_r {
   } SRC_PORT_MASK[16:0] = 17'h00;
 };
 
-// TRIGGER_CONDITION_TX[0..95][0..4]
 
-reg trigger_condition_tx_r {
+// TRIGGER_DIRECT_MAP_CTRL 
+
+reg glort_direct_map_ctrl_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   shared;
   HandCoded = true;
-  name = "Destination port mask.";
+  name = "Trigger Direct Mapping Access Control Register";
   desc = "
-         Destination port mask match when MatchTx is enabled in TRIGGER_CONDITION_CFG.
-         The complete mask is 257 bits.
+    Control Register for proxy access to TRIGGER_CONDITION_TX.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    hwclr;
+    AccessType = "RW/V";
+    desc = "
+	    Go command and completion status.
+        [list]
+        [*] Set to 1 by software to initiate operation
+        [*] Set to 0 by hardware when the operation is complete
+        [/list]
+           ";
+    ValRandomize = true;
+  } GO_COMPL[63:63] = 1'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+	    Completion Status. Set by hardware upon completion of operation.[br]
+	    0: Successful completion[br]
+	    1: Address Out-of-Range error
+           ";
+    ValRandomize = true;
+  } STATUS[62:62] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Operation Type:[br]
+            0: Read[br]
+            1: Write
+           ";
+    ValRandomize = true;
+  } OP_TYPE[61:61] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+	    Reserved
+           ";
+    ValRandomize = true;
+  } _RSVD0_[60:48] = 13'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File ID.[br]
+	    0 - TRIGGER_CONDITION_TX  [br]
+	    1-255 Reserved
+           ";
+    ValRandomize = true;
+  } REG_ID[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File Sub Index. Not used. Set to zero.
+           ";
+    ValRandomize = true;
+  } REG_SUB_ID[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register Entry Index. Indicates the TRIGGER_CONDITION_TX index.
+        Valid values are 0 - 95.
+           ";
+    ValRandomize = true;
+  } REG_INDX[31:0] = 32'h0;
+};
+
+
+
+// TRIGGER_DIRECT_MAP_CTX0
+
+reg trigger_direct_map_ctx0_r {
+  shared;
+  HandCoded = true;
+  name = "Trigger Destination Direct Mapping Access Data Register 0";
+  desc = "
+          Data register 0 for proxy access to the TRIGGER_CONDITION_TX.
+          [br][br]
+          Proxy accesses to TRIGGER_CONDITION_TX are 320b atomic operations.
          ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
   field {
     AccessType = "RW";
     desc = "
-            64 of 257 bits of the trigger's destination port mask used to compare against actual 
-            destination mask of the frame. See TRIGGER_CONDITION_CFG[i].MatchTx
-            for details of comparison options. 
-            [br][br]
-            Only bit 0 is used in TRIGGER_CONDITION_TX[4].
+            Contains bits 0..63 of the 258-bit destination port mask.
            ";
     ValRandomize = true;
   } DEST_PORT_MASK[63:0] = 64'h00;
 };
 
-regfile trigger_condition_tx_rf {
-  trigger_condition_tx_r TRIGGER_CONDITION_TX[5];
+
+
+// TRIGGER_DIRECT_MAP_CTX1
+
+reg trigger_direct_map_ctx1_r {
+  shared;
+  HandCoded = true;
+  name = "Trigger Destination Direct Mapping Access Data Register 1";
+  desc = "
+          Data register 1 for proxy access to the TRIGGER_CONDITION_TX.
+          [br][br]
+          Proxy accesses to TRIGGER_CONDITION_TX are 320b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 64..127 of the 258-bit destination port mask.
+           ";
+    ValRandomize = true;
+  } DEST_PORT_MASK[63:0] = 64'h00;
 };
+
+
+
+// TRIGGER_DIRECT_MAP_CTX2
+
+reg trigger_direct_map_ctx2_r {
+  shared;
+  HandCoded = true;
+  name = "Trigger Destination Direct Mapping Access Data Register 2";
+  desc = "
+          Data register 2 for proxy access to the TRIGGER_CONDITION_TX.
+          [br][br]
+          Proxy accesses to TRIGGER_CONDITION_TX are 320b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 128..191 of the 258-bit destination port mask.
+           ";
+    ValRandomize = true;
+  } DEST_PORT_MASK[63:0] = 64'h00;
+};
+
+
+
+// TRIGGER_DIRECT_MAP_CTX3
+
+reg trigger_direct_map_ctx3_r {
+  shared;
+  HandCoded = true;
+  name = "Trigger Destination Direct Mapping Access Data Register 3";
+  desc = "
+          Data register 3 for proxy access to the TRIGGER_CONDITION_TX.
+          [br][br]
+          Proxy accesses to TRIGGER_CONDITION_TX are 320b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 192..255 of the 258-bit destination port mask.
+           ";
+    ValRandomize = true;
+  } DEST_PORT_MASK[63:0] = 64'h00;
+};
+
+
+
+// TRIGGER_DIRECT_MAP_CTX4
+
+reg trigger_direct_map_ctx4_r {
+  shared;
+  HandCoded = true;
+  name = "Trigger Destination Direct Mapping Access Data Register 4";
+  desc = "
+          Data register 4 for proxy access to the TRIGGER_CONDITION_TX.
+          [br][br]
+          Proxy accesses to TRIGGER_CONDITION_TX are 320b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 256..257 of the 258-bit destination port mask.
+           ";
+    ValRandomize = true;
+  } DEST_PORT_MASK[1:0] = 2'h00;
+};
+
 
 
 
@@ -848,10 +998,14 @@ addrmap mby_ppe_trig_apply_map {
   trigger_condition_cfg_r             TRIGGER_CONDITION_CFG[96]        += 8;
   trigger_condition_param_r           TRIGGER_CONDITION_PARAM[96]      += 8;
   trigger_condition_cgrp_r            TRIGGER_CONDITION_CGRP[96]       += 8;
-  trigger_condition_type_r            TRIGGER_CONDITION_TYPE[96]       += 8;
   trigger_condition_glort_r           TRIGGER_CONDITION_GLORT[96]      += 8;
   trigger_condition_rx_r              TRIGGER_CONDITION_RX[96]         += 8;
-  trigger_condition_tx_rf             TRIGGER_CONDITION_TX[96]         += 8;
+  trigger_direct_map_ctrl_r           TRIGGER_DIRECT_MAP_CTRL   	   += 8;
+  trigger_direct_map_ctx0_r           TRIGGER_DIRECT_MAP_CTX0   	   += 8;
+  trigger_direct_map_ctx1_r           TRIGGER_DIRECT_MAP_CTX1   	   += 8;
+  trigger_direct_map_ctx2_r           TRIGGER_DIRECT_MAP_CTX2   	   += 8;
+  trigger_direct_map_ctx3_r           TRIGGER_DIRECT_MAP_CTX3      	   += 8;
+  trigger_direct_map_ctx4_r           TRIGGER_DIRECT_MAP_CTX4   	   += 8;
   trigger_condition_amask_1_r         TRIGGER_CONDITION_AMASK_1[96]    += 8;
   trigger_condition_amask_2_r         TRIGGER_CONDITION_AMASK_2[96]    += 8;
   trigger_action_cfg_1_r              TRIGGER_ACTION_CFG_1[96]         += 8;
