@@ -4,6 +4,28 @@
 
 #include "mby_parser.h"
 
+static fm_status mbyModelReadCSR(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+                                 const fm_uint32 byte_addr, fm_uint32 *value)
+{
+    fm_uint32 word_addr = (byte_addr / 4);
+    fm_bool addr_vld = (word_addr < MBY_REGISTER_ARRAY_SIZE);
+    *value = (addr_vld) ? regs[word_addr] : 0xBaadDeed;
+    fm_status status = (addr_vld) ? FM_OK : FM_FAIL;
+    return status;
+}
+
+static fm_status mbyModelReadCSRMult(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+                                     const fm_uint32 byte_addr, const fm_int len,
+                                     fm_uint32 *value) {
+    fm_status status = FM_OK;
+    for (fm_int i = 0; i < len; i++) {
+        status = mbyModelReadCSR(regs, byte_addr + (4*i), &value[i]);
+        if (status != FM_OK)
+            break;
+    }
+    return status;
+}
+
 // Get 16-bit word at given index in the segment data buffer
 static inline fm_uint16 getSegDataWord(fm_byte index, fm_uint32 adj_seg_len,
                                       fm_byte seg_data[MBY_PA_MAX_SEG_LEN]) {
@@ -54,19 +76,26 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
 // Parse the incoming packet and extracts useful fields from it
 void Parser
 (
+    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyMacToParser    * const in, 
           mbyParserToMapper * const out
 )
 {
+    // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
+    // and word offsets from the MBY_PARSER_PORT_CFG register file:
     fm_uint32 pa_port_cfg_val[MBY_PARSER_PORT_CFG_WIDTH];
 
-    mbyModelReadCSRMult(MBY_PARSER_PORT_CFG(in->RX_PORT, 0), MBY_PARSER_PORT_CFG_WIDTH, pa_port_cfg_val);
+    mbyModelReadCSRMult(regs, MBY_PARSER_PORT_CFG(in->RX_PORT, 0), MBY_PARSER_PORT_CFG_WIDTH, pa_port_cfg_val);
 
     fm_byte   init_ptr  = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_PTR);
     fm_uint16 ana_state = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_STATE);
     fm_uint16 op_mask   = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_OP_MASK);
     fm_byte   op_rot    = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_OP_ROT);
     
+    fm_byte init_w0_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_W0_OFFSET);
+    fm_byte init_w1_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_W1_OFFSET);
+    fm_byte init_w2_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_W2_OFFSET);
+
     fm_byte cur_ptr = init_ptr; // current pointer
 
     // Initialize (some of) the outputs:
@@ -76,7 +105,7 @@ void Parser
     out->PA_PACKET_TYPE     = 0;  // added for MBY <-- REVISIT!!!
 
     for (fm_int i = 0; i < MBY_MAX_PA_KEY_LEN; i++) {
-        out->PA_KEYS[i]       = 0x0;  
+        out->PA_KEYS      [i] = 0;  
         out->PA_KEYS_VALID[i] = 0;  
     }
 
@@ -84,18 +113,18 @@ void Parser
         out->PA_FLAGS[i] = 0; 
 
     for (fm_int i = 0; i < MBY_MAX_PA_PTR_NUM; i++) {
-        out->PA_PTRS[i]       = 0x0; 
+        out->PA_PTRS      [i] = 0; 
         out->PA_PTRS_VALID[i] = 0; 
     }
 
     fm_byte hit_idx  [MBY_PA_ANA_STAGES];
     fm_bool hit_idx_v[MBY_PA_ANA_STAGES];
     for (fm_int s = 0; s < MBY_PA_ANA_STAGES; s++) {
-        hit_idx[s]   = 0;
+        hit_idx  [s] = 0;
         hit_idx_v[s] = 0;
     }
 
-    // Calculate EOP and adj_seg_len based on offset and RX_LENGTH:
+    // Calculate end-of-packet (EOP) and adjusted segment length (adj_seg_len):
     fm_uint32 rlen = in->RX_LENGTH;
     fm_uint32 adj_seg_len = 0;
     fm_bool   eop = 0;
@@ -113,11 +142,6 @@ void Parser
 
     out->PA_ADJ_SEG_LEN = adj_seg_len;
 
-    // First header: pull values for w0, w1 and w2:
-    fm_byte init_w0_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_W0_OFFSET);
-    fm_byte init_w1_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_W1_OFFSET);
-    fm_byte init_w2_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_val, MBY_PARSER_PORT_CFG, INITIAL_W2_OFFSET);
-
     // Read in segment data:
     fm_byte seg_data[MBY_PA_MAX_SEG_LEN];
     for (fm_int a = 0; a < MBY_PA_MAX_SEG_LEN; a++)
@@ -127,9 +151,9 @@ void Parser
     fm_uint16 w1 = getSegDataWord(init_w1_offset, adj_seg_len, seg_data);
     fm_uint16 w2 = getSegDataWord(init_w2_offset, adj_seg_len, seg_data);
 
-    // Carry out analyzer actions:
     fm_byte ptr [MBY_PA_ANA_STAGES];
 
+    // Carry out analyzer actions (see section corresponding section in functional spec):
     for (fm_int s = 0; s < MBY_PA_ANA_STAGES; s++)
     {
         fm_bool rule_matched = FALSE;
@@ -138,7 +162,7 @@ void Parser
         {
             fm_uint32 key_w_val[MBY_PARSER_KEY_W_WIDTH];
 
-            mbyModelReadCSRMult(MBY_PARSER_KEY_W(s, r, 0), MBY_PARSER_KEY_W_WIDTH, key_w_val);
+            mbyModelReadCSRMult(regs, MBY_PARSER_KEY_W(s, r, 0), MBY_PARSER_KEY_W_WIDTH, key_w_val);
 
             fm_uint16 w0_mask = FM_ARRAY_GET_FIELD(key_w_val, MBY_PARSER_KEY_W, W0_MASK); 
             fm_uint16 w0_val  = FM_ARRAY_GET_FIELD(key_w_val, MBY_PARSER_KEY_W, W0_VALUE);
@@ -147,7 +171,7 @@ void Parser
 
             fm_uint32 key_s_val[MBY_PARSER_KEY_S_WIDTH];
 
-            mbyModelReadCSRMult(MBY_PARSER_KEY_S(s, r, 0), MBY_PARSER_KEY_S_WIDTH, key_s_val);
+            mbyModelReadCSRMult(regs, MBY_PARSER_KEY_S(s, r, 0), MBY_PARSER_KEY_S_WIDTH, key_s_val);
 
             fm_uint16 ana_state_mask = FM_ARRAY_GET_FIELD(key_s_val, MBY_PARSER_KEY_S, STATE_MASK);
             fm_uint16 ana_state_val  = FM_ARRAY_GET_FIELD(key_s_val, MBY_PARSER_KEY_S, STATE_VALUE);
@@ -167,48 +191,52 @@ void Parser
         //  Store pointer before updating:
         ptr[s] = cur_ptr;
 
-        //  Get analyzer fields:
-        fm_int    r_hit = hit_idx[s];
-        fm_uint32 ana_w_val[MBY_PARSER_ANA_W_WIDTH];
-        
-        mbyModelReadCSRMult(MBY_PARSER_ANA_W(s, r_hit, 0), MBY_PARSER_ANA_W_WIDTH, ana_w_val);
-
-        fm_byte skip           = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, SKIP);
-        fm_byte next_w0_offset = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, NEXT_W0_OFFSET);
-        fm_byte next_w1_offset = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, NEXT_W1_OFFSET);
-        fm_byte next_w2_offset = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, NEXT_W2_OFFSET);
-
-        fm_uint32 ana_s_val[MBY_PARSER_ANA_S_WIDTH];
-
-        mbyModelReadCSRMult(MBY_PARSER_ANA_S(s, r_hit, 0), MBY_PARSER_ANA_S_WIDTH, ana_s_val);
-
-        fm_uint16 next_ana_state      = FM_ARRAY_GET_FIELD(ana_s_val, MBY_PARSER_ANA_S, NEXT_STATE);
-        fm_uint16 next_ana_state_mask = FM_ARRAY_GET_FIELD(ana_s_val, MBY_PARSER_ANA_S, NEXT_STATE_MASK); 
-        fm_uint16 next_op             = FM_ARRAY_GET_FIELD(ana_s_val, MBY_PARSER_ANA_S, NEXT_OP);   
-
         // Update if a rule matched this stage, else pass unchanged to next stage:
         if (rule_matched) 
         {
+            // Get analyzer fields:
+            fm_int    r_hit = hit_idx[s];
+            fm_uint32 ana_w_val[MBY_PARSER_ANA_W_WIDTH];
+            
+            mbyModelReadCSRMult(regs, MBY_PARSER_ANA_W(s, r_hit, 0), MBY_PARSER_ANA_W_WIDTH, ana_w_val);
+
+            fm_byte skip           = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, SKIP);
+            fm_byte next_w0_offset = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, NEXT_W0_OFFSET);
+            fm_byte next_w1_offset = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, NEXT_W1_OFFSET);
+            fm_byte next_w2_offset = FM_ARRAY_GET_FIELD(ana_w_val, MBY_PARSER_ANA_W, NEXT_W2_OFFSET);
+
+            fm_uint32 ana_s_val[MBY_PARSER_ANA_S_WIDTH];
+
+            mbyModelReadCSRMult(regs, MBY_PARSER_ANA_S(s, r_hit, 0), MBY_PARSER_ANA_S_WIDTH, ana_s_val);
+
+            fm_uint16 next_ana_state      = FM_ARRAY_GET_FIELD(ana_s_val, MBY_PARSER_ANA_S, NEXT_STATE);
+            fm_uint16 next_ana_state_mask = FM_ARRAY_GET_FIELD(ana_s_val, MBY_PARSER_ANA_S, NEXT_STATE_MASK); 
+            fm_uint16 next_op             = FM_ARRAY_GET_FIELD(ana_s_val, MBY_PARSER_ANA_S, NEXT_OP);   
+
             fm_uint32 tmp_op_result = ((((fm_uint32) w2) << 16) & 0xffff0000) |
                                       ((((fm_uint32) w2)      ) & 0x0000ffff) ; 
 
-            op_mask &= MBY_PA_ANA_OP_MASK_BITS; // 12 bits used
-            op_rot  &= MBY_PA_ANA_OP_ROT_BITS;  //  4 bits used
+            op_mask &= MBY_PA_ANA_OP_MASK_BITS;
+            op_rot  &= MBY_PA_ANA_OP_ROT_BITS;
 
             fm_uint16 op_result = (fm_uint16) ( (tmp_op_result >> op_rot) & ((fm_uint32) op_mask) );
             cur_ptr += op_result;
             if (cur_ptr > MBY_PA_MAX_PTR_LEN)
                 cur_ptr = MBY_PA_MAX_PTR_LEN;
 
+            // Update w0..w2 fields for next stage:
             w0 = getSegDataWord(cur_ptr + next_w0_offset, adj_seg_len, seg_data);
             w1 = getSegDataWord(cur_ptr + next_w1_offset, adj_seg_len, seg_data);
             w2 = getSegDataWord(cur_ptr + next_w2_offset, adj_seg_len, seg_data);
 
+            // Update state for next stage:
             ana_state = (ana_state & ~next_ana_state_mask) | (next_ana_state & next_ana_state_mask);
 
-            op_rot  = (next_op >> MBY_PA_ANA_OP_ROT_SHIFT) & MBY_PA_ANA_OP_ROT_BITS; // upper  4 of 16 bits
-            op_mask =  next_op & MBY_PA_ANA_OP_MASK_BITS;                            // lower 12 of 16 bits
+            // Update ALU op for next stage:
+            op_rot  = (next_op >> MBY_PA_ANA_OP_ROT_SHIFT) & MBY_PA_ANA_OP_ROT_BITS;
+            op_mask =  next_op & MBY_PA_ANA_OP_MASK_BITS;
 
+            // Update pointer for next stage:
             cur_ptr += skip;
             if (cur_ptr > MBY_PA_MAX_PTR_LEN) 
                 cur_ptr = MBY_PA_MAX_PTR_LEN;
@@ -216,42 +244,41 @@ void Parser
 
     } // for s ...
 
-    // Apply and resolve:
-    fm_bool s_ena = TRUE;
+    fm_bool s_ena = TRUE; // initially enable
 
+    // Carry out exception and extract actions (see correcponding sections in functional spec):
     for (fm_int s = 0; s < MBY_PA_ANA_STAGES; s++)
     {
-        // Calculate eof_exc:
-        fm_int    r_hit = hit_idx[s];
-        fm_uint32 pa_exc_val[MBY_PARSER_EXC_WIDTH];
-
-        mbyModelReadCSRMult(MBY_PARSER_EXC(s, r_hit, 0), MBY_PARSER_EXC_WIDTH, pa_exc_val);
-
-        fm_byte xa_ex_offset    = FM_ARRAY_GET_FIELD(pa_exc_val, MBY_PARSER_EXC, EX_OFFSET);
-        fm_bool xa_parsing_done = FM_ARRAY_GET_BIT  (pa_exc_val, MBY_PARSER_EXC, PARSING_DONE);
-        fm_bool eof_exc         = (ptr[s] + xa_ex_offset > adj_seg_len);
-        
-        // Disable starting from this rule:
+        // If stage is enabled, and have valid hit, then continue:
         if (s_ena && (hit_idx_v[s] == 1))
         {
-            if (eof_exc)
-            {
-                s_ena = FALSE;
+            // Exception action:
+            fm_int    r_hit = hit_idx[s];
+            fm_uint32 pa_exc_val[MBY_PARSER_EXC_WIDTH];
 
+            mbyModelReadCSRMult(regs, MBY_PARSER_EXC(s, r_hit, 0), MBY_PARSER_EXC_WIDTH, pa_exc_val);
+
+            fm_byte xa_ex_offset    = FM_ARRAY_GET_FIELD(pa_exc_val, MBY_PARSER_EXC, EX_OFFSET);
+            fm_bool xa_parsing_done = FM_ARRAY_GET_BIT  (pa_exc_val, MBY_PARSER_EXC, PARSING_DONE);
+            fm_bool eof_exc         = (adj_seg_len < (ptr[s] + xa_ex_offset)); // a.k.a. EOS
+
+            if (eof_exc) // end-of-file exception
+             {
+                s_ena = FALSE; // disable further processing
                 out->PA_EX_STAGE = s & 0x1F; // 5 bits
-
                 if (eop == 1)
                     out->PA_EX_TRUNC_HEADER = 1; 
                 else
                     out->PA_EX_DEPTH_EXCEED = 1; 
             }
 
+            // Extraction action:
             for (fm_int wd = 0; wd < 2; wd++)
             {
                 fm_uint32 pa_ext_val[MBY_PARSER_EXT_WIDTH];
                 fm_int    r_hit_ex = r_hit + (wd * MBY_PA_ANA_RULES);
 
-                mbyModelReadCSRMult(MBY_PARSER_EXT(s, r_hit_ex, 0), MBY_PARSER_EXT_WIDTH, pa_ext_val);
+                mbyModelReadCSRMult(regs, MBY_PARSER_EXT(s, r_hit_ex, 0), MBY_PARSER_EXT_WIDTH, pa_ext_val);
 
                 fm_byte xa_key_start  = FM_ARRAY_GET_FIELD(pa_ext_val, MBY_PARSER_EXT, KEY_START);
                 fm_byte xa_key_len    = FM_ARRAY_GET_FIELD(pa_ext_val, MBY_PARSER_EXT, KEY_LEN);
@@ -284,17 +311,17 @@ void Parser
 
             } // for wd ...
 
-        } // if s_ena ...
+            if (xa_parsing_done == 1) {
+                s_ena                   = FALSE;
+                out->PA_EX_STAGE        = s & 0x1F; // 5 bits
+                out->PA_EX_PARSING_DONE = 1;
+            }
 
-        if ((s_ena == 1) && (hit_idx_v[s] == 1) && (xa_parsing_done == 1)) {
-            s_ena                     = FALSE;
-            out->PA_EX_STAGE        = s & 0x1F; // 5 bits
-            out->PA_EX_PARSING_DONE = 1;
-        }
+        } // if s_ena ...
 
     } // for s ...
 
-    // Checksum results for outer and inner IPv4:
+    // Perform checksum offloads & validations (see corresponding section in the func. spec):
     out->PA_CSUM_OK = 0;
 
     for (fm_uint32 p = 0; p <= 1; p++)
@@ -311,17 +338,10 @@ void Parser
         }
     } // for p ...
 
-    // Fetch related settings from PA_FLAGS:
-    fm_bool otr_l4_udp_v       = out->PA_FLAGS[MBY_PA_OTR_L4_UDP_V_FLAG];
-    fm_bool otr_l4_tcp_v       = out->PA_FLAGS[MBY_PA_OTR_L4_TCP_V_FLAG];
-    fm_bool otr_payload_frag_v = out->PA_FLAGS[MBY_PA_OTR_PAYLOAD_FRAG_V_FLAG];
-    fm_bool otr_head_frag_v    = out->PA_FLAGS[MBY_PA_OTR_HEAD_FRAG_V_FLAG];
+    // Fetch flags and pointers:
+    fm_byte otr_l3_ptr         = out->PA_PTRS[MBY_OTR_L3_PTR];
+    fm_bool otr_l3_v           = out->PA_FLAGS[MBY_PA_OTR_L3_V_FLAG];
 
-    // Fetch related pointers from PA_PTRS:
-    fm_byte otr_l3_ptr = out->PA_PTRS[MBY_OTR_L3_PTR];
-    fm_byte otr_l4_ptr = out->PA_PTRS[MBY_OTR_L4_PTR];
-
-    fm_bool otr_l3_v = out->PA_FLAGS[MBY_PA_OTR_L3_V_FLAG];
     fm_bool is_ipv4  = (otr_l3_v && (out->PA_KEYS_VALID[MBY_OTR_IPHDR_KEY] == 1));
     fm_bool is_ipv6  = (otr_l3_v && (out->PA_KEYS_VALID[MBY_OTR_IPHDR_KEY] == 0));
     
@@ -334,69 +354,17 @@ void Parser
     for (fm_int i = 0; i < n_keys; i++)
         l3_vld_chk &= (out->PA_KEYS_VALID[MBY_OTR_IPADDR_KEY + i] == 1);
 
-    // Fetch the appropriate PARSER_CSUM_CFG entry:
+    // Read checksum configuration registers:
     fm_uint32 pa_csum_cfg_val[MBY_PARSER_CSUM_CFG_WIDTH];
 
-    mbyModelReadCSRMult(MBY_PARSER_CSUM_CFG(in->RX_PORT, 0), MBY_PARSER_CSUM_CFG_WIDTH, pa_csum_cfg_val);
+    mbyModelReadCSRMult(regs, MBY_PARSER_CSUM_CFG(in->RX_PORT, 0), MBY_PARSER_CSUM_CFG_WIDTH, pa_csum_cfg_val);
 
-    fm_byte store_l4_partial = FM_ARRAY_GET_BIT  (pa_csum_cfg_val, MBY_PARSER_CSUM_CFG, STORE_L4_PARTIAL_CSUM);
-    fm_byte compute_l4_csum  = FM_ARRAY_GET_BIT  (pa_csum_cfg_val, MBY_PARSER_CSUM_CFG, COMPUTE_L4_CSUM);
-    fm_bool val_l3_len       = FM_ARRAY_GET_FIELD(pa_csum_cfg_val, MBY_PARSER_CSUM_CFG, VALIDATE_L3_LENGTH);
-
-    // Calculate the pointers:
-    fm_uint16 l3_len    = out->PA_KEYS[MBY_OTR_IPHDR_KEY + ip_len];
-    fm_uint16 start_ptr = otr_l4_ptr;
-    fm_uint16 end_ptr   = otr_l3_ptr + l3_len + ((is_ipv6) ? MBY_PSEUDOHEADER_SIZE : 0);
-
-    fm_uint16 csum_start_ptr = (otr_l4_tcp_v) ? start_ptr + 16 : ((otr_l4_udp_v) ? start_ptr + 6 : 0);
-    fm_uint16 csum_end_ptr   = (otr_l4_tcp_v) ? start_ptr + 18 : ((otr_l4_udp_v) ? start_ptr + 8 : 0);
-
-    fm_bool store_partial_csum_en = ((store_l4_partial != 0) && (otr_head_frag_v == 1));
-
-    fm_byte csum_array[MBY_PA_MAX_DATA_SZ]; // buffer for checksum calculations
-
-    // Populate the checksum array:
-    fm_uint16 cb_ptr = 0;
-    if (store_partial_csum_en) {
-        for (fm_uint pl = start_ptr; (pl < end_ptr) && (cb_ptr < MBY_PA_MAX_DATA_SZ) && (pl < rlen); pl++) {
-            csum_array[cb_ptr] = ((pl >= csum_start_ptr) && (pl < csum_end_ptr)) ? in->RX_DATA[pl] : 0;
-            cb_ptr++;
-        }
-    } else if ((rlen - 4) > MBY_PA_MAX_SEG_LEN) {
-        for (fm_uint pl = MBY_PA_MAX_SEG_LEN; (cb_ptr < MBY_PA_MAX_DATA_SZ) && (pl < (rlen - 4)); pl++) {
-            csum_array[cb_ptr] = in->RX_DATA[pl];
-            cb_ptr++;
-        }
-    }
+    fm_bool val_l3_len = FM_ARRAY_GET_FIELD(pa_csum_cfg_val, MBY_PARSER_CSUM_CFG, VALIDATE_L3_LENGTH);
+    fm_uint16 l3_len   = out->PA_KEYS[MBY_OTR_IPHDR_KEY + ip_len];
 
     // Clear flags:
-    out->PA_CSUM_ERR   = 0;
     out->PA_L3LEN_ERR  = 0;
-    out->TAIL_CSUM_LEN = 0;
     
-    // Calculate checksum:
-    fm_uint32 calc_l4_csum = calcGenericChksum(csum_array, cb_ptr);
-
-    if (store_partial_csum_en)
-    {
-        FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 30,  3, 0x3);  // set l4csum_len struct 'code' value
-        FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 16, 14, rlen); // set l4csum_len 'packet length' value
-
-        // Note: since UDP doesn't allow 0 csum, design sets this "pre-complemented value" to 0
-        FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 0, 16, ((calc_l4_csum == 0) ? 0 : ~calc_l4_csum));
-
-    } else { 
-
-        FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 30,  3, 0x0);  // set l4csum_len struct 'code' value
-        FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 16, 14, rlen); // set l4csum_len 'packet length' value
-
-        if ( ((rlen-4) > MBY_PA_MAX_SEG_LEN) && (calc_l4_csum != 0) ) {
-            FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 0, 16, ~calc_l4_csum); // set l4csum_len 'checksum' value
-        } else {
-            FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 0, 16,  calc_l4_csum); // set l4csum_len 'checksum' value
-        }
-    }
-
     // Validate packet length:
     if (val_l3_len && l3_vld_chk)
     {
@@ -405,20 +373,8 @@ void Parser
         if (rlen < min_pkt_len)
         {
             out->PA_L3LEN_ERR = 1;
-
-            // per "Fragment Handling" table in Parser HAS, L3 Len Validation overrides csum offload for fragments
-            if (store_partial_csum_en)
-                out->TAIL_CSUM_LEN = 0;
-
-            FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 30,  3, 1);    // set l4csum_len 'code'          value
-            FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 16, 14, rlen); // set l4csum_len 'packet length' value
-
-            if (val_l3_len == 1) {
+            if (val_l3_len)
                 out->PA_DROP = 1;
-                FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 2, 1, 1); // also mark drop in l4csum_len struct
-            }
-
-            FM_SET_UNNAMED_FIELD64(out->TAIL_CSUM_LEN, 1, 1, 1); // also mark l3 len error in l4csum_len struct
         }
     }
 }
