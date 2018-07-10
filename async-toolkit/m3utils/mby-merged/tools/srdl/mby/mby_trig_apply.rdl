@@ -840,26 +840,26 @@ reg trigger_stats_r {
 addrmap mby_ppe_trig_apply_map {
   name = "trig_apply";
   desc = "Trigger Registers";
-  addressing = fullalign;
+  addressing = regalign;
   Space = "MSG";
   Opcode = "MEM-SB";
   No_IOSF_Primary=true;
   
-  trigger_condition_cfg_r             TRIGGER_CONDITION_CFG[96]        ;
-  trigger_condition_param_r           TRIGGER_CONDITION_PARAM[96]      ;
-  trigger_condition_cgrp_r            TRIGGER_CONDITION_CGRP[96]       ;
-  trigger_condition_type_r            TRIGGER_CONDITION_TYPE[96]       ;
-  trigger_condition_glort_r           TRIGGER_CONDITION_GLORT[96]      ;
-  trigger_condition_rx_r              TRIGGER_CONDITION_RX[96]         ;
-  trigger_condition_tx_rf             TRIGGER_CONDITION_TX[96]         ;
-  trigger_condition_amask_1_r         TRIGGER_CONDITION_AMASK_1[96]    ;
-  trigger_condition_amask_2_r         TRIGGER_CONDITION_AMASK_2[96]    ;
-  trigger_action_cfg_1_r              TRIGGER_ACTION_CFG_1[96]         ;
-  trigger_action_cfg_2_r              TRIGGER_ACTION_CFG_2[96]         ;
-  trigger_action_glort_r              TRIGGER_ACTION_GLORT[96]         ;
-  trigger_action_dmask_r              TRIGGER_ACTION_DMASK[96]         ;
-  trigger_action_mirror_r             TRIGGER_ACTION_MIRROR[96]        ;
-  trigger_action_drop_r               TRIGGER_ACTION_DROP[96]          ;
-  trigger_stats_r                     TRIGGER_STATS[96]                ;
+  trigger_condition_cfg_r             TRIGGER_CONDITION_CFG[96]        += 8;
+  trigger_condition_param_r           TRIGGER_CONDITION_PARAM[96]      += 8;
+  trigger_condition_cgrp_r            TRIGGER_CONDITION_CGRP[96]       += 8;
+  trigger_condition_type_r            TRIGGER_CONDITION_TYPE[96]       += 8;
+  trigger_condition_glort_r           TRIGGER_CONDITION_GLORT[96]      += 8;
+  trigger_condition_rx_r              TRIGGER_CONDITION_RX[96]         += 8;
+  trigger_condition_tx_rf             TRIGGER_CONDITION_TX[96]         += 8;
+  trigger_condition_amask_1_r         TRIGGER_CONDITION_AMASK_1[96]    += 8;
+  trigger_condition_amask_2_r         TRIGGER_CONDITION_AMASK_2[96]    += 8;
+  trigger_action_cfg_1_r              TRIGGER_ACTION_CFG_1[96]         += 8;
+  trigger_action_cfg_2_r              TRIGGER_ACTION_CFG_2[96]         += 8;
+  trigger_action_glort_r              TRIGGER_ACTION_GLORT[96]         += 8;
+  trigger_action_dmask_r              TRIGGER_ACTION_DMASK[96]         += 8;
+  trigger_action_mirror_r             TRIGGER_ACTION_MIRROR[96]        += 8;
+  trigger_action_drop_r               TRIGGER_ACTION_DROP[96]          += 8;
+  trigger_stats_r                     TRIGGER_STATS[96]                += 8;
 };
 
