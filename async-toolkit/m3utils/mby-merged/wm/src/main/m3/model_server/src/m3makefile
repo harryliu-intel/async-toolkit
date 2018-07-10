@@ -9,6 +9,8 @@ import ("modula3scheme")
 import ("netobj")
 import ("sstubgen")
 
+include ("../AMD64_LINUX/derived.m3m")
+
 module ("ModelServer")
 
 %module ("HlpModelServer")

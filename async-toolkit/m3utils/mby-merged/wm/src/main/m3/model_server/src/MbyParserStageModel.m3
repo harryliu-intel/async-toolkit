@@ -10,7 +10,6 @@ IMPORT Metadata;
 IMPORT MbyParserMeta;
 IMPORT ModelStageResult;
 
-
 PROCEDURE HandlePacket(ipkt : Pkt.T;
                        h : TopAddr.H;
                        indices : Indices;
