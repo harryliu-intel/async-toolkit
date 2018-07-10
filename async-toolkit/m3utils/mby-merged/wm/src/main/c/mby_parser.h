@@ -261,5 +261,12 @@ typedef struct _mbyParserToMapper
     
 } mbyParserToMapper;
 
-#endif // MBY_PARSER_H
+// Function prototypes:
+void Parser
+(
+    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyMacToParser    * const in, 
+          mbyParserToMapper * const out
+);
 
+#endif // MBY_PARSER_H
