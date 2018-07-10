@@ -452,7 +452,7 @@ reg trigger_condition_rx_r {
   } SRC_PORT_MASK[16:0] = 17'h00;
 };
 
-// TRIGGER_CONDITION_TX[0..4]
+// TRIGGER_CONDITION_TX[0..95][0..4]
 
 reg trigger_condition_tx_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -479,6 +479,12 @@ reg trigger_condition_tx_r {
     ValRandomize = true;
   } DEST_PORT_MASK[63:0] = 64'h00;
 };
+
+regfile trigger_condition_tx_rf {
+  trigger_condition_tx_r TRIGGER_CONDITION_TX[5];
+};
+
+
 
 reg trigger_condition_amask_1_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -839,21 +845,21 @@ addrmap mby_ppe_trig_apply_map {
   Opcode = "MEM-SB";
   No_IOSF_Primary=true;
   
-  trigger_condition_cfg_r             TRIGGER_CONDITION_CFG             ;
-  trigger_condition_param_r           TRIGGER_CONDITION_PARAM           ;
-  trigger_condition_cgrp_r            TRIGGER_CONDITION_CGRP            ;
-  trigger_condition_type_r            TRIGGER_CONDITION_TYPE            ;
-  trigger_condition_glort_r           TRIGGER_CONDITION_GLORT           ;
-  trigger_condition_rx_r              TRIGGER_CONDITION_RX              ;
-  trigger_condition_tx_r              TRIGGER_CONDITION_TX[5]           ;
-  trigger_condition_amask_1_r         TRIGGER_CONDITION_AMASK_1         ;
-  trigger_condition_amask_2_r         TRIGGER_CONDITION_AMASK_2         ;
-  trigger_action_cfg_1_r              TRIGGER_ACTION_CFG_1              ;
-  trigger_action_cfg_2_r              TRIGGER_ACTION_CFG_2              ;
-  trigger_action_glort_r              TRIGGER_ACTION_GLORT              ;
-  trigger_action_dmask_r              TRIGGER_ACTION_DMASK              ;
-  trigger_action_mirror_r             TRIGGER_ACTION_MIRROR             ;
-  trigger_action_drop_r               TRIGGER_ACTION_DROP               ;
-  trigger_stats_r                     TRIGGER_STATS                     ;
+  trigger_condition_cfg_r             TRIGGER_CONDITION_CFG[96]        ;
+  trigger_condition_param_r           TRIGGER_CONDITION_PARAM[96]      ;
+  trigger_condition_cgrp_r            TRIGGER_CONDITION_CGRP[96]       ;
+  trigger_condition_type_r            TRIGGER_CONDITION_TYPE[96]       ;
+  trigger_condition_glort_r           TRIGGER_CONDITION_GLORT[96]      ;
+  trigger_condition_rx_r              TRIGGER_CONDITION_RX[96]         ;
+  trigger_condition_tx_rf             TRIGGER_CONDITION_TX[96]         ;
+  trigger_condition_amask_1_r         TRIGGER_CONDITION_AMASK_1[96]    ;
+  trigger_condition_amask_2_r         TRIGGER_CONDITION_AMASK_2[96]    ;
+  trigger_action_cfg_1_r              TRIGGER_ACTION_CFG_1[96]         ;
+  trigger_action_cfg_2_r              TRIGGER_ACTION_CFG_2[96]         ;
+  trigger_action_glort_r              TRIGGER_ACTION_GLORT[96]         ;
+  trigger_action_dmask_r              TRIGGER_ACTION_DMASK[96]         ;
+  trigger_action_mirror_r             TRIGGER_ACTION_MIRROR[96]        ;
+  trigger_action_drop_r               TRIGGER_ACTION_DROP[96]          ;
+  trigger_stats_r                     TRIGGER_STATS[96]                ;
 };
 

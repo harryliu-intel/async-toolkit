@@ -33,7 +33,7 @@ addrmap mby_ppe_rx_top_map {
   mby_ppe_rx_stats_map          stats;
   mby_ppe_cm_apply_map          cm_apply;
   mby_ppe_cm_usage_map          cm_usage;
-  mby_ppe_trig_apply_map        trig_appy[96];
+  mby_ppe_trig_apply_map        trig_appy;
   mby_ppe_trig_apply_misc_map   trig_apply_misc;
   mby_ppe_trig_usage_map        trig_usage;
 };
