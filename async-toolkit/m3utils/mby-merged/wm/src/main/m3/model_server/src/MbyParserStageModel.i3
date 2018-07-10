@@ -11,8 +11,7 @@ TYPE
     MptIdx : [0..2-1];
   END;
 
-PROCEDURE HandlePacket(from    : Coroutine.T;
-                       ipkt    : Pkt.T;
+PROCEDURE HandlePacket(ipkt    : Pkt.T;
                        h       : TopAddr.H;
                        indices : Indices;
                        imd     : Metadata.T;

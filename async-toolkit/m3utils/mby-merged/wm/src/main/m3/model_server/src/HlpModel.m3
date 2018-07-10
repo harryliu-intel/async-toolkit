@@ -21,7 +21,7 @@ PROCEDURE HandlePacket(server           : HlpModelServer.T;
                        pkt              : Pkt.T) =
   VAR
     sender : Sender := NIL;
-    mode := Mode.Reflect;
+    mode := Mode.Pipe;
   BEGIN
     CASE mode OF
       Mode.Flood => FloodPktHandler(hdr, pkt, sender)

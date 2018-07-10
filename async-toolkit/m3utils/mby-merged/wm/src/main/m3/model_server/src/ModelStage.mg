@@ -1,7 +1,7 @@
 GENERIC MODULE ModelStage(TopAddr, Model);
 IMPORT Coroutine;
 IMPORT BaseModelStage;
-IMPORT ModelStageResult;
+IMPORT ModelStageResult, ModelStageResultClass;
 IMPORT ServerPacket AS Pkt;
 IMPORT Metadata;
 
@@ -10,13 +10,12 @@ PROCEDURE Init(t : T;
                indices : Model.Indices;
                prev : BaseModelStage.T) : T =
   BEGIN
-    t.res := NEW(Res);
     t.prev := prev;
-    t.indices := indices;
+    t.indices := indices; 
     WITH cl = NEW(Closure, h := h, t := t) DO
-      t.co := Coroutine.Create(cl)
+      t.res := NEW(Res).init(Coroutine.Create(cl))
     END;
-    EVAL Coroutine.Call(t.co); (* setup part of coroutine *)
+    EVAL Coroutine.Call(t.res.co); (* setup part of coroutine *)
     RETURN t
   END Init;
 
@@ -25,7 +24,6 @@ REVEAL
     indices : Model.Indices;
     res     : Res;
     prev    : BaseModelStage.T;
-    co      : Coroutine.T;
   OVERRIDES
     init := Init;
     poll := Poll;
@@ -62,8 +60,7 @@ PROCEDURE Apply(cl : Closure; from : Coroutine.T) : REFANY =
         WITH haveInput = cl.t.prev.poll(ipkt, imd) DO
           IF haveInput THEN
             cl.t.res.ready := TRUE;
-            Model.HandlePacket(from,
-                               ipkt,
+            Model.HandlePacket(ipkt,
                                cl.t.h,
                                cl.t.indices,
                                imd,
@@ -78,7 +75,7 @@ PROCEDURE Apply(cl : Closure; from : Coroutine.T) : REFANY =
 
 PROCEDURE Poll(t : T; VAR out : Pkt.T; VAR meta : Metadata.T) : BOOLEAN =
   BEGIN
-    EVAL Coroutine.Call(t.co);
+    EVAL Coroutine.Call(t.res.co);
     IF t.res.ready THEN
       out := t.res.opkt;
       meta := t.res.om
