@@ -618,7 +618,7 @@
   ;;(dis "CONSTRAINT: " (stringify constraint) dnl)
   (case (car constraint)
     ((constant)
-     (sa "    IF t."nm" # " (symbol->m3integer (cadr constraint))
+     (sa "    IF "nm" # " (symbol->m3integer (cadr constraint))
                     " THEN RETURN FALSE END;" dnl))
     
     ((constraint)
@@ -692,7 +692,25 @@
 ;;
 
 (define (get-m3-bitstype n)
-  (M3Support.Modula3Type n))
+  (cond ((number? n) (M3Support.Modula3Type n))
+        ((and (list? n) (eq? (car n) 'array))
+         (let ((asz (cadr n))
+               (et  (caddr n)))
+           (string-append "ARRAY [0.." (number->string asz) "-1] OF "
+                          (get-m3-bitstype et))))
+        (else (error "unknown bitstype " n))))
+
+(define (get-field-size f)
+   (let* ((field-name (car f))
+          (n (cadr f)))
+    (cond ((number? n) n)
+        ((and (list? n) (eq? (car n) 'array))
+         (let ((asz (cadr n))
+               (et  (caddr n)))
+           (* asz (get-field-size (list field-name et))))))))
+   
+          
+ 
 
 (define (emit-bitstruct-field-type f i-wr)
   (let* ((field-name (car f))
@@ -706,16 +724,38 @@
         )
     (dis "    " field-name " : " (get-m3-bitstype field-type) defval ";" dnl i-wr)))
 
+(define (loopit func f wr dummy) ;; the labels get messed up!
+  (let* ((field-name (car f))
+         (n          (cadr f)))
+   (cond ((number? n) (func f wr dummy))
+         ((and (list? n) (eq? (car n) 'array))
+          (let ((res '())
+                (asz (cadr n))
+                (et  (caddr n)))
+            (dis "FOR i := 0 TO " (number->string asz) "-1 DO" dnl
+                 "  WITH qqqq__ = " field-name "[i] DO" dnl
+                 wr)
+            
+            (set! res (* asz (loopit func `(qqqq__ ,et) wr dummy)))
+            (dis "  END" dnl
+                 "END;" dnl wr)
+            res
+            )
+          )
+         (else (error "unknown bitstype " n)))
+   ))
+    
 (define (emit-bitstruct-field-format f wr dummy)
   (let ((field-name (car f))
         (field-type (cadr f))
         )
     (dis
      "    Wx.PutText(wx,\""field-name"=\");" dnl
-     "    Wx.PutText(wx,StructField.Format(t."field-name",wid:="field-type"));" dnl
+     "    Wx.PutText(wx,StructField.Format("field-name",wid:="field-type"));" dnl
      "    Wx.PutChar(wx, ' ');" dnl
      wr
      )
+    0
     )
   )
 
@@ -727,15 +767,20 @@
         (dis "    (*no constraint "field-name" *)" dnl wr)
         (dis "    (*have constraint "field-name" " (stringify (car tail)) " *)" dnl
              (get-bitstruct-constraint-check field-name field-type (car tail))
-             dnl wr))))
+             dnl wr))
+    0
+    ))
 
 (define (emit-bitstruct-field-readsb f wr start-bit)
   (let ((field-name (car f))
         (field-type (cadr f)))
+
+    ;;(dis "emitting field " field-name " of type " field-type dnl)
+    
     (dis "    (* "field-name" @ "start-bit":+"field-type" *)" dnl
          wr)
     (dis "    IF NOT Pkt.ExtractBits(s, at, "start-bit", "field-type", w) THEN RETURN FALSE END;" dnl wr)
-    (dis "    t."field-name" := w;" dnl wr)
+    (dis "    "field-name" := w;" dnl wr)
     (+ start-bit field-type)))
 
 (define (emit-bitstruct-field-writee f wr start-bit)
@@ -743,7 +788,7 @@
         (field-type (cadr f)))
     (dis "    (* "field-name" @ "start-bit":+"field-type" *)" dnl
          wr)
-    (dis "    Pkt.ArrPut(a, "start-bit", t."field-name", "field-type");" dnl wr)
+    (dis "    Pkt.ArrPut(a, "start-bit", "field-name", "field-type");" dnl wr)
     (+ start-bit field-type)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -780,7 +825,11 @@
         (put-m3-proc whch i3-wr m3-wr)
         (dis "  VAR " decls dnl m3-wr)
         (dis "  BEGIN" dnl m3-wr)
-        (map (lambda(f)(set! q (emitter f m3-wr q))) fields)
+        (map (lambda(f)(set! q (loopit
+                                emitter
+                                (cons (string-append "t." (car f)) (cdr f))
+                                m3-wr
+                                q))) fields)
 
         (dis "    " pre-return dnl m3-wr)
         (dis "    RETURN " return dnl m3-wr)
@@ -847,7 +896,7 @@
                ""
                0)
     
-    (dis dnl "CONST LengthBits = " (accumulate + 0 (map cadr fields)) ";" dnl
+    (dis dnl "CONST LengthBits = " (accumulate + 0 (map get-field-size fields)) ";" dnl
          dnl i3-wr)
 
     (close-m3 m3-wrs)
