@@ -30,7 +30,7 @@ reg egress_vid_table_r {
   field {
     AccessType = "RW";
     desc = "
-            For 64 ports of the total 257 bit mask, defines if this port is member of this VLAN or not.
+            For 64 ports of the total 258 bit mask, defines if this port is member of this VLAN or not.
            ";
     ValRandomize = true;
   } MEMBERSHIP[63:0] = 64'h00;
@@ -250,7 +250,7 @@ reg egress_mst_table_r {
   field {
     AccessType = "RW";
     desc = "
-            Defines forwarding state for 64 of 257 ports.
+            Defines forwarding state for 64 of 258 ports.
            ";
     ValRandomize = true;
   } FORWARDING[63:0] = 64'h00;
@@ -377,7 +377,7 @@ reg glort_direct_map_dst0_r {
   field {
     AccessType = "RW";
     desc = "
-            Contains bits 0..63 of the 257-bit destination port mask (not 
+            Contains bits 0..63 of the 258-bit destination port mask (not 
             including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
@@ -404,7 +404,7 @@ reg glort_direct_map_dst1_r {
   field {
     AccessType = "RW";
     desc = "
-            Contains bits 64..127 of the 257-bit destination port mask (not 
+            Contains bits 64..127 of the 258-bit destination port mask (not 
             including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
@@ -430,7 +430,7 @@ reg glort_direct_map_dst2_r {
   field {
     AccessType = "RW";
     desc = "
-            Contains bits 128..191 of the 257-bit destination port mask (not 
+            Contains bits 128..191 of the 258-bit destination port mask (not 
             including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
@@ -457,7 +457,7 @@ reg glort_direct_map_dst3_r {
   field {
     AccessType = "RW";
     desc = "
-            Contains bits 192..255 of the 257-bit destination port mask (not 
+            Contains bits 192..255 of the 258-bit destination port mask (not 
             including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
@@ -492,7 +492,7 @@ reg glort_direct_map_dst4_r {
   field {
     AccessType = "RW";
     desc = "
-            Contains bits 256..257 of the 257-bit destination port mask (not 
+            Contains bits 256..257 of the 258-bit destination port mask (not 
             including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
