@@ -80,7 +80,6 @@ Key | KeyInvert |    Matches
  1  |     1     | Neither 0 nor 1
 
 *)
-
 PROCEDURE LookupInTcamSlice( search : KeyString ;
 			     slice : TcamSlice ) :
 		  	     REF ARRAY OF BOOLEAN ;
