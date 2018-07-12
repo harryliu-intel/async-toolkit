@@ -1,5 +1,4 @@
 import( "libm3" )
 implementation( "Main" )
-interface( "Tcam" )
-implementation( "Tcam" )
+module( "Tcam" )
 program( "tcamtest" )
