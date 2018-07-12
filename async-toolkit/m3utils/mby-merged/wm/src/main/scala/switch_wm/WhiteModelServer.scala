@@ -366,12 +366,14 @@ object WhiteModelServer {
     /// rx_ppe is not an array, so it can be referenced through transparently
     val b = theCsr.mpt(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
     /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
-    val c = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
+    val c : Long = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
 
     val test = theCsr.mpt(0).rx_ppe.policers
     println("theCsr.mpt(0).rx_ppe.policers path is " + test.path)
-    val test1 = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1)
-    println("theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1) path is " + test1.path)
+    theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).USAGE_OVER_LIMIT() = 1
+    theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).OVER_LIMIT() = 1
+
+
 
     //
     implicit class csum_convenience (val x : mby_ppe_modify_map) {
