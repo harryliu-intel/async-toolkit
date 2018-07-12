@@ -2,7 +2,9 @@ package switch_wm.csr
 
 import switch_wm.PrimitiveTypes.U64
 
-
+/** Base class for RDL structure (i.e. address maps, regfiles, registers)
+  *
+  */
 abstract class RdlElement {
   import scala.collection._
   val changes : mutable.Set[RdlElement => Unit] = new mutable.HashSet[RdlElement => Unit]
@@ -77,5 +79,3 @@ abstract class RdlRegisterFile(parent : Option[RdlHierarchy]) extends RdlHierarc
     // and the on my parent, recursively
   }
 }
-
-
