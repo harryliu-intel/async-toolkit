@@ -274,8 +274,7 @@ PROCEDURE PutObject(tn : TEXT; gs : GenState) =
   BEGIN
     gs.main("object %s {\n", tn);
     gs.main("  def apply(parent : RdlHierarchy) : %s = apply(Some(parent))\n", tn);
-    gs.main("  def apply() : %s = apply(None)\n", tn);
-    gs.main("  def apply(parent : Option[RdlHierarchy]) : %s = {\n", tn);
+    gs.main("  def apply(parent : Option[RdlHierarchy] = None) : %s = {\n", tn);
     gs.main("    new %s(parent)\n", tn);
     gs.main("  }\n");
     (* what's that implicit def stuff in Michael's email? *)
