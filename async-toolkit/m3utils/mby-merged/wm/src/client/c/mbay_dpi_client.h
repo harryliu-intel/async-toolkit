@@ -27,9 +27,6 @@
 #define __MBAY_DPI_CLIENT_H_
 
 #include <stdint.h>
-#ifndef NO_SV
-#include "svdpi.h"
-#endif
 
 /* Error codes */
 enum wm_error {
@@ -52,25 +49,16 @@ int wm_disconnect(void);
 int wm_reg_write(const uint32_t addr, const uint64_t val);
 int wm_reg_read(const uint32_t addr, uint64_t *val);
 
+#define MAX_PKT_LEN 16384
+
 /* The pkt tx/rx from the WM */
 struct wm_pkt {
-	uint16_t port;
+	uint8_t data[MAX_PKT_LEN];
 	uint32_t len;
-	uint8_t *data;
+	uint16_t port;
 };
 
 int wm_pkt_push(const struct wm_pkt *pkt);
 int wm_pkt_get(struct wm_pkt *pkt);
-
-#ifndef NO_SV
-struct wm_svpkt {
-	uint16_t port;
-	uint32_t len;
-	svOpenArrayHandle sv_data;
-};
-
-int wm_svpkt_push(const struct wm_svpkt *svpkt);
-int wm_svpkt_get(struct wm_svpkt *svpkt);
-#endif
 
 #endif /* __MBAY_DPI_CLIENT_H_ */

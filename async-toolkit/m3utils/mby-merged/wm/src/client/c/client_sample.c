@@ -147,8 +147,6 @@ int test_pkts(void)
 		0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
 		0xee, 0x7f, 0xec, 0xb0
 	};
-	/* TODO pkt should be big enough to contain the data */
-	uint8_t rx_pkt_data[1000];
 	struct wm_pkt tx_pkt;
 	struct wm_pkt rx_pkt;
 	unsigned int i;
@@ -156,14 +154,13 @@ int test_pkts(void)
 
 	tx_pkt.port = 1;
 	tx_pkt.len = sizeof(tx_pkt_data);
-	tx_pkt.data = tx_pkt_data;
+	memcpy(tx_pkt.data, tx_pkt_data, sizeof(tx_pkt_data));
 	err = wm_pkt_push(&tx_pkt);
 	if (err) {
 		printf("Error sending traffic: %d\n", err);
 		return err;
 	}
 
-	rx_pkt.data = rx_pkt_data;
 	err = wm_pkt_get(&rx_pkt);
 	if (err) {
 		printf("Error receiving traffic: %d\n", err);

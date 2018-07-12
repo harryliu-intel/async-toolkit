@@ -42,9 +42,6 @@
 #include <stddef.h>
 #include <libgen.h>
 #include <sys/param.h>
-#ifndef NO_SV
-#include "svdpi_src.h"
-#endif
 
 #include "mbay_dpi_client.h"
 #include "client_types.h"
@@ -414,8 +411,8 @@ int wm_pkt_push(const struct wm_pkt *pkt)
 	int off = 0;
 	int err;
 
-	if (!pkt || !pkt->data) {
-		LOG_ERROR("Input pointer to pkt or pkt->data is NULL\n");
+	if (!pkt) {
+		LOG_ERROR("Input pointer to pkt is NULL\n");
 		return WM_ERR_INVALID_ARG;
 	}
 
@@ -477,8 +474,8 @@ int wm_pkt_get(struct wm_pkt *pkt)
 		return WM_ERR_RUNTIME;
 	}
 
-	if (!pkt || !pkt->data) {
-		LOG_ERROR("Input pointer to pkt or pkt->data is NULL\n");
+	if (!pkt) {
+		LOG_ERROR("Input pointer to pkt is NULL\n");
 		return WM_ERR_INVALID_ARG;
 	}
 
@@ -518,54 +515,6 @@ int wm_pkt_get(struct wm_pkt *pkt)
 
 	return WM_OK;
 }
-
-#ifndef NO_SV
-
-/* wm_svpkt_push() - SV wrapper for wm_pkt_push()
- *
- * Required to convert the memory buffer from SV to C format.
- */
-int wm_svpkt_push(const struct wm_svpkt *svpkt)
-{
-	struct wm_pkt pkt;
-
-	pkt.port = svpkt->port;
-	pkt.len = svpkt->len;
-	pkt.data = (uint8_t*) svGetArrayPtr(svpkt->data);
-
-	if (!pkt.data) {
-		LOG_ERROR("Cannot convert data buffer from SV to C\n");
-		return WM_ERR_INVALID_ARG;
-	}
-
-	return wm_pkt_push(pkt);
-}
-
-/* wm_svpkt_get() - SV wrapper for wm_pkt_get()
- *
- * Required to convert the memory buffer from SV to C format.
- */
-int wm_svpkt_get(struct wm_svpkt *svpkt)
-{
-	struct wm_pkt pkt;
-	int err;
-
-	pkt.port = svpkt->port;
-	pkt.len = svpkt->len;
-	pkt.data = (uint8_t*) svGetArrayPtr(svpkt->data);
-
-	if (!pkt.data) {
-		LOG_ERROR("Cannot convert data buffer from SV to C\n");
-		return WM_ERR_INVALID_ARG;
-	}
-
-	err = wm_pkt_get(&sv_pkt);
-	svpkt->port = pkt.port;
-	svpkt->len = pkt.len;
-
-	return err;
-}
-#endif /* #ifndef NO_SV */
 
 /*****************************************************************************
  *************************** Auxiliary functions *****************************
