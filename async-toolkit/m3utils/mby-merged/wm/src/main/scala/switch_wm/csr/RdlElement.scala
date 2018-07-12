@@ -41,10 +41,12 @@ abstract class RdlHierarchy(val parent : Option[RdlHierarchy]) extends RdlElemen
         val parentClass = p.getClass
         for (f <- parentClass.getDeclaredFields) {
           // println("examining "  + f.getName + " which is" + f.getType.getName)
+          val wasAccessible = f.isAccessible
           f.setAccessible(true)
           val obj = f.get(p)
           val m = obj.getClass.getMethod("indexOf",classOf[Object])
           val res = m.invoke(obj, this).asInstanceOf[Int]
+          f.setAccessible(wasAccessible)
           if ( res != -1 ) {
             return(s"${p.path}.${f.getName}($res)")
           }
