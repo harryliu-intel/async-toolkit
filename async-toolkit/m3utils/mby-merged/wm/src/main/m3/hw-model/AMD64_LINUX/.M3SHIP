@@ -1,0 +1,8 @@
+make_dir("/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/AMD64_LINUX")
+install_file(".M3EXPORTS", "/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/AMD64_LINUX", "0644")
+install_file(".M3WEB", "/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/AMD64_LINUX", "0644")
+make_dir("/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/src")
+install_file("../src/Main.m3", "/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/src", "0644")
+install_file("../src/Tcam.i3", "/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/src", "0644")
+install_file("../src/Tcam.m3", "/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/src", "0644")
+install_file("tcamtest", "/p/hdk/rtl/cad/x86-64_linux30/opensource/cm3/d5.10.0-20180622/pkg/hw-model/AMD64_LINUX", "0644")
