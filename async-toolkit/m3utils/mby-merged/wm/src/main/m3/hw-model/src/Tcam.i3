@@ -3,13 +3,6 @@
 
 INTERFACE Tcam ;
 
-(*************)
-(* Constants *)
-(*************)
-
-(* Number of entries per TCAM slice *)
-CONST NUM_ENTRIES = 1024 ;
-
 (*********)
 (* Types *)
 (*********)
@@ -26,7 +19,7 @@ END ;
 
 (* One TCAM slice with 40-bit entries *)
 TYPE TcamSlice = RECORD
-	NumEntries : INTEGER := 0 ;
+	NumEntries : [1..LAST(INTEGER)] := 1 ;
 	Log2EntriesPerChunk : [1..LAST(INTEGER)] := 1 ;
 	ChunkMask : REF ARRAY OF BOOLEAN := NIL ;
 	Entries : REF ARRAY OF Entry := NIL ;
@@ -54,7 +47,7 @@ EXCEPTION InvalidTCAMChunkConfiguration ;
 		      NumEntries / ( 2 ^ ( Log2EntriesPerChunk ) ) ; optional and
 		      initialized to all 'True' if not provided
 	- Entries : reference to an array of Entry records ; allows the user
-		    initialize the key, keyinvent, and valid bits in the TCAM entries ;
+		    initialize the Key strings, KeyInvert strings, and Valid bits in the TCAM entries ;
 		    optional and initialized to the default value of Entry if not provided
 	Returns TcamSlice record with the values described above.
 	- Raises InvalidTCAMEntryConfiguration when the length of Entries is not equal
@@ -73,13 +66,11 @@ PROCEDURE MakeSlice( NumEntries : [1..LAST(INTEGER)] ;
 	
 (* LookupInTcamSlice
 
-   - returns array of NUM_ENTRIES bools; '1' if that entry is a match, '0' o.w.
-   - chunk_mask :: 16-bit string; TCAM is divided into 16 chunks of 64 entries
-	           each; a '1' enables the chunk, a '0' disables the chunk
-   - search :: the 32-bit string you are using to search in the TCAM
-   - my_tcam :: array of NUM_ENTRIES entries
+   - search : the 40-bit string you are using to search in the TCAM slice
+   - slice : one TCAM slice to be searched
+   - Returns array of slice.NumEntries BOOLEANs; 'True' if that entry is a match, 'False' o.w.
 
-HLP TCAM Match Convention
+MBY TCAM Match Convention
 
 Key | KeyInvert |    Matches
 ------------------------------

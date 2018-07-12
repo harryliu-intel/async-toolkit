@@ -1,7 +1,0 @@
-% exports of hw-model
-_define_pgm("tcamtest")
-import_version("libm3", "AMD64_LINUX")
-import_version("m3core", "AMD64_LINUX")
-_map_add_module("Main.m3", "hw-model", "src", "hidden")
-_map_add_interface("Tcam.i3", "hw-model", "src", "hidden")
-_map_add_module("Tcam.m3", "hw-model", "src", "hidden")

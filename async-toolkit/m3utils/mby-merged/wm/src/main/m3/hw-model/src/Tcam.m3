@@ -52,11 +52,12 @@ BEGIN
 	(* Assigning Entries *)
 	IF Entries = NIL THEN
 		(* User didn't provide the entries *)
-		Entries := NEW( REF ARRAY OF Entry , NumEntries ) ;
+		slice_to_return.Entries := NEW( REF ARRAY OF Entry , NumEntries ) ;
 	ELSIF NUMBER( Entries^ ) # NumEntries THEN
-		(* "User provided entries array of invalid length" *)
+		(* "User provided Entries array of invalid length" *)
 		RAISE InvalidTCAMEntryConfiguration ;
 	ELSE
+		(* User provided Entries array of valid length *)
 		slice_to_return.Entries := Entries ;
 	END ;
 
