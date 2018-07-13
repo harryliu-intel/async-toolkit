@@ -51,6 +51,7 @@ interface ("MbyParserMeta")
 
 interface ("MbyTypes")
 interface ("MbyParserTypes")
+interface ("MbyParserSizes")
 interface ("MbyMacToParserMeta")
 interface ("MbyParserToMapperMeta")
 

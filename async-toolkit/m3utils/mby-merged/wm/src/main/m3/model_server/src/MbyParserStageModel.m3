@@ -7,8 +7,9 @@ IMPORT mby_ppe_parser_map_addr AS MapAddr;
 
 IMPORT ServerPacket AS Pkt;
 IMPORT Metadata;
-IMPORT MbyParserMeta;
 IMPORT ModelStageResult;
+IMPORT MbyMacToParserMeta;
+IMPORT MbyParserToMapperMeta;
 
 PROCEDURE HandlePacket(ipkt : Pkt.T;
                        h : TopAddr.H;
@@ -27,12 +28,12 @@ PROCEDURE HandlePacket(ipkt : Pkt.T;
 PROCEDURE HandlePacketInt(ipkt        : Pkt.T;
                           READONLY r  : Map.T;
                           READONLY u  : MapAddr.U;
-                          im          : Metadata.T;
+                          im          : MbyMacToParserMeta.T;
                           out         : ModelStageResult.T) =
   BEGIN
     (* duplicate, just to test *)
     FOR i := 1 TO 2 DO
-      out.push(opkt := ipkt, om := NEW(MbyParserMeta.T))
+      out.push(opkt := ipkt, om := NEW(MbyParserToMapperMeta.T))
     END
   END HandlePacketInt;
 
