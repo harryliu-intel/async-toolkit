@@ -49,6 +49,11 @@ module ("MbyParserStage")
 module ("MbyParserStageModel")
 interface ("MbyParserMeta")
 
+interface ("MbyTypes")
+interface ("MbyParserTypes")
+interface ("MbyMacToParserMeta")
+interface ("MbyParserToMapperMeta")
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % just testing stuff
 module ("HlpRepStageModel")
