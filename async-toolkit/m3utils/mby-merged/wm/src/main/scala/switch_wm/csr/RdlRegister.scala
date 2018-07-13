@@ -1,6 +1,8 @@
 package switch_wm.csr
 
 import switch_wm.PrimitiveTypes.U64
+import scala.collection.immutable.SortedMap
+
 
 object RegisterCounter {
     var count = 0
@@ -9,8 +11,8 @@ object RegisterCounter {
 abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElement {
   RegisterCounter.count += 1
 
-  def addressRegisterMap(baseAddress: Int): Map[Int, RdlElement] = {
-    Map[Int, RdlElement]((baseAddress, this))
+  def addressRegisterMap(baseAddress: Int): SortedMap[Int, RdlElement] = {
+    SortedMap[Int, RdlElement]((baseAddress, this))
   }
 
 
