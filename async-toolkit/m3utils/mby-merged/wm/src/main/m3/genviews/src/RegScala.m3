@@ -10,6 +10,7 @@ FROM Compiler IMPORT ThisFile, ThisLine;
 IMPORT Fmt;
 FROM Fmt IMPORT Int, F;
 IMPORT RegComponent;
+IMPORT RegChildSeq;
 FROM RegScalaConstants IMPORT IdiomName;
 IMPORT Debug;
 IMPORT AtomList, Atom;
@@ -176,6 +177,21 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     PutRegObject(myTn, gs);
   END GenReg;
 
+PROCEDURE PutChildrenDef(children : RegChildSeq.T;
+                         genState : RegGenState.T) 
+  RAISES {} =
+  VAR
+    gs : GenState := genState;
+  BEGIN
+    gs.main("  def children =");
+        FOR i := 0 TO children.size()-1 DO
+          WITH c = children.get(i) DO
+            gs.main(" %s ::", IdiomName(c.nm))
+          END
+        END;
+            gs.main("Nil\n");
+  END PutChildrenDef;
+
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
      one routine, viz., GenContainer *)
   
@@ -208,13 +224,8 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
         END
       END
     END;
-    gs.main("  def children =");
-        FOR i := 0 TO rf.children.size()-1 DO
-          WITH c  = rf.children.get(i) DO
-            gs.main(" %s ::", IdiomName(c.nm))
-          END
-        END;
-            gs.main("Nil\n");
+
+    PutChildrenDef(rf.children, gs);
     gs.main("}\n");
     PutObject(myTn, gs);
     FOR i := 0 TO rf.children.size()-1 DO
@@ -250,13 +261,7 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
         END
       END
     END;
-    gs.main("  def children =");
-    FOR i := 0 TO map.children.size()-1 DO
-      WITH c  = map.children.get(i) DO
-        gs.main(" %s ::", IdiomName(c.nm))
-      END
-    END;
-    gs.main("Nil\n");
+    PutChildrenDef(map.children, gs);
     gs.main("}\n");
 
     PutObject(myTn, gs);
