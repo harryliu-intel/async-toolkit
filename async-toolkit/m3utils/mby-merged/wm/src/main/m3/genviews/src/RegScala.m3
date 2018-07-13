@@ -183,13 +183,14 @@ PROCEDURE PutChildrenDef(children : RegChildSeq.T;
   VAR
     gs : GenState := genState;
   BEGIN
-    gs.main("  def children =");
-        FOR i := 0 TO children.size()-1 DO
-          WITH c = children.get(i) DO
-            gs.main(" %s ::", IdiomName(c.nm))
-          END
-        END;
-            gs.main("Nil\n");
+    gs.main("\n");
+    gs.main("  def children =\n");
+    FOR i := 0 TO children.size()-1 DO
+      WITH c = children.get(i) DO
+        gs.main("    %s ::\n", IdiomName(c.nm))
+      END
+    END;
+    gs.main("    Nil\n");
   END PutChildrenDef;
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
