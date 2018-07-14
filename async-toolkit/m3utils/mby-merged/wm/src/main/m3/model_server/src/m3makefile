@@ -40,7 +40,7 @@ Generic_module("BaseModelServer")
 module("MbyModelServer")
 
 interface("BaseModelStage")
-interface("Metadata")
+module("Metadata")
 Generic_module("ModelStage")
 module ("ModelStageResult")
 interface ("ModelStageResultClass")
@@ -54,6 +54,10 @@ interface ("MbyParserTypes")
 interface ("MbyParserSizes")
 interface ("MbyMacToParserMeta")
 interface ("MbyParserToMapperMeta")
+interface ("MbyParserToModifierMeta")
+interface ("MbyParserInfo")
+interface ("MbyMapperToClassifierMeta")
+interface ("MbyFfuTypes")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % just testing stuff

@@ -1,12 +1,16 @@
 INTERFACE MbyTypes;
 IMPORT Byte AS ByteIntf;
+IMPORT Word;
 
+CONST LS = Word.LeftShift;
+      
 TYPE
   PacketLen    = [0..16_ffff]; (* somewhat arbitrary *)
   Port         = [0..16_7f];   (* somewhat arbitrary *)
-  RxEplFlags   = [0..16_f];
+  RxEplFlags   = [0..LS(1,4)-1];
   Byte         = ByteIntf.T;
   SegmentLen   = [0..16_ffff]; (* cant be right *)
+  L2IvlanCntIndex = [0..16_ffff]; (* right? *)
 
 CONST Brand = "MbyTypes";
 

@@ -28,7 +28,7 @@ PROCEDURE HandlePacket(ipkt : Pkt.T;
 PROCEDURE HandlePacketInt(ipkt        : Pkt.T;
                           READONLY r  : Map.T;
                           READONLY u  : MapAddr.U;
-                          im          : MbyMacToParserMeta.T;
+                          im          : Metadata.T;
                           out         : ModelStageResult.T) =
   BEGIN
     (* duplicate, just to test *)
