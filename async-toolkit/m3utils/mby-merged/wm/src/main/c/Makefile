@@ -6,7 +6,9 @@ INC_DIR = .
 
 INCLUDES  = -I$(INC_DIR)
 
+SOURCES += mby_common.c
 SOURCES += mby_parser.c
+SOURCES += mby_mapper.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
@@ -50,7 +52,9 @@ DELFILES  = $(OBJECTS) *.o
 .PHONY: all
 all: $(OBJECTS)
 
+mby_common.o : mby_common.c mby_common.h
 mby_parser.o : mby_parser.c mby_parser.h
+mby_mapper.o : mby_mapper.c mby_mapper.h
 
 %.o: %.c
 	@echo '  Compiling' $<
