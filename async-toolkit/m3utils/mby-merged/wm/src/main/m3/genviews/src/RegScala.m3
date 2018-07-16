@@ -11,6 +11,7 @@ IMPORT Fmt;
 FROM Fmt IMPORT Int, F;
 IMPORT RegComponent;
 IMPORT RegChildSeq;
+IMPORT RegChild;
 FROM RegScalaConstants IMPORT IdiomName;
 IMPORT Debug;
 IMPORT AtomList, Atom;
@@ -193,6 +194,29 @@ PROCEDURE PutChildrenDef(children : RegChildSeq.T;
     gs.main("    Nil\n");
   END PutChildrenDef;
 
+PROCEDURE PutAddrMapDef(children : RegChildSeq.T;
+                        genState : RegGenState.T) 
+  RAISES {} =
+  VAR
+    gs : GenState := genState;
+  BEGIN
+    gs.main("\n");
+    gs.main("  override def addressRegisterMap(baseAddress: Int) = SortedMap[Int, RdlElement](");
+    FOR i := 0 TO children.size()-1 DO
+      WITH c = children.get(i) DO
+        gs.main("\n");
+        IF c.at = RegChild.Unspecified THEN
+          gs.main("    (-1, %s(0))", IdiomName(c.nm));
+        ELSE
+          gs.main("    (baseAddress + %s, %s(0))", Fmt.Int(BigInt.ToInteger(c.at.x)), IdiomName(c.nm));
+        END;
+        IF i # children.size()-1 THEN gs.main(",") END;
+      END
+    END;
+    gs.main(")\n");
+  END PutAddrMapDef;
+
+
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
      one routine, viz., GenContainer *)
   
@@ -206,6 +230,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package switch_wm.csr\n");
     gs.main("import switch_wm.PrimitiveTypes._\n");
+    gs.main("import scala.collection.immutable.SortedMap\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) ", myTn);
     IF rf.children.size() = 1 THEN
@@ -227,6 +252,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     END;
 
     PutChildrenDef(rf.children, gs);
+    PutAddrMapDef(rf.children, gs);
     gs.main("}\n");
     PutObject(myTn, gs);
     FOR i := 0 TO rf.children.size()-1 DO
@@ -247,6 +273,7 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     gs.main("package switch_wm.csr\n");
     gs.main("import switch_wm.PrimitiveTypes._\n");
     gs.main("import switch_wm.DegenerateIndexedSeq\n");
+    gs.main("import scala.collection.immutable.SortedMap\n");
 
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlAddressMap(parent) {\n", myTn);
@@ -263,6 +290,7 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
       END
     END;
     PutChildrenDef(map.children, gs);
+    PutAddrMapDef(map.children, gs);
     gs.main("}\n");
 
     PutObject(myTn, gs);
