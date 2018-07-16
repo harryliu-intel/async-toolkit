@@ -12,7 +12,7 @@ IMPORT Thread;
 
 CONST TE = Text.Equal;
       
-CONST Usage = "-is <none|underscore|hyphen> -os <none|underscore|hyphen> -ic <lower|upper|camel> -oc <lower|upper|camel>";
+CONST Usage = "-is <none|underscore|hyphen> -os <none|underscore|hyphen> -ic <lower|upper|camel> -oc <lower|upper|camel> [-sym <symbol>]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
@@ -38,6 +38,7 @@ VAR
   iCase, oCase : Case;
   rd : Rd.T;
   wr : Wr.T;
+  in : TEXT := NIL;
 BEGIN
   TRY
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
@@ -53,6 +54,9 @@ BEGIN
       IF pp.keywordPresent("-oc") THEN
         oCase := ParseCase(pp.getNext())
       END;
+      IF pp.keywordPresent("-sym") THEN
+        in := pp.getNext()
+      END;
       pp.skipParsed();
       pp.finish()
     END
@@ -64,13 +68,12 @@ BEGIN
   wr := Stdio.stdout;
   
   TRY
-    VAR
-      in := Rd.GetLine(rd);
-    BEGIN
-      Wr.PutText(wr, IdStyles.Convert(in, iCase, oCase, iSep, oSep));
-      Wr.PutChar(wr, '\n');
-      Wr.Close(wr)
-    END
+    IF in = NIL THEN
+      in := Rd.GetLine(rd)
+    END;
+    Wr.PutText(wr, IdStyles.Convert(in, iCase, oCase, iSep, oSep));
+    Wr.PutChar(wr, '\n');
+    Wr.Close(wr)
   EXCEPT
   END
 END Main.
