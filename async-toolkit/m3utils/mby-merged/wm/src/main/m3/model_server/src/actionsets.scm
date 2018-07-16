@@ -64,6 +64,5 @@
  ))
     
 (compile! action-sets)
-(exit)
     
     
