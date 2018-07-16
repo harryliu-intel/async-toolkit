@@ -117,7 +117,7 @@ int test_regs(void)
 	err = wm_reg_write(addr, val);
 	if (err) {
 		printf("Error writing register: %d\n", err);
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	printf("OK\n");
@@ -125,7 +125,7 @@ int test_regs(void)
 	err = wm_reg_read(addr, &val);
 	if (err) {
 		printf("Error reading register: %d\n", err);
-		return ERR_RUNTIME;
+		return WM_ERR_RUNTIME;
 	}
 
 	if (val != 0x1234567890abcdef)
@@ -133,13 +133,13 @@ int test_regs(void)
 	else
 		printf("OK\n");
 
-	return OK;
+	return WM_OK;
 }
 
 int test_pkts(void)
 {
 	/* Hardcoded test frame with Crc */
-	uint8_t tx_pkt[] = {
+	uint8_t tx_pkt_data[] = {
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
 		0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
 		0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
@@ -147,43 +147,59 @@ int test_pkts(void)
 		0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
 		0xee, 0x7f, 0xec, 0xb0
 	};
-	/* TODO pkt should be big enough to contain the data */
-	uint8_t rx_pkt[1000];
-	uint32_t pkt_len;
+	struct wm_pkt tx_pkt;
+	struct wm_pkt rx_pkt;
 	unsigned int i;
-	int port;
 	int err;
 
-	port = 1;
-	pkt_len = 8;
-	err = wm_pkt_push(port, tx_pkt, sizeof(tx_pkt));
+	tx_pkt.port = 1;
+	tx_pkt.len = sizeof(tx_pkt_data);
+	memcpy(tx_pkt.data, tx_pkt_data, sizeof(tx_pkt_data));
+	err = wm_pkt_push(&tx_pkt);
 	if (err) {
 		printf("Error sending traffic: %d\n", err);
 		return err;
 	}
 
-	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
+	err = wm_pkt_get(&rx_pkt);
 	if (err) {
 		printf("Error receiving traffic: %d\n", err);
 		return err;
 	}
 
-	printf("Received %d bytes on port %d\n", pkt_len, port);
-	if (memcmp(tx_pkt, rx_pkt, pkt_len)) {
-		printf("Unexpected difference between sent and received pkt\n");
-		for (i = 0; i < pkt_len; ++i)
-			if (tx_pkt[i] != rx_pkt[i])
-				printf("tx_pkt[%d] = 0x%x - rx_pkt[%d] = 0x%x\n", i, tx_pkt[i],
-						i, rx_pkt[i]);
+	printf("Received %d bytes on port %d\n", rx_pkt.len, rx_pkt.port);
+	if (tx_pkt.len != rx_pkt.len) {
+		printf("Unexpected difference between in length between sent (%d) and received (%d) pkt\n",
+				tx_pkt.len, tx_pkt.len);
+		return WM_ERR_RUNTIME;
 	}
 
-	err = wm_pkt_get(&port, rx_pkt, &pkt_len);
-	if (err == ERR_NO_DATA) {
-		printf("Did not receive any frame as expected\n");
+	if (memcmp(tx_pkt.data, rx_pkt.data, tx_pkt.len)) {
+		printf("Unexpected difference between sent and received pkt\n");
+		for (i = 0; i < tx_pkt.len; ++i)
+			if (tx_pkt.data[i] != rx_pkt.data[i])
+				printf("tx_pkt.data[%d] = 0x%x - rx_pkt.data[%d] = 0x%x\n",
+						i, tx_pkt.data[i], i, rx_pkt.data[i]);
+		return WM_ERR_RUNTIME;
+	}
+
+	err = wm_pkt_get(&rx_pkt);
+	if (err == WM_NO_DATA) {
+		printf("Received EOT as expected\n");
+	} else {
+		printf("Unexpected error code %d - should be WM_NO_DATA %d\n", err, 
+				WM_NO_DATA);
+		return WM_ERR_RUNTIME;
+	}
+
+	err = wm_pkt_get(&rx_pkt);
+	if (err != WM_NO_DATA && err != WM_OK) {
+		printf("Did not receive anything from WM as expected\n");
 	} else {
 		printf("Unexpected error code %d\n", err);
+		return WM_ERR_RUNTIME;
 	}
 
-	return OK;
+	return WM_OK;
 }
 

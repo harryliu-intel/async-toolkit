@@ -1,0 +1,14 @@
+Roman Parise
+
+This is a general TCAM model for use in MBY. For implementation details, please see Tcam.i3. TCAMs can be found in some of the following parts of MBY:
+- Wildcard Match (WCM) Groups contain 1024 entry TCAM slices. The number of slices per group can vary. These groups may also use non-trivial chunk masks.
+- The Programmable Parser Engine (PPE) contains a 64 entry TCAM named PARSER_PTYPE_TCAM.
+- The domain mapper contains a 4096 entry TCAM called MAP_DOMAIN_TCAM.
+- The packet profile TCAM contains 96 entries.
+
+TODOs:
+- More descriptive exception messages
+- Variable bit length of TCAM entries. Right now it is set to 40-bits, which is the length of the WCM groups' TCAM slices.
+- A way to protect the user from changing values in the Tcam.TcamSlice record, almost like private variables
+- Possible some READNLYs in function args to give the user a sense of safety whenever possible
+- A better, more extensible test suite
