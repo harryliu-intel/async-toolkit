@@ -1,9 +1,9 @@
 INTERFACE MbyParserSizes;
 
-CONST NumMeta = 32;
-      NumKeys = 84;
-      NumFlags = 48;
-      NumPtrs = 8;
+CONST NMeta  = 32;
+      NKeys  = 84;
+      NFlags = 48;
+      NPtrs  =  8;  
 
 CONST Brand = "MbyParserSizes";
 

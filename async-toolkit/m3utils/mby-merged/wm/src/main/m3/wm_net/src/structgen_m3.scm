@@ -359,7 +359,7 @@
                   (sa names "\"" sym "\"" comma)
                   (sa t2v val comma)
                   (sa v2t
-                      (if is-dup
+                      (if is-dup ;; we cant generate multiple matches for duplicate values (alias names)
                           ""
                           (sa "    | " val " => t := T." sym "; RETURN TRUE" dnl))
                       )))

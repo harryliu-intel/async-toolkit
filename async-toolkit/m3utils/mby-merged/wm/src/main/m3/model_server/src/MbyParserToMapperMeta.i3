@@ -7,10 +7,10 @@ IMPORT MbyParserSizes;
 (* from wm/src/main/c/mby_parser.h *)
 
 CONST
-  NM = MbyParserSizes.NumMeta;
-  NK = MbyParserSizes.NumKeys;
-  NF = MbyParserSizes.NumFlags;
-  NP = MbyParserSizes.NumPtrs;
+  NM = MbyParserSizes.NMeta;
+  NK = MbyParserSizes.NKeys;
+  NF = MbyParserSizes.NFlags;
+  NP = MbyParserSizes.NPtrs;
   
 TYPE
   T = Metadata.T OBJECT
