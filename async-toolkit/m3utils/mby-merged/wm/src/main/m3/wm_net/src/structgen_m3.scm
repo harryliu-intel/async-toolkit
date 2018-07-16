@@ -219,6 +219,8 @@
 
 (define compile-constants! compile-constants-m3!)
 
+(define dbg '())
+
 (define (compile-enum! nm x)
   (dis "compiling enum      :  " nm dnl)
   (let* ((wire-type    (car x))
@@ -335,22 +337,32 @@
             ) ;; nigeb
 
           ;; else -- iterate further
-          
+
           (let* ((sym     (scheme->m3 (caar x)))
                  (comma   (if (null? (cdr x)) "" ", "))
                  (valspec (cdar x))
+                 (valnum (M3Support.ParseUnsigned (stringify (car valspec))))
+                 (is-dup (and (not (null? (cdr valspec)))
+                              (eq? 'duplicate (cadr valspec))))
+                                               
                  (val     (cond ((null? valspec) i)
-                                ((< (car valspec) i)
+                                ((and (< valnum i)
+                                      (not is-dup))
+                                 (set! dbg valspec)
                                  (error (sa
                                          "bad value for enum "
                                          (stringify (car valspec)))))
-                                (else (car valspec)))))
+                                (else valnum))))
             (loop (+ val 1)
                   (cdr x)
                   (sa t sym comma)
                   (sa names "\"" sym "\"" comma)
                   (sa t2v val comma)
-                  (sa v2t "    | " val " => t := T." sym "; RETURN TRUE" dnl)))
+                  (sa v2t
+                      (if is-dup
+                          ""
+                          (sa "    | " val " => t := T." sym "; RETURN TRUE" dnl))
+                      )))
           ) ;; fi
       ) ;; pool
 
