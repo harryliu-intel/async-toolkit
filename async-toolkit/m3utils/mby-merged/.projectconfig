@@ -1,9 +1,9 @@
-intel.project   mby
-intel.cluster   mby 
+intel.project   mby_arch
+intel.cluster   mby_arch
 intel.stepping  mby-x0
 setup.STEP mby-x0
-setup.CLUSTER mby
+setup.CLUSTER mby_arch
 
 setup.CASA_STEP mby-x0
-setup.CASA_PROJECT mby
-setup.CASA_CLUSTER mby
+setup.CASA_PROJECT mby_arch
+setup.CASA_CLUSTER mby_arch
