@@ -1,0 +1,17 @@
+MODULE Main;
+
+CONST a = ARRAY OF INTEGER { 1, 2, 3 };
+
+VAR b : ARRAY [0..LAST(a)] OF INTEGER := a;
+
+PROCEDURE P(READONLY arr : ARRAY OF INTEGER) =
+  BEGIN
+    FOR i := FIRST(arr) TO LAST(arr) DO
+    END
+  END P;
+
+BEGIN
+
+  P(a)
+ 
+END Main.
