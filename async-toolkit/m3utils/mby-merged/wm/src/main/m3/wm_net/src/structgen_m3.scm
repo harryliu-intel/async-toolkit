@@ -341,8 +341,11 @@
           (let* ((sym     (scheme->m3 (caar x)))
                  (comma   (if (null? (cdr x)) "" ", "))
                  (valspec (cdar x))
-                 (valnum  (M3Support.ParseUnsigned (stringify (car valspec))))
-                 (is-dup  (and (not (null? (cdr valspec)))
+                 (valnum  (if (null? valspec)
+                              -1
+                              (M3Support.ParseUnsigned (stringify (car valspec)))))
+                 (is-dup  (and (not (null? valspec))
+                               (not (null? (cdr valspec)))
                                (eq? 'duplicate (cadr valspec))))
                                                
                  (val     (cond ((null? valspec) i)
