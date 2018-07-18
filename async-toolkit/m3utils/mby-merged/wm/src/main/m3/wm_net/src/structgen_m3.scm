@@ -1021,6 +1021,6 @@
 
 (define (compile! structs)
   (clear-globals!)
-  (wr-close (filewr-open (sa deriv-dir "derived.m3m")))
   (map compile-one! structs)
   )
+

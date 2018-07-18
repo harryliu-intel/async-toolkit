@@ -1,4 +1,4 @@
-MODULE MbyMapperStageModel;
+MODULE MbyMapperStageModel EXPORTS MbyMapperStageModel, MbyMapperSizes;
 
 IMPORT mby_top_map_addr AS TopAddr;
 
@@ -7,8 +7,10 @@ IMPORT mby_ppe_mapper_map_addr AS MapAddr;
 
 IMPORT ServerPacket AS Pkt;
 IMPORT Metadata;
+IMPORT MbyParserToMapperMeta;
 IMPORT MbyMapperToClassifierMeta;
 IMPORT ModelStageResult;
+IMPORT MbyMeta;
 
 PROCEDURE HandlePacket(ipkt : Pkt.T;
                        h : TopAddr.H;
@@ -29,7 +31,21 @@ PROCEDURE HandlePacketInt(ipkt        : Pkt.T;
                           READONLY u  : MapAddr.U;
                           im          : Metadata.T;
                           out         : ModelStageResult.T) =
+  VAR
+    mbm : MbyMeta.T :=
+        im.ofType(TYPECODE(MbyMeta.T));
+    p2m : MbyParserToMapperMeta.T :=
+        im.ofType(TYPECODE(MbyParserToMapperMeta.T));
+
+    isIPv4, isIPv6 := ARRAY [0..NIsIpBits-1] OF BOOLEAN { FALSE, .. };
+
   BEGIN
+    (* we dont actually use the ipkt here *)
+    WITH
+      portCfg = r.MapPortCfg[mbm.rxPort]
+     DO
+      
+    END;
     out.push(opkt := ipkt, om := NEW(MbyMapperToClassifierMeta.T))
   END HandlePacketInt;
 
