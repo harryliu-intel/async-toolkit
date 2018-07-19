@@ -131,4 +131,89 @@ object Memory {
 
     def compare(other: Alignment): Int = toLong.compare(other.toLong)
   }
+
+
+  /** Addressing kind. Can be:
+    *  * Compact --- aligned to accesswidth
+    *  * Regalign --- aligned to regalign
+    *  * Fullalign --- like regalign, but arrays aligned as a whole
+    * */
+  object Addressing extends Enumeration {
+    type Addressing = Value
+    val Regalign, Compact, Fullalign = Value
+
+    /** Default value (regalign) */
+    val default = Regalign
+  }
+
+
+  // hardcodded as for now
+  //TODO: generalize
+  /** Machine word size */
+  val WordSize = 64
+
+  /** Address in memory. Word-aware. */
+  class Address(val word: Long, val bit: Long) extends Ordered[Address] {
+    /** Address moved by memory shift. */
+    def +[M <: MemoryUnit](munit: M): Address = {
+      val allbits = (bit + munit.toBits.toLong)
+      Address(word + allbits / WordSize, allbits % WordSize)
+    }
+
+    /** Address moved by memory shift. */
+    def -[M <: MemoryUnit](munit: M): Address = {
+      val allbits = (bit - munit.toBits.toLong)
+      val a = word + allbits / WordSize
+      val b = WordSize - (allbits % WordSize)
+      if( b == WordSize ) { Address(word + a, 0) }
+      else { Address(word + a - 1, b) }
+    }
+
+    /** Shift between addresses. */
+    def -(other: Address): Bits = ((word - other.word) * WordSize + (bit - other.bit)).bits
+
+    /** Shift from bit block alignment. */
+    def %[M <: MemoryUnit](munit: M): Bits = {
+      val bits = munit.toBits.toLong
+      val wom = word % bits
+      val bam = WordSize % bits
+      val bim = bit % bits
+      ((wom * bam + bim) % bits).bits
+    }
+
+    /** Align to any block. */
+    def modAlign[M <: FullBytes](align: M): Address = {
+      val tobits = Address(if(bit != 0) { word + 1 } else { word }, 0)
+      val shift = (align - (tobits % align)) % align
+      this + shift
+    }
+
+    /** Align to proper block of size 2 pow N. */
+    def modAlign(align: Alignment): Address = modAlign(align.toBytes)
+
+    def compare(that: Address): Int =
+      (word - that.word).signum match {
+        case 0 => (bit - that.bit).signum
+        case sign @ _ => sign
+      }
+
+    /** Erasure word info, return bits. */
+    def toBits: Bits = ((word * WordSize) + bit).bits
+
+    /** Erasure word info, try bytes. */
+    def tryBytes: Option[Bytes] = toBits.tryBytes
+
+    /** Erasure word info, full bytes. */
+    def fullBytes: Bytes = toBits.fullBytes
+  }
+  object Address {
+    /** Simple explicit constructor */
+    def apply(word: Long, bit: Long): Address = new Address(word, bit)
+
+    /** From raw memory in bits */
+    def apply(bits: Bits): Address = Address(bits.value / WordSize, bits.value % WordSize)
+
+    /** From raw memory */
+    def apply[M <: MemoryUnit](munit: M): Address = Address(munit.toBits)
+  }
 }
