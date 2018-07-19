@@ -69,6 +69,13 @@ object Memory {
     override def toBits: Bits = (toBytes.toLong * 8).bits
 
     def nextPowerBytes: Bytes = nextPowerLong(toBytes.toLong).bytes
+    override def isPower: Boolean = toBytes == nextPowerBytes
+
+    /** Alignment if is power, None otherwise. */
+    def tryAlignment: Option[Alignment] = if( isPower ) { Some(toAlignment) } else { None }
+
+    /** Alignment conversion, unsafe */
+    def toAlignment = Alignment(toBytes.toLong)
   }
 
   /** Bits value.
@@ -112,5 +119,16 @@ object Memory {
 
     /** Convert to bytes */
     def bytes = Bytes(value)
+  }
+
+
+  /** 2 pow N bytes (runtime check) adapter. Can't be a value class so it can have a requirement. */
+  case class Alignment(value: Long) extends  Ordered[Alignment] {
+    require( value.bytes.isPower )
+    def toLong = value
+    def toBytes = toLong.bytes
+    def toBits = toBytes.toBits
+
+    def compare(other: Alignment): Int = toLong.compare(other.toLong)
   }
 }
