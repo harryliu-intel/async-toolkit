@@ -23,7 +23,7 @@
                 )
                )
 
-    (constants mapper-tc-source
+    (enum mapper-tc-source
                u64
                ((m3 MbyMapperTcSource))
                (
@@ -34,7 +34,7 @@
                 )
                )
 
-    (constants mapper-source
+    (enum mapper-source
                u64
                ((m3 MbyMapperSource))
                (

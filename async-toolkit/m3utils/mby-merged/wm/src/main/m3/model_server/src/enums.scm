@@ -1,7 +1,7 @@
 (define enums
   `((enum mby-parser-flags
           u8
-          ((m3 MbyParserFlags))
+          ((m3 MbyPaFlags))
           (
            (nop            0)
            (general-0              1)
@@ -39,7 +39,8 @@
 
     (enum mby-parser-keys
           u8
-          ((m3 MbyParserKeys))
+          (options (n 84))
+          ((m3 MbyPaKeys))
           (
            (inner-dmac             0)
            (inner-smac             3)
@@ -57,16 +58,15 @@
            (inner-l4dst            23)
            (mpls           24)
            (general                32)
-           (inner-ip-header                36)
-           (outer-ip-header                42)
+           (inner-ip-hdr                36)
+           (outer-ip-hdr                42)
            (outer-sipdip           48)
            (inner-sipdip           64)
-
            ))
 
     (enum mby-parser-ptrs-index
           u8
-          ((m3 MbyParserPtrsIndex))
+          ((m3 MbyPaPtrsIndex))
           (
            (nop            0)
            (otr-mpls-ptr           1)
@@ -75,13 +75,13 @@
            (inr-l2-ptr             4)
            (inr-mpls-ptr           5)
            (inr-l3-ptr             6)
-           (inr-l4-ptr             7)
-           (esp-ptr                7 duplicate)
+           (inr-l4-ptr-esp-ptr     7)
 
            ))
 
     (enum mby-realign-keys
           u8
+          (options (n 80))
           ((m3 MbyRealignKeys))
           (
            (inner-dmac             0)

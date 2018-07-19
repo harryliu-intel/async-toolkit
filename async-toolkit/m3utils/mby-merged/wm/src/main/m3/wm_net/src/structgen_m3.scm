@@ -221,16 +221,24 @@
 
 (define dbg '())
 
+(define (get-option tag opts)
+  (let ((b (assoc tag opts)))
+    (if b (cadr b) #f)))
+
 (define (compile-enum! nm x)
   (dis "compiling enum      :  " nm dnl)
   (let* ((wire-type    (car x))
          (m3-wire-type (scheme->m3 wire-type))
-         (names        (cadr x))
-         (values       (caddr x))
+         (have-options (and (list? (cadr x)) (eq? (caadr x) 'options)))
+         (options      (if have-options (cdadr x) '()))
+         (rest         (if have-options (cddr x) (cdr x)))
+         (names        (car rest))
+         (values       (cadr rest))
          (m3-name      (get-m3-name nm names))
          (m3-wrs       (open-m3 m3-name))
          (i3-wr        (car m3-wrs))
          (m3-wr        (cadr m3-wrs))
+         (n            (get-option 'n options))
          )
 
     ;;(dis "m3-name " m3-name dnl)
@@ -317,7 +325,10 @@
                       "    CASE w OF" dnl
                      )))
 
-      (cond ((null? x) ;; base case of iteration (done case)
+      (cond ((and (null? x)            ;; no more entries
+                  (or (not n)          ;; no padding requested
+                      (= i n)    ;; padding complete
+                      ))
 
              (dis t "};" dnl
                   dnl
@@ -336,7 +347,8 @@
                   m3-wr)
              )
 
-            ((not (= i (+ p 1)))
+            ((not (= i (+ p 1))) ;; padding between values
+
              (let ((idx (+ p 1)))
                        
                (loop idx
@@ -347,12 +359,26 @@
                      (sa t2v (number->string idx)", ")
                      v2t))
              )
-            
+
+            ((null? x) ;; padding at end
+             (let ((comma (if (= i (- n 1)) "" ", ")))
+               (loop i
+                     (+ i 1)
+                     x
+                     (sa t "Rsvd"(number->string i) comma)
+                     (sa names "\"Rsvd"(number->string i)"\"" comma)
+                     (sa t2v (number->string i) comma)
+                     v2t))
+             )
+
             (else
-             ;; else -- iterate further
+             ;; else -- iterate further with a requested value
 
              (let* ((sym     (scheme->m3 (caar x)))
-                    (comma   (if (null? (cdr x)) "" ", "))
+                    (comma   (if (and (null? (cdr x))
+                                      (or (not n) (= i (- n 1))))
+                                 ""
+                                 ", "))
                     (valspec (cdar x))
                     (valnum  (if (null? valspec)
                                  -1
