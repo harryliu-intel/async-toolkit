@@ -305,7 +305,8 @@
          "  END V2T;" dnl
          dnl m3-wr)
     
-    (let loop ((i   0)
+    (let loop ((p  -1) ;; previous ORD
+               (i   0) ;; current ORD
                (x   values)
                (t     "TYPE T = { ")
                (names "CONST Names = ARRAY T OF TEXT { ")
@@ -316,57 +317,74 @@
                       "    CASE w OF" dnl
                      )))
 
-      (if (null? x) ;; base case of iteration (done case)
+      (cond ((null? x) ;; base case of iteration (done case)
 
-          (begin
-            (dis t "};" dnl
+             (dis t "};" dnl
+                  dnl
+                  i3-wr)
+             (dis names "};" dnl
                  dnl
                  i3-wr)
-            (dis names "};" dnl
-                 dnl
-                 i3-wr)
-            (dis t2v "};" dnl
-                 dnl
-                 i3-wr)
-            (dis v2t
-                 "    ELSE RETURN FALSE" dnl
-                 "    END" dnl
-                 "  END V2TB;" dnl
-                 dnl
-                 m3-wr)
-            ) ;; nigeb
+             (dis t2v "};" dnl
+                  dnl
+                  i3-wr)
+             (dis v2t
+                  "    ELSE RETURN FALSE" dnl
+                  "    END" dnl
+                  "  END V2TB;" dnl
+                  dnl
+                  m3-wr)
+             )
 
-          ;; else -- iterate further
+            ((not (= i (+ p 1)))
+             (let ((idx (+ p 1)))
+                       
+               (loop idx
+                     i
+                     x
+                     (sa t "Rsvd"(number->string idx)", ")
+                     (sa names "\"Rsvd"(number->string idx)"\", ")
+                     (sa t2v (number->string idx)", ")
+                     v2t))
+             )
+            
+            (else
+             ;; else -- iterate further
 
-          (let* ((sym     (scheme->m3 (caar x)))
-                 (comma   (if (null? (cdr x)) "" ", "))
-                 (valspec (cdar x))
-                 (valnum  (if (null? valspec)
-                              -1
-                              (M3Support.ParseUnsigned (stringify (car valspec)))))
-                 (is-dup  (and (not (null? valspec))
-                               (not (null? (cdr valspec)))
-                               (eq? 'duplicate (cadr valspec))))
-                                               
-                 (val     (cond ((null? valspec) i)
-                                ((and (< valnum i)
-                                      (not is-dup))
-                                 (set! dbg valspec)
-                                 (error (sa
-                                         "bad value for enum "
-                                         (stringify (car valspec)))))
-                                (else valnum))))
-            (loop (+ val 1)
-                  (cdr x)
-                  (sa t sym comma)
-                  (sa names "\"" sym "\"" comma)
-                  (sa t2v val comma)
-                  (sa v2t
-                      (if is-dup ;; we cant generate multiple matches for duplicate values (alias names)
-                          ""
-                          (sa "    | " val " => t := T." sym "; RETURN TRUE" dnl))
-                      )))
-          ) ;; fi
+             (let* ((sym     (scheme->m3 (caar x)))
+                    (comma   (if (null? (cdr x)) "" ", "))
+                    (valspec (cdar x))
+                    (valnum  (if (null? valspec)
+                                 -1
+                                 (M3Support.ParseUnsigned (stringify (car valspec)))))
+                    (is-dup  (and (not (null? valspec))
+                                  (not (null? (cdr valspec)))
+                                  (eq? 'duplicate (cadr valspec))))
+                    
+                    (val     (cond ((null? valspec) i)
+                                   ((and (< valnum i)
+                                         (not is-dup))
+                                    (set! dbg valspec)
+                                    (error (sa
+                                            "bad value for enum "
+                                            (stringify (car valspec)))))
+                                   (else valnum))))
+               
+               (if is-dup (error "duplicate enums not supported"))
+               
+               (loop i
+                     (+ val 1)
+                     (cdr x)
+                     (sa t sym comma)
+                     (sa names "\"" sym "\"" comma)
+                     (sa t2v val comma)
+                     (sa v2t
+                         (if is-dup ;; we cant generate multiple matches for duplicate values (alias names)
+                             ""
+                             (sa "    | " val " => t := T." sym "; RETURN TRUE" dnl))
+                         ))
+               ))
+             ) ;; dnoc
       ) ;; pool
 
     (close-m3 m3-wrs)
