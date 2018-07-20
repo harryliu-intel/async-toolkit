@@ -86,15 +86,15 @@ void Parser
     out->PA_EX_PARSING_DONE = 0;
     out->PA_PACKET_TYPE     = 0;  // added for MBY <-- REVISIT!!!
     
-    for (fm_uint i = 0; i < MBY_MAX_PA_KEY_LEN; i++) {
+    for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
         out->PA_KEYS      [i] = 0;  
         out->PA_KEYS_VALID[i] = 0;  
     }
 
-    for (fm_uint i = 0; i < MBY_MAX_PA_FLAGS; i++)
+    for (fm_uint i = 0; i < MBY_N_PARSER_FLAGS; i++)
         out->PA_FLAGS[i] = 0; 
 
-    for (fm_uint i = 0; i < MBY_MAX_PA_PTR_NUM; i++) {
+    for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
         out->PA_PTRS      [i] = 0; 
         out->PA_PTRS_VALID[i] = 0; 
     }
@@ -272,7 +272,7 @@ void Parser
                 // Apply keys to target key array and track keys_valid:
                 for (fm_uint k = 0; k < xa_key_len; k++)
                 {
-                    if ((xa_key_start + k) < MBY_MAX_PA_KEY_LEN)
+                    if ((xa_key_start + k) < MBY_N_PARSER_KEYS)
                     {
                         fm_byte   key_off = ptr[s] + xa_key_offset + (k*2);
                         fm_uint16 key_val = getSegDataWord(key_off, adj_seg_len, seg_data);
@@ -283,10 +283,10 @@ void Parser
                     }
                 }
 
-                if ((xa_flag_num != 0) && (xa_flag_num < MBY_MAX_PA_FLAGS))
+                if ((xa_flag_num != 0) && (xa_flag_num < MBY_N_PARSER_FLAGS))
                     out->PA_FLAGS[xa_flag_num] = xa_flag_val;
 
-                if ( (xa_ptr_num != 0) && (xa_ptr_num < MBY_MAX_PA_PTR_NUM) ) {
+                if ( (xa_ptr_num != 0) && (xa_ptr_num < MBY_N_PARSER_PTRS) ) {
                     out->PA_PTRS      [xa_ptr_num] = ptr[s];
                     out->PA_PTRS_VALID[xa_ptr_num] = 1;
                 }
