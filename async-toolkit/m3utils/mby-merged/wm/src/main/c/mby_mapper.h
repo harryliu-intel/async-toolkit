@@ -15,53 +15,21 @@
 #define MBY_MAP_PORT_CFG_ENTRIES                                24
 #define MBY_MAP_PORT_CFG(index, word)                           ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0000000) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_PORT_CFG_l_DEFAULT_SGLORT                       5
-#define MBY_MAP_PORT_CFG_h_DEFAULT_SGLORT                       20
-#define MBY_MAP_PORT_CFG_b_DEFAULT_SGLORT_EN                    4
-#define MBY_MAP_PORT_CFG_l_PORT_SCENARIO                        0
-#define MBY_MAP_PORT_CFG_h_PORT_SCENARIO                        3
+#define MBY_MAP_PORT_CFG_l_DEFAULT_SGLORT                       9
+#define MBY_MAP_PORT_CFG_h_DEFAULT_SGLORT                       24
+#define MBY_MAP_PORT_CFG_b_DEFAULT_SGLORT_EN                    8
+#define MBY_MAP_PORT_CFG_l_PORT_PROFILE                         0
+#define MBY_MAP_PORT_CFG_h_PORT_PROFILE                         7
 
 #define MBY_MAP_PORT_DEFAULT_WIDTH                              2
 #define MBY_MAP_PORT_DEFAULT_ENTRIES_0                          6
 #define MBY_MAP_PORT_DEFAULT_ENTRIES_1                          24
 #define MBY_MAP_PORT_DEFAULT(index1, index0, word)              ((0x0000040) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0000800) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_PORT_DEFAULT_b_USE_PARSE_PTR                    32
 #define MBY_MAP_PORT_DEFAULT_l_VALUE                            16
 #define MBY_MAP_PORT_DEFAULT_h_VALUE                            31
-#define MBY_MAP_PORT_DEFAULT_l_USE_KEY                          8
-#define MBY_MAP_PORT_DEFAULT_h_USE_KEY                          15
 #define MBY_MAP_PORT_DEFAULT_l_TARGET                           0
 #define MBY_MAP_PORT_DEFAULT_h_TARGET                           7
-
-#define MBY_MAP_DGLORT_TCAM_WIDTH                               2
-#define MBY_MAP_DGLORT_TCAM_ENTRIES                             8
-#define MBY_MAP_DGLORT_TCAM(index, word)                        ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0001000) + (MBY_MAPPER_BASE))
-
-#define MBY_MAP_DGLORT_TCAM_l_KEY_INVERT                        21
-#define MBY_MAP_DGLORT_TCAM_h_KEY_INVERT                        41
-#define MBY_MAP_DGLORT_TCAM_l_KEY                               0
-#define MBY_MAP_DGLORT_TCAM_h_KEY                               20
-
-#define MBY_MAP_DGLORT_ACTION_WIDTH                             2
-#define MBY_MAP_DGLORT_ACTION_ENTRIES                           8
-#define MBY_MAP_DGLORT_ACTION(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0001040) + (MBY_MAPPER_BASE))
-
-#define MBY_MAP_DGLORT_ACTION_b_ENABLE                          30
-#define MBY_MAP_DGLORT_ACTION_l_ROT                             25
-#define MBY_MAP_DGLORT_ACTION_h_ROT                             29
-#define MBY_MAP_DGLORT_ACTION_l_START                           21
-#define MBY_MAP_DGLORT_ACTION_h_START                           24
-#define MBY_MAP_DGLORT_ACTION_l_LENGTH                          16
-#define MBY_MAP_DGLORT_ACTION_h_LENGTH                          20
-#define MBY_MAP_DGLORT_ACTION_l_BASE                            0
-#define MBY_MAP_DGLORT_ACTION_h_BASE                            15
-
-#define MBY_MAP_CPM_FN_WIDTH                                    2
-#define MBY_MAP_CPM_FN(word)                                    (((word)*4) + (0x0001080) + (MBY_MAPPER_BASE))
-
-#define MBY_MAP_CPM_FN_l_PORT_MASK                              0
-#define MBY_MAP_CPM_FN_h_PORT_MASK                              23
 
 #define MBY_MAP_LEN_LIMIT_WIDTH                                 2
 #define MBY_MAP_LEN_LIMIT_ENTRIES                               24
@@ -80,20 +48,20 @@
 #define MBY_MAP_DOMAIN_TCAM_ENTRIES                             4096
 #define MBY_MAP_DOMAIN_TCAM(index, word)                        ((0x0000010) * ((index) - 0) + ((word)*4)+ (0x0010000) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_DOMAIN_TCAM_l__RSVD1_                           98
+#define MBY_MAP_DOMAIN_TCAM_l__RSVD1_                           107
 #define MBY_MAP_DOMAIN_TCAM_h__RSVD1_                           127
 #define MBY_MAP_DOMAIN_TCAM_l_PORT_KEY_INVERT                   90
-#define MBY_MAP_DOMAIN_TCAM_h_PORT_KEY_INVERT                   97
+#define MBY_MAP_DOMAIN_TCAM_h_PORT_KEY_INVERT                   106
 #define MBY_MAP_DOMAIN_TCAM_b_VID2_VALID_INVERT                 89
 #define MBY_MAP_DOMAIN_TCAM_l_VID2_KEY_INVERT                   77
 #define MBY_MAP_DOMAIN_TCAM_h_VID2_KEY_INVERT                   88
 #define MBY_MAP_DOMAIN_TCAM_b_VID1_VALID_INVERT                 76
 #define MBY_MAP_DOMAIN_TCAM_l_VID1_KEY_INVERT                   64
 #define MBY_MAP_DOMAIN_TCAM_h_VID1_KEY_INVERT                   75
-#define MBY_MAP_DOMAIN_TCAM_l__RSVD0_                           34
+#define MBY_MAP_DOMAIN_TCAM_l__RSVD0_                           43
 #define MBY_MAP_DOMAIN_TCAM_h__RSVD0_                           63
 #define MBY_MAP_DOMAIN_TCAM_l_PORT_KEY                          26
-#define MBY_MAP_DOMAIN_TCAM_h_PORT_KEY                          33
+#define MBY_MAP_DOMAIN_TCAM_h_PORT_KEY                          42
 #define MBY_MAP_DOMAIN_TCAM_b_VID2_VALID                        25
 #define MBY_MAP_DOMAIN_TCAM_l_VID2_KEY                          13
 #define MBY_MAP_DOMAIN_TCAM_h_VID2_KEY                          24
@@ -106,7 +74,7 @@
 #define MBY_MAP_DOMAIN_ACTION0(index, word)                     ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0020000) + (MBY_MAPPER_BASE))
 
 #define MBY_MAP_DOMAIN_ACTION0_l_L2_DOMAIN                      30
-#define MBY_MAP_DOMAIN_ACTION0_h_L2_DOMAIN                      38
+#define MBY_MAP_DOMAIN_ACTION0_h_L2_DOMAIN                      37
 #define MBY_MAP_DOMAIN_ACTION0_l_L3_DOMAIN                      24
 #define MBY_MAP_DOMAIN_ACTION0_h_L3_DOMAIN                      29
 #define MBY_MAP_DOMAIN_ACTION0_l_OPERATOR_ID                    20
@@ -126,8 +94,8 @@
 #define MBY_MAP_DOMAIN_ACTION1_ENTRIES                          4096
 #define MBY_MAP_DOMAIN_ACTION1(index, word)                     ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0028000) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_DOMAIN_ACTION1_l_DOMAIN_SCENARIO                36
-#define MBY_MAP_DOMAIN_ACTION1_h_DOMAIN_SCENARIO                43
+#define MBY_MAP_DOMAIN_ACTION1_l_DOMAIN_PROFILE                 36
+#define MBY_MAP_DOMAIN_ACTION1_h_DOMAIN_PROFILE                 43
 #define MBY_MAP_DOMAIN_ACTION1_l_L2_POLICER                     24
 #define MBY_MAP_DOMAIN_ACTION1_h_L2_POLICER                     35
 #define MBY_MAP_DOMAIN_ACTION1_l_L3_POLICER                     12
@@ -147,7 +115,7 @@
 #define MBY_MAP_PORT(index, word)                               ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0031000) + (MBY_MAPPER_BASE))
 
 #define MBY_MAP_PORT_l_MAP_PORT                                 0
-#define MBY_MAP_PORT_h_MAP_PORT                                 3
+#define MBY_MAP_PORT_h_MAP_PORT                                 7
 
 #define MBY_MAP_MAC_WIDTH                                       4
 #define MBY_MAP_MAC_ENTRIES                                     96
@@ -162,45 +130,6 @@
 #define MBY_MAP_MAC_h_IGNORE_LENGTH                             53
 #define MBY_MAP_MAC_l_MAC                                       0
 #define MBY_MAP_MAC_h_MAC                                       47
-
-#define MBY_MAP_TYPE_WIDTH                                      2
-#define MBY_MAP_TYPE_ENTRIES                                    16
-#define MBY_MAP_TYPE(index, word)                               ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0032000) + (MBY_MAPPER_BASE))
-
-#define MBY_MAP_TYPE_l_VALID                                    20
-#define MBY_MAP_TYPE_h_VALID                                    21
-#define MBY_MAP_TYPE_l_MAP_TYPE                                 16
-#define MBY_MAP_TYPE_h_MAP_TYPE                                 19
-#define MBY_MAP_TYPE_l_TYPE_XXX                                 0
-#define MBY_MAP_TYPE_h_TYPE_XXX                                 15
-
-#define MBY_MAP_IP_LO_WIDTH                                     2
-#define MBY_MAP_IP_LO_ENTRIES                                   16
-#define MBY_MAP_IP_LO(index, word)                              ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0032080) + (MBY_MAPPER_BASE))
-
-#define MBY_MAP_IP_LO_l_IP_LO                                   0
-#define MBY_MAP_IP_LO_h_IP_LO                                   63
-
-#define MBY_MAP_IP_HI_WIDTH                                     2
-#define MBY_MAP_IP_HI_ENTRIES                                   16
-#define MBY_MAP_IP_HI(index, word)                              ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0032100) + (MBY_MAPPER_BASE))
-
-#define MBY_MAP_IP_HI_l_IP_HI                                   0
-#define MBY_MAP_IP_HI_h_IP_HI                                   63
-
-#define MBY_MAP_IP_CFG_WIDTH                                    2
-#define MBY_MAP_IP_CFG_ENTRIES                                  16
-#define MBY_MAP_IP_CFG(index, word)                             ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0032180) + (MBY_MAPPER_BASE))
-
-#define MBY_MAP_IP_CFG_l_MATCH_LENGTH                           11
-#define MBY_MAP_IP_CFG_h_MATCH_LENGTH                           18
-#define MBY_MAP_IP_CFG_l_VALID                                  7
-#define MBY_MAP_IP_CFG_h_VALID                                  10
-#define MBY_MAP_IP_CFG_l_MAP_IP                                 3
-#define MBY_MAP_IP_CFG_h_MAP_IP                                 6
-#define MBY_MAP_IP_CFG_l_IP_SCENARIO                            1
-#define MBY_MAP_IP_CFG_h_IP_SCENARIO                            2
-#define MBY_MAP_IP_CFG_b_IS_IPV6                                0
 
 #define MBY_MAP_PROT_WIDTH                                      2
 #define MBY_MAP_PROT_ENTRIES                                    8
@@ -341,110 +270,102 @@
 #define MBY_MAP_VPRI_l_VPRI_0                                   0
 #define MBY_MAP_VPRI_h_VPRI_0                                   3
 
-#define MBY_MAP_SCEN_KEY0_WIDTH                                 2
-#define MBY_MAP_SCEN_KEY0_ENTRIES                               96
-#define MBY_MAP_SCEN_KEY0(index, word)                          ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0038400) + (MBY_MAPPER_BASE))
+#define MBY_MAP_PROFILE_KEY0_WIDTH                              2
+#define MBY_MAP_PROFILE_KEY0_ENTRIES                            96
+#define MBY_MAP_PROFILE_KEY0(index, word)                       ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0038400) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_SCEN_KEY0_b_PTRS_ERR                            59
-#define MBY_MAP_SCEN_KEY0_l_EX                                  56
-#define MBY_MAP_SCEN_KEY0_h_EX                                  58
-#define MBY_MAP_SCEN_KEY0_l_CSUM                                54
-#define MBY_MAP_SCEN_KEY0_h_CSUM                                55
-#define MBY_MAP_SCEN_KEY0_l_IP_IS_V6                            52
-#define MBY_MAP_SCEN_KEY0_h_IP_IS_V6                            53
-#define MBY_MAP_SCEN_KEY0_l_IP_FITS                             50
-#define MBY_MAP_SCEN_KEY0_h_IP_FITS                             51
-#define MBY_MAP_SCEN_KEY0_b_IHL_OK                              49
-#define MBY_MAP_SCEN_KEY0_b_IHL_FITS                            48
-#define MBY_MAP_SCEN_KEY0_l_FLAGS                               1
-#define MBY_MAP_SCEN_KEY0_h_FLAGS                               47
-#define MBY_MAP_SCEN_KEY0_b_RSVD                                0
+#define MBY_MAP_PROFILE_KEY0_b_PTRS_ERR                         59
+#define MBY_MAP_PROFILE_KEY0_l_EX                               56
+#define MBY_MAP_PROFILE_KEY0_h_EX                               58
+#define MBY_MAP_PROFILE_KEY0_l_CSUM                             54
+#define MBY_MAP_PROFILE_KEY0_h_CSUM                             55
+#define MBY_MAP_PROFILE_KEY0_l_RSVD0                            50
+#define MBY_MAP_PROFILE_KEY0_h_RSVD0                            53
+#define MBY_MAP_PROFILE_KEY0_b_IHL_OK                           49
+#define MBY_MAP_PROFILE_KEY0_b_IHL_FITS                         48
+#define MBY_MAP_PROFILE_KEY0_l_FLAGS                            1
+#define MBY_MAP_PROFILE_KEY0_h_FLAGS                            47
+#define MBY_MAP_PROFILE_KEY0_b_RSVD                             0
 
-#define MBY_MAP_SCEN_KEY_INVERT0_WIDTH                          2
-#define MBY_MAP_SCEN_KEY_INVERT0_ENTRIES                        96
-#define MBY_MAP_SCEN_KEY_INVERT0(index, word)                   ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0038800) + (MBY_MAPPER_BASE))
+#define MBY_MAP_PROFILE_KEY_INVERT0_WIDTH                       2
+#define MBY_MAP_PROFILE_KEY_INVERT0_ENTRIES                     96
+#define MBY_MAP_PROFILE_KEY_INVERT0(index, word)                ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0038800) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_SCEN_KEY_INVERT0_b_PTRS_ERR                     59
-#define MBY_MAP_SCEN_KEY_INVERT0_l_EX                           56
-#define MBY_MAP_SCEN_KEY_INVERT0_h_EX                           58
-#define MBY_MAP_SCEN_KEY_INVERT0_l_CSUM                         54
-#define MBY_MAP_SCEN_KEY_INVERT0_h_CSUM                         55
-#define MBY_MAP_SCEN_KEY_INVERT0_l_IP_IS_V6                     52
-#define MBY_MAP_SCEN_KEY_INVERT0_h_IP_IS_V6                     53
-#define MBY_MAP_SCEN_KEY_INVERT0_l_IP_FITS                      50
-#define MBY_MAP_SCEN_KEY_INVERT0_h_IP_FITS                      51
-#define MBY_MAP_SCEN_KEY_INVERT0_b_IHL_OK                       49
-#define MBY_MAP_SCEN_KEY_INVERT0_b_IHL_FITS                     48
-#define MBY_MAP_SCEN_KEY_INVERT0_l_FLAGS                        1
-#define MBY_MAP_SCEN_KEY_INVERT0_h_FLAGS                        47
-#define MBY_MAP_SCEN_KEY_INVERT0_b_RSVD                         0
+#define MBY_MAP_PROFILE_KEY_INVERT0_b_PTRS_ERR                  59
+#define MBY_MAP_PROFILE_KEY_INVERT0_l_EX                        56
+#define MBY_MAP_PROFILE_KEY_INVERT0_h_EX                        58
+#define MBY_MAP_PROFILE_KEY_INVERT0_l_CSUM                      54
+#define MBY_MAP_PROFILE_KEY_INVERT0_h_CSUM                      55
+#define MBY_MAP_PROFILE_KEY_INVERT0_l_RSVD0                     50
+#define MBY_MAP_PROFILE_KEY_INVERT0_h_RSVD0                     53
+#define MBY_MAP_PROFILE_KEY_INVERT0_b_IHL_OK                    49
+#define MBY_MAP_PROFILE_KEY_INVERT0_b_IHL_FITS                  48
+#define MBY_MAP_PROFILE_KEY_INVERT0_l_FLAGS                     1
+#define MBY_MAP_PROFILE_KEY_INVERT0_h_FLAGS                     47
+#define MBY_MAP_PROFILE_KEY_INVERT0_b_RSVD                      0
 
-#define MBY_MAP_SCEN_KEY1_WIDTH                                 2
-#define MBY_MAP_SCEN_KEY1_ENTRIES                               96
-#define MBY_MAP_SCEN_KEY1(index, word)                          ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0038C00) + (MBY_MAPPER_BASE))
+#define MBY_MAP_PROFILE_KEY1_WIDTH                              2
+#define MBY_MAP_PROFILE_KEY1_ENTRIES                            96
+#define MBY_MAP_PROFILE_KEY1(index, word)                       ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0038C00) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_SCEN_KEY1_l_METADATA_TYPE                       52
-#define MBY_MAP_SCEN_KEY1_h_METADATA_TYPE                       59
-#define MBY_MAP_SCEN_KEY1_l_METADATA_FLAGS                      41
-#define MBY_MAP_SCEN_KEY1_h_METADATA_FLAGS                      51
-#define MBY_MAP_SCEN_KEY1_l_L2_DOMAIN                           32
-#define MBY_MAP_SCEN_KEY1_h_L2_DOMAIN                           40
-#define MBY_MAP_SCEN_KEY1_l_L3_DOMAIN                           26
-#define MBY_MAP_SCEN_KEY1_h_L3_DOMAIN                           31
-#define MBY_MAP_SCEN_KEY1_l_IP_SCENARIO                         18
-#define MBY_MAP_SCEN_KEY1_h_IP_SCENARIO                         25
-#define MBY_MAP_SCEN_KEY1_l_PORT_SCENARIO                       14
-#define MBY_MAP_SCEN_KEY1_h_PORT_SCENARIO                       17
-#define MBY_MAP_SCEN_KEY1_l_DOMAIN_SCENARIO                     6
-#define MBY_MAP_SCEN_KEY1_h_DOMAIN_SCENARIO                     13
-#define MBY_MAP_SCEN_KEY1_l_MAC_ROUTABLE                        2
-#define MBY_MAP_SCEN_KEY1_h_MAC_ROUTABLE                        5
-#define MBY_MAP_SCEN_KEY1_l_MAC_MBCAST                          0
-#define MBY_MAP_SCEN_KEY1_h_MAC_MBCAST                          1
+#define MBY_MAP_PROFILE_KEY1_l_PTYPE                            40
+#define MBY_MAP_PROFILE_KEY1_h_PTYPE                            49
+#define MBY_MAP_PROFILE_KEY1_l_L2_DOMAIN                        32
+#define MBY_MAP_PROFILE_KEY1_h_L2_DOMAIN                        39
+#define MBY_MAP_PROFILE_KEY1_l_L3_DOMAIN                        26
+#define MBY_MAP_PROFILE_KEY1_h_L3_DOMAIN                        31
+#define MBY_MAP_PROFILE_KEY1_l_RSVD                             22
+#define MBY_MAP_PROFILE_KEY1_h_RSVD                             25
+#define MBY_MAP_PROFILE_KEY1_l_PORT_PROFILE                     14
+#define MBY_MAP_PROFILE_KEY1_h_PORT_PROFILE                     21
+#define MBY_MAP_PROFILE_KEY1_l_DOMAIN_PROFILE                   6
+#define MBY_MAP_PROFILE_KEY1_h_DOMAIN_PROFILE                   13
+#define MBY_MAP_PROFILE_KEY1_l_MAC_ROUTABLE                     2
+#define MBY_MAP_PROFILE_KEY1_h_MAC_ROUTABLE                     5
+#define MBY_MAP_PROFILE_KEY1_l_MAC_MBCAST                       0
+#define MBY_MAP_PROFILE_KEY1_h_MAC_MBCAST                       1
 
-#define MBY_MAP_SCEN_KEY_INVERT1_WIDTH                          2
-#define MBY_MAP_SCEN_KEY_INVERT1_ENTRIES                        96
-#define MBY_MAP_SCEN_KEY_INVERT1(index, word)                   ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0039000) + (MBY_MAPPER_BASE))
+#define MBY_MAP_PROFILE_KEY_INVERT1_WIDTH                       2
+#define MBY_MAP_PROFILE_KEY_INVERT1_ENTRIES                     96
+#define MBY_MAP_PROFILE_KEY_INVERT1(index, word)                ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0039000) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_SCEN_KEY_INVERT1_l_METADATA_TYPE                52
-#define MBY_MAP_SCEN_KEY_INVERT1_h_METADATA_TYPE                59
-#define MBY_MAP_SCEN_KEY_INVERT1_l_METADATA_FLAGS               41
-#define MBY_MAP_SCEN_KEY_INVERT1_h_METADATA_FLAGS               51
-#define MBY_MAP_SCEN_KEY_INVERT1_l_L2_DOMAIN                    32
-#define MBY_MAP_SCEN_KEY_INVERT1_h_L2_DOMAIN                    40
-#define MBY_MAP_SCEN_KEY_INVERT1_l_L3_DOMAIN                    26
-#define MBY_MAP_SCEN_KEY_INVERT1_h_L3_DOMAIN                    31
-#define MBY_MAP_SCEN_KEY_INVERT1_l_IP_SCENARIO                  18
-#define MBY_MAP_SCEN_KEY_INVERT1_h_IP_SCENARIO                  25
-#define MBY_MAP_SCEN_KEY_INVERT1_l_PORT_SCENARIO                14
-#define MBY_MAP_SCEN_KEY_INVERT1_h_PORT_SCENARIO                17
-#define MBY_MAP_SCEN_KEY_INVERT1_l_DOMAIN_SCENARIO              6
-#define MBY_MAP_SCEN_KEY_INVERT1_h_DOMAIN_SCENARIO              13
-#define MBY_MAP_SCEN_KEY_INVERT1_l_MAC_ROUTABLE                 2
-#define MBY_MAP_SCEN_KEY_INVERT1_h_MAC_ROUTABLE                 5
-#define MBY_MAP_SCEN_KEY_INVERT1_l_MAC_MBCAST                   0
-#define MBY_MAP_SCEN_KEY_INVERT1_h_MAC_MBCAST                   1
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_PTYPE                     40
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_PTYPE                     49
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_L2_DOMAIN                 32
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_L2_DOMAIN                 39
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_L3_DOMAIN                 26
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_L3_DOMAIN                 31
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_RSVD                      22
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_RSVD                      25
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_PORT_PROFILE              14
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_PORT_PROFILE              21
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_DOMAIN_PROFILE            6
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_DOMAIN_PROFILE            13
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_MAC_ROUTABLE              2
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_MAC_ROUTABLE              5
+#define MBY_MAP_PROFILE_KEY_INVERT1_l_MAC_MBCAST                0
+#define MBY_MAP_PROFILE_KEY_INVERT1_h_MAC_MBCAST                1
 
-#define MBY_MAP_SCEN_ACTION_WIDTH                               2
-#define MBY_MAP_SCEN_ACTION_ENTRIES                             96
-#define MBY_MAP_SCEN_ACTION(index, word)                        ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0039400) + (MBY_MAPPER_BASE))
+#define MBY_MAP_PROFILE_ACTION_WIDTH                            2
+#define MBY_MAP_PROFILE_ACTION_ENTRIES                          96
+#define MBY_MAP_PROFILE_ACTION(index, word)                     ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0039400) + (MBY_MAPPER_BASE))
 
-#define MBY_MAP_SCEN_ACTION_b_SCENARIO_VALID                    34
-#define MBY_MAP_SCEN_ACTION_l_SCENARIO                          28
-#define MBY_MAP_SCEN_ACTION_h_SCENARIO                          33
-#define MBY_MAP_SCEN_ACTION_l_REWRITE_PROFILE                   24
-#define MBY_MAP_SCEN_ACTION_h_REWRITE_PROFILE                   27
-#define MBY_MAP_SCEN_ACTION_b_TRIG_VALID                        23
-#define MBY_MAP_SCEN_ACTION_l_SCEN_TRIG                         15
-#define MBY_MAP_SCEN_ACTION_h_SCEN_TRIG                         22
-#define MBY_MAP_SCEN_ACTION_b_PARSER_ERROR                      14
-#define MBY_MAP_SCEN_ACTION_l_IP_OPTIONS_MASK                   7
-#define MBY_MAP_SCEN_ACTION_h_IP_OPTIONS_MASK                   13
-#define MBY_MAP_SCEN_ACTION_b_PRIOS_VALID                       6
-#define MBY_MAP_SCEN_ACTION_l_VPRI_TGT                          3
-#define MBY_MAP_SCEN_ACTION_h_VPRI_TGT                          5
-#define MBY_MAP_SCEN_ACTION_l_DSCP_TGT                          0
-#define MBY_MAP_SCEN_ACTION_h_DSCP_TGT                          2
+#define MBY_MAP_PROFILE_ACTION_b_PROFILE_VALID                  34
+#define MBY_MAP_PROFILE_ACTION_l_PROFILE                        28
+#define MBY_MAP_PROFILE_ACTION_h_PROFILE                        33
+#define MBY_MAP_PROFILE_ACTION_l_REWRITE_PROFILE                24
+#define MBY_MAP_PROFILE_ACTION_h_REWRITE_PROFILE                27
+#define MBY_MAP_PROFILE_ACTION_b_TRIG_VALID                     23
+#define MBY_MAP_PROFILE_ACTION_l_PROFILE_TRIG                   15
+#define MBY_MAP_PROFILE_ACTION_h_PROFILE_TRIG                   22
+#define MBY_MAP_PROFILE_ACTION_b_PARSER_ERROR                   14
+#define MBY_MAP_PROFILE_ACTION_l_IP_OPTIONS_MASK                7
+#define MBY_MAP_PROFILE_ACTION_h_IP_OPTIONS_MASK                13
+#define MBY_MAP_PROFILE_ACTION_b_PRIOS_VALID                    6
+#define MBY_MAP_PROFILE_ACTION_l_VPRI_TGT                       3
+#define MBY_MAP_PROFILE_ACTION_h_VPRI_TGT                       5
+#define MBY_MAP_PROFILE_ACTION_l_DSCP_TGT                       0
+#define MBY_MAP_PROFILE_ACTION_h_DSCP_TGT                       2
 
 #define MBY_MAP_DOMAIN_POL_CFG_WIDTH                            2
 #define MBY_MAP_DOMAIN_POL_CFG(word)                            (((word)*4) + (0x0039800) + (MBY_MAPPER_BASE))
@@ -483,10 +404,6 @@
 #define MBY_L4_TCP_MIN_SIZE               18
 #define MBY_L4_MIN_SIZE                   8
 
-#define MBY_N_PARSER_KEYS                 80
-#define MBY_N_PARSER_FLAGS                47
-#define MBY_N_PARSER_PTRS                 7
-
 // --------------------------------------------------------------------------------
 
 #define N_REALIGN_KEYS      80
@@ -497,33 +414,28 @@
 #define TC_SOURCE_META      3
 
 #define SOURCE_NOOP                 0
-#define SOURCE_MAP_PORT             1
 #define SOURCE_MAP_OUTER_PROT       2
-#define SOURCE_MAP_OUTER_ETYPE      3
 #define SOURCE_MAP_OUTER_DMAC_H     4
 #define SOURCE_MAP_OUTER_DMAC_L     5
 #define SOURCE_MAP_OUTER_SMAC_H     6
 #define SOURCE_MAP_OUTER_SMAC_L     7
-#define SOURCE_MAP_OUTER_DIP        8
-#define SOURCE_MAP_OUTER_SIP        9
-//efine SOURCE_MAP_OUTER_L3_LENGTH  10
+#define SOURCE_MAP_PORT_H           8
+#define SOURCE_MAP_PORT_L           9
 #define SOURCE_MAP_OUTER_L4_SRC_L   12
 #define SOURCE_MAP_OUTER_L4_SRC_H   15
 #define SOURCE_MAP_OUTER_L4_DST_L   16
 #define SOURCE_MAP_OUTER_L4_DST_H   19
 #define SOURCE_PA_FLAGS_L           20
 #define SOURCE_PA_FLAGS_H           31
-#define SOURCE_FFU_SCENARIO_L       32
-#define SOURCE_FFU_SCENARIO_H       33
+#define SOURCE_FFU_PROFILE_L        32
+#define SOURCE_FFU_PROFILE_H        33
 #define SOURCE_MAP_INNER_PROT       34
-#define SOURCE_MAP_INNER_ETYPE      35
 #define SOURCE_MAP_INNER_DMAC_H     36
 #define SOURCE_MAP_INNER_DMAC_L     37
 #define SOURCE_MAP_INNER_SMAC_H     38
 #define SOURCE_MAP_INNER_SMAC_L     39
-#define SOURCE_MAP_INNER_DIP        40
-#define SOURCE_MAP_INNER_SIP        41
-//efine SOURCE_MAP_INNER_L3_LENGTH  42
+#define SOURCE_PORT_PROFILE_H       40
+#define SOURCE_PORT_PROFILE_L       41
 #define SOURCE_MAP_INNER_L4_SRC_L   44
 #define SOURCE_MAP_INNER_L4_SRC_H   47
 #define SOURCE_MAP_INNER_L4_DST_L   48
@@ -531,7 +443,8 @@
 #define SOURCE_EX                   52
 #define SOURCE_CSUM                 53
 #define SOURCE_IP_INFO              54
-
+#define SOURCE_PTYPE_L              55
+#define SOURCE_PTYPE_H              57
 // --------------------------------------------------------------------------------
 
 // Enums:
@@ -611,6 +524,19 @@ typedef enum mbyParserPtrsIndexEnum
 
 } mbyParserPtrsIndex;
 
+typedef enum mbyParserInfoIndexEnum
+{
+    MBY_PA_INFO_OTR_L2   = 0,
+    MBY_PA_INFO_OTR_MPLS = 1,
+    MBY_PA_INFO_OTR_L3   = 2,
+    MBY_PA_INFO_OTR_L4   = 3,
+    MBY_PA_INFO_INR_L2   = 4,
+    MBY_PA_INFO_INR_MPLS = 5,
+    MBY_PA_INFO_INR_L3   = 6,
+    MBY_PA_INFO_INR_L4   = 7
+
+} mbyParserInfoIndex;
+
 typedef enum mbyRealignKeysEnum
 {
     MBY_RE_KEYS_INNER_DMAC          =  0,
@@ -647,27 +573,6 @@ typedef enum mbyRealignKeysEnum
     MBY_RE_KEYS_INNER_DIP           = 72
 
 } mbyRealignKeys;
-
-typedef enum mbyMetaOffsetsEnum
-{
-    MBY_META_TYPE_OFF         =  0,
-    MBY_META_LAN_DST_PORT_OFF =  2,
-    MBY_META_DSI_DST_PORT_OFF =  4,
-    MBY_META_IP_HDR_OFF       = 11,
-    MBY_META_ESP_HDR_OFF      = 15
-
-} mbyMetaOffsets;
-
-typedef enum mbyMetaTypesEnum
-{
-    MBY_META_TYPE_LAN_RX    = 0x00,
-    MBY_META_TYPE_LAN_TX    = 0x01,
-    MBY_META_TYPE_MARKER    = 0x02,
-    MBY_META_TYPE_DSI_RX    = 0x14,
-    MBY_META_TYPE_DSI_TX    = 0x16,
-    MBY_META_TYPE_RIMMON_RX = 0x18
-
-} mybMetaTypes;
 
 typedef enum mbyPortDefaultsEnum
 {
@@ -772,15 +677,13 @@ typedef struct mbyMapPortCfgStruct
 {
     fm_uint16 DEFAULT_SGLORT;
     fm_bool   DEFAULT_SGLORT_EN;
-    fm_byte   PORT_SCENARIO;
+    fm_byte   PORT_PROFILE;
 
 } mbyMapPortCfg;
 
 typedef struct mbyMapPortDefaultsStruct
 {
-    fm_bool   USE_PARSE_PTR;
     fm_uint16 VALUE;
-    fm_byte   USE_KEY;
     fm_byte   TARGET;
 
 } mbyMapPortDefaults;
@@ -788,13 +691,13 @@ typedef struct mbyMapPortDefaultsStruct
 typedef struct mbyMapDomainTcamStruct
 {
     fm_uint32 _RSVD1_;
-    fm_byte   PORT_KEY_INVERT;
+    fm_uint32 PORT_KEY_INVERT;
     fm_bool   VID2_VALID_INVERT;
     fm_uint16 VID2_KEY_INVERT;
     fm_bool   VID1_VALID_INVERT;
     fm_uint16 VID1_KEY_INVERT;
     fm_uint32 _RSVD0_;
-    fm_byte   PORT_KEY;
+    fm_uint32 PORT_KEY;
     fm_bool   VID2_VALID;
     fm_uint16 VID2_KEY;
     fm_bool   VID1_VALID;
@@ -802,33 +705,30 @@ typedef struct mbyMapDomainTcamStruct
 
 } mbyMapDomainTcam;
 
-typedef struct mbyMapScenKey0Struct
+typedef struct mbyMapProfKey0Struct
 {
     fm_bool   PTRS_ERR;
     fm_byte   EX;
     fm_byte   CSUM;
-    fm_byte   IP_IS_V6;
     fm_byte   IP_FITS;
     fm_bool   IHL_OK;
     fm_bool   IHL_FITS;
     fm_uint64 FLAGS;
-    fm_bool   RSVD;
 
-} mbyMapScenKey0;
+} mbyMapProfKey0;
 
-typedef struct mbyMapScenKey1Struct
+typedef struct mbyMapProfKey1Struct
 {
-    fm_byte   METADATA_TYPE;
-    fm_uint16 METADATA_FLAGS;
-    fm_uint16 L2_DOMAIN;
+    fm_uint16 PTYPE;
+    fm_byte   L2_DOMAIN;
     fm_byte   L3_DOMAIN;
     fm_byte   IP_SCENARIO;
-    fm_byte   PORT_SCENARIO;
-    fm_byte   DOMAIN_SCENARIO;
+    fm_byte   PORT_PROFILE;
+    fm_byte   DOMAIN_PROFILE;
     fm_byte   MAC_ROUTABLE;
     fm_byte   MAC_MBCAST;
 
-} mbyMapScenKey1;
+} mbyMapProfKey1;
 
 typedef struct mbyMappedKeyStruct
 {
@@ -844,7 +744,7 @@ typedef struct mbyMappedKeyStruct
     fm_byte   MAP_OUTER_SIP;   // 4b field
     fm_byte   MAP_INNER_DIP;   // 4b field
     fm_byte   MAP_INNER_SIP;   // 4b field
-    fm_byte   MAP_PORT;        // 4b field
+    fm_byte   MAP_PORT;
     fm_uint16 MAP_OUTER_L4_DST;
     fm_uint16 MAP_OUTER_L4_SRC;
     fm_uint16 MAP_INNER_L4_DST;
@@ -852,20 +752,20 @@ typedef struct mbyMappedKeyStruct
 
 } mbyMappedKey;
 
-typedef struct mbyMapScenActionStruct
+typedef struct mbyMapProfActionStruct
 {
-    fm_bool   SCENARIO_VALID;
-    fm_byte   SCENARIO;
+    fm_bool   PROFILE_VALID;
+    fm_byte   PROFILE;
     fm_byte   REWRITE_PROFILE;
     fm_bool   TRIG_VALID;
-    fm_byte   SCEN_TRIG;
+    fm_byte   PROFILE_TRIG;
     fm_bool   PARSER_ERROR;
     fm_byte   IP_OPTIONS_MASK;
     fm_bool   PRIOS_VALID;
     fm_byte   VPRI_TGT;
     fm_byte   DSCP_TGT;
 
-} mbyMapScenAction;
+} mbyMapProfAction;
 
 typedef struct mbyMapRewriteStruct
 {
@@ -879,7 +779,8 @@ void Mapper
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper     * const in, 
-          mbyMapperToClassifier * const out
+          mbyMapperToClassifier * const out,
+          mbyParserToModifier   * const parser_to_modifier
 );
 
 #endif // MBY_MAPPER_H
