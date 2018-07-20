@@ -3,7 +3,7 @@
 
 (when (hiGraphicMode)
 ( hiSetBindKey "Layout" "Ctrl<Key>m" "leHiMarkNet()" )
-;( hiSetBindKey "Layout" "Alt<Key>m" "leHiUnmarkNet(nil)" )
+( hiSetBindKey "Layout" "Ctrl<Key>n" "leHiUnmarkNet(nil)" )
 ( hiSetBindKey "Layout" "y" "leToggleGravity()" )
 ( hiSetBindKey "Layout" "n" "ToggleNameDisplay()" )
 ( hiSetBindKey "Layout" "Ctrl<Key>r" "hiRedraw()" )
