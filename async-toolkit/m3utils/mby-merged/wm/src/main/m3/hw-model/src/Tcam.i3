@@ -29,8 +29,8 @@ END ;
 (* Exceptions *)
 (**************)
 
-EXCEPTION InvalidTCAMEntryConfiguration ;
-EXCEPTION InvalidTCAMChunkConfiguration ;
+EXCEPTION InvalidTCAMEntryConfiguration( TEXT ) ;
+EXCEPTION InvalidTCAMChunkConfiguration( TEXT ) ;
 
 (**************)
 (* Procedures *)

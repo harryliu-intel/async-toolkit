@@ -38,15 +38,15 @@ BEGIN
 		my_tcam := Tcam.MakeSlice( NumEntries := 2 , Entries := my_tcam_entries ) ;
 		IO.Put( "Error: Allocted TCAM with invalid number of entries!\n" ) ;
 	EXCEPT
-		| Tcam.InvalidTCAMEntryConfiguration => IO.Put( "" ) ;
-		| Tcam.InvalidTCAMChunkConfiguration => IO.Put( "Error: Wrong exception thrown A!\n" ) ;
+		| Tcam.InvalidTCAMEntryConfiguration( e ) => IO.Put( "Proper exception caught: " & e & "\n" ) ;
+		| Tcam.InvalidTCAMChunkConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
 	END ;
 	
 	TRY
 		my_tcam := Tcam.MakeSlice( NumEntries := num_entries , Entries := my_tcam_entries ) ;
 	EXCEPT
-		| Tcam.InvalidTCAMEntryConfiguration => IO.Put( "Error: Should not throw exception A!\n" ) ;
-		| Tcam.InvalidTCAMChunkConfiguration => IO.Put( "Error: Should not throw exception B!\n" ) ;
+		| Tcam.InvalidTCAMEntryConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
+		| Tcam.InvalidTCAMChunkConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
 	END ;
 
 	IO.Put( "*** Test 1 - Simple Lookup ***\n" ) ;
@@ -80,8 +80,8 @@ BEGIN
 		my_tcam := Tcam.MakeSlice( NumEntries := num_entries , Log2EntriesPerChunk := 12 , Entries := my_tcam_entries ) ;
 		IO.Put( "Error: Allocted TCAM with more entries per chunk than total entries!\n" ) ;
 	EXCEPT
-		| Tcam.InvalidTCAMChunkConfiguration => IO.Put("") ;
-		| Tcam.InvalidTCAMEntryConfiguration => IO.Put( "Error: Wrong exception thrown B!\n" ) ;
+		| Tcam.InvalidTCAMChunkConfiguration( e ) => IO.Put( "Proper exception caught: " & e & "\n" ) ;
+		| Tcam.InvalidTCAMEntryConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
 	END ;
 	(* Should throw exception when Log2EntriesPerChunk is 6 but length of my_tcam_entries_temp is 1025. *)
 	my_tcam_entries_temp := NEW( REF ARRAY OF Tcam.Entry , 1025 ) ;
@@ -89,22 +89,22 @@ BEGIN
 		my_tcam := Tcam.MakeSlice( NumEntries := num_entries , Log2EntriesPerChunk := 6 , Entries := my_tcam_entries_temp ) ;
 		IO.Put( "Error: Allocted TCAM with non-integer number of chunks!\n" ) ;
 	EXCEPT
-		| Tcam.InvalidTCAMEntryConfiguration => IO.Put("") ;
-		| Tcam.InvalidTCAMChunkConfiguration => IO.Put( "Error: Wrong exception thrown C!\n" ) ;
+		| Tcam.InvalidTCAMEntryConfiguration( e ) => IO.Put( "Proper exception caught: " & e & "\n" ) ;
+		| Tcam.InvalidTCAMChunkConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
 	END ;
 	(* Should throw exception when Log2EntriesPerChunk is 7 but ChunkMask has 16 entries. *)
 	TRY
 		my_tcam := Tcam.MakeSlice( num_entries , 7 , chunk_mask , my_tcam_entries ) ;
 		IO.Put( "Error: Allocted TCAM with mismatch between number of chunks and number of elements of ChunkMask!\n" ) ;
 	EXCEPT
-		| Tcam.InvalidTCAMChunkConfiguration => IO.Put( "" ) ;
-		| Tcam.InvalidTCAMEntryConfiguration => IO.Put( "Error: Wrong exception thrown D!\n" ) ;
+		| Tcam.InvalidTCAMChunkConfiguration( e ) => IO.Put( "Proper exception caught: " & e & "\n" ) ;
+		| Tcam.InvalidTCAMEntryConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
 	END ;
 	TRY
 		my_tcam := Tcam.MakeSlice( num_entries , 6 , chunk_mask , my_tcam_entries ) ;
 	EXCEPT
-		| Tcam.InvalidTCAMEntryConfiguration => IO.Put( "Error: Should not throw exception C!\n" ) ;
-		| Tcam.InvalidTCAMChunkConfiguration => IO.Put( "Error: Should not throw exception D!\n" ) ;
+		| Tcam.InvalidTCAMEntryConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
+		| Tcam.InvalidTCAMChunkConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
 	END ;
 
 	IO.Put( "*** Test 2 - Simple Lookup with All Chunks Disabled ***\n" ) ;
@@ -129,8 +129,8 @@ BEGIN
 	TRY
 		my_tcam := Tcam.MakeSlice( 512 ) ;
 	EXCEPT
-		| Tcam.InvalidTCAMEntryConfiguration => IO.Put( "Error: Should not throw exception E!\n" ) ;
-		| Tcam.InvalidTCAMChunkConfiguration => IO.Put( "Error: Should not throw exception F!\n" ) ;
+		| Tcam.InvalidTCAMEntryConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
+		| Tcam.InvalidTCAMChunkConfiguration( e ) => IO.Put( "Error, wrong exception thrown! " & e & "\n" ) ;
 	END ;
 
 	FOR EntryIndex := FIRST( my_tcam.Entries^ ) TO LAST( my_tcam.Entries^ ) DO

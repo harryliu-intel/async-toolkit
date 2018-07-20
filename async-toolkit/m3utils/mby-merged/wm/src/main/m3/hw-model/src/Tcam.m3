@@ -23,11 +23,9 @@ BEGIN
 
 	(* Assigning Log2EntriesPerChunk *)
 	IF entries_per_chunk > NumEntries THEN
-		(* "Too many entries per chunk" *)
-		RAISE InvalidTCAMChunkConfiguration ;
+		RAISE InvalidTCAMChunkConfiguration( "Too many entries per chunk" ) ;
 	ELSIF NumEntries MOD entries_per_chunk # 0 THEN
-		(* "Non-integer number of chunks in TCAM slice" *)
-		RAISE InvalidTCAMChunkConfiguration ;
+		RAISE InvalidTCAMChunkConfiguration( "Non-integer number of chunks in TCAM slice" ) ;
 	ELSE
 		slice_to_return.Log2EntriesPerChunk := Log2EntriesPerChunk ;
 	END ;
@@ -45,8 +43,7 @@ BEGIN
 		(* User assigned a chunk mask of valid length *)
 		slice_to_return.ChunkMask := ChunkMask ;
 	ELSE
-		(* "User assigned a chunk mask of invalid length" *)
-		RAISE InvalidTCAMChunkConfiguration ;
+		RAISE InvalidTCAMChunkConfiguration( "Assigned a chunk mask of invalid length." ) ;
 	END ;
 
 	(* Assigning Entries *)
@@ -54,8 +51,7 @@ BEGIN
 		(* User didn't provide the entries *)
 		slice_to_return.Entries := NEW( REF ARRAY OF Entry , NumEntries ) ;
 	ELSIF NUMBER( Entries^ ) # NumEntries THEN
-		(* "User provided Entries array of invalid length" *)
-		RAISE InvalidTCAMEntryConfiguration ;
+		RAISE InvalidTCAMEntryConfiguration( "User provided Entries array of invalid length" ) ;
 	ELSE
 		(* User provided Entries array of valid length *)
 		slice_to_return.Entries := Entries ;
