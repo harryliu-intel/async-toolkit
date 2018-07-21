@@ -15,19 +15,19 @@ CONST
   NP = MbyParserSizes.NPtrs;
 
 TYPE
-  PK = MbyPaKeys.T;
   PF = MbyPaFlags.T;
   
 TYPE
+  PaKeys = ARRAY [0..NK-1] OF MbyParserTypes.PaKey;
+  PaPtrs = ARRAY [0..NP-1] OF MbyParserTypes.PaPtr;
+  
   T = Metadata.T OBJECT
     rxFlags            :                    MbyTypes.RxEplFlags;
-    parserPktMeta      : ARRAY [0..NM-1] OF MbyTypes.Byte;
+    parserPktMeta      : ARRAY [0..NM-1] OF MbyTypes.Byte;  (* ??? does this belong here ??? *)
     paAdjSegLen        :                    MbyTypes.SegmentLen;
-    paKeys             : ARRAY PK        OF MbyParserTypes.PaKey;
-    paKeysValid        : ARRAY PK        OF BOOLEAN;
+    paKeys             :                    PaKeys;
     paFlags            : ARRAY PF        OF BOOLEAN;
-    paPtrs             : ARRAY [0..NP-1] OF MbyParserTypes.PaPtr;
-    paPtrsValid        : ARRAY [0..NP-1] OF BOOLEAN;
+    paPtrs             :                    PaPtrs;
     paCsumOk           :                    MbyParserTypes.PaCsumOk;
     paExStage          :                    MbyParserTypes.PaExStage;
     paExDepthExceed    :                    BOOLEAN;

@@ -11,7 +11,10 @@ IMPORT MbyParserToMapperMeta;
 IMPORT MbyMapperToClassifierMeta;
 IMPORT ModelStageResult;
 IMPORT MbyMeta;
+IMPORT MbyParserTypes; FROM MbyParserTypes IMPORT PaKey;
+FROM MbyParserToMapperMeta IMPORT PaKeys;
 IMPORT MbyPaFlags, MbyPaKeys;
+IMPORT MbyRealignKeys;
 
 PROCEDURE HandlePacket(ipkt : Pkt.T;
                        h : TopAddr.H;
@@ -37,35 +40,118 @@ PROCEDURE HandlePacketInt(READONLY r  : Map.T;
     p2m : MbyParserToMapperMeta.T :=
         im.ofType(TYPECODE(MbyParserToMapperMeta.T));
 
-    isIPv4, isIPv6 := ARRAY [0..NIsIpBits-1] OF BOOLEAN { FALSE, .. };
+    isIpV4, isIpV6 := ARRAY [0..NIsIpBits-1] OF BOOLEAN { FALSE, .. };
 
-    
+    realignedKeys  : RaKeys;
+    ihlOk, ihlFits : BOOLEAN;
   BEGIN
-    (* we dont actually use the ipkt here *)
+    (* we dont actually use the ipkt here -- should adjust param list *)
     WITH
       portCfg = r.MapPortCfg[mbm.rxPort]
      DO
       IF p2m.paFlags[MbyPaFlags.T.InrL3V] THEN
-        isIPv4[1] := p2m.paKeysValid[MbyPaKeys.T.InnerIpHdr];
-        isIPv6[1] := NOT isIPv4[1];
+        isIpV4[1] := p2m.paKeys[MbyPaKeys.InnerIpHdr].v;
+        isIpV6[1] := NOT isIpV4[1];
       END;
       IF p2m.paFlags[MbyPaFlags.T.OtrL3V] THEN
-        isIPv4[0] := p2m.paKeysValid[MbyPaKeys.T.OuterIpHdr];
-        isIPv6[0] := NOT isIPv4[1];
+        isIpV4[0] := p2m.paKeys[MbyPaKeys.OuterIpHdr].v;
+        isIpV6[0] := NOT isIpV4[1];
       END;
 
+      RealignKeys(isIpV4,
+                  isIpV6,
+                  p2m.paKeys,
+                  realignedKeys,
+                  ihlOk,
+                  ihlFits
+      );
 
+      LookUpDomainTcam();
 
+      GetDglortFromDglortKey();
 
+      InsertDefaults();
 
+      MapScalar();
 
+      GetParserInfo();
 
+      GetScenario();
 
+      MapRewrite();
       
     END;
 
     (* the next line s.b. moved up to HandlePacket *)
     out.push(opkt := NIL, om := NEW(MbyMapperToClassifierMeta.T))
   END HandlePacketInt;
+
+TYPE RaKeys = ARRAY [0..NRealignKeys-1] OF PaKey;
+
+PROCEDURE  RealignKeys(READONLY isIpV4, isIpV6    : ARRAY [0..1] OF BOOLEAN;
+                       READONLY pk (*paKeys*)     : PaKeys;
+                       VAR rk  (*realignedKeys*)  : RaKeys;
+                       VAR ihlOk                  : BOOLEAN;
+                       VAR ihlFits                : BOOLEAN) =
+
+  PROCEDURE CopyDefault() =
+    BEGIN END CopyDefault;
+
+  PROCEDURE RealignInner4() =
+    BEGIN
+    END RealignInner4;
+    
+  PROCEDURE RealignOuter4() =
+    BEGIN
+    END RealignOuter4;
+    
+  PROCEDURE RealignInner6() =
+    BEGIN
+    END RealignInner6;
+    
+  PROCEDURE RealignOuter6() =
+    BEGIN
+    END RealignOuter6;
+    
+  BEGIN
+    CopyDefault();
+
+    IF isIpV4[1] THEN RealignInner4() END;
+
+    IF isIpV4[0] THEN RealignOuter4() END;
+    
+    IF isIpV6[1] THEN RealignInner6() END;
+
+    IF isIpV6[0] THEN RealignOuter6() END;
+    
+  END RealignKeys;
+  
+PROCEDURE  LookUpDomainTcam() =
+  BEGIN
+  END LookUpDomainTcam;
+  
+PROCEDURE  GetDglortFromDglortKey() =
+  BEGIN
+  END GetDglortFromDglortKey;
+  
+PROCEDURE  InsertDefaults() =
+  BEGIN
+  END InsertDefaults;
+  
+PROCEDURE  MapScalar() =
+  BEGIN
+  END MapScalar;
+  
+PROCEDURE  GetParserInfo() =
+  BEGIN
+  END GetParserInfo;
+  
+PROCEDURE  GetScenario() =
+  BEGIN
+  END GetScenario;
+  
+PROCEDURE  MapRewrite() =
+  BEGIN
+  END MapRewrite;
 
 BEGIN END MbyMapperStageModel.
