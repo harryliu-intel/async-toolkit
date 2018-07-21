@@ -324,6 +324,10 @@
                       "    CASE w OF" dnl
                      )))
 
+      (define (next-req-idx) (if (null? (cdar x))
+                                 (+ p 1)
+                                 (M3Support.ParseUnsigned (stringify (cadar x)))))
+      
       (cond ((and (null? x)            ;; no more entries
                   (or (not n)          ;; no padding requested
                       (= (+ p 1) n)    ;; padding complete
@@ -356,7 +360,7 @@
                      v2t))
              )
 
-            ((not (= (M3Support.ParseUnsigned (stringify (cadar x))) (+ p 1))) ;; padding between values
+            ((not (= (next-req-idx) (+ p 1))) ;; padding between values
 
              (let ((idx (+ p 1)))
                        
@@ -373,29 +377,18 @@
              ;; else -- iterate further with a requested value
 
              (let* ((sym     (scheme->m3 (caar x)))
-                    (valspec (cdar x))
-                    (valnum  (if (null? valspec)
-                                 -1
-                                 (M3Support.ParseUnsigned (stringify (car valspec)))))
-                    (is-dup  (and (not (null? valspec))
-                                  (not (null? (cdr valspec)))
-                                  (eq? 'duplicate (cadr valspec))))
-                    
-                    (val     (cond ((null? valspec) (+ p 1))
-                                   ((and (< valnum (+ p 1))
-                                         (not is-dup))
-                                    (set! dbg valspec)
-                                    (error (sa
-                                            "bad value for enum "
-                                            (stringify (car valspec)))))
-                                   (else valnum)))
+                    (is-dup  (and (not (null? (cdar x)))
+                                  (not (null? (cddar x)))
+                                  (eq? 'duplicate (caddar x))))
+                    (val     (next-req-idx))
+                    (nonmono (< val (+ p 1)))
                     (comma   (if (and (null? (cdr x))
                                       (or (not n) (= val (- n 1))))
                                  ""
                                  ", ")))
 
-               
-               (if is-dup (error "duplicate enums not supported"))
+               (if nonmono (error (sa "bad value for enum " (stringify val))))
+               (if is-dup (error "duplicate enums not supported")) ;; desupport dups (at least for now)
                
                (loop val
                      (cdr x)
