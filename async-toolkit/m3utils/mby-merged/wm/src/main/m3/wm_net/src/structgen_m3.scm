@@ -313,8 +313,7 @@
          "  END V2T;" dnl
          dnl m3-wr)
     
-    (let loop ((p  -1) ;; previous ORD
-               (i   0) ;; current ORD
+    (let loop ((p  -1) ;; previous (just completed) ORD
                (x   values)
                (t     "TYPE T = { ")
                (names "CONST Names = ARRAY T OF TEXT { ")
@@ -327,7 +326,7 @@
 
       (cond ((and (null? x)            ;; no more entries
                   (or (not n)          ;; no padding requested
-                      (= i n)    ;; padding complete
+                      (= (+ p 1) n)    ;; padding complete
                       ))
 
              (dis t "};" dnl
@@ -347,12 +346,21 @@
                   m3-wr)
              )
 
-            ((not (= i (+ p 1))) ;; padding between values
+            ((null? x) ;; padding at end
+             (let ((comma (if (= p (- n 2)) "" ", ")))
+               (loop i
+                     '()
+                     (sa t "Rsvd"(number->string i) comma)
+                     (sa names "\"Rsvd"(number->string i)"\"" comma)
+                     (sa t2v (number->string i) comma)
+                     v2t))
+             )
+
+            ((not (= (M3Support.ParseUnsigned (stringify (cadar x))) (+ p 1))) ;; padding between values
 
              (let ((idx (+ p 1)))
                        
                (loop idx
-                     i
                      x
                      (sa t "Rsvd"(number->string idx)", ")
                      (sa names "\"Rsvd"(number->string idx)"\", ")
@@ -360,25 +368,11 @@
                      v2t))
              )
 
-            ((null? x) ;; padding at end
-             (let ((comma (if (= i (- n 1)) "" ", ")))
-               (loop i
-                     (+ i 1)
-                     x
-                     (sa t "Rsvd"(number->string i) comma)
-                     (sa names "\"Rsvd"(number->string i)"\"" comma)
-                     (sa t2v (number->string i) comma)
-                     v2t))
-             )
 
             (else
              ;; else -- iterate further with a requested value
 
              (let* ((sym     (scheme->m3 (caar x)))
-                    (comma   (if (and (null? (cdr x))
-                                      (or (not n) (= i (- n 1))))
-                                 ""
-                                 ", "))
                     (valspec (cdar x))
                     (valnum  (if (null? valspec)
                                  -1
@@ -387,19 +381,23 @@
                                   (not (null? (cdr valspec)))
                                   (eq? 'duplicate (cadr valspec))))
                     
-                    (val     (cond ((null? valspec) i)
-                                   ((and (< valnum i)
+                    (val     (cond ((null? valspec) (+ p 1))
+                                   ((and (< valnum (+ p 1))
                                          (not is-dup))
                                     (set! dbg valspec)
                                     (error (sa
                                             "bad value for enum "
                                             (stringify (car valspec)))))
-                                   (else valnum))))
+                                   (else valnum)))
+                    (comma   (if (and (null? (cdr x))
+                                      (or (not n) (= val (- n 1))))
+                                 ""
+                                 ", ")))
+
                
                (if is-dup (error "duplicate enums not supported"))
                
-               (loop i
-                     (+ val 1)
+               (loop val
                      (cdr x)
                      (sa t sym comma)
                      (sa names "\"" sym "\"" comma)
