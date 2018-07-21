@@ -37,9 +37,9 @@
 
            ))
 
-    (enum mby-parser-keys
+    (constants mby-parser-keys
           u8
-          (options (n 84))
+;;          (options (n 84))
           ((m3 MbyPaKeys))
           (
            (inner-dmac             0)
@@ -79,9 +79,9 @@
 
            ))
 
-    (enum mby-realign-keys
+    (constants mby-realign-keys
           u8
-          (options (n 80))
+;;          (options (n 80))
           ((m3 MbyRealignKeys))
           (
            (inner-dmac             0)
