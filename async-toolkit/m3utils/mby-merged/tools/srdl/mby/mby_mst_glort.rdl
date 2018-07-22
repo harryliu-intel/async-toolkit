@@ -23,7 +23,7 @@ reg egress_vid_table_r {
   desc = "
          Contains egress port membership state for the egress VLAN lookup.
          Indexed first by VLAN ID and then by chunk, where each chunk is
-         64 ports worth of the membership port mask.
+         64 ports worth of the 258 bit membership port mask.
          ";
   regwidth = 64;
   accesswidth = 64;

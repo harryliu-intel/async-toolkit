@@ -3,7 +3,7 @@
 
 
 
-// MAP_PORT_CFG[0..16]
+// MAP_PORT_CFG[0..17]
 
 reg map_port_cfg_r {
   shared;
@@ -44,7 +44,7 @@ reg map_port_cfg_r {
 
 
 
-// MAP_PORT_DEFAULT[0..16,0..5]
+// MAP_PORT_DEFAULT[0..17,0..5]
 
 reg map_port_default_r {
   shared;
@@ -102,7 +102,7 @@ regfile map_port_default_rf {
 
 
 
-// MAP_LEN_LIMIT[0..16]
+// MAP_LEN_LIMIT[0..17]
 
 reg map_len_limit_r {
   shared;
@@ -211,7 +211,7 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } _RSVD1_[127:107] = 21'h0;
+  } _RSVD1_[127:108] = 20'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -220,7 +220,7 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } PORT_KEY_INVERT[106:90] = 17'h1ffff;
+  } PORT_KEY_INVERT[107:90] = 18'h3ffff;
   field {
     AccessType = "RW";
     desc = "
@@ -260,7 +260,7 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } _RSVD0_[63:43] = 21'h0;
+  } _RSVD0_[63:44] = 20'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -268,7 +268,7 @@ reg map_domain_tcam_r {
 
            ";
     ValRandomize = true;
-  } PORT_KEY[42:26] = 17'h1ffff;
+  } PORT_KEY[43:26] = 18'h3ffff;
   field {
     AccessType = "RW";
     desc = "
@@ -501,7 +501,7 @@ reg map_domain_profile_r {
 
 
 
-// MAP_PORT[0..16]
+// MAP_PORT[0..17]
 
 reg map_port_r {
   shared;
@@ -1762,14 +1762,14 @@ addrmap mby_ppe_mapper_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  map_port_cfg_r             MAP_PORT_CFG[17]              @0x0 += 8;
-  map_port_default_rf        MAP_PORT_DEFAULT[17]          @0x200 += 64;
-  map_len_limit_r            MAP_LEN_LIMIT[17]             @0x1100 += 8;
+  map_port_cfg_r             MAP_PORT_CFG[18]              @0x0 += 8;
+  map_port_default_rf        MAP_PORT_DEFAULT[18]          @0x200 += 64;
+  map_len_limit_r            MAP_LEN_LIMIT[18]             @0x1100 += 8;
   map_domain_tcam_r          MAP_DOMAIN_TCAM[4096]         @0x10000 += 16;
   map_domain_action0_r       MAP_DOMAIN_ACTION0[4096]      @0x20000 += 8;
   map_domain_action1_r       MAP_DOMAIN_ACTION1[4096]      @0x28000 += 8;
   map_domain_profile_r       MAP_DOMAIN_PROFILE[512]       @0x30000 += 8;
-  map_port_r                 MAP_PORT[17]                  @0x31000 += 8;
+  map_port_r                 MAP_PORT[18]                  @0x31000 += 8;
   map_mac_r                  MAP_MAC[96]                   @0x31800 += 16;
   map_prot_r                 MAP_PROT[8]                   @0x32200 += 8;
   map_l4_src_r               MAP_L4_SRC[64]                @0x32400 += 8;

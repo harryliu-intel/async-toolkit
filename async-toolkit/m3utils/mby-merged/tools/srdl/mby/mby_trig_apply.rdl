@@ -417,7 +417,7 @@ reg trigger_condition_rx_r {
             from.
            ";
     ValRandomize = true;
-  } SRC_PORT_MASK[16:0] = 17'h00;
+  } SRC_PORT_MASK[17:0] = 18'h000;
 };
 
 

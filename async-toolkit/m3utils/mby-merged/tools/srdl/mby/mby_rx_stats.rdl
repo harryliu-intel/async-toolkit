@@ -81,13 +81,14 @@ reg rx_stats_bank_frame_r {
   desc = "
     Each entry corresponds to a port x statistics class. There are 4 
     banks in total. See specification chapter for more details.
-    
+    [br][br]
     The first index identifies the group, while the second index is the counter for that group.
-    
-    * Group 0: RX_STATS_BANK_FRAME[0,port*16+type], type defined in RX_STATS_BANK_0
-    * Group 1: RX_STATS_BANK_FRAME[1,port*16+type], type defined in RX_STATS_BANK_1
-    * Group 2: RX_STATS_BANK_FRAME[2,port*16+type], type defined in RX_STATS_BANK_2
-    * Group 3: RX_STATS_BANK_FRAME[3,port*16+type], type defined in RX_STATS_BANK_3
+    [list]
+    [*] Group 0: RX_STATS_BANK_FRAME[0,port*18+type], type defined in RX_STATS_BANK_0
+    [*] Group 1: RX_STATS_BANK_FRAME[1,port*18+type], type defined in RX_STATS_BANK_1
+    [*] Group 2: RX_STATS_BANK_FRAME[2,port*18+type], type defined in RX_STATS_BANK_2
+    [*] Group 3: RX_STATS_BANK_FRAME[3,port*18+type], type defined in RX_STATS_BANK_3
+    [/list]
          ";
   regwidth = 64;
   accesswidth = 64;
@@ -100,7 +101,7 @@ reg rx_stats_bank_frame_r {
   } FRAME_COUNTER[47:0] = 48'h00;
 };
 regfile rx_stats_bank_frame_rf {
-  rx_stats_bank_frame_r RX_STATS_BANK_FRAME[128] += 8;
+  rx_stats_bank_frame_r RX_STATS_BANK_FRAME[144] += 8;
 };
 
 
@@ -115,13 +116,14 @@ reg rx_stats_bank_byte_r {
   desc = "
     Each entry corresponds to a port x statistics class. There are 4 
     banks in total. See specification chapter for more details.
-    
+    [br][br]
     The first index identifies the group, while the second index is the counter for that group.
-    
-    * Group 0: RX_STATS_BANK_BYTE[0,port*16+type], type defined in RX_STATS_BANK_0
-    * Group 1: RX_STATS_BANK_BYTE[1,port*16+type], type defined in RX_STATS_BANK_1
-    * Group 2: RX_STATS_BANK_BYTE[2,port*16+type], type defined in RX_STATS_BANK_2
-    * Group 3: RX_STATS_BANK_BYTE[3,port*16+type], type defined in RX_STATS_BANK_3
+    [br][br]
+    [*] Group 0: RX_STATS_BANK_BYTE[0,port*18+type], type defined in RX_STATS_BANK_0
+    [*] Group 1: RX_STATS_BANK_BYTE[1,port*18+type], type defined in RX_STATS_BANK_1
+    [*] Group 2: RX_STATS_BANK_BYTE[2,port*18+type], type defined in RX_STATS_BANK_2
+    [*] Group 3: RX_STATS_BANK_BYTE[3,port*18+type], type defined in RX_STATS_BANK_3
+    [/list]
          ";
   regwidth = 64;
   accesswidth = 64;
@@ -134,7 +136,7 @@ reg rx_stats_bank_byte_r {
   } BYTE_COUNTER[55:0] = 56'h00;
 };
 regfile rx_stats_bank_byte_rf {
-  rx_stats_bank_byte_r RX_STATS_BANK_BYTE[128] += 8;
+  rx_stats_bank_byte_r RX_STATS_BANK_BYTE[144] += 8;
 };
 
 //VLAN
