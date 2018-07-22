@@ -11,6 +11,7 @@ TYPE
   Byte            = ByteIntf.T;
   SegmentLen      = [0..16_ffff]; (* cant be right *)
   L2IvlanCntIndex = [0..16_ffff]; (* right? *)
+  VlanId          = [0..LS(1,12)-1];
 
 CONST Brand = "MbyTypes";
 
