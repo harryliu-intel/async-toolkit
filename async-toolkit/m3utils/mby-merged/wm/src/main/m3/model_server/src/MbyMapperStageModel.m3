@@ -11,10 +11,10 @@ IMPORT MbyParserToMapperMeta;
 IMPORT MbyMapperToClassifierMeta;
 IMPORT ModelStageResult;
 IMPORT MbyMeta;
-IMPORT MbyParserTypes; FROM MbyParserTypes IMPORT PaKey;
-FROM MbyParserToMapperMeta IMPORT PaKeys;
-IMPORT MbyPaFlags, MbyPaKeys;
-IMPORT MbyRealignKeys;
+IMPORT MbyParserTypes; 
+IMPORT MbyPaFlags, MbyPaKeys AS PK;
+FROM MbyDoRealignKeys IMPORT RealignKeys, RaKeys;
+IMPORT Word;
 
 PROCEDURE HandlePacket(ipkt : Pkt.T;
                        h : TopAddr.H;
@@ -50,11 +50,11 @@ PROCEDURE HandlePacketInt(READONLY r  : Map.T;
       portCfg = r.MapPortCfg[mbm.rxPort]
      DO
       IF p2m.paFlags[MbyPaFlags.T.InrL3V] THEN
-        isIpV4[1] := p2m.paKeys[MbyPaKeys.InnerIpHdr].v;
+        isIpV4[1] := p2m.paKeys[PK.InnerIpHdr].v;
         isIpV6[1] := NOT isIpV4[1];
       END;
       IF p2m.paFlags[MbyPaFlags.T.OtrL3V] THEN
-        isIpV4[0] := p2m.paKeys[MbyPaKeys.OuterIpHdr].v;
+        isIpV4[0] := p2m.paKeys[PK.OuterIpHdr].v;
         isIpV6[0] := NOT isIpV4[1];
       END;
 
@@ -86,46 +86,6 @@ PROCEDURE HandlePacketInt(READONLY r  : Map.T;
     out.push(opkt := NIL, om := NEW(MbyMapperToClassifierMeta.T))
   END HandlePacketInt;
 
-TYPE RaKeys = ARRAY [0..NRealignKeys-1] OF PaKey;
-
-PROCEDURE  RealignKeys(READONLY isIpV4, isIpV6    : ARRAY [0..1] OF BOOLEAN;
-                       READONLY pk (*paKeys*)     : PaKeys;
-                       VAR rk  (*realignedKeys*)  : RaKeys;
-                       VAR ihlOk                  : BOOLEAN;
-                       VAR ihlFits                : BOOLEAN) =
-
-  PROCEDURE CopyDefault() =
-    BEGIN END CopyDefault;
-
-  PROCEDURE RealignInner4() =
-    BEGIN
-    END RealignInner4;
-    
-  PROCEDURE RealignOuter4() =
-    BEGIN
-    END RealignOuter4;
-    
-  PROCEDURE RealignInner6() =
-    BEGIN
-    END RealignInner6;
-    
-  PROCEDURE RealignOuter6() =
-    BEGIN
-    END RealignOuter6;
-    
-  BEGIN
-    CopyDefault();
-
-    IF isIpV4[1] THEN RealignInner4() END;
-
-    IF isIpV4[0] THEN RealignOuter4() END;
-    
-    IF isIpV6[1] THEN RealignInner6() END;
-
-    IF isIpV6[0] THEN RealignOuter6() END;
-    
-  END RealignKeys;
-  
 PROCEDURE  LookUpDomainTcam() =
   BEGIN
   END LookUpDomainTcam;

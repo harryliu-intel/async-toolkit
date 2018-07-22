@@ -64,6 +64,7 @@ interface ("MbyParserMeta")
 %interface ("MbyMapperSizes")
 module ("MbyMapperStage")
 module ("MbyMapperStageModel")
+module ("MbyDoRealignKeys")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % just testing stuff
