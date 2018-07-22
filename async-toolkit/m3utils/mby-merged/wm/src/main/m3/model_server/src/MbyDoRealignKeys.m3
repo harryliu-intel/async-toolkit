@@ -3,23 +3,10 @@ FROM MbyParserToMapperMeta IMPORT PaKeys;
 IMPORT Word;
 IMPORT MbyPaKeys AS PK;
 IMPORT MbyRealignKeys AS RK;
+FROM WmUtils IMPORT GetUnnamedField, ModfyUnnamedField;
 
 (* these should be moved... wm_support ? *)
 
-PROCEDURE GetUnnamedField(rvalue     : Word.T;
-                          start, len : CARDINAL) : Word.T =
-  BEGIN
-    RETURN Word.Extract(rvalue, start, len)
-  END GetUnnamedField;
-
-PROCEDURE ModfyUnnamedField(rvalue : Word.T;
-                            start, len : CARDINAL;
-                            value : Word.T) : Word.T =
-  BEGIN
-    RETURN Word.Insert(rvalue, value, start, len)
-  END ModfyUnnamedField;
-
-  
 PROCEDURE  RealignKeys(READONLY isIpV4, isIpV6    : ARRAY [0..1] OF BOOLEAN;
                        READONLY pk (*paKeys*)     : PaKeys;
                        VAR rk  (*realignedKeys*)  : RaKeys;

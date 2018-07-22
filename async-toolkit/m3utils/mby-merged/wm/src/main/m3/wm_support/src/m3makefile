@@ -27,5 +27,6 @@ Module("CsrOp")
 pqueue("CompAddr","CompAddr")
 
 Module("UnsafeUpdater")
+Module("WmUtils")
 
 library ("wm_support")
