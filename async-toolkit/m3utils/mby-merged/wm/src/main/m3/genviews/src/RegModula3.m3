@@ -25,6 +25,7 @@ IMPORT CardSet, CardSetDef;
 IMPORT RdlNum;
 FROM RegModula3IntfNaming IMPORT MapIntfNameRW;
 IMPORT GenViewsM3;
+IMPORT TextSeq;
 
 (* this stuff really shouldnt be in this module but in Main... *)
 IMPORT RdlProperty, RdlExplicitPropertyAssign;
@@ -538,19 +539,31 @@ PROCEDURE GenChildInit(e          : RegChild.T;
   
   (**********************************************************************)
 
+PROCEDURE PutFtypeDecls(gs : GenState; sec : Section; fTypeDecls : TextSeq.T) =
+  BEGIN
+    FOR i := 0 TO fTypeDecls.size()-1 DO
+      WITH d = fTypeDecls.get(i) DO
+        gs.put(sec, F("TYPE %s;\n", d))
+      END
+    END;
+    gs.put(sec, "\n");
+  END PutFtypeDecls;
+  
 PROCEDURE GenAddrmapRecord(map            : RegContainer.T;
                            gs             : GenState)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     ccnt : CARDINAL := 0;
     file := ThisFile(); line := Fmt.Int(ThisLine());
+    mainTypeName := MainTypeName[gs.th];
+    fTypeDecls := NEW(TextSeq.T).init();
   BEGIN
     IF NOT gs.newSymbol(map.typeName(gs)) THEN RETURN END;
     gs.put(Section.IMaintype, "\n");
     gs.put(Section.IMaintype, "TYPE\n");
     gs.put(Section.IMaintype,
            F("  %s = RECORD (* %s:%s *)\n",
-             MainTypeName[gs.th],
+             mainTypeName,
              file,
              line)
           );
@@ -573,13 +586,14 @@ PROCEDURE GenAddrmapRecord(map            : RegContainer.T;
         ELSE
           e.comp.generate(gs)
         END;
-        gs.put(Section.IMaintype, F("    %s : %s%s;\n",
-                                    IdiomName(e.nm),
-                                    FmtArr(e.array),
-                                    ComponentTypeName(e.comp,
-                                                      gs)));
-        INC(ccnt,ArrayCnt(e.array));
-
+        WITH typeStr   = FmtArr(e.array) & ComponentTypeName(e.comp,gs),
+             fNm       = IdiomName(e.nm),
+             fTypeDecl = F("%s_%s_type = %s",
+                           mainTypeName, IdiomName(e.nm,FALSE), typeStr) DO
+          gs.put(Section.IMaintype, F("    %s : %s;\n", fNm, typeStr));
+          INC(ccnt,ArrayCnt(e.array));
+          fTypeDecls.addhi(fTypeDecl);
+        END
       END
     END;
 
@@ -603,7 +617,8 @@ PROCEDURE GenAddrmapRecord(map            : RegContainer.T;
      END;
 
     gs.put(Section.IMaintype, "  END;\n");
-    gs.put(Section.IMaintype, "\n")
+    gs.put(Section.IMaintype, "\n");
+    PutFtypeDecls(gs, Section.IMaintype, fTypeDecls)
   END GenAddrmapRecord;
   
 PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T) 
@@ -1517,21 +1532,25 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   VAR
     ccnt : CARDINAL := 0;
     gs : GenState := genState;
+    mainTypeName := rf.typeName(gs);
+    fTypeDecls := NEW(TextSeq.T).init();
   BEGIN
     IF NOT gs.newSymbol(rf.typeName(gs)) THEN RETURN END;
     gs.put(Section.IComponents, F("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine())));
     gs.put(Section.IComponents, "TYPE\n");
-    gs.put(Section.IComponents, F("  %s = ", rf.typeName(gs)));
+    gs.put(Section.IComponents, F("  %s = ", mainTypeName));
 
     IF rf.children.size() # 1 THEN
       gs.put(Section.IComponents, F("RECORD (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine())));
       FOR i := 0 TO rf.children.size()-1 DO
-        WITH r = rf.children.get(i) DO
-          gs.put(Section.IComponents, F("    %s : %s%s;\n",
-                                        IdiomName(r.nm),
-                                        FmtArr(r.array),
-                                        ComponentTypeName(r.comp, gs)));
+        WITH r = rf.children.get(i),
+             typeStr = FmtArr(r.array) & ComponentTypeName(r.comp, gs),
+             fNm     = IdiomName(r.nm),
+             fTypeDecl = F("%s_%s_type = %s",
+                           mainTypeName, IdiomName(r.nm, FALSE), typeStr) DO
+          gs.put(Section.IComponents, F("    %s : %s;\n", fNm, typeStr));
           INC(ccnt,ArrayCnt(r.array));
+          fTypeDecls.addhi(fTypeDecl);
         END
       END;
       CASE gs.th OF
@@ -1561,6 +1580,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
       END
     END;
     gs.put(Section.IComponents, "\n");
+    PutFtypeDecls(gs, Section.IComponents, fTypeDecls);
     FOR i := 0 TO rf.children.size()-1 DO
       rf.children.get(i).comp.generate(gs)
     END;
@@ -1675,22 +1695,29 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
   VAR
     gs : GenState := genState;
     ccnt := 0;
+    mainTypeName := r.typeName(gs);
+    fTypeDecls := NEW(TextSeq.T).init();
   <*FATAL OSError.E, Thread.Alerted, Wr.Failure*>
   BEGIN
     (* check if already dumped *)
     IF NOT gs.newSymbol(r.typeName(gs)) THEN RETURN END;
     
     gs.put(Section.IComponents, F("TYPE\n"));
-    gs.put(Section.IComponents, F("  %s = RECORD (* %s:%s *)\n", r.typeName(gs),ThisFile(),Fmt.Int(ThisLine())));
+    gs.put(Section.IComponents, F("  %s = RECORD (* %s:%s *)\n", mainTypeName,ThisFile(),Fmt.Int(ThisLine())));
     FOR i := 0 TO r.fields.size()-1 DO
-      WITH f = r.fields.get(i) DO
+      WITH f = r.fields.get(i),
+           typeStr = M3FieldType(f, gs.th, gs),
+           fNm = f.name(),
+           fTypeDecl = F("%s_%s_type = %s",
+                         mainTypeName, f.name(FALSE), typeStr) DO
+
         IF f.width = BITSIZE(Word.T) THEN
           EVAL gs.i3imports.insert("Word")
         END;
-
-        gs.put(Section.IComponents, F("    %s : %s;\n",
-                                      f.name(), M3FieldType(f, gs.th, gs)));
-        INC(ccnt)
+        
+        gs.put(Section.IComponents, F("    %s : %s;\n", fNm, typeStr));
+        INC(ccnt);
+        fTypeDecls.addhi(fTypeDecl);
       END
     END;
     CASE gs.th OF
@@ -1714,6 +1741,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
     END;
     gs.put(Section.IComponents, F("  END;\n"));
     gs.put(Section.IComponents, F("\n"));
+    PutFtypeDecls(gs, Section.IComponents, fTypeDecls);
     CASE gs.th OF
       TypeHier.Addr =>  GenRegInit(r, gs)
     |
