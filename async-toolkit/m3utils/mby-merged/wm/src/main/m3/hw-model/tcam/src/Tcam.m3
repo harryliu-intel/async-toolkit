@@ -71,7 +71,6 @@ VAR
 	tcam_index : INTEGER := 0 ;
 	key_check_mask : KeyString := 0 ;
 BEGIN
-
 	(* Initialize the array to no hits *)
 	array_to_return := NEW( REF ARRAY OF BOOLEAN , slice.NumEntries ) ;
 	FOR hit_clear_index := FIRST( array_to_return^ ) TO LAST( array_to_return^ ) DO

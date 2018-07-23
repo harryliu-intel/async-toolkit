@@ -1,10 +1,7 @@
 import( "libm3" )
 
-module( "WCMTcamBlock" )
-module( "../tcam/src/Tcam" )
-module( "Main" )
-
-% For testing purposes only
 module( "Tcam" )
+module( "WCMTcamBlock" )
+implementation( "Main" )
 
 program( "test" )

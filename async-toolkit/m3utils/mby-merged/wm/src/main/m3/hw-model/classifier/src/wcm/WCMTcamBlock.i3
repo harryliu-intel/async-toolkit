@@ -1,5 +1,19 @@
 INTERFACE WCMTcamBlock ;
 
+(*************)
+(** Imports **)
+(*************)
+IMPORT Tcam ;
+
+(***************)
+(** Constants **)
+(***************)
+
+CONST KEY8_LENGTH = 64 ;
+CONST KEY16_LENGTH = 32 ;
+CONST KEY32_LENGTH = 16 ;
+CONST NUM_ENTRIES = 1024 ;
+
 (***********)
 (** Types **)
 (***********)
@@ -7,8 +21,7 @@ INTERFACE WCMTcamBlock ;
 (* Profile
 Configures the TCAM slice *)
 TYPE Profile = RECORD
-	ChunkMask : BOOLEAN := FALSE ;
-	StartCompare : BITS 1 FOR [0..1] := 0 ;
+	StartCompare : BOOLEAN := FALSE ;
 	SelectTop : BITS 6 FOR [16_00..16_3F] := 16_00 ;
 	Select0 : BITS 7 FOR [16_00..16_7F] := 16_00 ;
 	Select1 : BITS 7 FOR [16_00..16_7F] := 16_00 ;
@@ -24,39 +37,26 @@ TYPE Keys = RECORD
 	Key32 : REF ARRAY OF BITS 32 FOR [16_00000000..16_FFFFFFFF] := NIL ;
 END ;
 
-(***************)
-(** Constants **)
-(***************)
-
-CONST KEY8_LENGTH = 64 ;
-CONST KEY16_LENGTH = 32 ;
-CONST KEY32_LENGTH = 16 ;
-CONST NUM_ENTRIES = 1024 ;
+(* WCM TCAM Block *)
+TYPE T = RECORD 
+	BlockTcamSlice : Tcam.TcamSlice ;
+	BlockKeys : Keys ;
+	BlockProfile : Profile ;
+	BlockInHits : REF ARRAY OF BOOLEAN := NIL ;
+END ;
 
 (****************)
 (** Exceptions **)
 (****************)
 
-EXCEPTION InvalidKeysError( TEXT ) ;
-EXCEPTION InvalidInHitsError( TEXT ) ;
+EXCEPTION NoHitsException( TEXT ) ;
 
-(*************)
-(** Objects **)
-(*************)
+(****************)
+(** Procedures **)
+(****************)
 
-TYPE T = OBJECT
-METHODS
-	(** Accessor Methods **)
-	GetKeys( ) : Keys ;
-	GetProfile( ) : Profile ;
-	GetInHits( ) : REF ARRAY OF BOOLEAN ;
-	GetOutHits( ) : REF ARRAY OF BOOLEAN ;
-	GetHitIndexValid( ) : BOOLEAN ;
-	GetHitIndex( ) : REF ARRAY OF BOOLEAN ;
-	(** Mutator Methods **)
-	SetKeys( NewKeys : Keys )  RAISES { InvalidKeysError } ;
-	SetProfile( NewProfile : Profile ) ;
-	SetInHits( NewHits : REF ARRAY OF BOOLEAN ) RAISES { InvalidInHitsError } ;
-END ;
+PROCEDURE GetOutHits( WCMGroup : REF T ) : REF ARRAY OF BOOLEAN ;
+PROCEDURE GetHitIndexValid( WCMGroup : REF T ) : BOOLEAN ;
+PROCEDURE GetHitIndex( WCMGroup : REF T ) : CARDINAL RAISES { NoHitsException } ;
 
 END WCMTcamBlock.
