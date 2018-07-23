@@ -4,7 +4,6 @@ IMPORT ServerPacket AS Pkt;
 IMPORT mby_top_map_addr AS TopAddr;
 IMPORT Metadata;
 IMPORT ModelStageResult;
-IMPORT MbyParserMeta;
 
 TYPE
   Indices = RECORD
@@ -17,6 +16,5 @@ PROCEDURE HandlePacket(ipkt    : Pkt.T;
                        imd     : Metadata.T;
                        out     : ModelStageResult.T);
 
-TYPE Meta = MbyParserMeta.T;
 
 END MbyParserStageModel.

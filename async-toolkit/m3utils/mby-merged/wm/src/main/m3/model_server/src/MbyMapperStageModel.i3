@@ -15,6 +15,4 @@ PROCEDURE HandlePacket(ipkt    : Pkt.T;
                        imd     : Metadata.T;
                        out     : ModelStageResult.T);
 
-TYPE Meta = Metadata.T;
-
 END MbyMapperStageModel.

@@ -1,10 +1,9 @@
-INTERFACE MbyMapperToClassifierMeta;
-IMPORT Metadata;
+INTERFACE MbyMapperToClassifier;
 IMPORT MbyTypes;
 IMPORT MbyFfuTypes;
 
 TYPE
-  T = Metadata.T OBJECT
+  T = RECORD
     paError          :                    BOOLEAN;
     ffuKeys          :                    MbyFfuTypes.Keys;
     ffuActions       :                    MbyFfuTypes.Actions;
@@ -17,6 +16,6 @@ TYPE
     l2Ivlan1CntIndex :                    MbyTypes.L2IvlanCntIndex;
   END;
 
-CONST Brand = "MbyMapperToClassifierMeta";
+CONST Brand = "MbyMapperToClassifier";
 
-END MbyMapperToClassifierMeta.
+END MbyMapperToClassifier.
