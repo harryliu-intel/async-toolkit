@@ -5,8 +5,6 @@ IMPORT MbyPaKeys AS PK;
 IMPORT MbyRealignKeys AS RK;
 FROM WmUtils IMPORT GetUnnamedField, ModfyUnnamedField;
 
-(* these should be moved... wm_support ? *)
-
 PROCEDURE  RealignKeys(READONLY isIpV4, isIpV6    : ARRAY [0..1] OF BOOLEAN;
                        READONLY pk (*paKeys*)     : PaKeys;
                        VAR rk  (*realignedKeys*)  : RaKeys;
