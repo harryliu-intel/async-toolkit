@@ -41,6 +41,9 @@ module("MbyModelServer")
 
 interface("BaseModelStage")
 module("Metadata")
+generic_interface("Metadata")
+template("metadata")
+
 Generic_module("ModelStage")
 module ("ModelStageResult")
 interface ("ModelStageResultClass")
@@ -51,7 +54,10 @@ interface ("MbyMeta")
 interface ("MbyParserTypes")
 %interface ("MbyParserSizes")
 interface ("MbyMacToParserMeta")
-interface ("MbyParserToMapperMeta")
+%interface ("MbyParserToMapperMeta")
+interface ("MbyParserToMapper")
+metadata("MbyParserToMapper", "MbyParserToMapper")
+
 interface ("MbyParserToModifierMeta")
 interface ("MbyParserInfo")
 interface ("MbyMapperToClassifierMeta")
@@ -65,6 +71,9 @@ interface ("MbyParserMeta")
 module ("MbyMapperStage")
 module ("MbyMapperStageModel")
 module ("MbyDoRealignKeys")
+interface ("MbyMapProfKey1")
+interface ("MbyMapProfKey0")
+interface ("MbyMappedKey")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % just testing stuff

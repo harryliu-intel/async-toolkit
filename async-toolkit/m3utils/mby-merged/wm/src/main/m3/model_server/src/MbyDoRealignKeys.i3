@@ -1,5 +1,5 @@
 INTERFACE MbyDoRealignKeys;
-FROM MbyParserToMapperMeta IMPORT PaKeys;
+FROM MbyParserToMapper IMPORT PaKeys;
 FROM MbyParserTypes IMPORT PaKey;
 FROM MbyMapperSizes IMPORT NRealignKeys;
 

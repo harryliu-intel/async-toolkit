@@ -1,5 +1,5 @@
 MODULE MbyDoRealignKeys;
-FROM MbyParserToMapperMeta IMPORT PaKeys;
+FROM MbyParserToMapper IMPORT PaKeys;
 IMPORT Word;
 IMPORT MbyPaKeys AS PK;
 IMPORT MbyRealignKeys AS RK;

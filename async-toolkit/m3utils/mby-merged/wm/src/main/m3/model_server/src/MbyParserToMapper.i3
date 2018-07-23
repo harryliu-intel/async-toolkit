@@ -1,5 +1,4 @@
-INTERFACE MbyParserToMapperMeta;
-IMPORT Metadata;
+INTERFACE MbyParserToMapper;
 IMPORT MbyTypes;
 IMPORT MbyParserTypes;
 IMPORT MbyParserSizes;
@@ -21,7 +20,7 @@ TYPE
   PaKeys = ARRAY [0..NK-1] OF MbyParserTypes.PaKey;
   PaPtrs = ARRAY [0..NP-1] OF MbyParserTypes.PaPtr;
   
-  T = Metadata.T OBJECT
+  T = RECORD
     rxFlags            :                    MbyTypes.RxEplFlags;
     parserPktMeta      : ARRAY [0..NM-1] OF MbyTypes.Byte;  (* ??? does this belong here ??? *)
     paAdjSegLen        :                    MbyTypes.SegmentLen;
@@ -38,6 +37,6 @@ TYPE
     paPacketType       :                    MbyParserTypes.PaPacketType;
   END;
 
-CONST Brand = "MbyParserToMapperMeta";
+CONST Brand = "MbyParserToMapper";
 
-END MbyParserToMapperMeta.
+END MbyParserToMapper.
