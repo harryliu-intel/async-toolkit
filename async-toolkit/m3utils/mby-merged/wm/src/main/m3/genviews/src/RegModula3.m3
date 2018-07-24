@@ -720,11 +720,11 @@ PROCEDURE GenAddrmapXInit(map : RegAddrmap.T; gs : GenState) =
     qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
   BEGIN
     gs.put(Section.IMaintype,
-           F("PROCEDURE InitX(READONLY t : %s; VAR x : X; root : REFANY);\n", qmtn));
+           F("PROCEDURE InitX(READONLY t : %s; READONLY a : A; VAR x : X; root : REFANY);\n", qmtn));
     gs.put(Section.IMaintype, "\n");
     
     gs.mdecl(
-           F("PROCEDURE InitX(READONLY t : %s; VAR x : X; root : REFANY) =\n", qmtn));
+           F("PROCEDURE InitX(READONLY t : %s; READONLY a : A; VAR x : X; root : REFANY) =\n", qmtn));
     gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
     gs.mdecl("  BEGIN\n");
 
@@ -757,15 +757,17 @@ PROCEDURE GenChildXInit(e          : RegChild.T;
     
     IF e.array = NIL THEN
       gs.mdecl(
-             "    %s(t%s,x%s,root);\n",
-               ComponentInitName(e.comp,gs),
-               childArc,
-               childArc);
+          "    %s(t%s,a%s,x%s,root);\n",
+          ComponentInitName(e.comp,gs),
+          childArc,
+          childArc,
+          childArc);
     ELSE
       
       gs.mdecl("    %s\n",FmtArrFor(e.array));
-      gs.mdecl("      %s(t%s[i],x%s[i],root);\n",
+      gs.mdecl("      %s(t%s[i],a%s[i],x%s[i],root);\n",
                ComponentInitName(e.comp,gs),
+               childArc,
                childArc,
                childArc);
       gs.mdecl("    END;\n")
@@ -1026,7 +1028,7 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
            "  BEGIN\n" &
          F("    range := Init(h.a, base, CompPath.One(\"ROOT\"));\n") &
            "    EVAL CompMemory.T.init(h, range);\n" &
-           "    InitX(h.read, h.x, h);\n" &
+           "    InitX(h.read, h.a, h.x, h);\n" &
            "    UpdateInit(h.update, h.a, h.x, h);\n" &                         
            "    h.registerListener(range,NEW(Callback, h := h));\n"&
            "    RETURN h\n" &                             
@@ -1653,14 +1655,16 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
  PROCEDURE GenRegfileXInit(rf : RegRegfile.T; gs : GenState) =
   VAR
     iNm := ComponentInitName(rf, gs);
+    atn := ComponentTypeNameInHier(rf, gs, TypeHier.Addr);
     ttn := ComponentTypeNameInHier(rf, gs, TypeHier.Read);
     skipArc := rf.children.size() = 1;
   BEGIN
     gs.mdecl(
            
-             "PROCEDURE %s(READONLY t : %s; VAR x : %s; root : REFANY) =\n",
+             "PROCEDURE %s(READONLY t : %s; READONLY a : %s; VAR x : %s; root : REFANY) =\n",
              iNm,
              ttn,
+             atn,
              rf.typeName(gs));
     gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
     
@@ -1738,6 +1742,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T) =
       gs.put(Section.IComponents, F("    nonmono := FALSE;\n"));
       gs.put(Section.IComponents, F("    monomap : REF ARRAY OF CARDINAL;\n"));
       gs.put(Section.IComponents, F("    min, max: CompAddr.T;\n"));
+      gs.put(Section.IComponents, F("    nm : CompPath.T;\n"))
    |
       TypeHier.Update =>
       gs.put(Section.IComponents, F("    u : %s;\n",
@@ -1782,6 +1787,7 @@ PROCEDURE GenRegInit(r : RegReg.T; gs : GenState) =
     gs.mdecl("    c := 0;\n");
     gs.mdecl("    mono := NEW(CompRange.Monotonic).init();\n");
     gs.mdecl("  BEGIN\n");
+    gs.mdecl("    x.nm := path;\n");
     gs.mdecl("    range := CompRange.PlaceReg(at%s);\n",
                             FormatPropArgs(props));
     gs.mdecl("    at  := range.pos;\n");
@@ -1848,11 +1854,13 @@ PROCEDURE GenRegXInit(r : RegReg.T; gs : GenState) =
   VAR
     iNm := ComponentInitName(r, gs);
     ttn := ComponentTypeNameInHier(r, gs, TypeHier.Read);
+    atn := ComponentTypeNameInHier(r, gs, TypeHier.Addr);
   BEGIN
     gs.mdecl(
-           "PROCEDURE %s(READONLY t : %s; VAR x : %s; root : REFANY) =\n",
+           "PROCEDURE %s(READONLY t : %s; READONLY a : %s; VAR x : %s; root : REFANY) =\n",
            iNm,
            ttn,
+           atn,
            r.typeName(gs)
            );
     gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -1861,10 +1869,11 @@ PROCEDURE GenRegXInit(r : RegReg.T; gs : GenState) =
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f = r.fields.get(i) DO
         gs.mdecl(
-            "    x.%s := NEW(UnsafeUpdater.T).init(root,ADR(t.%s),%s);\n",
+            "    x.%s := NEW(UnsafeUpdater.T).init(root,ADR(t.%s),%s,CompPath.Cat(a.nm,\".%s\"));\n",
             f.name(debug := FALSE),
             f.name(debug := FALSE),
-            Fmt.Int(f.width))
+            Fmt.Int(f.width),
+            f.name(debug := FALSE))
       END;
     END;
     gs.mdecl("  END %s;\n",iNm);

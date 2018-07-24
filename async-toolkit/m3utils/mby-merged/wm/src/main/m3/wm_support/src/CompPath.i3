@@ -1,7 +1,8 @@
 INTERFACE CompPath;
 IMPORT CompRange;
+IMPORT TextList;
 
-TYPE T <: REFANY;
+TYPE T = TextList.T; (* do not use -- hack *)
 
 PROCEDURE Cat(a : T; b : TEXT) : T;
 

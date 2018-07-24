@@ -7,8 +7,6 @@ IMPORT TextList;
 
 VAR silent := Env.Get("WM_SILENT") # NIL;
 
-REVEAL T = TextList.T BRANDED OBJECT END;
-    
 PROCEDURE Cat(a : T; b : TEXT) : T =
   BEGIN
     IF silent THEN RETURN NIL END;
@@ -36,7 +34,7 @@ PROCEDURE CatArray(a : T; b : TEXT; i : CARDINAL) : T =
 
 PROCEDURE Debug(reg : T; at : CompRange.T) =
   BEGIN
-    IF reg # NIL THEN
+    IF reg # NIL AND M3Debug.GetLevel() >= 10 THEN
       M3Debug.Out(F("%s @ 16_%s = %s", ToText(reg), Int(
                                           CompAddr.DeltaBytes(at.pos,
                                                               CompAddr.Zero),

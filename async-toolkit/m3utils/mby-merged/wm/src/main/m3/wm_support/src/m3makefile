@@ -26,6 +26,7 @@ Module("IdStyles")
 Module("CsrOp")
 pqueue("CompAddr","CompAddr")
 
+Module("UpdateTracing")
 Module("UnsafeUpdater")
 Module("WmUtils")
 
