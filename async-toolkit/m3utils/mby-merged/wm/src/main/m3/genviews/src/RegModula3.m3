@@ -1024,7 +1024,7 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
            "  VAR\n" &
            "    range : CompRange.T;\n"&
            "  BEGIN\n" &
-         F("    range := Init(h.a, base, \"ROOT\");\n") &
+         F("    range := Init(h.a, base, CompPath.One(\"ROOT\"));\n") &
            "    EVAL CompMemory.T.init(h, range);\n" &
            "    InitX(h.read, h.x, h);\n" &
            "    UpdateInit(h.update, h.a, h.x, h);\n" &                         
