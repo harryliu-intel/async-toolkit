@@ -316,6 +316,15 @@ PROCEDURE FmtArr(a : RdlArray.Single) : TEXT =
      END
   END FmtArr;
 
+PROCEDURE FmtArrIdx(typeDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =
+  BEGIN
+    IF a = NIL THEN
+      RETURN
+    ELSE
+      typeDecls.addhi(F("%s = [0..%s-1]", nm, BigInt.Format(a.n.x)))
+    END
+  END FmtArrIdx;
+
 PROCEDURE FmtArrFor(a : RdlArray.Single) : TEXT =
   BEGIN
     RETURN F("FOR i := 0 TO %s-1 DO", BigInt.Format(a.n.x))
@@ -588,11 +597,12 @@ PROCEDURE GenAddrmapRecord(map            : RegContainer.T;
         END;
         WITH typeStr   = FmtArr(e.array) & ComponentTypeName(e.comp,gs),
              fNm       = IdiomName(e.nm),
-             fTypeDecl = F("%s_%s_type = %s",
-                           mainTypeName, IdiomName(e.nm,FALSE), typeStr) DO
+             typeNamePfx = F("%s_%s", mainTypeName, IdiomName(e.nm, FALSE)),
+             fTypeDecl = F("%s_type = %s", typeNamePfx, typeStr) DO
           gs.put(Section.IMaintype, F("    %s : %s;\n", fNm, typeStr));
           INC(ccnt,ArrayCnt(e.array));
           fTypeDecls.addhi(fTypeDecl);
+          FmtArrIdx(fTypeDecls, e.array, typeNamePfx & "_idx")
         END
       END
     END;
@@ -1546,11 +1556,12 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
         WITH r = rf.children.get(i),
              typeStr = FmtArr(r.array) & ComponentTypeName(r.comp, gs),
              fNm     = IdiomName(r.nm),
-             fTypeDecl = F("%s_%s_type = %s",
-                           mainTypeName, IdiomName(r.nm, FALSE), typeStr) DO
+             typeNamePfx = F("%s_%s", mainTypeName, IdiomName(r.nm, FALSE)),
+             fTypeDecl = F("%s_type = %s", typeNamePfx, typeStr) DO
           gs.put(Section.IComponents, F("    %s : %s;\n", fNm, typeStr));
           INC(ccnt,ArrayCnt(r.array));
           fTypeDecls.addhi(fTypeDecl);
+          FmtArrIdx(fTypeDecls, r.array, typeNamePfx & "_idx")
         END
       END;
       CASE gs.th OF

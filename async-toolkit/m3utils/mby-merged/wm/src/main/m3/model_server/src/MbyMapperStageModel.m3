@@ -9,15 +9,16 @@ IMPORT ServerPacket AS Pkt;
 IMPORT Metadata;
 IMPORT MbyParserToMapperMeta, MbyParserToMapper;
 IMPORT MbyMapperToClassifierMeta;
+IMPORT MbyMacToParserMeta, MbyMacToParser;
 IMPORT ModelStageResult;
-IMPORT MbyMeta;
 IMPORT MbyParserTypes; 
 IMPORT MbyPaFlags, MbyPaKeys AS PK;
 FROM MbyDoRealignKeys IMPORT RealignKeys, RaKeys;
 
 FROM mby_ppe_mapper_map
   IMPORT map_domain_tcam_r, T_MapDomainTcam_type, T_MapPortDefault_type,
-         map_domain_profile_r_PriorityProfile_type, map_len_limit_r;
+         map_domain_profile_r_PriorityProfile_type, map_len_limit_r,
+         T_MapDomainTcam_idx;
 
 FROM WmUtils IMPORT GetUnnamedField, ModfyUnnamedField;
 IMPORT MbyRealignKeys AS RK;
@@ -32,8 +33,8 @@ PROCEDURE HandlePacket(ipkt    : Pkt.T;
                        imd     : Metadata.T;
                        out     : ModelStageResult.T) =
   VAR
-    mbmM : MbyMeta.T :=
-        imd.ofType(TYPECODE(MbyMeta.T));
+    mbmM : MbyMacToParserMeta.T :=
+        imd.ofType(TYPECODE(MbyMacToParserMeta.T));
     p2mM : MbyParserToMapperMeta.T :=
         imd.ofType(TYPECODE(MbyParserToMapperMeta.T));
   BEGIN
@@ -42,14 +43,14 @@ PROCEDURE HandlePacket(ipkt    : Pkt.T;
     HandlePacketInt(h.read  .Mpt[indices.MptIdx].RxPpe.Mapper,
                     h.update.Mpt[indices.MptIdx].RxPpe.Mapper,
                     p2mM.m,
-                    mbmM,
+                    mbmM.m,
                     out)
   END HandlePacket;
   
 PROCEDURE HandlePacketInt(READONLY r  : Map.T;
                           READONLY u  : MapAddr.U;
                           VAR  p2m    : MbyParserToMapper.T;
-                          VAR  mbm    : MbyMeta.T;
+                          VAR  mbm    : MbyMacToParser.T;
                           out         : ModelStageResult.T) =
   VAR
 
@@ -133,8 +134,6 @@ PROCEDURE HandlePacketInt(READONLY r  : Map.T;
   END HandlePacketInt;
 
 TYPE VlanV = RECORD vid : MbyTypes.VlanId; v : BOOLEAN END;
-
-TYPE T_MapDomainTcam_idx =  [FIRST(T_MapDomainTcam_type)..LAST(T_MapDomainTcam_type)];
 
 PROCEDURE  LookUpDomainTcam(rxPort        : MbyTypes.Port;
                             vid1, vid2    : VlanV;

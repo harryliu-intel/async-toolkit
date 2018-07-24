@@ -50,7 +50,7 @@ interface ("ModelStageResultClass")
 
 
 interface ("MbyTypes")
-interface ("MbyMeta")
+%interface ("MbyMeta")
 interface ("MbyParserTypes")
 %interface ("MbyParserSizes")
 %interface ("MbyMacToParserMeta")
