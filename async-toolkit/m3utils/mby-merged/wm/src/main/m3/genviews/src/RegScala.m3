@@ -1,6 +1,6 @@
 MODULE RegScala EXPORTS RegScala, RegScalaGenerators;
 IMPORT GenViewsScala;
-IMPORT RegReg, RegGenState, RegRegfile, RegAddrmap;
+IMPORT RegReg, RegGenState, RegRegfile, RegAddrmap, RegField;
 IMPORT OSError, Thread, Wr;
 IMPORT Pathname, RegScalaGenState;
 FROM RegScalaGenState IMPORT Section;
@@ -12,12 +12,25 @@ FROM Fmt IMPORT Int, F;
 IMPORT RegComponent;
 IMPORT RegChildSeq;
 IMPORT RegChild;
+IMPORT CompAddr, CompRange;
+FROM CompRange IMPORT Prop, PropNames;
 FROM RegScalaConstants IMPORT IdiomName;
+IMPORT RegFieldArraySort, RegFieldSeq;
 IMPORT Debug;
 IMPORT AtomList, Atom;
+IMPORT RdlNum;
+IMPORT Text;
+
+(* this stuff really shouldnt be in this module but in Main... *)
+IMPORT RdlProperty, RdlExplicitPropertyAssign;
+IMPORT RdlPropertyRvalueKeyword;
+FROM RegProperty IMPORT GetKw, GetNumeric;
 
 (* stuff inherited from m3 *)
 FROM RegModula3Utils IMPORT CopyWx, DefVal;
+
+
+VAR doDebug := Debug.DebugThis("Scala");
 
 REVEAL
   T = GenViewsScala.Compiler BRANDED Brand OBJECT
@@ -70,6 +83,12 @@ PROCEDURE PushPendingOutput(gs : GenState)
       RAISE OSError.E(x)
     END
   END PushPendingOutput;
+
+PROCEDURE ComponentInitName(c : RegComponent.T; gs : GenState) : TEXT =
+  BEGIN
+    RETURN "init__" & c.typeName(gs)
+  END ComponentInitName;
+
   
   (**********************************************************************)
   
@@ -136,6 +155,408 @@ PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
   
   (**********************************************************************)
 
+(* Scala types' names *)
+CONST AddressType = "Address";
+(* class *)
+  (* + Int *)
+(* object *)
+CONST AddressingType = "Addressing";
+(* class *)
+(* object *)
+(* variants (enum or case class) *)
+  (* Regalign *)
+  (* Compact *)
+  (* Fullalign *)
+CONST PathType = "CompPath";
+CONST RangeType = "AddressRange";
+(* class *)
+(* object *)
+  (* placeReg  -- or a constructor *)
+  (* makeField -- or a constructor *)
+CONST RangeMonotonicType = "AddressRangeMonotonic";
+
+(* addr map generation-related routines: *)
+
+PROCEDURE FmtArr(a : RdlArray.Single) : TEXT =
+  BEGIN
+    IF a = NIL THEN
+      RETURN ""
+    ELSE
+      RETURN F("ARRAY [0..%s-1] OF ",BigInt.Format(a.n.x))
+     END
+  END FmtArr;
+
+PROCEDURE FmtArrFor(a : RdlArray.Single) : TEXT =
+  BEGIN
+    RETURN F("for( i <- 0 until %s ) {", BigInt.Format(a.n.x))
+  END FmtArrFor;
+
+VAR
+  props : ARRAY Prop OF RdlProperty.T := MakeProps(PropNames)^;
+
+PROCEDURE MakeProps(READONLY z : ARRAY OF TEXT) : REF ARRAY OF RdlProperty.T =
+  VAR
+    res := NEW(REF ARRAY OF RdlProperty.T, NUMBER(z));
+  BEGIN
+    FOR i := FIRST(z) TO LAST(z) DO
+      res[i] := RdlProperty.Make(z[i])
+    END;
+    RETURN res
+  END MakeProps;
+
+CONST
+   DefProp = ARRAY Prop OF TEXT {
+    "32",
+    "None",
+    "32",
+    AddressingType & ".Regalign"
+  };
+
+(* our Scala lib has meaningful memory units, so we can check them at generation-time *)
+PROCEDURE FormatMemory(bits : CARDINAL) : TEXT =
+  BEGIN
+    IF bits MOD 8 = 0 THEN
+      RETURN Fmt.Int(bits DIV 8) & ".bytes"
+    ELSE
+      RETURN Fmt.Int(bits) & ".bits"
+    END
+  END FormatMemory;
+
+PROCEDURE GetPropText(prop : Prop; comp : RegComponent.T) : TEXT =
+  VAR
+    q : RdlExplicitPropertyAssign.T := comp.props.lookup(props[prop]);
+  BEGIN
+    IF q = NIL THEN
+      (* return default *)
+      RETURN DefProp[prop]
+    ELSE
+      (* parse result *)
+
+      CASE prop OF 
+        Prop.Addressing =>
+        VAR
+          a : CompAddr.Addressing;
+        BEGIN
+          CASE GetKw(q.rhs) OF
+            RdlPropertyRvalueKeyword.T.compact =>
+            a := CompAddr.Addressing.Compact
+          |
+            RdlPropertyRvalueKeyword.T.regalign =>
+            a := CompAddr.Addressing.Regalign
+          |
+            RdlPropertyRvalueKeyword.T.fullalign =>
+            a := CompAddr.Addressing.Fullalign
+          ELSE
+            <*ASSERT FALSE*>
+          END;
+          RETURN F("%s.%s", AddressingType, CompAddr.AddressingNames[a])
+        END
+      ELSE
+        RETURN FormatMemory(GetNumeric(q.rhs))
+      END
+    END
+  END GetPropText;
+  
+PROCEDURE GetAddressingProp(comp : RegComponent.T) : CompAddr.Addressing =
+  VAR
+    q : RdlExplicitPropertyAssign.T :=
+        comp.props.lookup(props[CompRange.Prop.Addressing]);
+  BEGIN
+    IF q = NIL THEN
+      (* return default *)
+      RETURN CompAddr.Addressing.Regalign
+    ELSE
+      (* parse result *)
+
+      CASE GetKw(q.rhs) OF
+        RdlPropertyRvalueKeyword.T.compact =>
+        RETURN CompAddr.Addressing.Compact
+      |
+        RdlPropertyRvalueKeyword.T.regalign =>
+        RETURN CompAddr.Addressing.Regalign
+      |
+        RdlPropertyRvalueKeyword.T.fullalign =>
+        RETURN CompAddr.Addressing.Fullalign
+      ELSE
+        <*ASSERT FALSE*>
+      END
+    END
+  END GetAddressingProp;
+
+PROCEDURE GetPropTexts(c : RegComponent.T) : ARRAY Prop OF TEXT =
+  VAR
+    res : ARRAY Prop OF TEXT;
+  BEGIN
+    FOR i := FIRST(Prop) TO LAST(Prop) DO
+      res[i] := GetPropText(i, c)
+    END;
+    RETURN res
+  END GetPropTexts;
+
+PROCEDURE FormatPropArgs(READONLY args : ARRAY Prop OF TEXT) : TEXT =
+  VAR
+    res := "";
+  BEGIN
+    FOR i := FIRST(args) TO LAST(args) DO
+      IF NOT Text.Equal(args[i], "None") THEN
+        res := res & F(", %s = %s", PropNames[i], args[i])
+      END
+    END;
+    RETURN res
+  END FormatPropArgs;
+  
+PROCEDURE GenChildInit(e          : RegChild.T;
+                       gs         : GenState;
+                       addressing : CompAddr.Addressing;
+                       skipArc := FALSE) =
+  VAR
+    childArc : TEXT;
+    atS      : TEXT;
+  BEGIN
+    (* special case for array with only one child is that it is NOT
+       a record *)
+    childArc := IdiomName(e.nm,debug := FALSE);
+
+    IF doDebug THEN
+      Debug.Out("GenChildInit " & e.nm & " -> \"" & childArc & "\"")
+    END;
+    
+    FOR i := FIRST(props) TO LAST(props) DO
+      VAR q   := e.comp.props.lookup(props[i]);
+          dbg : TEXT := "**NIL**";
+      BEGIN
+        IF q # NIL THEN
+          dbg := F("{ %s }", RdlExplicitPropertyAssign.Format(q))
+        END;
+        IF doDebug THEN
+          Debug.Out(F("RdlProperty %s = %s",
+                      RdlProperty.Format(props[i]),
+                      dbg))
+        END
+      END
+    END;
+    
+    IF e.at = RegChild.Unspecified AND e.mod = RegChild.Unspecified THEN
+      atS := "at"
+    ELSIF e.at # RegChild.Unspecified THEN
+      atS := F("base + 0x%s",
+               Fmt.Int(BigInt.ToInteger(e.at.x), base := 16))
+    ELSIF e.mod # RegChild.Unspecified THEN
+      atS := F("at.modAlign(0x%s)",
+               Fmt.Int(BigInt.ToInteger(e.mod.x), base := 16))
+    END;
+    
+    IF e.array = NIL THEN
+      gs.main(
+             "    at = mono.increase(at, %s(x.%s, %s, CompPath.Cat(path, \".%s\")))\n",
+               ComponentInitName(e.comp,gs),
+               childArc,
+               atS,
+               childArc);
+      gs.main("    buff = buff :+ (at, x.%s)\n", childArc);
+    ELSE
+      (* e.array # NIL *)
+      gs.main("    var q = %s\n", atS);
+
+      IF addressing = CompAddr.Addressing.Fullalign THEN
+        (* cases : 
+           (0) calc overriden by @ or %= 
+           (1) stride given, then that is what we use to align
+           (2) stride not given, then we need to calculate size of
+               element
+        *)
+        IF e.at # RegChild.Unspecified OR e.mod # RegChild.Unspecified THEN
+          (* skip , fall back to not using fullalign *)
+        ELSIF e.stride # RegChild.Unspecified THEN
+          WITH alignTo = BigInt.ToInteger(BigInt.Mul(e.array.n.x,
+                                                     e.stride.x)) DO
+            IF e.at = RegChild.Unspecified AND e.mod = RegChild.Unspecified THEN
+              gs.main("    q = CompAddr.Align(at, %s);\n",  (* TOCHECK: modAlign? *)
+                                     Fmt.Int(alignTo))
+            END
+          END
+        ELSE
+          (* fullalign given, stride not given, mod not given, at not given *)
+          (* make a throwaway "first" and "second", measure distance between,
+             then align at to that and proceed *)
+          gs.main("    var first  = %s(x.%s(0), CompAddr.Zero, None)\n",
+                                 ComponentInitName(e.comp,gs),
+                                 childArc);
+          gs.main("    var second = %s(x.%s(1), first.lim, None)\n",
+                                 ComponentInitName(e.comp,gs),
+                                 childArc);
+          gs.main("    require( first != second )\n");
+          gs.main("    val len = second.lim.deltaBytes(first.lim)\n");
+          gs.main("    at = at.modAlign(len.nextPower)\n");
+          gs.main("    q = at\n");
+        END
+      END;
+      
+      gs.main("    %s\n",FmtArrFor(e.array));
+      gs.main("      at = mono.increase(at, %s(x.%s(i), q, CompPath.CatArray(path, \".%s\", i)))\n",
+               ComponentInitName(e.comp,gs),
+               childArc,
+               childArc);
+      (* IF NOT skipArc THEN *)
+      gs.main("      buff = buff :+ (at, x.%s(i))\n", childArc);
+      (* END; *)
+      IF e.stride # RegChild.Unspecified THEN
+        gs.main("      q = q + 0x%s.bytes\n",
+                               Fmt.Int(BigInt.ToInteger(e.stride.x), base := 16))
+      ELSE
+        gs.main("      q = at\n")
+      END;
+      gs.main("    }\n")
+    END
+  END GenChildInit;
+
+(* generating routines *)
+
+PROCEDURE GenRegInit(r : RegReg.T; gs : GenState) =
+  VAR 
+    iNm := ComponentInitName(r, gs);  (* builder's name *)
+    props := GetPropTexts(r);         (* alignment type *)
+    haveUnspecLsb := FALSE;
+    haveSpecLsb := FALSE;
+  BEGIN
+    gs.main("  override def addressRegisterMap(x: %s, addr: %s, path: %s): SortedMap[%s, _ <: IndexedSeq[RdlElement]] = {\n",
+      (* iNm,           builder's name  *)
+      r.typeName(gs),  (* parser's type *)
+      AddressType,
+      PathType,
+      AddressType);
+    gs.main("    // %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.main("    var at = addr\n");
+    gs.main("    val range = %s.placeReg(at%s)\n", RangeType, FormatPropArgs(props));
+    gs.main("    var mono = %s()\n", RangeMonotonicType);
+    gs.main("    var buff = IndexedSeq[(%s, _ <: IndexedSeq[RdlElement])]()\n", AddressType);
+    (* if x.tab was an immutable Vector (default IndexedSeq)... *)
+    (* no diff if it's IndexedSeq, Array or ArrayBuffer --- conversion to map will require iteration *)
+
+    gs.main("\n");
+    gs.main("    at = range.pos\n");
+    (* we don't want `this` in the map *)
+    (* gs.main("    buff = buff :+ (at, DegenerateHierarchy[IndexedSeq[%s]](this))\n", ...); *)
+
+    (* TODO *)
+    (* consider using Vector or a SortedMap *)
+    (* if a Vector, one needs two: one for indexing the other and the other ones with refs *)
+    
+    SortFieldsIfAllSpecified(r.fields);
+    FOR i := 0 TO r.fields.size()-1 DO
+      WITH f = r.fields.get(i) DO
+        <*ASSERT f.width # RegField.Unspecified*>
+        IF f.lsb = RegField.Unspecified THEN
+          haveUnspecLsb := TRUE;
+          gs.main("    x.%s = %s.makeField(at, %s)\n",
+                   f.name(debug := FALSE),
+                   RangeType,
+                   Fmt.Int(f.width));
+        ELSE
+          haveSpecLsb := TRUE;
+          gs.main("    x.%s = %s.makeField(range.pos + %s, %s)\n",
+                   f.name(debug := FALSE),
+                   RangeType,
+                   FormatMemory(f.lsb),
+                   FormatMemory(f.width));
+        END;
+        gs.main("    at = mono.increase(at, x.%s)\n",
+                 f.name(debug := FALSE));
+        (* TOASK: is it not counting registers? we have sth like that *)
+        (* gs.main(
+               "    INC(CompAddr.initCount)\n"); *)
+        gs.main("    buff = buff :+ (at, x.%s)\n", f.name(debug := FALSE));
+      END;
+      (* gs.main("    x.tab(c) = at; c += 1\n"); *)
+    END;
+
+    BuildTab(gs, iNm);
+    
+    IF haveSpecLsb AND haveUnspecLsb THEN
+      Debug.Error("Can't handle both specified and unspecified bit fields in a single register: " & r.typeName(gs))
+    END;
+    gs.main("    CompPath.Debug(path,range)\n");
+    (* gs.main("    return %s.From2(base,at)\n", RangeType); *)
+    gs.main("\n");
+    gs.main("    SortedMap(buff: _*)\n");
+    gs.main("  }");
+    gs.main("\n\n");
+  END GenRegInit;
+
+ PROCEDURE GenRegfileInit(rf : RegRegfile.T; gs : GenState) =
+  VAR
+    iNm := ComponentInitName(rf, gs);
+    skipArc := rf.children.size() = 1;
+  BEGIN
+    gs.main("  override def addressRegisterMap(x: %s, addr: %s, path: %s): SortedMap[%s, _ <: IndexedSeq[RdlElement]] = {\n",
+      (* iNm,           builder's name  *)
+      rf.typeName(gs),  (* parser's type *)
+      AddressType,
+      PathType,
+      AddressType);
+    gs.main("    // %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.main("    var at = addr\n");
+    gs.main("    var mono = %s()\n", RangeMonotonicType);
+    gs.main("    var buff = IndexedSeq[(Int, _ <: IndexedSeq[RdlElement])]()\n");
+
+    FOR i := 0 TO rf.children.size()-1 DO
+      (* special case:
+         if RF has a single member, it is not a record, instead it
+         is (a) an array of the child type (if an array)
+         OR (b) a copy of the child type (if a scalar)
+      *)
+      GenChildInit(rf.children.get(i),
+                   gs,
+                   GetAddressingProp(rf),
+                   skipArc := skipArc);
+    END;
+    IF NOT skipArc THEN BuildTab(gs, iNm) END;
+
+    (* gs.main("    RETURN CompRange.From2(base,at)\n"); *)
+    gs.main("    SortedMap(buff: _*)\n");
+    gs.main("  }");
+    gs.main("\n\n");
+  END GenRegfileInit;
+
+PROCEDURE SortFieldsIfAllSpecified(seq : RegFieldSeq.T) =
+  VAR
+    arr : REF ARRAY OF RegField.T;
+  BEGIN
+    FOR i := 0 TO seq.size()-1 DO
+      IF seq.get(i).lsb = RegField.Unspecified THEN
+        RETURN (* can't sort *)
+      END
+    END;
+    arr := NEW(REF ARRAY OF RegField.T, seq.size());
+    FOR i := 0 TO seq.size()-1 DO
+      arr[i] := seq.get(i)
+    END;
+    RegFieldArraySort.Sort(arr^);
+    FOR i := 0 TO seq.size()-1 DO
+      seq.put(i,arr[i])
+    END
+  END SortFieldsIfAllSpecified;
+
+ PROCEDURE BuildTab(gs : GenState; iNm : TEXT) =
+   BEGIN
+     gs.main("    require( c == x.tab.length)\n");
+     gs.main("    x.nonmono = !mono.isok()\n");
+     SetTabEnds(gs);
+     gs.main("    if( x.nonmono ) {\n");
+     gs.main("      x.monomap = mono.indexArr()\n");
+     gs.main("      Debug.Warning(\"Nonmono in %s\")\n",
+                             iNm);
+     gs.main("    }\n");
+  END BuildTab;
+   
+ PROCEDURE SetTabEnds(gs : GenState) =
+   (* update the tab so that min is least and max is most *)
+   BEGIN
+     gs.main("    mono.setRange(x.min,x.max)\n")
+  END SetTabEnds;
+
+  (**********************************************************************)
+
 CONST StdFieldAttrs = "RdlField with HardwareReadable with HardwareWritable with HardwareResetable";
 
 PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
@@ -157,6 +578,8 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package switch_wm.csr\n");
+    gs.main("import switch_wm.csr.Memory._\n");
+    gs.main("import switch_wm.csr.Memory.ImplicitConversions._\n");
     gs.main("import switch_wm.PrimitiveTypes._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : RdlHierarchy) extends RdlRegister[%s.Underlying](parent) {\n", myTn, myTn);
@@ -173,6 +596,9 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     gs.main("  def fields = List("); PutFields(); gs.main(")\n");
     gs.main("  def resetableFields : List[HardwareResetable] = List("); PutFields(); gs.main(")\n");
     gs.main("  protected var underlyingState = 0xDEADBEEFl\n");
+    gs.main("\n");
+
+    (* GenRegInit(r, gs); *)
     gs.main("}\n\n");
     
     PutRegObject(myTn, gs);
@@ -229,6 +655,8 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package switch_wm.csr\n");
+    gs.main("import switch_wm.csr.Memory._\n");
+    gs.main("import switch_wm.csr.Memory.ImplicitConversions._\n");
     gs.main("import switch_wm.PrimitiveTypes._\n");
     gs.main("import scala.collection.immutable.SortedMap\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -252,7 +680,8 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     END;
 
     PutChildrenDef(rf.children, gs);
-    PutAddrMapDef(rf.children, gs);
+    (* PutAddrMapDef(rf.children, gs); *)
+    (* GenRegfileInit(rf, gs); *)
     gs.main("}\n");
     PutObject(myTn, gs);
     FOR i := 0 TO rf.children.size()-1 DO
@@ -271,6 +700,8 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package switch_wm.csr\n");
+    gs.main("import switch_wm.csr.Memory._\n");
+    gs.main("import switch_wm.csr.Memory.ImplicitConversions._\n");
     gs.main("import switch_wm.PrimitiveTypes._\n");
     gs.main("import switch_wm.DegenerateIndexedSeq\n");
     gs.main("import scala.collection.immutable.SortedMap\n");
