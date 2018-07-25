@@ -32,32 +32,6 @@ PROCEDURE Init(t : T; base : REFANY; fieldAddr : ADDRESS; width : CARDINAL; nm :
     t.wid := width;
     RETURN t
   END Init;
-
-PROCEDURE Value(t : T) : Word.T =
-  VAR
-    pin := t.base;
-    ptr := LOOPHOLE(LOOPHOLE(t.base,INTEGER) + LOOPHOLE(t.off,INTEGER),ADDRESS);
-    res : Word.T;
-  BEGIN
-    CASE t.wid OF
-      1..8 =>
-      res := LOOPHOLE(ptr, UNTRACED REF [0..16_ff])^ 
-    |
-      9..16 =>
-      res := LOOPHOLE(ptr, UNTRACED REF [0..16_ffff])^
-    |
-      17..32 =>
-      res := LOOPHOLE(ptr, UNTRACED REF [0..16_ffffffff])^ 
-    |
-      33..64 =>
-      res := LOOPHOLE(ptr, UNTRACED REF Word.T)^ 
-    ELSE
-      <*ASSERT FALSE*>
-    END;
-
-    <*ASSERT pin # NIL *>
-    RETURN res
-  END Value;
   
 PROCEDURE Update(t : T; to : Word.T) =
   VAR

@@ -59,14 +59,6 @@ interface("RegScalaGenState")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-module   ("RegC")
-module   ("RegCConstants")
-module   ("RegCNaming")
-interface("RegCGenerators")
-interface("RegCGenState")
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 implementation ("Main")
 
 program ("genviews")

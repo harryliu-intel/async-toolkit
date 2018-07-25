@@ -1,13 +1,8 @@
 INTERFACE CompPath;
 IMPORT CompRange;
 IMPORT TextList;
-IMPORT TextSet;
 
 TYPE T = TextList.T; (* do not use -- hack *)
-
-PROCEDURE ConfigureSet(s : TextSet.T);
-
-VAR mu : MUTEX; (* use this if you use ConfigureSet *)
 
 PROCEDURE Cat(a : T; b : TEXT) : T;
 

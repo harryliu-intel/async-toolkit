@@ -83,7 +83,6 @@ interface ("MbyMappedKey")
 module ("HlpRepStageModel")
 module ("HlpRepStage")
 
-SchemeStubs ("Updater")
 SchemeStubs ("ModelServer")
 
 ExportSchemeStubs("model_server")
