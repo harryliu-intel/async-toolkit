@@ -19,6 +19,9 @@ IMPORT RegFieldArraySort, RegFieldSeq;
 IMPORT Debug;
 IMPORT AtomList, Atom;
 IMPORT Text;
+IMPORT TextRefTbl;
+IMPORT TextTopoSort;
+IMPORT FileWr;
 
 (* this stuff really shouldnt be in this module but in Main... *)
 IMPORT RdlProperty, RdlExplicitPropertyAssign;
@@ -41,24 +44,33 @@ REVEAL
 PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
-    gs : GenState := RegGenState.T.init(NEW(GenState, map := t.map), dirPath);
+    wxTbl := NEW(TextRefTbl.Default).init();
+    gs : GenState := RegGenState.T.init(NEW(GenState,
+                                            wxTbl := wxTbl,
+                                            map := t.map,
+                                            topo := NEW(TextTopoSort.T).init()), dirPath);
     intfNm := t.map.intfName(gs);
     fn := intfNm & ".h";
     path := dirPath & "/" & fn;
   BEGIN
-    FOR i := FIRST(gs.wx) TO LAST(gs.wx) DO
-      gs.wx[i] := Wx.New()
-    END;
-
     t.map.generate(gs);
 
-    (* do the actual output *)
-    IF IndividualTypeFiles THEN
-      (* this is the last pending symbol .. *)
-      PushPendingOutput(gs)
-    ELSE
-      Debug.Out("Copying output to " & path);
-      CopyWx(gs.wx, path)
+    Debug.Out("Copying output to " & path);
+
+    (* perform topo sort and produce output in that order *)
+    WITH seq = gs.topo.sort(),
+         wr  = FileWr.Open(path) DO
+      FOR i := 0 TO seq.size()-1 DO
+        Debug.Out(F("Emit wx[%s]",seq.get(i)));
+        VAR
+          wx : REFANY;
+          hadIt := wxTbl.get(seq.get(i),wx);
+        BEGIN
+          <*ASSERT hadIt*>
+          Wr.PutText(wr, Wx.ToText(wx))
+        END
+      END;
+      Wr.Close(wr)
     END
   END Write;
 
@@ -96,15 +108,25 @@ TYPE
   GenState = RegCGenState.T OBJECT
     map : RegAddrmap.T; (* do we really need this? could refer to T instead *)
     curSym : TEXT := NIL;
+    curWx : Wx.T := NIL;
+    wxTbl : TextRefTbl.T;
+    topo : TextTopoSort.T;
   METHODS
     p(sec : Section; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsP;
     main(fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL) := GsMain;
+    noteDep(to : TEXT) :=  NoteDep;
   OVERRIDES
     put := PutGS;
     newSymbol := NewSymbol;
   END;
 
-CONST IndividualTypeFiles = FALSE;
+PROCEDURE NoteDep(gs : GenState; toSym : TEXT) =
+  BEGIN
+    (* note that curSym depends on toSym *)
+    <*ASSERT gs.curSym # NIL*>
+    Debug.Out(F("%s depends on %s", gs.curSym, toSym));
+    gs.topo.addDependency(toSym, gs.curSym)
+  END NoteDep;
       
 PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
@@ -116,32 +138,17 @@ PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
        if we did not have it before -> OK
      *)
     res := RegGenState.T.newSymbol(gs, nm);
-
-    (* if we are using "IndividualTypeFiles" we push out the output
-       from the previous work before starting the next type, and do so
-       into its own file. 
-
-       if we are NOT using "IndividualTypeFiles" we instead accumulate
-       all the output of ALL the types in a single big output stream
-       and dump it at the end in Write().
-
-       This slightly screwy design allows us to share more code with
-       the Modula-3 generator, which generates each addrmap into its
-       own file, but not every single individual type.
-    *)
     
-    IF IndividualTypeFiles AND res THEN
-
-      PushPendingOutput(gs);
-
-      gs.curSym := nm
-    END;
+    gs.curWx := Wx.New();
+    gs.curSym := nm;
+    EVAL gs.wxTbl.put(nm, gs.curWx);
+    
     RETURN res
   END NewSymbol;
   
 PROCEDURE PutGS(gs : GenState; sec : Section; txt : TEXT) =
   BEGIN
-    Wx.PutText(gs.wx[sec], txt)
+    Wx.PutText(gs.curWx, txt)
   END PutGS;
 
 PROCEDURE GsP(gs  : GenState;
@@ -152,7 +159,7 @@ PROCEDURE GsP(gs  : GenState;
 
 PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)= 
   BEGIN gs.p(Section.Maintype, fmt, t1, t2, t3, t4, t5) END GsMain;
-  
+
   (**********************************************************************)
 
 (* addr map generation-related routines: *)
@@ -265,15 +272,13 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     gs.main("typedef struct {\n");
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f  = r.fields.get(i),
-           nm = f.name(debug := TRUE),
+           nm = f.name(debug := FALSE),
            dv = DefVal(f.defVal) DO
         gs.main("  uint%s %s;\n", Int(f.width), nm);
       END
     END;
     gs.main("} %s;\n\n", myTn);
-    
   END GenReg;
-
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
      one routine, viz., GenContainer *)
@@ -298,7 +303,8 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
         gs.main("  %s %s[%s];\n", tn, 
-                IdiomName(c.nm), Int(ArrSz(c.array)));
+                IdiomName(c.nm,FALSE), Int(ArrSz(c.array)));
+        gs.noteDep(tn);
         IF rf.children.size() = 1 THEN
         END
       END
@@ -328,11 +334,12 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
            tn = ComponentTypeName(c.comp,gs) DO
         IF (c.array = NIL) THEN
           gs.main("  %s %s;\n",
-                  tn, IdiomName(c.nm))
+                  tn, IdiomName(c.nm,FALSE))
         ELSE
           gs.main("  %s %s[%s];\n",
-                  tn, IdiomName(c.nm), Int(ArrSz(c.array)))
-        END
+                  tn, IdiomName(c.nm,FALSE), Int(ArrSz(c.array)))
+        END;
+        gs.noteDep(tn);
       END
     END;
     gs.main("} %s;\n", myTn);
@@ -343,7 +350,7 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
         c.comp.generate(gs)
       END
     END
- END GenAddrmap;
+  END GenAddrmap;
 
   (**********************************************************************)
   

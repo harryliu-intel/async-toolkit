@@ -28,6 +28,6 @@ for file in ${files}; do
 done
 
 REGSET=mby
-GENDIR=build_scala/${REGSET}/src
+GENDIR=build_c/${REGSET}/src
 
 mkdir -p $GENDIR
