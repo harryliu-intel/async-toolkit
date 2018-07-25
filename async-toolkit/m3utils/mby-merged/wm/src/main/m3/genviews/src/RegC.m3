@@ -1,6 +1,6 @@
 MODULE RegC EXPORTS RegC, RegCGenerators;
 IMPORT GenViewsC;
-IMPORT RegReg, RegGenState, RegRegfile, RegAddrmap, RegField;
+IMPORT RegReg, RegGenState, RegRegfile, RegAddrmap;
 IMPORT OSError, Thread, Wr;
 IMPORT Pathname, RegCGenState;
 FROM RegCGenState IMPORT Section;
@@ -10,26 +10,11 @@ FROM Compiler IMPORT ThisFile, ThisLine;
 IMPORT Fmt;
 FROM Fmt IMPORT Int, F;
 IMPORT RegComponent;
-IMPORT RegChildSeq;
-IMPORT RegChild;
-IMPORT CompAddr, CompRange;
-FROM CompRange IMPORT Prop, PropNames;
 FROM RegCConstants IMPORT IdiomName;
-IMPORT RegFieldArraySort, RegFieldSeq;
 IMPORT Debug;
-IMPORT AtomList, Atom;
-IMPORT Text;
 IMPORT TextRefTbl;
 IMPORT TextTopoSort;
 IMPORT FileWr;
-
-(* this stuff really shouldnt be in this module but in Main... *)
-IMPORT RdlProperty, RdlExplicitPropertyAssign;
-IMPORT RdlPropertyRvalueKeyword;
-FROM RegProperty IMPORT GetKw, GetNumeric;
-
-(* stuff inherited from m3 *)
-FROM RegModula3Utils IMPORT CopyWx, DefVal;
 
 <*FATAL BigInt.OutOfRange*>
 
@@ -74,34 +59,6 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
     END
   END Write;
 
-PROCEDURE PushPendingOutput(gs : GenState)
-  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
-  (* this routine is used to push out the pending output in case of
-     "IndividualTypeFiles" *)
-  VAR
-    path : Pathname.T;
-  BEGIN
-    (* is it the first symbol, in that case there is no output yet *)
-    IF gs.curSym = NIL THEN RETURN END;
-      
-    path := gs.dirPath & "/" & gs.curSym & ".scala";
-    TRY
-      Debug.Out("Copying output to " & path);
-      CopyWx(gs.wx, path)
-    EXCEPT
-      OSError.E(x) => x := AtomList.Append(x,
-                                           AtomList.List1(
-                                               Atom.FromText(": " & path)));
-      RAISE OSError.E(x)
-    END
-  END PushPendingOutput;
-
-PROCEDURE ComponentInitName(c : RegComponent.T; gs : GenState) : TEXT =
-  BEGIN
-    RETURN "init__" & c.typeName(gs)
-  END ComponentInitName;
-
-  
   (**********************************************************************)
   
 TYPE
@@ -162,118 +119,19 @@ PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
 
   (**********************************************************************)
 
-(* addr map generation-related routines: *)
-
-PROCEDURE FmtArr(a : RdlArray.Single) : TEXT =
-  BEGIN
-    IF a = NIL THEN
-      RETURN ""
-    ELSE
-      RETURN F("ARRAY [0..%s-1] OF ",BigInt.Format(a.n.x))
-     END
-  END FmtArr;
-
-PROCEDURE FmtArrFor(a : RdlArray.Single) : TEXT =
-  BEGIN
-    RETURN F("for( int i = 0 ; i < %s ; ++i ) {", BigInt.Format(a.n.x))
-  END FmtArrFor;
-
-VAR
-  props : ARRAY Prop OF RdlProperty.T := MakeProps(PropNames)^;
-
-PROCEDURE MakeProps(READONLY z : ARRAY OF TEXT) : REF ARRAY OF RdlProperty.T =
-  VAR
-    res := NEW(REF ARRAY OF RdlProperty.T, NUMBER(z));
-  BEGIN
-    FOR i := FIRST(z) TO LAST(z) DO
-      res[i] := RdlProperty.Make(z[i])
-    END;
-    RETURN res
-  END MakeProps;
-
-CONST AddressingType = "Addressing";
-      
-CONST
-   DefProp = ARRAY Prop OF TEXT {
-    "32",
-    "None",
-    "32",
-    AddressingType & ".Regalign"
-  };
-
-(* our C lib has meaningful memory units, so we can check them at generation-time *)
-PROCEDURE FormatMemory(bits : CARDINAL) : TEXT =
-  BEGIN
-    IF bits MOD 8 = 0 THEN
-      RETURN Fmt.Int(bits DIV 8) & ".bytes"
-    ELSE
-      RETURN Fmt.Int(bits) & ".bits"
-    END
-  END FormatMemory;
-
-PROCEDURE GetPropText(prop : Prop; comp : RegComponent.T) : TEXT =
-  VAR
-    q : RdlExplicitPropertyAssign.T := comp.props.lookup(props[prop]);
-  BEGIN
-    IF q = NIL THEN
-      (* return default *)
-      RETURN DefProp[prop]
-    ELSE
-      (* parse result *)
-
-      CASE prop OF 
-        Prop.Addressing =>
-        VAR
-          a : CompAddr.Addressing;
-        BEGIN
-          CASE GetKw(q.rhs) OF
-            RdlPropertyRvalueKeyword.T.compact =>
-            a := CompAddr.Addressing.Compact
-          |
-            RdlPropertyRvalueKeyword.T.regalign =>
-            a := CompAddr.Addressing.Regalign
-          |
-            RdlPropertyRvalueKeyword.T.fullalign =>
-            a := CompAddr.Addressing.Fullalign
-          ELSE
-            <*ASSERT FALSE*>
-          END;
-          RETURN F("%s.%s", AddressingType, CompAddr.AddressingNames[a])
-        END
-      ELSE
-        RETURN FormatMemory(GetNumeric(q.rhs))
-      END
-    END
-  END GetPropText;
-  
-  (**********************************************************************)
-
-CONST StdFieldAttrs = "RdlField with HardwareReadable with HardwareWritable with HardwareResetable";
-
 PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     gs : GenState := genState;
     myTn := r.typeName(gs);
 
-  PROCEDURE PutFields( (* could restrict here *) ) =
-    BEGIN
-      FOR i := 0 TO r.fields.size()-1 DO
-        WITH nm = r.fields.get(i).name(debug := FALSE) DO
-          gs.main(nm);
-          IF i # r.fields.size()-1 THEN gs.main(", ") END
-        END
-      END
-    END PutFields;
-    
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("typedef struct {\n");
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f  = r.fields.get(i),
-           nm = f.name(debug := FALSE),
-           dv = DefVal(f.defVal) DO
+           nm = f.name(debug := FALSE) DO
         gs.main("  uint%s %s;\n", Int(f.width), nm);
       END
     END;
@@ -293,12 +151,6 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("typedef struct {\n");
-    IF rf.children.size() = 1 THEN
-      WITH c = rf.children.get(0),
-           tn = ComponentTypeName(c.comp,gs) DO
-      END
-    END;
-    gs.main("{\n");
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
