@@ -8,19 +8,19 @@ IMPORT Debug;
 IMPORT TextSetDef;
 IMPORT RegAddrmap;
 IMPORT Pathname;
-IMPORT GenViews, GenViewsM3, GenViewsScala;
+IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC;
 IMPORT Text;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
-TYPE Lang = { M3, Scala };
+TYPE Lang = { M3, Scala, C };
 
-CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala" };
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -70,6 +70,8 @@ BEGIN
     Lang.M3    => gv := NEW(GenViewsM3.T)
   |
     Lang.Scala => gv := NEW(GenViewsScala.T)
+  |
+    Lang.C     => gv := NEW(GenViewsC.T)
   END;  
 
   EVAL lexer.setRd(rd);
