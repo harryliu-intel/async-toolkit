@@ -4,9 +4,16 @@ IMPORT Debug AS M3Debug;
 IMPORT CompAddr, CompRange;
 IMPORT Env;
 IMPORT TextList;
+IMPORT TextSet;
 
 VAR silent := Env.Get("WM_SILENT") # NIL;
+    set : TextSet.T := NIL;
 
+PROCEDURE ConfigureSet(s : TextSet.T) =
+  BEGIN
+    set := s
+  END ConfigureSet;
+  
 PROCEDURE Cat(a : T; b : TEXT) : T =
   BEGIN
     IF silent THEN RETURN NIL END;
@@ -14,6 +21,7 @@ PROCEDURE Cat(a : T; b : TEXT) : T =
       (* this case is the probing an array case *)
       RETURN NIL
     END;
+    IF set # NIL THEN EVAL set.insert(b) END;
     RETURN TextList.Cons(b,a)
   END Cat;
 
@@ -56,6 +64,12 @@ PROCEDURE ToText(t : T) : TEXT =
     RETURN txt
   END ToText;
 
-PROCEDURE One(txt : TEXT) : T = BEGIN RETURN TextList.List1(txt) END One;
+PROCEDURE One(txt : TEXT) : T =
+  BEGIN
+    IF set # NIL THEN EVAL set.insert(txt) END;
+    RETURN TextList.List1(txt)
+  END One;
   
-BEGIN END CompPath.
+BEGIN
+  mu := NEW(MUTEX);
+END CompPath.

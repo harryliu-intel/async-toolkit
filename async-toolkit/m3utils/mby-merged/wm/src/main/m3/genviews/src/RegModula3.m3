@@ -236,6 +236,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; rw : RW)
       EVAL gs.m3imports.insert("CompRange");
       EVAL gs.m3imports.insert("CompPath");
       EVAL gs.m3imports.insert("CompMemory");
+      EVAL gs.m3imports.insert("TextSetDef");
       EVAL gs.m3imports.insert("Debug");
       EVAL gs.m3imports.insert("CompMemoryListener");
     |
@@ -1026,7 +1027,13 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
            "  VAR\n" &
            "    range : CompRange.T;\n"&
            "  BEGIN\n" &
-         F("    range := Init(h.a, base, CompPath.One(\"ROOT\"));\n") &
+         F("    WITH s = NEW(TextSetDef.T).init() DO\n" &
+           "      LOCK CompPath.mu DO\n" &
+           "        CompPath.ConfigureSet(s);\n" &           
+           "        range := Init(h.a, base, CompPath.One(\"ROOT\"));\n") &
+           "        CompPath.ConfigureSet(NIL);\n" &
+           "      END\n" &
+           "    END;\n" &
            "    EVAL CompMemory.T.init(h, range);\n" &
            "    InitX(h.read, h.a, h.x, h);\n" &
            "    UpdateInit(h.update, h.a, h.x, h);\n" &                         

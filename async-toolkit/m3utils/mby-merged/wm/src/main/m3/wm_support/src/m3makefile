@@ -27,6 +27,7 @@ Module("CsrOp")
 pqueue("CompAddr","CompAddr")
 
 Module("UpdateTracing")
+Interface("Updater")
 Module("UnsafeUpdater")
 Module("WmUtils")
 

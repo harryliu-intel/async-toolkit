@@ -1,13 +1,12 @@
 UNSAFE INTERFACE UnsafeUpdater;
-IMPORT Word;
 IMPORT CompPath;
+IMPORT Updater;
 
 TYPE
   T <: Public;
 
-  Public = OBJECT METHODS
+  Public = Updater.T OBJECT METHODS
     init(base : REFANY; fieldAddr : ADDRESS; width : CARDINAL; nm : CompPath.T) : T;
-    update(to : Word.T);
   END;
 
 CONST Brand = "UnsafeUpdater";
