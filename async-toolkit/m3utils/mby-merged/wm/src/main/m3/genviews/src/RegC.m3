@@ -135,7 +135,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
         gs.main("  uint%s %s;\n", Int(f.width), nm);
       END
     END;
-    gs.main("} %s;\n\n", myTn);
+    gs.main("} %s;\n", myTn);
   END GenReg;
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
