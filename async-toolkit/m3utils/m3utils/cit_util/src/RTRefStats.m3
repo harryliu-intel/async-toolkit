@@ -46,8 +46,8 @@ PROCEDURE Line(tc: INTEGER; name: TEXT; size, count: INTEGER) =
   BEGIN
           S(Fmt.Pad(Fmt.Int(tc),5) & "  " &
             Fmt.Pad(name,40,' ',Fmt.Align.Left) &
-            Fmt.Pad(Fmt.Int(size),10) &
-            Fmt.Pad(Fmt.Int(count),8) &
+            Fmt.Pad(Fmt.Int(size),14) &
+            Fmt.Pad(Fmt.Int(count),12) &
             Fmt.Pad(Fmt.Int(size DIV count),9),
             0);
   END Line;
@@ -74,7 +74,7 @@ PROCEDURE ReportReachable(printTexts := FALSE) =
                        tc := tc));
         END;
       END;
-      S("   TC  Name                                     totalSize   count  avgSize",0);
+      S("   TC  Name                                         totalSize       count  avgSize",0);
       WHILE q.size() > 0 DO
         e := q.deleteMin();
         Line(e.tc, RTName.GetByTC(e.tc), e.priority, e.count);
