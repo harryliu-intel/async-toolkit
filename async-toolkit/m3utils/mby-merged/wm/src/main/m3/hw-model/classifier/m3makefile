@@ -2,6 +2,8 @@ import( "libm3" )
 
 module( "Tcam" )
 module( "WCMTcamBlock" )
+module( "WCM" )
+interface( "WCMConstants" )
 implementation( "Main" )
 
 program( "test" )

@@ -4,15 +4,16 @@ INTERFACE WCMTcamBlock ;
 (** Imports **)
 (*************)
 IMPORT Tcam ;
+IMPORT WCMConstants ;
 
 (***************)
 (** Constants **)
 (***************)
 
-CONST KEY8_LENGTH = 64 ;
-CONST KEY16_LENGTH = 32 ;
-CONST KEY32_LENGTH = 16 ;
-CONST NUM_ENTRIES = 1024 ;
+CONST KEY8_LENGTH = WCMConstants.KEY8_LENGTH ;
+CONST KEY16_LENGTH = WCMConstants.KEY16_LENGTH ;
+CONST KEY32_LENGTH = WCMConstants.KEY32_LENGTH ;
+CONST NUM_ENTRIES = WCMConstants.NUM_ENTRIES ;
 
 (***********)
 (** Types **)
