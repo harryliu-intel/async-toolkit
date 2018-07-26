@@ -219,16 +219,26 @@
 
 (define compile-constants! compile-constants-m3!)
 
+(define dbg '())
+
+(define (get-option tag opts)
+  (let ((b (assoc tag opts)))
+    (if b (cadr b) #f)))
+
 (define (compile-enum! nm x)
   (dis "compiling enum      :  " nm dnl)
   (let* ((wire-type    (car x))
          (m3-wire-type (scheme->m3 wire-type))
-         (names        (cadr x))
-         (values       (caddr x))
+         (have-options (and (list? (cadr x)) (eq? (caadr x) 'options)))
+         (options      (if have-options (cdadr x) '()))
+         (rest         (if have-options (cddr x) (cdr x)))
+         (names        (car rest))
+         (values       (cadr rest))
          (m3-name      (get-m3-name nm names))
          (m3-wrs       (open-m3 m3-name))
          (i3-wr        (car m3-wrs))
          (m3-wr        (cadr m3-wrs))
+         (n            (get-option 'n options))
          )
 
     ;;(dis "m3-name " m3-name dnl)
@@ -303,7 +313,7 @@
          "  END V2T;" dnl
          dnl m3-wr)
     
-    (let loop ((i   0)
+    (let loop ((p  -1) ;; previous (just completed) ORD
                (x   values)
                (t     "TYPE T = { ")
                (names "CONST Names = ARRAY T OF TEXT { ")
@@ -314,44 +324,84 @@
                       "    CASE w OF" dnl
                      )))
 
-      (if (null? x) ;; base case of iteration (done case)
+      (define (next-req-idx) (if (null? (cdar x))
+                                 (+ p 1)
+                                 (M3Support.ParseUnsigned (stringify (cadar x)))))
+      
+      (cond ((and (null? x)            ;; no more entries
+                  (or (not n)          ;; no padding requested
+                      (= (+ p 1) n)    ;; padding complete
+                      ))
 
-          (begin
-            (dis t "};" dnl
+             (dis t "};" dnl
+                  dnl
+                  i3-wr)
+             (dis names "};" dnl
                  dnl
                  i3-wr)
-            (dis names "};" dnl
-                 dnl
-                 i3-wr)
-            (dis t2v "};" dnl
-                 dnl
-                 i3-wr)
-            (dis v2t
-                 "    ELSE RETURN FALSE" dnl
-                 "    END" dnl
-                 "  END V2TB;" dnl
-                 dnl
-                 m3-wr)
-            ) ;; nigeb
+             (dis t2v "};" dnl
+                  dnl
+                  i3-wr)
+             (dis v2t
+                  "    ELSE RETURN FALSE" dnl
+                  "    END" dnl
+                  "  END V2TB;" dnl
+                  dnl
+                  m3-wr)
+             )
 
-          ;; else -- iterate further
-          
-          (let* ((sym     (scheme->m3 (caar x)))
-                 (comma   (if (null? (cdr x)) "" ", "))
-                 (valspec (cdar x))
-                 (val     (cond ((null? valspec) i)
-                                ((< (car valspec) i)
-                                 (error (sa
-                                         "bad value for enum "
-                                         (stringify (car valspec)))))
-                                (else (car valspec)))))
-            (loop (+ val 1)
-                  (cdr x)
-                  (sa t sym comma)
-                  (sa names "\"" sym "\"" comma)
-                  (sa t2v val comma)
-                  (sa v2t "    | " val " => t := T." sym "; RETURN TRUE" dnl)))
-          ) ;; fi
+            ((null? x) ;; padding at end
+             (let ((comma (if (= p (- n 2)) "" ", ")))
+               (loop i
+                     '()
+                     (sa t "Rsvd"(number->string i) comma)
+                     (sa names "\"Rsvd"(number->string i)"\"" comma)
+                     (sa t2v (number->string i) comma)
+                     v2t))
+             )
+
+            ((not (= (next-req-idx) (+ p 1))) ;; padding between values
+
+             (let ((idx (+ p 1)))
+                       
+               (loop idx
+                     x
+                     (sa t "Rsvd"(number->string idx)", ")
+                     (sa names "\"Rsvd"(number->string idx)"\", ")
+                     (sa t2v (number->string idx)", ")
+                     v2t))
+             )
+
+
+            (else
+             ;; else -- iterate further with a requested value
+
+             (let* ((sym     (scheme->m3 (caar x)))
+                    (is-dup  (and (not (null? (cdar x)))
+                                  (not (null? (cddar x)))
+                                  (eq? 'duplicate (caddar x))))
+                    (val     (next-req-idx))
+                    (nonmono (< val (+ p 1)))
+                    (comma   (if (and (null? (cdr x))
+                                      (or (not n) (= val (- n 1))))
+                                 ""
+                                 ", ")))
+
+               (if nonmono (error (sa "bad value for enum " (stringify val))))
+               (if is-dup (error "duplicate enums not supported")) ;; desupport dups (at least for now)
+               
+               (loop val
+                     (cdr x)
+                     (sa t sym comma)
+                     (sa names "\"" sym "\"" comma)
+                     (sa t2v val comma)
+                     (sa v2t
+                         (if is-dup ;; we cant generate multiple matches for duplicate values (alias names)
+                             ""
+                             (sa "    | " val " => t := T." sym "; RETURN TRUE" dnl))
+                         ))
+               ))
+             ) ;; dnoc
       ) ;; pool
 
     (close-m3 m3-wrs)
@@ -618,7 +668,7 @@
   ;;(dis "CONSTRAINT: " (stringify constraint) dnl)
   (case (car constraint)
     ((constant)
-     (sa "    IF t."nm" # " (symbol->m3integer (cadr constraint))
+     (sa "    IF "nm" # " (symbol->m3integer (cadr constraint))
                     " THEN RETURN FALSE END;" dnl))
     
     ((constraint)
@@ -692,7 +742,25 @@
 ;;
 
 (define (get-m3-bitstype n)
-  (M3Support.Modula3Type n))
+  (cond ((number? n) (M3Support.Modula3Type n))
+        ((and (list? n) (eq? (car n) 'array))
+         (let ((asz (cadr n))
+               (et  (caddr n)))
+           (string-append "ARRAY [0.." (number->string asz) "-1] OF "
+                          (get-m3-bitstype et))))
+        (else (error "unknown bitstype " n))))
+
+(define (get-field-size f)
+   (let* ((field-name (car f))
+          (n (cadr f)))
+    (cond ((number? n) n)
+        ((and (list? n) (eq? (car n) 'array))
+         (let ((asz (cadr n))
+               (et  (caddr n)))
+           (* asz (get-field-size (list field-name et))))))))
+   
+          
+ 
 
 (define (emit-bitstruct-field-type f i-wr)
   (let* ((field-name (car f))
@@ -706,16 +774,38 @@
         )
     (dis "    " field-name " : " (get-m3-bitstype field-type) defval ";" dnl i-wr)))
 
+(define (loopit func f wr dummy) ;; the labels get messed up!
+  (let* ((field-name (car f))
+         (n          (cadr f)))
+   (cond ((number? n) (func f wr dummy))
+         ((and (list? n) (eq? (car n) 'array))
+          (let ((res '())
+                (asz (cadr n))
+                (et  (caddr n)))
+            (dis "FOR i := 0 TO " (number->string asz) "-1 DO" dnl
+                 "  WITH qqqq__ = " field-name "[i] DO" dnl
+                 wr)
+            
+            (set! res (* asz (loopit func `(qqqq__ ,et) wr dummy)))
+            (dis "  END" dnl
+                 "END;" dnl wr)
+            res
+            )
+          )
+         (else (error "unknown bitstype " n)))
+   ))
+    
 (define (emit-bitstruct-field-format f wr dummy)
   (let ((field-name (car f))
         (field-type (cadr f))
         )
     (dis
      "    Wx.PutText(wx,\""field-name"=\");" dnl
-     "    Wx.PutText(wx,StructField.Format(t."field-name",wid:="field-type"));" dnl
+     "    Wx.PutText(wx,StructField.Format("field-name",wid:="field-type"));" dnl
      "    Wx.PutChar(wx, ' ');" dnl
      wr
      )
+    0
     )
   )
 
@@ -727,15 +817,20 @@
         (dis "    (*no constraint "field-name" *)" dnl wr)
         (dis "    (*have constraint "field-name" " (stringify (car tail)) " *)" dnl
              (get-bitstruct-constraint-check field-name field-type (car tail))
-             dnl wr))))
+             dnl wr))
+    0
+    ))
 
 (define (emit-bitstruct-field-readsb f wr start-bit)
   (let ((field-name (car f))
         (field-type (cadr f)))
+
+    ;;(dis "emitting field " field-name " of type " field-type dnl)
+    
     (dis "    (* "field-name" @ "start-bit":+"field-type" *)" dnl
          wr)
     (dis "    IF NOT Pkt.ExtractBits(s, at, "start-bit", "field-type", w) THEN RETURN FALSE END;" dnl wr)
-    (dis "    t."field-name" := w;" dnl wr)
+    (dis "    "field-name" := w;" dnl wr)
     (+ start-bit field-type)))
 
 (define (emit-bitstruct-field-writee f wr start-bit)
@@ -743,7 +838,7 @@
         (field-type (cadr f)))
     (dis "    (* "field-name" @ "start-bit":+"field-type" *)" dnl
          wr)
-    (dis "    Pkt.ArrPut(a, "start-bit", t."field-name", "field-type");" dnl wr)
+    (dis "    Pkt.ArrPut(a, "start-bit", "field-name", "field-type");" dnl wr)
     (+ start-bit field-type)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -780,7 +875,11 @@
         (put-m3-proc whch i3-wr m3-wr)
         (dis "  VAR " decls dnl m3-wr)
         (dis "  BEGIN" dnl m3-wr)
-        (map (lambda(f)(set! q (emitter f m3-wr q))) fields)
+        (map (lambda(f)(set! q (loopit
+                                emitter
+                                (cons (string-append "t." (car f)) (cdr f))
+                                m3-wr
+                                q))) fields)
 
         (dis "    " pre-return dnl m3-wr)
         (dis "    RETURN " return dnl m3-wr)
@@ -847,7 +946,7 @@
                ""
                0)
     
-    (dis dnl "CONST LengthBits = " (accumulate + 0 (map cadr fields)) ";" dnl
+    (dis dnl "CONST LengthBits = " (accumulate + 0 (map get-field-size fields)) ";" dnl
          dnl i3-wr)
 
     (close-m3 m3-wrs)
@@ -960,6 +1059,6 @@
 
 (define (compile! structs)
   (clear-globals!)
-  (wr-close (filewr-open (sa deriv-dir "derived.m3m")))
   (map compile-one! structs)
   )
+
