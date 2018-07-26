@@ -40,7 +40,7 @@ module ("DecoratedComponentDef")
 
 interface ("RegModula3Utils")
 
-%%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%
 
 module   ("RegModula3Constants")
 module   ("RegModula3")
@@ -50,7 +50,7 @@ interface("RegModula3GenState")
 
 module("RegModula3IntfNaming")
 
-%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%%
 
 module   ("RegScalaConstants")
 module   ("RegScala")
@@ -58,7 +58,7 @@ module   ("RegScalaNaming")
 interface("RegScalaGenerators")
 interface("RegScalaGenState")
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%  C output  %%%%%%%%%%%%%%%%%%%%%%%%
 
 module   ("RegC")
 module   ("RegCConstants")
@@ -66,7 +66,7 @@ module   ("RegCNaming")
 interface("RegCGenerators")
 interface("RegCGenState")
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 generic_module("TopoSort")
 module("TextTopoSort")
