@@ -1,3 +1,4 @@
+(* Roman Parise - WCM Group *)
 INTERFACE WCM ;
 
 (*************)

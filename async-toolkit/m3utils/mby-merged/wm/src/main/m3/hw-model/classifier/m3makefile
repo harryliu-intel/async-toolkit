@@ -1,9 +1,14 @@
 import( "libm3" )
 
+% TCAM
 module( "Tcam" )
+
+% WCM Group
 module( "WCMTcamBlock" )
 module( "WCM" )
+module( "WCMTest" )
 interface( "WCMConstants" )
-implementation( "Main" )
 
-program( "test" )
+% Top Level Test
+implementation( "Main" )
+program( "testall" )

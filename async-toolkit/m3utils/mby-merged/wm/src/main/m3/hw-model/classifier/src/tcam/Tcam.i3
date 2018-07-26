@@ -30,6 +30,7 @@ END ;
 (**************)
 
 EXCEPTION InvalidTCAMEntryConfiguration( TEXT ) ;
+
 EXCEPTION InvalidTCAMChunkConfiguration( TEXT ) ;
 
 (**************)

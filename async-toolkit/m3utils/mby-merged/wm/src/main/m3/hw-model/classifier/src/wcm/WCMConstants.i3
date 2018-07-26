@@ -1,3 +1,4 @@
+(* Roman Parise - WCMConstants *)
 INTERFACE WCMConstants ;
 
 CONST KEY8_LENGTH = 64 ;

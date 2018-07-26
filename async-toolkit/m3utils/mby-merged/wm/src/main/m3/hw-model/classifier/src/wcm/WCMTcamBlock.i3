@@ -1,3 +1,4 @@
+(* Roman Parise - WCMTcamBlock *)
 INTERFACE WCMTcamBlock ;
 
 (*************)

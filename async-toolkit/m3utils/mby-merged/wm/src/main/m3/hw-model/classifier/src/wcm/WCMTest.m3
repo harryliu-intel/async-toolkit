@@ -1,9 +1,13 @@
-MODULE Main ;
+(* Roman Parise - WCMTest *)
+MODULE WCMTest ;
+
 IMPORT WCMTcamBlock ;
 IMPORT Tcam ;
 IMPORT IO ;
 IMPORT Fmt ;
 IMPORT Word ;
+
+PROCEDURE FullTest( ) =
 VAR
 	block := NEW( REF WCMTcamBlock.T ) ;
 	mykeys : WCMTcamBlock.Keys ;
@@ -17,9 +21,11 @@ VAR
 	entriesperchunk := Word.LeftShift( 1 , log2entriesperchunk ) ;
 	chunkmask := NEW( REF ARRAY OF BOOLEAN , WCMTcamBlock.NUM_ENTRIES DIV entriesperchunk ) ;
 BEGIN
+	IO.Put( "WCM Group Test\n" ) ;
+	IO.Put( "==============\n" ) ;
 	IO.Put( "All errors will be printed to the terminal.\n" ) ;
 	IO.Put( "If nothing appears, your test worked!\n" ) ;
-	IO.Put( "===========================================\n" ) ;
+	IO.Put( "*** Test 1 - TCAM Block Test ***\n" ) ;
 	(* Keys record *)
 	mykeys.Key8 := NEW( REF ARRAY OF BITS 8 FOR [16_00..16_FF] , WCMTcamBlock.KEY8_LENGTH ) ;
 	FOR key8index := FIRST( mykeys.Key8^ ) TO LAST( mykeys.Key8^ ) DO
@@ -104,4 +110,6 @@ BEGIN
 	IF myhitindexvalid # TRUE THEN
 		IO.Put( "Hit index valid is incorrect!\n" ) ;
 	END ;
-END Main.
+END FullTest ;
+
+BEGIN END WCMTest.
