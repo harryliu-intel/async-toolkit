@@ -27,6 +27,22 @@ REVEAL
     write := Write;
   END;
 
+PROCEDURE DefTypes(wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
+  BEGIN
+    FOR i := 1 TO 64 DO
+      CASE i OF
+        1..8 => Wr.PutText(wr, "typedef unsigned char ")
+      |
+        9..16 => Wr.PutText(wr, "typedef unsigned short ")
+      |
+        17..32 => Wr.PutText(wr, "typedef unsigned int ")
+      |
+        33..64 => Wr.PutText(wr, "typedef unsigned long ")
+      END;
+      Wr.PutText(wr, F("uint%s;\n", Int(i)))
+    END
+  END DefTypes;
+  
 PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
@@ -51,6 +67,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
         (* perform topo sort and produce output in that order *)
         WITH seq = gs.topo.sort(),
              wr  = FileWr.Open(path) DO
+          DefTypes(wr);
           FOR i := 0 TO seq.size()-1 DO
             Debug.Out(F("Emit wx[%s]",seq.get(i)));
             VAR
@@ -80,7 +97,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
          path = dirPath & "/" & fn,
          wr = FileWr.Open(path) DO
       Wr.PutText(wr, F("\nvoid\n%s_main(const *%s, const *%s__addr);\n", intfNm, intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid build_main((void (*f)(void *))); /* called from Modula-3 */\n"));
+      Wr.PutText(wr, F("\nvoid build_main(void (*f)(void *)); /* called from Modula-3 */\n"));
       Wr.Close(wr)
     END;
 
@@ -134,11 +151,11 @@ PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
      *)
     res := RegGenState.T.newSymbol(gs, nm);
 
-    IF genPhase = 0 THEN
-      gs.curWx := Wx.New()
+    IF res AND genPhase = 0 THEN
+      gs.curWx := Wx.New();
+      WITH hadIt = gs.wxTbl.put(nm, gs.curWx) DO <*ASSERT NOT hadIt*> END
     END;
     gs.curSym := nm;
-    EVAL gs.wxTbl.put(nm, gs.curWx);
     
     RETURN res
   END NewSymbol;
@@ -174,6 +191,7 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
 
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
+    Debug.Out("Generating code for " & myTn);
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
     FOR p := FIRST(Phases) TO LAST(Phases) DO
       WITH v = Phases[p] DO
@@ -246,7 +264,7 @@ PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
     FOR p := FIRST(Phases) TO LAST(Phases) DO
       gs.main("  %s%s *p%s,\n", myTn, Phases[p].sfx, Int(ORD(p)));
     END;
-    gs.main("  (void (*f)(void *))\n");
+    gs.main("  void (*f)(void *)\n");
     gs.main(")");
   END GenProto;
 
@@ -269,7 +287,7 @@ PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
       WITH f  = r.fields.get(i),
            nm = f.name(debug := FALSE) DO
         gs.main("  p1->%s = &(p0->%s);\n", nm, nm);
-        gs.main("  f(&(p0->%s);\n",nm)
+        gs.main("  f(&(p0->%s));\n",nm)
       END
     END;
     gs.main("}\n\n")
@@ -294,7 +312,7 @@ PROCEDURE GenContainerInit(rf       : RegContainer.T;
           gs.main("  %s__init(&(p0->%s),&(p1->%s),f);\n", tn, nm, nm)
         ELSE
           gs.main("  for (int i=0; i<%s; ++i)\n", Int(ArrSz(c.array)));
-          gs.main("    %s__init(&(p0->%s[i]),%(p1->%s[i]),f);\n", tn, nm, nm)
+          gs.main("    %s__init(&(p0->%s[i]),&(p1->%s[i]),f);\n", tn, nm, nm)
         END
       END
     END;
