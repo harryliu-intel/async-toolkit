@@ -15,6 +15,7 @@ IMPORT Debug;
 IMPORT TextRefTbl;
 IMPORT TextTopoSort;
 IMPORT FileWr;
+IMPORT RegContainer;
 
 <*FATAL BigInt.OutOfRange*>
 
@@ -38,25 +39,62 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
     fn := intfNm & ".h";
     path := dirPath & "/" & fn;
   BEGIN
-    t.map.generate(gs);
+    FOR ph := FIRST(GenPhase) TO LAST(GenPhase) DO
+      EVAL RegGenState.T.init(gs, gs.dirPath); (* clear symbol table *)
+      genPhase := ph;
+      t.map.generate(gs);
 
-    Debug.Out("Copying output to " & path);
-
-    (* perform topo sort and produce output in that order *)
-    WITH seq = gs.topo.sort(),
-         wr  = FileWr.Open(path) DO
-      FOR i := 0 TO seq.size()-1 DO
-        Debug.Out(F("Emit wx[%s]",seq.get(i)));
-        VAR
-          wx : REFANY;
-          hadIt := wxTbl.get(seq.get(i),wx);
-        BEGIN
-          <*ASSERT hadIt*>
-          Wr.PutText(wr, Wx.ToText(wx))
+      CASE ph OF
+        0 =>
+        Debug.Out("Copying output to " & path);
+        
+        (* perform topo sort and produce output in that order *)
+        WITH seq = gs.topo.sort(),
+             wr  = FileWr.Open(path) DO
+          FOR i := 0 TO seq.size()-1 DO
+            Debug.Out(F("Emit wx[%s]",seq.get(i)));
+            VAR
+              wx : REFANY;
+              hadIt := wxTbl.get(seq.get(i),wx);
+            BEGIN
+              <*ASSERT hadIt*>
+              Wr.PutText(wr, Wx.ToText(wx))
+            END
+          END;
+          Wr.Close(wr)
+        END;
+        gs.curWx := Wx.New()
+      |
+        1 =>
+        WITH fn = intfNm & ".c",
+             path = dirPath & "/" & fn,
+             wr = FileWr.Open(path) DO
+          Wr.PutText(wr, F("#include \"%s.h\"\n\n", intfNm));
+          Wr.PutText(wr, Wx.ToText(gs.curWx));
+          Wr.Close(wr)
         END
-      END;
+      END
+    END;
+
+    WITH fn = intfNm & "_main.h",
+         path = dirPath & "/" & fn,
+         wr = FileWr.Open(path) DO
+      Wr.PutText(wr, F("\nvoid\n%s_main(const *%s, const *%s__addr);\n", intfNm, intfNm, intfNm));
+      Wr.PutText(wr, F("\nvoid build_main((void (*f)(void *))); /* called from Modula-3 */\n"));
       Wr.Close(wr)
-    END
+    END;
+
+    WITH fn = intfNm & ".i3",
+         path = dirPath & "/" & fn,
+         wr = FileWr.Open(path) DO
+      Wr.PutText(wr, F("INTERFACE %s;\n\n", intfNm));
+      Wr.PutText(wr, F("TYPE CallBackProc = PROCEDURE(addr : ADDRESS);\n\n"));
+      Wr.PutText(wr, F("<*EXTERNAL build_main*>\n"));
+      Wr.PutText(wr, F("PROCEDURE BuildMain(cb : CallBackProc);\n\n"));
+      Wr.PutText(wr, F("END %s.\n", intfNm));
+      Wr.Close(wr)
+    END;
+    
   END Write;
 
   (**********************************************************************)
@@ -95,8 +133,10 @@ PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
        if we did not have it before -> OK
      *)
     res := RegGenState.T.newSymbol(gs, nm);
-    
-    gs.curWx := Wx.New();
+
+    IF genPhase = 0 THEN
+      gs.curWx := Wx.New()
+    END;
     gs.curSym := nm;
     EVAL gs.wxTbl.put(nm, gs.curWx);
     
@@ -126,7 +166,7 @@ CONST
   Phases = ARRAY OF Variant { Variant {  "",       "" },
                               Variant { "*", "__addr" } };
 
-PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
+PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     gs : GenState := genState;
@@ -135,8 +175,8 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
-    FOR i := FIRST(Phases) TO LAST(Phases) DO
-      WITH v = Phases[i] DO
+    FOR p := FIRST(Phases) TO LAST(Phases) DO
+      WITH v = Phases[p] DO
         gs.main("typedef struct {\n");
         FOR i := 0 TO r.fields.size()-1 DO
           WITH f  = r.fields.get(i),
@@ -144,15 +184,17 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
             gs.main("  uint%s %s%s;\n", Int(f.width), v.ptr, nm);
           END
         END;
-        gs.main("} %s%s;\n", myTn, v.sfx)
+        gs.main("} %s%s;\n\n", myTn, v.sfx)
       END
-    END
-  END GenReg;
+    END;
+    GenProto(r, gs);
+    gs.main(";\n\n");
+  END GenRegStruct;
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
      one routine, viz., GenContainer *)
   
-PROCEDURE GenRegfile(rf       : RegRegfile.T;
+PROCEDURE GenContainerStruct(rf       : RegContainer.T;
                      genState : RegGenState.T) 
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
@@ -161,22 +203,29 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
-    FOR i := FIRST(Phases) TO LAST(Phases) DO
-      WITH v = Phases[i] DO
+    FOR p := FIRST(Phases) TO LAST(Phases) DO
+      WITH v = Phases[p] DO
         gs.main("typedef struct {\n");
         FOR i := 0 TO rf.children.size()-1 DO
           WITH c  = rf.children.get(i),
                tn = ComponentTypeName(c.comp,gs) DO
-            gs.main("  %s%s %s[%s];\n", tn, v.sfx,
-                    IdiomName(c.nm,FALSE), Int(ArrSz(c.array)));
+            IF c.array = NIL THEN
+              gs.main("  %s%s %s;\n", tn, v.sfx,
+                      IdiomName(c.nm,FALSE));
+            ELSE
+              gs.main("  %s%s %s[%s];\n", tn, v.sfx,
+                      IdiomName(c.nm,FALSE), Int(ArrSz(c.array)))
+            END;
             gs.noteDep(tn);
             IF rf.children.size() = 1 THEN
-            END
+            END;
           END
         END;
         gs.main("} %s%s;\n", myTn, v.sfx);
       END
     END;
+    GenProto(rf, gs);
+    gs.main(";\n\n");
     
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c = rf.children.get(i) DO
@@ -184,47 +233,118 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
         c.comp.generate(gs)
       END
     END
-   END GenRegfile;
+   END GenContainerStruct;
+  (**********************************************************************)
 
-PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T) 
+PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
-    gs : GenState := gsF;
-    myTn := map.typeName(gs);  
+    gs : GenState := genState;
+    myTn := r.typeName(gs);
+  BEGIN
+    gs.main("\nvoid\n%s__init(\n", myTn);
+    FOR p := FIRST(Phases) TO LAST(Phases) DO
+      gs.main("  %s%s *p%s,\n", myTn, Phases[p].sfx, Int(ORD(p)));
+    END;
+    gs.main("  (void (*f)(void *))\n");
+    gs.main(")");
+  END GenProto;
+
+  (**********************************************************************)
+
+PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  VAR
+    gs : GenState := genState;
+    myTn := r.typeName(gs);
+
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
-    FOR i := FIRST(Phases) TO LAST(Phases) DO
-      WITH v = Phases[i] DO
-        gs.main("typedef struct {\n");
-        FOR i := 0 TO map.children.size()-1 DO
-          WITH c  = map.children.get(i),
-               tn = ComponentTypeName(c.comp,gs) DO
-            IF (c.array = NIL) THEN
-              gs.main("  %s%s %s;\n",
-                      tn, v.sfx, IdiomName(c.nm,FALSE))
-            ELSE
-              gs.main("  %s%s %s[%s];\n",
-                      tn, v.sfx, IdiomName(c.nm,FALSE), Int(ArrSz(c.array)))
-            END;
-            gs.noteDep(tn);
-          END
-        END;
-        gs.main("} %s;\n", myTn);
+
+    GenProto(r, genState);
+    gs.main("{\n");
+    
+    FOR i := 0 TO r.fields.size()-1 DO
+      WITH f  = r.fields.get(i),
+           nm = f.name(debug := FALSE) DO
+        gs.main("  p1->%s = &(p0->%s);\n", nm, nm);
+        gs.main("  f(&(p0->%s);\n",nm)
       END
     END;
+    gs.main("}\n\n")
+  END GenRegInit;
 
-    FOR i := 0 TO map.children.size()-1 DO
-      WITH c = map.children.get(i) DO
+PROCEDURE GenContainerInit(rf       : RegContainer.T;
+                     genState : RegGenState.T) 
+  RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
+  VAR
+    gs : GenState := genState;
+    myTn := rf.typeName(gs);
+  BEGIN
+    IF NOT gs.newSymbol(myTn) THEN RETURN END;
+    gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
+    GenProto(rf, gs);
+    gs.main("{\n");
+    FOR i := 0 TO rf.children.size()-1 DO
+      WITH c  = rf.children.get(i),
+           tn = ComponentTypeName(c.comp, gs),
+           nm = IdiomName(c.nm,FALSE) DO
+        IF c.array = NIL THEN
+          gs.main("  %s__init(&(p0->%s),&(p1->%s),f);\n", tn, nm, nm)
+        ELSE
+          gs.main("  for (int i=0; i<%s; ++i)\n", Int(ArrSz(c.array)));
+          gs.main("    %s__init(&(p0->%s[i]),%(p1->%s[i]),f);\n", tn, nm, nm)
+        END
+      END
+    END;
+    gs.main("}\n\n");
+    FOR i := 0 TO rf.children.size()-1 DO
+      WITH c = rf.children.get(i) DO
         <*ASSERT c.comp # NIL*>
         c.comp.generate(gs)
       END
+    END;
+  END GenContainerInit;
+
+  (**********************************************************************)
+
+PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  BEGIN
+    CASE genPhase OF
+      0 =>  GenRegStruct(r, genState)
+    |
+      1 =>  GenRegInit(r, genState)
+    END
+  END GenReg;
+
+PROCEDURE GenAddrmap(r : RegAddrmap.T; genState : RegGenState.T)
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  BEGIN
+    CASE genPhase OF
+      0 =>  GenContainerStruct(r, genState)
+    |
+      1 =>  GenContainerInit(r, genState)
     END
   END GenAddrmap;
 
+PROCEDURE GenRegfile(r : RegRegfile.T; genState : RegGenState.T)
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  BEGIN
+    CASE genPhase OF
+      0 =>  GenContainerStruct(r, genState)
+    |
+      1 =>  GenContainerInit(r, genState)
+    END
+  END GenRegfile;
+
   (**********************************************************************)
-  
+
+TYPE GenPhase = [0..1];
+     
+VAR genPhase : GenPhase;
+    
 PROCEDURE ArrSz(a : RdlArray.Single) : CARDINAL =
   BEGIN
     IF a = NIL THEN
