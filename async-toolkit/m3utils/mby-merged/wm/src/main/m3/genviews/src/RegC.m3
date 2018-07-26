@@ -119,6 +119,13 @@ PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
 
   (**********************************************************************)
 
+TYPE
+  Variant = RECORD ptr, sfx : TEXT END;
+
+CONST
+  Phases = ARRAY OF Variant { Variant {  "",       "" },
+                              Variant { "*", "__addr" } };
+
 PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
@@ -128,14 +135,18 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("typedef struct {\n");
-    FOR i := 0 TO r.fields.size()-1 DO
-      WITH f  = r.fields.get(i),
-           nm = f.name(debug := FALSE) DO
-        gs.main("  uint%s %s;\n", Int(f.width), nm);
+    FOR i := FIRST(Phases) TO LAST(Phases) DO
+      WITH v = Phases[i] DO
+        gs.main("typedef struct {\n");
+        FOR i := 0 TO r.fields.size()-1 DO
+          WITH f  = r.fields.get(i),
+               nm = f.name(debug := FALSE) DO
+            gs.main("  uint%s %s%s;\n", Int(f.width), v.ptr, nm);
+          END
+        END;
+        gs.main("} %s%s;\n", myTn, v.sfx)
       END
-    END;
-    gs.main("} %s;\n", myTn);
+    END
   END GenReg;
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
@@ -150,19 +161,23 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("typedef struct {\n");
-    FOR i := 0 TO rf.children.size()-1 DO
-      WITH c  = rf.children.get(i),
-           tn = ComponentTypeName(c.comp,gs) DO
-        gs.main("  %s %s[%s];\n", tn, 
-                IdiomName(c.nm,FALSE), Int(ArrSz(c.array)));
-        gs.noteDep(tn);
-        IF rf.children.size() = 1 THEN
-        END
+    FOR i := FIRST(Phases) TO LAST(Phases) DO
+      WITH v = Phases[i] DO
+        gs.main("typedef struct {\n");
+        FOR i := 0 TO rf.children.size()-1 DO
+          WITH c  = rf.children.get(i),
+               tn = ComponentTypeName(c.comp,gs) DO
+            gs.main("  %s%s %s[%s];\n", tn, v.sfx,
+                    IdiomName(c.nm,FALSE), Int(ArrSz(c.array)));
+            gs.noteDep(tn);
+            IF rf.children.size() = 1 THEN
+            END
+          END
+        END;
+        gs.main("} %s%s;\n", myTn, v.sfx);
       END
     END;
-
-    gs.main("} %s;\n", myTn);
+    
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c = rf.children.get(i) DO
         <*ASSERT c.comp # NIL*>
@@ -180,21 +195,25 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
 
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("typedef struct {\n");
-    FOR i := 0 TO map.children.size()-1 DO
-      WITH c  = map.children.get(i),
-           tn = ComponentTypeName(c.comp,gs) DO
-        IF (c.array = NIL) THEN
-          gs.main("  %s %s;\n",
-                  tn, IdiomName(c.nm,FALSE))
-        ELSE
-          gs.main("  %s %s[%s];\n",
-                  tn, IdiomName(c.nm,FALSE), Int(ArrSz(c.array)))
+    FOR i := FIRST(Phases) TO LAST(Phases) DO
+      WITH v = Phases[i] DO
+        gs.main("typedef struct {\n");
+        FOR i := 0 TO map.children.size()-1 DO
+          WITH c  = map.children.get(i),
+               tn = ComponentTypeName(c.comp,gs) DO
+            IF (c.array = NIL) THEN
+              gs.main("  %s%s %s;\n",
+                      tn, v.sfx, IdiomName(c.nm,FALSE))
+            ELSE
+              gs.main("  %s%s %s[%s];\n",
+                      tn, v.sfx, IdiomName(c.nm,FALSE), Int(ArrSz(c.array)))
+            END;
+            gs.noteDep(tn);
+          END
         END;
-        gs.noteDep(tn);
+        gs.main("} %s;\n", myTn);
       END
     END;
-    gs.main("} %s;\n", myTn);
 
     FOR i := 0 TO map.children.size()-1 DO
       WITH c = map.children.get(i) DO
