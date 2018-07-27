@@ -88,6 +88,10 @@ module ("HlpRepStage")
 
 module ("UnsafeUpdaterFactory")
 sequence("Updater", "Updater")
+c_source("model_c_write")
+interface("ModelCWrite")
+table("IntUpdater", "Integer", "Updater")
+sorted_table("IntUpdater", "Integer", "Updater")
 
 implementation ("Main")
 

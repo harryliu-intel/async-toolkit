@@ -20,6 +20,8 @@ IMPORT UnsafeUpdater;
 IMPORT Updater;
 IMPORT CompPath;
 IMPORT UpdaterFactory;
+IMPORT ModelCWrite;
+IMPORT SortedIntUpdaterTbl AS AddrUpdaterTbl;
 
 PROCEDURE HandlePacket(server           : MbyModelServer.T;
                        READONLY readA   : Map.T;
@@ -41,6 +43,7 @@ PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
 VAR
   addrSeq := NEW(AddrSeq.T).init();
   upSeq   := NEW(UpdaterSeq.T).init();
+  addrUpdaterTbl := NEW(AddrUpdaterTbl.Default).init();
   
 PROCEDURE BuildCallback(addr : ADDRESS) =
   BEGIN
@@ -48,7 +51,10 @@ PROCEDURE BuildCallback(addr : ADDRESS) =
       IF FALSE THEN
         Debug.Out("BuildCallback " & Fmt.Unsigned(w))
       END;
-      NARROW(upSeq.get(addrSeq.size()),MyUpdater).caddr := addr;
+      WITH up = NARROW(upSeq.get(addrSeq.size()),MyUpdater) DO
+        up.caddr := addr;
+        WITH hadIt = addrUpdaterTbl.put(w, up) DO <*ASSERT NOT hadIt*> END
+      END;
       addrSeq.addhi(w)
     END
   END BuildCallback;
@@ -111,4 +117,16 @@ PROCEDURE MUUpdate(up : MyUpdater; to : Word.T) =
     END
   END MUUpdate;
 
-BEGIN END MbyModelC.
+PROCEDURE C2M3Callback(addr : ADDRESS; val : Word.T) =
+  VAR
+    up : Updater.T;
+  BEGIN
+    WITH hadIt = addrUpdaterTbl.get(LOOPHOLE(addr,Word.T),up) DO
+      <*ASSERT hadIt*>
+      up.update(val)
+    END
+  END C2M3Callback;
+
+BEGIN
+  ModelCWrite.SetCallback(C2M3Callback)
+END MbyModelC.
