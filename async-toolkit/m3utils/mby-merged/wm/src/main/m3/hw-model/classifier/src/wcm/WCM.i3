@@ -38,6 +38,11 @@ TYPE ActionRAMCfg = RECORD
 	SliceIndex : ARRAY[0..NUM_ACTION_RAMS-1] OF [0..NUM_SLICES-1] ;
 END ;
 
+(* WCMGroupProfile
+- StartCompare :: array of references to booleans; each one is
+		  the startcompare bit for the corresponding TCAM slice
+- MuxSelects :: the mux select bits for the WCM group
+*)
 TYPE WCMGroupProfile = RECORD
 	StartCompare : REF ARRAY OF REF BOOLEAN := NIL ;
 	MuxSelects : REF WCMTcamBlock.KeyMuxSelect := NIL ;
@@ -52,6 +57,7 @@ END ;
 - InHits :: the hits from the previous group
 - GroupProfile :: the profile that defines parameters
 		  such as the select bits to the key muxes
+		  and the StartCompare string
 *)
 TYPE T = RECORD
 	TcamBlock : REF ARRAY OF REF WCMTcamBlock.T ;
@@ -134,9 +140,6 @@ END WCM.
 (***********)
 (** TODOs **)
 (***********)
-(* The group currently does not fully support cascades
-since a StartCompare bit can be set in the profile, but
-not a whole StartCompare string. *)
 (* READONLY types for const arguments? *)
 (* More robust computation of outhits from one stage
 being inhits to next stage. *)
