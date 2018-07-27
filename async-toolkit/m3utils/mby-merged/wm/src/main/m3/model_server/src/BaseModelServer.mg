@@ -7,6 +7,7 @@ IMPORT CompAddr;
 FROM Fmt IMPORT F; IMPORT Fmt;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
+IMPORT UpdaterFactory;
 
 VAR doDebug := Debug.DebugThis(ModelServer.Brand);
     
@@ -28,12 +29,13 @@ PROCEDURE ResetChip(t : T) =
 
 PROCEDURE Init(t : T;
                infoPath : Pathname.T;
+               factory : UpdaterFactory.T;
                quitLast : BOOLEAN;
                infoFile : Pathname.T) : Super =
   BEGIN
-    EVAL Super.init(t, infoPath, quitLast, infoFile);
+    EVAL Super.init(t, infoPath, factory, quitLast, infoFile);
     Debug.Out(F("Creating %s ...",Map.Brand));
-    t.h := NEW(MapAddr.H).init(CompAddr.Zero);
+    t.h := NEW(MapAddr.H).init(CompAddr.Zero, factory);
     RETURN t
   END Init;
 

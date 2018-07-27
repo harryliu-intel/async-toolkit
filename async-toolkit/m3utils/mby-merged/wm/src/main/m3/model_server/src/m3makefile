@@ -37,7 +37,7 @@ table ("CardByte", "Cardinal", "Byte")
 module ("HlpModel")
 %module ("MbyModel") % pure Modula-3 version of MbyModel
 interface ("MbyModel")
-implementation ("MbyModelC") % C version of MbyModel
+module ("MbyModelC") % C version of MbyModel
 
 Generic_module("BaseModelServer")
 module("MbyModelServer")
@@ -86,12 +86,16 @@ interface ("MbyMappedKey")
 module ("HlpRepStageModel")
 module ("HlpRepStage")
 
+module ("UnsafeUpdaterFactory")
+sequence("Updater", "Updater")
+
+implementation ("Main")
+
 SchemeStubs ("Updater")
 SchemeStubs ("ModelServer")
 
 ExportSchemeStubs("model_server")
 importSchemeStubs()              % import ALL scheme stubs
 
-implementation ("Main")
 
 program ("modelserver")

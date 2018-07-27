@@ -29,6 +29,7 @@ pqueue("CompAddr","CompAddr")
 Module("UpdateTracing")
 Interface("Updater")
 Module("UnsafeUpdater")
+Factory("Updater","Updater")
 Module("WmUtils")
 
 library ("wm_support")

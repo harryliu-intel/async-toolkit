@@ -719,12 +719,14 @@ PROCEDURE GenAddrmapXInit(map : RegAddrmap.T; gs : GenState) =
   VAR
     qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
   BEGIN
+    EVAL gs.i3imports.insert("UpdaterFactory");
+    EVAL gs.m3imports.insert("UpdaterFactory");
     gs.put(Section.IMaintype,
-           F("PROCEDURE InitX(READONLY t : %s; READONLY a : A; VAR x : X; root : REFANY);\n", qmtn));
+           F("PROCEDURE InitX(READONLY t : %s; READONLY a : A; VAR x : X; root : REFANY; factory : UpdaterFactory.T);\n", qmtn));
     gs.put(Section.IMaintype, "\n");
     
     gs.mdecl(
-           F("PROCEDURE InitX(READONLY t : %s; READONLY a : A; VAR x : X; root : REFANY) =\n", qmtn));
+           F("PROCEDURE InitX(READONLY t : %s; READONLY a : A; VAR x : X; root : REFANY; factory : UpdaterFactory.T) =\n", qmtn));
     gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
     gs.mdecl("  BEGIN\n");
 
@@ -757,7 +759,7 @@ PROCEDURE GenChildXInit(e          : RegChild.T;
     
     IF e.array = NIL THEN
       gs.mdecl(
-          "    %s(t%s,a%s,x%s,root);\n",
+          "    %s(t%s,a%s,x%s,root,factory);\n",
           ComponentInitName(e.comp,gs),
           childArc,
           childArc,
@@ -765,7 +767,7 @@ PROCEDURE GenChildXInit(e          : RegChild.T;
     ELSE
       
       gs.mdecl("    %s\n",FmtArrFor(e.array));
-      gs.mdecl("      %s(t%s[i],a%s[i],x%s[i],root);\n",
+      gs.mdecl("      %s(t%s[i],a%s[i],x%s[i],root,factory);\n",
                ComponentInitName(e.comp,gs),
                childArc,
                childArc,
@@ -830,7 +832,7 @@ PROCEDURE GenFieldUpdater(c : CARDINAL; gs : GenState) =
     gs.mdecl("    m      : CompMemory.T;\n");
     gs.mdecl("    addr   : CompAddr.T;\n");
     gs.mdecl("    h      : H;\n");
-    gs.mdecl("    unsafe : UnsafeUpdater.T;\n");
+    gs.mdecl("    upObj  : Updater.T;\n");
     gs.mdecl("  OVERRIDES\n");
     gs.mdecl("    u := UpdateField%s;\n", cs);
     gs.mdecl("    updater := ReturnMe%s;\n", cs);
@@ -852,7 +854,7 @@ PROCEDURE GenFieldUpdater(c : CARDINAL; gs : GenState) =
     gs.mdecl("    EVAL o.m.csrOp(op);\n");
     IF c <= BITSIZE(Word.T) THEN
       gs.mdecl("    IF Unsafe THEN\n");
-      gs.mdecl("      o.unsafe.update(x)\n");
+      gs.mdecl("      o.upObj.update(x)\n");
       gs.mdecl("    END\n");
     END;
     gs.mdecl("  END UpdateField%s;\n", cs);
@@ -939,7 +941,7 @@ PROCEDURE GenRegUpdateInit(r : RegReg.T; gs : GenState) =
         END;
 
         gs.mdecl(
-                 "    x.%s := NEW(UObjConcrete%s, addr := a.%s.pos, unsafe := u.%s, m := m);\n", nm, ws, nm, nm);
+                 "    x.%s := NEW(UObjConcrete%s, addr := a.%s.pos, upObj := u.%s, m := m);\n", nm, ws, nm, nm);
         EVAL gs.fieldWidths.insert(f.width)
       END
     END;
@@ -968,7 +970,7 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
     gs.put(Section.IMaintype, "    update : U;\n");
     gs.put(Section.IMaintype, "    a      : A;\n");
     gs.put(Section.IMaintype, "  METHODS\n");
-    gs.put(Section.IMaintype, "    init(base : CompAddr.T) : H;\n");
+    gs.put(Section.IMaintype, "    init(base : CompAddr.T; factory : UpdaterFactory.T) : H;\n");
     gs.put(Section.IMaintype, "  END;\n");
     gs.put(Section.IMaintype, "\n");
     gs.put(Section.IMaintype, "  CONST DoUnsafeWrite = TRUE;\n");
@@ -1003,7 +1005,7 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
           "PROCEDURE CallbackCallback(cb : Callback; op : CsrOp.T) =\n" &
           "  (* can only do writes since no VAR *)\n" & 
           "  BEGIN\n" &
-          "    CsrAccess(cb.h.read, cb.h.a, op)\n" &
+          "    CsrAccess(cb.h.read, cb.h.a, cb.h.x, op)\n" &
           "  END CallbackCallback;\n" &
           "\n" &
 
@@ -1022,13 +1024,13 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
     gs.mdecl(
                        "  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.mdecl(
-           "PROCEDURE InitH(h : H; base : CompAddr.T) : H =\n" &
+           "PROCEDURE InitH(h : H; base : CompAddr.T; factory : UpdaterFactory.T) : H =\n" &
            "  VAR\n" &
            "    range : CompRange.T;\n"&
            "  BEGIN\n" &
          F("    range := Init(h.a, base, CompPath.One(\"ROOT\"));\n") &
            "    EVAL CompMemory.T.init(h, range);\n" &
-           "    InitX(h.read, h.a, h.x, h);\n" &
+           "    InitX(h.read, h.a, h.x, h, factory);\n" &
            "    UpdateInit(h.update, h.a, h.x, h);\n" &                         
            "    h.registerListener(range,NEW(Callback, h := h));\n"&
            "    RETURN h\n" &                             
@@ -1046,10 +1048,10 @@ PROCEDURE GenAddrmapCsr(map : RegAddrmap.T; gs : GenState) =
     gs.put(Section.IMaintype,
                        F("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine())));
     gs.put(Section.IMaintype,
-                       F("PROCEDURE CsrAccess(VAR t : %s; READONLY a : A; VAR op : CsrOp.T);\n", qmtn));
+                       F("PROCEDURE CsrAccess(VAR t : %s; READONLY a : A; READONLY x : X; VAR op : CsrOp.T);\n", qmtn));
 
     gs.mdecl(
-                       "PROCEDURE CsrAccess(VAR t : %s; READONLY a : A; VAR op : CsrOp.T) =\n", qmtn);
+                       "PROCEDURE CsrAccess(VAR t : %s; READONLY a : A; READONLY x : X; VAR op : CsrOp.T) =\n", qmtn);
     gs.mdecl(
                        "  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.mdecl("\n");
@@ -1350,14 +1352,16 @@ PROCEDURE GenRegfileCsr(rf : RegRegfile.T; gs : GenState) =
     pnm := ComponentCsrName(rf, gs);
     ttn := ComponentTypeNameInHier(rf, gs, TypeHier.Read);
     atn := ComponentTypeNameInHier(rf, gs, TypeHier.Addr);
+    xtn := ComponentTypeNameInHier(rf, gs, TypeHier.Unsafe);
     ccnt : CARDINAL := 0;
   <*FATAL OSError.E, Thread.Alerted, Wr.Failure*>
   BEGIN
     IF NOT gs.newSymbol(pnm) THEN RETURN END;
-    gs.mdecl( "PROCEDURE %s(VAR t : %s; READONLY a : %s; VAR op : CsrOp.T) =\n",
+    gs.mdecl( "PROCEDURE %s(VAR t : %s; READONLY a : %s; READONLY x : %s; VAR op : CsrOp.T) =\n",
                pnm,
                ttn,
-               atn);
+               atn,
+               xtn);
     gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
     IF rf.children.size() = 1 THEN
        gs.mdecl("  BEGIN\n");
@@ -1388,12 +1392,13 @@ PROCEDURE GenRegCsr(r  : RegReg.T;
     pnm := ComponentCsrName(r, gs);
     ttn := ComponentTypeNameInHier(r, gs, TypeHier.Read);
     atn := ComponentTypeNameInHier(r, gs, TypeHier.Addr);
+    xtn := ComponentTypeNameInHier(r, gs, TypeHier.Unsafe);
   <*FATAL OSError.E, Thread.Alerted, Wr.Failure*>
   BEGIN
     IF NOT gs.newSymbol(pnm) THEN RETURN END;
     gs.mdecl(
-           "PROCEDURE %s(VAR t : %s; READONLY a : %s; VAR op : CsrOp.T) =\n",
-           pnm, ttn, atn);
+           "PROCEDURE %s(VAR t : %s; READONLY a : %s; READONLY x : %s; VAR op : CsrOp.T) =\n",
+           pnm, ttn, atn, xtn);
     gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
     gs.mdecl("  PROCEDURE DoChild(c : [0..NUMBER(a.tab)-2]) =\n");
     gs.mdecl("    BEGIN\n");
@@ -1404,11 +1409,15 @@ PROCEDURE GenRegCsr(r  : RegReg.T;
            nm = f.name(debug := FALSE) DO
         IF f.width <= BITSIZE(Word.T) THEN
           gs.mdecl("    | %s => t.%s := CsrOp.DoField(op, t.%s, a.%s);\n",
-                                  Fmt.Int(i), nm, nm, nm)
+                   Fmt.Int(i), nm, nm, nm)
         ELSE
           gs.mdecl("    | %s => CsrOp.DoWideField(op, t.%s, a.%s);\n",
                                   Fmt.Int(i), nm, nm)
         END;
+        gs.mdecl("                    WITH u = x.%s DO\n", nm);
+        gs.mdecl("                      IF u.doSync THEN u.sync() END\n");
+        gs.mdecl("                    END\n");
+
       END
     END;
     gs.mdecl("      END\n");
@@ -1500,23 +1509,24 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
             EVAL gs.m3imports.insert("Fmt");
           END;
           
-          gs.mdecl("        %s(t[i],a[i],op)\n", ComponentCsrName(e.comp,gs));
+          gs.mdecl("        %s(t[i],a[i],x[i],op)\n", ComponentCsrName(e.comp,gs));
           gs.mdecl("      END\n");
           gs.mdecl("    END\n")
         END
       ELSE
         gs.mdecl("      (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
         gs.mdecl("    %s\n",FmtArrFor(e.array));
-        gs.mdecl("      %s(t[i],a[i],op)\n", ComponentCsrName(e.comp,gs));
+        gs.mdecl("      %s(t[i],a[i],x[i],op)\n", ComponentCsrName(e.comp,gs));
         gs.mdecl("    END\n")
       END;
     ELSE
      gs.mdecl("      (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
      IF e.array = NIL THEN
         gs.mdecl(
-               "      | %s => %s(t%s,a%s,op);\n",
+               "      | %s => %s(t%s,a%s,x%s,op);\n",
                  Fmt.Int(ccnt),
                  ComponentCsrName(e.comp,gs),
+                 childArc,
                  childArc,
                  childArc )
       ELSE
@@ -1524,8 +1534,12 @@ PROCEDURE GenChildCsr(e          : RegChild.T;
                F("      | %s..%s =>  ",
                    Fmt.Int(ccnt),
                    Fmt.Int(ccnt+ArrayCnt(e.array)-1)) &
-               F("%s(t%s[c-%s],a%s[c-%s],op);\n",
+               F("%s(t%s[c-%s]",
                    ComponentCsrName(e.comp,gs),
+                   childArc,
+                   Fmt.Int(ccnt)) &
+
+               F(",a%s[c-%s],x%s[c-%s],op);\n",
                    childArc,
                    Fmt.Int(ccnt),
                    childArc,
@@ -1661,7 +1675,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   BEGIN
     gs.mdecl(
            
-             "PROCEDURE %s(READONLY t : %s; READONLY a : %s; VAR x : %s; root : REFANY) =\n",
+             "PROCEDURE %s(READONLY t : %s; READONLY a : %s; VAR x : %s; root : REFANY; factory : UpdaterFactory.T) =\n",
              iNm,
              ttn,
              atn,
@@ -1857,7 +1871,7 @@ PROCEDURE GenRegXInit(r : RegReg.T; gs : GenState) =
     atn := ComponentTypeNameInHier(r, gs, TypeHier.Addr);
   BEGIN
     gs.mdecl(
-           "PROCEDURE %s(READONLY t : %s; READONLY a : %s; VAR x : %s; root : REFANY) =\n",
+           "PROCEDURE %s(READONLY t : %s; READONLY a : %s; VAR x : %s; root : REFANY; factory : UpdaterFactory.T) =\n",
            iNm,
            ttn,
            atn,
@@ -1869,7 +1883,7 @@ PROCEDURE GenRegXInit(r : RegReg.T; gs : GenState) =
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f = r.fields.get(i) DO
         gs.mdecl(
-            "    x.%s := NEW(UnsafeUpdater.T).init(root,ADR(t.%s),%s,CompPath.Cat(a.nm,\".%s\"));\n",
+            "    x.%s := NARROW(factory.buildT(),UnsafeUpdater.T).init(root,ADR(t.%s),%s,CompPath.Cat(a.nm,\".%s\"));\n",
             f.name(debug := FALSE),
             f.name(debug := FALSE),
             Fmt.Int(f.width),
@@ -2011,8 +2025,12 @@ PROCEDURE M3FieldWidthType(c : CARDINAL; th : TypeHier; gs : GenState; name := "
       (* all fields are addresses in the write mode *)
     |
       TypeHier.Unsafe =>
+      EVAL gs.i3imports.insert("Updater");
+      EVAL gs.m3imports.insert("Updater");
+      EVAL gs.i3imports.insert("UpdaterFactory");
+      EVAL gs.m3imports.insert("UpdaterFactory");
       EVAL gs.m3imports.insert("UnsafeUpdater");
-      RETURN "ROOT" (* actually an UnsafeUpdater.T *)
+      RETURN "Updater.T" (* actually an UnsafeUpdater.T *)
     |
       TypeHier.Read => RETURN M3Type()
     |

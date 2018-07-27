@@ -4,6 +4,7 @@ IMPORT Pathname;
 IMPORT CsrOp, CsrAccessStatus;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
+IMPORT UpdaterFactory;
 
 (********************************************************************** 
  *
@@ -29,6 +30,7 @@ TYPE
   Public = OBJECT
   METHODS
     init(infoPath : Pathname.T := ".";
+         factory : UpdaterFactory.T := NIL;
          quitOnLastClientExit := FALSE;
          infoFileName : Pathname.T := DefInfoFileName) : T;
     (* initialize object.  infoPath is a directory path where

@@ -15,7 +15,13 @@ REVEAL
   OVERRIDES
     init   := Init;
     update := Update;
+    getWidth := GetWidth;
+    getNm := GetNm;
   END;
+
+PROCEDURE GetWidth(t : T) : CARDINAL = BEGIN RETURN t.wid END GetWidth;
+
+PROCEDURE GetNm(t : T) : CompPath.T = BEGIN RETURN t.nm END GetNm;
 
 PROCEDURE Init(t : T; base : REFANY; fieldAddr : ADDRESS; width : CARDINAL; nm : CompPath.T) : T =
   BEGIN

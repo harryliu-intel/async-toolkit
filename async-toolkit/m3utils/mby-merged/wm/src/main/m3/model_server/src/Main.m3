@@ -17,6 +17,8 @@ IMPORT Stdio;
 IMPORT Params;
 IMPORT Text;
 IMPORT Thread;
+IMPORT UnsafeUpdaterFactory;
+IMPORT MbyModelC;
 
 <*FATAL Thread.Alerted*>
 
@@ -95,14 +97,16 @@ BEGIN
                        setupChip := HlpModel.SetupHlp)
     .init(infoPath := infoPath,
           infoFileName := infoFile,
-          quitOnLastClientExit := quitOnLast)
+          quitOnLastClientExit := quitOnLast,
+          factory := NEW(UnsafeUpdaterFactory.T).init())
   |
     Models.Mby =>
     modelServer := NEW(MbyModelServer.T,
                        setupChip := MbyModel.SetupMby)
     .init(infoPath := infoPath,
           infoFileName := infoFile,
-          quitOnLastClientExit := quitOnLast)
+          quitOnLastClientExit := quitOnLast,
+          factory := MbyModelC.GetUpdaterFactory())
   END;    
     
   modelServer.resetChip();
