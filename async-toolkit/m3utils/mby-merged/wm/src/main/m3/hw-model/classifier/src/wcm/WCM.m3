@@ -43,7 +43,7 @@ PROCEDURE MakeWCMGroup( TcamBlock : REF ARRAY OF REF WCMTcamBlock.T ;
 			ARAMCfg : ActionRAMCfg ;
 			MyKeys : REF WCMTcamBlock.Keys ;
 			InHits : REF ARRAY OF BOOLEAN ;
-			GroupProfile : REF WCMTcamBlock.Profile ) : REF T =
+			GroupProfile : REF WCMGroupProfile ) : REF T =
 VAR
 	wcm_group := NEW( REF T ) ;
 BEGIN
@@ -62,12 +62,8 @@ BEGIN
 		wcm_group.TcamBlock[ tcam_block_index ].BlockKeys := MyKeys ;
 	END ;
 	SetKeys( wcm_group , MyKeys ) ;
-	wcm_group.GroupProfile := NEW( REF WCMTcamBlock.Profile ) ;
 	(* Ensure each TCAM block has the proper profile *)
-	FOR tcam_block_index := FIRST( wcm_group.TcamBlock^ ) TO LAST( wcm_group.TcamBlock^ ) DO
-		<* ASSERT wcm_group.TcamBlock[ tcam_block_index ] # NIL *>
-		wcm_group.TcamBlock[ tcam_block_index ].BlockProfile := GroupProfile ;
-	END ;
+	wcm_group.GroupProfile := NEW( REF WCMGroupProfile ) ;
 	SetProfile( wcm_group , GroupProfile ) ;
 	(* Set the proper inhits array to the 0th slice *)
 	wcm_group.InHits := NEW( REF ARRAY OF BOOLEAN , NUM_ENTRIES ) ;
@@ -93,11 +89,19 @@ BEGIN
 	WCMGroup.MyKeys^ := NewKeys^ ;
 END SetKeys ;
 
-PROCEDURE SetProfile( WCMGroup : REF T ; GroupProfile : REF WCMTcamBlock.Profile ) =
+PROCEDURE SetProfile( WCMGroup : REF T ; GroupProfile : REF WCMGroupProfile ) =
 BEGIN
 	<* ASSERT WCMGroup # NIL *>
+	<* ASSERT WCMGroup.GroupProfile # NIL *>
 	<* ASSERT GroupProfile # NIL *>
+	<* ASSERT GroupProfile.StartCompare # NIL *>
+	<* ASSERT GroupProfile.MuxSelects # NIL *>
 	WCMGroup.GroupProfile^ := GroupProfile^ ;
+	FOR tcam_block_index := FIRST( WCMGroup.TcamBlock^ ) TO LAST( WCMGroup.TcamBlock^ ) DO
+		<* ASSERT WCMGroup.TcamBlock[ tcam_block_index ] # NIL *>
+		WCMGroup.TcamBlock[ tcam_block_index ].BlockProfile.MuxSelects := WCMGroup.GroupProfile.MuxSelects ;
+		WCMGroup.TcamBlock[ tcam_block_index ].BlockProfile.StartCompare := GroupProfile.StartCompare[ tcam_block_index ] ;
+	END ;
 END SetProfile ;
 
 (***********************)

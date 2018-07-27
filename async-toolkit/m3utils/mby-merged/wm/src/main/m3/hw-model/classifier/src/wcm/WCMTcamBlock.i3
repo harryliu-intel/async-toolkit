@@ -20,17 +20,22 @@ CONST NUM_ENTRIES = WCMConstants.NUM_ENTRIES ;
 (** Types **)
 (***********)
 
-(* Profile - provided by the mapper
-Configures the TCAM slice
-StartCompare - denotes whether slice is the beginning of a cascade
-SelectTop through Select3 - mux selects *)
-TYPE Profile = RECORD
-	StartCompare : BOOLEAN := FALSE ;
+(* KeyMuxSelect *)
+TYPE KeyMuxSelect = RECORD
 	SelectTop : BITS 6 FOR [16_00..16_3F] := 16_00 ;
 	Select0 : BITS 7 FOR [16_00..16_7F] := 16_00 ;
 	Select1 : BITS 7 FOR [16_00..16_7F] := 16_00 ;
 	Select2 : BITS 7 FOR [16_00..16_7F] := 16_00 ;
 	Select3 : BITS 7 FOR [16_00..16_7F] := 16_00 ;
+END ;
+
+(* Profile - provided by the mapper
+Configures the TCAM slice
+StartCompare - denotes whether slice is the beginning of a cascade
+SelectTop through Select3 - mux selects *)
+TYPE Profile = RECORD
+	StartCompare : REF BOOLEAN := NIL ;
+	MuxSelects : REF KeyMuxSelect := NIL ;
 END ;
 
 (* Keys - provided by the mapper

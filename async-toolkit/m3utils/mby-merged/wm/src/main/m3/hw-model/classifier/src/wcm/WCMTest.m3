@@ -26,7 +26,7 @@ VAR
 	winner : WCM.ActionRAMEntry ;
 	inhits : REF ARRAY OF BOOLEAN := NIL ;
 	mykeys : REF WCMTcamBlock.Keys := NIL ;
-	myprofile : REF WCMTcamBlock.Profile := NIL ;
+	myprofile : REF WCM.WCMGroupProfile := NIL ;
 BEGIN
 	IO.Put( "WCM Group Test\n" ) ;
 	IO.Put( "==============\n" ) ;
@@ -142,7 +142,8 @@ END FullTest ;
 PROCEDURE MakeTcamBlock( ) : REF WCMTcamBlock.T =
 VAR
 	mykeys := NEW( REF WCMTcamBlock.Keys ) ;
-	myprofile := NEW( REF WCMTcamBlock.Profile ) ;
+	block_profile := NEW( REF WCMTcamBlock.Profile ) ;
+	myprofile := NEW( REF WCM.WCMGroupProfile ) ;
 	inhits : REF ARRAY OF BOOLEAN := NIL ;
 	entries := NEW( REF ARRAY OF Tcam.Entry , WCMTcamBlock.NUM_ENTRIES ) ;
 	log2entriesperchunk := 6 ;
@@ -154,6 +155,9 @@ BEGIN
 	mykeys := MakeKeys( ) ;
 	(* Profile record *)
 	myprofile := MakeProfile( ) ;
+	block_profile.StartCompare := NEW( REF BOOLEAN ) ;
+	block_profile.StartCompare^ := TRUE ;
+	block_profile.MuxSelects := myprofile.MuxSelects ;
 	(* Inhits *)
 	inhits := MakeInHits( ) ;
 	(* Tcam entries *)
@@ -178,7 +182,7 @@ BEGIN
 		| Tcam.InvalidTCAMEntryConfiguration( errstr ) => IO.Put( errstr & "\n" ) ;
 	END ;
 	block^.BlockKeys := mykeys ;
-	block^.BlockProfile := myprofile ;
+	block^.BlockProfile := block_profile ;
 	block^.BlockInHits := inhits ;
 	RETURN block ;
 END MakeTcamBlock ;
@@ -228,16 +232,21 @@ BEGIN
 	RETURN mykeys ;
 END MakeKeys ;
 
-PROCEDURE MakeProfile( ) : REF WCMTcamBlock.Profile =
+PROCEDURE MakeProfile( ) : REF WCM.WCMGroupProfile =
 VAR
-	myprofile := NEW( REF WCMTcamBlock.Profile ) ;
+	myprofile := NEW( REF WCM.WCMGroupProfile ) ;
 BEGIN
-	myprofile.StartCompare := TRUE ;
-	myprofile.SelectTop := 16_00 ;
-	myprofile.Select0 := 16_01 ;
-	myprofile.Select1 := WCMTcamBlock.KEY16_LENGTH ;
-	myprofile.Select2 := WCMTcamBlock.KEY16_LENGTH + WCMTcamBlock.KEY8_LENGTH + 2 ;
-	myprofile.Select3 := 1 ;
+	myprofile.StartCompare := NEW( REF ARRAY OF REF BOOLEAN , WCM.NUM_SLICES ) ;
+	FOR startcompare_index := FIRST( myprofile.StartCompare^ ) TO LAST( myprofile.StartCompare^ ) DO
+		myprofile.StartCompare[ startcompare_index ] := NEW( REF BOOLEAN ) ;
+		myprofile.StartCompare[ startcompare_index ]^ := TRUE ;
+	END ;
+	myprofile.MuxSelects := NEW( REF WCMTcamBlock.KeyMuxSelect ) ;
+	myprofile.MuxSelects.SelectTop := 16_00 ;
+	myprofile.MuxSelects.Select0 := 16_01 ;
+	myprofile.MuxSelects.Select1 := WCMTcamBlock.KEY16_LENGTH ;
+	myprofile.MuxSelects.Select2 := WCMTcamBlock.KEY16_LENGTH + WCMTcamBlock.KEY8_LENGTH + 2 ;
+	myprofile.MuxSelects.Select3 := 1 ;
 	RETURN myprofile ;
 END MakeProfile ;
 

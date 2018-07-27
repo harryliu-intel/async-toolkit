@@ -38,6 +38,11 @@ TYPE ActionRAMCfg = RECORD
 	SliceIndex : ARRAY[0..NUM_ACTION_RAMS-1] OF [0..NUM_SLICES-1] ;
 END ;
 
+TYPE WCMGroupProfile = RECORD
+	StartCompare : REF ARRAY OF REF BOOLEAN := NIL ;
+	MuxSelects : REF WCMTcamBlock.KeyMuxSelect := NIL ;
+END ;
+
 (* WCMGroup
 - TcamBlock :: array of TCAM blocks in the WCM group
 - ActionRAM :: the action RAM banks
@@ -54,7 +59,7 @@ TYPE T = RECORD
 	ARAMCfg : ActionRAMCfg ;
 	MyKeys : REF WCMTcamBlock.Keys := NIL ;
 	InHits : REF ARRAY OF BOOLEAN := NIL ;
-	GroupProfile : REF WCMTcamBlock.Profile := NIL ;
+	GroupProfile : REF WCMGroupProfile := NIL ;
 END ;
 
 (****************)
@@ -101,7 +106,7 @@ PROCEDURE MakeWCMGroup( TcamBlock : REF ARRAY OF REF WCMTcamBlock.T ;
 			ARAMCfg : ActionRAMCfg ;
 			MyKeys : REF WCMTcamBlock.Keys ;
 			InHits : REF ARRAY OF BOOLEAN ;
-			GroupProfile : REF WCMTcamBlock.Profile ) : REF T ;
+			GroupProfile : REF WCMGroupProfile ) : REF T ;
 
 (* SetInHits
 - WCMGroup :: reference to the WCM group of interest
@@ -122,7 +127,7 @@ PROCEDURE SetKeys( WCMGroup : REF T ; NewKeys : REF WCMTcamBlock.Keys ) ;
 - GroupProfile :: the profile to the TCAM slices
 GroupProfile is assigned by value and not by reference.
 *)
-PROCEDURE SetProfile( WCMGroup : REF T ; GroupProfile : REF WCMTcamBlock.Profile ) ;
+PROCEDURE SetProfile( WCMGroup : REF T ; GroupProfile : REF WCMGroupProfile ) ;
 
 END WCM.
 

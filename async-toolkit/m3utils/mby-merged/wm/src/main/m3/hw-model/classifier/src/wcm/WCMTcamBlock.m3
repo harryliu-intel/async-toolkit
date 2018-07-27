@@ -22,7 +22,7 @@ BEGIN
 	<* ASSERT NUMBER( TcamBlock.BlockInHits^ ) = NUMBER( outhits^ ) *>
 	<* ASSERT FIRST( TcamBlock.BlockInHits^ ) = FIRST( outhits^ ) *>
 	FOR outhits_index := FIRST( outhits^ ) TO LAST( outhits^ ) DO
-		outhits[ outhits_index ] := outhits[ outhits_index ] AND ( TcamBlock.BlockProfile.StartCompare OR TcamBlock.BlockInHits[ outhits_index ] ) ;
+		outhits[ outhits_index ] := outhits[ outhits_index ] AND ( TcamBlock.BlockProfile.StartCompare^ OR TcamBlock.BlockInHits[ outhits_index ] ) ;
 	END ;
 	RETURN outhits ;
 END GetOutHits ;
@@ -122,11 +122,11 @@ BEGIN
 
 	(* Get outputs using mux selects *)
 	<* ASSERT TcamBlock.BlockProfile # NIL *>
-	mux_outs[ FIRST( mux_outs ) ] := mux_in[ FIRST( mux_in ) ][ TcamBlock.BlockProfile.Select0 ] ;
-	mux_outs[ FIRST( mux_outs ) + 1 ] := mux_in[ FIRST( mux_in ) + 1 ][ TcamBlock.BlockProfile.Select1 ] ;
-	mux_outs[ FIRST( mux_outs ) + 2 ] := mux_in[ FIRST( mux_in ) + 2 ][ TcamBlock.BlockProfile.Select2 ] ;
-	mux_outs[ FIRST( mux_outs ) + 3 ] := mux_in[ FIRST( mux_in ) + 3 ][ TcamBlock.BlockProfile.Select3 ] ;
-	mux_outs[ LAST( mux_outs ) ] := mux_in_most_sig[ TcamBlock.BlockProfile.SelectTop ] ;
+	mux_outs[ FIRST( mux_outs ) ] := mux_in[ FIRST( mux_in ) ][ TcamBlock.BlockProfile.MuxSelects.Select0 ] ;
+	mux_outs[ FIRST( mux_outs ) + 1 ] := mux_in[ FIRST( mux_in ) + 1 ][ TcamBlock.BlockProfile.MuxSelects.Select1 ] ;
+	mux_outs[ FIRST( mux_outs ) + 2 ] := mux_in[ FIRST( mux_in ) + 2 ][ TcamBlock.BlockProfile.MuxSelects.Select2 ] ;
+	mux_outs[ FIRST( mux_outs ) + 3 ] := mux_in[ FIRST( mux_in ) + 3 ][ TcamBlock.BlockProfile.MuxSelects.Select3 ] ;
+	mux_outs[ LAST( mux_outs ) ] := mux_in_most_sig[ TcamBlock.BlockProfile.MuxSelects.SelectTop ] ;
 	
 	(* Construct the Tcam search key *)
 	FOR byte_in_search_key_index := 0 TO num_muxes DO
