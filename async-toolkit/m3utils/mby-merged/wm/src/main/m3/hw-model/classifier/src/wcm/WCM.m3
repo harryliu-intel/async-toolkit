@@ -10,8 +10,6 @@ IMPORT WCMTcamBlock ;
 (** Visible Procedures **)
 (************************)
 
-(* Go through each action RAM bank *)
-(* The highest numbered action RAM bank with an action wins *)
 PROCEDURE GetWinningAction( WCMGroup : REF T ) : ActionRAMEntry RAISES { NoActionException } =
 VAR
 	exc_msg : TEXT := "No Action RAM bank has a valid action." ;
@@ -34,8 +32,9 @@ END GetWinningAction ;
 PROCEDURE GetWCMGroupOutHits( WCMGroup : REF T ) : REF ARRAY OF BOOLEAN =
 BEGIN
 	<* ASSERT WCMGroup # NIL *>
-	UpdateAllTCAMBlocks( WCMGroup ) ;
 	<* ASSERT WCMGroup.TcamBlock # NIL *>
+	(* TODO: Probably not necessary to actually compute the hits after
+	calling UpdateAllTCAMBlocks *)
 	RETURN WCMTcamBlock.GetOutHits( WCMGroup.TcamBlock[ LAST( WCMGroup.TcamBlock^ ) ] ) ;
 END GetWCMGroupOutHits ;
 
@@ -56,25 +55,24 @@ BEGIN
 	wcm_group.TcamBlock := TcamBlock ;
 	wcm_group.ActionRAM := ActionRAM ;
 	wcm_group.ARAMCfg := ARAMCfg ;
-	wcm_group.MyKeys := NIL ;
-	wcm_group.InHits := NIL ;
-	wcm_group.GroupProfile := NIL ;
-	(* Set inhits *)
-	wcm_group.InHits := InHits ;
-	(* Set keys *)
-	wcm_group.MyKeys := MyKeys ;
+	wcm_group.MyKeys := NEW( REF WCMTcamBlock.Keys ) ;
+	(* Ensure each TCAM block has the correct keys *)
 	FOR tcam_block_index := FIRST( wcm_group.TcamBlock^ ) TO LAST( wcm_group.TcamBlock^ ) DO
 		<* ASSERT wcm_group.TcamBlock[ tcam_block_index ] # NIL *>
-		wcm_group.TcamBlock[ tcam_block_index ].BlockKeys := wcm_group.MyKeys ;
+		wcm_group.TcamBlock[ tcam_block_index ].BlockKeys := MyKeys ;
 	END ;
-	(* Set profile *)
-	wcm_group.GroupProfile := GroupProfile ;
+	SetKeys( wcm_group , MyKeys ) ;
+	wcm_group.GroupProfile := NEW( REF WCMTcamBlock.Profile ) ;
+	(* Ensure each TCAM block has the proper profile *)
 	FOR tcam_block_index := FIRST( wcm_group.TcamBlock^ ) TO LAST( wcm_group.TcamBlock^ ) DO
 		<* ASSERT wcm_group.TcamBlock[ tcam_block_index ] # NIL *>
 		wcm_group.TcamBlock[ tcam_block_index ].BlockProfile := GroupProfile ;
 	END ;
-	(* Update all TCAM blocks *)
-	UpdateAllTCAMBlocks( wcm_group ) ;
+	SetProfile( wcm_group , GroupProfile ) ;
+	(* Set the proper inhits array to the 0th slice *)
+	wcm_group.InHits := NEW( REF ARRAY OF BOOLEAN , NUM_ENTRIES ) ;
+	<* ASSERT NUMBER( wcm_group.InHits^ ) = NUMBER( InHits^ ) OR InHits = NIL *>
+	SetInHits( wcm_group , InHits ) ;
 	RETURN wcm_group ;
 END MakeWCMGroup ;
 
@@ -82,7 +80,9 @@ PROCEDURE SetInHits( WCMGroup : REF T ; InHits : REF ARRAY OF BOOLEAN ) =
 BEGIN
 	<* ASSERT WCMGroup # NIL *>
 	<* ASSERT ( InHits = NIL AND NUMBER( WCMGroup.TcamBlock^ ) = 0 ) OR ( InHits # NIL AND NUMBER( WCMGroup.TcamBlock^ ) > 0 ) *>
-	WCMGroup.InHits := InHits ;
+	FOR inhits_index := FIRST( WCMGroup.TcamBlock^ ) TO LAST( WCMGroup.TcamBlock^ ) DO
+		WCMGroup.InHits[ inhits_index ] := InHits[ inhits_index ] ;
+	END ;
 	UpdateAllTCAMBlocks( WCMGroup ) ;
 END SetInHits ;
 
@@ -90,33 +90,21 @@ PROCEDURE SetKeys( WCMGroup : REF T ; NewKeys : REF WCMTcamBlock.Keys ) =
 BEGIN
 	<* ASSERT WCMGroup # NIL *>
 	<* ASSERT NewKeys # NIL *>
-	(* Ensure each TCAM block has the correct keys *)
-	WCMGroup.MyKeys := NewKeys ;
-	FOR tcam_block_index := FIRST( WCMGroup.TcamBlock^ ) TO LAST( WCMGroup.TcamBlock^ ) DO
-		<* ASSERT WCMGroup.TcamBlock[ tcam_block_index ] # NIL *>
-		WCMGroup.TcamBlock[ tcam_block_index ].BlockKeys := WCMGroup.MyKeys ;
-	END ;
-	UpdateAllTCAMBlocks( WCMGroup ) ;
+	WCMGroup.MyKeys^ := NewKeys^ ;
 END SetKeys ;
 
 PROCEDURE SetProfile( WCMGroup : REF T ; GroupProfile : REF WCMTcamBlock.Profile ) =
 BEGIN
 	<* ASSERT WCMGroup # NIL *>
 	<* ASSERT GroupProfile # NIL *>
-	WCMGroup.GroupProfile := GroupProfile ;
-	(* Ensure each TCAM block has the proper profile *)
-	FOR tcam_block_index := FIRST( WCMGroup.TcamBlock^ ) TO LAST( WCMGroup.TcamBlock^ ) DO
-		<* ASSERT WCMGroup.TcamBlock[ tcam_block_index ] # NIL *>
-		WCMGroup.TcamBlock[ tcam_block_index ].BlockProfile := GroupProfile ;
-	END ;
-	UpdateAllTCAMBlocks( WCMGroup ) ;
+	WCMGroup.GroupProfile^ := GroupProfile^ ;
 END SetProfile ;
 
 (***********************)
 (** Hidden Procedures **)
 (***********************)
 
-(* 
+(* GetAction
 Two conditions must be met for an Action to be returned...
    - ActionRAM must be enabled
    - The ActionRAM's corresponding slice must have a valid hit index
@@ -157,10 +145,14 @@ BEGIN
 	END ;
 END GetAction ;
 
-(* Call this before attempting to get hits from any 
-slice. This iterates through all the TCAM blocks and
+(* This iterates through all the TCAM blocks and
 performs a search. It then propagates all the outhits
-to the later TCAM slices accordingly. *)
+to the later TCAM slices accordingly.
+This needs to be called when the inhits array
+is changed since the outhits of each TCAM slice
+will not have updated. This does NOT need to be called
+when changing Profile, Keys, etc. since the TCAM slices already
+point to those structures. *)
 PROCEDURE UpdateAllTCAMBlocks( WCMGroup : REF T ) =
 VAR
 	prev_out_hits : REF ARRAY OF BOOLEAN := NIL ;
