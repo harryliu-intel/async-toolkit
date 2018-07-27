@@ -67,7 +67,9 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
         (* perform topo sort and produce output in that order *)
         WITH seq = gs.topo.sort(),
              wr  = FileWr.Open(path) DO
-          DefTypes(wr);
+          Wr.PutText(wr, F("#ifndef %s_INCLUDED\n#define %s_INCLUDED\n\n",
+                           intfNm, intfNm));
+         DefTypes(wr);
           FOR i := 0 TO seq.size()-1 DO
             Debug.Out(F("Emit wx[%s]",seq.get(i)));
             VAR
@@ -78,6 +80,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
               Wr.PutText(wr, Wx.ToText(wx))
             END
           END;
+          Wr.PutText(wr, F("#endif /* !%s_INCLUDED */\n", intfNm));
           Wr.Close(wr)
         END;
         gs.curWx := Wx.New()
@@ -96,19 +99,53 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
     WITH fn = intfNm & "_main.h",
          path = dirPath & "/" & fn,
          wr = FileWr.Open(path) DO
-      Wr.PutText(wr, F("\nvoid\n%s_main(const *%s, const *%s__addr);\n", intfNm, intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid build_main(void (*f)(void *)); /* called from Modula-3 */\n"));
+      Wr.PutText(wr, F("#ifndef %s_main_INCLUDED\n#define %s_main_INCLUDED\n\n",
+                       intfNm, intfNm));
+      Wr.PutText(wr, F("\nvoid\n%s_SendPacket(const r *%s, const w *%s__addr, int port, unsigned char *packet, unsigned int length);\n", intfNm, intfNm, intfNm));
+      Wr.PutText(wr, F("\nvoid %s_build(void (*f)(void *)); /* called from Modula-3 */\n", intfNm));
+      Wr.PutText(wr, F("#endif /* !%s_main_INCLUDED */\n", intfNm));
       Wr.Close(wr)
     END;
 
-    WITH fn = intfNm & ".i3",
+    WITH fn = intfNm & "_c.i3",
          path = dirPath & "/" & fn,
          wr = FileWr.Open(path) DO
-      Wr.PutText(wr, F("INTERFACE %s;\n\n", intfNm));
+      Wr.PutText(wr, F("INTERFACE %s_c;\n\n", intfNm));
+      Wr.PutText(wr, F("IMPORT Ctypes;\n"));
       Wr.PutText(wr, F("TYPE CallBackProc = PROCEDURE(addr : ADDRESS);\n\n"));
-      Wr.PutText(wr, F("<*EXTERNAL build_main*>\n"));
+      Wr.PutText(wr, F("<*EXTERNAL %s_build*>\n", intfNm));
       Wr.PutText(wr, F("PROCEDURE BuildMain(cb : CallBackProc);\n\n"));
-      Wr.PutText(wr, F("END %s.\n", intfNm));
+      Wr.PutText(wr, F("<*EXTERNAL %s_SendPacket*>\n", intfNm));
+      Wr.PutText(wr, F("PROCEDURE SendPacket(r, w : Ctypes.void_star; port : Ctypes.int; packet : Ctypes.char_star; length : Ctypes.unsigned_int);\n\n"));
+      Wr.PutText(wr, F("END %s_c.\n", intfNm));
+      Wr.Close(wr)
+    END;
+
+    WITH fn = intfNm & "_build.c",
+         path = dirPath & "/" & fn,
+         wr = FileWr.Open(path) DO
+      Wr.PutText(wr, F("#include \"%s.h\"\n", intfNm));
+      Wr.PutText(wr, F("#include <stdlib.h>\n\n"));     
+      Wr.PutText(wr, F("void\n"));
+      Wr.PutText(wr, F("%s_build(void (*f)(void *))\n", intfNm));
+      Wr.PutText(wr, F("{\n"));
+      Wr.PutText(wr, F("  %s       *r;\n", intfNm));
+      Wr.PutText(wr, F("  %s__addr *w;\n\n", intfNm));
+      Wr.PutText(wr, F("  r = (%s       *)malloc(sizeof(%s      ));\n", intfNm, intfNm));
+      Wr.PutText(wr, F("  w = (%s__addr *)malloc(sizeof(%s__addr));\n\n", intfNm, intfNm));
+      Wr.PutText(wr, F("  %s__init(r, w, f);\n", intfNm));
+      Wr.PutText(wr, F("}\n"));
+      Wr.Close(wr)
+    END;
+    
+    WITH fn = "m3makefile",
+         path = dirPath & "/" & fn,
+         wr = FileWr.Open(path) DO
+      Wr.PutText(wr, F("import(\"libm3\")\n"));
+      Wr.PutText(wr, F("c_source(\"%s\")\n",intfNm));
+      Wr.PutText(wr, F("c_source(\"%s_build\")\n",intfNm));
+      Wr.PutText(wr, F("Interface(\"%s_c\")\n", intfNm));
+      Wr.PutText(wr, F("library(\"%s_cmodel\")\n",intfNm));
       Wr.Close(wr)
     END;
     
@@ -239,7 +276,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
             END;
           END
         END;
-        gs.main("} %s%s;\n", myTn, v.sfx);
+        gs.main("} %s%s;\n\n", myTn, v.sfx);
       END
     END;
     GenProto(rf, gs);

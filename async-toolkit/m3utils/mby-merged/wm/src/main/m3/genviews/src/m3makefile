@@ -19,12 +19,10 @@ generic_interface("RegNaming")
 module    ("RegCompiler")
 module    ("RegGenState")
 
-
 interface ("RegChild")
 interface ("RegComponent")
 
 sequence ("RegChild", "RegChild")
-
 
 module ("RegProperty")
 
@@ -33,8 +31,8 @@ array_sort("RegField", "RegField")
 interface ("GenViews")
 generic_module("GenViews")
 module ("GenViewsM3")
-module ("GenViewsScala")  %% fill this in
-module ("GenViewsC")  %% fill this in
+module ("GenViewsScala")
+module ("GenViewsC")
 
 module ("DecoratedComponentDef")
 
@@ -47,8 +45,7 @@ module   ("RegModula3")
 module   ("RegModula3Naming")
 interface("RegModula3Generators")
 interface("RegModula3GenState")
-
-module("RegModula3IntfNaming")
+module   ("RegModula3IntfNaming")
 
 %%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%%
 

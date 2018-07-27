@@ -4,7 +4,6 @@ IMPORT mby_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT MbyModelServer;
-IMPORT ModelServer;
 
 PROCEDURE HandlePacket(server : MbyModelServer.T;
                        READONLY read : Map.T;

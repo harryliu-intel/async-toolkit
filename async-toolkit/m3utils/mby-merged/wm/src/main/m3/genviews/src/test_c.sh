@@ -16,6 +16,11 @@ CM3_EXEC=`ToolConfig.pl get_tool_exec cm3`
 PATHSPEC="--path ${WD}:${NEBULON}/include"
 
 rm -f build_c/src/*
+REGSET=mby
+GENDIR=build_c/${REGSET}_c/src
+
+mkdir -p $GENDIR
+
 mkdir -p work
 for file in ${files}; do
 	echo ${file}
@@ -23,11 +28,7 @@ for file in ${files}; do
 	${SVPP} ${PATHSPEC} < ${file} > work/intermediate01.rdl
 	${PERLFE} < work/intermediate01.rdl > work/intermediate02.rdl
 	cat work/intermediate02.rdl | (cd ${WD} ; perl) > work/intermediate03.rdl
-	mkdir -p build_c/mby/src
-	../AMD64_LINUX/genviews -L c -top ${top_map} -o build_c/mby/src < work/intermediate03.rdl
+	mkdir -p build_c/mby_c/src
+	../AMD64_LINUX/genviews -L c -top ${top_map} -o build_c/mby_c/src < work/intermediate03.rdl
 done
 
-REGSET=mby
-GENDIR=build_c/${REGSET}/src
-
-mkdir -p $GENDIR

@@ -4,6 +4,7 @@ import ("wm_support")
 import ("wm_net")
 import ("hlp")
 import ("mby")
+import ("mby_c")
 import ("mscheme")
 import ("modula3scheme")
 import ("netobj")
@@ -34,7 +35,9 @@ table ("IntDataPusher", "Integer", "DataPusher")
 table ("CardByte", "Cardinal", "Byte")
 
 module ("HlpModel")
-module ("MbyModel")
+%module ("MbyModel") % pure Modula-3 version of MbyModel
+interface ("MbyModel")
+implementation ("MbyModelC") % C version of MbyModel
 
 Generic_module("BaseModelServer")
 module("MbyModelServer")
