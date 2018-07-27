@@ -8,7 +8,7 @@ INTERFACE Tcam ;
 (*********)
 
 (* Type of TCAM entries and search strings - 40 bits *)
-TYPE KeyString = [0..16_ffffffffff] ;
+TYPE KeyString = [16_0000000000..16_ffffffffff] ;
 
 (* One 40-bit TCAM entry *)
 TYPE Entry = RECORD
@@ -29,8 +29,9 @@ END ;
 (* Exceptions *)
 (**************)
 
-EXCEPTION InvalidTCAMEntryConfiguration ;
-EXCEPTION InvalidTCAMChunkConfiguration ;
+EXCEPTION InvalidTCAMEntryConfiguration( TEXT ) ;
+
+EXCEPTION InvalidTCAMChunkConfiguration( TEXT ) ;
 
 (**************)
 (* Procedures *)
