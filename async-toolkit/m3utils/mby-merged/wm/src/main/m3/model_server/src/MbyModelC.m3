@@ -67,7 +67,7 @@ TYPE
   END;
 
 PROCEDURE BuildT(<*UNUSED*>f : MyUpdaterFactory) : Updater.T =
-  BEGIN RETURN NEW(MyUpdater) END BuildT;
+  BEGIN RETURN NEW(MyUpdater, doSync := TRUE, sync := MUSync) END BuildT;
 
 PROCEDURE GetUpdaterFactory() : UpdaterFactory.T =
   BEGIN
@@ -81,6 +81,13 @@ PROCEDURE MUInit(up : MyUpdater; base : REFANY; fieldAddr : ADDRESS; width : CAR
     upSeq.addhi(up);
     RETURN up
   END MUInit;
+
+PROCEDURE MUSync(up : MyUpdater) =
+  BEGIN
+    (* this routine is called to copy the Modula-3 value to C *)
+    (* in particular it is called by CsrAccess, because doSync is TRUE *)
+    MUUpdate(up, up.value())
+  END MUSync;
   
 PROCEDURE MUUpdate(up : MyUpdater; to : Word.T) =
   VAR
