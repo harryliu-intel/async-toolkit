@@ -23,9 +23,7 @@ CONST NUM_SLICES = 10 ;
 TYPE Action = [16_00000000..16_ffffffff] ;
 
 (* Action RAM Entry *)
-TYPE ActionRAMEntry = RECORD
-	Actions : ARRAY[0..NUM_ACTIONS-1] OF Action ;
-END ;
+TYPE ActionRAMEntry = ARRAY[0..NUM_ACTIONS-1] OF Action ;
 
 (* Action RAM Cfg Register *)
 TYPE ActionRAMCfg = RECORD
@@ -35,9 +33,12 @@ END ;
 
 (* WCMGroup *)
 TYPE T = RECORD
-	TcamBlock : ARRAY[0..NUM_SLICES-1] OF REF WCMTcamBlock.T ;
-	ActionRAM : ARRAY[0..NUM_ACTION_RAMS-1] OF REF ARRAY OF ActionRAMEntry ;
+	TcamBlock : REF ARRAY OF REF WCMTcamBlock.T ;
+	ActionRAM : REF ARRAY OF REF ARRAY OF ActionRAMEntry ;
 	ARAMCfg : ActionRAMCfg ;
+	MyKeys : REF WCMTcamBlock.Keys := NIL ;
+	InHits : REF ARRAY OF BOOLEAN := NIL ;
+	GroupProfile : REF WCMTcamBlock.Profile := NIL ;
 END ;
 
 (****************)
@@ -51,5 +52,20 @@ EXCEPTION NoActionException( TEXT ) ;
 (****************)
 
 PROCEDURE GetWinningAction( WCMGroup : REF T ) : ActionRAMEntry RAISES { NoActionException } ;
+
+PROCEDURE GetWCMGroupOutHits( WCMGroup : REF T ) : REF ARRAY OF BOOLEAN ;
+
+PROCEDURE MakeWCMGroup( TcamBlock : REF ARRAY OF REF WCMTcamBlock.T ;
+			ActionRAM : REF ARRAY OF REF ARRAY OF ActionRAMEntry ;
+			ARAMCfg : ActionRAMCfg ;
+			MyKeys : REF WCMTcamBlock.Keys ;
+			InHits : REF ARRAY OF BOOLEAN ;
+			GroupProfile : REF WCMTcamBlock.Profile ) : REF T ;
+
+PROCEDURE SetInHits( WCMGroup : REF T ; InHits : REF ARRAY OF BOOLEAN ) ;
+
+PROCEDURE SetKeys( WCMGroup : REF T ; NewKeys : REF WCMTcamBlock.Keys ) ;
+
+PROCEDURE SetProfile( WCMGroup : REF T ; GroupProfile : REF WCMTcamBlock.Profile ) ;
 
 END WCM.

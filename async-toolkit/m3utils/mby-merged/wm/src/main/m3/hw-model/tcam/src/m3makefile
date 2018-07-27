@@ -1,7 +1,0 @@
-import( "libm3" )
-module( "Tcam" )
-library( "Tcam" )
-
-% Executable Test
-% implementation( "Main" )
-% program( "tcamtest" )
