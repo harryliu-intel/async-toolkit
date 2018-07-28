@@ -7,4 +7,6 @@ c_source ("mby_parser")
 h_source ("mby_mapper")
 c_source ("mby_mapper")
 
+c_source ("mby_model_basic")
+
 library ("mby_c_model")
