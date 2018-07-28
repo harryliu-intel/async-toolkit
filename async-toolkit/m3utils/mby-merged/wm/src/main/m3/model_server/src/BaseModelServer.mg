@@ -22,9 +22,9 @@ REVEAL
 
 PROCEDURE ResetChip(t : T) =
   BEGIN
-    MapAddr.Reset(t.h.read, t.h.update);
     (* not sure this is right! *)
     t.setupChip(t.h.read, t.h.update);
+    MapAddr.Reset(t.h.read, t.h.update);
   END ResetChip;
 
 PROCEDURE Init(t : T;

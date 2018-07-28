@@ -103,6 +103,7 @@ TYPE
     w     : [1..64];
   OVERRIDES
     init := MUInit;
+    update := MUUpdate;
   END;
 
   MyUpdaterFactory = UpdaterFactory.T OBJECT
