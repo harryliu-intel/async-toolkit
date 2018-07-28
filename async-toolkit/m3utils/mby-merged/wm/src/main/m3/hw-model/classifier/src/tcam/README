@@ -6,8 +6,10 @@ This is a general TCAM model for use in MBY. For implementation details, please 
 - The domain mapper contains a 4096 entry TCAM called MAP_DOMAIN_TCAM.
 - The packet profile TCAM contains 96 entries.
 
+The TCAM is compiled as a library and linked to form any WM executable. This way, 
+
 TODOs:
-- More descriptive exception messages
+- More descriptive exception messages for Thread.Alerted and Wr.Failure errors
 - Variable bit length of TCAM entries. Right now it is set to 40-bits, which is the length of the WCM groups' TCAM slices.
 - A way to protect the user from changing values in the Tcam.TcamSlice record, almost like private variables
 - Possible some READNLYs in function args to give the user a sense of safety whenever possible
