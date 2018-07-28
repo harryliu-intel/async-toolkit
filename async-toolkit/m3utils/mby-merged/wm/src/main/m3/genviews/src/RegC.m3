@@ -16,6 +16,7 @@ IMPORT TextRefTbl;
 IMPORT TextTopoSort;
 IMPORT FileWr;
 IMPORT RegContainer;
+IMPORT TextSeq;
 
 <*FATAL BigInt.OutOfRange*>
 
@@ -213,6 +214,23 @@ PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
 
   (**********************************************************************)
 
+PROCEDURE FmtArrSz(xDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =
+  BEGIN
+    IF a = NIL THEN
+      RETURN
+    ELSE
+      xDecls.addhi(F("static const int %s__n = %s", nm, BigInt.Format(a.n.x)))
+    END
+  END FmtArrSz;
+
+PROCEDURE PutXDecls(gs : GenState; xDecls : TextSeq.T) =
+  BEGIN
+    FOR i := 0 TO xDecls.size()-1 DO
+      gs.main(xDecls.get(i)); gs.main(";\n")
+    END;
+    gs.main("\n")
+  END PutXDecls;
+
 TYPE
   Variant = RECORD ptr, sfx : TEXT END;
 
@@ -255,6 +273,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
   VAR
     gs : GenState := genState;
     myTn := rf.typeName(gs);
+    xDecls := NEW(TextSeq.T).init();
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -263,16 +282,16 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
         gs.main("typedef struct {\n");
         FOR i := 0 TO rf.children.size()-1 DO
           WITH c  = rf.children.get(i),
-               tn = ComponentTypeName(c.comp,gs) DO
+               tn = ComponentTypeName(c.comp,gs),
+               nm = IdiomName(c.nm, FALSE) DO
             IF c.array = NIL THEN
-              gs.main("  %s%s %s;\n", tn, v.sfx,
-                      IdiomName(c.nm,FALSE));
+              gs.main("  %s%s %s;\n", tn, v.sfx, nm)
             ELSE
-              gs.main("  %s%s %s[%s];\n", tn, v.sfx,
-                      IdiomName(c.nm,FALSE), Int(ArrSz(c.array)))
+              gs.main("  %s%s %s[%s];\n", tn, v.sfx, nm, Int(ArrSz(c.array)));
+              IF p = 0 THEN FmtArrSz(xDecls, c.array, myTn & "_" & nm) END;
             END;
             gs.noteDep(tn);
-            IF rf.children.size() = 1 THEN
+            IF rf.children.size() = 1 THEN (* ? *)
             END;
           END
         END;
@@ -281,6 +300,8 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
     END;
     GenProto(rf, gs);
     gs.main(";\n\n");
+
+    PutXDecls(gs, xDecls);
     
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c = rf.children.get(i) DO
