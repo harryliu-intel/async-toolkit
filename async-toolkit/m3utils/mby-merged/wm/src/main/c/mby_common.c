@@ -4,6 +4,11 @@
 
 #include "mby_common.h"
 
+const fm_status  FM_OK   = 0;
+const fm_status  FM_FAIL = 1;
+const fm_bool    TRUE    = 1;
+const fm_bool    FALSE   = 0;
+
 fm_status mbyModelReadCSR(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
                           const fm_uint32 byte_addr,
                           fm_uint32 *value)

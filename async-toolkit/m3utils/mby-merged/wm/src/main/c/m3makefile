@@ -1,0 +1,10 @@
+h_source ("mby_common")
+c_source ("mby_common")
+
+h_source ("mby_parser")
+c_source ("mby_parser")
+
+h_source ("mby_mapper")
+c_source ("mby_mapper")
+
+library ("mby_c_model")
