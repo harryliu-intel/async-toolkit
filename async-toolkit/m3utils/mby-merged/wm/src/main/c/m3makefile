@@ -1,3 +1,5 @@
+SYSTEM_CC = SYSTEM_CC & " -std=gnu99"
+
 h_source ("mby_common")
 c_source ("mby_common")
 

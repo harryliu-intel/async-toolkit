@@ -142,6 +142,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
     WITH fn = "m3makefile",
          path = dirPath & "/" & fn,
          wr = FileWr.Open(path) DO
+      Wr.PutText(wr, F("SYSTEM_CC = SYSTEM_CC & \" -std=gnu99\"\n"));
       Wr.PutText(wr, F("import(\"libm3\")\n"));
       Wr.PutText(wr, F("c_source(\"%s\")\n",intfNm));
       Wr.PutText(wr, F("c_source(\"%s_build\")\n",intfNm));
