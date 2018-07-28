@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map_main.h"
 #include "../m3/model_server/src/model_c_write.h" // pull in write_field
@@ -8,6 +9,9 @@ void
 mby_top_map_Setup     (const mby_top_map       *r,
                        const mby_top_map__addr *w)
 {
+  printf("Hello from the mby_top_map_Setup!\n");
+
+  write_field(w->mpt[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR, 12);
 
 }
 

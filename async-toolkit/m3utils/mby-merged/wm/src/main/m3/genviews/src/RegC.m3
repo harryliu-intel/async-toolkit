@@ -131,12 +131,14 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
       Wr.PutText(wr, F("#include \"%s.h\"\n", intfNm));
       Wr.PutText(wr, F("#include <stdlib.h>\n\n"));     
       Wr.PutText(wr, F("void\n"));
-      Wr.PutText(wr, F("%s_build(void (*f)(void *))\n", intfNm));
+      Wr.PutText(wr, F("%s_build(void (*f)(void *), void **rp, void **wp)\n", intfNm));
       Wr.PutText(wr, F("{\n"));
       Wr.PutText(wr, F("  %s       *r;\n", intfNm));
       Wr.PutText(wr, F("  %s__addr *w;\n\n", intfNm));
       Wr.PutText(wr, F("  r = (%s       *)malloc(sizeof(%s      ));\n", intfNm, intfNm));
       Wr.PutText(wr, F("  w = (%s__addr *)malloc(sizeof(%s__addr));\n\n", intfNm, intfNm));
+      Wr.PutText(wr, F("  *rp = r;\n"));
+      Wr.PutText(wr, F("  *wp = w;\n"));
       Wr.PutText(wr, F("  %s__init(r, w, f);\n", intfNm));
       Wr.PutText(wr, F("}\n"));
       Wr.Close(wr)
