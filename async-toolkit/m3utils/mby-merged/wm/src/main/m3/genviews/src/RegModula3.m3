@@ -313,7 +313,7 @@ PROCEDURE FmtArr(a : RdlArray.Single) : TEXT =
       RETURN ""
     ELSE
       RETURN F("ARRAY [0..%s-1] OF ",BigInt.Format(a.n.x))
-     END
+    END
   END FmtArr;
 
 PROCEDURE FmtArrIdx(typeDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =

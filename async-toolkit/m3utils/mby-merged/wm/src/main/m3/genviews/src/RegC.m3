@@ -102,7 +102,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
          wr = FileWr.Open(path) DO
       Wr.PutText(wr, F("#ifndef %s_main_INCLUDED\n#define %s_main_INCLUDED\n\n",
                        intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid\n%s_SendPacket(const r *%s, const w *%s__addr, int port, unsigned char *packet, unsigned int length);\n", intfNm, intfNm, intfNm));
+      Wr.PutText(wr, F("\nvoid\n%s_SendPacket(const  %s *r, const %s__addr *w, int port, unsigned char *packet, unsigned int length);\n", intfNm, intfNm, intfNm));
       Wr.PutText(wr, F("\nvoid %s_build(void (*f)(void *)); /* called from Modula-3 */\n", intfNm));
       Wr.PutText(wr, F("#endif /* !%s_main_INCLUDED */\n", intfNm));
       Wr.Close(wr)

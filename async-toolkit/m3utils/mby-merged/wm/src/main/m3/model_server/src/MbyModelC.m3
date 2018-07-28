@@ -23,6 +23,10 @@ IMPORT UpdaterFactory;
 IMPORT ModelCWrite;
 IMPORT SortedIntUpdaterTbl AS AddrUpdaterTbl;
 
+(* much of the code in here is really quite generic and should not
+   be prefixed Mby...  we should considering moving it out into a
+   more generically named module at some point *)
+
 PROCEDURE HandlePacket(server           : MbyModelServer.T;
                        READONLY readA   : Map.T;
                        READONLY updateA : MapAddr.Update;
@@ -40,6 +44,36 @@ PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
     Debug.Out(F("Mapped %s fields in C struct",Int(addrSeq.size())));
   END SetupMby;
 
+
+(* In the following we are setting up linkage to the C struct --
+   we provide bidirectional linkage, so that:
+
+   -- writes from m3 to the m3 record are mirrored in the C struct
+
+   -- writes from C go through our m3 Updater, so that they go
+      the normal path for us (and are mirrored to C by the mechanism
+      above)
+
+   -- writes from sideband go to both the m3 and C records, by 
+      forcing a sync() after every write (doSync = TRUE)
+
+   The writes from the C-side are most of what's going on here.
+
+   On initialization, the C struct is walked in the same order that
+   the m3 struct is walked, building a correspondence from every
+   UnsafeUpdater to the byte address of each field of the C struct.
+
+   On writes, the C-side calls a special write routine write_field
+   that passes the pointer that is to be written to the m3 side.
+   The m3 side looks up the pointer in a hash table and calls the
+   corresponding Updater's update method, which sets the correct
+   sequence in action to update all three state representations.
+
+   (Recall that the M3 side already has both a flat view and a 
+   record view---we are adding a third view in the C struct
+   view.)
+*)
+  
 VAR
   addrSeq := NEW(AddrSeq.T).init();
   upSeq   := NEW(UpdaterSeq.T).init();
@@ -61,7 +95,7 @@ PROCEDURE BuildCallback(addr : ADDRESS) =
 
 TYPE
   MyUpdater = UnsafeUpdater.T OBJECT
-    caddr : ADDRESS;
+    caddr : ADDRESS;  (* address of the field in the C struct *)
     w     : [1..64];
   OVERRIDES
     init := MUInit;
@@ -80,8 +114,14 @@ PROCEDURE GetUpdaterFactory() : UpdaterFactory.T =
     RETURN NEW(MyUpdaterFactory);
   END GetUpdaterFactory;
 
-PROCEDURE MUInit(up : MyUpdater; base : REFANY; fieldAddr : ADDRESS; width : CARDINAL; nm : CompPath.T) : UnsafeUpdater.T =
+PROCEDURE MUInit(up : MyUpdater;
+                 base : REFANY;
+                 fieldAddr : ADDRESS;
+                 width : CARDINAL;
+                 nm : CompPath.T) : UnsafeUpdater.T =
   BEGIN
+    (* build a regular UnsafeUpdater but add extra linkage for the
+       C struct *)
     EVAL UnsafeUpdater.T.init(up, base, fieldAddr, width, nm);
     up.w := width;
     upSeq.addhi(up);
