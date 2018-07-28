@@ -5,6 +5,13 @@
 // we implement the interface required of us by the model_server
 
 void
+mby_top_map_Setup     (const mby_top_map       *r,
+                       const mby_top_map__addr *w)
+{
+
+}
+
+void
 mby_top_map_SendPacket(const mby_top_map       *r,
                        const mby_top_map__addr *w,
                        int                      port,

@@ -20,7 +20,7 @@ IMPORT TextSeq;
 
 <*FATAL BigInt.OutOfRange*>
 
-VAR doDebug := Debug.DebugThis("C");
+VAR doDebug := Debug.DebugThis("REGC");
 
 REVEAL
   T = GenViewsC.Compiler BRANDED Brand OBJECT
@@ -28,7 +28,7 @@ REVEAL
     write := Write;
   END;
 
-PROCEDURE DefTypes(wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
+PROCEDURE DefTypes(wr : Wr.T) RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
     FOR i := 1 TO 64 DO
       CASE i OF
@@ -102,7 +102,8 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
          wr = FileWr.Open(path) DO
       Wr.PutText(wr, F("#ifndef %s_main_INCLUDED\n#define %s_main_INCLUDED\n\n",
                        intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid\n%s_SendPacket(const  %s *r, const %s__addr *w, int port, unsigned char *packet, unsigned int length);\n", intfNm, intfNm, intfNm));
+      Wr.PutText(wr, F("\nvoid\n%s_Setup(const %s *r, const %s__addr *w);\n", intfNm, intfNm, intfNm));
+      Wr.PutText(wr, F("\nvoid\n%s_SendPacket(const %s *r, const %s__addr *w, int port, unsigned char *packet, unsigned int length);\n", intfNm, intfNm, intfNm));
       Wr.PutText(wr, F("\nvoid %s_build(void (*f)(void *)); /* called from Modula-3 */\n", intfNm));
       Wr.PutText(wr, F("#endif /* !%s_main_INCLUDED */\n", intfNm));
       Wr.Close(wr)
@@ -115,7 +116,9 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
       Wr.PutText(wr, F("IMPORT Ctypes;\n"));
       Wr.PutText(wr, F("TYPE CallBackProc = PROCEDURE(addr : ADDRESS);\n\n"));
       Wr.PutText(wr, F("<*EXTERNAL %s_build*>\n", intfNm));
-      Wr.PutText(wr, F("PROCEDURE BuildMain(cb : CallBackProc);\n\n"));
+      Wr.PutText(wr, F("PROCEDURE BuildMain(cb : CallBackProc; rp : ADDRESS; wp : ADDRESS);\n\n"));
+      Wr.PutText(wr, F("<*EXTERNAL %s_Setup*>\n", intfNm));
+      Wr.PutText(wr, F("PROCEDURE Setup(r, w : Ctypes.void_star);\n\n"));
       Wr.PutText(wr, F("<*EXTERNAL %s_SendPacket*>\n", intfNm));
       Wr.PutText(wr, F("PROCEDURE SendPacket(r, w : Ctypes.void_star; port : Ctypes.int; packet : Ctypes.char_star; length : Ctypes.unsigned_int);\n\n"));
       Wr.PutText(wr, F("END %s_c.\n", intfNm));
@@ -199,7 +202,7 @@ PROCEDURE NewSymbol(gs : GenState; nm : TEXT) : BOOLEAN
     RETURN res
   END NewSymbol;
   
-PROCEDURE PutGS(gs : GenState; sec : Section; txt : TEXT) =
+PROCEDURE PutGS(gs : GenState; <*UNUSED*>sec : Section; txt : TEXT) =
   BEGIN
     Wx.PutText(gs.curWx, txt)
   END PutGS;
@@ -314,7 +317,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
   (**********************************************************************)
 
 PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
-  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  RAISES { } =
   VAR
     gs : GenState := genState;
     myTn := r.typeName(gs);

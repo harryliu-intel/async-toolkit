@@ -35,15 +35,19 @@ PROCEDURE HandlePacket(server           : MbyModelServer.T;
   BEGIN
   END HandlePacket;
 
+VAR
+  rp, wp : UNTRACED REF ADDRESS := NEW(UNTRACED REF ADDRESS);
+  
 PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
                    <*UNUSED*>READONLY read : Map.T;
                    READONLY update : MapAddr.Update) =
   BEGIN
     Debug.Out("SetupMby");
-    mby_top_map_c.BuildMain(BuildCallback);
+    mby_top_map_c.BuildMain(BuildCallback, rp, wp);
     Debug.Out(F("Mapped %s fields in C struct",Int(addrSeq.size())));
+    (* now call the C setup, if any *)
+    mby_top_map_c.Setup(rp^, wp^)
   END SetupMby;
-
 
 (* In the following we are setting up linkage to the C struct --
    we provide bidirectional linkage, so that:
@@ -75,8 +79,8 @@ PROCEDURE SetupMby(<*UNUSED*>server : MbyModelServer.T;
 *)
   
 VAR
-  addrSeq := NEW(AddrSeq.T).init();
-  upSeq   := NEW(UpdaterSeq.T).init();
+  addrSeq        := NEW(AddrSeq.T).init();
+  upSeq          := NEW(UpdaterSeq.T).init();
   addrUpdaterTbl := NEW(AddrUpdaterTbl.Default).init();
   
 PROCEDURE BuildCallback(addr : ADDRESS) =

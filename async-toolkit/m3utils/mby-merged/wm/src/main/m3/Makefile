@@ -21,6 +21,10 @@ PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
 
 NEBULON=$(shell ToolConfig.pl get_tool_path nebulon)
 
+MBY_C_ROOT=../c
+MBY_C_TARGDIR=$(MBY_C_ROOT)/$(OS_TARG)
+MBY_C_LIB=$(MBY_C_TARGDIR)/libmby_c_model.a
+
 WM_SUPPORT_ROOT=wm_support
 WM_SUPPORT_TARGDIR=$(WM_SUPPORT_ROOT)/$(OS_TARG)
 WM_SUPPORT=$(WM_SUPPORT_ROOT)/$(OS_TARG)/.done
@@ -140,6 +144,9 @@ $(C_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 
 cgen: $(C_GEN)
 
+$(MBY_C_LIB): $(C_GEN)
+	cd ../c && $(CM3) -x
+
 $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	mkdir -p work
 	${SVPP} --path $(NEBULON)/include:$(dir $<) < $< > work/i1.rdl
@@ -154,7 +161,8 @@ $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 $(WM_NET_LIB): $(STRUCTGEN) $(GENVIEWS) $(HLPLIB)
 	cd wm_net && $(CM3) -x
 
-$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB)
+
+$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 	cd model_server && $(CM3) -x 
 
 model_server: $(MODEL_SERVER)
@@ -170,4 +178,5 @@ clean:
 	rm -rf $(GENVIEWS_ROOT)/src/work
 	rm -rf $(WM_NET_ROOT)/scala_generated
 	find . -name $(OS_TARG) | xargs rm -rf 
+	find ../c -name $(OS_TARG) | xargs rm -rf 
 	rm -f $(TOP)
