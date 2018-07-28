@@ -970,7 +970,7 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
     gs.put(Section.IMaintype, "    update : U;\n");
     gs.put(Section.IMaintype, "    a      : A;\n");
     gs.put(Section.IMaintype, "  METHODS\n");
-    gs.put(Section.IMaintype, "    init(base : CompAddr.T; factory : UpdaterFactory.T) : H;\n");
+    gs.put(Section.IMaintype, "    init(base : CompAddr.T; factory : UpdaterFactory.T := NIL) : H;\n");
     gs.put(Section.IMaintype, "  END;\n");
     gs.put(Section.IMaintype, "\n");
     gs.put(Section.IMaintype, "  CONST DoUnsafeWrite = TRUE;\n");
@@ -1022,12 +1022,14 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
           "\n" 
     );
     gs.mdecl(
-                       "  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+           "  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    EVAL gs.m3imports.insert("UnsafeUpdaterFactory");
     gs.mdecl(
            "PROCEDURE InitH(h : H; base : CompAddr.T; factory : UpdaterFactory.T) : H =\n" &
            "  VAR\n" &
            "    range : CompRange.T;\n"&
            "  BEGIN\n" &
+           "    IF factory = NIL THEN factory := NEW(UnsafeUpdaterFactory.T) END;\n" &
          F("    range := Init(h.a, base, CompPath.One(\"ROOT\"));\n") &
            "    EVAL CompMemory.T.init(h, range);\n" &
            "    InitX(h.read, h.a, h.x, h, factory);\n" &

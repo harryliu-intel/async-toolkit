@@ -33,6 +33,7 @@ GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
 SCALA_GEN=foo
+C_GEN=bar
 
 STRUCTGEN_ROOT=structgen
 STRUCTGEN_TARGDIR=$(STRUCTGEN_ROOT)/$(OS_TARG)
@@ -51,6 +52,7 @@ SCALA_IMPLICITS=$(WM_NET_ROOT)/scala_generated/Implicits.scala
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
+MBY_BUILD_C_ROOT=$(GENVIEWS_ROOT)/src/build_c/mby_c
 MBYLIB=$(MBY_BUILD_ROOT)/$(OS_TARG)/libmby.a
 
 MODEL_SERVER_ROOT=model_server
@@ -76,7 +78,7 @@ $(TOP): $(TOP_TEMPLATE)
 	sed "s#MODEL_ROOT#$(MODEL_ROOT)#" $< > $@
 	sed -i "s#META_HOME#$(METAROOT)#" $@
 
-mby_mains: $(GENVIEWS) $(MBYLIB)
+mby_mains: $(GENVIEWS) $(MBYLIB) $(C_GEN)
 	$(MAKE) CM3=$(CM3) -C $(GENVIEWS_ROOT)/src/mby_mains
 
 hlp_mains: $(HLPLIB)
@@ -131,6 +133,12 @@ $(SCALA_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 
 scalagen: $(SCALA_GEN)
 
+$(C_GEN): $(MBY_POSTPROC) $(GENVIEWS)
+	mkdir -p $(MBY_BUILD_C_ROOT)/src
+	$(GENVIEWS_TARGDIR)/genviews -L c -top mby_top_map -o $(MBY_BUILD_C_ROOT)/src < $<
+	cd $(MBY_BUILD_C_ROOT)/src && $(CM3) -x
+
+cgen: $(C_GEN)
 
 $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	mkdir -p work

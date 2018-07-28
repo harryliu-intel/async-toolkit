@@ -86,7 +86,7 @@ interface ("MbyMappedKey")
 module ("HlpRepStageModel")
 module ("HlpRepStage")
 
-module ("UnsafeUpdaterFactory")
+%module ("UnsafeUpdaterFactory")
 sequence("Updater", "Updater")
 c_source("model_c_write")
 interface("ModelCWrite")
