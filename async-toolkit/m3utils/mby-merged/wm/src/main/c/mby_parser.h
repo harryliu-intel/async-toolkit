@@ -6,6 +6,7 @@
 #define MBY_PARSER_H
 
 #include "mby_common.h"
+#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 // --------------------------------------------------------------------------------
 
@@ -35,7 +36,7 @@ const fm_uint MBY_PA_ANA_OP_ROT_SHIFT        = 0xC;
 // Function prototypes:
 void Parser
 (
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const mby_ppe_parser_map *       r,
     const mbyMacToParser    * const in, 
           mbyParserToMapper * const out
 );

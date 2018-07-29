@@ -54,13 +54,14 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
 // Parse the incoming packet and extracts useful fields from it
 void Parser
 (
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser    * const in, 
-          mbyParserToMapper * const out
+    const mby_ppe_parser_map *       r,
+    const mbyMacToParser     * const in, 
+          mbyParserToMapper  * const out
 )
 {
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
+  fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE];
     fm_uint32 pa_port_cfg_vals[MBY_PARSER_PORT_CFG_WIDTH] = { 0 };
 
     mbyModelReadCSRMult(regs, MBY_PARSER_PORT_CFG(in->RX_PORT, 0), MBY_PARSER_PORT_CFG_WIDTH, pa_port_cfg_vals);
