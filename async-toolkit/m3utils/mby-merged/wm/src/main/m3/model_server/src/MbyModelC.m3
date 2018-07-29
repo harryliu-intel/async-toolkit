@@ -133,18 +133,19 @@ PROCEDURE MUInit(up : MyUpdater;
     RETURN up
   END MUInit;
 
-PROCEDURE MUSync(up : MyUpdater) =
-  BEGIN
-    (* this routine is called to copy the Modula-3 value to C *)
-    (* in particular it is called by CsrAccess, because doSync is TRUE *)
-    MUUpdate(up, up.value())
-  END MUSync;
-  
 PROCEDURE MUUpdate(up : MyUpdater; to : Word.T) =
-  VAR
-    ptr := up.caddr;
   BEGIN
     UnsafeUpdater.T.update(up, to);
+    MUSync(up);
+  END MUUpdate;
+  
+PROCEDURE MUSync(up : MyUpdater) =
+    (* this routine is called to copy the Modula-3 value to C *)
+    (* in particular it is called by CsrAccess, because doSync is TRUE *)
+  VAR
+    to := up.value();
+    ptr := up.caddr;
+  BEGIN
     CASE up.w OF
       1..8 =>
       LOOPHOLE(ptr, UNTRACED REF [0..16_ff])^ := to
@@ -160,7 +161,7 @@ PROCEDURE MUUpdate(up : MyUpdater; to : Word.T) =
     ELSE
       <*ASSERT FALSE*>
     END
-  END MUUpdate;
+  END MUSync;
 
 PROCEDURE C2M3Callback(addr : ADDRESS; val : Word.T) =
   VAR

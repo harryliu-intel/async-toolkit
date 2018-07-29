@@ -11,8 +11,9 @@ mby_top_map_Setup     (const mby_top_map       *r,
 {
   printf("Hello from the mby_top_map_Setup!\n");
 
+  printf("field is %d\n", r->mpt[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
   write_field(w->mpt[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR, 12);
-
+  printf("field is %d\n", r->mpt[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
 }
 
 void

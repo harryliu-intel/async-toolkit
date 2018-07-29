@@ -13,10 +13,11 @@ REVEAL
     wid  : CARDINAL;
     nm   : CompPath.T;
   OVERRIDES
-    init   := Init;
-    update := Update;
+    init     := Init;
+    update   := Update;
     getWidth := GetWidth;
-    getNm := GetNm;
+    getNm    := GetNm;
+    value    := Value;
   END;
 
 PROCEDURE GetWidth(t : T) : CARDINAL = BEGIN RETURN t.wid END GetWidth;
