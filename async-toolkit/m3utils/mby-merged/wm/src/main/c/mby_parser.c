@@ -61,20 +61,14 @@ void Parser
 {
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
-  fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE];
-    fm_uint32 pa_port_cfg_vals[MBY_PARSER_PORT_CFG_WIDTH] = { 0 };
+  fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE]; // dummy -- remove
 
-    mbyModelReadCSRMult(regs, MBY_PARSER_PORT_CFG(in->RX_PORT, 0), MBY_PARSER_PORT_CFG_WIDTH, pa_port_cfg_vals);
+    const parser_port_cfg_r cfg = r->PARSER_PORT_CFG[in->RX_PORT];
 
-    fm_byte   init_ptr     = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_PTR);
-    fm_uint16 ana_state    = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_STATE);
-    fm_uint16 op_mask      = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_OP_MASK);
-    fm_byte   op_rot       = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_OP_ROT);
-    fm_byte init_w0_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_W0_OFFSET);
-    fm_byte init_w1_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_W1_OFFSET);
-    fm_byte init_w2_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_W2_OFFSET);
-
-    fm_byte cur_ptr = init_ptr; // current pointer
+    fm_uint16 ana_state = cfg.INITIAL_STATE;
+    fm_uint16 op_mask = cfg.INITIAL_OP_MASK;
+    uint4     op_rot = cfg.INITIAL_OP_ROT;
+    fm_byte   cur_ptr = cfg.INITIAL_PTR; // current pointer
 
     // Pass-thru (some) inputs to outputs:
     out->RX_PORT = in->RX_PORT;
@@ -130,9 +124,9 @@ void Parser
     for (fm_uint a = 0; a < MBY_PA_MAX_SEG_LEN; a++)
         seg_data[a] = in->RX_DATA[a];
 
-    fm_uint16 w0 = getSegDataWord(init_w0_offset, adj_seg_len, seg_data);
-    fm_uint16 w1 = getSegDataWord(init_w1_offset, adj_seg_len, seg_data);
-    fm_uint16 w2 = getSegDataWord(init_w2_offset, adj_seg_len, seg_data);
+    fm_uint16 w0 = getSegDataWord(cfg.INITIAL_W0_OFFSET, adj_seg_len, seg_data);
+    fm_uint16 w1 = getSegDataWord(cfg.INITIAL_W1_OFFSET, adj_seg_len, seg_data);
+    fm_uint16 w2 = getSegDataWord(cfg.INITIAL_W2_OFFSET, adj_seg_len, seg_data);
 
     fm_byte ptr [MBY_PA_ANA_STAGES];
 
