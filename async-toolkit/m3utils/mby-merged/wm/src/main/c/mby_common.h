@@ -145,10 +145,10 @@ typedef fm_int                fm_status;
 typedef unsigned long long    fm_macaddr;
 
 // Constants:
-extern const fm_status  FM_OK;
-extern const fm_status  FM_FAIL;
-extern const fm_bool    TRUE;
-extern const fm_bool    FALSE;
+#define FM_OK     0
+#define FM_FAIL   1
+#define TRUE      1
+#define FALSE     0
 
 // External function prototypes:
 
