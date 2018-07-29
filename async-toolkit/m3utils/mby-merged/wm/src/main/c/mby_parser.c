@@ -6,7 +6,7 @@
 
 // Get 16-bit word at given index in the segment data buffer
 static inline fm_uint16 getSegDataWord(fm_byte index, fm_uint32 adj_seg_len,
-                                      fm_byte seg_data[MBY_PA_MAX_SEG_LEN]) {
+                                       fm_byte seg_data[MBY_PA_MAX_SEG_LEN]) {
     fm_uint16 value = 0;
     if ( ((fm_uint32) index) < (adj_seg_len - 1) )
         value = ((((fm_uint16) seg_data[index    ]) << 8) & 0xff00) |
@@ -130,20 +130,17 @@ void Parser
     fm_byte ptr [MBY_PA_ANA_STAGES];
 
     // Carry out analyzer actions (see corresponding section in functional spec):
-    for (fm_uint s = 0; s < MBY_PA_ANA_STAGES; s++)
-    {
+    for (fm_uint s = 0; s < MBY_PA_ANA_STAGES; s++) {
         fm_bool rule_matched = FALSE;
 
-        for (fm_uint r = 0; r < MBY_PA_ANA_RULES; r++)
-        {
+        for (fm_uint r = 0; r < MBY_PA_ANA_RULES; r++) {
           const parser_key_w_r wk = q->PARSER_KEY_W[s][r];
           const parser_key_s_r sk = q->PARSER_KEY_S[s][r];
           
           // CAM Matching:
           if ( ( (w0 & wk.W0_MASK) == wk.W0_VALUE ) &&
                ( (w1 & wk.W1_MASK) == wk.W1_VALUE ) &&
-               ( (ana_state & sk.STATE_MASK) == sk.STATE_VALUE) )
-            {
+               ( (ana_state & sk.STATE_MASK) == sk.STATE_VALUE) ) {
               hit_idx  [s] = ((fm_byte) r) & 0x1F;
               hit_idx_v[s] = 1;
               rule_matched = TRUE;
@@ -155,8 +152,7 @@ void Parser
         ptr[s] = cur_ptr;
 
         // Update if a rule matched this stage, else pass unchanged to next stage:
-        if (rule_matched) 
-        {
+        if (rule_matched) {
             // Get analyzer fields:
             fm_int               r_hit = hit_idx[s];
             const parser_ana_w_r aw    = q->PARSER_ANA_W[s][r_hit];
@@ -196,18 +192,15 @@ void Parser
     fm_bool s_ena = TRUE; // initially enable
 
     // Carry out exception and extract actions (see correcponding sections in functional spec):
-    for (fm_uint s = 0; s < MBY_PA_ANA_STAGES; s++)
-    {
-        // If stage is enabled, and have valid hit, then continue:
-        if (s_ena && (hit_idx_v[s] == 1))
-        {
+    for (fm_uint s = 0; s < MBY_PA_ANA_STAGES; s++) {
+      // If stage is enabled, and have valid hit, then continue:
+        if (s_ena && (hit_idx_v[s] == 1))  {
             // Exception action:
             fm_int    r_hit = hit_idx[s];
             const parser_exc_r xc = q->PARSER_EXC[s][r_hit];
             fm_bool eof_exc         = (adj_seg_len < (ptr[s] + xc.EX_OFFSET)); // a.k.a. EOS
 
-            if (eof_exc) // end-of-file exception
-             {
+            if (eof_exc) { // end-of-file exception
                 s_ena = FALSE; // disable further processing
                 out->PA_EX_STAGE = s & 0x1F; // 5 bits
                 if (eop == 1)
@@ -217,24 +210,21 @@ void Parser
             }
 
             // Extraction action:
-            for (fm_uint wd = 0; wd < 2; wd++)
-            {
+            for (fm_uint wd = 0; wd < 2; wd++) {
                 fm_int    r_hit_ex = r_hit + (wd * MBY_PA_ANA_RULES);
                 const parser_ext_r xt = q->PARSER_EXT[s][r_hit_ex];
                 const xt_KEY_LEN = 0; // FIXME
                 
                 // Apply keys to target key array and track keys_valid:
-                for (fm_uint k = 0; k < xt_KEY_LEN; k++)
-                {
-                    if ((xt.KEY_OFFSET + k) < MBY_N_PARSER_KEYS)
-                    {
-                      fm_byte   key_off = ptr[s] + xt.KEY_OFFSET + (k*2);
-                        fm_uint16 key_val = getSegDataWord(key_off, adj_seg_len, seg_data);
-                        fm_bool   key_vld = (((fm_uint32) key_off) < (adj_seg_len - 1));
-
-                        out->PA_KEYS      [xt.KEY_OFFSET + k] = key_val;
-                        out->PA_KEYS_VALID[xt.KEY_OFFSET + k] = key_vld;
-                    }
+                for (fm_uint k = 0; k < xt_KEY_LEN; k++) {
+                  if ((xt.KEY_OFFSET + k) < MBY_N_PARSER_KEYS) {
+                    fm_byte   key_off = ptr[s] + xt.KEY_OFFSET + (k*2);
+                    fm_uint16 key_val = getSegDataWord(key_off, adj_seg_len, seg_data);
+                    fm_bool   key_vld = (((fm_uint32) key_off) < (adj_seg_len - 1));
+                    
+                    out->PA_KEYS      [xt.KEY_OFFSET + k] = key_val;
+                    out->PA_KEYS_VALID[xt.KEY_OFFSET + k] = key_vld;
+                  }
                 }
 
                 if ((xt.FLAG_NUM != 0) && (xt.FLAG_NUM < MBY_N_PARSER_FLAGS))
@@ -260,8 +250,7 @@ void Parser
     // Perform checksum offloads & validations (see corresponding section in the func. spec):
     out->PA_CSUM_OK = 0;
 
-    for (fm_uint p = 0; p <= 1; p++)
-    {
+    for (fm_uint p = 0; p <= 1; p++) {
         fm_byte pr = 2 + (p * 4); // 4 bytes / ptr
         fm_byte p0 = out->PA_PTRS[pr  ];
         fm_byte p1 = out->PA_PTRS[pr+1] - 1;
@@ -296,12 +285,10 @@ void Parser
     out->PA_L3LEN_ERR  = 0;
     
     // Validate packet length:
-    if (q->PARSER_CSUM_CFG[in->RX_PORT].VALIDATE_L3_LENGTH && l3_vld_chk)
-    {
+    if (q->PARSER_CSUM_CFG[in->RX_PORT].VALIDATE_L3_LENGTH && l3_vld_chk) {
         fm_uint32 min_pkt_len = l3_len + otr_l3_ptr + 4 + ((is_ipv6) ? MBY_PSEUDOHEADER_SIZE : 0);
 
-        if (rlen < min_pkt_len)
-        {
+        if (rlen < min_pkt_len) {
             out->PA_L3LEN_ERR = 1;
             out->PA_DROP = 1;
         }
