@@ -61,7 +61,6 @@ void Parser
 {
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
-  fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE]; // dummy -- remove
 
     const parser_port_cfg_r cfg = q->PARSER_PORT_CFG[in->RX_PORT];
 
@@ -279,8 +278,8 @@ void Parser
     fm_byte otr_l3_ptr         = out->PA_PTRS[MBY_OTR_L3_PTR];
     fm_bool otr_l3_v           = out->PA_FLAGS[MBY_PA_OTR_L3_V_FLAG];
 
-    fm_bool is_ipv4  = (otr_l3_v && (out->PA_KEYS_VALID[MBY_OTR_IPHDR_KEY] == 1));
-    fm_bool is_ipv6  = (otr_l3_v && (out->PA_KEYS_VALID[MBY_OTR_IPHDR_KEY] == 0));
+    fm_bool is_ipv4 = (otr_l3_v && (out->PA_KEYS_VALID[MBY_OTR_IPHDR_KEY] == 1));
+    fm_bool is_ipv6 = (otr_l3_v && (out->PA_KEYS_VALID[MBY_OTR_IPHDR_KEY] == 0));
     
     fm_byte ip_len   = (is_ipv6) ?  4 : 1; // IPv6 Length field (2 empty keys precede IPv6 hdr)
     fm_byte n_keys   = (is_ipv6) ? 16 : 4; // number of outer IP addr keys
@@ -291,25 +290,20 @@ void Parser
     for (fm_uint i = 0; i < n_keys; i++)
         l3_vld_chk &= (out->PA_KEYS_VALID[MBY_OTR_IPADDR_KEY + i] == 1);
 
-    // Read checksum configuration registers:
-    fm_uint32 pa_csum_cfg_vals[MBY_PARSER_CSUM_CFG_WIDTH] = { 0 };
-    fm_bool validate_l3_len = q->PARSER_CSUM_CFG[in->RX_PORT].VALIDATE_L3_LENGTH;
-
     fm_uint16 l3_len   = out->PA_KEYS[MBY_OTR_IPHDR_KEY + ip_len];
 
     // Clear flags:
     out->PA_L3LEN_ERR  = 0;
     
     // Validate packet length:
-    if (validate_l3_len && l3_vld_chk)
+    if (q->PARSER_CSUM_CFG[in->RX_PORT].VALIDATE_L3_LENGTH && l3_vld_chk)
     {
         fm_uint32 min_pkt_len = l3_len + otr_l3_ptr + 4 + ((is_ipv6) ? MBY_PSEUDOHEADER_SIZE : 0);
 
         if (rlen < min_pkt_len)
         {
             out->PA_L3LEN_ERR = 1;
-            if (validate_l3_len)
-                out->PA_DROP = 1;
+            out->PA_DROP = 1;
         }
     }
 }
