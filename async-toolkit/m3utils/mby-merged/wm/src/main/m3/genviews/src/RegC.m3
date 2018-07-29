@@ -273,36 +273,45 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
      one routine, viz., GenContainer *)
+
+PROCEDURE SkipArcP(c : RegContainer.T) : BOOLEAN =
+  BEGIN RETURN ISTYPE(c, RegRegfile.T) AND c.children.size() = 1 END SkipArcP;
   
 PROCEDURE GenContainerStruct(rf       : RegContainer.T;
-                     genState : RegGenState.T) 
+                             genState : RegGenState.T) 
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
     gs : GenState := genState;
     myTn := rf.typeName(gs);
     xDecls := NEW(TextSeq.T).init();
+    skipArc := SkipArcP(rf);
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
     FOR p := FIRST(Phases) TO LAST(Phases) DO
       WITH v = Phases[p] DO
-        gs.main("typedef struct {\n");
+        (* skipArc : an array type 
+           else    : a struct type *)
+        gs.main("typedef ");
+        IF NOT skipArc THEN gs.main("struct {\n") END;
         FOR i := 0 TO rf.children.size()-1 DO
           WITH c  = rf.children.get(i),
                tn = ComponentTypeName(c.comp,gs),
                nm = IdiomName(c.nm, FALSE) DO
-            IF c.array = NIL THEN
+            IF skipArc THEN
+              <*ASSERT i=0*>
+              gs.main("%s%s %s%s[%s];\n\n",
+                      tn, v.sfx, myTn, v.sfx, Int(ArrSz(c.array)));
+            ELSIF c.array = NIL THEN
               gs.main("  %s%s %s;\n", tn, v.sfx, nm)
             ELSE
               gs.main("  %s%s %s[%s];\n", tn, v.sfx, nm, Int(ArrSz(c.array)));
               IF p = 0 THEN FmtArrSz(xDecls, c.array, myTn & "_" & nm) END;
             END;
             gs.noteDep(tn);
-            IF rf.children.size() = 1 THEN (* ? *)
-            END;
           END
         END;
-        gs.main("} %s%s;\n\n", myTn, v.sfx);
+        IF NOT skipArc THEN gs.main("} %s%s;\n\n", myTn, v.sfx) END;
       END
     END;
     GenProto(rf, gs);
@@ -317,6 +326,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
       END
     END
    END GenContainerStruct;
+
   (**********************************************************************)
 
 PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
@@ -359,11 +369,12 @@ PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
   END GenRegInit;
 
 PROCEDURE GenContainerInit(rf       : RegContainer.T;
-                     genState : RegGenState.T) 
+                           genState : RegGenState.T) 
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
     gs : GenState := genState;
     myTn := rf.typeName(gs);
+    skipArc := SkipArcP(rf);
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -373,7 +384,11 @@ PROCEDURE GenContainerInit(rf       : RegContainer.T;
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp, gs),
            nm = IdiomName(c.nm,FALSE) DO
-        IF c.array = NIL THEN
+        IF skipArc THEN
+          <*ASSERT i=0*>
+          gs.main("  for (int i=0; i<%s; ++i)\n", Int(ArrSz(c.array)));
+          gs.main("    %s__init(&((*p0)[i]),&((*p1)[i]),f);\n", tn)
+        ELSIF c.array = NIL THEN
           gs.main("  %s__init(&(p0->%s),&(p1->%s),f);\n", tn, nm, nm)
         ELSE
           gs.main("  for (int i=0; i<%s; ++i)\n", Int(ArrSz(c.array)));
