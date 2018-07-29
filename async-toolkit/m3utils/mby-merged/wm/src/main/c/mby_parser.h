@@ -34,11 +34,11 @@
 #define MBY_PA_ANA_OP_ROT_SHIFT          0xC
 
 // Function prototypes:
-void Parser
+void mbyParser
 (
-    const mby_ppe_parser_map *       r,
-    const mbyMacToParser    * const in, 
-          mbyParserToMapper * const out
+    const mby_ppe_parser_map   *       r,
+    const mbyMacToParser       * const in, 
+          mbyParserToMapper    * const out
 );
 
 #endif // MBY_PARSER_H

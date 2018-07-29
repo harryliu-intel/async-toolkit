@@ -52,7 +52,7 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
 }
 
 // Parse the incoming packet and extracts useful fields from it
-void Parser
+void mbyParser
 (
     const mby_ppe_parser_map *       q,
     const mbyMacToParser     * const in, 

@@ -32,7 +32,18 @@ PROCEDURE HandlePacket(server           : MbyModelServer.T;
                        READONLY updateA : MapAddr.Update;
                        READONLY hdr     : FmModelMessageHdr.T;
                        pkt              : Pkt.T) =
+  VAR
+    cPkt : UNTRACED REF ARRAY OF CHAR;
   BEGIN
+    cPkt := NEW(UNTRACED REF ARRAY OF CHAR, pkt.size());
+    FOR i := FIRST(cPkt^) TO LAST(cPkt^) DO
+      cPkt[i] := VAL(pkt.get(i),CHAR)
+    END;
+    TRY
+      mby_top_map_c.SendPacket(rp, wp, hdr.port, ADR(cPkt[0]), NUMBER(cPkt^))
+    FINALLY
+      DISPOSE(cPkt)
+    END
   END HandlePacket;
 
 VAR

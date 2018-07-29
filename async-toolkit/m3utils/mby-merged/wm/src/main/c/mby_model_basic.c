@@ -24,5 +24,10 @@ mby_top_map_SendPacket(const mby_top_map       *r,
                        unsigned char           *packet,
                        unsigned int             length)
 {
-
+  mbyMacToParser mac2pa;
+  mbyParserToMapper pa2map;
+  
+  mbyParser(&(r->mpt[0].rx_ppe.parser),
+            &mac2pa,
+            &pa2map);
 }
