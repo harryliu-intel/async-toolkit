@@ -222,8 +222,8 @@ PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
 
 PROCEDURE FmtConstant(xDecls : TextSeq.T; val : TEXT; nm, sfx : TEXT) =
   BEGIN
-      xDecls.addhi(F("static const unsigned int %s__%s = %s;", nm, sfx, val));
-      xDecls.addhi(F("#define %s__%sd    %s", nm, sfx, val))
+    xDecls.addhi(F("static const unsigned int %s__%s = %s;", nm, sfx, val));
+    xDecls.addhi(F("#define %s__%sd    %s", nm, sfx, val))
   END FmtConstant;
   
 PROCEDURE FmtArrSz(xDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =

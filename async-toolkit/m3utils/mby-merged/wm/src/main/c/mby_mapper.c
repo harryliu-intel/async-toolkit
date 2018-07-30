@@ -1245,7 +1245,7 @@ static void getProfile
         // Found all types
         if ((profileIdx > 0) && (trigIdx > 0) && (priosIdx > 0))
             break;
-    }
+    } // rof (i=0...)
 
     out->FFU_SCENARIO = mapProfAction->PROFILE;
 
