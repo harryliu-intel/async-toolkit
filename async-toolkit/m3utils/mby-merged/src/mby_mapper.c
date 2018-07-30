@@ -2,7 +2,9 @@
 
 // Copyright (C) 2018 Intel Corporation
 
+#include "mby_parser.h"
 #include "mby_mapper.h"
+#include "mby_classifier.h"
 
 static fm_uint32 rotateKey(fm_uint key, fm_uint rot) {
     return ((key << rot) | (key >> (32 - rot)));

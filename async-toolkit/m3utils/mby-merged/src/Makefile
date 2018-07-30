@@ -53,10 +53,10 @@ DELFILES  = $(OBJECTS) *.o
 .PHONY: all
 all: $(OBJECTS)
 
-mby_common.o     : mby_common.c                                               mby_common.h mby_common_defines.h
-mby_parser.o     : mby_parser.c     mby_parser.h     mby_parser_defines.h     mby_common.h mby_common_defines.h
-mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_mapper_defines.h     mby_common.h mby_common_defines.h
-mby_classifier.o : mby_classifier.c mby_classifier.h mby_classifier_defines.h mby_common.h mby_common_defines.h
+mby_common.o     : mby_common.c                      mby_common.h
+mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h
+mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h
+mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h
 
 %.o: %.c
 	@echo '  Compiling' $<
