@@ -6,6 +6,7 @@
 #define MBY_MAPPER_H
 
 #include "mby_common.h"
+#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 // Defines:
 #define MBY_MAPPER_BASE                                         (0x3780000)
@@ -775,9 +776,9 @@ typedef struct mbyMapRewriteStruct
 
 // Function prototypes:
 
-void Mapper
+void mbyMapper
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mby_ppe_mapper_map    *        q,
     const mbyParserToMapper     * const in, 
           mbyMapperToClassifier * const out,
           mbyParserToModifier   * const parser_to_modifier

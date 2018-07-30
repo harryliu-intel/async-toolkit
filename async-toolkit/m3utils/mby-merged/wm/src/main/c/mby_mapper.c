@@ -1550,14 +1550,16 @@ static void mapRewrite
     }
 }
 
-void Mapper
+void
+mbyMapper
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mby_ppe_mapper_map    *        q,
     const mbyParserToMapper     * const in, 
           mbyMapperToClassifier * const mapper_to_classifier,
           mbyParserToModifier   * const parser_to_modifier
 )
 {
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE];
     mbyMapPortCfg portCfg;
    
     getPortCfg(regs, in, &portCfg);

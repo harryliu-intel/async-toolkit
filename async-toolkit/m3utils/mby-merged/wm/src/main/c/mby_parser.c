@@ -52,7 +52,8 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
 }
 
 // Parse the incoming packet and extracts useful fields from it
-void mbyParser
+void
+mbyParser
 (
     const mby_ppe_parser_map *       q,
     const mbyMacToParser     * const in, 
@@ -65,9 +66,9 @@ void mbyParser
     const parser_port_cfg_r cfg = q->PARSER_PORT_CFG[in->RX_PORT];
 
     fm_uint16 ana_state = cfg.INITIAL_STATE;
-    fm_uint16 op_mask = cfg.INITIAL_OP_MASK;
-    uint4     op_rot = cfg.INITIAL_OP_ROT;
-    fm_byte   cur_ptr = cfg.INITIAL_PTR; // current pointer
+    fm_uint16 op_mask   = cfg.INITIAL_OP_MASK;
+    uint4     op_rot    = cfg.INITIAL_OP_ROT;
+    fm_byte   cur_ptr   = cfg.INITIAL_PTR; // current pointer
 
     // Pass-thru (some) inputs to outputs:
     out->RX_PORT = in->RX_PORT;
@@ -196,9 +197,9 @@ void mbyParser
       // If stage is enabled, and have valid hit, then continue:
         if (s_ena && (hit_idx_v[s] == 1))  {
             // Exception action:
-            fm_int    r_hit = hit_idx[s];
-            const parser_exc_r xc = q->PARSER_EXC[s][r_hit];
-            fm_bool eof_exc         = (adj_seg_len < (ptr[s] + xc.EX_OFFSET)); // a.k.a. EOS
+            fm_int               r_hit = hit_idx[s];
+            const parser_exc_r      xc = q->PARSER_EXC[s][r_hit];
+            fm_bool            eof_exc = (adj_seg_len < (ptr[s] + xc.EX_OFFSET)); // a.k.a. EOS
 
             if (eof_exc) { // end-of-file exception
                 s_ena = FALSE; // disable further processing
@@ -211,9 +212,9 @@ void mbyParser
 
             // Extraction action:
             for (fm_uint wd = 0; wd < 2; wd++) {
-                fm_int    r_hit_ex = r_hit + (wd * MBY_PA_ANA_RULES);
-                const parser_ext_r xt = q->PARSER_EXT[s][r_hit_ex];
-                const xt_KEY_LEN = 0; // FIXME
+                fm_int               r_hit_ex = r_hit + (wd * MBY_PA_ANA_RULES);
+                const parser_ext_r         xt = q->PARSER_EXT[s][r_hit_ex];
+                const              xt_KEY_LEN = 0; // FIXME
                 
                 // Apply keys to target key array and track keys_valid:
                 for (fm_uint k = 0; k < xt_KEY_LEN; k++) {

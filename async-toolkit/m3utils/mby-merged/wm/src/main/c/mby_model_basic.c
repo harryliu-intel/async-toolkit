@@ -3,6 +3,7 @@
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map_main.h"
 #include "../m3/model_server/src/model_c_write.h" // pull in write_field
 #include "mby_parser.h"
+#include "mby_mapper.h"
 
 // we implement the interface required of us by the model_server
 
@@ -24,10 +25,11 @@ mby_top_map_SendPacket(const mby_top_map       *r,
                        unsigned char           *packet,
                        unsigned int             length)
 {
-  mbyMacToParser mac2pa;
-  mbyParserToMapper pa2map;
+  mbyMacToParser        mac2par;
+  mbyParserToMapper     par2map;
+  mbyMapperToClassifier map2cla;
+  mbyParserToModifier   par2mod;
   
-  mbyParser(&(r->mpt[0].rx_ppe.parser),
-            &mac2pa,
-            &pa2map);
+  mbyParser(&(r->mpt[0].rx_ppe.parser), &mac2par, &par2map);
+  mbyMapper(&(r->mpt[0].rx_ppe.mapper), &par2map, &map2cla, &par2mod);
 }
