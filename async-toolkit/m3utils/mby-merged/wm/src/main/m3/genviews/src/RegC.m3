@@ -225,7 +225,7 @@ PROCEDURE FmtArrSz(xDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =
     IF a = NIL THEN
       RETURN
     ELSE
-      xDecls.addhi(F("static const int %s__n = %s", nm, BigInt.Format(a.n.x)));
+      xDecls.addhi(F("static const int %s__n = %s;", nm, BigInt.Format(a.n.x)));
       xDecls.addhi(F("#define %s__nd    %s", nm, BigInt.Format(a.n.x)))
     END
   END FmtArrSz;
@@ -233,7 +233,7 @@ PROCEDURE FmtArrSz(xDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =
 PROCEDURE PutXDecls(gs : GenState; xDecls : TextSeq.T) =
   BEGIN
     FOR i := 0 TO xDecls.size()-1 DO
-      gs.main(xDecls.get(i)); gs.main(";\n")
+      gs.main(xDecls.get(i)); gs.main("\n")
     END;
     gs.main("\n")
   END PutXDecls;

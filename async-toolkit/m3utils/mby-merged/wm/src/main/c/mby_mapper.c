@@ -193,30 +193,9 @@ static void realignKeys
     }
 }
 
-static void getDomainTcamEntry(fm_uint32         regs[MBY_REGISTER_ARRAY_SIZE],
-                               fm_int            cam_index,
-                               mbyMapDomainTcam *cam_entry)
-{
-    fm_uint32 map_domain_tcam_vals[MBY_MAP_DOMAIN_TCAM_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_TCAM(cam_index, 0), MBY_MAP_DOMAIN_TCAM_WIDTH, map_domain_tcam_vals);
-
-    cam_entry->_RSVD1_           = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, _RSVD1_);
-    cam_entry->PORT_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, PORT_KEY_INVERT);
-    cam_entry->VID2_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_VALID_INVERT);
-    cam_entry->VID2_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_KEY_INVERT);
-    cam_entry->VID1_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_VALID_INVERT);
-    cam_entry->VID1_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_KEY_INVERT);
-    cam_entry->_RSVD0_           = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, _RSVD0_);
-    cam_entry->PORT_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, PORT_KEY);
-    cam_entry->VID2_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_VALID);
-    cam_entry->VID2_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_KEY);
-    cam_entry->VID1_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_VALID);
-    cam_entry->VID1_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_KEY);
-}
-
 static void lookUpDomainTcam
 (
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const map_domain_tcam_r tcam[mby_ppe_mapper_map_MAP_DOMAIN_TCAM__nd],
     const mbyParserToMapper * const in,
     fm_uint                       * tcam_idx
 )
@@ -232,8 +211,7 @@ static void lookUpDomainTcam
     // The highest numbered DOMAIN_CAM entry has highest precedence
     for (fm_int i = (MBY_MAP_DOMAIN_TCAM_ENTRIES - 1); i >= 0; i--)
     {
-        mbyMapDomainTcam domainTcam;
-        getDomainTcamEntry(regs, i, &domainTcam);
+        const map_domain_tcam_r domainTcam = tcam[i];
 
         fm_byte   maskPort      = domainTcam.PORT_KEY   ^ domainTcam.PORT_KEY_INVERT;
         fm_byte   maskVid1Valid = domainTcam.VID1_VALID ^ domainTcam.VID1_VALID_INVERT;
@@ -1584,7 +1562,7 @@ mbyMapper
 
     lookUpDomainTcam
     (
-        regs,
+        q->MAP_DOMAIN_TCAM,
         in,
         &domain_index
     );
