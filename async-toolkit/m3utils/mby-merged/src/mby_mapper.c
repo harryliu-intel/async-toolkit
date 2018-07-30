@@ -1180,9 +1180,21 @@ static void getProfile
     const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
     const mbyMapProfKey0            key0,
     const mbyMapProfKey1            key1,
-    mbyMapProfAction        * const mapProfAction
+    mbyMapProfAction        * const map_prof_action
 )
 {
+    // initialize struct:
+    map_prof_action->PROFILE_VALID   = FALSE;
+    map_prof_action->PROFILE         = 0;
+    map_prof_action->REWRITE_PROFILE = FALSE;
+    map_prof_action->TRIG_VALID      = FALSE;
+    map_prof_action->PROFILE_TRIG    = 0;
+    map_prof_action->PARSER_ERROR    = FALSE;
+    map_prof_action->IP_OPTIONS_MASK = 0;
+    map_prof_action->PRIOS_VALID     = FALSE;
+    map_prof_action->VPRI_TGT        = 0;
+    map_prof_action->DSCP_TGT        = 0;
+
     fm_byte profileIdx = 0;
     fm_byte trigIdx    = 0;
     fm_byte priosIdx   = 0;
@@ -1257,26 +1269,26 @@ static void getProfile
         if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_VALID)) && (profileIdx == 0))
         {
             profileIdx                     = i;
-            mapProfAction->PROFILE_VALID   = 1;
-            mapProfAction->PROFILE         = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE);
-            mapProfAction->REWRITE_PROFILE = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, REWRITE_PROFILE);
+            map_prof_action->PROFILE_VALID   = 1;
+            map_prof_action->PROFILE         = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE);
+            map_prof_action->REWRITE_PROFILE = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, REWRITE_PROFILE);
         }
 
         if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, TRIG_VALID)) && (trigIdx == 0))
         {
             trigIdx                        = i;
-            mapProfAction->TRIG_VALID      = 1;
-            mapProfAction->PROFILE_TRIG    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_TRIG);
-            mapProfAction->IP_OPTIONS_MASK = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, IP_OPTIONS_MASK);
-            mapProfAction->PARSER_ERROR    = FM_ARRAY_GET_BIT  (profAction, MBY_MAP_PROFILE_ACTION, PARSER_ERROR);
+            map_prof_action->TRIG_VALID      = 1;
+            map_prof_action->PROFILE_TRIG    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_TRIG);
+            map_prof_action->IP_OPTIONS_MASK = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, IP_OPTIONS_MASK);
+            map_prof_action->PARSER_ERROR    = FM_ARRAY_GET_BIT  (profAction, MBY_MAP_PROFILE_ACTION, PARSER_ERROR);
         }
 
         if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, PRIOS_VALID)) && (priosIdx == 0))
         {
             priosIdx                   = i;
-            mapProfAction->PRIOS_VALID = 1;
-            mapProfAction->VPRI_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, VPRI_TGT);
-            mapProfAction->DSCP_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, DSCP_TGT);
+            map_prof_action->PRIOS_VALID = 1;
+            map_prof_action->VPRI_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, VPRI_TGT);
+            map_prof_action->DSCP_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, DSCP_TGT);
         }
 
         // Found all types
@@ -1284,7 +1296,7 @@ static void getProfile
             break;
     }
 
-    out->FFU_SCENARIO = mapProfAction->PROFILE;
+    out->FFU_SCENARIO = map_prof_action->PROFILE;
 
     // Set Scenario action
     for (fm_uint i = 0; i < 6; i++)
@@ -1649,10 +1661,6 @@ void Mapper
     );
 
     mbyMapProfAction map_prof_action;
-
-    map_prof_action.PROFILE         = 0;
-    map_prof_action.PROFILE_VALID   = FALSE;
-    map_prof_action.REWRITE_PROFILE = FALSE;
 
     getProfile
     (
