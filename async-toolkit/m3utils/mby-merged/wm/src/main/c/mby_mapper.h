@@ -674,30 +674,6 @@ typedef enum mbyClassifierAct24Enum
 
 // Structs:
 
-typedef struct mbyMapPortDefaultsStruct
-{
-    fm_uint16 VALUE;
-    fm_byte   TARGET;
-
-} mbyMapPortDefaults;
-
-typedef struct mbyMapDomainTcamStruct
-{
-    fm_uint32 _RSVD1_;
-    fm_uint32 PORT_KEY_INVERT;
-    fm_bool   VID2_VALID_INVERT;
-    fm_uint16 VID2_KEY_INVERT;
-    fm_bool   VID1_VALID_INVERT;
-    fm_uint16 VID1_KEY_INVERT;
-    fm_uint32 _RSVD0_;
-    fm_uint32 PORT_KEY;
-    fm_bool   VID2_VALID;
-    fm_uint16 VID2_KEY;
-    fm_bool   VID1_VALID;
-    fm_uint16 VID1_KEY;
-
-} mbyMapDomainTcam;
-
 typedef struct mbyMapProfKey0Struct
 {
     fm_bool   PTRS_ERR;
