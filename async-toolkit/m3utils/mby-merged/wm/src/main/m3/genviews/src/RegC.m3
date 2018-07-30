@@ -220,13 +220,18 @@ PROCEDURE GsMain(gs : GenState; fmt : TEXT; t1, t2, t3, t4, t5 : TEXT := NIL)=
 
   (**********************************************************************)
 
+PROCEDURE FmtConstant(xDecls : TextSeq.T; val : TEXT; nm, sfx : TEXT) =
+  BEGIN
+      xDecls.addhi(F("static const unsigned int %s__%s = %s;", nm, sfx, val));
+      xDecls.addhi(F("#define %s__%sd    %s", nm, sfx, val))
+  END FmtConstant;
+  
 PROCEDURE FmtArrSz(xDecls : TextSeq.T; a : RdlArray.Single; nm : TEXT) =
   BEGIN
     IF a = NIL THEN
       RETURN
     ELSE
-      xDecls.addhi(F("static const int %s__n = %s;", nm, BigInt.Format(a.n.x)));
-      xDecls.addhi(F("#define %s__nd    %s", nm, BigInt.Format(a.n.x)))
+      FmtConstant(xDecls, BigInt.Format(a.n.x), nm, "n")
     END
   END FmtArrSz;
 
@@ -249,8 +254,8 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     gs : GenState := genState;
-    myTn := r.typeName(gs);
-
+    myTn          := r.typeName(gs);
+    xDecls        := NEW(TextSeq.T).init();
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     Debug.Out("Generating code for " & myTn);
@@ -262,6 +267,9 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
           WITH f  = r.fields.get(i),
                nm = f.name(debug := FALSE) DO
             gs.main("  uint%s %s%s;\n", Int(f.width), v.ptr, nm);
+            IF p = FIRST(Phases) THEN
+              FmtConstant(xDecls, Int(f.width), F("%s_%s", myTn, nm), "n")
+            END
           END
         END;
         gs.main("} %s%s;\n\n", myTn, v.sfx)
@@ -269,6 +277,8 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
     END;
     GenProto(r, gs);
     gs.main(";\n\n");
+
+    PutXDecls(gs, xDecls)
   END GenRegStruct;
 
   (* the way this is coded, GenRegfile and GenAddrmap could be merged into
