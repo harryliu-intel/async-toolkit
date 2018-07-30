@@ -674,14 +674,6 @@ typedef enum mbyClassifierAct24Enum
 
 // Structs:
 
-typedef struct mbyMapPortCfgStruct
-{
-    fm_uint16 DEFAULT_SGLORT;
-    fm_bool   DEFAULT_SGLORT_EN;
-    fm_byte   PORT_PROFILE;
-
-} mbyMapPortCfg;
-
 typedef struct mbyMapPortDefaultsStruct
 {
     fm_uint16 VALUE;

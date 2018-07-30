@@ -15,21 +15,6 @@ static fm_uint32 generateMask(fm_uint start, fm_uint len) {
     return mask;
 }
 
-static void getPortCfg
-(
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper * const in,
-    mbyMapPortCfg           * const port_cfg
-)
-{
-    fm_uint32 map_port_cfg_vals[MBY_MAP_PORT_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_PORT_CFG(in->RX_PORT, 0), MBY_MAP_PORT_CFG_WIDTH, map_port_cfg_vals);
-
-    port_cfg->DEFAULT_SGLORT    = FM_ARRAY_GET_FIELD(map_port_cfg_vals, MBY_MAP_PORT_CFG, DEFAULT_SGLORT);
-    port_cfg->DEFAULT_SGLORT_EN = FM_ARRAY_GET_BIT  (map_port_cfg_vals, MBY_MAP_PORT_CFG, DEFAULT_SGLORT_EN);
-    port_cfg->PORT_PROFILE      = FM_ARRAY_GET_FIELD(map_port_cfg_vals, MBY_MAP_PORT_CFG, PORT_PROFILE);
-}
-
 static void realignKeys
 (
     const mbyParserToMapper * const in,
@@ -282,7 +267,7 @@ static void insertDefaults
     fm_uint32                 regs              [MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper * const in,
     mbyMapperToClassifier   * const out,
-    mbyMapPortCfg             port_cfg,
+    const map_port_cfg_r    * port_cfg,
     fm_uint16                 realigned_keys    [MBY_N_REALIGN_KEYS],
     fm_bool                   realigned_keys_vld[MBY_N_REALIGN_KEYS])
 {
@@ -434,8 +419,8 @@ static void insertDefaults
         }
     }
 
-    if (port_cfg.DEFAULT_SGLORT_EN) {
-        realigned_keys    [MBY_RE_KEYS_SGLORT] = port_cfg.DEFAULT_SGLORT;
+    if (port_cfg->DEFAULT_SGLORT_EN) {
+        realigned_keys    [MBY_RE_KEYS_SGLORT] = port_cfg->DEFAULT_SGLORT;
         realigned_keys_vld[MBY_RE_KEYS_SGLORT] = 1;
     }
 
@@ -532,20 +517,20 @@ static fm_int getTcFromPriSource
 
 static void mapScalar
 (
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper * const in,
-    mbyMapperToClassifier   * const out,
-    const mbyMapPortCfg             port_cfg,
-    const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
-    const fm_bool                   is_ipv4[MBY_N_IS_IP_BITS],
-    const fm_bool                   is_ipv6[MBY_N_IS_IP_BITS],
-    const fm_uint                   domain_index,
-    const fm_bool                   ihl_ok,
-    const fm_bool                   ihl_fits,
-    mbyMapProfKey0          * const map_prof_key0,
-    mbyMapProfKey1          * const map_prof_key1,
-    mbyMappedKey            * const mapped_key,
-    fm_byte                 * const pri_profile
+    fm_uint32                        regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyParserToMapper  * const in,
+    mbyMapperToClassifier    * const out,
+    const map_port_cfg_r     *       port_cfg,
+    const fm_uint16                  realigned_keys[MBY_N_REALIGN_KEYS],
+    const fm_bool                    is_ipv4[MBY_N_IS_IP_BITS],
+    const fm_bool                    is_ipv6[MBY_N_IS_IP_BITS],
+    const fm_uint                    domain_index,
+    const fm_bool                    ihl_ok,
+    const fm_bool                    ihl_fits,
+    mbyMapProfKey0           * const map_prof_key0,
+    mbyMapProfKey1           * const map_prof_key1,
+    mbyMappedKey             * const mapped_key,
+    fm_byte                  * const pri_profile
 )
 {
     // initialize
@@ -826,7 +811,7 @@ static void mapScalar
         FM_SET_UNNAMED_FIELD64(map_prof_key0->CSUM, i, 1, (un0 | (!is_ipv4[i])));
     }
 
-    map_prof_key1->PORT_PROFILE = port_cfg.PORT_PROFILE;
+    map_prof_key1->PORT_PROFILE = port_cfg->PORT_PROFILE;
 
     FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_MBCAST, 0, 1, oDmacMulticast);
     FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_MBCAST, 1, 1, oDmacBroadcast);
@@ -1560,10 +1545,8 @@ mbyMapper
 )
 {
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE];
-    mbyMapPortCfg portCfg;
+    const map_port_cfg_r portCfg = q->MAP_PORT_CFG[in->RX_PORT];
    
-    getPortCfg(regs, in, &portCfg);
-
     fm_bool isIPv4[MBY_N_IS_IP_BITS] = { FALSE };
     fm_bool isIPv6[MBY_N_IS_IP_BITS] = { FALSE };
 
@@ -1611,7 +1594,7 @@ mbyMapper
         regs,
         in,
         mapper_to_classifier,
-        portCfg,
+        &portCfg,
         realigned_keys,
         realigned_keys_vld
     );
@@ -1627,7 +1610,7 @@ mbyMapper
         regs,
         in,
         mapper_to_classifier,
-        portCfg,
+        &portCfg,
         realigned_keys,
         isIPv4,
         isIPv6,
