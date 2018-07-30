@@ -242,6 +242,7 @@ static void lookUpDomainTcam
 
 static void insertDefaults
 (
+    const map_port_default_r  port_defs         [mby_ppe_mapper_map_MAP_PORT_DEFAULT__nd][map_port_default_rf_MAP_PORT_DEFAULT__nd],
     fm_uint32                 regs              [MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper * const in,
     mbyMapperToClassifier   * const out,
@@ -1569,6 +1570,7 @@ mbyMapper
 
     insertDefaults
     (
+        q->MAP_PORT_DEFAULT,
         regs,
         in,
         mapper_to_classifier,

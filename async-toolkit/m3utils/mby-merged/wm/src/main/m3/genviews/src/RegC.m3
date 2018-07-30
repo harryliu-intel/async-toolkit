@@ -316,7 +316,19 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
               gs.main("  %s%s %s;\n", tn, v.sfx, nm)
             ELSE
               gs.main("  %s%s %s[%s];\n", tn, v.sfx, nm, Int(ArrSz(c.array)));
-              IF p = 0 THEN FmtArrSz(xDecls, c.array, myTn & "_" & nm) END;
+            END;
+            IF c.array # NIL THEN
+              (* constants for the array size *)
+              IF p = 0 THEN FmtArrSz(xDecls, c.array, myTn & "_" & nm) END
+            END;
+            IF p = 0 AND NOT skipArc THEN
+              (* convenience typedef *)
+              IF c.array = NIL THEN
+                xDecls.addhi(F("typedef %s %s_%s_t;\n", tn, myTn, nm))
+              ELSE
+                xDecls.addhi(F("typedef %s %s_%s_t[%s];\n", tn, myTn, nm,
+                               Int(ArrSz(c.array))))
+              END
             END;
             gs.noteDep(tn);
           END
