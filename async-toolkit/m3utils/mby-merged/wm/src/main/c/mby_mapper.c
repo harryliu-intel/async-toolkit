@@ -242,13 +242,13 @@ static void lookUpDomainTcam
 
 static void insertDefaults
 (
-    const map_port_default_r  port_defs         [mby_ppe_mapper_map_MAP_PORT_DEFAULT__nd][map_port_default_rf_MAP_PORT_DEFAULT__nd],
-    fm_uint32                 regs              [MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper * const in,
-    mbyMapperToClassifier   * const out,
-    const map_port_cfg_r    * port_cfg,
-    fm_uint16                 realigned_keys    [MBY_N_REALIGN_KEYS],
-    fm_bool                   realigned_keys_vld[MBY_N_REALIGN_KEYS])
+    const mby_ppe_mapper_map_MAP_PORT_DEFAULT_t    port_defs ,
+    const mbyParserToMapper                      * const in,
+    mbyMapperToClassifier                        * const out,
+    const map_port_cfg_r                         * port_cfg,
+    fm_uint16                                      realigned_keys    [MBY_N_REALIGN_KEYS],
+    fm_bool                                        realigned_keys_vld[MBY_N_REALIGN_KEYS]
+)
 {
     for (fm_uint i = 0; i < MBY_FFU_N_ACT24; i++) {
         out->FFU_ACTIONS.act24[i].prec = 1;
@@ -271,12 +271,7 @@ static void insertDefaults
     // Apply defaults on keys
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-        fm_uint32 map_port_default_vals[MBY_MAP_PORT_DEFAULT_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PORT_DEFAULT(in->RX_PORT, i, 0), MBY_MAP_PORT_DEFAULT_WIDTH, map_port_default_vals);
-
-        mbyMapPortDefaults port_defaults;
-        port_defaults.TARGET = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, TARGET);
-        port_defaults.VALUE  = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, VALUE);
+        const map_port_default_r port_defaults = port_defs[in->RX_PORT][i];
 
         fm_byte target = port_defaults.TARGET;
         if (target > MBY_DEFAULT_TARGET_FORCE_KEYS_H)
@@ -339,12 +334,7 @@ static void insertDefaults
     // Apply defaults on actions
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-        fm_uint32 map_port_default_vals[MBY_MAP_PORT_DEFAULT_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PORT_DEFAULT(in->RX_PORT, i, 0), MBY_MAP_PORT_DEFAULT_WIDTH, map_port_default_vals);
-
-        mbyMapPortDefaults port_defaults;
-        port_defaults.TARGET = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, TARGET);
-        port_defaults.VALUE  = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, VALUE);
+        const map_port_default_r port_defaults = port_defs[in->RX_PORT][i];
 
         fm_byte target = port_defaults.TARGET;
         if (target <= MBY_DEFAULT_TARGET_FORCE_KEYS_H)
@@ -1571,7 +1561,7 @@ mbyMapper
     insertDefaults
     (
         q->MAP_PORT_DEFAULT,
-        regs,
+        //        regs,
         in,
         mapper_to_classifier,
         &portCfg,
