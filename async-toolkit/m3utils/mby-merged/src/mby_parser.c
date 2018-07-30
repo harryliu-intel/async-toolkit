@@ -203,7 +203,7 @@ void Parser
 
             fm_uint16 op_result = (fm_uint16) ( (tmp_op_result >> op_rot) & ((fm_uint32) op_mask) );
             cur_ptr += op_result;
-            if (cur_ptr > MBY_PA_MAX_PTR_LEN)
+            if (cur_ptr >= MBY_PA_MAX_PTR_LEN)
                 cur_ptr = MBY_PA_MAX_PTR_LEN;
 
             // Update w0..w2 fields for next stage:
@@ -220,7 +220,7 @@ void Parser
 
             // Update pointer for next stage:
             cur_ptr += skip;
-            if (cur_ptr > MBY_PA_MAX_PTR_LEN) 
+            if (cur_ptr >= MBY_PA_MAX_PTR_LEN) 
                 cur_ptr = MBY_PA_MAX_PTR_LEN;
         }
 

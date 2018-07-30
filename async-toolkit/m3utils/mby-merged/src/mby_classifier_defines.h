@@ -5,16 +5,9 @@
 #ifndef MBY_CLASSIFIER_DEFINES_H
 #define MBY_CLASSIFIER_DEFINES_H
 
-#define MBY_FFU_N_KEY8                    64 
-#define MBY_FFU_N_KEY16                   32
-#define MBY_FFU_N_KEY32                   16 
-#define MBY_FFU_N_KEYS                    ( MBY_FFU_N_KEY8 + MBY_FFU_N_KEY16 + MBY_FFU_N_KEY32 )
-
 #define MBY_FFU_KEY16_BASE                0
 #define MBY_FFU_KEY8_BASE                 ( MBY_FFU_KEY16_BASE + MBY_FFU_N_KEY16 )
 #define MBY_FFU_KEY32_BASE                ( MBY_FFU_KEY8_BASE + MBY_FFU_N_KEY8 )
-
-#define MBY_FFU_N_HASH_KEYS               ( MBY_FFU_N_KEY8 + MBY_FFU_N_KEY16*2 + MBY_FFU_N_KEY32*4 )
 
 #define MBY_FFU_MAX_HASH_ENTRY_SIZE       64
 #define MBY_FFU_MAX_HASH_ACTIONS          4
@@ -24,10 +17,6 @@
 #define MBY_FFU_HASH_CAM_ETY_6_BITS_63_32 3
 
 /* FFU Action entry encoding */
-#define MBY_FFU_N_ACT24                   16
-#define MBY_FFU_N_ACT4                    23
-#define MBY_FFU_N_ACT1                    24
-#define MBY_FFU_N_REMAP_ACTIONS           8
 #define MBY_FFU_ACTIONS_PER_ENTRY         2
 #define MBY_FFU_ACTION_PREC_WIDTH         3
 #define MBY_FFU_ACTION_l_PREC             29
@@ -175,12 +164,6 @@
 #define MBY_IPV6_OPTION_FRAG          44
 #define MBY_IPV6_OPTION_DEST          60
 #define MBY_IPV6_OPTION_AUTH          51
-
-#define MBY_PROT_TCP                   6
-#define MBY_PROT_UDP                  17
-#define MBY_PROT_ICMPv4                1
-#define MBY_PROT_ICMPv6               58
-#define MBY_PROT_IGMP                  2
 
 /* FFU mux selects */
 #define MBY_FFU_SELECT_MAP_DIP_MAP_SIP       0
