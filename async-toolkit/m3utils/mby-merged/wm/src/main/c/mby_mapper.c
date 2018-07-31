@@ -209,7 +209,7 @@ static void lookUpDomainTcam
     *tcam_idx = 0; // no match
 
     // The highest numbered DOMAIN_CAM entry has highest precedence
-    for (fm_int i = (MBY_MAP_DOMAIN_TCAM_ENTRIES - 1); i >= 0; i--)
+    for (fm_int i = (mby_ppe_mapper_map_MAP_DOMAIN_TCAM__nd  - 1); i >= 0; i--)
     {
         const map_domain_tcam_r domainTcam = tcam[i];
 
@@ -269,7 +269,7 @@ static void insertDefaults
     realigned_keys[MBY_RE_KEYS_DGLORT] = 0;
 
     // Apply defaults on keys
-    for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
+    for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_PORT_DEFAULT__nd; i++)
     {
         const map_port_default_r port_defaults = port_defs[in->RX_PORT][i];
 
@@ -332,7 +332,7 @@ static void insertDefaults
     }
 
     // Apply defaults on actions
-    for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
+    for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_PORT_DEFAULT__nd; i++)
     {
         const map_port_default_r port_defaults = port_defs[in->RX_PORT][i];
 
@@ -496,7 +496,7 @@ compressMac(
   if (oMulticast) *oMulticast = fmModelIsMulticastMacAddress(keyMac);
   if (oBroadcast) *oBroadcast = fmModelIsBroadcastMacAddress(keyMac);
 
-  for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--) {
+  for (fm_int i = mby_ppe_mapper_map_MAP_MAC__nd - 1; i >= 0; i--) {
     const map_mac_r m = map_mac[i];
     
     uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << m.IGNORE_LENGTH;
@@ -540,7 +540,7 @@ static void mapScalar
     mapped_key->MAP_PORT = q->MAP_PORT[in->RX_PORT].MAP_PORT;
 
     // Compress PROT to 3 bits, highest index match wins
-    for (fm_uint i = 0; i < MBY_MAP_PROT_ENTRIES; i++)   {
+    for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_PROT__nd; i++)   {
         const map_prot_r map_prot = q->MAP_PROT[i];
         
         if (in->PA_FLAGS[MBY_PA_FLAGS_INR_L3_V] &&
@@ -566,9 +566,9 @@ static void mapScalar
         fm_uint32 temp = realigned_keys[MBY_RE_KEYS_OUTER_L4SRC];
         mapped_key->MAP_OUTER_L4_SRC = realigned_keys[MBY_RE_KEYS_OUTER_L4SRC];
         
-        for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)        {
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_SRC__nd; i++)        {
           const map_l4_src_r cur       = q->MAP_L4_SRC[i];
-          fm_bool            next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+          fm_bool            next_ok   = ((i + 1) != mby_ppe_mapper_map_MAP_L4_SRC__nd);
           const map_l4_src_r nxt       = next_ok ? q->MAP_L4_SRC[i+1] : (const map_l4_src_r) { 0 };
           
           if ((cur.VALID & 1) && (mapped_key->MAP_OUTER_PROT == cur.MAP_PROT)) {
@@ -587,9 +587,9 @@ static void mapScalar
         mapped_key->MAP_INNER_L4_SRC = realigned_keys[MBY_RE_KEYS_INNER_L4SRC];
 
         
-        for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)        {
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_SRC__nd; i++)        {
           const map_l4_src_r cur       = q->MAP_L4_SRC[i];
-          fm_bool            next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+          fm_bool            next_ok   = ((i + 1) != mby_ppe_mapper_map_MAP_L4_SRC__nd);
           const map_l4_src_r nxt       = next_ok ? q->MAP_L4_SRC[i+1] : (const map_l4_src_r) { 0 };
           
           if (((cur.VALID >> 1) & 1) && (mapped_key->MAP_INNER_PROT == cur.MAP_PROT)) {
@@ -610,10 +610,10 @@ static void mapScalar
         fm_uint32 temp = realigned_keys[MBY_RE_KEYS_OUTER_L4DST];
         mapped_key->MAP_OUTER_L4_DST = realigned_keys[MBY_RE_KEYS_OUTER_L4DST];
 
-        for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_DST__nd; i++)
         {
           const map_l4_dst_r cur = q->MAP_L4_DST[i];
-          fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+          fm_bool   next_ok   = ((i + 1) != mby_ppe_mapper_map_MAP_L4_DST__nd);
           const map_l4_dst_r nxt = next_ok ? q->MAP_L4_DST[i+1] : (const map_l4_dst_r) { 0 };
           
           if ((cur.VALID & 1) && (mapped_key->MAP_OUTER_PROT == cur.MAP_PROT))  {
@@ -632,10 +632,10 @@ static void mapScalar
         fm_uint32 temp = realigned_keys[MBY_RE_KEYS_INNER_L4DST];
         mapped_key->MAP_INNER_L4_DST = realigned_keys[MBY_RE_KEYS_INNER_L4DST];
 
-        for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_DST__nd; i++)
         {
           const map_l4_dst_r cur = q->MAP_L4_DST[i];
-          fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+          fm_bool   next_ok   = ((i + 1) != mby_ppe_mapper_map_MAP_L4_DST__nd);
           const map_l4_dst_r nxt = next_ok ? q->MAP_L4_DST[i+1] : (const map_l4_dst_r) { 0 };
           
           if (((cur.VALID >> 1) & 1) && (mapped_key->MAP_INNER_PROT == cur.MAP_PROT))  {
@@ -1015,7 +1015,7 @@ static void getProfile
     fm_byte trigIdx    = 0;
     fm_byte priosIdx   = 0;
 
-    for (fm_int i = MBY_MAP_PROFILE_KEY0_ENTRIES - 1; i >= 0; i--)
+    for (fm_int i = mby_ppe_mapper_map_MAP_PROFILE_KEY0__nd - 1; i >= 0; i--)
     {
       const map_profile_key0_r          profKey0   = q->MAP_PROFILE_KEY0[i];
       const map_profile_key_invert0_r   profMask0  = q->MAP_PROFILE_KEY_INVERT0[i];
@@ -1216,7 +1216,7 @@ static void mapRewrite
     // Rewrite Keys
     if (map_prof_action.PROFILE_VALID)
     {
-        for (fm_uint i = 0; i < MBY_MAP_REWRITE_ENTRIES_0; i++)
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_REWRITE__nd ; i++)
         {
             uint6 source_id  = q->MAP_REWRITE[map_prof_action.REWRITE_PROFILE][i].SRC_ID;
             fm_uint nybble_idx = i;
@@ -1295,7 +1295,7 @@ static void mapRewrite
         }
 
         if (map_prof_action.DSCP_TGT & 0x4) {
-            /* NOTE: This is place before (dscp_tgt & 0x1) otherwise
+          /* NOTE: This is place before (dscp_tgt & 0x1) otherwise
              * dscp will be remapped twice if both bits are set */
             uint6 dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
             uint6 map_dscp = q->MAP_DSCP_TC[priority_profile * 64 + dscp].DSCP;
@@ -1303,15 +1303,13 @@ static void mapRewrite
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_DSCP_HIGH].val = (map_dscp >> 4);
         }
 
-        if (map_prof_action.DSCP_TGT & 0x1)
-        {
+        if (map_prof_action.DSCP_TGT & 0x1)        {
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
             uint6 map_dscp = q->MAP_DSCP_TC[priority_profile * 64 + dscp].DSCP;
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6, map_dscp);
         }
 
-        if (map_prof_action.DSCP_TGT & 0x2)
-        {
+        if (map_prof_action.DSCP_TGT & 0x2)        {
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
             uint6 map_dscp = q->MAP_DSCP_TC[priority_profile * 64 + dscp].DSCP;
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6, map_dscp);
