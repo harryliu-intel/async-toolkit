@@ -265,10 +265,12 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
         gs.main("typedef struct {\n");
         FOR i := 0 TO r.fields.size()-1 DO
           WITH f  = r.fields.get(i),
-               nm = f.name(debug := FALSE) DO
-            gs.main("  uint%s %s%s;\n", Int(f.width), v.ptr, nm);
+               nm = f.name(debug := FALSE),
+               tn = F("uint%s", Int(f.width)) DO
+            gs.main("  %s %s%s;\n", tn, v.ptr, nm);
             IF p = FIRST(Phases) THEN
-              FmtConstant(xDecls, Int(f.width), F("%s_%s", myTn, nm), "n")
+              FmtConstant(xDecls, Int(f.width), F("%s_%s", myTn, nm), "n");
+              xDecls.addhi(F("typedef %s %s_%s_t;\n", tn, myTn, nm))
             END
           END
         END;
