@@ -12,18 +12,21 @@ void Classifier
           mbyClassifierToHash   * const out
 )
 {
-    fm_byte group = 0;
-    
+    // Init to defaults from the Mapper:
+    fm_byte               ffu_scenario = in->FFU_SCENARIO;
+    mbyClassifierKeys     ffu_keys     = in->FFU_KEYS;
+    mbyClassifierActions  ffu_actions  = in->FFU_ACTIONS;
+
     // Update scenario based on scenario action:
     for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
         if (in->FFU_ACTIONS.act1[s].prec != 0) {    
             fm_byte val = in->FFU_ACTIONS.act1[s].val & 1;
-            FM_SET_UNNAMED_FIELD(out->FFU_SCENARIO, i, 1, val);
+            FM_SET_UNNAMED_FIELD(ffu_scenario, i, 1, val);
         }     
     }                
 
-    // Assign FFU Group outputs:
-    out->FFU_GRP_KEYS    [group] = in->FFU_KEYS;
-    out->FFU_GRP_ACTIONS [group] = in->FFU_ACTIONS;
-    out->FFU_GRP_SCENARIO[group] = in->FFU_SCENARIO;
+    // Assign outputs:
+    out->FFU_KEYS     = ffu_keys;
+    out->FFU_ACTIONS  = ffu_actions;
+    out->FFU_SCENARIO = ffu_scenario;
 }

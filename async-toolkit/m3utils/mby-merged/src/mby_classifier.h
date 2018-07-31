@@ -408,13 +408,10 @@ typedef struct mbyClassifierToHashStruct
     fm_byte                 FFU_SCENARIO;
 
     // FFU Group Keys feeding to next group. Per FFU Group data to be used by DV.
-    mbyClassifierKeys       FFU_GRP_KEYS[1];     // note: [1] for now
+    mbyClassifierKeys       FFU_KEYS;
 
     // FFU Group Actions going to next group Per FFU Group data to be used by DV.
-    mbyClassifierActions    FFU_GRP_ACTIONS[1];  // note: [1] for now
-
-    // The 6-bit FFU scenario to be used by next FFU group. Per FFU Group data to be used by DV.
-    fm_byte                 FFU_GRP_SCENARIO[1]; // note: [1] for now
+    mbyClassifierActions    FFU_ACTIONS;
 
     /* Fghash Actions going to next group Per Fghash data to be used DV. */
 //  mbyFghashActions        FGHASH_ACTIONS[MBY_FFU_HASH_CFG_ENTRIES_1];
