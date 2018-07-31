@@ -429,7 +429,7 @@ reg parser_ext_r {
   name = "Sets Extract action per (stage, 2*rule)";
   desc = "
   Two extract actions are at (stage, rule) and (stage, rule+16).
-  Note that KEY_OFFSET should be even.
+  Note that OFFSET should be even.
   Hardware will ignore the lsb of these fields.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -440,19 +440,32 @@ reg parser_ext_r {
   field {
     AccessType = "RW";
     desc = "
-	The protocol identifier value to extract for this pointer.
+	Must be set to 1 for this extract action to write the protocol_id and
+    base offset to the header pointer indicated by PTR_NUM.
 
            ";
     ValRandomize = true;
-  } PROTOCOL_ID[24:18] = 8'h0;
+  } SET_PTR[26:26] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
-	First source byte relative to ptr.
+	The protocol identifier value to store to the header pointer entry 
+    identified by PTR_NUM. Set to 0xFF to prevent the header pointer 
+    from being used at extraction time.
 
            ";
     ValRandomize = true;
-  } KEY_OFFSET[17:10] = 8'h0;
+  } PROTOCOL_ID[25:18] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+	An offset to add to the current parsing ptr, the sum being stored
+    in the header pointer entry as the base offset for the 
+    corresponding protocol_id.
+
+           ";
+    ValRandomize = true;
+  } OFFSET[17:10] = 8'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -473,8 +486,8 @@ reg parser_ext_r {
   field {
     AccessType = "RW";
     desc = "
-	Which ptrs register to save current ptr value to.
-        Use ptr_num=0 to disable writing ptr.
+	Indicates which of 8 header pointer entries to write with the protocol_id and 
+    base offset, if SET_PTR is set.
 
            ";
     ValRandomize = true;
@@ -542,14 +555,26 @@ regfile parser_ptype_ram_rf {
   parser_ptype_ram_r PARSER_PTYPE_RAM[64] += 8;
 };
 
+
+// PARSER_EXTRACT_CFG[0..15][0..19]
+
 reg parser_extract_cfg_r {
   shared;
   HandCoded = true;
   name = "Extracts the field vector";
   desc = "
-    Indicates the 16b words to extract into the field vector.  This register is indexed
-    such that the extraction for the i'th 16b word in extraction profile p for interface j
-    is stored in PARSER_EXTRACT_CFG[p][((j*16)+i)/4].{OFFSET,PROTOCOL_ID}_{i % 4}.
+    Provides 16 extraction profiles, each indicating the 80 16b words to 
+    extract from the packet buffer into the field vector.  This register 
+    is indexed such that the extraction for the i'th 16b word in extraction profile p
+    is stored in PARSER_EXTRACT_CFG[p][i/4].
+    [br][br]
+    The OFFSET_n and PROTOCOL_ID_n fields are selected by n = i % 4.
+    [br][br]
+    During extraction, the 8 header pointer entries will be scanned for matching
+    protocol_id values. When a match is found, the OFFSET_n value will be summed
+    with the base offset from the header pointer entry and the result used as an 
+    absolute index into the packet from which the 16b word is extracted and
+    loaded into the field vector.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -623,5 +648,5 @@ addrmap mby_ppe_parser_map {
   parser_ext_rf              PARSER_EXT[32];
   parser_ptype_tcam_rf       PARSER_PTYPE_TCAM[2];
   parser_ptype_ram_rf        PARSER_PTYPE_RAM[2];
-  parser_extract_cfg_r       PARSER_EXTRACT_CFG[32];
+  parser_extract_cfg_rf      PARSER_EXTRACT_CFG[16];
 }; 
