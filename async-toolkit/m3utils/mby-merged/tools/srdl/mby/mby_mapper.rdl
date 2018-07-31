@@ -744,67 +744,76 @@ reg map_exp_tc_r {
   field {
     AccessType = "RW";
     desc = "
-        TC to set for this EXP.
+        Defines the TC associated with this ingress EXP.  Laid out as an array of 8 3-bit integers, in little-endian order.  The TC associated with EXP x is located at bits [ 3x : 3(x+1) )
 
-           ";
+          ";
     ValRandomize = true;
-  } TC_7[23:21] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        TC to set for this EXP.
-
-           ";
-    ValRandomize = true;
-  } TC_6[20:18] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        TC to set for this EXP.
-
-           ";
-    ValRandomize = true;
-  } TC_5[17:15] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        TC to set for this EXP.
-
-           ";
-    ValRandomize = true;
-  } TC_4[14:12] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        TC to set for this EXP.
-
-           ";
-    ValRandomize = true;
-  } TC_3[11:9] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        TC to set for this EXP.
-
-           ";
-    ValRandomize = true;
-  } TC_2[8:6] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        TC to set for this EXP.
-
-           ";
-    ValRandomize = true;
-  } TC_1[5:3] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        TC to set for this EXP.
-
-           ";
-    ValRandomize = true;
-  } TC_0[2:0] = 3'h0;
+  } TC_BY_EXP[23:0];
+//
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_7[23:21] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_6[20:18] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_5[17:15] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_4[14:12] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_3[11:9] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_2[8:6] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_1[5:3] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_0[2:0] = 3'h0;
 };
 
 
@@ -861,131 +870,140 @@ reg map_vpri_tc_r {
   field {
     AccessType = "RW";
     desc = "
-        Defines the TC associated with this ingress VPRI.
-
+        Defines the TC associated with this ingress VPRI.  Laid out as an array of 16 3-bit integers, in little-endian order.  The TC associated with VPRI v is located at bits [ 3v : 3(v+1) )
+  
            ";
     ValRandomize = true;
-  } TC_15[47:45] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_14[44:42] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_13[41:39] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_12[38:36] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_11[35:33] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_10[32:30] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_9[29:27] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_8[26:24] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_7[23:21] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_6[20:18] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_5[17:15] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_4[14:12] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_3[11:9] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_2[8:6] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_1[5:3] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the TC associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } TC_0[2:0] = 3'h0;
+  } TC_BY_VPRI[47:0];
+  
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_15[47:45] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_14[44:42] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_13[41:39] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_12[38:36] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_11[35:33] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_10[32:30] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_9[29:27] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_8[26:24] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_7[23:21] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_6[20:18] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_5[17:15] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_4[14:12] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_3[11:9] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_2[8:6] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_1[5:3] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_0[2:0] = 3'h0;
 };
 
 
@@ -1008,131 +1026,141 @@ reg map_vpri_r {
   field {
     AccessType = "RW";
     desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
+        Defines the internal VPRI associated with each ingress VPRI.  Laid out as an array of 16 4-bit integers, in little-endian order.  The internal VPRI associated with ingress VPRI v is located at bits [ 4v : 4(v+1) )
+  
 
            ";
     ValRandomize = true;
-  } VPRI_15[63:60] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_14[59:56] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_13[55:52] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_12[51:48] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_11[47:44] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_10[43:40] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_9[39:36] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_8[35:32] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_7[31:28] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_6[27:24] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_5[23:20] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_4[19:16] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_3[15:12] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_2[11:8] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_1[7:4] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-        Defines the internal VPRI associated with this ingress VPRI.
-
-           ";
-    ValRandomize = true;
-  } VPRI_0[3:0] = 4'h0;
+    } VPRI_BY_VPRI[63:0];
+//    
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_15[63:60] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_14[59:56] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_13[55:52] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_12[51:48] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_11[47:44] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_10[43:40] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_9[39:36] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_8[35:32] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_7[31:28] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_6[27:24] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_5[23:20] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_4[19:16] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_3[15:12] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_2[11:8] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_1[7:4] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_0[3:0] = 4'h0;
 };
 
 
