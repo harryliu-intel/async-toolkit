@@ -5,6 +5,10 @@ TYPE
   Case = { Lower, Upper, Camel };
   Sep = { None, Underscore, Hyphen };
 
+CONST
+  CaseNames = ARRAY Case OF TEXT { "lower", "upper", "camel" };
+  SepNames = ARRAY Sep OF TEXT { "none", "underscore", "hyphen" };
+
 PROCEDURE Parse(id : TEXT; case : Case; sep : Sep) : TextSeq.T;
   (* parse into canonical sequence of sequence of lower case words *)
 

@@ -9,6 +9,9 @@ import ("modula3scheme")
 import ("netobj")
 import ("sstubgen")
 
+_exec(["../../structgen/AMD64_LINUX/structgen","../../wm_net/src/structgen_shared.scm","../../wm_net/src/structgen_m3.scm","../../wm_net/src/structs_m3.scm", "../src/actionsets.scm", "../src/enums.scm", "../src/ffu_enums.scm", "../src/mapper_constants.scm", "../src/parser_constants.scm", "exit"])
+include ("../AMD64_LINUX/derived.m3m")
+
 module ("ModelServer")
 
 %module ("HlpModelServer")
@@ -35,6 +38,50 @@ module ("MbyModel")
 
 Generic_module("BaseModelServer")
 module("MbyModelServer")
+
+interface("BaseModelStage")
+module("Metadata")
+generic_interface("Metadata")
+template("metadata")
+
+Generic_module("ModelStage")
+module ("ModelStageResult")
+interface ("ModelStageResultClass")
+
+
+interface ("MbyTypes")
+%interface ("MbyMeta")
+interface ("MbyParserTypes")
+%interface ("MbyParserSizes")
+%interface ("MbyMacToParserMeta")
+interface ("MbyMacToParser")
+metadata ("MbyMacToParser", "MbyMacToParser")
+%interface ("MbyParserToMapperMeta")
+interface ("MbyParserToMapper")
+metadata("MbyParserToMapper", "MbyParserToMapper")
+
+interface ("MbyParserToModifierMeta")
+interface ("MbyParserInfo")
+interface ("MbyMapperToClassifier")
+metadata ("MbyMapperToClassifier", "MbyMapperToClassifier")
+interface ("MbyFfuTypes")
+
+module ("MbyParserStage")
+module ("MbyParserStageModel")
+%interface ("MbyParserMeta")
+
+%interface ("MbyMapperSizes")
+module ("MbyMapperStage")
+module ("MbyMapperStageModel")
+module ("MbyDoRealignKeys")
+interface ("MbyMapProfKey1")
+interface ("MbyMapProfKey0")
+interface ("MbyMappedKey")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% just testing stuff
+module ("HlpRepStageModel")
+module ("HlpRepStage")
 
 SchemeStubs ("ModelServer")
 

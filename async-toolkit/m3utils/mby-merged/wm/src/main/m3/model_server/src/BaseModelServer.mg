@@ -1,10 +1,5 @@
 GENERIC MODULE BaseModelServer(TheModel, Map, MapAddr);
 IMPORT ModelServer;
-(*
-IMPORT HlpModel AS TheModel;
-IMPORT hlp_top_map AS Map;
-IMPORT hlp_top_map_addr AS MapAddr;
-*)
 IMPORT CsrOp, CsrAccessStatus;
 IMPORT Pathname;
 IMPORT Debug;
@@ -17,7 +12,6 @@ VAR doDebug := Debug.DebugThis(ModelServer.Brand);
     
 REVEAL
   T = Public BRANDED Brand OBJECT
-    h        : MapAddr.H;
   OVERRIDES
     resetChip    := ResetChip;
     init         := Init;

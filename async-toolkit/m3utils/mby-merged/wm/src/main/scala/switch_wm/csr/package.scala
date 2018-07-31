@@ -11,4 +11,14 @@ package switch_wm
   * for using them.
  **/
 package object csr {
+  /**
+    * Implicit method to allow direct usage of the value of a field, without a () to explicitly
+    * call the apply method.
+    *
+    * Controversial whether we want to allow this.
+    * @param f
+    * @return
+    */
+  implicit def fieldToLong(f : RdlRegister[Long]#HardwareReadable) : Long = f.apply
+
 }

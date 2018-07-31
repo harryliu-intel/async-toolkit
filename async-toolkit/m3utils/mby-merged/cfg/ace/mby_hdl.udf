@@ -123,7 +123,22 @@ EOF
                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mbay_dpi_client.c ",
                ],
             },
- 
+            
+            cdn_pcie_lib => {
+                    -hdl_spec => [
+                        "verif/common/cdn_pcie_pkg/cdn_pcie_env.hdl",
+                    ],
+                    -dependent_libs => [
+                        "shdv_shared_lib",
+                    ],
+                    -tools => [
+                        "-FLG_create",
+                        "-lintra_create",
+                        "-sglp_createlib",
+                    ],
+                    -tag => "nonsynth+nonemul+nonlint",
+            },
+            
             mby_jasper_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/rtl/mby_jasper.hdl", "cfg/ace/HDL/rtl/mby_rtl.hdl", ],
                -tag            => "nonsynth+nonlint",
@@ -152,6 +167,7 @@ EOF
                   "gen_mby_wm_m3",
                   "mby_test_lib",
                   "mby_wm_dpi_lib",
+                  "cdn_pcie_lib",
                ],
 
                elab_opts => [

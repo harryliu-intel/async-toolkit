@@ -12,4 +12,22 @@
   * The model does not yet implement the security policy described in the SystemRDL, we believe this should be fixed.
  **/
 package object switch_wm {
+  implicit class RichByteArray(val self : Array[Byte]) {
+    def hexdump: Unit = {
+      print("Dump is: ")
+      var count: Int = 0
+
+      def cr(): Unit = {
+        if ((count % 16) == 0) print("\n" + count.toHexString + "\t")
+        count += 1
+      }
+
+      self.foreach(s => {
+        cr()
+        print(f"$s%02X" + " ")
+      }
+      )
+      println()
+    }
+  }
 }
