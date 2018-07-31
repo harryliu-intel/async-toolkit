@@ -1002,13 +1002,13 @@ static void getParserInfo
 
 static void getProfile
 (
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper * const in,
-    mbyMapperToClassifier   * const out,
-    const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
-    const mbyMapProfKey0            key0,
-    const mbyMapProfKey1            key1,
-    mbyMapProfAction        * const mapProfAction
+        const mby_ppe_mapper_map *       q,
+        const mbyParserToMapper * const in,
+        mbyMapperToClassifier   * const out,
+        const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
+        const mbyMapProfKey0            key0,
+        const mbyMapProfKey1            key1,
+        mbyMapProfAction        * const mapProfAction
 )
 {
     fm_byte profileIdx = 0;
@@ -1017,94 +1017,68 @@ static void getProfile
 
     for (fm_int i = MBY_MAP_PROFILE_KEY0_ENTRIES - 1; i >= 0; i--)
     {
-        fm_uint32 profKey0[MBY_MAP_PROFILE_KEY0_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY0(i, 0), MBY_MAP_PROFILE_KEY0_WIDTH, profKey0);
+      const map_profile_key0_r   profKey0   = q->MAP_PROFILE_KEY0[i];
+      const map_profile_key_invert0_r   profMask0  = q->MAP_PROFILE_KEY_INVERT0[i];
+      const map_profile_key1_r   profKey1   = q->MAP_PROFILE_KEY1[i];
+      const map_profile_key_invert1_r   profMask1  = q->MAP_PROFILE_KEY_INVERT1[i];
+      const map_profile_action_r profAction = q->MAP_PROFILE_ACTION[i];
+      
+      //        fm_uint32 profKey0[MBY_MAP_PROFILE_KEY0_WIDTH] = { 0 };
+      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY0(i, 0), MBY_MAP_PROFILE_KEY0_WIDTH, profKey0);
+      //
+      //        fm_uint32 profMask0[MBY_MAP_PROFILE_KEY_INVERT0_WIDTH] = { 0 };
+      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT0(i, 0), MBY_MAP_PROFILE_KEY_INVERT0_WIDTH, profMask0);
+      //
+      //        fm_uint32 profKey1[MBY_MAP_PROFILE_KEY1_WIDTH] = { 0 };
+      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY1(i, 0), MBY_MAP_PROFILE_KEY1_WIDTH, profKey1);
+      //
+      //        fm_uint32 profMask1[MBY_MAP_PROFILE_KEY_INVERT1_WIDTH] = { 0 };
+      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT1(i, 0), MBY_MAP_PROFILE_KEY_INVERT1_WIDTH, profMask1);
+      //
+      //        fm_uint32 profAction[MBY_MAP_PROFILE_ACTION_WIDTH] = { 0 };
+      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_ACTION(i, 0), MBY_MAP_PROFILE_ACTION_WIDTH, profAction);
 
-        fm_uint32 profMask0[MBY_MAP_PROFILE_KEY_INVERT0_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT0(i, 0), MBY_MAP_PROFILE_KEY_INVERT0_WIDTH, profMask0);
+#define CHECK(z,field,mask)                                   \
+        if ( (((~key##z .field ) & (mask)) & profKey##z.field ) || \
+             (   key##z.field             & profMask##z.field ) )     \
+            continue
 
-        fm_uint32 profKey1[MBY_MAP_PROFILE_KEY1_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY1(i, 0), MBY_MAP_PROFILE_KEY1_WIDTH, profKey1);
+      CHECK(0,PTRS_ERR, 0x1);
+      CHECK(0,EX, 0x7);
+      CHECK(0,CSUM, 0x3);
+      CHECK(0,IHL_OK, 0x1);
+      CHECK(0,IHL_FITS, 0x1);
+      CHECK(0,FLAGS, 0x7FFFFFFFFFFF);
+      CHECK(1,L2_DOMAIN, ~0);
+      CHECK(1,L3_DOMAIN,0x3F);
+      CHECK(1,PORT_PROFILE, 0xF);
+      CHECK(1,DOMAIN_PROFILE, 0xFF);
+      CHECK(1,MAC_ROUTABLE, 0xF);
+      CHECK(1,MAC_MBCAST, 0x3);
 
-        fm_uint32 profMask1[MBY_MAP_PROFILE_KEY_INVERT1_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT1(i, 0), MBY_MAP_PROFILE_KEY_INVERT1_WIDTH, profMask1);
-
-        fm_uint32 profAction[MBY_MAP_PROFILE_ACTION_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_ACTION(i, 0), MBY_MAP_PROFILE_ACTION_WIDTH, profAction);
-
-        if ( (((~key0.PTRS_ERR) & 0x1) & FM_ARRAY_GET_BIT(profKey0,  MBY_MAP_PROFILE_KEY0,        PTRS_ERR)) ||
-             (   key0.PTRS_ERR         & FM_ARRAY_GET_BIT(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, PTRS_ERR)) )
-            continue;
-
-        if ( (((~key0.EX) & 0x7) & FM_ARRAY_GET_FIELD(profKey0,  MBY_MAP_PROFILE_KEY0,        EX)) ||
-             (   key0.EX         & FM_ARRAY_GET_FIELD(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, EX)) )
-            continue;
-
-        if ( (((~key0.CSUM) & 0x3) & FM_ARRAY_GET_FIELD(profKey0,  MBY_MAP_PROFILE_KEY0,        CSUM)) ||
-             (   key0.CSUM         & FM_ARRAY_GET_FIELD(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, CSUM)) )
-            continue;
-
-        if ( (((~key0.IHL_OK) & 0x1) & FM_ARRAY_GET_BIT(profKey0,  MBY_MAP_PROFILE_KEY0,        IHL_OK)) ||
-             (   key0.IHL_OK         & FM_ARRAY_GET_BIT(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, IHL_OK)) )
-            continue;
-
-        if ( (((~key0.IHL_FITS) & 0x1) & FM_ARRAY_GET_BIT(profKey0,  MBY_MAP_PROFILE_KEY0,        IHL_FITS)) ||
-             (   key0.IHL_FITS         & FM_ARRAY_GET_BIT(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, IHL_FITS)) )
-            continue;
-
-        if ( (((~key0.FLAGS) & 0x7FFFFFFFFFFF) & FM_ARRAY_GET_FIELD64(profKey0,  MBY_MAP_PROFILE_KEY0,        FLAGS)) ||
-             (   key0.FLAGS                    & FM_ARRAY_GET_FIELD64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, FLAGS)) )
-            continue;
-
-        if ( (~key1.L2_DOMAIN & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        L2_DOMAIN)) ||
-             ( key1.L2_DOMAIN & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, L2_DOMAIN)) )
-            continue;
-
-        if ( (((~key1.L3_DOMAIN) & 0x3F) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        L3_DOMAIN)) ||
-             (   key1.L3_DOMAIN          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, L3_DOMAIN)) )
-            continue;
-
-        if ( (((~key1.PORT_PROFILE) & 0xF) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        PORT_PROFILE)) ||
-             (   key1.PORT_PROFILE         & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, PORT_PROFILE)) )
-            continue;
-
-        if ( (((~key1.DOMAIN_PROFILE) & 0xFF) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        DOMAIN_PROFILE)) ||
-             (   key1.DOMAIN_PROFILE          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, DOMAIN_PROFILE)) )
-            continue;
-
-        if ( (((~key1.MAC_ROUTABLE) & 0xF ) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        MAC_ROUTABLE)) ||
-             (   key1.MAC_ROUTABLE          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, MAC_ROUTABLE)) )
-            continue;
-
-        if ( (((~key1.MAC_MBCAST) & 0x3 ) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        MAC_MBCAST)) ||
-             (   key1.MAC_MBCAST          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, MAC_MBCAST)) )
-            continue;
-
+#undef CHECK
         // TODO: add packet type check
 
-        if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_VALID)) && (profileIdx == 0))
-        {
+        if (profAction.PROFILE_VALID && (profileIdx == 0))        {
             profileIdx                     = i;
             mapProfAction->PROFILE_VALID   = 1;
-            mapProfAction->PROFILE         = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE);
-            mapProfAction->REWRITE_PROFILE = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, REWRITE_PROFILE);
+            mapProfAction->PROFILE         = profAction.PROFILE;
+            mapProfAction->REWRITE_PROFILE = profAction.REWRITE_PROFILE;
         }
 
-        if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, TRIG_VALID)) && (trigIdx == 0))
-        {
+        if (profAction.TRIG_VALID  && (trigIdx == 0))        {
             trigIdx                        = i;
             mapProfAction->TRIG_VALID      = 1;
-            mapProfAction->PROFILE_TRIG    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_TRIG);
-            mapProfAction->IP_OPTIONS_MASK = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, IP_OPTIONS_MASK);
-            mapProfAction->PARSER_ERROR    = FM_ARRAY_GET_BIT  (profAction, MBY_MAP_PROFILE_ACTION, PARSER_ERROR);
+            mapProfAction->PROFILE_TRIG    = profAction.PROFILE_TRIG;
+            mapProfAction->IP_OPTIONS_MASK = profAction.IP_OPTIONS_MASK;
+            mapProfAction->PARSER_ERROR    = profAction.PARSER_ERROR;
         }
 
-        if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, PRIOS_VALID)) && (priosIdx == 0))
-        {
+        if (profAction.PRIOS_VALID && (priosIdx == 0))        {
             priosIdx                   = i;
             mapProfAction->PRIOS_VALID = 1;
-            mapProfAction->VPRI_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, VPRI_TGT);
-            mapProfAction->DSCP_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, DSCP_TGT);
+            mapProfAction->VPRI_TGT    = profAction.VPRI_TGT;
+            mapProfAction->DSCP_TGT    = profAction.DSCP_TGT;
         }
 
         // Found all types
@@ -1485,7 +1459,7 @@ mbyMapper
 
     getProfile
     (
-        regs,
+        q,
         in,
         mapper_to_classifier,
         realigned_keys,
