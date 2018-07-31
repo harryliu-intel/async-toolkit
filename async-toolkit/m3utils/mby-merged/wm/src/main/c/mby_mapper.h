@@ -9,6 +9,9 @@
 #include "fm_defs.h"
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
+typedef unsigned int uint;
+#define NULL ((void *)0)
+
 // Defines:
 #define MBY_MAPPER_BASE                                         (0x3780000)
 #define MBY_MAPPER_SIZE                                         (0x0080000)
