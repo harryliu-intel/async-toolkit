@@ -2,27 +2,7 @@ package switch_wm.ppe
 
 import switch_wm._
 import switch_wm.csr._
-/**
-  * ALU operation as used by parsing stages
-  * @param rot rotation amount, up to 16 bits
-  * @param mask mask field (12 bits)
-  */
-class AluOperation (val rot : Short, val mask : Short) {
-  assert(rot < 16, "Rotate by 16 is the max allowed")
-  assert((mask & 0xf000.toShort) == 0, "Only 12 bits of mask allowed")
-  // no 'logical rotate' operator native to scala
-  def apply(x : Short) : Short = (((x.toInt << 16 | x.toInt) >> rot.toInt) & mask).toShort
-}
-object AluOperation {
-  // Build up from CSR encoding, High 4 bits are rotate, low 12 bits are mask
-  def apply(x : Short) : AluOperation = {
-    AluOperation(((x >> 12) & 0xF).toShort, (x & 0xFFF).toShort)
-  }
-  // Build up from CSR encoding, High 4 bits are rotate, low 12 bits are mask
-  def apply(rot : Short, mask : Short) : AluOperation = {
-    new AluOperation(rot.toShort, mask.toShort)
-  }
-}
+import Parser._
 
 class ParserState(val w : List[Short], val op : AluOperation, val state : Short, val ptr : Short)
 object ParserState {
@@ -50,19 +30,7 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
         anaW.SKIP.toShort,AluOperation(anaS.NEXT_OP.toShort), anaS.NEXT_STATE.toShort, anaS.NEXT_STATE_MASK.toShort)
     }
   }
-  class ExtractAction(val protoId : Short, val keyOffset : Short, val flagNum : Option[Short], val flagVal : Boolean, val ptrNum : Option[Int]) {
-    def x (input : (PacketFields, PacketFlags)) : (PacketFields, PacketFlags) = {
-      val flags : PacketFlags = flagNum match {
-        case None => input._2
-        case Some(flagNum) => input._2.assign(flagNum, flagVal)
-      }
-      val fields : PacketFields = ptrNum match {
-        case None => input._1
-        case Some(ptrNum) => input._1.populateField(ptrNum, Seq(0,0))
-      }
-      (fields, flags)
-    }
-  }
+  
   class ExceptionAction( val exOffset : Short, val parsingDone : Boolean) {
     def x (input : (PacketFields, PacketFlags)) : (PacketFields, PacketFlags) = input
 
@@ -93,15 +61,7 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
     def extractAction(x : Int) : List[ExtractAction] = {
       val eaCsr = csr.PARSER_EXT(myindex)
       val eaCsrPair = List(eaCsr(x), eaCsr(x + 16))
-      eaCsrPair.map(x => {
-        // 0 is special as a flag number, means do _no_ flag annotation do not update _0_
-        val flagNum = x.FLAG_NUM.apply match {
-          case 0 => None
-          case x => Some(x.toShort)
-        }
-        new ExtractAction(x.PROTOCOL_ID.toShort, x.KEY_OFFSET.toShort, flagNum, x.FLAG_VALUE() == 1l, Some(x.PTR_NUM.toShort))
-      }
-      )
+      eaCsrPair.map(x => ExtractAction(x))
     }
     def exceptionAction(x  : Int) : ExceptionAction = {
       val exCsr = csr.PARSER_EXC(myindex)(x)
@@ -115,7 +75,7 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
     (0 until 16) collectFirst tcamMatch
   }
 
-  val x : (PacketHeader, ParserState, PacketFlags, PacketFields, Boolean, Boolean) => (ParserState, PacketFlags, PacketFields, Boolean, Boolean) = (ph, ps, pf, fields, eos, done) => {
+  val x : (PacketHeader, ParserState, PacketFlags, Parser.ProtoOffsets, Boolean, Boolean) => (ParserState, PacketFlags, ProtoOffsets, Boolean, Boolean) = (ph, ps, pf, fields, eos, done) => {
     val action = matchingAction(ps.w(0), ps.w(1), ps.state)
     (eos, done, action) match {
       // if we're done, or there was an exception previously then do nothing
@@ -129,7 +89,9 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
 }
 
 class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[PacketHeader, Metadata] {
-  val stages = (0 until 16).map(i => new ParserStage(csr, i))
+  val parserStages = 16
+
+  val stages = (0 until parserStages).map(i => new ParserStage(csr, i))
 
   def initialState(ph : PacketHeader, port : Int) : ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(port)
@@ -141,22 +103,35 @@ class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[Packe
     ParserState(w,aluOp, state, ptr)
   }
 
+  def fieldVector(ph : PacketHeader, protoOffsets: ProtoOffsets) : PacketFields = {
+    val extractorCsr = csr.PARSER_EXTRACT_CFG
+    // each of the 80 fields of the vector has a configuration in the CSR
+    PacketFields()
+  }
+
   val x : (PacketHeader) => Metadata = ph => {
     val p = 0 // need to handle this via the function interface somehow...
     val is = initialState(ph, p)
     val emptyFlags = PacketFlags()
-    val emptyFields = PacketFields()
     //    val (ps : ParserState, pf: PacketFlags, eos : Boolean,  done: Boolean) = stages.map(_.x).compose(is, emptyFlags, false, false)
-    val init = (is, emptyFlags, emptyFields, false, false)
+    val init = (is, emptyFlags, Parser.EmptyProtoOffsets, false, false)
     implicit val packetheader = ph
     // apply all the parser stages, the packetheader is the same, but pass the other state down the line
     // this needs cleanup!
-    val result : (ParserState, PacketFlags, PacketFields, Boolean, Boolean) = stages.map(_.x).foldLeft(init){
+    val stagesResult : (ParserState, PacketFlags, Parser.ProtoOffsets, Boolean, Boolean) = stages.map(_.x).foldLeft(init){
       (previous, f) => {
-
         f(ph, previous._1, previous._2, previous._3, previous._4, previous._5)
       }
     }
-    Metadata(result._2, result._3)
+    // now we have the flags and the proto-offsets
+    // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
+    Metadata(stagesResult._2, fieldVector(ph, stagesResult._3))
   }
+}
+
+object Parser {
+  type ProtoId = Int
+  type BaseOffset = Int
+  type ProtoOffsets = IndexedSeq[(ProtoId, BaseOffset)]
+  val EmptyProtoOffsets : ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
 }
