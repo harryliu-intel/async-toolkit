@@ -11,4 +11,10 @@ c_source ("mby_mapper")
 
 c_source ("mby_model_basic")
 
+h_source ("fm_bitfield")
+c_source ("fm_bitfield")
+
+h_source ("fm_defs")
+h_source ("fm_types")
+
 library ("mby_c_model")

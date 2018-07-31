@@ -6,7 +6,8 @@
 #define MBY_COMMON_H
 
 // Includes:
-#include "mby_classifier_defines.h"
+#include "mby_c_types.h"
+#include "mby_classifier_defines.h"  // should not be here?
 
 #define MBY_N_PARSER_KEYS                 80
 #define MBY_N_PARSER_FLAGS                48
@@ -122,32 +123,6 @@
     fmMultiWordBitfieldSet32((array), (bit), (bit), (value))
 
 #define MBY_REGISTER_ARRAY_SIZE 0x1800000
-
-// Basic Data Types:
-typedef char                  fm_char;
-typedef short                 fm_int16;
-typedef int                   fm_int32;
-typedef long long             fm_int64;
-typedef int                   fm_int;
-
-typedef unsigned char         fm_bool;
-typedef unsigned char         fm_byte;
-typedef unsigned int          fm_uint;
-typedef unsigned short        fm_uint16;
-typedef unsigned int          fm_uint32;
-typedef unsigned long long    fm_uint64;
-
-typedef char                 *fm_text;
-
-// FM Data Types:
-typedef fm_int                fm_status;
-typedef unsigned long long    fm_macaddr;
-
-// Constants:
-#define FM_OK     0
-#define FM_FAIL   1
-#define TRUE      1
-#define FALSE     0
 
 // External function prototypes:
 

@@ -414,6 +414,7 @@ static void insertDefaults
 
 static fm_int getTcFromPriSource
 (
+    const mby_ppe_mapper_map    *        q,
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper * const in,
     mbyMapperToClassifier   * const out,
@@ -422,11 +423,8 @@ static fm_int getTcFromPriSource
     const fm_byte                   priority_profile
 )
 {
-    fm_uint32 map_domain_action0_vals[MBY_MAP_DOMAIN_ACTION0_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action0_vals);
-
-    fm_byte priSource       = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, PRI_SOURCE);
-    fm_bool forceDefaultPri = FM_ARRAY_GET_BIT  (map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, FORCE_DEFAULT_PRI);
+    fm_byte priSource = q->MAP_DOMAIN_ACTION0[domain_index].PRI_SOURCE;
+    fm_bool forceDefaultPri = q->MAP_DOMAIN_ACTION0[domain_index].FORCE_DEFAULT_PRI;
 
     fm_int  tc = -1;
 
@@ -477,7 +475,7 @@ static fm_int getTcFromPriSource
     out->NO_PRI_ENC = 0;
 
     if ((forceDefaultPri) || (tc < 0)) {
-        tc = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, DEFAULT_PRI);
+        tc = q->MAP_DOMAIN_ACTION0[domain_index].DEFAULT_PRI;
         out->NO_PRI_ENC = 1;
     }
 
@@ -486,6 +484,8 @@ static fm_int getTcFromPriSource
 
 static void mapScalar
 (
+
+    const mby_ppe_mapper_map *       q,
     fm_uint32                        regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper  * const in,
     mbyMapperToClassifier    * const out,
@@ -825,7 +825,7 @@ static void mapScalar
 
     out->LEARN_MODE = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE);
 
-    fm_byte tc = getTcFromPriSource(regs, in, out, domain_index, realigned_keys, priority_profile);
+    fm_byte tc = getTcFromPriSource(q, regs, in, out, domain_index, realigned_keys, priority_profile);
     out->FFU_ACTIONS.act4[MBY_FFU_ACTION_TC].val = tc;
 
     fm_uint32 map_domain_action1_vals[MBY_MAP_DOMAIN_ACTION1_WIDTH] = { 0 };
@@ -1577,6 +1577,7 @@ mbyMapper
 
     mapScalar
     (
+        q,
         regs,
         in,
         mapper_to_classifier,

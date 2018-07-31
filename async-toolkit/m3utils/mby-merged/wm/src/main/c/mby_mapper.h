@@ -6,6 +6,7 @@
 #define MBY_MAPPER_H
 
 #include "mby_common.h"
+#include "fm_defs.h"
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 // Defines:
