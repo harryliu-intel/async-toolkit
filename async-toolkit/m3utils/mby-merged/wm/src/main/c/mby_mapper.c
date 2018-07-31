@@ -1017,26 +1017,11 @@ static void getProfile
 
     for (fm_int i = MBY_MAP_PROFILE_KEY0_ENTRIES - 1; i >= 0; i--)
     {
-      const map_profile_key0_r   profKey0   = q->MAP_PROFILE_KEY0[i];
+      const map_profile_key0_r          profKey0   = q->MAP_PROFILE_KEY0[i];
       const map_profile_key_invert0_r   profMask0  = q->MAP_PROFILE_KEY_INVERT0[i];
-      const map_profile_key1_r   profKey1   = q->MAP_PROFILE_KEY1[i];
+      const map_profile_key1_r          profKey1   = q->MAP_PROFILE_KEY1[i];
       const map_profile_key_invert1_r   profMask1  = q->MAP_PROFILE_KEY_INVERT1[i];
-      const map_profile_action_r profAction = q->MAP_PROFILE_ACTION[i];
-      
-      //        fm_uint32 profKey0[MBY_MAP_PROFILE_KEY0_WIDTH] = { 0 };
-      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY0(i, 0), MBY_MAP_PROFILE_KEY0_WIDTH, profKey0);
-      //
-      //        fm_uint32 profMask0[MBY_MAP_PROFILE_KEY_INVERT0_WIDTH] = { 0 };
-      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT0(i, 0), MBY_MAP_PROFILE_KEY_INVERT0_WIDTH, profMask0);
-      //
-      //        fm_uint32 profKey1[MBY_MAP_PROFILE_KEY1_WIDTH] = { 0 };
-      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY1(i, 0), MBY_MAP_PROFILE_KEY1_WIDTH, profKey1);
-      //
-      //        fm_uint32 profMask1[MBY_MAP_PROFILE_KEY_INVERT1_WIDTH] = { 0 };
-      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT1(i, 0), MBY_MAP_PROFILE_KEY_INVERT1_WIDTH, profMask1);
-      //
-      //        fm_uint32 profAction[MBY_MAP_PROFILE_ACTION_WIDTH] = { 0 };
-      //        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_ACTION(i, 0), MBY_MAP_PROFILE_ACTION_WIDTH, profAction);
+      const map_profile_action_r        profAction = q->MAP_PROFILE_ACTION[i];
 
 #define CHECK(z,field,mask)                                   \
         if ( (((~key##z .field ) & (mask)) & profKey##z.field ) || \
@@ -1057,35 +1042,35 @@ static void getProfile
       CHECK(1,MAC_MBCAST, 0x3);
 
 #undef CHECK
-        // TODO: add packet type check
-
-        if (profAction.PROFILE_VALID && (profileIdx == 0))        {
-            profileIdx                     = i;
-            mapProfAction->PROFILE_VALID   = 1;
-            mapProfAction->PROFILE         = profAction.PROFILE;
-            mapProfAction->REWRITE_PROFILE = profAction.REWRITE_PROFILE;
-        }
-
-        if (profAction.TRIG_VALID  && (trigIdx == 0))        {
-            trigIdx                        = i;
-            mapProfAction->TRIG_VALID      = 1;
-            mapProfAction->PROFILE_TRIG    = profAction.PROFILE_TRIG;
-            mapProfAction->IP_OPTIONS_MASK = profAction.IP_OPTIONS_MASK;
-            mapProfAction->PARSER_ERROR    = profAction.PARSER_ERROR;
-        }
-
-        if (profAction.PRIOS_VALID && (priosIdx == 0))        {
-            priosIdx                   = i;
-            mapProfAction->PRIOS_VALID = 1;
-            mapProfAction->VPRI_TGT    = profAction.VPRI_TGT;
-            mapProfAction->DSCP_TGT    = profAction.DSCP_TGT;
-        }
-
-        // Found all types
-        if ((profileIdx > 0) && (trigIdx > 0) && (priosIdx > 0))
-            break;
+      // TODO: add packet type check
+      
+      if (profAction.PROFILE_VALID && (profileIdx == 0))        {
+        profileIdx                     = i;
+        mapProfAction->PROFILE_VALID   = 1;
+        mapProfAction->PROFILE         = profAction.PROFILE;
+        mapProfAction->REWRITE_PROFILE = profAction.REWRITE_PROFILE;
+      }
+      
+      if (profAction.TRIG_VALID  && (trigIdx == 0))        {
+        trigIdx                        = i;
+        mapProfAction->TRIG_VALID      = 1;
+        mapProfAction->PROFILE_TRIG    = profAction.PROFILE_TRIG;
+        mapProfAction->IP_OPTIONS_MASK = profAction.IP_OPTIONS_MASK;
+        mapProfAction->PARSER_ERROR    = profAction.PARSER_ERROR;
+      }
+      
+      if (profAction.PRIOS_VALID && (priosIdx == 0))        {
+        priosIdx                   = i;
+        mapProfAction->PRIOS_VALID = 1;
+        mapProfAction->VPRI_TGT    = profAction.VPRI_TGT;
+        mapProfAction->DSCP_TGT    = profAction.DSCP_TGT;
+      }
+      
+      // Found all types
+      if ((profileIdx > 0) && (trigIdx > 0) && (priosIdx > 0))
+        break;
     } // rof (i=0...)
-
+    
     out->FFU_SCENARIO = mapProfAction->PROFILE;
 
     // Set Scenario action
@@ -1206,19 +1191,17 @@ static void rewriteSourceNybble
         return;
     }
 
-    if (nybble_idx < 8)
-    {
+    if (nybble_idx < 8)    {
         FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key16[keyIdx], keyOff, 4, val);
     }
-    else if (nybble_idx <= 31)
-    {
+    else if (nybble_idx <= 31)    {
         FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[keyIdx], keyOff, 4, val);
     }
 }
 
 static void mapRewrite
 (
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const mby_ppe_mapper_map    *        q,
     const mbyParserToMapper * const in,
     mbyMapperToClassifier   * const out,
     const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
@@ -1235,10 +1218,7 @@ static void mapRewrite
     {
         for (fm_uint i = 0; i < MBY_MAP_REWRITE_ENTRIES_0; i++)
         {
-            fm_uint32 map_rewrite_vals[MBY_MAP_REWRITE_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_REWRITE(map_prof_action.REWRITE_PROFILE, i, 0), MBY_MAP_REWRITE_WIDTH, map_rewrite_vals);
-
-            fm_byte source_id  = FM_ARRAY_GET_FIELD(map_rewrite_vals, MBY_MAP_REWRITE, SRC_ID);
+            uint6 source_id  = q->MAP_REWRITE[map_prof_action.REWRITE_PROFILE][i].SRC_ID;
             fm_uint nybble_idx = i;
 
             rewriteSourceNybble
@@ -1290,40 +1270,35 @@ static void mapRewrite
 
     if (map_prof_action.PRIOS_VALID == 1)
     {
-        fm_uint32 map_vpri_vals[MBY_MAP_VPRI_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_VPRI(priority_profile, 0), MBY_MAP_VPRI_WIDTH, map_vpri_vals);
-
+        const uint64 map_vpri = q->MAP_VPRI[priority_profile].VPRI_BY_VPRI;
+        
         /* vpri_tgt and dscp_tgt, no valid check is needed */
         if (map_prof_action.VPRI_TGT & 0x4) {
             /* NOTE: This is place before (vpri_tgt & 0x1) otherwise
              * vpri will be remapped twice if both bits are set */
             fm_int vpri     = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_vals, vpri * 4, 4);
+            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri, vpri * 4, 4);
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_VPRI_LOW].val = map_vpri;
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_VPRI_HIGH].val = map_vpri;
         }
 
         if (map_prof_action.VPRI_TGT & 0x1) {
             fm_int vpri     = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_vals, vpri * 4, 4);
+            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri, vpri * 4, 4);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4, map_vpri)
         }
 
         if (map_prof_action.VPRI_TGT & 0x2) {
             fm_int vpri     = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_INNER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_vals, vpri * 4, 4);
+            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri, vpri * 4, 4);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_INNER_VLAN1], 12, 4, map_vpri);
         }
 
         if (map_prof_action.DSCP_TGT & 0x4) {
             /* NOTE: This is place before (dscp_tgt & 0x1) otherwise
              * dscp will be remapped twice if both bits are set */
-            fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
-
-            fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((priority_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
-
-            fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
+            uint6 dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
+            uint6 map_dscp = q->MAP_DSCP_TC[priority_profile * 64 + dscp].DSCP;
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_DSCP_LOW].val  = map_dscp & 0xF;
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_DSCP_HIGH].val = (map_dscp >> 4);
         }
@@ -1331,22 +1306,14 @@ static void mapRewrite
         if (map_prof_action.DSCP_TGT & 0x1)
         {
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
-
-            fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((priority_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
-
-            fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
+            uint6 map_dscp = q->MAP_DSCP_TC[priority_profile * 64 + dscp].DSCP;
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6, map_dscp);
         }
 
         if (map_prof_action.DSCP_TGT & 0x2)
         {
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
-
-            fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((priority_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
-
-            fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
+            uint6 map_dscp = q->MAP_DSCP_TC[priority_profile * 64 + dscp].DSCP;
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6, map_dscp);
         }
     }
@@ -1361,7 +1328,6 @@ mbyMapper
           mbyParserToModifier   * const parser_to_modifier
 )
 {
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE];
     const map_port_cfg_r portCfg = q->MAP_PORT_CFG[in->RX_PORT];
    
     fm_bool isIPv4[MBY_N_IS_IP_BITS] = { FALSE };
@@ -1409,7 +1375,6 @@ mbyMapper
     insertDefaults
     (
         q->MAP_PORT_DEFAULT,
-        //        regs,
         in,
         mapper_to_classifier,
         &portCfg,
@@ -1470,7 +1435,7 @@ mbyMapper
 
     mapRewrite
     (
-        regs,
+        q,
         in,
         mapper_to_classifier,
         realigned_keys,
