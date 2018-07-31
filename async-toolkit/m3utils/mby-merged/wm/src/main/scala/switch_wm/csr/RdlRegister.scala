@@ -28,7 +28,7 @@ abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElem
     */
   trait HardwareReadable {
     this: RdlField =>
-    def apply: Long = extract(r)
+    def apply(): Long = extract(r)
   }
 
   /** Writable by hardware
