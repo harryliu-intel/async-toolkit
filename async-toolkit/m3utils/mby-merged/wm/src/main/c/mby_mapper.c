@@ -514,9 +514,7 @@ compressMac(
 
 static void mapScalar
 (
-
     const mby_ppe_mapper_map *       q,
-    fm_uint32                        regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper  * const in,
     mbyMapperToClassifier    * const out,
     const map_port_cfg_r     *       port_cfg,
@@ -542,8 +540,7 @@ static void mapScalar
     mapped_key->MAP_PORT = q->MAP_PORT[in->RX_PORT].MAP_PORT;
 
     // Compress PROT to 3 bits, highest index match wins
-    for (fm_uint i = 0; i < MBY_MAP_PROT_ENTRIES; i++)
-    {
+    for (fm_uint i = 0; i < MBY_MAP_PROT_ENTRIES; i++)   {
         const map_prot_r map_prot = q->MAP_PROT[i];
         
         if (in->PA_FLAGS[MBY_PA_FLAGS_INR_L3_V] &&
@@ -554,7 +551,6 @@ static void mapScalar
             (map_prot.PROT == FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8)))
           mapped_key->MAP_OUTER_PROT = map_prot.MAP_PROT;
     }
-    
 
     fm_bool oDmacMulticast, oDmacBroadcast;
 
@@ -616,26 +612,17 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
         {
-            fm_uint32 map_l4_dst_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_vals);
-
-            fm_uint32 map_l4_dst_next_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i+1, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_next_vals);
-
-            fm_byte   valid       = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, VALID);
-            fm_uint32 curr_prot   = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_PROT);
-            fm_uint32 curr_map    = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, L4_DST);
-            fm_uint32 curr_l4_dst = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_L4_DST);
-
-            if ((valid & 1) && (mapped_key->MAP_OUTER_PROT == curr_prot))
-            {
-                fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
-                fm_uint32 next_map  = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, L4_DST)   : 0;
-                fm_uint32 next_prot = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, MAP_PROT) : 0;
-
-                if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
-                    mapped_key->MAP_OUTER_L4_DST = curr_l4_dst;
-            }
+          const map_l4_dst_r cur = q->MAP_L4_DST[i];
+          fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+          const map_l4_dst_r nxt = next_ok ? q->MAP_L4_DST[i+1] : (const map_l4_dst_r) { 0 };
+          
+          if ((cur.VALID & 1) && (mapped_key->MAP_OUTER_PROT == cur.MAP_PROT))  {
+            fm_uint32 next_map  = (next_ok) ? nxt.L4_DST : 0;
+            fm_uint32 next_prot = (next_ok) ? nxt.MAP_PROT : 0;
+            
+            if ((cur.L4_DST <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
+              mapped_key->MAP_OUTER_L4_DST = cur.MAP_L4_DST;
+          }
         }
     }
 
@@ -647,26 +634,17 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
         {
-            fm_uint32 map_l4_dst_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_vals);
-
-            fm_uint32 map_l4_dst_next_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i+1, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_next_vals);
-
-            fm_byte   valid       = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, VALID);
-            fm_uint32 curr_prot   = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_PROT);
-            fm_uint32 curr_map    = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, L4_DST);
-            fm_uint32 curr_l4_dst = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_L4_DST);
-
-            if (((valid >> 1) & 1) && (mapped_key->MAP_INNER_PROT == curr_prot))
-            {
-                fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
-                fm_uint32 next_map  = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, L4_DST)   : 0;
-                fm_uint32 next_prot = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, MAP_PROT) : 0;
-
-                if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
-                    mapped_key->MAP_INNER_L4_DST = curr_l4_dst;
-            }
+          const map_l4_dst_r cur = q->MAP_L4_DST[i];
+          fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+          const map_l4_dst_r nxt = next_ok ? q->MAP_L4_DST[i+1] : (const map_l4_dst_r) { 0 };
+          
+          if (((cur.VALID >> 1) & 1) && (mapped_key->MAP_INNER_PROT == cur.MAP_PROT))  {
+            fm_uint32 next_map  = (next_ok) ? nxt.L4_DST : 0;
+            fm_uint32 next_prot = (next_ok) ? nxt.MAP_PROT : 0;
+            
+            if ((cur.L4_DST <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
+              mapped_key->MAP_INNER_L4_DST = cur.MAP_L4_DST;
+          }
         }
     }
 
@@ -702,33 +680,21 @@ static void mapScalar
     FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_MBCAST, 1, 1, oDmacBroadcast);
 
     // domain TCAM - domain_index is always valid here
-    fm_uint32 map_domain_action0_vals[MBY_MAP_DOMAIN_ACTION0_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action0_vals);
-
-    fm_bool update_domains = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, UPDATE_DOMAINS);
-
-    fm_byte priority_profile = 0;
+    const map_domain_action0_r map_domain_action0 = q->MAP_DOMAIN_ACTION0[domain_index];
+    
+    fm_byte priority_profile;
 
     // TODO: how to get L2 and L3 domains from metadata.
-    if (update_domains)
-    {
-        fm_byte operator_id = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
-        fm_byte l2_domain   = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L2_DOMAIN);
-        fm_byte l3_domain   = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L3_DOMAIN);
+    if (map_domain_action0.UPDATE_DOMAINS) {
+        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  0, 4, map_domain_action0.OPERATOR_ID);
+        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  4, 9, map_domain_action0.L2_DOMAIN);
+        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4), 13, 6, map_domain_action0.L3_DOMAIN);
 
-        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  0, 4, operator_id);
-        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  4, 9, l2_domain);
-        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4), 13, 6, l3_domain);
-
-        priority_profile = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
-    }
-    else
-    {
+        priority_profile = map_domain_action0.PRIORITY_PROFILE;
+    } else {
         fm_byte l2_domain = FM_ARRAY_GET_UNNAMED_FIELD(((fm_uint32*)(in->PKT_META + 5*4)), 4, 9);
-        fm_uint32 map_domain_profile_vals[MBY_MAP_DOMAIN_PROFILE_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_PROFILE(l2_domain, 0), MBY_MAP_DOMAIN_PROFILE_WIDTH, map_domain_profile_vals);
 
-        priority_profile = FM_ARRAY_GET_FIELD(map_domain_profile_vals, MBY_MAP_DOMAIN_PROFILE, PRIORITY_PROFILE);
+        priority_profile = q->MAP_DOMAIN_PROFILE[l2_domain].PRIORITY_PROFILE;
     }
 
     out->PRIORITY_PROFILE = priority_profile;
@@ -736,33 +702,25 @@ static void mapScalar
     map_prof_key1->L2_DOMAIN = FM_ARRAY_GET_UNNAMED_FIELD(((fm_uint32*)(in->PKT_META + 5*4)),  4, 9);
     map_prof_key1->L3_DOMAIN = FM_ARRAY_GET_UNNAMED_FIELD(((fm_uint32*)(in->PKT_META + 5*4)), 13, 6);
 
-    fm_bool un0 = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_EN);
-    out->FFU_ACTIONS.act1[MBY_FFU_ACTION_LEARN].val = un0;
+    out->FFU_ACTIONS.act1[MBY_FFU_ACTION_LEARN].val = map_domain_action0.LEARN_EN;
 
-    out->LEARN_MODE = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE);
+    out->LEARN_MODE = map_domain_action0.LEARN_MODE;
 
     fm_byte tc = getTcFromPriSource(q, in, out, domain_index, realigned_keys, priority_profile);
     out->FFU_ACTIONS.act4[MBY_FFU_ACTION_TC].val = tc;
 
-    fm_uint32 map_domain_action1_vals[MBY_MAP_DOMAIN_ACTION1_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_ACTION1(domain_index, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action1_vals);
+    const map_domain_action1_r map_domain_action1 = q->MAP_DOMAIN_ACTION1[domain_index];
 
-    fm_uint16 l2Policer           = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, L2_POLICER);
-    fm_uint16 l3Policer           = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, L3_POLICER);
-    map_prof_key1->DOMAIN_PROFILE = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, DOMAIN_PROFILE);
-    out->L2_IVLAN1_CNT_INDEX      = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, VLAN_COUNTER);
-
-    fm_uint32 map_domain_pol_cfg_vals[MBY_MAP_DOMAIN_POL_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_POL_CFG(0), MBY_MAP_DOMAIN_POL_CFG_WIDTH, map_domain_pol_cfg_vals);
-
-    fm_byte l2_color_cfg = FM_ARRAY_GET_FIELD(map_domain_pol_cfg_vals, MBY_MAP_DOMAIN_POL_CFG, L2_COLOR_CFG);
-    fm_byte l3_color_cfg = FM_ARRAY_GET_FIELD(map_domain_pol_cfg_vals, MBY_MAP_DOMAIN_POL_CFG, L3_COLOR_CFG);
+    fm_uint16 l2Policer           = map_domain_action1.L2_POLICER;
+    fm_uint16 l3Policer           = map_domain_action1.L3_POLICER;
+    map_prof_key1->DOMAIN_PROFILE = map_domain_action1.DOMAIN_PROFILE;
+    out->L2_IVLAN1_CNT_INDEX      = map_domain_action1.VLAN_COUNTER;
 
     if (l2Policer != 0) {
         // if l2_policer is nonzero, then the default POLICER[0] action is (bank=0, index=l2_policer).
         out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER0].val = 0;
         FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER0].val, 23,  1, 1);
-        FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER0].val, 20,  3, l2_color_cfg);
+        FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER0].val, 20,  3, q->MAP_DOMAIN_POL_CFG.L2_COLOR_CFG);
         FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER0].val,  0, 12, (l2Policer & 0xFFF));
     }
 
@@ -771,7 +729,7 @@ static void mapScalar
         out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER1].val = 0;
         FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER1].val, 23,  1, 1);
         FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER1].val,  0, 12, (l3Policer & 0xFFF));
-        FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER1].val, 20,  3, l3_color_cfg);
+        FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER1].val, 20,  3, q->MAP_DOMAIN_POL_CFG.L3_COLOR_CFG);
         FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER1].val, 16,  4, 5);
     }
 
@@ -813,7 +771,7 @@ static void encodeLength
 
 static void getParserInfo
 (
- const mby_ppe_mapper_map_MAP_LEN_LIMIT_t MAP_LEN_LIMIT,
+    const mby_ppe_mapper_map_MAP_LEN_LIMIT_t MAP_LEN_LIMIT,
     const mbyParserToMapper * const in, 
     const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
     const fm_bool                   is_ipv6[MBY_N_IS_IP_BITS],
@@ -1494,7 +1452,6 @@ mbyMapper
     mapScalar
     (
         q,
-        regs,
         in,
         mapper_to_classifier,
         &portCfg,
