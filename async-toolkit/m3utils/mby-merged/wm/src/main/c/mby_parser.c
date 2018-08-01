@@ -218,13 +218,13 @@ mbyParser
                 
                 // Apply keys to target key array and track keys_valid:
                 for (fm_uint k = 0; k < xt_KEY_LEN; k++) {
-                  if ((xt.KEY_OFFSET + k) < MBY_N_PARSER_KEYS) {
-                    fm_byte   key_off = ptr[s] + xt.KEY_OFFSET + (k*2);
+                  if ((xt.OFFSET + k) < MBY_N_PARSER_KEYS) {
+                    fm_byte   key_off = ptr[s] + xt.OFFSET + (k*2);
                     fm_uint16 key_val = getSegDataWord(key_off, adj_seg_len, seg_data);
                     fm_bool   key_vld = (((fm_uint32) key_off) < (adj_seg_len - 1));
                     
-                    out->PA_KEYS      [xt.KEY_OFFSET + k] = key_val;
-                    out->PA_KEYS_VALID[xt.KEY_OFFSET + k] = key_vld;
+                    out->PA_KEYS      [xt.OFFSET + k] = key_val;
+                    out->PA_KEYS_VALID[xt.OFFSET + k] = key_vld;
                   }
                 }
 

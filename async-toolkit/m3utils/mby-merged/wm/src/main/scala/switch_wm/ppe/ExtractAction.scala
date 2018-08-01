@@ -28,6 +28,6 @@ object ExtractAction {
       case 0xff => None
       case x => Some(x.toShort)
     }
-    new ExtractAction(protoId, csr.KEY_OFFSET.toShort, flagNum, csr.FLAG_VALUE() == 1l, csr.PTR_NUM.toShort)
+    new ExtractAction(protoId, csr.OFFSET.toShort, flagNum, csr.FLAG_VALUE() == 1l, csr.PTR_NUM.toShort)
   }
 }

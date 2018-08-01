@@ -30,7 +30,7 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
         anaW.SKIP.toShort,AluOperation(anaS.NEXT_OP.toShort), anaS.NEXT_STATE.toShort, anaS.NEXT_STATE_MASK.toShort)
     }
   }
-  
+
   class ExceptionAction( val exOffset : Short, val parsingDone : Boolean) {
     def x (input : (PacketFields, PacketFlags)) : (PacketFields, PacketFlags) = input
 
