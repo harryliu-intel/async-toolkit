@@ -79,7 +79,7 @@ GENERATED_DIR		= $(abspath $(GENERATED_BASE_DIR)/$(RTL_VERSION))
 TEMPLATES 			= $(subst $(TEMPLATE_DIR)/,,\
 						$(shell find $(TEMPLATE_DIR) -type f -name '*.template'))
 REG_GEN				= $(abspath $(MAKEFILE_DIR)/rdl.rb)
-TOP_MAP_RDL			= "hlp_top_map.rdl"
+TOP_MAP_RDL			= "mby_top_map.rdl"
 
 #############################################################################
 #                                  TARGETS                                  #

@@ -77,7 +77,7 @@ module RDL
     def initialize(fld_token, enums, lsb)
       # field { <prop> } <inst_name>[<msb>:<lsb>] = <reset>;
       fld_keywords = %w(AccessType desc encode ValRandomize)
-      fld_token.sub(/^\s+\}/,"").scan(/^\s*(\S+)\s*=\s*(.*?);/m) do |lhs,rhs|
+	fld_token.sub(/^\s+\}/,"").sub(" [","[").sub("];","] = 0;").scan(/^\s*(\S+)\s*=\s*(.*?);/m) do |lhs,rhs|
         if fld_keywords.include? lhs
           instance_variable_set("@#{lhs.downcase}",rhs)
         else
@@ -100,7 +100,11 @@ module RDL
         end
       end
       @accesstype = @accesstype[1..-2] # remove "s...
-      @desc       = @desc[1..-2]
+      begin
+	  @desc     = @desc[1..-2]
+      rescue
+	  @desc     = ""
+      end
       if !@encode.nil?          # elaborating field encode...
         @encode = enums.find { |x| x.type_name == @encode }
         raise "Error: enum not found for #{@inst_name}" if @encode.nil?
@@ -142,8 +146,13 @@ module RDL
       end
       @name        = @name[1..-2] # remove "s...
       @desc        = @desc[1..-2]
-      @regwidth    = @regwidth.sv_i
-      @accesswidth = @accesswidth.sv_i
+      begin
+	  @regwidth    = @regwidth.sv_i
+	  @accesswidth = @accesswidth.sv_i
+      rescue
+	  @regwidth    = 64
+	  @accesswidth = 64
+      end
       @fields      = Array.new
       lsb = 0
       prop_token.scan(/^\s*field\s*(\{.*?^\s+\}.*?;)/m) do |prop,rest|
