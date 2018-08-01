@@ -440,18 +440,9 @@ reg parser_ext_r {
   field {
     AccessType = "RW";
     desc = "
-	Must be set to 1 for this extract action to write the protocol_id and
-    base offset to the header pointer indicated by PTR_NUM.
-
-           ";
-    ValRandomize = true;
-  } SET_PTR[26:26] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
 	The protocol identifier value to store to the header pointer entry 
-    identified by PTR_NUM. Set to 0xFF to prevent the header pointer 
-    from being used at extraction time.
+    identified by PTR_NUM. Set to 0xFF to prevent this action from
+    setting any header pointer.
 
            ";
     ValRandomize = true;
@@ -487,7 +478,7 @@ reg parser_ext_r {
     AccessType = "RW";
     desc = "
 	Indicates which of 8 header pointer entries to write with the protocol_id and 
-    base offset, if SET_PTR is set.
+    base offset, if PROTOCOL_ID is not 0xFF.
 
            ";
     ValRandomize = true;
@@ -556,7 +547,7 @@ regfile parser_ptype_ram_rf {
 };
 
 
-// PARSER_EXTRACT_CFG[0..15][0..19]
+// PARSER_EXTRACT_CFG[0..15][0..79]
 
 reg parser_extract_cfg_r {
   shared;
@@ -565,13 +556,10 @@ reg parser_extract_cfg_r {
   desc = "
     Provides 16 extraction profiles, each indicating the 80 16b words to 
     extract from the packet buffer into the field vector.  This register 
-    is indexed such that the extraction for the i'th 16b word in extraction profile p
-    is stored in PARSER_EXTRACT_CFG[p][i/4].
+    is indexed first by extraction index, then by word number.
     [br][br]
-    The OFFSET_n and PROTOCOL_ID_n fields are selected by n = i % 4.
-    [br][br]
-    During extraction, the 8 header pointer entries will be scanned for matching
-    protocol_id values. When a match is found, the OFFSET_n value will be summed
+    During extraction, the 8 header pointer entries will be compared for matching
+    protocol_id values. When a match is found, the OFFSET value will be summed
     with the base offset from the header pointer entry and the result used as an 
     absolute index into the packet from which the 16b word is extracted and
     loaded into the field vector.
@@ -585,46 +573,54 @@ reg parser_extract_cfg_r {
     AccessType = "RW";
     desc = "The relative offset from which to source this 16b word";
     ValRandomize = true;
-  } OFFSET_3[63:56] = 8'h0;
+  } OFFSET[15:8] = 8'h0;
   field {
     AccessType = "RW";
     desc = "The protocol ID to use to source this 16b word";
     ValRandomize = true;
-  } PROTOCOL_ID_3[55:48] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "The relative offset from which to source this 16b word";
-    ValRandomize = true;
-  } OFFSET_2[47:40] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "The protocol ID to use to source this 16b word";
-    ValRandomize = true;
-  } PROTOCOL_ID_2[39:32] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "The relative offset from which to source this 16b word";
-    ValRandomize = true;
-  } OFFSET_1[31:24] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "The protocol ID to use to source this 16b word";
-    ValRandomize = true;
-  } PROTOCOL_ID_1[23:16] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "The relative offset from which to source this 16b word";
-    ValRandomize = true;
-  } OFFSET_0[15:8] = 8'h0;
-  field {
-    AccessType = "RW";
-    desc = "The protocol ID to use to source this 16b word";
-    ValRandomize = true;
-  } PROTOCOL_ID_0[7:0] = 8'h0;
+  } PROTOCOL_ID[7:0] = 8'hff;
 };
 regfile parser_extract_cfg_rf {
-  parser_extract_cfg_r PARSER_EXTRACT_CFG[20] += 8;
+  parser_extract_cfg_r PARSER_EXTRACT_CFG[80] += 8;
 };
+
+
+reg parser_counters_r {
+  shared;
+  HandCoded = true;
+  name = "Parser counters";
+  desc = "
+    A set of 8-bit counters, each incremented when a particular parsing
+    event occurs. Counted events are generally considered to be the 
+    result of misconfiguration.
+    [br][br]
+    Each counter may be individually reset to zero by writing 
+    0xFF to the counter.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        A protocol ID specified for field extraction did not 
+        appear in the pointer headers.
+           ";
+    ValRandomize = true;
+  } EXT_UNKNOWN_PROTID[15:8] = 8'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        The packet segment was exceeded when attempting to extract a
+        16b field vector entry.
+           ";
+    ValRandomize = true;
+  } EXT_SEG_BOUNDARY[7:0] = 8'h0;
+};
+
+
 
 addrmap mby_ppe_parser_map {
   name = "mby_parser";
@@ -649,4 +645,5 @@ addrmap mby_ppe_parser_map {
   parser_ptype_tcam_rf       PARSER_PTYPE_TCAM[2];
   parser_ptype_ram_rf        PARSER_PTYPE_RAM[2];
   parser_extract_cfg_rf      PARSER_EXTRACT_CFG[16];
+  parser_counters_r          PARSER_COUNTERS;
 }; 
