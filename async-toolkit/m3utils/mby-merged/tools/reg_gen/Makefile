@@ -71,7 +71,7 @@ RTL_VERSION			?= $(RTL_VERSION_DEFAULT)
 RTL_VERSION			:= $(strip $(RTL_VERSION))
 
 CO_ROOT			   ?= $(realpath $(call findParentDir,core))
-WM_ROOT			   ?= $(realpath $(call findParentDir,nd_ies-mby_expmt))
+WM_ROOT			   ?= $(realpath $(call findParentDir,tools))
 RDL_BASE_DIR		= $(abspath $(MAKEFILE_DIR)/rdl)
 RDL_DIR			   ?= $(abspath $(RDL_BASE_DIR)/$(RTL_VERSION))
 TEMPLATE_DIR		= $(abspath $(MAKEFILE_DIR)/templates)
