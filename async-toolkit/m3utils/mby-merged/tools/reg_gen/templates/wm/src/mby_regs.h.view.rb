@@ -5,7 +5,7 @@
 # % rdlgen.rb wm_reg_int top.rdl hlp_api_regs_int.h
 #
 
-class HlpApiRegsIntHView < RDL::ViewGen
+class MbyRegsHView < RDL::ViewGen
   def initialize(top_rdl_file, view_file, template_file)
     super(top_rdl_file)           # init @top_map
     source(view_file, template_file) # init @view_code from template
@@ -24,46 +24,46 @@ class HlpApiRegsIntHView < RDL::ViewGen
   def printAmParam(code, amName, amBase, amSize)
     code.push ""
     code.push "/******** #{amName}_BASE *******/"
-    code.push "#define HLP_#{amName}_BASE".ljust(64)+"(0x%07X)" % amBase
-    code.push "#define HLP_#{amName}_SIZE".ljust(64)+"(0x%07X)" % amSize
+    code.push "#define MBY_#{amName}_BASE".ljust(64)+"(0x%07X)" % amBase
+    code.push "#define MBY_#{amName}_SIZE".ljust(64)+"(0x%07X)" % amSize
     code.push ""
     return code
   end
 
   def printRegParam(code, amName, regName, nDims, regWidth, entries0, entries1, entries2, stride0, stride1, stride2, regOffset)
-    code.push "#define HLP_#{regName}_WIDTH".ljust(64)+"%d" % regWidth
+    code.push "#define MBY_#{regName}_WIDTH".ljust(64)+"%d" % regWidth
     if(nDims == 3)
-        code.push "#define HLP_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0
-        code.push "#define HLP_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1
-        code.push "#define HLP_#{regName}_ENTRIES_2".ljust(64)+"%d" % entries2
+        code.push "#define MBY_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0
+        code.push "#define MBY_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1
+        code.push "#define MBY_#{regName}_ENTRIES_2".ljust(64)+"%d" % entries2
         if(regWidth > 1)
-            code.push "#define HLP_#{regName}(index2, index1, index0, word)".ljust(64)+"((0x%07X) * ((index2) - 0)" % stride2 + "+(0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}(index2, index1, index0, word)".ljust(64)+"((0x%07X) * ((index2) - 0)" % stride2 + "+(0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         else
-            code.push "#define HLP_#{regName}(index2, index1, index0)".ljust(64)+"((0x%07X) * ((index2) - 0)" % stride2 + "+(0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0)" % stride0 + " + (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}(index2, index1, index0)".ljust(64)+"((0x%07X) * ((index2) - 0)" % stride2 + "+(0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0)" % stride0 + " + (0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         end
     end
     if(nDims == 2)
-        code.push "#define HLP_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0
-        code.push "#define HLP_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1
+        code.push "#define MBY_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0
+        code.push "#define MBY_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1
         if(regWidth > 1)
-            code.push "#define HLP_#{regName}(index1, index0, word)".ljust(64)+"((0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}(index1, index0, word)".ljust(64)+"((0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         else
-            code.push "#define HLP_#{regName}(index1, index0)".ljust(64)+"((0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0)" % stride0 + " + (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}(index1, index0)".ljust(64)+"((0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0)" % stride0 + " + (0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         end
     end
     if(nDims == 1)
-        code.push "#define HLP_#{regName}_ENTRIES".ljust(64)+"%d" % entries0
+        code.push "#define MBY_#{regName}_ENTRIES".ljust(64)+"%d" % entries0
         if(regWidth > 1)
-            code.push "#define HLP_#{regName}(index, word)".ljust(64)+"((0x%07X) * ((index) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}(index, word)".ljust(64)+"((0x%07X) * ((index) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         else
-            code.push "#define HLP_#{regName}(index)".ljust(64)+"((0x%07X) * ((index) - 0)" % stride0 + " + (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}(index)".ljust(64)+"((0x%07X) * ((index) - 0)" % stride0 + " + (0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         end
     end
     if(nDims == 0)
         if(regWidth > 1)
-            code.push "#define HLP_#{regName}(word)".ljust(64)+"(((word)*4) + (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}(word)".ljust(64)+"(((word)*4) + (0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         else
-            code.push "#define HLP_#{regName}()".ljust(64)+"((0x%07X) + (HLP_#{amName}_BASE))" % regOffset
+            code.push "#define MBY_#{regName}()".ljust(64)+"((0x%07X) + (MBY_#{amName}_BASE))" % regOffset
         end
     end
     code.push ""
@@ -73,10 +73,10 @@ class HlpApiRegsIntHView < RDL::ViewGen
   def printRegField(code, regName, fld)
     fldname = fld.inst_name
     if fld.lsb == fld.msb
-      code.push "#define HLP_#{regName}_b_#{fldname}".ljust(64)+"%d" % fld.lsb
+      code.push "#define MBY_#{regName}_b_#{fldname}".ljust(64)+"%d" % fld.lsb
     else
-      code.push "#define HLP_#{regName}_l_#{fldname}".ljust(64)+"%d" % fld.lsb
-      code.push "#define HLP_#{regName}_h_#{fldname}".ljust(64)+"%d" % fld.msb
+      code.push "#define MBY_#{regName}_l_#{fldname}".ljust(64)+"%d" % fld.lsb
+      code.push "#define MBY_#{regName}_h_#{fldname}".ljust(64)+"%d" % fld.msb
     end
     return code
   end
@@ -92,7 +92,7 @@ class HlpApiRegsIntHView < RDL::ViewGen
       encode.type_name.size + 3
     length = 29 if length < 29
     encode.encodings.each do |e|
-        code.push "    HLP_#{eName.upcase}_#{e.name.upcase}".ljust(32)+" = #{e.value},"
+        code.push "    MBY_#{eName.upcase}_#{e.name.upcase}".ljust(32)+" = #{e.value},"
     end
     code.last.sub!(/\,\z/,"")
     eNameCC = eName.split('_').collect(&:capitalize).join
