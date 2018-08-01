@@ -15,12 +15,12 @@ class HlpApiRegsIntHView < RDL::ViewGen
     update(wmRegEnumsAndStructs,         # insert new code between delimiters
            "// Auto generated reg enums begin\n",
            "// Auto generated reg enums end\n")
-           
+
     commit(view_file)           # save @view_code to view_file
   end
 
   private
-    
+
   def printAmParam(code, amName, amBase, amSize)
     code.push ""
     code.push "/******** #{amName}_BASE *******/"
@@ -29,35 +29,35 @@ class HlpApiRegsIntHView < RDL::ViewGen
     code.push ""
     return code
   end
-  
+
   def printRegParam(code, amName, regName, nDims, regWidth, entries0, entries1, entries2, stride0, stride1, stride2, regOffset)
     code.push "#define HLP_#{regName}_WIDTH".ljust(64)+"%d" % regWidth
-    if(nDims == 3) 
-        code.push "#define HLP_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0  
-        code.push "#define HLP_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1 
-        code.push "#define HLP_#{regName}_ENTRIES_2".ljust(64)+"%d" % entries2 
+    if(nDims == 3)
+        code.push "#define HLP_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0
+        code.push "#define HLP_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1
+        code.push "#define HLP_#{regName}_ENTRIES_2".ljust(64)+"%d" % entries2
         if(regWidth > 1)
             code.push "#define HLP_#{regName}(index2, index1, index0, word)".ljust(64)+"((0x%07X) * ((index2) - 0)" % stride2 + "+(0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
         else
             code.push "#define HLP_#{regName}(index2, index1, index0)".ljust(64)+"((0x%07X) * ((index2) - 0)" % stride2 + "+(0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0)" % stride0 + " + (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
-        end        
+        end
     end
-    if(nDims == 2) 
-        code.push "#define HLP_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0  
-        code.push "#define HLP_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1 
+    if(nDims == 2)
+        code.push "#define HLP_#{regName}_ENTRIES_0".ljust(64)+"%d" % entries0
+        code.push "#define HLP_#{regName}_ENTRIES_1".ljust(64)+"%d" % entries1
         if(regWidth > 1)
             code.push "#define HLP_#{regName}(index1, index0, word)".ljust(64)+"((0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
         else
             code.push "#define HLP_#{regName}(index1, index0)".ljust(64)+"((0x%07X) * ((index1) - 0)" % stride1 + " + (0x%07X) * ((index0) - 0)" % stride0 + " + (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
-        end        
+        end
     end
     if(nDims == 1)
-        code.push "#define HLP_#{regName}_ENTRIES".ljust(64)+"%d" % entries0  
+        code.push "#define HLP_#{regName}_ENTRIES".ljust(64)+"%d" % entries0
         if(regWidth > 1)
             code.push "#define HLP_#{regName}(index, word)".ljust(64)+"((0x%07X) * ((index) - 0) + ((word)*4)" % stride0 + "+ (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
         else
             code.push "#define HLP_#{regName}(index)".ljust(64)+"((0x%07X) * ((index) - 0)" % stride0 + " + (0x%07X) + (HLP_#{amName}_BASE))" % regOffset
-        end 
+        end
     end
     if(nDims == 0)
         if(regWidth > 1)
@@ -69,7 +69,7 @@ class HlpApiRegsIntHView < RDL::ViewGen
     code.push ""
     return code
   end
-  
+
   def printRegField(code, regName, fld)
     fldname = fld.inst_name
     if fld.lsb == fld.msb
@@ -80,7 +80,7 @@ class HlpApiRegsIntHView < RDL::ViewGen
     end
     return code
   end
-  
+
   def printEnum(encode)
     code = Array.new
     enum = {encode.type_name => code}
@@ -213,11 +213,11 @@ class HlpApiRegsIntHView < RDL::ViewGen
                 nDims = 0;
               end
             end
-        end    
+        end
         code = printRegParam(code, amName, regName, nDims, width, entries0, entries1,  entries2, stride0, stride1, stride2, reg_Offset)
 
         rg_defn.fields.each do |fld|
-          code = printRegField(code, regName, fld) 
+          code = printRegField(code, regName, fld)
         end
         code.push ""
       end
@@ -268,7 +268,7 @@ class HlpApiRegsIntHView < RDL::ViewGen
                         else
                             #if(fld.width <= 64)
                                 type = "fm_uint64"
-                            #end    
+                            #end
                         end
                     end
                 end
@@ -290,9 +290,9 @@ class HlpApiRegsIntHView < RDL::ViewGen
          #MAP_TYPE symbol name is already used by sys/mman.h
          if(fld.inst_name == "MAP_TYPE")
             name = "MAP_ETYPE"
-         else   
+         else
             name = fld.inst_name;
-         end   
+         end
           code.push "  #{type} ".ljust(32) + "#{name};"
         end
         rg_enums.push uniq_enums.values
@@ -303,5 +303,5 @@ class HlpApiRegsIntHView < RDL::ViewGen
     end
     return code
   end
-  
+
 end # class WmRegistersView
