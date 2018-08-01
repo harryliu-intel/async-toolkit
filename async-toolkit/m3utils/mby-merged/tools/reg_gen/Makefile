@@ -71,6 +71,7 @@ RTL_VERSION			?= $(RTL_VERSION_DEFAULT)
 RTL_VERSION			:= $(strip $(RTL_VERSION))
 
 CO_ROOT			   ?= $(realpath $(call findParentDir,core))
+WM_ROOT			   ?= $(realpath $(call findParentDir,nd_ies-mby_expmt))
 RDL_BASE_DIR		= $(abspath $(MAKEFILE_DIR)/rdl)
 RDL_DIR			   ?= $(abspath $(RDL_BASE_DIR)/$(RTL_VERSION))
 TEMPLATE_DIR		= $(abspath $(MAKEFILE_DIR)/templates)
@@ -182,21 +183,10 @@ gen:
 		done
 
 install:
-	$(eval API_DIR = $(GENERATED_DIR)/api)
-	$(eval FILE_LIST = $(subst $(API_DIR)/,,$(shell find $(API_DIR) -type f)))
 	$(eval WM_DIR = $(GENERATED_DIR)/wm)
+	echo "$(WM_DIR)"
 	$(eval WM_FILE_LIST = $(subst $(WM_DIR)/,,$(shell find $(WM_DIR) -type f)))
-	@echo ""; \
-	echo "Installing API files"; \
-	if [ "$(CO_ROOT)" == "" -o ! -d $(CO_ROOT) ]; then \
-		echo "Checkout root not found: $(CO_ROOT)"; \
-		exit 1; \
-	fi; \
-	for file in $(FILE_LIST); do \
-		echo "$(subst $(MAKEFILE_DIR)/,,$(API_DIR))/$$file -> $(CO_ROOT)/$$file"; \
-		install -D -m 0644 $(API_DIR)/$$file $(CO_ROOT)/$$file; \
-	done; \
-	if [ "$(WM_ROOT)" != "" -a -d "$(WM_ROOT)" ]; then \
+	@if [ "$(WM_ROOT)" != "" -a -d "$(WM_ROOT)" ]; then \
 		echo ""; \
 		echo "Installing WM files: $(WM_ROOT)"; \
 		for file in $(WM_FILE_LIST); do \
