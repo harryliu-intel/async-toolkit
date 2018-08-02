@@ -1573,7 +1573,7 @@ static void mapRewrite
 void Mapper
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper     * const in, 
+    const mbyParserToMapper     * const in,
           mbyMapperToClassifier * const out
 )
 {

@@ -63,10 +63,10 @@ typedef fm_int                fm_status;
 typedef unsigned long long    fm_macaddr;
 
 // Constants:
-const fm_status  FM_OK   = 0;
-const fm_status  FM_FAIL = 1;
-const fm_bool    TRUE    = 1;
-const fm_bool    FALSE   = 0;
+#define FM_OK   0
+#define FM_FAIL 1
+#define TRUE    1
+#define FALSE   0
 
 // External function prototypes:
 
