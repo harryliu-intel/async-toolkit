@@ -6,8 +6,8 @@
 $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
-     "verif/common/mby_wm_dpi_pkg/mby_wm_dpi_pkg.sv",
-     "verif/common/mby_wm_dpi_pkg/mby_wm_top.sv",
+     "verif/lib/mby_wm_dpi_pkg/mby_wm_dpi_pkg.sv",
+     "verif/lib/mby_wm_dpi_pkg/mby_wm_top.sv",
      ],
     
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
@@ -25,7 +25,7 @@ $hdl_spec = {
      "$ENV{UVM_HOME}/src",
      "$ENV{OVM_HOME}/src",
      "$ENV{ACE_HOME}/lib/Verilog",
-     "verif/common/mby_wm_dpi_pkg/",
+     "verif/lib/mby_wm_dpi_pkg/",
     ],
     
     # Arbitrary VLOG options

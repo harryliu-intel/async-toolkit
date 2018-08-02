@@ -126,7 +126,7 @@ EOF
             
             cdn_pcie_lib => {
                     -hdl_spec => [
-                        "verif/common/cdn_pcie_pkg/cdn_pcie_env.hdl",
+                        "cfg/ace/HDL/verif/cdn_pcie_env.hdl",
                     ],
                     -dependent_libs => [
                         "shdv_shared_lib",
