@@ -92,7 +92,7 @@ EOF
 
             mby_env_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_env.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
             },
 
@@ -139,6 +139,13 @@ EOF
                     -tag => "nonsynth+nonemul+nonlint",
             },
             
+            svt_axi_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/svt_axi_env.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
+            
             mby_jasper_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/rtl/mby_jasper.hdl", "cfg/ace/HDL/rtl/mby_rtl.hdl", ],
                -tag            => "nonsynth+nonlint",
@@ -168,6 +175,7 @@ EOF
                   "mby_test_lib",
                   "mby_wm_dpi_lib",
                   "cdn_pcie_lib",
+                  "svt_axi_lib"
                ],
 
                elab_opts => [
