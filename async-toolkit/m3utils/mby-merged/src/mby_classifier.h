@@ -11,6 +11,126 @@
 
 // Defines:
 
+#define MBY_FFU_GROUP_BASE                                      (0x3000000)
+#define MBY_FFU_GROUP_SIZE                                      (0x0300000)
+
+#define MBY_FFU_TCAM_WIDTH                                      4
+#define MBY_FFU_TCAM_ENTRIES_0                                  1024
+#define MBY_FFU_TCAM_ENTRIES_1                                  16
+#define MBY_FFU_TCAM_ENTRIES_2                                  3
+#define MBY_FFU_TCAM(index2, index1, index0, word)              ((0x0100000) * ((index2) - 0)+(0x0004000) * ((index1) - 0) + (0x0000010) * ((index0) - 0) + ((word)*4)+ (0x0000000) + (MBY_FFU_GROUP_BASE))
+
+#define MBY_FFU_TCAM_l__RSVD1_                                  104
+#define MBY_FFU_TCAM_h__RSVD1_                                  127
+#define MBY_FFU_TCAM_l_KEY_TOP_INVERT                           96
+#define MBY_FFU_TCAM_h_KEY_TOP_INVERT                           103
+#define MBY_FFU_TCAM_l_KEY_INVERT                               64
+#define MBY_FFU_TCAM_h_KEY_INVERT                               95
+#define MBY_FFU_TCAM_l__RSVD0_                                  40
+#define MBY_FFU_TCAM_h__RSVD0_                                  63
+#define MBY_FFU_TCAM_l_KEY_TOP                                  32
+#define MBY_FFU_TCAM_h_KEY_TOP                                  39
+#define MBY_FFU_TCAM_l_KEY                                      0
+#define MBY_FFU_TCAM_h_KEY                                      31
+
+#define MBY_FFU_ACTION_WIDTH                                    2
+#define MBY_FFU_ACTION_ENTRIES_0                                1024
+#define MBY_FFU_ACTION_ENTRIES_1                                20
+#define MBY_FFU_ACTION_ENTRIES_2                                3
+#define MBY_FFU_ACTION(index2, index1, index0, word)            ((0x0100000) * ((index2) - 0)+(0x0002000) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0040000) + (MBY_FFU_GROUP_BASE))
+
+#define MBY_FFU_ACTION_l_ACTION1                                32
+#define MBY_FFU_ACTION_h_ACTION1                                63
+#define MBY_FFU_ACTION_l_ACTION0                                0
+#define MBY_FFU_ACTION_h_ACTION0                                31
+
+#define MBY_FFU_TCAM_CFG_WIDTH                                  2
+#define MBY_FFU_TCAM_CFG_ENTRIES_0                              64
+#define MBY_FFU_TCAM_CFG_ENTRIES_1                              16
+#define MBY_FFU_TCAM_CFG_ENTRIES_2                              3
+#define MBY_FFU_TCAM_CFG(index2, index1, index0, word)          ((0x0100000) * ((index2) - 0)+(0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0080000) + (MBY_FFU_GROUP_BASE))
+
+#define MBY_FFU_TCAM_CFG_l_CHUNK_MASK                           36
+#define MBY_FFU_TCAM_CFG_h_CHUNK_MASK                           51
+#define MBY_FFU_TCAM_CFG_b_START_COMPARE                        35
+#define MBY_FFU_TCAM_CFG_b_START_SET                            34
+#define MBY_FFU_TCAM_CFG_l_SELECT_TOP                           28
+#define MBY_FFU_TCAM_CFG_h_SELECT_TOP                           33
+#define MBY_FFU_TCAM_CFG_l_SELECT0                              21
+#define MBY_FFU_TCAM_CFG_h_SELECT0                              27
+#define MBY_FFU_TCAM_CFG_l_SELECT1                              14
+#define MBY_FFU_TCAM_CFG_h_SELECT1                              20
+#define MBY_FFU_TCAM_CFG_l_SELECT2                              7
+#define MBY_FFU_TCAM_CFG_h_SELECT2                              13
+#define MBY_FFU_TCAM_CFG_l_SELECT3                              0
+#define MBY_FFU_TCAM_CFG_h_SELECT3                              6
+
+#define MBY_FFU_ACTION_CFG_WIDTH                                4
+#define MBY_FFU_ACTION_CFG_ENTRIES_0                            64
+#define MBY_FFU_ACTION_CFG_ENTRIES_1                            3
+#define MBY_FFU_ACTION_CFG(index1, index0, word)                ((0x0100000) * ((index1) - 0) + (0x0000010) * ((index0) - 0) + ((word)*4)+ (0x0082000) + (MBY_FFU_GROUP_BASE))
+
+#define MBY_FFU_ACTION_CFG_b_ENABLE_19                          99
+#define MBY_FFU_ACTION_CFG_b_ENABLE_18                          98
+#define MBY_FFU_ACTION_CFG_b_ENABLE_17                          97
+#define MBY_FFU_ACTION_CFG_b_ENABLE_16                          96
+#define MBY_FFU_ACTION_CFG_b_ENABLE_15                          95
+#define MBY_FFU_ACTION_CFG_b_ENABLE_14                          94
+#define MBY_FFU_ACTION_CFG_b_ENABLE_13                          93
+#define MBY_FFU_ACTION_CFG_b_ENABLE_12                          92
+#define MBY_FFU_ACTION_CFG_b_ENABLE_11                          91
+#define MBY_FFU_ACTION_CFG_b_ENABLE_10                          90
+#define MBY_FFU_ACTION_CFG_b_ENABLE_9                           89
+#define MBY_FFU_ACTION_CFG_b_ENABLE_8                           88
+#define MBY_FFU_ACTION_CFG_b_ENABLE_7                           87
+#define MBY_FFU_ACTION_CFG_b_ENABLE_6                           86
+#define MBY_FFU_ACTION_CFG_b_ENABLE_5                           85
+#define MBY_FFU_ACTION_CFG_b_ENABLE_4                           84
+#define MBY_FFU_ACTION_CFG_b_ENABLE_3                           83
+#define MBY_FFU_ACTION_CFG_b_ENABLE_2                           82
+#define MBY_FFU_ACTION_CFG_b_ENABLE_1                           81
+#define MBY_FFU_ACTION_CFG_b_ENABLE_0                           80
+#define MBY_FFU_ACTION_CFG_l_INDEX_19                           76
+#define MBY_FFU_ACTION_CFG_h_INDEX_19                           79
+#define MBY_FFU_ACTION_CFG_l_INDEX_18                           72
+#define MBY_FFU_ACTION_CFG_h_INDEX_18                           75
+#define MBY_FFU_ACTION_CFG_l_INDEX_17                           68
+#define MBY_FFU_ACTION_CFG_h_INDEX_17                           71
+#define MBY_FFU_ACTION_CFG_l_INDEX_16                           64
+#define MBY_FFU_ACTION_CFG_h_INDEX_16                           67
+#define MBY_FFU_ACTION_CFG_l_INDEX_15                           60
+#define MBY_FFU_ACTION_CFG_h_INDEX_15                           63
+#define MBY_FFU_ACTION_CFG_l_INDEX_14                           56
+#define MBY_FFU_ACTION_CFG_h_INDEX_14                           59
+#define MBY_FFU_ACTION_CFG_l_INDEX_13                           52
+#define MBY_FFU_ACTION_CFG_h_INDEX_13                           55
+#define MBY_FFU_ACTION_CFG_l_INDEX_12                           48
+#define MBY_FFU_ACTION_CFG_h_INDEX_12                           51
+#define MBY_FFU_ACTION_CFG_l_INDEX_11                           44
+#define MBY_FFU_ACTION_CFG_h_INDEX_11                           47
+#define MBY_FFU_ACTION_CFG_l_INDEX_10                           40
+#define MBY_FFU_ACTION_CFG_h_INDEX_10                           43
+#define MBY_FFU_ACTION_CFG_l_INDEX_9                            36
+#define MBY_FFU_ACTION_CFG_h_INDEX_9                            39
+#define MBY_FFU_ACTION_CFG_l_INDEX_8                            32
+#define MBY_FFU_ACTION_CFG_h_INDEX_8                            35
+#define MBY_FFU_ACTION_CFG_l_INDEX_7                            28
+#define MBY_FFU_ACTION_CFG_h_INDEX_7                            31
+#define MBY_FFU_ACTION_CFG_l_INDEX_6                            24
+#define MBY_FFU_ACTION_CFG_h_INDEX_6                            27
+#define MBY_FFU_ACTION_CFG_l_INDEX_5                            20
+#define MBY_FFU_ACTION_CFG_h_INDEX_5                            23
+#define MBY_FFU_ACTION_CFG_l_INDEX_4                            16
+#define MBY_FFU_ACTION_CFG_h_INDEX_4                            19
+#define MBY_FFU_ACTION_CFG_l_INDEX_3                            12
+#define MBY_FFU_ACTION_CFG_h_INDEX_3                            15
+#define MBY_FFU_ACTION_CFG_l_INDEX_2                            8
+#define MBY_FFU_ACTION_CFG_h_INDEX_2                            11
+#define MBY_FFU_ACTION_CFG_l_INDEX_1                            4
+#define MBY_FFU_ACTION_CFG_h_INDEX_1                            7
+#define MBY_FFU_ACTION_CFG_l_INDEX_0                            0
+#define MBY_FFU_ACTION_CFG_h_INDEX_0                            3
+
 #define MBY_FFU_KEY16_BASE                0
 #define MBY_FFU_KEY8_BASE                 ( MBY_FFU_KEY16_BASE + MBY_FFU_N_KEY16 )
 #define MBY_FFU_KEY32_BASE                ( MBY_FFU_KEY8_BASE + MBY_FFU_N_KEY8 )
@@ -217,6 +337,17 @@
 
 // Enums:
 
+typedef enum mbyClassifierActionEntryTypeEnum
+{
+    MBY_FFU_ACTION_NOP = 0,
+    MBY_FFU_ACTION_SET4_4B,
+    MBY_FFU_ACTION_SET8_1B,
+    MBY_FFU_ACTION_SET3_1B,
+    MBY_FFU_ACTION_SET3_4B,
+    MBY_FFU_ACTION_SET1_24B
+
+} mbyClassifierActionEntryType;
+
 typedef enum mbyClassifierAct1Enum
 {
     MBY_FFU_ACTION_DROP                   =  0,
@@ -331,6 +462,54 @@ typedef enum mbyFfuKey16Enum
 } mbyFfuKey16;
 
 // Structs:
+
+typedef struct mbyClassifierTcamCfgStruct
+{
+    fm_uint16               CHUNK_MASK;
+    fm_bool                 START_COMPARE;
+    fm_bool                 START_SET;
+    fm_byte                 SELECT_TOP;
+    fm_byte                 SELECT0;
+    fm_byte                 SELECT1;
+    fm_byte                 SELECT2;
+    fm_byte                 SELECT3;
+
+} mbyClassifierTcamCfg;
+
+typedef struct mbyClassifierTcamStruct
+{
+    fm_uint32               _RSVD1_;
+    fm_byte                 KEY_TOP_INVERT;
+    fm_uint32               KEY_INVERT;
+    fm_uint32               _RSVD0_;
+    fm_byte                 KEY_TOP;
+    fm_uint32               KEY;
+
+} mbyClassifierTcam;
+
+typedef struct mbyClassifierTcamEntryStruct
+{
+    fm_uint64               Key;
+    fm_uint64               KeyInvert;
+
+} mbyClassifierTcamEntry;
+
+typedef struct mbyLookupInfoStruct
+{
+    fm_uint64               key; // 40b field
+    fm_uint64               keyInvert; // 40b field
+    fm_bool                 rawHits[MBY_FFU_TCAM_ENTRIES_0];
+    fm_int                  hitIndex;
+    fm_bool                 hitIndexValid;
+
+} mbyLookupInfo;
+
+typedef struct mbyClassifierHitInfoStruct
+{
+    fm_int                  hitIndex;
+    fm_bool                 hitIndexValid;
+
+} mbyClassifierHitInfo;
 
 typedef struct mbyClassifierKeysStruct
 {

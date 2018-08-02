@@ -11,24 +11,24 @@
 // Get a named field of 2-32 bits within a 32-bit value
 #define FM_GET_FIELD(rvalue, regname, fieldname) \
     ( (rvalue >> regname ## _l_ ## fieldname) &  \
-     ( ( 2U << (regname ## _h_ ## fieldname - regname ## _l_ ## fieldname) ) - 1 ) )
+      ( ( 2U << ((regname ## _h_ ## fieldname) - (regname ## _l_ ## fieldname)) ) - 1 ) )
 
 // Set a named field of 2-32 bits within a 32-bit value
-#define FM_SET_FIELD(lvalue, regname, fieldname, fieldvalue)                                   \
-    (lvalue ^= ( ( (lvalue >> regname ## _l_ ## fieldname) ^ fieldvalue ) &                    \
-                ( ( 2U << (regname ## _h_ ## fieldname - regname ## _l_ ## fieldname) ) - 1 ) ) \
+#define FM_SET_FIELD(lvalue, regname, fieldname, fieldvalue) \
+    (lvalue ^= ( ( (lvalue >> regname ## _l_ ## fieldname) ^ fieldvalue ) & \
+                 ( ( 2U << ((regname ## _h_ ## fieldname) - (regname ## _l_ ## fieldname)) ) - 1 ) ) \
                << regname ## _l_ ## fieldname)
 
 // Get a named field of 2-64 bits within a 64-bit value.
-#define FM_GET_FIELD64(rvalue, regname, fieldname)                                            \
-    ( (rvalue >> regname ## _l_ ## fieldname) &                                               \
-     ( ( FM_LITERAL_U64(2) << (regname ## _h_ ## fieldname - regname ## _l_ ## fieldname) ) - \
+#define FM_GET_FIELD64(rvalue, regname, fieldname) \
+    ( (rvalue >> regname ## _l_ ## fieldname) & \
+      ( ( FM_LITERAL_U64(2) << ((regname ## _h_ ## fieldname) - (regname ## _l_ ## fieldname)) ) - \
       FM_LITERAL_U64(1) ) )
 
 
 // Set a named field of 2-64 bits within a 64-bit value
-#define FM_SET_FIELD64(lvalue, regname, fieldname, fieldvalue)                                           \
-    (lvalue ^= ( ( (lvalue >> regname ## _l_ ## fieldname) ^ fieldvalue ) &                              \
+#define FM_SET_FIELD64(lvalue, regname, fieldname, fieldvalue) \
+    (lvalue ^= ( ( (lvalue >> regname ## _l_ ## fieldname) ^ fieldvalue ) & \
                 ( ( FM_LITERAL_U64(2) << (regname ## _h_ ## fieldname - regname ## _l_ ## fieldname) ) - \
                  FM_LITERAL_U64(1) ) ) << regname ## _l_ ## fieldname)
 
