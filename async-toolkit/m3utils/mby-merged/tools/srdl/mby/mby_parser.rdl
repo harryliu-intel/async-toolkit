@@ -523,7 +523,7 @@ reg parser_ptype_ram_r {
   HandCoded = true;
   name = "Derives the packet type";
   desc = "
-    Contains the 6b packet type as a result of the match in
+    Contains the packet type and extraction index as a result of the match in
     PARSER_PTYPE_TCAM.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -535,12 +535,12 @@ reg parser_ptype_ram_r {
     AccessType = "RW";
     desc = "The extraction index in PARSER_EXTRACT_CFG to use for this packet type";
     ValRandomize = true;
-  } EXTRACT_IDX[9:6] = 4'h0;
+  } EXTRACT_IDX[13:10] = 4'h0;
   field {
     AccessType = "RW";
     desc = "The packet type result";
     ValRandomize = true;
-  } PTYPE[5:0] = 6'h0;
+  } PTYPE[9:0] = 10'h0;
 };
 regfile parser_ptype_ram_rf {
   parser_ptype_ram_r PARSER_PTYPE_RAM[64] += 8;
@@ -594,6 +594,9 @@ reg parser_counters_r {
     event occurs. Counted events are generally considered to be the 
     result of misconfiguration.
     [br][br]
+    Counter values will increment until they reach their maximum value,
+    then will remain saturated without rolling over.
+    [br][br]
     Each counter may be individually reset to zero by writing 
     0xFF to the counter.
            ";
@@ -602,6 +605,17 @@ reg parser_counters_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  default woclr;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        A protocol ID specified for field extraction
+        appears more than once in the pointer headers.
+           ";
+    ValRandomize = true;
+    counter;
+    incrsaturate = 8'hff;
+  } EXT_DUP_PROTID[23:16] = 8'h0;
   field {
     AccessType = "RW/1C/V";
     desc = "
@@ -609,6 +623,8 @@ reg parser_counters_r {
         appear in the pointer headers.
            ";
     ValRandomize = true;
+    counter;
+    incrsaturate = 8'hff;
   } EXT_UNKNOWN_PROTID[15:8] = 8'h0;
   field {
     AccessType = "RW/1C/V";
@@ -617,6 +633,8 @@ reg parser_counters_r {
         16b field vector entry.
            ";
     ValRandomize = true;
+    counter;
+    incrsaturate = 8'hff;
   } EXT_SEG_BOUNDARY[7:0] = 8'h0;
 };
 
