@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 ######################
 ### genparserext.py ##
@@ -82,7 +82,8 @@ def usage( ) :
 	print( EXTLEX_ARG + " :: absolute path to output *.e lexer spec file" )
 	print( EXTPARSE_ARG + " :: absolute path to output *.e parser spec file" )
 
-def check_input_arg( input_arg : str ) :
+def check_input_arg( input_arg ) :
+	assert isinstance( input_arg , str )
 	# Must be an absolute path
 	if not os.path.isabs( input_arg ) :
 		raise NotAbsPathError
@@ -90,7 +91,8 @@ def check_input_arg( input_arg : str ) :
 	if not os.path.isfile( input_arg ) :
 		raise InvalidFilePathError
 
-def check_output_arg( input_arg : str ) :
+def check_output_arg( input_arg ) :
+	assert isinstance( input_arg , str )
 	# Must be an absolute path
 	if not os.path.isabs( input_arg ) :
 		raise NotAbsPathError
@@ -112,7 +114,12 @@ def check_output_arg( input_arg : str ) :
 # Note: If there are multiple lines with the start symbol, the result of each is
 # concatenated and returned.
 # If no tokens are found in the text, NoTokensError exception is thrown.
-def parse_list( start : str , text_to_parse : str , start_opt : bool = False , regex_token : str = TOKEN_NAME_REGEX ) :
+def parse_list( start , text_to_parse , start_opt , regex_token ) :
+
+	assert isinstance( start , str )
+	assert isinstance( text_to_parse , str )
+	assert isinstance( start_opt , bool )
+	assert isinstance( regex_token , str )
 
 	# Regexes - use just to grab the line with the tokens
 	regex = ""
@@ -158,12 +165,13 @@ def parse_list( start : str , text_to_parse : str , start_opt : bool = False , r
 # Return a hashtable: { ID : [ "id1" , ... , "idN" ] }
 # TODO Error check. Make sure you don't have multiple occurrences of
 # ID or anything other than that.
-def parse_names_file( names_path : str ) :
+def parse_names_file( names_path ) :
+	assert isinstance( names_path , str )
 	ids_list = [ ]
 	with open( names_path , "r" ) as names_fhandle :
 		ftext = names_fhandle.read( )
 		try :
-			ids_list = parse_list( ID , ftext )
+			ids_list = parse_list( ID , ftext , False , TOKEN_NAME_REGEX )
 		except NoTokensError :
 			ids_list = [ ]
 	return { ID : ids_list }
@@ -176,17 +184,18 @@ def parse_names_file( names_path : str ) :
 # Assumes arguments were checked by the program's main function.
 # As a result, do not call this function separately.
 # TODO Check that these can cover the full spectrum of *.tok formats.
-def get_tokens( token_spec_path : str ) :
+def get_tokens( token_spec_path ) :
+	assert isinstance( token_spec_path , str )
 	list_of_tokens = [ ]
 	list_of_consts = [ ]
 	with open( token_spec_path , "r" ) as token_spec_fhandle :
 		ftext = token_spec_fhandle.read( )
 		try :
-			list_of_tokens = parse_list( r"%token" , ftext , True )
+			list_of_tokens = parse_list( r"%token" , ftext , True , TOKEN_NAME_REGEX )
 		except NoTokensError :
 			list_of_tokens = [ ]
 		try :
-			list_of_consts = parse_list( r"%const" , ftext )
+			list_of_consts = parse_list( r"%const" , ftext , False , TOKEN_NAME_REGEX )
 		except NoTokensError :
 			list_of_consts = [ ]
 	return { "nonconst" : list_of_tokens , "const" : list_of_consts }
@@ -194,7 +203,9 @@ def get_tokens( token_spec_path : str ) :
 # Returns a hashtable...
 # [ const_token_name => value ]
 # Constant tokens that are not defined in the lexer spec are excluded
-def get_const_token_values( token_spec_path : str , lexer_spec_path : str ) :
+def get_const_token_values( token_spec_path , lexer_spec_path ) :
+	assert isinstance( token_spec_path , str )
+	assert isinstance( lexer_spec_path , str )
 	list_of_consts = get_tokens( token_spec_path )[ 'const' ]
 	return_result = { }
 	if list_of_consts == [ ] :
@@ -216,7 +227,9 @@ def get_const_token_values( token_spec_path : str , lexer_spec_path : str ) :
 # module = False -> interface imports
 # Returns a string of the code for importing in that particular parser extension file
 # TODO Doesn't seem to be much of a use case for this function. Consider eliminating.
-def gen_imports_list( imports_list : list , module : bool = True ) :
+def gen_imports_list( imports_list , module ) :
+	assert isinstance( imports_list , list )
+	assert isinstance( module , bool )
 	imports_src = ""
 	if imports_list != [ ] :
 		if module == True :
@@ -233,7 +246,9 @@ def gen_imports_list( imports_list : list , module : bool = True ) :
 # Token ext generation
 # Assumes arguments were checked by the program's main function.
 # As a result, do not call this function separately.
-def gen_token_ext( token_spec_path : str , tok_ext_path : str ) :
+def gen_token_ext( token_spec_path , tok_ext_path ) :
+	assert isinstance( token_spec_path , str )
+	assert isinstance( tok_ext_path , str )
 	with open( tok_ext_path , "w" ) as tok_ext_fhandle :
 
 		# Write file header
@@ -254,8 +269,12 @@ def gen_token_ext( token_spec_path : str , tok_ext_path : str ) :
 # Lexer ext generation
 # Assumes arguments were checked by the program's main function.
 # As a result, do not call this function separately.
-def gen_lexer_ext( token_spec_path : str , lexer_spec_path : str , tok_ext_path : str , names_path : str , lexer_ext_path : str ) :
-
+def gen_lexer_ext( token_spec_path , lexer_spec_path , tok_ext_path , names_path , lexer_ext_path ) :
+	assert isinstance( token_spec_path , str )
+	assert isinstance( lexer_spec_path , str )
+	assert isinstance( tok_ext_path , str )
+	assert isinstance( names_path , str )
+	assert isinstance( lexer_ext_path , str )
 	with open( lexer_ext_path , "w" ) as lexer_ext_fhandle :
 		
 		# Generate file header
@@ -287,7 +306,15 @@ def gen_lexer_ext( token_spec_path : str , lexer_spec_path : str , tok_ext_path 
 # Generate parser ext
 # Assumes arguments were checked by the program's main function.
 # As a result, do not call this function separately.
-def gen_parser_ext( token_spec_path : str , lexer_spec_path : str , parser_spec_path : str , tok_ext_path : str , names_path : str , parser_ext_path : str ) :
+def gen_parser_ext( token_spec_path  , lexer_spec_path  , parser_spec_path  , tok_ext_path  , names_path  , parser_ext_path  ) :
+
+	assert isinstance( token_spec_path , str )
+	assert isinstance( lexer_spec_path , str )
+	assert isinstance( parser_spec_path , str )
+	assert isinstance( tok_ext_path , str )
+	assert isinstance( names_path , str )
+	assert isinstance( parser_ext_path , str )
+
 	token_spec_path_base = os.path.basename( token_spec_path )
 	parser_spec_path_base = os.path.basename( parser_spec_path )
 	tokext_interface_name = os.path.splitext( os.path.basename( tok_ext_path ) )[ 0 ]

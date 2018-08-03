@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 ###################
 ### genm3make.py ##
@@ -75,7 +75,8 @@ def usage( ) :
 # Raises NotAbsPathError and InvalidDirPathError
 # Raises MiscDirError if directory contains other directories. This can cause
 # ambiguity if those directories contain *.i3 files and such.
-def indir_check( indir : str ) :
+def indir_check( indir ) :
+	assert isinstance( indir , str )
 	# Must be an absolute path
 	if not os.path.isabs( indir ) :
 		raise NotAbsPathError
@@ -89,7 +90,8 @@ def indir_check( indir : str ) :
 # outdir_check( outdir : str ) - check the outdir argument
 # outdir - must be an absolute path that does not exist
 # Raises NotAbsPathError and InvalidDirPathError
-def outdir_check( outdir : str ) :
+def outdir_check( outdir ) :
+	assert isinstance( outdir , str )
 	# Must be an absolute path
 	if not os.path.isabs( outdir ) :
 		raise NotAbsPathError
@@ -103,7 +105,9 @@ def outdir_check( outdir : str ) :
 #	     located in the directory specified by outdir; do NOT provide
 #	     a full path
 # Raises InvalidProgNameError.
-def progname_check( progname : str , outdir : str ) :
+def progname_check( progname , outdir ) :
+	assert isinstance( outdir , str )
+	assert isinstance( progname , str )
 	# Must not exist and must not be a file path
 	if os.path.isfile( os.path.join( outdir , progname ) ) or progname.find( "/" ) != -1 :
 		raise InvalidProgNameError
@@ -113,7 +117,11 @@ def progname_check( progname : str , outdir : str ) :
 # - indir :: absolute path of input directory
 # - outdir :: absolute path of output directory
 # - progname :: optional ; name of the final program
-def gen_out_dir( indir : str , outdir : str , progname : str = "" ) :
+def gen_out_dir( indir , outdir , progname ) :
+
+	assert isinstance( indir , str )
+	assert isinstance( outdir , str )
+	assert isinstance( progname , str )
 
 	# Divide up the directory based on file extensions
 	all_files_with_ext = lambda ext : [ os.path.splitext( f )[ 0 ] for f in os.listdir( indir ) if os.path.splitext( f )[ 1 ] == ext ]
