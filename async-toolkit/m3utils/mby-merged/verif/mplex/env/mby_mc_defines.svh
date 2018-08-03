@@ -25,9 +25,12 @@
 //------------------------------------------------------------------------------
 //   Author        : Akshay Kotian
 //   Project       : Madison Bay
-//   Description   : This file contain any PARAMETERS or Defines.  Also contains Topology
-//                   configuration ENUM.
 //------------------------------------------------------------------------------
+
+//   Defines:    ec_env_defines
+//
+//  This file contain any PARAMETERS or Defines.  Also contains Topology
+//  configuration ENUM.
 
 `ifndef __MBY_MC_DEFINES_GUARD
 `define __MBY_MC_DEFINES_GUARD
@@ -39,21 +42,28 @@
 
 class mby_mc_defines extends uvm_object;
 
+    // Enumeration: mc_topology_e
+    // Definition of different mplex TB topologies.
+    //    -UNK_TOPO          -Used to detect integration error
+    //    -MPLEX             -MC TB with Real Processor RTL and PHY
+    //    -MPLEX_NP          -MC TB with PHY and Processor BFM
+    //    -MPLEX_NP_NPHY     -MC TB with Processor BFM and no PHY (PIPE mode)
     typedef enum int {
-        UNK_TOPO           = 0, // Used to detect integration error
-        MPLEX              = 1, // MC TB with Real Processor RTL and PHY
-        MPLEX_NP           = 2, // MC TB with PHY and Processor BFM
-        MPLEX_NP_NPHY      = 3  // MC TB with Processor BFM and no PHY (PIPE mode)
+        UNK_TOPO           = 0,
+        MPLEX              = 1,
+        MPLEX_NP           = 2,
+        MPLEX_NP_NPHY      = 3
     } mc_topology_e ;
-
 
 
     `uvm_object_utils(mby_mc_env_pkg::mby_mc_defines)
 
-
+    //---------------------------------------------------------------------------
     //  Constructor: new
     //  Collect any plusargs and re-configure variables from default, if used.
-    //
+    //  Arguments:
+    //  name   - MC Defines object name.
+    //---------------------------------------------------------------------------
     function       new(string name = "mby_mc_defines");
         super.new(name);
     //  $value$plusargs("DISABLE_END2END_FRAME_SB=%d",  disable_end2end_frame_sb);

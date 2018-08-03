@@ -26,10 +26,11 @@
 //------------------------------------------------------------------------------
 //   Author        : Akshay Kotian
 //   Project       : Madison Bay
-//   Description   : This file contains all the components which are common to all Mplex models.
 //------------------------------------------------------------------------------
 
-
+//include : mby_mc_tb_top_common
+//
+//This file contains all the components which are common to all Mplex models.
 
 `ifdef XVM
 import ovm_pkg::*;

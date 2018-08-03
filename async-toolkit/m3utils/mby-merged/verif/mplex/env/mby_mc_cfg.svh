@@ -25,9 +25,12 @@
 //------------------------------------------------------------------------------
 //   Author        : Akshay Kotian
 //   Project       : Madison Bay
-//   Description   : This is the configuration object to control the Top MPlex env and
-//                   its sub components.
 //------------------------------------------------------------------------------
+
+// Class: mby_mc_cfg
+//
+//   This is the configuration object to control the Top MPlex env and
+//   its sub components.
 //
 //   This Class contain all the switches to control the ENV setting.
 //
@@ -41,7 +44,7 @@
 //
 //   coverage_enabled  - default 1
 //
-//   Created by Upper env/cfg/test.
+
 
 `ifndef __MBY_MC_CFG_GUARD
 `define __MBY_MC_CFG_GUARD
@@ -55,15 +58,19 @@ class mby_mc_cfg extends shdv_base_config;
     // Topology/Test Island items
     mby_mc_defines::mc_topology_e topology = mby_mc_defines::MPLEX_NP_NPHY;
 
+    // Variable: ral_type
     // Definition of the RAL type
     string                           ral_type = "mby_mc_env_pkg::mby_mc_ral_env";
 
+    // Variable: ti_path
     // Definition from the Test Island, of TI Path
     string                           ti_path;
 
+    // Variable: rtl_top_path
     // Definition from the Test Island, of RTL_TOP Path
     string                           rtl_top_path;
 
+    // Variable: reset_type
     // Definition of the RESET type
     reset_type_e                     reset_type ;
 
@@ -76,6 +83,14 @@ class mby_mc_cfg extends shdv_base_config;
     `uvm_object_utils_end
 
 
+    //---------------------------------------------------------------------------
+    // Constructor: new
+    //
+    // Constructor.
+    //
+    // Arguments:
+    //    string name - mby_mc_cfg object name
+    //---------------------------------------------------------------------------
     function new( string name = "mby_mc_cfg");
         super.new(name);
 
@@ -89,25 +104,45 @@ class mby_mc_cfg extends shdv_base_config;
 
     endfunction: new
 
-    // Collect Plusargs here, then push down cfg changes to any bfm/IP
+    //---------------------------------------------------------------------------
+    // Function: pre_randomize
+    //---------------------------------------------------------------------------
     function void pre_randomize();
         super.pre_randomize();
     endfunction: pre_randomize
 
+    //---------------------------------------------------------------------------
+    // Function: post_randomize
+    // Collect Plusargs here, then push down cfg changes to any bfm/IP
+    //---------------------------------------------------------------------------
     function void post_randomize();
         super.post_randomize();
 
         push_down_knobs();
     endfunction: post_randomize
 
+    //---------------------------------------------------------------------------
+    // Function: push_down_knobs
+    //---------------------------------------------------------------------------
     function void push_down_knobs();
-
     endfunction: push_down_knobs
 
+    //---------------------------------------------------------------------------
+    // Function: get_ral_type
+    // Retrieve the RAL type
+    //
+    // Returns:
+    // string ral_type - Value indicating the RAL Type.
+    //---------------------------------------------------------------------------
     function string get_ral_type();
         return ral_type;
     endfunction: get_ral_type
-    
+
+    //---------------------------------------------------------------------------
+    // Function: get_tb_topology
+    // Returns:
+    // mc_topology_e - Value indicating the Mplex Testbench Topology.
+    //---------------------------------------------------------------------------
     function mby_mc_defines::mc_topology_e get_tb_topology();
         return topology;
     endfunction : get_tb_topology

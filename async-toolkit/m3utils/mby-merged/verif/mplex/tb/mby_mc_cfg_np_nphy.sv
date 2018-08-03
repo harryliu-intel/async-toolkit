@@ -27,9 +27,11 @@
 //------------------------------------------------------------------------------
 //   Author        : Akshay Kotian
 //   Project       : Madison Bay
-//   Description   : MBY Mplex TB Configuration (No Xtensa Processor, No PCIe PHY)
 //------------------------------------------------------------------------------
 
+// config: mby_mc_cfg_np_nphy
+//
+//MBY Mplex TB Configuration (No Xtensa Processor, No PCIe PHY)
 
 config mby_mc_cfg_np_nphy;
 

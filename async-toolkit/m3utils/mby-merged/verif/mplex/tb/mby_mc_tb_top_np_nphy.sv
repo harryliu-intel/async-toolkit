@@ -26,12 +26,15 @@
 //------------------------------------------------------------------------------
 //   Author        : Akshay Kotian
 //   Project       : Madison Bay
-//   Description   : MBY MC No Processor, No PHY Testbench Top module.
-//                   This fine only contains instantiation/configuration which are
-//                   specific to mplex_np_nphy model.
 //------------------------------------------------------------------------------
 
 `timescale 1ps/1fs
+//  Module:    mby_mc_tb_top
+//
+//  MBY MC No Processor, No PHY Testbench Top module.
+//  This file only contains instantiation/configuration which are
+//  specific to mplex_np_nphy model.
+
 
 module mby_mc_tb_top ();
 
