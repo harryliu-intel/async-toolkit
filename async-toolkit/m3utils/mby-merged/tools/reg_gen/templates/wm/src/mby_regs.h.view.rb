@@ -2,7 +2,7 @@
 # White Model register collateral generator
 #
 # Usage:
-# % rdlgen.rb wm_reg_int top.rdl hlp_api_regs_int.h
+# % rdl.rb <path to MBY rdl> mby_top_map.rdl mby_regs.h
 #
 
 class MbyRegsHView < RDL::ViewGen
@@ -96,7 +96,7 @@ class MbyRegsHView < RDL::ViewGen
     end
     code.last.sub!(/\,\z/,"")
     eNameCC = eName.split('_').collect(&:capitalize).join
-    code.push "} hlp#{eNameCC};"
+    code.push "} mby#{eNameCC};"
     code.push ""
     return enum
   end
@@ -134,7 +134,7 @@ class MbyRegsHView < RDL::ViewGen
       rf_defn = am_inst.type_defn
       rf_defn.instances.each do |rg_inst|
         entries = rg_inst.inst_size # outer number of entries
-        intries = 0                 # inner number of entries 
+        intries = 0                 # inner number of entries
         stride1 = rg_inst.addr_incr;
         rg_defn = rg_inst.type_defn
         rf_addr = 0;
@@ -145,7 +145,7 @@ class MbyRegsHView < RDL::ViewGen
           intries = rg_inst.inst_size
         end
         #puts "REG #{rg_inst.inst_name} rfaddr = 0x%08X" % rf_addr
-        
+
         regName = rg_inst.inst_name
         base = (am_inst.addr_base + rf_addr + rg_inst.addr_base);
         default = rg_defn.fields.map{|x|x.reset << x.lsb}.inject{|sum,y|sum + y}
@@ -154,7 +154,7 @@ class MbyRegsHView < RDL::ViewGen
         if rg_inst.addr_incr > 0
           stride0 = rg_inst.addr_incr
         else
-          stride0 = rg_defn.regwidth / 8 
+          stride0 = rg_defn.regwidth / 8
         end
 
         #puts "REG #{rg_inst.inst_name} stride0 = 0x%08X" % stride0
@@ -242,14 +242,14 @@ class MbyRegsHView < RDL::ViewGen
         code.push(rg_enums = Array.new)
         next if rf_uniq.has_key?(rg_defn.type_name) #||
                 #rg_defn.type_name =~ /^shell_ctl/
-        #skip printing of switch_ip and switch_im since switch field is already used by for other purposes.        
+        #skip printing of switch_ip and switch_im since switch field is already used by for other purposes.
         next if rg_defn.type_name =~ /^switch_ip/ ||
                 rg_defn.type_name =~ /^switch_im/
         rf_uniq[rg_defn.type_name] = true
         rName = rg_defn.type_name
         rNameCC = rg_defn.type_name.split('_').collect(&:capitalize).join
-        rNameCC.sub!(/R$/,'') 
-        code.push "typedef struct _hlp#{rNameCC}"
+        rNameCC.sub!(/R$/,'')
+        code.push "typedef struct _mby#{rNameCC}"
         code.push "{"
         uniq_enums = Hash.new
         rg_defn.fields.each do |fld|
@@ -277,7 +277,7 @@ class MbyRegsHView < RDL::ViewGen
             eName = fld.encode.type_name;
             eName.sub!(/_enum$/,'')
             eNameCC = eName.split('_').collect(&:capitalize).join
-            type = "hlp#{eNameCC}"
+            type = "mby#{eNameCC}"
 
             enum = printEnum(fld.encode)
             if !rf_uniq.has_key?(enum.keys[0])
@@ -296,7 +296,7 @@ class MbyRegsHView < RDL::ViewGen
           code.push "  #{type} ".ljust(32) + "#{name};"
         end
         rg_enums.push uniq_enums.values
-        code.push "} hlp#{rNameCC};"
+        code.push "} mby#{rNameCC};"
         code.push ""
       end
       code.push ""
