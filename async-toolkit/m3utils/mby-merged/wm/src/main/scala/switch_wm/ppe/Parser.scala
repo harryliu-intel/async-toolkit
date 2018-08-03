@@ -34,7 +34,6 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
 
   class ExceptionAction( val exOffset : Short, val parsingDone : Boolean) {
     def x (input : (PacketFields, PacketFlags)) : (PacketFields, PacketFlags) = input
-
     // EOP = (if last byte of non-FCS payload is in current segment) ? TRUE : FALSE
     // EOS = adjustedSegmentLength < (currentPointer + currentStage.exceptionOffset)
     def eop (ph : PacketHeader, currentOffset : Int) = false
@@ -88,7 +87,7 @@ class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[Packe
   def initialState(ph : PacketHeader, port : Int) : ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(port)
     val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
-    val w = initWOffsets.map(off => (ph(0 + off.toInt + 1) << 16 & ph(0 + off.toInt)).toShort)
+    val w = initWOffsets.map(off => ph.getWord(off.toInt))
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT.toShort, portCfg.INITIAL_OP_MASK.toShort)
     val state = portCfg.INITIAL_STATE.toShort
     val ptr = portCfg.INITIAL_PTR.toShort
@@ -109,25 +108,33 @@ class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[Packe
     }
   }
 
-  def fieldVector(ph : PacketHeader, protoOffsets: ProtoOffsets) : PacketFields = {
-    val fieldProfile = 0
-    val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile)
-    // each of the 80 fields of the vector has a configuration in the CSR
-    val f = extractorCsr.map(x => {
-      (x.PROTOCOL_ID(), protoOffsets.collect( { case i if i._1 == x.PROTOCOL_ID() => i._2})) match {
-        case (0xFF, _) => 0
-        case (_, pofs) if pofs.length == 0 => {
-          csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID() = math.min(255, csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID() + 1)
-          0
+  def saturatingIncrement(limit : Long)(field : RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable) = {
+    field() = math.min(limit, field() + 1)
+  }
+
+  object Extractor extends PipelineStage[(PacketHeader, ProtoOffsets), PacketFields] {
+    val x : ((PacketHeader, ProtoOffsets)) => PacketFields = { (ph : PacketHeader, protoOffsets : ProtoOffsets) =>
+      val fieldProfile = 0
+      val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile)
+
+      val satacc8b = saturatingIncrement(255)
+      // each of the 80 fields of the vector has a configuration in the CSR
+      val f : IndexedSeq[Short] = extractorCsr.map(a => {
+        (a.PROTOCOL_ID(), protoOffsets.collect({ case i if i._1 == a.PROTOCOL_ID() => i._2 })) match {
+          case (0xFF, _) => 0.toShort
+          case (_, pofs) if pofs.length == 0 => {
+            satacc8b(csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID)
+            0.toShort
+          }
+          case (_, pofs) if pofs.length > 1 => {
+            satacc8b(csr.PARSER_COUNTERS.EXT_DUP_PROTID)
+            ph.getWord(pofs.head + a.OFFSET().toInt)
+          }
+          case (_, pofs) if pofs.length == 1 => ph.getWord(pofs.head + a.OFFSET().toInt)
         }
-        case (_, pofs) if pofs.length > 1 => {
-          csr.PARSER_COUNTERS.EXT_DUP_PROTID() = math.min(255, csr.PARSER_COUNTERS.EXT_DUP_PROTID() + 1)
-          ph(pofs.head + x.OFFSET().toInt)
-        }
-        case (_, pofs) if pofs.length == 1 => ph(pofs.head + x.OFFSET().toInt)
-      }
-    })
-    PacketFields(f.map(_.toShort))
+      })
+      PacketFields(f)
+    }
   }
 
   val x : (PacketHeader) => Metadata = ph => {
@@ -146,7 +153,7 @@ class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[Packe
     }
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
-    Metadata(stagesResult._2, fieldVector(ph, stagesResult._3))
+    Metadata(stagesResult._2, Extractor.x(ph, stagesResult._3))
   }
 }
 
