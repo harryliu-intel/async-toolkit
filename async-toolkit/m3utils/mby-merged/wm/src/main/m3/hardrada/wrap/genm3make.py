@@ -117,7 +117,7 @@ def progname_check( progname , outdir ) :
 # - indir :: absolute path of input directory
 # - outdir :: absolute path of output directory
 # - progname :: optional ; name of the final program
-def gen_out_dir( indir , outdir , progname ) :
+def gen_out_dir( indir , outdir , progname = None ) :
 
 	assert isinstance( indir , str )
 	assert isinstance( outdir , str )

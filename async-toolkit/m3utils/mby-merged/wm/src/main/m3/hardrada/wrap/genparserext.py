@@ -114,7 +114,7 @@ def check_output_arg( input_arg ) :
 # Note: If there are multiple lines with the start symbol, the result of each is
 # concatenated and returned.
 # If no tokens are found in the text, NoTokensError exception is thrown.
-def parse_list( start , text_to_parse , start_opt , regex_token ) :
+def parse_list( start , text_to_parse , start_opt = False , regex_token = TOKEN_NAME_REGEX ) :
 
 	assert isinstance( start , str )
 	assert isinstance( text_to_parse , str )
