@@ -495,6 +495,27 @@ reg parser_ptype_tcam_r {
   desc = "
     The packet type TCAM matches on a key consisting of the lower 32b of
     the parser flag output.  The output of the TCAM is a 6b packet type.
+    [br][br]
+    A match occurs when the data searched is equal to the key and the 
+    entry is valid. The table below shows the encoded data value stored 
+    (Content) based on the state of the data (KEY) and mask (KEY_INVERT) 
+    values in the TCAM bitcell.
+  
+    [code]
+    +-----------------------------------------------------+
+    | Mask storage | Data storage |        Content        |
+    =======================================================
+    |      0       |      0       |   X (always match)    |
+    +-----------------------------------------------------+
+    |      0       |      1       |           1           |
+    +-----------------------------------------------------+
+    |      1       |      0       |           0           |
+    +-----------------------------------------------------+
+    |      1       |      1       | Always mismatch state |
+    +-----------------------------------------------------+
+    [/code]
+  
+    The highest index has precedence in case there is more than one match.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
