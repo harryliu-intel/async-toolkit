@@ -208,7 +208,7 @@ concat_elem: { val: RdlConcatElem.T }
 property_assign: { val : RdlPropertyAssign.T }
   defaultP { $$ := NEW(RdlPropertyAssignClass.Explicit, x := $1) }
   explicitP { $$ := NEW(RdlPropertyAssignClass.Explicit, x := $1) }
-  defTrueP { $$ := NEW(RdlPropertyAssignClass.Explicit,
+  trueP { $$ := NEW(RdlPropertyAssignClass.Explicit,
                         x := NEW(RdlExplicitPropertyAssign.T,
                                  haveModifier := FALSE,
                                  default := FALSE,
@@ -216,7 +216,16 @@ property_assign: { val : RdlPropertyAssign.T }
                                  rhs := NEW(RdlPropertyAssignRhs.Const,
                                      const := NEW(RdlPropertyRvalueConstant.Keyword,
                                            kw := RdlPropertyRvalueKeyword.T.true)))) }
-  postP  { $$ := NEW(RdlPropertyAssignClass.Post, x := $1) }                                            
+  postP  { $$ := NEW(RdlPropertyAssignClass.Post, x := $1) }
+  defTrueP { $$ := NEW(RdlPropertyAssignClass.Explicit,
+                        x := NEW(RdlExplicitPropertyAssign.T,
+                                 haveModifier := FALSE,
+                                 default := TRUE,
+                                 property := $1,
+                                 rhs := NEW(RdlPropertyAssignRhs.Const,
+                                     const := NEW(RdlPropertyRvalueConstant.Keyword,
+                                           kw := RdlPropertyRvalueKeyword.T.true)))) }
+
 default_property_assign: { val : RdlExplicitPropertyAssign.T }
   x { $$:= $1; $$.val.default := TRUE; $$.val.haveModifier := FALSE }
 
@@ -495,3 +504,5 @@ property_body: { val : RdlPropertyBody.T }
   pb4     { $$ := NEW(RdlPropertyBody.T, type := $2, usage := $3, def := $1) }
   pb5     { $$ := NEW(RdlPropertyBody.T, type := $3, usage := $2, def := $1) }
   
+
+
