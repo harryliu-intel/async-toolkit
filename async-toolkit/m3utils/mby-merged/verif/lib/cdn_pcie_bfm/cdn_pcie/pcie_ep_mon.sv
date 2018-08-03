@@ -2,7 +2,7 @@
 // Do not move the above pragma, it belongs at the top of the file.
 
 // Module:                      pcie_ep_mon 
-// SOMA file:                   /nfs/sc/disks/slx_1132/schodnek/apr/work_root/a0/apr5/apr-srvr10nm-a0/verif/tb/common/cdn_pcie_pkg/cdn_pcie/pcie_ep_mon.soma
+// SOMA file:                   verif/tb/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon.soma
 // Initial contents file:       
 // Simulation control flags:    
 // Activation plus option:      +enable_pcie_ep_mon
@@ -59,7 +59,7 @@
 //       the same custom option in each of their instantiation interfaces.
 
 module pcie_ep_mon
-  #(parameter string interface_soma = "${MODEL_ROOT}/verif/tb/common/cdn_pcie_pkg/cdn_pcie/pcie_ep_mon.soma",
+  #(parameter string interface_soma = "${MODEL_ROOT}/verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon.soma",
     parameter string init_file   = "",
     parameter string sim_control = ""
   )

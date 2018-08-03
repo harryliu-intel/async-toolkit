@@ -2,7 +2,7 @@
 // Do not move the above pragma, it belongs at the top of the file.
 
 // Module:                      pcie_rc_bfm 
-// SOMA file:                   /nfs/sc/disks/slx_1132/schodnek/apr/work_root/a0/apr5/apr-srvr10nm-a0/verif/tb/common/cdn_pcie_pkg/cdn_pcie/pcie_rc_bfm.soma
+// SOMA file:                  verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm.soma
 // Initial contents file:       
 // Simulation control flags:    
 // Activation plus option:      +enable_pcie_rc_bfm
@@ -59,7 +59,7 @@
 //       the same custom option in each of their instantiation interfaces.
 
 module pcie_rc_bfm
-  #(parameter string interface_soma = "${MODEL_ROOT}/verif/tb/common/cdn_pcie_pkg/cdn_pcie/pcie_rc_bfm.soma",
+  #(parameter string interface_soma = "${MODEL_ROOT}/verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm.soma",
     parameter string init_file   = "",
     parameter string sim_control = ""
   )
