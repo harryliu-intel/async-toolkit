@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 GENDIR=gendir/
 M3SRC=m3src/
@@ -15,6 +15,7 @@ cp `pwd`/m3src/* ./$WOEXT
 ./wrap/genm3make.py --indir `pwd`/$WOEXT/ --outdir `pwd`/$SRC/ --progname test
 rm -rf ./$WOEXT/
 # Build the source files
+mkdir -p ./$SRC/
 cd ./$SRC/ ; `ToolConfig.pl get_tool_exec cm3` -x
 # Run the test and generate the debug file
 cd ../../

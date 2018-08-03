@@ -58,21 +58,28 @@ qualidlist_reveal:
 ProcedureHead:
 	only oPROCEDURE oID signature
 
-ProcedureType:
-	only oPROCEDURE signature
+ProcedureNonRaisesType:
+	only oPROCEDURE signature_nonraises
+
+ProcedureRaisesType:
+	only oPROCEDURE signature_raises
+
+signature_raises:
+	typed_alpha '(' Formals ')' ':' nonProcType oRAISES Raises
+	typed_beta '(' Formals ')' ':' ProcedureRaisesType oRAISES Raises
+	nontyped '(' Formals ')' oRAISES Raises
+
+signature_nonraises:
+	typed '(' Formals ')' ':' type
+	nontyped '(' Formals ')'
+
 
 signature:
-	only '(' Formals ')' siglist
-
-siglist:
-	only opt_type opt_raises
+        raises signature_raises
+        nonraises signature_nonraises
 
 opt_type:
 	something ':' type
-	nothing
-
-opt_raises:
-	something oRAISES Raises
 	nothing
 
 Raises:
@@ -326,8 +333,8 @@ TCaseList:
 	complex TCaseList ',' TCase
 
 TCase:
-	empty typelist oASSOP kindastart
-	nonempty typelist '(' oID ')' oASSOP kindastart
+	empty reftypelist oASSOP kindastart
+	nonempty reftypelist '(' oID ')' oASSOP kindastart
 
 elsiflist:
 	single oELSIF expression oTHEN kindastart
@@ -388,16 +395,16 @@ TypeName:
 	rt oROOT
 	urt oUNTRACED oROOT
 
-typelist:
-	lone type
-	more typelist ',' type
+ordtypelist:
+	lone OrdType
+	more typelist ',' OrdType
 
-ArrayType:
-	wtype oARRAY typelist oOF type
-	notype oARRAY oOF type
+reftypelist:
+	lone ReferenceType
+	more typelist ',' ReferenceType
 
 PackedType:
-	only oBITS constexpression oFOR type
+	only oBITS constexpression oFOR notProcedureNonRaisesType
 
 EnumType:
 	empty '{' '}'
@@ -421,17 +428,14 @@ Field:
 	onlyconstexpr oID idlist oASSOP constexpression
 
 RefType:
-	both oUNTRACED MyBrand oREF type
-	utrace oUNTRACED oREF type
-	brnd MyBrand oREF type
-	neither oREF type
+	both oUNTRACED MyBrand oREF nonProcType
+	utrace oUNTRACED oREF nonProcType
+	brnd MyBrand oREF nonProcType
+	neither oREF nonProcType
 
 MyBrand:
 	wtl oBRANDED oTEXTLITERAL
 	wotl oBRANDED
-
-SetType:
-	only oSET oOF type
 
 SubrangeType:
 	only oLEFTBRACKET constexpression oTWOPERIODS constexpression oRIGHTBRACKET
@@ -479,18 +483,52 @@ Method:
 	alone oID signature
 	wcexpr oID signature oASSOP constexpression
 
-type:
+OrdType:
+       j SubrangeType               
+       d EnumType
+
+ArrayTypeAlpha:
+	wtype oARRAY ordtypelist oOF notProcedureNonRaisesType
+	open oARRAY oOF notProcedureNonRaisesType
+
+ArrayTypeBeta:
+	wtype oARRAY ordtypelist oOF ProcedureNonRaisesType
+	open oARRAY oOF ProcedureNonRaisesType
+
+SetTypeAlpha:
+	only oSET oOF notProcedureNonRaisesType
+
+SetTypeBeta:
+	only oSET oOF ProcedureNonRaisesType
+
+
+nonProcType:
 	a TypeName
-	b ArrayType
+	b ArrayTypeAlpha
 	c PackedType
-	d EnumType
-	e ObjectType
-	f ProcedureType
 	g RecordType
-	h RefType
-	i SetType
-	j SubrangeType
+	i SetTypeAlpha
 	k '(' type ')'
+        o OrdType
+        r ReferenceType
+               
+ReferenceType:
+        e ObjectType
+        h RefType
+              
+
+notProcedureNonRaisesType:
+        alpha nonProcType
+        beta ProcedureRaisesType
+
+containingProcedureNonRaisesType:
+        plain ProcedureNonRaisesType
+        array ArrayTypeBeta
+        set  SetTypeBeta
+               
+type:
+        alpha notProcedureNonRaisesType
+        gamma ProcedureNonRaisesType
 
 e7:
 	nothing '-' '+' '-'
