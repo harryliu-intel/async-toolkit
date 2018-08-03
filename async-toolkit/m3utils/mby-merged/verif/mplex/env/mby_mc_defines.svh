@@ -27,7 +27,7 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Defines:    ec_env_defines
+//   Defines : mby_mc_defines
 //
 //  This file contain any PARAMETERS or Defines.  Also contains Topology
 //  configuration ENUM.
