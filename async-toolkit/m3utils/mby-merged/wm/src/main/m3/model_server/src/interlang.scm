@@ -6,9 +6,11 @@
   `((constant ffu-n-key32 16)
     (constant ffu-n-key16 32)
     (constant ffu-n-key8  64)
-    (constant ffu-n-act24  16)
+
+    (constant ffu-n-act24 16)
     (constant ffu-n-act4  23)
     (constant ffu-n-act1  24)
+
     (constant n-parser-keys  84)
     (constant n-realign-keys (- n-parser-keys 4))
 
@@ -125,7 +127,7 @@
 
 (define (gen-m3-type-use x defs)
 
-  (cond ((number? x)
+  (cond ((number? x) 
          (sa *m3-uint-intf* "." "UInt" (number->string x)))
         
         ((and (symbol? x)
@@ -143,6 +145,9 @@
         ;; must be type expression
         ((not (pair? x)) '*not-found*)
 
+        ((eq? (car x) 'bits)
+               (sa "[0..WM(LS(1," (gen-m3-val-use (cadr x) defs) "),1)]")) ;; WM = Word.Minus, LS = Word.LeftShift
+          
         ((eq? (car x) 'array)
          (sa "ARRAY [0.." (gen-m3-val-use (cadr x) defs) "-1] OF (" (gen-m3-type-use (caddr x) defs) ")"))
 
@@ -165,6 +170,9 @@
   '(+ - *))
   
 (define (gen-m3-val-use x defs)
+
+  (define (recurse z) (gen-m3-val-use z defs))
+
   (cond ((number? x) (number->string x))
 
         ((and (symbol? x)
@@ -180,16 +188,18 @@
          (sa "NUMBER(" (gen-m3-type-use (cadr x) defs) ")"))
 
         ((memq (car x) *multiops*)
-         (sa "(" (infixize (cdr x) (car x)) ")"))
+         (sa "(" (infixize (map recurse (cdr x)) (car x)) ")"))
 
         ((let ((br (assoc (car x) *binops*)))
            (if br
-               (sa "(" (cadr x) " " (cadr (assoc 'm3 (cadr br))) " " (caddr x) ")")
+               (sa "(" (recurse (cadr x)) " " (cadr (assoc 'm3 (cadr br))) " " (recurse (caddr x)) ")")
                #f)))
              
         (else '*not-found*)))
          
-         
+(define (compile-m3-typedef x defs)
+  (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
+  (sa "TYPE " (scheme->m3 (cadr x)) " = " (gen-m3-type-use (caddr x) defs) ";"))
                 
 (define (compile-interlang! defs)
   
