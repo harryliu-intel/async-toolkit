@@ -1,6 +1,5 @@
 package switch_wm.csr
 
-import scala.reflect.ClassTag
 import scala.annotation.tailrec
 
 
@@ -72,10 +71,12 @@ object Memory {
     override def isPower: Boolean = toBytes == nextPowerBytes
 
     /** Alignment if is power, None otherwise. */
-    def tryAlignment: Option[Alignment] = if( isPower ) { Some(toAlignment) } else { None }
+    def tryAlignment: Option[Alignment] = if( toLong > 0 && isPower ) { Some(toAlignment) } else { None }
 
     /** Alignment conversion, unsafe */
     def toAlignment = Alignment(toBytes.toLong)
+
+    override def toString = toBytes.toString
   }
 
   /** Bits value.
@@ -88,6 +89,8 @@ object Memory {
     def tryBytes: Option[Bytes] = if( value % 8 == 0 ) { Some((value / 8).bytes) } else { None }
 
     def nextPower: Bits = nextPowerBits
+
+    override def toString = value.toString + " bits"
   }
 
   /** Bytes value.
@@ -109,6 +112,8 @@ object Memory {
     def %(other: Bytes) = new Bytes(toLong % other.toLong)
 
     def nextPower: Bytes = nextPowerBytes
+
+    override def toString = value.toString + " bytes"
   }
 
 
@@ -123,13 +128,17 @@ object Memory {
 
 
   /** 2 pow N bytes (runtime check) adapter. Can't be a value class so it can have a requirement. */
-  case class Alignment(value: Long) extends  Ordered[Alignment] {
+  case class Alignment(value: Long) extends Ordered[Alignment] {
+    require( value > 0L )
     require( value.bytes.isPower )
+
     def toLong = value
     def toBytes = toLong.bytes
     def toBits = toBytes.toBits
 
     def compare(other: Alignment): Int = toLong.compare(other.toLong)
+
+    override def toString = "Alignment(" + toBytes + ")"
   }
 
 
@@ -154,6 +163,9 @@ object Memory {
 
   /** Address in memory. Word-aware. */
   class Address(val word: Long, val bit: Long) extends Ordered[Address] {
+    require(word >= 0)
+    require(bit >= 0)
+
     /** Address moved by memory shift. */
     def +[M <: MemoryUnit](munit: M): Address = {
       val allbits = (bit + munit.toBits.toLong)
@@ -205,6 +217,8 @@ object Memory {
 
     /** Erasure word info, full bytes. */
     def fullBytes: Bytes = toBits.fullBytes
+
+    override def toString = "Address(word: " + word + ", bit: " + bit + ")"
   }
   object Address {
     /** Simple explicit constructor */
@@ -224,18 +238,28 @@ object Memory {
     * @param width width in bits
     * */
   class AddressRange(val pos: Address, val width: Bits) {
+    require(width.toLong > 0L)  // pos <= lim
+
     /** First address free after this range,
       * e.g. AddressRange(Address(32.bytes), 8.bytes).lim == Address(40.bytes)
       */
     def lim: Address = pos + width
 
     /** Position and the next position after the range,
-     * e.g. AddressRange(Address(32.bytes), 8.bytes).toAddressPair == (Address(32.bytes), Address(40.bytes)) */
+      * e.g. AddressRange(Address(32.bytes), 8.bytes).toAddressPair == (Address(32.bytes), Address(40.bytes)) */
     def toAddressPair = (pos, lim)
+
+    override def toString = "AddressRange(pos: " + pos + ", lim: " + lim + ")"
+
+    /** Highly friendly and readable range form */
+    def rangeString = "" + pos.toBits.toLong + ".." + lim.toBits.toLong
   }
   object AddressRange {
     /** Simple explcit constructor */
     def apply[M <: MemoryUnit](addr: Address, munit: M) = new AddressRange(addr, munit.toBits)
+
+    /** Construct from two addresses. */
+    def apply[M <: MemoryUnit](pos: Address, lim: Address): AddressRange = AddressRange(pos, lim-pos)
 
     /** Field constructor */
     def makeField[M <: MemoryUnit](addr: Address, munit: M) = AddressRange(addr, munit.toBits)
