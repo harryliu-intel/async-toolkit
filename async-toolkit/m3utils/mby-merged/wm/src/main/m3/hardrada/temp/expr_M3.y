@@ -9,7 +9,7 @@ E1:
 	end E2
 
 E2:
-	recurse oNOT E2
+	recurse NOT E2
 	end E3
 
 E3:
@@ -40,34 +40,6 @@ E8:
 	myTextLiteral oTEXTLITERAL
 	myConstr Constructor
 	myExpr '(' Expr ')'
-
-Constructor:
-	type '{' consarr '}'
-	empty '{' '}'
-
-consarr:
-	mysetcons SetCons
-	myrecordcons RecordCons
-	myarraycons ArrayCons
-
-SetCons:
-	recurse SetCons ',' SetElt
-	end SetElt
-
-SetElt:
-	basic Expr
-	complex Expr oTWOPERIODS Expr
-
-RecordCons:
-	basic RecordElt
-	complex RecordCons ',' RecordElt
-
-RecordElt:
-	basic Expr
-	complex oID oASSOP Expr
-
-ArrayCons:
-	only exprlist ',' oTWOPERIODS
 
 Relop:
 	eq '='
@@ -103,11 +75,3 @@ exprlist:
 actuallist:
 	recurse actuallist ',' Actual
 	end Actual
-
-Actual:
-	mytype type
-	expr Expr
-	assop_expr oID oASSOP Expr
-
-type:
-	forthelolz ';' '/' '.' '}'
