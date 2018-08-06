@@ -15,8 +15,7 @@ object Metadata {
 }
 
 abstract class PipelineStage[I,O] {
-  val x : (I) => O
-
+  val x : I => O
 }
 
 class Epl extends PipelineStage[Array[Byte], Packet] {
