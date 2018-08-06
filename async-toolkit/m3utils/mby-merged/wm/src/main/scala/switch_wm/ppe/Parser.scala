@@ -1,7 +1,7 @@
 package switch_wm.ppe
 
 import switch_wm._
-import switch_wm.csr._
+import switch_wm.csr.{RdlRegister, _}
 import Parser._
 import Tcam._
 
@@ -113,11 +113,13 @@ class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[Packe
   }
 
   object Extractor extends PipelineStage[(PacketHeader, ProtoOffsets), PacketFields] {
-    val x : ((PacketHeader, ProtoOffsets)) => PacketFields = { (ph : PacketHeader, protoOffsets : ProtoOffsets) =>
+    val x = { (t : (PacketHeader, ProtoOffsets)) =>
+      val ph = t._1
+      val protoOffsets = t._2
       val fieldProfile = 0
       val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile)
 
-      val satacc8b = saturatingIncrement(255)
+      def satacc8b(field : RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable) : Unit= saturatingIncrement (255)(field)
       // each of the 80 fields of the vector has a configuration in the CSR
       val f : IndexedSeq[Short] = extractorCsr.map(a => {
         (a.PROTOCOL_ID(), protoOffsets.collect({ case i if i._1 == a.PROTOCOL_ID() => i._2 })) match {
