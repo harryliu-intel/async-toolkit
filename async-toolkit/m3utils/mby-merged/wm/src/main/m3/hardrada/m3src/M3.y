@@ -78,10 +78,6 @@ signature:
         raises signature_raises
         nonraises signature_nonraises
 
-opt_type:
-	something ':' type
-	nothing
-
 Raises:
 	any oANY
 	empty '{' '}'
@@ -528,7 +524,7 @@ containingProcedureNonRaisesType:
                
 type:
         alpha notProcedureNonRaisesType
-        gamma ProcedureNonRaisesType
+        beta  containingProcedureNonRaisesType
 
 e7:
 	nothing '-' '+' '-'
