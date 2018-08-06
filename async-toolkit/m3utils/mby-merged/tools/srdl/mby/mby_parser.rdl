@@ -626,7 +626,7 @@ reg parser_counters_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
-  default woclr = true;
+  default woclr;
   field {
     AccessType = "RW/1C/V";
     desc = "

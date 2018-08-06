@@ -86,7 +86,7 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.08.03",
+    VERSION => "18.08.03-1",
     ENV_APPEND  => {
         'PATH'  => "&get_tool_path()/bin",
     },
