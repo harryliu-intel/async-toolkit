@@ -38,8 +38,10 @@
 
 // Set a field of 32 or fewer bits for an unnamed 32-bit value
 #define FM_SET_UNNAMED_FIELD(lvalue, start, len, value) \
+{ \
     lvalue &= ~(((1 << (len)) - 1) << (start)); \
-    lvalue |= ((value) & ((1 << (len)) - 1)) << (start); 
+    lvalue |= ((value) & ((1 << (len)) - 1)) << (start); \
+}
 
 // Extract a field of 64 or fewer bits from an unnamed 64-bit value.
 #define FM_GET_UNNAMED_FIELD64(lvalue, start, len) \
