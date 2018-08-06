@@ -335,6 +335,199 @@
 #define MBY_FFU_SELECT_L3_SIP_95_64         40
 #define MBY_FFU_SELECT_L3_SIP_127_96        41
 
+// --------------------------------------------------------------------------------
+
+#define MBY_FGHASH_BASE                                         (0x3400000)
+#define MBY_FGHASH_SIZE                                         (0x00C0000)
+
+#define MBY_FFU_HASH_LOOKUP_WIDTH                               4
+#define MBY_FFU_HASH_LOOKUP_ENTRIES_0                           8192
+#define MBY_FFU_HASH_LOOKUP_ENTRIES_1                           3
+#define MBY_FFU_HASH_LOOKUP(index1, index0, word)               ((0x0040000) * ((index1) - 0) + (0x0000010) * ((index0) - 0) + ((word)*4)+ (0x0000000) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_HASH_LOOKUP_l_PTR                               64
+#define MBY_FFU_HASH_LOOKUP_h_PTR                               83
+#define MBY_FFU_HASH_LOOKUP_l_RSVD1_                            52
+#define MBY_FFU_HASH_LOOKUP_h_RSVD1_                            63
+#define MBY_FFU_HASH_LOOKUP_l_SELECT_4                          48
+#define MBY_FFU_HASH_LOOKUP_h_SELECT_4                          51
+#define MBY_FFU_HASH_LOOKUP_l_SELECT_3                          44
+#define MBY_FFU_HASH_LOOKUP_h_SELECT_3                          47
+#define MBY_FFU_HASH_LOOKUP_l_SELECT_2                          40
+#define MBY_FFU_HASH_LOOKUP_h_SELECT_2                          43
+#define MBY_FFU_HASH_LOOKUP_l_SELECT_1                          36
+#define MBY_FFU_HASH_LOOKUP_h_SELECT_1                          39
+#define MBY_FFU_HASH_LOOKUP_l_SELECT_0                          32
+#define MBY_FFU_HASH_LOOKUP_h_SELECT_0                          35
+#define MBY_FFU_HASH_LOOKUP_l_MASK                              0
+#define MBY_FFU_HASH_LOOKUP_h_MASK                              31
+
+#define MBY_FFU_HASH_CAM_WIDTH                                  2
+#define MBY_FFU_HASH_CAM_ENTRIES_0                              8
+#define MBY_FFU_HASH_CAM_ENTRIES_1                              32
+#define MBY_FFU_HASH_CAM_ENTRIES_2                              3
+#define MBY_FFU_HASH_CAM(index2, index1, index0, word)          ((0x0040000) * ((index2) - 0)+(0x0000040) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0020000) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_HASH_CAM_l_DATA                                 0
+#define MBY_FFU_HASH_CAM_h_DATA                                 63
+
+#define MBY_FFU_HASH_CAM_EN_WIDTH                               2
+#define MBY_FFU_HASH_CAM_EN_ENTRIES_0                           32
+#define MBY_FFU_HASH_CAM_EN_ENTRIES_1                           2
+#define MBY_FFU_HASH_CAM_EN_ENTRIES_2                           3
+#define MBY_FFU_HASH_CAM_EN(index2, index1, index0, word)       ((0x0040000) * ((index2) - 0)+(0x0000100) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0020800) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_HASH_CAM_EN_l_MASK                              0
+#define MBY_FFU_HASH_CAM_EN_h_MASK                              63
+
+#define MBY_FFU_KEY_MASK0_WIDTH                                 2
+#define MBY_FFU_KEY_MASK0_ENTRIES_0                             64
+#define MBY_FFU_KEY_MASK0_ENTRIES_1                             2
+#define MBY_FFU_KEY_MASK0_ENTRIES_2                             3
+#define MBY_FFU_KEY_MASK0(index2, index1, index0, word)         ((0x0040000) * ((index2) - 0)+(0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0020C00) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_KEY_MASK0_l_KEY8_MASK                           0
+#define MBY_FFU_KEY_MASK0_h_KEY8_MASK                           63
+
+#define MBY_FFU_KEY_MASK1_WIDTH                                 2
+#define MBY_FFU_KEY_MASK1_ENTRIES_0                             64
+#define MBY_FFU_KEY_MASK1_ENTRIES_1                             2
+#define MBY_FFU_KEY_MASK1_ENTRIES_2                             3
+#define MBY_FFU_KEY_MASK1(index2, index1, index0, word)         ((0x0040000) * ((index2) - 0)+(0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0021000) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_KEY_MASK1_l_KEY_SUBMODE1                        50
+#define MBY_FFU_KEY_MASK1_h_KEY_SUBMODE1                        51
+#define MBY_FFU_KEY_MASK1_l_KEY_SUBMODE0                        48
+#define MBY_FFU_KEY_MASK1_h_KEY_SUBMODE0                        49
+#define MBY_FFU_KEY_MASK1_l_KEY32_MASK                          32
+#define MBY_FFU_KEY_MASK1_h_KEY32_MASK                          47
+#define MBY_FFU_KEY_MASK1_l_KEY16_MASK                          0
+#define MBY_FFU_KEY_MASK1_h_KEY16_MASK                          31
+
+#define MBY_FFU_KEY_MASK2_WIDTH                                 2
+#define MBY_FFU_KEY_MASK2_ENTRIES_0                             64
+#define MBY_FFU_KEY_MASK2_ENTRIES_1                             2
+#define MBY_FFU_KEY_MASK2_ENTRIES_2                             3
+#define MBY_FFU_KEY_MASK2(index2, index1, index0, word)         ((0x0040000) * ((index2) - 0)+(0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0021400) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_KEY_MASK2_l_KEY_SUBMASK1                        32
+#define MBY_FFU_KEY_MASK2_h_KEY_SUBMASK1                        63
+#define MBY_FFU_KEY_MASK2_l_KEY_SUBMASK0                        0
+#define MBY_FFU_KEY_MASK2_h_KEY_SUBMASK0                        31
+
+#define MBY_FFU_HASH_MISS_WIDTH                                 2
+#define MBY_FFU_HASH_MISS_ENTRIES_0                             64
+#define MBY_FFU_HASH_MISS_ENTRIES_1                             2
+#define MBY_FFU_HASH_MISS_ENTRIES_2                             3
+#define MBY_FFU_HASH_MISS(index2, index1, index0, word)         ((0x0040000) * ((index2) - 0)+(0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0021800) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_HASH_MISS_l_ACTION1                             32
+#define MBY_FFU_HASH_MISS_h_ACTION1                             63
+#define MBY_FFU_HASH_MISS_l_ACTION0                             0
+#define MBY_FFU_HASH_MISS_h_ACTION0                             31
+
+#define MBY_FFU_HASH_CFG_WIDTH                                  2
+#define MBY_FFU_HASH_CFG_ENTRIES_0                              64
+#define MBY_FFU_HASH_CFG_ENTRIES_1                              3
+#define MBY_FFU_HASH_CFG(index1, index0, word)                  ((0x0040000) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0021C00) + (MBY_FGHASH_BASE))
+
+#define MBY_FFU_HASH_CFG_b_MODE                                 46
+#define MBY_FFU_HASH_CFG_l_BASE_PTR_0                           33
+#define MBY_FFU_HASH_CFG_h_BASE_PTR_0                           45
+#define MBY_FFU_HASH_CFG_l_BASE_PTR_1                           20
+#define MBY_FFU_HASH_CFG_h_BASE_PTR_1                           32
+#define MBY_FFU_HASH_CFG_l_HASH_SIZE_0                          15
+#define MBY_FFU_HASH_CFG_h_HASH_SIZE_0                          19
+#define MBY_FFU_HASH_CFG_l_HASH_SIZE_1                          10
+#define MBY_FFU_HASH_CFG_h_HASH_SIZE_1                          14
+#define MBY_FFU_HASH_CFG_l_ENTRY_SIZE_0                         5
+#define MBY_FFU_HASH_CFG_h_ENTRY_SIZE_0                         9
+#define MBY_FFU_HASH_CFG_l_ENTRY_SIZE_1                         0
+#define MBY_FFU_HASH_CFG_h_ENTRY_SIZE_1                         4
+
+/******** HASH_ENTRY_RAM_BASE *******/
+#define MBY_HASH_ENTRY_RAM_BASE                                 (0x3500000)
+#define MBY_HASH_ENTRY_RAM_SIZE                                 (0x0080000)
+
+#define MBY_HASH_ENTRY0_WIDTH                                   2
+#define MBY_HASH_ENTRY0_ENTRIES                                 65536
+#define MBY_HASH_ENTRY0(index, word)                            ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0000000) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY0_l_DATA                                  0
+#define MBY_HASH_ENTRY0_h_DATA                                  63
+
+#define MBY_HASH_ENTRY1_WIDTH                                   2
+#define MBY_HASH_ENTRY1_ENTRIES                                 65536
+#define MBY_HASH_ENTRY1(index, word)                            ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0080000) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY1_l_DATA                                  0
+#define MBY_HASH_ENTRY1_h_DATA                                  63
+
+#define MBY_HASH_ENTRY_RAM_ALLOC_WIDTH                          2
+#define MBY_HASH_ENTRY_RAM_ALLOC_ENTRIES                        2
+#define MBY_HASH_ENTRY_RAM_ALLOC(index, word)                   ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0100000) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY_RAM_ALLOC_l_GP_SEL                       0
+#define MBY_HASH_ENTRY_RAM_ALLOC_h_GP_SEL                       7
+
+#define MBY_HASH_ENTRY_RAM_ERR_WRITE_WIDTH                      2
+#define MBY_HASH_ENTRY_RAM_ERR_WRITE_ENTRIES_0                  2
+#define MBY_HASH_ENTRY_RAM_ERR_WRITE_ENTRIES_1                  2
+#define MBY_HASH_ENTRY_RAM_ERR_WRITE(index1, index0, word)      ((0x0000010) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0100020) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY_RAM_ERR_WRITE_l_ERR_INJECT               0
+#define MBY_HASH_ENTRY_RAM_ERR_WRITE_h_ERR_INJECT               1
+
+#define MBY_HASH_ENTRY_RAM_CERR_READ_WIDTH                      2
+#define MBY_HASH_ENTRY_RAM_CERR_READ_ENTRIES_0                  2
+#define MBY_HASH_ENTRY_RAM_CERR_READ_ENTRIES_1                  2
+#define MBY_HASH_ENTRY_RAM_CERR_READ(index1, index0, word)      ((0x0000010) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0100040) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY_RAM_CERR_READ_l_COL                      16
+#define MBY_HASH_ENTRY_RAM_CERR_READ_h_COL                      18
+#define MBY_HASH_ENTRY_RAM_CERR_READ_l_ADDR                     5
+#define MBY_HASH_ENTRY_RAM_CERR_READ_h_ADDR                     15
+#define MBY_HASH_ENTRY_RAM_CERR_READ_l_LANE                     3
+#define MBY_HASH_ENTRY_RAM_CERR_READ_h_LANE                     4
+#define MBY_HASH_ENTRY_RAM_CERR_READ_l_RSVD                     1
+#define MBY_HASH_ENTRY_RAM_CERR_READ_h_RSVD                     2
+#define MBY_HASH_ENTRY_RAM_CERR_READ_b_ERROR                    0
+
+#define MBY_HASH_ENTRY_RAM_UERR_READ_WIDTH                      2
+#define MBY_HASH_ENTRY_RAM_UERR_READ_ENTRIES_0                  2
+#define MBY_HASH_ENTRY_RAM_UERR_READ_ENTRIES_1                  2
+#define MBY_HASH_ENTRY_RAM_UERR_READ(index1, index0, word)      ((0x0000010) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0100060) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY_RAM_UERR_READ_l_COL                      16
+#define MBY_HASH_ENTRY_RAM_UERR_READ_h_COL                      18
+#define MBY_HASH_ENTRY_RAM_UERR_READ_l_ADDR                     5
+#define MBY_HASH_ENTRY_RAM_UERR_READ_h_ADDR                     15
+#define MBY_HASH_ENTRY_RAM_UERR_READ_l_LANE                     3
+#define MBY_HASH_ENTRY_RAM_UERR_READ_h_LANE                     4
+#define MBY_HASH_ENTRY_RAM_UERR_READ_l_RSVD                     1
+#define MBY_HASH_ENTRY_RAM_UERR_READ_h_RSVD                     2
+#define MBY_HASH_ENTRY_RAM_UERR_READ_b_ERROR                    0
+
+#define MBY_HASH_ENTRY_RAM_CERR_CNT_WIDTH                       2
+#define MBY_HASH_ENTRY_RAM_CERR_CNT_ENTRIES_0                   2
+#define MBY_HASH_ENTRY_RAM_CERR_CNT_ENTRIES_1                   2
+#define MBY_HASH_ENTRY_RAM_CERR_CNT(index1, index0, word)       ((0x0000010) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x01000C0) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY_RAM_CERR_CNT_l__RSVD_                    12
+#define MBY_HASH_ENTRY_RAM_CERR_CNT_h__RSVD_                    31
+#define MBY_HASH_ENTRY_RAM_CERR_CNT_l_COUNTER                   0
+#define MBY_HASH_ENTRY_RAM_CERR_CNT_h_COUNTER                   11
+
+#define MBY_HASH_ENTRY_RAM_UERR_CNT_WIDTH                       2
+#define MBY_HASH_ENTRY_RAM_UERR_CNT_ENTRIES_0                   2
+#define MBY_HASH_ENTRY_RAM_UERR_CNT_ENTRIES_1                   2
+#define MBY_HASH_ENTRY_RAM_UERR_CNT(index1, index0, word)       ((0x0000010) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x01000E0) + (MBY_HASH_ENTRY_RAM_BASE))
+
+#define MBY_HASH_ENTRY_RAM_UERR_CNT_l__RSVD_                    12
+#define MBY_HASH_ENTRY_RAM_UERR_CNT_h__RSVD_                    31
+#define MBY_HASH_ENTRY_RAM_UERR_CNT_l_COUNTER                   0
+#define MBY_HASH_ENTRY_RAM_UERR_CNT_h_COUNTER                   11
+
 // Enums:
 
 typedef enum mbyClassifierActionEntryTypeEnum
@@ -425,7 +618,7 @@ typedef enum mbyClassifierAct24Enum
 
 } mbyClassifierAct24;
 
-typedef enum mbyFfuKey8Enum
+typedef enum mbyClassifierKey8Enum
 {
     MBY_FFU_KEY8_MPLS_LABEL5_0 = 0,
     MBY_FFU_KEY8_MPLS_LABEL5_1 = 1,
@@ -444,9 +637,9 @@ typedef enum mbyFfuKey8Enum
     MBY_FFU_KEY8_OUTER_LEN     = 22,
     MBY_FFU_KEY8_OUTER_DS      = 24
 
-} mbyFfuKey8;
+} mbyClassifierKey8;
 
-typedef enum mbyFfuKey16Enum
+typedef enum mbyClassifierKey16Enum
 {
     MBY_FFU_KEY16_OUTER_VLAN1     = 14,
     MBY_FFU_KEY16_INNER_VLAN1     = 20,
@@ -459,7 +652,7 @@ typedef enum mbyFfuKey16Enum
     MBY_FFU_KEY16_MPLS_LABEL4_0   = 30,
     MBY_FFU_KEY16_MPLS_LABEL4_1   = 31
 
-} mbyFfuKey16;
+} mbyClassifierKey16;
 
 // Structs:
 
@@ -494,6 +687,19 @@ typedef struct mbyClassifierTcamEntryStruct
 
 } mbyClassifierTcamEntry;
 
+typedef struct mbyClassifierHashLookupStruct
+{
+  fm_uint32                     PTR;
+  fm_uint16                     RSVD1_;
+  fm_byte                       SELECT_4;
+  fm_byte                       SELECT_3;
+  fm_byte                       SELECT_2;
+  fm_byte                       SELECT_1;
+  fm_byte                       SELECT_0;
+  fm_uint32                     MASK;
+
+} mbyClassifierHashLookup;
+
 typedef struct mbyLookupInfoStruct
 {
     fm_uint64               key; // 40b field
@@ -510,6 +716,25 @@ typedef struct mbyClassifierHitInfoStruct
     fm_bool                 hitIndexValid;
 
 } mbyClassifierHitInfo;
+
+typedef struct mbyClassifierKeyMaskCfgStruct
+{
+    fm_uint32               Key16Mask;
+    fm_uint64               Key8Mask;
+    fm_uint16               Key32Mask;
+    fm_byte                 KeySubmode[2]; // 2b field
+    fm_uint32               KeySubmask[2];
+
+} mbyClassifierKeyMaskCfg;
+
+typedef struct mbyClassifierHashCfgStruct
+{
+    fm_bool                 mode;
+    fm_uint16               base_ptr  [2]; // 13b field
+    fm_byte                 hash_size [2]; // 5b field
+    fm_byte                 entry_size[2]; // 5b field
+
+} mbyClassifierHashCfg;
 
 typedef struct mbyClassifierKeysStruct
 {
@@ -591,9 +816,6 @@ typedef struct mbyClassifierToHashStruct
 
     // FFU Group Actions going to next group Per FFU Group data to be used by DV.
     mbyClassifierActions    FFU_ACTIONS;
-
-    /* Fghash Actions going to next group Per Fghash data to be used DV. */
-//  mbyFghashActions        FGHASH_ACTIONS[MBY_FFU_HASH_CFG_ENTRIES_1];
 
     /* ECN/SWPRI/TTL01/DSCP and merged VPRI */
 //  mbyClassifierMuxedAction FFU_MUXED_ACTION;
