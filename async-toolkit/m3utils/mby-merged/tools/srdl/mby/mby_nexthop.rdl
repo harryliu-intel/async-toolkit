@@ -166,6 +166,7 @@ reg nexthop_used_r {
          ";
   regwidth = 64;
   accesswidth = 64;
+  default woclr;
   field {
     AccessType = "RW/1C/V";
     desc = "

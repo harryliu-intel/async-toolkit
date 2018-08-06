@@ -117,7 +117,7 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
 
 MBY_POSTPROC = work/mby_postproc.rdl
-$(MBY_POSTPROC): $(MBY_TOP_RDL)
+$(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	mkdir -p work
 	${SVPP} --path $(NEBULON)/include:$(dir $<) < $< > work/i1.rdl
 	${PERLFE} < work/i1.rdl > work/i2.rdl

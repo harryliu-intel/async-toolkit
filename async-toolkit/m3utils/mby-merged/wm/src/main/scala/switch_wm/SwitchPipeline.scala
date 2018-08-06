@@ -6,6 +6,7 @@ class Packet
 class PacketHeader {
   val adjustedSegmentLength = 100 // (should be computed)
   def apply(addr : Int) : Byte = 0
+  def getWord(addr : Int) : Short = ((apply(addr) << 8) | apply(addr)).toShort
 }
 
 class Metadata(val flags : ppe.PacketFlags, val fields : ppe.PacketFields)
@@ -14,8 +15,7 @@ object Metadata {
 }
 
 abstract class PipelineStage[I,O] {
-  val x : (I) => O
-
+  val x : I => O
 }
 
 class Epl extends PipelineStage[Array[Byte], Packet] {

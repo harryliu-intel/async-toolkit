@@ -10,4 +10,6 @@ class PacketFields(val fields : Vector[Short]) {
 
 object PacketFields{
   def apply() : PacketFields = new PacketFields(Vector.fill[Short](80)(0.toShort))
+  def apply(x : IndexedSeq[Short]) : PacketFields = new PacketFields(x.toVector)
+
 }
