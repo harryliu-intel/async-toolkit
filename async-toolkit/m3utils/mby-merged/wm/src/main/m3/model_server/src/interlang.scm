@@ -193,6 +193,16 @@
 
         (else '*not-found*)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (serialize-m3-number b arg)
+  (sa *m3-uint-intf* "." "Serialize" (number->string b) "(" arg ")"))
+
+(define (deserialize-m3-number b arg)
+  (sa *m3-uint-intf* "." "Deserialize" (number->string b) "(" arg ")"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define mod modulo) ;; for Scheme!
 
 (define *binops*
@@ -270,18 +280,6 @@
 (define (m3-modu-nm typedef)
   (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".i3"))
   
-(define (compile-m3-constant x defs)
-  (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
-  (let* ((imports (make-string-set 10))
-         (code (sa "CONST " (scheme->m3 (cadr x)) " = " (gen-m3-val-use (caddr x) defs imports) ";")))
-    (list
-     (list (sa *m3-proj* *m3-const-intf* ".i3")
-           imports
-           code)
-     )
-    )
-  )
-
 (define (compile-m3-typedef-def x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
   (let* ((imports (make-string-set 10))
@@ -295,11 +293,157 @@
 (define (compile-m3-typedef-serial-size x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
   (list (m3-intf-nm x) *empty-set* (sa "CONST SerialSize = " (get-type-field-cnt (caddr x) defs) ";")))
-  
+
+(define (m3-deser-name whch)
+  (case whch
+    ((ser) "Serialize")
+    ((deser) "Deserialize")
+    (else (error))))
+
+(define (m3-deser-uint-pname b whch)
+  (sa *m3-uint-intf* "." (m3-deser-name whch) (number->string b)))
+
+(define (m3-deser-builtin-pname x whch)
+   (let ((b-test (assoc x *builtins*)))
+                   (if b-test
+                       (sa "WmDeSer." (m3-deser-name whch) (get-m3-name (cadr b-test)))
+                       #f)))
+           
+(define (m3-deser-typedef-pname x whch)
+  (let ((r-test (sym-lookup x defs)))
+    (if (and r-test (eq? 'typedef (car r-test)))
+        (let ((intf (sa *m3-proj* (get-m3-name r-test))))
+          (sa "CONST " proc-name " = " intf "." proc-name semi))
+        #f)))
+
+(define (compile-m3-typedef-proto td defs whch semi)
+  (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
+  (let ((x          (caddr td))
+        (proc-name  (m3-deser-name whch)))
+    ;; depending what the typedef is, we do different things
+    ;; if its just an alias, make it a CONST def, relating to the base type
+    ;; else provide the standard proto
+    (list
+     (m3-intf-nm td)
+     *empty-set* 
+     (cond ((number? x) 
+            (sa "CONST " proc-name " = " (m3-deser-uint-pname x whch) semi))
+
+           ((let (builtin-name (m3-deser-builtin-pname x whch))
+              (if builtin-name (sa "CONST "proc-name" = " builtin-name ";"))))
+
+           ((let (td-name (m3-deser-typedef-pname x whch))
+              (if td-name (sa "CONST "proc-name" = " td-name ";"))))
+           
+           ;; must be type expression
+           ((not (pair? x)) '*not-found*)
+           
+           ((eq? (car x) 'bits)
+            (compile-m3-typedef-proto (force-value (cadr x) defs) defs whch))
+
+           (else ;; a compound type of some kind (struct or array)
+            (case whch
+              ((ser) (sa "PROCEDURE Serialize(READONLY t : T; VAR s : ARRAY[0..SerialSize-1] OF Word.T)" semi))
+              ((deser) (sa "PROCEDURE Deserialize(VAR t : T; READONLY s : ARRAY[0..SerialSize-1] OF Word.T)" semi))
+              )
+            )
+           )
+     );;tsil
+    );;tel
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-m3-deser-code whch x defs lhs lev ind p)
+  (cond
+
+   ((number? x) (sa ind (m3-deser-uint-pname x whch) "(" lhs ", s[" p "])"))
+
+   ((let ((builtin-name (m3-deser-builtin-pname x whch)))
+      (if builtin-name (sa ind builtin-name "(" lhs ", s[" p "])") #f)))
+   
+   ((let ((td-name (m3-deser-typedef-pname x whch)))
+      (if td-name (sa ind td-name "(" lhs ", s[" p "])") #f)))
+   
+   ((not (pair? x)) (error))
+    
+   ((eq? (car x) 'bits)
+    (make-m3-deser-code whch (force-value (cadr x) defs) lhs lev ind p))
+   
+   ((eq? (car x) 'array)
+    (sa
+     ind "FOR i"lev" := 0 TO " (force-value (cadr x) defs) "-1 DO" dnl
+     ind "  WITH t"lev " = " lhs "[i"lev"], " dnl
+     ind "       o"lev " =  "p" + i"lev" * " (get-type-field-cnt (caddr x) defs) " DO" dnl
+     ;; keep track of indices?
+
+          (make-m3-deser-code whch (caddr x) defs (sa "t"lev) (+ lev 1) (sa ind "    ") (sa "o"lev)) dnl
+
+          ind "  END" dnl
+          ind "END" 
+          ))
+
+   ((eq? (car x) 'struct)
+
+     
+    )
+        
+
+   )
+  )
+         
+        
+
+
+(define (compile-m3-typedef-code td defs whch)
+  (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
+  (let ((imports    (make-string-set 10))
+        (x          (caddr td))
+        (proc-name  (m3-deser-name whch)))
+    (list
+     (m3-modu-nm td)
+     imports
+     (cond ((not (pair? x)) "") ;; base type, no need for code generation
+
+           ((or (eq? (car x) 'array) (eq? (car x) 'struct))
+            (sa (caddr (compile-m3-typedef-proto td defs whch "=")) dnl
+                "BEGIN" dnl
+
+                (make-m3-deser-code whch x defs "t" 0 "  " 0)
+                
+                "END " proc-name ";" dnl
+                ))
+
+           (else "")
+
+           );; dnoc
+          );;tsil
+    );;tel
+  )
+
+
+;; main entry points for generating M3 below ...
+
 (define (compile-m3-typedef x defs)
   (list (compile-m3-typedef-def x defs)
         (compile-m3-typedef-serial-size x defs)
+        (compile-m3-typedef-proto x defs 'ser ";")
+        (compile-m3-typedef-proto x defs 'deser ";")
+        (compile-m3-typedef-code x defs 'ser)
+        (compile-m3-typedef-code x defs 'deser)
         ))
+
+(define (compile-m3-constant x defs)
+  (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
+  (let* ((imports (make-string-set 10))
+         (code (sa "CONST " (scheme->m3 (cadr x)) " = " (gen-m3-val-use (caddr x) defs imports) ";")))
+    (list
+     (list (sa *m3-proj* *m3-const-intf* ".i3")
+           imports
+           code)
+     )
+    )
+  )
 
 ;;
 ;; in C, the tags will be used only to be topologically sorted before generation into a single
