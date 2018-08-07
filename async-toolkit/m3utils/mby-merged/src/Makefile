@@ -7,6 +7,7 @@ INC_DIR = .
 INCLUDES  = -I$(INC_DIR)
 
 SOURCES += fm_crc32.c
+SOURCES += mby_bitfield.c
 SOURCES += mby_common.c
 SOURCES += mby_parser.c
 SOURCES += mby_mapper.c
@@ -55,10 +56,10 @@ DELFILES  = $(OBJECTS) *.o
 .PHONY: all
 all: $(OBJECTS)
 
-mby_common.o     : mby_common.c                      mby_common.h
-mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h
-mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h
-mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h
+mby_common.o     : mby_common.c                      mby_common.h mby_bitfield.h
+mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h mby_bitfield.h
+mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h mby_bitfield.h
+mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h mby_bitfield.h
 
 %.o: %.c
 	@echo '  Compiling' $<
