@@ -313,7 +313,7 @@
   (let ((r-test (sym-lookup x defs)))
     (if (and r-test (eq? 'typedef (car r-test)))
         (let ((intf (sa *m3-proj* (get-m3-name r-test))))
-          (sa "CONST " proc-name " = " intf "." proc-name semi))
+          (sa intf "." (m3-deser-name whch)))
         #f)))
 
 (define (compile-m3-typedef-proto td defs whch semi)
@@ -329,11 +329,11 @@
      (cond ((number? x) 
             (sa "CONST " proc-name " = " (m3-deser-uint-pname x whch) semi))
 
-           ((let (builtin-name (m3-deser-builtin-pname x whch))
-              (if builtin-name (sa "CONST "proc-name" = " builtin-name ";"))))
+           ((let ((builtin-name (m3-deser-builtin-pname x whch)))
+              (if builtin-name (sa "CONST "proc-name" = " builtin-name ";") #f)))
 
-           ((let (td-name (m3-deser-typedef-pname x whch))
-              (if td-name (sa "CONST "proc-name" = " td-name ";"))))
+           ((let ((td-name (m3-deser-typedef-pname x whch)))
+              (if td-name (sa "CONST "proc-name" = " td-name ";") #f)))
            
            ;; must be type expression
            ((not (pair? x)) '*not-found*)
@@ -356,7 +356,6 @@
 
 (define (make-m3-deser-code whch x defs lhs lev ind p)
   (cond
-
    ((number? x) (sa ind (m3-deser-uint-pname x whch) "(" lhs ", s[" p "])"))
 
    ((let ((builtin-name (m3-deser-builtin-pname x whch)))
@@ -374,7 +373,7 @@
     (sa
      ind "FOR i"lev" := 0 TO " (force-value (cadr x) defs) "-1 DO" dnl
      ind "  WITH t"lev " = " lhs "[i"lev"], " dnl
-     ind "       o"lev " =  "p" + i"lev" * " (get-type-field-cnt (caddr x) defs) " DO" dnl
+     ind "       o"lev " = " p" + i"lev" * " (get-type-field-cnt (caddr x) defs) " DO" dnl
      ;; keep track of indices?
 
           (make-m3-deser-code whch (caddr x) defs (sa "t"lev) (+ lev 1) (sa ind "    ") (sa "o"lev)) dnl
@@ -391,7 +390,17 @@
       (if (null? ptr)
           outp
           (loop (cdr ptr)
-                (sa outp (make-m3-deser-code whch (cadar ptr) defs (sa lhs "." (caar ptr)) lev (sa ind "  ") idx ) ";" dnl)
+                (sa outp
+                    (make-m3-deser-code whch
+                                        (cadar ptr)
+                                        defs
+                                        (sa lhs "." (scheme-mem->m3 (caar ptr)))
+                                        lev
+                                        (sa ind "  ")
+                                        idx )
+                    ";"
+                    dnl
+                    ) ;; as
                 (+ idx (get-type-field-cnt (cadar ptr) defs))
                 )
           ) ;; fi
@@ -418,12 +427,12 @@
      (cond ((not (pair? x)) "") ;; base type, no need for code generation
 
            ((or (eq? (car x) 'array) (eq? (car x) 'struct))
-            (sa (caddr (compile-m3-typedef-proto td defs whch "=")) dnl
-                "BEGIN" dnl
+            (sa (caddr (compile-m3-typedef-proto td defs whch " =")) dnl
+                "  BEGIN" dnl
 
                 (make-m3-deser-code whch x defs "t" 0 "  " 0)
                 
-                "END " proc-name ";" dnl
+                "  END " proc-name ";" dnl
                 ))
 
            (else "")
