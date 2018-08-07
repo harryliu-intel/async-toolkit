@@ -12,9 +12,12 @@
     (constant ffu-n-act1  24)
 
     (constant n-parser-keys  84)
+    (constant n-parser-ptrs  8)
+    (constant n-parser-flags  4)
     (constant n-realign-keys (- n-parser-keys 4))
 
     (typedef parser-key 16)
+    (typedef pk-alias parser-key)
 
     (typedef ffu-key32  32)
     (typedef ffu-key16  16)
@@ -31,40 +34,42 @@
     
     (typedef parser-to-mapper
              (struct
-              (rx-port             8)
-              (pkt-meta            pkt-meta)
-              (rx-flags            8)
-              (pa-keys             (array  n-parser-keys parser-key))
-              (pa-keys-valid       (array  n-parser-keys boolean))
-              (pa-flags            (array             48 boolean))
-              (pa-ptrs             (array              8 8))
-              (pa-ptrs-valid       (array              8 boolean))
-              (pa-csum-ok          2)
-              (pa-ex-stage         8)
-              (pa-ex-depth-exceed  boolean)
-              (pa-ex-trunch-header boolean)
-              (pa-drop             boolean)
-              (pa-l3len-err        boolean)
-              (pa-packet-type      8)))
-
+              ((rx-port             8)
+               (pkt-meta            pkt-meta)
+               (rx-flags            8)
+               (pa-keys             (array  n-parser-keys     parser-key))
+               (pa-keys-valid       (array  n-parser-keys     boolean))
+               (pa-flags            (array  n-parser-flags    boolean))
+               (pa-ptrs             (array  n-parser-ptrs     8))
+               (pa-ptrs-valid       (array  n-parser-ptrs     boolean))
+               (pa-csum-ok          2)
+               (pa-ex-stage         8)
+               (pa-ex-depth-exceed  boolean)
+               (pa-ex-trunc-header  boolean)
+               (pa-drop             boolean)
+               (pa-l3len-err        boolean)
+               (pa-packet-type      8))))
+    
     (typedef classifier-keys
              (struct 
-              (key32 (array ffu-n-key32 ffu-key32))
-              (key16 (array ffu-n-key16 ffu-key16))
-              (key8  (array ffu-n-key8  ffu-key8))))
-
+              ((key32 (array ffu-n-key32 ffu-key32))
+               (key16 (array ffu-n-key16 ffu-key16))
+               (key8  (array ffu-n-key8  ffu-key8)))))
+             
     (typedef prec-val
              (struct
-              (prev 3)
-              (val 24)))
+              ((prev 3)
+               (val 24))))
 
     (typedef classifier-actions
              (struct 
-              (act24 (array ffu-n-act24 prev-val))
-              (act4  (array ffu-n-act4 prev-val))
-              (act1  (array ffu-n-act1 prev-val))))
+              ((act24 (array ffu-n-act24 prec-val))
+               (act4  (array ffu-n-act4 prec-val))
+               (act1  (array ffu-n-act1 prec-val)))))
 
     ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (lang-name kind lang obj)
   (let* ((db (caddr obj))
@@ -84,7 +89,7 @@
 
 
 (define *builtins*
-  '((boolean (type (boolean) ((m3 "BOOLEAN") (c "fm_bool") (scm boolean)))))
+  '((boolean (typedef (boolean) ((m3 "BOOLEAN") (c "fm_bool") (scm boolean)))))
   )
 
 (define *languages* '(m3 c scm))
@@ -94,9 +99,6 @@
 (define *m3-const-intf* "StructConst")
 (define *c-proj* "mby")
 (define *c-const-pfx* "mbyStruct_")
-
-
-;; kind is 'member or 'type
 
 (define (sym-lookup sym defs)
 
@@ -125,9 +127,36 @@
                     'Lower 'LCamel
                     'Hyphen 'None))
 
-(define (gen-m3-type-use x defs)
+(define (get-type-field-cnt x defs)
+  (cond ((or (number? x)
+             (and (symbol? x)
+                  (assoc x *builtins*))) 1)
+
+        ((and (symbol? x)
+              (let ((r-test (sym-lookup x defs)))
+                (if (and r-test (eq? 'typedef (car r-test)))
+                    (get-type-field-cnt (caddr (cadr r-test)) defs)))))
+
+        ((not (pair? x)) (error "get-type-field-cnt failed on " x))
+
+        ((eq? (car x) 'bits) 1)
+
+        ((eq? (car x) 'array) (* (force-value (cadr x) defs) (get-type-field-cnt (caddr x) defs)))
+
+        ((eq? (car x) 'struct)
+         (let loop ((cnt 0)
+                    (p (cadr x))) ;; the list of fields
+           (if (null? p)
+               cnt
+               (loop (+ cnt (get-type-field-cnt (cadar p) defs)) (cdr p)))))
+               
+        ))
+ 
+         
+(define (gen-m3-type-use x defs imports)
 
   (cond ((number? x) 
+         (imports 'insert! "UInt")
          (sa *m3-uint-intf* "." "UInt" (number->string x)))
         
         ((and (symbol? x)
@@ -138,24 +167,28 @@
 
         ((and (symbol? x)
               (let ((r-test (sym-lookup x defs)))
-                (if (and r-test (eq? 'type (car r-test)))
-                    (sa *m3-proj* (get-m3-name  r-test) ".T")
+                (if (and r-test (eq? 'typedef (car r-test)))
+                    (let ((intf (sa *m3-proj* (get-m3-name r-test))))
+                      (imports 'insert! intf)
+                      (sa intf ".T"))
                     #f))))
 
         ;; must be type expression
         ((not (pair? x)) '*not-found*)
 
         ((eq? (car x) 'bits)
-               (sa "[0..WM(LS(1," (gen-m3-val-use (cadr x) defs) "),1)]")) ;; WM = Word.Minus, LS = Word.LeftShift
+               (sa "[0..WM(LS(1," (gen-m3-val-use (cadr x) defs imports) "),1)]")) ;; WM = Word.Minus, LS = Word.LeftShift
           
         ((eq? (car x) 'array)
-         (sa "ARRAY [0.." (gen-m3-val-use (cadr x) defs) "-1] OF (" (gen-m3-type-use (caddr x) defs) ")"))
+         (sa "ARRAY [0.." (gen-m3-val-use (cadr x) defs imports) "-1] OF " (gen-m3-type-use (caddr x) defs imports) ""))
 
         ((eq? (car x) 'struct)
          (apply sa
                 (append
                 (list "RECORD" dnl)
-                (map (lambda (fspec) (sa "  " (scheme-mem->m3 (car fspec)) " : (" (gen-m3-type-use (cadr fspec) defs) ");" dnl)) (cdr x))
+                (map
+                 (lambda (fspec) (sa "  " (scheme-mem->m3 (car fspec)) " : " (gen-m3-type-use (cadr fspec) defs imports) ";" dnl))
+                 (cadr x))
                 (list "END" dnl))))
 
         (else '*not-found*)))
@@ -168,24 +201,50 @@
 
 (define *multiops*
   '(+ - *))
-  
-(define (gen-m3-val-use x defs)
 
-  (define (recurse z) (gen-m3-val-use z defs))
+(define (pow2 n) (if (= n 0) 1 (* 2 (pow2 (- n 1)))))
+
+(define (force-type-number x defs)
+  (cond ((number? x) (pow2 x))
+
+        ((and (pair? x) (eq? (car x) 'bits)) (pow2 (force-value (cadr x) defs)))
+
+        ((and (pair? x) (eq? (car x) 'array)) (force-value (cadr x) defs))
+
+        (else (error "force-type-number on " x))))
+
+(define (force-value x defs)
+  (cond ((number? x) x)
+
+        ((and (symbol? x)
+              (let ((r-test (sym-lookup x defs)))
+                (if (and r-test (eq? 'constant (car r-test)))
+                    (force-value (caddr (cadr r-test)) defs)))))
+
+        ((not (pair? x)) '*not-found*)
+
+        ((or (memq (car x) *multiops*) (assoc (car x) *binops*))
+         (apply (eval (car x)) (map (lambda(z)(force-value z defs)) (cdr x))))))
+
+(define (gen-m3-val-use x defs imports)
+
+  (define (recurse z) (gen-m3-val-use z defs imports))
 
   (cond ((number? x) (number->string x))
 
         ((and (symbol? x)
               (let ((r-test (sym-lookup x defs)))
                 (if (and r-test (eq? 'constant (car r-test)))
-                    (sa *m3-proj* *m3-const-intf* "." (get-m3-name  r-test) )
+                    (let ((intf (sa *m3-proj* *m3-const-intf* )))
+                      (imports 'insert! intf)
+                      (sa intf "." (get-m3-name  r-test) ))
                     #f))))
         
         ;; must be value expression
         ((not (pair? x)) '*not-found*)
 
         ((eq? (car x) 'number)
-         (sa "NUMBER(" (gen-m3-type-use (cadr x) defs) ")"))
+         (sa "NUMBER(" (gen-m3-type-use (cadr x) defs imports) ")"))
 
         ((memq (car x) *multiops*)
          (sa "(" (infixize (map recurse (cdr x)) (car x)) ")"))
@@ -196,13 +255,73 @@
                #f)))
              
         (else '*not-found*)))
-         
-(define (compile-m3-typedef x defs)
-  (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
-  (sa "TYPE " (scheme->m3 (cadr x)) " = " (gen-m3-type-use (caddr x) defs) ";"))
-                
-(define (compile-interlang! defs)
+
+;;
+;; In M3, the various compile routines will tag the output with the filename whither to place each
+;; generated fragment.
+;;
+;; syntax of top-level output is
+;; ((<fn> <fragment>) (<fn> <fragment>) ...)
+;;
+
+(define (m3-intf-nm typedef)
+  (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".i3"))
+
+(define (m3-modu-nm typedef)
+  (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".i3"))
   
-  (map compile-one-il! defs))
-             
+(define (compile-m3-constant x defs)
+  (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
+  (let* ((imports (make-string-set 10))
+         (code (sa "CONST " (scheme->m3 (cadr x)) " = " (gen-m3-val-use (caddr x) defs imports) ";")))
+    (list
+     (list (sa *m3-proj* *m3-const-intf* ".i3")
+           imports
+           code)
+     )
+    )
+  )
+
+(define (compile-m3-typedef-def x defs)
+  (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
+  (let* ((imports (make-string-set 10))
+         (code (sa "TYPE T = " (gen-m3-type-use (caddr x) defs imports) ";")))
+    (list (m3-intf-nm x) imports code)
+    )
+  )
+
+(define *empty-set* (make-string-set 0))
+
+(define (compile-m3-typedef-serial-size x defs)
+  (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
+  (list (m3-intf-nm x) *empty-set* (sa "CONST SerialSize = " (get-type-field-cnt (caddr x) defs) ";")))
+  
+(define (compile-m3-typedef x defs)
+  (list (compile-m3-typedef-def x defs)
+        (compile-m3-typedef-serial-size x defs)
+        ))
+
+;;
+;; in C, the tags will be used only to be topologically sorted before generation into a single
+;; flat file
+;;
+;; syntax of top-level output is
+;; ((<tag> <fragment>) (<tag> <fragment>) ...)
+;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *fn* '())
+
+(define (make-compiler lang)
+  (lambda (rec defs)
+    (let* ((fn (symbol-append 'compile- lang '- (car rec)))
+          (f (eval fn)))
+      (set! *fn* fn)
+      (f rec defs))))
+              
                             
+(define (compile lang)
+  (let* ((compiler (make-compiler lang))
+         (lsts (map (lambda (def) (compiler def defs)) defs)))
+    (apply append lsts)))

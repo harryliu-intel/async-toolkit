@@ -36,4 +36,9 @@ Module("UnsafeUpdaterFactory")
 
 Module("WmUtils")
 
+Module("WxToWr")
+
+Generic_module("TopoSort")
+Module("TextTopoSort")
+
 library ("wm_support")
