@@ -528,6 +528,28 @@
 #define MBY_HASH_ENTRY_RAM_UERR_CNT_l_COUNTER                   0
 #define MBY_HASH_ENTRY_RAM_UERR_CNT_h_COUNTER                   11
 
+/******** MPLS_MUX_BASE *******/
+#define MBY_MPLS_MUX_BASE                                       (0x37E1000)
+#define MBY_MPLS_MUX_SIZE                                       (0x0008000)
+
+#define MBY_MPLS_MUX_EXP_DS_WIDTH                               2
+#define MBY_MPLS_MUX_EXP_DS_ENTRIES                             256
+#define MBY_MPLS_MUX_EXP_DS(index, word)                        ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0000000) + (MBY_MPLS_MUX_BASE))
+
+#define MBY_MPLS_MUX_EXP_DS_l_DSCP                              6
+#define MBY_MPLS_MUX_EXP_DS_h_DSCP                              11
+#define MBY_MPLS_MUX_EXP_DS_l_ECN                               4
+#define MBY_MPLS_MUX_EXP_DS_h_ECN                               5
+#define MBY_MPLS_MUX_EXP_DS_l_TC                                0
+#define MBY_MPLS_MUX_EXP_DS_h_TC                                3
+
+#define MBY_MPLS_MUX_DSCP_TC_WIDTH                              2
+#define MBY_MPLS_MUX_DSCP_TC_ENTRIES                            64
+#define MBY_MPLS_MUX_DSCP_TC(index, word)                       ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0000800) + (MBY_MPLS_MUX_BASE))
+
+#define MBY_MPLS_MUX_DSCP_TC_l_TC                               0
+#define MBY_MPLS_MUX_DSCP_TC_h_TC                               3
+
 // Enums:
 
 typedef enum mbyClassifierActionEntryTypeEnum
@@ -759,6 +781,21 @@ typedef struct mbyClassifierActionsStruct
 
 } mbyClassifierActions;
 
+/****** MPLS_MUX_BASE Register Structs ******/
+typedef struct mbyMplsMuxExpDsStruct
+{
+    fm_byte                  DSCP;
+    fm_byte                  ECN;
+    fm_byte                  TC;
+
+} mbyMplsMuxExpDs;
+
+typedef struct mbyMplsMuxDscpTc
+{
+  fm_byte                    TC;
+
+} mbyMplsMuxDscpTc;
+
 typedef struct mbyMapperToClassifierStruct
 {
     /* Boolean indicating whether a header parse error has occurred. */
@@ -808,17 +845,20 @@ typedef struct mbyClassifierMuxedActionStruct
 
 typedef struct mbyClassifierToHashStruct
 {
-    // The 6-bit FFU scenario.
-    fm_byte                 FFU_SCENARIO;
+    // The Layer 2 destination address:
+    fm_macaddr              L2_DMAC;
 
-    // FFU Group Keys feeding to next group. Per FFU Group data to be used by DV.
-    mbyClassifierKeys       FFU_KEYS;
+    // The Layer 2 source address:
+    fm_macaddr              L2_SMAC;
 
-    // FFU Group Actions going to next group Per FFU Group data to be used by DV.
-    mbyClassifierActions    FFU_ACTIONS;
+    // The 16-bit innermost Ethernet type:
+    fm_uint16               L2_ETYPE;
 
-    /* ECN/SWPRI/TTL01/DSCP and merged VPRI */
-//  mbyClassifierMuxedAction FFU_MUXED_ACTION;
+    // The 12-bit ingress VLAN ID:
+    fm_uint16               L2_IVID1;
+
+    // The 4-bit QOS VLAN priority:
+    fm_byte                 QOS_L2_VPRI1;
 
 } mbyClassifierToHash;
     

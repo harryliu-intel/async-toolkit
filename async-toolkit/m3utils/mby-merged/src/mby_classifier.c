@@ -914,6 +914,173 @@ static void matchExact
     lookUpHash(regs, keys, scenario, group, actions);
 }
 
+// Decode FFU ACTIONS ECN-CTRL, TC_CTRL, TTL_CTRL and DSCP_CTRL,
+// and populate FFU_MUXED_ACTION.
+static void muxActions
+(
+    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyClassifierKeys     keys,
+    const mbyClassifierActions  actions,
+    const fm_byte               pri_profile
+)
+{
+    fm_byte mpls_pop  = actions.act4[MBY_FFU_ACTION_MPLS_POP].val;
+    fm_byte ecn_ctrl  = actions.act4[MBY_FFU_ACTION_ECN_CTRL].val;
+    fm_byte tc_ctrl   = actions.act4[MBY_FFU_ACTION_TC_CTRL].val;
+    fm_byte ttl_ctrl  = actions.act4[MBY_FFU_ACTION_TTL_CTRL].val;
+    fm_byte dscp_ctrl = actions.act4[MBY_FFU_ACTION_DSCP_CTRL].val; 
+
+    mbyClassifierMuxedAction  muxed_action_inst;
+    mbyClassifierMuxedAction *muxed_action = &muxed_action_inst;
+
+    // Update ECN:
+    muxed_action->ecn         = 0;
+    muxed_action->aqm_mark_en = 0;
+
+    fm_byte exp  = 0;
+    fm_byte dscp = 0;
+    
+    if (ecn_ctrl < 4) // FFU directly specifies ECN value:
+    {
+        muxed_action->ecn         = (ecn_ctrl == 2) ? 1 : ecn_ctrl;
+        muxed_action->aqm_mark_en = (ecn_ctrl == 2) ? 1 : 0;
+    } 
+    else if (ecn_ctrl < 16) // Define ECN source and marking rules:
+    {
+        switch (ecn_ctrl & 3) // ECN
+        {
+            case 0: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 0, 2); break;
+            case 1: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 0, 2); break;
+
+            case 2: // ECN-CTRL[1:0] = 2 : ECN source is MPLS label 1, i.e. MPLS_MUX_EXP_DS[mpls_labels[0].exp].ecn
+            {
+                exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3);
+                fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
+                mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
+                muxed_action->ecn = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, ECN);
+                break;
+            }
+            case 3: // ECN_CTRL[1:0]=3: ECN source is MPLS label exposed after MPLS_POP
+            {
+                exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
+                      (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0;
+                fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
+                mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
+                muxed_action->ecn = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, ECN);
+                break;
+            }
+
+            default: break;
+        }
+
+        // ECN_CTRL[3:2]=3: mark in FFU if ingress ECN is 01 or 10 (aqm_mark_en=0):
+        if ((((ecn_ctrl >> 2) & 3) == 3) && (muxed_action->ecn == 1 || muxed_action->ecn == 2))
+            muxed_action->ecn = 3;
+
+        // ECN marking:
+        muxed_action->aqm_mark_en = (((ecn_ctrl >> 2) & 3) == 2);
+    }
+    
+    // Update DSCP:
+    muxed_action->dscp = 0;
+
+    switch (dscp_ctrl)
+    {
+        case  0: muxed_action->dscp = (actions.act4[MBY_FFU_ACTION_DSCP_LOW ].val & 0xF) |
+                                     ((actions.act4[MBY_FFU_ACTION_DSCP_HIGH].val & 0xF) << 4); break;
+
+        case  4: muxed_action->dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6); break;
+        case  5: muxed_action->dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 2, 6); break;
+        
+        case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
+                       (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_2  + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
+
+        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3); break;
+        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL2_1], 9, 3); break;
+        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL3_1], 9, 3); break;
+        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL4_1], 9, 3); break;
+
+        default: break;
+    }
+
+    if (dscp_ctrl == 6 || ((dscp_ctrl >= 8) && (dscp_ctrl <= 11))) {
+        fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
+        mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
+        muxed_action->dscp = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, DSCP);
+    }
+
+    // Update SWPRI:
+    muxed_action->swpri = 0;
+    
+    switch (tc_ctrl)
+    {
+        case  0: muxed_action->swpri = actions.act4[MBY_FFU_ACTION_TC].val; break;
+
+        case  4:
+        {
+            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
+            fm_uint32 mpls_mux_dscp_tc_vals[MBY_MPLS_MUX_DSCP_TC_WIDTH] = { 0 };
+            mbyModelReadCSRMult(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), MBY_MPLS_MUX_DSCP_TC_WIDTH, mpls_mux_dscp_tc_vals);
+            muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_dscp_tc_vals, MBY_MPLS_MUX_DSCP_TC, TC);
+            break;
+        }
+        case  5:
+        {
+            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
+            fm_uint32 mpls_mux_dscp_tc_vals[MBY_MPLS_MUX_DSCP_TC_WIDTH] = { 0 };
+            mbyModelReadCSRMult(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), MBY_MPLS_MUX_DSCP_TC_WIDTH, mpls_mux_dscp_tc_vals);
+            muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_dscp_tc_vals, MBY_MPLS_MUX_DSCP_TC, TC);
+            break;
+        }
+    case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
+                   (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8 [MBY_FFU_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
+            
+        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3); break;
+        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL2_1], 9, 3); break;
+        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL3_1], 9, 3); break;
+        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL4_1], 9, 3); break;
+
+        default: break;
+    }
+
+    if (tc_ctrl == 6 || (tc_ctrl >= 8 && tc_ctrl <= 11)) {
+        fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
+        mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
+         muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, TC);
+    }
+
+    // get TTL value based on TTL_CTRL Action:
+    fm_byte ttl = 0;
+
+    switch (ttl_ctrl)
+    {
+        case  0: ttl = keys.key8[MBY_FFU_KEY8_OUTER_TTL]; break;
+        case  1: ttl = keys.key8[MBY_FFU_KEY8_INNER_TTL]; break;
+        case  2: ttl = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 0, 8) :
+                       (mpls_pop < 6) ? keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_3 + ((mpls_pop - 4) * 4)] : 0; break;
+        case  4: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 0, 8); break;
+        case  5: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL2_1], 0, 8); break;
+        case  6: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL3_1], 0, 8); break;
+        case  7: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL4_1], 0, 8); break;
+
+        default: break;
+    }
+
+    muxed_action->ttl01 = 0;
+
+    if (ttl == 0)
+        FM_SET_UNNAMED_FIELD(muxed_action->ttl01, 0, 1, 1)
+    else if (ttl == 1)
+        FM_SET_UNNAMED_FIELD(muxed_action->ttl01, 1, 1, 1)
+
+    muxed_action->ttl_ctrl = ttl_ctrl;
+
+    muxed_action->vpri = (actions.act4[MBY_FFU_ACTION_VPRI_LOW].prec >= actions.act4[MBY_FFU_ACTION_VPRI_HIGH].prec) ?
+        actions.act4[MBY_FFU_ACTION_VPRI_LOW].val : actions.act4[MBY_FFU_ACTION_VPRI_HIGH].val;
+    
+    muxed_action->route = (actions.act1[MBY_FFU_ACTION_NO_ROUTE].val == 0 && actions.act24[MBY_FFU_ACTION_FWD].val != 0);
+}
+
 void Classifier
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
@@ -921,10 +1088,11 @@ void Classifier
           mbyClassifierToHash   * const out
 )
 {
-    // Init to defaults from the Mapper:
-    fm_byte               scenario = in->FFU_SCENARIO;
-    mbyClassifierKeys     keys     = in->FFU_KEYS;
-    mbyClassifierActions  actions  = in->FFU_ACTIONS;
+    // Read inputs from the Mapper:
+    fm_byte               scenario    = in->FFU_SCENARIO;
+    mbyClassifierKeys     keys        = in->FFU_KEYS;
+    mbyClassifierActions  actions     = in->FFU_ACTIONS;
+    fm_byte               pri_profile = in->PRIORITY_PROFILE;
 
     // Use group = 0 for now (MBY spec group = 0..1) <-- FIXME!!!!
     fm_byte group = 0;
@@ -946,8 +1114,14 @@ void Classifier
             FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
     }
 
-    // Assign outputs:
-    out->FFU_SCENARIO   = scenario;
-    out->FFU_KEYS       = keys;
-    out->FFU_ACTIONS    = actions;
+    // ECN/DSCP/SWPRI/TTL and merged VPRI:
+    muxActions(regs, keys, actions, pri_profile);
+
+#if 0
+    // Get ECMP Hash and MOD_META:
+    Entropy(model);
+    
+    // Transform FFU KEYS and ACTIONS to FWD KEYS and ACTIONS:
+    xformActions();
+#endif
 }
