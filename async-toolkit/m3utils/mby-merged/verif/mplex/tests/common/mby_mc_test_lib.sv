@@ -1,4 +1,3 @@
-
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -28,33 +27,55 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-`timescale 1ps/1fs
-//  Module:    mby_mc_tb_top
+//   Package:    mby_mc_test_lib
 //
-//  MBY MC No Processor, No PHY Testbench Top module.
-//  This file only contains instantiation/configuration which are
-//  specific to mplex_np_nphy model.
+//   This is the main Test program file which holds all tests that will be ran in Mplex env.
 
+`ifndef __MBY_MC_TEST_LIB_GUARD
+`define __MBY_MC_TEST_LIB_GUARD
 
-module mby_mc_tb_top ();
+program mby_mc_test_lib;
 
-    `include "mby_mc_tb_top_common.svh"
+`ifdef XVM
+    import ovm_pkg::*;
+    import xvm_pkg::*;
+   `include "ovm_macros.svh"
+   `include "sla_macros.svh"
+`endif
 
+    import sla_pkg::*;
+    import uvm_pkg::*;
 
-    //-----------------------------------------------------------------------------
-    // Verification Test Island
-    //-----------------------------------------------------------------------------
-    mby_mc_ti #(
-        .TOPOLOGY(mby_mc_env_pkg::mby_mc_defines::MPLEX_NP_NPHY)
-    ) mc_ti(
-        .mby_mc_tb_if               (mc_tb_if),
-        .shdv_intf                  (shdv_intf)
+    `include "uvm_macros.svh"
+    `include "slu_macros.svh"
 
-    );
+    import shdv_base_pkg::*;
+    import mby_mc_env_pkg::*;
+    import mby_wm_dpi_pkg::* ;
 
+    `define __INSIDE_MBY_MC_TEST_LIB
+    `include "mby_mc_base_test.svh"
+    `include "mby_mc_alive_test.svh"
+    `undef __INSIDE_MBY_MC_TEST_LIB
+
+    // UVM Start test
     initial begin
+        string testname;
 
+        if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
+`ifndef XVM
+            $display ("MBY_tb Started Running %s in UVM mode!\n",testname);
+        end
+        uvm_pkg::run_test(testname);
+`else
+        $display ("MBY_tb Started Running %s in XVM mode!\n",testname);
     end
+    xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
 
-endmodule: mby_mc_tb_top
+`endif
 
+end
+
+endprogram
+
+`endif // __MBY_MC_TEST_LIB_GUARD

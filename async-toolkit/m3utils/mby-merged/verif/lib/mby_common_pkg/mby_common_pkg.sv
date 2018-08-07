@@ -1,4 +1,5 @@
 
+
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -28,33 +29,38 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-`timescale 1ps/1fs
-//  Module:    mby_mc_tb_top
+//   Package:    mby_common_pkg
 //
-//  MBY MC No Processor, No PHY Testbench Top module.
-//  This file only contains instantiation/configuration which are
-//  specific to mplex_np_nphy model.
+//   This package file contains all the common files which will be shared between different test bench.
 
 
-module mby_mc_tb_top ();
+`ifndef __MBY_COMMON_PKG_GUARD
+`define __MBY_COMMON_PKG_GUARD
 
-    `include "mby_mc_tb_top_common.svh"
+package mby_common_pkg;
 
+`ifdef XVM
+    import ovm_pkg::*;
+    import xvm_pkg::*;
+   `include "ovm_macros.svh"
+   `include "sla_macros.svh"
+`endif
 
-    //-----------------------------------------------------------------------------
-    // Verification Test Island
-    //-----------------------------------------------------------------------------
-    mby_mc_ti #(
-        .TOPOLOGY(mby_mc_env_pkg::mby_mc_defines::MPLEX_NP_NPHY)
-    ) mc_ti(
-        .mby_mc_tb_if               (mc_tb_if),
-        .shdv_intf                  (shdv_intf)
+    import uvm_pkg::*;
+    import sla_pkg::*;
 
-    );
+    import shdv_base_pkg::*;
+    import mby_wm_dpi_pkg::* ;
 
-    initial begin
+   `include "uvm_macros.svh"
+   `include "slu_macros.svh"
 
-    end
+   `define __INSIDE_MBY_COMMON_PKG
+   `include "mby_base_seq.svh"
 
-endmodule: mby_mc_tb_top
+   `undef  __INSIDE_MBY_COMMON_PKG
+
+endpackage: mby_common_pkg
+
+`endif // __MBY_COMMON_PKG_GUARD
 

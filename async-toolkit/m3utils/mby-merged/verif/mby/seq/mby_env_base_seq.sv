@@ -2,7 +2,7 @@
 //
 //
 //   ----------------------------------------------------------------------
-//   file:     mby_base_seq.sv
+//   file:     mby_env_base_seq.sv
 //   Date Created  : 25/7/2016
 //   Author        : dbenita
 //   Project       : MBY IP
@@ -11,7 +11,7 @@
 //
 //  This file contain all of the MBY base sequences.
 //
-// Class: mby_base_seq
+// Class: mby_env_base_seq
 //
 // Base sequence for all the sequences.
 //
@@ -19,8 +19,8 @@
 // to access MBY registers
 
 
-class mby_base_seq extends shdv_base_seq;
-    `uvm_object_utils(mby_base_seq)
+class mby_env_base_seq extends shdv_base_seq;
+    `uvm_object_utils(mby_env_base_seq)
     `uvm_declare_p_sequencer(slu_sequencer)
 
     slu_status_t status;
@@ -33,7 +33,7 @@ class mby_base_seq extends shdv_base_seq;
 
      Constractor, set up the MBY RAL pointer.
      */
-    function new(input string name = "mby_base_seq",
+    function new(input string name = "mby_env_base_seq",
             uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
         super.new(name /*, sequencer, parent_seq*/);
 

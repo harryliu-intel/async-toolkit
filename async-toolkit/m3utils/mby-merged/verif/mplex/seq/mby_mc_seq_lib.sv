@@ -28,33 +28,48 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-`timescale 1ps/1fs
-//  Module:    mby_mc_tb_top
+//   Package:    mby_mc_seq_lib
 //
-//  MBY MC No Processor, No PHY Testbench Top module.
-//  This file only contains instantiation/configuration which are
-//  specific to mplex_np_nphy model.
+//   Section: Mplex sequences library
+//
+//    include all Mplex sequences
+//
+//    <mby_mc_power_good_seq.sv>           - Power_Good sequence, is the initial sequence used to set Power_Good and clear Resets
+//
+//    <mby_mc_hard_reset_seq.sv>           - Hard_Reset sequence, drops the Hard Reset after a delay. (Ran second)
+//
+//    <mby_mc_warm_reset_seq.sv>           - Warm_Reset sequence, drops the Warm Reset after a delay. (Ran third)
 
 
-module mby_mc_tb_top ();
+`ifndef __MBY_MC_SEQ_LIB_GUARD
+`define __MBY_MC_SEQ_LIB_GUARD
 
-    `include "mby_mc_tb_top_common.svh"
+package mby_mc_seq_lib;
 
+`ifdef XVM
+    import ovm_pkg::*;
+    import xvm_pkg::*;
+   `include "ovm_macros.svh"
+   `include "sla_macros.svh"
+`endif
 
-    //-----------------------------------------------------------------------------
-    // Verification Test Island
-    //-----------------------------------------------------------------------------
-    mby_mc_ti #(
-        .TOPOLOGY(mby_mc_env_pkg::mby_mc_defines::MPLEX_NP_NPHY)
-    ) mc_ti(
-        .mby_mc_tb_if               (mc_tb_if),
-        .shdv_intf                  (shdv_intf)
+    import uvm_pkg::*;
+    import sla_pkg::*;
 
-    );
+    import shdv_base_pkg::*;
 
-    initial begin
+   `include "uvm_macros.svh"
+   `include "slu_macros.svh"
 
-    end
+   `define __INSIDE_MBY_MC_SEQ_LIB
+   `include "mby_mc_env_base_seq.svh"
+   `include "mby_mc_power_good_seq.svh"
+   `include "mby_mc_hard_reset_seq.svh"
+   `include "mby_mc_warm_reset_seq.svh"
+   `include "mby_mc_env_cfg_seq.svh"
+   
+   `undef  __INSIDE_MBY_MC_SEQ_LIB
 
-endmodule: mby_mc_tb_top
+endpackage: mby_mc_seq_lib
 
+`endif // __MBY_MC_SEQ_LIB_GUARD

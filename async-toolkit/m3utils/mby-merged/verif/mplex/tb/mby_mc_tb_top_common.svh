@@ -44,7 +44,21 @@ import sla_pkg::*;
    `include "uvm_macros.svh"
    `include "slu_macros.svh"
 
-//import mby_mc_test_pkg::*;
+
+// ===============================================
+// Clock block instance
+// ===============================================
+
+logic        fabric_clk;                             // Fabric Clock - 1.2 Ghz
+
+shdv_clk_gen  fabric_clk_gen(fabric_clk);            // FABRIC clk = 1.2 Ghz
+
+initial begin
+
+    fabric_clk_gen.period     = 833333fs;
+    fabric_clk_gen.jitter     = 0ps;
+
+end
 
 
 // ===============================================
@@ -56,23 +70,14 @@ longint      fsdb_on,fsdb_off;
 int          fsdb_file_size = 1800;
 string       str;
 
-// UVM Start test
-string       testname;
-
-initial begin
-    if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-`ifndef XVM
-        $display ("EC_EC_tb_top Started Running %s in UVM mode!\n",testname);
-    end
-    uvm_pkg::run_test(testname);
-`else
-    $display ("EC_EC_tb_top Started Running %s in XVM mode!\n",testname);
-end
-xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
-`endif
-end
-
 mby_mc_tb_if mc_tb_if();
+
+assign mc_tb_if.clk = fabric_clk;
+
+shdv_base_tb_intf shdv_intf();
+
+assign   shdv_intf.ref_clk   = mc_tb_if.clk;
+assign   shdv_intf.ref_rst   = mc_tb_if.hard_reset;
 
 
 //////////////////////////////////////////////
@@ -148,4 +153,20 @@ function automatic longint convert_time(string in);
 
     return out;
 endfunction //convert_time()
+
+// ===============================================
+// Verification Test Library
+// ===============================================
+mby_mc_test_lib test();
+
+// ===============================================
+// MBY White Model instance
+// ===============================================
+mby_wm_top mby_wm();
+
+// ===============================================
+// MBY Mplex DUT
+// ===============================================
+//dummy_dut dummy_dut_();
+
 

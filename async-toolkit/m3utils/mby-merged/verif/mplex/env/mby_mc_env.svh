@@ -28,7 +28,7 @@
 //------------------------------------------------------------------------------
 
 //
-//Class : mby_mplex_env
+//Class : mby_mc_env
 //This is the MBY Management Complex Environment file which is extended from shdv_base_env.
 //This class instantiates agents and also creates and connects scoreboards.
 //
@@ -40,7 +40,7 @@
 `error "Attempt to include file outside of mby_mc_env_pkg."
 `endif
 
-class mby_mplex_env extends shdv_base_env;
+class mby_mc_env extends shdv_base_env;
 
     // Variable:  mc_cfg
     // Protected Top Level mplex environment configuration.
@@ -50,7 +50,7 @@ class mby_mplex_env extends shdv_base_env;
     // Interface handle to mplex Testbench.
     virtual   mby_mc_tb_if                                  tb_vif;
 
-    `uvm_component_utils_begin(mby_mplex_env)
+    `uvm_component_utils_begin(mby_mc_env)
         `uvm_field_object       (mc_cfg,                          UVM_ALL_ON)
     //  `uvm_field_sarray_object(svt_bfm_env,                     UVM_DEFAULT)
     `uvm_component_utils_end
@@ -63,19 +63,20 @@ class mby_mplex_env extends shdv_base_env;
     //      string name - MBY MPLEX environment object name.
     //      uvm_component parent - Component parent object.
     //---------------------------------------------------------------------------
-    function new(string name = "mby_mplex_env", uvm_component parent = null);
+    function new(string name = "mby_mc_env", uvm_component parent = null);
 
         uvm_object tmp_cfg;
         super.new(name, parent);
 
-        if(get_config_object("mby_mplex_cfg", tmp_cfg)) begin
+        if(get_config_object("mby_mc_cfg", tmp_cfg)) begin
             $cast(mc_cfg, tmp_cfg);
         end
 
         if (mc_cfg == null) begin
-            `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mplex_cfg object!")
+            `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mc_cfg object!")
         end
-        ral_type = mc_cfg.get_ral_type();
+        
+        //ral_type = mc_cfg.get_ral_type();
 
     endfunction : new
 

@@ -146,9 +146,21 @@ EOF
                -tag            => "nonsynth+nonlint",
             },
             
+            mby_common_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/mby_common_pkg.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib' ],
+               -tag            => "nonsynth+nonlint",
+            },
+            
             mby_mc_env_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_env.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'svt_axi_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'svt_axi_lib'],
+               -tag            => "nonsynth",
+            },
+            
+            mby_mc_test_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_test.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib'],
                -tag            => "nonsynth",
             },
             
@@ -160,7 +172,7 @@ EOF
             
             mby_mc_tb_top_np_nphy_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_tb_top_np_nphy.hdl', ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_ti_lib', 'svt_axi_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_test_lib', 'mby_mc_ti_lib', 'mby_common_lib', 'svt_axi_lib'],
                -tag            => "nonsynth",
             },
             
@@ -257,12 +269,13 @@ EOF
                   "mby_mc_ti_lib",  
                   "shdv_shared_lib",
                   "mby_mc_env_lib", 
-                  "mby_mc_tb_top_np_nphy_lib",  
+                  "mby_mc_test_lib", 
+                  "mby_mc_tb_top_np_nphy_lib", 
                   "mby_jasper_lib", 
-                  ##"mby_mc_test_lib",
                   "mby_wm_dpi_lib",
                   "cdn_pcie_lib",
                   "svt_axi_lib",
+                  "mby_common_lib",
                ],
 
                elab_opts => [

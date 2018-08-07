@@ -6,10 +6,7 @@
 $hdl_spec = {
 
 	# List of specific VERILOG source files
-	-vlog_files => [
-	   "verif/mplex/env/mby_mc_env_pkg.sv",
-	   "verif/mplex/seq/mby_mc_seq_lib.sv",
-	],
+	-vlog_files => [ "verif/mplex/tests/common/mby_mc_test_lib.sv", ],
 
 # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
 	-vlog_lib_dirs => [],
@@ -19,16 +16,15 @@ $hdl_spec = {
 
    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
 	-vlog_incdirs => [
-		"$ENV{UVM_HOME}/src",       
-		"$ENV{OVM_HOME}/src",
+
 		"$ENV{SAOLA_HOME}/verilog",
 		"$ENV{SAOLA_HOME}/verilog_uvm",
-		"verif/mplex/",
-		"verif/mplex/tb",
-		"verif/mplex/seq",
-		"verif/mplex/ral",
-		"verif/mplex/ti",
-		"verif/mplex/env",
+		"$ENV{UVM_HOME}/src",
+		"$ENV{OVM_HOME}/src",
+		"$ENV{ACE_HOME}/lib/Verilog",
+		"verif/mplex/tests/common",
+		"verif/mplex/tests/mby_mc_alive_test",
+
 	],
 
 	# Arbitrary VLOG options

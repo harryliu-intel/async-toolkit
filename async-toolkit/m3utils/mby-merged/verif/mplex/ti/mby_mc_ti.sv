@@ -36,10 +36,13 @@ module mby_mc_ti #( parameter string   RTL_TOP_PATH = "",            // The RTL 
         parameter mby_mc_env_pkg::mby_mc_defines::mc_topology_e TOPOLOGY =  mby_mc_env_pkg::mby_mc_defines::MPLEX_NP_NPHY
     )
     (
-        mby_mc_tb_if  mby_mc_tb_if
+        mby_mc_tb_if  mby_mc_tb_if,
+        
+        shdv_base_tb_intf shdv_intf
     );
 
 import uvm_pkg::*;
+import sla_pkg::*;
 
     initial begin
         // Set MC TI Path in the database
@@ -50,13 +53,14 @@ import uvm_pkg::*;
 
         // Set the MC_TB_IF in the database
         uvm_config_db#(virtual mby_mc_tb_if)::set(uvm_root::get(), $sformatf("%s",TB_ENV_PATH) , "mby_mc_tb_if", mby_mc_tb_if);
-
+        
+         // Set the SHDV tb_intf in the database
+        slu_resource_db#(virtual shdv_base_tb_intf)::add({"env", ".IP_intf"}, shdv_intf, `__FILE__, `__LINE__);
+                
         //Set MC TB Topology
         uvm_config_db#(int)::set(uvm_root::get(), TB_ENV_PATH, "TOPOLOGY", TOPOLOGY);
 
-        // Set the BFM interfaces in the database
-        //
-
+        
     end
 
 endmodule
