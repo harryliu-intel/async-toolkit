@@ -354,6 +354,77 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; can the de/ser and fmt be combined to a common pattern?
+
+(define (m3-fmt-uint-pname b)
+  (sa *m3-uint-intf* ".Format" (number->string b)))
+
+(define (m3-fmt-builtin-pname x)
+   (let ((b-test (assoc x *builtins*)))
+                   (if b-test
+                       (sa "WmDeSer.Format" (get-m3-name (cadr b-test)))
+                       #f)))
+           
+(define (m3-fmt-typedef-pname x)
+  (let ((r-test (sym-lookup x defs)))
+    (if (and r-test (eq? 'typedef (car r-test)))
+        (let ((intf (sa *m3-proj* (get-m3-name r-test))))
+          (sa intf ".Format"))
+        #f)))
+
+(define (make-m3-fmt-code x defs lhs lev ind p)
+  (cond
+   ((number? x) (sa ind (m3-fmt-uint-pname x) "(wx, " lhs ", s[" p "])"))
+
+   ((let ((builtin-name (m3-fmt-builtin-pname x)))
+      (if builtin-name (sa ind builtin-name "(wx, " lhs ", s[" p "])") #f)))
+   
+   ((let ((td-name (m3-fmt-typedef-pname x)))
+      (if td-name (sa ind td-name "(wx, " lhs ", s[" p "])") #f)))
+
+   ((not (pair? x)) (error "cant de/ser " x))
+    
+   ((eq? (car x) 'bits)
+    (make-m3-fmt-code (force-value (cadr x) defs) lhs lev ind p))
+   
+   ((eq? (car x) 'array)
+    (sa
+     ind "FOR i"lev" := 0 TO " (force-value (cadr x) defs) "-1 DO" dnl
+     ind "  WITH t"lev " = " lhs "[i"lev"], " dnl
+     ind "       o"lev " = " p" + i"lev" * " (get-type-field-cnt (caddr x) defs) " DO" dnl
+
+          (make-m3-fmt-code (caddr x) defs (sa "t"lev) (+ lev 1) (sa ind "    ") (sa "o"lev)) dnl
+
+          ind "  END" dnl
+          ind "END" 
+          ))
+
+   ((eq? (car x) 'struct)
+    (let loop ((ptr (cadr x))
+               (outp "")
+               (idx p)
+               )
+      (if (null? ptr)
+          outp
+          (loop (cdr ptr)
+                (sa outp
+                    (make-m3-fmt-code   (cadar ptr)
+                                        defs
+                                        (sa lhs "." (scheme-mem->m3 (caar ptr)))
+                                        lev
+                                        (sa ind "  ")
+                                        idx )
+                    ";"
+                    dnl
+                    ) ;; as
+                (+ idx (get-type-field-cnt (cadar ptr) defs))
+                )
+          ) ;; fi
+      ) ;; tel
+    )))
+
+;;; ser/des
+
 (define (make-m3-deser-code whch x defs lhs lev ind p)
   (cond
    ((number? x) (sa ind (m3-deser-uint-pname x whch) "(" lhs ", s[" p "])"))
@@ -374,7 +445,6 @@
      ind "FOR i"lev" := 0 TO " (force-value (cadr x) defs) "-1 DO" dnl
      ind "  WITH t"lev " = " lhs "[i"lev"], " dnl
      ind "       o"lev " = " p" + i"lev" * " (get-type-field-cnt (caddr x) defs) " DO" dnl
-     ;; keep track of indices?
 
           (make-m3-deser-code whch (caddr x) defs (sa "t"lev) (+ lev 1) (sa ind "    ") (sa "o"lev)) dnl
 
@@ -404,17 +474,8 @@
                 (+ idx (get-type-field-cnt (cadar ptr) defs))
                 )
           ) ;; fi
-      
       ) ;; tel
-     
-    )
-        
-
-   )
-  )
-         
-        
-
+    )))
 
 (define (compile-m3-typedef-code td defs whch)
   (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
@@ -433,7 +494,8 @@
                 (make-m3-deser-code whch x defs "t" 0 "  " 0)
                 
                 "  END " proc-name ";" dnl
-                ))
+                ) ;; as
+            )
 
            (else "")
 
