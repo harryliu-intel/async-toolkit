@@ -39,7 +39,8 @@ lazy val root = (project in file(".")).
     libraryDependencies += scalaTest % Test,
     libraryDependencies += scalaXml % Compile,
     libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
-    libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
+    libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0",
+    libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3"
     //libraryDependencies ++= Seq(
     //  "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
     //  "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
