@@ -365,7 +365,7 @@
    ((let ((td-name (m3-deser-typedef-pname x whch)))
       (if td-name (sa ind td-name "(" lhs ", s[" p "])") #f)))
    
-   ((not (pair? x)) (error))
+   ((not (pair? x)) (error "cant de/ser " x))
     
    ((eq? (car x) 'bits)
     (make-m3-deser-code whch (force-value (cadr x) defs) lhs lev ind p))
@@ -384,7 +384,19 @@
           ))
 
    ((eq? (car x) 'struct)
-
+    (let loop ((ptr (cadr x))
+               (outp "")
+               (idx p)
+               )
+      (if (null? ptr)
+          outp
+          (loop (cdr ptr)
+                (sa outp (make-m3-deser-code whch (cadar ptr) defs (sa lhs "." (caar ptr)) lev (sa ind "  ") idx ) ";" dnl)
+                (+ idx (get-type-field-cnt (cadar ptr) defs))
+                )
+          ) ;; fi
+      
+      ) ;; tel
      
     )
         
