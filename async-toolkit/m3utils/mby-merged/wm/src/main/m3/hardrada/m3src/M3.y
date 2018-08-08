@@ -84,8 +84,8 @@ Raises:
 	nonempty '{' qualid qualidlist '}'
 
 qualid:
-	simple oID
-	not_simple oID '.' oID
+	simple oQUALID
+	not_simple oQUALID '.' oQUALID
 
 qualidlist:
 	nothing
@@ -192,36 +192,63 @@ Block:
 	nodecl oBEGIN kindastart oEND
 
 expression:
-	only e1
+	single E1
+	double expression oOR E1
 
-e1:
-	single e2
-	double e2 oOR e1
+E1:
+	single E2
+	double E1 oAND E2
 
-e2:
-	single e3
-	notsingle oNOT e2
+E2:
+	single E3
+	double oNOT E2
 
-e3:
-	single e4
-	double e4 Relop e3
+E3:
+	single E4
+	double E3 Relop E4
 
-e4:
-	single e5
-	double e5 Addop e4
+E4:
+	single E5
+	double E4 Addop E5
 
-e5:
-	single e6
-	double e6 Mulop e5
+E5:
+	single E6
+	double E5 Mulop E6
 
-e6:
-	single e7
-	double_positive oPOSITIVEOP e6
-	double_negative oNEGATIVEOP e6
+E6:
+	plus oPOSITIVEOP E6
+	minus oNEGATIVEOP E6
+	next E7
+
+E7:
+	wsel E7 Selector
+	wosel E8
+
+E8:
+	mynum oNUMBER
+	mycharlit oCHARLITERAL
+	mytextlit oTEXTLITERAL
+	constr Constructor
+	anotherExpr '(' expression ')'
+	myid oID
+
+Selector:
+	carat '^'
+	dotid '.' oID
+	myexpr '[' expression exprlist ']'
+	alist '(' ActualList ')'
+	empty_alist '(' ')'
+
+exprlist:
+	two exprlist ',' expression
+	one expression
+
+Constructor:
+	nothing '}' ';' ':' '{'
 
 ActualList:
-	nothing
-	something ',' Actual ActualList
+	one Actual
+	two ActualList ',' Actual
 
 Actual:
 	mytype type
@@ -283,7 +310,7 @@ AssignSt:
 
 CallSt:
 	empty expression '(' ')'
-	nonempty expression '(' Actual ActualList ')'
+	nonempty expression '(' ActualList ')'
 
 ExitSt:
 	only oEXIT
@@ -525,6 +552,3 @@ containingProcedureNonRaisesType:
 type:
         alpha notProcedureNonRaisesType
         beta  containingProcedureNonRaisesType
-
-e7:
-	nothing '-' '+' '-'

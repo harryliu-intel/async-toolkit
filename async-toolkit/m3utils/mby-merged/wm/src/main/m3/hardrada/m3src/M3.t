@@ -124,5 +124,6 @@
 %token oTEXTLITERAL
 %token oESCAPE
 %token oPRINTINGCHAR
+%token oQUALID
 %token oID
 %token oNUMBER
