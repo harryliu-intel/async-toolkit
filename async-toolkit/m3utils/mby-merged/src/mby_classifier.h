@@ -550,6 +550,53 @@
 #define MBY_MPLS_MUX_DSCP_TC_l_TC                               0
 #define MBY_MPLS_MUX_DSCP_TC_h_TC                               3
 
+/******** ENTROPY_BASE *******/
+#define MBY_ENTROPY_BASE                                        (0x37E0000)
+#define MBY_ENTROPY_SIZE                                        (0x0000100)
+
+#define MBY_ENTROPY_HASH_CFG0_WIDTH                             2
+#define MBY_ENTROPY_HASH_CFG0_ENTRIES_0                         64
+#define MBY_ENTROPY_HASH_CFG0_ENTRIES_1                         2
+#define MBY_ENTROPY_HASH_CFG0(index1, index0, word)             ((0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0000000) + (MBY_ENTROPY_BASE))
+
+#define MBY_ENTROPY_HASH_CFG0_l_KEY_MASK8                       0
+#define MBY_ENTROPY_HASH_CFG0_h_KEY_MASK8                       63
+
+#define MBY_ENTROPY_HASH_CFG1_WIDTH                             2
+#define MBY_ENTROPY_HASH_CFG1_ENTRIES_0                         64
+#define MBY_ENTROPY_HASH_CFG1_ENTRIES_1                         2
+#define MBY_ENTROPY_HASH_CFG1(index1, index0, word)             ((0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0000400) + (MBY_ENTROPY_BASE))
+
+#define MBY_ENTROPY_HASH_CFG1_l_KEY_SUBMODE1                    50
+#define MBY_ENTROPY_HASH_CFG1_h_KEY_SUBMODE1                    51
+#define MBY_ENTROPY_HASH_CFG1_l_KEY_SUBMODE0                    48
+#define MBY_ENTROPY_HASH_CFG1_h_KEY_SUBMODE0                    49
+#define MBY_ENTROPY_HASH_CFG1_l_KEY_MASK32                      32
+#define MBY_ENTROPY_HASH_CFG1_h_KEY_MASK32                      47
+#define MBY_ENTROPY_HASH_CFG1_l_KEY_MASK16                      0
+#define MBY_ENTROPY_HASH_CFG1_h_KEY_MASK16                      31
+
+#define MBY_ENTROPY_HASH_CFG2_WIDTH                             2
+#define MBY_ENTROPY_HASH_CFG2_ENTRIES_0                         64
+#define MBY_ENTROPY_HASH_CFG2_ENTRIES_1                         2
+#define MBY_ENTROPY_HASH_CFG2(index1, index0, word)             ((0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0000800) + (MBY_ENTROPY_BASE))
+
+#define MBY_ENTROPY_HASH_CFG2_l_KEY_SUBMASK1                    32
+#define MBY_ENTROPY_HASH_CFG2_h_KEY_SUBMASK1                    63
+#define MBY_ENTROPY_HASH_CFG2_l_KEY_SUBMASK0                    0
+#define MBY_ENTROPY_HASH_CFG2_h_KEY_SUBMASK0                    31
+
+#define MBY_ENTROPY_META_CFG_WIDTH                              2
+#define MBY_ENTROPY_META_CFG_ENTRIES                            64
+#define MBY_ENTROPY_META_CFG(index, word)                       ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0000C00) + (MBY_ENTROPY_BASE))
+
+#define MBY_ENTROPY_META_CFG_l_BYTE_DEFAULTS                    12
+#define MBY_ENTROPY_META_CFG_h_BYTE_DEFAULTS                    23
+#define MBY_ENTROPY_META_CFG_l_HASH_START                       6
+#define MBY_ENTROPY_META_CFG_h_HASH_START                       11
+#define MBY_ENTROPY_META_CFG_l_HASH_SIZE                        0
+#define MBY_ENTROPY_META_CFG_h_HASH_SIZE                        5
+
 // Enums:
 
 typedef enum mbyClassifierActionEntryTypeEnum
@@ -676,6 +723,27 @@ typedef enum mbyClassifierKey16Enum
 
 } mbyClassifierKey16;
 
+typedef enum mbyClassifierKey32Enum
+{
+    MBY_FFU_KEY32_OUTER_SIP_127_96    = 0,
+    MBY_FFU_KEY32_OUTER_SIP_95_64     = 1,
+    MBY_FFU_KEY32_OUTER_SIP_63_32     = 2,
+    MBY_FFU_KEY32_OUTER_SIP_31_0      = 3,
+    MBY_FFU_KEY32_OUTER_DIP_127_96    = 4,
+    MBY_FFU_KEY32_OUTER_DIP_95_64     = 5,
+    MBY_FFU_KEY32_OUTER_DIP_63_32     = 6,
+    MBY_FFU_KEY32_OUTER_DIP_31_0      = 7,
+    MBY_FFU_KEY32_INNER_SIP_127_96    = 8,
+    MBY_FFU_KEY32_INNER_SIP_95_64     = 9,
+    MBY_FFU_KEY32_INNER_SIP_63_32     = 10,
+    MBY_FFU_KEY32_INNER_SIP_31_0      = 11,
+    MBY_FFU_KEY32_INNER_DIP_127_96    = 12,
+    MBY_FFU_KEY32_INNER_DIP_95_64     = 13,
+    MBY_FFU_KEY32_INNER_DIP_63_32     = 14,
+    MBY_FFU_KEY32_INNER_DIP_31_0      = 15
+
+} mbyClassifierKey32;
+
 // Structs:
 
 typedef struct mbyClassifierTcamCfgStruct
@@ -711,14 +779,14 @@ typedef struct mbyClassifierTcamEntryStruct
 
 typedef struct mbyClassifierHashLookupStruct
 {
-  fm_uint32                     PTR;
-  fm_uint16                     RSVD1_;
-  fm_byte                       SELECT_4;
-  fm_byte                       SELECT_3;
-  fm_byte                       SELECT_2;
-  fm_byte                       SELECT_1;
-  fm_byte                       SELECT_0;
-  fm_uint32                     MASK;
+    fm_uint32               PTR;
+    fm_uint16               RSVD1_;
+    fm_byte                 SELECT_4;
+    fm_byte                 SELECT_3;
+    fm_byte                 SELECT_2;
+    fm_byte                 SELECT_1;
+    fm_byte                 SELECT_0;
+    fm_uint32               MASK;
 
 } mbyClassifierHashLookup;
 
@@ -781,54 +849,27 @@ typedef struct mbyClassifierActionsStruct
 
 } mbyClassifierActions;
 
-/****** MPLS_MUX_BASE Register Structs ******/
 typedef struct mbyMplsMuxExpDsStruct
 {
-    fm_byte                  DSCP;
-    fm_byte                  ECN;
-    fm_byte                  TC;
+    fm_byte                 DSCP;
+    fm_byte                 ECN;
+    fm_byte                 TC;
 
 } mbyMplsMuxExpDs;
 
 typedef struct mbyMplsMuxDscpTc
 {
-  fm_byte                    TC;
+    fm_byte                 TC;
 
 } mbyMplsMuxDscpTc;
 
-typedef struct mbyMapperToClassifierStruct
+typedef struct mbyEntropyMetaCfg
 {
-    /* Boolean indicating whether a header parse error has occurred. */
-    fm_bool                 PARSER_ERROR;
+    fm_uint16               BYTE_DEFAULTS;
+    fm_byte                 HASH_START;
+    fm_byte                 HASH_SIZE;
 
-    /* Keys to be used for FFU TCAM lookup */
-    mbyClassifierKeys       FFU_KEYS;
-
-    /* Actions generated by FFU lookup */
-    mbyClassifierActions    FFU_ACTIONS;
-
-    /* The 6-bit FFU scenario. */
-    fm_byte                 FFU_SCENARIO;
-
-    /* The 4-bit FFU vrid. */
-    fm_byte                 FFU_VRID;
-
-    /* ip_option to be used for counting trap_ip_iptions */
-    fm_bool                 IP_OPTION[2];
-
-    /* The 5-bit FFU priority profile. */
-    fm_byte                 PRIORITY_PROFILE;
-
-    /* Mapper decision for using default priority */
-    fm_bool                 NO_PRI_ENC;
-
-    // 0 for Shared Vlan Learning (SVL), 1 for Independent Vlan Learning (IVL)
-    fm_bool                 LEARN_MODE;
-
-    // Ingress VLAN counter
-    fm_uint16               L2_IVLAN1_CNT_INDEX;
-
-} mbyMapperToClassifier;
+} mbyEntropyMetaCfg;
 
 typedef struct mbyClassifierMuxedActionStruct
 {    
@@ -843,22 +884,182 @@ typedef struct mbyClassifierMuxedActionStruct
 
 } mbyClassifierMuxedAction;
 
+typedef struct mbyClassifierFlags
+{   
+    fm_bool                 drop;
+    fm_bool                 trap;
+    fm_bool                 log;
+    fm_bool                 no_route;
+    fm_bool                 rx_mirror;
+    fm_bool                 capture_time;
+    fm_byte                 tx_tag;
+
+} mbyClassifierFlags;
+
+typedef struct mbyIppRxTagStruct
+{
+    fm_bool                 custom; 
+    fm_bool                 mpls;   
+    fm_bool                 ipv6;   
+    fm_bool                 ipv4;   
+    fm_bool                 v2first;
+    fm_bool                 vlan2;
+    fm_bool                 vlan1; 
+
+} mbyRxTag;
+
+typedef struct mbyMapperToClassifierStruct
+{
+    // Parser info structure:
+    mbyParserInfo           PARSER_INFO;
+
+    // Boolean indicating whether a header parse error has occurred:
+    fm_bool                 PARSER_ERROR;
+
+    // Keys to be used for FFU TCAM lookup:
+    mbyClassifierKeys       FFU_KEYS;
+
+    // Actions generated by FFU lookup:
+    mbyClassifierActions    FFU_ACTIONS;
+
+    // The 6-bit FFU scenario:
+    fm_byte                 FFU_SCENARIO;
+
+    // The 4-bit FFU vrid:
+    fm_byte                 FFU_VRID;
+
+    // ip_option to be used for counting trap_ip_iptions:
+    fm_bool                 IP_OPTION[2];
+
+    // The 5-bit FFU priority profile:
+    fm_byte                 PRIORITY_PROFILE;
+
+    // Mapper decision for using default priority:
+    fm_bool                 NO_PRI_ENC;
+
+    // 0 for Shared Vlan Learning (SVL), 1 for Independent Vlan Learning (IVL)
+    fm_bool                 LEARN_MODE;
+
+    // Ingress VLAN counter
+    fm_uint16               L2_IVLAN1_CNT_INDEX;
+
+} mbyMapperToClassifier;
+
 typedef struct mbyClassifierToHashStruct
 {
+    // Hash value to be used by ARP_TABLE
+    fm_uint64               L34_HASH;
+
+    // Ingress L2 domain
+    fm_uint16               L2_IDOMAIN;
+
+    // Ingress L3 domain
+    fm_byte                 L3_IDOMAIN;
+
+    // Index into the MODIFY descriptor tables
+    fm_uint32               MOD_IDX;
+
+    // The 16-bit innermost Ethernet type:
+    fm_uint16               L2_ETYPE;
+
+    // # of MPLS labels to pop in Modify:
+    fm_byte                 MPLS_POP;
+
+    // Encapsulate flag:
+    fm_bool                 ENCAP;
+
+    // Decapsulate flag:
+    fm_bool                 DECAP;
+
+    // The 4-bit Switch priority:
+    fm_byte                 QOS_SWPRI;
+
+    // The 16-bit source GLORT:
+    fm_uint16               SGLORT;
+
+    // The 16-bit ingress destination GLORT:
+    fm_uint16               IDGLORT;
+
     // The Layer 2 destination address:
     fm_macaddr              L2_DMAC;
 
     // The Layer 2 source address:
     fm_macaddr              L2_SMAC;
 
-    // The 16-bit innermost Ethernet type:
-    fm_uint16               L2_ETYPE;
+    // DMAC embedded in DIP of IPV6 packet:
+    fm_macaddr              DMAC_FROM_IPV6;
+
+    // Boolean indicating whether the packet is IPv4:
+    fm_bool                 IS_IPV4;
+
+    // Boolean indicating whether the packet is IPv6:
+    fm_bool                 IS_IPV6;
+
+    // The 16-bit IPv4 datagram length for outer/inner header:
+    fm_uint16               L3_LENGTH;
+
+    // The 16-bit IPv4 datagram length for outer header (including the IPv4
+    //header and payload) or 16-bit IPv6 payload length (including any
+    // extension headers) in units of octets:
+    fm_uint16               OUTER_L3_LENGTH;
+
+    // The 16-bit IPv4 datagram length for Inner header (including the IPv4
+    // header and payload) or 16-bit IPv6 payload length (including any
+    // extension headers) in units of octets:
+    fm_uint16               INNER_L3_LENGTH;
+
+    // Flag to indicate presence of IP options:
+    fm_bool                 TRAP_IP_OPTIONS;
+
+    // Packet drop flag depending on TTL value:
+    fm_bool                 DROP_TTL;
+
+    // Boolean indicating whether this ICMP packet should be trapped:
+    fm_bool                 TRAP_ICMP;
+
+    // Boolean indicating whether this IGMP packet should be trapped:
+    fm_bool                 TRAP_IGMP;
+
+    // Controls update of TTL field of egress packet:
+    fm_byte                 TTL_CTRL;
+
+    // The 6-bit set of FFU flags. Bits [5:0] contain {CAPTURE-TIME,
+    // RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}:
+    mbyClassifierFlags      FFU_FLAGS;
+
+    // Classifier route:
+    fm_uint32               FFU_ROUTE;
+
+    // Boolean indicating no learning:
+    fm_bool                 NO_LEARN;
 
     // The 12-bit ingress VLAN ID:
     fm_uint16               L2_IVID1;
 
+    // Transmit tag:
+    fm_byte                 TX_TAG;
+
     // The 4-bit QOS VLAN priority:
     fm_byte                 QOS_L2_VPRI1;
+
+    // Classifier action triggers:
+    fm_byte                 FFU_TRIG;
+
+    // The 6-bit QOS Differentiated Services Code Point (DSCP):
+    fm_byte                 QOS_L3_DSCP;
+
+    // Policer action set by FFU to be used policers:
+    fm_uint32               POLICER_ACTION[4];
+
+    /* Boolean indicating whether a parity error has been detected in any
+     * of the memories while processing this packet. */
+    fm_bool                 PARITY_ERROR;
+
+    // ECN value to use in egress packet:
+    fm_byte                 ECN;
+
+    // AQM_MARK_EN to use in egress packet:
+    fm_byte                 AQM_MARK_EN;
 
 } mbyClassifierToHash;
     

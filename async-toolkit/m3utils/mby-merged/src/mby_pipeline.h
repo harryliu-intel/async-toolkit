@@ -23,8 +23,7 @@ void Mapper
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper     * const in, 
-          mbyMapperToClassifier * const out,
-          mbyParserToModifier   * const parser_to_modifier
+          mbyMapperToClassifier * const out
 );
 
 void Classifier

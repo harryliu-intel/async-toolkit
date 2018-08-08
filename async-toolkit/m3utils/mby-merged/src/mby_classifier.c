@@ -2,6 +2,7 @@
 
 // Copyright (C) 2018 Intel Corporation
 
+#include "mby_parser.h"
 #include "mby_mapper.h"
 #include "mby_classifier.h"
 #include "fm_crc32.h"
@@ -405,18 +406,18 @@ static void getKeyMaskCfg
 static void applyKeyMask
 (
     const mbyClassifierKeyMaskCfg         key_mask_cfg,
-    const mbyClassifierKeys       * const keys,
+    const mbyClassifierKeys               keys,
           mbyClassifierKeys       * const hash_keys
 )
 {
     for (fm_uint i = 0; i < MBY_FFU_N_KEY16; i++)
-        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.Key16Mask, i, 1)) ? keys->key16[i] : 0;
+        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.Key16Mask, i, 1)) ? keys.key16[i] : 0;
 
     for (fm_uint i = 0; i < MBY_FFU_N_KEY8; i++)
-        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(key_mask_cfg.Key8Mask,  i, 1)) ? keys->key8 [i] : 0;
+        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(key_mask_cfg.Key8Mask,  i, 1)) ? keys.key8 [i] : 0;
 
     for (fm_uint i = 0; i < MBY_FFU_N_KEY32; i++)
-        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.Key32Mask, i, 1)) ? keys->key32[i] : 0;
+        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.Key32Mask, i, 1)) ? keys.key32[i] : 0;
 }
 
 static void convertKeysToBytes
@@ -736,7 +737,7 @@ static void lookUpHash
 
         // Apply key mask on FFU keys:
         mbyClassifierKeys hash_keys;
-        applyKeyMask(key_mask_cfg, keys, &hash_keys);
+        applyKeyMask(key_mask_cfg, *keys, &hash_keys);
 
         // Convert Keys into array of bytes:
         fm_byte hash_bytes[MBY_FFU_N_HASH_KEYS] = { 0 };
@@ -914,14 +915,13 @@ static void matchExact
     lookUpHash(regs, keys, scenario, group, actions);
 }
 
-// Decode FFU ACTIONS ECN-CTRL, TC_CTRL, TTL_CTRL and DSCP_CTRL,
-// and populate FFU_MUXED_ACTION.
-static void muxActions
+static void populateMuxedAction
 (
-    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyClassifierKeys     keys,
-    const mbyClassifierActions  actions,
-    const fm_byte               pri_profile
+    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyClassifierKeys           keys,
+    const mbyClassifierActions        actions,
+    const fm_byte                     pri_profile,
+    mbyClassifierMuxedAction  * const muxed_action
 )
 {
     fm_byte mpls_pop  = actions.act4[MBY_FFU_ACTION_MPLS_POP].val;
@@ -929,9 +929,6 @@ static void muxActions
     fm_byte tc_ctrl   = actions.act4[MBY_FFU_ACTION_TC_CTRL].val;
     fm_byte ttl_ctrl  = actions.act4[MBY_FFU_ACTION_TTL_CTRL].val;
     fm_byte dscp_ctrl = actions.act4[MBY_FFU_ACTION_DSCP_CTRL].val; 
-
-    mbyClassifierMuxedAction  muxed_action_inst;
-    mbyClassifierMuxedAction *muxed_action = &muxed_action_inst;
 
     // Update ECN:
     muxed_action->ecn         = 0;
@@ -1046,7 +1043,7 @@ static void muxActions
     if (tc_ctrl == 6 || (tc_ctrl >= 8 && tc_ctrl <= 11)) {
         fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
         mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
-         muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, TC);
+        muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, TC);
     }
 
     // get TTL value based on TTL_CTRL Action:
@@ -1081,6 +1078,292 @@ static void muxActions
     muxed_action->route = (actions.act1[MBY_FFU_ACTION_NO_ROUTE].val == 0 && actions.act24[MBY_FFU_ACTION_FWD].val != 0);
 }
 
+static void getEntropyCfg
+(
+          fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint                   hash_num,
+    const fm_byte                   hash_prof,
+    mbyClassifierKeyMaskCfg * const entropy_cfg
+)
+{
+    fm_uint32 entropy_hash_cfg0_vals[MBY_ENTROPY_HASH_CFG0_WIDTH] = { 0 };
+    fm_uint32 entropy_hash_cfg1_vals[MBY_ENTROPY_HASH_CFG1_WIDTH] = { 0 };
+    
+    mbyModelReadCSRMult(regs, MBY_ENTROPY_HASH_CFG0(hash_num, hash_prof, 0), MBY_ENTROPY_HASH_CFG0_WIDTH, entropy_hash_cfg0_vals);
+    mbyModelReadCSRMult(regs, MBY_ENTROPY_HASH_CFG1(hash_num, hash_prof, 0), MBY_ENTROPY_HASH_CFG1_WIDTH, entropy_hash_cfg1_vals);
+    
+    entropy_cfg->Key8Mask  = FM_ARRAY_GET_FIELD64(entropy_hash_cfg0_vals, MBY_FFU_KEY_MASK0, KEY8_MASK);
+    entropy_cfg->Key16Mask = FM_ARRAY_GET_FIELD  (entropy_hash_cfg1_vals, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    entropy_cfg->Key32Mask = FM_ARRAY_GET_FIELD  (entropy_hash_cfg1_vals, MBY_FFU_KEY_MASK1, KEY32_MASK);
+}
+
+static void getEntropyMetaCfg
+(
+          fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_byte             hash_prof,
+    mbyEntropyMetaCfg * const meta_cfg
+)
+{
+    fm_uint32 entropy_meta_cfg_vals[MBY_ENTROPY_META_CFG_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_ENTROPY_META_CFG(hash_prof, 0), MBY_ENTROPY_META_CFG_WIDTH, entropy_meta_cfg_vals);
+    
+    meta_cfg->BYTE_DEFAULTS = FM_ARRAY_GET_FIELD(entropy_meta_cfg_vals, MBY_ENTROPY_META_CFG, BYTE_DEFAULTS);
+    meta_cfg->HASH_START    = FM_ARRAY_GET_FIELD(entropy_meta_cfg_vals, MBY_ENTROPY_META_CFG, HASH_START);
+    meta_cfg->HASH_SIZE     = FM_ARRAY_GET_FIELD(entropy_meta_cfg_vals, MBY_ENTROPY_META_CFG, HASH_SIZE);
+}
+
+static void populateEntropy
+(
+    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyClassifierKeys            keys,
+    const mbyClassifierActions         actions,
+    fm_uint32                  * const ecmp_hash,
+    fm_uint64                  * const mod_meta
+) 
+{
+    fm_byte   hash_profiles[2] = { 0 };
+    fm_uint32 hash_values  [2] = { 0 };
+    
+    for (fm_uint hash_num = 0; hash_num < 2; hash_num++)
+    {
+        fm_byte val0 = (actions.act4[MBY_FFU_ACTION_HASH_PROFILE_ECMP_0 + (2 * hash_num)].val);
+        fm_byte val1 = (actions.act4[MBY_FFU_ACTION_HASH_PROFILE_ECMP_1 + (2 * hash_num)].val & 0x3);
+
+        FM_SET_UNNAMED_FIELD(hash_profiles[hash_num], 0, 4, val0);
+        FM_SET_UNNAMED_FIELD(hash_profiles[hash_num], 4, 2, val1);
+
+        // Get FFU_KEY_MASK register fields:
+        mbyClassifierKeyMaskCfg entropy_cfg;
+        getEntropyCfg(regs, hash_num, hash_profiles[hash_num], &entropy_cfg);
+        
+        // Apply key mask on FFU keys:
+        mbyClassifierKeys hash_keys;
+        applyKeyMask(entropy_cfg, keys, &hash_keys);
+        
+        // Convert Keys into array of bytes:
+        fm_byte hash_bytes[MBY_FFU_N_HASH_KEYS] = { 0 };
+        convertKeysToBytes(hash_keys, hash_bytes);
+        
+        // Get hash value from CRC:
+         hash_values[hash_num] = (hash_num == 0) ?
+            fmCrc32ByteSwap (hash_bytes, MBY_FFU_N_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
+            fmCrc32CByteSwap(hash_bytes, MBY_FFU_N_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
+    }
+    
+
+    // ECMP HASH for ARP_TABLE:
+    *ecmp_hash = hash_values[0] & 0xFFFFFF;
+
+    // Populate MOD_META for use by the Modifier:
+    mbyEntropyMetaCfg meta_cfg;
+    getEntropyMetaCfg(regs, hash_profiles[1], &meta_cfg);
+
+    fm_uint64 mod_meta_l = 0; // local var
+
+    // Apply Defaults to MOD_META:
+    for (fm_uint i = 0; i < 6; i++)
+    {
+        fm_byte s = FM_GET_UNNAMED_FIELD(meta_cfg.BYTE_DEFAULTS, i*2, 2);
+        switch (s)
+        {
+            case 0:
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_FFU_ACTION_META0_LOW ].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_FFU_ACTION_META0_HIGH].val);
+                break;          
+            case 1:
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_FFU_ACTION_META1_LOW ].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_FFU_ACTION_META1_HIGH].val);
+                break;
+            case 2:
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_FFU_ACTION_META2_LOW ].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_FFU_ACTION_META2_HIGH].val);
+                break;
+            case 3:
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     8, 0);
+                break;       
+        }
+    }
+    
+    // Apply Hash to MOD_META:
+    fm_uint64 meta_mask = 0;
+    for (fm_uint i = 0; i < 48; i++)
+        if ((i >= meta_cfg.HASH_START) && (i < (meta_cfg.HASH_START + meta_cfg.HASH_SIZE)))
+            meta_mask |= (FM_LITERAL_U64(1) << i);
+
+    fm_uint64 meta_hash = (((fm_uint64) hash_values[1]) << 32) | hash_values[1];
+
+    *mod_meta = (mod_meta_l & ~meta_mask) | (meta_hash & meta_mask);
+}
+
+static fm_macaddr extractDmac(const fm_uint32 ip_lo, const fm_uint32 ip_hi)
+{
+    fm_macaddr mac_addr =  ((fm_macaddr)( ip_lo & 0xFFFFFF  )) |
+                          (((fm_macaddr)( ip_hi & 0xFDFFFF00)) << 16) |
+                          (((fm_macaddr)(~ip_hi & 0x2000000 )) << 16) ;
+    return mac_addr;
+}
+
+static void transformActions
+(
+    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyParserInfo            parser_info,
+    const mbyClassifierKeys        keys,
+    const mbyClassifierActions     actions,
+    const mbyClassifierMuxedAction muxed_action,
+    const fm_uint32                ecmp_hash,
+    const fm_uint64                mod_meta,
+    mbyClassifierToHash    * const out
+)
+{
+    fm_bool   decap    = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 1) & 0x1;
+    fm_bool   encap    =  actions.act24[MBY_FFU_ACTION_MOD_IDX ].val & 0x1;
+    fm_uint32 mod_idx  = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
+    fm_byte   mpls_pop =  actions.act4 [MBY_FFU_ACTION_MPLS_POP].val;
+
+    fm_uint64 sglort  = 0;
+    FM_SET_UNNAMED_FIELD64(sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
+    FM_SET_UNNAMED_FIELD64(sglort,  8, 16, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2    ]);
+
+    fm_uint64 idglort = 0;
+    FM_SET_UNNAMED_FIELD64(idglort, 0,  8, keys.key8[(MBY_RE_KEYS_DGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
+    FM_SET_UNNAMED_FIELD64(idglort, 8, 16, keys.key8[(MBY_RE_KEYS_DGLORT - MBY_RE_KEYS_GENERAL_8B)*2    ]);
+    
+    fm_uint64 l2_smac     = 0;
+    fm_uint   l2_smac_off = (decap) ? MBY_RE_KEYS_INNER_SMAC : MBY_RE_KEYS_OUTER_SMAC;
+    for (fm_uint i = 0; i <= 2; i++)
+        FM_SET_UNNAMED_FIELD64(l2_smac, (16 * i), 16, keys.key16[l2_smac_off + (2 - i)])
+
+    fm_uint64 l2_dmac  = 0;
+    fm_uint   l2_dmac_off = (decap) ? MBY_RE_KEYS_INNER_DMAC : MBY_RE_KEYS_OUTER_DMAC;
+    for (fm_uint i = 0; i <= 2; i++)
+        FM_SET_UNNAMED_FIELD64(l2_dmac, (16 * i), 16, keys.key16[l2_dmac_off + (2 - i)])
+
+    fm_uint16 l2_etype = (decap) ? keys.key16[MBY_RE_KEYS_INNER_ETYPE]
+                                 : keys.key16[MBY_RE_KEYS_OUTER_ETYPE];
+    
+    fm_uint16  ip_prot = (decap) ? keys.key8[MBY_FFU_KEY8_INNER_PROT] : keys.key8[MBY_FFU_KEY8_OUTER_PROT];
+
+    fm_uint    dmac_ipv6_off_lo = (decap) ? MBY_FFU_KEY32_INNER_DIP_31_0  : MBY_FFU_KEY32_OUTER_DIP_31_0;
+    fm_uint    dmac_ipv6_off_hi = (decap) ? MBY_FFU_KEY32_INNER_DIP_63_32 : MBY_FFU_KEY32_OUTER_DIP_63_32;    
+
+    fm_macaddr dmac_from_ipv6   = extractDmac(keys.key32[dmac_ipv6_off_lo], keys.key32[dmac_ipv6_off_hi]);
+
+    fm_bool is_ipv4 = (decap) ? (parser_info.inr_l3_len && !parser_info.inr_l3_v6)
+                              : (parser_info.otr_l3_len && !parser_info.otr_l3_v6);
+
+    fm_bool is_ipv6 = (decap) ? (parser_info.inr_l3_len &&  parser_info.inr_l3_v6)
+                              : (parser_info.otr_l3_len &&  parser_info.otr_l3_v6);
+
+    fm_uint l3_length_off = (decap) ? MBY_FFU_KEY8_INNER_LEN : MBY_FFU_KEY8_OUTER_LEN;
+    fm_uint16 l3_length = 0;
+    FM_SET_UNNAMED_FIELD64(l3_length, 0, 8, keys.key8[l3_length_off + 1]);
+    FM_SET_UNNAMED_FIELD64(l3_length, 8, 8, keys.key8[l3_length_off    ]);
+
+    fm_bool trap_ip_options = 0; // = state->IP_OPTION[decap] <-- FIXME!!!!
+
+    fm_bool otr_mpls_v = 0; // state->PA_FLAGS[MBY_PA_FLAGS_OTR_MPLS_V] <-- FIXME!!!!
+
+    fm_bool is_ttl01 = (muxed_action.ttl01 & 1) || ((muxed_action.ttl01 >> 1) & 1);
+    fm_bool drop_ttl = is_ttl01 && (is_ipv4 || is_ipv6 || otr_mpls_v);
+
+    fm_bool trap_icmp = drop_ttl &&
+        ((is_ipv4 && (ip_prot == MBY_PROT_ICMPv4)) || (is_ipv6 && (ip_prot == MBY_PROT_ICMPv6)));
+
+    fm_bool trap_igmp = is_ipv4 && (ip_prot == MBY_PROT_IGMP);
+
+    fm_uint16 inner_l3_length = 0;
+    fm_uint   inner_index = (MBY_RE_KEYS_INNER_IP_LEN - MBY_RE_KEYS_GENERAL_8B) * 2 + 1;
+    FM_SET_UNNAMED_FIELD64(inner_l3_length, 0, 8, keys.key8[inner_index]);
+    FM_SET_UNNAMED_FIELD64(inner_l3_length, 8, 8, keys.key8[inner_index - 1]);
+    
+    fm_uint16 outer_l3_length = 0;
+    fm_uint   outer_index = (MBY_RE_KEYS_OUTER_IP_LEN - MBY_RE_KEYS_GENERAL_8B) * 2 + 1;
+    FM_SET_UNNAMED_FIELD64(outer_l3_length, 0, 8, keys.key8[outer_index]);
+    FM_SET_UNNAMED_FIELD64(outer_l3_length, 8, 8, keys.key8[outer_index - 1]);
+
+    mbyClassifierFlags ffu_flags;
+    ffu_flags.drop         = actions.act1[MBY_FFU_ACTION_DROP     ].val;
+    ffu_flags.trap         = actions.act1[MBY_FFU_ACTION_TRAP     ].val;
+    ffu_flags.log          = actions.act1[MBY_FFU_ACTION_LOG      ].val;
+    ffu_flags.no_route     = actions.act1[MBY_FFU_ACTION_NO_ROUTE ].val;
+    ffu_flags.rx_mirror    = actions.act1[MBY_FFU_ACTION_RX_MIRROR].val;
+    ffu_flags.capture_time = actions.act1[MBY_FFU_ACTION_CAPT_TIME].val;
+
+    for (fm_uint i = 0; i <= 1; i++)
+        FM_SET_UNNAMED_FIELD(ffu_flags.tx_tag, i, 1, actions.act1[i+MBY_FFU_ACTION_TX_TAG0].val);
+
+    fm_uint32 ffu_route = 0;
+    FM_SET_UNNAMED_FIELD64(ffu_route, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_FFU_ACTION_FWD].val, 0, 22));
+
+    fm_bool no_learn = 0;
+    FM_SET_UNNAMED_FIELD(no_learn, 0, 1, ~actions.act1[MBY_FFU_ACTION_LEARN].val);
+
+    fm_uint16 l2_ivid1 = 0;
+    if (decap && actions.act4[MBY_FFU_ACTION_VID_LOW].prec <= 1)
+        l2_ivid1 = keys.key16[MBY_RE_KEYS_INNER_VLAN1];
+    else
+        for (fm_uint i = 0; i <= (MBY_FFU_ACTION_VID_HIGH - MBY_FFU_ACTION_VID_LOW); i++)
+            FM_SET_UNNAMED_FIELD(l2_ivid1, i * 4, 4, actions.act4[MBY_FFU_ACTION_VID_LOW+i].val);
+
+    fm_bool qos_l2_vpri1_sel = decap
+        && (actions.act4[MBY_FFU_ACTION_VPRI_LOW ].val <= 1)
+        && (actions.act4[MBY_FFU_ACTION_VPRI_HIGH].val <= 1);
+
+    fm_byte qos_l2_vpri1_decap = (actions.act1[MBY_FFU_ACTION_COPY_OTR_VPRI].val)
+           ? ((keys.key16[MBY_RE_KEYS_OUTER_VLAN1] >> 12) & 0xF) 
+           : ((keys.key16[MBY_RE_KEYS_INNER_VLAN1] >> 12) & 0xF);
+
+    fm_byte qos_l2_vpri1 = (qos_l2_vpri1_sel) ? qos_l2_vpri1_decap : muxed_action.vpri;
+
+    fm_byte ffu_trig = 0;
+    for (fm_uint i = MBY_FFU_ACTION_TRIGGER0; i <= MBY_FFU_ACTION_TRIGGER7; i++)
+        FM_SET_UNNAMED_FIELD(ffu_trig, i - MBY_FFU_ACTION_TRIGGER0, 1, actions.act1[i].val);
+
+    fm_uint32 policer_action[MBY_FFU_ACTION_POLICER3 + 1] = { 0 };
+    for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
+        policer_action[i] = actions.act24[i].val;
+
+    // Write outputs:
+    out->L34_HASH         = ecmp_hash;
+    out->L2_IDOMAIN       = 0;
+    out->L3_IDOMAIN       = 0;
+    out->MOD_IDX          = mod_idx;
+    out->L2_ETYPE         = l2_etype;
+    out->MPLS_POP         = mpls_pop;
+    out->ENCAP            = encap;
+    out->DECAP            = decap;
+    out->QOS_SWPRI        = muxed_action.swpri;
+    out->SGLORT           = sglort;
+    out->IDGLORT          = idglort;
+    out->L2_SMAC          = l2_smac;
+    out->L2_DMAC          = l2_dmac;
+    out->DMAC_FROM_IPV6   = dmac_from_ipv6;
+    out->IS_IPV4          = is_ipv4;
+    out->IS_IPV6          = is_ipv6;    
+    out->L3_LENGTH        = l3_length;
+    out->INNER_L3_LENGTH  = inner_l3_length;
+    out->OUTER_L3_LENGTH  = outer_l3_length;
+    out->TRAP_IP_OPTIONS  = trap_ip_options;
+    out->DROP_TTL         = drop_ttl;
+    out->TRAP_ICMP        = trap_icmp;
+    out->TRAP_IGMP        = trap_igmp;
+    out->TTL_CTRL         = muxed_action.ttl_ctrl;
+    out->FFU_FLAGS        = ffu_flags;
+    out->TX_TAG           = ffu_flags.tx_tag;
+    out->FFU_ROUTE        = ffu_route;
+    out->NO_LEARN         = no_learn;
+    out->L2_IVID1         = l2_ivid1;
+    out->QOS_L2_VPRI1     = qos_l2_vpri1;
+    out->QOS_L3_DSCP      = muxed_action.dscp;
+    out->FFU_TRIG         = ffu_trig;
+    out->PARITY_ERROR     = 0; // REVISIT!!!
+    out->ECN              = muxed_action.ecn;     
+    out->AQM_MARK_EN      = muxed_action.aqm_mark_en;
+
+    for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
+        out->POLICER_ACTION[i] = policer_action[i];
+}
+
 void Classifier
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
@@ -1095,33 +1378,37 @@ void Classifier
     fm_byte               pri_profile = in->PRIORITY_PROFILE;
 
     // Use group = 0 for now (MBY spec group = 0..1) <-- FIXME!!!!
-    fm_byte group = 0;
+    for (fm_byte group = 0; group < 1; group++)
+    {
+        // Perform wildcard match (WCM) lookup:
+        matchWildcard(regs, &keys, scenario, group, &actions);
 
-    // Perform wildcard match (WCM) lookup:
-    matchWildcard(regs, &keys, scenario, group, &actions);
-
-    // Perform exact match (EM) lookup:
-    matchExact(regs, &keys, scenario, group, &actions);
-
+        // Perform exact match (EM) lookup:
+        matchExact(regs, &keys, scenario, group, &actions);
 #if 0
-    // Remap subset of keys going into next group:
-    remapKeys(...);
+        // Remap subset of keys going into next group:
+        remapKeys(...);
 #endif
-
-    // Update scenario based on scenario action:
-    for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
-        if (actions.act1[s].prec != 0)
-            FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
+        // Update scenario based on scenario action:
+        for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
+            if (actions.act1[s].prec != 0)
+                FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
+        }
     }
-
-    // ECN/DSCP/SWPRI/TTL and merged VPRI:
-    muxActions(regs, keys, actions, pri_profile);
-
-#if 0
-    // Get ECMP Hash and MOD_META:
-    Entropy(model);
     
-    // Transform FFU KEYS and ACTIONS to FWD KEYS and ACTIONS:
-    xformActions();
-#endif
+    // Populate muxed_action:
+    mbyClassifierMuxedAction muxed_action;
+
+    populateMuxedAction(regs, keys, actions, pri_profile, &muxed_action);
+
+    // Populate ecmp_hash and mod_meta:
+    fm_uint32 ecmp_hash = 0;
+    fm_uint64 mod_meta  = 0;
+
+    populateEntropy(regs, keys, actions, &ecmp_hash, &mod_meta);
+    
+    // Transform exisiting keys, actions, etc. into desired output:
+    mbyParserInfo parser_info = in->PARSER_INFO;
+
+    transformActions(regs, parser_info, keys, actions, muxed_action, ecmp_hash, mod_meta, out);
 }

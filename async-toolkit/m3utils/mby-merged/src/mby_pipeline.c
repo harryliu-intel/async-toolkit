@@ -13,15 +13,14 @@ void Pipeline
     // intermediate structs:
 
     mbyParserToMapper     par2map;
-    mbyParserToModifier   par2mod;
     mbyMapperToClassifier map2cla;
     mbyClassifierToHash   cla2hsh;
     
     // pipeline stages:
     
-    Parser     (regs, mac2par, &par2map);
+    Parser     (regs,  mac2par, &par2map);
 
-    Mapper     (regs, &par2map, &map2cla, &par2mod);
+    Mapper     (regs, &par2map, &map2cla);
 
     Classifier (regs, &map2cla, &cla2hsh);
 }

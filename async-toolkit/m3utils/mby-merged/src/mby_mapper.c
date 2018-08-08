@@ -947,10 +947,10 @@ static void getParserInfo
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper * const in, 
+    mbyMapperToClassifier   * const out,
     const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
     const fm_bool                   is_ipv6[MBY_N_IS_IP_BITS],
-    mbyMapProfKey0          * const map_prof_key0,
-    mbyParserInfo           * const parser_info
+    mbyMapProfKey0          * const map_prof_key0
 )
 {
     fm_byte outerProt = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8);
@@ -1017,6 +1017,9 @@ static void getParserInfo
 
     fm_bool fits = TRUE;
     fm_bool ptrsErr = FALSE;
+
+    // Point at parser info structure:
+    mbyParserInfo *parser_info = &out->PARSER_INFO;
 
     // otr_l2
     encodeLength
@@ -1568,8 +1571,7 @@ void Mapper
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserToMapper     * const in, 
-          mbyMapperToClassifier * const mapper_to_classifier,
-          mbyParserToModifier   * const parser_to_modifier
+          mbyMapperToClassifier * const out
 )
 {
     mbyMapPortCfg portCfg;
@@ -1622,7 +1624,7 @@ void Mapper
     (
         regs,
         in,
-        mapper_to_classifier,
+        out,
         portCfg,
         realigned_keys,
         realigned_keys_vld
@@ -1638,7 +1640,7 @@ void Mapper
     (
         regs,
         in,
-        mapper_to_classifier,
+        out,
         portCfg,
         realigned_keys,
         isIPv4,
@@ -1656,10 +1658,10 @@ void Mapper
     (
         regs,
         in,
+        out,
         realigned_keys,
         isIPv6,
-        &map_prof_key0,
-        &parser_to_modifier->PARSER_INFO
+        &map_prof_key0
     );
 
     mbyMapProfAction map_prof_action;
@@ -1668,7 +1670,7 @@ void Mapper
     (
         regs,
         in,
-        mapper_to_classifier,
+        out,
         realigned_keys,
         map_prof_key0,
         map_prof_key1,
@@ -1679,7 +1681,7 @@ void Mapper
     (
         regs,
         in,
-        mapper_to_classifier,
+        out,
         realigned_keys,
         realigned_keys_vld,
         isIPv6,

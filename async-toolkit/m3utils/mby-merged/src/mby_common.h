@@ -49,8 +49,10 @@
 
 // Set a field of 64 or fewer bits for an unnamed 64-bit value
 #define FM_SET_UNNAMED_FIELD64(lvalue, start, len, value) \
+{ \
     lvalue &= ~(((FM_LITERAL_U64(1) << (len)) - FM_LITERAL_U64(1)) << (start)); \
-    lvalue |= ((value) & ((FM_LITERAL_U64(1) << (len)) - FM_LITERAL_U64(1))) << (start); 
+    lvalue |= ((value) & ((FM_LITERAL_U64(1) << (len)) - FM_LITERAL_U64(1))) << (start); \
+}
 
 // Get a named field of 2-32 bits within a >64-bit value
 #define FM_ARRAY_GET_FIELD(array, regname, fieldname)            \
