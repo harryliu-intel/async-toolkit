@@ -194,6 +194,7 @@ Block:
 expression:
 	single E1
 	double expression oOR E1
+	call CallSt
 
 E1:
 	single E2
@@ -229,15 +230,13 @@ E8:
 	mycharlit oCHARLITERAL
 	mytextlit oTEXTLITERAL
 	constr Constructor
-	anotherExpr '(' expression ')'
 	myid oID
+	par '(' expression ')'
 
 Selector:
 	carat '^'
 	dotid '.' oID
-	myexpr '[' expression exprlist ']'
-	alist '(' ActualList ')'
-	empty_alist '(' ')'
+	myexpr '[' exprlist ']'
 
 exprlist:
 	two exprlist ',' expression
