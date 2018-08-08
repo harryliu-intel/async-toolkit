@@ -1,6 +1,6 @@
 package switch_wm.ppe
 
-import switch_wm.csr.RdlRegister
+import com.intel.cg.hpfd.csr.RdlRegister
 
 object Tcam {
   type tcTriple = (RdlRegister[Long]#HardwareReadable, RdlRegister[Long]#HardwareReadable, Long)

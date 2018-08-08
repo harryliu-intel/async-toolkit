@@ -1,7 +1,8 @@
 package switch_wm.ppe
 
 import switch_wm._
-import switch_wm.csr.{RdlRegister, _}
+import com.intel.cg.hpfd.csr._
+import com.intel.cg.hpfd.csr.generated._
 import Parser._
 import Tcam._
 
@@ -14,7 +15,7 @@ object ParserState {
 }
 
 
-class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int) {
+class ParserStage(val csr : mby_ppe_parser_map, val myindex : Int) {
   class AnalyzerAction(w_off : List[Short], skip: Short, op : AluOperation,
                        next_state : Short, next_state_mask : Short) {
     def x (ph : PacketHeader, input : ParserState) : ParserState = {
@@ -79,7 +80,7 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
   }
 }
 
-class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[PacketHeader, Metadata] {
+class Parser(csr : mby_ppe_parser_map) extends PipelineStage[PacketHeader, Metadata] {
   val parserStages = 16
 
   val stages = (0 until parserStages).map(i => new ParserStage(csr, i))
