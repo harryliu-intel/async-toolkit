@@ -1,6 +1,6 @@
 package switch_wm.ppe
 
-import switch_wm.csr.parser_ext_r
+import com.intel.cg.hpfd.csr.generated.parser_ext_r
 import switch_wm.ppe.Parser.ProtoOffsets
 
 class ExtractAction(val protoId : Option[Short], val keyOffset : Short, val flagNum : Option[Short], val flagVal : Boolean, val ptrNum : Int) {
