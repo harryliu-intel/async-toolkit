@@ -1204,14 +1204,14 @@ static fm_macaddr extractDmac(const fm_uint32 ip_lo, const fm_uint32 ip_hi)
 
 static void transformActions
 (
-    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserInfo            parser_info,
-    const mbyClassifierKeys        keys,
-    const mbyClassifierActions     actions,
-    const mbyClassifierMuxedAction muxed_action,
-    const fm_uint32                ecmp_hash,
-    const fm_uint64                mod_meta,
-    mbyClassifierToHash    * const out
+    fm_uint32                              regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyMapperToClassifier    * const in,
+    const mbyClassifierKeys                keys,
+    const mbyClassifierActions             actions,
+    const mbyClassifierMuxedAction         muxed_action,
+    const fm_uint32                        ecmp_hash,
+    const fm_uint64                        mod_meta,
+    mbyClassifierToHash            * const out
 )
 {
     fm_bool   decap    = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 1) & 0x1;
@@ -1247,6 +1247,8 @@ static void transformActions
 
     fm_macaddr dmac_from_ipv6   = extractDmac(keys.key32[dmac_ipv6_off_lo], keys.key32[dmac_ipv6_off_hi]);
 
+    mbyParserInfo parser_info = in->PARSER_INFO;
+    
     fm_bool is_ipv4 = (decap) ? (parser_info.inr_l3_len && !parser_info.inr_l3_v6)
                               : (parser_info.otr_l3_len && !parser_info.otr_l3_v6);
 
@@ -1258,9 +1260,9 @@ static void transformActions
     FM_SET_UNNAMED_FIELD64(l3_length, 0, 8, keys.key8[l3_length_off + 1]);
     FM_SET_UNNAMED_FIELD64(l3_length, 8, 8, keys.key8[l3_length_off    ]);
 
-    fm_bool trap_ip_options = 0; // = state->IP_OPTION[decap] <-- FIXME!!!!
+    fm_bool trap_ip_options = in->IP_OPTION[decap];
 
-    fm_bool otr_mpls_v = 0; // state->PA_FLAGS[MBY_PA_FLAGS_OTR_MPLS_V] <-- FIXME!!!!
+    fm_bool otr_mpls_v = in->OTR_MPLS_V;
 
     fm_bool is_ttl01 = (muxed_action.ttl01 & 1) || ((muxed_action.ttl01 >> 1) & 1);
     fm_bool drop_ttl = is_ttl01 && (is_ipv4 || is_ipv6 || otr_mpls_v);
@@ -1407,7 +1409,5 @@ void Classifier
     populateEntropy(regs, keys, actions, &ecmp_hash, &mod_meta);
     
     // Transform exisiting keys, actions, etc. into desired output:
-    mbyParserInfo parser_info = in->PARSER_INFO;
-
-    transformActions(regs, parser_info, keys, actions, muxed_action, ecmp_hash, mod_meta, out);
+    transformActions(regs, in, keys, actions, muxed_action, ecmp_hash, mod_meta, out);
 }

@@ -916,6 +916,9 @@ typedef struct mbyMapperToClassifierStruct
     // Boolean indicating whether a header parse error has occurred:
     fm_bool                 PARSER_ERROR;
 
+    // Parser flag indicating valid outer MPLS packet:
+    fm_bool                 OTR_MPLS_V;
+    
     // Keys to be used for FFU TCAM lookup:
     mbyClassifierKeys       FFU_KEYS;
 

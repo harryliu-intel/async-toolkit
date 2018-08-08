@@ -953,6 +953,9 @@ static void getParserInfo
     mbyMapProfKey0          * const map_prof_key0
 )
 {
+    fm_bool pa_flag_otr_mpls_v = in->PA_FLAGS[MBY_PA_FLAGS_OTR_MPLS_V];
+    out->OTR_MPLS_V = pa_flag_otr_mpls_v; // pass thru to Classifier
+    
     fm_byte outerProt = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8);
 
     fm_bool tcp[2] = { FALSE };
