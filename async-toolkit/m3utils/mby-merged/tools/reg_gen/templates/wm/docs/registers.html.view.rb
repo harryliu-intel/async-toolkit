@@ -5,27 +5,11 @@
 # % rdlgen.rb html top.rdl top.html
 #
 
-class HtmlView < RDL::ViewGen
+class RegistersHtmlView < RDL::ViewGen
 
-  class SecurityInfo
-    SEC_FILE = ENV['MODEL_ROOT']+"/src/srdl/security.pm"
-    def initialize()
-      sec_hash = IO.read(SEC_FILE).scan(/%security.*^\t\);/m).shift.
-                 sub(/^%/,"").
-                 sub(/\(/,"{").
-                 sub(/\)/,"}")
-      @sec_info = eval(sec_hash)
-    end
-    def get(tag)
-      @sec_info.include?(tag) ? @sec_info[tag].gsub(/\"/,"") : ""
-    end
-  end
-
-  def initialize(top_rdl_file, view_file)
-    @security_info = SecurityInfo.new
+  def initialize(top_rdl_file, view_file, template_file)
     super(top_rdl_file)         # init @top_map
-    File.delete view_file if File.exist? view_file # force re-generate
-    source(view_file, "html")   # init @view_code from html.template if new
+    source(view_file, template_file) # init @view_code from template
     update(addrmap_html_table,  # insert new code between delimiters
            "auto-generated-addrmap",
            "/auto-generated-addrmap")
@@ -39,17 +23,6 @@ class HtmlView < RDL::ViewGen
   end
 
   private
-
-  def get_security(reg)
-    tags = reg.instance_variables.keep_if{|x|x.to_s =~ /Security_/}
-    tags.map do |x|
-      label = x.to_s.sub(/^@/,"").sub(/_Str/,"").underscore.
-              split(/_/).map{|x|x.capitalize}.join(' ')
-      value = reg.instance_variable_get(x)
-      value = @security_info.get(value) if label !~ /Policy Role\z/
-      [label, value]
-    end
-  end
 
   def registers_html_table()
     @top_map.instances.map do |am_inst|
@@ -89,11 +62,10 @@ class HtmlView < RDL::ViewGen
             end
           end
           irange = ranges.map { |x| "[0..#{x-1}]" }.join
-          sec_info = get_security(rg_defn)
           tbl.spanners = [Html.r_span(5, lb_addr        , rg_addr),
                           Html.r_span(5, "Atomicity"    , rg_defn.accesswidth),
                           Html.r_span(5, "Reset Domains", am_defn.resetdomains),
-                         ] + sec_info.map{|x|Html.r_span(5,*x)}
+                         ]
           tbl.preface  = "      "
           tbl.preface += Html.h(4, Html.a_href(am_inst.inst_name+"-desc",
                                                rg_inst.inst_name+irange,
@@ -153,14 +125,14 @@ class HtmlView < RDL::ViewGen
         iname = ii.inst_name
         iname+= "[0..#{ii.inst_size-1}]" if ii.inst_size > 1
         block = Html.a_href(ii.inst_name+"-desc", iname, ii.inst_name)
-        brief = Html.desc(ii.type_defn.desc)
+        brief = Html.desc(ii.type_defn.desc) if ii.type_defn.desc
         baddr = "0x%07X" % ii.addr_base
         bsize = ii.type_defn.addressbits
         tbl.rows.push [block, brief, baddr, bsize]
       end
     end
   end
-end # class HtmlView
+end # class RegistersHtmlView
 
 #------------------------------------------------------------------------------
 # HTML table generation helper module
