@@ -79,15 +79,17 @@ GTEST_ROOT ?= /p/utils/srd/software/unit-test/GoogleTest-SLES11/googletest
 GTEST_INCLUDES = -I$(GTEST_ROOT)/include
 GTEST_OBJECTS = $(GTEST_ROOT)/make/gtest_main.a
 
+UT_CFLAGS += -O0 -g -ggdb3
+
 UT_BINARIES += tests/ut_mapper.exe
-# UT_BINARIES += tests/ut_classifier.exe
+UT_BINARIES += tests/ut_classifier.exe
 
 tests/ut_mapper.exe: tests/ut_mapper.o
-tests/ut_classifier.exe: tests/ut_classifier.o mby_classifier.o mby_common.o
+tests/ut_classifier.exe: tests/ut_classifier.o
 
 tests/%.o: tests/%.cpp
 	@echo '  Compiling' $<
-	$(ECHO) $(GPP) -o $@ $(DEFINES) $(GTEST_INCLUDES) $(INCLUDES) -c $<
+	$(ECHO) $(GPP) -o $@ $(DEFINES) $(UT_CFLAGS) $(GTEST_INCLUDES) $(INCLUDES) -c $<
 
 tests/%.exe:
 	@echo '  Linking' $<
