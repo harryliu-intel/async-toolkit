@@ -11,6 +11,7 @@ OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
 
 METAROOT=$(shell ToolConfig.pl get_tool_path meta)
+METAVERSION=$(shell ToolConfig.pl get_tool_version meta)
 
 # override here if you want to test a new toolchain
 #CM3=/tmp/cm3-all-AMD64_LINUX-d5.10.0-Linux3.0.101-20180514/bin/cm3
@@ -76,9 +77,13 @@ TOP_TEMPLATE=top_template
 # 	$(TEST_TARG)
 mains: mby_mains hlp_mains model_server
 
-top: $(TOP)
+# provide a mechanism to force rebuild on meta update
+META_VERSION_F=meta.version.$(METAVERSION)
+$(META_VERSION_F):
+	touch $@
 
-$(TOP): $(TOP_TEMPLATE)
+top: $(TOP)
+$(TOP): $(TOP_TEMPLATE) $(META_VERSION_F)
 	sed "s#MODEL_ROOT#$(MODEL_ROOT)#" $< > $@
 	sed -i "s#META_HOME#$(METAROOT)#" $@
 
@@ -117,7 +122,7 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
 
 MBY_POSTPROC = work/mby_postproc.rdl
-$(MBY_POSTPROC): $(MBY_TOP_RDL)
+$(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	mkdir -p work
 	${SVPP} --path $(NEBULON)/include:$(dir $<) < $< > work/i1.rdl
 	${PERLFE} < work/i1.rdl > work/i2.rdl

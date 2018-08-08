@@ -1,8 +1,10 @@
 package switch_wm.ppe
 
 import switch_wm._
-import switch_wm.csr._
+import com.intel.cg.hpfd.csr._
+import com.intel.cg.hpfd.csr.generated._
 import Parser._
+import Tcam._
 
 class ParserState(val w : List[Short], val op : AluOperation, val state : Short, val ptr : Short)
 object ParserState {
@@ -13,7 +15,7 @@ object ParserState {
 }
 
 
-class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int) {
+class ParserStage(val csr : mby_ppe_parser_map, val myindex : Int) {
   class AnalyzerAction(w_off : List[Short], skip: Short, op : AluOperation,
                        next_state : Short, next_state_mask : Short) {
     def x (ph : PacketHeader, input : ParserState) : ParserState = {
@@ -33,7 +35,6 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
 
   class ExceptionAction( val exOffset : Short, val parsingDone : Boolean) {
     def x (input : (PacketFields, PacketFlags)) : (PacketFields, PacketFlags) = input
-
     // EOP = (if last byte of non-FCS payload is in current segment) ? TRUE : FALSE
     // EOS = adjustedSegmentLength < (currentPointer + currentStage.exceptionOffset)
     def eop (ph : PacketHeader, currentOffset : Int) = false
@@ -48,31 +49,22 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
   def matchingAction(w0 : Short, w1 : Short, state : Short) : Option[(AnalyzerAction, List[ExtractAction], ExceptionAction)]  = {
     val wcsr = csr.PARSER_KEY_W(myindex)
     val kcsr = csr.PARSER_KEY_S(myindex)
-    // take the tcam relevant to _this_ stage, from configuration
-    def tcamMatcher(input : Short, candidate : Short, candidateMask : Short) : Boolean = {
-      // mask off the care bits from the candidate and the data in the tcam, match if the same
-      (input & candidateMask) == (candidate & candidateMask)
-    }
-    def action(x : Int)  : AnalyzerAction = {
-      val actionCsr = csr.PARSER_ANA_W(myindex)(x)
-      val c = csr.PARSER_ANA_S(myindex)(x)
-      AnalyzerAction(actionCsr, c)
-    }
-    def extractAction(x : Int) : List[ExtractAction] = {
-      val eaCsr = csr.PARSER_EXT(myindex)
-      val eaCsrPair = List(eaCsr(x), eaCsr(x + 16))
-      eaCsrPair.map(x => ExtractAction(x))
-    }
-    def exceptionAction(x  : Int) : ExceptionAction = {
-      val exCsr = csr.PARSER_EXC(myindex)(x)
-      new ExceptionAction(exCsr.EX_OFFSET.toShort, exCsr.PARSING_DONE.apply == 1)
-    }
-    val tcamMatch: PartialFunction[Int, (AnalyzerAction, List[ExtractAction], ExceptionAction)] = {
-      case x if (tcamMatcher(w0, wcsr(x).W0_VALUE.toShort, wcsr(x).W0_MASK.toShort) &&
-        tcamMatcher(w1, wcsr(x).W1_VALUE.toShort, wcsr(x).W1_MASK.toShort) &&
-        tcamMatcher(state, kcsr(x).STATE_VALUE.toShort, kcsr(x).STATE_MASK.toShort)) => (action(x), extractAction(x), exceptionAction(x))
-    }
-    (0 until 16) collectFirst tcamMatch
+
+
+    val analyzerActions = (csr.PARSER_ANA_W(myindex) zip csr.PARSER_ANA_S(myindex)).map(x => AnalyzerAction(x._1, x._2))
+    val extractActions = (0 until 16).map(e => {
+      List(ExtractAction(csr.PARSER_EXT(myindex)(e)), ExtractAction(csr.PARSER_EXT(myindex)(e + 16)))
+    })
+    val exceptionActions = csr.PARSER_EXC(myindex).map(x => new ExceptionAction(x.EX_OFFSET.toShort, x.PARSING_DONE.apply == 1))
+    val matcher = tcamMatchSeq(parserAnalyzerTcamMatchBit) _
+
+    (wcsr zip kcsr) zip ((analyzerActions, extractActions, exceptionActions).zipped.toList) collectFirst ({
+      case (x, y) if matcher(Seq(
+        (x._1.W0_MASK, x._1.W0_VALUE, w0),
+        (x._1.W1_MASK, x._1.W1_VALUE, w1),
+        (x._2.STATE_MASK, x._2.STATE_VALUE, state)
+      )) => y
+    })
   }
 
   val x : (PacketHeader, ParserState, PacketFlags, Parser.ProtoOffsets, Boolean, Boolean) => (ParserState, PacketFlags, ProtoOffsets, Boolean, Boolean) = (ph, ps, pf, fields, eos, done) => {
@@ -88,7 +80,7 @@ class ParserStage(val csr : switch_wm.csr.mby_ppe_parser_map, val myindex : Int)
   }
 }
 
-class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[PacketHeader, Metadata] {
+class Parser(csr : mby_ppe_parser_map) extends PipelineStage[PacketHeader, Metadata] {
   val parserStages = 16
 
   val stages = (0 until parserStages).map(i => new ParserStage(csr, i))
@@ -96,17 +88,56 @@ class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[Packe
   def initialState(ph : PacketHeader, port : Int) : ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(port)
     val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
-    val w = initWOffsets.map(off => (ph(0 + off.toInt + 1) << 16 & ph(0 + off.toInt)).toShort)
+    val w = initWOffsets.map(off => ph.getWord(off.toInt))
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT.toShort, portCfg.INITIAL_OP_MASK.toShort)
     val state = portCfg.INITIAL_STATE.toShort
     val ptr = portCfg.INITIAL_PTR.toShort
     ParserState(w,aluOp, state, ptr)
   }
 
-  def fieldVector(ph : PacketHeader, protoOffsets: ProtoOffsets) : PacketFields = {
-    val extractorCsr = csr.PARSER_EXTRACT_CFG
-    // each of the 80 fields of the vector has a configuration in the CSR
-    PacketFields()
+
+  def packetType(pf : PacketFlags) : (PacketType, ExtractionIndex) = {
+    val interface = 0
+    val tcamCsr = csr.PARSER_PTYPE_TCAM(interface)
+    val sramCsr = csr.PARSER_PTYPE_RAM(interface)
+    val tc = tcamMatch.curried(standardTcamMatchBit)
+    // TODO -- implement the TCAM encoded function
+    (tcamCsr zip sramCsr).reverse.collectFirst( { case (x,y) if {
+      tc(x.KEY_INVERT, x.KEY, pf.toLong) } => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)} ) match {
+      case None => (0,0)
+      case Some(pt) => pt
+    }
+  }
+
+  def saturatingIncrement(limit : Long)(field : RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable) = {
+    field() = math.min(limit, field() + 1)
+  }
+
+  object Extractor extends PipelineStage[(PacketHeader, ProtoOffsets), PacketFields] {
+    val x = { (t : (PacketHeader, ProtoOffsets)) =>
+      val ph = t._1
+      val protoOffsets = t._2
+      val fieldProfile = 0
+      val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile)
+
+      def satacc8b(field : RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable) : Unit= saturatingIncrement (255)(field)
+      // each of the 80 fields of the vector has a configuration in the CSR
+      val f : IndexedSeq[Short] = extractorCsr.map(a => {
+        (a.PROTOCOL_ID(), protoOffsets.collect({ case i if i._1 == a.PROTOCOL_ID() => i._2 })) match {
+          case (0xFF, _) => 0.toShort
+          case (_, pofs) if pofs.length == 0 => {
+            satacc8b(csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID)
+            0.toShort
+          }
+          case (_, pofs) if pofs.length > 1 => {
+            satacc8b(csr.PARSER_COUNTERS.EXT_DUP_PROTID)
+            ph.getWord(pofs.head + a.OFFSET().toInt)
+          }
+          case (_, pofs) if pofs.length == 1 => ph.getWord(pofs.head + a.OFFSET().toInt)
+        }
+      })
+      PacketFields(f)
+    }
   }
 
   val x : (PacketHeader) => Metadata = ph => {
@@ -125,7 +156,7 @@ class Parser(csr : switch_wm.csr.mby_ppe_parser_map) extends PipelineStage[Packe
     }
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
-    Metadata(stagesResult._2, fieldVector(ph, stagesResult._3))
+    Metadata(stagesResult._2, Extractor.x(ph, stagesResult._3))
   }
 }
 
@@ -133,5 +164,7 @@ object Parser {
   type ProtoId = Int
   type BaseOffset = Int
   type ProtoOffsets = IndexedSeq[(ProtoId, BaseOffset)]
+  type PacketType = Int
+  type ExtractionIndex = Int
   val EmptyProtoOffsets : ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
 }

@@ -1,20 +1,14 @@
-package switch_wm.csr
+package com.intel.cg.hpfd.csr
 
-import switch_wm.PrimitiveTypes.U64
+import com.intel.cg.hpfd.csr.PrimitiveTypes.U64
+
 import scala.collection.immutable.SortedMap
 
-
-object RegisterCounter {
-    var count = 0
-}
-
 abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElement {
-  RegisterCounter.count += 1
 
   def addressRegisterMap(baseAddress: Int): SortedMap[Int, RdlElement] = {
     SortedMap[Int, RdlElement]((baseAddress, this))
   }
-
 
   abstract class RdlField {
     protected def r: Range
@@ -28,6 +22,8 @@ abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElem
     */
   trait HardwareReadable {
     this: RdlField =>
+
+    def size : Int = r.size
     def apply(): Long = extract(r)
   }
 

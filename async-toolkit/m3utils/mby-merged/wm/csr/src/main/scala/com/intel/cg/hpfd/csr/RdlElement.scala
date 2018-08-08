@@ -1,6 +1,7 @@
-package switch_wm.csr
+package com.intel.cg.hpfd.csr
 
-import switch_wm.PrimitiveTypes.U64
+import com.intel.cg.hpfd.csr.PrimitiveTypes.U64
+
 import scala.collection._
 
 /** Base class for RDL structure (i.e. address maps, regfiles, registers)

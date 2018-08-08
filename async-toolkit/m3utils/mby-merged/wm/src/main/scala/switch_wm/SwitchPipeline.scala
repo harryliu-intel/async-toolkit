@@ -1,11 +1,12 @@
 package switch_wm
 
-
+import com.intel.cg.hpfd.csr.generated.{mby_ppe_mapper_map, mby_ppe_rx_top_map, mby_top_map}
 
 class Packet
 class PacketHeader {
   val adjustedSegmentLength = 100 // (should be computed)
   def apply(addr : Int) : Byte = 0
+  def getWord(addr : Int) : Short = ((apply(addr) << 8) | apply(addr)).toShort
 }
 
 class Metadata(val flags : ppe.PacketFlags, val fields : ppe.PacketFields)
@@ -14,8 +15,7 @@ object Metadata {
 }
 
 abstract class PipelineStage[I,O] {
-  val x : (I) => O
-
+  val x : I => O
 }
 
 class Epl extends PipelineStage[Array[Byte], Packet] {
@@ -30,13 +30,13 @@ class HeaderExtraction extends PipelineStage[Packet, PacketHeader] {
   }
 }
 
-class KeyMapper(csr : switch_wm.csr.mby_ppe_mapper_map) extends PipelineStage[Metadata, Metadata] {
+class KeyMapper(csr : mby_ppe_mapper_map) extends PipelineStage[Metadata, Metadata] {
   val x : (Metadata) => Metadata = (md) => {
     md
   }
 }
 
-class RxPpe(csr : switch_wm.csr.mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], Metadata] {
+class RxPpe(csr : mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], Metadata] {
   val epl = new Epl
   val headerExtractor = new HeaderExtraction
   val parser = new switch_wm.ppe.Parser(csr.parser)
@@ -49,7 +49,7 @@ class RxPpe(csr : switch_wm.csr.mby_ppe_rx_top_map) extends PipelineStage[Array[
 
 object SwitchTest {
   val junk = Array.ofDim[Byte](1024)
-  val theCsrs = csr.mby_top_map()
+  val theCsrs = mby_top_map()
   val swp = new RxPpe(theCsrs.mpt(0).rx_ppe)
   swp.x(junk)
 }

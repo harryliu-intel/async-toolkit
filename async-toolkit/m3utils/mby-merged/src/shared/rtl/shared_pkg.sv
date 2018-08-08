@@ -64,6 +64,22 @@ typedef struct packed {
     logic               valid;      //valid
 } rx_ppe_igr_post_ppe_t;
 
+//
+// LSM (management port)
+//
+  localparam W_MGMT_ADDR      =    28; // Bit width of chip address
+  localparam W_MGMT_DATA64    =    64; // Width of 64b management ripple channel
+  localparam W_MGMT_DATA32    =    32; // Width of 32b management ripple channel
+ 
+  typedef struct packed {
+    logic                          atomic;
+    logic                          done;
+    logic                          uerr;
+    logic                          rw;
+    logic [W_MGMT_ADDR-1:0]        addr;
+    logic [W_MGMT_DATA64-1:0]      data;
+  } mgmt64_t;
+
 endpackage : shared_pkg
 
 `endif	// SHARED_PKG_INCLUDE

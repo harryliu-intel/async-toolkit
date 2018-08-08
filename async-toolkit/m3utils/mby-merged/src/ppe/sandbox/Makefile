@@ -130,6 +130,8 @@ PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_igr_post_ppe_if.sv
 PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_pull_sched_rx_ppe_if.sv
 PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_tx_ppe_if.sv
 PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
+PPE_VCS_SRC  += $(SHARED_SRC)/interfaces/ahb_rx_ppe_if.sv
+PPE_VCS_SRC  += $(SHARED_SRC)/interfaces/glb_rx_ppe_if.sv
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \

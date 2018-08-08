@@ -577,10 +577,12 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package switch_wm.csr\n");
-    gs.main("import switch_wm.csr.Memory._\n");
-    gs.main("import switch_wm.csr.Memory.ImplicitConversions._\n");
-    gs.main("import switch_wm.PrimitiveTypes._\n");
+    gs.main("package com.intel.cg.hpfd.csr.generated\n");
+    gs.main("import com.intel.cg.hpfd.csr.Memory._\n");
+    gs.main("import com.intel.cg.hpfd.csr.RdlRegister\n");
+    gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
+    gs.main("import com.intel.cg.hpfd.csr.Memory.ImplicitConversions._\n");
+    gs.main("import com.intel.cg.hpfd.csr.PrimitiveTypes._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : RdlHierarchy) extends RdlRegister[%s.Underlying](parent) {\n", myTn, myTn);
     FOR i := 0 TO r.fields.size()-1 DO
@@ -654,10 +656,13 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     myTn := rf.typeName(gs);
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package switch_wm.csr\n");
-    gs.main("import switch_wm.csr.Memory._\n");
-    gs.main("import switch_wm.csr.Memory.ImplicitConversions._\n");
-    gs.main("import switch_wm.PrimitiveTypes._\n");
+    gs.main("package com.intel.cg.hpfd.csr.generated\n");
+    gs.main("import com.intel.cg.hpfd.csr.Memory._\n");
+    gs.main("import com.intel.cg.hpfd.csr.Memory.ImplicitConversions._\n");
+    gs.main("import com.intel.cg.hpfd.csr.PrimitiveTypes._\n");
+    gs.main("import com.intel.cg.hpfd.csr.DegenerateHierarchy\n");
+    gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
+    gs.main("import com.intel.cg.hpfd.csr.RdlRegisterFile\n");
     gs.main("import scala.collection.immutable.SortedMap\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) ", myTn);
@@ -699,11 +704,14 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     myTn := map.typeName(gs);  
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package switch_wm.csr\n");
-    gs.main("import switch_wm.csr.Memory._\n");
-    gs.main("import switch_wm.csr.Memory.ImplicitConversions._\n");
-    gs.main("import switch_wm.PrimitiveTypes._\n");
-    gs.main("import switch_wm.DegenerateIndexedSeq\n");
+    gs.main("package com.intel.cg.hpfd.csr.generated\n");
+    gs.main("import com.intel.cg.hpfd.csr.Memory._\n");
+    gs.main("import com.intel.cg.hpfd.csr.Memory.ImplicitConversions._\n");
+    gs.main("import com.intel.cg.hpfd.csr.PrimitiveTypes._\n");
+    gs.main("import com.intel.cg.hpfd.csr.DegenerateIndexedSeq\n");
+    gs.main("import com.intel.cg.hpfd.csr.RdlAddressMap\n");
+    gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
+    gs.main("import com.intel.cg.hpfd.csr.RdlElement\n");
     gs.main("import scala.collection.immutable.SortedMap\n");
 
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
