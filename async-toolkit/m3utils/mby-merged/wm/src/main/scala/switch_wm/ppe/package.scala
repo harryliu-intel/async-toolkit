@@ -1,7 +1,15 @@
 package switch_wm
 
+import scala.collection.immutable.BitSet
+
 package object ppe {
   class PortIndex(val p : Int) extends AnyVal
+
+
+  class SourcePortMask(l : Long) {
+    val bs = BitSet(l.toInt)
+
+  }
 
   class L3Domain(val d : Int) extends AnyVal
   class L2Domain(val d : Int) extends AnyVal
@@ -61,7 +69,23 @@ package object ppe {
     * 8 Bit
     * @param cgrp
     */
-  class CGRP(val cgrp : Int) extends AnyVal
+  class CGRP(val cgrp : Int) extends AnyVal {
+    def == (other : Long, otherMask : Long) : Boolean = {
+      (cgrp & otherMask) == (other & otherMask)
+    }
+  }
 
-  class GLORT(val glort : Int) extends AnyVal
+  /**
+    * 16-bit glort
+    * @param glort
+    */
+  class GLORT(val glort : Short) extends AnyVal {
+    def maskUpdate(newGlort : Short, newGlortMask : Short) : GLORT = {
+      // take zero out the masked bits, and bitwise-OR in those that are being updated
+      val r = (glort & ~newGlortMask) | (newGlort & newGlortMask)
+      new GLORT(r.toShort)
+    }
+  }
+
+  class TrafficClass(val tc : Int) extends AnyVal
 }
