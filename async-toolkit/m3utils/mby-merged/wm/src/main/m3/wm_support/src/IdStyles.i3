@@ -2,11 +2,11 @@ INTERFACE IdStyles;
 IMPORT TextSeq;
 
 TYPE
-  Case = { Lower, Upper, Camel };
+  Case = { Lower, Upper, Camel, LCamel };
   Sep = { None, Underscore, Hyphen };
 
 CONST
-  CaseNames = ARRAY Case OF TEXT { "lower", "upper", "camel" };
+  CaseNames = ARRAY Case OF TEXT { "lower", "upper", "camel", "lcamel" };
   SepNames = ARRAY Sep OF TEXT { "none", "underscore", "hyphen" };
 
 PROCEDURE Parse(id : TEXT; case : Case; sep : Sep) : TextSeq.T;

@@ -65,8 +65,8 @@ interface("RegCGenState")
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-generic_module("TopoSort")
-module("TextTopoSort")
+%generic_module("TopoSort")
+%module("TextTopoSort")
 
 implementation ("Main")
 
