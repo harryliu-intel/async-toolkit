@@ -40,12 +40,9 @@ declnext:
 
 decl:
 	const_nonempty oCONST constdecllist
-	const_empty oCONST
 	typedecl_nonempty oTYPE typedecllist
-	typedecl_empty oTYPE
 	exception oEXCEPTION exceptionlist
 	var oVAR variabledecllist
-	emptyvar oVAR
 	proc1 ProcedureHead ';'
 	proc2 ProcedureHead '=' Block oID ';'
 	rev oREVEAL qualidlist_reveal
@@ -92,22 +89,16 @@ qualidlist:
 	something ',' qualid qualidlist
 
 exceptionlist:
-	only exceptiondecl ';' exceptiondeclnext
-
-exceptiondeclnext:
-	nothing
-	something exceptionlist
+	empty
+	only exceptiondecl ';' exceptionlist
 
 exceptiondecl:
 	empty oID
 	nonempty oID '(' type ')'
 
 constdecllist:
-	only constdecl ';' constdeclnext
-
-constdeclnext:
 	empty
-	nonempty constdecllist
+	only constdecl ';' constdecllist
 
 constdecl:
 	empty oID '=' constexpression
@@ -117,11 +108,8 @@ constexpression:
 	myexpr expression
 
 typedecllist:
-	only typedecl ';' typedeclnext
-
-typedeclnext:
-	nothing
-	something typedecllist
+	empty
+	only typedecl ';' typedecllist
 
 importlist:
 	nothing
@@ -166,7 +154,7 @@ Mode:
 	rdonly oREADONLY
 
 variabledecllist:
-	empty variabledecl ';'
+	empty
 	nonempty variabledecl ';' variabledecllist
 
 variabledecl:
