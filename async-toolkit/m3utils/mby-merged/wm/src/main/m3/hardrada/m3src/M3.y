@@ -18,7 +18,6 @@ compilation:
 
 Interface:
 	wimpanddecl oINTERFACE oID ';' importlist decllist oEND oID '.'
-	wimpandnodecl oINTERFACE oID ';' importlist oEND oID '.'
 	wimpanddecleq oINTERFACE oID '=' oID GenActls oEND oID '.'
 
 GenInf:
@@ -32,7 +31,7 @@ GenActls:
 	empty '(' ')'
 
 decllist:
-	single decl
+	single
 	double decllist decl
 
 decl:
@@ -175,7 +174,6 @@ typedecl:
 
 Block:
 	wdecl decllist oBEGIN kindastart oEND
-	nodecl oBEGIN kindastart oEND
 
 expression:
 	single E1
