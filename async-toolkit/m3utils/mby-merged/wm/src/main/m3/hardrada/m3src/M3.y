@@ -244,7 +244,6 @@ ActualList:
 	two ActualList ',' Actual
 
 Actual:
-	mytype type
 	expr expression
 	assop_expr oID oASSOP expression
 
