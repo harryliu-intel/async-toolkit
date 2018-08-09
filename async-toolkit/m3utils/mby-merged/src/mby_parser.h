@@ -230,7 +230,7 @@ typedef struct mbyMacToParserStruct
     // The ingress port
     fm_int                  RX_PORT;
 
-    /* Packet Meta Data. */
+    // Packet meta data:
     fm_byte                 PKT_META[32];
 
 } mbyMacToParser;
@@ -243,55 +243,53 @@ typedef struct mbyParserToMapperStruct
     // Packet meta data (pass-thru):
     fm_byte                 PKT_META[32];
 
-    /* The 4-bit set of RX EPL flags. Bits [7:3] are reserved and always
-     * set to zero. For bits [2:0] see also ''mbyRxFlags''. */
+    // The 4-bit set of RX EPL flags. Bits [7:3] are reserved and always
+    // set to zero. For bits [2:0] see also ''mbyRxFlags'':
     fm_byte                 RX_FLAGS;
 
-    /* Pkt Seg Meta Err. Valid on EOP. */
+    // Pkt Seg Meta Err. Valid on EOP:
 //  fm_bool                 SEG_META_ERR;
 
-    /* Adjusted segment length. */
+    // Adjusted segment length:
     fm_uint16               PA_ADJ_SEG_LEN;
 
-    /* 16-bit Parser keys extracted from packet. */
+    // 16-bit Parser keys extracted from packet:
     fm_uint16               PA_KEYS[84];
 
-    /* Boolean valid bits to match Parser keys assigned by extract actions for packet. */
+    // Boolean valid bits to match Parser keys assigned by extract actions for packet:
     fm_bool                 PA_KEYS_VALID[84];
 
-    /* Parser flag values assigned per bit by extract actions. */
+    // Parser flag values assigned per bit by extract actions:
     fm_bool                 PA_FLAGS[48];
 
-    /* Byte offsets of interest within packet resulting from Parser extract
-     * actions. */
+    // Byte offsets of interest within packet resulting from Parser extract actions:
     fm_byte                 PA_PTRS[8];
 
-    /* Boolean valid bits to match pointers of interest within packet from
-     * Parser extract actions. */
+    // Boolean valid bits to match pointers of within packet from Parser extract actions:
     fm_bool                 PA_PTRS_VALID[8];
 
-    /* Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers. */
+    // Checksum OK result for outer (bit 0) and inner (bit 1) IPv4 headers:
     fm_byte                 PA_CSUM_OK;
 
-    /* Parser analyzer stage where exception was reached. */
+    // Parser analyzer stage where exception was reached:
     fm_byte                 PA_EX_STAGE;
 
-    /* Parser stopped: EOS exception and segment was not EOP. */
+    // Parser stopped: EOS exception and segment was not EOP:
     fm_bool                 PA_EX_DEPTH_EXCEED;
 
-    /* Parser stopped: EOS exception and segment was EOP. */
+    // Parser stopped: EOS exception and segment was EOP:
     fm_bool                 PA_EX_TRUNC_HEADER;
 
-    /* Parser stopped: Parsing Done exception. */
+    // Parser stopped: Parsing Done exception:
     fm_bool                 PA_EX_PARSING_DONE;
 
-    /* Checksum validation error, drop pkt in Tail. */
+    // Checksum validation error, drop pkt in tail:
     fm_bool                 PA_DROP;
 
-    /* L3 length error. */
+    // L3 length error:
     fm_bool                 PA_L3LEN_ERR;
 
-    /* packet type (added for MBY) */
+    // Packet type (added for MBY):
     fm_byte                 PA_PACKET_TYPE;
 
 } mbyParserToMapper;

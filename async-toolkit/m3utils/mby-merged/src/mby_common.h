@@ -142,6 +142,9 @@
 #define MBY_PROT_ICMPv6          58
 #define MBY_PROT_IGMP             2
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 // Basic Data Types:
 typedef char                  fm_char;
 typedef short                 fm_int16;
@@ -168,6 +171,7 @@ const fm_status  FM_FAIL = 1;
 const fm_bool    TRUE    = 1;
 const fm_bool    FALSE   = 0;
 
+// Macros:
 // External function prototypes:
 
 fm_uint32 fmMultiWordBitfieldGet32(const fm_uint32 *array, fm_int hiBit, fm_int loBit);

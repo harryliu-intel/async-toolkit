@@ -11,6 +11,7 @@ SOURCES += mby_common.c
 SOURCES += mby_parser.c
 SOURCES += mby_mapper.c
 SOURCES += mby_classifier.c
+SOURCES += mby_hash.c
 SOURCES += mby_pipeline.c
 
 OBJECTS = $(SOURCES:.c=.o)
