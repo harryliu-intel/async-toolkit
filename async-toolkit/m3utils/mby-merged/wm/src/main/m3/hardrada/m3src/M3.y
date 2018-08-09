@@ -227,7 +227,17 @@ exprlist:
 	one expression
 
 Constructor:
-	nothing '}' ';' ':' '{'
+	empty type '{' '}'
+	nonempty type '{' constructorlist '}'
+
+constructorlist:
+	single exprderivative
+	double constructorlist ',' exprderivative
+
+exprderivative:
+	pureexpr expression
+	dotdot expression oTWOPERIODS expression
+	myassignment oID oASSOP expression
 
 ActualList:
 	one Actual
