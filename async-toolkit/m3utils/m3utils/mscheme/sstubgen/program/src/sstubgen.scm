@@ -1712,7 +1712,7 @@
               (imports 'insert! 'SchemeSymbol)
               (string-append
                "      ELSE" dnl
-               "        SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2("(make-symbol 'quote env)",SchemeUtils.List1("(make-symbol 'ANY env)")))" dnl
+               "        EVAL SchemeApply.OneArg(interp,excHandler,SchemeUtils.List2("(make-symbol 'quote env)",SchemeUtils.List1("(make-symbol 'ANY env)")))" dnl
                )
               )
             (apply string-append

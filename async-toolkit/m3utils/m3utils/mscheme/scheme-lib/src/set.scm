@@ -27,7 +27,7 @@
               ((size)     (length (hashtable 'keys)))
 
               ((rehash! keys clear! display)     (hashtable message))
-
+              
 							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 							
 							((intersection)
