@@ -32,11 +32,8 @@ GenActls:
 	empty '(' ')'
 
 decllist:
-	only decl declnext 
-
-declnext:
-	empty
-	nonempty decllist
+	single decl
+	double decllist decl
 
 decl:
 	const_nonempty oCONST constdecllist
