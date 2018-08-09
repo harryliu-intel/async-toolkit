@@ -100,7 +100,6 @@
 %const oREFANY
 %const oROUND
 %const oSUBARRAY
-%const oTEXT
 %const oTRUE
 %const oTRUNC
 %const oTYPECODE
@@ -121,6 +120,5 @@
 
 %token oCHARLITERAL
 %token oTEXTLITERAL
-%token oQUALID
 %token oID
 %token oNUMBER

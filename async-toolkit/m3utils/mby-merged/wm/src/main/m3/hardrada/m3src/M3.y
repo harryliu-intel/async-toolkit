@@ -31,8 +31,8 @@ GenActls:
 	empty '(' ')'
 
 decllist:
-	single
-	double decllist decl
+	empty
+	nonempty decl decllist 
 
 decl:
 	const_nonempty oCONST constdecllist
@@ -77,8 +77,8 @@ Raises:
 	nonempty '{' qualid qualidlist '}'
 
 qualid:
-	simple oQUALID
-	not_simple oQUALID '.' oQUALID
+	simple oID
+	not_simple oID '.' oID
 
 qualidlist:
 	nothing
