@@ -8,6 +8,7 @@
 // Includes:
 
 #include "mby_common.h"
+#include "mby_bitfield.h"
 
 // Defines:
 

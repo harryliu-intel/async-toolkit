@@ -16,14 +16,14 @@
 void Parser
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser    * const in, 
+    const mbyMacToParser    * const in,
           mbyParserToMapper * const out
 );
 
 void Mapper
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper     * const in, 
+    const mbyParserToMapper     * const in,
           mbyMapperToClassifier * const out
 );
 

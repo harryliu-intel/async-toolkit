@@ -585,8 +585,8 @@ static void mapScalar
     FM_SET_UNNAMED_FIELD64(keyMac, 16, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC + 1]);
     FM_SET_UNNAMED_FIELD64(keyMac, 32, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC    ]);
 
-    fm_bool oDmacMulticast = fmModelIsMulticastMacAddress(keyMac);
-    fm_bool oDmacBroadcast = fmModelIsBroadcastMacAddress(keyMac);
+    fm_bool oDmacMulticast = mbyModelIsMulticastMacAddress(keyMac);
+    fm_bool oDmacBroadcast = mbyModelIsBroadcastMacAddress(keyMac);
 
     for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
     {
@@ -1573,7 +1573,7 @@ static void mapRewrite
 void Mapper
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper     * const in, 
+    const mbyParserToMapper     * const in,
           mbyMapperToClassifier * const out
 )
 {
