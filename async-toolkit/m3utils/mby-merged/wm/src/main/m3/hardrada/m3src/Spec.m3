@@ -20,8 +20,8 @@ IMPORT LexerExt ;
 PROCEDURE Parse( in_fname : Pathname.T ) : REF Node.T RAISES { InvalidFname } =
 VAR
 	rd_handle : Rd.T ;
-	parser := NEW( ParserExt.T ) ;
 	lexer := NEW( LexerExt.T ) ;
+	parser := NEW( ParserExt.T ) ;
 	root : REF Node.T := NIL ;
 BEGIN
 	(* Take file name *)

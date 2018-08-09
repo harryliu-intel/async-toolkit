@@ -166,6 +166,7 @@ Mode:
 	rdonly oREADONLY
 
 variabledecllist:
+	empty variabledecl ';'
 	nonempty variabledecl ';' variabledecllist
 
 variabledecl:
@@ -442,7 +443,7 @@ Fields:
 
 FieldList:
 	single Field
-	double FieldList ',' Field
+	double FieldList ';' Field
 
 Field:
 	bothtypeconstexpr oID idlist ':' type oASSOP constexpression

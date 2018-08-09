@@ -119,11 +119,8 @@
 %const oNEGATIVEOP
 %const oPOSITIVEOP
 
-%token oLITERAL
 %token oCHARLITERAL
 %token oTEXTLITERAL
-%token oESCAPE
-%token oPRINTINGCHAR
 %token oQUALID
 %token oID
 %token oNUMBER

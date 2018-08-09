@@ -1,29 +1,5 @@
 INTERFACE Tcam ;
 
-TYPE KeyString = [16_0000000000..16_ffffffffff] ;
-
-TYPE Entry = RECORD
-	Key : KeyString := 16_0000000000 ;
-	KeyInvert : KeyString := 16_0000000000 ;
-	Valid : BOOLEAN := FALSE
-END ;
-
-TYPE TcamSlice = RECORD
-	ChunkMask : REF ARRAY OF BOOLEAN := NIL ;
-	Entries : REF ARRAY OF Entry := NIL ;
-END ;
-
-EXCEPTION InvalidTCAMEntryConfiguration( TEXT ) ;
-
-EXCEPTION InvalidTCAMChunkConfiguration( TEXT ) ;
-
-PROCEDURE MakeSlice( Entries : REF ARRAY OF Entry := NIL ;
-		     ChunkMask : REF ARRAY OF BOOLEAN := NIL ) :
-		     TcamSlice
-		     RAISES { InvalidTCAMEntryConfiguration , InvalidTCAMChunkConfiguration } ;
-	
-PROCEDURE LookupInTcamSlice( search : KeyString ;
-			     slice : TcamSlice ) :
-		  	     REF ARRAY OF BOOLEAN ;
+IMPORT IO ;
 
 END Tcam.
