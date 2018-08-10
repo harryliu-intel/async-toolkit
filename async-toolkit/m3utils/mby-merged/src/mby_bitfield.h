@@ -119,10 +119,11 @@
 // Set an unnamed field of 32 or fewer bits within a >64-bit value
 #define FM_ARRAY_SET_UNNAMED_BIT(array, bit, value) \
     mbyMultiWordBitfieldSet32((array), (bit), (bit), (value))
+
 fm_uint32 mbyMultiWordBitfieldGet32(const fm_uint32 *array, fm_int hiBit, fm_int loBit);
 fm_uint64 mbyMultiWordBitfieldGet64(const fm_uint32 *array, fm_int hiBit, fm_int loBit);
 
 void      mbyMultiWordBitfieldSet32(fm_uint32 *array, fm_int hiBit, fm_int loBit, fm_uint32 value);
 void      mbyMultiWordBitfieldSet64(fm_uint32 *array, fm_int hiBit, fm_int loBit, fm_uint64 value);
 
-#endif /* MBY_BITFIELD_H */
+#endif // MBY_BITFIELD_H

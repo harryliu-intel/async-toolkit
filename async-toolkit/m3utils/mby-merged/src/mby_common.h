@@ -71,18 +71,39 @@ typedef unsigned long long    fm_macaddr;
 #define TRUE    1
 #define FALSE   0
 
-// Macros:
 // External function prototypes:
 
 fm_bool   fmModelIsMulticastMacAddress(fm_macaddr keyMac);
 fm_bool   fmModelIsBroadcastMacAddress(fm_macaddr keyMac);
 
-fm_status mbyModelReadCSR(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
-                          const fm_uint32 byte_addr,
-                          fm_uint32 *value);
+fm_status mbyModelReadCSR
+(
+    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint32 byte_addr,
+    fm_uint32 * const value
+);
 
-fm_status mbyModelReadCSRMult(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
-                              const fm_uint32 byte_addr,
-                              const fm_int len,
-                              fm_uint32 *value);
+fm_status mbyModelReadCSRMult
+(
+    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint32 byte_addr,
+    const fm_int len,
+    fm_uint32 * const value
+);
+
+fm_status mbyModelWriteCSR64
+(
+    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint32 byte_addr,
+    const fm_uint64 new_value
+);
+
+fm_status mbyModelWriteCSRMult
+(
+    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint32 byte_addr,
+    const fm_int len,
+    fm_uint32 * const new_value
+);
+
 #endif // MBY_COMMON_H
