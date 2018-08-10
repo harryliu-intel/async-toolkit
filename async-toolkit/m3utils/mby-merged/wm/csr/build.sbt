@@ -24,5 +24,5 @@ lazy val csr = (project in file("."))
     name := "csr-model",
     logLevel in sourceGenerators in Compile := Level.Info,
     sourceGenerators in Compile += csrCodeGeneration.taskValue,
-    (managedSourceDirectories in Compile) += file(s"$m3BuildPath/src")
+    managedSourceDirectories in Compile += file(s"$m3BuildPath/src")
   )
