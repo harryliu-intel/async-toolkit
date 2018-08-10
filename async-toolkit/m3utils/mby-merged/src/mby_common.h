@@ -14,6 +14,8 @@
 #define   isUnicastMacAddress(addr) (((addr) &  FM_LITERAL_U64(0x010000000000)) == 0)
 #define isMulticastMacAddress(addr) (!isUnicastMacAddress(addr) && !isBroadcastMacAddress(addr))
 
+#define FM_NOT_USED(a) (void) (a)
+
 // Defines:
 
 #define MBY_PORTS_COUNT          24 // <-- REVISIT!!!
@@ -91,6 +93,13 @@ fm_status mbyModelReadCSRMult
     const fm_uint32 byte_addr,
     const fm_int len,
     fm_uint32 * const value
+);
+
+fm_status mbyModelReadCSR64
+(
+ 	fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+	const fm_uint32 byte_addr,
+	fm_uint64 * const value
 );
 
 fm_status mbyModelWriteCSR64

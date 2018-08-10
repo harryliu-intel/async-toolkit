@@ -56,7 +56,7 @@ DEFINES  += -D_FM_ARCH_x86_64
 ifeq ($(DEBUG),1)
 endif
 
-DELFILES  = $(OBJECTS) *.o unit_tests/*.o unit_tests/*.exe
+DELFILES  = $(OBJECTS) *.o *.so
 
 .PHONY: all
 all: $(OBJECTS)
@@ -66,14 +66,51 @@ mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h mby_bitfield.h
 mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h mby_bitfield.h
 mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h mby_bitfield.h
 
+PIPELINE_STAGES += mby_parser.o
+PIPELINE_STAGES += mby_mapper.o
+PIPELINE_STAGES += mby_classifier.o
+
+mby_pipeline.o   : mby_pipeline.c   mby_pipeline.h   $(PIPELINE_STAGES)
+mby_model.o      : mby_model.c      mby_model.h		 mby_pipeline.o
+
 %.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+libmbymodel.so: $(OBJECTS) mby_model.o
+	@echo '  Linking' $@
+	$(ECHO) $(CC) -shared -o $@ $^
 
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
 	$(ECHO) rm -f $(DELFILES)
+
+# ============================ Model server ===============================
+
+DELFILES += model_server/*.o mby_server
+
+model_server/%.o: model_server/%.c
+	@echo '  Compiling' $<
+	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+MS_OBJECTS += model_server/mby_srv_main.o
+MS_OBJECTS += model_server/mby_srv_time.o
+MS_OBJECTS += model_server/mby_srv_socket.o
+MS_OBJECTS += model_server/mby_srv_errno.o
+MS_OBJECTS += model_server/mby_srv_utils.o
+MS_OBJECTS += model_server/mby_srv_message.o
+MS_OBJECTS += model_server/mby_srv_handlers.o
+
+# Search libmbymodel.so in the same folder and remember it in the binary (-R)
+MS_FLAGS += -Wl,-R -Wl,. -L.
+
+mby_server: $(MS_OBJECTS) libmbymodel.so
+	@echo '  Linking mby_server'
+	$(ECHO) $(CC) -o model_server/mby_server $(DEFINES) $(INCLUDES) \
+	$^ -pthread -lpthread -ldl -lrt -rdynamic $(MS_FLAGS) -lmbymodel
+	@mv model_server/mby_server .
+
 
 # ========================== Unit testing ==================================
 
@@ -90,6 +127,8 @@ UT_BINARIES += unit_tests/ut_classifier.exe
 unit_tests/ut_mapper.exe: unit_tests/ut_mapper.o
 unit_tests/ut_classifier.exe: unit_tests/ut_classifier.o
 
+DELFILES += unit_tests/*.o unit_tests/*.exe model_server/msrv
+
 unit_tests/%.o: unit_tests/%.cpp
 	@echo '  Compiling' $<
 	$(ECHO) $(GPP) -o $@ $(DEFINES) $(UT_CFLAGS) $(GTEST_INCLUDES) $(INCLUDES) -c $<
@@ -105,3 +144,4 @@ unit_test: $(UT_BINARIES)
 		echo '  Executing UT' $$ut; \
 		$$ut; \
 	done
+

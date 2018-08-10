@@ -15,6 +15,14 @@
 
 // Function prototypes:
 
+void Pipeline
+(
+    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyMacToParser    * const mac2par
+);
+
+// TODO all the following should be moved to the header files corresponding to
+// the C file where the function is actually implemented.
 void Parser
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
@@ -56,5 +64,4 @@ void MaskGen
     const mbyNextHopToMaskGen   * const in,
           mbyMaskGenToTriggers  * const out
 );
-
 #endif

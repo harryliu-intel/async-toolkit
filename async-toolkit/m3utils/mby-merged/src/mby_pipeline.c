@@ -20,7 +20,7 @@ void Pipeline
     mbyMaskGenToTriggers  msk2trg;
 
     // pipeline stages:
-    
+
     Parser     (regs,  mac2par, &par2map);
 
     Mapper     (regs, &par2map, &map2cla);

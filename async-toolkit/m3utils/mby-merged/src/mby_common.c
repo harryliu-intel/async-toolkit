@@ -51,3 +51,35 @@ fm_status mbyModelWriteCSRMult(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
     }
     return status;
 }
+
+fm_status mbyModelReadCSR64(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+                            const fm_uint32 byte_addr,
+                            fm_uint64 *value)
+{
+    fm_uint32 word_addr = (byte_addr / 4);
+    fm_bool addr_vld = (word_addr < MBY_REGISTER_ARRAY_SIZE);
+	if (addr_vld)
+	{
+		*value = regs[word_addr + 1];
+		*value = (*value << 32) | regs[word_addr];
+	}
+	else
+		*value = 0xBaadDeedBaadDeed;
+
+    return (addr_vld) ? FM_OK : FM_FAIL;
+}
+
+fm_status mbyModelWriteCSR64(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+                            const fm_uint32 byte_addr,
+                            fm_uint64 value)
+{
+    fm_uint32 word_addr = (byte_addr / 4);
+    fm_bool addr_vld = (word_addr < MBY_REGISTER_ARRAY_SIZE);
+	if (addr_vld)
+	{
+		regs[word_addr + 1] = value >> 32;
+		regs[word_addr] = value & 0xffffffff;
+	}
+
+    return (addr_vld) ? FM_OK : FM_FAIL;
+}

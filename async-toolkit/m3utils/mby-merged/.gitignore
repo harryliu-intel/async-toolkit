@@ -13,3 +13,7 @@ tools/reg_gen/generated
 
 # Unit tests executable files
 src/tests/*.exe
+
+# Model server files
+src/mby_server
+*.packetServer

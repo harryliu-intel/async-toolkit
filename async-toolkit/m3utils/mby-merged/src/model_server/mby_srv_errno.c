@@ -32,6 +32,8 @@
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
+#include <string.h>
+#include "mby_model.h"
 
 /*****************************************************************************
  * Macros, Constants & Types
