@@ -1,4 +1,0 @@
-#!/bin/sh
-
-xmllint --schema DefaultCommands.xsd DefaultCommands.xml > /dev/null
-grep -o '<include *file="[^"]*"' DefaultCommands.xml | cut -d '"' -f 2 -s | xargs -I{} xmllint --schema DefaultCommands.xsd ../../{} > /dev/null

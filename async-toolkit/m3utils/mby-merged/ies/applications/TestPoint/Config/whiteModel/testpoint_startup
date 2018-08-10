@@ -1,5 +1,0 @@
-# expert
-#tp("set port all up");
-#tp("create vlan 1");
-#tp("add vlan port 1 all");
-#tp("set vlan spanning-tree 1 all forwarding");
