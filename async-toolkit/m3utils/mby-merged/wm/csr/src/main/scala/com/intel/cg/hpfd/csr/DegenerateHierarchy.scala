@@ -1,4 +1,4 @@
-package switch_wm.csr
+package com.intel.cg.hpfd.csr
 
 trait DegenerateHierarchy[T <: IndexedSeq[_ <: RdlElement]] extends RdlHierarchy {
   protected def next : T

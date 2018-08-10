@@ -1,4 +1,4 @@
-package switch_wm.csr
+package com.intel.cg.hpfd.csr
 
 import scala.annotation.tailrec
 

@@ -1,4 +1,5 @@
 % $Id: m3overrides,v 1.1 2009/04/24 07:09:13 mika Exp $
 
+%override("rdlparse","/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git/rdl/")
 include("../../m3overrides")
 

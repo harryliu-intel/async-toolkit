@@ -28,7 +28,7 @@ PROCEDURE Parse(id : TEXT; case : Case; sep : Sep) : TextSeq.T =
     FOR i := 0 TO Text.Length(id)-1 DO
       WITH c = Text.GetChar(id, i),
            d = toLower[c] DO
-        IF    case = Case.Camel AND IsUpper(c) THEN
+        IF    case = Case.Camel OR case = Case.LCamel AND IsUpper(c) THEN
           Pop();
           Push(d)
         ELSIF sep = Sep.Underscore AND c = '_' THEN
@@ -65,6 +65,9 @@ PROCEDURE Format(seq : TextSeq.T; case : Case; sep : Sep) : TEXT =
             |
               Case.Camel =>
               IF j = 0 THEN s.addhi(toUpper[c]) ELSE s.addhi(c) END
+            |
+              Case.LCamel =>
+              IF j = 0 AND i # 0 THEN s.addhi(toUpper[c]) ELSE s.addhi(c) END
             END
           END
         END

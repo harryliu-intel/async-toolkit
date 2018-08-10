@@ -40,8 +40,10 @@ module rx_ppe
     igr_pull_sched_rx_ppe_if.ppe    igr_pull_sched_rx_ppe_if,   //Ingress pull scheduler interface
     rx_ppe_tx_ppe_if.rx             rx_ppe_tx_ppe0_if,          //TX PPE0 interface
     rx_ppe_tx_ppe_if.rx             rx_ppe_tx_ppe1_if,          //TX PPE1 interface
-    rx_ppe_ppe_stm_if.ppe           rx_ppe_ppe_stm_if           //Shared table memory interface
-//TODO, add managment interface
+    rx_ppe_ppe_stm_if.ppe           rx_ppe_ppe_stm_if,          //Shared table memory interface
+
+    ahb_rx_ppe_if.ppe               ahb_rx_ppe_if,              // AHB slave connection
+    glb_rx_ppe_if.ppe               glb_rx_ppe_if               // Centralize control for synchronizing updates
 );
 
 endmodule

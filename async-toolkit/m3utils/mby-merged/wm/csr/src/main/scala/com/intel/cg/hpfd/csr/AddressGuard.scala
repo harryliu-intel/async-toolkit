@@ -1,12 +1,12 @@
-package switch_wm.csr
+package com.intel.cg.hpfd.csr
 
 import java.util.TreeMap
 
-import scala.collection.immutable.SortedMap
-import scala.collection.JavaConverters._
-import collection.breakOut
+import com.intel.cg.hpfd.csr.Memory._
 
-import Memory._
+import scala.collection.JavaConverters._
+import scala.collection.breakOut
+import scala.collection.immutable.SortedMap
 
 
 case class AddressOverlap(first: AddressRange, second: AddressRange) extends Exception

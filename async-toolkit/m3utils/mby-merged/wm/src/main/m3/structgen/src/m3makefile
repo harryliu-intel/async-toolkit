@@ -19,6 +19,9 @@ SchemeStubs("FS")
 SchemeStubs("Fmt")
 SchemeStubs("Scan")
 SchemeStubs("M3Support")
+SchemeStubs("Wx")
+SchemeStubs("WxToWr")
+SchemeStubs("TextTopoSort")
 
 ExportSchemeStubs("structgen") % export OUR scheme stubs
 

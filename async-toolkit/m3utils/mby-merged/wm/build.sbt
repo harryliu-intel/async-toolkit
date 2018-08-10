@@ -1,10 +1,8 @@
-import Dependencies._
-//
+import sbt.Keys.{managedSourceDirectories, unmanagedSourceDirectories}
+import sbt.file
 
-
-def makeWmServerCode : Seq[File] = {
+def makeWmServerCode: Seq[File] = {
   import sys.process._
-  import sbt.io._
   println("Generating WM server from Scheme")
   val m3dir = new File("src/main/m3")
   val result : Int = "make -C src/main/m3 rpc_structs".!
@@ -13,60 +11,32 @@ def makeWmServerCode : Seq[File] = {
   pf.get.map(x => new File(x.getCanonicalPath))
 }
 
-def makeWmCsrCode(targdir : File) : Seq[File] = {
-  import sys.process._
-  import sbt.io._
-  println("Generating CSR set from RDL")
-  val m3dir = new File("src/main/m3")
-  val targdir = new File(m3dir + "/genviews/src/build/mby")
-  val result : Int = "make -C src/main/m3 scalagen".!
-  require(result == 0, "Failed to build views")
-  require(targdir.isDirectory, s"$targdir not a directory")
-  val pf = targdir ** "*.scala"
-  println("Generation done")
-  pf.get.map(x => { /* println(x.getCanonicalFile) ; */ new File(x.getCanonicalPath) })
-}
+lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar")
 
+lazy val csr = project in file("csr")
 
-lazy val root = (project in file(".")).
-  settings(
-    inThisBuild(List(
-      organization := "com.intel",
-      scalaVersion := "2.12.4",
-      version      := "0.1.0-SNAPSHOT"
-    )),
+lazy val root = (project in file("."))
+  .settings(
+    Settings.commonSettings,
     name := "wm",
-    libraryDependencies += scalaTest % Test,
-    libraryDependencies += scalaXml % Compile,
-    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
-    libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0",
-    libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3"
-    //libraryDependencies ++= Seq(
-    //  "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
-    //  "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
-    //)
+    libraryDependencies ++= Dependencies.whiteModelDeps,
+    managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated"),
+    unmanagedSourceDirectories in Compile += file(s"${baseDirectory.value}/src/main/m3/wm_net/scala_src"),
+    mainClass in Compile := Some("switch_wm.WhiteModelServer"),
+    mainClass in assembly := Some("switch_wm.WhiteModelServer"),
+    assemblyOutputPath in assembly := path,
+    sourceGenerators in Compile += Def.task { makeWmServerCode }.taskValue
   )
 
-sourceGenerators in Compile += Def.task { makeWmServerCode }.taskValue
-sourceGenerators in Compile += Def.task { makeWmCsrCode((sourceManaged in Compile).value / "csr") }.taskValue
-
-mainClass in Compile := Some("switch_wm.WhiteModelServer")
-
-
-// PB.targets in Compile := Seq(
-//  scalapb.gen() -> (sourceManaged in Compile).value
-//)
-
-// below, to enable IDEA to automatically context-complete with content from these the scheme-based generator
-managedSourceDirectories in Compile += file(file("src/main/m3/genviews/src/build/mby/src").absolutePath)
-managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated")
-unmanagedSourceDirectories in Compile += file(file("src/main/m3/wm_net/scala_src").absolutePath)
-
-
-parallelExecution in Test := false
-mainClass in assembly := Some("switch_wm.WhiteModelServer")
-// assemblyJarName in assembly := "mbay_wm.jar"
-
-val path =  new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar")
-// val success = path.mkdirs()
-assemblyOutputPath in assembly := path
+val buildOnNhdk = taskKey[Unit]("Build task for nhdk environment.")
+buildOnNhdk := Def.sequential(
+  clean in csr,
+  clean in root,
+  publishLocal in csr,
+  update in root,
+  compile in Compile in root,
+  doc in Compile in root,
+  assembly in root,
+  publish in root,
+  publish in csr
+).value
