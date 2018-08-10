@@ -30,13 +30,12 @@
 
 //   Class:  mby_mc_env_base_seq
 //
-//   This is the main IP Power_Good Sequence. execute in Power_Good_Phase
+//   This is the Mplex base seq extended from MBY Base seq which is in-turn extended 
+//   from shdv_base_seq. This sequence class has methods to setup mplex env object handle 
+//   and methods to perform register access both for RTL and WM.
 //
-//   Gets all environments <endpoint_interface> and drives resets to all.
-//
-//   Clears all Power_Good, Hard_Reset, and Warm_Reset.
-//
-//   Delay for short time and Set Power_Good.
+//  All the sequences in mplex env will extend from this base sequence to inherit its
+//  functionality.  
 
 
 `ifndef __MBY_MC_ENV_BASE_SEQ_GUARD
@@ -54,11 +53,11 @@ class mby_mc_env_base_seq extends mby_common_pkg::mby_base_seq;
 
     // Variable: cfg
     // Mplex environment cfg.
-    mby_mc_env_pkg::mby_mc_cfg         cfg;
+    mby_mc_env_pkg::mby_mc_tb_top_cfg  cfg;
 
     // Variable: ral
     // Mplex RAL env.
-    //mby_mc_env_pkg::mby_mc_ral_env     ral;
+    mby_mc_env_pkg::mby_mc_ral_env     ral;
 
     // Variable: vif
     // Handle to Mplex Tb interface.
@@ -88,7 +87,7 @@ class mby_mc_env_base_seq extends mby_common_pkg::mby_base_seq;
 
         this.env = temp_env;
         this.cfg = temp_env.get_tb_cfg();
-        //this.ral = temp_env.get_tb_ral();
+        this.ral = temp_env.get_tb_ral();
         this.vif = temp_env.get_tb_vif();
 
     endfunction : set_env

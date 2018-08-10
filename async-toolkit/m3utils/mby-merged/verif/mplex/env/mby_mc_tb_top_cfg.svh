@@ -27,9 +27,9 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-// Class: mby_mc_cfg
+// Class: mby_mc_tb_top_cfg
 //
-//   This is the configuration object to control the Top MPlex env and
+//   This is the Top configuration object to control the MPlex env and
 //   its sub components.
 //
 //   This Class contain all the switches to control the ENV setting.
@@ -46,14 +46,14 @@
 //
 
 
-`ifndef __MBY_MC_CFG_GUARD
-`define __MBY_MC_CFG_GUARD
+`ifndef __MBY_MC_TB_TOP_CFG_GUARD
+`define __MBY_MC_TB_TOP_CFG_GUARD
 
 `ifndef __INSIDE_MBY_MC_ENV_PKG
 `error "Attempt to include file outside of mby_mc_env_pkg."
 `endif
 
-class mby_mc_cfg extends shdv_base_config;
+class mby_mc_tb_top_cfg extends shdv_base_config;
 
     // Topology/Test Island items
     mby_mc_defines::mc_topology_e topology = mby_mc_defines::MPLEX_NP_NPHY;
@@ -74,12 +74,23 @@ class mby_mc_cfg extends shdv_base_config;
     // Definition of the RESET type
     reset_type_e                     reset_type ;
 
-    `uvm_object_utils_begin(mby_mc_cfg)
+    // Variable: dut_cfg
+    // Mplex DUT cfg object
+    rand mby_mc_dut_cfg              dut_cfg ;
+
+    // Variable: env_cfg
+    // Mplex TB env cfg object
+    rand mby_mc_env_cfg              env_cfg ;
+
+
+    `uvm_object_utils_begin(mby_mc_tb_top_cfg)
         `uvm_field_string(ti_path,                                                      UVM_DEFAULT)
         `uvm_field_string(rtl_top_path,                                                 UVM_DEFAULT)
         `uvm_field_string(ral_type,                                                     UVM_DEFAULT)
         `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
         `uvm_field_enum  (mby_mc_defines::mc_topology_e, topology,                      UVM_DEFAULT)
+        `uvm_field_object(dut_cfg,                                                      UVM_DEFAULT)
+        `uvm_field_object(env_cfg,                                                      UVM_DEFAULT)
     `uvm_object_utils_end
 
 
@@ -89,10 +100,13 @@ class mby_mc_cfg extends shdv_base_config;
     // Constructor.
     //
     // Arguments:
-    //    string name - mby_mc_cfg object name
+    //    string name - mby_mc_tb_top_cfg object name
     //---------------------------------------------------------------------------
-    function new( string name = "mby_mc_cfg");
+    function new( string name = "mby_mc_tb_top_cfg");
         super.new(name);
+
+        dut_cfg = mby_mc_dut_cfg::type_id::create("dut_cfg");
+        env_cfg = mby_mc_env_cfg::type_id::create("env_cfg");
 
         if(!uvm_config_db#(int)::get(null, "uvm_test_top", "TOPOLOGY", topology)) begin
             `uvm_fatal(get_name(),$sformatf("Unable to acquire valid topology value!!! value = %0d",topology))
@@ -101,6 +115,7 @@ class mby_mc_cfg extends shdv_base_config;
         if (topology == mby_mc_defines::UNK_TOPO) begin
             `uvm_fatal(get_name(), "Topology value is Unknown!!!");
         end
+
 
     endfunction: new
 
@@ -147,6 +162,6 @@ class mby_mc_cfg extends shdv_base_config;
         return topology;
     endfunction : get_tb_topology
 
-endclass: mby_mc_cfg
+endclass: mby_mc_tb_top_cfg
 
-`endif // __MBY_MC_CFG_GUARD
+`endif // __MBY_MC_TB_TOP_CFG_GUARD

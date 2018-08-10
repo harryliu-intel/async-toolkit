@@ -46,7 +46,7 @@ class mby_mc_ral_env extends sla_ral_env;
 
     // Variable: cfg
     // Handle to the Top Configuration
-    mby_mc_cfg   cfg;
+    mby_mc_tb_top_cfg   cfg;
 
     `ovm_component_utils(mby_mc_env_pkg::mby_mc_ral_env)
 

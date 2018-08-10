@@ -56,9 +56,12 @@ package mby_mc_env_pkg;
    `define __INSIDE_MBY_MC_ENV_PKG
 
    `include "mby_mc_defines.svh"
-   `include "mby_mc_cfg.svh"
-   `include "mby_mc_env.svh"
+   `include "mby_mc_env_cfg.svh"
+   `include "mby_mc_dut_cfg.svh"
+   `include "mby_mc_tb_top_cfg.svh"
    `include "mby_mc_ral_env.svh"
+   `include "mby_mc_env.svh"
+  
     `undef  __INSIDE_MBY_MC_ENV_PKG
 
 endpackage: mby_mc_env_pkg

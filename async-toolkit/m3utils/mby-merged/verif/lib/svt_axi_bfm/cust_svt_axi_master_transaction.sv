@@ -76,14 +76,14 @@ class cust_axi_master_transaction extends svt_axi_master_transaction;
     addr >=0 ;
   }
 
-  /** UVM Object Utility macro */
+  //UVM Object Utility macro 
   `uvm_object_utils_begin(cust_axi_master_transaction)
      `uvm_field_int(burst_type_fixed_wt,UVM_ALL_ON)
      `uvm_field_int(burst_type_incr_wt ,UVM_ALL_ON)
      `uvm_field_int(burst_type_wrap_wt ,UVM_ALL_ON)
   `uvm_object_utils_end
 
-  /** Class Constructor */
+  // Class Constructor 
   function new (string name = "cust_axi_master_transaction");
     super.new(name);
   endfunction: new

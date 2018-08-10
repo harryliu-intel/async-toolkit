@@ -27,8 +27,6 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-
-
 //   Defines:    svt_axi_bfm_defines
 //
 //   This file contain any SVT_BFM level Defines, Typedefs, or PARAMETERS.
@@ -40,7 +38,6 @@
 `ifndef __INSIDE_SVT_AXI_BFM_PKG__
 `error "Attempt to include file outside of svt_ethernet_bfm_pkg."
 `endif
-
 
 
    `define SVT_AXI_USER_DEFINES_SVI

@@ -46,9 +46,7 @@
         `include "slu_macros.svh"
 
         import shdv_base_pkg::*;
-       // import eth_bfm_pkg::*;
         import svt_uvm_pkg::*;
-      //  import svt_ethernet_enum_pkg::*;
         import svt_bfm_shell_uvm_pkg::*;
         import svt_axi_uvm_pkg::*;
 

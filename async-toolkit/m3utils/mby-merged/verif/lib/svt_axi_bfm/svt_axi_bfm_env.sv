@@ -47,10 +47,16 @@ class svt_axi_bfm_env extends shdv_base_env;
     // The user can specify whether Interconnect Env is required in the System Env, using the system configuration
     svt_axi_system_env   axi_system_env;
 
+    // Variable:  axi_vif
+    // Interface handle to the Main SVT AXI
     svt_axi_vif axi_vif;
 
+    // Variable: sequencer
+    // Virtual Sequencer class for Synopsys AXI BFM
     axi_virtual_sequencer sequencer;
 
+    // Variable: axi_cfg
+    // Synopsys AXI BFM custom configuration object for AXI Master/Slave config
     cust_svt_axi_system_configuration axi_cfg;
 
     axi_uvm_scoreboard axi_scoreboard;
@@ -67,7 +73,15 @@ class svt_axi_bfm_env extends shdv_base_env;
         `uvm_field_object(axi_cfg,              UVM_ALL_ON)
     `uvm_component_utils_end
 
-
+    // ------------------------------------------------------------------------
+    // Constructor: new
+    // Create a Static pointer to this environment. Define the config type. Create
+    // the env_cfg for controlling the SVT BFM.
+    //
+    // Arguments:
+    // name   - svt_axi_bfm_env object name.
+    // parent - parent component.
+    // ------------------------------------------------------------------------
     function new(string name = "svt_axi_bfm_env", uvm_component parent = null);
         super.new(name, parent);
 
@@ -78,7 +92,16 @@ class svt_axi_bfm_env extends shdv_base_env;
 
     endfunction: new
 
-
+    // ------------------------------------------------------------------------
+    // Function: build_phase()
+    // Get Handle to the Test Island Path.
+    // Create Synopsys AXI BFM Configuration and Agent. Based on selected mode.
+    // As well set up the custom configuration for those objects.
+    // Create CallBack's.
+    //
+    // Arguments:
+    // phase   - uvm_phase handle.
+    // ------------------------------------------------------------------------
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
@@ -105,13 +128,18 @@ class svt_axi_bfm_env extends shdv_base_env;
     //Create the Master Sink
     //slave_listener = new("slave_listener", this);
 
-
     endfunction
 
-
+    // ------------------------------------------------------------------------
+    // Function: connect_phase()
+    // Connect the CallBack's.  Connect the Virtual Sequencer.
+    //
+    // Arguments:
+    // phase   - uvm_phase handle.
+    // ------------------------------------------------------------------------
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        
+
         //Connect VIF
         axi_system_env.vif = axi_vif;
 
@@ -123,32 +151,56 @@ class svt_axi_bfm_env extends shdv_base_env;
         axi_system_env.master[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_initiated_export);
         axi_system_env.slave[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_response_export);
 
-    /**
-     * Connect the listener class instances with analysis ports of Master and Slave
-     * agent.
-     */
+    //
+    //Connect the listener class instances with analysis ports of Master and Slave
+    //agent.
+    //
     //axi_system_env.master[0].monitor.item_observed_port.connect(master_listener.analysis_export);
     // axi_system_env.slave[0].monitor.item_observed_port.connect(slave_listener.analysis_export);
 
     endfunction: connect_phase
 
+    // ------------------------------------------------------------------------
+    // Function: end_of_elaboration_phase()
+    //
+    // Arguments:
+    // phase   - uvm_phase handle.
+    // ------------------------------------------------------------------------
     function void end_of_elaboration_phase(uvm_phase phase);
         super.end_of_elaboration_phase(phase);
     endfunction: end_of_elaboration_phase
 
+    // ------------------------------------------------------------------------
+    // Function: start_of_simulation_phase()
+    //
+    // Arguments:
+    // phase   - uvm_phase handle.
+    // ------------------------------------------------------------------------
     function void start_of_simulation_phase(uvm_phase phase);
         super.start_of_simulation_phase(phase);
     endfunction: start_of_simulation_phase
 
-    function void set_axi_cfg(cust_svt_axi_system_configuration val);
-        axi_cfg    = val;
+    // ------------------------------------------------------------------------
+    // Function set_bfm_cfg()
+    // Set the Synopsys AXI BFM Custom Configuration object.
+    //
+    // Arguments:
+    // cust_cfg   - handle to the custom svt configuration object.
+    // ------------------------------------------------------------------------
+    function void set_axi_cfg(cust_svt_axi_system_configuration cust_cfg);
+        axi_cfg    = cust_cfg;
     endfunction: set_axi_cfg
 
+    // ------------------------------------------------------------------------
+    // Function set_axi_vif()
+    // Set the Synopsys AXI BFM Interface.
+    //
+    // Arguments:
+    // vif   - handle to the axi virtual interface.
+    // ------------------------------------------------------------------------
     function void set_axi_vif(svt_axi_vif vif);
         axi_vif    = vif;
     endfunction: set_axi_vif
 endclass
 
 `endif // __SVT_AXI_BFM_ENV_GUARD
-
-

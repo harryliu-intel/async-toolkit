@@ -43,7 +43,7 @@ class mby_mc_base_test extends shdv_base_test;
 
     // Variable: cfg
     // Top level Mplex env configuration
-    mby_mc_cfg cfg;
+    mby_mc_tb_top_cfg cfg;
 
     // Variable: env
     // Top level ENV
@@ -122,11 +122,11 @@ class mby_mc_base_test extends shdv_base_test;
     virtual function void build_phase(uvm_phase phase);
         uvm_report_info(get_full_name(),"Build", UVM_LOG);
 
-        cfg = mby_mc_cfg::type_id::create("cfg", this);                                 // Create a Top-Level Configuration object
+        cfg = mby_mc_tb_top_cfg::type_id::create("cfg", this);                                 // Create a Top-Level Configuration object
 
         randomize_cfg();                                                                // Randomize the Top_Config
 
-        set_config_object("env", "mby_mc_cfg", cfg, 0);
+        set_config_object("env", "mby_mc_tb_top_cfg", cfg, 0);
 
         env     = mby_mc_env::type_id::create("env",this);                              // Create the Top Environment object
     endfunction : build_phase
@@ -153,7 +153,7 @@ class mby_mc_base_test extends shdv_base_test;
     virtual function void randomize_cfg();
         `uvm_info(get_name(), "mby_mc_base_test randomize_cfg was called!", UVM_HIGH);
         if (!this.randomize(cfg)) begin
-            `uvm_fatal(get_name, "randomization of mby_mc_cfg failed");
+            `uvm_fatal(get_name, "randomization of mby_mc_tb_top_cfg failed");
         end
 
     endfunction : randomize_cfg
