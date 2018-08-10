@@ -54,7 +54,7 @@ DEFINES  += -D_FM_ARCH_x86_64
 ifeq ($(DEBUG),1)
 endif
 
-DELFILES  = $(OBJECTS) *.o tests/*.o tests/*.exe
+DELFILES  = $(OBJECTS) *.o unit_tests/*.o unit_tests/*.exe
 
 .PHONY: all
 all: $(OBJECTS)
@@ -82,23 +82,23 @@ GTEST_OBJECTS = $(GTEST_ROOT)/make/gtest_main.a
 
 UT_CFLAGS += -O0 -g -ggdb3
 
-UT_BINARIES += tests/ut_mapper.exe
-UT_BINARIES += tests/ut_classifier.exe
+UT_BINARIES += unit_tests/ut_mapper.exe
+UT_BINARIES += unit_tests/ut_classifier.exe
 
-tests/ut_mapper.exe: tests/ut_mapper.o
-tests/ut_classifier.exe: tests/ut_classifier.o
+unit_tests/ut_mapper.exe: unit_tests/ut_mapper.o
+unit_tests/ut_classifier.exe: unit_tests/ut_classifier.o
 
-tests/%.o: tests/%.cpp
+unit_tests/%.o: unit_tests/%.cpp
 	@echo '  Compiling' $<
 	$(ECHO) $(GPP) -o $@ $(DEFINES) $(UT_CFLAGS) $(GTEST_INCLUDES) $(INCLUDES) -c $<
 
-tests/%.exe:
+unit_tests/%.exe:
 	@echo '  Linking' $<
 	$(ECHO) $(GPP) -o $@ $(DEFINES) $(GTEST_INCLUDES) $(INCLUDES) \
 		-pthread -lpthread -ldl -rdynamic $(GTEST_OBJECTS) $^
 
-.PHONY: test
-test: $(UT_BINARIES)
+.PHONY: unit_test
+unit_test: $(UT_BINARIES)
 	@for ut in $(UT_BINARIES) ; do \
 		echo '  Executing UT' $$ut; \
 		$$ut; \
