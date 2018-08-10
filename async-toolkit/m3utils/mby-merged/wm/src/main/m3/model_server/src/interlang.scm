@@ -729,6 +729,10 @@
     )
   )
 
+(define (compile-c-typedef-deser-size x defs)
+  (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
+  (list "" (sa "#define " (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))) "_deser_qwords " (get-type-field-cnt (caddr x) defs) )))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (compile-c-typedef x defs)
@@ -737,7 +741,8 @@
    (compile-c-typedef-def x defs)
    (compile-c-typedef-deser-proto x defs 'ser ";")
    (compile-c-typedef-deser-proto x defs 'deser ";")
-
+   (compile-c-typedef-deser-size  x defs)
+   
    ;; and these to an implementation
    (compile-c-typedef-deser-code x defs 'ser)
    (compile-c-typedef-deser-code x defs 'deser)
