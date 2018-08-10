@@ -100,21 +100,21 @@
 (define *c-proj* "mby")
 (define *c-const-pfx* "mbyStruct_")
 
-(define (sym-lookup sym defs)
+(define (make-sym-def-data rec)
+  (let* ((tag (car rec))
+         (names (map
+                 (lambda (lang)
+                   (list lang
+                         (lang-name tag lang rec)))
+                 *languages*)))
+    (list tag rec names)
+    ))
 
-  (define (make-result rec)
-    (let* ((tag (car rec))
-           (names (map
-                   (lambda (lang)
-                     (list lang
-                           (lang-name tag lang rec)))
-                   *languages*)))
-      (list tag rec names)
-      ))
+(define (sym-lookup sym defs)
 
   (define (helper p)
     (cond ((null? p) #f)
-          ((eq? sym (cadar p)) (make-result (car p)))
+          ((eq? sym (cadar p)) (make-sym-def-data (car p)))
           (else (helper (cdr p)))))
 
   (helper defs))
@@ -569,9 +569,61 @@
     (list (list nm code) )
     ))
 
+(define (scheme-mem->c sym)
+  (IdStyles.Convert (symbol->string sym)
+                    'Lower 'LCamel
+                    'Hyphen 'None))
+
+(define (compile-c-typedef-def-from-data x nm defs)
+  (let ((def-sfx (sa " " nm)))
+    (cond ((number? x) (sa "uint" (number->string x) def-sfx))
+          
+          ((and (symbol? x)
+                (let ((b-test (assoc x *builtins*)))
+                  (if b-test
+                      (sa (get-c-name (cadr b-test)) def-sfx)
+                      #f))))
+
+          
+          ((and (symbol? x)
+                (let ((r-test (sym-lookup x defs)))
+                  (if (and r-test (eq? 'typedef (car r-test)))
+                      (sa *c-proj* "_" (get-c-name r-test) def-sfx)
+                      #f))))
+
+          ;; must be type expression
+          ((not (pair? x)) '*not-found*)
+
+          ((eq? (car x) 'bits)
+           (compile-c-typedef-def-from-data (force-value (cadr x) defs) nm defs))
+
+          ((eq? (car x) 'array)
+           (compile-c-typedef-def-from-data (caddr x) (sa nm "[" (force-value (cadr x) defs) "]") defs))
+                
+          ((eq? (car x) 'struct)
+           (apply sa
+                  (append
+                   (list "struct {" dnl)
+                   (map
+                    (lambda (fspec) (sa "  " (compile-c-typedef-def-from-data (cadr fspec) (scheme-mem->c (car fspec)) defs) ";" dnl))
+                    (cadr x))
+                   (list "} " nm))))
+          
+          (else '*not-found*)))
+  )
+
+(define (compile-c-typedef-def x defs)
+  (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
+  (sa "typedef " (compile-c-typedef-def-from-data
+   (caddr x)
+   (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs)))
+   defs) ";"
+  ))
+
+
 (define (compile-c-typedef x defs)
   (list
-   
+   (compile-c-typedef-def x defs)
    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
