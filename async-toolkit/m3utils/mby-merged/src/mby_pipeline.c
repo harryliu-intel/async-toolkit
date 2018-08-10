@@ -15,8 +15,9 @@ void Pipeline
     mbyParserToMapper     par2map;
     mbyMapperToClassifier map2cla;
     mbyClassifierToHash   cla2hsh;
-    mbyHashToNextHop      hsh2nhp;
-    
+    mbyHashToNextHop      hsh2nxt;
+    mbyNextHopToMaskGen   nxt2msk;
+
     // pipeline stages:
     
     Parser     (regs,  mac2par, &par2map);
@@ -25,5 +26,7 @@ void Pipeline
 
     Classifier (regs, &map2cla, &cla2hsh);
 
-    Hash       (regs, &cla2hsh, &hsh2nhp);
+    Hash       (regs, &cla2hsh, &hsh2nxt);
+
+    NextHop    (regs, &hsh2nxt, &nxt2msk);
 }

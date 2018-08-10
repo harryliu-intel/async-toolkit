@@ -10,6 +10,7 @@
 #include "mby_mapper.h"
 #include "mby_classifier.h"
 #include "mby_hash.h"
+#include "mby_nexthop.h"
 
 // Function prototypes:
 
@@ -39,6 +40,13 @@ void Hash
     fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyClassifierToHash * const in,
           mbyHashToNextHop    * const out
+);
+
+void NextHop
+(
+    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyHashToNextHop    * const in,
+          mbyNextHopToMaskGen * const out
 );
 
 #endif // MBY_PIPELINE_H
