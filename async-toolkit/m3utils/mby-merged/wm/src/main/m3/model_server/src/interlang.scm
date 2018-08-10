@@ -620,10 +620,128 @@
    defs) ";"
   ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (c-deser-name whch)
+  (case whch
+    ((ser) "serialize")
+    ((deser) "deserialize")
+    (else (error))))
+
+(define (c-deser-uint-pname b whch)
+  (sa (c-deser-name whch) "_uint" (number->string b)))
+
+(define (c-deser-builtin-pname x whch)
+   (let ((b-test (assoc x *builtins*)))
+                   (if b-test
+                       (sa (c-deser-name whch) "_" (get-c-name (cadr b-test)))
+                       #f)))
+           
+(define (c-deser-typedef-pname x whch)
+  (let ((r-test (sym-lookup x defs)))
+    (if (and r-test (eq? 'typedef (car r-test)))
+        (sa *c-proj* "_" (get-c-name r-test) "_" (c-deser-name whch))
+        #f)))
+
+(define (compile-c-typedef-deser-proto td defs whch semi)
+  (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
+  (let ((tn (sa *c-proj* "_" (get-c-name (sym-lookup (cadr td) defs)))))
+    ;; this is a bit different from the M3 since there are no const
+    ;; functions in C
+    (list
+     ""
+     (sa "void " (c-deser-name whch) "_" tn "("
+         (case whch
+           ((ser)   (sa "uint64 *w, const " tn " *t"))
+           ((deser) (sa "const uint64 *w, " tn " *t"))
+           )
+         ")" semi)
+     ) ;;tsil
+    ) ;;tel
+  )
+
+(define (call-c-deser-code whch obj strm-idx)
+  (case whch
+    ((ser deser) (sa "(&(s[" strm-idx "]), &(" obj "))"))
+    ))
+
+(define (make-c-deser-code whch x defs lhs lev ind p)
+  (cond
+   ((number? x)
+    (sa ind (c-deser-uint-pname x whch) (call-c-deser-code whch lhs p) ";" dnl))
+
+   ((let ((dsname (c-deser-builtin-pname x whch)))
+      (if dsname (sa ind dsname (call-c-deser-code whch lhs p) ";" dnl) #f)))
+   
+   ((let ((dsname (c-deser-typedef-pname x whch)))
+      (if dsname (sa ind dsname (call-c-deser-code whch lhs p) ";" dnl) #f)))
+   
+   ((not (pair? x)) (error "cant de/ser " x))
+    
+   ((eq? (car x) 'bits)
+    (make-c-deser-code whch (force-value (cadr x) defs) lhs lev ind p))
+   
+   ((eq? (car x) 'array)
+    (sa
+     ind "for (int i"lev" = 0; i"lev" < " (force-value (cadr x) defs) "; ++i"lev") {" dnl
+     ind "  uint o"lev " = " p" + i"lev" * " (get-type-field-cnt (caddr x) defs) ";" dnl
+     (make-c-deser-code whch (caddr x) defs (sa lhs "[i"lev"]") (+ lev 1) (sa ind "  ") (sa "o"lev) ) dnl
+          ind "}" 
+          ))
+
+   ((eq? (car x) 'struct)
+    (let loop ((ptr (cadr x))
+               (outp "")
+               (idx p)
+               )
+      (if (null? ptr)
+          outp
+          (loop (cdr ptr)
+                (sa outp
+                    (make-c-deser-code whch
+                                        (cadar ptr)
+                                        defs
+                                        (sa lhs "->" (scheme-mem->c (caar ptr)))
+                                        lev
+                                        (sa ind "  ")
+                                        idx
+                                        )
+                    dnl
+                    ) ;; as
+                (+ idx (get-type-field-cnt (cadar ptr) defs))
+                )
+          ) ;; fi
+      ) ;; tel
+    )))
+
+(define (compile-c-typedef-deser-code td defs whch)
+  (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
+  (let ((x          (caddr td)))
+    (list
+     ""
+     (sa
+      (cadr (compile-c-typedef-deser-proto td defs whch "")) dnl
+      "{" dnl
+      (make-c-deser-code whch x defs "t" 0 "  " 0)
+      "}" dnl
+      )
+     )
+    )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (compile-c-typedef x defs)
   (list
+   ;; these should be directed to a header file
    (compile-c-typedef-def x defs)
+   (compile-c-typedef-deser-proto x defs 'ser ";")
+   (compile-c-typedef-deser-proto x defs 'deser ";")
+
+   ;; and these to an implementation
+   (compile-c-typedef-deser-code x defs 'ser)
+   (compile-c-typedef-deser-code x defs 'deser)
+   
    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
