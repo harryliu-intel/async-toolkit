@@ -119,6 +119,43 @@
 
   (helper defs))
 
+(define mod modulo) ;; for Scheme!
+
+(define *binops*
+  '((mod ((m3 "MOD") (c "%")))
+    (div ((m3 "DIV") (c "/")))))
+
+(define *multiops*
+  '(+ - *))
+
+(define (pow2 n) (if (= n 0) 1 (* 2 (pow2 (- n 1)))))
+
+(define (force-type-number x defs)
+  (cond ((number? x) (pow2 x))
+
+        ((and (pair? x) (eq? (car x) 'bits)) (pow2 (force-value (cadr x) defs)))
+
+        ((and (pair? x) (eq? (car x) 'array)) (force-value (cadr x) defs))
+
+        (else (error "force-type-number on " x))))
+
+(define (force-value x defs)
+  (cond ((number? x) x)
+
+        ((and (symbol? x)
+              (let ((r-test (sym-lookup x defs)))
+                (if (and r-test (eq? 'constant (car r-test)))
+                    (force-value (caddr (cadr r-test)) defs)))))
+
+        ((not (pair? x)) '*not-found*)
+
+        ((eq? (car x) 'number) (force-type-number (cadr x) defs))
+
+        ((or (memq (car x) *multiops*) (assoc (car x) *binops*))
+         (apply (eval (car x)) (map (lambda(z)(force-value z defs)) (cdr x))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (get-m3-name rec)
   (cadr (assoc 'm3 (caddr rec))))
 
@@ -195,39 +232,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define mod modulo) ;; for Scheme!
-
-(define *binops*
-  '((mod ((m3 "MOD") (c "%")))
-    (div ((m3 "DIV") (c "/")))))
-
-(define *multiops*
-  '(+ - *))
-
-(define (pow2 n) (if (= n 0) 1 (* 2 (pow2 (- n 1)))))
-
-(define (force-type-number x defs)
-  (cond ((number? x) (pow2 x))
-
-        ((and (pair? x) (eq? (car x) 'bits)) (pow2 (force-value (cadr x) defs)))
-
-        ((and (pair? x) (eq? (car x) 'array)) (force-value (cadr x) defs))
-
-        (else (error "force-type-number on " x))))
-
-(define (force-value x defs)
-  (cond ((number? x) x)
-
-        ((and (symbol? x)
-              (let ((r-test (sym-lookup x defs)))
-                (if (and r-test (eq? 'constant (car r-test)))
-                    (force-value (caddr (cadr r-test)) defs)))))
-
-        ((not (pair? x)) '*not-found*)
-
-        ((or (memq (car x) *multiops*) (assoc (car x) *binops*))
-         (apply (eval (car x)) (map (lambda(z)(force-value z defs)) (cdr x))))))
-
 (define (gen-m3-val-use x defs imports)
 
   (define (recurse z) (gen-m3-val-use z defs imports))
@@ -270,7 +274,7 @@
   (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".i3"))
 
 (define (m3-modu-nm typedef)
-  (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".i3"))
+  (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".m3"))
   
 (define (compile-m3-typedef-def x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
@@ -280,7 +284,7 @@
     )
   )
 
-(define *empty-set* (make-string-set 0))
+(define *empty-set* (make-string-set 1))
 
 (define (compile-m3-typedef-serial-size x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
@@ -288,9 +292,9 @@
 
 (define (m3-deser-name whch)
   (case whch
-    ((ser) "Serialize")
+    ((ser)   "Serialize")
     ((deser) "Deserialize")
-    ((fmt) "FormatWx")
+    ((fmt)   "FormatWx")
     (else (error))))
 
 (define (m3-deser-uint-pname b whch)
@@ -359,12 +363,15 @@
     ))
 
 (define (m3-tag-deser-code whch ind tag)
-  (sa
-   ind "Wx.PutChar(wx, '\\n');" dnl
-   ind "Wx.PutText(wx, \""ind"\");" dnl
-   (if tag (sa
-   ind "Wx.PutText(wx, "tag");" dnl) "")
-   ind "Wx.PutChar(wx, ':');" dnl
+  (if (eq? tag 'fmt)
+      (sa
+       ind "Wx.PutChar(wx, '\\n');" dnl
+       ind "Wx.PutText(wx, \""ind"\");" dnl
+       (if tag (sa
+                ind "Wx.PutText(wx, "tag");" dnl) "")
+       ind "Wx.PutChar(wx, ':');" dnl
+       )
+      ""
       ))
 
 (define (make-m3-deser-code whch x defs lhs lev ind p tag)
@@ -437,7 +444,8 @@
      imports
      (cond ((not (pair? x)) "") ;; base type, no need for code generation
 
-           ((or (eq? (car x) 'array) (eq? (car x) 'struct))
+           ((or (eq? (car x) 'array)
+                (eq? (car x) 'struct))
             (sa (caddr (compile-m3-typedef-deser-proto td defs whch " =")) dnl
                 "  BEGIN" dnl
 
@@ -488,6 +496,84 @@
 ;; ((<tag> <fragment>) (<tag> <fragment>) ...)
 ;;
 
+(define (c-deser-name whch)
+  (case whch
+    ((ser)   "serialize")
+    ((deser) "deserialize")
+    (else (error))))
+
+(define (get-c-name rec)
+  (cadr (assoc 'c (caddr rec))))
+
+(define (gen-c-val-use x defs)
+
+  (define (recurse z) (gen-c-val-use z defs))
+
+  (cond ((number? x) (number->string x))
+
+        ((and (symbol? x)
+              (let ((r-test (sym-lookup x defs)))
+                (if (and r-test (eq? 'constant (car r-test)))
+                    (sa *c-const-pfx* (get-c-name r-test))
+                    #f))))
+        
+        ;; must be value expression
+        ((not (pair? x)) '*not-found*)
+
+        ((eq? (car x) 'number) (force-value x defs))
+
+        ((memq (car x) *multiops*)
+         (sa "(" (infixize (map recurse (cdr x)) (car x)) ")"))
+
+        ((let ((br (assoc (car x) *binops*)))
+           (if br
+               (sa "(" (recurse (cadr x)) " " (cadr (assoc 'c (cadr br))) " " (recurse (caddr x)) ")")
+               #f)))
+             
+        (else '*not-found*)))
+
+(define (gen-c-val-use x defs)
+
+  (define (recurse z) (gen-c-val-use z defs))
+
+  (cond ((number? x) (number->string x))
+
+        ((and (symbol? x)
+              (let ((r-test (sym-lookup x defs)))
+                (if (and r-test (eq? 'constant (car r-test)))
+                    (sa *c-const-pfx* (get-c-name  r-test) )
+                    #f))))
+        
+        ;; must be value expression
+        ((not (pair? x)) '*not-found*)
+
+        ((eq? (car x) 'number)
+         (number->string (force-type-number (cadr x) defs)))
+
+        ((memq (car x) *multiops*)
+         (sa "(" (infixize (map recurse (cdr x)) (car x)) ")"))
+
+        ((let ((br (assoc (car x) *binops*)))
+           (if br
+               (sa "(" (recurse (cadr x)) " " (cadr (assoc 'c (cadr br))) " " (recurse (caddr x)) ")")
+               #f)))
+             
+        (else '*not-found*)))
+
+(define (compile-c-constant x defs)
+  (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
+
+  (let* ((nm         (sa *c-const-pfx* (get-c-name (sym-lookup (cadr x) defs))))
+         (imports    (make-string-set 10))
+         (code       (sa "#define " nm "    " (gen-c-val-use (caddr x) defs))))
+    (list (list nm code) )
+    ))
+
+(define (compile-c-typedef x defs)
+  (list
+   
+   ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *fn* '())
@@ -498,7 +584,6 @@
           (f (eval fn)))
       (set! *fn* fn)
       (f rec defs))))
-              
                             
 (define (compile lang)
   (let* ((compiler (make-compiler lang))
