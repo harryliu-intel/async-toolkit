@@ -699,13 +699,13 @@
           (loop (cdr ptr)
                 (sa outp
                     (make-c-deser-code whch
-                                        (cadar ptr)
-                                        defs
-                                        (sa lhs "->" (scheme-mem->c (caar ptr)))
-                                        lev
-                                        (sa ind "  ")
-                                        idx
-                                        )
+                                       (cadar ptr)
+                                       defs
+                                       (sa lhs "->" (scheme-mem->c (caar ptr)))
+                                       lev
+                                       (sa ind "  ")
+                                       idx
+                                       )
                     dnl
                     ) ;; as
                 (+ idx (get-type-field-cnt (cadar ptr) defs))
@@ -764,3 +764,5 @@
   (let* ((compiler (make-compiler lang))
          (lsts (map (lambda (def) (compiler def defs)) defs)))
     (apply append lsts)))
+
+(define (compile-all) (map compile '(m3 c)))
