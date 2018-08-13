@@ -3,34 +3,47 @@ FROM Fmt IMPORT F, Int;
 IMPORT Debug AS M3Debug;
 IMPORT CompAddr, CompRange;
 IMPORT Env;
+IMPORT TextList;
+IMPORT TextSet;
 
 VAR silent := Env.Get("WM_SILENT") # NIL;
-    
-PROCEDURE Cat(a, b : T) : T =
+    set : TextSet.T := NIL;
+
+PROCEDURE ConfigureSet(s : TextSet.T) =
+  BEGIN
+    set := s
+  END ConfigureSet;
+  
+PROCEDURE Cat(a : T; b : TEXT) : T =
   BEGIN
     IF silent THEN RETURN NIL END;
     IF a = NIL OR b = NIL THEN
       (* this case is the probing an array case *)
       RETURN NIL
     END;
-    RETURN a & b
+    IF set # NIL THEN EVAL set.insert(b) END;
+    RETURN TextList.Cons(b,a)
   END Cat;
 
-PROCEDURE CatArray(a, b : T; i : CARDINAL) : T =
+PROCEDURE Empty() : T =
+  BEGIN
+    RETURN TextList.List1("")
+  END Empty;
+  
+PROCEDURE CatArray(a : T; b : TEXT; i : CARDINAL) : T =
   BEGIN
     IF silent THEN RETURN NIL END;
     IF a = NIL OR b = NIL THEN
       (* this case is the probing an array case *)
       RETURN NIL
     END;
-    RETURN Cat(a,b) & F("[%s]",Int(i))
+    RETURN Cat(a,b & F("[%s]",Int(i)))
   END CatArray;
 
 PROCEDURE Debug(reg : T; at : CompRange.T) =
-  VAR
   BEGIN
-    IF reg # NIL THEN
-      M3Debug.Out(F("%s @ 16_%s = %s", reg, Int(
+    IF reg # NIL AND M3Debug.GetLevel() >= 10 THEN
+      M3Debug.Out(F("%s @ 16_%s = %s", ToText(reg), Int(
                                           CompAddr.DeltaBytes(at.pos,
                                                               CompAddr.Zero),
                                           base := 16),
@@ -38,5 +51,25 @@ PROCEDURE Debug(reg : T; at : CompRange.T) =
                   
     END
   END Debug;
+
+PROCEDURE ToText(t : T) : TEXT =
+  VAR
+    p := t;
+    txt := "";
+  BEGIN
+    WHILE p # NIL DO
+      txt := p.head & txt;
+      p := p.tail
+    END;
+    RETURN txt
+  END ToText;
+
+PROCEDURE One(txt : TEXT) : T =
+  BEGIN
+    IF set # NIL THEN EVAL set.insert(txt) END;
+    RETURN TextList.List1(txt)
+  END One;
   
-BEGIN END CompPath.
+BEGIN
+  mu := NEW(MUTEX);
+END CompPath.

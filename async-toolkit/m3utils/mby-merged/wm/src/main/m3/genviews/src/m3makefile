@@ -19,12 +19,10 @@ generic_interface("RegNaming")
 module    ("RegCompiler")
 module    ("RegGenState")
 
-
 interface ("RegChild")
 interface ("RegComponent")
 
 sequence ("RegChild", "RegChild")
-
 
 module ("RegProperty")
 
@@ -33,23 +31,23 @@ array_sort("RegField", "RegField")
 interface ("GenViews")
 generic_module("GenViews")
 module ("GenViewsM3")
-module ("GenViewsScala")  %% fill this in
+module ("GenViewsScala")
+module ("GenViewsC")
 
 module ("DecoratedComponentDef")
 
 interface ("RegModula3Utils")
 
-%%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%
 
 module   ("RegModula3Constants")
 module   ("RegModula3")
 module   ("RegModula3Naming")
 interface("RegModula3Generators")
 interface("RegModula3GenState")
+module   ("RegModula3IntfNaming")
 
-module("RegModula3IntfNaming")
-
-%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%%
 
 module   ("RegScalaConstants")
 module   ("RegScala")
@@ -57,7 +55,18 @@ module   ("RegScalaNaming")
 interface("RegScalaGenerators")
 interface("RegScalaGenState")
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%  C output  %%%%%%%%%%%%%%%%%%%%%%%%
+
+module   ("RegC")
+module   ("RegCConstants")
+module   ("RegCNaming")
+interface("RegCGenerators")
+interface("RegCGenState")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+generic_module("TopoSort")
+module("TextTopoSort")
 
 implementation ("Main")
 

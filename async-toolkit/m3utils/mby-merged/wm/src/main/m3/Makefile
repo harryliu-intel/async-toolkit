@@ -11,6 +11,7 @@ OS_TARG=AMD64_LINUX
 CM3=$(shell ToolConfig.pl get_tool_exec cm3)
 
 METAROOT=$(shell ToolConfig.pl get_tool_path meta)
+METAVERSION=$(shell ToolConfig.pl get_tool_version meta)
 
 # override here if you want to test a new toolchain
 #CM3=/tmp/cm3-all-AMD64_LINUX-d5.10.0-Linux3.0.101-20180514/bin/cm3
@@ -20,6 +21,10 @@ SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp
 PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
 
 NEBULON=$(shell ToolConfig.pl get_tool_path nebulon)
+
+MBY_C_ROOT=../c
+MBY_C_TARGDIR=$(MBY_C_ROOT)/$(OS_TARG)
+MBY_C_LIB=$(MBY_C_TARGDIR)/libmby_c_model.a
 
 WM_SUPPORT_ROOT=wm_support
 WM_SUPPORT_TARGDIR=$(WM_SUPPORT_ROOT)/$(OS_TARG)
@@ -33,6 +38,7 @@ GENVIEWS_ROOT=genviews
 GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
 SCALA_GEN=foo
+C_GEN=bar
 
 STRUCTGEN_ROOT=structgen
 STRUCTGEN_TARGDIR=$(STRUCTGEN_ROOT)/$(OS_TARG)
@@ -51,6 +57,7 @@ SCALA_IMPLICITS=$(WM_NET_ROOT)/scala_generated/Implicits.scala
 
 MBY_TOP_RDL=../../../../tools/srdl/mby/mby_top_map.rdl
 MBY_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/mby
+MBY_BUILD_C_ROOT=$(GENVIEWS_ROOT)/src/build_c/mby_c
 MBYLIB=$(MBY_BUILD_ROOT)/$(OS_TARG)/libmby.a
 
 MODEL_SERVER_ROOT=model_server
@@ -70,13 +77,17 @@ TOP_TEMPLATE=top_template
 # 	$(TEST_TARG)
 mains: mby_mains hlp_mains model_server
 
-top: $(TOP)
+# provide a mechanism to force rebuild on meta update
+META_VERSION_F=meta.version.$(METAVERSION)
+$(META_VERSION_F):
+	touch $@
 
-$(TOP): $(TOP_TEMPLATE)
+top: $(TOP)
+$(TOP): $(TOP_TEMPLATE) $(META_VERSION_F)
 	sed "s#MODEL_ROOT#$(MODEL_ROOT)#" $< > $@
 	sed -i "s#META_HOME#$(METAROOT)#" $@
 
-mby_mains: $(GENVIEWS) $(MBYLIB)
+mby_mains: $(GENVIEWS) $(MBYLIB) $(C_GEN)
 	$(MAKE) CM3=$(CM3) -C $(GENVIEWS_ROOT)/src/mby_mains
 
 hlp_mains: $(HLPLIB)
@@ -111,7 +122,7 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
 
 MBY_POSTPROC = work/mby_postproc.rdl
-$(MBY_POSTPROC): $(MBY_TOP_RDL)
+$(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	mkdir -p work
 	${SVPP} --path $(NEBULON)/include:$(dir $<) < $< > work/i1.rdl
 	${PERLFE} < work/i1.rdl > work/i2.rdl
@@ -131,6 +142,15 @@ $(SCALA_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 
 scalagen: $(SCALA_GEN)
 
+$(C_GEN): $(MBY_POSTPROC) $(GENVIEWS)
+	mkdir -p $(MBY_BUILD_C_ROOT)/src
+	$(GENVIEWS_TARGDIR)/genviews -L c -top mby_top_map -o $(MBY_BUILD_C_ROOT)/src < $<
+	cd $(MBY_BUILD_C_ROOT)/src && $(CM3) -x
+
+cgen: $(C_GEN)
+
+$(MBY_C_LIB): $(C_GEN)
+	cd ../c && $(CM3) -x
 
 $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	mkdir -p work
@@ -146,7 +166,8 @@ $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 $(WM_NET_LIB): $(STRUCTGEN) $(GENVIEWS) $(HLPLIB)
 	cd wm_net && $(CM3) -x
 
-$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB)
+
+$(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 	cd model_server && $(CM3) -x 
 
 model_server: $(MODEL_SERVER)
@@ -162,4 +183,5 @@ clean:
 	rm -rf $(GENVIEWS_ROOT)/src/work
 	rm -rf $(WM_NET_ROOT)/scala_generated
 	find . -name $(OS_TARG) | xargs rm -rf 
+	find ../c -name $(OS_TARG) | xargs rm -rf 
 	rm -f $(TOP)

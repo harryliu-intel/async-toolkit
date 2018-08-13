@@ -6,7 +6,9 @@ TYPE
 
   Super = ModelServer.T;
   
-  Public = Super OBJECT METHODS
+  Public = Super OBJECT
+    h        : MapAddr.H;
+  METHODS
     setupChip(READONLY read : Map.T; READONLY update : MapAddr.Update);
   END;
 

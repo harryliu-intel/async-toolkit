@@ -14,8 +14,10 @@ reg em_b_hash_lookup_r {
   desc = "
   In single lookup mode, there is one table using 8K buckets.
   In split-4K lookup mode,
-  * LOOKUP0 = EM_B_LOOKUP[0..4095]
-  * LOOKUP1 = EM_B_LOOKUP[4096..8192]
+  [list]
+  [*] LOOKUP0 = EM_B_LOOKUP[0..4095]
+  [*] LOOKUP1 = EM_B_LOOKUP[4096..8192]
+  [/list]
   Noted that per-group above explicitly implies only FFU groups 0..1.  
   While these registers exist for FFU group 2, none of them should be 
   written by software and should be considered reserved
@@ -106,19 +108,19 @@ reg em_b_hash_cam_r {
   desc = "
   The second index is the entry number, and the third index
   is the word number. The entry format is big-endian. Byte 0 is bits 63..56 of word 0.
-
+  [br][br]
   In 64B entry mode, the entry is 64 bytes wide.
   In 64B mode there is a single action resolution and the 1-2 actions from
   the highest-numbered matching entry are used.
   To form a 64B entry, a key 56B or less is padded with 0s to 56B and followed by two actions.
   In the case of a 60B key, there is only 1 action at EM_B_HASH_CAM[group][rule][7][31:0].
-
+  [br][br]
   In 32B entry mode, EM_B_HASH_CAM[group][rule][0..3] is the row0 entry,
   and EM_B_HASH_CAM[group][rule][4..7] is the row1 entry. The two rows are resolved
   independently: the 1-2 actions from the highest-numbered matching entry within each row
   are used. To form a 32B entry, a key 24B or less is padded with 0s to 24B and followed
   by two actions. In the case of a 28B key in 32B mode, there is only 1 action.
-  
+  [br][br]
   Noted that per-group above explicitly implies only FFU groups 0..1.  
   While these registers exist for FFU group 2, none of them should be 
   written by software and should be considered reserved
@@ -151,7 +153,7 @@ reg em_b_hash_cam_en_r {
   desc = "
   When EM_B_HASH_CAM_EN[group][row][rule].mask[s] is set, then
   EM_B_HASH_CAM[group][rule][row*4 +: 4] is used in scenario s.
-  
+  [br][br]
   Noted that per-group above explicitly implies only FFU groups 0..1.  
   While these registers exist for FFU group 2, none of them should be 
   written by software and should be considered reserved
@@ -184,13 +186,13 @@ reg em_b_key_sel0_r {
   name = "Configures hash value calculation";
   desc = "
   Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
-
+  [br][br]
   This register is indexed first by hash number 0..1, then by scenario.
-
+  [br][br]
   Before matching, the selected (Key32, Key16, Key8) are compacted
   in big endian form. If the result is an odd number of bytes,
   a padding 0 byte is added.
-  
+  [br][br]
   Noted that per-group above explicitly implies only FFU groups 0..1.  
   While these registers exist for FFU group 2, none of them should be 
   written by software and should be considered reserved
@@ -224,13 +226,13 @@ reg em_b_key_sel1_r {
   name = "Configures hash value calculation";
   desc = "
   Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
-
+  [br][br]
   This register is indexed first by hash number 0..1, then by scenario.
-
+  [br][br]
   Before matching, the selected (Key32, Key16, Key8) are compacted
   in big endian form. If the result is an odd number of bytes,
   a padding 0 byte is added.
-  
+  [br][br]
   Noted that per-group above explicitly implies only FFU groups 0..1.  
   While these registers exist for FFU group 2, none of them should be 
   written by software and should be considered reserved
@@ -317,11 +319,11 @@ reg em_b_hash_miss_r {
   name = "Provides two hash-miss actions for each hashtable row.";
   desc = "
   EM_B_HASH_MISS[r][scenario] provides 2 actions for row r=0..1.
-
+  [br][br]
   If there is no key match in ENTRY_RAM or CAM, then both actions are taken.
   The format of the action is the same as EM_B_ACTION,
   HASH_ENTRY_RAM, and EM_B_HASH_CAM.
-  
+  [br][br]
   Noted that per-group above explicitly implies only FFU groups 0..1.  
   While these registers exist for FFU group 2, none of them should be 
   written by software and should be considered reserved
@@ -360,7 +362,7 @@ reg em_b_hash_cfg_r {
   name = "Configure FFU hashing";
   desc = "
   This register is indexed by the scenario.
-  
+  [br][br]
   Noted that per-group above explicitly implies only FFU groups 0..1.  
   While these registers exist for FFU group 2, none of them should be 
   written by software and should be considered reserved
@@ -455,30 +457,32 @@ reg wcm_tcam_r {
   name = "Configures an entry in a slice's key TCAM";
   desc = "
     Configures an entry in the TCAM. 
-    
+    [br][br] 
     A match occurs when the data searched is equal to the content, as defined
     in the table below.
-
+    [br][br] 
     A key is loaded by writing the key into 'Key' (KEY / KEY_TOP) and loading its 1s
     compliment in KeyInvert (KEY_INVERT / KEY_TOP_INVERT). Writing both 'Key' and 'KeyInvert' with 1
     on same bit in both fields will invalidate the entry while writing
     0 on same bit in both field is equivalent of ignoring this bit in
     the seach.
- 
+    [br][br] 
     The table below shows the encoded data value stored (Content)
     based on the Key and KeyInvert values.
 
-          .+-----------------------------------------------------+
-          .| KeyInvert    | Key          |        Content        |
-          .=======================================================
-          .|      0       |      0       |   X (always match)    |
-          .+-----------------------------------------------------+
-          .|      0       |      1       |           1           |
-          .+-----------------------------------------------------+
-          .|      1       |      0       |           0           |
-          .+-----------------------------------------------------+
-          .|      1       |      1       | Always mismatch state |
-          .+-----------------------------------------------------+
+    [code]
+          +-----------------------------------------------------+
+          | KeyInvert    | Key          |        Content        |
+          =======================================================
+          |      0       |      0       |   X (always match)    |
+          +-----------------------------------------------------+
+          |      0       |      1       |           1           |
+          +-----------------------------------------------------+
+          |      1       |      0       |           0           |
+          +-----------------------------------------------------+
+          |      1       |      1       | Always mismatch state |
+          +-----------------------------------------------------+
+    [/code]
 
     The highest index has precedence in case there is more than one match in
     the same slice.
@@ -625,9 +629,11 @@ reg wcm_tcam_cfg_r {
     AccessType = "RW";
     desc = "
          Selects byte 0 of the lookup key. 
-         * If Select0 is in the range of 0-31, then the value is KEY16[Select0][7:0]. 
-         * If Select0 is in the range of 32-95, then the value is KEY8[Select0 - 32]. 
-         * If Select0 is in the range of 96-111, then the value is KEY32[Select0 - 96][7:0].
+         [list]
+         [*] If Select0 is in the range of 0-31, then the value is KEY16[Select0][7:0]. 
+         [*] If Select0 is in the range of 32-95, then the value is KEY8[Select0 - 32]. 
+         [*] If Select0 is in the range of 96-111, then the value is KEY32[Select0 - 96][7:0].
+         [/list]
 
            ";
     ValRandomize = true;
@@ -636,9 +642,11 @@ reg wcm_tcam_cfg_r {
     AccessType = "RW";
     desc = "
         Selects byte 1 of the lookup key.
-        * If Select1 is in the range of 0-31, then the value is KEY16[Select1][15:8]. 
-        * If Select1 is in the range of 32-95, then the value is KEY8[Select1 - 32]. 
-        * If Select1 is in the range of 96-111, then the value is KEY32[Select1 - 96][15:8].
+        [list]
+        [*] If Select1 is in the range of 0-31, then the value is KEY16[Select1][15:8]. 
+        [*] If Select1 is in the range of 32-95, then the value is KEY8[Select1 - 32]. 
+        [*] If Select1 is in the range of 96-111, then the value is KEY32[Select1 - 96][15:8].
+        [/list]
 
            ";
     ValRandomize = true;
@@ -647,9 +655,11 @@ reg wcm_tcam_cfg_r {
     AccessType = "RW";
     desc = "
         Selects byte 2 of the lookup key.
-        * If Select2 is in the range of 0-31, then the value is KEY16[Select2][7:0]. 
-        * If Select2 is in the range of 32-95, then the value is KEY8[Select2 - 32]. 
-        * If Select2 is in the range of 96-111, then the value is KEY32[Select2 - 96][23:16].
+        [list]
+        [*] If Select2 is in the range of 0-31, then the value is KEY16[Select2][7:0]. 
+        [*] If Select2 is in the range of 32-95, then the value is KEY8[Select2 - 32]. 
+        [*] If Select2 is in the range of 96-111, then the value is KEY32[Select2 - 96][23:16].
+        [/list]
 
            ";
     ValRandomize = true;
@@ -658,9 +668,11 @@ reg wcm_tcam_cfg_r {
     AccessType = "RW";
     desc = "
         Selects byte 3 of the lookup key.
-        * If Select3 is in the range of 0-31, then the value is KEY16[Select3][15:8]. 
-        * If Select3 is in the range of 32-95, then the value is KEY8[Select3 - 32]. 
-        * If Select3 is in the range of 96-111, then the value is KEY32[Select3 - 96][31:24].
+        [list]
+        [*] If Select3 is in the range of 0-31, then the value is KEY16[Select3][15:8]. 
+        [*] If Select3 is in the range of 32-95, then the value is KEY8[Select3 - 32]. 
+        [*] If Select3 is in the range of 96-111, then the value is KEY32[Select3 - 96][31:24].
+        [/list]
 
            ";
     ValRandomize = true;

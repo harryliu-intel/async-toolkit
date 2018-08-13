@@ -41,6 +41,8 @@ igr_pull_sched_rx_ppe_if    igr_pull_sched_rx_ppe_if();
 rx_ppe_tx_ppe_if            rx_ppe_tx_ppe0_if();
 rx_ppe_tx_ppe_if            rx_ppe_tx_ppe1_if();
 rx_ppe_ppe_stm_if           rx_ppe_ppe_stm_if();
+ahb_rx_ppe_if               ahb_rx_ppe_if();
+glb_rx_ppe_if               glb_rx_ppe_if();
 
 rx_ppe  rx_ppe (
     .cclk                       (1'b0),
@@ -50,7 +52,9 @@ rx_ppe  rx_ppe (
     .igr_pull_sched_rx_ppe_if   (igr_pull_sched_rx_ppe_if),
     .rx_ppe_tx_ppe0_if          (rx_ppe_tx_ppe0_if),
     .rx_ppe_tx_ppe1_if          (rx_ppe_tx_ppe1_if),
-    .rx_ppe_ppe_stm_if          (rx_ppe_ppe_stm_if)
+    .rx_ppe_ppe_stm_if          (rx_ppe_ppe_stm_if),
+    .ahb_rx_ppe_if              (ahb_rx_ppe_if),
+    .glb_rx_ppe_if              (glb_rx_ppe_if)
 );
 
 endmodule

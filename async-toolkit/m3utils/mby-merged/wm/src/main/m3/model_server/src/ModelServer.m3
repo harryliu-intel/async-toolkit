@@ -30,6 +30,7 @@ IMPORT Byte;
 IMPORT FmModelDataType;
 IMPORT FmModelSideBandData;
 IMPORT Process;
+IMPORT UpdaterFactory;
 
 IMPORT Compiler;
 
@@ -54,6 +55,7 @@ REVEAL
     mu                   : MUTEX; (* protects egressPorts, portLinkState *)
     quitOnLastClientExit : BOOLEAN;
     infoFile             : Pathname.T;
+    updaterFactory       : UpdaterFactory.T;
   OVERRIDES
     init       := Init;
     listenFork := ListenFork;
@@ -188,6 +190,7 @@ PROCEDURE WriteInfo(dirPath, fileName : Pathname.T; port : IP.Port)
   
 PROCEDURE Init(t : T;
                infoPath : Pathname.T;
+               factory : UpdaterFactory.T;
                quitOnLastClientExit : BOOLEAN;
                infoFile : Pathname.T) : T =
   BEGIN
@@ -205,6 +208,7 @@ PROCEDURE Init(t : T;
       Debug.Out("PORT " & Int(t.port));
       t.conn := conn
     END;
+    t.updaterFactory := factory;
     RETURN t
   END Init;
 

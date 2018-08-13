@@ -2,20 +2,32 @@ UNSAFE MODULE UnsafeUpdater;
 IMPORT Debug;
 IMPORT Fmt;
 IMPORT Word;
+IMPORT CompPath;
+IMPORT UpdateTracing;
+IMPORT IO;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
     base : REFANY;
     off  : ADDRESS;
     wid  : CARDINAL;
+    nm   : CompPath.T;
   OVERRIDES
-    init   := Init;
-    update := Update;
+    init     := Init;
+    update   := Update;
+    getWidth := GetWidth;
+    getNm    := GetNm;
+    value    := Value;
   END;
 
-PROCEDURE Init(t : T; base : REFANY; fieldAddr : ADDRESS; width : CARDINAL) : T =
+PROCEDURE GetWidth(t : T) : CARDINAL = BEGIN RETURN t.wid END GetWidth;
+
+PROCEDURE GetNm(t : T) : CompPath.T = BEGIN RETURN t.nm END GetNm;
+
+PROCEDURE Init(t : T; base : REFANY; fieldAddr : ADDRESS; width : CARDINAL; nm : CompPath.T) : T =
   BEGIN
     t.base := base;
+    t.nm := nm;
     t.off :=
         LOOPHOLE(LOOPHOLE(fieldAddr,INTEGER) - LOOPHOLE(base,INTEGER),ADDRESS);
     IF doDebug THEN
@@ -27,12 +39,43 @@ PROCEDURE Init(t : T; base : REFANY; fieldAddr : ADDRESS; width : CARDINAL) : T 
     t.wid := width;
     RETURN t
   END Init;
+
+PROCEDURE Value(t : T) : Word.T =
+  VAR
+    pin := t.base;
+    ptr := LOOPHOLE(LOOPHOLE(t.base,INTEGER) + LOOPHOLE(t.off,INTEGER),ADDRESS);
+    res : Word.T;
+  BEGIN
+    CASE t.wid OF
+      1..8 =>
+      res := LOOPHOLE(ptr, UNTRACED REF [0..16_ff])^ 
+    |
+      9..16 =>
+      res := LOOPHOLE(ptr, UNTRACED REF [0..16_ffff])^
+    |
+      17..32 =>
+      res := LOOPHOLE(ptr, UNTRACED REF [0..16_ffffffff])^ 
+    |
+      33..64 =>
+      res := LOOPHOLE(ptr, UNTRACED REF Word.T)^ 
+    ELSE
+      <*ASSERT FALSE*>
+    END;
+
+    <*ASSERT pin # NIL *>
+    RETURN res
+  END Value;
   
 PROCEDURE Update(t : T; to : Word.T) =
   VAR
     pin := t.base;
     ptr := LOOPHOLE(LOOPHOLE(t.base,INTEGER) + LOOPHOLE(t.off,INTEGER),ADDRESS);
   BEGIN
+
+    IF UpdateTracing.Enabled THEN
+      IO.Put(CompPath.ToText(t.nm) & " <- 16_" & Fmt.Unsigned(to) & "\n")
+    END;
+      
     CASE t.wid OF
       1..8 =>
       LOOPHOLE(ptr, UNTRACED REF [0..16_ff])^ := to

@@ -12,6 +12,7 @@ Sequence ("CompRange", "CompRange")
 Sequence ("CompAddr", "CompAddr")
 Module ("CompPath")
 Module ("CompMemory")
+Interface ("MemoryMap")
 
 Module ("CompMemoryListener")
 List ("CompMemoryListener","CompMemoryListener")
@@ -25,6 +26,14 @@ Module("IdStyles")
 Module("CsrOp")
 pqueue("CompAddr","CompAddr")
 
+Module("UpdateTracing")
+
+Interface("Updater")
+Factory("Updater","Updater")
+
 Module("UnsafeUpdater")
+Module("UnsafeUpdaterFactory")
+
+Module("WmUtils")
 
 library ("wm_support")
