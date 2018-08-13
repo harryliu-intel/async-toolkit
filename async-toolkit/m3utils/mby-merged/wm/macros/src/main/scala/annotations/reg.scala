@@ -256,14 +256,16 @@ object regImpl {
     class qProps(val name: String) {
       /** Parsed props */
       var defs = Map[c.TermName, c.Tree]()
-      def unapply(tree: c.Tree): Option[(c.TermName, c.Tree)] =
+      def unapply(tree: c.Tree): Option[(c.TermName, c.Tree)] = {
         tree match {
-          case q"$pref $pname = $pimpl" if pref == name => {
+          case q"$pref.$pname = $pimpl" if pref.toString == name => {
             compAssert(tree.pos, !defs.contains(pname), s"register can't have multiple $name for $pname")
             defs = defs + (pname -> pimpl)
             Some((pname, pimpl))
           }
+          case _ => None
         }
+      }
     }
 
 
