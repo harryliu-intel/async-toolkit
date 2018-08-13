@@ -734,6 +734,16 @@
   (list "" (sa "#define " (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))) "_deser_qwords " (get-type-field-cnt (caddr x) defs) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define topo-sorter (obj-method-wrap (new-modula-object 'TextTopoSort.T ) 'TextTopoSort.T))
+(topo-sorter 'init)
+(topo-sorter 'addDependency "a" "b")
+(topo-sorter 'addDependency "a" "c")
+(topo-sorter 'addDependency "b" "d")
+
+(define s (obj-method-wrap (topo-sorter 'sort) 'TextSeq.T))
+(s 'size)
+(s 'get 0)
+
 
 (define (compile-c-typedef x defs)
   (list
