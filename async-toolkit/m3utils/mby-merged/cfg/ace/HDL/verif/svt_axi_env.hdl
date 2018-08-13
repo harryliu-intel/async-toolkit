@@ -1,0 +1,64 @@
+# vim: noai : ts=3 : sw=3 : expandtab : ft=perl
+
+use ToolConfig;
+
+my $snps_svt_path    = &ToolConfig::get_tool_env_var('vipsvt', 'DESIGNWARE_HOME');
+
+$hdl_spec = {
+
+    -vlog_incdirs => [
+# No UVM_INCLUDES define being declared.   Useing the next line to include UVM macros and other files..
+         #"$ENV{UVM_INCLUDES}",
+         "$ENV{UVM_HOME}/src",
+         "$ENV{OVM_HOME}/src",
+         "$ENV{SAOLA_HOME}/verilog",
+         "$ENV{SAOLA_HOME}/verilog_uvm",
+
+         "verif/lib/svt_axi_bfm",
+         "$snps_svt_path/src/sverilog/vcs",
+         "$snps_svt_path/include/sverilog",
+         "$snps_svt_path/src/verilog/vcs",
+         "$snps_svt_path/include/verilog",
+    ],
+
+    -vlog_files => [
+         "$snps_svt_path/include/sverilog/svt.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt_axi.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt_bfm_shell.uvm.pkg",
+
+         #"$snps_svt_path/include/sverilog/svt_axi_if.svi",
+         "verif/lib/svt_axi_bfm/svt_axi_reset_if.sv",
+         "verif/lib/svt_axi_bfm/svt_axi_bfm_pkg.sv",
+    ],
+
+
+    -vlog_opts => [
+         "-sverilog",
+         "+define+UVM",
+
+         "+define+UVM_DISABLE_AUTO_ITEM_RECORDING",
+         "+define+UVM_PACKER_MAX_BYTES=1500000",
+         #"+define+UVM_PACKER_MAX_BYTES=4096",
+         #"+define+UVM_PACKER_MAX_BYTES=16384",
+		 "+define+UVM_NO_DEPRECATED",
+         "+define+SVT_UVM_TECHNOLOGY",
+         "+define+SYNOPSYS_SV",
+
+         "+define+SVT_EXCLUDE_METHODOLOGY_PKG_INCLUDE",  # Include uvm_macros, but not uvm_pkg
+
+         #"+define+SVT_EXCLUDE_METHODOLOGY_PKG",
+         #"+define+SVT_EXCLUDE_METHODOLOGY_PKG_MACROS",   # Include uvm_pkg, but not uvm_macros
+
+
+         ## INTEL USES THE FOLLOWING TO PASS THE PATH TO THE SVT ROOT TO THE USER CUSTOMIZEABLE CODE
+         ### The file that uses this is $snps_svt_path/include/sverilog/svt_source_defines.svi
+         ### After every Synopsys release
+
+#Doesn't appear used in ETH_PORT for the release N_2017.12 .    Commented out for now.
+
+         #"+define+INTEL_DW_SVT_ROOT=$designware_home",
+
+
+         "-override_timescale=1ps/1fs",
+    ],
+};
