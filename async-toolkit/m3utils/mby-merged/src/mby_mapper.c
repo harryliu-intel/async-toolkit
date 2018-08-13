@@ -467,7 +467,7 @@ static fm_int getTcFromPriSource
     mbyMapperToClassifier   * const out,
     const fm_uint                   domain_index,
     const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
-    const fm_byte                   priority_profile
+    const fm_byte                   pri_profile
 )
 {
     fm_uint32 map_domain_action0_vals[MBY_MAP_DOMAIN_ACTION0_WIDTH] = { 0 };
@@ -487,7 +487,7 @@ static fm_int getTcFromPriSource
                 if (in->PA_FLAGS[MBY_PA_FLAGS_OTR_L2_VLAN1])
                 {
                     fm_uint32 map_vpri_tc_vals[MBY_MAP_VPRI_TC_WIDTH] = { 0 };
-                    mbyModelReadCSRMult(regs, MBY_MAP_VPRI_TC(priority_profile, 0), MBY_MAP_VPRI_TC_WIDTH, map_vpri_tc_vals);
+                    mbyModelReadCSRMult(regs, MBY_MAP_VPRI_TC(pri_profile, 0), MBY_MAP_VPRI_TC_WIDTH, map_vpri_tc_vals);
                     fm_uint32 vpri = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1], 12, 4);
                     tc = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_tc_vals, (vpri * 3), 3);
                 }
@@ -497,7 +497,7 @@ static fm_int getTcFromPriSource
                 if (in->PA_FLAGS[MBY_PA_FLAGS_OTR_MPLS_V])
                 {
                     fm_uint32 map_exp_tc_vals[MBY_MAP_EXP_TC_WIDTH] = { 0 };
-                    mbyModelReadCSRMult(regs, MBY_MAP_EXP_TC(priority_profile, 0), MBY_MAP_EXP_TC_WIDTH, map_exp_tc_vals);
+                    mbyModelReadCSRMult(regs, MBY_MAP_EXP_TC(pri_profile, 0), MBY_MAP_EXP_TC_WIDTH, map_exp_tc_vals);
                     fm_uint32 exp = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_MPLS + 1], 9, 3);
                     tc = FM_ARRAY_GET_UNNAMED_FIELD(map_exp_tc_vals, (exp * 3), 3);
                 }
@@ -508,7 +508,7 @@ static fm_int getTcFromPriSource
                 {
                     fm_uint32 dscp = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_DS_FLOW], 10, 6);
                     fm_uint32 map_dscp_tc_vals[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-                    mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((priority_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_vals);
+                    mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_vals);
                     tc = FM_ARRAY_GET_FIELD(map_dscp_tc_vals, MBY_MAP_DSCP_TC, TC);
                 }
                 break;
@@ -833,47 +833,44 @@ static void mapScalar
     FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_MBCAST, 0, 1, oDmacMulticast);
     FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_MBCAST, 1, 1, oDmacBroadcast);
 
+    fm_byte   operator_id = 0;
+    fm_uint16 l2_domain   = 0;
+    fm_byte   l3_domain   = 0;
+
     // domain TCAM - domain_index is always valid here
     fm_uint32 map_domain_action0_vals[MBY_MAP_DOMAIN_ACTION0_WIDTH] = { 0 };
     mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action0_vals);
-
     fm_bool update_domains = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, UPDATE_DOMAINS);
 
-    fm_byte priority_profile = 0;
-
-    // TODO: how to get L2 and L3 domains from metadata.
     if (update_domains)
     {
-        fm_byte operator_id = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
-        fm_byte l2_domain   = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L2_DOMAIN);
-        fm_byte l3_domain   = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L3_DOMAIN);
-
-        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  0, 4, operator_id);
-        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  4, 9, l2_domain);
-        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4), 13, 6, l3_domain);
-
-        priority_profile = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
+        operator_id  = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
+        l2_domain    = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L2_DOMAIN);
+        l3_domain    = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L3_DOMAIN);
+        *pri_profile = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
     }
     else
     {
-        fm_byte l2_domain = FM_ARRAY_GET_UNNAMED_FIELD(((fm_uint32*)(in->PKT_META + 5*4)), 4, 9);
         fm_uint32 map_domain_profile_vals[MBY_MAP_DOMAIN_PROFILE_WIDTH] = { 0 };
         mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_PROFILE(l2_domain, 0), MBY_MAP_DOMAIN_PROFILE_WIDTH, map_domain_profile_vals);
 
-        priority_profile = FM_ARRAY_GET_FIELD(map_domain_profile_vals, MBY_MAP_DOMAIN_PROFILE, PRIORITY_PROFILE);
+        *pri_profile = FM_ARRAY_GET_FIELD(map_domain_profile_vals, MBY_MAP_DOMAIN_PROFILE, PRIORITY_PROFILE);
     }
 
-    out->PRIORITY_PROFILE = priority_profile;
+    out->OPERATOR_ID      = operator_id;
+    out->L2_IDOMAIN       = l2_domain;
+    out->L3_IDOMAIN       = l3_domain;
+    out->PRIORITY_PROFILE = *pri_profile;
 
-    map_prof_key1->L2_DOMAIN = FM_ARRAY_GET_UNNAMED_FIELD(((fm_uint32*)(in->PKT_META + 5*4)),  4, 9);
-    map_prof_key1->L3_DOMAIN = FM_ARRAY_GET_UNNAMED_FIELD(((fm_uint32*)(in->PKT_META + 5*4)), 13, 6);
+    map_prof_key1->L2_DOMAIN = l2_domain;
+    map_prof_key1->L3_DOMAIN = l3_domain;
 
     fm_bool un0 = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_EN);
     out->FFU_ACTIONS.act1[MBY_FFU_ACTION_LEARN].val = un0;
 
     out->LEARN_MODE = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE);
 
-    fm_byte tc = getTcFromPriSource(regs, in, out, domain_index, realigned_keys, priority_profile);
+    fm_byte tc = getTcFromPriSource(regs, in, out, domain_index, realigned_keys, *pri_profile);
     out->FFU_ACTIONS.act4[MBY_FFU_ACTION_TC].val = tc;
 
     fm_uint32 map_domain_action1_vals[MBY_MAP_DOMAIN_ACTION1_WIDTH] = { 0 };
@@ -911,8 +908,6 @@ static void mapScalar
     // TODO: may be removed in the future.
     for (fm_uint i = 0; i < 32; i++)
         out->FFU_KEYS.key8[63-i] = in->PKT_META[i];
-
-    *pri_profile = priority_profile;
 }
 
 static void encodeLength
@@ -1445,7 +1440,7 @@ static void mapRewrite
     mbyMapProfAction                map_prof_action,
     mbyMapProfKey0                  map_prof_key0,
     mbyMappedKey                    mapped_key,
-    fm_byte                         priority_profile
+    fm_byte                         pri_profile
 )
 {
     // Rewrite Keys
@@ -1509,7 +1504,7 @@ static void mapRewrite
     if (map_prof_action.PRIOS_VALID == 1)
     {
         fm_uint32 map_vpri_vals[MBY_MAP_VPRI_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_VPRI(priority_profile, 0), MBY_MAP_VPRI_WIDTH, map_vpri_vals);
+        mbyModelReadCSRMult(regs, MBY_MAP_VPRI(pri_profile, 0), MBY_MAP_VPRI_WIDTH, map_vpri_vals);
 
         /* vpri_tgt and dscp_tgt, no valid check is needed */
         if (map_prof_action.VPRI_TGT & 0x4) {
@@ -1539,7 +1534,7 @@ static void mapRewrite
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
 
             fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((priority_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
+            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
 
             fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_DSCP_LOW].val  = map_dscp & 0xF;
@@ -1551,7 +1546,7 @@ static void mapRewrite
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
 
             fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((priority_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
+            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
 
             fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6, map_dscp);
@@ -1562,7 +1557,7 @@ static void mapRewrite
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
 
             fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((priority_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
+            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
 
             fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6, map_dscp);
@@ -1581,19 +1576,19 @@ void Mapper
    
     getPortCfg(regs, in, &portCfg);
 
-    fm_bool isIPv4[MBY_N_IS_IP_BITS] = { FALSE };
-    fm_bool isIPv6[MBY_N_IS_IP_BITS] = { FALSE };
+    fm_bool is_ipv4[MBY_N_IS_IP_BITS] = { FALSE };
+    fm_bool is_ipv6[MBY_N_IS_IP_BITS] = { FALSE };
 
     // INNER IP
-    if(in->PA_FLAGS[MBY_PA_FLAGS_INR_L3_V]) {
-        isIPv4[1] = in->PA_KEYS_VALID[MBY_PA_KEYS_INNER_IP_HEADER];
-        isIPv6[1] = !isIPv4[1];
+    if (in->PA_FLAGS[MBY_PA_FLAGS_INR_L3_V]) {
+        is_ipv4[1] = in->PA_KEYS_VALID[MBY_PA_KEYS_INNER_IP_HEADER];
+        is_ipv6[1] = !is_ipv4[1];
     }
 
     // OUTER IP
-    if(in->PA_FLAGS[MBY_PA_FLAGS_OTR_L3_V]) {
-        isIPv4[0] = in->PA_KEYS_VALID[MBY_PA_KEYS_OUTER_IP_HEADER];
-        isIPv6[0] = !isIPv4[0];
+    if (in->PA_FLAGS[MBY_PA_FLAGS_OTR_L3_V]) {
+        is_ipv4[0] = in->PA_KEYS_VALID[MBY_PA_KEYS_OUTER_IP_HEADER];
+        is_ipv6[0] = !is_ipv4[0];
     }
 
     fm_uint16 realigned_keys    [MBY_N_REALIGN_KEYS];
@@ -1606,8 +1601,8 @@ void Mapper
     realignKeys
     (
         in,
-        isIPv4,
-        isIPv6,
+        is_ipv4,
+        is_ipv6,
         realigned_keys,
         realigned_keys_vld,
         &ihl_ok,
@@ -1646,8 +1641,8 @@ void Mapper
         out,
         portCfg,
         realigned_keys,
-        isIPv4,
-        isIPv6,
+        is_ipv4,
+        is_ipv6,
         domain_index,
         ihl_ok,
         ihl_fits,
@@ -1663,7 +1658,7 @@ void Mapper
         in,
         out,
         realigned_keys,
-        isIPv6,
+        is_ipv6,
         &map_prof_key0
     );
 
@@ -1687,7 +1682,7 @@ void Mapper
         out,
         realigned_keys,
         realigned_keys_vld,
-        isIPv6,
+        is_ipv6,
         map_prof_action,
         map_prof_key0,
         mapped_key,

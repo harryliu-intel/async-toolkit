@@ -972,6 +972,15 @@ typedef struct mbyMapperToClassifierStruct
     // ip_option to be used for counting trap_ip_iptions:
     fm_bool                 IP_OPTION[2];
 
+    // Operator ID:
+    fm_bool                 OPERATOR_ID;
+
+    // L2 ingress domain:
+    fm_uint16               L2_IDOMAIN;
+
+    // L3 ingress domain:
+    fm_byte                 L3_IDOMAIN;
+
     // The 5-bit FFU priority profile:
     fm_byte                 PRIORITY_PROFILE;
 
@@ -1064,8 +1073,8 @@ typedef struct mbyClassifierToHashStruct
     // Controls update of TTL field of egress packet:
     fm_byte                 TTL_CTRL;
 
-    // The 6-bit set of FFU flags. Bits [5:0] contain {CAPTURE-TIME,
-    // RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}:
+    // The 6-bit set of FFU flags. Bits [5:0] contain
+    //   {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}:
     mbyClassifierFlags      FFU_FLAGS;
 
     // Classifier route:

@@ -79,40 +79,46 @@ void NextHop
 
     fm_bool    encap       = in->ENCAP;
     fm_bool    decap       = in->DECAP;
-    fm_macaddr l2_dmac     = in->L2_DMAC;
     fm_macaddr dmac_ipv6   = in->DMAC_FROM_IPV6;
+    fm_macaddr l2_dmac     = in->L2_DMAC;
     fm_uint16  l2_ivid1    = in->L2_IVID1;
     fm_uint16  l2_idomain  = in->L2_IDOMAIN;
     fm_byte    l3_idomain  = in->L3_IDOMAIN;
-    fm_uint16  l2_evid1    = l2_ivid1;
-    fm_uint16  l2_edomain  = l2_edomain;
-    fm_byte    l3_edomain  = l3_edomain;
-    fm_byte    mtu_index   = 0;
-    fm_uint16  idglort     = (glort_routed) ? dglort : 0;
+    fm_uint16  l2_evid1    = in->L2_IVID1;
+    fm_uint16  l2_edomain  = in->L2_IDOMAIN;
+    fm_byte    l3_edomain  = in->L3_IDOMAIN;
+
+    fm_uint16  idglort     = 0;
     fm_bool    mark_routed = !glort_routed && !no_route;
-    fm_bool    do_arp_lkup = !glort_routed;
+    fm_byte    mtu_index   = 0;
     fm_uint32  mod_index   = 0;
     
-    if (do_arp_lkup)
+    if (glort_routed)
+    {
+        idglort     = dglort;
+        mark_routed = FALSE;
+    }
+    else // do ARP lookup
     {
         mbyArpTable arp_table;
         getARPTableEntry(regs, arp_tbl_idx, &arp_table);
 
-        if (arp_table.EntryType == MBY_ARP_TYPE_MAC) {
-            l2_evid1    = arp_table.EVID;
+        fm_bool arp_type_mac = (arp_table.EntryType == MBY_ARP_TYPE_MAC);
+
+        if (arp_type_mac) {
             l2_dmac     = (arp_table.IPv6Entry == 1) ? dmac_ipv6 : arp_table.DMAC;
         } else {
-            l2_evid1    = arp_table.EVID;
             idglort     = arp_table.DGLORT;
             mark_routed = arp_table.markRouted;
         }
 
+        if (arp_table.UpdateL2Domain)
+            l2_edomain = arp_table.L2Domain;
+
         if (arp_table.UpdateL3Domain)
             l3_edomain = arp_table.L3Domain;
         
-        if (arp_table.UpdateL2Domain)
-            l2_edomain = arp_table.L2Domain;
-        
+        l2_evid1   =  arp_table.EVID;
         mtu_index  =  arp_table.MTU_Index;
         mod_index  = (arp_table.ModIdx >> 2) & 0xFFFF;
         decap      = (arp_table.ModIdx >> 1) & 0x1;

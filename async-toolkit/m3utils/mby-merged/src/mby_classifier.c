@@ -1324,10 +1324,14 @@ static void transformActions
     for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
         policer_action[i] = actions.act24[i].val;
 
+    // Pass-thru from Mapper:
+    fm_uint16 l2_idomain = in->L2_IDOMAIN;
+    fm_byte   l3_idomain = in->L3_IDOMAIN;    
+    
     // Write outputs:
     out->L34_HASH         = ecmp_hash;
-    out->L2_IDOMAIN       = 0;
-    out->L3_IDOMAIN       = 0;
+    out->L2_IDOMAIN       = l2_idomain;
+    out->L3_IDOMAIN       = l3_idomain;
     out->MOD_IDX          = mod_idx;
     out->L2_ETYPE         = l2_etype;
     out->MPLS_POP         = mpls_pop;
