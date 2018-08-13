@@ -19,7 +19,7 @@
 // to access MBY registers
   
 
-class mby_extended_base_seq extends mby_base_seq;
+class mby_extended_base_seq extends mby_env_base_seq;
   `uvm_object_utils(mby_extended_base_seq) 
   `uvm_declare_p_sequencer(slu_sequencer)
   

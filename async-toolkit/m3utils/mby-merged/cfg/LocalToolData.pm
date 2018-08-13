@@ -35,6 +35,7 @@ $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_PATH}                       = "
 $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "&get_tool_env_var(jaspergold,JASPERGOLD_UXDB_ARGS)";
 $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_VER}                             = "&get_tool_version(jaspergold)/";
 $ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}                          = "&get_tool_version(jaspergold)";
+$ToolConfig_tools{runtools}{ENV}{DESIGNWARE_HOME}                            = "&get_tool_path(vipsvt)";
 
 #####################################################
 #    Configure Environment variables for Nebulon    #
@@ -75,6 +76,14 @@ $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "
 
 # Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
 $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
+
+$ToolConfig_tools{vipsvt} = {
+    VERSION    => "O-2018.06",
+    PATH       => "$ENV{RTL_CAD_ROOT}/synopsys/designware/&get_tool_version()",
+    ENV        => { SVT_VERSION     => "&get_tool_version()",
+                    DESIGNWARE_HOME => "&get_tool_path()" },
+    ENV_APPEND => { PATH            => "&get_tool_path()/bin" },
+};
 
 $ToolConfig_tools{dc_shell} = {
     VERSION    =>  "I-2013.12-SP5-6",
@@ -241,7 +250,7 @@ $ToolConfig_tools{"NaturalDocs"} = {
 $ToolConfig_tools{"sbt"} = {
     VERSION => "1.1.2",
     PATH => "/usr/intel/pkgs/sbt/&get_tool_version()",
-    EXEC => "&get_tool_path()/bin/sbt -Dhttp.proxyHost=proxy-us.intel.com -Dhttp.proxyPort=912 -Dhttps.proxyHost=proxy-us.intel.com -Dhttps.proxyPort=912 -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
+    EXEC => "&get_tool_path()/bin/sbt -Dhttp.proxyHost=proxy-chain.intel.com -Dhttp.proxyPort=911 -Dhttps.proxyHost=proxy-chain.intel.com -Dhttps.proxyPort=911 -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
     ENV_APPEND => {
       PATH => "&get_tool_path()/bin",
     },

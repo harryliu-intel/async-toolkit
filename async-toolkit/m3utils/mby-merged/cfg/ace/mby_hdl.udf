@@ -92,7 +92,7 @@ EOF
 
             mby_env_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_env.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
             },
 
@@ -126,7 +126,7 @@ EOF
             
             cdn_pcie_lib => {
                     -hdl_spec => [
-                        "verif/common/cdn_pcie_pkg/cdn_pcie_env.hdl",
+                        "cfg/ace/HDL/verif/cdn_pcie_env.hdl",
                     ],
                     -dependent_libs => [
                         "shdv_shared_lib",
@@ -137,6 +137,43 @@ EOF
                         "-sglp_createlib",
                     ],
                     -tag => "nonsynth+nonemul+nonlint",
+            },
+            
+            svt_axi_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/svt_axi_env.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
+            
+            mby_common_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/mby_common_pkg.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib' ],
+               -tag            => "nonsynth+nonlint",
+            },
+            
+            mby_mc_env_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_env.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'svt_axi_lib'],
+               -tag            => "nonsynth",
+            },
+            
+            mby_mc_test_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_test.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib'],
+               -tag            => "nonsynth",
+            },
+            
+            mby_mc_ti_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib' ],
+               -tag            => "nonsynth",
+            },
+            
+            mby_mc_tb_top_np_nphy_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_tb_top_np_nphy.hdl', ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_test_lib', 'mby_mc_ti_lib', 'mby_common_lib', 'svt_axi_lib'],
+               -tag            => "nonsynth",
             },
             
             mby_jasper_lib => {
@@ -215,6 +252,77 @@ EOF
                },
             },
 
+            mplex_np_nphy => {
+               top         => 'mby_mc_tb_top_np_nphy_lib.mby_mc_cfg_np_nphy',
+               #jg_elab_top => 'mby_jasper_lib.mby_top',
+
+               #enable_congruency_elab  =>  $mby_enable_congruency_elab,
+               #enable_xprop_elab       =>  $mby_enable_xprop_elab,
+               #enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
+
+               libs => [
+                  "mby_rtl_lib",
+                  "mby_regflow_lib",
+                  "gen_mby_regflow_lib",
+                  "gen_mby_wm",
+                  "gen_mby_wm_m3",
+                  "mby_mc_ti_lib",  
+                  "shdv_shared_lib",
+                  "mby_mc_env_lib", 
+                  "mby_mc_test_lib", 
+                  "mby_mc_tb_top_np_nphy_lib", 
+                  "mby_jasper_lib", 
+                  "mby_wm_dpi_lib",
+                  "cdn_pcie_lib",
+                  "svt_axi_lib",
+                  "mby_common_lib",
+               ],
+
+               elab_opts => [
+                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                  libs => [
+                     "mby_rtl_lib",
+                     "mby_regflow_lib",
+                     "mby_mc_ti_lib",
+                     "mby_mc_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mplex",
+                     #"verif/mplex/fal",
+                     "verif/mplex/ral",
+                     "verif/mplex/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                     "$ENV{SAOLA_HOME}/verilog",
+                     "$ENV{SAOLA_HOME}/verilog_uvm",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+            }, # mplex_np_nphy
+            
             mby_lintra => {
                top  => "mby_rtl_lib.mby",
                libs => [ "mby_rtl_lib" ],
@@ -228,7 +336,7 @@ EOF
                   "mby_ti_lib",
                   "shdv_shared_lib",
                   "mby_env_lib",
-		  "mby_test_lib",
+		          "mby_test_lib",
                   "mby_wm_dpi_lib",
                   "upf",
                   "lpa"

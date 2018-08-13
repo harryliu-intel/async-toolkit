@@ -70,8 +70,9 @@ Group: Fal  {
    File: toplevel_fuse_env.svh  (mby/fal/toplevel_fuse_env.svh)
    }  # Group: Fal
 
+File: mby_base_seq  (lib/mby_common_pkg/mby_base_seq.svh)
+File: mby_common_pkg  (lib/mby_common_pkg/mby_common_pkg.sv)
 File: mby_defines.sv  (mby/tb/mby_defines.sv)
-File: mby_tb  (mby/tb/mby_tb.sv)
 
 Group: Ral  {
 
@@ -82,7 +83,7 @@ Group: Ral  {
 
 Group: Seq  {
 
-   File: mby_base_seq.sv  (mby/seq/mby_base_seq.sv)
+   File: mby_env_base_seq.sv  (mby/seq/mby_env_base_seq.sv)
    File: mby_extended_base_seq.sv  (mby/seq/mby_extended_base_seq.sv)
    File: mby_isr_seq.sv  (mby/seq/mby_isr_seq.sv)
    File: mby_pci_config_seq.sv  (mby/seq/mby_pci_config_seq.sv)
@@ -109,6 +110,60 @@ Group: Ti  {
    File: mby_ti_low.sv  (mby/ti/mby_ti_low.sv)
    }  # Group: Ti
 
+Group: Lib  {
+
+   Group: Cdn_pcie_bfm  {
+
+      File: pcie_ep_mon  (lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon.sv)
+      File: pcie_ep_mon_phy  (lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon_phy.sv)
+      File: pcie_rc_bfm  (lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm.sv)
+      File: pcie_rc_bfm_phy  (lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm_phy.sv)
+      }  # Group: Cdn_pcie_bfm
+
+   Group: Svt_axi_bfm  {
+
+      File: axi_master_directed_sequence  (lib/svt_axi_bfm/svt_axi_master_directed_sequence.sv)
+      File: axi_reset_if  (lib/svt_axi_bfm/svt_axi_reset_if.sv)
+      File: axi_uvm_scoreboard  (lib/svt_axi_bfm/svt_axi_scoreboard.sv)
+      File: cust_axi_master_transaction  (lib/svt_axi_bfm/cust_svt_axi_master_transaction.sv)
+      File: cust_svt_axi_system_configuration  (lib/svt_axi_bfm/cust_svt_axi_system_cfg.sv)
+      File: svt_axi_bfm_defines  (lib/svt_axi_bfm/svt_axi_bfm_defines.sv)
+      File: svt_axi_bfm_pkg  (lib/svt_axi_bfm/svt_axi_bfm_pkg.sv)
+      File: svt_bfm_env  (lib/svt_axi_bfm/svt_axi_bfm_env.sv)
+      File: svt_ethernet_virtual_sequencer  (lib/svt_axi_bfm/svt_axi_virtual_sequencer.sv)
+      }  # Group: Svt_axi_bfm
+
+   }  # Group: Lib
+
+Group: Mplex  {
+
+   File: env/mby_mc_defines.svh  (mplex/env/mby_mc_defines.svh)
+   File: env/mby_mc_env.svh  (mplex/env/mby_mc_env.svh)
+   File: mby_mc_cfg  (mplex/env/mby_mc_cfg.svh)
+   File: mby_mc_env_pkg  (mplex/env/mby_mc_env_pkg.sv)
+   File: mby_mc_tb_top  (mplex/tb/mby_mc_tb_top_np_nphy.sv)
+   }  # Group: Mplex
+
+File: mby_tb  (mby/tb/mby_tb.sv)
+
+Group: Mplex  {
+
+   File: mby_mc_alive_test  (mplex/tests/mby_mc_alive_test/mby_mc_alive_test.svh)
+   File: mby_mc_base_test  (mplex/tests/common/mby_mc_base_test.svh)
+
+   Group: seq  {
+
+      File: mby_mc_env_base_seq  (mplex/seq/mby_mc_env_base_seq.svh)
+      File: mby_mc_env_cfg_seq  (mplex/seq/mby_mc_env_cfg_seq.svh)
+      File: mby_mc_hard_reset_seq  (mplex/seq/mby_mc_hard_reset_seq.svh)
+      File: mby_mc_power_good_seq  (mplex/seq/mby_mc_power_good_seq.svh)
+      File: mby_mc_seq_lib  (mplex/seq/mby_mc_seq_lib.sv)
+      File: mby_mc_warm_reset_seq  (mplex/seq/mby_mc_warm_reset_seq.svh)
+      }  # Group: seq
+
+   File: mby_mc_test_lib  (mplex/tests/common/mby_mc_test_lib.sv)
+   }  # Group: Mplex
+
 Group: Index  {
 
    Index: Everything
@@ -117,5 +172,8 @@ Group: Index  {
    File Index: Files
    Method Index: Methods
    Variable Index: Variables
+   Macro Index: Macros
+   Package Index: Packages
+   Type Index: Types
    }  # Group: Index
 

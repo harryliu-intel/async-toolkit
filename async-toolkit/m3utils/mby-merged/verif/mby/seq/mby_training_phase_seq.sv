@@ -28,7 +28,7 @@
  */
 
 
-class mby_training_phase_seq extends mby_base_seq;
+class mby_training_phase_seq extends mby_env_base_seq;
   
 
   

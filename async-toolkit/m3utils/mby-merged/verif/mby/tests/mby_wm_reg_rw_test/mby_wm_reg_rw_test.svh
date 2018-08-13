@@ -51,7 +51,7 @@ class mby_wm_reg_rw_test extends mby_base_test;
 endclass : mby_wm_reg_rw_test
 
 
-class mby_wm_reg_rw_seq extends mby_base_seq;
+class mby_wm_reg_rw_seq extends mby_env_base_seq;
 
     `uvm_object_utils(mby_wm_reg_rw_seq)
 

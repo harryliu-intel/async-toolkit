@@ -16,7 +16,6 @@ lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar"
 lazy val csr = project in file("csr")
 
 lazy val root = (project in file("."))
-  .dependsOn(csr) // TODO: Temporary solution. Use explicit dependency artifact
   .settings(
     Settings.commonSettings,
     name := "wm",
@@ -28,3 +27,16 @@ lazy val root = (project in file("."))
     assemblyOutputPath in assembly := path,
     sourceGenerators in Compile += Def.task { makeWmServerCode }.taskValue
   )
+
+val buildOnNhdk = taskKey[Unit]("Build task for nhdk environment.")
+buildOnNhdk := Def.sequential(
+  clean in csr,
+  clean in root,
+  publishLocal in csr,
+  update in root,
+  compile in Compile in root,
+  doc in Compile in root,
+  assembly in root,
+  publish in root,
+  publish in csr
+).value
