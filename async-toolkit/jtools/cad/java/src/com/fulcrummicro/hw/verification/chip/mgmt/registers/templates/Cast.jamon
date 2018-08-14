@@ -152,7 +152,8 @@ define <% camelCaseBaseName %>Management() attributes
 <%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
   <+ <% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Management
 </%if></%for></%if>\
-  <+ AddressSpace {
+  <+ AddressSpace 
+  <+ core.neuro.v2.register_functions.RegisterFunctions {
   int <% baseName %>_MGMT_BITS = <% mgmtDataBits %>;
   csp {
 <%doc>************************************************************</%doc>\

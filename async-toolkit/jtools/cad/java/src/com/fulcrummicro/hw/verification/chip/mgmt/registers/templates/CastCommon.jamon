@@ -46,7 +46,7 @@ Register reg;
 String namePrefix ="";
 </%args>\
 <%doc>----</%doc><%if reg.isStructure() %>\
-        <% Utility.underscoreToCamelCase(reg.getName(), true) %>
+        Reg<% Utility.underscoreToCamelCase(reg.getName(), true) %>
 <%doc>----</%doc><%else>\
         int(<% reg.getName() %>_BITS)
 <%doc>----</%doc></%if>\
