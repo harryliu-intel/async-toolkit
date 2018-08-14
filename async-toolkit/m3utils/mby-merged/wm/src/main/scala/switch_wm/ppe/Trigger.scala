@@ -1,7 +1,9 @@
 package switch_wm.ppe
 
 import switch_wm.PipelineStage
-import switch_wm.csr._
+import com.intel.cg.hpfd.csr._
+import com.intel.cg.hpfd.csr.generated._
+
 import switch_wm.ppe.Trigger.MatchCase
 
 import scala.collection.immutable.BitSet
