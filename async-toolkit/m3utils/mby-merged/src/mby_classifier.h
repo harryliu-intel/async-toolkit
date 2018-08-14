@@ -281,11 +281,6 @@
 //efine MBY_CPU_CODE_TTL              0x96;
 //efine MBY_CPU_CODE_MAX              0xFF;
 
-/* Frame types */
-#define MBY_ETYPE_IPv4                 0x0800
-#define MBY_ETYPE_IPv6                 0x86DD
-#define MBY_ETYPE_MAC_CONTROL          0x8808
-
 #define MBY_IPV6_OPTION_HOP_BY_HOP     0
 #define MBY_IPV6_OPTION_ROUTING       43
 #define MBY_IPV6_OPTION_FRAG          44

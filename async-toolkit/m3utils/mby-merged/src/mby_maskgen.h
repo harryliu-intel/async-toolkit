@@ -251,8 +251,102 @@
 
 #define MBY_FWD_MA_TABLE_DIRTY_IM_b_MASK                        0
 
+// Action Codes:
+#define MBY_ACTION_NORMAL             0   /* forwarded normally */
+#define MBY_ACTION_FLOOD              1   /* flooded due to unknown destination */
+#define MBY_ACTION_SPECIAL            2   /* forwarded with fixed destination mask */
+#define MBY_ACTION_DROP_PARSE         3   /* drop due to parse error */
+#define MBY_ACTION_DROP_PARITY        4   /* dropped due to parity error */
+#define MBY_ACTION_TRAP               5   /* trap spec. mcast add., MAC CTL & MAC REMAP CTL */
+#define MBY_ACTION_DROP_CONTROL       6   /* dropped pause frame */ 
+#define MBY_ACTION_DROP_STP           7   /* dropped due to spanning tree*/
+#define MBY_ACTION_DROP_SV            8   /* dropped due to security violation */
+#define MBY_ACTION_MARKER_ERROR_DROPS 9   /* marker packets dropped due to fatal errors */
+#define MBY_ACTION_DROP_IV            10   /* dropped due to vlan ingress violation */
+#define MBY_ACTION_DROP_EV            11   /* dropped due to vlan egress violation */
+#define MBY_ACTION_DROP_CAM           12
+#define MBY_ACTION_DROP_FFU           13   /* dropped due to FFU flag */
+#define MBY_ACTION_DROP_TRIG          14   /* dropped due to a trigger action */
+#define MBY_ACTION_DROP_L3_PYLD_LEN   15   /* Single segment frames dropped when the L3 payload length does not agree with the actual packet length */
+#define MBY_ACTION_DROP_POLICER       16   /* dropped due the policer_drop flag from pre. */
+#define MBY_ACTION_DROP_TTL           17  
+#define MBY_ACTION_DROP_CM_GLOBAL     18
+#define MBY_ACTION_DROP_CM_SMP0       19
+#define MBY_ACTION_DROP_CM_SMP1       20
+#define MBY_ACTION_DROP_CM_RX_HOG0    21
+#define MBY_ACTION_DROP_CM_RX_HOG1    22
+#define MBY_ACTION_DROP_CM_TX_HOG0    23
+#define MBY_ACTION_DROP_CM_TX_HOG1    24
+#define MBY_ACTION_DROP_FRAME_ERR     25
+#define MBY_ACTION_REDIRECT_TRIG      26   /* redirected due to trigger match */
+#define MBY_ACTION_DROP_DLF           27   /* drop due to flood control of DLF frames */
+#define MBY_ACTION_GLORT_FORWARDED    28  /* Glort forwarded. */
+#define MBY_ACTION_BANK5_OTHER_DROPS  29  /* Bank 5 Other Drops */
+#define MBY_ACTION_DROP_LOOPBACK      30  /* Drop due to port or VLAN reflection disabled. */
+#define MBY_ACTION_DROP_L4_CSUM       31  /* Single segment packet drops due to L4 checksum (UDP, TCP, SCTP) failures */
+
+#define MBY_AMASK_DROP_PERR                  ( FM_LITERAL_U64(1) <<  0  )
+#define MBY_AMASK_SPECIAL                    ( FM_LITERAL_U64(1) <<  1  )
+#define MBY_AMASK_DROP_PARSER_ERR            ( FM_LITERAL_U64(1) <<  2  )
+#define MBY_AMASK_TRAP_RESERVED_MAC          ( FM_LITERAL_U64(1) <<  3  )
+#define MBY_AMASK_TRAP_RESERVED_MAC_REMAP    ( FM_LITERAL_U64(1) <<  4  )
+#define MBY_AMASK_DROP_MAC_CTRL              ( FM_LITERAL_U64(1) <<  7  )
+#define MBY_AMASK_DROP_RESERVED_MAC          ( FM_LITERAL_U64(1) <<  8  )
+#define MBY_AMASK_DROP_SMAC                  ( FM_LITERAL_U64(1) <<  10 )
+#define MBY_AMASK_DROP_SEC_ADDR              ( FM_LITERAL_U64(1) <<  11 )
+#define MBY_AMASK_DROP_SEC_PORT              ( FM_LITERAL_U64(1) <<  12 )
+#define MBY_AMASK_DROP_STATIC_ADDR           ( FM_LITERAL_U64(1) <<  13 )
+#define MBY_AMASK_DROP_PROVISIONAL           ( FM_LITERAL_U64(1) <<  14 )
+#define MBY_AMASK_TRAP_CPU_ADDR              ( FM_LITERAL_U64(1) <<  15 )
+#define MBY_AMASK_DROP_IV                    ( FM_LITERAL_U64(1) <<  16 )
+#define MBY_AMASK_DROP_INGRESS_STP_NON_LEARN ( FM_LITERAL_U64(1) <<  17 )
+#define MBY_AMASK_DROP_INGRESS_STP_LEARN     ( FM_LITERAL_U64(1) <<  18 )
+#define MBY_AMASK_DROP_FFU                   ( FM_LITERAL_U64(1) <<  19 )
+#define MBY_AMASK_TRAP_FFU                   ( FM_LITERAL_U64(1) <<  20 )
+#define MBY_AMASK_TRAP_ICMP_TTL              ( FM_LITERAL_U64(1) <<  21 )
+#define MBY_AMASK_TRAP_IP_OPTION             ( FM_LITERAL_U64(1) <<  22 )
+#define MBY_AMASK_TRAP_MTU_VIO               ( FM_LITERAL_U64(1) <<  23 )
+#define MBY_AMASK_TRAP_IGMP                  ( FM_LITERAL_U64(1) <<  24 )
+#define MBY_AMASK_TRAP_TTL                   ( FM_LITERAL_U64(1) <<  25 )
+#define MBY_AMASK_DROP_TTL                   ( FM_LITERAL_U64(1) <<  26 )
+#define MBY_AMASK_DROP_DLF                   ( FM_LITERAL_U64(1) <<  27 )
+#define MBY_AMASK_DROP_CAM_MISS              ( FM_LITERAL_U64(1) <<  28 )
+#define MBY_AMASK_DROP_NULL_GLORTDEST        ( FM_LITERAL_U64(1) <<  29 )
+#define MBY_AMASK_DROP_EV                    ( FM_LITERAL_U64(1) <<  30 )
+#define MBY_AMASK_DROP_EGRESS_STP            ( FM_LITERAL_U64(1) <<  32 )
+#define MBY_AMASK_DROP_LOOPBACK              ( FM_LITERAL_U64(1) <<  33 )
+#define MBY_AMASK_GLORT                      ( FM_LITERAL_U64(1) <<  34 )
+#define MBY_AMASK_FLOOD                      ( FM_LITERAL_U64(1) <<  35 )
+#define MBY_AMASK_SWITCH_RESERVED_MAC        ( FM_LITERAL_U64(1) <<  36 )
+#define MBY_AMASK_FORWARD_NORMAL             ( FM_LITERAL_U64(1) <<  37 )
+#define MBY_AMASK_LOG_INGRESS_FFU            ( FM_LITERAL_U64(1) <<  38 )
+#define MBY_AMASK_LOG_MAC_CTRL               ( FM_LITERAL_U64(1) <<  39 )
+#define MBY_AMASK_LOG_ARP_REDIRECT           ( FM_LITERAL_U64(1) <<  40 )
+#define MBY_AMASK_LOG_IP_ICMP                ( FM_LITERAL_U64(1) <<  41 )
+#define MBY_AMASK_LOG_IP_TTL                 ( FM_LITERAL_U64(1) <<  42 )
+#define MBY_AMASK_MIRROR_INGRESS_FFU         ( FM_LITERAL_U64(1) <<  43 )
+
+#define MBY_LOG_TYPE_TRIG_LOG_ACTION  (1 << 0)
+#define MBY_LOG_TYPE_FFU              (1 << 1)
+#define MBY_LOG_TYPE_RESERVED_MAC     (1 << 2)
+#define MBY_LOG_TYPE_ARP_REDIRECT     (1 << 3)
+#define MBY_LOG_TYPE_ICMP             (1 << 4)
+#define MBY_LOG_TYPE_TTL_IP_MC        (1 << 5)
+#define MBY_LOG_TYPE_IP_UCST_L2_MCST  (1 << 7) /* EAC TBR */
+
+#define MBY_DMAC_IEEE_PREFIX          FM_LITERAL_U64(0x0180c2000000)
+#define MBY_SPECIAL_DMASK             0xFFFFFFFFFF00
+
 // Enums:
 
+typedef enum mbyIeeeReservedMacActionActionEnum
+{
+    MBY_IEEE_RESERVED_MAC_ACTION_ACTION_SWITCHNORMALLY = 0,
+    MBY_IEEE_RESERVED_MAC_ACTION_ACTION_TRAP = 1,
+    MBY_IEEE_RESERVED_MAC_ACTION_ACTION_DROP = 2,
+    MBY_IEEE_RESERVED_MAC_ACTION_ACTION_LOG = 3
+
+} mbyIeeeReservedMacActionAction;
 
 // Structs:
 
@@ -280,9 +374,36 @@ typedef struct mbyFwdSysCfg1Struct
 
 } mbyFwdSysCfg1;
 
+typedef struct mbyFwdSysCfgRouterStruct
+{
+    fm_bool                 TRAP_IP_OPTIONS;
+    fm_byte                 TRAP_TTL1;
+
+} mbyFwdSysCfgRouter;
+
 typedef struct mbyMaskGenToTriggersStruct
 {
-    fm_bool                 FOO;
+    fm_bool                 LEARNING_ENABLED;    // learning enabled status within action codes
+    fm_uint64               AMASK;               // 46-bit action mask
+    fm_uint32               DMASK;               // 24-bit destination mask
+    fm_uint32               FNMASK;              // 24-bit normal forwarding mask
+    fm_byte                 LOG_AMASK;           // 6-bit logging action mask
+    fm_bool                 CPU_TRAP;            // flag indicating frame should be sent to CPU
+    fm_byte                 OPERATOR_ID;         // 4-bit operator ID
+    fm_byte                 QOS_SWPRI;           // 4-bit switch priority
+    fm_bool                 STORE_TRAP_ACTION;   // flag indicating whether 4bit trap action code will be stored in metadata
+    fm_uint16               IDGLORT;             // 16-bit ingress destination GLORT
+    fm_bool                 LOGGING_HIT;         // flag indicating whether logging was hit
+    fm_bool                 MCAST_EPOCH;         // flag defining current epoch for multicast garbage collection
+    fm_int                  MIRROR0_PORT;        // mirror 0 port
+    fm_int                  MIRROR1_PORT;        // mirror 1 port
+    fm_byte                 MIRROR0_PROFILE_V;   // mirror 0 profile valid
+    fm_byte                 MIRROR1_PROFILE_V;   // mirror 1 profile valid
+    fm_int                  MIRROR0_PROFILE_IDX; // mirror 0 profile index
+    fm_int                  MIRROR1_PROFILE_IDX; // mirror 1 profile index
+    fm_uint32               ACTION;              // resolved action
+    fm_byte                 L2_EDOMAIN;          // egress L2 domain
+    fm_byte                 L3_EDOMAIN;          // egress L3 domain
 
 } mbyMaskGenToTriggers;
 

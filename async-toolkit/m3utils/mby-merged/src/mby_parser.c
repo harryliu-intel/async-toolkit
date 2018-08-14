@@ -77,8 +77,11 @@ void Parser
 
     // Pass-thru (some) inputs to outputs:
     out->RX_PORT = in->RX_PORT;
+
+#if 0 // Obsolete <-- REVISIT!!!
     for (fm_uint i = 0; i < MBY_PA_ANA_STAGES; i++)
         out->PKT_META[i] = in->PKT_META[i];
+#endif
 
     // Initialize (some of) the outputs:
     out->PA_EX_DEPTH_EXCEED = 0;

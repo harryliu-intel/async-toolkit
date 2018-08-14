@@ -11,6 +11,7 @@
 #include "mby_classifier.h"
 #include "mby_hash.h"
 #include "mby_nexthop.h"
+#include "mby_maskgen.h"
 
 // Function prototypes:
 
@@ -47,6 +48,13 @@ void NextHop
     fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyHashToNextHop    * const in,
           mbyNextHopToMaskGen * const out
+);
+
+void MaskGen
+(
+    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyNextHopToMaskGen  * const in,
+          mbyMaskGenToTriggers * const out
 );
 
 #endif // MBY_PIPELINE_H

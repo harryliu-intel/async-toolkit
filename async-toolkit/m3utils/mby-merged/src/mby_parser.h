@@ -229,7 +229,7 @@ typedef struct mbyMacToParserStruct
     fm_uint32               RX_LENGTH;
 
     // The ingress port
-    fm_int                  RX_PORT;
+    fm_uint32               RX_PORT;
 
     // Packet meta data:
     fm_byte                 PKT_META[32];
@@ -239,7 +239,7 @@ typedef struct mbyMacToParserStruct
 typedef struct mbyParserToMapperStruct
 {
     // The ingress port (pass-thru):
-    fm_int                  RX_PORT;
+    fm_uint32               RX_PORT;
 
     // Packet meta data (pass-thru):
     fm_byte                 PKT_META[32];

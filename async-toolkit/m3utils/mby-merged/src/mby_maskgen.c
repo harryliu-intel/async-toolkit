@@ -35,8 +35,8 @@ static void getPortCfg2
 
 static void getSysCfg1
 (
-    fm_uint32              regs[MBY_REGISTER_ARRAY_SIZE],
-    mbyFwdSysCfg1  * const cfg
+    fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
+    mbyFwdSysCfg1 * const cfg
 )
 {
     fm_uint32 fwd_sys_cfg1_vals[MBY_FWD_SYS_CFG_1_WIDTH] = { 0 };
@@ -49,6 +49,33 @@ static void getSysCfg1
     cfg->TRAP_MTU_VIOLATIONS     = FM_ARRAY_GET_BIT(fwd_sys_cfg1_vals, MBY_FWD_SYS_CFG_1, TRAP_MTU_VIOLATIONS);
 }
 
+static void getSysCfgRouter
+(
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+    mbyFwdSysCfgRouter * const cfg
+)
+{
+    fm_uint32 fwd_sys_cfg_router_vals[MBY_FWD_SYS_CFG_ROUTER_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_FWD_SYS_CFG_ROUTER(0), MBY_FWD_SYS_CFG_ROUTER_WIDTH, fwd_sys_cfg_router_vals);
+
+    cfg->TRAP_IP_OPTIONS = FM_ARRAY_GET_BIT  (fwd_sys_cfg_router_vals, MBY_FWD_SYS_CFG_ROUTER, TRAP_IP_OPTIONS);
+    cfg->TRAP_TTL1       = FM_ARRAY_GET_FIELD(fwd_sys_cfg_router_vals, MBY_FWD_SYS_CFG_ROUTER, TRAP_TTL1);
+}
+
+static fm_bool isCpuMacAddress
+(
+    fm_uint32        regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_macaddr mac_addr
+)
+{
+    fm_uint32 fwd_cpu_mac_vals[MBY_FWD_CPU_MAC_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_FWD_CPU_MAC(0), MBY_FWD_CPU_MAC_WIDTH, fwd_cpu_mac_vals);
+    fm_macaddr cpu_mac_addr = FM_ARRAY_GET_FIELD64(fwd_cpu_mac_vals, MBY_FWD_CPU_MAC, MAC_ADDR);
+
+    fm_bool result = (mac_addr == cpu_mac_addr);
+    return result;
+}
+
 void MaskGen
 (
     fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
@@ -56,8 +83,15 @@ void MaskGen
           mbyMaskGenToTriggers * const out
 )
 {
-    fm_uint32 rx_port = 0; // REVISIT !!!!
+    // Get inputs:
+    fm_uint32   rx_port         = in->RX_PORT;
+    fm_bool     parser_window_v = in->PARSER_WINDOW_V; // was: in->PARSER_INFO.window_parse_v;
+    fm_macaddr  l2_smac         = in->L2_SMAC;
+    fm_macaddr  l2_dmac         = in->L2_DMAC;
+    mbySTPState l2_ifid1_state  = in->L2_IFID1_STATE;
+    fm_bool     no_learn        = in->NO_LEARN;
     
+    // Configurations:
     mbyFwdPortCfg1 port_cfg1;
     getPortCfg1(regs, rx_port, &port_cfg1);
 
@@ -67,47 +101,134 @@ void MaskGen
     mbyFwdSysCfg1 sys_cfg1;
     getSysCfg1 (regs, &sys_cfg1);
 
+    mbyFwdSysCfgRouter sys_cfg_router;
+    getSysCfgRouter(regs, &sys_cfg_router);
+
+    // Logging:
+    fm_bool logging_hit = FALSE;
+    
+    // Learning:
+    fm_bool l2_ifid1_learn   = ((l2_ifid1_state == MBY_STP_STATE_LEARNING) ||
+                                (l2_ifid1_state == MBY_STP_STATE_FORWARD));
+    fm_bool learning_allowed = port_cfg1.LEARNING_ENABLE && !no_learn && l2_ifid1_learn;
+    fm_bool l2_smac_is_cpu   = isCpuMacAddress(regs, in->L2_SMAC); // L2_SMAC = CPU MAC -> disable learning
+    fm_bool l2_smac_is_zero  = (l2_smac == 0); // L2_SMAC = 0 -> disable learning
+    fm_bool learning_enabled = learning_allowed && !l2_smac_is_cpu && !l2_smac_is_zero;
+
+    out->LEARNING_ENABLED = learning_enabled;
+    
+    // Action & log action masks:
+    fm_uint64 amask = 0;
+    fm_byte log_amask = 0;
+    
+    if (in->GLORT_CAM_MISS)
+        amask |= MBY_AMASK_DROP_CAM_MISS;   // CAM miss -> drop frame
+    
+    if (in->TARGETED_DETERMINISTIC)
+        amask |= MBY_AMASK_SPECIAL;         // frame is special delivery
+    
+    if (in->PARSER_ERROR)
+        amask |= MBY_AMASK_DROP_PARSER_ERR; // parser err -> drop frame
+
+    if (in->TRAP_IGMP)
+        amask |= MBY_AMASK_TRAP_IGMP;       // trap IGMP frame
+    
+    if (in->PARITY_ERROR)
+        amask |= MBY_AMASK_DROP_PERR;       // parity err -> drop frame 
+
+    if ((sys_cfg1.DROP_MAC_CTRL_ETHERTYPE == TRUE) && (in->L2_ETYPE == MBY_ETYPE_MAC_CONTROL))
+        amask |= MBY_AMASK_DROP_MAC_CTRL;   // MAC CTRL Eth type 0x8808 Frame -> drop frame
+
+    fm_bool drop_invalid_smac  = sys_cfg1.DROP_INVALID_SMAC;
+    fm_bool l2_smac_is_invalid = l2_smac_is_zero && !parser_window_v;
+    fm_bool l2_smac_is_broad   = isBroadcastMacAddress(l2_smac);
+    fm_bool l2_smac_is_multi   = isMulticastMacAddress(l2_smac);
+
+    if (drop_invalid_smac && (l2_smac_is_invalid || l2_smac_is_broad || l2_smac_is_multi))
+        amask |= MBY_AMASK_DROP_SMAC;       // SMAC frame -> drop frame
+    
+    // Process traps:
+    fm_bool log_ip_mc_ttl = FALSE;
+    fm_bool l2_dmac_cpu   = isCpuMacAddress(regs, l2_dmac);
+    fm_bool l2_dmac_zero  = (l2_dmac == 0);
+
+    if (l2_dmac_cpu && !(l2_dmac_zero && parser_window_v))
+        amask |= MBY_AMASK_TRAP_CPU_ADDR; // Trapping CPU addressed frame
+
+    // Special packet handling:
+    if ((l2_dmac & MBY_SPECIAL_DMASK) == (MBY_DMAC_IEEE_PREFIX & MBY_SPECIAL_DMASK))
+    {
+        fm_uint32 fwd_rsvd_mac_action_vals[MBY_FWD_IEEE_RESERVED_MAC_ACTION_WIDTH] = { 0 };
+        mbyModelReadCSRMult(regs, MBY_FWD_IEEE_RESERVED_MAC_ACTION(0), MBY_FWD_IEEE_RESERVED_MAC_ACTION_WIDTH, fwd_rsvd_mac_action_vals);
+
+        fm_uint32 fwd_rsvd_mac_trap_pri_vals[MBY_FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY_WIDTH] = { 0 };
+        mbyModelReadCSRMult(regs, MBY_FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY(0), MBY_FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY_WIDTH, fwd_rsvd_mac_trap_pri_vals);
+
+        fm_byte rmc_idx  = l2_dmac & 0x3F; // 6 bits (0..63)
+        fm_byte action   = FM_ARRAY_GET_UNNAMED_FIELD(fwd_rsvd_mac_action_vals, 2 * rmc_idx, 2); // 2-bit action
+        fm_bool trap_pri = FM_ARRAY_GET_UNNAMED_BIT  (fwd_rsvd_mac_trap_pri_vals, rmc_idx);
+
+        switch (action)
+        {
+            case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_SWITCHNORMALLY:
+                amask |= MBY_AMASK_SWITCH_RESERVED_MAC;
+                break;
+
+            case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_TRAP:
+                amask |= (trap_pri) ? MBY_AMASK_TRAP_RESERVED_MAC_REMAP : MBY_AMASK_TRAP_RESERVED_MAC;
+                break;
+
+            case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_DROP:
+                amask |= MBY_AMASK_DROP_RESERVED_MAC;
+                break;
+
+            default:
+            case MBY_IEEE_RESERVED_MAC_ACTION_ACTION_LOG:
+                amask |= MBY_AMASK_LOG_MAC_CTRL;
+                log_amask |= MBY_LOG_TYPE_RESERVED_MAC;
+                break;
+        }
+    }
+
+    if (in->MARK_ROUTED && (in->IP_MCAST_IDX == 0) && (in->L2_IVID1 == (in->L2_EVID1 & 0xFFF)))
+        log_amask |= MBY_LOG_TYPE_ARP_REDIRECT;
+
+    if (in->DROP_TTL)
+    {
+        if (in->IP_MCAST_IDX == 0)
+        {
+            if      (sys_cfg_router.TRAP_TTL1 == 0)
+                amask |= MBY_AMASK_DROP_TTL;
+            else if (sys_cfg_router.TRAP_TTL1 == 1 )
+                amask |= (in->TRAP_ICMP) ? MBY_AMASK_TRAP_ICMP_TTL : MBY_AMASK_DROP_TTL;
+            else if (sys_cfg_router.TRAP_TTL1 == 2 )
+                amask |= (in->TRAP_ICMP) ? MBY_AMASK_TRAP_ICMP_TTL : MBY_AMASK_TRAP_TTL;
+        }
+        else // Frame is IP multicast:
+        {
+            if ((sys_cfg_router.TRAP_TTL1 == 1) && in->TRAP_ICMP) {
+                log_amask |= MBY_LOG_TYPE_ICMP;
+                log_ip_mc_ttl = TRUE;
+            }
+            else if (sys_cfg_router.TRAP_TTL1 == 2) {
+                log_amask |= (in->TRAP_ICMP) ? MBY_LOG_TYPE_ICMP : MBY_LOG_TYPE_TTL_IP_MC;
+                log_ip_mc_ttl = TRUE;
+            }
+        }
+    }
+
+    if (sys_cfg_router.TRAP_IP_OPTIONS && in->TRAP_IP_OPTIONS && (in->IS_IPV6 || in->IS_IPV4))
+        amask |= MBY_AMASK_TRAP_IP_OPTION;
+
+    if (sys_cfg1.TRAP_MTU_VIOLATIONS && in->MTU_VIOLATION && in->MARK_ROUTED)
+        amask |= MBY_AMASK_TRAP_MTU_VIO; // MTU violation -> trapping frame
+
+    out->AMASK     = amask;
+    out->LOG_AMASK = log_amask;
+    
+    // --------------------------------------------------------------------------------
+    
 #if 0
-    // initialize learning flag:
-    state->LEARNING_ENABLED = 
-        portCfg1.LEARNING_ENABLE &&
-        (!state->NO_LEARN) &&
-        ((state->L2_IFID1_STATE == HLP_MODEL_STP_STATE_LEARNING) ||
-         (state->L2_IFID1_STATE == HLP_MODEL_STP_STATE_FORWARD));
-
-    if (state->GLORT_CAM_MISS)
-        state->AMASK |= HLP_MODEL_AMASK_DROP_CAM_MISS; // CAM miss -> drop frame
-    
-    if (state->TARGETED_DETERMINISTIC)
-        state->AMASK |= HLP_MODEL_AMASK_SPECIAL; // frame is special delivery
-    
-    if (state->PARSER_ERROR)
-        state->AMASK |= HLP_MODEL_AMASK_DROP_PARSER_ERR; // parser err -> drop frame
-
-    if (state->TRAP_IGMP)
-        state->AMASK |= HLP_MODEL_AMASK_TRAP_IGMP; // trap IGMP frame
-    
-    if (state->PARITY_ERROR)
-        state->AMASK |= HLP_MODEL_AMASK_DROP_PERR; // parity err -> drop frame 
-
-    if ((sysCfg1.DROP_MAC_CTRL_ETHERTYPE == TRUE) && (state->L2_ETYPE == HLP_MODEL_ETYPE_MAC_CONTROL))
-        state->AMASK |= HLP_MODEL_AMASK_DROP_MAC_CTRL; // MAC CTRL Eth type 0x8808 Frame -> drop frame
-
-    if ((sysCfg1.DROP_INVALID_SMAC == TRUE) &&
-        (((state->L2_SMAC == 0) && (state->PARSER_INFO.window_parse_v == 0)) ||
-         (fmModelIsBroadcastMacAddress(state->L2_SMAC)) ||
-         (fmModelIsMulticastMacAddress(state->L2_SMAC))))
-        state->AMASK |= HLP_MODEL_AMASK_DROP_SMAC; // SMAC frame -> drop frame
-    
-    if (fmModelIsCpuMacAddress(model, state->L2_SMAC))
-        state->LEARNING_ENABLED = 0; // L2_SMAC = CPU MAC addr -> disable learning
-
-    if (state->L2_SMAC == 0)
-        state->LEARNING_ENABLED = 0; // L2_SMAC = 0 -> disable learning
-
-    fm_bool logIpMcTtl = FALSE;
-    ProcessTraps(model, &logIpMcTtl);
-
     ProcessPortSecurity(model);
 
     ProcessFiltering(model);
@@ -115,82 +236,75 @@ void MaskGen
     ProcessFfuFlags(model);
 
     ProcessQCN(model);
+#endif
+    fm_uint32 dmask = in->PRE_RESOLVE_DMASK; // 24-bit destination mask
 
-    state->DMASK = state->PRE_RESOLVE_DMASK;
-
+    out->DMASK = dmask;
+#if 0
     ProcessEgressStpState(model);
-
-    fm_byte learning_enabled_snapshot = state->LEARNING_ENABLED;
 
     ResolveAction(model);
 
     UpdateActionMask(model, logIpMcTtl);
+#endif
 
-    state->CPU_TRAP = (state->ACTION == HLP_MODEL_ACTION_TRAP);
+    fm_bool cpu_trap = (in->ACTION == MBY_ACTION_TRAP);
 
-    state->OPERATOR_ID = state->PKT_META[20] & 0x0f; 
+    out->CPU_TRAP          = cpu_trap;
+    out->OPERATOR_ID       = in->OPERATOR_ID; // was: in->PKT_META[20] & 0x0f;
+    out->QOS_SWPRI         = in->QOS_SWPRI;
+    out->STORE_TRAP_ACTION = sys_cfg1.STORE_TRAP_ACTION;
 
-    state->QOS_SWPRI &= 0x7; /*TODO: swpri 4bits, tc 3bits; to coordinate with rtl in act_res*/
-
-    state->STORE_TRAP_ACTION = sysCfg1.STORE_TRAP_ACTION;
-
-    // part 2
-
+#if 0
     HandleLAG(model);
 
     HandleLoopbackSuppress(model);
+#endif
+    out->IDGLORT = in->TRIGGERS.destGlort;
 
-    fm_bool doNotTrapOrLog = (state->TRIGGERS.trapAction == HLP_MODEL_TRIG_ACTION_TRAP_REVERT);
+    // Trap:
+    fm_bool trap_trap   = (in->TRIGGERS.trapAction == MBY_TRIG_ACTION_TRAP_TRAP);
+    fm_bool trap_revert = (in->TRIGGERS.trapAction == MBY_TRIG_ACTION_TRAP_REVERT);
+    fm_bool trap_log    = (in->TRIGGERS.trapAction == MBY_TRIG_ACTION_TRAP_LOG);
 
-    /* Trap to CPU */
-    state->IDGLORT = state->TRIGGERS.destGlort;
+    fm_byte l3_edomain  = (in->TRIGGERS.egressL3DomainAction == 0) ? in->L3_EDOMAIN : 0;
+    fm_byte l2_edomain  = (in->TRIGGERS.egressL2DomainAction == 0) ? in->L2_EDOMAIN : 0;
 
-    if ((state->CPU_TRAP || (state->TRIGGERS.trapAction == HLP_MODEL_TRIG_ACTION_TRAP_TRAP)) && !doNotTrapOrLog)
-    {
+#if 0
+    if ((cpu_trap || trap_trap) && !trap_revert)
         err = HandleTraps(model);
-        FM_LOG_ABORT_ON_ERR(FM_LOG_CAT_PLATFORM, err);
-    } else { //TODO: not !trap - should be default
-        if (state->TRIGGERS.egressL3DomainAction == 0) {
-            FM_SET_UNNAMED_FIELD64(state->PKT_META[21], 5, 3, state->L3_EDOMAIN & 0x07);
-            FM_SET_UNNAMED_FIELD64(state->PKT_META[22], 0, 3, state->L3_EDOMAIN >> 3);
-        }
-        if (state->TRIGGERS.egressL2DomainAction == 0) {
-            FM_SET_UNNAMED_FIELD64(state->PKT_META[20], 4, 4, state->L2_EDOMAIN & 0x00F);
-            FM_SET_UNNAMED_FIELD64(state->PKT_META[21], 0, 5, state->L2_EDOMAIN >> 4);
-        }
-    }
-
-    state->LOGGING_HIT = 0;
-
-    if ( ( sysCfg1.ENABLE_TRAP_PLUS_LOG || 
-         (state->CPU_TRAP  == 0) ||  
-           ( state->TRIGGERS.trapAction == HLP_MODEL_TRIG_ACTION_TRAP_TRAP) || 
-           ( state->TRIGGERS.trapAction == HLP_MODEL_TRIG_ACTION_TRAP_LOG) ) &&
-         !doNotTrapOrLog )
-    {
+            
+    if ((sys_cfg1.ENABLE_TRAP_PLUS_LOG || !cpu_trap || trap_trap || trap_log) && !trap_revert)
         err = HandleLogging(model);
-        FM_LOG_ABORT_ON_ERR(FM_LOG_CAT_PLATFORM, err);
-    }
-    
-    regPtr = FM_MODEL_GET_REG_PTR(model, HLP_CM_APPLY_MCAST_EPOCH(0));
-    state->MCAST_EPOCH = FM_GET_BIT(*regPtr, HLP_CM_APPLY_MCAST_EPOCH, CURRENT);
+#endif
 
-    regPtr = FM_MODEL_GET_REG_PTR(model, 
-                                  HLP_CM_APPLY_MIRROR_PROFILE_TABLE(state->MIRROR0_PROFILE_IDX, 0));
-    state->MIRROR0_PORT = FM_GET_FIELD(*regPtr, HLP_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
+//T regPtr = FM_MODEL_GET_REG_PTR(model, HLP_CM_APPLY_MCAST_EPOCH(0));
+    fm_bool mcast_epoch = FALSE; //T FM_GET_BIT(*regPtr, HLP_CM_APPLY_MCAST_EPOCH, CURRENT);
 
-    regPtr = FM_MODEL_GET_REG_PTR(model, 
-                                  HLP_CM_APPLY_MIRROR_PROFILE_TABLE(state->MIRROR1_PROFILE_IDX, 0));
-    state->MIRROR1_PORT = FM_GET_FIELD(*regPtr, HLP_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
+//T regPtr = FM_MODEL_GET_REG_PTR(model, HLP_CM_APPLY_MIRROR_PROFILE_TABLE(in->MIRROR0_PROFILE_IDX, 0));
+    fm_int mirror0_port = 0; //T FM_GET_FIELD(*regPtr, HLP_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
 
-    state->MIRROR0_PROFILE_V &= state->MIRROR0_PORT < HLP_MODEL_PORTS_COUNT;
-    state->MIRROR1_PROFILE_V &= state->MIRROR1_PORT < HLP_MODEL_PORTS_COUNT;
+//T regPtr = FM_MODEL_GET_REG_PTR(model, HLP_CM_APPLY_MIRROR_PROFILE_TABLE(in>MIRROR1_PROFILE_IDX, 0));
+    fm_int mirror1_port = 0; //T FM_GET_FIELD(*regPtr, HLP_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
 
-    state->FNMASK = state->DMASK;
+    fm_uint64 fnmask = dmask; // normal forwarding mask
 
     // partial process of marker drop, can be further modified in cm_apply_checker based on RateLimit
-    if((state->PKT_META[HLP_MODEL_META_TYPE_OFF] == HLP_MODEL_META_TYPE_MARKER) && (state->FNMASK == 0))
-        state->ACTION = HLP_MODEL_ACTION_MARKER_ERROR_DROPS;
+    fm_uint32 action = 0;
+#if 0
+    if ((in->PKT_META[MBY_META_TYPE_OFF] == MBY_META_TYPE_MARKER) && (fnmask == 0))
+        action = MBY_ACTION_MARKER_ERROR_DROPS;
 #endif
+
+    out->MCAST_EPOCH       = mcast_epoch;
+    out->MIRROR0_PORT      = mirror0_port;
+    out->MIRROR1_PORT      = mirror1_port;
+    out->MIRROR0_PROFILE_V = (mirror0_port < MBY_PORTS_COUNT);
+    out->MIRROR1_PROFILE_V = (mirror1_port < MBY_PORTS_COUNT);
+    out->FNMASK            = fnmask;
+    out->L3_EDOMAIN        = l3_edomain;
+    out->L2_EDOMAIN        = l2_edomain;
+    out->LOGGING_HIT       = logging_hit;
+    out->ACTION            = action;
 }
 

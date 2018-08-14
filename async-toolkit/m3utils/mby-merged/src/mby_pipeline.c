@@ -17,6 +17,7 @@ void Pipeline
     mbyClassifierToHash   cla2hsh;
     mbyHashToNextHop      hsh2nxt;
     mbyNextHopToMaskGen   nxt2msk;
+    mbyMaskGenToTriggers  msk2trg;
 
     // pipeline stages:
     
@@ -29,4 +30,6 @@ void Pipeline
     Hash       (regs, &cla2hsh, &hsh2nxt);
 
     NextHop    (regs, &hsh2nxt, &nxt2msk);
+
+    MaskGen    (regs, &nxt2msk, &msk2trg);
 }

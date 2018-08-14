@@ -585,8 +585,8 @@ static void mapScalar
     FM_SET_UNNAMED_FIELD64(keyMac, 16, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC + 1]);
     FM_SET_UNNAMED_FIELD64(keyMac, 32, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC    ]);
 
-    fm_bool oDmacMulticast = mbyModelIsMulticastMacAddress(keyMac);
-    fm_bool oDmacBroadcast = mbyModelIsBroadcastMacAddress(keyMac);
+    fm_bool oDmacMulticast = isMulticastMacAddress(keyMac);
+    fm_bool oDmacBroadcast = isBroadcastMacAddress(keyMac);
 
     for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
     {
@@ -904,10 +904,10 @@ static void mapScalar
         FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[MBY_FFU_ACTION_POLICER1].val, 16,  4, 5);
     }
 
-    // Write PKT_META to keys: MD write block
-    // TODO: may be removed in the future.
+#if 0 // Obsolete <-- REVISIT!!!
     for (fm_uint i = 0; i < 32; i++)
         out->FFU_KEYS.key8[63-i] = in->PKT_META[i];
+#endif
 }
 
 static void encodeLength
