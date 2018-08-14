@@ -6,8 +6,7 @@
 $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
-     "verif/lib/mby_wm_dpi_pkg/mby_wm_dpi_pkg.sv",
-     "verif/lib/mby_wm_dpi_pkg/mby_wm_top.sv",
+     "verif/lib/mby_common_pkg/mby_common_pkg.sv",
      ],
     
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
@@ -19,13 +18,11 @@ $hdl_spec = {
 
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-        
-     "$ENV{SAOLA_HOME}/verilog",
-     "$ENV{SAOLA_HOME}/verilog_uvm",
-     "$ENV{UVM_HOME}/src",
-     "$ENV{OVM_HOME}/src",
-     "$ENV{ACE_HOME}/lib/Verilog",
-     "verif/lib/mby_wm_dpi_pkg/",
+        "$ENV{UVM_HOME}/src",
+        "$ENV{OVM_HOME}/src",
+        "$ENV{SAOLA_HOME}/verilog",
+        "$ENV{SAOLA_HOME}/verilog_uvm",
+        "verif/lib/mby_common_pkg",
     ],
     
     # Arbitrary VLOG options

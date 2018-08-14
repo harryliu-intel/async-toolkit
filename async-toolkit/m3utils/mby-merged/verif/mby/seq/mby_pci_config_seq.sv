@@ -17,7 +17,7 @@
  
  This sequence set up the MBY config space:
  */
-class mby_pci_config_seq extends mby_base_seq;
+class mby_pci_config_seq extends mby_env_base_seq;
   `uvm_object_utils(mby_pci_config_seq) 
   `uvm_declare_p_sequencer(slu_sequencer)
     
