@@ -18,7 +18,6 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
   )
 
 lazy val root = (project in file("."))
-  .enablePlugins(CsrCodeGeneration)
   .settings(
     Settings.commonSettings,
     name := "wm",
