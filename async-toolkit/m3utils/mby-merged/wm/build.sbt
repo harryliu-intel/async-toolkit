@@ -22,7 +22,10 @@ lazy val root = (project in file("."))
   .settings(
     Settings.commonSettings,
     name := "wm",
-    libraryDependencies ++= Dependencies.whiteModelDeps
+    libraryDependencies ++= Dependencies.whiteModelDeps,
+    mainClass in Compile := Some("switch_wm.WhiteModelServer"),
+    mainClass in assembly := Some("switch_wm.WhiteModelServer"),
+    assemblyOutputPath in assembly := path
   )
 
 val buildOnNhdk = taskKey[Unit]("Build task for nhdk environment.")
