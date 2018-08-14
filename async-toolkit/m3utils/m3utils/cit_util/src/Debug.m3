@@ -370,6 +370,7 @@ VAR
 PROCEDURE SetDebugTimeZone( tzName : TEXT) RAISES { OSError.E } =
   BEGIN
     LOCK tMu DO
+      DebugTimeZone := tzName;
       tz := TZ.New(tzName)
     END
   END SetDebugTimeZone;
