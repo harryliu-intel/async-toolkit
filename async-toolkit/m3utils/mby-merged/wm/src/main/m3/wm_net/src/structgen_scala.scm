@@ -47,9 +47,9 @@
       (dis nm dnl mf-wr)
       (wr-close mf-wr))
           
-    (dis "package switch_wm.model_server" dnl dnl wr)
+    (dis "package com.intel.cg.hpfd.madisonbay.wm.server.dto" dnl dnl wr)
 	(dis "import java.io._" dnl dnl wr)
-	(dis "import switch_wm.PrimitiveTypes._" dnl dnl wr)
+	(dis "import PrimitiveTypes._" dnl dnl wr)
 	
     (dis "object " nm " extends " scala-super " {" dnl wr)
 
@@ -133,7 +133,7 @@
          (names        (cadr x))
          (values       (caddr x))
          (scala-name      (get-scala-name nm names))
-         (scala-wrs       (open-scala scala-name "WhiteModelConstants"))
+         (scala-wrs       (open-scala scala-name "AnyRef"))
          (wr              (car scala-wrs))
          )
     (add-tgt-type! nm scala-name)
@@ -478,11 +478,11 @@
       (dis dnl "case class " scala-name " (" dnl wr)
       (map (lambda(f)(emit-bitstruct-field-type f wr)) fields)
       (dis " )" wr)
-	  (dis " extends BitStruct" dnl wr)
+	  (dis "" dnl wr)
       )
 
     (add-tgt-type! nm scala-name)
-	(dis "package switch_wm.model_server" dnl dnl wr)
+	(dis "package com.intel.cg.hpfd.madisonbay.wm.server.dto" dnl dnl wr)
 	(dis "import java.io._" dnl wr)
 
     ;; the matching Modula-3 declaration
@@ -615,9 +615,9 @@
     (add-tgt-type! nm scala-name)
     ;; (set! e import-intfs)
     ;; the matching Modula-3 declaration
-    (dis "package switch_wm.model_server" dnl dnl wr)
+    (dis "package com.intel.cg.hpfd.madisonbay.wm.server.dto" dnl dnl wr)
     (dis "import java.io._" dnl wr)
-    (dis "import switch_wm.PrimitiveTypes._" dnl dnl wr)
+    (dis "import PrimitiveTypes._" dnl dnl wr)
     (dis "import Implicits._" dnl dnl wr)
 
     (dis "case class " scala-name dnl wr)
