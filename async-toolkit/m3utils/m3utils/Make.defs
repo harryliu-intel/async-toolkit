@@ -17,7 +17,7 @@
 #CM3_HOME := $(shell dirname $(_CM3_BIN))/..
 #CM3_HOME := $(RTL_PROJ_TOOLS)/meta/nhdk/cm3
 
-CM3_VERSION := d5.10.0
+CM3_VERSION := d5.10.0-20180711
 CM3_HOME := $(RTL_CAD_ROOT)/opensource/cm3/$(CM3_VERSION)/
 
 ifdef CYGWIN
