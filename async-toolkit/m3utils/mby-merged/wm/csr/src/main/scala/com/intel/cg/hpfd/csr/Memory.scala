@@ -331,6 +331,16 @@ object Memory {
       case q"${value: Int}.bytes" => value.toLong.bytes
     }
 
+    lazy val AlignmentSym = symbolOf[Alignment]
+    implicit lazy val liftAlignment = Liftable[Alignment] { a =>
+      q"new $AlignmentSym(${a.value})"
+    }
+    implicit lazy val unliftAlignment = Unliftable[Alignment] {
+      case q"$sym(${value: Long})" if sym == AlignmentSym => Alignment(value)
+      case q"$sym(${value: Int})"  if sym == AlignmentSym => Alignment(value.toLong)
+      case q"${bytes: Bytes}.toAlignment" => bytes.toAlignment
+    }
+
     implicit lazy val unliftMemoryUnit = Unliftable[MemoryUnit] {
       case q"${bits: Bits}" => bits
       case q"${bytes: Bytes}" => bytes
