@@ -78,7 +78,7 @@
         (hookupLaygen nil)       ; add power hookups around Laygen cells
         (metalFill t)            ; add metal fill
         (noPowerFill nil)
-	(doPowerGates nil)       ; optionally skip export of placed pillars
+        (doPowerGates nil)       ; optionally skip export of placed pillars
         (colorGrid t)            ; add a color grid to flatten view
         (timingDriven t)         ; timing driven custom routing
         (softMacro nil)          ; run APR
@@ -628,13 +628,13 @@
       (foreach shape srcCV->shapes
         (when shape->pin
           net = (dbMakeNet CV shape->net->name)
-	  trm = (dbCreateTerm net net->name shape->pin->term->direction)
+          trm = (dbCreateTerm net net->name shape->pin->term->direction)
           fig = (dbCopyFig shape CV)
           pin = (dbCreatePin net fig); net->name trm)
 
           ; need to be sure we have drawing purpose too
-	  (when fig->purpose=="pin" &&
-	        (dbGetPropByName fig "PinType")->value=="BusScript"
+          (when fig->purpose=="pin" &&
+                (dbGetPropByName fig "PinType")->value=="BusScript"
              (dbCreateRect CV (list fig->layerName "drawing") fig->bBox)
           )
         )
