@@ -19,22 +19,46 @@ TYPE T = RECORD
 	(* An array of the node's child nodes, or the
 	nodes to which our current node connects in
 	the tree. *)
-	children : REF ARRAY OF REF T := NIL ;
+	children : REF DList := NIL ;
+END ;
+
+TYPE DList = RECORD
+	(* Current element *)
+	cur : REF T := NIL ;
+	(* Previous element *)
+	prev : REF DList := NIL ;
+	(* Next element*)
+	next : REF DList := NIL ;
 END ;
 
 (**************)
 (* Procedures *)
 (**************)
 
+(* Node *)
 PROCEDURE Equal( NodeA , NodeB : T ) : BOOLEAN ;
 
-PROCEDURE DeepCopy( CurrentNode : REF T ) : REF T ;
+PROCEDURE DeepCopy( NewNode : REF T ; CurrentNode : REF T ) ;
 
-PROCEDURE FindAllNonterms( root : REF T ; NontermVal : TEXT ) : REF ARRAY OF REF T ;
+PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEXT ) ;
 
-(* TODO Remove later *)
-PROCEDURE AppendArr( ArrToChange : REF ARRAY OF REF T ; NodeToAppend : REF T ) ;
+(* DList *)
+PROCEDURE IsEmpty( list : DList ) : BOOLEAN ;
 
-PROCEDURE AppendArrToArr( ArrToChange : REF ARRAY OF REF T ; ArrToAppend : REF ARRAY OF REF T ) ;
+PROCEDURE Length( list : DList ) : CARDINAL ;
+
+PROCEDURE EqualDList( listA : REF DList ; listB : REF DList ) : BOOLEAN ;
+
+PROCEDURE GoToBeginning( begoflist : REF DList ; list : REF DList ) ;
+
+PROCEDURE GoToEnd( endoflist : REF DList ; list : REF DList ) ;
+
+PROCEDURE DeepCopyDList( newlist : REF DList ; list : REF DList ) ;
+
+PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) ;
+
+PROCEDURE AppendDList( listA : REF DList ; listB : REF DList ) ;
+
+PROCEDURE DefaultDList( list : REF DList ) ;
 
 END Node.
