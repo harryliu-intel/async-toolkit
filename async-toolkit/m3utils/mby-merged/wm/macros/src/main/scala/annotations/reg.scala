@@ -12,11 +12,15 @@ class reg extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro RegImpl.impl
 }
 
-
 class RegImpl(val c: Context) {
   import c.universe._
 
-  implicit val liftRange = new Liftable[Range] { def apply(r: Range): c.Tree = q"(${r.start} to ${r.last})" }
+  implicit val unliftContinuousRange = Unliftable[Range] {
+    case q"${start: Int} to ${end: Int}" => start to end
+    case q"${start: Int} until ${end: Int}" => start until end
+  }
+
+  implicit val liftContinuousRange = Liftable[Range] { r => q"(${r.start} to ${r.last})" }
 
   def evalExpr[T](tree: c.Tree): T = c.eval[T](c.Expr(tree))
 
@@ -78,29 +82,25 @@ class RegImpl(val c: Context) {
 
   /** Parses "field" annotation into FieldInfo. */
   class FieldParser {
-    def parse(name: String, range: c.Tree, hard: c.Tree, soft: c.Tree): FieldInfo = {
-      val anyRan = evalExpr[Range](range)
-      val ran = anyRan.start until (anyRan.last+1)
-      if (ran.start >= ran.end) {
-        c.abort(c.enclosingPosition, "Register field cannot have zero width, found: ${ran.start} .. ${ran.end}")
-      }
-      FieldInfo(name, ran, evalExpr(hard), evalExpr(soft))
-    }
-
     def apply(name: String, args: Seq[c.Tree]): FieldInfo = {
-      val defaultHard = q""" "R+W" """
-      val defaultSoft = q""" "R+W" """
-      //TODO: loop?
-      val info = args match {
-        case q"$range" :: Nil                                   => parse(name, range, defaultHard, defaultSoft)
-        case q"$range" :: q"soft=$soft" :: Nil                  => parse(name, range, defaultHard, soft)
-        case q"$range" :: q"hard=$hard" :: q"soft=$soft" :: Nil => parse(name, range, hard, soft)
-        case q"$range" :: q"$hard" :: Nil                       => parse(name, range, hard, defaultSoft)
-        case q"$range" :: q"$hard" :: q"soft=$soft" :: Nil      => parse(name, range, hard, soft)
-        case q"$range" :: q"$hard" :: q"$soft" :: Nil           => parse(name, range, hard, soft)
-        case _ => c.abort(wrappingPos(args.toList), "Invalid arguments for reg's field")
+      val (defaultHard, defaultSoft) = ("R+W", "R+W")
+      val pos = wrappingPos(args.toList)
+      val (range, tail) = args match {
+        case q"${range: Range}" :: tail => (range, tail)
+        case _ => compAbort(pos, "Invalid arguments for reg's field")
       }
-      info
+      compAssert(pos, range.start <= range.last, s"Register field cannot have zero width, found: ${range.start} .. ${range.end}")
+      //TODO: loop?
+      val (hard, soft) = tail match {
+        case Nil                                                       => (defaultHard, defaultSoft)
+        case q"soft=${soft: String}" :: Nil                            => (defaultHard, soft)
+        case q"hard=${hard: String}" :: q"soft=${soft: String}" :: Nil => (hard, soft)
+        case q"${hard: String}" :: Nil                                 => (hard, defaultSoft)
+        case q"${hard: String}" :: q"soft=${soft: String}" :: Nil      => (hard, soft)
+        case q"${hard: String}" :: q"${soft: String}" :: Nil           => (hard, soft)
+        case _ => compAbort(pos, "Invalid arguments for reg's field")
+      }
+      FieldInfo(name, range, hard, soft)
     }
   }
 
@@ -138,7 +138,7 @@ class RegImpl(val c: Context) {
   def handleField(name: c.TermName, args: Seq[c.Tree], body: Seq[c.Tree], guard: AddressGuard): FieldData = {
     val info = parseField(name, args)
     val range = info.range
-    val (pos, lim) = (range.start, range.end)
+    val (pos, lim) = (range.start, range.last+1)
     val ar = AddressRange(Address(pos.bits), (lim-pos).bits)
     try {
       guard += (ar, name.toString)
@@ -196,7 +196,7 @@ class RegImpl(val c: Context) {
 
       val res = tree match {
         case q"$rname = $impl.bytes" if rname.toString == name => parseBytes(impl)
-        case q"$rname = $impl.bits" if rname.toString == name => parseBytes(impl)
+        case q"$rname = $impl.bits" if rname.toString == name => parseBits(impl)
         case q"$rname = $impl" if rname.toString == name => {
           impl match {
             case value @ Literal(_) => {
@@ -231,12 +231,13 @@ class RegImpl(val c: Context) {
       tree match {
         case q"field.$name($details)" => {
           val (args, body) = details match {
-            // name(...){...}
-            case Apply(Apply(Select(Ident(TermName("scala")), _), args), body) => (args, body)
-            // name(el){...}
-            case Apply(arg@Apply(_, _), body) => (Seq(arg), body)
             // name(el)
-            case _ => (Seq(details), Seq())
+            case q"${_: Range}" => (Seq(details), Seq())
+            // name(el){...}
+            case Apply(arg @ q"${_: Range}", body) => (Seq(arg), body)
+            // name(...){...}
+            case Apply(q"(..$args)", body) => (args, body)
+            case _ => compAbort(details.pos, "Invalid field declaration")
           }
           fields = handleField(name, args, body, guard) :: fields
           Some((name, args, body))
