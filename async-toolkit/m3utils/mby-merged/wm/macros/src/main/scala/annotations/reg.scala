@@ -12,7 +12,7 @@ class reg extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro RegImpl.impl
 }
 
-class RegImpl(val c: Context) {
+class RegImpl(val c: Context) extends WhiteboLiftableMemory {
   import c.universe._
 
   implicit val unliftContinuousRange = Unliftable[Range] {
@@ -163,48 +163,36 @@ class RegImpl(val c: Context) {
     /** Value of the parsed alignment. */
     var value: Option[Alignment] = None
 
+    /** Try to parse prop assignment from tree */
     def unapply(tree: c.Tree): Option[(Alignment, List[c.Tree])] = {
-      def check(): Unit =
+      val pos: Position = tree.pos
+
+      /** Take memory unit as alignment, generate code. */
+      def take(munit: MemoryUnit): (Alignment, List[c.Tree]) = {
         compAssert(pos, value.isEmpty, s"register can't have multiple $name assignments")
 
-      def intToAlignment(value: Int): Alignment = {
-        val bytes = value.bytes
-        compAssert(pos, bytes.isPower, s"register must have $name = 2^N bytes")
-        bytes.toAlignment
-      }
+        val obytes = munit.tryBytes
+        compAssert(pos, obytes.isDefined, s"register can't have $name which not being full bytes, found: $munit")
 
-      def gen(intVal: Int): Option[(Alignment, List[c.Tree])] = {
-        val raw = intToAlignment(intVal)
-        value = Some(raw)
-        Some((raw, List(q"override def ${TermName(name)} = Alignment($intVal)")))
-      }
+        val oalignment = obytes.get.tryAlignment
+        compAssert(pos, oalignment.isDefined, s"register must have $name = 2^N bytes")
 
-      def parseBytes(value: c.Tree): Option[(Alignment, List[c.Tree])] = {
-        check()
-        val num = evalExpr[Int](value)
-        gen(num)
+        val alignment = oalignment.get
+        value = Some(alignment)
+        (alignment, List(q"override def ${TermName(name)} = $alignment"))
       }
-
-      def parseBits(value: c.Tree): Option[(Alignment, List[c.Tree])] = {
-        check()
-        val num = evalExpr[Int](value)
-        compAssert(pos, num % 8 == 0, s"register can't have $name which not being full bytes, found: $num.bits")
-        gen(num / 8)
-      }
-
-      def pos: Position = tree.pos
 
       val res = tree match {
-        case q"$rname = $impl.bytes" if rname.toString == name => parseBytes(impl)
-        case q"$rname = $impl.bits" if rname.toString == name => parseBits(impl)
         case q"$rname = $impl" if rname.toString == name => {
-          impl match {
-            case value @ Literal(_) => {
-              compInfo(pos, s"assuming bits units for $name value ($impl.bits)", true)
-              parseBits(value)
+          val munit = impl match {
+            case q"${munit: MemoryUnit}" => munit
+            case q"${int: Int}" => {
+              compInfo(pos, s"assuming bits units for $name value ($int.bits)", true)
+              int.toLong.bits
             }
-            case _ => compAbort(pos,s"register's $name given value which cannot be handled, $impl")
+            case _ => compAbort(pos,s"register's $name given value which cannot be handled, $impl}")
           }
+          Some(take(munit))
         }
         case _ => None
       }
