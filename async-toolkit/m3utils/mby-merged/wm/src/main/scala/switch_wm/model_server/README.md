@@ -1,5 +1,3 @@
-package switch_wm
-
 /** Provides classes and associated objects for building the model server
   *
   * ==Overview==
@@ -23,5 +21,3 @@ package switch_wm
   * Other classes and objects are human-written to support these classes and provide elegant mechanisms
   * for using them.
  **/
-package object model_server {
-}

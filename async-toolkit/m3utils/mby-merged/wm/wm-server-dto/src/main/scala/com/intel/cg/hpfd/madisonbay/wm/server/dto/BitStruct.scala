@@ -1,6 +1,4 @@
-package switch_wm.model_server
-
-class BitStruct
+package com.intel.cg.hpfd.madisonbay.wm.server.dto
 
 object BitStruct {
   def extractField(ba : Array[Byte], bitOffset : Int, fieldSize : Int) : Long = {
