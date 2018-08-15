@@ -50,4 +50,52 @@ BEGIN
 	RETURN NewNode ;
 END DeepCopy ;
 
+PROCEDURE FindAllNonterms( root : REF T ; NontermVal : TEXT ) : REF ARRAY OF REF T =
+VAR
+	return_arr : REF ARRAY OF REF T := NIL ;
+BEGIN
+	<* ASSERT root # NIL *>
+	return_arr := NEW( REF ARRAY OF REF T , 0 ) ;
+	IF root^.cat = Category.NonTerminal THEN
+		IF root^.val = NontermVal THEN
+			AppendArr( return_arr , root ) ;
+		END ;
+		FOR child_index := FIRST( root^.children^ ) TO LAST( root^.children^ ) DO
+			AppendArrToArr( return_arr , FindAllNonterms( root^.children[ child_index ] , NontermVal ) ) ;
+		END ;
+	END ;
+	RETURN return_arr ;
+END FindAllNonterms ;
+
+(* TODO Can you use readonly for these? *)
+PROCEDURE AppendArr( ArrToChange : REF ARRAY OF REF T ; NodeToAppend : REF T ) =
+VAR
+	single_element_arr : REF ARRAY OF REF T := NIL ;
+BEGIN
+	<* ASSERT ArrToChange # NIL *>
+	<* ASSERT NodeToAppend # NIL *>
+	single_element_arr := NEW( REF ARRAY OF REF T , 1 ) ;
+	single_element_arr[ FIRST( single_element_arr^ ) ] := NodeToAppend ;
+	AppendArrToArr( ArrToChange , single_element_arr ) ;
+END AppendArr ;
+
+PROCEDURE AppendArrToArr( ArrToChange : REF ARRAY OF REF T ; ArrToAppend : REF ARRAY OF REF T ) =
+VAR
+	ArrToReturn : REF ARRAY OF REF T := NIL ;
+	temp_last := 0 ;
+BEGIN
+	<* ASSERT ArrToChange # NIL *>
+	<* ASSERT ArrToAppend # NIL *>
+	<* ASSERT FIRST( ArrToChange^ ) = FIRST( ArrToReturn^ ) *>
+	ArrToReturn := NEW( REF ARRAY OF REF T , NUMBER( ArrToChange^ ) + NUMBER( ArrToAppend^ ) ) ;
+	FOR arr_index := FIRST( ArrToChange^ ) TO LAST( ArrToChange^ ) DO
+		ArrToReturn[ arr_index ] := ArrToChange[ arr_index ] ;
+	END ;
+	temp_last := LAST( ArrToReturn^ ) ;
+	FOR arr_index := FIRST( ArrToAppend^ ) TO LAST( ArrToAppend^ ) DO
+		ArrToReturn[ ( arr_index - FIRST( ArrToAppend^ ) ) + temp_last + 1 ] := ArrToAppend[ arr_index ] ;
+	END ;
+	ArrToChange := ArrToReturn ;
+END AppendArrToArr ;
+
 BEGIN END Node .

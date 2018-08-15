@@ -12,6 +12,19 @@ IMPORT Pathname ;
 EXCEPTION InvalidFname ;
 EXCEPTION OutError ;
 
+(*********)
+(* Types *)
+(*********)
+
+TYPE PTreeParams = RECORD
+	ProcedureDefnVal : TEXT := "" ;
+	ArgSeparator : TEXT := "" ;
+	PathToProcedureBlock : REF ARRAY OF TEXT := NIL ;
+	PathToProcedureName : REF ARRAY OF TEXT := NIL ;
+	PathToArgList : REF ARRAY OF TEXT := NIL ;
+	PathToArgNameFromArg : REF ARRAY OF TEXT := NIL ;
+END ;
+
 (**************)
 (* Procedures *)
 (**************)
@@ -26,7 +39,11 @@ when EOF character is printed to the stream
 Raises InvalidFname exception if path does not exist
 in filesystem
 *)
-PROCEDURE Parse( in_fname : Pathname.T ) : REF Node.T RAISES { InvalidFname } ;
+(* PROCEDURE Parse( in_fname : Pathname.T ) : REF Node.T RAISES { InvalidFname } ; *)
+
+(* Specialize 
+Note: root node will most likely be changed as a result of specialization. *)
+(* PROCEDURE Specialize( root : REF Node.T ; ptree_pms : REF PTreeParams ) ; *)
 
 (* GenCode
 - root :: reference to the starting node of the parse tree

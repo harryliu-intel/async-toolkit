@@ -1,11 +1,5 @@
 INTERFACE Node ;
 
-(*************)
-(* Constants *)
-(*************)
-
-CONST Brand = "SomeNode" ;
-
 (*********)
 (* Types *)
 (*********)
@@ -35,5 +29,12 @@ END ;
 PROCEDURE Equal( NodeA , NodeB : T ) : BOOLEAN ;
 
 PROCEDURE DeepCopy( CurrentNode : REF T ) : REF T ;
+
+PROCEDURE FindAllNonterms( root : REF T ; NontermVal : TEXT ) : REF ARRAY OF REF T ;
+
+(* TODO Remove later *)
+PROCEDURE AppendArr( ArrToChange : REF ARRAY OF REF T ; NodeToAppend : REF T ) ;
+
+PROCEDURE AppendArrToArr( ArrToChange : REF ARRAY OF REF T ; ArrToAppend : REF ARRAY OF REF T ) ;
 
 END Node.
