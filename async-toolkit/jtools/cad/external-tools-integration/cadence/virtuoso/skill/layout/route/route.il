@@ -339,10 +339,7 @@
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (fprintf file "--base=%s\n" (GetCastCellName CV->cellName))
-    (cond (softMacro
-           (unless abstractCellName && targetCellName
-                   (error "must specify ?abstractName and ?targetCellName for ?softMacro t\n")
-                   )
+    (cond (softMacro && abstractCellName && targetCellName
            (fprintf file "--cell=%s\n" (GetCastCellName targetCellName))
            (fprintf file "--abstract=%s\n" (GetCastCellName abstractCellName))
            (fprintf file "--task=spr\n")
