@@ -12,7 +12,7 @@ class reg extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro RegImpl.impl
 }
 
-class RegImpl(val c: Context) extends WhiteboLiftableMemory { self =>
+class RegImpl(val c: Context) extends WhiteControl with WhiteboLiftableMemory { self =>
   import c.universe._
 
   implicit val unliftContinuousRange = Unliftable[Range] {
@@ -21,33 +21,8 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory { self =>
   }
 
   implicit val liftContinuousRange = Liftable[Range] { r => q"(${r.start} to ${r.last})" }
-  
+
   def evalExpr[T](tree: c.Tree): T = c.eval[T](c.Expr(tree))
-
-  def cAbort(pos: c.Position, str: String): Nothing = c.abort(pos, str)
-  def cAbort(str: String)(implicit pos: c.Position): Nothing = cAbort(pos, str)
-
-  def cError(pos: c.Position, str: String): Unit = c.error(pos, str)
-  def cError(str: String)(implicit pos: c.Position): Unit = cError(pos, str)
-
-  def cInfo(pos: c.Position, str: String, flag: Boolean = false): Unit = c.info(pos, str, flag)
-  def cInfo(str: String, flag: Boolean)(implicit pos: c.Position): Unit = cInfo(pos, str, flag)
-  def cInfo(str: String)(implicit pos: c.Position): Unit = cInfo(pos, str)
-
-  def cWarn(pos: c.Position, str: String): Unit = c.warning(pos, str)
-  def cWarn(str: String)(implicit pos: c.Position): Unit = cWarn(pos, str)
-
-  def cAssert(pos: c.Position, cond: Boolean, str: => String): Unit = if (!cond) { cAbort(pos, str) }
-  def cAssert(cond: Boolean)(str: => String)(implicit pos: c.Position): Unit = cAssert(pos, cond, str)
-  implicit class cAssertable(cond: Boolean) {
-    def |(str: => String)(implicit pos: c.Position): Unit = cAssert(pos, cond, str)
-  }
-
-  def cGet[T](pos: c.Position, option: Option[T], str: String): T = option.getOrElse(c.abort(pos, str))
-  implicit class cGettable[T](op: Option[T]) {
-    def cGet(str: String)(implicit pos: c.Position): T = self.cGet(pos, op, str)
-    def |(str: String)(implicit pos: c.Position): T = self.cGet(pos, op, str)
-  }
 
 
   def extractClassParts(classDecl: ClassDef): (TypeName, List[c.Tree]) = classDecl match {
