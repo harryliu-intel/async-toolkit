@@ -518,6 +518,8 @@
     )
   )
 
+(define (compile-m3-prepare)  #t)
+
 ;;
 ;; in C, the tags will be used only to be topologically sorted before generation into a single
 ;; flat file
@@ -591,20 +593,21 @@
         (else '*not-found*)))
 
 (define (compile-c-constant x defs)
-  (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
-
-  (let* ((nm         (sa *c-const-pfx* (get-c-name (sym-lookup (cadr x) defs))))
-         (imports    (make-string-set 10))
-         (code       (sa "#define " nm "    " (gen-c-val-use (caddr x) defs))))
-    (list (list nm code) )
-    ))
-
+  (let ((header-fn (sa *c-proj* "_struct.h")))
+    (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
+    
+    (let* ((nm         (sa *c-const-pfx* (get-c-name (sym-lookup (cadr x) defs))))
+           (imports    (make-string-set 10))
+           (code       (sa "#define " nm "    " (gen-c-val-use (caddr x) defs))))
+      (list (list header-fn #f code) )
+      )))
+    
 (define (scheme-mem->c sym)
   (IdStyles.Convert (symbol->string sym)
                     'Lower 'LCamel
                     'Hyphen 'None))
 
-(define (compile-c-typedef-def-from-data x nm defs)
+(define (compile-c-typedef-def-from-data x nm defs dep-recorder)
   (let ((def-sfx (sa " " nm)))
     (cond ((number? x) (sa "uint" (number->string x) def-sfx))
           
@@ -618,37 +621,52 @@
           ((and (symbol? x)
                 (let ((r-test (sym-lookup x defs)))
                   (if (and r-test (eq? 'typedef (car r-test)))
-                      (sa *c-proj* "_" (get-c-name r-test) def-sfx)
+                      (let ((tn (sa *c-proj* "_" (get-c-name r-test))))
+                        (dis "... depends on " tn dnl)
+                        (dep-recorder tn)
+                        (sa tn def-sfx))
                       #f))))
 
           ;; must be type expression
           ((not (pair? x)) '*not-found*)
 
           ((eq? (car x) 'bits)
-           (compile-c-typedef-def-from-data (force-value (cadr x) defs) nm defs))
+           (compile-c-typedef-def-from-data (force-value (cadr x) defs) nm defs dep-recorder))
 
           ((eq? (car x) 'array)
-           (compile-c-typedef-def-from-data (caddr x) (sa nm "[" (force-value (cadr x) defs) "]") defs))
+           (compile-c-typedef-def-from-data (caddr x) (sa nm "[" (force-value (cadr x) defs) "]") defs dep-recorder))
                 
           ((eq? (car x) 'struct)
            (apply sa
                   (append
                    (list "struct {" dnl)
                    (map
-                    (lambda (fspec) (sa "  " (compile-c-typedef-def-from-data (cadr fspec) (scheme-mem->c (car fspec)) defs) ";" dnl))
+                    (lambda (fspec)
+                      (sa "  "
+                          (compile-c-typedef-def-from-data (cadr fspec) (scheme-mem->c (car fspec)) defs dep-recorder)
+                          ";"
+                          dnl)
+                      );;adbmal
                     (cadr x))
                    (list "} " nm))))
           
           (else '*not-found*)))
   )
 
-(define (compile-c-typedef-def x defs)
+(define (compile-c-typedef-def x defs topo-sorter)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
-  (sa "typedef " (compile-c-typedef-def-from-data
-   (caddr x)
-   (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs)))
-   defs) ";"
-  ))
+  (let* ((sym-nm                           (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))))
+         (dep-recorder (lambda(pred)(dis pred " <- " sym-nm dnl)(topo-sorter 'addDependency pred sym-nm)))
+         (code
+          (begin (dis "c-typedef " sym-nm dnl)
+                 (sa "typedef "
+                     (compile-c-typedef-def-from-data (caddr x) sym-nm defs dep-recorder)
+                     ";"
+                     ))))
+
+    (list sym-nm code)
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -679,7 +697,7 @@
     ;; this is a bit different from the M3 since there are no const
     ;; functions in C
     (list
-     ""
+     #f
      (sa "void " (c-deser-name whch) "_" tn "("
          (case whch
            ((ser)   (sa "uint64 *w, const " tn " *t"))
@@ -748,7 +766,7 @@
   (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
   (let ((x          (caddr td)))
     (list
-     ""
+     #f
      (sa
       (cadr (compile-c-typedef-deser-proto td defs whch "")) dnl
       "{" dnl
@@ -761,7 +779,7 @@
 
 (define (compile-c-typedef-deser-size x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
-  (list "" (sa "#define " (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))) "_deser_qwords " (get-type-field-cnt (caddr x) defs) )))
+  (list #f (sa "#define " (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))) "_deser_qwords " (get-type-field-cnt (caddr x) defs) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -777,24 +795,44 @@
 (define s (obj-method-wrap (topo-sorter 'sort) 'TextSeq.T))
 (s 'size)
 (s 'get 0)
+
+(define (new-topo-sorter)
+  (let ((res (obj-method-wrap (new-modula-object 'TextTopoSort.T ) 'TextTopoSort.T)))
+    (obj-method-wrap (res 'init) 'TextTopoSort.T)
+    ))
                                                                     ;;
                                                                     ;;
                                                                     ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (compile-c-typedef x defs)
-  (list
-   ;; these should be directed to a header file
-   (compile-c-typedef-def x defs)
-   (compile-c-typedef-deser-proto x defs 'ser ";")
-   (compile-c-typedef-deser-proto x defs 'deser ";")
-   (compile-c-typedef-deser-size  x defs)
-   
-   ;; and these to an implementation
-   (compile-c-typedef-deser-code x defs 'ser)
-   (compile-c-typedef-deser-code x defs 'deser)
-   
+  (let ((header-fn (sa *c-proj* "_struct.h"))
+        (c-code-fn (sa *c-proj* "_struct.c")))
+
+    (append
+     ;; these should be directed to a header file
+     (map (lambda(c) (cons header-fn c))
+          (list
+           (compile-c-typedef-def           x defs *topo-sorter*)
+           (compile-c-typedef-deser-proto   x defs 'ser ";")
+           (compile-c-typedef-deser-proto   x defs 'deser ";")
+           (compile-c-typedef-deser-size    x defs)
+           ))
+
+     
+     ;; and these to an implementation
+     (map (lambda(c) (cons c-code-fn c))
+          (list
+           (compile-c-typedef-deser-code    x defs 'ser)
+           (compile-c-typedef-deser-code    x defs 'deser)
+           ))
+     );;dneppa
    ))
+
+(define *topo-sorter* '())
+
+(define (compile-c-prepare)
+  (set! *topo-sorter* (new-topo-sorter)) #t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -808,6 +846,7 @@
       (f rec defs))))
                             
 (define (compile lang)
+  ((eval (symbol-append 'compile- lang '-prepare)))
   (let* ((compiler (make-compiler lang))
          (lsts (map (lambda (def) (compiler def defs)) defs)))
     (apply append lsts)))
@@ -821,6 +860,72 @@
 (define (uniq-string-list L) (uniq equal? (sort-string-list L)))
 
 (define (compile-all) (map compile '(m3 c)))
+
+(define (seq-to-list s)
+  (let loop ((i (s 'size))
+             (res '()))
+    (if (= 0 i) res (loop (- i 1) (cons (s 'get (- i 1)) res)))))
+
+(define (rearrange-list lst order)
+  (if (not (= (length lst) (length order))) (error "length mismatch " (length lst) " " (length order)))
+  (map (lambda (o)(assoc o lst)) order))
+
+(define (do-c-output lst odir)
+  (let* ((files    (uniq-string-list (map car lst))) ;; uniq the filenames
+         (wrs      (map (lambda(fn) (list fn (FileWr.Open (sa odir "/src/" fn)))) files))
+         (tagged   (filter cadr lst))
+         (ordered  (map cdr (rearrange-list (map (lambda (t) (cons (cadr t) t)) tagged) (seq-to-list seq))))
+         (untagged (filter (lambda(x)(not (cadr x))) lst))
+         (seq      (obj-method-wrap (*topo-sorter* 'sort) 'TextSeq.T))
+         )
+    (dis (length untagged) " untagged" dnl)
+    (dis (length tagged) " tagged" dnl)
+    
+    (map (lambda(w)
+           (let* ((fn (car w))
+                  (wr (cadr w)))
+
+             (do-c-header fn wr)
+             (define (output-matching L)
+               (map (lambda (code) (dis code dnl dnl wr)) (map caddr (filter (lambda(q)(equal? fn (car q))) L))))
+             
+             ;; do untagged output first
+             (output-matching untagged)
+
+             ;; then tagged and ordered
+             (output-matching ordered)
+
+             (do-c-trailer fn wr)
+             
+             ))
+         wrs)
+    files
+    ))
+
+(define (do-c-header fn wr)
+  (let* ((bn (TextUtils.RemoveSuffixes fn '(".c" ".h")))
+         (sfx (string->symbol
+               (TextUtils.RemovePrefix   fn (sa bn ".")))))
+    (case sfx
+      ((c) #t)
+      ((h)
+       (dis "#ifndef _"bn"_H" dnl
+            "#define _"bn"_H" dnl
+            dnl
+            wr)))))
+
+(define (do-c-trailer fn wr)
+  (let* ((bn (TextUtils.RemoveSuffixes fn '(".c" ".h")))
+         (sfx (string->symbol
+               (TextUtils.RemovePrefix   fn (sa bn ".")))))
+    (case sfx
+      ((c) #t)
+      ((h)
+       (dis "#endif /* !_"bn"_H */" dnl
+            wr)))))
+
+(define (do-c-meta-output lst)
+  (do-c-output lst *m3-lib-name*))
 
 (define (do-m3-output lst odir libnm)
   (let* ((files (uniq-string-list (map car lst))) ;; uniq the filenames
