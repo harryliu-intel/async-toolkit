@@ -24,15 +24,15 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
 
   def evalExpr[T](tree: c.Tree): T = c.eval[T](c.Expr(tree))
 
-  def compAbort(pos: c.Position, str: String): Nothing = c.abort(pos, str)
+  def cAbort(pos: c.Position, str: String): Nothing = c.abort(pos, str)
 
-  def compError(pos: c.Position, str: String): Unit = c.error(pos, str)
+  def cError(pos: c.Position, str: String): Unit = c.error(pos, str)
 
-  def compInfo(pos: c.Position, str: String, flag: Boolean = false): Unit = c.info(pos, str, flag)
+  def cInfo(pos: c.Position, str: String, flag: Boolean = false): Unit = c.info(pos, str, flag)
 
-  def compWarn(pos: c.Position, str: String): Unit = c.warning(pos, str)
+  def cWarn(pos: c.Position, str: String): Unit = c.warning(pos, str)
 
-  def compAssert(pos: c.Position, cond: Boolean, str: => String): Unit = if (!cond) { compAbort(pos, str) }
+  def cAssert(pos: c.Position, cond: Boolean, str: => String): Unit = if (!cond) { cAbort(pos, str) }
 
   def extractClassParts(classDecl: ClassDef): (TypeName, Seq[c.Tree]) = classDecl match {
     case q"class $name { ..$body }" => (name, body)
@@ -87,9 +87,9 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
       val pos = wrappingPos(args.toList)
       val (range, tail) = args match {
         case q"${range: Range}" :: tail => (range, tail)
-        case _ => compAbort(pos, "Invalid arguments for reg's field")
+        case _ => cAbort(pos, "Invalid arguments for reg's field")
       }
-      compAssert(pos, range.start <= range.last, s"Register field cannot have zero width, found: ${range.start} .. ${range.end}")
+      cAssert(pos, range.start <= range.last, s"Register field cannot have zero width, found: ${range.start} .. ${range.end}")
       //TODO: loop?
       val (hard, soft) = tail match {
         case Nil                                                       => (defaultHard, defaultSoft)
@@ -98,7 +98,7 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
         case q"${hard: String}" :: Nil                                 => (hard, defaultSoft)
         case q"${hard: String}" :: q"soft=${soft: String}" :: Nil      => (hard, soft)
         case q"${hard: String}" :: q"${soft: String}" :: Nil           => (hard, soft)
-        case _ => compAbort(pos, "Invalid arguments for reg's field")
+        case _ => cAbort(pos, "Invalid arguments for reg's field")
       }
       FieldInfo(name, range, hard, soft)
     }
@@ -117,7 +117,7 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
       el match {
         case q"$name = $value" => (TermName(name.toString), value)
         case Ident(name) => (name.toTermName, q"")  //TODO: special case, should handled separately
-        case _ => compAbort(el.pos,s"unknown value in field $name: $el")
+        case _ => cAbort(el.pos,s"unknown value in field $name: $el")
       }
     }.toMap
 
@@ -143,7 +143,7 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
     try {
       guard += (ar, name.toString)
     } catch {
-      case AddressOverlap(first, second) => compError(c.enclosingPosition, s"Register cannot have overlapping fields, found: ${first.rangeString}, ${second.rangeString}")
+      case AddressOverlap(first, second) => cError(c.enclosingPosition, s"Register cannot have overlapping fields, found: ${first.rangeString}, ${second.rangeString}")
     }
     val newBody = body.flatMap {
       case q"$a; $b" => List(a, b)
@@ -169,13 +169,13 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
 
       /** Take memory unit as alignment, generate code. */
       def take(munit: MemoryUnit): (Alignment, List[c.Tree]) = {
-        compAssert(pos, value.isEmpty, s"register can't have multiple $name assignments")
+        cAssert(pos, value.isEmpty, s"register can't have multiple $name assignments")
 
         val obytes = munit.tryBytes
-        compAssert(pos, obytes.isDefined, s"register can't have $name which not being full bytes, found: $munit")
+        cAssert(pos, obytes.isDefined, s"register can't have $name which not being full bytes, found: $munit")
 
         val oalignment = obytes.get.tryAlignment
-        compAssert(pos, oalignment.isDefined, s"register must have $name = 2^N bytes")
+        cAssert(pos, oalignment.isDefined, s"register must have $name = 2^N bytes")
 
         val alignment = oalignment.get
         value = Some(alignment)
@@ -187,10 +187,10 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
           val munit = impl match {
             case q"${munit: MemoryUnit}" => munit
             case q"${int: Int}" => {
-              compInfo(pos, s"assuming bits units for $name value ($int.bits)", true)
+              cInfo(pos, s"assuming bits units for $name value ($int.bits)", true)
               int.toLong.bits
             }
-            case _ => compAbort(pos,s"register's $name given value which cannot be handled, $impl}")
+            case _ => cAbort(pos,s"register's $name given value which cannot be handled, $impl}")
           }
           Some(take(munit))
         }
@@ -225,7 +225,7 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
             case Apply(arg @ q"${_: Range}", body) => (Seq(arg), body)
             // name(...){...}
             case Apply(q"(..$args)", body) => (args, body)
-            case _ => compAbort(details.pos, "Invalid field declaration")
+            case _ => cAbort(details.pos, "Invalid field declaration")
           }
           fields = handleField(name, args, body, guard) :: fields
           Some((name, args, body))
@@ -249,7 +249,7 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
     def unapply(tree: c.Tree): Option[(c.TermName, c.Tree)] = {
       tree match {
         case q"$pref.$pname = $pimpl" if pref.toString == name => {
-          compAssert(tree.pos, !defs.contains(pname), s"register can't have multiple $name for $pname")
+          cAssert(tree.pos, !defs.contains(pname), s"register can't have multiple $name for $pname")
           defs = defs + (pname -> pimpl)
           Some((pname, pimpl))
         }
@@ -292,7 +292,7 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
     }
 
     val (fields, guard) = (qField.fields, qField.guard)
-    compAssert(pos, guard.length > 0, s"Register must have at least one field")
+    cAssert(pos, guard.length > 0, s"Register must have at least one field")
 
     // default values:
     //   regwidth = 4 bytes
@@ -300,11 +300,11 @@ class RegImpl(val c: Context) extends WhiteboLiftableMemory {
     val regwidth = qRegwidth.value.getOrElse(Alignment(4))
     val accesswidth = qAccesswidth.value.getOrElse(regwidth)
 
-    compAssert(pos, regwidth >= accesswidth, s"Register must have regwidth >= accesswidth (found: ${regwidth.toBytes} < ${accesswidth.toBytes})")
+    cAssert(pos, regwidth >= accesswidth, s"Register must have regwidth >= accesswidth (found: ${regwidth.toBytes} < ${accesswidth.toBytes})")
 
     // all fields span through total width of...
     val cwidth = guard.width
-    compAssert(pos, cwidth <= accesswidth.toBits, s"Register's contents are wider than its accesswidth (${accesswidth.toBits} < $cwidth)")
+    cAssert(pos, cwidth <= accesswidth.toBits, s"Register's contents are wider than its accesswidth (${accesswidth.toBits} < $cwidth)")
 
     //TODO: handle address map
     val addrMap = guard.toAddrMap
