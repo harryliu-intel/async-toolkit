@@ -1,5 +1,11 @@
 INTERFACE Node ;
 
+(*************)
+(* Constants *)
+(*************)
+
+CONST Brand = "SomeNode" ;
+
 (*********)
 (* Types *)
 (*********)
@@ -21,5 +27,13 @@ TYPE T = RECORD
 	the tree. *)
 	children : REF ARRAY OF REF T := NIL ;
 END ;
+
+(**************)
+(* Procedures *)
+(**************)
+
+PROCEDURE Equal( NodeA , NodeB : T ) : BOOLEAN ;
+
+PROCEDURE DeepCopy( CurrentNode : REF T ) : REF T ;
 
 END Node.
