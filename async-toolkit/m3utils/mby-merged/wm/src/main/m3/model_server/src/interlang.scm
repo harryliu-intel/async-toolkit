@@ -97,7 +97,6 @@
 (define *m3-proj* "Mby")
 (define *m3-uint-intf* "UInt")
 (define *m3-const-intf* "StructConst")
-(define *m3-output-dir* "build_mby_meta")
 (define *m3-lib-name* "mby_struct")
 (define *m3-common-output-dir* "wm_meta_common")
 
@@ -192,13 +191,12 @@
                (loop (+ cnt (get-type-field-cnt (cadar p) defs)) (cdr p)))))
                
         ))
- 
          
-(define (gen-m3-type-use x defs imports)
+(define (gen-m3-type-use x defs imports in-intf)
 
   (cond ((number? x) 
          (imports 'insert! "UInt")
-         (sa *m3-uint-intf* "." "UInt" (number->string x)))
+         (fmt-m3-sym (cons *m3-uint-intf* (sa "UInt" (number->string x))) in-intf imports))
         
         ((and (symbol? x)
               (let ((b-test (assoc x *builtins*)))
@@ -211,24 +209,24 @@
                 (if (and r-test (eq? 'typedef (car r-test)))
                     (let ((intf (sa *m3-proj* (get-m3-name r-test))))
                       (imports 'insert! intf)
-                      (sa intf ".T"))
+                      (fmt-m3-sym (cons intf "T") in-intf imports))
                     #f))))
 
         ;; must be type expression
         ((not (pair? x)) '*not-found*)
 
         ((eq? (car x) 'bits)
-               (sa "[0..WM(LS(1," (gen-m3-val-use (cadr x) defs imports) "),1)]")) ;; WM = Word.Minus, LS = Word.LeftShift
+               (sa "[0..Word.Minus(Word.LeftShift(1," (gen-m3-val-use (cadr x) defs imports in-intf) "),1)]"))
           
         ((eq? (car x) 'array)
-         (sa "ARRAY [0.." (gen-m3-val-use (cadr x) defs imports) "-1] OF " (gen-m3-type-use (caddr x) defs imports) ""))
+         (sa "ARRAY [0.." (gen-m3-val-use (cadr x) defs imports in-intf) "-1] OF " (gen-m3-type-use (caddr x) defs imports in-intf) ""))
 
         ((eq? (car x) 'struct)
          (apply sa
                 (append
                 (list "RECORD" dnl)
                 (map
-                 (lambda (fspec) (sa "  " (scheme-mem->m3 (car fspec)) " : " (gen-m3-type-use (cadr fspec) defs imports) ";" dnl))
+                 (lambda (fspec) (sa "  " (scheme-mem->m3 (car fspec)) " : " (gen-m3-type-use (cadr fspec) defs imports in-intf) ";" dnl))
                  (cadr x))
                 (list "END" dnl))))
 
@@ -236,9 +234,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (gen-m3-val-use x defs imports)
+(define (fmt-m3-sym intf-sym in-intf imports)
+  (let ((intf (car intf-sym))
+        (sym  (cdr intf-sym)))
+    (imports 'insert! intf)
+    (sa (if (equal? intf in-intf) "" (sa intf "."))
+        sym)
+    )
+  )
+      
+(define (gen-m3-val-use x defs imports in-intf)
 
-  (define (recurse z) (gen-m3-val-use z defs imports))
+  (define (recurse z) (gen-m3-val-use z defs imports in-intf))
 
   (cond ((number? x) (number->string x))
 
@@ -247,14 +254,14 @@
                 (if (and r-test (eq? 'constant (car r-test)))
                     (let ((intf (sa *m3-proj* *m3-const-intf* )))
                       (imports 'insert! intf)
-                      (sa intf "." (get-m3-name  r-test) ))
+                      (fmt-m3-sym (cons intf (get-m3-name r-test)) in-intf imports))
                     #f))))
         
         ;; must be value expression
         ((not (pair? x)) '*not-found*)
 
         ((eq? (car x) 'number)
-         (sa "NUMBER(" (gen-m3-type-use (cadr x) defs imports) ")"))
+         (sa "NUMBER(" (gen-m3-type-use (cadr x) defs imports in-intf) ")"))
 
         ((memq (car x) *multiops*)
          (sa "(" (infixize (map recurse (cdr x)) (car x)) ")"))
@@ -275,16 +282,19 @@
 ;;
 
 (define (m3-intf-nm typedef)
-  (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".i3"))
+  (sa *m3-proj*  (scheme->m3 (cadr typedef))))
 
-(define (m3-modu-nm typedef)
-  (sa *m3-proj*  (scheme->m3 (cadr typedef)) ".m3"))
+(define (m3-intf-fnm typedef)
+  (sa (m3-intf-nm typedef) ".i3"))
+
+(define (m3-modu-fnm typedef)
+  (sa (m3-intf-nm typedef) ".m3"))
   
 (define (compile-m3-typedef-def x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
   (let* ((imports (make-string-set 10))
-         (code (sa "TYPE T = " (gen-m3-type-use (caddr x) defs imports) ";")))
-    (list (m3-intf-nm x) imports code)
+         (code (sa "TYPE T = " (gen-m3-type-use (caddr x) defs imports (m3-intf-nm x)) ";")))
+    (list (m3-intf-fnm x) imports code)
     )
   )
 
@@ -292,7 +302,7 @@
 
 (define (compile-m3-typedef-serial-size x defs)
   (if (not (eq? (car x) 'typedef)) (error "not a typedef : " x))
-  (list (m3-intf-nm x) *empty-set* (sa "CONST SerialSize = " (get-type-field-cnt (caddr x) defs) ";")))
+  (list (m3-intf-fnm x) *empty-set* (sa "CONST SerialSize = " (get-type-field-cnt (caddr x) defs) ";")))
 
 (define (m3-deser-name whch)
   (case whch
@@ -301,57 +311,66 @@
     ((fmt)   "FormatWx")
     (else (error))))
 
+(define (m3-deser-proto whch nm serial-size semi type)
+  (sa "PROCEDURE " nm "("
+      (case whch
+        ((ser)   (sa "VAR s : ARRAY[0.."serial-size"-1] OF Word.T; READONLY z : "type))
+        ((deser) (sa "READONLY s : ARRAY[0.."serial-size"-1] OF Word.T; VAR z : "type))
+        ((fmt)   (sa "wx : Wx.T; READONLY z : "type))
+        )
+      ")" semi)
+  )
+
 (define (m3-deser-uint-pname b whch)
-  (sa *m3-uint-intf* "." (m3-deser-name whch) (number->string b)))
+  (cons *m3-uint-intf*  (sa (m3-deser-name whch) (number->string b))))
 
 (define (m3-deser-builtin-pname x whch)
    (let ((b-test (assoc x *builtins*)))
                    (if b-test
-                       (sa "WmDeSer." (m3-deser-name whch) (get-m3-name (cadr b-test)))
+                       (cons "WmDeSer" (sa (m3-deser-name whch) (get-m3-name (cadr b-test))))
                        #f)))
            
 (define (m3-deser-typedef-pname x whch)
   (let ((r-test (sym-lookup x defs)))
     (if (and r-test (eq? 'typedef (car r-test)))
         (let ((intf (sa *m3-proj* (get-m3-name r-test))))
-          (sa intf "." (m3-deser-name whch)))
+          (cons intf (m3-deser-name whch)))
         #f)))
 
 (define (compile-m3-typedef-deser-proto td defs whch semi)
   (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
   (let ((x          (caddr td))
+        (in-intf    (m3-intf-nm td))
+        (imports    (make-string-set 10))
         (proc-name  (m3-deser-name whch)))
     ;; depending what the typedef is, we do different things
     ;; if its just an alias, make it a CONST def, relating to the base type
     ;; else provide the standard proto
-    (list
-     (m3-intf-nm td)
-     *empty-set* 
+    (let ((code
      (cond ((number? x) 
-            (sa "CONST " proc-name " = " (m3-deser-uint-pname x whch) semi))
+            (sa "CONST " proc-name " = " (fmt-m3-sym (m3-deser-uint-pname x whch) in-intf imports) semi))
 
            ((let ((builtin-name (m3-deser-builtin-pname x whch)))
-              (if builtin-name (sa "CONST "proc-name" = " builtin-name ";") #f)))
+              (if builtin-name (sa "CONST "proc-name" = " (fmt-m3-sym builtin-name in-intf imports) ";") #f)))
 
            ((let ((td-name (m3-deser-typedef-pname x whch)))
-              (if td-name (sa "CONST "proc-name" = " td-name ";") #f)))
+              (if td-name (sa "CONST "proc-name" = " (fmt-m3-sym td-name in-intf imports) ";") #f)))
            
            ;; must be type expression
            ((not (pair? x)) '*not-found*)
            
            ((eq? (car x) 'bits)
-            (compile-m3-typedef-deser-proto (force-value (cadr x) defs) defs whch))
+            (let ((rv (compile-m3-typedef-deser-proto (force-value (cadr x) defs) defs whch semi)))
+              (set! imports (cadr rv))
+              (caddr rv)))
 
            (else ;; a compound type of some kind (struct or array)
-            (sa "PROCEDURE " (m3-deser-name whch) "("
-                (case whch
-                  ((ser)   "VAR s : ARRAY[0..SerialSize-1] OF Word.T; READONLY t : T")
-                  ((deser) "READONLY s : ARRAY[0..SerialSize-1] OF Word.T; VAR t : T")
-                  ((fmt)   "wx : Wx.T; READONLY t : T")
-                  )
-                ")" semi))
-           ) ;;dnoc
-     ) ;;tsil
+            (m3-deser-proto whch (m3-deser-name whch) "SerialSize" semi "T"))
+            ) ;;dnoc
+     ))
+           
+      (list (m3-intf-fnm td) imports code)
+      )
     ) ;;tel
   )
 
@@ -360,11 +379,10 @@
 ;;; ser/deser/fmt
 ;;;
 
-(define (call-m3-deser-code whch obj strm-idx)
+(define (call-m3-deser-code whch obj start-strm-idx len)
   (case whch
-    ((ser deser) (sa "(s[" strm-idx "], " obj ")"))
-    ((fmt)       (sa "(wx, "obj")"))
-    ))
+    ((ser deser) (sa "(SUBARRAY(s," start-strm-idx"," len "), " obj ")"))
+    ((fmt)       (sa "(wx, "obj")"))))
 
 (define (m3-tag-deser-code whch ind tag)
   (if (eq? tag 'fmt)
@@ -378,20 +396,31 @@
       ""
       ))
 
-(define (make-m3-deser-code whch x defs lhs lev ind p tag)
+(define (make-m3-deser-code whch x defs lhs lev ind p tag imports in-intf)
   (cond
-   ((number? x) (sa (m3-tag-deser-code whch ind tag) ind (m3-deser-uint-pname x whch) (call-m3-deser-code whch lhs p)))
+   ((number? x) (sa (m3-tag-deser-code whch ind tag)
+                    ind
+                    (fmt-m3-sym (m3-deser-uint-pname x whch) in-intf imports)
+                    (call-m3-deser-code whch lhs p 1)))
 
    ((let ((builtin-name (m3-deser-builtin-pname x whch)))
-      (if builtin-name (sa (m3-tag-deser-code whch ind tag) ind builtin-name (call-m3-deser-code whch lhs p)) #f)))
+      (if builtin-name (sa (m3-tag-deser-code whch ind tag)
+                           ind
+                           (fmt-m3-sym builtin-name in-intf imports)
+                           (call-m3-deser-code whch lhs p 1))
+          #f)))
    
    ((let ((td-name (m3-deser-typedef-pname x whch)))
-      (if td-name (sa (m3-tag-deser-code whch ind tag) ind td-name (call-m3-deser-code whch lhs p)) #f)))
+      (if td-name (sa (m3-tag-deser-code whch ind tag)
+                      ind
+                      (fmt-m3-sym td-name in-intf imports)
+                      (call-m3-deser-code whch lhs p (fmt-m3-sym (cons (car td-name) "SerialSize") in-intf imports)))
+          #f)))
    
    ((not (pair? x)) (error "cant de/ser " x))
     
    ((eq? (car x) 'bits)
-    (make-m3-deser-code whch (force-value (cadr x) defs) lhs lev ind p tag))
+    (make-m3-deser-code whch (force-value (cadr x) defs) lhs lev ind p tag imports in-intf))
    
    ((eq? (car x) 'array)
     (sa
@@ -403,9 +432,9 @@
      ind "       o"lev " = " p" + i"lev" * " (get-type-field-cnt (caddr x) defs) " DO" dnl))
      
        ((fmt) (sa
-     ind "       tag"lev " = F(\"%s[%s]\","(if (= lev 0) (if tag tag "\"\"") (sa "tag"(- lev 1)))", Int(i"lev")) DO" dnl)))
+     ind "       tag"lev " = Fmt.F(\"%s[%s]\","(if (= lev 0) (if tag tag "\"\"") (sa "tag"(- lev 1)))", Fmt.Int(i"lev")) DO" dnl)))
 
-          (make-m3-deser-code whch (caddr x) defs (sa "t"lev) (+ lev 1) (sa ind "    ") (sa "o"lev) (sa "tag" lev)) dnl
+          (make-m3-deser-code whch (caddr x) defs (sa "t"lev) (+ lev 1) (sa ind "    ") (sa "o"lev) (sa "tag" lev) imports in-intf) dnl
 
           ind "  END" dnl
           ind "END" 
@@ -428,6 +457,8 @@
                                         (sa ind "  ")
                                         idx
                                         (sa "\"" (caar ptr) "\"")
+                                        imports
+                                        in-intf
                                         )
                     ";"
                     dnl
@@ -440,32 +471,28 @@
 
 (define (compile-m3-typedef-deser-code td defs whch)
   (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
-  (let ((imports    (make-string-set 10))
+  (let* ((imports    (make-string-set 10))
         (x          (caddr td))
-        (proc-name  (m3-deser-name whch)))
-    (list
-     (m3-modu-nm td)
-     imports
-     (cond ((not (pair? x)) "") ;; base type, no need for code generation
-
-           ((or (eq? (car x) 'array)
-                (eq? (car x) 'struct))
-            (sa (caddr (compile-m3-typedef-deser-proto td defs whch " =")) dnl
-                "  BEGIN" dnl
-
-                (make-m3-deser-code whch x defs "t" 0 "  " 0 "")
-                
-                "  END " proc-name ";" dnl
-                ) ;; as
-            )
-
-           (else "")
-
-           );; dnoc
-          );;tsil
-    );;tel
+        (proc-name  (m3-deser-name whch))
+        (tdp (compile-m3-typedef-deser-proto td defs whch " ="))
+        (code
+         (cond ((not (pair? x)) "") ;; base type, no need for code generation
+               ((or (eq? (car x) 'array)
+                    (eq? (car x) 'struct))
+                (sa (caddr tdp) dnl
+                    "  BEGIN" dnl
+                    (make-m3-deser-code whch x defs "z" 0 "  " 0 #f imports (m3-intf-nm td))
+                    "  END " proc-name ";" dnl
+                    ) ;; as
+                )
+               (else "")
+               );; dnoc
+         )
+        )
+    (set! imports (imports 'union (cadr tdp)))
+    (list (m3-modu-fnm td) imports code)
+    );;*tel
   )
-
 
 ;; main entry points for generating M3 below ...
 
@@ -483,11 +510,10 @@
 (define (compile-m3-constant x defs)
   (if (not (eq? (car x) 'constant)) (error "not a constant : " x))
   (let* ((imports (make-string-set 10))
-         (code (sa "CONST " (scheme->m3 (cadr x)) " = " (gen-m3-val-use (caddr x) defs imports) ";")))
+         (intf-nm (sa *m3-proj* *m3-const-intf*))
+         (code (sa "CONST " (scheme->m3 (cadr x)) " = " (gen-m3-val-use (caddr x) defs imports intf-nm) ";")))
     (list
-     (list (sa *m3-proj* *m3-const-intf* ".i3")
-           imports
-           code)
+     (list (sa intf-nm ".i3") imports code)
      )
     )
   )
@@ -738,6 +764,10 @@
   (list "" (sa "#define " (sa *c-proj* "_" (get-c-name (sym-lookup (cadr x) defs))) "_deser_qwords " (get-type-field-cnt (caddr x) defs) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; just test code, to make sure it all works
+;;
+
 (define topo-sorter (obj-method-wrap (new-modula-object 'TextTopoSort.T ) 'TextTopoSort.T))
 (topo-sorter 'init)
 (topo-sorter 'addDependency "a" "b")
@@ -747,7 +777,10 @@
 (define s (obj-method-wrap (topo-sorter 'sort) 'TextSeq.T))
 (s 'size)
 (s 'get 0)
-
+                                                                    ;;
+                                                                    ;;
+                                                                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (compile-c-typedef x defs)
   (list
@@ -779,6 +812,8 @@
          (lsts (map (lambda (def) (compiler def defs)) defs)))
     (apply append lsts)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (string-lt t0 t1) (= -1 (Text.Compare t0 t1)))
 
 (define (sort-string-list L) (mergesort L string-lt))
@@ -788,13 +823,19 @@
 (define (compile-all) (map compile '(m3 c)))
 
 (define (do-m3-output lst odir libnm)
-  (let* ((files (uniq-string-list (map car lst)))
+  (let* ((files (uniq-string-list (map car lst))) ;; uniq the filenames
          (wrs   (map (lambda(fn) (list fn (FileWr.Open (sa odir "/src/" fn)) (make-string-set 10))) files))
          (m3mwr (FileWr.Open (sa odir "/src/m3makefile")))
          (m3owr (FileWr.Open (sa odir "/src/m3overrides")))
          )
-    (dis "import(\"libm3\")" dnl m3mwr)
-    (dis "override(\"" *m3-common-output-dir* "\","../..")" dnl m3owr)
+    (define (dis-import i-l-nm)
+      (if (not (equal? i-l-nm libnm)) (dis "import(\"" i-l-nm "\")" dnl m3mwr)))
+
+    (dis-import "libm3")
+    (dis-import "libbuf")
+    (dis-import *m3-common-output-dir*)
+
+    (dis "override(\"" *m3-common-output-dir* "\",\"../..\")" dnl m3owr)
 
     ;; side effects :-(
     (map (lambda (o)
@@ -805,53 +846,53 @@
          lst)
 
     (map (lambda(w)
+           ;; do one output file at a time ---
            (let* ((fn  (car w))
                   (wr  (cadr w))
                   (im  (caddr w))
-                  (mn  (TextUtils.RemoveSuffixes fn '(".m3" ".i3") ))
-                  (sfx (string->symbol (TextUtils.RemovePrefix   fn (sa mn ".")))))
+                  (mn  (TextUtils.RemoveSuffixes fn '(".m3" ".i3") )) ;; compute module name
+                  (sfx (string->symbol
+                        (TextUtils.RemovePrefix   fn (sa mn "."))))) ;; and suffix :-)
              (dis (case sfx
                     ((i3) (dis "Interface(\"" mn "\")" dnl m3mwr)      "INTERFACE ")
                     ((m3) (dis "implementation(\"" mn "\")" dnl m3mwr) "MODULE "))
                   mn ";" dnl dnl
                   wr)
 
-
-             (map (lambda (i) (dis "IMPORT " i ";" dnl wr)) (im 'keys))
+             (map (lambda (i) (if (not (equal? i mn)) (dis "<*NOWARN*>IMPORT " i ";" dnl wr))) (append '("Fmt" "Word" "Wx") (im 'keys)))
 
              (dis dnl wr)
 
              (let ((matches (filter (lambda (q)(equal? (car q) fn)) lst)))
                (map (lambda (c) (dis c dnl dnl wr)) (map caddr matches))
                )
-
              
-             (dis (case sfx
-                    ((i3) "END ")
-                    ((m3) "BEGIN END "))
-                  mn "." dnl
+             (dis (case sfx ((i3) "END ") ((m3) "BEGIN END ")) mn "." dnl ;; EOM
                   wr)
              ))
-
         wrs)
-                    
-                 
 
     (map Wr.Close (map cadr wrs))
 
     (dis "library(\"" libnm "\")" dnl m3mwr)
     (Wr.Close m3mwr)
     (Wr.Close m3owr)
-
     wrs
-
     ))
+
+(define (do-m3-meta-output lst)
+  (do-m3-output lst *m3-lib-name* *m3-lib-name*))
+
+(define (do-m3-common-output lst)
+  (do-m3-output lst *m3-common-output-dir* *m3-common-output-dir*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *uint-high* 64)
 
 (define (m3-uint-type n)
   (if (= 64 n) "Word.T"
-      (sa "[ 0..Word.LeftShift(1,"n")-1 ]")))
+      (sa "[ 0..Word.Minus(Word.LeftShift(1,"n"),1) ]")))
 
 (define (c-uint-type n)
   (cond ((> 32 n) "unsigned long int")
@@ -860,28 +901,30 @@
         (else "unsigned char")))
           
 (define (make-1-uint n)
-  (let ((i-import-set (make-string-set 10)))
-    (i-import-set 'insert! "Word")
-    (i-import-set 'insert! "Wx")
+  (let* ((tn (sa "UInt"n))
+         (ser-proto  (m3-deser-proto 'ser (sa "Serialize"n) 1 "" tn))
+         (deser-proto (m3-deser-proto 'deser (sa "Deserialize"n) 1 "" tn))
+         (fmt-proto (m3-deser-proto 'fmt (sa "FormatWx"n) 1 "" tn))
+         (i-import-set (make-string-set 10)))
     (list 
      (list "UInt.i3" i-import-set
            (sa
             "TYPE UInt"n" = "(m3-uint-type n) ";" dnl
-            "PROCEDURE Serialize"n"(VAR o : Word.T; READONLY z : UInt"n");" dnl
-            "PROCEDURE Deserialize"n"(READONLY o : Word.T; VAR z : UInt"n");" dnl
-            "PROCEDURE FormatWx"n"(wx : Wx.T; READONLY z : UInt"n");" dnl
+            ser-proto ";" dnl
+            deser-proto ";" dnl
+            fmt-proto ";" dnl
             dnl
             )
            )
-     (list "UInt.m3" (let ((m-import-set (i-import-set 'copy))) (m-import-set 'insert! "Fmt") m-import-set)
-           (sa 
-            "PROCEDURE Serialize"n"(VAR o : Word.T; READONLY z : UInt"n") =" dnl
-            "  BEGIN o := z END Serialize"n";" dnl
+     (list "UInt.m3" i-import-set
+           (sa
+            ser-proto "=" dnl
+            "  BEGIN s[0] := z END Serialize"n";" dnl
             dnl
-            "PROCEDURE Deserialize"n"(READONLY i : Word.T; VAR z : UInt"n") =" dnl
-            "  BEGIN z := i END Deserialize"n";" dnl
+            deser-proto "=" dnl
+            "  BEGIN z := s[0] END Deserialize"n";" dnl
             dnl
-            "PROCEDURE FormatWx"n"(wx : Wx.T; READONLY z : UInt"n") =" dnl
+            fmt-proto "=" dnl
             "  BEGIN Wx.PutText(wx, \"16_\" & Fmt.Unsigned(z)) END FormatWx"n";" dnl
             dnl
             )
@@ -896,3 +939,44 @@
     (if (= i 0)
         res
         (loop (- i 1) (append res (make-1-uint i))))))
+
+(define (make-builtins)
+  (let* ((n "BOOLEAN")
+         (tn n)
+         (ser-proto  (m3-deser-proto 'ser (sa "Serialize"n) 1 "" tn))
+         (deser-proto (m3-deser-proto 'deser (sa "Deserialize"n) 1 "" tn))
+         (fmt-proto (m3-deser-proto 'fmt (sa "FormatWx"n) 1 "" tn)))
+  (list
+   (list "WmDeSer.i3"
+         *empty-set*
+         (sa
+          ser-proto ";" dnl
+          deser-proto ";" dnl
+          fmt-proto ";" dnl
+          dnl
+          )
+         )
+   (list "WmDeSer.m3"
+         *empty-set*
+         (sa
+            ser-proto "=" dnl
+            "  BEGIN s[0] := ORD(z) END Serialize"n";" dnl
+            dnl
+            deser-proto "=" dnl
+            "  BEGIN z := VAL(s[0],"tn") END Deserialize"n";" dnl
+            dnl
+            fmt-proto "=" dnl
+            "  BEGIN Wx.PutText(wx, Fmt.Bool(z)) END FormatWx"n";" dnl
+            dnl
+            )
+          )
+     )
+    )
+  )
+          
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (do-it)
+  (do-m3-meta-output (compile 'm3))
+  (do-m3-common-output (append (make-uints) (make-builtins))))

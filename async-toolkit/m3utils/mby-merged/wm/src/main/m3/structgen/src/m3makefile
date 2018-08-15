@@ -26,6 +26,7 @@ SchemeStubs("TextSeq")
 SchemeStubs("Text") 
 SchemeStubs("TextUtils") 
 SchemeStubs("TextSet") 
+SchemeStubs("TextRefTbl") 
 SchemeStubs("TextList") 
 
 ExportSchemeStubs("structgen") % export OUR scheme stubs
