@@ -1,4 +1,4 @@
-(require-modules "basic-defs" "m3" "display" "hashtable" "struct" "set")
+(require-modules "basic-defs" "m3" "display" "hashtable" "struct" "set" "mergesort")
 (load "../../wm_net/src/structgen_m3.scm")
 (load "../../wm_net/src/structgen_shared.scm")
 
@@ -97,6 +97,10 @@
 (define *m3-proj* "Mby")
 (define *m3-uint-intf* "UInt")
 (define *m3-const-intf* "StructConst")
+(define *m3-output-dir* "build_mby_meta")
+(define *m3-lib-name* "mby_struct")
+(define *m3-common-output-dir* "wm_meta_common")
+
 (define *c-proj* "mby")
 (define *c-const-pfx* "mbyStruct_")
 
@@ -343,7 +347,7 @@
                 (case whch
                   ((ser)   "VAR s : ARRAY[0..SerialSize-1] OF Word.T; READONLY t : T")
                   ((deser) "READONLY s : ARRAY[0..SerialSize-1] OF Word.T; VAR t : T")
-                  ((fmt)   "wx : Wx.; READONLY t : T")
+                  ((fmt)   "wx : Wx.T; READONLY t : T")
                   )
                 ")" semi))
            ) ;;dnoc
@@ -775,4 +779,120 @@
          (lsts (map (lambda (def) (compiler def defs)) defs)))
     (apply append lsts)))
 
+(define (string-lt t0 t1) (= -1 (Text.Compare t0 t1)))
+
+(define (sort-string-list L) (mergesort L string-lt))
+
+(define (uniq-string-list L) (uniq equal? (sort-string-list L)))
+
 (define (compile-all) (map compile '(m3 c)))
+
+(define (do-m3-output lst odir libnm)
+  (let* ((files (uniq-string-list (map car lst)))
+         (wrs   (map (lambda(fn) (list fn (FileWr.Open (sa odir "/src/" fn)) (make-string-set 10))) files))
+         (m3mwr (FileWr.Open (sa odir "/src/m3makefile")))
+         (m3owr (FileWr.Open (sa odir "/src/m3overrides")))
+         )
+    (dis "import(\"libm3\")" dnl m3mwr)
+    (dis "override(\"" *m3-common-output-dir* "\","../..")" dnl m3owr)
+
+    ;; side effects :-(
+    (map (lambda (o)
+           (let* ((fn (car o))
+                  (im (cadr o))
+                  (x (assoc fn wrs)))
+             (set-cdr! (cdr x) (list ((caddr x) 'union im)))))
+         lst)
+
+    (map (lambda(w)
+           (let* ((fn  (car w))
+                  (wr  (cadr w))
+                  (im  (caddr w))
+                  (mn  (TextUtils.RemoveSuffixes fn '(".m3" ".i3") ))
+                  (sfx (string->symbol (TextUtils.RemovePrefix   fn (sa mn ".")))))
+             (dis (case sfx
+                    ((i3) (dis "Interface(\"" mn "\")" dnl m3mwr)      "INTERFACE ")
+                    ((m3) (dis "implementation(\"" mn "\")" dnl m3mwr) "MODULE "))
+                  mn ";" dnl dnl
+                  wr)
+
+
+             (map (lambda (i) (dis "IMPORT " i ";" dnl wr)) (im 'keys))
+
+             (dis dnl wr)
+
+             (let ((matches (filter (lambda (q)(equal? (car q) fn)) lst)))
+               (map (lambda (c) (dis c dnl dnl wr)) (map caddr matches))
+               )
+
+             
+             (dis (case sfx
+                    ((i3) "END ")
+                    ((m3) "BEGIN END "))
+                  mn "." dnl
+                  wr)
+             ))
+
+        wrs)
+                    
+                 
+
+    (map Wr.Close (map cadr wrs))
+
+    (dis "library(\"" libnm "\")" dnl m3mwr)
+    (Wr.Close m3mwr)
+    (Wr.Close m3owr)
+
+    wrs
+
+    ))
+
+(define *uint-high* 64)
+
+(define (m3-uint-type n)
+  (if (= 64 n) "Word.T"
+      (sa "[ 0..Word.LeftShift(1,"n")-1 ]")))
+
+(define (c-uint-type n)
+  (cond ((> 32 n) "unsigned long int")
+        ((> 16 n) "unsigned int")
+        ((> 8 n) "unsigned short int")
+        (else "unsigned char")))
+          
+(define (make-1-uint n)
+  (let ((i-import-set (make-string-set 10)))
+    (i-import-set 'insert! "Word")
+    (i-import-set 'insert! "Wx")
+    (list 
+     (list "UInt.i3" i-import-set
+           (sa
+            "TYPE UInt"n" = "(m3-uint-type n) ";" dnl
+            "PROCEDURE Serialize"n"(VAR o : Word.T; READONLY z : UInt"n");" dnl
+            "PROCEDURE Deserialize"n"(READONLY o : Word.T; VAR z : UInt"n");" dnl
+            "PROCEDURE FormatWx"n"(wx : Wx.T; READONLY z : UInt"n");" dnl
+            dnl
+            )
+           )
+     (list "UInt.m3" (let ((m-import-set (i-import-set 'copy))) (m-import-set 'insert! "Fmt") m-import-set)
+           (sa 
+            "PROCEDURE Serialize"n"(VAR o : Word.T; READONLY z : UInt"n") =" dnl
+            "  BEGIN o := z END Serialize"n";" dnl
+            dnl
+            "PROCEDURE Deserialize"n"(READONLY i : Word.T; VAR z : UInt"n") =" dnl
+            "  BEGIN z := i END Deserialize"n";" dnl
+            dnl
+            "PROCEDURE FormatWx"n"(wx : Wx.T; READONLY z : UInt"n") =" dnl
+            "  BEGIN Wx.PutText(wx, \"16_\" & Fmt.Unsigned(z)) END FormatWx"n";" dnl
+            dnl
+            )
+          )
+     )
+    )
+  )
+
+(define (make-uints)
+  (let loop ((i     *uint-high*)
+             (res   '()))
+    (if (= i 0)
+        res
+        (loop (- i 1) (append res (make-1-uint i))))))
