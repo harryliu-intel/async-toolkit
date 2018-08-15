@@ -1,6 +1,9 @@
 package com.intel.cg.hpfd.csr
 
 import scala.annotation.tailrec
+import scala.reflect.api.Universe
+import scala.reflect.runtime.{universe => runtimeUniverse}
+import scala.reflect.macros.{blackbox, whitebox}
 
 
 object Memory {
@@ -302,5 +305,50 @@ object Memory {
     /** Conversion to addressing from option. Works with indirect conversions too. */
     implicit def optionToAddressing[A](value: A)(implicit f: A => Option[Addressing.Value]): Addressing.Value =
       f(value).getOrElse(Addressing.default)
+  }
+
+
+  /** Lifting and unlifting memory-related types. */
+  trait LiftableMemory {
+    val universe: Universe
+    import universe._
+
+    lazy val asMemoryUnitsSym: TypeSymbol = symbolOf[asMemoryUnits]
+
+    implicit lazy val liftBits = Liftable[Bits] { b =>
+      q"(new $asMemoryUnitsSym(${b.toLong})).bits"
+    }
+    implicit lazy val unliftBits = Unliftable[Bits] {
+      case q"${value: Long}.bits" => value.bits
+      case q"${value: Int}.bits" => value.toLong.bits
+    }
+
+    implicit lazy val liftBytes = Liftable[Bytes] { b =>
+      q"(new $asMemoryUnitsSym(${b.value})).bytes"
+    }
+    implicit lazy val unliftBytes = Unliftable[Bytes] {
+      case q"${value: Long}.bytes" => value.bytes
+      case q"${value: Int}.bytes" => value.toLong.bytes
+    }
+
+    implicit lazy val unliftMemoryUnit = Unliftable[MemoryUnit] {
+      case q"${bits: Bits}" => bits
+      case q"${bytes: Bytes}" => bytes
+    }
+  }
+
+  object RuntimeLiftableMemory extends LiftableMemory {
+    type U = runtimeUniverse.type
+    val universe: U = runtimeUniverse
+  }
+  trait BlackboxLiftableMemory extends LiftableMemory {
+    val c: blackbox.Context
+    type U = c.universe.type
+    val universe: U = c.universe
+  }
+  trait WhiteboLiftableMemory extends LiftableMemory {
+    val c: whitebox.Context
+    type U = c.universe.type
+    val universe: U = c.universe
   }
 }
