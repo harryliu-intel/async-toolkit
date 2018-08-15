@@ -12,7 +12,7 @@ class reg extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro RegImpl.impl
 }
 
-class RegImpl(val c: Context) extends WhiteControl with WhiteboLiftableMemory { self =>
+class RegImpl(val c: Context) extends Control with LiftableMemory { self =>
   import c.universe._
 
   implicit val unliftContinuousRange = Unliftable[Range] {

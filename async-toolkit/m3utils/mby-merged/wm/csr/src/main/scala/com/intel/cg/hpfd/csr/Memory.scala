@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.csr
 import scala.annotation.tailrec
 import scala.reflect.api.Universe
 import scala.reflect.runtime.{universe => runtimeUniverse}
-import scala.reflect.macros.{blackbox, whitebox}
+import scala.reflect.macros.blackbox
 
 
 object Memory {
@@ -309,7 +309,7 @@ object Memory {
 
 
   /** Lifting and unlifting memory-related types. */
-  trait LiftableMemory {
+  trait LiftableMemoryImpl {
     val universe: Universe
     import universe._
 
@@ -347,17 +347,12 @@ object Memory {
     }
   }
 
-  object RuntimeLiftableMemory extends LiftableMemory {
+  object RuntimeLiftableMemory extends LiftableMemoryImpl {
     type U = runtimeUniverse.type
     val universe: U = runtimeUniverse
   }
-  trait BlackboxLiftableMemory extends LiftableMemory {
-    val c: blackbox.Context
-    type U = c.universe.type
-    val universe: U = c.universe
-  }
-  trait WhiteboLiftableMemory extends LiftableMemory {
-    val c: whitebox.Context
+  trait LiftableMemory extends LiftableMemoryImpl {
+    val c: blackbox.Context  // whitebox's one is blackbox's one's subtype
     type U = c.universe.type
     val universe: U = c.universe
   }

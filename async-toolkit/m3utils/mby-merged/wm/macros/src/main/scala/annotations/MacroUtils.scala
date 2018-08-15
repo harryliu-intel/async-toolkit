@@ -1,13 +1,12 @@
 package src.main.scala
 
 import scala.language.experimental.macros
-import scala.reflect.macros.{blackbox, whitebox}
+import scala.reflect.macros.blackbox
 
 
 object MacroUtils {
-
-  trait ContextControl[C <: blackbox.Context] { self =>
-    val c: C
+  trait Control { self =>
+    val c: blackbox.Context  // whitebox's one is blackbox's one's subtype
     import c._
 
     def cAbort(pos: Position, str: String): Nothing = abort(pos, str)
@@ -35,7 +34,4 @@ object MacroUtils {
       def |(str: String)(implicit pos: Position): T = self.cGet(pos, op, str)
     }
   }
-
-  trait BlackControl extends ContextControl[blackbox.Context]
-  trait WhiteControl extends ContextControl[whitebox.Context]
 }
