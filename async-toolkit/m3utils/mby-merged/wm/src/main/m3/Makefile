@@ -112,7 +112,7 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 	mkdir -p $(dir $@)
 	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
 	rm -rf $(SCALA_IMPLICITS)
-	echo "package switch_wm.model_server" > $(SCALA_IMPLICITS)
+	echo "package com.intel.cg.hpfd.madisonbay.wm.server.dto" > $(SCALA_IMPLICITS)
 	echo "import java.io._" >> $(SCALA_IMPLICITS)
 	echo "object Implicits {" >> $(SCALA_IMPLICITS)
 	grep -h implicit $(WM_NET_ROOT)/scala_generated/* >> $(SCALA_IMPLICITS)

@@ -9,4 +9,5 @@ object Versions {
   val scopt = "3.7.0"
   val shapeless = "2.3.3"
   val csrModel = applicationVersion
+  val wmServerDto = applicationVersion
 }
