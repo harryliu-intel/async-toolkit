@@ -72,6 +72,7 @@
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
+        (doHierDef nil)          ; create cellName.def with hierarchy separator
         (doNondefaultDef nil)    ; create cellName_nondefault.def
         (doSkipRouting nil)      ; create cellName.SkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
@@ -94,6 +95,7 @@
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
         excludeCellsFile
+        (hierSep "!") ; a character that is legal, but not otherwise used
         (statusNonDefault t) (errorStr "") placed)
 
     (printf "Export Start %s\n" (getCurrentTime))
@@ -195,6 +197,13 @@
                       statusDef=nil
                       )
                      )
+               (when doHierDef
+                 inst->name = (ListApplyFuncToListAndAccumulateResult
+                                (or inst->hierName (list inst->name))
+                                (lambda (elem accum)
+                                  (if accum (strcat elem hierSep accum) elem))
+                                nil
+                                nil))
                )
       (unless doPowerGates
         (DeletePwrGateCells ?CV ExportCV)
@@ -205,13 +214,21 @@
 
       ; export DEF
       (when statusDef
+        defFile = (sprintf nil "%s/%s.def" LEFDEF_DIR CV->cellName)
         statusDef = (ldtrDefWriteOA
-                     (sprintf nil "%s/%s.def" LEFDEF_DIR CV->cellName)
+                     defFile
                      ExportCV->libName
                      ExportCV->cellName
                      ExportCV->viewName
                      (sprintf nil "%s/%s.def.log" LEFDEF_DIR CV->cellName)
                      "5.7")
+        (when (and statusDef doHierDef)
+          div = (or (dbGetPropByName (dbGetPropByName (techGetTechFile cv)
+                                                      "LEF Legacy")
+                                     "DIVIDER")->value
+                    "/")
+          command = (sprintf nil "sed -i 's:\\%s:\\%s:g' '%s'" hierSep div defFile)
+          (shell command))
         )
       (dbPurge ExportCV)
       )

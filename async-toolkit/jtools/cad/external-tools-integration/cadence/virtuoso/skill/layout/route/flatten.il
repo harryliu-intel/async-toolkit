@@ -681,6 +681,7 @@ useICV = t
   (foreach sub1 inst->master->instances
            sub2 = (dbCopyFig sub1 CV inst->transform)
            sub2->name = (strcat inst->name "." sub1->name)
+           sub2->hierName = (cons sub1->name (or inst->hierName (list inst->name)))
            (when inst->status=="locked" sub2->status="locked")
            )
   (dbDeleteObject inst)
