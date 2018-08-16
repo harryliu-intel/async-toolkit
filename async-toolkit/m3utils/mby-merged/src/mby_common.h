@@ -105,7 +105,7 @@ fm_status mbyModelWriteCSRMult
     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
     const fm_uint32 byte_addr,
     const fm_int len,
-    fm_uint32 * const new_value
+    const fm_uint32 * new_value
 );
 
 #endif // MBY_COMMON_H
