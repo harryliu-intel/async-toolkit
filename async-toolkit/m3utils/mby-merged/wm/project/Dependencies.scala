@@ -8,6 +8,7 @@ object Dependencies {
   lazy val scopt = "com.github.scopt" %% "scopt" % Versions.scopt
   lazy val shapeless = "com.chuusai" %% "shapeless" % Versions.shapeless
   lazy val csrModel = "com.intel.cg.hpfd" %% "csr-model" % Versions.csrModel changing()
+  lazy val wmServerDto = "com.intel.cg.hpfd" %% "wm-server-dto" % Versions.wmServerDto changing()
 
   lazy val whiteModelDeps = Seq(
     scalaTest % Test,
@@ -15,7 +16,8 @@ object Dependencies {
     scalaParserCombinators,
     scopt,
     shapeless,
-    csrModel
+    csrModel,
+    wmServerDto
   )
 
 }
