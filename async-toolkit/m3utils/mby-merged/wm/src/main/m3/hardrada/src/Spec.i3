@@ -25,6 +25,13 @@ TYPE PTreeParams = RECORD
 	PathToArgNameFromArgList : REF ARRAY OF TEXT := NIL ;
 END ;
 
+TYPE SpecParams = RECORD
+	specblock : REF Node.T := NIL ;
+	static_args : REF ARRAY OF TEXT := NIL ;
+	procname : TEXT := "" ;
+	procdefnumber : CARDINAL := 0 ;
+END ;
+
 (**************)
 (* Procedures *)
 (**************)
@@ -43,7 +50,7 @@ in filesystem
 
 (* Specialize 
 Note: root node will most likely be changed as a result of specialization. *)
-(* PROCEDURE Specialize( root : REF Node.T ; ptree_pms : REF PTreeParams ) ; *)
+PROCEDURE Specialize( root : REF Node.T ; spec_pms : REF SpecParams ; ptree_pms : REF PTreeParams ) ;
 
 (* GenCode
 - root :: reference to the starting node of the parse tree

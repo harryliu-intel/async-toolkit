@@ -38,12 +38,24 @@ IMPORT Text ;
 (* 	RETURN root ; *)
 (* END Parse ; *)
 
-(*
-PROCEDURE Specialize( root : REF Node.T ; ptree_pms : REF PTreeParams ) =
+PROCEDURE Specialize( root : REF Node.T ; spec_pms : REF SpecParams ; ptree_pms : REF PTreeParams ) =
+VAR
+	procdef : REF Node.T := NIL ;
 BEGIN
-	
+	<* ASSERT root # NIL *>
+	<* ASSERT spec_pms # NIL *>
+	<* ASSERT spec_pms^.specblock # NIL *>
+	<* ASSERT spec_pms^.static_args # NIL *>
+	<* ASSERT Text.Equal( spec_pms^.procname , "" ) *>
+	<* ASSERT ptree_pms # NIL *>
+	(* TODO You should be asserting that more ptree_pms are not nil. *)
+	procdef := GetNthProcDef( root , ptree_pms , spec_pms^.procname , spec_pms^.procdefnumber ) ;
+	<* ASSERT procdef # NIL *>
+	FOR static_arg_index := FIRST( spec_pms^.static_args^ ) TO LAST( spec_pms^.static_args^ ) DO
+		DeleteArgWName( procdef , ptree_pms , spec_pms^.static_args[ static_arg_index ] ) ;
+	END ;
+	PrependCodeToProcBlock( procdef , spec_pms^.specblock , ptree_pms ) ;
 END Specialize ;
-*)
 
 (*
 PROCEDURE GenCode( root : REF Node.T ; out_fname : Pathname.T ) RAISES { InvalidFname } =
