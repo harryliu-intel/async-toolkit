@@ -25,7 +25,7 @@ fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE];
 
 struct TestData testsPass[TEST_PASS_MAX] =  {
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\x1f\x1f\x1f\x1f\x1f\x1f\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "0001020304051f1f1f1f1f1f8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
 .PA_KEYS[8] = 1029,
@@ -34,12 +34,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 7967,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Unicast DMAC",
-.len = 14},
+.name = "L2 Ethernet Unicast DMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xdd\xee\xff\xaa\xaa", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbddeeffaaaa", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
 .PA_KEYS[8] = 1029,
@@ -48,12 +47,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61183,
 .PA_KEYS[12] = 43690,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Unicast SMAC",
-.len = 14},
+.name = "L2 Ethernet Unicast SMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x55\x55", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f15555", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -62,12 +60,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 21845,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Multicast DMAC",
-.len = 14},
+.name = "L2 Ethernet Multicast DMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\xf1\xf1\xf1\xf1\xf1\xf1\xff\x55\x55\x55\x15\x55\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "f1f1f1f1f1f1ff55555515558000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 61937,
 .PA_KEYS[7] = 61937,
 .PA_KEYS[8] = 61937,
@@ -76,12 +73,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 5461,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Multicast SMAC",
-.len = 14},
+.name = "L2 Ethernet Multicast SMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\xff\xff\xff\xff\xff\xff\xf1\xf1\xf1\xf1\xf1\xf1\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "fffffffffffff1f1f1f1f1f18000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 65535,
 .PA_KEYS[7] = 65535,
 .PA_KEYS[8] = 65535,
@@ -90,12 +86,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Broadcast DMAC",
-.len = 14},
+.name = "L2 Ethernet Broadcast DMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\xf1\xf1\xf1\xf1\xf1\xf1\xff\xff\xff\xff\xff\xff\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "f1f1f1f1f1f1ffffffffffff8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 61937,
 .PA_KEYS[7] = 61937,
 .PA_KEYS[8] = 61937,
@@ -104,12 +99,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 65535,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Broadcast SMAC",
-.len = 14},
+.name = "L2 Ethernet Broadcast SMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x00\x00\x00\x00\x00\xf1\xf1\xf1\xf1\xf1\xf1\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000000000000f1f1f1f1f1f18000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 0,
 .PA_KEYS[7] = 0,
 .PA_KEYS[8] = 0,
@@ -118,12 +112,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet zero-DMAC",
-.len = 14},
+.name = "L2 Ethernet zero-DMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\xf1\xf1\xf1\xf1\xf1\xf1\x00\x00\x00\x00\x00\x00\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "f1f1f1f1f1f10000000000008000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 61937,
 .PA_KEYS[7] = 61937,
 .PA_KEYS[8] = 61937,
@@ -132,12 +125,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 0,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet zero-SMAC",
-.len = 14},
+.name = "L2 Ethernet zero-SMAC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x00\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f10000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -146,12 +138,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 0,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet zero Ethertype",
-.len = 14},
+.name = "L2 Ethernet zero Ethertype"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -160,12 +151,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet 64 length",
-.len = 14},
+.name = "L2 Ethernet 64 length"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x80\x00", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18000", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -174,12 +164,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 32768,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet 128 length",
-.len = 14},
+.name = "L2 Ethernet 128 length"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x88\x08", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18808", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -188,12 +177,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 34824,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Flow Control",
-.len = 14},
+.name = "L2 Ethernet Flow Control"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x88\xe5", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f188e5", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -202,12 +190,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 35045,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet MACSEC",
-.len = 14},
+.name = "L2 Ethernet MACSEC"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x08\x06", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f10806", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -216,12 +203,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 2054,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet ARP",
-.len = 14},
+.name = "L2 Ethernet ARP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x80\x35", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18035", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -230,12 +216,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 32821,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Reverse ARP",
-.len = 14},
+.name = "L2 Ethernet Reverse ARP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x88\xcc", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f188cc", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -244,12 +229,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 35020,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet LLDP",
-.len = 14},
+.name = "L2 Ethernet LLDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x89\x06", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18906", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -258,12 +242,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 35078,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet FCoE",
-.len = 14},
+.name = "L2 Ethernet FCoE"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x89\x14", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18914", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -272,12 +255,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 35092,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet FCoE Init",
-.len = 14},
+.name = "L2 Ethernet FCoE Init"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x08\x42", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f10842", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -286,12 +268,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 2114,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet Wake on Lan",
-.len = 14},
+.name = "L2 Ethernet Wake on Lan"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x88\xf7", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f188f7", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -300,12 +281,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 35063,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet PTP",
-.len = 14},
+.name = "L2 Ethernet PTP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x88\x63", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18863", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -314,12 +294,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 34915,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet PPPoE DS",
-.len = 14},
+.name = "L2 Ethernet PPPoE DS"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x88\x64", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f18864", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -328,12 +307,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 34916,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet PPPoE SS",
-.len = 14},
+.name = "L2 Ethernet PPPoE SS"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x22\xf3", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f122f3", .RX_LENGTH = 128, .RX_PORT = 1 }, .out = {
 .PA_KEYS[6] = 426,
 .PA_KEYS[7] = 48093,
 .PA_KEYS[8] = 61183,
@@ -342,12 +320,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 61937,
 .PA_KEYS[12] = 8947,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet PPPoE DS",
-.len = 14},
+.name = "L2 Ethernet PPPoE DS"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81002aaa8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -359,12 +336,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 10922,
 .PA_KEYS[31] = 10922,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet Vlan 0xAAA 0x2",
-.len = 18},
+.name = "L2 Ethernet Vlan 0xAAA 0x2"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x55\x55\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810055558000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -376,12 +352,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 21845,
 .PA_KEYS[31] = 21845,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet Vlan 0x555 0x5",
-.len = 18},
+.name = "L2 Ethernet Vlan 0x555 0x5"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x00\x00\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810000008000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_KEYS[6] = 1,
@@ -394,12 +369,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 0,
 .PA_KEYS[31] = 0,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet VLAN Priority Tagged (zero-VID) zero-pri",
-.len = 18},
+.name = "L2 Ethernet VLAN Priority Tagged (zero-VID) zero-pri"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x10\x00\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810010008000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_KEYS[6] = 1,
@@ -412,12 +386,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 4096,
 .PA_KEYS[31] = 4096,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet VLAN Priority Tagged (zero-VID) non-zero-pri",
-.len = 18},
+.name = "L2 Ethernet VLAN Priority Tagged (zero-VID) non-zero-pri"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xef\xff\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100efff8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -429,12 +402,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 61439,
 .PA_KEYS[31] = 61439,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet Vlan 0xFFF 0xE",
-.len = 18},
+.name = "L2 Ethernet Vlan 0xFFF 0xE"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x10\x01\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810010018000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -446,12 +418,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 4097,
 .PA_KEYS[31] = 4097,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet Vlan 0x001 0x1 - Invalid CFI",
-.len = 18},
+.name = "L2 Ethernet Vlan 0x001 0x1 - Invalid CFI"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x86\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 152, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 152, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[30] = 1,
@@ -493,12 +464,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 1,
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 36},
-.name = "L2 PBB IPv6 Unknown NH",
-.len = 76},
+.name = "L2 PBB IPv6 Unknown NH"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x86\xdd\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 184, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 184, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[30] = 1,
@@ -544,12 +514,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 36,
 .PA_PTRS[7] = 76},
-.name = "L2 PBB IPv6",
-.len = 92},
+.name = "L2 PBB IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\x48\xaa\xaa\xaf\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 192, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaafff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 192, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[29] = 1,
@@ -597,12 +566,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[5] = 36,
 .PA_PTRS[6] = 40,
 .PA_PTRS[7] = 80},
-.name = "L2 PBB 1 MPLS MCAST/IPv6",
-.len = 96},
+.name = "L2 PBB 1 MPLS MCAST/IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\x48\xaa\xaa\xae\xff\xbb\xbb\xbd\xee\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 160, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaaeffbbbbbdee4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 160, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[29] = 1,
@@ -640,12 +608,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[5] = 36,
 .PA_PTRS[6] = 44,
 .PA_PTRS[7] = 64},
-.name = "L2 PBB 2 MPLS MCAST/IPv4",
-.len = 80},
+.name = "L2 PBB 2 MPLS MCAST/IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\x48\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 168, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 168, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_KEYS[0] = 57005,
@@ -666,12 +633,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[5] = 36},
-.name = "L2 PBB 3 MPLS MCAST",
-.len = 84},
+.name = "L2 PBB 3 MPLS MCAST"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 168, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 168, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_KEYS[0] = 57005,
@@ -692,12 +658,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[5] = 36},
-.name = "L2 PBB 3 MPLS UCAST",
-.len = 84},
+.name = "L2 PBB 3 MPLS UCAST"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x81\x00\xff\x05\x88\x48\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 176, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff058848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 176, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -720,12 +685,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[5] = 40},
-.name = "L2 PBB VLAN TAG A",
-.len = 88},
+.name = "L2 PBB VLAN TAG A"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\xa8\xff\x05\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 176, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa88a8ff058847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 176, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -748,12 +712,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[5] = 40},
-.name = "L2 PBB VLAN TAG B",
-.len = 88},
+.name = "L2 PBB VLAN TAG B"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\xa8\xff\x05\x99\x99", .RX_LENGTH = 80, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff059999", .RX_LENGTH = 80, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -776,12 +739,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 38},
-.name = "L2 PBB VLAN1 (default rule)",
-.len = 40},
+.name = "L2 PBB VLAN1 (default rule)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\xa8\xff\x05\x86\xdd\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 192, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff0586dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 192, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -829,12 +791,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 40,
 .PA_PTRS[7] = 80},
-.name = "L2 PBB VLAN1/IPv6",
-.len = 96},
+.name = "L2 PBB VLAN1/IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x81\x00\xff\x05\x08\x00\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 152, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0508004505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 152, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -872,12 +833,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 40,
 .PA_PTRS[7] = 60},
-.name = "L2 PBB VLAN1/IPv4",
-.len = 76},
+.name = "L2 PBB VLAN1/IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x88\xa8\xff\x05\x81\x00\x12\x34\x86\xdd\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 200, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa88a8ff058100123486dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 200, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -928,12 +888,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 44,
 .PA_PTRS[7] = 84},
-.name = "L2 PBB VLAN1/VLAN2 TAG A/IPv6",
-.len = 100},
+.name = "L2 PBB VLAN1/VLAN2 TAG A/IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x81\x00\xff\x05\x88\xa8\x12\x34\x86\xdd\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 200, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a8123486dd605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 200, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -983,12 +942,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 44,
 .PA_PTRS[7] = 84},
-.name = "L2 PBB VLAN1/VLAN2 TAG B/IPv6",
-.len = 100},
+.name = "L2 PBB VLAN1/VLAN2 TAG B/IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x81\x00\xff\x05\x88\xa8\x12\x34\x08\x00\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 160, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a8123408004505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 160, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -1028,12 +986,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 44,
 .PA_PTRS[7] = 64},
-.name = "L2 PBB VLAN1/VLAN2/IPv4",
-.len = 80},
+.name = "L2 PBB VLAN1/VLAN2/IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x81\x00\xff\x05\x88\xa8\x12\x34\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 184, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff0588a812348847aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 184, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -1058,12 +1015,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[5] = 44},
-.name = "L2 PBB VLAN1/VLAN2/MPLS UCAST",
-.len = 92},
+.name = "L2 PBB VLAN1/VLAN2/MPLS UCAST"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x88\x47\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x81\x00\xff\x05\x88\xa8\x12\x34\x88\x48\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x1c\x00\x00\x00\x00\x15\x11\xef\x33\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x10\x00\x00\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 184, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118847deadbeeffffffeccbedeefaa8100ff0588a812348848aaaaaeffbbbbbceecccccbdd4505001c000000001511ef33c0a0fdfefafbfcfd1194119400100000c1c1c1c1c1c1c1c1", .RX_LENGTH = 184, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -1088,12 +1044,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[5] = 44},
-.name = "L2 PBB VLAN1/VLAN2/MPLS MCAST",
-.len = 92},
+.name = "L2 PBB VLAN1/VLAN2/MPLS MCAST"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x81\x00\xff\x05\x88\xa8\x12\x34\x99\x99", .RX_LENGTH = 88, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa8100ff0588a812349999", .RX_LENGTH = 88, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[26] = 1,
@@ -1118,12 +1073,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 42},
-.name = "L2 PBB VLAN1/VLAN2/Unknown (default rule)",
-.len = 44},
+.name = "L2 PBB VLAN1/VLAN2/Unknown (default rule)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555581002aaa8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -1138,12 +1092,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 10922,
 .PA_KEYS[31] = 21845,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2",
-.len = 22},
+.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x55\x55\x88\xa8\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100555588a82aaa8000", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_KEYS[6] = 1,
@@ -1157,12 +1110,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 10922,
 .PA_KEYS[31] = 21845,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ TAG1_A and TAG2_B matched",
-.len = 22},
+.name = "L2 Ethernet QinQ TAG1_A and TAG2_B matched"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555581002aaa8000", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 1,
@@ -1177,12 +1129,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 21845,
 .PA_KEYS[31] = 10922,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ vlan2first - TAG2_B and TAG1_A matched",
-.len = 22},
+.name = "L2 Ethernet QinQ vlan2first - TAG2_B and TAG1_A matched"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x55\x55\x88\xa8\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 6 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100555588a82aaa8000", .RX_LENGTH = 64, .RX_PORT = 6 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 1,
@@ -1197,12 +1148,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 21845,
 .PA_KEYS[31] = 10922,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ vlan2first - TAG2_A and TAG1_B matched",
-.len = 22},
+.name = "L2 Ethernet QinQ vlan2first - TAG2_A and TAG1_B matched"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x55\x55\x88\xa8\x20\x00\x80\x00", .RX_LENGTH = 64, .RX_PORT = 6 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100555588a820008000", .RX_LENGTH = 64, .RX_PORT = 6 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1218,12 +1168,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 21845,
 .PA_KEYS[31] = 8192,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ vlan2first Priority Tagged (zero-VID1) - TAG2_A and TAG1_B matched",
-.len = 22},
+.name = "L2 Ethernet QinQ vlan2first Priority Tagged (zero-VID1) - TAG2_A and TAG1_B matched"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x81\x00\x20\x00\x80\x00", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85555810020008000", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1239,12 +1188,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 21845,
 .PA_KEYS[31] = 8192,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ vlan2first Priority Tagged (zero-VID1) - TAG2_B and TAG1_A matched",
-.len = 22},
+.name = "L2 Ethernet QinQ vlan2first Priority Tagged (zero-VID1) - TAG2_B and TAG1_A matched"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x2a\xaa\x81\x00\x55\x55\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a82aaa810055558000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -1259,12 +1207,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 21845,
 .PA_KEYS[31] = 10922,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ 0xAAA 0x2 0x555 0x5",
-.len = 22},
+.name = "L2 Ethernet QinQ 0xAAA 0x2 0x555 0x5"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x00\x00\x81\x00\xff\xff\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a800008100ffff8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1280,12 +1227,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 65535,
 .PA_KEYS[31] = 0,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ Priority Tagged (zero-VID1) 0xFFF 0xF",
-.len = 22},
+.name = "L2 Ethernet QinQ Priority Tagged (zero-VID1) 0xFFF 0xF"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x00\x00\x81\x00\xff\xff\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810000008100ffff8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1301,12 +1247,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 65535,
 .PA_KEYS[31] = 0,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ Priority Tagged (zero-VID1) Ethtype1=0x8100 0xFFF 0xF",
-.len = 22},
+.name = "L2 Ethernet QinQ Priority Tagged (zero-VID1) Ethtype1=0x8100 0xFFF 0xF"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xff\xff\x81\x00\x00\x00\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8ffff810000008000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -1321,12 +1266,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[15] = 0,
 .PA_KEYS[31] = 65535,
 .PA_PTRS[2] = 22},
-.name = "L2 Ethernet QinQ 0xFFF 0xF 0x0 0x0",
-.len = 22},
+.name = "L2 Ethernet QinQ 0xFFF 0xF 0x0 0x0"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xff\xff\x81\x00\x00\x00\x88\xe7", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8ffff8100000088e7", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1350,12 +1294,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 0,
 .PA_PTRS[4] = 26,
 .PA_PTRS[6] = 40},
-.name = "L2 Ethernet QinQ with PBB vlan2first Priority-Tagged (VID1=0)",
-.len = 22},
+.name = "L2 Ethernet QinQ with PBB vlan2first Priority-Tagged (VID1=0)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 3 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555581002aaa8000", .RX_LENGTH = 64, .RX_PORT = 3 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[20] = 0,
 .PA_KEYS[6] = 1,
@@ -1368,12 +1311,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 21845,
 .PA_KEYS[31] = 21845,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG1 configured and matched (TAG_1A)",
-.len = 22},
+.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG1 configured and matched (TAG_1A)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 3 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555581002aaa8000", .RX_LENGTH = 64, .RX_PORT = 3 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[20] = 0,
 .PA_KEYS[6] = 1,
@@ -1386,12 +1328,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[14] = 21845,
 .PA_KEYS[31] = 21845,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG1 configured and matched (TAG1_B)",
-.len = 22},
+.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG1 configured and matched (TAG1_B)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x55\x55\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 4 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100555581002aaa8000", .RX_LENGTH = 64, .RX_PORT = 4 }, .out = {
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
 .PA_KEYS[6] = 1,
@@ -1403,12 +1344,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[12] = 33024,
 .PA_KEYS[15] = 21845,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG2 configured and matched (TAG2_A)",
-.len = 22},
+.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG2 configured and matched (TAG2_A)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 4 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555581002aaa8000", .RX_LENGTH = 64, .RX_PORT = 4 }, .out = {
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
 .PA_KEYS[6] = 1,
@@ -1420,12 +1360,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[12] = 33024,
 .PA_KEYS[15] = 21845,
 .PA_PTRS[2] = 18},
-.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG2 configured and matched (TAG2_B)",
-.len = 22},
+.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG2 configured and matched (TAG2_B)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x81\x00\x2a\xaa\x80\x00", .RX_LENGTH = 64, .RX_PORT = 7 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555581002aaa8000", .RX_LENGTH = 64, .RX_PORT = 7 }, .out = {
 .PA_FLAGS[20] = 0,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1435,12 +1374,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[11] = 56814,
 .PA_KEYS[12] = 34984,
 .PA_PTRS[2] = 14},
-.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - no VLAN tags configured",
-.len = 22},
+.name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - no VLAN tags configured"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1461,12 +1399,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "L3 IPv4 untagged",
-.len = 34},
+.name = "L3 IPv4 untagged"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x55\x55\x20\x00\x0f\xff\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014555520000fff0000c0a800013f57fffe", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
@@ -1488,12 +1425,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "L3 IPv4 Fragmented 1st",
-.len = 34},
+.name = "L3 IPv4 Fragmented 1st"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x55\x55\x40\x20\x0f\xff\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014555540200fff0000c0a800013f57fffe", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
@@ -1515,12 +1451,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "L3 IPv4 Fragmented 2nd",
-.len = 34},
+.name = "L3 IPv4 Fragmented 2nd"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xaa\xaa\x08\x00\x45\x00\x00\x14\x55\x55\x40\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100aaaa080045000014555540000f000000c0a800013f57fffe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
@@ -1544,12 +1479,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38},
-.name = "L3 IPv4 VLAN 0xAAA 0xA",
-.len = 38},
+.name = "L3 IPv4 VLAN 0xAAA 0xA"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xa0\x00\x08\x00\x45\x00\x00\x14\x55\x55\x40\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100a000080045000014555540000f000000c0a800013f57fffe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -1574,12 +1508,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38},
-.name = "L3 IPv4 VLAN Vid1Eth=0x8100 Priority-Tagged (VID=0) 0xA",
-.len = 38},
+.name = "L3 IPv4 VLAN Vid1Eth=0x8100 Priority-Tagged (VID=0) 0xA"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xaa\xaa\x08\x00\x45\x00\x00\x14\x55\x55\x20\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100aaaa080045000014555520000f000000c0a800013f57fffe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -1604,12 +1537,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38},
-.name = "L3 IPv4 Fragmented VLAN 0xAAA 0xA",
-.len = 38},
+.name = "L3 IPv4 Fragmented VLAN 0xAAA 0xA"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xaa\xaa\x08\x00\x45\x00\x00\x14\x55\x55\x40\x20\x0f\xff\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100aaaa080045000014555540200fff0000c0a800013f57fffe", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -1634,12 +1566,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38},
-.name = "L3 IPv4 Fragmented 2nd VLAN 0xAAA 0xA",
-.len = 38},
+.name = "L3 IPv4 Fragmented 2nd VLAN 0xAAA 0xA"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xaa\xaa\x81\x00\x31\x23\x08\x00\x45\x00\x00\x14\x55\x55\x40\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8aaaa81003123080045000014555540000f000000c0a800013f57fffe", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -1666,12 +1597,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42},
-.name = "L3 IPv4 QinQ 0xAAA 0xA 0x123 0x3",
-.len = 42},
+.name = "L3 IPv4 QinQ 0xAAA 0xA 0x123 0x3"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xaa\xaa\x81\x00\x30\x00\x08\x00\x45\x00\x00\x14\x55\x55\x40\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 84, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8aaaa81003000080045000014555540000f000000c0a800013f57fffe", .RX_LENGTH = 84, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1699,12 +1629,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42},
-.name = "L3 IPv4 QinQ vlan2first Priority-Tagged (VID=0)",
-.len = 42},
+.name = "L3 IPv4 QinQ vlan2first Priority-Tagged (VID=0)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xaa\xaa\x81\x00\x31\x23\x08\x00\x45\x00\x00\x14\x55\x55\x20\x00\x0f\xff\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8aaaa81003123080045000014555520000fff0000c0a800013f57fffe", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1732,12 +1661,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42},
-.name = "L3 IPv4 Fragmented 1st QinQ",
-.len = 42},
+.name = "L3 IPv4 Fragmented 1st QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xaa\xaa\x81\x00\x31\x23\x08\x00\x45\x00\x00\x14\x55\x55\x40\x20\x0f\xff\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8aaaa81003123080045000014555540200fff0000c0a800013f57fffe", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -1765,12 +1693,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42},
-.name = "L3 IPv4 Fragmented 2nd QinQ",
-.len = 42},
+.name = "L3 IPv4 Fragmented 2nd QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xaf\xff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaafff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1783,12 +1710,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[25] = 45055,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 18},
-.name = "MPLS Unicast ",
-.len = 18},
+.name = "MPLS Unicast "},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x48\xaa\xaa\xaf\xff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8848aaaaafff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1801,12 +1727,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[25] = 45055,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 18},
-.name = "MPLS Multicast ",
-.len = 18},
+.name = "MPLS Multicast "},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbd\xee", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbdee", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1821,12 +1746,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[27] = 48622,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 22},
-.name = "MPLS Unicast 2 labels",
-.len = 22},
+.name = "MPLS Unicast 2 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1843,12 +1767,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[29] = 52189,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 26},
-.name = "MPLS Unicast 3 labels",
-.len = 26},
+.name = "MPLS Unicast 3 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xca\xdd\xdd\xdd\xd9\xcc", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd9cc", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1867,12 +1790,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 55756,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 30},
-.name = "MPLS Unicast 4 labels",
-.len = 30},
+.name = "MPLS Unicast 4 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xca\xdd\xdd\xdd\xd8\xcc\xee\xee\xe7\xbb", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee7bb", .RX_LENGTH = 68, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1893,12 +1815,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[33] = 59323,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 34},
-.name = "MPLS Unicast 5 labels",
-.len = 34},
+.name = "MPLS Unicast 5 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xca\xdd\xdd\xdd\xd8\xcc\xee\xee\xe6\xbb\xff\xff\xf5\xaa", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bbfffff5aa", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -1921,12 +1842,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[35] = 62890,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 38},
-.name = "MPLS Unicast 6 labels",
-.len = 38},
+.name = "MPLS Unicast 6 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xa5\x55\x88\x47\xaa\xaa\xaf\xff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100a5558847aaaaafff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
@@ -1942,12 +1862,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 42325,
 .PA_PTRS[1] = 18,
 .PA_PTRS[2] = 22},
-.name = "MPLS Unicast VLAN 0x555 0xA",
-.len = 22},
+.name = "MPLS Unicast VLAN 0x555 0xA"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xa5\x55\x88\x48\xaa\xaa\xaf\xff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100a5558848aaaaafff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
@@ -1963,12 +1882,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 42325,
 .PA_PTRS[1] = 18,
 .PA_PTRS[2] = 22},
-.name = "MPLS Multicast VLAN 0x555 0xA",
-.len = 22},
+.name = "MPLS Multicast VLAN 0x555 0xA"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xa5\x55\x81\x00\x0f\xff\x88\x47\xaa\xaa\xaf\xff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8a55581000fff8847aaaaafff", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -1987,12 +1905,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 42325,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 26},
-.name = "MPLS Unicast QinQ 0xAAA 0x5 0xFFF 0x0",
-.len = 26},
+.name = "MPLS Unicast QinQ 0xAAA 0x5 0xFFF 0x0"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x11\x01\x81\x00\x21\x11\x88\x48\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xca\xdd\xdd\xdd\xd9\xcc", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81101810021118848aaaaaeffbbbbbceecccccaddddddd9cc", .RX_LENGTH = 76, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -2016,12 +1933,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 55756,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 38},
-.name = "MPLS Multicast QinQ 0x101 0x1 0x111 0x2",
-.len = 38},
+.name = "MPLS Multicast QinQ 0x101 0x1 0x111 0x2"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x11\x01\x81\x00\x20\x00\x88\x48\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xca\xdd\xdd\xdd\xd9\xcc", .RX_LENGTH = 76, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81101810020008848aaaaaeffbbbbbceecccccaddddddd9cc", .RX_LENGTH = 76, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -2046,12 +1962,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 55756,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 38},
-.name = "MPLS Multicast QinQ vlan2first Priority-Tagged (VID1=0)",
-.len = 38},
+.name = "MPLS Multicast QinQ vlan2first Priority-Tagged (VID1=0)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xa5\x55\x81\x00\x00\x00\x88\x47\xaa\xaa\xaf\xff", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8a555810000008847aaaaafff", .RX_LENGTH = 64, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -2071,12 +1986,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[31] = 0,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 26},
-.name = "MPLS Unicast QinQ vlan2first Priority-Tagged (VID1=0)",
-.len = 26},
+.name = "MPLS Unicast QinQ vlan2first Priority-Tagged (VID1=0)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xca\xdd\xdd\xdd\xd8\xcc\xee\xee\xe6\xbb\x00\x00\x70\xaa\x12\x34\x51\x00", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bb000070aa12345100", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -2099,12 +2013,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[35] = 28842,
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 38},
-.name = "MPLS Unicast 7 labels - 6 labels validated",
-.len = 42},
+.name = "MPLS Unicast 7 labels - 6 labels validated"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x11\x01\x81\x00\x21\x11\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xca\xdd\xdd\xdd\xd8\xcc\xee\xee\xe6\xbb\x00\x00\x70\xaa\x12\x34\x51\x00", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81101810021118847aaaaaeffbbbbbceecccccaddddddd8cceeeee6bb000070aa12345100", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -2132,12 +2045,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[35] = 28842,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 46},
-.name = "MPLS Unicast 7 labels - 6 labels validated with QinQ",
-.len = 50},
+.name = "MPLS Unicast 7 labels - 6 labels validated with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x00\x00\x00\x00\x15\xfd\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[21] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
@@ -2166,12 +2078,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 46},
-.name = "IPv4 over MPLS 3 labels",
-.len = 46},
+.name = "IPv4 over MPLS 3 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x55\x55\x20\x00\x15\xfd\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500145555200015fd0000c0a0fdfefafbfcfd", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[21] = 1,
 .PA_FLAGS[22] = 1,
@@ -2201,12 +2112,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 46},
-.name = "IPv4 1st frag. over MPLS 3 labels",
-.len = 46},
+.name = "IPv4 1st frag. over MPLS 3 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x55\x55\x40\x20\x15\xfd\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500145555402015fd0000c0a0fdfefafbfcfd", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[21] = 1,
 .PA_FLAGS[22] = 1,
@@ -2236,12 +2146,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 46},
-.name = "IPv4 2nd frag. over MPLS 3 labels",
-.len = 46},
+.name = "IPv4 2nd frag. over MPLS 3 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x71\x11\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x00\x00\x00\x00\x15\xfd\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810071118847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[21] = 1,
 .PA_FLAGS[22] = 1,
@@ -2273,12 +2182,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 18,
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 50},
-.name = "IPv4 over MPLS 3 labels over VLAN",
-.len = 50},
+.name = "IPv4 over MPLS 3 labels over VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x3f\x0f\x81\x00\x42\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x00\x00\x00\x00\x15\xfd\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a83f0f810042228847aaaaaeffbbbbbceecccccbdd450500140000000015fd0000c0a0fdfefafbfcfd", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -2313,12 +2221,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 54},
-.name = "IPv4 over MPLS 3 labels over QinQ",
-.len = 54},
+.name = "IPv4 over MPLS 3 labels over QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[21] = 1,
 .PA_FLAGS[22] = 1,
@@ -2363,12 +2270,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 14,
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 66},
-.name = "IPv6 over MPLS 3 labels",
-.len = 66},
+.name = "IPv6 over MPLS 3 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[21] = 1,
@@ -2416,12 +2322,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 18,
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 70},
-.name = "IPv6 over MPLS 3 labels and VLAN",
-.len = 70},
+.name = "IPv6 over MPLS 3 labels and VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -2472,12 +2377,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 74},
-.name = "IPv6 over MPLS 3 labels and QinQ",
-.len = 74},
+.name = "IPv6 over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x00\xff\x50\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000100ff500100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -2523,12 +2427,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr Fragmented over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr Fragmented over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x32\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x00\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003215f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -2576,12 +2479,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 74},
-.name = "IPv6 ExHdr ESP over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr ESP over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x3b\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013b00000100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -2628,12 +2530,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr NoNextHDR over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr NoNextHDR over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x32\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013200000100000000aabbccdd0008eeff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[12] = 1,
@@ -2684,12 +2585,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 82},
-.name = "IPv6 ExHdr ESP over 1st Fragmented/MPLS(3)/QinQ",
-.len = 90},
+.name = "IPv6 ExHdr ESP over 1st Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x32\x00\xff\x01\x01\x01\x01\x01\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013200ff0101010101aabbccdd0008eeff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[12] = 1,
 .PA_FLAGS[18] = 1,
@@ -2735,12 +2635,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr ESP over fragmented/MPLS(3)/QinQ",
-.len = 90},
+.name = "IPv6 ExHdr ESP over fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2f\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00082c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012f0000010000000020000800123456ff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -2790,12 +2689,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr GRE over Fragmented/MPLS(3)/QinQ",
-.len = 90},
+.name = "IPv6 ExHdr GRE over Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08\x35\x79", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111000001000000001111222200083579", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -2848,12 +2746,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr UDP over Fragmented/MPLS(3)/QinQ",
-.len = 90},
+.name = "IPv6 ExHdr UDP over Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x06\x00\x00\x01\x00\x00\x00\x00\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001060000010000000022225555123456781111111f5000003300000044", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -2905,12 +2802,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr TCP over Fragmented/MPLS(3)/QinQ",
-.len = 102},
+.name = "IPv6 ExHdr TCP over Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x84\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001840000010000000011112222a9112285fe0b3579", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -2963,12 +2859,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr SCTP over Fragmented/MPLS(3)/QinQ",
-.len = 94},
+.name = "IPv6 ExHdr SCTP over Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x3a\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08", .RX_LENGTH = 176, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000111122220008", .RX_LENGTH = 176, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3016,12 +2911,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr ICMP over Fragmented/MPLS(3)/QinQ",
-.len = 88},
+.name = "IPv6 ExHdr ICMP over Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x04\x00\x00\x01\x00\x00\x00\x00\x45\x05\x00\x14\x00\x00\x00\x00\x15\x11\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010400000100000000450500140000000015110000c0a0fdfefafbfcfd", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3084,12 +2978,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 82,
 .PA_PTRS[6] = 82,
 .PA_PTRS[7] = 102},
-.name = "IPv6 ExHdr IPv4/UDP over Fragmented/MPLS(3)/QinQ",
-.len = 102},
+.name = "IPv6 ExHdr IPv4/UDP over Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x29\x00\x00\x01\x00\x00\x00\x00\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 244, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 244, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3162,12 +3055,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 82,
 .PA_PTRS[6] = 82,
 .PA_PTRS[7] = 122},
-.name = "IPv6 ExHdr IPv6/UDP over Fragmented/MPLS(3)/QinQ",
-.len = 122},
+.name = "IPv6 ExHdr IPv6/UDP over Fragmented/MPLS(3)/QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3213,12 +3105,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr non fragmented, nh fragmented",
-.len = 82},
+.name = "IPv6 ExHdr non fragmented, nh fragmented"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x32\x00\x02\x01\x00\x00\x00\x00\x3b\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000132000201000000003b00020100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3267,12 +3158,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 82},
-.name = "IPv6 ExHdr non gragmented, nh esp",
-.len = 90},
+.name = "IPv6 ExHdr non gragmented, nh esp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x84\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100018400000000000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3324,12 +3214,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr non fragmented, nh sctp",
-.len = 82},
+.name = "IPv6 ExHdr non fragmented, nh sctp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2f\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012f00020100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -3378,12 +3267,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr non fragmented, nh gre",
-.len = 82},
+.name = "IPv6 ExHdr non fragmented, nh gre"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011100020100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3435,12 +3323,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr non fragmented, nh UDP",
-.len = 82},
+.name = "IPv6 ExHdr non fragmented, nh UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x06\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010600000000000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3491,12 +3378,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr non fragmented, nh TCP",
-.len = 82},
+.name = "IPv6 ExHdr non fragmented, nh TCP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x3a\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -3543,12 +3429,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 82},
-.name = "IPv6 ExHdr non fragmented, nh icmp",
-.len = 82},
+.name = "IPv6 ExHdr non fragmented, nh icmp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x29\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012900000100000000aabbccdd0008eeff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -3593,12 +3478,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr non fragmented, nh ip6",
-.len = 90},
+.name = "IPv6 ExHdr non fragmented, nh ip6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x04\x00\xff\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010400ff0100000000aabbccdd0008eeff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -3643,12 +3527,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr non fragmented, nh ip4",
-.len = 90},
+.name = "IPv6 ExHdr non fragmented, nh ip4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x99\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00080015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001990000010000000020000800123456ff", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -3693,12 +3576,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr non fragmented, unknown protocol",
-.len = 90},
+.name = "IPv6 ExHdr non fragmented, unknown protocol"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x32\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003200000100000000aabbccdd0008eeff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[12] = 1,
@@ -3749,12 +3631,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 90},
-.name = "IPv6 nh 0x99, nh 1st frag, nh ESP",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 1st frag, nh ESP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x32\x00\xff\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003200ff0100000000aabbccdd0008eeff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[12] = 1,
 .PA_FLAGS[18] = 1,
@@ -3801,12 +3682,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh frag, nh ESP",
-.len = 98},
+.name = "IPv6 nh 0x99, nh frag, nh ESP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x2f\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000002f0000010000000020000800123456ff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -3856,12 +3736,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh frag, nh gre",
-.len = 98},
+.name = "IPv6 nh 0x99, nh frag, nh gre"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x11\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08\x35\x79", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c0000010000000011000001000000001111222200083579", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -3914,12 +3793,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh frag, nh udp",
-.len = 98},
+.name = "IPv6 nh 0x99, nh frag, nh udp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x06\x00\x00\x01\x00\x00\x00\x00\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000060000010000000022225555123456781111111f5000003300000044", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -3971,12 +3849,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh frag, nh tcp",
-.len = 110},
+.name = "IPv6 nh 0x99, nh frag, nh tcp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x84\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c00000100000000840000010000000011112222a9112285fe0b3579", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -4029,12 +3906,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh frag, nh SCTP",
-.len = 102},
+.name = "IPv6 nh 0x99, nh frag, nh SCTP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x3a\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08", .RX_LENGTH = 192, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003a00000100000000111122220008", .RX_LENGTH = 192, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4082,12 +3958,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh frag, nh ICMP",
-.len = 96},
+.name = "IPv6 nh 0x99, nh frag, nh ICMP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x04\x00\x00\x01\x00\x00\x00\x00\x45\x05\x00\x14\x00\x00\x00\x00\x15\x11\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4150,12 +4025,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 90,
 .PA_PTRS[6] = 90,
 .PA_PTRS[7] = 110},
-.name = "IPv6 nh 0x99, nh frag, nh IPv4/UDP",
-.len = 110},
+.name = "IPv6 nh 0x99, nh frag, nh IPv4/UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x29\x00\x00\x01\x00\x00\x00\x00\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 260, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 260, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4228,12 +4102,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 90,
 .PA_PTRS[6] = 90,
 .PA_PTRS[7] = 130},
-.name = "IPv6 nh 0x99, nh frag, nh IPv6/UDP",
-.len = 130},
+.name = "IPv6 nh 0x99, nh frag, nh IPv6/UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x3b\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000003b00000100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4280,12 +4153,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh frag, no next header",
-.len = 90},
+.name = "IPv6 nh 0x99, nh frag, no next header"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x99\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000009900000100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4331,12 +4203,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh frag, nh 0x99",
-.len = 90},
+.name = "IPv6 nh 0x99, nh frag, nh 0x99"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x2c\x00\x00\x01\x00\x00\x00\x00\x99\x00\x55\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012c000001000000009900550100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4382,12 +4253,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh non 1st frag, nh 0x99",
-.len = 90},
+.name = "IPv6 nh 0x99, nh non 1st frag, nh 0x99"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x3b\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000003b00000100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -4433,12 +4303,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh 0x98, no next header",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, no next header"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4484,12 +4353,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh fragmented",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, nh fragmented"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x02\x01\x00\x00\x00\x00\x32\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000201000000003200020100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4538,12 +4406,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 90},
-.name = "IPv6 nh 0x99, nh 0x98, nh esp",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, nh esp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x84\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000008400000000000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4595,12 +4462,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh 0x98, nh sctp",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, nh sctp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x2f\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000002f00020100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -4649,12 +4515,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh 0x98, nh gre",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, nh gre"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x02\x01\x00\x00\x00\x00\x11\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000201000000001100020100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4706,12 +4571,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh 0x98, nh UDP",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, nh UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000000000000000600000000000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -4762,12 +4626,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh 0x98, nh TCP",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, nh TCP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x3a\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000003a00000100000000", .RX_LENGTH = 180, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -4814,12 +4677,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 90},
-.name = "IPv6 nh 0x99, nh 0x98, nh icmp",
-.len = 90},
+.name = "IPv6 nh 0x99, nh 0x98, nh icmp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x29\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002900000100000000aabbccdd0008eeff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -4864,12 +4726,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh ip6",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh ip6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\xff\x01\x00\x00\x00\x00\x04\x00\xff\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff01000000000400ff0100000000aabbccdd0008eeff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -4914,12 +4775,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh ip4",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh ip4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000020000800123456ff", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -4964,12 +4824,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, unknown protocol",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, unknown protocol"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x32\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003200000100000000aabbccdd0008eeff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[12] = 1,
@@ -5020,12 +4879,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 1st frag, nh ESP",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 1st frag, nh ESP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x32\x00\xff\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003200ff0100000000aabbccdd0008eeff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[12] = 1,
 .PA_FLAGS[18] = 1,
@@ -5072,12 +4930,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh ESP",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh ESP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x2f\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000002f0000010000000020000800123456ff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5127,12 +4984,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh gre",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh gre"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x11\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08\x35\x79", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c0000010000000011000001000000001111222200083579", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -5185,12 +5041,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh udp",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh udp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x06\x00\x00\x01\x00\x00\x00\x00\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000060000010000000022225555123456781111111f5000003300000044", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -5242,12 +5097,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh tcp",
-.len = 118},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh tcp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x84\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c00000100000000840000010000000011112222a9112285fe0b3579", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -5300,12 +5154,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh SCTP",
-.len = 110},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh SCTP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x3a\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08", .RX_LENGTH = 208, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003a00000100000000111122220008", .RX_LENGTH = 208, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5353,12 +5206,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh ICMP",
-.len = 104},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh ICMP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x04\x00\x00\x01\x00\x00\x00\x00\x45\x05\x00\x14\x00\x00\x00\x00\x15\x11\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5421,12 +5273,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 98,
 .PA_PTRS[6] = 98,
 .PA_PTRS[7] = 118},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh IPv4/UDP",
-.len = 118},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh IPv4/UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x29\x00\x00\x01\x00\x00\x00\x00\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5499,12 +5350,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 98,
 .PA_PTRS[6] = 98,
 .PA_PTRS[7] = 138},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh IPv6/UDP",
-.len = 138},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh IPv6/UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x3b\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000003b00000100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5551,12 +5401,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, no next header",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, no next header"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x99\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000009900000100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5602,12 +5451,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh 0x99",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh frag, nh 0x99"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x99\x00\x55\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000002c000001000000009900550100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5653,12 +5501,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh non 1st frag, nh 0x99",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh non 1st frag, nh 0x99"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x3b\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000003b00000100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -5704,12 +5551,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, no next header",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, no next header"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5755,12 +5601,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97 nh fragmented",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97 nh fragmented"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x02\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x32\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980002010000000097000001000000003200020100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5809,12 +5654,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh esp",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh esp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x84\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000008400000000000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5866,12 +5710,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh sctp",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh sctp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2f\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000002f00020100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -5920,12 +5763,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh gre",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh gre"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x02\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x11\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980002010000000097000001000000001100020100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -5977,12 +5819,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh UDP",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000000000000097000001000000000600000000000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6033,12 +5874,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh TCP",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh TCP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x3a\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000003a00000100000000", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -6085,12 +5925,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 98},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh icmp",
-.len = 98},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh icmp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x29\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002900000100000000aabbccdd0008eeff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -6135,12 +5974,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh ip6",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh ip6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\xff\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x04\x00\xff\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff010000000097000001000000000400ff0100000000aabbccdd0008eeff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -6185,12 +6023,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh ip4",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh ip4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000198000001000000009700000100000000960000010000000020000800123456ff", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -6235,12 +6072,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, unknown protocol",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, unknown protocol"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x32\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003200000100000000aabbccdd0008eeff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[12] = 1,
@@ -6291,12 +6127,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, 0x97, nh 1st frag, nh ESP",
-.len = 114},
+.name = "IPv6 nh 0x99, nh 0x98, 0x97, nh 1st frag, nh ESP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x32\x00\xff\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003200ff0100000000aabbccdd0008eeff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[12] = 1,
 .PA_FLAGS[18] = 1,
@@ -6343,12 +6178,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh ESP",
-.len = 114},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh ESP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x2f\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000002f0000010000000020000800123456ff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6398,12 +6232,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh gre",
-.len = 114},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh gre"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x11\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08\x35\x79", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c0000010000000011000001000000001111222200083579", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -6456,12 +6289,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh udp",
-.len = 114},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh udp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x06\x00\x00\x01\x00\x00\x00\x00\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 252, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000060000010000000022225555123456781111111f5000003300000044", .RX_LENGTH = 252, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -6513,12 +6345,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh tcp",
-.len = 126},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh tcp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x84\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c00000100000000840000010000000011112222a9112285fe0b3579", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
@@ -6571,12 +6402,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh SCTP",
-.len = 118},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh SCTP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x3a\x00\x00\x01\x00\x00\x00\x00\x11\x11\x22\x22\x00\x08", .RX_LENGTH = 224, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003a00000100000000111122220008", .RX_LENGTH = 224, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6624,12 +6454,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh ICMP",
-.len = 112},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh ICMP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x04\x00\x00\x01\x00\x00\x00\x00\x45\x05\x00\x14\x00\x00\x00\x00\x15\x11\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 252, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000000400000100000000450500140000000015110000c0a0fdfefafbfcfd", .RX_LENGTH = 252, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6692,12 +6521,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 106,
 .PA_PTRS[6] = 106,
 .PA_PTRS[7] = 126},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh IPv4/UDP",
-.len = 126},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh IPv4/UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x29\x00\x00\x01\x00\x00\x00\x00\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000002900000100000000605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6770,12 +6598,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 106,
 .PA_PTRS[6] = 106,
 .PA_PTRS[7] = 146},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh IPv6/UDP",
-.len = 146},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh IPv6/UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x3b\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000003b00000100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6822,12 +6649,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, no next header",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, no next header"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x99\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000009900000100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6873,12 +6699,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh 0x99",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh 0x99"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00\x99\x00\x55\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000002c000001000000009900550100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -6924,12 +6749,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh non 1st frag, nh 0x99",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh non 1st frag, nh 0x99"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x3b\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000003b00000100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -6975,12 +6799,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, no next header",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, no next header"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x02\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x32\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800020100000000970000010000000096000001000000003200020100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -7029,12 +6852,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[7] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh esp",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh esp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x84\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000008400000000000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -7086,12 +6908,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh sctp",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh sctp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x2f\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000002f00020100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -7140,12 +6961,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh gre",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh gre"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x02\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x11\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800020100000000970000010000000096000001000000001100020100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -7197,12 +7017,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh UDP",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh UDP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x00\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000000000000970000010000000096000001000000000600000000000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -7253,12 +7072,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh TCP",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh TCP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x3a\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000003a00000100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -7305,12 +7123,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 106},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh icmp",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh icmp"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x29\x00\x00\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000002900000100000000aabbccdd0008eeff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -7355,12 +7172,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh ip6",
-.len = 114},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh ip6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\xff\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x04\x00\xff\x01\x00\x00\x00\x00\xaa\xbb\xcc\xdd\x00\x08\xee\xff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800ff0100000000970000010000000096000001000000000400ff0100000000aabbccdd0008eeff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -7405,12 +7221,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh ip4",
-.len = 114},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh ip4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x08\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x20\x00\x08\x00\x12\x34\x56\xff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00089915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001980000010000000097000001000000009600000100000000960000010000000020000800123456ff", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -7455,12 +7270,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, unknown protocol",
-.len = 114},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, unknown protocol"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1194119400083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7492,12 +7306,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T over IPv4",
-.len = 42},
+.name = "L4 NAT-T over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\x5a\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\xab\xda\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x08\xf1\xff", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005a5a080045000014000000000f11abdac0a800013f57fffe119411940008f1ff", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7532,12 +7345,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38,
 .PA_PTRS[7] = 46},
-.name = "NAT-T over IPv4 with VLAN",
-.len = 46},
+.name = "NAT-T over IPv4 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\x5a\x81\x00\x74\xbb\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x08\x00\x01", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f110000c0a800013f57fffe1194119400080001", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7575,12 +7387,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42,
 .PA_PTRS[7] = 50},
-.name = "NAT-T over IPv4 with QinQ",
-.len = 50},
+.name = "NAT-T over IPv4 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7622,12 +7433,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54,
 .PA_PTRS[7] = 62},
-.name = "L4 NAT-T over IPv6",
-.len = 62},
+.name = "L4 NAT-T over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\x5a\x86\xdd\x60\x70\x00\x01\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005a5a86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7672,12 +7482,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 58,
 .PA_PTRS[7] = 66},
-.name = "NAT-T over IPv6 with VLAN",
-.len = 66},
+.name = "NAT-T over IPv6 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\x5a\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7725,12 +7534,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62,
 .PA_PTRS[7] = 70},
-.name = "NAT-T over IPv6 with QinQ",
-.len = 70},
+.name = "NAT-T over IPv6 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x00\x00\x00\x00\x15\x11\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7770,12 +7578,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 46,
 .PA_PTRS[7] = 54},
-.name = "NAT-T over IPv4 over MPLS 3 labels",
-.len = 54},
+.name = "NAT-T over IPv4 over MPLS 3 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x71\x11\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x00\x00\x00\x00\x15\x11\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 116, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810071118847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579", .RX_LENGTH = 116, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7818,12 +7625,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 50,
 .PA_PTRS[7] = 58},
-.name = "NAT-T IPv4 over MPLS 3 labels over VLAN",
-.len = 58},
+.name = "NAT-T IPv4 over MPLS 3 labels over VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x3f\x0f\x81\x00\x42\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x45\x05\x00\x14\x00\x00\x00\x00\x15\x11\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a83f0f810042228847aaaaaeffbbbbbceecccccbdd450500140000000015110000c0a0fdfefafbfcfd1194119400083579", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7869,12 +7675,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 54,
 .PA_PTRS[7] = 62},
-.name = "NAT-T over IPv4 over MPLS 3 labels over QinQ",
-.len = 62},
+.name = "NAT-T over IPv4 over MPLS 3 labels over QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7924,12 +7729,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 66,
 .PA_PTRS[7] = 74},
-.name = "NAT-T over IPv6 over MPLS 3 labels",
-.len = 74},
+.name = "NAT-T over IPv6 over MPLS 3 labels"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 156, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579", .RX_LENGTH = 156, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -7982,12 +7786,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 70,
 .PA_PTRS[7] = 78},
-.name = "NAT-T over IPv6 over MPLS 3 labels and VLAN",
-.len = 78},
+.name = "NAT-T over IPv6 over MPLS 3 labels and VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x08\x35\x79", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400083579", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8043,12 +7846,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 74,
 .PA_PTRS[7] = 82},
-.name = "NAT-T over IPv6 over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "NAT-T over IPv6 over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\x01\x02\x03\x04\x05\x06\x07\x08", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee08004500001c000000000f11abd2c0a800013f57fffe11941194001035790102030405060708", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8080,12 +7882,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "ESP over NAT-T over IPv4",
-.len = 50},
+.name = "ESP over NAT-T over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x08\x00\x45\x00\x00\x78\x00\x00\x00\x00\x0f\x11\xab\x76\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81001222080045000078000000000f11ab76c0a800013f57fffe11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8120,12 +7921,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38,
 .PA_PTRS[7] = 46},
-.name = "ESP over NAT-T over IPv4 with VLAN",
-.len = 146},
+.name = "ESP over NAT-T over IPv4 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x08\x00\x45\x00\x00\x78\x00\x00\x00\x00\x0f\x11\xab\x76\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8122281004333080045000078000000000f11ab76c0a800013f57fffe11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8163,12 +7963,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42,
 .PA_PTRS[7] = 50},
-.name = "ESP over NAT-T over IPv4 with QinQ",
-.len = 150},
+.name = "ESP over NAT-T over IPv4 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xaf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8204,12 +8003,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38,
 .PA_PTRS[7] = 46},
-.name = "ESP over NAT-T over IPv4 over MPLS(1)",
-.len = 146},
+.name = "ESP over NAT-T over IPv4 over MPLS(1)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8247,12 +8045,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42,
 .PA_PTRS[7] = 50},
-.name = "ESP over NAT-T over IPv4 over MPLS(2)",
-.len = 150},
+.name = "ESP over NAT-T over IPv4 over MPLS(2)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8292,12 +8089,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 46,
 .PA_PTRS[7] = 54},
-.name = "ESP over NAT-T over IPv4 over MPLS(3)",
-.len = 154},
+.name = "ESP over NAT-T over IPv4 over MPLS(3)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8339,12 +8135,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 50,
 .PA_PTRS[7] = 58},
-.name = "ESP over NAT-T over IPv4 over MPLS(4)",
-.len = 158},
+.name = "ESP over NAT-T over IPv4 over MPLS(4)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xaf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8383,12 +8178,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42,
 .PA_PTRS[7] = 50},
-.name = "ESP over NAT-T over IPv4 over MPLS(1) with VLAN",
-.len = 150},
+.name = "ESP over NAT-T over IPv4 over MPLS(1) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8429,12 +8223,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 46,
 .PA_PTRS[7] = 54},
-.name = "ESP over NAT-T over IPv4 over MPLS(2) with VLAN",
-.len = 154},
+.name = "ESP over NAT-T over IPv4 over MPLS(2) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8477,12 +8270,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 50,
 .PA_PTRS[7] = 58},
-.name = "ESP over NAT-T over IPv4 over MPLS(3) with VLAN",
-.len = 158},
+.name = "ESP over NAT-T over IPv4 over MPLS(3) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8526,12 +8318,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 54,
 .PA_PTRS[7] = 62},
-.name = "ESP over NAT-T over IPv4 over MPLS(4) with VLAN",
-.len = 162},
+.name = "ESP over NAT-T over IPv4 over MPLS(4) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xaf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaafff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8573,12 +8364,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 46,
 .PA_PTRS[7] = 54},
-.name = "ESP over NAT-T over IPv4 over MPLS(1) with QinQ",
-.len = 154},
+.name = "ESP over NAT-T over IPv4 over MPLS(1) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8622,12 +8412,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 50,
 .PA_PTRS[7] = 58},
-.name = "ESP over NAT-T over IPv4 over MPLS(2) with QinQ",
-.len = 158},
+.name = "ESP over NAT-T over IPv4 over MPLS(2) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffcccccfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8673,12 +8462,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 54,
 .PA_PTRS[7] = 62},
-.name = "ESP over NAT-T over IPv4 over MPLS(3) with QinQ",
-.len = 162},
+.name = "ESP over NAT-T over IPv4 over MPLS(3) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x05\x00\x78\x00\x00\x00\x00\x15\x11\xee\xd7\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 332, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff45050078000000001511eed7c0a0fdfefafbfcfd11941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 332, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8725,12 +8513,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 38,
 .PA_PTRS[3] = 58,
 .PA_PTRS[7] = 66},
-.name = "ESP over NAT-T over IPv4 over MPLS(4) with QinQ",
-.len = 166},
+.name = "ESP over NAT-T over IPv4 over MPLS(4) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8772,12 +8559,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54,
 .PA_PTRS[7] = 62},
-.name = "ESP over NAT-T over IPv6",
-.len = 162},
+.name = "ESP over NAT-T over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x86\xdd\x60\x7f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 332, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100122286dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 332, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8822,12 +8608,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 58,
 .PA_PTRS[7] = 66},
-.name = "ESP over NAT-T over IPv6 with VLAN",
-.len = 166},
+.name = "ESP over NAT-T over IPv6 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x86\xdd\x60\x7f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 340, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a812228100433386dd607fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 340, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8875,12 +8660,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62,
 .PA_PTRS[7] = 70},
-.name = "ESP over NAT-T over IPv6 with QinQ",
-.len = 170},
+.name = "ESP over NAT-T over IPv6 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xaf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 332, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 332, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8926,12 +8710,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 58,
 .PA_PTRS[7] = 66},
-.name = "ESP over NAT-T over IPv6 over MPLS(1)",
-.len = 166},
+.name = "ESP over NAT-T over IPv6 over MPLS(1)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 340, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 340, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -8979,12 +8762,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62,
 .PA_PTRS[7] = 70},
-.name = "ESP over NAT-T over IPv6 over MPLS(2)",
-.len = 170},
+.name = "ESP over NAT-T over IPv6 over MPLS(2)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 348, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 348, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9034,12 +8816,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 66,
 .PA_PTRS[7] = 74},
-.name = "ESP over NAT-T over IPv6 over MPLS(3)",
-.len = 174},
+.name = "ESP over NAT-T over IPv6 over MPLS(3)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 356, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 356, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9091,12 +8872,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 70,
 .PA_PTRS[7] = 78},
-.name = "ESP over NAT-T over IPv6 over MPLS(4)",
-.len = 178},
+.name = "ESP over NAT-T over IPv6 over MPLS(4)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xaf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 340, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 340, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9145,12 +8925,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62,
 .PA_PTRS[7] = 70},
-.name = "ESP over NAT-T over IPv6 over MPLS(1) with VLAN",
-.len = 170},
+.name = "ESP over NAT-T over IPv6 over MPLS(1) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 348, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 348, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9201,12 +8980,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 66,
 .PA_PTRS[7] = 74},
-.name = "ESP over NAT-T over IPv6 over MPLS(2) with VLAN",
-.len = 174},
+.name = "ESP over NAT-T over IPv6 over MPLS(2) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 356, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 356, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9259,12 +9037,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 70,
 .PA_PTRS[7] = 78},
-.name = "ESP over NAT-T over IPv6 over MPLS(3) with VLAN",
-.len = 178},
+.name = "ESP over NAT-T over IPv6 over MPLS(3) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 364, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 364, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9318,12 +9095,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 74,
 .PA_PTRS[7] = 82},
-.name = "ESP over NAT-T over IPv6 over MPLS(4) with VLAN",
-.len = 182},
+.name = "ESP over NAT-T over IPv6 over MPLS(4) with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xaf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 348, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaafff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 348, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9375,12 +9151,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 26,
 .PA_PTRS[3] = 66,
 .PA_PTRS[7] = 74},
-.name = "ESP over NAT-T over IPv6 over MPLS(1) with QinQ",
-.len = 174},
+.name = "ESP over NAT-T over IPv6 over MPLS(1) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 356, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 356, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9434,12 +9209,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 30,
 .PA_PTRS[3] = 70,
 .PA_PTRS[7] = 78},
-.name = "ESP over NAT-T over IPv6 over MPLS(2) with QinQ",
-.len = 178},
+.name = "ESP over NAT-T over IPv6 over MPLS(2) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 364, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffcccccfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 364, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9495,12 +9269,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 34,
 .PA_PTRS[3] = 74,
 .PA_PTRS[7] = 82},
-.name = "ESP over NAT-T over IPv6 over MPLS(3) with QinQ",
-.len = 182},
+.name = "ESP over NAT-T over IPv6 over MPLS(3) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x64\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x6c\x35\x79\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f", .RX_LENGTH = 372, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff605fffff00641115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111941194006c35790f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f", .RX_LENGTH = 372, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -9557,12 +9330,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 38,
 .PA_PTRS[3] = 78,
 .PA_PTRS[7] = 86},
-.name = "ESP over NAT-T over IPv6 over MPLS(4) with QinQ",
-.len = 186},
+.name = "ESP over NAT-T over IPv6 over MPLS(4) with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\xab\xcd\x00\x44", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f00000033abcd0044", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[23] = 1,
@@ -9588,12 +9360,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "TCP over IPv4",
-.len = 54},
+.name = "TCP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\x5a\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\xab\xe5\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x21\x21\x52\x52\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\xf1\xff\x00\x44", .RX_LENGTH = 116, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005a5a080045000014000000000f06abe5c0a800013f57fffe21215252123456781111111f00000033f1ff0044", .RX_LENGTH = 116, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -9622,12 +9393,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38},
-.name = "TCP over IPv4 with VLAN",
-.len = 58},
+.name = "TCP over IPv4 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\x5a\x81\x00\x74\xbb\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x22\x33\x44\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x01\x00\x44", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f060000c0a800013f57fffe11223344123456781111111f0000003300010044", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -9659,12 +9429,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42},
-.name = "TCP over IPv4 with QinQ",
-.len = 62},
+.name = "TCP over IPv4 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[23] = 1,
@@ -9700,12 +9469,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "TCP over IPv6",
-.len = 74},
+.name = "TCP over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\x5a\x86\xdd\x60\x70\x00\x01\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x21\x21\x52\x52\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\xf1\xff\x00\x44", .RX_LENGTH = 156, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005a5a86dd6070000100000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000121215252123456781111111f00000033f1ff0044", .RX_LENGTH = 156, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -9744,12 +9512,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 58},
-.name = "TCP over IPv6 with VLAN",
-.len = 78},
+.name = "TCP over IPv6 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\x5a\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x22\x33\x44\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\xff\xff\x00\x44", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344123456781111111f00000033ffff0044", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -9791,12 +9558,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62},
-.name = "TCP over IPv6 with QinQ",
-.len = 82},
+.name = "TCP over IPv6 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[23] = 1,
@@ -9823,12 +9589,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "UDP over IPv4",
-.len = 42},
+.name = "UDP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\x5a\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\xab\xda\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x10\x10\x88\x88\x00\x08\xf1\xff", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005a5a080045000014000000000f11abdac0a800013f57fffe101088880008f1ff", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -9858,12 +9623,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38},
-.name = "UDP over IPv4 with VLAN",
-.len = 46},
+.name = "UDP over IPv4 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\x5a\x81\x00\x74\xbb\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x22\x33\x44\x00\x08\x00\x01", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f110000c0a800013f57fffe1122334400080001", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -9896,12 +9660,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42},
-.name = "UDP over IPv4 with QinQ",
-.len = 50},
+.name = "UDP over IPv4 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x00\x08\x35\x79", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[23] = 1,
@@ -9938,12 +9701,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "UDP over IPv6",
-.len = 62},
+.name = "UDP over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\x5a\x86\xdd\x60\x70\x00\x01\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x21\x21\x52\x52\x00\x08\x35\x79", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005a5a86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012121525200083579", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -9983,12 +9745,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 58},
-.name = "UDP over IPv6 with VLAN",
-.len = 66},
+.name = "UDP over IPv6 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\x5a\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x22\x33\x44\x00\x08\x35\x79", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85a5a810074bb86dd6070000100001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011122334400083579", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -10031,12 +9792,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62},
-.name = "UDP over IPv6 with QinQ",
-.len = 70},
+.name = "UDP over IPv6 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x84\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x43\x21\x98\x76\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579", .RX_LENGTH = 92, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[23] = 1,
@@ -10063,12 +9823,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "SCTP over IPv4",
-.len = 46},
+.name = "SCTP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\x5a\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x84\xab\x67\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x10\x10\x88\x88\x70\x70\x80\x80\xf1\xf1\xf1\xf1", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005a5a080045000014000000000f84ab67c0a800013f57fffe1010888870708080f1f1f1f1", .RX_LENGTH = 100, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -10098,12 +9857,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 38},
-.name = "SCTP over IPv4 with VLAN",
-.len = 50},
+.name = "SCTP over IPv4 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\x5a\x81\x00\x74\xbb\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x84\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x22\x33\x44\x11\x21\x11\x31\x0f\x0c\x0b\x0d", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85a5a810074bb080045000014000000000f840000c0a800013f57fffe11223344112111310f0c0b0d", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -10136,12 +9894,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 42},
-.name = "SCTP over IPv4 with QinQ",
-.len = 54},
+.name = "SCTP over IPv4 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x70\x00\x01\x00\x00\x84\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x22\x33\x44\x11\x21\x11\x31\x0f\x0c\x0b\x0d", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d", .RX_LENGTH = 132, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[23] = 1,
@@ -10178,12 +9935,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "SCTP over IPv6",
-.len = 66},
+.name = "SCTP over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x5a\xaa\x86\xdd\x60\x70\x00\x01\x00\x00\x84\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x22\x33\x44\x11\x21\x11\x31\x0f\x0c\x0b\x0d", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81005aaa86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d", .RX_LENGTH = 140, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
@@ -10223,12 +9979,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 18,
 .PA_PTRS[3] = 58},
-.name = "SCTP over IPv6 with VLAN",
-.len = 70},
+.name = "SCTP over IPv6 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x00\x84\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x22\x33\x44\x11\x21\x11\x31\x0f\x0c\x0b\x0d", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -10271,12 +10026,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62},
-.name = "SCTP over IPv6 with QinQ",
-.len = 74},
+.name = "SCTP over IPv6 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x04\xcd\x9f\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[30] = 1,
 .PA_FLAGS[31] = 1,
@@ -10313,12 +10067,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 34,
 .PA_PTRS[6] = 34,
 .PA_PTRS[7] = 54},
-.name = "IPv4 over IPv4",
-.len = 54},
+.name = "IPv4 over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x04\xcd\x9f\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x06\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\xab\xcd\x00\x44", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f06abbec0a800013f57fffe22225555123456781111111f00000033abcd0044", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[30] = 1,
 .PA_FLAGS[31] = 1,
@@ -10355,12 +10108,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 34,
 .PA_PTRS[6] = 34,
 .PA_PTRS[7] = 54},
-.name = "IPv4/TCP over IPv4",
-.len = 74},
+.name = "IPv4/TCP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x04\xcd\x9f\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x84\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\xab\xcd\x00\x44", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f04cd9fc1a2b3e41234567845000014001c00000f84abbec0a800013f57fffe22225555123456781111111f00000033abcd0044", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[30] = 1,
 .PA_FLAGS[31] = 1,
@@ -10397,12 +10149,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 34,
 .PA_PTRS[6] = 34,
 .PA_PTRS[7] = 54},
-.name = "IPv4/SCTP over IPv4",
-.len = 74},
+.name = "IPv4/SCTP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x38\x00\x00\x00\x00\x0f\x29\xcd\x6a\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x60\x70\x00\x01\x00\x2c\x84\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000038000000000f29cd6ac1a2b3e41234567860700001002c8415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 148, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[30] = 1,
 .PA_FLAGS[31] = 1,
@@ -10449,12 +10200,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 34,
 .PA_PTRS[6] = 34,
 .PA_PTRS[7] = 74},
-.name = "IPv6 over IPv4",
-.len = 74},
+.name = "IPv6 over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x01\xcd\xa2\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f01cda2c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -10476,12 +10226,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 22136,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "ICMP over IPv4",
-.len = 54},
+.name = "ICMP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x02\xcd\xa1\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f02cda1c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -10502,12 +10251,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 22136,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "IGMP over IPv4",
-.len = 54},
+.name = "IGMP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x2f\xcd\x74\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f2fcd74c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[23] = 1,
 .PA_KEYS[6] = 1,
@@ -10531,12 +10279,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 22136,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "GRE over IPv4",
-.len = 54},
+.name = "GRE over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x01\x0f\x32\xcd\x70\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000010f32cd70c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[12] = 1,
 .PA_FLAGS[22] = 1,
@@ -10559,12 +10306,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 22136,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "ESP-fragment over IPv4",
-.len = 54},
+.name = "ESP-fragment over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x32\xcd\x71\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f32cd71c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[12] = 1,
 .PA_FLAGS[22] = 1,
@@ -10590,12 +10336,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 34},
-.name = "ESP over IPv4",
-.len = 54},
+.name = "ESP over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x14\x04\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100140415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -10648,12 +10393,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 62,
 .PA_PTRS[6] = 62,
 .PA_PTRS[7] = 82},
-.name = "IPv4 over IPv6",
-.len = 82},
+.name = "IPv4 over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x24\x29\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x60\x70\x00\x01\x00\x2c\x84\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c8415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -10716,12 +10460,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 62,
 .PA_PTRS[6] = 62,
 .PA_PTRS[7] = 102},
-.name = "IPv6 over IPv6",
-.len = 102},
+.name = "IPv6 over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x24\x29\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x60\x70\x00\x01\x00\x2c\x04\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 244, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c0415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 244, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -10780,12 +10523,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62,
 .PA_PTRS[6] = 62},
-.name = "IPv6/IP over IPv6",
-.len = 122},
+.name = "IPv6/IP over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x24\x29\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x60\x70\x00\x01\x00\x2c\x3b\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c3b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -10848,12 +10590,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 62,
 .PA_PTRS[6] = 62,
 .PA_PTRS[7] = 102},
-.name = "IPv6/No Next Hdr over IPv6",
-.len = 102},
+.name = "IPv6/No Next Hdr over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x24\x29\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x60\x70\x00\x01\x00\x2c\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100242915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000160700001002c0615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -10916,12 +10657,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[3] = 62,
 .PA_PTRS[6] = 62,
 .PA_PTRS[7] = 102},
-.name = "IPv6/TCP over IPv6",
-.len = 102},
+.name = "IPv6/TCP over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x14\x3a\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100143a15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -10959,12 +10699,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62},
-.name = "ICMP over IPv6",
-.len = 82},
+.name = "ICMP over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x14\x2f\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100142f15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -11004,12 +10743,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62},
-.name = "GRE over IPv6",
-.len = 82},
+.name = "GRE over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x14\x3b\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100143b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000145000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -11046,12 +10784,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62},
-.name = "NO NEXT HDR over IPv6",
-.len = 82},
+.name = "NO NEXT HDR over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\x1f\x1f\x1f\x1f\x1f\x1f\x80\x00", .RX_LENGTH = 64, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "0001020304051f1f1f1f1f1f8000", .RX_LENGTH = 64, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_KEYS[0] = 4113,
 .PA_KEYS[1] = 4627,
@@ -11084,12 +10821,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[69] = 10795,
 .PA_KEYS[70] = 11309,
 .PA_PTRS[2] = 14},
-.name = "DI L2 (even length) up to rule 4B (partial)",
-.len = 14},
+.name = "DI L2 (even length) up to rule 4B (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\x1f\x1f\x1f\x1f\x1f\x1f\x80\x00", .RX_LENGTH = 66, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "0001020304051f1f1f1f1f1f8000", .RX_LENGTH = 66, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_KEYS[0] = 4113,
 .PA_KEYS[1] = 4627,
@@ -11123,12 +10859,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[70] = 11309,
 .PA_KEYS[71] = 11823,
 .PA_PTRS[2] = 14},
-.name = "DI L2 (even length) up to rule 4B (full)",
-.len = 14},
+.name = "DI L2 (even length) up to rule 4B (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\x1f\x1f\x1f\x1f\x1f\x1f\x80\x00", .RX_LENGTH = 78, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "0001020304051f1f1f1f1f1f8000", .RX_LENGTH = 78, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_KEYS[0] = 4113,
 .PA_KEYS[1] = 4627,
@@ -11168,12 +10903,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[76] = 14393,
 .PA_KEYS[77] = 14907,
 .PA_PTRS[2] = 14},
-.name = "DI L2 (even length) up to rule 5A (partial)",
-.len = 14},
+.name = "DI L2 (even length) up to rule 5A (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\x1f\x1f\x1f\x1f\x1f\x1f\x80\x00", .RX_LENGTH = 82, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "0001020304051f1f1f1f1f1f8000", .RX_LENGTH = 82, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_KEYS[0] = 4113,
 .PA_KEYS[1] = 4627,
@@ -11215,12 +10949,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[78] = 15421,
 .PA_KEYS[79] = 15935,
 .PA_PTRS[2] = 14},
-.name = "DI L2 (even length) up to rule 5A (full)",
-.len = 14},
+.name = "DI L2 (even length) up to rule 5A (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\x1f\x1f\x1f\x1f\x1f\x1f\x80\x00", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "0001020304051f1f1f1f1f1f8000", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_KEYS[0] = 4113,
 .PA_KEYS[1] = 4627,
@@ -11274,12 +11007,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[78] = 15421,
 .PA_KEYS[79] = 15935,
 .PA_PTRS[2] = 14},
-.name = "DI L2 full vector",
-.len = 14},
+.name = "DI L2 full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 68, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe", .RX_LENGTH = 68, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[0] = 1,
@@ -11316,12 +11048,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[70] = 7197,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L3 IPv4 unknown protocol (even length) up to rule 4B (partial)",
-.len = 34},
+.name = "DI L3 IPv4 unknown protocol (even length) up to rule 4B (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x02\xcd\xa1\xc1\xa2\xb3\xe4\x12\x34\x56\x78\x45\x00\x00\x14\x00\x1c\x00\x00\x0f\x00\xab\xbe\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f02cda1c1a2b3e41234567845000014001c00000f00abbec0a800013f57fffe", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[0] = 17664,
@@ -11379,12 +11110,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 6683,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L3 IPv4 IGMP (full)",
-.len = 54},
+.name = "DI L3 IPv4 IGMP (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x00\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f000000c0a800013f57fffe", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[0] = 1,
@@ -11442,12 +11172,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L3 IPv4 unknown protocol full vector",
-.len = 34},
+.name = "DI L3 IPv4 unknown protocol full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x00\x08\x35\x79", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11511,12 +11240,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 UDP full vector",
-.len = 42},
+.name = "DI L4 IPv4 UDP full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe2222555500083579", .RX_LENGTH = 84, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11563,12 +11291,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[74] = 9253,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 UDP (even length) up to rule 5A (partial)",
-.len = 42},
+.name = "DI L4 IPv4 UDP (even length) up to rule 5A (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\xab\xcd\x00\x44", .RX_LENGTH = 64, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044", .RX_LENGTH = 64, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11598,12 +11325,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 TCP (even length) up to rule 1b (partial)",
-.len = 54},
+.name = "DI L4 IPv4 TCP (even length) up to rule 1b (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\xab\xcd\x00\x44", .RX_LENGTH = 66, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044", .RX_LENGTH = 66, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11634,12 +11360,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 TCP (even length) up to rule 1b (full)",
-.len = 54},
+.name = "DI L4 IPv4 TCP (even length) up to rule 1b (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\xab\xcd\x00\x44", .RX_LENGTH = 68, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044", .RX_LENGTH = 68, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11671,12 +11396,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 TCP (even length) up to rule 2A (partial)",
-.len = 54},
+.name = "DI L4 IPv4 TCP (even length) up to rule 2A (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\xab\xcd\x00\x44", .RX_LENGTH = 164, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f060000c0a800013f57fffe22225555123456781111111f50000033abcd0044", .RX_LENGTH = 164, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11739,12 +11463,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 TCP full vector",
-.len = 54},
+.name = "DI L4 IPv4 TCP full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x84\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x43\x21\x98\x76\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 64, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579", .RX_LENGTH = 64, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11779,12 +11502,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 SCTP (even length) up to rule 2B (partial)",
-.len = 46},
+.name = "DI L4 IPv4 SCTP (even length) up to rule 2B (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x84\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x43\x21\x98\x76\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 66, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579", .RX_LENGTH = 66, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11820,12 +11542,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 SCTP (even length) up to rule 2B (full)",
-.len = 46},
+.name = "DI L4 IPv4 SCTP (even length) up to rule 2B (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x84\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x43\x21\x98\x76\xa9\x11\x22\x85\xfe\x0b\x35\x79", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f840000c0a800013f57fffe43219876a9112285fe0b3579", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -11889,12 +11610,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 SCTP full vector",
-.len = 46},
+.name = "DI L4 IPv4 SCTP full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x01\x00\x00\xc1\xa2\xb3\xe4\x12\x34\x56\x78", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f010000c1a2b3e412345678", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[0] = 515,
@@ -11953,12 +11673,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 12337,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34},
-.name = "DI L4 IPv4 ICMP full vector",
-.len = 34},
+.name = "DI L4 IPv4 ICMP full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x65\x5a\xaa\xaa\x00\x00\xfd\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 76, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 76, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[0] = 1,
@@ -11999,12 +11718,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[64] = 4113,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "DI L3 IPv6 unknown protocol (even length) up to rule 3A (partial)",
-.len = 54},
+.name = "DI L3 IPv6 unknown protocol (even length) up to rule 3A (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x65\x5a\xaa\xaa\x00\x00\xfd\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[0] = 1,
@@ -12062,12 +11780,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "DI L3 IPv6 unknown protocol full vector",
-.len = 54},
+.name = "DI L3 IPv6 unknown protocol full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\x00\x04\x00\x44", .RX_LENGTH = 110, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f5000003300040044", .RX_LENGTH = 110, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -12120,12 +11837,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[71] = 7711,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "DI L4 IPv6 TCP (even length) up to rule 4B (full)",
-.len = 74},
+.name = "DI L4 IPv6 TCP (even length) up to rule 4B (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x50\x00\x00\x33\x00\x04\x00\x44", .RX_LENGTH = 138, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f5000003300040044", .RX_LENGTH = 138, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[5] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -12188,12 +11904,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "DI L4 IPv6 TCP full vector",
-.len = 74},
+.name = "DI L4 IPv6 TCP full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x00\x08\x35\x79", .RX_LENGTH = 104, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579", .RX_LENGTH = 104, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -12250,12 +11965,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[74] = 9253,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "DI L4 IPv6 UDP (even length) up to rule 5A (partial)",
-.len = 62},
+.name = "DI L4 IPv6 UDP (even length) up to rule 5A (partial)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x7f\xff\xff\x00\x00\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x00\x08\x35\x79", .RX_LENGTH = 130, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd607fffff00001115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555500083579", .RX_LENGTH = 130, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -12319,12 +12033,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "DI L4 IPv6 UDP full vector",
-.len = 62},
+.name = "DI L4 IPv6 UDP full vector"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x70\x00\x01\x00\x00\x84\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x22\x33\x44\x11\x21\x11\x31\x0f\x0c\x0b\x0d", .RX_LENGTH = 122, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd6070000100008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000111223344112111310f0c0b0d", .RX_LENGTH = 122, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[6] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -12388,12 +12101,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 11823,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 54},
-.name = "DI L4 IPv6 SCTP (even length) up to rule 5B (full)",
-.len = 66},
+.name = "DI L4 IPv6 SCTP (even length) up to rule 5B (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\x74\xbb\x86\xdd\x60\x70\x00\x01\x00\x00\x3a\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa810074bb86dd6070000100003a15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -12458,12 +12170,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 12337,
 .PA_PTRS[2] = 22,
 .PA_PTRS[3] = 62},
-.name = "DI L4 IPv6 ICMP",
-.len = 62},
+.name = "DI L4 IPv6 ICMP"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x3a\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013a00000100000000", .RX_LENGTH = 128, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -12524,12 +12235,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[79] = 12337,
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 62},
-.name = "DI L4 IPv6 ICMP over ExHdr Fragmented",
-.len = 62},
+.name = "DI L4 IPv6 ICMP over ExHdr Fragmented"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x70\x00\x01\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x99\x00\xff\x01\x00\x00\x00\x00\x11\x22\x33\x44\x00\x08\x00\x00", .RX_LENGTH = 166, .RX_PORT = 2 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd6070000100002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019900ff01000000001122334400080000", .RX_LENGTH = 166, .RX_PORT = 2 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[14] = 1,
 .PA_FLAGS[22] = 1,
@@ -12588,12 +12298,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_KEYS[78] = 7197,
 .PA_KEYS[79] = 7711,
 .PA_PTRS[2] = 14},
-.name = "DI L3 IPv6 Fragmented (even length) up to rule 5B (full)",
-.len = 70},
+.name = "DI L3 IPv6 Fragmented (even length) up to rule 5B (full)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x95\x11\x95\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1195119500083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12625,12 +12334,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4501",
-.len = 42},
+.name = "L4 NAT-T Port Range 4501"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x96\x11\x96\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1196119600083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12662,12 +12370,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4502",
-.len = 42},
+.name = "L4 NAT-T Port Range 4502"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x97\x11\x97\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1197119700083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12699,12 +12406,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4503",
-.len = 42},
+.name = "L4 NAT-T Port Range 4503"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x98\x11\x98\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1198119800083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12736,12 +12442,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4504",
-.len = 42},
+.name = "L4 NAT-T Port Range 4504"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x99\x11\x99\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe1199119900083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12773,12 +12478,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4505",
-.len = 42},
+.name = "L4 NAT-T Port Range 4505"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x9a\x11\x9a\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119a119a00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12810,12 +12514,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4506",
-.len = 42},
+.name = "L4 NAT-T Port Range 4506"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x9b\x11\x9b\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119b119b00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12847,12 +12550,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4507",
-.len = 42},
+.name = "L4 NAT-T Port Range 4507"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x9c\x11\x9c\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119c119c00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12884,12 +12586,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4508",
-.len = 42},
+.name = "L4 NAT-T Port Range 4508"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x9d\x11\x9d\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119d119d00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12921,12 +12622,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4509",
-.len = 42},
+.name = "L4 NAT-T Port Range 4509"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x9e\x11\x9e\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119e119e00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12958,12 +12658,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4510",
-.len = 42},
+.name = "L4 NAT-T Port Range 4510"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x9f\x11\x9f\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe119f119f00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -12995,12 +12694,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4511",
-.len = 42},
+.name = "L4 NAT-T Port Range 4511"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa0\x11\xa0\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a011a000083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13032,12 +12730,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4512",
-.len = 42},
+.name = "L4 NAT-T Port Range 4512"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa1\x11\xa1\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a111a100083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13069,12 +12766,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4513",
-.len = 42},
+.name = "L4 NAT-T Port Range 4513"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa2\x11\xa2\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a211a200083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13106,12 +12802,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4514",
-.len = 42},
+.name = "L4 NAT-T Port Range 4514"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa3\x11\xa3\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a311a300083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13143,12 +12838,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4515",
-.len = 42},
+.name = "L4 NAT-T Port Range 4515"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa4\x11\xa4\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a411a400083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13180,12 +12874,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4516",
-.len = 42},
+.name = "L4 NAT-T Port Range 4516"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa5\x11\xa5\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a511a500083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13217,12 +12910,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4517",
-.len = 42},
+.name = "L4 NAT-T Port Range 4517"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa6\x11\xa6\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a611a600083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13254,12 +12946,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4518",
-.len = 42},
+.name = "L4 NAT-T Port Range 4518"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa7\x11\xa7\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a711a700083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13291,12 +12982,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4519",
-.len = 42},
+.name = "L4 NAT-T Port Range 4519"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa8\x11\xa8\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a811a800083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13328,12 +13018,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4520",
-.len = 42},
+.name = "L4 NAT-T Port Range 4520"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xa9\x11\xa9\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11a911a900083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13365,12 +13054,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4521",
-.len = 42},
+.name = "L4 NAT-T Port Range 4521"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xaa\x11\xaa\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11aa11aa00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13402,12 +13090,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4522",
-.len = 42},
+.name = "L4 NAT-T Port Range 4522"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xab\x11\xab\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ab11ab00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13439,12 +13126,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4523",
-.len = 42},
+.name = "L4 NAT-T Port Range 4523"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xac\x11\xac\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ac11ac00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13476,12 +13162,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4524",
-.len = 42},
+.name = "L4 NAT-T Port Range 4524"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xad\x11\xad\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ad11ad00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13513,12 +13198,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4525",
-.len = 42},
+.name = "L4 NAT-T Port Range 4525"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xae\x11\xae\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11ae11ae00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13550,12 +13234,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4526",
-.len = 42},
+.name = "L4 NAT-T Port Range 4526"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xaf\x11\xaf\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11af11af00083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13587,12 +13270,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4527",
-.len = 42},
+.name = "L4 NAT-T Port Range 4527"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xb0\x11\xb0\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b011b000083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13624,12 +13306,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4528",
-.len = 42},
+.name = "L4 NAT-T Port Range 4528"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xb1\x11\xb1\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b111b100083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13661,12 +13342,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4529",
-.len = 42},
+.name = "L4 NAT-T Port Range 4529"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xb2\x11\xb2\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b211b200083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13698,12 +13378,11 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4530",
-.len = 42},
+.name = "L4 NAT-T Port Range 4530"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x11\x00\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\xb3\x11\xb3\x00\x08\x35\x79", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000014000000000f110000c0a800013f57fffe11b311b300083579", .RX_LENGTH = 84, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[4] = 1,
 .PA_FLAGS[8] = 1,
 .PA_FLAGS[13] = 1,
@@ -13735,8 +13414,7 @@ struct TestData testsPass[TEST_PASS_MAX] =  {
 .PA_PTRS[2] = 14,
 .PA_PTRS[3] = 34,
 .PA_PTRS[7] = 42},
-.name = "L4 NAT-T Port Range 4531",
-.len = 42}
+.name = "L4 NAT-T Port Range 4531"}
 
 };
 
@@ -13746,7 +13424,7 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x80\x00", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711118000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_KEYS[0] = 1,
@@ -13765,12 +13443,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[14] = 21845,
 .PA_KEYS[31] = 21845,
 .PA_PTRS[4] = 22},
-.name = "L2 Ethernet VLAN with PBB",
-.len = 22},
+.name = "L2 Ethernet VLAN with PBB"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x86\xdd\x60\x5f\xff\xff\x00\x00\x3b\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 152, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa86dd605fffff00003b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 152, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[30] = 1,
@@ -13813,12 +13490,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 36,
 .PA_PTRS[7] = 76},
-.name = "L2 PBB IPv6 No next hdr",
-.len = 76},
+.name = "L2 PBB IPv6 No next hdr"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x55\x55\x88\xe7\x11\x11\x11\x11\xde\xad\xbe\xef\xff\xff\xfe\xcc\xbe\xde\xef\xaa\x08\x00\x45\x05\x00\x14\x00\x00\x00\x00\x15\x99\x00\x00\xc0\xa0\xfd\xfe\xfa\xfb\xfc\xfd", .RX_LENGTH = 112, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8555588e711111111deadbeeffffffeccbedeefaa0800450500140000000015990000c0a0fdfefafbfcfd", .RX_LENGTH = 112, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[25] = 1,
 .PA_FLAGS[30] = 1,
@@ -13851,12 +13527,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[4] = 22,
 .PA_PTRS[6] = 36,
 .PA_PTRS[7] = 56},
-.name = "L2 PBB IPv4",
-.len = 56},
+.name = "L2 PBB IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xff\xff\x81\x00\x00\x00\x88\xe7", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8ffff8100000088e7", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -13878,12 +13553,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[15] = 0,
 .PA_KEYS[31] = 65535,
 .PA_PTRS[4] = 26},
-.name = "L2 Ethernet QinQ with PBB",
-.len = 22},
+.name = "L2 Ethernet QinQ with PBB"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x65\x5a\xaa\xaa\x00\x00\xfd\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
 .PA_KEYS[7] = 515,
@@ -13914,12 +13588,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[62] = 40961,
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 14},
-.name = "L3 IPv6 untagged",
-.len = 54},
+.name = "L3 IPv6 untagged"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x7a\xaa\x86\xdd\x65\x5a\xaa\xaa\x00\x00\xfd\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 116, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81007aaa86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 116, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[22] = 1,
 .PA_KEYS[6] = 1,
@@ -13953,12 +13626,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[62] = 40961,
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 18},
-.name = "L3 IPv6 VLAN 0xAAA 0x7",
-.len = 58},
+.name = "L3 IPv6 VLAN 0xAAA 0x7"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x15\x55\x81\x00\x5f\xff\x86\xdd\x65\x5a\xaa\xaa\x00\x00\xfd\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8155581005fff86dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 124, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -13995,12 +13667,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[62] = 40961,
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22},
-.name = "L3 IPv6 QinQ 0x555 0x1 0xFFF 0x5",
-.len = 62},
+.name = "L3 IPv6 QinQ 0x555 0x1 0xFFF 0x5"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x15\x55\x81\x00\x50\x00\x86\xdd\x65\x5a\xaa\xaa\x00\x00\xfd\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01", .RX_LENGTH = 124, .RX_PORT = 5 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a815558100500086dd655aaaaa0000fd15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a0010001", .RX_LENGTH = 124, .RX_PORT = 5 }, .out = {
 .PA_FLAGS[17] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -14038,12 +13709,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[62] = 40961,
 .PA_KEYS[63] = 1,
 .PA_PTRS[2] = 22},
-.name = "L3 IPv6 QinQ vlan2first Priority-Tagged (VID1=0)",
-.len = 62},
+.name = "L3 IPv6 QinQ vlan2first Priority-Tagged (VID1=0)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x00\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000000100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -14089,12 +13759,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr 1st Fragmented over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr 1st Fragmented over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2b\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x00\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002b15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -14139,12 +13808,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr Routing  over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr Routing  over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x3c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x00\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -14189,12 +13857,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr Dest Opt over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr Dest Opt over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x33\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x00\x00\x02\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00003315f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000020100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -14239,12 +13906,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr AH  over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr AH  over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x2c\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00002c15f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100010000000000000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -14290,12 +13956,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr 1st & last Frag. over MPLS 3 labels and QinQ",
-.len = 82},
+.name = "IPv6 ExHdr 1st & last Frag. over MPLS 3 labels and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x00\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x3b\xff\x50\x01\x00\x00\x00\x00", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00000015f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100013bff500100000000", .RX_LENGTH = 164, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
 .PA_FLAGS[20] = 0,
@@ -14340,12 +14005,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 ExHdr non fragmented, no next header",
-.len = 82},
+.name = "IPv6 ExHdr non fragmented, no next header"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x5a\xaa\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbc\xee\xcc\xcc\xcb\xdd\x60\x5f\xff\xff\x00\x00\x99\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x98\x00\x00\x01\x00\x00\x00\x00\x97\x00\x00\x01\x00\x00\x00\x00\x96\x00\x00\x01\x00\x00\x00\x00\x2c\x00\x00\x01\x00\x00\x00\x00", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a85aaa8100a5558847aaaaaeffbbbbbceecccccbdd605fffff00009915f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100019800000100000000970000010000000096000001000000002c00000100000000", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[18] = 1,
 .PA_FLAGS[19] = 1,
@@ -14391,23 +14055,21 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[63] = 1,
 .PA_PTRS[1] = 22,
 .PA_PTRS[2] = 34},
-.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh fragmented",
-.len = 106},
+.name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh fragmented"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x64\x00\x00\x00\x00\x0f\x11\xab\x8a\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40", .RX_LENGTH = 246, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000064000000000f11ab8ac0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40", .RX_LENGTH = 246, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_KEYS[16] = 8192,
 .PA_KEYS[17] = 2048,
 .PA_PTRS[3] = 0},
-.name = "GRE (no following protocol)",
-.len = 123},
+.name = "GRE (no following protocol)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14429,12 +14091,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4",
-.len = 94},
+.name = "GRE over ESP over NAT-T over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x47\x00\x00\x20\x00\x0f\x11\x8b\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x20\x00\x0f\x11\x8b\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000047000020000f118ba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000020000f118bd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14456,12 +14117,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 Fragmented 1st",
-.len = 94},
+.name = "GRE over ESP over NAT-T over IPv4 Fragmented 1st"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x47\x00\x00\x40\x00\x0f\x11\x6b\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x40\x00\x0f\x11\x6b\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000047000040000f116ba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000040000f116bd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 188, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14483,12 +14143,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 Fragmented 2nd",
-.len = 94},
+.name = "GRE over ESP over NAT-T over IPv4 Fragmented 2nd"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x08\x00\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee81001222080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14510,12 +14169,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with VLAN",
-.len = 98},
+.name = "GRE over ESP over NAT-T over IPv4 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x65\x55\x08\x00\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8122281006555080045000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14537,12 +14195,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with QinQ",
-.len = 102},
+.name = "GRE over ESP over NAT-T over IPv4 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xaf\xff\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaafff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14564,12 +14221,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with MPLS",
-.len = 98},
+.name = "GRE over ESP over NAT-T over IPv4 with MPLS"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 204, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14591,12 +14247,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with MPLS(2)",
-.len = 102},
+.name = "GRE over ESP over NAT-T over IPv4 with MPLS(2)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 212, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14618,12 +14273,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with MPLS(3)",
-.len = 106},
+.name = "GRE over ESP over NAT-T over IPv4 with MPLS(3)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 220, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14645,12 +14299,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with MPLS(4)",
-.len = 110},
+.name = "GRE over ESP over NAT-T over IPv4 with MPLS(4)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 228, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14672,12 +14325,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with MPLS(4) & VLAN",
-.len = 114},
+.name = "GRE over ESP over NAT-T over IPv4 with MPLS(4) & VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xa5\x55\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x00\x00\x47\x00\x00\x00\x00\x0f\x11\xab\xa7\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x1c\x00\x00\x00\x00\x0f\x11\xab\xd2\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8a555810012228847aaaaaeffbbbbbeffccccceffdddddfff45000047000000000f11aba7c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff4500001c000000000f11abd2c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14699,12 +14351,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "GRE over ESP over NAT-T over IPv4 with MPLS(4) & QinQ",
-.len = 118},
+.name = "GRE over ESP over NAT-T over IPv4 with MPLS(4) & QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 268, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 268, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14736,12 +14387,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6",
-.len = 134},
+.name = "GRE over ESP over NAT-T over IPv6"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x52\x22\x86\xdd\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100522286dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14773,12 +14423,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with VLAN",
-.len = 138},
+.name = "GRE over ESP over NAT-T over IPv6 with VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\xa5\x55\x86\xdd\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 284, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a812228100a55586dd605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 284, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14810,12 +14459,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with QinQ",
-.len = 142},
+.name = "GRE over ESP over NAT-T over IPv6 with QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xaf\xff\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaafff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14847,12 +14495,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with MPLS",
-.len = 138},
+.name = "GRE over ESP over NAT-T over IPv6 with MPLS"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbf\xff\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 284, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 284, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14884,12 +14531,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with MPLS(2)",
-.len = 142},
+.name = "GRE over ESP over NAT-T over IPv6 with MPLS(2)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xcf\xff\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffcccccfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 292, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14921,12 +14567,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with MPLS(3)",
-.len = 146},
+.name = "GRE over ESP over NAT-T over IPv6 with MPLS(3)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 300, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14958,12 +14603,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with MPLS(4)",
-.len = 150},
+.name = "GRE over ESP over NAT-T over IPv6 with MPLS(4)"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 308, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -14995,12 +14639,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with MPLS(4) & VLAN",
-.len = 154},
+.name = "GRE over ESP over NAT-T over IPv6 with MPLS(4) & VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x03\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x47\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x08\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810003338847aaaaaeffbbbbbeffccccceffdddddfff605fffff00471115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00081115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15032,12 +14675,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "GRE over ESP over NAT-T over IPv6 with MPLS(4) & QinQ",
-.len = 158},
+.name = "GRE over ESP over NAT-T over IPv6 with MPLS(4) & QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x45\x00\x00\x4b\x00\x00\x00\x00\x0f\x11\xab\xa3\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\xab\xe5\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044", .RX_LENGTH = 196, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15059,12 +14701,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "TCP over IPv4 and GRE",
-.len = 98},
+.name = "TCP over IPv4 and GRE"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\xa5\x55\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x00\x00\x4b\x00\x00\x00\x00\x0f\x11\xab\xa3\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\xab\xe5\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee8100a5558847aaaaaeffbbbbbeffccccceffdddddfff4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044", .RX_LENGTH = 236, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15086,12 +14727,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "TCP over IPv4 and GRE with MPLS(4) & VLAN",
-.len = 118},
+.name = "TCP over IPv4 and GRE with MPLS(4) & VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xa5\x55\x81\x00\x76\x66\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x00\x00\x4b\x00\x00\x00\x00\x0f\x11\xab\xa3\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x06\xab\xe5\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 244, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8a555810076668847aaaaaeffbbbbbeffccccceffdddddfff4500004b000000000f11aba3c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f06abe5c0a800013f57fffe22225555123456781111111f0000003300000044", .RX_LENGTH = 244, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15113,12 +14753,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "TCP over IPv4 and GRE with MPLS(4) & QinQ",
-.len = 122},
+.name = "TCP over IPv4 and GRE with MPLS(4) & QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x86\xdd\x60\x5f\xff\xff\x00\x4b\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee86dd605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044", .RX_LENGTH = 276, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15150,12 +14789,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "TCP over IPv6 and GRE",
-.len = 138},
+.name = "TCP over IPv6 and GRE"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x81\x00\x12\x22\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x4b\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee810012228847aaaaaeffbbbbbeffccccceffdddddfff605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044", .RX_LENGTH = 316, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15187,12 +14825,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "TCP over IPv6 and GRE with MPLS(4) and VLAN",
-.len = 158},
+.name = "TCP over IPv6 and GRE with MPLS(4) and VLAN"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x4b\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x00\x06\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x12\x34\x56\x78\x11\x11\x11\x1f\x00\x00\x00\x33\x00\x00\x00\x44", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff605fffff004b1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00000615f0040004f0030003f0020002f0010001a0040004a0030003a0020002a001000122225555123456781111111f0000003300000044", .RX_LENGTH = 324, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15224,12 +14861,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "TCP over IPv6 and GRE with MPLS(4) and QinQ",
-.len = 162},
+.name = "TCP over IPv6 and GRE with MPLS(4) and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\x12\x22\x81\x00\x43\x33\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x45\x00\x00\x57\x00\x00\x00\x00\x0f\x11\xab\x97\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x86\xdd\x12\x34\x56\xff\x60\x5f\xff\xff\x00\x00\x84\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x22\x22\x55\x55\x12\x34\x56\x78\xab\xcd\xef\x12", .RX_LENGTH = 268, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a81222810043338847aaaaaeffbbbbbeffccccceffdddddfff45000057000000000f11ab97c0a800013f57fffe1194119400103579c1c1c1c1c1c1c1c1200086dd123456ff605fffff00008415f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100012222555512345678abcdef12", .RX_LENGTH = 268, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15261,12 +14897,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 48},
-.name = "SCTP over IPv6 and GRE with MPLS(4) and QinQ",
-.len = 134},
+.name = "SCTP over IPv6 and GRE with MPLS(4) and QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x88\xa8\xa5\x55\x81\x00\x76\x66\x88\x47\xaa\xaa\xae\xff\xbb\xbb\xbe\xff\xcc\xcc\xce\xff\xdd\xdd\xdf\xff\x60\x5f\xff\xff\x00\x2f\x11\x15\xf0\x04\x00\x04\xf0\x03\x00\x03\xf0\x02\x00\x02\xf0\x01\x00\x01\xa0\x04\x00\x04\xa0\x03\x00\x03\xa0\x02\x00\x02\xa0\x01\x00\x01\x11\x94\x11\x94\x00\x10\x35\x79\xc1\xc1\xc1\xc1\xc1\xc1\xc1\xc1\x20\x00\x08\x00\x12\x34\x56\xff\x45\x00\x00\x14\x00\x00\x00\x00\x0f\x84\xab\x67\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x22\x22\x55\x55\x12\x34\x56\x78\xab\xcd\xef\x12", .RX_LENGTH = 268, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee88a8a555810076668847aaaaaeffbbbbbeffccccceffdddddfff605fffff002f1115f0040004f0030003f0020002f0010001a0040004a0030003a0020002a00100011194119400103579c1c1c1c1c1c1c1c120000800123456ff45000014000000000f84ab67c0a800013f57fffe2222555512345678abcdef12", .RX_LENGTH = 268, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[23] = 1,
 .PA_FLAGS[30] = 1,
@@ -15288,12 +14923,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 0,
 .PA_PTRS[6] = 8,
 .PA_PTRS[7] = 28},
-.name = "SCTP over IPv4 and GRE with MPLS(4) & QinQ",
-.len = 134},
+.name = "SCTP over IPv4 and GRE with MPLS(4) & QinQ"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x00\x00\x0f\x04\xab\xd3\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x45\x00\x00\x14\x00\x1c\xab\xe7\x15\x00\x0f\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000000000f04abd3c0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[22] = 1,
 .PA_FLAGS[30] = 1,
@@ -15324,12 +14958,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 20,
 .PA_PTRS[6] = 20,
 .PA_PTRS[7] = 40},
-.name = "IPv4 over IPv4",
-.len = 54},
+.name = "IPv4 over IPv4"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x20\x00\x0f\x04\x8b\xd3\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x45\x00\x00\x14\x00\x1c\xab\xe7\x15\x00\x0f\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000020000f048bd3c0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[10] = 1,
 .PA_FLAGS[22] = 1,
@@ -15361,12 +14994,11 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_PTRS[3] = 20,
 .PA_PTRS[6] = 20,
 .PA_PTRS[7] = 40},
-.name = "IPv4 over IPv4 fragmented first",
-.len = 54},
+.name = "IPv4 over IPv4 fragmented first"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x00\x01\x02\x03\x04\x05\xcc\xaa\xbb\xcc\xdd\xee\x08\x00\x45\x00\x00\x28\x00\x00\x28\x88\x0f\x04\x83\x4b\xc0\xa8\x00\x01\x3f\x57\xff\xfe\x45\x00\x00\x14\x00\x1c\xab\xe7\x15\x00\x0f\x00\xc0\xa8\x00\x01\x3f\x57\xff\xfe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "000102030405ccaabbccddee080045000028000028880f04834bc0a800013f57fffe45000014001cabe715000f00c0a800013f57fffe", .RX_LENGTH = 108, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[11] = 1,
 .PA_FLAGS[22] = 1,
@@ -15382,16 +15014,14 @@ struct TestData testsFail[TEST_FAIL_MAX] = {
 .PA_KEYS[51] = 65534,
 .PA_PTRS[2] = 0,
 .PA_PTRS[3] = 20},
-.name = "IPv4 over IPv4 fragmented",
-.len = 54},
+.name = "IPv4 over IPv4 fragmented"},
 
 
 
- { .in = { .RX_DATA = (unsigned char*) "\x01\xaa\xbb\xdd\xee\xff\xf1\xf1\xf1\xf1\xf1\xf1\x88\xcc", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
+ { .in = { .RX_DATA = (unsigned char*) "01aabbddeefff1f1f1f1f1f188cc", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
 .PA_FLAGS[9] = 1,
 .PA_FLAGS[32] = 1},
-.name = "Window Parsing - unsupported protocol (0x66)",
-.len = 14}
+.name = "Window Parsing - unsupported protocol (0x66)"}
 
 };
 

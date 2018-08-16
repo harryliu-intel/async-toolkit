@@ -80,13 +80,21 @@ void prepareData(int testsNum, struct TestData tests[])
 {
     for (int i = 0; i < testsNum; i++)
     {
-        unsigned char *ptr = malloc(tests[i].in.RX_LENGTH);
+        unsigned char * ptr = malloc(tests[i].in.RX_LENGTH);
+        const char * packetStr = (char *) tests[i].in.RX_DATA;
+        unsigned int packetStrLen = (unsigned int) strlen(packetStr)/2;
+        int rv = 0;
 
-        for (unsigned int x = 0; x < tests[i].len; x++)
+        for (unsigned int x = 0; x < packetStrLen; x++){
             ptr[x] = tests[i].in.RX_DATA[x];
+            rv = sscanf(packetStr + 2*x, "%02x",(unsigned int*) &ptr[x]);
+            if (rv != 1)
+                break;
 
-        for (unsigned int x = tests[i].len; x < tests[i].in.RX_LENGTH; x++)
-            ptr[x] = x - tests[i].len;
+        }
+
+        for (unsigned int x = packetStrLen; x < tests[i].in.RX_LENGTH; x++)
+            ptr[x] = x - packetStrLen;
 
         unsigned int crc = fmCrc32(ptr, tests[i].in.RX_LENGTH  - 4);
 
