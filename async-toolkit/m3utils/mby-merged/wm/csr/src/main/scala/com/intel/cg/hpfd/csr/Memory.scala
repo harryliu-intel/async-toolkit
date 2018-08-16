@@ -1,6 +1,9 @@
 package com.intel.cg.hpfd.csr
 
 import scala.annotation.tailrec
+import scala.reflect.api.Universe
+import scala.reflect.runtime.{universe => runtimeUniverse}
+import scala.reflect.macros.blackbox
 
 
 object Memory {
@@ -302,5 +305,55 @@ object Memory {
     /** Conversion to addressing from option. Works with indirect conversions too. */
     implicit def optionToAddressing[A](value: A)(implicit f: A => Option[Addressing.Value]): Addressing.Value =
       f(value).getOrElse(Addressing.default)
+  }
+
+
+  /** Lifting and unlifting memory-related types. */
+  trait LiftableMemoryImpl {
+    val universe: Universe
+    import universe._
+
+    lazy val asMemoryUnitsSym: TypeSymbol = symbolOf[asMemoryUnits]
+
+    implicit lazy val liftBits = Liftable[Bits] { b =>
+      q"(new $asMemoryUnitsSym(${b.toLong})).bits"
+    }
+    implicit lazy val unliftBits = Unliftable[Bits] {
+      case q"${value: Long}.bits" => value.bits
+      case q"${value: Int}.bits" => value.toLong.bits
+    }
+
+    implicit lazy val liftBytes = Liftable[Bytes] { b =>
+      q"(new $asMemoryUnitsSym(${b.value})).bytes"
+    }
+    implicit lazy val unliftBytes = Unliftable[Bytes] {
+      case q"${value: Long}.bytes" => value.bytes
+      case q"${value: Int}.bytes" => value.toLong.bytes
+    }
+
+    lazy val AlignmentSym = symbolOf[Alignment]
+    implicit lazy val liftAlignment = Liftable[Alignment] { a =>
+      q"new $AlignmentSym(${a.value})"
+    }
+    implicit lazy val unliftAlignment = Unliftable[Alignment] {
+      case q"$sym(${value: Long})" if sym == AlignmentSym => Alignment(value)
+      case q"$sym(${value: Int})"  if sym == AlignmentSym => Alignment(value.toLong)
+      case q"${bytes: Bytes}.toAlignment" => bytes.toAlignment
+    }
+
+    implicit lazy val unliftMemoryUnit = Unliftable[MemoryUnit] {
+      case q"${bits: Bits}" => bits
+      case q"${bytes: Bytes}" => bytes
+    }
+  }
+
+  object RuntimeLiftableMemory extends LiftableMemoryImpl {
+    type U = runtimeUniverse.type
+    val universe: U = runtimeUniverse
+  }
+  trait LiftableMemory extends LiftableMemoryImpl {
+    val c: blackbox.Context  // whitebox's one is blackbox's one's subtype
+    type U = c.universe.type
+    val universe: U = c.universe
   }
 }
