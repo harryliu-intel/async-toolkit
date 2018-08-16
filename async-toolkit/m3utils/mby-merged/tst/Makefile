@@ -9,6 +9,9 @@ clean:
 .PHONY: all
 all: test_parser test_mapper
 
+.PHONY: test_all
+test_all: all
+
 .PHONY: test_parser
 test_parser:
 	@echo "Testing parser ..."
