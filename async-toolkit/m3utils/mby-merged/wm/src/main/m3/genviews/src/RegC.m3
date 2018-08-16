@@ -70,7 +70,10 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
              wr  = FileWr.Open(path) DO
           Wr.PutText(wr, F("#ifndef %s_INCLUDED\n#define %s_INCLUDED\n\n",
                            intfNm, intfNm));
-         DefTypes(wr);
+          (*
+          DefTypes(wr);
+          *)
+          Wr.PutText(wr, "#include \"uint.h\"\n");
           FOR i := 0 TO seq.size()-1 DO
             Debug.Out(F("Emit wx[%s]",seq.get(i)));
             VAR
@@ -147,7 +150,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
     WITH fn = "m3makefile",
          path = dirPath & "/" & fn,
          wr = FileWr.Open(path) DO
-      Wr.PutText(wr, F("SYSTEM_CC = SYSTEM_CC & \" -std=gnu99\"\n"));
+      Wr.PutText(wr, F("SYSTEM_CC = SYSTEM_CC & \" -I../../../../../../c -std=gnu99\"\n"));
       Wr.PutText(wr, F("import(\"libm3\")\n"));
       Wr.PutText(wr, F("c_source(\"%s\")\n",intfNm));
       Wr.PutText(wr, F("c_source(\"%s_build\")\n",intfNm));

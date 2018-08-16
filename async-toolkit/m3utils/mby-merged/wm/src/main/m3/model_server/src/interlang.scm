@@ -598,7 +598,7 @@
     
     (let* ((nm         (sa *c-const-pfx* (get-c-name (sym-lookup (cadr x) defs))))
            (imports    (make-string-set 10))
-           (code       (sa "#define " nm "    " (gen-c-val-use (caddr x) defs))))
+           (code       (sa "#define " nm "    " (force-value (caddr x) defs))))
       (list (list header-fn #f code) )
       )))
     
@@ -677,12 +677,12 @@
     (else (error))))
 
 (define (c-deser-uint-pname b whch)
-  (sa (c-deser-name whch) "_uint" (number->string b)))
+  (sa "uint" (number->string b) "_" (c-deser-name whch)  ))
 
 (define (c-deser-builtin-pname x whch)
    (let ((b-test (assoc x *builtins*)))
                    (if b-test
-                       (sa (c-deser-name whch) "_" (get-c-name (cadr b-test)))
+                       (sa (get-c-name (cadr b-test)) "_" (c-deser-name whch))
                        #f)))
            
 (define (c-deser-typedef-pname x whch)
@@ -698,10 +698,10 @@
     ;; functions in C
     (list
      #f
-     (sa "void " (c-deser-name whch) "_" tn "("
+     (sa "void "  tn "_" (c-deser-name whch) "("
          (case whch
-           ((ser)   (sa "uint64 *w, const " tn " *t"))
-           ((deser) (sa "const uint64 *w, " tn " *t"))
+           ((ser)   (sa "uint64 *s, const " tn " *t"))
+           ((deser) (sa "const uint64 *s, " tn " *t"))
            )
          ")" semi)
      ) ;;tsil
@@ -889,11 +889,11 @@
              (define (output-matching L)
                (map (lambda (code) (dis code dnl dnl wr)) (map caddr (filter (lambda(q)(equal? fn (car q))) L))))
              
-             ;; do untagged output first
-             (output-matching untagged)
-
-             ;; then tagged and ordered
+             ;; do tagged and ordered
              (output-matching ordered)
+
+             ;; do untagged 
+             (output-matching untagged)
 
              (do-c-trailer fn wr)
              
@@ -907,10 +907,14 @@
          (sfx (string->symbol
                (TextUtils.RemovePrefix   fn (sa bn ".")))))
     (case sfx
-      ((c) #t)
+      ((c)
+       (dis "#include \"" "uint" ".h\"" dnl wr)
+       (dis "#include \"" bn ".h\"" dnl dnl wr))
       ((h)
        (dis "#ifndef _"bn"_H" dnl
             "#define _"bn"_H" dnl
+            dnl
+            "#include \"" "uint" ".h\"" dnl 
             dnl
             wr)))))
 
@@ -927,7 +931,7 @@
 (define (do-c-meta-output lst)
   (do-c-output lst *m3-lib-name*))
 
-(define (do-m3-output lst odir libnm)
+(define (do-m3-output lst odir libnm c-files)
   (let* ((files (uniq-string-list (map car lst))) ;; uniq the filenames
          (wrs   (map (lambda(fn) (list fn (FileWr.Open (sa odir "/src/" fn)) (make-string-set 10))) files))
          (m3mwr (FileWr.Open (sa odir "/src/m3makefile")))
@@ -939,6 +943,7 @@
     (dis-import "libm3")
     (dis-import "libbuf")
     (dis-import *m3-common-output-dir*)
+    (dis "SYSTEM_CC = SYSTEM_CC & \" -I../../../../../c -std=gnu99\"" dnl m3mwr)
 
     (dis "override(\"" *m3-common-output-dir* "\",\"../..\")" dnl m3owr)
 
@@ -964,7 +969,8 @@
                   mn ";" dnl dnl
                   wr)
 
-             (map (lambda (i) (if (not (equal? i mn)) (dis "<*NOWARN*>IMPORT " i ";" dnl wr))) (append '("Fmt" "Word" "Wx") (im 'keys)))
+             (map (lambda (i) (if (not (equal? i mn)) (dis "<*NOWARN*>IMPORT " i ";" dnl wr)))
+                  (append '("Fmt" "Word" "Wx") (im 'keys)))
 
              (dis dnl wr)
 
@@ -979,17 +985,26 @@
 
     (map Wr.Close (map cadr wrs))
 
+    (map (lambda(fn)
+           (let* ((bn (TextUtils.RemoveSuffixes fn '(".c" ".h")))
+                  (sfx (string->symbol
+                        (TextUtils.RemovePrefix   fn (sa bn ".")))))
+             (dis sfx "_source(\"" bn "\")"dnl m3mwr)))
+         c-files)
+             
+
+
     (dis "library(\"" libnm "\")" dnl m3mwr)
     (Wr.Close m3mwr)
     (Wr.Close m3owr)
     wrs
     ))
 
-(define (do-m3-meta-output lst)
-  (do-m3-output lst *m3-lib-name* *m3-lib-name*))
+(define (do-m3-meta-output lst c-files)
+  (do-m3-output lst *m3-lib-name* *m3-lib-name* c-files))
 
-(define (do-m3-common-output lst)
-  (do-m3-output lst *m3-common-output-dir* *m3-common-output-dir*))
+(define (do-m3-common-output lst c-files)
+  (do-m3-output lst *m3-common-output-dir* *m3-common-output-dir* c-files))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1082,6 +1097,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (do-c-common-output) '())
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (do-it)
-  (do-m3-meta-output (compile 'm3))
-  (do-m3-common-output (append (make-uints) (make-builtins))))
+  (let ((c-files (do-c-meta-output (compile 'c))))
+    (do-m3-meta-output (compile 'm3) c-files)
+    )
+  (let ((c-files (do-c-common-output)))
+    (do-m3-common-output (append (make-uints) (make-builtins)) c-files)
+    )
+  )
