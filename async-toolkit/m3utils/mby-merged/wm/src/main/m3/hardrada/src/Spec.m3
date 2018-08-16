@@ -10,6 +10,7 @@ IMPORT Rd , Wr ;
 IMPORT OSError ;
 IMPORT Pathname ;
 IMPORT Thread ;
+IMPORT Text ;
 
 (**********************)
 (* Visible Procedures *)
@@ -97,90 +98,117 @@ END DebugTree ;
 - path is nonempty and not NIL
 - root node is a nonterminal and is the implicit starting point of the path
 *)
-PROCEDURE FollowPath( root : REF Node.T ; path : REF ARRAY OF TEXT ) : REF ARRAY OF REF Node.T =
+PROCEDURE FollowPath( list : REF Node.DList ; root : REF Node.T ; path : REF ARRAY OF TEXT ) =
 VAR
-	return_end_of_path : REF ARRAY OF REF Node.T := NIL ;
-	recursive_return_end_of_path : REF ARRAY OF REF Node.T := NIL ;
+	return_end_of_path := NEW( REF Node.DList ) ;
+	recursive_return_end_of_path := NEW( REF Node.DList ) ;
+	recursive_templist := NEW( REF Node.DList ) ;
 	adjusted_path : REF ARRAY OF TEXT := NIL ;
+	current_child := NEW( REF Node.DList ) ;
 BEGIN
 	<* ASSERT path # NIL *>
 	<* ASSERT NUMBER( path^ ) # 0 *>
+	<* ASSERT root # NIL *>
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
-	return_end_of_path := NEW( REF ARRAY OF REF Node.T , 0 ) ;
-	FOR child_index := FIRST( root^.children^ ) TO LAST( root^.children^ ) DO
-		IF root^.children[ child_index ]^.val = path[ FIRST( path^ ) ] THEN
-			Node.AppendArr( return_end_of_path , root^.children[ child_index ] ) ;
+	<* ASSERT list # NIL *>
+	Node.DefaultDList( return_end_of_path ) ;
+	Node.DefaultDList( recursive_return_end_of_path ) ;
+	Node.DefaultDList( recursive_templist ) ;
+	Node.GoToBeginning( current_child , root^.children ) ;
+	Node.DefaultDList( list ) ;
+	LOOP
+		IF current_child^.cur^.val = path[ FIRST( path^ ) ] THEN
+			Node.AppendNode( list , current_child^.cur ) ;
+		END ;
+		IF current_child^.next = NIL THEN
+			EXIT ;
+		ELSE
+			current_child := current_child^.next ;
 		END ;
 	END ;
 	IF NUMBER( path^ ) > 1 THEN
-		recursive_return_end_of_path := NEW( REF ARRAY OF REF Node.T , 0 ) ;
 		adjusted_path := NEW( REF ARRAY OF TEXT , NUMBER( path^ ) - 1 ) ;
 		FOR path_index := FIRST( path^ ) + 1 TO LAST( path^ ) DO
 			adjusted_path[ ( path_index - ( FIRST( path^ ) + 1 ) ) + FIRST( adjusted_path^ ) ] := path[ path_index ] ;
 		END ;
-		FOR end_of_path_index := FIRST( return_end_of_path^ ) TO LAST( return_end_of_path^ ) DO
-			Node.AppendArrToArr( recursive_return_end_of_path , FollowPath( return_end_of_path[ end_of_path_index ] , adjusted_path ) ) ;
+		Node.GoToBeginning( current_child , return_end_of_path ) ;
+		LOOP
+			FollowPath( recursive_templist , current_child^.cur , adjusted_path ) ;
+			Node.AppendDList( recursive_return_end_of_path , recursive_templist ) ;
+			IF current_child^.next = NIL THEN
+				EXIT ;
+			ELSE
+				current_child := current_child^.next ;
+			END ;
 		END ;
-		RETURN recursive_return_end_of_path ;
+		Node.ShallowCopyDList( list , recursive_return_end_of_path ) ;
+	ELSE
+		Node.ShallowCopyDList( list , return_end_of_path ) ;
 	END ;
-	RETURN return_end_of_path ;
 END FollowPath ;
 
 (* Get args list from procedure definition *)
 (* Return array should only have 1 element, the Formals nonterminal, but
 it is theoretically possible to have multiple elements. *)
-PROCEDURE GetArgsList( root : REF Node.T ; ptree_pms : REF PTreeParams ) : REF ARRAY OF REF Node.T =
-VAR
-	argslist : REF ARRAY OF REF Node.T := NIL ;
+PROCEDURE GetArgsList( list : REF Node.DList ; root : REF Node.T ; ptree_pms : REF PTreeParams ) =
 BEGIN
+	<* ASSERT root # NIL *>
 	<* ASSERT root^.val = ptree_pms^.ProcedureDefnVal *>
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
+	<* ASSERT ptree_pms # NIL *>
 	<* ASSERT ptree_pms^.PathToArgList # NIL *>
 	<* ASSERT NUMBER( ptree_pms^.PathToArgList^ ) > 0 *>
-	argslist := FollowPath( root , ptree_pms^.PathToArgList ) ;
+	<* ASSERT list # NIL *>
+	Node.DefaultDList( list ) ;
+	FollowPath( list , root , ptree_pms^.PathToArgList ) ;
 	(* TOOD What if user makes a grammar error and has
 	two separate argument lists for same procedure? *)
-	<* ASSERT argslist # NIL *>
-	<* ASSERT NUMBER( argslist^ ) = 1 *>
-	RETURN argslist ;
+	<* ASSERT Node.Length( list^ ) = 1 *>
 END GetArgsList ;
 
 (* Get procedure name from procedure definition *)
 PROCEDURE GetProcName( root : REF Node.T ; ptree_pms : REF PTreeParams ) : TEXT =
 VAR
-	procnamelist : REF ARRAY OF REF Node.T := NIL ;
+	list := NEW( REF Node.DList ) ;
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
 	<* ASSERT root^.val = ptree_pms^.ProcedureDefnVal *>
 	<* ASSERT ptree_pms^.PathToProcedureName # NIL *>
 	<* ASSERT NUMBER( ptree_pms^.PathToProcedureName^ ) # 0 *>
-	procnamelist := FollowPath( root , ptree_pms^.PathToProcedureName ) ;
+	FollowPath( list , root , ptree_pms^.PathToProcedureName ) ;
 	(* TODO Again, probably want proper error handling *)
-	<* ASSERT NUMBER( procnamelist^ ) = 1 *>
-	<* ASSERT procnamelist[ FIRST( procnamelist^ ) ].cat = Node.Category.Identifier *>
-	RETURN procnamelist[ FIRST( procnamelist^ ) ].val ;
+	<* ASSERT Node.Length( list^ ) = 1 *>
+	<* ASSERT list^.cur^.cat = Node.Category.Identifier *>
+	RETURN list^.cur^.val ;
 END GetProcName ;
 
 (* Get nth proc def with name *)
 (* Return NIL if we can't find it *)
 PROCEDURE GetNthProcDef( root : REF Node.T ; ptree_pms : REF PTreeParams ; ProcName : TEXT ; N : CARDINAL ) : REF Node.T =
 VAR
-	all_proc_defs : REF ARRAY OF REF Node.T := NIL ;
+	all_proc_defs_raw := NEW( REF Node.DList ) ;
+	all_proc_defs := NEW( REF Node.DList ) ;
 	proc_match_ctr : CARDINAL := 0 ;
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT ptree_pms # NIL *>
 	(* Find all procedure defs *)
-	all_proc_defs := Node.FindAllNonterms( root , ptree_pms^.ProcedureDefnVal ) ;
+	Node.FindAllNonterms( all_proc_defs_raw , root , ptree_pms^.ProcedureDefnVal ) ;
 	(* Look through each one. If name matches, increment counter. *)
 	(* When right counter value hit, return node. *)
-	FOR proc_index := FIRST( all_proc_defs^ ) TO LAST( all_proc_defs^ ) DO
-		IF GetProcName( all_proc_defs[ proc_index ] , ptree_pms ) = ProcName THEN
+	Node.GoToBeginning( all_proc_defs , all_proc_defs_raw ) ;
+	LOOP
+		IF GetProcName( all_proc_defs^.cur , ptree_pms ) = ProcName THEN
 			IF proc_match_ctr = N THEN
-				RETURN all_proc_defs[ proc_index ] ;
+				RETURN all_proc_defs^.cur ;
 			END ;
 			INC( proc_match_ctr ) ;
+		END ;
+		IF all_proc_defs^.next = NIL THEN
+			EXIT ;
+		ELSE
+			all_proc_defs := all_proc_defs^.next ;
 		END ;
 	END ;
 	(* If Nth hit not reached, return NIL. *)
@@ -189,11 +217,32 @@ END GetNthProcDef ;
 
 PROCEDURE DeleteArgWName( root : REF Node.T ; ptree_pms : REF PTreeParams ; argname : TEXT ) =
 VAR
-	new_args_list : REF ARRAY OF REF Node.T := NEW( REF ARRAY OF REF Node.T , 0 ) ;
-	current_args_list : REF ARRAY OF REF Node.T := NIL ;
-	current_arg_name : TEXT := "" ;
-	current_arg_name_arr : REF ARRAY OF REF Node.T := NIL ;
+	argslist := NEW( REF Node.DList ) ;
+	child := NEW( REF Node.DList ) ;
+	nextchild := NEW( REF Node.DList ) ;
 BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT ptree_pms # NIL *>
+	<* ASSERT Text.Equal( argname , "" ) *>
+	GetArgsList( argslist , root , ptree_pms ) ;
+	FollowPath( child , argslist^.cur , ptree_pms^.PathToArgNameFromArgList ) ;
+	LOOP
+		IF child^.cur^.val = argname THEN
+			nextchild := child^.next ;
+			Node.DeleteFromList( child ) ;
+			child := nextchild ;
+			IF child^.cur^.val = ptree_pms^.ArgSeparator THEN
+				nextchild := child^.next ;
+				Node.DeleteFromList( child ) ;
+				child := nextchild ;
+			END ;
+		END ;
+		IF child^.next = NIL THEN
+			EXIT ;
+		ELSE
+			child := child^.next ;
+		END ;
+	END ;
 END DeleteArgWName ;
 
 (* IndentedTreePrint
@@ -227,6 +276,7 @@ If I have the following tree...
 PROCEDURE IndentedTreePrint( root : REF Node.T ; num_indents : INTEGER ; write_stream : Wr.T ) RAISES { Wr.Failure , Thread.Alerted } =
 VAR
 	node_cat : TEXT := "" ;
+	current_child := NEW( REF Node.DList ) ;
 BEGIN
 	IF root # NIL THEN
 		(* Print initial indentation *)
@@ -256,13 +306,20 @@ BEGIN
 			| Thread.Alerted => RAISE Thread.Alerted ;
 		END ;
 		(* Do this recursively for all of its children *)
-		IF root^.children # NIL THEN
-			FOR child_index := FIRST( root^.children^ ) TO LAST( root^.children^ ) DO
+		current_child := root^.children ;
+		IF NOT Node.IsEmpty( root^.children^ ) THEN
+			Node.GoToBeginning( current_child , root^.children ) ;
+			LOOP
 				TRY
-					IndentedTreePrint( root^.children[ child_index ] , num_indents + 1 , write_stream ) ;
+					IndentedTreePrint( current_child^.cur , num_indents + 1 , write_stream ) ;
 				EXCEPT
 					| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
 					| Thread.Alerted => RAISE Thread.Alerted ;
+				END ;
+				IF current_child^.next = NIL THEN
+					EXIT ;
+				ELSE
+					current_child := current_child^.next ;
 				END ;
 			END ;
 		END ;

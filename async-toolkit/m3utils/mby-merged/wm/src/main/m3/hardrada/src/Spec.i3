@@ -22,7 +22,7 @@ TYPE PTreeParams = RECORD
 	PathToProcedureBlock : REF ARRAY OF TEXT := NIL ;
 	PathToProcedureName : REF ARRAY OF TEXT := NIL ;
 	PathToArgList : REF ARRAY OF TEXT := NIL ;
-	PathToArgNameFromArg : REF ARRAY OF TEXT := NIL ;
+	PathToArgNameFromArgList : REF ARRAY OF TEXT := NIL ;
 END ;
 
 (**************)

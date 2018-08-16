@@ -158,6 +158,23 @@ BEGIN
 	END ;
 END DeepCopyDList ;
 
+PROCEDURE ShallowCopyDList( newlist : REF DList ; list : REF DList ) =
+BEGIN
+	<* ASSERT list # NIL *>
+	<* ASSERT newlist # NIL *>
+	newlist^.cur := list^.cur ;
+	IF list^.next # NIL THEN
+		ShallowCopyDList( newlist^.next , list^.next ) ;
+	ELSE
+		newlist^.next := NIL ;
+	END ;
+	IF list.prev # NIL THEN
+		ShallowCopyDList( newlist^.prev , list^.prev ) ;
+	ELSE
+		newlist^.prev := NIL ;
+	END ;
+END ShallowCopyDList ;
+
 (* TODO Can you use readonly for these? *)
 PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) =
 VAR
@@ -191,8 +208,16 @@ BEGIN
 	END ;
 END AppendDList ;
 
+PROCEDURE DeleteFromList( list : REF DList ) =
+BEGIN
+	<* ASSERT list # NIL *>
+	list^.prev^.next := list^.next ;
+	list^.next^.prev := list^.prev ;
+END DeleteFromList ;
+
 PROCEDURE DefaultDList( list : REF DList ) =
 BEGIN
+	<* ASSERT list # NIL *>
 	list^.cur := NIL ;
 	list^.prev := NIL ;
 	list^.next := NIL ;
