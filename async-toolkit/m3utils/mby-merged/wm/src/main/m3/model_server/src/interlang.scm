@@ -928,7 +928,7 @@
     (case sfx
       ((c)
        (dis "#include \"" "uint.h\"" dnl wr)
-       (dis "#include \"" "fm_bool.h\"" dnl wr)
+       (dis "#include \"" "fm_types.h\"" dnl wr)
        (dis "#include \"" bn ".h\"" dnl dnl wr)
        (dis "#include \"../../" *m3-common-output-dir* "/src/" *c-builtin-serdes-fn* ".h\"" dnl dnl wr))
       ((h)
