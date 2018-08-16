@@ -32,7 +32,7 @@ END DeepCopy ;
 
 PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEXT ) =
 VAR
-	current_child := NEW( REF DList ) ;
+	current_child : REF DList := NIL ;
 	templist := NEW( REF DList ) ;
 BEGIN
 	<* ASSERT root # NIL *>
@@ -43,7 +43,7 @@ BEGIN
 			AppendNode( newlist , root ) ;
 		END ;
 		(* TODO Make this a function... somehow *)
-		GoToBeginning( current_child , root^.children ) ;
+		current_child := GoToBeginning( root^.children ) ;
 		LOOP
 			FindAllNonterms( templist , current_child^.cur , NontermVal ) ;
 			AppendDList( newlist , templist ) ;
@@ -58,24 +58,24 @@ END FindAllNonterms ;
 
 (* DList *)
 
-PROCEDURE IsEmpty( list : DList ) : BOOLEAN =
+PROCEDURE IsEmpty( list : REF DList ) : BOOLEAN =
 BEGIN
-	RETURN ( list.cur = NIL AND list.prev = NIL AND list.next = NIL ) ;
+	RETURN ( list^.cur = NIL AND list^.prev = NIL AND list^.next = NIL ) ;
 END IsEmpty ;
 
-PROCEDURE Length( list : DList ) : CARDINAL =
+PROCEDURE Length( list : REF DList ) : CARDINAL =
 VAR
 	count := 0 ;
+	templist : REF DList := NIL ;
 BEGIN
 	IF IsEmpty( list ) THEN
 		RETURN 0 ;
 	END ;
-	WHILE list.prev # NIL DO
-		list := list.prev^ ;
-	END ;
-	WHILE list.next # NIL DO
+	INC( count ) ;
+	templist := GoToBeginning( list ) ;
+	WHILE templist.next # NIL DO
 		INC( count ) ;
-		list := list.next^ ;
+		templist := templist^.next ;
 	END ;
 	RETURN count ;
 END Length ;
@@ -85,10 +85,10 @@ VAR
 	currentListA : REF DList := NIL ;
 	currentListB : REF DList := NIL ;
 BEGIN
-	IF NOT IsEmpty( listA^ ) AND NOT IsEmpty( listB^ ) THEN
-		IF Length( listA^ ) = Length( listB^ ) THEN
-			GoToBeginning( currentListA , listA ) ;
-			GoToBeginning( currentListB , listB ) ;
+	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
+		IF Length( listA ) = Length( listB ) THEN
+			currentListA := GoToBeginning( listA ) ;
+			currentListB := GoToBeginning( listB ) ;
 			LOOP
 				IF currentListA.cur # NIL AND currentListB.cur # NIL THEN
 					IF NOT Equal( currentListA.cur^ , currentListB.cur^ ) THEN
@@ -108,37 +108,35 @@ BEGIN
 		ELSE
 			RETURN FALSE ;
 		END ;
-	ELSIF IsEmpty( listA^ ) AND IsEmpty( listB^ ) THEN
+	ELSIF IsEmpty( listA ) AND IsEmpty( listB ) THEN
 		RETURN TRUE ;
 	ELSE
 		RETURN FALSE ;
 	END ;
 END EqualDList ;
 
-PROCEDURE GoToBeginning( begoflist : REF DList ; list : REF DList ) =
-VAR
-	curlist := list ;
+(* Return pointer. Otherwise, you need to pass a REF REF to this
+function and that can be tricky to acquire and maintain in higher
+level code.*)
+PROCEDURE GoToBeginning( list : REF DList ) : REF DList =
 BEGIN
-	<* ASSERT begoflist # NIL *>
-	WHILE curlist^.prev # NIL DO
-		curlist := curlist^.prev ;
+	<* ASSERT list # NIL *>
+	WHILE list^.prev # NIL DO
+		list := list^.prev ;
 	END ;
-	begoflist^.cur := curlist^.cur ;
-	begoflist^.prev := curlist^.prev ;
-	begoflist^.next := curlist^.next ;
+	RETURN list ;
 END GoToBeginning ;
 
-PROCEDURE GoToEnd( endoflist : REF DList ; list : REF DList ) =
-VAR
-	curlist := list ;
+(* Return pointer. Otherwise, you need to pass a REF REF to this
+function and that can be tricky to acquire and maintain in higher
+level code.*)
+PROCEDURE GoToEnd( list : REF DList ) : REF DList =
 BEGIN
-	<* ASSERT endoflist # NIL *>
-	WHILE curlist^.next # NIL DO
-		curlist := curlist^.next ;
+	<* ASSERT list # NIL *>
+	WHILE list^.next # NIL DO
+		list := list^.next ;
 	END ;
-	endoflist^.cur := curlist^.cur ;
-	endoflist^.prev := curlist^.prev ;
-	endoflist^.next := curlist^.next ;
+	RETURN list ;
 END GoToEnd ;
 
 PROCEDURE DeepCopyDList( newlist : REF DList ; list : REF DList ) =
@@ -178,44 +176,40 @@ END ShallowCopyDList ;
 (* TODO Can you use readonly for these? *)
 PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) =
 VAR
-	templistptr : REF DList := NEW( REF DList ) ;
+	endoflist : REF DList := NIL ;
 BEGIN
 	<* ASSERT list # NIL *>
 	<* ASSERT NodeToAppend # NIL *>
-	IF NOT IsEmpty( list^ ) THEN
-		GoToEnd( templistptr , list ) ;
-		templistptr^.next := NEW( REF DList , cur := NodeToAppend , prev := templistptr , next := NIL ) ;
-	ELSE
-		list^.cur := NodeToAppend ;
-	END ;
+	endoflist := GoToEnd( list ) ;
+	endoflist^.next := NEW( REF DList , cur := NodeToAppend , prev := endoflist , next := NIL ) ;
 END AppendNode ;
 
 (* TODO listB can probably be readonly here. Do that more often *)
 PROCEDURE AppendDList( listA : REF DList ; listB : REF DList ) =
 VAR
-	templistptrA : REF DList := NEW( REF DList ) ;
-	templistptrB : REF DList := NEW( REF DList ) ;
+	templistptrA : REF DList := NIL ;
+	templistptrB : REF DList := NIL ;
 	newtemplistptrB : REF DList := NEW( REF DList ) ;
 BEGIN
-	IF NOT IsEmpty( listA^ ) AND NOT IsEmpty( listB^ ) THEN
-		GoToEnd( templistptrA , listA ) ;
-		GoToBeginning( templistptrB , listB ) ;
+	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
+		templistptrA := GoToEnd( listA ) ;
+		templistptrB := GoToBeginning( listB ) ;
 		DeepCopyDList( newtemplistptrB , templistptrB ) ;
 		templistptrA^.next := newtemplistptrB ;
 		newtemplistptrB^.prev := templistptrA ;
-	ELSIF IsEmpty( listA^ ) AND NOT IsEmpty( listB^ ) THEN
+	ELSIF IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
 		DeepCopyDList( listA , listB ) ;
 	END ;
 END AppendDList ;
 
 PROCEDURE PrependNode( list : REF DList ; NodeToAppend : REF T ) =
 VAR
-	templistptr : REF DList := NEW( REF DList ) ;
+	templistptr : REF DList := NIL ;
 BEGIN
 	<* ASSERT list # NIL *>
 	<* ASSERT NodeToAppend # NIL *>
-	IF NOT IsEmpty( list^ ) THEN
-		GoToBeginning( templistptr , list ) ;
+	IF NOT IsEmpty( list ) THEN
+		templistptr := GoToBeginning( list ) ;
 		templistptr^.prev := NEW( REF DList , cur := NodeToAppend , prev := NIL , next := templistptr ) ;
 	ELSE
 		list^.cur := NodeToAppend ;
@@ -224,17 +218,17 @@ END PrependNode ;
 
 PROCEDURE PrependDList( listA : REF DList ; listB : REF DList ) =
 VAR
-	templistptrA : REF DList := NEW( REF DList ) ;
+	templistptrA : REF DList := NIL ;
 	templistptrB : REF DList := NEW( REF DList ) ;
 	newtemplistptrB : REF DList := NEW( REF DList ) ;
 BEGIN
-	IF NOT IsEmpty( listA^ ) AND NOT IsEmpty( listB^ ) THEN
-		GoToBeginning( templistptrA , listA ) ;
-		GoToEnd( templistptrB , listB ) ;
+	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
+		templistptrA := GoToBeginning( listA ) ;
+		templistptrB := GoToEnd( listB ) ;
 		DeepCopyDList( newtemplistptrB , templistptrB ) ;
 		templistptrA^.prev := newtemplistptrB ;
 		newtemplistptrB^.next := templistptrA ;
-	ELSIF IsEmpty( listA^ ) AND NOT IsEmpty( listB^ ) THEN
+	ELSIF IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
 		DeepCopyDList( listA , listB ) ;
 	END ;
 END PrependDList ;
@@ -252,12 +246,12 @@ END DeleteFromList ;
 
 PROCEDURE DeleteList( list : REF DList ) =
 VAR
-	child := NEW( REF DList ) ;
+	child : REF DList := NIL ;
 	nextchild := NEW( REF DList ) ;
 BEGIN
 	(* TODO Should you document if something meaningful happens when you use the
 	same list for both args? *)
-	GoToBeginning( child , list ) ;
+	child := GoToBeginning( list ) ;
 	LOOP
 		nextchild := child^.next ;
 		DeleteFromList( child ) ;

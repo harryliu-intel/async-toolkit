@@ -43,15 +43,15 @@ PROCEDURE DeepCopy( NewNode : REF T ; CurrentNode : REF T ) ;
 PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEXT ) ;
 
 (* DList *)
-PROCEDURE IsEmpty( list : DList ) : BOOLEAN ;
+PROCEDURE IsEmpty( list : REF DList ) : BOOLEAN ;
 
-PROCEDURE Length( list : DList ) : CARDINAL ;
+PROCEDURE Length( list : REF DList ) : CARDINAL ;
 
 PROCEDURE EqualDList( listA : REF DList ; listB : REF DList ) : BOOLEAN ;
 
-PROCEDURE GoToBeginning( begoflist : REF DList ; list : REF DList ) ;
+PROCEDURE GoToBeginning( list : REF DList ) : REF DList ;
 
-PROCEDURE GoToEnd( endoflist : REF DList ; list : REF DList ) ;
+PROCEDURE GoToEnd( list : REF DList ) : REF DList ;
 
 PROCEDURE DeepCopyDList( newlist : REF DList ; list : REF DList ) ;
 

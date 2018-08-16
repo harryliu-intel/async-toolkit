@@ -116,7 +116,7 @@ VAR
 	recursive_return_end_of_path := NEW( REF Node.DList ) ;
 	recursive_templist := NEW( REF Node.DList ) ;
 	adjusted_path : REF ARRAY OF TEXT := NIL ;
-	current_child := NEW( REF Node.DList ) ;
+	current_child : REF Node.DList := NIL ;
 BEGIN
 	<* ASSERT path # NIL *>
 	<* ASSERT NUMBER( path^ ) # 0 *>
@@ -126,7 +126,7 @@ BEGIN
 	Node.DefaultDList( return_end_of_path ) ;
 	Node.DefaultDList( recursive_return_end_of_path ) ;
 	Node.DefaultDList( recursive_templist ) ;
-	Node.GoToBeginning( current_child , root^.children ) ;
+	current_child := Node.GoToBeginning( root^.children ) ;
 	Node.DefaultDList( list ) ;
 	LOOP
 		IF current_child^.cur^.val = path[ FIRST( path^ ) ] THEN
@@ -143,7 +143,7 @@ BEGIN
 		FOR path_index := FIRST( path^ ) + 1 TO LAST( path^ ) DO
 			adjusted_path[ ( path_index - ( FIRST( path^ ) + 1 ) ) + FIRST( adjusted_path^ ) ] := path[ path_index ] ;
 		END ;
-		Node.GoToBeginning( current_child , return_end_of_path ) ;
+		current_child := Node.GoToBeginning( return_end_of_path ) ;
 		LOOP
 			FollowPath( recursive_templist , current_child^.cur , adjusted_path ) ;
 			Node.AppendDList( recursive_return_end_of_path , recursive_templist ) ;
@@ -175,7 +175,7 @@ BEGIN
 	FollowPath( list , root , ptree_pms^.PathToArgList ) ;
 	(* TOOD What if user makes a grammar error and has
 	two separate argument lists for same procedure? *)
-	<* ASSERT Node.Length( list^ ) = 1 *>
+	<* ASSERT Node.Length( list ) = 1 *>
 END GetArgsList ;
 
 (* Get procedure name from procedure definition *)
@@ -190,7 +190,7 @@ BEGIN
 	<* ASSERT NUMBER( ptree_pms^.PathToProcedureName^ ) # 0 *>
 	FollowPath( list , root , ptree_pms^.PathToProcedureName ) ;
 	(* TODO Again, probably want proper error handling *)
-	<* ASSERT Node.Length( list^ ) = 1 *>
+	<* ASSERT Node.Length( list ) = 1 *>
 	<* ASSERT list^.cur^.cat = Node.Category.Identifier *>
 	RETURN list^.cur^.val ;
 END GetProcName ;
@@ -200,7 +200,7 @@ END GetProcName ;
 PROCEDURE GetNthProcDef( root : REF Node.T ; ptree_pms : REF PTreeParams ; ProcName : TEXT ; N : CARDINAL ) : REF Node.T =
 VAR
 	all_proc_defs_raw := NEW( REF Node.DList ) ;
-	all_proc_defs := NEW( REF Node.DList ) ;
+	all_proc_defs : REF Node.DList := NIL ;
 	proc_match_ctr : CARDINAL := 0 ;
 BEGIN
 	<* ASSERT root # NIL *>
@@ -209,7 +209,7 @@ BEGIN
 	Node.FindAllNonterms( all_proc_defs_raw , root , ptree_pms^.ProcedureDefnVal ) ;
 	(* Look through each one. If name matches, increment counter. *)
 	(* When right counter value hit, return node. *)
-	Node.GoToBeginning( all_proc_defs , all_proc_defs_raw ) ;
+	all_proc_defs := Node.GoToBeginning( all_proc_defs_raw ) ;
 	LOOP
 		IF GetProcName( all_proc_defs^.cur , ptree_pms ) = ProcName THEN
 			IF proc_match_ctr = N THEN
@@ -332,8 +332,9 @@ BEGIN
 		END ;
 		(* Do this recursively for all of its children *)
 		current_child := root^.children ;
-		IF NOT Node.IsEmpty( root^.children^ ) THEN
-			Node.GoToBeginning( current_child , root^.children ) ;
+		<* ASSERT current_child # NIL *>
+		IF NOT Node.IsEmpty( root^.children ) THEN
+			current_child := Node.GoToBeginning( root^.children ) ;
 			LOOP
 				TRY
 					IndentedTreePrint( current_child^.cur , num_indents + 1 , write_stream ) ;
