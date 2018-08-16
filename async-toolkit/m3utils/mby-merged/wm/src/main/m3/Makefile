@@ -125,8 +125,8 @@ $(META_STRUCTS): $(STRUCTGEN) $(INTERLANG)
 	mkdir -p $(MODEL_SERVER_ROOT)/src/wm_meta_common/src
 	pwd
 	cd $(MODEL_SERVER_ROOT)/src && ../../structgen/$(OS_TARG)/structgen interlang.scm exit
-	cd $(MODEL_SERVER_ROOT)/src/wm_meta_common/src && cm3 -x
-	cd $(MODEL_SERVER_ROOT)/src/mby_struct/src && cm3 -x 
+	cd $(MODEL_SERVER_ROOT)/src/wm_meta_common/src && $(CM3) -x
+	cd $(MODEL_SERVER_ROOT)/src/mby_struct/src && $(CM3) -x 
 
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS) $(META_STRUCTS)
 
