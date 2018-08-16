@@ -73,7 +73,7 @@ clean:
 
 $(TARGET): $(OBJECTS)
 	@echo '  Linking' $<
-	$(CC) $(LDFLAGS) -o $(TARGET) $(TST_DIR)/mby_mapper_test.o $(SRC_DIR)/mby_mapper.o $(SRC_DIR)/mby_common.o $(SRC_DIR)/fm_crc32.o $(SRC_DIR)/mby_bitfield.o
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 .PHONY: run
 run: $(TARGET)
