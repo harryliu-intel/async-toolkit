@@ -17,9 +17,9 @@
 
 void Parser
 (
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser    * const in,
-          mbyParserToMapper * const out
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyMacToParser        * const in,
+          mbyParserToMapper     * const out
 );
 
 void Mapper
@@ -38,23 +38,23 @@ void Classifier
 
 void Hash
 (
-    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyClassifierToHash * const in,
-          mbyHashToNextHop    * const out
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyClassifierToHash   * const in,
+          mbyHashToNextHop      * const out
 );
 
 void NextHop
 (
-    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyHashToNextHop    * const in,
-          mbyNextHopToMaskGen * const out
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyHashToNextHop      * const in,
+          mbyNextHopToMaskGen   * const out
 );
 
 void MaskGen
 (
-    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyNextHopToMaskGen  * const in,
-          mbyMaskGenToTriggers * const out
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyNextHopToMaskGen   * const in,
+          mbyMaskGenToTriggers  * const out
 );
 
-#endif // MBY_PIPELINE_H
+#endif

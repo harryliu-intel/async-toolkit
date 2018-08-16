@@ -1108,4 +1108,5 @@ typedef struct mbyClassifierToHashStruct
 
 } mbyClassifierToHash;
     
-#endif // MBY_CLASSIFIER_H
+#endif
+

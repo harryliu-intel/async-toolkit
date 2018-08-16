@@ -295,4 +295,4 @@ typedef struct mbyParserToMapperStruct
 
 } mbyParserToMapper;
 
-#endif // MBY_PARSER_H
+#endif
