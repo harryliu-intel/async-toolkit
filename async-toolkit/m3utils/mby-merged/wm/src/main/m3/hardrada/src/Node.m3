@@ -73,7 +73,7 @@ BEGIN
 	END ;
 	INC( count ) ;
 	templist := GoToBeginning( list ) ;
-	WHILE templist.next # NIL DO
+	WHILE templist^.next # NIL DO
 		INC( count ) ;
 		templist := templist^.next ;
 	END ;
@@ -180,8 +180,12 @@ VAR
 BEGIN
 	<* ASSERT list # NIL *>
 	<* ASSERT NodeToAppend # NIL *>
-	endoflist := GoToEnd( list ) ;
-	endoflist^.next := NEW( REF DList , cur := NodeToAppend , prev := endoflist , next := NIL ) ;
+	IF NOT IsEmpty( list ) THEN
+		endoflist := GoToEnd( list ) ;
+		endoflist^.next := NEW( REF DList , cur := NodeToAppend , prev := endoflist , next := NIL ) ;
+	ELSE
+		list^.cur := NodeToAppend ;
+	END ;
 END AppendNode ;
 
 (* TODO listB can probably be readonly here. Do that more often *)
