@@ -102,6 +102,7 @@
 
 (define *c-proj* "mby")
 (define *c-const-pfx* "mbyStruct_")
+(define *c-builtin-serdes-fn* "common_serdes")
 
 (define (make-sym-def-data rec)
   (let* ((tag (car rec))
@@ -670,12 +671,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (c-deser-name whch)
-  (case whch
-    ((ser) "serialize")
-    ((deser) "deserialize")
-    (else (error))))
-
 (define (c-deser-uint-pname b whch)
   (sa "uint" (number->string b) "_" (c-deser-name whch)  ))
 
@@ -685,11 +680,23 @@
                        (sa (get-c-name (cadr b-test)) "_" (c-deser-name whch))
                        #f)))
            
-(define (c-deser-typedef-pname x whch)
+(define (c-deser-typedef-pname x whch defs)
   (let ((r-test (sym-lookup x defs)))
     (if (and r-test (eq? 'typedef (car r-test)))
         (sa *c-proj* "_" (get-c-name r-test) "_" (c-deser-name whch))
         #f)))
+
+(define (c-deser-proto-for-type whch tn formal)
+  (sa "void "  tn "_" (c-deser-name whch) "("
+      (case whch
+        ((ser)   (sa "uint64 *s, const " tn " " formal))
+        ((deser) (sa "const uint64 *s, " tn " " formal))
+        )
+      ")"))
+
+(define (make-pointer-formal of type defs)
+  (if (array-typedef? type defs) of (sa "*" of)))
+
 
 (define (compile-c-typedef-deser-proto td defs whch semi)
   (if (not (eq? (car td) 'typedef)) (error "not a typedef : " td))
@@ -698,31 +705,46 @@
     ;; functions in C
     (list
      #f
-     (sa "void "  tn "_" (c-deser-name whch) "("
-         (case whch
-           ((ser)   (sa "uint64 *s, const " tn " *t"))
-           ((deser) (sa "const uint64 *s, " tn " *t"))
-           )
-         ")" semi)
+     (sa (c-deser-proto-for-type whch tn (make-pointer-formal "t" (cadr td) defs)) semi)
      ) ;;tsil
     ) ;;tel
   )
 
 (define (call-c-deser-code whch obj strm-idx)
   (case whch
-    ((ser deser) (sa "(&(s[" strm-idx "]), &(" obj "))"))
+    ((ser deser) (sa "(&(s[" strm-idx "]), " obj ")")) ;; deref hack :-(
     ))
+
+(define (take-address obj) (sa "&(" obj ")"))
+
+(define *of* '())
+(define *tn* '())
+
+(define (array-typedef? tn defs)
+  (let ((t-rec (sym-lookup tn defs)))
+    (and t-rec
+         (equal? (car t-rec) 'typedef)         ;; its a typedef
+         (pair? (caddr (cadr t-rec)))          ;; referencing a compound type...
+         (equal? (caar (cddadr t-rec)) 'array))))
+
+(define (make-pointer of tn defs)
+  (cond ((equal? of "t") "t")         ;; t itself ALWAYS a pointer
+
+        ((array-typedef? tn defs) of) ;; array already a pointer in C
+
+        (else (take-address of))      ;; all others
+        ))
 
 (define (make-c-deser-code whch x defs lhs lev ind p)
   (cond
    ((number? x)
-    (sa ind (c-deser-uint-pname x whch) (call-c-deser-code whch lhs p) ";" dnl))
+    (sa ind (c-deser-uint-pname x whch) (call-c-deser-code whch (make-pointer lhs x defs) p) ";" dnl))
 
    ((let ((dsname (c-deser-builtin-pname x whch)))
-      (if dsname (sa ind dsname (call-c-deser-code whch lhs p) ";" dnl) #f)))
+      (if dsname (sa ind dsname (call-c-deser-code whch (make-pointer lhs x defs) p) ";" dnl) #f)))
    
-   ((let ((dsname (c-deser-typedef-pname x whch)))
-      (if dsname (sa ind dsname (call-c-deser-code whch lhs p) ";" dnl) #f)))
+   ((let ((dsname (c-deser-typedef-pname x whch defs)))
+      (if dsname (sa ind dsname (call-c-deser-code whch (make-pointer lhs x defs) p) ";" dnl) #f)))
    
    ((not (pair? x)) (error "cant de/ser " x))
     
@@ -836,13 +858,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define *fn* '())
-
 (define (make-compiler lang)
   (lambda (rec defs)
     (let* ((fn (symbol-append 'compile- lang '- (car rec)))
           (f (eval fn)))
-      (set! *fn* fn)
       (f rec defs))))
                             
 (define (compile lang)
@@ -873,10 +892,10 @@
 (define (do-c-output lst odir)
   (let* ((files    (uniq-string-list (map car lst))) ;; uniq the filenames
          (wrs      (map (lambda(fn) (list fn (FileWr.Open (sa odir "/src/" fn)))) files))
-         (tagged   (filter cadr lst))
-         (ordered  (map cdr (rearrange-list (map (lambda (t) (cons (cadr t) t)) tagged) (seq-to-list seq))))
          (untagged (filter (lambda(x)(not (cadr x))) lst))
          (seq      (obj-method-wrap (*topo-sorter* 'sort) 'TextSeq.T))
+         (tagged   (filter cadr lst))
+         (ordered  (map cdr (rearrange-list (map (lambda (t) (cons (cadr t) t)) tagged) (seq-to-list seq))))
          )
     (dis (length untagged) " untagged" dnl)
     (dis (length tagged) " tagged" dnl)
@@ -909,7 +928,8 @@
     (case sfx
       ((c)
        (dis "#include \"" "uint" ".h\"" dnl wr)
-       (dis "#include \"" bn ".h\"" dnl dnl wr))
+       (dis "#include \"" bn ".h\"" dnl dnl wr)
+       (dis "#include \"../../" *m3-common-output-dir* "/src/" *c-builtin-serdes-fn* ".h\"" dnl dnl wr))
       ((h)
        (dis "#ifndef _"bn"_H" dnl
             "#define _"bn"_H" dnl
@@ -1004,6 +1024,7 @@
   (do-m3-output lst *m3-lib-name* *m3-lib-name* c-files))
 
 (define (do-m3-common-output lst c-files)
+  ;;(dis "c-files : " c-files dnl)
   (do-m3-output lst *m3-common-output-dir* *m3-common-output-dir* c-files))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1097,7 +1118,38 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (do-c-common-output) '())
+(define (make-uint-type-names)
+  (let loop ((i 64)
+             (res '()))
+    (if (= i 0)
+        res
+        (loop (- i 1) (cons (sa "uint" i) res)))))
+
+(define *a* '())
+(define *p* '())
+(define *c* '())
+
+(define (make-c-common-protos type)
+  (map (lambda(whch)(sa (c-deser-proto-for-type whch type "*t") ";"))
+       '(ser deser)))
+
+(define (make-c-common-code type)
+  (map (lambda(whch)
+         (sa (c-deser-proto-for-type whch type "*t") dnl
+             "{" dnl
+             (case whch ((ser)   "  *s = *t;") ((deser) "  *t = *s;")) dnl
+             "}" dnl
+             )) '(ser deser)))
+
+(define (do-c-common-output)
+  (let* ((all-types (cons "fm_bool" (make-uint-type-names)))
+         (protos (map (lambda(txt)(list (sa *c-builtin-serdes-fn* ".h") #f txt))
+                      (apply append (map make-c-common-protos all-types))))
+         (codes (map (lambda(txt)(list (sa *c-builtin-serdes-fn* ".c") #f txt))
+                     (apply append (map make-c-common-code all-types)))))
+                     
+    (do-c-output (append codes protos) *m3-common-output-dir*)
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1106,6 +1158,7 @@
     (do-m3-meta-output (compile 'm3) c-files)
     )
   (let ((c-files (do-c-common-output)))
+    ;;(dis "do-it c-files : " c-files dnl)
     (do-m3-common-output (append (make-uints) (make-builtins)) c-files)
     )
   )
