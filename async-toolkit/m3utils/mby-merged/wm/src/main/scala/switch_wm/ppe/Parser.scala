@@ -58,7 +58,7 @@ class ParserStage(val csr : mby_ppe_parser_map, val myindex : Int) {
     val exceptionActions = csr.PARSER_EXC(myindex).map(x => new ExceptionAction(x.EX_OFFSET.toShort, x.PARSING_DONE.apply == 1))
     val matcher = tcamMatchSeq(parserAnalyzerTcamMatchBit) _
 
-    (wcsr zip kcsr) zip ((analyzerActions, extractActions, exceptionActions).zipped.toList) collectFirst ({
+    (wcsr zip kcsr) zip ((analyzerActions, extractActions, exceptionActions).zipped.toIterable) collectFirst ({
       case (x, y) if matcher(Seq(
         (x._1.W0_MASK, x._1.W0_VALUE, w0),
         (x._1.W1_MASK, x._1.W1_VALUE, w1),
@@ -103,10 +103,7 @@ class Parser(csr : mby_ppe_parser_map) extends PipelineStage[PacketHeader, Metad
     val tc = tcamMatch.curried(standardTcamMatchBit)
     // TODO -- implement the TCAM encoded function
     (tcamCsr zip sramCsr).reverse.collectFirst( { case (x,y) if {
-      tc(x.KEY_INVERT, x.KEY, pf.toLong) } => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)} ) match {
-      case None => (0,0)
-      case Some(pt) => pt
-    }
+      tc(x.KEY_INVERT, x.KEY, pf.toLong) } => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)} ).getOrElse((0,0))
   }
 
   def saturatingIncrement(limit : Long)(field : RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable) = {
@@ -125,15 +122,20 @@ class Parser(csr : mby_ppe_parser_map) extends PipelineStage[PacketHeader, Metad
       val f : IndexedSeq[Short] = extractorCsr.map(a => {
         (a.PROTOCOL_ID(), protoOffsets.collect({ case i if i._1 == a.PROTOCOL_ID() => i._2 })) match {
           case (0xFF, _) => 0.toShort
-          case (_, pofs) if pofs.length == 0 => {
-            satacc8b(csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID)
-            0.toShort
+          case (_, pofs) => pofs.length match {
+            case 0 => {
+              satacc8b(csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID)
+              0.toShort
+            }
+            case 1 => {
+              ph.getWord(pofs.head + a.OFFSET().toInt)
+            }
+            case _ => { // i.e. > 1
+              // behavior of duplicate condition is a bit arbitrary (should not happen in valid configuration)
+              satacc8b(csr.PARSER_COUNTERS.EXT_DUP_PROTID)
+              ph.getWord(pofs.head + a.OFFSET().toInt)
+            }
           }
-          case (_, pofs) if pofs.length > 1 => {
-            satacc8b(csr.PARSER_COUNTERS.EXT_DUP_PROTID)
-            ph.getWord(pofs.head + a.OFFSET().toInt)
-          }
-          case (_, pofs) if pofs.length == 1 => ph.getWord(pofs.head + a.OFFSET().toInt)
         }
       })
       PacketFields(f)

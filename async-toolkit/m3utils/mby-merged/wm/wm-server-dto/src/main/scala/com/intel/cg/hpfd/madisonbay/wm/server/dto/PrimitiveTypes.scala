@@ -1,13 +1,12 @@
-package switch_wm
+package com.intel.cg.hpfd.madisonbay.wm.server.dto
 
 import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
 
-
 object PrimitiveTypes {
- type U8 = Byte
- type U16 = Short
- type U32 = Int
- type U64 = Long
+  type U8 = Byte
+  type U16 = Short
+  type U32 = Int
+  type U64 = Long
 
 
   implicit class PrimitiveTypeInputStream(is : InputStream) extends DataInputStream(is) {
@@ -38,14 +37,14 @@ object PrimitiveTypes {
     }
   }
 
- implicit def intToU8(i : Int) : U8 = { 
+  implicit def intToU8(i : Int) : U8 = {
     require (i <= 255)
     i.toByte
- }
- implicit def intToU16(i : Int) : U16 = {
+  }
+  implicit def intToU16(i : Int) : U16 = {
     require (i <= (1 << 16) - 1)
     i.toByte
- }
+  }
   def unsignedU8toInt(x : U8) : Int = x.toInt& 0xff
   def unsignedU16toInt(x : U16) : Int = x.toInt & 0xffff
 
