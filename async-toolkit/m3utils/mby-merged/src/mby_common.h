@@ -10,9 +10,8 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-// MAC address utilities
 #define isBroadcastMacAddress(addr) ( (addr) == FM_LITERAL_U64(0xFFFFFFFFFFFF))
-#define isUnicastMacAddress(addr)   (((addr) &  FM_LITERAL_U64(0x010000000000)) == 0)
+#define   isUnicastMacAddress(addr) (((addr) &  FM_LITERAL_U64(0x010000000000)) == 0)
 #define isMulticastMacAddress(addr) (!isUnicastMacAddress(addr) && !isBroadcastMacAddress(addr))
 
 // Defines:
@@ -45,6 +44,8 @@
 #define MBY_ETYPE_IPv4           0x0800
 #define MBY_ETYPE_IPv6           0x86DD
 #define MBY_ETYPE_MAC_CONTROL    0x8808
+
+#define MBY_DEFAULT_DMASK        0xFFFFFF
 
 // Basic Data Types:
 typedef char                  fm_char;

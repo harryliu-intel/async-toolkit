@@ -337,6 +337,11 @@
 #define MBY_DMAC_IEEE_PREFIX          FM_LITERAL_U64(0x0180c2000000)
 #define MBY_SPECIAL_DMASK             0xFFFFFFFFFF00
 
+#define MBY_SV_MOVE_DROP_RESERVED     0
+#define MBY_SV_MOVE_DROP_PORT         1
+#define MBY_SV_MOVE_DROP_ADDR         2
+#define MBY_SV_MOVE_DROP_STATIC       3
+
 // Enums:
 
 typedef enum mbyIeeeReservedMacActionActionEnum
@@ -347,6 +352,14 @@ typedef enum mbyIeeeReservedMacActionActionEnum
     MBY_IEEE_RESERVED_MAC_ACTION_ACTION_LOG = 3
 
 } mbyIeeeReservedMacActionAction;
+
+typedef enum mbyFclassTypeEnum
+{
+    MBY_FCLASS_UNICAST = 0,
+    MBY_FCLASS_MULTICAST,
+    MBY_FCLASS_BROADCAST
+
+} mbyFclassType;
 
 // Structs:
 
@@ -404,6 +417,9 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint32               ACTION;              // resolved action
     fm_byte                 L2_EDOMAIN;          // egress L2 domain
     fm_byte                 L3_EDOMAIN;          // egress L3 domain
+    fm_bool                 MAC_MOVED;           // flag indicating that a non-secure MAC was found
+    fm_byte                 FCLASS;              // class state (Unicast, Broadcast or Multicast) detected
+    fm_byte                 XCAST;               // indicate Unicast, Multicast, or Broadcast
 
 } mbyMaskGenToTriggers;
 

@@ -117,6 +117,17 @@ typedef enum mbyTriggerActionLearningEnum
 
 } mbyTriggerActionLearning;
 
+typedef enum mbyMaLookupEntryTypeEnum
+{
+    MBY_MA_LOOKUP_ENTRY_TYPE_NOTUSED      = 0,
+    MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL  = 1,
+    MBY_MA_LOOKUP_ENTRY_TYPE_DYNAMIC      = 2,
+    MBY_MA_LOOKUP_ENTRY_TYPE_SECURE       = 3,
+    MBY_MA_LOOKUP_ENTRY_TYPE_STATIC       = 4,
+    MBY_MA_LOOKUP_ENTRY_TYPE_SECURESTATIC = 5
+
+} mbyMaLookupEntryType;
+
 // Structs:
 
 typedef struct mbyArpTableStruct
@@ -175,6 +186,24 @@ typedef struct mbyTriggerResultsStruct
 
 } mbyTriggerResults;
 
+typedef struct mbyMaTableStruct
+{
+    fm_byte                 _RSVD5_;
+    fm_byte                 OLD_PORT;
+    fm_byte                 NEW_PORT;
+    mbyMaLookupEntryType    ENTRY_TYPE;
+    fm_byte                 _RSVD3_;
+    fm_byte                 TRIG_ID;
+    fm_uint16               S_GLORT;
+    fm_uint16               D_GLORT;
+    fm_byte                 _RSVD2_;
+    fm_bool                 _RSVD1_;
+    fm_uint16               L2_DOMAIN;
+    fm_uint16               VID;
+    fm_uint64               MAC_ADDRESS;
+
+} mbyMaTable;
+
 typedef struct mbyNextHopToMaskGenStruct
 {
     fm_uint16               ARP_TABLE_INDEX;
@@ -195,30 +224,40 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint32               MOD_IDX;
 
     // Added for MaskGen's benefit:
-    fm_uint32               RX_PORT;             // receive port number
-    fm_bool                 PARSER_WINDOW_V;     // parser window valid
-    fm_bool                 PARSER_ERROR;        // flag indicating a header parse error
-    fm_bool                 PARITY_ERROR;        // flag indicating a memory parity error
-    fm_uint16               L2_ETYPE;            // 16-bit innermost Ethernet type
-    mbySTPState             L2_IFID1_STATE;      // 2-bit spanning tree state for the ingress port
-    fm_bool                 NO_LEARN;            // flag indicating whether learning is diabled
-    fm_bool                 GLORT_CAM_MISS;      // flag indicating whether GLORT lookup resulted in a miss
-    fm_bool                 TARGETED_DETERMINISTIC; // flag indicating whether mode is set to targeted deterministic
-    fm_bool                 CPU_TRAP;
-    fm_bool                 TRAP_ICMP;           // flag indicating whether ICMP packet should be trapped    
-    fm_bool                 TRAP_IGMP;           // flag indicating whether IGMP packet should be trapped
-    fm_bool                 TRAP_IP_OPTIONS;     // flag indicating presence of IP options
-    fm_uint32               PRE_RESOLVE_DMASK;   // destination mask before action resolution
-    fm_uint32               ACTION;              // resolved action
-    fm_byte                 OPERATOR_ID;         // 4-bit operator ID
-    fm_byte                 QOS_SWPRI;           // 4-bit switch priority
-    mbyTriggerResults       TRIGGERS;            // trigger results
-    fm_uint16               IP_MCAST_IDX;        // index into the MCAST_VLAN_TABLE
-    fm_uint32               MIRROR0_PROFILE_IDX; // mirror 0 profile index
-    fm_bool                 MTU_VIOLATION;       // flag indicating whether this packet violates the MTU
-    fm_bool                 DROP_TTL;            // flag indicating whether this packet should be dropped
-    fm_bool                 IS_IPV4;             // flag indicating whether the packet is IPv4
-    fm_bool                 IS_IPV6;             // flag indicating whether the packet is IPv6
+    fm_uint32               RX_PORT;                // receive port number
+    fm_bool                 PARSER_WINDOW_V;        // parser window valid flag
+    fm_bool                 PARSER_ERROR;           // header parse error flag
+    fm_bool                 PARITY_ERROR;           // memory parity error flag
+    fm_uint16               L2_ETYPE;               // 16-bit innermost Ethernet type
+    mbySTPState             L2_IFID1_STATE;         // 2-bit spanning tree state for the ingress port
+    fm_bool                 L2_IVLAN1_MEMBERSHIP;   // ingress port is part of the ingress VLAN flag
+    fm_bool                 L2_IVLAN1_REFLECT;      // ingress VLAN reflection is enabled
+    fm_uint32               L2_EVLAN1_MEMBERSHIP;   // 24-bit egress VLAN port membership vector
+    fm_bool                 NO_LEARN;               // learning is diabled flag
+    fm_bool                 GLORT_CAM_MISS;         // GLORT lookup resulted in a miss flag
+    fm_bool                 GLORT_FORWARDED;        // glortforwarded due to FFU rule
+    fm_uint32               GLORT_DMASK;            // 24-bit GLORT-based destination mask
+    fm_bool                 TARGETED_DETERMINISTIC; // mode is set to targeted deterministic
+    fm_bool                 CPU_TRAP;               // CPU trap
+    fm_bool                 TRAP_ICMP;              // ICMP packet should be trapped    
+    fm_bool                 TRAP_IGMP;              // IGMP packet should be trapped
+    fm_bool                 TRAP_IP_OPTIONS;        // IP options present
+    fm_uint32               PRE_RESOLVE_DMASK;      // destination mask before action resolution
+    fm_uint32               ACTION;                 // resolved action
+    fm_byte                 OPERATOR_ID;            // 4-bit operator ID
+    fm_byte                 QOS_SWPRI;              // 4-bit switch priority
+    mbyTriggerResults       TRIGGERS;               // trigger results
+    fm_uint16               IP_MCAST_IDX;           // index into the MCAST_VLAN_TABLE
+    fm_uint32               MIRROR0_PROFILE_IDX;    // mirror 0 profile index
+    fm_bool                 MTU_VIOLATION;          // packet violates the MTU
+    fm_bool                 DROP_TTL;               // packet should be dropped
+    fm_bool                 IS_IPV4;                // packet is IPv4
+    fm_bool                 IS_IPV6;                // packet is IPv6
+    fm_bool                 SA_HIT;                 // source MAC address lookup hit
+    mbyMaTable              SA_RESULT;              // source MAC address lookup result
+    fm_byte                 SV_DROP;                // MAC security violation info
+    fm_uint16               CSGLORT;                // 16-bit canonical source GLORT
+    fm_bool                 FLOOD_FORWARDED;        // glort is flood-forwarded
 
 } mbyNextHopToMaskGen;
 

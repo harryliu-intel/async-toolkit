@@ -144,4 +144,3 @@ void NextHop
     out->ENCAP           = encap;
     out->DECAP           = decap;
 }
-

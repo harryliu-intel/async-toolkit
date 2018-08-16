@@ -107,17 +107,19 @@ void MaskGen
     // Logging:
     fm_bool logging_hit = FALSE;
     
+    // --------------------------------------------------------------------------------
     // Learning:
+
     fm_bool l2_ifid1_learn   = ((l2_ifid1_state == MBY_STP_STATE_LEARNING) ||
                                 (l2_ifid1_state == MBY_STP_STATE_FORWARD));
     fm_bool learning_allowed = port_cfg1.LEARNING_ENABLE && !no_learn && l2_ifid1_learn;
-    fm_bool l2_smac_is_cpu   = isCpuMacAddress(regs, in->L2_SMAC); // L2_SMAC = CPU MAC -> disable learning
-    fm_bool l2_smac_is_zero  = (l2_smac == 0); // L2_SMAC = 0 -> disable learning
+    fm_bool l2_smac_is_cpu   = isCpuMacAddress(regs, l2_smac);
+    fm_bool l2_smac_is_zero  = (l2_smac == 0);
     fm_bool learning_enabled = learning_allowed && !l2_smac_is_cpu && !l2_smac_is_zero;
 
-    out->LEARNING_ENABLED = learning_enabled;
-    
-    // Action & log action masks:
+    // --------------------------------------------------------------------------------
+    // Action Masks:
+
     fm_uint64 amask = 0;
     fm_byte log_amask = 0;
     
@@ -147,7 +149,9 @@ void MaskGen
     if (drop_invalid_smac && (l2_smac_is_invalid || l2_smac_is_broad || l2_smac_is_multi))
         amask |= MBY_AMASK_DROP_SMAC;       // SMAC frame -> drop frame
     
-    // Process traps:
+    // --------------------------------------------------------------------------------
+    // Traps:
+
     fm_bool log_ip_mc_ttl = FALSE;
     fm_bool l2_dmac_cpu   = isCpuMacAddress(regs, l2_dmac);
     fm_bool l2_dmac_zero  = (l2_dmac == 0);
@@ -204,13 +208,12 @@ void MaskGen
             else if (sys_cfg_router.TRAP_TTL1 == 2 )
                 amask |= (in->TRAP_ICMP) ? MBY_AMASK_TRAP_ICMP_TTL : MBY_AMASK_TRAP_TTL;
         }
-        else // Frame is IP multicast:
+        else // Frame is IP multicast
         {
             if ((sys_cfg_router.TRAP_TTL1 == 1) && in->TRAP_ICMP) {
                 log_amask |= MBY_LOG_TYPE_ICMP;
                 log_ip_mc_ttl = TRUE;
-            }
-            else if (sys_cfg_router.TRAP_TTL1 == 2) {
+            } else if (sys_cfg_router.TRAP_TTL1 == 2) {
                 log_amask |= (in->TRAP_ICMP) ? MBY_LOG_TYPE_ICMP : MBY_LOG_TYPE_TTL_IP_MC;
                 log_ip_mc_ttl = TRUE;
             }
@@ -223,23 +226,109 @@ void MaskGen
     if (sys_cfg1.TRAP_MTU_VIOLATIONS && in->MTU_VIOLATION && in->MARK_ROUTED)
         amask |= MBY_AMASK_TRAP_MTU_VIO; // MTU violation -> trapping frame
 
-    out->AMASK     = amask;
-    out->LOG_AMASK = log_amask;
+    // --------------------------------------------------------------------------------
+    // Port Security:
+
+    if (port_cfg1.FILTER_VLAN_INGRESS && !in->L2_IVLAN1_MEMBERSHIP)
+        amask |= MBY_AMASK_DROP_IV; // VLAN ingress violation -> dropping frame
     
+    fm_bool mac_moved = (in->SA_HIT && (in->SA_RESULT.S_GLORT != in->CSGLORT));
+
+    switch (in->SV_DROP)
+    {
+        case MBY_SV_MOVE_DROP_ADDR:   // secure addr violation -> dropping frame
+            amask |= MBY_AMASK_DROP_SEC_ADDR; break;
+        case MBY_SV_MOVE_DROP_PORT:   // secure port violation -> dropping frame
+            amask |= MBY_AMASK_DROP_SEC_PORT; break;
+        case MBY_SV_MOVE_DROP_STATIC: // static addr violation -> dropping frame
+            amask |= MBY_AMASK_DROP_STATIC_ADDR; break;
+        default: break;
+    }
+
+    // Ingress spanning tree check:
+    switch (in->L2_IFID1_STATE)
+    {
+        case MBY_STP_STATE_DISABLE:
+        case MBY_STP_STATE_LISTENING: // STP ingress (non-learning) violation -> dropping frame
+            amask |= MBY_AMASK_DROP_INGRESS_STP_NON_LEARN; break; 
+        case MBY_STP_STATE_LEARNING:  // STP ingress (learning) violation -> dropping frame
+            amask |= MBY_AMASK_DROP_INGRESS_STP_LEARN; break;
+        default: break;
+    }
+
+    // --------------------------------------------------------------------------------
+    // Filtering:
+
+    fm_bool l2_dmac_is_broad = isBroadcastMacAddress(l2_dmac);
+    fm_bool l2_dmac_is_multi = isMulticastMacAddress(l2_dmac);
+    fm_bool l2_dmac_is_uni   =   isUnicastMacAddress(l2_dmac);
+
+    fm_byte fclass = 0;
+    fm_byte xcast  = 0;
+    
+    if        (l2_dmac_is_broad) { 
+        fclass = MBY_FCLASS_BROADCAST;
+        xcast  = 2;
+    } else if (l2_dmac_is_multi) { 
+        fclass = MBY_FCLASS_MULTICAST;
+        xcast  = 1;
+    } else if (l2_dmac_is_uni) { 
+        fclass = MBY_FCLASS_UNICAST;
+        xcast  = 0;
+    }
+
+    fm_uint32 dmask = MBY_DEFAULT_DMASK;
+
+    if (in->FLOOD_FORWARDED)
+        amask |= MBY_AMASK_FLOOD;
+
+    if (in->GLORT_FORWARDED)
+        amask |= MBY_AMASK_GLORT;
+
+    // Perform port-based filtering for switched packets
+    dmask &= port_cfg1.DESTINATION_MASK;
+    dmask &= port_cfg2.DESTINATION_MASK;
+
+    // Ingress VLAN reflection check:
+    if ( !in->MARK_ROUTED && !in->L2_IVLAN1_REFLECT && !in->TARGETED_DETERMINISTIC)
+        dmask &= ~(FM_LITERAL_U64(1) << in->RX_PORT);
+
+    // Prevent reflection: drop frame
+    if (dmask == 0)
+        amask |= MBY_AMASK_DROP_LOOPBACK;
+
+    // Save pre-resolve dmask for later:
+    fm_uint32 pre_resolve_dmask = dmask & in->GLORT_DMASK;
+
+    if (pre_resolve_dmask == 0)
+    {
+        // Egress VLAN membership check:
+        if (in->GLORT_DMASK == 0) { // Null Glort Dest: dropping frame
+            amask |= MBY_AMASK_DROP_NULL_GLORTDEST;
+            if (in->FLOOD_FORWARDED == 1) // Null Glort Dest & Flood Forwarded: dropping frame (DLF)
+                amask |= MBY_AMASK_DROP_DLF;
+        }
+        else { // do not set amask loopback when also setting null dest.
+            amask |= MBY_AMASK_DROP_LOOPBACK; // Loopback (port or VLAN refl. dis.): dropping frame
+        }
+    }
+    else if (!in->TARGETED_DETERMINISTIC)
+    {
+        pre_resolve_dmask &= in->L2_EVLAN1_MEMBERSHIP; // VLAN egress filtering
+        if (pre_resolve_dmask == 0)
+            amask |= MBY_AMASK_DROP_EV; // VLAN egress violation: dropping frame
+    }
+
     // --------------------------------------------------------------------------------
     
 #if 0
-    ProcessPortSecurity(model);
-
-    ProcessFiltering(model);
-
     ProcessFfuFlags(model);
 
     ProcessQCN(model);
 #endif
-    fm_uint32 dmask = in->PRE_RESOLVE_DMASK; // 24-bit destination mask
 
-    out->DMASK = dmask;
+    dmask = pre_resolve_dmask; // 24-bit destination mask
+
 #if 0
     ProcessEgressStpState(model);
 
@@ -251,7 +340,7 @@ void MaskGen
     fm_bool cpu_trap = (in->ACTION == MBY_ACTION_TRAP);
 
     out->CPU_TRAP          = cpu_trap;
-    out->OPERATOR_ID       = in->OPERATOR_ID; // was: in->PKT_META[20] & 0x0f;
+    out->OPERATOR_ID       = in->OPERATOR_ID;
     out->QOS_SWPRI         = in->QOS_SWPRI;
     out->STORE_TRAP_ACTION = sys_cfg1.STORE_TRAP_ACTION;
 
@@ -296,15 +385,21 @@ void MaskGen
         action = MBY_ACTION_MARKER_ERROR_DROPS;
 #endif
 
+    out->LEARNING_ENABLED  = learning_enabled;
     out->MCAST_EPOCH       = mcast_epoch;
     out->MIRROR0_PORT      = mirror0_port;
     out->MIRROR1_PORT      = mirror1_port;
     out->MIRROR0_PROFILE_V = (mirror0_port < MBY_PORTS_COUNT);
     out->MIRROR1_PROFILE_V = (mirror1_port < MBY_PORTS_COUNT);
+    out->AMASK             = amask;
     out->FNMASK            = fnmask;
+    out->DMASK             = dmask;
+    out->LOG_AMASK         = log_amask;
     out->L3_EDOMAIN        = l3_edomain;
     out->L2_EDOMAIN        = l2_edomain;
     out->LOGGING_HIT       = logging_hit;
     out->ACTION            = action;
+    out->MAC_MOVED         = mac_moved;
+    out->FCLASS            = fclass;
+    out->XCAST             = xcast;
 }
-
