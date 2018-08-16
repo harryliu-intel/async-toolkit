@@ -138,7 +138,7 @@ $(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > $@
 
 
-$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS)
+$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs
 	mkdir -p $(MBY_BUILD_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L m3 -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(MBY_BUILD_ROOT)/src
