@@ -4,7 +4,7 @@
 clean:
 	@echo "Cleaning ..."
 	make -C parser clean
-	#make -C mapper clean
+	make -C mapper clean
 
 .PHONY: all
 all: test_parser test_mapper
