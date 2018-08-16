@@ -8,6 +8,7 @@ lazy val csr = (project in file("csr"))
   .enablePlugins(CsrCodeGeneration)
   .settings(
     Settings.commonSettings,
+    libraryDependencies ++= Dependencies.csrDeps,
     name := "csr-model"
   )
 lazy val wmServerDto = (project in file("wm-server-dto"))

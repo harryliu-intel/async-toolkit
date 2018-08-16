@@ -7,8 +7,13 @@ object Dependencies {
   lazy val scalaParserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % Versions.parserCombinators
   lazy val scopt = "com.github.scopt" %% "scopt" % Versions.scopt
   lazy val shapeless = "com.chuusai" %% "shapeless" % Versions.shapeless
+  lazy val reflect = "org.scala-lang" % "scala-reflect" % Versions.reflect
   lazy val csrModel = "com.intel.cg.hpfd" %% "csr-model" % Versions.csrModel changing()
   lazy val wmServerDto = "com.intel.cg.hpfd" %% "wm-server-dto" % Versions.wmServerDto changing()
+
+  lazy val csrDeps = Seq(
+    reflect
+  )
 
   lazy val whiteModelDeps = Seq(
     scalaTest % Test,
