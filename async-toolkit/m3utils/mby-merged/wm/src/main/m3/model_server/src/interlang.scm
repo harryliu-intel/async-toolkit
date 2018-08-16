@@ -695,7 +695,7 @@
       ")"))
 
 (define (make-pointer-formal of type defs)
-  (if (array-typedef? type defs) of (sa "*" of)))
+  (if (array-typedef? type defs) (sa "/*array*/"of) (sa "*" of)))
 
 
 (define (compile-c-typedef-deser-proto td defs whch semi)
@@ -927,7 +927,8 @@
                (TextUtils.RemovePrefix   fn (sa bn ".")))))
     (case sfx
       ((c)
-       (dis "#include \"" "uint" ".h\"" dnl wr)
+       (dis "#include \"" "uint.h\"" dnl wr)
+       (dis "#include \"" "fm_bool.h\"" dnl wr)
        (dis "#include \"" bn ".h\"" dnl dnl wr)
        (dis "#include \"../../" *m3-common-output-dir* "/src/" *c-builtin-serdes-fn* ".h\"" dnl dnl wr))
       ((h)
@@ -1035,7 +1036,7 @@
   (if (= 64 n) "Word.T"
       (sa "[ 0..Word.Minus(Word.LeftShift(1,"n"),1) ]")))
 
-(define (c-uint-type n)
+(define (c-uint-type n) ;; this probably isnt used
   (cond ((> 32 n) "unsigned long int")
         ((> 16 n) "unsigned int")
         ((> 8 n) "unsigned short int")
@@ -1162,3 +1163,5 @@
     (do-m3-common-output (append (make-uints) (make-builtins)) c-files)
     )
   )
+
+(do-it)

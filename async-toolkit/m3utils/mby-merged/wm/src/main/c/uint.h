@@ -1,8 +1,7 @@
 #ifndef _UINT_H
 #define _UINT_H
 
-typedef unsigned int uint;    /* shouldnt really be here */
-typedef unsigned int fm_bool; /* shouldnt really be here */
+typedef unsigned int uint;
 
 typedef unsigned char uint1;
 typedef unsigned char uint2;
