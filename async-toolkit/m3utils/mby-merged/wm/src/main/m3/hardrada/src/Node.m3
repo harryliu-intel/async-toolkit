@@ -208,12 +208,65 @@ BEGIN
 	END ;
 END AppendDList ;
 
+PROCEDURE PrependNode( list : REF DList ; NodeToAppend : REF T ) =
+VAR
+	templistptr : REF DList := NEW( REF DList ) ;
+BEGIN
+	<* ASSERT list # NIL *>
+	<* ASSERT NodeToAppend # NIL *>
+	IF NOT IsEmpty( list^ ) THEN
+		GoToBeginning( templistptr , list ) ;
+		templistptr^.prev := NEW( REF DList , cur := NodeToAppend , prev := NIL , next := templistptr ) ;
+	ELSE
+		list^.cur := NodeToAppend ;
+	END ;
+END PrependNode ;
+
+PROCEDURE PrependDList( listA : REF DList ; listB : REF DList ) =
+VAR
+	templistptrA : REF DList := NEW( REF DList ) ;
+	templistptrB : REF DList := NEW( REF DList ) ;
+	newtemplistptrB : REF DList := NEW( REF DList ) ;
+BEGIN
+	IF NOT IsEmpty( listA^ ) AND NOT IsEmpty( listB^ ) THEN
+		GoToBeginning( templistptrA , listA ) ;
+		GoToEnd( templistptrB , listB ) ;
+		DeepCopyDList( newtemplistptrB , templistptrB ) ;
+		templistptrA^.prev := newtemplistptrB ;
+		newtemplistptrB^.next := templistptrA ;
+	ELSIF IsEmpty( listA^ ) AND NOT IsEmpty( listB^ ) THEN
+		DeepCopyDList( listA , listB ) ;
+	END ;
+END PrependDList ;
+
 PROCEDURE DeleteFromList( list : REF DList ) =
 BEGIN
 	<* ASSERT list # NIL *>
-	list^.prev^.next := list^.next ;
-	list^.next^.prev := list^.prev ;
+	IF list^.prev # NIL THEN
+		list^.prev^.next := list^.next ;
+	END ;
+	IF list^.next^.prev # NIL THEN
+		list^.next^.prev := list^.prev ;
+	END ;
 END DeleteFromList ;
+
+PROCEDURE DeleteList( list : REF DList ) =
+VAR
+	child := NEW( REF DList ) ;
+	nextchild := NEW( REF DList ) ;
+BEGIN
+	(* TODO Should you document if something meaningful happens when you use the
+	same list for both args? *)
+	GoToBeginning( child , list ) ;
+	LOOP
+		nextchild := child^.next ;
+		DeleteFromList( child ) ;
+		child := nextchild ;
+		IF child = NIL THEN
+			EXIT ;
+		END ;
+	END ;
+END DeleteList ;
 
 PROCEDURE DefaultDList( list : REF DList ) =
 BEGIN

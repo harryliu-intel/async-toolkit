@@ -245,6 +245,19 @@ BEGIN
 	END ;
 END DeleteArgWName ;
 
+PROCEDURE PrependCodeToProcBlock( root : REF Node.T ; CodeToPrepend : REF Node.T ; ptree_pms : REF PTreeParams ) =
+VAR
+	blocklist := NEW( REF Node.DList ) ;
+BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT root^.val = ptree_pms^.ProcedureDefnVal *>
+	<* ASSERT root^.cat = Node.Category.NonTerminal *>
+	<* ASSERT CodeToPrepend # NIL *>
+	<* ASSERT ptree_pms # NIL *>
+	FollowPath( blocklist , root , ptree_pms^.PathToProcedureBlock ) ;
+	Node.PrependNode( blocklist^.cur^.children , CodeToPrepend ) ;
+END PrependCodeToProcBlock ;
+
 (* IndentedTreePrint
 - root :: reference to the starting node of the parse tree
 - num_indents :: number of indents (defined as two spaces) preceding the root node
