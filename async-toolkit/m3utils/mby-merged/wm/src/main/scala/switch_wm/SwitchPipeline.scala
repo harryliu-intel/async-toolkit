@@ -2,7 +2,6 @@ package switch_wm
 
 import com.intel.cg.hpfd.csr.generated.{mby_ppe_mapper_map, mby_ppe_rx_top_map, mby_top_map}
 
-class Packet
 class PacketHeader {
   val adjustedSegmentLength = 100 // (should be computed)
   def apply(addr : Int) : Byte = 0
@@ -20,7 +19,7 @@ abstract class PipelineStage[I,O] {
 
 class Epl extends PipelineStage[Array[Byte], Packet] {
   val x : (Array[Byte]) => Packet = (bits) => {
-    new Packet
+    new Packet(bits)
   }
 }
 
@@ -30,20 +29,22 @@ class HeaderExtraction extends PipelineStage[Packet, PacketHeader] {
   }
 }
 
+/*
 class KeyMapper(csr : mby_ppe_mapper_map) extends PipelineStage[Metadata, Metadata] {
   val x : (Metadata) => Metadata = (md) => {
     md
   }
 }
+*/
 
-class RxPpe(csr : mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], Metadata] {
+class RxPpe(csr : mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], ppe.ParserOutput] {
   val epl = new Epl
   val headerExtractor = new HeaderExtraction
   val parser = new switch_wm.ppe.Parser(csr.parser)
-  val mapper = new KeyMapper(csr.mapper)
+  // val mapper = new KeyMapper(csr.mapper)
 
   // how do we provide the 'port' here?
-  val x : (Array[Byte]) => Metadata = epl.x andThen headerExtractor.x andThen parser.x andThen mapper.x
+  val x : (Array[Byte]) => ppe.ParserOutput = epl.x andThen headerExtractor.x andThen parser.x
 
 }
 

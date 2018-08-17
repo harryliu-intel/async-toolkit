@@ -1,5 +1,7 @@
 package switch_wm
 
+import switch_wm.ppe.Parser.ProtoOffsets
+
 import scala.collection.immutable.BitSet
 
 package object ppe {
@@ -10,6 +12,8 @@ package object ppe {
     val bs = BitSet(l.toInt)
 
   }
+
+  type EplRxFlags = Int
 
   class L3Domain(val d : Int) extends AnyVal
   class L2Domain(val d : Int) extends AnyVal
@@ -88,4 +92,23 @@ package object ppe {
   }
 
   class TrafficClass(val tc : Int) extends AnyVal
+
+  case class ParserOutput (rxPort : PortIndex,
+                           pktMeta : Int,
+                           rxFlags : EplRxFlags,
+                           segMetaErr : Boolean,
+                           paAdjSegLegLen : Int,
+                           paKeys : PacketFields, // should be 'option' values?
+                           paKeysValid : Boolean,
+                           paFlags : PacketFlags,
+                           paPointers: ProtoOffsets,
+                           paPointersValid : Boolean,
+                           paCsumOk : Boolean,
+                           paExceptionStage : Int,
+                           paExceptionDepthExceeded : Boolean,
+                           paExceptionTruncHeader : Boolean,
+                           paExParsingDone : Boolean,
+                           paDrop : Boolean,
+                           paPacketType : Int
+                          )
 }
