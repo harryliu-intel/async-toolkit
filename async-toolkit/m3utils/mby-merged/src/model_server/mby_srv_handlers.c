@@ -10,6 +10,10 @@
 // TODO what to do with this?
 static int debug = 3;
 
+fm_socket pktRecvSockets[MAX_PHYS_PORT];
+fm_msg_stats msg_stat;
+// TODO static fm_int portLinkState[MAX_PHYS_PORT];
+
 #define NONPOSTED_PORT  0
 #define POSTED_PORT     1
 
@@ -78,10 +82,10 @@ static int debug = 3;
  *                  valid management message.
  *
  *****************************************************************************/
-fm_status HandleMsgLinkState(fm_int               sw,
-                             fm_socket           *socket,
-                             fm_modelMessage *    imsg,
-                             fm_int32             msgLength)
+static fm_status HandleMsgLinkState(fm_int               sw,
+                                    fm_socket           *socket,
+                                    fm_modelMessage *    imsg,
+                                    fm_int32             msgLength)
 {
     fm_status        status = FM_OK;
 
@@ -102,8 +106,8 @@ fm_status HandleMsgLinkState(fm_int               sw,
     linkState = imsg->data[0];
 
     if (linkState != portLinkState[port])
-	printf("PhysPort %d linkState %d oldState %d\n", port, linkState,
-	       portLinkState[port]);
+        printf("PhysPort %d linkState %d oldState %d\n", port, linkState,
+               portLinkState[port]);
 
     if (port < MAX_PHYS_PORT)
         portLinkState[port] = linkState;
@@ -143,10 +147,10 @@ fm_status HandleMsgLinkState(fm_int               sw,
  *                  valid management message.
  *
  *****************************************************************************/
-fm_status HandleMsgVersionInfo(fm_int               sw,
-                               fm_socket           *socket,
-                               fm_modelMessage *    imsg,
-                               fm_int32             msgLength)
+static fm_status HandleMsgVersionInfo(fm_int               sw,
+                                      fm_socket           *socket,
+                                      fm_modelMessage *    imsg,
+                                      fm_int32             msgLength)
 {
     fm_status        status = FM_OK;
     fm_modelMessage  emsg;
@@ -187,8 +191,8 @@ fm_status HandleMsgVersionInfo(fm_int               sw,
     msgLength = FM_MODEL_MSG_HEADER_SIZE + strlen((char*)(emsg.data + 2)) + 3;
     emsg.msgLength = htonl(msgLength);
 
-	printf("Version info sent back:\n");
-	HexDump((unsigned char *)&emsg, ntohl(emsg.msgLength));
+    printf("Version info sent back:\n");
+    HexDump((unsigned char *)&emsg, ntohl(emsg.msgLength));
     SendMessage(socket, &emsg, ntohl(emsg.msgLength));
 
     FM_LOG_EXIT(FM_LOG_CAT_PLATFORM, status);
@@ -224,10 +228,10 @@ fm_status HandleMsgVersionInfo(fm_int               sw,
  *                  valid management message.
  *
  *****************************************************************************/
-fm_status HandleMsgIosf(fm_int               sw,
-                        fm_socket           *socket,
-                        fm_modelMessage *    imsg,
-                        fm_int32             imsgLength)
+static fm_status HandleMsgIosf(fm_int               sw,
+                               fm_socket           *socket,
+                               fm_modelMessage *    imsg,
+                               fm_int32             imsgLength)
 {
     fm_status        status = FM_OK;
     fm_byte          dest;
@@ -295,14 +299,14 @@ fm_status HandleMsgIosf(fm_int               sw,
     if (dest != 0x1)
     {
         FM_LOG_INFO(FM_LOG_CAT_PLATFORM,
-                "dest=0x%x is not valid strap for HLP - ignoring\n", dest);
-	    FM_LOG_EXIT(FM_LOG_CAT_PLATFORM, FM_OK);
+                    "dest=0x%x is not valid strap for HLP - ignoring\n", dest);
+        FM_LOG_EXIT(FM_LOG_CAT_PLATFORM, FM_OK);
     }
     if (source != 0)
     {
         FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-            "source=0x%x is non-zero\n", source);
-            rsp = IOSF_RSP_FAIL;
+                     "source=0x%x is non-zero\n", source);
+        rsp = IOSF_RSP_FAIL;
     }
 
     /* Validate sai */
@@ -320,8 +324,8 @@ fm_status HandleMsgIosf(fm_int               sw,
         if (exphdr)
         {
             FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                "EXPHDR=0x%x is non-zero\n", exphdr);
-                rsp = IOSF_RSP_FAIL;
+                         "EXPHDR=0x%x is non-zero\n", exphdr);
+            rsp = IOSF_RSP_FAIL;
         }
 
         if (opcode == IOSF_REG_READ || opcode == IOSF_REG_WRITE)
@@ -329,14 +333,14 @@ fm_status HandleMsgIosf(fm_int               sw,
             if (fbe != 0xF)
             {
                 FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                    "fbe=0x%x is not 0xF\n", fbe);
-                    rsp = IOSF_RSP_FAIL;
+                             "fbe=0x%x is not 0xF\n", fbe);
+                rsp = IOSF_RSP_FAIL;
             }
             if (!(sbe == 0xF || sbe == 0x0))
             {
                 FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                    "sbe=0x%x is not 0xF or 0x0\n", sbe);
-                    rsp = IOSF_RSP_FAIL;
+                             "sbe=0x%x is not 0xF or 0x0\n", sbe);
+                rsp = IOSF_RSP_FAIL;
             }
         }
     }
@@ -359,8 +363,8 @@ fm_status HandleMsgIosf(fm_int               sw,
 
         if (debug >= 3)
             printf("dest 0x%x src 0x%x opcode 0x%x tag %d sai 0x%x addr 0x%x\n",
-                dest, source, opcode, tag, sai, addr);
-//FIXME: how to handle failure in the middle of block operation
+                   dest, source, opcode, tag, sai, addr);
+        //FIXME: how to handle failure in the middle of block operation
         switch (opcode)
         {
             case IOSF_REG_READ:
@@ -406,7 +410,7 @@ fm_status HandleMsgIosf(fm_int               sw,
                 if (ndw > MAX_READ_BASE_NDW)
                 {
                     FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                        "ndw %d is out of range\n", ndw);
+                                 "ndw %d is out of range\n", ndw);
                     ndw =  MAX_READ_BASE_NDW;
                     rsp = IOSF_RSP_FAIL;
                     break;
@@ -421,14 +425,14 @@ fm_status HandleMsgIosf(fm_int               sw,
                     if (ndw & 1)
                     {
                         FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                            "ndw %d is odd value\n", ndw);
+                                     "ndw %d is odd value\n", ndw);
                         rsp = IOSF_RSP_FAIL;
                         break;
                     }
                     for (cnt = 0; cnt < ndw/2; cnt++)
                     {
                         if (FM_OK == mbyReadReg(sw, addr + cnt*2*4,
-                                                      &val64))
+                                                &val64))
                         {
                             if (debug >= 3)
                                 printf("Read: Addr 0x%x = 0x%llx\n",
@@ -450,7 +454,7 @@ fm_status HandleMsgIosf(fm_int               sw,
                         if (ndw > MAX_READ_REP_NDW)
                         {
                             FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                                "ndw is out of range %d\n", ndw);
+                                         "ndw is out of range %d\n", ndw);
                             ndw =  MAX_READ_REP_NDW;
                             rsp = IOSF_RSP_FAIL;
                             break;
@@ -473,7 +477,7 @@ fm_status HandleMsgIosf(fm_int               sw,
                 if (ndw > MAX_READ_BASE_NDW)
                 {
                     FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                        "ndw %d is out of range\n", ndw);
+                                 "ndw %d is out of range\n", ndw);
                     ndw =  MAX_READ_BASE_NDW;
                     rsp = IOSF_RSP_FAIL;
                     break;
@@ -484,29 +488,29 @@ fm_status HandleMsgIosf(fm_int               sw,
                     if (debug >= 3)
                     {
                         printf("ndw %d addr 0x%x valOff %d ndwOff %d iDataLen %d\n",
-                            ndw, addr, valOff, ndwOff, iDataLen);
+                               ndw, addr, valOff, ndwOff, iDataLen);
                     }
                     if (ndw & 1)
                     {
                         FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                            "ndw %d is odd value\n", ndw);
+                                     "ndw %d is odd value\n", ndw);
                         rsp = IOSF_RSP_FAIL;
                         break;
                     }
-					for (cnt = 0; cnt < ndw/2; cnt++)
-					{
-						val64 = GET_64(imsg->data + valOff + cnt*8);
-						if (debug >= 3)
-							printf("Write: Addr 0x%x = 0x%llx\n",
-									addr + cnt*2*4, val64);
-						if (FM_OK != mbyWriteReg(sw, addr + cnt*2*4,
-						                               val64))
-						{
-							/* FIXME: Failure in middle, what should be the response */
-							rsp = IOSF_RSP_FAIL;
-							break;
-						}
-					}
+                    for (cnt = 0; cnt < ndw/2; cnt++)
+                    {
+                        val64 = GET_64(imsg->data + valOff + cnt*8);
+                        if (debug >= 3)
+                            printf("Write: Addr 0x%x = 0x%llx\n",
+                                   addr + cnt*2*4, val64);
+                        if (FM_OK != mbyWriteReg(sw, addr + cnt*2*4,
+                                                 val64))
+                        {
+                            /* FIXME: Failure in middle, what should be the response */
+                            rsp = IOSF_RSP_FAIL;
+                            break;
+                        }
+                    }
 
                     valOff = valOff + ndw*4 + 4; /* next values */
                     if (valOff <= iDataLen)
@@ -515,7 +519,7 @@ fm_status HandleMsgIosf(fm_int               sw,
                         if (ndw > MAX_READ_REP_NDW)
                         {
                             FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                                "ndw is out of range %d\n", ndw);
+                                         "ndw is out of range %d\n", ndw);
                             rsp = IOSF_RSP_FAIL;
                             break;
                         }
@@ -528,14 +532,14 @@ fm_status HandleMsgIosf(fm_int               sw,
             default:
                 rsp = IOSF_RSP_FAIL;
                 FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-                            "Invalid IOSF opcode 0x%x",
-                            opcode);
+                             "Invalid IOSF opcode 0x%x",
+                             opcode);
                 break;
         }
     }
 
     emsg.type = htons(FM_MODEL_MSG_IOSF);
-	emsg.version = htons(FM_MODEL_MSG_VERSION);
+    emsg.version = htons(FM_MODEL_MSG_VERSION);
     msgLength = eDataLen + FM_MODEL_MSG_HEADER_SIZE;
     emsg.msgLength = htonl(msgLength);
 
@@ -703,10 +707,10 @@ static void FinalizePacket(fm_modelMessage *     emsg,
  * \return          Other ''Status Codes'' as appropriate in case of failure.
  *
  *****************************************************************************/
-fm_status HandleMsgPacket(fm_int               sw,
-                          fm_modelMessage *    imsg,
-                          fm_int               physPort,
-                          fm_int32             imsgLength)
+static fm_status HandleMsgPacket(fm_int               sw,
+                                 fm_modelMessage *    imsg,
+                                 fm_int               physPort,
+                                 fm_int32             imsgLength)
 {
     fm_modelSidebandData sbData;
     fm_status            status;
@@ -758,7 +762,7 @@ fm_status HandleMsgPacket(fm_int               sw,
                            packet,
                            pktLength);
                            // ,&sbData);
-	status = FM_OK;
+    status = FM_OK;
     FM_LOG_ABORT_ON_ERR(FM_LOG_CAT_PLATFORM, status);
 
     numPkts = 0;
@@ -777,7 +781,7 @@ fm_status HandleMsgPacket(fm_int               sw,
         packet = &data[FM_MODEL_MSG_TLV_SIZE];
         FM_CLEAR(sbData);
 
-		// TODO
+        // TODO
         // status = fmModelReceivePacket(sw,
         //                               &physPort,
         //                               packet,
@@ -786,13 +790,13 @@ fm_status HandleMsgPacket(fm_int               sw,
         //                               &sbData);
 
 #if 0 // TODO
-	if (portLinkState[physPort] != PORT_LINK_UP)
-	{
-		FM_LOG_INFO(FM_LOG_CAT_PLATFORM,
-			    "TB: Link down %d. Dropping TX packet on phys port %d.\n",
-			    portLinkState[physPort], physPort);
-		continue;
-	}
+        if (portLinkState[physPort] != PORT_LINK_UP)
+        {
+            FM_LOG_INFO(FM_LOG_CAT_PLATFORM,
+                        "TB: Link down %d. Dropping TX packet on phys port %d.\n",
+                        portLinkState[physPort], physPort);
+            continue;
+        }
 #endif
 
         *( (fm_int32 *) &data[FM_MODEL_DATA_TYPE_SIZE] ) = htonl(pktLength);
@@ -905,9 +909,9 @@ ABORT:
  *                  the specified switch number.
  *
  *****************************************************************************/
-fm_status HandleMsgSetEgressInfo(fm_int               sw,
-                                 fm_modelMessage *    imsg,
-                                 fm_int               type)
+static fm_status HandleMsgSetEgressInfo(fm_int               sw,
+                                        fm_modelMessage *    imsg,
+                                        fm_int               type)
 {
     fm_status           status = FM_OK;
     fm_uint16           port;
@@ -999,7 +1003,8 @@ fm_status HandleMsgSetEgressInfo(fm_int               sw,
  * \return          Other ''Status Codes'' as appropriate in case of failure.
  *
  *****************************************************************************/
-fm_status ProcessMessage(fm_socket *socket, fm_modelMessage *imsg,
+fm_status ProcessMessage(fm_socket *socket,
+                         fm_modelMessage *imsg,
                          fm_int32 msgLength)
 {
     fm_status            status = FM_OK;

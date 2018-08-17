@@ -41,7 +41,10 @@
 
 #define FM_FDS_POLL_TIMEOUT_USEC            1*1000
 
+// TODO remove this global/extern varaibles
 static int debug = 0;
+extern fm_socket pktRecvSockets[MAX_PHYS_PORT];
+extern fm_msg_stats msg_stat;
 
 /*extern fm_uint64 log_cat_mask;*/
 /*extern char *log_cat_names[];*/
@@ -54,42 +57,32 @@ void logPrintHandler(fm_uint64 level, char *log)
 
 static void print_usage(char *cmd)
 {
-	printf("Usage: %s [options]\n", cmd);
-	printf("    -h                    - This help.\n");
-	printf("    -p <port>             - Set server port\n");
-	printf("    -l                    - Disable all model logging output\n");
-	printf("    -r                    - Don't reset chip.\n");
-	printf("    -I                    - Don't check and send interrupt messages.\n");
-	printf("    -o <file>             - Save startup register writes to config file.\n");
-	printf("    -d <debug>            - Specify logging level.\n");
-	printf("    -v <cat1,cat2>        - Enable logging from selected categories.\n");
+    printf("Usage: %s [options]\n", cmd);
+    printf("    -h                    - This help.\n");
+    printf("    -p <port>             - Set server port\n");
+    printf("    -l                    - Disable all model logging output\n");
+    printf("    -r                    - Don't reset chip.\n");
+    printf("    -I                    - Don't check and send interrupt messages.\n");
+    printf("    -o <file>             - Save startup register writes to config file.\n");
+    printf("    -d <debug>            - Specify logging level.\n");
+    printf("    -v <cat1,cat2>        - Enable logging from selected categories.\n");
 
-	printf("Allowed values for category names are: \n");
-	printf(" - all: Enable output from all the categories \n");
-	printf(" - none: Disable output from all the categories \n");
-	printf(" - Comma separated list of the following category names:\n     ");
+    printf("Allowed values for category names are: \n");
+    printf(" - all: Enable output from all the categories \n");
+    printf(" - none: Disable output from all the categories \n");
+    printf(" - Comma separated list of the following category names:\n     ");
 
 #if 0
-	int i = 0;
+    int i = 0;
     while (log_cat_names[i]) {
-       printf("%s  ", log_cat_names[i]);
-       if (++i % 8 == 0 && log_cat_names[i])
-           printf("\n     ");
+        printf("%s  ", log_cat_names[i]);
+        if (++i % 8 == 0 && log_cat_names[i])
+            printf("\n     ");
     }
 #endif
     printf("\n");
-	exit(0);
+    exit(0);
 }
-
-// FIXME put somewhere else
-typedef struct _fm_libCfg
-{
-    /* log debug level */
-    fm_int  logLevel;
-
-    /* Callback for displaying log messages */
-    void (*logHandler)(fm_uint64 level, char *log);
-} fm_libCfg;
 
 /*****************************************************************************/
 /* main
@@ -112,23 +105,21 @@ int main(int argc, char *argv[])
     fm_libCfg       libCfg;
     fm_bool         resetChip = TRUE;
     fm_int          sendIntr = 1;
-    // fm_int          intrStep = INTERRUPT_READ_DELAY;
-    fm_socket            serverSocket;
-    fm_int               serverPort = 0;
-    fm_bool              dataPresent;
-    fm_modelMessage      imsg;
-    fm_int32             msgLength;
-    fm_timestamp         timeout;
-    fm_socket           *sockets[MAX_PERSISTENT_CONNECTIONS + 1];
-    fm_int               numSockets = 1;
-    fm_int               eventsReceived[MAX_PERSISTENT_CONNECTIONS + 1];
-
-	fd_set rfds;
-	struct timeval tv;
-    char c;
-    int rv;
-    int fd = 0;
-
+    //fm_int          intrStep = INTERRUPT_READ_DELAY;
+    fm_socket       serverSocket;
+    fm_int          serverPort = 0;
+    fm_bool         dataPresent;
+    fm_modelMessage imsg;
+    fm_int32        msgLength;
+    fm_timestamp    timeout;
+    fm_socket       *sockets[MAX_PERSISTENT_CONNECTIONS + 1];
+    fm_int          numSockets = 1;
+    fm_int          eventsReceived[MAX_PERSISTENT_CONNECTIONS + 1];
+    fd_set          rfds;
+    struct          timeval tv;
+    char            c;
+    int             rv;
+    int             fd = 0;
 
     memset(&libCfg, 0, sizeof(libCfg));
     libCfg.logLevel = debug;
@@ -168,8 +159,8 @@ int main(int argc, char *argv[])
         }
         else
         {
-			print_usage(argv[0]);
-			exit(0);
+            print_usage(argv[0]);
+            exit(0);
         }
     }
 
@@ -255,107 +246,107 @@ int main(int argc, char *argv[])
 
     while (TRUE)
     {
-			FD_ZERO(&rfds);
-			FD_SET(fd, &rfds);
-			tv.tv_sec = 0;
-			tv.tv_usec = 0;
+        FD_ZERO(&rfds);
+        FD_SET(fd, &rfds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
 
-			rv = select(fd + 1, &rfds, NULL, NULL, &tv);
-            if (rv) {
-                read(fd, &c, 1);
-                switch (c)
-                {
-                    case 'h':
-                        printf("Help:\n");
-                        printf("\tq             - Quit\n");
-                        printf("\ts             - Show messages statistics\n");
-                        printf("\tr             - Reset messages statistics\n");
-                        printf("\tl             - Toggle logging output\n");
-                        printf("\t0..6          - Set debug level. 1=PRINT, 2=DEBUG, 4=DEBUG3, etc\n");
-                        printf("\ta             - Enable output log for all categories\n");
-                        printf("\tn             - Disable output log for all categories\n");
-                        printf("\tt<c>          - Toggle output log for category <c> (see below)\n");
-                        i = 0;
+        rv = select(fd + 1, &rfds, NULL, NULL, &tv);
+        if (rv) {
+            read(fd, &c, 1);
+            switch (c)
+            {
+                case 'h':
+                    printf("Help:\n");
+                    printf("\tq             - Quit\n");
+                    printf("\ts             - Show messages statistics\n");
+                    printf("\tr             - Reset messages statistics\n");
+                    printf("\tl             - Toggle logging output\n");
+                    printf("\t0..6          - Set debug level. 1=PRINT, 2=DEBUG, 4=DEBUG3, etc\n");
+                    printf("\ta             - Enable output log for all categories\n");
+                    printf("\tn             - Disable output log for all categories\n");
+                    printf("\tt<c>          - Toggle output log for category <c> (see below)\n");
+                    i = 0;
 #if 0
-                        while (log_cat_names[i]) {
-                            printf("\tt%c            - Toggle %s (%s)\n",
-                                   'a' + i, log_cat_names[i],
-                                   log_cat_mask & (1<<i) ? "enabled" : "disabled");
-                            i++;
-                        }
+                    while (log_cat_names[i]) {
+                        printf("\tt%c            - Toggle %s (%s)\n",
+                                'a' + i, log_cat_names[i],
+                                log_cat_mask & (1<<i) ? "enabled" : "disabled");
+                        i++;
+                    }
 #endif
                     break;
-                    case 's':
-                        printf("Messages stats:\n");
-                        printf("\tPACKET    : %d\n", msg_stat.packet);
-                        printf("\tMGMT      : %d\n", msg_stat.mgmt);
-                        printf("\tCTRL      : %d\n", msg_stat.ctrl);
-                        printf("\tIOSF      : %d\n", msg_stat.iosf);
+                case 's':
+                    printf("Messages stats:\n");
+                    printf("\tPACKET    : %d\n", msg_stat.packet);
+                    printf("\tMGMT      : %d\n", msg_stat.mgmt);
+                    printf("\tCTRL      : %d\n", msg_stat.ctrl);
+                    printf("\tIOSF      : %d\n", msg_stat.iosf);
                     break;
-                    case 'r':
-                        memset(&msg_stat, 0, sizeof(msg_stat));
+                case 'r':
+                    memset(&msg_stat, 0, sizeof(msg_stat));
                     break;
-                    case 'q':
-                        exit(0);
+                case 'q':
+                    exit(0);
                     break;
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                        debug = c - '0';
-                        libCfg.logLevel = debug;
-                        // fmModelLibSetLogLevel(libCfg.logLevel);
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                    debug = c - '0';
+                    libCfg.logLevel = debug;
+                    // fmModelLibSetLogLevel(libCfg.logLevel);
                     break;
-                    case 'l':
-                        if (libCfg.logLevel < 0)
-                        {
-                            libCfg.logLevel = 0;
-                            printf("Log level is set to %d\n", libCfg.logLevel);
-                        }
-                        else
-                        {
-                            libCfg.logLevel = -1;
-                            printf("All logging is disabled\n");
-                        }
-                        // fmModelLibSetLogLevel(libCfg.logLevel);
+                case 'l':
+                    if (libCfg.logLevel < 0)
+                    {
+                        libCfg.logLevel = 0;
+                        printf("Log level is set to %d\n", libCfg.logLevel);
+                    }
+                    else
+                    {
+                        libCfg.logLevel = -1;
+                        printf("All logging is disabled\n");
+                    }
+                    // fmModelLibSetLogLevel(libCfg.logLevel);
                     break;
-                    case 'g':
-                        for (i = 0; i < numSockets; i++)
-                        {
-                            printf("Socket#%d fd %d type %d\n", i,
-                                   sockets[i]->sock, sockets[i]->type);
-                        }
+                case 'g':
+                    for (i = 0; i < numSockets; i++)
+                    {
+                        printf("Socket#%d fd %d type %d\n", i,
+                                sockets[i]->sock, sockets[i]->type);
+                    }
                     break;
 #if 0
-                    case 'a':
-                        printf("Output log for all categories is enabled\n");
-                        log_cat_mask = 0xFFFFFFFFFFFFFFFF;
+                case 'a':
+                    printf("Output log for all categories is enabled\n");
+                    log_cat_mask = 0xFFFFFFFFFFFFFFFF;
                     break;
-                    case 'n':
-                        printf("Output log for all categories is disabled\n");
-                        log_cat_mask = 0;
+                case 'n':
+                    printf("Output log for all categories is disabled\n");
+                    log_cat_mask = 0;
                     break;
-                    case 't':
-						if (read(fd, &c, 1) <= 0 || c < 'a' || c > 'n') {
-							printf("Category is not valid. Type 'h' for help\n");
-							break;
-						}
-                        unsigned int j = c - 'a';
-                        if (log_cat_mask & (1<<j)) {
-                            printf("Output of category %s is disabled\n", log_cat_names[j]);
-                            log_cat_mask &= ~(1 << j);
-                        }
-                        else {
-                            printf("Output of category %s is enabled\n", log_cat_names[j]);
-                            log_cat_mask |= 1 << j;
-                        }
+                case 't':
+                    if (read(fd, &c, 1) <= 0 || c < 'a' || c > 'n') {
+                        printf("Category is not valid. Type 'h' for help\n");
+                        break;
+                    }
+                    unsigned int j = c - 'a';
+                    if (log_cat_mask & (1<<j)) {
+                        printf("Output of category %s is disabled\n", log_cat_names[j]);
+                        log_cat_mask &= ~(1 << j);
+                    }
+                    else {
+                        printf("Output of category %s is enabled\n", log_cat_names[j]);
+                        log_cat_mask |= 1 << j;
+                    }
                     break;
 #endif
-                }
             }
+        }
 
 #if 0 && MBY_ENABLE_INTERRUPT // We will probably never use this
         if (sendIntr && intrStep <= 0)

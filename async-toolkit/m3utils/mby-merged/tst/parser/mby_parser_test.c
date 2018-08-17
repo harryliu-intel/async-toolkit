@@ -55,7 +55,7 @@ unsigned int runTests(unsigned int testsNum, struct TestData tests[])
         mbyMacToParser * const in  = &(tests[x].in);
 
         Parser(regs, in, out);
-
+        
         if (compareValues(out, tests[x].out) > 0)
             printf(COLOR_RED "[FAIL] " COLOR_RESET);
         else {
@@ -86,7 +86,6 @@ void prepareData(int testsNum, struct TestData tests[])
         int rv = 0;
 
         for (unsigned int x = 0; x < packetStrLen; x++){
-            ptr[x] = tests[i].in.RX_DATA[x];
             rv = sscanf(packetStr + 2*x, "%02x",(unsigned int*) &ptr[x]);
             if (rv != 1)
                 break;
