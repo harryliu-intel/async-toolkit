@@ -302,9 +302,10 @@ END ;
 ptree_pms^.ProcedureDefnVal := "Decl.Rule5" ;
 ptree_pms^.ArgSeparator := ";" ;
 ptree_pms^.PathToProcedureBlock := TextList.Cons( "Block.Rule1" , NIL ) ;
-ptree_pms^.PathToProcedureName := TextList.Cons( "ProcedureHead.Rule1" , NIL ) ;
+ptree_pms^.PathToProcedureName := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
 ptree_pms^.PathToArgList := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Signature.Rule1" , TextList.Cons( "Formals.Rule1" , NIL ) ) ) ;
-ptree_pms^.PathToArgNameFromArgList := TextList.Cons( "Formals.Rule1" , TextList.Cons( "Formal.Rule1" , TextList.Cons( "IdList.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ) ) ;
+ptree_pms^.PathToArgFromArgList := TextList.Cons( "Formal.Rule1" , NIL ) ;
+ptree_pms^.PathToArgNameFromArg := TextList.Cons( "IdList.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
 
 spec_pms^.specblock := inline_root ;
 spec_pms^.static_args := TextList.Cons( "x" , NIL ) ;

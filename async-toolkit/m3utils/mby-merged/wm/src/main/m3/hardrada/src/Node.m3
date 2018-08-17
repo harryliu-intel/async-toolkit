@@ -63,6 +63,7 @@ END FindAllNonterms ;
 
 PROCEDURE IsEmpty( list : REF DList ) : BOOLEAN =
 BEGIN
+	<* ASSERT list # NIL *>
 	RETURN ( list^.cur = NIL AND list^.prev = NIL AND list^.next = NIL ) ;
 END IsEmpty ;
 
@@ -72,7 +73,6 @@ VAR
 	templist : REF DList := NIL ;
 BEGIN
 	IF IsEmpty( list ) THEN
-		IO.Put( "Length is empty!\n" ) ;
 		RETURN 0 ;
 	END ;
 	INC( count ) ;
@@ -81,7 +81,6 @@ BEGIN
 		INC( count ) ;
 		templist := templist^.next ;
 	END ;
-	IO.Put( "Count: " & Fmt.Int( count ) & "\n" ) ;
 	RETURN count ;
 END Length ;
 
@@ -178,37 +177,6 @@ BEGIN
 	END ;
 END DeepCopyDList ;
 
-PROCEDURE ShallowCopyDList( newlist : REF DList ; list : REF DList ) =
-VAR
-	templist : REF DList := NIL ;
-	myprev : REF DList := NIL ;
-BEGIN
-	<* ASSERT list # NIL *>
-	<* ASSERT newlist # NIL *>
-	templist := GoToBeginning( list ) ;
-	myprev := NIL ;
-	WHILE templist # NIL DO
-		(* What is cur? *)
-		IF templist^.cur # NIL THEN
-			newlist^.cur := templist^.cur ;
-		ELSE
-			newlist^.cur := NIL ;
-		END ;
-		(* What is prev? *)
-		newlist^.prev := myprev ;
-		(* What is next? *)
-		IF templist^.next # NIL THEN
-			newlist^.next := NEW( REF DList ) ;
-			myprev := newlist ;
-			newlist := newlist^.next ;
-		ELSE
-			newlist^.next := NIL ;
-		END ;
-		(* Next loop iteration *)
-		templist := templist^.next ;
-	END ;
-END ShallowCopyDList ;
-
 (* TODO Can you use readonly for these? *)
 PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) =
 VAR
@@ -279,9 +247,10 @@ BEGIN
 	IF list^.prev # NIL THEN
 		list^.prev^.next := list^.next ;
 	END ;
-	IF list^.next^.prev # NIL THEN
+	IF list^.next # NIL THEN
 		list^.next^.prev := list^.prev ;
 	END ;
+	DefaultDList( list ) ;
 END DeleteFromList ;
 
 PROCEDURE DeleteList( list : REF DList ) =
@@ -309,5 +278,21 @@ BEGIN
 	list^.prev := NIL ;
 	list^.next := NIL ;
 END DefaultDList ;
+
+PROCEDURE DebugList( list : REF DList ) =
+BEGIN
+	<* ASSERT list # NIL *>
+	IF IsEmpty( list ) THEN
+		IO.Put( "( Empty )\n" ) ;
+	ELSE
+		list := GoToBeginning( list ) ;
+		WHILE list^.next # NIL DO
+			IO.Put( list^.cur^.val ) ;
+			IO.Put( "->" ) ;
+		END ;
+		IO.Put( list^.cur^.val ) ;
+		IO.Put( "\n" ) ;
+	END ;
+END DebugList ;
 
 BEGIN END Node .

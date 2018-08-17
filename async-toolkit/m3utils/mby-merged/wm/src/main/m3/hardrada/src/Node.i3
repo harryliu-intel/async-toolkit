@@ -55,8 +55,6 @@ PROCEDURE GoToEnd( list : REF DList ) : REF DList ;
 
 PROCEDURE DeepCopyDList( newlist : REF DList ; list : REF DList ) ;
 
-PROCEDURE ShallowCopyDList( newlist : REF DList ; list : REF DList ) ;
-
 PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) ;
 
 PROCEDURE AppendDList( listA : REF DList ; listB : REF DList ) ;
@@ -70,5 +68,7 @@ PROCEDURE DeleteFromList( list : REF DList ) ;
 PROCEDURE DeleteList( list : REF DList ) ;
 
 PROCEDURE DefaultDList( list : REF DList ) ;
+
+PROCEDURE DebugList( list : REF DList ) ;
 
 END Node.

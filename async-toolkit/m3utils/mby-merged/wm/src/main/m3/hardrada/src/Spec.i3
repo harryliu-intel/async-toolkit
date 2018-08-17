@@ -23,7 +23,8 @@ TYPE PTreeParams = RECORD
 	PathToProcedureBlock : TextList.T := NIL ;
 	PathToProcedureName : TextList.T := NIL ;
 	PathToArgList : TextList.T := NIL ;
-	PathToArgNameFromArgList : TextList.T := NIL ;
+	PathToArgFromArgList : TextList.T := NIL ;
+	PathToArgNameFromArg : TextList.T := NIL ;
 END ;
 
 TYPE SpecParams = RECORD

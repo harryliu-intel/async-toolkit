@@ -55,7 +55,7 @@ BEGIN
 	procdef := GetNthProcDef( root , ptree_pms , spec_pms^.procname , spec_pms^.procdefnumber ) ;
 	<* ASSERT procdef # NIL *>
 	my_static_args := spec_pms^.static_args ;
-	WHILE my_static_args.head # NIL DO
+	WHILE my_static_args # NIL DO
 		DeleteArgWName( procdef , ptree_pms , my_static_args.head ) ;
 		my_static_args := my_static_args.tail ;
 	END ;
@@ -131,16 +131,10 @@ BEGIN
 	Node.DefaultDList( recursive_templist ) ;
 	Node.DefaultDList( list ) ;
 	current_child := Node.GoToBeginning( root^.children ) ;
-	IO.Put( "Follow Path\n" ) ;
-	IO.Put( "===========\n" ) ;
 	LOOP
-		IO.Put( "Current child's value: " & current_child^.cur^.val & "\n" ) ;
-		IO.Put( "Path head: " & path.head & "\n" ) ;
 		IF current_child^.cur^.val = path.head THEN
-			IO.Put( "Match!\n" ) ;
 			Node.AppendNode( return_end_of_path , current_child^.cur ) ;
 		END ;
-		IO.Put( "------------------------\n" ) ;
 		IF current_child^.next = NIL THEN
 			EXIT ;
 		ELSE
@@ -159,9 +153,15 @@ BEGIN
 				current_child := current_child^.next ;
 			END ;
 		END ;
-		Node.ShallowCopyDList( list , recursive_return_end_of_path ) ;
+		recursive_return_end_of_path := Node.GoToBeginning( recursive_return_end_of_path ) ;
+		list^.cur := recursive_return_end_of_path^.cur ;
+		list^.prev := recursive_return_end_of_path^.prev ;
+		list^.next := recursive_return_end_of_path^.next ;
 	ELSE
-		Node.ShallowCopyDList( list , return_end_of_path ) ;
+		return_end_of_path := Node.GoToBeginning( return_end_of_path ) ;
+		list^.cur := return_end_of_path^.cur ;
+		list^.prev := return_end_of_path^.prev ;
+		list^.next := return_end_of_path^.next ;
 	END ;
 END FollowPath ;
 
@@ -194,11 +194,12 @@ BEGIN
 	<* ASSERT root^.val = ptree_pms^.ProcedureDefnVal *>
 	<* ASSERT ptree_pms^.PathToProcedureName # NIL *>
 	<* ASSERT TextList.Length( ptree_pms^.PathToProcedureName ) > 0 *>
-	IO.Put( "Root's value is: " & root^.val & "\n" ) ;
 	FollowPath( list , root , ptree_pms^.PathToProcedureName ) ;
 	(* TODO Again, probably want proper error handling *)
 	<* ASSERT Node.Length( list ) = 1 *>
-	RETURN list^.cur^.val ;
+	<* ASSERT Node.Length( list^.cur^.children ) = 1 *>
+	<* ASSERT list^.cur^.children^.cur^.cat = Node.Category.Identifier *>
+	RETURN list^.cur^.children^.cur^.val ;
 END GetProcName ;
 
 (* Get nth proc def with name *)
@@ -237,28 +238,37 @@ PROCEDURE DeleteArgWName( root : REF Node.T ; ptree_pms : REF PTreeParams ; argn
 VAR
 	argslist := NEW( REF Node.DList ) ;
 	child := NEW( REF Node.DList ) ;
+	childname := NEW( REF Node.DList ) ;
 	nextchild := NEW( REF Node.DList ) ;
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT ptree_pms # NIL *>
 	<* ASSERT NOT Text.Equal( argname , "" ) *>
 	GetArgsList( argslist , root , ptree_pms ) ;
-	FollowPath( child , argslist^.cur , ptree_pms^.PathToArgNameFromArgList ) ;
-	LOOP
-		IF child^.cur^.val = argname THEN
-			nextchild := child^.next ;
-			Node.DeleteFromList( child ) ;
-			child := nextchild ;
-			IF child^.cur^.val = ptree_pms^.ArgSeparator THEN
+	FollowPath( child , argslist^.cur , ptree_pms^.PathToArgFromArgList ) ;
+	<* ASSERT child # NIL *>
+	IF Node.Length( child ) > 0 THEN
+		IO.Put( "Current argument list: " ) ;
+		Node.DebugList( child ) ;
+		WHILE child # NIL DO
+			IO.Put( "Current value: " & child^.cur^.children^.cur^.val & "\n" ) ;
+			IO.Put( "Argument name: " & argname & "\n" ) ;
+			FollowPath( childname , child^.cur , ptree_pms^.PathToArgNameFromArg ) ;
+			IF childname^.cur^.children^.cur^.val = argname THEN
+				IO.Put( "Match!\n" ) ;
 				nextchild := child^.next ;
 				Node.DeleteFromList( child ) ;
+				IO.Put( "New list: " ) ;
+				Node.DebugList( child ) ;
 				child := nextchild ;
+				IF child # NIL AND child^.cur^.val = ptree_pms^.ArgSeparator THEN
+					nextchild := child^.next ;
+					Node.DeleteFromList( child ) ;
+					child := nextchild ;
+				END ;
+			ELSE
+				child := child^.next ;
 			END ;
-		END ;
-		IF child^.next = NIL THEN
-			EXIT ;
-		ELSE
-			child := child^.next ;
 		END ;
 	END ;
 END DeleteArgWName ;
