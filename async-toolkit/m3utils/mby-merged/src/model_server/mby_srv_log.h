@@ -5,9 +5,19 @@
 #include <stdio.h>
 #include "mby_srv_errno.h"
 
-
 //#define VERBOSE
 #define DEBUG_PRINT_RECEIVED_PACKET
+
+
+// TODO this is currently unused
+typedef struct _fm_libCfg
+{
+    /* log debug level */
+    fm_int  logLevel;
+
+    /* Callback for displaying log messages */
+    void (*logHandler)(fm_uint64 level, char *log);
+} fm_libCfg;
 
 /* Dummy logging functions
  * At the moment they all go straight to std out
@@ -26,38 +36,38 @@
 #define FM_LOG_ENTRY DUMMY_LOG
 
 #define FM_LOG_ENTRY_VERBOSE(cat, ...) \
-	printf("Entering... " __VA_ARGS__ );
+    printf("Entering... " __VA_ARGS__ );
 
 #define FM_LOG_EXIT(cat, result) \
-	{ \
-		printf("Exit function %s - result = %d\n", __func__, result); \
-		return result; \
-	} \
+{ \
+    printf("Exit function %s - result = %d\n", __func__, result); \
+    return result; \
+} \
 
-#define FM_LOG_EXIT_VERBOSE(cat, errcode)                                      \
-    {                                                                          \
-        printf( "Exit Status %d (%s)\n",                                       \
-                (errcode),                                                     \
-                fmErrorMsg( (errcode) ) );                                     \
-        return errcode;                                                        \
-    }
+#define FM_LOG_EXIT_VERBOSE(cat, errcode)                                  \
+{                                                                          \
+    printf( "Exit Status %d (%s)\n",                                       \
+            (errcode),                                                     \
+            fmErrorMsg( (errcode) ) );                                     \
+    return errcode;                                                        \
+}
 
 #define FM_LOG_ASSERT(cat, cond, ...) \
-	if (!(cond)) \
-	{ \
-		FM_LOG_PRINT( __VA_ARGS__ ); \
-	}
+    if (!(cond)) \
+{ \
+    FM_LOG_PRINT( __VA_ARGS__ ); \
+}
 
-#define FM_LOG_ABORT_ON_ERR(cat, errcode)                                      \
-	{                                                                          \
-		fm_status localError = (errcode);                                      \
-		if ( (localError) != FM_OK )                                           \
-		{                                                                      \
-			FM_LOG_DEBUG((cat), "Break to abort handler: %s\n",                \
-					fmErrorMsg((localError)));                                 \
-			goto ABORT;                                                        \
-		}                                                                      \
-	}
+#define FM_LOG_ABORT_ON_ERR(cat, errcode)                                  \
+{                                                                          \
+    fm_status localError = (errcode);                                      \
+    if ( (localError) != FM_OK )                                           \
+    {                                                                      \
+        FM_LOG_DEBUG((cat), "Break to abort handler: %s\n",                \
+                     fmErrorMsg((localError)));                            \
+        goto ABORT;                                                        \
+    }                                                                      \
+}
 
 #if 0
 #define FM_LOG_SYS_EXIT_ON_COND(cat, cond)                  \
@@ -80,14 +90,14 @@
     }
 #else
 #define FM_LOG_SYS_EXIT_ON_COND(cat, cond)                  \
-	if ((cond)) {                                           \
-		strerror_r(errno, strErrBuf,                        \
-				FM_STRERROR_BUF_SIZE);                      \
-		FM_LOG_FATAL((cat),                                 \
-				"System error %d: %s\n",                    \
-				errno, strErrBuf);                          \
-		FM_LOG_EXIT_VERBOSE((cat), FM_FAIL);                \
-	}
+    if ((cond)) {                                           \
+        strerror_r(errno, strErrBuf,                        \
+                   FM_STRERROR_BUF_SIZE);                   \
+        FM_LOG_FATAL((cat),                                 \
+                     "System error %d: %s\n",               \
+                     errno, strErrBuf);                     \
+        FM_LOG_EXIT_VERBOSE((cat), FM_FAIL);                \
+    }
 #endif
 
 
