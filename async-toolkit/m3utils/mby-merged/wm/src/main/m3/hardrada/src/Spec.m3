@@ -124,7 +124,6 @@ VAR
 BEGIN
 	<* ASSERT TextList.Length( path ) > 0 *>
 	<* ASSERT list # NIL *>
-	<* ASSERT Node.Length( list ) > 0 *>
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
 	Node.DefaultDList( return_end_of_path ) ;
@@ -132,10 +131,16 @@ BEGIN
 	Node.DefaultDList( recursive_templist ) ;
 	Node.DefaultDList( list ) ;
 	current_child := Node.GoToBeginning( root^.children ) ;
+	IO.Put( "Follow Path\n" ) ;
+	IO.Put( "===========\n" ) ;
 	LOOP
+		IO.Put( "Current child's value: " & current_child^.cur^.val & "\n" ) ;
+		IO.Put( "Path head: " & path.head & "\n" ) ;
 		IF current_child^.cur^.val = path.head THEN
-			Node.AppendNode( list , current_child^.cur ) ;
+			IO.Put( "Match!\n" ) ;
+			Node.AppendNode( return_end_of_path , current_child^.cur ) ;
 		END ;
+		IO.Put( "------------------------\n" ) ;
 		IF current_child^.next = NIL THEN
 			EXIT ;
 		ELSE
@@ -189,10 +194,10 @@ BEGIN
 	<* ASSERT root^.val = ptree_pms^.ProcedureDefnVal *>
 	<* ASSERT ptree_pms^.PathToProcedureName # NIL *>
 	<* ASSERT TextList.Length( ptree_pms^.PathToProcedureName ) > 0 *>
+	IO.Put( "Root's value is: " & root^.val & "\n" ) ;
 	FollowPath( list , root , ptree_pms^.PathToProcedureName ) ;
 	(* TODO Again, probably want proper error handling *)
 	<* ASSERT Node.Length( list ) = 1 *>
-	<* ASSERT list^.cur^.cat = Node.Category.Identifier *>
 	RETURN list^.cur^.val ;
 END GetProcName ;
 

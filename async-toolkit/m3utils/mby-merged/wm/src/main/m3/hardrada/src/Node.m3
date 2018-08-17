@@ -1,5 +1,8 @@
 MODULE Node ;
 
+IMPORT IO ;
+IMPORT Fmt ;
+
 (**********************)
 (* Visible Procedures *)
 (**********************)
@@ -69,6 +72,7 @@ VAR
 	templist : REF DList := NIL ;
 BEGIN
 	IF IsEmpty( list ) THEN
+		IO.Put( "Length is empty!\n" ) ;
 		RETURN 0 ;
 	END ;
 	INC( count ) ;
@@ -77,6 +81,7 @@ BEGIN
 		INC( count ) ;
 		templist := templist^.next ;
 	END ;
+	IO.Put( "Count: " & Fmt.Int( count ) & "\n" ) ;
 	RETURN count ;
 END Length ;
 
