@@ -11,6 +11,8 @@ IMPORT OSError ;
 IMPORT Pathname ;
 IMPORT Thread ;
 IMPORT Text ;
+IMPORT TextList ;
+IMPORT IO ;
 
 (**********************)
 (* Visible Procedures *)
@@ -41,18 +43,21 @@ IMPORT Text ;
 PROCEDURE Specialize( root : REF Node.T ; spec_pms : REF SpecParams ; ptree_pms : REF PTreeParams ) =
 VAR
 	procdef : REF Node.T := NIL ;
+	my_static_args : TextList.T := NIL ;
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT spec_pms # NIL *>
 	<* ASSERT spec_pms^.specblock # NIL *>
 	<* ASSERT spec_pms^.static_args # NIL *>
-	<* ASSERT Text.Equal( spec_pms^.procname , "" ) *>
+	<* ASSERT NOT Text.Equal( spec_pms^.procname , "" ) *>
 	<* ASSERT ptree_pms # NIL *>
 	(* TODO You should be asserting that more ptree_pms are not nil. *)
 	procdef := GetNthProcDef( root , ptree_pms , spec_pms^.procname , spec_pms^.procdefnumber ) ;
 	<* ASSERT procdef # NIL *>
-	FOR static_arg_index := FIRST( spec_pms^.static_args^ ) TO LAST( spec_pms^.static_args^ ) DO
-		DeleteArgWName( procdef , ptree_pms , spec_pms^.static_args[ static_arg_index ] ) ;
+	my_static_args := spec_pms^.static_args ;
+	WHILE my_static_args.head # NIL DO
+		DeleteArgWName( procdef , ptree_pms , my_static_args.head ) ;
+		my_static_args := my_static_args.tail ;
 	END ;
 	PrependCodeToProcBlock( procdef , spec_pms^.specblock , ptree_pms ) ;
 END Specialize ;
@@ -110,26 +115,25 @@ END DebugTree ;
 - path is nonempty and not NIL
 - root node is a nonterminal and is the implicit starting point of the path
 *)
-PROCEDURE FollowPath( list : REF Node.DList ; root : REF Node.T ; path : REF ARRAY OF TEXT ) =
+PROCEDURE FollowPath( list : REF Node.DList ; root : REF Node.T ; path : TextList.T ) =
 VAR
 	return_end_of_path := NEW( REF Node.DList ) ;
 	recursive_return_end_of_path := NEW( REF Node.DList ) ;
 	recursive_templist := NEW( REF Node.DList ) ;
-	adjusted_path : REF ARRAY OF TEXT := NIL ;
 	current_child : REF Node.DList := NIL ;
 BEGIN
-	<* ASSERT path # NIL *>
-	<* ASSERT NUMBER( path^ ) # 0 *>
+	<* ASSERT TextList.Length( path ) > 0 *>
+	<* ASSERT list # NIL *>
+	<* ASSERT Node.Length( list ) > 0 *>
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
-	<* ASSERT list # NIL *>
 	Node.DefaultDList( return_end_of_path ) ;
 	Node.DefaultDList( recursive_return_end_of_path ) ;
 	Node.DefaultDList( recursive_templist ) ;
-	current_child := Node.GoToBeginning( root^.children ) ;
 	Node.DefaultDList( list ) ;
+	current_child := Node.GoToBeginning( root^.children ) ;
 	LOOP
-		IF current_child^.cur^.val = path[ FIRST( path^ ) ] THEN
+		IF current_child^.cur^.val = path.head THEN
 			Node.AppendNode( list , current_child^.cur ) ;
 		END ;
 		IF current_child^.next = NIL THEN
@@ -138,14 +142,11 @@ BEGIN
 			current_child := current_child^.next ;
 		END ;
 	END ;
-	IF NUMBER( path^ ) > 1 THEN
-		adjusted_path := NEW( REF ARRAY OF TEXT , NUMBER( path^ ) - 1 ) ;
-		FOR path_index := FIRST( path^ ) + 1 TO LAST( path^ ) DO
-			adjusted_path[ ( path_index - ( FIRST( path^ ) + 1 ) ) + FIRST( adjusted_path^ ) ] := path[ path_index ] ;
-		END ;
+	IF TextList.Length( path ) > 1 THEN
+		path := path.tail ;
 		current_child := Node.GoToBeginning( return_end_of_path ) ;
 		LOOP
-			FollowPath( recursive_templist , current_child^.cur , adjusted_path ) ;
+			FollowPath( recursive_templist , current_child^.cur , path ) ;
 			Node.AppendDList( recursive_return_end_of_path , recursive_templist ) ;
 			IF current_child^.next = NIL THEN
 				EXIT ;
@@ -169,7 +170,7 @@ BEGIN
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
 	<* ASSERT ptree_pms # NIL *>
 	<* ASSERT ptree_pms^.PathToArgList # NIL *>
-	<* ASSERT NUMBER( ptree_pms^.PathToArgList^ ) > 0 *>
+	<* ASSERT TextList.Length( ptree_pms^.PathToArgList ) > 0 *>
 	<* ASSERT list # NIL *>
 	Node.DefaultDList( list ) ;
 	FollowPath( list , root , ptree_pms^.PathToArgList ) ;
@@ -187,7 +188,7 @@ BEGIN
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
 	<* ASSERT root^.val = ptree_pms^.ProcedureDefnVal *>
 	<* ASSERT ptree_pms^.PathToProcedureName # NIL *>
-	<* ASSERT NUMBER( ptree_pms^.PathToProcedureName^ ) # 0 *>
+	<* ASSERT TextList.Length( ptree_pms^.PathToProcedureName ) > 0 *>
 	FollowPath( list , root , ptree_pms^.PathToProcedureName ) ;
 	(* TODO Again, probably want proper error handling *)
 	<* ASSERT Node.Length( list ) = 1 *>
@@ -235,7 +236,7 @@ VAR
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT ptree_pms # NIL *>
-	<* ASSERT Text.Equal( argname , "" ) *>
+	<* ASSERT NOT Text.Equal( argname , "" ) *>
 	GetArgsList( argslist , root , ptree_pms ) ;
 	FollowPath( child , argslist^.cur , ptree_pms^.PathToArgNameFromArgList ) ;
 	LOOP

@@ -22,8 +22,8 @@ END Equal ;
 
 PROCEDURE DeepCopy( NewNode : REF T ; CurrentNode : REF T ) =
 BEGIN
+	<* ASSERT NewNode # NIL *>
 	<* ASSERT CurrentNode # NIL *>
-	NewNode := NEW( REF T ) ;
 	NewNode^.val := CurrentNode^.val ;
 	NewNode^.cat := CurrentNode^.cat ;
 	NewNode^.children := NEW( REF DList ) ;
@@ -140,36 +140,67 @@ BEGIN
 END GoToEnd ;
 
 PROCEDURE DeepCopyDList( newlist : REF DList ; list : REF DList ) =
+VAR
+	templist : REF DList := NIL ;
+	myprev : REF DList := NIL ;
 BEGIN
 	<* ASSERT list # NIL *>
 	<* ASSERT newlist # NIL *>
-	DeepCopy( newlist^.cur , list^.cur ) ;
-	IF list^.next # NIL THEN
-		DeepCopyDList( newlist^.next , list^.next ) ;
-	ELSE
-		newlist^.next := NIL ;
-	END ;
-	IF list.prev # NIL THEN
-		DeepCopyDList( newlist^.prev , list^.prev ) ;
-	ELSE
-		newlist^.prev := NIL ;
+	templist := GoToBeginning( list ) ;
+	myprev := NIL ;
+	WHILE templist # NIL DO
+		(* What is cur? *)
+		IF templist^.cur # NIL THEN
+			IF newlist^.cur = NIL THEN
+				newlist^.cur := NEW( REF T ) ;
+			END ;
+			DeepCopy( newlist^.cur , templist^.cur ) ;
+		ELSE
+			newlist^.cur := NIL ;
+		END ;
+		(* What is prev? *)
+		newlist^.prev := myprev ;
+		(* What is next? *)
+		IF templist^.next # NIL THEN
+			newlist^.next := NEW( REF DList ) ;
+			myprev := newlist ;
+			newlist := newlist^.next ;
+		ELSE
+			newlist^.next := NIL ;
+		END ;
+		(* Next loop iteration *)
+		templist := templist^.next ;
 	END ;
 END DeepCopyDList ;
 
 PROCEDURE ShallowCopyDList( newlist : REF DList ; list : REF DList ) =
+VAR
+	templist : REF DList := NIL ;
+	myprev : REF DList := NIL ;
 BEGIN
 	<* ASSERT list # NIL *>
 	<* ASSERT newlist # NIL *>
-	newlist^.cur := list^.cur ;
-	IF list^.next # NIL THEN
-		ShallowCopyDList( newlist^.next , list^.next ) ;
-	ELSE
-		newlist^.next := NIL ;
-	END ;
-	IF list.prev # NIL THEN
-		ShallowCopyDList( newlist^.prev , list^.prev ) ;
-	ELSE
-		newlist^.prev := NIL ;
+	templist := GoToBeginning( list ) ;
+	myprev := NIL ;
+	WHILE templist # NIL DO
+		(* What is cur? *)
+		IF templist^.cur # NIL THEN
+			newlist^.cur := templist^.cur ;
+		ELSE
+			newlist^.cur := NIL ;
+		END ;
+		(* What is prev? *)
+		newlist^.prev := myprev ;
+		(* What is next? *)
+		IF templist^.next # NIL THEN
+			newlist^.next := NEW( REF DList ) ;
+			myprev := newlist ;
+			newlist := newlist^.next ;
+		ELSE
+			newlist^.next := NIL ;
+		END ;
+		(* Next loop iteration *)
+		templist := templist^.next ;
 	END ;
 END ShallowCopyDList ;
 

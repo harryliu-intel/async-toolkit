@@ -5,6 +5,7 @@ INTERFACE Spec ;
 (***********)
 IMPORT Node ;
 IMPORT Pathname ;
+IMPORT TextList ;
 
 (**************)
 (* Exceptions *)
@@ -19,15 +20,15 @@ EXCEPTION OutError ;
 TYPE PTreeParams = RECORD
 	ProcedureDefnVal : TEXT := "" ;
 	ArgSeparator : TEXT := "" ;
-	PathToProcedureBlock : REF ARRAY OF TEXT := NIL ;
-	PathToProcedureName : REF ARRAY OF TEXT := NIL ;
-	PathToArgList : REF ARRAY OF TEXT := NIL ;
-	PathToArgNameFromArgList : REF ARRAY OF TEXT := NIL ;
+	PathToProcedureBlock : TextList.T := NIL ;
+	PathToProcedureName : TextList.T := NIL ;
+	PathToArgList : TextList.T := NIL ;
+	PathToArgNameFromArgList : TextList.T := NIL ;
 END ;
 
 TYPE SpecParams = RECORD
 	specblock : REF Node.T := NIL ;
-	static_args : REF ARRAY OF TEXT := NIL ;
+	static_args : TextList.T := NIL ;
 	procname : TEXT := "" ;
 	procdefnumber : CARDINAL := 0 ;
 END ;
