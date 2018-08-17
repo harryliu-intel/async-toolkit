@@ -9,6 +9,7 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "mby_classifier.h" // mbyClassifierFlags
 
 // Defines:
 
@@ -230,6 +231,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool                 PARITY_ERROR;           // memory parity error flag
     fm_uint16               L2_ETYPE;               // 16-bit innermost Ethernet type
     mbySTPState             L2_IFID1_STATE;         // 2-bit spanning tree state for the ingress port
+    fm_uint32               L2_EFID1_STATE;         // 24-bit egress forwarding vector
     fm_bool                 L2_IVLAN1_MEMBERSHIP;   // ingress port is part of the ingress VLAN flag
     fm_bool                 L2_IVLAN1_REFLECT;      // ingress VLAN reflection is enabled
     fm_uint32               L2_EVLAN1_MEMBERSHIP;   // 24-bit egress VLAN port membership vector
@@ -258,6 +260,10 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_byte                 SV_DROP;                // MAC security violation info
     fm_uint16               CSGLORT;                // 16-bit canonical source GLORT
     fm_bool                 FLOOD_FORWARDED;        // glort is flood-forwarded
+    fm_bool                 RX_MIRROR;              // rx mirror frame
+    mbyClassifierFlags      FFU_FLAGS;              // flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
+    fm_uint32               HASH_ROT_A;
+    fm_uint32               HASH_ROT_B;
 
 } mbyNextHopToMaskGen;
 

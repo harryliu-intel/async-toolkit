@@ -251,6 +251,26 @@
 
 #define MBY_FWD_MA_TABLE_DIRTY_IM_b_MASK                        0
 
+/******** CM_APPLY_BASE *******/
+#define MBY_CM_APPLY_BASE                                       (0x3A20000)
+#define MBY_CM_APPLY_SIZE                                       (0x0010000)
+
+#define MBY_CM_APPLY_MIRROR_PROFILE_TABLE_WIDTH                 2
+#define MBY_CM_APPLY_MIRROR_PROFILE_TABLE_ENTRIES               64
+#define MBY_CM_APPLY_MIRROR_PROFILE_TABLE(index, word)          ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0003200) + (MBY_CM_APPLY_BASE))
+
+#define MBY_CM_APPLY_MIRROR_PROFILE_TABLE_l_PORT                0
+#define MBY_CM_APPLY_MIRROR_PROFILE_TABLE_h_PORT                4
+
+#define MBY_CM_APPLY_LOOPBACK_SUPPRESS_WIDTH                    2
+#define MBY_CM_APPLY_LOOPBACK_SUPPRESS_ENTRIES                  24
+#define MBY_CM_APPLY_LOOPBACK_SUPPRESS(index, word)             ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0003500) + (MBY_CM_APPLY_BASE))
+
+#define MBY_CM_APPLY_LOOPBACK_SUPPRESS_l_GLORT_MASK             16
+#define MBY_CM_APPLY_LOOPBACK_SUPPRESS_h_GLORT_MASK             31
+#define MBY_CM_APPLY_LOOPBACK_SUPPRESS_l_GLORT                  0
+#define MBY_CM_APPLY_LOOPBACK_SUPPRESS_h_GLORT                  15
+
 // Action Codes:
 #define MBY_ACTION_NORMAL             0   /* forwarded normally */
 #define MBY_ACTION_FLOOD              1   /* flooded due to unknown destination */
@@ -342,6 +362,10 @@
 #define MBY_SV_MOVE_DROP_ADDR         2
 #define MBY_SV_MOVE_DROP_STATIC       3
 
+#define MBY_DEFAULT_DMASK        0xFFFFFF
+#define MBY_AMASK_WIDTH          38
+#define MBY_FABRIC_LOG_PORTS     24
+
 // Enums:
 
 typedef enum mbyIeeeReservedMacActionActionEnum
@@ -394,32 +418,44 @@ typedef struct mbyFwdSysCfgRouterStruct
 
 } mbyFwdSysCfgRouter;
 
+typedef struct mbyFwdLagCfgStruct
+{
+    fm_bool                 IN_LAG;
+    fm_bool                 HASH_ROTATION;
+    fm_byte                 INDEX;
+    fm_byte                 LAG_SIZE;
+
+} mbyFwdLagCfg;
+
 typedef struct mbyMaskGenToTriggersStruct
 {
-    fm_bool                 LEARNING_ENABLED;    // learning enabled status within action codes
-    fm_uint64               AMASK;               // 46-bit action mask
-    fm_uint32               DMASK;               // 24-bit destination mask
-    fm_uint32               FNMASK;              // 24-bit normal forwarding mask
-    fm_byte                 LOG_AMASK;           // 6-bit logging action mask
-    fm_bool                 CPU_TRAP;            // flag indicating frame should be sent to CPU
-    fm_byte                 OPERATOR_ID;         // 4-bit operator ID
-    fm_byte                 QOS_SWPRI;           // 4-bit switch priority
-    fm_bool                 STORE_TRAP_ACTION;   // flag indicating whether 4bit trap action code will be stored in metadata
-    fm_uint16               IDGLORT;             // 16-bit ingress destination GLORT
-    fm_bool                 LOGGING_HIT;         // flag indicating whether logging was hit
-    fm_bool                 MCAST_EPOCH;         // flag defining current epoch for multicast garbage collection
-    fm_int                  MIRROR0_PORT;        // mirror 0 port
-    fm_int                  MIRROR1_PORT;        // mirror 1 port
-    fm_byte                 MIRROR0_PROFILE_V;   // mirror 0 profile valid
-    fm_byte                 MIRROR1_PROFILE_V;   // mirror 1 profile valid
-    fm_int                  MIRROR0_PROFILE_IDX; // mirror 0 profile index
-    fm_int                  MIRROR1_PROFILE_IDX; // mirror 1 profile index
-    fm_uint32               ACTION;              // resolved action
-    fm_byte                 L2_EDOMAIN;          // egress L2 domain
-    fm_byte                 L3_EDOMAIN;          // egress L3 domain
-    fm_bool                 MAC_MOVED;           // flag indicating that a non-secure MAC was found
-    fm_byte                 FCLASS;              // class state (Unicast, Broadcast or Multicast) detected
-    fm_byte                 XCAST;               // indicate Unicast, Multicast, or Broadcast
+    fm_bool                 LEARNING_ENABLED;      // learning enabled status within action codes
+    fm_uint64               AMASK;                 // 46-bit action mask
+    fm_uint32               DMASK;                 // 24-bit destination mask
+    fm_uint32               FNMASK;                // 24-bit normal forwarding mask
+    fm_byte                 LOG_AMASK;             // 6-bit logging action mask
+    fm_bool                 CPU_TRAP;              // flag indicating frame should be sent to CPU
+    fm_byte                 OPERATOR_ID;           // 4-bit operator ID
+    fm_byte                 QOS_SWPRI;             // 4-bit switch priority
+    fm_bool                 STORE_TRAP_ACTION;     // flag indicating whether 4bit trap action code will be stored in metadata
+    fm_uint16               IDGLORT;               // 16-bit ingress destination GLORT
+    fm_bool                 LOGGING_HIT;           // flag indicating whether logging was hit
+    fm_uint32               MIRROR0_PORT;          // mirror 0 port
+    fm_uint32               MIRROR1_PORT;          // mirror 1 port
+    fm_byte                 MIRROR0_PROFILE_V;     // mirror 0 profile valid
+    fm_byte                 MIRROR1_PROFILE_V;     // mirror 1 profile valid
+    fm_uint32               MIRROR0_PROFILE_IDX;   // mirror 0 profile index
+    fm_uint32               MIRROR1_PROFILE_IDX;   // mirror 1 profile index
+    fm_bool                 QCN_MIRROR0_PROFILE_V; // qcn mirror 0 profile valid
+    fm_bool                 QCN_MIRROR1_PROFILE_V; // qcn mirror 1 profile valid
+    fm_uint32               ACTION;                // resolved action
+    fm_byte                 L2_EDOMAIN;            // egress L2 domain
+    fm_byte                 L3_EDOMAIN;            // egress L3 domain
+    fm_bool                 MAC_MOVED;             // flag indicating that a non-secure MAC was found
+    fm_byte                 FCLASS;                // class state (Unicast, Broadcast or Multicast) detected
+    fm_byte                 XCAST;                 // indicate Unicast, Multicast, or Broadcast
+    fm_bool                 RX_MIRROR;             // rx mirror frame
+    fm_byte                 CPU_CODE;              // 4-bit CPU code
 
 } mbyMaskGenToTriggers;
 

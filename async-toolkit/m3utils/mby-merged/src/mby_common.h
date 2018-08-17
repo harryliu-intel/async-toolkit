@@ -47,8 +47,6 @@
 #define MBY_ETYPE_IPv6           0x86DD
 #define MBY_ETYPE_MAC_CONTROL    0x8808
 
-#define MBY_DEFAULT_DMASK        0xFFFFFF
-
 // Basic Data Types:
 typedef char                  fm_char;
 typedef short                 fm_int16;
