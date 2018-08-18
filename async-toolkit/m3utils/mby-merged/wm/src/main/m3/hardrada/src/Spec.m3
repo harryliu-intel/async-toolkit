@@ -12,6 +12,8 @@ IMPORT Pathname ;
 IMPORT Thread ;
 IMPORT Text ;
 IMPORT TextList ;
+IMPORT StyleRulesTbl ;
+IMPORT NextCharTbl ;
 IMPORT IO ;
 
 (**********************)
@@ -62,9 +64,10 @@ BEGIN
 	PrependCodeToProcBlock( procdef , spec_pms^.specblock , ptree_pms ) ;
 END Specialize ;
 
-PROCEDURE GenCode( root : REF Node.T ; style_rules_array : REF ARRAY OF StyleRule ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } =
+PROCEDURE GenCode( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } =
 VAR
-	out_file_handle : Wr.T ;
+	out_file_handle : Wr.T := NIL ;
+	term_list : TextList.T := NIL ;
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT style_rules_array # NIL *>
@@ -83,7 +86,12 @@ BEGIN
 			END ;
 	END ;
 	TRY
-		GenCodeText( root , style_rules_array , out_file_handle ) ;
+		term_list := GetTokenList( root , style_rules_array ) ;
+		<* ASSERT term_list # NIL *>
+		WHILE term_list # NIL DO
+			Wr.PutText( out_file_handle , term_list.head ) ;
+			term_list := term_list.tail ;
+		END ;
 	EXCEPT
 		| Wr.Failure( ErrCode ) => EVAL ErrCode ; RAISE OutError ;
 		| Thread.Alerted => RAISE OutError ;
@@ -140,75 +148,44 @@ END DebugTree ;
 (* Hidden Procedures *)
 (*********************)
 
-PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : REF ARRAY OF StyleRule ; out_file_handle : Wr.T ) RAISES { Wr.Failure , Thread.Alerted } =
-VAR
-	term_list : TextList.T := NIL ;
-BEGIN
-	<* ASSERT root # NIL *>
-	<* ASSERT style_rules_array # NIL *>
-	(* TODO Assert out_file_handle *)
-	term_list := GetTermList( root ) ;
-	(* Should have at least one terminal, the root node in a lone tree. *)
-	<* ASSERT term_list # NIL *>
-	TRY
-		WHILE term_list # NIL THEN
-			(* Write the terminal *)
-			Wr.PutText( out_file_handle , term_list ) ;
-		END ;
-	EXCEPT
-		| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
-		| Thread.Alerted => RAISE Thread.Alerted ;
-	END ;
+(* TODO Organize and document these *)
 
-	IF root^.cat # Node.Category.NonTerminal THEN
-	ELSE
-		<* ASSERT Node.Length( root^.children ) > 0 *>
-		roots_kids := root^.children ;
-		WHILE roots_kids # NIL DO
-			GenCodeText( roots_kids^.cur , style_rules_array , out_file_handle ) ;
-			FOR grule_index := FIRST( style_rules_array^ ) TO LAST( style_rules_array^ ) DO
-				IF root^.val = style_rules_array[ grule_index ].Grule AND
-				   grule_index = style_rules_array[ grule_index ].Index AND
-				   root^.cat = Node.Category.NonTerminal THEN
-					TRY
-						Wr.PutText( out_file_handle , style_rules_array[ grule_index ].TextToPrintAfter ) ;
-						different_char_after := TRUE ;
-					EXCEPT
-						| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
-						| Thread.Alerted => RAISE Thread.Alerted ;
-					END ;
-				END ;
-			END ;
-			TRY
-				IF different_char_after = FALSE THEN
-					Wr.PutText( out_file_handle , " " ) ;
-				END ;
-			EXCEPT
-				| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
-				| Thread.Alerted => RAISE Thread.Alerted ;
-			END ;
-			different_char_after := FALSE ;
-			roots_kids := roots_kids^.next ;
-		END ;
-	END ;
-END GenCodeText ;
-
-PROCEDURE GetTermList( root : REF Node.T ) : TextList.T =
+PROCEDURE GetTokenList( root : REF Node.T ; srules_tbl : StyleRulesTbl.Default ) : TextList.T =
 VAR
-	my_tlist : TextList.T := NIL ;
+	tlist_to_return : TextList.T := NIL ;
+	child_len : CARDINAL := 0 ;
+	index : CARDINAL := 0 ;
 	temp_child : REF Node.DList := NIL ;
+	endchar : TEXT := "" ;
+	mynextchartbl : NextCharTbl.T ;
 BEGIN
+	(* TODO More assertions? *)
+	<* ASSERT root # NIL *>
 	IF root^.cat # Node.Category.NonTerminal THEN
-		RETURN TextList.Cons( root^.val ) ;
+		RETURN TextList.Cons( root^.val , NIL ) ;
 	ELSE
+		tlist_to_return := NIL ;
+		child_len := Node.Length( root^.children ) ;
+		index := 0 ;
 		temp_child := root^.children ;
-		my_tlist := GetTermList( temp_child ) ;
 		WHILE temp_child # NIL DO
-			TextList.Append( my_tlist , GetTermList( temp_child ) ) ;
+			endchar := "" ;
+			IF NOT srules_tbl.get( root^.val , mynextchartbl ) OR NOT mynextchartbl.get( root^.val , endchar ) THEN
+				IF index # child_len - 1 THEN
+					endchar := " " ;
+				END ;
+			END ;
+			IF tlist_to_return = NIL THEN
+				tlist_to_return := GetTokenList( temp_child^.cur , srules_tbl ) ;
+			ELSE
+				tlist_to_return := TextList.Append( tlist_to_return , GetTokenList( temp_child^.cur , srules_tbl ) ) ;
+			END ;
+			tlist_to_return := TextList.Append( tlist_to_return , TextList.Cons( endchar , NIL ) ) ;
+			temp_child := temp_child^.next ;
 		END ;
-		RETURN my_tlist ;
+		RETURN tlist_to_return ;
 	END ;
-END GetTermList ;
+END GetTokenList ;
 
 (* Follow a path and return all the nodes at the end of it *)
 (* Assumptions:

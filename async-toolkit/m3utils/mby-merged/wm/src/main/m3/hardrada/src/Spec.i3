@@ -6,6 +6,7 @@ INTERFACE Spec ;
 IMPORT Node ;
 IMPORT Pathname ;
 IMPORT TextList ;
+IMPORT StyleRulesTbl ;
 
 (**************)
 (* Exceptions *)
@@ -66,7 +67,7 @@ PROCEDURE Specialize( root : REF Node.T ; spec_pms : REF SpecParams ; ptree_pms 
 Raise InvalidFname if unable to write to file because of permissions,
 directories not existing, or file already existing.
 *)
-PROCEDURE GenCode( root : REF Node.T ; style_rules_array : REF ARRAY OF StyleRule ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } ;
+PROCEDURE GenCode( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } ;
 
 (* DebugTree
 - root :: the starting node of the parse tree

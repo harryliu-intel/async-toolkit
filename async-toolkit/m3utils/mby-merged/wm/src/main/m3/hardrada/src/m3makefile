@@ -1,6 +1,8 @@
 import( "libm3" )
 module( "Node" )
 module( "Spec" )
+module( "NextCharTbl" )
+module( "StyleRulesTbl" )
 
 implementation( "Main" )
 

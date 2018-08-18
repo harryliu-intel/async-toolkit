@@ -5,6 +5,8 @@ IMPORT Node ;
 IMPORT IO ;
 IMPORT Fmt ;
 IMPORT TextList ;
+IMPORT StyleRulesTbl ;
+IMPORT NextCharTbl ;
 
 BEGIN
 VAR root := NEW( REF Node.T ) ;
@@ -25,7 +27,21 @@ VAR deeper_start_node := NEW( REF Node.T ) ;
 
 VAR ptree_pms := NEW( REF Spec.PTreeParams ) ;
 VAR spec_pms := NEW( REF Spec.SpecParams ) ;
-VAR style_rules : REF ARRAY OF Spec.StyleRule := NIL ;
+VAR style_rules := NEW( StyleRulesTbl.Default ).init( ) ;
+VAR nextchar1 := NEW( NextCharTbl.Default ).init( ) ;
+VAR nextchar2 := NEW( NextCharTbl.Default ).init( ) ;
+VAR nextchar3 := NEW( NextCharTbl.Default ).init( ) ;
+
+VAR four := "4" ;
+VAR newline1 := "\n" ;
+VAR one := "1" ;
+VAR newline2 := "\n" ;
+VAR two := "2" ;
+VAR newline3 := "\n" ;
+
+VAR declrule5 := "Decl.Rule5" ;
+VAR my_S := "S" ;
+VAR modulerule1 := "Module.Rule1" ;
 
 BEGIN
 
@@ -322,10 +338,14 @@ EXCEPT
 END ;
 
 
-style_rules := NEW( REF ARRAY OF Spec.StyleRule , 3 ) ;
-style_rules[ FIRST( style_rules^ ) ] := Spec.StyleRule{ "Decl.Rule5" , 4 , "\n" };
-style_rules[ FIRST( style_rules^ ) + 1 ] := Spec.StyleRule{ "S" , 1 , "\n" };
-style_rules[ FIRST( style_rules^ ) + 2 ] := Spec.StyleRule{ "Moduel.Rule1" , 2 , "\n" };
+(* TODO At some point you need error checking. What if I put in a
+grammar rule that doesn't exist *)
+EVAL nextchar1.put( four , newline1 ) ;
+EVAL style_rules.put( declrule5 , nextchar1 ) ;
+EVAL nextchar2.put( one , newline2 ) ;
+EVAL style_rules.put( my_S , nextchar2 ) ;
+EVAL nextchar3.put( two , newline3 ) ;
+EVAL style_rules.put( modulerule1 , nextchar3 ) ;
 
 TRY
 	Spec.GenCode( root , style_rules , "./test_out.m3" ) ;

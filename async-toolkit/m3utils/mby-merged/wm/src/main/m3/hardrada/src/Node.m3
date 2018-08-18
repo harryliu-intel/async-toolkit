@@ -196,7 +196,6 @@ PROCEDURE AppendDList( listA : REF DList ; listB : REF DList ) =
 VAR
 	templistptrA : REF DList := NIL ;
 	templistptrB : REF DList := NIL ;
-	newtemplistptrB : REF DList := NEW( REF DList ) ;
 BEGIN
 	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
 		templistptrA := GoToEnd( listA ) ;
