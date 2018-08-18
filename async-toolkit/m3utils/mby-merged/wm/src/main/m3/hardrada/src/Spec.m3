@@ -15,6 +15,7 @@ IMPORT TextList ;
 IMPORT StyleRulesTbl ;
 IMPORT NextCharTbl ;
 IMPORT IO ;
+IMPORT Fmt ;
 
 (**********************)
 (* Visible Procedures *)
@@ -170,7 +171,7 @@ BEGIN
 		temp_child := root^.children ;
 		WHILE temp_child # NIL DO
 			endchar := "" ;
-			IF NOT srules_tbl.get( root^.val , mynextchartbl ) OR NOT mynextchartbl.get( root^.val , endchar ) THEN
+			IF NOT srules_tbl.get( root^.val , mynextchartbl ) OR NOT mynextchartbl.get( Fmt.Int( index ) , endchar ) THEN
 				IF index # child_len - 1 THEN
 					endchar := " " ;
 				END ;
@@ -182,6 +183,7 @@ BEGIN
 			END ;
 			tlist_to_return := TextList.Append( tlist_to_return , TextList.Cons( endchar , NIL ) ) ;
 			temp_child := temp_child^.next ;
+			INC( index ) ;
 		END ;
 		RETURN tlist_to_return ;
 	END ;
