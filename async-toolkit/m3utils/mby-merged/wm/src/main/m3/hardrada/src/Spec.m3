@@ -62,11 +62,41 @@ BEGIN
 	PrependCodeToProcBlock( procdef , spec_pms^.specblock , ptree_pms ) ;
 END Specialize ;
 
-(*
-PROCEDURE GenCode( root : REF Node.T ; out_fname : Pathname.T ) RAISES { InvalidFname } =
+PROCEDURE GenCode( root : REF Node.T ; style_rules_array : REF ARRAY OF StyleRule ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } =
+VAR
+	out_file_handle : Wr.T ;
 BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT style_rules_array # NIL *>
+	TRY
+		EVAL FileRd.Open( out_fname ) ;
+		RAISE InvalidFname ;
+	EXCEPT
+		(* ...open output stream... *)
+		| OSError.E =>
+			TRY
+				out_file_handle := FileWr.Open( out_fname ) ;
+			EXCEPT
+				| OSError.E( ErrCode ) =>
+					EVAL ErrCode ; (* To silence warnings *)
+					RAISE InvalidFname ;
+			END ;
+	END ;
+	TRY
+		GenCodeText( root , style_rules_array , out_file_handle ) ;
+	EXCEPT
+		| Wr.Failure( ErrCode ) => EVAL ErrCode ; RAISE OutError ;
+		| Thread.Alerted => RAISE OutError ;
+	END ;
+	TRY
+		Wr.Close( out_file_handle ) ;
+	EXCEPT
+		| Wr.Failure( ErrCode ) =>
+			EVAL ErrCode ; (* To silence warnings *)
+			RAISE OutError ;
+		| Thread.Alerted => RAISE OutError ;
+	END ;
 END GenCode ;
-*)
 
 PROCEDURE DebugTree( root : REF Node.T ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } =
 VAR
@@ -109,6 +139,76 @@ END DebugTree ;
 (*********************)
 (* Hidden Procedures *)
 (*********************)
+
+PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : REF ARRAY OF StyleRule ; out_file_handle : Wr.T ) RAISES { Wr.Failure , Thread.Alerted } =
+VAR
+	term_list : TextList.T := NIL ;
+BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT style_rules_array # NIL *>
+	(* TODO Assert out_file_handle *)
+	term_list := GetTermList( root ) ;
+	(* Should have at least one terminal, the root node in a lone tree. *)
+	<* ASSERT term_list # NIL *>
+	TRY
+		WHILE term_list # NIL THEN
+			(* Write the terminal *)
+			Wr.PutText( out_file_handle , term_list ) ;
+		END ;
+	EXCEPT
+		| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
+		| Thread.Alerted => RAISE Thread.Alerted ;
+	END ;
+
+	IF root^.cat # Node.Category.NonTerminal THEN
+	ELSE
+		<* ASSERT Node.Length( root^.children ) > 0 *>
+		roots_kids := root^.children ;
+		WHILE roots_kids # NIL DO
+			GenCodeText( roots_kids^.cur , style_rules_array , out_file_handle ) ;
+			FOR grule_index := FIRST( style_rules_array^ ) TO LAST( style_rules_array^ ) DO
+				IF root^.val = style_rules_array[ grule_index ].Grule AND
+				   grule_index = style_rules_array[ grule_index ].Index AND
+				   root^.cat = Node.Category.NonTerminal THEN
+					TRY
+						Wr.PutText( out_file_handle , style_rules_array[ grule_index ].TextToPrintAfter ) ;
+						different_char_after := TRUE ;
+					EXCEPT
+						| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
+						| Thread.Alerted => RAISE Thread.Alerted ;
+					END ;
+				END ;
+			END ;
+			TRY
+				IF different_char_after = FALSE THEN
+					Wr.PutText( out_file_handle , " " ) ;
+				END ;
+			EXCEPT
+				| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
+				| Thread.Alerted => RAISE Thread.Alerted ;
+			END ;
+			different_char_after := FALSE ;
+			roots_kids := roots_kids^.next ;
+		END ;
+	END ;
+END GenCodeText ;
+
+PROCEDURE GetTermList( root : REF Node.T ) : TextList.T =
+VAR
+	my_tlist : TextList.T := NIL ;
+	temp_child : REF Node.DList := NIL ;
+BEGIN
+	IF root^.cat # Node.Category.NonTerminal THEN
+		RETURN TextList.Cons( root^.val ) ;
+	ELSE
+		temp_child := root^.children ;
+		my_tlist := GetTermList( temp_child ) ;
+		WHILE temp_child # NIL DO
+			TextList.Append( my_tlist , GetTermList( temp_child ) ) ;
+		END ;
+		RETURN my_tlist ;
+	END ;
+END GetTermList ;
 
 (* Follow a path and return all the nodes at the end of it *)
 (* Assumptions:
@@ -240,26 +340,25 @@ VAR
 	child := NEW( REF Node.DList ) ;
 	childname := NEW( REF Node.DList ) ;
 	nextchild := NEW( REF Node.DList ) ;
+	adjusted_path : TextList.T := NIL ;
+	level_above_arglist : REF Node.DList := NIL ;
+	children_at_arglist_level : REF Node.DList := NIL ;
+	nextchild_below_arglist : REF Node.DList := NIL ;
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT ptree_pms # NIL *>
 	<* ASSERT NOT Text.Equal( argname , "" ) *>
 	GetArgsList( argslist , root , ptree_pms ) ;
-	FollowPath( child , argslist^.cur , ptree_pms^.PathToArgFromArgList ) ;
-	<* ASSERT child # NIL *>
-	IF Node.Length( child ) > 0 THEN
-		IO.Put( "Current argument list: " ) ;
-		Node.DebugList( child ) ;
+	<* ASSERT Node.Length( argslist ) <= 1 *>
+	(* TODO What if language allows separators but not args? *)
+	IF Node.Length( argslist ) = 1 THEN
+		child := argslist^.cur^.children ;
+		<* ASSERT child # NIL *>
 		WHILE child # NIL DO
-			IO.Put( "Current value: " & child^.cur^.children^.cur^.val & "\n" ) ;
-			IO.Put( "Argument name: " & argname & "\n" ) ;
 			FollowPath( childname , child^.cur , ptree_pms^.PathToArgNameFromArg ) ;
 			IF childname^.cur^.children^.cur^.val = argname THEN
-				IO.Put( "Match!\n" ) ;
 				nextchild := child^.next ;
 				Node.DeleteFromList( child ) ;
-				IO.Put( "New list: " ) ;
-				Node.DebugList( child ) ;
 				child := nextchild ;
 				IF child # NIL AND child^.cur^.val = ptree_pms^.ArgSeparator THEN
 					nextchild := child^.next ;
@@ -270,8 +369,52 @@ BEGIN
 				child := child^.next ;
 			END ;
 		END ;
+		(* If no children, delete the argslist from the tree *)
+		IF Node.Length( argslist^.cur^.children ) = 0 THEN
+			(* Cut off the last element from the path.
+			We're going one level above the arglist. *)
+			adjusted_path := CutOffLastListElement( ptree_pms^.PathToArgList ) ;
+			<* ASSERT adjusted_path # NIL *>
+			level_above_arglist := NEW( REF Node.DList ) ;
+			FollowPath( level_above_arglist , root , adjusted_path ) ;
+			(* Delete any references to THAT arglist *)
+			<* ASSERT Node.Length( level_above_arglist ) > 0 *>
+			WHILE level_above_arglist # NIL DO
+				<* ASSERT level_above_arglist^.cur # NIL *>
+				children_at_arglist_level := level_above_arglist^.cur^.children ;
+				WHILE children_at_arglist_level # NIL DO
+					<* ASSERT children_at_arglist_level # NIL *>
+					IF children_at_arglist_level^.cur = argslist^.cur THEN
+						nextchild_below_arglist := children_at_arglist_level^.next ;
+						Node.DeleteFromList( children_at_arglist_level ) ;
+						children_at_arglist_level := nextchild_below_arglist ;
+					ELSE
+						children_at_arglist_level := children_at_arglist_level^.next ;
+					END ;
+				END ;
+				level_above_arglist := level_above_arglist^.next ;
+			END ;
+		END ;
 	END ;
 END DeleteArgWName ;
+
+PROCEDURE CutOffLastListElement( list : TextList.T ) : TextList.T =
+VAR
+	templist : TextList.T := NIL ;
+BEGIN
+	IF TextList.Length( list ) = 0 THEN
+		RETURN list ;
+	ELSIF TextList.Length( list ) = 1 THEN
+		RETURN list.tail ;
+	ELSE
+		templist := list ;
+		WHILE templist.tail.tail # NIL DO
+			templist := templist.tail ;
+		END ;
+		templist.tail := NIL ;
+		RETURN list ;
+	END ;
+END CutOffLastListElement ;
 
 PROCEDURE PrependCodeToProcBlock( root : REF Node.T ; CodeToPrepend : REF Node.T ; ptree_pms : REF PTreeParams ) =
 VAR

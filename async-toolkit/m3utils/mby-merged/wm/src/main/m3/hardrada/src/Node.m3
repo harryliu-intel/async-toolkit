@@ -192,8 +192,26 @@ BEGIN
 	END ;
 END AppendNode ;
 
-(* TODO listB can probably be readonly here. Do that more often *)
 PROCEDURE AppendDList( listA : REF DList ; listB : REF DList ) =
+VAR
+	templistptrA : REF DList := NIL ;
+	templistptrB : REF DList := NIL ;
+	newtemplistptrB : REF DList := NEW( REF DList ) ;
+BEGIN
+	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
+		templistptrA := GoToEnd( listA ) ;
+		templistptrB := GoToBeginning( listB ) ;
+		templistptrA^.next := templistptrB ;
+		templistptrB^.prev := templistptrA ;
+	ELSIF IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
+		listA^.cur := listB^.cur ;
+		listA^.next := listB^.next ;
+		listA^.prev := listB^.prev ;
+	END ;
+END AppendDList ;
+
+(* TODO listB can probably be readonly here. Do that more often *)
+PROCEDURE AppendDListDeep( listA : REF DList ; listB : REF DList ) =
 VAR
 	templistptrA : REF DList := NIL ;
 	templistptrB : REF DList := NIL ;
@@ -208,7 +226,7 @@ BEGIN
 	ELSIF IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
 		DeepCopyDList( listA , listB ) ;
 	END ;
-END AppendDList ;
+END AppendDListDeep ;
 
 PROCEDURE PrependNode( list : REF DList ; NodeToAppend : REF T ) =
 VAR

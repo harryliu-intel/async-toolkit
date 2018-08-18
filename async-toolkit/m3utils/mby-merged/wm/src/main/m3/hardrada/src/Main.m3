@@ -25,6 +25,7 @@ VAR deeper_start_node := NEW( REF Node.T ) ;
 
 VAR ptree_pms := NEW( REF Spec.PTreeParams ) ;
 VAR spec_pms := NEW( REF Spec.SpecParams ) ;
+VAR style_rules : REF ARRAY OF Spec.StyleRule := NIL ;
 
 BEGIN
 
@@ -304,7 +305,6 @@ ptree_pms^.ArgSeparator := ";" ;
 ptree_pms^.PathToProcedureBlock := TextList.Cons( "Block.Rule1" , NIL ) ;
 ptree_pms^.PathToProcedureName := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
 ptree_pms^.PathToArgList := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Signature.Rule1" , TextList.Cons( "Formals.Rule1" , NIL ) ) ) ;
-ptree_pms^.PathToArgFromArgList := TextList.Cons( "Formal.Rule1" , NIL ) ;
 ptree_pms^.PathToArgNameFromArg := TextList.Cons( "IdList.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
 
 spec_pms^.specblock := inline_root ;
@@ -319,6 +319,19 @@ TRY
 EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
+
+
+style_rules := NEW( REF ARRAY OF Spec.StyleRule , 3 ) ;
+style_rules[ FIRST( style_rules^ ) ] := Spec.StyleRule{ "Decl.Rule5" , 4 , "\n" };
+style_rules[ FIRST( style_rules^ ) + 1 ] := Spec.StyleRule{ "S" , 1 , "\n" };
+style_rules[ FIRST( style_rules^ ) + 2 ] := Spec.StyleRule{ "Moduel.Rule1" , 2 , "\n" };
+
+TRY
+	Spec.GenCode( root , style_rules , "./test_out.m3" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Invalid output fname\n" ) ;
+	| Spec.OutError => IO.Put( "Problem writing to outfile\n" ) ;
 END ;
 
 END ;

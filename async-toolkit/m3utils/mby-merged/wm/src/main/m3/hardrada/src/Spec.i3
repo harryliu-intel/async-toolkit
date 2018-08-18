@@ -17,13 +17,13 @@ EXCEPTION OutError ;
 (* Types *)
 (*********)
 
+(* Args and separators are the immediate children of ArgList *)
 TYPE PTreeParams = RECORD
 	ProcedureDefnVal : TEXT := "" ;
 	ArgSeparator : TEXT := "" ;
 	PathToProcedureBlock : TextList.T := NIL ;
 	PathToProcedureName : TextList.T := NIL ;
 	PathToArgList : TextList.T := NIL ;
-	PathToArgFromArgList : TextList.T := NIL ;
 	PathToArgNameFromArg : TextList.T := NIL ;
 END ;
 
@@ -32,6 +32,12 @@ TYPE SpecParams = RECORD
 	static_args : TextList.T := NIL ;
 	procname : TEXT := "" ;
 	procdefnumber : CARDINAL := 0 ;
+END ;
+
+TYPE StyleRule = RECORD
+	Grule : TEXT := "" ;
+	Index : CARDINAL := 0 ;
+	TextToPrintAfter : TEXT := "" ;
 END ;
 
 (**************)
@@ -60,7 +66,7 @@ PROCEDURE Specialize( root : REF Node.T ; spec_pms : REF SpecParams ; ptree_pms 
 Raise InvalidFname if unable to write to file because of permissions,
 directories not existing, or file already existing.
 *)
-(* PROCEDURE GenCode( root : REF Node.T ; out_fname : Pathname.T ) RAISES { InvalidFname } ; *)
+PROCEDURE GenCode( root : REF Node.T ; style_rules_array : REF ARRAY OF StyleRule ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } ;
 
 (* DebugTree
 - root :: the starting node of the parse tree

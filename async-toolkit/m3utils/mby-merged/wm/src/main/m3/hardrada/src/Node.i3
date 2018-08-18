@@ -59,6 +59,8 @@ PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) ;
 
 PROCEDURE AppendDList( listA : REF DList ; listB : REF DList ) ;
 
+PROCEDURE AppendDListDeep( listA : REF DList ; listB : REF DList ) ;
+
 PROCEDURE PrependNode( list : REF DList ; NodeToAppend : REF T ) ;
 
 PROCEDURE PrependDList( listA : REF DList ; listB : REF DList ) ;
