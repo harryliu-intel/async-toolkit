@@ -130,7 +130,7 @@ deeper_start_node^.val := "S" ;
 deeper_start_node^.cat := Node.Category.NonTerminal ;
 deeper_start_node^.children := NEW( REF Node.DList ) ;
 Node.AppendNode( deeper_block_node^.children , deeper_start_node ) ;
-Node.AppendNode( deeper_block_node^.children , NEW( REF Node.T , val := "END" , cat := Node.Category.Identifier , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( deeper_block_node^.children , NEW( REF Node.T , val := "END" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 
 current_node := NEW( REF Node.T ) ;
 current_node^.val := "Stmt.Rule6" ;

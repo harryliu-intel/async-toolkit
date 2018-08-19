@@ -168,7 +168,7 @@ BEGIN
 		tlist_to_return := NIL ;
 		child_len := Node.Length( root^.children ) ;
 		index := 0 ;
-		temp_child := root^.children ;
+		temp_child := Node.GoToBeginning( root^.children ) ;
 		WHILE temp_child # NIL DO
 			endchar := "" ;
 			IF NOT srules_tbl.get( root^.val , mynextchartbl ) OR NOT mynextchartbl.get( Fmt.Int( index ) , endchar ) THEN
@@ -188,6 +188,19 @@ BEGIN
 		RETURN tlist_to_return ;
 	END ;
 END GetTokenList ;
+
+PROCEDURE DebugTextList( tlist : TextList.T ) =
+BEGIN
+	IF tlist = NIL THEN
+		IO.Put( "( Empty )\n" ) ;
+	ELSE
+		WHILE tlist.tail # NIL DO
+			IO.Put( tlist.head & " -> " ) ;
+			tlist := tlist.tail ;
+		END ;
+		IO.Put( tlist.head & "\n" ) ;
+	END ;
+END DebugTextList ;
 
 (* Follow a path and return all the nodes at the end of it *)
 (* Assumptions:

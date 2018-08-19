@@ -306,6 +306,7 @@ BEGIN
 		WHILE list^.next # NIL DO
 			IO.Put( list^.cur^.val ) ;
 			IO.Put( "->" ) ;
+			list := list^.next ;
 		END ;
 		IO.Put( list^.cur^.val ) ;
 		IO.Put( "\n" ) ;
