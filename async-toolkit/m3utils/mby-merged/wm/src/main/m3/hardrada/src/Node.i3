@@ -1,5 +1,11 @@
 INTERFACE Node ;
 
+(**************)
+(* Exceptions *)
+(**************)
+
+EXCEPTION NoMatchException ;
+
 (*********)
 (* Types *)
 (*********)
@@ -19,6 +25,8 @@ TYPE T = RECORD
 	(* An array of the node's child nodes, or the
 	nodes to which our current node connects in
 	the tree. *)
+	(* Note: By convention, terminals have NIL
+	children, NOT empty lists for children. *)
 	children : REF DList := NIL ;
 END ;
 
@@ -41,6 +49,11 @@ PROCEDURE Equal( NodeA , NodeB : T ) : BOOLEAN ;
 PROCEDURE DeepCopy( NewNode : REF T ; CurrentNode : REF T ) ;
 
 PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEXT ) ;
+
+(* Returns the actual parent node and NOT a deep copy. *)
+(* If root matches childnode, returns NIL. Otherwise, returns reference to parent node.
+Throws NoMatchException is it cannot find childnode. *)
+PROCEDURE GetParent( root : REF T ; childnode : REF T ) : REF T RAISES { NoMatchException } ;
 
 (* DList *)
 PROCEDURE IsEmpty( list : REF DList ) : BOOLEAN ;

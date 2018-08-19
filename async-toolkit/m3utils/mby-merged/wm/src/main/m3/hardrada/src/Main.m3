@@ -302,8 +302,24 @@ Node.AppendNode( current_node2^.children , NEW( REF Node.T , val := "8" , cat :=
 Node.AppendNode( current_node^.children , current_node2 ) ;
 Node.AppendNode( inline_root^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 
+(* TODO At some point you need error checking. What if I put in a
+grammar rule that doesn't exist *)
+EVAL nextchar1.put( four , newline1 ) ;
+EVAL style_rules.put( declrule5 , nextchar1 ) ;
+EVAL nextchar2.put( one , newline2 ) ;
+EVAL style_rules.put( my_S , nextchar2 ) ;
+EVAL nextchar3.put( two , newline3 ) ;
+EVAL style_rules.put( modulerule1 , nextchar3 ) ;
+
 TRY
 	Spec.DebugTree( root , "./test" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
+	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
+
+TRY
+	Spec.GenCode( root , style_rules , "./test.m3" ) ;
 EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
@@ -336,16 +352,6 @@ EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
-
-
-(* TODO At some point you need error checking. What if I put in a
-grammar rule that doesn't exist *)
-EVAL nextchar1.put( four , newline1 ) ;
-EVAL style_rules.put( declrule5 , nextchar1 ) ;
-EVAL nextchar2.put( one , newline2 ) ;
-EVAL style_rules.put( my_S , nextchar2 ) ;
-EVAL nextchar3.put( two , newline3 ) ;
-EVAL style_rules.put( modulerule1 , nextchar3 ) ;
 
 TRY
 	Spec.GenCode( root , style_rules , "./test_out.m3" ) ;

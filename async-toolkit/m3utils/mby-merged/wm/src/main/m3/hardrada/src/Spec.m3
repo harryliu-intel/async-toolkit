@@ -43,9 +43,16 @@ IMPORT Fmt ;
 (* 	RETURN root ; *)
 (* END Parse ; *)
 
+(* Deep copy of procedure defn. Specialize the copy and then append it
+just after the original defn. This way, it will work for languages like
+Python and C in which functions are defined in order, which lets you
+call the original function and other functions from the residual function in the inlined
+code. It is the user's responsibility to order their residual functions properly
+to ensure that they call one from the other. *)
 PROCEDURE Specialize( root : REF Node.T ; spec_pms : REF SpecParams ; ptree_pms : REF PTreeParams ) =
 VAR
 	procdef : REF Node.T := NIL ;
+	spec_procdef := NEW( REF Node.T ) ;
 	my_static_args : TextList.T := NIL ;
 BEGIN
 	<* ASSERT root # NIL *>
@@ -57,12 +64,14 @@ BEGIN
 	(* TODO You should be asserting that more ptree_pms are not nil. *)
 	procdef := GetNthProcDef( root , ptree_pms , spec_pms^.procname , spec_pms^.procdefnumber ) ;
 	<* ASSERT procdef # NIL *>
+	Node.DeepCopy( spec_procdef , procdef ) ;
 	my_static_args := spec_pms^.static_args ;
 	WHILE my_static_args # NIL DO
-		DeleteArgWName( procdef , ptree_pms , my_static_args.head ) ;
+		DeleteArgWName( spec_procdef , ptree_pms , my_static_args.head ) ;
 		my_static_args := my_static_args.tail ;
 	END ;
-	PrependCodeToProcBlock( procdef , spec_pms^.specblock , ptree_pms ) ;
+	PrependCodeToProcBlock( spec_procdef , spec_pms^.specblock , ptree_pms ) ;
+	AddNewProcedure( root , spec_procdef , ptree_pms ) ;
 END Specialize ;
 
 PROCEDURE GenCode( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } =
@@ -150,6 +159,42 @@ END DebugTree ;
 (*********************)
 
 (* TODO Organize and document these *)
+
+PROCEDURE AddNewProcedure( root : REF Node.T ; newprocdef : REF Node.T ; ptree_pms : REF PTreeParams ) =
+VAR
+	all_proc_defs_raw := NEW( REF Node.DList ) ;
+	last_proc_def : REF Node.T := NIL ;
+	parent_of_last_proc_def : REF Node.T := NIL ;
+	temp_child : REF Node.DList := NIL ;
+	nextchild : REF Node.DList := NIL ;
+BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT newprocdef # NIL *>
+	<* ASSERT newprocdef^.val = ptree_pms^.ProcedureDefnVal *>
+	(* Get all the procedure defs *)
+	Node.FindAllNonterms( all_proc_defs_raw , root , ptree_pms^.ProcedureDefnVal ) ;
+	(* Find the last one *)
+	last_proc_def := Node.GoToEnd( all_proc_defs_raw )^.cur ;
+	(* Get their parent *)
+	TRY
+		parent_of_last_proc_def := Node.GetParent( root , last_proc_def ) ;
+		<* ASSERT parent_of_last_proc_def # NIL *>
+	EXCEPT
+		| Node.NoMatchException => <* ASSERT FALSE *>
+	END ;
+	(* Add him in the children's list afterward *)
+	temp_child := parent_of_last_proc_def^.children ;
+	WHILE temp_child # NIL DO
+		IF temp_child^.cur = last_proc_def THEN
+			nextchild := temp_child^.next ;
+			temp_child^.next := NEW( REF Node.DList ) ;
+			temp_child^.next^.cur := newprocdef ;
+			temp_child^.next^.prev := temp_child ;
+			temp_child^.next^.next := nextchild ;
+		END ;
+		temp_child := temp_child^.next ;
+	END ;
+END AddNewProcedure ;
 
 PROCEDURE GetTokenList( root : REF Node.T ; srules_tbl : StyleRulesTbl.Default ) : TextList.T =
 VAR

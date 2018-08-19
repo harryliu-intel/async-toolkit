@@ -33,6 +33,8 @@ BEGIN
 	DeepCopyDList( NewNode^.children , CurrentNode^.children ) ;
 END DeepCopy ;
 
+(* TODO Probably good to generalize this function so it can work for GetParent as
+well. *)
 PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEXT ) =
 VAR
 	current_child : REF DList := NIL ;
@@ -58,6 +60,37 @@ BEGIN
 		END ;
 	END ;
 END FindAllNonterms ;
+
+(* TODO Assumes node only has one parent. Write the function later
+to check if the tree is valid and assert this at the start. *)
+PROCEDURE GetParent( root : REF T ; childnode : REF T ) : REF T RAISES { NoMatchException } =
+VAR
+	rootchild : REF DList := NIL ;
+	tempparent : REF T := NIL ;
+BEGIN
+	<* ASSERT childnode # NIL *>
+	IF root = NIL THEN
+		RAISE NoMatchException ;
+	ELSIF root = childnode THEN
+		RETURN NIL ;
+	ELSE
+		rootchild := root^.children ;
+		(* TODO Assert to make sure it's not empty and is NIL if it should be? *)
+		WHILE rootchild # NIL DO
+			TRY
+				tempparent := GetParent( rootchild^.cur , childnode ) ;
+				IF tempparent = NIL THEN
+					RETURN root ;
+				ELSE
+					RETURN tempparent ;
+				END ;
+			EXCEPT
+				| NoMatchException => rootchild := rootchild^.next ;
+			END ;
+		END ;
+		RAISE NoMatchException ;
+	END ;
+END GetParent ;
 
 (* DList *)
 
