@@ -22,6 +22,12 @@ SchemeStubs("M3Support")
 SchemeStubs("Wx")
 SchemeStubs("WxToWr")
 SchemeStubs("TextTopoSort")
+SchemeStubs("TextSeq")
+SchemeStubs("Text") 
+SchemeStubs("TextUtils") 
+SchemeStubs("TextSet") 
+SchemeStubs("TextRefTbl") 
+SchemeStubs("TextList") 
 
 ExportSchemeStubs("structgen") % export OUR scheme stubs
 

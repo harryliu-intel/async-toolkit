@@ -63,6 +63,8 @@ MBYLIB=$(MBY_BUILD_ROOT)/$(OS_TARG)/libmby.a
 MODEL_SERVER_ROOT=model_server
 MODEL_SERVER_TARGDIR=$(MODEL_SERVER_ROOT)/$(OS_TARG)
 MODEL_SERVER=$(MODEL_SERVER_TARGDIR)/modelserver
+META_STRUCTS=$(MODEL_SERVER_ROOT)/src/mby_struct/$(OS_TARG)/libmby_struct.a
+INTERLANG=$(MODEL_SERVER_ROOT)/src/interlang.scm
 
 HLP_TOP_RDL=/p/hlp/hlp_release/drops/hlp-DROP_1P2-17ww50d/src/srdl/hlp_top_map.rdl
 HLP_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/hlp
@@ -112,14 +114,21 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 	mkdir -p $(dir $@)
 	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
 	rm -rf $(SCALA_IMPLICITS)
-	echo "package switch_wm.model_server" > $(SCALA_IMPLICITS)
+	echo "package com.intel.cg.hpfd.madisonbay.wm.server.dto" > $(SCALA_IMPLICITS)
 	echo "import java.io._" >> $(SCALA_IMPLICITS)
 	echo "object Implicits {" >> $(SCALA_IMPLICITS)
 	grep -h implicit $(WM_NET_ROOT)/scala_generated/* >> $(SCALA_IMPLICITS)
 	echo "}" >> $(SCALA_IMPLICITS)
 
+$(META_STRUCTS): $(STRUCTGEN) $(INTERLANG)
+	mkdir -p $(MODEL_SERVER_ROOT)/src/mby_struct/src
+	mkdir -p $(MODEL_SERVER_ROOT)/src/wm_meta_common/src
+	pwd
+	cd $(MODEL_SERVER_ROOT)/src && ../../structgen/$(OS_TARG)/structgen interlang.scm exit
+	cd $(MODEL_SERVER_ROOT)/src/wm_meta_common/src && $(CM3) -x
+	cd $(MODEL_SERVER_ROOT)/src/mby_struct/src && $(CM3) -x 
 
-rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS)
+rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS) $(META_STRUCTS)
 
 MBY_POSTPROC = work/mby_postproc.rdl
 $(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
@@ -129,7 +138,7 @@ $(MBY_POSTPROC): $(MBY_TOP_RDL) $(wildcard $(dir $(MBY_TOP_RDL))/*.rdl)
 	export PERL5LIB=$(dir $<).. && cat work/i2.rdl | perl > $@
 
 
-$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS)
+$(MBYLIB): $(MBY_POSTPROC) $(GENVIEWS) rpc_structs
 	mkdir -p $(MBY_BUILD_ROOT)/src
 	$(GENVIEWS_TARGDIR)/genviews -L m3 -top mby_top_map -o $(MBY_BUILD_ROOT)/src < $<
 	cp $(GENVIEWS_ROOT)/src/boilerplate/m3overrides $(MBY_BUILD_ROOT)/src
@@ -181,6 +190,8 @@ clean:
 	rm -rf $(GENVIEWS_TARGDIR)
 	rm -rf $(GENVIEWS_ROOT)/src/build
 	rm -rf $(GENVIEWS_ROOT)/src/work
+	rm -rf $(MODEL_SERVER_ROOT)/src/mby_struct
+	rm -rf $(MODEL_SERVER_ROOT)/src/wm_meta_common
 	rm -rf $(WM_NET_ROOT)/scala_generated
 	find . -name $(OS_TARG) | xargs rm -rf 
 	find ../c -name $(OS_TARG) | xargs rm -rf 

@@ -1,6 +1,6 @@
 package com.intel.cg.hpfd.csr
 
-import com.intel.cg.hpfd.csr.PrimitiveTypes.U64
+import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
 
 import scala.collection._
 

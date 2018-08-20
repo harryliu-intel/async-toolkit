@@ -578,11 +578,11 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package com.intel.cg.hpfd.csr.generated\n");
-    gs.main("import com.intel.cg.hpfd.csr.Memory._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
     gs.main("import com.intel.cg.hpfd.csr.RdlRegister\n");
     gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
-    gs.main("import com.intel.cg.hpfd.csr.Memory.ImplicitConversions._\n");
-    gs.main("import com.intel.cg.hpfd.csr.PrimitiveTypes._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("class %s(parent : RdlHierarchy) extends RdlRegister[%s.Underlying](parent) {\n", myTn, myTn);
     FOR i := 0 TO r.fields.size()-1 DO
@@ -657,9 +657,9 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package com.intel.cg.hpfd.csr.generated\n");
-    gs.main("import com.intel.cg.hpfd.csr.Memory._\n");
-    gs.main("import com.intel.cg.hpfd.csr.Memory.ImplicitConversions._\n");
-    gs.main("import com.intel.cg.hpfd.csr.PrimitiveTypes._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
     gs.main("import com.intel.cg.hpfd.csr.DegenerateHierarchy\n");
     gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
     gs.main("import com.intel.cg.hpfd.csr.RdlRegisterFile\n");
@@ -705,9 +705,9 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package com.intel.cg.hpfd.csr.generated\n");
-    gs.main("import com.intel.cg.hpfd.csr.Memory._\n");
-    gs.main("import com.intel.cg.hpfd.csr.Memory.ImplicitConversions._\n");
-    gs.main("import com.intel.cg.hpfd.csr.PrimitiveTypes._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
+    gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
     gs.main("import com.intel.cg.hpfd.csr.DegenerateIndexedSeq\n");
     gs.main("import com.intel.cg.hpfd.csr.RdlAddressMap\n");
     gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");

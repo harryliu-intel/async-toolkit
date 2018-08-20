@@ -1,12 +1,12 @@
-package src.main.scala
+package com.intel.cg.hpfd.madisonbay
 
 import java.util.TreeMap
 
-import scala.collection.immutable.SortedMap
-import scala.collection.JavaConverters._
-import collection.breakOut
+import com.intel.cg.hpfd.madisonbay.Memory._
 
-import com.intel.cg.hpfd.csr.Memory._
+import scala.collection.JavaConverters._
+import scala.collection.breakOut
+import scala.collection.immutable.SortedMap
 
 
 case class AddressOverlap(first: AddressRange, second: AddressRange) extends Exception
@@ -29,12 +29,11 @@ class AddressGuard {
 
   def +=(tup: (AddressRange, RdlName)): this.type = this += (tup._1, tup._2)
 
-  def length: Int = map.size()
-
   def pos: Address = map.firstKey.pos
   def lim: Address = map.lastKey.lim
   def width: Bits = lim - pos
   def range = AddressRange(pos, lim)
+  def length: Int = ???
 
   /** Converts to a plain address map. */
   def toAddrMap: SortedMap[Address, RdlName] = map.asScala.map(x => (x._1.pos, x._2))(breakOut)

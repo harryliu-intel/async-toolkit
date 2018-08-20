@@ -1,42 +1,64 @@
-import sbt.Keys.{managedSourceDirectories, unmanagedSourceDirectories}
-import sbt.file
 
-def makeWmServerCode: Seq[File] = {
-  import sys.process._
-  println("Generating WM server from Scheme")
-  val m3dir = new File("src/main/m3")
-  val result : Int = "make -C src/main/m3 rpc_structs".!
-  require(result == 0, "Scheme-based generation step failed")
-  val pf = (m3dir / "wm_net" / "scala_generated") ** "*.scala"
-  pf.get.map(x => new File(x.getCanonicalPath))
-}
+// to break current task with C-c
+cancelable in sbt.Global := true
 
 lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar")
 
-lazy val csr = project in file("csr")
+lazy val common = (project in file("common"))
+  .settings(
+    Settings.commonSettings,
+    libraryDependencies ++= Dependencies.commonDeps
+  )
+
+lazy val csrMacros = (project in file("csr-macros"))
+  .dependsOn(common)
+  .settings(
+    Settings.commonSettings,
+    name := "csr-macros",
+    libraryDependencies ++= Dependencies.csrMacrosDeps,
+    addCompilerPlugin(Dependencies.scalaMacros),
+    autoCompilerPlugins := true
+  )
+
+lazy val csr = (project in file("csr"))
+  .enablePlugins(CsrCodeGeneration)
+  .dependsOn(csrMacros)
+  .settings(
+    Settings.commonSettings,
+    name := "csr-model"
+  )
+
+lazy val wmServerDto = (project in file("wm-server-dto"))
+  .enablePlugins(DtoCodeGeneration)
+  .dependsOn(common)
+  .settings(
+    Settings.commonSettings,
+    name := "wm-server-dto"
+  )
 
 lazy val root = (project in file("."))
+  .dependsOn(common, csrMacros)
   .settings(
     Settings.commonSettings,
     name := "wm",
     libraryDependencies ++= Dependencies.whiteModelDeps,
-    managedSourceDirectories in Compile += file("src/main/m3/wm_net/scala_generated"),
-    unmanagedSourceDirectories in Compile += file(s"${baseDirectory.value}/src/main/m3/wm_net/scala_src"),
     mainClass in Compile := Some("switch_wm.WhiteModelServer"),
     mainClass in assembly := Some("switch_wm.WhiteModelServer"),
-    assemblyOutputPath in assembly := path,
-    sourceGenerators in Compile += Def.task { makeWmServerCode }.taskValue
+    assemblyOutputPath in assembly := path
   )
 
 val buildOnNhdk = taskKey[Unit]("Build task for nhdk environment.")
 buildOnNhdk := Def.sequential(
   clean in csr,
+  clean in wmServerDto,
   clean in root,
   publishLocal in csr,
+  publishLocal in wmServerDto,
   update in root,
   compile in Compile in root,
   doc in Compile in root,
   assembly in root,
   publish in root,
-  publish in csr
+  publish in csr,
+  publish in wmServerDto
 ).value

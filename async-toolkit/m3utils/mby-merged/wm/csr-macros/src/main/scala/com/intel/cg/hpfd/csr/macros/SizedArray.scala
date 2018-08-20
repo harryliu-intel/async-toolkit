@@ -1,13 +1,11 @@
-package src.main.scala
+package com.intel.cg.hpfd.csr.macros
 
 import scala.reflect.ClassTag
 import scala.language.experimental.macros
 import scala.reflect.api.Trees
 import scala.reflect.macros.whitebox.Context
-
 import shapeless._
 import syntax.singleton._
-
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto._

@@ -1,10 +1,11 @@
 package switch_wm
-import switch_wm.model_server.Implicits._
+import com.intel.cg.hpfd.madisonbay.wm.server.dto._
+import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import java.io._
+
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
-import switch_wm.model_server._
-import switch_wm.PrimitiveTypes.U64
+import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
 
 object WhiteModelServer {
   val legacyProtocol = false

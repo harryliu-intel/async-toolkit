@@ -9,7 +9,7 @@
 #include "fm_defs.h"
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
-typedef unsigned int uint;
+//typedef unsigned int uint;
 #define NULL ((void *)0)
 
 // Defines:
