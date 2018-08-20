@@ -71,7 +71,16 @@ class mby_mc_env_cfg extends shdv_base_config;
     // AXI data bus width.
     int axi_data_width;
 
+    // Variable: ahb_bfm_cfg
+    // SVT AHB BFM config object.
+    svt_ahb_bfm_pkg::cust_svt_ahb_system_configuration  ahb_bfm_cfg;
 
+    int ahb_num_mst;
+    int	ahb_num_slv;
+    int ahb_dw;
+    bit	is_active;
+
+   
     `uvm_object_utils_begin(mby_mc_env_cfg)
         `uvm_field_object(axi_bfm_cfg,                                           UVM_DEFAULT)
         `uvm_field_int(axi_num_masters,                                          UVM_DEFAULT)
@@ -91,6 +100,8 @@ class mby_mc_env_cfg extends shdv_base_config;
     function new( string name = "mby_mc_env_cfg");
         super.new(name);
         axi_bfm_cfg = svt_axi_bfm_pkg::cust_svt_axi_system_configuration::type_id::create("axi_bfm_cfg");
+        ahb_bfm_cfg = svt_ahb_bfm_pkg::cust_svt_ahb_system_configuration::type_id::create("ahb_bfm_cfg");
+        
     endfunction: new
 
     //---------------------------------------------------------------------------

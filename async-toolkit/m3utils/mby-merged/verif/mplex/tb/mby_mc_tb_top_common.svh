@@ -79,6 +79,15 @@ shdv_base_tb_intf shdv_intf();
 assign   shdv_intf.ref_clk   = mc_tb_if.clk;
 assign   shdv_intf.ref_rst   = mc_tb_if.hard_reset;
 
+svt_ahb_if ahb_if();
+assign ahb_if.hclk = fabric_clk;
+   
+ahb_reset_if ahb_reset_if();
+assign ahb_reset_if.clk =  mc_tb_if.clk;
+assign ahb_reset_if.resetn = ~mc_tb_if.hard_reset;
+   
+assign ahb_if.hresetn = ahb_reset_if.resetn;
+   
 // VIP interface representing the AXI system.
 svt_axi_if axi_if();
 assign axi_if.common_aclk = mc_tb_if.clk;

@@ -1,0 +1,8 @@
+interface ahb_reset_if();
+
+  logic resetn;
+  logic clk;
+
+  modport ahb_reset_modport (input clk, output resetn);
+
+endinterface

@@ -58,6 +58,11 @@ class mby_mc_env extends shdv_base_env;
     // SVT_AXI BFM Environment objects
     svt_axi_bfm_pkg::svt_axi_bfm_env                        axi_bfm;
 
+    // Variable: ahb_bfm
+    // SVT AHB BFM Environment object
+    svt_ahb_bfm_pkg::ahb_bfm_env                            ahb_bfm;
+    virtual    svt_ahb_if                                   ahb_if;
+
 
     `uvm_component_utils_begin(mby_mc_env)
         `uvm_field_object  (tb_cfg,                          UVM_ALL_ON)
@@ -131,7 +136,7 @@ class mby_mc_env extends shdv_base_env;
 
         //Build BFMs and push down knobs
         build_axi_bfm();
-
+        build_ahb_bfm();
     endfunction: build_phase
 
 
@@ -148,9 +153,24 @@ class mby_mc_env extends shdv_base_env;
                 tb_cfg.env_cfg.axi_data_width),UVM_HIGH)
 
         axi_bfm.setup_bfm(tb_cfg.env_cfg.axi_num_masters, tb_cfg.env_cfg.axi_num_slaves,tb_cfg.env_cfg.axi_data_width);
-
+        axi_bfm.set_report_verbosity_level_hier(UVM_NONE);
     endfunction: build_axi_bfm
 
+    //---------------------------------------------------------------------------
+    //  Function: build_ahb_bfm
+    //  Build and configure AHB Slave BFMs.
+    //---------------------------------------------------------------------------
+    function void build_ahb_bfm();
+
+        ahb_bfm = svt_ahb_bfm_pkg::ahb_bfm_env::type_id::create("ahb_bfm", this);
+        if (!uvm_config_db#(virtual svt_ahb_if)::get(this, "", "ahb_if", ahb_if)) begin
+	   `uvm_fatal(get_name(),"Config_DB.get() for AHB BFM interface was not successful!")
+        end
+        ahb_bfm.set_vif(ahb_if);
+        ahb_bfm.cfg = tb_cfg.env_cfg.ahb_bfm_cfg;
+        ahb_bfm.cfg.setup_ahb(tb_cfg.env_cfg.ahb_num_mst, tb_cfg.env_cfg.ahb_num_slv, tb_cfg.env_cfg.is_active, tb_cfg.env_cfg.ahb_dw);
+        ahb_bfm.set_report_verbosity_level_hier(UVM_NONE);
+    endfunction: build_ahb_bfm
     //---------------------------------------------------------------------------
     //  Function: connect_phase
     //  Connects different BFM interfaces and Scoreboard
@@ -177,6 +197,7 @@ class mby_mc_env extends shdv_base_env;
         ral_randomize();
         if (_level == SLA_TOP) begin
         end
+        
     endfunction: end_of_elaboration_phase
 
     //---------------------------------------------------------------------------
