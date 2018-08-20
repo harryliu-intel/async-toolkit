@@ -18,7 +18,10 @@ void Pipeline
     mbyHashToNextHop      hsh2nxt;
     mbyNextHopToMaskGen   nxt2msk;
     mbyMaskGenToTriggers  msk2trg;
-
+    // ... gap ...
+    mbyPolicerToRxStats   pol2rxs;
+    mbyRxStatsToModifier  rxs2mod;
+    
     // pipeline stages:
 
     Parser     (regs,  mac2par, &par2map);
@@ -32,4 +35,6 @@ void Pipeline
     NextHop    (regs, &hsh2nxt, &nxt2msk);
 
     MaskGen    (regs, &nxt2msk, &msk2trg);
+
+    RxStats    (regs, &pol2rxs, &rxs2mod);
 }

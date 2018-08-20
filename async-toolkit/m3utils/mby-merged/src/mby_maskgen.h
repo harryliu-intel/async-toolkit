@@ -364,7 +364,6 @@
 
 #define MBY_DEFAULT_DMASK        0xFFFFFF
 #define MBY_AMASK_WIDTH          38
-#define MBY_FABRIC_LOG_PORTS     24
 
 // Enums:
 
