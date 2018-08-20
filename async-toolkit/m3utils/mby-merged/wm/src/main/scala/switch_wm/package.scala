@@ -1,3 +1,5 @@
+import java.io.{DataInput, DataInputStream, FileInputStream, FileReader}
+
 /** Implement an executable spec for the Madison Bay 25 Terabit Switch Product
   *
   * ==Overview==
@@ -14,6 +16,79 @@
 package object switch_wm {
   case class Packet(bytes : Array[Byte]) {
 
+  }
+
+  /**
+    * Bring in a PCAP file's contents as packets
+    *
+    * @see https://wiki.wireshark.org/Development/LibpcapFileFormat
+    * @param f
+    * @return
+    */
+  def loadPcap(f : java.io.File) : Seq[Packet] = {
+    def reverse(s : Short) : Short = {
+      (((s >> 8) & 0xff) | (s << 8)).toShort
+    }
+    def reverseI(i : Int) : Int = {
+        ((i >> 24) & 0xff) |
+        ((i >> 8) & 0xff00) |
+        ((i << 8) & 0x00ff0000) |
+        ((i << 24) & 0xff000000)
+    }
+
+    case class pcap_hdr_s (
+      val reverse : Boolean,   /* magic number */
+      val version_major : Short,  /* major version number */
+      val version_minor : Short,  /* minor version number */
+      val  thiszone : Int,       /* GMT to local correction */
+      val sigfigs : Int,        /* accuracy of timestamps */
+      val snaplen : Int,        /* max length of captured packets, in octets */
+      val network : Int        /* data link type */
+                     ) {
+    }
+    object pcap_hdr_s {
+      def apply(is : DataInputStream) : pcap_hdr_s = {
+        val magic_number = is.readInt()
+        val rev = magic_number match {
+          case 0xa1b2c3d4 => false
+          case 0xd4c3b2a1 => true
+          case _ => { assert (false, s"Totally invalid magic number ${magic_number.toHexString}") ; false }
+        }
+        rev match {
+          case true => new pcap_hdr_s(rev, reverse(is.readShort()), reverse(is.readShort()), reverseI(is.readInt()), reverseI(is.readInt()), reverseI(is.readInt()), reverseI(is.readInt()))
+          case false => new pcap_hdr_s(rev, is.readShort(), is.readShort(), is.readInt(), is.readInt(), is.readInt(), is.readInt())
+        }
+      }
+    }
+
+    case class pcaprec_hdr_s (
+      ts_sec : Int,         /* timestamp seconds */
+      ts_usec : Int,        /* timestamp microseconds */
+      incl_len : Int,       /* number of octets of packet saved in file */
+      orig_len : Int      /* actual length of packet */
+    )
+    object pcaprec_hdr_s {
+      def apply(is : DataInputStream)(implicit main : pcap_hdr_s) : pcaprec_hdr_s = {
+        main.reverse match {
+          case false => new pcaprec_hdr_s (is.readInt (), is.readInt (), is.readInt (), is.readInt () )
+          case true => new pcaprec_hdr_s (reverseI(is.readInt ()), reverseI(is.readInt ()), reverseI(is.readInt ()), reverseI(is.readInt () ))
+        }
+      }
+    }
+
+    val is = new DataInputStream(new FileInputStream(f))
+    implicit val hdr = pcap_hdr_s(is)
+    assert(hdr.version_major == 2, s"Expected version 2, got hdr ${hdr}")
+    assert(hdr.version_minor == 4, s"Expected minor version 4, got hdr ${hdr}")
+    println(f"Reading pcap with hdr: ${hdr}")
+
+    val pkt_hdr = pcaprec_hdr_s(is)
+    println(f"Reading packet with hdr: ${pkt_hdr}")
+    val pktArray = Array.ofDim[Byte](pkt_hdr.incl_len)
+    is.readFully(pktArray)
+    println(s"Read packet of length ${pktArray.length}, captured at ${new java.util.Date(pkt_hdr.ts_sec.toLong * 1000)}")
+    // first incarnation of this just reads the first packet and returns a seq of length 1, need to handle reading many (or 0) packets!
+    Seq(new Packet(pktArray))
   }
 
   /**

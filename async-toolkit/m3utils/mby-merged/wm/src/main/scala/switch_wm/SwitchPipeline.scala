@@ -2,10 +2,13 @@ package switch_wm
 
 import com.intel.cg.hpfd.csr.generated.{mby_ppe_mapper_map, mby_ppe_rx_top_map, mby_top_map}
 
-class PacketHeader {
+class PacketHeader(val bytes : Array[Byte]) {
   val adjustedSegmentLength = 100 // (should be computed)
-  def apply(addr : Int) : Byte = 0
+  def apply(addr : Int) : Byte = bytes(addr)
   def getWord(addr : Int) : Short = ((apply(addr) << 8) | apply(addr)).toShort
+}
+object PacketHeader {
+  def apply( bytes : Array[Byte]) : PacketHeader = new PacketHeader(bytes)
 }
 
 class Metadata(val flags : ppe.PacketFlags, val fields : ppe.PacketFields)
@@ -25,7 +28,7 @@ class Epl extends PipelineStage[Array[Byte], Packet] {
 
 class HeaderExtraction extends PipelineStage[Packet, PacketHeader] {
   val x : (Packet) => PacketHeader = (p) => {
-    new PacketHeader
+    new PacketHeader (p.bytes.slice(0,80))
   }
 }
 

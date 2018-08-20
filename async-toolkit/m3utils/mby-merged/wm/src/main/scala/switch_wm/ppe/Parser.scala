@@ -91,6 +91,7 @@ class Parser(csr : mby_ppe_parser_map) extends PipelineStage[PacketHeader, Parse
     val emptyFlags = PacketFlags()
     val init = (is, emptyFlags, Parser.EmptyProtoOffsets, Option.empty[ParserException])
 
+
     implicit val packetheader = ph
 
     // apply all the parser stages, the packetheader is the same, but pass the other state down the line

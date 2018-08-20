@@ -16,7 +16,7 @@ class ChecksumSpec extends FlatSpec with Matchers {
 
   // https://en.wikipedia.org/wiki/IPv4_header_checksum
   val csumExp2 = Seq(0x45,0x00,0x00,0x73,0x00,0x00,0x40,0x00,0x40,0x11, 0xb8,0x61, 0xc0, 0xa8,0x00, 0x01, 0xc0, 0xa8,0x00,0xc7).map(_.toByte)
-  s"The checksum of ${csumExp1.map(_.hex)}" should s"validate to 0" in {
+  s"The checksum of ${csumExp2.map(_.hex)}" should s"validate to 0" in {
     checksum(csumExp2) shouldEqual 0
   }
 }
