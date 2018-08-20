@@ -12,6 +12,7 @@
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
+#include "mby_rxstats.h"
 
 // Function prototypes:
 
@@ -64,4 +65,12 @@ void MaskGen
     const mbyNextHopToMaskGen   * const in,
           mbyMaskGenToTriggers  * const out
 );
+
+void RxStats
+(
+    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyPolicerToRxStats  * const in,
+          mbyRxStatsToModifier * const out
+);
+
 #endif
