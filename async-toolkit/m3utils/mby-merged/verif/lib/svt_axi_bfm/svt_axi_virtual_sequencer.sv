@@ -64,6 +64,10 @@ class axi_virtual_sequencer extends uvm_sequencer;
 
     `uvm_component_utils(axi_virtual_sequencer)
 
+    // Variable: sequencer
+    // Instance of txrx sequencer
+    svt_axi_system_sequencer sequencer;
+
     function new(string name="axi_virtual_sequencer", uvm_component parent=null);
         super.new(name,parent);
     endfunction // new

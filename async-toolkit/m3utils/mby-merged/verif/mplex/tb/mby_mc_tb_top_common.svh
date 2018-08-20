@@ -79,6 +79,20 @@ shdv_base_tb_intf shdv_intf();
 assign   shdv_intf.ref_clk   = mc_tb_if.clk;
 assign   shdv_intf.ref_rst   = mc_tb_if.hard_reset;
 
+// VIP interface representing the AXI system.
+svt_axi_if axi_if();
+assign axi_if.common_aclk = mc_tb_if.clk;
+
+// AXI env Interface instance to provide access to the reset signal
+axi_reset_if axi_reset_if();
+assign axi_reset_if.clk   = mc_tb_if.clk;
+assign axi_reset_if.reset = mc_tb_if.hard_reset;
+
+//Assign the reset pin from the reset interface to the reset pins from the VIP
+//interface.
+assign axi_if.master_if[0].aresetn = ~axi_reset_if.reset;
+assign axi_if.slave_if[0].aresetn  = ~axi_reset_if.reset;
+
 
 //////////////////////////////////////////////
 // Hierarchy-Based RTL File List Dumping ////

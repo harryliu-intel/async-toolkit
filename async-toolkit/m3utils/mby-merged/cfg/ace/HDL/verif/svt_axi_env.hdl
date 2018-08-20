@@ -25,8 +25,7 @@ $hdl_spec = {
          "$snps_svt_path/include/sverilog/svt.uvm.pkg",
          "$snps_svt_path/include/sverilog/svt_axi.uvm.pkg",
          "$snps_svt_path/include/sverilog/svt_bfm_shell.uvm.pkg",
-
-         #"$snps_svt_path/include/sverilog/svt_axi_if.svi",
+         "$snps_svt_path/include/sverilog/svt_axi_if.svi",
          "verif/lib/svt_axi_bfm/svt_axi_reset_if.sv",
          "verif/lib/svt_axi_bfm/svt_axi_bfm_pkg.sv",
     ],
@@ -38,12 +37,9 @@ $hdl_spec = {
 
          "+define+UVM_DISABLE_AUTO_ITEM_RECORDING",
          "+define+UVM_PACKER_MAX_BYTES=1500000",
-         #"+define+UVM_PACKER_MAX_BYTES=4096",
-         #"+define+UVM_PACKER_MAX_BYTES=16384",
-		 "+define+UVM_NO_DEPRECATED",
+         "+define+UVM_NO_DEPRECATED",
          "+define+SVT_UVM_TECHNOLOGY",
          "+define+SYNOPSYS_SV",
-
          "+define+SVT_EXCLUDE_METHODOLOGY_PKG_INCLUDE",  # Include uvm_macros, but not uvm_pkg
 
          #"+define+SVT_EXCLUDE_METHODOLOGY_PKG",

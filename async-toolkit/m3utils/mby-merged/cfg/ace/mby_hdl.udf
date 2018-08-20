@@ -166,7 +166,7 @@ EOF
             
             mby_mc_ti_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_ti.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'svt_axi_lib' ],
                -tag            => "nonsynth",
             },
             

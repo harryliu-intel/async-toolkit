@@ -56,12 +56,12 @@ class mby_mc_env extends shdv_base_env;
 
     // Variable:  axi_bfm
     // SVT_AXI BFM Environment objects
-    //svt_axi_bfm_pkg::svt_axi_bfm_env                        axi_bfm;
+    svt_axi_bfm_pkg::svt_axi_bfm_env                        axi_bfm;
 
 
     `uvm_component_utils_begin(mby_mc_env)
-        `uvm_field_object       (tb_cfg,                          UVM_ALL_ON)
-       //`uvm_field_object(axi_bfm,                         UVM_DEFAULT)
+        `uvm_field_object  (tb_cfg,                          UVM_ALL_ON)
+        `uvm_field_object  (axi_bfm,                         UVM_DEFAULT)
     `uvm_component_utils_end
 
     //---------------------------------------------------------------------------
@@ -73,19 +73,13 @@ class mby_mc_env extends shdv_base_env;
     //      uvm_component parent - Component parent object.
     //---------------------------------------------------------------------------
     function new(string name = "mby_mc_env", uvm_component parent = null);
-
-        uvm_object tmp_cfg;
         super.new(name, parent);
 
-        if(get_config_object("mby_mc_tb_top_cfg", tmp_cfg)) begin
-            $cast(tb_cfg, tmp_cfg);
-        end
+        ral_type = "mby_mc_env_pkg::mby_mc_ral_env";
 
-        if (tb_cfg == null) begin
-            `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mc_tb_top_cfg object!")
-        end
-
-        ral_type = tb_cfg.get_ral_type();
+        // Set SLA CFG object type
+        // Refer to Saola user guide for info about Saola CFG obj
+        config_type = "mby_mc_tb_top_cfg";
 
     endfunction : new
 
@@ -97,17 +91,34 @@ class mby_mc_env extends shdv_base_env;
     //      phase - uvm_phase object.
     //---------------------------------------------------------------------------
     virtual function void build_phase(uvm_phase phase);
+        uvm_object tmp_cfg;
+
         super.build_phase(phase);
+
+        if(get_config_object("mby_mc_tb_top_cfg", tmp_cfg)) begin
+            $cast(tb_cfg, tmp_cfg);
+        end
+
+        if (tb_cfg == null) begin
+            `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mc_tb_top_cfg object!")
+        end
+
+        `uvm_info (get_full_name , $sformatf("Mplex Top _cfg : %s", tb_cfg.sprint()), UVM_FULL)
 
         if(!uvm_config_db#(string)::get(this, "" , "TI_PATH", tb_cfg.ti_path)) begin
             `uvm_fatal(get_name(),"Config_DB.get() for ENV's TI_PATH was not successful!")
         end
-        `uvm_info(get_full_name(),$sformatf("This EC_Env Build Phase set env_cfg.ti_path = %s", tb_cfg.ti_path),UVM_FULL)
+        `uvm_info(get_full_name(),$sformatf("This Mplex Build Phase set tb_cfg.ti_path = %s", tb_cfg.ti_path),UVM_FULL)
 
         if(!uvm_config_db#(string)::get(this, "" , "RTL_TOP_PATH", tb_cfg.rtl_top_path)) begin
             `uvm_fatal(get_name(),"Config_DB.get() for ENV's RTL_TOP_PATH was not successful!")
         end
-        `uvm_info(get_full_name(),$sformatf("This EC_Env Build Phase set env_cfg.rtl_top_path = %s", tb_cfg.rtl_top_path),UVM_FULL)
+        `uvm_info(get_full_name(),$sformatf("This Mplex Build Phase set tb_cfg.rtl_top_path = %s", tb_cfg.rtl_top_path),UVM_FULL)
+
+        if(!uvm_config_db#(int)::get(this, "", "TOPOLOGY", tb_cfg.topology)) begin
+            `uvm_fatal(get_name(),$sformatf("Unable to acquire valid topology value!!! "))
+        end
+        `uvm_info(get_full_name(),$sformatf("This Mplex Build Phase set tb_cfg.topology = %s", tb_cfg.topology),UVM_FULL)
 
         if(!uvm_config_db#(virtual mby_mc_tb_if)::get(this, "", "mby_mc_tb_if", tb_vif)) begin
             `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
@@ -116,13 +127,28 @@ class mby_mc_env extends shdv_base_env;
         $cast(tb_ral,ral);
         if(tb_ral == null) begin
             `ovm_fatal(get_name(),"Unable to acquire handle to TB RAL!");
-        end 
-        
-        //Build BFMs and push down knobs
-        //axi_bfm =  svt_axi_bfm_pkg::svt_axi_bfm_env::type_id::create("axi_bfm", this);
-        //axi_bfm.set_axi_cfg(tb_cfg.axi_bfm_cfg);
+        end
 
+        //Build BFMs and push down knobs
+        build_axi_bfm();
+        
     endfunction: build_phase
+
+
+    //---------------------------------------------------------------------------
+    //  Function: build_axi_bfm
+    //  Build and configure AXI master and Slave BFMs.
+    //---------------------------------------------------------------------------
+    function void build_axi_bfm();
+
+        axi_bfm =  svt_axi_bfm_pkg::svt_axi_bfm_env::type_id::create("axi_bfm", this);
+        axi_bfm.set_axi_cfg(tb_cfg.env_cfg.axi_bfm_cfg);
+        `uvm_info(get_full_name(),$sformatf("Setting AXI BFM cfg: num_masters =%0d, num_slaves = %0d",
+                tb_cfg.env_cfg.axi_num_masters,tb_cfg.env_cfg.axi_num_slaves),UVM_HIGH)
+        axi_bfm.set_num_masters(tb_cfg.env_cfg.axi_num_masters);
+        axi_bfm.set_num_slaves(tb_cfg.env_cfg.axi_num_slaves);
+
+    endfunction: build_axi_bfm
 
     //---------------------------------------------------------------------------
     //  Function: connect_phase

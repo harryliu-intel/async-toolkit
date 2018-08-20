@@ -108,15 +108,6 @@ class mby_mc_tb_top_cfg extends shdv_base_config;
         dut_cfg = mby_mc_dut_cfg::type_id::create("dut_cfg");
         env_cfg = mby_mc_env_cfg::type_id::create("env_cfg");
 
-        if(!uvm_config_db#(int)::get(null, "uvm_test_top", "TOPOLOGY", topology)) begin
-            `uvm_fatal(get_name(),$sformatf("Unable to acquire valid topology value!!! value = %0d",topology))
-        end
-
-        if (topology == mby_mc_defines::UNK_TOPO) begin
-            `uvm_fatal(get_name(), "Topology value is Unknown!!!");
-        end
-
-
     endfunction: new
 
     //---------------------------------------------------------------------------
