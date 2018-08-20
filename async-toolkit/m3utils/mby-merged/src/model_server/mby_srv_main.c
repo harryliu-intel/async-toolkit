@@ -38,6 +38,7 @@
 #include "mby_srv_socket.h"
 #include "mby_srv_message.h"
 #include "mby_srv_handlers.h"
+#include "mby_srv_nvmimg.h"
 
 #define FM_FDS_POLL_TIMEOUT_USEC            1*1000
 
@@ -63,6 +64,7 @@ static void print_usage(char *cmd)
     printf("    -l                    - Disable all model logging output\n");
     printf("    -r                    - Don't reset chip.\n");
     printf("    -I                    - Don't check and send interrupt messages.\n");
+    printf("    -f <file>             - Load specified NVM image.\n");
     printf("    -o <file>             - Save startup register writes to config file.\n");
     printf("    -d <debug>            - Specify logging level.\n");
     printf("    -v <cat1,cat2>        - Enable logging from selected categories.\n");
@@ -104,6 +106,7 @@ int main(int argc, char *argv[])
     fm_int          i;
     fm_libCfg       libCfg;
     fm_bool         resetChip = TRUE;
+    fm_text         nvmImgFile = NULL;
     fm_int          sendIntr = 1;
     //fm_int          intrStep = INTERRUPT_READ_DELAY;
     fm_socket       serverSocket;
@@ -157,6 +160,11 @@ int main(int argc, char *argv[])
             // TODO Add corresponding init functions for MBY
             // fmModelLibSetLogCat(argv[++i]);
         }
+        else if (!strcmp(argv[i], "-f") && (i+1 < argc))
+        {
+            nvmImgFile = argv[i+1];
+            i++;
+        }
         else
         {
             print_usage(argv[0]);
@@ -188,6 +196,16 @@ int main(int argc, char *argv[])
     else
     {
         printf("Skipping chip reset\n");
+    }
+
+    if (nvmImgFile)
+    {
+		status = loadNvmImg(nvmImgFile);
+		if (status)
+		{
+			FM_LOG_FATAL(FM_LOG_CAT_PLATFORM,
+						 "Unable to load NVM image!\n");
+		}
     }
 
     status = fmInitializeSocketInfoFile();

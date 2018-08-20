@@ -17,6 +17,7 @@ SOURCES += mby_nexthop.c
 SOURCES += mby_maskgen.c
 SOURCES += mby_rxstats.c
 SOURCES += mby_pipeline.c
+SOURCES += mby_reg_ctrl.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
@@ -80,6 +81,7 @@ PIPELINE_STAGES += mby_maskgen.o
 PIPELINE_STAGES += mby_rxstats.o
 
 mby_pipeline.o   : mby_pipeline.c   mby_pipeline.h   $(PIPELINE_STAGES)
+mby_reg_ctrl.o   : mby_reg_ctrl.c   mby_reg_ctrl.h
 mby_model.o      : mby_model.c      mby_model.h		 mby_pipeline.o
 
 %.o: %.c
@@ -110,6 +112,7 @@ MS_OBJECTS += model_server/mby_srv_errno.o
 MS_OBJECTS += model_server/mby_srv_utils.o
 MS_OBJECTS += model_server/mby_srv_message.o
 MS_OBJECTS += model_server/mby_srv_handlers.o
+MS_OBJECTS += model_server/mby_srv_nvmimg.o
 
 # Search libmbymodel.so in the same folder and remember it in the binary (-R)
 MS_FLAGS += -Wl,-R -Wl,. -L.

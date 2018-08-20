@@ -1,3 +1,54 @@
+/* vim:ts=4:sw=4:expandtab
+ * (No tabs, indent level is 4 spaces)  */
+/*****************************************************************************
+ * Copyright (c) 2018, Intel Corporation
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notice,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Intel Corporation nor the names of its contributors
+ *       may be used to endorse or promote products derived from this software
+ *       without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*****************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <time.h>
+#include <unistd.h>
+#include <errno.h>
+#include <ctype.h>
+
+#include "mby_model.h"
+#include "mby_srv_utils.h"
+
+// For MBY_FWD_PORT_CFG_1
+#include <mby_maskgen.h>
+
+#define NVM_HDR_SIZE            0x1000
+#define NVM_MOD_SIZE            (4096*16)
+#define UNDEF_VAL               0xdeadbeef
+
+static FILE* outFp;
+
+static int debug = 5;
 
 static int processChunk(unsigned int modNum, unsigned int chnkNum,
                         uint16_t *chunk, unsigned int chunkLen) {
@@ -34,7 +85,7 @@ static int processChunk(unsigned int modNum, unsigned int chnkNum,
         {
                 fprintf(outFp, "0x%07x 0x%lx\n", addr, val);
         }
-        WriteCSR64(0, addr, val);
+        mbyWriteReg(0, addr, val);
         n += size;
     }
     return numEntries;
@@ -73,7 +124,7 @@ static int processModule(unsigned int modNum, uint16_t *module,
     return numEntries;
 }
 
-static int loadImg(char *filename, fm_uint32 *alBitmask)
+int loadNvmImg(char *filename/*, fm_uint32 *alBitmask*/)
 {
     unsigned int addr;
     time_t start;
@@ -87,6 +138,10 @@ static int loadImg(char *filename, fm_uint32 *alBitmask)
     uint32_t header[NVM_HDR_SIZE/4];
     uint32_t offset, modLen;
     uint16_t module[NVM_MOD_SIZE];
+    fm_uint32       alBitmask[8] = {UNDEF_VAL, UNDEF_VAL, UNDEF_VAL, UNDEF_VAL,
+                                    UNDEF_VAL, UNDEF_VAL, UNDEF_VAL, UNDEF_VAL};
+
+    outFp = stderr;
 
 	if (!filename)
 		return -1;
@@ -94,7 +149,7 @@ static int loadImg(char *filename, fm_uint32 *alBitmask)
     if (strlen(filename) < 1) return 0;
 
     start = time(NULL);
-	printf("Loading file: %s\n", filename);
+	printf("Loading NVM image from file: %s\n", filename);
 	fp = fopen(filename, "r");
 
 	if (!fp) {
@@ -132,11 +187,13 @@ static int loadImg(char *filename, fm_uint32 *alBitmask)
         }
         if (header[0] != 0x4563AABB) {
             /* If text, load text image */
+#if 0
             if (isprint(header[0] & 0xFF)) {
                 fclose(fp);
                 printf("Loading text file: %s\n", filename);
                 return loadTextCfg(filename);
             }
+#endif
             printf("Expect header of 0x4563AABB but got 0x%08x\n", header[0]);
             return -1;
         }
@@ -195,14 +252,15 @@ static int loadImg(char *filename, fm_uint32 *alBitmask)
                 numEntries += num;
             }
         }
+        // TODO see if this applies for MBY at all
         /* Calculate FWD_PORT_CFG_1(cpkPort) */
-        addr = HLP_FWD_PORT_CFG_1(20,0);
+        addr = MBY_FWD_PORT_CFG_1(20,0);
         val = 0x3FFFFFF;
         if (outFp)
         {
                 fprintf(outFp, "0x%07x 0x%lx\n", addr, val);
         }
-        WriteCSR64(0, addr, val);
+        mbyWriteReg(0, addr, val);
 
 	} else {
         printf("Failed to read image header. Got %d bytes\n", len);

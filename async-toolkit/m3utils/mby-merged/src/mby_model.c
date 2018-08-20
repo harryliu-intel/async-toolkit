@@ -3,6 +3,7 @@
 #include "mby_pipeline.h"
 
 #include <string.h>
+#include "mby_reg_ctrl.h"
 
 // This is the persistent state of the model
 static fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE];
@@ -11,7 +12,8 @@ fm_status mbyResetModel(fm_int sw)
 {
     // TODO this function must set the default register values
     FM_NOT_USED(sw);
-    memset(regs, 0, sizeof(regs));
+    for (int i = 0;i < MBY_REGISTER_ARRAY_SIZE;++i)
+        regs[i] = mbyModelGetRegisterDefault(i*4);
     return FM_OK;
 }
 
