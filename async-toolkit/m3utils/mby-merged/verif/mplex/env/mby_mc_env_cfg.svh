@@ -66,12 +66,17 @@ class mby_mc_env_cfg extends shdv_base_config;
     // Variable: axi_num_slaves
     // Number of AXI Slaves .
     int axi_num_slaves;
+    
+    // Variable: axi_data_width
+    // AXI data bus width.
+    int axi_data_width;
 
 
     `uvm_object_utils_begin(mby_mc_env_cfg)
         `uvm_field_object(axi_bfm_cfg,                                           UVM_DEFAULT)
         `uvm_field_int(axi_num_masters,                                          UVM_DEFAULT)
         `uvm_field_int(axi_num_slaves,                                           UVM_DEFAULT)
+        `uvm_field_int(axi_data_width,                                           UVM_DEFAULT)
     `uvm_object_utils_end
 
 

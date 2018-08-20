@@ -131,7 +131,7 @@ class mby_mc_env extends shdv_base_env;
 
         //Build BFMs and push down knobs
         build_axi_bfm();
-        
+
     endfunction: build_phase
 
 
@@ -143,10 +143,11 @@ class mby_mc_env extends shdv_base_env;
 
         axi_bfm =  svt_axi_bfm_pkg::svt_axi_bfm_env::type_id::create("axi_bfm", this);
         axi_bfm.set_axi_cfg(tb_cfg.env_cfg.axi_bfm_cfg);
-        `uvm_info(get_full_name(),$sformatf("Setting AXI BFM cfg: num_masters =%0d, num_slaves = %0d",
-                tb_cfg.env_cfg.axi_num_masters,tb_cfg.env_cfg.axi_num_slaves),UVM_HIGH)
-        axi_bfm.set_num_masters(tb_cfg.env_cfg.axi_num_masters);
-        axi_bfm.set_num_slaves(tb_cfg.env_cfg.axi_num_slaves);
+        `uvm_info(get_full_name(),$sformatf("Setting AXI BFM cfg: num_masters =%0d, num_slaves = %0d\
+                data_width = %0d",tb_cfg.env_cfg.axi_num_masters,tb_cfg.env_cfg.axi_num_slaves,
+                tb_cfg.env_cfg.axi_data_width),UVM_HIGH)
+
+        axi_bfm.setup_bfm(tb_cfg.env_cfg.axi_num_masters, tb_cfg.env_cfg.axi_num_slaves,tb_cfg.env_cfg.axi_data_width);
 
     endfunction: build_axi_bfm
 

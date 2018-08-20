@@ -59,6 +59,7 @@
 
 class cust_svt_axi_system_configuration extends svt_axi_system_configuration;
 
+    int data_width = 256;
     //Utility macro
     `uvm_object_utils (cust_svt_axi_system_configuration)
 
@@ -87,7 +88,7 @@ class cust_svt_axi_system_configuration extends svt_axi_system_configuration;
 
             this.master_cfg[idx-1].transaction_coverage_enable = 1;
 
-            this.master_cfg[idx-1].data_width = 256;
+            this.master_cfg[idx-1].data_width = data_width;
             this.master_cfg[idx-1].id_width = 8;
 
             this.master_cfg[idx-1].reordering_algorithm = svt_axi_port_configuration::RANDOM;
@@ -108,7 +109,7 @@ class cust_svt_axi_system_configuration extends svt_axi_system_configuration;
 
             this.slave_cfg[idx-1].transaction_coverage_enable = 1;
 
-            this.slave_cfg[idx-1].data_width = 256;
+            this.slave_cfg[idx-1].data_width = data_width;
             this.slave_cfg[idx-1].id_width = 8;
 
             this.slave_cfg[idx-1].reordering_algorithm = svt_axi_port_configuration::RANDOM;

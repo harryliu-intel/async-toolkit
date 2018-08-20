@@ -197,28 +197,23 @@ class svt_axi_bfm_env extends shdv_base_env;
     function void set_axi_cfg(cust_svt_axi_system_configuration cust_cfg);
         axi_cfg    = cust_cfg;
     endfunction: set_axi_cfg
-    
+
     // ------------------------------------------------------------------------
-    // Function set_num_master()
-    // Set the number of AXI BFM Masters.
+    // Function setup_bfm()
+    // Set the number of AXI BFM Masters, Slaves and data width.
     //
     // Arguments:
     // int num_masters   -Number of AXI masters.
+    // int num_slaves    -Number of AXI Slaves.
+    // int data_width    -Axi bus width.
+
     // ------------------------------------------------------------------------
-    function void set_num_masters(int num_masters);
+    function void setup_bfm(int num_masters, int num_slaves, int data_width );
         axi_cfg.num_masters    = num_masters;
-    endfunction: set_num_masters
-    
-    // ------------------------------------------------------------------------
-    // Function set_num_slaves()
-    // Set the number of AXI BFM Slaves.
-    //
-    // Arguments:
-    // int num_slaves   -Number of AXI slaves.
-    // ------------------------------------------------------------------------
-    function void set_num_slaves(int num_slaves);
         axi_cfg.num_slaves    = num_slaves;
-    endfunction: set_num_slaves
+        axi_cfg.num_slaves    = num_slaves;
+        axi_cfg.data_width    = data_width;
+    endfunction: setup_bfm
 
     // ------------------------------------------------------------------------
     // Function set_axi_vif()
