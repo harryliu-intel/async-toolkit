@@ -5,7 +5,7 @@
 # % rdlgen.rb wm_reg_ctrl top.rdl hlp_model_reg_ctrl.c
 #
 
-class HlpModelRegCtrlCView < RDL::ViewGen
+class MbyRegCtrlCView < RDL::ViewGen
   def initialize(top_rdl_file, view_file, template_file)
     super(top_rdl_file)           # init @top_map
     source(view_file, template_file) # init @view_code from template
@@ -18,12 +18,12 @@ class HlpModelRegCtrlCView < RDL::ViewGen
     update(wmRegResetDomains,         # insert new code between delimiters
            "// Auto generated reg reset domains begin\n",
            "// Auto generated reg reset domains end\n")
-           
+
     commit(view_file)           # save @view_code to view_file
   end
 
   private
-  
+
   def getAddrMask(wordMaxIdx, entry0MaxIdx, entry1MaxIdx, entry2MaxIdx)
     addrMask = 0xFFFF_FFFF;
 
@@ -39,7 +39,7 @@ class HlpModelRegCtrlCView < RDL::ViewGen
     if(wordMaxIdx > 0)
         addrMask = (addrMask << ((Math.log2(wordMaxIdx)).floor + 1)) & 0xFFFF_FFFF
         for i in 0..(Math.log2(wordMaxIdx)).floor
-            addrMask |= (1<<i); 
+            addrMask |= (1<<i);
         end
     end
 
@@ -87,7 +87,7 @@ class HlpModelRegCtrlCView < RDL::ViewGen
       rf_defn = am_inst.type_defn
       rf_defn.instances.each do |rg_inst|
         entries = rg_inst.inst_size # outer number of entries
-        intries = 0                 # inner number of entries 
+        intries = 0                 # inner number of entries
 	stride1 = rg_inst.addr_incr;
         rg_defn = rg_inst.type_defn
         rf_addr = 0
@@ -104,7 +104,7 @@ class HlpModelRegCtrlCView < RDL::ViewGen
         if rg_inst.addr_incr > 0
           stride0 = rg_inst.addr_incr
         else
-          stride0 = rg_defn.regwidth / 8 
+          stride0 = rg_defn.regwidth / 8
         end
 
         #if rg_inst.addr_incr > 0 && ((rg_inst.addr_incr) > (rg_defn.regwidth / 8))
@@ -113,7 +113,7 @@ class HlpModelRegCtrlCView < RDL::ViewGen
         #  width = rg_defn.regwidth / 32
         #end
         #nwords = rg_defn.regwidth / 32
-        
+
         #puts "REG #{regName} regWidth=0x%x" % rg_defn.regwidth
         #puts "REG #{regName} addr_incr=0x%x" % rg_inst.addr_incr
         #puts "REG #{regName} width=0x%x" % width
@@ -121,7 +121,7 @@ class HlpModelRegCtrlCView < RDL::ViewGen
         max0 = 0;
         max1 = 0;
         max2 = 0;
-        
+
         if(antries > 1)
             if entries > 1
               if intries > 1
@@ -165,7 +165,7 @@ class HlpModelRegCtrlCView < RDL::ViewGen
                 nDims = 0;
               end
             end
-        end 
+        end
 
         addrMask = getAddrMaskNew(max0, max1, max2, stride0, stride1, stride2);
 	addrResult = 0;
@@ -174,28 +174,28 @@ class HlpModelRegCtrlCView < RDL::ViewGen
         cwMask = 0;
         cw1Mask = 0;
         rvMask = 0;
-        
+
         rg_defn.fields.each do |fld|
-            #puts "REG #{regName} fld.width = %d" % fld.width 
+            #puts "REG #{regName} fld.width = %d" % fld.width
             #puts "REG #{regName} fld.accesstype=%s" % fld.accesstype
-        
+
 
             for i in 0..fld.width-1
                 if(fld.accesstype == "RW" || fld.accesstype == "RW/V" || fld.accesstype == "WO")
-                    rwMask = rwMask | (1 << (fld.lsb + i)); 
-                end    
+                    rwMask = rwMask | (1 << (fld.lsb + i));
+                end
                 if(fld.accesstype == "RO" || fld.accesstype == "RO/V")
-                    roMask = roMask | (1 << (fld.lsb + i)); 
-                end 
+                    roMask = roMask | (1 << (fld.lsb + i));
+                end
                 if(fld.accesstype == "RW/C" || fld.accesstype == "RW/C/V")
-                    cwMask = cwMask | (1 << (fld.lsb + i)); 
-                end 
+                    cwMask = cwMask | (1 << (fld.lsb + i));
+                end
                 if(fld.accesstype == "RW/1C" || fld.accesstype == "RW/1C/V")
-                    cw1Mask = cw1Mask | (1 << (fld.lsb + i)); 
-                end 
+                    cw1Mask = cw1Mask | (1 << (fld.lsb + i));
+                end
                 if(fld.accesstype == "RV")
-                    rvMask = rvMask | (1 << (fld.lsb + i)); 
-                end  
+                    rvMask = rvMask | (1 << (fld.lsb + i));
+                end
             end
             #puts "REG #{regName} rwMask=0x%x" % rwMask
         end
@@ -218,21 +218,21 @@ class HlpModelRegCtrlCView < RDL::ViewGen
 		#Might be better to skip with all zero
 		#There are about twice as many entries matched
                 skipZero = skipZero + 1;
-            end 
+            end
             if(rwMaskW != 0xFFFF_FFFF ||
                roMaskW != 0 ||
                cwMaskW != 0 ||
                cw1MaskW != 0 ||
                rvMaskW != 0)
                 code.push sprintf("    {0x%08X, 0x%06X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X}, /* %s [%0d]*/", addrMask, addrResult, rwMaskW, roMaskW, cwMaskW, cw1MaskW, rvMaskW, regName, word);
-            end      
+            end
         end
-        
+
       end
     end
     return code
   end #wmRegAttributes
-    
+
 def wmRegDefaults()
     code = Array.new
     nDims = 0;
@@ -248,7 +248,7 @@ def wmRegDefaults()
       rf_defn = am_inst.type_defn
       rf_defn.instances.each do |rg_inst|
         entries = rg_inst.inst_size # outer number of entries
-        intries = 0                 # inner number of entries 
+        intries = 0                 # inner number of entries
 	stride1 = rg_inst.addr_incr;
         rg_defn = rg_inst.type_defn
         rf_addr = 0;
@@ -259,7 +259,7 @@ def wmRegDefaults()
           intries = rg_inst.inst_size
         end
         #puts "REG #{rg_inst.inst_name} rfaddr = 0x%08X" % rf_addr
-        
+
         regName = rg_inst.inst_name
         base = (am_inst.addr_base + rf_addr + rg_inst.addr_base);
         default = rg_defn.fields.map{|x|x.reset << x.lsb}.inject{|sum,y|sum + y}
@@ -267,10 +267,10 @@ def wmRegDefaults()
         if rg_inst.addr_incr > 0
           stride0 = rg_inst.addr_incr
         else
-          stride0 = rg_defn.regwidth / 8 
+          stride0 = rg_defn.regwidth / 8
         end
         #if rg_inst.addr_incr > 0 && ((rg_inst.addr_incr/4) > (rg_defn.regwidth / 32))
-        #  width = rg_inst.addr_incr / 4 
+        #  width = rg_inst.addr_incr / 4
         #else
         #  width = rg_defn.regwidth / 32
         #end
@@ -309,7 +309,7 @@ def wmRegDefaults()
             else
               nDims = 0;
             end
-        end 
+        end
 
         if(default != 0)
 #if (max0 > 0)
@@ -326,10 +326,10 @@ def wmRegDefaults()
                 addrResult = base + word*4;
                 defaultW = (default >> 32*word) & 0xFFFF_FFFF;
                 if(defaultW != 0)
-                    code.push sprintf("    {0x%08X, 0x%08X, 0x%08X}, /* %s [%d] */", addrMask, addrResult, defaultW, regName, word) 
+                    code.push sprintf("    {0x%08X, 0x%08X, 0x%08X}, /* %s [%d] */", addrMask, addrResult, defaultW, regName, word)
                 end
-            end    
-        end   
+            end
+        end
       end
     end
     return code
@@ -346,11 +346,11 @@ def wmRegDefaults()
       antries = am_inst.inst_size;
       stride2 = am_inst.addr_incr;
       amBase = am_inst.addr_base;
-        
+
       rf_defn = am_inst.type_defn
       rf_defn.instances.each do |rg_inst|
         entries = rg_inst.inst_size # outer number of entries
-        intries = 0                 # inner number of entries 
+        intries = 0                 # inner number of entries
 	stride1 = rg_inst.addr_incr;
         rg_defn = rg_inst.type_defn
         rf_addr = 0;
@@ -361,21 +361,21 @@ def wmRegDefaults()
           intries = rg_inst.inst_size
         end
         #puts "REG #{rg_inst.inst_name} rfaddr = 0x%08X" % rf_addr
-        
+
         regName = rg_inst.inst_name
         base = (am_inst.addr_base + rf_addr + rg_inst.addr_base);
         width = rg_defn.regwidth / 32
         if rg_inst.addr_incr > 0
           stride0 = rg_inst.addr_incr
         else
-          stride0 = rg_defn.regwidth / 8 
+          stride0 = rg_defn.regwidth / 8
         end
         #if rg_inst.addr_incr > 0 && ((rg_inst.addr_incr/4) > (rg_defn.regwidth / 32))
-        #  width = rg_inst.addr_incr / 4 
+        #  width = rg_inst.addr_incr / 4
         #else
         #  width = rg_defn.regwidth / 32
         #end
- 
+
         max0 = 0;
         max1 = 0;
         max2 = 0;
@@ -410,7 +410,7 @@ def wmRegDefaults()
             else
               nDims = 0;
             end
-        end 
+        end
 
         addrMask = getAddrMaskNew(max0, max1, max2, stride0, stride1, stride2);
 
@@ -431,7 +431,7 @@ def wmRegDefaults()
             if(/COLD/ =~ rf_defn.resetdomains)
                 domainMask = domainMask | (1 << 3);
             end
-        end    
+        end
         if(/PCIE_WARM/ =~ rf_defn.resetdomains)
             domainMask = domainMask | (1 << 4);
         end
@@ -441,14 +441,14 @@ def wmRegDefaults()
             if(/PCIE_HOT/ =~ rf_defn.resetdomains)
                 domainMask = domainMask | (1 << 5);
             end
-        end 
+        end
         if(/PCIE_DATAPATH_MEM/ =~ rf_defn.resetdomains)
             domainMask = domainMask | (1 << 15);
         else
             if(/PCIE_DATAPATH/ =~ rf_defn.resetdomains)
                 domainMask = domainMask | (1 << 7);
             end
-        end    
+        end
         if(/EPL/ =~ rf_defn.resetdomains)
             domainMask = domainMask | (1 << 8);
         end
@@ -459,16 +459,16 @@ def wmRegDefaults()
                 domainMask = domainMask | (1 << 9);
             end
         end
-         
+
         if(domainMask != 0)
-            code.push sprintf("    {0x%08X, 0x%06X, 0x%08X}, /* %s */", addrMask, addrResult, domainMask, regName)  
-        end  
+            code.push sprintf("    {0x%08X, 0x%06X, 0x%08X}, /* %s */", addrMask, addrResult, domainMask, regName)
+        end
         #rg_defn.fields.each do |fld|
-        #  code = printRegField(code, regName, fld) 
+        #  code = printRegField(code, regName, fld)
         #end
       end
     end
     return code
   end
 
-end # class WmRegistersView
+end # class MbyRegCtrlCView

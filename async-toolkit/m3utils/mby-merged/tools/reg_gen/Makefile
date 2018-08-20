@@ -184,7 +184,6 @@ gen:
 
 install:
 	$(eval WM_DIR = $(GENERATED_DIR)/wm)
-	echo "$(WM_DIR)"
 	$(eval WM_FILE_LIST = $(subst $(WM_DIR)/,,$(shell find $(WM_DIR) -type f)))
 	@if [ "$(WM_ROOT)" != "" -a -d "$(WM_ROOT)" ]; then \
 		echo ""; \
