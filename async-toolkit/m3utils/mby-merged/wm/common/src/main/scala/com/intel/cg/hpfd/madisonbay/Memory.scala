@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.csr
+package com.intel.cg.hpfd.madisonbay
 
 import scala.annotation.tailrec
 import scala.reflect.api.Universe

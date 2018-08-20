@@ -5,7 +5,7 @@ import java.io._
 
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.server.dto.PrimitiveTypes.U64
+import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
 
 object WhiteModelServer {
   val legacyProtocol = false

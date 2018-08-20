@@ -49,7 +49,7 @@
           
     (dis "package com.intel.cg.hpfd.madisonbay.wm.server.dto" dnl dnl wr)
 	(dis "import java.io._" dnl dnl wr)
-	(dis "import PrimitiveTypes._" dnl dnl wr)
+	(dis "import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._" dnl dnl wr)
 	
     (dis "object " nm " extends " scala-super " {" dnl wr)
 
@@ -617,7 +617,7 @@
     ;; the matching Modula-3 declaration
     (dis "package com.intel.cg.hpfd.madisonbay.wm.server.dto" dnl dnl wr)
     (dis "import java.io._" dnl wr)
-    (dis "import PrimitiveTypes._" dnl dnl wr)
+    (dis "import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._" dnl dnl wr)
     (dis "import Implicits._" dnl dnl wr)
 
     (dis "case class " scala-name dnl wr)
