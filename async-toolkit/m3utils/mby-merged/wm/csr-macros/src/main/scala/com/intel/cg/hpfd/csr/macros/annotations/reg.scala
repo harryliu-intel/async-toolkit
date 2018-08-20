@@ -1,10 +1,13 @@
-package src.main.scala.annotations
+package com.intel.cg.hpfd.csr.macros.annotations
+
+import com.intel.cg.hpfd.csr.macros.MacroUtils.Control
+import com.intel.cg.hpfd.madisonbay.{AddressGuard, AddressOverlap}
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
-import scala.reflect.api.Trees
+//import scala.reflect.api.Trees
 import scala.reflect.macros.whitebox.Context
-import com.intel.cg.hpfd.csr.Memory._
+import com.intel.cg.hpfd.madisonbay.Memory._
 
 
 @compileTimeOnly("enable macro paradise to expand macro annotations")

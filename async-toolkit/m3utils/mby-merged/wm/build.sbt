@@ -4,21 +4,40 @@ cancelable in sbt.Global := true
 
 lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar")
 
-lazy val csr = (project in file("csr"))
-  .enablePlugins(CsrCodeGeneration)
+lazy val common = (project in file("common"))
   .settings(
     Settings.commonSettings,
-    libraryDependencies ++= Dependencies.csrDeps,
+    libraryDependencies ++= Dependencies.commonDeps
+  )
+
+lazy val csrMacros = (project in file("csr-macros"))
+  .dependsOn(common)
+  .settings(
+    Settings.commonSettings,
+    name := "csr-macros",
+    libraryDependencies ++= Dependencies.csrMacrosDeps,
+    addCompilerPlugin(Dependencies.scalaMacros),
+    autoCompilerPlugins := true
+  )
+
+lazy val csr = (project in file("csr"))
+  .enablePlugins(CsrCodeGeneration)
+  .dependsOn(csrMacros)
+  .settings(
+    Settings.commonSettings,
     name := "csr-model"
   )
+
 lazy val wmServerDto = (project in file("wm-server-dto"))
   .enablePlugins(DtoCodeGeneration)
+  .dependsOn(common)
   .settings(
     Settings.commonSettings,
     name := "wm-server-dto"
   )
 
 lazy val root = (project in file("."))
+  .dependsOn(common, csrMacros)
   .settings(
     Settings.commonSettings,
     name := "wm",

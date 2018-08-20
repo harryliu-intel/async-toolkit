@@ -9,6 +9,8 @@ object Versions {
   val scopt = "3.7.0"
   val shapeless = "2.3.3"
   val reflect =  scalaVersion
+  val refined = "0.9.2"
+  val scalaMacros = "2.1.0"
   val csrModel = applicationVersion
   val wmServerDto = applicationVersion
 }
