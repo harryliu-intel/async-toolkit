@@ -1,9 +1,13 @@
 
 #include "mby_model.h"
 #include "mby_pipeline.h"
+#include "mby_reg_ctrl.h"
+
+// FIXME this is not allowed - errno should be part of the model
+#include "model_server/mby_srv_errno.h"
 
 #include <string.h>
-#include "mby_reg_ctrl.h"
+#include <stdio.h>
 
 // This is the persistent state of the model
 static fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE];
@@ -45,5 +49,19 @@ fm_status mbySendPacket(fm_int sw, fm_int port, fm_byte *packet,
     //mac2par.PKT_META = sbData->pktMeta;
     Pipeline(regs, &mac2par);
     return FM_OK;
+}
+
+fm_status mbyReceivePacket(fm_int sw, fm_int *port, fm_byte *packet,
+                                fm_int *length, fm_int maxPktSize) // fm_modelSidebandData *sbData);
+{
+    int i;
+
+    FM_NOT_USED(sw);
+
+    printf("%s unimplemented - returning NO_MORE data\n", __func__);
+    *port = 0;
+    *length = 0;
+
+    return FM_ERR_NO_MORE;
 }
 

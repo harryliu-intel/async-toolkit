@@ -44,7 +44,7 @@
 
 // TODO remove this global/extern varaibles
 static int debug = 0;
-extern fm_socket pktRecvSockets[MAX_PHYS_PORT];
+extern fm_socket pktRecvSocket;
 extern fm_msg_stats msg_stat;
 
 /*extern fm_uint64 log_cat_mask;*/
@@ -251,12 +251,11 @@ int main(int argc, char *argv[])
     /* Initially just the server */
     sockets[0] = &serverSocket;
     numSockets = 1;
-    for (i = 0; i < MAX_PHYS_PORT; i++)
-    {
-        pktRecvSockets[i].sock = -1;
-        pktRecvSockets[i].type = FM_SOCKET_TYPE_TCP;
+    pktRecvSocket.sock = -1;
+    pktRecvSocket.type = FM_SOCKET_TYPE_TCP;
+
+    // for (i = 0; i < MAX_PHYS_PORT; i++)
         // TODO portLinkState[i] = PORT_LINK_UP;
-    }
 
     printf("Waiting for TCP connections on port %d\n", serverSocket.serverPort);
     printf("Type 'h' for help\n");
