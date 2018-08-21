@@ -567,7 +567,7 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 	/* Check the rsp field to validate the content of the response */
 	rsp = (((uint8_t *)rx_msg)[3] >> 3) & 0x3;
 	if (rsp) {
-		LOG_ERROR("Register write operation failed - rsp=%d", rsp);
+		LOG_ERROR("Register read/write operation failed - rsp=%d\n", rsp);
 		return WM_ERR_INVALID_RESPONSE;
 	}
 
