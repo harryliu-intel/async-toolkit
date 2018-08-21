@@ -80,12 +80,19 @@
 					   EndString    => '/Report\s+counts\s+by\s+severity/',
 					   #EndString    => '/Report/',
 					   #RequiredText => ['Report',],
-					   okErrors     => undef,
+					   okErrors     => [
+		                                       # [AK]:8/20/18 - Filter AXI cfg object error fields.
+				                       # TODO: Findout if there is a way to turn off AMBA VIP config 
+						       # object print.
+						       '/allow_cache_update_on_coherent_error_response/',
+		                                       '/flag_cacheline_and_memory_coherency_check_per_xact_as_error/',
+		                          ],
+                                   
 					   #okErrors_multiLine => [
 								  #[3, "/ERROR.*\(introduced error\)/", "/At time/", "/ERROR - example multi-line error/"],
 								 #],
 					  },
-
+					  
 			   },
 		  # List of classified errors to look for.
 		  # The parser searchs for 'All' first. Then tries to classify

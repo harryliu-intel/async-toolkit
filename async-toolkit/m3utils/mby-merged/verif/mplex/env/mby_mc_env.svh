@@ -148,6 +148,8 @@ class mby_mc_env extends shdv_base_env;
                 tb_cfg.env_cfg.axi_data_width),UVM_HIGH)
 
         axi_bfm.setup_bfm(tb_cfg.env_cfg.axi_num_masters, tb_cfg.env_cfg.axi_num_slaves,tb_cfg.env_cfg.axi_data_width);
+        
+        //axi_bfm.set_report_verbosity_level_hier(UVM_LOW);
 
     endfunction: build_axi_bfm
 
