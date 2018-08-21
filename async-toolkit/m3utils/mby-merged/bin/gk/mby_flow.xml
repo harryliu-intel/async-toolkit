@@ -47,7 +47,7 @@
                 <DUT>mby</DUT>
                 <Stage>mplex_turnin_test</Stage>
                 <Stage_Exec>verif/mplex/reglist/turnin.list</Stage_Exec>
-                <AdditionalArgs>-disable_work_area_subdir -mc mplex_np_nphy </AdditionalArgs>
+                <AdditionalArgs>-disable_work_area_subdir -model mplex_np_nphy </AdditionalArgs>
                 <XdutStageDep>[mby].[vcs]</XdutStageDep>
                 <PassRate>100</PassRate>
                 <IsGating>1</IsGating>
