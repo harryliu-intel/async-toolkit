@@ -88,7 +88,7 @@
                               )
            )
           (t
-           lCV = (Route ?CV fpCV ?softMacro t ?topMetal topMetal
+           lCV = (Route ?CV fpCV ?softMacro t ?topMetal topMetal ?Mem 16384
                         ?targetCellName targetName ?abstractCellName abstractName
                         ?ecoIter 2)
            (when lCV (cdsp4add ?CV lCV))
