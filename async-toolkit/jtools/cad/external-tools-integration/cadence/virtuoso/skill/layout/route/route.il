@@ -223,7 +223,7 @@
                      (sprintf nil "%s/%s.def.log" LEFDEF_DIR CV->cellName)
                      "5.7")
         (when (and statusDef doHierDef)
-          div = (or (dbGetPropByName (dbGetPropByName (techGetTechFile cv)
+          div = (or (dbGetPropByName (dbGetPropByName (techGetTechFile CV)
                                                       "LEF Legacy")
                                      "DIVIDER")->value
                     "/")
