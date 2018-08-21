@@ -38,6 +38,10 @@ module mby_mc_ti #( parameter string   RTL_TOP_PATH = "",             // The RTL
     (
         mby_mc_tb_if  mby_mc_tb_if,
 
+        svt_ahb_if    ahb_if,
+     
+        ahb_reset_if  ahb_reset_if,
+
         svt_axi_if    axi_if,
 
         axi_reset_if  axi_reset_if,
@@ -68,7 +72,11 @@ module mby_mc_ti #( parameter string   RTL_TOP_PATH = "",             // The RTL
 
         uvm_config_db#(virtual axi_reset_if.axi_reset_modport)::set(uvm_root::get(), $sformatf("%s.axi_bfm*",TB_ENV_PATH), "reset_mp", axi_reset_if.axi_reset_modport);
 
+        //Set SVT AHB interface
+        uvm_config_db#(virtual svt_ahb_if)::set(uvm_root::get(), $sformatf("%s",TB_ENV_PATH), "ahb_if", ahb_if);
 
+        //Set AVT AHB reset interface modport
+        uvm_config_db#(virtual ahb_reset_if.ahb_reset_modport)::set(uvm_root::get(), $sformatf("%s.ahb_bfm.sequencer", TB_ENV_PATH), "reset_mp", ahb_reset_if.ahb_reset_modport);
 
     end
 
