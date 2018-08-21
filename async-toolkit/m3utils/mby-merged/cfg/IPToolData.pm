@@ -153,4 +153,13 @@ $ToolConfig_ips{shdv} = {
    },
 };
 
+$ToolConfig_ips{fdo_tools} = {
+   PATH => "$ENV{RTL_PROJ_TOOLS}/fdo_tools/nhdk/&get_tool_version()",
+   VERSION => "18.00.07",
+   OTHER   => {
+      SEARCH_PATHS   => ["&get_tool_path()",],
+      IMPORT         => ["cfg/shdv_IPToolData.pm",],
+   },
+};
+
 1;

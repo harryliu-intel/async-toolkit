@@ -70,6 +70,9 @@ int main(int argc, char **argv)
 		printf("Error while connecting or starting to the WM\n");
 		return 1;
 	}
+	else {
+		printf("Started/connected to WM\n");
+	}
 
 	/********** Test write/read register operations ***********/
 	err = test_regs();

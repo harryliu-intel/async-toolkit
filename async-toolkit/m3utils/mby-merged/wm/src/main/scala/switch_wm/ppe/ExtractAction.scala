@@ -4,7 +4,7 @@ import com.intel.cg.hpfd.csr.generated.parser_ext_r
 import switch_wm.ppe.Parser.ProtoOffsets
 
 class ExtractAction(val protoId : Option[Short], val keyOffset : Short, val flagNum : Option[Short], val flagVal : Boolean, val ptrNum : Int) {
-  def x (input : (ProtoOffsets, PacketFlags)) : (ProtoOffsets, PacketFlags) = {
+  def apply (input : (ProtoOffsets, PacketFlags)) : (ProtoOffsets, PacketFlags) = {
     val flags : PacketFlags = flagNum match {
       case None => input._2
       case Some(flagNum) => input._2.assign(flagNum, flagVal)
