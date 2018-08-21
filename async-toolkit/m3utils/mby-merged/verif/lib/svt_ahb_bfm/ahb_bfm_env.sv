@@ -34,9 +34,7 @@ class ahb_bfm_env extends uvm_env;
 
       uvm_config_db#(svt_ahb_vif)::set(this, "ahb_system_env", "vif", ahb_if);
 
-      /** Construct the system agent */
-      ahb_system_env = svt_ahb_system_env::type_id::create("ahb_system_env", this);
-
+      
       /**
       * Check if the configuration is passed to the environment.
       * If not then create the configuration and pass it to the agent.
@@ -49,6 +47,8 @@ class ahb_bfm_env extends uvm_env;
       
       uvm_config_db#(svt_ahb_system_configuration)::set(this, "ahb_system_env", "cfg", cfg);
       
+      /** Construct the system agent */
+      ahb_system_env = svt_ahb_system_env::type_id::create("ahb_system_env", this);
       /** Construct the virtual sequencer */
       sequencer = ahb_virtual_sequencer::type_id::create("sequencer", this);
 
@@ -61,6 +61,23 @@ class ahb_bfm_env extends uvm_env;
       super.connect_phase(phase);
       
    endfunction
+
+   function void setup_bfm(int num_mst, int num_slv, bit is_active, int data_width );
+
+      cfg.num_masters = num_mst;
+      cfg.num_slaves = num_slv;
+      /** Create port configurations */
+      cfg.create_sub_cfgs(num_mst,num_slv);
+      if (num_mst) begin
+         cfg.master_cfg[0].is_active  = is_active;
+         cfg.master_cfg[0].data_width = data_width;
+      end
+      else if (num_slv) begin
+         cfg.slave_cfg[0].is_active  = is_active;
+         cfg.slave_cfg[0].data_width = data_width;
+      end
+      
+  endfunction: setup_bfm
 
 endclass 
 

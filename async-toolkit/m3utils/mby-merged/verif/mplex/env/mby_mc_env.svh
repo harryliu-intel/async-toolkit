@@ -168,7 +168,10 @@ class mby_mc_env extends shdv_base_env;
         end
         ahb_bfm.set_vif(ahb_if);
         ahb_bfm.cfg = tb_cfg.env_cfg.ahb_bfm_cfg;
-        ahb_bfm.cfg.setup_ahb(tb_cfg.env_cfg.ahb_num_mst, tb_cfg.env_cfg.ahb_num_slv, tb_cfg.env_cfg.is_active, tb_cfg.env_cfg.ahb_dw);
+        `uvm_info(get_full_name(),$sformatf("Setting AHB BFM cfg: num_masters =%0d, num_slaves = %0d\
+                data_width = %0d",tb_cfg.env_cfg.ahb_num_mst,tb_cfg.env_cfg.ahb_num_slv,
+                tb_cfg.env_cfg.ahb_dw),UVM_NONE)
+        ahb_bfm.setup_bfm(tb_cfg.env_cfg.ahb_num_mst, tb_cfg.env_cfg.ahb_num_slv, tb_cfg.env_cfg.ahb_is_active, tb_cfg.env_cfg.ahb_dw);
         ahb_bfm.set_report_verbosity_level_hier(UVM_NONE);
     endfunction: build_ahb_bfm
     //---------------------------------------------------------------------------

@@ -27,11 +27,11 @@ class mby_mc_ahb_random_access_test extends mby_mc_base_test;
       super.build_phase(phase);
 
       cfg.env_cfg.ahb_num_slv = 1;
-      cfg.env_cfg.ahb_num_mst = 0;
+      cfg.env_cfg.ahb_is_active = 1;
       cfg.env_cfg.ahb_dw = 32;
-      cfg.env_cfg.is_active = 1;
+      
       set_config_object("env", "mby_mc_tb_top_cfg", cfg, 0);
-
+      
       `uvm_info("build_phase", "Exiting...", UVM_LOW)
    endfunction: build_phase
 
