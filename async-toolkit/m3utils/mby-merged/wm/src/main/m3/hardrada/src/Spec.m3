@@ -207,6 +207,7 @@ VAR
 BEGIN
 	(* TODO More assertions? *)
 	<* ASSERT root # NIL *>
+	IO.Put( "Current node: " & root^.val & "\n" ) ;
 	IF root^.cat # Node.Category.NonTerminal THEN
 		RETURN TextList.Cons( root^.val , NIL ) ;
 	ELSE

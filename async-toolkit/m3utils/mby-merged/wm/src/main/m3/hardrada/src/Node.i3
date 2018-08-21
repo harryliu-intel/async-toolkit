@@ -10,7 +10,7 @@ EXCEPTION NoMatchException ;
 (* Types *)
 (*********)
 
-TYPE Category = { NonTerminal , Constant , Identifier , NoCategory } ;
+TYPE Category = { NonTerminal , Constant , Identifier , Placeholder , NoCategory } ;
 
 TYPE T = RECORD
 
@@ -25,8 +25,8 @@ TYPE T = RECORD
 	(* An array of the node's child nodes, or the
 	nodes to which our current node connects in
 	the tree. *)
-	(* Note: By convention, terminals have NIL
-	children, NOT empty lists for children. *)
+	(* Note: By convention, terminals have empty lists for
+	children, NOT NIL for children. *)
 	children : REF DList := NIL ;
 END ;
 
@@ -47,6 +47,8 @@ END ;
 PROCEDURE Equal( NodeA , NodeB : T ) : BOOLEAN ;
 
 PROCEDURE DeepCopy( NewNode : REF T ; CurrentNode : REF T ) ;
+
+PROCEDURE FindAllNodesWithCategory( newlist : REF DList ; root : REF T ; cat : Category ) ;
 
 PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEXT ) ;
 

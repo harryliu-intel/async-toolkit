@@ -1,4 +1,5 @@
 import( "libm3" )
+module( "DepGraph" )
 module( "Node" )
 module( "Spec" )
 module( "NextCharTbl" )

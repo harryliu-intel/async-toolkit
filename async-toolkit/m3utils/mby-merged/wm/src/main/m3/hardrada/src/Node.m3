@@ -30,8 +30,39 @@ BEGIN
 	NewNode^.val := CurrentNode^.val ;
 	NewNode^.cat := CurrentNode^.cat ;
 	NewNode^.children := NEW( REF DList ) ;
-	DeepCopyDList( NewNode^.children , CurrentNode^.children ) ;
+	IF CurrentNode^.children # NIL THEN
+		IF NewNode^.children = NIL THEN
+			NewNode^.children := NEW( REF DList ) ;
+		END ;
+		DeepCopyDList( NewNode^.children , CurrentNode^.children ) ;
+	END ;
 END DeepCopy ;
+
+PROCEDURE FindAllNodesWithCategory( newlist : REF DList ; root : REF T ; cat : Category ) =
+VAR
+	current_child : REF DList := NIL ;
+	templist := NEW( REF DList ) ;
+BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT newlist # NIL *>
+	DefaultDList( newlist ) ;
+	IF root^.cat = cat THEN
+		AppendNode( newlist , root ) ;
+	END ;
+	IF root^.cat = Category.NonTerminal THEN
+		(* TODO Make this a function... somehow *)
+		current_child := GoToBeginning( root^.children ) ;
+		LOOP
+			FindAllNodesWithCategory( templist , current_child^.cur , cat ) ;
+			AppendDList( newlist , templist ) ;
+			IF current_child^.next = NIL THEN
+				EXIT ;
+			ELSE
+				current_child := current_child^.next ;
+			END ;
+		END ;
+	END ;
+END FindAllNodesWithCategory ;
 
 (* TODO Probably good to generalize this function so it can work for GetParent as
 well. *)
@@ -249,6 +280,8 @@ VAR
 	templistptrB : REF DList := NIL ;
 	newtemplistptrB : REF DList := NEW( REF DList ) ;
 BEGIN
+	<* ASSERT listA # NIL *>
+	<* ASSERT listB # NIL *>
 	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
 		templistptrA := GoToEnd( listA ) ;
 		templistptrB := GoToBeginning( listB ) ;
@@ -280,6 +313,8 @@ VAR
 	templistptrB : REF DList := NEW( REF DList ) ;
 	newtemplistptrB : REF DList := NEW( REF DList ) ;
 BEGIN
+	<* ASSERT listA # NIL *>
+	<* ASSERT listB # NIL *>
 	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
 		templistptrA := GoToBeginning( listA ) ;
 		templistptrB := GoToEnd( listB ) ;

@@ -7,9 +7,12 @@ IMPORT Fmt ;
 IMPORT TextList ;
 IMPORT StyleRulesTbl ;
 IMPORT NextCharTbl ;
+IMPORT DepGraph ;
 
 BEGIN
 VAR root := NEW( REF Node.T ) ;
+VAR root_for_dep := NEW( REF Node.T ) ;
+VAR depgraph := NEW( REF DepGraph.T ) ;
 VAR inline_root := NEW( REF Node.T ) ;
 VAR current_node := NEW( REF Node.T ) ;
 VAR current_node2 := NEW( REF Node.T ) ;
@@ -24,6 +27,36 @@ VAR proc_head := NEW( REF Node.T ) ;
 VAR deeper_block_node := NEW( REF Node.T ) ;
 VAR signature_node := NEW( REF Node.T ) ;
 VAR deeper_start_node := NEW( REF Node.T ) ;
+
+VAR tempchildren := NEW( REF Node.DList ) ;
+VAR tempchildren2 := NEW( REF Node.DList ) ;
+VAR tempchildren3 := NEW( REF Node.DList ) ;
+
+VAR stmt_add_on := NEW( REF Node.T ) ;
+VAR stmt_add_on_take2 := NEW( REF Node.T ) ;
+VAR start_ifst_1 := NEW( REF Node.T ) ;
+VAR real_start_ifst_1 := NEW( REF Node.T ) ;
+VAR real_start_ifst_2 := NEW( REF Node.T ) ;
+VAR ass_stmt_add_on := NEW( REF Node.T ) ;
+VAR ass_stmt_add_on_take2 := NEW( REF Node.T ) ;
+VAR return_stmt := NEW( REF Node.T ) ;
+VAR expr_add_on := NEW( REF Node.T ) ;
+VAR expr_add_on_take2 := NEW( REF Node.T ) ;
+VAR expr_add_on2 := NEW( REF Node.T ) ;
+VAR ifst := NEW( REF Node.T ) ;
+VAR expr_add_on2_take2 := NEW( REF Node.T ) ;
+VAR expr_add_on3 := NEW( REF Node.T ) ;
+VAR expr_add_on3_take2 := NEW( REF Node.T ) ;
+VAR expr_add_on4 := NEW( REF Node.T ) ;
+VAR expr_add_on4_take2 := NEW( REF Node.T ) ;
+VAR expr_add_on_if1 := NEW( REF Node.T ) ;
+VAR qualid_if1 := NEW( REF Node.T ) ;
+VAR id_add_on := NEW( REF Node.T ) ;
+VAR id_add_on_take2 := NEW( REF Node.T ) ;
+VAR id_add_on2 := NEW( REF Node.T ) ;
+VAR id_add_on2_take2 := NEW( REF Node.T ) ;
+VAR number_add_on := NEW( REF Node.T ) ;
+VAR number_add_on_take2 := NEW( REF Node.T ) ;
 
 VAR ptree_pms := NEW( REF Spec.PTreeParams ) ;
 VAR spec_pms := NEW( REF Spec.SpecParams ) ;
@@ -185,6 +218,7 @@ Node.AppendNode( current_node2^.children , current_node ) ;
 Node.AppendNode( current_node2^.children , NEW( REF Node.T , val := ")" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 
 current_node := NEW( REF Node.T ) ;
+return_stmt := current_node ;
 current_node^.val := "Stmt.Rule13" ;
 current_node^.cat := Node.Category.NonTerminal ;
 current_node^.children := NEW( REF Node.DList ) ;
@@ -203,6 +237,127 @@ current_node4^.children := NEW( REF Node.DList ) ;
 Node.AppendNode( current_node4^.children , NEW( REF Node.T , val := "x" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 Node.AppendNode( current_node3^.children , current_node4 ) ;
 Node.AppendNode( current_node2^.children , current_node3 ) ;
+
+(* Initial part of conditional *)
+expr_add_on_if1^.val := "Expr.Rule1" ;
+expr_add_on_if1^.cat := Node.Category.NonTerminal ;
+expr_add_on_if1^.children := NEW( REF Node.DList ) ;
+qualid_if1^.val := "QualId.Rule1" ;
+qualid_if1^.cat := Node.Category.NonTerminal ;
+qualid_if1^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( qualid_if1^.children , NEW( REF Node.T , val := "TRUE" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( expr_add_on_if1^.children , qualid_if1 ) ;
+start_ifst_1^.val := "IfSt.Rule1" ;
+start_ifst_1^.cat := Node.Category.NonTerminal ;
+start_ifst_1^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( start_ifst_1^.children , expr_add_on_if1 ) ;
+Node.AppendNode( start_ifst_1^.children , NEW( REF Node.T , val := "THEN" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+ifst^.val := "Stmt.Rule8" ;
+ifst^.cat := Node.Category.NonTerminal ;
+ifst^.children := NEW( REF Node.DList ) ;
+real_start_ifst_1^.val := "S" ;
+real_start_ifst_1^.cat := Node.Category.NonTerminal ;
+real_start_ifst_1^.children := NEW( REF Node.DList ) ;
+real_start_ifst_2^.val := "S" ;
+real_start_ifst_2^.cat := Node.Category.NonTerminal ;
+real_start_ifst_2^.children := NEW( REF Node.DList ) ;
+
+(* Part 1 of conditional *)
+stmt_add_on^.val := "Stmt.Rule1" ;
+stmt_add_on^.cat := Node.Category.NonTerminal ;
+stmt_add_on^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( real_start_ifst_1^.children , stmt_add_on ) ;
+Node.AppendNode( start_ifst_1^.children , real_start_ifst_1 ) ;
+Node.AppendNode( ifst^.children , start_ifst_1 ) ;
+ass_stmt_add_on^.val := "AssignSt.Rule1" ;
+ass_stmt_add_on^.cat := Node.Category.NonTerminal ;
+ass_stmt_add_on^.children := NEW( REF Node.DList ) ;
+expr_add_on^.val := "Expr.Rule1" ;
+expr_add_on^.cat := Node.Category.NonTerminal ;
+expr_add_on^.children := NEW( REF Node.DList ) ;
+id_add_on^.val := "Id.Rule1" ;
+id_add_on^.cat := Node.Category.NonTerminal ;
+id_add_on^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( id_add_on^.children , NEW( REF Node.T , val := "y" , cat := Node.Category.Identifier , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( expr_add_on^.children , id_add_on ) ;
+Node.AppendNode( ass_stmt_add_on^.children , expr_add_on ) ;
+Node.AppendNode( stmt_add_on^.children , ass_stmt_add_on ) ;
+Node.AppendNode( ifst^.children , start_ifst_1 ) ;
+Node.AppendNode( deeper_start_node^.children , ifst ) ;
+Node.AppendNode( ass_stmt_add_on^.children , NEW( REF Node.T , val := ":=" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+expr_add_on2^.val := "Expr.Rule1" ;
+expr_add_on2^.cat := Node.Category.NonTerminal ;
+expr_add_on2^.children := NEW( REF Node.DList ) ;
+expr_add_on3^.val := "Expr.Rule1" ;
+expr_add_on3^.cat := Node.Category.NonTerminal ;
+expr_add_on3^.children := NEW( REF Node.DList ) ;
+id_add_on2^.val := "Id.Rule1" ;
+id_add_on2^.cat := Node.Category.NonTerminal ;
+id_add_on2^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( id_add_on2^.children , NEW( REF Node.T , val := "x" , cat := Node.Category.Identifier , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( expr_add_on3^.children , id_add_on2 ) ;
+Node.AppendNode( expr_add_on2^.children , expr_add_on3 ) ;
+Node.AppendNode( expr_add_on2^.children , NEW( REF Node.T , val := "+" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+number_add_on^.val := "Number" ;
+number_add_on^.cat := Node.Category.NonTerminal ;
+number_add_on^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( number_add_on^.children , NEW( REF Node.T , val := "1" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+expr_add_on4^.val := "Expr.Rule1" ;
+expr_add_on4^.cat := Node.Category.NonTerminal ;
+expr_add_on4^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( expr_add_on4^.children , number_add_on ) ;
+Node.AppendNode( expr_add_on2^.children , expr_add_on4 ) ;
+Node.AppendNode( ass_stmt_add_on^.children , expr_add_on2 ) ;
+Node.AppendNode( deeper_start_node^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+
+(* Part 2 of conditional *)
+Node.AppendNode( ifst^.children , NEW( REF Node.T , val := "ELSE" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+stmt_add_on_take2^.val := "Stmt.Rule1" ;
+stmt_add_on_take2^.cat := Node.Category.NonTerminal ;
+stmt_add_on_take2^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( real_start_ifst_2^.children , stmt_add_on_take2 ) ;
+Node.AppendNode( start_ifst_1^.children , real_start_ifst_2 ) ;
+ass_stmt_add_on_take2^.val := "AssignSt.Rule1" ;
+ass_stmt_add_on_take2^.cat := Node.Category.NonTerminal ;
+ass_stmt_add_on_take2^.children := NEW( REF Node.DList ) ;
+expr_add_on_take2^.val := "Expr.Rule1" ;
+expr_add_on_take2^.cat := Node.Category.NonTerminal ;
+expr_add_on_take2^.children := NEW( REF Node.DList ) ;
+id_add_on_take2^.val := "Id.Rule1" ;
+id_add_on_take2^.cat := Node.Category.NonTerminal ;
+id_add_on_take2^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( id_add_on_take2^.children , NEW( REF Node.T , val := "y" , cat := Node.Category.Identifier , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( expr_add_on_take2^.children , id_add_on_take2 ) ;
+Node.AppendNode( ass_stmt_add_on_take2^.children , expr_add_on_take2 ) ;
+Node.AppendNode( stmt_add_on_take2^.children , ass_stmt_add_on_take2 ) ;
+Node.AppendNode( real_start_ifst_2^.children , stmt_add_on_take2 ) ;
+Node.AppendNode( start_ifst_1^.children , real_start_ifst_2 ) ;
+Node.AppendNode( ass_stmt_add_on_take2^.children , NEW( REF Node.T , val := ":=" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+expr_add_on2_take2^.val := "Expr.Rule1" ;
+expr_add_on2_take2^.cat := Node.Category.NonTerminal ;
+expr_add_on2_take2^.children := NEW( REF Node.DList ) ;
+expr_add_on3_take2^.val := "Expr.Rule1" ;
+expr_add_on3_take2^.cat := Node.Category.NonTerminal ;
+expr_add_on3_take2^.children := NEW( REF Node.DList ) ;
+id_add_on2_take2^.val := "Id.Rule1" ;
+id_add_on2_take2^.cat := Node.Category.NonTerminal ;
+id_add_on2_take2^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( id_add_on2_take2^.children , NEW( REF Node.T , val := "x" , cat := Node.Category.Identifier , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( expr_add_on3_take2^.children , id_add_on2_take2 ) ;
+Node.AppendNode( expr_add_on2_take2^.children , expr_add_on3_take2 ) ;
+Node.AppendNode( expr_add_on2_take2^.children , NEW( REF Node.T , val := "+" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+number_add_on_take2^.val := "Number" ;
+number_add_on_take2^.cat := Node.Category.NonTerminal ;
+number_add_on_take2^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( number_add_on_take2^.children , NEW( REF Node.T , val := "2" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+expr_add_on4_take2^.val := "Expr.Rule1" ;
+expr_add_on4_take2^.cat := Node.Category.NonTerminal ;
+expr_add_on4_take2^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( expr_add_on4_take2^.children , number_add_on_take2 ) ;
+Node.AppendNode( expr_add_on2_take2^.children , expr_add_on4_take2 ) ;
+Node.AppendNode( ass_stmt_add_on_take2^.children , expr_add_on2_take2 ) ;
+Node.AppendNode( real_start_ifst_2^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+
 Node.AppendNode( current_node^.children , current_node2 ) ;
 Node.AppendNode( deeper_start_node^.children , current_node ) ;
 Node.AppendNode( deeper_start_node^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
@@ -331,6 +486,61 @@ EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
+
+(* Testing dep graph *)
+(* Construct dep graph *)
+depgraph^.deps := NIL ;
+depgraph^.subdepgraph := NEW( REF ARRAY OF REF DepGraph.T , 2 ) ;
+depgraph^.parse_root := NEW( REF Node.T ) ;
+Node.DeepCopy( depgraph^.parse_root , ifst ) ;
+
+depgraph^.next := NEW( REF DepGraph.T ) ;
+depgraph^.next^.deps := NIL ;
+depgraph^.next^.subdepgraph := NIL ;
+depgraph^.next^.next := NIL ;
+depgraph^.next^.parse_root := NEW( REF Node.T ) ;
+Node.DeepCopy( depgraph^.parse_root , return_stmt ) ;
+
+(* Deep copy original parse tree with placeholders *)
+Node.DeepCopyDList( tempchildren , deeper_start_node^.children ) ;
+deeper_start_node^.children := NEW( REF Node.DList ) ;
+deeper_start_node^.cat := Node.Category.Placeholder ;
+root_for_dep^.children := NEW( REF Node.DList ) ;
+Node.DeepCopy( root_for_dep , root ) ;
+Node.DeepCopyDList( deeper_start_node^.children , tempchildren ) ;
+deeper_start_node^.cat := Node.Category.NonTerminal ;
+
+(* Put placeholders *)
+Node.DeepCopyDList( tempchildren2 , real_start_ifst_1^.children ) ;
+Node.DeepCopyDList( tempchildren3 , real_start_ifst_2^.children ) ;
+real_start_ifst_1^.children := NEW( REF Node.DList ) ;
+real_start_ifst_1^.cat := Node.Category.Placeholder ;
+real_start_ifst_2^.children := NEW( REF Node.DList ) ;
+real_start_ifst_2^.cat := Node.Category.Placeholder ;
+
+depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.next := NIL ;
+depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.deps := NIL ;
+Node.DeepCopy( depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.parse_root , real_start_ifst_1 ) ;
+depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.subdepgraph := NIL ;
+
+depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.next := NIL ;
+depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.deps := NIL ;
+Node.DeepCopy( depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.parse_root , real_start_ifst_2 ) ;
+depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.subdepgraph := NIL ;
+
+Node.DeepCopyDList( real_start_ifst_1^.children , tempchildren2 ) ;
+real_start_ifst_1^.cat := Node.Category.NonTerminal ;
+Node.DeepCopyDList( real_start_ifst_2^.children , tempchildren3 ) ;
+real_start_ifst_2^.cat := Node.Category.NonTerminal ;
+
+DepGraph.ConstructParseTree( root_for_dep , depgraph , ";" ) ;
+TRY
+	Spec.GenCode( root_for_dep , style_rules , "./depgraph.m3" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
+	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
+(* Done Testing dep graph *)
 
 ptree_pms^.ProcedureDefnVal := "Decl.Rule5" ;
 ptree_pms^.ArgSeparator := ";" ;
