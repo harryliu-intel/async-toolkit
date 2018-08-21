@@ -718,7 +718,8 @@ void Hash
     out->FFU_FLAGS               = in->FFU_FLAGS;
     out->FFU_ROUTE               = in->FFU_ROUTE;
     out->ENCAP                   = in->ENCAP;
-    out->DECAP                   = in->DECAP;    
+    out->DECAP                   = in->DECAP;
+    out->L2_SMAC                 = in->L2_SMAC;
     out->L2_DMAC                 = in->L2_DMAC;
     out->DMAC_FROM_IPV6          = in->DMAC_FROM_IPV6;
     out->L2_IDOMAIN              = in->L2_IDOMAIN;

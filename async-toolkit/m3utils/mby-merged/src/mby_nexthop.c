@@ -80,6 +80,7 @@ void NextHop
     fm_bool    encap       = in->ENCAP;
     fm_bool    decap       = in->DECAP;
     fm_macaddr dmac_ipv6   = in->DMAC_FROM_IPV6;
+    fm_macaddr l2_smac     = in->L2_SMAC;
     fm_macaddr l2_dmac     = in->L2_DMAC;
     fm_uint16  l2_ivid1    = in->L2_IVID1;
     fm_uint16  l2_idomain  = in->L2_IDOMAIN;
@@ -129,6 +130,7 @@ void NextHop
 
     // Write outputs:
     out->ARP_TABLE_INDEX = arp_tbl_idx;
+    out->L2_SMAC         = l2_smac;
     out->L2_DMAC         = l2_dmac;
     out->L2_IDOMAIN      = l2_idomain;
     out->L2_EDOMAIN      = l2_edomain;
