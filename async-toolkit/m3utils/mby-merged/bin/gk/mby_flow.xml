@@ -16,7 +16,7 @@
 		<DUT>mby</DUT>
 		<Stage>vcs</Stage>
 		<Stage_Exec>bman</Stage_Exec>
-		<AdditionalArgs>-s all +s vcs -mc mplex_np_nphy +s vclp +s dvt -nodelete_flow_data</AdditionalArgs>
+		<AdditionalArgs>-s all +s vcs -mc mby,mplex_np_nphy +s vclp +s dvt -nodelete_flow_data</AdditionalArgs>
                 <XdutStageDep>[mby].[genrtl]</XdutStageDep>
 		<IsGating>1</IsGating>
 		<Turnin>1</Turnin>
