@@ -15,12 +15,16 @@ class ExtractAction(val protoId : Option[Short], val keyOffset : Short, val flag
     }
     (fields, flags)
   }
+
+  override def toString: String = {
+    s"pid = $protoId, koff = $keyOffset, flagnum = $flagNum, flagval = $flagVal, ptrNum = $ptrNum"
+  }
 }
 object ExtractAction {
   def apply(csr : parser_ext_r) = {
     // 0 is special as a flag number, means do _no_ flag annotation do not update _0_
     val flagNum = csr.FLAG_NUM() match {
-      case 0 => None
+      case 0l => None
       case x => Some(x.toShort)
     }
     // 0xff is  special proto-id, do no annotation to the fields in that case

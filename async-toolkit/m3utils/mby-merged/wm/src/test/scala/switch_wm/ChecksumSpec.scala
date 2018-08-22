@@ -4,7 +4,8 @@ import org.scalatest._
 import switch_wm._
 
 /**
-  * Validate 1's complement based checksum computation over arrays of bytes
+  * Validate 1's complement based checksum computation over arrays of bytes. Use publically available
+  * sample results to validate.
   */
 class ChecksumSpec extends FlatSpec with Matchers {
   // http://www.netfor2.com/checksum.html
