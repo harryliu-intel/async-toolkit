@@ -1,0 +1,22 @@
+
+use mby::RunModes;
+mby::RunModes::init_library;
+{ 
+# Set you test's specific options 
+    %opts = ( 
+	-static_check_tools => ["jg",], 
+	-model => "igr", 
+	-jg_prove => [], 
+	-jg_clock => "-infer", 
+	-jg_reset => "-none", 
+	-seed => '0000000A', 
+	-jg_post_process_modes => "AceDefault_JG", 
+    -post_process_pattern_file => "$ENV{MODEL_ROOT}/cfg/ace/ace_base_postsim.pp",
+	); 
+# Create an optional base of runmodes 
+    %runModes = ( 
+	); 
+# Add all runmodes 
+    import_runmodes(-dest_hash=>\%runModes, -file=>$OPTFILE); 
+} 
+

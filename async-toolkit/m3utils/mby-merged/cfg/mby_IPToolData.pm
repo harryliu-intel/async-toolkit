@@ -53,7 +53,7 @@ $ToolConfig_ips{mby} = {
 ######################################################################
 IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 
-my $epl_version = "eth_port-dev-x0-18ww31d";
+my $epl_version = "eth_port-dev-x0-18ww34b";
 
 $ToolConfig_ips{epl} = {
    PATH    => "$ENV{IP_MODELS}/eth_port/$epl_version",
