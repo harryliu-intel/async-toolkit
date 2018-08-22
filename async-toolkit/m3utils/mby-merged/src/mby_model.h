@@ -25,13 +25,9 @@ fm_status mbySendPacket(fm_int sw,
                         *packet,
                         fm_int length); //, fm_modelSidebandData *sbData);
 
-/* TODO Implement this function...how?
-fm_status hlpModelReceivePacket(fm_int sw,
-                                fm_int * port,
-                                fm_byte * packet,
-                                fm_int * length,
-                                fm_int maxPktSize,
-                                fm_modelSidebandData *sbData);
-*/
-
+fm_status mbyReceivePacket(fm_int sw,
+                           fm_int *port,
+                           fm_byte *packet,
+                           fm_int *length,
+                           fm_int maxPktSize); // fm_modelSidebandData *sbData);
 #endif /* _MBY_MODEL_H_ */

@@ -10,7 +10,7 @@
 // TODO what to do with this?
 static int debug = 3;
 
-fm_socket pktRecvSockets[MAX_PHYS_PORT];
+fm_socket pktRecvSocket;
 fm_msg_stats msg_stat;
 // TODO static fm_int portLinkState[MAX_PHYS_PORT];
 
@@ -781,13 +781,12 @@ static fm_status HandleMsgPacket(fm_int               sw,
         packet = &data[FM_MODEL_MSG_TLV_SIZE];
         FM_CLEAR(sbData);
 
-        // TODO
-        // status = fmModelReceivePacket(sw,
-        //                               &physPort,
-        //                               packet,
-        //                               &pktLength,
-        //                               FM_MODEL_MAX_PACKET_SIZE,
-        //                               &sbData);
+        status = mbyReceivePacket(sw,
+                                  &physPort,
+                                  packet,
+                                  &pktLength,
+                                  FM_MODEL_MAX_PACKET_SIZE);
+                                  // &sbData);
 
 #if 0 // TODO
         if (portLinkState[physPort] != PORT_LINK_UP)
@@ -816,8 +815,6 @@ static fm_status HandleMsgPacket(fm_int               sw,
                 emsg->type                        = FM_MODEL_MSG_PACKET_EOT;
                 emsgLength                        += 2;
                 *( (fm_uint16 *) &emsg->data[0] ) = htons(numPkts);
-//FIXME
-                continue;
             }
             else
             {
@@ -843,21 +840,17 @@ static fm_status HandleMsgPacket(fm_int               sw,
             if (debug >= 2)
             {
                 printf("Packet sent back to port %d\n", physPort);
-                HexDump(emsg->data, ntohl(emsg->msgLength));
+                HexDump((fm_byte *)&emsg, ntohl(emsg->msgLength));
             }
-            // TODO  if (pktRecvSockets[physPort].sock  < 0)
-            // {
-            //     printf("Dropping packet egressing port %d\n", physPort);
-            // }
+
+            if (pktRecvSocket.sock  < 0)
+                printf("Dropping packet egressing port %d\n", physPort);
             else
-            {
-                // TODO SendMessage(&pktRecvSockets[physPort] , emsg,
-                //              ntohl(emsg->msgLength));
-            }
+                SendMessage(&pktRecvSocket, emsg, ntohl(emsg->msgLength));
         }
         else
         {
-            /* No packet received or a processing error has occurred... */
+            /* A processing error has occurred... */
             FM_LOG_DEBUG(FM_LOG_CAT_PLATFORM,
                          "TB: No egress packet, ingress length %d, "
                          "status %d (%s)\n",
@@ -947,35 +940,35 @@ static fm_status HandleMsgSetEgressInfo(fm_int               sw,
 
 
         /* If there was a socket on this port previously, close it down. */
-        if (pktRecvSockets[port].sock != -1)
+        if (pktRecvSocket.sock != -1)
         {
-            fmCloseNetworkConnection(&pktRecvSockets[port]);
+            fmCloseNetworkConnection(&pktRecvSocket);
         }
 
-        pktRecvSockets[port].sock = -1;
+        pktRecvSocket.sock = -1;
     }
     else
     {
         FM_LOG_DEBUG(FM_LOG_CAT_PLATFORM,
-                     "Setting destination for egress port %d to %s:%d\n",
-                     port, host, networkPort);
+                     "Setting destination for egress traffic to %s:%d\n",
+                     host, networkPort);
 
-        if (pktRecvSockets[port].sock >= 0)
+        if (pktRecvSocket.sock >= 0)
         {
             FM_LOG_WARNING(FM_LOG_CAT_PLATFORM,
-                    "Packet receive socket for port %d is active. Close existing one %d.\n",
-                    port, pktRecvSockets[port].sock);
-            fmCloseNetworkConnection(&pktRecvSockets[port]);
-            pktRecvSockets[port].sock = -1;
+                    "Packet receive socket is already active. Close existing one %d.\n",
+                    pktRecvSocket.sock);
+            fmCloseNetworkConnection(&pktRecvSocket);
+            pktRecvSocket.sock = -1;
         }
 
-        fmCreateNetworkClient(&pktRecvSockets[port],
+        fmCreateNetworkClient(&pktRecvSocket,
                               FM_SOCKET_TYPE_TCP,
                               host,
                               networkPort);
         FM_LOG_DEBUG(FM_LOG_CAT_PLATFORM,
-                     "Packet connection for port %d created. sock = %d\n",
-                     port, pktRecvSockets[port].sock);
+                     "Packet connection for egress traffic created. sock = %d\n",
+                     pktRecvSocket.sock);
     }
 
     FM_LOG_EXIT(FM_LOG_CAT_PLATFORM, status);

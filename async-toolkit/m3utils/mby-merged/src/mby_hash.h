@@ -82,6 +82,7 @@ typedef struct mbyHashToNextHopStruct
     fm_uint32               FFU_ROUTE;
     fm_bool                 ENCAP;
     fm_bool                 DECAP;
+    fm_macaddr              L2_SMAC;
     fm_macaddr              L2_DMAC;
     fm_macaddr              DMAC_FROM_IPV6;
     fm_uint16               L2_IDOMAIN;

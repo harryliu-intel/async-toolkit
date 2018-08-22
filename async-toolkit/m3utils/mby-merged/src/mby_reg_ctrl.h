@@ -27,11 +27,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#ifndef _MBY_SRV_REG_CTRL_H_
+#define _MBY_SRV_REG_CTRL_H_
 
 #include "mby_model.h"
 
-int loadNvmImg(char *filename/*, fm_uint32 *alBitmask*/);
+fm_uint32 mbyModelGetRegisterDefault(fm_uint32 addr);
+
+
+#endif /* _MBY_SRV_REG_CTRL_H_ */
