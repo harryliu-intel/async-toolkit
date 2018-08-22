@@ -33,7 +33,9 @@ abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElem
     */
   trait HardwareWritable {
     this: RdlField =>
-    def assign(x: Long): Unit = replace(r, x)
+    def assign(x: Long): Unit = {
+      replace(r, x)
+    }
     def update(x: Long): Unit = assign(x)
   }
 
@@ -82,7 +84,9 @@ abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElem
     * @param r the range to extract
     * @return a Long representing the field in question
     */
-  protected def extract(r: Range): Long = (underlyingState >> r.start) & (-1 << (r.start - r.end))
+  protected def extract(r: Range): Long = {
+    (underlyingState >> r.start) & ((1 << r.size) - 1)
+  }
 
   /** Assign to a fraction of the register, used by RdlField objects.
     *
@@ -93,8 +97,8 @@ abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElem
     */
   protected def replace(r: Range, l: Long): Unit = {
     val shifted = l << r.start
-    val mask = 0
-    underlyingState = underlyingState & mask | shifted
+    val mask = ~(((1 << r.size) - 1) << r.start)
+    underlyingState = (underlyingState & mask) | shifted
   }
 
   //  def reset = fields.rese
