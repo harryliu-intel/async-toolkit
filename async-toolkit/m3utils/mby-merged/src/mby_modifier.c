@@ -48,7 +48,7 @@ void Modifier
 
     // DMAC/SMAC update:
 
-    ctrl_data.isRoutable = ctrl_data.routeA && (tx_tag == MBY_NORMAL_TAGGING) && !(ctrl_data.isMirror);
+//> ctrl_data.isRoutable = ctrl_data.routeA && (tx_tag == MBY_NORMAL_TAGGING) && !(ctrl_data.isMirror);
 
 //> UpdateMacAddrIPP(key, model, &reg_data, &ctrl_data, &chunked_seg);
 
@@ -62,8 +62,7 @@ void Modifier
 
 //> MiscOps(key, model, &reg_data, &ctrl_data, &chunkedSeg, packet); // if minFrameSize, updatePktmeta use min size
 
-    fm_uint32 tx_stats_length = (!ctrl_data.mirrorTrunc && !tx_drop)
-        ? ctrl_data.egressSeg0Bytes + tx_stats_last_len : ctrl_data.refcnt_tx_len;
+    fm_uint32 tx_stats_length = 0; //> (!ctrl_data.mirrorTrunc && !tx_drop) ? ctrl_data.egressSeg0Bytes + tx_stats_last_len : ctrl_data.refcnt_tx_len;
 
     // Write outputs:
     out->TX_LENGTH       = tx_length;
