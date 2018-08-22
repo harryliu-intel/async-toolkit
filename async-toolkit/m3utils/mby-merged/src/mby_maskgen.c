@@ -78,6 +78,129 @@ static void getLagCfg
     cfg->LAG_SIZE      = FM_ARRAY_GET_FIELD(fwd_lag_cfg_vals, MBY_FWD_LAG_CFG, LAG_SIZE);
 }
 
+static void getGlortCamEntry
+(
+    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_byte       cam_index,
+    mbyGlortCam * const cam_entry
+)
+{
+    fm_uint32 glort_cam_vals[MBY_GLORT_CAM_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_GLORT_CAM(cam_index, 0), MBY_GLORT_CAM_WIDTH, glort_cam_vals);
+
+    cam_entry->KEY_INVERT = FM_ARRAY_GET_FIELD(glort_cam_vals, MBY_GLORT_CAM, KEY_INVERT);
+    cam_entry->KEY        = FM_ARRAY_GET_FIELD(glort_cam_vals, MBY_GLORT_CAM, KEY);
+}
+
+static void getGlortDestTableEntry
+(
+    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint16           table_index,
+    mbyGlortDestTable * const table_entry
+)
+{
+    fm_uint32 glort_dest_table_vals[MBY_GLORT_DEST_TABLE_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_GLORT_DEST_TABLE(table_index, 0), MBY_GLORT_DEST_TABLE_WIDTH, glort_dest_table_vals);
+    
+    table_entry->IP_MULTICAST_INDEX = FM_ARRAY_GET_FIELD(glort_dest_table_vals, MBY_GLORT_DEST_TABLE, IP_MULTICAST_INDEX);
+    table_entry->DEST_MASK          = FM_ARRAY_GET_FIELD(glort_dest_table_vals, MBY_GLORT_DEST_TABLE, DEST_MASK);
+}
+
+static void getGlortRamEntry
+(
+    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_byte       ram_index,
+    mbyGlortRam * const ram_entry
+)
+{
+    fm_uint32 glort_ram_vals[MBY_GLORT_RAM_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_GLORT_RAM(ram_index, 0), MBY_GLORT_RAM_WIDTH, glort_ram_vals);
+
+    ram_entry->SKIP_DGLORT_DEC   = FM_ARRAY_GET_BIT  (glort_ram_vals, MBY_GLORT_RAM, SKIP_DGLORT_DEC);
+    ram_entry->HASH_ROTATION     = FM_ARRAY_GET_BIT  (glort_ram_vals, MBY_GLORT_RAM, HASH_ROTATION);
+    ram_entry->DEST_COUNT        = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, DEST_COUNT);
+    ram_entry->RANGE_SUB_INDEX_A = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, RANGE_SUB_INDEX_A);
+    ram_entry->RANGE_SUB_INDEX_B = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, RANGE_SUB_INDEX_B);
+    ram_entry->DEST_INDEX        = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, DEST_INDEX);
+    ram_entry->STRICT            = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, STRICT);
+}
+
+static fm_status lookUpRamEntry
+(
+    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint16     idglort,
+    mbyGlortRam * const glort_ram
+)
+{
+    fm_bool cam_hit = FALSE;
+    
+    // The highest numbered GLORT_CAM entry has highest precendence:
+    for (fm_int i = MBY_GLORT_CAM_ENTRIES - 1; i >= 0; i--)
+    {
+        fm_byte index = i;
+
+        mbyGlortCam glort_cam;
+        getGlortCamEntry(regs, index, &glort_cam);
+        
+        fm_uint16 mask    = glort_cam.KEY ^ glort_cam.KEY_INVERT;
+        fm_uint16 key     = glort_cam.KEY;
+        fm_uint16 key_inv = glort_cam.KEY_INVERT;
+        
+        if (((key & key_inv) == 0) && ((idglort & mask) == (key & mask)))
+        {    
+            getGlortRamEntry(regs, index, glort_ram);
+            cam_hit = TRUE;
+            break;
+        }
+    }
+
+    if (!cam_hit)  // if glort_cam is not hit then zero out glort_ram_entry
+    {
+        glort_ram->SKIP_DGLORT_DEC   = 0;
+        glort_ram->HASH_ROTATION     = 0;
+        glort_ram->DEST_COUNT        = 0;
+        glort_ram->RANGE_SUB_INDEX_A = 0;
+        glort_ram->RANGE_SUB_INDEX_B = 0;
+        glort_ram->DEST_INDEX        = 0;
+        glort_ram->STRICT            = 0;
+    }
+    
+    fm_status sts = (cam_hit) ? FM_OK : FM_FAIL;
+    return sts;
+}
+
+static void lookUpDestEntry
+(
+    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint16           idglort,
+    const fm_bool             strict_glort_routing,
+    const fm_uint32           hash_rot_a,
+    const fm_uint32           hash_rot_b,
+    const mbyGlortRam         glort_ram,
+    mbyGlortDestTable * const glort_dest_table
+)
+{
+    fm_uint16 length_a   = (glort_ram.RANGE_SUB_INDEX_A >> 4) & 0xF;
+    fm_uint16 length_b   = (glort_ram.RANGE_SUB_INDEX_B >> 4) & 0xF;
+    fm_uint16 offset_a   =  glort_ram.RANGE_SUB_INDEX_A & 0xF;
+    fm_uint16 offset_b   =  glort_ram.RANGE_SUB_INDEX_B & 0xF;
+    fm_uint16 glort_a    = (idglort >> offset_a) & ((1 << length_a) - 1);
+    fm_uint16 glort_b    = (idglort >> offset_b) & ((1 << length_b) - 1);
+    fm_uint16 dest_index = 0;
+
+    if (strict_glort_routing) {
+        dest_index = glort_ram.DEST_INDEX + (glort_b << length_a) + glort_a;
+    } else {
+        fm_uint32 hash = ((glort_ram.HASH_ROTATION) ? hash_rot_b : hash_rot_a)
+            % (glort_ram.DEST_COUNT == 0) ? 16 : glort_ram.DEST_COUNT;
+        dest_index = glort_ram.DEST_INDEX + (hash << length_a) + glort_a;
+    }
+
+    dest_index &= 0xFFF; // remove carry bit
+    
+    getGlortDestTableEntry(regs, dest_index, glort_dest_table);
+}
+
 static fm_bool isCpuMacAddress
 (
     fm_uint32        regs[MBY_REGISTER_ARRAY_SIZE],
@@ -297,12 +420,14 @@ void MaskGen
 {
     // Read inputs:
     fm_uint32   rx_port         = in->RX_PORT;
+    fm_uint16   idglort         = in->IDGLORT;         // in->TRIGGERS.destGlort; // <-- REVISIT!!!
+    fm_uint32   hash_rot_a      = in->HASH_ROT_A;
+    fm_uint32   hash_rot_b      = in->HASH_ROT_A;    
     fm_bool     parser_window_v = in->PARSER_WINDOW_V; // was: in->PARSER_INFO.window_parse_v;
     fm_macaddr  l2_smac         = in->L2_SMAC;
     fm_macaddr  l2_dmac         = in->L2_DMAC;
     mbySTPState l2_ifid1_state  = in->L2_IFID1_STATE;
     fm_bool     no_learn        = in->NO_LEARN;
-    fm_uint16   idglort         = in->IDGLORT; // in->TRIGGERS.destGlort; // <-- REVISIT!!!
     fm_uint32   glort_dmask     = in->GLORT_DMASK;
     fm_byte     qos_swpri       = in->QOS_SWPRI;
     fm_byte     operator_id     = in->OPERATOR_ID;
@@ -326,6 +451,31 @@ void MaskGen
     // Logging:
     fm_bool logging_hit = FALSE;
     
+    // --------------------------------------------------------------------------------
+    // GLORT:
+
+    mbyGlortRam glort_ram;
+    fm_bool glort_cam_miss = FALSE;
+    if (lookUpRamEntry(regs, idglort, &glort_ram) != FM_OK)
+        glort_cam_miss = TRUE; // GLORT CAM miss
+   
+    // GLORT CAM hit:
+    fm_bool strict_glort_routing   = (glort_ram.STRICT == 2) || (glort_ram.STRICT == 3);
+    fm_bool targeted_deterministic = (glort_ram.STRICT == 2);
+
+    fm_bool   skip_dglort_dec = FALSE;
+    fm_uint16 ip_mcast_idx    = 0;
+    
+    if (!glort_cam_miss)
+    {    
+        mbyGlortDestTable glort_dest_table;
+        lookUpDestEntry(regs, idglort, strict_glort_routing, hash_rot_a, hash_rot_b, glort_ram, &glort_dest_table);
+
+        skip_dglort_dec = glort_ram.SKIP_DGLORT_DEC;
+        glort_dmask     = glort_dest_table.DEST_MASK; 
+        ip_mcast_idx    = glort_dest_table.IP_MULTICAST_INDEX;
+    } 
+
     // --------------------------------------------------------------------------------
     // Learning:
 
@@ -371,9 +521,10 @@ void MaskGen
     // --------------------------------------------------------------------------------
     // Traps:
 
-    fm_bool log_ip_mc_ttl = FALSE;
-    fm_bool l2_dmac_cpu   = isCpuMacAddress(regs, l2_dmac);
-    fm_bool l2_dmac_zero  = (l2_dmac == 0);
+    fm_bool store_trap_action = sys_cfg1.STORE_TRAP_ACTION;
+    fm_bool log_ip_mc_ttl     = FALSE;
+    fm_bool l2_dmac_cpu       = isCpuMacAddress(regs, l2_dmac);
+    fm_bool l2_dmac_zero      = (l2_dmac == 0);
 
     if (l2_dmac_cpu && !(l2_dmac_zero && parser_window_v))
         amask |= MBY_AMASK_TRAP_CPU_ADDR; // Trapping CPU addressed frame
@@ -413,12 +564,12 @@ void MaskGen
         }
     }
 
-    if (mark_routed && (in->IP_MCAST_IDX == 0) && (in->L2_IVID1 == (in->L2_EVID1 & 0xFFF)))
+    if (mark_routed && (ip_mcast_idx == 0) && (in->L2_IVID1 == (in->L2_EVID1 & 0xFFF)))
         log_amask |= MBY_LOG_TYPE_ARP_REDIRECT;
 
     if (in->DROP_TTL)
     {
-        if (in->IP_MCAST_IDX == 0)
+        if (ip_mcast_idx == 0)
         {
             if      (sys_cfg_router.TRAP_TTL1 == 0)
                 amask |= MBY_AMASK_DROP_TTL;
@@ -745,31 +896,37 @@ void MaskGen
     { /* err = HandleLogging(model) */; }
 
     // Write outputs:
-    out->LEARNING_ENABLED      = learning_enabled;
-    out->MIRROR0_PORT          = mirror0_port;
-    out->MIRROR1_PORT          = mirror1_port;
-    out->MIRROR0_PROFILE_V     = mirror0_profile_v;
-    out->MIRROR1_PROFILE_V     = mirror1_profile_v;
-    out->MIRROR0_PROFILE_IDX   = mirror0_profile_idx;
-    out->MIRROR1_PROFILE_IDX   = mirror1_profile_idx;
-    out->QCN_MIRROR0_PROFILE_V = qcn_mirror0_profile_v;
-    out->QCN_MIRROR1_PROFILE_V = qcn_mirror1_profile_v;
-    out->AMASK                 = amask;
-    out->FNMASK                = fnmask;
-    out->DMASK                 = dmask;
-    out->LOG_AMASK             = log_amask;
-    out->L3_EDOMAIN            = l3_edomain;
-    out->L2_EDOMAIN            = l2_edomain;
-    out->LOGGING_HIT           = logging_hit;
-    out->ACTION                = action;
-    out->MAC_MOVED             = mac_moved;
-    out->FCLASS                = fclass;
-    out->XCAST                 = xcast;
-    out->IDGLORT               = idglort;
-    out->CPU_CODE              = cpu_code;
-    out->QOS_SWPRI             = qos_swpri;
-    out->CPU_TRAP              = cpu_trap;
-    out->OPERATOR_ID           = operator_id;
-    out->STORE_TRAP_ACTION     = sys_cfg1.STORE_TRAP_ACTION;
-    out->RX_MIRROR             = rx_mirror_out;
+    out->IDGLORT                = idglort;
+    out->TARGETED_DETERMINISTIC = targeted_deterministic;
+    out->STRICT_GLORT_ROUTING   = strict_glort_routing;
+    out->GLORT_CAM_MISS         = glort_cam_miss;
+    out->GLORT_DMASK            = glort_dmask;
+    out->SKIP_DGLORT_DEC        = skip_dglort_dec;
+    out->IP_MCAST_IDX           = ip_mcast_idx;
+    out->LEARNING_ENABLED       = learning_enabled;
+    out->MIRROR0_PORT           = mirror0_port;
+    out->MIRROR1_PORT           = mirror1_port;
+    out->MIRROR0_PROFILE_V      = mirror0_profile_v;
+    out->MIRROR1_PROFILE_V      = mirror1_profile_v;
+    out->MIRROR0_PROFILE_IDX    = mirror0_profile_idx;
+    out->MIRROR1_PROFILE_IDX    = mirror1_profile_idx;
+    out->QCN_MIRROR0_PROFILE_V  = qcn_mirror0_profile_v;
+    out->QCN_MIRROR1_PROFILE_V  = qcn_mirror1_profile_v;
+    out->AMASK                  = amask;
+    out->FNMASK                 = fnmask;
+    out->DMASK                  = dmask;
+    out->LOG_AMASK              = log_amask;
+    out->L3_EDOMAIN             = l3_edomain;
+    out->L2_EDOMAIN             = l2_edomain;
+    out->LOGGING_HIT            = logging_hit;
+    out->ACTION                 = action;
+    out->MAC_MOVED              = mac_moved;
+    out->FCLASS                 = fclass;
+    out->XCAST                  = xcast;
+    out->CPU_CODE               = cpu_code;
+    out->QOS_SWPRI              = qos_swpri;
+    out->CPU_TRAP               = cpu_trap;
+    out->OPERATOR_ID            = operator_id;
+    out->STORE_TRAP_ACTION      = store_trap_action;
+    out->RX_MIRROR              = rx_mirror_out;
 }

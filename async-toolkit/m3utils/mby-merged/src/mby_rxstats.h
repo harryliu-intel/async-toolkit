@@ -112,7 +112,7 @@ typedef enum mbyRxStatsBk2Enum
 
 } mbyRxStatsBk2;
 
-typedef enum
+typedef enum mbyRxStatsBk3Enum
 {
     STAT_PolicerDrops = 0,
     STAT_TTLDrops,
@@ -131,31 +131,15 @@ typedef enum
     STAT_LoopbackSuppDrops,
     STAT_L4CheckSumValidationDrops
 
-} hlp_modelRxStatsBk3;
+} mbyRxStatsBk3;
 
 // Structs:
 
-typedef struct mbyPolicerToRxStatsStruct
-{
-    fm_uint32               RX_LENGTH;          // RX packet length
-    fm_uint32               RX_PORT;            // RX port number
-    fm_bool                 IS_IPV4;            // packet is of type IP v4
-    fm_bool                 IS_IPV6;            // packet is of type IP v6
-    fm_macaddr              L2_DMAC;            // layer 2 destination address
-    fm_uint16               L2_IVLAN1_CNT_INDEX;
-    fm_uint64               FNMASK;             // forwarding normal mask
-    fm_bool                 SEG_META_ERR;       // segment error
-    fm_bool                 allowStateChange;   // allow 
-    fm_uint32               ACTION;             // resolved action
-    fm_byte                 TC;                 // 3-bit traffic class
-
-} mbyPolicerToRxStats;
-
-typedef struct mbyRxStatsToModifier
+typedef struct mbyRxStatsToRxOutStruct
 {
     fm_bool                 SAF_ERROR;         // SAF error
 
-} mbyRxStatsToModifier;
+} mbyRxStatsToRxOut;
 
 #endif
 

@@ -12,7 +12,12 @@
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
+#include "mby_triggers.h"
+#include "mby_congmgmt.h"
 #include "mby_rxstats.h"
+#include "mby_rxtotx.h"
+#include "mby_modifier.h"
+#include "mby_txstats.h"
 
 // Function prototypes:
 
@@ -66,11 +71,46 @@ void MaskGen
           mbyMaskGenToTriggers  * const out
 );
 
+void Triggers
+(
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyMaskGenToTriggers  * const in,
+          mbyTriggersToCongMgmt * const out
+);
+
+void CongMgmt
+(
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyTriggersToCongMgmt * const in,
+          mbyCongMgmtToRxStats  * const out
+);
+
 void RxStats
 (
-    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyPolicerToRxStats  * const in,
-          mbyRxStatsToModifier * const out
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyCongMgmtToRxStats  * const in,
+          mbyRxStatsToRxOut     * const out
+);
+
+void RxToTx
+(
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyRxStatsToRxOut     * const in,
+          mbyTxInToModifier     * const out
+);
+
+void Modifier
+(
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyTxInToModifier     * const in,
+          mbyModifierToTxStats  * const out
+);
+
+void TxStats
+(
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyModifierToTxStats  * const in,
+          mbyTxStatsToTxOut     * const out
 );
 
 #endif

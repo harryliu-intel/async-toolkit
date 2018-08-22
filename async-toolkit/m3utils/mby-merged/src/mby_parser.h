@@ -222,18 +222,20 @@ typedef enum mbyParserPtrsIndexEnum
 
 typedef struct mbyMacToParserStruct
 {
-    // The ingress packet data
+    // Ingress packet data
     fm_byte                *RX_DATA;
 
-    // The ingress packet data length in units of bytes
+    // Ingress packet data length [bytes]
     fm_uint32               RX_LENGTH;
 
-    // The ingress port
+    // Ingress port
     fm_uint32               RX_PORT;
 
+#if 0 // Obsolete <-- REVISIT!!!
     // Packet meta data:
     fm_byte                 PKT_META[32];
-
+#endif
+    
 } mbyMacToParser;
 
 typedef struct mbyParserToMapperStruct
@@ -247,9 +249,6 @@ typedef struct mbyParserToMapperStruct
     // The 4-bit set of RX EPL flags. Bits [7:3] are reserved and always
     // set to zero. For bits [2:0] see also ''mbyRxFlags'':
     fm_byte                 RX_FLAGS;
-
-    // Pkt Seg Meta Err. Valid on EOP:
-//  fm_bool                 SEG_META_ERR;
 
     // Adjusted segment length:
     fm_uint16               PA_ADJ_SEG_LEN;

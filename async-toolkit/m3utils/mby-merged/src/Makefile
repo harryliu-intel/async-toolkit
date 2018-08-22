@@ -15,7 +15,12 @@ SOURCES += mby_classifier.c
 SOURCES += mby_hash.c
 SOURCES += mby_nexthop.c
 SOURCES += mby_maskgen.c
+SOURCES += mby_triggers.c
+SOURCES += mby_congmgmt.c
 SOURCES += mby_rxstats.c
+SOURCES += mby_rxtotx.c
+SOURCES += mby_modifier.c
+SOURCES += mby_txstats.c
 SOURCES += mby_pipeline.c
 
 OBJECTS = $(SOURCES:.c=.o)
@@ -69,7 +74,12 @@ mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h mby_bitfield.h
 mby_hash.o       : mby_hash.c       mby_hash.h       mby_common.h mby_bitfield.h
 mby_nexthop.o    : mby_nexthop.c    mby_nexthop.h    mby_common.h mby_bitfield.h
 mby_maskgen.o    : mby_maskgen.c    mby_maskgen.h    mby_common.h mby_bitfield.h
+mby_triggers.o   : mby_triggers.c   mby_triggers.h   mby_common.h mby_bitfield.h
+mby_congmgmt.o   : mby_congmgmt.c   mby_congmgmt.h   mby_common.h mby_bitfield.h
 mby_rxstats.o    : mby_rxstats.c    mby_rxstats.h    mby_common.h mby_bitfield.h
+mby_rxtotx.o     : mby_rxtotx.c     mby_rxtotx.h     mby_common.h mby_bitfield.h
+mby_modifier.o   : mby_modifier.c   mby_modifier.h   mby_common.h mby_bitfield.h
+mby_txstats.o    : mby_txstats.c    mby_txstats.h    mby_common.h mby_bitfield.h
 
 PIPELINE_STAGES += mby_parser.o
 PIPELINE_STAGES += mby_mapper.o
@@ -78,6 +88,9 @@ PIPELINE_STAGES += mby_hash.o
 PIPELINE_STAGES += mby_nexthop.o
 PIPELINE_STAGES += mby_maskgen.o
 PIPELINE_STAGES += mby_rxstats.o
+PIPELINE_STAGES += mby_rxtotx.o
+PIPELINE_STAGES += mby_modifier.o
+PIPELINE_STAGES += mby_txstats.o
 
 mby_pipeline.o   : mby_pipeline.c   mby_pipeline.h   $(PIPELINE_STAGES)
 mby_model.o      : mby_model.c      mby_model.h		 mby_pipeline.o

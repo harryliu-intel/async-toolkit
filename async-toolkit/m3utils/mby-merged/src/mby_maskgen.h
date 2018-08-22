@@ -12,6 +12,45 @@
 
 // Defines:
 
+/******** MST_GLORT_BASE *******/
+#define MBY_MST_GLORT_BASE                                      (0x3A00000)
+#define MBY_MST_GLORT_SIZE                                      (0x0010000)
+
+#define MBY_GLORT_DEST_TABLE_WIDTH                              2
+#define MBY_GLORT_DEST_TABLE_ENTRIES                            4096
+#define MBY_GLORT_DEST_TABLE(index, word)                       ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0010000) + (MBY_MST_GLORT_BASE))
+
+#define MBY_GLORT_DEST_TABLE_l_IP_MULTICAST_INDEX               24
+#define MBY_GLORT_DEST_TABLE_h_IP_MULTICAST_INDEX               35
+#define MBY_GLORT_DEST_TABLE_l_DEST_MASK                        0
+#define MBY_GLORT_DEST_TABLE_h_DEST_MASK                        23
+
+#define MBY_GLORT_RAM_WIDTH                                     2
+#define MBY_GLORT_RAM_ENTRIES                                   64
+#define MBY_GLORT_RAM(index, word)                              ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0018000) + (MBY_MST_GLORT_BASE))
+
+#define MBY_GLORT_RAM_b_SKIP_DGLORT_DEC                         35
+#define MBY_GLORT_RAM_b_HASH_ROTATION                           34
+#define MBY_GLORT_RAM_l_DEST_COUNT                              30
+#define MBY_GLORT_RAM_h_DEST_COUNT                              33
+#define MBY_GLORT_RAM_l_RANGE_SUB_INDEX_B                       22
+#define MBY_GLORT_RAM_h_RANGE_SUB_INDEX_B                       29
+#define MBY_GLORT_RAM_l_RANGE_SUB_INDEX_A                       14
+#define MBY_GLORT_RAM_h_RANGE_SUB_INDEX_A                       21
+#define MBY_GLORT_RAM_l_DEST_INDEX                              2
+#define MBY_GLORT_RAM_h_DEST_INDEX                              13
+#define MBY_GLORT_RAM_l_STRICT                                  0
+#define MBY_GLORT_RAM_h_STRICT                                  1
+
+#define MBY_GLORT_CAM_WIDTH                                     2
+#define MBY_GLORT_CAM_ENTRIES                                   64
+#define MBY_GLORT_CAM(index, word)                              ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0018400) + (MBY_MST_GLORT_BASE))
+
+#define MBY_GLORT_CAM_l_KEY_INVERT                              16
+#define MBY_GLORT_CAM_h_KEY_INVERT                              31
+#define MBY_GLORT_CAM_l_KEY                                     0
+#define MBY_GLORT_CAM_h_KEY                                     15
+
 /******** FWD_MISC_BASE *******/
 #define MBY_FWD_MISC_BASE                                       (0x3A40000)
 #define MBY_FWD_MISC_SIZE                                       (0x0010000)
@@ -367,6 +406,15 @@
 
 // Enums:
 
+typedef enum mbyGlortRamStrictEnum
+{
+    MBY_GLORT_RAM_STRICT_HASHED  = 0,
+    MBY_GLORT_RAM_STRICT_RSVD    = 1,
+    MBY_GLORT_RAM_STRICT_TARGETED_DETERMINISTIC = 2,
+    MBY_GLORT_RAM_STRICT_DETERMINISTIC = 3
+
+} mbyGlortRamStrict;
+
 typedef enum mbyIeeeReservedMacActionActionEnum
 {
     MBY_IEEE_RESERVED_MAC_ACTION_ACTION_SWITCHNORMALLY = 0,
@@ -426,35 +474,68 @@ typedef struct mbyFwdLagCfgStruct
 
 } mbyFwdLagCfg;
 
+typedef struct mbyGlortDestTableStruct
+{
+    fm_uint16               IP_MULTICAST_INDEX;
+    fm_uint32               DEST_MASK;
+
+} mbyGlortDestTable;
+
+
+typedef struct mbyGlortRamStruct
+{
+    fm_bool                 SKIP_DGLORT_DEC;
+    fm_bool                 HASH_ROTATION;
+    fm_byte                 DEST_COUNT;
+    fm_byte                 RANGE_SUB_INDEX_B;
+    fm_byte                 RANGE_SUB_INDEX_A;
+    fm_uint16               DEST_INDEX;
+    mbyGlortRamStrict       STRICT;
+
+} mbyGlortRam;
+
+typedef struct mbyGlortCamStruct
+{
+    fm_uint16               KEY_INVERT;
+    fm_uint16               KEY;
+
+} mbyGlortCam;
+
 typedef struct mbyMaskGenToTriggersStruct
 {
-    fm_bool                 LEARNING_ENABLED;      // learning enabled status within action codes
-    fm_uint64               AMASK;                 // 46-bit action mask
-    fm_uint32               DMASK;                 // 24-bit destination mask
-    fm_uint32               FNMASK;                // 24-bit normal forwarding mask
-    fm_byte                 LOG_AMASK;             // 6-bit logging action mask
-    fm_bool                 CPU_TRAP;              // flag indicating frame should be sent to CPU
-    fm_byte                 OPERATOR_ID;           // 4-bit operator ID
-    fm_byte                 QOS_SWPRI;             // 4-bit switch priority
-    fm_bool                 STORE_TRAP_ACTION;     // flag indicating whether 4bit trap action code will be stored in metadata
-    fm_uint16               IDGLORT;               // 16-bit ingress destination GLORT
-    fm_bool                 LOGGING_HIT;           // flag indicating whether logging was hit
-    fm_uint32               MIRROR0_PORT;          // mirror 0 port
-    fm_uint32               MIRROR1_PORT;          // mirror 1 port
-    fm_byte                 MIRROR0_PROFILE_V;     // mirror 0 profile valid
-    fm_byte                 MIRROR1_PROFILE_V;     // mirror 1 profile valid
-    fm_uint32               MIRROR0_PROFILE_IDX;   // mirror 0 profile index
-    fm_uint32               MIRROR1_PROFILE_IDX;   // mirror 1 profile index
-    fm_bool                 QCN_MIRROR0_PROFILE_V; // qcn mirror 0 profile valid
-    fm_bool                 QCN_MIRROR1_PROFILE_V; // qcn mirror 1 profile valid
-    fm_uint32               ACTION;                // resolved action
-    fm_byte                 L2_EDOMAIN;            // egress L2 domain
-    fm_byte                 L3_EDOMAIN;            // egress L3 domain
-    fm_bool                 MAC_MOVED;             // flag indicating that a non-secure MAC was found
-    fm_byte                 FCLASS;                // class state (Unicast, Broadcast or Multicast) detected
-    fm_byte                 XCAST;                 // indicate Unicast, Multicast, or Broadcast
-    fm_bool                 RX_MIRROR;             // rx mirror frame
-    fm_byte                 CPU_CODE;              // 4-bit CPU code
+    fm_bool                 LEARNING_ENABLED;       // learning enabled status within action codes
+    fm_uint64               AMASK;                  // 46-bit action mask
+    fm_uint32               DMASK;                  // 24-bit destination mask
+    fm_uint32               FNMASK;                 // 24-bit normal forwarding mask
+    fm_byte                 LOG_AMASK;              // 6-bit logging action mask
+    fm_bool                 CPU_TRAP;               // flag indicating frame should be sent to CPU
+    fm_byte                 OPERATOR_ID;            // 4-bit operator ID
+    fm_byte                 QOS_SWPRI;              // 4-bit switch priority
+    fm_bool                 STORE_TRAP_ACTION;      // flag indicating whether 4bit trap action code will be stored in metadata
+    fm_uint16               IDGLORT;                // 16-bit ingress destination GLORT
+    fm_bool                 LOGGING_HIT;            // flag indicating whether logging was hit
+    fm_uint32               MIRROR0_PORT;           // mirror 0 port
+    fm_uint32               MIRROR1_PORT;           // mirror 1 port
+    fm_byte                 MIRROR0_PROFILE_V;      // mirror 0 profile valid
+    fm_byte                 MIRROR1_PROFILE_V;      // mirror 1 profile valid
+    fm_uint32               MIRROR0_PROFILE_IDX;    // mirror 0 profile index
+    fm_uint32               MIRROR1_PROFILE_IDX;    // mirror 1 profile index
+    fm_bool                 QCN_MIRROR0_PROFILE_V;  // qcn mirror 0 profile valid
+    fm_bool                 QCN_MIRROR1_PROFILE_V;  // qcn mirror 1 profile valid
+    fm_uint32               ACTION;                 // resolved action
+    fm_byte                 L2_EDOMAIN;             // egress L2 domain
+    fm_byte                 L3_EDOMAIN;             // egress L3 domain
+    fm_bool                 MAC_MOVED;              // flag indicating that a non-secure MAC was found
+    fm_byte                 FCLASS;                 // class state (Unicast, Broadcast or Multicast) detected
+    fm_byte                 XCAST;                  // indicate Unicast, Multicast, or Broadcast
+    fm_bool                 RX_MIRROR;              // rx mirror frame
+    fm_byte                 CPU_CODE;               // 4-bit CPU code
+    fm_bool                 TARGETED_DETERMINISTIC; // mode is set to targeted deterministic
+    fm_bool                 STRICT_GLORT_ROUTING;
+    fm_bool                 GLORT_CAM_MISS;
+    fm_uint32               GLORT_DMASK;            // 24-bit GLORT-based destination mask
+    fm_bool                 SKIP_DGLORT_DEC;
+    fm_uint16               IP_MCAST_IDX;           // index into the MCAST_VLAN_TABLE
 
 } mbyMaskGenToTriggers;
 

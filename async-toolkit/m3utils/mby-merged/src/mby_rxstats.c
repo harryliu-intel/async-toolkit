@@ -2,14 +2,16 @@
 
 // Copyright (C) 2018 Intel Corporation
 
+#include "mby_congmgmt.h"
 #include "mby_rxstats.h"
 #include "mby_maskgen.h" // action codes
 
+#if 0 // should this code be in MaskGen rather than here? <-- REVISIT!!!!
 static void handleTail
 (
     fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyPolicerToRxStats  * const in,
-          mbyRxStatsToModifier * const out
+    const mbyCongMgmtToRxStats * const in,
+          mbyRxStatsToRxOut    * const out
 )
 {
     // Read inputs:
@@ -39,8 +41,6 @@ static void handleTail
     fm_bool   ign_frame_err = FM_ARRAY_GET_BIT    (saf_matrix_vals, MBY_SAF_MATRIX, IGNORE_FRAME_ERROR);
     
     fm_uint64 dmask = fnmask;
-
-#if 0 // should this code be in MaskGen rather than here? <-- REVISIT!!!!
 
     if (state->MIRROR1_PROFILE_V)
         dmask |= (FM_LITERAL_U64(1) << state->MIRROR1_PORT);
@@ -85,9 +85,7 @@ static void handleTail
             out->TX_DROP = 1;
         }
     }
-#endif
-    
-#if 0
+
     // Update Action code for CSUM and L3 Length errors
     // Applies to only single segment packets. Multi-segment packets are handled by Modify
     if (rx_length <= 192)
@@ -133,8 +131,8 @@ static void handleTail
     // clear parser_info for window parsing
     if (out->PARSER_INFO.window_parse_v)
         FM_CLEAR(state->PARSER_INFO);
-#endif
 }
+#endif
 
 static fm_uint16 getBankIndex(const fm_uint32 rx_port)
 {
@@ -363,8 +361,8 @@ static void handleRxBankVlan
 void RxStats
 (
     fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyPolicerToRxStats  * const in,
-          mbyRxStatsToModifier * const out
+    const mbyCongMgmtToRxStats * const in,
+          mbyRxStatsToRxOut    * const out
 )
 {
     // Read inputs:
@@ -384,9 +382,10 @@ void RxStats
 
     if (state_chg)
     {
-        // Handle tail
-        handleTail(regs, in, out); // code that likely does not belong to RxStats <-- REVISIT!!!!
-
+#if 0 // code that likely does not belong to RxStats <-- REVISIT!!!!
+        // Handle tail processing:
+        handleTail(regs, in, out); 
+#endif
         // Handle RX frame classification:
         handleRxBank0(regs, rx_length, rx_port, is_ipv4, is_ipv6, is_bcast, is_mcast, is_ucast);
 
