@@ -131,14 +131,14 @@ class RegImpl(val c: Context) extends Control with LiftableMemory { self =>
     }
   }
 
-  def handleField(name: c.TermName, args: List[c.Tree], body: List[c.Tree], guard: AddressGuard): FieldData = {
+  def handleField(name: c.TermName, args: List[c.Tree], body: List[c.Tree], guard: AddressGuard[TermName]): FieldData = {
     implicit val cpos = wrappingPos(args)
     val info = parseField(name, args)
     val range = info.range
     val (pos, lim) = (range.start, range.last+1)
     val ar = AddressRange(Address(pos.bits), (lim-pos).bits)
     try {
-      guard += (ar, name.toString)
+      guard += (ar, name)
     }
     catch {
       case AddressOverlap(first, second) => cError {
@@ -204,7 +204,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory { self =>
       *
       * Throws an error if overlapping is detecyted.
       * Can generate address map. */
-    var guard = AddressGuard()
+    var guard = AddressGuard[TermName]()
 
     /** Parsed fields' data. */
     var fields = List[FieldData]()
@@ -219,7 +219,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory { self =>
             case Apply(arg @ q"${_: Range}", body) => (List(arg), body)
             // name(...){...}
             case Apply(q"(..$args)", body) => (args, body)
-            case _ => cAbort(details.pos, "Invalid field declaration")
+            case _ => cAbort("Invalid field declaration")(details.pos)
           }
           fields = handleField(name, args, body, guard) :: fields
           Some((name, args, body))
