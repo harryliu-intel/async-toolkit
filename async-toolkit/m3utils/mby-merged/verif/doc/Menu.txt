@@ -210,6 +210,39 @@ File: mby_mc_axi_random_access_test  (mplex/tests/mby_mc_axi_random_access_test/
 File: mby_tb  (mby/tb/mby_tb.sv)
 File: new  (mplex/tests/mby_mc_ahb_random_access_test/mby_mc_ahb_random_access_test.svh)
 
+Group: Egress  {
+
+   Group: Env  {
+
+      File: egress_base_env.svh  (egress/env/egress_base_env.svh)
+      File: egress_env.svh  (egress/env/egress_env.svh)
+      File: egress_env_monitor.svh  (egress/env/egress_env_monitor.svh)
+      File: egress_ral_env.svh  (egress/env/egress_ral_env.svh)
+      File: new  (egress/env/egress_config.svh)
+      File: new  (egress/env/egress_ti_config.svh)
+      }  # Group: Env
+
+   Group: Fal  {
+
+      File: MBY_classes.svh  (egress/fal/egress_classes.svh)
+      File: mby_fuse_env.sv  (egress/fal/egress_fuse_env.sv)
+      File: mby_fuse_regs.svh  (egress/fal/egress_fuse_regs.svh)
+      File: toplevel_fuse_env.svh  (egress/fal/toplevel_fuse_env.svh)
+      }  # Group: Fal
+
+   File: new  (egress/seq/egress_extended_base_seq.sv)
+
+   Group: Ral  {
+
+      File: MBY_ral_rtl_monitor.svh  (egress/ral/egress_ral_rtl_monitor.svh)
+      File: mby_regs_ral_rtl_monitor.svh  (egress/ral/egress_regs_ral_rtl_monitor.svh)
+      File: mby_regs_regs.svh  (egress/ral/egress_regs_regs.svh)
+      }  # Group: Ral
+
+   File: seq/egress_env_base_seq.sv  (egress/seq/egress_env_base_seq.sv)
+   File: tests/egress_alive_test/egress_alive_test.svh  (egress/tests/egress_alive_test/egress_alive_test.svh)
+   }  # Group: Egress
+
 Group: Index  {
 
    Index: Everything
