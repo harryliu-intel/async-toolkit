@@ -276,7 +276,7 @@ if [ -n "$client_spec_exists" ] ; then
 
   if [ -n "$fast" ]; then
       # this can save a LOT of time but makes assumptions that may not remain true
-      all_cds_info_files=`$findcmd $dfII_dir -follow \\( -name '*#*' -o -name layout -o -name floorplan -o -name abstract -o -name flatten -o -name prelayout -o -name layout_tag \\) -type d -prune -o \\( -type f -name cdsinfo.tag -print \\)`
+      all_cds_info_files=`$findcmd $dfII_dir -follow \\( -name '*#*' \\) -type d -prune -o \\( -type f -name cdsinfo.tag -print \\)`
   else
       all_cds_info_files=`$findcmd $dfII_dir -follow  -type f -name "cdsinfo.tag"`
   fi
