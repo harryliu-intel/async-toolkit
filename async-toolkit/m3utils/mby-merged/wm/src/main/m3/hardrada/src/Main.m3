@@ -13,6 +13,7 @@ BEGIN
 VAR root := NEW( REF Node.T ) ;
 VAR root_for_dep := NEW( REF Node.T ) ;
 VAR depgraph := NEW( REF DepGraph.T ) ;
+VAR depgraph_pms := NEW( REF DepGraph.DepGraphParams ) ;
 VAR inline_root := NEW( REF Node.T ) ;
 VAR current_node := NEW( REF Node.T ) ;
 VAR current_node2 := NEW( REF Node.T ) ;
@@ -31,6 +32,10 @@ VAR deeper_start_node := NEW( REF Node.T ) ;
 VAR tempchildren := NEW( REF Node.DList ) ;
 VAR tempchildren2 := NEW( REF Node.DList ) ;
 VAR tempchildren3 := NEW( REF Node.DList ) ;
+
+VAR proc_block := NEW( REF Node.DList ) ;
+
+VAR new_placeholder_list := NEW( REF Node.DList ) ;
 
 VAR stmt_add_on := NEW( REF Node.T ) ;
 VAR stmt_add_on_take2 := NEW( REF Node.T ) ;
@@ -250,6 +255,7 @@ Node.AppendNode( expr_add_on_if1^.children , qualid_if1 ) ;
 start_ifst_1^.val := "IfSt.Rule1" ;
 start_ifst_1^.cat := Node.Category.NonTerminal ;
 start_ifst_1^.children := NEW( REF Node.DList ) ;
+Node.AppendNode( start_ifst_1^.children , NEW( REF Node.T , val := "IF" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 Node.AppendNode( start_ifst_1^.children , expr_add_on_if1 ) ;
 Node.AppendNode( start_ifst_1^.children , NEW( REF Node.T , val := "THEN" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 ifst^.val := "Stmt.Rule8" ;
@@ -267,8 +273,8 @@ stmt_add_on^.val := "Stmt.Rule1" ;
 stmt_add_on^.cat := Node.Category.NonTerminal ;
 stmt_add_on^.children := NEW( REF Node.DList ) ;
 Node.AppendNode( real_start_ifst_1^.children , stmt_add_on ) ;
+Node.AppendNode( real_start_ifst_1^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 Node.AppendNode( start_ifst_1^.children , real_start_ifst_1 ) ;
-Node.AppendNode( ifst^.children , start_ifst_1 ) ;
 ass_stmt_add_on^.val := "AssignSt.Rule1" ;
 ass_stmt_add_on^.cat := Node.Category.NonTerminal ;
 ass_stmt_add_on^.children := NEW( REF Node.DList ) ;
@@ -311,12 +317,14 @@ Node.AppendNode( ass_stmt_add_on^.children , expr_add_on2 ) ;
 Node.AppendNode( deeper_start_node^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 
 (* Part 2 of conditional *)
-Node.AppendNode( ifst^.children , NEW( REF Node.T , val := "ELSE" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( start_ifst_1^.children , NEW( REF Node.T , val := "ELSE" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 stmt_add_on_take2^.val := "Stmt.Rule1" ;
 stmt_add_on_take2^.cat := Node.Category.NonTerminal ;
 stmt_add_on_take2^.children := NEW( REF Node.DList ) ;
 Node.AppendNode( real_start_ifst_2^.children , stmt_add_on_take2 ) ;
+Node.AppendNode( real_start_ifst_2^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Identifier , children := NEW( REF Node.DList ) ) ) ;
 Node.AppendNode( start_ifst_1^.children , real_start_ifst_2 ) ;
+Node.AppendNode( start_ifst_1^.children , NEW( REF Node.T , val := "END" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 ass_stmt_add_on_take2^.val := "AssignSt.Rule1" ;
 ass_stmt_add_on_take2^.cat := Node.Category.NonTerminal ;
 ass_stmt_add_on_take2^.children := NEW( REF Node.DList ) ;
@@ -330,8 +338,6 @@ Node.AppendNode( id_add_on_take2^.children , NEW( REF Node.T , val := "y" , cat 
 Node.AppendNode( expr_add_on_take2^.children , id_add_on_take2 ) ;
 Node.AppendNode( ass_stmt_add_on_take2^.children , expr_add_on_take2 ) ;
 Node.AppendNode( stmt_add_on_take2^.children , ass_stmt_add_on_take2 ) ;
-Node.AppendNode( real_start_ifst_2^.children , stmt_add_on_take2 ) ;
-Node.AppendNode( start_ifst_1^.children , real_start_ifst_2 ) ;
 Node.AppendNode( ass_stmt_add_on_take2^.children , NEW( REF Node.T , val := ":=" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 expr_add_on2_take2^.val := "Expr.Rule1" ;
 expr_add_on2_take2^.cat := Node.Category.NonTerminal ;
@@ -356,7 +362,6 @@ expr_add_on4_take2^.children := NEW( REF Node.DList ) ;
 Node.AppendNode( expr_add_on4_take2^.children , number_add_on_take2 ) ;
 Node.AppendNode( expr_add_on2_take2^.children , expr_add_on4_take2 ) ;
 Node.AppendNode( ass_stmt_add_on_take2^.children , expr_add_on2_take2 ) ;
-Node.AppendNode( real_start_ifst_2^.children , NEW( REF Node.T , val := ";" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
 
 Node.AppendNode( current_node^.children , current_node2 ) ;
 Node.AppendNode( deeper_start_node^.children , current_node ) ;
@@ -487,53 +492,22 @@ EXCEPT
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
 
+ptree_pms^.ProcedureDefnVal := "Decl.Rule5" ;
+ptree_pms^.ArgSeparator := ";" ;
+ptree_pms^.PathToProcedureBlock := TextList.Cons( "Block.Rule1" , NIL ) ;
+ptree_pms^.PathToProcedureName := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
+ptree_pms^.PathToArgList := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Signature.Rule1" , TextList.Cons( "Formals.Rule1" , NIL ) ) ) ;
+ptree_pms^.PathToArgNameFromArg := TextList.Cons( "IdList.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
+
 (* Testing dep graph *)
-(* Construct dep graph *)
-depgraph^.deps := NIL ;
-depgraph^.subdepgraph := NEW( REF ARRAY OF REF DepGraph.T , 2 ) ;
-depgraph^.parse_root := NEW( REF Node.T ) ;
-Node.DeepCopy( depgraph^.parse_root , ifst ) ;
-
-depgraph^.next := NEW( REF DepGraph.T ) ;
-depgraph^.next^.deps := NIL ;
-depgraph^.next^.subdepgraph := NIL ;
-depgraph^.next^.next := NIL ;
-depgraph^.next^.parse_root := NEW( REF Node.T ) ;
-Node.DeepCopy( depgraph^.parse_root , return_stmt ) ;
-
-(* Deep copy original parse tree with placeholders *)
-Node.DeepCopyDList( tempchildren , deeper_start_node^.children ) ;
-deeper_start_node^.children := NEW( REF Node.DList ) ;
-deeper_start_node^.cat := Node.Category.Placeholder ;
-root_for_dep^.children := NEW( REF Node.DList ) ;
-Node.DeepCopy( root_for_dep , root ) ;
-Node.DeepCopyDList( deeper_start_node^.children , tempchildren ) ;
-deeper_start_node^.cat := Node.Category.NonTerminal ;
-
-(* Put placeholders *)
-Node.DeepCopyDList( tempchildren2 , real_start_ifst_1^.children ) ;
-Node.DeepCopyDList( tempchildren3 , real_start_ifst_2^.children ) ;
-real_start_ifst_1^.children := NEW( REF Node.DList ) ;
-real_start_ifst_1^.cat := Node.Category.Placeholder ;
-real_start_ifst_2^.children := NEW( REF Node.DList ) ;
-real_start_ifst_2^.cat := Node.Category.Placeholder ;
-
-depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.next := NIL ;
-depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.deps := NIL ;
-Node.DeepCopy( depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.parse_root , real_start_ifst_1 ) ;
-depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) ]^.subdepgraph := NIL ;
-
-depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.next := NIL ;
-depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.deps := NIL ;
-Node.DeepCopy( depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.parse_root , real_start_ifst_2 ) ;
-depgraph^.subdepgraph[ FIRST( depgraph^.subdepgraph^ ) + 1 ]^.subdepgraph := NIL ;
-
-Node.DeepCopyDList( real_start_ifst_1^.children , tempchildren2 ) ;
-real_start_ifst_1^.cat := Node.Category.NonTerminal ;
-Node.DeepCopyDList( real_start_ifst_2^.children , tempchildren3 ) ;
-real_start_ifst_2^.cat := Node.Category.NonTerminal ;
-
-DepGraph.ConstructParseTree( root_for_dep , depgraph , ";" ) ;
+depgraph_pms^.start_symbol_val := "S" ;
+depgraph_pms^.separator := ";" ;
+depgraph_pms^.ProcedureBodyToSSPath := TextList.Cons( "S" , NIL ) ;
+(* Get procedure block *)
+procdef := GetNthProcDef( root , ptree_pms , "sgn" , 0 ) ;
+Node.FollowPath( proc_block , procdef , ptree_pms^.PathToProcedureBlock ) ;
+GetDepGraph( depgraph , root , depgraph_pms ) ;
+ConstructParseTree( root_for_dep , depgraph , depgraph_pms ) ;
 TRY
 	Spec.GenCode( root_for_dep , style_rules , "./depgraph.m3" ) ;
 EXCEPT
@@ -541,13 +515,6 @@ EXCEPT
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
 (* Done Testing dep graph *)
-
-ptree_pms^.ProcedureDefnVal := "Decl.Rule5" ;
-ptree_pms^.ArgSeparator := ";" ;
-ptree_pms^.PathToProcedureBlock := TextList.Cons( "Block.Rule1" , NIL ) ;
-ptree_pms^.PathToProcedureName := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
-ptree_pms^.PathToArgList := TextList.Cons( "ProcedureHead.Rule1" , TextList.Cons( "Signature.Rule1" , TextList.Cons( "Formals.Rule1" , NIL ) ) ) ;
-ptree_pms^.PathToArgNameFromArg := TextList.Cons( "IdList.Rule1" , TextList.Cons( "Id.Rule1" , NIL ) ) ;
 
 spec_pms^.specblock := inline_root ;
 spec_pms^.static_args := TextList.Cons( "x" , NIL ) ;

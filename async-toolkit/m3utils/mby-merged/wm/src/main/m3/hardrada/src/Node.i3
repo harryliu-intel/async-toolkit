@@ -1,5 +1,10 @@
 INTERFACE Node ;
 
+(***********)
+(* Imports *)
+(***********)
+IMPORT TextList ;
+
 (**************)
 (* Exceptions *)
 (**************)
@@ -56,6 +61,14 @@ PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEX
 (* If root matches childnode, returns NIL. Otherwise, returns reference to parent node.
 Throws NoMatchException is it cannot find childnode. *)
 PROCEDURE GetParent( root : REF T ; childnode : REF T ) : REF T RAISES { NoMatchException } ;
+
+(* Follow a path and return all the nodes at the end of it *)
+(* Assumptions:
+- path is nonempty and not NIL
+- root node is a nonterminal and is the implicit starting point of the path
+*)
+(* TODO Ensure that it returns empty list with all NILs if no match *)
+PROCEDURE FollowPath( list : REF DList ; root : REF T ; path : TextList.T ) ;
 
 (* DList *)
 PROCEDURE IsEmpty( list : REF DList ) : BOOLEAN ;

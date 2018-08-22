@@ -1,7 +1,12 @@
 MODULE Node ;
 
+(***********)
+(* Imports *)
+(***********)
+
 IMPORT IO ;
 IMPORT Fmt ;
+IMPORT TextList ;
 
 (**********************)
 (* Visible Procedures *)
@@ -122,6 +127,56 @@ BEGIN
 		RAISE NoMatchException ;
 	END ;
 END GetParent ;
+
+PROCEDURE FollowPath( list : REF DList ; root : REF T ; path : TextList.T ) =
+VAR
+	return_end_of_path := NEW( REF DList ) ;
+	recursive_return_end_of_path := NEW( REF DList ) ;
+	recursive_templist := NEW( REF DList ) ;
+	current_child : REF DList := NIL ;
+BEGIN
+	<* ASSERT TextList.Length( path ) > 0 *>
+	<* ASSERT list # NIL *>
+	<* ASSERT root # NIL *>
+	<* ASSERT root^.cat = Category.NonTerminal *>
+	Node.DefaultDList( return_end_of_path ) ;
+	Node.DefaultDList( recursive_return_end_of_path ) ;
+	Node.DefaultDList( recursive_templist ) ;
+	Node.DefaultDList( list ) ;
+	current_child := GoToBeginning( root^.children ) ;
+	LOOP
+		IF current_child^.cur^.val = path.head THEN
+			AppendNode( return_end_of_path , current_child^.cur ) ;
+		END ;
+		IF current_child^.next = NIL THEN
+			EXIT ;
+		ELSE
+			current_child := current_child^.next ;
+		END ;
+	END ;
+	IF TextList.Length( path ) > 1 THEN
+		path := path.tail ;
+		current_child := GoToBeginning( return_end_of_path ) ;
+		LOOP
+			FollowPath( recursive_templist , current_child^.cur , path ) ;
+			AppendDList( recursive_return_end_of_path , recursive_templist ) ;
+			IF current_child^.next = NIL THEN
+				EXIT ;
+			ELSE
+				current_child := current_child^.next ;
+			END ;
+		END ;
+		recursive_return_end_of_path := GoToBeginning( recursive_return_end_of_path ) ;
+		list^.cur := recursive_return_end_of_path^.cur ;
+		list^.prev := recursive_return_end_of_path^.prev ;
+		list^.next := recursive_return_end_of_path^.next ;
+	ELSE
+		return_end_of_path := GoToBeginning( return_end_of_path ) ;
+		list^.cur := return_end_of_path^.cur ;
+		list^.prev := return_end_of_path^.prev ;
+		list^.next := return_end_of_path^.next ;
+	END ;
+END FollowPath ;
 
 (* DList *)
 
@@ -261,6 +316,8 @@ VAR
 	templistptrA : REF DList := NIL ;
 	templistptrB : REF DList := NIL ;
 BEGIN
+	<* ASSERT listA # NIL *>
+	<* ASSERT listB # NIL *>
 	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
 		templistptrA := GoToEnd( listA ) ;
 		templistptrB := GoToBeginning( listB ) ;

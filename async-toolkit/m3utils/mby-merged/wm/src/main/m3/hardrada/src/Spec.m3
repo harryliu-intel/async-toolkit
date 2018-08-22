@@ -248,61 +248,6 @@ BEGIN
 	END ;
 END DebugTextList ;
 
-(* Follow a path and return all the nodes at the end of it *)
-(* Assumptions:
-- path is nonempty and not NIL
-- root node is a nonterminal and is the implicit starting point of the path
-*)
-PROCEDURE FollowPath( list : REF Node.DList ; root : REF Node.T ; path : TextList.T ) =
-VAR
-	return_end_of_path := NEW( REF Node.DList ) ;
-	recursive_return_end_of_path := NEW( REF Node.DList ) ;
-	recursive_templist := NEW( REF Node.DList ) ;
-	current_child : REF Node.DList := NIL ;
-BEGIN
-	<* ASSERT TextList.Length( path ) > 0 *>
-	<* ASSERT list # NIL *>
-	<* ASSERT root # NIL *>
-	<* ASSERT root^.cat = Node.Category.NonTerminal *>
-	Node.DefaultDList( return_end_of_path ) ;
-	Node.DefaultDList( recursive_return_end_of_path ) ;
-	Node.DefaultDList( recursive_templist ) ;
-	Node.DefaultDList( list ) ;
-	current_child := Node.GoToBeginning( root^.children ) ;
-	LOOP
-		IF current_child^.cur^.val = path.head THEN
-			Node.AppendNode( return_end_of_path , current_child^.cur ) ;
-		END ;
-		IF current_child^.next = NIL THEN
-			EXIT ;
-		ELSE
-			current_child := current_child^.next ;
-		END ;
-	END ;
-	IF TextList.Length( path ) > 1 THEN
-		path := path.tail ;
-		current_child := Node.GoToBeginning( return_end_of_path ) ;
-		LOOP
-			FollowPath( recursive_templist , current_child^.cur , path ) ;
-			Node.AppendDList( recursive_return_end_of_path , recursive_templist ) ;
-			IF current_child^.next = NIL THEN
-				EXIT ;
-			ELSE
-				current_child := current_child^.next ;
-			END ;
-		END ;
-		recursive_return_end_of_path := Node.GoToBeginning( recursive_return_end_of_path ) ;
-		list^.cur := recursive_return_end_of_path^.cur ;
-		list^.prev := recursive_return_end_of_path^.prev ;
-		list^.next := recursive_return_end_of_path^.next ;
-	ELSE
-		return_end_of_path := Node.GoToBeginning( return_end_of_path ) ;
-		list^.cur := return_end_of_path^.cur ;
-		list^.prev := return_end_of_path^.prev ;
-		list^.next := return_end_of_path^.next ;
-	END ;
-END FollowPath ;
-
 (* Get args list from procedure definition *)
 (* Return array should only have 1 element, the Formals nonterminal, but
 it is theoretically possible to have multiple elements. *)
@@ -316,7 +261,7 @@ BEGIN
 	<* ASSERT TextList.Length( ptree_pms^.PathToArgList ) > 0 *>
 	<* ASSERT list # NIL *>
 	Node.DefaultDList( list ) ;
-	FollowPath( list , root , ptree_pms^.PathToArgList ) ;
+	Node.FollowPath( list , root , ptree_pms^.PathToArgList ) ;
 	(* TOOD What if user makes a grammar error and has
 	two separate argument lists for same procedure? *)
 	<* ASSERT Node.Length( list ) = 1 *>
@@ -332,7 +277,7 @@ BEGIN
 	<* ASSERT root^.val = ptree_pms^.ProcedureDefnVal *>
 	<* ASSERT ptree_pms^.PathToProcedureName # NIL *>
 	<* ASSERT TextList.Length( ptree_pms^.PathToProcedureName ) > 0 *>
-	FollowPath( list , root , ptree_pms^.PathToProcedureName ) ;
+	Node.FollowPath( list , root , ptree_pms^.PathToProcedureName ) ;
 	(* TODO Again, probably want proper error handling *)
 	<* ASSERT Node.Length( list ) = 1 *>
 	<* ASSERT Node.Length( list^.cur^.children ) = 1 *>
@@ -393,7 +338,7 @@ BEGIN
 		child := argslist^.cur^.children ;
 		<* ASSERT child # NIL *>
 		WHILE child # NIL DO
-			FollowPath( childname , child^.cur , ptree_pms^.PathToArgNameFromArg ) ;
+			Node.FollowPath( childname , child^.cur , ptree_pms^.PathToArgNameFromArg ) ;
 			IF childname^.cur^.children^.cur^.val = argname THEN
 				nextchild := child^.next ;
 				Node.DeleteFromList( child ) ;
@@ -414,7 +359,7 @@ BEGIN
 			adjusted_path := CutOffLastListElement( ptree_pms^.PathToArgList ) ;
 			<* ASSERT adjusted_path # NIL *>
 			level_above_arglist := NEW( REF Node.DList ) ;
-			FollowPath( level_above_arglist , root , adjusted_path ) ;
+			Node.FollowPath( level_above_arglist , root , adjusted_path ) ;
 			(* Delete any references to THAT arglist *)
 			<* ASSERT Node.Length( level_above_arglist ) > 0 *>
 			WHILE level_above_arglist # NIL DO
@@ -463,7 +408,7 @@ BEGIN
 	<* ASSERT root^.cat = Node.Category.NonTerminal *>
 	<* ASSERT CodeToPrepend # NIL *>
 	<* ASSERT ptree_pms # NIL *>
-	FollowPath( blocklist , root , ptree_pms^.PathToProcedureBlock ) ;
+	Node.FollowPath( blocklist , root , ptree_pms^.PathToProcedureBlock ) ;
 	Node.PrependNode( blocklist^.cur^.children , CodeToPrepend ) ;
 END PrependCodeToProcBlock ;
 
@@ -519,6 +464,8 @@ BEGIN
 			node_cat := "Identifier" ;
 		ELSIF root^.cat = Node.Category.NoCategory THEN
 			node_cat := "NoCategory" ;
+		ELSIF root^.cat = Node.Category.Placeholder THEN
+			node_cat := "Placeholder" ;
 		(* TODO Do I need an else? *)
 		END ;
 		TRY

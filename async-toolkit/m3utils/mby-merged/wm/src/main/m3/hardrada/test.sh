@@ -1,5 +1,8 @@
 #!/usr/bin/sh
 
+rm -rf ./w_placeholder
+rm -rf ./w_placeholder_if1
+rm -rf ./w_placeholder_if2
 rm -rf ./AMD64_LINUX
 rm -rf ./test
 rm -rf ./test_inline
