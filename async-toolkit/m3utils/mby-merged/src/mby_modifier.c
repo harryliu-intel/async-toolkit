@@ -12,39 +12,66 @@ void Modifier
           mbyModifierToTxStats  * const out
 )
 {
+    // Read inputs:
+    fm_bool   no_modify         = in->NO_MODIFY;  // skip most of modifications in Modifier
+    fm_uint32 rx_length         = in->RX_LENGTH;  // ingress packet data length [bytes]
+    fm_byte  *rx_data           = in->RX_DATA;
+    fm_bool   tx_drop           = in->TX_DROP;
+    fm_byte   tx_tag            = in->TX_TAG;
+    fm_uint32 tx_stats_last_len = in->TX_STATS_LAST_LEN;
+    
+    // input from the outside:
+    fm_byte *packet;
 
+    // Chunked Packet:
+    mbyModRegData reg_data;
+
+//> GetModRegData(key, model, &reg_data);
+
+    mbyModControlData ctrl_data;
+    
+//> CalcIngressCRC(key, model, &ctrl_data);
+
+    mbyChunkedSeg chunked_seg;
+
+//> InitChunkedSeg(key, model, packet, &chunked_seg);
+
+//> InitControl(key, model, &reg_data, &ctrl_data, &chunked_seg);
+
+    // L2 Modifications:
+
+//> GetRxL2Tags(key, model, &ctrl_data, &chunked_seg);
+
+//> DropPacket(key, model, &ctrl_data);
+
+//> VlanLookup(key, model, &reg_data, &ctrl_data, &chunked_seg);
+
+    // DMAC/SMAC update:
+
+    ctrl_data.isRoutable = ctrl_data.routeA && (tx_tag == MBY_NORMAL_TAGGING) && !(ctrl_data.isMirror);
+
+//> UpdateMacAddrIPP(key, model, &reg_data, &ctrl_data, &chunked_seg);
+
+    // Step 3 in EAS: Construct VLAN Tags (and copy to output):
+
+//> UpdateVlanIPP(key, model, &reg_data, &ctrl_data, &chunked_seg);
+
+    fm_uint32 tx_length = 0; // egress packet data length [bytes]
+
+//> PackPacket(packet, no_modify, rx_length, rx_data, &chunkedSeg, &ctrl_data, &tx_length, key);
+
+//> MiscOps(key, model, &reg_data, &ctrl_data, &chunkedSeg, packet); // if minFrameSize, updatePktmeta use min size
+
+    fm_uint32 tx_stats_length = (!ctrl_data.mirrorTrunc && !tx_drop)
+        ? ctrl_data.egressSeg0Bytes + tx_stats_last_len : ctrl_data.refcnt_tx_len;
+
+    // Write outputs:
+    out->TX_LENGTH       = tx_length;
+    out->TX_STATS_LENGTH = tx_stats_length;
+    out->SEG_DROP        = tx_drop;
 }
 
-#if 0
-/*****************************************************************************
- * File:            hlp_model_modify.c
- * Creation Date:   June 25, 2012
- * Description:     MODIFY stage of HLP white model
- *
- * INTEL CONFIDENTIAL
- * Copyright 2012 Intel Corporation. All Rights Reserved.
- *
- * The source code contained or described herein and all documents related
- * to the source code ("Material") are owned by Intel Corporation or its
- * suppliers or licensors. Title to the Material remains with Intel
- * Corporation or its suppliers and licensors. The Material contains trade
- * secrets and proprietary and confidential information of Intel or its
- * suppliers and licensors. The Material is protected by worldwide copyright
- * and trade secret laws and treaty provisions. No part of the Material may
- * be used, copied, reproduced, modified, published, uploaded, posted,
- * transmitted, distributed, or disclosed in any way without Intel's prior
- * express written permission.
- *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or
- * delivery of the Materials, either expressly, by implication, inducement,
- * estoppel or otherwise. Any license under such intellectual property rights
- * must be express and approved by Intel in writing.
- *****************************************************************************/
-
-#include <fm_sdk_hlp_int.h>
-#include <platforms/common/model/hlp/hlp_model_types.h>
-#include <platforms/common/model/hlp/debug/hlp_model_debug.h>
+#if 0 // HLP code trimmed down to a minumum for the EOM MBY sprint by Arek/Andrea -- for reference only:
 
 /*****************************************************************************
  * Macros, Constants & Types
@@ -2383,5 +2410,4 @@ DONE:
 
     return status;
 }   /* end hlpModelModify */
-
 #endif
