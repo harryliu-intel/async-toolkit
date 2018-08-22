@@ -2,7 +2,7 @@
 
 %audf = (
    Includes => [
-      "eth_port:cfg/ace/eth_port_integ.udf",
+      "eth_port:cfg/ace/eth_port_mby_ec_integ.udf",
       "cfg/ace/mby_hdl.udf",
    ],
 );
