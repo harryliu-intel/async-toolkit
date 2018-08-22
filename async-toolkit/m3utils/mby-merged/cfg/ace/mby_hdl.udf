@@ -138,7 +138,12 @@ EOF
                     ],
                     -tag => "nonsynth+nonemul+nonlint",
             },
-            
+            svt_ahb_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/svt_ahb_bfm.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
             svt_axi_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/svt_axi_env.hdl" ],
                -dependent_libs => [ 'shdv_shared_lib',
@@ -154,7 +159,7 @@ EOF
             
             mby_mc_env_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_env.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'svt_axi_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'svt_axi_lib', 'svt_ahb_lib'],
                -tag            => "nonsynth",
             },
             
@@ -166,13 +171,13 @@ EOF
             
             mby_mc_ti_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_ti.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'svt_axi_lib', 'svt_ahb_lib' ],
                -tag            => "nonsynth",
             },
             
             mby_mc_tb_top_np_nphy_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_mc_tb_top_np_nphy.hdl', ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_test_lib', 'mby_mc_ti_lib', 'mby_common_lib', 'svt_axi_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_test_lib', 'mby_mc_ti_lib', 'mby_common_lib', 'svt_axi_lib', 'svt_ahb_lib'],
                -tag            => "nonsynth",
             },
             
@@ -275,8 +280,13 @@ EOF
                   "mby_wm_dpi_lib",
                   "cdn_pcie_lib",
                   "svt_axi_lib",
+                  "svt_ahb_lib",
                   "mby_common_lib",
                ],
+               testcase_globals => {
+                   #      -enabled_post_process_modes => "mby_test, mplex_np_nphy", 
+                   #      -post_process_pattern_file => { default => "cfg/ace/mby_post_process.pp" },
+                    },
 
                elab_opts => [
                   "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",

@@ -13,21 +13,23 @@ $hdl_spec = {
          "$ENV{OVM_HOME}/src",
          "$ENV{SAOLA_HOME}/verilog",
          "$ENV{SAOLA_HOME}/verilog_uvm",
-
-         "verif/lib/svt_axi_bfm",
          "$snps_svt_path/src/sverilog/vcs",
          "$snps_svt_path/include/sverilog",
          "$snps_svt_path/src/verilog/vcs",
          "$snps_svt_path/include/verilog",
+         "verif/lib/svt_ahb_bfm",
+         
+      
     ],
 
     -vlog_files => [
          "$snps_svt_path/include/sverilog/svt.uvm.pkg",
-         "$snps_svt_path/include/sverilog/svt_axi.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt_ahb.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt_ahb_system_configuration.uvm.pkg",
          "$snps_svt_path/include/sverilog/svt_bfm_shell.uvm.pkg",
-         "$snps_svt_path/include/sverilog/svt_axi_if.svi",
-         "verif/lib/svt_axi_bfm/svt_axi_reset_if.sv",
-         "verif/lib/svt_axi_bfm/svt_axi_bfm_pkg.sv",
+         "verif/lib/svt_ahb_bfm/ahb_reset_if.svi",
+         "verif/lib/svt_ahb_bfm/svt_ahb_if.svi",
+         "verif/lib/svt_ahb_bfm/svt_ahb_bfm_pkg.sv",
     ],
 
 
@@ -37,22 +39,9 @@ $hdl_spec = {
 
          "+define+UVM_DISABLE_AUTO_ITEM_RECORDING",
          "+define+UVM_PACKER_MAX_BYTES=1500000",
-         "+define+UVM_NO_DEPRECATED",
          "+define+SVT_UVM_TECHNOLOGY",
          "+define+SYNOPSYS_SV",
          "+define+SVT_EXCLUDE_METHODOLOGY_PKG_INCLUDE",  # Include uvm_macros, but not uvm_pkg
-
-         #"+define+SVT_EXCLUDE_METHODOLOGY_PKG",
-         #"+define+SVT_EXCLUDE_METHODOLOGY_PKG_MACROS",   # Include uvm_pkg, but not uvm_macros
-
-
-         ## INTEL USES THE FOLLOWING TO PASS THE PATH TO THE SVT ROOT TO THE USER CUSTOMIZEABLE CODE
-         ### The file that uses this is $snps_svt_path/include/sverilog/svt_source_defines.svi
-         ### After every Synopsys release
-
-#Doesn't appear used in ETH_PORT for the release N_2017.12 .    Commented out for now.
-
-         #"+define+INTEL_DW_SVT_ROOT=$designware_home",
 
 
          "-override_timescale=1ps/1fs",

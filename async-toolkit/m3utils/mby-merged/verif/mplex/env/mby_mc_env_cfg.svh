@@ -57,10 +57,40 @@ class mby_mc_env_cfg extends shdv_base_config;
 
     // Variable: axi_bfm_cfg
     // SVT AXI BFM config object.
-    //rand svt_axi_bfm_pkg::cust_svt_axi_system_configuration axi_bfm_cfg;
+    svt_axi_bfm_pkg::cust_svt_axi_system_configuration axi_bfm_cfg;
 
+    // Variable: axi_num_masters
+    // Number of AXI Masters .
+    int axi_num_masters;
+
+    // Variable: axi_num_slaves
+    // Number of AXI Slaves .
+    int axi_num_slaves;
+    
+    // Variable: axi_data_width
+    // AXI data bus width.
+    int axi_data_width;
+
+    // Variable: ahb_bfm_cfg
+    // SVT AHB BFM config object.
+    svt_ahb_bfm_pkg::cust_svt_ahb_system_configuration  ahb_bfm_cfg;
+
+    // SVT AHB bfm cfg variables.
+    int ahb_num_mst;
+    int	ahb_num_slv;
+    int ahb_dw;
+    bit	ahb_is_active;
+
+   
     `uvm_object_utils_begin(mby_mc_env_cfg)
-    //`uvm_field_object(axi_bfm_cfg,                                           UVM_DEFAULT)
+        `uvm_field_object(axi_bfm_cfg,                                           UVM_DEFAULT)
+        `uvm_field_int(axi_num_masters,                                          UVM_DEFAULT)
+        `uvm_field_int(axi_num_slaves,                                           UVM_DEFAULT)
+        `uvm_field_int(axi_data_width,                                           UVM_DEFAULT)
+        `uvm_field_int(ahb_num_mst,                                              UVM_DEFAULT)
+        `uvm_field_int(ahb_num_slv,                                              UVM_DEFAULT)
+        `uvm_field_int(ahb_dw,                                                   UVM_DEFAULT)
+        `uvm_field_int(ahb_is_active,                                            UVM_DEFAULT)
     `uvm_object_utils_end
 
 
@@ -74,7 +104,9 @@ class mby_mc_env_cfg extends shdv_base_config;
     //---------------------------------------------------------------------------
     function new( string name = "mby_mc_env_cfg");
         super.new(name);
-
+        axi_bfm_cfg = svt_axi_bfm_pkg::cust_svt_axi_system_configuration::type_id::create("axi_bfm_cfg");
+        ahb_bfm_cfg = svt_ahb_bfm_pkg::cust_svt_ahb_system_configuration::type_id::create("ahb_bfm_cfg");
+        
     endfunction: new
 
     //---------------------------------------------------------------------------

@@ -56,12 +56,17 @@ class mby_mc_env extends shdv_base_env;
 
     // Variable:  axi_bfm
     // SVT_AXI BFM Environment objects
-    //svt_axi_bfm_pkg::svt_axi_bfm_env                        axi_bfm;
+    svt_axi_bfm_pkg::svt_axi_bfm_env                        axi_bfm;
+
+    // Variable: ahb_bfm
+    // SVT AHB BFM Environment object
+    svt_ahb_bfm_pkg::ahb_bfm_env                            ahb_bfm;
+    virtual    svt_ahb_if                                   ahb_if;
 
 
     `uvm_component_utils_begin(mby_mc_env)
-        `uvm_field_object       (tb_cfg,                          UVM_ALL_ON)
-       //`uvm_field_object(axi_bfm,                         UVM_DEFAULT)
+        `uvm_field_object  (tb_cfg,                          UVM_ALL_ON)
+        `uvm_field_object  (axi_bfm,                         UVM_DEFAULT)
     `uvm_component_utils_end
 
     //---------------------------------------------------------------------------
@@ -73,19 +78,13 @@ class mby_mc_env extends shdv_base_env;
     //      uvm_component parent - Component parent object.
     //---------------------------------------------------------------------------
     function new(string name = "mby_mc_env", uvm_component parent = null);
-
-        uvm_object tmp_cfg;
         super.new(name, parent);
 
-        if(get_config_object("mby_mc_tb_top_cfg", tmp_cfg)) begin
-            $cast(tb_cfg, tmp_cfg);
-        end
+        ral_type = "mby_mc_env_pkg::mby_mc_ral_env";
 
-        if (tb_cfg == null) begin
-            `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mc_tb_top_cfg object!")
-        end
-
-        ral_type = tb_cfg.get_ral_type();
+        // Set SLA CFG object type
+        // Refer to Saola user guide for info about Saola CFG obj
+        config_type = "mby_mc_tb_top_cfg";
 
     endfunction : new
 
@@ -97,17 +96,34 @@ class mby_mc_env extends shdv_base_env;
     //      phase - uvm_phase object.
     //---------------------------------------------------------------------------
     virtual function void build_phase(uvm_phase phase);
+        uvm_object tmp_cfg;
+
         super.build_phase(phase);
+
+        if(get_config_object("mby_mc_tb_top_cfg", tmp_cfg)) begin
+            $cast(tb_cfg, tmp_cfg);
+        end
+
+        if (tb_cfg == null) begin
+            `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mc_tb_top_cfg object!")
+        end
+
+        `uvm_info (get_full_name , $sformatf("Mplex Top _cfg : %s", tb_cfg.sprint()), UVM_FULL)
 
         if(!uvm_config_db#(string)::get(this, "" , "TI_PATH", tb_cfg.ti_path)) begin
             `uvm_fatal(get_name(),"Config_DB.get() for ENV's TI_PATH was not successful!")
         end
-        `uvm_info(get_full_name(),$sformatf("This EC_Env Build Phase set env_cfg.ti_path = %s", tb_cfg.ti_path),UVM_FULL)
+        `uvm_info(get_full_name(),$sformatf("This Mplex Build Phase set tb_cfg.ti_path = %s", tb_cfg.ti_path),UVM_FULL)
 
         if(!uvm_config_db#(string)::get(this, "" , "RTL_TOP_PATH", tb_cfg.rtl_top_path)) begin
             `uvm_fatal(get_name(),"Config_DB.get() for ENV's RTL_TOP_PATH was not successful!")
         end
-        `uvm_info(get_full_name(),$sformatf("This EC_Env Build Phase set env_cfg.rtl_top_path = %s", tb_cfg.rtl_top_path),UVM_FULL)
+        `uvm_info(get_full_name(),$sformatf("This Mplex Build Phase set tb_cfg.rtl_top_path = %s", tb_cfg.rtl_top_path),UVM_FULL)
+
+        if(!uvm_config_db#(int)::get(this, "", "TOPOLOGY", tb_cfg.topology)) begin
+            `uvm_fatal(get_name(),$sformatf("Unable to acquire valid topology value!!! "))
+        end
+        `uvm_info(get_full_name(),$sformatf("This Mplex Build Phase set tb_cfg.topology = %s", tb_cfg.topology),UVM_FULL)
 
         if(!uvm_config_db#(virtual mby_mc_tb_if)::get(this, "", "mby_mc_tb_if", tb_vif)) begin
             `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
@@ -116,14 +132,50 @@ class mby_mc_env extends shdv_base_env;
         $cast(tb_ral,ral);
         if(tb_ral == null) begin
             `ovm_fatal(get_name(),"Unable to acquire handle to TB RAL!");
-        end 
-        
-        //Build BFMs and push down knobs
-        //axi_bfm =  svt_axi_bfm_pkg::svt_axi_bfm_env::type_id::create("axi_bfm", this);
-        //axi_bfm.set_axi_cfg(tb_cfg.axi_bfm_cfg);
+        end
 
+        //Build BFMs and push down knobs
+        build_axi_bfm();
+        build_ahb_bfm();
     endfunction: build_phase
 
+
+    //---------------------------------------------------------------------------
+    //  Function: build_axi_bfm
+    //  Build and configure AXI master and Slave BFMs.
+    //---------------------------------------------------------------------------
+    function void build_axi_bfm();
+
+        axi_bfm =  svt_axi_bfm_pkg::svt_axi_bfm_env::type_id::create("axi_bfm", this);
+        axi_bfm.set_axi_cfg(tb_cfg.env_cfg.axi_bfm_cfg);
+        `uvm_info(get_full_name(),$sformatf("Setting AXI BFM cfg: num_masters =%0d, num_slaves = %0d\
+                data_width = %0d",tb_cfg.env_cfg.axi_num_masters,tb_cfg.env_cfg.axi_num_slaves,
+                tb_cfg.env_cfg.axi_data_width),UVM_MEDIUM)
+
+        axi_bfm.setup_bfm(tb_cfg.env_cfg.axi_num_masters, tb_cfg.env_cfg.axi_num_slaves,tb_cfg.env_cfg.axi_data_width);
+        
+        //axi_bfm.set_report_verbosity_level_hier(UVM_LOW);
+
+    endfunction: build_axi_bfm
+
+    //---------------------------------------------------------------------------
+    //  Function: build_ahb_bfm
+    //  Build and configure AHB Slave BFMs.
+    //---------------------------------------------------------------------------
+    function void build_ahb_bfm();
+
+        ahb_bfm = svt_ahb_bfm_pkg::ahb_bfm_env::type_id::create("ahb_bfm", this);
+        if (!uvm_config_db#(virtual svt_ahb_if)::get(this, "", "ahb_if", ahb_if)) begin
+	   `uvm_fatal(get_name(),"Config_DB.get() for AHB BFM interface was not successful!")
+        end
+        ahb_bfm.set_vif(ahb_if);
+        ahb_bfm.cfg = tb_cfg.env_cfg.ahb_bfm_cfg;
+        `uvm_info(get_full_name(),$sformatf("Setting AHB BFM cfg: num_masters =%0d, num_slaves = %0d\
+                data_width = %0d",tb_cfg.env_cfg.ahb_num_mst,tb_cfg.env_cfg.ahb_num_slv,
+                tb_cfg.env_cfg.ahb_dw),UVM_MEDIUM)
+        ahb_bfm.setup_bfm(tb_cfg.env_cfg.ahb_num_mst, tb_cfg.env_cfg.ahb_num_slv, tb_cfg.env_cfg.ahb_is_active, tb_cfg.env_cfg.ahb_dw);
+        ahb_bfm.set_report_verbosity_level_hier(UVM_NONE);
+    endfunction: build_ahb_bfm
     //---------------------------------------------------------------------------
     //  Function: connect_phase
     //  Connects different BFM interfaces and Scoreboard
@@ -150,6 +202,7 @@ class mby_mc_env extends shdv_base_env;
         ral_randomize();
         if (_level == SLA_TOP) begin
         end
+        
     endfunction: end_of_elaboration_phase
 
     //---------------------------------------------------------------------------

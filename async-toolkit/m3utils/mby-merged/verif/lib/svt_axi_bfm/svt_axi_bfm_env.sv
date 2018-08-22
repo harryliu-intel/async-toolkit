@@ -85,10 +85,9 @@ class svt_axi_bfm_env extends shdv_base_env;
     function new(string name = "svt_axi_bfm_env", uvm_component parent = null);
         super.new(name, parent);
 
-        // Set SLA CFG object type    -  (Refer to Saola user guide for info about Saola CFG obj)
-        config_type = "svt_axi_bfm_env_config";
+    // Set SLA CFG object type    -  (Refer to Saola user guide for info about Saola CFG obj)
+    //config_type = "cust_svt_axi_system_configuration";
 
-    //axi_cfg     = cust_svt_axi_system_configuration::type_id::create("axi_cfg");
 
     endfunction: new
 
@@ -105,15 +104,23 @@ class svt_axi_bfm_env extends shdv_base_env;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
-        if (!uvm_config_db#(cust_svt_axi_system_configuration)::get(this, "", "axi_cfg", axi_cfg)) begin
-            `ovm_fatal(get_name(),"Unable to acquire handle to axi_cfg object!");
-        end
 
         if (!uvm_config_db#(svt_axi_vif)::get(this, "", "axi_vif", axi_vif)) begin
             `ovm_fatal(get_name(),"Unable to acquire handle to axi_vif!");
         end
+        else begin
+            uvm_config_db#(svt_axi_vif)::set(this, "axi_system_env", "vif", axi_vif);
+        end
 
         //Construct the system agent
+        if ( axi_cfg == null) begin
+            `ovm_fatal(get_name(),"axi_cfg object not set! Use set_axi_cfg method to set the cfg.");
+        end
+        else begin
+            //Pass down the configuration to SVT environment
+            uvm_config_db#(svt_axi_system_configuration)::set(this, "axi_system_env", "cfg", axi_cfg);
+        end
+
         axi_system_env = svt_axi_system_env::type_id::create("axi_system_env", this);
 
         //Construct the virtual sequencer
@@ -140,17 +147,17 @@ class svt_axi_bfm_env extends shdv_base_env;
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
 
-        //Connect VIF
-        axi_system_env.vif = axi_vif;
-
-        /**
-         * Connect the master and slave agent's analysis ports with
-         * item_observed_before_export and item_observed_after_export ports of the
-         * scoreboard.
-         */
-        axi_system_env.master[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_initiated_export);
-        axi_system_env.slave[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_response_export);
-
+        //
+        //Connect the master and slave agent's analysis ports with
+        //item_observed_before_export and item_observed_after_export ports of the
+        //scoreboard.
+        //TODO: fix the connection for multi master/slave.
+        if(axi_cfg.num_masters) begin
+            axi_system_env.master[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_initiated_export);
+        end
+        if(axi_cfg.num_slaves) begin
+            axi_system_env.slave[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_response_export);
+        end
     //
     //Connect the listener class instances with analysis ports of Master and Slave
     //agent.
@@ -190,6 +197,23 @@ class svt_axi_bfm_env extends shdv_base_env;
     function void set_axi_cfg(cust_svt_axi_system_configuration cust_cfg);
         axi_cfg    = cust_cfg;
     endfunction: set_axi_cfg
+
+    // ------------------------------------------------------------------------
+    // Function setup_bfm()
+    // Set the number of AXI BFM Masters, Slaves and data width.
+    //
+    // Arguments:
+    // int num_masters   -Number of AXI masters.
+    // int num_slaves    -Number of AXI Slaves.
+    // int data_width    -Axi bus width.
+
+    // ------------------------------------------------------------------------
+    function void setup_bfm(int num_masters, int num_slaves, int data_width );
+        axi_cfg.num_masters    = num_masters;
+        axi_cfg.num_slaves    = num_slaves;
+        axi_cfg.num_slaves    = num_slaves;
+        axi_cfg.data_width    = data_width;
+    endfunction: setup_bfm
 
     // ------------------------------------------------------------------------
     // Function set_axi_vif()

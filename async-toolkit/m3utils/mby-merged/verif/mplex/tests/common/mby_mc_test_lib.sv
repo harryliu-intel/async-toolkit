@@ -56,6 +56,8 @@ program mby_mc_test_lib;
     `define __INSIDE_MBY_MC_TEST_LIB
     `include "mby_mc_base_test.svh"
     `include "mby_mc_alive_test.svh"
+    `include "mby_mc_axi_random_access_test.svh"
+    `include "mby_mc_ahb_random_access_test.svh"
     `undef __INSIDE_MBY_MC_TEST_LIB
 
     // UVM Start test

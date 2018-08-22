@@ -11,44 +11,52 @@ import scala.collection.immutable.SortedMap
 
 case class AddressOverlap(first: AddressRange, second: AddressRange) extends Exception
 
-/** Guards non-overlapping of address ranges. */
-class AddressGuard {
-  import AddressGuard.RdlName
+/** Guards non-overlapping of address ranges.
+  *
+  * V --- value type, defaults to String
+  */
+class AddressGuard[V] {
+  type K = AddressRange
 
-  var map = new TreeMap[AddressRange, RdlName]((x,y) => x.pos.compare(y.pos))
+  var map = new TreeMap[K,V]((x,y) => x.pos.compare(y.pos))
 
-  def +=(ar: AddressRange, el: RdlName): this.type = {
+  def +=(ar: K, el: V) {
     val lb = map.floorKey(ar)
     val hb = map.ceilingKey(ar)
     // ..b c..d e..
     if( !(lb == null || (lb.lim <= ar.pos)) ) { throw new AddressOverlap(lb, ar) }
     if( !(hb == null || (ar.lim <= hb.pos)) ) { throw new AddressOverlap(ar, hb) }
     map.put(ar, el)
-    this
   }
 
-  def +=(tup: (AddressRange, RdlName)): this.type = this += (tup._1, tup._2)
+  def +=(tup: (K,V)) {
+    val (ar, el) = tup
+    this += (ar, el)
+  }
+
+  def ++=(src: Traversable[(K,V)]) {
+    for(el <- src) {
+      this += el
+    }
+  }
+
+  def length: Int = map.size()
 
   def pos: Address = map.firstKey.pos
   def lim: Address = map.lastKey.lim
   def width: Bits = lim - pos
   def range = AddressRange(pos, lim)
-  def length: Int = ???
 
   /** Converts to a plain address map. */
-  def toAddrMap: SortedMap[Address, RdlName] = map.asScala.map(x => (x._1.pos, x._2))(breakOut)
+  def toAddrMap: SortedMap[Address, V] = map.asScala.map { case(ar, el) => (ar.pos, el) } (breakOut)
 }
 object AddressGuard {
-  type RdlName = String
+  def apply[V]() = new AddressGuard[V]
 
-  def apply() = new AddressGuard
-
-  def apply(el: (AddressRange, RdlName), rest: (AddressRange, RdlName)*): AddressGuard = {
-    var guard = AddressGuard()
+  def apply[V](el: (AddressRange, V), rest: (AddressRange, V)*): AddressGuard[V] = {
+    var guard = AddressGuard[V]()
     guard += el
-    for(r <- rest) {
-      guard += r
-    }
+    guard ++= rest
     guard
   }
 }

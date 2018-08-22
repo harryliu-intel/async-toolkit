@@ -32,5 +32,10 @@ $hdl_spec = {
 
    # Arbitrary VLOG options
 #   -vlog_opts => ['-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',]
+    -vlog_opts => [
+        #Synopsys SVT BFM is compiled with this define which required the UVM lib to be
+        #compiled with it too.
+         "+define+UVM_PACKER_MAX_BYTES=1500000",
+     ]
 
 };

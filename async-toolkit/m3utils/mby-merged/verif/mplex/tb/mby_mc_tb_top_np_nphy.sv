@@ -48,6 +48,10 @@ module mby_mc_tb_top ();
         .TOPOLOGY(mby_mc_env_pkg::mby_mc_defines::MPLEX_NP_NPHY)
     ) mc_ti(
         .mby_mc_tb_if               (mc_tb_if),
+	.ahb_if                     (ahb_if),
+	.ahb_reset_if               (ahb_reset_if),
+        .axi_if                     (axi_if),
+        .axi_reset_if               (axi_reset_if),
         .shdv_intf                  (shdv_intf)
 
     );

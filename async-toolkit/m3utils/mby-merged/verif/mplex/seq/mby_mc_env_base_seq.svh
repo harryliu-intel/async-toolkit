@@ -61,7 +61,7 @@ class mby_mc_env_base_seq extends mby_common_pkg::mby_base_seq;
 
     // Variable: vif
     // Handle to Mplex Tb interface.
-    virtual mby_mc_tb_if vif;
+    virtual mby_mc_tb_if               vif;
 
     // ------------------------------------------------------------------------
     //  Constructor: new

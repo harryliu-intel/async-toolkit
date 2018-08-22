@@ -24,6 +24,8 @@ $hdl_spec = {
 		"$ENV{ACE_HOME}/lib/Verilog",
 		"verif/mplex/tests/common",
 		"verif/mplex/tests/mby_mc_alive_test",
+		"verif/mplex/tests/mby_mc_axi_random_access_test",
+                "verif/mplex/tests/mby_mc_ahb_random_access_test",
 
 	],
 
