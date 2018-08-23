@@ -1,5 +1,6 @@
 import( "libm3" )
-List( "REFANY" , "REFANY" )
+module( "MyREFANY" )
+module( "REFANYList" )
 module( "DepGraph" )
 module( "Node" )
 module( "Spec" )

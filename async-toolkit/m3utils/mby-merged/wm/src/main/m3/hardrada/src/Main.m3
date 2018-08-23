@@ -29,6 +29,10 @@ VAR deeper_block_node := NEW( REF Node.T ) ;
 VAR signature_node := NEW( REF Node.T ) ;
 VAR deeper_start_node := NEW( REF Node.T ) ;
 
+VAR procdef := NEW( REF Node.T ) ;
+
+VAR look_for_start_sym := NEW( REF Node.DList ) ;
+
 VAR tempchildren := NEW( REF Node.DList ) ;
 VAR tempchildren2 := NEW( REF Node.DList ) ;
 VAR tempchildren3 := NEW( REF Node.DList ) ;
@@ -36,6 +40,7 @@ VAR tempchildren3 := NEW( REF Node.DList ) ;
 VAR proc_block := NEW( REF Node.DList ) ;
 
 VAR new_placeholder_list := NEW( REF Node.DList ) ;
+VAR new_root_lolz := NEW( REF Node.T ) ;
 
 VAR stmt_add_on := NEW( REF Node.T ) ;
 VAR stmt_add_on_take2 := NEW( REF Node.T ) ;
@@ -504,10 +509,45 @@ depgraph_pms^.start_symbol_val := "S" ;
 depgraph_pms^.separator := ";" ;
 depgraph_pms^.ProcedureBodyToSSPath := TextList.Cons( "S" , NIL ) ;
 (* Get procedure block *)
-procdef := GetNthProcDef( root , ptree_pms , "sgn" , 0 ) ;
+procdef := Spec.GetNthProcDef( root , ptree_pms , "sgn" , 0 ) ;
 Node.FollowPath( proc_block , procdef , ptree_pms^.PathToProcedureBlock ) ;
-GetDepGraph( depgraph , root , depgraph_pms ) ;
-ConstructParseTree( root_for_dep , depgraph , depgraph_pms ) ;
+<* ASSERT Node.Length( proc_block ) = 1 *>
+TRY
+	Spec.DebugTree( proc_block^.cur , "./depgraph_pretest_b4placeholder.m3" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
+	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
+DepGraph.PutPlaceholderInProcBlock( root_for_dep , proc_block^.cur , depgraph_pms ) ;
+TRY
+	Spec.DebugTree( proc_block^.cur , "./depgraph_pretest_afterplaceholder.m3" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
+	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
+Node.FollowPath( look_for_start_sym , proc_block^.cur , depgraph_pms^.ProcedureBodyToSSPath ) ;
+<* ASSERT look_for_start_sym^.cur # NIL *>
+IF look_for_start_sym^.cur^.cat = Node.Category.Placeholder THEN
+	IO.Put( "Good. When you find the start symbol for the proc body, it is replaced with a placeholder.\n" ) ;
+ELSE
+	IO.Put( "Ugh. When you find the start symbol for the proc body, it is NOT replaced with a placeholder.\n" ) ;
+END ;
+DepGraph.GetDepGraph( depgraph , root_for_dep , depgraph_pms ) ;
+TRY
+	Spec.DebugTree( depgraph^.parse_root , "./depgraph_pretest.m3" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
+	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
+(*
+TRY
+	Spec.DebugTree( depgraph^.next^.parse_root , "./depgraph_pretest_next.m3" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
+	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
+*)
+DepGraph.ConstructParseTree( proc_block^.cur , depgraph , depgraph_pms ) ;
 TRY
 	Spec.GenCode( root_for_dep , style_rules , "./depgraph.m3" ) ;
 EXCEPT

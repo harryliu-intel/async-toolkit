@@ -23,7 +23,7 @@ TYPE T = RECORD
 	next : REF T := NIL ;
 	deps : REF ARRAY OF REF T := NIL ;
 	parse_root : REF Node.T := NIL ;
-	subdepgraph : REF ARRAY OF REF T := NIL ;
+	subdepgraph : REFANYList.T := NIL ; (* Treat as singly-linked list of REF T *)
 END ;
 
 TYPE DepGraphParams = RECORD
@@ -50,8 +50,19 @@ the placeholder node is then changed to NonTerminal. *)
 PROCEDURE ConstructParseTree( parse_root : REF Node.T ; root : REF T ; depgraph_pms : REF DepGraphParams ) ;
 
 (* Convert parse_root to my_depgraph. Doesn't break parse_root. Overwrites my_depgraph. *)
+(* parse_root is expected to be the start symbol of a procedure block. *)
+(* Note: Parse trees are deep copied. No need to worry about this procedure breaking your parse trees. *)
 (* TODO Ensure readonlys and such by adding READONLY keyword everywhere in this code when necessary *)
 PROCEDURE GetDepGraph( my_depgraph : REF T ; parse_root : REF Node.T ; depgraph_pms : REF DepGraphParams ) ;
+
+(* Take root. The user is responsible for ensuring that this is a proper procedure block.
+Find the start symbol using the path in depgraph_pms. Replace it with a placeholder (note: this
+changes root). Deepcopy the start symbol subtree from root to start. *)
+PROCEDURE PutPlaceholderInProcBlock( start : REF Node.T ; root : REF Node.T ; depgraph_pms : REF DepGraphParams ) ;
+
+PROCEDURE IsEmpty( root : REF T ) : BOOLEAN ;
+
+PROCEDURE Length( root : REF T ) : CARDINAL ;
 
 PROCEDURE DefaultDepGraph( my_depgraph : REF T ) ;
 

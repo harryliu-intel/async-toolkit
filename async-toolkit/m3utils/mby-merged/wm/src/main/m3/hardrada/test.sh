@@ -1,5 +1,10 @@
 #!/usr/bin/sh
 
+rm -rf ./main_parse_root
+rm -rf ./depgraph_pretest.m3
+rm -rf ./depgraph_pretest_next.m3
+rm -rf ./depgraph_pretest_afterplaceholder.m3
+rm -rf ./depgraph_pretest_b4placeholder.m3
 rm -rf ./w_placeholder
 rm -rf ./w_placeholder_if1
 rm -rf ./w_placeholder_if2

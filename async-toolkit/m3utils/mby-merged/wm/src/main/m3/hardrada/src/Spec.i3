@@ -83,4 +83,9 @@ file.
 *)
 PROCEDURE DebugTree( root : REF Node.T ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } ;
 
+(* Get nth proc def with name *)
+(* Return NIL if we can't find it *)
+(* TODO Exception instead of returning NIL since that forces the user to consider that case? *)
+PROCEDURE GetNthProcDef( root : REF Node.T ; ptree_pms : REF PTreeParams ; ProcName : TEXT ; N : CARDINAL ) : REF Node.T ;
+
 END Spec.

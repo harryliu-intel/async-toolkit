@@ -51,20 +51,17 @@ BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT newlist # NIL *>
 	DefaultDList( newlist ) ;
+	DefaultDList( templist ) ;
 	IF root^.cat = cat THEN
 		AppendNode( newlist , root ) ;
 	END ;
 	IF root^.cat = Category.NonTerminal THEN
 		(* TODO Make this a function... somehow *)
 		current_child := GoToBeginning( root^.children ) ;
-		LOOP
+		WHILE current_child # NIL DO
 			FindAllNodesWithCategory( templist , current_child^.cur , cat ) ;
-			AppendDList( newlist , templist ) ;
-			IF current_child^.next = NIL THEN
-				EXIT ;
-			ELSE
-				current_child := current_child^.next ;
-			END ;
+			AppendDListDeep( newlist , templist ) ;
+			current_child := current_child^.next ;
 		END ;
 	END ;
 END FindAllNodesWithCategory ;
@@ -139,10 +136,10 @@ BEGIN
 	<* ASSERT list # NIL *>
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.cat = Category.NonTerminal *>
-	Node.DefaultDList( return_end_of_path ) ;
-	Node.DefaultDList( recursive_return_end_of_path ) ;
-	Node.DefaultDList( recursive_templist ) ;
-	Node.DefaultDList( list ) ;
+	DefaultDList( return_end_of_path ) ;
+	DefaultDList( recursive_return_end_of_path ) ;
+	DefaultDList( recursive_templist ) ;
+	DefaultDList( list ) ;
 	current_child := GoToBeginning( root^.children ) ;
 	LOOP
 		IF current_child^.cur^.val = path.head THEN
@@ -422,18 +419,20 @@ BEGIN
 END DefaultDList ;
 
 PROCEDURE DebugList( list : REF DList ) =
+VAR
+	templist : REF DList := NIL ;
 BEGIN
 	<* ASSERT list # NIL *>
 	IF IsEmpty( list ) THEN
 		IO.Put( "( Empty )\n" ) ;
 	ELSE
-		list := GoToBeginning( list ) ;
-		WHILE list^.next # NIL DO
-			IO.Put( list^.cur^.val ) ;
+		templist := GoToBeginning( list ) ;
+		WHILE templist^.next # NIL DO
+			IO.Put( templist^.cur^.val ) ;
 			IO.Put( "->" ) ;
-			list := list^.next ;
+			templist := templist^.next ;
 		END ;
-		IO.Put( list^.cur^.val ) ;
+		IO.Put( templist^.cur^.val ) ;
 		IO.Put( "\n" ) ;
 	END ;
 END DebugList ;

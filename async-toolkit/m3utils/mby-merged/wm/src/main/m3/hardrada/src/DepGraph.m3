@@ -8,6 +8,9 @@ IMPORT Node ;
 IMPORT IO ;
 IMPORT Fmt ;
 IMPORT Text ;
+IMPORT REFANYList ;
+
+IMPORT Spec ;
 
 (************************)
 (** Visible Procedures **)
@@ -23,6 +26,7 @@ BEGIN
 	<* ASSERT parse_root # NIL *>
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.parse_root # NIL *>
+	IO.Put( "root length is " & Fmt.Int( Length( root ) ) & "\n" ) ;
 	placeholder_list := NEW( REF Node.DList ) ;
 	Node.FindAllNodesWithCategory( placeholder_list , parse_root , Node.Category.Placeholder ) ;
 	<* ASSERT Node.Length( placeholder_list ) = 1 *>
@@ -44,17 +48,130 @@ END ConstructParseTree ;
 
 PROCEDURE GetDepGraph( my_depgraph : REF T ; parse_root : REF Node.T ; depgraph_pms : REF DepGraphParams ) =
 VAR
-	ss : REF Node.DList := NIL ;
+	tempchild : REF Node.DList := NIL ;
+	tempdepgraph : REF T := NIL ;
+	tempstartsymbs : REF Node.DList := NIL ;
+	templowerleveltree : REF Node.T := NIL ;
+	first_subdepgraph : REF REFANYList.T := NIL ;
 BEGIN
-	(* TODO Ensure that my_depgraph is blank? *)
 	<* ASSERT my_depgraph # NIL *>
 	<* ASSERT parse_root # NIL *>
+	<* ASSERT parse_root^.children # NIL *>
 	<* ASSERT depgraph_pms # NIL *>
-	ss := NEW( REF Node.DList ) ;
-	Node.FollowPath( ss , parse_root , depgraph_pms^.ProcedureBodyToSSPath ) ;
-	<* ASSERT Node.Length( ss ) = 1 *>
-	GetDepGraphFromStartSymbol( my_depgraph , ss^.cur , depgraph_pms ) ;
+	<* ASSERT parse_root^.val = depgraph_pms^.start_symbol_val *>
+	(* TODO Should I assert to ensure there are no placeholders? *)
+	tempchild := parse_root^.children ;
+	tempdepgraph := my_depgraph ;
+	(* Reaching while loop via ->next being nil -> tempchild # NIL,
+	Reaching while loop via recursion, would hit the IsEmpty scenario *)
+	WHILE tempchild # NIL AND NOT Node.IsEmpty( tempchild ) DO
+		(* Skip separators, which have the value of separator and are terminals. *)
+		IF NOT( Text.Equal( tempchild^.cur^.val , depgraph_pms^.separator ) AND tempchild^.cur^.cat # Node.Category.NonTerminal ) THEN
+			tempdepgraph^.subdepgraph := NIL ;
+			IO.Put( "Initial Length of depgraph list (should be 0): " & Fmt.Int( REFANYList.Length( my_depgraph^.subdepgraph ) ) & "\n" ) ;
+			IO.Put( "CONSIDERING STATEMENT FOR DEPGRAPH GENERATION: " & tempchild^.cur^.val & "\n" ) ;
+			tempstartsymbs := NEW( REF Node.DList ) ;
+			Node.DefaultDList( tempstartsymbs ) ;
+			templowerleveltree := NEW( REF Node.T ) ;
+			(* Parse root *)
+			(* For now, parse_root is simply the tree whose root is at the current
+			child *)
+			tempdepgraph^.parse_root := NEW( REF Node.T ) ;
+			Node.DeepCopy( tempdepgraph^.parse_root , tempchild^.cur ) ;
+			(* Deps *)
+			tempdepgraph^.deps := NIL ; (* For now... *)
+			(* Subdepgraph *)
+			(* Get the next level of start symbols... *)
+			GetNextLevelOfStartSymbols( tempstartsymbs , tempdepgraph^.parse_root , depgraph_pms ) ;
+			(* Again, NIL case must be considered if you reach it via .next,
+			IsEmpty must be considered if GetNextLevelOfStartSymbols returns an empty
+			start symbol list *)
+			WHILE tempstartsymbs # NIL AND NOT Node.IsEmpty( tempstartsymbs ) DO
+				(* For each start symbol, create a subdependency graph *)
+				Node.DeepCopy( templowerleveltree , tempstartsymbs^.cur ) ;
+				IF first_subdepgraph = NIL THEN
+					IO.Put( "Starting the subdepgraph list!\n" ) ;
+					first_subdepgraph := NEW( REF REFANYList.T ) ;
+					first_subdepgraph^ := REFANYList.Cons( NEW( REF T ) , NIL ) ;
+					tempdepgraph^.subdepgraph := first_subdepgraph^ ;
+					IO.Put( "Length of depgraph list (should now be 1): " & Fmt.Int( REFANYList.Length( tempdepgraph^.subdepgraph ) ) & "\n" ) ;
+				ELSIF REFANYList.Length( first_subdepgraph^ ) = 1 THEN
+					IO.Put( "Appending to the subdepgraph list. If you only see this and no starting message, it means you're going to get an empty element.\n" ) ;
+					first_subdepgraph^ := REFANYList.Append( first_subdepgraph^ , REFANYList.Cons( NEW( REF T ) , NIL ) ) ;
+					tempdepgraph^.subdepgraph := first_subdepgraph^ ;
+					IO.Put( "Length of depgraph list (should now be 2): " & Fmt.Int( REFANYList.Length( tempdepgraph^.subdepgraph ) ) & "\n" ) ;
+					tempdepgraph^.subdepgraph := tempdepgraph^.subdepgraph.tail ;
+				ELSE
+					IO.Put( "Appending to the subdepgraph list. If you only see this and no starting message, it means you're going to get an empty element.\n" ) ;
+					tempdepgraph^.subdepgraph := REFANYList.Append( tempdepgraph^.subdepgraph , REFANYList.Cons( NEW( REF T ) , NIL ) ) ;
+					tempdepgraph^.subdepgraph := tempdepgraph^.subdepgraph.tail ;
+				END ;
+				GetDepGraph( tempdepgraph^.subdepgraph.head , templowerleveltree , depgraph_pms ) ;
+				(* Be sure to replace the original tree's start symbols with placeholders. *)
+				tempstartsymbs^.cur^.children := NEW( REF Node.DList ) ;
+				tempstartsymbs^.cur^.cat := Node.Category.Placeholder ;
+				tempstartsymbs := tempstartsymbs^.next ;
+			END ;
+			IF first_subdepgraph # NIL THEN
+				tempdepgraph^.subdepgraph := first_subdepgraph^ ;
+			END ;
+			IO.Put( "Ending Length of depgraph list (should be 2): " & Fmt.Int( REFANYList.Length( tempdepgraph^.subdepgraph ) ) & "\n" ) ;
+			(* Next *)
+			IF tempchild^.next # NIL AND NOT( Text.Equal( tempchild^.next^.cur^.val , depgraph_pms^.separator ) AND tempchild^.next^.cur^.cat # Node.Category.NonTerminal ) THEN
+				(* If next is not nil nor is a separator *)
+				tempdepgraph^.next := NEW( REF T ) ;
+				tempdepgraph := tempdepgraph^.next ;
+			ELSE
+				tempdepgraph^.next := NIL ;
+			END ;
+		END ;
+		tempchild := tempchild^.next ;
+	END ;
 END GetDepGraph ;
+
+PROCEDURE PutPlaceholderInProcBlock( start : REF Node.T ; root : REF Node.T ; depgraph_pms : REF DepGraphParams ) =
+VAR
+	start_sym : REF Node.DList := NIL ;
+BEGIN
+	<* ASSERT start # NIL *>
+	<* ASSERT root # NIL *>
+	<* ASSERT depgraph_pms # NIL *>
+	start_sym := NEW( REF Node.DList ) ;
+	Node.FollowPath( start_sym , root , depgraph_pms^.ProcedureBodyToSSPath ) ;
+	Node.DeepCopy( start , start_sym^.cur ) ;
+	start_sym^.cur^.cat := Node.Category.Placeholder ;
+	Node.DefaultDList( start_sym^.cur^.children ) ;
+	<* ASSERT Node.IsEmpty( start_sym^.cur^.children ) *> (* Just a sanity check *)
+END PutPlaceholderInProcBlock ;
+
+PROCEDURE IsEmpty( root : REF T ) : BOOLEAN =
+VAR
+	mydefault : REF T := NIL ;
+BEGIN
+	<* ASSERT root # NIL *>
+	mydefault := NEW( REF T ) ;
+	DefaultDepGraph( mydefault ) ;
+	IF root^.next = mydefault^.next AND root^.deps = mydefault^.deps AND root^.parse_root = mydefault^.parse_root AND root^.subdepgraph = mydefault^.subdepgraph THEN
+		RETURN TRUE ;
+	ELSE
+		RETURN FALSE ;
+	END ;
+END IsEmpty ;
+
+PROCEDURE Length( root : REF T ) : CARDINAL =
+VAR
+	cnt : CARDINAL := 0 ;
+BEGIN
+	IF IsEmpty( root ) THEN
+		RETURN 0 ;
+	ELSE
+		WHILE root # NIL DO
+			INC( cnt ) ;
+			root := root^.next ;
+		END ;
+		RETURN cnt ;
+	END ;
+END Length ;
 
 (* TOOD Is this really necessary since we have NEW? *)
 PROCEDURE DefaultDepGraph( my_depgraph : REF T ) =
@@ -73,82 +190,38 @@ END DefaultDepGraph ;
 PROCEDURE ConstructParseTreeRootList( parse_root : REF Node.DList ; root : REF T ) =
 VAR
 	placeholder_list : REF Node.DList := NIL ;
+	tempsubdepgraph : REFANYList.T := NIL ; 
 BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.parse_root # NIL *>
 	<* ASSERT parse_root # NIL *>
+	IO.Put( "Head of tree: " & root^.parse_root^.val & "\n" ) ;
 	Node.DefaultDList( parse_root ) ;
 	parse_root^.cur := NEW( REF Node.T ) ;
 	Node.DeepCopy( parse_root^.cur , root^.parse_root ) ;
 	placeholder_list := NEW( REF Node.DList ) ;
 	Node.FindAllNodesWithCategory( placeholder_list , parse_root^.cur , Node.Category.Placeholder ) ;
+
 	IF root^.subdepgraph = NIL THEN
 		<* ASSERT Node.Length( placeholder_list ) = 0 *>
-		IO.Put( "Hit bottom level!\n" ) ;
 		IF root^.next # NIL THEN
 			parse_root^.next := NEW( REF Node.DList ) ;
 			ConstructParseTreeRootList( parse_root^.next , root^.next ) ;
 		END ;
 	ELSE
-		IO.Put( "Have subdepgraphs!\n" ) ;
-		IO.Put( "Placeholder list: " ) ;
 		Node.DebugList( placeholder_list ) ;
-		IO.Put( "Length of subdepgraph list: " & Fmt.Int( NUMBER( root^.subdepgraph^ ) ) & "\n" ) ;
-		IO.Put( "Parse root head: " & root^.parse_root^.val & "\n" ) ;
-		IF root^.parse_root^.children^.cur^.children^.next^.next^.next^.cur^.cat # Node.Category.Placeholder THEN
-			IO.Put( "Value: " & root^.parse_root^.children^.cur^.children^.next^.next^.next^.cur^.val & "\n" ) ;
-			<* ASSERT FALSE *>
-		END ;
-		<* ASSERT Node.Length( placeholder_list ) = NUMBER( root^.subdepgraph^ ) *>
-		FOR sdg_index := FIRST( root^.subdepgraph^ ) TO LAST( root^.subdepgraph^ ) DO
-			ConstructParseTreeRootList( placeholder_list^.cur^.children , root^.subdepgraph[ sdg_index ] ) ;
+		IO.Put( "Top of tree: " & parse_root^.cur^.val & "\n" ) ;
+		IO.Put( "Placeholder list: " & Fmt.Int( Node.Length( placeholder_list ) ) & "\n" ) ;
+		IO.Put( "Subdepgraph list: " & Fmt.Int( REFANYList.Length( root^.subdepgraph ) ) & "\n" ) ;
+		<* ASSERT Node.Length( placeholder_list ) = REFANYList.Length( root^.subdepgraph ) *>
+		tempsubdepgraph := root^.subdepgraph ;
+		WHILE tempsubdepgraph # NIL DO
+			ConstructParseTreeRootList( placeholder_list^.cur^.children , tempsubdepgraph.head ) ;
 			placeholder_list^.cur^.cat := Node.Category.NonTerminal ;
+			tempsubdepgraph := tempsubdepgraph.tail ;
 		END ;
 	END ;
 END ConstructParseTreeRootList ;
-
-(* Note: Parse trees are deep copied. No need to worry about this procedure breaking your parse trees. *)
-PROCEDURE GetDepGraphFromStartSymbol( my_depgraph : REF T ; parse_root : REF Node.T ; depgraph_pms : REF DepGraphParams ) =
-VAR
-	tempchild : REF Node.DList := NIL ;
-	tempdepgraph : REF T := NIL ;
-	tempstartsymbs : REF Node.DList := NIL ;
-	templowerleveltree : REF Node.T := NIL ;
-BEGIN
-	<* ASSERT my_depgraph # NIL *>
-	<* ASSERT parse_root # NIL *>
-	<* ASSERT depgraph_pms # NIL *>
-	(* TODO Should I assert to ensure there are no placeholders? *)
-	tempchild := parse_root^.children ;
-	tempdepgraph := my_depgraph ;
-	WHILE tempchild # NIL DO
-		(* Skip separators, which have the value of separator and are terminals. *)
-		IF Text.Equal( tempchild^.cur^.val , depgraph_pms^.separator ) OR tempchild^.cur^.cat = Node.Category.NonTerminal THEN
-			(* Parse root *)
-			Node.DeepCopy( tempdepgraph^.parse_root , tempchild^.cur ) ;
-			(* Deps *)
-			tempdepgraph^.deps := NIL ; (* For now... *)
-			(* Subdepgraph *)
-			GetNextLevelOfStartSymbols( tempstartsymbs , tempdepgraph^.parse_root , depgraph_pms ) ;
-			tempdepgraph^.subdepgraph := NEW( REF T , Node.Length( tempstartsymbs ) ) ;
-			FOR sdg_index := FIRST( tempdepgraph^.subdepgraph^ ) TO LAST( tempdepgraph^.subdepgraph^ ) DO
-				Node.DeepCopy( templowerleveltree , tempstartsymbs^.cur ) ;
-				GetDepGraphFromStartSymbol( tempdepgraph^.subdepgraph[ sdg_index ] , templowerleveltree , depgraph_pms ) ;
-				tempstartsymbs^.cur^.children := NEW( REF Node.DList ) ;
-				tempstartsymbs^.cur^.cat := Node.Category.Placeholder ;
-				tempstartsymbs := tempstartsymbs^.next ;
-			END ;
-			(* Next *)
-			IF tempchild # NIL THEN
-				tempdepgraph^.next := NEW( REF T ) ;
-				tempdepgraph := tempdepgraph^.next ;
-			ELSE
-				tempdepgraph^.next := NIL ;
-			END ;
-		END ;
-		tempchild := tempchild^.next ;
-	END ;
-END GetDepGraphFromStartSymbol ;
 
 (* ss_list is overwritten with the start symbols. The start symbols are references to the actual nodes
 and NOT deep copies thereof. *)
@@ -167,13 +240,14 @@ BEGIN
 		ss_list^.prev := NIL ;
 	ELSE
 		Node.DefaultDList( ss_list ) ;
-		tempchild := ss_list^.cur^.children ;
-		WHILE tempchild # NIL DO
+		tempchild := parse_root^.children ;
+		WHILE tempchild # NIL AND NOT Node.IsEmpty( tempchild ) DO
 			(* Write to temp list *)
 			templist := NEW( REF Node.DList ) ;
 			GetNextLevelOfStartSymbols( templist , tempchild^.cur , depgraph_pms ) ;
 			(* Append list to ss_list *)
 			Node.AppendDList( ss_list , templist ) ;
+			tempchild := tempchild^.next ;
 		END ;
 	END ;
 END GetNextLevelOfStartSymbols ;
