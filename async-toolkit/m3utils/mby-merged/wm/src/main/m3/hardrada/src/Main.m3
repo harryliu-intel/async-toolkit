@@ -31,6 +31,8 @@ VAR deeper_start_node := NEW( REF Node.T ) ;
 
 VAR procdef := NEW( REF Node.T ) ;
 
+VAR ugh_another_temp := NEW( REF DepGraph.T ) ;
+
 VAR look_for_start_sym := NEW( REF Node.DList ) ;
 
 VAR tempchildren := NEW( REF Node.DList ) ;
@@ -509,8 +511,12 @@ depgraph_pms^.start_symbol_val := "S" ;
 depgraph_pms^.separator := ";" ;
 depgraph_pms^.ProcedureBodyToSSPath := TextList.Cons( "S" , NIL ) ;
 (* Get procedure block *)
+IO.Put( "Finding procedure def...\n" ) ;
 procdef := Spec.GetNthProcDef( root , ptree_pms , "sgn" , 0 ) ;
+IO.Put( "Found procedure def...\n" ) ;
+IO.Put( "Finding procedure block...\n" ) ;
 Node.FollowPath( proc_block , procdef , ptree_pms^.PathToProcedureBlock ) ;
+IO.Put( "Found procedure block...\n" ) ;
 <* ASSERT Node.Length( proc_block ) = 1 *>
 TRY
 	Spec.DebugTree( proc_block^.cur , "./depgraph_pretest_b4placeholder.m3" ) ;
@@ -518,7 +524,9 @@ EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
+IO.Put( "Putting placeholders in procedure block...\n" ) ;
 DepGraph.PutPlaceholderInProcBlock( root_for_dep , proc_block^.cur , depgraph_pms ) ;
+IO.Put( "Successfully put placeholders in procedure block...\n" ) ;
 TRY
 	Spec.DebugTree( proc_block^.cur , "./depgraph_pretest_afterplaceholder.m3" ) ;
 EXCEPT
@@ -527,33 +535,40 @@ EXCEPT
 END ;
 Node.FollowPath( look_for_start_sym , proc_block^.cur , depgraph_pms^.ProcedureBodyToSSPath ) ;
 <* ASSERT look_for_start_sym^.cur # NIL *>
-IF look_for_start_sym^.cur^.cat = Node.Category.Placeholder THEN
-	IO.Put( "Good. When you find the start symbol for the proc body, it is replaced with a placeholder.\n" ) ;
-ELSE
-	IO.Put( "Ugh. When you find the start symbol for the proc body, it is NOT replaced with a placeholder.\n" ) ;
-END ;
+IO.Put( "Number of placeholders in procedure block (should only be 1): " & Fmt.Int( Node.Length( look_for_start_sym ) ) & "\n" ) ;
+IO.Put( "Getting dependency graph...\n" ) ;
 DepGraph.GetDepGraph( depgraph , root_for_dep , depgraph_pms ) ;
+IO.Put( "Got dependency graph...\n" ) ;
+<* ASSERT depgraph^.parse_root # NIL *>
+IO.Put( "Length of dependency graph (should be 2 for IfSt and ReturnSt): " & Fmt.Int( DepGraph.Length( depgraph ) ) & "\n" ) ;
+ugh_another_temp := depgraph ;
+WHILE ugh_another_temp # NIL DO
+	IO.Put( " - " & ugh_another_temp^.parse_root^.val & "\n" ) ;
+	ugh_another_temp := ugh_another_temp^.next ;
+END ;
 TRY
 	Spec.DebugTree( depgraph^.parse_root , "./depgraph_pretest.m3" ) ;
 EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
-(*
 TRY
 	Spec.DebugTree( depgraph^.next^.parse_root , "./depgraph_pretest_next.m3" ) ;
 EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
-*)
+IO.Put( "Costructing parse tree from dep graph...\n" ) ;
 DepGraph.ConstructParseTree( proc_block^.cur , depgraph , depgraph_pms ) ;
+IO.Put( "Constructed parse tree from dep graph...\n" ) ;
+IO.Put( "Generating code from parse tree...\n" ) ;
 TRY
 	Spec.GenCode( root_for_dep , style_rules , "./depgraph.m3" ) ;
 EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
 END ;
+IO.Put( "Generated code from parse tree...\n" ) ;
 (* Done Testing dep graph *)
 
 spec_pms^.specblock := inline_root ;

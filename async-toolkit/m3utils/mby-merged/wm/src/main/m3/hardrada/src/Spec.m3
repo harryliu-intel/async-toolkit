@@ -120,6 +120,7 @@ PROCEDURE DebugTree( root : REF Node.T ; out_fname : Pathname.T ) RAISES { Inval
 VAR
 	out_file_handle : Wr.T ;
 BEGIN
+	<* ASSERT root # NIL *>
 	(* If file does not exist... *)
 	TRY
 		EVAL FileRd.Open( out_fname ) ;
@@ -447,11 +448,15 @@ BEGIN
 	IF root # NIL THEN
 		(* Print initial indentation *)
 		FOR indent_count := 1 TO num_indents DO
-			TRY
-				Wr.PutText( write_stream , "  " ) ;
-			EXCEPT
-				| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
-				| Thread.Alerted => RAISE Thread.Alerted ;
+			IF PrintFileDebug = TRUE THEN
+				TRY
+					Wr.PutText( write_stream , "  " ) ;
+				EXCEPT
+					| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
+					| Thread.Alerted => RAISE Thread.Alerted ;
+				END ;
+			ELSE
+				IO.Put( "  " ) ;
 			END ;
 		END ;
 		(* Print node's value and category *)
@@ -467,11 +472,15 @@ BEGIN
 			node_cat := "Placeholder" ;
 		(* TODO Do I need an else? *)
 		END ;
-		TRY
-			Wr.PutText( write_stream , root^.val & " ( " & node_cat & " )\n" ) ;
-		EXCEPT
-			| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
-			| Thread.Alerted => RAISE Thread.Alerted ;
+		IF PrintFileDebug = TRUE THEN
+			TRY
+				Wr.PutText( write_stream , root^.val & " ( " & node_cat & " )\n" ) ;
+			EXCEPT
+				| Wr.Failure( ErrCode ) => RAISE Wr.Failure( ErrCode ) ;
+				| Thread.Alerted => RAISE Thread.Alerted ;
+			END ;
+		ELSE
+			IO.Put( root^.val & " ( " & node_cat & " )\n" ) ;
 		END ;
 		(* Do this recursively for all of its children *)
 		current_child := root^.children ;

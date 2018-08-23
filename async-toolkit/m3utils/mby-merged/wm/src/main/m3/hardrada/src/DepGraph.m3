@@ -26,7 +26,6 @@ BEGIN
 	<* ASSERT parse_root # NIL *>
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.parse_root # NIL *>
-	IO.Put( "root length is " & Fmt.Int( Length( root ) ) & "\n" ) ;
 	placeholder_list := NEW( REF Node.DList ) ;
 	Node.FindAllNodesWithCategory( placeholder_list , parse_root , Node.Category.Placeholder ) ;
 	<* ASSERT Node.Length( placeholder_list ) = 1 *>
@@ -66,10 +65,10 @@ BEGIN
 	Reaching while loop via recursion, would hit the IsEmpty scenario *)
 	WHILE tempchild # NIL AND NOT Node.IsEmpty( tempchild ) DO
 		(* Skip separators, which have the value of separator and are terminals. *)
+		IO.Put( "-------------------------\n" ) ;
 		IF NOT( Text.Equal( tempchild^.cur^.val , depgraph_pms^.separator ) AND tempchild^.cur^.cat # Node.Category.NonTerminal ) THEN
+			IO.Put( "Getting dep graph for a non-separator: " & tempchild^.cur^.val & "\n" ) ;
 			tempdepgraph^.subdepgraph := NIL ;
-			IO.Put( "Initial Length of depgraph list (should be 0): " & Fmt.Int( REFANYList.Length( my_depgraph^.subdepgraph ) ) & "\n" ) ;
-			IO.Put( "CONSIDERING STATEMENT FOR DEPGRAPH GENERATION: " & tempchild^.cur^.val & "\n" ) ;
 			tempstartsymbs := NEW( REF Node.DList ) ;
 			Node.DefaultDList( tempstartsymbs ) ;
 			templowerleveltree := NEW( REF Node.T ) ;
@@ -83,6 +82,7 @@ BEGIN
 			(* Subdepgraph *)
 			(* Get the next level of start symbols... *)
 			GetNextLevelOfStartSymbols( tempstartsymbs , tempdepgraph^.parse_root , depgraph_pms ) ;
+			IO.Put( "Number of start symbols: " & Fmt.Int( Node.Length( tempstartsymbs ) ) & "\n" ) ;
 			(* Again, NIL case must be considered if you reach it via .next,
 			IsEmpty must be considered if GetNextLevelOfStartSymbols returns an empty
 			start symbol list *)
@@ -90,19 +90,14 @@ BEGIN
 				(* For each start symbol, create a subdependency graph *)
 				Node.DeepCopy( templowerleveltree , tempstartsymbs^.cur ) ;
 				IF first_subdepgraph = NIL THEN
-					IO.Put( "Starting the subdepgraph list!\n" ) ;
 					first_subdepgraph := NEW( REF REFANYList.T ) ;
 					first_subdepgraph^ := REFANYList.Cons( NEW( REF T ) , NIL ) ;
 					tempdepgraph^.subdepgraph := first_subdepgraph^ ;
-					IO.Put( "Length of depgraph list (should now be 1): " & Fmt.Int( REFANYList.Length( tempdepgraph^.subdepgraph ) ) & "\n" ) ;
 				ELSIF REFANYList.Length( first_subdepgraph^ ) = 1 THEN
-					IO.Put( "Appending to the subdepgraph list. If you only see this and no starting message, it means you're going to get an empty element.\n" ) ;
 					first_subdepgraph^ := REFANYList.Append( first_subdepgraph^ , REFANYList.Cons( NEW( REF T ) , NIL ) ) ;
 					tempdepgraph^.subdepgraph := first_subdepgraph^ ;
-					IO.Put( "Length of depgraph list (should now be 2): " & Fmt.Int( REFANYList.Length( tempdepgraph^.subdepgraph ) ) & "\n" ) ;
 					tempdepgraph^.subdepgraph := tempdepgraph^.subdepgraph.tail ;
 				ELSE
-					IO.Put( "Appending to the subdepgraph list. If you only see this and no starting message, it means you're going to get an empty element.\n" ) ;
 					tempdepgraph^.subdepgraph := REFANYList.Append( tempdepgraph^.subdepgraph , REFANYList.Cons( NEW( REF T ) , NIL ) ) ;
 					tempdepgraph^.subdepgraph := tempdepgraph^.subdepgraph.tail ;
 				END ;
@@ -115,18 +110,31 @@ BEGIN
 			IF first_subdepgraph # NIL THEN
 				tempdepgraph^.subdepgraph := first_subdepgraph^ ;
 			END ;
-			IO.Put( "Ending Length of depgraph list (should be 2): " & Fmt.Int( REFANYList.Length( tempdepgraph^.subdepgraph ) ) & "\n" ) ;
+			tempchild := tempchild^.next ;
 			(* Next *)
-			IF tempchild^.next # NIL AND NOT( Text.Equal( tempchild^.next^.cur^.val , depgraph_pms^.separator ) AND tempchild^.next^.cur^.cat # Node.Category.NonTerminal ) THEN
-				(* If next is not nil nor is a separator *)
-				tempdepgraph^.next := NEW( REF T ) ;
-				tempdepgraph := tempdepgraph^.next ;
+			IF tempchild # NIL (* AND NOT( Text.Equal( tempchild^.cur^.val , depgraph_pms^.separator ) AND tempchild^.cur^.cat # Node.Category.NonTerminal ) *) THEN
+				WHILE tempchild # NIL DO
+					IF NOT( Text.Equal( tempchild^.cur^.val , depgraph_pms^.separator ) AND tempchild^.cur^.cat # Node.Category.NonTerminal ) THEN
+						(* Not a separator. Go to next. *)
+						tempdepgraph^.next := NEW( REF T ) ;
+						tempdepgraph := tempdepgraph^.next ;
+						EXIT ;
+					ELSE
+						(* Separator skip *)
+						tempchild := tempchild^.next ;
+					END ;
+				END ;
 			ELSE
 				tempdepgraph^.next := NIL ;
 			END ;
+		ELSE
+			IO.Put( "Getting dep graph for a separator: " & tempchild^.cur^.val & "\n" ) ;
+			tempchild := tempchild^.next ;
 		END ;
-		tempchild := tempchild^.next ;
+		first_subdepgraph := NIL ;
+		IO.Put( "-------------------------\n" ) ;
 	END ;
+	IO.Put( "Length of depgraph for this call: " & Fmt.Int( Length( my_depgraph ) ) & "\n" ) ;
 END GetDepGraph ;
 
 PROCEDURE PutPlaceholderInProcBlock( start : REF Node.T ; root : REF Node.T ; depgraph_pms : REF DepGraphParams ) =
@@ -195,7 +203,6 @@ BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.parse_root # NIL *>
 	<* ASSERT parse_root # NIL *>
-	IO.Put( "Head of tree: " & root^.parse_root^.val & "\n" ) ;
 	Node.DefaultDList( parse_root ) ;
 	parse_root^.cur := NEW( REF Node.T ) ;
 	Node.DeepCopy( parse_root^.cur , root^.parse_root ) ;
@@ -210,9 +217,6 @@ BEGIN
 		END ;
 	ELSE
 		Node.DebugList( placeholder_list ) ;
-		IO.Put( "Top of tree: " & parse_root^.cur^.val & "\n" ) ;
-		IO.Put( "Placeholder list: " & Fmt.Int( Node.Length( placeholder_list ) ) & "\n" ) ;
-		IO.Put( "Subdepgraph list: " & Fmt.Int( REFANYList.Length( root^.subdepgraph ) ) & "\n" ) ;
 		<* ASSERT Node.Length( placeholder_list ) = REFANYList.Length( root^.subdepgraph ) *>
 		tempsubdepgraph := root^.subdepgraph ;
 		WHILE tempsubdepgraph # NIL DO

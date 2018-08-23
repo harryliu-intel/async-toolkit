@@ -14,6 +14,14 @@ IMPORT StyleRulesTbl ;
 EXCEPTION InvalidFname ;
 EXCEPTION OutError ;
 
+(*************)
+(* Constants *)
+(*************)
+
+(* True - DebugTree prints to a file
+   False - DebugTree prints to the console *)
+CONST PrintFileDebug = FALSE ;
+
 (*********)
 (* Types *)
 (*********)
