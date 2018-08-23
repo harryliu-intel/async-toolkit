@@ -17,9 +17,9 @@
 // Modification history :
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
-`ifndef MBY_TYPES_SV
-`define MBY_TYPES_SV
+`ifndef EGRESS_TYPES_SV
+`define EGRESS_TYPES_SV
 
 
-`endif // MBY_TYPES_SV
+`endif // EGRESS_TYPES_SV
 

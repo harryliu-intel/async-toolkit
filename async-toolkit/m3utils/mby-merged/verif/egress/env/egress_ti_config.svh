@@ -20,8 +20,13 @@
 
 class egress_ti_config extends uvm_object;
 
- string egress_ti_low_path;
- int egress_has_reset_pkg;
+  // Variable: egress_ti_low_path
+  // egress test island path
+  string egress_ti_low_path;
+
+  // Variable: egress_has_reset_pkg
+  // egress reset pkg property
+  int    egress_has_reset_pkg;
 
   `uvm_object_utils_begin(egress_ti_config)
      `uvm_field_string(egress_ti_low_path, UVM_ALL_ON)
@@ -29,8 +34,8 @@ class egress_ti_config extends uvm_object;
    `uvm_object_utils_end
 
   //function: new 
-  function new( string         name = "");
+  function new(string name = "");
     super.new(name);
   endfunction
   
-endclass
+endclass // egress_ti_config

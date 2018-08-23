@@ -46,6 +46,48 @@ Format: 1.52
 # --------------------------------------------------------------------------
 
 
+Group: Egress  {
+
+   Group: Env  {
+
+      File: egress_base_env.svh  (egress/env/egress_base_env.svh)
+      File: egress_env.svh  (egress/env/egress_env.svh)
+      File: egress_env_monitor.svh  (egress/env/egress_env_monitor.svh)
+      File: egress_ral_env.svh  (egress/env/egress_ral_env.svh)
+      File: egress_config.svh  (egress/env/egress_config.svh)
+      File: egress_ti_config.svh  (egress/env/egress_ti_config.svh)
+      }  # Group: Env
+
+   Group: Fal  {
+
+      File: MBY_classes.svh  (egress/fal/egress_classes.svh)
+      File: mby_fuse_env.sv  (egress/fal/egress_fuse_env.sv)
+      File: mby_fuse_regs.svh  (egress/fal/egress_fuse_regs.svh)
+      File: toplevel_fuse_env.svh  (egress/fal/toplevel_fuse_env.svh)
+      }  # Group: Fal
+
+   Group: Ral  {
+
+      File: MBY_ral_rtl_monitor.svh  (egress/ral/egress_ral_rtl_monitor.svh)
+      File: mby_regs_ral_rtl_monitor.svh  (egress/ral/egress_regs_ral_rtl_monitor.svh)
+      File: mby_regs_regs.svh  (egress/ral/egress_regs_regs.svh)
+      }  # Group: Ral
+
+   Group: Seq  {
+
+      File: egress_hard_reset_seq.sv  (no auto-title, egress/seq/egress_hard_reset_seq.sv)
+      File: egress_env_base_seq.sv  (no auto-title, egress/seq/egress_env_base_seq.sv)
+      File: egress_extended_base_seq.sv  (no auto-title, egress/seq/egress_extended_base_seq.sv)
+      }  # Group: Seq
+
+   Group: Tests  {
+
+      File: egress_base_test.svh  (no auto-title, egress/tests/common/egress_base_test.svh)
+      File: egress_alive_test.svh  (no auto-title, egress/tests/egress_alive_test/egress_alive_test.svh)
+      }  # Group: Tests
+
+   }  # Group: Egress
+
 Group: Mplex  {
 
    File: mby_mc_alive_test  (mplex/tests/mby_mc_alive_test/mby_mc_alive_test.svh)
@@ -72,8 +114,8 @@ Group: Ingress  {
       File: ingress_env.svh  (ingress/env/ingress_env.svh)
       File: ingress_env_monitor.svh  (ingress/env/ingress_env_monitor.svh)
       File: ingress_ral_env.svh  (ingress/env/ingress_ral_env.svh)
-      File: new  (ingress/env/ingress_config.svh)
-      File: new  (ingress/env/ingress_ti_config.svh)
+      File: ingress_config.svh  (no auto-title, ingress/env/ingress_config.svh)
+      File: ingress_ti_config.svh  (no auto-title, ingress/env/ingress_ti_config.svh)
       }  # Group: Env
 
    Group: Fal  {
@@ -94,12 +136,16 @@ Group: Ingress  {
    Group: Seq  {
 
       File: ingress_env_base_seq.sv  (ingress/seq/ingress_env_base_seq.sv)
-      File: new  (ingress/seq/ingress_extended_base_seq.sv)
+      File: ingress_extended_base_seq.sv  (no auto-title, ingress/seq/ingress_extended_base_seq.sv)
       }  # Group: Seq
 
-   }  # Group: Ingress
+   Group: Tests  {
 
-File: ingress/.../ingress_alive_test/ingress_alive_test.svh  (ingress/tests/ingress_alive_test/ingress_alive_test.svh)
+      File: tests/ingress_alive_test/ingress_alive_test.svh  (no auto-title, ingress/tests/ingress_alive_test/ingress_alive_test.svh)
+      }  # Group: Tests
+
+}  # Group: Ingress
+
 
 Group: Env  {
 
@@ -209,39 +255,6 @@ Group: Mplex  {
 File: mby_mc_axi_random_access_test  (mplex/tests/mby_mc_axi_random_access_test/mby_mc_axi_random_access_test.svh)
 File: mby_tb  (mby/tb/mby_tb.sv)
 File: new  (mplex/tests/mby_mc_ahb_random_access_test/mby_mc_ahb_random_access_test.svh)
-
-Group: Egress  {
-
-   Group: Env  {
-
-      File: egress_base_env.svh  (egress/env/egress_base_env.svh)
-      File: egress_env.svh  (egress/env/egress_env.svh)
-      File: egress_env_monitor.svh  (egress/env/egress_env_monitor.svh)
-      File: egress_ral_env.svh  (egress/env/egress_ral_env.svh)
-      File: new  (egress/env/egress_config.svh)
-      File: new  (egress/env/egress_ti_config.svh)
-      }  # Group: Env
-
-   Group: Fal  {
-
-      File: MBY_classes.svh  (egress/fal/egress_classes.svh)
-      File: mby_fuse_env.sv  (egress/fal/egress_fuse_env.sv)
-      File: mby_fuse_regs.svh  (egress/fal/egress_fuse_regs.svh)
-      File: toplevel_fuse_env.svh  (egress/fal/toplevel_fuse_env.svh)
-      }  # Group: Fal
-
-   File: new  (egress/seq/egress_extended_base_seq.sv)
-
-   Group: Ral  {
-
-      File: MBY_ral_rtl_monitor.svh  (egress/ral/egress_ral_rtl_monitor.svh)
-      File: mby_regs_ral_rtl_monitor.svh  (egress/ral/egress_regs_ral_rtl_monitor.svh)
-      File: mby_regs_regs.svh  (egress/ral/egress_regs_regs.svh)
-      }  # Group: Ral
-
-   File: seq/egress_env_base_seq.sv  (egress/seq/egress_env_base_seq.sv)
-   File: tests/egress_alive_test/egress_alive_test.svh  (egress/tests/egress_alive_test/egress_alive_test.svh)
-   }  # Group: Egress
 
 Group: Index  {
 

@@ -24,6 +24,8 @@ class egress_dummy_seq extends egress_extended_base_seq;
 
   `uvm_object_utils(egress_dummy_seq)
 
+  // Function: new
+  // Constructor
   function new(string name = "egress_dummy_seq", uvm_component parent = null);
     super.new(name);
   endfunction
@@ -55,14 +57,14 @@ class egress_dummy_seq extends egress_extended_base_seq;
     `uvm_info(get_name(), "Finished egress_dummy_seq", UVM_LOW)
   endtask: body
 
-endclass
+endclass // egress_dummy_seq
 
 class egress_eth_simple_seq extends egress_extended_base_seq;
 
   `uvm_object_utils(egress_eth_simple_seq)
   `uvm_declare_p_sequencer(slu_sequencer)
 
-  egress_env        el_ambiente;
+  egress_env     el_ambiente;
   eth_frame      el_frame;
   eth_sequencer  el_sequencer;
 
@@ -100,12 +102,15 @@ class egress_eth_simple_seq extends egress_extended_base_seq;
   end
   endtask
 
-endclass
+endclass // egress_eth_simple_seq
+
 
 class egress_alive_test extends egress_base_test;
 
   `uvm_component_utils(egress_alive_test)
 
+  // Function: new
+  // Constructor
   function new (string name="egress_alive_test", uvm_component parent=null);
     super.new (name, parent);
   endfunction :  new
@@ -115,6 +120,9 @@ class egress_alive_test extends egress_base_test;
     // TODO: Create config obj here.
   endfunction : build_phase
 
+  // Function: connect_phase
+  // sequences are defined for each of the run sub-phases.
+  // user data phase sequence is set to egress_eth_simple_seq.
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
     // TODO: Set data phase seq here.
