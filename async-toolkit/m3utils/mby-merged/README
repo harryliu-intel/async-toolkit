@@ -89,7 +89,7 @@ Examples of Build Manager commands for DUTs:
 Models                    Commands                                 Description
 ------------------------------------------------------------------------------------------------------------
 MBY                    -  bman -mc mby                           # Madison Bay Configuration
-
+mplex_np_nphy          -  bman -mc mplex_np_nphy                 # Management complex model with no Processor and no PHY.   
 
 Compile ALL:
   bman -dut mby -mc mby
