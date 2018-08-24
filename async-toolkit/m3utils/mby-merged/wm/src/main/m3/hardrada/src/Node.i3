@@ -55,6 +55,8 @@ PROCEDURE DeepCopy( NewNode : REF T ; CurrentNode : REF T ) ;
 
 PROCEDURE FindAllNodesWithCategory( newlist : REF DList ; root : REF T ; cat : Category ) ;
 
+PROCEDURE FindAllNodesWithCategoryDeep( newlist : REF DList ; root : REF T ; cat : Category ) ;
+
 PROCEDURE FindAllNonterms( newlist : REF DList ; root : REF T ; NontermVal : TEXT ) ;
 
 (* Returns the actual parent node and NOT a deep copy. *)
@@ -81,6 +83,8 @@ PROCEDURE GoToBeginning( list : REF DList ) : REF DList ;
 
 PROCEDURE GoToEnd( list : REF DList ) : REF DList ;
 
+PROCEDURE ShallowCopyDList( newlist : REF DList ; list : REF DList ) ;
+
 PROCEDURE DeepCopyDList( newlist : REF DList ; list : REF DList ) ;
 
 PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) ;
@@ -88,6 +92,8 @@ PROCEDURE AppendNode( list : REF DList ; NodeToAppend : REF T ) ;
 PROCEDURE AppendDList( listA : REF DList ; listB : REF DList ) ;
 
 PROCEDURE AppendDListDeep( listA : REF DList ; listB : REF DList ) ;
+
+PROCEDURE AppendDListDeepWithShallowNodes( listA : REF DList ; listB : REF DList ) ;
 
 PROCEDURE PrependNode( list : REF DList ; NodeToAppend : REF T ) ;
 

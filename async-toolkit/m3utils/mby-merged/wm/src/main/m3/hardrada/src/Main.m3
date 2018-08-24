@@ -561,9 +561,15 @@ END ;
 IO.Put( "Costructing parse tree from dep graph...\n" ) ;
 DepGraph.ConstructParseTree( proc_block^.cur , depgraph , depgraph_pms ) ;
 IO.Put( "Constructed parse tree from dep graph...\n" ) ;
+TRY
+	Spec.DebugTree( proc_block^.cur , "./depgraph_tree.m3" ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
+	| Spec.OutError => IO.Put( "Outerror.\n" ) ;
+END ;
 IO.Put( "Generating code from parse tree...\n" ) ;
 TRY
-	Spec.GenCode( root_for_dep , style_rules , "./depgraph.m3" ) ;
+	Spec.GenCode( root , style_rules , "./depgraph.m3" ) ;
 EXCEPT
 	| Spec.InvalidFname => IO.Put( "Can't use that fname.\n" ) ;
 	| Spec.OutError => IO.Put( "Outerror.\n" ) ;

@@ -43,6 +43,29 @@ BEGIN
 	END ;
 END DeepCopy ;
 
+PROCEDURE FindAllNodesWithCategoryDeep( newlist : REF DList ; root : REF T ; cat : Category ) =
+VAR
+	current_child : REF DList := NIL ;
+	templist := NEW( REF DList ) ;
+BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT newlist # NIL *>
+	DefaultDList( newlist ) ;
+	DefaultDList( templist ) ;
+	IF root^.cat = cat THEN
+		AppendNode( newlist , root ) ;
+	END ;
+	IF root^.cat = Category.NonTerminal THEN
+		(* TODO Make this a function... somehow *)
+		current_child := GoToBeginning( root^.children ) ;
+		WHILE current_child # NIL DO
+			FindAllNodesWithCategoryDeep( templist , current_child^.cur , cat ) ;
+			AppendDListDeepWithShallowNodes( newlist , templist ) ;
+			current_child := current_child^.next ;
+		END ;
+	END ;
+END FindAllNodesWithCategoryDeep ;
+
 PROCEDURE FindAllNodesWithCategory( newlist : REF DList ; root : REF T ; cat : Category ) =
 VAR
 	current_child : REF DList := NIL ;
@@ -259,6 +282,33 @@ BEGIN
 	RETURN list ;
 END GoToEnd ;
 
+PROCEDURE ShallowCopyDList( newlist : REF DList ; list : REF DList ) =
+VAR
+	templist : REF DList := NIL ;
+	myprev : REF DList := NIL ;
+BEGIN
+	<* ASSERT list # NIL *>
+	<* ASSERT newlist # NIL *>
+	templist := GoToBeginning( list ) ;
+	myprev := NIL ;
+	WHILE templist # NIL DO
+		(* What is cur? *)
+		newlist^.cur := templist^.cur ;
+		(* What is prev? *)
+		newlist^.prev := myprev ;
+		(* What is next? *)
+		IF templist^.next # NIL THEN
+			newlist^.next := NEW( REF DList ) ;
+			myprev := newlist ;
+			newlist := newlist^.next ;
+		ELSE
+			newlist^.next := NIL ;
+		END ;
+		(* Next loop iteration *)
+		templist := templist^.next ;
+	END ;
+END ShallowCopyDList ;
+
 PROCEDURE DeepCopyDList( newlist : REF DList ; list : REF DList ) =
 VAR
 	templist : REF DList := NIL ;
@@ -326,6 +376,28 @@ BEGIN
 		listA^.prev := listB^.prev ;
 	END ;
 END AppendDList ;
+
+(* TODO listB can probably be readonly here. Do that more often *)
+PROCEDURE AppendDListDeepWithShallowNodes( listA : REF DList ; listB : REF DList ) =
+VAR
+	templistptrA : REF DList := NIL ;
+	templistptrB : REF DList := NIL ;
+	newtemplistptrB : REF DList := NEW( REF DList ) ;
+BEGIN
+	<* ASSERT listA # NIL *>
+	<* ASSERT listB # NIL *>
+	IF NOT IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
+		templistptrA := GoToEnd( listA ) ;
+		templistptrB := GoToBeginning( listB ) ;
+		ShallowCopyDList( newtemplistptrB , templistptrB ) ;
+		(* DeepCopyDList( newtemplistptrB , templistptrB ) ; *)
+		templistptrA^.next := newtemplistptrB ;
+		newtemplistptrB^.prev := templistptrA ;
+	ELSIF IsEmpty( listA ) AND NOT IsEmpty( listB ) THEN
+		ShallowCopyDList( listA , listB ) ;
+		(* DeepCopyDList( listA , listB ) ; *)
+	END ;
+END AppendDListDeepWithShallowNodes ;
 
 (* TODO listB can probably be readonly here. Do that more often *)
 PROCEDURE AppendDListDeep( listA : REF DList ; listB : REF DList ) =

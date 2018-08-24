@@ -20,7 +20,7 @@ EXCEPTION OutError ;
 
 (* True - DebugTree prints to a file
    False - DebugTree prints to the console *)
-CONST PrintFileDebug = FALSE ;
+CONST PrintFileDebug = TRUE ;
 
 (*********)
 (* Types *)
