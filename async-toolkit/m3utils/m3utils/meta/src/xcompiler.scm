@@ -6,7 +6,7 @@
 (define *m-inf* (- *inf*))
 
 (define (is-special? x)
-	(or (= *inf* x) (= *m-inf* x) (is-nan? x)))
+  (or (= *inf* x) (= *m-inf* x) (is-nan? x)))
 
 (define (compile-min-expression w-exp . tag)
   ;; tag is optional, needed for the partial derivatives only
@@ -51,7 +51,7 @@
           'compiled-formula 
           (compile-min-expression (x 'get 'working-expression) k))))
    (all-deps 'TARGET)))
-          
+
 (define (interpolate-limits l v)
   (cond ((not (pair? l)) v)
         (else 
@@ -82,11 +82,11 @@
                     (x 'get 'topological-index))
                  (error "topo index decreasing " tag " -> " q dnl)
                  #t))
-                      
+           
            (filter (lambda(q)(not (eq? tag q)))(x 'get 'dependents))
 
-)))))
-    
+           )))))
+
 (define (force-recalc! tag) (recalc! tag 'force))
 
 (define (initialized? tag)
@@ -108,17 +108,17 @@
       (if (and (not (done 'member? k))
                (ready-to-calc? k))
           (begin ;;(dis "initializing " k dnl)
-                 (done 'insert! k)
-                 (map do-one (force-recalc! k)))))
-      
+            (done 'insert! k)
+            (map do-one (force-recalc! k)))))
+    
     (let ((initials (filter ready-to-calc? (expressions 'keys))))
       (map do-one initials)
-))
-#t)
+      ))
+  #t)
 
 (define (actual-dependents tag)
   (filter (lambda(q)(not (eq? tag q)))((expressions 'retrieve tag) 'get 'dependents)))
-    
+
 (define actual-parents
   (eq?-memo
    (lambda(tag)
@@ -165,26 +165,26 @@
                                     (contained? mp ll)))
                                 ms)
                         (cdr s)))))))
-                      
-          
+
+
 (define (calc-partial-derivative of wrt)
   (simplify-eval-arith 
    (differentiate ((expressions 'retrieve of) 'get 'working-expression) 
                   wrt)))
-          
-        
+
+
 (define (compile-partial-derivatives of)
   (let ((wrt (actual-parents of)))
     (map cons wrt (map (lambda(k)(compile-min-expression
                                   (calc-partial-derivative of k) of))
                        wrt))))
-        
-        
+
+
 (define (compile-all-partial-derivatives!)
   (map (lambda(k)((expressions 'retrieve k) 'set! 'compiled-derivatives
                   (compile-partial-derivatives k)))
        (all-deps 'TARGET))
-#t)
+  #t)
 
 (define u-n-d-v-tag '())
 
@@ -196,8 +196,8 @@
        (map cons 
             (map car compiled-d) 
             (map eval (map cdr compiled-d))))))
-            
-    
+
+
 (define (initialize-all-numerical-derivatives)
   ;; only called on initialization, should be able to do it incrementally
   ;; otherwise
@@ -207,7 +207,7 @@
 
 (define (get-current-total-derivative tag)
   (let ((x ((expressions 'retrieve tag) 'get 'total-derivative)))
-		(if (null? x) 0 x)))
+    (if (null? x) 0 x)))
 
 (define g-c-p-d-args '())
 
@@ -219,11 +219,11 @@
   (cond ((assoc wrt ((expressions 'retrieve of) 'get 'current-partial-values))
          => cdr)
         (else 0)))
-  
+
 (define debug-wrt '())
 
 (define (calc-total-derivative! of wrt)
-	(set! debug-wrt wrt)
+  (set! debug-wrt wrt)
   ;; assumes total-derivative of all dependents of 'wrt' have already
   ;; been calculated and are present in the total-derivative field 
   ;; of the variable-state
@@ -235,9 +235,9 @@
                             deps)
                        (map (lambda(d)(get-current-partial-derivative d wrt)) 
                             deps)
-                ))))
-			(if (is-special? res)
-					(error "special total derivative at key " wrt " : " res))
+                       ))))
+      (if (is-special? res)
+          (error "special total derivative at key " wrt " : " res))
 
       ((expressions 'retrieve wrt) 'set! 'total-derivative res)
       res)))
@@ -256,24 +256,24 @@
 (define (calc-all-total-derivatives!)
   ((expressions 'retrieve 'TARGET) 'set! 'total-derivative 1)
   (let loop ((seen-target #f)
-						 (p (reverse evaluation-order))) 
-		;; skip past TARGET so we dont zero its total
+             (p (reverse evaluation-order))) 
+    ;; skip past TARGET so we dont zero its total
     (cond ((null? p) #t)
 
-					((eq? (car p) 'TARGET) 
-					 ((expressions 'retrieve (car p)) 'set! 'total-derivative 1)
-					 (loop #t (cdr p)))
+          ((eq? (car p) 'TARGET) 
+           ((expressions 'retrieve (car p)) 'set! 'total-derivative 1)
+           (loop #t (cdr p)))
 
-					(seen-target
-					 (calc-total-derivative! 'TARGET (car p))
-					 (loop #t (cdr p))
-					 )
+          (seen-target
+           (calc-total-derivative! 'TARGET (car p))
+           (loop #t (cdr p))
+           )
 
-					(else 
-					 ((expressions 'retrieve (car p)) 'set! 'total-derivative 0)
-					 (loop #f (cdr p)))
-					)
-))
+          (else 
+           ((expressions 'retrieve (car p)) 'set! 'total-derivative 0)
+           (loop #f (cdr p)))
+          )
+    ))
 
 ;; sketch of what remains:
 ;; use partials to choose variable to look at
@@ -309,7 +309,7 @@
    (cond ((is-free? tag)  'current-limits)
          ((is-parametric? tag) 'current-value)
          (else (error "not free or parametric " tag)))))
-          
+
 
 ;; debugging for the minimizer
 (define debug-s1m-mapper  '())
@@ -335,8 +335,8 @@
 
     (define (change! *unused* to)
       (dis "search-one-mapped!.change! " tag " " to dnl)
-			(if (is-special? to) ;; catch problems early
-					(error "attempting to change to special value: " to))
+      (if (is-special? to) ;; catch problems early
+          (error "attempting to change to special value: " to))
       (let ((arg (real-mapper to)))
         (if (or (not last-arg) (not (= arg last-arg)))
             (begin
@@ -345,16 +345,16 @@
                    (change-and-recalc! tag arg)))))
 
       (let ((res (t 'get 'current-limits))) ;; return value of TARGET
-				(if (is-special? res) (error "special TARGET: " res))
-				res
-				)
+        (if (is-special? res) (error "special TARGET: " res))
+        res
+        )
       )
 
     (let* ((min-obj    (new-modula-object 'LRFunction.T `(eval . ,change!)))
-					 (initval (get-current-opt-value tag))
+           (initval (get-current-opt-value tag))
            (init-brack (make-init-brack inv-mapper initval))
            (step1      (Bracket.SchemeInitial init-brack min-obj)))
-			(dis "initial value of " tag " " initval dnl)
+      (dis "initial value of " tag " " initval dnl)
       (dis "after Bracket.SchemeInitial, step1: " step1 dnl)
       (set! debug-s1m-step1 step1)
 
@@ -369,32 +369,32 @@
 
       (dis "TARGET is " (t 'get 'current-limits) dnl)
 
-;;			(if (= (get-current-opt-value tag) initval)
-;;					(error "no change in " tag ", why?"))
+      ;;                        (if (= (get-current-opt-value tag) initval)
+      ;;                                        (error "no change in " tag ", why?"))
       #t
-)))
+      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (finitize x limit)
-	(cond ((is-nan? x) 0)
-				((= *inf* x) limit)
-				((= *m-inf* x) (- limit))
-				(else x)))
+  (cond ((is-nan? x) 0)
+        ((= *inf* x) limit)
+        ((= *m-inf* x) (- limit))
+        (else x)))
 
 (define (make-init-brack inv-mapper value)
   (map cons
        '(a b c)
        (mergesort
         (let ((old (finitize (inv-mapper value)
-														 (inv-mapper (- 1 (sqrt *epsmach*)))
-														 ))) ;; convert to bracketing space
+                             (inv-mapper (- 1 (sqrt *epsmach*)))
+                             ))) ;; convert to bracketing space
           (if (> (abs old) *standard-bracketing-value*)
               (list (* old 2) old 0)
               (list (- *standard-bracketing-value*) 
                     old 
                     *standard-bracketing-value*)))
-   <)))
+        <)))
 
 (define identity (lambda(x) x))
 
@@ -416,18 +416,18 @@
   (let ((tag  (car pair))
         (dVdt (cdr pair)))
 
-  (cond ((is-free? tag) (> (get-current-opt-value tag) *epsmach*))
-        ;; our free vars are limited below by zero
+    (cond ((is-free? tag) (> (get-current-opt-value tag) *epsmach*))
+          ;; our free vars are limited below by zero
 
-        ((not (is-parametric? tag)) #f)
-        (else 
-         (set! debug-tag tag)
-         (let ((v (get-current-opt-value tag)))
+          ((not (is-parametric? tag)) #f)
+          (else 
+           (set! debug-tag tag)
+           (let ((v (get-current-opt-value tag)))
 
-           (and (not (null? v)) ;; this tests for vars past TARGET
-                (or (< dVdt 0) (> v (sqrt *epsmach*)))
-                (or (> dVdt 0) (< v (- 1 (sqrt *epsmach*))))))))))
-        
+             (and (not (null? v)) ;; this tests for vars past TARGET
+                  (or (< dVdt 0) (> v (sqrt *epsmach*)))
+                  (or (> dVdt 0) (< v (- 1 (sqrt *epsmach*))))))))))
+
 (define (candidate-less-than? c0 c1) (> (abs (cdr c0)) (abs (cdr c1))))
 
 (define (find-next-candidates)
@@ -438,7 +438,7 @@
          (keyed-derivs (map cons keys (map get-total keys))))
     
     (mergesort (filter is-candidate?  keyed-derivs) candidate-less-than?)
-))
+    ))
 
 (define search-sequence '())
 
@@ -447,11 +447,11 @@
   (define (repeat)
     (let ((next (car (find-next-candidates))))
       (if (and (> (abs (cdr next)) *quit-derivative*)
-							 #t)
+               #t)
 
-;;							 (or (< (length search-sequence) 2)
-;;									 (not (= (cdar search-sequence)
-;;													 (cdadr search-sequence))))
+          ;;    (or (< (length search-sequence) 2)
+          ;;        (not (= (cdar search-sequence)
+          ;;        (cdadr search-sequence))))
           (begin
             (dis "====================  SEARCHING " next "  ===================="dnl)
             (set! search-sequence
@@ -471,7 +471,7 @@
   (repeat))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-         
+
 (define (calc-numerical-derivative of wrt) ;; for debugging, not used by code
   (let* ((x0    (get-current-opt-value wrt))
          (y0    (compute-actual-value of))
@@ -485,7 +485,7 @@
          (slope (/ (- y1 y0) (- x1 x0))))
     (change-and-recalc! wrt x0) ;; reset it
     slope
-))
+    ))
 
 (define (range-times-total tag)
   (let* ((x (expressions 'retrieve tag))
@@ -494,50 +494,50 @@
     (* d (- (caddr r) (cadr r)))))
 
 (define (symbol-has-prefix? symbol prefix)
-	(let* ((pstr (symbol->string prefix))
-				 (sstr (symbol->string symbol))
-				 (n    (string-length pstr)))
-		(and 
-		 (>= (string-length sstr) n)
-		 (equal? (head n (string->list sstr)) (string->list pstr)))))
+  (let* ((pstr (symbol->string prefix))
+         (sstr (symbol->string symbol))
+         (n    (string-length pstr)))
+    (and 
+     (>= (string-length sstr) n)
+     (equal? (head n (string->list sstr)) (string->list pstr)))))
 
 (define (is-time-symbol? sym) (symbol-has-prefix? sym 'time))
 
 (define (get-all-node-transition-times nodetxt)
-	(map cadadr 
-			 (map ArithRep.ToScheme 
-						(map get-transition-time 
-								 (get-transitions prs nodetxt)))))
-				
+  (map cadadr 
+       (map ArithRep.ToScheme 
+            (map get-transition-time 
+                 (get-transitions prs nodetxt)))))
+
 (define (get-all-transition-times)
-	(let* ((node-tbl 
-					   (modula-type-op 'PRS.T 'get-field prs 'nodes))
-				 (nodes    
-					   (map Name.Format (enumerate-tbl-keys 'NameRefTbl node-tbl))))
-		(apply append
-					 (map (lambda(n)(map (lambda(t)(cons t n))
-															 (get-all-node-transition-times n))) nodes))))
-		
+  (let* ((node-tbl 
+          (modula-type-op 'PRS.T 'get-field prs 'nodes))
+         (nodes    
+          (map Name.Format (enumerate-tbl-keys 'NameRefTbl node-tbl))))
+    (apply append
+           (map (lambda(n)(map (lambda(t)(cons t n))
+                               (get-all-node-transition-times n))) nodes))))
+
 (define (get-time-predecessor t)
-	;; get the last time that this time depends on
-	;; (last fanin if several)
-	(let ((tt (get-all-transition-times)))
-		(let loop ((preds     (filter is-time-symbol? (actual-parents t)))
-							 (res       '())
-							 (last-time -1))
-			(cond ((null? preds) (if (null? res) 
-															 #f
-															 (list res 
-																		 (cond ((assoc res tt) => cdr) (else #f))
-																		 (- (compute-actual-value t)
-																				(compute-actual-value res)))))
-						((> (compute-actual-value (car preds)) last-time)
-						 (loop (cdr preds) (car preds) (compute-actual-value (car preds))))
-						(else (loop (cdr preds) res last-time))))))
-	
+  ;; get the last time that this time depends on
+  ;; (last fanin if several)
+  (let ((tt (get-all-transition-times)))
+    (let loop ((preds     (filter is-time-symbol? (actual-parents t)))
+               (res       '())
+               (last-time -1))
+      (cond ((null? preds) (if (null? res) 
+                               #f
+                               (list res 
+                                     (cond ((assoc res tt) => cdr) (else #f))
+                                     (- (compute-actual-value t)
+                                        (compute-actual-value res)))))
+            ((> (compute-actual-value (car preds)) last-time)
+             (loop (cdr preds) (car preds) (compute-actual-value (car preds))))
+            (else (loop (cdr preds) res last-time))))))
+
 
 (define (get-n-predecessors t n)
-	(if (= n 0) 
-			'()
-			(let ((p (get-time-predecessor t)))
-				(cons p (get-n-predecessors (car p) (- n 1))))))
+  (if (= n 0) 
+      '()
+      (let ((p (get-time-predecessor t)))
+        (cons p (get-n-predecessors (car p) (- n 1))))))

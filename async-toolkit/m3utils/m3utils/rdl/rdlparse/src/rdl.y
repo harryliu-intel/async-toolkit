@@ -62,7 +62,8 @@ component_inst_list:
 property_assign:
   defaultP                 default_property_assign ';'
   explicitP                explicit_property_assign ';'
-  defTrueP                 property ';'
+  trueP                    property ';'
+  defTrueP                 T_DEFAULT property ';'
   postP                    post_property_assign ';'
 
 property_definition:

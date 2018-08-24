@@ -20,8 +20,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (tail-component name)  
-	(if (null? name) (error "tail-component of null name")
-			(Name.Tail   name)))
+  (if (null? name) (error "tail-component of null name")
+      (Name.Tail   name)))
 
 (define (parent-component name)
   (if (equal? name (Name.Empty)) (error "no parent")
@@ -38,12 +38,12 @@
       '()
       (cons (modula-type-op type 'get-field nl 'head)
             (convert-m3-list-to-list
-						 type
+             type
              (modula-type-op type 'get-field nl 'tail)))))
 
 (define (convert-namelist-to-list nl)
-	(map Name.Format (convert-m3-list-to-list 'NameList.T nl)))
-	
+  (map Name.Format (convert-m3-list-to-list 'NameList.T nl)))
+
 
 (define (convert-namelist-to-list nl)
   (if (null? nl) 
@@ -103,10 +103,10 @@
     (if (modula-type-op 'NameNameListTbl.T 'call-method type-instances 'get a)
         (convert-namelist-to-list (cadr a))
 
-				(if (eq? (Name.ParseText txtname) top-name) (list "") '()) 
-				;; check for top cell too
+        (if (eq? (Name.ParseText txtname) top-name) (list "") '()) 
+        ;; check for top cell too
 
- )))
+        )))
 
 (define (get-parent n)
   (if (string? n)
@@ -147,7 +147,7 @@
     (cond ((null? r) s)
           ((member? (car r) s) (loop (cdr r) s))
           (else (loop (cdr r) (cons (car r) s))))))
-    
+
 
 (define (escape-for-unix str)
 
@@ -166,7 +166,7 @@
 (define (routed-no-recurse cell) 
   ;; responds with cell name plus some whitespace if cell is routed
   (run-command "fulcrum cast_query --max-heap-size=2G --task=subcells --filter=\"directive=routed:true\" --cell=\"" (escape-for-unix cell) "\" --no-recurse --cast-path=/mnt/fulcrum/alta/mnystrom/p4/hw-main/cast:/mnt/fulcrum/alta/mnystrom/p4/hw-alta/layout/tsmc65/spec"))
-    
+
 
 (define (whitespace? c) (member? (char->integer c) '(9 10 32)))
 
@@ -177,9 +177,9 @@
     (lambda (x)
       (let ((old (assoc x ans)))
         (if  (not old)
-            (let ((new (f x))) (set! ans (cons (cons x new) ans)) new)
-            (cdr old))))))
-                          
+             (let ((new (f x))) (set! ans (cons (cons x new) ans)) new)
+             (cdr old))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; code for checking whether a certain type is "routed"
@@ -207,7 +207,7 @@
 
 (define (routed-type? typetxt) 
   (wrapped-routed-set 'member (Name.ParseCharsRef typetxt)))
-              
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -222,12 +222,12 @@
   ;; state is a list of pairs ( type-name . sub-instance-name )
 
   (map search-one-parent state)
-)
+  )
 
 (define (iter-parent-type pair)
   (let ((par (car pair))
         (sub (cdr pair)))
-             
+    
     ;; sub is a sub-instance-name
     ;; par is a full parent instance name
     ;; evaluates to a pair: (instantiated-type . sub-instance-name)
@@ -247,7 +247,7 @@
         (inst-name (caddr s)))
     (cond (done s)
           ((routed-type? type-name) (list #t type-name inst-name))
-        
+          
           (else 
            (let* ((instances        (get-type-instances type-name))
                   (parent-instances (map get-parent instances)))
@@ -256,7 +256,7 @@
                   instances
                   parent-instances))))))
 
-          
+
 (define (find-sub-instances pair)
   ;; within the top-level cell, search for a given type and return
   ;; all its instances together with their instance names.
@@ -277,7 +277,7 @@
                                   (if (null? post) ""
                                       (string-append "." post))))))
          (get-type-instances target))))
-          
+
 
 
 (define (all-parent-types type-sub)
@@ -298,15 +298,15 @@
   ;; terminates with ((#t routed-type-name . instance-prefix) ... )
   ;;
 
-;;  (dis "(iterate-till-all-routed '" (stringify lst) ")" dnl)
+  ;;  (dis "(iterate-till-all-routed '" (stringify lst) ")" dnl)
 
   (define (done? x)
     (or (car x)(string=? (cadr x) (Name.Format top-name))))
 
   (let ((unrouted (filter (lambda(x)(not (done? x))) lst))
         (routed   (filter (lambda(x)(     done? x))  lst)))
-;;    (dis "(define unrouted '" (stringify unrouted) ")" dnl)
-;;    (dis "(define routed   '" (stringify   routed) ")" dnl)
+    ;;    (dis "(define unrouted '" (stringify unrouted) ")" dnl)
+    ;;    (dis "(define routed   '" (stringify   routed) ")" dnl)
     (let ((curr
            (append routed 
                    (let ((parents 
@@ -315,36 +315,36 @@
                                   (map all-parent-types (map cdr unrouted))))))
                      (map cons (map (lambda(x)(routed-type? (car x))) parents) 
                           parents)))))
-;;      (dis "current state: " curr dnl)
-;;      (dis "current done:  " (map done? curr) dnl)
+      ;;      (dis "current state: " curr dnl)
+      ;;      (dis "current done:  " (map done? curr) dnl)
       (if (member? #f (map done? curr))
           (iterate-till-all-routed curr)
           curr)
-)))
+      )))
 
 (define (routed-instance? i) 
   (cond ((get-instance-type i) => routed-type?)
         (else #f)))
 
 (define (routed-super-instance i)
-	;; pass it (<instance>) : returns (<instance> <rel-path>)
+  ;; pass it (<instance>) : returns (<instance> <rel-path>)
   (cond ((equal? (car i) "") 
-				 (if (routed-type? (Name.Format top-name))
-						 i
-						 #f))
+         (if (routed-type? (Name.Format top-name))
+             i
+             #f))
 
         ((routed-instance? (car i))  i)
 
         (else (routed-super-instance 
-							 (list (get-parent (car i)) 
-										 (let ((tail (get-tail (car i))))
-											 (if (null? (cadr i)) 
-													 tail
-													 (string-append tail "." (cadr i)))))))))
-																					 
+               (list (get-parent (car i)) 
+                     (let ((tail (get-tail (car i))))
+                       (if (null? (cadr i)) 
+                           tail
+                           (string-append tail "." (cadr i)))))))))
+
 
 ;; DSIM stuff
-        
+
 (define (get-dsim-type txtname)
   (if (or (null? txtname) (equal? txtname (Name.Format top-name)))
       dsim-top
@@ -353,7 +353,7 @@
             (cadr a)
             #f))
       )
-)
+  )
 
 (define (matching-instantiated-types abstract-type)
   (map Name.Format 
@@ -365,7 +365,7 @@
        ))
 
 (define (nameseq-to-list seq)
-	;;(if (null? seq) (error "null seq"))
+  ;;(if (null? seq) (error "null seq"))
   (let ((size (modula-type-op 'NameSeq.T 'call-method seq 'size))
         (res '()))
     (define (helper n) 
@@ -379,14 +379,14 @@
             (helper (- n 1)))))
     (helper (- size 1))))
 
-    
+
 (define (index-find x lst)
   (let loop ((l lst)
              (n 0))
     (cond ((null? l) #f)
           ((equal? (car l) x) n)
           (else (loop (cdr l) (+ n 1))))))
-        
+
 (define (indices-find x lst)
   (let loop ((l lst)
              (n 0)
@@ -394,11 +394,11 @@
     (cond ((null? l)          res)
           ((equal? (car l) x) (loop (cdr l) (+ n 1) (cons n res)) )
           (else               (loop (cdr l) (+ n 1) res           )))))
-  
+
 (define (type-args typetxt)
   (let* ((dsim-type (get-dsim-type typetxt))
          (args      (modula-type-op 'Dsim.Define 'get-field dsim-type 'args)))
-		(if (null? args) '() (nameseq-to-list args))))
+    (if (null? args) '() (nameseq-to-list args))))
 
 
 (define (maptag tag lst)
@@ -411,8 +411,8 @@
 (define debug-cn-nodetxt '())
 
 (define (characterize-node typetxt nodetxt)
-	(set! debug-cn-typetxt typetxt)
-	(set! debug-cn-nodetxt nodetxt)
+  (set! debug-cn-typetxt typetxt)
+  (set! debug-cn-nodetxt nodetxt)
   ;; characterize a node within a cell type
   ;; global characteristics have to be assembled by traversing 
   ;; the instantiation DAG
@@ -447,29 +447,29 @@
 
 (define (get-decls typetxt)
   (let* ((dsim-type 
-            (get-dsim-type  typetxt))
+          (get-dsim-type  typetxt))
          (decls     
-             (reflist-to-list
-              (modula-type-op 'Dsim.Define 'get-field dsim-type 'decls))))
+          (reflist-to-list
+           (modula-type-op 'Dsim.Define 'get-field dsim-type 'decls))))
     decls))
 
 (define (get-rules typetxt)
   (let* ((dsim-type 
-            (get-dsim-type  typetxt))
+          (get-dsim-type  typetxt))
          (dsim-body
-            (modula-type-op 'Dsim.Define 'get-field dsim-type 'dsimBody))
+          (modula-type-op 'Dsim.Define 'get-field dsim-type 'dsimBody))
          (rules     
-             (reflist-to-list
-              (if (null? dsim-body) '()
-                  (modula-type-op 'Dsim.DsimBody 'get-field dsim-body 'rules)))))
+          (reflist-to-list
+           (if (null? dsim-body) '()
+               (modula-type-op 'Dsim.DsimBody 'get-field dsim-body 'rules)))))
     rules))
 
 (define (get-decl-field d fld) 
   (modula-type-op 'Dsim.Decl 'get-field d fld))
-                                
+
 (define (get-rule-field d fld) 
   (modula-type-op 'Dsim.Rule 'get-field d fld))
-                            
+
 (define (analyze-conjunct c)
   (cons
    (modula-type-op 'Dsim.Conjunct 'get-field c 'sense)
@@ -540,7 +540,7 @@
                         (get-decl-field match 'type)))
            (cons 'args (nameseq-to-list 
                         (get-decl-field match 'args))))))))
-  
+
 (define (local-aliases typetxt nodetxt)
   ;; find all the local aliases in the named type of
   ;; the named node (in that type's name space)
@@ -561,13 +561,13 @@
 
 (define (get-subcell-port-connections typetext nametext)
   (apply append 
-   (map mapconscar
-        (map (lambda(x)
-               (cons (Name.Format (get-decl-field x 'id) )
-                     (indices-find 
-                      nametext 
-                      (nameseq-to-list (get-decl-field x 'args)))) )
-             (get-decls typetext)))))
+         (map mapconscar
+              (map (lambda(x)
+                     (cons (Name.Format (get-decl-field x 'id) )
+                           (indices-find 
+                            nametext 
+                            (nameseq-to-list (get-decl-field x 'args)))) )
+                   (get-decls typetext)))))
 
 (define (search-node nodetxt)
   ;; find the most local splitting of nodetxt 
@@ -588,7 +588,7 @@
             (parent-type (list parent parent-type child))
             (else (loop (get-parent parent)
                         (string-append (get-tail parent) "." child))))
-           )))
+      )))
 
 (define (get-subcell-decl typetxt instancetxt)
   (let ((decls (get-decls typetxt))
@@ -598,14 +598,14 @@
                  (lambda (d) (eq? iname (get-decl-field d 'id))) 
                  decls))))
       matching-decl)))
-  
+
 
 (define (get-subcell-type typetxt instancetxt)
   (Name.Format 
    (get-decl-field (get-subcell-decl typetxt instancetxt) 'type)))
 
 (define (get-subcell-port-binding typetxt instancetxt portid)
-;;  (dis "(get-subcell-port-binding " (stringify typetxt) " " (stringify instancetxt) " " portid ")" dnl)
+  ;;  (dis "(get-subcell-port-binding " (stringify typetxt) " " (stringify instancetxt) " " portid ")" dnl)
   (Name.Format
    (nameseq-get
     (get-decl-field (get-subcell-decl typetxt instancetxt) 'args)
@@ -637,7 +637,7 @@
 
     (define (recurse start-cell start-name)
       ;;(dis "(recurse " (stringify start-cell) " " (stringify start-name) ")" dnl)
-        
+      
       (let ( (start-type (get-instance-type start-cell))
              (tag        (make-tag start-cell start-name)) )
 
@@ -647,8 +647,8 @@
                  (subcell-type (get-subcell-type start-type sub-instance))
                  (subnodename  (get-port-name subcell-type port-id)))
             (recurse 
-						 (if (equal? start-cell "") sub-instance (string-append start-cell "." sub-instance))
-						 subnodename)))
+             (if (equal? start-cell "") sub-instance (string-append start-cell "." sub-instance))
+             subnodename)))
 
         (define (search-superport portid)
           (let* ((super          (search-parent start-cell))
@@ -677,15 +677,15 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     (let ((start (search-node nodetxt)))
-			(if (or (not start) (string=? (cdr start) ""))
-					#f
-					(recurse  (car start) (cdr start))))
+      (if (or (not start) (string=? (cdr start) ""))
+          #f
+          (recurse  (car start) (cdr start))))
 
     so-far))
 
 (define (analyze-conjunct c)
   (cons (Name.Format (get-field 'Dsim.Conjunct c 'input))
-                     (get-field 'Dsim.Conjunct c 'sense)))
+        (get-field 'Dsim.Conjunct c 'sense)))
 
 (define (analyze-rule rule)
   `( (conjuncts . ,(map analyze-conjunct 
@@ -700,7 +700,7 @@
 (define (get-rule-fanins rule)
   (map (lambda(c)(Name.Format (get-field 'Dsim.Conjunct c 'input)))
        (reflist-to-list (get-field 'Dsim.Rule rule 'conjuncts))))
-            
+
 (define (alias-global-fanouts alias-characteristics)
   (let ((env-name (caar alias-characteristics)) ;; cell part of alias
         (rules    (cdrfiltertag 'rule-fanout alias-characteristics)))
@@ -719,7 +719,7 @@
 (define (node-fans alias-op)
   ;; take a search op on an alias and turn it into a node-search op
   (lambda(node)
-      (uniq string=? (apply append (map alias-op (search2 node))))))
+    (uniq string=? (apply append (map alias-op (search2 node))))))
 
 (define node-fanouts (node-fans alias-global-fanouts))
 
@@ -771,10 +771,10 @@
 
 
 (define (canonical-name-impl node) 
-	(let ((aliases (all-node-aliases node)))
-		(if (null? aliases) 
-				node
-				(shortest-alias (all-node-aliases node)))))
+  (let ((aliases (all-node-aliases node)))
+    (if (null? aliases) 
+        node
+        (shortest-alias (all-node-aliases node)))))
 
 (define canonical-name (memoize canonical-name-impl))
 
@@ -782,7 +782,7 @@
   (let ((search-aliases (all-node-aliases search-node)))
 
     (define (search-node? n) (member? n search-aliases))
-      
+    
     (let loop ((state (iter-step node-fans `((,start-node))))
                (n 1))
 
@@ -793,10 +793,10 @@
               ((not (= 0 (length matches))) matches)
 
               (else (loop (iter-step node-fans state) (+ n 1))))))))
-           
+
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;       
-  
+
 (define (l) (load "meta.scm"))
 
 
@@ -825,7 +825,7 @@
     (if (string=? x "") 
         prefixes
         (loop (cons x prefixes) (get-parent x)))))
-        
+
 
 (define (all-splittings n)
   ;; "a.b.c" -> (("a" . "b.c") ("a.b" . "c") ("a.b.c")))
@@ -854,9 +854,9 @@
   ;; not sure if this is quite right if we are using just the canonical names.
   ;; should we be using ALL aliases instead?
   (let ((cands (apply intersection equal?
-                          (map all-prefixes canonical-list))))
-		(if (null? cands) ""
-				(car (filter-max (lambda (x)(count-dots x)) cands)))))
+                      (map all-prefixes canonical-list))))
+    (if (null? cands) ""
+        (car (filter-max (lambda (x)(count-dots x)) cands)))))
 
 
 ;; food for thought.
@@ -874,8 +874,8 @@
         (error (string-append "Not a prefix of: " str " : " pfx))
         str-sfx)))
 
- (define (elim-prefix pfx lst)
-   (map (lambda(s)(elim-1-prefix pfx s)) lst))
+(define (elim-prefix pfx lst)
+  (map (lambda(s)(elim-1-prefix pfx s)) lst))
 
 (define (common-supercell-and-nodes path)
   (let ((super (common-supercell path)))
@@ -895,7 +895,7 @@
     (cond ( (string=? p "")        #f )
           ( (get-instance-type p)   p )
           ( else                    (get-actual-parent p) )
-)))
+          )))
 
 (define (get-all-parent-types type)
   (map get-instance-type 
@@ -910,20 +910,20 @@
   (if (= 0 n) to 
       (let ((repeat
              (lambda (this) (apply-repeatedly f (- n 1) this))))
-      (repeat (apply f to)))))
+        (repeat (apply f to)))))
 
 (define (make-modula-set type items)
-	(let ((ns (modula-type-op type 
-														'call-method
-														(new-modula-object type)
-														'init
-														'(10))))
-		(let loop ((lst items))
-			(if (null? lst) ns (begin (modula-type-op type 'call-method
-																								ns 
-																								'insert 
-																								(list (car lst)))
-																(loop (cdr lst)))))))
+  (let ((ns (modula-type-op type 
+                            'call-method
+                            (new-modula-object type)
+                            'init
+                            '(10))))
+    (let loop ((lst items))
+      (if (null? lst) ns (begin (modula-type-op type 'call-method
+                                                ns 
+                                                'insert 
+                                                (list (car lst)))
+                                (loop (cdr lst)))))))
 
 
 (load "verify.scm")

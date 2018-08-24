@@ -457,7 +457,7 @@ PROCEDURE EvalInternal(t   : T;
               EVAL t.eval(First(args),env);
               args := Rest(args)
             END;
-            x := First(args)
+            x := First(args) (* tail call *)
           ELSIF fn = SYMdefine THEN
             IF First(args) # NIL AND ISTYPE(First(args), Pair) THEN
               RETURN env.define(First(First(args)),
