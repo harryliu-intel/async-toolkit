@@ -4,7 +4,7 @@
 
 #include "mby_mapper.h"
 #include "mby_classifier.h"
-#include "fm_crc32.h"
+#include "mby_crc32.h"
 
 static void getTcamCfg
 (
@@ -744,8 +744,8 @@ static void lookUpHash
 
         // Get hash value from CRC:
         fm_uint32 hash = (hash_num == 0) ?
-            fmCrc32ByteSwap (hash_bytes, MBY_FFU_N_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
-            fmCrc32CByteSwap(hash_bytes, MBY_FFU_N_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
+            mbyCrc32ByteSwap (hash_bytes, MBY_FFU_N_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
+            mbyCrc32CByteSwap(hash_bytes, MBY_FFU_N_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
 
         // Key Compaction:
         fm_byte packed_keys[MBY_FFU_N_HASH_KEYS] = { 0 };
@@ -1145,8 +1145,8 @@ static void populateEntropy
 
         // Get hash value from CRC:
          hash_values[hash_num] = (hash_num == 0) ?
-            fmCrc32ByteSwap (hash_bytes, MBY_FFU_N_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
-            fmCrc32CByteSwap(hash_bytes, MBY_FFU_N_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
+            mbyCrc32ByteSwap (hash_bytes, MBY_FFU_N_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
+            mbyCrc32CByteSwap(hash_bytes, MBY_FFU_N_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
     }
 
 

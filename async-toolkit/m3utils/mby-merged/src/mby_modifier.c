@@ -3,7 +3,7 @@
 // Copyright (C) 2018 Intel Corporation
 #include "mby_rxtotx.h"
 #include "mby_modifier.h"
-#include "fm_crc32.h"
+#include "mby_crc32.h"
 
 static void getModRegData
 (
@@ -41,7 +41,7 @@ static void getModRegData
 static void calcIngressCRC
 (
     fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
-    fm_byte           * const rx_data,
+    const fm_byte     * const rx_data,
     const fm_uint32           rx_length,
     mbyModControlData * const c
 )
@@ -51,7 +51,7 @@ static void calcIngressCRC
         ingress_crc |= rx_data[rx_length - 4 + i] << (i * 8);
 
     // calculate good ingress crc
-    fm_uint32 good_ingress_crc = fmCrc32(rx_data, rx_length-4);
+    fm_uint32 good_ingress_crc = mbyCrc32(rx_data, rx_length-4);
 
     // calculate ingress crc error differential
     fm_uint32 crc_ingress_diff = good_ingress_crc ^ ingress_crc;
@@ -213,7 +213,7 @@ static void initChunkedSeg
 (
     fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyParserInfo   parser_info,
-    fm_byte       * const rx_data,
+    const fm_byte * const rx_data,
     const fm_uint32       rx_length,
     mbyChunkedSeg * const chunked_seg
 )
@@ -384,23 +384,23 @@ void Modifier
 )
 {
     // Read inputs:
-    mbyParserInfo parser_info       = in->PARSER_INFO;
-    fm_bool       no_modify         = in->NO_MODIFY;  // skip most of modifications in Modifier
-    fm_uint32     rx_length         = in->RX_LENGTH;  // ingress packet data length [bytes]
-    fm_byte     * rx_data           = in->RX_DATA;
-    fm_uint32     tx_port           = in->TX_PORT;
-    fm_bool       tx_drop           = in->TX_DROP;
-    fm_uint32     tx_length         = in->TX_LENGTH;
-    fm_byte       tx_tag            = in->TX_TAG;
-    fm_uint32     tx_stats_last_len = in->TX_STATS_LAST_LEN;
-    fm_uint16     l2_evid1          = in->L2_EVID1;
-    fm_uint16     edglort           = in->EDGLORT;
-    mbyMirrorType mirtyp            = in->MIRTYP;
-    fm_byte       qos_l3_dscp       = in->QOS_L3_DSCP;
-    fm_byte       ecn               = in->ECN;
-    fm_bool       mark_routed       = in->MARK_ROUTED;
-    fm_uint32     mod_idx           = in->MOD_IDX;
-    fm_uint64     tail_csum_len     = in->TAIL_CSUM_LEN;
+    const mbyParserInfo   parser_info       = in->PARSER_INFO;
+    const fm_bool         no_modify         = in->NO_MODIFY;  // skip most of modifications in Modifier
+    const fm_uint32       rx_length         = in->RX_LENGTH;  // ingress packet data length [bytes]
+    const fm_byte * const rx_data           = in->RX_DATA;
+    const fm_uint32       tx_port           = in->TX_PORT;
+    const fm_bool         tx_drop           = in->TX_DROP;
+    const fm_uint32       tx_length         = in->TX_LENGTH;
+    const fm_byte         tx_tag            = in->TX_TAG;
+    const fm_uint32       tx_stats_last_len = in->TX_STATS_LAST_LEN;
+    const fm_uint16       l2_evid1          = in->L2_EVID1;
+    const fm_uint16       edglort           = in->EDGLORT;
+    const mbyMirrorType   mirtyp            = in->MIRTYP;
+    const fm_byte         qos_l3_dscp       = in->QOS_L3_DSCP;
+    const fm_byte         ecn               = in->ECN;
+    const fm_bool         mark_routed       = in->MARK_ROUTED;
+    const fm_uint32       mod_idx           = in->MOD_IDX;
+    const fm_uint64       tail_csum_len     = in->TAIL_CSUM_LEN;
 
     // input from the outside:
     fm_byte *packet;

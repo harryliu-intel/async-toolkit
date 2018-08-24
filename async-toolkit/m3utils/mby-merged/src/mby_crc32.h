@@ -26,18 +26,22 @@
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
-#ifndef __FM_FM_CRC32_H
-#define __FM_FM_CRC32_H
+#ifndef MBY_CRC32_H
+#define MBY_CRC32_H
 
-extern fm_uint32 fmCrc32(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32Math(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32ByteSwap(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32C(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32CMath(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32CByteSwap(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32K(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32KMath(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32KByteSwap(fm_byte *buf, fm_int len);
-extern fm_uint32 fmCrc32Q(fm_byte *buf, fm_int len);
+#include "mby_common.h"
 
-#endif /* __FM_FM_CRC32_H */
+// Function prototypes:
+fm_uint32 mbyCrc32          (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32Math      (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32ByteSwap  (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32C         (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32CMath     (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32CByteSwap (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32K         (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32KMath     (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32KByteSwap (const fm_byte * const buf, const fm_uint32 len);
+fm_uint32 mbyCrc32Q         (const fm_byte * const buf, const fm_uint32 len);
+
+#endif
+

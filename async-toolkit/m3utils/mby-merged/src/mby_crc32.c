@@ -26,8 +26,7 @@
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
-
-#include "mby_common.h"
+#include "mby_crc32.h"
 
 /*****************************************************************************
  * Macros, Constants & Types
@@ -58,7 +57,7 @@
  *     fmCrc32Table[i] = crc;
  * }
  */
-static const fm_uint32 fmCrc32Table[] =
+static const fm_uint32 mbyCrc32Table[] =
 {
     0x00000000U, 0x77073096U, 0xee0e612cU, 0x990951baU, 0x076dc419U,
     0x706af48fU, 0xe963a535U, 0x9e6495a3U, 0x0edb8832U, 0x79dcb8a4U,
@@ -128,10 +127,10 @@ static const fm_uint32 fmCrc32Table[] =
  *     {
  *         crc = (crc >> 1) ^ (poly & (-(crc & 1)));
  *     }
- *     fmCrc32CTable[i] = crc;
+ *     mbyCrc32CTable[i] = crc;
  * }
  */
-static const fm_uint32 fmCrc32CTable[] =
+static const fm_uint32 mbyCrc32CTable[] =
 {
     0x00000000U, 0xf26b8303U, 0xe13b70f7U, 0x1350f3f4U, 0xc79a971fU,
     0x35f1141cU, 0x26a1e7e8U, 0xd4ca64ebU, 0x8ad958cfU, 0x78b2dbccU,
@@ -201,10 +200,10 @@ static const fm_uint32 fmCrc32CTable[] =
  *     {
  *         crc = (crc >> 1) ^ (poly & (-(crc & 1)));
  *     }
- *     fmCrc32KTable[i] = crc;
+ *     mbyCrc32KTable[i] = crc;
  * }
  */
-static const fm_uint32 fmCrc32KTable[] =
+static const fm_uint32 mbyCrc32KTable[] =
 {
     0x00000000U, 0x9695c4caU, 0xfb4839c9U, 0x6dddfd03U, 0x20f3c3cfU,
     0xb6660705U, 0xdbbbfa06U, 0x4d2e3eccU, 0x41e7879eU, 0xd7724354U,
@@ -274,10 +273,10 @@ static const fm_uint32 fmCrc32KTable[] =
  *     {
  *         crc = (crc >> 1) ^ (poly & (-(crc & 1)));
  *     }
- *     fmCrc32QTable[i] = crc;
+ *     mbyCrc32QTable[i] = crc;
  * }
  */
-static const fm_uint32 fmCrc32QTable[] =
+static const fm_uint32 mbyCrc32QTable[] =
 {
     0x00000000U, 0x999a0002U, 0x98310507U, 0x01ab0505U, 0x9b670f0dU,
     0x02fd0f0fU, 0x03560a0aU, 0x9acc0a08U, 0x9dcb1b19U, 0x04511b1bU,
@@ -346,7 +345,7 @@ static const fm_uint32 fmCrc32QTable[] =
  *****************************************************************************/
 
 /*****************************************************************************/
-/** fmCrc32
+/** mbyCrc32
  * \ingroup intUtil
  *
  * \desc            Returns the Ethernet 32-bit cyclic redundancy check
@@ -359,27 +358,22 @@ static const fm_uint32 fmCrc32QTable[] =
  * \return          The CRC-32 value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_int        i;
-    fm_uint32     crc;
+    fm_uint32 crc = 0xffffffffU;
 
-    crc = 0xffffffffU;
-
-    for (i = 0 ; i < len ; i++)
-    {
-        crc = fmCrc32Table[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
-    }
+    for (fm_uint i = 0 ; i < len ; i++)
+        crc = mbyCrc32Table[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
 
     crc = ~crc;
 
     return crc;
 
-}   /* end fmCrc32 */
+}   /* end mbyCrc32 */
 
 
 /*****************************************************************************/
-/** fmCrc32Math
+/** mbyCrc32Math
  * \ingroup intUtil
  *
  * \desc            Returns the Ethernet 32-bit cyclic redundancy check
@@ -393,24 +387,19 @@ fm_uint32 fmCrc32(fm_byte *buf, fm_int len)
  * \return          The CRC-32 value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32Math(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32Math(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_int        i;
-    fm_uint32     crc;
+    fm_uint32 crc = 0;
 
-    crc = 0;
-
-    for (i = 0 ; i < len ; i++)
-    {
-        crc = fmCrc32Table[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
-    }
+    for (fm_uint i = 0 ; i < len ; i++)
+        crc = mbyCrc32Table[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
 
     return crc;
 
-}   /* end fmCrc32Math */
+}   /* end mbyCrc32Math */
 
 /*****************************************************************************/
-/** fmCrc32ByteSwap
+/** mbyCrc32ByteSwap
  * \ingroup intUtil
  *
  * \desc            Returns the Ethernet 32-bit cyclic redundancy check
@@ -424,11 +413,9 @@ fm_uint32 fmCrc32Math(fm_byte *buf, fm_int len)
  * \return          The CRC-32 value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32ByteSwap(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32ByteSwap(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_uint32 crc;
-
-    crc = fmCrc32Math(buf, len);
+    fm_uint32 crc = mbyCrc32Math(buf, len);
     
     //Byte swap
     crc = ((crc >> 24) & 0xff) |
@@ -438,11 +425,10 @@ fm_uint32 fmCrc32ByteSwap(fm_byte *buf, fm_int len)
 
     return crc;
 
-}   /* end fmCrc32ByteSwap */
-
+} /* end mbyCrc32ByteSwap */
 
 /*****************************************************************************/
-/** fmCrc32C
+/** mbyCrc32C
  * \ingroup intUtil
  *
  * \desc            Returns the Castagnoli 32-bit cyclic redundancy check
@@ -455,27 +441,21 @@ fm_uint32 fmCrc32ByteSwap(fm_byte *buf, fm_int len)
  * \return          The CRC-32C value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32C(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32C(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_int    i;
-    fm_uint32 crc;
+    fm_uint32 crc = 0xffffffffU;
 
-    crc = 0xffffffffU;
-
-    for (i = 0 ; i < len ; i++)
-    {
-        crc = fmCrc32CTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
-    }
+    for (fm_uint i = 0 ; i < len ; i++)
+        crc = mbyCrc32CTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
 
     crc = ~crc;
 
     return crc;
 
-}   /* end fmCrc32C */
-
+}   /* end mbyCrc32C */
 
 /*****************************************************************************/
-/** fmCrc32CMath
+/** mbyCrc32CMath
  * \ingroup intUtil
  *
  * \desc            Returns the Ethernet 32-bit cyclic redundancy check
@@ -489,24 +469,19 @@ fm_uint32 fmCrc32C(fm_byte *buf, fm_int len)
  * \return          The CRC-32 value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32CMath(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32CMath(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_int        i;
-    fm_uint32     crc;
+    fm_uint32 crc = 0;
 
-    crc = 0;
-
-    for (i = 0 ; i < len ; i++)
-    {
-        crc = fmCrc32CTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
-    }
+    for (fm_uint i = 0 ; i < len ; i++)
+        crc = mbyCrc32CTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
 
     return crc;
 
-}   /* end fmCrc32Math */
+} /* end mbyCrc32Math */
 
 /*****************************************************************************/
-/** fmCrc32CByteSwap
+/** mbyCrc32CByteSwap
  * \ingroup intUtil
  *
  * \desc            Returns the Ethernet 32-bit cyclic redundancy check
@@ -520,24 +495,22 @@ fm_uint32 fmCrc32CMath(fm_byte *buf, fm_int len)
  * \return          The CRC-32 value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32CByteSwap(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32CByteSwap(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_uint32 crc;
-
-    crc = fmCrc32CMath(buf, len);
+    fm_uint32 crc = mbyCrc32CMath(buf, len);
     
-    //Byte swap
+    // Byte swap
     crc = ((crc >> 24) & 0xff) |
-          ((crc << 8) & 0xff0000) |
-          ((crc >> 8) & 0xff00) |
+          ((crc <<  8) & 0xff0000) |
+          ((crc >>  8) & 0xff00) |
           ((crc << 24) & 0xff000000);
 
     return crc;
 
-}   /* end fmCrc32CByteSwap */
+} /* end mbyCrc32CByteSwap */
 
 /*****************************************************************************/
-/** fmCrc32K
+/** mbyCrc32K
  * \ingroup intUtil
  *
  * \desc            Returns the Koopman 32-bit cyclic redundancy check
@@ -550,26 +523,21 @@ fm_uint32 fmCrc32CByteSwap(fm_byte *buf, fm_int len)
  * \return          The CRC-32K value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32K(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32K(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_int    i;
-    fm_uint32 crc;
+    fm_uint32 crc = 0xffffffffU;
 
-    crc = 0xffffffffU;
-
-    for (i = 0 ; i < len ; i++)
-    {
-        crc = fmCrc32KTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
-    }
+    for (fm_uint i = 0 ; i < len ; i++)
+        crc = mbyCrc32KTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
 
     crc = ~crc;
 
     return crc;
 
-}   /* end fmCrc32K */
+} /* end mbyCrc32K */
 
 /*****************************************************************************/
-/** fmCrc32KMath
+/** mbyCrc32KMath
  * \ingroup intUtil
  *
  * \desc            Returns the Koopman 32-bit cyclic redundancy check
@@ -583,24 +551,19 @@ fm_uint32 fmCrc32K(fm_byte *buf, fm_int len)
  * \return          The CRC-32K value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32KMath(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32KMath(const fm_byte *const buf, const fm_uint32 len)
 {
-    fm_int        i;
-    fm_uint32     crc;
+    fm_uint32 crc = 0;
 
-    crc = 0;
-
-    for (i = 0 ; i < len ; i++)
-    {
-        crc = fmCrc32KTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
-    }
+    for (fm_uint i = 0 ; i < len ; i++)
+        crc = mbyCrc32KTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
 
     return crc;
 
-}   /* end fmCrc32KMath */
+}   /* end mbyCrc32KMath */
 
 /*****************************************************************************/
-/** fmCrc32CByteSwap
+/** mbyCrc32CByteSwap
  * \ingroup intUtil
  *
  * \desc            Returns theKoopman 32-bit cyclic redundancy check
@@ -614,25 +577,22 @@ fm_uint32 fmCrc32KMath(fm_byte *buf, fm_int len)
  * \return          The CRC-32K value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32KByteSwap(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32KByteSwap(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_uint32 crc;
-
-    crc = fmCrc32KMath(buf, len);
+    fm_uint32 crc = mbyCrc32KMath(buf, len);
     
     //Byte swap
     crc = ((crc >> 24) & 0xff) |
-          ((crc << 8) & 0xff0000) |
-          ((crc >> 8) & 0xff00) |
+          ((crc <<  8) & 0xff0000) |
+          ((crc >>  8) & 0xff00) |
           ((crc << 24) & 0xff000000);
 
     return crc;
 
-}   /* end fmCrc32KByteSwap */
-
+} /* end mbyCrc32KByteSwap */
 
 /*****************************************************************************/
-/** fmCrc32Q
+/** mbyCrc32Q
  * \ingroup intUtil
  *
  * \desc            Returns the AIXM 32-bit cyclic redundancy check
@@ -645,22 +605,15 @@ fm_uint32 fmCrc32KByteSwap(fm_byte *buf, fm_int len)
  * \return          The CRC-32Q value.
  *
  *****************************************************************************/
-fm_uint32 fmCrc32Q(fm_byte *buf, fm_int len)
+fm_uint32 mbyCrc32Q(const fm_byte * const buf, const fm_uint32 len)
 {
-    fm_int    i;
-    fm_uint32 crc;
+    fm_uint32 crc = 0xffffffffU;
 
-    crc = 0xffffffffU;
-
-    for (i = 0 ; i < len ; i++)
-    {
-        crc = fmCrc32QTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
-    }
+    for (fm_uint i = 0 ; i < len ; i++)
+        crc = mbyCrc32QTable[(crc ^ buf[i]) & 0xff] ^ (crc >> 8);
 
     crc = ~crc;
 
     return crc;
 
-}   /* end fmCrc32Q */
-
-
+}   /* end mbyCrc32Q */

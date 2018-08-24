@@ -6,7 +6,7 @@ INC_DIR = .
 
 INCLUDES  = -I$(INC_DIR)
 
-SOURCES += fm_crc32.c
+SOURCES += mby_crc32.c
 SOURCES += mby_bitfield.c
 SOURCES += mby_common.c
 SOURCES += mby_parser.c

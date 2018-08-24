@@ -4,7 +4,7 @@
 
 #include "mby_classifier.h"
 #include "mby_hash.h"
-#include "fm_crc32.h"
+#include "mby_crc32.h"
 
 static fm_uint16 lookUpPearsonHash(const fm_uint16 key)
 {
@@ -625,8 +625,8 @@ static void calcCrcKey
     fm_uint length = sizeof(hash_keys.l234Key);
     fm_uint width  = 48;
     
-    fm_uint64 e_hash = ((fm_uint64) fmCrc32ByteSwap (keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
-    fm_uint64 c_hash = ((fm_uint64) fmCrc32CByteSwap(keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
+    fm_uint64 e_hash = ((fm_uint64) mbyCrc32ByteSwap (keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
+    fm_uint64 c_hash = ((fm_uint64) mbyCrc32CByteSwap(keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
 
     fm_uint64 mask   = (FM_LITERAL_U64(1) << width) - FM_LITERAL_U64(1);
 
