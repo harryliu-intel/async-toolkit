@@ -1,8 +1,7 @@
-~ Begin P4Grammar
 p4program
-    : /* empty */
+    :
     | p4program declaration
-    | p4program ';'  /* empty declaration */
+    | p4program ';'  
     ;
 
 declaration
@@ -301,7 +300,7 @@ baseType
 typeOrVoid
     : typeRef
     | VOID
-    | IDENTIFIER     // may be a type variable
+    | IDENTIFIER    
     ;
 
 optTypeParameters
@@ -431,7 +430,6 @@ conditionalStatement
     | IF '(' expression ')' statement ELSE statement
     ;
 
-// To support direct invocation of a control or parser without instantiation
 directApplication
     : typeName '.' APPLY '(' argumentList ')' ';'
     ;
@@ -452,7 +450,7 @@ blockStatement
     ;
 
 statOrDeclList
-    : /* empty */
+    : 
     | statOrDeclList statementOrDeclaration
     ;
 
@@ -461,7 +459,7 @@ switchStatement
     ;
 
 switchCases
-    : /* empty */
+    : 
     | switchCases switchCase
     ;
 
@@ -482,7 +480,6 @@ statementOrDeclaration
     | instantiation
     ;
 
-/************ TABLES *************/
 tableDeclaration
     : optAnnotations TABLE name '{' tablePropertyList '}'
     ;
@@ -495,13 +492,13 @@ tablePropertyList
 tableProperty
     : KEY '=' '{' keyElementList '}'
     | ACTIONS '=' '{' actionList '}'
-    | CONST ENTRIES '=' '{' entriesList '}' /* immutable entries */
+    | CONST ENTRIES '=' '{' entriesList '}' 
     | optAnnotations CONST nonTableKwName '=' initializer ';'
     | optAnnotations nonTableKwName '=' initializer ';'
     ;
 
 keyElementList
-    : /* empty */
+    : 
     | keyElementList keyElement
     ;
 
@@ -510,7 +507,7 @@ keyElement
     ;
 
 actionList
-    : /* empty */
+    : 
     | actionList actionRef ';'
     ;
 
@@ -528,13 +525,9 @@ actionRef
     | optAnnotations name '(' argumentList ')'
     ;
 
-/************************* ACTION ********************************/
-
 actionDeclaration
     : optAnnotations ACTION name '(' parameterList ')' blockStatement
     ;
-
-/************************* VARIABLES *****************************/
 
 variableDeclaration
     : annotations typeRef name optInitializer ';'
@@ -554,14 +547,12 @@ initializer
     : expression
     ;
 
-/************************* Expressions ****************************/
-
 functionDeclaration
     : functionPrototype blockStatement
     ;
 
 argumentList
-    : /* empty */
+    : 
     | nonEmptyArgList
     ;
 
@@ -577,7 +568,7 @@ argument
     ;
 
 expressionList
-    : /* empty */
+    : 
     | expression
     | expressionList ',' expression
     ;
@@ -624,8 +615,6 @@ lvalue
 %nonassoc ']' '(' '['
 %left '.'
 
-// Additional precedences need to be specified
-
 expression
     : INTEGER
     | TRUE
@@ -651,24 +640,23 @@ expression
     | expression '-' expression
     | expression '|+|' expression
     | expression '|-|' expression
-    | expression SHL expression        // <<
-    | expression '>''>' expression     // check that >> are adjacent
-    | expression LE expression         // <=
-    | expression GE expression         // >=
+    | expression SHL expression        
+    | expression '>''>' expression     
+    | expression LE expression         
+    | expression GE expression         
     | expression '<' expression
     | expression '>' expression
-    | expression NE expression         // !=
-    | expression EQ expression         // ==
+    | expression NE expression         
+    | expression EQ expression         
     | expression '&' expression
     | expression '^' expression
     | expression '|' expression
-    | expression PP expression         // ++
-    | expression AND expression        // &&
-    | expression OR expression         // ||
+    | expression PP expression         
+    | expression AND expression        
+    | expression OR expression         
     | expression '?' expression ':' expression
     | expression '<' realTypeArgumentList '>' '(' argumentList ')'
     | expression '(' argumentList ')'
     | namedType '(' argumentList ')'
     | '(' typeRef ')' expression
     ;
-~ End P4Grammar
