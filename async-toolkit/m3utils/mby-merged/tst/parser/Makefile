@@ -4,7 +4,7 @@ TST_DIR = .
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
 
-SOURCES  = $(SRC_DIR)/fm_crc32.c
+SOURCES  = $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
 SOURCES += $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_parser.c
@@ -57,10 +57,10 @@ DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
 all: $(TARGET)
 
 $(SRC_DIR)/mby_common.o :      $(SRC_DIR)/mby_common.c $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/fm_crc32.o :        $(SRC_DIR)/fm_crc32.c $(SRC_DIR)/fm_crc32.h $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/mby_crc32.o :       $(SRC_DIR)/mby_crc32.c $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_bitfield.o :    $(SRC_DIR)/mby_bitfield.c $(SRC_DIR)/mby_bitfield.h $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_parser.o :      $(SRC_DIR)/mby_parser.c $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_common.h
-$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/fm_crc32.h $(SRC_DIR)/mby_common.h
+$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h
 
 .PHONY: clean
 clean:

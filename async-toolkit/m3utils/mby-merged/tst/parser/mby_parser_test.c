@@ -3,7 +3,7 @@
 #include <string.h>
 #include <mby_common.h>
 #include <mby_pipeline.h>
-#include <fm_crc32.h>
+#include <mby_crc32.h>
 
 #include "mby_parser_test.h"
 
@@ -95,7 +95,7 @@ void prepareData(int testsNum, struct TestData tests[])
         for (unsigned int x = packetStrLen; x < tests[i].in.RX_LENGTH; x++)
             ptr[x] = x - packetStrLen;
 
-        unsigned int crc = fmCrc32(ptr, tests[i].in.RX_LENGTH  - 4);
+        unsigned int crc = mbyCrc32(ptr, tests[i].in.RX_LENGTH  - 4);
 
         for (unsigned int x = 0; x < 4; x++)
             ptr[tests[i].in.RX_LENGTH-4+x] = (crc >> (8*x)) & 0xff;
