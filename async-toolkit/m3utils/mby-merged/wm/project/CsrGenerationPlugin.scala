@@ -6,7 +6,7 @@ import sbt.Compile
 
 import sys.process._
 
-object CsrCodeGeneration extends AutoPlugin {
+object CsrGenerationPlugin extends AutoPlugin {
 
   private val m3Path = "src/main/m3"
   private val m3BuildPath = s"$m3Path/genviews/src/build/mby"
@@ -34,6 +34,6 @@ object CsrCodeGeneration extends AutoPlugin {
     },
     logLevel in sourceGenerators in Compile := Level.Info,
     sourceGenerators in Compile += csrCodeGeneration.taskValue,
-    managedSourceDirectories in Compile += file(s"${m3BuildPath}/src")
+    managedSourceDirectories in Compile += file(s"$m3BuildPath/src")
   )
 }
