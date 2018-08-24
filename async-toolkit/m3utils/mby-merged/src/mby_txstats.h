@@ -9,12 +9,9 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "mby_modifier.h"
 
 // Defines:
-
-/******** MOD_BASE *******/
-#define MBY_MOD_BASE                                            (0x4000000)
-#define MBY_MOD_SIZE                                            (0x0800000)
 
 #define MBY_MOD_STATS_BANK_FRAME_WIDTH                          2
 #define MBY_MOD_STATS_BANK_FRAME_ENTRIES                        384

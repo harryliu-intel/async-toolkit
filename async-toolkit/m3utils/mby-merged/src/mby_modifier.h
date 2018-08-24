@@ -12,6 +12,86 @@
 
 // Defines:
 
+#define DEFAULT_SEGMENT_BYTES   192
+
+/******** MOD_BASE *******/
+#define MBY_MOD_BASE                                            (0x4000000)
+#define MBY_MOD_SIZE                                            (0x0800000)
+
+#define MBY_MOD_PER_PORT_CFG1_WIDTH                             2
+#define MBY_MOD_PER_PORT_CFG1_ENTRIES                           24
+#define MBY_MOD_PER_PORT_CFG1(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0118400) + (MBY_MOD_BASE))
+
+#define MBY_MOD_PER_PORT_CFG1_l_LOOPBACK_SUPPRESS_GLORT         19
+#define MBY_MOD_PER_PORT_CFG1_h_LOOPBACK_SUPPRESS_GLORT         34
+#define MBY_MOD_PER_PORT_CFG1_l_LOOPBACK_SUPPRESS_MASK          3
+#define MBY_MOD_PER_PORT_CFG1_h_LOOPBACK_SUPPRESS_MASK          18
+#define MBY_MOD_PER_PORT_CFG1_l_VID2_MAP_INDEX                  1
+#define MBY_MOD_PER_PORT_CFG1_h_VID2_MAP_INDEX                  2
+#define MBY_MOD_PER_PORT_CFG1_b_ENABLE_VLAN_UPDATE              0
+
+#define MBY_MOD_PER_PORT_CFG2_WIDTH                             2
+#define MBY_MOD_PER_PORT_CFG2_ENTRIES                           24
+#define MBY_MOD_PER_PORT_CFG2(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0118500) + (MBY_MOD_BASE))
+
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_PCP1_UPDATE              16
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_PCP2_UPDATE              15
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_DEI1_UPDATE              14
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_DEI2_UPDATE              13
+#define MBY_MOD_PER_PORT_CFG2_l_VLAN1_E_TYPE                    11
+#define MBY_MOD_PER_PORT_CFG2_h_VLAN1_E_TYPE                    12
+#define MBY_MOD_PER_PORT_CFG2_l_VLAN2_E_TYPE                    9
+#define MBY_MOD_PER_PORT_CFG2_h_VLAN2_E_TYPE                    10
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_DMAC_ROUTING             8
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_SMAC_ROUTING             7
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_TTL_DECREMENT            6
+#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_ECN_MODIFICATION         5
+#define MBY_MOD_PER_PORT_CFG2_b_VID2_FIRST                      4
+#define MBY_MOD_PER_PORT_CFG2_l_VLAN_TAGGING                    1
+#define MBY_MOD_PER_PORT_CFG2_h_VLAN_TAGGING                    3
+#define MBY_MOD_PER_PORT_CFG2_b_MIN_FRAME_SIZE                  0
+
+#define MBY_MOD_IM_WIDTH                                        2
+#define MBY_MOD_IM(word)                                        (((word)*4) + (0x0120210) + (MBY_MOD_BASE))
+
+#define MBY_MOD_IM_b_ECN_DROP                                   36
+#define MBY_MOD_IM_b_TTL1_DROP                                  35
+#define MBY_MOD_IM_b_LOOPBACK_DROP                              34
+#define MBY_MOD_IM_b_TIMEOUT_DROP                               33
+#define MBY_MOD_IM_b_L3_LEN_L4_CSUM_ERROR_MARK                  32
+#define MBY_MOD_IM_b_L4_CSUM_ERROR_DROP                         31
+#define MBY_MOD_IM_b_L3_LEN_ERROR_DROP                          30
+#define MBY_MOD_IM_b_MARKER_ERROR_DROP                          29
+#define MBY_MOD_IM_b_TX_ERROR_DROP                              28
+#define MBY_MOD_IM_b_TX_ECC_DROP                                27
+#define MBY_MOD_IM_b_INNER_L4_NONEXIST                          26
+#define MBY_MOD_IM_b_OUTER_L4_NONEXIST                          25
+#define MBY_MOD_IM_b_INNER_IP_NONEXIST                          24
+#define MBY_MOD_IM_b_OUTER_IP_NONEXIST                          23
+#define MBY_MOD_IM_b_INNER_MAC_NONEXIST                         22
+#define MBY_MOD_IM_b_OUTER_MAC_NONEXIST                         21
+#define MBY_MOD_IM_b_SIZE_ERROR_MIN                             20
+#define MBY_MOD_IM_b_SIZE_ERROR_MAX                             19
+#define MBY_MOD_IM_b_PKT_LEN_UPDATE                             18
+#define MBY_MOD_IM_b_TTL_DEC_BELOW0                             17
+#define MBY_MOD_IM_b_TTLDS_SRC_NONEXIST                         16
+#define MBY_MOD_IM_b_TTLDS_TGT_NONEXIST                         15
+#define MBY_MOD_IM_b_INNER_IP_MISMATCH                          14
+#define MBY_MOD_IM_b_OUTER_IP_MISMATCH                          13
+#define MBY_MOD_IM_b_MPLS_POP_EMPTY                             12
+#define MBY_MOD_IM_b_POP_ELI_EMPTY                              11
+#define MBY_MOD_IM_b_POP_AL_EMPTY                               10
+#define MBY_MOD_IM_b_MPLS_PUSH_FULL                             9
+#define MBY_MOD_IM_b_PUSH_ELI_FULL                              8
+#define MBY_MOD_IM_b_PUSH_AL_FULL                               7
+#define MBY_MOD_IM_b_INNER_TAG_EMPTY                            6
+#define MBY_MOD_IM_b_OUTER_TAG_EMPTY                            5
+#define MBY_MOD_IM_b_VLAN_TAG_EMPTY                             4
+#define MBY_MOD_IM_b_INNER_TAG_FULL                             3
+#define MBY_MOD_IM_b_OUTER_TAG_FULL                             2
+#define MBY_MOD_IM_b_VLAN_TAG_FULL                              1
+#define MBY_MOD_IM_b_MEM_ERROR                                  0
+
 // Enums:
 
 typedef enum mbyTxTagEnum
@@ -30,6 +110,16 @@ typedef enum mbyModPerPortCfg1Vid2MapIndexEnum
     MBY_MOD_PER_PORT_CFG1_VID2_MAP_INDEX_DGLORT = 2
 
 } mbyModPerPortCfg1Vid2MapIndex;
+
+typedef enum mbyDvStatusEnum
+{
+    IS_OK = 0,
+    EOP_ERROR,
+    NOT_ENOUGH_RX_DATA,
+    INVALID_IP_VERSION,
+    COPY_ERROR
+
+} mbyDvStatus;
 
 // Structs:
 
@@ -85,7 +175,7 @@ typedef struct mbyModRegDataStruct
 typedef struct mbyModControlDataStruct
 {
     // Misc:
-    fm_byte                 dvStatus;
+    mbyDvStatus             dvStatus;
     fm_bool                 isMarkerPkt;
     fm_bool                 isWindowParsing;
     // Mirror Lookup:
@@ -104,7 +194,7 @@ typedef struct mbyModControlDataStruct
     // MPLS:
     fm_bool                 isInterLSR;
 #if 0 
-    mbyMplsData             mplsData;  // REVISIT!!!!
+    mbyMplsData             mplsData;  // not implemented for now <-- REVISIT!!!!
 #endif
     // L3:
     fm_uint32               l3Idx;
