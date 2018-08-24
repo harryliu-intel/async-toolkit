@@ -1,3 +1,5 @@
+import RdlGitHashPlugin.autoImport._
+import sbt.Keys._
 
 // to break current task with C-c
 cancelable in sbt.Global := true
@@ -21,15 +23,16 @@ lazy val csrMacros = (project in file("csr-macros"))
   )
 
 lazy val csr = (project in file("csr"))
-  .enablePlugins(CsrCodeGeneration)
+  .enablePlugins(CsrGenerationPlugin, RdlGitHashPlugin)
   .dependsOn(csrMacros)
   .settings(
     Settings.commonSettings,
-    name := "csr-model"
+    name := "csr-model",
+    version := rdlGitHashShortProjectVersion.value
   )
 
 lazy val wmServerDto = (project in file("wm-server-dto"))
-  .enablePlugins(DtoCodeGeneration)
+  .enablePlugins(DtoGenerationPlugin)
   .dependsOn(common)
   .settings(
     Settings.commonSettings,
@@ -38,10 +41,11 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
 
 lazy val root = (project in file("."))
   .dependsOn(common, csrMacros)
+  .enablePlugins(RdlGitHashPlugin)
   .settings(
     Settings.commonSettings,
     name := "wm",
-    libraryDependencies ++= Dependencies.whiteModelDeps,
+    libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
     mainClass in Compile := Some("switch_wm.WhiteModelServer"),
     mainClass in assembly := Some("switch_wm.WhiteModelServer"),
     assemblyOutputPath in assembly := path

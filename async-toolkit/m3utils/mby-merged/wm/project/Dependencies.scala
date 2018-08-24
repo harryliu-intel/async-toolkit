@@ -10,20 +10,20 @@ object Dependencies {
   lazy val reflect = "org.scala-lang" % "scala-reflect" % Versions.reflect
   lazy val refined = "eu.timepit" %% "refined" % Versions.refined
   lazy val scalaMacros = "org.scalamacros" % "paradise" % Versions.scalaMacros cross CrossVersion.full
-  lazy val csrModel = "com.intel.cg.hpfd" %% "csr-model" % Versions.csrModel changing()
   lazy val wmServerDto = "com.intel.cg.hpfd" %% "wm-server-dto" % Versions.wmServerDto changing()
+  def csrModel(csrVersion: String): ModuleID = "com.intel.cg.hpfd" %% "csr-model" % csrVersion
 
   lazy val csrMacrosDeps = Seq(shapeless, refined)
 
   lazy val commonDeps = Seq(reflect)
 
-  lazy val whiteModelDeps = Seq(
+  def whiteModelDeps(csrVersion: String) = Seq(
     scalaTest % Test,
     scalaXml % Compile,
     scalaParserCombinators,
     scopt,
     shapeless,
-    csrModel,
+    csrModel(csrVersion),
     wmServerDto
   )
 

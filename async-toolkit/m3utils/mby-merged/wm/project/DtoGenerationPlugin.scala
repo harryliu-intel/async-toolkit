@@ -1,10 +1,10 @@
-import DtoCodeGeneration.autoImport.createWmServerDtos
+import DtoGenerationPlugin.autoImport.createWmServerDtos
 import sbt.Keys.{logLevel, managedSourceDirectories, sLog, sourceGenerators}
 import sbt.{AutoPlugin, Compile, Def, File, Level, file, taskKey}
 import sbt.io.syntax._
 import sbt.io.FileFilter._
 
-object DtoCodeGeneration extends AutoPlugin {
+object DtoGenerationPlugin extends AutoPlugin {
 
   object autoImport {
     lazy val createWmServerDtos = taskKey[Seq[File]]("Generates wm server code with m3 toolchain.")
