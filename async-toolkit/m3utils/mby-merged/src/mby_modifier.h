@@ -13,6 +13,7 @@
 // Defines:
 
 #define DEFAULT_SEGMENT_BYTES   192
+#define VLAN_TAG_BYTES          4
 
 /******** MOD_BASE *******/
 #define MBY_MOD_BASE                                            (0x4000000)
@@ -120,6 +121,118 @@ typedef enum mbyDvStatusEnum
     COPY_ERROR
 
 } mbyDvStatus;
+
+typedef enum mbyDropErrCodeEnum
+{
+    ERR_UNKNOWN        = 0x00,
+    ERR_VLAN_TAG_FULL  = 0x01, // done
+    ERR_OTR_L2_FULL    = 0x02, // done
+    ERR_INR_L2_FULL    = 0x03, // done
+    ERR_VLAN_TAG_EMPTY = 0x04, //      the desired deleted vid not present
+    ERR_OTR_L2_EMPTY   = 0x05, // done can't remove the number as per mode
+    ERR_INR_L2_EMPTY   = 0x06, // done
+    ERR_PUSH_AL        = 0x07, // done
+    ERR_PUSH_ELI       = 0x08, // done
+    ERR_PUSH_G         = 0x09, // done
+    ERR_POP_AL         = 0x0a, // done
+    ERR_POP_ELI        = 0x0b, // done
+    ERR_POP_G          = 0x0c, // done
+    ERR_OTR_IPV        = 0x0d, // done
+    ERR_INR_IPV        = 0x0e, // done
+    ERR_TTLDS_TGT      = 0x0f, // done
+    ERR_TTLDS_SRC      = 0x10, //
+    ERR_TTL_0          = 0x11, // done
+    ERR_PKT_LEN        = 0x12, //
+    ERR_SEG_G_320      = 0x13,
+    ERR_SEG_S_18       = 0x14,
+    ERR_OTR_MAC        = 0x15,
+    ERR_INR_MAC        = 0x16,
+    ERR_OTR_IP         = 0x17,
+    ERR_INR_IP         = 0x18,
+    ERR_OTR_L4         = 0x19,
+    ERR_INR_L4         = 0x1a
+
+} mbyDropErrCode;
+
+typedef enum mbyMarkerFlagEnum
+{
+    NOMARKER = 0,
+    MARKER = 1
+
+} mbyMarkerFlag;
+
+typedef enum mbyDropFlagEnum
+{
+    NODROP = 0,
+    DROP = 1
+
+} mbyDropFlag;
+
+typedef enum mbyIntrErrCodeEnum // interrupt disp
+{
+    INTR_DISREGARD_ERR               = -1,
+    INTR_MEM_ECC_ERR                 =  0,
+    INTR_U_INSERT_VLAN_IPP           =  1, 
+    INTR_U_INSERT_L2_TAG_OTR         =  2,
+    INTR_U_INSERT_L2_TAG_INR         =  3,
+    INTR_U_REMOVE_VLAN_IPP           =  4,
+    INTR_U_REMOVE_L2_TAG_OTR         =  5,
+    INTR_U_REMOVE_L2_TAG_INR         =  6,
+    INTR_U_PUSH_AL                   =  7,
+    INTR_U_PUSH_ELI                  =  8,
+    INTR_U_PUSH_G                    =  9,
+    INTR_U_POP_AL                    = 10,
+    INTR_U_POP_ELI                   = 11,
+    INTR_U_POP_G                     = 12,
+    INTR_OTR_IPV_MISMATCH            = 13,
+    INTR_INR_IPV_MISMATCH            = 14,
+    INTR_TTLDS_NON_TGT               = 15,
+    INTR_TTLDS_NON_SRC               = 16,
+    INTR_TTL_DEC_ERR                 = 17,
+    INTR_PKT_LEN_MD_UPDATE_ERR       = 18,
+    INTR_BIGGER_320B                 = 19,
+    INTR_SMALLER_18B                 = 20,
+    INTR_OTR_MAC_NONEXIST            = 21,
+    INTR_INR_MAC_NONEXIST            = 22,
+    INTR_OTR_IP_NONEXIST             = 23,
+    INTR_INR_IP_NONEXIST             = 24,
+    INTR_OTR_L4_NONEXIST             = 25,
+    INTR_INR_L4_NONEXIST             = 26,
+    INTR_TX_ECC_DROP                 = 27,
+    INTR_TX_ERR_DROP                 = 28,
+    INTR_MARKER_ERR_DROP             = 29,
+    INTR_L3_LEN_ERR_DROP             = 30,
+    INTR_L4_CSUM_ERR_DROP            = 31, 
+    INTR_L3_LEN_L4_CSUM_ERR_MASK     = 32,
+    INTR_TIMEOUT_DROP                = 33,
+    INTR_LPBK_DROP                   = 34,
+    INTR_TTL1_DROP                   = 35,
+    INTR_ECN_DROP                    = 36
+
+} mbyIntrErrCode;
+
+typedef enum mbyDispCodeEnum
+{
+    //                     index   priority  description
+    //                     -----   --------  -----------
+    DISP_TXECCDROP      =   0,     //  1     pm_read.err
+    DISP_TXERRORDROP    =   1,     //  2     mod_ctrl.tx_drop
+    DISP_MARKERERRDROP  =   2,     //  3
+    DISP_L3ERRDROP      =   3,     //  3
+    DISP_L4ERRDROP      =   4,     //  3
+    DISP_L3L4ERRMARK    =   5,     //  3
+    DISP_TIMEOUTDROP    =   6,     //  4     mod_ctrl.is_timeout
+    DISP_LOOPBACKDROP   =   7,     //  5
+    DISP_TTL1DROP       =   8,     //  6     fwd_modify.ttl1
+    DISP_ECNDROP        =   9,     //  7
+    DISP_MODERRORDROP   =  10,     //  8
+    DISP_TXERROR        =  11,     //  9
+    DISP_OOMTRUNC       =  12,     // 10
+    DISP_UCAST          =  13,     // 11
+    DISP_BCAST          =  14,     // 12
+    DISP_MCAST          =  15      // 13
+
+} mbyDispCode;
 
 // Structs:
 
@@ -317,8 +430,9 @@ typedef struct mbyModifierToTxStatsStruct
     fm_byte               * TX_DATA;         // egress packet data
     fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
     fm_uint32               TX_PORT;         // egress port
-    fm_uint16               TX_DISP;         // 4-bit egress frame disposition
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]
+    fm_uint16               TX_DISP;         // egress frame disposition
+    fm_bool                 TX_DROP;         // packet drop
     fm_bool                 SEG_DROP;        // segment drop
 
 } mbyModifierToTxStats;

@@ -6,7 +6,7 @@
 
 fm_status mbyModelReadCSR(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
                           const fm_uint32 byte_addr,
-                          fm_uint32 *value)
+                          fm_uint32 * const value)
 {
     fm_uint32 word_addr = (byte_addr / 4);
     fm_bool addr_vld = (word_addr < MBY_REGISTER_ARRAY_SIZE);
@@ -18,7 +18,7 @@ fm_status mbyModelReadCSR(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
 fm_status mbyModelReadCSRMult(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
                               const fm_uint32 byte_addr,
                               const fm_int len,
-                              fm_uint32 *value) {
+                              fm_uint32 * const value) {
     fm_status status = FM_OK;
     for (fm_int i = 0; i < len; i++) {
         status = mbyModelReadCSR(regs, byte_addr + (4*i), &value[i]);
@@ -30,7 +30,7 @@ fm_status mbyModelReadCSRMult(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
 
 fm_status mbyModelWriteCSR(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
                           const fm_uint32 byte_addr,
-                          fm_uint32 value)
+                          const fm_uint32 value)
 {
     fm_uint32 word_addr = (byte_addr / 4);
     fm_bool addr_vld = (word_addr < MBY_REGISTER_ARRAY_SIZE);
@@ -42,7 +42,7 @@ fm_status mbyModelWriteCSR(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
 fm_status mbyModelWriteCSRMult(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
                               const fm_uint32 byte_addr,
                               const fm_int len,
-                              const fm_uint32 *value) {
+                              const fm_uint32 * const value) {
     fm_status status = FM_OK;
     for (fm_int i = 0; i < len; i++) {
         status = mbyModelWriteCSR(regs, byte_addr + (4*i), value[i]);
@@ -54,7 +54,7 @@ fm_status mbyModelWriteCSRMult(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
 
 fm_status mbyModelReadCSR64(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
                             const fm_uint32 byte_addr,
-                            fm_uint64 *value)
+                            fm_uint64 * const value)
 {
     fm_uint32 word_addr = (byte_addr / 4);
     fm_bool addr_vld = (word_addr < MBY_REGISTER_ARRAY_SIZE);
@@ -71,7 +71,7 @@ fm_status mbyModelReadCSR64(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
 
 fm_status mbyModelWriteCSR64(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
                              const fm_uint32 byte_addr,
-                             fm_uint64 value)
+                             const fm_uint64 value)
 {
     fm_uint32 word_addr = (byte_addr / 4);
     fm_bool addr_vld = (word_addr < MBY_REGISTER_ARRAY_SIZE);

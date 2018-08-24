@@ -373,7 +373,125 @@ static void initControl
     if (chunked_seg.otr_l3_v6)
         c.igL3TotalLen -= 40;
 
+    // get Rx L2 tags:
+    for (fm_uint i = 0; i < (VLAN_TAG_BYTES * 4); i++)
+        c.rx_tags[i] = chunked_seg.otr_tags[i];
+
+    c.rx_n_tag  = chunked_seg.n_otr_tag;
+    c.rxVlan1   = parser_info.otr_l2_vlan1;
+    c.rxVlan2   = parser_info.otr_l2_vlan2;
+    c.rxV2first = parser_info.otr_l2_v2first;
+
+    // copy final struct:
     *ctrl_data = c;
+}
+
+static void dropAndLog
+(
+    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_byte             drop_disp,
+    const mbyMarkerFlag       marker_flag,
+    const mbyDropFlag         drop_flag,
+    const mbyIntrErrCode      intr_disp,
+    fm_uint16         * const tx_disp,
+    fm_bool           * const tx_drop,
+    mbyModControlData * const ctrl_data
+)
+{
+    if ((drop_disp < *tx_disp) && (marker_flag != MARKER) &&
+        ((drop_disp != DISP_MODERRORDROP) || (drop_flag == DROP)))
+        *tx_disp = drop_disp;
+
+    // update flag if not already set:
+    *tx_drop = *tx_drop || ((marker_flag != MARKER) && (drop_flag == DROP));
+
+    if (drop_flag == DROP)
+    {
+        if (marker_flag == MARKER)
+        {
+            if      (drop_disp == DISP_ECNDROP)
+                ctrl_data->ecn_tx_drop = TRUE;
+            else if (drop_disp == DISP_TIMEOUTDROP)
+                ctrl_data->timeout_tx_drop = TRUE;
+            else
+                ctrl_data->non_cm_tx_drop = TRUE;
+        }
+        else
+        {
+            ctrl_data->cancel_drop_on_marker = TRUE;
+            if (drop_disp < ctrl_data->cancelled_tx_disp)
+                ctrl_data->cancelled_tx_disp = drop_disp;
+        }
+    }
+
+    // interrupt prediction. Only valid for single-step tests
+    if (intr_disp != INTR_DISREGARD_ERR)
+    {
+        fm_uint64 mod_im_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MOD_IM(0), &mod_im_reg);
+
+        fm_uint64 ip = FM_GET_UNNAMED_FIELD64(mod_im_reg, 0, 63) | FM_LITERAL_U64(1) << intr_disp;
+        FM_SET_UNNAMED_FIELD64(mod_im_reg, 0, 63, ip);
+
+        mbyModelWriteCSR64(regs, MBY_MOD_IM(0), mod_im_reg);
+        
+        if (!((ctrl_data->mod_im) >> intr_disp & 0x1))
+            ctrl_data->intr_occured = TRUE;
+    }
+}
+
+void dropPacket
+(
+    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_uint32           rx_length,
+    const fm_bool             drop_ttl,
+    const fm_bool             is_timeout,
+    const fm_bool             out_of_mem,
+    const fm_bool             pm_err,
+    const fm_bool             pm_err_nonsop,
+    const fm_bool             saf_error,
+    fm_uint16         * const tx_disp,
+    fm_bool           * const tx_drop,
+    mbyModControlData * const ctrl_data
+)
+{
+    const fm_bool is_marker    = ctrl_data->isMarkerPkt;
+    const fm_bool is_mirror    = ctrl_data->isMirror;
+    const fm_bool mirror_trunc = ctrl_data->mirrorTrunc;
+    
+    const mbyMarkerFlag marker_flag = ((is_marker) ? MARKER : NOMARKER);
+    
+//>  *seg_meta_err = FALSE; <-- FIXME!!!
+    
+    if (ctrl_data->routeA && !is_mirror && drop_ttl && !(*tx_drop))
+        dropAndLog(regs, DISP_TTL1DROP,     marker_flag, DROP, INTR_TTL1_DROP, tx_disp, tx_drop, ctrl_data);
+
+    if (ctrl_data->loopbackSuppressDrop && !(*tx_drop))
+        dropAndLog(regs, DISP_LOOPBACKDROP, marker_flag, DROP, INTR_LPBK_DROP, tx_disp, tx_drop, ctrl_data);
+
+    if (is_timeout)
+        dropAndLog(regs, DISP_TIMEOUTDROP,  marker_flag, DROP, INTR_TIMEOUT_DROP, tx_disp, tx_drop, ctrl_data);
+
+    if (out_of_mem && !mirror_trunc) // HLP logic for this was quizzical, so simplified <-- REVISIT!!!
+        dropAndLog(regs, DISP_OOMTRUNC, NOMARKER, NODROP, INTR_DISREGARD_ERR, tx_disp, tx_drop, ctrl_data);
+    else if (((rx_length > DEFAULT_SEGMENT_BYTES) || pm_err_nonsop) && !mirror_trunc)
+        dropAndLog(regs, DISP_TXERROR,  NOMARKER, NODROP, INTR_DISREGARD_ERR, tx_disp, tx_drop, ctrl_data);
+    
+    if (saf_error)
+    {
+        if (is_marker)
+            dropAndLog(regs, DISP_TXERRORDROP,   NOMARKER, DROP, INTR_TX_ERR_DROP,     tx_disp, tx_drop, ctrl_data);
+        else
+            dropAndLog(regs, DISP_MARKERERRDROP, NOMARKER, DROP, INTR_MARKER_ERR_DROP, tx_disp, tx_drop, ctrl_data);
+    }
+
+    if (pm_err)
+    {
+        if (!is_marker)
+            dropAndLog(regs, DISP_TXECCDROP,     NOMARKER, DROP, INTR_TX_ECC_DROP,     tx_disp, tx_drop, ctrl_data);
+        else
+            dropAndLog(regs, DISP_MARKERERRDROP, NOMARKER, DROP, INTR_MARKER_ERR_DROP, tx_disp, tx_drop, ctrl_data);
+    }
 }
 
 void Modifier
@@ -387,9 +505,9 @@ void Modifier
     const mbyParserInfo   parser_info       = in->PARSER_INFO;
     const fm_bool         no_modify         = in->NO_MODIFY;  // skip most of modifications in Modifier
     const fm_uint32       rx_length         = in->RX_LENGTH;  // ingress packet data length [bytes]
-    const fm_byte * const rx_data           = in->RX_DATA;
+    const fm_byte * const rx_data           = in->RX_DATA;    // packet RX data
     const fm_uint32       tx_port           = in->TX_PORT;
-    const fm_bool         tx_drop           = in->TX_DROP;
+    const fm_bool         tx_drop_in        = in->TX_DROP;
     const fm_uint32       tx_length         = in->TX_LENGTH;
     const fm_byte         tx_tag            = in->TX_TAG;
     const fm_uint32       tx_stats_last_len = in->TX_STATS_LAST_LEN;
@@ -401,9 +519,13 @@ void Modifier
     const fm_bool         mark_routed       = in->MARK_ROUTED;
     const fm_uint32       mod_idx           = in->MOD_IDX;
     const fm_uint64       tail_csum_len     = in->TAIL_CSUM_LEN;
-
-    // input from the outside:
-    fm_byte *packet;
+    const fm_byte         xcast             = in->XCAST;
+    const fm_bool         drop_ttl          = in->DROP_TTL;
+    const fm_bool         is_timeout        = in->IS_TIMEOUT;
+    const fm_bool         out_of_mem        = in->OOM;
+    const fm_bool         pm_err_nonsop     = in->PM_ERR_NONSOP;
+    const fm_bool         pm_err            = in->PM_ERR;
+    const fm_bool         saf_error         = in->SAF_ERROR;
 
     // Chunked Packet:
     mbyChunkedSeg chunked_seg;
@@ -436,9 +558,28 @@ void Modifier
 
     // L2 Modifications:
 
-//> GetRxL2Tags(key, model, &ctrl_data, &chunked_seg);
+    ctrl_data.cancelled_tx_disp = DISP_UCAST;
 
-//> DropPacket(key, model, &ctrl_data);
+    // inital disposition:
+    fm_uint16 tx_disp = (xcast == 2) ? DISP_BCAST : (xcast == 1) ? DISP_MCAST : DISP_UCAST;
+
+    // inital drop status:
+    fm_bool   tx_drop = tx_drop_in;
+
+    dropPacket
+    (
+        regs,
+        rx_length,
+        drop_ttl,
+        is_timeout,
+        out_of_mem,
+        pm_err,
+        pm_err_nonsop,
+        saf_error,
+        &tx_disp,
+        &tx_drop,
+        &ctrl_data
+    );
 
 //> VlanLookup(key, model, &reg_data, &ctrl_data, &chunked_seg);
 
@@ -456,10 +597,14 @@ void Modifier
 
 //> MiscOps(key, model, &reg_data, &ctrl_data, &chunkedSeg, packet); // if minFrameSize, updatePktmeta use min size
 
-    fm_uint32 tx_stats_length = (!ctrl_data.mirrorTrunc && !tx_drop) ? ctrl_data.egressSeg0Bytes + tx_stats_last_len : ctrl_data.refcnt_tx_len;
+    fm_uint32 tx_stats_length = (!ctrl_data.mirrorTrunc && !tx_drop)
+        ? ctrl_data.egressSeg0Bytes + tx_stats_last_len : ctrl_data.refcnt_tx_len;
 
     // Write outputs:
+    out->TX_DATA         = 0; // = NULL, temporary <-- FIXME!!!
     out->TX_LENGTH       = tx_length;
     out->TX_STATS_LENGTH = tx_stats_length;
+    out->TX_DISP         = tx_disp;
+    out->TX_DROP         = tx_drop;
     out->SEG_DROP        = tx_drop;
 }

@@ -36,6 +36,13 @@ typedef struct mbyTxInToModifierStruct
     fm_bool                 MARK_ROUTED;
     fm_uint32               MOD_IDX;       // index into the MODIFY descriptor tables
     fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
+    fm_byte                 XCAST;
+    fm_bool                 DROP_TTL;
+    fm_bool                 IS_TIMEOUT;
+    fm_bool                 OOM;           // out of memory
+    fm_bool                 PM_ERR;        // ECC error on PM
+    fm_bool                 PM_ERR_NONSOP;
+    fm_bool                 SAF_ERROR;     // SAF error
 
 } mbyTxInToModifier;
 
