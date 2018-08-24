@@ -41,7 +41,7 @@ nonTableKwName
    ;
 
 optAnnotations
-    : /* empty */
+    : 
     | annotations
     ;
 
@@ -57,7 +57,7 @@ annotation
     ;
 
 parameterList
-    : /* empty */
+    : 
     | nonEmptyParameterList
     ;
 
@@ -75,7 +75,7 @@ direction
     : IN
     | OUT
     | INOUT
-    | /* empty */
+    | 
     ;
 
 packageTypeDeclaration
@@ -89,7 +89,7 @@ instantiation
     ;
 
 optConstructorParameters
-    : /* empty */
+    : 
     | '(' parameterList ')'
     ;
 
@@ -97,16 +97,13 @@ dotPrefix
     : '.'
     ;
 
-/**************************** PARSER ******************************/
-
 parserDeclaration
     : parserTypeDeclaration optConstructorParameters
-      /* no type parameters allowed in the parserTypeDeclaration */
       '{' parserLocalElements parserStates '}'
     ;
 
 parserLocalElements
-    : /* empty */
+    :
     | parserLocalElements parserLocalElement
     ;
 
@@ -131,7 +128,7 @@ parserState
     ;
 
 parserStatements
-    : /* empty */
+    :
     | parserStatements parserStatement
     ;
 
@@ -148,7 +145,7 @@ parserBlockStatement
     ;
 
 transitionStatement
-    : /* empty */
+    :
     | TRANSITION stateExpression
     ;
 
@@ -162,7 +159,7 @@ selectExpression
     ;
 
 selectCaseList
-    : /* empty */
+    :
     | selectCaseList selectCase
     ;
 
@@ -201,11 +198,8 @@ valueSetDeclaration
       VALUESET '<' typeName '>' '(' expression ')' name ';'
   ;
 
-/*************************** CONTROL ************************/
-
 controlDeclaration
     : controlTypeDeclaration optConstructorParameters
-      /* no type parameters allowed in controlTypeDeclaration */
       '{' controlLocalDeclarations APPLY controlBody '}'
     ;
 
@@ -215,7 +209,7 @@ controlTypeDeclaration
     ;
 
 controlLocalDeclarations
-    : /* empty */
+    :
     | controlLocalDeclarations controlLocalDeclaration
     ;
 
@@ -231,15 +225,13 @@ controlBody
     : blockStatement
     ;
 
-/*************************** EXTERN *************************/
-
 externDeclaration
     : optAnnotations EXTERN nonTypeName optTypeParameters '{' methodPrototypes '}'
     | optAnnotations EXTERN functionPrototype ';'
     ;
 
 methodPrototypes
-    : /* empty */
+    :
     | methodPrototypes methodPrototype
     ;
 
@@ -251,8 +243,6 @@ methodPrototype
     : optAnnotations functionPrototype ';'
     | optAnnotations TYPE_IDENTIFIER '(' parameterList ')' ';'
     ;
-
-/************************** TYPES ****************************/
 
 typeRef
     : baseType
@@ -304,7 +294,7 @@ typeOrVoid
     ;
 
 optTypeParameters
-    : /* empty */
+    :
     | '<' typeParameterList '>'
     ;
 
@@ -362,7 +352,7 @@ structTypeDeclaration
     ;
 
 structFieldList
-    : /* empty */
+    :
     | structFieldList structField
     ;
 
@@ -403,8 +393,6 @@ typedefDeclaration
     | optAnnotations TYPE typeRef name ';'
     | optAnnotations TYPE derivedTypeDeclaration name ';'
     ;
-
-/*************************** STATEMENTS *************************/
 
 assignmentOrMethodCallStatement
     : lvalue '(' argumentList ')' ';'
@@ -539,7 +527,7 @@ constantDeclaration
     ;
 
 optInitializer
-    : /* empty */
+    : 
     | '=' initializer
     ;
 
