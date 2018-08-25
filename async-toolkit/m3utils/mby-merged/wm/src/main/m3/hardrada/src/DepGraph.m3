@@ -9,6 +9,7 @@ IMPORT IO ;
 IMPORT Fmt ;
 IMPORT Text ;
 IMPORT REFANYList ;
+IMPORT TextList ;
 
 (************************)
 (** Visible Procedures **)
@@ -20,9 +21,6 @@ VAR
 	children_list : REF Node.DList := NIL ;
 	tempnext : REF Node.DList := NIL ;
 	stmt_sep_node : REF Node.T := NIL ;
-
-	IfFirst : REF T := NIL ;
-	IfSecond : REF T := NIL ;
 BEGIN
 	<* ASSERT parse_root # NIL *>
 	<* ASSERT root # NIL *>
@@ -30,10 +28,6 @@ BEGIN
 	placeholder_list := NEW( REF Node.DList ) ;
 	IO.Put( "--- CONSTRUCTING PARSE TREE ---\n" ) ;
 	IO.Put( "parse_root val: " & parse_root^.val & "\n" ) ;
-	IfFirst := root^.subdepgraph.head ;
-	IfSecond := root^.subdepgraph.tail.head ;
-	IO.Put( "IfSt first statement: " & IfFirst.parse_root^.children^.cur^.val & "\n" ) ;
-	IO.Put( "IfSt second statement: " & IfSecond.parse_root^.children^.cur^.val & "\n" ) ;
 	IO.Put( "Starting to look for all placeholders...\n" ) ;
 	Node.FindAllNodesWithCategoryDeep( placeholder_list , parse_root , Node.Category.Placeholder ) ;
 	IO.Put( "Got the placeholders...\n" ) ;
@@ -285,5 +279,67 @@ BEGIN
 		END ;
 	END ;
 END GetNextLevelOfStartSymbols ;
+
+PROCEDURE DebugDepGraph( my_depgraph : REF T ; default_start : TEXT := "" ) =
+VAR
+	tempsdgptr : REFANYList.T := NIL ;
+	tempdeps : REFANYList.T := NIL ;
+	tempdeps_underlying_depgraph : REF T := NIL ;
+	temp_assigned_var : TextList.T := NIL ;
+BEGIN
+	<* ASSERT my_depgraph # NIL *>
+	<* ASSERT my_depgraph^.parse_root # NIL *>
+	IF IsEmpty( my_depgraph ) THEN
+		IO.Put( "( Empty )\n" ) ;
+	ELSE
+		(* For each element of depgraph, print the parse
+		root head. Indent and do the same for its children. *)
+		WHILE my_depgraph # NIL DO
+			IO.Put( default_start & my_depgraph^.parse_root^.val ) ;
+			IF my_depgraph^.is_static = TRUE THEN
+				IO.Put( " ( Static ) " ) ;
+			ELSE
+				IO.Put( " ( Dynamic ) " ) ;
+			END ;
+			IF my_depgraph^.deps = NIL THEN
+				IO.Put( " ( No dependencies ) " ) ;
+			ELSE
+				IO.Put( " ( Dependencies : " ) ;
+				tempdeps := my_depgraph^.deps ;
+				WHILE tempdeps.tail # NIL DO
+					tempdeps_underlying_depgraph := tempdeps.head ;
+					<* ASSERT tempdeps_underlying_depgraph^.parse_root # NIL *>
+					<* ASSERT NOT IsEmpty( tempdeps_underlying_depgraph ) *>
+					IO.Put( tempdeps_underlying_depgraph^.parse_root^.val & " , " ) ;
+					tempdeps := tempdeps.tail ;
+				END ;
+				<* ASSERT NOT IsEmpty( tempdeps_underlying_depgraph ) *>
+				IO.Put( tempdeps_underlying_depgraph^.parse_root^.val ) ;
+				IO.Put( " ) " ) ;
+			END ;
+			IF my_depgraph^.assigned_vars = NIL THEN
+				IO.Put( " ( No assigned vars ) " ) ;
+			ELSE
+				IO.Put( " ( Assigned vars : " ) ;
+				temp_assigned_var := my_depgraph^.assigned_vars ;
+				WHILE temp_assigned_var.tail # NIL DO
+					IO.Put( temp_assigned_var.head & " , " ) ;
+					temp_assigned_var := temp_assigned_var.tail ;
+				END ;
+				IO.Put( temp_assigned_var.head ) ;
+				IO.Put( " ) " ) ;
+			END ;
+			IO.Put( "\n" ) ;
+			IF my_depgraph^.subdepgraph # NIL THEN
+				tempsdgptr := my_depgraph^.subdepgraph ;
+				WHILE tempsdgptr # NIL DO
+					DebugDepGraph( tempsdgptr.head , default_start & "  " ) ;
+					tempsdgptr := tempsdgptr.tail ;
+				END ;
+			END ;
+			my_depgraph := my_depgraph^.next ;
+		END ;
+	END ;
+END DebugDepGraph ;
 
 BEGIN END DepGraph .

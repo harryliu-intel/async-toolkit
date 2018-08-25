@@ -21,9 +21,11 @@ Note: Any placeholders in parse_root are reserved for nested statements. Nothing
 *)
 TYPE T = RECORD
 	next : REF T := NIL ;
-	deps : REF ARRAY OF REF T := NIL ;
+	is_static : BOOLEAN := FALSE ;
+	assigned_vars : TextList.T := NIL ;
+	deps : REFANYList.T := NIL ;
 	parse_root : REF Node.T := NIL ;
-	subdepgraph : REFANYList.T := NIL ; (* Treat as singly-linked list of REF T *)
+	subdepgraph : REFANYList.T := NIL ; (* Treat as singly-linked list of REF T. Do NOT have an empty depgraph underlying the reference. *)
 END ;
 
 TYPE DepGraphParams = RECORD
@@ -65,5 +67,7 @@ PROCEDURE IsEmpty( root : REF T ) : BOOLEAN ;
 PROCEDURE Length( root : REF T ) : CARDINAL ;
 
 PROCEDURE DefaultDepGraph( my_depgraph : REF T ) ;
+
+PROCEDURE DebugDepGraph( my_depgraph : REF T ; default_start : TEXT := "" ) ;
 
 END DepGraph .
