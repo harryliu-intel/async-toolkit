@@ -1,12 +1,23 @@
+% Imports
 import( "libm3" )
-module( "MyREFANY" )
-module( "REFANYList" )
+
+% Core types
 module( "DepGraph" )
 module( "Node" )
 module( "Spec" )
+
+% Wrapper types
+module( "MyREFANY" )
+module( "MyCARDINAL" )
+
+% Lists
+module( "REFANYList" )
+module( "CARDINALList" )
+
+% Tables
 module( "NextCharTbl" )
 module( "StyleRulesTbl" )
 
+% Main program
 implementation( "Main" )
-
 program( "test" )

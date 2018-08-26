@@ -92,6 +92,8 @@ BEGIN
 			Node.DeepCopy( tempdepgraph^.parse_root , tempchild^.cur ) ;
 			(* Deps *)
 			tempdepgraph^.deps := NIL ; (* For now... *)
+			(* Dep_order *)
+			tempdepgraph^.dep_order := NIL ; (* For now... *)
 			(* Subdepgraph *)
 			(* Get the next level of start symbols... *)
 			GetNextLevelOfStartSymbols( tempstartsymbs , tempdepgraph^.parse_root , depgraph_pms ) ;

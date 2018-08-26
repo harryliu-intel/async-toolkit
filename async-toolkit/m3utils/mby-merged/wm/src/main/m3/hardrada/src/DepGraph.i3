@@ -6,6 +6,7 @@ INTERFACE DepGraph ;
 IMPORT Node ;
 IMPORT TextList ;
 IMPORT REFANYList ;
+IMPORT CARDINALList ;
 
 (***********)
 (** Types **)
@@ -24,6 +25,7 @@ TYPE T = RECORD
 	is_static : BOOLEAN := FALSE ;
 	assigned_vars : TextList.T := NIL ;
 	deps : REFANYList.T := NIL ;
+	dep_order : CARDINALList.T := NIL ;
 	parse_root : REF Node.T := NIL ;
 	subdepgraph : REFANYList.T := NIL ; (* Treat as singly-linked list of REF T. Do NOT have an empty depgraph underlying the reference. *)
 END ;

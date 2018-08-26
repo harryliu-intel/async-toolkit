@@ -10,6 +10,7 @@ IMPORT NextCharTbl ;
 IMPORT DepGraph ;
 IMPORT Text ;
 IMPORT REFANYList ;
+IMPORT CARDINALList ;
 
 BEGIN
 VAR root := NEW( REF Node.T ) ;
@@ -712,8 +713,11 @@ sdg1 := depgraph_stmt1_subdepgraph1 ;
 sdg2 := depgraph_stmt1_subdepgraph2 ;
 sdg_refany_list := REFANYList.Cons( sdg1 , REFANYList.Cons( sdg2 , NIL ) ) ;
 depgraph_stmt1^.next^.next^.deps := REFANYList.Cons( nextdeps , sdg_refany_list ) ;
+depgraph_stmt1^.next^.next^.dep_order := CARDINALList.Cons( 0 , NIL ) ;
 depgraph_stmt1_subdepgraph1.deps := NEW( REFANYList.T , head := nextdeps , tail := NIL ) ;
+depgraph_stmt1_subdepgraph1.dep_order := CARDINALList.Cons( 0 , NIL ) ;
 depgraph_stmt1_subdepgraph2.deps := NEW( REFANYList.T , head := nextdeps , tail := NIL ) ;
+depgraph_stmt1_subdepgraph2.dep_order := CARDINALList.Cons( 0 , NIL ) ;
 (* Modify IF in depgraph *)
 (* Modify RETURN in depgraph *)
 depgraph_stmt1^.next^.next^.next^.is_static := FALSE ;
@@ -723,6 +727,7 @@ depgraph_next_next := depgraph_stmt1^.next^.next ;
 refany_depgraph_2 := REFANYList.Cons( depgraph_stmt1_subdepgraph1 , REFANYList.Cons( depgraph_stmt1_subdepgraph2 , NIL ) ) ;
 refany_depgraph := REFANYList.Cons( depgraph_next_next , refany_depgraph_2 ) ;
 depgraph_stmt1^.next^.next^.next^.deps := REFANYList.Cons( depgraph_stmt1_refany , refany_depgraph ) ;
+depgraph_stmt1^.next^.next^.next^.dep_order := CARDINALList.Cons( 0 , CARDINALList.Cons( 1 , NIL ) ) ;
 (* Modify RETURN in depgraph *)
 IO.Put( "Got dependency graph...\n" ) ;
 <* ASSERT depgraph^.parse_root # NIL *>
