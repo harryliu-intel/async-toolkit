@@ -17,6 +17,7 @@ IMPORT NextCharTbl ;
 IMPORT IO ;
 IMPORT Fmt ;
 IMPORT DepGraph ;
+IMPORT SymbolTbl ;
 
 (**********************)
 (* Visible Procedures *)
@@ -177,6 +178,62 @@ END DebugTree ;
 (*********************)
 
 (* TODO Organize and document these *)
+
+PROCEDURE GenM3MakefileCode( src_fname : TEXT ; program_fname : TEXT ) : TEXT =
+VAR
+	text_to_return : TEXT := "" ;
+BEGIN
+	text_to_return := text_to_return & "implementation( " & src_fname " )\n" ;
+	text_to_return := text_to_return & "program( " & program_fname " )\n" ;
+	RETURN text_to_return ;
+END GenM3MakefileCode ;
+
+PROCEDURE GenSpecFileCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ; out_fname : Pathname.T ) : TEXT =
+VAR
+	text_to_return : TEXT := "" ;
+BEGIN
+	text_to_return := text_to_return & "MODULE Main ;\n" ;
+	text_to_return := text_to_return & "IMPORT FileWr ;\n" ;
+	text_to_return := text_to_return & "IMPORT Wr ;\n" ;
+	text_to_return := text_to_return & "IMPORT OSError ;\n" ;
+	text_to_return := text_to_return & "IMPORT Thread ;\n" ;
+	text_to_return := text_to_return & GenProcDefCode( src , depgraph_pms , style_rules_array , varname , symbtbl ) & "\n" ;
+	text_to_return := text_to_return & "VAR\n" ;
+	text_to_return := text_to_return & "\tout_file_handle : Wr.T\n" ;
+	text_to_return := text_to_return & "BEGIN\n" ;
+	text_to_return := text_to_return & "TRY\n" ;
+	text_to_return := text_to_return & "\tout_file_handle := FileWr.Open( " & out_fname & " ) ;\n" ;
+	text_to_return := text_to_return & "\tWr.PutText( out_file_handle , SpecVar( ) ) ;\n" ;
+	text_to_return := text_to_return & "\tWr.Close( out_file_handle ) ;\n" ;
+	text_to_return := text_to_return & "EXCEPT\n" ;
+	text_to_return := text_to_return & "\t| OSError.E( ErrCode ) => EVAL ErrCode ;\n" ;
+	text_to_return := text_to_return & "\t| Wr.Failure( ErrCode ) => EVAL ErrCode ;\n" ;
+	text_to_return := text_to_return & "\t| Thread.Alerted => EVAL 0 ;\n" ;
+	text_to_return := text_to_return & "END ;\n" ;
+	text_to_return := text_to_return & "END Main ;" ;
+	RETURN text_to_return ;
+END GenSpecFileCode ;
+
+(* TODO Is there a way to make style_rules_array optional later? *)
+(* NOTE: SOME LANGUAGE SPECIFIC M3 FEATURES *)
+PROCEDURE GenProcDefCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ) : TEXT =
+VAR
+	text_to_return : TEXT := "" ;
+	var_type : TEXT := "" ;
+BEGIN
+	<* ASSERT src # NIL *>
+	<* ASSERT depgraph_pms # NIL *>
+	(* TODO Assert that varname must be in assigned_vars textlist *)
+	IF symbtbl.get( varname , var_type ) THEN
+		text_to_return := text_to_return & "PROCEDURE SpecVar( ) : TEXT =\n" ;
+		text_to_return := text_to_return & "BEGIN\n" ;
+		text_to_return := text_to_return & GenProcBodyCode( src , depgraph_pms , style_rules_array ) ;
+		text_to_return := text_to_return & "\tRETURN " & varname & ";\n" ;
+	ELSE
+		<* ASSERT FALSE *>
+	END ;
+	RETURN text_to_return ;
+END GenProcDefCode ;
 
 PROCEDURE GenProcBodyCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ) : TEXT =
 VAR

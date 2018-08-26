@@ -9,6 +9,7 @@ module( "Spec" )
 % Wrapper types
 module( "MyREFANY" )
 module( "MyCARDINAL" )
+interface( "MyBOOLEAN" )
 
 % Lists
 module( "REFANYList" )
@@ -17,6 +18,8 @@ module( "CARDINALList" )
 % Tables
 module( "NextCharTbl" )
 module( "StyleRulesTbl" )
+module( "SymbolTbl" )
+module( "TypeUseTbl" )
 
 % Main program
 implementation( "Main" )
