@@ -77,6 +77,8 @@ directories not existing, or file already existing.
 *)
 PROCEDURE GenCode( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } ;
 
+PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ) : TEXT RAISES { InvalidFname , OutError } ;
+
 (* DebugTree
 - root :: the starting node of the parse tree
 - out_fname :: relative output file path

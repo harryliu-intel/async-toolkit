@@ -64,6 +64,8 @@ Find the start symbol using the path in depgraph_pms. Replace it with a placehol
 changes root). Deepcopy the start symbol subtree from root to start. *)
 PROCEDURE PutPlaceholderInProcBlock( start : REF Node.T ; root : REF Node.T ; depgraph_pms : REF DepGraphParams ) ;
 
+PROCEDURE GenProcBodyParseTreeFromSingleNodeWithDeps( parse_root : REF Node.T ; src : REF T ; depgraph_pms : REF DepGraphParams ) ;
+
 PROCEDURE IsEmpty( root : REF T ) : BOOLEAN ;
 
 PROCEDURE Length( root : REF T ) : CARDINAL ;

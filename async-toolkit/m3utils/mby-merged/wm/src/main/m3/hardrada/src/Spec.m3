@@ -16,6 +16,7 @@ IMPORT StyleRulesTbl ;
 IMPORT NextCharTbl ;
 IMPORT IO ;
 IMPORT Fmt ;
+IMPORT DepGraph ;
 
 (**********************)
 (* Visible Procedures *)
@@ -116,6 +117,22 @@ BEGIN
 	END ;
 END GenCode ;
 
+PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ) : TEXT RAISES { InvalidFname , OutError } =
+VAR
+	term_list : TextList.T := NIL ;
+	return_text : TEXT := "" ;
+BEGIN
+	<* ASSERT root # NIL *>
+	<* ASSERT style_rules_array # NIL *>
+	term_list := GetTokenList( root , style_rules_array ) ;
+	<* ASSERT term_list # NIL *>
+	WHILE term_list # NIL DO
+		return_text := return_text & term_list.head ;
+		term_list := term_list.tail ;
+	END ;
+	RETURN return_text ;
+END GenCodeText ;
+
 PROCEDURE DebugTree( root : REF Node.T ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } =
 VAR
 	out_file_handle : Wr.T ;
@@ -160,6 +177,17 @@ END DebugTree ;
 (*********************)
 
 (* TODO Organize and document these *)
+
+PROCEDURE GenProcBodyCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ) : TEXT =
+VAR
+	new_parse_root : REF Node.T := NIL ;
+BEGIN
+	<* ASSERT src # NIL *>
+	<* ASSERT depgraph_pms # NIL *>
+	new_parse_root := NEW( REF Node.T ) ;
+	DepGraph.GenProcBodyParseTreeFromSingleNodeWithDeps( new_parse_root , src , depgraph_pms ) ;
+	RETURN GenCodeText( new_parse_root , style_rules_array ) ;
+END GenProcBodyCode ;
 
 PROCEDURE AddNewProcedure( root : REF Node.T ; newprocdef : REF Node.T ; ptree_pms : REF PTreeParams ) =
 VAR

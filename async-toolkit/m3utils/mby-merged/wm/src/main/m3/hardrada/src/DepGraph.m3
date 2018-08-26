@@ -9,6 +9,7 @@ IMPORT IO ;
 IMPORT Fmt ;
 IMPORT Text ;
 IMPORT REFANYList ;
+IMPORT CARDINALList ;
 IMPORT TextList ;
 
 (************************)
@@ -209,6 +210,41 @@ END DefaultDepGraph ;
 (***********************)
 (** Hidden Procedures **)
 (***********************)
+
+PROCEDURE GenProcBodyParseTreeFromSingleNodeWithDeps( parse_root : REF Node.T ; src : REF T ; depgraph_pms : REF DepGraphParams ) =
+VAR
+	dep_index : CARDINAL := 0 ;
+	temp_dep_order : CARDINALList.T := NIL ;
+	stmt_list : REF Node.DList := NIL ;
+	temp_dep_list : REFANYList.T := NIL ;
+	temp_dep : REF T := NIL ;
+	new_stmt : REF Node.DList := NIL ;
+BEGIN
+	(* Initial assertions *)
+	<* ASSERT parse_root # NIL *>
+	<* ASSERT src # NIL *>
+	(* Follow dep_order and construct parse tree root for each *)
+	(* TODO How to have error checking in case the list is not monotonically increasing *)
+	temp_dep_order := src^.dep_order ;
+	stmt_list := NEW( REF Node.DList ) ;
+	Node.DefaultDList( stmt_list ) ;
+	temp_dep_list := src^.deps ;
+	WHILE temp_dep_order # NIL DO
+		temp_dep := temp_dep_list.head ;
+		IF dep_index = temp_dep_order.head THEN
+			new_stmt := NEW( REF Node.DList ) ;
+			ConstructParseTreeRoot( new_stmt , temp_dep ) ;
+			Node.AppendDListDeepWithShallowNodes( stmt_list , new_stmt ) ;
+			Node.AppendNode( stmt_list , NEW( REF Node.T , val := depgraph_pms^.separator , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+		END ;
+		temp_dep_list := temp_dep_list.tail ;
+		INC( dep_index ) ;
+	END ;
+	(* Generate proc body with each of these ptree roots *)
+	parse_root^.val := depgraph_pms^.start_symbol_val ;
+	parse_root^.cat := Node.Category.NonTerminal ;
+	parse_root^.children := stmt_list ;
+END GenProcBodyParseTreeFromSingleNodeWithDeps ;
 
 PROCEDURE ConstructParseTreeRoot( parse_root : REF Node.DList ; root : REF T ) =
 VAR
