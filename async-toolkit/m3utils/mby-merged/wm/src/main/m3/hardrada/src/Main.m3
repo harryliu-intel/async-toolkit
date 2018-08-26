@@ -9,6 +9,7 @@ IMPORT StyleRulesTbl ;
 IMPORT NextCharTbl ;
 IMPORT DepGraph ;
 IMPORT Text ;
+IMPORT REFANYList ;
 
 BEGIN
 VAR root := NEW( REF Node.T ) ;
@@ -39,6 +40,13 @@ VAR assign_stmt := NEW( REF Node.T ) ;
 VAR depgraph_stmt1_subdepgraph1 := NEW( REF DepGraph.T ) ;
 VAR depgraph_stmt1_subdepgraph2 := NEW( REF DepGraph.T ) ;
 
+VAR nextdeps : REFANY := NIL ;
+VAR sdg1 : REFANY := NIL ;
+VAR sdg2 : REFANY := NIL ;
+VAR refany_depgraph : REFANYList.T := NIL ;
+VAR refany_depgraph_2 : REFANYList.T := NIL ;
+VAR sdg_refany_list : REFANYList.T := NIL ;
+
 VAR procdef := NEW( REF Node.T ) ;
 
 VAR ugh_another_temp := NEW( REF DepGraph.T ) ;
@@ -50,6 +58,8 @@ VAR tempchildren2 := NEW( REF Node.DList ) ;
 VAR tempchildren3 := NEW( REF Node.DList ) ;
 
 VAR depgraph_stmt1 := NEW( REF DepGraph.T ) ;
+VAR depgraph_stmt1_refany := depgraph_stmt1 ;
+VAR depgraph_next_next : REFANY := NIL ;
 
 VAR proc_block := NEW( REF Node.DList ) ;
 
@@ -696,10 +706,23 @@ depgraph_stmt1_subdepgraph1^.assigned_vars := TextList.Cons( "y" , NIL ) ;
 depgraph_stmt1_subdepgraph2 := depgraph_stmt1^.next^.next^.subdepgraph.tail.head ;
 depgraph_stmt1_subdepgraph2^.is_static := TRUE ;
 depgraph_stmt1_subdepgraph2^.assigned_vars := TextList.Cons( "y" , NIL ) ;
+
+nextdeps := depgraph_stmt1^.next ;
+sdg1 := depgraph_stmt1_subdepgraph1 ;
+sdg2 := depgraph_stmt1_subdepgraph2 ;
+sdg_refany_list := REFANYList.Cons( sdg1 , REFANYList.Cons( sdg2 , NIL ) ) ;
+depgraph_stmt1^.next^.next^.deps := REFANYList.Cons( nextdeps , sdg_refany_list ) ;
+depgraph_stmt1_subdepgraph1.deps := NEW( REFANYList.T , head := nextdeps , tail := NIL ) ;
+depgraph_stmt1_subdepgraph2.deps := NEW( REFANYList.T , head := nextdeps , tail := NIL ) ;
 (* Modify IF in depgraph *)
 (* Modify RETURN in depgraph *)
 depgraph_stmt1^.next^.next^.next^.is_static := FALSE ;
 depgraph_stmt1^.next^.next^.next^.assigned_vars := NIL ;
+
+depgraph_next_next := depgraph_stmt1^.next^.next ;
+refany_depgraph_2 := REFANYList.Cons( depgraph_stmt1_subdepgraph1 , REFANYList.Cons( depgraph_stmt1_subdepgraph2 , NIL ) ) ;
+refany_depgraph := REFANYList.Cons( depgraph_next_next , refany_depgraph_2 ) ;
+depgraph_stmt1^.next^.next^.next^.deps := REFANYList.Cons( depgraph_stmt1_refany , refany_depgraph ) ;
 (* Modify RETURN in depgraph *)
 IO.Put( "Got dependency graph...\n" ) ;
 <* ASSERT depgraph^.parse_root # NIL *>

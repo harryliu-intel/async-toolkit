@@ -36,6 +36,7 @@ BEGIN
 	placeholder_list^.cur^.cat := Node.Category.NonTerminal ;
 	IO.Put( "Number of children for the placeholder before (we expect 0): " & Fmt.Int( Node.Length( placeholder_list^.cur^.children ) ) & "\n" ) ;
 	ConstructParseTreeRootList( placeholder_list^.cur^.children , root ) ;
+	<* ASSERT placeholder_list^.cur^.children^.cur # NIL *>
 	IO.Put( "Number of children for the placeholder after (we expect 2): " & Fmt.Int( Node.Length( placeholder_list^.cur^.children ) ) & "\n" ) ;
 	IO.Put( "First child (I expect Rule8): " & placeholder_list^.cur^.children^.cur^.val & "\n" ) ;
 	IO.Put( "Second child (I expect Rule13): " & placeholder_list^.cur^.children^.next^.cur^.val & "\n" ) ;
@@ -207,7 +208,7 @@ END DefaultDepGraph ;
 (** Hidden Procedures **)
 (***********************)
 
-PROCEDURE ConstructParseTreeRootList( parse_root : REF Node.DList ; root : REF T ) =
+PROCEDURE ConstructParseTreeRoot( parse_root : REF Node.DList ; root : REF T ) =
 VAR
 	placeholder_list : REF Node.DList := NIL ;
 	tempsubdepgraph : REFANYList.T := NIL ; 
@@ -218,16 +219,9 @@ BEGIN
 	<* ASSERT parse_root # NIL *>
 	Node.DefaultDList( parse_root ) ;
 	parse_root^.cur := NEW( REF Node.T ) ;
-	IO.Put( " --- CONSTRUCTING PARSE TREE ROOT LIST ---\n" ) ;
-	IO.Put( "Current root value: " & root^.parse_root^.val & "\n" ) ;
-	IO.Put( "Deep copying root^.parse_root to parse_root...\n" ) ;
 	Node.DeepCopy( parse_root^.cur , root^.parse_root ) ;
-	IO.Put( "Successfully deep copied root^.parse_root to parse_root...\n" ) ;
 	placeholder_list := NEW( REF Node.DList ) ;
-	IO.Put( "Looking for all placeholders...\n" ) ;
 	Node.FindAllNodesWithCategoryDeep( placeholder_list , parse_root^.cur , Node.Category.Placeholder ) ;
-	IO.Put( "Found all placeholders...\n" ) ;
-	IO.Put( "Number of placeholders: " & Fmt.Int( Node.Length( placeholder_list ) ) & "\n" ) ;
 
 	(* If no subdepgraph, you already deep copied the tree. So, you're fine. *)
 	(* If you have a subdepgraph, you gotta consider those too. *)
@@ -242,13 +236,28 @@ BEGIN
 			tempsubdepgraph := tempsubdepgraph.tail ;
 		END ;
 	END ;
+END ConstructParseTreeRoot ;
 
-	IF root^.next # NIL THEN
-		parse_root^.next := NEW( REF Node.DList ) ;
-		ConstructParseTreeRootList( parse_root^.next , root^.next ) ;
+PROCEDURE ConstructParseTreeRootList( parse_root : REF Node.DList ; root : REF T ) =
+VAR
+	placeholder_list : REF Node.DList := NIL ;
+	tempsubdepgraph : REFANYList.T := NIL ; 
+BEGIN
+
+	<* ASSERT root # NIL *>
+	<* ASSERT root^.parse_root # NIL *>
+	<* ASSERT parse_root # NIL *>
+
+	Node.DefaultDList( parse_root ) ;
+	WHILE root # NIL DO
+		ConstructParseTreeRoot( parse_root , root ) ;
+		IF root^.next # NIL THEN
+			parse_root^.next := NEW( REF Node.DList ) ;
+			parse_root := parse_root^.next ;
+		END ;
+		root := root^.next ;
 	END ;
 
-	IO.Put( " --- CONSTRUCTING PARSE TREE ROOT LIST ---\n" ) ;
 END ConstructParseTreeRootList ;
 
 (* ss_list is overwritten with the start symbols. The start symbols are references to the actual nodes
@@ -306,6 +315,7 @@ BEGIN
 			ELSE
 				IO.Put( " ( Dependencies : " ) ;
 				tempdeps := my_depgraph^.deps ;
+				tempdeps_underlying_depgraph := tempdeps.head ;
 				WHILE tempdeps.tail # NIL DO
 					tempdeps_underlying_depgraph := tempdeps.head ;
 					<* ASSERT tempdeps_underlying_depgraph^.parse_root # NIL *>
@@ -313,7 +323,6 @@ BEGIN
 					IO.Put( tempdeps_underlying_depgraph^.parse_root^.val & " , " ) ;
 					tempdeps := tempdeps.tail ;
 				END ;
-				<* ASSERT NOT IsEmpty( tempdeps_underlying_depgraph ) *>
 				IO.Put( tempdeps_underlying_depgraph^.parse_root^.val ) ;
 				IO.Put( " ) " ) ;
 			END ;
