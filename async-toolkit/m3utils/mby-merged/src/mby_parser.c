@@ -61,17 +61,17 @@ void Parser
 {
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
-    fm_uint32 pa_port_cfg_vals[MBY_PARSER_PORT_CFG_WIDTH] = { 0 };
+    fm_uint64 pa_port_cfg_reg = 0;
 
-    mbyModelReadCSRMult(regs, MBY_PARSER_PORT_CFG(in->RX_PORT, 0), MBY_PARSER_PORT_CFG_WIDTH, pa_port_cfg_vals);
+    mbyModelReadCSR64(regs, MBY_PARSER_PORT_CFG(in->RX_PORT, 0), &pa_port_cfg_reg);
 
-    fm_byte   init_ptr     = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_PTR);
-    fm_uint16 ana_state    = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_STATE);
-    fm_uint16 op_mask      = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_OP_MASK);
-    fm_byte   op_rot       = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_OP_ROT);
-    fm_byte init_w0_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_W0_OFFSET);
-    fm_byte init_w1_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_W1_OFFSET);
-    fm_byte init_w2_offset = FM_ARRAY_GET_FIELD(pa_port_cfg_vals, MBY_PARSER_PORT_CFG, INITIAL_W2_OFFSET);
+    fm_byte   init_ptr     = FM_GET_FIELD64(pa_port_cfg_reg, MBY_PARSER_PORT_CFG, INITIAL_PTR);
+    fm_uint16 ana_state    = FM_GET_FIELD64(pa_port_cfg_reg, MBY_PARSER_PORT_CFG, INITIAL_STATE);
+    fm_uint16 op_mask      = FM_GET_FIELD64(pa_port_cfg_reg, MBY_PARSER_PORT_CFG, INITIAL_OP_MASK);
+    fm_byte   op_rot       = FM_GET_FIELD64(pa_port_cfg_reg, MBY_PARSER_PORT_CFG, INITIAL_OP_ROT);
+    fm_byte init_w0_offset = FM_GET_FIELD64(pa_port_cfg_reg, MBY_PARSER_PORT_CFG, INITIAL_W0_OFFSET);
+    fm_byte init_w1_offset = FM_GET_FIELD64(pa_port_cfg_reg, MBY_PARSER_PORT_CFG, INITIAL_W1_OFFSET);
+    fm_byte init_w2_offset = FM_GET_FIELD64(pa_port_cfg_reg, MBY_PARSER_PORT_CFG, INITIAL_W2_OFFSET);
 
     fm_byte cur_ptr = init_ptr; // current pointer
 
@@ -145,21 +145,21 @@ void Parser
 
         for (fm_uint r = 0; r < MBY_PA_ANA_RULES; r++)
         {
-            fm_uint32 key_w_vals[MBY_PARSER_KEY_W_WIDTH] = { 0 };
+            fm_uint64 key_w_reg = 0;
 
-            mbyModelReadCSRMult(regs, MBY_PARSER_KEY_W(s, r, 0), MBY_PARSER_KEY_W_WIDTH, key_w_vals);
+            mbyModelReadCSR64(regs, MBY_PARSER_KEY_W(s, r, 0), &key_w_reg);
 
-            fm_uint16 w0_mask = FM_ARRAY_GET_FIELD(key_w_vals, MBY_PARSER_KEY_W, W0_MASK); 
-            fm_uint16 w0_val  = FM_ARRAY_GET_FIELD(key_w_vals, MBY_PARSER_KEY_W, W0_VALUE);
-            fm_uint16 w1_mask = FM_ARRAY_GET_FIELD(key_w_vals, MBY_PARSER_KEY_W, W1_MASK); 
-            fm_uint16 w1_val  = FM_ARRAY_GET_FIELD(key_w_vals, MBY_PARSER_KEY_W, W1_VALUE);
+            fm_uint16 w0_mask = FM_GET_FIELD64(key_w_reg, MBY_PARSER_KEY_W, W0_MASK);
+            fm_uint16 w0_val  = FM_GET_FIELD64(key_w_reg, MBY_PARSER_KEY_W, W0_VALUE);
+            fm_uint16 w1_mask = FM_GET_FIELD64(key_w_reg, MBY_PARSER_KEY_W, W1_MASK);
+            fm_uint16 w1_val  = FM_GET_FIELD64(key_w_reg, MBY_PARSER_KEY_W, W1_VALUE);
 
-            fm_uint32 key_s_vals[MBY_PARSER_KEY_S_WIDTH] = { 0 };
+            fm_uint64 key_s_reg = 0;
 
-            mbyModelReadCSRMult(regs, MBY_PARSER_KEY_S(s, r, 0), MBY_PARSER_KEY_S_WIDTH, key_s_vals);
+            mbyModelReadCSR64(regs, MBY_PARSER_KEY_S(s, r, 0), &key_s_reg);
 
-            fm_uint16 ana_state_mask = FM_ARRAY_GET_FIELD(key_s_vals, MBY_PARSER_KEY_S, STATE_MASK);
-            fm_uint16 ana_state_val  = FM_ARRAY_GET_FIELD(key_s_vals, MBY_PARSER_KEY_S, STATE_VALUE);
+            fm_uint16 ana_state_mask = FM_GET_FIELD64(key_s_reg, MBY_PARSER_KEY_S, STATE_MASK);
+            fm_uint16 ana_state_val  = FM_GET_FIELD64(key_s_reg, MBY_PARSER_KEY_S, STATE_VALUE);
 
             // CAM Matching:
             if ( ( (w0 & w0_mask) == w0_val ) &&
@@ -181,22 +181,22 @@ void Parser
         {
             // Get analyzer fields:
             fm_int    r_hit = hit_idx[s];
-            fm_uint32 ana_w_vals[MBY_PARSER_ANA_W_WIDTH] = { 0 };
+            fm_uint64 ana_w_reg = 0;
             
-            mbyModelReadCSRMult(regs, MBY_PARSER_ANA_W(s, r_hit, 0), MBY_PARSER_ANA_W_WIDTH, ana_w_vals);
+            mbyModelReadCSR64(regs, MBY_PARSER_ANA_W(s, r_hit, 0), &ana_w_reg);
 
-            fm_byte skip           = FM_ARRAY_GET_FIELD(ana_w_vals, MBY_PARSER_ANA_W, SKIP);
-            fm_byte next_w0_offset = FM_ARRAY_GET_FIELD(ana_w_vals, MBY_PARSER_ANA_W, NEXT_W0_OFFSET);
-            fm_byte next_w1_offset = FM_ARRAY_GET_FIELD(ana_w_vals, MBY_PARSER_ANA_W, NEXT_W1_OFFSET);
-            fm_byte next_w2_offset = FM_ARRAY_GET_FIELD(ana_w_vals, MBY_PARSER_ANA_W, NEXT_W2_OFFSET);
+            fm_byte skip           = FM_GET_FIELD64(ana_w_reg, MBY_PARSER_ANA_W, SKIP);
+            fm_byte next_w0_offset = FM_GET_FIELD64(ana_w_reg, MBY_PARSER_ANA_W, NEXT_W0_OFFSET);
+            fm_byte next_w1_offset = FM_GET_FIELD64(ana_w_reg, MBY_PARSER_ANA_W, NEXT_W1_OFFSET);
+            fm_byte next_w2_offset = FM_GET_FIELD64(ana_w_reg, MBY_PARSER_ANA_W, NEXT_W2_OFFSET);
 
-            fm_uint32 ana_s_vals[MBY_PARSER_ANA_S_WIDTH] = { 0 };
+            fm_uint64 ana_s_reg = 0;
 
-            mbyModelReadCSRMult(regs, MBY_PARSER_ANA_S(s, r_hit, 0), MBY_PARSER_ANA_S_WIDTH, ana_s_vals);
+            mbyModelReadCSR64(regs, MBY_PARSER_ANA_S(s, r_hit, 0), &ana_s_reg);
 
-            fm_uint16 next_ana_state      = FM_ARRAY_GET_FIELD(ana_s_vals, MBY_PARSER_ANA_S, NEXT_STATE);
-            fm_uint16 next_ana_state_mask = FM_ARRAY_GET_FIELD(ana_s_vals, MBY_PARSER_ANA_S, NEXT_STATE_MASK); 
-            fm_uint16 next_op             = FM_ARRAY_GET_FIELD(ana_s_vals, MBY_PARSER_ANA_S, NEXT_OP);
+            fm_uint16 next_ana_state      = FM_GET_FIELD64(ana_s_reg, MBY_PARSER_ANA_S, NEXT_STATE);
+            fm_uint16 next_ana_state_mask = FM_GET_FIELD64(ana_s_reg, MBY_PARSER_ANA_S, NEXT_STATE_MASK);
+            fm_uint16 next_op             = FM_GET_FIELD64(ana_s_reg, MBY_PARSER_ANA_S, NEXT_OP);
 
             fm_uint32 tmp_op_result = ((((fm_uint32) w2) << 16) & 0xffff0000) |
                                       ((((fm_uint32) w2)      ) & 0x0000ffff) ; 
@@ -239,12 +239,12 @@ void Parser
         {
             // Exception action:
             fm_int    r_hit = hit_idx[s];
-            fm_uint32 pa_exc_vals[MBY_PARSER_EXC_WIDTH] = { 0 };
+            fm_uint64 pa_exc_reg = 0;
 
-            mbyModelReadCSRMult(regs, MBY_PARSER_EXC(s, r_hit, 0), MBY_PARSER_EXC_WIDTH, pa_exc_vals);
+            mbyModelReadCSR64(regs, MBY_PARSER_EXC(s, r_hit, 0), &pa_exc_reg);
 
-            fm_byte xa_ex_offset    = FM_ARRAY_GET_FIELD(pa_exc_vals, MBY_PARSER_EXC, EX_OFFSET);
-            fm_bool xa_parsing_done = FM_ARRAY_GET_BIT  (pa_exc_vals, MBY_PARSER_EXC, PARSING_DONE);
+            fm_byte xa_ex_offset    = FM_GET_FIELD64(pa_exc_reg, MBY_PARSER_EXC, EX_OFFSET);
+            fm_bool xa_parsing_done = FM_GET_BIT64  (pa_exc_reg, MBY_PARSER_EXC, PARSING_DONE);
             fm_bool eof_exc         = (adj_seg_len < (ptr[s] + xa_ex_offset)); // a.k.a. EOS
 
             if (eof_exc) // end-of-file exception
@@ -260,17 +260,17 @@ void Parser
             // Extraction action:
             for (fm_uint wd = 0; wd < 2; wd++)
             {
-                fm_uint32 pa_ext_vals[MBY_PARSER_EXT_WIDTH] = { 0 };
+                fm_uint64 pa_ext_reg = 0;
                 fm_int    r_hit_ex = r_hit + (wd * MBY_PA_ANA_RULES);
 
-                mbyModelReadCSRMult(regs, MBY_PARSER_EXT(s, r_hit_ex, 0), MBY_PARSER_EXT_WIDTH, pa_ext_vals);
+                mbyModelReadCSR64(regs, MBY_PARSER_EXT(s, r_hit_ex, 0), &pa_ext_reg);
 
-                fm_byte xa_key_start  = FM_ARRAY_GET_FIELD(pa_ext_vals, MBY_PARSER_EXT, KEY_START);
-                fm_byte xa_key_len    = FM_ARRAY_GET_FIELD(pa_ext_vals, MBY_PARSER_EXT, KEY_LEN);
-                fm_byte xa_key_offset = FM_ARRAY_GET_FIELD(pa_ext_vals, MBY_PARSER_EXT, KEY_OFFSET);
-                fm_byte xa_flag_num   = FM_ARRAY_GET_FIELD(pa_ext_vals, MBY_PARSER_EXT, FLAG_NUM);
-                fm_bool xa_flag_val   = FM_ARRAY_GET_BIT  (pa_ext_vals, MBY_PARSER_EXT, FLAG_VALUE);
-                fm_byte xa_ptr_num    = FM_ARRAY_GET_FIELD(pa_ext_vals, MBY_PARSER_EXT, PTR_NUM);
+                fm_byte xa_key_start  = FM_GET_FIELD64(pa_ext_reg, MBY_PARSER_EXT, KEY_START);
+                fm_byte xa_key_len    = FM_GET_FIELD64(pa_ext_reg, MBY_PARSER_EXT, KEY_LEN);
+                fm_byte xa_key_offset = FM_GET_FIELD64(pa_ext_reg, MBY_PARSER_EXT, KEY_OFFSET);
+                fm_byte xa_flag_num   = FM_GET_FIELD64(pa_ext_reg, MBY_PARSER_EXT, FLAG_NUM);
+                fm_bool xa_flag_val   = FM_GET_BIT64  (pa_ext_reg, MBY_PARSER_EXT, FLAG_VALUE);
+                fm_byte xa_ptr_num    = FM_GET_FIELD64(pa_ext_reg, MBY_PARSER_EXT, PTR_NUM);
 
                 // Apply keys to target key array and track keys_valid:
                 for (fm_uint k = 0; k < xa_key_len; k++)
@@ -340,11 +340,11 @@ void Parser
         l3_vld_chk &= (out->PA_KEYS_VALID[MBY_OTR_IPADDR_KEY + i] == 1);
 
     // Read checksum configuration registers:
-    fm_uint32 pa_csum_cfg_vals[MBY_PARSER_CSUM_CFG_WIDTH] = { 0 };
+    fm_uint64 pa_csum_cfg_reg = 0;
 
-    mbyModelReadCSRMult(regs, MBY_PARSER_CSUM_CFG(in->RX_PORT, 0), MBY_PARSER_CSUM_CFG_WIDTH, pa_csum_cfg_vals);
+    mbyModelReadCSR64(regs, MBY_PARSER_CSUM_CFG(in->RX_PORT, 0), &pa_csum_cfg_reg);
 
-    fm_bool val_l3_len = FM_ARRAY_GET_FIELD(pa_csum_cfg_vals, MBY_PARSER_CSUM_CFG, VALIDATE_L3_LENGTH);
+    fm_bool val_l3_len = FM_GET_FIELD64(pa_csum_cfg_reg, MBY_PARSER_CSUM_CFG, VALIDATE_L3_LENGTH);
     fm_uint16 l3_len   = out->PA_KEYS[MBY_OTR_IPHDR_KEY + ip_len];
 
     // Clear flags:

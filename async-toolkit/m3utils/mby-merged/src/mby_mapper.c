@@ -24,12 +24,12 @@ static void getPortCfg
     mbyMapPortCfg           * const port_cfg
 )
 {
-    fm_uint32 map_port_cfg_vals[MBY_MAP_PORT_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_PORT_CFG(in->RX_PORT, 0), MBY_MAP_PORT_CFG_WIDTH, map_port_cfg_vals);
+    fm_uint64 map_port_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_PORT_CFG(in->RX_PORT, 0), &map_port_cfg_reg);
 
-    port_cfg->DEFAULT_SGLORT    = FM_ARRAY_GET_FIELD(map_port_cfg_vals, MBY_MAP_PORT_CFG, DEFAULT_SGLORT);
-    port_cfg->DEFAULT_SGLORT_EN = FM_ARRAY_GET_BIT  (map_port_cfg_vals, MBY_MAP_PORT_CFG, DEFAULT_SGLORT_EN);
-    port_cfg->PORT_PROFILE      = FM_ARRAY_GET_FIELD(map_port_cfg_vals, MBY_MAP_PORT_CFG, PORT_PROFILE);
+    port_cfg->DEFAULT_SGLORT    = FM_GET_FIELD64(map_port_cfg_reg, MBY_MAP_PORT_CFG, DEFAULT_SGLORT);
+    port_cfg->DEFAULT_SGLORT_EN = FM_GET_BIT64  (map_port_cfg_reg, MBY_MAP_PORT_CFG, DEFAULT_SGLORT_EN);
+    port_cfg->PORT_PROFILE      = FM_GET_FIELD64(map_port_cfg_reg, MBY_MAP_PORT_CFG, PORT_PROFILE);
 }
 
 static void realignKeys
@@ -214,21 +214,21 @@ static void getDomainTcamEntry(fm_uint32         regs[MBY_REGISTER_ARRAY_SIZE],
                                fm_int            cam_index,
                                mbyMapDomainTcam *cam_entry)
 {
-    fm_uint32 map_domain_tcam_vals[MBY_MAP_DOMAIN_TCAM_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_TCAM(cam_index, 0), MBY_MAP_DOMAIN_TCAM_WIDTH, map_domain_tcam_vals);
+    fm_uint32 map_domain_tcam_regs[MBY_MAP_DOMAIN_TCAM_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_TCAM(cam_index, 0), MBY_MAP_DOMAIN_TCAM_WIDTH, map_domain_tcam_regs);
 
-    cam_entry->_RSVD1_           = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, _RSVD1_);
-    cam_entry->PORT_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, PORT_KEY_INVERT);
-    cam_entry->VID2_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_VALID_INVERT);
-    cam_entry->VID2_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_KEY_INVERT);
-    cam_entry->VID1_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_VALID_INVERT);
-    cam_entry->VID1_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_KEY_INVERT);
-    cam_entry->_RSVD0_           = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, _RSVD0_);
-    cam_entry->PORT_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, PORT_KEY);
-    cam_entry->VID2_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_VALID);
-    cam_entry->VID2_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID2_KEY);
-    cam_entry->VID1_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_VALID);
-    cam_entry->VID1_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_vals, MBY_MAP_DOMAIN_TCAM, VID1_KEY);
+    cam_entry->_RSVD1_           = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, _RSVD1_);
+    cam_entry->PORT_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, PORT_KEY_INVERT);
+    cam_entry->VID2_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_VALID_INVERT);
+    cam_entry->VID2_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_KEY_INVERT);
+    cam_entry->VID1_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_VALID_INVERT);
+    cam_entry->VID1_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_KEY_INVERT);
+    cam_entry->_RSVD0_           = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, _RSVD0_);
+    cam_entry->PORT_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, PORT_KEY);
+    cam_entry->VID2_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_VALID);
+    cam_entry->VID2_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_KEY);
+    cam_entry->VID1_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_VALID);
+    cam_entry->VID1_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_KEY);
 }
 
 static void lookUpDomainTcam
@@ -309,12 +309,12 @@ static void insertDefaults
     // Apply defaults on keys
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-        fm_uint32 map_port_default_vals[MBY_MAP_PORT_DEFAULT_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PORT_DEFAULT(in->RX_PORT, i, 0), MBY_MAP_PORT_DEFAULT_WIDTH, map_port_default_vals);
+        fm_uint64 map_port_default_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PORT_DEFAULT(in->RX_PORT, i, 0), &map_port_default_reg);
 
         mbyMapPortDefaults port_defaults;
-        port_defaults.TARGET = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, TARGET);
-        port_defaults.VALUE  = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, VALUE);
+        port_defaults.TARGET = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, TARGET);
+        port_defaults.VALUE  = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, VALUE);
 
         fm_byte target = port_defaults.TARGET;
         if (target > MBY_DEFAULT_TARGET_FORCE_KEYS_H)
@@ -377,12 +377,12 @@ static void insertDefaults
     // Apply defaults on actions
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-        fm_uint32 map_port_default_vals[MBY_MAP_PORT_DEFAULT_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PORT_DEFAULT(in->RX_PORT, i, 0), MBY_MAP_PORT_DEFAULT_WIDTH, map_port_default_vals);
+        fm_uint64 map_port_default_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PORT_DEFAULT(in->RX_PORT, i, 0), &map_port_default_reg);
 
         mbyMapPortDefaults port_defaults;
-        port_defaults.TARGET = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, TARGET);
-        port_defaults.VALUE  = FM_ARRAY_GET_FIELD(map_port_default_vals, MBY_MAP_PORT_DEFAULT, VALUE);
+        port_defaults.TARGET = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, TARGET);
+        port_defaults.VALUE  = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, VALUE);
 
         fm_byte target = port_defaults.TARGET;
         if (target <= MBY_DEFAULT_TARGET_FORCE_KEYS_H)
@@ -470,11 +470,11 @@ static fm_int getTcFromPriSource
     const fm_byte                   pri_profile
 )
 {
-    fm_uint32 map_domain_action0_vals[MBY_MAP_DOMAIN_ACTION0_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action0_vals);
+    fm_uint64 map_domain_action0_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), &map_domain_action0_reg);
 
-    fm_byte priSource       = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, PRI_SOURCE);
-    fm_bool forceDefaultPri = FM_ARRAY_GET_BIT  (map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, FORCE_DEFAULT_PRI);
+    fm_byte priSource       = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRI_SOURCE);
+    fm_bool forceDefaultPri = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, FORCE_DEFAULT_PRI);
 
     fm_int  tc = -1;
 
@@ -486,20 +486,20 @@ static fm_int getTcFromPriSource
             case TC_SOURCE_VPRI:
                 if (in->PA_FLAGS[MBY_PA_FLAGS_OTR_L2_VLAN1])
                 {
-                    fm_uint32 map_vpri_tc_vals[MBY_MAP_VPRI_TC_WIDTH] = { 0 };
-                    mbyModelReadCSRMult(regs, MBY_MAP_VPRI_TC(pri_profile, 0), MBY_MAP_VPRI_TC_WIDTH, map_vpri_tc_vals);
+                    fm_uint64 map_vpri_tc_reg = 0;
+                    mbyModelReadCSR64(regs, MBY_MAP_VPRI_TC(pri_profile, 0), &map_vpri_tc_reg);
                     fm_uint32 vpri = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1], 12, 4);
-                    tc = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_tc_vals, (vpri * 3), 3);
+                    tc = FM_GET_UNNAMED_FIELD64(map_vpri_tc_reg, (vpri * 3), 3);
                 }
                 break;
 
             case TC_SOURCE_MPLS:
                 if (in->PA_FLAGS[MBY_PA_FLAGS_OTR_MPLS_V])
                 {
-                    fm_uint32 map_exp_tc_vals[MBY_MAP_EXP_TC_WIDTH] = { 0 };
-                    mbyModelReadCSRMult(regs, MBY_MAP_EXP_TC(pri_profile, 0), MBY_MAP_EXP_TC_WIDTH, map_exp_tc_vals);
+                    fm_uint64 map_exp_tc_reg = 0;
+                    mbyModelReadCSR64(regs, MBY_MAP_EXP_TC(pri_profile, 0), &map_exp_tc_reg);
                     fm_uint32 exp = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_MPLS + 1], 9, 3);
-                    tc = FM_ARRAY_GET_UNNAMED_FIELD(map_exp_tc_vals, (exp * 3), 3);
+                    tc = FM_GET_UNNAMED_FIELD64(map_exp_tc_reg, (exp * 3), 3);
                 }
                 break;
 
@@ -507,9 +507,9 @@ static fm_int getTcFromPriSource
                 if (in->PA_FLAGS[MBY_PA_FLAGS_OTR_L3_V])
                 {
                     fm_uint32 dscp = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_DS_FLOW], 10, 6);
-                    fm_uint32 map_dscp_tc_vals[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-                    mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_vals);
-                    tc = FM_ARRAY_GET_FIELD(map_dscp_tc_vals, MBY_MAP_DSCP_TC, TC);
+                    fm_uint64 map_dscp_tc_reg = 0;
+                    mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
+                    tc = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, TC);
                 }
                 break;
 
@@ -525,7 +525,7 @@ static fm_int getTcFromPriSource
     out->NO_PRI_ENC = 0;
 
     if ((forceDefaultPri) || (tc < 0)) {
-        tc = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, DEFAULT_PRI);
+        tc = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, DEFAULT_PRI);
         out->NO_PRI_ENC = 1;
     }
 
@@ -557,26 +557,26 @@ static void mapScalar
     fm_uint64 headerIPhi = 0;
     fm_uint64 headerIPlo = 0;
 
-    fm_uint32 map_port_vals[MBY_MAP_PORT_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_PORT(in->RX_PORT, 0), MBY_MAP_PORT_WIDTH, map_port_vals);
+    fm_uint64 map_port_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_PORT(in->RX_PORT, 0), &map_port_reg);
 
-    mapped_key->MAP_PORT = FM_ARRAY_GET_FIELD(map_port_vals, MBY_MAP_PORT, MAP_PORT);
+    mapped_key->MAP_PORT = FM_GET_FIELD64(map_port_reg, MBY_MAP_PORT, MAP_PORT);
 
     // Compress PROT to 3 bits, highest index match wins
     for (fm_uint i = 0; i < MBY_MAP_PROT_ENTRIES; i++)
     {
-        fm_uint32 map_prot_vals[MBY_MAP_PROT_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROT(i, 0), MBY_MAP_PROT_WIDTH, map_prot_vals);
+        fm_uint64 map_prot_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PROT(i, 0), &map_prot_reg);
 
-        fm_byte prot = FM_ARRAY_GET_FIELD(map_prot_vals, MBY_MAP_PROT, PROT);
+        fm_byte prot = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, PROT);
 
         if (in->PA_FLAGS[MBY_PA_FLAGS_INR_L3_V] &&
             (prot == FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_INNER_IP_TTL_PROT], 0, 8)))
-            mapped_key->MAP_INNER_PROT = FM_ARRAY_GET_FIELD(map_prot_vals, MBY_MAP_PROT, MAP_PROT);
+            mapped_key->MAP_INNER_PROT = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, MAP_PROT);
 
         if (in->PA_FLAGS[MBY_PA_FLAGS_OTR_L3_V] &&
             (prot == FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8)))
-            mapped_key->MAP_OUTER_PROT = FM_ARRAY_GET_FIELD(map_prot_vals, MBY_MAP_PROT, MAP_PROT);
+            mapped_key->MAP_OUTER_PROT = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, MAP_PROT);
     }
 
     // Compress outer DMAC to 4 bits
@@ -590,17 +590,17 @@ static void mapScalar
 
     for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
     {
-        fm_uint32 map_mac_vals[MBY_MAP_MAC_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_vals);
+        fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
+        mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
 
-        fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_vals, MBY_MAP_MAC, MAC);
-        fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, VALID);
-        fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, IGNORE_LENGTH);
+        fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
+        fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
+        fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
         fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
 
         if ((valid & 1) && (mac == (keyMac & mask))) {
-            mapped_key->MAP_OUTER_DMAC = FM_ARRAY_GET_FIELD(map_mac_vals, MBY_MAP_MAC, MAP_MAC);
-            fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_vals, MBY_MAP_MAC, MAC_ROUTABLE);
+            mapped_key->MAP_OUTER_DMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
+            fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
             FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 0, 1, un0);
             break;
         }
@@ -613,17 +613,17 @@ static void mapScalar
 
     for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
     {
-        fm_uint32 map_mac_vals[MBY_MAP_MAC_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_vals);
+        fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
+        mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
 
-        fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_vals, MBY_MAP_MAC, MAC);
-        fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, VALID);
-        fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, IGNORE_LENGTH);
+        fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
+        fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
+        fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
         fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
 
         if (((valid >> 1) & 1) && (mac == (keyMac  & mask))) {
-            mapped_key->MAP_OUTER_SMAC = FM_ARRAY_GET_FIELD(map_mac_vals, MBY_MAP_MAC, MAP_MAC);
-            fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_vals, MBY_MAP_MAC, MAC_ROUTABLE);
+            mapped_key->MAP_OUTER_SMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
+            fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
             FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 1, 1, un0);
             break;
         }
@@ -638,17 +638,17 @@ static void mapScalar
 
         for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
         {
-            fm_uint32 map_mac_vals[MBY_MAP_MAC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_vals);
+            fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
+            mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
 
-            fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_vals, MBY_MAP_MAC, MAC);
-            fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, VALID);
-            fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, IGNORE_LENGTH);
+            fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
+            fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
+            fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
             fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
 
             if (((valid >> 2) & 1 ) && (mac == (keyMac & mask))) {
-                mapped_key->MAP_INNER_DMAC = FM_ARRAY_GET_FIELD(map_mac_vals, MBY_MAP_MAC, MAP_MAC);
-                fm_uint32 un0 = FM_ARRAY_GET_BIT(map_mac_vals, MBY_MAP_MAC, MAC_ROUTABLE);
+                mapped_key->MAP_INNER_DMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
+                fm_uint32 un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
                 FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 2, 1, un0);
                 break;
             }
@@ -661,17 +661,17 @@ static void mapScalar
 
         for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
         {
-            fm_uint32 map_mac_vals[MBY_MAP_MAC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_vals);
+            fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
+            mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
 
-            fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_vals, MBY_MAP_MAC, MAC);
-            fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, VALID);
-            fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_vals, MBY_MAP_MAC, IGNORE_LENGTH);
+            fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
+            fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
+            fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
             fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
 
             if (((valid >> 3) & 1 ) && (mac == (keyMac & mask))) {
-                mapped_key->MAP_INNER_SMAC = FM_ARRAY_GET_FIELD(map_mac_vals, MBY_MAP_MAC, MAP_MAC);
-                fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_vals, MBY_MAP_MAC, MAC_ROUTABLE);
+                mapped_key->MAP_INNER_SMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
+                fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
                 FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 3, 1, un0);
                 break;
             }
@@ -686,22 +686,22 @@ static void mapScalar
         
         for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)
         {
-            fm_uint32 map_l4_src_vals[MBY_MAP_L4_SRC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_SRC(i, 0), MBY_MAP_L4_SRC_WIDTH, map_l4_src_vals);
+            fm_uint64 map_l4_src_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i, 0), &map_l4_src_reg);
 
-            fm_uint32 map_l4_src_next_vals[MBY_MAP_L4_SRC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_SRC(i+1, 0), MBY_MAP_L4_SRC_WIDTH, map_l4_src_next_vals);
+            fm_uint64 map_l4_src_next_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i+1, 0), &map_l4_src_next_reg);
 
-            fm_byte   valid       = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, VALID);
-            fm_uint32 curr_prot   = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, MAP_PROT);
-            fm_uint32 curr_map    = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, L4_SRC);
-            fm_uint32 curr_l4_src = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, MAP_L4_SRC);
+            fm_byte   valid       = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, VALID);
+            fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_PROT);
+            fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, L4_SRC);
+            fm_uint32 curr_l4_src = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_L4_SRC);
 
             if ((valid & 1) && (mapped_key->MAP_OUTER_PROT == curr_prot))
             {
                 fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
-                fm_uint32 next_map  = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_src_next_vals, MBY_MAP_L4_SRC, L4_SRC)   : 0;
-                fm_uint32 next_prot = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_src_next_vals, MBY_MAP_L4_SRC, MAP_PROT) : 0;
+                fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, L4_SRC)   : 0;
+                fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, MAP_PROT) : 0;
 
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_OUTER_L4_SRC = curr_l4_src;
@@ -717,22 +717,22 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)
         {
-            fm_uint32 map_l4_src_vals[MBY_MAP_L4_SRC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_SRC(i, 0), MBY_MAP_L4_SRC_WIDTH, map_l4_src_vals);
+            fm_uint64 map_l4_src_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i, 0), & map_l4_src_reg);
 
-            fm_uint32 map_l4_src_next_vals[MBY_MAP_L4_SRC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_SRC(i+1, 0), MBY_MAP_L4_SRC_WIDTH, map_l4_src_next_vals);
+            fm_uint64 map_l4_src_next_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i+1, 0), &map_l4_src_next_reg);
 
-            fm_byte   valid       = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, VALID);
-            fm_uint32 curr_prot   = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, MAP_PROT);
-            fm_uint32 curr_map    = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, L4_SRC);
-            fm_uint32 curr_l4_src = FM_ARRAY_GET_FIELD(map_l4_src_vals, MBY_MAP_L4_SRC, MAP_L4_SRC);
+            fm_byte   valid       = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, VALID);
+            fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_PROT);
+            fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, L4_SRC);
+            fm_uint32 curr_l4_src = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_L4_SRC);
 
             if (((valid >> 1) & 1) && (mapped_key->MAP_INNER_PROT == curr_prot))
             {
                 fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
-                fm_uint32 next_map  = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_src_next_vals, MBY_MAP_L4_SRC, L4_SRC)   : 0;
-                fm_uint32 next_prot = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_src_next_vals, MBY_MAP_L4_SRC, MAP_PROT) : 0;
+                fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, L4_SRC)   : 0;
+                fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, MAP_PROT) : 0;
 
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_INNER_L4_SRC = curr_l4_src;
@@ -748,22 +748,22 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
         {
-            fm_uint32 map_l4_dst_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_vals);
+            fm_uint64 map_l4_dst_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i, 0), &map_l4_dst_reg);
 
-            fm_uint32 map_l4_dst_next_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i+1, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_next_vals);
+            fm_uint64 map_l4_dst_next_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i+1, 0), &map_l4_dst_next_reg);
 
-            fm_byte   valid       = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, VALID);
-            fm_uint32 curr_prot   = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_PROT);
-            fm_uint32 curr_map    = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, L4_DST);
-            fm_uint32 curr_l4_dst = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_L4_DST);
+            fm_byte   valid       = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, VALID);
+            fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_PROT);
+            fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, L4_DST);
+            fm_uint32 curr_l4_dst = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_L4_DST);
 
             if ((valid & 1) && (mapped_key->MAP_OUTER_PROT == curr_prot))
             {
                 fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
-                fm_uint32 next_map  = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, L4_DST)   : 0;
-                fm_uint32 next_prot = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, MAP_PROT) : 0;
+                fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, L4_DST)   : 0;
+                fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, MAP_PROT) : 0;
 
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_OUTER_L4_DST = curr_l4_dst;
@@ -779,22 +779,22 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
         {
-            fm_uint32 map_l4_dst_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_vals);
+            fm_uint64 map_l4_dst_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i, 0), &map_l4_dst_reg);
 
-            fm_uint32 map_l4_dst_next_vals[MBY_MAP_L4_DST_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_L4_DST(i+1, 0), MBY_MAP_L4_DST_WIDTH, map_l4_dst_next_vals);
+            fm_uint64 map_l4_dst_next_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i+1, 0), &map_l4_dst_next_reg);
 
-            fm_byte   valid       = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, VALID);
-            fm_uint32 curr_prot   = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_PROT);
-            fm_uint32 curr_map    = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, L4_DST);
-            fm_uint32 curr_l4_dst = FM_ARRAY_GET_FIELD(map_l4_dst_vals, MBY_MAP_L4_DST, MAP_L4_DST);
+            fm_byte   valid       = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, VALID);
+            fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_PROT);
+            fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, L4_DST);
+            fm_uint32 curr_l4_dst = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_L4_DST);
 
             if (((valid >> 1) & 1) && (mapped_key->MAP_INNER_PROT == curr_prot))
             {
                 fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
-                fm_uint32 next_map  = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, L4_DST)   : 0;
-                fm_uint32 next_prot = (next_ok) ? FM_ARRAY_GET_FIELD(map_l4_dst_next_vals, MBY_MAP_L4_DST, MAP_PROT) : 0;
+                fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, L4_DST)   : 0;
+                fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, MAP_PROT) : 0;
 
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_INNER_L4_DST = curr_l4_dst;
@@ -838,23 +838,23 @@ static void mapScalar
     fm_byte   l3_domain   = 0;
 
     // domain TCAM - domain_index is always valid here
-    fm_uint32 map_domain_action0_vals[MBY_MAP_DOMAIN_ACTION0_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action0_vals);
-    fm_bool update_domains = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, UPDATE_DOMAINS);
+    fm_uint64 map_domain_action0_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), &map_domain_action0_reg);
+    fm_bool update_domains = FM_GET_BIT64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, UPDATE_DOMAINS);
 
     if (update_domains)
     {
-        operator_id  = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
-        l2_domain    = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L2_DOMAIN);
-        l3_domain    = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, L3_DOMAIN);
-        *pri_profile = FM_ARRAY_GET_FIELD(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
+        operator_id  = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
+        l2_domain    = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, L2_DOMAIN);
+        l3_domain    = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, L3_DOMAIN);
+        *pri_profile = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
     }
     else
     {
-        fm_uint32 map_domain_profile_vals[MBY_MAP_DOMAIN_PROFILE_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_PROFILE(l2_domain, 0), MBY_MAP_DOMAIN_PROFILE_WIDTH, map_domain_profile_vals);
+        fm_uint64 map_domain_profile_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_PROFILE(l2_domain, 0), &map_domain_profile_reg);
 
-        *pri_profile = FM_ARRAY_GET_FIELD(map_domain_profile_vals, MBY_MAP_DOMAIN_PROFILE, PRIORITY_PROFILE);
+        *pri_profile = FM_GET_FIELD64(map_domain_profile_reg, MBY_MAP_DOMAIN_PROFILE, PRIORITY_PROFILE);
     }
 
     out->OPERATOR_ID      = operator_id;
@@ -865,27 +865,27 @@ static void mapScalar
     map_prof_key1->L2_DOMAIN = l2_domain;
     map_prof_key1->L3_DOMAIN = l3_domain;
 
-    fm_bool un0 = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_EN);
+    fm_bool un0 = FM_GET_BIT64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, LEARN_EN);
     out->FFU_ACTIONS.act1[MBY_FFU_ACTION_LEARN].val = un0;
 
-    out->LEARN_MODE = FM_ARRAY_GET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE);
+    out->LEARN_MODE = FM_GET_BIT64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE);
 
     fm_byte tc = getTcFromPriSource(regs, in, out, domain_index, realigned_keys, *pri_profile);
     out->FFU_ACTIONS.act4[MBY_FFU_ACTION_TC].val = tc;
 
-    fm_uint32 map_domain_action1_vals[MBY_MAP_DOMAIN_ACTION1_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_ACTION1(domain_index, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action1_vals);
+    fm_uint64 map_domain_action1_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION1(domain_index, 0), &map_domain_action1_reg);
 
-    fm_uint16 l2Policer           = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, L2_POLICER);
-    fm_uint16 l3Policer           = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, L3_POLICER);
-    map_prof_key1->DOMAIN_PROFILE = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, DOMAIN_PROFILE);
-    out->L2_IVLAN1_CNT_INDEX      = FM_ARRAY_GET_FIELD(map_domain_action1_vals, MBY_MAP_DOMAIN_ACTION1, VLAN_COUNTER);
+    fm_uint16 l2Policer           = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L2_POLICER);
+    fm_uint16 l3Policer           = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L3_POLICER);
+    map_prof_key1->DOMAIN_PROFILE = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, DOMAIN_PROFILE);
+    out->L2_IVLAN1_CNT_INDEX      = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, VLAN_COUNTER);
 
-    fm_uint32 map_domain_pol_cfg_vals[MBY_MAP_DOMAIN_POL_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_POL_CFG(0), MBY_MAP_DOMAIN_POL_CFG_WIDTH, map_domain_pol_cfg_vals);
+    fm_uint64 map_domain_pol_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_POL_CFG(0), &map_domain_pol_cfg_reg);
 
-    fm_byte l2_color_cfg = FM_ARRAY_GET_FIELD(map_domain_pol_cfg_vals, MBY_MAP_DOMAIN_POL_CFG, L2_COLOR_CFG);
-    fm_byte l3_color_cfg = FM_ARRAY_GET_FIELD(map_domain_pol_cfg_vals, MBY_MAP_DOMAIN_POL_CFG, L3_COLOR_CFG);
+    fm_byte l2_color_cfg = FM_GET_FIELD64(map_domain_pol_cfg_reg, MBY_MAP_DOMAIN_POL_CFG, L2_COLOR_CFG);
+    fm_byte l3_color_cfg = FM_GET_FIELD64(map_domain_pol_cfg_reg, MBY_MAP_DOMAIN_POL_CFG, L3_COLOR_CFG);
 
     if (l2Policer != 0) {
         // if l2_policer is nonzero, then the default POLICER[0] action is (bank=0, index=l2_policer).
@@ -996,16 +996,16 @@ static void getParserInfo
        exception, or the MPLS stack was not fully parsed. */
 
     // maximum number of bytes per config
-    fm_uint32 mby_map_len_limit_vals[MBY_MAP_LEN_LIMIT_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_LEN_LIMIT(in->RX_PORT, 0), MBY_MAP_LEN_LIMIT_WIDTH, mby_map_len_limit_vals);
+    fm_uint64 mby_map_len_limit_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_LEN_LIMIT(in->RX_PORT, 0), &mby_map_len_limit_reg);
 
     fm_byte hdrLenLimit[8] = { 0 };
 
-    hdrLenLimit[MBY_PA_INFO_OTR_L2]   = FM_ARRAY_GET_FIELD(mby_map_len_limit_vals, MBY_MAP_LEN_LIMIT, OTR_L2_LEN_LIMIT) * 4 + 14;
-    hdrLenLimit[MBY_PA_INFO_INR_L2]   = FM_ARRAY_GET_FIELD(mby_map_len_limit_vals, MBY_MAP_LEN_LIMIT, INR_L2_LEN_LIMIT) * 4 + 14;
+    hdrLenLimit[MBY_PA_INFO_OTR_L2]   = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, OTR_L2_LEN_LIMIT) * 4 + 14;
+    hdrLenLimit[MBY_PA_INFO_INR_L2]   = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, INR_L2_LEN_LIMIT) * 4 + 14;
 
-    hdrLenLimit[MBY_PA_INFO_OTR_MPLS] = FM_ARRAY_GET_FIELD(mby_map_len_limit_vals, MBY_MAP_LEN_LIMIT, OTR_MPLS_LEN_LIMIT) * 4;
-    hdrLenLimit[MBY_PA_INFO_INR_MPLS] = FM_ARRAY_GET_FIELD(mby_map_len_limit_vals, MBY_MAP_LEN_LIMIT, INR_MPLS_LEN_LIMIT) * 4;
+    hdrLenLimit[MBY_PA_INFO_OTR_MPLS] = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, OTR_MPLS_LEN_LIMIT) * 4;
+    hdrLenLimit[MBY_PA_INFO_INR_MPLS] = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, INR_MPLS_LEN_LIMIT) * 4;
 
     hdrLenLimit[MBY_PA_INFO_OTR_L3]   = MBY_OTR_L3_LEN_LIMIT * 4;
     hdrLenLimit[MBY_PA_INFO_INR_L3]   = MBY_INR_L3_LEN_LIMIT * 4;
@@ -1204,94 +1204,94 @@ static void getProfile
 
     for (fm_int i = MBY_MAP_PROFILE_KEY0_ENTRIES - 1; i >= 0; i--)
     {
-        fm_uint32 profKey0[MBY_MAP_PROFILE_KEY0_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY0(i, 0), MBY_MAP_PROFILE_KEY0_WIDTH, profKey0);
+        fm_uint64 profKey0 = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PROFILE_KEY0(i, 0), &profKey0);
 
-        fm_uint32 profMask0[MBY_MAP_PROFILE_KEY_INVERT0_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT0(i, 0), MBY_MAP_PROFILE_KEY_INVERT0_WIDTH, profMask0);
+        fm_uint64 profMask0 = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PROFILE_KEY_INVERT0(i, 0), &profMask0);
 
-        fm_uint32 profKey1[MBY_MAP_PROFILE_KEY1_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY1(i, 0), MBY_MAP_PROFILE_KEY1_WIDTH, profKey1);
+        fm_uint64 profKey1 = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PROFILE_KEY1(i, 0), &profKey1);
 
-        fm_uint32 profMask1[MBY_MAP_PROFILE_KEY_INVERT1_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_KEY_INVERT1(i, 0), MBY_MAP_PROFILE_KEY_INVERT1_WIDTH, profMask1);
+        fm_uint64 profMask1 = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PROFILE_KEY_INVERT1(i, 0), &profMask1);
 
-        fm_uint32 profAction[MBY_MAP_PROFILE_ACTION_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_PROFILE_ACTION(i, 0), MBY_MAP_PROFILE_ACTION_WIDTH, profAction);
+        fm_uint64 profAction = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_PROFILE_ACTION(i, 0), &profAction);
 
-        if ( (((~key0.PTRS_ERR) & 0x1) & FM_ARRAY_GET_BIT(profKey0,  MBY_MAP_PROFILE_KEY0,        PTRS_ERR)) ||
-             (   key0.PTRS_ERR         & FM_ARRAY_GET_BIT(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, PTRS_ERR)) )
+        if ( (((~key0.PTRS_ERR) & 0x1) & FM_GET_BIT64(profKey0,  MBY_MAP_PROFILE_KEY0,        PTRS_ERR)) ||
+             (   key0.PTRS_ERR         & FM_GET_BIT64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, PTRS_ERR)) )
             continue;
 
-        if ( (((~key0.EX) & 0x7) & FM_ARRAY_GET_FIELD(profKey0,  MBY_MAP_PROFILE_KEY0,        EX)) ||
-             (   key0.EX         & FM_ARRAY_GET_FIELD(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, EX)) )
+        if ( (((~key0.EX) & 0x7) & FM_GET_FIELD64(profKey0,  MBY_MAP_PROFILE_KEY0,        EX)) ||
+             (   key0.EX         & FM_GET_FIELD64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, EX)) )
             continue;
 
-        if ( (((~key0.CSUM) & 0x3) & FM_ARRAY_GET_FIELD(profKey0,  MBY_MAP_PROFILE_KEY0,        CSUM)) ||
-             (   key0.CSUM         & FM_ARRAY_GET_FIELD(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, CSUM)) )
+        if ( (((~key0.CSUM) & 0x3) & FM_GET_FIELD64(profKey0,  MBY_MAP_PROFILE_KEY0,        CSUM)) ||
+             (   key0.CSUM         & FM_GET_FIELD64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, CSUM)) )
             continue;
 
-        if ( (((~key0.IHL_OK) & 0x1) & FM_ARRAY_GET_BIT(profKey0,  MBY_MAP_PROFILE_KEY0,        IHL_OK)) ||
-             (   key0.IHL_OK         & FM_ARRAY_GET_BIT(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, IHL_OK)) )
+        if ( (((~key0.IHL_OK) & 0x1) & FM_GET_BIT64(profKey0,  MBY_MAP_PROFILE_KEY0,        IHL_OK)) ||
+             (   key0.IHL_OK         & FM_GET_BIT64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, IHL_OK)) )
             continue;
 
-        if ( (((~key0.IHL_FITS) & 0x1) & FM_ARRAY_GET_BIT(profKey0,  MBY_MAP_PROFILE_KEY0,        IHL_FITS)) ||
-             (   key0.IHL_FITS         & FM_ARRAY_GET_BIT(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, IHL_FITS)) )
+        if ( (((~key0.IHL_FITS) & 0x1) & FM_GET_BIT64(profKey0,  MBY_MAP_PROFILE_KEY0,        IHL_FITS)) ||
+             (   key0.IHL_FITS         & FM_GET_BIT64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, IHL_FITS)) )
             continue;
 
-        if ( (((~key0.FLAGS) & 0x7FFFFFFFFFFF) & FM_ARRAY_GET_FIELD64(profKey0,  MBY_MAP_PROFILE_KEY0,        FLAGS)) ||
-             (   key0.FLAGS                    & FM_ARRAY_GET_FIELD64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, FLAGS)) )
+        if ( (((~key0.FLAGS) & 0x7FFFFFFFFFFF) & FM_GET_FIELD64(profKey0,  MBY_MAP_PROFILE_KEY0,        FLAGS)) ||
+             (   key0.FLAGS                    & FM_GET_FIELD64(profMask0, MBY_MAP_PROFILE_KEY_INVERT0, FLAGS)) )
             continue;
 
-        if ( (~key1.L2_DOMAIN & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        L2_DOMAIN)) ||
-             ( key1.L2_DOMAIN & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, L2_DOMAIN)) )
+        if ( (~key1.L2_DOMAIN & FM_GET_FIELD64(profKey1,  MBY_MAP_PROFILE_KEY1,        L2_DOMAIN)) ||
+             ( key1.L2_DOMAIN & FM_GET_FIELD64(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, L2_DOMAIN)) )
             continue;
 
-        if ( (((~key1.L3_DOMAIN) & 0x3F) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        L3_DOMAIN)) ||
-             (   key1.L3_DOMAIN          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, L3_DOMAIN)) )
+        if ( (((~key1.L3_DOMAIN) & 0x3F) & FM_GET_FIELD64(profKey1,  MBY_MAP_PROFILE_KEY1,        L3_DOMAIN)) ||
+             (   key1.L3_DOMAIN          & FM_GET_FIELD64(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, L3_DOMAIN)) )
             continue;
 
-        if ( (((~key1.PORT_PROFILE) & 0xF) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        PORT_PROFILE)) ||
-             (   key1.PORT_PROFILE         & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, PORT_PROFILE)) )
+        if ( (((~key1.PORT_PROFILE) & 0xF) & FM_GET_FIELD64(profKey1,  MBY_MAP_PROFILE_KEY1,        PORT_PROFILE)) ||
+             (   key1.PORT_PROFILE         & FM_GET_FIELD64(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, PORT_PROFILE)) )
             continue;
 
-        if ( (((~key1.DOMAIN_PROFILE) & 0xFF) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        DOMAIN_PROFILE)) ||
-             (   key1.DOMAIN_PROFILE          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, DOMAIN_PROFILE)) )
+        if ( (((~key1.DOMAIN_PROFILE) & 0xFF) & FM_GET_FIELD64(profKey1,  MBY_MAP_PROFILE_KEY1,        DOMAIN_PROFILE)) ||
+             (   key1.DOMAIN_PROFILE          & FM_GET_FIELD64(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, DOMAIN_PROFILE)) )
             continue;
 
-        if ( (((~key1.MAC_ROUTABLE) & 0xF ) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        MAC_ROUTABLE)) ||
-             (   key1.MAC_ROUTABLE          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, MAC_ROUTABLE)) )
+        if ( (((~key1.MAC_ROUTABLE) & 0xF ) & FM_GET_FIELD64(profKey1,  MBY_MAP_PROFILE_KEY1,        MAC_ROUTABLE)) ||
+             (   key1.MAC_ROUTABLE          & FM_GET_FIELD64(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, MAC_ROUTABLE)) )
             continue;
 
-        if ( (((~key1.MAC_MBCAST) & 0x3 ) & FM_ARRAY_GET_FIELD(profKey1,  MBY_MAP_PROFILE_KEY1,        MAC_MBCAST)) ||
-             (   key1.MAC_MBCAST          & FM_ARRAY_GET_FIELD(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, MAC_MBCAST)) )
+        if ( (((~key1.MAC_MBCAST) & 0x3 ) & FM_GET_FIELD64(profKey1,  MBY_MAP_PROFILE_KEY1,        MAC_MBCAST)) ||
+             (   key1.MAC_MBCAST          & FM_GET_FIELD64(profMask1, MBY_MAP_PROFILE_KEY_INVERT1, MAC_MBCAST)) )
             continue;
 
         // TODO: add packet type check
 
-        if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_VALID)) && (profileIdx == 0))
+        if ((FM_GET_BIT64(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_VALID)) && (profileIdx == 0))
         {
-            profileIdx                     = i;
+            profileIdx                       = i;
             map_prof_action->PROFILE_VALID   = 1;
-            map_prof_action->PROFILE         = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE);
-            map_prof_action->REWRITE_PROFILE = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, REWRITE_PROFILE);
+            map_prof_action->PROFILE         = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, PROFILE);
+            map_prof_action->REWRITE_PROFILE = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, REWRITE_PROFILE);
         }
 
-        if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, TRIG_VALID)) && (trigIdx == 0))
+        if ((FM_GET_BIT64(profAction, MBY_MAP_PROFILE_ACTION, TRIG_VALID)) && (trigIdx == 0))
         {
             trigIdx                        = i;
             map_prof_action->TRIG_VALID      = 1;
-            map_prof_action->PROFILE_TRIG    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_TRIG);
-            map_prof_action->IP_OPTIONS_MASK = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, IP_OPTIONS_MASK);
-            map_prof_action->PARSER_ERROR    = FM_ARRAY_GET_BIT  (profAction, MBY_MAP_PROFILE_ACTION, PARSER_ERROR);
+            map_prof_action->PROFILE_TRIG    = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, PROFILE_TRIG);
+            map_prof_action->IP_OPTIONS_MASK = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, IP_OPTIONS_MASK);
+            map_prof_action->PARSER_ERROR    = FM_GET_BIT64  (profAction, MBY_MAP_PROFILE_ACTION, PARSER_ERROR);
         }
 
-        if ((FM_ARRAY_GET_BIT(profAction, MBY_MAP_PROFILE_ACTION, PRIOS_VALID)) && (priosIdx == 0))
+        if ((FM_GET_BIT64(profAction, MBY_MAP_PROFILE_ACTION, PRIOS_VALID)) && (priosIdx == 0))
         {
             priosIdx                   = i;
             map_prof_action->PRIOS_VALID = 1;
-            map_prof_action->VPRI_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, VPRI_TGT);
-            map_prof_action->DSCP_TGT    = FM_ARRAY_GET_FIELD(profAction, MBY_MAP_PROFILE_ACTION, DSCP_TGT);
+            map_prof_action->VPRI_TGT    = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, VPRI_TGT);
+            map_prof_action->DSCP_TGT    = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, DSCP_TGT);
         }
 
         // Found all types
@@ -1448,10 +1448,10 @@ static void mapRewrite
     {
         for (fm_uint i = 0; i < MBY_MAP_REWRITE_ENTRIES_0; i++)
         {
-            fm_uint32 map_rewrite_vals[MBY_MAP_REWRITE_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_REWRITE(map_prof_action.REWRITE_PROFILE, i, 0), MBY_MAP_REWRITE_WIDTH, map_rewrite_vals);
+            fm_uint64 map_rewrite_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_REWRITE(map_prof_action.REWRITE_PROFILE, i, 0), &map_rewrite_reg);
 
-            fm_byte source_id  = FM_ARRAY_GET_FIELD(map_rewrite_vals, MBY_MAP_REWRITE, SRC_ID);
+            fm_byte source_id  = FM_GET_FIELD64(map_rewrite_reg, MBY_MAP_REWRITE, SRC_ID);
             fm_uint nybble_idx = i;
 
             rewriteSourceNybble
@@ -1503,28 +1503,28 @@ static void mapRewrite
 
     if (map_prof_action.PRIOS_VALID == 1)
     {
-        fm_uint32 map_vpri_vals[MBY_MAP_VPRI_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_VPRI(pri_profile, 0), MBY_MAP_VPRI_WIDTH, map_vpri_vals);
+        fm_uint64 map_vpri_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MAP_VPRI(pri_profile, 0), &map_vpri_reg);
 
         /* vpri_tgt and dscp_tgt, no valid check is needed */
         if (map_prof_action.VPRI_TGT & 0x4) {
             /* NOTE: This is place before (vpri_tgt & 0x1) otherwise
              * vpri will be remapped twice if both bits are set */
             fm_int vpri     = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_vals, vpri * 4, 4);
+            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_VPRI_LOW].val = map_vpri;
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_VPRI_HIGH].val = map_vpri;
         }
 
         if (map_prof_action.VPRI_TGT & 0x1) {
             fm_int vpri     = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_vals, vpri * 4, 4);
+            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4, map_vpri)
         }
 
         if (map_prof_action.VPRI_TGT & 0x2) {
             fm_int vpri     = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_INNER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_ARRAY_GET_UNNAMED_FIELD(map_vpri_vals, vpri * 4, 4);
+            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key16[MBY_FFU_KEY16_INNER_VLAN1], 12, 4, map_vpri);
         }
 
@@ -1533,10 +1533,10 @@ static void mapRewrite
              * dscp will be remapped twice if both bits are set */
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
 
-            fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
+            fm_uint64 map_dscp_tc_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
 
-            fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
+            fm_int map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_DSCP_LOW].val  = map_dscp & 0xF;
             out->FFU_ACTIONS.act4[MBY_FFU_ACTION_DSCP_HIGH].val = (map_dscp >> 4);
         }
@@ -1545,10 +1545,10 @@ static void mapRewrite
         {
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
 
-            fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
+            fm_uint64 map_dscp_tc_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
 
-            fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
+            fm_int map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6, map_dscp);
         }
 
@@ -1556,10 +1556,10 @@ static void mapRewrite
         {
             fm_int dscp = FM_GET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
 
-            fm_uint32 map_dscp_tc_val[MBY_MAP_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), MBY_MAP_DSCP_TC_WIDTH, map_dscp_tc_val);
+            fm_uint64 map_dscp_tc_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
 
-            fm_int map_dscp = FM_ARRAY_GET_FIELD(map_dscp_tc_val, MBY_MAP_DSCP_TC, DSCP);
+            fm_int map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
             FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key8[MBY_FFU_KEY8_INNER_DS], 2, 6, map_dscp);
         }
     }

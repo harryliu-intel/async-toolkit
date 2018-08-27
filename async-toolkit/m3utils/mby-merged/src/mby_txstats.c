@@ -24,21 +24,21 @@ static void updateTxStatsBank
 )
 {
     // Update (read/modify/write) frame count:
-    fm_uint32 mod_stats_bank_frame_vals[MBY_MOD_STATS_BANK_FRAME_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MOD_STATS_BANK_FRAME(index, 0), MBY_MOD_STATS_BANK_FRAME_WIDTH, mod_stats_bank_frame_vals);
-    fm_uint64 frame_cnt = FM_ARRAY_GET_FIELD64(mod_stats_bank_frame_vals, MBY_MOD_STATS_BANK_FRAME, FRAME_COUNTER);
+    fm_uint64 mod_stats_bank_frame_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MOD_STATS_BANK_FRAME(index, 0), &mod_stats_bank_frame_reg);
+    fm_uint64 frame_cnt = FM_GET_FIELD64(mod_stats_bank_frame_reg, MBY_MOD_STATS_BANK_FRAME, FRAME_COUNTER);
     fm_uint64 one       = FM_LITERAL_U64(1);
     frame_cnt = incrTxCounter(frame_cnt, one);
-    FM_ARRAY_SET_FIELD64(mod_stats_bank_frame_vals, MBY_MOD_STATS_BANK_FRAME, FRAME_COUNTER, frame_cnt);
-    mbyModelWriteCSRMult(regs, MBY_MOD_STATS_BANK_FRAME(index, 0), MBY_MOD_STATS_BANK_FRAME_WIDTH, mod_stats_bank_frame_vals);
+    FM_SET_FIELD64(mod_stats_bank_frame_reg, MBY_MOD_STATS_BANK_FRAME, FRAME_COUNTER, frame_cnt);
+    mbyModelWriteCSR64(regs, MBY_MOD_STATS_BANK_FRAME(index, 0), mod_stats_bank_frame_reg);
 
     // Update (read/modify/write) byte count:
-    fm_uint32 mod_stats_bank_byte_vals[MBY_MOD_STATS_BANK_BYTE_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MOD_STATS_BANK_BYTE(index, 0), MBY_MOD_STATS_BANK_BYTE_WIDTH, mod_stats_bank_byte_vals);
-    fm_uint64 byte_cnt = FM_ARRAY_GET_FIELD64(mod_stats_bank_byte_vals, MBY_MOD_STATS_BANK_BYTE, BYTE_COUNTER);
+    fm_uint64 mod_stats_bank_byte_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MOD_STATS_BANK_BYTE(index, 0), &mod_stats_bank_byte_reg);
+    fm_uint64 byte_cnt = FM_GET_FIELD64(mod_stats_bank_byte_reg, MBY_MOD_STATS_BANK_BYTE, BYTE_COUNTER);
     byte_cnt = incrTxCounter(byte_cnt, len);
-    FM_ARRAY_SET_FIELD64(mod_stats_bank_byte_vals, MBY_MOD_STATS_BANK_BYTE, BYTE_COUNTER, byte_cnt);
-    mbyModelWriteCSRMult(regs, MBY_MOD_STATS_BANK_BYTE(index, 0), MBY_MOD_STATS_BANK_BYTE_WIDTH, mod_stats_bank_byte_vals);
+    FM_SET_FIELD64(mod_stats_bank_byte_reg, MBY_MOD_STATS_BANK_BYTE, BYTE_COUNTER, byte_cnt);
+    mbyModelWriteCSR64(regs, MBY_MOD_STATS_BANK_BYTE(index, 0), mod_stats_bank_byte_reg);
 }
 
 void TxStats

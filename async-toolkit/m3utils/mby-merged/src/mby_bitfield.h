@@ -120,6 +120,10 @@
 #define FM_ARRAY_SET_UNNAMED_BIT(array, bit, value) \
     mbyMultiWordBitfieldSet32((array), (bit), (bit), (value))
 
+// Extract an unnamed bit from a  64-bit value
+#define FM_GET_UNNAMED_BIT64(rvalue, bit) \
+    ( (rvalue >> bit) & 1 )
+
 fm_uint32 mbyMultiWordBitfieldGet32(const fm_uint32 *array, fm_int hiBit, fm_int loBit);
 fm_uint64 mbyMultiWordBitfieldGet64(const fm_uint32 *array, fm_int hiBit, fm_int loBit);
 

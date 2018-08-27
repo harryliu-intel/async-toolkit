@@ -13,22 +13,22 @@ static void getARPTableEntry
           mbyArpTable * const arp_table
 )
 {
-    fm_uint32 arp_table_vals[MBY_ARP_TABLE_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_ARP_TABLE(arp_tbl_idx, 0), MBY_ARP_TABLE_WIDTH, arp_table_vals);
+    fm_uint32 arp_table_regs[MBY_ARP_TABLE_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_ARP_TABLE(arp_tbl_idx, 0), MBY_ARP_TABLE_WIDTH, arp_table_regs);
 
-    arp_table->DMAC           = FM_ARRAY_GET_FIELD64(arp_table_vals, MBY_ARP_TABLE, DST_MAC);
-    arp_table->EntryType      = FM_ARRAY_GET_BIT    (arp_table_vals, MBY_ARP_TABLE, ENTRY_TYPE);
-    arp_table->IPv6Entry      = FM_ARRAY_GET_BIT    (arp_table_vals, MBY_ARP_TABLE, IPV6_ENTRY);
-    arp_table->EVID           = FM_ARRAY_GET_FIELD  (arp_table_vals, MBY_ARP_TABLE, EVID);
-    arp_table->MTU_Index      = FM_ARRAY_GET_FIELD  (arp_table_vals, MBY_ARP_TABLE, MTU_INDEX);
-    arp_table->ModIdx         = FM_ARRAY_GET_FIELD  (arp_table_vals, MBY_ARP_TABLE, MOD_IDX);
-    arp_table->L3Domain       = FM_ARRAY_GET_FIELD  (arp_table_vals, MBY_ARP_TABLE, L3_DOMAIN);
-    arp_table->L2Domain       = FM_ARRAY_GET_FIELD  (arp_table_vals, MBY_ARP_TABLE, L2_DOMAIN);
-    arp_table->UpdateL3Domain = FM_ARRAY_GET_BIT    (arp_table_vals, MBY_ARP_TABLE, UPDATE_L3_DOMAIN);
-    arp_table->UpdateL2Domain = FM_ARRAY_GET_BIT    (arp_table_vals, MBY_ARP_TABLE, UPDATE_L2_DOMAIN);
+    arp_table->DMAC           = FM_ARRAY_GET_FIELD64(arp_table_regs, MBY_ARP_TABLE, DST_MAC);
+    arp_table->EntryType      = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, ENTRY_TYPE);
+    arp_table->IPv6Entry      = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, IPV6_ENTRY);
+    arp_table->EVID           = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, EVID);
+    arp_table->MTU_Index      = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, MTU_INDEX);
+    arp_table->ModIdx         = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, MOD_IDX);
+    arp_table->L3Domain       = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, L3_DOMAIN);
+    arp_table->L2Domain       = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, L2_DOMAIN);
+    arp_table->UpdateL3Domain = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, UPDATE_L3_DOMAIN);
+    arp_table->UpdateL2Domain = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, UPDATE_L2_DOMAIN);
     
-    fm_uint16 dglort      = FM_ARRAY_GET_FIELD(arp_table_vals, MBY_ARP_ENTRY_GLORT, DGLORT);
-    fm_bool   mark_routed = FM_ARRAY_GET_BIT  (arp_table_vals, MBY_ARP_ENTRY_GLORT, markRouted);
+    fm_uint16 dglort      = FM_ARRAY_GET_FIELD(arp_table_regs, MBY_ARP_ENTRY_GLORT, DGLORT);
+    fm_bool   mark_routed = FM_ARRAY_GET_BIT  (arp_table_regs, MBY_ARP_ENTRY_GLORT, markRouted);
     fm_bool   type_glort  = (arp_table->EntryType == MBY_ARP_TYPE_GLORT);
 
     arp_table->DGLORT     = (type_glort) ? dglort      : 0;
@@ -41,16 +41,16 @@ static void setARPUsedEntry
     const fm_uint32 arp_tbl_idx
 )
 {   
-    fm_uint32 arp_used_vals[MBY_ARP_USED_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_ARP_USED(arp_tbl_idx, 0), MBY_ARP_USED_WIDTH, arp_used_vals);
+    fm_uint64 arp_used_reg = 0;
+    mbyModelReadCSR64(regs, MBY_ARP_USED(arp_tbl_idx, 0), &arp_used_reg);
 
-    fm_uint64 used_value = FM_ARRAY_GET_FIELD64(arp_used_vals, MBY_ARP_USED, USED);
+    fm_uint64 used_value = FM_GET_FIELD64(arp_used_reg, MBY_ARP_USED, USED);
 
     used_value |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
 
-    FM_ARRAY_SET_FIELD64(arp_used_vals, MBY_ARP_USED, USED, used_value);
+    FM_SET_FIELD64(arp_used_reg, MBY_ARP_USED, USED, used_value);
 
-    mbyModelWriteCSRMult(regs, MBY_ARP_USED(arp_tbl_idx, 0), MBY_ARP_USED_WIDTH, arp_used_vals);
+    mbyModelWriteCSR64(regs, MBY_ARP_USED(arp_tbl_idx, 0), arp_used_reg);
 }
 
 void NextHop

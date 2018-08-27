@@ -538,21 +538,21 @@ static void getFwdHashingCfg
     mbyFwdHashingCfg * const fwd_hashing_cfg
 )
 {
-    fm_uint32 fwd_hashing_cfg_vals[MBY_FWD_HASHING_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_HASHING_CFG(0), MBY_FWD_HASHING_CFG_WIDTH, fwd_hashing_cfg_vals);
+    fm_uint64 fwd_hashing_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_HASHING_CFG(0), &fwd_hashing_cfg_reg);
 
-    fwd_hashing_cfg->USE_METADATA  = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_METADATA);
-    fwd_hashing_cfg->ECMP_ROTATION = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, ECMP_ROTATION);
-    fwd_hashing_cfg->ROTATION_B    = FM_ARRAY_GET_FIELD(fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, ROTATION_B);
-    fwd_hashing_cfg->ROTATION_A    = FM_ARRAY_GET_FIELD(fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, ROTATION_A);
-    fwd_hashing_cfg->USE_VID       = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_VID);
-    fwd_hashing_cfg->USE_VPRI      = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_VPRI);
-    fwd_hashing_cfg->USE_TYPE      = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_TYPE);
-    fwd_hashing_cfg->USE_SMAC      = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_SMAC);
-    fwd_hashing_cfg->USE_DMAC      = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_DMAC);
-    fwd_hashing_cfg->SYMMETRIC     = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, SYMMETRIC);
-    fwd_hashing_cfg->USE_L34       = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_L34);
-    fwd_hashing_cfg->USE_L2_IF_IP  = FM_ARRAY_GET_BIT  (fwd_hashing_cfg_vals, MBY_FWD_HASHING_CFG, USE_L2_IF_IP);
+    fwd_hashing_cfg->USE_METADATA  = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_METADATA);
+    fwd_hashing_cfg->ECMP_ROTATION = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, ECMP_ROTATION);
+    fwd_hashing_cfg->ROTATION_B    = FM_GET_FIELD64(fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, ROTATION_B);
+    fwd_hashing_cfg->ROTATION_A    = FM_GET_FIELD64(fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, ROTATION_A);
+    fwd_hashing_cfg->USE_VID       = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_VID);
+    fwd_hashing_cfg->USE_VPRI      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_VPRI);
+    fwd_hashing_cfg->USE_TYPE      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_TYPE);
+    fwd_hashing_cfg->USE_SMAC      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_SMAC);
+    fwd_hashing_cfg->USE_DMAC      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_DMAC);
+    fwd_hashing_cfg->SYMMETRIC     = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, SYMMETRIC);
+    fwd_hashing_cfg->USE_L34       = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_L34);
+    fwd_hashing_cfg->USE_L2_IF_IP  = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_L2_IF_IP);
 }
 
 static void fetchL234HashKeys

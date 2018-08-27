@@ -33,12 +33,12 @@ static void handleTail
         num_segs += 1 + (pkt_len + MBY_SEGMENT_LEN - 1) / MBY_SEGMENT_LEN; // check <-- REVISIT!!!
     }
     
-    fm_uint32 saf_matrix_vals[MBY_SAF_MATRIX_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_SAF_MATRIX(rx_port, 0), MBY_SAF_MATRIX_WIDTH, saf_matrix_vals);
+    fm_uint64 saf_matrix_reg = 0;
+    mbyModelReadCSR64(regs, MBY_SAF_MATRIX(rx_port, 0), &saf_matrix_reg);
 
-    fm_uint64 enable_snf    = FM_ARRAY_GET_FIELD64(saf_matrix_vals, MBY_SAF_MATRIX, ENABLE_SNF);
-    fm_uint32 cut_thru_mode = FM_ARRAY_GET_FIELD  (saf_matrix_vals, MBY_SAF_MATRIX, CUT_THRU_MODE);
-    fm_bool   ign_frame_err = FM_ARRAY_GET_BIT    (saf_matrix_vals, MBY_SAF_MATRIX, IGNORE_FRAME_ERROR);
+    fm_uint64 enable_snf    = FM_GET_FIELD64(saf_matrix_reg, MBY_SAF_MATRIX, ENABLE_SNF);
+    fm_uint32 cut_thru_mode = FM_GET_FIELD64(saf_matrix_reg, MBY_SAF_MATRIX, CUT_THRU_MODE);
+    fm_bool   ign_frame_err = FM_GET_BIT64  (saf_matrix_reg, MBY_SAF_MATRIX, IGNORE_FRAME_ERROR);
     
     fm_uint64 dmask = fnmask;
 
@@ -162,21 +162,21 @@ static void updateRxStatsBank
 )
 {
     // Update (read/modify/write) frame count:
-    fm_uint32 rx_stats_bank_frame_vals[MBY_RX_STATS_BANK_FRAME_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_RX_STATS_BANK_FRAME(bank, index, 0), MBY_RX_STATS_BANK_FRAME_WIDTH, rx_stats_bank_frame_vals);
-    fm_uint64 frame_cnt = FM_ARRAY_GET_FIELD64(rx_stats_bank_frame_vals, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER);
+    fm_uint64 rx_stats_bank_frame_reg = 0;
+    mbyModelReadCSR64(regs, MBY_RX_STATS_BANK_FRAME(bank, index, 0), &rx_stats_bank_frame_reg);
+    fm_uint64 frame_cnt = FM_GET_FIELD64(rx_stats_bank_frame_reg, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER);
     fm_uint64 one       = FM_LITERAL_U64(1);
     frame_cnt = incrRxCounter(frame_cnt, one);
-    FM_ARRAY_SET_FIELD64(rx_stats_bank_frame_vals, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER, frame_cnt);
-    mbyModelWriteCSRMult(regs, MBY_RX_STATS_BANK_FRAME(bank, index, 0), MBY_RX_STATS_BANK_FRAME_WIDTH, rx_stats_bank_frame_vals);
+    FM_SET_FIELD64(rx_stats_bank_frame_reg, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER, frame_cnt);
+    mbyModelWriteCSR64(regs, MBY_RX_STATS_BANK_FRAME(bank, index, 0), rx_stats_bank_frame_reg);
 
     // Update (read/modify/write) byte count:
-    fm_uint32 rx_stats_bank_byte_vals[MBY_RX_STATS_BANK_BYTE_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_RX_STATS_BANK_BYTE(bank, index, 0), MBY_RX_STATS_BANK_BYTE_WIDTH, rx_stats_bank_byte_vals);
-    fm_uint64 byte_cnt = FM_ARRAY_GET_FIELD64(rx_stats_bank_byte_vals, MBY_RX_STATS_BANK_BYTE, BYTE_COUNTER);
+    fm_uint64 rx_stats_bank_byte_reg = 0;
+    mbyModelReadCSR64(regs, MBY_RX_STATS_BANK_BYTE(bank, index, 0), &rx_stats_bank_byte_reg);
+    fm_uint64 byte_cnt = FM_GET_FIELD64(rx_stats_bank_byte_reg, MBY_RX_STATS_BANK_BYTE, BYTE_COUNTER);
     byte_cnt = incrRxCounter(byte_cnt, len);
-    FM_ARRAY_SET_FIELD64(rx_stats_bank_byte_vals, MBY_RX_STATS_BANK_BYTE, BYTE_COUNTER, byte_cnt);
-    mbyModelWriteCSRMult(regs, MBY_RX_STATS_BANK_BYTE(bank, index, 0), MBY_RX_STATS_BANK_BYTE_WIDTH, rx_stats_bank_byte_vals);
+    FM_SET_FIELD64(rx_stats_bank_byte_reg, MBY_RX_STATS_BANK_BYTE, BYTE_COUNTER, byte_cnt);
+    mbyModelWriteCSR64(regs, MBY_RX_STATS_BANK_BYTE(bank, index, 0), rx_stats_bank_byte_reg);
 }
 
 static void updateRxStatsVlan
@@ -187,21 +187,21 @@ static void updateRxStatsVlan
 )
 {
     // Update (read/modify/write) frame count:
-    fm_uint32 rx_stats_vlan_frame_vals[MBY_RX_STATS_VLAN_FRAME_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_RX_STATS_VLAN_FRAME(index, 0), MBY_RX_STATS_VLAN_FRAME_WIDTH, rx_stats_vlan_frame_vals);
-    fm_uint64 frame_cnt = FM_ARRAY_GET_FIELD64(rx_stats_vlan_frame_vals, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER);
+    fm_uint64 rx_stats_vlan_frame_reg = 0;
+    mbyModelReadCSR64(regs, MBY_RX_STATS_VLAN_FRAME(index, 0), &rx_stats_vlan_frame_reg);
+    fm_uint64 frame_cnt = FM_GET_FIELD64(rx_stats_vlan_frame_reg, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER);
     fm_uint64 one       = FM_LITERAL_U64(1);
     frame_cnt = incrRxCounter(frame_cnt, one);
-    FM_ARRAY_SET_FIELD64(rx_stats_vlan_frame_vals, MBY_RX_STATS_VLAN_FRAME, FRAME_COUNTER, frame_cnt);
-    mbyModelWriteCSRMult(regs, MBY_RX_STATS_VLAN_FRAME(index, 0), MBY_RX_STATS_VLAN_FRAME_WIDTH, rx_stats_vlan_frame_vals);
+    FM_SET_FIELD64(rx_stats_vlan_frame_reg, MBY_RX_STATS_VLAN_FRAME, FRAME_COUNTER, frame_cnt);
+    mbyModelWriteCSR64(regs, MBY_RX_STATS_VLAN_FRAME(index, 0), rx_stats_vlan_frame_reg);
 
     // Update (read/modify/write) byte count:
-    fm_uint32 rx_stats_vlan_byte_vals[MBY_RX_STATS_VLAN_BYTE_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_RX_STATS_VLAN_BYTE(index, 0), MBY_RX_STATS_VLAN_BYTE_WIDTH, rx_stats_vlan_byte_vals);
-    fm_uint64 byte_cnt = FM_ARRAY_GET_FIELD64(rx_stats_vlan_byte_vals, MBY_RX_STATS_VLAN_BYTE, BYTE_COUNTER);
+    fm_uint64 rx_stats_vlan_byte_reg = 0;
+    mbyModelReadCSR64(regs, MBY_RX_STATS_VLAN_BYTE(index, 0), &rx_stats_vlan_byte_reg);
+    fm_uint64 byte_cnt = FM_GET_FIELD64(rx_stats_vlan_byte_reg, MBY_RX_STATS_VLAN_BYTE, BYTE_COUNTER);
     byte_cnt = incrRxCounter(byte_cnt, len);
-    FM_ARRAY_SET_FIELD64(rx_stats_vlan_byte_vals, MBY_RX_STATS_VLAN_BYTE, BYTE_COUNTER, byte_cnt);
-    mbyModelWriteCSRMult(regs, MBY_RX_STATS_VLAN_BYTE(index, 0), MBY_RX_STATS_VLAN_BYTE_WIDTH, rx_stats_vlan_byte_vals);
+    FM_SET_FIELD64(rx_stats_vlan_byte_reg, MBY_RX_STATS_VLAN_BYTE, BYTE_COUNTER, byte_cnt);
+    mbyModelWriteCSR64(regs, MBY_RX_STATS_VLAN_BYTE(index, 0), rx_stats_vlan_byte_reg);
 }
 
 static void handleRxBank0

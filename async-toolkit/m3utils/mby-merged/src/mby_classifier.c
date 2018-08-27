@@ -15,17 +15,17 @@ static void getTcamCfg
     mbyClassifierTcamCfg * const tcam_cfg
 )
 {
-    fm_uint32 ffu_tcam_cfg_vals[MBY_FFU_TCAM_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FFU_TCAM_CFG(group, slice, scenario, 0), MBY_FFU_TCAM_CFG_WIDTH, ffu_tcam_cfg_vals);
+    fm_uint64 ffu_tcam_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_TCAM_CFG(group, slice, scenario, 0), &ffu_tcam_cfg_reg);
 
-    tcam_cfg->CHUNK_MASK    = FM_ARRAY_GET_FIELD(ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, CHUNK_MASK);
-    tcam_cfg->START_COMPARE = FM_ARRAY_GET_BIT  (ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, START_COMPARE);
-    tcam_cfg->START_SET     = FM_ARRAY_GET_BIT  (ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, START_SET);
-    tcam_cfg->SELECT_TOP    = FM_ARRAY_GET_FIELD(ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, SELECT_TOP);
-    tcam_cfg->SELECT0       = FM_ARRAY_GET_FIELD(ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, SELECT0);
-    tcam_cfg->SELECT1       = FM_ARRAY_GET_FIELD(ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, SELECT1);
-    tcam_cfg->SELECT2       = FM_ARRAY_GET_FIELD(ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, SELECT2);
-    tcam_cfg->SELECT3       = FM_ARRAY_GET_FIELD(ffu_tcam_cfg_vals, MBY_FFU_TCAM_CFG, SELECT3);
+    tcam_cfg->CHUNK_MASK    = FM_GET_FIELD64(ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, CHUNK_MASK);
+    tcam_cfg->START_COMPARE = FM_GET_BIT64  (ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, START_COMPARE);
+    tcam_cfg->START_SET     = FM_GET_BIT64  (ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, START_SET);
+    tcam_cfg->SELECT_TOP    = FM_GET_FIELD64(ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, SELECT_TOP);
+    tcam_cfg->SELECT0       = FM_GET_FIELD64(ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, SELECT0);
+    tcam_cfg->SELECT1       = FM_GET_FIELD64(ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, SELECT1);
+    tcam_cfg->SELECT2       = FM_GET_FIELD64(ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, SELECT2);
+    tcam_cfg->SELECT3       = FM_GET_FIELD64(ffu_tcam_cfg_reg, MBY_FFU_TCAM_CFG, SELECT3);
 }
 
 static void getTcamEntry
@@ -37,14 +37,14 @@ static void getTcamEntry
     mbyClassifierTcamEntry * const tcam_entry
 )
 {
-    fm_uint32 ffu_tcam_vals[MBY_FFU_TCAM_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FFU_TCAM(group, slice, index, 0), MBY_FFU_TCAM_WIDTH, ffu_tcam_vals);
+    fm_uint32 ffu_tcam_regs[MBY_FFU_TCAM_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_FFU_TCAM(group, slice, index, 0), MBY_FFU_TCAM_WIDTH, ffu_tcam_regs);
 
-    tcam_entry->Key       = FM_ARRAY_GET_FIELD64(ffu_tcam_vals, MBY_FFU_TCAM, KEY) |
-                            FM_ARRAY_GET_FIELD64(ffu_tcam_vals, MBY_FFU_TCAM, KEY_TOP) << 32;
+    tcam_entry->Key       = FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY) |
+                            FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_TOP) << 32;
 
-    tcam_entry->KeyInvert = FM_ARRAY_GET_FIELD64(ffu_tcam_vals, MBY_FFU_TCAM, KEY_INVERT) |
-                            FM_ARRAY_GET_FIELD64(ffu_tcam_vals, MBY_FFU_TCAM, KEY_TOP_INVERT) << 32;
+    tcam_entry->KeyInvert = FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_INVERT) |
+                            FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_TOP_INVERT) << 32;
 }
 
 static void selectKeyMask
@@ -336,28 +336,28 @@ static void resolveActions
     mbyClassifierActions * const actions // = output actions
 )
 {
-    fm_uint32 ffu_action_cfg_vals[MBY_FFU_ACTION_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FFU_ACTION_CFG(group, scenario, 0), MBY_FFU_ACTION_CFG_WIDTH, ffu_action_cfg_vals);
+    fm_uint32 ffu_action_cfg_regs[MBY_FFU_ACTION_CFG_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_FFU_ACTION_CFG(group, scenario, 0), MBY_FFU_ACTION_CFG_WIDTH, ffu_action_cfg_regs);
 
     for (fm_uint ram_num = 0; ram_num < MBY_FFU_ACTION_ENTRIES_1; ram_num++)
     {
-        fm_bool enable = FM_ARRAY_GET_UNNAMED_FIELD(ffu_action_cfg_vals, ram_num + (MBY_FFU_ACTION_ENTRIES_1 * 4), 1);
+        fm_bool enable = FM_ARRAY_GET_UNNAMED_FIELD(ffu_action_cfg_regs, ram_num + (MBY_FFU_ACTION_ENTRIES_1 * 4), 1);
         if (!enable)
             continue; // skip action RAM if disabled
 
-        fm_uint slice = FM_ARRAY_GET_UNNAMED_FIELD(ffu_action_cfg_vals, ram_num * 4, 4);
+        fm_uint slice = FM_ARRAY_GET_UNNAMED_FIELD(ffu_action_cfg_regs, ram_num * 4, 4);
 
         if (tcam_hit_info[slice].hitIndexValid)
         {
             fm_uint hit_index = tcam_hit_info[slice].hitIndex;
 
-            fm_uint32 ffu_action_vals[MBY_FFU_ACTION_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_FFU_ACTION(group, ram_num, hit_index, 0), MBY_FFU_ACTION_WIDTH, ffu_action_vals);
+            fm_uint64 ffu_action_reg = 0;
+            mbyModelReadCSR64(regs, MBY_FFU_ACTION(group, ram_num, hit_index, 0), &ffu_action_reg);
 
             for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
                 fm_uint32 action = (i == 0) ?
-                    FM_ARRAY_GET_FIELD(ffu_action_vals, MBY_FFU_ACTION, ACTION0) :
-                    FM_ARRAY_GET_FIELD(ffu_action_vals, MBY_FFU_ACTION, ACTION1) ;
+                    FM_GET_FIELD64(ffu_action_reg, MBY_FFU_ACTION, ACTION0) :
+                    FM_GET_FIELD64(ffu_action_reg, MBY_FFU_ACTION, ACTION1) ;
                 doAction(regs, action, actions);
             }
         }
@@ -391,15 +391,15 @@ static void getKeyMaskCfg
     mbyClassifierKeyMaskCfg * const key_mask_cfg
 )
 {
-    fm_uint32 ffu_key_mask0_vals[MBY_FFU_KEY_MASK0_WIDTH] = { 0 };
-    fm_uint32 ffu_key_mask1_vals[MBY_FFU_KEY_MASK1_WIDTH] = { 0 };
+    fm_uint64 ffu_key_mask0_reg = 0;
+    fm_uint64 ffu_key_mask1_reg = 0;
 
-    mbyModelReadCSRMult(regs, MBY_FFU_KEY_MASK0(group, hash_num, scenario, 0), MBY_FFU_KEY_MASK0_WIDTH, ffu_key_mask0_vals);
-    mbyModelReadCSRMult(regs, MBY_FFU_KEY_MASK1(group, hash_num, scenario, 0), MBY_FFU_KEY_MASK1_WIDTH, ffu_key_mask1_vals);
+    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK0(group, hash_num, scenario, 0), &ffu_key_mask0_reg);
+    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK1(group, hash_num, scenario, 0), &ffu_key_mask1_reg);
 
-    key_mask_cfg->Key8Mask  = FM_ARRAY_GET_FIELD64(ffu_key_mask0_vals, MBY_FFU_KEY_MASK0, KEY8_MASK);
-    key_mask_cfg->Key16Mask = FM_ARRAY_GET_FIELD  (ffu_key_mask1_vals, MBY_FFU_KEY_MASK1, KEY16_MASK);
-    key_mask_cfg->Key32Mask = FM_ARRAY_GET_FIELD  (ffu_key_mask1_vals, MBY_FFU_KEY_MASK1, KEY32_MASK);
+    key_mask_cfg->Key8Mask  = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
+    key_mask_cfg->Key16Mask = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    key_mask_cfg->Key32Mask = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
 }
 
 static void applyKeyMask
@@ -494,16 +494,16 @@ static void getHashCfg
     mbyClassifierHashCfg * const hash_cfg
 )
 {
-    fm_uint32 ffu_hash_cfg_vals[MBY_FFU_HASH_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FFU_HASH_CFG(group, scenario, 0), MBY_FFU_HASH_CFG_WIDTH, ffu_hash_cfg_vals);
+    fm_uint64 ffu_hash_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_HASH_CFG(group, scenario, 0), &ffu_hash_cfg_reg);
 
-    hash_cfg->mode          = FM_ARRAY_GET_BIT  (ffu_hash_cfg_vals, MBY_FFU_HASH_CFG, MODE);
-    hash_cfg->base_ptr[0]   = FM_ARRAY_GET_FIELD(ffu_hash_cfg_vals, MBY_FFU_HASH_CFG, BASE_PTR_0);
-    hash_cfg->base_ptr[1]   = FM_ARRAY_GET_FIELD(ffu_hash_cfg_vals, MBY_FFU_HASH_CFG, BASE_PTR_1);
-    hash_cfg->hash_size[0]  = FM_ARRAY_GET_FIELD(ffu_hash_cfg_vals, MBY_FFU_HASH_CFG, HASH_SIZE_0);
-    hash_cfg->hash_size[1]  = FM_ARRAY_GET_FIELD(ffu_hash_cfg_vals, MBY_FFU_HASH_CFG, HASH_SIZE_1);
-    hash_cfg->entry_size[0] = FM_ARRAY_GET_FIELD(ffu_hash_cfg_vals, MBY_FFU_HASH_CFG, ENTRY_SIZE_0);
-    hash_cfg->entry_size[1] = FM_ARRAY_GET_FIELD(ffu_hash_cfg_vals, MBY_FFU_HASH_CFG, ENTRY_SIZE_1);
+    hash_cfg->mode          = FM_GET_BIT64  (ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, MODE);
+    hash_cfg->base_ptr[0]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_0);
+    hash_cfg->base_ptr[1]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_1);
+    hash_cfg->hash_size[0]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_0);
+    hash_cfg->hash_size[1]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_1);
+    hash_cfg->entry_size[0] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_0);
+    hash_cfg->entry_size[1] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_1);
 }
 
 static void getHashLookupEntry
@@ -514,16 +514,16 @@ static void getHashLookupEntry
     mbyClassifierHashLookup * const lookup_entry
 )
 {
-    fm_uint32 ffu_hash_lookup_vals[MBY_FFU_HASH_LOOKUP_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FFU_HASH_LOOKUP(group, lookup_ptr, 0), MBY_FFU_HASH_LOOKUP_WIDTH, ffu_hash_lookup_vals);
+    fm_uint32 ffu_hash_lookup_regs[MBY_FFU_HASH_LOOKUP_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_FFU_HASH_LOOKUP(group, lookup_ptr, 0), MBY_FFU_HASH_LOOKUP_WIDTH, ffu_hash_lookup_regs);
 
-    lookup_entry->PTR      = FM_ARRAY_GET_FIELD(ffu_hash_lookup_vals, MBY_FFU_HASH_LOOKUP, PTR);
-    lookup_entry->SELECT_4 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_vals, MBY_FFU_HASH_LOOKUP, SELECT_4);
-    lookup_entry->SELECT_3 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_vals, MBY_FFU_HASH_LOOKUP, SELECT_3);
-    lookup_entry->SELECT_2 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_vals, MBY_FFU_HASH_LOOKUP, SELECT_2);
-    lookup_entry->SELECT_1 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_vals, MBY_FFU_HASH_LOOKUP, SELECT_1);
-    lookup_entry->SELECT_0 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_vals, MBY_FFU_HASH_LOOKUP, SELECT_0);
-    lookup_entry->MASK     = FM_ARRAY_GET_FIELD(ffu_hash_lookup_vals, MBY_FFU_HASH_LOOKUP, MASK);
+    lookup_entry->PTR      = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, PTR);
+    lookup_entry->SELECT_4 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_4);
+    lookup_entry->SELECT_3 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_3);
+    lookup_entry->SELECT_2 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_2);
+    lookup_entry->SELECT_1 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_1);
+    lookup_entry->SELECT_0 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_0);
+    lookup_entry->MASK     = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, MASK);
 }
 
 static fm_uint64 getHashRamEntry
@@ -536,14 +536,14 @@ static fm_uint64 getHashRamEntry
     fm_uint64 hash_entry = 0;
 
     if (hash_num == 0) {
-        fm_uint32 hash_entry0_vals[MBY_HASH_ENTRY0_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_HASH_ENTRY0(hash_ram_addr, 0), MBY_HASH_ENTRY0_WIDTH, hash_entry0_vals);
-        hash_entry = FM_ARRAY_GET_FIELD64(hash_entry0_vals, MBY_HASH_ENTRY0, DATA);
+        fm_uint64 hash_entry0_reg = 0;
+        mbyModelReadCSR64(regs, MBY_HASH_ENTRY0(hash_ram_addr, 0), &hash_entry0_reg);
+        hash_entry = FM_GET_FIELD64(hash_entry0_reg, MBY_HASH_ENTRY0, DATA);
     }
     else {
-        fm_uint32 hash_entry1_vals[MBY_HASH_ENTRY1_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_HASH_ENTRY1(hash_ram_addr, 0), MBY_HASH_ENTRY1_WIDTH, hash_entry1_vals);
-        hash_entry = FM_ARRAY_GET_FIELD64(hash_entry1_vals, MBY_HASH_ENTRY1, DATA);
+        fm_uint64 hash_entry1_reg = 0;
+        mbyModelReadCSR64(regs, MBY_HASH_ENTRY1(hash_ram_addr, 0), &hash_entry1_reg);
+        hash_entry = FM_GET_FIELD64(hash_entry1_reg, MBY_HASH_ENTRY1, DATA);
     }
 
     return hash_entry;
@@ -581,9 +581,9 @@ static void getHashRamData
 
     fm_byte ram_alloc[MBY_FFU_KEY_MASK0_ENTRIES_1] = { 0 };
     for (fm_uint i = 0; i < MBY_FFU_KEY_MASK0_ENTRIES_1; i++) {
-        fm_uint32 hash_entry_ram_alloc_vals[MBY_HASH_ENTRY_RAM_ALLOC_WIDTH] = { 0 };
-        mbyModelReadCSRMult(hash_entry_ram_alloc_vals, MBY_HASH_ENTRY_RAM_ALLOC(i, 0), MBY_HASH_ENTRY_RAM_ALLOC_WIDTH, hash_entry_ram_alloc_vals);
-        ram_alloc[i] = FM_ARRAY_GET_FIELD64(hash_entry_ram_alloc_vals, MBY_HASH_ENTRY_RAM_ALLOC, GP_SEL);
+        fm_uint64 hash_entry_ram_alloc_reg = 0;
+        mbyModelReadCSR64(regs, MBY_HASH_ENTRY_RAM_ALLOC(i, 0), &hash_entry_ram_alloc_reg);
+        ram_alloc[i] = FM_GET_FIELD64(hash_entry_ram_alloc_reg, MBY_HASH_ENTRY_RAM_ALLOC, GP_SEL);
     }
 
     fm_bool   mode_32b   = (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_32B);
@@ -793,9 +793,9 @@ static void lookUpHash
                 fm_bool hashn_32b = ( ((hash_num == 0) && (j < 4)) || ((hash_num == 1) && (j >= 4)) );
 
                 if (entry_64b || (entry_32b && hashn_32b)) {
-                    fm_uint32 ffu_hash_cam_vals[MBY_FFU_HASH_CAM_WIDTH] = { 0 };
-                    mbyModelReadCSRMult(regs, MBY_FFU_HASH_CAM(group, i, j, 0), MBY_FFU_HASH_CAM_WIDTH, ffu_hash_cam_vals);
-                    fm_uint64 cam_entry = FM_ARRAY_GET_FIELD64(ffu_hash_cam_vals, MBY_FFU_HASH_CAM, DATA);
+                    fm_uint64 ffu_hash_cam_reg = 0;
+                    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM(group, i, j, 0), &ffu_hash_cam_reg);
+                    fm_uint64 cam_entry = FM_GET_FIELD64(ffu_hash_cam_reg, MBY_FFU_HASH_CAM, DATA);
                     for (fm_uint k = 0; k < 8; k++) {
                         cam_key[key_idx] = (cam_entry >> (8 * (7-k))) & 0xFF;
                         key_idx++;
@@ -826,15 +826,15 @@ static void lookUpHash
 
             if (cam_hit)
             {
-                fm_uint32 ffu_hash_cam_en_vals[MBY_FFU_HASH_CAM_EN_WIDTH] = { 0 };
-                mbyModelReadCSRMult(regs, MBY_FFU_HASH_CAM_EN(group, hash_num, i, 0), MBY_FFU_HASH_CAM_EN_WIDTH, ffu_hash_cam_en_vals);
-                fm_uint64 scenario_mask = FM_ARRAY_GET_FIELD64(ffu_hash_cam_en_vals, MBY_FFU_HASH_CAM_EN, MASK);
+                fm_uint64 ffu_hash_cam_en_reg = 0;
+                mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM_EN(group, hash_num, i, 0), &ffu_hash_cam_en_reg);
+                fm_uint64 scenario_mask = FM_GET_FIELD64(ffu_hash_cam_en_reg, MBY_FFU_HASH_CAM_EN, MASK);
                 hash_cam_en = (scenario_mask >> scenario) & 1;
 
                 // 64B entry mode needs to consider CAM_EN[0/1]
                 if (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) {
-                    mbyModelReadCSRMult(regs, MBY_FFU_HASH_CAM_EN(group, (hash_num + 1), i, 0), MBY_FFU_HASH_CAM_EN_WIDTH, ffu_hash_cam_en_vals);
-                    scenario_mask = FM_ARRAY_GET_FIELD64(ffu_hash_cam_en_vals, MBY_FFU_HASH_CAM_EN, MASK);
+                    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM_EN(group, (hash_num + 1), i, 0), &ffu_hash_cam_en_reg);
+                    scenario_mask = FM_GET_FIELD64(ffu_hash_cam_en_reg, MBY_FFU_HASH_CAM_EN, MASK);
                     hash_cam_en &= (scenario_mask >> scenario) & 1;
                 }
 
@@ -882,15 +882,15 @@ static void lookUpHash
                 getHashActions(hash_ram_key, hash_cfg.mode, key_size, cam_entry_size, is_cam, hash_actions);
             } else {
                 // Get actions from FFU_HASH_MISS register since both cam and ram missed
-                fm_uint32 ffu_hash_miss_vals[MBY_FFU_HASH_MISS_WIDTH] = { 0 };
-                mbyModelReadCSRMult(regs, MBY_FFU_HASH_MISS(group, hash_num, scenario, 0), MBY_FFU_HASH_MISS_WIDTH, ffu_hash_miss_vals);
-                hash_actions[0] = FM_ARRAY_GET_FIELD(ffu_hash_miss_vals, MBY_FFU_HASH_MISS, ACTION0);
-                hash_actions[1] = FM_ARRAY_GET_FIELD(ffu_hash_miss_vals, MBY_FFU_HASH_MISS, ACTION1);
+                fm_uint64 ffu_hash_miss_reg = 0;
+                mbyModelReadCSR64(regs, MBY_FFU_HASH_MISS(group, hash_num, scenario, 0), &ffu_hash_miss_reg);
+                hash_actions[0] = FM_GET_FIELD64(ffu_hash_miss_reg, MBY_FFU_HASH_MISS, ACTION0);
+                hash_actions[1] = FM_GET_FIELD64(ffu_hash_miss_reg, MBY_FFU_HASH_MISS, ACTION1);
 
                 if (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) {
-                    mbyModelReadCSRMult(regs, MBY_FFU_HASH_MISS(group, 1, scenario, 0), MBY_FFU_HASH_MISS_WIDTH, ffu_hash_miss_vals);
-                    hash_actions[2] = FM_ARRAY_GET_FIELD(ffu_hash_miss_vals, MBY_FFU_HASH_MISS, ACTION0);
-                    hash_actions[3] = FM_ARRAY_GET_FIELD(ffu_hash_miss_vals, MBY_FFU_HASH_MISS, ACTION1);
+                    mbyModelReadCSR64(regs, MBY_FFU_HASH_MISS(group, 1, scenario, 0), &ffu_hash_miss_reg);
+                    hash_actions[2] = FM_GET_FIELD64(ffu_hash_miss_reg, MBY_FFU_HASH_MISS, ACTION0);
+                    hash_actions[3] = FM_GET_FIELD64(ffu_hash_miss_reg, MBY_FFU_HASH_MISS, ACTION1);
                 }
             }
 
@@ -951,18 +951,18 @@ static void populateMuxedAction
             case 2: // ECN-CTRL[1:0] = 2 : ECN source is MPLS label 1, i.e. MPLS_MUX_EXP_DS[mpls_labels[0].exp].ecn
             {
                 exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3);
-                fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
-                mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
-                muxed_action->ecn = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, ECN);
+                fm_uint64 mpls_mux_exp_ds_reg = 0;
+                mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
+                muxed_action->ecn = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, ECN);
                 break;
             }
             case 3: // ECN_CTRL[1:0]=3: ECN source is MPLS label exposed after MPLS_POP
             {
                 exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
                       (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0;
-                fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
-                mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
-                muxed_action->ecn = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, ECN);
+                fm_uint64 mpls_mux_exp_ds_reg = 0;
+                mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
+                muxed_action->ecn = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, ECN);
                 break;
             }
 
@@ -1000,9 +1000,9 @@ static void populateMuxedAction
     }
 
     if (dscp_ctrl == 6 || ((dscp_ctrl >= 8) && (dscp_ctrl <= 11))) {
-        fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
-        muxed_action->dscp = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, DSCP);
+        fm_uint64 mpls_mux_exp_ds_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
+        muxed_action->dscp = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, DSCP);
     }
 
     // Update SWPRI:
@@ -1015,17 +1015,17 @@ static void populateMuxedAction
         case  4:
         {
             dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
-            fm_uint32 mpls_mux_dscp_tc_vals[MBY_MPLS_MUX_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), MBY_MPLS_MUX_DSCP_TC_WIDTH, mpls_mux_dscp_tc_vals);
-            muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_dscp_tc_vals, MBY_MPLS_MUX_DSCP_TC, TC);
+            fm_uint64 mpls_mux_dscp_tc_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), &mpls_mux_dscp_tc_reg);
+            muxed_action->swpri = FM_GET_FIELD64(mpls_mux_dscp_tc_reg, MBY_MPLS_MUX_DSCP_TC, TC);
             break;
         }
         case  5:
         {
             dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
-            fm_uint32 mpls_mux_dscp_tc_vals[MBY_MPLS_MUX_DSCP_TC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), MBY_MPLS_MUX_DSCP_TC_WIDTH, mpls_mux_dscp_tc_vals);
-            muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_dscp_tc_vals, MBY_MPLS_MUX_DSCP_TC, TC);
+            fm_uint64 mpls_mux_dscp_tc_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), &mpls_mux_dscp_tc_reg);
+            muxed_action->swpri = FM_GET_FIELD64(mpls_mux_dscp_tc_reg, MBY_MPLS_MUX_DSCP_TC, TC);
             break;
         }
     case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
@@ -1040,9 +1040,9 @@ static void populateMuxedAction
     }
 
     if (tc_ctrl == 6 || (tc_ctrl >= 8 && tc_ctrl <= 11)) {
-        fm_uint32 mpls_mux_exp_ds_vals[MBY_MPLS_MUX_EXP_DS_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), MBY_MPLS_MUX_EXP_DS_WIDTH, mpls_mux_exp_ds_vals);
-        muxed_action->swpri = FM_ARRAY_GET_FIELD(mpls_mux_exp_ds_vals, MBY_MPLS_MUX_EXP_DS, TC);
+        fm_uint64 mpls_mux_exp_ds_reg = 0;
+        mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
+        muxed_action->swpri = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, TC);
     }
 
     // get TTL value based on TTL_CTRL Action:
@@ -1085,15 +1085,15 @@ static void getEntropyCfg
     mbyClassifierKeyMaskCfg * const entropy_cfg
 )
 {
-    fm_uint32 entropy_hash_cfg0_vals[MBY_ENTROPY_HASH_CFG0_WIDTH] = { 0 };
-    fm_uint32 entropy_hash_cfg1_vals[MBY_ENTROPY_HASH_CFG1_WIDTH] = { 0 };
+    fm_uint64 entropy_hash_cfg0_reg = 0;
+    fm_uint64 entropy_hash_cfg1_reg = 0;
 
-    mbyModelReadCSRMult(regs, MBY_ENTROPY_HASH_CFG0(hash_num, hash_prof, 0), MBY_ENTROPY_HASH_CFG0_WIDTH, entropy_hash_cfg0_vals);
-    mbyModelReadCSRMult(regs, MBY_ENTROPY_HASH_CFG1(hash_num, hash_prof, 0), MBY_ENTROPY_HASH_CFG1_WIDTH, entropy_hash_cfg1_vals);
+    mbyModelReadCSR64(regs, MBY_ENTROPY_HASH_CFG0(hash_num, hash_prof, 0), &entropy_hash_cfg0_reg);
+    mbyModelReadCSR64(regs, MBY_ENTROPY_HASH_CFG1(hash_num, hash_prof, 0), &entropy_hash_cfg1_reg);
 
-    entropy_cfg->Key8Mask  = FM_ARRAY_GET_FIELD64(entropy_hash_cfg0_vals, MBY_FFU_KEY_MASK0, KEY8_MASK);
-    entropy_cfg->Key16Mask = FM_ARRAY_GET_FIELD  (entropy_hash_cfg1_vals, MBY_FFU_KEY_MASK1, KEY16_MASK);
-    entropy_cfg->Key32Mask = FM_ARRAY_GET_FIELD  (entropy_hash_cfg1_vals, MBY_FFU_KEY_MASK1, KEY32_MASK);
+    entropy_cfg->Key8Mask  = FM_GET_FIELD64(entropy_hash_cfg0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
+    entropy_cfg->Key16Mask = FM_GET_FIELD64(entropy_hash_cfg1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    entropy_cfg->Key32Mask = FM_GET_FIELD64(entropy_hash_cfg1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
 }
 
 static void getEntropyMetaCfg
@@ -1103,12 +1103,12 @@ static void getEntropyMetaCfg
     mbyEntropyMetaCfg * const meta_cfg
 )
 {
-    fm_uint32 entropy_meta_cfg_vals[MBY_ENTROPY_META_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_ENTROPY_META_CFG(hash_prof, 0), MBY_ENTROPY_META_CFG_WIDTH, entropy_meta_cfg_vals);
+    fm_uint64 entropy_meta_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_ENTROPY_META_CFG(hash_prof, 0), &entropy_meta_cfg_reg);
 
-    meta_cfg->BYTE_DEFAULTS = FM_ARRAY_GET_FIELD(entropy_meta_cfg_vals, MBY_ENTROPY_META_CFG, BYTE_DEFAULTS);
-    meta_cfg->HASH_START    = FM_ARRAY_GET_FIELD(entropy_meta_cfg_vals, MBY_ENTROPY_META_CFG, HASH_START);
-    meta_cfg->HASH_SIZE     = FM_ARRAY_GET_FIELD(entropy_meta_cfg_vals, MBY_ENTROPY_META_CFG, HASH_SIZE);
+    meta_cfg->BYTE_DEFAULTS = FM_GET_FIELD64(entropy_meta_cfg_reg, MBY_ENTROPY_META_CFG, BYTE_DEFAULTS);
+    meta_cfg->HASH_START    = FM_GET_FIELD64(entropy_meta_cfg_reg, MBY_ENTROPY_META_CFG, HASH_START);
+    meta_cfg->HASH_SIZE     = FM_GET_FIELD64(entropy_meta_cfg_reg, MBY_ENTROPY_META_CFG, HASH_SIZE);
 }
 
 static void populateEntropy

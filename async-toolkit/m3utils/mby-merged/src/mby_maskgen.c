@@ -12,12 +12,12 @@ static void getPortCfg1
     mbyFwdPortCfg1 * const cfg
 )
 {
-    fm_uint32 fwd_port_cfg1_vals[MBY_FWD_PORT_CFG_1_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_PORT_CFG_1(port, 0), MBY_FWD_PORT_CFG_1_WIDTH, fwd_port_cfg1_vals);
+    fm_uint64 fwd_port_cfg1_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_PORT_CFG_1(port, 0), &fwd_port_cfg1_reg);
 
-    cfg->LEARNING_ENABLE     = FM_ARRAY_GET_BIT  (fwd_port_cfg1_vals, MBY_FWD_PORT_CFG_1, LEARNING_ENABLE);
-    cfg->FILTER_VLAN_INGRESS = FM_ARRAY_GET_BIT  (fwd_port_cfg1_vals, MBY_FWD_PORT_CFG_1, FILTER_VLAN_INGRESS);
-    cfg->DESTINATION_MASK    = FM_ARRAY_GET_FIELD(fwd_port_cfg1_vals, MBY_FWD_PORT_CFG_1, DESTINATION_MASK);
+    cfg->LEARNING_ENABLE     = FM_GET_BIT64  (fwd_port_cfg1_reg, MBY_FWD_PORT_CFG_1, LEARNING_ENABLE);
+    cfg->FILTER_VLAN_INGRESS = FM_GET_BIT64  (fwd_port_cfg1_reg, MBY_FWD_PORT_CFG_1, FILTER_VLAN_INGRESS);
+    cfg->DESTINATION_MASK    = FM_GET_FIELD64(fwd_port_cfg1_reg, MBY_FWD_PORT_CFG_1, DESTINATION_MASK);
 }
 
 static void getPortCfg2
@@ -27,10 +27,10 @@ static void getPortCfg2
     mbyFwdPortCfg2 * const cfg
 )
 {
-    fm_uint32 fwd_port_cfg2_vals[MBY_FWD_PORT_CFG_2_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_PORT_CFG_2(port, 0), MBY_FWD_PORT_CFG_2_WIDTH, fwd_port_cfg2_vals);
+    fm_uint64 fwd_port_cfg2_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_PORT_CFG_2(port, 0), &fwd_port_cfg2_reg);
 
-    cfg->DESTINATION_MASK = FM_ARRAY_GET_FIELD(fwd_port_cfg2_vals, MBY_FWD_PORT_CFG_2, DESTINATION_MASK);
+    cfg->DESTINATION_MASK = FM_GET_FIELD64(fwd_port_cfg2_reg, MBY_FWD_PORT_CFG_2, DESTINATION_MASK);
 }
 
 static void getSysCfg1
@@ -39,14 +39,14 @@ static void getSysCfg1
     mbyFwdSysCfg1 * const cfg
 )
 {
-    fm_uint32 fwd_sys_cfg1_vals[MBY_FWD_SYS_CFG_1_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_SYS_CFG_1(0), MBY_FWD_SYS_CFG_1_WIDTH, fwd_sys_cfg1_vals);
+    fm_uint64 fwd_sys_cfg1_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_SYS_CFG_1(0), &fwd_sys_cfg1_reg);
 
-    cfg->STORE_TRAP_ACTION       = FM_ARRAY_GET_BIT(fwd_sys_cfg1_vals, MBY_FWD_SYS_CFG_1, STORE_TRAP_ACTION);
-    cfg->DROP_MAC_CTRL_ETHERTYPE = FM_ARRAY_GET_BIT(fwd_sys_cfg1_vals, MBY_FWD_SYS_CFG_1, DROP_MAC_CTRL_ETHERTYPE);
-    cfg->DROP_INVALID_SMAC       = FM_ARRAY_GET_BIT(fwd_sys_cfg1_vals, MBY_FWD_SYS_CFG_1, DROP_INVALID_SMAC);
-    cfg->ENABLE_TRAP_PLUS_LOG    = FM_ARRAY_GET_BIT(fwd_sys_cfg1_vals, MBY_FWD_SYS_CFG_1, ENABLE_TRAP_PLUS_LOG);
-    cfg->TRAP_MTU_VIOLATIONS     = FM_ARRAY_GET_BIT(fwd_sys_cfg1_vals, MBY_FWD_SYS_CFG_1, TRAP_MTU_VIOLATIONS);
+    cfg->STORE_TRAP_ACTION       = FM_GET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, STORE_TRAP_ACTION);
+    cfg->DROP_MAC_CTRL_ETHERTYPE = FM_GET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, DROP_MAC_CTRL_ETHERTYPE);
+    cfg->DROP_INVALID_SMAC       = FM_GET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, DROP_INVALID_SMAC);
+    cfg->ENABLE_TRAP_PLUS_LOG    = FM_GET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, ENABLE_TRAP_PLUS_LOG);
+    cfg->TRAP_MTU_VIOLATIONS     = FM_GET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, TRAP_MTU_VIOLATIONS);
 }
 
 static void getSysCfgRouter
@@ -55,11 +55,11 @@ static void getSysCfgRouter
     mbyFwdSysCfgRouter * const cfg
 )
 {
-    fm_uint32 fwd_sys_cfg_router_vals[MBY_FWD_SYS_CFG_ROUTER_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_SYS_CFG_ROUTER(0), MBY_FWD_SYS_CFG_ROUTER_WIDTH, fwd_sys_cfg_router_vals);
+    fm_uint64 fwd_sys_cfg_router_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_SYS_CFG_ROUTER(0), &fwd_sys_cfg_router_reg);
 
-    cfg->TRAP_IP_OPTIONS = FM_ARRAY_GET_BIT  (fwd_sys_cfg_router_vals, MBY_FWD_SYS_CFG_ROUTER, TRAP_IP_OPTIONS);
-    cfg->TRAP_TTL1       = FM_ARRAY_GET_FIELD(fwd_sys_cfg_router_vals, MBY_FWD_SYS_CFG_ROUTER, TRAP_TTL1);
+    cfg->TRAP_IP_OPTIONS = FM_GET_BIT64  (fwd_sys_cfg_router_reg, MBY_FWD_SYS_CFG_ROUTER, TRAP_IP_OPTIONS);
+    cfg->TRAP_TTL1       = FM_GET_FIELD64(fwd_sys_cfg_router_reg, MBY_FWD_SYS_CFG_ROUTER, TRAP_TTL1);
 }
 
 static void getLagCfg
@@ -69,13 +69,13 @@ static void getLagCfg
     mbyFwdLagCfg * const cfg
 )
 {
-    fm_uint32 fwd_lag_cfg_vals[MBY_FWD_LAG_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_LAG_CFG(port, 0), MBY_FWD_LAG_CFG_WIDTH, fwd_lag_cfg_vals);
+    fm_uint64 fwd_lag_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_LAG_CFG(port, 0), &fwd_lag_cfg_reg);
 
-    cfg->IN_LAG        = FM_ARRAY_GET_BIT  (fwd_lag_cfg_vals, MBY_FWD_LAG_CFG, IN_LAG);
-    cfg->HASH_ROTATION = FM_ARRAY_GET_BIT  (fwd_lag_cfg_vals, MBY_FWD_LAG_CFG, HASH_ROTATION);
-    cfg->INDEX         = FM_ARRAY_GET_FIELD(fwd_lag_cfg_vals, MBY_FWD_LAG_CFG, INDEX);
-    cfg->LAG_SIZE      = FM_ARRAY_GET_FIELD(fwd_lag_cfg_vals, MBY_FWD_LAG_CFG, LAG_SIZE);
+    cfg->IN_LAG        = FM_GET_BIT64  (fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, IN_LAG);
+    cfg->HASH_ROTATION = FM_GET_BIT64  (fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, HASH_ROTATION);
+    cfg->INDEX         = FM_GET_FIELD64(fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, INDEX);
+    cfg->LAG_SIZE      = FM_GET_FIELD64(fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, LAG_SIZE);
 }
 
 static void getGlortCamEntry
@@ -85,11 +85,11 @@ static void getGlortCamEntry
     mbyGlortCam * const cam_entry
 )
 {
-    fm_uint32 glort_cam_vals[MBY_GLORT_CAM_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_GLORT_CAM(cam_index, 0), MBY_GLORT_CAM_WIDTH, glort_cam_vals);
+    fm_uint64 glort_cam_reg = 0;
+    mbyModelReadCSR64(regs, MBY_GLORT_CAM(cam_index, 0), &glort_cam_reg);
 
-    cam_entry->KEY_INVERT = FM_ARRAY_GET_FIELD(glort_cam_vals, MBY_GLORT_CAM, KEY_INVERT);
-    cam_entry->KEY        = FM_ARRAY_GET_FIELD(glort_cam_vals, MBY_GLORT_CAM, KEY);
+    cam_entry->KEY_INVERT = FM_GET_FIELD64(glort_cam_reg, MBY_GLORT_CAM, KEY_INVERT);
+    cam_entry->KEY        = FM_GET_FIELD64(glort_cam_reg, MBY_GLORT_CAM, KEY);
 }
 
 static void getGlortDestTableEntry
@@ -99,11 +99,11 @@ static void getGlortDestTableEntry
     mbyGlortDestTable * const table_entry
 )
 {
-    fm_uint32 glort_dest_table_vals[MBY_GLORT_DEST_TABLE_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_GLORT_DEST_TABLE(table_index, 0), MBY_GLORT_DEST_TABLE_WIDTH, glort_dest_table_vals);
+    fm_uint64 glort_dest_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_GLORT_DEST_TABLE(table_index, 0), &glort_dest_table_reg);
     
-    table_entry->IP_MULTICAST_INDEX = FM_ARRAY_GET_FIELD(glort_dest_table_vals, MBY_GLORT_DEST_TABLE, IP_MULTICAST_INDEX);
-    table_entry->DEST_MASK          = FM_ARRAY_GET_FIELD(glort_dest_table_vals, MBY_GLORT_DEST_TABLE, DEST_MASK);
+    table_entry->IP_MULTICAST_INDEX = FM_GET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, IP_MULTICAST_INDEX);
+    table_entry->DEST_MASK          = FM_GET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, DEST_MASK);
 }
 
 static void getGlortRamEntry
@@ -113,16 +113,16 @@ static void getGlortRamEntry
     mbyGlortRam * const ram_entry
 )
 {
-    fm_uint32 glort_ram_vals[MBY_GLORT_RAM_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_GLORT_RAM(ram_index, 0), MBY_GLORT_RAM_WIDTH, glort_ram_vals);
+    fm_uint64 glort_ram_reg = 0;
+    mbyModelReadCSR64(regs, MBY_GLORT_RAM(ram_index, 0), &glort_ram_reg);
 
-    ram_entry->SKIP_DGLORT_DEC   = FM_ARRAY_GET_BIT  (glort_ram_vals, MBY_GLORT_RAM, SKIP_DGLORT_DEC);
-    ram_entry->HASH_ROTATION     = FM_ARRAY_GET_BIT  (glort_ram_vals, MBY_GLORT_RAM, HASH_ROTATION);
-    ram_entry->DEST_COUNT        = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, DEST_COUNT);
-    ram_entry->RANGE_SUB_INDEX_A = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, RANGE_SUB_INDEX_A);
-    ram_entry->RANGE_SUB_INDEX_B = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, RANGE_SUB_INDEX_B);
-    ram_entry->DEST_INDEX        = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, DEST_INDEX);
-    ram_entry->STRICT            = FM_ARRAY_GET_FIELD(glort_ram_vals, MBY_GLORT_RAM, STRICT);
+    ram_entry->SKIP_DGLORT_DEC   = FM_GET_BIT64  (glort_ram_reg, MBY_GLORT_RAM, SKIP_DGLORT_DEC);
+    ram_entry->HASH_ROTATION     = FM_GET_BIT64  (glort_ram_reg, MBY_GLORT_RAM, HASH_ROTATION);
+    ram_entry->DEST_COUNT        = FM_GET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, DEST_COUNT);
+    ram_entry->RANGE_SUB_INDEX_A = FM_GET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, RANGE_SUB_INDEX_A);
+    ram_entry->RANGE_SUB_INDEX_B = FM_GET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, RANGE_SUB_INDEX_B);
+    ram_entry->DEST_INDEX        = FM_GET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, DEST_INDEX);
+    ram_entry->STRICT            = FM_GET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, STRICT);
 }
 
 static fm_status lookUpRamEntry
@@ -207,9 +207,9 @@ static fm_bool isCpuMacAddress
     const fm_macaddr mac_addr
 )
 {
-    fm_uint32 fwd_cpu_mac_vals[MBY_FWD_CPU_MAC_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_CPU_MAC(0), MBY_FWD_CPU_MAC_WIDTH, fwd_cpu_mac_vals);
-    fm_macaddr cpu_mac_addr = FM_ARRAY_GET_FIELD64(fwd_cpu_mac_vals, MBY_FWD_CPU_MAC, MAC_ADDR);
+    fm_uint64 fwd_cpu_mac_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_CPU_MAC(0), &fwd_cpu_mac_reg);
+    fm_macaddr cpu_mac_addr = FM_GET_FIELD64(fwd_cpu_mac_reg, MBY_FWD_CPU_MAC, MAC_ADDR);
 
     fm_bool result = (mac_addr == cpu_mac_addr);
     return result;
@@ -532,15 +532,15 @@ void MaskGen
     // Special packet handling:
     if ((l2_dmac & MBY_SPECIAL_DMASK) == (MBY_DMAC_IEEE_PREFIX & MBY_SPECIAL_DMASK))
     {
-        fm_uint32 fwd_rsvd_mac_action_vals[MBY_FWD_IEEE_RESERVED_MAC_ACTION_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_FWD_IEEE_RESERVED_MAC_ACTION(0), MBY_FWD_IEEE_RESERVED_MAC_ACTION_WIDTH, fwd_rsvd_mac_action_vals);
+        fm_uint32 fwd_rsvd_mac_action_regs[MBY_FWD_IEEE_RESERVED_MAC_ACTION_WIDTH] = { 0 };
+        mbyModelReadCSRMult(regs, MBY_FWD_IEEE_RESERVED_MAC_ACTION(0), MBY_FWD_IEEE_RESERVED_MAC_ACTION_WIDTH, fwd_rsvd_mac_action_regs);
 
-        fm_uint32 fwd_rsvd_mac_trap_pri_vals[MBY_FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY(0), MBY_FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY_WIDTH, fwd_rsvd_mac_trap_pri_vals);
+        fm_uint64 fwd_rsvd_mac_trap_pri_reg = 0;
+        mbyModelReadCSR64(regs, MBY_FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY(0), &fwd_rsvd_mac_trap_pri_reg);
 
         fm_byte rmc_idx    = l2_dmac & 0x3F; // 6 bits (0..63)
-        fm_byte mac_action = FM_ARRAY_GET_UNNAMED_FIELD(fwd_rsvd_mac_action_vals, 2 * rmc_idx, 2); // 2-bit action
-        fm_bool trap_pri   = FM_ARRAY_GET_UNNAMED_BIT  (fwd_rsvd_mac_trap_pri_vals, rmc_idx);
+        fm_byte mac_action = FM_ARRAY_GET_UNNAMED_FIELD(fwd_rsvd_mac_action_regs, 2 * rmc_idx, 2); // 2-bit action
+        fm_bool trap_pri   = FM_GET_UNNAMED_BIT64      (fwd_rsvd_mac_trap_pri_reg, rmc_idx);
 
         switch (mac_action)
         {
@@ -711,29 +711,29 @@ void MaskGen
         rx_mirror_out     = TRUE;  // RX mirroring frame
         mirror1_profile_v = rx_mirror_in;
 
-        fm_uint32 fwd_rx_mirror_cfg_vals[MBY_FWD_RX_MIRROR_CFG_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_FWD_RX_MIRROR_CFG(0), MBY_FWD_RX_MIRROR_CFG_WIDTH, fwd_rx_mirror_cfg_vals);
+        fm_uint64 fwd_rx_mirror_cfg_reg = 0;
+        mbyModelReadCSR64(regs, MBY_FWD_RX_MIRROR_CFG(0), &fwd_rx_mirror_cfg_reg);
 
-        mirror1_profile_idx = FM_ARRAY_GET_FIELD(fwd_rx_mirror_cfg_vals, MBY_FWD_RX_MIRROR_CFG, MIRROR_PROFILE_IDX);
+        mirror1_profile_idx = FM_GET_FIELD64(fwd_rx_mirror_cfg_reg, MBY_FWD_RX_MIRROR_CFG, MIRROR_PROFILE_IDX);
     }
 
     // --------------------------------------------------------------------------------
     // QCN:
 
-    fm_uint32 fwd_qcn_mirror_cfg_vals[MBY_FWD_QCN_MIRROR_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_QCN_MIRROR_CFG(0), MBY_FWD_QCN_MIRROR_CFG_WIDTH, fwd_qcn_mirror_cfg_vals);
+    fm_uint64 fwd_qcn_mirror_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_QCN_MIRROR_CFG(0), &fwd_qcn_mirror_cfg_reg);
 
-    fm_byte mirror_profile_idx = FM_ARRAY_GET_FIELD(fwd_qcn_mirror_cfg_vals, MBY_FWD_QCN_MIRROR_CFG, MIRROR_PROFILE_IDX);
-    fm_byte mirror_session     = FM_ARRAY_GET_FIELD(fwd_qcn_mirror_cfg_vals, MBY_FWD_QCN_MIRROR_CFG, MIRROR_SESSION);
+    fm_byte mirror_profile_idx = FM_GET_FIELD64(fwd_qcn_mirror_cfg_reg, MBY_FWD_QCN_MIRROR_CFG, MIRROR_PROFILE_IDX);
+    fm_byte mirror_session     = FM_GET_FIELD64(fwd_qcn_mirror_cfg_reg, MBY_FWD_QCN_MIRROR_CFG, MIRROR_SESSION);
 
-    fm_uint32 cm_mirror0_profile_vals[MBY_CM_APPLY_MIRROR_PROFILE_TABLE_WIDTH] = { 0 };
-    fm_uint32 cm_mirror1_profile_vals[MBY_CM_APPLY_MIRROR_PROFILE_TABLE_WIDTH] = { 0 };
+    fm_uint64 cm_mirror0_profile_reg = 0;
+    fm_uint64 cm_mirror1_profile_reg = 0;
 
-    mbyModelReadCSRMult(regs, MBY_CM_APPLY_MIRROR_PROFILE_TABLE(mirror0_profile_idx, 0), MBY_CM_APPLY_MIRROR_PROFILE_TABLE_WIDTH, cm_mirror0_profile_vals);
-    mbyModelReadCSRMult(regs, MBY_CM_APPLY_MIRROR_PROFILE_TABLE(mirror1_profile_idx, 0), MBY_CM_APPLY_MIRROR_PROFILE_TABLE_WIDTH, cm_mirror1_profile_vals);
+    mbyModelReadCSR64(regs, MBY_CM_APPLY_MIRROR_PROFILE_TABLE(mirror0_profile_idx, 0), &cm_mirror0_profile_reg);
+    mbyModelReadCSR64(regs, MBY_CM_APPLY_MIRROR_PROFILE_TABLE(mirror1_profile_idx, 0), &cm_mirror1_profile_reg);
 
-    fm_uint32 mirror0_port = FM_ARRAY_GET_FIELD(cm_mirror0_profile_vals, MBY_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
-    fm_uint32 mirror1_port = FM_ARRAY_GET_FIELD(cm_mirror1_profile_vals, MBY_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
+    fm_uint32 mirror0_port = FM_GET_FIELD64(cm_mirror0_profile_reg, MBY_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
+    fm_uint32 mirror1_port = FM_GET_FIELD64(cm_mirror1_profile_reg, MBY_CM_APPLY_MIRROR_PROFILE_TABLE, PORT);
 
     fm_bool qcn_mirror0_profile_v   = FALSE;
     fm_bool qcn_mirror1_profile_v   = FALSE;
@@ -790,9 +790,9 @@ void MaskGen
     fm_uint32 action = 0;
     fm_byte   cpu_code = 0;
     
-    fm_uint32 fwd_rsvd_mac_cfg_vals[MBY_FWD_IEEE_RESERVED_MAC_CFG_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FWD_IEEE_RESERVED_MAC_CFG(0), MBY_FWD_IEEE_RESERVED_MAC_CFG_WIDTH, fwd_rsvd_mac_cfg_vals);
-    fm_byte trap_tc = FM_ARRAY_GET_FIELD(fwd_rsvd_mac_cfg_vals, MBY_FWD_IEEE_RESERVED_MAC_CFG, TRAP_TC);
+    fm_uint64 fwd_rsvd_mac_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FWD_IEEE_RESERVED_MAC_CFG(0), &fwd_rsvd_mac_cfg_reg);
+    fm_byte trap_tc = FM_GET_FIELD64(fwd_rsvd_mac_cfg_reg, MBY_FWD_IEEE_RESERVED_MAC_CFG, TRAP_TC);
 
     resolveAction
     (
@@ -864,11 +864,11 @@ void MaskGen
 
     for (fm_uint i = 0; !skip_suppress && (i < MBY_FABRIC_LOG_PORTS); i++)
     {
-        fm_uint32 cm_lpbk_suppress_vals[MBY_CM_APPLY_LOOPBACK_SUPPRESS_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_CM_APPLY_LOOPBACK_SUPPRESS(i, 0), MBY_CM_APPLY_LOOPBACK_SUPPRESS_WIDTH, cm_lpbk_suppress_vals);
+        fm_uint64 cm_lpbk_suppress_reg = 0;
+        mbyModelReadCSR64(regs, MBY_CM_APPLY_LOOPBACK_SUPPRESS(i, 0), &cm_lpbk_suppress_reg);
 
-        fm_uint16 lpbk_glort_mask = FM_ARRAY_GET_FIELD64(cm_lpbk_suppress_vals, MBY_CM_APPLY_LOOPBACK_SUPPRESS, GLORT_MASK);
-        fm_uint16 lpbk_glort      = FM_ARRAY_GET_FIELD64(cm_lpbk_suppress_vals, MBY_CM_APPLY_LOOPBACK_SUPPRESS, GLORT); 
+        fm_uint16 lpbk_glort_mask = FM_GET_FIELD64(cm_lpbk_suppress_reg, MBY_CM_APPLY_LOOPBACK_SUPPRESS, GLORT_MASK);
+        fm_uint16 lpbk_glort      = FM_GET_FIELD64(cm_lpbk_suppress_reg, MBY_CM_APPLY_LOOPBACK_SUPPRESS, GLORT);
 
         if ((csglort & lpbk_glort_mask) == lpbk_glort)
             dmask &= ~(FM_LITERAL_U64(1) << i);
