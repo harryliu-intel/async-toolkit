@@ -1,4 +1,4 @@
-MODULE Spec;
+UNSAFE MODULE Spec;
 
 (***********)
 (* Imports *)
@@ -18,7 +18,12 @@ IMPORT IO ;
 IMPORT Fmt ;
 IMPORT DepGraph ;
 IMPORT SymbolTbl ;
-
+IMPORT TypeUseTbl ;
+IMPORT CARDINALList ;
+IMPORT REFANYList ;
+IMPORT Unix ;
+IMPORT Ctypes ;
+IMPORT M3toC ;
 (**********************)
 (* Visible Procedures *)
 (**********************)
@@ -118,7 +123,7 @@ BEGIN
 	END ;
 END GenCode ;
 
-PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ) : TEXT RAISES { InvalidFname , OutError } =
+PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ) : TEXT =
 VAR
 	term_list : TextList.T := NIL ;
 	return_text : TEXT := "" ;
@@ -179,15 +184,141 @@ END DebugTree ;
 
 (* TODO Organize and document these *)
 
+(* Get a particular variable's value after the execution of the particular statement *)
+(* This function's definition restricts the partial evaluator to only running on x86-64 architectures and Unix OSs *)
+PROCEDURE GetVarValueAfterStatement( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ; abs_path_to_top_dir : Pathname.T ) : TEXT RAISES { InvalidFname , OutError , ReadError } =
+VAR
+	specdir_dirname : Ctypes.char_star ;
+	specdir_src_dirname : Ctypes.char_star ;
+	specdir_src_genfiles_dirname : Ctypes.char_star ;
+	specdir_dir : TEXT := "" ;
+	specdir_src_dir : TEXT := "" ;
+	specdir_src_genfiles_dir : TEXT := "" ;
+	m3makefile_fhandle : Wr.T ;
+	main_fhandle : Wr.T ;
+	compiler_name : TEXT := "cm3" ;
+	compiler_name_ptr : Ctypes.char_star ;
+	program_abs_path : TEXT := "" ;
+	program_abs_path_ptr : Ctypes.char_star ;
+	dumpfile_name : TEXT := "" ;
+	dumpfile_handle : Rd.T ;
+	dumpfile_len : CARDINAL := 0 ;
+	return_text : TEXT := "" ;
+	temp_assigned_vars : TextList.T := NIL ;
+	varname_valid : BOOLEAN := FALSE ;
+BEGIN
+	IO.Put( "===== RUNNING GetVarValueAfterStatement in Spec.m3 =====\n" ) ;
+	(* Assertions *)
+	IO.Put( "Initial assertions...\n" ) ;
+	<* ASSERT src # NIL *>
+	<* ASSERT depgraph_pms # NIL *>
+	(* Check to ensure varname is in assigned_vars list of depgraph *)
+	IO.Put( "Check to ensure varname is in assigned_vars list of depgraph...\n" ) ;
+	temp_assigned_vars := src^.assigned_vars ;
+	WHILE temp_assigned_vars # NIL DO
+		IF temp_assigned_vars.head = varname THEN
+			varname_valid := TRUE ;
+		END ;
+	END ;
+	<* ASSERT varname_valid = TRUE *>
+	(* Ensure that abs_path_to_top_dir is an absolute path ending with "/" *)
+	IO.Put( "Ensure that abs_path_to_top_dir is a valid absolute path ending with /...\n" ) ;
+	<* ASSERT Pathname.Valid( abs_path_to_top_dir ) = TRUE *> (* Valid path *)
+	<* ASSERT Pathname.Absolute( abs_path_to_top_dir ) = TRUE *> (* Abs path *)
+	<* ASSERT Text.Equal( Text.Sub( abs_path_to_top_dir , Text.Length( abs_path_to_top_dir ) - 1 , 1 ) , "/" ) *> (* Ends in / *)
+	(* Make specdir/ *)
+	IO.Put( "Make specdir/..." ) ;
+	specdir_dir := abs_path_to_top_dir & "specdir/" ;
+	specdir_dirname := M3toC.CopyTtoS( specdir_dir ) ;
+	EVAL Unix.mkdir( specdir_dirname , 8_040000 ) ;
+	EVAL Unix.chmod( specdir_dirname , 16_777 ) ;
+	(* Make specdir/src/ *)
+	IO.Put( "Make specdir/src/..." ) ;
+	specdir_src_dir := abs_path_to_top_dir & "specdir/src/" ;
+	specdir_src_dirname := M3toC.CopyTtoS( specdir_src_dir ) ;
+	EVAL Unix.mkdir( specdir_src_dirname , 8_040000 ) ;
+	EVAL Unix.chmod( specdir_src_dirname , 16_777 ) ;
+	(* Make specdir/src/genfiles/ *)
+	IO.Put( "Make specdir/src/genfiles/..." ) ;
+	specdir_src_genfiles_dir := abs_path_to_top_dir & "specdir/src/genfiles/" ;
+	specdir_src_genfiles_dirname := M3toC.CopyTtoS( specdir_src_genfiles_dir ) ;
+	EVAL Unix.mkdir( specdir_src_genfiles_dirname , 8_040000 ) ;
+	EVAL Unix.chmod( specdir_src_genfiles_dirname , 16_777 ) ;
+	(* Generate m3makefile in specdir/src/ *)
+	IO.Put( "Generate m3makefile in specdir/src/...\n" ) ;
+	TRY
+		m3makefile_fhandle := FileWr.Open( specdir_src_dir & "/m3makefile" ) ;
+		Wr.PutText( m3makefile_fhandle , GenM3MakefileCode( "Main" , "Main" ) ) ;
+		Wr.Close( m3makefile_fhandle ) ;
+	EXCEPT
+		| OSError.E( ErrCode ) => EVAL ErrCode ; RAISE InvalidFname ;
+		| Wr.Failure( ErrCode ) => EVAL ErrCode ; RAISE OutError ;
+		| Thread.Alerted => RAISE OutError ;
+	END ;
+	(* Generate Main.m3 in specdir/src/... *)
+	IO.Put( "Generate Main.m3 in specdir/src/...\n" ) ; 
+	TRY
+		main_fhandle := FileWr.Open( specdir_src_dir & "/Main.m3" ) ;
+		dumpfile_name := specdir_src_genfiles_dir & "/dumpfile" ;
+		Wr.PutText( main_fhandle , GenSpecFileCode( src , depgraph_pms , style_rules_array , varname , symbtbl , dumpfile_name ) ) ;
+		Wr.Close( main_fhandle ) ;
+	EXCEPT
+		| OSError.E( ErrCode ) => EVAL ErrCode ; RAISE InvalidFname ;
+		| Wr.Failure( ErrCode ) => EVAL ErrCode ; RAISE OutError ;
+		| Thread.Alerted => RAISE OutError ;
+	END ;
+	(* Run cm3 to compile *)
+	IO.Put( "Run cm3 to compile...\n" ) ;
+	compiler_name_ptr := M3toC.CopyTtoS( compiler_name ) ;
+	EVAL Unix.execve( compiler_name_ptr , NIL , NIL ) ;
+	(* Run program *)
+	IO.Put( "Run program...\n" ) ; 
+	program_abs_path := specdir_src_genfiles_dir & "/AMD64_LINUX/Main" ; (* Changes with architecture *)
+	program_abs_path_ptr := M3toC.CopyTtoS( program_abs_path ) ;
+	EVAL Unix.execve( program_abs_path_ptr , NIL , NIL ) ;
+	(* Read file for text value *)
+	IO.Put( "Read file for text value...\n" ) ; 
+	TRY
+		dumpfile_handle := FileRd.Open( dumpfile_name ) ;
+		TRY
+			dumpfile_len := Rd.Length( dumpfile_handle ) ;
+			return_text := Rd.GetText( dumpfile_handle , dumpfile_len ) ;
+			Rd.Close( dumpfile_handle ) ;
+		EXCEPT
+			| Rd.Failure => RAISE ReadError ;
+			| Thread.Alerted => RAISE ReadError ;
+		END ;
+	EXCEPT
+		| OSError.E( ErrCode ) => EVAL ErrCode ; RAISE ReadError ;
+		| ReadError => RAISE ReadError ;
+	END ;
+	(* Delete specdir/ *)
+	IO.Put( "Delete specdir/...\n" ) ; 
+	EVAL Unix.rmdir( specdir_dirname ) ;
+	EVAL Unix.rmdir( specdir_src_dirname ) ;
+	EVAL Unix.rmdir( specdir_src_genfiles_dirname ) ;
+	(* Manage memory *)
+	IO.Put( "Manage memory...\n" ) ; 
+	M3toC.FreeCopiedS( specdir_dirname ) ;
+	M3toC.FreeCopiedS( specdir_src_dirname ) ;
+	M3toC.FreeCopiedS( specdir_src_genfiles_dirname ) ;
+	M3toC.FreeCopiedS( compiler_name_ptr ) ;
+	M3toC.FreeCopiedS( program_abs_path_ptr ) ;
+	(* Return the text value *)
+	IO.Put( "===== RUNNING GetVarValueAfterStatement in Spec.m3 =====\n" ) ;
+	RETURN return_text ;
+END GetVarValueAfterStatement ;
+
 PROCEDURE GenM3MakefileCode( src_fname : TEXT ; program_fname : TEXT ) : TEXT =
 VAR
 	text_to_return : TEXT := "" ;
 BEGIN
-	text_to_return := text_to_return & "implementation( " & src_fname " )\n" ;
-	text_to_return := text_to_return & "program( " & program_fname " )\n" ;
+	text_to_return := text_to_return & "implementation( " & src_fname & " )\n" ;
+	text_to_return := text_to_return & "program( " & program_fname & " )\n" ;
 	RETURN text_to_return ;
 END GenM3MakefileCode ;
 
+(* out_fname must be abs path *)
 PROCEDURE GenSpecFileCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ; out_fname : Pathname.T ) : TEXT =
 VAR
 	text_to_return : TEXT := "" ;
@@ -195,6 +326,7 @@ BEGIN
 	text_to_return := text_to_return & "MODULE Main ;\n" ;
 	text_to_return := text_to_return & "IMPORT FileWr ;\n" ;
 	text_to_return := text_to_return & "IMPORT Wr ;\n" ;
+	text_to_return := text_to_return & "IMPORT Fmt ;\n" ;
 	text_to_return := text_to_return & "IMPORT OSError ;\n" ;
 	text_to_return := text_to_return & "IMPORT Thread ;\n" ;
 	text_to_return := text_to_return & GenProcDefCode( src , depgraph_pms , style_rules_array , varname , symbtbl ) & "\n" ;
@@ -219,21 +351,143 @@ END GenSpecFileCode ;
 PROCEDURE GenProcDefCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ) : TEXT =
 VAR
 	text_to_return : TEXT := "" ;
-	var_type : TEXT := "" ;
+	var_type : TypeUseTbl.T ;
+	type_text : TEXT := "" ;
+	iter : TypeUseTbl.Iterator ;
+	dead_bool : BOOLEAN := FALSE ;
+	fmt_fn : TEXT := "" ;
 BEGIN
 	<* ASSERT src # NIL *>
 	<* ASSERT depgraph_pms # NIL *>
 	(* TODO Assert that varname must be in assigned_vars textlist *)
 	IF symbtbl.get( varname , var_type ) THEN
-		text_to_return := text_to_return & "PROCEDURE SpecVar( ) : TEXT =\n" ;
-		text_to_return := text_to_return & "BEGIN\n" ;
-		text_to_return := text_to_return & GenProcBodyCode( src , depgraph_pms , style_rules_array ) ;
-		text_to_return := text_to_return & "\tRETURN " & varname & ";\n" ;
+		iter := var_type.iterate( ) ;
+		WHILE iter.next( type_text , dead_bool ) DO
+			<* ASSERT NOT Text.Equal( type_text , "" ) *>
+			text_to_return := text_to_return & "PROCEDURE SpecVar( ) : TEXT =\n" ;
+			text_to_return := text_to_return & "VAR\n" ;
+			text_to_return := text_to_return & GenVarDefs( src , depgraph_pms , symbtbl ) ;
+			text_to_return := text_to_return & "BEGIN\n" ;
+			text_to_return := text_to_return & GenProcBodyCode( src , depgraph_pms , style_rules_array ) & "\n" ;
+			(* TODO Tricky to do for arrays *)
+			IF Text.Equal( type_text , "BOOLEAN" ) THEN
+				fmt_fn := "Fmt.Bool" ;
+			ELSIF Text.Equal( type_text , "INTEGER" ) THEN
+				fmt_fn := "Fmt.Int" ;
+			ELSIF Text.Equal( type_text , "ADDRESS" ) THEN
+				fmt_fn := "Fmt.Addr" ;
+			ELSIF Text.Equal( Text.Sub( type_text , 0 , Text.Length( "REF" ) ) , "REF" ) THEN
+				fmt_fn := "Fmt.Ref" ;
+			ELSIF Text.Equal( type_text , "REAL" ) THEN
+				fmt_fn := "Fmt.Real" ;
+			ELSIF Text.Equal( type_text , "LONGREAL" ) THEN
+				fmt_fn := "Fmt.LongReal" ;
+			ELSIF Text.Equal( type_text , "EXTENDED" ) THEN
+				fmt_fn := "Fmt.Extended" ;
+			ELSIF Text.Equal( type_text , "CHAR" ) THEN
+				fmt_fn := "Fmt.Char" ;
+			ELSIF Text.Equal( type_text , "TEXT" ) THEN
+				fmt_fn := "" ;
+			ELSE
+				(* You haven't provided support for this datatype yet. *)
+				<* ASSERT FALSE *>
+			END ;
+			text_to_return := text_to_return & "RETURN " & fmt_fn & "( " & varname & " ) ;\n" ;
+			text_to_return := text_to_return & "END SpecVar ;\n" ;
+		END ;
 	ELSE
 		<* ASSERT FALSE *>
 	END ;
 	RETURN text_to_return ;
 END GenProcDefCode ;
+
+PROCEDURE GenVarDefs( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; symbtbl : SymbolTbl.Default ) : TEXT =
+VAR
+	temp_dep_order : CARDINALList.T := NIL ;
+	dep_index : CARDINAL := 0 ;
+	temp_dep_list : REFANYList.T := NIL ;
+	temp_dep : REF DepGraph.T := NIL ;
+	temp_assigned_vars : TextList.T := NIL ;
+	tut : TypeUseTbl.T ;
+	the_typename : TEXT := "" ;
+	assigned_bool : BOOLEAN := FALSE ;
+	return_str : TEXT := "" ;
+	iter :  TypeUseTbl.Iterator ;
+BEGIN
+	(* Initial assertions *)
+	<* ASSERT src # NIL *>
+	<* ASSERT depgraph_pms # NIL *>
+	(* Default the symbol table to all false *)
+	symbtbl := DefaultSymbolTbl( symbtbl ) ;
+	(* For each dependency in use, look at assigned vars. *)
+	temp_dep_order := src^.dep_order ;
+	temp_dep_list := src^.deps ;
+	WHILE temp_dep_order # NIL DO
+		temp_dep := temp_dep_list.head ;
+		IF dep_index = temp_dep_order.head THEN
+			temp_assigned_vars := temp_dep^.assigned_vars ;
+			WHILE temp_assigned_vars # NIL DO
+				IF symbtbl.get( temp_assigned_vars.head , tut ) THEN
+					iter := tut.iterate( ) ;
+					WHILE iter.next( the_typename , assigned_bool ) DO
+						IF assigned_bool = FALSE THEN
+							(* If true, var already assigned, forget it. *)
+							(* If false, concatenate with varname and type. *)
+							return_str := return_str & temp_assigned_vars.head & " : " & the_typename & " ;\n" ;
+							EVAL tut.put( the_typename , TRUE ) ;
+						END ;
+					END ;
+				ELSE
+					<* ASSERT FALSE *>
+				END ;
+				temp_assigned_vars := temp_assigned_vars.tail ;
+			END ;
+		END ;
+		temp_dep_list := temp_dep_list.tail ;
+		temp_dep_order := temp_dep_order.tail ;
+		INC( dep_index ) ;
+	END ;
+	(* At the end, briefly check the node itself *)
+	temp_assigned_vars := src^.assigned_vars ;
+	WHILE temp_assigned_vars # NIL DO
+		IF symbtbl.get( temp_assigned_vars.head , tut ) THEN
+			iter := tut.iterate( ) ;
+			WHILE iter.next( the_typename , assigned_bool ) DO
+				IF assigned_bool = FALSE THEN
+					(* If true, var already assigned, forget it. *)
+					(* If false, concatenate with varname and type. *)
+					return_str := return_str & temp_assigned_vars.head & " : " & the_typename & " ;\n" ;
+					EVAL tut.put( the_typename , TRUE ) ;
+				END ;
+			END ;
+		ELSE
+			<* ASSERT FALSE *>
+		END ;
+		temp_assigned_vars := temp_assigned_vars.tail ;
+	END ;
+	(* Return text string *)
+	RETURN return_str ;
+END GenVarDefs ;
+
+PROCEDURE DefaultSymbolTbl( symbtbl : SymbolTbl.Default ) : SymbolTbl.Default =
+VAR
+	typeusetbl : TypeUseTbl.T ;
+	iter : SymbolTbl.Iterator ;
+	deeper_iter : TypeUseTbl.Iterator ;
+	the_typename : TEXT := "" ;
+	varname : TEXT := "" ;
+	my_bool : BOOLEAN := FALSE ;
+BEGIN
+	(* TODO Any assertions? *)
+	iter := symbtbl.iterate( ) ;
+	WHILE iter.next( varname , typeusetbl ) DO
+		deeper_iter := typeusetbl.iterate( ) ;
+		WHILE deeper_iter.next( the_typename , my_bool ) DO
+			EVAL typeusetbl.put( the_typename , FALSE ) ;
+		END ;
+	END ; 
+	RETURN symbtbl ;
+END DefaultSymbolTbl ;
 
 PROCEDURE GenProcBodyCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ) : TEXT =
 VAR

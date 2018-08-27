@@ -58,6 +58,8 @@ BEGIN
 	IF root^.cat = Category.NonTerminal THEN
 		(* TODO Make this a function... somehow *)
 		current_child := GoToBeginning( root^.children ) ;
+		IO.Put( "About to make a recursive call: " & root^.val & "\n" ) ;
+		<* ASSERT NOT IsEmpty( current_child ) *>
 		WHILE current_child # NIL DO
 			FindAllNodesWithCategoryDeep( templist , current_child^.cur , cat ) ;
 			AppendDListDeepWithShallowNodes( newlist , templist ) ;

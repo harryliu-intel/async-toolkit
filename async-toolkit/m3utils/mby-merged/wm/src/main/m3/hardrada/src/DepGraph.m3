@@ -230,12 +230,14 @@ BEGIN
 	Node.DefaultDList( stmt_list ) ;
 	temp_dep_list := src^.deps ;
 	WHILE temp_dep_order # NIL DO
+		<* ASSERT temp_dep_list # NIL *>
 		temp_dep := temp_dep_list.head ;
 		IF dep_index = temp_dep_order.head THEN
 			new_stmt := NEW( REF Node.DList ) ;
 			ConstructParseTreeRoot( new_stmt , temp_dep ) ;
 			Node.AppendDListDeepWithShallowNodes( stmt_list , new_stmt ) ;
 			Node.AppendNode( stmt_list , NEW( REF Node.T , val := depgraph_pms^.separator , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+			temp_dep_order := temp_dep_order.tail ;
 		END ;
 		temp_dep_list := temp_dep_list.tail ;
 		INC( dep_index ) ;
@@ -259,6 +261,7 @@ BEGIN
 	parse_root^.cur := NEW( REF Node.T ) ;
 	Node.DeepCopy( parse_root^.cur , root^.parse_root ) ;
 	placeholder_list := NEW( REF Node.DList ) ;
+	IO.Put( "Parse tree root for which I am finding all placeholders: " & parse_root^.cur^.val & "\n" ) ;
 	Node.FindAllNodesWithCategoryDeep( placeholder_list , parse_root^.cur , Node.Category.Placeholder ) ;
 
 	(* If no subdepgraph, you already deep copied the tree. So, you're fine. *)

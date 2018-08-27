@@ -7,12 +7,15 @@ IMPORT Node ;
 IMPORT Pathname ;
 IMPORT TextList ;
 IMPORT StyleRulesTbl ;
+IMPORT DepGraph ;
+IMPORT SymbolTbl ;
 
 (**************)
 (* Exceptions *)
 (**************)
 EXCEPTION InvalidFname ;
 EXCEPTION OutError ;
+EXCEPTION ReadError ;
 
 (*************)
 (* Constants *)
@@ -78,6 +81,8 @@ directories not existing, or file already existing.
 PROCEDURE GenCode( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ; out_fname : Pathname.T ) RAISES { InvalidFname , OutError } ;
 
 PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ) : TEXT RAISES { InvalidFname , OutError } ;
+
+PROCEDURE GenSpecFileCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ; out_fname : Pathname.T ) : TEXT ;
 
 (* DebugTree
 - root :: the starting node of the parse tree

@@ -11,6 +11,8 @@ IMPORT DepGraph ;
 IMPORT Text ;
 IMPORT REFANYList ;
 IMPORT CARDINALList ;
+IMPORT SymbolTbl ;
+IMPORT TypeUseTbl ;
 
 BEGIN
 VAR root := NEW( REF Node.T ) ;
@@ -32,6 +34,12 @@ VAR deeper_block_node := NEW( REF Node.T ) ;
 VAR signature_node := NEW( REF Node.T ) ;
 VAR deeper_start_node := NEW( REF Node.T ) ;
 
+VAR my_symbol_tbl := NEW( SymbolTbl.Default ).init( ) ;
+VAR typeuse_y := NEW( TypeUseTbl.Default ).init( ) ;
+VAR typeuse_x := NEW( TypeUseTbl.Default ).init( ) ;
+
+VAR refany_assign_x_carat : REFANY := NIL ;
+
 VAR exprrule1_assign := NEW( REF Node.T ) ;
 VAR exprrule1_assign2 := NEW( REF Node.T ) ;
 VAR idrule1 := NEW( REF Node.T ) ;
@@ -49,6 +57,9 @@ VAR refany_depgraph_2 : REFANYList.T := NIL ;
 VAR sdg_refany_list : REFANYList.T := NIL ;
 
 VAR procdef := NEW( REF Node.T ) ;
+
+VAR integer_txt := "INTEGER" ;
+VAR false_var := FALSE ;
 
 VAR ugh_another_temp := NEW( REF DepGraph.T ) ;
 
@@ -690,9 +701,9 @@ Node.AppendNode( idrule1^.children , NEW( REF Node.T , val := "y" , cat := Node.
 Node.AppendNode( exprrule1_assign^.children , idrule1 ) ;
 Node.AppendNode( idrule1_2^.children , NEW( REF Node.T , val := "0" , cat := Node.Category.Identifier , children := NEW( REF Node.DList ) ) ) ;
 Node.AppendNode( exprrule1_assign2^.children , idrule1_2 ) ;
-Node.AppendNode( depgraph_stmt1^.parse_root^.children , exprrule1_assign ) ;
-Node.AppendNode( depgraph_stmt1^.parse_root^.children ,  NEW( REF Node.T , val := ":=" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
-Node.AppendNode( depgraph_stmt1^.parse_root^.children , exprrule1_assign2 ) ;
+Node.AppendNode( assign_stmt^.children, exprrule1_assign ) ;
+Node.AppendNode( assign_stmt^.children, NEW( REF Node.T , val := ":=" , cat := Node.Category.Constant , children := NEW( REF Node.DList ) ) ) ;
+Node.AppendNode( assign_stmt^.children, exprrule1_assign2 ) ;
 (* Modify the depgraph *)
 (* Modify x^:=3 in depgraph *)
 depgraph_stmt1^.next^.is_static := TRUE ;
@@ -726,8 +737,9 @@ depgraph_stmt1^.next^.next^.next^.assigned_vars := NIL ;
 depgraph_next_next := depgraph_stmt1^.next^.next ;
 refany_depgraph_2 := REFANYList.Cons( depgraph_stmt1_subdepgraph1 , REFANYList.Cons( depgraph_stmt1_subdepgraph2 , NIL ) ) ;
 refany_depgraph := REFANYList.Cons( depgraph_next_next , refany_depgraph_2 ) ;
-depgraph_stmt1^.next^.next^.next^.deps := REFANYList.Cons( depgraph_stmt1_refany , refany_depgraph ) ;
-depgraph_stmt1^.next^.next^.next^.dep_order := CARDINALList.Cons( 0 , CARDINALList.Cons( 1 , NIL ) ) ;
+refany_assign_x_carat := depgraph_stmt1^.next ;
+depgraph_stmt1^.next^.next^.next^.deps := REFANYList.Cons( depgraph_stmt1_refany , REFANYList.Cons( refany_assign_x_carat , refany_depgraph ) ) ;
+depgraph_stmt1^.next^.next^.next^.dep_order := CARDINALList.Cons( 0 , CARDINALList.Cons( 1 , CARDINALList.Cons( 2 , NIL ) ) ) ;
 (* Modify RETURN in depgraph *)
 IO.Put( "Got dependency graph...\n" ) ;
 <* ASSERT depgraph^.parse_root # NIL *>
@@ -751,6 +763,13 @@ EXCEPT
 END ;
 IO.Put( "Costructing parse tree from dep graph...\n" ) ;
 DepGraph.ConstructParseTree( proc_block^.cur , depgraph , depgraph_pms ) ;
+IO.Put( "=== GENERATING FILE FROM DEPGRAPH ===\n" ) ;
+EVAL typeuse_y.put( integer_txt , false_var ) ;
+EVAL typeuse_x.put( "INTEGER" , FALSE ) ;
+EVAL my_symbol_tbl.put( "y" , typeuse_y ) ;
+EVAL my_symbol_tbl.put( "x^" , typeuse_x ) ;
+IO.Put( Spec.GenSpecFileCode( depgraph^.next^.next , depgraph_pms , style_rules , "y" , my_symbol_tbl , "Speccing_y" ) ) ;
+IO.Put( "=== GENERATING FILE FROM DEPGRAPH ===\n" ) ;
 IO.Put( "=== DEPGRAPH DEBUG ===\n" ) ;
 DepGraph.DebugDepGraph( depgraph_stmt1 ) ;
 IO.Put( "=== DEPGRAPH DEBUG ===\n" ) ;

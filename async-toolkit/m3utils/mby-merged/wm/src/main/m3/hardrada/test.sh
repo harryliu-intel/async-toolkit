@@ -1,5 +1,6 @@
 #!/usr/bin/sh
 
+rm -rf ./Lolz
 rm -rf ./depgraph_tree.m3
 rm -rf ./main_parse_root
 rm -rf ./depgraph_pretest.m3
