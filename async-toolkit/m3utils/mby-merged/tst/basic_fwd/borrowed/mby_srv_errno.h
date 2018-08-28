@@ -802,11 +802,4 @@
 
 /** @} (end of Doxygen group) */
 
-
-/* returns error string for given error */
-const char *fmErrorMsg(fm_int err);
-
-/* returns status code given a string containing the status code name */
-fm_status fmErrorCode(const char *errString);
-
 #endif /* _MBY_SERVER_ERRNO_H_ */

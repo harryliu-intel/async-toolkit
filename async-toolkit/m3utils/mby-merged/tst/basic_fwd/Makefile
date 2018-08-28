@@ -4,9 +4,28 @@ TST_DIR = .
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
 
-SOURCES = $(wildcard $(SRC_DIR)/*.c)
-SOURCES += $(wildcard $(TST_DIR)/*.c)
-SOURCES += $(wildcard $(TST_DIR)/borrowed/*.c)
+SOURCES  = $(SRC_DIR)/mby_reg_ctrl.c
+SOURCES += $(SRC_DIR)/mby_maskgen.c
+SOURCES += $(SRC_DIR)/mby_hash.c
+SOURCES += $(SRC_DIR)/mby_nexthop.c
+SOURCES += $(SRC_DIR)/mby_common.c
+SOURCES += $(SRC_DIR)/mby_crc32.c
+SOURCES += $(SRC_DIR)/mby_classifier.c
+SOURCES += $(SRC_DIR)/mby_rxtotx.c
+SOURCES += $(SRC_DIR)/mby_parser.c
+SOURCES += $(SRC_DIR)/mby_rxstats.c
+SOURCES += $(SRC_DIR)/mby_txstats.c
+SOURCES += $(SRC_DIR)/mby_congmgmt.c
+SOURCES += $(SRC_DIR)/mby_pipeline.c
+SOURCES += $(SRC_DIR)/mby_modifier.c
+SOURCES += $(SRC_DIR)/mby_triggers.c
+SOURCES += $(SRC_DIR)/mby_model.c
+SOURCES += $(SRC_DIR)/mby_bitfield.c
+SOURCES += $(SRC_DIR)/mby_mapper.c
+
+SOURCES += $(TST_DIR)/mby_basic_fwd_test.c
+SOURCES += $(TST_DIR)/borrowed/mby_srv_utils.c
+SOURCES += $(TST_DIR)/borrowed/mby_srv_nvmimg.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
@@ -54,10 +73,29 @@ DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
 .PHONY: all
 all: $(TARGET)
 
-#$(SRC_DIR)/mby_common.o :      $(SRC_DIR)/mby_common.c $(SRC_DIR)/mby_common.h
-#$(SRC_DIR)/mby_bitfield.o :    $(SRC_DIR)/mby_bitfield.c $(SRC_DIR)/mby_bitfield.h $(SRC_DIR)/mby_common.h
-#$(SRC_DIR)/mby_mapper.o :      $(SRC_DIR)/mby_mapper.c $(SRC_DIR)/mby_mapper.h $(SRC_DIR)/mby_common.h
-#$(TST_DIR)/mby_mapper_test.o : $(TST_DIR)/mby_mapper_test.c $(SRC_DIR)/mby_mapper.h $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
+$(SRC_DIR)/mby_maskgen.o   : $(SRC_DIR)/mby_maskgen.c    $(SRC_DIR)/mby_maskgen.h
+$(SRC_DIR)/mby_hash.o      : $(SRC_DIR)/mby_hash.c       $(SRC_DIR)/mby_hash.h
+$(SRC_DIR)/mby_nexthop.o   : $(SRC_DIR)/mby_nexthop.c    $(SRC_DIR)/mby_nexthop.h
+$(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
+$(SRC_DIR)/mby_classifier.o: $(SRC_DIR)/mby_classifier.c $(SRC_DIR)/mby_classifier.h
+$(SRC_DIR)/mby_rxtotx.o    : $(SRC_DIR)/mby_rxtotx.c     $(SRC_DIR)/mby_rxtotx.h
+$(SRC_DIR)/mby_parser.o    : $(SRC_DIR)/mby_parser.c     $(SRC_DIR)/mby_parser.h
+$(SRC_DIR)/mby_rxstats.o   : $(SRC_DIR)/mby_rxstats.c    $(SRC_DIR)/mby_rxstats.h
+$(SRC_DIR)/mby_txstats.o   : $(SRC_DIR)/mby_txstats.c    $(SRC_DIR)/mby_txstats.h
+$(SRC_DIR)/mby_congmgmt.o  : $(SRC_DIR)/mby_congmgmt.c   $(SRC_DIR)/mby_congmgmt.h
+$(SRC_DIR)/mby_pipeline.o  : $(SRC_DIR)/mby_pipeline.c   $(SRC_DIR)/mby_pipeline.h
+$(SRC_DIR)/mby_modifier.o  : $(SRC_DIR)/mby_modifier.c   $(SRC_DIR)/mby_modifier.h
+$(SRC_DIR)/mby_triggers.o  : $(SRC_DIR)/mby_triggers.c   $(SRC_DIR)/mby_triggers.h
+$(SRC_DIR)/mby_model.o     : $(SRC_DIR)/mby_model.c      $(SRC_DIR)/mby_model.h
+$(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
+$(SRC_DIR)/mby_mapper.o    : $(SRC_DIR)/mby_mapper.c     $(SRC_DIR)/mby_mapper.h
+
+$(TST_DIR)/borrowed/mby_srv_errno.o : $(TST_DIR)/borrowed/mby_srv_errno.c  $(TST_DIR)/borrowed/mby_srv_errno.h
+$(TST_DIR)/borrowed/mby_srv_utils.o : $(TST_DIR)/borrowed/mby_srv_utils.c  $(TST_DIR)/borrowed/mby_srv_utils.h
+$(TST_DIR)/borrowed/mby_srv_nvmimg.o: $(TST_DIR)/borrowed/mby_srv_nvmimg.c $(TST_DIR)/borrowed/mby_srv_nvmimg.h
+$(TST_DIR)/mby_basic_fwd_test.o     : $(TST_DIR)/mby_basic_fwd_test.c
 
 .PHONY: clean
 clean:
