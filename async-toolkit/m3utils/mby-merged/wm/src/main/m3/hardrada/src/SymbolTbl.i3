@@ -1,1 +1,1 @@
-INTERFACE SymbolTbl = Table( Text , TypeUseTbl ) END SymbolTbl.
+INTERFACE SymbolTbl = Table( Text , TypeUse ) END SymbolTbl.

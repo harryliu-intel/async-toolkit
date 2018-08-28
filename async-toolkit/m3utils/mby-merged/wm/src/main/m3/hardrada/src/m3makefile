@@ -6,10 +6,12 @@ module( "DepGraph" )
 module( "Node" )
 module( "Spec" )
 
+% Supplementary Interfaces
+interface( "TypeUse" )
+
 % Wrapper types
 module( "MyREFANY" )
 module( "MyCARDINAL" )
-interface( "MyBOOLEAN" )
 
 % Lists
 module( "REFANYList" )
@@ -19,7 +21,6 @@ module( "CARDINALList" )
 module( "NextCharTbl" )
 module( "StyleRulesTbl" )
 module( "SymbolTbl" )
-module( "TypeUseTbl" )
 
 % Main program
 implementation( "Main" )

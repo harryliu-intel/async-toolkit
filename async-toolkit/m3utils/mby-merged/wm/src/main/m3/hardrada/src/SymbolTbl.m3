@@ -1,1 +1,1 @@
-MODULE SymbolTbl = Table( Text , TypeUseTbl ) END SymbolTbl.
+MODULE SymbolTbl = Table( Text , TypeUse ) END SymbolTbl.

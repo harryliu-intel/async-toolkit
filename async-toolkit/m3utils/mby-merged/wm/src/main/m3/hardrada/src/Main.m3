@@ -12,7 +12,7 @@ IMPORT Text ;
 IMPORT REFANYList ;
 IMPORT CARDINALList ;
 IMPORT SymbolTbl ;
-IMPORT TypeUseTbl ;
+IMPORT TypeUse ;
 
 BEGIN
 VAR root := NEW( REF Node.T ) ;
@@ -35,8 +35,9 @@ VAR signature_node := NEW( REF Node.T ) ;
 VAR deeper_start_node := NEW( REF Node.T ) ;
 
 VAR my_symbol_tbl := NEW( SymbolTbl.Default ).init( ) ;
-VAR typeuse_y := NEW( TypeUseTbl.Default ).init( ) ;
-VAR typeuse_x := NEW( TypeUseTbl.Default ).init( ) ;
+VAR typeuse_y : TypeUse.T ;
+VAR typeuse_x_hat : TypeUse.T ;
+VAR typeuse_x : TypeUse.T ;
 
 VAR refany_assign_x_carat : REFANY := NIL ;
 
@@ -707,7 +708,7 @@ Node.AppendNode( assign_stmt^.children, exprrule1_assign2 ) ;
 (* Modify the depgraph *)
 (* Modify x^:=3 in depgraph *)
 depgraph_stmt1^.next^.is_static := TRUE ;
-depgraph_stmt1^.next^.assigned_vars := TextList.Cons( "x^" , NIL ) ;
+depgraph_stmt1^.next^.assigned_vars := TextList.Cons( "x^" , TextList.Cons( "x" , NIL ) ) ;
 (* Modify x^:=3 in depgraph *)
 (* Modify IF in depgraph *)
 depgraph_stmt1^.next^.next^.is_static := TRUE ;
@@ -764,10 +765,24 @@ END ;
 IO.Put( "Costructing parse tree from dep graph...\n" ) ;
 DepGraph.ConstructParseTree( proc_block^.cur , depgraph , depgraph_pms ) ;
 IO.Put( "=== GETTING VALUE OF y ===\n" ) ;
-EVAL typeuse_y.put( integer_txt , false_var ) ;
-EVAL typeuse_x.put( "INTEGER" , FALSE ) ;
+
+typeuse_y.TypeName := "INTEGER" ;
+typeuse_y.Ptr := NIL ;
+typeuse_y.AlreadyAssigned := FALSE ;
+
+typeuse_x_hat.TypeName := "INTEGER" ;
+typeuse_x_hat.Ptr := NEW( REF ARRAY OF TEXT , 1 ) ;
+typeuse_x_hat.Ptr[ FIRST( typeuse_x.Ptr^ ) ] := "x" ;
+typeuse_x_hat.AlreadyAssigned := FALSE ;
+
+typeuse_x.TypeName := "REF INTEGER" ;
+typeuse_x.Ptr := NIL ;
+typeuse_x.AlreadyAssigned := FALSE ;
+
 EVAL my_symbol_tbl.put( "y" , typeuse_y ) ;
-EVAL my_symbol_tbl.put( "x^" , typeuse_x ) ;
+EVAL my_symbol_tbl.put( "x^" , typeuse_x_hat ) ;
+EVAL my_symbol_tbl.put( "x" , typeuse_x ) ;
+
 TRY
 	IO.Put( "Depgraph parse_root: " & depgraph^.next^.parse_root^.val & "\n" ) ;
 	<* ASSERT depgraph^.next^.assigned_vars # NIL *>

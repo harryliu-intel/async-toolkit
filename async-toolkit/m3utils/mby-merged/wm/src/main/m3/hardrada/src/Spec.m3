@@ -18,12 +18,13 @@ IMPORT IO ;
 IMPORT Fmt ;
 IMPORT DepGraph ;
 IMPORT SymbolTbl ;
-IMPORT TypeUseTbl ;
 IMPORT CARDINALList ;
 IMPORT REFANYList ;
 IMPORT Unix ;
 IMPORT Ctypes ;
 IMPORT M3toC ;
+IMPORT TypeUse ;
+
 (**********************)
 (* Visible Procedures *)
 (**********************)
@@ -357,50 +358,44 @@ END GenSpecFileCode ;
 PROCEDURE GenProcDefCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ) : TEXT =
 VAR
 	text_to_return : TEXT := "" ;
-	var_type : TypeUseTbl.T ;
-	type_text : TEXT := "" ;
-	iter : TypeUseTbl.Iterator ;
-	dead_bool : BOOLEAN := FALSE ;
+	var_type : TypeUse.T ;
 	fmt_fn : TEXT := "" ;
 BEGIN
 	<* ASSERT src # NIL *>
 	<* ASSERT depgraph_pms # NIL *>
 	(* TODO Assert that varname must be in assigned_vars textlist *)
 	IF symbtbl.get( varname , var_type ) THEN
-		iter := var_type.iterate( ) ;
-		WHILE iter.next( type_text , dead_bool ) DO
-			<* ASSERT NOT Text.Equal( type_text , "" ) *>
-			text_to_return := text_to_return & "PROCEDURE SpecVar( ) : TEXT =\n" ;
-			text_to_return := text_to_return & "VAR\n" ;
-			text_to_return := text_to_return & GenVarDefs( src , depgraph_pms , symbtbl ) ;
-			text_to_return := text_to_return & "BEGIN\n" ;
-			text_to_return := text_to_return & GenProcBodyCode( src , depgraph_pms , style_rules_array ) & "\n" ;
-			(* TODO Tricky to do for arrays *)
-			IF Text.Equal( type_text , "BOOLEAN" ) THEN
-				fmt_fn := "Fmt.Bool" ;
-			ELSIF Text.Equal( type_text , "INTEGER" ) THEN
-				fmt_fn := "Fmt.Int" ;
-			ELSIF Text.Equal( type_text , "ADDRESS" ) THEN
-				fmt_fn := "Fmt.Addr" ;
-			ELSIF Text.Equal( Text.Sub( type_text , 0 , Text.Length( "REF" ) ) , "REF" ) THEN
-				fmt_fn := "Fmt.Ref" ;
-			ELSIF Text.Equal( type_text , "REAL" ) THEN
-				fmt_fn := "Fmt.Real" ;
-			ELSIF Text.Equal( type_text , "LONGREAL" ) THEN
-				fmt_fn := "Fmt.LongReal" ;
-			ELSIF Text.Equal( type_text , "EXTENDED" ) THEN
-				fmt_fn := "Fmt.Extended" ;
-			ELSIF Text.Equal( type_text , "CHAR" ) THEN
-				fmt_fn := "Fmt.Char" ;
-			ELSIF Text.Equal( type_text , "TEXT" ) THEN
-				fmt_fn := "" ;
-			ELSE
-				(* You haven't provided support for this datatype yet. *)
-				<* ASSERT FALSE *>
-			END ;
-			text_to_return := text_to_return & "RETURN " & fmt_fn & "( " & varname & " ) ;\n" ;
-			text_to_return := text_to_return & "END SpecVar ;\n" ;
+		<* ASSERT NOT Text.Equal( var_type.TypeName , "" ) *>
+		text_to_return := text_to_return & "PROCEDURE SpecVar( ) : TEXT =\n" ;
+		text_to_return := text_to_return & "VAR\n" ;
+		text_to_return := text_to_return & GenVarDefs( src , depgraph_pms , symbtbl ) ;
+		text_to_return := text_to_return & "BEGIN\n" ;
+		text_to_return := text_to_return & GenProcBodyCode( src , depgraph_pms , style_rules_array ) & "\n" ;
+		(* TODO Tricky to do for arrays *)
+		IF Text.Equal( var_type.TypeName , "BOOLEAN" ) THEN
+			fmt_fn := "Fmt.Bool" ;
+		ELSIF Text.Equal( var_type.TypeName , "INTEGER" ) THEN
+			fmt_fn := "Fmt.Int" ;
+		ELSIF Text.Equal( var_type.TypeName , "ADDRESS" ) THEN
+			fmt_fn := "Fmt.Addr" ;
+		ELSIF Text.Equal( Text.Sub( var_type.TypeName , 0 , Text.Length( "REF" ) ) , "REF" ) THEN
+			fmt_fn := "Fmt.Ref" ;
+		ELSIF Text.Equal( var_type.TypeName , "REAL" ) THEN
+			fmt_fn := "Fmt.Real" ;
+		ELSIF Text.Equal( var_type.TypeName , "LONGREAL" ) THEN
+			fmt_fn := "Fmt.LongReal" ;
+		ELSIF Text.Equal( var_type.TypeName , "EXTENDED" ) THEN
+			fmt_fn := "Fmt.Extended" ;
+		ELSIF Text.Equal( var_type.TypeName , "CHAR" ) THEN
+			fmt_fn := "Fmt.Char" ;
+		ELSIF Text.Equal( var_type.TypeName , "TEXT" ) THEN
+			fmt_fn := "" ;
+		ELSE
+			(* You haven't provided support for this datatype yet. *)
+			<* ASSERT FALSE *>
 		END ;
+		text_to_return := text_to_return & "RETURN " & fmt_fn & "( " & varname & " ) ;\n" ;
+		text_to_return := text_to_return & "END SpecVar ;\n" ;
 	ELSE
 		<* ASSERT FALSE *>
 	END ;
@@ -414,11 +409,8 @@ VAR
 	temp_dep_list : REFANYList.T := NIL ;
 	temp_dep : REF DepGraph.T := NIL ;
 	temp_assigned_vars : TextList.T := NIL ;
-	tut : TypeUseTbl.T ;
-	the_typename : TEXT := "" ;
-	assigned_bool : BOOLEAN := FALSE ;
+	var_type : TypeUse.T ;
 	return_str : TEXT := "" ;
-	iter :  TypeUseTbl.Iterator ;
 BEGIN
 	(* Initial assertions *)
 	<* ASSERT src # NIL *>
@@ -433,15 +425,19 @@ BEGIN
 		IF dep_index = temp_dep_order.head THEN
 			temp_assigned_vars := temp_dep^.assigned_vars ;
 			WHILE temp_assigned_vars # NIL DO
-				IF symbtbl.get( temp_assigned_vars.head , tut ) THEN
-					iter := tut.iterate( ) ;
-					WHILE iter.next( the_typename , assigned_bool ) DO
-						IF assigned_bool = FALSE THEN
-							(* If true, var already assigned, forget it. *)
-							(* If false, concatenate with varname and type. *)
-							return_str := return_str & temp_assigned_vars.head & " : " & the_typename & " ;\n" ;
-							EVAL tut.put( the_typename , TRUE ) ;
+				IF symbtbl.get( temp_assigned_vars.head , var_type ) THEN
+					IF var_type.AlreadyAssigned = FALSE THEN
+						(* If true, var already assigned, forget it. *)
+						(* If false, concatenate with varname and type. *)
+						IF var_type.Ptr = NIL THEN
+							(* For non-derefenced values *)
+							(* Dereferenced values are already implicitly defined if the reference exists.
+							e.g. x existing implies x^ exists. *)
+							IF Text.Equal( Text.Sub( var_type.TypeName , 0 , Text.Length( "REF" ) ) , "REF" ) THEN
+								return_str := return_str & temp_assigned_vars.head & " : " & var_type.TypeName & " ;\n" ;
+							END ;
 						END ;
+						var_type.AlreadyAssigned := TRUE ;
 					END ;
 				ELSE
 					<* ASSERT FALSE *>
@@ -456,15 +452,12 @@ BEGIN
 	(* At the end, briefly check the node itself *)
 	temp_assigned_vars := src^.assigned_vars ;
 	WHILE temp_assigned_vars # NIL DO
-		IF symbtbl.get( temp_assigned_vars.head , tut ) THEN
-			iter := tut.iterate( ) ;
-			WHILE iter.next( the_typename , assigned_bool ) DO
-				IF assigned_bool = FALSE THEN
-					(* If true, var already assigned, forget it. *)
-					(* If false, concatenate with varname and type. *)
-					return_str := return_str & temp_assigned_vars.head & " : " & the_typename & " ;\n" ;
-					EVAL tut.put( the_typename , TRUE ) ;
-				END ;
+		IF symbtbl.get( temp_assigned_vars.head , var_type ) THEN
+			IF var_type.AlreadyAssigned = FALSE THEN
+				(* If true, var already assigned, forget it. *)
+				(* If false, concatenate with varname and type. *)
+				return_str := return_str & temp_assigned_vars.head & " : " & var_type.TypeName & " ;\n" ;
+				var_type.AlreadyAssigned := TRUE ;
 			END ;
 		ELSE
 			<* ASSERT FALSE *>
@@ -477,20 +470,14 @@ END GenVarDefs ;
 
 PROCEDURE DefaultSymbolTbl( symbtbl : SymbolTbl.Default ) : SymbolTbl.Default =
 VAR
-	typeusetbl : TypeUseTbl.T ;
 	iter : SymbolTbl.Iterator ;
-	deeper_iter : TypeUseTbl.Iterator ;
-	the_typename : TEXT := "" ;
+	var_type : TypeUse.T ;
 	varname : TEXT := "" ;
-	my_bool : BOOLEAN := FALSE ;
 BEGIN
 	(* TODO Any assertions? *)
 	iter := symbtbl.iterate( ) ;
-	WHILE iter.next( varname , typeusetbl ) DO
-		deeper_iter := typeusetbl.iterate( ) ;
-		WHILE deeper_iter.next( the_typename , my_bool ) DO
-			EVAL typeusetbl.put( the_typename , FALSE ) ;
-		END ;
+	WHILE iter.next( varname , var_type ) DO
+		var_type.AlreadyAssigned := FALSE ;
 	END ; 
 	RETURN symbtbl ;
 END DefaultSymbolTbl ;
