@@ -27,20 +27,11 @@ BEGIN
 	<* ASSERT root # NIL *>
 	<* ASSERT root^.parse_root # NIL *>
 	placeholder_list := NEW( REF Node.DList ) ;
-	IO.Put( "--- CONSTRUCTING PARSE TREE ---\n" ) ;
-	IO.Put( "parse_root val: " & parse_root^.val & "\n" ) ;
-	IO.Put( "Starting to look for all placeholders...\n" ) ;
 	Node.FindAllNodesWithCategoryDeep( placeholder_list , parse_root , Node.Category.Placeholder ) ;
-	IO.Put( "Got the placeholders...\n" ) ;
-	IO.Put( "Number of placeholders (I expect 1 for the top level): " & Fmt.Int( Node.Length( placeholder_list ) ) & "\n" ) ;
 	<* ASSERT Node.Length( placeholder_list ) = 1 *>
 	placeholder_list^.cur^.cat := Node.Category.NonTerminal ;
-	IO.Put( "Number of children for the placeholder before (we expect 0): " & Fmt.Int( Node.Length( placeholder_list^.cur^.children ) ) & "\n" ) ;
 	ConstructParseTreeRootList( placeholder_list^.cur^.children , root ) ;
 	<* ASSERT placeholder_list^.cur^.children^.cur # NIL *>
-	IO.Put( "Number of children for the placeholder after (we expect 2): " & Fmt.Int( Node.Length( placeholder_list^.cur^.children ) ) & "\n" ) ;
-	IO.Put( "First child (I expect Rule8): " & placeholder_list^.cur^.children^.cur^.val & "\n" ) ;
-	IO.Put( "Second child (I expect Rule13): " & placeholder_list^.cur^.children^.next^.cur^.val & "\n" ) ;
 	<* ASSERT placeholder_list^.cur^.children # NIL *>
 	(* Add separators *)
 	children_list := Node.GoToBeginning( placeholder_list^.cur^.children ) ;
@@ -53,10 +44,6 @@ BEGIN
 		END ;
 		children_list := tempnext ;
 	END ;
-	IO.Put( "Children of placeholder: " ) ;
-	Node.DebugList( placeholder_list^.cur^.children ) ;
-	IO.Put( "Number of children for the placeholder after separators added (we expect 4): " & Fmt.Int( Node.Length( Node.GoToBeginning( placeholder_list^.cur^.children ) ) ) & "\n" ) ;
-	IO.Put( "--- CONSTRUCTING PARSE TREE ---\n" ) ;
 END ConstructParseTree ;
 
 PROCEDURE GetDepGraph( my_depgraph : REF T ; parse_root : REF Node.T ; depgraph_pms : REF DepGraphParams ) =
@@ -261,7 +248,6 @@ BEGIN
 	parse_root^.cur := NEW( REF Node.T ) ;
 	Node.DeepCopy( parse_root^.cur , root^.parse_root ) ;
 	placeholder_list := NEW( REF Node.DList ) ;
-	IO.Put( "Parse tree root for which I am finding all placeholders: " & parse_root^.cur^.val & "\n" ) ;
 	Node.FindAllNodesWithCategoryDeep( placeholder_list , parse_root^.cur , Node.Category.Placeholder ) ;
 
 	(* If no subdepgraph, you already deep copied the tree. So, you're fine. *)

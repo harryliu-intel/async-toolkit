@@ -763,13 +763,21 @@ EXCEPT
 END ;
 IO.Put( "Costructing parse tree from dep graph...\n" ) ;
 DepGraph.ConstructParseTree( proc_block^.cur , depgraph , depgraph_pms ) ;
-IO.Put( "=== GENERATING FILE FROM DEPGRAPH ===\n" ) ;
+IO.Put( "=== GETTING VALUE OF y ===\n" ) ;
 EVAL typeuse_y.put( integer_txt , false_var ) ;
 EVAL typeuse_x.put( "INTEGER" , FALSE ) ;
 EVAL my_symbol_tbl.put( "y" , typeuse_y ) ;
 EVAL my_symbol_tbl.put( "x^" , typeuse_x ) ;
-IO.Put( Spec.GenSpecFileCode( depgraph^.next^.next , depgraph_pms , style_rules , "y" , my_symbol_tbl , "Speccing_y" ) ) ;
-IO.Put( "=== GENERATING FILE FROM DEPGRAPH ===\n" ) ;
+TRY
+	IO.Put( "Depgraph parse_root: " & depgraph^.next^.parse_root^.val & "\n" ) ;
+	<* ASSERT depgraph^.next^.assigned_vars # NIL *>
+	IO.Put( Spec.GetVarValueAfterStatement( depgraph^.next , depgraph_pms , style_rules , "y" , my_symbol_tbl , "/p/eth400g/mby/romanpar/work/mby-mby-x0/wm/src/main/m3/hardrada/" ) ) ;
+EXCEPT
+	| Spec.InvalidFname => IO.Put( "Invalid fname!\n" ) ;
+	| Spec.OutError => IO.Put( "Out error!\n" ) ;
+	| Spec.ReadError => IO.Put( "Read error!\n" ) ;
+END ;
+IO.Put( "=== GETTING VALUE OF y ===\n" ) ;
 IO.Put( "=== DEPGRAPH DEBUG ===\n" ) ;
 DepGraph.DebugDepGraph( depgraph_stmt1 ) ;
 IO.Put( "=== DEPGRAPH DEBUG ===\n" ) ;

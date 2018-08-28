@@ -82,7 +82,7 @@ PROCEDURE GenCode( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default
 
 PROCEDURE GenCodeText( root : REF Node.T ; style_rules_array : StyleRulesTbl.Default ) : TEXT RAISES { InvalidFname , OutError } ;
 
-PROCEDURE GenSpecFileCode( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ; out_fname : Pathname.T ) : TEXT ;
+PROCEDURE GetVarValueAfterStatement( src : REF DepGraph.T ; depgraph_pms : REF DepGraph.DepGraphParams ; style_rules_array : StyleRulesTbl.Default ; varname : TEXT ; symbtbl : SymbolTbl.Default ; abs_path_to_top_dir : Pathname.T ) : TEXT RAISES { InvalidFname , OutError , ReadError } ;
 
 (* DebugTree
 - root :: the starting node of the parse tree
