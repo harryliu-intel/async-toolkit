@@ -435,7 +435,7 @@ typedef struct mbyChunkedSegStruct
 
 typedef struct mbyModifierToTxStatsStruct
 {
-    fm_byte               * TX_DATA;         // egress packet data
+    fm_byte                 TX_DATA[MBY_MAX_PACKET_SIZE]; // egress packet data
     fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
     fm_uint32               TX_PORT;         // egress port
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]

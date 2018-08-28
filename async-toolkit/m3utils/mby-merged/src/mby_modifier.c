@@ -1091,11 +1091,13 @@ void doMiscOps
     fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyModRegData * const reg_data,
     const fm_uint32             rx_length,
+    const fm_uint32             tx_stats_last_len,
     fm_uint32           * const tx_length_inout,
     fm_byte                     tx_packet[MBY_MAX_PACKET_SIZE],
     fm_uint16           * const tx_disp,
     fm_bool             * const tx_drop,
     mbyDropErrCode      * const tx_reasoncode,
+    fm_uint32           * const tx_stats_length,
     mbyModControlData   * const ctrl_data
 )
 {
@@ -1163,8 +1165,10 @@ void doMiscOps
     ctrl_data->refcntSeg0Bytes = (is_min_frame) ? 64 : ctrl_data->egressSeg0Bytes;
     ctrl_data->refcnt_tx_len   = (is_min_frame) ? 64 : tx_length;
 
-    // Update tx_length:
+    // Update lengths:
     *tx_length_inout = tx_length;
+    *tx_stats_length = (!ctrl_data->mirrorTrunc && !tx_drop)
+        ? (ctrl_data->egressSeg0Bytes + tx_stats_last_len) : ctrl_data->refcnt_tx_len;
 }
 
 void Modifier
@@ -1202,10 +1206,11 @@ void Modifier
     const fm_macaddr      l2_dmac           = in->L2_DMAC;
 
     // Initialize:
-    fm_bool   tx_drop = tx_drop_in;
-    fm_uint16 tx_disp = (xcast == 2) ? DISP_BCAST : (xcast == 1) ? DISP_MCAST : DISP_UCAST;
-
-    mbyDropErrCode tx_reasoncode = ERR_NONE;
+    fm_bool        tx_drop         = tx_drop_in;
+    fm_uint16      tx_disp         = (xcast == 2) ? DISP_BCAST : (xcast == 1) ? DISP_MCAST : DISP_UCAST;
+    fm_uint32      tx_length       = 0;
+    fm_uint32      tx_stats_length = 0;
+    mbyDropErrCode tx_reasoncode   = ERR_NONE;
     
     // Unpack RX packet into chunked segment:
     mbyChunkedSeg chunked_seg;
@@ -1228,6 +1233,7 @@ void Modifier
 
     // Read registered config data:
     mbyModRegData reg_data;
+
     getModRegCfgData
     (
         regs,
@@ -1235,7 +1241,9 @@ void Modifier
         &reg_data
     );
 
+    // Initialize control data:
     mbyModControlData ctrl_data;
+
     calcIngressCRC
     (
         regs,
@@ -1244,7 +1252,6 @@ void Modifier
         &ctrl_data
     );
 
-    // Initialize control data:
     initControl
     (
         regs,
@@ -1305,8 +1312,7 @@ void Modifier
     updateVlanIPP(key, model, &reg_data, &ctrl_data, &chunked_seg);
 #endif
 
-    fm_uint32 tx_length = 0;
-    fm_byte   tx_packet[MBY_MAX_PACKET_SIZE] = { 0 };
+    fm_byte tx_packet[MBY_MAX_PACKET_SIZE] = { 0 };
     
     packPacket
     (
@@ -1324,20 +1330,21 @@ void Modifier
         regs,
         &reg_data,
         rx_length,
+        tx_stats_last_len,
         &tx_length,
         tx_packet,
         &tx_disp,
         &tx_drop,
         &tx_reasoncode,
+        &tx_stats_length,
         &ctrl_data
     );
 
-    fm_uint32 tx_stats_length = (!ctrl_data.mirrorTrunc && !tx_drop)
-        ? (ctrl_data.egressSeg0Bytes + tx_stats_last_len) : ctrl_data.refcnt_tx_len;
-
     // Write outputs:
+    for (fm_uint i = 0; i < MBY_MAX_PACKET_SIZE; i++)
+        out->TX_DATA[i]  = tx_packet[i];
+
     out->TX_LENGTH       = tx_length;
-    out->TX_DATA         = tx_packet;
     out->TX_STATS_LENGTH = tx_stats_length;
     out->TX_DISP         = tx_disp;
     out->TX_DROP         = tx_drop;

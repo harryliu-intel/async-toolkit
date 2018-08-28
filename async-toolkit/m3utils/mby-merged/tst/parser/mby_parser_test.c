@@ -100,7 +100,8 @@ void prepareData(int testsNum, struct TestData tests[])
         for (unsigned int x = 0; x < 4; x++)
             ptr[tests[i].in.RX_LENGTH-4+x] = (crc >> (8*x)) & 0xff;
 
-        tests[i].in.RX_DATA = ptr; 
+        for (unsigned int j = 0; j < MBY_MAX_PACKET_SIZE; j++)
+            tests[i].in.RX_DATA[j] = (j < tests[i].in.RX_LENGTH) ? ptr[j] : 0;
     }   
 }
 
