@@ -2,7 +2,7 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include <mby_common.h>
+#include "mby_common.h"
 
 #ifndef MBY_BITFIELD_H
 #define MBY_BITFIELD_H
