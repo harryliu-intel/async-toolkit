@@ -269,8 +269,12 @@ int main(int argc, char *argv[])
         tv.tv_usec = 0;
 
         rv = select(fd + 1, &rfds, NULL, NULL, &tv);
-        if (rv) {
-            read(fd, &c, 1);
+        if (rv)
+        {
+            int rdNum = read(fd, &c, 1);
+            if (rdNum != 1)
+                break; // problem with reading the socket!
+            
             switch (c)
             {
                 case 'h':

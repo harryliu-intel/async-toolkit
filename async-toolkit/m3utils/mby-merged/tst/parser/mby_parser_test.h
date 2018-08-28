@@ -13,29 +13,35 @@
 #define COLOR_GREEN   "\x1b[32m"
 #define COLOR_RESET   "\x1b[0m"
 
-struct TestData {
-
-    mbyMacToParser in;
+struct TestData
+{
+    mbyMacToParser    in;
     mbyParserToMapper out;
-    char * name;
-    unsigned int len;
+    char *            name;
 };
 
-fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE];
+struct TestData testsPass[TEST_PASS_MAX] = {
 
-struct TestData testsPass[TEST_PASS_MAX] =  {
-
- { .in = { .RX_DATA = "0001020304051f1f1f1f1f1f8000", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {
-.PA_KEYS[6] = 1,
-.PA_KEYS[7] = 515,
-.PA_KEYS[8] = 1029,
-.PA_KEYS[9] = 7967,
-.PA_KEYS[10] = 7967,
-.PA_KEYS[11] = 7967,
-.PA_KEYS[12] = 32768,
-.PA_PTRS[2] = 14},
-.name = "L2 Ethernet Unicast DMAC"},
-
+ {
+   .in =
+   {
+       .RX_DATA = "0001020304051f1f1f1f1f1f8000",
+       .RX_LENGTH = 64,
+       .RX_PORT = 1
+   },
+   .out =
+   {
+       .PA_KEYS[ 6] = 1,
+       .PA_KEYS[ 7] = 515,
+       .PA_KEYS[ 8] = 1029,
+       .PA_KEYS[ 9] = 7967,
+       .PA_KEYS[10] = 7967,
+       .PA_KEYS[11] = 7967,
+       .PA_KEYS[12] = 32768,
+       .PA_PTRS[ 2] = 14
+    },
+    .name = "L2 Ethernet Unicast DMAC"
+ },
 
 
  { .in = { .RX_DATA = "000102030405ccaabbddeeffaaaa", .RX_LENGTH = 64, .RX_PORT = 1 }, .out = {

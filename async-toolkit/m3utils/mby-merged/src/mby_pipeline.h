@@ -24,7 +24,8 @@
 void Pipeline
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser    * const mac2par
+    const mbyMacToParser    * const mac2par,
+          mbyTxStatsToTxOut * const txs2txo
 );
 
 // TODO all the following should be moved to the header files corresponding to

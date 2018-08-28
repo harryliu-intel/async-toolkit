@@ -7,49 +7,61 @@
 
 #include "mby_parser_test.h"
 
-void readRegs()
+void readRegs(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE])
 {
-    FILE* file = fopen ("regs.txt", "r");
-    unsigned int reg = 0;
+    FILE *file = fopen ("regs.txt", "r");
+    if (file == NULL) {
+        printf("Could not open file regs.txt -- exiting!\n");
+        exit(-1);
+    }
 
-    int i  = 0;
-    while (!feof (file)) {  
-        int rv = fscanf (file, "%u",&reg); 
-        regs[i] = reg;     
+    int i = 0;
+    while (!feof (file))
+    {  
+        fm_uint32 val = 0;
+        int rv = fscanf (file, "%u", &val); 
+        regs[i] = (rv == 1) ? val : 0;
         i++;
     }
 
     fclose (file);        
 }
 
-unsigned int compareValues(mbyParserToMapper * const out, mbyParserToMapper outRef)
+fm_uint compareValues(mbyParserToMapper * const out, mbyParserToMapper outRef)
 {
-    int fails = 0;
+    fm_uint fails = 0;
 
-    for (int v = 0; v < KEYS_MAX; v++)
-        if(out->PA_KEYS[v] != outRef.PA_KEYS[v])
+    for (fm_uint v = 0; v < KEYS_MAX; v++)
+        if (out->PA_KEYS[v] != outRef.PA_KEYS[v])
             fails++;
 
-    for (int v = 0; v < FLAGS_MAX; v++)
-        if(out->PA_FLAGS[v] != outRef.PA_FLAGS[v])
+    for (fm_uint v = 0; v < FLAGS_MAX; v++)
+        if (out->PA_FLAGS[v] != outRef.PA_FLAGS[v])
             fails++;
 
-    for (int v = 0; v < PTRS_MAX; v++)
-        if(out->PA_PTRS[v] != outRef.PA_PTRS[v])
+    for (fm_uint v = 0; v < PTRS_MAX; v++)
+        if (out->PA_PTRS[v] != outRef.PA_PTRS[v])
             fails++;
 
     return fails;
 }
 
-unsigned int runTests(unsigned int testsNum, struct TestData tests[])
+fm_uint runTests
+(
+    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
+    fm_uint   testsNum,
+    struct TestData tests[]
+)
 {
+    printf("--------------------------------------------------------------------------------\n");
+
     mbyParserToMapper par2map;
     mbyParserToMapper * const out = &par2map;
-    unsigned int passNum = 0;
+    fm_uint passNum = 0;
 
-    for(unsigned int x = 0; x < testsNum; x++)
+    for (fm_uint x = 0; x < testsNum; x++)
     {
-        for (int v = 0; v < KEYS_MAX; v++)
+        for (fm_uint v = 0; v < KEYS_MAX; v++)
             out->PA_KEYS[v] = 0;
 
         mbyMacToParser * const in  = &(tests[x].in);
@@ -57,78 +69,87 @@ unsigned int runTests(unsigned int testsNum, struct TestData tests[])
         Parser(regs, in, out);
         
         if (compareValues(out, tests[x].out) > 0)
-            printf(COLOR_RED "[FAIL] " COLOR_RESET);
+            printf(COLOR_RED   "[FAIL]" COLOR_RESET);
         else {
-            printf (COLOR_GREEN "[PASS] " COLOR_RESET);
+            printf(COLOR_GREEN "[pass]" COLOR_RESET);
             passNum++;
         }
 
-        printf("Test number %3d:  %s\n",x, tests[x].name);
+        printf(" Test number %3d:  %s\n", x, tests[x].name);
     }
 
-    printf("\n");
+    printf("--------------------------------------------------------------------------------\n");
 
     if (passNum != testsNum)
-        printf(COLOR_RED "[FAIL] %3d/%3d - PARSER TEST \n\n" COLOR_RESET, passNum, testsNum);
+        printf(COLOR_RED   "[FAIL]");
     else 
-        printf(COLOR_GREEN "[PASS] %3d/%3d - PARSER TEST \n\n" COLOR_RESET, passNum, testsNum);
-        
+        printf(COLOR_GREEN "[pass]");
+
+    printf("  %3d/%3d - Parser tests\n" COLOR_RESET, passNum, testsNum);
+
+    printf("--------------------------------------------------------------------------------\n");
+
     return passNum;
 }
 
-void prepareData(int testsNum, struct TestData tests[])
+void prepareData(fm_uint testsNum, struct TestData tests[])
 {
-    for (int i = 0; i < testsNum; i++)
+    for (fm_uint i = 0; i < testsNum; i++)
     {
-        unsigned char * ptr = malloc(tests[i].in.RX_LENGTH);
-        const char * packetStr = (char *) tests[i].in.RX_DATA;
-        unsigned int packetStrLen = (unsigned int) strlen(packetStr)/2;
-        int rv = 0;
+        // Scan in RX_DATA from string:
+        const char *  packetStrPtr = (char *) tests[i].in.RX_DATA;
+        const fm_uint packetStrLen = (fm_uint) strlen(packetStrPtr);
 
-        for (unsigned int x = 0; x < packetStrLen; x++){
-            rv = sscanf(packetStr + 2*x, "%02x",(unsigned int*) &ptr[x]);
-            if (rv != 1)
+        // Point at RX_DATA array:
+        fm_byte *ptr = tests[i].in.RX_DATA;
+
+        for (fm_uint x = 0; x < packetStrLen/2; x++)
+        {
+            fm_uint val = 0;
+            int rv = sscanf(packetStrPtr + 2*x, "%02x", &val); // 2 hex chars per byte
+            if (rv == 1)
+                ptr[x] = val & 0xff; // write in place back to RX_DATA array
+            else
                 break;
-
         }
 
-        for (unsigned int x = packetStrLen; x < tests[i].in.RX_LENGTH; x++)
-            ptr[x] = x - packetStrLen;
+        // Fill payload with ascending numbers starting from 0:
+        for (fm_uint x = packetStrLen/2; x < tests[i].in.RX_LENGTH; x++)
+            ptr[x] = x - packetStrLen/2; // ramp
 
-        unsigned int crc = mbyCrc32(ptr, tests[i].in.RX_LENGTH  - 4);
+        // Compute CRC32 checksum:
+        fm_uint crc = mbyCrc32(ptr, tests[i].in.RX_LENGTH - 4);
 
-        for (unsigned int x = 0; x < 4; x++)
+        // Store CRC:
+        for (fm_uint x = 0; x < 4; x++)
             ptr[tests[i].in.RX_LENGTH-4+x] = (crc >> (8*x)) & 0xff;
-
-        for (unsigned int j = 0; j < MBY_MAX_PACKET_SIZE; j++)
-            tests[i].in.RX_DATA[j] = (j < tests[i].in.RX_LENGTH) ? ptr[j] : 0;
     }   
-}
-
-void freeData(int testsNum, struct TestData tests[])
-{
-    for (int i = 0; i < testsNum; i++)
-        if (tests[i].in.RX_DATA != NULL)
-            free(tests[i].in.RX_DATA);
 }
 
 int main()
 {
-    printf("##############################################################################################\n\n");
-    printf("RUNNING PARSER TESTS\n\n");
+    // Allocate storage for registers on the heap:
+    fm_uint32 *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32)); 
+    if (regs == NULL) {
+        printf("Could not allocate heap memory for registers -- exiting!\n");
+        exit(-1);
+    }
 
-    readRegs();
+    // Read registers from "regs.txt":
+    readRegs(regs);
+
     prepareData(TEST_PASS_MAX, testsPass);
  
-    unsigned int passNum = runTests(TEST_PASS_MAX, testsPass);
- 
-    freeData(TEST_PASS_MAX, testsPass);
+    fm_uint passNum = runTests(regs, TEST_PASS_MAX, testsPass);
 
 #if 0 // Tests currently failing -> REVISIT!!!
     prepareData(TEST_FAIL_MAX, testsFail);
-    runTests(TEST_FAIL_MAX, testsFail);
+    runTests(regs, TEST_FAIL_MAX, testsFail);
 #endif  
 
+    // Free up registers:
+    free(regs);
+    
     int rv = (passNum == TEST_PASS_MAX) ? 0 : -1;
     return rv;
 }

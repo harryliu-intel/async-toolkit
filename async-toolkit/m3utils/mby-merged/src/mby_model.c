@@ -38,16 +38,19 @@ fm_status mbyWriteReg(fm_int sw, fm_uint addr, fm_uint64 val)
 fm_status mbySendPacket(fm_int sw, fm_int port, fm_byte *packet,
                         fm_int length) // , fm_modelSidebandData *sbData)
 {
-    mbyMacToParser mac2par;
+    mbyMacToParser    mac2par;
+    mbyTxStatsToTxOut txs2txo;
 
     FM_NOT_USED(sw);
 
-    mac2par.RX_DATA = packet;
+    for (fm_uint32 i = 0; i < MBY_MAX_PACKET_SIZE; i++)
+        mac2par.RX_DATA[i] = (length) ? packet[i] : 0;
+
     mac2par.RX_LENGTH = length;
-    mac2par.RX_PORT = port;
-    // TODO do we need packet metadata in MBY?
-    //mac2par.PKT_META = sbData->pktMeta;
-    Pipeline(regs, &mac2par);
+    mac2par.RX_PORT   = port;
+
+    Pipeline(regs, &mac2par, &txs2txo);
+
     return FM_OK;
 }
 

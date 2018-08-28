@@ -72,7 +72,7 @@ clean:
 	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $< 
 
 $(TARGET): $(OBJECTS)
-	@echo '  Linking' $<
+	@echo '  Linking' $(TARGET)
 	$(ECHO) $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 .PHONY: run

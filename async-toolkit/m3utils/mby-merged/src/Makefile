@@ -41,10 +41,11 @@ ECHO := @
 endif
 
 CFLAGS  = -std=gnu99
-CFLAGS += -Wno-long-long
-CFLAGS += -Wextra
 CFLAGS += -Wall
+CFLAGS += -Wextra
 CFLAGS += -Werror
+CFLAGS += -Wno-error=unused-result  # downgrade to warning instead of error
+CFLAGS += -Wno-long-long
 CFLAGS += -Wno-missing-field-initializers
 CFLAGS += -Wno-unused
 CFLAGS += -pedantic-errors
@@ -66,7 +67,7 @@ endif
 DELFILES  = $(OBJECTS) *.o *.so
 
 .PHONY: all
-all: $(OBJECTS)
+all: $(OBJECTS) mby_server
 
 mby_common.o     : mby_common.c                      mby_common.h mby_bitfield.h
 mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h mby_bitfield.h
