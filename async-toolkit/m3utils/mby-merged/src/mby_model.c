@@ -35,13 +35,18 @@ fm_status mbyWriteReg(fm_int sw, fm_uint addr, fm_uint64 val)
     return mbyModelWriteCSR64(regs, addr, val);
 }
 
-fm_status mbySendPacket(fm_int sw, fm_int port, fm_byte *packet,
-                        fm_int length) // , fm_modelSidebandData *sbData)
+fm_status mbySendPacket
+(
+    const fm_int          sw,
+    const fm_int          port,
+    const fm_byte * const packet,
+    const fm_int          length
+)
 {
+    FM_NOT_USED(sw);
+
     mbyMacToParser    mac2par;
     mbyTxStatsToTxOut txs2txo;
-
-    FM_NOT_USED(sw);
 
     for (fm_uint32 i = 0; i < MBY_MAX_PACKET_SIZE; i++)
         mac2par.RX_DATA[i] = (length) ? packet[i] : 0;
@@ -54,15 +59,20 @@ fm_status mbySendPacket(fm_int sw, fm_int port, fm_byte *packet,
     return FM_OK;
 }
 
-fm_status mbyReceivePacket(fm_int sw, fm_int *port, fm_byte *packet,
-                                fm_int *length, fm_int maxPktSize) // fm_modelSidebandData *sbData);
+fm_status mbyReceivePacket
+(
+    const fm_int          sw,
+    fm_int        * const port,
+    fm_byte       * const packet,
+    fm_int        * const length,
+    const fm_int          maxPktSize
+)
 {
-    int i;
-
     FM_NOT_USED(sw);
 
     printf("%s unimplemented - returning NO_MORE data\n", __func__);
-    *port = 0;
+
+    *port   = 0;
     *length = 0;
 
     return FM_ERR_NO_MORE;
