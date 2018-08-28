@@ -14,6 +14,7 @@
 
 #define DEFAULT_SEGMENT_BYTES   192
 #define VLAN_TAG_BYTES          4
+#define MIN_EGRESS_BYTES        18
 
 /******** MOD_BASE *******/
 #define MBY_MOD_BASE                                            (0x4000000)
@@ -51,6 +52,13 @@
 #define MBY_MOD_PER_PORT_CFG2_l_VLAN_TAGGING                    1
 #define MBY_MOD_PER_PORT_CFG2_h_VLAN_TAGGING                    3
 #define MBY_MOD_PER_PORT_CFG2_b_MIN_FRAME_SIZE                  0
+
+#define MBY_MOD_ROUTER_SMAC_WIDTH                               2
+#define MBY_MOD_ROUTER_SMAC_ENTRIES                             64
+#define MBY_MOD_ROUTER_SMAC(index, word)                        ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0118600) + (MBY_MOD_BASE))
+
+#define MBY_MOD_ROUTER_SMAC_l_SMAC                              0
+#define MBY_MOD_ROUTER_SMAC_h_SMAC                              47
 
 #define MBY_MOD_IM_WIDTH                                        2
 #define MBY_MOD_IM(word)                                        (((word)*4) + (0x0120210) + (MBY_MOD_BASE))
@@ -124,7 +132,7 @@ typedef enum mbyDvStatusEnum
 
 typedef enum mbyDropErrCodeEnum
 {
-    ERR_UNKNOWN        = 0x00,
+    ERR_NONE           = 0x00,
     ERR_VLAN_TAG_FULL  = 0x01, // done
     ERR_OTR_L2_FULL    = 0x02, // done
     ERR_INR_L2_FULL    = 0x03, // done
@@ -302,7 +310,7 @@ typedef struct mbyModControlDataStruct
     fm_bool                 vlanSwitched;
     fm_bool                 routeA;
     fm_bool                 loopbackSuppressDrop;
-    fm_int                  rx_n_tag;
+    fm_uint32               rx_n_tag;
     fm_byte                 rx_tags[16];
     // MPLS:
     fm_bool                 isInterLSR;
@@ -370,8 +378,8 @@ typedef struct mbyChunkedSegStruct
 {
     // Outer L2 + Ethertype:
     fm_byte                 ftag[8];
-    fm_byte                 otr_dmac[6];
-    fm_byte                 otr_smac[6];
+    fm_byte                 otr_dmac[MAC_ADDR_BYTES];
+    fm_byte                 otr_smac[MAC_ADDR_BYTES];
     fm_byte                 otr_tags[16];
     fm_byte                 otr_et[2];
     fm_bool                 ftag_v;
@@ -398,8 +406,8 @@ typedef struct mbyChunkedSegStruct
     fm_byte                 tun_opt_size;
 
     // Inner L2 (+Ether Type):
-    fm_byte                 inr_dmac[6];
-    fm_byte                 inr_smac[6];
+    fm_byte                 inr_dmac[MAC_ADDR_BYTES];
+    fm_byte                 inr_smac[MAC_ADDR_BYTES];
     fm_byte                 inr_tags[16];
     fm_byte                 inr_et[2];
     fm_bool                 inr_l2_v;
@@ -421,7 +429,7 @@ typedef struct mbyChunkedSegStruct
 
     // Payload:
     fm_byte                 payload_start;
-    fm_int                  payload_size;
+    fm_uint32               payload_size;
 
 } mbyChunkedSeg;
 
@@ -433,6 +441,7 @@ typedef struct mbyModifierToTxStatsStruct
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]
     fm_uint16               TX_DISP;         // egress frame disposition
     fm_bool                 TX_DROP;         // packet drop
+    fm_byte                 TX_REASONCODE;   // reason for dropping packet
     fm_bool                 SEG_DROP;        // segment drop
 
 } mbyModifierToTxStats;

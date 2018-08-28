@@ -22,7 +22,7 @@ typedef struct mbyTxInToModifierStruct
     fm_byte                *RX_DATA;       // ingress (receive) packet data
     fm_uint32               TX_LENGTH;     // egress packet data length[byte]
     fm_uint32               TX_PORT;
-    fm_bool                 TX_DROP;
+    fm_bool                 TX_DROP;       // flag indicating packet drop
     fm_byte                 TX_TAG;
     fm_uint32               TX_STATS_LAST_LEN;
 
@@ -43,6 +43,7 @@ typedef struct mbyTxInToModifierStruct
     fm_bool                 PM_ERR;        // ECC error on PM
     fm_bool                 PM_ERR_NONSOP;
     fm_bool                 SAF_ERROR;     // SAF error
+    fm_macaddr              L2_DMAC;       // L2 destination MAC address
 
 } mbyTxInToModifier;
 

@@ -23,6 +23,8 @@
 
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000
 
+#define MBY_MAX_PACKET_SIZE      32767
+
 #define MBY_N_PARSER_KEYS        80
 #define MBY_N_PARSER_FLAGS       48
 #define MBY_N_PARSER_PTRS         8
@@ -47,6 +49,8 @@
 #define MBY_ETYPE_IPv4           0x0800
 #define MBY_ETYPE_IPv6           0x86DD
 #define MBY_ETYPE_MAC_CONTROL    0x8808
+
+#define MAC_ADDR_BYTES           6
 
 // Basic Data Types:
 typedef char                  fm_char;
