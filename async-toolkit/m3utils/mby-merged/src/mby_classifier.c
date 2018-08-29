@@ -59,7 +59,7 @@ static void selectKeyMask
     mux[1] = tcam_cfg->SELECT1;
     mux[2] = tcam_cfg->SELECT2;
     mux[3] = tcam_cfg->SELECT3;
-    mux[4] = tcam_cfg->SELECT_TOP + MBY_FFU_N_KEY16;
+    mux[4] = tcam_cfg->SELECT_TOP + MBY_FFU_KEY16;
 
     lookup_info->key       = 0;
     lookup_info->keyInvert = FM_LITERAL_U64(0xFFFFFFFFF);
@@ -72,7 +72,7 @@ static void selectKeyMask
 
         // key8:
         fm_byte temp = 0;
-        if ((mux[i] >= MBY_FFU_KEY8_BASE) && (mux[i] < (MBY_FFU_KEY8_BASE + MBY_FFU_N_KEY8)))
+        if ((mux[i] >= MBY_FFU_KEY8_BASE) && (mux[i] < (MBY_FFU_KEY8_BASE + MBY_FFU_KEY8)))
             temp = keys->key8[mux[i] - MBY_FFU_KEY8_BASE];
 
         // key16 and key32 are invalid for SelectTop:
@@ -80,11 +80,11 @@ static void selectKeyMask
             continue;
 
         // key16:
-        if (mux[i] < (MBY_FFU_KEY16_BASE + MBY_FFU_N_KEY16))
+        if (mux[i] < (MBY_FFU_KEY16_BASE + MBY_FFU_KEY16))
             temp = FM_GET_UNNAMED_FIELD(keys->key16[mux[i] - MBY_FFU_KEY16_BASE], lo_bit % 16, 8);
 
         // key32:
-        if ((mux[i] >= MBY_FFU_KEY32_BASE) && (mux[i] < (MBY_FFU_KEY32_BASE + MBY_FFU_N_KEY32)))
+        if ((mux[i] >= MBY_FFU_KEY32_BASE) && (mux[i] < (MBY_FFU_KEY32_BASE + MBY_FFU_KEY32)))
             temp = FM_GET_UNNAMED_FIELD(keys->key32[mux[i] - MBY_FFU_KEY32_BASE], lo_bit, 8);
 
         FM_SET_UNNAMED_FIELD64(lookup_info->key, lo_bit, 8, temp);
@@ -249,7 +249,7 @@ static void doAction
             fm_uint32 value  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET4_4B_VALUE);
             for (fm_uint i = 0; i < 4; i++) {
                 fm_uint j = index * 4 + i;
-                if ((j < MBY_FFU_N_ACT4) && (enable & (1uL << i)))
+                if ((j < MBY_FFU_ACT4) && (enable & (1uL << i)))
                     setPrec(&(actions->act4[j]), prec, ((value >> 4*i) & 0xF));
             }
             break;
@@ -262,7 +262,7 @@ static void doAction
             fm_uint32 value  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET8_1B_VALUE);
             for (fm_uint i = 0; i < 8; i++) {
                 fm_uint j = index * 8 + i;
-                if ((j < MBY_FFU_N_ACT1) && (enable & (1uL << i)))
+                if ((j < MBY_FFU_ACT1) && (enable & (1uL << i)))
                     setPrec(&(actions->act1[j]), prec, ((value >> i) & 0x1));
             }
             break;
@@ -273,19 +273,19 @@ static void doAction
             fm_byte indexA  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXA);
             fm_bool enableA = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EA);
             fm_byte valueA  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VA);
-            if (enableA && (indexA < MBY_FFU_N_ACT1))
+            if (enableA && (indexA < MBY_FFU_ACT1))
                 setPrec(&(actions->act1[indexA]), prec, valueA);
 
             fm_byte indexB  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXB);
             fm_bool enableB = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EB);
             fm_byte valueB  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VB);
-            if (enableB && (indexB < MBY_FFU_N_ACT1))
+            if (enableB && (indexB < MBY_FFU_ACT1))
                 setPrec(&(actions->act1[indexB]), prec, valueB);
 
             fm_byte indexC  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXC);
             fm_bool enableC = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EC);
             fm_byte valueC  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VC);
-            if (enableC && (indexC < MBY_FFU_N_ACT1))
+            if (enableC && (indexC < MBY_FFU_ACT1))
                 setPrec(&(actions->act1[indexC]), prec, valueC);
 
             break;
@@ -295,17 +295,17 @@ static void doAction
         {
             fm_byte indexA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXA);
             fm_byte valueA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEA);
-            if (indexA < MBY_FFU_N_ACT4)
+            if (indexA < MBY_FFU_ACT4)
                 setPrec(&(actions->act4[indexA]), prec, valueA);
 
             fm_byte indexB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXB);
             fm_byte valueB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEB);
-            if (indexB < MBY_FFU_N_ACT4)
+            if (indexB < MBY_FFU_ACT4)
                 setPrec(&(actions->act4[indexB]), prec, valueB);
 
             fm_byte indexC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXC);
             fm_byte valueC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEC);
-            if (indexC < MBY_FFU_N_ACT4)
+            if (indexC < MBY_FFU_ACT4)
                 setPrec(&(actions->act4[indexC]), prec, valueC);
 
             break;
@@ -315,7 +315,7 @@ static void doAction
         {
             fm_byte   index = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_INDEX);
             fm_uint32 value = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_VALUE);
-            if(index < MBY_FFU_N_ACT24)
+            if(index < MBY_FFU_ACT24)
                 setPrec(&(actions->act24[index]), prec, value);
             break;
         }
@@ -409,47 +409,47 @@ static void applyKeyMask
           mbyClassifierKeys       * const hash_keys
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
         hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.Key16Mask, i, 1)) ? keys.key16[i] : 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY8; i++)
+    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
         hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(key_mask_cfg.Key8Mask,  i, 1)) ? keys.key8 [i] : 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
         hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.Key32Mask, i, 1)) ? keys.key32[i] : 0;
 }
 
 static void convertKeysToBytes
 (
     const mbyClassifierKeys keys,
-    fm_byte                 bytes[MBY_FFU_N_HASH_KEYS]
+    fm_byte                 bytes[MBY_FFU_HASH_KEYS]
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY16; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++) {
         bytes[2*i + 1] =  keys.key16[i]       & 0xFF;
         bytes[2*i    ] = (keys.key16[i] >> 8) & 0xFF;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY8; i++)
-        bytes[MBY_FFU_N_KEY16*2 + i] = keys.key8[i];
+    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
+        bytes[MBY_FFU_KEY16*2 + i] = keys.key8[i];
 
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
         for (fm_uint j = 0; j < 4; j++)
-            bytes[MBY_FFU_N_KEY16*2 + MBY_FFU_N_KEY8 + i*4 + (3-j)] = (keys.key32[i] >> (j * 8 )) & 0xFF;
+            bytes[MBY_FFU_KEY16*2 + MBY_FFU_KEY8 + i*4 + (3-j)] = (keys.key32[i] >> (j * 8 )) & 0xFF;
 }
 
 static void doKeyCompaction
 (
     const mbyClassifierKeyMaskCfg         key_mask_cfg,
     const mbyClassifierKeys               hash_keys,
-    fm_byte                               packed_keys[MBY_FFU_N_HASH_KEYS],
+    fm_byte                               packed_keys[MBY_FFU_HASH_KEYS],
     fm_byte                       * const key_size
 )
 {
     fm_byte key_idx = 0;
 
     // KEY32:
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY32; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++) {
         if (FM_GET_UNNAMED_FIELD(key_mask_cfg.Key32Mask, i, 1)) {
             for (fm_uint j = 0; j < 4; j++)
                 packed_keys[key_idx + j] = (hash_keys.key32[i] >> (8 * (3-j))) & 0xFF;
@@ -458,7 +458,7 @@ static void doKeyCompaction
     }
 
     // KEY16:
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY16; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++) {
         if (FM_GET_UNNAMED_FIELD(key_mask_cfg.Key16Mask, i, 1)) {
             packed_keys[key_idx    ] = (hash_keys.key16[i] >> 8) & 0xFF;
             packed_keys[key_idx + 1] =  hash_keys.key16[i]       & 0xFF;
@@ -468,7 +468,7 @@ static void doKeyCompaction
     }
 
     // KEY8:
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY8; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++) {
         if (FM_GET_UNNAMED_FIELD(key_mask_cfg.Key8Mask, i, 1)) {
             packed_keys[key_idx] = hash_keys.key8[i];
             key_idx++;
@@ -479,7 +479,7 @@ static void doKeyCompaction
     for (fm_uint i = (key_idx % 4); (0 < i) && (i < 4); i++) {
         packed_keys[key_idx] = 0;
         key_idx++;
-        if (key_idx == MBY_FFU_N_HASH_KEYS)
+        if (key_idx == MBY_FFU_HASH_KEYS)
             break;
     }
 
@@ -739,16 +739,16 @@ static void lookUpHash
         applyKeyMask(key_mask_cfg, *keys, &hash_keys);
 
         // Convert Keys into array of bytes:
-        fm_byte hash_bytes[MBY_FFU_N_HASH_KEYS] = { 0 };
+        fm_byte hash_bytes[MBY_FFU_HASH_KEYS] = { 0 };
         convertKeysToBytes(hash_keys, hash_bytes);
 
         // Get hash value from CRC:
         fm_uint32 hash = (hash_num == 0) ?
-            mbyCrc32ByteSwap (hash_bytes, MBY_FFU_N_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
-            mbyCrc32CByteSwap(hash_bytes, MBY_FFU_N_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
+            mbyCrc32ByteSwap (hash_bytes, MBY_FFU_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
+            mbyCrc32CByteSwap(hash_bytes, MBY_FFU_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
 
         // Key Compaction:
-        fm_byte packed_keys[MBY_FFU_N_HASH_KEYS] = { 0 };
+        fm_byte packed_keys[MBY_FFU_HASH_KEYS] = { 0 };
         fm_byte key_size = 0;
         doKeyCompaction(key_mask_cfg, hash_keys, packed_keys, &key_size);
 
@@ -1140,13 +1140,13 @@ static void populateEntropy
         applyKeyMask(entropy_cfg, keys, &hash_keys);
 
         // Convert Keys into array of bytes:
-        fm_byte hash_bytes[MBY_FFU_N_HASH_KEYS] = { 0 };
+        fm_byte hash_bytes[MBY_FFU_HASH_KEYS] = { 0 };
         convertKeysToBytes(hash_keys, hash_bytes);
 
         // Get hash value from CRC:
          hash_values[hash_num] = (hash_num == 0) ?
-            mbyCrc32ByteSwap (hash_bytes, MBY_FFU_N_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
-            mbyCrc32CByteSwap(hash_bytes, MBY_FFU_N_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
+            mbyCrc32ByteSwap (hash_bytes, MBY_FFU_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
+            mbyCrc32CByteSwap(hash_bytes, MBY_FFU_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
     }
 
 

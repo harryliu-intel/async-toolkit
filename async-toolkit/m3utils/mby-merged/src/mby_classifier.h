@@ -133,8 +133,8 @@
 #define MBY_FFU_ACTION_CFG_h_INDEX_0                            3
 
 #define MBY_FFU_KEY16_BASE                0
-#define MBY_FFU_KEY8_BASE                 ( MBY_FFU_KEY16_BASE + MBY_FFU_N_KEY16 )
-#define MBY_FFU_KEY32_BASE                ( MBY_FFU_KEY8_BASE + MBY_FFU_N_KEY8 )
+#define MBY_FFU_KEY8_BASE                 ( MBY_FFU_KEY16_BASE + MBY_FFU_KEY16 )
+#define MBY_FFU_KEY32_BASE                ( MBY_FFU_KEY8_BASE  + MBY_FFU_KEY8 )
 
 #define MBY_FFU_MAX_HASH_ENTRY_SIZE       64
 #define MBY_FFU_MAX_HASH_ACTIONS          4
@@ -873,122 +873,43 @@ typedef struct mbyIppRxTagStruct
 
 typedef struct mbyClassifierToHashStruct
 {
-    // Hash value to be used by ARP_TABLE
-    fm_uint64               L34_HASH;
-
-    // Ingress L2 domain
-    fm_uint16               L2_IDOMAIN;
-
-    // Ingress L3 domain
-    fm_byte                 L3_IDOMAIN;
-
-    // Index into the MODIFY descriptor tables
-    fm_uint32               MOD_IDX;
-
-    // The 16-bit innermost Ethernet type:
-    fm_uint16               L2_ETYPE;
-
-    // # of MPLS labels to pop in Modify:
-    fm_byte                 MPLS_POP;
-
-    // Encapsulate flag:
-    fm_bool                 ENCAP;
-
-    // Decapsulate flag:
-    fm_bool                 DECAP;
-
-    // The 4-bit Switch priority:
-    fm_byte                 QOS_SWPRI;
-
-    // The 16-bit source GLORT:
-    fm_uint16               SGLORT;
-
-    // The 16-bit ingress destination GLORT:
-    fm_uint16               IDGLORT;
-
-    // The Layer 2 destination address:
-    fm_macaddr              L2_DMAC;
-
-    // The Layer 2 source address:
-    fm_macaddr              L2_SMAC;
-
-    // DMAC embedded in DIP of IPV6 packet:
-    fm_macaddr              DMAC_FROM_IPV6;
-
-    // Boolean indicating whether the packet is IPv4:
-    fm_bool                 IS_IPV4;
-
-    // Boolean indicating whether the packet is IPv6:
-    fm_bool                 IS_IPV6;
-
-    // The 16-bit IPv4 datagram length for outer/inner header:
-    fm_uint16               L3_LENGTH;
-
-    // The 16-bit IPv4 datagram length for outer header (including the IPv4
-    //header and payload) or 16-bit IPv6 payload length (including any
-    // extension headers) in units of octets:
-    fm_uint16               OUTER_L3_LENGTH;
-
-    // The 16-bit IPv4 datagram length for Inner header (including the IPv4
-    // header and payload) or 16-bit IPv6 payload length (including any
-    // extension headers) in units of octets:
-    fm_uint16               INNER_L3_LENGTH;
-
-    // Flag to indicate presence of IP options:
-    fm_bool                 TRAP_IP_OPTIONS;
-
-    // Packet drop flag depending on TTL value:
-    fm_bool                 DROP_TTL;
-
-    // Boolean indicating whether this ICMP packet should be trapped:
-    fm_bool                 TRAP_ICMP;
-
-    // Boolean indicating whether this IGMP packet should be trapped:
-    fm_bool                 TRAP_IGMP;
-
-    // Controls update of TTL field of egress packet:
-    fm_byte                 TTL_CTRL;
-
-    // The 6-bit set of FFU flags. Bits [5:0] contain
-    //   {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}:
-    mbyClassifierFlags      FFU_FLAGS;
-
-    // Classifier route:
-    fm_uint32               FFU_ROUTE;
-
-    // Boolean indicating no learning:
-    fm_bool                 NO_LEARN;
-
-    // The 12-bit ingress VLAN ID:
-    fm_uint16               L2_IVID1;
-
-    // Transmit tag:
-    fm_byte                 TX_TAG;
-
-    // The 4-bit QOS VLAN priority:
-    fm_byte                 QOS_L2_VPRI1;
-
-    // Classifier action triggers:
-    fm_byte                 FFU_TRIG;
-
-    // The 6-bit QOS Differentiated Services Code Point (DSCP):
-    fm_byte                 QOS_L3_DSCP;
-
-    // Policer action set by FFU to be used policers:
-    fm_uint32               POLICER_ACTION[4];
-
-    /* Boolean indicating whether a parity error has been detected in any
-     * of the memories while processing this packet. */
-    fm_bool                 PARITY_ERROR;
-
-    // ECN value to use in egress packet:
-    fm_byte                 ECN;
-
-    // AQM_MARK_EN to use in egress packet:
-    fm_byte                 AQM_MARK_EN;
-
-    // 0 for Shared Vlan Learning (SVL), 1 for Independent Vlan Learning (IVL)
-    fm_bool                 LEARN_MODE;
+    fm_uint64               L34_HASH;          // hash value to be used by ARP_TABLE
+    fm_uint16               L2_IDOMAIN;        // ingress L2 domain
+    fm_byte                 L3_IDOMAIN;        // ingress L3 domain
+    fm_uint32               MOD_IDX;           // index into the MODIFY descriptor tables
+    fm_uint16               L2_ETYPE;          // 16-bit innermost Ethernet type
+    fm_byte                 MPLS_POP;          // # of MPLS labels to pop in Modify
+    fm_bool                 ENCAP;             // encapsulate flag
+    fm_bool                 DECAP;             // decapsulate flag
+    fm_byte                 QOS_SWPRI;         // 4-bit quality of service priority
+    fm_uint16               SGLORT;            // 16-bit source GLORT
+    fm_uint16               IDGLORT;           // 16-bit ingress destination GLORT
+    fm_macaddr              L2_DMAC;           // layer 2 destination address
+    fm_macaddr              L2_SMAC;           // layer 2 source address
+    fm_macaddr              DMAC_FROM_IPV6;    // DMAC embedded in DIP of IPV6 packet
+    fm_bool                 IS_IPV4;           // packet is of type IP version 4
+    fm_bool                 IS_IPV6;           // packet is of type IP version 6
+    fm_uint16               L3_LENGTH;         // 16-bit IPv4 datagram length for outer/inner header
+    fm_uint16               OUTER_L3_LENGTH;   // 16-bit IPv4 datagram length for outer header
+    fm_uint16               INNER_L3_LENGTH;   // 16-bit IPv4 datagram length for Inner header
+    fm_bool                 TRAP_IP_OPTIONS;   // flag indicating presence of IP options
+    fm_bool                 DROP_TTL;          // drop packet (depending on TTL value)
+    fm_bool                 TRAP_ICMP;         // trap ICMP packet
+    fm_bool                 TRAP_IGMP;         // trap IGMP packet
+    fm_byte                 TTL_CTRL;          // controls update of TTL field of egress packet
+    mbyClassifierFlags      FFU_FLAGS;         // classifier flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
+    fm_uint32               FFU_ROUTE;         // classifier route
+    fm_bool                 NO_LEARN;          // disable learning
+    fm_uint16               L2_IVID1;          // 12-bit ingress VLAN ID
+    fm_byte                 TX_TAG;            // transmit tag
+    fm_byte                 QOS_L2_VPRI1;      // 4-bit QOS VLAN priority
+    fm_byte                 FFU_TRIG;          // classifier action triggers
+    fm_byte                 QOS_L3_DSCP;       // 6-bit QOS Differentiated Services Code Point (DSCP):
+    fm_uint32               POLICER_ACTION[MBY_FFU_POL_ACTIONS]; // policer actions
+    fm_bool                 PARITY_ERROR;      // parity error detected flag
+    fm_byte                 ECN;               // egress ECN value
+    fm_byte                 AQM_MARK_EN;       // egress AQM_MARK_EN
+    fm_bool                 LEARN_MODE;        // learn mode: 0=SVL, 1=IVL
 
 } mbyClassifierToHash;
     

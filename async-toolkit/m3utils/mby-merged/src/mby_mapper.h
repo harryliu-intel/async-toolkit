@@ -612,7 +612,6 @@ typedef struct mbyMapRewriteStruct
 
 typedef struct mbyMapperToClassifierStruct
 {
-    
     mbyParserInfo           PARSER_INFO;      // parser info structure
     fm_bool                 PARSER_ERROR;     // header parse error
     fm_bool                 OTR_MPLS_V;       // parser outer MPLS packet valid

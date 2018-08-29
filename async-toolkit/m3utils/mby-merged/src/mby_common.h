@@ -29,15 +29,16 @@
 #define MBY_N_PARSER_FLGS        48
 #define MBY_N_PARSER_PTRS         8
 
-#define MBY_FFU_N_KEY8           64
-#define MBY_FFU_N_KEY16          32
-#define MBY_FFU_N_KEY32          16
-#define MBY_FFU_N_KEYS           ( MBY_FFU_N_KEY8 + MBY_FFU_N_KEY16   + MBY_FFU_N_KEY32   )
-#define MBY_FFU_N_HASH_KEYS      ( MBY_FFU_N_KEY8 + MBY_FFU_N_KEY16*2 + MBY_FFU_N_KEY32*4 )
-#define MBY_FFU_N_ACT24          16
-#define MBY_FFU_N_ACT4           23
-#define MBY_FFU_N_ACT1           24
-#define MBY_FFU_N_REMAP_ACTIONS   8
+#define MBY_FFU_KEY8             64
+#define MBY_FFU_KEY16            32
+#define MBY_FFU_KEY32            16
+#define MBY_FFU_KEYS             ( MBY_FFU_KEY8 + MBY_FFU_KEY16   + MBY_FFU_KEY32   )
+#define MBY_FFU_HASH_KEYS        ( MBY_FFU_KEY8 + MBY_FFU_KEY16*2 + MBY_FFU_KEY32*4 )
+#define MBY_FFU_ACT24            16
+#define MBY_FFU_ACT4             23
+#define MBY_FFU_ACT1             24
+#define MBY_FFU_REMAP_ACTIONS     8
+#define MBY_FFU_POL_ACTIONS       4  // MBY_FFU_ACTION_POLICER[0..3]
 
 #define MBY_PROT_TCP              6
 #define MBY_PROT_UDP             17
@@ -130,9 +131,9 @@ typedef struct mbyParserInfoStruct
 
 typedef struct mbyClassifierKeysStruct
 {
-    fm_uint32               key32[MBY_FFU_N_KEY32];
-    fm_uint16               key16[MBY_FFU_N_KEY16];
-    fm_byte                 key8 [MBY_FFU_N_KEY8 ];
+    fm_uint32               key32[MBY_FFU_KEY32];
+    fm_uint16               key16[MBY_FFU_KEY16];
+    fm_byte                 key8 [MBY_FFU_KEY8 ];
 
 } mbyClassifierKeys;
 
@@ -145,9 +146,9 @@ typedef struct mbyPrecValStruct
 
 typedef struct mbyClassifierActionsStruct
 {
-    mbyPrecVal              act24[MBY_FFU_N_ACT24];
-    mbyPrecVal              act4 [MBY_FFU_N_ACT4 ];
-    mbyPrecVal              act1 [MBY_FFU_N_ACT1 ];
+    mbyPrecVal              act24[MBY_FFU_ACT24];
+    mbyPrecVal              act4 [MBY_FFU_ACT4 ];
+    mbyPrecVal              act1 [MBY_FFU_ACT1 ];
 
 } mbyClassifierActions;
 

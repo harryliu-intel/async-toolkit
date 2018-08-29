@@ -288,16 +288,16 @@ static void insertDefaults
     fm_uint16                 realigned_keys    [MBY_N_REALIGN_KEYS],
     fm_bool                   realigned_keys_vld[MBY_N_REALIGN_KEYS])
 {
-    for (fm_uint i = 0; i < MBY_FFU_N_ACT24; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
         out->FFU_ACTIONS.act24[i].prec = 1;
         out->FFU_ACTIONS.act24[i].val = 0;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_N_ACT4; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
         out->FFU_ACTIONS.act4[i].prec = 1;
         out->FFU_ACTIONS.act4[i].val = 0;
     }
-    for (fm_uint i = 0; i < MBY_FFU_N_ACT1; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
         out->FFU_ACTIONS.act1[i].prec = 1;
         out->FFU_ACTIONS.act1[i].val = 0;
     }
@@ -391,22 +391,22 @@ static void insertDefaults
         // target 96...105 matches lower act24[0...10]
         if ( (target <= MBY_DEFAULT_TARGET_ACT24_L_H) &&
              (target >= MBY_DEFAULT_TARGET_ACT24_L_L) &&
-             ((target - MBY_DEFAULT_TARGET_ACT24_L_L) < MBY_FFU_N_ACT24)) {
+             ((target - MBY_DEFAULT_TARGET_ACT24_L_L) < MBY_FFU_ACT24)) {
             fm_uint32 un0 = port_defaults.VALUE;
             FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[target - 96].val, 0, 16, un0);
         }
         else if ( (target <= MBY_DEFAULT_TARGET_ACT24_U_H) &&
                   (target >= MBY_DEFAULT_TARGET_ACT24_U_L) &&
-                  ((target - MBY_DEFAULT_TARGET_ACT24_U_L) < MBY_FFU_N_ACT24)) {
+                  ((target - MBY_DEFAULT_TARGET_ACT24_U_L) < MBY_FFU_ACT24)) {
             // target 112...121 matches upper act24[0...10]
             fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, 0, 8);
             FM_SET_UNNAMED_FIELD(out->FFU_ACTIONS.act24[target - 112].val, 16, 8, un0);
         }
         else if ( (target <= MBY_DEFAULT_TARGET_ACT4_4_H) &&
                   (target >= MBY_DEFAULT_TARGET_ACT4_4_L) &&
-                  ((target - MBY_DEFAULT_TARGET_ACT4_4_L) < MBY_FFU_N_ACT4)) {
+                  ((target - MBY_DEFAULT_TARGET_ACT4_4_L) < MBY_FFU_ACT4)) {
             for (fm_uint j = 0; j < 4; j++) {
-                if ((target - MBY_DEFAULT_TARGET_ACT4_4_L + j) < MBY_FFU_N_ACT4) {
+                if ((target - MBY_DEFAULT_TARGET_ACT4_4_L + j) < MBY_FFU_ACT4) {
                     fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, j * 4, 4);
                     out->FFU_ACTIONS.act4[target - MBY_DEFAULT_TARGET_ACT4_4_L + j].val = un0;
                 }
@@ -414,9 +414,9 @@ static void insertDefaults
         }
         else if ( (target <= MBY_DEFAULT_TARGET_ACT4_2_H) &&
                   (target >= MBY_DEFAULT_TARGET_ACT4_2_L) &&
-                  ((target - MBY_DEFAULT_TARGET_ACT4_2_L) < MBY_FFU_N_ACT4)) {
+                  ((target - MBY_DEFAULT_TARGET_ACT4_2_L) < MBY_FFU_ACT4)) {
             for (fm_uint j = 0; j < 2; j++) {
-                if ((target - MBY_DEFAULT_TARGET_ACT4_2_L + j) < MBY_FFU_N_ACT4) {
+                if ((target - MBY_DEFAULT_TARGET_ACT4_2_L + j) < MBY_FFU_ACT4) {
                     fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, j * 4, 4);
                     out->FFU_ACTIONS.act4[target - MBY_DEFAULT_TARGET_ACT4_2_L + j].val = un0;
                 }
@@ -424,7 +424,7 @@ static void insertDefaults
         }
         else if ( (target <= MBY_DEFAULT_TARGET_ACT4_1_H) &&
              (target >= MBY_DEFAULT_TARGET_ACT4_1_L)  &&
-             ((target - MBY_DEFAULT_TARGET_ACT4_1_L) < MBY_FFU_N_ACT4)) {
+             ((target - MBY_DEFAULT_TARGET_ACT4_1_L) < MBY_FFU_ACT4)) {
             fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, 0, 4);
             out->FFU_ACTIONS.act4[target - MBY_DEFAULT_TARGET_ACT4_1_L].val = un0;
         }
@@ -444,17 +444,17 @@ static void insertDefaults
     // Set FFU keys from realigned_keys
 
     // KEY16
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
          out->FFU_KEYS.key16[i] = realigned_keys[i];
  
     // KEY8
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY8; i += 2) {
+    for (fm_uint i = 0; i < MBY_FFU_KEY8; i += 2) {
         out->FFU_KEYS.key8[i  ] = FM_GET_UNNAMED_FIELD(realigned_keys[(i >> 1) + MBY_RE_KEYS_GENERAL_8B], 8, 8);
         out->FFU_KEYS.key8[i+1] = FM_GET_UNNAMED_FIELD(realigned_keys[(i >> 1) + MBY_RE_KEYS_GENERAL_8B], 0, 8);
     }
 
     // KEY32
-    for (fm_uint i = 0; i < MBY_FFU_N_KEY32; i++) {
+    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++) {
         FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key32[i], 16, 16, realigned_keys[i * 2 + MBY_RE_KEYS_OUTER_SIP]);
         FM_SET_UNNAMED_FIELD(out->FFU_KEYS.key32[i],  0, 16, realigned_keys[i * 2 + MBY_RE_KEYS_OUTER_SIP + 1]);
     }
