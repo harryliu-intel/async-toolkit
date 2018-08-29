@@ -416,7 +416,7 @@ static void simple_tcp_VLAN_COUNTER_test_setup(fm_uint32 reg[MBY_REGISTER_ARRAY_
 
 static int simple_tcp_VLAN_COUNTER_test_check(fm_uint32 reg[MBY_REGISTER_ARRAY_SIZE], const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->L2_IVLAN1_CNT_INDEX == 0x805, "L2_IVLAN1_CNT_INDEX");
+    MAPPER_TEST_ASSERT(in->L2_IVLAN1_CNT == 0x805, "L2_IVLAN1_CNT");
 
     return 1;
 }
