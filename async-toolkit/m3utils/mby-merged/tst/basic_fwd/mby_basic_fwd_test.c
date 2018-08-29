@@ -3,6 +3,12 @@
 #include <stdio.h>
 
 #include "borrowed/mby_srv_nvmimg.h"
+#include "mby_basic_fwd_init.h"
+#include <mby_init.h>
+
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_RESET   "\x1b[0m"
 
 // TODO make this const once model allows... or add memcpy if it won't
 /*const*/unsigned char sent_packet[1024] =  {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0xcc, 0xaa, 0xbb, 0xcc, 0xdd, 0xee,
@@ -19,6 +25,8 @@ const int send_port = 0;
 #define BASIC_FWD_FAIL_ON_NON_OK(test) \
                 if (status != FM_OK) { \
                     printf("FAIL of mby_basic_fwd @ %s\n", test); \
+                    printf(COLOR_RED   "[FAIL]"); \
+                    printf("--------------------------------------------------------------------------------\n"); \
                     return -1; \
                 }
 
@@ -26,6 +34,8 @@ fm_status init()
 {
     // TODO verify if that's all that we need
     loadNvmImg("nvm.img");
+    init_common();
+    basic_fwd_init();
     return FM_OK;
 }
 
@@ -45,6 +55,7 @@ int main()
 
     fm_status status;
 
+    printf("--------------------------------------------------------------------------------\n");
     printf("mby_basic_fwd test\n");
 
     status = mbyResetModel(send_sw);
@@ -62,6 +73,7 @@ int main()
     status = check();
     BASIC_FWD_FAIL_ON_NON_OK("check");
 
-    printf("PASS of mby_basic_fwd");
+    printf(COLOR_GREEN "[pass]");
+    printf("--------------------------------------------------------------------------------\n");
     return 0;
 }

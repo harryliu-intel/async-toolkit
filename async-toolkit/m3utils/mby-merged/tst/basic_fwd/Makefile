@@ -3,6 +3,7 @@ TST_DIR = .
 
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
+INCLUDES += -I$(TST_DIR)/../common
 
 SOURCES  = $(SRC_DIR)/mby_reg_ctrl.c
 SOURCES += $(SRC_DIR)/mby_maskgen.c
@@ -24,6 +25,8 @@ SOURCES += $(SRC_DIR)/mby_bitfield.c
 SOURCES += $(SRC_DIR)/mby_mapper.c
 
 SOURCES += $(TST_DIR)/mby_basic_fwd_test.c
+SOURCES += $(TST_DIR)/mby_basic_fwd_init.c
+SOURCES += $(TST_DIR)/../common/mby_init.c
 SOURCES += $(TST_DIR)/borrowed/mby_srv_utils.c
 SOURCES += $(TST_DIR)/borrowed/mby_srv_nvmimg.c
 
@@ -95,6 +98,8 @@ $(SRC_DIR)/mby_mapper.o    : $(SRC_DIR)/mby_mapper.c     $(SRC_DIR)/mby_mapper.h
 $(TST_DIR)/borrowed/mby_srv_errno.o : $(TST_DIR)/borrowed/mby_srv_errno.c  $(TST_DIR)/borrowed/mby_srv_errno.h
 $(TST_DIR)/borrowed/mby_srv_utils.o : $(TST_DIR)/borrowed/mby_srv_utils.c  $(TST_DIR)/borrowed/mby_srv_utils.h
 $(TST_DIR)/borrowed/mby_srv_nvmimg.o: $(TST_DIR)/borrowed/mby_srv_nvmimg.c $(TST_DIR)/borrowed/mby_srv_nvmimg.h
+$(TST_DIR)/../common/mby_init.o     : $(TST_DIR)/../common/mby_init.c      $(TST_DIR)/../common/mby_init.h
+$(TST_DIR)/mby_basic_fwd_init.o     : $(TST_DIR)/mby_basic_fwd_init.c      $(TST_DIR)/mby_basic_fwd_init.h
 $(TST_DIR)/mby_basic_fwd_test.o     : $(TST_DIR)/mby_basic_fwd_test.c
 
 .PHONY: clean
