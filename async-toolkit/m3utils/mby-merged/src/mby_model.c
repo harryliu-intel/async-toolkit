@@ -45,8 +45,8 @@ fm_status mbySendPacket
 {
     FM_NOT_USED(sw);
 
-    mbyMacToParser    mac2par;
-    mbyTxStatsToTxOut txs2txo;
+    mbyRxMacToParser  mac2par;
+    mbyTxStatsToTxMac txs2mac;
 
     for (fm_uint32 i = 0; i < MBY_MAX_PACKET_SIZE; i++)
         mac2par.RX_DATA[i] = (length) ? packet[i] : 0;
@@ -54,7 +54,7 @@ fm_status mbySendPacket
     mac2par.RX_LENGTH = length;
     mac2par.RX_PORT   = port;
 
-    Pipeline(regs, &mac2par, &txs2txo);
+    Pipeline(regs, &mac2par, &txs2mac);
 
     return FM_OK;
 }

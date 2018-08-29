@@ -24,8 +24,8 @@
 void Pipeline
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser    * const mac2par,
-          mbyTxStatsToTxOut * const txs2txo
+    const mbyRxMacToParser  * const mac2par,
+          mbyTxStatsToTxMac * const txs2mac
 );
 
 // TODO all the following should be moved to the header files corresponding to
@@ -33,7 +33,7 @@ void Pipeline
 void Parser
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser        * const in,
+    const mbyRxMacToParser      * const in,
           mbyParserToMapper     * const out
 );
 
@@ -111,7 +111,7 @@ void TxStats
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyModifierToTxStats  * const in,
-          mbyTxStatsToTxOut     * const out
+          mbyTxStatsToTxMac     * const out
 );
 
 #endif

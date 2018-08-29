@@ -7,8 +7,8 @@
 void Pipeline
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser    * const mac2par,
-          mbyTxStatsToTxOut * const txs2txo
+    const mbyRxMacToParser  * const mac2par,
+          mbyTxStatsToTxMac * const txs2mac
 )
 {
     // Intermediate structs:
@@ -52,5 +52,5 @@ void Pipeline
     
     Modifier   (regs, &txi2mod, &mod2txs);
 
-    TxStats    (regs, &mod2txs,  txs2txo);
+    TxStats    (regs, &mod2txs,  txs2mac);
 }

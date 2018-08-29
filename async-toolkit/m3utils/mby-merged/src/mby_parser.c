@@ -55,7 +55,7 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
 void Parser
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMacToParser    * const in, 
+    const mbyRxMacToParser  * const in, 
           mbyParserToMapper * const out
 )
 {

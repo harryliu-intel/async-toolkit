@@ -45,7 +45,7 @@ void TxStats
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyModifierToTxStats  * const in,
-          mbyTxStatsToTxOut     * const out
+          mbyTxStatsToTxMac     * const out
 )
 {
     // Read inputos:
