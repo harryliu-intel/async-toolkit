@@ -286,7 +286,7 @@ object Memory {
         .getOrElse(regwidth)
       val align = alignment.getOrElse(width)
       val lo = at.modAlign(align)
-      AddressRange(lo, (lo + regwidth.toBytes).toBits)
+      AddressRange(lo, regwidth.toBits)
     }
   }
 
