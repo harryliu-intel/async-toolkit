@@ -819,9 +819,8 @@ static void mapScalar
     map_prof_key0->IHL_OK   = ihl_ok;
     map_prof_key0->IHL_FITS = ihl_fits;
 
-    for (fm_uint i = 0; i < (MBY_N_PARSER_FLAGS - 1); i++) {
+    for (fm_uint i = 0; i < (MBY_N_PARSER_FLGS - 1); i++)
         FM_SET_UNNAMED_FIELD64(map_prof_key0->FLAGS, i, 1, in->PA_FLAGS[i+1]);
-    }
 
     for(fm_uint i = 0; i < MBY_N_IS_IP_BITS; i++) {
         fm_uint32 un0 = FM_GET_UNNAMED_FIELD(in->PA_CSUM_OK, i, 1);

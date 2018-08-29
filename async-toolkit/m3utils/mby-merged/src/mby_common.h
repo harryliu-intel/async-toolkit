@@ -26,7 +26,7 @@
 #define MBY_MAX_PACKET_SIZE      32767
 
 #define MBY_N_PARSER_KEYS        80
-#define MBY_N_PARSER_FLAGS       48
+#define MBY_N_PARSER_FLGS        48
 #define MBY_N_PARSER_PTRS         8
 
 #define MBY_FFU_N_KEY8           64

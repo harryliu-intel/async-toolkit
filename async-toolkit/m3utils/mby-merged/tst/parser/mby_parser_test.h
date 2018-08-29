@@ -5,9 +5,6 @@
 
 #define TEST_PASS_MAX 322 
 #define TEST_FAIL_MAX 48 
-#define KEYS_MAX 84
-#define FLAGS_MAX 48
-#define PTRS_MAX 8
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -15,7 +12,7 @@
 
 struct TestData
 {
-    mbyMacToParser    in;
+    mbyRxMacToParser  in;
     mbyParserToMapper out;
     char *            name;
 };

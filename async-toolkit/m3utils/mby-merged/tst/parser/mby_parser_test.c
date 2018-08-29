@@ -31,19 +31,50 @@ fm_uint compareValues(mbyParserToMapper * const out, mbyParserToMapper outRef)
 {
     fm_uint fails = 0;
 
-    for (fm_uint v = 0; v < KEYS_MAX; v++)
+    for (fm_uint v = 0; v < MBY_N_PARSER_KEYS; v++)
         if (out->PA_KEYS[v] != outRef.PA_KEYS[v])
             fails++;
 
-    for (fm_uint v = 0; v < FLAGS_MAX; v++)
+    for (fm_uint v = 0; v < MBY_N_PARSER_FLGS; v++)
         if (out->PA_FLAGS[v] != outRef.PA_FLAGS[v])
             fails++;
 
-    for (fm_uint v = 0; v < PTRS_MAX; v++)
+    for (fm_uint v = 0; v < MBY_N_PARSER_PTRS; v++)
         if (out->PA_PTRS[v] != outRef.PA_PTRS[v])
             fails++;
 
     return fails;
+}
+
+void initOutput
+(
+    mbyParserToMapper * const out
+)
+{
+    out->PA_ADJ_SEG_LEN = 0;
+
+    for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
+        out->PA_KEYS      [i] = 0;  
+        out->PA_KEYS_VALID[i] = FALSE;  
+    }
+
+    for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
+        out->PA_FLAGS[i] = 0; 
+
+    for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
+        out->PA_PTRS      [i] = 0; 
+        out->PA_PTRS_VALID[i] = FALSE; 
+    }
+
+    out->PA_CSUM_OK         = 0;
+    out->PA_EX_STAGE        = 0;
+    out->PA_EX_DEPTH_EXCEED = FALSE;
+    out->PA_EX_TRUNC_HEADER = FALSE;
+    out->PA_EX_PARSING_DONE = FALSE;
+    out->PA_DROP            = FALSE;
+    out->PA_L3LEN_ERR       = FALSE;
+    out->PA_PACKET_TYPE     = 0;
+
 }
 
 fm_uint runTests
@@ -57,14 +88,14 @@ fm_uint runTests
 
     mbyParserToMapper par2map;
     mbyParserToMapper * const out = &par2map;
+
+    initOutput (out);
+    
     fm_uint passNum = 0;
 
     for (fm_uint x = 0; x < testsNum; x++)
     {
-        for (fm_uint v = 0; v < KEYS_MAX; v++)
-            out->PA_KEYS[v] = 0;
-
-        mbyMacToParser * const in  = &(tests[x].in);
+        mbyRxMacToParser * const in  = &(tests[x].in);
 
         Parser(regs, in, out);
         
