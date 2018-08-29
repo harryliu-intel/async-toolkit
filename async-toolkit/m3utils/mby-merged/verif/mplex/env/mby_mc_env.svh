@@ -148,13 +148,14 @@ class mby_mc_env extends shdv_base_env;
 
         axi_bfm =  svt_axi_bfm_pkg::svt_axi_bfm_env::type_id::create("axi_bfm", this);
         axi_bfm.set_axi_cfg(tb_cfg.env_cfg.axi_bfm_cfg);
-        `uvm_info(get_full_name(),$sformatf("Setting AXI BFM cfg: num_masters =%0d, num_slaves = %0d\
-                data_width = %0d",tb_cfg.env_cfg.axi_num_masters,tb_cfg.env_cfg.axi_num_slaves,
-                tb_cfg.env_cfg.axi_data_width),UVM_MEDIUM)
+        `uvm_info(get_full_name(),$sformatf("Setting AXI BFM cfg: num_masters =%0d,num_slaves =%0d, axi_mstr_is_active = %0d\
+                axi_mstr_is_active = %0d",tb_cfg.env_cfg.axi_num_masters,tb_cfg.env_cfg.axi_num_slaves,
+                tb_cfg.env_cfg.axi_mstr_is_active,tb_cfg.env_cfg.axi_slv_is_active),UVM_MEDIUM)
 
-        axi_bfm.setup_bfm(tb_cfg.env_cfg.axi_num_masters, tb_cfg.env_cfg.axi_num_slaves,tb_cfg.env_cfg.axi_data_width);
-        
-        //axi_bfm.set_report_verbosity_level_hier(UVM_LOW);
+        axi_bfm.setup_bfm(tb_cfg.env_cfg.axi_num_masters,tb_cfg.env_cfg.axi_num_slaves,
+               tb_cfg.env_cfg.axi_mstr_is_active, tb_cfg.env_cfg.axi_slv_is_active );
+
+    //axi_bfm.set_report_verbosity_level_hier(UVM_LOW);
 
     endfunction: build_axi_bfm
 
@@ -166,7 +167,7 @@ class mby_mc_env extends shdv_base_env;
 
         ahb_bfm = svt_ahb_bfm_pkg::ahb_bfm_env::type_id::create("ahb_bfm", this);
         if (!uvm_config_db#(virtual svt_ahb_if)::get(this, "", "ahb_if", ahb_if)) begin
-	   `uvm_fatal(get_name(),"Config_DB.get() for AHB BFM interface was not successful!")
+            `uvm_fatal(get_name(),"Config_DB.get() for AHB BFM interface was not successful!")
         end
         ahb_bfm.set_vif(ahb_if);
         ahb_bfm.cfg = tb_cfg.env_cfg.ahb_bfm_cfg;
@@ -202,7 +203,7 @@ class mby_mc_env extends shdv_base_env;
         ral_randomize();
         if (_level == SLA_TOP) begin
         end
-        
+
     endfunction: end_of_elaboration_phase
 
     //---------------------------------------------------------------------------
