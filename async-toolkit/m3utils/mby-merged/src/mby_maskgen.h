@@ -536,6 +536,7 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint32               GLORT_DMASK;            // 24-bit GLORT-based destination mask
     fm_bool                 SKIP_DGLORT_DEC;
     fm_uint16               IP_MCAST_IDX;           // index into the MCAST_VLAN_TABLE
+    fm_bool                 DA_HIT;                 // destination MAC address lookup hit
 
 } mbyMaskGenToTriggers;
 

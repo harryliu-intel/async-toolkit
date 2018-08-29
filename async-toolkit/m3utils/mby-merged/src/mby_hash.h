@@ -88,7 +88,7 @@ typedef struct mbyHashToNextHopStruct
     fm_uint16               L2_IDOMAIN;
     fm_byte                 L3_IDOMAIN;
     fm_uint16               L2_IVID1;
-
+    fm_bool                 LEARN_MODE;
 } mbyHashToNextHop;
 
 #endif

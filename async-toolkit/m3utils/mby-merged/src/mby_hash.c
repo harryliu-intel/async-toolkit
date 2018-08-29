@@ -725,4 +725,5 @@ void Hash
     out->L2_IDOMAIN              = in->L2_IDOMAIN;
     out->L3_IDOMAIN              = in->L3_IDOMAIN;
     out->L2_IVID1                = in->L2_IVID1;
+    out->LEARN_MODE              = in->LEARN_MODE;
 }

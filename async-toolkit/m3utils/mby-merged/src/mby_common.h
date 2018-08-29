@@ -153,9 +153,6 @@ typedef struct mbyClassifierActionsStruct
 
 // External function prototypes:
 
-fm_bool   fmModelIsMulticastMacAddress(fm_macaddr keyMac);
-fm_bool   fmModelIsBroadcastMacAddress(fm_macaddr keyMac);
-
 fm_status mbyModelReadCSR
 (
     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],

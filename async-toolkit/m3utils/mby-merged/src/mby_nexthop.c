@@ -5,6 +5,7 @@
 #include "mby_classifier.h"
 #include "mby_hash.h"
 #include "mby_nexthop.h"
+#include "mby_maskgen.h"
 
 static void getARPTableEntry
 (
@@ -51,6 +52,111 @@ static void setARPUsedEntry
     FM_SET_FIELD64(arp_used_reg, MBY_ARP_USED, USED, used_value);
 
     mbyModelWriteCSR64(regs, MBY_ARP_USED(arp_tbl_idx, 0), arp_used_reg);
+}
+
+static void GetMaTableEntry
+(
+    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    fm_byte             set,
+    fm_uint16           ma_tbl_idx,
+    mbyMaTable  * const entry
+)
+{
+    fm_uint32 ma_table_regs[MBY_MA_TABLE_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_MA_TABLE(set, ma_tbl_idx, 0), MBY_MA_TABLE_WIDTH, ma_table_regs);
+
+    entry->OLD_PORT    = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, OLD_PORT);
+    entry->NEW_PORT    = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, NEW_PORT);
+    entry->ENTRY_TYPE  = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, ENTRY_TYPE);
+    entry->TRIG_ID     = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, TRIG_ID);
+    entry->S_GLORT     = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, S_GLORT);
+    entry->D_GLORT     = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, D_GLORT);
+    entry->L2_DOMAIN   = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, L2_DOMAIN);
+    entry->VID         = FM_ARRAY_GET_FIELD(ma_table_regs, MBY_MA_TABLE, VID);
+    entry->MAC_ADDRESS = FM_ARRAY_GET_FIELD64(ma_table_regs, MBY_MA_TABLE, MAC_ADDRESS);
+
+} /* end GetMaTableEntry*/
+
+void lookUpAddress
+(
+          fm_uint32          regs[MBY_REGISTER_ARRAY_SIZE],
+          fm_macaddr         macAddr,
+          fm_uint16          vid,
+          fm_uint16          l2_domain,
+          fm_bool            learn_mode,
+          fm_bool    * const hit,
+          mbyMaTable * const entry
+)
+{
+    mbyMaTable ma_entry;
+
+    //learn_mode = 1 for IVL, LEARN_MODE = 0 for SVL
+    fm_uint16 lvid     = (learn_mode) ? vid : 0;
+    fm_uint16 camIndex = MBY_MA_TABLE_TCAM_SIZE; /*1024*/
+    fm_byte   lset     = MBY_MAC_ADDR_BANK_COUNT - 1;// Using only bank = 5 <-- REVISIT!!!
+
+    while (camIndex > 0)
+    {
+        camIndex--;
+        GetMaTableEntry(regs, lset, camIndex, &ma_entry);
+
+        if ((ma_entry.MAC_ADDRESS == macAddr) && (ma_entry.VID == lvid) && (ma_entry.L2_DOMAIN == l2_domain) &&
+            (ma_entry.ENTRY_TYPE != MBY_MA_ENTRY_TYPE_NOT_USED))
+        {
+            *hit = TRUE;
+            *entry = ma_entry;
+            break;
+        }
+    }
+}
+
+void l2LookUp
+(
+          fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
+          fm_bool                     flood_set,
+          fm_uint16                   l2_edomain,
+          fm_uint16           * const idglort,
+    const mbyHashToNextHop    * const in,
+          mbyNextHopToMaskGen * const out)
+{
+    out->GLORT_FORWARDED = 0;
+    out->FLOOD_FORWARDED = 0;
+
+    if (*idglort && !flood_set)
+    {
+        /* no change to dglort */
+        out->GLORT_FORWARDED = 1;
+    }
+    else
+    {
+        fm_uint64 flood_glort_table_reg = 0;
+        mbyModelReadCSR64(regs, MBY_FLOOD_GLORT_TABLE(l2_edomain, 0), &flood_glort_table_reg);
+
+        lookUpAddress(regs, in->L2_DMAC, in->L2_IVID1, l2_edomain, in->LEARN_MODE, &out->DA_HIT, &out->DA_RESULT);
+
+        if (out->DA_HIT && out->DA_RESULT.D_GLORT)
+        {
+            *idglort = out->DA_RESULT.D_GLORT;
+            if(out->DA_RESULT.ENTRY_TYPE == MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL)
+                out->AMASK |= MBY_AMASK_DROP_PROVISIONAL;
+        }
+        else if ((idglort != 0) && (flood_set == 1))
+            /* no change to dglort */
+            out->GLORT_FORWARDED = 1;
+        else if (isBroadcastMacAddress(in->L2_DMAC))
+            *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, BROADCAST_GLORT);
+
+        else if (isMulticastMacAddress(in->L2_DMAC))
+        {
+            *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_MULTICAST_GLORT);
+            out->FLOOD_FORWARDED = 1;
+        }
+        else
+        {
+            *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_UNICAST_GLORT);
+            out->FLOOD_FORWARDED = 1;
+        }
+    }
 }
 
 void NextHop
@@ -127,6 +233,10 @@ void NextHop
 
         setARPUsedEntry(regs, arp_tbl_idx);
     }
+
+    // l2Lookup is temporary placed in nexthop <-- REVISIT!!!
+    l2LookUp(regs, flood_set, l2_edomain, &idglort, in, out);
+
 
     // Write outputs:
     out->ARP_TABLE_INDEX = arp_tbl_idx;

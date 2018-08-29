@@ -38,10 +38,10 @@ fm_status check()
 int main()
 {
     int sw = 0;
-    int recv_port;
+    fm_uint32 recv_port;
     const uint32_t recv_pkt_buf_len = 1024;
     unsigned char recv_packet_buf[recv_pkt_buf_len];
-    fm_int recv_packet_len;
+    fm_uint32 recv_packet_len;
 
     fm_status status;
 

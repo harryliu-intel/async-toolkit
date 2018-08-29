@@ -434,6 +434,8 @@ void MaskGen
     fm_bool     rx_mirror_in    = in->RX_MIRROR;
     fm_bool     mark_routed     = in->MARK_ROUTED;
     fm_uint16   csglort         = in->CSGLORT;
+    fm_bool     da_hit          = in->DA_HIT;
+    fm_uint64   amask           = in->AMASK;
 
     // Configurations:
     mbyFwdPortCfg1 port_cfg1;
@@ -489,7 +491,7 @@ void MaskGen
     // --------------------------------------------------------------------------------
     // Action Masks:
 
-    fm_uint64 amask = 0;
+
     fm_byte log_amask = 0;
     
     if (in->GLORT_CAM_MISS)
@@ -929,4 +931,5 @@ void MaskGen
     out->OPERATOR_ID            = operator_id;
     out->STORE_TRAP_ACTION      = store_trap_action;
     out->RX_MIRROR              = rx_mirror_out;
+    out->DA_HIT                 = da_hit;
 }
