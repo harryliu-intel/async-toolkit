@@ -42,8 +42,7 @@ static void calcIngressCRC
 (
     fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
     const fm_uint32           rx_length,
-//  const fm_byte     * const rx_packet,
-    const fm_byte             rx_packet[MBY_MAX_PACKET_SIZE],
+    const fm_byte     * const rx_packet,
     mbyModControlData * const c
 )
 {
@@ -65,7 +64,7 @@ static void calcIngressCRC
 static void unpackPacket
 (
     const fm_uint32	  rx_length,
-    const fm_byte         rx_packet[MBY_MAX_PACKET_SIZE],
+    const fm_byte * const rx_packet,
     const mbyParserInfo   parser_info,
     mbyChunkedSeg * const chunked_seg
 )
@@ -335,7 +334,7 @@ static void initChunkedSeg
 (
     fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
     const fm_uint32       rx_length,
-    const fm_byte         rx_packet[MBY_MAX_PACKET_SIZE],
+    const fm_byte * const rx_packet,
     mbyChunkedSeg * const chunked_seg
 )
 {

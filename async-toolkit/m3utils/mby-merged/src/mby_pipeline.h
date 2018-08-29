@@ -21,6 +21,20 @@
 
 // Function prototypes:
 
+void RxPipeline
+(
+    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyRxMacToParser  * const mac2par,
+          mbyRxStatsToRxOut * const rxs2rxo
+);
+
+void TxPipeline
+(
+    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyRxStatsToRxOut * const rxs2rxo,
+          mbyTxStatsToTxMac * const txs2mac
+);
+
 void Pipeline
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],

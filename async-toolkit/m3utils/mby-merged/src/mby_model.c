@@ -47,6 +47,9 @@ fm_status mbyWriteReg
     return mbyModelWriteCSR64(regs, addr, val);
 }
 
+// Persistent store for RX output:
+static mbyRxStatsToRxOut rxs2rxo;
+
 fm_status mbySendPacket
 (
     const fm_uint32         sw,
@@ -57,16 +60,16 @@ fm_status mbySendPacket
 {
     FM_NOT_USED(sw);
 
-    mbyRxMacToParser  mac2par;
-    mbyTxStatsToTxMac txs2mac;
+    // Input struct:
+    mbyRxMacToParser mac2par;
 
-    for (fm_uint32 i = 0; i < MBY_MAX_PACKET_SIZE; i++)
-        mac2par.RX_DATA[i] = (i < length) ? packet[i] : 0;
+    // Populate input:
+    mac2par.RX_DATA   = (fm_byte *) packet;
+    mac2par.RX_LENGTH = (fm_uint32) length;
+    mac2par.RX_PORT   = (fm_uint32) port;
 
-    mac2par.RX_LENGTH = length;
-    mac2par.RX_PORT   = port;
-
-    Pipeline(regs, &mac2par, &txs2mac);
+    // Call RX pipeline:
+    RxPipeline(regs, &mac2par, &rxs2rxo);
 
     return FM_OK;
 }
@@ -82,11 +85,21 @@ fm_status mbyReceivePacket
 {
     FM_NOT_USED(sw);
 
-    printf("%s unimplemented - returning NO_MORE data\n", __func__);
+    // Output struct:
+    mbyTxStatsToTxMac txs2mac;
+    
+    // Call RX pipeline:
+    TxPipeline(regs, &rxs2rxo, &txs2mac);
 
-    *port   = 0;
-    *length = 0;
+    // Populate output:
+    *port   = txs2mac.TX_PORT;
+    *length = txs2mac.TX_LENGTH;
 
-    return FM_ERR_NO_MORE;
+    // Assert (length <= max_pkt_size) <-- REVISIT!!!
+    
+    for (fm_uint i = 0; i < max_pkt_size; i++)
+        packet[i] = (i < (*length)) ? txs2mac.TX_DATA[i] : 0;
+
+    return FM_ERR_NO_MORE; // temporary <-- REVISIT!!!
 }
 

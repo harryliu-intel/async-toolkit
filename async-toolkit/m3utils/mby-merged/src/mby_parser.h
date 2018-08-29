@@ -222,7 +222,7 @@ typedef enum mbyParserPtrsIndexEnum
 
 typedef struct mbyRxMacToParserStruct
 {
-    fm_byte                 RX_DATA[MBY_MAX_PACKET_SIZE]; // ingress packet data
+    fm_byte               * RX_DATA;   // ingress packet data (pointer to)
     fm_uint32               RX_LENGTH; // ingress packet data length [bytes]
     fm_uint32               RX_PORT;   // ingress port
 

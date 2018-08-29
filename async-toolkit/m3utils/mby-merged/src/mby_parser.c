@@ -111,7 +111,7 @@ void Parser
     // Read in segment data:
     fm_byte seg_data[MBY_PA_MAX_SEG_LEN];
     for (fm_uint i = 0; i < MBY_PA_MAX_SEG_LEN; i++)
-	seg_data[i] = (i < in->RX_LENGTH) ? in->RX_DATA[i] : 0;			
+	seg_data[i] = (i < rx_length) ? in->RX_DATA[i] : 0;			
     
     fm_uint16 w0 = getSegDataWord(init_w0_offset, pa_adj_seg_len, seg_data);
     fm_uint16 w1 = getSegDataWord(init_w1_offset, pa_adj_seg_len, seg_data);
