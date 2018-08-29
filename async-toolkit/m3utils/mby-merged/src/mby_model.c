@@ -14,8 +14,8 @@ static fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE];
 
 fm_status mbyResetModel(const fm_uint32 sw)
 {
-    // TODO this function must set the default register values
-    FM_NOT_USED(sw);
+    if (sw != 0)
+        return FM_ERR_UNSUPPORTED;
 
     for (int i = 0;i < MBY_REGISTER_ARRAY_SIZE;++i)
         regs[i] = mbyModelGetRegisterDefault(i*4);
@@ -30,7 +30,8 @@ fm_status mbyReadReg
     fm_uint64 * const val
 )
 {
-    FM_NOT_USED(sw);
+    if (sw != 0)
+        return FM_ERR_UNSUPPORTED;
     // FM_LOG_PRINT("Read64 register addr=0x%x\n", addr);
     return mbyModelReadCSR64(regs, addr, val);
 }
@@ -42,7 +43,8 @@ fm_status mbyWriteReg
     const fm_uint64 val
 )
 {
-    FM_NOT_USED(sw);
+    if (sw != 0)
+        return FM_ERR_UNSUPPORTED;
     // FM_LOG_PRINT("Write64 register addr=0x%x val=0x%llx\n", addr, val);
     return mbyModelWriteCSR64(regs, addr, val);
 }
@@ -58,7 +60,8 @@ fm_status mbySendPacket
     const fm_uint32         length
 )
 {
-    FM_NOT_USED(sw);
+    if (sw != 0)
+        return FM_ERR_UNSUPPORTED;
 
     // Input struct:
     mbyRxMacToParser mac2par;
@@ -83,11 +86,12 @@ fm_status mbyReceivePacket
     const fm_uint32         max_pkt_size
 )
 {
-    FM_NOT_USED(sw);
+    if (sw != 0)
+        return FM_ERR_UNSUPPORTED;
 
     // Output struct:
     mbyTxStatsToTxMac txs2mac;
-    
+
     // Call RX pipeline:
     TxPipeline(regs, &rxs2rxo, &txs2mac);
 
@@ -96,7 +100,7 @@ fm_status mbyReceivePacket
     *length = txs2mac.TX_LENGTH;
 
     // Assert (length <= max_pkt_size) <-- REVISIT!!!
-    
+
     for (fm_uint i = 0; i < max_pkt_size; i++)
         packet[i] = (i < (*length)) ? txs2mac.TX_DATA[i] : 0;
 
