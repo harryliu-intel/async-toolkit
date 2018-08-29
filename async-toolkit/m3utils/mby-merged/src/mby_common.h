@@ -128,6 +128,29 @@ typedef struct mbyParserInfoStruct
 
 } mbyParserInfo;
 
+typedef struct mbyClassifierKeysStruct
+{
+    fm_uint32               key32[MBY_FFU_N_KEY32];
+    fm_uint16               key16[MBY_FFU_N_KEY16];
+    fm_byte                 key8 [MBY_FFU_N_KEY8 ];
+
+} mbyClassifierKeys;
+
+typedef struct mbyPrecValStruct
+{
+    fm_byte                 prec; // 3b field
+    fm_uint32               val;  // act24.val is 24b, act4.val is 4b, act1.val is 1b
+
+} mbyPrecVal;
+
+typedef struct mbyClassifierActionsStruct
+{
+    mbyPrecVal              act24[MBY_FFU_N_ACT24];
+    mbyPrecVal              act4 [MBY_FFU_N_ACT4 ];
+    mbyPrecVal              act1 [MBY_FFU_N_ACT1 ];
+
+} mbyClassifierActions;
+
 // External function prototypes:
 
 fm_bool   fmModelIsMulticastMacAddress(fm_macaddr keyMac);

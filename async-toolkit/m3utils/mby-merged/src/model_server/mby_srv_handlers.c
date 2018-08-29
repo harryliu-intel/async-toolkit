@@ -781,12 +781,20 @@ static fm_status HandleMsgPacket(fm_int               sw,
         packet = &data[FM_MODEL_MSG_TLV_SIZE];
         FM_CLEAR(sbData);
 
+        // signedness mismatch <-- REVISIT!!!
+        fm_uint32 tx_port   = (physPort  < 0) ? 0 : physPort;
+        fm_uint32 tx_length = (pktLength < 0) ? 0 : pktLength;
+
         status = mbyReceivePacket(sw,
-                                  &physPort,
+                                  &tx_port,
                                   packet,
-                                  &pktLength,
+                                  &tx_length,
                                   FM_MODEL_MAX_PACKET_SIZE);
                                   // &sbData);
+
+        // signedness mismatch <-- REVISIT!!!
+        physPort  = (fm_int)   tx_port;
+        pktLength = (fm_int32) tx_length;
 
 #if 0 // TODO
         if (portLinkState[physPort] != PORT_LINK_UP)
