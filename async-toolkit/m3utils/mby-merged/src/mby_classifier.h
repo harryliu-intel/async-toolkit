@@ -236,16 +236,6 @@
 
 #define MBY_N_MA_HASH_KEYS            9
 
-#define MBY_MA_TABLE_CAM_BANK         5
-#define MBY_MA_TABLE_CAM_ENTRIES      1024
-
-#define MBY_MA_ENTRY_TYPE_NOT_USED      0
-#define MBY_MA_ENTRY_TYPE_PROVISIONAL   1
-#define MBY_MA_ENTRY_TYPE_DYNAMIC       2
-#define MBY_MA_ENTRY_TYPE_SECURE        3
-#define MBY_MA_ENTRY_TYPE_STATIC        4
-#define MBY_MA_ENTRY_TYPE_SECURE_STATIC 5
-
 #define MBY_SV_MOVE_DROP_RESERVED     0
 #define MBY_SV_MOVE_DROP_PORT         1
 #define MBY_SV_MOVE_DROP_ADDR         2
@@ -996,6 +986,9 @@ typedef struct mbyClassifierToHashStruct
 
     // AQM_MARK_EN to use in egress packet:
     fm_byte                 AQM_MARK_EN;
+
+    // 0 for Shared Vlan Learning (SVL), 1 for Independent Vlan Learning (IVL)
+    fm_bool                 LEARN_MODE;
 
 } mbyClassifierToHash;
     

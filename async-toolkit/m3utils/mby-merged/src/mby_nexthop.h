@@ -52,6 +52,68 @@
 #define MBY_ARP_ENTRY_GLORT_h_DGLORT      15
 #define MBY_ARP_ENTRY_GLORT_b_markRouted  16
 
+// Below defines are related to L2Lookup and temporary placed in nexthop <-- REVISIT!!!
+#define MBY_FLOOD_GLORT_TABLE_WIDTH                             2
+#define MBY_FLOOD_GLORT_TABLE_ENTRIES                           512
+#define MBY_FLOOD_GLORT_TABLE(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0050000) + (MBY_ARP_VLAN_BASE))
+
+#define MBY_FLOOD_GLORT_TABLE_l_BROADCAST_GLORT                 32
+#define MBY_FLOOD_GLORT_TABLE_h_BROADCAST_GLORT                 47
+#define MBY_FLOOD_GLORT_TABLE_l_FLOOD_MULTICAST_GLORT           16
+#define MBY_FLOOD_GLORT_TABLE_h_FLOOD_MULTICAST_GLORT           31
+#define MBY_FLOOD_GLORT_TABLE_l_FLOOD_UNICAST_GLORT             0
+#define MBY_FLOOD_GLORT_TABLE_h_FLOOD_UNICAST_GLORT             15
+
+#define MBY_L2LOOKUP_BASE                                       (0x3800000)
+#define MBY_L2LOOKUP_SIZE                                       (0x0200000)
+
+#define MBY_MA_TABLE_WIDTH                                      4
+#define MBY_MA_TABLE_ENTRIES_0                                  8192
+#define MBY_MA_TABLE_ENTRIES_1                                  6
+#define MBY_MA_TABLE(index1, index0, word)                      ((0x0020000) * ((index1) - 0) + (0x0000010) * ((index0) - 0) + ((word)*4)+ (0x0000000) + (MBY_L2LOOKUP_BASE))
+
+#define MBY_MA_TABLE_l__RSVD5_                                  125
+#define MBY_MA_TABLE_h__RSVD5_                                  127
+#define MBY_MA_TABLE_l_OLD_PORT                                 120
+#define MBY_MA_TABLE_h_OLD_PORT                                 124
+#define MBY_MA_TABLE_l_NEW_PORT                                 115
+#define MBY_MA_TABLE_h_NEW_PORT                                 119
+#define MBY_MA_TABLE_l_ENTRY_TYPE                               112
+#define MBY_MA_TABLE_h_ENTRY_TYPE                               114
+#define MBY_MA_TABLE_l__RSVD3_                                  110
+#define MBY_MA_TABLE_h__RSVD3_                                  111
+#define MBY_MA_TABLE_l_TRIG_ID                                  104
+#define MBY_MA_TABLE_h_TRIG_ID                                  109
+#define MBY_MA_TABLE_l_S_GLORT                                  88
+#define MBY_MA_TABLE_h_S_GLORT                                  103
+#define MBY_MA_TABLE_l_D_GLORT                                  72
+#define MBY_MA_TABLE_h_D_GLORT                                  87
+#define MBY_MA_TABLE_l__RSVD2_                                  70
+#define MBY_MA_TABLE_h__RSVD2_                                  71
+#define MBY_MA_TABLE_b__RSVD1_                                  69
+#define MBY_MA_TABLE_l_L2_DOMAIN                                60
+#define MBY_MA_TABLE_h_L2_DOMAIN                                68
+#define MBY_MA_TABLE_l_VID                                      48
+#define MBY_MA_TABLE_h_VID                                      59
+#define MBY_MA_TABLE_l_MAC_ADDRESS                              0
+#define MBY_MA_TABLE_h_MAC_ADDRESS                              47
+
+#define MBY_MA_TABLE_CAM_BANK         5
+#define MBY_MA_TABLE_CAM_ENTRIES      1024
+
+/* The number of banks in the MAC Address Table. */
+#define MBY_MAC_ADDR_BANK_COUNT             6
+
+/* The size of MA_TABLE tcam size*/
+#define MBY_MA_TABLE_TCAM_SIZE              1024
+
+#define MBY_MA_ENTRY_TYPE_NOT_USED      0
+#define MBY_MA_ENTRY_TYPE_PROVISIONAL   1
+#define MBY_MA_ENTRY_TYPE_DYNAMIC       2
+#define MBY_MA_ENTRY_TYPE_SECURE        3
+#define MBY_MA_ENTRY_TYPE_STATIC        4
+#define MBY_MA_ENTRY_TYPE_SECURE_STATIC 5
+
 // Enums:
 
 typedef enum mbyArpEntryTypeEnum
@@ -256,7 +318,9 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool                 IS_IPV4;                // packet is IPv4
     fm_bool                 IS_IPV6;                // packet is IPv6
     fm_bool                 SA_HIT;                 // source MAC address lookup hit
+    fm_bool                 DA_HIT;                 // destination MAC address lookup hit
     mbyMaTable              SA_RESULT;              // source MAC address lookup result
+    mbyMaTable              DA_RESULT;              // destination MAC address lookup result
     fm_byte                 SV_DROP;                // MAC security violation info
     fm_uint16               CSGLORT;                // 16-bit canonical source GLORT
     fm_bool                 FLOOD_FORWARDED;        // glort is flood-forwarded
@@ -264,6 +328,8 @@ typedef struct mbyNextHopToMaskGenStruct
     mbyClassifierFlags      FFU_FLAGS;              // flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
     fm_uint32               HASH_ROT_A;
     fm_uint32               HASH_ROT_B;
+    // Below fields are related to L2Lookup and temporary placed in nexthop <-- REVISIT!!!
+    fm_uint64               AMASK; // Action mask
 
 } mbyNextHopToMaskGen;
 

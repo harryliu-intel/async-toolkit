@@ -1414,4 +1414,7 @@ void Classifier
 
     // Transform exisiting keys, actions, etc. into desired output:
     transformActions(regs, in, keys, actions, muxed_action, ecmp_hash, mod_meta, out);
+
+    // Pass-thru
+    out->LEARN_MODE = in->LEARN_MODE;
 }
