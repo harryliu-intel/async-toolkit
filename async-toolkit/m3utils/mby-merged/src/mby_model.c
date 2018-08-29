@@ -15,8 +15,7 @@ fm_status mbyResetModel(const fm_uint32 sw)
     if (sw != 0)
         return FM_ERR_UNSUPPORTED;
 
-    for (int i = 0;i < MBY_REGISTER_ARRAY_SIZE;++i)
-        regs[i] = mbyModelGetRegisterDefault(i*4);
+    mbyModelLoadDefaults(regs);
 
     return FM_OK;
 }

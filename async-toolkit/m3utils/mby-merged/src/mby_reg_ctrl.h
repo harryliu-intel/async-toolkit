@@ -33,6 +33,6 @@
 #include "mby_model.h"
 
 fm_uint32 mbyModelGetRegisterDefault(fm_uint32 addr);
-
+void mbyModelLoadDefaults(fm_uint32* regs);
 
 #endif /* _MBY_SRV_REG_CTRL_H_ */

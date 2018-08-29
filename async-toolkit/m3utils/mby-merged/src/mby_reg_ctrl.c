@@ -430,3 +430,42 @@ fm_uint32 mbyModelGetRegisterDefault(fm_uint32 addr)
     return rtnValue;
 
 }   /* end mbyModelGetRegisterDefault */
+
+static inline fm_uint32 maskLsbOnly(fm_uint32 in)
+{
+    if (in == 0) return 0;
+
+    fm_uint32 shift = 0;
+    fm_uint32 work = in;
+    while ((work & 1) == 0)
+    {
+        ++shift;
+        work >>= 1;
+    }
+    return 1 << shift;
+}
+
+void mbyModelLoadDefaults(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]) {
+    memset(regs, 0, MBY_REGISTER_ARRAY_SIZE*sizeof(fm_uint32));
+
+    const fm_mbyRegisterDefault *defaultPtr = mbyRegisterDefaultTable;
+
+    while (defaultPtr->addrMask)
+    {
+        /* this contains 1s where the address has "don't care" bits */
+        fm_uint32 addrMaskNegHi = ~defaultPtr->addrMask;
+        fm_uint32 addrMaskNegLo = maskLsbOnly(addrMaskNegHi);
+        /* we increment by this, so make sure it isn't 0 so the loop can terminate */
+        if (addrMaskNegLo == 0) addrMaskNegLo = 1;
+        for (fm_uint32 d = 0;d <= addrMaskNegHi;d += addrMaskNegLo)
+        {
+            // TODO see if isAddrMatched should be used (see its TODO)
+            fm_uint32 finalAddr = defaultPtr->addrResult + d;
+            /* The iteration will do some "illegal" addresses if mask has "gaps", so we need to check */
+            if ((finalAddr & defaultPtr->addrMask) == defaultPtr->addrResult)
+                regs[finalAddr/4] = defaultPtr->def;
+        }
+
+        ++defaultPtr;
+    }
+}
