@@ -65,10 +65,10 @@ fm_status fmInitializeSocketInfoFile(void)
         }
         else
         {
-            /* strErrNum = */strerror_r(errno, strErrBuf, FM_STRERROR_BUF_SIZE);
-			FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-					"Can't create server info file %s: %s\n",
-					filename, strErrBuf );
+            char *e = strerror_r(errno, strErrBuf, FM_STRERROR_BUF_SIZE);
+            FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
+                         "Can't create server info file %s: %s\n",
+                         filename, strErrBuf );
 #if 0
             if (strErrNum == 0)
             {
@@ -146,9 +146,9 @@ fm_status fmAddSocketInfoToFile(fm_text hostname, fm_int port,
     }
     else
     {
-        strerror_r(errno, strErrBuf, FM_STRERROR_BUF_SIZE);
-		FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
-				"Can't append to server info file: %s - %d\n", strErrBuf, errno);
+        char * e = strerror_r(errno, strErrBuf, FM_STRERROR_BUF_SIZE);
+        FM_LOG_ERROR(FM_LOG_CAT_PLATFORM,
+                     "Can't append to server info file: %s - %d\n", strErrBuf, errno);
 
         FM_LOG_EXIT(FM_LOG_CAT_PLATFORM, FM_FAIL);
     }

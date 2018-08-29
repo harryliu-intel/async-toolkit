@@ -91,8 +91,8 @@ typedef struct _fm_libCfg
 #else
 #define FM_LOG_SYS_EXIT_ON_COND(cat, cond)                  \
     if ((cond)) {                                           \
-        strerror_r(errno, strErrBuf,                        \
-                   FM_STRERROR_BUF_SIZE);                   \
+        char *e = strerror_r(errno, strErrBuf,              \
+                             FM_STRERROR_BUF_SIZE);         \
         FM_LOG_FATAL((cat),                                 \
                      "System error %d: %s\n",               \
                      errno, strErrBuf);                     \

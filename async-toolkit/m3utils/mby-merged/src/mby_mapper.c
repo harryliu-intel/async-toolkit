@@ -878,7 +878,7 @@ static void mapScalar
     fm_uint16 l2Policer           = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L2_POLICER);
     fm_uint16 l3Policer           = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L3_POLICER);
     map_prof_key1->DOMAIN_PROFILE = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, DOMAIN_PROFILE);
-    out->L2_IVLAN1_CNT_INDEX      = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, VLAN_COUNTER);
+    out->L2_IVLAN1_CNT            = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, VLAN_COUNTER);
 
     fm_uint64 map_domain_pol_cfg_reg = 0;
     mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_POL_CFG(0), &map_domain_pol_cfg_reg);
