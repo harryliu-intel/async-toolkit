@@ -201,7 +201,7 @@ EOF
             
             mby_common_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/mby_common_pkg.hdl" ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'svt_ahb_lib' ],
                -tag            => "nonsynth+nonlint",
             },
             
