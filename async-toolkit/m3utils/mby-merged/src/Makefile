@@ -23,6 +23,7 @@ SOURCES += mby_modifier.c
 SOURCES += mby_txstats.c
 SOURCES += mby_pipeline.c
 SOURCES += mby_reg_ctrl.c
+# SOURCES += mby_log_dump.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
