@@ -101,7 +101,7 @@ static void getGlortDestTableEntry
 {
     fm_uint64 glort_dest_table_reg = 0;
     mbyModelReadCSR64(regs, MBY_GLORT_DEST_TABLE(table_index, 0), &glort_dest_table_reg);
-    
+
     table_entry->IP_MULTICAST_INDEX = FM_GET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, IP_MULTICAST_INDEX);
     table_entry->DEST_MASK          = FM_GET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, DEST_MASK);
 }
@@ -133,7 +133,7 @@ static fm_status lookUpRamEntry
 )
 {
     fm_bool cam_hit = FALSE;
-    
+
     // The highest numbered GLORT_CAM entry has highest precendence:
     for (fm_int i = MBY_GLORT_CAM_ENTRIES - 1; i >= 0; i--)
     {
@@ -141,13 +141,13 @@ static fm_status lookUpRamEntry
 
         mbyGlortCam glort_cam;
         getGlortCamEntry(regs, index, &glort_cam);
-        
+
         fm_uint16 mask    = glort_cam.KEY ^ glort_cam.KEY_INVERT;
         fm_uint16 key     = glort_cam.KEY;
         fm_uint16 key_inv = glort_cam.KEY_INVERT;
-        
+
         if (((key & key_inv) == 0) && ((idglort & mask) == (key & mask)))
-        {    
+        {
             getGlortRamEntry(regs, index, glort_ram);
             cam_hit = TRUE;
             break;
@@ -164,7 +164,7 @@ static fm_status lookUpRamEntry
         glort_ram->DEST_INDEX        = 0;
         glort_ram->STRICT            = 0;
     }
-    
+
     fm_status sts = (cam_hit) ? FM_OK : FM_FAIL;
     return sts;
 }
@@ -197,7 +197,7 @@ static void lookUpDestEntry
     }
 
     dest_index &= 0xFFF; // remove carry bit
-    
+
     getGlortDestTableEntry(regs, dest_index, glort_dest_table);
 }
 
@@ -268,7 +268,7 @@ static void resolveAction
             *cpu_code         = MBY_CPU_CODE_RSVD_MAC;
             *qos_swpri        = trap_tc; // <-- REVISIT!!!
             break;
-        
+
         case MBY_AMASK_DROP_MAC_CTRL:
             *dmask            = 0;
             *action           = MBY_ACTION_DROP_CONTROL;
@@ -419,23 +419,28 @@ void MaskGen
 )
 {
     // Read inputs:
-    fm_uint32   rx_port         = in->RX_PORT;
-    fm_uint16   idglort         = in->IDGLORT;         // in->TRIGGERS.destGlort; // <-- REVISIT!!!
-    fm_uint32   hash_rot_a      = in->HASH_ROT_A;
-    fm_uint32   hash_rot_b      = in->HASH_ROT_A;    
-    fm_bool     parser_window_v = in->PARSER_WINDOW_V; // was: in->PARSER_INFO.window_parse_v;
-    fm_macaddr  l2_smac         = in->L2_SMAC;
-    fm_macaddr  l2_dmac         = in->L2_DMAC;
-    mbySTPState l2_ifid1_state  = in->L2_IFID1_STATE;
-    fm_bool     no_learn        = in->NO_LEARN;
-    fm_uint32   glort_dmask     = in->GLORT_DMASK;
-    fm_byte     qos_swpri       = in->QOS_SWPRI;
-    fm_byte     operator_id     = in->OPERATOR_ID;
-    fm_bool     rx_mirror_in    = in->RX_MIRROR;
-    fm_bool     mark_routed     = in->MARK_ROUTED;
-    fm_uint16   csglort         = in->CSGLORT;
-    fm_bool     da_hit          = in->DA_HIT;
-    fm_uint64   amask           = in->AMASK;
+          mbyParserInfo parser_info     = in->PARSER_INFO;
+    const fm_bool       parser_window_v = in->PARSER_WINDOW_V;
+    const fm_bool       pa_drop         = in->PA_DROP;
+    const fm_bool       pa_l3len_err    = in->PA_L3LEN_ERR;
+    const fm_uint32     rx_port         = in->RX_PORT;
+    const fm_uint32     rx_length       = in->RX_LENGTH;
+    const fm_uint16     idglort         = in->IDGLORT;         // in->TRIGGERS.destGlort; // <-- REVISIT!!!
+    const fm_uint32     hash_rot_a      = in->HASH_ROT_A;
+    const fm_uint32     hash_rot_b      = in->HASH_ROT_A;
+    const fm_macaddr    l2_smac         = in->L2_SMAC;
+    const fm_macaddr    l2_dmac         = in->L2_DMAC;
+    const mbySTPState   l2_ifid1_state  = in->L2_IFID1_STATE;
+    const fm_bool       no_learn        = in->NO_LEARN;
+          fm_uint32     glort_dmask     = in->GLORT_DMASK;
+          fm_byte       qos_swpri       = in->QOS_SWPRI;
+    const fm_byte       operator_id     = in->OPERATOR_ID;
+    const fm_bool       rx_mirror_in    = in->RX_MIRROR;
+    const fm_bool       mark_routed     = in->MARK_ROUTED;
+    const fm_uint16     csglort         = in->CSGLORT;
+    const fm_bool       da_hit          = in->DA_HIT;
+          fm_byte       seg_meta_err    = in->SEG_META_ERR;
+          fm_uint64     amask           = in->AMASK;
 
     // Configurations:
     mbyFwdPortCfg1 port_cfg1;
@@ -452,7 +457,7 @@ void MaskGen
 
     // Logging:
     fm_bool logging_hit = FALSE;
-    
+
     // --------------------------------------------------------------------------------
     // GLORT:
 
@@ -460,23 +465,23 @@ void MaskGen
     fm_bool glort_cam_miss = FALSE;
     if (lookUpRamEntry(regs, idglort, &glort_ram) != FM_OK)
         glort_cam_miss = TRUE; // GLORT CAM miss
-   
+
     // GLORT CAM hit:
     fm_bool strict_glort_routing   = (glort_ram.STRICT == 2) || (glort_ram.STRICT == 3);
     fm_bool targeted_deterministic = (glort_ram.STRICT == 2);
 
     fm_bool   skip_dglort_dec = FALSE;
     fm_uint16 ip_mcast_idx    = 0;
-    
+
     if (!glort_cam_miss)
-    {    
+    {
         mbyGlortDestTable glort_dest_table;
         lookUpDestEntry(regs, idglort, strict_glort_routing, hash_rot_a, hash_rot_b, glort_ram, &glort_dest_table);
 
         skip_dglort_dec = glort_ram.SKIP_DGLORT_DEC;
-        glort_dmask     = glort_dest_table.DEST_MASK; 
+        glort_dmask     = glort_dest_table.DEST_MASK;
         ip_mcast_idx    = glort_dest_table.IP_MULTICAST_INDEX;
-    } 
+    }
 
     // --------------------------------------------------------------------------------
     // Learning:
@@ -491,23 +496,22 @@ void MaskGen
     // --------------------------------------------------------------------------------
     // Action Masks:
 
-
     fm_byte log_amask = 0;
-    
+
     if (in->GLORT_CAM_MISS)
         amask |= MBY_AMASK_DROP_CAM_MISS;   // CAM miss -> drop frame
-    
+
     if (in->TARGETED_DETERMINISTIC)
         amask |= MBY_AMASK_SPECIAL;         // frame is special delivery
-    
+
     if (in->PARSER_ERROR)
         amask |= MBY_AMASK_DROP_PARSER_ERR; // parser err -> drop frame
 
     if (in->TRAP_IGMP)
         amask |= MBY_AMASK_TRAP_IGMP;       // trap IGMP frame
-    
+
     if (in->PARITY_ERROR)
-        amask |= MBY_AMASK_DROP_PERR;       // parity err -> drop frame 
+        amask |= MBY_AMASK_DROP_PERR;       // parity err -> drop frame
 
     if ((sys_cfg1.DROP_MAC_CTRL_ETHERTYPE == TRUE) && (in->L2_ETYPE == MBY_ETYPE_MAC_CONTROL))
         amask |= MBY_AMASK_DROP_MAC_CTRL;   // MAC CTRL Eth type 0x8808 Frame -> drop frame
@@ -519,7 +523,7 @@ void MaskGen
 
     if (drop_invalid_smac && (l2_smac_is_invalid || l2_smac_is_broad || l2_smac_is_multi))
         amask |= MBY_AMASK_DROP_SMAC;       // SMAC frame -> drop frame
-    
+
     // --------------------------------------------------------------------------------
     // Traps:
 
@@ -603,7 +607,7 @@ void MaskGen
 
     if (port_cfg1.FILTER_VLAN_INGRESS && !in->L2_IVLAN1_MEMBERSHIP)
         amask |= MBY_AMASK_DROP_IV; // VLAN ingress violation -> dropping frame
-    
+
     fm_bool mac_moved = (in->SA_HIT && (in->SA_RESULT.S_GLORT != csglort));
 
     switch (in->SV_DROP)
@@ -621,7 +625,7 @@ void MaskGen
     {
         case MBY_STP_STATE_DISABLE:
         case MBY_STP_STATE_LISTENING: // STP ingress (non-learning) violation -> dropping frame
-            amask |= MBY_AMASK_DROP_INGRESS_STP_NON_LEARN; break; 
+            amask |= MBY_AMASK_DROP_INGRESS_STP_NON_LEARN; break;
         case MBY_STP_STATE_LEARNING:  // STP ingress (learning) violation -> dropping frame
             amask |= MBY_AMASK_DROP_INGRESS_STP_LEARN; break;
         default: break;
@@ -636,14 +640,14 @@ void MaskGen
 
     fm_byte fclass = 0;
     fm_byte xcast  = 0;
-    
-    if        (l2_dmac_is_broad) { 
+
+    if        (l2_dmac_is_broad) {
         fclass = MBY_FCLASS_BROADCAST;
         xcast  = 2;
-    } else if (l2_dmac_is_multi) { 
+    } else if (l2_dmac_is_multi) {
         fclass = MBY_FCLASS_MULTICAST;
         xcast  = 1;
-    } else if (l2_dmac_is_uni) { 
+    } else if (l2_dmac_is_uni) {
         fclass = MBY_FCLASS_UNICAST;
         xcast  = 0;
     }
@@ -691,7 +695,7 @@ void MaskGen
     }
 
     // --------------------------------------------------------------------------------
-    // Classifier Flags:    
+    // Classifier Flags:
 
     if (in->FFU_FLAGS.drop)
         amask |= MBY_AMASK_DROP_FFU; // dropping frame
@@ -754,7 +758,7 @@ void MaskGen
 
     // --------------------------------------------------------------------------------
     // Egress STP state:
-    
+
     dmask = pre_resolve_dmask; // 24-bit destination mask
     if (((amask & MBY_AMASK_SPECIAL) == 0) && (dmask != 0)) {
         dmask &= in->L2_EFID1_STATE; // STP egress filtering: DMASK
@@ -766,7 +770,7 @@ void MaskGen
     // Pre-Resolve:
 
     fm_uint32 pre_resolve_action = 0; // How does this affect 'action'? <-- REVISIT!!!
-    
+
     if (amask & MBY_AMASK_SPECIAL) {
         pre_resolve_action = MBY_ACTION_SPECIAL;
         pre_resolve_dmask  = glort_dmask;
@@ -791,7 +795,7 @@ void MaskGen
 
     fm_uint32 action = 0;
     fm_byte   cpu_code = 0;
-    
+
     fm_uint64 fwd_rsvd_mac_cfg_reg = 0;
     mbyModelReadCSR64(regs, MBY_FWD_IEEE_RESERVED_MAC_CFG(0), &fwd_rsvd_mac_cfg_reg);
     fm_byte trap_tc = FM_GET_FIELD64(fwd_rsvd_mac_cfg_reg, MBY_FWD_IEEE_RESERVED_MAC_CFG, TRAP_TC);
@@ -832,7 +836,7 @@ void MaskGen
     if (rx_mirror_in)
         amask |= MBY_AMASK_MIRROR_INGRESS_FFU;
 
-    // --------------------------------------------------------------------------------    
+    // --------------------------------------------------------------------------------
     // LAG:
 
     // GLORT Lookup - strict targeted deterministic mode:
@@ -848,7 +852,7 @@ void MaskGen
             getLagCfg(regs, i, &lag_cfg);
             if (!lag_cfg.IN_LAG)
                 continue;
-    
+
             fm_uint32 hash = (lag_cfg.HASH_ROTATION) ? in->HASH_ROT_B : in->HASH_ROT_A;
             hash %= (lag_cfg.LAG_SIZE == 0) ? 16 : lag_cfg.LAG_SIZE;
             if (hash != lag_cfg.INDEX)
@@ -893,11 +897,126 @@ void MaskGen
 
     if ((cpu_trap || trap_trap) && !trap_revert)
     { /* err = HandleTraps(model) */; }
-            
+
     if ((sys_cfg1.ENABLE_TRAP_PLUS_LOG || !cpu_trap || trap_trap || trap_log) && !trap_revert)
     { /* err = HandleLogging(model) */; }
 
+    // --------------------------------------------------------------------------------
+    // Tail processing:
+
+    // remove FCS bytes from array storage:
+    fm_uint32 pkt_len  = (rx_length < 4) ? 0 : (rx_length - 4);
+    fm_uint32 num_segs = 0;
+
+    // First segment is 192 bytes
+    if (pkt_len <= 192) {
+        pkt_len   = 0;
+        num_segs  = 1;
+    } else {
+        pkt_len  -= 192;
+        num_segs += 1 + (pkt_len + MBY_SEGMENT_LEN - 1) / MBY_SEGMENT_LEN; // check <-- REVISIT!!!
+    }
+
+    fm_uint64 saf_matrix_reg = 0;
+    mbyModelReadCSR64(regs, MBY_SAF_MATRIX(rx_port, 0), &saf_matrix_reg);
+
+    fm_uint64 enable_snf    = FM_GET_FIELD64(saf_matrix_reg, MBY_SAF_MATRIX, ENABLE_SNF);
+    fm_uint32 cut_thru_mode = FM_GET_FIELD64(saf_matrix_reg, MBY_SAF_MATRIX, CUT_THRU_MODE);
+    fm_bool   ign_frame_err = FM_GET_BIT64  (saf_matrix_reg, MBY_SAF_MATRIX, IGNORE_FRAME_ERROR);
+
+    dmask = fnmask; // recall stored mask <-- REVISIT!!!!
+
+    if (mirror0_profile_v)
+        dmask |= (FM_LITERAL_U64(1) << mirror0_port);
+
+    if (mirror1_profile_v)
+        dmask |= (FM_LITERAL_U64(1) << mirror1_port);
+
+    dmask &= ( 0xFFFFFFFFFFFF ); // 48 bit port mask
+    enable_snf = (enable_snf & dmask) & 0xFFFFFF;
+
+    // Decide whether frame is SAF:
+    fm_bool is_saf = FALSE;
+    if (enable_snf)
+        is_saf = TRUE;
+    else if ((cut_thru_mode == 0) || (cut_thru_mode == 1))
+        is_saf = (num_segs == 1);
+    else if (cut_thru_mode == 2)
+        is_saf = (num_segs <= 2);
+    else
+        is_saf = TRUE; // end-of-frame
+
+    // SAF ERROR in tail processing:
+    fm_bool saf_error    = FALSE;
+    fm_bool tx_drop      = FALSE;
+
+    if ((seg_meta_err == 1) || (seg_meta_err == 2))
+    {
+        if (is_saf || (dmask == 0)) {
+            saf_error = !ign_frame_err;
+            if (!enable_snf && (cut_thru_mode == 0) && (dmask != 0))
+                saf_error = FALSE;
+        }
+    }
+
+    if (saf_error)
+    {
+        if ((num_segs == 1) || (dmask == 0)) // single-segment
+        {
+            action            = MBY_ACTION_DROP_FRAME_ERR;
+            fnmask            = 0;
+            mirror1_profile_v = 0;
+            mirror0_profile_v = 0;
+        }
+        else // multi-segment
+            tx_drop = TRUE;
+    }
+
+    // Update Action code for CSUM and L3 Length errors
+    // Applies to only single segment packets. Multi-segment packets are handled by Modify
+    if (rx_length <= 192)
+    {
+        if (action == MBY_ACTION_NORMAL ||
+            action == MBY_ACTION_FLOOD ||
+            action == MBY_ACTION_GLORT_FORWARDED ||
+            action == MBY_ACTION_TRAP ||
+            action == MBY_ACTION_SPECIAL ||
+            action == MBY_ACTION_REDIRECT_TRIG ||
+            action == MBY_ACTION_DROP_CONTROL ||
+            action == MBY_ACTION_DROP_IV ||
+            action == MBY_ACTION_DROP_EV ||
+            action == MBY_ACTION_DROP_STP ||
+            action == MBY_ACTION_DROP_CAM ||
+            action == MBY_ACTION_DROP_FFU ||
+            action == MBY_ACTION_DROP_TRIG ||
+            action == MBY_ACTION_DROP_TTL ||
+            action == MBY_ACTION_DROP_DLF ||
+            action == MBY_ACTION_BANK5_OTHER_DROPS ||
+            action == MBY_ACTION_DROP_SV)
+        {
+            if (pa_drop && pa_l3len_err)
+                action = MBY_ACTION_DROP_L3_PYLD_LEN;
+        }
+
+        // Drop single-segment packets with l4csum error /l3 length error:
+        if ((action == MBY_ACTION_DROP_L3_PYLD_LEN) || (action == MBY_ACTION_DROP_L4_CSUM))
+        {
+            fnmask            = 0;
+            mirror1_profile_v = 0;
+            mirror0_profile_v = 0;
+        }
+    }
+    else if (pa_drop && pa_l3len_err)
+        seg_meta_err = 2; // framing error in multi-segment packet
+
+    // copy and optionally clear parser_info for window parsing:
+    if (parser_window_v)
+    { /* FM_CLEAR(parser_info) */ ; } // why is this clearing needed?! <--- REVISIT!!!
+
+    // --------------------------------------------------------------------------------
+
     // Write outputs:
+    out->PARSER_INFO            = parser_info;
     out->IDGLORT                = idglort;
     out->TARGETED_DETERMINISTIC = targeted_deterministic;
     out->STRICT_GLORT_ROUTING   = strict_glort_routing;
@@ -932,4 +1051,35 @@ void MaskGen
     out->STORE_TRAP_ACTION      = store_trap_action;
     out->RX_MIRROR              = rx_mirror_out;
     out->DA_HIT                 = da_hit;
+    out->SAF_ERROR              = saf_error;
+    out->TX_DROP                = tx_drop;
+    out->SEG_META_ERR           = seg_meta_err;
+
+    // Pass thru:
+    out->IS_IPV4;
+    out->IS_IPV6;
+    out->L2_DMAC;
+    out->L2_IVLAN1_CNT;
+    out->TC;
+    out->NO_MODIFY;
+    out->RX_LENGTH;
+    out->RX_DATA;
+    out->RX_PORT;
+    out->TX_PORT;
+    out->TX_LENGTH;
+    out->TX_TAG;
+    out->TX_STATS_LAST_LEN;
+    out->L2_EVID1;
+    out->EDGLORT;
+    out->MIRTYP;
+    out->QOS_L3_DSCP;
+    out->ECN;
+    out->MARK_ROUTED;
+    out->MOD_IDX;
+    out->TAIL_CSUM_LEN;
+    out->DROP_TTL;
+    out->IS_TIMEOUT;
+    out->OOM;
+    out->PM_ERR_NONSOP;
+    out->PM_ERR;
 }

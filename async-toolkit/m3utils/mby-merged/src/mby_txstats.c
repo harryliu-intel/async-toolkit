@@ -43,17 +43,24 @@ static void updateTxStatsBank
 
 void TxStats
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyModifierToTxStats  * const in,
-          mbyTxStatsToTxMac     * const out
+    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyModifierToTxStats * const in,
+          mbyTxStatsToTxMac    * const out
 )
 {
-    // Read inputos:
-    fm_uint32 tx_port         = in->TX_PORT;
-    fm_uint16 tx_disp         = in->TX_DISP;
-    fm_uint32 tx_stats_length = in->TX_STATS_LENGTH;
+    // Read inputs:
+    const fm_uint32 tx_port         = in->TX_PORT;
+    const fm_uint16 tx_disp         = in->TX_DISP;
+    const fm_uint32 tx_stats_length = in->TX_STATS_LENGTH;
 
-    fm_uint16 index   = (tx_port * 16) + tx_disp;
+    fm_uint16 index = (tx_port * 16) + tx_disp;
 
     updateTxStatsBank(regs, tx_stats_length, index);
+
+    // Write outputs:
+
+    // Pass thru:
+    out->TX_DATA   = in->TX_DATA;
+    out->TX_LENGTH = in->TX_LENGTH;
+    out->TX_PORT   = tx_port;
 }

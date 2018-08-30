@@ -1340,13 +1340,13 @@ void Modifier
     );
 
     // Write outputs:
-    for (fm_uint i = 0; i < MBY_MAX_PACKET_SIZE; i++)
-        out->TX_DATA[i]  = tx_packet[i];
-
-    out->TX_LENGTH       = tx_length;
     out->TX_STATS_LENGTH = tx_stats_length;
     out->TX_DISP         = tx_disp;
-    out->TX_DROP         = tx_drop;
-    out->SEG_DROP        = tx_drop;
-    out->TX_REASONCODE   = tx_reasoncode;
+    out->TX_LENGTH       = tx_length;
+
+    for (fm_uint i = 0; i < MBY_MAX_PACKET_SIZE; i++)
+        out->TX_DATA[i] = tx_packet[i];
+
+    // Pass thru:
+    out->TX_PORT = tx_port;
 }

@@ -435,14 +435,12 @@ typedef struct mbyChunkedSegStruct
 
 typedef struct mbyModifierToTxStatsStruct
 {
-    fm_byte               * TX_DATA;         // egress packet data
-    fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
-    fm_uint32               TX_PORT;         // egress port
     fm_uint32               TX_STATS_LENGTH; // egress packet data stats length [bytes]
     fm_uint16               TX_DISP;         // egress frame disposition
-    fm_bool                 TX_DROP;         // packet drop
-    fm_byte                 TX_REASONCODE;   // reason for dropping packet
-    fm_bool                 SEG_DROP;        // segment drop
+    fm_byte               * TX_DATA;         // egress packet data
+    fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
+    // pass-thru:
+    fm_uint32               TX_PORT;         // egress port
 
 } mbyModifierToTxStats;
 

@@ -310,6 +310,20 @@
 #define MBY_CM_APPLY_LOOPBACK_SUPPRESS_l_GLORT                  0
 #define MBY_CM_APPLY_LOOPBACK_SUPPRESS_h_GLORT                  15
 
+/******** SAF_BASE *******/
+#define MBY_SAF_BASE                                            (0x3EB0000)
+#define MBY_SAF_SIZE                                            (0x0000100)
+
+#define MBY_SAF_MATRIX_WIDTH                                    2
+#define MBY_SAF_MATRIX_ENTRIES                                  24
+#define MBY_SAF_MATRIX(index, word)                             ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0000800) + (MBY_SAF_BASE))
+
+#define MBY_SAF_MATRIX_l_ENABLE_SNF                             3
+#define MBY_SAF_MATRIX_h_ENABLE_SNF                             26
+#define MBY_SAF_MATRIX_l_CUT_THRU_MODE                          1
+#define MBY_SAF_MATRIX_h_CUT_THRU_MODE                          2
+#define MBY_SAF_MATRIX_b_IGNORE_FRAME_ERROR                     0
+
 // Action Codes:
 #define MBY_ACTION_NORMAL             0   /* forwarded normally */
 #define MBY_ACTION_FLOOD              1   /* flooded due to unknown destination */
@@ -317,7 +331,7 @@
 #define MBY_ACTION_DROP_PARSE         3   /* drop due to parse error */
 #define MBY_ACTION_DROP_PARITY        4   /* dropped due to parity error */
 #define MBY_ACTION_TRAP               5   /* trap spec. mcast add., MAC CTL & MAC REMAP CTL */
-#define MBY_ACTION_DROP_CONTROL       6   /* dropped pause frame */ 
+#define MBY_ACTION_DROP_CONTROL       6   /* dropped pause frame */
 #define MBY_ACTION_DROP_STP           7   /* dropped due to spanning tree*/
 #define MBY_ACTION_DROP_SV            8   /* dropped due to security violation */
 #define MBY_ACTION_MARKER_ERROR_DROPS 9   /* marker packets dropped due to fatal errors */
@@ -328,7 +342,7 @@
 #define MBY_ACTION_DROP_TRIG          14   /* dropped due to a trigger action */
 #define MBY_ACTION_DROP_L3_PYLD_LEN   15   /* Single segment frames dropped when the L3 payload length does not agree with the actual packet length */
 #define MBY_ACTION_DROP_POLICER       16   /* dropped due the policer_drop flag from pre. */
-#define MBY_ACTION_DROP_TTL           17  
+#define MBY_ACTION_DROP_TTL           17
 #define MBY_ACTION_DROP_CM_GLOBAL     18
 #define MBY_ACTION_DROP_CM_SMP0       19
 #define MBY_ACTION_DROP_CM_SMP1       20
@@ -537,6 +551,38 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_bool                 SKIP_DGLORT_DEC;
     fm_uint16               IP_MCAST_IDX;           // index into the MCAST_VLAN_TABLE
     fm_bool                 DA_HIT;                 // destination MAC address lookup hit
+    fm_bool                 SAF_ERROR;              // SAF error
+    fm_bool                 TX_DROP;                // flag indicating packet drop
+
+    // pass-thru:
+    fm_bool                 IS_IPV4;       // packet is of type IP v4
+    fm_bool                 IS_IPV6;       // packet is of type IP v6
+    fm_macaddr              L2_DMAC;       // layer 2 destination address
+    fm_uint16               L2_IVLAN1_CNT; // ingress VLAN counter
+    fm_byte                 SEG_META_ERR;  // segment error
+    fm_byte                 TC;            // 3-bit traffic class
+    mbyParserInfo           PARSER_INFO;   // parser info struct
+    fm_bool                 NO_MODIFY;     // skip most of modifications in Modifier
+    fm_uint32               RX_LENGTH;     // RX packet length
+    fm_byte               * RX_DATA;       // ingress (receive) packet data
+    fm_uint32               RX_PORT;       // RX port number
+    fm_uint32               TX_PORT;       // egress port
+    fm_uint32               TX_LENGTH;     // egress packet data length[byte]
+    fm_byte                 TX_TAG;        // egress tag
+    fm_uint32               TX_STATS_LAST_LEN;
+    fm_uint16               L2_EVID1;      // 12-bit egress VLAN ID
+    fm_uint16               EDGLORT;       // egress destination glort
+    mbyMirrorType           MIRTYP;        // mirror type
+    fm_byte                 QOS_L3_DSCP;   // 6-bit QOS Differentiated Services Code Point (DSCP)
+    fm_byte                 ECN;           // ECN value to use in egress packet
+    fm_bool                 MARK_ROUTED;
+    fm_uint32               MOD_IDX;       // index into the MODIFY descriptor tables
+    fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
+    fm_bool                 DROP_TTL;
+    fm_bool                 IS_TIMEOUT;
+    fm_bool                 OOM;           // out of memory
+    fm_bool                 PM_ERR_NONSOP;
+    fm_bool                 PM_ERR;        // ECC error on PM
 
 } mbyMaskGenToTriggers;
 

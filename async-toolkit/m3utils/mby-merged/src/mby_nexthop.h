@@ -269,13 +269,14 @@ typedef struct mbyMaTableStruct
 
 typedef struct mbyNextHopToMaskGenStruct
 {
+    mbyParserInfo           PARSER_INFO;      // parser info structure
     fm_uint16               ARP_TABLE_INDEX;
     fm_bool                 ENCAP;
     fm_bool                 DECAP;
     fm_macaddr              L2_SMAC;        // Layer 2 source      MAC address
     fm_macaddr              L2_DMAC;        // Layer 2 destination MAC address
     fm_uint16               L2_IDOMAIN;
-    fm_byte                 L3_IDOMAIN;    
+    fm_byte                 L3_IDOMAIN;
     fm_uint16               L2_IVID1;
     fm_uint16               L2_EDOMAIN;      // egress L2 domain
     fm_byte                 L3_EDOMAIN;      // egress L3 domain
@@ -287,10 +288,14 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint32               MOD_IDX;
 
     // Added for MaskGen's benefit:
-    fm_uint32               RX_PORT;                // receive port number
     fm_bool                 PARSER_WINDOW_V;        // parser window valid flag
     fm_bool                 PARSER_ERROR;           // header parse error flag
     fm_bool                 PARITY_ERROR;           // memory parity error flag
+    fm_bool                 PA_DROP;                // checksum validation error, drop pkt in tail proc
+    fm_bool                 PA_L3LEN_ERR;           // l3 length error
+    fm_byte                 SEG_META_ERR;           // segment error
+    fm_uint32               RX_PORT;                // receive port number
+    fm_uint32               RX_LENGTH;              // RX packet length
     fm_uint16               L2_ETYPE;               // 16-bit innermost Ethernet type
     mbySTPState             L2_IFID1_STATE;         // 2-bit spanning tree state for the ingress port
     fm_uint32               L2_EFID1_STATE;         // 24-bit egress forwarding vector
@@ -303,7 +308,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint32               GLORT_DMASK;            // 24-bit GLORT-based destination mask
     fm_bool                 TARGETED_DETERMINISTIC; // mode is set to targeted deterministic
     fm_bool                 CPU_TRAP;               // CPU trap
-    fm_bool                 TRAP_ICMP;              // ICMP packet should be trapped    
+    fm_bool                 TRAP_ICMP;              // ICMP packet should be trapped
     fm_bool                 TRAP_IGMP;              // IGMP packet should be trapped
     fm_bool                 TRAP_IP_OPTIONS;        // IP options present
     fm_uint32               PRE_RESOLVE_DMASK;      // destination mask before action resolution

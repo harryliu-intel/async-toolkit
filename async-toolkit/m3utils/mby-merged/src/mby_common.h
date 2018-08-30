@@ -25,6 +25,8 @@
 
 #define MBY_MAX_PACKET_SIZE      32767
 
+#define MBY_SEGMENT_LEN          256
+
 #define MBY_N_PARSER_KEYS        80
 #define MBY_N_PARSER_FLGS        48
 #define MBY_N_PARSER_PTRS         8
@@ -107,7 +109,7 @@ typedef enum mbyMirrorTypeEnum
 
 typedef struct mbyParserInfoStruct
 {
-    fm_byte                 otr_l2_len;    // 3b field 
+    fm_byte                 otr_l2_len;    // 3b field
     fm_bool                 otr_l2_vlan1;
     fm_bool                 otr_l2_vlan2;
     fm_bool                 otr_l2_v2first;
@@ -125,7 +127,7 @@ typedef struct mbyParserInfoStruct
     fm_byte                 inr_l3_len;    // 4b field
     fm_bool                 inr_l3_v6;
     fm_bool                 inr_l4_udp;
-    fm_bool                 inr_l4_tcp;  
+    fm_bool                 inr_l4_tcp;
 
 } mbyParserInfo;
 

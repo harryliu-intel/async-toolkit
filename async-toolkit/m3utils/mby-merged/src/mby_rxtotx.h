@@ -18,16 +18,14 @@
 
 typedef struct mbyTxInToModifierStruct
 {
-    fm_uint32               RX_LENGTH;     // ingress packet data length [bytes]
-    fm_byte                *RX_DATA;       // ingress (receive) packet data
-    fm_uint32               TX_LENGTH;     // egress packet data length[byte]
-    fm_uint32               TX_PORT;
-    fm_bool                 TX_DROP;       // flag indicating packet drop
-    fm_byte                 TX_TAG;
-    fm_uint32               TX_STATS_LAST_LEN;
-
     mbyParserInfo           PARSER_INFO;
     fm_bool                 NO_MODIFY;     // skip most of modifications in Modifier
+    fm_uint32               RX_LENGTH;     // ingress packet data length [bytes]
+    fm_byte               * RX_DATA;       // ingress (receive) packet data
+    fm_bool                 TX_DROP;       // flag indicating packet drop
+    fm_uint32               TX_LENGTH;     // egress packet data length[byte]
+    fm_byte                 TX_TAG;
+    fm_uint32               TX_STATS_LAST_LEN;
     fm_uint16               L2_EVID1;      // 12-bit egress VLAN ID
     fm_uint16               EDGLORT;       // egress destination glort
     mbyMirrorType           MIRTYP;        // mirror type
@@ -40,10 +38,12 @@ typedef struct mbyTxInToModifierStruct
     fm_bool                 DROP_TTL;
     fm_bool                 IS_TIMEOUT;
     fm_bool                 OOM;           // out of memory
-    fm_bool                 PM_ERR;        // ECC error on PM
     fm_bool                 PM_ERR_NONSOP;
+    fm_bool                 PM_ERR;        // ECC error on PM
     fm_bool                 SAF_ERROR;     // SAF error
     fm_macaddr              L2_DMAC;       // L2 destination MAC address
+    // pass-thru:
+    fm_uint32               TX_PORT;
 
 } mbyTxInToModifier;
 

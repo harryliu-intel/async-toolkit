@@ -6,134 +6,6 @@
 #include "mby_rxstats.h"
 #include "mby_maskgen.h" // action codes
 
-#if 0 // should this code be in MaskGen rather than here? <-- REVISIT!!!!
-static void handleTail
-(
-    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyCongMgmtToRxStats * const in,
-          mbyRxStatsToRxOut    * const out
-)
-{
-    // Read inputs:
-    fm_uint32 rx_length    = in->RX_LENGTH;
-    fm_uint32 rx_port      = in->RX_PORT;
-    fm_uint64 fnmask       = in->FNMASK;
-    fm_bool   seg_meta_err = in->SEG_META_ERR;
-
-    // remove FCS bytes from array storage:
-    fm_uint32 pkt_len  = (rx_length < 4) ? 0 : (rx_length - 4);
-    fm_uint32 num_segs = 0;
-
-    // First segment is 192 bytes
-    if (pkt_len <= 192) {
-        pkt_len   = 0;
-        num_segs  = 1;
-    } else {    
-        pkt_len  -= 192;
-        num_segs += 1 + (pkt_len + MBY_SEGMENT_LEN - 1) / MBY_SEGMENT_LEN; // check <-- REVISIT!!!
-    }
-    
-    fm_uint64 saf_matrix_reg = 0;
-    mbyModelReadCSR64(regs, MBY_SAF_MATRIX(rx_port, 0), &saf_matrix_reg);
-
-    fm_uint64 enable_snf    = FM_GET_FIELD64(saf_matrix_reg, MBY_SAF_MATRIX, ENABLE_SNF);
-    fm_uint32 cut_thru_mode = FM_GET_FIELD64(saf_matrix_reg, MBY_SAF_MATRIX, CUT_THRU_MODE);
-    fm_bool   ign_frame_err = FM_GET_BIT64  (saf_matrix_reg, MBY_SAF_MATRIX, IGNORE_FRAME_ERROR);
-    
-    fm_uint64 dmask = fnmask;
-
-    if (state->MIRROR1_PROFILE_V)
-        dmask |= (FM_LITERAL_U64(1) << state->MIRROR1_PORT);
-    if(state->MIRROR0_PROFILE_V)
-        dmask |= (FM_LITERAL_U64(1) << state->MIRROR0_PORT);
-    dmask &= ( 0xFFFFFFFFFFFF ); // 48 bit port mask
-    enable_snf = (enable_snf & dmask) & 0xFFFFFF;
-    
-    // Decide whether frame is SAF:
-    fm_bool is_saf = FALSE;
-    if (enable_snf)
-        is_saf = TRUE;
-    else if ((cut_thru_mode == 0) || (cut_thru_mode == 1))
-        is_saf = (num_segs == 1);
-    else if (cut_thru_mode == 2)
-        is_saf = (num_segs <= 2);
-    else
-        is_saf = TRUE; // end-of-frame
-
-    // SAF ERROR in tail processing:
-    fm_bool saf_error = FALSE;
-    if ((seg_meta_err == 1) || (seg_meta_err == 2))
-    {
-        if (is_saf || (dmask == 0)) {
-            saf_error = !ign_frame_err;
-            if (!enable_snf && (cut_thru_mode == 0) && (dmask != 0))
-                saf_error = FALSE;
-        }    
-    }
-    
-    if (saf_error)
-    {
-        if ((num_segs == 1) || (dmask == 0))
-        {    
-            out->ACTION            = MBY_ACTION_DROP_FRAME_ERR;
-            out->FNMASK            = 0;
-            out->MIRROR1_PROFILE_V = 0;
-            out->MIRROR0_PROFILE_V = 0;
-        }
-        else // multi-segment
-        {
-            out->TX_DROP = 1;
-        }
-    }
-
-    // Update Action code for CSUM and L3 Length errors
-    // Applies to only single segment packets. Multi-segment packets are handled by Modify
-    if (rx_length <= 192)
-    { 
-        if (in->ACTION == MBY_ACTION_NORMAL ||
-            in->ACTION == MBY_ACTION_FLOOD ||
-            in->ACTION == MBY_ACTION_GLORT_FORWARDED ||
-            in->ACTION == MBY_ACTION_TRAP ||
-            in->ACTION == MBY_ACTION_SPECIAL ||
-            in->ACTION == MBY_ACTION_REDIRECT_TRIG ||
-            in->ACTION == MBY_ACTION_DROP_CONTROL ||
-            in->ACTION == MBY_ACTION_DROP_IV ||
-            in->ACTION == MBY_ACTION_DROP_EV ||
-            in->ACTION == MBY_ACTION_DROP_STP ||
-            in->ACTION == MBY_ACTION_DROP_CAM ||
-            in->ACTION == MBY_ACTION_DROP_FFU ||
-            in->ACTION == MBY_ACTION_DROP_TRIG ||
-            in->ACTION == MBY_ACTION_DROP_TTL ||
-            in->ACTION == MBY_ACTION_DROP_DLF ||
-            in->ACTION == MBY_ACTION_BANK5_OTHER_DROPS ||
-            in->ACTION == MBY_ACTION_DROP_SV)
-        {    
-            if (in->PA_DROP && in->PA_L3LEN_ERR)
-                out->ACTION = MBY_ACTION_DROP_L3_PYLD_LEN;
-            else if (in->PA_DROP && in->PA_CSUM_ERR)
-                out->ACTION = MBY_ACTION_DROP_L4_CSUM;
-        }
-
-        // Drop single-segment packets with l4csum error /l3 length error:
-        if ((out->ACTION == MBY_ACTION_DROP_L3_PYLD_LEN) || (out->ACTION == MBY_ACTION_DROP_L4_CSUM))
-        {
-            out->FNMASK = 0;
-            out->MIRROR1_PROFILE_V = 0;
-            out->MIRROR0_PROFILE_V = 0;
-        }
-    } 
-    else if (in->PA_DROP && (in->PA_L3LEN_ERR || in->PA_CSUM_ERR))
-        out->SEG_META_ERR = 2; // framing error in multi-segment packet
-
-    // Write outputs:
-    out->SAF_ERROR = saf_error;
-    
-    // clear parser_info for window parsing
-    if (out->PARSER_INFO.window_parse_v)
-        FM_CLEAR(state->PARSER_INFO);
-}
-#endif
-
 static fm_uint16 getBankIndex(const fm_uint32 rx_port)
 {
     fm_uint16 index = 0;
@@ -157,7 +29,7 @@ static void updateRxStatsBank
 (
     fm_uint32       regs[MBY_REGISTER_ARRAY_SIZE],
     const fm_uint32 bank,
-    const fm_uint16 index,                  
+    const fm_uint16 index,
     const fm_uint64 len
 )
 {
@@ -213,7 +85,7 @@ static void handleRxBank0
     const fm_bool   is_ipv6,
     const fm_bool   is_bcast,
     const fm_bool   is_mcast,
-    const fm_bool   is_ucast          
+    const fm_bool   is_ucast
 )
 {
     fm_uint32 bank  = 0;
@@ -241,7 +113,7 @@ static void handleRxBank0
         index += STAT_RxMcstPktsNonIP;
     else if (is_ucast)
         index += STAT_RxUcstPktsNonIP;
-    
+
     updateRxStatsBank(regs, bank, index, len);
 }
 
@@ -258,7 +130,7 @@ static void handleRxBank1
     fm_uint64 len   = rx_length;
 
     index += (tc & 0x7);
-    
+
     updateRxStatsBank(regs, bank, index, len);
 }
 
@@ -281,9 +153,9 @@ static void handleRxBank2
         case MBY_ACTION_SPECIAL:            index += STAT_TargetedDeterministicForwarded; break;
         case MBY_ACTION_DROP_PARSE:         index += STAT_ParseErrDrops;                  break;
         case MBY_ACTION_DROP_PARITY:        index += STAT_ParityErrorDrops;               break;
-        case MBY_ACTION_TRAP:               index += STAT_Trapped;                        break;    
+        case MBY_ACTION_TRAP:               index += STAT_Trapped;                        break;
         case MBY_ACTION_DROP_CONTROL:       index += STAT_CtrlDrops;                      break;
-        case MBY_ACTION_DROP_STP:           index += STAT_STPDrops;                       break;    
+        case MBY_ACTION_DROP_STP:           index += STAT_STPDrops;                       break;
         case MBY_ACTION_DROP_SV:            index += STAT_SecurityViolations;             break;
         case MBY_ACTION_MARKER_ERROR_DROPS: index += STAT_MarkerErrorDrops;               break;
         case MBY_ACTION_DROP_IV:            index += STAT_VlanIngressDrops;               break;
@@ -324,10 +196,10 @@ static void handleRxBank3
         case MBY_ACTION_DROP_FRAME_ERR:    index += STAT_FrameErrorDrops;           break;
         case MBY_ACTION_REDIRECT_TRIG:     index += STAT_TriggerRedirects;          break;
         case MBY_ACTION_DROP_DLF:          index += STAT_FloodControlDrops;         break;
-        case MBY_ACTION_GLORT_FORWARDED:   index += STAT_GlortForwarded;            break; 
+        case MBY_ACTION_GLORT_FORWARDED:   index += STAT_GlortForwarded;            break;
         case MBY_ACTION_DROP_LOOPBACK:     index += STAT_LoopbackSuppDrops;         break;
         case MBY_ACTION_BANK5_OTHER_DROPS: index += STAT_OtherDrops;                break;
-        case MBY_ACTION_DROP_L4_CSUM:      index += STAT_L4CheckSumValidationDrops; break;     
+        case MBY_ACTION_DROP_L4_CSUM:      index += STAT_L4CheckSumValidationDrops; break;
         default:                                                                    break;
     }
 
@@ -339,13 +211,13 @@ static void handleRxBankVlan
           fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
     const fm_uint32 rx_length,
     const fm_uint32 action,
-    const fm_uint16 l2_ivlan1_cnt_index,
+    const fm_uint16 l2_ivlan1_cnt,
     const fm_bool   is_bcast,
     const fm_bool   is_mcast,
     const fm_bool   is_ucast
 )
 {
-    if (l2_ivlan1_cnt_index != 0)
+    if (l2_ivlan1_cnt != 0)
     {
         fm_bool is_drop = !(action == MBY_ACTION_NORMAL ||
                             action == MBY_ACTION_FLOOD ||
@@ -355,7 +227,7 @@ static void handleRxBankVlan
                             action == MBY_ACTION_GLORT_FORWARDED);
 
         fm_uint16 l2_type = (is_drop) ? 3 : (is_ucast) ? 0 : (is_mcast) ? 1 : (is_bcast) ? 2 : 0;
-        fm_uint16 index   = ((l2_ivlan1_cnt_index << 2) | l2_type ) & 0x3FFF;
+        fm_uint16 index   = ((l2_ivlan1_cnt << 2) | l2_type ) & 0x3FFF;
         fm_uint64 len     = rx_length;
 
         updateRxStatsVlan(regs, index, len);
@@ -370,40 +242,60 @@ void RxStats
 )
 {
     // Read inputs:
-    fm_bool    state_chg           = in->allowStateChange;
-    fm_uint32  rx_length           = in->RX_LENGTH;
-    fm_uint32  rx_port             = in->RX_PORT;
-    fm_bool    is_ipv4             = in->IS_IPV4;
-    fm_bool    is_ipv6             = in->IS_IPV6;
-    fm_macaddr l2_dmac             = in->L2_DMAC;
-    fm_uint16  l2_ivlan1_cnt_index = in->L2_IVLAN1_CNT_INDEX;
-    fm_byte    tc                  = in->TC;      // = traffic class
-    fm_uint    action              = in->ACTION;
+    const fm_uint32  rx_length     = in->RX_LENGTH;
+    const fm_uint32  rx_port       = in->RX_PORT;
+    const fm_bool    is_ipv4       = in->IS_IPV4;
+    const fm_bool    is_ipv6       = in->IS_IPV6;
+    const fm_macaddr l2_dmac       = in->L2_DMAC;
+    const fm_uint16  l2_ivlan1_cnt = in->L2_IVLAN1_CNT;
+    const fm_byte    tc            = in->TC;      // = traffic class
+    const fm_uint    action        = in->ACTION;
 
     fm_bool is_bcast = isBroadcastMacAddress(l2_dmac);
     fm_bool is_mcast = isMulticastMacAddress(l2_dmac);
-    fm_bool is_ucast =   isUnicastMacAddress(l2_dmac);    
+    fm_bool is_ucast =   isUnicastMacAddress(l2_dmac);
 
-    if (state_chg)
-    {
-#if 0 // code that likely does not belong to RxStats <-- REVISIT!!!!
-        // Handle tail processing:
-        handleTail(regs, in, out); 
-#endif
-        // Handle RX frame classification:
-        handleRxBank0(regs, rx_length, rx_port, is_ipv4, is_ipv6, is_bcast, is_mcast, is_ucast);
+    // Handle RX frame classification:
+    handleRxBank0(regs, rx_length, rx_port, is_ipv4, is_ipv6, is_bcast, is_mcast, is_ucast);
 
-        // Handle per-port RX TC counters:
-        handleRxBank1(regs, rx_length, rx_port, tc);
-    
-        // Perform RX forwarding action:
-        fm_bool drop_act = ((action & 0x10) != 0);
-        if (drop_act)
-            handleRxBank3(regs, rx_length, rx_port, action);  // drop actions
-        else
-            handleRxBank2(regs, rx_length, rx_port, action);
+    // Handle per-port RX TC counters:
+    handleRxBank1(regs, rx_length, rx_port, tc);
 
-        // Handle RX VLAN counters:
-        handleRxBankVlan(regs, rx_length, action, l2_ivlan1_cnt_index, is_bcast, is_mcast, is_ucast);
-    }
+    // Perform RX forwarding action:
+    fm_bool drop_act = ((action & 0x10) != 0);
+    if (drop_act)
+        handleRxBank3(regs, rx_length, rx_port, action);  // drop actions
+    else
+        handleRxBank2(regs, rx_length, rx_port, action);
+
+    // Handle RX VLAN counters:
+    handleRxBankVlan(regs, rx_length, action, l2_ivlan1_cnt, is_bcast, is_mcast, is_ucast);
+
+    // Write outputs:
+    out->RX_LENGTH         = rx_length;
+
+    // Pass thru:
+    out->PARSER_INFO       = in->PARSER_INFO;
+    out->NO_MODIFY         = in->NO_MODIFY;
+    out->RX_DATA           = in->RX_DATA;
+    out->TX_DROP           = in->TX_DROP;
+    out->TX_LENGTH         = in->TX_LENGTH;
+    out->TX_TAG            = in->TX_TAG;
+    out->TX_STATS_LAST_LEN = in->TX_STATS_LAST_LEN;
+    out->L2_EVID1          = in->L2_EVID1;
+    out->EDGLORT           = in->EDGLORT;
+    out->MIRTYP            = in->MIRTYP;
+    out->QOS_L3_DSCP       = in->QOS_L3_DSCP;
+    out->ECN               = in->ECN;
+    out->MARK_ROUTED       = in->MARK_ROUTED;
+    out->MOD_IDX           = in->MOD_IDX;
+    out->TAIL_CSUM_LEN     = in->TAIL_CSUM_LEN;
+    out->XCAST             = in->XCAST;
+    out->DROP_TTL          = in->DROP_TTL;
+    out->IS_TIMEOUT        = in->IS_TIMEOUT;
+    out->OOM               = in->OOM;
+    out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
+    out->PM_ERR            = in->PM_ERR;
+    out->SAF_ERROR         = in->SAF_ERROR;
+    out->L2_DMAC           = in->L2_DMAC;
 }
