@@ -95,6 +95,8 @@ void lookUpAddress
     fm_uint16 camIndex = MBY_MA_TABLE_TCAM_SIZE; /*1024*/
     fm_byte   lset     = MBY_MAC_ADDR_BANK_COUNT - 1;// Using only bank = 5 <-- REVISIT!!!
 
+    *hit = FALSE;
+
     while (camIndex > 0)
     {
         camIndex--;

@@ -8,7 +8,7 @@
 
 static fm_uint16 lookUpPearsonHash(const fm_uint16 key)
 {
-    const fm_byte table[] =
+    static const fm_byte table[] =
     {
         11,  7,  4,  6,  0, 10,  3,  5,
         13, 14,  1,  2, 15, 12,  9,  8,
@@ -602,7 +602,7 @@ static void fetchL234HashKeys
 
     for (fm_uint i = 0, s = 8; i < 2; i++, s -= 8)
         hash_keys->l234Key[14 + i] = (vlan >> s) & 0xFF;
-    
+
     // Extract the configuration information and forward it:
     fm_bool is_ip = in->IS_IPV4 || in->IS_IPV6;
 
@@ -645,12 +645,12 @@ static void calcL234Hash
     fm_uint64 hash = (hash_keys.zeroL2) ? FM_LITERAL_U64(0) : hash_keys.crc234;
 
     if (hash_keys.useL34 && !hash_keys.zeroL34)
-        hash ^= ((hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF)) << 24) | 
+        hash ^= ((hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF)) << 24) |
                  (hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF));
 
     *rot_a_key = hash >> (MIN(hash_keys.rotA, 3) * 12) & FM_LITERAL_U64(0xFFF);
     *rot_b_key = hash >> (MIN(hash_keys.rotB, 3) * 12) & FM_LITERAL_U64(0xFFF);
-    
+
     *rot_a_val = lookUpPearsonHash(*rot_a_key);
     *rot_b_val = lookUpPearsonHash(*rot_b_key);
 }
@@ -686,10 +686,10 @@ void Hash
     mbyHashKeys hash_keys;
 
     fetchL234HashKeys(regs, in, &hash_keys);
-    
-    fm_uint64 crc234 = 0;
 
+    fm_uint64 crc234 = 0;
     calcCrcKey(hash_keys, &crc234);
+    hash_keys.crc234 = crc234;
 
     fm_uint16 raw_hash = 0;
     fm_byte   arp_hash[16] = { 0 };
