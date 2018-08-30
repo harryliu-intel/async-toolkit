@@ -2,9 +2,7 @@
 #include "mby_model.h"
 #include "mby_pipeline.h"
 #include "mby_reg_ctrl.h"
-
-// FIXME this is not allowed - errno should be part of the model
-#include "model_server/mby_srv_errno.h"
+#include "mby_errors.h"
 
 #include <string.h>
 #include <stdio.h>

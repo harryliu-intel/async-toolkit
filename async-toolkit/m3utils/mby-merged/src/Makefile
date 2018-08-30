@@ -23,6 +23,7 @@ SOURCES += mby_modifier.c
 SOURCES += mby_txstats.c
 SOURCES += mby_pipeline.c
 SOURCES += mby_reg_ctrl.c
+SOURCES += mby_errors.c
 # SOURCES += mby_log_dump.c
 
 OBJECTS = $(SOURCES:.c=.o)
@@ -83,6 +84,7 @@ mby_rxstats.o    : mby_rxstats.c    mby_rxstats.h    mby_common.h mby_bitfield.h
 mby_rxtotx.o     : mby_rxtotx.c     mby_rxtotx.h     mby_common.h mby_bitfield.h
 mby_modifier.o   : mby_modifier.c   mby_modifier.h   mby_common.h mby_bitfield.h
 mby_txstats.o    : mby_txstats.c    mby_txstats.h    mby_common.h mby_bitfield.h
+mby_errors.o     : mby_errors.c     mby_errors.h
 
 PIPELINE_STAGES += mby_parser.o
 PIPELINE_STAGES += mby_mapper.o
@@ -123,7 +125,6 @@ model_server/%.o: model_server/%.c
 MS_OBJECTS += model_server/mby_srv_main.o
 MS_OBJECTS += model_server/mby_srv_time.o
 MS_OBJECTS += model_server/mby_srv_socket.o
-MS_OBJECTS += model_server/mby_srv_errno.o
 MS_OBJECTS += model_server/mby_srv_utils.o
 MS_OBJECTS += model_server/mby_srv_message.o
 MS_OBJECTS += model_server/mby_srv_handlers.o

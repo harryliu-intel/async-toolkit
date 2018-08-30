@@ -9,10 +9,10 @@
 #include <linux/stat.h>
 #include <fcntl.h>
 
+#include "mby_errors.h"
 #include "mby_srv_socket.h"
 #include "mby_srv_log.h"
 #include "mby_srv_utils.h"
-#include "mby_srv_errno.h"
 
 
 #define FM_GETHOSTBYNAME_BUF_SIZE           2048

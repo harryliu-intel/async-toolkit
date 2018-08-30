@@ -3,7 +3,7 @@
 #define _MBY_SRV_LOG_H_
 
 #include <stdio.h>
-#include "mby_srv_errno.h"
+#include "mby_errors.h"
 
 //#define VERBOSE
 #define DEBUG_PRINT_RECEIVED_PACKET

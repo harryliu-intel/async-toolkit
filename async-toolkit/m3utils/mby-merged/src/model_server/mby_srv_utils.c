@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "mby_model.h"
 #include "mby_srv_log.h"
-#include "mby_srv_errno.h"
 
 fm_status ParseUint64(char *string, fm_uint64 *result)
 {

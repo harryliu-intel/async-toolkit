@@ -32,8 +32,8 @@
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
-#ifndef _MBY_SERVER_ERRNO_H_
-#define _MBY_SERVER_ERRNO_H_
+#ifndef _MBY_ERRORS_H_
+#define _MBY_ERRORS_H_
 
 #include <mby_model.h>
 
@@ -809,4 +809,4 @@ const char *fmErrorMsg(fm_int err);
 /* returns status code given a string containing the status code name */
 fm_status fmErrorCode(const char *errString);
 
-#endif /* _MBY_SERVER_ERRNO_H_ */
+#endif /* _MBY_ERRORS_H_ */
