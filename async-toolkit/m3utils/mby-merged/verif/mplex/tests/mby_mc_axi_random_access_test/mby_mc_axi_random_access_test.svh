@@ -58,6 +58,7 @@ class mby_mc_axi_random_access_test extends mby_mc_base_test;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         cfg.env_cfg.axi_num_masters = 1;
+        cfg.env_cfg.axi_mstr_is_active = 1;
         `ovm_info(get_name(), $sformatf("TEST: setting num_master = %0d ",cfg.env_cfg.axi_num_masters), OVM_MEDIUM);
         set_config_object("env", "mby_mc_tb_top_cfg", cfg, 0);
     endfunction : build_phase

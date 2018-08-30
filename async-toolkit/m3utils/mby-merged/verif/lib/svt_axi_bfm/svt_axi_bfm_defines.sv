@@ -45,4 +45,26 @@
    `define SVT_AXI_MAX_ID_WIDTH 12
 
 
+class axi_bfm_defines extends uvm_object;
+   
+    parameter AXI_ADDR_WIDTH = 32;
+    parameter AXI_DATA_WIDTH = 64;
+    parameter AXI_ID_WIDTH   = 8;
+    parameter svt_axi_port_configuration::axi_interface_type_enum AXI_INTERFACE_TYPE = svt_axi_port_configuration::AXI4; 
+
+    `uvm_object_utils(svt_axi_bfm_pkg::axi_bfm_defines)
+
+    //---------------------------------------------------------------------------
+    //  Constructor: new
+    //  Collect any plusargs and re-configure variables from default, if used.
+    //  Arguments:
+    //  name   - AXI BFM Defines object name.
+    //---------------------------------------------------------------------------
+    function       new(string name = "axi_bfm_defines");
+        super.new(name);
+
+    endfunction: new
+
+endclass: axi_bfm_defines
+
 `endif // __SVT_BFM_DEFINES_GUARD

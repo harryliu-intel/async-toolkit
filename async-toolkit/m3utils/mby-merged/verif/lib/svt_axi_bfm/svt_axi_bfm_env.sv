@@ -203,16 +203,55 @@ class svt_axi_bfm_env extends shdv_base_env;
     // Set the number of AXI BFM Masters, Slaves and data width.
     //
     // Arguments:
-    // int num_masters   -Number of AXI masters.
-    // int num_slaves    -Number of AXI Slaves.
-    // int data_width    -Axi bus width.
+    // int num_masters        -Number of AXI masters.
+    // int num_slaves         -Number of AXI Slaves.
+    // bit mstr_is_active     -Axi Master is_active.
+    // bit slv_is_active      -Axi Slave is_active.
 
     // ------------------------------------------------------------------------
-    function void setup_bfm(int num_masters, int num_slaves, int data_width );
-        axi_cfg.num_masters    = num_masters;
-        axi_cfg.num_slaves    = num_slaves;
-        axi_cfg.num_slaves    = num_slaves;
-        axi_cfg.data_width    = data_width;
+    function void setup_bfm(int num_masters, int num_slaves, bit mstr_is_active, bit slv_is_active);
+
+
+        axi_cfg.num_masters       = num_masters;
+        axi_cfg.num_slaves        = num_slaves;
+        axi_cfg.create_sub_cfgs(num_masters,num_slaves);
+
+        for (int idx = 1 ; idx <= num_masters ; idx ++ ) begin
+            axi_cfg.master_cfg[idx-1].axi_interface_type = axi_bfm_defines::AXI_INTERFACE_TYPE;
+            axi_cfg.master_cfg[idx-1].data_width =  axi_bfm_defines::AXI_DATA_WIDTH;
+            axi_cfg.master_cfg[idx-1].addr_width = axi_bfm_defines::AXI_ADDR_WIDTH;
+            axi_cfg.master_cfg[idx-1].id_width = axi_bfm_defines::AXI_ID_WIDTH;
+            axi_cfg.master_cfg[idx-1].is_active = mstr_is_active;
+
+            // Enable transaction level coverage
+            axi_cfg.master_cfg[idx-1].transaction_coverage_enable = 1;
+            // Enable protocol file generation for Protocol Analyzer
+            //axi_cfg.master_cfg[idx-1].enable_xml_gen = 1;
+            axi_cfg.master_cfg[idx-1].pa_format_type = svt_xml_writer::FSDB;
+            axi_cfg.master_cfg[idx-1].transaction_coverage_enable = 1;
+            axi_cfg.master_cfg[idx-1].reordering_algorithm = svt_axi_port_configuration::RANDOM;
+            axi_cfg.master_cfg[idx-1].write_resp_reordering_depth = `SVT_AXI_MAX_WRITE_RESP_REORDERING_DEPTH;
+        end
+
+        for (int idx = 1 ; idx <= num_slaves ; idx ++ ) begin
+            axi_cfg.slave_cfg[idx-1].axi_interface_type = axi_bfm_defines::AXI_INTERFACE_TYPE;
+            axi_cfg.slave_cfg[idx-1].is_active = slv_is_active;
+            axi_cfg.slave_cfg[idx-1].data_width = axi_bfm_defines::AXI_DATA_WIDTH;
+            axi_cfg.slave_cfg[idx-1].addr_width = axi_bfm_defines::AXI_ADDR_WIDTH;
+            axi_cfg.slave_cfg[idx-1].id_width = axi_bfm_defines::AXI_ID_WIDTH;;
+
+            // Enable transaction level coverage
+            axi_cfg.slave_cfg[idx-1].transaction_coverage_enable = 1;
+
+            // Enable protocol file generation for Protocol Analyzer
+            //axi_cfg.slave_cfg[idx-1].enable_xml_gen = 1;
+            axi_cfg.slave_cfg[idx-1].pa_format_type= svt_xml_writer::FSDB;
+            axi_cfg.slave_cfg[idx-1].transaction_coverage_enable = 1;
+            axi_cfg.slave_cfg[idx-1].reordering_algorithm = svt_axi_port_configuration::RANDOM;
+            axi_cfg.slave_cfg[idx-1].write_resp_reordering_depth = `SVT_AXI_MAX_WRITE_RESP_REORDERING_DEPTH;
+        //this.set_addr_range(0,64'h0,64'hffff_ffff_ffff_ffff);
+        end
+
     endfunction: setup_bfm
 
     // ------------------------------------------------------------------------
