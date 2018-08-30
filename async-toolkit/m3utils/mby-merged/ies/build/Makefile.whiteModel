@@ -1,0 +1,247 @@
+# vim:et:sw=4:syntax=make:ts=4:tw=79:
+# Makefile for White Model Platform
+#
+# The platform makefile is responsible for setting:
+#   PLAT_OBJ     - the object files to be compiled for the platform code
+#   PLAT_TARGETS - the targets to be installed for the platform
+
+# Process micro-code generated
+
+# Defined before the microcode Makefile include to provide the command
+# used to checkout the auto-generated files (if neccessary).  Comment out
+# this line if no checkout is neccessary.
+MICROCODE_CHECKOUT_FILES = xargs $(P4) edit
+
+# This is because in regular manual build mode, the ucode file is found
+# in ../build, but in test mode, it is found in the model directory
+# without a ../build tree available.  The use of -include versus
+# include ensures that no error is generated for the one that
+# fails.  We assume that one of these is actually found, and it is
+# entirely possible that none of them are found in which case we
+# have no microcode targets and build should proceed normally.
+-include Makefile.ucode
+-include ../build/Makefile.ucode
+
+# Default to 64-bit mode
+ifeq ($(ARCH),)
+    ARCH = x86_64
+endif
+
+# Specify whether switch/router microcode is to be dynamically-loaded or
+# internally-built into main library. 1 == dynamically-load, 0 = internal.
+UCODE_SWITCH_DL = 1
+
+# Specify whether MPLS router microcode is to be dynamically-loaded or
+# internally-built into main library. 1 == dynamically-load, 0 = internal.
+UCODE_MPLS_DL = 1
+
+# This address is an unused fixed address at which to locate
+# the FocalPoint library.
+SO_BASE_ADDRESS = 0x02000000
+
+# this address is an unused fixed address at which to locate
+# the Dynamically-Loaded Microcode library/libraries.
+DLIB_BASE_ADDRESS = 0x02600000
+
+# Include all chips for which a white model exists.
+SUPPORTED_CHIP_FAMILIES = FM4000 FM10000 HLP CPK
+
+# enable pedantic errors
+CWARNING_FLAGS += -pedantic-errors
+
+# add conditional variable for host based compilation
+CPPFLAGS += -I../include/std/intel
+
+# test for 64-bit build host (modify this as needed for
+# your build host)
+BUILD_HOST_IS_64BIT = $(shell uname -a | grep x86_64)
+
+ifeq ($(ARCH),x86_64)
+
+    # Compile for 64-bit machine
+    ifeq ($(BUILD_HOST_IS_64BIT),)
+        $(error Cannot compile 64-bit platform on 32-bit host)
+    endif
+    export ARCH=x86_64
+    CFLAGS += -D_FM_ARCH_x86_64
+
+else # ARCH=x86_64
+
+    # Compile for 32-bit machine
+    export ARCH=i386
+    ifeq ($(BUILD_HOST_IS_64BIT),x86_64)
+        # force 32-bit compilation and libraries
+        CFLAGS        += -D_FM_ARCH_i386
+        CFLAGS        += -m32
+        LFLAGS        += -m32
+        LIBFLAGS      += -m32
+        SHFLAGS       += -m32
+        PERL_FORCE_32 = TRUE
+    endif
+
+endif # ARCH=i386
+
+# Add compiler optimizations
+# At least O1 is required for -Wall to catch uninitialized variables
+ifdef DEBUG
+    CFLAGS += -O0
+else
+    CFLAGS += -O1
+endif
+
+# compiler settings, conditionalized because we don't use a cross compiler
+# for emulation
+CC  = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+AR  = $(CROSS_COMPILE)ar
+LD  = $(CROSS_COMPILE)ld
+
+KERN_REL_ROOT_DIRECTORY = ../../fulcrum
+KERN_BASE_DIRECTORY     = ../../vendor/kernel.org
+BASE_DIRECTORY          = ../..
+
+# We link all source code found in the platform directory
+PLAT_SRC = $(wildcard platforms/$(PLATFORM)/*.c)
+
+# Include common code
+PLAT_SRC += platforms/common/fm_file_attr_loader.c
+PLAT_SRC += $(wildcard platforms/common/buffers/std-alloc/*.c)
+PLAT_SRC += $(wildcard platforms/common/instrument/*.c)
+PLAT_SRC += $(wildcard platforms/common/lib/dll/*.c)
+PLAT_SRC += $(wildcard platforms/common/lib/net/*.c)
+PLAT_SRC += $(wildcard platforms/common/packet/generic-packet/*.c)
+
+# Include model support from common library
+PLAT_SRC += platforms/common/model/fm_model_packet_queue.c
+PLAT_SRC += platforms/common/model/testpoint_support.c
+
+ifeq (FM4000,$(findstring FM4000,$(SUPPORTED_CHIP_FAMILIES)))
+    PLAT_SRC += $(wildcard platforms/common/model/fm4000/*.c)
+    PLAT_SRC += $(wildcard platforms/common/model/fm4000/debug/*.c)
+    PLAT_SRC += $(wildcard platforms/common/packet/generic-packet/fm4000/*.c)
+endif
+
+ifeq (FM6000,$(findstring FM6000,$(SUPPORTED_CHIP_FAMILIES)))
+    PLAT_SRC += $(wildcard platforms/common/lib/ucode/*.c)
+    PLAT_SRC += $(wildcard platforms/common/model/fm6000/*.c)
+    PLAT_SRC += $(wildcard platforms/common/packet/generic-packet/fm6000/*.c)
+
+    #
+    #
+    # First Dynamic-Load-Library: Switch/Router microcode and model code
+    #
+    #
+    DLIB1_SRC  = api/fm6000/fm6000_api_uc_attr.c
+    DLIB1_SRC += api/fm6000/fm6000_api_uc_init.c
+    DLIB1_SRC += api/fm6000/fm6000_api_uc_port_attr.c
+    DLIB1_SRC += api/fm6000/fm6000_api_uc_vlan_attr.c
+    DLIB1_SRC += api/fm6000/fm6000_api_uc_stats.c
+    DLIB1_SRC += $(wildcard platforms/common/model/fm6000/auto-generated/*.c)
+
+    ifeq ($(UCODE_SWITCH_DL),1)
+        DLIB1_NAME            = "FocalPoint AWM Switch/Router"
+        DLIB1_A               = ../build/fm_awm_switch.a
+        DLIB1_SO_NAME         = libFocalPoint_AWM_switch.$(SO_EXTENSION)
+        DLIB1_SO              = ../build/$(DLIB1_SO_NAME)
+        DLIB1_SO_BASE_ADDRESS = ( $(DLIB_BASE_ADDRESS) + 0 )
+        DLIB1_OBJ             = $(patsubst %.c,%.o,$(DLIB1_SRC))
+        DLIB1_LNK             = ../build/libFocalpoint_AWM_switch.lds
+    else
+        PLAT_SRC              += $(DLIB1_SRC)
+    endif
+
+    #
+    #
+    # Second Dynamic-Load-Library: MPLS Router microcode and model code
+    #
+    #
+    DLIB2_SRC  = api/fm6000/MPLS/fm6000_api_uc_attr.c
+    DLIB2_SRC += api/fm6000/MPLS/fm6000_api_uc_init.c
+    DLIB2_SRC += api/fm6000/MPLS/fm6000_api_uc_port_attr.c
+    DLIB2_SRC += api/fm6000/MPLS/fm6000_api_uc_vlan_attr.c
+    DLIB2_SRC += api/fm6000/MPLS/fm6000_api_uc_stats.c
+    DLIB2_SRC += $(wildcard platforms/common/model/fm6000/auto-generated/mpls/*.c)
+
+    ifeq ($(UCODE_MPLS_DL),1)
+        DLIB2_NAME            = "FocalPoint AWM MPLS Router"
+        DLIB2_A               = ../build/fm_awm_mpls.a
+        DLIB2_SO_NAME         = libFocalPoint_AWM_mpls.$(SO_EXTENSION)
+        DLIB2_SO              = ../build/$(DLIB2_SO_NAME)
+        DLIB2_SO_BASE_ADDRESS = ( $(DLIB_BASE_ADDRESS) + 0x00200000 )
+        DLIB2_OBJ             = $(patsubst %.c,%.o,$(DLIB2_SRC))
+        DLIB2_LNK             = ../build/libFocalpoint_AWM_mpls.lds
+    else
+        PLAT_SRC              += $(DLIB2_SRC)
+    endif
+
+    #
+    #
+    # List of all Dynamic-Load-Libraries that are created for this platform
+    #
+    #
+    DLIB_SO = $(DLIB1_SO)
+    DLIBS   = DLIB1
+
+    #
+    #
+    # Other Targets
+    #
+    #
+    PLAT_TARGETS = ../build/microcode.raw
+endif
+
+ifeq (FM10000,$(findstring FM10000,$(SUPPORTED_CHIP_FAMILIES)))
+    PLAT_SRC += $(wildcard platforms/common/model/fm10000/*.c)
+    PLAT_SRC += $(wildcard platforms/common/model/fm10000/debug/*.c)
+endif
+
+ifeq (HLP,$(findstring HLP,$(SUPPORTED_CHIP_FAMILIES)))
+    PLAT_SRC += $(wildcard platforms/common/model/hlp/*.c)
+    PLAT_SRC += $(wildcard platforms/common/model/hlp/debug/*.c)
+endif
+
+ifeq (CPK,$(findstring CPK,$(SUPPORTED_CHIP_FAMILIES)))
+    PLAT_SRC += $(wildcard platforms/common/model/cpk/*.c)
+    PLAT_SRC += $(wildcard platforms/common/model/cpk/debug/*.c)
+endif
+
+# List of platform object files
+PLAT_OBJ = $(patsubst %.c,%.o,$(PLAT_SRC))
+
+########################### TestPoint/perl ##################################
+
+ifeq ($(ELDKBASE),)
+    ifneq ($(DEV_ENV_INTEL),)
+        ELDKBASE = /p/utils/srd/software/cross-compilers/eldk/rootfs-usr
+    else    
+        ELDKBASE = /home/local/common/kirkwood/hosts/usr-eldk
+    endif
+endif
+
+PERL_CFLAGS     = $(CWARNING_FLAGS)                                           \
+                  -Wno-format-zero-length -Wno-sign-compare -Wno-type-limits  \
+                  -fPIC
+PERL_CPPFLAGS   =
+PERL_EXTRA_LIBS =
+
+# All Perl related flags are finalized with help of the ExtUtils::Embed module
+# on the host machine where Perl will be run.
+ifeq ($(CROSS_COMPILE),)
+    PERL_CFLAGS           += $(shell perl -MExtUtils::Embed -e ccflags)
+    PERL_CPPFLAGS         += $(shell perl -MExtUtils::Embed -e perl_inc)
+    PERL_WRAPPER_CPPFLAGS += -I../include/std/intel
+    PERL_WRAPPER_LDFLAGS  += $(shell perl -MExtUtils::Embed -e ldopts)
+    READKEY_LDFLAGS       += $(shell perl -MExtUtils::Embed -e ldopts)
+else
+    # ELDK 2.6
+    PERL_CFLAGS           += -fno-strict-aliasing -pipe                       \
+                             -Wdeclaration-after-statement                    \
+                             -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+    PERL_CPPFLAGS         += -I$(ELDKBASE)/local/lib/perl5/5.8.8/ppc-linux/CORE
+    PERL_EXTRA_LIBS       += -L$(ELDKBASE)/lib/gcc/ppc-linux/4.0.0 -lgcc
+    PERL_WRAPPER_CPPFLAGS += -I../vendor/eldk/include -I../include/std/mpc8245
+endif
+
+# The software generated interface cannot be compiled with pedantic warnings
+# enabled.
+PERL_CFLAGS := $(filter-out -pedantic%,$(PERL_CFLAGS))

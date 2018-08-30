@@ -1,0 +1,363 @@
+/* vim:ts=4:sw=4:expandtab
+ * (No tabs, indent level is 4 spaces)  */
+/*****************************************************************************
+ * Copyright (c) 2018, Intel Corporation
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notice,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Intel Corporation nor the names of its contributors
+ *       may be used to endorse or promote products derived from this software
+ *       without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*****************************************************************************/
+
+#include "mby_model.h"
+
+// TODO remove this since it's only used for MBY_FFU_HASH_CAM
+#include <mby_classifier.h>
+
+/*****************************************************************************
+ * Data Structures
+ *****************************************************************************/
+
+/**************************************************
+ * Register default values
+ **************************************************/
+
+typedef struct _fm_mbyRegisterDefault
+{
+    /* Mask to be applied to register address. */
+    fm_uint32   addrMask;
+
+    /* Expected result of applying addrMask to the register address. If
+     * result matches, then this table entry applies to the register. */
+    fm_uint32   addrResult;
+
+    /* Default value for this word */
+    fm_uint32   def;
+
+} fm_mbyRegisterDefault;
+
+
+/**************************************************
+ * Register field types
+ **************************************************/
+
+typedef struct _fm_mbyRegisterAccess
+{
+    /* Mask to be applied to register address. */
+    fm_uint32   addrMask;
+
+    /* Expected result of applying addrMask to the register address. If
+     * result matches, then this table entry applies to the register. */
+    fm_uint32   addrResult;
+
+    /* Mask of bits with RW access */
+    fm_uint32   rwMask;
+
+    /* Mask of bits with RO access */
+    fm_uint32   roMask;
+
+    /* Mask of bits with CW access */
+    fm_uint32   cwMask;
+
+    /* Mask of bits with CW1 access */
+    fm_uint32   cw1Mask;
+
+    /* Mask of bits with RV access */
+    fm_uint32   rvMask;
+
+} fm_mbyRegisterAccess;
+
+
+/**************************************************
+ * Register reset domains
+ **************************************************/
+
+typedef struct _fm_mbyRegisterResetDomain
+{
+    fm_uint32 addrMask;
+
+    fm_uint32 addrResult;
+
+    fm_uint32 domainMask;
+
+} fm_mbyRegisterResetDomain;
+
+/*****************************************************************************
+ * Register Tables
+ *****************************************************************************/
+
+
+/**************************************************
+ * List of register words that have at least one
+ * bit not of type RW.
+ **************************************************/
+
+const fm_mbyRegisterAccess mbyRegisterFieldTypeTable[] =
+{
+/*   addrMask    addrResult  rwMask      roMask      cwMask      cw1Mask     rvMask          name [word] */
+
+// Auto generated reg attributes begin
+// Auto generated reg attributes end
+
+    /* Terminator */
+    {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000}
+};
+
+
+/**************************************************
+ * List of register words that have a non-zero
+ * default value.
+ **************************************************/
+
+static const fm_mbyRegisterDefault mbyRegisterDefaultTable[] =
+{
+/*   addrMask    addrResult  default         name [word] */
+// Auto generated reg defaults begin
+// Auto generated reg defaults end
+    /* Terminator */
+    {0x00000000, 0x00000000, 0x00000000}
+};
+
+
+/**************************************************
+ * List of register words that are on a separate
+ * reset domain
+ **************************************************/
+
+const fm_mbyRegisterResetDomain mbyResetDomainTable[] =
+{
+/*   addrMask    addrResult  domainMask */
+// Auto generated reg reset domains begin
+// Auto generated reg reset domains end
+    /* Terminator */
+    {0x00000000, 0x000000, 0x00000000}
+};
+
+
+/*****************************************************************************/
+/** isAddrMatched
+ * \ingroup intModel
+ *
+ * \desc            Check if MBY address matches in range of mask and value.
+ *
+ * \param[in]       addr is the register's address in the MBY register
+ *                  space.
+ *
+ * \param[in]       mask is the mask on address.
+ *
+ * \param[in]       result is the result to compare too.
+ *
+ * \return          TRUE if address matches the value.
+ * \return          FALSE otherwise
+ *
+ *****************************************************************************/
+static inline fm_bool isAddrMatched(fm_uint32 addr, fm_uint mask, fm_uint result)
+{
+	if ((addr & mask) == result)
+	{
+		/* Special case for overlapping addr/mask not capable of
+		 * matching the correct entry
+		 */
+		/* 0xFFF3F807, 0x3320000 FFU_HASH_CAM */
+		if (((addr & 0xFFF3F800) == MBY_FFU_HASH_CAM(0,0,0,0)) &&
+		    (mask != 0xFFF3F807))
+		{
+			/* matches FFU_HASH_CAM but it is not for
+			 * FFU_HASH_CAM entry */
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+/*****************************************************************************
+ * Public Functions
+ *****************************************************************************/
+
+// FIXME mby_resetDomain is not defined here
+#if 0
+/*****************************************************************************/
+/** mbyModelFindRegisterResetDomain
+ * \ingroup intModel
+ *
+ * \desc            Searches the set of reset domains for the given register for
+ *                  the given reset domain.
+ *
+ * \param[in]       addr is the register's address in the MBY register
+ *                  space.
+ *
+ * \param[in]       domain is the reset domain to search for.
+ *
+ * \return          TRUE if the reset domain is found in the set of reset
+ *                  domains for the given register.
+ * \return          FALSE otherwise
+ *
+ *****************************************************************************/
+mby_resetDomain mbyModelFindRegisterResetDomain(fm_uint32 addr, mby_resetDomain domain)
+{
+    const fm_mbyRegisterResetDomain *rst;
+
+    /* Search the register reset domain table to check if this register is part
+     * of the given reset domain. */
+    rst = mbyResetDomainTable;
+
+    while (rst->addrMask)
+    {
+        if (isAddrMatched(addr, rst->addrMask, rst->addrResult))
+        {
+            if ( ( rst->domainMask & (1 << domain) ) != 0 )
+            {
+                return TRUE;
+            }
+            break;
+        }
+        ++rst;
+    }
+
+    return FALSE;
+
+}   /* end mbyModelFindRegisterResetDomain */
+#endif
+
+/*****************************************************************************/
+/** mbyModelGetRegisterDefault
+ * \ingroup intModel
+ *
+ * \desc            Returns the default value for the given register.
+ *                                                                      \lb\lb
+ *                  The defaults table is searched for a non-zero default value.
+ *                  If none, zero is returned as the default, otherwise the
+ *                  default from the table is returned.
+ *
+ * \param[in]       addr is the register's address in the MBY register
+ *                  space.
+ *
+ * \return          Default value
+ *
+ *****************************************************************************/
+fm_uint32 mbyModelGetRegisterDefault(fm_uint32 addr)
+{
+    const fm_mbyRegisterDefault *defaults;
+    fm_uint32                       rtnValue = 0;
+
+    /**************************************************
+     * Search the defaults table to see if this reg
+     * has a non-zero default value.
+     **************************************************/
+
+    defaults = mbyRegisterDefaultTable;
+
+    while (defaults->addrMask)
+    {
+        /* Does masked address give the expected result? */
+        if (isAddrMatched(addr, defaults->addrMask, defaults->addrResult))
+        {
+            rtnValue = defaults->def;
+            break;
+        }
+
+        ++defaults;
+    }
+
+    return rtnValue;
+
+}   /* end mbyModelGetRegisterDefault */
+
+
+
+/*****************************************************************************/
+/** mbyModelGetRegisterAccess
+ * \ingroup intModel
+ *
+ * \desc            Returns various mask(Read-Write,Read-Only, etc.) values
+ *                  for the given register.
+ *
+ * \param[in]       addr is the register's address in the MBY register
+ *                  space.
+ *
+ * \param[out]      rwMask points to caller-allocated storage where this
+ *                  function should place the mask identifying read-write bits.
+ *
+ * \param[out]      roMask points to caller-allocated storage where this
+ *                  function should place the mask identifying read-only bits.
+ *
+ * \param[out]      cwMask points to caller-allocated storage where this
+ *                  function should place the mask identifying clear-on-write
+ *                  bits.
+ *
+ * \param[out]      cw1Mask points to caller-allocated storage where this
+ *                  function should place the mask identifying clear-on-write-1
+ *                  bits.
+ *
+ * \param[out]      rvMask points to caller-allocated storage where this
+ *                  function should place the mask identifying reserved bits.
+ *
+ * \return          None
+ *
+ *****************************************************************************/
+void mbyModelGetRegisterAccess(fm_uint32  addr,
+                                  fm_uint32 *rwMask,
+                                  fm_uint32 *roMask,
+                                  fm_uint32 *cwMask,
+                                  fm_uint32 *cw1Mask,
+                                  fm_uint32 *rvMask)
+{
+    const fm_mbyRegisterAccess *access;
+
+    /**************************************************
+     * Defaults for most registers.
+     **************************************************/
+
+    *rwMask  = 0xffffffff;
+    *roMask  = 0x00000000;
+    *cwMask  = 0x00000000;
+    *cw1Mask = 0x00000000;
+    *rvMask  = 0x00000000;
+
+    /**************************************************
+     * Search the access table to see if this reg
+     * has special access bit fields.
+     **************************************************/
+
+    access = mbyRegisterFieldTypeTable;
+
+    while (access->addrMask)
+    {
+        /* Does masked address give the expected result? */
+        if (isAddrMatched(addr, access->addrMask, access->addrResult))
+        {
+            *rwMask  = access->rwMask;
+            *roMask  = access->roMask;
+            *cwMask  = access->cwMask;
+            *cw1Mask = access->cw1Mask;
+            *rvMask  = access->rvMask;
+            break;
+        }
+
+        ++access;
+    }
+
+    return;
+
+}   /* end mbyModelGetRegisterAccess */
+

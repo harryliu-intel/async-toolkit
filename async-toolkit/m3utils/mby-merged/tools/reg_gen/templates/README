@@ -1,0 +1,16 @@
+Templates Directory
+
+The contents of this directory are installation target identifiers.
+
+TARGET ID		REPOSITORY
+--------------------------------------------------------------------
+api			The IES API repository
+wm			The White Model repository
+
+The directory structure under the target id directory is a replica of the path 
+to the file in the respective repository.  This path is used to:
+- Identify files uniquely (same name, different path)
+- Make it easy to identify which template/view to edit when making a change
+- Which files are generated from this content in a repository
+- Install the files in the proper location.
+

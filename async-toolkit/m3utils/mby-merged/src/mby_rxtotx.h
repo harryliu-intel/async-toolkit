@@ -1,0 +1,50 @@
+// -*- mode:c -*-
+
+// Copyright (C) 2018 Intel Corporation
+
+#ifndef MBY_RXTOTX_H
+#define MBY_RXTOTX_H
+
+// Includes:
+
+#include "mby_common.h"
+#include "mby_bitfield.h"
+
+// Defines:
+
+// Enums:
+
+// Structs:
+
+typedef struct mbyTxInToModifierStruct
+{
+    mbyParserInfo           PARSER_INFO;
+    fm_bool                 NO_MODIFY;     // skip most of modifications in Modifier
+    fm_uint32               RX_LENGTH;     // ingress packet data length [bytes]
+    fm_byte               * RX_DATA;       // ingress (receive) packet data
+    fm_bool                 TX_DROP;       // flag indicating packet drop
+    fm_uint32               TX_LENGTH;     // egress packet data length[byte]
+    fm_byte                 TX_TAG;
+    fm_uint32               TX_STATS_LAST_LEN;
+    fm_uint16               L2_EVID1;      // 12-bit egress VLAN ID
+    fm_uint16               EDGLORT;       // egress destination glort
+    mbyMirrorType           MIRTYP;        // mirror type
+    fm_byte                 QOS_L3_DSCP;   // 6-bit QOS Differentiated Services Code Point (DSCP)
+    fm_byte                 ECN;           // ECN value to use in egress packet
+    fm_bool                 MARK_ROUTED;
+    fm_uint32               MOD_IDX;       // index into the MODIFY descriptor tables
+    fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
+    fm_byte                 XCAST;
+    fm_bool                 DROP_TTL;
+    fm_bool                 IS_TIMEOUT;
+    fm_bool                 OOM;           // out of memory
+    fm_bool                 PM_ERR_NONSOP;
+    fm_bool                 PM_ERR;        // ECC error on PM
+    fm_bool                 SAF_ERROR;     // SAF error
+    fm_macaddr              L2_DMAC;       // L2 destination MAC address
+    // pass-thru:
+    fm_uint32               TX_PORT;
+
+} mbyTxInToModifier;
+
+#endif
