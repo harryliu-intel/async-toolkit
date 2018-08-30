@@ -1,27 +1,19 @@
-% Imports
+% Import
 import( "libm3" )
+import( "paneman" )
+import( "patternmatching" )
 
-% Core types
-module( "DepGraph" )
+% Modules
+module( "RDP" )
 module( "Node" )
-module( "Spec" )
-
-% Supplementary Interfaces
-interface( "TypeUse" )
+module( "ParseQueue" )
 
 % Wrapper types
-module( "MyREFANY" )
 module( "MyCARDINAL" )
 
 % Lists
-module( "REFANYList" )
 module( "CARDINALList" )
 
-% Tables
-module( "NextCharTbl" )
-module( "StyleRulesTbl" )
-module( "SymbolTbl" )
-
-% Main program
+% Main
 implementation( "Main" )
-program( "test" )
+program( "Main" )
