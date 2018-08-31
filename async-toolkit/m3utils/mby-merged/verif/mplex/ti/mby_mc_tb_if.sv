@@ -36,8 +36,12 @@ interface mby_mc_tb_if();
 
     logic warm_reset;
 
-    logic clk;
-
+    logic fab_clk;
+    
+    logic proc_clk;
+    
+    logic peri_clk;
+    
     initial begin
         power_good_reset     = 0;
         hard_reset           = 0;

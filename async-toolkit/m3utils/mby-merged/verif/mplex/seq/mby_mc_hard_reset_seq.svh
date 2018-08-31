@@ -98,7 +98,7 @@ class mby_mc_hard_reset_seq extends shdv_base_reset_seq;
         `uvm_info(get_name(), $sformatf("Hard_Reset Set"), UVM_NONE);
         tb_vif.warm_reset                 = 1;
 
-        repeat (200) @(posedge tb_vif.clk);
+        repeat (200) @(posedge tb_vif.fab_clk);
 
         `uvm_info(get_name(), $sformatf("Hard_Reset Cleared"), UVM_NONE);
         tb_vif.hard_reset                 = 0;

@@ -49,17 +49,27 @@ import sla_pkg::*;
 // Clock block instance
 // ===============================================
 
-logic        fabric_clk;                             // Fabric Clock - 1.2 Ghz
+logic         fabric_clk;                             // Fabric Clock - 1.2 Ghz
+logic         proc_clk;                               // Processor Clock - 1.0 Ghz
+logic         peri_clk;                               // Peripheral Clock - 200 Mhz
 
-shdv_clk_gen  fabric_clk_gen(fabric_clk);            // FABRIC clk = 1.2 Ghz
+shdv_clk_gen  fabric_clk_gen(fabric_clk);            
+shdv_clk_gen  proc_clk_gen(proc_clk);    
+shdv_clk_gen  peri_clk_gen(peri_clk);    
 
 initial begin
 
     fabric_clk_gen.period     = 833333fs;
     fabric_clk_gen.jitter     = 0ps;
+    
+    proc_clk_gen.period       = 1000ps;
+    proc_clk_gen.jitter       = 0ps;
+    
+    peri_clk_gen.period       = 5000ps;
+    peri_clk_gen.jitter       = 0ps;
+    
 
 end
-
 
 // ===============================================
 // =                FSDB variable                =
@@ -72,29 +82,31 @@ string       str;
 
 mby_mc_tb_if mc_tb_if();
 
-assign mc_tb_if.clk = fabric_clk;
+assign mc_tb_if.fab_clk  = fabric_clk;
+assign mc_tb_if.proc_clk = proc_clk;
+assign mc_tb_if.peri_clk = peri_clk;
 
 shdv_base_tb_intf shdv_intf();
 
-assign   shdv_intf.ref_clk   = mc_tb_if.clk;
+assign   shdv_intf.ref_clk   = mc_tb_if.fab_clk;
 assign   shdv_intf.ref_rst   = mc_tb_if.hard_reset;
 
 svt_ahb_if ahb_if();
 assign ahb_if.hclk = fabric_clk;
 
 ahb_reset_if ahb_reset_if();
-assign ahb_reset_if.clk =  mc_tb_if.clk;
+assign ahb_reset_if.clk =  mc_tb_if.fab_clk;
 assign ahb_reset_if.resetn = ~mc_tb_if.hard_reset;
 
 assign ahb_if.hresetn = ahb_reset_if.resetn;
 
 // VIP interface representing the AXI system.
 svt_axi_if axi_if();
-assign axi_if.common_aclk = mc_tb_if.clk;
+assign axi_if.common_aclk = mc_tb_if.fab_clk;
 
 // AXI env Interface instance to provide access to the reset signal
 axi_reset_if axi_reset_if();
-assign axi_reset_if.clk   = mc_tb_if.clk;
+assign axi_reset_if.clk   = mc_tb_if.fab_clk;
 assign axi_reset_if.reset = mc_tb_if.hard_reset;
 
 //Assign the reset pin from the reset interface to the reset pins from the VIP
@@ -191,8 +203,12 @@ mby_wm_top mby_wm();
 // MBY Mplex DUT
 // ===============================================
 cup_top mplex_top(
-    .fab_clk (mc_tb_if.clk),  // fabric and bus clock
-    .fab_resetn(~mc_tb_if.hard_reset)
+    .fab_clk (mc_tb_if.fab_clk),  // fabric and bus clock
+    .fab_resetn(~mc_tb_if.hard_reset),
+    .proc_clk (mc_tb_if.proc_clk),
+    .proc_core_reset(mc_tb_if.hard_reset),
+    .peri_clk (mc_tb_if.peri_clk),
+    .peri_resetn(~mc_tb_if.hard_reset)
 );
 
 

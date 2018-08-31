@@ -17,16 +17,10 @@
 class ahb_master_directed_sequence extends svt_ahb_master_transaction_base_sequence;
 
    `uvm_object_utils(ahb_master_directed_sequence)
-  /** Parameter that controls the number of transactions that will be generated */
-  rand int unsigned sequence_length = 5;
 
-  /** Constrain the sequence length to a reasonable value */
-  constraint reasonable_sequence_length {
-    sequence_length <= 100;
-  }
-
-  /** UVM Object Utility macro */
-  //`uvm_object_utils(ahb_master_directed_sequence)
+  svt_ahb_master_transaction write_tran, read_tran;
+  svt_configuration get_cfg;
+  bit status;
 
   /** Class Constructor */
   function new(string name="ahb_master_directed_sequence");
@@ -34,15 +28,10 @@ class ahb_master_directed_sequence extends svt_ahb_master_transaction_base_seque
   endfunction
   
   virtual task body();
-    svt_ahb_master_transaction write_tran, read_tran;
-    svt_configuration get_cfg;
-    bit status;
+    
     `uvm_info("body", "Entered ...", UVM_LOW)
 
     super.body();
-
-    status = uvm_config_db #(int unsigned)::get(null, get_full_name(), "sequence_length", sequence_length);
-    `uvm_info("body", $sformatf("sequence_length is %0d as a result of %0s.", sequence_length, status ? "config DB" : "randomization"), UVM_LOW);
 
     /** Obtain a handle to the port configuration */
     p_sequencer.get_cfg(get_cfg);
@@ -50,28 +39,22 @@ class ahb_master_directed_sequence extends svt_ahb_master_transaction_base_seque
       `uvm_fatal("body", "Unable to $cast the configuration to a svt_ahb_port_configuration class");
     end
 
-    for(int i = 0; i < sequence_length; i++) begin
-       $display ("Iteration : %0d", i);
-       
       /** Set up the write transaction */
       `uvm_create(write_tran)
       write_tran.randomize()with {
       write_tran.lock         == 0;
       write_tran.cfg          == cfg;
       write_tran.xact_type    == svt_ahb_transaction::WRITE;
-      write_tran.addr         == (32'h0000_0000 | ('h10 * i));
+      write_tran.addr         == (32'h0000_0000 | ('h10 * 1));
       write_tran.burst_type   == svt_ahb_transaction::INCR4;
       write_tran.burst_size   == svt_ahb_transaction::BURST_SIZE_32BIT;
-      foreach (write_tran.data[i]) { 
-        write_tran.data[i] == i;
-      }
-				   };
+      write_tran.data[0] == 1;
+      };
        
-       `uvm_send(write_tran)
+      `uvm_send(write_tran)
       get_response(rsp);
-       `svt_xvm_debug("body", $sformatf("Response of tlm write sequence 'd%0d received:\n%s",i,rsp.sprint()));
+       `svt_xvm_debug("body", $sformatf("Response of tlm write sequence received:\n%s",rsp.sprint()));
  
-    end
 
     `uvm_info("body", "Exiting...", UVM_LOW)
   endtask: body

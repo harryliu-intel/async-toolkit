@@ -93,7 +93,7 @@ class mby_mc_warm_reset_seq extends shdv_base_reset_seq;
     //------------------------------------------------------------------------------
     task body();
 
-        repeat (100) @(posedge tb_vif.clk);
+        repeat (100) @(posedge tb_vif.fab_clk);
 
         `uvm_info(get_name(), $sformatf("Warm_Reset Cleared"), UVM_NONE);
         tb_vif.warm_reset                 = 0;

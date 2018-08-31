@@ -95,7 +95,7 @@ class mby_mc_alive_seq extends mby_mc_seq_lib::mby_mc_env_base_seq;
         int count;
         `ovm_info(get_name(), "mby_mc_alive_seq is running!", OVM_MEDIUM);
         repeat(50) begin
-            @(posedge vif.clk);
+            @(posedge vif.fab_clk);
             count++;
             `ovm_info(get_name(), $sformatf("mby_mc_alive_seq: clock edge %0d",count), OVM_FULL);
         end
