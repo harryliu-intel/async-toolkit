@@ -191,6 +191,7 @@ static void lookUpDestEntry
     if (strict_glort_routing) {
         dest_index = glort_ram.DEST_INDEX + (glort_b << length_a) + glort_a;
     } else {
+        // TODO Clarify calculation precedence for '%' and '?'.
         fm_uint32 hash = ((glort_ram.HASH_ROTATION) ? hash_rot_b : hash_rot_a)
             % (glort_ram.DEST_COUNT == 0) ? 16 : glort_ram.DEST_COUNT;
         dest_index = glort_ram.DEST_INDEX + (hash << length_a) + glort_a;
@@ -528,6 +529,7 @@ void MaskGen
     // Traps:
 
     fm_bool store_trap_action = sys_cfg1.STORE_TRAP_ACTION;
+    // TODO Variable 'log_ip_mc_ttl' is assigned a value that is never used.
     fm_bool log_ip_mc_ttl     = FALSE;
     fm_bool l2_dmac_cpu       = isCpuMacAddress(regs, l2_dmac);
     fm_bool l2_dmac_zero      = (l2_dmac == 0);

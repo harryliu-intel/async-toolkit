@@ -567,6 +567,7 @@ static void fetchL234HashKeys
 
     fm_macaddr dmac  = (fwd_hashing_cfg.USE_DMAC) ? in->L2_DMAC : FM_LITERAL_U64(0);
     fm_macaddr smac  = (fwd_hashing_cfg.USE_SMAC) ? in->L2_SMAC : FM_LITERAL_U64(0);
+    // TODO Variable 'xor' is assigned a value that is never used.
     fm_macaddr xor   = (in->L2_DMAC ^ in->L2_SMAC) & FM_LITERAL_U64(0xFFFFFFFFFFFF);
     fm_macaddr dmac2 = 0;
     fm_macaddr smac2 = 0;

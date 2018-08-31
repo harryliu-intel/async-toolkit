@@ -10,6 +10,7 @@ static fm_uint64 incrTxCounter(const fm_uint64 cnt_in, const fm_uint64 inc)
     const fm_uint64 cnt_max = FM_LITERAL_U64(0xFFFFFFFFFFFF); // 48-bit counter
     const fm_uint64 delta   = cnt_max - cnt_in; // delta between current and maximum counter values
     const fm_uint64 cnt_wrp = inc - (FM_LITERAL_U64(1) + delta); // safely wrap around
+    // TODO Variable 'cnt_inc' is assigned a value that is never used.
     const fm_uint64 cnt_inc = cnt_in + inc;
     const fm_uint64 cnt_out = (inc > delta) ? cnt_wrp : cnt_in;  // wrap around or increment
 

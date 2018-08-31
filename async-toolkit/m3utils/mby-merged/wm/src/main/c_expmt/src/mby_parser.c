@@ -308,6 +308,7 @@ void Parser
     fm_byte otr_l3_ptr = pa_ptrs[MBY_OTR_L3_PTR];
     fm_bool otr_l3_v   = pa_flags[MBY_PA_OTR_L3_V_FLAG];
 
+    // TODO Variable 'is_ipv4' is assigned a value that is never used.
     fm_bool is_ipv4  = otr_l3_v &&  pa_keys_valid[MBY_OTR_IPHDR_KEY];
     fm_bool is_ipv6  = otr_l3_v && !pa_keys_valid[MBY_OTR_IPHDR_KEY];
     

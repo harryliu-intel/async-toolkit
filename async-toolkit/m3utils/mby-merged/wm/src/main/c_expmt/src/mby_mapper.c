@@ -6,10 +6,12 @@
 #include "mby_mapper.h"
 #include "mby_classifier.h"
 
+// TODO The function 'rotateKey' is never used.
 static fm_uint32 rotateKey(fm_uint key, fm_uint rot) {
     return ((key << rot) | (key >> (32 - rot)));
 }
 
+// TODO The function 'generateMask' is never used.
 static fm_uint32 generateMask(fm_uint start, fm_uint len) {
     fm_uint32 mask = 0;
     for (fm_uint j = start; j < (start + len); j++)
@@ -554,6 +556,7 @@ static void mapScalar
     mapped_key->MAP_INNER_PROT = 0;
     mapped_key->MAP_OUTER_PROT = 0;
 
+    // TODO both variables are assigned a value that is never used
     fm_uint64 headerIPhi = 0;
     fm_uint64 headerIPlo = 0;
 
