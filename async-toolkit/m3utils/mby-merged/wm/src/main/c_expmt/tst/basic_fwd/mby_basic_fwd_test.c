@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "borrowed/mby_srv_nvmimg.h"
 #include "mby_basic_fwd_init.h"
 #include <mby_init.h>
 
@@ -33,7 +32,7 @@ const int send_port = 0;
 fm_status init()
 {
     // TODO verify if that's all that we need
-    loadNvmImg("nvm.img");
+    init_nvm_img();
     init_common();
     basic_fwd_init();
     return FM_OK;
