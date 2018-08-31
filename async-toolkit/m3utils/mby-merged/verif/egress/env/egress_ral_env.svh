@@ -32,7 +32,7 @@ class egress_ral_env extends egress_regs_ral_env;
   endfunction : new
 
 
-  //Function: end_of_elaboration - Map access type to sequences.
+  // Function: end_of_elaboration 
   function void end_of_elaboration();
     super.end_of_elaboration();
     // set_frontdoor_seq_type("primary","read","egress_ral_iosf_pri_access");

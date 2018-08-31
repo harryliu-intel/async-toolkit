@@ -21,7 +21,10 @@
 
 class egress_env extends egress_base_env;
 
+  // Variable: ti_config
+  // test island configuration object
   egress_ti_config ti_config;
+
   //protected string egress_ti_low_path   = "XYZ_tb.u_egress_ti";
 
   // Variable: _egress_env

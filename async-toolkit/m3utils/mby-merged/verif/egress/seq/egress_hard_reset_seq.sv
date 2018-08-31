@@ -23,6 +23,8 @@ class egress_hard_reset_seq extends egress_extended_base_seq;
   `uvm_object_utils(egress_hard_reset_seq)
   `uvm_declare_p_sequencer(slu_sequencer)
 
+  // Function: body
+  //  Asserts and de-asserts reset signals
   task body();
     virtual egress_env_if env_if;
     egress_env egress_env_ptr;

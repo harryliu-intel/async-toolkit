@@ -17,9 +17,10 @@
 // Modification history :
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
-
 class egress_base_env extends slu_tb_env;
 
+  // Variable: cfg
+  // The egress config object
   protected egress_config cfg;
 
   `uvm_component_utils_begin(egress_base_env)
@@ -37,9 +38,7 @@ class egress_base_env extends slu_tb_env;
 
   //////////////////////////////////////////////////////////////////////////////
   // Function: egress_base_env build
-  // build phase of egress_base_env
-  // All VC's and Agent should be build in this pahse.
-  // For each new VC's/Agnet it is recommand to add it an a specific function
+  // Build phase of egress_base_env.
   virtual function void build_phase(uvm_phase phase);
     if (_level == SLA_TOP) begin
       // In this section all the IP specific stuff that are
@@ -68,7 +67,6 @@ class egress_base_env extends slu_tb_env;
   //////////////////////////////////////////////////////////////////////////////
   // Function: egress_base_env end_of_elaboration 
   // end_of_elaboration  phase of egress_base_env
-  // In this pahse we randomize the fuse env
   virtual function void end_of_elaboration_phase (uvm_phase phase);
     super.end_of_elaboration_phase(phase);
     if (_level == SLA_TOP) begin

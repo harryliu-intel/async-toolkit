@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+
+use strict;
+
+my $headerFile = shift(@ARGV);
+my $srcFile = shift(@ARGV);
+my $outFile = shift(@ARGV);
+
+if (!$headerFile || !$srcFile || !$outFile)
+{
+    printf("Invalid arguments!\n");
+    exit(1);
+}
+
+my $list = [];
+my $adding = 0;
+
+open(HF, "<$headerFile");
+
+while(<HF>)
+{
+    chomp;
+    if (m/^#define FM_(\S+)\s+\d+/)
+    {
+        if (!$adding && ($1 eq "OK"))
+        {
+            push(@$list, { key => "FM_$1", desc => undef });
+            $adding = 1;
+        }
+        elsif ($adding)
+        {
+            push(@$list, { key => "FM_$1", desc => undef });
+        }
+    }
+}
+
+close(HF);
+
+$adding = 0;
+my $pos = 0;
+my $state = 0;
+
+open (SF, "<$srcFile");
+
+while(<SF>)
+{
+    chomp;
+
+    if (($state == 0) && (m/^static const char/))
+    {
+        $state++;
+    }
+    elsif (($state == 1) && (m/^{/))
+    {
+        $state++;
+    }
+    elsif (($state == 2) && (m/\s+\"(.*)\",/))
+    {
+        $list->[$pos++]->{desc} = $1;
+    }
+    elsif (($state == 2) && (m/^};/))
+    {
+        $state = 0;
+    }
+    elsif (($state == 0) && (m/^typedef struct _statusCode/))
+    {
+        last;
+    }
+}
+
+close (SF);
+
+open (OF, ">$outFile");
+
+for (my $i = 0; $i < scalar (@$list); $i++)
+{
+    printf(OF "%-48s %s\n", $list->[$i]->{key}, $list->[$i]->{desc});
+}
+
+close (OF);

@@ -25,11 +25,11 @@ class egress_extended_base_seq extends egress_env_base_seq;
 
   //---------------------------------------------------------------------------
   // Function: new
-  // Constructor, set up the MBY RAL pointer.
+  // Constructor, set up the egress RAL pointer.
   //---------------------------------------------------------------------------
   function new(input string name = "egress_extended_base_seq",
                uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
     super.new(name, sequencer, parent_seq);
   endfunction
 
-endclass
+endclass // egress_extended_base_seq
