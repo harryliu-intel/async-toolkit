@@ -1,0 +1,666 @@
+M3 v4.2
+N0 Main
+
+M0 1 6 0 0 0 0 17 0 0 24 0 0
+A0
+N1 Rd
+B1
+N2 FileRd
+B2
+N3 ParseQueue
+B3
+N4 IO
+B4
+N5 RDP
+B5
+N6 RTHooks
+B6
+N7 AllocateTracedRef
+V0 6 7 29ea9480867f065a
+i0
+N8 Put
+V1 4 8 97adfd90d26b4605
+i1
+N9 TextLitInfo
+V2 6 9 fdc7f49fa7f061c3
+i2
+N10 TextLitGetChar
+V3 6 10 bf853738ef95b58f
+i3
+N11 TextLitGetWideChar
+V4 6 11 6b44a8081c4ee8f1
+i4
+N12 TextLitGetChars
+V5 6 12 e51aa8c54a895201
+i5
+N13 TextLitGetWideChars
+V6 6 13 face384698a06a95
+i6
+N14 CheckLoadTracedRef
+V7 6 14 33cac043de87135c
+i7
+N15 Push
+V8 3 15 4af3040a88d9c14b
+i8
+N16 Peek
+V9 3 16 6c3b508f39816246
+i9
+N17 ReportFault
+V10 6 17 e0ad157f9f695006
+i10
+N18 Inc
+V11 3 18 d5e7dee8418cf68e
+i11
+N19 Pop
+V12 3 19 f3893134b218f189
+i12
+N20 Open
+V13 2 20 272b460cd5071529
+i13
+N21 Parse
+V14 5 21 878c8db1a632645a
+i14
+N22 T
+V15 1 22 2ddda687a60c6245
+i15
+V16 3 22 94afc3542f5219b2
+i16
+t055b86ab
+t991133c7
+tfa67ef2f
+t7cfe252f
+t62761487
+t43604b73
+t6d871b27
+tb750d684
+t38df5df5
+tb964357b
+t9132dde7
+t89cd34bd
+tc9e236c8
+ta19bdc21
+t966fe87f
+t37e50548
+tcef795fe
+t9f3b9799
+ta4bb9882
+t4d9f213f
+t71593eb2
+tbac29fbf
+t1511081f
+t767df167
+Qfa67ef2f 9d8fb489
+Q62761487 9d8fb489
+Q6d871b27 50f86574
+Qbac29fbf bac29fbc
+N23 CARDINALList
+
+M23 1 3 1 0 0 12 7 0 0 16 0 0
+A23
+B6
+N24 MyCARDINAL
+B24
+B23
+N25 List
+g25
+N26 Cons
+V17 23 26 1a5ddf6567076135
+J17
+N27 List1
+V18 23 27 8e23d15491b81ee6
+J18
+N28 List2
+V19 23 28 9baf3b96880738e1
+J19
+N29 List3
+V20 23 29 b695c0299d05b3ed
+J20
+N30 FromArray
+V21 23 30 98017ff9ad1322f7
+J21
+N31 Length
+V22 23 31 eed4e5f9938287f6
+J22
+N32 Nth
+V23 23 32 33feecf04a3c7a26
+J23
+N33 Member
+V24 23 33 603ef0f8aa9274f7
+J24
+N34 Append
+V25 23 34 323bbaf826416cf2
+J25
+N35 AppendD
+V26 23 35 168e658b365d55c9
+J26
+N36 Reverse
+V27 23 36 e0154e6b3d3e24c3
+J27
+N37 ReverseD
+V28 23 37 0597aad24c09a022
+J28
+V29 23 22 6d96708330a84a19
+i29
+N38 AllocateTracedObj
+V30 6 38 04c256affc2e8451
+i30
+i10
+i7
+N39 Equal
+V31 24 39 4d40c1bdcfdcc8d6
+i31
+N40 CheckStoreTraced
+V32 6 40 8ffa5ad840254ad5
+i32
+V33 24 22 58efbd6fcfd698c4
+i33
+t055b86ab
+tb396b2d0
+ta697a066
+t0f7747f1
+t82f92124
+t46d79418
+t00db7abd
+t5eecac99
+tddffda29
+tce69b020
+t4addb72c
+t25ef85a7
+t58c1d1d1
+ta4bb9882
+t37e50548
+t584c90ec
+
+I23 1 2 1 0 0 0 2 2 12 0 12 0
+A23
+B6
+B24
+g25
+N41 Brand
+V34 24 41 ccd0ce700b91393f
+i34
+i33
+V35 23 41 5e1e45c9cd5d7c82
+E35
+E29
+e17
+e18
+e19
+e20
+e21
+e22
+e23
+e24
+e25
+e26
+e27
+e28
+T055b86ab
+Tb396b2d0
+Ta697a066
+T0f7747f1
+T82f92124
+T46d79418
+T00db7abd
+T5eecac99
+Tddffda29
+Tce69b020
+T4addb72c
+T25ef85a7
+O055b86ab 9d8fb489 128 64 0
+
+M24 1 2 0 0 0 1 1 0 0 1 0 0
+A24
+B6
+B24
+J31
+i33
+t584c90ec
+
+I24 1 1 0 0 0 0 0 2 1 0 1 0
+A24
+B6
+E34
+E33
+e31
+T584c90ec
+
+M3 1 5 0 0 0 7 15 0 0 25 0 0
+A3
+N42 Fmt
+B42
+B4
+B23
+B6
+B3
+J8
+J12
+J11
+J9
+N43 Depth
+V36 3 43 c18052d0388e5823
+J36
+N44 Sum
+V37 3 44 dc5807fb0e7b4197
+J37
+N45 Debug
+V38 3 45 a4158984c4eba033
+J38
+i16
+i10
+i32
+i7
+i17
+i22
+i0
+i1
+i2
+i3
+i4
+i5
+i6
+N46 Int
+V39 42 46 bb2b6ce9ab4d2f5d
+i39
+N47 Concat
+V40 6 47 2bcdb700e948c590
+i40
+t055b86ab
+t991133c7
+tcef795fe
+t71593eb2
+t4d9f213f
+t9f3b9799
+ta4bb9882
+t37e50548
+tb396b2d0
+t5eecac99
+t7cfe252f
+t62761487
+t43604b73
+t6d871b27
+tb750d684
+t38df5df5
+tb964357b
+t9132dde7
+t89cd34bd
+tc9e236c8
+ta19bdc21
+t966fe87f
+t2aa4581f
+tf2a35a9d
+t97f166d3
+Q6d871b27 50f86574
+Q62761487 9d8fb489
+
+I3 1 2 0 0 0 0 1 1 7 1 5 0
+A3
+B23
+B6
+i29
+E16
+e8
+e12
+e11
+e9
+e36
+e37
+e38
+t055b86ab
+T991133c7
+Tcef795fe
+T71593eb2
+T4d9f213f
+T9f3b9799
+N48 Node
+
+M48 1 5 0 0 0 24 19 0 0 37 0 0
+A48
+N49 TextList
+B49
+B42
+B4
+B6
+B48
+V41 48 39 3709ae9ef79cb50a
+J41
+N50 DeepCopy
+V42 48 50 163386d55a18bb82
+J42
+N51 FindAllNodesWithCategory
+V43 48 51 2641534b56b008a7
+J43
+N52 FindAllNodesWithCategoryDeep
+V44 48 52 c4f7b6834ecd2b4a
+J44
+N53 FindAllNonterms
+V45 48 53 f89b5e33bbdc9172
+J45
+N54 GetParent
+V46 48 54 14713a74abc61d81
+J46
+N55 FollowPath
+V47 48 55 b5f0659f9e47bc94
+J47
+N56 IsEmpty
+V48 48 56 06734d8675c69b72
+J48
+V49 48 31 36c5dad27e0471ee
+J49
+N57 EqualDList
+V50 48 57 d633b6474bdfc69c
+J50
+N58 GoToBeginning
+V51 48 58 da39f15cc235c2e9
+J51
+N59 GoToEnd
+V52 48 59 c060abd5507d2c65
+J52
+N60 ShallowCopyDList
+V53 48 60 5e975a14dc1799fa
+J53
+N61 DeepCopyDList
+V54 48 61 9101db1534129cd8
+J54
+N62 AppendNode
+V55 48 62 1cf9e7220d723d5c
+J55
+N63 AppendDList
+V56 48 63 7a529830dc992546
+J56
+N64 AppendDListDeep
+V57 48 64 d932bd9358add9c2
+J57
+N65 AppendDListDeepWithShallowNodes
+V58 48 65 e165c42e5559eafc
+J58
+N66 PrependNode
+V59 48 66 1dfba71c59dbcfc1
+J59
+N67 PrependDList
+V60 48 67 9aebd719555d326e
+J60
+N68 DeleteFromList
+V61 48 68 eb4090a63cd23d04
+J61
+N69 DeleteList
+V62 48 69 86cc0cf63f3ccec4
+J62
+N70 DefaultDList
+V63 48 70 81d6ddb80889ba43
+J63
+N71 DebugList
+V64 48 71 6b0667f595195930
+J64
+N72 NoMatchException
+V65 48 72 c034113ca34fc735
+i65
+N73 Category
+V66 48 73 9951b95e4e4b9ef6
+i66
+V67 48 22 0e2fa7ef0cdc3805
+i67
+N74 DList
+V68 48 74 1d186d670f594ed9
+i68
+i7
+i10
+i32
+i0
+N75 Raise
+V69 6 75 543d89ab72cb48cc
+i69
+N76 PushEFrame
+V70 6 76 fbf5f693d89731bf
+i70
+N77 PopEFrame
+V71 6 77 4058e7247afdcd8a
+i71
+V72 49 31 01fcf05cd2ac2270
+i72
+i1
+i2
+i3
+i4
+i5
+i6
+V73 49 22 a4983949916dcd79
+i73
+t0d20b767
+t2fd3bdb2
+t2fd3bdb3
+t2fd3bdb0
+t2fd3bdb5
+t99309680
+tcf301369
+t8efb9265
+td8f55ad1
+ta3b734ff
+tde95f194
+t97989f64
+tb1b7410a
+tbf50fb33
+tc3a2d54e
+tccc3562d
+t51c05ab1
+t0dbcad52
+tfaf8ffcc
+td3deed10
+t37e50548
+ta4bb9882
+t7cfe252f
+t656bdc20
+td154816f
+t40896ad2
+t62761487
+t43604b73
+t6d871b27
+tb750d684
+t38df5df5
+tb964357b
+t9132dde7
+t89cd34bd
+tc9e236c8
+ta19bdc21
+t966fe87f
+Q62761487 9d8fb489
+Q6d871b27 50f86574
+
+I48 1 2 0 0 0 0 6 4 24 10 19 0
+A48
+B49
+B6
+i73
+i2
+i3
+i4
+i5
+i6
+E65
+E66
+E67
+E68
+e41
+e42
+e43
+e44
+e45
+e46
+e47
+e48
+e49
+e50
+e51
+e52
+e53
+e54
+e55
+e56
+e57
+e58
+e59
+e60
+e61
+e62
+e63
+e64
+tde95f194
+t6d871b27
+tb750d684
+t38df5df5
+tb964357b
+t9132dde7
+t89cd34bd
+tc9e236c8
+ta19bdc21
+t966fe87f
+T0d20b767
+T2fd3bdb2
+T2fd3bdb3
+T2fd3bdb0
+T2fd3bdb5
+T99309680
+Tcf301369
+T8efb9265
+Td8f55ad1
+Ta3b734ff
+T97989f64
+Tb1b7410a
+Tbf50fb33
+Tc3a2d54e
+Tccc3562d
+T51c05ab1
+T0dbcad52
+Tfaf8ffcc
+Td3deed10
+Q6d871b27 50f86574
+
+M5 1 10 0 0 0 1 34 0 0 41 0 0
+A5
+B42
+B4
+N78 Text
+B78
+N79 Thread
+B79
+B3
+N80 RegEx
+B80
+B48
+B1
+B6
+B5
+J14
+i0
+N81 Failure
+V74 1 81 8c991440c634c5ba
+i74
+N82 Alerted
+V75 79 82 3ae605d9dcab0e20
+i75
+i70
+V76 1 31 f128307d86725d5d
+i76
+i10
+i32
+N83 GetText
+V77 1 83 a84c31ba1c3a835b
+i77
+i71
+i7
+i8
+i36
+i12
+i37
+i9
+i11
+N84 FromChar
+V78 78 84 4ef8f919d997681c
+i78
+V79 78 39 7b8a753f7d187f80
+i79
+i2
+i3
+i4
+i5
+i6
+N85 GetChar
+V80 78 85 ccdfe3e5f258863b
+i80
+i40
+i1
+N86 Error
+V81 80 86 2c20f56ba7cf83cf
+i81
+N87 Compile
+V82 80 87 edb865f989a53e80
+i82
+i39
+N88 Sub
+V83 78 88 5cd3d528bf4eb513
+i83
+N89 Execute
+V84 80 89 22da17ce2529ee90
+i84
+i16
+N90 Pattern
+V85 80 90 0282663c68dafed1
+i85
+i15
+t055b86ab
+t991133c7
+tfa67ef2f
+t767df167
+t6da05e0b
+t7cfe252f
+td1d9dd0e
+tad398276
+td154816f
+t0ad58a50
+ta4bb9882
+t37e50548
+t75f8ff35
+tcef795fe
+t9f3b9799
+t71593eb2
+t4d9f213f
+td2eebba7
+tc9d11604
+t6d871b27
+tb750d684
+t38df5df5
+tb964357b
+t9132dde7
+t89cd34bd
+tc9e236c8
+ta19bdc21
+t966fe87f
+ta5d24926
+t97f166d3
+t62761487
+t43604b73
+t4b5528ea
+t2aa4581f
+tf2a35a9d
+td19a1208
+t832830d7
+t4c185ae4
+t3df8467b
+te5fc8d79
+t81caddd6
+Q62761487 9d8fb489
+Q6d871b27 50f86574
+Qd1d9dd0e 1c1c45e6
+Q6da05e0b 9d8fb489
+Qfa67ef2f 9d8fb489
+
+I5 1 3 0 0 0 0 1 0 1 1 1 0
+A5
+B1
+B48
+B6
+i15
+e14
+tfa67ef2f
+T767df167
+Qfa67ef2f 9d8fb489

@@ -43,7 +43,6 @@ BEGIN
 	progtext^.index := 0 ;
 	progtext^.offset_fifo := NIL ;
 	RETURN Compilation( progtext ) ;
-	(* RETURN Compilation( progtext ) ; *)
 END Parse ;
 
 (*************************)
@@ -66,13 +65,12 @@ END NextGrammarRule ;
 PROCEDURE ResetGrammarRule( progtext : REF ProgText ) =
 BEGIN
 	<* ASSERT progtext # NIL *>
-	(* Assert to ensure FIFO queue is not empty *)
 	<* ASSERT progtext^.offset_fifo # NIL *>
 	<* ASSERT ParseQueue.Depth( progtext^.offset_fifo ) > 0 *>
-	(* Decrement index by top of FIFO *)
-	(* DEC( progtext^.index , ParseQueue.Peek( progtext^.offset_fifo ) ) ; *)
 	(* Pop 0 off FIFO top *)
 	ParseQueue.Pop( progtext^.offset_fifo ) ;
+	(* Reset index *)
+	progtext^.index := ParseQueue.Sum( progtext^.offset_fifo ) ;
 END ResetGrammarRule ;
 
 PROCEDURE FinishGrammarRule( progtext : REF ProgText ) =
@@ -86,7 +84,7 @@ BEGIN
 	(* Add the top FIFO queue value to the value beneath it *)
 	fifo_top := ParseQueue.Peek( progtext^.offset_fifo ) ;
 	ParseQueue.Pop( progtext^.offset_fifo ) ;
-	IF ParseQueue.Depth( progtext^.offset_fifo ) >= 1 THEN
+	IF progtext^.offset_fifo # NIL AND ParseQueue.Depth( progtext^.offset_fifo ) >= 1 THEN
 		ParseQueue.Inc( progtext^.offset_fifo , fifo_top ) ;
 	END ;
 	INC( progtext^.index , fifo_top ) ;
@@ -107,33 +105,32 @@ VAR
 	token_len_cnt : CARDINAL := 0 ;
 BEGIN
 	<* ASSERT progtext # NIL *>
+	(* Push 0 to top of FIFO queue *)
+	NextGrammarRule( progtext ) ;
 	(* Skip whitespace *)
-	IO.Put( "Current index: " & Fmt.Int( progtext^.index ) & "\n" ) ;
 	WHILE IsWhitespace( Text.GetChar( progtext^.txt , progtext^.index ) ) DO
+		IO.Put( "Skipping ws char: " & Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index ) ) & "\n" ) ;
 		INC( progtext^.index ) ;
 		IF progtext^.offset_fifo # NIL AND ParseQueue.Depth( progtext^.offset_fifo ) > 0 THEN
 			ParseQueue.Inc( progtext^.offset_fifo ) ;
 		END ;
-		IO.Put( "Inc: " & Fmt.Int( progtext^.index ) & "\n" ) ;
 	END ;
-	(* Push 0 to top of FIFO queue *)
-	NextGrammarRule( progtext ) ;
 	(* Get the length of the token *)
 	token_len_cnt := 0 ;
 	WHILE NOT IsWhitespace( Text.GetChar( progtext^.txt , progtext^.index + token_len_cnt ) ) DO
+		IO.Put( "Non-ws char: " & Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index + token_len_cnt ) ) & "\n" ) ;
 		ParseQueue.Inc( progtext^.offset_fifo ) ;
 		INC( token_len_cnt ) ;
 	END ;
 	(* Regex match the character *)
 	TRY
 		regex_pattern := RegEx.Compile( pattern ) ;
+		IO.Put( "Current token (index: " & Fmt.Int( progtext^.index ) & "): " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & "\n" ) ;
 		IF RegEx.Execute( regex_pattern , progtext^.txt , progtext^.index , token_len_cnt , NIL ) # -1 THEN
 			FinishGrammarRule( progtext ) ;
-			IO.Put( "Finishing match: " & Fmt.Int( progtext^.index ) & "\n" ) ;
 			RETURN TRUE ;
 		ELSE
 			ResetGrammarRule( progtext ) ;
-			IO.Put( "Resetting match: " & Fmt.Int( progtext^.index ) & "\n" ) ;
 			RETURN FALSE ;
 		END ;
 	EXCEPT
@@ -158,12 +155,10 @@ BEGIN
 		RETURN TRUE ;
 	END ;
 
-	IF Module( progtext ) THEN
-		IO.Put( "Module...\n" ) ;
+	IF DummyModule( progtext ) THEN
 		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	END ;
-	IO.Put( "Not Module...\n" ) ;
 
 	IF GenInf( progtext ) THEN
 		FinishGrammarRule( progtext ) ;
@@ -178,6 +173,42 @@ BEGIN
 	RETURN FALSE ;
 	
 END Compilation ;
+
+PROCEDURE DummyModule( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF Match( progtext , "MODULE" ) THEN
+		IF Id( progtext ) THEN
+			IF Match( progtext , ";" ) THEN
+				IF Match( progtext , "BEGIN" ) THEN
+					IF Match( progtext , "END" ) THEN
+						IF Id( progtext ) THEN
+							IF Match( progtext , "." ) THEN
+								FinishGrammarRule( progtext ) ;
+								RETURN TRUE ;
+							END ;
+							ResetGrammarRule( progtext ) ;
+							RETURN FALSE ;
+						END ;
+						ResetGrammarRule( progtext ) ;
+						RETURN FALSE ;
+					END ;
+					ResetGrammarRule( progtext ) ;
+					RETURN FALSE ;
+				END ;
+				ResetGrammarRule( progtext ) ;
+				RETURN FALSE ;
+			END ;
+			ResetGrammarRule( progtext ) ;
+			RETURN FALSE ;
+		END ;
+		ResetGrammarRule( progtext ) ;
+		RETURN FALSE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END DummyModule ;
 
 PROCEDURE Interface( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
@@ -281,35 +312,29 @@ PROCEDURE Module_Route1( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
+	IO.Put( "Checking Module...\n" ) ;
 	IF NOT Match( progtext , "MODULE" ) THEN
-		IO.Put( "Does not contain \"MODULE\"...\n" ) ;
+		IO.Put( "Not Module...\n" ) ;
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "Contains \"MODULE\"... (Index: " & Fmt.Int( progtext^.index ) & ")\n" ) ;
+	IO.Put( "Is Module...\n" ) ;
 	IF NOT Id( progtext ) THEN
-		IO.Put( "Does not contain Id...\n" ) ;
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "Contains Id... (Index: " & Fmt.Int( progtext^.index ) & ")\n" ) ;
 	EVAL Exports_IdList( progtext ) ;
 	IF NOT Match( progtext , ";" ) THEN
-		IO.Put( "Does not contain ;...\n" ) ;
 		IO.Put( Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index ) ) ) ;
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "Contains ; ... (Index: " & Fmt.Int( progtext^.index ) & ")\n" ) ;
 	WHILE Import( progtext ) DO
-		IO.Put( "Contains Import...\n" ) ;
 	END ;
 	IF Block( progtext ) AND Id( progtext ) AND Match( progtext , "." ) THEN
-		IO.Put( "Contains Block and Ending...\n" ) ;
 		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	ELSE
-		IO.Put( "Does not contain Block and Ending...\n" ) ;
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
@@ -729,6 +754,28 @@ BEGIN
 	RETURN FALSE ;
 END ProcedureHead ;
 
+PROCEDURE MatchAndType( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	IF Match( progtext , ":" ) AND Type( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END MatchAndType ;
+
+PROCEDURE MatchAndRaises( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	IF Match( progtext , "RAISES" ) AND Raises( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END MatchAndRaises ;
+
 PROCEDURE Signature( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
@@ -737,8 +784,8 @@ BEGIN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	EVAL Match( progtext , ":" ) AND Type( progtext ) ;
-	EVAL Match( progtext , "RAISES" ) AND Raises( progtext ) ;
+	EVAL MatchAndType( progtext ) ;
+	EVAL MatchAndRaises( progtext ) ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
 END Signature ;
@@ -1743,7 +1790,6 @@ BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
 	IF Expr( progtext ) THEN
-		IO.Put( "Expr...\n" ) ;
 		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	END ;
@@ -1759,14 +1805,11 @@ BEGIN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "E1...\n" ) ;
 	WHILE Match( progtext , "OR" ) DO
-		IO.Put( "OR...\n" ) ;
 		IF NOT E1( progtext ) THEN
 			ResetGrammarRule( progtext ) ;
 			RETURN FALSE ;
 		END ;
-		IO.Put( "E1...\n" ) ;
 	END ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
@@ -1780,14 +1823,11 @@ BEGIN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "E2...\n" ) ;
 	WHILE Match( progtext , "AND" ) DO
-		IO.Put( "AND...\n" ) ;
 		IF NOT E2( progtext ) THEN
 			ResetGrammarRule( progtext ) ;
 			RETURN FALSE ;
 		END ;
-		IO.Put( "E2...\n" ) ;
 	END ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
@@ -1798,13 +1838,11 @@ BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
 	WHILE Match( progtext , "NOT" ) DO
-		IO.Put( "NOT...\n" ) ;
 	END ;
 	IF NOT E3( progtext ) THEN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "E3...\n" ) ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
 END E2 ;
@@ -1813,18 +1851,15 @@ PROCEDURE E3( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IO.Put( "E4...\n" ) ;
 	IF NOT E4( progtext ) THEN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
 	WHILE Relop( progtext ) DO
-		IO.Put( "Relop...\n" ) ;
 		IF NOT E4( progtext ) THEN
 			ResetGrammarRule( progtext ) ;
 			RETURN FALSE ;
 		END ;
-		IO.Put( "E4...\n" ) ;
 	END ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
@@ -1834,18 +1869,15 @@ PROCEDURE E4( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IO.Put( "E5...\n" ) ;
 	IF NOT E5( progtext ) THEN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
 	WHILE Addop( progtext ) DO
-		IO.Put( "Addop...\n" ) ;
 		IF NOT E5( progtext ) THEN
 			ResetGrammarRule( progtext ) ;
 			RETURN FALSE ;
 		END ;
-		IO.Put( "E5...\n" ) ;
 	END ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
@@ -1855,18 +1887,15 @@ PROCEDURE E5( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IO.Put( "E6...\n" ) ;
 	IF NOT E6( progtext ) THEN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
 	WHILE Mulop( progtext ) DO
-		IO.Put( "Mulop...\n" ) ;
 		IF NOT E6( progtext ) THEN
 			ResetGrammarRule( progtext ) ;
 			RETURN FALSE ;
 		END ;
-		IO.Put( "E6...\n" ) ;
 	END ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
@@ -1877,13 +1906,11 @@ BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
 	WHILE Match( progtext , "+" ) OR Match( progtext , "-" ) DO
-		IO.Put( "PlusMinus...\n" ) ;
 	END ;
 	IF NOT E7( progtext ) THEN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "E7...\n" ) ;
 	FinishGrammarRule( progtext ) ;
 	RETURN TRUE ;
 END E6 ;
@@ -1896,7 +1923,6 @@ BEGIN
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
 	END ;
-	IO.Put( "E8...\n" ) ;
 	WHILE Selector( progtext ) DO
 	END ;
 	FinishGrammarRule( progtext ) ;
@@ -1909,7 +1935,6 @@ BEGIN
 	NextGrammarRule( progtext ) ;
 	IF Id( progtext ) OR Number( progtext ) OR CharLiteral( progtext ) OR TextLiteral( progtext ) OR
 	   Constructor( progtext ) OR ( Match( progtext , "(" ) AND Expr( progtext ) AND Match( progtext , ")" ) ) THEN
-		IO.Put( "Done...\n" ) ;
 		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	END ;
@@ -2239,12 +2264,9 @@ END TypeName ;
 PROCEDURE Id( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
-	NextGrammarRule( progtext ) ;
 	IF Match( progtext , "[a-zA-Z][a-zA-Z0-9_]*" ) THEN
-		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	END ;
-	ResetGrammarRule( progtext ) ;
 	RETURN FALSE ;
 END Id ;
 

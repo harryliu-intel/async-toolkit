@@ -14,4 +14,8 @@ PROCEDURE Peek( q : REF T ) : CARDINAL ;
 
 PROCEDURE Depth( q : REF T ) : CARDINAL ;
 
+PROCEDURE Sum( q : REF T ) : CARDINAL ;
+
+PROCEDURE Debug( q : REF T ) ;
+
 END ParseQueue .
