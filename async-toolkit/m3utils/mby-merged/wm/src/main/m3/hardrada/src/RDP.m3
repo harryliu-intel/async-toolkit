@@ -99,14 +99,12 @@ BEGIN
 	END ;
 END IsWhitespace ;
 
-PROCEDURE Match( progtext : REF ProgText ; pattern : TEXT ) : BOOLEAN =
+PROCEDURE Match( progtext : REF ProgText ; pattern : TEXT ; optional : BOOLEAN := FALSE ) : BOOLEAN =
 VAR
 	regex_pattern : RegEx.Pattern ;
 	token_len_cnt : CARDINAL := 0 ;
 BEGIN
 	<* ASSERT progtext # NIL *>
-	(* Push 0 to top of FIFO queue *)
-	NextGrammarRule( progtext ) ;
 	(* Skip whitespace *)
 	WHILE IsWhitespace( Text.GetChar( progtext^.txt , progtext^.index ) ) DO
 		IO.Put( "Skipping ws char: " & Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index ) ) & "\n" ) ;
@@ -115,6 +113,8 @@ BEGIN
 			ParseQueue.Inc( progtext^.offset_fifo ) ;
 		END ;
 	END ;
+	(* Push 0 to top of FIFO queue *)
+	NextGrammarRule( progtext ) ;
 	(* Get the length of the token *)
 	token_len_cnt := 0 ;
 	WHILE NOT IsWhitespace( Text.GetChar( progtext^.txt , progtext^.index + token_len_cnt ) ) DO
@@ -128,10 +128,13 @@ BEGIN
 		IO.Put( "Current token (index: " & Fmt.Int( progtext^.index ) & "): " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & "\n" ) ;
 		IF RegEx.Execute( regex_pattern , progtext^.txt , progtext^.index , token_len_cnt , NIL ) # -1 THEN
 			FinishGrammarRule( progtext ) ;
+			IO.Put( "Proper match. Returning TRUE!\n" ) ;
 			RETURN TRUE ;
 		ELSE
 			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
+			IO.Put( "Mismatch. Returning " & Fmt.Bool( optional ) & "!\n" ) ;
+			IO.Put( "Index reset to " & Fmt.Int( progtext^.index ) & "\n" ) ;
+			RETURN optional ;
 		END ;
 	EXCEPT
 		(* TODO More elegant way of handling errors? *)
@@ -178,33 +181,10 @@ PROCEDURE DummyModule( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF Match( progtext , "MODULE" ) THEN
-		IF Id( progtext ) THEN
-			IF Match( progtext , ";" ) THEN
-				IF Match( progtext , "BEGIN" ) THEN
-					IF Match( progtext , "END" ) THEN
-						IF Id( progtext ) THEN
-							IF Match( progtext , "." ) THEN
-								FinishGrammarRule( progtext ) ;
-								RETURN TRUE ;
-							END ;
-							ResetGrammarRule( progtext ) ;
-							RETURN FALSE ;
-						END ;
-						ResetGrammarRule( progtext ) ;
-						RETURN FALSE ;
-					END ;
-					ResetGrammarRule( progtext ) ;
-					RETURN FALSE ;
-				END ;
-				ResetGrammarRule( progtext ) ;
-				RETURN FALSE ;
-			END ;
-			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
-		END ;
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF Match( progtext , "MODULE" ) AND Id( progtext ) AND Match( progtext , ";" ) AND Match( progtext , ";" , TRUE ) AND Match( progtext , "BEGIN" ) AND Match( progtext , "END" ) AND
+	   Id( progtext ) AND Match( progtext , "." ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
 	ResetGrammarRule( progtext ) ;
 	RETURN FALSE ;
