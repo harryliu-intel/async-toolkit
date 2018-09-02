@@ -128,11 +128,11 @@ BEGIN
 		IO.Put( "Current token (index: " & Fmt.Int( progtext^.index ) & "): " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & "\n" ) ;
 		IF RegEx.Execute( regex_pattern , progtext^.txt , progtext^.index , token_len_cnt , NIL ) # -1 THEN
 			FinishGrammarRule( progtext ) ;
-			IO.Put( "Proper match. Returning TRUE!\n" ) ;
+			IO.Put( "Proper match. Parsed " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & " . Expecting '" & pattern & "' Returning TRUE!\n" ) ;
 			RETURN TRUE ;
 		ELSE
 			ResetGrammarRule( progtext ) ;
-			IO.Put( "Mismatch. Returning " & Fmt.Bool( optional ) & "!\n" ) ;
+			IO.Put( "Mismatch. Parsed " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & " . Expecting '" & pattern & "'. Returning " & Fmt.Bool( optional ) & "!\n" ) ;
 			IO.Put( "Index reset to " & Fmt.Int( progtext^.index ) & "\n" ) ;
 			RETURN optional ;
 		END ;
@@ -150,25 +150,7 @@ PROCEDURE Compilation( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	(* Optional UNSAFE *)
-	EVAL Match( progtext , "UNSAFE" ) ;
-	(* Either Interface, Module, GenInf, or GenMod - mandatory *)
-	IF Interface( progtext ) THEN
-		FinishGrammarRule( progtext ) ;
-		RETURN TRUE ;
-	END ;
-
-	IF DummyModule( progtext ) THEN
-		FinishGrammarRule( progtext ) ;
-		RETURN TRUE ;
-	END ;
-
-	IF GenInf( progtext ) THEN
-		FinishGrammarRule( progtext ) ;
-		RETURN TRUE ;
-	END ;
-
-	IF GenMod( progtext ) THEN
+	IF Match( progtext , "UNSAFE" , TRUE ) AND ( Interface( progtext ) OR Module( progtext ) OR GenInf( progtext ) OR GenMod( progtext ) ) THEN
 		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	END ;
@@ -176,19 +158,6 @@ BEGIN
 	RETURN FALSE ;
 	
 END Compilation ;
-
-PROCEDURE DummyModule( progtext : REF ProgText ) : BOOLEAN =
-BEGIN
-	<* ASSERT progtext # NIL *>
-	NextGrammarRule( progtext ) ;
-	IF Match( progtext , "MODULE" ) AND Id( progtext ) AND Match( progtext , ";" ) AND Match( progtext , ";" , TRUE ) AND Match( progtext , "BEGIN" ) AND Match( progtext , "END" ) AND
-	   Id( progtext ) AND Match( progtext , "." ) THEN
-		FinishGrammarRule( progtext ) ;
-		RETURN TRUE ;
-	END ;
-	ResetGrammarRule( progtext ) ;
-	RETURN FALSE ;
-END DummyModule ;
 
 PROCEDURE Interface( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
@@ -276,48 +245,36 @@ BEGIN
 	RETURN FALSE ;
 END Module ;
 
-PROCEDURE Exports_IdList( progtext : REF ProgText ) : BOOLEAN =
+PROCEDURE Exports_IdList( progtext : REF ProgText ; optional : BOOLEAN := FALSE ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF NOT ( Match( progtext , "EXPORTS" ) AND IdList( progtext ) ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF Match( progtext , "EXPORTS" ) AND IdList( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN optional ;
 END Exports_IdList ;
 
 PROCEDURE Module_Route1( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IO.Put( "Checking Module...\n" ) ;
-	IF NOT Match( progtext , "MODULE" ) THEN
-		IO.Put( "Not Module...\n" ) ;
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
-	END ;
-	IO.Put( "Is Module...\n" ) ;
-	IF NOT Id( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
-	END ;
-	EVAL Exports_IdList( progtext ) ;
-	IF NOT Match( progtext , ";" ) THEN
-		IO.Put( Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index ) ) ) ;
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
-	END ;
-	WHILE Import( progtext ) DO
-	END ;
-	IF Block( progtext ) AND Id( progtext ) AND Match( progtext , "." ) THEN
-		FinishGrammarRule( progtext ) ;
-		RETURN TRUE ;
+	IF Match( progtext , "MODULE" ) AND Id( progtext ) AND Exports_IdList( progtext , TRUE ) AND Match( progtext , ";" ) THEN
+		WHILE Import( progtext ) DO
+		END ;
+		IF Block( progtext ) AND Id( progtext ) AND Match( progtext , "." ) THEN
+			FinishGrammarRule( progtext ) ;
+			RETURN TRUE ;
+		ELSE
+			ResetGrammarRule( progtext ) ;
+			RETURN FALSE ;
+		END ;
 	ELSE
 		ResetGrammarRule( progtext ) ;
 		RETURN FALSE ;
-	END ;
+	END ; 
 END Module_Route1 ;
 
 PROCEDURE Module_Route2( progtext : REF ProgText ) : BOOLEAN =

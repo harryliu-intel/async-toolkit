@@ -1,3 +1,4 @@
-MODULE Main ;
+UNSAFE MODULE Main ;
 BEGIN
+	EVAL 3+3;
 END Main .
