@@ -77,7 +77,7 @@ object Memory {
     def tryAlignment: Option[Alignment] = if( toLong > 0 && isPower ) { Some(toAlignment) } else { None }
 
     /** Alignment conversion, unsafe */
-    def toAlignment = Alignment(toBytes.toLong)
+    def toAlignment = Alignment(toBytes)
 
     override def toString = toBytes.toString
   }
@@ -135,17 +135,26 @@ object Memory {
 
 
   /** 2 pow N bytes (runtime check) adapter. Can't be a value class so it can have a requirement. */
-  case class Alignment(value: Long) extends Ordered[Alignment] {
-    require( value > 0L )
-    require( value.bytes.isPower )
-
-    def toLong = value
-    def toBytes = toLong.bytes
-    def toBits = toBytes.toBits
+  class Alignment private (val value: Long) extends AnyVal with Ordered[Alignment] {
+    def toLong: Long = value
+    def toBytes: Bytes = toLong.bytes
+    def toBits: Bits = toBytes.toBits
 
     def compare(other: Alignment): Int = toLong.compare(other.toLong)
 
-    override def toString = "Alignment(" + toBytes + ")"
+    override def toString: String = "Alignment(" + toBytes + ")"
+  }
+  object Alignment {
+    /** Simple constructor from full bytes. */
+    def apply[F <: FullBytes](fbytes: F): Alignment = {
+      val value = fbytes.toBytes.toLong
+      require( value > 0L )
+      require( value.bytes.isPower )
+      new Alignment(value)
+    }
+
+    /** Simple extractor to bytes */
+    def unapply(align: Alignment): Option[Bytes] = Some(align.toBytes)
   }
 
 
@@ -184,7 +193,7 @@ object Memory {
     def %[M <: MemoryUnit](munit: M): Bits = toBits % munit
 
     /** Align to any block. */
-    def alignTo(align: Alignment): Address = {q
+    def alignTo(align: Alignment): Address = {
       val bitAlign = align.toBits
       val shift = this % bitAlign
       if (shift.toLong == 0) { this } else { this + (bitAlign - shift) }
@@ -323,6 +332,8 @@ object Memory {
     import universe._
 
     lazy val asMemoryUnitsSym: TypeSymbol = symbolOf[asMemoryUnits]
+    lazy val BitsCom = symbolOf[Bits].companion
+    lazy val BytesCom = symbolOf[Bytes].companion
 
     implicit lazy val liftBits = Liftable[Bits] { b =>
       q"(new $asMemoryUnitsSym(${b.toLong})).bits"
@@ -330,6 +341,8 @@ object Memory {
     implicit lazy val unliftBits = Unliftable[Bits] {
       case q"${value: Long}.bits" => value.bits
       case q"${value: Int}.bits" => value.toLong.bits
+      case q"$sym(${value: Long})" if sym == BitsCom => value.bits
+      case q"$sym(${value: Int})" if sym == BitsCom => value.toLong.bits
     }
 
     implicit lazy val liftBytes = Liftable[Bytes] { b =>
@@ -338,21 +351,25 @@ object Memory {
     implicit lazy val unliftBytes = Unliftable[Bytes] {
       case q"${value: Long}.bytes" => value.bytes
       case q"${value: Int}.bytes" => value.toLong.bytes
-    }
-
-    lazy val AlignmentSym = symbolOf[Alignment]
-    implicit lazy val liftAlignment = Liftable[Alignment] { a =>
-      q"new $AlignmentSym(${a.value})"
-    }
-    implicit lazy val unliftAlignment = Unliftable[Alignment] {
-      case q"$sym(${value: Long})" if sym == AlignmentSym => Alignment(value)
-      case q"$sym(${value: Int})"  if sym == AlignmentSym => Alignment(value.toLong)
-      case q"${bytes: Bytes}.toAlignment" => bytes.toAlignment
+      case q"$sym(${value: Long})" if sym == BytesCom => value.bytes
+      case q"$sym(${value: Int})" if sym == BytesCom => value.toLong.bytes
     }
 
     implicit lazy val unliftMemoryUnit = Unliftable[MemoryUnit] {
       case q"${bits: Bits}" => bits
       case q"${bytes: Bytes}" => bytes
+    }
+    implicit lazy val unliftFullBytes = Unliftable[FullBytes] {
+      case q"${bytes: Bytes}" => bytes
+    }
+
+    lazy val AlignmentCom = symbolOf[Alignment].companion
+    implicit lazy val liftAlignment = Liftable[Alignment] { a =>
+      q"$AlignmentCom(${a.toBytes})"
+    }
+    implicit lazy val unliftAlignment = Unliftable[Alignment] {
+      case q"$sym(${fbytes: FullBytes})" if sym == AlignmentCom => Alignment(fbytes.toBytes)
+      case q"${fbytes: FullBytes}.toAlignment" => fbytes.toAlignment
     }
   }
 

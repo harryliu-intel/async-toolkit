@@ -293,7 +293,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory { self =>
     // default values:
     //   regwidth = 4 bytes
     //   accesswidth = regwidth
-    val regwidth = qRegwidth.value.getOrElse(Alignment(4))
+    val regwidth = qRegwidth.value.getOrElse(4.bytes.toAlignment)
     val accesswidth = qAccesswidth.value.getOrElse(regwidth)
 
     cAssert(regwidth >= accesswidth) {
