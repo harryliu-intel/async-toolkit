@@ -25,7 +25,6 @@ void RxToTx
     out->TX_DROP           = in->TX_DROP;
     out->TX_LENGTH         = in->TX_LENGTH;
     out->TX_TAG            = in->TX_TAG;
-    out->TX_STATS_LAST_LEN = in->TX_STATS_LAST_LEN;
     out->L2_EVID1          = in->L2_EVID1;
     out->EDGLORT           = in->EDGLORT;
     out->MIRTYP            = in->MIRTYP;

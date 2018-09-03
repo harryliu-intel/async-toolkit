@@ -26,7 +26,7 @@ typedef struct mbyCongMgmtToRxStatsStruct
     fm_uint64               FNMASK;        // forwarding normal mask
     fm_bool                 SEG_META_ERR;  // segment error
     fm_uint32               ACTION;        // resolved action
-    fm_byte                 TC;            // 3-bit traffic class
+    fm_byte                 TRAFFIC_CLASS; // 3-bit traffic class
     mbyParserInfo           PARSER_INFO;   // parser info struct
     fm_bool                 NO_MODIFY;     // skip most of modifications in Modifier
     fm_uint32               RX_LENGTH;     // RX packet length
@@ -36,7 +36,6 @@ typedef struct mbyCongMgmtToRxStatsStruct
     fm_bool                 TX_DROP;       // flag indicating packet drop
     fm_uint32               TX_LENGTH;     // egress packet data length[byte]
     fm_byte                 TX_TAG;        // egress tag
-    fm_uint32               TX_STATS_LAST_LEN;
     fm_uint16               L2_EVID1;      // 12-bit egress VLAN ID
     fm_uint16               EDGLORT;       // egress destination glort
     mbyMirrorType           MIRTYP;        // mirror type

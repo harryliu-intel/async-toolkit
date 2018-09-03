@@ -132,7 +132,6 @@ typedef struct mbyRxStatsToRxOutStruct
     fm_bool                 TX_DROP;       // flag indicating packet drop
     fm_uint32               TX_LENGTH;     // egress packet data length[byte]
     fm_byte                 TX_TAG;
-    fm_uint32               TX_STATS_LAST_LEN;
     fm_uint16               L2_EVID1;      // 12-bit egress VLAN ID
     fm_uint16               EDGLORT;       // egress destination glort
     mbyMirrorType           MIRTYP;        // mirror type
