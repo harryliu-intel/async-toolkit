@@ -133,6 +133,7 @@ object Memory {
   }
 
 
+
   /** 2 pow N bytes (runtime check) adapter. Can't be a value class so it can have a requirement. */
   case class Alignment(value: Long) extends Ordered[Alignment] {
     require( value > 0L )
@@ -183,7 +184,7 @@ object Memory {
     def %[M <: MemoryUnit](munit: M): Bits = toBits % munit
 
     /** Align to any block. */
-    def alignTo(align: Alignment): Address = {
+    def alignTo(align: Alignment): Address = {q
       val bitAlign = align.toBits
       val shift = this % bitAlign
       if (shift.toLong == 0) { this } else { this + (bitAlign - shift) }
@@ -226,6 +227,20 @@ object Memory {
       * @example Address at (x.words + y.bits)
       */
     def at[M <: MemoryUnit](munit: M) = Address(munit)
+
+    /** Simple extractor */
+    def unapply(address: Address): Option[(Long, Bits)] = Some((address.words, address.bits))
+  }
+
+  /** Extractor for Address.
+    *
+    * @example
+    *   sth match {
+    *     case Address at Bits(offset) => offset
+    *   }
+    */
+  object at {
+    def unapply(address: Address): Option[(Address.type, Bits)] = Some((Address, address.toBits))
   }
 
 
