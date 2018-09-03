@@ -180,7 +180,7 @@ typedef enum mbyIntrErrCodeEnum // interrupt disp
 {
     INTR_DISREGARD_ERR               = -1,
     INTR_MEM_ECC_ERR                 =  0,
-    INTR_U_INSERT_VLAN_IPP           =  1, 
+    INTR_U_INSERT_VLAN_IPP           =  1,
     INTR_U_INSERT_L2_TAG_OTR         =  2,
     INTR_U_INSERT_L2_TAG_INR         =  3,
     INTR_U_REMOVE_VLAN_IPP           =  4,
@@ -210,7 +210,7 @@ typedef enum mbyIntrErrCodeEnum // interrupt disp
     INTR_TX_ERR_DROP                 = 28,
     INTR_MARKER_ERR_DROP             = 29,
     INTR_L3_LEN_ERR_DROP             = 30,
-    INTR_L4_CSUM_ERR_DROP            = 31, 
+    INTR_L4_CSUM_ERR_DROP            = 31,
     INTR_L3_LEN_L4_CSUM_ERR_MASK     = 32,
     INTR_TIMEOUT_DROP                = 33,
     INTR_LPBK_DROP                   = 34,
@@ -314,7 +314,7 @@ typedef struct mbyModControlDataStruct
     fm_byte                 rx_tags[16];
     // MPLS:
     fm_bool                 isInterLSR;
-#if 0 
+#if 0
     mbyMplsData             mplsData;  // not implemented for now <-- REVISIT!!!!
 #endif
     // L3:
@@ -389,7 +389,7 @@ typedef struct mbyChunkedSegStruct
     fm_byte                 otr_mpls[28];
     fm_byte                 n_otr_mpls;
     fm_byte                 n_otr_mpls_pre;
-    
+
     // Outer IP:
     fm_byte                 otr_ip[56];
     fm_byte                 otr_ip_size;
@@ -439,6 +439,7 @@ typedef struct mbyModifierToTxStatsStruct
     fm_uint16               TX_DISP;         // egress frame disposition
     fm_byte               * TX_DATA;         // egress packet data
     fm_uint32               TX_LENGTH;       // egress packet data length [bytes]
+    fm_bool                 NO_PRI_ENC;      // do not use priority encoding, use default enc.
     // pass-thru:
     fm_uint32               TX_PORT;         // egress port
 

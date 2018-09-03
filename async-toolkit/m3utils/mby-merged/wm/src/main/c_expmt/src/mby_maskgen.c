@@ -431,7 +431,7 @@ void MaskGen
     const fm_uint32     hash_rot_b      = in->HASH_ROT_A;
     const fm_macaddr    l2_smac         = in->L2_SMAC;
     const fm_macaddr    l2_dmac         = in->L2_DMAC;
-    const mbySTPState   l2_ifid1_state  = in->L2_IFID1_STATE;
+    const mbyStpState   l2_ifid1_state  = in->L2_IFID1_STATE;
     const fm_bool       no_learn        = in->NO_LEARN;
           fm_uint32     glort_dmask     = in->GLORT_DMASK;
           fm_byte       qos_swpri       = in->QOS_SWPRI;

@@ -22,7 +22,7 @@ static void getModRegCfgData
 
     fm_uint64 mod_per_port_cfg2_reg = 0;
     mbyModelReadCSR64(regs, MBY_MOD_PER_PORT_CFG2(tx_port, 0), &mod_per_port_cfg2_reg);
-                                                                     
+
     r->modPerPortCfg2.ENABLE_DMAC_ROUTING     = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_DMAC_ROUTING);
     r->modPerPortCfg2.ENABLE_SMAC_ROUTING     = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_SMAC_ROUTING);
     r->modPerPortCfg2.ENABLE_TTL_DECREMENT    = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_TTL_DECREMENT);
@@ -75,7 +75,7 @@ static void unpackPacket
         : parser_info.otr_l2_len;
 
     fm_uint32 idx = 0;
-    
+
     if (otr_l2_len > 0) {
         for (fm_uint i = 0; i < 6; i++, idx++)
             chunked_seg->otr_dmac[i] = rx_packet[idx];
@@ -330,23 +330,6 @@ static void packPacket
     }
 }
 
-static void initChunkedSeg
-(
-    fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32       rx_length,
-    const fm_byte * const rx_packet,
-    mbyChunkedSeg * const chunked_seg
-)
-{
-#if 0
-
-    SelectL4CsumSrc(key, model, state->RX_DATA, chunkedSeg);
-
-    out->NO_PRI_ENC = !((state->PARSER_INFO.otr_l2_vlan1>0)
-                        || (state->PARSER_INFO.otr_mpls_len>0) || (state->PARSER_INFO.otr_l3_len>0));
-#endif
-}
-
 static fm_bool isWindowParsing
 (
     const mbyParserInfo parser_info
@@ -399,7 +382,7 @@ static void initControl
 
     // Ingress flow 2nd pass window parsing packet: passing through
     c.isWindowParsing = (isWindowParsing(parser_info) && !no_modify);
-    
+
     c.dvStatus              = IS_OK;
     c.isMarkerPkt           = 0;
     c.evidA                 = l2_evid1;
@@ -474,7 +457,7 @@ static void initControl
 
     c.tail_len = (((tail_csum_len >> 16) & 0x3FFF) < DEFAULT_SEGMENT_BYTES)
         ? 0 : (((tail_csum_len >> 16) & 0x3FFF) - DEFAULT_SEGMENT_BYTES);
-    
+
     fm_uint64 mod_im_reg = 0;
     mbyModelReadCSR64(regs, MBY_MOD_IM(0), &mod_im_reg);
     c.mod_im = FM_GET_UNNAMED_FIELD64(mod_im_reg, 0, 63);
@@ -559,7 +542,7 @@ static void dropAndLog
         FM_SET_UNNAMED_FIELD64(mod_im_reg, 0, 63, ip);
 
         mbyModelWriteCSR64(regs, MBY_MOD_IM(0), mod_im_reg);
-        
+
         if (!((ctrl_data->mod_im) >> intr_disp & 0x1))
             ctrl_data->intr_occured = TRUE;
     }
@@ -584,14 +567,14 @@ static void dropPacket
     const fm_bool is_marker    = ctrl_data->isMarkerPkt;
     const fm_bool is_mirror    = ctrl_data->isMirror;
     const fm_bool mirror_trunc = ctrl_data->mirrorTrunc;
-    
+
     const mbyMarkerFlag marker_flag = ((is_marker) ? MARKER : NOMARKER);
-    
+
     // L2 Modifications:
     ctrl_data->cancelled_tx_disp = DISP_UCAST;
 
 //>  *seg_meta_err = FALSE; <-- FIXME!!!
-    
+
     if (ctrl_data->routeA && !is_mirror && drop_ttl && !(*tx_drop))
         dropAndLog(regs, DISP_TTL1DROP,     marker_flag, DROP, ERR_TTL_0, INTR_TTL1_DROP,
                    tx_disp, tx_drop, tx_reasoncode, ctrl_data);
@@ -606,7 +589,7 @@ static void dropPacket
         dropAndLog(regs, DISP_OOMTRUNC, NOMARKER, NODROP, ERR_NONE, INTR_DISREGARD_ERR, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
     else if (((rx_length > DEFAULT_SEGMENT_BYTES) || pm_err_nonsop) && !mirror_trunc)
         dropAndLog(regs, DISP_TXERROR,  NOMARKER, NODROP, ERR_NONE, INTR_DISREGARD_ERR, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-    
+
     if (saf_error)
     {
         if (is_marker)
@@ -734,7 +717,7 @@ static void updateVlan
 
     fm_uint64 *rdval = (fm_uint64 *) FM_MODEL_GET_REG_PTR(model, HLP_MOD_VID1_MAP(modVid1MapAddr, 0));
     newVid1 = FM_GET_FIELD64(*rdval, HLP_MOD_VID1_MAP, VID);
-    rdval = (fm_uint64 *) FM_MODEL_GET_REG_PTR(model, HLP_MOD_VLAN_TAG(modVlanTagAddr, 0)); 
+    rdval = (fm_uint64 *) FM_MODEL_GET_REG_PTR(model, HLP_MOD_VLAN_TAG(modVlanTagAddr, 0));
 
     fm_uint64  temp64;
     temp64 = FM_GET_FIELD64(*rdval, HLP_MOD_VLAN_TAG, TAG);
@@ -1072,7 +1055,7 @@ static void updateMacAddrIPP
             for (fm_uint i = 0, bit_offset = 40; i < MAC_ADDR_BYTES; i++, bit_offset -= 8)
                 chunked_seg->otr_dmac[i] = ((fm_byte) ((l2_dmac >> bit_offset) & 0xff));
         }
-        
+
         if (modify_smac)
         {
             fm_macaddr mod_router_smac_reg = 0;
@@ -1101,7 +1084,7 @@ void doMiscOps
 )
 {
     fm_uint32 tx_length = *tx_length_inout; // local var
-    
+
     if (tx_length >= rx_length)
     {
         fm_uint32 bytes_added      = tx_length - rx_length;
@@ -1126,7 +1109,7 @@ void doMiscOps
         if (crc_idx != 0)
         {
             tx_length = DEFAULT_SEGMENT_BYTES + crc_idx;
-            
+
             if (ctrl_data->bytesAdded != 0)
             {
                 if (ctrl_data->bytesAdded & 0x80)
@@ -1210,7 +1193,8 @@ void Modifier
     fm_uint32      tx_length       = 0;
     fm_uint32      tx_stats_length = 0;
     mbyDropErrCode tx_reasoncode   = ERR_NONE;
-    
+    fm_bool        no_pri_enc      = !((parser_info.otr_l2_vlan1 > 0) || (parser_info.otr_mpls_len > 0) || (parser_info.otr_l3_len > 0));
+
     // Unpack RX packet into chunked segment:
     mbyChunkedSeg chunked_seg;
     unpackPacket
@@ -1218,15 +1202,6 @@ void Modifier
         rx_length,
         rx_packet,
         parser_info,
-        &chunked_seg
-    );
-
-    // Initialize chunked segments:
-    initChunkedSeg
-    (
-        regs,
-        rx_length,
-        rx_packet,
         &chunked_seg
     );
 
@@ -1312,7 +1287,7 @@ void Modifier
 #endif
 
     fm_byte tx_packet[MBY_MAX_PACKET_SIZE] = { 0 };
-    
+
     packPacket
     (
         no_modify,
@@ -1343,6 +1318,7 @@ void Modifier
     out->TX_STATS_LENGTH = tx_stats_length;
     out->TX_DISP         = tx_disp;
     out->TX_LENGTH       = tx_length;
+    out->NO_PRI_ENC      = no_pri_enc; // is this output still needed? <-- REVISIT!!!
 
     for (fm_uint i = 0; i < MBY_MAX_PACKET_SIZE; i++)
         out->TX_DATA[i] = tx_packet[i];
