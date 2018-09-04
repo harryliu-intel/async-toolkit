@@ -3,6 +3,7 @@ import sbt._
 object Dependencies {
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest
+  lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
   lazy val scalaXml = "org.scala-lang.modules" %% "scala-xml" % Versions.scalaXml
   lazy val scalaParserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % Versions.parserCombinators
   lazy val scopt = "com.github.scopt" %% "scopt" % Versions.scopt
@@ -15,10 +16,11 @@ object Dependencies {
 
   lazy val csrMacrosDeps = Seq(shapeless, refined)
 
-  lazy val commonDeps = Seq(reflect)
+  lazy val commonDeps = Seq(reflect, scalaTest, scalaCheck)
 
   def whiteModelDeps(csrVersion: String) = Seq(
     scalaTest % Test,
+    scalaCheck,
     scalaXml % Compile,
     scalaParserCombinators,
     scopt,

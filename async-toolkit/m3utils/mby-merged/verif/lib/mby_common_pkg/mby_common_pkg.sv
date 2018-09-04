@@ -51,11 +51,16 @@ package mby_common_pkg;
 
     import shdv_base_pkg::*;
     import mby_wm_dpi_pkg::* ;
+    import svt_ahb_bfm_pkg::*;
+   
 
    `include "uvm_macros.svh"
    `include "slu_macros.svh"
 
    `define __INSIDE_MBY_COMMON_PKG
+   `include "mby_ral_user_object.svh"
+   `include "mby_ral_base_sequence.svh"
+   `include "mby_ral_ahb_access.sv"
    `include "mby_base_seq.svh"
 
    `undef  __INSIDE_MBY_COMMON_PKG

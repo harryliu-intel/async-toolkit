@@ -77,7 +77,7 @@ object Memory {
     def tryAlignment: Option[Alignment] = if( toLong > 0 && isPower ) { Some(toAlignment) } else { None }
 
     /** Alignment conversion, unsafe */
-    def toAlignment = Alignment(toBytes.toLong)
+    def toAlignment = Alignment(toBytes)
 
     override def toString = toBytes.toString
   }
@@ -127,21 +127,34 @@ object Memory {
 
     /** Convert to bytes */
     def bytes = Bytes(value)
+
+    /** Convert to word length in words */
+    def words: Bytes = (WordSize.toLong / 8).bytes
   }
 
 
-  /** 2 pow N bytes (runtime check) adapter. Can't be a value class so it can have a requirement. */
-  case class Alignment(value: Long) extends Ordered[Alignment] {
-    require( value > 0L )
-    require( value.bytes.isPower )
 
-    def toLong = value
-    def toBytes = toLong.bytes
-    def toBits = toBytes.toBits
+  /** 2 pow N bytes (runtime check) adapter. Can't be a value class so it can have a requirement. */
+  class Alignment private (val value: Long) extends AnyVal with Ordered[Alignment] {
+    def toLong: Long = value
+    def toBytes: Bytes = toLong.bytes
+    def toBits: Bits = toBytes.toBits
 
     def compare(other: Alignment): Int = toLong.compare(other.toLong)
 
-    override def toString = "Alignment(" + toBytes + ")"
+    override def toString: String = "Alignment(" + toBytes + ")"
+  }
+  object Alignment {
+    /** Simple constructor from full bytes. */
+    def apply[F <: FullBytes](fbytes: F): Alignment = {
+      val value = fbytes.toBytes.toLong
+      require( value > 0L )
+      require( value.bytes.isPower )
+      new Alignment(value)
+    }
+
+    /** Simple extractor to bytes */
+    def unapply(align: Alignment): Option[Bytes] = Some(align.toBytes)
   }
 
 
@@ -165,55 +178,31 @@ object Memory {
   val WordSize = 64
 
   /** Address in memory. Word-aware. */
-  class Address(val word: Long, val bit: Long) extends Ordered[Address] {
-    require(word >= 0)
-    require(bit >= 0)
+  class Address private (val offset: Long) extends AnyVal with Ordered[Address] {
 
     /** Address moved by memory shift. */
-    def +[M <: MemoryUnit](munit: M): Address = {
-      val allbits = (bit + munit.toBits.toLong)
-      Address(word + allbits / WordSize, allbits % WordSize)
-    }
+    def +[M <: MemoryUnit](munit: M): Address = Address(toBits + munit)
 
     /** Address moved by memory shift. */
-    def -[M <: MemoryUnit](munit: M): Address = {
-      val allbits = (bit - munit.toBits.toLong)
-      val a = word + allbits / WordSize
-      val b = WordSize - (allbits % WordSize)
-      if( b == WordSize ) { Address(word + a, 0) }
-      else { Address(word + a - 1, b) }
-    }
+    def -[M <: MemoryUnit](munit: M): Address = Address(toBits - munit)
 
     /** Shift between addresses. */
-    def -(other: Address): Bits = ((word - other.word) * WordSize + (bit - other.bit)).bits
+    def -(other: Address): Bits = toBits - other.toBits
 
     /** Shift from bit block alignment. */
-    def %[M <: MemoryUnit](munit: M): Bits = {
-      val bits = munit.toBits.toLong
-      val wom = word % bits
-      val bam = WordSize % bits
-      val bim = bit % bits
-      ((wom * bam + bim) % bits).bits
-    }
+    def %[M <: MemoryUnit](munit: M): Bits = toBits % munit
 
     /** Align to any block. */
-    def modAlign[M <: FullBytes](align: M): Address = {
-      val tobits = Address(if(bit != 0) { word + 1 } else { word }, 0)
-      val shift = (align - (tobits % align)) % align
-      this + shift
+    def alignTo(align: Alignment): Address = {
+      val bitAlign = align.toBits
+      val shift = this % bitAlign
+      if (shift.toLong == 0) { this } else { this + (bitAlign - shift) }
     }
 
-    /** Align to proper block of size 2 pow N. */
-    def modAlign(align: Alignment): Address = modAlign(align.toBytes)
-
-    def compare(that: Address): Int =
-      (word - that.word).signum match {
-        case 0 => (bit - that.bit).signum
-        case sign @ _ => sign
-      }
+    def compare(other: Address): Int = offset.compare(other.offset)
 
     /** Erasure word info, return bits. */
-    def toBits: Bits = ((word * WordSize) + bit).bits
+    def toBits: Bits = offset.bits
 
     /** Erasure word info, try bytes. */
     def tryBytes: Option[Bytes] = toBits.tryBytes
@@ -221,17 +210,46 @@ object Memory {
     /** Erasure word info, full bytes. */
     def fullBytes: Bytes = toBits.fullBytes
 
-    override def toString = "Address(word: " + word + ", bit: " + bit + ")"
+    /** Full words */
+    def words: Long = (toBits.toLong / WordSize)
+
+    /** Bit offset from full words */
+    def bits: Bits = (toBits.toLong % WordSize).bits
+
+    override def toString = "Address at " + words + ".words + " + bits + ".bits"
   }
   object Address {
-    /** Simple explicit constructor */
-    def apply(word: Long, bit: Long): Address = new Address(word, bit)
-
-    /** From raw memory in bits */
-    def apply(bits: Bits): Address = Address(bits.value / WordSize, bits.value % WordSize)
-
     /** From raw memory */
-    def apply[M <: MemoryUnit](munit: M): Address = Address(munit.toBits)
+    def apply[M <: MemoryUnit](munit: M): Address = {
+      require(munit.toLong >= 0)
+      new Address(munit.toBits.toLong)
+    }
+
+    /** From word number and bit offset.
+      *
+      * @note It's valid for bit offset to be negative or bigger than word size.
+      */
+    def apply(word: Long, bits: Bits): Address = Address((word * WordSize).bits + bits)
+
+    /** Syntactic sugar.
+      *
+      * @example Address at (x.words + y.bits)
+      */
+    def at[M <: MemoryUnit](munit: M) = Address(munit)
+
+    /** Simple extractor */
+    def unapply(address: Address): Option[(Long, Bits)] = Some((address.words, address.bits))
+  }
+
+  /** Extractor for Address.
+    *
+    * @example
+    *   sth match {
+    *     case Address at Bits(offset) => offset
+    *   }
+    */
+  object at {
+    def unapply(address: Address): Option[(Address.type, Bits)] = Some((Address, address.toBits))
   }
 
 
@@ -285,7 +303,7 @@ object Memory {
         .filter(_ => addressing == Addressing.Compact)
         .getOrElse(regwidth)
       val align = alignment.getOrElse(width)
-      val lo = at.modAlign(align)
+      val lo = at alignTo align
       AddressRange(lo, regwidth.toBits)
     }
   }
@@ -314,6 +332,8 @@ object Memory {
     import universe._
 
     lazy val asMemoryUnitsSym: TypeSymbol = symbolOf[asMemoryUnits]
+    lazy val BitsCom = symbolOf[Bits].companion
+    lazy val BytesCom = symbolOf[Bytes].companion
 
     implicit lazy val liftBits = Liftable[Bits] { b =>
       q"(new $asMemoryUnitsSym(${b.toLong})).bits"
@@ -321,6 +341,8 @@ object Memory {
     implicit lazy val unliftBits = Unliftable[Bits] {
       case q"${value: Long}.bits" => value.bits
       case q"${value: Int}.bits" => value.toLong.bits
+      case q"$sym(${value: Long})" if sym == BitsCom => value.bits
+      case q"$sym(${value: Int})" if sym == BitsCom => value.toLong.bits
     }
 
     implicit lazy val liftBytes = Liftable[Bytes] { b =>
@@ -329,21 +351,25 @@ object Memory {
     implicit lazy val unliftBytes = Unliftable[Bytes] {
       case q"${value: Long}.bytes" => value.bytes
       case q"${value: Int}.bytes" => value.toLong.bytes
-    }
-
-    lazy val AlignmentSym = symbolOf[Alignment]
-    implicit lazy val liftAlignment = Liftable[Alignment] { a =>
-      q"new $AlignmentSym(${a.value})"
-    }
-    implicit lazy val unliftAlignment = Unliftable[Alignment] {
-      case q"$sym(${value: Long})" if sym == AlignmentSym => Alignment(value)
-      case q"$sym(${value: Int})"  if sym == AlignmentSym => Alignment(value.toLong)
-      case q"${bytes: Bytes}.toAlignment" => bytes.toAlignment
+      case q"$sym(${value: Long})" if sym == BytesCom => value.bytes
+      case q"$sym(${value: Int})" if sym == BytesCom => value.toLong.bytes
     }
 
     implicit lazy val unliftMemoryUnit = Unliftable[MemoryUnit] {
       case q"${bits: Bits}" => bits
       case q"${bytes: Bytes}" => bytes
+    }
+    implicit lazy val unliftFullBytes = Unliftable[FullBytes] {
+      case q"${bytes: Bytes}" => bytes
+    }
+
+    lazy val AlignmentCom = symbolOf[Alignment].companion
+    implicit lazy val liftAlignment = Liftable[Alignment] { a =>
+      q"$AlignmentCom(${a.toBytes})"
+    }
+    implicit lazy val unliftAlignment = Unliftable[Alignment] {
+      case q"$sym(${fbytes: FullBytes})" if sym == AlignmentCom => Alignment(fbytes.toBytes)
+      case q"${fbytes: FullBytes}.toAlignment" => fbytes.toAlignment
     }
   }
 
