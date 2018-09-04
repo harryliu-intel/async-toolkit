@@ -420,7 +420,7 @@ void MaskGen
 )
 {
     // Read inputs:
-    fm_uint64                amask                  = in->AMASK;
+    const fm_uint64          amask_in               = in->AMASK;
     const fm_uint16          csglort                = in->CSGLORT;
     const fm_bool            da_hit                 = in->DA_HIT;
     const fm_bool            drop_ttl               = in->DROP_TTL;
@@ -522,7 +522,8 @@ void MaskGen
     // --------------------------------------------------------------------------------
     // Action Masks:
 
-    fm_byte log_amask = 0;
+    fm_uint64 amask     = amask_in; // from lookUpL2() in NextHop
+    fm_byte   log_amask = 0;
 
     if (glort_cam_miss)
         amask |= MBY_AMASK_DROP_CAM_MISS;   // CAM miss -> drop frame
