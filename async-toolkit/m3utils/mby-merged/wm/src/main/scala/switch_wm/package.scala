@@ -148,4 +148,11 @@ package object switch_wm {
       f"0x$self%02X"
     }
   }
+
+  implicit class nibbles(val x : Int) {
+    def nib(i : Int) : Int = {
+      val mask = 0xf << i
+      (x & mask) >> (4 * i)
+    }
+  }
 }
