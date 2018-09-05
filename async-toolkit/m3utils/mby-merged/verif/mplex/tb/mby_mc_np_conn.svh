@@ -1,4 +1,3 @@
-
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -28,38 +27,10 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-`timescale 1ps/1fs
-//  Module:    mby_mc_tb_top
+//include : mby_mc_np_conn
 //
-//  MBY MC No Processor, No PHY Testbench Top module.
-//  This file only contains instantiation/configuration which are
-//  specific to mplex_np_nphy model.
+// AXI connections to Cport processor in Mplex no proc TB when the Cport
+// processor is black-boxed. 
 
-
-module mby_mc_tb_top ();
-
-    `include "mby_mc_tb_top_common.svh"
-    `include "mby_mc_np_conn.svh"
-    
-
-    //-----------------------------------------------------------------------------
-    // Verification Test Island
-    //-----------------------------------------------------------------------------
-    mby_mc_ti #(
-        .TOPOLOGY(mby_mc_env_pkg::mby_mc_defines::MPLEX_NP_NPHY)
-    ) mc_ti(
-        .mby_mc_tb_if               (mc_tb_if),
-	.ahb_if                     (ahb_if),
-	.ahb_reset_if               (ahb_reset_if),
-        .axi_if                     (axi_if),
-        .axi_reset_if               (axi_reset_if),
-        .shdv_intf                  (shdv_intf)
-
-    );
-
-    initial begin
-
-    end
-
-endmodule: mby_mc_tb_top
-
+// Using the STUB Processor so connect the AXI agent to the CPort signals
+assign mplex_top.cup_proc.RREADY    =  axi_if.master_if[0].rready;

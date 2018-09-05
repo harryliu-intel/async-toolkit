@@ -1,4 +1,3 @@
-
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -52,10 +51,12 @@ import sla_pkg::*;
 logic         fabric_clk;                             // Fabric Clock - 1.2 Ghz
 logic         proc_clk;                               // Processor Clock - 1.0 Ghz
 logic         peri_clk;                               // Peripheral Clock - 200 Mhz
+logic         qref_clk;                               // QSPI ref Clock - 37 Mhz (1.2 Ghz/16)
 
 shdv_clk_gen  fabric_clk_gen(fabric_clk);            
 shdv_clk_gen  proc_clk_gen(proc_clk);    
-shdv_clk_gen  peri_clk_gen(peri_clk);    
+shdv_clk_gen  peri_clk_gen(peri_clk); 
+shdv_clk_gen  qref_clk_gen(qref_clk); 
 
 initial begin
 
@@ -67,8 +68,10 @@ initial begin
     
     peri_clk_gen.period       = 5000ps;
     peri_clk_gen.jitter       = 0ps;
+       
+    qref_clk_gen.period       = 27027ps;
+    qref_clk_gen.jitter       = 0ps;
     
-
 end
 
 // ===============================================
@@ -208,7 +211,9 @@ cup_top mplex_top(
     .proc_clk (mc_tb_if.proc_clk),
     .proc_core_reset(mc_tb_if.hard_reset),
     .peri_clk (mc_tb_if.peri_clk),
-    .peri_resetn(~mc_tb_if.hard_reset)
+    .peri_resetn(~mc_tb_if.hard_reset),
+    .qref_clk(qref_clk),
+    .qref_resetn(~mc_tb_if.hard_reset)
 );
 
 
