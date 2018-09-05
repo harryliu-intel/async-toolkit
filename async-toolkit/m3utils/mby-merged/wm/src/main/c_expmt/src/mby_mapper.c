@@ -964,7 +964,8 @@ static void getParserInfo
     const fm_bool                   pa_ptrs_valid [MBY_N_PARSER_PTRS],
     const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
     const fm_bool                   is_ipv6       [MBY_N_IS_IP_BITS],
-    mbyMapProfKey0          * const map_prof_key0
+    mbyMapProfKey0          * const map_prof_key0,
+    mbyParserInfo           * const parser_info
 )
 {
     fm_bool pa_flag_otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
@@ -1034,9 +1035,6 @@ static void getParserInfo
 
     fm_bool fits = TRUE;
     fm_bool ptrs_err = FALSE;
-
-    // Point at parser info structure:
-    mbyParserInfo *parser_info = &out->PARSER_INFO;
 
     // otr_l2
     encodeLength
@@ -1722,6 +1720,8 @@ void Mapper
         &l2_ivlan1_cnt
     );
 
+    mbyParserInfo parser_info;
+
     getParserInfo
     (
         regs,
@@ -1733,7 +1733,8 @@ void Mapper
         pa_ptrs_valid,
         realigned_keys,
         is_ipv6,
-        &map_prof_key0
+        &map_prof_key0,
+        &parser_info
     );
 
     mbyMapProfAction map_prof_action;
@@ -1790,6 +1791,7 @@ void Mapper
     out->NO_PRI_ENC       = no_pri_enc;
     out->OPERATOR_ID      = operator_id;
     out->PARSER_ERROR     = parser_error;
+    out->PARSER_INFO      = parser_info;
     out->PRIORITY_PROFILE = pri_profile;
     out->TRAFFIC_CLASS    = traffic_class;
 }
