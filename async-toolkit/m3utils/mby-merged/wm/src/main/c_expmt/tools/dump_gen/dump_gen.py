@@ -15,7 +15,7 @@ def handle_array(ast, arr, prefix):
         return
     print('  printf(" %s = {");' % (var_name))
     print('  for(int i=0; i < %d; ++i)' % (int(arr.type.dim.value)))
-    print('    printf("%%d, ", s->%s[i]);' % (var_name))
+    print('    printf("%%u, ", s->%s[i]);' % (var_name))
     print('  printf("}\\n");')
 
 def handle_pointer(ast, pointer, prefix):
@@ -49,9 +49,9 @@ def handle_struct(ast, struct, prefix):
         if var_type == 'fm_bool':
             print('  printf(" %s = %%s\\n", s->%s ? "TRUE" : "FALSE");' % (var_name, var_name))
         elif var_type in ['fm_byte', 'fm_uint8', 'fm_uint16', 'fm_uint32']:
-            print('  printf(" %s = %%d\\n", s->%s);' % (var_name, var_name))
+            print('  printf(" %s = %%u\\n", s->%s);' % (var_name, var_name))
         if var_type == 'fm_uint64':
-            print('  printf(" %s = %%lld\\n", s->%s);' % (var_name, var_name))
+            print('  printf(" %s = %%llu\\n", s->%s);' % (var_name, var_name))
         else:
             node = node_by_name(ast, var_type)
             # node.show(attrnames=True, nodenames=True)

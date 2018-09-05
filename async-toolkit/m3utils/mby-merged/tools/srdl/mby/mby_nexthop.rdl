@@ -5,94 +5,78 @@
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
 
-reg nexthop_entry_table_r {
+
+reg nexthop_config_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Provides next-hop global configuration.";
+  desc = "Global configuration for next-hop operation.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           Sets the rate at which the next-hop sweeper task ages out
+           NH_ROUTE table entries for identifying flowlet gaps.
+           [br][br]
+           Units are TBD.
+           ";
+    ValRandomize = true;
+  } SWEEPER_RATE[9:2] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Enable interrupts for software based flowlet load balancing.
+           ";
+    ValRandomize = true;
+  } FLOWLET_INT_EN[1:1] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Enable flowlet-based load balancing.
+           ";
+    ValRandomize = true;
+  } FLOWLET_ENABLE[0:0] = 1'h0;
+};
+
+
+reg nexthop_status_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Provides next-hop status to software.";
+  desc = "Reports to software the status of the next-hop.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicates the route table entry for which a flowlet 
+           boundary was detected and an interrupt generated
+           ";
+    ValRandomize = true;
+  } FLOWLET[13:0] = 14'h0;
+};
+
+
+reg nexthop_neighbors_table_0_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   shared;
   HandCoded = true;
   name = "Stores next-hop information for IP routing and GLORT forwarding.";
-  desc = "Stores next-hop entry and related fields for IP routing and GLORT forwarding.";
-  regwidth = 128;
-  accesswidth = 128;
-  field {
-    AccessType = "RW";
-    desc = "
-           0: Entry is used for GLORT forwarding. DST_MAC, EVID and IPV6_ENTRY are ignored.
-           [br][br]
-           1: Entry is used for IP routing. DST_MAC provides the next hop router's DMAC
-                  and DGLORT indicates the egress port to which the next hop router is connected.
-           ";
-    ValRandomize = true;
-  } ENTRY_TYPE[121:121] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           Indicates whether to derive the DMAC from the IPv6 DIP when 
-           doing IP routing and stateless autoconfig is enabled on the network.[br]
-           Ignored if ENTRY_TYPE=0.
-           ";
-    ValRandomize = true;
-  } IPV6_ENTRY[120:120] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           Marks the packet as routed when doing GLORT forwarding so that Modify will update 
-           the appropriate header fields.[br]
-           Ignored if ENTRY_TYPE=1.
-           ";
-    ValRandomize = true;
-  } MARK_ROUTED[119:119] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           Indicates to update the L3 domain value.
-           ";
-    ValRandomize = true;
-  } UPDATE_L3_DOMAIN[118:118] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           Indicates to update the L2 domain value.
-           ";
-    ValRandomize = true;
-  } UPDATE_L2_DOMAIN[117:117] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-           New L3 domain value to use if UPDATE_L3_DOMAIN=1
-           ";
-    ValRandomize = true;
-  } L3_DOMAIN[116:111] = 6'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-           New L2 domain value to use if UPDATE_L2_DOMAIN=1
-           ";
-    ValRandomize = true;
-  } L2_DOMAIN[110:103] = 8'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-           Modify index MOD_IDX.
-           ";
-    ValRandomize = true;
-  } MOD_IDX[102:79] = 24'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-            Index into the MTU size check table.
-           ";
-    ValRandomize = true;
-  } MTU_INDEX[78:76] = 3'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-            Egress VLAN ID used for IP routing. [br]
-            Ignored if ENTRY_TYPE=0.
-           ";
-    ValRandomize = true;
-  } EVID[75:64] = 12'h00;
+  desc = "
+         Stores the low order half of the next-hop entry and related fields 
+         for IP routing and GLORT forwarding.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
   field {
     AccessType = "RW";
     desc = "
@@ -108,6 +92,354 @@ reg nexthop_entry_table_r {
            ";
     ValRandomize = true;
   } DST_MAC[47:0] = 48'h00;
+};
+
+reg nexthop_neighbors_table_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Stores next-hop information for IP routing and GLORT forwarding.";
+  desc = "
+         Stores the high order half of the next-hop entry and related fields 
+         for IP routing and GLORT forwarding.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           0: Entry is used for GLORT forwarding. DST_MAC, EVID and IPV6_ENTRY are ignored.
+           [br][br]
+           1: Entry is used for IP routing. DST_MAC provides the next hop router's DMAC
+                  and DGLORT indicates the egress port to which the next hop router is connected.
+           ";
+    ValRandomize = true;
+  } ENTRY_TYPE[57:57] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicates whether to derive the DMAC from the IPv6 DIP when 
+           doing IP routing and stateless autoconfig is enabled on the network.[br]
+           Ignored if ENTRY_TYPE=0.
+           ";
+    ValRandomize = true;
+  } IPV6_ENTRY[56:56] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Marks the packet as routed when doing GLORT forwarding so that Modify will update 
+           the appropriate header fields.[br]
+           Ignored if ENTRY_TYPE=1.
+           ";
+    ValRandomize = true;
+  } MARK_ROUTED[55:55] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicates whether to update the L3 domain value.
+           ";
+    ValRandomize = true;
+  } UPDATE_L3_DOMAIN[54:54] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           Indicates whether to update the L2 domain value.
+           ";
+    ValRandomize = true;
+  } UPDATE_L2_DOMAIN[53:53] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           New L3 domain value to use if UPDATE_L3_DOMAIN=1
+           ";
+    ValRandomize = true;
+  } L3_DOMAIN[52:47] = 6'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           New L2 domain value to use if UPDATE_L2_DOMAIN=1
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[46:39] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+           Modify index MOD_IDX.
+           ";
+    ValRandomize = true;
+  } MOD_IDX[38:15] = 24'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Index into the MTU size check table.
+           ";
+    ValRandomize = true;
+  } MTU_INDEX[14:12] = 3'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Egress VLAN ID used for IP routing. [br]
+            Ignored if ENTRY_TYPE=0.
+           ";
+    ValRandomize = true;
+  } EVID[11:0] = 12'h00;
+};
+
+
+reg nexthop_groups_table_0_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Next-hop ECMP group information for IP routing.";
+  desc = "
+         Stores the low order half of the next-hop group entry.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used for GROUP_TYPE=1, indicates the offset into the weight table row
+            in NH_WEIGHTS.
+           ";
+    ValRandomize = true;
+  } WEIGHT_ROW_OFFSET[39:34] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used for GROUP_TYPE=1, indicates the weight table row
+            in NH_WEIGHTS.
+           ";
+    ValRandomize = true;
+  } WEIGHT_ROW[33:23] = 11'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicates the size of the group in NH_NEIGHBORS. If 
+            N_GROUP_SZ_TYPE is 0, this field is the literal size
+            of the group (0 indicates 64 members). If N_GROUP_SZ_TYPE
+            is 1, this field must be between 0 and 12 and the
+            group size is 2^N_GROUP_SIZE.
+           ";
+    ValRandomize = true;
+  } N_GROUP_SIZE[22:17] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicates whether N_GROUP_SIZE is literal or
+            a power of 2.
+           ";
+    ValRandomize = true;
+  } N_GROUP_SZ_TYPE[16:16] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The index to the first NH_NEIGHBORS entry associated
+            with this group. For ECMP groups, also indicates the
+            first corresponding NH_ROUTES entry.
+           ";
+    ValRandomize = true;
+  } BASE_INDEX[15:2] = 14'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicates the type of group:
+            [list]
+            [*] 0: ECMP group
+            [*] 1: WCMP group
+            [*] 2: ECMP group with flowlet support
+            [*] 3: Reserved
+            [/list]
+           ";
+    ValRandomize = true;
+  } GROUP_TYPE[1:0] = 2'h0;
+};
+
+
+
+reg nexthop_groups_table_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Next-hop ECMP group information for IP routing.";
+  desc = "
+         Stores the high order half of the next-hop group entry.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Index to the minimal path counter for the group
+            in NH_GROUP_MIN.
+           ";
+    ValRandomize = true;
+  } GROUP_MIN_INDEX[28:18] = 11'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Flowlet age reset value
+           ";
+    ValRandomize = true;
+  } FLOWLET_AGE_RESET[17:10] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicates the flowlet re-balancing policy:
+            [list]
+            [*] 0: Software
+            [*] 1: LetFlow
+            [*] 2: Path Loading
+            [*] 3: SDN Managed
+            [*] 4: Local Congestion
+            [*] 5: Congestion Notification
+            [*] 6: Power Aware
+            [*] 7: Reserved
+            [/list]
+            See the functional specification for details.
+           ";
+    ValRandomize = true;
+  } FLOWLET_POLICY[9:7] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicates the size of the group in NH_ROUTES. If 
+            R_GROUP_SZ_TYPE is 0, this field is the literal size
+            of the group (0 indicates 64 members). If R_GROUP_SZ_TYPE
+            is 1, this field must be between 0 and 12 and the
+            group size is 2^R_GROUP_SIZE.
+           ";
+    ValRandomize = true;
+  } R_GROUP_SIZE[6:1] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicates whether R_GROUP_SIZE is literal or
+            a power of 2.
+           ";
+    ValRandomize = true;
+  } R_GROUP_SZ_TYPE[0:0] = 1'h0;
+};
+
+
+
+reg nexthop_routes_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Next-hop ECMP group information for IP routing.";
+  desc = "
+         ECMP hash bin.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Flowlet gap timer counter
+           ";
+    ValRandomize = true;
+  } AGE_COUNTER[33:26] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Index to NH_GROUPS entry associated with this bin.
+           ";
+    ValRandomize = true;
+  } GROUP_IDX[25:14] = 12'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Index to NH_NEIGHBORS entry associated with this bin.
+           ";
+    ValRandomize = true;
+  } NEIGHBOR_IDX[13:0] = 14'h0;
+};
+
+
+
+reg nexthop_weights_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Next-hop WCMP group weight table.";
+  desc = "
+         Provides weights for each of the paths in a WCMP group.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_7[63:56] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_6[55:48] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_5[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_4[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_3[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_2[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_1[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Cumulative weight value for one path.
+           ";
+    ValRandomize = true;
+  } WEIGHT_0[7:0] = 8'h0;
+};
+
+
+
+regfile nexthop_weights_table_rf {
+  nexthop_weights_table_r NH_WEIGHTS[8] += 8;
 };
 
 reg flood_glort_table_r {
@@ -147,6 +479,94 @@ reg flood_glort_table_r {
   } FLOOD_UNICAST_GLORT[15:0] = 16'h00;
 };
 
+
+reg nexthop_path_ctrs_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Count of bytes sent per ECMP group memeber";
+  desc = "
+          A counter of bytes sent for transmission on each path in an
+          ECMP group. Used for identifying the least used path for 
+          rebalancing flowlets. Each entry holds the byte count for
+          the path in the corresponding index into NH_NEIGHBORS.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  default woclr;
+  field {
+    AccessType = "RW";
+    desc = "
+            Byte count.
+           ";
+    ValRandomize = true;
+  } BYTES[63:0] = 64'h00;
+};
+
+
+
+reg nexthop_group_min_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Path with minimum count of bytes sent per ECMP group";
+  desc = "
+          Each ECMP group keeps track of the path within the group
+          to which the least number of bytes has been sent. This 
+          path will be the target path for flowlet rebalancing.
+          [br][br]
+          For the ECMP group whose NH_GROUPS entry is at index
+          N, the corresponding entry will be:[br]
+          NH_GROUP_MIN[N/4].MIN_X[br]
+          where X = N % 4.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  default woclr;
+  field {
+    AccessType = "RW";
+    desc = "
+            NH_NEIGHBORS index corersponding to the path in an ECMP
+            with the previously known least number of bytes sent to
+            it.
+           ";
+    ValRandomize = true;
+  } MIN_3[63:48] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            NH_NEIGHBORS index corersponding to the path in an ECMP
+            with the previously known least number of bytes sent to
+            it.
+           ";
+    ValRandomize = true;
+  } MIN_2[47:32] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            NH_NEIGHBORS index corersponding to the path in an ECMP
+            with the previously known least number of bytes sent to
+            it.
+           ";
+    ValRandomize = true;
+  } MIN_1[31:16] = 16'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            NH_NEIGHBORS index corersponding to the path in an ECMP
+            with the previously known least number of bytes sent to
+            it.
+           ";
+    ValRandomize = true;
+  } MIN_0[15:0] = 16'h00;
+};
+
+
+
 reg nexthop_used_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -156,11 +576,11 @@ reg nexthop_used_r {
   name = "Tracks if hardware has used each ARP entry.";
   desc = "
           Each time NEXTHOP_TABLE[index] entry is used to forward a frame, the 
-          chip sets the NEXTHOP_USED[index{13:6}]{index{5:0}} bit to 1. When 
+          chip sets the NH_USED[index{13:6}]{index{5:0}} bit to 1. When 
           software writes a word to this table, any bits that are 1 in the 
-          word will clear the corresponding bit in NEXTHOP_USED to 0. The software 
+          word will clear the corresponding bit in NH_USED to 0. The software 
           should read a word into x, record which entries have been used since 
-          the last sample, and then write x back to NEXTHOP_USED to clear the bits.
+          the last sample, and then write x back to NH_USED to clear the bits.
           This avoids any race between the hardware and software. The concept 
           is similar to an interrupt register.
          ";
@@ -302,11 +722,20 @@ addrmap mby_ppe_nexthop_map {
   Opcode = "MEM-SB";
   No_IOSF_Primary=true;
   
-  nexthop_entry_table_r   NEXTHOP_TABLE[16384]    ;
-  ingress_vid_table_r     INGRESS_VID_TABLE[4096] ;
-  flood_glort_table_r     FLOOD_GLORT_TABLE[256]  ;
-  nexthop_used_r          NEXTHOP_USED[256]       ;
-  mtu_table_r             MTU_TABLE[8]            ;
-  fwd_hashing_cfg_r       FWD_HASHING_CFG         ;
+  nexthop_config_r              NH_CONFIG                   ;
+  nexthop_status_r              NH_STATUS                   ;
+  nexthop_neighbors_table_0_r   NH_NEIGHBORS_0[16384]       ;
+  nexthop_neighbors_table_1_r   NH_NEIGHBORS_1[16384]       ;
+  nexthop_groups_table_0_r      NH_GROUPS_0[4096]           ;
+  nexthop_groups_table_1_r      NH_GROUPS_1[4096]           ;
+  nexthop_routes_table_r        NH_ROUTES[16384]            ;
+  nexthop_weights_table_rf      NH_WEIGHTS[2048]            ;
+  ingress_vid_table_r           INGRESS_VID_TABLE[4096]     ;
+  flood_glort_table_r           FLOOD_GLORT_TABLE[256]      ;
+  nexthop_used_r                NH_USED[256]                ;
+  nexthop_path_ctrs_r           NH_PATH_CTRS[16384]         ;
+  nexthop_group_min_r           NH_GROUP_MIN[512]           ;
+  mtu_table_r                   MTU_TABLE[8]                ;
+  fwd_hashing_cfg_r             FWD_HASHING_CFG             ;
 };
 

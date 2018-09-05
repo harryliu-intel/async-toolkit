@@ -8,7 +8,7 @@
 
 static fm_uint16 lookUpPearsonHash(const fm_uint16 key)
 {
-    const fm_byte table[] =
+    static const fm_byte table[] =
     {
         11,  7,  4,  6,  0, 10,  3,  5,
         13, 14,  1,  2, 15, 12,  9,  8,
@@ -557,17 +557,24 @@ static void getFwdHashingCfg
 
 static void fetchL234HashKeys
 (
-    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyClassifierToHash * const in,
-    mbyHashKeys               * const hash_keys
+    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_macaddr    l2_dmac,
+    const fm_macaddr    l2_smac,
+    const fm_uint16     l2_etype,
+    const fm_uint16     l2_ivid1,
+    const fm_byte       qos_l2_vpri1,
+    const fm_bool       is_ipv4,
+    const fm_bool       is_ipv6,
+    const fm_uint64     l34_hash,
+    mbyHashKeys * const hash_keys
 )
 {
     mbyFwdHashingCfg fwd_hashing_cfg;
     getFwdHashingCfg(regs, &fwd_hashing_cfg);
 
-    fm_macaddr dmac  = (fwd_hashing_cfg.USE_DMAC) ? in->L2_DMAC : FM_LITERAL_U64(0);
-    fm_macaddr smac  = (fwd_hashing_cfg.USE_SMAC) ? in->L2_SMAC : FM_LITERAL_U64(0);
-    fm_macaddr xor   = (in->L2_DMAC ^ in->L2_SMAC) & FM_LITERAL_U64(0xFFFFFFFFFFFF);
+    fm_macaddr dmac  = (fwd_hashing_cfg.USE_DMAC) ? l2_dmac : FM_LITERAL_U64(0);
+    fm_macaddr smac  = (fwd_hashing_cfg.USE_SMAC) ? l2_smac : FM_LITERAL_U64(0);
+//  fm_macaddr xor   = (dmac ^ smac) & FM_LITERAL_U64(0xFFFFFFFFFFFF); // unused, why? <--- REVISIT!!!
     fm_macaddr dmac2 = 0;
     fm_macaddr smac2 = 0;
 
@@ -582,29 +589,29 @@ static void fetchL234HashKeys
         dmac2 = dmac;
         smac2 = smac;
     }
-    
+
     for (fm_uint i = 0, s = 40; i < 6; i++, s -= 8) {
         hash_keys->l234Key[i    ] = (dmac2 >> s) & 0xFF;
         hash_keys->l234Key[i + 6] = (smac2 >> s) & 0xFF;
     }
 
-    if (fwd_hashing_cfg.USE_TYPE && (in->L2_ETYPE >= 0x0600))
+    if (fwd_hashing_cfg.USE_TYPE && (l2_etype >= 0x0600))
         for (fm_uint i = 0, s = 8; i < 2; i++, s -= 8)
-            hash_keys->l234Key[12 + i] = (in->L2_ETYPE >> s) & 0xFF;
+            hash_keys->l234Key[12 + i] = (l2_etype >> s) & 0xFF;
 
     fm_uint16 vlan = 0;
 
     if (fwd_hashing_cfg.USE_VID)
-        vlan = in->L2_IVID1;
+        vlan = l2_ivid1;
 
     if (fwd_hashing_cfg.USE_VPRI)
-        vlan |= in->QOS_L2_VPRI1 << 12;
+        vlan |= qos_l2_vpri1 << 12;
 
     for (fm_uint i = 0, s = 8; i < 2; i++, s -= 8)
         hash_keys->l234Key[14 + i] = (vlan >> s) & 0xFF;
-    
+
     // Extract the configuration information and forward it:
-    fm_bool is_ip = in->IS_IPV4 || in->IS_IPV6;
+    fm_bool is_ip = is_ipv4 || is_ipv6;
 
     hash_keys->arpEcmpCfg = fwd_hashing_cfg.ECMP_ROTATION;
     hash_keys->zeroL2     = is_ip && !fwd_hashing_cfg.USE_L2_IF_IP;
@@ -612,25 +619,19 @@ static void fetchL234HashKeys
     hash_keys->useL34     = fwd_hashing_cfg.USE_L34;
     hash_keys->rotA       = fwd_hashing_cfg.ROTATION_A;
     hash_keys->rotB       = fwd_hashing_cfg.ROTATION_B;
-    hash_keys->crc34      = in->L34_HASH;
-}
+    hash_keys->crc34      = l34_hash;
 
-static void calcCrcKey
-(
-    mbyHashKeys hash_keys,
-    fm_uint64 * const crc234
-)
-{
-    fm_byte *keys  = &hash_keys.l234Key[0];
-    fm_uint length = sizeof(hash_keys.l234Key);
-    fm_uint width  = 48;
-    
+    // Calculate CRC234:
+    fm_byte  *keys   = &(hash_keys->l234Key[0]);
+    fm_uint   length = sizeof(hash_keys->l234Key);
+    fm_uint   width  = 48;
+
     fm_uint64 e_hash = ((fm_uint64) mbyCrc32ByteSwap (keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
     fm_uint64 c_hash = ((fm_uint64) mbyCrc32CByteSwap(keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
-
     fm_uint64 mask   = (FM_LITERAL_U64(1) << width) - FM_LITERAL_U64(1);
+    fm_uint64 crc234 = ((c_hash << 32) | e_hash) & mask;
 
-    *crc234 = ((c_hash << 32) | e_hash) & mask;
+    hash_keys->crc234 = crc234;
 }
 
 static void calcL234Hash
@@ -645,12 +646,12 @@ static void calcL234Hash
     fm_uint64 hash = (hash_keys.zeroL2) ? FM_LITERAL_U64(0) : hash_keys.crc234;
 
     if (hash_keys.useL34 && !hash_keys.zeroL34)
-        hash ^= ((hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF)) << 24) | 
+        hash ^= ((hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF)) << 24) |
                  (hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF));
 
     *rot_a_key = hash >> (MIN(hash_keys.rotA, 3) * 12) & FM_LITERAL_U64(0xFFF);
     *rot_b_key = hash >> (MIN(hash_keys.rotB, 3) * 12) & FM_LITERAL_U64(0xFFF);
-    
+
     *rot_a_val = lookUpPearsonHash(*rot_a_key);
     *rot_b_val = lookUpPearsonHash(*rot_b_key);
 }
@@ -660,7 +661,7 @@ static void calcL34Hash
     const mbyHashKeys   hash_keys,
     fm_byte             arp_hash[16],
     fm_uint16   * const raw_hash
-    
+
 )
 {
     fm_uint64 crc34 = hash_keys.crc34;
@@ -669,7 +670,7 @@ static void calcL34Hash
     fm_uint32 val   = lookUpPearsonHash(key);
 
     *raw_hash = ((val & 0xF) << 8) | ((key >> 4) & 0xFF);
-    
+
     fm_uint32 operand = ((val & 0xF) << 8) | ((key >> 4) & 0xFF);
 
     for (fm_uint32 i = 0, mult = 16; i < 16; i++, mult = (mult + 1) % 16)
@@ -683,27 +684,58 @@ void Hash
           mbyHashToNextHop    * const out
 )
 {
+    fm_macaddr l2_dmac      = in->L2_DMAC;
+    fm_macaddr l2_smac      = in->L2_SMAC;
+    fm_uint16  l2_etype     = in->L2_ETYPE;
+    fm_uint16  l2_ivid1     = in->L2_IVID1;
+    fm_byte    qos_l2_vpri1 = in->QOS_L2_VPRI1;
+    fm_bool    is_ipv4      = in->IS_IPV4;
+    fm_bool    is_ipv6      = in->IS_IPV6;
+    fm_uint64  l34_hash     = in->L34_HASH;
+
     mbyHashKeys hash_keys;
 
-    fetchL234HashKeys(regs, in, &hash_keys);
-    
-    fm_uint64 crc234 = 0;
-
-    calcCrcKey(hash_keys, &crc234);
+    fetchL234HashKeys
+    (
+        regs,
+        l2_dmac,
+        l2_smac,
+        l2_etype,
+        l2_ivid1,
+        qos_l2_vpri1,
+        is_ipv4,
+        is_ipv6,
+        l34_hash,
+        &hash_keys
+    );
 
     fm_uint16 raw_hash = 0;
     fm_byte   arp_hash[16] = { 0 };
-    
-    calcL34Hash(hash_keys, arp_hash, &raw_hash);
+
+    calcL34Hash
+    (
+        hash_keys,
+        arp_hash,
+        &raw_hash
+    );
 
     fm_uint16 rot_a_key = 0;
     fm_uint32 rot_a_val = 0;
     fm_uint16 rot_b_key = 0;
     fm_uint32 rot_b_val = 0;
 
-    calcL234Hash(hash_keys, &rot_a_key, &rot_a_val, &rot_b_key, &rot_b_val);
+    calcL234Hash
+    (
+        hash_keys,
+        &rot_a_key,
+        &rot_a_val,
+        &rot_b_key,
+        &rot_b_val
+    );
 
     // Write outputs:
+    out->L2_SMAC                 = l2_smac;
+    out->L2_DMAC                 = l2_dmac;
     out->HASH_KEYS               = hash_keys;
     out->HASH_ROT_A_PTABLE_INDEX = rot_a_key;
     out->HASH_ROT_A              = rot_a_val;
@@ -713,14 +745,12 @@ void Hash
 
     for (fm_uint i = 0; i < 16; i++)
         out->ARP_HASH[i]         = arp_hash[i];
-    
-    // Pass-thru from Classifier:
+
+    // Pass thru:
     out->FFU_FLAGS               = in->FFU_FLAGS;
     out->FFU_ROUTE               = in->FFU_ROUTE;
     out->ENCAP                   = in->ENCAP;
     out->DECAP                   = in->DECAP;
-    out->L2_SMAC                 = in->L2_SMAC;
-    out->L2_DMAC                 = in->L2_DMAC;
     out->DMAC_FROM_IPV6          = in->DMAC_FROM_IPV6;
     out->L2_IDOMAIN              = in->L2_IDOMAIN;
     out->L3_IDOMAIN              = in->L3_IDOMAIN;

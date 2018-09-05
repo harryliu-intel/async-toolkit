@@ -191,6 +191,7 @@ static void lookUpDestEntry
     if (strict_glort_routing) {
         dest_index = glort_ram.DEST_INDEX + (glort_b << length_a) + glort_a;
     } else {
+        // TODO Clarify calculation precedence for '%' and '?'.
         fm_uint32 hash = ((glort_ram.HASH_ROTATION) ? hash_rot_b : hash_rot_a)
             % (glort_ram.DEST_COUNT == 0) ? 16 : glort_ram.DEST_COUNT;
         dest_index = glort_ram.DEST_INDEX + (hash << length_a) + glort_a;
@@ -430,7 +431,7 @@ void MaskGen
     const fm_uint32     hash_rot_b      = in->HASH_ROT_A;
     const fm_macaddr    l2_smac         = in->L2_SMAC;
     const fm_macaddr    l2_dmac         = in->L2_DMAC;
-    const mbySTPState   l2_ifid1_state  = in->L2_IFID1_STATE;
+    const mbyStpState   l2_ifid1_state  = in->L2_IFID1_STATE;
     const fm_bool       no_learn        = in->NO_LEARN;
           fm_uint32     glort_dmask     = in->GLORT_DMASK;
           fm_byte       qos_swpri       = in->QOS_SWPRI;
@@ -528,6 +529,7 @@ void MaskGen
     // Traps:
 
     fm_bool store_trap_action = sys_cfg1.STORE_TRAP_ACTION;
+    // TODO Variable 'log_ip_mc_ttl' is assigned a value that is never used.
     fm_bool log_ip_mc_ttl     = FALSE;
     fm_bool l2_dmac_cpu       = isCpuMacAddress(regs, l2_dmac);
     fm_bool l2_dmac_zero      = (l2_dmac == 0);
