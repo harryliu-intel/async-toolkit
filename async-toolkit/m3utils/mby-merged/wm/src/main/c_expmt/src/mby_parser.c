@@ -48,20 +48,21 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
     fm_uint16 len = (p_end > p_beg) ? (p_end - p_beg + 1) : 0;
     fm_uint32 chksum = calcGenericChksum(buf, len);
     fm_bool   chksum_ok = ((chksum & 0xffff) > 0);
-    return chksum_ok; 
+    return chksum_ok;
 }
 
 // Parse the incoming packet and extracts useful fields from it
 void Parser
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxMacToParser  * const in, 
+    const mbyRxMacToParser  * const in,
           mbyParserToMapper * const out
 )
 {
     // Read inputs:
-    fm_uint32 rx_port   = in->RX_PORT;
-    fm_uint32 rx_length = in->RX_LENGTH;    
+    const fm_uint32       rx_port   = in->RX_PORT;
+    const fm_uint32       rx_length = in->RX_LENGTH;
+    const fm_byte * const rx_data   = in->RX_DATA;
 
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
@@ -84,7 +85,7 @@ void Parser
     fm_bool   pa_ex_trunc_header = FALSE;
     fm_bool   pa_ex_parsing_done = FALSE;
     fm_bool   pa_packet_type     = FALSE;  // added for MBY <-- REVISIT!
-    
+
     fm_uint16 pa_keys       [MBY_N_PARSER_KEYS] = { 0     };
     fm_bool   pa_keys_valid [MBY_N_PARSER_KEYS] = { FALSE };
     fm_bool   pa_flags      [MBY_N_PARSER_FLGS] = { FALSE };
@@ -111,8 +112,8 @@ void Parser
     // Read in segment data:
     fm_byte seg_data[MBY_PA_MAX_SEG_LEN];
     for (fm_uint i = 0; i < MBY_PA_MAX_SEG_LEN; i++)
-	seg_data[i] = (i < rx_length) ? in->RX_DATA[i] : 0;			
-    
+	seg_data[i] = (i < rx_length) ? rx_data[i] : 0;
+
     fm_uint16 w0 = getSegDataWord(init_w0_offset, pa_adj_seg_len, seg_data);
     fm_uint16 w1 = getSegDataWord(init_w1_offset, pa_adj_seg_len, seg_data);
     fm_uint16 w2 = getSegDataWord(init_w2_offset, pa_adj_seg_len, seg_data);
@@ -150,7 +151,7 @@ void Parser
                 hit_idx  [s] = ((fm_byte) r) & 0x1F;
                 hit_idx_v[s] = 1;
                 rule_matched = TRUE;
-            } 
+            }
 
         } // for r ...
 
@@ -158,12 +159,12 @@ void Parser
         ptr[s] = cur_ptr;
 
         // Update if a rule matched this stage, else pass unchanged to next stage:
-        if (rule_matched) 
+        if (rule_matched)
         {
             // Get analyzer fields:
             fm_int    r_hit = hit_idx[s];
             fm_uint64 ana_w_reg = 0;
-            
+
             mbyModelReadCSR64(regs, MBY_PARSER_ANA_W(s, r_hit, 0), &ana_w_reg);
 
             fm_byte skip           = FM_GET_FIELD64(ana_w_reg, MBY_PARSER_ANA_W, SKIP);
@@ -180,7 +181,7 @@ void Parser
             fm_uint16 next_op             = FM_GET_FIELD64(ana_s_reg, MBY_PARSER_ANA_S, NEXT_OP);
 
             fm_uint32 tmp_op_result = ((((fm_uint32) w2) << 16) & 0xffff0000) |
-                                      ((((fm_uint32) w2)      ) & 0x0000ffff) ; 
+                                      ((((fm_uint32) w2)      ) & 0x0000ffff) ;
 
             op_mask &= MBY_PA_ANA_OP_MASK_BITS;
             op_rot  &= MBY_PA_ANA_OP_ROT_BITS;
@@ -204,7 +205,7 @@ void Parser
 
             // Update pointer for next stage:
             cur_ptr += skip;
-            if (cur_ptr >= MBY_PA_MAX_PTR_LEN) 
+            if (cur_ptr >= MBY_PA_MAX_PTR_LEN)
                 cur_ptr = MBY_PA_MAX_PTR_LEN;
         }
 
@@ -233,9 +234,9 @@ void Parser
                 s_ena = FALSE; // disable further processing
                 pa_ex_stage = s & 0x1F; // 5 bits
                 if (eop == 1)
-                    pa_ex_trunc_header = TRUE; 
+                    pa_ex_trunc_header = TRUE;
                 else
-                    pa_ex_depth_exceed = TRUE; 
+                    pa_ex_depth_exceed = TRUE;
             }
 
             // Extraction action:
@@ -308,9 +309,10 @@ void Parser
     fm_byte otr_l3_ptr = pa_ptrs[MBY_OTR_L3_PTR];
     fm_bool otr_l3_v   = pa_flags[MBY_PA_OTR_L3_V_FLAG];
 
+    // TODO Variable 'is_ipv4' is assigned a value that is never used.
     fm_bool is_ipv4  = otr_l3_v &&  pa_keys_valid[MBY_OTR_IPHDR_KEY];
     fm_bool is_ipv6  = otr_l3_v && !pa_keys_valid[MBY_OTR_IPHDR_KEY];
-    
+
     fm_byte ip_len   = (is_ipv6) ?  4 : 1; // IPv6 Length field (2 empty keys precede IPv6 hdr)
     fm_byte n_keys   = (is_ipv6) ? 16 : 4; // number of outer IP addr keys
 
@@ -327,7 +329,7 @@ void Parser
     // Clear flags:
     fm_bool pa_l3len_err = FALSE;
     fm_bool pa_drop      = FALSE;
-    
+
     // Validate packet length:
     if (val_l3_len && l3_vld_chk)
     {
@@ -346,16 +348,16 @@ void Parser
     out->PA_ADJ_SEG_LEN     = pa_adj_seg_len;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
-        out->PA_KEYS      [i] = pa_keys      [i];  
-        out->PA_KEYS_VALID[i] = pa_keys_valid[i];  
+        out->PA_KEYS      [i] = pa_keys      [i];
+        out->PA_KEYS_VALID[i] = pa_keys_valid[i];
     }
 
     for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
-        out->PA_FLAGS[i] = pa_flags[i]; 
+        out->PA_FLAGS[i] = pa_flags[i];
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
-        out->PA_PTRS      [i] = pa_ptrs      [i]; 
-        out->PA_PTRS_VALID[i] = pa_ptrs_valid[i]; 
+        out->PA_PTRS      [i] = pa_ptrs      [i];
+        out->PA_PTRS_VALID[i] = pa_ptrs_valid[i];
     }
 
     out->PA_CSUM_OK         = pa_csum_ok;

@@ -1,20 +1,19 @@
 package com.intel.cg.hpfd.madisonbay
 
-import com.intel.cg.hpfd.madisonbay.Memory.{Address, Alignment, Bits, Bytes}
+import com.intel.cg.hpfd.madisonbay.Memory.{Address, AddressRange, Alignment, Bits, Bytes}
 import org.scalatest.{FlatSpec, Matchers}
 import org.scalacheck.{Prop, Properties}
 import org.scalacheck.Prop.forAll
+import org.scalatest.prop.Checkers
 
-class MemoryTest extends FlatSpec with Matchers{
+class MemoryTest extends FlatSpec with Matchers with Checkers{
 
   "toLong in Bits" should "return number of bits as long" in {
-    val bits = Bits(Long.MaxValue)
-    bits.toLong should equal(Long.MaxValue)
+    check(Prop.forAll((n: Long) => Bits(n).toLong == n))
   }
 
   "toBits in Bits" should "return number of bits as Bits" in {
-    val bits = Bits(Long.MaxValue)
-    bits.toBits should equal(Bits(Long.MaxValue))
+    check(Prop.forAll((n: Long) => Bits(n).toBits == Bits(n)))
   }
 
   "tryBytes in Bits" should "return None if there is less than 8 bits" in {
@@ -39,7 +38,6 @@ class MemoryTest extends FlatSpec with Matchers{
     bits.nextPower should equal(Bits(4))
   }
 
-
   "fullBytes in Bits" should "return 0 as Byte if there is less than 8 bits" in {
     val bits = Bits(7)
     bits.fullBytes should equal(Bytes(0))
@@ -63,16 +61,11 @@ class MemoryTest extends FlatSpec with Matchers{
   }
 
   "plus(+) in Bits" should "sum bits of two Bits objects" in {
-    val bits = Bits(Long.MaxValue)
-    val bits2 = Bits(0)
-    bits + bits2 should equal(Bits(Long.MaxValue))
+    check(Prop.forAll((n: Long, m:Long) => Bits(n) + Bits(m) == Bits(n+m)))
   }
 
-
   "minus(-) in Bits" should "subtract bits of two Bits objects" in {
-    val bits = Bits(Long.MaxValue)
-    val bits2 = Bits(0)
-    bits - bits2 should equal(Bits(Long.MaxValue))
+    check(Prop.forAll((n: Long, m:Long) => Bits(n) - Bits(m) == Bits(n-m)))
   }
 
   "slash(/) in Bits" should "return floor of Bits division" in {
@@ -164,11 +157,26 @@ class MemoryTest extends FlatSpec with Matchers{
     an [ArithmeticException] should be thrownBy address % bits
   }
 
-  "modAlign(Align) in Address" should "align address to block of size 2 pow N" in {
+  "alignTo(Align) in Address" should "align address to block of size 2 pow N" in {
     val address = Address(1, Bits(1))
     val al = Alignment(Bytes(4))
     val modA = address alignTo al
     modA.bits should equal(Bits(32))
   }
+
+  "AddressRange" should "throw IllegalArgumentException if created with range <= 0" in {
+    an [IllegalArgumentException] should be thrownBy AddressRange(Address(Bits(4)),Bits(0))
+  }
+  it should "throw IllegalArgumentException if created with first address param <= second address param" in {
+    an [IllegalArgumentException] should be thrownBy AddressRange(Address(Bits(4)),Address(Bits(0)))
+  }
+
+  "placeReg in AddressRange" should "return properly aligned address range" in {
+    val ar = AddressRange.placeReg(Address(Bits(17)), Alignment(Bytes(2)))
+    ar.pos.toBits should equal(Bits(32))
+    ar.width should equal(Bits(16))
+  }
+
+
 
 }

@@ -18,6 +18,11 @@ package object ppe {
   class L3Domain(val d : Int) extends AnyVal
   class L2Domain(val d : Int) extends AnyVal
 
+  object IPVersion extends Enumeration  {
+    val V4 = Value(0x4, "IPv4")
+    val V6 = Value(0x6, "IPv4")
+  }
+
   object PacketClass extends Enumeration {
     val Unicast = Value(0x1, "Unicast")
     val Broadcast = Value(0x2, "Broadcast")
@@ -64,9 +69,27 @@ package object ppe {
       )
 
     override def toString(): String = {
-      def b(x : Int) : String = ((addr >> x * 8) & 0xff).toByte.toHexString
-      s"${b(0)}:${b(1)}:${b(2)}:${b(3)}:${b(4)}:${b(5)}"
+      def b(x : Int) : String = {
+        val byteVal = ((addr >> x * 8) & 0xff).toByte
+        f"$byteVal%02X"
+      }
+      s"${b(5)}:${b(4)}:${b(3)}:${b(2)}:${b(1)}:${b(0)}"
     }
+
+    /**
+      * Mask off low order bits
+      * @param bits number of bits to mask to zero from LSBs
+      * @return new MACAddress with the mask applied
+      */
+    def maskLsb(bits : Int) : MACAddress = {
+      val mask = ~((1l << bits) - 1)
+      MACAddress(mask & addr)
+    }
+  }
+  object MACAddress {
+    def apply(addr : Long) = new MACAddress(addr)
+    def apply(a0: Short, a1: Short, a2: Short) = new MACAddress(a2.toLong << 32 & a1.toLong << 16 & a0.toLong)
+
   }
 
   /**
@@ -93,6 +116,8 @@ package object ppe {
 
   class TrafficClass(val tc : Int) extends AnyVal
 
+
+
   case class ParserOutput (rxPort : PortIndex,
                            pktMeta : Int,
                            rxFlags : EplRxFlags,
@@ -111,4 +136,35 @@ package object ppe {
                            paDrop : Boolean,
                            paPacketType : Int
                           )
+  implicit def nibblesKey16(n : (Int, Int, Int, Int)) : Key16 = {
+    (n._1 | n._2 << 4 | n._3 << 8 | n._4 << 12).toShort
+  }
+
+  //Table 4 - Fields and classification granularity
+  //  0..63	16b	KEY16s (0..31)
+  //64..95	8b	KEY8s (0..31)
+  //96..159	32b	KEY32s (0..15)
+  type Key16 = Short
+  type Key8 = Byte
+  type Key32 = Int
+
+  class FieldVector {
+    val array = Array.ofDim[Byte](160)
+    def update(i: Int)(k : Key8) { array(i) = k }
+    def k16(i : Int): Key16 = {
+      require(i %2 == 0)
+      require(i < 64)
+
+      array(i).toShort
+    }
+    def k32(i : Int): Key32 = {
+      require(i %4 == 0)
+      array(i).toInt
+    }
+    def k8(i : Int): Key32 = {
+      require(i %4 == 0)
+      array(i).toInt
+    }
+  }
+
 }

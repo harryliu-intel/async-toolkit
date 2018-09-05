@@ -40,4 +40,3 @@ typedef struct mbyTxStatsToTxMacStruct
 } mbyTxStatsToTxMac;
 
 #endif
-

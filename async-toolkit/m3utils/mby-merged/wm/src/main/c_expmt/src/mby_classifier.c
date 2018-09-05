@@ -1290,6 +1290,7 @@ static void transformActions
     ffu_flags.rx_mirror    = actions.act1[MBY_FFU_ACTION_RX_MIRROR].val;
     ffu_flags.capture_time = actions.act1[MBY_FFU_ACTION_CAPT_TIME].val;
 
+    // FIXME cppcheck (error) Uninitialized struct member: ffu_flags.tx_tag
     for (fm_uint i = 0; i <= 1; i++)
         FM_SET_UNNAMED_FIELD(ffu_flags.tx_tag, i, 1, actions.act1[i+MBY_FFU_ACTION_TX_TAG0].val);
 
