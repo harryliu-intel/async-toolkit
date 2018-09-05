@@ -1169,7 +1169,7 @@ void Modifier
     const fm_bool         tx_drop_in        = in->TX_DROP;
     const fm_uint32       tx_length_in      = in->TX_LENGTH;
     const fm_byte         tx_tag            = in->TX_TAG;
-    const fm_uint32       tx_stats_last_len = in->TX_STATS_LAST_LEN;
+    const fm_uint32       tx_stats_last_len = 0; // was: in->TX_STATS_LAST_LEN; <--- FIXME!!!
     const fm_uint16       l2_evid1          = in->L2_EVID1;
     const fm_uint16       edglort           = in->EDGLORT;
     const mbyMirrorType   mirtyp            = in->MIRTYP;

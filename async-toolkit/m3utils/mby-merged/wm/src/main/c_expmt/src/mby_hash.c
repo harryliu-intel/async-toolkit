@@ -756,4 +756,5 @@ void Hash
     out->L3_IDOMAIN              = in->L3_IDOMAIN;
     out->L2_IVID1                = in->L2_IVID1;
     out->LEARN_MODE              = in->LEARN_MODE;
+    out->TRAFFIC_CLASS           = in->TRAFFIC_CLASS;
 }

@@ -612,21 +612,21 @@ typedef struct mbyMapRewriteStruct
 
 typedef struct mbyMapperToClassifierStruct
 {
-    mbyParserInfo           PARSER_INFO;      // parser info structure
-    fm_bool                 PARSER_ERROR;     // header parse error
-    fm_bool                 OTR_MPLS_V;       // parser outer MPLS packet valid
-    mbyClassifierKeys       FFU_KEYS;         // classifier TCAM lookup keys
     mbyClassifierActions    FFU_ACTIONS;      // classifier actions
+    mbyClassifierKeys       FFU_KEYS;         // classifier TCAM lookup keys
     fm_byte                 FFU_SCENARIO;     // 6-bit classifier scenario
-    fm_byte                 FFU_VRID;         // 4-bit classifier vrid
     fm_bool                 IP_OPTION[2];     // trap_ip_iptions count
-    fm_bool                 OPERATOR_ID;      // operator ID
     fm_uint16               L2_IDOMAIN;       // L2 ingress domain
-    fm_byte                 L3_IDOMAIN;       // L3 ingress domain
-    fm_byte                 PRIORITY_PROFILE; // 5-bit classifier priority profile
-    fm_bool                 NO_PRI_ENC;       // mapper priority encoding
-    fm_bool                 LEARN_MODE;       // learning mode: 0=SVL, 1=IVL
     fm_uint16               L2_IVLAN1_CNT;    // ingress VLAN counter
+    fm_byte                 L3_IDOMAIN;       // L3 ingress domain
+    fm_bool                 LEARN_MODE;       // learning mode: 0=SVL, 1=IVL
+    fm_bool                 NO_PRI_ENC;       // mapper priority encoding
+    fm_bool                 OPERATOR_ID;      // operator ID
+    fm_bool                 OTR_MPLS_V;       // parser outer MPLS packet valid
+    fm_bool                 PARSER_ERROR;     // header parse error
+    mbyParserInfo           PARSER_INFO;      // parser info structure
+    fm_byte                 PRIORITY_PROFILE; // 5-bit classifier priority profile
+    fm_byte                 TRAFFIC_CLASS;    // 3-bit traffic class
 
 } mbyMapperToClassifier;
 

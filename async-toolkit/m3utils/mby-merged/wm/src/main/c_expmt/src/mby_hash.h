@@ -127,6 +127,7 @@ typedef struct mbyHashToNextHopStruct
     fm_byte                 L3_IDOMAIN;
     fm_uint16               L2_IVID1;
     fm_bool                 LEARN_MODE;
+    fm_byte                 TRAFFIC_CLASS;          // 3-bit traffic class
 
 } mbyHashToNextHop;
 

@@ -123,14 +123,14 @@ static void handleRxBank1
           fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
     const fm_uint32 rx_length,
     const fm_uint32 rx_port,
-    const fm_byte   tc // traffic class
+    const fm_byte   traffic_class
 )
 {
     fm_uint32 bank  = 1;
     fm_uint16 index = getBankIndex(rx_port);
     fm_uint64 len   = rx_length;
 
-    index += (tc & 0x7);
+    index += (traffic_class & 0x7);
 
     updateRxStatsBank(regs, bank, index, len);
 }
@@ -249,7 +249,7 @@ void RxStats
     const fm_bool    is_ipv6       = in->IS_IPV6;
     const fm_macaddr l2_dmac       = in->L2_DMAC;
     const fm_uint16  l2_ivlan1_cnt = in->L2_IVLAN1_CNT;
-    const fm_byte    tc            = in->TC;      // = traffic class
+    const fm_byte    traffic_class = in->TRAFFIC_CLASS;
     const fm_uint    action        = in->ACTION;
 
     fm_bool is_bcast = isBroadcastMacAddress(l2_dmac);
@@ -260,7 +260,7 @@ void RxStats
     handleRxBank0(regs, rx_length, rx_port, is_ipv4, is_ipv6, is_bcast, is_mcast, is_ucast);
 
     // Handle per-port RX TC counters:
-    handleRxBank1(regs, rx_length, rx_port, tc);
+    handleRxBank1(regs, rx_length, rx_port, traffic_class);
 
     // Perform RX forwarding action:
     fm_bool drop_act = ((action & 0x10) != 0);
@@ -282,7 +282,6 @@ void RxStats
     out->TX_DROP           = in->TX_DROP;
     out->TX_LENGTH         = in->TX_LENGTH;
     out->TX_TAG            = in->TX_TAG;
-    out->TX_STATS_LAST_LEN = in->TX_STATS_LAST_LEN;
     out->L2_EVID1          = in->L2_EVID1;
     out->EDGLORT           = in->EDGLORT;
     out->MIRTYP            = in->MIRTYP;

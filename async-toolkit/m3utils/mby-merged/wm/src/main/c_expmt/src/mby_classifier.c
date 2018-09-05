@@ -1204,110 +1204,131 @@ static fm_macaddr extractDmac(const fm_uint32 ip_lo, const fm_uint32 ip_hi)
 
 static void transformActions
 (
-    fm_uint32                              regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMapperToClassifier    * const in,
-    const mbyClassifierKeys                keys,
-    const mbyClassifierActions             actions,
-    const mbyClassifierMuxedAction         muxed_action,
-    const fm_uint32                        ecmp_hash,
-    const fm_uint64                        mod_meta,
-    mbyClassifierToHash            * const out
+    fm_uint32                        regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyClassifierKeys          keys,
+    const mbyClassifierActions       actions,
+    const mbyClassifierMuxedAction   muxed_action,
+    const fm_bool                    ip_option[2],
+    const mbyParserInfo              parser_info,
+    const fm_uint32                  ecmp_hash,
+    const fm_uint64                  mod_meta,
+    fm_bool                  * const decap,
+    fm_bool                  * const encap,
+    fm_byte                  * const mod_idx,
+    fm_uint16                * const l2_etype,
+    fm_byte                  * const mpls_pop,
+    fm_uint64                * const sglort,
+    fm_uint64                * const idglort,
+    fm_macaddr               * const l2_smac,
+    fm_macaddr               * const l2_dmac,
+    fm_macaddr               * const dmac_from_ipv6,
+    fm_bool                  * const is_ipv4,
+    fm_bool                  * const is_ipv6,
+    fm_uint16                * const l3_length,
+    fm_uint16                * const inner_l3_length,
+    fm_uint16                * const outer_l3_length,
+    fm_bool                  * const trap_ip_options,
+    fm_bool                  * const drop_ttl,
+    fm_bool                  * const trap_icmp,
+    fm_bool                  * const trap_igmp,
+    mbyClassifierFlags       * const ffu_flags,
+    fm_uint32                * const ffu_route,
+    fm_bool                  * const no_learn,
+    fm_uint16                * const l2_ivid1,
+    fm_byte                  * const qos_l2_vpri1,
+    fm_byte                  * const ffu_trig,
+    fm_uint32                * const policer_action
 )
 {
-    fm_bool   decap    = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 1) & 0x1;
-    fm_bool   encap    =  actions.act24[MBY_FFU_ACTION_MOD_IDX ].val & 0x1;
-    fm_uint32 mod_idx  = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
-    fm_byte   mpls_pop =  actions.act4 [MBY_FFU_ACTION_MPLS_POP].val;
+    *decap    = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 1) & 0x1;
+    *encap    =  actions.act24[MBY_FFU_ACTION_MOD_IDX ].val & 0x1;
+    *mod_idx  = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
+    *mpls_pop =  actions.act4 [MBY_FFU_ACTION_MPLS_POP].val;
 
-    fm_uint64 sglort  = 0;
-    FM_SET_UNNAMED_FIELD64(sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
-    FM_SET_UNNAMED_FIELD64(sglort,  8, 16, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2    ]);
+    *sglort = 0;
+    FM_SET_UNNAMED_FIELD64(*sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
+    FM_SET_UNNAMED_FIELD64(*sglort,  8, 16, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2    ]);
 
-    fm_uint64 idglort = 0;
-    FM_SET_UNNAMED_FIELD64(idglort, 0,  8, keys.key8[(MBY_RE_KEYS_DGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
-    FM_SET_UNNAMED_FIELD64(idglort, 8, 16, keys.key8[(MBY_RE_KEYS_DGLORT - MBY_RE_KEYS_GENERAL_8B)*2    ]);
+    *idglort = 0;
+    FM_SET_UNNAMED_FIELD64(*idglort, 0,  8, keys.key8[(MBY_RE_KEYS_DGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
+    FM_SET_UNNAMED_FIELD64(*idglort, 8, 16, keys.key8[(MBY_RE_KEYS_DGLORT - MBY_RE_KEYS_GENERAL_8B)*2    ]);
 
-    fm_uint64 l2_smac     = 0;
-    fm_uint   l2_smac_off = (decap) ? MBY_RE_KEYS_INNER_SMAC : MBY_RE_KEYS_OUTER_SMAC;
+    *l2_smac = 0;
+    fm_uint    l2_smac_off = (*decap) ? MBY_RE_KEYS_INNER_SMAC : MBY_RE_KEYS_OUTER_SMAC;
     for (fm_uint i = 0; i <= 2; i++)
-        FM_SET_UNNAMED_FIELD64(l2_smac, (16 * i), 16, keys.key16[l2_smac_off + (2 - i)])
+        FM_SET_UNNAMED_FIELD64(*l2_smac, (16 * i), 16, keys.key16[l2_smac_off + (2 - i)])
 
-    fm_uint64 l2_dmac  = 0;
-    fm_uint   l2_dmac_off = (decap) ? MBY_RE_KEYS_INNER_DMAC : MBY_RE_KEYS_OUTER_DMAC;
+    *l2_dmac  = 0;
+    fm_uint   l2_dmac_off = (*decap) ? MBY_RE_KEYS_INNER_DMAC : MBY_RE_KEYS_OUTER_DMAC;
     for (fm_uint i = 0; i <= 2; i++)
-        FM_SET_UNNAMED_FIELD64(l2_dmac, (16 * i), 16, keys.key16[l2_dmac_off + (2 - i)])
+        FM_SET_UNNAMED_FIELD64(*l2_dmac, (16 * i), 16, keys.key16[l2_dmac_off + (2 - i)])
 
-    fm_uint16 l2_etype = (decap) ? keys.key16[MBY_RE_KEYS_INNER_ETYPE]
-                                 : keys.key16[MBY_RE_KEYS_OUTER_ETYPE];
+    *l2_etype = (*decap) ? keys.key16[MBY_RE_KEYS_INNER_ETYPE] : keys.key16[MBY_RE_KEYS_OUTER_ETYPE];
 
-    fm_uint16  ip_prot = (decap) ? keys.key8[MBY_FFU_KEY8_INNER_PROT] : keys.key8[MBY_FFU_KEY8_OUTER_PROT];
+    fm_uint16  ip_prot = (*decap) ? keys.key8[MBY_FFU_KEY8_INNER_PROT] : keys.key8[MBY_FFU_KEY8_OUTER_PROT];
 
-    fm_uint    dmac_ipv6_off_lo = (decap) ? MBY_FFU_KEY32_INNER_DIP_31_0  : MBY_FFU_KEY32_OUTER_DIP_31_0;
-    fm_uint    dmac_ipv6_off_hi = (decap) ? MBY_FFU_KEY32_INNER_DIP_63_32 : MBY_FFU_KEY32_OUTER_DIP_63_32;
+    fm_uint    dmac_ipv6_off_lo = (*decap) ? MBY_FFU_KEY32_INNER_DIP_31_0  : MBY_FFU_KEY32_OUTER_DIP_31_0;
+    fm_uint    dmac_ipv6_off_hi = (*decap) ? MBY_FFU_KEY32_INNER_DIP_63_32 : MBY_FFU_KEY32_OUTER_DIP_63_32;
 
-    fm_macaddr dmac_from_ipv6   = extractDmac(keys.key32[dmac_ipv6_off_lo], keys.key32[dmac_ipv6_off_hi]);
+    *dmac_from_ipv6 = extractDmac(keys.key32[dmac_ipv6_off_lo], keys.key32[dmac_ipv6_off_hi]);
 
-    mbyParserInfo parser_info = in->PARSER_INFO;
+    *is_ipv4 = (*decap) ? (parser_info.inr_l3_len && !parser_info.inr_l3_v6)
+                        : (parser_info.otr_l3_len && !parser_info.otr_l3_v6);
 
-    fm_bool is_ipv4 = (decap) ? (parser_info.inr_l3_len && !parser_info.inr_l3_v6)
-                              : (parser_info.otr_l3_len && !parser_info.otr_l3_v6);
+    *is_ipv6 = (*decap) ? (parser_info.inr_l3_len &&  parser_info.inr_l3_v6)
+                        : (parser_info.otr_l3_len &&  parser_info.otr_l3_v6);
 
-    fm_bool is_ipv6 = (decap) ? (parser_info.inr_l3_len &&  parser_info.inr_l3_v6)
-                              : (parser_info.otr_l3_len &&  parser_info.otr_l3_v6);
+    fm_uint32 l3_length_off = (*decap) ? MBY_FFU_KEY8_INNER_LEN : MBY_FFU_KEY8_OUTER_LEN;
+    *l3_length = 0;
+    FM_SET_UNNAMED_FIELD64(*l3_length, 0, 8, keys.key8[l3_length_off + 1]);
+    FM_SET_UNNAMED_FIELD64(*l3_length, 8, 8, keys.key8[l3_length_off    ]);
 
-    fm_uint l3_length_off = (decap) ? MBY_FFU_KEY8_INNER_LEN : MBY_FFU_KEY8_OUTER_LEN;
-    fm_uint16 l3_length = 0;
-    FM_SET_UNNAMED_FIELD64(l3_length, 0, 8, keys.key8[l3_length_off + 1]);
-    FM_SET_UNNAMED_FIELD64(l3_length, 8, 8, keys.key8[l3_length_off    ]);
-
-    fm_bool trap_ip_options = in->IP_OPTION[decap];
-
-    fm_bool otr_mpls_v = in->OTR_MPLS_V;
+    *trap_ip_options = ip_option[*decap];
 
     fm_bool is_ttl01 = (muxed_action.ttl01 & 1) || ((muxed_action.ttl01 >> 1) & 1);
-    fm_bool drop_ttl = is_ttl01 && (is_ipv4 || is_ipv6 || otr_mpls_v);
 
-    fm_bool trap_icmp = drop_ttl &&
-        ((is_ipv4 && (ip_prot == MBY_PROT_ICMPv4)) || (is_ipv6 && (ip_prot == MBY_PROT_ICMPv6)));
+    *drop_ttl = is_ttl01 && (*is_ipv4 || *is_ipv6);
 
-    fm_bool trap_igmp = is_ipv4 && (ip_prot == MBY_PROT_IGMP);
+    *trap_icmp = drop_ttl &&
+        ((*is_ipv4 && (ip_prot == MBY_PROT_ICMPv4)) || (*is_ipv6 && (ip_prot == MBY_PROT_ICMPv6)));
 
-    fm_uint16 inner_l3_length = 0;
-    fm_uint   inner_index = (MBY_RE_KEYS_INNER_IP_LEN - MBY_RE_KEYS_GENERAL_8B) * 2 + 1;
-    FM_SET_UNNAMED_FIELD64(inner_l3_length, 0, 8, keys.key8[inner_index]);
-    FM_SET_UNNAMED_FIELD64(inner_l3_length, 8, 8, keys.key8[inner_index - 1]);
+    *trap_igmp = *is_ipv4 && (ip_prot == MBY_PROT_IGMP);
 
-    fm_uint16 outer_l3_length = 0;
-    fm_uint   outer_index = (MBY_RE_KEYS_OUTER_IP_LEN - MBY_RE_KEYS_GENERAL_8B) * 2 + 1;
-    FM_SET_UNNAMED_FIELD64(outer_l3_length, 0, 8, keys.key8[outer_index]);
-    FM_SET_UNNAMED_FIELD64(outer_l3_length, 8, 8, keys.key8[outer_index - 1]);
+    *inner_l3_length = 0;
+    fm_uint inner_index = (MBY_RE_KEYS_INNER_IP_LEN - MBY_RE_KEYS_GENERAL_8B) * 2 + 1;
+    FM_SET_UNNAMED_FIELD64(*inner_l3_length, 0, 8, keys.key8[inner_index]);
+    FM_SET_UNNAMED_FIELD64(*inner_l3_length, 8, 8, keys.key8[inner_index - 1]);
 
-    mbyClassifierFlags ffu_flags;
-    ffu_flags.drop         = actions.act1[MBY_FFU_ACTION_DROP     ].val;
-    ffu_flags.trap         = actions.act1[MBY_FFU_ACTION_TRAP     ].val;
-    ffu_flags.log          = actions.act1[MBY_FFU_ACTION_LOG      ].val;
-    ffu_flags.no_route     = actions.act1[MBY_FFU_ACTION_NO_ROUTE ].val;
-    ffu_flags.rx_mirror    = actions.act1[MBY_FFU_ACTION_RX_MIRROR].val;
-    ffu_flags.capture_time = actions.act1[MBY_FFU_ACTION_CAPT_TIME].val;
+    *outer_l3_length = 0;
+    fm_uint outer_index = (MBY_RE_KEYS_OUTER_IP_LEN - MBY_RE_KEYS_GENERAL_8B) * 2 + 1;
+    FM_SET_UNNAMED_FIELD64(*outer_l3_length, 0, 8, keys.key8[outer_index]);
+    FM_SET_UNNAMED_FIELD64(*outer_l3_length, 8, 8, keys.key8[outer_index - 1]);
+
+    ffu_flags->drop         = actions.act1[MBY_FFU_ACTION_DROP     ].val;
+    ffu_flags->trap         = actions.act1[MBY_FFU_ACTION_TRAP     ].val;
+    ffu_flags->log          = actions.act1[MBY_FFU_ACTION_LOG      ].val;
+    ffu_flags->no_route     = actions.act1[MBY_FFU_ACTION_NO_ROUTE ].val;
+    ffu_flags->rx_mirror    = actions.act1[MBY_FFU_ACTION_RX_MIRROR].val;
+    ffu_flags->capture_time = actions.act1[MBY_FFU_ACTION_CAPT_TIME].val;
 
     // FIXME cppcheck (error) Uninitialized struct member: ffu_flags.tx_tag
     for (fm_uint i = 0; i <= 1; i++)
-        FM_SET_UNNAMED_FIELD(ffu_flags.tx_tag, i, 1, actions.act1[i+MBY_FFU_ACTION_TX_TAG0].val);
+        FM_SET_UNNAMED_FIELD(ffu_flags->tx_tag, i, 1, actions.act1[i+MBY_FFU_ACTION_TX_TAG0].val);
 
-    fm_uint32 ffu_route = 0;
-    FM_SET_UNNAMED_FIELD64(ffu_route, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_FFU_ACTION_FWD].val, 0, 22));
+    *ffu_route = 0;
+    FM_SET_UNNAMED_FIELD64(*ffu_route, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_FFU_ACTION_FWD].val, 0, 22));
 
-    fm_bool no_learn = 0;
-    FM_SET_UNNAMED_FIELD(no_learn, 0, 1, ~actions.act1[MBY_FFU_ACTION_LEARN].val);
+    *no_learn = FALSE;
+    FM_SET_UNNAMED_FIELD(*no_learn, 0, 1, ~actions.act1[MBY_FFU_ACTION_LEARN].val);
 
-    fm_uint16 l2_ivid1 = 0;
-    if (decap && actions.act4[MBY_FFU_ACTION_VID_LOW].prec <= 1)
-        l2_ivid1 = keys.key16[MBY_RE_KEYS_INNER_VLAN1];
+    *l2_ivid1 = 0;
+    if (*decap && actions.act4[MBY_FFU_ACTION_VID_LOW].prec <= 1)
+        *l2_ivid1 = keys.key16[MBY_RE_KEYS_INNER_VLAN1];
     else
         for (fm_uint i = 0; i <= (MBY_FFU_ACTION_VID_HIGH - MBY_FFU_ACTION_VID_LOW); i++)
-            FM_SET_UNNAMED_FIELD(l2_ivid1, i * 4, 4, actions.act4[MBY_FFU_ACTION_VID_LOW+i].val);
+            FM_SET_UNNAMED_FIELD(*l2_ivid1, i * 4, 4, actions.act4[MBY_FFU_ACTION_VID_LOW+i].val);
 
-    fm_bool qos_l2_vpri1_sel = decap
+    fm_bool qos_l2_vpri1_sel = *decap
         && (actions.act4[MBY_FFU_ACTION_VPRI_LOW ].val <= 1)
         && (actions.act4[MBY_FFU_ACTION_VPRI_HIGH].val <= 1);
 
@@ -1315,24 +1336,150 @@ static void transformActions
            ? ((keys.key16[MBY_RE_KEYS_OUTER_VLAN1] >> 12) & 0xF)
            : ((keys.key16[MBY_RE_KEYS_INNER_VLAN1] >> 12) & 0xF);
 
-    fm_byte qos_l2_vpri1 = (qos_l2_vpri1_sel) ? qos_l2_vpri1_decap : muxed_action.vpri;
+    *qos_l2_vpri1 = (qos_l2_vpri1_sel) ? qos_l2_vpri1_decap : muxed_action.vpri;
 
-    fm_byte ffu_trig = 0;
+    *ffu_trig = 0;
     for (fm_uint i = MBY_FFU_ACTION_TRIGGER0; i <= MBY_FFU_ACTION_TRIGGER7; i++)
-        FM_SET_UNNAMED_FIELD(ffu_trig, i - MBY_FFU_ACTION_TRIGGER0, 1, actions.act1[i].val);
+        FM_SET_UNNAMED_FIELD(*ffu_trig, i - MBY_FFU_ACTION_TRIGGER0, 1, actions.act1[i].val);
 
-    fm_uint32 policer_action[MBY_FFU_ACTION_POLICER3 + 1] = { 0 };
     for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
         policer_action[i] = actions.act24[i].val;
+}
 
-    // Pass-thru from Mapper:
-    fm_uint16 l2_idomain = in->L2_IDOMAIN;
-    fm_byte   l3_idomain = in->L3_IDOMAIN;    
-    
+void Classifier
+(
+    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    const mbyMapperToClassifier * const in,
+          mbyClassifierToHash   * const out
+)
+{
+    // Read inputs from the Mapper:
+    const mbyClassifierActions  actions_in  = in->FFU_ACTIONS;
+    const mbyClassifierKeys     keys        = in->FFU_KEYS;
+    const fm_byte               scenario_in = in->FFU_SCENARIO;
+    const fm_bool * const       ip_option   = in->IP_OPTION;
+    const mbyParserInfo         parser_info = in->PARSER_INFO;
+    const fm_byte               pri_profile = in->PRIORITY_PROFILE;
+
+    fm_byte              scenario = scenario_in;
+    mbyClassifierActions actions  = actions_in;
+
+    // Use group = 0 for now (MBY spec group = 0..1) <-- FIXME!!!!
+    for (fm_byte group = 0; group < 1; group++)
+    {
+        // Perform wildcard match (WCM) lookup:
+        matchWildcard(regs, &keys, scenario, group, &actions);
+
+        // Perform exact match (EM) lookup:
+        matchExact(regs, &keys, scenario, group, &actions);
+#if 0
+        // Remap subset of keys going into next group:
+        remapKeys(...);
+#endif
+        // Update scenario based on scenario action:
+        for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
+            if (actions.act1[s].prec != 0)
+                FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
+        }
+    }
+
+    // Populate muxed_action:
+    mbyClassifierMuxedAction muxed_action;
+
+    populateMuxedAction
+    (
+        regs,
+        keys,
+        actions,
+        pri_profile,
+        &muxed_action
+    );
+
+    // Populate ecmp_hash and mod_meta:
+    fm_uint32 ecmp_hash = 0;
+    fm_uint64 mod_meta  = 0;
+
+    populateEntropy
+    (
+        regs,
+        keys,
+        actions,
+        &ecmp_hash,
+        &mod_meta
+    );
+
+    // Transform exisiting keys, actions, etc. into desired output:
+
+    fm_bool                  decap           = FALSE;
+    fm_bool                  encap           = FALSE;
+    fm_byte                  mod_idx         = 0;
+    fm_uint16                l2_etype        = 0;
+    fm_byte                  mpls_pop        = 0;
+    fm_uint64                sglort          = 0;
+    fm_uint64                idglort         = 0;
+    fm_macaddr               l2_smac         = 0;
+    fm_macaddr               l2_dmac         = 0;
+    fm_macaddr               dmac_from_ipv6  = 0;
+    fm_bool                  is_ipv4         = FALSE;
+    fm_bool                  is_ipv6         = FALSE;
+    fm_uint16                l3_length       = 0;
+    fm_uint16                inner_l3_length = 0;
+    fm_uint16                outer_l3_length = 0;
+    fm_bool                  trap_ip_options = FALSE;
+    fm_bool                  drop_ttl        = FALSE;
+    fm_bool                  trap_icmp       = FALSE;
+    fm_bool                  trap_igmp       = FALSE;
+    mbyClassifierFlags       ffu_flags       = { 0 };
+    fm_uint32                ffu_route       = 0;
+    fm_bool                  no_learn        = FALSE;
+    fm_uint16                l2_ivid1        = 0;
+    fm_byte                  qos_l2_vpri1    = 0;
+    fm_byte                  ffu_trig        = 0;
+
+    fm_uint32                policer_action[MBY_FFU_ACTION_POLICER3 + 1] = { 0 };
+
+    transformActions
+    (
+        regs,
+        keys,
+        actions,
+        muxed_action,
+        ip_option,
+        parser_info,
+        ecmp_hash,
+        mod_meta,
+        &decap,
+        &encap,
+        &mod_idx,
+        &l2_etype,
+        &mpls_pop,
+        &sglort,
+        &idglort,
+        &l2_smac,
+        &l2_dmac,
+        &dmac_from_ipv6,
+        &is_ipv4,
+        &is_ipv6,
+        &l3_length,
+        &inner_l3_length,
+        &outer_l3_length,
+        &trap_ip_options,
+        &drop_ttl,
+        &trap_icmp,
+        &trap_igmp,
+        &ffu_flags,
+        &ffu_route,
+        &no_learn,
+        &l2_ivid1,
+        &qos_l2_vpri1,
+        &ffu_trig,
+        policer_action
+    );
+
+    // Write outputs:
+
     // Write outputs:
     out->L34_HASH         = ecmp_hash;
-    out->L2_IDOMAIN       = l2_idomain;
-    out->L3_IDOMAIN       = l3_idomain;
     out->MOD_IDX          = mod_idx;
     out->L2_ETYPE         = l2_etype;
     out->MPLS_POP         = mpls_pop;
@@ -1368,54 +1515,11 @@ static void transformActions
 
     for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
         out->POLICER_ACTION[i] = policer_action[i];
-}
 
-void Classifier
-(
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMapperToClassifier * const in,
-          mbyClassifierToHash   * const out
-)
-{
-    // Read inputs from the Mapper:
-    fm_byte               scenario    = in->FFU_SCENARIO;
-    mbyClassifierKeys     keys        = in->FFU_KEYS;
-    mbyClassifierActions  actions     = in->FFU_ACTIONS;
-    fm_byte               pri_profile = in->PRIORITY_PROFILE;
+    // Pass thru:
 
-    // Use group = 0 for now (MBY spec group = 0..1) <-- FIXME!!!!
-    for (fm_byte group = 0; group < 1; group++)
-    {
-        // Perform wildcard match (WCM) lookup:
-        matchWildcard(regs, &keys, scenario, group, &actions);
-
-        // Perform exact match (EM) lookup:
-        matchExact(regs, &keys, scenario, group, &actions);
-#if 0
-        // Remap subset of keys going into next group:
-        remapKeys(...);
-#endif
-        // Update scenario based on scenario action:
-        for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
-            if (actions.act1[s].prec != 0)
-                FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
-        }
-    }
-
-    // Populate muxed_action:
-    mbyClassifierMuxedAction muxed_action;
-
-    populateMuxedAction(regs, keys, actions, pri_profile, &muxed_action);
-
-    // Populate ecmp_hash and mod_meta:
-    fm_uint32 ecmp_hash = 0;
-    fm_uint64 mod_meta  = 0;
-
-    populateEntropy(regs, keys, actions, &ecmp_hash, &mod_meta);
-
-    // Transform exisiting keys, actions, etc. into desired output:
-    transformActions(regs, in, keys, actions, muxed_action, ecmp_hash, mod_meta, out);
-
-    // Pass-thru
-    out->LEARN_MODE = in->LEARN_MODE;
+    out->L2_IDOMAIN    = in->L2_IDOMAIN;
+    out->L3_IDOMAIN    = in->L3_IDOMAIN;
+    out->LEARN_MODE    = in->LEARN_MODE;
+    out->TRAFFIC_CLASS = in->TRAFFIC_CLASS;
 }

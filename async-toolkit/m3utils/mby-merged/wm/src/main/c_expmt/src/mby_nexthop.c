@@ -300,9 +300,7 @@ void NextHop
     out->L2_IVLAN1_REFLECT      = in->L2_IVLAN1_REFLECT;
     out->L2_EVLAN1_MEMBERSHIP   = in->L2_EVLAN1_MEMBERSHIP;
     out->NO_LEARN               = in->NO_LEARN;
-    out->GLORT_CAM_MISS         = in->GLORT_CAM_MISS;
     out->GLORT_DMASK            = in->GLORT_DMASK;
-    out->TARGETED_DETERMINISTIC = in->TARGETED_DETERMINISTIC;
     out->CPU_TRAP               = in->CPU_TRAP;
     out->TRAP_ICMP              = in->TRAP_ICMP;
     out->TRAP_IGMP              = in->TRAP_IGMP;
