@@ -2,7 +2,7 @@ package switch_wm.ppe
 
 import com.intel.cg.hpfd.csr.generated.{mby_ppe_parser_map, parser_ana_s_r, parser_ana_w_r}
 import switch_wm.PacketHeader
-import switch_wm.ppe.Parser.{ParserException, ProtoOffsets}
+import switch_wm.ppe.Parser._
 import switch_wm.ppe.Tcam.{parserAnalyzerTcamMatchBit, tcamMatchSeq}
 import ParserStage._
 
@@ -12,17 +12,17 @@ class ParserStage(val csr : mby_ppe_parser_map, val myindex : Int) {
   case class Action(val aa: AnalyzerAction, extractA : List[ExtractAction], excAction : ExceptionAction) {
     def apply(ps : ParserState, pf : PacketFlags, po : Parser.ProtoOffsets)(ph : PacketHeader ) : (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
       val currentOffset = ps.ptr
-      // is there an error condition?
-      if (excAction.eop(ph, currentOffset)) return (ps, pf, po, Some(new ParserException(stageEncountered = myindex)))
-      val newPs = aa(ph, ps)
-      // do all of the extraction operations to add more to the flags and offsets
-      val poPf : (ProtoOffsets, PacketFlags) = extractA.foldLeft(po, pf)({ (prev, f) => f(prev)} )
-      // if done, then note that
-      val doneException = excAction.parsingDone match {
-        case true => Some(new ParserException(done = true, stageEncountered = myindex))
-        case _ => None
+      // is there an error condition requiring an abort (i.e. without processing this stage)
+      // or is the exception action to do nothing (or mark 'done')
+      excAction.x(ph, currentOffset, myindex) match {
+        case e : Some[AbortParserException] => (ps, pf, po, e)
+        case e => {
+          val newPs = aa(ph, ps) // setup the analyze actions for the next stage
+          // do all of the extraction operations to add more to the flags and offsets
+          val poPf : (ProtoOffsets, PacketFlags) = extractA.foldLeft(po, pf)({ (prev, f) => f(prev)} )
+          (newPs, poPf._2, poPf._1, e)
+        }
       }
-      (newPs, poPf._2, poPf._1, doneException)
     }
   }
 
@@ -82,10 +82,15 @@ object ParserStage {
   }
 
   class ExceptionAction( val exOffset : Short, val parsingDone : Boolean) {
-    def x (input : (PacketFields, PacketFlags)) : (PacketFields, PacketFlags) = input
-    // EOP = (if last byte of non-FCS payload is in current segment) ? TRUE : FALSE
+    def x (ph: PacketHeader, currentOffset : Int, stage : Int) : Option[ParserException] = {
+       if (eos(ph, currentOffset) & ph.eop ) Some(new ParseDepthExceededException(stage))
+       else if (eos(ph, currentOffset) & ph.eop) Some(new ParseDepthExceededException(stage))
+       else if (parsingDone) Some(new ParserDoneException(stage))
+       else None
+    }
+    // EOP = (if last byte of non-FCS payload is in current segment) ? TRUE : FALSE -- stored in packet header
+    // at construction time
     // EOS = adjustedSegmentLength < (currentPointer + currentStage.exceptionOffset)
-    def eop (ph : PacketHeader, currentOffset : Int) = false
     def eos  (ph : PacketHeader, currentOffset : Int) : Boolean = {
       ph.adjustedSegmentLength < currentOffset + exOffset
     }

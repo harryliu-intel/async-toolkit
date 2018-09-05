@@ -1,11 +1,37 @@
 package switch_wm
 
 import com.intel.cg.hpfd.csr.generated.{mby_ppe_mapper_map, mby_ppe_rx_top_map, mby_top_map}
+import switch_wm.ppe.IPVersion
 
-class PacketHeader(val bytes : Array[Byte]) {
-  val adjustedSegmentLength = 100 // (should be computed)
+class PacketHeader(val bytes : IndexedSeq[Byte]) {
+  val maxSegmentSize = 192
+  val adjustedSegmentLength = {
+    if (bytes.length < 4) bytes.length
+    else if ((bytes.length - 4) > maxSegmentSize) maxSegmentSize
+    else bytes.length - 4
+  }
+
+  /**
+    * The packetheader  includes the entire packet
+    *
+    * Used in parser to help distinguish between exceeding parser depth and
+    * exceeding packet size
+    */
+  val eop = (bytes.length - 4) <= maxSegmentSize
+
   def apply(addr : Int) : Byte = bytes(addr)
-  def getWord(addr : Int) : Short = ((apply(addr) << 8) | apply(addr)).toShort
+  def getWord(addr : Int) : Short = ((apply(addr + 1) << 8) | apply(addr)).toShort
+
+  def ipVersion : IPVersion.Value = {
+    bytes(0).nib(1) match {
+      case 0x4 => IPVersion.V4
+      case 0x6 => IPVersion.V6
+    }
+  }
+  def totalLength : Int = {
+    getWord(2)
+  }
+
 }
 object PacketHeader {
   def apply( bytes : Array[Byte]) : PacketHeader = new PacketHeader(bytes)
@@ -47,13 +73,6 @@ class RxPpe(csr : mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], ppe.Par
   // val mapper = new KeyMapper(csr.mapper)
 
   // how do we provide the 'port' here?
-  val x : (Array[Byte]) => ppe.ParserOutput = epl.x andThen headerExtractor.x andThen parser.x
+  val x : (Array[Byte]) => ppe.ParserOutput = epl.x andThen parser.x
 
-}
-
-object SwitchTest {
-  val junk = Array.ofDim[Byte](1024)
-  val theCsrs = mby_top_map()
-  val swp = new RxPpe(theCsrs.mpt(0).rx_ppe)
-  swp.x(junk)
 }
