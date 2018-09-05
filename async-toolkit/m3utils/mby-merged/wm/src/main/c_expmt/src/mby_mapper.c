@@ -968,9 +968,6 @@ static void getParserInfo
     mbyParserInfo           * const parser_info
 )
 {
-    fm_bool pa_flag_otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
-    out->OTR_MPLS_V = pa_flag_otr_mpls_v; // pass thru to Classifier
-
     fm_byte outerProt = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8);
 
     fm_bool tcp[2] = { FALSE };
@@ -1613,8 +1610,10 @@ void Mapper
     const fm_byte   * const pa_ptrs            = in->PA_PTRS;       // [MBY_N_PARSER_PTRS]
     const fm_bool   * const pa_ptrs_valid      = in->PA_PTRS_VALID; // [MBY_N_PARSER_PTRS]
 
-    mbyMapPortCfg port_cfg;
+    // Outer MPLS valid flag for use in the Classifier:
+    fm_bool pa_flag_otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
 
+    mbyMapPortCfg port_cfg;
     getPortCfg(regs, rx_port, &port_cfg);
 
     fm_bool is_ipv4[MBY_N_IS_IP_BITS] = { FALSE };
@@ -1790,6 +1789,7 @@ void Mapper
     out->LEARN_MODE       = learn_mode;
     out->NO_PRI_ENC       = no_pri_enc;
     out->OPERATOR_ID      = operator_id;
+    out->OTR_MPLS_V       = pa_flag_otr_mpls_v;
     out->PARSER_ERROR     = parser_error;
     out->PARSER_INFO      = parser_info;
     out->PRIORITY_PROFILE = pri_profile;
