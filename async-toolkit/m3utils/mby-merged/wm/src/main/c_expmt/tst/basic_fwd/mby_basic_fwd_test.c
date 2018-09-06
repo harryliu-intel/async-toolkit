@@ -1,9 +1,11 @@
-#include <mby_model.h>
 #include <stdint.h>
 #include <stdio.h>
 
-#include "mby_basic_fwd_init.h"
+#include <mby_errors.h>
+#include <mby_model.h>
 #include <mby_init.h>
+
+#include "mby_basic_fwd_init.h"
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -21,13 +23,33 @@
 const int send_sw = 0;
 const int send_port = 0;
 
-#define BASIC_FWD_FAIL_ON_NON_OK(test) \
-                if (status != FM_OK) { \
-                    printf("FAIL of mby_basic_fwd @ %s\n", test); \
-                    printf(COLOR_RED   "[FAIL]"); \
-                    printf("--------------------------------------------------------------------------------\n"); \
-                    return -1; \
-                }
+inline int checkOk (const char * test, const fm_status status)
+{
+    int rv = (status == FM_OK) ? 0 : -1;
+
+    if (rv == 0)
+        printf(COLOR_GREEN "[pass]");
+    else
+        printf(COLOR_RED   "[fail]");
+
+    printf(COLOR_RESET " %s\n", test);
+
+    return rv;
+}
+
+inline int checkNoMore (const char * test, const fm_status status)
+{
+    int rv = (status == FM_ERR_NO_MORE) ? 0 : -1;
+
+    if (rv == 0)
+        printf(COLOR_GREEN "[pass]");
+    else
+        printf(COLOR_RED   "[fail]");
+
+    printf(COLOR_RESET " %s\n", test);
+
+    return rv;
+}
 
 fm_status init()
 {
@@ -52,27 +74,50 @@ int main()
     unsigned char recv_packet_buf[recv_pkt_buf_len];
     fm_uint32 recv_packet_len;
 
-    fm_status status;
+    fm_status status = FM_OK;
 
     printf("--------------------------------------------------------------------------------\n");
-    printf("mby_basic_fwd test\n");
 
-    status = mbyResetModel(send_sw);
-    BASIC_FWD_FAIL_ON_NON_OK("mbyResetModel");
+    int rv = 0;
 
-    status = init();
-    BASIC_FWD_FAIL_ON_NON_OK("init");
+    for (fm_uint i = 0; i < 1; i++) {
 
-    status = mbySendPacket(send_sw, send_port, sent_packet, sizeof(sent_packet));
-    BASIC_FWD_FAIL_ON_NON_OK("mbySendPacket");
+        status = mbyResetModel(send_sw);
+        rv = checkOk("mbyResetModel", status);
+        if (rv != 0)
+            break;
 
-    status = mbyReceivePacket(send_sw, &recv_port, recv_packet_buf, &recv_packet_len, recv_pkt_buf_len);
-    BASIC_FWD_FAIL_ON_NON_OK("mbyReceivePacket");
+        status = init();
+        rv = checkOk("init", status);
+        if (rv != 0)
+            break;
 
-    status = check();
-    BASIC_FWD_FAIL_ON_NON_OK("check");
+        status = mbySendPacket(send_sw, send_port, sent_packet, sizeof(sent_packet));
+        rv = checkOk("mbySendPacket", status);
+        if (rv != 0)
+            break;
 
-    printf(COLOR_GREEN "[pass]");
+        status = mbyReceivePacket(send_sw, &recv_port, recv_packet_buf, &recv_packet_len, recv_pkt_buf_len);
+        checkNoMore("mbyReceivePacket", status);
+        if (rv != 0)
+            break;
+
+        status = check();
+        checkOk("check", status);
+        if (rv != 0)
+            break;
+    }
+
     printf("--------------------------------------------------------------------------------\n");
-    return 0;
+
+    if (rv == 0)
+        printf(COLOR_GREEN "[pass]");
+    else
+        printf(COLOR_RED   "[fail]");
+
+    printf(" Basic forwarding tests\n"  COLOR_RESET);
+
+    printf("--------------------------------------------------------------------------------\n");
+
+    return rv;
 }

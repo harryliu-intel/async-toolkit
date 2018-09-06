@@ -1076,7 +1076,9 @@ void MaskGen
     out->QCN_MIRROR0_PROFILE_V  = qcn_mirror0_profile_v;
     out->QCN_MIRROR1_PROFILE_V  = qcn_mirror1_profile_v;
     out->QOS_SWPRI              = qos_swpri;
+    out->RX_LENGTH              = rx_length;
     out->RX_MIRROR              = rx_mirror;
+    out->RX_PORT                = rx_port;
     out->SAF_ERROR              = saf_error;
     out->SEG_META_ERR           = seg_meta_err;
     out->SKIP_DGLORT_DEC        = skip_dglort_dec;
@@ -1100,8 +1102,6 @@ void MaskGen
     out->PM_ERR_NONSOP          = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP            = in->QOS_L3_DSCP;
     out->RX_DATA                = in->RX_DATA;
-    out->RX_LENGTH              = in->RX_LENGTH;
-    out->RX_PORT                = in->RX_PORT;
     out->TAIL_CSUM_LEN          = in->TAIL_CSUM_LEN;
     out->TRAFFIC_CLASS          = in->TRAFFIC_CLASS;
     out->TX_TAG                 = in->TX_TAG;

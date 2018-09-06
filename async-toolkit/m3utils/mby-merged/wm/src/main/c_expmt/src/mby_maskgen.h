@@ -551,7 +551,9 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_bool                 QCN_MIRROR0_PROFILE_V;  // qcn mirror 0 profile valid
     fm_bool                 QCN_MIRROR1_PROFILE_V;  // qcn mirror 1 profile valid
     fm_byte                 QOS_SWPRI;              // 4-bit switch priority
+    fm_uint32               RX_LENGTH;              // RX packet length
     fm_bool                 RX_MIRROR;              // rx mirror frame
+    fm_uint32               RX_PORT;                // RX port number
     fm_bool                 SAF_ERROR;              // SAF error
     fm_byte                 SEG_META_ERR;           // segment error
     fm_bool                 SKIP_DGLORT_DEC;
@@ -574,8 +576,6 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_bool                 PM_ERR_NONSOP;
     fm_byte                 QOS_L3_DSCP;            // 6-bit QOS Differentiated Services Code Point (DSCP)
     fm_byte              *  RX_DATA;                // ingress (receive) packet data
-    fm_uint32               RX_LENGTH;              // RX packet length
-    fm_uint32               RX_PORT;                // RX port number
     fm_uint64               TAIL_CSUM_LEN;          // L4 CSUM related information
     fm_byte                 TRAFFIC_CLASS;          // 3-bit traffic class
     fm_byte                 TX_TAG;                 // egress tag

@@ -734,19 +734,21 @@ void Hash
     );
 
     // Write outputs:
-    out->L2_SMAC                 = l2_smac;
-    out->L2_DMAC                 = l2_dmac;
-    out->HASH_KEYS               = hash_keys;
-    out->HASH_ROT_A_PTABLE_INDEX = rot_a_key;
-    out->HASH_ROT_A              = rot_a_val;
-    out->HASH_ROT_B_PTABLE_INDEX = rot_b_key;
-    out->HASH_ROT_B              = rot_b_val;
-    out->RAW_HASH                = raw_hash;
 
     for (fm_uint i = 0; i < 16; i++)
         out->ARP_HASH[i]         = arp_hash[i];
 
+    out->HASH_KEYS               = hash_keys;
+    out->HASH_ROT_A              = rot_a_val;
+    out->HASH_ROT_A_PTABLE_INDEX = rot_a_key;
+    out->HASH_ROT_B              = rot_b_val;
+    out->HASH_ROT_B_PTABLE_INDEX = rot_b_key;
+    out->L2_DMAC                 = l2_dmac;
+    out->L2_SMAC                 = l2_smac;
+    out->RAW_HASH                = raw_hash;
+
     // Pass thru:
+
     out->FFU_FLAGS               = in->FFU_FLAGS;
     out->FFU_ROUTE               = in->FFU_ROUTE;
     out->ENCAP                   = in->ENCAP;
@@ -756,5 +758,9 @@ void Hash
     out->L3_IDOMAIN              = in->L3_IDOMAIN;
     out->L2_IVID1                = in->L2_IVID1;
     out->LEARN_MODE              = in->LEARN_MODE;
+    out->PARITY_ERROR            = in->PARITY_ERROR;
+    out->PA_L3LEN_ERR            = in->PA_L3LEN_ERR;
+    out->RX_LENGTH               = in->RX_LENGTH;
+    out->RX_PORT                 = in->RX_PORT;
     out->TRAFFIC_CLASS           = in->TRAFFIC_CLASS;
 }

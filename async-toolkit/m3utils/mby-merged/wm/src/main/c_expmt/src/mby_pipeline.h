@@ -31,7 +31,7 @@ void RxPipeline
 void TxPipeline
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxStatsToRxOut * const rxs2rxo,
+    const mbyTxInToModifier * const txi2mod,
           mbyTxStatsToTxMac * const txs2mac
 );
 

@@ -1479,47 +1479,52 @@ void Classifier
     // Write outputs:
 
     // Write outputs:
-    out->L34_HASH         = ecmp_hash;
-    out->MOD_IDX          = mod_idx;
-    out->L2_ETYPE         = l2_etype;
-    out->MPLS_POP         = mpls_pop;
-    out->ENCAP            = encap;
+    out->AQM_MARK_EN      = muxed_action.aqm_mark_en;
     out->DECAP            = decap;
-    out->QOS_SWPRI        = muxed_action.swpri;
-    out->SGLORT           = sglort;
-    out->IDGLORT          = idglort;
-    out->L2_SMAC          = l2_smac;
-    out->L2_DMAC          = l2_dmac;
     out->DMAC_FROM_IPV6   = dmac_from_ipv6;
+    out->DROP_TTL         = drop_ttl;
+    out->ECN              = muxed_action.ecn;
+    out->ENCAP            = encap;
+    out->FFU_FLAGS        = ffu_flags;
+    out->FFU_ROUTE        = ffu_route;
+    out->FFU_TRIG         = ffu_trig;
+    out->IDGLORT          = idglort;
+    out->INNER_L3_LENGTH  = inner_l3_length;
     out->IS_IPV4          = is_ipv4;
     out->IS_IPV6          = is_ipv6;
-    out->L3_LENGTH        = l3_length;
-    out->INNER_L3_LENGTH  = inner_l3_length;
-    out->OUTER_L3_LENGTH  = outer_l3_length;
-    out->TRAP_IP_OPTIONS  = trap_ip_options;
-    out->DROP_TTL         = drop_ttl;
-    out->TRAP_ICMP        = trap_icmp;
-    out->TRAP_IGMP        = trap_igmp;
-    out->TTL_CTRL         = muxed_action.ttl_ctrl;
-    out->FFU_FLAGS        = ffu_flags;
-    out->TX_TAG           = ffu_flags.tx_tag;
-    out->FFU_ROUTE        = ffu_route;
-    out->NO_LEARN         = no_learn;
+    out->L2_DMAC          = l2_dmac;
+    out->L2_ETYPE         = l2_etype;
     out->L2_IVID1         = l2_ivid1;
-    out->QOS_L2_VPRI1     = qos_l2_vpri1;
-    out->QOS_L3_DSCP      = muxed_action.dscp;
-    out->FFU_TRIG         = ffu_trig;
-    out->PARITY_ERROR     = 0; // REVISIT!!!
-    out->ECN              = muxed_action.ecn;
-    out->AQM_MARK_EN      = muxed_action.aqm_mark_en;
+    out->L2_SMAC          = l2_smac;
+    out->L34_HASH         = ecmp_hash;
+    out->L3_LENGTH        = l3_length;
+    out->MOD_IDX          = mod_idx;
+    out->MPLS_POP         = mpls_pop;
+    out->NO_LEARN         = no_learn;
+    out->OUTER_L3_LENGTH  = outer_l3_length;
 
     for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
         out->POLICER_ACTION[i] = policer_action[i];
 
+    out->QOS_L2_VPRI1     = qos_l2_vpri1;
+    out->QOS_L3_DSCP      = muxed_action.dscp;
+    out->QOS_SWPRI        = muxed_action.swpri;
+    out->SGLORT           = sglort;
+    out->TRAP_ICMP        = trap_icmp;
+    out->TRAP_IGMP        = trap_igmp;
+    out->TRAP_IP_OPTIONS  = trap_ip_options;
+    out->TTL_CTRL         = muxed_action.ttl_ctrl;
+    out->TX_TAG           = ffu_flags.tx_tag;
+
     // Pass thru:
 
-    out->L2_IDOMAIN    = in->L2_IDOMAIN;
-    out->L3_IDOMAIN    = in->L3_IDOMAIN;
-    out->LEARN_MODE    = in->LEARN_MODE;
-    out->TRAFFIC_CLASS = in->TRAFFIC_CLASS;
+    out->LEARN_MODE       = in->LEARN_MODE;
+    out->L2_IDOMAIN       = in->L2_IDOMAIN;
+    out->L3_IDOMAIN       = in->L3_IDOMAIN;
+    out->PARITY_ERROR     = in->PARITY_ERROR;
+    out->PA_DROP          = in->PA_DROP;
+    out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
+    out->RX_LENGTH        = in->RX_LENGTH;
+    out->RX_PORT          = in->RX_PORT;
+    out->TRAFFIC_CLASS    = in->TRAFFIC_CLASS;
 }

@@ -44,19 +44,15 @@ void RxPipeline
 void TxPipeline
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxStatsToRxOut * const rxs2rxo,
+    const mbyTxInToModifier * const txi2mod,
           mbyTxStatsToTxMac * const txs2mac
 )
 {
     // Intermediate structs:
-    mbyTxInToModifier     txi2mod;
-    mbyModifierToTxStats  mod2txs;
-
-    // RX to TX adapter:
-    RxToTx     (regs,  rxs2rxo, &txi2mod);
+    mbyModifierToTxStats mod2txs;
 
     // TX pipeline stages:
-    Modifier   (regs, &txi2mod, &mod2txs);
+    Modifier   (regs,  txi2mod, &mod2txs);
 
     TxStats    (regs, &mod2txs,  txs2mac);
 }
@@ -69,8 +65,14 @@ void Pipeline
           mbyTxStatsToTxMac * const txs2mac
 )
 {
-    mbyRxStatsToRxOut     rxs2rxo;
+    // Intermediate structs:
+    mbyRxStatsToRxOut rxs2rxo;
+    mbyTxInToModifier txi2mod;
 
+    // Pipeline stages:
     RxPipeline (regs,  mac2par, &rxs2rxo);
-    TxPipeline (regs, &rxs2rxo, txs2mac);
+
+    RxToTx     (regs, &rxs2rxo, &txi2mod);
+
+    TxPipeline (regs, &txi2mod,  txs2mac);
 }

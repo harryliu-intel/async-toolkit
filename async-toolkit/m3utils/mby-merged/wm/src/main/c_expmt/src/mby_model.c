@@ -46,8 +46,9 @@ fm_status mbyWriteReg
     return mbyModelWriteCSR64(regs, addr, val);
 }
 
-// Persistent store for RX output:
+// Persistent store for RX output and TX input:
 static mbyRxStatsToRxOut rxs2rxo;
+static mbyTxInToModifier txi2mod;
 
 fm_status mbySendPacket
 (
@@ -86,21 +87,44 @@ fm_status mbyReceivePacket
     if (sw != 0)
         return FM_ERR_UNSUPPORTED;
 
+    // Input struct:
+    txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
+    txi2mod.ECN           = rxs2rxo.ECN;
+    txi2mod.EDGLORT       = rxs2rxo.EDGLORT;
+    txi2mod.IS_TIMEOUT    = rxs2rxo.IS_TIMEOUT;
+    txi2mod.L2_DMAC       = rxs2rxo.L2_DMAC;
+    txi2mod.L2_EVID1      = rxs2rxo.L2_EVID1;
+    txi2mod.MARK_ROUTED   = rxs2rxo.MARK_ROUTED;
+    txi2mod.MIRTYP        = rxs2rxo.MIRTYP;
+    txi2mod.MOD_IDX       = rxs2rxo.MOD_IDX;
+    txi2mod.NO_MODIFY     = rxs2rxo.NO_MODIFY;
+    txi2mod.OOM           = rxs2rxo.OOM;
+    txi2mod.PARSER_INFO   = rxs2rxo.PARSER_INFO;
+    txi2mod.PM_ERR        = rxs2rxo.PM_ERR;
+    txi2mod.PM_ERR_NONSOP = rxs2rxo.PM_ERR_NONSOP;
+    txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;
+    txi2mod.RX_DATA       = rxs2rxo.RX_DATA;
+    txi2mod.RX_LENGTH     = rxs2rxo.RX_LENGTH;
+    txi2mod.SAF_ERROR     = rxs2rxo.SAF_ERROR;
+    txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
+    txi2mod.TX_DATA       = packet; // points at provided buffer
+    txi2mod.TX_DROP       = rxs2rxo.TX_DROP;
+    txi2mod.TX_LENGTH     = rxs2rxo.TX_LENGTH;
+    txi2mod.TX_PORT       = rxs2rxo.TX_PORT;
+    txi2mod.TX_TAG        = rxs2rxo.TX_TAG;
+    txi2mod.XCAST         = rxs2rxo.XCAST;
+
     // Output struct:
     mbyTxStatsToTxMac txs2mac;
 
     // Call RX pipeline:
-    TxPipeline(regs, &rxs2rxo, &txs2mac);
+    TxPipeline(regs, &txi2mod, &txs2mac);
 
     // Populate output:
     *port   = txs2mac.TX_PORT;
     *length = txs2mac.TX_LENGTH;
 
-    // Assert (length <= max_pkt_size) <-- REVISIT!!!
-
-    for (fm_uint i = 0; i < max_pkt_size; i++)
-        packet[i] = (i < (*length)) ? txs2mac.TX_DATA[i] : 0;
+    // assert (length <= max_pkt_size) <-- REVISIT!!!
 
     return FM_ERR_NO_MORE; // temporary <-- REVISIT!!!
 }
-

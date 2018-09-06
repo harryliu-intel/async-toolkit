@@ -1598,20 +1598,21 @@ void Mapper
 )
 {
     // Read inputs:
-    const fm_uint32         rx_port            = in->RX_PORT;
-    const fm_bool           pa_ex_parsing_done = in->PA_EX_PARSING_DONE;
-    const fm_bool           pa_ex_trunc_header = in->PA_EX_TRUNC_HEADER;
-    const fm_bool           pa_ex_depth_exceed = in->PA_EX_DEPTH_EXCEED;
-    const fm_bool           pa_csum_ok         = in->PA_CSUM_OK;
     const fm_byte           pa_adj_seg_len     = in->PA_ADJ_SEG_LEN;
+    const fm_bool           pa_csum_ok         = in->PA_CSUM_OK;
+    const fm_bool           pa_ex_depth_exceed = in->PA_EX_DEPTH_EXCEED;
+    const fm_bool           pa_ex_parsing_done = in->PA_EX_PARSING_DONE;
+    const fm_byte           pa_ex_stage        = in->PA_EX_STAGE;   // unsed <-- REVISIT!!!
+    const fm_bool           pa_ex_trunc_header = in->PA_EX_TRUNC_HEADER;
     const fm_bool   * const pa_flags           = in->PA_FLAGS;      // [MBY_N_PARSER_FLGS]
     const fm_uint16 * const pa_keys            = in->PA_KEYS;       // [MBY_N_PARSER_KEYS]
     const fm_bool   * const pa_keys_valid      = in->PA_KEYS_VALID; // [MBY_N_PARSER_KEYS]
     const fm_byte   * const pa_ptrs            = in->PA_PTRS;       // [MBY_N_PARSER_PTRS]
     const fm_bool   * const pa_ptrs_valid      = in->PA_PTRS_VALID; // [MBY_N_PARSER_PTRS]
+    const fm_uint32         rx_port            = in->RX_PORT;
 
     // Outer MPLS valid flag for use in the Classifier:
-    fm_bool pa_flag_otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
+    fm_bool otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
 
     mbyMapPortCfg port_cfg;
     getPortCfg(regs, rx_port, &port_cfg);
@@ -1789,9 +1790,17 @@ void Mapper
     out->LEARN_MODE       = learn_mode;
     out->NO_PRI_ENC       = no_pri_enc;
     out->OPERATOR_ID      = operator_id;
-    out->OTR_MPLS_V       = pa_flag_otr_mpls_v;
+    out->OTR_MPLS_V       = otr_mpls_v;
     out->PARSER_ERROR     = parser_error;
     out->PARSER_INFO      = parser_info;
     out->PRIORITY_PROFILE = pri_profile;
+    out->RX_PORT          = rx_port;
     out->TRAFFIC_CLASS    = traffic_class;
+
+    // Pass thru:
+
+    out->PARITY_ERROR     = FALSE; // parked at 0 <-- REVISIT!!!
+    out->PA_DROP          = in->PA_DROP;
+    out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
+    out->RX_LENGTH        = in->RX_LENGTH;
 }
