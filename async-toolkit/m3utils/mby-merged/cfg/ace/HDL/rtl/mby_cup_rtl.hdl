@@ -521,10 +521,11 @@ $hdl_spec = {
 	# Arbitrary VLOG options
 	-vlog_opts => [
 	    "+libext+.v+.vs+.sv+.bvrl+.sdpv+.xfsm.vs",
-        "+define+VCS_PTR_SIZE=64",
-        "+define+INTCNOPWR",
+        #"+define+VCS_PTR_SIZE=64",
+        #"+define+INTCNOPWR",
         "+define+cdns_qspi_synth",
-        "-vc",
+        #"-vc",
+	    
 	    #"+libverbose",
         #"+notimingcheck",
         #"+no_tchk_msg",

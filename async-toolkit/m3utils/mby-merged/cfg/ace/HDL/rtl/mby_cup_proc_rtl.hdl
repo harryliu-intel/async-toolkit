@@ -73,8 +73,6 @@ $hdl_spec = {
     -vlog_incdirs => [
         "src/rtl/cup/verilog",
         "src/rtl/cup/verilog/processor",
-        
-        
     ],
 
     # Arbitrary VLOG options
