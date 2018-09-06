@@ -18,32 +18,32 @@
 
 #define MBY_N_REALIGN_KEYS                80
 #define MBY_N_IS_IP_BITS                  2
-#define MBY_N_MAC_ROUTABLE_BITS           4
-#define MBY_N_VLAN_ROUTER_ID              2
-#define MBY_N_MAP8                        8
-#define MBY_N_MAP16                       8
-#define MBY_N_REWRITE_KEY8_BITS           32
-#define MBY_N_REWRITE_KEY16_BITS          16
-
+//#define MBY_N_MAC_ROUTABLE_BITS           4
+//#define MBY_N_VLAN_ROUTER_ID              2
+//#define MBY_N_MAP8                        8
+//#define MBY_N_MAP16                       8
+//#define MBY_N_REWRITE_KEY8_BITS           32
+//#define MBY_N_REWRITE_KEY16_BITS          16
+//
 #define MBY_OTR_L3_LEN_LIMIT              14
 #define MBY_OTR_TUN_LEN_LIMIT             18
 #define MBY_INR_L3_LEN_LIMIT              14
-
-#define MBY_L2_MIN_SIZE                   14
-#define MBY_MPLS_MIN_SIZE                 0
-#define MBY_L3_MIN_SIZE                   20
+//
+//#define MBY_L2_MIN_SIZE                   14
+//#define MBY_MPLS_MIN_SIZE                 0
+//#define MBY_L3_MIN_SIZE                   20
 #define MBY_L4_TCP_MIN_SIZE               18
 #define MBY_L4_MIN_SIZE                   8
+//
+//// --------------------------------------------------------------------------------
 
-// --------------------------------------------------------------------------------
-
-#define N_REALIGN_KEYS      80
-
+#define N_REALIGN_KEYS      80 // why two versions of this?
+//
 #define TC_SOURCE_VPRI      0
 #define TC_SOURCE_MPLS      1
 #define TC_SOURCE_DSCP      2
 #define TC_SOURCE_META      3
-
+//
 #define SOURCE_NOOP                 0
 #define SOURCE_MAP_OUTER_PROT       2
 #define SOURCE_MAP_OUTER_DMAC_H     4
@@ -65,8 +65,8 @@
 #define SOURCE_MAP_INNER_DMAC_L     37
 #define SOURCE_MAP_INNER_SMAC_H     38
 #define SOURCE_MAP_INNER_SMAC_L     39
-#define SOURCE_PORT_PROFILE_H       40
-#define SOURCE_PORT_PROFILE_L       41
+//#define SOURCE_PORT_PROFILE_H       40
+//#define SOURCE_PORT_PROFILE_L       41
 #define SOURCE_MAP_INNER_L4_SRC_L   44
 #define SOURCE_MAP_INNER_L4_SRC_H   47
 #define SOURCE_MAP_INNER_L4_DST_L   48
@@ -74,8 +74,8 @@
 #define SOURCE_EX                   52
 #define SOURCE_CSUM                 53
 #define SOURCE_IP_INFO              54
-#define SOURCE_PTYPE_L              55
-#define SOURCE_PTYPE_H              57
+//#define SOURCE_PTYPE_L              55
+//#define SOURCE_PTYPE_H              57
 // --------------------------------------------------------------------------------
 
 // Enums:
