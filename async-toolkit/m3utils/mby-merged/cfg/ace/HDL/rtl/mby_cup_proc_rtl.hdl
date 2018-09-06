@@ -54,18 +54,7 @@ $hdl_spec = {
          "src/rtl/cup/verilog/processor/primitives.v",
          "src/rtl/cup/verilog/processor/response_buffer.v",
          "src/rtl/cup/verilog/processor/writebuffer.v",
-         # behavioral
-         "src/rtl/cup/verilog_behav/processor/DRam0.v",
-         "src/rtl/cup/verilog_behav/processor/DRam1.v",
-         "src/rtl/cup/verilog_behav/processor/IRam0.v",
-         "src/rtl/cup/verilog_behav/processor/IRam1.v",
-         "src/rtl/cup/verilog_behav/processor/IRom0.v",
-         "src/rtl/cup/verilog_behav/processor/dram0.v",
-         "src/rtl/cup/verilog_behav/processor/dram1.v",
-         "src/rtl/cup/verilog_behav/processor/iram0.v",
-         "src/rtl/cup/verilog_behav/processor/iram1.v",
-         "src/rtl/cup/verilog_behav/processor/irom0.v",
-               
+         
        
          # top
          "src/rtl/cup/verilog/processor/cup_proc.v",
@@ -84,7 +73,7 @@ $hdl_spec = {
     -vlog_incdirs => [
         "src/rtl/cup/verilog",
         "src/rtl/cup/verilog/processor",
-        "src/rtl/cup/verilog_behav/processor/",
+        
         
     ],
 

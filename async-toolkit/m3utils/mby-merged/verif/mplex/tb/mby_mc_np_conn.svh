@@ -33,4 +33,39 @@
 // processor is black-boxed. 
 
 // Using the STUB Processor so connect the AXI agent to the CPort signals
+
+// axi write address channel:
+assign mplex_top.cup_proc.AWADDR    =  axi_if.master_if[0].awaddr;
+assign mplex_top.cup_proc.AWVALID   =  axi_if.master_if[0].awvalid;
+assign mplex_top.cup_proc.AWBURST   =  axi_if.master_if[0].awburst;
+assign mplex_top.cup_proc.AWLOCK    =  axi_if.master_if[0].awlock;
+assign mplex_top.cup_proc.AWSIZE    =  axi_if.master_if[0].awsize;
+assign mplex_top.cup_proc.AWPROT    =  axi_if.master_if[0].awprot;
+assign mplex_top.cup_proc.AWID	    =  axi_if.master_if[0].awid;
+assign mplex_top.cup_proc.AWLEN	    =  axi_if.master_if[0].awlen;
+assign mplex_top.cup_proc.AWCACHE   =  axi_if.master_if[0].awcache;
+assign mplex_top.cup_proc.AWQOS	    =  axi_if.master_if[0].awqos;
+
+// axi write data channel:  
+assign mplex_top.cup_proc.WDATA	    =  axi_if.master_if[0].wdata; 
+assign mplex_top.cup_proc.WVALID    =  axi_if.master_if[0].wvalid;
+assign mplex_top.cup_proc.WLAST	    =  axi_if.master_if[0].wlast;
+assign mplex_top.cup_proc.WSTRB	    =  axi_if.master_if[0].wstrb; 
+  
+// axi write response channel
+assign mplex_top.cup_proc.BREADY    =  axi_if.master_if[0].bready;
+
+// axi read address channel
+assign mplex_top.cup_proc.ARADDR    =  axi_if.master_if[0].araddr;
+assign mplex_top.cup_proc.ARBURST   =  axi_if.master_if[0].arburst;
+assign mplex_top.cup_proc.ARCACHE   =  axi_if.master_if[0].arcache;
+assign mplex_top.cup_proc.ARID	    =  axi_if.master_if[0].arid;
+assign mplex_top.cup_proc.ARLEN	    =  axi_if.master_if[0].arlen;	 
+assign mplex_top.cup_proc.ARLOCK    =  axi_if.master_if[0].arlock;
+assign mplex_top.cup_proc.ARPROT    =  axi_if.master_if[0].arprot;
+assign mplex_top.cup_proc.ARQOS	    =  axi_if.master_if[0].arqos;	 
+assign mplex_top.cup_proc.ARSIZE    =  axi_if.master_if[0].arsize;
+assign mplex_top.cup_proc.ARVALID   =  axi_if.master_if[0].arvalid;
+
+// axi read data channel
 assign mplex_top.cup_proc.RREADY    =  axi_if.master_if[0].rready;

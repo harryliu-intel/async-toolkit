@@ -117,6 +117,27 @@ assign axi_reset_if.reset = mc_tb_if.hard_reset;
 assign axi_if.master_if[0].aresetn = ~axi_reset_if.reset;
 assign axi_if.slave_if[0].aresetn  = ~axi_reset_if.reset;
 
+// axi write address channel:
+assign axi_if.master_if[0].awready  =  mplex_top.cup_proc.AWREADY;
+
+// axi write data channel:
+assign axi_if.master_if[0].wready   =  mplex_top.cup_proc.WREADY;
+
+// axi write response channel:
+assign axi_if.master_if[0].bid      =  mplex_top.cup_proc.BID;		
+assign axi_if.master_if[0].bresp    =  mplex_top.cup_proc.BRESP;	
+assign axi_if.master_if[0].bvalid   =  mplex_top.cup_proc.BVALID;
+
+// axi read address channel 
+assign axi_if.master_if[0].arready   =  mplex_top.cup_proc.ARREADY;
+
+// axi read data channel
+assign axi_if.master_if[0].rlast   =  mplex_top.cup_proc.RLAST;
+assign axi_if.master_if[0].rresp   =  mplex_top.cup_proc.RRESP;	
+assign axi_if.master_if[0].rvalid  =  mplex_top.cup_proc.RVALID;
+assign axi_if.master_if[0].rdata   =  mplex_top.cup_proc.RDATA;  
+assign axi_if.master_if[0].rid     =  mplex_top.cup_proc.RID;
+
 
 //////////////////////////////////////////////
 // Hierarchy-Based RTL File List Dumping ////
