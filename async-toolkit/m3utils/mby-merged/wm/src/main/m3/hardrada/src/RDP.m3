@@ -107,7 +107,7 @@ BEGIN
 	<* ASSERT progtext # NIL *>
 	(* Skip whitespace *)
 	WHILE IsWhitespace( Text.GetChar( progtext^.txt , progtext^.index ) ) DO
-		IO.Put( "Skipping ws char: " & Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index ) ) & "\n" ) ;
+		IO.Put( "Skipping ws char: " & Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index ) ) & " (index: " & Fmt.Int( progtext^.index ) & ")\n" ) ;
 		INC( progtext^.index ) ;
 		IF progtext^.offset_fifo # NIL AND ParseQueue.Depth( progtext^.offset_fifo ) > 0 THEN
 			ParseQueue.Inc( progtext^.offset_fifo ) ;
@@ -118,7 +118,7 @@ BEGIN
 	(* Get the length of the token *)
 	token_len_cnt := 0 ;
 	WHILE NOT IsWhitespace( Text.GetChar( progtext^.txt , progtext^.index + token_len_cnt ) ) DO
-		IO.Put( "Non-ws char: " & Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index + token_len_cnt ) ) & "\n" ) ;
+		IO.Put( "Non-ws char: " & Text.FromChar( Text.GetChar( progtext^.txt , progtext^.index + token_len_cnt ) ) & " (index: " & Fmt.Int( progtext^.index ) & ")\n" ) ;
 		ParseQueue.Inc( progtext^.offset_fifo ) ;
 		INC( token_len_cnt ) ;
 	END ;
@@ -127,13 +127,13 @@ BEGIN
 		regex_pattern := RegEx.Compile( pattern ) ;
 		IO.Put( "Current token (index: " & Fmt.Int( progtext^.index ) & "): " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & "\n" ) ;
 		IF RegEx.Execute( regex_pattern , progtext^.txt , progtext^.index , token_len_cnt , NIL ) # -1 THEN
-			FinishGrammarRule( progtext ) ;
 			IO.Put( "Proper match. Parsed " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & " . Expecting '" & pattern & "' Returning TRUE!\n" ) ;
+			FinishGrammarRule( progtext ) ;
 			RETURN TRUE ;
 		ELSE
-			ResetGrammarRule( progtext ) ;
 			IO.Put( "Mismatch. Parsed " & Text.Sub( progtext^.txt , progtext^.index , token_len_cnt ) & " . Expecting '" & pattern & "'. Returning " & Fmt.Bool( optional ) & "!\n" ) ;
 			IO.Put( "Index reset to " & Fmt.Int( progtext^.index ) & "\n" ) ;
+			ResetGrammarRule( progtext ) ;
 			RETURN optional ;
 		END ;
 	EXCEPT
@@ -397,10 +397,15 @@ BEGIN
 	NextGrammarRule( progtext ) ;
 	WHILE Decl( progtext ) DO
 	END ;
+	IO.Put( "=============================== PARSING BLOCK ===============================\n" ) ;
 	IF Match( progtext , "BEGIN" ) AND S( progtext ) AND Match( progtext , "END" ) THEN
+		IO.Put( "Successfully parsed block!\n" ) ;
 		FinishGrammarRule( progtext ) ;
+		IO.Put( "=============================== PARSING BLOCK ===============================\n" ) ;
 		RETURN TRUE ;
 	END ;
+	IO.Put( "Unsuccessfully parsed block!\n" ) ;
+	IO.Put( "=============================== PARSING BLOCK ===============================\n" ) ;
 	ResetGrammarRule( progtext ) ;
 	RETURN FALSE ;
 END Block ;
@@ -835,11 +840,7 @@ PROCEDURE Stmt( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF AssignSt( progtext ) OR Block( progtext ) OR CallSt( progtext ) OR CaseSt( progtext ) OR
-	   ExitSt( progtext ) OR EvalSt( progtext ) OR ForSt( progtext ) OR IfSt( progtext ) OR
-	   LockSt( progtext ) OR LoopSt( progtext ) OR RaiseSt( progtext ) OR RepeatSt( progtext ) OR
-	   ReturnSt( progtext ) OR TCaseSt( progtext ) OR TryXptSt( progtext ) OR TryFinSt( progtext ) OR
-	   WhileSt( progtext ) OR WithSt( progtext ) THEN
+	IF EvalSt( progtext ) THEN
 		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	END ;
@@ -847,32 +848,54 @@ BEGIN
 	RETURN FALSE ;
 END Stmt ;
 
-PROCEDURE Optional_Stmt_List( progtext : REF ProgText ) : BOOLEAN =
+PROCEDURE RealStmt( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF Block( progtext ) OR CaseSt( progtext ) OR ExitSt( progtext ) OR EvalSt( progtext ) OR
+	   ForSt( progtext ) OR IfSt( progtext ) OR LockSt( progtext ) OR LoopSt( progtext ) OR
+	   RaiseSt( progtext ) OR RepeatSt( progtext ) OR ReturnSt( progtext ) OR TCaseSt( progtext ) OR 
+	   TryXptSt( progtext ) OR TryFinSt( progtext ) OR WhileSt( progtext ) OR WithSt( progtext ) OR
+	   AssignSt( progtext ) OR CallSt( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END RealStmt ;
+
+PROCEDURE Optional_Stmt_List( progtext : REF ProgText ; optional : BOOLEAN := FALSE ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
 	IF NOT Stmt( progtext ) THEN
 		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+		RETURN optional ;
 	END ;
 	WHILE Match( progtext , ";" ) DO
 		IF NOT Stmt( progtext ) THEN
 			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
+			RETURN optional ;
 		END ;
 	END ;
-	EVAL Match( progtext , ";" ) ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	IF Match( progtext , ";" , optional ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN optional ;
 END Optional_Stmt_List ;
 
 PROCEDURE S( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	EVAL Optional_Stmt_List( progtext ) ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	IF Optional_Stmt_List( progtext , TRUE ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END S ;
 
 PROCEDURE AssignSt( progtext : REF ProgText ) : BOOLEAN =
@@ -1734,144 +1757,205 @@ BEGIN
 	RETURN FALSE ;
 END ConstExpr ;
 
+PROCEDURE Expr_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF E1( progtext ) AND Match( progtext , "OR" ) AND Expr( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END Expr_Route1 ;
+
 PROCEDURE Expr( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF NOT E1( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF Expr_Route1( progtext ) OR E1( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	WHILE Match( progtext , "OR" ) DO
-		IF NOT E1( progtext ) THEN
-			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
-		END ;
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END Expr ;
+
+PROCEDURE E1_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF E2( progtext ) AND Match( progtext , "AND" ) AND E1( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END E1_Route1 ;
 
 PROCEDURE E1( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF NOT E2( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF E1_Route1( progtext ) OR E2( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	WHILE Match( progtext , "AND" ) DO
-		IF NOT E2( progtext ) THEN
-			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
-		END ;
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END E1 ;
+
+PROCEDURE E2_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF Match( progtext , "NOT" ) AND E2( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END E2_Route1 ;
 
 PROCEDURE E2( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	WHILE Match( progtext , "NOT" ) DO
+	IF E2_Route1( progtext ) OR E3( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	IF NOT E3( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END E2 ;
+
+PROCEDURE E3_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF E4( progtext ) AND Relop( progtext ) AND E3( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END E3_Route1 ;
+
 
 PROCEDURE E3( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF NOT E4( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF E3_Route1( progtext ) OR E4( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	WHILE Relop( progtext ) DO
-		IF NOT E4( progtext ) THEN
-			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
-		END ;
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END E3 ;
+
+PROCEDURE E4_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF E5( progtext ) AND Addop( progtext ) AND E4( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END E4_Route1 ;
 
 PROCEDURE E4( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF NOT E5( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF E4_Route1( progtext ) OR E5( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	WHILE Addop( progtext ) DO
-		IF NOT E5( progtext ) THEN
-			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
-		END ;
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END E4 ;
+
+PROCEDURE E5_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF E6( progtext ) AND Mulop( progtext ) AND E5( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END E5_Route1 ;
 
 PROCEDURE E5( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF NOT E6( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF E5_Route1( progtext ) OR E6( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	WHILE Mulop( progtext ) DO
-		IF NOT E6( progtext ) THEN
-			ResetGrammarRule( progtext ) ;
-			RETURN FALSE ;
-		END ;
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END E5 ;
+
+PROCEDURE E6_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF ( Match( progtext , "+" ) OR Match( progtext , "-" ) ) AND E6( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END E6_Route1 ;
 
 PROCEDURE E6( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	WHILE Match( progtext , "+" ) OR Match( progtext , "-" ) DO
+	IF E6_Route1( progtext ) OR E7( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	IF NOT E7( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END E6 ;
+
+PROCEDURE E7_Route1( progtext : REF ProgText ) : BOOLEAN =
+BEGIN
+	<* ASSERT progtext # NIL *>
+	NextGrammarRule( progtext ) ;
+	IF E7( progtext ) AND Selector( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
+	END ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
+END E7_Route1 ;
 
 PROCEDURE E7( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF NOT E8( progtext ) THEN
-		ResetGrammarRule( progtext ) ;
-		RETURN FALSE ;
+	IF (* E7_Route1( progtext ) OR *) E8( progtext ) THEN
+		FinishGrammarRule( progtext ) ;
+		RETURN TRUE ;
 	END ;
-	WHILE Selector( progtext ) DO
-	END ;
-	FinishGrammarRule( progtext ) ;
-	RETURN TRUE ;
+	ResetGrammarRule( progtext ) ;
+	RETURN FALSE ;
 END E7 ;
 
 PROCEDURE E8( progtext : REF ProgText ) : BOOLEAN =
 BEGIN
 	<* ASSERT progtext # NIL *>
 	NextGrammarRule( progtext ) ;
-	IF Id( progtext ) OR Number( progtext ) OR CharLiteral( progtext ) OR TextLiteral( progtext ) OR
-	   Constructor( progtext ) OR ( Match( progtext , "(" ) AND Expr( progtext ) AND Match( progtext , ")" ) ) THEN
+	IF Number( progtext ) (* OR Id( progtext ) OR CharLiteral( progtext ) OR TextLiteral( progtext ) OR
+	   Constructor( progtext ) OR ( Match( progtext , "(" ) AND Expr( progtext ) AND Match( progtext , ")" ) ) *) THEN
 		FinishGrammarRule( progtext ) ;
 		RETURN TRUE ;
 	END ;
