@@ -144,8 +144,7 @@ Group: Ingress  {
       File: tests/ingress_alive_test/ingress_alive_test.svh  (no auto-title, ingress/tests/ingress_alive_test/ingress_alive_test.svh)
       }  # Group: Tests
 
-}  # Group: Ingress
-
+   }  # Group: Ingress
 
 Group: Env  {
 
@@ -171,8 +170,6 @@ Group: Fal  {
    File: toplevel_fuse_env.svh  (mby/fal/toplevel_fuse_env.svh)
    }  # Group: Fal
 
-File: mby_base_seq  (lib/mby_common_pkg/mby_base_seq.svh)
-File: mby_common_pkg  (lib/mby_common_pkg/mby_common_pkg.sv)
 File: mby_defines.sv  (mby/tb/mby_defines.sv)
 
 Group: Ral  {
@@ -228,7 +225,7 @@ Group: Lib  {
       File: axi_uvm_scoreboard  (lib/svt_axi_bfm/svt_axi_scoreboard.sv)
       File: cust_axi_master_transaction  (lib/svt_axi_bfm/cust_svt_axi_master_transaction.sv)
       File: cust_svt_axi_system_configuration  (lib/svt_axi_bfm/cust_svt_axi_system_cfg.sv)
-      File: svt_axi_bfm_defines  (lib/svt_axi_bfm/svt_axi_bfm_defines.sv)
+      File: svt_axi_bfm_defines.sv  (lib/svt_axi_bfm/svt_axi_bfm_defines.sv)
       File: svt_axi_bfm_pkg  (lib/svt_axi_bfm/svt_axi_bfm_pkg.sv)
       File: svt_bfm_env  (lib/svt_axi_bfm/svt_axi_bfm_env.sv)
       File: svt_ethernet_virtual_sequencer  (lib/svt_axi_bfm/svt_axi_virtual_sequencer.sv)
@@ -255,6 +252,13 @@ Group: Mplex  {
 File: mby_mc_axi_random_access_test  (mplex/tests/mby_mc_axi_random_access_test/mby_mc_axi_random_access_test.svh)
 File: mby_tb  (mby/tb/mby_tb.sv)
 File: new  (mplex/tests/mby_mc_ahb_random_access_test/mby_mc_ahb_random_access_test.svh)
+
+Group: Lib  {
+
+   File: mby_base_seq  (lib/mby_common_pkg/mby_base_seq.svh)
+   File: mby_common_pkg  (lib/mby_common_pkg/mby_common_pkg.sv)
+   File: mby_ral_ahb_access  (lib/mby_common_pkg/mby_ral_ahb_access.sv)
+   }  # Group: Lib
 
 Group: Index  {
 

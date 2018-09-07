@@ -28,51 +28,38 @@
 // -------------------------------------------------------------------
 // -- Author : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : Madison Bay
-// -- Description : RX PPE to shared table memory interface
+// -- Description : Parser to classifier interface
 // --
 // -------------------------------------------------------------------
 
-interface rx_ppe_ppe_stm_if
+interface par_class_if
+import hlp_pkg::*, hlp_ipp_pkg::*;
 ();
-logic           [3:0]   tbl0_wen;       //per chunk write enables
-logic   [2:0]   [3:0]   tbl0_ren;       //per port, per chunk read enables (port 0 is LPM, 1-2 are EM)
-logic   [3:0]   [19:0]  tbl0_addr;      //per port address (port 0 is write, 1 is LPM, 2-3 are EM)
-logic           [287:0] tbl0_wdata;     //write data (including ECC bits)
-logic           [143:0] tbl0_lpm_rdata; //LPM port read data (including ECC bits)
-logic   [1:0]   [287:0] tbl0_em_rdata;  //EM ports read data (including ECC bits)
+imn_rpl_bkwd_t  rpl_bkwd;       //Management status from downstream blocks
+imn_rpl_frwd_t  rpl_frwd;       //Managment to downstream blocks
 
-logic           [3:0]   tbl1_wen;       //per chunk write enables
-logic   [1:0]   [3:0]   tbl1_ren;       //per port, per chunk read enables
-logic   [2:0]   [19:0]  tbl1_addr;      //per port address (port 0 is write, 1-2 are EM)
-logic           [287:0] tbl1_wdata;     //write data (including ECC bits)
-logic   [1:0]   [287:0] tbl1_em_rdata;  //EM ports read data (including ECC bits)
+parser_out_t    parser_out;     //Parser results
+logic           parser_out_v;   //Parser results valid
 
-modport ppe(
-    output  tbl0_wen,
-    output  tbl0_ren,
-    output  tbl0_addr,
-    output  tbl0_wdata,
-    input   tbl0_lpm_rdata,
-    input   tbl0_em_rdata,
-    output  tbl1_wen,
-    output  tbl1_ren,
-    output  tbl1_addr,
-    output  tbl1_wdata,
-    input   tbl1_em_rdata
+tail_info_t     o_tail_info;    //Tail info
+logic           o_tail_info_v;  //Tail info valid
+
+modport parser(
+    input   rpl_bkwd,
+    output  rpl_frwd,
+    output  parser_out,
+    output  parser_out_v,
+    output  o_tail_info,
+    output  o_tail_info_v
 );
 
-modport stm(
-    input   tbl0_wen,
-    input   tbl0_ren,
-    input   tbl0_addr,
-    input   tbl0_wdata,
-    output  tbl0_lpm_rdata,
-    output  tbl0_em_rdata,
-    input   tbl1_wen,
-    input   tbl1_ren,
-    input   tbl1_addr,
-    input   tbl1_wdata,
-    output  tbl1_em_rdata
+modport classifier(
+    output  rpl_bkwd,
+    input   rpl_frwd,
+    input   parser_out,
+    input   parser_out_v,
+    input   o_tail_info,
+    input   o_tail_info_v
 );
 
-endinterface: rx_ppe_ppe_stm_if
+endinterface: par_class_if

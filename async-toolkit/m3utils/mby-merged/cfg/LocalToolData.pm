@@ -208,17 +208,19 @@ $ToolConfig_tools{jasper_utils} = {
 $ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
 
 $ToolConfig_tools{"mgm"} = {
-    VERSION => "1.8_try5",
+    VERSION => "2.31",
     PATH => "$ENV{RTL_PROJ_TOOLS}/mgm/nhdk/&get_tool_version()",
-    #PATH => "/nfs/sc/disks/nhdk_da.work.001/belfere/1.8_dev1",
     MGM_ARGS => {
         BLOCKS => {
-            mby => ["mby",],
+            mby => ["parser",],
         },
         PHYSICAL_PARAMS => "$ENV{MODEL_ROOT}/tools/mgm/mby_physical_params.csv",
         REPORT_DIR => "$ENV{MODEL_ROOT}/target/".&ToolConfig::get_facet("dut")."/mgm_run/rtl",
         #REPORT_DIR => "$ENV{MODEL_ROOT}/target/mgm/rtl",
-        PREFIX => "mby_prefix",
+        PREFIX => "mby",
+	CMO  => [
+	    "/tmp/dummy"
+	    ],
     },
     EXEC => "&get_tool_path()/bin/mgm",
     ENV => {
@@ -227,9 +229,18 @@ $ToolConfig_tools{"mgm"} = {
         MGM_RTL  =>  "&get_tool_path()/rtl",
     },
     ENV_APPEND => {
-        PATH => "&get_tool_path()/bin:/p/com/eda/intel/puni/2.7", #TODO: fix later to HDK puni
+     PATH => "&get_tool_path()/bin", 
     },
+
+    OTHER => {
+            LOCAL_ASIC_MEMORIES => "YES",
+    }, 
 };
+$ToolConfig_tools{buildman}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
+$ToolConfig_tools{runtools}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
+$ToolConfig_tools{buildman}{ENV}{MGM_TSMC_N7}  = "YES";
+
+
 
 $ToolConfig_tools{"mono"} = {
     VERSION => "5.2.0.224",
