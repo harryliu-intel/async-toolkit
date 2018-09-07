@@ -21,7 +21,7 @@ static fm_uint64 incrRxCounter(const fm_uint64 cnt_in, const fm_uint64 inc)
     const fm_uint64 cnt_wrp = inc - (FM_LITERAL_U64(1) + delta); // safely wrap around
     // TODO Variable 'cnt_inc' is assigned a value that is never used.
     const fm_uint64 cnt_inc = cnt_in + inc;
-    const fm_uint64 cnt_out = (inc > delta) ? cnt_wrp : cnt_in;  // wrap around or increment
+    const fm_uint64 cnt_out = (inc > delta) ? cnt_wrp : cnt_inc;  // wrap around or increment
 
     return cnt_out;
 }

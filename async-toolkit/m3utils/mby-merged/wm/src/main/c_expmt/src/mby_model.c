@@ -33,6 +33,20 @@ fm_status mbyReadReg
     return mbyModelReadCSR64(regs, addr, val);
 }
 
+fm_status mbyWriteRegMult
+(
+    const fm_uint32 sw,
+    const fm_uint32 addr,
+    const fm_int len,
+    const fm_uint32 * const val
+)
+{
+    if (sw != 0)
+        return FM_ERR_UNSUPPORTED;
+
+    return mbyModelWriteCSRMult(regs, addr, len, val);
+}
+
 fm_status mbyWriteReg
 (
     const fm_uint32 sw,
@@ -91,6 +105,7 @@ fm_status mbyReceivePacket
     txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
     txi2mod.ECN           = rxs2rxo.ECN;
     txi2mod.EDGLORT       = rxs2rxo.EDGLORT;
+    txi2mod.FNMASK        = rxs2rxo.FNMASK;
     txi2mod.IS_TIMEOUT    = rxs2rxo.IS_TIMEOUT;
     txi2mod.L2_DMAC       = rxs2rxo.L2_DMAC;
     txi2mod.L2_EVID1      = rxs2rxo.L2_EVID1;
@@ -125,5 +140,5 @@ fm_status mbyReceivePacket
 
     // assert (length <= max_pkt_size) <-- REVISIT!!!
 
-    return FM_ERR_NO_MORE; // temporary <-- REVISIT!!!
+    return FM_OK; // temporary <-- REVISIT!!!
 }

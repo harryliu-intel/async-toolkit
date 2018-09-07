@@ -6,6 +6,7 @@
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
+#include "mby_common.h"
 
 static void getARPTableEntry
 (
@@ -56,10 +57,10 @@ static void setARPUsedEntry
 
 static void getMaTableEntry
 (
-    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_byte       set,
-    const fm_uint16     ma_tbl_idx,
-    mbyMaTable  * const entry
+          fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    const fm_byte             set,
+    const fm_uint16           ma_tbl_idx,
+          mbyMaTable  * const entry
 )
 {
     fm_uint32 ma_table_regs[MBY_MA_TABLE_WIDTH] = { 0 };
@@ -111,56 +112,123 @@ void lookUpAddress
     }
 }
 
-void lookUpL2
+static void getIvidTableEntry
 (
-          fm_uint32          regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_bool            flood_set,
-    const fm_uint16          l2_edomain,
-    const fm_macaddr         l2_dmac,
-    const fm_uint16          l2_ivid1,
-    const fm_bool            learn_mode,
-          fm_uint16  * const idglort,
-          fm_bool    * const glort_forwarded,
-          fm_bool    * const flood_forwarded,
-          fm_bool    * const da_hit,
-          mbyMaTable * const da_result,
-          fm_uint64  * const amask
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+    fm_uint16                  vid,
+    mbyIngressVidTable * const entry
 )
 {
+    fm_uint64 ivid_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_INGRESS_VID_TABLE(vid, 0), &ivid_table_reg);
+
+    entry->TRAP_IGMP  = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, TRAP_IGMP);
+    entry->REFLECT    = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, REFLECT);
+    entry->MEMBERSHIP = FM_GET_FIELD64(ivid_table_reg, MBY_INGRESS_VID_TABLE, MEMBERSHIP);
+}
+
+static void getEvidTableEntry
+(
+    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    fm_uint16                 vid,
+    mbyEgressVidTable * const entry
+)
+{
+    fm_uint64 evid_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_EGRESS_VID_TABLE(vid, 0), &evid_table_reg);
+
+    entry->TRIG_ID    = FM_GET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, TRIG_ID);
+    entry->MEMBERSHIP = FM_GET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, MEMBERSHIP);
+}
+
+void lookUpL2
+(
+    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
+    fm_uint32           rx_port,
+    fm_macaddr          l2_dmac,
+    fm_uint16           ivid1,
+    fm_uint16           evid1,
+    fm_bool             flood_set,
+    fm_uint16           l2_edomain,
+    fm_bool             learn_mode,
+    fm_uint16   * const idglort,
+    fm_bool     * const glort_forwarded,
+    fm_bool     * const flood_forwarded,
+    fm_bool     * const da_hit,
+    mbyMaTable  * const da_result,
+    fm_uint64   * const amask,
+    fm_bool     * const l2_ivlan1_membership,
+    fm_bool     * const l2_ivlan1_reflect,
+    fm_uint32   * const l2_evlan1_membership,
+    fm_bool     * const trap_igmp,
+    mbyStpState * const l2_ifid1_state,
+    fm_uint32   * const l2_efid1_state
+)
+{
+    /***************************************************
+     * Perform ingress & egress VLAN lookups.
+     **************************************************/
+    mbyEgressVidTable  evidTable;
+    mbyIngressVidTable ividTable;
+
+    getIvidTableEntry(regs, ivid1, &ividTable);
+    getEvidTableEntry(regs, evid1, &evidTable);
+
+    *l2_ivlan1_reflect    = ividTable.REFLECT;
+    *trap_igmp           &= ividTable.TRAP_IGMP;
+    *l2_ivlan1_membership = FM_GET_UNNAMED_FIELD(ividTable.MEMBERSHIP, rx_port, 1);
+    *l2_evlan1_membership = evidTable.MEMBERSHIP;
+
+    *glort_forwarded = 0;
+    *flood_forwarded = 0;
+
+
+    *glort_forwarded = 0;
+    *flood_forwarded = 0;
+
     if (*idglort && !flood_set)
-    {
-        *glort_forwarded = TRUE; // no change to dglort
-    }
+        /* no change to dglort */
+        *glort_forwarded = 1;
     else
     {
         fm_uint64 flood_glort_table_reg = 0;
         mbyModelReadCSR64(regs, MBY_FLOOD_GLORT_TABLE(l2_edomain, 0), &flood_glort_table_reg);
 
-        lookUpAddress(regs, l2_dmac, l2_ivid1, l2_edomain, learn_mode, da_hit, da_result);
+        lookUpAddress(regs, l2_dmac, ivid1, l2_edomain, learn_mode, da_hit, da_result);
 
         if (da_hit && da_result->D_GLORT)
         {
             *idglort = da_result->D_GLORT;
-            if (da_result->ENTRY_TYPE == MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL)
+            if(da_result->ENTRY_TYPE == MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL)
                 *amask |= MBY_AMASK_DROP_PROVISIONAL;
         }
-        else if ((*idglort != 0) && flood_set)
-            *glort_forwarded = TRUE;  // no change to dglort
-
+        else if ((idglort != 0) && (flood_set == 1))
+            /* no change to dglort */
+            *glort_forwarded = 1;
         else if (isBroadcastMacAddress(l2_dmac))
             *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, BROADCAST_GLORT);
-
         else if (isMulticastMacAddress(l2_dmac))
         {
             *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_MULTICAST_GLORT);
-            *flood_forwarded = TRUE;
+            *flood_forwarded = 1;
         }
         else
         {
             *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_UNICAST_GLORT);
-            *flood_forwarded = TRUE;
+            *flood_forwarded = 1;
         }
     }
+
+    /***************************************************
+     * Perform ingress & egress forwarding ID lookups.
+     **************************************************/
+    fm_uint64 ingress_mst_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_INGRESS_MST_TABLE(ivid1, 0), &ingress_mst_table_reg);
+    *l2_ifid1_state = FM_GET_UNNAMED_FIELD64(ingress_mst_table_reg, rx_port * 2, 2);
+
+    fm_uint64 egress_mst_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_EGRESS_MST_TABLE(evid1, 0), &egress_mst_table_reg);
+    *l2_efid1_state = FM_GET_FIELD64(egress_mst_table_reg, MBY_EGRESS_MST_TABLE, FORWARDING);
 }
 
 void NextHop
@@ -187,7 +255,8 @@ void NextHop
     const fm_bool            learn_mode  = in->LEARN_MODE;
     const fm_uint16          raw_hash    = in->RAW_HASH;
     const fm_byte * const    arp_hash    = in->ARP_HASH; // [16]
-
+          fm_bool            trap_igmp   = in->TRAP_IGMP;
+    const fm_uint32          rx_port     = in->RX_PORT;
 
     fm_bool   no_route     = ffu_flags.no_route;
     fm_bool   group_type   = FM_GET_BIT  (ffu_route, MBY_FFU_ROUTE, GROUP_TYPE);
@@ -237,51 +306,51 @@ void NextHop
         setARPUsedEntry(regs, arp_tbl_idx);
     }
 
-    // l2 lookup is temporary placed in nexthop <-- REVISIT!!!
-    fm_bool    glort_forwarded = FALSE;
-    fm_bool    flood_forwarded = FALSE;
-    fm_bool    da_hit          = FALSE;
-    mbyMaTable da_result       = { 0 };
-    fm_uint64  amask           = 0;
+    // l2Lookup is temporary placed in nexthop <-- REVISIT!!!
+    fm_bool     glort_forwarded      = FALSE;
+    fm_bool     flood_forwarded      = FALSE;
+    fm_bool     da_hit               = FALSE;
+    mbyMaTable  da_result            = { 0 };
+    fm_uint64   amask                = 0;
+    fm_bool     l2_ivlan1_membership = FALSE;
+    fm_bool     l2_ivlan1_reflect    = FALSE;
+    fm_uint32   l2_evlan1_membership = 0;
+    mbyStpState l2_ifid1_state       = MBY_STP_STATE_DISABLE;
+    fm_uint32   l2_efid1_state       = 0;
 
-    lookUpL2
-    (
-        regs,
-        flood_set,
-        l2_edomain,
-        l2_dmac,
-        l2_ivid1,
-        learn_mode,
-        &idglort,
-        &glort_forwarded,
-        &flood_forwarded,
-        &da_hit,
-        &da_result,
-        &amask
-    );
+    lookUpL2(regs, rx_port, l2_dmac, l2_ivid1, l2_evid1, flood_set, l2_edomain, learn_mode, &idglort,
+             &glort_forwarded, &flood_forwarded, &da_hit, &da_result, &amask, &l2_ivlan1_membership,
+             &l2_ivlan1_reflect, &l2_evlan1_membership, &trap_igmp, &l2_ifid1_state, &l2_efid1_state);
 
     // Write outputs:
-    out->AMASK           = amask;
-    out->ARP_TABLE_INDEX = arp_tbl_idx;
-    out->DA_HIT          = da_hit;
-    out->DA_RESULT       = da_result;
-    out->DECAP           = decap;
-    out->ENCAP           = encap;
-    out->FLOOD_FORWARDED = flood_forwarded;
-    out->FLOOD_SET       = flood_set;
-    out->GLORT_FORWARDED = glort_forwarded;
-    out->IDGLORT         = idglort;
-    out->L2_DMAC         = l2_dmac;
-    out->L2_EDOMAIN      = l2_edomain;
-    out->L2_EVID1        = l2_evid1;
-    out->L2_IDOMAIN      = l2_idomain;
-    out->L2_IVID1        = l2_ivid1;
-    out->L2_SMAC         = l2_smac;
-    out->L3_EDOMAIN      = l3_edomain;
-    out->L3_IDOMAIN      = l3_idomain;
-    out->MARK_ROUTED     = mark_routed;
-    out->MOD_IDX         = mod_index;
-    out->MTU_INDEX       = mtu_index;
+    out->AMASK                = amask;
+    out->ARP_TABLE_INDEX      = arp_tbl_idx;
+    out->DA_HIT               = da_hit;
+    out->DA_RESULT            = da_result;
+    out->DECAP                = decap;
+    out->ENCAP                = encap;
+    out->FLOOD_FORWARDED      = flood_forwarded;
+    out->FLOOD_SET            = flood_set;
+    out->GLORT_FORWARDED      = glort_forwarded;
+    out->IDGLORT              = idglort;
+    out->L2_DMAC              = l2_dmac;
+    out->L2_EDOMAIN           = l2_edomain;
+    out->L2_EFID1_STATE       = l2_efid1_state;
+    out->L2_EVID1             = l2_evid1;
+    out->L2_EVLAN1_MEMBERSHIP = l2_evlan1_membership;
+    out->L2_IDOMAIN           = l2_idomain;
+    out->L2_IFID1_STATE       = l2_ifid1_state;
+    out->L2_IVID1             = l2_ivid1;
+    out->L2_IVLAN1_MEMBERSHIP = l2_ivlan1_membership;
+    out->L2_IVLAN1_REFLECT    = l2_ivlan1_reflect;
+    out->L2_SMAC              = l2_smac;
+    out->L3_EDOMAIN           = l3_edomain;
+    out->L3_IDOMAIN           = l3_idomain;
+    out->MARK_ROUTED          = mark_routed;
+    out->MOD_IDX              = mod_index;
+    out->MTU_INDEX            = mtu_index;
+    out->RX_PORT              = rx_port;
+    out->TRAP_IGMP            = trap_igmp;
 
     // Pass thru:
     out->ACTION                 = in->ACTION;
@@ -295,12 +364,7 @@ void NextHop
     out->IP_MCAST_IDX           = in->IP_MCAST_IDX;
     out->IS_IPV4                = in->IS_IPV4;
     out->IS_IPV6                = in->IS_IPV6;
-    out->L2_EFID1_STATE         = in->L2_EFID1_STATE;
     out->L2_ETYPE               = in->L2_ETYPE;
-    out->L2_EVLAN1_MEMBERSHIP   = in->L2_EVLAN1_MEMBERSHIP;
-    out->L2_IFID1_STATE         = in->L2_IFID1_STATE;
-    out->L2_IVLAN1_MEMBERSHIP   = in->L2_IVLAN1_MEMBERSHIP;
-    out->L2_IVLAN1_REFLECT      = in->L2_IVLAN1_REFLECT;
     out->MIRROR0_PROFILE_IDX    = in->MIRROR0_PROFILE_IDX;
     out->MTU_VIOLATION          = in->MTU_VIOLATION;
     out->NO_LEARN               = in->NO_LEARN;
@@ -315,13 +379,11 @@ void NextHop
     out->QOS_SWPRI              = in->QOS_SWPRI;
     out->RX_LENGTH              = in->RX_LENGTH;
     out->RX_MIRROR              = in->RX_MIRROR;
-    out->RX_PORT                = in->RX_PORT;
     out->SA_HIT                 = in->SA_HIT;
     out->SA_RESULT              = in->SA_RESULT;
     out->SEG_META_ERR           = in->SEG_META_ERR;
     out->SV_DROP                = in->SV_DROP;
     out->TRAP_ICMP              = in->TRAP_ICMP;
-    out->TRAP_IGMP              = in->TRAP_IGMP;
     out->TRAP_IP_OPTIONS        = in->TRAP_IP_OPTIONS;
     out->TRIGGERS               = in->TRIGGERS;
 }

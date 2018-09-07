@@ -10,6 +10,7 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 #include "mby_classifier.h" // mbyClassifierFlags
+#include "mby_maskgen.h"
 
 // Defines:
 
@@ -65,6 +66,84 @@
 #define MBY_FLOOD_GLORT_TABLE_h_FLOOD_MULTICAST_GLORT           31
 #define MBY_FLOOD_GLORT_TABLE_l_FLOOD_UNICAST_GLORT             0
 #define MBY_FLOOD_GLORT_TABLE_h_FLOOD_UNICAST_GLORT             15
+
+#define MBY_INGRESS_VID_TABLE_WIDTH                             2
+#define MBY_INGRESS_VID_TABLE_ENTRIES                           4096
+#define MBY_INGRESS_VID_TABLE(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0040000) + (MBY_ARP_VLAN_BASE))
+
+#define MBY_INGRESS_VID_TABLE_b_TRAP_IGMP                       25
+#define MBY_INGRESS_VID_TABLE_b_REFLECT                         24
+#define MBY_INGRESS_VID_TABLE_l_MEMBERSHIP                      0
+#define MBY_INGRESS_VID_TABLE_h_MEMBERSHIP                      23
+
+#define MBY_EGRESS_VID_TABLE_WIDTH                              2
+#define MBY_EGRESS_VID_TABLE_ENTRIES                            4096
+#define MBY_EGRESS_VID_TABLE(index, word)                       ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0048000) + (MBY_ARP_VLAN_BASE))
+
+#define MBY_EGRESS_VID_TABLE_l_TRIG_ID                          24
+#define MBY_EGRESS_VID_TABLE_h_TRIG_ID                          29
+#define MBY_EGRESS_VID_TABLE_l_MEMBERSHIP                       0
+#define MBY_EGRESS_VID_TABLE_h_MEMBERSHIP                       23
+
+#define MBY_INGRESS_MST_TABLE_WIDTH                             2
+#define MBY_INGRESS_MST_TABLE_ENTRIES                           4096
+#define MBY_INGRESS_MST_TABLE(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0000000) + (MBY_MST_GLORT_BASE))
+
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_23                    46
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_23                    47
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_22                    44
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_22                    45
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_21                    42
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_21                    43
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_20                    40
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_20                    41
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_19                    38
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_19                    39
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_18                    36
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_18                    37
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_17                    34
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_17                    35
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_16                    32
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_16                    33
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_15                    30
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_15                    31
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_14                    28
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_14                    29
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_13                    26
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_13                    27
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_12                    24
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_12                    25
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_11                    22
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_11                    23
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_10                    20
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_10                    21
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_9                     18
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_9                     19
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_8                     16
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_8                     17
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_7                     14
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_7                     15
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_6                     12
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_6                     13
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_5                     10
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_5                     11
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_4                     8
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_4                     9
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_3                     6
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_3                     7
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_2                     4
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_2                     5
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_1                     2
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_1                     3
+#define MBY_INGRESS_MST_TABLE_l_STP_STATE_0                     0
+#define MBY_INGRESS_MST_TABLE_h_STP_STATE_0                     1
+
+#define MBY_EGRESS_MST_TABLE_WIDTH                              2
+#define MBY_EGRESS_MST_TABLE_ENTRIES                            4096
+#define MBY_EGRESS_MST_TABLE(index, word)                       ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0008000) + (MBY_MST_GLORT_BASE))
+
+#define MBY_EGRESS_MST_TABLE_l_FORWARDING                       0
+#define MBY_EGRESS_MST_TABLE_h_FORWARDING                       23
 
 #define MBY_L2LOOKUP_BASE                                       (0x3800000)
 #define MBY_L2LOOKUP_SIZE                                       (0x0200000)
@@ -144,6 +223,19 @@ typedef struct mbyArpTableStruct
     fm_uint32               ModIdx;
 
 } mbyArpTable;
+
+typedef struct mbyIngressVidTableStruct
+{
+  fm_bool                   TRAP_IGMP;
+  fm_bool                   REFLECT;
+  fm_uint32                 MEMBERSHIP;
+} mbyIngressVidTable;
+
+typedef struct mbyEgressVidTableStruct
+{
+  fm_byte                   TRIG_ID;
+  fm_uint32                 MEMBERSHIP;
+} mbyEgressVidTable;
 
 typedef struct mbyNextHopToMaskGenStruct
 {

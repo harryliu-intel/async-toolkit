@@ -754,6 +754,7 @@ void Hash
     out->ENCAP                   = in->ENCAP;
     out->DECAP                   = in->DECAP;
     out->DMAC_FROM_IPV6          = in->DMAC_FROM_IPV6;
+    out->DROP_TTL                = in->DROP_TTL;
     out->L2_IDOMAIN              = in->L2_IDOMAIN;
     out->L3_IDOMAIN              = in->L3_IDOMAIN;
     out->L2_IVID1                = in->L2_IVID1;
@@ -763,4 +764,5 @@ void Hash
     out->RX_LENGTH               = in->RX_LENGTH;
     out->RX_PORT                 = in->RX_PORT;
     out->TRAFFIC_CLASS           = in->TRAFFIC_CLASS;
+    out->TRAP_IGMP               = in->TRAP_IGMP;
 }

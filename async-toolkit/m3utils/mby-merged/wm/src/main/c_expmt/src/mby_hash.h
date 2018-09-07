@@ -93,14 +93,9 @@ typedef struct mbyHashToNextHopStruct
     fm_uint16               IP_MCAST_IDX;           // index into the MCAST_VLAN_TABLE
     fm_bool                 IS_IPV4;                // packet is IPv4
     fm_bool                 IS_IPV6;                // packet is IPv6
-    fm_uint32               L2_EFID1_STATE;         // 24-bit egress forwarding vector
     fm_uint16               L2_ETYPE;               // 16-bit innermost Ethernet type
-    fm_uint32               L2_EVLAN1_MEMBERSHIP;   // 24-bit egress VLAN port membership vector
     fm_uint16               L2_IDOMAIN;
-    mbyStpState             L2_IFID1_STATE;         // 2-bit spanning tree state for the ingress port
     fm_uint16               L2_IVID1;
-    fm_bool                 L2_IVLAN1_MEMBERSHIP;   // ingress port is part of the ingress VLAN flag
-    fm_bool                 L2_IVLAN1_REFLECT;      // ingress VLAN reflection is enabled
     fm_byte                 L3_IDOMAIN;
     fm_bool                 LEARN_MODE;
     fm_uint32               MIRROR0_PROFILE_IDX;    // mirror 0 profile index

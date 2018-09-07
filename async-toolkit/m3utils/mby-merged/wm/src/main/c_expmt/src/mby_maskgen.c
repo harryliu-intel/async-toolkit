@@ -23,12 +23,12 @@ static void getPortCfg1
 static void getPortCfg2
 (
     fm_uint32              regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32        port, // RX port
+    const fm_uint16        l2_edomain,
     mbyFwdPortCfg2 * const cfg
 )
 {
     fm_uint64 fwd_port_cfg2_reg = 0;
-    mbyModelReadCSR64(regs, MBY_FWD_PORT_CFG_2(port, 0), &fwd_port_cfg2_reg);
+    mbyModelReadCSR64(regs, MBY_FWD_PORT_CFG_2(l2_edomain, 0), &fwd_port_cfg2_reg);
 
     cfg->DESTINATION_MASK = FM_GET_FIELD64(fwd_port_cfg2_reg, MBY_FWD_PORT_CFG_2, DESTINATION_MASK);
 }
@@ -472,7 +472,7 @@ void MaskGen
     getPortCfg1(regs, rx_port, &port_cfg1);
 
     mbyFwdPortCfg2 port_cfg2;
-    getPortCfg2(regs, rx_port, &port_cfg2);
+    getPortCfg2(regs, l2_edomain_in, &port_cfg2);
 
     mbyFwdSysCfg1 sys_cfg1;
     getSysCfg1 (regs, &sys_cfg1);
@@ -817,8 +817,10 @@ void MaskGen
     fm_uint64 pri_amask = 0; // bitmask representing the index of the highest priority bit
     for (fm_uint i = 0; i < MBY_AMASK_WIDTH; i++) {
         pri_amask = FM_LITERAL_U64(1) << i;
-        if (amask & pri_amask)
+        if (amask & pri_amask) {
+            amask = pri_amask;
             break;
+        }
     }
 
     fm_uint64 fwd_rsvd_mac_cfg_reg = 0;
@@ -831,7 +833,7 @@ void MaskGen
 
     resolveAction
     (
-        pri_amask,
+        amask,
         glort_dmask,
         trap_tc,
         &amask,
