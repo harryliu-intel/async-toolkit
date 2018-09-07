@@ -28,30 +28,24 @@
 // -------------------------------------------------------------------
 // -- Author : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : Madison Bay
-// -- Description : Ingress Pre PPE to RX PPE interface
+// -- Description : RX PPE to Ingress Post PPE interface
 // --
 // -------------------------------------------------------------------
 
-interface igr_pull_sched_rx_ppe_if
+interface rx_ppe_igr_if
+import shared_pkg::*;
 ();
-logic           intf0_valid;    //interface 0 read valid
-logic   [14:0]  intf0_addr;     //interface 0 read address
-
-logic           intf1_valid;    //interface 1 read valid
-logic   [14:0]  intf1_addr;     //interface 1 read address
-
-modport igr(
-    output  intf0_valid,
-    output  intf0_addr,
-    output  intf1_valid,
-    output  intf1_addr
-);
+rx_ppe_igr_t    intf0;      //Interface 0
+rx_ppe_igr_t    intf1;      //Interface 1
 
 modport ppe(
-    input   intf0_valid,
-    input   intf0_addr,
-    input   intf1_valid,
-    input   intf1_addr
+    output  intf0,
+    output  intf1
 );
 
-endinterface: igr_pull_sched_rx_ppe_if
+modport igr(
+    input   intf0,
+    input   intf1
+);
+
+endinterface: rx_ppe_igr_if

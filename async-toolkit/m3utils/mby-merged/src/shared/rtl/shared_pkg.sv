@@ -51,10 +51,12 @@ typedef struct packed {
     logic   [IGR_PPE_PKT_LEN_WIDTH-1:0]     len;    //tail information packet length
     logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;     //tail information packet ID
     logic                                   valid;  //tail information valid
-} igr_pre_ppe_rx_ppe_tail_t;
+} igr_rx_ppe_tail_t;
 
 //vp_cpp_rx_metadata when normally switched
 typedef struct packed {
+    logic           snap_timestamp; //snap timestamp
+    logic           data_type;      //data_type, determines lower bits
     logic   [3:0]   net_add_dom;    //network address domain
     logic   [5:0]   l3_dom;         //l3 domain
     logic   [7:0]   l2_dom;         //l2 domain
@@ -62,6 +64,8 @@ typedef struct packed {
 
 //vp_cpp_rx_metadata when directed
 typedef struct packed {
+    logic           snap_timestamp; //snap timestamp
+    logic           data_type;      //data_type, determines lower bits
     logic   [1:0]   reserved_1_0;   //unused
     logic   [15:0]  dglort;         //destination glort
 } vp_cpp_rx_md_dir_t;
@@ -69,31 +73,29 @@ typedef struct packed {
 typedef union packed {
     vp_cpp_rx_md_swt_t  switched;   //Cport metadata when switched
     vp_cpp_rx_md_dir_t  directed;   //Cport metadata when directed
-} vp_cpp_rx_md_data_t;
-
-typedef struct packed {
-    logic               snap_timestamp; //snap timestamp
-    logic               data_type;      //data_type, determines lower bits
-    vp_cpp_rx_md_data_t data;           //Either switched or directed fields
 } vp_cpp_rx_md_t;
 
 typedef struct packed {
-    vp_cpp_rx_md_t                          cpp_md; //header segment additional CPP metadata
+    vp_cpp_rx_md_t                          cpp_md; //Cport metadata
     logic   [IGR_PPE_TS_WIDTH-1:0]          ts;     //header segment timestamp
     logic   [$clog2(MGP_TC_CNT)-1:0]        tc;     //header segment TC
     logic   [$clog2(MGP_PORT_CNT)-1:0]      port;   //header segment incoming port ID
     logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;     //header segment packet ID
-    logic   [IGR_PPE_ECC_WIDTH-1:0]         ecc;    //header segment ECC
-    logic   [IGR_PPE_DATA_WIDTH-1:0]        data;   //header segment data
-    logic                                   valid;  //header segment valid
-} igr_pre_ppe_rx_ppe_head_t;
+} igr_rx_ppe_md_t;
+
+typedef struct packed {
+    igr_rx_ppe_md_t                     md;     //header segment metadata
+    logic   [IGR_PPE_ECC_WIDTH-1:0]     ecc;    //header segment ECC
+    logic   [IGR_PPE_DATA_WIDTH-1:0]    data;   //header segment data
+    logic                               valid;  //header segment valid
+} igr_rx_ppe_head_t;
 
 //PPE to ingress packet type
 typedef struct packed {
     logic   mc;     //when set indicates a multicast packet
     logic   cpp;    //when set indicates need to mirror packet to CPP/CP
     logic   mirror; //when set indicates need to mirror packet to a normal port
-} ppe_igr_pkt_type_t;
+} rx_ppe_igr_pkt_type_t;
 
 // PPE to ingress metadata
 typedef struct packed {
@@ -111,17 +113,17 @@ typedef struct packed {
     logic   [47:0]                      mod_metadata;   //modification metadata
     logic   [23:0]                      mod_profile;    //modification profile
     logic   [7:0]                       dest_port;      //destination port
-    ppe_igr_pkt_type_t                  pkt_type;       //packet type
-} ppe_igr_md_t
+    rx_ppe_igr_pkt_type_t               pkt_type;       //packet type
+} rx_ppe_igr_md_t;
 
 typedef struct packed {
-    ppe_igr_md_t                            md;         //metadata
+    rx_ppe_igr_md_t                         md;         //metadata
     logic   [$clog2(MGP_TC_CNT)-1:0]        tc;         //Egress TC
     logic   [$clog2(MGP_PORT_CNT)-1:0]      port;       //egress port ID
     logic   [2:0]                           pkt_type;   //one hot packet type indication, bit2:INT, bit1:CPP, bit0:normal
     logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;         //header segment packet ID
     logic                                   valid;      //valid
-} rx_ppe_igr_post_ppe_t;
+} rx_ppe_igr_t;
 
 //
 // LSM (management port)

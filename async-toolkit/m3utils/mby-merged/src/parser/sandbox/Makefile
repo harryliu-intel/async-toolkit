@@ -8,6 +8,7 @@
 #/
 #/////////////////////////////////////////////////////////////////////////////
 
+RTL_SRC = ../..
 PPE_SRC = ..
 DV_SRC = ../sandbox/dv/verilog
 
@@ -92,7 +93,7 @@ INCS +=	$(PPE_SRC)/hlp_sva/fwd
 INCS +=	$(PPE_SRC)/hlp_sva/tail
 INCS += $(ASSERT_LIB)/SVA_LIB
 
-PPE_INCS = $(PPE_SRC)/rtl/rx_ppe
+PPE_INCS = $(RTL_SRC)/parser/rtl
 PPE_INCS += $(SHARED_SRC)/rtl
 PPE_INCS += $(SHARED_SRC)/interfaces
 
@@ -125,13 +126,15 @@ VCS_SRC  += $(PPE_SRC)/hlp_verilog/tail/hlp_tail_pkg.vh
 VCS_SRC  +=	$(PPE_SRC)/hlp_verilog/lib/sram/hlp_ecc.v
 
 PPE_VCS_SRC  =	$(SHARED_SRC)/rtl/shared_pkg.sv
-PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_pre_ppe_rx_ppe_if.sv
-PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_igr_post_ppe_if.sv
-PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_pull_sched_rx_ppe_if.sv
-PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_tx_ppe_if.sv
-PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
+PPE_VCS_SRC  +=	$(SHARED_SRC)/rtl/pkt_pkg.sv
+PPE_VCS_SRC  +=	$(SHARED_SRC)/rtl/pkt_meta_pkg.sv
+PPE_VCS_SRC  +=	$(SHARED_SRC)/rtl/rx_ppe_pkg.sv
 PPE_VCS_SRC  += $(SHARED_SRC)/interfaces/ahb_rx_ppe_if.sv
 PPE_VCS_SRC  += $(SHARED_SRC)/interfaces/glb_rx_ppe_if.sv
+PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_rx_ppe_if.sv
+PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_igr_if.sv
+PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
+PPE_VCS_SRC  +=	$(SHARED_SRC)/interfaces/par_class_if.sv
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \

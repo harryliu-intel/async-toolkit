@@ -37,9 +37,9 @@ module parser_top
     input   logic                       reset,
 
     ahb_rx_ppe_if.ppe                   ahb_rx_ppe_if,              // AHB slave connection
-    glb_rx_ppe_if.ppe                   glb_rx_ppe_if               // Centralize control for synchronizing updates
+    glb_rx_ppe_if.ppe                   glb_rx_ppe_if,              // Centralize control for synchronizing updates
 
-    igr_pre_ppe_rx_ppe_if.ppe           igr_pre_ppe_rx_ppe_if,      //Ingress pre PPE interface
+    igr_rx_ppe_if.ppe                   igr_rx_ppe_if,              //Ingress pre PPE interface
 
     par_class_if.parser                 par_class_if               //Classifier interface
 );

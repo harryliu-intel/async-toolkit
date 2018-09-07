@@ -33,14 +33,31 @@
 
 module rx_ppe
 (
-    input   logic                   cclk,
-    input   logic                   reset,
-    igr_pre_ppe_rx_ppe_if.ppe       igr_pre_ppe_rx_ppe_if,      //Ingress pre PPE interface
-    rx_ppe_igr_post_ppe_if.ppe      rx_ppe_igr_post_ppe_if,     //Ingress post PPE interface
-    rx_ppe_ppe_stm_if.ppe           rx_ppe_ppe_stm_if,          //Shared table memory interface
+    input   logic           cclk,
+    input   logic           reset,
 
-    ahb_rx_ppe_if.ppe               ahb_rx_ppe_if,              // AHB slave connection
-    glb_rx_ppe_if.ppe               glb_rx_ppe_if               // Centralize control for synchronizing updates
+    ahb_rx_ppe_if.ppe       ahb_rx_ppe_if,      // AHB slave connection
+    glb_rx_ppe_if.ppe       glb_rx_ppe_if,      // Centralize control for synchronizing updates
+
+    igr_rx_ppe_if.ppe       igr_rx_ppe_if,      //Ingress pre PPE interface
+
+    rx_ppe_ppe_stm_if.ppe   rx_ppe_ppe_stm_if,  //Shared table memory interface
+
+    rx_ppe_igr_if.ppe       rx_ppe_igr_if       //Ingress post PPE interface
+);
+
+par_class_if    par_class_if();
+
+parser_top  parser_top (
+    .cclk               (cclk),
+    .reset              (reset),
+
+    .ahb_rx_ppe_if      (ahb_rx_ppe_if),
+    .glb_rx_ppe_if      (glb_rx_ppe_if),
+
+    .igr_rx_ppe_if      (igr_rx_ppe_if),
+
+    .par_class_if       (par_class_if)
 );
 
 endmodule
