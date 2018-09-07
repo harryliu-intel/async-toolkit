@@ -176,7 +176,137 @@ define <% camelCaseBaseName %>Management() attributes
 </%if></%for>\
 
 <%doc>************************************************************</%doc>\
+<%doc>atomic word address decode</%doc>\
+<%for Register reg : registers %><%if reg.getAlias() == null %>\
+    function getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(8) = (
+<%if reg.getAtomicWidth() >= reg.getEntryWidth() %>\
+      getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %> = 0
+<%else>\
+      int(4) atomicWordBits = log2(<% reg.getName() %>_ATOMIC_WIDTH);
+      int(4) widthBits = log2(<% reg.getName() %>_WIDTH);
+      getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %> = chip_addr{widthBits-1:atomicWordBits}
+</%if>\
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>entry address decode</%doc>\
+<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries() > 1) %>\
+    function getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(16) = (
+      int(8) entryBits = log2(<% reg.getName() %>_ENTRIES<%if reg.getNumEntries1()>1 %>_0</%if>);
+      getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE<%if reg.getNumEntries1()>1 %>_0</%if>)) & ((1<<entryBits) - 1)
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>entry 1 address decode</%doc>\
+<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries1() > 1) %>\
+    function getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(16) = (
+      int(8) entry1Bits = log2(<% reg.getName() %>_ENTRIES_1);
+      getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE_1)) & ((1<<entry1Bits) - 1)
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>entry 2 address decode</%doc>\
+<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries2() > 1) %>\
+    function getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(16) -chip_addr) : int(16) = (
+      int(8) entry2Bits = log2(<% reg.getName() %>_ENTRIES_2);
+      getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE_2)) & ((1<<entry2Bits) - 1)
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>handle read/write access to each register</%doc>\
+<%for Register reg : registers %><%if reg.getAlias() == null %>\
+<%java String index = ""; %>\
+    function manageReg<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(1) -rw; int(16) -chip_addr; int(32) -+data; \
+<%if reg.isStructure() %>Reg<% Utility.underscoreToCamelCase(reg.getName(), true) %><%else>int(<% reg.getName() %>_BITS)</%if> -+s\
+<%if reg.getNumEntries() > 1 %>[0..<% reg.getName() %>_ENTRIES-1]\
+<%elseif reg.getNumEntries1() > 1 %>[0..<% reg.getName() %>_ENTRIES1-1,0..<% reg.getName() %>_ENTRIES0-1]\
+<%elseif reg.getNumEntries2() > 1 %>[0..<% reg.getName() %>_ENTRIES2-1,0..<% reg.getName() %>_ENTRIES1-1,0..<% reg.getName() %>_ENTRIES0-1]\
+</%if>\
+) = (
+      int(<% reg.getImplementationWidth() %>) data_atomic;
+<%doc>----</%doc><%if reg.getEntryWidth() > 1 %>\
+      int(8) atomic_word = getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%doc>----</%doc><%else>\
+      int(8) atomic_word = 0;
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.getNumEntries() > 1 %>\
+      int(16) i0 = getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%java index = "[i0]"; %>\
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.getNumEntries1() > 1 %>\
+      int(16) i1 = getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%java index = "[i1, i0]"; %>\
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.getNumEntries2() > 1 %>\
+      int(16) i2 = getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%java index = "[i2, i1, i0]"; %>\
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.isStructure() %>\
+      int(<% reg.getImplementationWidth() %>) reg = pack(s<% index %>);
+<%doc>----</%doc><%else>\
+      int(<% reg.getImplementationWidth() %>) reg = s<% index %>;
+<%doc>----</%doc></%if>\
+      int(<% reg.getImplementationWidth() %>) reg_read = reg & ~<% reg.getName() %>_WO_MASK;
+
+      [ rw == 0 ->
+<%doc>----</%doc><%if reg.getEntryWidth() > 1 %>\
+        [ \
+<%doc>------</%doc><%for int i=0; i<Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth()); i++ %>atomic_word == <% i %> -> \
+<%java int max = Math.min(reg.getAtomicWidth()*32*(i+1) - 1, reg.getImplementationWidth()-1); %>\
+<%java int min = reg.getAtomicWidth()*32*(i); %>\
+data = reg_read{<% max %>:<% min %>}
+        []\
+<%doc>------</%doc></%for>else -> skip ];
+<%doc>----</%doc><%else>\
+        data = reg_read
+<%doc>----</%doc></%if>\
+      []else ->
+        [ \
+<%doc>------</%doc><%for int i=0; i<Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth()); i++ %>atomic_word == <% i %> -> \
+<%java int max = Math.min(reg.getAtomicWidth()*32*(i+1) - 1, reg.getImplementationWidth()-1); %>\
+<%java int min = reg.getAtomicWidth()*32*(i); %>\
+data_atomic{<% max %>:<% min %>} = data;
+          <i:<% min %>..<% max %>:( regWriteBit(i,
+            <% reg.getName() %>_RW_MASK | <% reg.getName() %>_RV_MASK | <% reg.getName() %>_WO_MASK,
+            <% reg.getName() %>_RO_MASK,
+            <% reg.getName() %>_CW_MASK,
+            <% reg.getName() %>_CW1_MASK,
+            data_atomic, reg); )>
+        []\
+<%doc>------</%doc></%for>else -> skip ];
+      ];
+<%doc>-------</%doc><%if reg.isStructure() %>\
+      unpack(s<% index %>, reg);
+<%doc>-------</%doc><%else>\
+      s<% index %> = reg;
+<%doc>-------</%doc></%if>\
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>Manage all registers in the design</%doc>\
+    function manage<% camelCaseBaseName %>Registers(int(1) -rw; int(16) -chip_addr; int(32) -+data; <% camelCaseBaseName %>Registers -+s) = (
+      int(32) offset;
+      #[regRange(chip_addr, <% base.getFullName() %>, <% base.getName() %>_SIZE, offset) ->
+        #[\
+<%java boolean first_a = true; %>\
+<%for Register reg : base.getRegisters() %><%if reg.getAlias() == null %>\
+<%java String index; %>\
+<% first_a ? "" : "        []" %><%java first_a=false; %>\
+addressIs<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr) ->
+          manageReg<% Utility.underscoreToCamelCase(reg.getName(), true) %>(rw, chip_addr, data, s::<% reg.getName().toLowerCase() %>)
+</%if></%for>\
+        ]
+      ]
+    );
+
+<%doc>************************************************************</%doc>\
 <%doc>Initialization of Registers</%doc>\
+    // Will be deprecated in favor of the manageRegisters function above
     function rw<% camelCaseBaseName %>Registers(int(1) -rw; int -addr; int -+data;
                                <% camelCaseBaseName %>Registers -+s) = (
       int reg;              // packed register value

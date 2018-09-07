@@ -563,231 +563,721 @@ int mgmtDataBits = (group == null) ? 32*maxAtomicWidth : maxSramBits;
           }
         }
         // 176, 14
-        jamonWriter.write("\n    function rw");
-        // 180, 16
-        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(camelCaseBaseName), jamonWriter);
-        // 180, 39
-        jamonWriter.write("Registers(int(1) -rw; int -addr; int -+data;\n                               ");
-        // 181, 32
-        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(camelCaseBaseName), jamonWriter);
-        // 181, 55
-        jamonWriter.write("Registers -+s) = (\n      int reg;              // packed register value\n      int(32) i, i0, i1, i2, word, offset;  // indices\n      #[regRange(addr, ");
-        // 184, 24
-        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(base.getFullName()), jamonWriter);
-        // 184, 48
-        jamonWriter.write(", ");
-        // 184, 50
-        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(base.getName()), jamonWriter);
-        // 184, 70
-        jamonWriter.write("_SIZE, offset) ->\n        #[");
-        // 186, 1
-        boolean first = true; 
-        // 187, 14
-        for (Register reg : base.getRegisters() )
+        jamonWriter.write("\n");
+        // 180, 1
+        for (Register reg : registers )
         {
-          // 187, 57
+          // 180, 34
           if (reg.getAlias() == null )
           {
-            // 188, 1
-            String index; 
-            // 189, 1
-            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(first ? "" : "        []"), jamonWriter);
-            // 189, 32
-            first=false; 
-            // 190, 18
-            if (reg.getNumEntries() == 1 )
+            // 180, 64
+            jamonWriter.write("    function getAtomicWordNumber");
+            // 181, 33
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 181, 89
+            jamonWriter.write("(int(16) -chip_addr) : int(8) = (\n");
+            // 182, 1
+            if (reg.getAtomicWidth() >= reg.getEntryWidth() )
             {
-              // 190, 75
-              jamonWriter.write("addrMatch(offset,\n              ");
-              // 192, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 192, 34
-              jamonWriter.write("_ADDR,\n              ");
-              // 193, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 193, 34
-              jamonWriter.write("_BITS,\n              word) ->\n");
-              // 195, 1
-              index = ""; 
+              // 182, 52
+              jamonWriter.write("      getAtomicWordNumber");
+              // 183, 26
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+              // 183, 82
+              jamonWriter.write(" = 0\n");
             }
-            // 196, 18
-            else if (reg.getNumEntries1() == 1 )
+            // 184, 1
+            else
             {
-              // 196, 55
-              jamonWriter.write("addrMatch1D(offset,\n              ");
-              // 198, 15
+              // 184, 8
+              jamonWriter.write("      int(4) atomicWordBits = log2(");
+              // 185, 36
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 198, 34
-              jamonWriter.write("_BASE,\n              ");
-              // 199, 15
+              // 185, 55
+              jamonWriter.write("_ATOMIC_WIDTH);\n      int(4) widthBits = log2(");
+              // 186, 31
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 199, 34
-              jamonWriter.write("_ENTRIES,\n              ");
-              // 200, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 200, 34
-              jamonWriter.write("_STRIDE,\n              ");
-              // 201, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 201, 34
-              jamonWriter.write("_BITS,\n              i, word) ->\n");
-              // 203, 1
-              index = "[i]"; 
+              // 186, 50
+              jamonWriter.write("_WIDTH);\n      getAtomicWordNumber");
+              // 187, 26
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+              // 187, 82
+              jamonWriter.write(" = chip_addr{widthBits-1:atomicWordBits}\n");
             }
-            // 204, 18
-            else if (reg.getNumEntries2() == 1 )
+            // 188, 7
+            jamonWriter.write("    );\n");
+          }
+        }
+        // 190, 14
+        jamonWriter.write("\n");
+        // 194, 1
+        for (Register reg : registers )
+        {
+          // 194, 34
+          if ((reg.getAlias() == null) && (reg.getNumEntries() > 1) )
+          {
+            // 194, 95
+            jamonWriter.write("    function getEntryAddress");
+            // 195, 29
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 195, 85
+            jamonWriter.write("(int(16) -chip_addr) : int(16) = (\n      int(8) entryBits = log2(");
+            // 196, 31
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 196, 50
+            jamonWriter.write("_ENTRIES");
+            // 196, 58
+            if (reg.getNumEntries1()>1 )
             {
-              // 204, 55
-              jamonWriter.write("addrMatch2D(offset,\n              ");
-              // 206, 15
+              // 196, 88
+              jamonWriter.write("_0");
+            }
+            // 196, 96
+            jamonWriter.write(");\n      getEntryAddress");
+            // 197, 22
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 197, 78
+            jamonWriter.write(" = (chip_addr >> log2(");
+            // 197, 100
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 197, 119
+            jamonWriter.write("_STRIDE");
+            // 197, 126
+            if (reg.getNumEntries1()>1 )
+            {
+              // 197, 156
+              jamonWriter.write("_0");
+            }
+            // 197, 164
+            jamonWriter.write(")) & ((1<<entryBits) - 1)\n    );\n");
+          }
+        }
+        // 199, 14
+        jamonWriter.write("\n");
+        // 203, 1
+        for (Register reg : registers )
+        {
+          // 203, 34
+          if ((reg.getAlias() == null) && (reg.getNumEntries1() > 1) )
+          {
+            // 203, 96
+            jamonWriter.write("    function getEntry1Address");
+            // 204, 30
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 204, 86
+            jamonWriter.write("(int(16) -chip_addr) : int(16) = (\n      int(8) entry1Bits = log2(");
+            // 205, 32
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 205, 51
+            jamonWriter.write("_ENTRIES_1);\n      getEntry1Address");
+            // 206, 23
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 206, 79
+            jamonWriter.write(" = (chip_addr >> log2(");
+            // 206, 101
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 206, 120
+            jamonWriter.write("_STRIDE_1)) & ((1<<entry1Bits) - 1)\n    );\n");
+          }
+        }
+        // 208, 14
+        jamonWriter.write("\n");
+        // 212, 1
+        for (Register reg : registers )
+        {
+          // 212, 34
+          if ((reg.getAlias() == null) && (reg.getNumEntries2() > 1) )
+          {
+            // 212, 96
+            jamonWriter.write("    function getEntry2Address");
+            // 213, 30
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 213, 86
+            jamonWriter.write("(int(16) -chip_addr) : int(16) = (\n      int(8) entry2Bits = log2(");
+            // 214, 32
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 214, 51
+            jamonWriter.write("_ENTRIES_2);\n      getEntry2Address");
+            // 215, 23
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 215, 79
+            jamonWriter.write(" = (chip_addr >> log2(");
+            // 215, 101
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 215, 120
+            jamonWriter.write("_STRIDE_2)) & ((1<<entry2Bits) - 1)\n    );\n");
+          }
+        }
+        // 217, 14
+        jamonWriter.write("\n");
+        // 221, 1
+        for (Register reg : registers )
+        {
+          // 221, 34
+          if (reg.getAlias() == null )
+          {
+            // 222, 1
+            String index = ""; 
+            // 222, 29
+            jamonWriter.write("    function manageReg");
+            // 223, 23
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 223, 79
+            jamonWriter.write("(int(1) -rw; int(16) -chip_addr; int(32) -+data; ");
+            // 224, 1
+            if (reg.isStructure() )
+            {
+              // 224, 26
+              jamonWriter.write("Reg");
+              // 224, 29
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            }
+            // 224, 85
+            else
+            {
+              // 224, 92
+              jamonWriter.write("int(");
+              // 224, 96
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 206, 34
-              jamonWriter.write("_BASE,\n              ");
-              // 207, 15
+              // 224, 115
+              jamonWriter.write("_BITS)");
+            }
+            // 224, 127
+            jamonWriter.write(" -+s");
+            // 225, 1
+            if (reg.getNumEntries() > 1 )
+            {
+              // 225, 32
+              jamonWriter.write("[0..");
+              // 225, 36
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 207, 34
-              jamonWriter.write("_ENTRIES_0,\n              ");
-              // 208, 15
+              // 225, 55
+              jamonWriter.write("_ENTRIES-1]");
+            }
+            // 226, 1
+            else if (reg.getNumEntries1() > 1 )
+            {
+              // 226, 37
+              jamonWriter.write("[0..");
+              // 226, 41
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 208, 34
-              jamonWriter.write("_ENTRIES_1,\n              ");
-              // 209, 15
+              // 226, 60
+              jamonWriter.write("_ENTRIES1-1,0..");
+              // 226, 75
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 209, 34
-              jamonWriter.write("_STRIDE_0,\n              ");
-              // 210, 15
+              // 226, 94
+              jamonWriter.write("_ENTRIES0-1]");
+            }
+            // 227, 1
+            else if (reg.getNumEntries2() > 1 )
+            {
+              // 227, 37
+              jamonWriter.write("[0..");
+              // 227, 41
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 210, 34
-              jamonWriter.write("_STRIDE_1,\n              ");
-              // 211, 15
+              // 227, 60
+              jamonWriter.write("_ENTRIES2-1,0..");
+              // 227, 75
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 211, 34
-              jamonWriter.write("_BITS,\n              i0, i1, word) ->\n");
-              // 213, 1
+              // 227, 94
+              jamonWriter.write("_ENTRIES1-1,0..");
+              // 227, 109
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 227, 128
+              jamonWriter.write("_ENTRIES0-1]");
+            }
+            // 228, 7
+            jamonWriter.write(") = (\n      int(");
+            // 230, 11
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getImplementationWidth()), jamonWriter);
+            // 230, 45
+            jamonWriter.write(") data_atomic;\n");
+            // 231, 18
+            if (reg.getEntryWidth() > 1 )
+            {
+              // 231, 49
+              jamonWriter.write("      int(8) atomic_word = getAtomicWordNumber");
+              // 232, 47
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+              // 232, 103
+              jamonWriter.write("(chip_addr);\n");
+            }
+            // 233, 18
+            else
+            {
+              // 233, 25
+              jamonWriter.write("      int(8) atomic_word = 0;\n");
+            }
+            // 236, 18
+            if (reg.getNumEntries() > 1 )
+            {
+              // 236, 49
+              jamonWriter.write("      int(16) i0 = getEntryAddress");
+              // 237, 35
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+              // 237, 91
+              jamonWriter.write("(chip_addr);\n");
+              // 238, 1
+              index = "[i0]"; 
+            }
+            // 240, 18
+            if (reg.getNumEntries1() > 1 )
+            {
+              // 240, 50
+              jamonWriter.write("      int(16) i1 = getEntry1Address");
+              // 241, 36
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+              // 241, 92
+              jamonWriter.write("(chip_addr);\n");
+              // 242, 1
               index = "[i1, i0]"; 
             }
-            // 214, 18
-            else
+            // 244, 18
+            if (reg.getNumEntries2() > 1 )
             {
-              // 214, 25
-              jamonWriter.write("addrMatch3D(offset,\n              ");
-              // 216, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 216, 34
-              jamonWriter.write("_BASE,\n              ");
-              // 217, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 217, 34
-              jamonWriter.write("_ENTRIES_0,\n              ");
-              // 218, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 218, 34
-              jamonWriter.write("_ENTRIES_1,\n              ");
-              // 219, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 219, 34
-              jamonWriter.write("_ENTRIES_2,\n              ");
-              // 220, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 220, 34
-              jamonWriter.write("_STRIDE_0,\n              ");
-              // 221, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 221, 34
-              jamonWriter.write("_STRIDE_1,\n              ");
-              // 222, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 222, 34
-              jamonWriter.write("_STRIDE_2,\n              ");
-              // 223, 15
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 223, 34
-              jamonWriter.write("_BITS,\n              i0, i1, i2, word) ->\n");
-              // 225, 1
+              // 244, 50
+              jamonWriter.write("      int(16) i2 = getEntry2Address");
+              // 245, 36
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+              // 245, 92
+              jamonWriter.write("(chip_addr);\n");
+              // 246, 1
               index = "[i2, i1, i0]"; 
             }
-            // 228, 18
+            // 248, 18
             if (reg.isStructure() )
             {
-              // 228, 43
-              jamonWriter.write("            reg = pack(s::");
-              // 229, 27
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName().toLowerCase()), jamonWriter);
-              // 229, 60
+              // 248, 43
+              jamonWriter.write("      int(");
+              // 249, 11
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getImplementationWidth()), jamonWriter);
+              // 249, 45
+              jamonWriter.write(") reg = pack(s");
+              // 249, 59
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(index), jamonWriter);
-              // 229, 71
+              // 249, 70
               jamonWriter.write(");\n");
             }
-            // 230, 24
-            jamonWriter.write("            regReadWrite(rw, word,\n              ");
-            // 232, 15
-            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-            // 232, 34
-            jamonWriter.write("_ATOMIC_WIDTH,\n              ");
-            // 233, 15
-            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-            // 233, 34
-            jamonWriter.write("_RW_MASK | ");
-            // 233, 45
-            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-            // 233, 64
-            jamonWriter.write("_RV_MASK,\n              ");
-            // 234, 15
-            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-            // 234, 34
-            jamonWriter.write("_RO_MASK,\n              ");
-            // 235, 15
-            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-            // 235, 34
-            jamonWriter.write("_CW_MASK,\n              ");
-            // 236, 15
-            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-            // 236, 34
-            jamonWriter.write("_CW1_MASK,\n              data, ");
-            // 237, 21
-            if (reg.isStructure() )
-            {
-              // 237, 46
-              jamonWriter.write("reg");
-            }
-            // 237, 49
+            // 250, 18
             else
             {
-              // 237, 56
-              jamonWriter.write("s::");
-              // 237, 59
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName().toLowerCase()), jamonWriter);
-              // 237, 92
+              // 250, 25
+              jamonWriter.write("      int(");
+              // 251, 11
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getImplementationWidth()), jamonWriter);
+              // 251, 45
+              jamonWriter.write(") reg = s");
+              // 251, 54
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(index), jamonWriter);
+              // 251, 65
+              jamonWriter.write(";\n");
             }
-            // 237, 109
-            jamonWriter.write(");\n");
-            // 238, 18
+            // 252, 24
+            jamonWriter.write("      int(");
+            // 253, 11
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getImplementationWidth()), jamonWriter);
+            // 253, 45
+            jamonWriter.write(") reg_read = reg & ~");
+            // 253, 65
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 253, 84
+            jamonWriter.write("_WO_MASK;\n\n      [ rw == 0 ->\n");
+            // 256, 18
+            if (reg.getEntryWidth() > 1 )
+            {
+              // 256, 49
+              jamonWriter.write("        [ ");
+              // 258, 20
+              for (int i=0; i<Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth()); i++ )
+              {
+                // 258, 100
+                jamonWriter.write("atomic_word == ");
+                // 258, 115
+                org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(i), jamonWriter);
+                // 258, 122
+                jamonWriter.write(" -> ");
+                // 259, 1
+                int max = Math.min(reg.getAtomicWidth()*32*(i+1) - 1, reg.getImplementationWidth()-1); 
+                // 260, 1
+                int min = reg.getAtomicWidth()*32*(i); 
+                // 260, 49
+                jamonWriter.write("data = reg_read{");
+                // 261, 17
+                org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(max), jamonWriter);
+                // 261, 26
+                jamonWriter.write(":");
+                // 261, 27
+                org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(min), jamonWriter);
+                // 261, 36
+                jamonWriter.write("}\n        []");
+              }
+              // 263, 27
+              jamonWriter.write("else -> skip ];\n");
+            }
+            // 264, 18
+            else
+            {
+              // 264, 25
+              jamonWriter.write("        data = reg_read\n");
+            }
+            // 266, 24
+            jamonWriter.write("      []else ->\n        [ ");
+            // 269, 20
+            for (int i=0; i<Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth()); i++ )
+            {
+              // 269, 100
+              jamonWriter.write("atomic_word == ");
+              // 269, 115
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(i), jamonWriter);
+              // 269, 122
+              jamonWriter.write(" -> ");
+              // 270, 1
+              int max = Math.min(reg.getAtomicWidth()*32*(i+1) - 1, reg.getImplementationWidth()-1); 
+              // 271, 1
+              int min = reg.getAtomicWidth()*32*(i); 
+              // 271, 49
+              jamonWriter.write("data_atomic{");
+              // 272, 13
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(max), jamonWriter);
+              // 272, 22
+              jamonWriter.write(":");
+              // 272, 23
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(min), jamonWriter);
+              // 272, 32
+              jamonWriter.write("} = data;\n          <i:");
+              // 273, 14
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(min), jamonWriter);
+              // 273, 23
+              jamonWriter.write("..");
+              // 273, 25
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(max), jamonWriter);
+              // 273, 34
+              jamonWriter.write(":( regWriteBit(i,\n            ");
+              // 274, 13
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 274, 32
+              jamonWriter.write("_RW_MASK | ");
+              // 274, 43
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 274, 62
+              jamonWriter.write("_RV_MASK | ");
+              // 274, 73
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 274, 92
+              jamonWriter.write("_WO_MASK,\n            ");
+              // 275, 13
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 275, 32
+              jamonWriter.write("_RO_MASK,\n            ");
+              // 276, 13
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 276, 32
+              jamonWriter.write("_CW_MASK,\n            ");
+              // 277, 13
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 277, 32
+              jamonWriter.write("_CW1_MASK,\n            data_atomic, reg); )>\n        []");
+            }
+            // 280, 27
+            jamonWriter.write("else -> skip ];\n      ];\n");
+            // 282, 21
             if (reg.isStructure() )
             {
-              // 238, 43
-              jamonWriter.write("            unpack(s::");
-              // 239, 23
-              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName().toLowerCase()), jamonWriter);
-              // 239, 56
+              // 282, 46
+              jamonWriter.write("      unpack(s");
+              // 283, 15
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(index), jamonWriter);
-              // 239, 67
+              // 283, 26
+              jamonWriter.write(", reg);\n");
+            }
+            // 284, 21
+            else
+            {
+              // 284, 28
+              jamonWriter.write("      s");
+              // 285, 8
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(index), jamonWriter);
+              // 285, 19
+              jamonWriter.write(" = reg;\n");
+            }
+            // 286, 27
+            jamonWriter.write("    );\n");
+          }
+        }
+        // 288, 14
+        jamonWriter.write("\n    function manage");
+        // 292, 20
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(camelCaseBaseName), jamonWriter);
+        // 292, 43
+        jamonWriter.write("Registers(int(1) -rw; int(16) -chip_addr; int(32) -+data; ");
+        // 292, 101
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(camelCaseBaseName), jamonWriter);
+        // 292, 124
+        jamonWriter.write("Registers -+s) = (\n      int(32) offset;\n      #[regRange(chip_addr, ");
+        // 294, 29
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(base.getFullName()), jamonWriter);
+        // 294, 53
+        jamonWriter.write(", ");
+        // 294, 55
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(base.getName()), jamonWriter);
+        // 294, 75
+        jamonWriter.write("_SIZE, offset) ->\n        #[");
+        // 296, 1
+        boolean first_a = true; 
+        // 297, 1
+        for (Register reg : base.getRegisters() )
+        {
+          // 297, 44
+          if (reg.getAlias() == null )
+          {
+            // 298, 1
+            String index; 
+            // 299, 1
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(first_a ? "" : "        []"), jamonWriter);
+            // 299, 34
+            first_a=false; 
+            // 299, 58
+            jamonWriter.write("addressIs");
+            // 300, 10
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 300, 66
+            jamonWriter.write("(chip_addr) ->\n          manageReg");
+            // 301, 20
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(Utility.underscoreToCamelCase(reg.getName(), true)), jamonWriter);
+            // 301, 76
+            jamonWriter.write("(rw, chip_addr, data, s::");
+            // 301, 101
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName().toLowerCase()), jamonWriter);
+            // 301, 134
+            jamonWriter.write(")\n");
+          }
+        }
+        // 302, 14
+        jamonWriter.write("        ]\n      ]\n    );\n\n    // Will be deprecated in favor of the manageRegisters function above\n    function rw");
+        // 310, 16
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(camelCaseBaseName), jamonWriter);
+        // 310, 39
+        jamonWriter.write("Registers(int(1) -rw; int -addr; int -+data;\n                               ");
+        // 311, 32
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(camelCaseBaseName), jamonWriter);
+        // 311, 55
+        jamonWriter.write("Registers -+s) = (\n      int reg;              // packed register value\n      int(32) i, i0, i1, i2, word, offset;  // indices\n      #[regRange(addr, ");
+        // 314, 24
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(base.getFullName()), jamonWriter);
+        // 314, 48
+        jamonWriter.write(", ");
+        // 314, 50
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(base.getName()), jamonWriter);
+        // 314, 70
+        jamonWriter.write("_SIZE, offset) ->\n        #[");
+        // 316, 1
+        boolean first = true; 
+        // 317, 14
+        for (Register reg : base.getRegisters() )
+        {
+          // 317, 57
+          if (reg.getAlias() == null )
+          {
+            // 318, 1
+            String index; 
+            // 319, 1
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(first ? "" : "        []"), jamonWriter);
+            // 319, 32
+            first=false; 
+            // 320, 18
+            if (reg.getNumEntries() == 1 )
+            {
+              // 320, 75
+              jamonWriter.write("addrMatch(offset,\n              ");
+              // 322, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 322, 34
+              jamonWriter.write("_ADDR,\n              ");
+              // 323, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 323, 34
+              jamonWriter.write("_BITS,\n              word) ->\n");
+              // 325, 1
+              index = ""; 
+            }
+            // 326, 18
+            else if (reg.getNumEntries1() == 1 )
+            {
+              // 326, 55
+              jamonWriter.write("addrMatch1D(offset,\n              ");
+              // 328, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 328, 34
+              jamonWriter.write("_BASE,\n              ");
+              // 329, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 329, 34
+              jamonWriter.write("_ENTRIES,\n              ");
+              // 330, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 330, 34
+              jamonWriter.write("_STRIDE,\n              ");
+              // 331, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 331, 34
+              jamonWriter.write("_BITS,\n              i, word) ->\n");
+              // 333, 1
+              index = "[i]"; 
+            }
+            // 334, 18
+            else if (reg.getNumEntries2() == 1 )
+            {
+              // 334, 55
+              jamonWriter.write("addrMatch2D(offset,\n              ");
+              // 336, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 336, 34
+              jamonWriter.write("_BASE,\n              ");
+              // 337, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 337, 34
+              jamonWriter.write("_ENTRIES_0,\n              ");
+              // 338, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 338, 34
+              jamonWriter.write("_ENTRIES_1,\n              ");
+              // 339, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 339, 34
+              jamonWriter.write("_STRIDE_0,\n              ");
+              // 340, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 340, 34
+              jamonWriter.write("_STRIDE_1,\n              ");
+              // 341, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 341, 34
+              jamonWriter.write("_BITS,\n              i0, i1, word) ->\n");
+              // 343, 1
+              index = "[i1, i0]"; 
+            }
+            // 344, 18
+            else
+            {
+              // 344, 25
+              jamonWriter.write("addrMatch3D(offset,\n              ");
+              // 346, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 346, 34
+              jamonWriter.write("_BASE,\n              ");
+              // 347, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 347, 34
+              jamonWriter.write("_ENTRIES_0,\n              ");
+              // 348, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 348, 34
+              jamonWriter.write("_ENTRIES_1,\n              ");
+              // 349, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 349, 34
+              jamonWriter.write("_ENTRIES_2,\n              ");
+              // 350, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 350, 34
+              jamonWriter.write("_STRIDE_0,\n              ");
+              // 351, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 351, 34
+              jamonWriter.write("_STRIDE_1,\n              ");
+              // 352, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 352, 34
+              jamonWriter.write("_STRIDE_2,\n              ");
+              // 353, 15
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+              // 353, 34
+              jamonWriter.write("_BITS,\n              i0, i1, i2, word) ->\n");
+              // 355, 1
+              index = "[i2, i1, i0]"; 
+            }
+            // 358, 18
+            if (reg.isStructure() )
+            {
+              // 358, 43
+              jamonWriter.write("            reg = pack(s::");
+              // 359, 27
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName().toLowerCase()), jamonWriter);
+              // 359, 60
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(index), jamonWriter);
+              // 359, 71
+              jamonWriter.write(");\n");
+            }
+            // 360, 24
+            jamonWriter.write("            regReadWrite(rw, word,\n              ");
+            // 362, 15
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 362, 34
+            jamonWriter.write("_ATOMIC_WIDTH,\n              ");
+            // 363, 15
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 363, 34
+            jamonWriter.write("_RW_MASK | ");
+            // 363, 45
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 363, 64
+            jamonWriter.write("_RV_MASK,\n              ");
+            // 364, 15
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 364, 34
+            jamonWriter.write("_RO_MASK,\n              ");
+            // 365, 15
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 365, 34
+            jamonWriter.write("_CW_MASK,\n              ");
+            // 366, 15
+            org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
+            // 366, 34
+            jamonWriter.write("_CW1_MASK,\n              data, ");
+            // 367, 21
+            if (reg.isStructure() )
+            {
+              // 367, 46
+              jamonWriter.write("reg");
+            }
+            // 367, 49
+            else
+            {
+              // 367, 56
+              jamonWriter.write("s::");
+              // 367, 59
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName().toLowerCase()), jamonWriter);
+              // 367, 92
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(index), jamonWriter);
+            }
+            // 367, 109
+            jamonWriter.write(");\n");
+            // 368, 18
+            if (reg.isStructure() )
+            {
+              // 368, 43
+              jamonWriter.write("            unpack(s::");
+              // 369, 23
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName().toLowerCase()), jamonWriter);
+              // 369, 56
+              org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(index), jamonWriter);
+              // 369, 67
               jamonWriter.write(", reg)\n");
             }
           }
         }
-        // 241, 27
+        // 371, 27
         jamonWriter.write("        ]\n      ]\n    );\n\n");
-        // 247, 1
+        // 377, 1
         {
-          // 247, 1
+          // 377, 1
           __jamon_innerUnit__registerInit(jamonWriter, registers, camelCaseBaseName );
         }
-        // 247, 77
+        // 377, 77
         jamonWriter.write("\n  }\n}\n");
       }
     }
-    // 252, 8
+    // 382, 8
     jamonWriter.write("\n");
   }
   
