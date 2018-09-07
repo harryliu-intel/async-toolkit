@@ -7,6 +7,7 @@ use ToolConfig;
 my $vcsVer = &ToolConfig::get_tool_version('vcsmx');
 my $MBY_IOSF_PRI_VC_ROOT = &ToolConfig::get_tool_path('ipconfig/iosf_primary_bfm') . "/ph4";
 my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc');
+my $sva_lib                 = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
 
 my $default_enable_congruency_elab  = 1;
 my $default_enable_xprop_elab       = 1;
@@ -15,6 +16,23 @@ my $default_enable_partcomp_elab    = 1;
 my $mby_enable_congruency_elab      = $default_enable_congruency_elab;
 my $mby_enable_xprop_elab           = $default_enable_xprop_elab;
 my $mby_enable_partcomp_elab        = $default_enable_partcomp_elab;
+my $behaveMem = 0;
+my @mbyMgmLibs = ( "target/mby/mgm_run/rtl/mby_memories_common_rel.hdl",
+	           "target/mby/mgm_run/rtl/mby_memories_rel.hdl",);
+
+my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
+                      'target/mby/mgm_run/rtl/mby_memories_wrap_rel.hdl', 
+		    );
+for (my $i = 0; $i < @ARGV; $i++) {
+    if ($ARGV[$i] eq "-mby_behave_mem") {
+ 	$behaveMem = 1;	
+	push (@mbyMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
+	push (@mbyTbMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
+	last;
+    }
+};    
+
+print "MGM debug : @mbyMgmLibs\n";
 
 %audf = (
    Includes => [],
@@ -65,6 +83,19 @@ EOF
             mby_rtl_lib => {
                -hdl_spec => [ 'cfg/ace/HDL/rtl/mby_rtl.hdl', ],
             },
+	     sva_lib => {
+                     -hdl_spec => [ "$sva_lib/intel_checkers_pkg_rtl.hdl", ],
+                    -vlog_opts => ["-sverilog", "-assert svaext"],
+                },
+
+	    mby_mgm_lib => {
+		-generated => 1,
+		-gen_config => "mby: :mby_mgm_lib",
+		-hdl_spec        => [ 
+		     @mbyMgmLibs,
+		    ],
+		    -dependent_libs => ['sva_lib',],
+	    },
             mby_cup_rtl_lib => {
                -hdl_spec => [ 'cfg/ace/HDL/rtl/mby_cup_rtl.hdl', ],
             },
@@ -251,6 +282,8 @@ EOF
                libs => [
                   "mby_tb_lib",
                   "mby_rtl_lib",
+		   "sva_lib",
+		   "mby_mgm_lib",
                   "mby_regflow_lib",
                   "mby_ti_lib",
                   "shdv_shared_lib",

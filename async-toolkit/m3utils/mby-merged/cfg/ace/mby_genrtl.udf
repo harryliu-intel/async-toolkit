@@ -9,6 +9,7 @@ my $config_file = "$ENV{MODEL_ROOT}/tools/mgm/config_file";
 my $includes =  "$ENV{MODEL_ROOT}/tools/mgm/blocks_inclusion";
 my $apr_struct = "$ENV{MODEL_ROOT}/tools/mgm/apr_structure";
 my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
+my $cmo =  join(":", @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'CMO'}});
 
 
 %audf = (
@@ -60,7 +61,7 @@ my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
                      filter => 'Synthesis',
                      gen_commands => [ 
                          #"mkdir -p $ENV{MODEL_ROOT}/target/mgm",
-                         "mgm $blocks -cnfg $config_file -includes $includes -apr_struct $apr_struct -csv $ph_params -unique $prefix -clk $clock_file -rprt_dir  $report_dir",
+                         "mgm $blocks -cnfg $config_file -includes $includes -apr_struct $apr_struct -csv $ph_params -unique $prefix -clk $clock_file -rprt_dir  $report_dir -cmo $cmo -relative_path_from $ENV{MODEL_ROOT} ",
                      ],
 		 },      #mby_mgm_lib
                  gen_mby_regflow_lib => {

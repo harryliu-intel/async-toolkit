@@ -27,20 +27,21 @@
 // -------------------------------------------------------------------
 // -- Author : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : Madison Bay
-// -- Description : RX PPE top level
+// -- Description : Parser top level
 // --
 // -------------------------------------------------------------------
 
-module rx_ppe
+module parser_top
 (
-    input   logic                   cclk,
-    input   logic                   reset,
-    igr_pre_ppe_rx_ppe_if.ppe       igr_pre_ppe_rx_ppe_if,      //Ingress pre PPE interface
-    rx_ppe_igr_post_ppe_if.ppe      rx_ppe_igr_post_ppe_if,     //Ingress post PPE interface
-    rx_ppe_ppe_stm_if.ppe           rx_ppe_ppe_stm_if,          //Shared table memory interface
+    input   logic                       cclk,
+    input   logic                       reset,
 
-    ahb_rx_ppe_if.ppe               ahb_rx_ppe_if,              // AHB slave connection
-    glb_rx_ppe_if.ppe               glb_rx_ppe_if               // Centralize control for synchronizing updates
+    ahb_rx_ppe_if.ppe                   ahb_rx_ppe_if,              // AHB slave connection
+    glb_rx_ppe_if.ppe                   glb_rx_ppe_if               // Centralize control for synchronizing updates
+
+    igr_pre_ppe_rx_ppe_if.ppe           igr_pre_ppe_rx_ppe_if,      //Ingress pre PPE interface
+
+    par_class_if.parser                 par_class_if               //Classifier interface
 );
 
 endmodule
