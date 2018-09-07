@@ -15,7 +15,6 @@
 #include <mby_pipeline.h>
 #include <mby_reg_ctrl.h>
 #include <mby_rxstats.h>
-#include <mby_rxtotx.h>
 #include <mby_triggers.h>
 #include <mby_txstats.h>
 

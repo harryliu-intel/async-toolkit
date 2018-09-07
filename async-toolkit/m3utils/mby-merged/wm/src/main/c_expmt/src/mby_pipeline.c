@@ -56,23 +56,3 @@ void TxPipeline
 
     TxStats    (regs, &mod2txs,  txs2mac);
 }
-
-// TODO remove if no longer required
-void Pipeline
-(
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxMacToParser  * const mac2par,
-          mbyTxStatsToTxMac * const txs2mac
-)
-{
-    // Intermediate structs:
-    mbyRxStatsToRxOut rxs2rxo;
-    mbyTxInToModifier txi2mod;
-
-    // Pipeline stages:
-    RxPipeline (regs,  mac2par, &rxs2rxo);
-
-    RxToTx     (regs, &rxs2rxo, &txi2mod);
-
-    TxPipeline (regs, &txi2mod,  txs2mac);
-}

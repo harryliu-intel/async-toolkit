@@ -127,6 +127,7 @@ typedef struct mbyRxStatsToRxOutStruct
     fm_bool                 DROP_TTL;
     fm_byte                 ECN;           // ECN value to use in egress packet
     fm_uint16               EDGLORT;       // egress destination glort
+    fm_uint32               FNMASK;        // forwarding normal mask
     fm_bool                 IS_TIMEOUT;
     fm_macaddr              L2_DMAC;       // L2 destination MAC address
     fm_uint16               L2_EVID1;      // 12-bit egress VLAN ID
@@ -145,7 +146,6 @@ typedef struct mbyRxStatsToRxOutStruct
     fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
     fm_bool                 TX_DROP;       // flag indicating packet drop
     fm_uint32               TX_LENGTH;     // egress packet data length[byte]
-    fm_uint32               TX_PORT;       // egress port
     fm_byte                 TX_TAG;        // egress tag
     fm_byte                 XCAST;         //
 

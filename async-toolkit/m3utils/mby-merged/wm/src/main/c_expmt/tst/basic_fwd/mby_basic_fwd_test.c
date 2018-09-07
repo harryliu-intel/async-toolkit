@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <mby_common.h>
 #include <mby_errors.h>
 #include <mby_model.h>
 #include <mby_init.h>

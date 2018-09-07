@@ -279,6 +279,7 @@ void RxStats
     out->DROP_TTL          = in->DROP_TTL;
     out->ECN               = in->ECN;
     out->EDGLORT           = in->EDGLORT;
+    out->FNMASK            = in->FNMASK;
     out->IS_TIMEOUT        = in->IS_TIMEOUT;
     out->L2_DMAC           = in->L2_DMAC;
     out->L2_EVID1          = in->L2_EVID1;
