@@ -60,9 +60,9 @@ void Parser
 )
 {
     // Read inputs:
-    const fm_uint32       rx_port   = in->RX_PORT;
-    const fm_uint32       rx_length = in->RX_LENGTH;
     const fm_byte * const rx_data   = in->RX_DATA;
+    const fm_uint32       rx_length = in->RX_LENGTH;
+    const fm_uint32       rx_port   = in->RX_PORT;
 
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
@@ -344,28 +344,31 @@ void Parser
     }
 
     // Write outputs:
-    out->RX_PORT            = rx_port; // pass-thru
+
     out->PA_ADJ_SEG_LEN     = pa_adj_seg_len;
+    out->PA_CSUM_OK         = pa_csum_ok;
+    out->PA_DROP            = pa_drop;
+    out->PA_EX_DEPTH_EXCEED = pa_ex_depth_exceed;
+    out->PA_EX_PARSING_DONE = pa_ex_parsing_done;
+    out->PA_EX_STAGE        = pa_ex_stage;
+    out->PA_EX_TRUNC_HEADER = pa_ex_trunc_header;
+
+    for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
+        out->PA_FLAGS[i] = pa_flags[i];
 
     for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
         out->PA_KEYS      [i] = pa_keys      [i];
         out->PA_KEYS_VALID[i] = pa_keys_valid[i];
     }
 
-    for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
-        out->PA_FLAGS[i] = pa_flags[i];
+    out->PA_L3LEN_ERR       = pa_l3len_err;
+    out->PA_PACKET_TYPE     = pa_packet_type;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
         out->PA_PTRS      [i] = pa_ptrs      [i];
         out->PA_PTRS_VALID[i] = pa_ptrs_valid[i];
     }
 
-    out->PA_CSUM_OK         = pa_csum_ok;
-    out->PA_EX_STAGE        = pa_ex_stage;
-    out->PA_EX_DEPTH_EXCEED = pa_ex_depth_exceed;
-    out->PA_EX_TRUNC_HEADER = pa_ex_trunc_header;
-    out->PA_EX_PARSING_DONE = pa_ex_parsing_done;
-    out->PA_DROP            = pa_drop;
-    out->PA_L3LEN_ERR       = pa_l3len_err;
-    out->PA_PACKET_TYPE     = pa_packet_type;
+    out->RX_PORT            = rx_port;
+    out->RX_LENGTH          = rx_length;
 }
