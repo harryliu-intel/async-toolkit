@@ -1,15 +1,19 @@
-BLOCK         = parser_top
+BLOCK         = rx_ppe
 DIFF         := $(if $(DISPLAY),tkdiff,diff -w)
 NGEN          = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/ngen_i/ngen_i.pl
 NGEN_FLAGS    = -fi=INTCNOPWR
 V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
-V_DIRS        = -d=../rtl
+V_DIRS        = -d=../../parser/rtl \
+                -d=../../action_be/rtl \
+                -d=../../shared/rtl \
+                -d=../../shared/interfaces \
+                -d=../rtl
 V_LIBS        =
 
 .PHONY: ngen pre top post rtl copy clean diff
 
-ngen: clean pre top post
+ngen: clean top
 
 pre:
 	./pre_process.pl
@@ -29,7 +33,7 @@ rtl copy:
 
 clean:
 	@echo "Cleaning $(BLOCK)"
-	@rm -rf $(wildcard ngen parser_shells_wrapper_inc.v parser_shells_wrapper.v parser_ff_mems.v)
+	@rm -rf $(wildcard ngen)
 
 diff:
 	@echo "Making a difference..." # one byte at a time

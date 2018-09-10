@@ -97,23 +97,64 @@ typedef struct packed {
     logic   mirror; //when set indicates need to mirror packet to a normal port
 } rx_ppe_igr_pkt_type_t;
 
-// PPE to ingress metadata
+// Unicast/MC Packet metadata
 typedef struct packed {
-    logic   [15:0]                      policer_res;    //policer result
-    logic   [31:0]                      vid1_vid2;      //VID1 and VID2
-    logic   [$clog2(MC_GROUP_CNT)-1:0]  mc_grp_id;      //multicast group ID
-    logic   [IGR_PPE_TS_WIDTH-1:0]      igr_ts;         //ingress timestamp
-    logic   [5:0]                       l3d;            //L3 domain
-    logic   [7:0]                       l2d;            //L2 domain
-    logic   [15:0]                      dglort;         //destination global resource tag
-    logic   [15:0]                      sglort;         //source global resource tag
-    logic   [11:0]                      vlan;           //VLAN
-    logic   [47:0]                      dmac;           //DMAC
-    logic   [11:0]                      igr_vlan;       //ingress VLAN
-    logic   [47:0]                      mod_metadata;   //modification metadata
-    logic   [23:0]                      mod_profile;    //modification profile
-    logic   [7:0]                       dest_port;      //destination port
-    rx_ppe_igr_pkt_type_t               pkt_type;       //packet type
+    logic   [121:0]                 reserved;
+    logic   [3:0]                   packet_type;
+    logic   [23:0]                  mod_profile;
+    logic   [19:0]                  mod_md;
+    logic   [11:0]                  ivid;
+    logic   [11:0]                  evid;
+    logic   [3:0]                   vpri;
+    logic   [1:0]                   tx_tag;
+    logic   [3:0]                   tag_flags;      //parser flags
+    logic   [47:0]                  dmac;
+    logic   [7:0]                   rx_port;        //source port
+    logic   [5:0]                   l3d;            //L3 domain
+    logic   [IGR_PPE_TS_WIDTH-1:0]  igr_ts;         //Ingress timestamp
+    logic   [7:0]                   l3_mcgrpid;
+    logic                           tx_drop;
+    logic   [5:0]                   dscp;
+    logic   [3:0]                   ttl_ctl;
+    logic   [1:0]                   ecn_val;
+    logic                           aqm_mark_en;
+    logic   [63:0]                  hdr_ptr;
+    logic   [63:0]                  hdr_ptr_offset;
+} rx_ppe_igr_port_md_t;
+
+// CPP Packet metadata
+typedef struct packed {
+    logic   [4:0]                   packet_type;
+    logic   [7:0]                   dest_port;
+    logic   [23:0]                  mod_profile;
+    logic   [31:0]                  mod_md;
+    logic   [11:0]                  ivid1;
+    logic   [11:0]                  ivid2;
+    logic   [11:0]                  evid1;
+    logic   [11:0]                  evid2;
+    logic   [3:0]                   vpri1;
+    logic   [3:0]                   vpri2;
+    logic   [1:0]                   tx_tag;
+    logic   [3:0]                   tag_flags;      //parser flags
+    logic   [47:0]                  dmac;
+    logic   [7:0]                   sglort;
+    logic   [15:0]                  dglort;
+    logic   [31:0]                  user_id;
+    logic   [5:0]                   l3d;            //L3 domain
+    logic   [IGR_PPE_TS_WIDTH-1:0]  igr_ts;         //Ingress timestamp
+    logic   [7:0]                   l3_mcgrpid;
+    logic   [31:0]                  pol_res;
+    logic   [3:0]                   dscp_ctl;
+    logic   [3:0]                   ttl_ctl;
+    logic   [3:0]                   tc_ctl;
+    logic   [3:0]                   ecn_ctl;
+    logic   [63:0]                  hdr_ptr;
+    logic   [55:0]                  hdr_ptr_offset;
+} rx_ppe_igr_cpp_md_t;
+
+typedef union packed {
+    rx_ppe_igr_port_md_t    cpp_md;     //CPP metadata
+    rx_ppe_igr_port_md_t    port_md;    //Normal port metadata
 } rx_ppe_igr_md_t;
 
 typedef struct packed {

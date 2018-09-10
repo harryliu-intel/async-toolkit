@@ -1,23 +1,16 @@
 // -- Author       : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : MBY
-// -- Description  : parser netlist.
+// -- Description  : rx_ppe netlist.
 // -------------------------------------------------------------------
 ngen_mod_name
 
-input reset,
-
-ahb_rx_ppe_if.ppe ahb_rx_ppe_if,
-glb_rx_ppe_if.ppe glb_rx_ppe_if,
-
-igr_rx_ppe_if.ppe igr_rx_ppe_if,
+rx_ppe_ppe_stm_if.ppe rx_ppe_ppe_stm_if,
+rx_ppe_igr_if.ppe rx_ppe_igr_if,
 
 ngen_IO_list
 ngen_IO_end
 
 ngen_wires
-
-logic reset_n;
-print "assign reset_n = !reset;\n";
 
 ngen_submodules
 
