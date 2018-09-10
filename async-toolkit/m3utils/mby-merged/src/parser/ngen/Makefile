@@ -1,0 +1,36 @@
+BLOCK         = parser_top
+DIFF         := $(if $(DISPLAY),tkdiff,diff -w)
+NGEN          = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/ngen_i/ngen_i.pl
+NGEN_FLAGS    = -fi=INTCNOPWR -B
+V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
+
+V_DIRS        = -d=../rtl
+V_LIBS        =
+
+.PHONY: ngen pre top post verilog copy clean diff
+
+ngen: clean pre top post
+
+pre:
+	./pre_process.pl
+	$(V2BBOX) -v ./parser_shells_wrapper_inc.v -n parser_shells_wrapper -p ../../../target/mby/mgm_run/parser/src,../../../target/mby/mgm_run/rtl -o parser_shells_wrapper.v
+	$(V2BBOX) -v ../../../target/mby/mgm_run/parser/src/mem_wrap/parser_ff_mems.v -p ../../../target/mby/mgm_run/parser/src,../../../target/mby/mgm_run/rtl -o parser_ff_mems.v
+
+top:
+	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
+
+post:
+	rm -f parser_shells_wrapper_inc.v
+	rm -f parser_shells_wrapper.v
+	rm -f parser_ff_mems.v
+
+verilog copy:
+	cp ngen/$(BLOCK).sv ../rtl/$(BLOCK).sv
+
+clean:
+	@echo "Cleaning $(BLOCK)"
+	@rm -rf $(wildcard ngen parser_shells_wrapper_inc.v parser_shells_wrapper.v parser_ff_mems.v)
+
+diff:
+	@echo "Making a difference..." # one byte at a time
+	$(DIFF) ../verilog/$(BLOCK).sv ngen/$(BLOCK).sv
