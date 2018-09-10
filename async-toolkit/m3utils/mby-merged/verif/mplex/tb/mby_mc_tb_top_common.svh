@@ -1,4 +1,3 @@
-
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -52,10 +51,12 @@ import sla_pkg::*;
 logic         fabric_clk;                             // Fabric Clock - 1.2 Ghz
 logic         proc_clk;                               // Processor Clock - 1.0 Ghz
 logic         peri_clk;                               // Peripheral Clock - 200 Mhz
+logic         qref_clk;                               // QSPI ref Clock - 37 Mhz (1.2 Ghz/16)
 
 shdv_clk_gen  fabric_clk_gen(fabric_clk);            
 shdv_clk_gen  proc_clk_gen(proc_clk);    
-shdv_clk_gen  peri_clk_gen(peri_clk);    
+shdv_clk_gen  peri_clk_gen(peri_clk); 
+shdv_clk_gen  qref_clk_gen(qref_clk); 
 
 initial begin
 
@@ -67,8 +68,10 @@ initial begin
     
     peri_clk_gen.period       = 5000ps;
     peri_clk_gen.jitter       = 0ps;
+       
+    qref_clk_gen.period       = 27027ps;
+    qref_clk_gen.jitter       = 0ps;
     
-
 end
 
 // ===============================================
@@ -113,6 +116,27 @@ assign axi_reset_if.reset = mc_tb_if.hard_reset;
 //interface.
 assign axi_if.master_if[0].aresetn = ~axi_reset_if.reset;
 assign axi_if.slave_if[0].aresetn  = ~axi_reset_if.reset;
+
+// axi write address channel:
+assign axi_if.master_if[0].awready  =  mplex_top.cup_proc.AWREADY;
+
+// axi write data channel:
+assign axi_if.master_if[0].wready   =  mplex_top.cup_proc.WREADY;
+
+// axi write response channel:
+assign axi_if.master_if[0].bid      =  mplex_top.cup_proc.BID;		
+assign axi_if.master_if[0].bresp    =  mplex_top.cup_proc.BRESP;	
+assign axi_if.master_if[0].bvalid   =  mplex_top.cup_proc.BVALID;
+
+// axi read address channel 
+assign axi_if.master_if[0].arready   =  mplex_top.cup_proc.ARREADY;
+
+// axi read data channel
+assign axi_if.master_if[0].rlast   =  mplex_top.cup_proc.RLAST;
+assign axi_if.master_if[0].rresp   =  mplex_top.cup_proc.RRESP;	
+assign axi_if.master_if[0].rvalid  =  mplex_top.cup_proc.RVALID;
+assign axi_if.master_if[0].rdata   =  mplex_top.cup_proc.RDATA;  
+assign axi_if.master_if[0].rid     =  mplex_top.cup_proc.RID;
 
 
 //////////////////////////////////////////////
@@ -208,7 +232,9 @@ cup_top mplex_top(
     .proc_clk (mc_tb_if.proc_clk),
     .proc_core_reset(mc_tb_if.hard_reset),
     .peri_clk (mc_tb_if.peri_clk),
-    .peri_resetn(~mc_tb_if.hard_reset)
+    .peri_resetn(~mc_tb_if.hard_reset),
+    .qref_clk(qref_clk),
+    .qref_resetn(~mc_tb_if.hard_reset)
 );
 
 
