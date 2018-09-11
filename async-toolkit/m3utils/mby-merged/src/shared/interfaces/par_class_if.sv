@@ -28,37 +28,38 @@
 // -------------------------------------------------------------------
 // -- Author : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : Madison Bay
-// -- Description : Ingress Pre PPE to RX PPE interface
+// -- Description : Parser to classifier interface
 // --
 // -------------------------------------------------------------------
 
-interface igr_pre_ppe_rx_ppe_if
-import shared_pkg::*;
+interface par_class_if
+import rx_ppe_pkg::*;
 ();
-igr_pre_ppe_rx_ppe_tail_t   intf0_tail;     //tail information for interface 0
-igr_pre_ppe_rx_ppe_head_t   intf0_head;     //head segment for interface 0
-logic                       intf0_ack;      //segment acknowledge for interface 0
+imn_rpl_bkwd_t  rpl_bkwd;       //Management status from downstream blocks
+imn_rpl_frwd_t  rpl_frwd;       //Managment to downstream blocks
 
-igr_pre_ppe_rx_ppe_tail_t   intf1_tail;     //tail information for interface 1
-igr_pre_ppe_rx_ppe_head_t   intf1_head;     //head segment for interface 1
-logic                       intf1_ack;      //segment acknowledge for interface 1
+parser_out_t    parser_out;     //Parser results
+logic           parser_out_v;   //Parser results valid
 
-modport igr(
-    output  intf0_tail,
-    output  intf0_head,
-    input   intf0_ack,
-    output  intf1_tail,
-    output  intf1_head,
-    input   intf1_ack
+tail_info_t     o_tail_info;    //Tail info
+logic           o_tail_info_v;  //Tail info valid
+
+modport parser(
+    input   rpl_bkwd,
+    output  rpl_frwd,
+    output  parser_out,
+    output  parser_out_v,
+    output  o_tail_info,
+    output  o_tail_info_v
 );
 
-modport ppe(
-    input   intf0_tail,
-    input   intf0_head,
-    output  intf0_ack,
-    input   intf1_tail,
-    input   intf1_head,
-    output  intf1_ack
+modport classifier(
+    output  rpl_bkwd,
+    input   rpl_frwd,
+    input   parser_out,
+    input   parser_out_v,
+    input   o_tail_info,
+    input   o_tail_info_v
 );
 
-endinterface: igr_pre_ppe_rx_ppe_if
+endinterface: par_class_if

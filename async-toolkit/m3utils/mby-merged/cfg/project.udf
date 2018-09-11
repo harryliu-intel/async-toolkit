@@ -73,6 +73,9 @@ use ToolConfig;
         -target_prefix => {
             default => "target",
         },
+	 -mby_behave_mem => {
+            default => 0,
+        },
         -vcstarget => {
             default => "vcs_lib/".&ToolConfig::get_tool_version('vcsmx')."_suse64",    
         },

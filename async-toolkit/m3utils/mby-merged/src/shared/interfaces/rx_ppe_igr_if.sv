@@ -28,23 +28,24 @@
 // -------------------------------------------------------------------
 // -- Author : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : Madison Bay
-// -- Description : RX PPE to TX PPE interface
+// -- Description : RX PPE to Ingress Post PPE interface
 // --
 // -------------------------------------------------------------------
 
-interface rx_ppe_tx_ppe_if
+interface rx_ppe_igr_if
+import shared_pkg::*;
 ();
-logic   [231:0] data;   //interface 0 read data
-logic   [15:0]  ecc;    //interface 0 read ECC
+rx_ppe_igr_t    intf0;      //Interface 0
+rx_ppe_igr_t    intf1;      //Interface 1
 
-modport rx(
-    output  data,
-    output  ecc
+modport ppe(
+    output  intf0,
+    output  intf1
 );
 
-modport tx(
-    input   data,
-    input   ecc
+modport igr(
+    input   intf0,
+    input   intf1
 );
 
-endinterface: rx_ppe_tx_ppe_if
+endinterface: rx_ppe_igr_if

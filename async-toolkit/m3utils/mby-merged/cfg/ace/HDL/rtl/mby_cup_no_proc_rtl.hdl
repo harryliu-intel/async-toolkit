@@ -1,0 +1,15 @@
+# vim: noai : ts=4 : sw=4 : ft=perl
+
+$hdl_spec = {
+
+    # SV Source Files (no SVX support)
+    -vlog_files => [
+        "src/rtl/cup/stub/cup_proc_stub.v",
+    ],
+
+    # SV Include Directories
+    -vlog_incdirs => [
+        "src/rtl/cup/stub"
+    ],
+
+};
