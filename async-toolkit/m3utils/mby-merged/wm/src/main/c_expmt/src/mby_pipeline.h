@@ -15,7 +15,6 @@
 #include "mby_triggers.h"
 #include "mby_congmgmt.h"
 #include "mby_rxstats.h"
-#include "mby_rxtotx.h"
 #include "mby_modifier.h"
 #include "mby_txstats.h"
 
@@ -31,14 +30,7 @@ void RxPipeline
 void TxPipeline
 (
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxStatsToRxOut * const rxs2rxo,
-          mbyTxStatsToTxMac * const txs2mac
-);
-
-void Pipeline
-(
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxMacToParser  * const mac2par,
+    const mbyTxInToModifier * const txi2mod,
           mbyTxStatsToTxMac * const txs2mac
 );
 
@@ -105,13 +97,6 @@ void RxStats
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
     const mbyCongMgmtToRxStats  * const in,
           mbyRxStatsToRxOut     * const out
-);
-
-void RxToTx
-(
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxStatsToRxOut     * const in,
-          mbyTxInToModifier     * const out
 );
 
 void Modifier
