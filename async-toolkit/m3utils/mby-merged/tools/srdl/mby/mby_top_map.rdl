@@ -19,6 +19,7 @@
 `include "mby_modify.rdl"
 `include "mby_local_store.rdl"
 `include "mby_shm.rdl"
+`include "epl.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -52,6 +53,7 @@ addrmap mby_mpt_top_map {
 // 3.2T hiearchy
 addrmap mby_top_map {
   mby_mpt_top_map mpt[2];
+  epl             epl;
   mby_shm_map     shm;    
 };
 
