@@ -212,7 +212,9 @@ $ToolConfig_tools{"mgm"} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/mgm/nhdk/&get_tool_version()",
     MGM_ARGS => {
         BLOCKS => {
-            mby => ["parser",],
+            mby => ["parser",
+                    "ppe_stm",
+                   ],
         },
         PHYSICAL_PARAMS => "$ENV{MODEL_ROOT}/tools/mgm/mby_physical_params.csv",
         REPORT_DIR => "$ENV{MODEL_ROOT}/target/".&ToolConfig::get_facet("dut")."/mgm_run/rtl",
