@@ -110,6 +110,7 @@ typedef struct mbyHashToNextHopStruct
     fm_bool                 PA_L3LEN_ERR;           // l3 length error
     fm_uint32               PRE_RESOLVE_DMASK;      // destination mask before action resolution
     fm_byte                 QOS_SWPRI;              // 4-bit switch priority
+    fm_byte               * RX_DATA;                // ingress (receive) packet data
     fm_uint32               RX_LENGTH;              // RX packet length
     fm_bool                 RX_MIRROR;              // rx mirror frame
     fm_uint32               RX_PORT;                // receive port number

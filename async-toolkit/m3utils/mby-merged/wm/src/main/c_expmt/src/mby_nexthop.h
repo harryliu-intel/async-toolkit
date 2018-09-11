@@ -293,7 +293,6 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint16               L2_IVLAN1_CNT;        // ingress VLAN counter
     mbyMirrorType           MIRTYP;               // mirror type
     fm_uint32               MOD_IDX;              // index into the MODIFY descriptor tables
-    fm_bool                 NO_MODIFY;            // skip most of modifications in Modifier
     fm_bool                 OOM;                  // out of memory
     mbyParserInfo           PARSER_INFO;          // parser info structure
     fm_bool                 PM_ERR;               // ECC error on PM

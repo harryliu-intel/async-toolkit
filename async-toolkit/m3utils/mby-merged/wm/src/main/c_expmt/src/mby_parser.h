@@ -245,6 +245,7 @@ typedef struct mbyParserToMapperStruct
     fm_byte                 PA_PTRS      [MBY_N_PARSER_PTRS]; // pointers to data of interest within packet
     fm_bool                 PA_PTRS_VALID[MBY_N_PARSER_PTRS]; // parser pointers valid flags
     fm_uint32               RX_LENGTH;                        // ingress packet data length [bytes]
+    fm_byte               * RX_DATA;                          // ingress (receive) packet data
     fm_uint32               RX_PORT;                          // ingress port
 
 } mbyParserToMapper;

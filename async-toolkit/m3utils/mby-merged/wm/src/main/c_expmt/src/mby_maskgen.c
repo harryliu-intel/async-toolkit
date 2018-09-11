@@ -1097,7 +1097,6 @@ void MaskGen
     out->L2_IVLAN1_CNT          = in->L2_IVLAN1_CNT;
     out->MIRTYP                 = in->MIRTYP;
     out->MOD_IDX                = in->MOD_IDX;
-    out->NO_MODIFY              = in->NO_MODIFY;
     out->OOM                    = in->OOM;
     out->PARSER_INFO            = in->PARSER_INFO;
     out->PM_ERR                 = in->PM_ERR;
