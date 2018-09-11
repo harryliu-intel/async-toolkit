@@ -1,0 +1,182 @@
+
+reg earb_fixed_schedule_r {
+  shared;
+  HandCoded = true;
+  name = "Egress Arbiter Fixed Schedule.";
+  desc = "Egress Arbiter Fixed Schedule.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Set to 1 if this entry is an idle entry, available for mgmt
+            or sweep operations; if so, no sched outputs are sent.
+           ";
+    ValRandomize = true;
+  } IDLE[10:10] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Logical fabric port.
+           ";
+    ValRandomize = true;
+  } PORT[9:5] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Physical fabric port.
+           ";
+    ValRandomize = true;
+  } PHYS_PORT[4:0] = 5'h00;
+};
+regfile earb_fixed_schedule_rf {
+  earb_fixed_schedule_r EARB_FIXED_SCHEDULE[512] += 8;
+};
+
+reg earb_adaptive_schedule_r {
+  shared;
+  HandCoded = true;
+  name = "Egress Arbiter Adaptive Schedule And Port Mapping.";
+  desc = "
+          One entry per-physical port. Describes which logical port each
+          physical port is mapped to, and which in which rounds the port is
+          eligible to be scheduled.
+
+          There are two separate earb_adaptive_schedule pages so that one can be
+          re-configured while the other is active. Switching from one page
+          to the other is controlled by the earb_ctrl_r.page field.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Logical port number mapped to this physical port.
+           ";
+    ValRandomize = true;
+  } PORT[20:16] = 5'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            One bit for each of the rounds (max 16 rounds). The port is
+            eligible to be scheduled in a round if the corresponding bit is
+            set. Should be configured to satisfy minimum bandwidth requirements
+            of the port.
+           ";
+    ValRandomize = true;
+  } ELIGIBLE[15:0] = 16'h00;
+};
+
+regfile earb_adaptive_schedule_rf {
+  earb_adaptive_schedule_r EARB_ADAPTIVE_SCHEDULE[32] += 8;
+};
+
+reg earb_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "Control Signals For The Egress Arbiter.";
+  desc = "Control Signals For The Egress Arbiter.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            If this bit is set to 1, then EARB will check the TXQ's and EARB's 
+            o_schedule_tx_v phase bits. If the phase bits do not match, then the 
+            EARB will assert the o_schedule_tx.ready_invalidate bit.
+            This prevents the next packet being scheduled by the EARB
+            from using the current packet's o_schedule_tx_v valid bits in the event that
+            the port's qid_ready signal was deasserted and then reasserted.
+            Hence, it forces a packet being scheduled after a qid_ready deassertion to 
+            wait for o_schedule_tx_v bits which it triggered. 
+           ";
+    ValRandomize = true;
+  } TXQ_EARB_PHASE_CHECK_ENABLE[21:21] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, determines the minimum spacing
+            allowed for scheduling a given quad. If the value is set to N, the minimum spacing
+	    for a quad to be scheduled is N+1. The valid range for N is from 3'h1 to 3'h5.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_MIN_SPACING[20:18] = 3'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, if this bit is set to 1, then
+            the Adaptive Schedule will use the skip fill algorithm to 
+            utilize potentially wasted bandwidth in the event that a scheduling
+            slot is available and there are ports which are ready to be transmitted
+            but not scheduled to be served in this round. 
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SKIP_FILL[17:17] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Highest index used in Fixed Scheduling Table. Minimum value is 1.
+           ";
+    ValRandomize = true;
+  } MAX_FIXED_SCHED_TABLE_INDEX[16:8] = 9'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Highest round number index used before looping back to 0. Since
+            the eligible table has a maximum of 16 round, the max round
+            index must be <=15. Minimum value is 1. 
+           ";
+    ValRandomize = true;
+  } MAX_ROUND_INDEX[7:4] = 4'hF;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Fixed Scheduling is active, defines which EARB Fixed
+            Schedule page is active (0 or 1). Transitions from one page to the
+            other occur when the round index loops back to 0.
+           ";
+    ValRandomize = true;
+  } FIXED_SCHED_PAGE[3:3] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            When Adaptive Scheduling is active, defines which EARB Adaptive
+            Schedule page is active (0 or 1). Transitions from one page to the
+            other occur when the round index loops back to 0.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SCHED_PAGE[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used to determine if Adaptive Scheduling or Fixed Scheduling is
+            active. If set to 0, Fixed Scheduling is active. If set to 1,
+            Adaptive Scheduling is active.
+           ";
+    ValRandomize = true;
+  } ADAPTIVE_SCHED_ENABLE[1:1] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Used to enable the egress arbiter. If set to 0, then
+            no egress ports are serviced.
+           ";
+    ValRandomize = true;
+  } ENABLE[0:0] = 1'h00;
+};
+
+
+addrmap mby_tx_voq_map {
+  name = "mby_tx_voq";
+  desc = "Tx VOQ Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  earb_fixed_schedule_rf    EARB_FIXED_SCHEDULE[2];
+  earb_adaptive_schedule_rf EARB_ADAPTIVE_SCHEDULE[2];
+  earb_ctrl_r               EARB_CTRL;
+
+};

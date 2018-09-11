@@ -19,6 +19,9 @@
 `include "mby_modify.rdl"
 `include "mby_local_store.rdl"
 `include "mby_shm.rdl"
+`include "mby_mesh_row.rdl"
+`include "mby_rx_voq.rdl"
+`include "mby_tx_voq.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -45,13 +48,16 @@ addrmap mby_ppe_tx_top_map {
 // 1.6T hiearchy
 addrmap mby_mpt_top_map {
   mby_ppe_rx_top_map            rx_ppe;
+  mby_rx_voq_map                rx_voq;
   mby_ppe_tx_top_map            tx_ppe;
+  mby_tx_voq_map                tx_voq;
   mby_local_store_map           ppe_store;
 };
 
 // 3.2T hiearchy
 addrmap mby_top_map {
   mby_mpt_top_map mpt[2];
-  mby_shm_map     shm;    
+  mby_shm_map     shm;
+  mby_mesh_map    mesh; // one row of the mesh
 };
 
