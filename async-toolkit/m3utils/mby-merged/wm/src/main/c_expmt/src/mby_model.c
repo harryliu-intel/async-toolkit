@@ -124,7 +124,6 @@ fm_status mbyReceivePacket
     txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
     txi2mod.TX_DATA       = packet; // points at provided buffer
     txi2mod.TX_DROP       = rxs2rxo.TX_DROP;
-    txi2mod.TX_LENGTH     = rxs2rxo.TX_LENGTH;
     txi2mod.TX_TAG        = rxs2rxo.TX_TAG;
     txi2mod.XCAST         = rxs2rxo.XCAST;
 

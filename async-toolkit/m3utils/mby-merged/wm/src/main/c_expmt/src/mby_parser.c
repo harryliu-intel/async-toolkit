@@ -60,9 +60,12 @@ void Parser
 )
 {
     // Read inputs:
-    const fm_byte * const rx_data   = in->RX_DATA;
-    const fm_uint32       rx_length = in->RX_LENGTH;
-    const fm_uint32       rx_port   = in->RX_PORT;
+    const fm_byte * const rx_data_in = in->RX_DATA;
+    const fm_uint32       rx_length  = in->RX_LENGTH;
+    const fm_uint32       rx_port    = in->RX_PORT;
+
+    // Initialize:
+    fm_byte * const rx_packet        = (fm_byte *) rx_data_in;
 
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
@@ -112,7 +115,7 @@ void Parser
     // Read in segment data:
     fm_byte seg_data[MBY_PA_MAX_SEG_LEN];
     for (fm_uint i = 0; i < MBY_PA_MAX_SEG_LEN; i++)
-	seg_data[i] = (i < rx_length) ? rx_data[i] : 0;
+	seg_data[i] = (i < rx_length) ? rx_data_in[i] : 0;
 
     fm_uint16 w0 = getSegDataWord(init_w0_offset, pa_adj_seg_len, seg_data);
     fm_uint16 w1 = getSegDataWord(init_w1_offset, pa_adj_seg_len, seg_data);
@@ -369,6 +372,7 @@ void Parser
         out->PA_PTRS_VALID[i] = pa_ptrs_valid[i];
     }
 
+    out->RX_DATA            = rx_packet;
     out->RX_PORT            = rx_port;
     out->RX_LENGTH          = rx_length;
 }

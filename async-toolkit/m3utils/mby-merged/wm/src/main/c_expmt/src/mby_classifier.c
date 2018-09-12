@@ -1502,6 +1502,7 @@ void Classifier
     out->MPLS_POP         = mpls_pop;
     out->NO_LEARN         = no_learn;
     out->OUTER_L3_LENGTH  = outer_l3_length;
+    out->PARSER_INFO      = parser_info;
 
     for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
         out->POLICER_ACTION[i] = policer_action[i];
@@ -1522,8 +1523,10 @@ void Classifier
     out->L2_IDOMAIN       = in->L2_IDOMAIN;
     out->L3_IDOMAIN       = in->L3_IDOMAIN;
     out->PARITY_ERROR     = in->PARITY_ERROR;
+    out->PARSER_ERROR     = in->PARSER_ERROR;
     out->PA_DROP          = in->PA_DROP;
     out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
+    out->RX_DATA          = in->RX_DATA;
     out->RX_LENGTH        = in->RX_LENGTH;
     out->RX_PORT          = in->RX_PORT;
     out->TRAFFIC_CLASS    = in->TRAFFIC_CLASS;

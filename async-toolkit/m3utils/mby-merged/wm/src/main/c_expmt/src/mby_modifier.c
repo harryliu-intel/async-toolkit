@@ -323,9 +323,9 @@ static void packPacket
         for (fm_uint i = 0; i < rx_length; i++, idx++)
       	    tx_packet[idx] = rx_packet[i];
     } else {
-        *tx_length = chunked_seg->payload_size;
         for (fm_uint i = 0; i < chunked_seg->payload_size; i++, idx++)
             tx_packet[idx] = rx_packet[chunked_seg->payload_start + i];
+        *tx_length = idx;
     }
 }
 
@@ -1182,7 +1182,6 @@ void Modifier
     const fm_uint64       tail_csum_len     = in->TAIL_CSUM_LEN;
     const fm_byte * const tx_data_in        = in->TX_DATA;
     const fm_bool         tx_drop_in        = in->TX_DROP;
-    const fm_uint32       tx_length_in      = in->TX_LENGTH;
     const fm_uint32       tx_stats_last_len = 0; // was: in->TX_STATS_LAST_LEN; <--- FIXME!!!
     const fm_byte         tx_tag            = in->TX_TAG;
     const fm_byte         xcast             = in->XCAST;
@@ -1198,6 +1197,7 @@ void Modifier
 
     // Select egress port:
     fm_uint32 tx_port = 0;
+
     for (fm_uint i = 0; i < 24; i++)
         if (fnmask & (1uL << i)) {
             tx_port = i;
@@ -1205,7 +1205,7 @@ void Modifier
         }
 
     // Unpack RX packet into chunked segment:
-    mbyChunkedSeg chunked_seg;
+    mbyChunkedSeg chunked_seg = { 0 };
     unpackPacket
     (
         rx_length,
@@ -1248,7 +1248,7 @@ void Modifier
         mark_routed,
         mod_idx,
         rx_length,
-        tx_length_in,
+        tx_length,
         tail_csum_len,
         chunked_seg,
         &ctrl_data

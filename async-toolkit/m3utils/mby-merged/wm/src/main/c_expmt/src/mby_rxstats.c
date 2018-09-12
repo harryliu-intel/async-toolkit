@@ -296,7 +296,6 @@ void RxStats
     out->SAF_ERROR         = in->SAF_ERROR;
     out->TAIL_CSUM_LEN     = in->TAIL_CSUM_LEN;
     out->TX_DROP           = in->TX_DROP;
-    out->TX_LENGTH         = in->TX_LENGTH;
     out->TX_TAG            = in->TX_TAG;
     out->XCAST             = in->XCAST;
 }
