@@ -1,0 +1,39 @@
+reg mesh_freepointer_load_address_r {
+  shared;
+  HandCoded = true;
+  name = "Load free pointer address and RAW bits into a free pointer fifo";
+  desc = "
+    Writes two free pointer addresses (and correspondent RAW bits) into a FIFO.
+
+	 Register index indicates, first which free pointer fifo (65), and second
+	 which of the 3085 pairs of addresses (total of 6,169) are loaded into that
+	 free pointer fifo.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Second free pointer address to loead.";
+    ValRandomize = true;
+  } VALUE_2[47:24] = 24'h0;
+  field {
+    AccessType = "RW";
+    desc = "First free pointer address to loead.";
+    ValRandomize = true;
+  } VALUE_1[23:0] = 24'h0;
+
+};
+
+
+addrmap mby_freepointer_fifo_map {
+  name = "mby_freepointer_fifo";
+  desc = "Shared Memory Free Pointer Register Set for each FIFO in the allocator";
+//  Space = "MSG";
+//  Opcode = "MEM-SB";
+//  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  //mesh_freepointer_load_address_r MESH_FREEPOINTER_LOAD_ADDRESS[85][3085];
+  mesh_freepointer_load_address_r MESH_FREEPOINTER_LOAD_ADDRESS[3085];
+
+};

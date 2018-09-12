@@ -62,9 +62,9 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
   `uvm_object_utils(ingress_eth_simple_seq)
   `uvm_declare_p_sequencer(slu_sequencer)
 
-  ingress_env        el_ambiente;
-  eth_frame      el_frame;
-  eth_sequencer  el_sequencer;
+  ingress_env    el_ambiente;
+  eth_frame      los_frames[4];
+  eth_sequencer  los_sequencers[4];
 
   function new (string name="ingress_eth_simple_seq");
     super.new (name);
@@ -73,31 +73,45 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
   endfunction :  new
 
   virtual task body();
-    int count = 0;
+    int count[4] = {0,0,0,0};
     `slu_info(this.get_name(), ("Starting eth simple sequence..."))
-    `slu_assert($cast(el_sequencer, el_ambiente.get_slu_sqcr().pick_sequencer("tx0")),
-                ("Could not get a pointer to the sequencer"))
-    el_frame = eth_frame::type_id::create("el_frame");
-    el_frame.set_item_context(this, el_sequencer);
-    repeat (20) begin
-      `slu_assert(el_frame.randomize() with {
-        kind           inside {BASIC_FRAME,
-                               IPV4_FRAME,
-                               IPV6_FRAME};
-        payload.size() inside {[256:512]};
-        dmac            == 'h000102030405 + count;
-        smac            == 'h060708090a0b + count;
-        tc              == count[3:0];
-        (kind == BASIC_FRAME) ->
-          foreach (payload[idx])
-            payload[idx] == idx;
-       }, ("Unable to randomize eth_pkt"))
-    count++;
-    `slu_info(this.get_name(), ("Started eth_frame %d", count))
-    `uvm_send(el_frame)
-    #200_000ps;
-    `slu_info(this.get_name(), ("Sent eth_frame %d", count))
-  end
+    foreach(los_sequencers[i]) begin
+      `slu_assert($cast(los_sequencers[i], 
+        el_ambiente.get_slu_sqcr().pick_sequencer($sformatf("tx%0d", i))),
+        ("Could not get a pointer to the sequencer%0d", i))
+    end
+    foreach(los_frames[i]) begin
+      los_frames[i] = eth_frame::type_id::create($sformatf("los_frames_%0d", i));
+      los_frames[i].set_item_context(this, los_sequencers[i]);
+    end
+    foreach(los_frames[i]) begin
+      automatic int auto_i = i;
+      fork 
+        begin
+          repeat (20) begin
+            `slu_assert(los_frames[auto_i].randomize() with {
+              bubble         inside {[7:13]};
+              kind           inside {BASIC_FRAME,
+                                     IPV4_FRAME,
+                                     IPV6_FRAME};
+              payload.size() inside {[64:512]};
+              dmac            == 'h000102030405 + count[auto_i];
+              smac            == 'h060708090a0b + count[auto_i];
+              tc              == count[auto_i][3:0];
+              (kind == BASIC_FRAME) ->
+                 foreach (payload[idx])
+                   payload[idx] == idx;
+              }, ("Unable to randomize eth_pkt"))
+            count[auto_i]++;
+            `slu_info(this.get_name(), ("Started eth_frame %0d %0d", auto_i, count[auto_i]))
+            `uvm_send(los_frames[auto_i])
+            //#200_000ps;
+            `slu_info(this.get_name(), ("Sent eth_frame %0d %0d", auto_i, count[auto_i]))
+          end
+        end
+      join_none
+    end
+    wait fork;
   endtask
 
 endclass
