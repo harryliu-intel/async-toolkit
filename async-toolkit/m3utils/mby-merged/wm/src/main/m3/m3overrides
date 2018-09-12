@@ -1,0 +1,10 @@
+% $Id: m3overrides,v 1.1 2009/04/24 07:09:13 mika Exp $
+include(".top")
+override("wm_support",TOP)
+override("wm_net",TOP)
+override("mby",MBY_REGS)
+override("hlp",MBY_REGS)
+override("mby_c",MBY_REGS_C)
+override("hlp_c",MBY_REGS_C)
+override("c", MBY_C_MODEL)
+include(META_INC)

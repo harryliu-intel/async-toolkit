@@ -1,0 +1,26 @@
+import ("libm3")
+import ("wm_support")
+import ("hlp")
+
+_exec(["../../structgen/AMD64_LINUX/structgen","../src/structgen_shared.scm","../src/structgen_m3.scm","../src/structs_m3.scm", "../src/structs.scm"])
+
+include ("../AMD64_LINUX/derived.m3m")
+
+Interface("Byte")
+Sequence("Byte","Byte")
+
+Module ("NetTypes")
+
+Module ("RdNet")
+Module ("WrNet")
+Module ("StructField")
+
+%Module ("FmModelMessageHdr")
+
+Interface ("NetError")
+Interface ("NetContext")
+
+Module("ServerPacket")
+implementation("ServerPacketDbg")
+
+library ("wm_net")

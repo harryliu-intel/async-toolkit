@@ -1,0 +1,8 @@
+INTERFACE Word1024;
+IMPORT Word;
+
+TYPE T = ARRAY [0..15] OF Word.T;
+
+CONST Brand = "Word1024";
+
+END Word1024.

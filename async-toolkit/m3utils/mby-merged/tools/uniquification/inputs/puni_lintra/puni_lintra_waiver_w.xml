@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LINTRA_WAIVERS>
+  <!--waiver desc="" temporary="yes" limit="-1" open_date="Mon Dec 19 2016" message="InterValCheck.*" id="IP_dvvenger_1482186666" rule="puni" file="na" owner="dvvenger" /-->
+  <!--ATTENTION! Make sure that message field in the waiver is not empty, otherwise you'll waive ALL violations with one waiver-->
+  <!--EXAMPLE:
+  <waiver desc="" temporary="yes" limit="-1" open_date="Mon Dec 19 2016" message=".*arb_common.vh.*" id="IP_dvvenger_1482186666" rule="puni" file="na" owner="dvvenger" />
+  -->
+</LINTRA_WAIVERS>

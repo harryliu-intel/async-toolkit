@@ -1,0 +1,98 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+
+// FWD_TABLE0[0..3071][0..255]
+
+reg fwd_table0_r {
+  shared;
+  HandCoded = true;
+  name = "Shared table for CGRP_A";
+  desc = "
+    Entry storage table for LPM and EM_A.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Entry data
+           ";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+regfile fwd_table0_rf {
+  fwd_table0_r FWD_TABLE0[256] += 8;
+};
+
+// FWD_TABLE1[0..511][0..255]
+
+reg fwd_table1_r {
+  shared;
+  HandCoded = true;
+  name = "Shared table for CGRP_B";
+  desc = "
+    Entry storage table for EM_B.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Entry data
+           ";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+regfile fwd_table1_rf {
+  fwd_table1_r FWD_TABLE1[256] += 8;
+};
+
+// FWD_TABLE_MOD[0..639][0..255]
+
+reg fwd_table_mod_r {
+  shared;
+  HandCoded = true;
+  name = "Shared table for packet modifier context memory";
+  desc = "
+    Entry storage table for modify content entries.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Entry data
+           ";
+    ValRandomize = true;
+  } DATA[63:0] = 64'h0;
+};
+regfile fwd_table_mod_rf {
+  fwd_table1_r FWD_TABLE_MOD[256] += 8;
+};
+
+
+
+
+addrmap mby_shm_map {
+  name = "mby_shm";
+  desc = "Shared Tables Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  fwd_table0_rf       FWD_TABLE0[3072];
+  fwd_table1_rf       FWD_TABLE1[512];
+  fwd_table_mod_rf    FWD_TABLE_MOD[640];
+}; 

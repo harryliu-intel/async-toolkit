@@ -1,0 +1,111 @@
+x86-64_linux_2.6.16.60
+>> NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc.base
+export NOVAS_RC
+
+>> NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc.base
+export NOVAS_RC
+
+>> gmake -j -s -f /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/master.makefile TMSTAMP=2013_0909_0708 do_debussy_ace_vlib_mkdir.pl
+>> NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc
+export NOVAS_RC
+
+>> gmake  -f /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/master.makefile TMSTAMP=2013_0909_0708 do_debussy_vlmap
+cp /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc.base /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc
+vlmap lpa /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//lpa/lpa
+vlmap - A library mapping manage tool, Release Verdi3_2012.04 (Linux x86_64/64bit) 04/18/2012
+Copyright (C) 1996 - 2012 by SpringSoft, Inc.
+All Rights Reserved.
+www.springsoft.com
+
+This computer program constitutes or contains trade secrets and confidential
+information of SpringSoft Inc. or its licensors. This computer program is
+protected by copyright law and international treaties.
+
+
+logDir = /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0/results/novas_lib/vlmapLog
+vlmap sip_shared_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//sip_shared_lib/sip_shared_lib
+vlmap - A library mapping manage tool, Release Verdi3_2012.04 (Linux x86_64/64bit) 04/18/2012
+Copyright (C) 1996 - 2012 by SpringSoft, Inc.
+All Rights Reserved.
+www.springsoft.com
+
+This computer program constitutes or contains trade secrets and confidential
+information of SpringSoft Inc. or its licensors. This computer program is
+protected by copyright law and international treaties.
+
+
+logDir = /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0/results/novas_lib/vlmapLog
+vlmap upf /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//upf/upf
+vlmap - A library mapping manage tool, Release Verdi3_2012.04 (Linux x86_64/64bit) 04/18/2012
+Copyright (C) 1996 - 2012 by SpringSoft, Inc.
+All Rights Reserved.
+www.springsoft.com
+
+This computer program constitutes or contains trade secrets and confidential
+information of SpringSoft Inc. or its licensors. This computer program is
+protected by copyright law and international treaties.
+
+
+logDir = /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0/results/novas_lib/vlmapLog
+vlmap mby_env_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_env_lib/mby_env_lib
+vlmap - A library mapping manage tool, Release Verdi3_2012.04 (Linux x86_64/64bit) 04/18/2012
+Copyright (C) 1996 - 2012 by SpringSoft, Inc.
+All Rights Reserved.
+www.springsoft.com
+
+This computer program constitutes or contains trade secrets and confidential
+information of SpringSoft Inc. or its licensors. This computer program is
+protected by copyright law and international treaties.
+
+
+logDir = /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0/results/novas_lib/vlmapLog
+vlmap mby_rtl_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_rtl_lib/mby_rtl_lib
+vlmap - A library mapping manage tool, Release Verdi3_2012.04 (Linux x86_64/64bit) 04/18/2012
+Copyright (C) 1996 - 2012 by SpringSoft, Inc.
+All Rights Reserved.
+www.springsoft.com
+
+This computer program constitutes or contains trade secrets and confidential
+information of SpringSoft Inc. or its licensors. This computer program is
+protected by copyright law and international treaties.
+
+
+logDir = /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0/results/novas_lib/vlmapLog
+vlmap mby_tb_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_tb_lib/mby_tb_lib
+vlmap - A library mapping manage tool, Release Verdi3_2012.04 (Linux x86_64/64bit) 04/18/2012
+Copyright (C) 1996 - 2012 by SpringSoft, Inc.
+All Rights Reserved.
+www.springsoft.com
+
+This computer program constitutes or contains trade secrets and confidential
+information of SpringSoft Inc. or its licensors. This computer program is
+protected by copyright law and international treaties.
+
+
+logDir = /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0/results/novas_lib/vlmapLog
+vlmap mby_ti_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_ti_lib/mby_ti_lib
+vlmap - A library mapping manage tool, Release Verdi3_2012.04 (Linux x86_64/64bit) 04/18/2012
+Copyright (C) 1996 - 2012 by SpringSoft, Inc.
+All Rights Reserved.
+www.springsoft.com
+
+This computer program constitutes or contains trade secrets and confidential
+information of SpringSoft Inc. or its licensors. This computer program is
+protected by copyright law and international treaties.
+
+
+logDir = /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0/results/novas_lib/vlmapLog
+>> gmake -s   -j  -f /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/master.makefile CLEAN_LIB=0 TMSTAMP=2013_0909_0708 IGNORE_CHAR='' all_libs_debussy 
+>> gmake  -f /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/master.makefile INI_VAR=NOVAS_RC TMSTAMP=2013_0909_0708 BASE_INI=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc.base do_all_debussy_model_inis 
+Creating mby specific simulator setup files:
+File: /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby
+Log: /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log
+cp /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc.base //nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby
+cp /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc.base /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby
+NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby;export NOVAS_RC; vlmap lpa /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//lpa/lpa >> /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log 2>&1
+NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby;export NOVAS_RC; vlmap upf /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//upf/upf >> /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log 2>&1
+NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby;export NOVAS_RC; vlmap mby_env_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_env_lib/mby_env_lib >> /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log 2>&1
+NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby;export NOVAS_RC; vlmap sip_shared_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//sip_shared_lib/sip_shared_lib >> /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log 2>&1
+NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby;export NOVAS_RC; vlmap mby_ti_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_ti_lib/mby_ti_lib >> /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log 2>&1
+NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby;export NOVAS_RC; vlmap mby_rtl_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_rtl_lib/mby_rtl_lib >> /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log 2>&1
+NOVAS_RC=/nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//novas.rc_mby;export NOVAS_RC; vlmap mby_tb_lib /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/novas_lib//mby_tb_lib/mby_tb_lib >> /nfs/iil/proj/mpg/romanb_wa/ip_template-coe-x0//results/makefiles/makeLogs/mby_permodel_ini.log 2>&1

@@ -1,0 +1,572 @@
+# FocalPoint API src package
+# Build Makefile
+
+
+################################# Variables ##################################
+
+LIBRARY = ../build/fm_sdk.a
+LIBRARY_SO_NAME = FocalpointSDK
+ifeq ($(PLATFORM),whiteModelLib)
+LIBRARY_SO_NAME = Wm
+endif
+LIBRARY_SO = ../build/lib$(LIBRARY_SO_NAME).$(SO_EXTENSION)
+LIBRARY_DIR = ../build
+
+include ../build/Makefile.config
+
+# make sure platform targets are not built by default
+.DEFAULT_GOAL := all
+
+include ../build/Makefile.$(PLATFORM)
+
+# Version 4.2 of gcc add support for the -Wno-override-init option, which
+# is needed in later versions of gcc to prevent warnings when initializing
+# some structures.
+GCC_NO_OVERRIDE_INIT := 4.2
+
+# Get the version of the compiler we're running with.
+
+# The option -v tells the compiler to print out the version in verbose mode.
+# The content of this message changes according to the compiler configuration,
+# but the structure of the last line has the format:
+#               gcc version V.V.V (xxxxxx)
+# where V.V.V is the compiler version and "xxxx" is a variable message that
+# changes for each distribution, for instance:
+#               gcc version 4.0.0 (DENX ELDK 4.1 4.0.0)
+GCC_VERSION := $(shell $(CC) -v 2>&1 | \
+		sed -n -e "/gcc version/{s/.*gcc version *\([0-9]\.[0-9]\).*/\1/p}")
+
+# If the version of compiler we're running is older and does not support
+# -Wno-override-init, then COMPARE_GCC_VERSION will be set to "-".
+COMPARE_GCC_VERSION := $(shell echo "$(GCC_VERSION) - $(GCC_NO_OVERRIDE_INIT)" | \
+								bc | \
+								grep "^-" -o)
+
+# If using a new enough version of gcc, add -Wno-override-init option
+ifneq ($(COMPARE_GCC_VERSION),-)
+	CFLAGS += -Wno-override-init
+endif
+
+################################## Sources ###################################
+
+ALL_HDRS += $(shell find ../include -name '*.h')
+
+GCH_HDRS =                                          \
+../include/fm_sdk.h                                 \
+../include/fm_sdk_int.h                             \
+
+
+API_SRC =                                           \
+api/fm_api_acl.c                                    \
+api/fm_api_addr.c                                   \
+api/fm_api_attr.c                                   \
+api/fm_api_buffer.c                                 \
+api/fm_api_cardinal.c                               \
+api/fm_api_crm.c                                    \
+api/fm_api_event_fast_maint.c                       \
+api/fm_api_event_handler.c                          \
+api/fm_api_event_intr.c                             \
+api/fm_api_event_mac_maint.c                        \
+api/fm_api_event_mac_purge_table.c                  \
+api/fm_api_event_mgmt.c                             \
+api/fm_api_event_port.c                             \
+api/fm_api_fibm.c                                   \
+api/fm_api_flow.c                                   \
+api/fm_api_glob.c                                   \
+api/fm_api_init.c                                   \
+api/fm_api_lag.c                                    \
+api/fm_api_lag_int.c                                \
+api/fm_api_lbg.c                                    \
+api/fm_api_legacy_int.c                             \
+api/fm_api_lport.c                                  \
+api/fm_api_mapper.c                                 \
+api/fm_api_mirror.c                                 \
+api/fm_api_multicast.c                              \
+api/fm_api_parity.c                                 \
+api/fm_api_pkt_rx.c                                 \
+api/fm_api_pkt_tx.c                                 \
+api/fm_api_policer.c                                \
+api/fm_api_port.c                                   \
+api/fm_api_portmask.c                               \
+api/fm_api_qos.c                                    \
+api/fm_api_rbridge.c                                \
+api/fm_api_regs.c                                   \
+api/fm_api_regs_cache.c                             \
+api/fm_api_replication.c                            \
+api/fm_api_routing.c                                \
+api/fm_api_sflow.c                                  \
+api/fm_api_stacking.c                               \
+api/fm_api_stats.c                                  \
+api/fm_api_storm.c                                  \
+api/fm_api_stp.c                                    \
+api/fm_api_trigger.c                                \
+api/fm_api_vlan.c                                   \
+api/fm_api_vn.c                                     \
+
+
+API_SRC_FM2000=                                     \
+api/fm2000/fm2000_api_acl.c                         \
+api/fm2000/fm2000_api_addr.c                        \
+api/fm2000/fm2000_api_attr.c                        \
+api/fm2000/fm2000_api_event_intr.c                  \
+api/fm2000/fm2000_api_event_fast_maint.c            \
+api/fm2000/fm2000_api_event_mac_maint.c             \
+api/fm2000/fm2000_api_event_mgmt.c                  \
+api/fm2000/fm2000_api_event_port.c                  \
+api/fm2000/fm2000_api_init.c                        \
+api/fm2000/fm2000_api_lag.c                         \
+api/fm2000/fm2000_api_lport.c                       \
+api/fm2000/fm2000_api_mirror.c                      \
+api/fm2000/fm2000_api_pkt_rx.c                      \
+api/fm2000/fm2000_api_pkt_tx.c                      \
+api/fm2000/fm2000_api_port.c                        \
+api/fm2000/fm2000_api_qos.c                         \
+api/fm2000/fm2000_api_stats.c                       \
+api/fm2000/fm2000_api_vlan.c                        \
+
+
+API_SRC_FM4000=                                     \
+api/fm4000/fm4000_api_acl.c                         \
+api/fm4000/fm4000_api_acl_apply.c                   \
+api/fm4000/fm4000_api_acl_mapper.c                  \
+api/fm4000/fm4000_api_acl_policer.c                 \
+api/fm4000/fm4000_api_addr.c                        \
+api/fm4000/fm4000_api_addr_offload.c                \
+api/fm4000/fm4000_api_attr.c                        \
+api/fm4000/fm4000_api_crm.c                         \
+api/fm4000/fm4000_api_cvlan.c                       \
+api/fm4000/fm4000_api_event_fast_maint.c            \
+api/fm4000/fm4000_api_event_intr.c                  \
+api/fm4000/fm4000_api_event_mac_maint.c             \
+api/fm4000/fm4000_api_event_mac_maint_int.c         \
+api/fm4000/fm4000_api_event_mgmt.c                  \
+api/fm4000/fm4000_api_event_port.c                  \
+api/fm4000/fm4000_api_ffu.c                         \
+api/fm4000/fm4000_api_flow.c                        \
+api/fm4000/fm4000_api_init.c                        \
+api/fm4000/fm4000_api_lag.c                         \
+api/fm4000/fm4000_api_lbg.c                         \
+api/fm4000/fm4000_api_lport.c                       \
+api/fm4000/fm4000_api_mac_proc_entry.c              \
+api/fm4000/fm4000_api_mac_purge_table.c             \
+api/fm4000/fm4000_api_mac_scan_table.c              \
+api/fm4000/fm4000_api_mirror.c                      \
+api/fm4000/fm4000_api_mtable.c                      \
+api/fm4000/fm4000_api_multicast.c                   \
+api/fm4000/fm4000_api_parity.c                      \
+api/fm4000/fm4000_api_pkt_rx.c                      \
+api/fm4000/fm4000_api_pkt_tx.c                      \
+api/fm4000/fm4000_api_port.c                        \
+api/fm4000/fm4000_api_pri_mapper.c                  \
+api/fm4000/fm4000_api_qos.c                         \
+api/fm4000/fm4000_api_register_cache.c              \
+api/fm4000/fm4000_api_routing.c                     \
+api/fm4000/fm4000_api_sflow.c                       \
+api/fm4000/fm4000_api_stacking.c                    \
+api/fm4000/fm4000_api_stats.c                       \
+api/fm4000/fm4000_api_storm.c                       \
+api/fm4000/fm4000_api_trigger.c                     \
+api/fm4000/fm4000_api_vlan.c                        \
+
+
+API_SRC_FM6000 =                                    \
+api/fm6000/fm6000_api_acl.c                         \
+api/fm6000/fm6000_api_acl_mapper.c                  \
+api/fm6000/fm6000_api_acl_non_disrupt.c             \
+api/fm6000/fm6000_api_acl_policer.c                 \
+api/fm6000/fm6000_api_an.c                          \
+api/fm6000/fm6000_api_attr.c                        \
+api/fm6000/fm6000_api_addr.c                        \
+api/fm6000/fm6000_api_bist.c                        \
+api/fm6000/fm6000_api_bst.c                         \
+api/fm6000/fm6000_api_crm.c                         \
+api/fm6000/fm6000_api_epl.c                         \
+api/fm6000/fm6000_api_event_intr.c                  \
+api/fm6000/fm6000_api_event_fast_maint.c            \
+api/fm6000/fm6000_api_event_mac_maint.c             \
+api/fm6000/fm6000_api_event_mgmt.c                  \
+api/fm6000/fm6000_api_event_port.c                  \
+api/fm6000/fm6000_api_ffu.c                         \
+api/fm6000/fm6000_api_flow.c                        \
+api/fm6000/fm6000_api_init.c                        \
+api/fm6000/fm6000_api_lag.c                         \
+api/fm6000/fm6000_api_lbg.c                         \
+api/fm6000/fm6000_api_lport.c                       \
+api/fm6000/fm6000_api_mac_purge_table.c             \
+api/fm6000/fm6000_api_map.c                         \
+api/fm6000/fm6000_api_mirror.c                      \
+api/fm6000/fm6000_api_mtable.c                      \
+api/fm6000/fm6000_api_multicast.c                   \
+api/fm6000/fm6000_api_parity.c                      \
+api/fm6000/fm6000_api_policer.c                     \
+api/fm6000/fm6000_api_pkt_tx.c                      \
+api/fm6000/fm6000_api_port.c                        \
+api/fm6000/fm6000_api_qos.c                         \
+api/fm6000/fm6000_api_rbridge.c                     \
+api/fm6000/fm6000_api_register_cache.c              \
+api/fm6000/fm6000_api_replication.c                 \
+api/fm6000/fm6000_api_routing.c                     \
+api/fm6000/fm6000_api_sbus.c                        \
+api/fm6000/fm6000_api_scan_fix.c                    \
+api/fm6000/fm6000_api_serdes.c                      \
+api/fm6000/fm6000_api_sflow.c                       \
+api/fm6000/fm6000_api_spico_code.c                  \
+api/fm6000/fm6000_api_sram_err.c                    \
+api/fm6000/fm6000_api_stacking.c                    \
+api/fm6000/fm6000_api_stats.c                       \
+api/fm6000/fm6000_api_storm.c                       \
+api/fm6000/fm6000_api_stp.c                         \
+api/fm6000/fm6000_api_vlan.c                        \
+api/fm6000/fm6000_api_vn.c                          \
+
+
+API_SRC_FM10000=                                    \
+api/fm10000/fm10000_api_init.c                      \
+api/fm10000/fm10000_api_vlan.c                      \
+
+API_SRC_HLP=                                    	\
+api/hlp/hlp_api_init.c                      		\
+api/hlp/hlp_api_vlan.c                      		\
+
+API_SRC_CPK=                                    	\
+api/cpk/cpk_api_init.c                      		\
+api/cpk/cpk_api_vlan.c                      		\
+
+API_SRC_SWAG=                                       \
+api/fm_api_swag.c                                   \
+api/swag/fmSWAG_api_acl.c                           \
+api/swag/fmSWAG_api_addr.c                          \
+api/swag/fmSWAG_api_attr.c                          \
+api/swag/fmSWAG_api_crm.c                           \
+api/swag/fmSWAG_api_event_handler.c                 \
+api/swag/fmSWAG_api_init.c                          \
+api/swag/fmSWAG_api_lag.c                           \
+api/swag/fmSWAG_api_lport.c                         \
+api/swag/fmSWAG_api_mirror.c                        \
+api/swag/fmSWAG_api_multicast.c                     \
+api/swag/fmSWAG_api_pkt_tx.c                        \
+api/swag/fmSWAG_api_policer.c                       \
+api/swag/fmSWAG_api_port.c                          \
+api/swag/fmSWAG_api_qos.c                           \
+api/swag/fmSWAG_api_routing.c                       \
+api/swag/fmSWAG_api_stacking.c                      \
+api/swag/fmSWAG_api_stats.c                         \
+api/swag/fmSWAG_api_storm.c                         \
+api/swag/fmSWAG_api_stp.c                           \
+api/swag/fmSWAG_api_trigger.c                       \
+api/swag/fmSWAG_api_vlan.c                          \
+api/swag/topologies/fat-tree/fmFatTree_solver.c     \
+api/swag/topologies/mesh/fmMesh_solver.c            \
+
+
+ALOS_SRC =                                          \
+alos/$(PLATFORM_OS)/fm_alos_alloc.c                 \
+alos/$(PLATFORM_OS)/fm_alos_dynamic_load.c          \
+alos/$(PLATFORM_OS)/fm_alos_event_queue.c           \
+alos/$(PLATFORM_OS)/fm_alos_init.c                  \
+alos/$(PLATFORM_OS)/fm_alos_lock.c                  \
+alos/$(PLATFORM_OS)/fm_alos_logging.c               \
+alos/$(PLATFORM_OS)/fm_alos_rwlock.c                \
+alos/$(PLATFORM_OS)/fm_alos_sem.c                   \
+alos/$(PLATFORM_OS)/fm_alos_threads.c               \
+alos/$(PLATFORM_OS)/fm_alos_time.c                  \
+alos/$(PLATFORM_OS)/fm_alos_rand.c                  \
+
+
+COMMON_SRC =                                        \
+common/fm_attr.c                                    \
+common/fm_bitarray.c                                \
+common/fm_bitfield.c                                \
+common/fm_c11_annex_k.c                             \
+common/fm_crc32.c                                   \
+common/fm_plusargs.c                                \
+common/fm_dlist.c                                   \
+common/fm_errno.c                                   \
+common/fm_graycode.c                                \
+common/fm_md5.c                                     \
+common/fm_string.c                                  \
+common/fm_tree.c                                    \
+
+
+DEBUG_SRC =                                         \
+debug/fm_debug.c                                    \
+debug/fm_debug_acl.c                                \
+debug/fm_debug_mac_table.c                          \
+debug/fm_debug_regs.c                               \
+debug/fm_debug_selftest.c                           \
+debug/fm_debug_snapshots.c                          \
+debug/fm_debug_trace.c                              \
+debug/fm_debug_eye_diagram.c                        \
+
+
+DEBUG_SRC_FM2000 =                                  \
+debug/fm2000/fm2000_debug.c                         \
+debug/fm2000/fm2000_debug_mac_table.c               \
+debug/fm2000/fm2000_debug_regs.c                    \
+debug/fm2000/fm2000_debug_snapshots.c               \
+
+
+DEBUG_SRC_FM4000 =                                  \
+debug/fm4000/fm4000_debug.c                         \
+debug/fm4000/fm4000_debug_ffu.c                     \
+debug/fm4000/fm4000_debug_mac_table.c               \
+debug/fm4000/fm4000_debug_regs.c                    \
+debug/fm4000/fm4000_debug_selftest.c                \
+
+
+DEBUG_SRC_FM6000 =                                  \
+debug/fm6000/fm6000_debug.c                         \
+debug/fm6000/fm6000_debug_ffu.c                     \
+debug/fm6000/fm6000_debug_mac_table.c               \
+debug/fm6000/fm6000_debug_mapper.c                  \
+debug/fm6000/fm6000_debug_misc.c                    \
+debug/fm6000/fm6000_debug_regs.c                    \
+debug/fm6000/fm6000_debug_regs_field.c              \
+debug/fm6000/fm6000_debug_selftest.c                \
+debug/fm6000/fm6000_debug_eye_diagram.c             \
+
+DEBUG_SRC_HLP =                                  \
+debug/hlp/hlp_debug_regs.c                    	    \
+debug/hlp/hlp_debug_reg_fields.c                    \
+debug/hlp/hlp_debug_reg_table.c                     \
+
+DEBUG_SRC_SWAG =                                    \
+debug/swag/fmSWAG_debug_mac_table.c                 \
+
+
+# For GCH selection
+LC_SUPPORTED_CHIP_FAMILIES=\
+    $(foreach family,$(SUPPORTED_CHIP_FAMILIES),$(shell echo $(family) | tr A-Z a-z))
+
+# Add objects to the API source list
+define add_api_objects
+  API_SRC += $$(API_SRC_$(1))
+endef
+
+# Add objects to the DEBUG source list
+define add_debug_objects
+  DEBUG_SRC += $$(DEBUG_SRC_$(1))
+endef
+
+# Add defines to CFLAGs to support chip familes
+define add_cflags_family
+  CFLAGS += -DFM_SUPPORT_$(1)
+endef
+
+# Add defines to CFLAGs to support validation instrumentation logging level
+define add_cflags_instrument_log_level
+  ifdef INSTRUMENT_LOG_LEVEL
+    CFLAGS += -DINSTRUMENT_LOG_LEVEL=$(INSTRUMENT_LOG_LEVEL)
+  else
+    CFLAGS += -DINSTRUMENT_LOG_LEVEL=0
+  endif
+endef
+
+# Add headers to gch
+define add_gch_header
+  GCH_HDRS += ../include/fm_sdk_$(1)_int.h
+endef
+
+# Add include files for families to GCH list
+$(foreach family,$(LC_SUPPORTED_CHIP_FAMILIES),$(eval $(call add_gch_header,$(family))))
+
+# Use the function to add all families to the source list, resulting in API_SRC
+# pointing to all source code
+$(foreach family,$(SUPPORTED_CHIP_FAMILIES),$(eval $(call add_api_objects,$(family))))
+
+$(foreach family,$(SUPPORTED_CHIP_FAMILIES),$(eval $(call add_debug_objects,$(family))))
+
+# Make sure the CFLAGS get updated to define the right support tags
+$(foreach family,$(SUPPORTED_CHIP_FAMILIES),$(eval $(call add_cflags_family,$(family))))
+
+# Make sure the CFLAGS get updated to define the right validation logging level
+$(eval $(call add_cflags_instrument_log_level))
+
+#Building for whiteModelLib
+ifeq ($(PLATFORM),whiteModelLib)
+	GCH_HDRS = 
+	API_SRC =
+	ALOS_SRC =
+	DRV_SRC =
+	DEBUG_SRC =
+	COMMON_SRC =                                        \
+		common/fm_bitarray.c                        \
+		common/fm_bitfield.c                        \
+		common/fm_c11_annex_k.c                     \
+		common/fm_crc32.c                           \
+		common/fm_string.c
+endif
+
+GCH_OBJ    = $(GCH_HDRS:.h=.h.gch)
+API_OBJ    = $(API_SRC:.c=.o)
+ALOS_OBJ   = $(ALOS_SRC:.c=.o)
+DRV_OBJ    = $(DRV_SRC:.c=.o)
+COMMON_OBJ = $(COMMON_SRC:.c=.o)
+DEBUG_OBJ  = $(DEBUG_SRC:.c=.o)
+
+LIBRARY_OBJ =           \
+    $(PLAT_OBJ)         \
+    $(API_OBJ)          \
+    $(ALOS_OBJ)         \
+    $(DRV_OBJ)          \
+    $(COMMON_OBJ)       \
+    $(DEBUG_OBJ)        \
+
+
+LFLAGS += -L$(LIBRARY_DIR)
+LINKER_SCRIPT = ../build/libFocalpointSDK.lds
+ifeq ($(PLATFORM),whiteModelLib)
+LINKER_SCRIPT = ../build/libWm.lds
+endif
+
+# The library is linked at a fixed address. Make sure that address has been
+# defined (in the platform-specific Makefile or environment).
+ifeq ($(SO_BASE_ADDRESS),)
+ SO_BASE_ADDRESS = 0x00200000
+ $(warning WARNING: Defaulting shared library base address to: $(SO_BASE_ADDRESS).)
+endif
+
+
+EXAMPLES =                          \
+../examples/basic/basic             \
+
+
+################################ Dynamic Libraries ################################
+define build_dlib
+ifdef $(1)_NAME
+ifeq ($(PLATFORM_OS),linux)
+# sed magic is to specify the virtual base address of the shared library
+# see page 7 of http://people.redhat.com/jakub/prelink.pdf
+# The first command spits out the text of the default linker script, which
+# normally locates the shared library at address zero. The script text is
+# piped to sed, which changes the library base addess to that specified in
+# SO_BASE_ADDRESS. sed output is redirected to LINKER_SCRIPT, which is then
+# used in the last command to actually generate the shared library with the
+# specified base address.
+$($(1)_SO): $($(1)_OBJ) $(PLAT_OBJ) $(LIBRARY_SO)
+	@echo "Locating $($(1)_NAME) library at: $($(1)_SO_BASE_ADDRESS)"
+	$(CC) $(SHFLAGS) -Wl,--verbose 2>&1 | sed -e '/^======/,/^======/!d' -e '/^======/d;s/0\(.*\)\(+ SIZEOF_HEADERS\)/$($(1)_SO_BASE_ADDRESS)\1\2/' > $($(1)_LNK)
+	rm a.out
+	$(CC) -Wl,-T,$($(1)_LNK) $(SHFLAGS) -fPIC $($(1)_OBJ) -L../build -l$(LIBRARY_SO_NAME) -o $($(1)_SO)
+else
+$($(1)_SO): $($(1)_OBJ) $(PLAT_OBJ) $(LIBRARY_SO)
+	$(CC) $(LIBFLAGS) $($(1)_OBJ) -o $($(1)_SO) -L../build -l$(LIBRARY_SO_NAME)
+endif
+
+$($(1)_A): $($(1)_OBJ) $(PLAT_OBJ)
+	$(AR) r $($(1)_OBJ) $($(1)_A)
+endif
+endef
+
+#ifdef DLIB1_NAME
+#ifeq ($(PLATFORM_OS),linux)
+# sed magic is to specify the virtual base address of the shared library
+# see page 7 of http://people.redhat.com/jakub/prelink.pdf
+# The first command spits out the text of the default linker script, which
+# normally locates the shared library at address zero. The script text is
+# piped to sed, which changes the library base addess to that specified in
+# SO_BASE_ADDRESS. sed output is redirected to LINKER_SCRIPT, which is then
+# used in the last command to actually generate the shared library with the
+# specified base address.
+#$(DLIB1_SO): $(DLIB1_OBJ) $(PLAT_OBJ) $(LIBRARY_SO)
+#	@echo "Locating $(DLIB1_NAME) library at: $(DLIB1_SO_BASE_ADDRESS)"
+#	$(CC) $(SHFLAGS) -Wl,--verbose 2>&1 | sed -e '/^======/,/^======/!d' -e '/^======/d;s/0\( + SIZEOF_HEADERS\)/$(DLIB1_SO_BASE_ADDRESS)\1/' > $(DLIB1_LNK)
+#	rm a.out
+#	$(CC) -Wl,-T,$(DLIB1_LNK) $(SHFLAGS) -fPIC $(DLIB1_OBJ) -L../build -l$(LIBRARY_SO_NAME) -o $@
+#else
+#$(DLIB1_SO): $(DLIB1_OBJ) $(PLAT_OBJ)
+#	$(CC) $(LIBFLAGS) $^ -o $@
+#endif
+#
+#$(DLIB1_A): $(DLIB1_OBJ) $(PLAT_OBJ)
+#	$(AR) r $@ $^
+#endif
+
+
+$(foreach dlib,$(DLIBS),$(eval $(call build_dlib,$(dlib))))
+
+
+################################ Target Lists ################################
+
+###################### Rules For Building Error Table #######################
+
+.PHONY : error-tables
+error-tables :
+	@echo Rebuilding ../include/common/fm_errno.h and common/fm_erno.c...
+	../build/gen_err_files common/ERRORS ../include/common/fm_errno.h common/fm_errno.c
+
+################################## Targets ###################################
+
+all: $(MICROCODE_RULE) $(DLIB_SO) $(LIBRARY) $(LIBRARY_SO) $(PTARGETS) examples $(PLAT_TARGETS)
+
+sdk : $(MICROCODE_RULE) $(DLIB_SO) $(LIBRARY) $(LIBRARY_SO)
+
+bldlib: $(LIBRARY_SO) $(DLIB_SO)
+installexe: $(LIBRARY_SO) $(DLIB_SO)
+
+examples : $(EXAMPLES) $(PLAT_EXAMPLES)
+
+ifeq ($(PLATFORM_OS),linux)
+# sed magic is to specify the virtual base address of the shared library
+# see page 7 of http://people.redhat.com/jakub/prelink.pdf
+# The first command spits out the text of the default linker script, which
+# normally locates the shared library at address zero. The script text is
+# piped to sed, which changes the library base addess to that specified in
+# SO_BASE_ADDRESS. sed output is redirected to LINKER_SCRIPT, which is then
+# used in the last command to actually generate the shared library with the
+# specified base address.
+$(LIBRARY_SO): $(LIBRARY_OBJ)
+	@echo "Locating FocalPoint shared library at: $(SO_BASE_ADDRESS)"
+	$(CC) $(SHFLAGS) -Wl,--verbose 2>&1 | sed -e '/^======/,/^======/!d' -e '/^======/d;s/0\(.*\)\(+ SIZEOF_HEADERS\)/$(SO_BASE_ADDRESS)\1\2/' > $(LINKER_SCRIPT)
+	rm a.out
+	$(CC) -Wl,-T,$(LINKER_SCRIPT) $(SHFLAGS) -fPIC -lpthread -lrt $^ -o $@
+else
+$(LIBRARY_SO): $(LIBRARY_OBJ)
+	$(CC) $(LIBFLAGS) $^ -o $@
+endif
+
+$(LIBRARY): $(LIBRARY_OBJ)
+	$(AR) r $@ $^
+
+
+############################## Dependency Rules #############################
+
+$(LIBRARY_OBJ) : $(GCH_OBJ)
+
+############################## Generic Rules ################################
+
+
+%.h.gch : %.h  $(ALL_HDRS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.o : %.c  $(ALL_HDRS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+################################# Examples ##################################
+../examples/%: ../examples/%.c $(MICROCODE_RULE) $(LIBRARY_SO)
+	$(CC) $(CFLAGS) -g -o $@  -I../include $< $(LFLAGS) -l$(LIBRARY_SO_NAME) -lpthread $(PLAT_FLAGS) 
+
+# Comment out the two previous lines and uncomment the two following lines
+# to statically link fm_sdk.a with the example applications
+
+#../examples/%: ../examples/%.c $(MICROCODE_RULE) $(LIBRARY)
+#	$(CC) $(CFLAGS) -g -o $@ -I../include $< $(LFLAGS) $(LIBRARY) -lpthread -lrt
+
+############################## Maintenance Targets ##########################
+
+clean: perl-clean support-clean protocols-clean $(CLEAN_TARGETS)
+	find api alos . ../build -name '*.o' -or -name '*.ko' -or -name '*.so' -or -name '*.a' -or -name '*.lds' | xargs rm -f
+	rm -f util/fm2224ep/ep_nvram
+	rm -f ../testing/lib/*.a ../testing/lib/*.o
+	rm -f ../include/*.gch
+	rm -f a.out
+	rm -f platforms/$(PLATFORM)/kernel/focalpoint/.focalpoint.ko.cmd
+	rm -f platforms/$(PLATFORM)/kernel/focalpoint/.focalpoint_main.o.cmd
+	rm -f platforms/$(PLATFORM)/kernel/focalpoint/.focalpoint.mod.o.cmd
+	rm -f platforms/$(PLATFORM)/kernel/focalpoint/focalpoint.mod.c
+	rm -f platforms/$(PLATFORM)/kernel/focalpoint/.focalpoint.o.cmd
+	rm -f platforms/$(PLATFORM)/kernel/focalpoint/.fm6000_linux_kernel_*.o.cmd
+	rm -f platforms/$(PLATFORM)/kernel/focalpoint/Module.symvers
+	rm -rf platforms/$(PLATFORM)/kernel/focalpoint/.tmp_versions
+	rm -f $(EXAMPLES) $(PLAT_EXAMPLES)
+

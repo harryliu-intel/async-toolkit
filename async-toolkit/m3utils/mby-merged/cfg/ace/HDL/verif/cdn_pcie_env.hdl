@@ -1,0 +1,49 @@
+# vim: noai : ts=4 : sw=4 : ft=perl
+
+my $denali_src = &ToolConfig::get_tool_env_var( 'vipcat', 'DENALI' );
+my $vrst_src   = &ToolConfig::get_tool_env_var( 'vipcat', 'VRST_HOME' );
+
+$hdl_spec = {
+
+	-vlog_incdirs => [
+		"$ENV{UVM_HOME}/src",
+		"$ENV{OVM_HOME}/src",
+		"$ENV{XVM_HOME}/src",
+		"$ENV{XVM_HOME}/src/macros",
+		"$ENV{SAOLA_HOME}/verilog",
+		"$ENV{SAOLA_HOME}/verilog_uvm",
+		"$denali_src/ddvapi/sv/",
+		#"$denali_src/ddvapi/sv/ovm/pcie",
+		"$denali_src/ddvapi/sv/uvm/pcie",
+		"verif/lib/cdn_pcie_bfm",
+		"verif/lib/cdn_pcie_bfm/cdn_pcie",
+	],
+
+	-vlog_files => [
+		"$denali_src/ddvapi/sv/denaliMem.sv",
+		"$denali_src/ddvapi/sv/denaliPcie.sv",
+		"$denali_src/ddvapi/sv/uvm/pcie/cdnPcieUvmTop.sv",
+		"verif/lib/cdn_pcie_bfm/cdn_pcie_pkg.sv",
+		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon.sv",
+		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm.sv",
+		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon_phy.sv",
+		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm_phy.sv",
+	],
+
+	"-vlog_opts" => [
+		"+define+DENALI_SV_VCS",
+		"+define+DENALI_UVM +define+VCS +define+UVM",
+
+		# Added to allow VIP to use VPI libraries instead of PLI libraries
+		# Sucheta 10/22/2015
+		"+define+CDN_VIP_AUTO_TEST",
+	],
+
+	"-hdl_spec" => [
+
+# Include another HDL specifications file which has common files, vlog options etc.
+# User can leave this option blank if there's no HDL file to be included
+
+	],
+
+};

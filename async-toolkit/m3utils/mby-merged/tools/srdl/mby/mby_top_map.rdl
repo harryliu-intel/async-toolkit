@@ -1,0 +1,63 @@
+`include "lib_udp.rdl"
+`include "mby_ip.rdl"
+
+`include "mby_parser.rdl"
+`include "mby_mapper.rdl"
+`include "mby_cgrp_a.rdl"
+`include "mby_cgrp_b.rdl"
+`include "mby_nexthop.rdl"
+`include "mby_policers.rdl"
+`include "mby_entropy.rdl"
+`include "mby_cm_apply.rdl"
+`include "mby_cm_usage.rdl"
+`include "mby_fwd_misc.rdl"
+`include "mby_mst_glort.rdl"
+`include "mby_trig_apply.rdl"
+`include "mby_trig_apply_misc.rdl"
+`include "mby_trig_usage.rdl"
+`include "mby_rx_stats.rdl"
+`include "mby_modify.rdl"
+`include "mby_local_store.rdl"
+`include "mby_shm.rdl"
+`include "mby_mesh_row.rdl"
+`include "mby_rx_voq.rdl"
+`include "mby_tx_voq.rdl"
+
+addrmap mby_ppe_rx_top_map {
+  mby_ppe_parser_map            parser;
+  mby_ppe_mapper_map            mapper;
+  mby_ppe_cgrp_a_map            cgrp_a;
+  mby_ppe_cgrp_b_map            cgrp_b;
+  mby_ppe_entropy_map           entropy;
+  mby_ppe_nexthop_map           nexthop;
+  mby_ppe_fwd_misc_map          fwd_misc;
+  mby_ppe_mst_glort_map         mst_glort;
+  mby_ppe_policers_map          policers;
+  mby_ppe_rx_stats_map          stats;
+  mby_ppe_cm_apply_map          cm_apply;
+  mby_ppe_cm_usage_map          cm_usage;
+  mby_ppe_trig_apply_map        trig_apply;
+  mby_ppe_trig_apply_misc_map   trig_apply_misc;
+  mby_ppe_trig_usage_map        trig_usage;
+};
+
+addrmap mby_ppe_tx_top_map {
+  mby_ppe_modify_map            modify;
+};
+
+// 1.6T hiearchy
+addrmap mby_mpt_top_map {
+  mby_ppe_rx_top_map            rx_ppe;
+  mby_rx_voq_map                rx_voq;
+  mby_ppe_tx_top_map            tx_ppe;
+  mby_tx_voq_map                tx_voq;
+  mby_local_store_map           ppe_store;
+};
+
+// 3.2T hiearchy
+addrmap mby_top_map {
+  mby_mpt_top_map mpt[2];
+  mby_shm_map     shm;
+  mby_mesh_map    mesh; // one row of the mesh
+};
+

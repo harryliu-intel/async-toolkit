@@ -1,0 +1,105 @@
+#USE GenRTL.udf to define all ace based code generation##
+use lib "$ENV{RTL_PROJ_BIN}/perllib";
+use ToolConfig;
+my $blocks = join "", map { "-c $_ " } @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{"BLOCKS"}->{&ToolConfig::get_facet("dut")}};
+my $report_dir = &ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'REPORT_DIR'};
+my $ph_params = &ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'PHYSICAL_PARAMS'};
+my $prefix =  &ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'PREFIX'};
+my $config_file = "$ENV{MODEL_ROOT}/tools/mgm/config_file";
+my $includes =  "$ENV{MODEL_ROOT}/tools/mgm/blocks_inclusion";
+my $apr_struct = "$ENV{MODEL_ROOT}/tools/mgm/apr_structure";
+my $clock_file = "$ENV{MODEL_ROOT}/tools/mgm/clk_file";
+my $cmo =  join(":", @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'CMO'}});
+
+
+%audf = (
+#   Includes  => ["GenRTL/gen_rtl.udf"],
+   InterfaceVars => {
+        # configure flags reported by 'ace -sh GENERATE'
+        -add_flag_dump => { default=> 1, },
+        -dump_rtl_include_prereqs => { default=> 1, },
+        -enable_generate_rtl => { default=> 1, },         
+        -en__mby_mgm_lib => {
+                type => 'BOOLEAN',
+                default => 1,
+                help => {
+                    desc => "STAGE 'mby_mgm_lib' enable",
+                    group => "GENERATE",
+                },
+        },           #en__mby_mgm_lib
+        -en__gen_mby_regflow_lib => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_mby_regflow_lib' enable",
+                group => "GENERATE",
+            },
+        },
+        -en__gen_mby_wm => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_mby_wm' enable",
+                group => "GENERATE",
+            },
+        },
+        -en__gen_mby_wm_m3 => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_mby_wm_m3' enable",
+                group => "GENERATE",
+            },
+        },
+
+    }, #end InterfaceVars
+ GenRTL => {
+        mby => {
+            -config => {
+                 mby_mgm_lib => {
+                     enable_config => '<-en__mby_mgm_lib>',
+                     filter => 'Synthesis',
+                     gen_commands => [ 
+                         #"mkdir -p $ENV{MODEL_ROOT}/target/mgm",
+                         "mgm $blocks -cnfg $config_file -includes $includes -apr_struct $apr_struct -csv $ph_params -unique $prefix -clk $clock_file -rprt_dir  $report_dir -cmo $cmo -relative_path_from $ENV{MODEL_ROOT} ",
+                     ],
+		 },      #mby_mgm_lib
+                 gen_mby_regflow_lib => {
+                    enable_config => '<-en__gen_mby_regflow_lib>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Running nebulon'",
+                       "make -C $ENV{MODEL_ROOT}/tools/srdl/mby",
+                    ],
+                },
+                gen_mby_wm => {
+                    enable_config => '<-en__gen_mby_wm>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Generating white model through sbt'",
+                       # ugly hack to deal with https://github.com/sbt/sbt/issues/3598
+                       # this works whether or not a '~/.sbt' area already exists (it produces an extraneous link
+                       # inside this directory if it already exists)
+                       "mkdir -p /tmp/$ENV{USER}/home_dotsbt",
+                       "ln -fs /tmp/$ENV{USER}/home_dotsbt $ENV{HOME}/.sbt",
+                       "cd $ENV{MODEL_ROOT}/wm",
+                       &ToolConfig::get_tool_exec('sbt') . " buildOnNhdk",
+                    ],
+                },
+                gen_mby_wm_m3 => {
+                    enable_config => '<-en__gen_mby_wm_m3>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Generating white model through m3'",
+                       "make -C $ENV{MODEL_ROOT}/wm/src/main/m3",
+                    ],
+                },
+
+	    },          # -config
+	},          # $PROJECT
+    },              # GenRTL
+    
+    );
+
+
+#################################################################################

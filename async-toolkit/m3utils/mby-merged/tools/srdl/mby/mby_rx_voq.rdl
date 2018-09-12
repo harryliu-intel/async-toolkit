@@ -1,0 +1,124 @@
+
+enum rx_voq_lane_cfg_enum {
+  DISABLE = 2'd0 { desc = " Disable this lane."; };
+  SINGLE  = 2'd1 { desc = " This lane is its own port."; };
+  PAIR    = 2'd2 { desc = " This lane (and lane XOR 1) are a port."; };
+  QUAD    = 2'd3 { desc = " This lane is used in quad mode."; };
+};
+
+reg rx_voq_lane_cfg_r {
+  shared;
+  HandCoded = true;
+  desc = "
+      Lane configuration for Rx VOQ Tag Sequencer.
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 15 configuration";
+    ValRandomize = true;
+  } LANE_15[31:30] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 14 configuration";
+    ValRandomize = true;
+  } LANE_14[29:28] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 13 configuration";
+    ValRandomize = true;
+  } LANE_13[27:26] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 12 configuration";
+    ValRandomize = true;
+  } LANE_12[25:24] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 11 configuration";
+    ValRandomize = true;
+  } LANE_11[23:22] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 10 configuration";
+    ValRandomize = true;
+  } LANE_10[21:20] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 9 configuration";
+    ValRandomize = true;
+  } LANE_9[19:18] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 8 configuration";
+    ValRandomize = true;
+  } LANE_8[17:16] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 7 configuration";
+    ValRandomize = true;
+  } LANE_7[15:14] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 6 configuration";
+    ValRandomize = true;
+  } LANE_6[13:12] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 5 configuration";
+    ValRandomize = true;
+  } LANE_5[11:10] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 4 configuration";
+    ValRandomize = true;
+  } LANE_4[9:8] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 3 configuration";
+    ValRandomize = true;
+  } LANE_3[7:6] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 2 configuration";
+    ValRandomize = true;
+  } LANE_2[5:4] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 1 configuration";
+    ValRandomize = true;
+  } LANE_1[3:2] = 2'h0;
+  field {
+    encode = rx_voq_lane_cfg_enum;
+    AccessType = "RW";
+    desc = "Lane 0 configuration";
+    ValRandomize = true;
+  } LANE_0[1:0] = 2'h0;
+};
+
+addrmap mby_rx_voq_map {
+  name = "mby_rx_voq";
+  desc = "Rx VOQ Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  rx_voq_lane_cfg_r RX_VOQ_LANE_CFG;
+};

@@ -1,0 +1,12 @@
+Directory: tools/collage
+Area for Collage
+
+Collage is an SoC Integration system, focused on efficient IP reuse and SoC RTL integration. Collage provides a 
+top-down approach to IP integration based on modular and configurable IPs. Collage is built around coreTools (from Synopsys) 
+for IP packaging and integration, and Intel SoC Front-End and Back-End flows. Collage also enables derived collateral 
+generation (ACE, testbench, UPF, etc.) delivered through the Chassis Sandbox packages.
+
+See:  
+https://securewiki.ith.intel.com/display/hdk/RTL+Integration
+https://securewiki.ith.intel.com/display/hdk/Collage
+

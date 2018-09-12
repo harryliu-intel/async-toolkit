@@ -1,0 +1,21 @@
+reg myreg_r {
+  regwidth = 64;
+  field { } OUTER[63:0];
+};
+
+regfile outer_rf {
+  myreg_r ONE;
+}; 
+
+regfile nested_rf {
+  reg myreg_r {
+    regwidth = 64;
+    field {  } NESTED[63:0];
+  };
+  myreg_r TWO;
+};
+
+addrmap top_map {
+  outer_rf OUTER;
+  nested_rf NESTED;
+};

@@ -1,0 +1,5 @@
+Usage
+
+cd tools/dump_gen
+python dump_gen.py > ../../src/mby_log_dump.c
+python dump_gen.py --header > ../../src/mby_log_dump.h

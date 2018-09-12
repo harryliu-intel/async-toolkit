@@ -1,0 +1,29 @@
+`include "lib_udp.rdl"
+
+addrmap mby_regs{
+	`include "mby_cfg.rdl"
+	`include "mby_mem.rdl"
+
+	bridge;
+
+	// CFG space rdl
+	mby_cfg mby_cfg;
+	// MEM space rdl
+	mby_mem mby_mem;
+	// CFG space through SB
+	mby_cfg mby_cfg_sb;
+	// MEM space through SB
+	mby_mem mby_mem_sb;
+	
+	//Space and Base seeting
+
+	mby_cfg->Space="CFG";
+	mby_cfg->BaseAddress="0/10/0"; //INTEG: Need to replace with the IP B.D.F
+	mby_mem->Space="MEM";
+	mby_mem->BaseAddress="BASE_ADDR_0";
+
+	mby_cfg_sb->Space="MSG";
+	mby_cfg_sb->BaseAddress="0xaa"; //INTEG: Need to replace with the IP SB port number
+	mby_mem_sb->Space="MSG";
+	mby_mem_sb->BaseAddress="0xaa"; //INTEG: Need to replace with the IP SB port number	
+};

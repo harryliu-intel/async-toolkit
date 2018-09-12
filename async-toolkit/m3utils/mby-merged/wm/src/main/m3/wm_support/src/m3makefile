@@ -1,0 +1,44 @@
+import ("libm3")
+import ("cit_util")
+
+Interface ("Word128")
+Interface ("Word256")
+Interface ("Word512")
+Interface ("Word1024")
+
+Module ("CompAddr")
+Module ("CompRange")
+Sequence ("CompRange", "CompRange")
+Sequence ("CompAddr", "CompAddr")
+Module ("CompPath")
+Module ("CompMemory")
+Interface ("MemoryMap")
+
+Module ("CompMemoryListener")
+List ("CompMemoryListener","CompMemoryListener")
+
+Table("CompMemoryListenerRef", "CompMemoryListener", "Refany")
+MkSet("CompMemoryListener","CompMemoryListener")
+MkSetDef("CompMemoryListener","CompMemoryListener")
+
+Interface("CsrAccessStatus")
+Module("IdStyles")
+Module("CsrOp")
+pqueue("CompAddr","CompAddr")
+
+Module("UpdateTracing")
+
+Interface("Updater")
+Factory("Updater","Updater")
+
+Module("UnsafeUpdater")
+Module("UnsafeUpdaterFactory")
+
+Module("WmUtils")
+
+Module("WxToWr")
+
+Generic_module("TopoSort")
+Module("TextTopoSort")
+
+library ("wm_support")
