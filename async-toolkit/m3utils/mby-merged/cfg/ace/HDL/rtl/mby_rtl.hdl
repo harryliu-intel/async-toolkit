@@ -1,0 +1,31 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+	 "src/mby/rtl/mby_top.v",
+     ],
+	
+	# List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+	-vlog_lib_dirs => [
+	 "src/mby/rtl",
+     ],
+	
+	# List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+	-vlog_lib_files => [],
+	
+	# List of include directories. Corresponds with the VLOG '+incdir+' parameter
+	-vlog_incdirs => [
+	 "src/mby/rtl",
+     ],
+	
+	# Arbitrary VLOG options
+	-vlog_opts => [],
+	
+	
+    };
+

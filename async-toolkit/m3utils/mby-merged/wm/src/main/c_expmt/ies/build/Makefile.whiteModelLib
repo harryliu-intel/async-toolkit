@@ -1,0 +1,141 @@
+# vim:et:sw=4:syntax=make:ts=4:tw=79:
+# Makefile for White Model Platform
+#
+# The platform makefile is responsible for setting:
+#   PLAT_OBJ     - the object files to be compiled for the platform code
+#   PLAT_TARGETS - the targets to be installed for the platform
+
+# Process micro-code generated
+
+# Defined before the microcode Makefile include to provide the command
+# used to checkout the auto-generated files (if neccessary).  Comment out
+# this line if no checkout is neccessary.
+MICROCODE_CHECKOUT_FILES = xargs $(P4) edit
+
+# This is because in regular manual build mode, the ucode file is found
+# in ../build, but in test mode, it is found in the model directory
+# without a ../build tree available.  The use of -include versus
+# include ensures that no error is generated for the one that
+# fails.  We assume that one of these is actually found, and it is
+# entirely possible that none of them are found in which case we
+# have no microcode targets and build should proceed normally.
+-include Makefile.ucode
+-include ../build/Makefile.ucode
+
+# Default to 64-bit mode
+ifeq ($(ARCH),)
+    ARCH = x86_64
+endif
+
+# Specify whether switch/router microcode is to be dynamically-loaded or
+# internally-built into main library. 1 == dynamically-load, 0 = internal.
+UCODE_SWITCH_DL = 1
+
+# Specify whether MPLS router microcode is to be dynamically-loaded or
+# internally-built into main library. 1 == dynamically-load, 0 = internal.
+UCODE_MPLS_DL = 1
+
+# This address is an unused fixed address at which to locate
+# the FocalPoint library.
+SO_BASE_ADDRESS = 0x02000000
+
+# this address is an unused fixed address at which to locate
+# the Dynamically-Loaded Microcode library/libraries.
+DLIB_BASE_ADDRESS = 0x02600000
+
+# Include all chips for which a white model exists.
+SUPPORTED_CHIP_FAMILIES =
+
+# enable pedantic errors
+CWARNING_FLAGS += -pedantic-errors
+
+# add conditional variable for host based compilation
+CPPFLAGS += -I../include/std/intel
+
+# test for 64-bit build host (modify this as needed for
+# your build host)
+BUILD_HOST_IS_64BIT = $(shell uname -a | grep x86_64)
+
+ifeq ($(ARCH),x86_64)
+
+    # Compile for 64-bit machine
+    ifeq ($(BUILD_HOST_IS_64BIT),)
+        $(error Cannot compile 64-bit platform on 32-bit host)
+    endif
+    export ARCH=x86_64
+    CFLAGS += -D_FM_ARCH_x86_64
+
+else # ARCH=x86_64
+
+    # Compile for 32-bit machine
+    export ARCH=i386
+    ifeq ($(BUILD_HOST_IS_64BIT),x86_64)
+        # force 32-bit compilation and libraries
+        CFLAGS        += -D_FM_ARCH_i386
+        CFLAGS        += -m32
+        LFLAGS        += -m32
+        LIBFLAGS      += -m32
+        SHFLAGS       += -m32
+        PERL_FORCE_32 = TRUE
+    endif
+
+endif # ARCH=i386
+
+# Add compiler optimizations
+# At least O1 is required for -Wall to catch uninitialized variables
+ifdef DEBUG
+    CFLAGS += -O0
+else
+    CFLAGS += -O1
+endif
+
+CFLAGS += $(PA_DUMP)
+
+# compiler settings, conditionalized because we don't use a cross compiler
+# for emulation
+CC  = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+AR  = $(CROSS_COMPILE)ar
+LD  = $(CROSS_COMPILE)ld
+
+BASE_DIRECTORY          = ../..
+
+PLAT_SRC = $(wildcard platforms/$(PLATFORM)/*.c)
+
+PLAT_SRC += $(wildcard platforms/common/model/hlp/*.c)
+PLAT_SRC += $(wildcard platforms/common/model/hlp/debug/*.c)
+
+# List of platform object files
+PLAT_OBJ = $(patsubst %.c,%.o,$(PLAT_SRC))
+
+ifneq ($(DUKE),)
+	PLAT_FLAGS = -DPLATFORM_DUKE
+	ifneq ($(DUKE_FPGA_OFFSET),)
+		PLAT_FLAGS += -DFPGA_OFFSET=$(DUKE_FPGA_OFFSET)
+	endif
+	PLAT_FLAGS += ../examples/model_server/duke_proxy.c
+	PLAT_FLAGS += ../examples/model_server/duke_iosf.c
+    PLAT_FLAGS += -I../examples/model_server/ftdi_driver -L../examples/model_server/ftdi_driver
+    PLAT_FLAGS += -lftd2xx
+endif
+
+ifneq ($(VELOCE),)
+	PLAT_FLAGS = -DPLATFORM_VELOCE
+	ifneq ($(DEV_ENV_INTEL),)
+		PYTHON_VER = $(shell python -V 2>&1 | cut -f2 -d\ )
+		PYTHON_MAIN_VER = $(shell python -V 2>&1 | cut -f2 -d\  | cut -f1-2 -d.)
+		#PYTHON_HOME = $(abspath $(dir $(shell iwhich python))/../)
+		PYTHON_HOME = /usr/intel/pkgs/python/$(PYTHON_VER)
+		PLAT_FLAGS += -I$(PYTHON_HOME)/include/python$(PYTHON_MAIN_VER) -L$(PYTHON_HOME)/lib -lpython$(PYTHON_MAIN_VER)
+	else
+		PLAT_FLAGS += -I/usr/include/python2.7 -lpython2.7
+	endif
+	ifneq ($(VELOCE_BAUDRATE),)
+		PLAT_FLAGS += -DBAUDRATE=$(VELOCE_BAUDRATE)
+	endif
+	ifneq ($(VELOCE_COM),)
+		PLAT_FLAGS += -DCOM=\"$(VELOCE_COM)\"
+	endif
+endif
+
+PLAT_EXAMPLES = ../examples/model_server/model_server

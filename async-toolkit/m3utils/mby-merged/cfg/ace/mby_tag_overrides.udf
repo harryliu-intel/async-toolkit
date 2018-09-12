@@ -1,0 +1,16 @@
+#---*-cperl-*---
+
+%audf = (
+    HDLSpec => {
+
+        -filter => {
+            Emulation => {
+                -tags        => [ "emul", "emu", "lint", "synth" ],
+                -macros      => undef,
+                -dump_format => 'pl',
+                -modules     => ["Ace::Filters::Tag"],
+            },    # Emulation
+        },    # -filter
+
+      }    # HDLSpec
+);         # %audf

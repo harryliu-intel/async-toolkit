@@ -1,0 +1,6 @@
+import ("libm3")
+import ("wm_net")
+import ("parseparams")
+
+implementation ("Main")
+program ("idstyles")

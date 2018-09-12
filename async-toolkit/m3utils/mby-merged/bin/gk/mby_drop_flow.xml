@@ -1,0 +1,21 @@
+<data>
+	<!-- Compilation -->
+	<row>
+                <Cluster>mby</Cluster>
+                <DUT>mby</DUT>
+                <Stage>dummy_task</Stage>
+		<Stage_Exec>echo</Stage_Exec>
+                <AdditionalArgs>dummy_task</AdditionalArgs>
+                <XdutStageDep></XdutStageDep>
+                <PassRate></PassRate>
+                <IsGating>1</IsGating>
+                <Turnin>1</Turnin>
+                <Release>1</Release>
+                <PostRelease>0</PostRelease>
+                <Conditional></Conditional>
+                <Rel_AdditionalArgs></Rel_AdditionalArgs>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>other</Type>
+        </row>
+</data>

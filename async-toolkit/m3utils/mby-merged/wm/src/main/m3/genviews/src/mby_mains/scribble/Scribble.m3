@@ -1,0 +1,60 @@
+MODULE Scribble EXPORTS Main;
+IMPORT mby_top_map AS Map;
+IMPORT mby_top_map_addr AS MapAddr;
+IMPORT IO;
+IMPORT CompAddr;
+IMPORT Fmt;
+IMPORT Debug;
+IMPORT RTName;
+IMPORT Random;
+IMPORT Word;
+IMPORT CsrOp;
+IMPORT Time;
+
+PROCEDURE DoReset() =
+  VAR
+    t0, t1 : Time.T;
+  BEGIN
+    Debug.Out("Resetting...");
+    t0 := Time.Now();
+    MapAddr.Reset(map.read, map.update);
+    t1 := Time.Now();
+    Debug.Out(Fmt.F("Reset took %s seconds",
+                    Fmt.LongReal(t1-t0, prec := 6)));
+  END DoReset;
+
+VAR
+  map  := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
+  rand := NEW(Random.Default).init();
+
+  time0, time1 : Time.T;
+  op : CsrOp.T;
+CONST
+  NumWrites = 10 * 1000 * 1000;
+
+BEGIN
+  IO.Put(Fmt.Int(CompAddr.initCount) & " fields have been address initialized.\n");
+  DoReset();
+  DoReset();
+  Debug.Out("Scribbling");
+
+  time0 := Time.Now();
+  FOR i := 1 TO NumWrites DO
+    WITH startW = rand.integer(map.a.min.word, map.a.max.word),
+         startB = rand.integer(0, BITSIZE(Word.T)-1),
+         wid    = rand.integer(0, BITSIZE(Word.T)-1),
+         val    = rand.integer(FIRST(Word.T), LAST(Word.T)) DO
+      op     := CsrOp.MakeWrite(CompAddr.T { startW, startB },
+                                wid,
+                                val,
+                                TRUE);
+      EVAL map.csrOp(op)
+    END
+  END;
+  time1 := Time.Now();
+
+  Debug.Out(Fmt.F("%s narrow writes per second", Fmt.LongReal(FLOAT(NumWrites,LONGREAL)/(time1-time0), prec := 6)));
+  DoReset();
+  DoReset();
+
+END Scribble.

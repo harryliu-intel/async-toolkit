@@ -1,0 +1,43 @@
+reg myreg_r {
+  regwidth = 64;
+  field { AccessType = "RW"; } MYFIELD[63:0];
+};
+
+regfile single_rf {
+  myreg_r ONE;
+}; 
+
+regfile array_rf {
+  myreg_r TWO[2];
+};
+
+regfile mid_rf {
+  alignment = 8;
+  reg myreg_n_r {
+    regwidth = 64;
+    field { AccessType = "RW"; } MYFIELD[63:0];
+  };
+  regfile array_n_rf {
+    myreg_n_r TWO[2];
+  };
+  array_rf FIVE[5];
+  array_n_rf FIVE_N[5];
+};
+
+addrmap mid_map {
+  single_rf TOP_SINGLE;
+  single_rf TOP_TWO[2]; 
+
+  array_rf TWO_TOP, TWOPOINTFIVE_TOP;
+  array_rf TOP_DOUBLE[3];
+  myreg_r  LONE_REG;
+  myreg_r  MANY_REGS[8192];
+
+  mid_rf   DEEP[7];
+};
+
+addrmap top_map {
+  mid_map MID1;
+  mid_map MID2;
+  mid_map MID3,MID4;
+};

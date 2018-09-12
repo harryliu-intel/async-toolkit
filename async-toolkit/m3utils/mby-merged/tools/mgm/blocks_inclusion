@@ -1,0 +1,8 @@
+tdpu		=>	{(dpu_tdpu,dpu_0), (dpu_tdpu,dpu_1)}
+rdpu		=>	{(dpu_rdpu,dpu_0), (dpu_rdpu,dpu_1)}
+pmat		=>	{(pdoc,pdoc)}
+fpmat		=>	{(jpdoc,pdoc)}
+rcu_pst		=>	{(hflu,hflu), (fdflu,fdflu)}
+flxp_upper_dual => 	{(flxp_upper,flxp_upper_0), (flxp_upper,flxp_upper_1)}
+rcu_rprs	=>	{(flxp_upper_dual,ana_rx)}
+rcu_tprs	=>	{(flxp_upper_dual,ana_tx)}

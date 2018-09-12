@@ -1,0 +1,4 @@
+#!/bin/tcsh
+$MODEL_ROOT/tools/uniquification/scripts/uniquifyme -prefix generic -model_root $MODEL_ROOT -f $MODEL_ROOT/tools/uniquification/inputs/$CLUSTER.puni_switches.txt -checker_mode 
+tar -cvzf $MODEL_ROOT/tools/uniquification/outputs/puni.log.tgz $MODEL_ROOT/tools/uniquification/outputs/puni.log 
+rm $MODEL_ROOT/tools/uniquification/outputs/puni.log

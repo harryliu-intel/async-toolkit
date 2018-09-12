@@ -1,0 +1,107 @@
+import ("libm3")
+import ("parseparams")
+import ("wm_support")
+import ("wm_net")
+import ("hlp")
+import ("mby")
+import ("mby_c")
+%import ("mby_c_model")
+import ("c")
+import ("mscheme")
+import ("modula3scheme")
+import ("netobj")
+import ("sstubgen")
+
+_exec(["../../structgen/AMD64_LINUX/structgen","../../wm_net/src/structgen_shared.scm","../../wm_net/src/structgen_m3.scm","../../wm_net/src/structs_m3.scm", "../src/actionsets.scm", "../src/enums.scm", "../src/ffu_enums.scm", "../src/mapper_constants.scm", "../src/parser_constants.scm", "exit"])
+include ("../AMD64_LINUX/derived.m3m")
+
+module ("ModelServer")
+
+%module ("HlpModelServer")
+% NO -- CANT PULL THIS IN HERE!  The reason is that this will pull in
+% the entire register def of HLP into the Scheme name mangling, which
+% is too big for us to handle (at least with any speed).
+%
+% Instead, if we want to get at the HLP regs from Scheme,
+% we have to do so in some roundabout way.  (not as yet defined)
+% ... more to come ...
+%
+
+interface ("ModelServerClass")
+module("MsIosf")
+%interface ("MsIosf")
+module ("HlpModelServer")
+
+module ("DataPusher")
+table ("IntDataPusher", "Integer", "DataPusher")
+table ("CardByte", "Cardinal", "Byte")
+
+module ("HlpModel")
+%module ("MbyModel") % pure Modula-3 version of MbyModel
+interface ("MbyModel")
+module ("MbyModelC") % C version of MbyModel
+
+Generic_module("BaseModelServer")
+module("MbyModelServer")
+
+interface("BaseModelStage")
+module("Metadata")
+generic_interface("Metadata")
+template("metadata")
+
+Generic_module("ModelStage")
+module ("ModelStageResult")
+interface ("ModelStageResultClass")
+
+
+interface ("MbyTypes")
+%interface ("MbyMeta")
+interface ("MbyParserTypes")
+%interface ("MbyParserSizes")
+%interface ("MbyMacToParserMeta")
+interface ("MbyMacToParser")
+metadata ("MbyMacToParser", "MbyMacToParser")
+%interface ("MbyParserToMapperMeta")
+interface ("MbyParserToMapper")
+metadata("MbyParserToMapper", "MbyParserToMapper")
+
+interface ("MbyParserToModifierMeta")
+interface ("MbyParserInfo")
+interface ("MbyMapperToClassifier")
+metadata ("MbyMapperToClassifier", "MbyMapperToClassifier")
+interface ("MbyFfuTypes")
+
+module ("MbyParserStage")
+module ("MbyParserStageModel")
+%interface ("MbyParserMeta")
+
+%interface ("MbyMapperSizes")
+module ("MbyMapperStage")
+module ("MbyMapperStageModel")
+module ("MbyDoRealignKeys")
+interface ("MbyMapProfKey1")
+interface ("MbyMapProfKey0")
+interface ("MbyMappedKey")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% just testing stuff
+module ("HlpRepStageModel")
+module ("HlpRepStage")
+
+%module ("UnsafeUpdaterFactory")
+sequence("Updater", "Updater")
+c_source("model_c_write")
+interface("ModelCWrite")
+table("IntUpdater", "Integer", "Updater")
+sorted_table("IntUpdater", "Integer", "Updater")
+
+implementation ("Main")
+
+SchemeStubs ("Updater")
+SchemeStubs ("ModelServer")
+
+ExportSchemeStubs("model_server")
+importSchemeStubs()              % import ALL scheme stubs
+
+
+program ("modelserver")

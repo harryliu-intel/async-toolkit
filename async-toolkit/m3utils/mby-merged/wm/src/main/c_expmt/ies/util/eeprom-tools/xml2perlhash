@@ -1,0 +1,1068 @@
+#!/usr/local/bin/perl
+
+###############################################################################
+# File:             xml2perlhash
+# Author:           Eduardo Romero
+# Creation Date:    08/16/2011
+# Description:      Register perl hash table generator for Alta.
+# Version:          1.0.0
+#
+# Copyright (C) 2011 Fulcrum Microsystems, Inc. All rights reserved.
+# Unauthorized disclosure is prohibited.
+###############################################################################
+
+use strict;
+use Term::ReadLine;
+use Term::ReadLine::Gnu;
+use IO::Select;
+use XML::Twig;
+use bigint;
+
+use Data::Dumper;
+
+our $RL = new Term::ReadLine::Gnu("");
+
+my $inputFile = "";
+my $err = 0;
+my $input;
+
+my $registerSetName;
+my $regDefault     = 0;
+my $regTypeIsWR    = 0;
+my @registerSetDef = undef;
+my $errorLogBuff   = "";
+my $errorCount     = 0;
+my %SpecialRegHash;
+
+my %AltaRegAliasHash = ();
+
+# This hash defines all the registers to be managed as special cases or that
+# includes a port index.
+# 
+my %AltaSpecialRegisterHash = (
+    # EPL
+    "EPL_IP"                         => ["o", 0],
+    "EPL_CFG_A"                      => ["u", 0],
+    "EPL_CFG_B"                      => ["u", 0],
+    "EPL_LED_STATUS"                 => ["o", 0],
+    "EPL_FIFO_ERROR_STATUS"          => ["o", 0],
+    "EPL_TX_FIFO_READ_PTR_STATUS"    => ["o", 0],
+    "EPL_TX_FIFO_WRITE_PTR_STATUS"   => ["o", 0],
+    "EPL_TX_FIFO_A_PTR_STATUS"       => ["o", 0],
+    "EPL_TX_FIFO_B_PTR_STATUS"       => ["o", 0],
+    "EPL_TX_FIFO_C_PTR_STATUS"       => ["o", 0],
+    "EPL_TX_FIFO_D_PTR_STATUS"       => ["o", 0],
+    "EPL_RX_FIFO_READ_PTR_STATUS"    => ["o", 0],
+    "EPL_RX_FIFO_WRITE_PTR_STATUS"   => ["o", 0],
+    "EPL_RX_FIFO_A_PTR_STATUS"       => ["o", 0],
+    "EPL_RX_FIFO_B_PTR_STATUS"       => ["o", 0],
+    "EPL_RX_FIFO_C_PTR_STATUS"       => ["o", 0],
+    "EPL_RX_FIFO_D_PTR_STATUS"       => ["o", 0],
+    "PCS_10BASEX_CFG"                => ["u", 0],
+    "PCS_10GBASEX_RX_STATUS"         => ["o", 0],
+    "PCS_10GBASEX_TX_STATUS"         => ["o", 0],
+    "PCS_40GBASEX_CFG"               => ["u", 0],
+    "PCS_40GBASER_RX_STATUS"         => ["o", 0],
+    "EPL_1588_TIMER_STATUS"          => ["o", 0],
+    "PORT_STATUS"                    => ["o", 1],
+    "AN_IM"                          => ["u", 1],
+    "LINK_IM"                        => ["u", 1],
+    "AN_IP"                          => ["o", 1],
+    "LINK_IP"                        => ["o", 1],
+    "EPL_PORT_MULTI_PURPOSE_CFG_A"   => ["u", 1],
+    "AN_37_PAGE_RX_STATUS"           => ["o", 1],
+    "AN_73_PAGE_RX_STATUS"           => ["o", 1],
+    "LINK_RULES"                     => ["u", 1],
+    "MAC_CFG"                        => ["u", 1],
+    "TX_SEQUENCE"                    => ["u", 1],
+    "RX_SEQUENCE"                    => ["u", 1],
+    "MAC_1588_STATUS"                => ["o", 1],
+    "MAC_OVERSIZE_COUNTER"           => ["i", 1],
+    "MAC_JABBER_COUNTER"             => ["i", 1],
+    "MAC_UNDERSIZE_COUNTER"          => ["i", 1],
+    "MAC_RUNT_COUNTER"               => ["i", 1],
+    "MAC_OVERRUN_COUNTER"            => ["i", 1],
+    "MAC_UNDERRUN_COUNTER"           => ["i", 1],
+    "MAC_CODE_ERROR_COUNTER"         => ["i", 1],
+    "MAC_LINK_COUNTER"               => ["i", 1],
+    "PCS_1000BASEX_CFG"              => ["u", 1],
+    "PCS_1000BASEX_RX_STATUS"        => ["o", 1],
+    "PCS_1000BASEX_TX_STATUS"        => ["o", 1],
+    "PCS_10GBASER_CFG"               => ["u", 1],
+    "PCS_10GBASER_RX_STATUS"         => ["o", 1],
+    "PCS_10GBASER_TX_STATUS"         => ["o", 1],
+    "AN_37_CFG"                      => ["u", 1],
+    "AN_37_TIMER_CFG"                => ["u", 1],
+    "AN_37_BASE_PAGE_TX"             => ["u", 1],
+    "AN_37_BASE_PAGE_RX"             => ["u", 1],
+    "AN_37_NEXT_PAGE_TX"             => ["u", 1],
+    "AN_37_NEXT_PAGE_RX"             => ["u", 1],
+    "SGMII_AN_TIMER_CFG"             => ["u", 1],
+    "SGMII_AN_TX_CONFIG"             => ["u", 1],
+    "SGMII_AN_TX_CONFIG_LOOPBACK"    => ["u", 1],
+    "SGMII_AN_RX_CONFIG"             => ["u", 1],
+    "AN_37_STATUS"                   => ["o", 1],
+    "AN_73_CFG"                      => ["u", 1],
+    "AN_73_TIMER_CFG"                => ["u", 1],
+    "AN_73_BASE_PAGE_TX"             => ["u", 1],
+    "AN_73_BASE_PAGE_RX"             => ["u", 1],
+    "AN_73_NEXT_PAGE_TX"             => ["u", 1],
+    "AN_73_NEXT_PAGE_RX"             => ["u", 1],
+    "AN_73_STATUS"                   => ["o", 1],
+    "AN_73_TX_LCW_DEBUG"             => ["u", 1],
+    "AN_73_RX_ABILITY_MATCH_LCW_DEBUG"  => ["u", 1],
+    "SERDES_CFG"                     => ["u", 1],
+    "MULTI_PURPOSE_ERROR_COUNTER"    => ["u", 1],
+    "PCS_40GBASER_RX_BIP_STATUS"     => ["o", 1],
+    "PCS_10GBASER_RX_BER_STATUS"     => ["o", 1],
+    "DISPARITY_ERROR_8B10B"          => ["u", 1],
+    "LANE_CFG"                       => ["u", 1],
+    "LANE_STATUS"                    => ["o", 1],
+    "SERDES_RX_CFG"                  => ["u", 1],
+    "SERDES_TX_CFG"                  => ["u", 1],
+    "SERDES_SIGNAL_DETECT"           => ["u", 1],
+    "SERDES_STATUS"                  => ["o", 1],
+    "SERDES_IM"                      => ["u", 1],
+    "SERDES_IP"                      => ["o", 1],
+    "LANE_DEBUG"                     => ["o", 1],
+    # Parser:
+    "PARSER_RAM"                     => ["u", -1],
+    "PARSER_INIT_STATE"              => ["u",  0],
+    "PARSER_INIT_FIELDS"             => ["u",  1],
+    # Mapper:
+    "MAPPER_VID1_TABLE"              => ["u", -1],
+    "MAPPER_VID2_TABLE"              => ["u", -1],
+    "MAPPER_SRC_PORT_TABLE"          => ["u",  0],
+    "MAPPER_QOS_PER_PORT_VPRI1"      => ["u",  0],
+    "MAPPER_QOS_PER_PORT_VPRI2"      => ["u",  0],
+    "MAPPER_QOS_PER_PORT_W4"         => ["u",  0],
+    # FFU
+    "FFU_BST_ACTION"                 => ["u", -1],
+    "FFU_BST_KEY"                    => ["u", -1],
+    "FFU_SLICE_ACTION"               => ["u", -1],
+    "HASH_LAYER3_PTABLE"             => ["u", -1],
+    # NextHop
+    "NEXTHOP_WIDE"                   => ["u", -1],
+    "NEXTHOP_TABLE"                  => ["u", -1],
+    "NEXTHOP_NARROW_UNICAST"         => ["u", -1],
+    "NEXTHOP_NARROW_MULTICAST"       => ["u", -1],
+    # Hash
+    "HASH_LAYER2_ROTA_PTABLE"        => ["u", -1],
+    "HASH_LAYER2_ROTB_PTABLE"        => ["u", -1],
+    # L3AR
+    "L3AR_IP"                        => ["o", -1],
+    # L2L_MAC
+    "L2L_MAC_TABLE"                  => ["u", -1],
+    # L2L
+    "L2L_LOCK_TABLE"                 => ["u", -1],
+    "L2L_EVID1_TABLE"                => ["u", -1],
+    "L2L_IVID1_TABLE"                => ["u", -1],
+    "L2L_EVID2_TABLE"                => ["u", -1],
+    "L2L_IVID2_TABLE"                => ["u", -1],
+    # L2L_SWEEPER
+    "L2L_SWEEPER_TIMER_STATUS"       => ["o", -1],
+    "L2L_SWEEPER_CAM"                => ["i", -1],
+    "L2L_SWEEPER_RAM"                => ["i", -1],
+    "L2L_SWEEPER_FIFO"               => ["i", -1],
+    "L2L_SWEEPER_FIFO_HEAD"          => ["i", -1],
+    "L2L_SWEEPER_FIFO_TAIL"          => ["i", -1],
+    "L2L_SWEEPER_IP"                 => ["o", -1],
+    "L2L_SWEEPER_IM"                 => ["i", -1],
+    # L2F
+    "L2F_TABLE_4K"                   => ["u", -1],
+    "L2F_TABLE_256"                  => ["u", -1],
+    # GLORT
+    "GLORT_RAM"                      => ["u", -1],
+    # POLICERS
+    "POLICER_CFG_4K"                 => ["u", -1],
+    "POLICER_CFG_1K"                 => ["u", -1],
+    "POLICER_STATE_4K"               => ["u", -1],
+    "POLICER_STATE_1K"               => ["u", -1],
+    # EACL
+    "EACL_CAM2"                      => ["u",  0],
+    # LAG
+    "LAG_PORT_TABLE"                 => ["u",  0],
+    # LBS
+    "LBS_CAM"                        => ["u",  0],
+    # L2AR
+    "L2AR_FLAGS_CAM"                 => ["u",  0],
+    "L2AR_ACTION_CPU_CODE"           => ["u", -1],
+    "L2AR_ACTION_TRAP_HEADER"        => ["u", -1],
+    "L2AR_ACTION_MIRROR"             => ["u", -1],
+    "L2AR_ACTION_QOS"                => ["u", -1],
+    "L2AR_ACTION_MA_WRITEBACK"       => ["u", -1],
+    "L2AR_ACTION_DGLORT"             => ["u", -1],
+    "L2AR_ACTION_W16AB"              => ["u", -1],
+    "L2AR_ACTION_W16CDEF"            => ["u", -1],
+    "L2AR_ACTION_W8ABCDE"            => ["u", -1],
+    "L2AR_ACTION_W4"                 => ["u", -1],
+    "L2AR_ACTION_VID"                => ["u", -1],
+    "L2AR_ACTION_DMASK_IDX"          => ["u", -1],
+    "L2AR_ACTION_STATS_IDX5AB"       => ["u", -1],
+    "L2AR_ACTION_STATS_IDX5C"        => ["u", -1],
+    "L2AR_ACTION_STATS_IDX12A"       => ["u", -1],
+    "L2AR_ACTION_STATS_IDX12B"       => ["u", -1],
+    "L2AR_ACTION_STATS_IDX16A"       => ["u", -1],
+    "L2AR_ACTION_STATS_IDX16B"       => ["u", -1],
+    # CM 
+    "CM_BSG_MAP"                     => ["u",  0],
+    "CM_PORT_RXMP_USAGE"             => ["u",  1],
+    "CM_PORT_TX_DROP_COUNT"          => ["u",  0],
+    "CM_PORT_RXMP_PRIVATE_WM"        => ["u",  1],
+    "CM_PORT_RXMP_HOG_WM"            => ["u",  1],
+    "CM_PORT_TXMP_PRIVATE_WM"        => ["u",  1],
+    "CM_PORT_TXMP_HOG_WM"            => ["u",  1],
+    "CM_PORT_RXMP_PAUSE_ON_WM"       => ["u",  1],
+    "CM_PORT_RXMP_PAUSE_OFF_WM"      => ["u",  1],
+    "CM_TC_PC_MAP"                   => ["u",  0],
+    "CM_PC_RXMP_MAP"                 => ["u",  0],
+    "CM_PAUSE_CFG"                   => ["u",  0],
+    "CM_PAUSE_PACING_CFG"            => ["u",  0],
+    "CM_PAUSE_RCV_STATE"             => ["u",  1],
+    "CM_ESCHED_STATE"                => ["u",  0],
+    "CM_PAUSE_GEN_STATE"             => ["u",  0],
+    "CM_PAUSE_PACING_STATE"          => ["u",  0],
+    "ERL_CFG"                        => ["u",  1],
+    "ERL_CFG_IFG"                    => ["u",  0],
+    "CM_QUEUE_STATE_INIT"            => ["u", -1],
+    "ERL_USAGE"                      => ["u",  1],
+    # CMM
+    "CM_PORT_TXMP_USAGE"             => ["u",  1],
+    "CM_PORT_TXMP_IP_WM"             => ["u",  1],
+    "CM_PORT_TXMP_SAMPLING_PERIOD"   => ["u",  1],
+    "CM_PORT_TXMP_SAMPLING_STATE"    => ["u",  1],
+    # SAF
+    "SAF_MATRIX"                     => ["u",  0],
+    # STATS_BANK
+    "STATS_AR_RX_PORT_MAP"           => ["u",  0],
+    "STATS_AR_TX_PORT_MAP"           => ["u",  0],
+    "STATS_BANK_COUNTER"             => ["u", -1],
+    # MCAST_MID
+    "MCAST_DEST_TABLE"               => ["u", -1],
+    # MCAST_POST
+    "MCAST_VLAN_TABLE"               => ["u", -1],
+    # ESCHED
+    "ESCHED_CFG_1"                   => ["u",  0],
+    "ESCHED_CFG_2"                   => ["u",  0],
+    "ESCHED_CFG_3"                   => ["u",  0],
+    # MONITOR
+    "ESCHED_DRR_Q"                   => ["u",  1],
+    "ESCHED_DRR_CFG"                 => ["u",  0],
+    # SSCHED
+    "SSCHED_TX_NEXT_PORT"            => ["s", -1],
+    "SSCHED_TX_INIT_TOKEN"           => ["s", -1],
+    "SSCHED_TX_INIT_COMPLETE"        => ["s", -1],
+    "SSCHED_TX_REPLACE_TOKEN"        => ["s", -1],
+    "SSCHED_RX_NEXT_PORT"            => ["s", -1],
+    "SSCHED_RX_INIT_TOKEN"           => ["s", -1],
+    "SSCHED_RX_INIT_COMPLETE"        => ["s", -1],
+    "SSCHED_RX_REPLACE_TOKEN"        => ["s", -1],
+    "SSCHED_RX_SLOW_PORT"            => ["s", -1],
+    "SSCHED_RXQ_FREELIST_INIT"       => ["s", -1],
+    "SSCHED_RXQ_FREELIST_INIT_DONE"  => ["s", -1],
+    "SSCHED_TXQ_FREELIST_INIT"       => ["s", -1],
+    "SSCHED_TXQ_FREELIST_INIT_DONE"  => ["s", -1],
+    "SSCHED_HS_FREELIST_INIT"        => ["s", -1],
+    "SSCHED_HS_FREELIST_INIT_DONE"   => ["s", -1],
+    "SSCHED_FREELIST_INIT"           => ["s", -1],
+    "SSCHED_FREELIST_INIT_DONE"      => ["s", -1],
+    # MOD
+    "MOD_L2_VLAN1_TX_TAGGED"         => ["u", -1],
+    "MOD_L2_VLAN2_TX_TAGGED"         => ["u", -1],
+    "MOD_MAP_IDX12A"                 => ["u", -1],
+    "MOD_MAP_DATA_W16A"              => ["u", -1],
+    "MOD_MAP_DATA_W16B"              => ["u", -1],
+    "MOD_MAP_DATA_W16C"              => ["u", -1],
+    "MOD_MAP_DATA_W16D"              => ["u", -1],
+    "MOD_MAP_DATA_W16E"              => ["u",  0],
+    "MOD_MAP_DATA_W16F"              => ["u",  0],
+    "MOD_MAP_DATA_W12A"              => ["u",  0],
+    "MOD_MAP_DATA_W8A"               => ["u",  0],
+    "MOD_MAP_DATA_W8B"               => ["u",  0],
+    "MOD_TX_PORT_TAG"                => ["u",  0],
+    "MOD_DST_PORT_TAG"               => ["u",  0],
+    "MOD_L2_VPRI1_TX_MAP"            => ["u",  0],
+    "MOD_L2_VPRI2_TX_MAP"            => ["u",  0],
+    "MOD_TX_PAUSE_QUANTA"            => ["u",  0],
+    "MOD_MIN_LENGTH"                 => ["u",  0],
+    "MCAST_LOOPBACK_SUPPRESS"        => ["u",  0],
+    # MGMT1
+    "FATAL_CODE"                     => ["s", -1],
+    "LAST_FATAL_CODE"                => ["i", -1],
+    "FATAL_COUNT"                    => ["i", -1],
+    "SOFT_RESET"                     => ["s", -1],
+    # MGMT2
+
+    "SRAM_CORRECTED_IP"              => ["o", -1],
+    "SRAM_CORRECTED_IM"              => ["i", -1],
+    "SRAM_UNCORRECTABLE_IP"          => ["o", -1],
+    "SRAM_UNCORRECTABLE_IM"          => ["i", -1],
+    "SRAM_UNCORRECTABLE_FATAL"       => ["i", -1],
+
+    "BOOT_CTRL"                      => ["i", -1],
+    "GPIO_IP"                        => ["o", -1],
+    "SCAN_CONFIG_DATA_IN"            => ["s", -1],
+    "SCAN_CHAIN_DATA_IN"             => ["s", -1],
+    "SWEEPER_CFG"                    => ["s", -1],
+    "S2A_EN_STATUS"                  => ["o", -1],
+    "FM_SCAN_STATUS"                 => ["o", -1],
+    "PLL_CTRL"                       => ["s", -1],
+    "DLL_CTRL"                       => ["s", -1],
+    "PLL_STAT"                       => ["s", -1],
+    "TESTCTRL_MOD_CFG"               => ["s", -1],
+    "TESTCTRL_TICK_CFG"              => ["s", -1],
+    "TESTCTRL_START"                 => ["s", -1],
+    "FUSEBOX"                        => ["s", -1],
+    "BM_MARCH_SEQUENCE"              => ["s", -1],
+    "BM_GENERAL_CONFIG"              => ["s", -1],
+    "BM_TXQ_HS_SEGMENTS"             => ["s", -1],
+    "BM_RXQ_PAGES"                   => ["s", -1],
+    "BM_MODEL_INFO"                  => ["s", -1],
+    "BM_FFU_SLICE_MASK"              => ["s", -1],
+    "BM_VRM"                         => ["s", -1],
+    "BM_MAX_ALLOWED_REPAIRS"         => ["s", -1],
+    "BM_IP"                          => ["o", -1],
+    "BM_IM"                          => ["s", -1],
+    "BM_FUSEBOX_BURN_TIME"           => ["s", -1],
+    "BM_FUSEBOX_APPEND"              => ["s", -1],
+    "BM_START_OPERATION"             => ["s", -1],
+    "TEN_T_BIST_MARCH_CONFIG"        => ["s", -1],
+    "TEN_T_BIST_GENERAL_CONFIG"      => ["s", -1],
+    "TEN_T_BIST_STATUS"              => ["o", -1],
+    "TEN_T_BIST_USER_CHECKER_MASK"   => ["s", -1],
+    "TEN_T_BIST_IP"                  => ["o", -1],
+    "TEN_T_BIST_IM"                  => ["s", -1],
+    "TEN_T_BIST_USER_OP"             => ["s", -1],
+    "TEN_T_BIST_PAIRED_READ"         => ["s", -1],
+    "TEN_T_BIST_CURRENT_ADDR"        => ["s", -1],
+    "TEN_T_BIST_START_SEQUENCE"      => ["s", -1],
+    "TEN_T_BIST_SAVED_ADDRESS"       => ["s", -1],
+    "TEN_T_BIST_DEBUG_STATUS_1"      => ["o", -1],
+    "TEN_T_BIST_DEBUG_STATUS_2"      => ["o", -1],
+    "TEN_T_BIST_CHAIN_LATENCY"       => ["s", -1],
+    "TEN_T_BIST_CHAIN_CDC"           => ["s", -1],
+    "CDP_BIST_REPAIR"                => ["s", -1],
+    "CDP_BIST_MARCH_CONFIG"          => ["s", -1],
+    "CDP_BIST_DEFECT_MAP"            => ["s", -1],
+    "CDP_BIST_GENERAL_CONFIG"        => ["s", -1],
+    "CDP_BIST_STATUS"                => ["o", -1],
+    "CDP_BIST_USER_CHECKER_MASKS"    => ["s", -1],
+    "CDP_BIST_IP"                    => ["o", -1],
+    "CDP_BIST_IM"                    => ["s", -1],
+    "CDP_BIST_CLEAR_REPAIRS"         => ["s", -1],
+    "CDP_BIST_ADD_REPAIR"            => ["s", -1],
+    "CDP_BIST_USER_OP"               => ["s", -1],
+    "CDP_BIST_START_SEQUENCE"        => ["s", -1],
+    "CDP_BIST_BLOCK_HALFCHUNK"       => ["s", -1],
+    "CDP_BIST_SEGMENT_COUNT"         => ["s", -1],
+    "CDP_BIST_NEXT_SEGMENT"          => ["s", -1],
+    "CDP_BIST_NEXT_NEW_REPAIR"       => ["s", -1],
+    "CDP_BIST_SAVED_ADDRESS"         => ["s", -1],
+    "CDP_BIST_DEBUG_STATUS_1"        => ["o", -1],
+    "CDP_BIST_DEBUG_STATUS_2"        => ["o", -1],
+    "CDP_BIST_CHAIN_GENERAL_CONFIG"  => ["s", -1],
+    "CDP_BIST_CHAIN_LATENCY"         => ["s", -1],
+    "CDP_BIST_CHAIN_CDC"             => ["s", -1],
+    "SPDP_BIST_MARCH_CONFIG"         => ["s", -1],   
+    "SPDP_BIST_GENERAL_CONFIG"       => ["s", -1],
+    "SPDP_BIST_STATUS"               => ["o", -1],
+    "SPDP_BIST_USER_CHECKER_MASKS"   => ["s", -1],
+    "SPDP_BIST_IP"                   => ["o", -1],
+    "SPDP_BIST_IM"                   => ["s", -1],
+    "SPDP_BIST_MAX_ADDR"             => ["s", -1],
+    "SPDP_BIST_USER_OP"              => ["s", -1],
+    "SPDP_BIST_START_SEQUENCE"       => ["s", -1],
+    "SPDP_BIST_SAVED_ADDRESS"        => ["s", -1],
+    "SPDP_BIST_DEBUG_STATUS_1"       => ["o", -1],
+    "SPDP_BIST_DEBUG_STATUS_2"       => ["o", -1],
+    "SPDP_BIST_CHAIN_GENERAL_CONFIG" => ["s", -1],
+    "SPDP_BIST_CHAIN_LATENCY"        => ["s", -1],
+    "SPDP_BIST_CHAIN_CDC"            => ["s", -1],
+    "BM_IP"                          => ["o", -1],
+    "SRBM_REPAIR"                    => ["s", -1],
+    "SRBM_MARCH_SEQUENCE"            => ["s", -1],
+    "SRBM_GENERAL_CONFIG"            => ["s", -1],
+    "SRBM_IP"                        => ["o", -1],
+    "SRBM_IM"                        => ["s", -1],
+    "SRBM_CLEAR_REPAIRS"             => ["s", -1],
+    "SRBM_ADD_REPAIR"                => ["s", -1],
+    "SRBM_NEXT_NEW_REPAIR"           => ["s", -1],
+    "SRBM_LAST_NR_DEFECT"            => ["s", -1],
+    "CRM_DATA"                       => ["u", -1],
+    "CRM_CTRL"                       => ["s", -1],
+    "CRM_STATUS"                     => ["o", -1],
+    "CRM_TIME"                       => ["s", -1],
+    "CRM_IP"                         => ["o", -1],
+    "CRM_IM"                         => ["s", -1],
+    "CRM_COMMAND"                    => ["s", -1],
+    "CRM_REGISTER"                   => ["s", -1],
+    "CRM_PERIOD"                     => ["s", -1],
+    "CRM_PARAM"                      => ["s", -1],
+
+    # PCIe
+    "PCI_CFG_ID"                     => ["s", -1],
+    "PCI_CFG_CMD"                    => ["s", -1],
+    "PCI_CFG_1"                      => ["s", -1],
+    "PCI_CFG_2"                      => ["s", -1],
+    "PCI_CFG_BAR0"                   => ["s", -1],
+    "PCI_CFG_BAR1"                   => ["s", -1],
+    "PCI_CFG_BAR2"                   => ["s", -1],
+    "PCI_CFG_BAR3"                   => ["s", -1],
+    "PCI_CFG_BAR4"                   => ["s", -1],
+    "PCI_CFG_BAR5"                   => ["s", -1],
+    "PCI_CFG_CARDBUS"                => ["s", -1],
+    "PCI_CFG_SUBID"                  => ["s", -1],
+    "PCI_CFG_EXP_ROM"                => ["s", -1],
+    "PCI_CFG_CAP_PTR"                => ["s", -1],
+    "PCI_CFG_RSVD"                   => ["s", -1],
+    "PCI_CFG_INT"                    => ["s", -1],
+    "PCI_CFG_PM_CAP"                 => ["s", -1],
+    "PCI_CFG_PM_CTRL"                => ["s", -1],
+    "PCI_CFG_MSI_CAP"                => ["s", -1],
+    "PCI_CFG_MSI_ADDR_LO"            => ["s", -1],
+    "PCI_CFG_MSI_ADDR_HI"            => ["s", -1],
+    "PCI_CFG_MSI_DATA"               => ["s", -1],
+    "PCI_CFG_MSI_MASK"               => ["s", -1],
+    "PCI_CFG_MSI_PENDING"            => ["s", -1],
+    "PCI_CFG_PCIE_CAP"               => ["s", -1],
+    "PCI_CFG_PCI_DEV_CAP"            => ["s", -1],
+    "PCI_CFG_PCIE_DEV"               => ["s", -1],
+    "PCI_CFG_PCI_LINK_CAP"           => ["s", -1],
+    "PCI_CFG_PCI_LINK_CTRL"          => ["s", -1],
+    "PCI_CFG_DEV_CAP2"               => ["s", -1],
+    "PCI_CFG_DEV_CTRL2"              => ["s", -1],
+    "PCI_CFG_PCI_LINK_CAP2"          => ["s", -1],
+    "PCI_CFG_PCI_LINK_CTRL2"         => ["s", -1],
+    "PCI_ENDIANISM"                  => ["s", -1],
+    "PCI_COMMAND"                    => ["s", -1],
+    "PCI_STATUS"                     => ["s", -1],
+    "PCI_COALESCING"                 => ["s", -1],
+    "PCI_RX_BD_BASE"                 => ["s", -1],
+    "PCI_RX_BD_END"                  => ["s", -1],
+    "PCI_TX_BD_BASE"                 => ["s", -1],
+    "PCI_TX_BD_END"                  => ["s", -1],
+    "PCI_IP"                         => ["o", -1],
+    "PCI_IM"                         => ["s", -1],
+    "PCI_CURRENT_TX_DATA_PTR"        => ["s", -1],
+    "PCI_CURRENT_RX_DATA_PTR"        => ["s", -1],
+    "PCI_CURRENT_TX_BD_PTR"          => ["s", -1],
+    "PCI_CURRENT_RX_BD_PTR"          => ["s", -1],
+    "PCI_TX_FRAME_LEN"               => ["s", -1],
+    "PCI_SIZE"                       => ["s", -1],
+    "PCI_DMA_CFG"                    => ["s", -1],
+    "PCI_FRAME_TIMEOUT"              => ["s", -1],
+    "PCI_STAT_COUNTER"               => ["s", -1],
+    "PCI_STAT_NUM_PKTS"              => ["s", -1],
+    "PCI_DEBUG"                      => ["s", -1],
+    "PCI_CORE_CTRL_1"                => ["s", -1],
+    "PCI_CORE_CTRL_2"                => ["s", -1],
+    "PCI_CORE_DEBUG_1"               => ["o", -1],
+    "PCI_CORE_DEBUG_2"               => ["o", -1],
+    "PCI_CORE_DEBUG_3"               => ["o", -1],
+    "PCI_CORE_DEBUG_4"               => ["o", -1],
+    "PCI_CORE_DEBUG_5"               => ["o", -1],
+    "PCI_CORE_DEBUG_6"               => ["o", -1],
+    "PCI_CORE_DEBUG_7"               => ["o", -1],
+    "PCI_CORE_DEBUG_8"               => ["o", -1],
+    "PCI_CORE_DEBUG_9"               => ["o", -1],
+    "PCI_CORE_DEBUG_10"              => ["o", -1],
+    "PCI_CORE_DEBUG_11"              => ["o", -1],
+    "PCI_CORE_DEBUG_12"              => ["o", -1],
+    "PCI_CORE_DEBUG_13"              => ["o", -1],
+    "PCI_CORE_DEBUG_14"              => ["o", -1],
+    "PCI_CORE_DEBUG_15"              => ["o", -1],
+    "PCI_CORE_DEBUG_16"              => ["o", -1],
+    "PCI_CORE_DEBUG_17"              => ["o", -1],
+    "PCI_CORE_DEBUG_18"              => ["o", -1],
+    "PCI_CORE_DEBUG_19"              => ["o", -1],
+    "PCI_CORE_DEBUG_20"              => ["o", -1],
+    "PCI_CORE_DEBUG_21"              => ["o", -1],
+    "PCI_CORE_DEBUG_22"              => ["o", -1],
+    "PCI_SERDES_CTRL_1"              => ["s", -1],
+    "PCI_SERDES_CTRL_2"              => ["s", -1],
+    "PCI_SERDES_CTRL_3"              => ["s", -1],
+    "PCI_SERDES_CTRL_4"              => ["s", -1],
+    "PCI_SERDES_DEBUG_1"             => ["o", -1],
+    "PCI_SERDES_DEBUG_2"             => ["o", -1],
+    "PCI_SERDES_DEBUG_3"             => ["o", -1],
+
+    # JSS
+    "SBUS_CFG"                       => ["s", -1],
+    "SBUS_COMMAND"                   => ["s", -1],
+    "SBUS_REQUEST"                   => ["s", -1],
+    "SBUS_RESPONSE"                  => ["s", -1],
+    "SBUS_SPICO"                     => ["s", -1],
+    "SBUS_IP"                        => ["o", -1],
+    "SBUS_IM"                        => ["s", -1],
+    "SPICO_BIST"                     => ["s", -1],
+    "TAP_FSM_STATE"                  => ["s", -1],
+    "TAP_EFUSE_CFG"                  => ["s", -1],
+    "TAP_EFUSE"                      => ["s", -1],
+    "SSCHED_TICK_CFG"                => ["s", -1],
+
+    # FC_BEM
+    "FC_MRL_MGMT_CYCLES"             => ["s", -1],
+    "FC_MRL_SWEEP_CYCLES"            => ["s", -1],
+    "FC_MRL_SWEEP_PERIOD"            => ["s", -1],
+    "FC_MRL_UNROLL_ITER"             => ["s", -1],
+    "FC_MRL_TOKEN_LIMIT"             => ["s", -1],
+    "FC_MRL_FC_TOKEN_LIMIT"          => ["s", -1],
+    "FC_MRL_ALIGN_TX_STATS"          => ["s", -1],
+    "FC_MRL_FC_TOKEN_LIMIT"          => ["s", -1]
+);
+
+
+# command line parsing
+$err = &GetFileNames(@ARGV);
+my $self = new();
+
+# process the xml file
+if ($inputFile ne "")
+{
+    # Select the special register hash table to use.
+    %SpecialRegHash = %AltaSpecialRegisterHash;
+    # Load and process the xmlfile
+    load($self,$inputFile);
+}
+
+# show a final message
+if ($err)
+{
+    print "\nExecution ERROR\n\n";
+}
+else
+{
+    print "\n\nXML file was sucessfully processed\n\n";
+}
+exit $err;
+
+############################## Helper Functions #############################
+
+sub new($$)
+{
+    my $proto = shift;
+
+    my $class = ref($proto) || $proto;
+
+    my $self = {};
+
+    bless($self, $class);
+
+    return $self;
+}
+
+
+sub GetFileNames
+{
+    my $value = "";
+    my $expect;
+
+    # parse the command line
+    while (($value = shift @_) ne "")
+    {
+        if (!defined($expect))
+        {
+            if ($value eq "-i")
+            {
+                $expect = \$inputFile;
+            }
+            elsif ($value eq "-h")
+            {
+                &PrintUsage;
+            }
+            else
+            {
+                print "\n Invalid Command line";
+                &PrintUsage;
+            }
+        }
+        else
+        {
+            $$expect = $value;
+            $expect = undef;
+        }
+    }
+    if (defined($expect))
+    {
+        print "\n Invalid Command line";
+        &PrintUsage;
+    }
+
+    # If no command line arguments, promt for the file names
+    if ($inputFile eq "")
+    {
+        $inputFile = $RL->readline("regInfo xml file : ");
+        if ($inputFile eq "" || !-e $inputFile)
+        {
+            print "\nERROR: File not found.\n\n";
+            exit 1;
+        }
+    }
+}
+
+sub PrintUsage
+{
+    print "\nUsage: xml2perlhash [-i inputfile][|tee outputfile]\n\n";
+    exit 0;
+}
+              
+sub load($$)
+{
+    my ($self,$file) = @_;
+
+    # skip empty files
+    if (!(-e $file))
+    {
+        print " [Command XML Load] Error: file not found: $file\n";
+        return;
+    }
+    
+
+    my $parser = new XML::Twig( 
+                                twig_handlers => {
+                                    'registerSet'                       => \&registerSetPass1,
+                                    'registers/register'                =>\&registerPass1,
+                                    'registers/register/fields/field'   =>\&registerPass1,
+                                }
+                              );
+
+    # parse the xml document and fill up the hash
+    print STDERR "\nCreating register alias table...\n";
+    $parser->parsefile($file) or die "Error parsing XML file $file: $!";
+
+    # print hash description and open the hash definition
+    print <<EOF;
+
+# %alta_regs_hash
+#
+# Entry format:
+#   [ word-count, index-count, port-index, ordering,
+#     addr-sub, default-sub, bounds-list ]
+#
+# word-count:  number of 32-bit words that comprise each
+#              register value (1-4)
+# index-count: number of indices that must be provided to
+#              fully specify a register (size of bounds-list)
+# port-index:  indicates which index is either a EPL or a port number
+#              (-1 for none) the indicated index refers an EPL number if
+#              the index size is 25 or a port number if the index size is 75.
+# ordering:    indicates how this register should be handled:
+#              "s": handle as a special case
+#              "u": handle in an unordered automated loop (normal case)
+#              "o": read only register
+#              "i": ignore register
+# addr-sub:    subroutine that returns a register address
+#              given appropriate index arguments
+# default-sub: subroutine that returns the register default
+#              value given appropriate index arguments
+#              Read only registers return 'undef'.
+# bounds-list: list of list references.  Each list reference
+#              represents one index argument to the subroutine
+#              and gives the min and max values allowed.
+
+# NOTE:
+#
+# This table is automatically generated from the XML used to generate the chip
+# design. This table should not be edited directly. Instead, changes should be
+# implemented in the XSLT stylesheet, codegen_fm6000_regs.xsl or to the tool
+# used to generate the perl hash table (xml2perlhash).
+EOF
+
+    # add the generation date to the header
+    my ($second, $minute, $hour, $dayOfMonth, $month, $yearOffset, $dayOfWeek, $dayOfYear, $daylightSavings) = localtime();
+    my $year = 1900 + $yearOffset;
+    $month++;
+
+    print "#\n# Generated: $month/$dayOfMonth/$year\n\n";
+
+    # print the Alta hash table.
+
+    print 'my %alta_regs_hash = (';
+    print "\n";
+
+    my $parser = new XML::Twig( 
+                                twig_handlers => {
+                                    'registerSet'                       => \&registerSetPass2,
+                                    'registers/register'                =>\&registerPass2,
+                                    'registers/register/fields/field'   =>\&registerFieldPass2,
+                                }
+                              );
+    print STDERR "\nCreating Alta Register Hash Table...\n";
+    $parser->{INSTANCE} = $self;
+
+    # parse the xml document and fill up the hash
+    $parser->parsefile($file) or die "Error parsing XML file $file: $!";
+
+    # close the hash definition
+    print ");\n\n";
+}
+
+##@method printRegItem()
+#
+# @brief        print all regiter entries to the hash table for a
+#               given registerSet
+#
+# @param[in]    $baseAddr: registerSet base address.
+#
+sub printRegItem
+{
+    my ($registerSetName, $regSetBaseAddr) = @_;
+
+    # print the RegisterSet header
+    print "\n# Block: $registerSetName, base address = " . sprintf("0x%6.6x",$regSetBaseAddr) . " (" . @registerSetDef . " registers) \n";
+
+    # print the register entries
+    foreach my $reg (@registerSetDef)
+    {
+        if (!defined $reg)
+        {
+            next;
+        }
+
+        # generate the subroutine that returns the register address
+        my $sub_address = "sub { return (" . sprintf("0x%6.6x + 0x%6.6x ", $regSetBaseAddr, $reg->{'regOffset'});
+
+        # add the index offsets
+        if ($reg->{'regndxNum'} > 0)
+        {
+            $sub_address .= "+ " . sprintf("0x%x ", $reg->{'regStride'}[0]) . '* $_[0]';
+        }
+        if ($reg->{'regndxNum'} > 1)
+        {
+            $sub_address .= "+ " . sprintf("0x%x ", $reg->{'regStride'}[1]) . '* $_[1]';
+        }
+        if ($reg->{'regndxNum'} > 2)
+        {
+            $sub_address .= "+ " . sprintf("0x%x ", $reg->{'regStride'}[2]) . '* $_[2]';
+        }
+        $sub_address .= ") }";
+
+        # print the complete entry
+        printf("        \"FM_%-35.35s => [",$reg->{'regName'}."\"");
+        printf(" %2.2d, %2.2d,% d,", $reg->{'regWidth'}, $reg->{'regndxNum'}, $reg->{'regPortNdx'});
+        printf(" \"%s\", %s, %s %s ],\n", $reg->{'regOrdering'}, $sub_address, $reg->{'regSubDefault'}, $reg->{'regBoundList'});
+    }
+}
+
+##@method registerSetPass1()
+#
+# @brief        pass 1 registerSet handler.
+#
+# @param[in]    $twig: the twig instance
+#
+# @param[in]    $registerSet: the registerSet element.
+#
+sub registerSetPass1
+{
+    my ($twig, $registerSet) = @_;
+
+}
+
+##@method registerPass1()
+#
+# @brief        pass1 register handler. This method builts a hash table
+#               to resolve the register alias.
+#
+# @param[in]    $twig: the twig instance
+#
+# @param[in]    $register: the register element.
+#
+sub registerPass1
+{
+    my ( $twig, $register) = @_;
+    
+    my $registerName = $register->first_child_text('name');
+    my $addrOffset = $register->first_child_text('addressOffset');
+
+    # Add the register offset to the alias table.
+    if (defined $addrOffset)
+    {
+        $AltaRegAliasHash{$registerName} = hex($addrOffset);
+    }
+}
+
+##@method registerFieldPass1()
+#
+# @brief        pass 1register field handler.
+#
+# @param[in]    $twig: the twig instance
+#
+# @param[in]    $registerField: the field element.
+#
+sub registerFieldPass1
+{
+    my ($twig, $registerField) = @_;
+
+}
+
+
+##@method registerSetPass2()
+#
+# @brief        registerSet handler.
+#
+# @param[in]    $twig: the twig instance
+#
+# @param[in]    $registerSet: the registerSet element.
+#
+sub registerSetPass2
+{
+    my ($twig, $registerSet) = @_;
+
+    # get the registerSet name and base address
+    $registerSetName = $registerSet->first_child_text('name');
+    my $registerSetBaseAddress = hex($registerSet->first_child_text('addressBase'));
+
+
+    # print the register entries
+    printRegItem($registerSetName, $registerSetBaseAddress);
+    
+    # release register defintions
+    undef @registerSetDef;
+}
+
+##@method registerPass2()
+#
+# @brief        register handler.
+#
+# @param[in]    $twig: the twig instance
+#
+# @param[in]    $register: the register element.
+#
+sub registerPass2
+{
+    my ( $twig, $register) = @_;
+
+    # get register parameters
+    my $registerName = $register->first_child_text('name');
+    my $addrOffset = $register->first_child_text('addressOffset');
+    my $regAlias = $register->first_child_text('alias');
+    my $regWidth = $register->first_child_text('width');
+    my @entries = $register->children('entries');
+    my @baseEntry = $register->children('baseEntry');
+    my @stride = $register->children('stride');
+    my $addrOffsetValue = 0;
+    my @strideValues;
+    my $regPortIndex = -1;
+    my $regOrdering;
+
+    if (defined $addrOffset && $addrOffset ne "")
+    {
+        $addrOffsetValue = hex($addrOffset);
+    }
+    elsif (defined $regAlias && $regAlias ne "")
+    {
+        $addrOffsetValue = $AltaRegAliasHash{$regAlias};
+        if (! defined $addrOffsetValue)
+        {
+            print STDERR "ERROR in register $registerName: invalid address offset\n";
+        }
+    }
+    else
+    {
+        print STDERR "ERROR in register $registerName: address offset not defined\n";
+    }
+    # determine the number of indexes
+    my $ndxNum = 0;
+
+    if (@entries > 1)
+    {
+        $ndxNum = @entries + 0;
+    }
+    elsif ($entries[0]->text > 1)
+    {
+        $ndxNum = 1;
+    }
+    
+    # create the bound list
+    my $boundList = "";
+    if ($ndxNum > 0)
+    {
+        if ($ndxNum != @baseEntry || $ndxNum != @stride)
+        {
+            $errorLogBuff .= sprintf("ERROR in the index definition for register %s\n", $registerName);
+            $errorCount++;
+        }
+        else
+        {
+            my $entryNum = 0;
+            while ($entryNum < @entries)
+            {
+                my $upperLimit = ($entries[$entryNum]->text) - 1;
+                my $lowerLimit = ($baseEntry[$entryNum] ->text) + 0;
+                $boundList .= sprintf(", [%d, %d]", $lowerLimit, $upperLimit);
+
+                # use the loop to generate the stride array
+                push(@strideValues, hex(@stride[$entryNum] ->text) );
+                $entryNum++;
+            }
+        }
+    }
+
+    # create the "get default value" subroutine
+    my $defaultSub = "sub {";
+
+    # only return default values if the register is RW (read-write)
+    if ($regTypeIsWR)
+    {
+        # only if the register is not ReadOnly
+        if (defined $regDefault && $regTypeIsWR)
+        {
+            my $wordCount = $regWidth;
+            my $defaultWordValue;
+            $defaultSub .= " return (";
+
+            while ($wordCount > 0)
+            {
+                $defaultWordValue = $regDefault & 0xffffffff;
+                $regDefault >>= 32;
+                if ($defaultWordValue)
+                {
+                    $defaultSub .= sprintf("0x%8.8x",$defaultWordValue);
+                }
+                else
+                {
+                    $defaultSub .= sprintf("0x%2.2x",$defaultWordValue);
+                }
+                if ($wordCount > 1)
+                {
+                    $defaultSub .= ", ";
+                }
+                $wordCount--;
+            }
+            $defaultSub .= ");";
+        }
+    }
+    else
+    {
+        # tag the register as read-only
+        $regOrdering = "o";
+    }
+    $defaultSub .= " }";
+
+    # check if the register must be managed as an special case
+    my $specialRegEntry = $SpecialRegHash{$registerName};
+
+    if (defined $specialRegEntry)
+    {
+        my ($specialOrdering, $portIndex) = @$specialRegEntry;
+
+        # ignore special tagging if the register was already tagged as 'read-only'
+        if (!defined $regOrdering)
+        {
+            $regOrdering = $specialOrdering;
+        }
+        $regPortIndex = $portIndex;
+    }
+
+    # if still $regOrdering is not defined, set it to the default value
+    if (!defined $regOrdering)
+    {
+        $regOrdering = "u";
+    }
+
+    # push the register description into the register set array
+    push @registerSetDef, {
+        "regName"       => $registerName,
+        "regOffset"     => $addrOffsetValue,
+        "regWidth"      => $regWidth,
+        "regndxNum"     => $ndxNum,
+        "regPortNdx"    => $regPortIndex,
+        "regOrdering"   => $regOrdering,
+        "regBoundList"  => $boundList,
+        "regSubDefault" => $defaultSub,
+        "regStride"     => \@strideValues,
+        };
+
+    # undefine field variables
+    $regDefault = 0;
+    $regTypeIsWR = 0;
+}
+
+##@method registerFieldPass2()
+#
+# @brief        register field handler.
+#
+# @param[in]    $twig: the twig instance
+#
+# @param[in]    $registerField: the field element.
+#
+sub registerFieldPass2
+{
+    my ($twig, $registerField) = @_;
+
+    # get the name, position, length and default value of the field.
+    my $registerFieldName = $registerField->first_child_text('name');
+    my $fieldPosition = $registerField->first_child_text('position');
+    my $fieldLength = $registerField->first_child_text('length');
+    my $entryNum = hex($registerField->first_child_text('entries'));
+    my $fieldType = $registerField->first_child_text('type');
+    my $fieldDefaultStr = $registerField->first_child_text('default');
+    my $fieldDefault = 0;
+
+    # only process the fields that are not 'read-only'
+    if ($fieldType ne "RO")
+    {
+        # set the register type as Read-Write
+        $regTypeIsWR |= 1;
+
+        # get the default value
+        if ($fieldLength <= 32)
+        {
+            $fieldDefault = hex($fieldDefaultStr);
+        }
+        else
+        {
+            $fieldDefault = bighex($fieldDefaultStr);
+        }
+
+        if (defined $entryNum && $entryNum > 1)
+        {
+            # manage aggregated fields
+            my $count;
+            my $baseFieldDefault = $fieldDefault;
+            for ($count = 1; $count < $entryNum; $count++)
+            {
+                $fieldDefault = ($fieldDefault<<$fieldLength)|$baseFieldDefault;
+            }
+        }
+
+        # skip fields with default values == 00
+        if ($fieldDefault)
+        {
+            # use math ops because there are some problems using shift ops 
+            $regDefault += ($fieldDefault * (2**$fieldPosition));
+        }
+    }
+}
+
+
+
+##@method bighex()
+#
+# @brief        hex-sting to unsigned integer converter for big unsigned
+#               integers.
+#
+# @param[in]    $str: the hex-string to convert
+#
+# @return       the unsigned equivalent value.
+#
+sub bighex
+{
+    my ($str) = @_;
+    my $num = 0;
+
+    # remove leading whitespace
+    $str =~ s/^\s+//;
+    if ($str =~ m/^(0x|0X)/)
+    {
+        # remove the leading '0x'
+        $str =~ s/^(0x|0X)//;
+
+        my @strarray = split(//,$str);
+        foreach my $xchar (@strarray)
+        {
+            $num = $num * 16 + hex($xchar)
+        }
+    }
+    return $num;
+}

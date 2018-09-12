@@ -1,0 +1,197 @@
+# vim:et:sw=4:ts=4:tw=79:
+
+###############################################################################
+#
+#                                   support
+#
+###############################################################################
+
+INSTALL_TARGETS += install-support
+
+CPPFLAGS += -I../applications/support/include
+
+ifneq ($(GPL_FREE),)
+CPPFLAGS += -DFM_GPL_FREE
+endif
+
+SUPPORT_SRCS =                                          \
+    ../applications/support/src/fm_packet_arp.c         \
+    ../applications/support/src/fm_packet_classify.c    \
+    ../applications/support/src/fm_packet_igmp.c        \
+    ../applications/support/src/fm_support_root.c
+ifeq ($(PLATFORM),whiteModelLib)
+SUPPORT_SRCS =
+endif
+SUPPORT_DEPS = $(SUPPORT_SRCS:.c=.P)
+SUPPORT_OBJS = $(SUPPORT_SRCS:.c=.o)
+
+SUPPORT_INSTALL_DIRECTORY = $(INSTALL_DIRECTORY)/lib
+SUPPORT_LIBRARY = ../build/libsupport.a
+
+$(SUPPORT_LIBRARY) : $(SUPPORT_OBJS)
+	$(AR) r $@ $^
+
+support: $(SUPPORT_LIBRARY)
+
+support-clean:
+	$(RM) $(SUPPORT_DEPS) $(SUPPORT_OBJS)
+
+install-support-base:
+	@echo Creating support install directory $(SUPPORT_INSTALL_DIRECTORY)
+	if [ ! -d $(SUPPORT_INSTALL_DIRECTORY) ]; then      \
+		mkdir -p $(SUPPORT_INSTALL_DIRECTORY);          \
+	fi
+
+install-support: support install-support-base
+	@echo Copying $(SUPPORT_LIB) to $(SUPPORT_INSTALL_DIRECTORY)
+	cp $(SUPPORT_LIBRARY) $(SUPPORT_INSTALL_DIRECTORY)
+
+MAKEDEPEND = $(CC) -M $(CPPFLAGS) -o $*.d $<
+
+%.P : %.c
+	$(MAKEDEPEND)
+	@sed 's|.*\.o[ :]\+|$*.o $@ : |g' < $*.d > $@;  \
+		rm -f $*.d;                                 \
+		[ -s $@ ] || rm -f $@
+
+-include $(SUPPORT_DEPS)
+
+###############################################################################
+#
+#                                   protocols
+#
+###############################################################################
+
+INSTALL_TARGETS += install-protocols
+
+CPPFLAGS += -I../applications/protocols/include
+
+PROTOCOLS_SRCS =                                          \
+    ../applications/protocols/src/lldp.c                  \
+    ../applications/protocols/src/lldp_mib.c              \
+    ../applications/protocols/src/lldp_tlv.c              \
+    ../applications/protocols/src/lldp_rx.c               \
+    ../applications/protocols/src/lldp_tx.c               \
+    ../applications/protocols/src/lldp_event.c            \
+    ../applications/protocols/src/lldp_list.c             \
+    ../applications/protocols/src/lldp_hash.c             \
+    ../applications/protocols/src/dcbx.c                  \
+    ../applications/protocols/src/dcbx_mib.c              \
+    ../applications/protocols/src/dcbx_v1_core.c          \
+    ../applications/protocols/src/dcbx_v1_tlv.c           \
+    ../applications/protocols/src/dcbx_v1_ets.c           \
+    ../applications/protocols/src/dcbx_v1_pfc.c           \
+    ../applications/protocols/src/dcbx_v1_app.c           \
+    ../applications/protocols/src/dcbx_v1_cn.c            \
+    ../applications/protocols/src/dcbx_v0_core.c          \
+    ../applications/protocols/src/dcbx_v0_tlv.c           \
+    ../applications/protocols/src/dcbx_v0_ets.c           \
+    ../applications/protocols/src/dcbx_v0_pfc.c           \
+    ../applications/protocols/src/dcbx_v0_app.c           \
+    ../applications/protocols/src/fm_proto_lldp.c         \
+    ../applications/protocols/src/fm_proto_dcbx.c
+
+ifeq ($(PLATFORM),whiteModelLib)
+PROTOCOLS_SRCS = 
+endif
+
+PROTOCOLS_DEPS = $(PROTOCOLS_SRCS:.c=.P)
+PROTOCOLS_OBJS = $(PROTOCOLS_SRCS:.c=.o)
+
+PROTOCOLS_INSTALL_DIRECTORY = $(INSTALL_DIRECTORY)/lib
+PROTOCOLS_LIBRARY = ../build/libprotocols.a
+
+$(PROTOCOLS_LIBRARY) : $(PROTOCOLS_OBJS)
+	$(AR) r $@ $^
+
+protocols: $(PROTOCOLS_LIBRARY)
+
+protocols-clean:
+	$(RM) $(PROTOCOLS_DEPS) $(PROTOCOLS_OBJS)
+
+install-protocols-base:
+	@echo Creating protocols install directory $(PROTOCOLS_INSTALL_DIRECTORY)
+	if [ ! -d $(PROTOCOLS_INSTALL_DIRECTORY) ]; then      \
+		mkdir -p $(PROTOCOLS_INSTALL_DIRECTORY);          \
+	fi
+
+install-protocols: protocols install-protocols-base
+	@echo Copying $(PROTOCOLS_LIB) to $(PROTOCOLS_INSTALL_DIRECTORY)
+	cp $(PROTOCOLS_LIBRARY) $(PROTOCOLS_INSTALL_DIRECTORY)
+
+MAKEDEPEND = $(CC) -M $(CPPFLAGS) -o $*.d $<
+
+%.P : %.c
+	$(MAKEDEPEND)
+	@sed 's|.*\.o[ :]\+|$*.o $@ : |g' < $*.d > $@;  \
+		rm -f $*.d;                                 \
+		[ -s $@ ] || rm -f $@
+
+-include $(PROTOCOLS_DEPS)
+
+###############################################################################
+#
+#                                   TestPoint
+#
+###############################################################################
+
+INSTALL_TARGETS += install-testpoint
+
+ifeq ($(TESTPOINT_BUILD_ID),)
+    TESTPOINT_BUILD_ID := 0
+endif
+
+ifeq ($(DEBUGTP),1)
+    C_SRC_CODE = src
+endif
+
+TESTPOINT_SRCS =    \
+    Config          \
+    Applications    \
+    Base            \
+    Chip            \
+    Scripts         \
+    TestPoint       \
+    TestPointShared \
+    Types
+
+TESTPOINT_INSTALL_DIRECTORY = $(INSTALL_DIRECTORY)/perl
+TESTPOINT_VERSION_CONTENTS = "                                                \
+package Applications::TestPoint::Common::Version;                             \
+sub getBuildID                                                                \
+{                                                                             \
+    return \"$(TESTPOINT_BUILD_ID)\";                                         \
+}                                                                             \
+1;                                                                            \
+"
+TESTPOINT_VERSION_PACKAGE =                                                   \
+        $(TESTPOINT_INSTALL_DIRECTORY)/Applications/TestPoint/Common/Version.pm
+
+install-testpoint-base:
+	@echo Creating TestPoint install directory $(TESTPOINT_INSTALL_DIRECTORY)
+	rm -fr $(TESTPOINT_INSTALL_DIRECTORY)
+	mkdir -p $(TESTPOINT_INSTALL_DIRECTORY)
+
+install-testpoint: install-testpoint-base
+	@echo Copying TestPoint to $(TESTPOINT_INSTALL_DIRECTORY)
+	cd ../applications/TestPoint &&                 \
+	for i in $(TESTPOINT_SRCS); do                  \
+		cp -pPR $$i $(TESTPOINT_INSTALL_DIRECTORY) ;  \
+	done
+	cd .. &&                 \
+	for i in $(C_SRC_CODE); do                      \
+		cp -pPR $$i $(TESTPOINT_INSTALL_DIRECTORY) ;  \
+	done
+	chmod -R a+rw $(TESTPOINT_INSTALL_DIRECTORY)
+	echo $(TESTPOINT_VERSION_CONTENTS) > $(TESTPOINT_VERSION_PACKAGE)
+	echo $(PLATFORM) > $(TESTPOINT_INSTALL_DIRECTORY)/SDKPlatform
+
+###############################################################################
+#
+#                                   model-tb
+#
+###############################################################################
+
+../applications/model-tb/model-tb: ../applications/model-tb/src/model-tb.c $(LIBRARY_SO)
+	$(CC) $(CFLAGS) -g -o $@ -I../include/platforms/altaWhiteModel $< $(LFLAGS) -fPIC -l$(LIBRARY_SO_NAME)  -lpthread
+

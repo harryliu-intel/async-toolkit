@@ -1,0 +1,18 @@
+
+// ---------------------------------------------------------------------------------
+//  This file builds on the intel_checkers.vs in Intel SVA_LIB 
+//  It adds a cov property for each assertion the user intends to code 
+
+`ifndef MBY_INTEL_CHECKERS
+`define MBY_INTEL_CHECKERS
+
+`include "intel_checkers.vs"
+
+`define MBY_ASSERTS_TRIGGER(name, trig, prop, clk, rst, MSG)  name``_related_cover: cover property (@(clk) disable iff(rst) trig); `ASSERTS_TRIGGER(name, trig, prop, clk, rst, MSG)
+
+`define MBY_ASSERTS_DELAYED_TRIGGER(name, trig, delay, prop, clk, rst, MSG)  name``_related_cover: cover property (@(clk) disable iff(rst) trig); `ASSERTS_DELAYED_TRIGGER(name, trig, delay, prop, clk, rst, MSG)
+
+
+// ---------------------------------------------------------------------------------
+
+`endif 

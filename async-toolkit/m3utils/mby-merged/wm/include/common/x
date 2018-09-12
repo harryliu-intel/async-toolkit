@@ -1,0 +1,747 @@
+
+OK                                     , 0, OK. 
+
+
+FAIL                                   , 1, Unspecified failure. 
+
+
+ERR_INVALID_ARGUMENT                   , 2, Invalid argument. 
+
+
+ERR_UNSUPPORTED                        , 3, Feature is unsupported. 
+
+
+ERR_NO_MEM                             , 4, Unable to allocate memory. 
+
+
+ERR_NOT_FOUND                          , 5, Specified key was not found. 
+
+
+ERR_ALREADY_EXISTS                     , 6, Specified key already exists. 
+
+
+ERR_NO_MORE                            , 7, Reached end of iteration. 
+
+
+ERR_MODIFIED_WHILE_ITERATING           , 8, A data structure was modified while iterating over it. 
+
+
+ERR_UNINITIALIZED                      , 9, A necessary initialization function has not been called first. 
+
+
+ERR_ASSERTION_FAILED                   , 10, A program assertion check failed. 
+
+
+ERR_INVALID_SWITCH                     , 11, Invalid switch number. 
+
+
+ERR_INVALID_VLAN                       , 12, Invalid VLAN ID. 
+
+
+ERR_BUFFER_FULL                        , 13, Buffer was too small to fit data. 
+
+
+ERR_ADDR_BANK_FULL                     , 14, MA table bank was full. 
+
+
+ERR_ADDR_NOT_FOUND                     , 15, Address was not found in MA Table. 
+
+
+ERR_INVALID_ATTRIB                     , 16, Attribute does not exist. 
+
+
+ERR_ALREADYUSED_PORT                   , 17, Port is already a member of a LAG. 
+
+
+ERR_FULL_LAG                           , 18, No room for additional ports in this LAG. 
+
+
+ERR_INVALID_LAG                        , 19, Invalid LAG identifier. 
+
+
+ERR_INVALID_PORT                       , 20, Invalid port number. 
+
+
+ERR_NO_FREE_LAG                        , 21, Reached maximum LAG count. 
+
+
+ERR_INVALID_PORT_STATE                 , 22, Invalid port state. 
+
+
+ERR_INVALID_SUBMODE                    , 23, Invalid submode. 
+
+
+ERR_PENDING_LIST_FULL                  , 24, Pending list is full. 
+
+
+ERR_INVALID_MIRROR                     , 25, Invalid mirror. 
+
+
+ERR_INVALID_DSTMASK                    , 26, Invalid destination port mask specified. 
+
+
+ERR_INVALID_SRCMASK                    , 27, Invalid source port mask. 
+
+
+ERR_INVALID_MACADDR                    , 28, Invalid MAC address. 
+
+
+ERR_INVALID_PRIORITY                   , 29, Invalid priority. 
+
+
+ERR_INVALID_ADDR_MATCH                 , 30, Invalid address match. 
+
+
+ERR_INVALID_TRIG                       , 31, Invalid trigger number. 
+
+
+ERR_INVALID_ENTRYTYPE                  , 32, Invalid MAC Address Table entry type. 
+
+
+ERR_TRIG_CONFLICTS                     , 33, Requested trigger settings conflict with an existing trigger. 
+
+
+ERR_NO_FREE_TRIG                       , 34, No free trigger slots remaining. 
+
+
+ERR_NO_VLANCOUNTER                     , 35, No VLAN counter resource available/allocated. 
+
+
+ERR_BAD_SWITCH_CONFIG                  , 36, Current chip configuration is invalid. 
+
+
+ERR_NO_PLL_LOCK                        , 37, Unable to lock frame handler PLL. 
+
+
+ERR_NO_BOOT                            , 38, Switch's Boot FSM did not finish properly. 
+
+
+ERR_INVALID_PORT_MIRROR_GROUP          , 39, Port mirror group is invalid or already in use. 
+
+
+ERR_NO_PORTS_IN_MIRROR_GROUP           , 40, No (more) ports left in the port mirror group. 
+
+
+ERR_INVALID_ACL                        , 41, ACL is invalid or already in use. 
+
+
+ERR_INVALID_ACL_RULE                   , 42, ACL rule is invalid or already in use. 
+
+
+ERR_ACL_DISABLED                       , 43, ACL subsystem has not been enabled. See ''QOS_ACL_ENABLE'' for FM2000 devices or ''api.FM4000.boot.ffuEnable'' for FM3000 and FM4000 devices. 
+
+
+ERR_NO_RULES_IN_ACL                    , 44, No (more) rules left in ACL. 
+
+
+ERR_NO_ACLS                            , 45, No (more) matching ACLs found. 
+
+
+ERR_ACL_TABLE_FULL                     , 46, No more trigger hardware resources are available (FM2000 only). 
+
+
+ERR_ACLS_TOO_BIG                       , 47, Insufficient hardware resources to support the compiled ACL configuration. See ''FFU_SLICE_ALLOCATIONS''. 
+
+
+ERR_NO_LAGS                            , 48, No (more) link aggregation groups in system. 
+
+
+ERR_NO_PORTS_IN_LAG                    , 49, No (more) ports in link aggregation group. 
+
+
+ERR_NO_SWITCHES                        , 50, No (more) switches. 
+
+
+ERR_INVALID_ACL_IP_VERSION             , 51, An IP protocol version was indicated for an ACL that is not available on the device being configured. 
+
+
+ERR_INVALID_ACL_PRECEDENCE             , 52, An ACL precedence value is out of range. 
+
+
+ERR_INVALID_ACL_PARAM                  , 53, The parameter specified for a particular ACL rule option is not valid for that option. 
+
+
+ERR_INVALID_POLICER                    , 54, Policer does not exist or cannot be created. 
+
+
+ERR_INVALID_DSCP_MAP                   , 55, A policer DSCP down map entry is out of range. 
+
+
+ERR_INVALID_SWPRI_MAP                  , 56, A policer switch priority down map entry is out of range. 
+
+
+ERR_INVALID_ACL_IMAGE                  , 57, An invalid ACL binary image was specified. 
+
+
+ERR_ACL_COMPILE                        , 58, The ACL compiler (''fmCompileACL'') was unable to produce a valid ACL binary image from the current ACL configuration, likely due to an invalid configuration (for example specifying an unknown mapper value). 
+
+
+ERR_ACL_IMAGE_OVERFLOW                 , 59, The compiled ACL binary image will not fit into the space provided by the caller. 
+
+
+ERR_INVALID_SWITCH_TYPE                , 60, An unsupported switch type has been provided. 
+
+
+ERR_PARITY                             , 61, A parity error was encountered when reading a register. 
+
+
+ERR_INVALID_REGISTER_CONTENTS          , 62, A register contained an illegal or uninterpretable value. 
+
+
+ERR_INVALID_SLICE                      , 63, Invalid FFU slice specification. 
+
+
+ERR_INVALID_SLOT                       , 64, The slot argument to an FFU mapper function is out of range. 
+
+
+ERR_SWAG_DUPLICATE_LINK                , 65, An attempt was made to add a duplicate link to a switch aggregate. 
+
+
+ERR_SWAG_TRUNK_LIST_FULL               , 66, A switch aggregate switch's trunk list is full - no more links may be added to the trunk. 
+
+
+ERR_SWAG_NO_MORE_TRUNKS                , 67, A switch aggregate switch has no more trunks available. 
+
+
+ERR_LPORT_DESTS_UNAVAILABLE            , 68, A block of logical port destination table entries cannot be allocated. 
+
+
+ERR_LPORT_CAM_UNAVAILABLE              , 69, A logical port CAM/RAM entry cannot be allocated. 
+
+
+ERR_NO_SYMBOL_LOCK                     , 70, No symbol lock on SERDES (required for BIST). 
+
+
+ERR_VLAN_ALREADY_EXISTS                , 71, The vlan already exists and thus cannot be created. 
+
+
+ERR_SWITCH_NOT_UP                      , 72, The specified switch is not up. 
+
+
+ERR_BAD_BUFFER                         , 73, Attempt to operate on an invalid buffer pointer. 
+
+
+ERR_FRAME_TOO_LARGE                    , 74, Frame is too large for sending over the CPU interface. 
+
+
+ERR_INVALID_VCID                       , 75, The specified VLAN counter group ID does not reference a valid VLAN counter group. 
+
+
+ERR_LOG_PORT_UNAVAILABLE               , 76, No available unallocated logical ports. 
+
+
+ERR_FFU_RES_OWNED                      , 77, This FFU resource is already owned by another component. 
+
+
+ERR_NO_FFU_RES_FOUND                   , 78, No FFU resources are available. 
+
+
+ERR_INVALID_PAUSE_MODE                 , 79, This property is not valid given the current pause mode. 
+
+
+ERR_KEY_NOT_FOUND                      , 80, Key was not found in the attribute database. 
+
+
+ERR_INVALID_VALUE                      , 81, Invalid value argument supplied to API function. 
+
+
+ERR_ARP_TABLE_FULL                     , 82, The ARP table is full. 
+
+
+ERR_DUPLICATE_ARP_ENTRY                , 83, Duplicate ARP entry. 
+
+
+ERR_TABLE_FULL                         , 84, Table is full. 
+
+
+ERR_INVALID_INTERFACE                  , 85, Invalid IP interface. 
+
+
+ERR_INVALID_MULTICAST_GROUP            , 86, Invalid multicast group. 
+
+
+ERR_INVALID_VRID                       , 87, Invalid Virtual Router ID. 
+
+
+ERR_ECMP_GROUP_FULL                    , 88, Too many routes in ECMP Group. 
+
+
+ERR_MCAST_GROUP_ACTIVE                 , 89, Multicast Group is active. 
+
+
+ERR_MCAST_GROUP_ALREADY_ASSIGNED       , 90, Multicast Group already attached to an address. 
+
+
+ERR_TOO_MANY_VIRTUAL_ROUTERS           , 91, Too many virtual routers in use. 
+
+
+ERR_VLAN_ALREADY_ASSIGNED              , 92, Vlan already assigned to an interface. 
+
+
+ERR_TRIGGER_UNAVAILABLE                , 93, No trigger is available. 
+
+
+ERR_RATELIMITER_UNAVAILABLE            , 94, No rate limiter is available. 
+
+
+ERR_INVALID_STORM_CTRL                 , 95, Invalid storm controller. 
+
+
+ERR_NO_STORM_CONTROLLERS               , 96, No storm controller found. 
+
+
+ERR_NO_STORM_CONDITION                 , 97, No storm controller condition found. 
+
+
+ERR_NO_STORM_ACTION                    , 98, No storm controller action found. 
+
+
+ERR_INVALID_STORM_COND                 , 99, Invalid storm controller condition. 
+
+
+ERR_INVALID_QOS_MODE                   , 100, Attempt to set an attribute that is under API control when ''AUTO_PAUSE_MODE'' is enabled. 
+
+
+ERR_NO_POLICERS                        , 101, No policers found. 
+
+
+ERR_STORM_COND_EXCEEDED                , 102, Exceeding the maximum number of conditions for a storm controller. 
+
+
+ERR_STORM_ACTION_EXCEEDED              , 103, Exceeding the maximum number of actions for a storm controller. 
+
+
+ERR_INVALID_ACTION                     , 104, Invalid storm controller action. 
+
+
+ERR_UNKNOWN_REGISTER                   , 105, Unrecognized register name. 
+
+
+ERR_REG_SNAPSHOT_FULL                  , 106, Register snapshot memory is full. 
+
+
+ERR_MCAST_ADDR_NOT_ASSIGNED            , 107, A Multicast Address has not been assigned to a multicast group. 
+
+
+ERR_MCAST_GROUP_NOT_ACTIVE             , 108, Multicast Group is not active. 
+
+
+ERR_INVALID_STP_MODE                   , 109, Invalid spanning tree mode. 
+
+
+ERR_NO_MIRROR_GROUPS_EXIST             , 110, There are no mirror groups existing. 
+
+
+ERR_PORT_ALREADY_MIRRORED              , 111, The specified port is already added to another mirror group. 
+
+
+ERR_NO_FREE_STORM_CTRL                 , 112, No more storm controllers can be created. 
+
+
+ERR_MCAST_ADDRESS_IN_USE               , 113, Multicast Address already assigned to a multicast group. 
+
+
+ERR_USE_MCAST_FUNCTIONS                , 114, Use Multicast Group functions to configure multicast addresses. 
+
+
+ERR_NO_MCAST_RESOURCES                 , 115, There are not enough multicast resources to perform this operation. 
+
+
+ERR_NOT_MULTICAST_ADDRESS              , 116, Not a Multicast Address. 
+
+
+ERR_VRID_ALREADY_IN_USE                , 117, Virtual Router ID is already in use. 
+
+
+ERR_PHYS_ROUTER_NOT_DELETABLE          , 118, Physical Router may not be deleted. 
+
+
+ERR_PORT_IS_IN_LAG                     , 119, Port is a member of a Link Aggregation Group. 
+
+
+ERR_EGRESS_ACLS_REQUIRE_LAST_MINSLICE  , 120, Egress ACLs require the highest-numbered slice be allocated. 
+
+
+ERR_SWITCH_AGGREGATE_NOT_EMPTY         , 121, Switch Aggregate is not empty. 
+
+
+ERR_INVALID_SWITCH_AGGREGATE           , 122, Invalid Switch Aggregate (SWAG) Identifier. 
+
+
+ERR_SWITCH_ALREADY_IN_AGGREGATE        , 123, Switch is already a switch aggregate member. 
+
+
+ERR_SWITCH_IS_NOT_DOWN                 , 124, Switch is not down. 
+
+
+ERR_SWITCH_NOT_IN_AGGREGATE            , 125, Switch is not in a switch aggregate. 
+
+
+ERR_NON_CONTIGUOUS_RESOURCE            , 126, Can't return the range for an FFU resource, because it is not contiguous. 
+
+
+ERR_INVALID_COUNTER_BANK               , 127, Counter/policer bank number out of range. 
+
+
+ERR_INVALID_COUNTER_INDEX              , 128, Counter/policer index number out of range. 
+
+
+ERR_INVALID_LBG_STATE                  , 129, This operation is invalid for the current mode of this LBG. 
+
+
+ERR_INVALID_LBG_PORT_COUNT             , 130, Invalid number of ports in the LBG. 
+
+
+ERR_INVALID_LBG_DISTRIB                , 131, The total usage for all members does not sum to 100%. 
+
+
+ERR_INVALID_LBG_PORT_STATE             , 132, The LBG member port is in an unknown state. 
+
+
+ERR_INVALID_LBG_PORT_REDIRECT          , 133, The LBG member port does not have a valid redirect target. 
+
+
+ERR_NO_LBG_STANDBY_PORTS               , 134, This LBG has no standby ports to redirect to. 
+
+
+ERR_PHYSICAL_SWITCH_ONLY               , 135, Request only valid with a physical switch. 
+
+
+ERR_NO_FREE_RESOURCES                  , 136, Not enough free resources exist to complete this operation. 
+
+
+ERR_INVALID_SFLOW_INSTANCE             , 137, Invalid sFlow instance ID. 
+
+
+ERR_INVALID_SFLOW_ATTR                 , 138, Invalid sFlow attribute. 
+
+
+ERR_NO_SFLOW_PORT                      , 139, No sFlow port found. 
+
+
+ERR_NO_TRIGGER_ID                      , 140, No trigger Id found. 
+
+
+ERR_FIBM_TIMEOUT                       , 141, FIBM operation timeout. 
+
+
+ERR_FIBM_NOT_ENABLED                   , 142, FIBM is not enabled. 
+
+
+ERR_FIBM_INVALID_RESPONSE              , 143, Invalid FIBM response. 
+
+
+ERR_GLORT_RANGE_TOO_SMALL              , 144, Glort range too small to address all logical ports. 
+
+
+ERR_NO_FORWARDING_RULES                , 145, There are no (more) forwarding rules. 
+
+
+ERR_PORT_NOT_LBG_MEMBER                , 146, Port is not a member of the load balancing group. 
+
+
+ERR_INVALID_LBG                        , 147, Invalid load balancing group. 
+
+
+ERR_TX_PACKET_QUEUE_FULL               , 148, Transmit packet queue is full. 
+
+
+ERR_PORT_IN_USE                        , 149, Port is in use. 
+
+
+ERR_NO_LAG_RESOURCES                   , 150, There are not enough LAG resources to perform this operation. 
+
+
+ERR_NO_LBG_RESOURCES                   , 151, There are not enough LBG resources to perform this operation. 
+
+
+ERR_LAG_IN_USE                         , 152, LAG is already in use. 
+
+
+ERR_NO_FREE_PRIORITY_MAPPER            , 153, No priority mapper resources are available to be allocated. 
+
+
+ERR_INVALID_PRIORITY_MAPPER            , 154, Invalid priority mapper ID. 
+
+
+ERR_INVALID_PRIORITY_MAP               , 155, Invalid priority map. 
+
+
+ERR_SWPRI_UNASSIGNED                   , 156, No switch priority assigned to priority mapper. 
+
+
+ERR_INVALID_REGISTER                   , 157, Operation cannot be performed on the specified register. 
+
+
+ERR_GLORT_IN_USE                       , 158, The specified glort is already in use. 
+
+
+ERR_SWAG_NOT_UP                        , 159, The switch aggregate is not up. 
+
+
+ERR_NO_GLORTS_ALLOCATED                , 160, No glorts have been allocated using an fmAllocateStack* function. 
+
+
+ERR_CVLAN_MAPPING_FULL                 , 161, No more CVLAN mappings can be created. 
+
+
+ERR_MAPPER_FULL                        , 162, Mapper is full. 
+
+
+ERR_INVALID_ADDR_MASK                  , 163, Invalid IP address mask. 
+
+
+ERR_NO_ACTIVE_PORTS_IN_LBG             , 164, No active ports in load balancing group. 
+
+
+ERR_NO_FREE_ACL_PORT_SET               , 165, No more ACL port sets can be created. 
+
+
+ERR_INVALID_ACL_PORT_SET               , 166, Specified ACL port set is not valid. 
+
+
+ERR_NO_ACL_PORT_SET                    , 167, There are no (more) ACL port sets. 
+
+
+ERR_NO_ACL_PORT_SET_PORT               , 168, There are no (more) ACL port set ports. 
+
+
+ERR_INVALID_NEW_ESCHED_CONFIG          , 169, The new egress scheduler configuration is invalid and cannot be applied. 
+
+
+ERR_INVALID_ACTIVE_ESCHED_CONFIG       , 170, The active egress scheduler configuration has an error. 
+
+
+ERR_STATIC_ADDR_EXISTS                 , 171, Static MA Table entry already exists. 
+
+
+ERR_INVALID_INDEX                      , 172, Index is out of range. 
+
+
+ERR_SPARE1                             , 173, (Not used.) 
+
+
+ERR_INVALID_FID                        , 174, Invalid FID number. 
+
+
+ERR_INVALID_PORT_MAC                   , 175, Invalid port MAC number. 
+
+
+ERR_INVALID_PORT_LANE                  , 176, Invalid port lane number. 
+
+
+ERR_INVALID_ETH_MODE                   , 177, Invalid Ethernet interface mode. 
+
+
+ERR_PER_LAG_ATTRIBUTE                  , 178, Per-Lag attribute cannot be set on a member port. 
+
+
+ERR_NOT_PER_LAG_ATTRIBUTE              , 179, Per-port attribute cannot be set on a lag logical port. 
+
+
+ERR_ECMP_GROUP_IN_USE                  , 180, The ECMP Group is in use. 
+
+
+ERR_ECMP_GROUP_IS_FULL                 , 181, The ECMP Group is full. 
+
+
+ERR_MIXING_NARROW_AND_WIDE_NEXTHOPS    , 182, Mixing Narrow and Wide Next Hops in an ECMP group is not supported. 
+
+
+ERR_INSUFFICIENT_UNICAST_ROUTE_SPACE   , 183, FFU slice redistribution insufficient for existing Unicast routes. 
+
+
+ERR_INSUFFICIENT_MULTICAST_ROUTE_SPACE , 184, FFU slice redistribution insufficient for existing Multicast routes. 
+
+
+ERR_INSUFFICIENT_ACL_SPACE             , 185, FFU slice redistribution insufficient for existing ACLs. 
+
+
+ERR_INSUFFICIENT_CVLAN_SPACE           , 186, FFU slice redistribution insufficient for existing CVLANs. 
+
+
+ERR_TRAFFIC_STOP_REQUIRED              , 187, Unable to perform the requested operation without stopping traffic. 
+
+
+ERR_NEED_RESERVED_VLAN                 , 188, No VLAN reserved for Per-VLAN spanning tree mode. 
+
+
+ERR_NO_ACL_RULE_INGRESS_PORT           , 189, There are no (more) ACL rule ingress ports. 
+
+
+ERR_INVALID_SCENARIO                   , 190, Invalid scenario key parameters. 
+
+
+ERR_INVALID_MUX_SELECT                 , 191, Invalid key multiplexer selection. 
+
+
+ERR_INVALID_REMAP_CFG                  , 192, Invalid FFU remap point profile configuration. 
+
+
+ERR_INVALID_HASH_CFG                   , 193, Invalid L3 hash profile. 
+
+
+ERR_INVALID_RULE                       , 194, Invalid FFU Rule. 
+
+
+ERR_LOG_PORT_REQUIRED                  , 195, Requested operation requires a logical port. 
+
+
+ERR_INVALID_MAPPER                     , 196, Invalid Mapper ID specified. 
+
+
+ERR_INVALID_STATE                      , 197, API call invalid in current state. 
+
+
+ERR_INVALID_CRM                        , 198, Invalid CRM identifier. 
+
+
+ERR_CRM_UNAVAILABLE                    , 199, No CRM indexes are available. 
+
+
+ERR_MODEL_REQUEUE_PACKET               , 200, The egressing packet should be requeued. 
+
+
+ERR_MCAST_INVALID_STATE                , 201, Invalid Multicast Group State for this Operation. 
+
+
+ERR_INVALID_LBG_MODE                   , 202, Invalid LBG mode. 
+
+
+ERR_INVALID_LBG_PORT_TRANS             , 203, Invalid LBG port mode transition. 
+
+
+ERR_TUNNEL_IN_USE                      , 204, Tunnel is in use. 
+
+
+ERR_NO_ROUTE_TO_HOST                   , 205, There are no routes that serve the specified IP address. 
+
+
+ERR_LOCK_NOT_TAKEN                     , 206, Required lock not taken. 
+
+
+ERR_LOCK_INIT                          , 207, Unable to initialize lock. 
+
+
+ERR_LOCK_DESTROY                       , 208, Unable to destroy lock. 
+
+
+ERR_UNABLE_TO_LOCK                     , 209, Unable to capture lock. 
+
+
+ERR_UNABLE_TO_UNLOCK                   , 210, Unable to release lock. 
+
+
+ERR_BAD_GETTIME                        , 211, Unable to get the current system time. 
+
+
+ERR_NO_EVENTS_AVAILABLE                , 212, No events available at this time. 
+
+
+ERR_REMOVING_EVENT                     , 213, Error in removing event from queue. 
+
+
+ERR_EVENT_QUEUE_FULL                   , 214, Unable to send an event to a thread because its event queue is full. 
+
+
+ERR_UNABLE_TO_CREATE_THREAD            , 215, Thread creation failed. 
+
+
+ERR_UNABLE_TO_CREATE_COND              , 216, Condition variable creation failed. 
+
+
+ERR_UNABLE_TO_SIGNAL_COND              , 217, Unable to send signal to condition variable. 
+
+
+ERR_CONDWAIT_FAILED                    , 218, Wait on condition failed. 
+
+
+ERR_EVENT_QUEUE_EMPTY                  , 219, Event queue is empty. 
+
+
+ERR_HEAP_FULL                          , 220, Heap is full. 
+
+
+ERR_LOCK_UNINITIALIZED                 , 221, The specified lock has not been initialized. 
+
+
+ERR_SEM_TIMEOUT                        , 222, A timeout occurred while trying to capture a semaphore. 
+
+
+ERR_LOCK_TIMEOUT                       , 223, A timeout occurred while trying to capture a lock. 
+
+
+ERR_LOCK_PRECEDENCE                    , 224, A lock was captured or released out of order with respect to other locks. 
+
+
+ERR_OPENING_INFO_DEVICE_NODE           , 225, Unable to open info device node. 
+
+
+ERR_OPENING_DEVICE_NODE                , 226, Unable to open device node. 
+
+
+ERR_BAD_IOCTL                          , 227, A device ioctl call failed. 
+
+
+ERR_CANT_IDENTIFY_SWITCH               , 228, The switch could not be identified. 
+
+
+ERR_MDIO_NO_RESPONSE                   , 229, MDIO access error. 
+
+
+ERR_I2C_NO_RESPONSE                    , 230, I2C access error 
+
+
+ERR_TOO_MANY_PORTS_FOR_LBG_REDIRECT    , 231, The total number of active and failover LBG ports exceeded the maximum allowed by LAG pruning (16 for FM4000). 
+
+
+ERR_NO_VLANS_IN_MIRROR_GROUP           , 232, No (more) vlans left in the mirror group. 
+
+
+ERR_PORT_IS_INTERNAL                   , 233, Port is internal. 
+
+
+ERR_DFE_NOT_STATIC                     , 234, Current DFE mode is not static. 
+
+
+ERR_INCOMPATIBLE_DFE                   , 235, Desired DFE mode not compatible with interface. 
+
+
+ERR_INVALID_TRAP_CODE                  , 236, Invalid trap code specified. 
+
+
+ERR_FFU_RESOURCE_IN_USE                , 237, FFU resource is already in use. 
+
+
+ERR_MICROCODE_IMAGE_FILE_MISSING       , 238, The microcode image file is missing. 
+
+
+ERR_MICROCODE_IMAGE_INVALID            , 239, The microcode image file has errors and is invalid. 
+
+
+ERR_INVALID_SCHED_TOKEN                , 240, Scheduler token not found or invalid. 
+
+
+ERR_SCHED_INIT                         , 241, Unable to initialize scheduler. 
+
+
+ERR_NO_FREE_TUNNEL_ID                  , 242, No more tunnel ID can be created. 
+
+
+ERR_EEPROM_VERSION_MISMATCH            , 243, The EEPROM version used is not compatible with this API version 
+
+
+ERR_NO_EYE_DIAGRAM_SAMPLES             , 244, No (more) eye diagram samples left 
+
+
+ERR_INVALID_GPIO_ID                    , 245, The specified GPIO signal ID is invalid 
+
+
+ERR_INVALID_GPIO_BANK                  , 246, The specified GPIO signal bank is invalid 
+
+
+ERR_INVALID_GPIO_STATE                 , 247, The specified operation is invalid in the current GPIO signal state 
+
+
+ERR_GPIO_NO_RESPONSE                   , 248, GPIO access error 
+

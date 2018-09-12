@@ -1,0 +1,427 @@
+# vim:et:sw=4:syntax=make:ts=4:tw=79:
+
+##############################################################################
+# File:            Makefile.goldenModel
+# Creation Date:   September 14, 2012
+# Description:     makefile for golden model platform
+#
+# INTEL CONFIDENTIAL
+# Copyright 2012 - 2014 Intel Corporation. All Rights Reserved.
+#
+# The source code contained or described herein and all documents related
+# to the source code ("Material") are owned by Intel Corporation or its
+# suppliers or licensors. Title to the Material remains with Intel
+# Corporation or its suppliers and licensors. The Material contains trade
+# secrets and proprietary and confidential information of Intel or its
+# suppliers and licensors. The Material is protected by worldwide copyright
+# and trade secret laws and treaty provisions. No part of the Material may
+# be used, copied, reproduced, modified, published, uploaded, posted,
+# transmitted, distributed, or disclosed in any way without Intel's prior
+# express written permission.
+#
+# No license under any patent, copyright, trade secret or other intellectual
+# property right is granted to or conferred upon you by disclosure or
+# delivery of the Materials, either expressly, by implication, inducement,
+# estoppel or otherwise. Any license under such intellectual property rights
+# must be express and approved by Intel in writing.
+##############################################################################
+
+###############################################################################
+# Command-line Overrideable Variables
+###############################################################################
+
+## FV_DEBUG
+#  Boolean indicating whether the minimal SDK library should be built with
+#  debugging symbols.
+FV_DEBUG    ?= 0
+## FV_INSTDIR
+#  The root directory in which to install the (minimal) SDK library, golden
+#  model driver and golden model shared library.
+FV_INSTDIR  ?= ../
+## FV_UVM
+#  Boolean indicating whether a minimal SDK library for use by UVM testbenches
+#  should be build.
+FV_UVM      ?= 0
+## FV_VALGRIND
+#  Boolean indicating whether Valgrind support should be compiled into the SDK
+#  library.
+FV_VALGRIND ?= 0
+
+###############################################################################
+# Internal Command-line Overrideable Variables
+###############################################################################
+
+FV_PERL5ARCH_CPPFLAGS ?= $(shell $(PERL) -MExtUtils::Embed -e 'perl_inc')
+FV_PERL5ARCH_CFLAGS   ?= $(shell $(PERL) -MExtUtils::Embed -e 'ccflags')
+FV_PERL5ARCH_LDFLAGS  ?= $(shell $(PERL) -MExtUtils::Embed -e 'ldopts')
+FV_QUIET              ?= @
+
+###############################################################################
+# Macros
+###############################################################################
+
+rparen = )
+
+
+###############################################################################
+## filter-out-family
+#
+# \desc             Filters out all chip specific files from the set of
+#                   supplied files.
+#
+# \param[in]        files is the set of files to filter.
+#
+# \return           The filtered set of files.
+#
+###############################################################################
+define filter-out-family
+$(shell echo $(1) | tr " " "\n" | egrep -v -e "/fm[0-9]{4,5}/" | xargs)
+endef
+
+
+###############################################################################
+## is-set
+#
+# \desc             Determines whether the supplied value is set, i.e. whether
+#                   it evaluates to either 1, true or yes.
+#
+# \param[in]        value is the value to be checked.
+#
+# \return           1 if the supplied value is set.
+# \return           0 otherwise.
+#
+###############################################################################
+define is-set
+$(if $(findstring $(strip $(call lc,$(1))),1 true yes),1,0)
+endef
+
+
+###############################################################################
+## lc
+#
+# \desc             Translates all uppercase characters in the supplied string
+#                   to their lowercase equivalents.
+#
+# \param[in]        string is the string to be translated.
+#
+# \return           the translated string.
+#
+###############################################################################
+define lc
+$(shell echo $(1) | tr "[A-Z]" "[a-z]")
+endef
+
+
+###############################################################################
+## p4-revert
+#
+# \desc             Discards changes from an opened file if the file does not
+#                   differ from the depot revision with the exception of RCS
+#                   keywords.
+#
+# \param[in]        file is the file to revert.
+#
+###############################################################################
+define p4-revert
+$(ENV) P4DIFF='$(P4DIFF)' $(P4) diff $(1) |                                   \
+    $(EGREP) -v "==== .* - .* ====" | $(P4) -x - revert
+endef
+
+
+###############################################################################
+## update-variable
+#
+# \desc             Updates a make variable by applying the following
+#                   transformations:
+#                                                                       \lb\lb
+#                       * Filter the value of the supplied make variable and
+#                         separate out all options containing the pattern
+#                         "/<platform>".
+#                       * Modify the resulting set of options by replacing all
+#                         occurrences of the pattern "/<platform>" with
+#                         "/<baseplat>".
+#                       * Append the results to original value of the supplied
+#                         make variable.
+#
+# \param[in]        value is the name of the variable to update.
+#
+# \param[in]        platform is the platform name.
+#
+# \param[in]        baseplat is the base platform name.
+#
+###############################################################################
+define update-variable
+$(eval $(1) += $(shell echo "$($(1))" | tr " " "\n" |                         \
+                       sed -n -e "\,/$(2), { s,/$(2),/$(3),g; p }"))
+endef
+
+###############################################################################
+# Includes
+###############################################################################
+
+ifneq ($(origin SUPPORTED_CHIP_FAMILIES),command line)
+    override SUPPORTED_CHIP_FAMILIES := FM10000
+endif
+
+# The golden model platform is based on the white model platform. Load the
+# white model platform variable definitions and transformation rules. Modify
+# the C preprocessor flags and the set of platform source files to reference
+# the correct platform directory.
+# Note: This section relies on the Macros section and MUST follow it.
+override __platform   := $(PLATFORM)
+override __baseplat   := whiteModel
+$(call update-variable,CPPFLAGS,$(__platform),$(__baseplat))
+override PLATFORM     := whiteModel
+ifeq ($(filter Makefile.$(PLATFORM),$(MAKEFILES)),)
+    include ../build/Makefile.$(PLATFORM)
+endif
+PLAT_SRC              := $(subst /$(__platform)/,/$(PLATFORM)/,$(PLAT_SRC))
+override PLATFORM     := $(__platform)
+
+###############################################################################
+# Global Variables
+###############################################################################
+
+CPARSER     = platforms/$(PLATFORM)/scripts/cparser.pl
+ENV         = env
+INSTALL     = install
+ifeq ($(call is-set,$(FV_DEBUG)),0)
+    # Strip the symbol table to reduce the size of the deliverables.
+    INSTALL += -s
+endif
+IWHICH      = iwhich
+MKDIR       = mkdir
+PERL        = perl
+P4DIFF      = ../../../scripts/perforce/p4diff
+REGISTERS   = fulcrum --latest registers
+VALGRIND    = valgrind
+
+ifeq ($(call is-set,$(FV_UVM)),0)
+    LFLAGS += -Wl,-rpath,$(abspath $(FV_INSTDIR))/lib
+endif   # FV_UVM
+
+ifeq ($(call is-set,$(FV_VALGRIND)),1)
+    VALGRIND_HOME = $(abspath $(dir $(shell $(IWHICH) $(VALGRIND)))/../)
+    CPPFLAGS      += -DFM_HAVE_VALGRIND -I$(VALGRIND_HOME)/include
+endif   # FV_VALGRIND
+
+PERL_CPPFLAGS         = $(FV_PERL5ARCH_CPPFLAGS)
+PERL_CFLAGS           = $(FV_PERL5ARCH_CFLAGS)
+PERL_CFLAGS           += -g -fPIC
+PERL_WRAPPER_CPPFLAGS += -I../include/std/intel
+PERL_WRAPPER_LDFLAGS  += $(FV_PERL5ARCH_LDFLAGS)
+
+FV_CHAN_TMPLDIR = platforms/$(PLATFORM)/scripts/templates
+FV_CHAN_XMLDIR  = platforms/$(PLATFORM)/scripts/xml
+CLEAN_TARGETS   += clean-golden-model
+
+###############################################################################
+# Sources
+###############################################################################
+
+# The top-level switch family specific XML channel description.
+FV_CHAN_XML        = $(FV_CHAN_XMLDIR)/@FAMILY@/@FAMILY@_channels.xml
+# The top-level switch family specific RELAX NG schema.
+FV_CHAN_RNG        = $(FV_CHAN_XMLDIR)/@FAMILY@/@FAMILY@_channels.rng
+# The top-level switch family specific template to generate the channel debug
+# functions. The path is relative to $(FV_CHAN_TMPLDIR).
+FV_CHAN_DEBUG_TMPL = @FAMILY@/@FAMILY@_debug.tt
+# The switch family specific C source file where to place the channel debug
+# functions.
+FV_CHAN_DEBUG_OBJ  = platforms/common/model/@FAMILY@/debug/@FAMILY@_model_debug.c
+# The top-level switch family specific template to generate the state data
+# structure. The path is relative to $(FV_CHAN_TMPLDIR).
+FV_CHAN_STATE_TMPL = @FAMILY@/@FAMILY@_state.tt
+# The switch family specific C header file where to place the state data
+# structure.
+FV_CHAN_STATE_OBJ  = ../include/platforms/common/model/@FAMILY@/@FAMILY@_model_state.h
+
+# The FM10000 register XML file.
+FV_REG_XML_FM10000 = //hw/tsmc28-dev/cast/chip/rrc/base/registers/registerInfo.xml
+# The switch family specific C source file where to place the register defaults
+# table.
+FV_REG_DEFAULTS       = platforms/common/model/@FAMILY@/@FAMILY@_model_reg_ctrl.c
+# The switch family specific C header file where to place the register macros.
+FV_REG_H           = ../include/api/internal/@FAMILY@/@FAMILY@_api_regs_int.h
+# The switch family specific C source file where to place the debug register
+# table.
+FV_REG_DBG_REGS    = debug/@FAMILY@/@FAMILY@_debug_reg_table.c
+# The switch family specific C source file where to place the debug register
+# fields table.
+FV_REG_DBG_FIELDS  = debug/@FAMILY@/@FAMILY@_debug_reg_fields.c
+# The switch family specific Perl module where to place the register constants
+# and subroutines.
+FV_REG_PERL        = ../applications/TestPoint/Chip/@FAMILY@/Registers.pm
+FV_REG_PERL_NS     = Chip::@FAMILY@
+
+FV_CHAN_SRC = $(wildcard $(FV_CHAN_XMLDIR)/*.xml)
+FV_CHAN_SRC += $(wildcard $(FV_CHAN_XMLDIR)/*.rng)
+FV_CHAN_SRC += $(wildcard $(FV_CHAN_TMPLDIR)/*.tt)
+FV_CHAN_SRC += $(strip                                                        \
+                 $(foreach family,                                            \
+                   $(call lc,$(SUPPORTED_CHIP_FAMILIES)),                     \
+                     $(wildcard $(FV_CHAN_XMLDIR)/$(family)/*.xml)            \
+                     $(wildcard $(FV_CHAN_XMLDIR)/$(family)/*.rng)            \
+                     $(wildcard $(FV_CHAN_TMPLDIR)/$(family)/*.tt)))
+FV_CHAN_OBJ = $(strip                                                         \
+                $(foreach family,                                             \
+                  $(call lc,$(SUPPORTED_CHIP_FAMILIES)),                      \
+                    $(subst @FAMILY@,$(family),$(FV_CHAN_DEBUG_OBJ))          \
+                    $(subst @FAMILY@,$(family),$(FV_CHAN_STATE_OBJ))))
+
+FV_GMD    = platforms/$(PLATFORM)/gmd
+FV_LIBGMD = platforms/$(PLATFORM)/libgmd.$(SO_EXTENSION)
+
+ifneq ($(filter FM10000,$(SUPPORTED_CHIP_FAMILIES)),)
+    PLAT_SRC := $(filter-out                                                  \
+                  $(patsubst %,\%/%,                                          \
+                    $(notdir $(wildcard platforms/$(PLATFORM)/fm10000/*.c))), \
+                  $(PLAT_SRC))
+    PLAT_SRC += $(wildcard platforms/$(PLATFORM)/fm10000/*.c)
+endif
+
+ifneq ($(filter HLP,$(SUPPORTED_CHIP_FAMILIES)),)
+    PLAT_SRC := $(filter-out                                                  \
+                  $(patsubst %,\%/%,                                          \
+                    $(notdir $(wildcard platforms/$(PLATFORM)/hlp/*.c))), \
+                  $(PLAT_SRC))
+    PLAT_SRC += $(wildcard platforms/$(PLATFORM)/hlp/*.c)
+endif
+
+
+# Prevent the precompiled headers from being built to work around a build error
+# caused by GCC crashing due to an internal compiler error (ICE) when resuming
+# a previous build.
+#
+# Note: This override is disabled when building a minimal SDK library as the
+# pre-compiled headers are part of the deliverable.
+ifeq ($(call is-set,$(FV_UVM)),0)
+    override GCH_OBJ :=
+endif   # FV_UVM
+
+FV_GMD_SRC = platforms/$(PLATFORM)/gmd.c
+FV_GMD_OBJ = $(patsubst %.c,%.o,$(FV_GMD_SRC))
+
+ifeq ($(call is-set,$(FV_UVM)),1)
+    ifneq ($(origin SUPPORTED_CHIP_FAMILIES),command line)
+        $(error SUPPORTED_CHIP_FAMILIES must be defined on the command line)
+    endif
+
+    # Select the smallest possible subset of platform specific source files.
+    override PLAT_SRC        := $(strip                                       \
+                                  $(call filter-out-family,$(PLAT_SRC))       \
+                                  $(foreach family,                           \
+                                    $(call lc,$(SUPPORTED_CHIP_FAMILIES)),    \
+                                      platforms/common/model/$(family)/$(family)_model_main.c \
+                                      platforms/common/model/$(family)/$(family)_model_platform.c \
+                                      platforms/$(PLATFORM)/unit/$(family)/$(family)_model_stubs.c))
+    # Do not compile any of the SDK test, support or protocol libraries.
+    override SDK_TESTLIB_SRC :=
+    override SUPPORT_SRCS    :=
+    override PROTOCOLS_SRCS  :=
+
+endif   # FV_UVM
+
+###############################################################################
+# Targets
+###############################################################################
+
+.DEFAULT_GOAL := $(FV_GMD)
+
+clean-golden-model :
+	$(RM) $(FV_GMD) $(FV_LIBGMD)
+
+## generate-channels
+#  Generates the model state data structure and the stage specific debug
+#  functions from a switch family specific XML based channel description.
+generate-channels : $(FV_CHAN_OBJ)
+
+## generate-registers
+#  Generates the register macro header file, the register defaults table, the
+#  debug register table and the debug register fields table from a switch
+#  family specific register XML file.
+generate-registers :
+	$(foreach family,$(SUPPORTED_CHIP_FAMILIES),                              \
+	$(if $(filter-out undefined,$(origin FV_REG_XML_$(family))),              \
+	h=$(subst @FAMILY@,$(call lc,$(family)),$(FV_REG_H));                     \
+	$(P4) edit $${h} || exit 1;                                               \
+	$(P4) print -q $(FV_REG_XML_$(family)) |                                  \
+		$(REGISTERS) --xml=- --hPrefix=$(family)_ --h=$${h} ||                \
+		exit 1;                                                               \
+	$(call p4-revert,$${h}) || exit 1;                                        \
+	defaults=$(subst @FAMILY@,$(call lc,$(family)),$(FV_REG_DEFAULTS));       \
+	$(P4) edit $${defaults} || exit 1;                                        \
+	$(P4) print -q $(FV_REG_XML_$(family)) |                                  \
+		$(REGISTERS) --xml=- --hPrefix=$(family)_ --cTable=$${defaults} ||    \
+		exit 1;                                                               \
+	$(call p4-revert,$${defaults}) || exit 1;                                 \
+	dbg_regs=$(subst @FAMILY@,$(call lc,$(family)),$(FV_REG_DBG_REGS));       \
+	$(P4) edit $${dbg_regs} || exit 1;                                        \
+	$(P4) print -q $(FV_REG_XML_$(family)) |                                  \
+		$(REGISTERS) --xml=- --hPrefix=$(family)_ --cDbgRegs=$${dbg_regs} ||  \
+		exit 1;                                                               \
+	$(call p4-revert,$${dbg_regs}) || exit 1;                                 \
+	fields=$(subst @FAMILY@,$(call lc,$(family)),$(FV_REG_DBG_FIELDS));       \
+	$(P4) edit $${fields} || exit 1;                                          \
+	$(P4) print -q $(FV_REG_XML_$(family)) |                                  \
+		$(REGISTERS) --xml=- --hPrefix=$(family)_ --cDbgFields=$${fields} ||  \
+		exit 1;                                                               \
+	$(call p4-revert,$${fields}) || exit 1;                                   \
+	perl=$(subst @FAMILY@,$(family),$(FV_REG_PERL));                          \
+	$(P4) edit $${perl} || exit 1;                                            \
+	$(P4) print -q $(FV_REG_XML_$(family)) |                                  \
+		$(REGISTERS) --xml=- --hPrefix=$(family)_ --pm=$${perl}               \
+			--pmNamespace=$(subst @FAMILY@,$(family),$(FV_REG_PERL_NS)) ||    \
+		exit 1;                                                               \
+	$(call p4-revert,$${perl}) || exit 1;))
+
+ifeq ($(call is-set,$(FV_UVM)),0)
+install-golden-model : install-golden-model-deps                              \
+                       $(FV_GMD) $(FV_LIBGMD)                                 \
+                       $(FV_INSTDIR)/bin
+	$(INSTALL) -m 0555 $(FV_GMD) $(FV_INSTDIR)/bin
+	$(INSTALL) -m 0555 $(FV_LIBGMD) $(FV_INSTDIR)/lib
+else
+install-golden-model : install-golden-model-deps
+endif   # FV_UVM
+
+install-golden-model-deps : generate-channels sdk $(FV_INSTDIR)/lib
+	$(INSTALL) -m 0555 $(LIBRARY_SO) $(FV_INSTDIR)/lib
+	for lib in $(DLIB_SO); do $(INSTALL) -m 0555 $${lib} $(FV_INSTDIR)/lib; done
+
+$(FV_CHAN_OBJ) : $(FV_CHAN_SRC)
+	$(foreach family,$(call lc,$(SUPPORTED_CHIP_FAMILIES)),                   \
+	rng=$(subst @FAMILY@,$(family),$(FV_CHAN_RNG));                           \
+	xml=$(subst @FAMILY@,$(family),$(FV_CHAN_XML));                           \
+	$(XMLLINT) --noout --relaxng $${rng} $${xml} || exit 1;                   \
+	for template in $(filter $(family)/%,                                     \
+                      $(patsubst $(FV_CHAN_TMPLDIR)/%,%,                      \
+                        $(filter %.tt,$(FV_CHAN_SRC)))); do                   \
+		case "$${template}" in                                                \
+			$(subst @FAMILY@,$(family),$(FV_CHAN_DEBUG_TMPL))$(rparen)        \
+				dst=$(subst @FAMILY@,$(family),$(FV_CHAN_DEBUG_OBJ));         \
+				$(CPARSER) -f $${xml} -o $${dst}                              \
+					-I $(FV_CHAN_TMPLDIR) -t $${template} || exit 1;          \
+				;;                                                            \
+			$(subst @FAMILY@,$(family),$(FV_CHAN_STATE_TMPL))$(rparen)        \
+				dst=$(subst @FAMILY@,$(family),$(FV_CHAN_STATE_OBJ));         \
+				$(CPARSER) -f $${xml} -o $${dst}                              \
+					-I $(FV_CHAN_TMPLDIR) -t $${template} || exit 1;          \
+				;;                                                            \
+		esac;                                                                 \
+	done;)
+
+$(FV_GMD) : $(FV_GMD_OBJ) $(LIBRARY_SO)
+	$(CC) -o $@ $(FV_GMD_OBJ) -L$(LIBRARY_DIR) -l$(LIBRARY_SO_NAME) $(LFLAGS)
+
+$(FV_LIBGMD) : $(FV_GMD_OBJ) $(LIBRARY_SO)
+	$(CC) $(LIBFLAGS) -o $@ $(FV_GMD_OBJ) -L$(LIBRARY_DIR) -l$(LIBRARY_SO_NAME) $(LFLAGS)
+
+$(FV_INSTDIR)/bin $(FV_INSTDIR)/lib :
+	$(FV_QUIET)[ -d $@ ] || $(MKDIR) -p $@
+
+.PHONY: clean-golden-model          \
+        generate-channels           \
+        generate-registers          \
+        install-golden-model        \
+        install-golden-model-deps

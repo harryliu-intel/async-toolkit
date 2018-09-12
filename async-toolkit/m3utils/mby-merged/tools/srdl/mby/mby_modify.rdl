@@ -1,0 +1,898 @@
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+// MOD_MIRROR_PROFILE_TABLE0[0..255]
+
+reg mod_mirror_profile_table0_r {
+  shared;
+  HandCoded = true;
+  name = "Mirror profiles";
+  desc = "
+  Defines mirror profiles in modify.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "
+            Store the original source PORT of the packet into PMD
+
+           ";
+    ValRandomize = true;
+  } STORE_PORT[62:62] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Store the original source VSI of the packet into PMD
+
+           ";
+    ValRandomize = true;
+  } STORE_VSI[61:61] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Metadata Type for the first metadata update.
+
+           ";
+    ValRandomize = true;
+  } METADATA_TYPE0[60:56] = 5'h1f;
+  field {
+    AccessType = "RW";
+    desc = "
+        byte offset for starting byte for the first metadata update.
+
+           ";
+    ValRandomize = true;
+  } METADATA_BYTE_OFFSET0[55:48] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Value to be updated in the specified location in Metadata staring from
+        the byte offset indicated above
+
+           ";
+    ValRandomize = true;
+  } METADATA_VALUE0[47:32] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Mask value for the first update in Metadata. For each bit, set to 1 to apply new MetadataValue. Otherwise, set to 0 for no change.
+
+           ";
+    ValRandomize = true;
+  } METADATA_MASK0[31:16] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Define whether this mirror packet is for auto-learn mirroring.  When this bit is set,
+	    the RECIRCULATE bit must be set as well.
+           ";
+    ValRandomize = true;
+  } AUTO_LEARN[15:15] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Define whether the mirror copy should be recirculated back to FXP for
+	additional processing.
+
+           ";
+    ValRandomize = true;
+  } RECIRCULATE[14:14] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Define whether mirror is Pre-Modify or not.
+
+           ";
+    ValRandomize = true;
+  } PRE_MOD[13:13] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Define whether mirror copies should be truncated or not.
+
+           ";
+    ValRandomize = true;
+  } TRUNC[12:12] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        New Destination VSI/Port to use for mirrored or logged copies.
+        The highest bit (bit 11) indicates that the destination type:
+	  *0: VSI
+	  *1: Physical Port
+	10:0 Destination ID  
+	  *if Destination Type = 0, valid from 0 to 1023, 
+	  *if Destination Type = 1, valid from 0 to 7 
+           ";
+    ValRandomize = true;
+  } MIRROR_DST[11:0] = 12'h0;
+};
+
+// MOD_MIRROR_PROFILE_TABLE1[0..255]
+
+reg mod_mirror_profile_table1_r {
+  shared;
+  HandCoded = true;
+  name = "Mirror profiles";
+  desc = "
+  Defines mirror profiles in modify.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "
+        Metadata Type for the second metadata update.
+
+           ";
+    ValRandomize = true;
+  } METADATA_TYPE1[44:40] = 5'h1f;
+  field {
+    AccessType = "RW";
+    desc = "
+        byte offset for starting byte for the second metadata update.
+
+           ";
+    ValRandomize = true;
+  } METADATA_BYTE_OFFSET1[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Value to be updated in the specified location in Metadata staring from
+        the byte offset indicated above
+
+           ";
+    ValRandomize = true;
+  } METADATA_VALUE1[31:16] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Mask value for the second update in Metadata. For each bit, set to 1 to apply new MetadataValue. Otherwise, set to 0 for no change.
+
+           ";
+    ValRandomize = true;
+  } METADATA_MASK1[15:0] = 16'h0;
+};
+
+// MOD_MIRROR_PROFILE_TABLE2[0..255]
+
+reg mod_mirror_profile_table2_r {
+  shared;
+  HandCoded = true;
+  name = "Mirror profiles";
+  desc = "
+  Defines mirror profiles in modify.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "
+             Destination Queue.  For Mirror Copy to Local Host (MIRROR_DST = VSI
+	     Type), the DST_Q will be used to update HostInfoRx.DST_Q or
+	     Common.Generic.
+
+           ";
+    ValRandomize = true;
+  } DST_Q[37:24] = 14'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+             Function Valid
+
+           ";
+    ValRandomize = true;
+  } FUNC_VALID[23:23] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bits
+           ";
+    ValRandomize = true;
+  } _RSVD1_[22:22] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Physical Function Number
+
+           ";
+    ValRandomize = true;
+  } PF_NUM[21:16] = 6'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+            Reserved bits
+           ";
+    ValRandomize = true;
+  } _RSVD0_[15:14] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Function Type:
+	    *00: Virtual Function
+	    *01: Virtual Device/Virtual Machine
+	    *10: Physical Function
+	    *11: Managemeability (EMP) 
+           ";
+    ValRandomize = true;
+  } FUNCTION_TYPE[13:12] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+             Function Number
+
+           ";
+    ValRandomize = true;
+  } FUNCTION_NUM[11:0] = 12'h0;
+};
+
+// MOD_PROFILE_GROUP[0..1023]
+
+reg mod_profile_group_r {
+  shared;
+  HandCoded = true;
+  name = "Modify transform profile group map";
+  desc = "
+  Defines the mapping from the protocol headers to the modify transform groups.
+  The first group, GROUP_0, is always assumed to start at byte 0 of the packet.
+  The following 7 group values are provided, where the i'th value is a 9b encoding
+  that either specifies an 8b protocol ID (when bit 8 is 0), or an 8b relative
+  length offset into the last specified protocol ID (when bit 8 is 1).
+  Use a value of 255 to indicate an unused group mapping.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+
+  field {
+    AccessType = "RW";
+    desc = "See register description for field details.";
+    ValRandomize = true;
+  } GROUP_7[62:54] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "See register description for field details.";
+    ValRandomize = true;
+  } GROUP_6[53:45] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "See register description for field details.";
+    ValRandomize = true;
+  } GROUP_5[44:36] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "See register description for field details.";
+    ValRandomize = true;
+  } GROUP_4[35:27] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "See register description for field details.";
+    ValRandomize = true;
+  } GROUP_3[26:18] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "See register description for field details.";
+    ValRandomize = true;
+  } GROUP_2[17:9] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "See register description for field details.";
+    ValRandomize = true;
+  } GROUP_1[8:0] = 9'h0;
+};
+
+
+// MOD_PROFILE_COMMAND[0..1023,0..15]
+
+reg mod_profile_command_r {
+  shared;
+  HandCoded = true;
+  name = "Modify transform profile commands";
+  desc = "
+  Defines up to 4 24b commands to apply to a group.  The i'th command for the
+    j'th group is accessed at MOD_PROFILE_COMMAND[profile][(j*4 + i)/2].CMD_{i%2}.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Indicates the 2nd command.  See the HAS for the encoding.";
+    ValRandomize = true;
+  } CMD_1[47:24] = 24'h0;
+  field {
+    AccessType = "RW";
+    desc = "Indicates the 1st command.  See the HAS for the encoding.";
+    ValRandomize = true;
+  } CMD_0[23:0] = 24'h0;
+};
+regfile mod_profile_command_rf {
+  mod_profile_command_r MOD_PROFILE_COMMAND[16] += 8;
+};
+
+
+// MOD_PROFILE_FIELD[0..1023,0..7]
+
+reg mod_profile_field_r {
+  shared;
+  HandCoded = true;
+  name = "Modify transform 8b field extraction";
+  desc = "
+  Defines the 8b extraction for up to 24 fields.
+  The i'th field settings is accessed at MOD_PROFILE_FIELD[profile][i/3].*_{i%3}.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Selects the extraction offset relative to the base offset of the given protocol ID.
+           ";
+    ValRandomize = true;
+  } OFFSET_2[50:42] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Selects the protocol ID whose base offset is used to pick the field to extract.  Values 0..222 indicate
+        packet header protocols.  A value of 223 refers to the internal parser pointer list.  Values 224..254 indicate metadata types 0..30 respectively.  A value of 255
+        is reserved.
+           ";
+    ValRandomize = true;
+  } PROTOCOL_ID_2[41:34] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+        Selects the extraction offset relative to the base offset of the given protocol ID.
+           ";
+    ValRandomize = true;
+  } OFFSET_1[33:25] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Selects the protocol ID whose base offset is used to pick the field to extract.  Values 0..222 indicate
+        packet header protocols.  A value of 223 refers to the internal parser pointer list.  Values 224..254 indicate metadata types 0..30 respectively.  A value of 255
+        is reserved.
+           ";
+    ValRandomize = true;
+  } PROTOCOL_ID_1[24:17] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+        Selects the extraction offset relative to the base offset of the given protocol ID.
+           ";
+    ValRandomize = true;
+  } OFFSET_0[16:8] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Selects the protocol ID whose base offset is used to pick the field to extract.  Values 0..222 indicate
+        packet header protocols.  A value of 223 refers to the internal parser pointer list.  Values 224..254 indicate metadata types 0..30 respectively.  A value of 255
+        is reserved.
+           ";
+    ValRandomize = true;
+  } PROTOCOL_ID_0[7:0] = 8'hff;
+};
+regfile mod_profile_field_rf {
+  mod_profile_field_r MOD_PROFILE_FIELD[8] += 8;
+};
+
+// MOD_MAP[0..3][0..511]
+
+reg mod_map_r {
+  shared;
+  HandCoded = true;
+  name = "Modify 16b field transform";
+  desc = "
+  Provides 2K maps that produce a 2B value.
+  The i'th entry is located as MOD_MAP[*][i/4].VALUE{i%4}.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE3[63:48] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE2[47:32] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE1[31:16] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE0[15:0] = 16'h0;
+};
+regfile mod_map_rf {
+  mod_map_r MOD_MAP[512] += 8;
+};
+
+
+// MOD_MAP_DUAL[0..1023][0..7]
+
+reg mod_map_dual_r {
+  shared;
+  HandCoded = true;
+  name = "Modify 8b field transform";
+  desc = "
+  Provides 1K instances of 64 maps that produce a 1B value.
+  The inner map i'th entry is located as MOD_MAP_DUAL[j][i/8].VALUE{i%8}.
+  This LUT can be used to remap DSCP, VPRI or MPLS TC.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE7[63:56] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE6[55:48] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE5[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE4[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE3[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE2[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE1[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            The remapped value.
+           ";
+    ValRandomize = true;
+  } VALUE0[7:0] = 8'h0;
+};
+regfile mod_map_dual_rf {
+  mod_map_dual_r MOD_MAP_DUAL[8] += 8;
+};
+
+// MOD_MAP_CFG[0..3]
+
+reg mod_map_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "MOD_MAP Lookup Table Configuration";
+  desc = "
+        Defines the mapping input configuration for corresponding MOD_MAP lookup table.
+        In direct mode, the first 16b of field data is the starting IDX value.
+          The IDX is first shifted and then masked, and the result is the final index.
+        In relative mode, the first 16b is the IDX, and next 16b is the BASE.
+          Separately, both fields are shifted and then masked.
+          The final index is the sum of the masked BASE and masked IDX.
+        Upper bits of the final index that exceed the input to the lookup table will be ignored.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "This field represents the output shift for the lookup result. The lookup result 
+            will be shifted left by this many bits before transferring into the packet.";
+    ValRandomize = true;
+  } OUTPUT_SHIFT[35:32] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field represents the output bitmask for the lookup result. Only
+            asserted bits will have the lookup result transferred to the packet.";
+    ValRandomize = true;
+  } OUTPUT_MASK[31:16] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the bit length of the mask, starting from bit 0, that is
+            applied to the shifted BASE.  Bits outside of the mask will be zeroed out.";
+    ValRandomize = true;
+  } BASE_MASK_LEN[15:12] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the number of bits of the BASE field to shift right.";
+    ValRandomize = true;
+  } BASE_SHIFT_RIGHT[11:8] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the bit length of the mask, starting from bit 0, that is
+            applied to the shifted IDX.  Bits outside of the mask will be zeroed out.";
+    ValRandomize = true;
+  } IDX_MASK_LEN[7:4] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the number of bits of the IDX field to shift right.";
+    ValRandomize = true;
+  } IDX_SHIFT_RIGHT[3:0] = 4'h0;
+};
+
+// MOD_MAP_DUAL_CFG
+
+reg mod_map_dual_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "MOD_MAP_DUAL Lookup Table Configuration";
+  desc = "
+        Defines the mapping input configuration for the MOD_MAP_DUAL lookup table.
+        The first 16b of field data is the IDX0, and the next 8b is IDX1.
+        After shifting and masking the indices, MOD_MAP_DUAL is accessed by [IDX0][IDX1].
+        Upper bits of the indices that exceed the inputs to the lookup tables will be ignored.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "This field represents the output shift for the lookup result. The lookup result 
+            will be shifted left by this many bits before transferring into the packet.";
+    ValRandomize = true;
+  } OUTPUT_SHIFT[33:30] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field represents the output bitmask for the lookup result. Only
+            asserted bits will have the lookup result transferred to the packet.";
+    ValRandomize = true;
+  } OUTPUT_MASK[29:14] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the bit length of the mask, starting from bit 0, that is
+            applied to the shifted IDX1.  Bits outside of the mask will be zeroed out.";
+    ValRandomize = true;
+  } IDX1_MASK_LEN[13:11] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the number of bits of the IDX1 field to shift right.";
+    ValRandomize = true;
+  } IDX1_SHIFT_RIGHT[10:8] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the bit length of the mask, starting from bit 0, that is
+            applied to the shifted IDX0.  Bits outside of the mask will be zeroed out.";
+    ValRandomize = true;
+  } IDX0_MASK_LEN[7:4] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "This field indicates the number of bits of the IDX0 field to shift right.";
+    ValRandomize = true;
+  } IDX0_SHIFT_RIGHT[3:0] = 4'h0;
+};
+
+// MOD_CSUM_CFG1
+
+reg mod_csum_cfg1_r {
+  shared;
+  HandCoded = true;
+  name = "Protocol IDs used to determine the headers for checksum validation and TSO modificaion";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-2 IPv6 header.
+           ";
+    ValRandomize = true;
+  } IPV6_2[47:40] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-1 IPv6 header.
+           ";
+    ValRandomize = true;
+  } IPV6_1[39:32] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-0 IPv6 header.
+           ";
+    ValRandomize = true;
+  } IPV6_0[31:24] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-2 IPv4 header.
+           ";
+    ValRandomize = true;
+  } IPV4_2[23:16] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-1 IPv4 header.
+           ";
+    ValRandomize = true;
+  } IPV4_1[15:8] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-0 IPv4 header.
+           ";
+    ValRandomize = true;
+  } IPV4_0[7:0] = 8'hff;
+};
+
+// MOD_CSUM_CFG2
+
+reg mod_csum_cfg2_r {
+  shared;
+  HandCoded = true;
+  name = "Protocol IDs used to determine the headers for checksum validation and TSO modification";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the SCTP header.
+           ";
+    ValRandomize = true;
+  } SCTP[55:48] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-1 TCP header.
+           ";
+    ValRandomize = true;
+  } TCP_2[47:40] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-1 TCP header.
+           ";
+    ValRandomize = true;
+  } TCP_1[39:32] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-0 TCP header.
+           ";
+    ValRandomize = true;
+  } TCP_0[31:24] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-1 UDP header.
+           ";
+    ValRandomize = true;
+  } UDP_2[23:16] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-1 UDP header.
+           ";
+    ValRandomize = true;
+  } UDP_1[15:8] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Protocol ID of the depth-0 UDP header.
+           ";
+    ValRandomize = true;
+  } UDP_0[7:0] = 8'hff;
+};
+
+reg mod_csum_en_cfg_r {
+  shared;
+  name = "Enable for Checksum Computation";
+  desc = "Provides Enable Config for Rx Checksum regneration";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "
+           Checksum Computation Enable for the SCTP.
+           ";
+    ValRandomize = true;
+  } SCTP_EN[10:10] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+           Checksum Computation Enable for the depth-1 TCP.
+           ";
+    ValRandomize = true;
+  } D1_TCP_EN[9:9] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+           Checksum Computation Enable for the Depth-0 TCP.
+           ";
+    ValRandomize = true;
+  } D0_TCP_EN[8:8] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+           Checksum Computation Enable for the depth-1 UDP.
+           ";
+    ValRandomize = true;
+  } D1_UDP_EN[7:7] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+           Checksum Computation Enable for the depth-0 UDP.
+           ";
+    ValRandomize = true;
+  } D0_UDP_EN[6:6] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Checksum Computation Enable for the depth-2 IPV6 header.
+           ";
+    ValRandomize = true;
+  } D2_IPV6_EN[5:5] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+           Checksum Computation Enable for the depth-1 IPV6 header.
+           ";
+    ValRandomize = true;
+  } D1_IPV6_EN[4:4] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+           Checksum Computation Enable for the depth-0 IPV6 header.
+           ";
+    ValRandomize = true;
+  } D0_IPV6_EN[3:3] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Checksum Computation Enable for the depth-2 IPV4 header.
+           ";
+    ValRandomize = true;
+  } D2_IPV4_EN[2:2] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Checksum Computation Enable for the depth-1 IPV4 header.
+           ";
+    ValRandomize = true;
+  } D1_IPV4_EN[1:1] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+            Checksum Computation Enable for the depth-0 IPV4 header.
+           ";
+    ValRandomize = true;
+  } D0_IPV4_EN[0:0] = 1'h1;
+};
+
+addrmap mby_ppe_modify_map {
+  name = "modify";
+  desc = "Egress Modification Registers";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  mod_profile_command_rf       MOD_PROFILE_COMMAND[64]       ;
+  mod_profile_field_rf         MOD_PROFILE_FIELD[64]         ;
+  mod_map_dual_rf              MOD_MAP_DUAL[1024]            ;
+  mod_map_rf                   MOD_MAP[4]                    ;
+  mod_profile_group_r          MOD_PROFILE_GROUP[64]         ;
+  mod_mirror_profile_table0_r  MOD_MIRROR_PROFILE_TABLE0[64] ;
+  mod_mirror_profile_table1_r  MOD_MIRROR_PROFILE_TABLE1[64] ;
+  mod_mirror_profile_table2_r  MOD_MIRROR_PROFILE_TABLE2[64] ;
+  mod_map_cfg_r                MOD_MAP_CFG[4]                ;
+  mod_map_dual_cfg_r           MOD_MAP_DUAL_CFG;
+  mod_csum_cfg1_r	           MOD_CSUM_CFG1;
+  mod_csum_cfg2_r	           MOD_CSUM_CFG2;
+  mod_csum_en_cfg_r            MOD_CSUM_EN_CFG;
+};
+
+

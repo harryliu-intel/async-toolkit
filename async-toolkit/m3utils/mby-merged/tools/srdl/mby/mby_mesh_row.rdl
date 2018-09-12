@@ -1,0 +1,228 @@
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Read Request Y
+
+reg mesh_arb_rreq_y_r {
+  shared;
+  HandCoded = true;
+  name = "Arbitration weights for vertical read request bus";
+  desc = "
+    Indicates the proportion of cycles allocated to each arbiter input.
+
+    Register index is the column of the mesh node.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Weight for westbound inputs to northbound bus.";
+    ValRandomize = true;
+  } WB_TO_NB[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for eastbound inputs to northbound bus.";
+    ValRandomize = true;
+  } EB_TO_NB[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing northbound.";
+    ValRandomize = true;
+  } NB_TO_NB[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for westbound inputs to southbound bus.";
+    ValRandomize = true;
+  } WB_TO_SB[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for eastbound inputs to southbound bus.";
+    ValRandomize = true;
+  } EB_TO_SB[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing southbound.";
+    ValRandomize = true;
+  } SB_TO_SB[7:0] = 8'h0;
+
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Write Request Y
+
+reg mesh_arb_wreq_y_r {
+  shared;
+  HandCoded = true;
+  name = "Arbitration weights for vertical write request bus";
+  desc = "
+    Indicates the proportion of cycles allocated to each arbiter input.
+
+    Register index is the column of the mesh node.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Weight for westbound inputs to northbound bus.";
+    ValRandomize = true;
+  } WB_TO_NB[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for eastbound inputs to northbound bus.";
+    ValRandomize = true;
+  } EB_TO_NB[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing northbound.";
+    ValRandomize = true;
+  } NB_TO_NB[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for westbound inputs to southbound bus.";
+    ValRandomize = true;
+  } WB_TO_SB[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for eastbound inputs to southbound bus.";
+    ValRandomize = true;
+  } EB_TO_SB[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing southbound.";
+    ValRandomize = true;
+  } SB_TO_SB[7:0] = 8'h0;
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Read Response Y
+
+reg mesh_arb_rrsp_y_r {
+  shared;
+  HandCoded = true;
+  name = "Arbitration weights for vertical read response bus";
+  desc = "
+    Indicates the proportion of cycles allocated to each arbiter input.
+
+    Register index is the column of the mesh node.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Weight for westbound inputs to northbound bus.";
+    ValRandomize = true;
+  } WB_TO_NB[63:56] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for eastbound inputs to northbound bus.";
+    ValRandomize = true;
+  } EB_TO_NB[55:48] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing northbound.";
+    ValRandomize = true;
+  } NB_TO_NB[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for local-memory inputs to northbound bus.";
+    ValRandomize = true;
+  } MEM_TO_NB[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for westbound inputs to southbound bus.";
+    ValRandomize = true;
+  } WB_TO_SB[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for eastbound inputs to southbound bus.";
+    ValRandomize = true;
+  } EB_TO_SB[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing southbound.";
+    ValRandomize = true;
+  } SB_TO_SB[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for local-memory inputs to southbound bus.";
+    ValRandomize = true;
+  } MEM_TO_SB[7:0] = 8'h0;
+
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Read Response X
+
+reg mesh_arb_rrsp_x_r {
+  shared;
+  HandCoded = true;
+  name = "Arbitration weights for horizontal read response bus";
+  desc = "
+    Indicates the proportion of cycles allocated to each arbiter input.
+
+    Register index is the column of the mesh node.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "Weight for northbound inputs to westbound bus.";
+    ValRandomize = true;
+  } NB_TO_WB[63:56] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for southbound inputs to westbound bus.";
+    ValRandomize = true;
+  } SB_TO_WB[55:48] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing westbound.";
+    ValRandomize = true;
+  } WB_TO_WB[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for local-memory inputs to westbound bus.";
+    ValRandomize = true;
+  } MEM_TO_WB[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for northbound inputs to eastbound bus.";
+    ValRandomize = true;
+  } NB_TO_EB[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for southbound inputs to eastbound bus.";
+    ValRandomize = true;
+  } SB_TO_EB[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for operations continuing eastbound.";
+    ValRandomize = true;
+  } EB_TO_EB[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "Weight for local-memory inputs to eastbound bus.";
+    ValRandomize = true;
+  } MEM_TO_EB[7:0] = 8'h0;
+
+};
+
+
+addrmap mby_mesh_map {
+  name = "mby_mesh";
+  desc = "Shared Memory Mesh Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  mesh_arb_rreq_y_r   MESH_ARB_RREQ_Y[8];
+  mesh_arb_wreq_y_r   MESH_ARB_WREQ_Y[8];
+  mesh_arb_rrsp_y_r   MESH_ARB_RRSP_Y[8];
+  mesh_arb_rrsp_x_r   MESH_ARB_RRSP_X[8];
+
+};

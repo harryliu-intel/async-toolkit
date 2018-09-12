@@ -1,0 +1,695 @@
+// INTEL TOP SECRET
+// Copyright 2014 Intel Corporation. All Rights Reserved.
+//
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+  // Enum: IngressMstTable_STPState
+enum ingress_mst_table_stpstate_enum {
+  DISABLE              =  2'd0 { desc = ""; };
+  LISTENING            =  2'd1 { desc = ""; };
+  LEARNING             =  2'd2 { desc = ""; };
+  FORWARD              =  2'd3 { desc = ""; };
+};
+
+
+reg egress_vid_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress VLAN table";
+  desc = "
+         Contains egress port membership state for the egress VLAN lookup.
+         Indexed first by VLAN ID and then by chunk, where each chunk is
+         64 ports worth of the 258 bit membership port mask.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            For 64 ports of the total 258 bit mask, defines if this port is member of this VLAN or not.
+           ";
+    ValRandomize = true;
+  } MEMBERSHIP[63:0] = 64'h00;
+};
+
+regfile egress_vid_table_rf {
+  egress_vid_table_r EGRESS_VID_TABLE[5] += 8;
+};
+
+
+
+reg egress_vid_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress VLAN configuration";
+  desc = "Contains a trigger ID per egress VLAN.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            VLAN trigger match condition identifier.
+           ";
+    ValRandomize = true;
+  } TRIG_ID[5:0] = 6'h00;
+};
+
+
+
+reg ingress_mst_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Ingress spanning-tree forwarding state table";
+  desc = "
+          INGRESS_MST_TABLE holds the ingress spanning-tree state per ingress port.
+          Each port has two bits of spanning tree state associated to it. These states are:
+          [code]
+          DISABLE   = 0
+          LISTENING = 1
+          LEARNING  = 2
+          FORWARD   = 3
+          [/code]
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 17.
+           ";
+    ValRandomize = true;
+  } STP_STATE_17[35:34] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 16.
+           ";
+    ValRandomize = true;
+  } STP_STATE_16[33:32] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 15.
+           ";
+    ValRandomize = true;
+  } STP_STATE_15[31:30] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 14.
+           ";
+    ValRandomize = true;
+  } STP_STATE_14[29:28] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 13.
+           ";
+    ValRandomize = true;
+  } STP_STATE_13[27:26] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 12.
+           ";
+    ValRandomize = true;
+  } STP_STATE_12[25:24] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 11.
+           ";
+    ValRandomize = true;
+  } STP_STATE_11[23:22] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 10.
+           ";
+    ValRandomize = true;
+  } STP_STATE_10[21:20] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 9.
+           ";
+    ValRandomize = true;
+  } STP_STATE_9[19:18] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 8.
+           ";
+    ValRandomize = true;
+  } STP_STATE_8[17:16] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 7.
+           ";
+    ValRandomize = true;
+  } STP_STATE_7[15:14] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 6.
+           ";
+    ValRandomize = true;
+  } STP_STATE_6[13:12] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 5.
+           ";
+    ValRandomize = true;
+  } STP_STATE_5[11:10] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 4.
+           ";
+    ValRandomize = true;
+  } STP_STATE_4[9:8] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 3.
+           ";
+    ValRandomize = true;
+  } STP_STATE_3[7:6] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 2.
+           ";
+    ValRandomize = true;
+  } STP_STATE_2[5:4] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 1.
+           ";
+    ValRandomize = true;
+  } STP_STATE_1[3:2] = 2'h00;
+  field {
+    encode = ingress_mst_table_stpstate_enum;
+    AccessType = "RW";
+    desc = "
+            Two bits of spanning tree state for port 0.
+           ";
+    ValRandomize = true;
+  } STP_STATE_0[1:0] = 2'h00;
+};
+
+
+
+
+reg egress_mst_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Egress spanning-tree forwarding state table";
+  desc = "
+         Contains egress spanning-tree state for each port in the VLAN.
+         Each port has one bit of spanning tree forwarding state associated with it.
+         [br][br]
+         Indexed first by VLAN ID and then by chunk, where each chunk is
+         64 ports worth of spanning-tree state.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines forwarding state for 64 of 258 ports.
+           ";
+    ValRandomize = true;
+  } FORWARDING[63:0] = 64'h00;
+};
+
+regfile egress_mst_table_rf {
+  egress_mst_table_r EGRESS_MST_TABLE[5] += 8;
+};
+
+
+
+
+  // Enum: GlortRam_Strict
+enum glort_ram_strict_enum {
+  HASHED  =  2'd0 { desc = "Not strict (hashed)."; };
+  RSVD    =  2'd1 { desc = "Reserved."; };
+  TARGETED_DETERMINISTIC  =  2'd2 { desc = "determinstic mode with special operation"; };
+  DETERMINISTIC   =  2'd3 { desc = "deterministic mode"; };
+};
+
+
+// GLORT_DIRECT_MAP_CTRL 
+
+reg glort_direct_map_ctrl_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "GLORT Direct Mapping Access Control Register";
+  desc = "
+    Control Register for proxy access to the GLORT_DEST_TABLE.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    hwclr;
+    AccessType = "RW/V";
+    desc = "
+	    Go command and completion status.
+        [list]
+        [*] Set to 1 by software to initiate operation
+        [*] Set to 0 by hardware when the operation is complete
+        [/list]
+           ";
+    ValRandomize = true;
+  } GO_COMPL[63:63] = 1'h0;
+  field {
+    AccessType = "RW/V";
+    desc = "
+	    Completion Status. Set by hardware upon completion of operation.[br]
+	    0: Successful completion[br]
+	    1: Address Out-of-Range error
+           ";
+    ValRandomize = true;
+  } STATUS[62:62] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Operation Type:[br]
+            0: Read[br]
+            1: Write
+           ";
+    ValRandomize = true;
+  } OP_TYPE[61:61] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+	    Reserved
+           ";
+    ValRandomize = true;
+  } _RSVD0_[60:48] = 13'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File ID.[br]
+	    0 - GLORT_DEST_TABLE  [br]
+	    1-255 Reserved
+           ";
+    ValRandomize = true;
+  } REG_ID[47:40] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register File Sub Index. Not used. Set to zero.
+           ";
+    ValRandomize = true;
+  } REG_SUB_ID[39:32] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+	    Register Entry Index. Indicates the GLORT_DEST_TABLE index.
+        Valid values are 0 - 4095.
+           ";
+    ValRandomize = true;
+  } REG_INDX[31:0] = 32'h0;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST0
+
+reg glort_direct_map_dst0_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 0";
+  desc = "
+          Data register 0 for proxy access to the GLORT_DEST_TABLE.
+          [br][br]
+          GLORT_DEST_TABLE defines the destination ports for a given GLORT. 
+          The DestMask is a bit vector indicating which ports will receive 
+          normal (not logged or mirrored) copies of the frame. If an 
+          IP_MulticastIndex is specified (with value different than 0), then 
+          RXQ_MCAST_DEST_TABLE will be used to retrieve lists of VLANs for 
+          each port to use during IP multicast replication.
+          [br][br]
+          Proxy accesses to GLORT_DEST_TABLE are 320b atomic operations.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 0..63 of the 258-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST1
+
+reg glort_direct_map_dst1_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 1";
+  desc = "
+          Data register 1 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 64..127 of the 258-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+// GLORT_DIRECT_MAP_DST2
+
+reg glort_direct_map_dst2_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 2";
+  desc = "
+          Data register 2 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 128..191 of the 258-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST3
+
+reg glort_direct_map_dst3_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 3";
+  desc = "
+          Data register 3 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 192..255 of the 258-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[63:0] = 64'h00;
+};
+
+
+
+// GLORT_DIRECT_MAP_DST4
+
+reg glort_direct_map_dst4_r {
+  shared;
+  HandCoded = true;
+  name = "GLORT Destination Direct Mapping Access Data Register 4";
+  desc = "
+          Data register 4 for proxy access to the GLORT_DEST_TABLE.
+          See GLORT_DIRECT_MAP_DST0 for more information.
+         ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selects the IP multicast profile: used as an index into 
+            RXQ_MCAST_DEST_TABLE.
+           ";
+    ValRandomize = true;
+  } IP_MULTICAST_INDEX[13:2] = 12'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Contains bits 256..257 of the 258-bit destination port mask (not 
+            including logged or mirrored copies of the packet).
+           ";
+    ValRandomize = true;
+  } DEST_MASK[1:0] = 2'h00;
+};
+
+
+
+reg glort_cam_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Configures an entry in the GLORT CAM";
+  desc = " 
+          Configures an entry in the GLORT CAM. The CAM entries are readable but
+          the value returned will be masked out according to the mask originally
+          written along with the value.
+          [br][br]
+          A match occurs when the data searched is equal to the key and the 
+          entry is valid. The table below shows the encoded data value stored 
+          (Content) based on the state of the data (Key) and mask (KeyInvert) 
+          values in the TCAM bitcell.
+          
+          [code]
+          +-----------------------------------------------------+
+          | Mask storage | Data storage |        Content        |
+          =======================================================
+          |      0       |      0       |   X (always match)    |
+          +-----------------------------------------------------+
+          |      0       |      1       |           1           |
+          +-----------------------------------------------------+
+          |      1       |      0       |           0           |
+          +-----------------------------------------------------+
+          |      1       |      1       | Always mismatch state |
+          +-----------------------------------------------------+
+          [/code]
+          
+          The highest index has precedence in case there is more than one match.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Glort Mask. Write the inverse to match exactly.
+           ";
+    ValRandomize = true;
+  } KEY_INVERT[31:16] = 16'hffff;
+  field {
+    AccessType = "RW";
+    desc = "
+            Glort value.
+           ";
+    ValRandomize = true;
+  } KEY[15:0] = 16'hffff;
+};
+
+reg glort_ram_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Data associated with each CAM entry";
+  desc = "  
+          Data associated with each CAM entry. The entry defines how to 
+          compute the index for indexing the GLORT_DEST_TABLE to retrieve the 
+          final destination. See the Destination Mask Generation chapter
+          in the HAS for details on the various fields.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Indicate to skip DGLORT decrement.
+           ";
+    ValRandomize = true;
+  } SKIP_DGLORT_DEC[35:35] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Selects hash Rotation A (0) or Rotation B (1) for calculating the
+            destination mask index.
+           ";
+    ValRandomize = true;
+  } HASH_ROTATION[34:34] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the number of DestMask entries in the GLORT_DEST_TABLE over
+            which frames will be hashed. A value of 0 is interpreted as 16. For
+            distributed link aggregation pruning, this corresponds to the 
+            number of ports in the LAG.
+           ";
+    ValRandomize = true;
+  } DEST_COUNT[33:30] = 4'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines a field GLORTB extracted from the GLORT (bits 3..0 is bit position,
+            bits 7..4 is the length) to use as a parameter for indexing into the
+            GLORT_DEST_TABLE.
+           ";
+    ValRandomize = true;
+  } RANGE_SUB_INDEX_B[29:22] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines a field GLORTA extracted from the GLORT (bits 3..0 is bit position,
+            bits 7..4 is the length) to use  as a parameter for indexing into the
+            GLORT_DEST_TABLE.
+           ";
+    ValRandomize = true;
+  } RANGE_SUB_INDEX_A[21:14] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Defines the base index of the first entry into the GLORT_DEST_TABLE
+            which contains the destination.
+           ";
+    ValRandomize = true;
+  } DEST_INDEX[13:2] = 12'h00;
+  field {
+    encode = glort_ram_strict_enum;
+    AccessType = "RW";
+    desc = "
+            Determines whether the destination index is chosen explicitly or via hashing.
+            [list]
+            [*] Hashed(0)
+            [*] Reserved (1)
+            [*] Targeted Deterministic (2)
+            [*] Deterministic (3)
+            [/list]
+           ";
+    ValRandomize = true;
+  } STRICT[1:0] = 2'h00;
+};
+
+
+// CGRP_USED_TABLE[0..64]
+
+reg cgrp_used_table_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "EM_B hit table";
+  desc = "
+         Used for aging out MAC address table entries. Provides one bit
+         for each EM_B hash or CAM entry that might be used for SMAC
+         matching. When an EM_B hash or CAM entry hits on a packet
+         and employs a USED action, the corresponding bit in this table
+         will be set by hardware. Software clears individual bits by
+         writing a 1 to them.
+         [br][br]
+         Indexes 0..63 correspond to the EM_B hash table entries and
+         index 64 corresponds to the EM_B CAM table. Note that the
+         CAM has only 32 entries, corresponding to the low-order 32
+         bits of CGRP_USED_TABLE[64].
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+           Used bits corresponding to 64 EM_B table entries.
+           ";
+    ValRandomize = true;
+  } USED[63:0] = 64'h00;
+};
+
+
+
+addrmap mby_ppe_mst_glort_map {
+  name = "MST and GLORT";
+  desc = "Forward and Global Resource Tag Registers";
+  addressing = fullalign;
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary=true;
+  
+  egress_vid_table_rf     EGRESS_VID_TABLE[4096]  ;
+  egress_vid_cfg_r        EGRESS_VID_CFG[4096]    ;
+  ingress_mst_table_r     INGRESS_MST_TABLE[4096] ;     
+  egress_mst_table_rf     EGRESS_MST_TABLE[4096]  ;
+  glort_direct_map_ctrl_r GLORT_DIRECT_MAP_CTRL   ;
+  glort_direct_map_dst0_r GLORT_DIRECT_MAP_DST0   ;
+  glort_direct_map_dst1_r GLORT_DIRECT_MAP_DST1   ;
+  glort_direct_map_dst2_r GLORT_DIRECT_MAP_DST2   ;
+  glort_direct_map_dst3_r GLORT_DIRECT_MAP_DST3   ;
+  glort_direct_map_dst4_r GLORT_DIRECT_MAP_DST4   ;
+  glort_ram_r             GLORT_RAM[64]           ;
+  glort_cam_r             GLORT_CAM[64]           ;
+  cgrp_used_table_r       CGRP_USED_TABLE[65]     ;
+};
+

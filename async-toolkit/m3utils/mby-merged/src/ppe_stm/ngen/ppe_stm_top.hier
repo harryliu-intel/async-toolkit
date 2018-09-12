@@ -1,0 +1,6 @@
+// PPE shared table memory block
+
+ppe_stm_top [
+  ppe_stm_shells_wrapper of ppe_stm_shells_wrapper with ppe_stm_shells_wrapper.map
+  ppe_stm_sram_mems of ppe_stm_sram_mems with ppe_stm_sram_mems.map
+]

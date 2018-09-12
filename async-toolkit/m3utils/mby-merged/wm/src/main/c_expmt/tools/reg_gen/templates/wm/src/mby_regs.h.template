@@ -1,0 +1,53 @@
+/**
+ * INTEL CONFIDENTIAL
+ * Copyright 2018 Intel Corporation. All Rights Reserved.
+ *
+ */
+
+#ifndef MBY_REGS_H
+#define MBY_REGS_H
+
+// TODO can we remove these?
+typedef enum
+{
+    MBY_RESET_DOMAIN_CHIP = 0,
+
+    MBY_RESET_DOMAIN_DEVICE = 1,
+
+    MBY_RESET_DOMAIN_MASTER = 2,
+
+    MBY_RESET_DOMAIN_COLD = 3,
+
+    MBY_RESET_DOMAIN_PCIE_WARM = 4,
+
+    MBY_RESET_DOMAIN_PCIE_HOT = 5,
+
+    MBY_RESET_DOMAIN_PCIE_DATAPATH = 7,
+
+    MBY_RESET_DOMAIN_EPL = 8,
+
+    MBY_RESET_DOMAIN_SWITCH = 9,
+
+    MBY_RESET_DOMAIN_COLD_MEM = 12,
+
+    MBY_RESET_DOMAIN_PCIE_HOT_MEM = 14,
+
+    MBY_RESET_DOMAIN_PCIE_DATAPATH_MEM = 15,
+
+    MBY_RESET_DOMAIN_SWITCH_MEM = 17,
+
+    MBY_RESET_DOMAIN_MAX
+
+} mby_resetDomain;
+
+
+// Auto generated reg params begin
+
+// Auto generated reg params end
+
+// Auto generated reg enums begin
+
+// Auto generated reg enums end
+
+#endif  /* MBY_REGS_H */
+

@@ -1,0 +1,38 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+$hdl_spec = {
+    # List of specific VERILOG source files
+    -vlog_files => [
+     "verif/mby/tests/common/mby_test_lib.sv",
+     ],
+    
+    # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     ],
+
+    # List of verilog library source files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+        
+     "$ENV{SAOLA_HOME}/verilog",
+     "$ENV{SAOLA_HOME}/verilog_uvm",
+     "$ENV{UVM_HOME}/src",
+     "$ENV{OVM_HOME}/src",
+     "$ENV{ACE_HOME}/lib/Verilog",
+     "verif/mby/tests/common",
+     "verif/mby/tests/mby_alive_test",
+     "verif/mby/tests/mby_lintra_test",
+     "verif/mby/tests/mby_wm_reg_rw_test",      
+
+     ],
+    
+    # Arbitrary VLOG options
+#    -vlog_opts => ['-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',]
+
+    
+};
