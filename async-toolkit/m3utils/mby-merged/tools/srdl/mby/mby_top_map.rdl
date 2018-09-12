@@ -21,6 +21,7 @@
 `include "mby_shm.rdl"
 `include "epl.rdl"
 `include "amba_complex.rdl"
+`include "pcie.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -43,6 +44,7 @@ addrmap mby_ppe_rx_top_map {
 // Top-level AMBA Management complex 
 addrmap mby_amba_top_map {
   imc            imc;
+  pep            pep;
 };
 
 addrmap mby_ppe_tx_top_map {
@@ -61,6 +63,7 @@ addrmap mby_top_map {
   mby_mpt_top_map mpt[2];
   epl             epl;
   mby_shm_map     shm;    
+  mby_amba_top_map amba; // TODO: relocate to 'real' top-level mby addrmap (this is a single 3.2 hierarchy)
 };
 
 
