@@ -15,6 +15,7 @@ pre:
 	./pre_process.pl
 	$(V2BBOX) -v ./parser_shells_wrapper_inc.v -n parser_shells_wrapper -p ../../../target/mby/mgm_run/parser/src,../../../target/mby/mgm_run/rtl -o parser_shells_wrapper.v
 	$(V2BBOX) -v ../../../target/mby/mgm_run/parser/src/mem_wrap/parser_ff_mems.v -p ../../../target/mby/mgm_run/parser/src,../../../target/mby/mgm_run/rtl -o parser_ff_mems.v
+	$(V2BBOX) -v ../../../target/mby/mgm_run/parser/src/mem_wrap/parser_rf_mems.v -p ../../../target/mby/mgm_run/parser/src,../../../target/mby/mgm_run/rtl -o parser_rf_mems.v
 
 top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
@@ -23,13 +24,14 @@ post:
 	rm -f parser_shells_wrapper_inc.v
 	rm -f parser_shells_wrapper.v
 	rm -f parser_ff_mems.v
+	rm -f parser_rf_mems.v
 
 rtl copy:
 	cp ngen/$(BLOCK).sv ../rtl/$(BLOCK).sv
 
 clean:
 	@echo "Cleaning $(BLOCK)"
-	@rm -rf $(wildcard ngen parser_shells_wrapper_inc.v parser_shells_wrapper.v parser_ff_mems.v)
+	@rm -rf $(wildcard ngen parser_shells_wrapper_inc.v parser_shells_wrapper.v parser_ff_mems.v parser_rf_mems.v)
 
 diff:
 	@echo "Making a difference..." # one byte at a time

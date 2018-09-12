@@ -1,4 +1,5 @@
 Module Name,Unit,Block Name,Ports,Freq[Mhz],Lines,Width,Protection,ECC Signature Width,Write Segment Size,Instantiations,Interleaving,Protection Resolution,Write Segment W/O ECC Size,Width W/O ECC,Type,Words|Number of Rules, Bits/Word,Bit Enable|Slice Enable,Folded,Column Mux,Redundancy,Rows,Columns,Total # Instances,Name,,,,
+mem_parser_metadata_fifo_shell_48x61,parser_metadata_fifo,parser,1r1w,1225,48,69,ECC,8,69,1,1,61,61,61,RF-1R1W,48,69,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_cmpe_cache_0_0_shell_1024x1320,cache_0_0,cmpe,1r1w,600,1024,1320,None,0,44,1,,,44,1320,RF-1R1W,1024,132,6,0,0,0,1,10,10,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_cmpe_cache_0_1_shell_1024x88,cache_0_1,cmpe,1r1w,600,1024,88,None,0,44,1,,,44,88,RF-1R1W,1024,88,4,0,0,0,1,1,1,ip743rfshpm1r1w1024x88be4p1,,,,
 mem_cmpe_cache_1_0_0_shell_1024x1056,cache_1_0_0,cmpe,1r1w,600,1024,1056,None,0,44,1,,,44,1056,RF-1R1W,1024,132,6,0,0,0,1,8,8,ip743rfshpm1r1w1024x132be6p1,,,,
