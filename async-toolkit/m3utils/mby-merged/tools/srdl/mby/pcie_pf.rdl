@@ -679,6 +679,7 @@ reg pcie_pca_fault_r {
 reg pcie_rhi_fault_r {
   shared;
   HandCoded = true;
+  CoverageMode = "COVERAGE_OFF"; // not support for 128 bit registers
   name = "Receiver Host Interface Fault";
   desc = "
     This register is not implemented, reserved for future use.
@@ -766,6 +767,7 @@ reg pcie_thi_fault_r {
 reg pcie_rpp_fault_r {
   shared;
   HandCoded = true;
+  CoverageMode = "COVERAGE_OFF";
   name = "Receiver Packet Processing Fault";
   desc = "
     This register is not implemented, reserved for future use.
@@ -788,6 +790,7 @@ reg pcie_rpp_fault_r {
 reg pcie_tpp_fault_r {
   shared;
   HandCoded = true;
+  CoverageMode = "COVERAGE_OFF";
   name = "Transmitter Packet Processing Fault";
   desc = "
     This register is not implemented, reserved for future use.
@@ -1157,6 +1160,7 @@ reg pcie_sm_area_r {
   name = "Switch Manager Area";
   desc = "
            ";
+  CoverageMode = "COVERAGE_OFF";
   regwidth = 256;
   accesswidth = 64;
   field {
