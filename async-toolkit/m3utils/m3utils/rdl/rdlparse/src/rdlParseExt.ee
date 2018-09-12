@@ -414,6 +414,10 @@ opt_external: { val : BOOLEAN }
 id: { val : TEXT }
   id { $$ := $1 }
 
+id_or_propid: { val : TEXT }
+  id { $$ := $1 }
+  prop { $$ := $1 }
+
 enum_entry: { val : RdlEnumEntry.T }
   x      { $$ := NEW(RdlEnumEntry.T,
                      id := $1,

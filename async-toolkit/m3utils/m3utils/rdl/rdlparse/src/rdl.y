@@ -73,6 +73,10 @@ property_definition:
 id:
   id                       T_mID
 
+id_or_propid:
+  id                       T_mID
+  prop                     T_mPROPERTY
+
 property_body:
   pb0                      property_type property_usage opt_property_default
   pb1                      property_type property_default property_usage
@@ -150,7 +154,7 @@ component_inst_elem_list:
   list                     component_inst_elem ',' component_inst_elem_list
 
 component_inst_elem:
-  x                        id opt_array opt_eq_num opt_at_num opt_inc_num opt_mod_num
+  x                        id_or_propid opt_array opt_eq_num opt_at_num opt_inc_num opt_mod_num
 
 opt_array:
   array                    array
