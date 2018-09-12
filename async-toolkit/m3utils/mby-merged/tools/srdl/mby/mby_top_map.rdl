@@ -22,6 +22,9 @@
 `include "mby_mesh_row.rdl"
 `include "mby_rx_voq.rdl"
 `include "mby_tx_voq.rdl"
+`include "epl.rdl"
+`include "amba_complex.rdl"
+`include "pcie.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -39,6 +42,12 @@ addrmap mby_ppe_rx_top_map {
   mby_ppe_trig_apply_map        trig_apply;
   mby_ppe_trig_apply_misc_map   trig_apply_misc;
   mby_ppe_trig_usage_map        trig_usage;
+};
+
+// Top-level AMBA Management complex 
+addrmap mby_amba_top_map {
+  imc            imc;
+  pep            pep;
 };
 
 addrmap mby_ppe_tx_top_map {
@@ -59,5 +68,8 @@ addrmap mby_top_map {
   mby_mpt_top_map mpt[2];
   mby_shm_map     shm;
   mby_mesh_map    mesh; // one row of the mesh
+  epl             epl;
+  mby_amba_top_map amba; // TODO: relocate to 'real' top-level mby addrmap (this is a single 3.2 hierarchy)
 };
+
 

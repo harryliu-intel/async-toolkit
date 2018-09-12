@@ -1,0 +1,36 @@
+//
+//
+`include "lib_udp.rdl"
+`include "mby_apb_mailbox_csrs.rdlh"
+
+    addrmap mby_apb_mailbox_csrs {                // Start the Address Map for mby_apb_mailbox_csrs
+        name="mby_apb_mailbox_csrs";
+        Space="MEM";
+        SyncResetSignal="rst_n pwr_rst_n";
+        IntelRsvd=false;
+
+        apb_reset_ctrl            apb_reset_ctrl                     @0x000000000000;
+        apb_boot_config           apb_boot_config                    @0x000000000004;
+        apb_boot_status           apb_boot_status                    @0x000000000008;
+        apb_write_privilege_ctrl1 apb_write_privilege_ctrl1          @0x000000000010;
+        apb_write_privilege_ctrl2 apb_write_privilege_ctrl2          @0x000000000014;
+        apb_read_privilege_ctrl1  apb_read_privilege_ctrl1           @0x000000000018;
+        apb_read_privilege_ctrl2  apb_read_privilege_ctrl2           @0x00000000001C;
+        apb_pll_f00               apb_pll_f00                        @0x000000000040;
+        apb_int_steering_ctl1     apb_int_steering_ctl1              @0x000000000080;
+        apb_int_steering_ctl2     apb_int_steering_ctl2              @0x000000000084;
+        apb_pcie_doorbell         apb_pcie_doorbell                  @0x000000000090;
+        apb_pcie_raw_int_stat     apb_pcie_raw_int_stat              @0x000000000094;
+        apb_pcie_masked_int_stat  apb_pcie_masked_int_stat           @0x000000000098;
+        apb_pcie_int_masks        apb_pcie_int_masks                 @0x00000000009C;
+        apb_cport_doorbell        apb_cport_doorbell                 @0x0000000000A0;
+        apb_cport_raw_int_stat    apb_cport_raw_int_stat             @0x0000000000A4;
+        apb_cport_masked_int_stat apb_cport_masked_int_stat          @0x0000000000A8;
+        apb_cport_int_masks       apb_cport_int_masks                @0x0000000000AC;
+        apb_route_table_update    apb_route_table_update             @0x0000000000C0;
+        apb_route_table_sync      apb_route_table_sync               @0x0000000000C4;
+        apb_route_fifo_stat       apb_route_fifo_stat                @0x0000000000C8;
+        apb_lm_f00                apb_lm_f00                         @0x000000000100;
+        apb_lm_trig_f00           apb_lm_trig_f00                    @0x000000000200;
+    };            // End of Address Map for mby_apb_mailbox_csrs
+
