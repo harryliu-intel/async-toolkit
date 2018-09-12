@@ -39,7 +39,8 @@
 module mby_mc_tb_top ();
 
     `include "mby_mc_tb_top_common.svh"
-
+    `include "mby_mc_np_conn.svh"
+    
 
     //-----------------------------------------------------------------------------
     // Verification Test Island
