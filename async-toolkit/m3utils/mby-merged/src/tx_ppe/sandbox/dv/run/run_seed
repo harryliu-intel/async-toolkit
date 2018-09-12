@@ -1,0 +1,1 @@
+ppe_stm +vcs+lic+wait +ntb_random_seed=2875591401 +vpdfile+ppe_stm.vpd +start_dumping=0 | tee run_seed.log

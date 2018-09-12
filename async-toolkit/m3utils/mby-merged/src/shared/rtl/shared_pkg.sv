@@ -46,6 +46,9 @@ localparam IGR_PPE_ECC_WIDTH        = 72;       //IGR to PPE ecc field width
 localparam IGR_PPE_DATA_WIDTH       = 1024;     //IGR to PPE data field width
 localparam MC_GROUP_CNT             = 16384;    //multicast group count
 localparam POLICER_CNT              = 4096;     //number of policers
+localparam EGR_PPE_DATA_WIDTH       = 1536;     //EGR to PPE data field width
+localparam EGR_PPE_MOD_WIDTH        = 512;      //EGR to PPE mod field width
+localparam PPE_EGR_DATA_WIDTH       = 2560;     //PPE to EGR data field width
 
 typedef struct packed {
     logic   [IGR_PPE_ERR_WIDTH-1:0]         err;    //tail information CRC error notification
