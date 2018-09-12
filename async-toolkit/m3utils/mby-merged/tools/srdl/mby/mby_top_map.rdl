@@ -20,6 +20,7 @@
 `include "mby_local_store.rdl"
 `include "mby_shm.rdl"
 `include "epl.rdl"
+`include "amba_complex.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -39,6 +40,11 @@ addrmap mby_ppe_rx_top_map {
   mby_ppe_trig_usage_map        trig_usage;
 };
 
+// Top-level AMBA Management complex 
+addrmap mby_amba_top_map {
+  imc            imc;
+};
+
 addrmap mby_ppe_tx_top_map {
   mby_ppe_modify_map            modify;
 };
@@ -56,4 +62,5 @@ addrmap mby_top_map {
   epl             epl;
   mby_shm_map     shm;    
 };
+
 
