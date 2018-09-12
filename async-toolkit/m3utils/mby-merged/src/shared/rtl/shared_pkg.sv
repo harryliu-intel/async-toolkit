@@ -45,6 +45,7 @@ localparam MGP_PORT_CNT             = 17;       //MGP port count, 1 for CP/CPP
 localparam IGR_PPE_ECC_WIDTH        = 72;       //IGR to PPE ecc field width
 localparam IGR_PPE_DATA_WIDTH       = 1024;     //IGR to PPE data field width
 localparam MC_GROUP_CNT             = 16384;    //multicast group count
+localparam POLICER_CNT              = 4096;     //number of policers
 
 typedef struct packed {
     logic   [IGR_PPE_ERR_WIDTH-1:0]         err;    //tail information CRC error notification
@@ -158,12 +159,13 @@ typedef union packed {
 } rx_ppe_igr_md_t;
 
 typedef struct packed {
-    rx_ppe_igr_md_t                         md;         //metadata
-    logic   [$clog2(MGP_TC_CNT)-1:0]        tc;         //Egress TC
-    logic   [$clog2(MGP_PORT_CNT)-1:0]      port;       //egress port ID
-    logic   [2:0]                           pkt_type;   //one hot packet type indication, bit2:INT, bit1:CPP, bit0:normal
-    logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;         //header segment packet ID
-    logic                                   valid;      //valid
+    rx_ppe_igr_md_t                         md;             //metadata
+    logic   [$clog2(POLICER_CNT)-1:0]       policer_idx;    //Policer index
+    logic   [$clog2(MGP_TC_CNT)-1:0]        tc;             //Egress TC
+    logic   [$clog2(MGP_PORT_CNT)-1:0]      port;           //egress port ID
+    logic   [2:0]                           pkt_type;       //one hot packet type indication, bit2:INT, bit1:CPP, bit0:normal
+    logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;             //header segment packet ID
+    logic                                   valid;          //valid
 } rx_ppe_igr_t;
 
 //
