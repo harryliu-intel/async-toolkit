@@ -1,7 +1,6 @@
 // -*- mode:c -*-
 
 // Copyright (C) 2018 Intel Corporation
-#include "mby_rxtotx.h"
 #include "mby_modifier.h"
 #include "mby_crc32.h"
 
@@ -1161,39 +1160,49 @@ void Modifier
 )
 {
     // Read inputs:
-    const mbyParserInfo   parser_info       = in->PARSER_INFO;
+    const fm_bool         drop_ttl          = in->DROP_TTL;
+    const fm_byte         ecn               = in->ECN;
+    const fm_uint16       edglort           = in->EDGLORT;
+    const fm_uint32       fnmask            = in->FNMASK;        // forwarding normal mask
+    const fm_bool         is_timeout        = in->IS_TIMEOUT;
+    const fm_macaddr      l2_dmac           = in->L2_DMAC;
+    const fm_uint16       l2_evid1          = in->L2_EVID1;
+    const fm_bool         mark_routed       = in->MARK_ROUTED;
+    const mbyMirrorType   mirtyp            = in->MIRTYP;
+    const fm_uint32       mod_idx           = in->MOD_IDX;
     const fm_bool         no_modify         = in->NO_MODIFY;  // skip most of modifications in Modifier
+    const fm_bool         out_of_mem        = in->OOM;
+    const mbyParserInfo   parser_info       = in->PARSER_INFO;
+    const fm_bool         pm_err            = in->PM_ERR;
+    const fm_bool         pm_err_nonsop     = in->PM_ERR_NONSOP;
+    const fm_byte         qos_l3_dscp       = in->QOS_L3_DSCP;
     const fm_uint32       rx_length         = in->RX_LENGTH;  // ingress packet data length [bytes]
     const fm_byte * const rx_packet         = in->RX_DATA;    // packet RX data
-    const fm_uint32       tx_port           = in->TX_PORT;
+    const fm_bool         saf_error         = in->SAF_ERROR;
+    const fm_uint64       tail_csum_len     = in->TAIL_CSUM_LEN;
+    const fm_byte * const tx_data_in        = in->TX_DATA;
     const fm_bool         tx_drop_in        = in->TX_DROP;
     const fm_uint32       tx_length_in      = in->TX_LENGTH;
+    const fm_uint32       tx_stats_last_len = 0; // was: in->TX_STATS_LAST_LEN; <--- FIXME!!!
     const fm_byte         tx_tag            = in->TX_TAG;
-    const fm_uint32       tx_stats_last_len = in->TX_STATS_LAST_LEN;
-    const fm_uint16       l2_evid1          = in->L2_EVID1;
-    const fm_uint16       edglort           = in->EDGLORT;
-    const mbyMirrorType   mirtyp            = in->MIRTYP;
-    const fm_byte         qos_l3_dscp       = in->QOS_L3_DSCP;
-    const fm_byte         ecn               = in->ECN;
-    const fm_bool         mark_routed       = in->MARK_ROUTED;
-    const fm_uint32       mod_idx           = in->MOD_IDX;
-    const fm_uint64       tail_csum_len     = in->TAIL_CSUM_LEN;
     const fm_byte         xcast             = in->XCAST;
-    const fm_bool         drop_ttl          = in->DROP_TTL;
-    const fm_bool         is_timeout        = in->IS_TIMEOUT;
-    const fm_bool         out_of_mem        = in->OOM;
-    const fm_bool         pm_err_nonsop     = in->PM_ERR_NONSOP;
-    const fm_bool         pm_err            = in->PM_ERR;
-    const fm_bool         saf_error         = in->SAF_ERROR;
-    const fm_macaddr      l2_dmac           = in->L2_DMAC;
 
     // Initialize:
-    fm_bool        tx_drop         = tx_drop_in;
-    fm_uint16      tx_disp         = (xcast == 2) ? DISP_BCAST : (xcast == 1) ? DISP_MCAST : DISP_UCAST;
-    fm_uint32      tx_length       = 0;
-    fm_uint32      tx_stats_length = 0;
-    mbyDropErrCode tx_reasoncode   = ERR_NONE;
-    fm_bool        no_pri_enc      = !((parser_info.otr_l2_vlan1 > 0) || (parser_info.otr_mpls_len > 0) || (parser_info.otr_l3_len > 0));
+    fm_bool         tx_drop         = tx_drop_in;
+    fm_uint16       tx_disp         = (xcast == 2) ? DISP_BCAST : (xcast == 1) ? DISP_MCAST : DISP_UCAST;
+    fm_byte * const tx_packet       = (fm_byte *) tx_data_in;
+    fm_uint32       tx_length       = 0;
+    fm_uint32       tx_stats_length = 0;
+    mbyDropErrCode  tx_reasoncode   = ERR_NONE;
+    fm_bool         no_pri_enc      = !((parser_info.otr_l2_vlan1 > 0) || (parser_info.otr_mpls_len > 0) || (parser_info.otr_l3_len > 0));
+
+    // Select egress port:
+    fm_uint32 tx_port = 0;
+    for (fm_uint i = 0; i < 24; i++)
+        if (fnmask & (1uL << i)) {
+            tx_port = i;
+            break;
+        }
 
     // Unpack RX packet into chunked segment:
     mbyChunkedSeg chunked_seg;
@@ -1286,8 +1295,6 @@ void Modifier
     updateVlanIPP(key, model, &reg_data, &ctrl_data, &chunked_seg);
 #endif
 
-    fm_byte tx_packet[MBY_MAX_PACKET_SIZE] = { 0 };
-
     packPacket
     (
         no_modify,
@@ -1315,14 +1322,11 @@ void Modifier
     );
 
     // Write outputs:
-    out->TX_STATS_LENGTH = tx_stats_length;
+
+    out->NO_PRI_ENC      = no_pri_enc; // is this output still needed? <-- REVISIT!!!
+    out->TX_DATA         = tx_packet;
     out->TX_DISP         = tx_disp;
     out->TX_LENGTH       = tx_length;
-    out->NO_PRI_ENC      = no_pri_enc; // is this output still needed? <-- REVISIT!!!
-
-    for (fm_uint i = 0; i < MBY_MAX_PACKET_SIZE; i++)
-        out->TX_DATA[i] = tx_packet[i];
-
-    // Pass thru:
-    out->TX_PORT = tx_port;
+    out->TX_PORT         = tx_port;
+    out->TX_STATS_LENGTH = tx_stats_length;
 }

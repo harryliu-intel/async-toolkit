@@ -75,6 +75,7 @@ push (@{$ToolConfig_ips{mby}{OTHER}{SEARCH_PATHS}}, (
    "&get_tool_path(ipconfig/chassis_pg_vc                 )",
    "&get_tool_var(ipconfig/ip_ccu_vc,         SEARCH_PATHS)",
    "&get_tool_var(ipconfig/sva_lib_ip,        SEARCH_PATHS)",
+	  "&get_tool_path(ipconfig/SVA_LIB)",
    "&get_tool_var(ipconfig/shdv,              SEARCH_PATHS)",
 ));
 
@@ -135,6 +136,16 @@ $ToolConfig_tools{INTC_LIB_SCOREBOARD} = {
       SEARCH_PATHS   => ["&get_tool_path()",],
    },
 };
+
+
+$ToolConfig_ips{SVA_LIB} = {
+    PATH    => "/p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/&get_tool_version()",
+        VERSION => "15.4p5_shOpt64",
+    
+},
+
+$ToolConfig_tools{buildman}{ENV}{SVA_LIB}  = "&get_tool_path(ipconfig/SVA_LIB)";
+
 
 $ToolConfig_ips{sva_lib_ip} = {
    PATH => "/nfs/site/disks/hdk.cad.1/linux_2.6.16_x86-64/sva_lib/&get_tool_version()/SVA_LIB",

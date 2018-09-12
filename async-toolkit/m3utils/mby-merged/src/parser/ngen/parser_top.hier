@@ -1,0 +1,7 @@
+// Parser block
+
+parser_top [
+  parser_shells_wrapper of parser_shells_wrapper with parser_shells_wrapper.map
+  parser_ff_mems of parser_ff_mems with parser_ff_mems.map
+  parser_rf_mems of parser_rf_mems with parser_rf_mems.map
+]

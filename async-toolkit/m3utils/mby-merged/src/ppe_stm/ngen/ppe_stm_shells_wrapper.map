@@ -1,0 +1,53 @@
+foreach $i (0..191) {
+    >> PPE_STM_FWD_TBL0_$i$_CFG_reg_sel
+    >> PPE_STM_FWD_TBL0_$i$_STATUS_reg_sel
+    >> ppe_stm_fwd_tbl0_$i$_adr
+    >> ppe_stm_fwd_tbl0_$i$_mem_ls_enter
+    >> ppe_stm_fwd_tbl0_$i$_rd_en
+    >> ppe_stm_fwd_tbl0_$i$_wr_data
+    >> ppe_stm_fwd_tbl0_$i$_wr_en
+    >> ppe_stm_fwd_tbl0_$i$_ecc_uncor_err
+    >> ppe_stm_fwd_tbl0_$i$_init_done
+    >> ppe_stm_fwd_tbl0_$i$_rd_data
+    >> ppe_stm_fwd_tbl0_$i$_rd_valid
+}
+
+foreach $i (0..63) {
+    >> PPE_STM_FWD_TBL1_$i$_CFG_reg_sel
+    >> PPE_STM_FWD_TBL1_$i$_STATUS_reg_sel
+    >> ppe_stm_fwd_tbl1_$i$_adr
+    >> ppe_stm_fwd_tbl1_$i$_mem_ls_enter
+    >> ppe_stm_fwd_tbl1_$i$_rd_en
+    >> ppe_stm_fwd_tbl1_$i$_wr_data
+    >> ppe_stm_fwd_tbl1_$i$_wr_en
+    >> ppe_stm_fwd_tbl1_$i$_ecc_uncor_err
+    >> ppe_stm_fwd_tbl1_$i$_init_done
+    >> ppe_stm_fwd_tbl1_$i$_rd_data
+    >> ppe_stm_fwd_tbl1_$i$_rd_valid
+}
+
+foreach $i (0..79) {
+    >> PPE_STM_MOD_TBL_$i$_CFG_reg_sel
+    >> PPE_STM_MOD_TBL_$i$_STATUS_reg_sel
+    >> ppe_stm_mod_tbl_$i$_adr
+    >> ppe_stm_mod_tbl_$i$_mem_ls_enter
+    >> ppe_stm_mod_tbl_$i$_rd_en
+    >> ppe_stm_mod_tbl_$i$_wr_data
+    >> ppe_stm_mod_tbl_$i$_wr_en
+    >> ppe_stm_mod_tbl_$i$_ecc_uncor_err
+    >> ppe_stm_mod_tbl_$i$_init_done
+    >> ppe_stm_mod_tbl_$i$_rd_data
+    >> ppe_stm_mod_tbl_$i$_rd_valid
+}
+
+    >> PPE_STM_ECC_COR_ERR_reg_sel
+    >> PPE_STM_ECC_UNCOR_ERR_reg_sel
+    >> unified_regs_rd
+    >> unified_regs_wr_data
+    >> unified_regs_ack
+    >> unified_regs_rd_data
+    >> ppe_stm_ecc_int
+    >> ppe_stm_init_done
+
+cclk    >> clk
+reset_n >> reset_n

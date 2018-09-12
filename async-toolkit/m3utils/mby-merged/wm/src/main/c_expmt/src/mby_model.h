@@ -18,6 +18,14 @@ fm_status mbyReadReg
     fm_uint64 * const val
 );
 
+fm_status mbyWriteRegMult
+(
+    const fm_uint32 sw,
+    const fm_uint32 addr,
+    const fm_int len,
+    const fm_uint32 * const val
+);
+
 fm_status mbyWriteReg
 (
     const fm_uint32 sw,
