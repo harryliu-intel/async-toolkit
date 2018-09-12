@@ -31,14 +31,15 @@ package ingress_env_pkg;
   import uvm_pkg::*;
 
   import shdv_base_pkg::*;
-  //import mby_wm_dpi_pkg::*;    
-    
+  //import mby_wm_dpi_pkg::*;
+  import mby_common_pkg::*;
+
   import mby_ec_bfm_pkg::*;
   import ec_env_pkg::*;
 
 `include "uvm_macros.svh"
 `include "slu_macros.svh"
-  
+
 `include "ingress_types.svh"
 `include "ingress_ti_config.svh"
 `include "ingress_config.svh"
