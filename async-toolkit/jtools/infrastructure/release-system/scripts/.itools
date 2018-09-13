@@ -58,5 +58,5 @@ P:qmake 4.6.3
 P:libqt 4.6.3
 P:gawk 3.1.6
 P:rsync 2.6.8
-P:graphviz latest
+P:graphviz 2.26.3
 glpsol /usr/intel/pkgs/glpk/4.44/bin/glpsol
