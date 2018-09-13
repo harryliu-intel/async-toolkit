@@ -72,7 +72,7 @@
         (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
         (doLef t)                ; create cellName.lef
         (doDef t)                ; create cellName.def
-        (doHierDef nil)          ; create cellName.def with hierarchy separator
+        (doHierDef t)            ; create cellName.def with hierarchy separator
         (doNondefaultDef nil)    ; create cellName_nondefault.def
         (doSkipRouting nil)      ; create cellName.SkipRouting.tcl
         (hookupD04 nil)          ; add power hookups around d04 cells
