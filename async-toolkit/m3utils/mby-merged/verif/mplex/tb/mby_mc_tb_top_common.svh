@@ -53,25 +53,25 @@ logic         proc_clk;                               // Processor Clock - 1.0 G
 logic         peri_clk;                               // Peripheral Clock - 200 Mhz
 logic         qref_clk;                               // QSPI ref Clock - 37 Mhz (1.2 Ghz/16)
 
-shdv_clk_gen  fabric_clk_gen(fabric_clk);            
-shdv_clk_gen  proc_clk_gen(proc_clk);    
-shdv_clk_gen  peri_clk_gen(peri_clk); 
-shdv_clk_gen  qref_clk_gen(qref_clk); 
+shdv_clk_gen  fabric_clk_gen(fabric_clk);
+shdv_clk_gen  proc_clk_gen(proc_clk);
+shdv_clk_gen  peri_clk_gen(peri_clk);
+shdv_clk_gen  qref_clk_gen(qref_clk);
 
 initial begin
 
     fabric_clk_gen.period     = 833333fs;
     fabric_clk_gen.jitter     = 0ps;
-    
+
     proc_clk_gen.period       = 1000ps;
     proc_clk_gen.jitter       = 0ps;
-    
+
     peri_clk_gen.period       = 5000ps;
     peri_clk_gen.jitter       = 0ps;
-       
+
     qref_clk_gen.period       = 27027ps;
     qref_clk_gen.jitter       = 0ps;
-    
+
 end
 
 // ===============================================
@@ -124,20 +124,69 @@ assign axi_if.master_if[0].awready  =  mplex_top.cup_proc.AWREADY;
 assign axi_if.master_if[0].wready   =  mplex_top.cup_proc.WREADY;
 
 // axi write response channel:
-assign axi_if.master_if[0].bid      =  mplex_top.cup_proc.BID;		
-assign axi_if.master_if[0].bresp    =  mplex_top.cup_proc.BRESP;	
+assign axi_if.master_if[0].bid      =  mplex_top.cup_proc.BID;
+assign axi_if.master_if[0].bresp    =  mplex_top.cup_proc.BRESP;
 assign axi_if.master_if[0].bvalid   =  mplex_top.cup_proc.BVALID;
 
-// axi read address channel 
+// axi read address channel
 assign axi_if.master_if[0].arready   =  mplex_top.cup_proc.ARREADY;
 
 // axi read data channel
 assign axi_if.master_if[0].rlast   =  mplex_top.cup_proc.RLAST;
-assign axi_if.master_if[0].rresp   =  mplex_top.cup_proc.RRESP;	
+assign axi_if.master_if[0].rresp   =  mplex_top.cup_proc.RRESP;
 assign axi_if.master_if[0].rvalid  =  mplex_top.cup_proc.RVALID;
-assign axi_if.master_if[0].rdata   =  mplex_top.cup_proc.RDATA;  
+assign axi_if.master_if[0].rdata   =  mplex_top.cup_proc.RDATA;
 assign axi_if.master_if[0].rid     =  mplex_top.cup_proc.RID;
 
+//
+//Peripheral AXI slave port connection.
+//
+// axi write address channel:
+assign axi_if.slave_if[0].awready  = mplex_top.cup_fabric.cup_x2p.awready;
+assign axi_if.slave_if[0].awaddr   = mplex_top.cup_fabric.cup_x2p.awaddr;
+assign axi_if.slave_if[0].awvalid  = mplex_top.cup_fabric.cup_x2p.awvalid;
+assign axi_if.slave_if[0].awburst  = mplex_top.cup_fabric.cup_x2p.awburst;
+assign axi_if.slave_if[0].awlock   = mplex_top.cup_fabric.cup_x2p.awlock;
+assign axi_if.slave_if[0].awsize   = mplex_top.cup_fabric.cup_x2p.awsize;
+assign axi_if.slave_if[0].awprot   = mplex_top.cup_fabric.cup_x2p.awprot;
+assign axi_if.slave_if[0].awid     = mplex_top.cup_fabric.cup_x2p.awid;
+assign axi_if.slave_if[0].awlen    = mplex_top.cup_fabric.cup_x2p.awlen;
+assign axi_if.slave_if[0].awcache  = mplex_top.cup_fabric.cup_x2p.awcache;
+//assign axi_if.slave_if[0].awqos  = mplex_top.cup_fabric.cup_x2p.awqos;
+
+// axi write data channel:
+assign axi_if.slave_if[0].wready   = mplex_top.cup_fabric.cup_x2p.wready;
+assign axi_if.slave_if[0].wdata    = mplex_top.cup_fabric.cup_x2p.wdata;
+assign axi_if.slave_if[0].wvalid   = mplex_top.cup_fabric.cup_x2p.wvalid;
+assign axi_if.slave_if[0].wlast    = mplex_top.cup_fabric.cup_x2p.wlast;
+assign axi_if.slave_if[0].wstrb    = mplex_top.cup_fabric.cup_x2p.wstrb;
+
+// axi write response channel:
+assign axi_if.slave_if[0].bid      = mplex_top.cup_fabric.cup_x2p.bid;
+assign axi_if.slave_if[0].bresp    = mplex_top.cup_fabric.cup_x2p.bresp;
+assign axi_if.slave_if[0].bvalid   = mplex_top.cup_fabric.cup_x2p.bvalid;
+assign axi_if.slave_if[0].bready   = mplex_top.cup_fabric.cup_x2p.bready;
+
+// axi read address channel
+assign axi_if.slave_if[0].arready  = mplex_top.cup_fabric.cup_x2p.arready;
+assign axi_if.slave_if[0].araddr   = mplex_top.cup_fabric.cup_x2p.araddr;
+assign axi_if.slave_if[0].arburst  = mplex_top.cup_fabric.cup_x2p.arburst;
+assign axi_if.slave_if[0].arcache  = mplex_top.cup_fabric.cup_x2p.arcache;
+assign axi_if.slave_if[0].arid     = mplex_top.cup_fabric.cup_x2p.arid;
+assign axi_if.slave_if[0].arlen    = mplex_top.cup_fabric.cup_x2p.arlen;
+assign axi_if.slave_if[0].arlock   = mplex_top.cup_fabric.cup_x2p.arlock;
+assign axi_if.slave_if[0].arprot   = mplex_top.cup_fabric.cup_x2p.arprot;
+//assign axi_if.slave_if[0].arqos    = mplex_top.cup_fabric.cup_x2p.arqos;
+assign axi_if.slave_if[0].arsize   = mplex_top.cup_fabric.cup_x2p.arsize;
+assign axi_if.slave_if[0].arvalid  = mplex_top.cup_fabric.cup_x2p.arvalid;
+
+// axi read data channel
+assign axi_if.slave_if[0].rlast    = mplex_top.cup_fabric.cup_x2p.rlast;
+assign axi_if.slave_if[0].rresp    = mplex_top.cup_fabric.cup_x2p.rresp; 
+assign axi_if.slave_if[0].rvalid   = mplex_top.cup_fabric.cup_x2p.rvalid;
+assign axi_if.slave_if[0].rdata    = mplex_top.cup_fabric.cup_x2p.rdata; 
+assign axi_if.slave_if[0].rid      = mplex_top.cup_fabric.cup_x2p.rid;   
+assign axi_if.slave_if[0].rready   = mplex_top.cup_fabric.cup_x2p.rready;   
 
 //////////////////////////////////////////////
 // Hierarchy-Based RTL File List Dumping ////
