@@ -163,36 +163,37 @@ module ingress_tb ();
       $vcdpluson();
     end
 
-    if($test$plusargs("fsdb")) begin                                      // Plusarg to enable FSDB dump
-      if ($value$plusargs("FSDB_ON=%s",str)) begin                        // Plusarg to enable a start sample time after a delay
-        fsdb_on = convert_time(str);                                      // Time to start (Converted time via plusarg)
+    if($test$plusargs("fsdb")) begin                                    // Plusarg to enable FSDB dump
+      if ($value$plusargs("FSDB_ON=%s",str)) begin                      // Plusarg to enable a start sample time after a delay
+        fsdb_on = convert_time(str);                                    // Time to start (Converted time via plusarg)
         $display("FSDB DUMP:  Waiting %s before starting fsdb dump", str);
-        #fsdb_on;                                                         // Wait - time before start
+        #fsdb_on;                                                       // Wait - time before start
       end else begin
-        fsdb_on = 0;                                                      // Time to start (no specified Time, so start at 0)
+        fsdb_on = 0;                                                    // Time to start (no specified Time, so start at 0)
       end
 
-      if ($value$plusargs("FSDB_SIZE=%d",fsdb_file_size)) begin           // Plusarg to specify a FSDB dump file size Limit
-        if (fsdb_file_size<32) begin                                      // Must be at least 32
+      if ($value$plusargs("FSDB_SIZE=%d",fsdb_file_size)) begin         // Plusarg to specify a FSDB dump file size Limit
+        if (fsdb_file_size<32) begin                                    // Must be at least 32
           fsdb_file_size = 32;
         end
       end
 
-      $value$plusargs("FSDB_FILE=%s",fsdb_file);                         // Plusarg to specify user defined FSDB dump file name
+      $value$plusargs("FSDB_FILE=%s",fsdb_file);                        // Plusarg to specify user defined FSDB dump file name
 
       $fsdbAutoSwitchDumpfile(fsdb_file_size,fsdb_file,0,{fsdb_file,"_vf.log"}); // Enablement of Auto file switching
 
-      if ($test$plusargs("fsdb_config")) begin                           // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
+      if ($test$plusargs("fsdb_config")) begin                          // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
         $fsdbDumpvarsToFile ("fsdb.dump.config");
       end else begin
-        $fsdbDumpvars(0,ingress_tb,"+all");                                 // Default - FSDB dump of all signals in the design
+        $fsdbDumpvars(0,ingress_tb,"+all");                             // Default - FSDB dump of all signals in the design
+        $fsdbDumpSVA();
       end
 
-      if ($value$plusargs("FSDB_OFF=%s",str)) begin                      // Plusarg to Enable a stop time of sampling
+      if ($value$plusargs("FSDB_OFF=%s",str)) begin                     // Plusarg to Enable a stop time of sampling
         fsdb_off = convert_time(str) - fsdb_on;                         // Overall Time to stop, not a length of time. (Converted time via plusarg, subtract Start time)
         $display("FSDB DUMP:  Stopping FSDB dump in %s", str);
         if (fsdb_off>0) begin                                           // calculated difference must be greater than 0, else stop imediately
-          #fsdb_off;                                                   // Wait - time before stop
+          #fsdb_off;                                                    // Wait - time before stop
         end
         $fsdbDumpoff();                                                 // Turn off FSDB dumping
         $display("FSDB DUMP :  Stopped FSDB dump");

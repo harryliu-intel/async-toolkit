@@ -90,6 +90,8 @@ Models                    Commands                                 Description
 ------------------------------------------------------------------------------------------------------------
 MBY                    -  bman -mc mby                           # Madison Bay Configuration
 mplex_np_nphy          -  bman -mc mplex_np_nphy                 # Management complex model with no Processor and no PHY.   
+igr                    -  bman -mc igr                           # Ingress testbench
+egr                    -  bman -mc egr                           # Egress testbench
 
 Compile ALL:
   bman -dut mby -mc mby
