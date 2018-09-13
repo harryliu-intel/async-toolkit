@@ -1,3 +1,10 @@
+`include "lib_udp.rdl"
+ 
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+//// Start of the code
+
 reg mesh_freepointer_load_address_r {
   shared;
   HandCoded = true;
