@@ -68,6 +68,8 @@ package mby_mc_seq_lib;
    `include "mby_mc_warm_reset_seq.svh"
    `include "mby_mc_env_cfg_seq.svh"
    
+   `include "mby_mc_axi_random_access_seq.svh"
+   
    `undef  __INSIDE_MBY_MC_SEQ_LIB
 
 endpackage: mby_mc_seq_lib

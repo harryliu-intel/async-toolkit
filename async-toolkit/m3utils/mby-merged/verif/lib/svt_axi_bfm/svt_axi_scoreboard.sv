@@ -182,7 +182,9 @@ class axi_uvm_scoreboard extends uvm_scoreboard;
 
         `uvm_info("write_response", $sformatf("xact:\n%s", resp_xact.sprint()), UVM_FULL)
         response_xact_queue.push_back(resp_xact);
-        -> non_empty_xact_queue;
+        //AK: Slave_IF sees the response before the Master_IF. 
+        // Dont compare until the response is seen by the master.
+        //-> non_empty_xact_queue;
     endfunction
 
     /** Compares the elements from the queue */

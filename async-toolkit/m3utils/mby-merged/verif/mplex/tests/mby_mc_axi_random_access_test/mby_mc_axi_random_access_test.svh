@@ -59,6 +59,9 @@ class mby_mc_axi_random_access_test extends mby_mc_base_test;
         super.build_phase(phase);
         cfg.env_cfg.axi_num_masters = 1;
         cfg.env_cfg.axi_mstr_is_active = 1;
+
+        cfg.env_cfg.axi_num_slaves = 1;
+        cfg.env_cfg.axi_slv_is_active = 0;
         `ovm_info(get_name(), $sformatf("TEST: setting num_master = %0d ",cfg.env_cfg.axi_num_masters), OVM_MEDIUM);
         set_config_object("env", "mby_mc_tb_top_cfg", cfg, 0);
     endfunction : build_phase
@@ -97,15 +100,15 @@ class mby_mc_axi_random_seq extends mby_mc_seq_lib::mby_mc_env_base_seq;
     task body ();
 
         // Variable: axi_directed_seq
-        // Sequence to be executed in this test.  "axi_master_directed_sequence"
-        svt_axi_bfm_pkg::axi_master_directed_sequence  axi_directed_seq;
+        // Sequence to be executed in this test.  "mby_mc_axi_random_access_seq"
+        mby_mc_seq_lib::mby_mc_axi_random_access_seq  axi_directed_seq;
 
         `ovm_info(get_name(), "mby_mc_axi_random_seq is running!", OVM_MEDIUM);
 
-        axi_directed_seq = svt_axi_bfm_pkg::axi_master_directed_sequence::type_id::create("seq");
+        axi_directed_seq = mby_mc_seq_lib::mby_mc_axi_random_access_seq::type_id::create("axi_directed_seq");
         `uvm_do_on_with(axi_directed_seq,
             env.axi_bfm.axi_system_env.master[0].sequencer,
-            {sequence_length == 1;              // number of write followed by read transaction
+            {sequence_length == 2;
             })
 
         `ovm_info(get_name(), $sformatf("mby_mc_axi_random_seq Complete"), OVM_HIGH);
