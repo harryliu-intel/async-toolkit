@@ -17,7 +17,6 @@ enum parser_csum_cfg_validate_l3_length_enum {
 
 
 
-
 // PARSER_PORT_CFG[0..23]
 
 reg parser_port_cfg_r {
