@@ -27,7 +27,7 @@
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
-/*  mby_ppe_mapper_map            mapper;
+  mby_ppe_mapper_map            mapper;
   mby_ppe_cgrp_a_map            cgrp_a;
   mby_ppe_cgrp_b_map            cgrp_b;
   mby_ppe_entropy_map           entropy;
@@ -40,7 +40,7 @@ addrmap mby_ppe_rx_top_map {
   mby_ppe_cm_usage_map          cm_usage;
   mby_ppe_trig_apply_map        trig_apply;
   mby_ppe_trig_apply_misc_map   trig_apply_misc;
-  mby_ppe_trig_usage_map        trig_usage; */
+  mby_ppe_trig_usage_map        trig_usage;
 };
 
 addrmap mby_ppe_tx_top_map {
@@ -67,7 +67,7 @@ addrmap mby_mpt_top_map {
 addrmap mby_mpp_map {
   name = "mby_mpp_map";
   desc = "Mega Port Pair (3.2T)";
-  mby_mpt_top_map mpt[1]; // 2
+  mby_mpt_top_map mpt[2];
   mby_shm_map     shm;
 };
 
@@ -75,7 +75,7 @@ addrmap mby_mpp_map {
 addrmap mby_globals_map {
   name = "mby_globals_map";
   desc = "MBY Globals";
-  mby_mesh_row_map        mesh[1]; // 16
+  mby_mesh_row_map        mesh[16];
   mby_freepointer_top_map freepointer;
   //mby_amba_top_map        amba;
 };
