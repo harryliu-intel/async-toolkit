@@ -47,7 +47,6 @@ typedef struct mbyCongMgmtToRxStatsStruct
     fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
     fm_byte                 TRAFFIC_CLASS; // 3-bit traffic class
     fm_bool                 TX_DROP;       // flag indicating packet drop
-    fm_uint32               TX_LENGTH;     // egress packet data length[byte]
     fm_uint32               TX_PORT;       // egress port
     fm_byte                 TX_TAG;        // egress tag
     fm_byte                 XCAST;

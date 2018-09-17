@@ -6,9 +6,10 @@ clean:
 	make -C parser clean
 	make -C mapper clean
 	make -C basic_fwd clean
+	make -C basic_flood clean
 
 .PHONY: all
-all: test_parser test_mapper test_basic_fwd
+all: test_parser test_mapper test_basic_fwd test_basic_flood
 
 .PHONY: test_all
 test_all: all
@@ -27,3 +28,8 @@ test_mapper:
 test_basic_fwd:
 	@echo "Testing basic forwarding ..."
 	make -C basic_fwd run
+
+.PHONY: test_basic_flood
+test_basic_flood:
+	@echo "Testing basic flooding ..."
+	make -C basic_flood run
