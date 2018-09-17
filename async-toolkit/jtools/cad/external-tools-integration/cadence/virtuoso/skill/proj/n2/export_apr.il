@@ -5,6 +5,7 @@ spar_cell_list =
      "lib.bd.standard.nopipe.SEND_CTRL.0"
      "lib.bd.convert.qdi.BD_TO_QDI_CTRL.0"
      "lib.bd.convert.qdi.QDI_TO_BD_CTRL.0"
+
      ; TOP_HALO (physical only but very common)
      "globals.TOP_HALO.n"
      "globals.TOP_HALO.s"
@@ -29,6 +30,9 @@ spar_cell_list =
   spar_cell_list = (cons (sprintf nil "lib.util.delay.tunable.TDL-L%d-R.0" i) spar_cell_list)
   spar_cell_list = (cons (sprintf nil "lib.util.delay.tunable.TDL-L%d-R.1" i) spar_cell_list)
   )
+(for i 9 16
+  spar_cell_list = (cons (sprintf nil "lib.util.delay.tunable.TDL-L%d-R.1" i) spar_cell_list)
+  )
 
 ; PULSE_CTRL/PULSE_SEND_CTRL
 (for i 0 8
@@ -38,12 +42,21 @@ spar_cell_list =
     )
   )
 
-; 4GBD_CTRL
-(for i 1 8
-  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_false_false-R.0" i) spar_cell_list)
-  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_true_false-R.0" i) spar_cell_list)
-  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.4GBD_CTRL-L%d_false_true-R.0" i) spar_cell_list)
+; BD CTRL
+(for i 4 16
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.CTRL-L%d_false_false-R.0" i) spar_cell_list)
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.CTRL-L%d_true_false-R.0" i) spar_cell_list)
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.CTRL-L%d_false_true-R.0" i) spar_cell_list)
+  spar_cell_list = (cons (sprintf nil "lib.bd.standard.pipeline.CTRL-L%d_true_true-R.0" i) spar_cell_list)
   )
+
+; special purpose cells
+  spar_cell_list = (cons "lib.synchronous.6T.sram.SRAM_SAMPLER.0" spar_cell_list)
+  spar_cell_list = (cons "lib.qdi.buffer.soft.BUF_1of-L2-R.0" spar_cell_list)
+  spar_cell_list = (cons "lib.qdi.serial.funny_register.SHIFT_REG_RO-L0-R.0" spar_cell_list)
+  spar_cell_list = (cons "lib.qdi.metastable.slackless_arbiter.SLACKLESS_ARBITER2.20000" spar_cell_list)
+  spar_cell_list = (cons "core.noc.crossbar.datapath.TAIL_CONTROL.1000" spar_cell_list)
+
 
 ; add nominal threshold versions if they exist
 nom_cell_list = nil
@@ -87,3 +100,5 @@ spar_cell_list = (append spar_cell_list nom_cell_list)
     )
   t
   )
+
+
