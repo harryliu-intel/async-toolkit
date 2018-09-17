@@ -249,6 +249,8 @@ PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
         |
           RdlComponentDefElem.PropertyAssign =>
         |
+          RdlComponentDefElem.EnumDef =>
+        |
           RdlComponentDefElem.ComponentInst(ci) =>
           WITH comp = c.list.defTab.lookup(ci.componentInst.id) DO
             IF comp.type # RdlComponentDefType.T.field THEN

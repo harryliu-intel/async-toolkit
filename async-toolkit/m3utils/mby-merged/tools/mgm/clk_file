@@ -1,4 +1,4 @@
-car_pcie_lcb_clk              500		CLK_DOMAIN_0
+cclk                          1225		CLK_DOMAIN_0
 car_csr_clk                   500		CLK_DOMAIN_1
 car_pcie_hiu_clk              250		CLK_DOMAIN_2
 car_side_clk                  120		CLK_DOMAIN_3

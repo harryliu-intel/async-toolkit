@@ -43,7 +43,7 @@ VCS_SRC  +=	$(SHARED_SRC)/interfaces/par_class_if.sv
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \
-    -assert svaext +define+VCSSIM+INTEL_SVA_OFF \
+    -assert svaext +define+VCSSIM+INTEL_SVA_OFF+MBY_PARSER_BEHAVE_MEMS \
     -Mdir=$(SIM_DIR)/csrc -o $(SIM_DIR)/$@
 
 default: ppe_stm

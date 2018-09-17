@@ -1,0 +1,31 @@
+#  This is a simple text file containing all the info needed to
+#  describe IOs for this block.
+# 
+# 
+# NOTES: 
+#  * Lines beginning with "#%" get ignored when writing the ios table to a .csv file.
+#  * "-" means to use the previous value for that io if defined; if not, use the DEFAULT value.
+#  * Columns with multiple values must have curly braces (e.g., '{sccp scsh}').
+#
+
+###--------------------------------------------------------------------------------------
+### TESTING DYNAMIC COLUMNS in IO table. Just "like" the clocks table.
+###--------------------------------------------------------------------------------------
+
+#% port_pattern  direction   min_delay  driving_cell     ideal_slew  extra
+#  -------       ---------   ---------  ------------     ----------  ------------
+DEFAULT          in            -0.055   a16svt16_sbuf_a8   0.040      none
+DEFAULT          out           -0.015   a16svt16_sbuf_a8   0.040      none
+
+
+#% port_pattern               direction max_delay   clock_name clock_edge active_modes                      
+#  -------                    --------- ---------   ---------- ---------- ----------------------------------
+DEFAULT                       in         0.230         cclk       rise     { func  }
+DEFAULT                       out        0.245         cclk       rise     { func  }
+# DEFAULT  max_delay is margin (w/o extra margin) + 75ps for iso buffer and setup time
+
+
+  *                           in             -         cclk       rise     { func  } 
+  *                           out            -         cclk       rise     { func  } 
+
+

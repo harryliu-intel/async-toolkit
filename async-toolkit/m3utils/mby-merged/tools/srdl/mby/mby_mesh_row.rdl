@@ -212,14 +212,14 @@ reg mesh_arb_rrsp_x_r {
 };
 
 
-addrmap mby_mesh_map {
+addrmap mby_mesh_row_map {
   name = "mby_mesh";
-  desc = "Shared Memory Mesh Register Set";
+  desc = "Shared Memory Mesh Row Register Set";
   Space = "MSG";
   Opcode = "MEM-SB";
   No_IOSF_Primary = true;
   addressing = fullalign;
-
+  
   mesh_arb_rreq_y_r   MESH_ARB_RREQ_Y[8];
   mesh_arb_wreq_y_r   MESH_ARB_WREQ_Y[8];
   mesh_arb_rrsp_y_r   MESH_ARB_RRSP_Y[8];
