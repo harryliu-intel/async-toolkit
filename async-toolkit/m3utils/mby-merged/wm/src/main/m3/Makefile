@@ -17,7 +17,7 @@ METAVERSION=$(shell ToolConfig.pl get_tool_version meta)
 #CM3=/tmp/cm3-all-AMD64_LINUX-d5.10.0-Linux3.0.101-20180514/bin/cm3
 #METAROOT=/nfs/sc/disks/hlp_0015/mnystroe/git/meta-git-2
 
-SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp 
+SVPP=${METAROOT}/rdl/svpp/$(OS_TARG)/svpp
 PERLFE=${METAROOT}/perlfe/$(OS_TARG)/perlfe
 
 NEBULON=$(shell ToolConfig.pl get_tool_path nebulon)
@@ -117,7 +117,7 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 	echo "package com.intel.cg.hpfd.madisonbay.wm.server.dto" > $(SCALA_IMPLICITS)
 	echo "import java.io._" >> $(SCALA_IMPLICITS)
 	echo "object Implicits {" >> $(SCALA_IMPLICITS)
-	grep -h implicit $(WM_NET_ROOT)/scala_generated/* >> $(SCALA_IMPLICITS)
+	grep -h implicit $(WM_NET_ROOT)/scala_generated/{Fm,Iosf}* >> $(SCALA_IMPLICITS)
 	echo "}" >> $(SCALA_IMPLICITS)
 
 $(META_STRUCTS): $(STRUCTGEN) $(INTERLANG)
@@ -126,7 +126,7 @@ $(META_STRUCTS): $(STRUCTGEN) $(INTERLANG)
 	pwd
 	cd $(MODEL_SERVER_ROOT)/src && ../../structgen/$(OS_TARG)/structgen interlang.scm exit
 	cd $(MODEL_SERVER_ROOT)/src/wm_meta_common/src && $(CM3) -x
-	cd $(MODEL_SERVER_ROOT)/src/mby_struct/src && $(CM3) -x 
+	cd $(MODEL_SERVER_ROOT)/src/mby_struct/src && $(CM3) -x
 
 rpc_structs: $(M3_STRUCTS) $(SCALA_STRUCTS) $(META_STRUCTS)
 
@@ -177,7 +177,7 @@ $(WM_NET_LIB): $(STRUCTGEN) $(GENVIEWS) $(HLPLIB)
 
 
 $(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
-	cd model_server && $(CM3) -x 
+	cd model_server && $(CM3) -x
 
 model_server: $(MODEL_SERVER)
 
@@ -193,6 +193,6 @@ clean:
 	rm -rf $(MODEL_SERVER_ROOT)/src/mby_struct
 	rm -rf $(MODEL_SERVER_ROOT)/src/wm_meta_common
 	rm -rf $(WM_NET_ROOT)/scala_generated
-	find . -name $(OS_TARG) | xargs rm -rf 
-	find ../c -name $(OS_TARG) | xargs rm -rf 
+	find . -name $(OS_TARG) | xargs rm -rf
+	find ../c -name $(OS_TARG) | xargs rm -rf
 	rm -f $(TOP)

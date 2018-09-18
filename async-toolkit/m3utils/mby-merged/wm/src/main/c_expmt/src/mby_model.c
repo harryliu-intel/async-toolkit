@@ -7,8 +7,9 @@
 #include <string.h>
 #include <stdio.h>
 
-// This is the persistent state of the model
-static fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE];
+// This is the persistent state of the model registers:
+static fm_uint32   regs[MBY_REGISTER_ARRAY_SIZE];
+static mby_top_map tmap;
 
 fm_status mbyResetModel(const fm_uint32 sw)
 {
@@ -75,6 +76,9 @@ fm_status mbySendPacket
     if (sw != 0)
         return FM_ERR_UNSUPPORTED;
 
+    // RX top CSR map:
+    mby_ppe_rx_top_map * const rx_tmap = &(tmap.mpt[0].rx_ppe);
+
     // Input struct:
     mbyRxMacToParser mac2par;
 
@@ -84,7 +88,7 @@ fm_status mbySendPacket
     mac2par.RX_PORT   = (fm_uint32) port;
 
     // Call RX pipeline:
-    RxPipeline(regs, &mac2par, &rxs2rxo);
+    RxPipeline(regs, rx_tmap, &mac2par, &rxs2rxo);
 
     return FM_OK;
 }
@@ -100,6 +104,9 @@ fm_status mbyReceivePacket
 {
     if (sw != 0)
         return FM_ERR_UNSUPPORTED;
+
+    // TX top CSR map:
+    mby_ppe_tx_top_map * const tx_tmap = &(tmap.mpt[0].tx_ppe);
 
     // Input struct:
     txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
@@ -131,7 +138,7 @@ fm_status mbyReceivePacket
     mbyTxStatsToTxMac txs2mac;
 
     // Call RX pipeline:
-    TxPipeline(regs, &txi2mod, &txs2mac);
+    TxPipeline(regs, tx_tmap, &txi2mod, &txs2mac);
 
     // Populate output:
     *port   = txs2mac.TX_PORT;

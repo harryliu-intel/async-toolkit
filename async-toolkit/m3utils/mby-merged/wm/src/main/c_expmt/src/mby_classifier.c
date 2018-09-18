@@ -2,6 +2,7 @@
 
 // Copyright (C) 2018 Intel Corporation
 
+#include <mby_top_map.h>
 #include "mby_mapper.h"
 #include "mby_classifier.h"
 #include "mby_crc32.h"
@@ -1349,8 +1350,9 @@ static void transformActions
 void Classifier
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMapperToClassifier * const in,
-          mbyClassifierToHash   * const out
+    mby_ppe_rx_top_map          * const rx_top_map,
+    mbyMapperToClassifier const * const in,
+    mbyClassifierToHash         * const out
 )
 {
     // Read inputs from the Mapper:

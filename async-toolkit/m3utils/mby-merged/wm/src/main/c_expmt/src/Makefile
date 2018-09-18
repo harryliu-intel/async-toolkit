@@ -2,9 +2,11 @@
 
 # Copyright (C) 2018 Intel Corporation
 
-INC_DIR = .
+INC_DIR1 = .
+INC_DIR2 = ../../c                                  # uint.h
+INC_DIR3 = ../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
 
-INCLUDES  = -I$(INC_DIR)
+INCLUDES = -I$(INC_DIR1) -I$(INC_DIR2) -I$(INC_DIR3)
 
 SOURCES += mby_crc32.c
 SOURCES += mby_bitfield.c
