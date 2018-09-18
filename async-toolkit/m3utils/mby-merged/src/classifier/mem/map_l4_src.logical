@@ -1,0 +1,12 @@
+Ram Type                    <REGULAR, ROM, TCAM>    = REGULAR
+Ram Ports                   <1rw, 1r1w, 2rw>        = 1rw
+Ram Lines Number            <Integer Number>        = 64
+Ram Data Width              <Integer Number>        = 64
+Ram Protection Type         <ECC, Parity, None>     = ECC
+Post Chk ECC Sample         <Yes, CLKG, No>         = Yes
+Memory clock name A         <Write Clock Name>      = cclk
+Memory clock name B         <Write Clock Name>      = cclk
+Ram Clear-On-Reset          <Yes, Number, No, LL>   = No
+Memory Instances            <Integer Number>        = 1
+Ram Fast Clock Frequency    <Real Number>           = 1225
+Disable Suffix              <Yes, No>               = Both

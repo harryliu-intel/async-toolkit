@@ -1802,5 +1802,6 @@ void Mapper
     out->PARITY_ERROR     = FALSE; // parked at 0 <-- REVISIT!!!
     out->PA_DROP          = in->PA_DROP;
     out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
+    out->RX_DATA          = in->RX_DATA;
     out->RX_LENGTH        = in->RX_LENGTH;
 }

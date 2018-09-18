@@ -14,6 +14,9 @@ void Triggers
 {
     // Note: this stage is empty for now. Will be coded up in the next sprint. <-- REVISIT!!!
 
+    /* no_modify action comes from triggers. */
+    fm_bool no_modify = FALSE;
+
     // Pass thru:
     out->ACTION            = in->ACTION;
     out->DROP_TTL          = in->DROP_TTL;
@@ -29,7 +32,7 @@ void Triggers
     out->MARK_ROUTED       = in->MARK_ROUTED;
     out->MIRTYP            = in->MIRTYP;
     out->MOD_IDX           = in->MOD_IDX;
-    out->NO_MODIFY         = in->NO_MODIFY;
+    out->NO_MODIFY         = no_modify;
     out->OOM               = in->OOM;
     out->PARSER_INFO       = in->PARSER_INFO;
     out->PM_ERR            = in->PM_ERR;

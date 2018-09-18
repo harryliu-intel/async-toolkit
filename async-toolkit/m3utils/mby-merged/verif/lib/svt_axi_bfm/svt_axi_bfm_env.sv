@@ -51,6 +51,10 @@ class svt_axi_bfm_env extends shdv_base_env;
     // Interface handle to the Main SVT AXI
     svt_axi_vif axi_vif;
 
+    // Variable:  axi_reset_vif
+    // Interface handle to AXI reset Interface.
+    virtual axi_reset_if axi_reset_vif;
+
     // Variable: sequencer
     // Virtual Sequencer class for Synopsys AXI BFM
     axi_virtual_sequencer sequencer;
@@ -111,6 +115,9 @@ class svt_axi_bfm_env extends shdv_base_env;
         else begin
             uvm_config_db#(svt_axi_vif)::set(this, "axi_system_env", "vif", axi_vif);
         end
+        if (!uvm_config_db#(virtual axi_reset_if)::get(this, "", "axi_reset_if", axi_reset_vif)) begin
+            `ovm_fatal(get_name(),"Unable to acquire handle to axi_reset_vif!");
+        end
 
         //Construct the system agent
         if ( axi_cfg == null) begin
@@ -127,7 +134,8 @@ class svt_axi_bfm_env extends shdv_base_env;
         sequencer = axi_virtual_sequencer::type_id::create("sequencer", this);
 
         // Create the scoreboard
-        axi_scoreboard = axi_uvm_scoreboard::type_id::create("axi_scoreboard", this);
+        //axi_scoreboard = axi_uvm_scoreboard::type_id::create("axi_scoreboard", this);
+        //axi_scoreboard.axi_reset_if = axi_reset_vif;
 
     //Create the Master Sink
     //master_listener = new("master_listener", this);
@@ -152,18 +160,19 @@ class svt_axi_bfm_env extends shdv_base_env;
         //item_observed_before_export and item_observed_after_export ports of the
         //scoreboard.
         //TODO: fix the connection for multi master/slave.
-        if(axi_cfg.num_masters) begin
-            axi_system_env.master[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_initiated_export);
-        end
-        if(axi_cfg.num_slaves) begin
-            axi_system_env.slave[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_response_export);
-        end
-    //
-    //Connect the listener class instances with analysis ports of Master and Slave
-    //agent.
-    //
-    //axi_system_env.master[0].monitor.item_observed_port.connect(master_listener.analysis_export);
-    // axi_system_env.slave[0].monitor.item_observed_port.connect(slave_listener.analysis_export);
+        //if(axi_cfg.num_masters) begin
+        //    axi_system_env.master[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_initiated_export);
+        //end
+        //if(axi_cfg.num_slaves) begin
+        //    axi_system_env.slave[0].monitor.item_observed_port.connect(axi_scoreboard.item_observed_response_export);
+        //end
+
+        //
+        //Connect the listener class instances with analysis ports of Master and Slave
+        //agent.
+        //
+        //axi_system_env.master[0].monitor.item_observed_port.connect(master_listener.analysis_export);
+        // axi_system_env.slave[0].monitor.item_observed_port.connect(slave_listener.analysis_export);
 
     endfunction: connect_phase
 
@@ -223,12 +232,16 @@ class svt_axi_bfm_env extends shdv_base_env;
             axi_cfg.master_cfg[idx-1].id_width = axi_bfm_defines::AXI_ID_WIDTH;
             axi_cfg.master_cfg[idx-1].is_active = mstr_is_active;
 
+            //Enable tracker file generation.
+            axi_cfg.master_cfg[idx-1].enable_tracing = 1;
+            axi_cfg.master_cfg[idx-1].enable_reporting = 1;
+            axi_cfg.master_cfg[idx-1].data_trace_enable = 1;
+
             // Enable transaction level coverage
             axi_cfg.master_cfg[idx-1].transaction_coverage_enable = 1;
             // Enable protocol file generation for Protocol Analyzer
             //axi_cfg.master_cfg[idx-1].enable_xml_gen = 1;
             axi_cfg.master_cfg[idx-1].pa_format_type = svt_xml_writer::FSDB;
-            axi_cfg.master_cfg[idx-1].transaction_coverage_enable = 1;
             axi_cfg.master_cfg[idx-1].reordering_algorithm = svt_axi_port_configuration::RANDOM;
             axi_cfg.master_cfg[idx-1].write_resp_reordering_depth = `SVT_AXI_MAX_WRITE_RESP_REORDERING_DEPTH;
         end
@@ -240,13 +253,17 @@ class svt_axi_bfm_env extends shdv_base_env;
             axi_cfg.slave_cfg[idx-1].addr_width = axi_bfm_defines::AXI_ADDR_WIDTH;
             axi_cfg.slave_cfg[idx-1].id_width = axi_bfm_defines::AXI_ID_WIDTH;;
 
+            //Enable tracker file generation.
+            axi_cfg.slave_cfg[idx-1].enable_tracing = 1;
+            axi_cfg.slave_cfg[idx-1].enable_reporting = 1;
+            axi_cfg.slave_cfg[idx-1].data_trace_enable = 1;
+
             // Enable transaction level coverage
             axi_cfg.slave_cfg[idx-1].transaction_coverage_enable = 1;
 
             // Enable protocol file generation for Protocol Analyzer
             //axi_cfg.slave_cfg[idx-1].enable_xml_gen = 1;
             axi_cfg.slave_cfg[idx-1].pa_format_type= svt_xml_writer::FSDB;
-            axi_cfg.slave_cfg[idx-1].transaction_coverage_enable = 1;
             axi_cfg.slave_cfg[idx-1].reordering_algorithm = svt_axi_port_configuration::RANDOM;
             axi_cfg.slave_cfg[idx-1].write_resp_reordering_depth = `SVT_AXI_MAX_WRITE_RESP_REORDERING_DEPTH;
         //this.set_addr_range(0,64'h0,64'hffff_ffff_ffff_ffff);

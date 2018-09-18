@@ -457,7 +457,6 @@ typedef struct mbyTxInToModifierStruct
     fm_uint64               TAIL_CSUM_LEN; // L4 CSUM related information
     fm_byte               * TX_DATA;       // egress (transmit) packet data
     fm_bool                 TX_DROP;       // flag indicating packet drop
-    fm_uint32               TX_LENGTH;     // egress packet data length[byte]
     fm_byte                 TX_TAG;        //
     fm_byte                 XCAST;         //
 
