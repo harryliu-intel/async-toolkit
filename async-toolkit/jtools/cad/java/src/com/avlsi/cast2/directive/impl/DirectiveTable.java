@@ -341,24 +341,25 @@ public class DirectiveTable {
         registerDirective(CSP, LATENCY, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, LATENCY_PER_STAGE, FLOAT_TYPE, new Float(2.0));
         registerDirective(CSP, SLACK_PER_STAGE, FLOAT_TYPE, new Float(0.5));
-        registerDirective(CSP, CYCLE_TIME, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, CYCLE_TIME_IN, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, CYCLE_TIME_OUT, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
-        registerDirective(CSP, DEFAULT_CYCLE_TIME, FLOAT_TYPE, new Float(10));
+        registerDirective(CSP, CYCLE_TIME, FLOAT_TYPE, null);
         registerDirective(CSP, FB, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, FB_NEUTRAL, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, FB_VALID, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, BF, WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
-        registerDirective(CSP, TIME_UNIT, INT_TYPE, new Integer(100));
+        registerDirective(CELL, TIME_UNIT, INT_TYPE, new Integer(100));
         registerDirective(CSP, INTERNAL_SLACK, WIDE_CHANNEL_TYPE, INT_TYPE, null);
         registerDirective(CSP, SYNCHRONIZE_CHANNELS, arrayify(WIDE_CHANNEL_TYPE), BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CSP, SLACKER_TIME, CSP_LVALUE, FLOAT_TYPE, new Float(0));
-        registerDirective(SUBCELL, SLACKER_TIME, INSTANCE_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(CSP, SLACKER_TIME_INPUTS, FLOAT_TYPE, new Float(0));
         registerDirective(CSP, SLACKER_TIME_OUTPUTS, FLOAT_TYPE, new Float(0));
-        registerDirective(CSP, LATENCY_PER_SLACK, FLOAT_TYPE, new Float(1.0));
-        registerDirective(CSP, LATENCY_PER_SLACK, WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(1));
-        registerDirective(CSP, CYCLE_TIME, FLOAT_TYPE, new Float(10));
+        registerDirective(CSP, LATENCY_PER_SLACK, FLOAT_TYPE, new Float(2.0));
+        registerDirective(CSP, LATENCY_PER_SLACK, WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(2));
+        registerDirective(CSP, CSP_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
+        registerDirective(CSP, CSP_TIME_INPUTS, FLOAT_TYPE, null);
+        registerDirective(CSP, CSP_TIME_OUTPUTS, FLOAT_TYPE, null);
+        registerDirective(CSP, CONDITION_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
 
         // see bug 6085
         registerDirective(CSP, STRICT_VARS, BOOLEAN_TYPE, Boolean.FALSE);
@@ -383,7 +384,6 @@ public class DirectiveTable {
         registerDirective(CELL, SLACKER_IS_SLACK, BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(CELL, SLACKER_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(CELL, CONDITION_ORDER, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
-        registerDirective(CELL, CONDITION_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(CELL, CONDITION_GROUP, POSSIBLY_WIDE_CHANNEL_TYPE, INT_TYPE, new Integer(0));
         registerDirective(CELL, SLACKER_FREE_SLACK, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
         registerDirective(SUBCELL, SLACKER_FREE_SLACK, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
@@ -415,6 +415,15 @@ public class DirectiveTable {
         registerDirective(CELL, SLINT_IGNORE, arrayify(DEEP_HALFOP_TYPE), BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(PRS, SLINT_IGNORE, arrayify(DEEP_HALFOP_TYPE), BOOLEAN_TYPE, Boolean.FALSE);
         registerDirective(SUBCELL, SLINT_IGNORE, arrayify(DEEP_HALFOP_TYPE), BOOLEAN_TYPE, Boolean.FALSE);
+
+        registerDirective(SUBCELL, TIME, INSTANCE_TYPE, FLOAT_TYPE, new Float(0));
+        registerDirective(SUBCELL, CYCLE_TIME, FLOAT_TYPE, null);
+        registerDirective(SUBCELL, CYCLE_TIME, CHANNEL_TYPE, FLOAT_TYPE, null);
+
+        registerDirective(CELL, CYCLE_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
+        registerDirective(CELL, CYCLE_TIME, FLOAT_TYPE, null);
+        registerDirective(CELL, CYCLE_TIME_INPUTS, FLOAT_TYPE, null);
+        registerDirective(CELL, CYCLE_TIME_OUTPUTS, FLOAT_TYPE, null);
         
         /** VDCVerify directives */
         registerDirective(CELL, VDC_LEAF, BOOLEAN_TYPE, Boolean.FALSE);

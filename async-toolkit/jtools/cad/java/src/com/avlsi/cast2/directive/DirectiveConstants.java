@@ -202,6 +202,12 @@ public interface DirectiveConstants {
     String IMPLICIT_INIT = "implicit_init";
     String INTERNAL_SLACK = "internal_slack";
     String SYNCHRONIZE_CHANNELS = "synchronize_channels";
+    String CSP_TIME = "csp_time";
+    String CSP_TIME_INPUTS = "csp_time_inputs";
+    String CSP_TIME_OUTPUTS = "csp_time_outputs";
+    String CYCLE_TIME_INPUTS = "cycle_time_inputs";
+    String CYCLE_TIME_OUTPUTS = "cycle_time_outputs";
+    String TIME = "time";
 
     /** DFX related directives */
     String ASYNC_SCAN_INPUTS = "async_scan_inputs";

@@ -805,16 +805,34 @@ public final class DirectiveUtils {
 
     public static ChannelTimingInfo getTiming(final CellInterface cell,
                                               final String channel,
-                                              final int defStages) {
-        return getTiming(cell, BlockInterface.CSP, channel, defStages);
+                                              final Float defaultCycleTime) {
+        return getTiming(cell, BlockInterface.CSP, channel, 1, defaultCycleTime);
     }
 
+    public static ChannelTimingInfo getTiming(final CellInterface cell,
+                                              final String channel,
+                                              final int defStage) {
+        return getTiming(cell, BlockInterface.CSP, channel, defStage);
+    }
+    
     public static ChannelTimingInfo getTiming(final CellInterface cell,
                                               final String block,
                                               final String channel,
                                               final int defStages) {
+        return getTiming(cell, block, channel, defStages, null);
+
+   }
+
+    public static ChannelTimingInfo getTiming(final CellInterface cell,
+                                              final String block,
+                                              final String channel,
+                                              final int defStages,
+                                              final Float defaultCycleTime) {
         final Function<String,Object> getWideDir = dir ->
             getBlockDirective(cell, block, dir, DirectiveConstants.WIDE_CHANNEL_TYPE)
+                   .get(channel);
+        final Function<String,Object> getTopPosWideDir = dir ->
+            getTopLevelDirective(cell, dir, DirectiveConstants.POSSIBLY_WIDE_CHANNEL_TYPE)
                    .get(channel);
 
         // find dynamic_slack, a scalar quantity that describes the maximum
@@ -822,8 +840,9 @@ public final class DirectiveUtils {
         final Integer dynslack = (Integer) getWideDir.apply(DirectiveConstants.DYNAMIC_SLACK);
 
         // find cycle_time
-        final Float defaultct = (Float) getBlockDirective(cell, block, DirectiveConstants.CYCLE_TIME);
-        final Float ct = (Float) getWideDir.apply(DirectiveConstants.CYCLE_TIME);
+        final Float defaultct = (defaultCycleTime == null) ?
+            (Float) getTopLevelDirective(cell, DirectiveConstants.CYCLE_TIME) : defaultCycleTime;
+        final Float ct = (Float) getTopPosWideDir.apply(DirectiveConstants.CYCLE_TIME);
         final float cycleTime =
             ct == null ? defaultct.floatValue() : ct.floatValue();
 
@@ -930,7 +949,7 @@ public final class DirectiveUtils {
         }
 
         // find the conversion to DSim units
-        final int timeUnit = ((Integer) getBlockDirective(cell, block, DirectiveConstants.TIME_UNIT)).intValue();
+        final int timeUnit = ((Integer) getTopLevelDirective(cell, DirectiveConstants.TIME_UNIT)).intValue();
 
         return new ChannelTimingInfo() {
             public int getSlack() { return slack; }
