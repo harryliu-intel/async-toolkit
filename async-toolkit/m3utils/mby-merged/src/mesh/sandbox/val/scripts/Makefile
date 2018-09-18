@@ -17,7 +17,8 @@ SL2_LIB      ?= /p/hdk/rtl/ip_models/shdk74/sl2_library/sl2_library-srvr10nm-apr
 SL2_LIB_IP16 ?= /p/hdk/rtl/ip_models/shdk74/sl2lib_ip16/sl2lib_ip16-srvr10nm-latest
 SVA_LIB      ?= /p/hdk/rtl/cad/x86-64_linux26/dt/sva_lib/8.1/SVA_LIB
 VCS_HOME     ?= /p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/L-2016.06-SP2-7
-export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME
+VCS_TARGET_ARCH ?= suse64
+export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME VCS_TARGET_ARCH
 
 ################################################################################
 # Other project-related options
@@ -83,7 +84,7 @@ vars:
 	@# List of variables set in VARS, which by default is all make variables
 	@$(foreach v,$(filter-out .VARIABLES VARS,$(VARS)),echo "$v = $($v)";)
 
-DIRS ?= LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB BINROOT RUNROOT URG_REPORTDIR
+DIRS ?= LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME BINROOT RUNROOT URG_REPORTDIR
 .PHONY : dirs
 dirs:
 	@# Prints list of interesting dirs and their values

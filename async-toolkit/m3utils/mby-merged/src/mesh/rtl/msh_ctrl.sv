@@ -57,8 +57,18 @@ import mesh_pkg::*;                                             // import declar
 //-----------------------------------------------------------------------------
 // ..., ... stages :  <short logic description>
 //-----------------------------------------------------------------------------
-// separate module to support physical grouping
 
+msh_wr_req msh_wr_req (
+
+    .mclk   (mclk)
+
+);
+
+msh_rd_req msh_rd_req (
+
+    .mclk   (mclk)
+
+);
 
 //**********************************************************************************************************************
 // OUTPUT SECTION 
