@@ -2,12 +2,12 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.switch_wm.Packet
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.{PacketHeader, PipelineStage}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Tcam._
-import com.intel.cg.hpfd.madisonbay.wm.switch_wm._
+import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.nibbles
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{IPVersion, ParserOutput, PortIndex}
+import com.intel.cg.hpfd.madisonbay.wm.util.Packet
 
 class ParserState(val w : List[Short], val op : AluOperation, val state : Short, val ptr : Short)
 object ParserState {

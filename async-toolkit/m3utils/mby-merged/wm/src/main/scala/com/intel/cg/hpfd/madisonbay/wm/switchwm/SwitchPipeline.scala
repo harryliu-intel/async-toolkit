@@ -3,8 +3,8 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 import com.intel.cg.hpfd.csr.generated.mby_ppe_rx_top_map
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe._
-import com.intel.cg.hpfd.madisonbay.wm.switch_wm.Packet
-import com.intel.cg.hpfd.madisonbay.wm.switch_wm._
+import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.nibbles
+import com.intel.cg.hpfd.madisonbay.wm.util.Packet
 
 
 class PacketHeader(val bytes : IndexedSeq[Byte]) {

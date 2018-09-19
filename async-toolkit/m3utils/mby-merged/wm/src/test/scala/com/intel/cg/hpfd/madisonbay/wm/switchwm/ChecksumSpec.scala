@@ -1,7 +1,9 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import org.scalatest._
-import com.intel.cg.hpfd.madisonbay.wm.switch_wm._
+
+import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.RichByte
+import com.intel.cg.hpfd.madisonbay.wm.util.IPV4Util.checksum
 
 /**
   * Validate 1's complement based checksum computation over arrays of bytes. Use publically available

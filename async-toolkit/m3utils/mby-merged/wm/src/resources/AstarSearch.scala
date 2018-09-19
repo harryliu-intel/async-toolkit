@@ -1,7 +1,4 @@
-package com.intel.cg.hpfd.madisonbay.wm.example
-
-import scala.collection.mutable
-import scala.io.Source
+package com.intel.cg.hpfd.madisonbay.wm.example;
 
 /** Implements A-star search of a text format maze
   *

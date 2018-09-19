@@ -3,7 +3,8 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 import java.io.File
 
 import org.scalatest.{FlatSpec, Matchers}
-import com.intel.cg.hpfd.madisonbay.wm.switch_wm.loadPcap
+
+import com.intel.cg.hpfd.madisonbay.wm.util.Packet
 
 /**
   * Test the 'pcap' parsing capability.
@@ -16,6 +17,6 @@ class PcapSpec extends FlatSpec with Matchers {
   val pcapFile : File = new File("src/test/data/scapy.pcap")
   s"The file ${pcapFile}" should s"have one packet in it" in {
     println(System.getenv("PWD"))
-    loadPcap(pcapFile).length shouldEqual 1
+    Packet.loadPcap(pcapFile).length shouldEqual 1
   }
 }

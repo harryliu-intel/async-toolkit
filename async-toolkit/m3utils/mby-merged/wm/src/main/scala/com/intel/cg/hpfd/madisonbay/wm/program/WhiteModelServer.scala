@@ -3,11 +3,18 @@ package com.intel.cg.hpfd.madisonbay.wm.program
 import java.io._
 
 import com.intel.cg.hpfd.csr.RdlRegister
-import com.intel.cg.hpfd.csr.generated._
+import com.intel.cg.hpfd.csr.generated.{mby_top_map, mby_ppe_modify_map, mod_profile_group_r}
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
-import com.intel.cg.hpfd.madisonbay.wm.server.dto._
-import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
-import com.intel.cg.hpfd.madisonbay.wm.switch_wm._
+
+import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits.{osToFmModelMessageHdrOutputStream, osToIosfRegCompNoDataOutputStream,
+isToIosfRegBlkDataInputStream, isToFmModelMessageHdrInputStream, osToIosfRegCompDataHdrOutputStream,
+isToFmModelSetEgressInfoHdrInputStream, osToFmModelMsgPacketEotOutputStream, osToFmModelDataTypeOutputStream,
+isToFmModelDataTypeInputStream}
+import com.intel.cg.hpfd.madisonbay.wm.server.dto.{IosfRegReadReq, IosfRegWriteReq, IosfRegBlkWriteReqHdr,
+IosfRegCompNoData, IOSF, IosfRegCompDataHdr,
+FmModelMessageHdr, FmModelMsgType, FmModelMsgPacketEot, FmModelDataType}
+
+import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.RichByteArray
 
 
 object WhiteModelServer {

@@ -7,7 +7,7 @@ class AstarSpec extends FunSpec  {
     val sep = java.io.File.separator
     "src" + sep + "test" + sep + "data" + sep + f
   }
-
+/*
   describe ("5.txt") {
     it("should have a no path found ") {
       val (source, goal, xdim, ydim, blockages) = AstarSearch.readProblem(computeExampleFilePath("5.txt"))
@@ -34,5 +34,5 @@ class AstarSpec extends FunSpec  {
       assert(resultPath.isDefined)
       assert(resultPath.get.size == optimalLength)
     }
-  }
+  }*/
 }

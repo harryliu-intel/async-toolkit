@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm
+package com.intel.cg.hpfd.madisonbay.wm.util
 
 trait DegenerateIndexedSeq[+A] extends IndexedSeq[A] {
   require(length == 1, "Degenerate list only makes sense for size 1")
