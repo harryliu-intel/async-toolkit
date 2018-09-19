@@ -1,14 +1,16 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr.generated.{mby_ppe_parser_map, parser_ana_s_r, parser_ana_w_r}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.PacketHeader
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ParserStage._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Tcam.{parserAnalyzerTcamMatchBit, tcamMatchSeq}
 
 
 class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
-  case class Action(val aa: AnalyzerAction, extractA: List[ExtractAction], excAction: ExceptionAction) {
+
+  case class Action(aa: AnalyzerAction, extractA: List[ExtractAction], excAction: ExceptionAction) {
+
     def apply(ps: ParserState, pf: PacketFlags, po: Parser.ProtoOffsets)(ph: PacketHeader ): (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
       val currentOffset = ps.ptr
       // is there an error condition requiring an abort (i.e. without processing this stage)
@@ -23,6 +25,7 @@ class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
         }
       }
     }
+
   }
 
   /**
@@ -40,13 +43,13 @@ class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
     val exceptionActions = csr.PARSER_EXC(myindex).map(x => new ExceptionAction(x.EX_OFFSET.toShort, x.PARSING_DONE.apply == 1))
     val matcher = tcamMatchSeq(parserAnalyzerTcamMatchBit) _
 
-    (wcsr zip kcsr) zip ((analyzerActions, extractActions, exceptionActions).zipped.toIterable) collectFirst ({
+    (wcsr zip kcsr) zip (analyzerActions, extractActions, exceptionActions).zipped.toIterable collectFirst {
       case (x, y) if matcher(Seq(
         (x._1.W0_MASK, x._1.W0_VALUE, w0),
         (x._1.W1_MASK, x._1.W1_VALUE, w1),
         (x._2.STATE_MASK, x._2.STATE_VALUE, state)
       )) => Action(y._1, y._2, y._3)
-    })
+    }
   }
 
   def apply(ph: PacketHeader, ps: ParserState, pf: PacketFlags, fields : ProtoOffsets, exception: Option[ParserException]) : (ParserState, PacketFlags, ProtoOffsets, Option[ParserException]) = {
@@ -57,7 +60,7 @@ class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
       // if nothing matches, do nothing
       case (exc, None) => (ps, pf, fields, exc)
         // otherwise, apply the action
-      case (_, Some(action)) => action(ps, pf, fields)(ph)
+      case (_, Some(act)) => act(ps, pf, fields)(ph)
     }
   }
 }
@@ -82,9 +85,9 @@ object ParserStage {
 
   class ExceptionAction( val exOffset: Short, val parsingDone: Boolean) {
     def x (ph: PacketHeader, currentOffset: Int, stage: Int): Option[ParserException] = {
-       if (eos(ph, currentOffset) & ph.eop ) Some(new ParseDepthExceededException(stage))
-       else if (eos(ph, currentOffset) & ph.eop) Some(new ParseDepthExceededException(stage))
-       else if (parsingDone) Some(new ParserDoneException(stage))
+       if (eos(ph, currentOffset) & ph.eop ) Some(ParseDepthExceededException(stage))
+       else if (eos(ph, currentOffset) & ph.eop) Some(ParseDepthExceededException(stage))
+       else if (parsingDone) Some(ParserDoneException(stage))
        else None
     }
     // EOP = (if last byte of non-FCS payload is in current segment) ? TRUE: FALSE -- stored in packet header
@@ -94,4 +97,5 @@ object ParserStage {
       ph.adjustedSegmentLength < currentOffset + exOffset
     }
   }
+
 }

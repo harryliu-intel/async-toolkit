@@ -2,7 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr.generated._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Mapper.{MACLookupResult, MACMapperResult, RewriteProfileType, RewriteSource}
-import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.nibbles
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.Implicits
 import ppe._
 
 class Mapper(val csr: mby_ppe_mapper_map) {

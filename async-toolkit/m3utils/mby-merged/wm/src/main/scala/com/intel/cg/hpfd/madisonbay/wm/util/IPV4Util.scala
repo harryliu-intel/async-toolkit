@@ -1,6 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.util
 
 object IPV4Util {
+
   /**
     * Compute 1's complement based IPv4 checksum over an array of bytes
     * @see https://en.wikipedia.org/wiki/IPv4_header_checksum
@@ -8,6 +9,7 @@ object IPV4Util {
     * @return
     */
   def checksum(bytes: Seq[Byte]): Short = {
+
     def foldToShort(x: Int): Short = {
       val lo = x & 0xffff
       val hi = (x >> 16) & 0xffff
@@ -15,6 +17,7 @@ object IPV4Util {
       if ((folded >> 16) != 0) foldToShort(folded)
       else folded.toShort
     }
+
     def addUnsignedShort(acc: Int, addend: Short): Int = acc + (addend.toInt & 0xffff)
 
     // sum up the 16-bit words
@@ -33,4 +36,5 @@ object IPV4Util {
     // fold the high and low 16 bit components together and bitwise invert the result to get the checksum
     (~foldToShort(sum) & 0xFFFF).toShort
   }
+
 }

@@ -1,10 +1,13 @@
 package com.intel.cg.hpfd.madisonbay.wm.util
 
 import java.io.{DataInputStream, FileInputStream}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.reverseInt
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtShort.reverseShort
 
 case class Packet(bytes: Array[Byte])
 
 object Packet {
+
   /**
     * Bring in a PCAP file's contents as packets
     *
@@ -13,15 +16,6 @@ object Packet {
     * @return
     */
   def loadPcap(f: java.io.File): Seq[Packet] = {
-    def reverse(s: Short): Short = {
-      (((s >> 8) & 0xff) | (s << 8)).toShort
-    }
-    def reverseI(i: Int): Int = {
-      ((i >> 24) & 0xff) |
-        ((i >> 8) & 0xff00) |
-        ((i << 8) & 0x00ff0000) |
-        ((i << 24) & 0xff000000)
-    }
 
     case class pcap_hdr_s ( reverse: Boolean,      /* magic number */
                             version_major: Short,  /* major version number */
@@ -42,22 +36,22 @@ object Packet {
             false
         }
         if (rev)
-          new pcap_hdr_s(rev, reverse(is.readShort()), reverse(is.readShort()), reverseI(is.readInt()), reverseI(is.readInt()), reverseI(is.readInt()), reverseI(is.readInt()))
+          new pcap_hdr_s(rev, reverseShort(is.readShort()), reverseShort(is.readShort()), reverseInt(is.readInt()), reverseInt(is.readInt()), reverseInt(is.readInt()), reverseInt(is.readInt()))
         else
           new pcap_hdr_s(rev, is.readShort(), is.readShort(), is.readInt(), is.readInt(), is.readInt(), is.readInt())
       }
     }
 
-    case class pcaprec_hdr_s (
-                               ts_sec: Int,         /* timestamp seconds */
-                               ts_usec: Int,        /* timestamp microseconds */
-                               incl_len: Int,       /* number of octets of packet saved in file */
-                               orig_len: Int      /* actual length of packet */
-                             )
+    case class pcaprec_hdr_s (ts_sec: Int,          /* timestamp seconds */
+                              ts_usec: Int,         /* timestamp microseconds */
+                              incl_len: Int,        /* number of octets of packet saved in file */
+                              orig_len: Int         /* actual length of packet */
+                              )
+
     object pcaprec_hdr_s {
       def apply(is: DataInputStream)(implicit main: pcap_hdr_s): pcaprec_hdr_s =
         if (main.reverse)
-          new pcaprec_hdr_s (reverseI(is.readInt ()), reverseI(is.readInt ()), reverseI(is.readInt ()), reverseI(is.readInt () ))
+          new pcaprec_hdr_s (reverseInt(is.readInt ()), reverseInt(is.readInt ()), reverseInt(is.readInt ()), reverseInt(is.readInt () ))
         else
           new pcaprec_hdr_s (is.readInt (), is.readInt (), is.readInt (), is.readInt () )
     }
@@ -76,4 +70,5 @@ object Packet {
     // first incarnation of this just reads the first packet and returns a seq of length 1, need to handle reading many (or 0) packets!
     Seq(new Packet(pktArray))
   }
+
 }

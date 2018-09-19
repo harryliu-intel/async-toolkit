@@ -1,6 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser.{ParserException, ProtoOffsets}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe._
 import org.scalatest._

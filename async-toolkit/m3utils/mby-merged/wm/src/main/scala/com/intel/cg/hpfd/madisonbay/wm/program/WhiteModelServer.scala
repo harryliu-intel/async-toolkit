@@ -9,7 +9,7 @@ import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 
-import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.RichByteArray
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtArrayByte.RichByteArray
 
 
 object WhiteModelServer {

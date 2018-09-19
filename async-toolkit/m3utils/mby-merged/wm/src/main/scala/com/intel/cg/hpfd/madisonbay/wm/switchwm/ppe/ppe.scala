@@ -5,10 +5,12 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser.ProtoOffsets
 import scala.collection.immutable.BitSet
 
 object ppe {
+
   class PortIndex(val p: Int) extends AnyVal
 
 
   class SourcePortMask(l: Long) {
+
     val bs = BitSet(l.toInt)
 
   }
@@ -86,8 +88,11 @@ object ppe {
       MACAddress(mask & addr)
     }
   }
+
   object MACAddress {
+
     def apply(addr: Long) = new MACAddress(addr)
+
     def apply(a0: Short, a1: Short, a2: Short) = new MACAddress(a2.toLong << 32 & a1.toLong << 16 & a0.toLong)
 
   }
@@ -149,22 +154,28 @@ object ppe {
   type Key32 = Int
 
   class FieldVector {
-    val array = Array.ofDim[Byte](160)
+
+    val array: Array[Byte] = Array.ofDim[Byte](160)
+
     def update(i: Int)(k: Key8) { array(i) = k }
+
     def k16(i: Int): Key16 = {
       require(i %2 == 0)
       require(i < 64)
 
       array(i).toShort
     }
+
     def k32(i: Int): Key32 = {
       require(i %4 == 0)
       array(i).toInt
     }
+
     def k8(i: Int): Key32 = {
       require(i %4 == 0)
       array(i).toInt
     }
+
   }
 
 }

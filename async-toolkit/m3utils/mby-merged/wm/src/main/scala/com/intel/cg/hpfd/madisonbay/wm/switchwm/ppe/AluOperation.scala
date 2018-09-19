@@ -11,6 +11,7 @@ class AluOperation (val rot: Short, val mask: Short) {
   // no 'logical rotate' operator native to scala
   def apply(x: Short): Short = (((x.toInt << 16 | x.toInt) >> rot.toInt) & mask).toShort
 }
+
 object AluOperation {
   // Build up from CSR encoding, High 4 bits are rotate, low 12 bits are mask
   def apply(x: Short): AluOperation = {

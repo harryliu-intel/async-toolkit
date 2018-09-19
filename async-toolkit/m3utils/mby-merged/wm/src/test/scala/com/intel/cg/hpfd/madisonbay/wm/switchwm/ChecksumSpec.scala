@@ -2,7 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import org.scalatest._
 
-import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.RichByte
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtShort.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.util.IPV4Util.checksum
 
 /**
@@ -10,6 +10,7 @@ import com.intel.cg.hpfd.madisonbay.wm.util.IPV4Util.checksum
   * sample results to validate.
   */
 class ChecksumSpec extends FlatSpec with Matchers {
+
   // http://www.netfor2.com/checksum.html
   val csumExp1 = Seq(0x01,0x00,0xF2,0x03, 0xF4, 0xF5, 0xF6, 0xF7 ,0x00,0x00).map(_.toByte)
   val csumResult1 = 0x210e
@@ -22,4 +23,5 @@ class ChecksumSpec extends FlatSpec with Matchers {
   s"The checksum of ${csumExp2.map(_.hex)}" should s"validate to 0" in {
     checksum(csumExp2) shouldEqual 0
   }
+
 }

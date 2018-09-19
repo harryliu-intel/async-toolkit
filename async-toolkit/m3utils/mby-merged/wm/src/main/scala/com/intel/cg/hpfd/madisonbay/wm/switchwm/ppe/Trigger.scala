@@ -1,18 +1,15 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.PipelineStage
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Trigger.MatchCase
 import ppe.{PortIndex, TrafficClass, VID}
 
 import scala.collection.immutable.BitSet
 
 
-
 class TriggerUnit extends PipelineStage[FrameState,FrameState] {
-  val x: FrameState => FrameState = fs => {
-    fs
-  }
+  val x: FrameState => FrameState = fs => fs
 }
 
 class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
@@ -175,6 +172,7 @@ object Trigger {
     val Redirect: Value = Value(2, "Redirect")
     val Drop: Value = Value(3, "Drop")
   }
+
   object TcActionEnum extends Enumeration {
     val AsIs: Value = Value(0, "AsIs")
     val ReassignTc: Value = Value(1, "ReassignTc")

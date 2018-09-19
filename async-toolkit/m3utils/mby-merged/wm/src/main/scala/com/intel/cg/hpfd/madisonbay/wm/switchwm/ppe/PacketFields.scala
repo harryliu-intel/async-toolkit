@@ -3,11 +3,13 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.MACAddress
 
 class PacketFields(val fields: IndexedSeq[Short]) {
+
   // 80 fields, of 2 bytes each
   def populateField(startField: Int, contents: Seq[Short]): PacketFields = {
     // obviously need to support field of size > 1!
     new PacketFields(fields.patch(startField, contents, contents.length))
   }
+
   def key8(i: Int): Byte = {
     require((0 until 32).contains(i))
     val fval = fields(64 + (i / 2))
@@ -19,6 +21,7 @@ class PacketFields(val fields: IndexedSeq[Short]) {
     require((0 until 32).contains(i))
     fields(i)
   }
+
   def key16_u(i: Int, x: Short): PacketFields = {
     new PacketFields(fields.updated(i, x))
   }
@@ -31,10 +34,13 @@ class PacketFields(val fields: IndexedSeq[Short]) {
   // treat the packet fields, assuming that the parser was configured
   // as expected by the _mapper_
   def assumeIPv4Parsed: PacketFields with MACMapperImposed = new PacketFields(fields) with MACMapperImposed
+
 }
 
 object PacketFields{
+
   def apply(): PacketFields = new PacketFields(Vector.fill[Short](80)(0.toShort))
+
   def apply(x: IndexedSeq[Short]): PacketFields = new PacketFields(x.toVector)
 
 }
