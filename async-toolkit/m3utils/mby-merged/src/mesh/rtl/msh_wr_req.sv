@@ -36,12 +36,11 @@
 
 `include "mesh_defines.vh";                                     // include file with `defines 
 
-module msh_dp 
+module msh_wr_req 
 import mesh_pkg::*;                                             // import declarations from mesh_pkg.sv
 (
 
-
-    input               mclk                                    // mesh clock                                 
+    input               mclk                                   // mesh clock                                 
 
 );
 
@@ -55,48 +54,10 @@ import mesh_pkg::*;                                             // import declar
 
 /// ... stage signals
 
-//**********************************************************************************************************************
-// MESH SUB-BLOCK INSTANTIATIONS
-//**********************************************************************************************************************
-
-// mesh write datapath
-msh_wr_dp msh_wr_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-// mesh read datapath
-msh_rd_dp msh_rd_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-// mesh memory datapath
-msh_mem_dp msh_mem_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-
-generate
-for (genvar gv_b=0; gv_b < NUM_MESH_NODE_MEM_BANKS; gv_b++) begin : mem_banks 
-
 //-----------------------------------------------------------------------------
-// => ..., ... stages :  <short logic description>
+// ..., ... stages :  <short logic description>
 //-----------------------------------------------------------------------------
-// separate modules to support physical grouping
-
-msh_mem msh_mem (
-    
-    .mclk   (mclk)
-
-);
-    
-end : mem_banks
-endgenerate
+// separate module to support physical grouping
 
 
 //**********************************************************************************************************************
@@ -108,4 +69,4 @@ endgenerate
 //-----------------------------------------------------------------------------
 
 
-endmodule // msh_dp
+endmodule // msh_wr_req
