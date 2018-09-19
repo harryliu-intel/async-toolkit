@@ -1,0 +1,47 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+    ## need to remove the following
+       "src/shared/rtl/shared_pkg.sv",
+       "src/rtl/gm/gmm/verilog/gmm_pkg.sv",
+       "src/shared/interfaces/egr_ppe_stm_if.sv",
+       "src/shared/interfaces/egr_tx_ppe_if.sv",
+    ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/rtl/egr/verilog/mby_egr_pkg.sv",
+       "src/rtl/egr/verilog/egr_ahb_if.sv",
+       "src/rtl/egr/verilog/egr_epl_if.sv",
+       "src/rtl/egr/verilog/egr_mc_table_if.sv",
+       "src/rtl/egr/verilog/egr_pod_if.sv",
+       "src/rtl/egr/verilog/egr_smm_readarb_if.sv",
+       "src/rtl/egr/verilog/egr_smm_writearb_if.sv",
+       "src/rtl/egr/verilog/egr_statsmgmt_if.sv",
+       "src/rtl/egr/verilog/egr_tagring_if.sv",
+       "src/rtl/egr/verilog/egr_vp_if.sv",
+       "src/rtl/egr/verilog/egr_top.sv",
+     ],
+    
+    # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     "src/mby/rtl",
+     ],
+    
+    # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+    
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+     "src/mby/rtl",
+     ],
+    
+    # Arbitrary VLOG options
+    -vlog_opts => [],
+    
+    
+    };
+
