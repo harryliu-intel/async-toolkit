@@ -13,6 +13,8 @@ SOURCES += mby_bitfield.c
 SOURCES += mby_common.c
 SOURCES += mby_parser.c
 SOURCES += mby_mapper.c
+SOURCES += mby_lpm_regs.c
+SOURCES += mby_lpm.c
 SOURCES += mby_classifier.c
 SOURCES += mby_hash.c
 SOURCES += mby_nexthop.c
@@ -79,6 +81,8 @@ all: $(OBJECTS) mby_server
 mby_common.o     : mby_common.c                      mby_common.h mby_bitfield.h
 mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h mby_bitfield.h
 mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h mby_bitfield.h
+mby_lpm_regs.o   : mby_lpm_regs.c   mby_lpm_regs.h   mby_common.h mby_bitfield.h
+mby_lpm.o        : mby_lpm.c        mby_lpm.h        mby_common.h mby_bitfield.h
 mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h mby_bitfield.h
 mby_hash.o       : mby_hash.c       mby_hash.h       mby_common.h mby_bitfield.h
 mby_nexthop.o    : mby_nexthop.c    mby_nexthop.h    mby_common.h mby_bitfield.h
@@ -92,6 +96,7 @@ mby_errors.o     : mby_errors.c     mby_errors.h
 
 PIPELINE_STAGES += mby_parser.o
 PIPELINE_STAGES += mby_mapper.o
+PIPELINE_STAGES += mby_lpm.o        mby_lpm_regs.o
 PIPELINE_STAGES += mby_classifier.o
 PIPELINE_STAGES += mby_hash.o
 PIPELINE_STAGES += mby_nexthop.o
@@ -150,24 +155,32 @@ GTEST_ROOT ?= /p/utils/srd/software/unit-test/GoogleTest-SLES11/googletest
 GTEST_INCLUDES = -I$(GTEST_ROOT)/include
 GTEST_OBJECTS = $(GTEST_ROOT)/make/gtest_main.a
 
+GMOCK_ROOT ?= /p/utils/srd/software/unit-test/GoogleTest-SLES11/googlemock
+GMOCK_INCLUDES = -I/p/utils/srd/software/unit-test/GoogleTest-SLES11/C-Mock-master/include
+GMOCK_INCLUDES += -I$(GMOCK_ROOT)/include
+GMOCK_OBJECTS = $(GMOCK_ROOT)/make/gmock_main.a
+
+
 UT_CFLAGS += -O0 -g -ggdb3
 
-UT_BINARIES += unit_tests/ut_mapper.exe
-UT_BINARIES += unit_tests/ut_classifier.exe
+#UT_BINARIES += unit_tests/ut_mapper.exe
+#UT_BINARIES += unit_tests/ut_classifier.exe
+UT_BINARIES += unit_tests/ut_lpm.exe
 
-unit_tests/ut_mapper.exe: unit_tests/ut_mapper.o
-unit_tests/ut_classifier.exe: unit_tests/ut_classifier.o
+#unit_tests/ut_mapper.exe: unit_tests/ut_mapper.o
+#unit_tests/ut_classifier.exe: unit_tests/ut_classifier.o
+unit_tests/ut_lpm.exe: unit_tests/ut_lpm.o unit_tests/mock_lpm_regs.o
 
 DELFILES += unit_tests/*.o unit_tests/*.exe model_server/msrv
 
 unit_tests/%.o: unit_tests/%.cpp
 	@echo '  Compiling' $<
-	$(ECHO) $(GPP) -o $@ $(DEFINES) $(UT_CFLAGS) $(GTEST_INCLUDES) $(INCLUDES) -c $<
+	$(ECHO) $(GPP) -o $@ $(DEFINES) $(UT_CFLAGS) $(GTEST_INCLUDES) $(GMOCK_INCLUDES) $(INCLUDES) -c $<
 
 unit_tests/%.exe:
 	@echo '  Linking' $<
-	$(ECHO) $(GPP) -o $@ $(DEFINES) $(GTEST_INCLUDES) $(INCLUDES) \
-		-pthread -lpthread -ldl -rdynamic $(GTEST_OBJECTS) $^
+	$(ECHO) $(GPP) -o $@ $(DEFINES) $(GMOCK_INCLUDES) $(GTEST_INCLUDES) $(INCLUDES) \
+		-pthread -lpthread -ldl -rdynamic $(GEST_OBJECTS) $(GMOCK_OBJECTS) $^
 
 .PHONY: unit_test
 unit_test: $(UT_BINARIES)

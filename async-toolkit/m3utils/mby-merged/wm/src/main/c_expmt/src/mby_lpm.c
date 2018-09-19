@@ -1,0 +1,210 @@
+// -*- mode:c -*-
+
+// Copyright (C) 2018 Intel Corporation
+
+#include "mby_lpm_regs.h"
+#include "mby_lpm.h"
+#include "assert.h"
+
+static void lookUpLpmTcam
+(
+    fm_uint32                regs[MBY_REGISTER_ARRAY_SIZE],
+    mbyLpmTcamLookup * const tcam_lookup
+)
+{
+    fm_uint16 tcam_index = 0;
+
+    assert(tcam_lookup);
+
+    tcam_lookup->hit_valid = FALSE;
+
+    while (tcam_index < MBY_LPM_MATCH_TCAM_ENTRIES_0)
+    {
+        mbyLpmTcamEntry tcam_entry;
+        mbyLpmGetTcamEntry(regs, tcam_index, &tcam_entry);
+
+        fm_uint64 cam_key_inv = tcam_entry.key_invert;
+        fm_uint64 cam_key     = tcam_entry.key;
+        fm_uint64 mask        = cam_key ^ cam_key_inv;
+
+        // TODO verify this check: I copy pasted it from the classifier
+        if (((cam_key & cam_key_inv) == 0) && ((tcam_lookup->key & mask) == (cam_key & mask)))
+        {
+            tcam_lookup->hit_valid = TRUE;
+            tcam_lookup->hit_index = tcam_index;
+            // TODO verify it is OK to return on the first hit
+            return;
+        }
+
+        ++tcam_index;
+    }
+}
+
+static fm_bool getBitIn64BitsArray
+(
+    fm_uint64       const * const   array,
+    fm_byte                         bit_num
+)
+{
+    assert(array);
+
+    // TODO 100% untested code :)
+    return (array[bit_num / 64] >> (bit_num % 64)) & 0x1;
+}
+
+// Return the number of 1s between array lsb and bit_num (excluded)
+static fm_byte countOneIn64BitsArray
+(
+    fm_uint64       const * const   array,
+    fm_byte                         bit_num
+)
+{
+    fm_byte count = 0;
+    fm_byte i;
+
+    assert(array);
+
+    for (i = 0; i <= bit_num; ++i)
+        count += getBitIn64BitsArray(array, i);
+
+    return count;
+}
+
+static fm_bool getSubtriePrefixNode
+(
+    mbyLpmSubtrieStore const * const    st_store,
+    fm_byte                             idx
+)
+{
+    assert(st_store);
+    assert(idx < MBY_LPM_NUM_PREFIXES);
+    return getBitIn64BitsArray(st_store->prefix_bitmap, idx);
+}
+
+static fm_bool getSubtrieChildNode
+(
+    mbyLpmSubtrieStore const * const    st_store,
+    fm_byte                             idx
+)
+{
+    assert(st_store);
+    // Always true: assert(idx < MBY_LPM_NUM_CHILD);
+    return getBitIn64BitsArray(st_store->child_bitmap, idx);
+}
+
+static void exploreSubtrie
+(
+    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
+    mbyLpmSubtrie const * const subtrie,
+    mbyLpmSubtrieLookup * const st_lookup
+)
+{
+    /* Exploration steps
+     * - Explore the trie 1 bit at a time
+     * - if 1 => update the hit since we are looking for longest match
+     * - Decrease the key_len at each step
+     *
+     * Stop when:
+     * - The key len is 0
+     * - Child subtrie is empty
+     *
+     * Recursive step:
+     * - Move to the next 8 bits of the key
+     * - Subtrie is pointed by CPTR
+     */
+
+    fm_byte key = st_lookup->key[0];
+    mbyLpmSubtrieStore st_store;
+    fm_byte node_idx = 0;
+    fm_byte level = 0;
+    fm_bool node_val;
+    fm_bool key_bit;
+
+    mbyLpmGetSubtrieStore(regs, subtrie->root_ptr, &st_store);
+
+    do
+    {
+        node_val = getSubtriePrefixNode(&st_store, node_idx);
+        if (node_val)
+        {
+            fm_byte action_idx = countOneIn64BitsArray(st_store.prefix_bitmap, node_idx);
+            st_lookup->hit_ptr = st_store.action_base_ptr + action_idx;
+            st_lookup->hit_valid = TRUE;
+        }
+
+        // Check if we have processed the entire key
+        // FIXME double check this because I am not sure it's correct...
+        if (--st_lookup->key_len == 0)
+            return;
+
+        // Read next bit of the key and move to the next node
+        key_bit = (key >> (7 - level)) & 0x1;
+        node_idx = 1 + 2 * node_idx + key_bit;
+        ++level;
+    }
+    while (level < 8);
+
+    if (--st_lookup->key_len == 0)
+        return;
+
+    // Process the key lsb by checking the child nodes
+    node_idx -= MBY_LPM_NUM_PREFIXES;
+    node_val = getSubtrieChildNode(&st_store, node_idx);
+
+    if (node_val)
+    {
+        mbyLpmSubtrie child_subtrie;
+        fm_byte child_idx;
+
+        child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
+        mbyLpmGetSubtrie(regs, subtrie->child_base_ptr + child_idx, &child_subtrie);
+        st_lookup->key = &(st_lookup->key[1]);
+
+        exploreSubtrie(regs, &child_subtrie, st_lookup);
+    }
+}
+
+void Lpm
+(
+    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    mbyLpmIn    const * const in,
+    mbyLpmOut         * const out
+)
+{
+    mbyLpmTcamLookup          tcam_lookup;
+    mbyLpmSubtrie             tcam_subtrie;
+    mbyLpmSubtrieLookup       st_lookup;
+
+    // TODO verify what happens when key_len < 33 bits (i.e. TCAM key len + 1)
+    assert(in->key_len >= 33);
+    assert(in->key_len < MBY_LPM_KEY_MAX_BITS_LEN);
+
+    // FIXME adjust based on how the key is stored in memory
+    tcam_lookup.key = in->key[0] | in->key[1] << 8 | in->key[2] << 16 |in->key[3] << 24;
+
+    lookUpLpmTcam(regs, &tcam_lookup);
+
+    if (!tcam_lookup.hit_valid)
+    {
+        out->hit_valid = FALSE;
+        return;
+    }
+
+    mbyLpmGetTcamSubtrie(regs, tcam_lookup.hit_index, &tcam_subtrie);
+
+    st_lookup.key       = (fm_byte *) &(in->key[4]);
+    st_lookup.key_len   = in->key_len - 32;
+    st_lookup.hit_valid = FALSE;
+
+    exploreSubtrie(regs, &tcam_subtrie, &st_lookup);
+
+    out->hit_valid = st_lookup.hit_valid;
+    if (out->hit_valid)
+    {
+        // TODO verify alignment in SHM_FWD_TABLE0
+        out->fwd_table0_idx = st_lookup.hit_ptr * 16;
+    }
+
+}
+
+
