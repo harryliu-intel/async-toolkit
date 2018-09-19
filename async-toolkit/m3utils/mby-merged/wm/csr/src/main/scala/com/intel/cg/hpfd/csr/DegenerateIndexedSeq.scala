@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr
 
 trait DegenerateIndexedSeq[+A] extends IndexedSeq[A] {

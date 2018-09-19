@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions
 
 object ExtArrayByte {

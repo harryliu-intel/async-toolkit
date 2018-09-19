@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr.macros.MacroUtils.Control

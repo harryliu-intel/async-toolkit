@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
