@@ -2,7 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.util
 
 import java.io.{DataInputStream, FileInputStream}
 
-case class Packet(bytes : Array[Byte])
+case class Packet(bytes: Array[Byte])
 
 object Packet {
   /**
@@ -12,28 +12,28 @@ object Packet {
     * @param f pcap file to load
     * @return
     */
-  def loadPcap(f : java.io.File) : Seq[Packet] = {
-    def reverse(s : Short) : Short = {
+  def loadPcap(f: java.io.File): Seq[Packet] = {
+    def reverse(s: Short): Short = {
       (((s >> 8) & 0xff) | (s << 8)).toShort
     }
-    def reverseI(i : Int) : Int = {
+    def reverseI(i: Int): Int = {
       ((i >> 24) & 0xff) |
         ((i >> 8) & 0xff00) |
         ((i << 8) & 0x00ff0000) |
         ((i << 24) & 0xff000000)
     }
 
-    case class pcap_hdr_s ( reverse : Boolean,      /* magic number */
-                            version_major : Short,  /* major version number */
-                            version_minor : Short,  /* minor version number */
-                            thiszone : Int,         /* GMT to local correction */
-                            sigfigs : Int,          /* accuracy of timestamps */
-                            snaplen : Int,          /* max length of captured packets, in octets */
-                            network : Int           /* data link type */
+    case class pcap_hdr_s ( reverse: Boolean,      /* magic number */
+                            version_major: Short,  /* major version number */
+                            version_minor: Short,  /* minor version number */
+                            thiszone: Int,         /* GMT to local correction */
+                            sigfigs: Int,          /* accuracy of timestamps */
+                            snaplen: Int,          /* max length of captured packets, in octets */
+                            network: Int           /* data link type */
                           )
 
     object pcap_hdr_s {
-      def apply(is : DataInputStream) : pcap_hdr_s = {
+      def apply(is: DataInputStream): pcap_hdr_s = {
         val magic_number = is.readInt()
         val rev = magic_number match {
           case 0xa1b2c3d4 => false
@@ -49,13 +49,13 @@ object Packet {
     }
 
     case class pcaprec_hdr_s (
-                               ts_sec : Int,         /* timestamp seconds */
-                               ts_usec : Int,        /* timestamp microseconds */
-                               incl_len : Int,       /* number of octets of packet saved in file */
-                               orig_len : Int      /* actual length of packet */
+                               ts_sec: Int,         /* timestamp seconds */
+                               ts_usec: Int,        /* timestamp microseconds */
+                               incl_len: Int,       /* number of octets of packet saved in file */
+                               orig_len: Int      /* actual length of packet */
                              )
     object pcaprec_hdr_s {
-      def apply(is : DataInputStream)(implicit main : pcap_hdr_s) : pcaprec_hdr_s =
+      def apply(is: DataInputStream)(implicit main: pcap_hdr_s): pcaprec_hdr_s =
         if (main.reverse)
           new pcaprec_hdr_s (reverseI(is.readInt ()), reverseI(is.readInt ()), reverseI(is.readInt ()), reverseI(is.readInt () ))
         else
@@ -63,7 +63,7 @@ object Packet {
     }
 
     val is = new DataInputStream(new FileInputStream(f))
-    implicit val hdr : pcap_hdr_s = pcap_hdr_s(is)
+    implicit val hdr: pcap_hdr_s = pcap_hdr_s(is)
     assert(hdr.version_major == 2, s"Expected version 2, got hdr $hdr")
     assert(hdr.version_minor == 4, s"Expected minor version 4, got hdr $hdr")
     println(f"Reading pcap with hdr: $hdr")

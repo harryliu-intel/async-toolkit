@@ -3,13 +3,14 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 import com.intel.cg.hpfd.csr.generated.parser_ext_r
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser.ProtoOffsets
 
-class ExtractAction(val protoId : Option[Short], val keyOffset : Short, val flagNum : Option[Short], val flagVal : Boolean, val ptrNum : Int) {
-  def apply (input : (ProtoOffsets, PacketFlags)) : (ProtoOffsets, PacketFlags) = {
-    val flags : PacketFlags = flagNum match {
+class ExtractAction(val protoId: Option[Short], val keyOffset: Short, val flagNum: Option[Short], val flagVal: Boolean, val ptrNum: Int) {
+  def apply (input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
+    val flags: PacketFlags =
+      flagNum match {
       case None => input._2
-      case Some(flagNum) => input._2.assign(flagNum, flagVal)
+      case Some(extractedFlagNum) => input._2.assign(extractedFlagNum, flagVal)
     }
-    val fields : ProtoOffsets = protoId match {
+    val fields: ProtoOffsets = protoId match {
       case None => input._1
       case Some(x) => input._1.updated(ptrNum, (x.toInt, keyOffset.toInt))
     }
@@ -21,7 +22,7 @@ class ExtractAction(val protoId : Option[Short], val keyOffset : Short, val flag
   }
 }
 object ExtractAction {
-  def apply(csr : parser_ext_r) = {
+  def apply(csr: parser_ext_r) = {
     // 0 is special as a flag number, means do _no_ flag annotation do not update _0_
     val flagNum = csr.FLAG_NUM() match {
       case 0l => None

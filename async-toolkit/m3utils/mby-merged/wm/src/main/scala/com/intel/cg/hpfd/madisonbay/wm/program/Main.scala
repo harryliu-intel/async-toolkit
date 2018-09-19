@@ -4,7 +4,7 @@ import java.io.File
 
 object Main {
 
-  case class Config(serverDir : File = new File("."), serverName : File = new File("models.packetServer"))
+  case class Config(serverDir: File = new File("."), serverName: File = new File("models.packetServer"))
 
   def createConfiguration(): scopt.OptionParser[Config] =  new scopt.OptionParser[Config]("whitemodel") {
     head("whitemodel", "0.1")
@@ -14,12 +14,12 @@ object Main {
       c.copy(serverName = x) } text("the name of the generated network port file")
   }
 
-  def main(args : Array[String]) : Unit = {
+  def main(args: Array[String]): Unit = {
 
    createConfiguration().parse(args, Config()) match {
       case Some(config) =>
         val fullyQualifiedFile = new File(config.serverDir + "/" + config.serverName)
-        WhiteModelServer.runModelServer( fullyQualifiedFile )
+        WhiteModelServer.runModelServer(fullyQualifiedFile)
 
       case None =>  // arguments are bad, error message will have been displayed
     }

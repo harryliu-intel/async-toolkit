@@ -5,33 +5,33 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Mapper.{MACLookupResult, MAC
 import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.nibbles
 import ppe._
 
-class Mapper(val csr : mby_ppe_mapper_map) {
+class Mapper(val csr: mby_ppe_mapper_map) {
   object MACMapper {
-    implicit class MacMapperEntry(val c : map_mac_r) {
-      def matches(mac : MACAddress) : Boolean = {
+    implicit class MacMapperEntry(val c: map_mac_r) {
+      def matches(mac: MACAddress): Boolean = {
         val mask = (1 << (c.IGNORE_LENGTH() + 1)) - 1
         c.MAC() == (mac.addr & mask)
       }
     }
 
-    def highestMatching(mac : MACAddress) : MACLookupResult = {
-      val lookup = (0 until csr.MAP_MAC.length).reverse.collectFirst(
+    def highestMatching(mac: MACAddress): MACLookupResult = {
+      val lookup = csr.MAP_MAC.indices.reverse.collectFirst(
         { case i if csr.MAP_MAC(i) matches mac => MACLookupResult(i, csr.MAP_MAC(i).MAC_ROUTABLE() == 1)})
       lookup match {
         case Some(l) => l
-        case None => MACLookupResult(0, false)
+        case None => MACLookupResult(0, routeable = false)
       }
     }
 
-    def x(fv : MACMapperImposed) : MACMapperResult = {
+    def x(fv: MACMapperImposed): MACMapperResult = {
       MACMapperResult(highestMatching(fv.OuterDMAC), highestMatching(fv.OuterSMAC), highestMatching(fv.InnerDMAC), highestMatching(fv.OuterSMAC))
     }
   }
 
   object KeyRewrite {
-    val c = csr.MAP_REWRITE
+    val c: IndexedSeq[map_rewrite_rf] = csr.MAP_REWRITE
 
-    def rewriteNibble(source : RewriteSource, orig : Int, macResult : MACMapperResult) : Int = {
+    def rewriteNibble(source: RewriteSource, orig: Int, macResult: MACMapperResult): Int = {
       source match {
         case 0 => orig // 0 defined to mean NOP
         case 4 => macResult.outerDMAC.index.nib(0)
@@ -47,24 +47,24 @@ class Mapper(val csr : mby_ppe_mapper_map) {
       }
     }
 
-    def x[T <: PacketFields](fv : PacketFields, rewriteProfile : RewriteProfileType, macResult : MACMapperResult ) : PacketFields = {
+    def x[T <: PacketFields](fv: PacketFields, rewriteProfile: RewriteProfileType, macResult: MACMapperResult ): PacketFields = {
       val rewriteCfg = c(rewriteProfile)
       // 32 'nibbles' available for rewriting
       val key16_13_orig = fv.key16(13).toShort
       val key16_19_orig = fv.key16(19).toShort
 
-      val x0 = fv.key16_u(13, ((rewriteNibble(rewriteCfg(0).SRC_ID().toInt,key16_13_orig.nib(0), macResult)).toInt,
-                      (rewriteNibble(rewriteCfg(1).SRC_ID().toInt,key16_13_orig.nib(1), macResult)).toInt,
-                      (rewriteNibble(rewriteCfg(2).SRC_ID().toInt,key16_13_orig.nib(2), macResult)).toInt,
-                      (rewriteNibble(rewriteCfg(3).SRC_ID().toInt,key16_13_orig.nib(3), macResult)).toInt))
-      val x1 = x0.key16_u(19, ((rewriteNibble(rewriteCfg(4).SRC_ID().toInt,key16_19_orig.nib(0), macResult)).toInt,
-        (rewriteNibble(rewriteCfg(5).SRC_ID().toInt,key16_19_orig.nib(1), macResult)).toInt,
-        (rewriteNibble(rewriteCfg(6).SRC_ID().toInt,key16_19_orig.nib(2), macResult)).toInt,
-        (rewriteNibble(rewriteCfg(7).SRC_ID().toInt,key16_19_orig.nib(3), macResult)).toInt))
-      val x2 = x1.key16_u(19, ((rewriteNibble(rewriteCfg(4).SRC_ID().toInt,key16_19_orig.nib(0), macResult)).toInt,
-        (rewriteNibble(rewriteCfg(5).SRC_ID().toInt,key16_19_orig.nib(1), macResult)).toInt,
-        (rewriteNibble(rewriteCfg(6).SRC_ID().toInt,key16_19_orig.nib(2), macResult)).toInt,
-        (rewriteNibble(rewriteCfg(7).SRC_ID().toInt,key16_19_orig.nib(3), macResult)).toInt))
+      val x0 = fv.key16_u(13, (rewriteNibble(rewriteCfg(0).SRC_ID().toInt,key16_13_orig.nib(0), macResult).toInt,
+                      rewriteNibble(rewriteCfg(1).SRC_ID().toInt,key16_13_orig.nib(1), macResult).toInt,
+                      rewriteNibble(rewriteCfg(2).SRC_ID().toInt,key16_13_orig.nib(2), macResult).toInt,
+                      rewriteNibble(rewriteCfg(3).SRC_ID().toInt,key16_13_orig.nib(3), macResult).toInt))
+      val x1 = x0.key16_u(19, (rewriteNibble(rewriteCfg(4).SRC_ID().toInt,key16_19_orig.nib(0), macResult).toInt,
+        rewriteNibble(rewriteCfg(5).SRC_ID().toInt,key16_19_orig.nib(1), macResult).toInt,
+        rewriteNibble(rewriteCfg(6).SRC_ID().toInt,key16_19_orig.nib(2), macResult).toInt,
+        rewriteNibble(rewriteCfg(7).SRC_ID().toInt,key16_19_orig.nib(3), macResult).toInt))
+      val x2 = x1.key16_u(19, (rewriteNibble(rewriteCfg(4).SRC_ID().toInt,key16_19_orig.nib(0), macResult).toInt,
+        rewriteNibble(rewriteCfg(5).SRC_ID().toInt,key16_19_orig.nib(1), macResult).toInt,
+        rewriteNibble(rewriteCfg(6).SRC_ID().toInt,key16_19_orig.nib(2), macResult).toInt,
+        rewriteNibble(rewriteCfg(7).SRC_ID().toInt,key16_19_orig.nib(3), macResult).toInt))
       x2
       // etc.
     }
@@ -74,11 +74,11 @@ class Mapper(val csr : mby_ppe_mapper_map) {
 object Mapper {
   type RewriteProfileType = Int
   type RewriteSource = Int
-  case class MACLookupResult (val index : Int, val routeable : Boolean)
-  case class MACMapperResult (val outerDMAC : MACLookupResult,
-                         val outerSMAC : MACLookupResult,
-                         val innerDMAC : MACLookupResult,
-                         val innerSMAC : MACLookupResult)
+  case class MACLookupResult (index: Int, routeable: Boolean)
+  case class MACMapperResult (outerDMAC: MACLookupResult,
+                              outerSMAC: MACLookupResult,
+                              innerDMAC: MACLookupResult,
+                              innerSMAC: MACLookupResult)
 
 
 }

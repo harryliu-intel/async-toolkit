@@ -8,9 +8,9 @@ import com.intel.cg.hpfd.madisonbay.wm.util.Packet
 package object epl {
 
   case class EplOutput(
-                      rxData : Packet,
-                      rxPort : PortIndex,
-                      pktMeta : Int
+                      rxData: Packet,
+                      rxPort: PortIndex,
+                      pktMeta: Int
                       )
 
 }

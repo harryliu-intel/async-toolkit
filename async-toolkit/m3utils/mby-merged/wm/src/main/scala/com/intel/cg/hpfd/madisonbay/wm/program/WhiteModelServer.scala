@@ -6,13 +6,8 @@ import com.intel.cg.hpfd.csr.RdlRegister
 import com.intel.cg.hpfd.csr.generated.{mby_top_map, mby_ppe_modify_map, mod_profile_group_r}
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
 
-import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits.{osToFmModelMessageHdrOutputStream, osToIosfRegCompNoDataOutputStream,
-isToIosfRegBlkDataInputStream, isToFmModelMessageHdrInputStream, osToIosfRegCompDataHdrOutputStream,
-isToFmModelSetEgressInfoHdrInputStream, osToFmModelMsgPacketEotOutputStream, osToFmModelDataTypeOutputStream,
-isToFmModelDataTypeInputStream}
-import com.intel.cg.hpfd.madisonbay.wm.server.dto.{IosfRegReadReq, IosfRegWriteReq, IosfRegBlkWriteReqHdr,
-IosfRegCompNoData, IOSF, IosfRegCompDataHdr,
-FmModelMessageHdr, FmModelMsgType, FmModelMsgPacketEot, FmModelDataType}
+import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
+import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 
 import com.intel.cg.hpfd.madisonbay.wm.util.ImplicitExtensions.RichByteArray
 
@@ -22,25 +17,25 @@ object WhiteModelServer {
 
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
   // (we do not not provide subclasses or trait definitions in the scheme-based generator)
-  type dataSig = { def data0 : Long ; def data1 : Long }
-  type addrSig = { def addr0 : Long ; def addr1 : Long; def addr2 : Long  }
+  type dataSig = { def data0: Long ; def data1: Long }
+  type addrSig = { def addr0: Long ; def addr1: Long; def addr2: Long  }
   type iosfSig = dataSig with addrSig
 
   // Rich-Wrappers pattern automatically enables 'addr' and 'data' shorthands when appropriate
   implicit class IosfHasData(i: dataSig) {
-    def data : Long = {
+    def data: Long = {
       i.data0 | (i.data1 << 32)
     }
   }
   implicit class IosfHasAddress(i: addrSig) {
-    def addr : Long = {
+    def addr: Long = {
       i.addr0 | (i.addr1 << 16) | (i.addr2 << (16 + 12))
     }
   }
   // better to generate these automatically from scheme
   // and put them in a companion object, etc.
   object IosfReadExtractor {
-    def unapply(a : Array[Byte]) : Option[IosfRegReadReq] = {
+    def unapply(a: Array[Byte]): Option[IosfRegReadReq] = {
       if (a.size != IosfRegReadReq.LengthBits / 8) None
       else {
         val candidate = IosfRegReadReq(a)
@@ -50,7 +45,7 @@ object WhiteModelServer {
     }
   }
   object IosfBlkWriteExtractor {
-    def unapply(a : Array[Byte]) : Option[IosfRegBlkWriteReqHdr] = {
+    def unapply(a: Array[Byte]): Option[IosfRegBlkWriteReqHdr] = {
       if (a.size != IosfRegBlkWriteReqHdr.LengthBits / 8) return None
       else {
         val candidate = IosfRegBlkWriteReqHdr(a)
@@ -60,7 +55,7 @@ object WhiteModelServer {
     }
   }
   object IosfRegWriteExtractor {
-    def unapply(a : Array[Byte]) : Option[IosfRegWriteReq] = {
+    def unapply(a: Array[Byte]): Option[IosfRegWriteReq] = {
       if (a.size != 24) return None
       val candidate = IosfRegWriteReq(a)
       if (candidate.opcode != IOSF.RegWrite) {
@@ -79,7 +74,7 @@ object WhiteModelServer {
   val csrSpace = new scala.collection.mutable.HashMap[Int, Byte]
 
 
-  def processWriteBlk(iosf : IosfRegBlkWriteReqHdr)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
+  def processWriteBlk(iosf: IosfRegBlkWriteReqHdr)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
     val addr = iosf.addr
     println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
     val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
@@ -97,9 +92,9 @@ object WhiteModelServer {
     println(" Wrote the response, ok")
   }
 
-  type respondable = { def opcode: Long; def dest : Long;  def source : Long; def tag : Long }
+  type respondable = { def opcode: Long; def dest: Long;  def source: Long; def tag: Long }
 
-  def makeResponse[T <: respondable] (req: T) : IosfRegCompNoData = {
+  def makeResponse[T <: respondable] (req: T): IosfRegCompNoData = {
     require (req.opcode != IOSF.RegRead && req.opcode != IOSF.RegBlkRead)
     new IosfRegCompNoData(
       sai = 1,
@@ -110,7 +105,7 @@ object WhiteModelServer {
       rsvd0 = 0)
   }
 
-  def makeReadResponse[T <: respondable] (req: T) : IosfRegCompDataHdr = {
+  def makeReadResponse[T <: respondable] (req: T): IosfRegCompDataHdr = {
     require (req.opcode == IOSF.RegRead || req.opcode == IOSF.RegBlkRead)
     new IosfRegCompDataHdr(
       sai = 1,
@@ -122,7 +117,7 @@ object WhiteModelServer {
   }
 
 
-  def processWriteReg(iosf : IosfRegWriteReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
+  def processWriteReg(iosf: IosfRegWriteReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
     val addr = iosf.addr
     val data = is.readIosfRegBlkData()
     val response = makeResponse(iosf)
@@ -132,7 +127,7 @@ object WhiteModelServer {
     os.flush()
   }
 
-  def processReadReg(iosf : IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
+  def processReadReg(iosf: IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
     val addr = iosf.addr
     println("Processing read of 0x" + addr.toHexString)
     val theArray = Array.ofDim[Byte](8)
@@ -147,7 +142,7 @@ object WhiteModelServer {
     println("Wrote the response back " + theArray.toIndexedSeq.map(f => f"$f%x"))
   }
 
-  def processIosf(implicit is : DataInputStream, os : DataOutputStream, toGo  : Int) = {
+  def processIosf(implicit is: DataInputStream, os: DataOutputStream, toGo : Int) = {
     val array = Array.ofDim[Byte](128 / 8)  // IOSF headers are 16 bytes, except for reg-write, which is 24
 
     is.readFully(array)
@@ -169,7 +164,7 @@ object WhiteModelServer {
   import java.net._
   val egressPortToSocketMap = new collection.mutable.HashMap[Int, Socket]()
   val socketToOs = new collection.mutable.HashMap[Socket, DataOutputStream]
-  def portToOs(i : Int) = socketToOs(egressPortToSocketMap(i))
+  def portToOs(i: Int) = socketToOs(egressPortToSocketMap(i))
 
 
   /** Implement configuration of an egress port
@@ -188,7 +183,7 @@ object WhiteModelServer {
     * In the legacy protocol, new connections are opened on every egress info signal. No EOTs are sent, the model
     * depends on timing out on the connections to decide there is no more data to receive.
     */
-  def processEgressInfo(implicit is : DataInputStream, os : DataOutputStream, toGo : Int, hdr : FmModelMessageHdr) : Unit = {
+  def processEgressInfo(implicit is: DataInputStream, os: DataOutputStream, toGo: Int, hdr: FmModelMessageHdr): Unit = {
     //val eih = is.readFmModelMsgSetEgressInfoHdr()
     val switchPort = hdr.Port
     val ei = is.readFmModelSetEgressInfoHdr()
@@ -214,8 +209,8 @@ object WhiteModelServer {
     def matchingSocket(s: Socket) = {
       (s.getInetAddress.getCanonicalHostName == remote._1.getCanonicalHostName) && (s.getPort == remote._2)
     }
-    def alwaysNewSocket(s : Socket) = false
-    val newSocketFunc : Socket => Boolean = if (legacyProtocol) { alwaysNewSocket } else { matchingSocket }
+    def alwaysNewSocket(s: Socket) = false
+    val newSocketFunc: Socket => Boolean = if (legacyProtocol) { alwaysNewSocket } else { matchingSocket }
 
     egressPortToSocketMap(switchPort) = egressPortToSocketMap.values.filter(newSocketFunc).headOption match {
       case Some(s) => {
@@ -232,7 +227,7 @@ object WhiteModelServer {
     }
   }
 
-  def pushEot(os : DataOutputStream): Unit = {
+  def pushEot(os: DataOutputStream): Unit = {
     val resultHdr = new FmModelMessageHdr(
       // outer header + inner header (type + integer) + size of contents
       Msglength = 12 + 2,
@@ -242,7 +237,7 @@ object WhiteModelServer {
     os.flush()
   }
 
-  def pushPacket(port: Short, contents : Array[Byte]): Unit = {
+  def pushPacket(port: Short, contents: Array[Byte]): Unit = {
     val resultHdr = new FmModelMessageHdr(
       // outer header + inner header (type + integer) + size of contents
       Msglength = 12 + (FmModelDataType.Length + 4) + contents.length,
@@ -257,8 +252,8 @@ object WhiteModelServer {
 
   }
 
-  def processPacket(implicit is : DataInputStream, toGo : Int, hdr : FmModelMessageHdr ) : Unit = {
-    def extractFragment() : (FmModelDataType.Value, Array[Byte]) = {
+  def processPacket(implicit is: DataInputStream, toGo: Int, hdr: FmModelMessageHdr ): Unit = {
+    def extractFragment(): (FmModelDataType.Value, Array[Byte]) = {
        val t = is.readFmModelDataType()
       val len = is.readInt()
       val contents = Array.ofDim[Byte](len)
@@ -298,9 +293,9 @@ object WhiteModelServer {
     println("Received quit operation!")
   }
 
-  def processMessage(implicit is : DataInputStream, os : DataOutputStream) = {
+  def processMessage(implicit is: DataInputStream, os: DataOutputStream) = {
 
-    implicit val hdr : FmModelMessageHdr = is.readFmModelMessageHdr()
+    implicit val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)
     implicit val toGo = hdr.Msglength - 12
@@ -315,7 +310,7 @@ object WhiteModelServer {
     }
   }
 
-  def runModelServer(file : File) = {
+  def runModelServer(file: File) = {
     val server = new ServerSocket(0) // 0 means pick any available port
 
     val port = server.getLocalPort()
@@ -334,7 +329,7 @@ object WhiteModelServer {
 
     var done = false
     while (!done) {
-      val s : Socket = server.accept()
+      val s: Socket = server.accept()
       s.setTcpNoDelay(true)
       println("Accepted new connection:" + s)
       egressPortToSocketMap(-1) = s
@@ -363,7 +358,7 @@ object WhiteModelServer {
     server.close()
   }
 
-  def checkoutCsr : Unit = {
+  def checkoutCsr: Unit = {
     val startCreationTime = System.currentTimeMillis()
     val theCsr = mby_top_map()
     val doneCreationTime = System.currentTimeMillis()
@@ -376,7 +371,7 @@ object WhiteModelServer {
     /// rx_ppe is not an array, so it can be referenced through transparently
     val b = theCsr.mpt(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
     /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
-    val c : Long = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
+    val c: Long = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
 
     val test = theCsr.mpt(0).rx_ppe.policers
     println("theCsr.mpt(0).rx_ppe.policers path is " + test.path)
@@ -386,12 +381,12 @@ object WhiteModelServer {
 
 
     //
-    implicit class csum_convenience (val x : mby_ppe_modify_map) {
+    implicit class csum_convenience (val x: mby_ppe_modify_map) {
        def ipv4_hdr = List(x.MOD_CSUM_CFG1.IPV4_0, x.MOD_CSUM_CFG1.IPV4_1, x.MOD_CSUM_CFG1.IPV4_2)
        def ipv6_hdr = List(x.MOD_CSUM_CFG1.IPV6_1, x.MOD_CSUM_CFG1.IPV6_2, x.MOD_CSUM_CFG1.IPV6_2)
     }
-    implicit class profile_group_abstraction(val x : mod_profile_group_r) {
-      def get_group(i : Int) : mod_profile_group_r#HardwareWritable = {
+    implicit class profile_group_abstraction(val x: mod_profile_group_r) {
+      def get_group(i: Int): mod_profile_group_r#HardwareWritable = {
         i match {
           case 1 => x.GROUP_1
           case 2 => x.GROUP_2
@@ -416,7 +411,7 @@ object WhiteModelServer {
     println("Reseting fields that are resetable")
     val resetStartTime = System.currentTimeMillis()
     var resetCount = 0
-    def countFieldsReset(r : RdlRegister[U64]#HardwareResetable) = { r.reset() ; resetCount += 1}
+    def countFieldsReset(r: RdlRegister[U64]#HardwareResetable) = { r.reset() ; resetCount += 1}
     theCsr.foreachResetableField(countFieldsReset(_) )
     val resetDoneTime = System.currentTimeMillis()
     val resetElapsedTime = resetDoneTime - resetStartTime

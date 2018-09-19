@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.util
 
 object ImplicitExtensions {
-  implicit class RichByte(val self : Byte) {
+  implicit class RichByte(val self: Byte) {
     def hex: String = {
       f"0x$self%02X"
     }
@@ -26,8 +26,8 @@ object ImplicitExtensions {
     }
   }
 
-  implicit class nibbles(val x : Int) {
-    def nib(i : Int) : Int = {
+  implicit class nibbles(val x: Int) {
+    def nib(i: Int): Int = {
       val mask = 0xf << i
       (x & mask) >> (4 * i)
     }

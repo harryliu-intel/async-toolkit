@@ -6,26 +6,26 @@ import scala.collection.BitSet
   * Flags which may be set or cleared by each parser stage
   */
 class PacketFlags(val flags: BitSet) {
-  def set(x : Int) : PacketFlags = {
+  def set(x: Int): PacketFlags = {
     if (x == 0) this
     else new PacketFlags(flags + x)
   }
-  def clear(x : Int) : PacketFlags = {
+  def clear(x: Int): PacketFlags = {
     if (x== 0) this
     else new PacketFlags(flags - x)
   }
-  def assign(x : Int, v : Boolean) : PacketFlags = {
+  def assign(x: Int, v: Boolean): PacketFlags = {
     if (v) { set (x) }
     else { clear (x) }
   }
-  def toLong : Long = {
+  def toLong: Long = {
     flags.foldLeft(0l)((acc, bit) => acc | (1 << bit))
   }
 }
 
 object PacketFlags {
 
-  def apply() : PacketFlags = {
+  def apply(): PacketFlags = {
     new PacketFlags(BitSet.empty)
   }
 }
