@@ -3,10 +3,6 @@ package com.intel.cg.hpfd.madisonbay.wm.program
 
 import java.io._
 
-import com.intel.cg.hpfd.csr.RdlRegister
-import com.intel.cg.hpfd.csr.generated.{mby_top_map, mod_profile_group_r}
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
-
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 
@@ -75,7 +71,7 @@ object WhiteModelServer {
   val csrSpace = new scala.collection.mutable.HashMap[Int, Byte]
 
 
-  def processWriteBlk(iosf: IosfRegBlkWriteReqHdr)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
+  def processWriteBlk(iosf: IosfRegBlkWriteReqHdr, is: DataInputStream, os: DataOutputStream): Unit = {
     val addr = iosf.addr
     println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
     val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
@@ -118,9 +114,7 @@ object WhiteModelServer {
   }
 
 
-  def processWriteReg(iosf: IosfRegWriteReq)(implicit os: DataOutputStream): Unit = {
-    // val addr = iosf.addr
-    // val data = is.readIosfRegBlkData()
+  def processWriteReg(iosf: IosfRegWriteReq, os: DataOutputStream): Unit = {
     val response = makeResponse(iosf)
     val hdr = FmModelMessageHdr(3 * 4 + 2*4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
     os.writeFmModelMessageHdr(hdr)
@@ -128,7 +122,7 @@ object WhiteModelServer {
     os.flush()
   }
 
-  def processReadReg(iosf: IosfRegReadReq)(implicit os: DataOutputStream): Unit = {
+  def processReadReg(iosf: IosfRegReadReq, os: DataOutputStream): Unit = {
     val addr = iosf.addr
     println("Processing read of 0x" + addr.toHexString)
     val theArray = Array.ofDim[Byte](8)
@@ -143,19 +137,19 @@ object WhiteModelServer {
     println("Wrote the response back " + theArray.toIndexedSeq.map(f => f"$f%x"))
   }
 
-  def processIosf(implicit is: DataInputStream, os: DataOutputStream) = {
+  def processIosf(is: DataInputStream, os: DataOutputStream) = {
     val array = Array.ofDim[Byte](128 / 8)  // IOSF headers are 16 bytes, except for reg-write, which is 24
 
     is.readFully(array)
     array match {
-      case IosfBlkWriteExtractor(writeReg) => processWriteBlk(writeReg)
-      case IosfReadExtractor(readReg) => processReadReg(readReg)
+      case IosfBlkWriteExtractor(writeReg) => processWriteBlk(writeReg, is, os)
+      case IosfReadExtractor(readReg) => processReadReg(readReg, os)
       case _ => {
         val extra = Array.ofDim[Byte](64 / 8)
         is.readFully(extra)
         val expandedArray = array ++ extra
         expandedArray match {
-          case IosfRegWriteExtractor(writeReg) => processWriteReg(writeReg)
+          case IosfRegWriteExtractor(writeReg) => processWriteReg(writeReg, os)
           case _ => assert(false, "Failed to parse IOSF packet, after trying 192-bit sized regwrite")
         }
       }
@@ -163,9 +157,8 @@ object WhiteModelServer {
   }
 
   import java.net._
-  val egressPortToSocketMap = new collection.mutable.HashMap[Int, Socket]()
-  val socketToOs = new collection.mutable.HashMap[Socket, DataOutputStream]
-  def portToOs(i: Int) = socketToOs(egressPortToSocketMap(i))
+  val egressPortToSocketAndStreamMap = new collection.mutable.HashMap[Int, (Socket, DataOutputStream)]()
+  def portToOs(i: Int) = egressPortToSocketAndStreamMap(i)._2
 
 
   /** Implement configuration of an egress port
@@ -184,7 +177,7 @@ object WhiteModelServer {
     * In the legacy protocol, new connections are opened on every egress info signal. No EOTs are sent, the model
     * depends on timing out on the connections to decide there is no more data to receive.
     */
-  def processEgressInfo(implicit is: DataInputStream, toGo: Int, hdr: FmModelMessageHdr): Unit = {
+  def processEgressInfo(is: DataInputStream, toGo: Int, hdr: FmModelMessageHdr): Unit = {
     //val eih = is.readFmModelMsgSetEgressInfoHdr()
     val switchPort = hdr.Port
     val ei = is.readFmModelSetEgressInfoHdr()
@@ -198,10 +191,10 @@ object WhiteModelServer {
     println(s"Configuring = $hostname:$tcpPort as egress to switch port $switchPort")
 
     // first determine whether we already have a connection to the client on this port
-    egressPortToSocketMap.get(switchPort) match {
-      case Some(s) => {
+    egressPortToSocketAndStreamMap.get(switchPort) match {
+      case Some((s, _)) => {
         s.close()
-        egressPortToSocketMap.remove(switchPort)
+        egressPortToSocketAndStreamMap.remove(switchPort)
         assert(false, "Reassinging an egress port not tested functionality")
       }
       case None => { }
@@ -211,19 +204,19 @@ object WhiteModelServer {
       (s.getInetAddress.getCanonicalHostName == remote._1.getCanonicalHostName) && (s.getPort == remote._2)
     }
 
-    val newSocketFunc: Socket => Boolean = if (legacyProtocol) { _ => false } else { matchingSocket }
+    def newSocketFunc(mapElement: (Socket, DataOutputStream)): Boolean =
+      if (legacyProtocol) false else matchingSocket(mapElement._1)
 
-    egressPortToSocketMap(switchPort) = egressPortToSocketMap.values.filter(newSocketFunc).headOption match {
-      case Some(s) => {
+    egressPortToSocketAndStreamMap(switchPort) = egressPortToSocketAndStreamMap.values.filter(newSocketFunc).headOption match {
+      case Some((s, os)) => {
         println(" * Socket connection already exists!")
-        s
+        (s, os)
       }
       case None => {
         val s = new Socket(hostname, tcpPort)
         println(s" * Allocating new socket connection to $hostname:$tcpPort")
         val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream()))
-        socketToOs(s) = os
-        s
+        (s, os)
       }
     }
   }
@@ -253,7 +246,7 @@ object WhiteModelServer {
 
   }
 
-  def processPacket(implicit is: DataInputStream, hdr: FmModelMessageHdr ): Unit = {
+  def processPacket(is: DataInputStream, os : DataOutputStream, hdr: FmModelMessageHdr ): Unit = {
     def extractFragment(): (FmModelDataType.Value, Array[Byte]) = {
        val t = is.readFmModelDataType()
       val len = is.readInt()
@@ -287,26 +280,29 @@ object WhiteModelServer {
     }
     //done 'reflecting', signal we are done with this packet on all ports (transmission size at 0, not sure
     // what the point of this is)
-    if (!legacyProtocol) for (os <- socketToOs.values) pushEot(os)
+    pushEot(os)
+    // We have to make sure we are sending EOT just once per socket, hence toSet (look @ method doc)
+    if (!legacyProtocol)
+      for (otherOs <- egressPortToSocketAndStreamMap.values.map(_._2).toSet) pushEot(otherOs)
   }
 
   def processCommandQuit() = {
     println("Received quit operation!")
   }
 
-  def processMessage(implicit is: DataInputStream, os: DataOutputStream) = {
+  def processMessage(is: DataInputStream, os: DataOutputStream) = {
 
-    implicit val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
+    val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)
-    implicit val toGo = hdr.Msglength - 12
+    val toGo = hdr.Msglength - 12
 
 
     hdr.Type match  {
-      case FmModelMsgType.Packet => processPacket
+      case FmModelMsgType.Packet => processPacket(is, os, hdr)
       case FmModelMsgType.Mgmt => Unit
-      case FmModelMsgType.Iosf => processIosf
-      case FmModelMsgType.SetEgressInfo => processEgressInfo
+      case FmModelMsgType.Iosf => processIosf(is, os)
+      case FmModelMsgType.SetEgressInfo => processEgressInfo(is, toGo, hdr)
       case FmModelMsgType.CommandQuit => assert(false)
       case _ =>
     }
@@ -316,10 +312,8 @@ object WhiteModelServer {
     val server = new ServerSocket(0) // 0 means pick any available port
 
     val port = server.getLocalPort()
-    // val myaddress = server.getInetAddress.getHostName
     val hostname = InetAddress.getLocalHost().getCanonicalHostName()
     val descText = "0:" + hostname + ":" + port
-    checkoutCsr
     println("Scala White Model Server for Madison Bay Switch Chip")
     println("Socket port open at " +  descText)
     println("Write server description file to " + file)
@@ -333,15 +327,13 @@ object WhiteModelServer {
       val s: Socket = server.accept()
       s.setTcpNoDelay(true)
       println("Accepted new connection:" + s)
-      egressPortToSocketMap(-1) = s
       // for some reason, doesn't appear to work if Buffered* is removed from the stack
       // this is suspicious
-      implicit val is = new DataInputStream(new BufferedInputStream(s.getInputStream))
-      implicit val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
-      socketToOs(s) = os
+      val is = new DataInputStream(new BufferedInputStream(s.getInputStream))
+      val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
 
       try {
-        while (true) processMessage
+        while (true) processMessage(is, os)
       } catch {
         case _: EOFException => {
           println("Termination of IO from client without shutdown command " + s.getInetAddress().getHostName())
@@ -353,64 +345,10 @@ object WhiteModelServer {
       os.flush()
       os.close()
       s.close()
-      socketToOs.remove(s)
-      egressPortToSocketMap.retain((x, mapsock) => mapsock != s)
+      egressPortToSocketAndStreamMap.retain {
+        case (_, (socket, _)) => socket != s
+      }
     }
     server.close()
   }
-
-  def checkoutCsr: Unit = {
-    // val startCreationTime = System.currentTimeMillis()
-    val theCsr = mby_top_map()
-    // val doneCreationTime = System.currentTimeMillis()
-    // val elapsedTime = doneCreationTime - startCreationTime
-    // val x = theCsr.shm(0).FWD_TABLE0(0).FWD_TABLE0(1).DATA
-
-
-    // a, b, c are the same field:
-    // val a = theCsr.mpt(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
-    /// rx_ppe is not an array, so it can be referenced through transparently
-    // val b = theCsr.mpt(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
-    /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
-    // val c: Long = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
-
-    val test = theCsr.mpt(0).rx_ppe.policers
-    println("theCsr.mpt(0).rx_ppe.policers path is " + test.path)
-    theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).USAGE_OVER_LIMIT() = 1
-    theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).OVER_LIMIT() = 1
-
-    implicit class profile_group_abstraction(val x: mod_profile_group_r) {
-      def get_group(i: Int): mod_profile_group_r#HardwareWritable = {
-        i match {
-          case 1 => x.GROUP_1
-          case 2 => x.GROUP_2
-          case 3 => x.GROUP_3
-          case 4 => x.GROUP_4
-          case 5 => x.GROUP_5
-          case 6 => x.GROUP_6
-          case 7 => x.GROUP_7
-        }
-      }
-    }
-    // now, can reference these guys more abstractly
-    // val _ = theCsr.mpt(0).tx_ppe.modify(0).ipv4_hdr
-    // or
-    // val _ = theCsr.mpt(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
-    //
-    // val _  = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT.reset()
-    // val _ = theCsr.addressRegisterMap(0)
-    //outputshift assign 1
-
-
-    println("Reseting fields that are resetable")
-    val resetStartTime = System.currentTimeMillis()
-    var resetCount = 0
-    def countFieldsReset(r: RdlRegister[U64]#HardwareResetable) = { r.reset() ; resetCount += 1}
-    theCsr.foreachResetableField(countFieldsReset(_) )
-    val resetDoneTime = System.currentTimeMillis()
-    val resetElapsedTime = resetDoneTime - resetStartTime
-    println(" Reset took " + resetElapsedTime + "ms and hit " + resetCount + " fields!")
-
-  }
-
 }
