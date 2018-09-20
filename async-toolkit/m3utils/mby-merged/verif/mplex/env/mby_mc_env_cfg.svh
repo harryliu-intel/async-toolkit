@@ -80,11 +80,22 @@ class mby_mc_env_cfg extends shdv_base_config;
     svt_ahb_bfm_pkg::cust_svt_ahb_system_configuration  ahb_bfm_cfg;
 
     // SVT AHB bfm cfg variables.
+    // Variable: ahb_num_mst
+    // Number of AHB Masters .
     int ahb_num_mst;
-    int ahb_num_slv;
-    int ahb_dw;
-    bit ahb_is_active;
 
+    // SVT AHB bfm cfg variables.
+    // Variable: ahb_num_slv
+    // Number of AHB slaves.
+    int ahb_num_slv;
+    
+    // Variable: ahb_mst_is_active
+    // is_active bit for AHB Master .
+    bit ahb_mst_is_active;
+
+    // Variable: ahb_slv_is_active
+    // is_active bit for AHB Slave .
+    bit ahb_slv_is_active;
 
     `uvm_object_utils_begin(mby_mc_env_cfg)
         `uvm_field_object(axi_bfm_cfg,                                               UVM_DEFAULT)
@@ -94,8 +105,8 @@ class mby_mc_env_cfg extends shdv_base_config;
         `uvm_field_int(axi_slv_is_active,                                            UVM_DEFAULT)
         `uvm_field_int(ahb_num_mst,                                                  UVM_DEFAULT)
         `uvm_field_int(ahb_num_slv,                                                  UVM_DEFAULT)
-        `uvm_field_int(ahb_dw,                                                       UVM_DEFAULT)
-        `uvm_field_int(ahb_is_active,                                                UVM_DEFAULT)
+        `uvm_field_int(ahb_mst_is_active ,                                           UVM_DEFAULT)
+        `uvm_field_int(ahb_slv_is_active,                                            UVM_DEFAULT)
     `uvm_object_utils_end
 
 

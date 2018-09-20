@@ -377,6 +377,7 @@ void NextHop
     out->PA_L3LEN_ERR           = in->PA_L3LEN_ERR;
     out->PRE_RESOLVE_DMASK      = in->PRE_RESOLVE_DMASK;
     out->QOS_SWPRI              = in->QOS_SWPRI;
+    out->RX_DATA                = in->RX_DATA;
     out->RX_LENGTH              = in->RX_LENGTH;
     out->RX_MIRROR              = in->RX_MIRROR;
     out->SA_HIT                 = in->SA_HIT;

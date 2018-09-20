@@ -733,6 +733,9 @@ void Hash
         &rot_b_val
     );
 
+    // Init SV drop
+    fm_byte sv_drop = MBY_SV_MOVE_DROP_RESERVED;
+
     // Write outputs:
 
     for (fm_uint i = 0; i < 16; i++)
@@ -746,6 +749,7 @@ void Hash
     out->L2_DMAC                 = l2_dmac;
     out->L2_SMAC                 = l2_smac;
     out->RAW_HASH                = raw_hash;
+    out->SV_DROP                 = sv_drop;
 
     // Pass thru:
 
@@ -760,7 +764,10 @@ void Hash
     out->L2_IVID1                = in->L2_IVID1;
     out->LEARN_MODE              = in->LEARN_MODE;
     out->PARITY_ERROR            = in->PARITY_ERROR;
+    out->PARSER_ERROR            = in->PARSER_ERROR;
+    out->PARSER_INFO             = in->PARSER_INFO;
     out->PA_L3LEN_ERR            = in->PA_L3LEN_ERR;
+    out->RX_DATA                 = in->RX_DATA;
     out->RX_LENGTH               = in->RX_LENGTH;
     out->RX_PORT                 = in->RX_PORT;
     out->TRAFFIC_CLASS           = in->TRAFFIC_CLASS;

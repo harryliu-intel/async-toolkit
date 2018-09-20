@@ -75,7 +75,7 @@ msh_ctrl msh_ctrl (
 //**********************************************************************************************************************
 
 generate
-for (genvar gv_c=0; gv_c < NUM_DP_CHUNKS; gv_c++) begin : dp_chunks 
+for (genvar gv_c=0; gv_c < NUM_MESH_DP_CHUNKS; gv_c++) begin : dp_chunks 
 
 //-----------------------------------------------------------------------------
 // => ..., ... stages :  <short logic description>

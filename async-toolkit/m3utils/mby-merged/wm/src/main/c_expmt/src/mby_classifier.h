@@ -910,9 +910,12 @@ typedef struct mbyClassifierToHashStruct
     fm_bool                 LEARN_MODE;                          // learn mode: 0=SVL, 1=IVL
     fm_uint16               L2_IDOMAIN;                          // ingress L2 domain
     fm_byte                 L3_IDOMAIN;                          // ingress L3 domain
+    fm_bool                 PARSER_ERROR;                        // header parse error
+    mbyParserInfo           PARSER_INFO;                         // parser info structure
     fm_bool                 PARITY_ERROR;                        // parity error detected flag
     fm_bool                 PA_DROP;                             // checksum validation error, drop pkt in tail
     fm_bool                 PA_L3LEN_ERR;                        // l3 length error
+    fm_byte               * RX_DATA;                             // ingress (receive) packet data
     fm_uint32               RX_LENGTH;                           // ingress packet data length [bytes]
     fm_uint32               RX_PORT;                             // ingress port
     fm_byte                 TRAFFIC_CLASS;                       // 3-bit traffic class
