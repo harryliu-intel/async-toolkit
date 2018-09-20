@@ -14,6 +14,7 @@ $hdl_spec = {
        "src/shared/interfaces/egr_tx_ppe_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/rtl/egr/verilog/mby_egr_pkg.sv",
+       "src/rtl/egr/verilog/egr_igr_if.sv",
        "src/rtl/egr/verilog/egr_ahb_if.sv",
        "src/rtl/egr/verilog/egr_epl_if.sv",
        "src/rtl/egr/verilog/egr_mc_table_if.sv",
@@ -23,7 +24,9 @@ $hdl_spec = {
        "src/rtl/egr/verilog/egr_statsmgmt_if.sv",
        "src/rtl/egr/verilog/egr_tagring_if.sv",
        "src/rtl/egr/verilog/egr_vp_if.sv",
+       "src/rtl/egr/sandbox/egr_dummy_if.sv",
        "src/rtl/egr/verilog/egr_top.sv",
+       "src/rtl/egr/sandbox/egr_top_tb.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
