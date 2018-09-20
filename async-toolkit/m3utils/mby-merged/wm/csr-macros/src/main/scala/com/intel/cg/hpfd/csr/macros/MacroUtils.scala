@@ -25,12 +25,14 @@ object MacroUtils {
     def cAssert(pos: Position, cond: Boolean, str: => String): Unit = if (!cond) { cAbort(pos, str) }
     def cAssert(cond: Boolean)(str: => String)(implicit pos: Position): Unit = cAssert(pos, cond, str)
     implicit class cAssertable(cond: Boolean) {
+      //scalastyle:off method.name
       def |(str: => String)(implicit pos: Position): Unit = cAssert(pos, cond, str)
     }
 
     def cGet[T](pos: Position, option: Option[T], str: String): T = option.getOrElse(abort(pos, str))
     implicit class cGettable[T](op: Option[T]) {
       def cGet(str: String)(implicit pos: Position): T = self.cGet(pos, op, str)
+      // scalastyle:off method.name
       def |(str: String)(implicit pos: Position): T = self.cGet(pos, op, str)
     }
   }

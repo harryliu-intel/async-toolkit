@@ -1,3 +1,5 @@
+//scalastyle:off magic.number
+// TODO create scalastyle config for test
 package com.intel.cg.hpfd.madisonbay
 
 import com.intel.cg.hpfd.madisonbay.Memory.{Address, AddressRange, Alignment, Bits, Bytes}
@@ -61,7 +63,7 @@ class MemoryTest extends FlatSpec with Matchers with Checkers{
   }
 
   "plus(+) in Bits" should "sum bits of two Bits objects" in {
-    check(Prop.forAll((n: Long, m:Long) => Bits(n) + Bits(m) == Bits(n+m)))
+    check(Prop.forAll((n: Long, m:Long) => Bits(n) + Bits(m) == Bits(n + m)))
   }
 
   "minus(-) in Bits" should "subtract bits of two Bits objects" in {

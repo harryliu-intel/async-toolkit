@@ -36,6 +36,9 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
   .dependsOn(common)
   .settings(
     Settings.commonSettings,
+    // TODO: to be removed
+    scalastyleFailOnError := false,
+    scalastyleFailOnWarning := false,
     name := "wm-server-dto"
   )
 

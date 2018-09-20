@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr
 
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64

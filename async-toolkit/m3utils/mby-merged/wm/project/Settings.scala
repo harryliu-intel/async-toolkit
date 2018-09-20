@@ -2,6 +2,7 @@ import sbt.Keys._
 import sbt.librarymanagement.ivy.Credentials
 import sbt.librarymanagement.syntax._
 import sbt.{Def, inThisBuild}
+import org.scalastyle.sbt.ScalastylePlugin.autoImport._
 
 object Settings {
   val artifactoryResolver =
@@ -19,7 +20,7 @@ object Settings {
       "AP39GKaJqAVMRgQ1xiYzA82NrHX"
     ),
     resolvers += artifactoryResolver,
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
     // enable publishing only for npgadmin user
     //    streams in publish := Def.sequential(
     //      Def.task {
@@ -28,5 +29,10 @@ object Settings {
     //      },
     //      streams in publish
     //    ).value
-  ))
+  )) ++ Seq(
+    scalastyleFailOnError := true,
+    scalastyleFailOnWarning := true,
+    (compile in Compile) := ((compile in Compile) dependsOn scalastyle.in(Compile).toTask("")).value,
+    (compile in Test) := ((compile in Test) dependsOn scalastyle.in(Test).toTask("")).value
+  )
 }

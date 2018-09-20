@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr.macros
 
 import scala.reflect.ClassTag
