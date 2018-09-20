@@ -88,9 +88,9 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
 
   }
 
-  def csumValidate(ph: PacketHeader, pf: PacketFields): Boolean = {
-    false // wiki spec of validation behavior not complete (8/17/2018)
-  }
+  // def csumValidate(ph: PacketHeader, pf: PacketFields): Boolean = {
+    // false // wiki spec of validation behavior not complete (8/17/2018)
+  // }
 
   /**
     * Validate Packet Length from Header. Only checked for IPv4 packets.
@@ -128,7 +128,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
     val init = (is, emptyFlags, Parser.EmptyProtoOffsets, Option.empty[ParserException])
 
 
-    implicit val packetheader: PacketHeader = ph
+    // implicit val packetheader: PacketHeader = ph
 
     // apply all the parser stages, the packetheader is the same, but pass the other state down the line
     // this needs cleanup!
@@ -153,9 +153,10 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
 
     }
     val (depthExceeded, headerTruncated, parsingDone) = pe match {
-      case _: Some[ParserDoneException] => (false, false, true)
-      case _: Some[TruncatedHeaderException] => (false, true, false)
-      case _: Some[ParseDepthExceededException] => (true, false, false)
+      case Some(ParserDoneException(_)) => (false, false, true)
+      case Some(TruncatedHeaderException(_)) => (false, true, false)
+      case Some(ParseDepthExceededException(_)) => (true, false, false)
+      case _ => (false,false,false)
     }
 
     ParserOutput(

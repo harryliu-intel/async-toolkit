@@ -20,12 +20,6 @@ abstract class RdlHierarchy(val parent : Option[RdlHierarchy]) extends RdlElemen
     children foreach (_.foreach(_.foreachResetableField(f)))
   }
 
-  def mySeq(s : IndexedSeq[RdlElement]) : Boolean  = {
-    s.contains()
-      true
-
-  }
-
   /**
     * Compute the hierarchical path to an RDL element
     *

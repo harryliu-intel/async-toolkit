@@ -1,8 +1,6 @@
 package com.intel.cg.hpfd.csr.macros
 
-import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
-
 
 object MacroUtils {
   trait Control { self =>

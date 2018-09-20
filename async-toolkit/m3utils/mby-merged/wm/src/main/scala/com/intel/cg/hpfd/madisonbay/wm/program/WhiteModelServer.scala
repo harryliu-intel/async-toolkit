@@ -4,14 +4,14 @@ package com.intel.cg.hpfd.madisonbay.wm.program
 import java.io._
 
 import com.intel.cg.hpfd.csr.RdlRegister
-import com.intel.cg.hpfd.csr.generated.{mby_top_map, mby_ppe_modify_map, mod_profile_group_r}
+import com.intel.cg.hpfd.csr.generated.{mby_top_map, mod_profile_group_r}
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
 
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtArrayByte.RichByteArray
-
+import scala.language.reflectiveCalls
 
 object WhiteModelServer {
   val legacyProtocol = false
@@ -118,9 +118,9 @@ object WhiteModelServer {
   }
 
 
-  def processWriteReg(iosf: IosfRegWriteReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = iosf.addr
-    val data = is.readIosfRegBlkData()
+  def processWriteReg(iosf: IosfRegWriteReq)(implicit os: DataOutputStream): Unit = {
+    // val addr = iosf.addr
+    // val data = is.readIosfRegBlkData()
     val response = makeResponse(iosf)
     val hdr = FmModelMessageHdr(3 * 4 + 2*4, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
     os.writeFmModelMessageHdr(hdr)
@@ -128,7 +128,7 @@ object WhiteModelServer {
     os.flush()
   }
 
-  def processReadReg(iosf: IosfRegReadReq)(implicit is: DataInputStream, os: DataOutputStream): Unit = {
+  def processReadReg(iosf: IosfRegReadReq)(implicit os: DataOutputStream): Unit = {
     val addr = iosf.addr
     println("Processing read of 0x" + addr.toHexString)
     val theArray = Array.ofDim[Byte](8)
@@ -143,7 +143,7 @@ object WhiteModelServer {
     println("Wrote the response back " + theArray.toIndexedSeq.map(f => f"$f%x"))
   }
 
-  def processIosf(implicit is: DataInputStream, os: DataOutputStream, toGo : Int) = {
+  def processIosf(implicit is: DataInputStream, os: DataOutputStream) = {
     val array = Array.ofDim[Byte](128 / 8)  // IOSF headers are 16 bytes, except for reg-write, which is 24
 
     is.readFully(array)
@@ -184,7 +184,7 @@ object WhiteModelServer {
     * In the legacy protocol, new connections are opened on every egress info signal. No EOTs are sent, the model
     * depends on timing out on the connections to decide there is no more data to receive.
     */
-  def processEgressInfo(implicit is: DataInputStream, os: DataOutputStream, toGo: Int, hdr: FmModelMessageHdr): Unit = {
+  def processEgressInfo(implicit is: DataInputStream, toGo: Int, hdr: FmModelMessageHdr): Unit = {
     //val eih = is.readFmModelMsgSetEgressInfoHdr()
     val switchPort = hdr.Port
     val ei = is.readFmModelSetEgressInfoHdr()
@@ -210,8 +210,8 @@ object WhiteModelServer {
     def matchingSocket(s: Socket) = {
       (s.getInetAddress.getCanonicalHostName == remote._1.getCanonicalHostName) && (s.getPort == remote._2)
     }
-    def alwaysNewSocket(s: Socket) = false
-    val newSocketFunc: Socket => Boolean = if (legacyProtocol) { alwaysNewSocket } else { matchingSocket }
+
+    val newSocketFunc: Socket => Boolean = if (legacyProtocol) { _ => false } else { matchingSocket }
 
     egressPortToSocketMap(switchPort) = egressPortToSocketMap.values.filter(newSocketFunc).headOption match {
       case Some(s) => {
@@ -253,7 +253,7 @@ object WhiteModelServer {
 
   }
 
-  def processPacket(implicit is: DataInputStream, toGo: Int, hdr: FmModelMessageHdr ): Unit = {
+  def processPacket(implicit is: DataInputStream, hdr: FmModelMessageHdr ): Unit = {
     def extractFragment(): (FmModelDataType.Value, Array[Byte]) = {
        val t = is.readFmModelDataType()
       val len = is.readInt()
@@ -301,6 +301,7 @@ object WhiteModelServer {
     println ("Processing message with hdr" + hdr)
     implicit val toGo = hdr.Msglength - 12
 
+
     hdr.Type match  {
       case FmModelMsgType.Packet => processPacket
       case FmModelMsgType.Mgmt => Unit
@@ -315,7 +316,7 @@ object WhiteModelServer {
     val server = new ServerSocket(0) // 0 means pick any available port
 
     val port = server.getLocalPort()
-    val myaddress = server.getInetAddress.getHostName
+    // val myaddress = server.getInetAddress.getHostName
     val hostname = InetAddress.getLocalHost().getCanonicalHostName()
     val descText = "0:" + hostname + ":" + port
     checkoutCsr
@@ -328,8 +329,7 @@ object WhiteModelServer {
     psFile.close()
     file.deleteOnExit()
 
-    var done = false
-    while (!done) {
+    while (true) {
       val s: Socket = server.accept()
       s.setTcpNoDelay(true)
       println("Accepted new connection:" + s)
@@ -343,7 +343,7 @@ object WhiteModelServer {
       try {
         while (true) processMessage
       } catch {
-        case eof: EOFException => {
+        case _: EOFException => {
           println("Termination of IO from client without shutdown command " + s.getInetAddress().getHostName())
         }
       }
@@ -360,32 +360,25 @@ object WhiteModelServer {
   }
 
   def checkoutCsr: Unit = {
-    val startCreationTime = System.currentTimeMillis()
+    // val startCreationTime = System.currentTimeMillis()
     val theCsr = mby_top_map()
-    val doneCreationTime = System.currentTimeMillis()
-    val elapsedTime = doneCreationTime - startCreationTime
-    val x = theCsr.shm(0).FWD_TABLE0(0).FWD_TABLE0(1).DATA
+    // val doneCreationTime = System.currentTimeMillis()
+    // val elapsedTime = doneCreationTime - startCreationTime
+    // val x = theCsr.shm(0).FWD_TABLE0(0).FWD_TABLE0(1).DATA
 
 
     // a, b, c are the same field:
-    val a = theCsr.mpt(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
+    // val a = theCsr.mpt(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
     /// rx_ppe is not an array, so it can be referenced through transparently
-    val b = theCsr.mpt(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
+    // val b = theCsr.mpt(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
     /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
-    val c: Long = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
+    // val c: Long = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
 
     val test = theCsr.mpt(0).rx_ppe.policers
     println("theCsr.mpt(0).rx_ppe.policers path is " + test.path)
     theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).USAGE_OVER_LIMIT() = 1
     theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).OVER_LIMIT() = 1
 
-
-
-    //
-    implicit class csum_convenience (val x: mby_ppe_modify_map) {
-       def ipv4_hdr = List(x.MOD_CSUM_CFG1.IPV4_0, x.MOD_CSUM_CFG1.IPV4_1, x.MOD_CSUM_CFG1.IPV4_2)
-       def ipv6_hdr = List(x.MOD_CSUM_CFG1.IPV6_1, x.MOD_CSUM_CFG1.IPV6_2, x.MOD_CSUM_CFG1.IPV6_2)
-    }
     implicit class profile_group_abstraction(val x: mod_profile_group_r) {
       def get_group(i: Int): mod_profile_group_r#HardwareWritable = {
         i match {
@@ -400,12 +393,12 @@ object WhiteModelServer {
       }
     }
     // now, can reference these guys more abstractly
-    val ipv4_h = theCsr.mpt(0).tx_ppe.modify(0).ipv4_hdr
+    // val _ = theCsr.mpt(0).tx_ppe.modify(0).ipv4_hdr
     // or
-    val group2 = theCsr.mpt(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
+    // val _ = theCsr.mpt(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
     //
-    val outputshift = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT.reset()
-    val memoryMap = theCsr.addressRegisterMap(0)
+    // val _  = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT.reset()
+    // val _ = theCsr.addressRegisterMap(0)
     //outputshift assign 1
 
 

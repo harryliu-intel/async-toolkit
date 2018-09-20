@@ -1,4 +1,3 @@
-
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr.generated.{mby_ppe_parser_map, parser_ana_s_r, parser_ana_w_r}
@@ -19,7 +18,7 @@ class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
       // or is the exception action to do nothing (or mark 'done')
       excAction.x(ph, currentOffset, myindex) match {
 
-        case e: Some[AbortParserException] => (ps, pf, po, e)
+        case e @ Some(_: AbortParserException) => (ps, pf, po, e)
 
         case e =>
           val newPs = aa(ph, ps) // setup the analyze actions for the next stage
