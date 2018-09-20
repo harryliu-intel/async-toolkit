@@ -13,9 +13,9 @@ mby_top_map_Setup     (const mby_top_map       *r,
 {
   printf("Hello from the mby_top_map_Setup!\n");
 
-  printf("field is %d\n", r->mpp.mpt[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
-  write_field(w->mpp.mpt[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR, 12);
-  printf("field is %d\n", r->mpp.mpt[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
+  printf("field is %d\n", r->mpp.mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
+  write_field(w->mpp.mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR, 12);
+  printf("field is %d\n", r->mpp.mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
 }
 
 void
@@ -30,6 +30,6 @@ mby_top_map_SendPacket(const mby_top_map       *r,
   mbyMapperToClassifier map2cla;
   mbyParserToModifier   par2mod;
   
-  mbyParser(&(r->mpp.mpt[0].rx_ppe.parser), &mac2par, &par2map);
-  mbyMapper(&(r->mpp.mpt[0].rx_ppe.mapper), &par2map, &map2cla, &par2mod);
+  mbyParser(&(r->mpp.mgp[0].rx_ppe.parser), &mac2par, &par2map);
+  mbyMapper(&(r->mpp.mgp[0].rx_ppe.mapper), &par2map, &map2cla, &par2mod);
 }

@@ -51,10 +51,10 @@ addrmap mby_freepointer_top_map {
 	mby_freepointer_fifo_map fifo[85];
 };
 
-// MPT = 1.6T hiearchy
-addrmap mby_mpt_top_map {
-  name = "mby_mpt_top_map";
-  desc = "Mega Port Tile (1.6T)";
+// MGP = 1.6T hiearchy
+addrmap mby_mgp_top_map {
+  name = "mby_mgp_top_map";
+  desc = "MeGaPort (1.6T)";
   mby_ppe_rx_top_map            rx_ppe;
   mby_rx_voq_map                rx_voq;
   mby_rx_pb_map                 rx_pb;
@@ -66,8 +66,8 @@ addrmap mby_mpt_top_map {
 // MPP = 3.2T hiearchy
 addrmap mby_mpp_map {
   name = "mby_mpp_map";
-  desc = "Mega Port Pair (3.2T)";
-  mby_mpt_top_map mpt[2];
+  desc = "MegaPort Pair (3.2T)";
+  mby_mgp_top_map mgp[2];
   mby_shm_map     shm;
 };
 
