@@ -3,15 +3,13 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import java.io.File
 
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.Packet
 import org.scalatest.{FlatSpec, Matchers}
-
-import com.intel.cg.hpfd.madisonbay.wm.util.Packet
 
 /**
   * Test the 'pcap' parsing capability.
   *
   * @see https://wiki.wireshark.org/Development/LibpcapFileFormat
-  *
   * @todo Dynamically generate pcap files via a tool like 'scapy'
   */
 class PcapSpec extends FlatSpec with Matchers {

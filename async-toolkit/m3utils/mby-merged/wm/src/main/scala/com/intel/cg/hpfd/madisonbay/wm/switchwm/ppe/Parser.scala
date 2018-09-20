@@ -1,14 +1,14 @@
-//scalastyle:off
+
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.{PacketHeader, PipelineStage}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.{Packet, PacketHeader, PipelineStage}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Tcam._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.Implicits
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{IPVersion, ParserOutput, PortIndex}
-import com.intel.cg.hpfd.madisonbay.wm.util.Packet
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{ParserOutput, PortIndex}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.IPVersion
 
 class ParserState(val w: List[Short], val op: AluOperation, val state: Short, val ptr: Short)
 
@@ -19,8 +19,6 @@ object ParserState {
   }
 
 }
-
-
 
 
 class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput] {
@@ -44,8 +42,9 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
     val tcamCsr = csr.PARSER_PTYPE_TCAM(interface)
     val sramCsr = csr.PARSER_PTYPE_RAM(interface)
     val tc = tcamMatch.curried(standardTcamMatchBit)
-    (tcamCsr zip sramCsr).reverse.collectFirst( { case (x,y) if {
-      tc(x.KEY_INVERT, x.KEY, pf.toLong) } => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)} ).getOrElse((0,0))
+    tcamCsr.zip(sramCsr).reverse.collectFirst {
+      case (xk,yk) if tc(xk.KEY_INVERT, xk.KEY, pf.toLong) => (yk.PTYPE().toInt, yk.EXTRACT_IDX().toInt)
+    }.getOrElse((0,0))
   }
 
   def saturatingIncrement(limit: Long)(field: RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable): Unit = {
@@ -55,6 +54,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
 
   object Extractor extends PipelineStage[(PacketHeader, ProtoOffsets), PacketFields] {
 
+    //scalastyle:off
     val x = { t: (PacketHeader, ProtoOffsets) =>
       val ph = t._1
       val protoOffsets = t._2
@@ -84,6 +84,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
       }
       PacketFields(f)
     }
+    //scalastyle:on
 
   }
 
@@ -99,7 +100,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
     * @return
     */
   def ipv4ihlValidate(ph: PacketHeader): Boolean = {
-    require(ph.ipVersion == IPVersion.V4)
+    require(ph.ipVersion == IPVersion.IPV4)
     val ipv4_ihl = ph.bytes(0).nib(1)
     val ihlLargeEnough = ipv4_ihl >= 5
     val headerLargeEnough = ph.totalLength >= (4 * ipv4_ihl)
@@ -113,13 +114,13 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
       // length check varies based on IPv4 (where the length includes the IP header)
       // versus IPv6 (where the payload length includes all extension headers but not the IP header itself)
       ph.ipVersion match {
-        case IPVersion.V4 => ph.totalLength <= (pkt.bytes.length- otr_l3_ptr - 4)
-        case IPVersion.V6 => ph.totalLength <= (pkt.bytes.length- otr_l3_ptr - 40 - 4)
+        case IPVersion.IPV4 => ph.totalLength <= (pkt.bytes.length- otr_l3_ptr - 4)
+        case IPVersion.IPV6 => ph.totalLength <= (pkt.bytes.length- otr_l3_ptr - 40 - 4)
       }
     }
 
   val x: Packet => ParserOutput = pkt => {
-    val ph = PacketHeader(pkt.bytes.slice(0, 192))
+    val ph = PacketHeader(pkt.bytes.slice(0, PacketHeader.maxSegmentSize))
     // setup the initial state
     val rxport = new PortIndex(0) // need to handle this via the function interface somehow...
     val is = initialState(ph, rxport)
@@ -188,23 +189,27 @@ object Parser {
   type ExtractionIndex = Int
   val EmptyProtoOffsets: ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
 
-  class ParserException( val stageEncountered: Int)
+  class ParserException(val stageEncountered: Int)
 
   object ParserException {
     def apply(eos: Boolean = false, eop: Boolean = false, done: Boolean = false, stageEncountered: Int): Parser.ParserException = {
-      if (done) ParserDoneException(stageEncountered)
-      else if (eos & eop) TruncatedHeaderException(stageEncountered)
-      else ParseDepthExceededException(stageEncountered)
+      if (done) {
+        ParserDoneException(stageEncountered)
+      } else if (eos & eop) {
+        TruncatedHeaderException(stageEncountered)
+      } else {
+        ParseDepthExceededException(stageEncountered)
+      }
     }
   }
 
-  class AbortParserException( stageEncountered: Int) extends ParserException(stageEncountered)
+  class AbortParserException(stageEncountered: Int) extends ParserException(stageEncountered)
 
-  case class TruncatedHeaderException( override val stageEncountered: Int ) extends AbortParserException(stageEncountered)
+  case class TruncatedHeaderException(override val stageEncountered: Int) extends AbortParserException(stageEncountered)
 
-  case class ParseDepthExceededException( override val stageEncountered: Int ) extends AbortParserException(stageEncountered)
+  case class ParseDepthExceededException(override val stageEncountered: Int) extends AbortParserException(stageEncountered)
 
-  case class ParserDoneException( override val stageEncountered: Int ) extends ParserException(stageEncountered)
+  case class ParserDoneException(override val stageEncountered: Int) extends ParserException(stageEncountered)
 
 }
 

@@ -1,5 +1,5 @@
-//scalastyle:off
-package com.intel.cg.hpfd.madisonbay.wm.util
+
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
 
 object IPV4Util {
 
@@ -15,8 +15,11 @@ object IPV4Util {
       val lo = x & 0xffff
       val hi = (x >> 16) & 0xffff
       val folded = lo + hi
-      if ((folded >> 16) != 0) foldToShort(folded)
-      else folded.toShort
+      if ((folded >> 16) != 0) {
+        foldToShort(folded)
+      } else {
+        folded.toShort
+      }
     }
 
     def addUnsignedShort(acc: Int, addend: Short): Int = acc + (addend.toInt & 0xffff)

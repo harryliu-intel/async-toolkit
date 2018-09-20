@@ -1,10 +1,10 @@
-//scalastyle:off
-package com.intel.cg.hpfd.madisonbay.wm.util
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
 
 import java.io.{DataInputStream, FileInputStream}
+
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.reverseInt
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtShort.reverseShort
-
+//scalastyle:off
 case class Packet(bytes: Array[Byte])
 
 object Packet {

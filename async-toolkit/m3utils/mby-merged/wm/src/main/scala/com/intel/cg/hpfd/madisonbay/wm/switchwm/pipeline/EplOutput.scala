@@ -1,8 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
-import com.intel.cg.hpfd.madisonbay.wm.util.Packet
 
-case class EplOutput(rxData : Packet,
-                     rxPort : PortIndex,
-                     pktMeta : Int)
+case class EplOutput(rxData: Packet,
+                     rxPort: PortIndex,
+                     pktMeta: Int)

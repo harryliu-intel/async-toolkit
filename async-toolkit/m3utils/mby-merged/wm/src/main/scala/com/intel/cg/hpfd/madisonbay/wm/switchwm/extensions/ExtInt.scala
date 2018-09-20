@@ -2,9 +2,9 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions
 
 object ExtInt {
 
-  implicit class Implicits(val x : Int) {
+  implicit class Implicits(val x: Int) {
 
-    def nib(i : Int) : Int = {
+    def nib(i: Int): Int = {
       val mask = 0xf << i
       (x & mask) >> (4 * i)
     }

@@ -1,4 +1,4 @@
-//scalastyle:off
+
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions
 
 object ExtArrayByte {
@@ -14,12 +14,10 @@ object ExtArrayByte {
         count += 1
       }
 
-      self.foreach(s => {
+      self.foreach {s =>
         cr()
         print(f"$s%02X" + " ")
       }
-      )
-      println()
     }
 
   }

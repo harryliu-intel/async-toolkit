@@ -1,7 +1,7 @@
-//scalastyle:off
+
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.MACAddress
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.MACAddress
 
 class PacketFields(val fields: IndexedSeq[Short]) {
 
@@ -23,7 +23,7 @@ class PacketFields(val fields: IndexedSeq[Short]) {
     fields(i)
   }
 
-  def key16_u(i: Int, x: Short): PacketFields = {
+  def key16Updated(i: Int, x: Short): PacketFields = {
     new PacketFields(fields.updated(i, x))
   }
 
@@ -38,8 +38,10 @@ class PacketFields(val fields: IndexedSeq[Short]) {
 
 }
 
-object PacketFields{
+object PacketFields {
 
+  //scalastyle:off
+  // TODO: find dependency between 80 from HeaderExtraction and here
   def apply(): PacketFields = new PacketFields(Vector.fill[Short](80)(0.toShort))
 
   def apply(x: IndexedSeq[Short]): PacketFields = new PacketFields(x.toVector)

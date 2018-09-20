@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions
 
 object ExtShort {
 
-  implicit class Implicits(val self : Byte) {
+  implicit class Implicits(val self: Byte) {
 
     def hex: String = {
       f"0x$self%02X"

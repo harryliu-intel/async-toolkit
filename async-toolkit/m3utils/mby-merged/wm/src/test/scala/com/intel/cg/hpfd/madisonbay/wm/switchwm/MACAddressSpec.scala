@@ -1,7 +1,7 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.MACAddress
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.MACAddress
 import org.scalatest._
 
 

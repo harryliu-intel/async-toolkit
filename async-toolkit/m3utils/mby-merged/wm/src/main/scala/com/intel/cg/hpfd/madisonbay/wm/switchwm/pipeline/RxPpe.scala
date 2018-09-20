@@ -1,13 +1,17 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
 
+
 import com.intel.cg.hpfd.csr.generated.mby_ppe_rx_top_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.ParserOutput
 
 
-class RxPpe(csr : mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], ParserOutput] {
+class RxPpe(csr: mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], ParserOutput] {
+
   val epl = new Epl
+
   val headerExtractor = new HeaderExtraction
+
   val parser = new Parser(csr.parser)
   // val mapper = new KeyMapper(csr.mapper)
 

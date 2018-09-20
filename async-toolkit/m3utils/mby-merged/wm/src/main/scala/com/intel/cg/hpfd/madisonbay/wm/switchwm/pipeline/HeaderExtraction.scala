@@ -1,8 +1,14 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
 
-import com.intel.cg.hpfd.madisonbay.wm.util.Packet
 
+object HeaderExtraction {
+
+  val PacketHeaderOffset = 80
+
+}
 
 class HeaderExtraction extends PipelineStage[Packet, PacketHeader] {
-  val x: Packet => PacketHeader = p =>  new PacketHeader(p.bytes.slice(0,80))
+
+  val x: Packet => PacketHeader = p =>  new PacketHeader(p.bytes.slice(0, HeaderExtraction.PacketHeaderOffset))
+
 }

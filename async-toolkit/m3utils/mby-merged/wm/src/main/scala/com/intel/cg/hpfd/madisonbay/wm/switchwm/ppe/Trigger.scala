@@ -1,4 +1,4 @@
-//scalastyle:off
+
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr.generated._
@@ -14,6 +14,7 @@ class TriggerUnit extends PipelineStage[FrameState,FrameState] {
 }
 
 class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
+
   val tcfg = new TrigCfg(ppe_cfg.trig_apply, ppe_cfg.trig_apply_misc, ppe_cfg.trig_usage)
   def apply(i: Int): Trigger = {
     new Trigger(tcfg, i)
@@ -23,11 +24,11 @@ class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
   def firingTriggers(fs: FrameState): Iterable[Trigger] = {
     val result = List.newBuilder[Trigger]
     var firedThisPrecedenceStage  = false
-    (0 until length).map ( i => {
+    (0 until length).map { i =>
       val trig = apply(i)
       if (tcfg.TRIGGER_CONDITION_CFG(i).MATCH_BY_PRECEDENCE() == 0) firedThisPrecedenceStage = false
       if (!firedThisPrecedenceStage && trig.c(fs)) result += trig
-    })
+    }
     result.result()
   }
 
@@ -38,6 +39,7 @@ abstract class TriggerCondition {
 }
 
 class CgrpCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
+
   val tcc = apply_map.TRIGGER_CONDITION_CGRP(index)
   val condition = MatchCase(apply_map.TRIGGER_CONDITION_CFG(index).MATCH_CGRP().toInt)
   val x: FrameState => Boolean = fs => {
@@ -47,6 +49,7 @@ class CgrpCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends Trigg
       case MatchCase.NotEqual => !(fs.cgrp == (tcc.CGRP_ID(), tcc.CGRP_MASK()))
     }
   }
+
 }
 
 class SourcePortCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
@@ -80,9 +83,8 @@ object TrigCfg {
 
 
 
-class Trigger(val tcfg: TrigCfg,
-              val index: Int)
-{
+class Trigger(val tcfg: TrigCfg, val index: Int) {
+
   lazy val srcPortCondition = new SourcePortCondition(tcfg, index)
   lazy val cgrpCondition = new CgrpCondition(tcfg, index)
   lazy val stats = tcfg.TRIGGER_STATS(index)
@@ -92,6 +94,7 @@ class Trigger(val tcfg: TrigCfg,
     if (fire) stats.COUNT() = stats.COUNT() + 1
     fire
   }
+
 }
 
 
@@ -107,6 +110,7 @@ object Trigger {
     * Simple case of trigger behaviors defined by a when a precedence group consists of a _single_ trigger
    */
   class TrigPipeline(csr: mby_ppe_rx_top_map, trigIdx: Int) extends PipelineStage[FrameState, FrameState] {
+
     val ta_cfg1 = csr.trig_apply.TRIGGER_ACTION_CFG_1(trigIdx)
     val ta_cfg2 = csr.trig_apply.TRIGGER_ACTION_CFG_2(trigIdx)
 
@@ -178,4 +182,5 @@ object Trigger {
     val AsIs: Value = Value(0, "AsIs")
     val ReassignTc: Value = Value(1, "ReassignTc")
   }
+
 }
