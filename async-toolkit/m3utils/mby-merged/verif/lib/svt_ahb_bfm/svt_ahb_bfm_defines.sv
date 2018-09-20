@@ -22,48 +22,40 @@
 // otherwise. Any license under such intellectual property rights must be
 // express and approved by Intel in writing.
 //
-//=======================================================================
-// COPYRIGHT (C)  2012 SYNOPSYS INC.
-// This software and the associated documentation are confidential and
-// proprietary to Synopsys, Inc. Your use or disclosure of this software
-// is subject to the terms and conditions of a written license agreement
-// between you, or your company, and Synopsys, Inc. In the event of
-// publications, the following notice is applicable:
-//
-// ALL RIGHTS RESERVED
-//
-// The entire notice above must be reproduced on all authorized copies.
-//
 //------------------------------------------------------------------------------
 //   Author        : Dhivya Sankar
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//Class:    cust_svt_ahb_system_configuration
+//   Defines:    svt_ahb_bfm_defines
 //
-//
-//Class cust_svt_ahb_system_configuration is basically used to encapsulate all
-//the configuration information.  It extends system configuration and set the
-//appropriate fields like number of master/slaves, create master/slave
-//configurations etc..., which are required by System Env.
-//------------------------------------------------------------------------------
+//   This file contain any SVT_BFM level Defines, Typedefs, or PARAMETERS.
 
-class cust_svt_ahb_system_configuration extends svt_ahb_system_configuration;
 
-   /** UVM Object Utility macro */
-   `uvm_object_utils_begin (cust_svt_ahb_system_configuration)
-      `uvm_field_int(num_masters,    UVM_DEFAULT)
-      `uvm_field_int(num_slaves,    UVM_DEFAULT)
-    `uvm_object_utils_end
+`ifndef __SVT_BFM_DEFINES_GUARD
+`define __SVT_BFM_DEFINES_GUARD
 
-   /** Class Constructor */
-   function new (string name = "cust_svt_ahb_system_configuration");
 
+`define SVT_AHB_USER_DEFINES_SVI
+
+class ahb_bfm_defines extends uvm_object;
+   parameter AHB_ADDR_WIDTH = 32;
+   parameter AHB_DATA_WIDTH = 64;
+   parameter svt_ahb_configuration::ahb_interface_type_enum AHB_INTERFACE_TYPE = svt_ahb_configuration::AHB; 
+
+   `uvm_object_utils(svt_ahb_bfm_pkg::ahb_bfm_defines)
+
+   //---------------------------------------------------------------------------
+   //  Constructor: new
+   //  Collect any plusargs and re-configure variables from default, if used.
+   //  Arguments:
+   //  name   - AHB BFM Defines object name.
+   //---------------------------------------------------------------------------
+   function       new(string name = "ahb_bfm_defines");
       super.new(name);
-      
-   endfunction 
- 
-   
 
-endclass
+   endfunction: new
+
+endclass: ahb_bfm_defines
+
+`endif // __SVT_BFM_DEFINES_GUARD
