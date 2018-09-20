@@ -5,7 +5,9 @@
 #ifndef MBY_PIPELINE_H
 #define MBY_PIPELINE_H
 
+#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
+#endif
 #include "mby_common.h"
 #include "mby_parser.h"
 #include "mby_mapper.h"
@@ -23,16 +25,22 @@
 
 void RxPipeline
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_rx_top_map      * const rx_top_map,
+#else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    mby_ppe_rx_top_map      * const rx_tmap,
+#endif
     mbyRxMacToParser  const * const mac2par,
     mbyRxStatsToRxOut       * const rxs2rxo
 );
 
 void TxPipeline
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_tx_top_map      * const tx_top_map,
+#else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    mby_ppe_tx_top_map      * const tx_tmap,
+#endif
     mbyTxInToModifier const * const txi2mod,
     mbyTxStatsToTxMac       * const txs2mac
 );
@@ -41,22 +49,34 @@ void TxPipeline
 // the C file where the function is actually implemented.
 void Parser
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_parser_map          * const parser_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyRxMacToParser const      * const in,
     mbyParserToMapper           * const out
 );
 
 void Mapper
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map          * const mapper_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyParserToMapper const     * const in,
     mbyMapperToClassifier       * const out
 );
 
 void Classifier
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map          * const cgrp_a_map,
+    mby_ppe_cgrp_b_map          * const cgrp_b_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    mby_ppe_rx_top_map          * const rx_top_map,
+#endif
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
 );

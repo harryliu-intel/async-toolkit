@@ -8,8 +8,11 @@
 #include <stdio.h>
 
 // This is the persistent state of the model registers:
+#ifdef USE_NEW_CSRS
+static mby_top_map top_map;
+#else
 static fm_uint32   regs[MBY_REGISTER_ARRAY_SIZE];
-static mby_top_map tmap;
+#endif
 
 fm_status mbyResetModel(const fm_uint32 sw)
 {
@@ -76,8 +79,10 @@ fm_status mbySendPacket
     if (sw != 0)
         return FM_ERR_UNSUPPORTED;
 
-    // RX top CSR map:
-    mby_ppe_rx_top_map * const rx_tmap = &(tmap.mpt[0].rx_ppe);
+    // Top CSR map for tile 0 receive pipeline:
+#ifdef USE_NEW_CSRS
+    mby_ppe_rx_top_map * const rx0_regs = &(top_map.mpt[0].rx_ppe);
+#endif
 
     // Input struct:
     mbyRxMacToParser mac2par;
@@ -88,7 +93,11 @@ fm_status mbySendPacket
     mac2par.RX_PORT   = (fm_uint32) port;
 
     // Call RX pipeline:
-    RxPipeline(regs, rx_tmap, &mac2par, &rxs2rxo);
+#ifdef USE_NEW_CSRS
+    RxPipeline(rx0_regs, &mac2par, &rxs2rxo);
+#else
+    RxPipeline(regs,     &mac2par, &rxs2rxo);
+#endif
 
     return FM_OK;
 }
@@ -105,8 +114,10 @@ fm_status mbyReceivePacket
     if (sw != 0)
         return FM_ERR_UNSUPPORTED;
 
-    // TX top CSR map:
-    mby_ppe_tx_top_map * const tx_tmap = &(tmap.mpt[0].tx_ppe);
+    // Top CSR map for tile 0 transmit pipeline:
+#ifdef USE_NEW_CSRS
+    mby_ppe_tx_top_map * const tx0_regs = &(top_map.mpt[0].tx_ppe);
+#endif
 
     // Input struct:
     txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
@@ -138,7 +149,11 @@ fm_status mbyReceivePacket
     mbyTxStatsToTxMac txs2mac;
 
     // Call RX pipeline:
-    TxPipeline(regs, tx_tmap, &txi2mod, &txs2mac);
+#ifdef USE_NEW_CSRS
+    TxPipeline(tx0_regs, &txi2mod, &txs2mac);
+#else
+    TxPipeline(regs,     &txi2mod, &txs2mac);
+#endif
 
     // Populate output:
     *port   = txs2mac.TX_PORT;

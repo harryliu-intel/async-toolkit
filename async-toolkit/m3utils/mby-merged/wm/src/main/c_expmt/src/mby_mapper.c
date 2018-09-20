@@ -2,6 +2,10 @@
 
 // Copyright (C) 2018 Intel Corporation
 
+#ifdef USE_NEW_CSRS
+#include <mby_top_map.h>
+#endif
+
 #include "mby_parser.h"
 #include "mby_mapper.h"
 #include "mby_classifier.h"
@@ -1592,7 +1596,11 @@ static void mapRewrite
 
 void Mapper
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map          * const mapper_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     const mbyParserToMapper     * const in,
           mbyMapperToClassifier * const out
 )

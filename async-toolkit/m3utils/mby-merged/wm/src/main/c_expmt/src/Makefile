@@ -67,6 +67,10 @@ DEFINES  += -D_FM_ARCH_x86_64
 ifeq ($(DEBUG),1)
 endif
 
+ifeq ($(USE_NEW_CSRS),1)
+CFLAGS += -DUSE_NEW_CSRS
+endif
+
 DELFILES  = $(OBJECTS) *.o *.so
 
 .PHONY: all

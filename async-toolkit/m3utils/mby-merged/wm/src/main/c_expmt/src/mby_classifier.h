@@ -758,8 +758,8 @@ typedef struct mbyClassifierTcamStruct
 
 typedef struct mbyClassifierTcamEntryStruct
 {
-    fm_uint64               Key;
-    fm_uint64               KeyInvert;
+    fm_uint64               key;
+    fm_uint64               keyInvert;
 
 } mbyClassifierTcamEntry;
 
@@ -778,37 +778,47 @@ typedef struct mbyClassifierHashLookupStruct
 
 typedef struct mbyLookupInfoStruct
 {
-    fm_uint64               key; // 40b field
-    fm_uint64               keyInvert; // 40b field
+    fm_uint64               key;       // 40b field
+    fm_uint64               keyInvert; // 40b
     fm_bool                 rawHits[MBY_FFU_TCAM_ENTRIES_0];
-    fm_int                  hitIndex;
+    fm_uint32               hitIndex;
     fm_bool                 hitIndexValid;
 
 } mbyLookupInfo;
 
 typedef struct mbyClassifierHitInfoStruct
 {
-    fm_int                  hitIndex;
+    fm_uint32               hitIndex;
     fm_bool                 hitIndexValid;
 
 } mbyClassifierHitInfo;
 
 typedef struct mbyClassifierKeyMaskCfgStruct
 {
-    fm_uint32               Key16Mask;
-    fm_uint64               Key8Mask;
-    fm_uint16               Key32Mask;
-    fm_byte                 KeySubmode[2]; // 2b field
-    fm_uint32               KeySubmask[2];
+    fm_uint32               key8Mask;   // 32b field
+    fm_uint32               key16Mask;  // 32b
+    fm_uint16               key32Mask;  // 16b
+    fm_byte                 keyMaskSel; //  4b
 
 } mbyClassifierKeyMaskCfg;
+
+typedef struct mbyClassifierEntropyCfgStruct
+{
+    fm_uint32               key8Mask;    // 32b field
+    fm_uint32               key16Mask;   // 32b
+    fm_uint16               key32Mask;   // 16b
+    fm_byte                 keyMaskProf; //  4b
+    fm_byte                 symProf;     //  2b
+    fm_bool                 symmetric;   //  1b
+
+} mbyClassifierEntropyCfg;
 
 typedef struct mbyClassifierHashCfgStruct
 {
     fm_bool                 mode;
     fm_uint16               base_ptr  [2]; // 13b field
-    fm_byte                 hash_size [2]; // 5b field
-    fm_byte                 entry_size[2]; // 5b field
+    fm_byte                 hash_size [2]; //  5b
+    fm_byte                 entry_size[2]; //  5b
 
 } mbyClassifierHashCfg;
 
@@ -833,6 +843,13 @@ typedef struct mbyEntropyMetaCfg
     fm_byte                 HASH_SIZE;
 
 } mbyEntropyMetaCfg;
+
+typedef struct mbyClassifierActionCfgStruct
+{
+    fm_bool                 enable; // 1b field
+    fm_byte                 slice;  // 4b
+
+} mbyClassifierActionCfg;
 
 typedef struct mbyClassifierMuxedActionStruct
 {
