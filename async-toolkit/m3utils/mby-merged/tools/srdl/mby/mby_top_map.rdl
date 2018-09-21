@@ -22,6 +22,7 @@
 `include "mby_mesh_row.rdl"
 `include "mby_rx_voq.rdl"
 `include "mby_tx_voq.rdl"
+`include "mby_freepointer.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -45,6 +46,10 @@ addrmap mby_ppe_tx_top_map {
   mby_ppe_modify_map            modify;
 };
 
+addrmap mby_freepointer_top_map {
+	mby_freepointer_fifo_map fifo[85];
+};
+
 // 1.6T hiearchy
 addrmap mby_mpt_top_map {
   mby_ppe_rx_top_map            rx_ppe;
@@ -56,8 +61,9 @@ addrmap mby_mpt_top_map {
 
 // 3.2T hiearchy
 addrmap mby_top_map {
-  mby_mpt_top_map mpt[2];
-  mby_shm_map     shm;
-  mby_mesh_map    mesh; // one row of the mesh
+  mby_mpt_top_map         mpt[2];
+  mby_shm_map             shm;
+  mby_mesh_map            mesh; // one row of the mesh
+  mby_freepointer_top_map freepointer;
 };
 

@@ -8,7 +8,7 @@
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This class builds and connects the differents agents/BFMs/VCs needed by this
+// This class builds and connects the different agents/BFMs/VCs needed by this
 // cluster test environment
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
@@ -96,9 +96,10 @@ class ingress_env extends ingress_base_env;
     eth_cdi_bfm               = ec_env_defines::mby_ec_bfm_t::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
     eth_cdi_bfm.cfg.mode      = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
     eth_cdi_bfm.cfg.speed     = eth_bfm_pkg::SPEED_400G;                                            // Configure speed.
-    eth_cdi_bfm.cfg.num_ports = 2;                                                                  // Configure num_ports.
-    eth_cdi_bfm.cfg.ack_delay = 0;
-    eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
+    eth_cdi_bfm.cfg.num_ports = 4;                                                                  // Configure num_ports.
+    eth_cdi_bfm.cfg.sop_alignment = 67;
+    //eth_cdi_bfm.cfg.ack_delay = 0;
+    //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
     eth_cdi_bfm.cfg.push_down_knobs();                                                              // Push Down the Config Knobs
 
     eth_cdi_tx_io = ec_env_defines::cdi_tx_io_t::type_id::create("eth_cdi_tx_io", this);

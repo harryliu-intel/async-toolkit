@@ -213,6 +213,7 @@ $ToolConfig_tools{"mgm"} = {
     MGM_ARGS => {
         BLOCKS => {
             mby => ["parser",
+                    "classifier",
                     "ppe_stm",
                    ],
         },

@@ -132,7 +132,7 @@ EOF
 
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'ec_ti_lib', 'mby_ec_bfm_lib'],
+               -dependent_libs  => [ 'shdv_shared_lib', 'ec_ti_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -144,22 +144,27 @@ EOF
 
             mby_ingress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'ec_ti_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'ec_ti_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
-	    mby_ingress_test_lib => {
+            mby_ingress_test_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_ingress_test.hdl', ],
                -dependent_libs => [ 'sip_shared_lib', 'mby_ingress_env_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
             },
 
-            mby_egress_env_lib => {
-               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'ec_ti_lib', 'mby_ec_bfm_lib'],
-               -tag             => "nonsynth",
+            mby_egr_rtl_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_egr_rtl_lib.hdl' ],
+               -dependent_libs  => [ 'sla_lib'],
             },
 
+            mby_egress_env_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'ec_ti_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -tag             => "nonsynth",
+            },
+            
             mby_egress_ti_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_egress_ti.hdl' ],
                -dependent_libs => [ 'shdv_shared_lib', 'mby_egress_env_lib' ],
@@ -168,14 +173,20 @@ EOF
 
             mby_egress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'ec_ti_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'ec_ti_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
-	    mby_egress_test_lib => {
+	         mby_egress_test_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_egress_test.hdl', ],
                -dependent_libs => [ 'sip_shared_lib', 'mby_egress_env_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
+            },
+                      
+            mby_gm_rtl_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gm_rtl_lib.hdl' ],
+               -dependent_libs  => [ 'sla_lib'],
+               #-tag             => "nonsynth",
             },
 
             mby_env_lib => {
@@ -492,6 +503,8 @@ EOF
 
                libs => [
                    "shdv_shared_lib",
+                   "svt_ahb_lib",
+                   "mby_common_lib",
                    "mby_rtl_lib",
                    "mby_ingress_tb_lib",
                    "mby_ingress_ti_lib",
@@ -557,6 +570,9 @@ EOF
 
                libs => [
                    "shdv_shared_lib",
+                   "svt_ahb_lib",
+                   "mby_common_lib",
+                   "mby_egr_rtl_lib",
                    "mby_rtl_lib",
                    "mby_egress_tb_lib",
                    "mby_egress_ti_lib",
@@ -607,6 +623,105 @@ EOF
             },
             ####################################################################
             # mby_egress model ends
+            ####################################################################
+
+            ####################################################################
+            ## mby egr rtl dev model starts
+            ####################################################################
+            egr_rtl_dev => {
+               top  => 'mby_egr_rtl_lib.egr_top_tb',
+
+               use  => [
+                       ],
+
+               libs => [
+                   "sla_lib",
+                   "mby_egr_rtl_lib"
+               ],
+
+               elab_opts => [
+                     "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                     "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
+                     "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                 libs => [
+                 ]
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                  ],
+               },
+
+               power_intent => {
+               },
+            },
+            ####################################################################
+            # mby egr rtl dev model ends
+            ####################################################################
+
+
+            ####################################################################
+            ## mby global manager model starts
+            ####################################################################
+            gm_rtl_dev => {
+               top  => 'mby_gm_rtl_lib.tb_gmm',
+
+               use  => [
+                       ],
+
+               libs => [
+                   "sla_lib",
+                   "mby_gm_rtl_lib"
+               ],
+
+               elab_opts => [
+                     "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                     "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
+                     "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                 libs => [
+                 ]
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                  ],
+               },
+
+               power_intent => {
+               },
+            },
+            ####################################################################
+            # mby global manager model ends
             ####################################################################
 
          },
