@@ -4,31 +4,22 @@
 #include <mby_common.h>
 #include <mby_pipeline.h>
 #include <mby_crc32.h>
-
+#include <mby_init.h>
 #include "mby_parser_test.h"
 
-void readRegs(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE])
-{
-    FILE *file = fopen ("regs.txt", "r");
-    if (file == NULL) {
-        printf("Could not open file regs.txt -- exiting!\n");
-        exit(-1);
-    }
+void initRegs(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]) {
 
-    int i = 0;
-    while (!feof(file) && (i < MBY_REGISTER_ARRAY_SIZE))
-    {  
-        fm_uint32 val = 0;
-        int rv = fscanf (file, "%u", &val); 
-        if (rv != 1) {
-            printf("Got an error while reading file regs.txt -- exiting!\n");
-            exit(-1);
-        }
-        regs[i] = val;
-        i++;
-    }
+    // Initialize model registers 
+    mbyResetModel(0);
+    init_nvm_img();
+    fm_uint64 val;
 
-    fclose (file);        
+    // Copy parser registers to present regs array
+    for(int regIndex = MBY_PARSER_BASE/4; regIndex < MBY_PARSER_BASE/4 + MBY_PARSER_SIZE/4; regIndex+=2){
+        mbyReadReg(0, regIndex*4, &val);
+	regs[regIndex] = (unsigned int)(val & 0xffffffff);
+	regs[regIndex+1] = (unsigned int)(val >> 32) ;
+    }
 }
 
 void initOutput
@@ -183,8 +174,7 @@ int main()
         exit(-1);
     }
 
-    // Read registers from "regs.txt":
-    readRegs(regs);
+    initRegs(regs);
 
 #if 1
     fm_uint tests_num = TEST_PASS_MAX;

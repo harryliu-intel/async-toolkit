@@ -4,7 +4,6 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 import java.io.File
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.Packet
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -29,7 +28,7 @@ class ParserSpec extends FlatSpec with Matchers {
   // https://en.wikipedia.org/wiki/IPv4_header_checksum
   val pcapFile : File = new File("src/test/data/scapy.pcap")
   s"${pcapFile}" should s" have an UDP header" in {
-    val pkt = Packet.loadPcap(pcapFile)(0)
+    // val pkt = Packet.loadPcap(pcapFile)(0)
     // val pout = parser.x(pkt) // (crashes without correct image)
     // can't actually do this assertion yet (no parser image)
     // pout.paFlags.flags should contain (TypicalPacketFlags.otr_l4_udp_v.id)

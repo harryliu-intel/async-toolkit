@@ -4,8 +4,7 @@ package com.intel.cg.hpfd.madisonbay
 
 import com.intel.cg.hpfd.madisonbay.Memory.{Address, AddressRange, Alignment, Bits, Bytes}
 import org.scalatest.{FlatSpec, Matchers}
-import org.scalacheck.{Prop, Properties}
-import org.scalacheck.Prop.forAll
+import org.scalacheck.Prop
 import org.scalatest.prop.Checkers
 
 class MemoryTest extends FlatSpec with Matchers with Checkers{
