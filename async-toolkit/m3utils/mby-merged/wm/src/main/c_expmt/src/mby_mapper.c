@@ -23,19 +23,61 @@ static fm_uint32 generateMask(fm_uint start, fm_uint len) {
     return mask;
 }
 
-static void getPortCfg
+static mbyMapPortCfg getPortCfg
 (
-    fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32       rx_port,
-    mbyMapPortCfg * const port_cfg
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            rx_port
 )
 {
+    mbyMapPortCfg port_cfg;
+
+#ifdef USE_NEW_CSRS
+    map_port_cfg_r const * const map_port_cfg = &(mapper_map->MAP_PORT_CFG[rx_port]);
+
+    port_cfg.DEFAULT_SGLORT    = map_port_cfg->DEFAULT_SGLORT;
+    port_cfg.DEFAULT_SGLORT_EN = map_port_cfg->DEFAULT_SGLORT_EN;
+    port_cfg.PORT_PROFILE      = map_port_cfg->PORT_PROFILE;
+#else
     fm_uint64 map_port_cfg_reg = 0;
     mbyModelReadCSR64(regs, MBY_MAP_PORT_CFG(rx_port, 0), &map_port_cfg_reg);
 
-    port_cfg->DEFAULT_SGLORT    = FM_GET_FIELD64(map_port_cfg_reg, MBY_MAP_PORT_CFG, DEFAULT_SGLORT);
-    port_cfg->DEFAULT_SGLORT_EN = FM_GET_BIT64  (map_port_cfg_reg, MBY_MAP_PORT_CFG, DEFAULT_SGLORT_EN);
-    port_cfg->PORT_PROFILE      = FM_GET_FIELD64(map_port_cfg_reg, MBY_MAP_PORT_CFG, PORT_PROFILE);
+    port_cfg.DEFAULT_SGLORT    = FM_GET_FIELD64(map_port_cfg_reg, MBY_MAP_PORT_CFG, DEFAULT_SGLORT);
+    port_cfg.DEFAULT_SGLORT_EN = FM_GET_BIT64  (map_port_cfg_reg, MBY_MAP_PORT_CFG, DEFAULT_SGLORT_EN);
+    port_cfg.PORT_PROFILE      = FM_GET_FIELD64(map_port_cfg_reg, MBY_MAP_PORT_CFG, PORT_PROFILE);
+#endif
+    return port_cfg;
+}
+
+static mbyMapPortDefaults getPortDefaults
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            rx_port,
+    fm_byte   const            entry
+)
+{
+    mbyMapPortDefaults port_defaults;
+
+#ifdef USE_NEW_CSRS
+    map_port_default_r const * const map_port_default = &(mapper_map->MAP_PORT_DEFAULT[rx_port][entry]);
+
+    port_defaults.TARGET = map_port_default->TARGET;
+    port_defaults.VALUE  = map_port_default->VALUE;
+#else
+    fm_uint64 map_port_default_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_PORT_DEFAULT(rx_port, entry, 0), &map_port_default_reg);
+
+    port_defaults.TARGET = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, TARGET);
+    port_defaults.VALUE  = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, VALUE);
+#endif
+    return port_defaults;
 }
 
 static void realignKeys
@@ -318,13 +360,11 @@ static void insertDefaults
     // Apply defaults on keys
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-        fm_uint64 map_port_default_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MAP_PORT_DEFAULT(rx_port, i, 0), &map_port_default_reg);
-
-        mbyMapPortDefaults port_defaults;
-        port_defaults.TARGET = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, TARGET);
-        port_defaults.VALUE  = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, VALUE);
-
+#ifdef USE_NEW_REGS
+        mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, i);
+#else
+        mbyMapPortDefaults port_defaults = getPortDefaults(regs,       rx_port, i);
+#endif
         fm_byte target = port_defaults.TARGET;
         if (target > MBY_DEFAULT_TARGET_FORCE_KEYS_H)
             continue;
@@ -386,13 +426,11 @@ static void insertDefaults
     // Apply defaults on actions
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-        fm_uint64 map_port_default_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MAP_PORT_DEFAULT(rx_port, i, 0), &map_port_default_reg);
-
-        mbyMapPortDefaults port_defaults;
-        port_defaults.TARGET = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, TARGET);
-        port_defaults.VALUE  = FM_GET_FIELD64(map_port_default_reg, MBY_MAP_PORT_DEFAULT, VALUE);
-
+#ifdef USE_NEW_REGS
+        mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, i);
+#else
+        mbyMapPortDefaults port_defaults = getPortDefaults(regs,       rx_port, i);
+#endif
         fm_byte target = port_defaults.TARGET;
         if (target <= MBY_DEFAULT_TARGET_FORCE_KEYS_H)
            continue;
@@ -1622,8 +1660,12 @@ void Mapper
     // Outer MPLS valid flag for use in the Classifier:
     fm_bool otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
 
-    mbyMapPortCfg port_cfg;
-    getPortCfg(regs, rx_port, &port_cfg);
+
+#ifdef USE_NEW_CSRS
+    mbyMapPortCfg port_cfg = getPortCfg(mapper_map, rx_port);
+#else
+    mbyMapPortCfg port_cfg = getPortCfg(regs,       rx_port);
+#endif
 
     fm_bool is_ipv4[MBY_N_IS_IP_BITS] = { FALSE };
     fm_bool is_ipv6[MBY_N_IS_IP_BITS] = { FALSE };

@@ -480,7 +480,7 @@ static void resolveActions
 {
     for (fm_uint ram_num = 0; ram_num < MBY_FFU_ACTION_ENTRIES_1; ram_num++)
     {
-#ifdef USE_NEW_REGS
+#ifdef USE_NEW_CSRS
         mbyClassifierActionCfg action_cfg = getWcmActionCfg(cgrp_b_map, group, scenario, ram_num);
 #else
         mbyClassifierActionCfg action_cfg = getWcmActionCfg(regs,       group, scenario, ram_num);
@@ -1015,7 +1015,7 @@ static void lookUpHash
         fm_uint32 hash_actions[MBY_FFU_MAX_HASH_ACTIONS] = { 0 };
 
         // Get FFU_KEY_MASK register fields:
-#ifdef USE_NEW_REGS
+#ifdef USE_NEW_CSRS
         mbyClassifierKeyMaskCfg key_mask_cfg = getKeyMaskCfg(cgrp_a_map, group, hash_num, scenario);
 #else
         mbyClassifierKeyMaskCfg key_mask_cfg = getKeyMaskCfg(regs,       group, hash_num, scenario);
@@ -1201,7 +1201,7 @@ static void lookUpHash
 
 static void matchExact
 (
-#ifdef USE_NEW_REGS
+#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map      * const cgrp_a_map,
     mby_ppe_cgrp_b_map      * const cgrp_b_map,
 #else
@@ -1213,7 +1213,7 @@ static void matchExact
     mbyClassifierActions    * const actions // = output actions
 )
 {
-#ifdef USE_NEW_REGS
+#ifdef USE_NEW_CSRS
     lookUpHash(cgrp_a_map, cgrp_b_map, keys, scenario, group, actions);
 #else
     lookUpHash(regs,                   keys, scenario, group, actions);
@@ -1385,7 +1385,7 @@ static void populateMuxedAction
 
 static mbyClassifierEntropyCfg getEntropyCfg
 (
-#ifdef USE_NEW_REGS
+#ifdef USE_NEW_CSRS
     mby_ppe_entropy_map * const entropy_map,
 #else
     fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
@@ -1396,7 +1396,7 @@ static mbyClassifierEntropyCfg getEntropyCfg
 {
     mbyClassifierEntropyCfg entropy_cfg;
 
-#ifdef USE_NEW_REGS
+#ifdef USE_NEW_CSRS
     entropy_hash_cfg0_r const * const hash_cfg0 = &(entropy_map->ENTROPY_HASH_CFG0[hash_num][hash_prof]);
     entropy_hash_cfg1_r const * const hash_cfg1 = &(entropy_map->ENTROPY_HASH_CFG1[hash_num][hash_prof]);
 
