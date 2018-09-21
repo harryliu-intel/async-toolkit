@@ -2,31 +2,63 @@
 
 import common
 import os.path
-import sc
 import pe
 import imp
 import argparse
+import sys
 
+# pe_and_compile
+# Generate the remaining Python code and run the file to perform partial evaluation.
+# Does not return a value.
 def pe_and_compile( final_rhd_src_fname ) :
-	# TODO Typechecking
+	assert isinstance( final_rhd_src_fname , str )
+	if not os.path.isabs( final_rhd_src_fname ) :
+		print ( "Please provide absolute path for final rhd source filename." )
+		sys.exit( common.FAILURE )
+	if not os.path.isfile( final_rhd_src_fname ) :
+		print ( "Final rhd source file does not exist." )
+		sys.exit( common.FAILURE )
 	# Append loop for all pe
-	# TODO Need some error checking to make sure you don't overwrite anything
 	final_rhd_src_suffix = "pe.pe_collection( \"" + hda_paths.hw_lib + "\" , all_src , \"" + os.path.join( hda_paths.parts , hda_paths.pe_top_fname ) + "\" , \"" + hda_paths.parts + "\" )\n"
 	# Append loop for all compiling
-	# final_rhd_src_suffix += "sc.sc_collection( all_files_to_compile )\n"
-	# final_rhd_src = "all_files_to_compile = [ ]\n"
 	final_rhd_src = "all_src = { }\n"
 	final_rhd_src += "pe_outfnames = [ ]\n"
 	# Run final_rhd_src
 	with open( final_rhd_src_fname , "r" ) as final_rhd_src_handle :
 		final_rhd_src += final_rhd_src_handle.read( ) + final_rhd_src_suffix
-		print ( "=== Final Code ===" )
-		print ( final_rhd_src )
-		print ( "=== Final Code ===" )
-		exec final_rhd_src
+		try :
+			exec final_rhd_src
+		except :
+			print ( "Something went wrong with hda_directives file." )
+			sys.exit( common.FAILURE )
 
+# gen_final_scm_src
+# Generate some definitions for the Scheme code in hda_directives.
+# Return the final Scheme source file name.
 def gen_final_scm_src( hda_directives , final_rhd_src_fname , dirname ) :
-	# TODO Typechecking
+
+	assert isinstance( hda_directives , str )
+	assert isinstance( final_rhd_src_fname , str )
+	assert isinstance( dirname , str )
+
+	if not os.path.isabs( hda_directives ) :
+		print ( "Please provide absolute path for hda_directives file name." )
+		sys.exit( common.FAILURE )
+	if not os.path.isfile( hda_directives ) :
+		print ( "hda_directives file does not exist." )
+		sys.exit( common.FAILURE )
+
+	if not os.path.isabs( final_rhd_src_fname ) :
+		print ( "Please provide absolute path for final scm source filename." )
+		sys.exit( common.FAILURE )
+
+	if not os.path.isabs( dirname ) :
+		print ( "Please provide absolute path for directory with final scm source." )
+		sys.exit( common.FAILURE )
+	if not os.path.isdir( dirname ) :
+		print ( "Final scm source file's directory does not exist." )
+		sys.exit( common.FAILURE )
+
 	final_scm_src = ""
 	with open( common.hda_root + "/src/rhd.scm" , "r" ) as rhd_scm_handle :
 		# First, wrap hda_directives in a call that appends all the strings and
@@ -48,25 +80,51 @@ def gen_final_scm_src( hda_directives , final_rhd_src_fname , dirname ) :
 		final_scm_src_handle.write( final_scm_src )
 	return final_scm_src_fname
 
+# perform_hda_directives_actions
+# Generate Python code from hda_directives and execute.
+# Place temporary collateral in the dirname directory.
 def perform_hda_directives_actions( hda_directives , dirname ) :
-	# TODO Typechecking
-	# Name final Python output file
+
+	assert isinstance( hda_directives , str )
+	assert isinstance( dirname , str )
+
+	if not os.path.isabs( hda_directives ) :
+		print ( "Please provide absolute path for hda_directives file name." )
+		sys.exit( common.FAILURE )
+	if not os.path.isfile( hda_directives ) :
+		print ( "hda_directives file does not exist." )
+		sys.exit( common.FAILURE )
+
+	if not os.path.isabs( dirname ) :
+		print ( "Please provide absolute path for temp directory for hda_directives collateral." )
+		sys.exit( common.FAILURE )
+	if not os.path.isfile( hda_directives ) :
+		print ( "temp directory for hda_directives collateral does not exist." )
+		sys.exit( common.FAILURE )
+
+	# Name final Python output file and run
 	final_rhd_src_fname = common.uniquify_name( os.path.join( dirname , "temp" ) )
 	final_scm_src_fname = gen_final_scm_src( hda_directives , final_rhd_src_fname , dirname )
-	# Compile and run. Be sure to get a unique name for the executable.
-	# final_scm_src_exec_fname = common.uniquify_name( os.path.join( dirname , "temp" ) , ".image" )
-	# sc.sc( final_scm_src_fname , "toplevel" , final_scm_src_exec_fname )
-	# TODO Ensure that you've sourced the hda.env file
 	os.system( common.scheme + " " + final_scm_src_fname )
 	pe_and_compile( final_rhd_src_fname )
 
+# rhd - run hda_directives
+# Run hda_directives and perform partial evaluation. Generates collateral in a temporary
+# directory. This directory is deleted afterward.
 def rhd( hda_paths_path ) :
-	# TODO Typechecking and error checking
-	# TODO Check for absolute path
+
+	assert isinstance( hda_paths_path , str )
+	if not os.path.isabs( hda_paths_path ) :
+		print ( "Please provide absolute path for hda_paths file." )
+		sys.exit( common.FAILURE )
+	if not os.path.isfile( hda_paths_path ) :
+		print ( "hda_paths file does not exist." )
+		sys.exit( common.FAILURE )
+
 	global hda_paths
 	hda_paths = imp.load_source( "hda_paths" , hda_paths_path )
 	# Generate a uniquely-named directory
-	dirname = common.uniquify_name( "temp" )
+	dirname = os.path.join( os.path.dirname( hda_paths_path ) , common.uniquify_name( "temp" ) )
 	os.system( "mkdir -p " + dirname )
 	perform_hda_directives_actions( hda_paths.hda_directives , dirname )
 	os.system( "rm -rf " + dirname )

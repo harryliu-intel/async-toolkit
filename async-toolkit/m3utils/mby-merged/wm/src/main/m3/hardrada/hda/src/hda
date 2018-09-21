@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import argparse
+import sys
 import os
+import common
 import os.path
 import imp
 import rhd
@@ -26,45 +28,54 @@ def usage ( ) :
 	print ( "		 all residual *.spec.scm files in parts/. That extension is reserved for" )
 	print ( "		 residual programs. Handwritten Scheme files should simply use the *.scm" )
 	print ( "		 extension to avoid being cleaned." )
-	print ( "- hda --hw_lib/--parts/--hda_directives/--build (abs path) :: used to set the absolute path" )
-	print ( "		 of one of the directories/files; changes the .hda_paths file" )
 	print ( "=== hda ===" )
 
+# root
+# Generates the hda_paths file if it does not currently exist.
+# Generates any directories that do not currently exist.
 def root( hda_paths ) :
-	# TODO Typecheck + abs path check
-	# TODO Check to make sure hda_paths is a file and NOT a directory
+	assert isinstance( hda_paths , str )
+	if not os.path.isabs( hda_paths ) :
+		print ( "Please provide absolute path for root argument." )
+		sys.exit( common.FAILURE )
 	if os.path.exists( hda_paths ) :
 		print ( ".hda_paths file found at " + hda_paths + "..." )
 	else :
 		my_root = os.path.dirname( hda_paths )
 		print ( "Creating .hda_paths file at " + hda_paths + "..." )
-		with open( hda_paths , "w" ) as root_fhandle :
-			# TODO Check for overwriting files for all the generated directories
-			# and for my_root.
-			print ( "File successfully created... Now generating content..." )
-			print ( "hw_lib..." )
-			hw_lib_path = os.path.join( my_root , "hw_lib/" )
+		print ( "File successfully created... Now generating content..." )
+
+		print ( "hw_lib..." )
+		hw_lib_path = os.path.join( my_root , "hw_lib/" )
+		if os.path.isdir( hw_lib_path ) :
+			print ( "hw_lib already exists. Not creating dir." )
+		else :
+			print ( "hw_lib does not exist. Creating dir." )
 			os.system( "mkdir -p " + hw_lib_path )
-			hda_paths_text = "hw_lib = \"" + hw_lib_path + "\"\n"
+		hda_paths_text = "hw_lib = \"" + hw_lib_path + "\"\n"
 
-			print ( "parts..." )
-			parts_path = os.path.join( my_root , "parts/" )
+		print ( "parts..." )
+		parts_path = os.path.join( my_root , "parts/" )
+		if os.path.isdir( parts_path ) :
+			print ( "parts already eixsts. Not creating dir." )
+		else :
+			print ( "parts does not exist. Creating dir." )
 			os.system( "mkdir -p " + parts_path )
-			hda_paths_text += "parts = \"" + parts_path + "\"\n"
+		hda_paths_text += "parts = \"" + parts_path + "\"\n"
 
-#			print ( "build..." )
-#			build_path = os.path.join( my_root , "build/" )
-#			os.system( "mkdir -p " + build_path )
-#			hda_paths_text += "build = \"" + build_path + "\"\n"
+		pe_top_fname = "pe_top.scm"
+		if os.path.isfile( os.path.join( parts_path , pe_top_fname ) ) :
+			print ( "hda refuses to overwrite " + pe_top_fname + "!" )
+			print ( "Please remove " + pe_top_fname + " from the parts/ directory!" )
+			sys.exit( common.FAILURE )
+		hda_paths_text += "pe_top_fname = \"" + pe_top_fname + "\"\n"
 
-			print ( "pe_top_fname..." )
-			hda_paths_text += "pe_top_fname = \"pe_top.scm\"\n"
-
-			print ( "hda_directives..." )
-			hda_directives_path = os.path.join( my_root , "hda_directives" )
-			os.system( "touch " + hda_directives_path )
+		print ( "hda_directives..." )
+		hda_directives_path = os.path.join( my_root , "hda_directives" )
+		if os.path.isfile( hda_directives_path ) :
+			print ( "hda_directives already exists. Not creating file." )
+		else :
 			with open( hda_directives_path , "w" ) as hda_directives_fhandle :
-				# TODO Error checking
 				hda_directives_fhandle.write( "; static_arg\n" )
 				hda_directives_fhandle.write( ";\n" )
 				hda_directives_fhandle.write( "; argnum - index of the argument\n" )
@@ -90,12 +101,13 @@ def root( hda_paths ) :
 				hda_directives_fhandle.write( "; src - path to source file relative to hw_lib/ directory\n" )
 				hda_directives_fhandle.write( "; outfname - path to output file relative to parts/ directory \n" )
 				hda_directives_fhandle.write( "; ( pe src outfname ( list of fn2pe's ) )\n" )
-			hda_paths_text += "hda_directives = \"" + hda_directives_path + "\"\n"
+		hda_paths_text += "hda_directives = \"" + hda_directives_path + "\"\n"
+		with open( hda_paths , "w" ) as root_fhandle :
 			root_fhandle.write( hda_paths_text )
 
+# clean
+# Delete pe_top file and the specialized source files.
 def clean( ) :
-	# TODO Typechecking
-#	os.system( "rm -rf " + os.path.join( hda_paths.build , "*" ) )
 	os.system( "rm -rf " + os.path.join( hda_paths.parts , hda_paths.pe_top_fname ) )
 	os.system( "rm -rf " + os.path.join( hda_paths.parts , "*.spec.scm" ) )
 	print ( "hda directory successfully cleaned." )
@@ -111,10 +123,6 @@ if __name__ == "__main__" :
 	parser.add_argument( ROOT_ARG , required = True , type = str )
 	parser.add_argument( MAKE_ARG , required = False , action = "store_true" )
 	parser.add_argument( CLEAN_ARG , required = False , action = "store_true" )
-#	parser.add_argument( HW_LIB_ARG , required = False , type = str )
-#	parser.add_argument( PARTS_ARG , required = False , type = str )
-#	parser.add_argument( HDA_DIRECTIVES_ARG , required = False , type = str )
-#	parser.add_argument( BUILD_ARG , required = False , type = str )
 	args = parser.parse_args( )
 	if args.root is not None :
 		root( args.root )
@@ -129,11 +137,3 @@ if __name__ == "__main__" :
 		make( args.root )
 	if args.clean == True :
 		clean( )
-#	if args.hw_lib != None :
-#		hw_lib( )
-#	if args.parts != None :
-#		parts( )
-#	if args.hda_directives != None :
-#		hda_directives( )
-#	if args.build != None :
-#		build( )
