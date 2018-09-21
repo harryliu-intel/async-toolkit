@@ -1,0 +1,5 @@
+INTERFACE Tcam ;
+
+IMPORT IO ;
+
+END Tcam.
