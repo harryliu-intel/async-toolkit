@@ -1,0 +1,9 @@
+( define ( alu x y op )
+	( cond
+	( ( = op 0 ) ( + x y ) )
+	( ( = op 1 ) ( - x y ) )
+	( ( = op 2 ) ( * x y ) )
+	( ( = op 3 ) ( quotient x y ) )
+	( else #f )
+	)
+)

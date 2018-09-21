@@ -1,0 +1,52 @@
+( define ( bcamlookup searchkey table )
+	( let loop ( ( index 0 ) ( currenttable table ) )
+	( if ( = searchkey ( car currenttable ) )
+	index
+	( loop ( + index 1 ) ( cdr currenttable ) ) )
+	)
+)
+
+; ; Bitwise lib for scheme48
+; (define numbits 32 )
+; 
+; (define (bitwise-not i)
+;   ( - ( - ( arithmetic-shift numbits 1 ) 1 ) i ) )
+; 
+; (define (bitwise-and x y)
+; 	( let loop ( ( myx x ) ( myy y ) )
+; 
+;   (cond ((= myx 0) 0)
+; 	((= myx -1) myy)
+; 	(else
+; 	 (+ (* (loop (arithmetic-shift myx -1)
+; 		     (arithmetic-shift myy -1))
+; 	       2)
+; 	    (* (modulo myx 2) (modulo myy 2)))))
+; 
+; 	)
+; )
+; 
+; (define (bitwise-ior x y)
+;   (bitwise-not (bitwise-and (bitwise-not x)
+; 			    (bitwise-not y))))
+; 
+; (define (bitwise-xor x y)
+;   (bitwise-and (bitwise-not (bitwise-and x y))
+; 	       (bitwise-ior x y)))
+; 
+; (define (bitwise-eqv x y)
+;   (bitwise-not (bitwise-xor x y)))
+; 
+; 
+; (define (arithmetic-shift n m)
+;   (floor (* n (expt 2 m))))
+; 
+; 
+; (define (count-bits x)		; Count 1's in the positive 2's comp rep
+;   (let ((x (if (< x 0) (bitwise-not x) x)))
+;     (do ((x x (arithmetic-shift x 1))
+; 	 (result 0 (+ result (modulo x 2))))
+; 	((= x 0) result))))
+; 
+; ( define ( bitwise-nor x y ) ( bitwise-not ( bitwise-ior x y ) ) )
+; ; Bitwise lib for scheme48
