@@ -16,9 +16,11 @@ class TriggerUnit extends PipelineStage[FrameState,FrameState] {
 class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
 
   val tcfg = new TrigCfg(ppe_cfg.trig_apply, ppe_cfg.trig_apply_misc, ppe_cfg.trig_usage)
+
   def apply(i: Int): Trigger = {
     new Trigger(tcfg, i)
   }
+
   def length: Int = tcfg.TRIGGER_ACTION_CFG_1.length // no way to get this more safely (assumes all of the trigger cfg registers are the same length
 
   def firingTriggers(fs: FrameState): Iterable[Trigger] = {

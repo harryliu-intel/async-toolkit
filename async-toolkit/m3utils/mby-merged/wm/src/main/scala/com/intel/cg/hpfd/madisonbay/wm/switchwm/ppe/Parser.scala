@@ -6,19 +6,8 @@ import com.intel.cg.hpfd.csr.generated._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.{Packet, PacketHeader, PipelineStage}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Tcam._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{ParserOutput, PortIndex}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.IPVersion
-
-class ParserState(val w: List[Short], val op: AluOperation, val state: Short, val ptr: Short)
-
-object ParserState {
-
-  def apply(w: List[Short], op: AluOperation, state: Short, ptr: Short): ParserState =  {
-    new ParserState(w, op, state, ptr)
-  }
-
-}
 
 
 class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput] {
@@ -93,31 +82,16 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
   // }
 
   /**
-    * Validate Packet Length from Header. Only checked for IPv4 packets.
-    *
-    * @see https://en.wikipedia.org/wiki/IPv4#Header
-    * @param ph
-    * @return
-    */
-  def ipv4ihlValidate(ph: PacketHeader): Boolean = {
-    require(ph.ipVersion == IPVersion.IPV4)
-    val ipv4_ihl = ph.bytes(0).nib(1)
-    val ihlLargeEnough = ipv4_ihl >= 5
-    val headerLargeEnough = ph.totalLength >= (4 * ipv4_ihl)
-    headerLargeEnough & ihlLargeEnough
-  }
-
-  /**
     * Check Payload Length
     */
-    def payloadValidate(pkt: Packet, ph: PacketHeader, otr_l3_ptr: Int): Boolean = {
-      // length check varies based on IPv4 (where the length includes the IP header)
-      // versus IPv6 (where the payload length includes all extension headers but not the IP header itself)
-      ph.ipVersion match {
-        case IPVersion.IPV4 => ph.totalLength <= (pkt.bytes.length- otr_l3_ptr - 4)
-        case IPVersion.IPV6 => ph.totalLength <= (pkt.bytes.length- otr_l3_ptr - 40 - 4)
-      }
+  def payloadValidate(pkt: Packet, ph: PacketHeader, otr_l3_ptr: Int): Boolean = {
+    // length check varies based on IPv4 (where the length includes the IP header)
+    // versus IPv6 (where the payload length includes all extension headers but not the IP header itself)
+    ph.ipVersion match {
+      case IPVersion.IPV4 => ph.totalLength <= (pkt.bytes.length - otr_l3_ptr - 4)
+      case IPVersion.IPV6 => ph.totalLength <= (pkt.bytes.length - otr_l3_ptr - 40 - 4)
     }
+  }
 
   val x: Packet => ParserOutput = pkt => {
     val ph = PacketHeader(pkt.bytes.slice(0, PacketHeader.maxSegmentSize))

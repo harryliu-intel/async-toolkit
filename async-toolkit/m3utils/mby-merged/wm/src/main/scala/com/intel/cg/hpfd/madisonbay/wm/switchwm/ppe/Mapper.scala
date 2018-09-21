@@ -4,7 +4,8 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 import com.intel.cg.hpfd.csr.generated._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Mapper.{MACLookupResult, MACMapperResult, RewriteProfileType, RewriteSource}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.Implicits
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.FieldVector._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.PacketFields.MACMapperImposed
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.FieldVector._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.MACAddress
 
 
@@ -13,10 +14,12 @@ class Mapper(val csr: mby_ppe_mapper_map) {
   object MACMapper {
 
     implicit class MacMapperEntry(val c: map_mac_r) {
+
       def matches(mac: MACAddress): Boolean = {
         val mask = (1 << (c.IGNORE_LENGTH() + 1)) - 1
         c.MAC() == (mac.addr & mask)
       }
+
     }
 
     def highestMatching(mac: MACAddress): MACLookupResult = {
@@ -60,8 +63,8 @@ class Mapper(val csr: mby_ppe_mapper_map) {
     def x[T <: PacketFields](fv: PacketFields, rewriteProfile: RewriteProfileType, macResult: MACMapperResult ): PacketFields = {
       val rewriteCfg = c(rewriteProfile)
       // 32 'nibbles' available for rewriting
-      val key16_13_orig = fv.key16(13).toShort
-      val key16_19_orig = fv.key16(19).toShort
+      val key16_13_orig = fv.key16(13)
+      val key16_19_orig = fv.key16(19)
 
       val x0 = fv.key16Updated(13, (rewriteNibble(rewriteCfg(0).SRC_ID().toInt,key16_13_orig.nib(0), macResult).toInt,
                       rewriteNibble(rewriteCfg(1).SRC_ID().toInt,key16_13_orig.nib(1), macResult).toInt,

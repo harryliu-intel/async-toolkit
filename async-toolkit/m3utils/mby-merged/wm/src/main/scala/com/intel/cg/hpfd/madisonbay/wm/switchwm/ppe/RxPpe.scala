@@ -1,8 +1,7 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
-
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_rx_top_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.{Epl, HeaderExtraction, PipelineStage}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.ParserOutput
 
 

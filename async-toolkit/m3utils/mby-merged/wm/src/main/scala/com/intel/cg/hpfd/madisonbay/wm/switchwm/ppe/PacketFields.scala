@@ -1,7 +1,9 @@
 
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.PacketFields.MACMapperImposed
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.MACAddress
+
 
 class PacketFields(val fields: IndexedSeq[Short]) {
 
@@ -46,14 +48,16 @@ object PacketFields {
 
   def apply(x: IndexedSeq[Short]): PacketFields = new PacketFields(x.toVector)
 
+  trait MACMapperImposed {
+    this: PacketFields =>
+
+    def InnerDMAC: MACAddress = MACAddress(key16(0), key16(1), key16(2))
+    def InnerSMAC: MACAddress = MACAddress(key16(3), key16(4), key16(5))
+    def OuterDMAC: MACAddress = MACAddress(key16(6), key16(7), key16(8))
+    def OuterSMAC: MACAddress = MACAddress(key16(9), key16(10), key16(11))
+
+  }
+
 }
 
-trait MACMapperImposed {
-  this: PacketFields =>
 
-  def InnerDMAC: MACAddress = MACAddress(key16(0), key16(1), key16(2))
-  def InnerSMAC: MACAddress = MACAddress(key16(3), key16(4), key16(5))
-  def OuterDMAC: MACAddress = MACAddress(key16(6), key16(7), key16(8))
-  def OuterSMAC: MACAddress = MACAddress(key16(9), key16(10), key16(11))
-
-}

@@ -46,5 +46,20 @@ class PacketHeader(val bytes: IndexedSeq[Byte]) {
     getWord(2)
   }
 
+  /**
+    * Validate Packet Length from Header. Only checked for IPv4 packets.
+    *
+    * @see https://en.wikipedia.org/wiki/IPv4#Header
+    * @param ph
+    * @return
+    */
+  def ipv4ihlValidate: Boolean = {
+    require(ipVersion == IPVersion.IPV4)
+    val ipv4_ihl = bytes(0).nib(1)
+    val ihlLargeEnough = ipv4_ihl >= 5
+    val headerLargeEnough = totalLength >= (4 * ipv4_ihl)
+    headerLargeEnough & ihlLargeEnough
+  }
+
 }
 

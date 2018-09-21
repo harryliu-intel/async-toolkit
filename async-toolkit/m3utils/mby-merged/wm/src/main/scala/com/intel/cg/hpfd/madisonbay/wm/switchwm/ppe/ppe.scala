@@ -83,8 +83,6 @@ object ppe {
 
   class TrafficClass(val tc: Int) extends AnyVal
 
-
-
   case class ParserOutput (rxPort: PortIndex,
                            pktMeta: Int,
                            rxFlags: EplRxFlags,

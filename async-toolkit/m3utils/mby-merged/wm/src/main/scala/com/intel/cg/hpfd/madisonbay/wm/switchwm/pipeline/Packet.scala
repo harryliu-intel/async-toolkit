@@ -28,6 +28,7 @@ object Packet {
                           )
 
     object pcap_hdr_s {
+
       def apply(is: DataInputStream): pcap_hdr_s = {
         val magic_number = is.readInt()
         val rev = magic_number match {
@@ -41,6 +42,7 @@ object Packet {
         else
           new pcap_hdr_s(rev, is.readShort(), is.readShort(), is.readInt(), is.readInt(), is.readInt(), is.readInt())
       }
+
     }
 
     case class pcaprec_hdr_s (ts_sec: Int,          /* timestamp seconds */
@@ -50,11 +52,13 @@ object Packet {
                               )
 
     object pcaprec_hdr_s {
+
       def apply(is: DataInputStream)(implicit main: pcap_hdr_s): pcaprec_hdr_s =
         if (main.reverse)
           new pcaprec_hdr_s (reverseInt(is.readInt ()), reverseInt(is.readInt ()), reverseInt(is.readInt ()), reverseInt(is.readInt () ))
         else
           new pcaprec_hdr_s (is.readInt (), is.readInt (), is.readInt (), is.readInt () )
+
     }
 
     val is = new DataInputStream(new FileInputStream(f))

@@ -1,5 +1,6 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.Packet
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 
 case class EplOutput(rxData: Packet,

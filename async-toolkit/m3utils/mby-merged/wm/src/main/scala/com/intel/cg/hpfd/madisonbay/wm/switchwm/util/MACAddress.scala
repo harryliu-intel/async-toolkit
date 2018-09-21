@@ -23,7 +23,7 @@ class MACAddress(val addr: Long) extends AnyVal {
     * @return
     */
   def validSource: Boolean = !(
-    (addr == 0) ||
+      (addr == 0) ||
       (addr == 0xffffff) ||
       ((addr & (0x1 << 40)) != 0) // multicast source if bit 40 set
     )
