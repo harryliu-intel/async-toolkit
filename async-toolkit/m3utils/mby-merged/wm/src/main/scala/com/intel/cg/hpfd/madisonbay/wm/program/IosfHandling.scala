@@ -34,7 +34,7 @@ class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
   // and put them in a companion object, etc.
   object IosfReadExtractor {
     def unapply(a: Array[Byte]): Option[IosfRegReadReq] = {
-      if (a.size != IosfRegReadReq.LengthBits / 8) { None }
+      if (a.length != IosfRegReadReq.LengthBits / 8) { None }
       else {
         val candidate = IosfRegReadReq(a)
         if (candidate.opcode != IOSF.RegRead) { None }
@@ -44,7 +44,7 @@ class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
   }
   object IosfBlkWriteExtractor {
     def unapply(a: Array[Byte]): Option[IosfRegBlkWriteReqHdr] = {
-      if (a.size != IosfRegBlkWriteReqHdr.LengthBits / 8) { None }
+      if (a.length != IosfRegBlkWriteReqHdr.LengthBits / 8) { None }
       else {
         val candidate = IosfRegBlkWriteReqHdr(a)
         if (candidate.opcode != IOSF.RegBlkWrite) { None }
@@ -54,7 +54,7 @@ class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
   }
   object IosfRegWriteExtractor {
     def unapply(a: Array[Byte]): Option[IosfRegWriteReq] = {
-      if (a.size != 24) return None
+      if (a.length != 24) return None
       val candidate = IosfRegWriteReq(a)
       if (candidate.opcode != IOSF.RegWrite) {
         // println("Rejecting, opcode is " + candidate.opcode)
@@ -73,7 +73,7 @@ class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
     println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
     val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
     is.readFully(array)
-    array.hexdump
+    array.hexdump()
     //    + array.toList.map(f => f"$f%x"))
     for(i <- addr until addr + 4 * iosf.ndw) {
       csrSpace.put(i.toInt, array((i - addr).toInt))
@@ -123,12 +123,12 @@ class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
     val addr = iosf.addr
     println("Processing read of 0x" + addr.toHexString)
     val theArray = Array.ofDim[Byte](8)
-    (0 until 8).map( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
+    (0 until 8).foreach( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
     val msgLength = 3*4 + IosfRegCompDataHdr.LengthBits / 8 + 8 // 12 bytes of ModelMsgHdr, 8 bytes of IOSF header, 8 bytes of data
     os.writeFmModelMessageHdr( FmModelMessageHdr(msgLength, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
     val response = makeReadResponse(iosf)
     os.writeIosfRegCompDataHdr(response)
-    (0 until 8).map(x => os.writeByte(theArray(x)))
+    (0 until 8).foreach(x => os.writeByte(theArray(x)))
 
     os.flush()
     println("Wrote the response back " + theArray.toIndexedSeq.map(f => f"$f%x"))
@@ -142,15 +142,15 @@ class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
     array match {
       case IosfBlkWriteExtractor(writeReg) => processWriteBlk(writeReg, is, os)
       case IosfReadExtractor(readReg) => processReadReg(readReg, os)
-      case _ => {
+      case _ =>
         val extra = Array.ofDim[Byte](64 / 8)
         is.readFully(extra)
         val expandedArray = array ++ extra
         expandedArray match {
           case IosfRegWriteExtractor(writeReg) => processWriteReg(writeReg, os)
-          case _ => assert(false, "Failed to parse IOSF packet, after trying 192-bit sized regwrite")
+          case _ => assert(assertion = false, "Failed to parse IOSF packet, after trying 192-bit sized regwrite")
         }
-      }
+
     }
   }
 }

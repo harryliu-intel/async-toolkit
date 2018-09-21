@@ -7,10 +7,9 @@ import java.net.{InetAddress, Socket}
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 
-import scala.collection.mutable.HashMap
-
-class EgressInfoHandling(egressPortToSocketAndStreamMap: HashMap[Int, (Socket, DataOutputStream)],
+class EgressInfoHandling(egressPortToSocketAndStreamMap: scala.collection.mutable.HashMap[Int, (Socket, DataOutputStream)],
                          legacyProtocol: Boolean)  {
+
   /** Implement configuration of an egress port
     *
     * In 'new' protocol, a port-machine tuple defines a socket as well as a connection. I.e. if ports 1 and 2 are
@@ -42,12 +41,12 @@ class EgressInfoHandling(egressPortToSocketAndStreamMap: HashMap[Int, (Socket, D
 
     // first determine whether we already have a connection to the client on this port
     egressPortToSocketAndStreamMap.get(switchPort) match {
-      case Some((s, _)) => {
+      case Some((s, _)) =>
         s.close()
         egressPortToSocketAndStreamMap.remove(switchPort)
-        assert(false, "Reassinging an egress port not tested functionality")
-      }
-      case None => { }
+        assert(assertion = false, "Reassinging an egress port not tested functionality")
+
+      case None =>
     }
 
     def matchingSocket(s: Socket) = {
@@ -57,17 +56,17 @@ class EgressInfoHandling(egressPortToSocketAndStreamMap: HashMap[Int, (Socket, D
     def newSocketFunc(mapElement: (Socket, DataOutputStream)): Boolean =
       if (legacyProtocol) false else matchingSocket(mapElement._1)
 
-    egressPortToSocketAndStreamMap(switchPort) = egressPortToSocketAndStreamMap.values.filter(newSocketFunc).headOption match {
-      case Some((s, os)) => {
+    egressPortToSocketAndStreamMap(switchPort) = egressPortToSocketAndStreamMap.values.find(newSocketFunc) match {
+      case Some((s, os)) =>
         println(" * Socket connection already exists!")
         (s, os)
-      }
-      case None => {
+
+      case None =>
         val s = new Socket(hostname, tcpPort)
         println(s" * Allocating new socket connection to $hostname:$tcpPort")
-        val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream()))
+        val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
         (s, os)
-      }
+
     }
   }
 }

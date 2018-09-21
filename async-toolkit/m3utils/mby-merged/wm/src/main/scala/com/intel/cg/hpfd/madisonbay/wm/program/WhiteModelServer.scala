@@ -19,11 +19,11 @@ object WhiteModelServer {
   val packetHandling = new PacketHandling(egressPortToSocketAndStreamMap, legacyProtocol)
   val egressInfoHandling = new EgressInfoHandling(egressPortToSocketAndStreamMap, legacyProtocol)
 
-  def processCommandQuit() = {
+  def processCommandQuit(): Unit = {
     println("Received quit operation!")
   }
 
-  def processMessage(is: DataInputStream, os: DataOutputStream) = {
+  def processMessage(is: DataInputStream, os: DataOutputStream): Any = {
 
     val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
@@ -41,11 +41,11 @@ object WhiteModelServer {
     }
   }
 
-  def runModelServer(file: File) = {
+  def runModelServer(file: File): Unit = {
     val server = new ServerSocket(0) // 0 means pick any available port
 
-    val port = server.getLocalPort()
-    val hostname = InetAddress.getLocalHost().getCanonicalHostName()
+    val port = server.getLocalPort
+    val hostname = InetAddress.getLocalHost.getCanonicalHostName
     val descText = "0:" + hostname + ":" + port
     println("Scala White Model Server for Madison Bay Switch Chip")
     println("Socket port open at " +  descText)
@@ -68,9 +68,9 @@ object WhiteModelServer {
       try {
         while (true) processMessage(is, os)
       } catch {
-        case _: EOFException => {
-          println("Termination of IO from client without shutdown command " + s.getInetAddress().getHostName())
-        }
+        case _: EOFException =>
+          println("Termination of IO from client without shutdown command " + s.getInetAddress.getHostName)
+
       }
       println("Disconnected.")
       // cleanup the socket, and remove any egress port mappings to that socket
