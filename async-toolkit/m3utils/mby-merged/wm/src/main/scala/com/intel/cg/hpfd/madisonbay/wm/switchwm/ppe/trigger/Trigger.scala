@@ -1,10 +1,10 @@
 
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.PipelineStage
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Trigger.MatchCase
-import ppe.{PortIndex, TrafficClass, VID}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{PortIndex, TrafficClass, VID}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.MatchCase
 
 import scala.collection.immutable.BitSet
 

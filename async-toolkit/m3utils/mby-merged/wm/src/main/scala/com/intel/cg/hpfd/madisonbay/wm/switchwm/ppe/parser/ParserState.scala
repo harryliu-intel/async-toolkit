@@ -1,3 +1,3 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 case class ParserState(w: List[Short], op: AluOperation, state: Short, ptr: Short)

@@ -1,9 +1,11 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_rx_top_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.{Epl, HeaderExtraction, PipelineStage}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.ParserOutput
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Epl
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.{HeaderExtraction, Parser, ParserOutput}
 
+
+// TODO: split pipeline from different abstract layers
 
 class RxPpe(csr: mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], ParserOutput] {
 

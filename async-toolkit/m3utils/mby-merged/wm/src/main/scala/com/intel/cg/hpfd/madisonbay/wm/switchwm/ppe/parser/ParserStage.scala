@@ -1,10 +1,10 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.csr.generated.{mby_ppe_parser_map, parser_ana_s_r, parser_ana_w_r}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.PacketHeader
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ParserStage._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Tcam.{parserAnalyzerTcamMatchBit, tcamMatchSeq}
+import ParserTcam.{parserAnalyzerTcamMatchBit, tcamMatchSeq}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserStage.{AnalyzerAction, ExceptionAction}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
 
 class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {

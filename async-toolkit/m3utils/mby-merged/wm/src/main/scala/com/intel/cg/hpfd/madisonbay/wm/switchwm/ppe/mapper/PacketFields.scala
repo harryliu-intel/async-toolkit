@@ -1,10 +1,11 @@
 
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.PacketFields.MACMapperImposed
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields.MACMapperImposed
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.MACAddress
 
 
+// TODO: it's a mapper output
 class PacketFields(val fields: IndexedSeq[Short]) {
 
   // 80 fields, of 2 bytes each

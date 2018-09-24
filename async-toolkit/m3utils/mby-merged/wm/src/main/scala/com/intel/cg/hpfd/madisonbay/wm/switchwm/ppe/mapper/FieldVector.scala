@@ -1,7 +1,7 @@
 
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.FieldVector._
+import FieldVector._
 
 object FieldVector {
 

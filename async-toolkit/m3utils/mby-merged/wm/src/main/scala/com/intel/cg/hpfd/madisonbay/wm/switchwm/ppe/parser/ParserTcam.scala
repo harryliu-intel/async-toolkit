@@ -1,15 +1,13 @@
-
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.csr.RdlRegister
-
 
 /**
   * Ternary Content-Addressable Memory
   * TCAM table: Stores ACL, QoS, and other information generally associated with Layer 3 and up  layer processing.
   * Switches use CAM to store MAC Addrss Table.
   */
-object Tcam {
+object ParserTcam {
 
   type tcTriple = (RdlRegister[Long]#HardwareReadable, RdlRegister[Long]#HardwareReadable, Long)
 

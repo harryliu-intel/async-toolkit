@@ -1,8 +1,6 @@
 
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser.ProtoOffsets
-
 import scala.collection.immutable.BitSet
 
 //scalastyle:off
@@ -82,24 +80,5 @@ object ppe {
   }
 
   class TrafficClass(val tc: Int) extends AnyVal
-
-  case class ParserOutput (rxPort: PortIndex,
-                           pktMeta: Int,
-                           rxFlags: EplRxFlags,
-                           segMetaErr: Boolean,
-                           paAdjSegLegLen: Int,
-                           paKeys: PacketFields, // should be 'option' values?
-                           paKeysValid: Boolean,
-                           paFlags: PacketFlags,
-                           paPointers: ProtoOffsets,
-                           paPointersValid: Boolean,
-                           paCsumOk: Boolean,
-                           paExceptionStage: Int,
-                           paExceptionDepthExceeded: Boolean,
-                           paExceptionTruncHeader: Boolean,
-                           paExParsingDone: Boolean,
-                           paDrop: Boolean,
-                           paPacketType: Int
-                          )
 
 }

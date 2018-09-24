@@ -1,13 +1,14 @@
 
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.{Packet, PacketHeader, PipelineStage}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Tcam._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{ParserOutput, PortIndex}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.IPVersion
+import ParserTcam._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.PipelineStage
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader}
 
 
 class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput] {
@@ -156,6 +157,8 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
 }
 
 object Parser {
+
+  case class ParserState(w: List[Short], op: AluOperation, state: Short, ptr: Short)
 
   type ProtoId = Int
   type BaseOffset = Int

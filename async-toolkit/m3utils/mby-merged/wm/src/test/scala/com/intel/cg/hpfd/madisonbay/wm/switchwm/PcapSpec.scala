@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import java.io.File
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline.Packet
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Packet
 import org.scalatest.{FlatSpec, Matchers}
 
 /**

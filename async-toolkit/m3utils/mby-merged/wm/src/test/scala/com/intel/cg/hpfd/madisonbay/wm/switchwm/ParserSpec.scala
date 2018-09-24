@@ -4,7 +4,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 import java.io.File
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.Parser
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import org.scalatest.{FlatSpec, Matchers}
 
 /**

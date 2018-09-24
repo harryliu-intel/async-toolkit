@@ -1,8 +1,11 @@
 
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 /**
+  * Arithmetic Logic Unit
+  *
   * ALU operation as used by parsing stages
+ *
   * @param rot rotation amount, up to 16 bits
   * @param mask mask field (12 bits)
   */

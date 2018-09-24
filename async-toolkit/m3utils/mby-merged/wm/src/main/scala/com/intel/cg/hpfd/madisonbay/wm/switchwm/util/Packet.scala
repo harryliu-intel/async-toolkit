@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
 
 import java.io.{DataInputStream, FileInputStream}
 

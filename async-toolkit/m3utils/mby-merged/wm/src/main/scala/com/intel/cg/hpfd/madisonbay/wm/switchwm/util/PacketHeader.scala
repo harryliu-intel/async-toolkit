@@ -1,8 +1,7 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.pipeline
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.Implicits
-import PacketHeader.maxSegmentSize
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.IPVersion
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader.maxSegmentSize
 
 object PacketHeader {
 
