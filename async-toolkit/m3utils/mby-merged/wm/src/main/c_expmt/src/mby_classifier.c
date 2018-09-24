@@ -10,6 +10,380 @@
 #include "mby_classifier.h"
 #include "mby_crc32.h"
 
+static mbyClassifierKeyMaskCfg getEmAKeyMaskCfg
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_byte const               hash_num,
+    fm_byte const               scenario
+)
+{
+    mbyClassifierKeyMaskCfg key_mask_cfg;
+
+#ifdef USE_NEW_CSRS
+    em_a_key_sel0_r const * const key_sel0 = &(cgrp_a_map->EM_A_KEY_SEL0[hash_num]);
+    em_a_key_sel1_r const * const key_sel1 = &(cgrp_a_map->EM_A_KEY_SEL1[hash_num]);
+
+    key_mask_cfg.keyMaskSel = key_sel1->KEY_MASK_SEL; // [51:48]
+    key_mask_cfg.key32Mask  = key_sel1->KEY32_MASK;   // [47:32]
+    key_mask_cfg.key16Mask  = key_sel1->KEY16_MASK;   // [31: 0]
+    key_mask_cfg.key8Mask   = key_sel0->KEY8_MASK;    // [31: 0]
+#else
+    fm_byte const group = 0; // Exact Match "A"
+
+    fm_uint64 ffu_key_mask0_reg = 0;
+    fm_uint64 ffu_key_mask1_reg = 0;
+
+    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK0(group, hash_num, scenario, 0), &ffu_key_mask0_reg);
+    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK1(group, hash_num, scenario, 0), &ffu_key_mask1_reg);
+
+    key_mask_cfg.keyMaskSel = 0; // <--- REVISIT!!!!
+    key_mask_cfg.key32Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
+    key_mask_cfg.key16Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    key_mask_cfg.key8Mask   = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
+#endif
+    return key_mask_cfg;
+}
+
+static mbyClassifierKeyMaskCfg getEmBKeyMaskCfg
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_byte const               hash_num,
+    fm_byte const               scenario
+)
+{
+    mbyClassifierKeyMaskCfg key_mask_cfg;
+
+#ifdef USE_NEW_CSRS
+    em_b_key_sel0_r const * const key_sel0 = &(cgrp_b_map->EM_B_KEY_SEL0[hash_num]);
+    em_b_key_sel1_r const * const key_sel1 = &(cgrp_b_map->EM_B_KEY_SEL1[hash_num]);
+
+    key_mask_cfg.keyMaskSel = key_sel1->KEY_MASK_SEL; // [51:48]
+    key_mask_cfg.key32Mask  = key_sel1->KEY32_MASK;   // [47:32]
+    key_mask_cfg.key16Mask  = key_sel1->KEY16_MASK;   // [31: 0]
+    key_mask_cfg.key8Mask   = key_sel0->KEY8_MASK;    // [31: 0]
+#else
+    fm_byte const group = 1; // Exact Match "B"
+
+    fm_uint64 ffu_key_mask0_reg = 0;
+    fm_uint64 ffu_key_mask1_reg = 0;
+
+    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK0(group, hash_num, scenario, 0), &ffu_key_mask0_reg);
+    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK1(group, hash_num, scenario, 0), &ffu_key_mask1_reg);
+
+    key_mask_cfg.keyMaskSel = 0; // <--- REVISIT!!!!
+    key_mask_cfg.key32Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
+    key_mask_cfg.key16Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    key_mask_cfg.key8Mask   = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
+#endif
+    return key_mask_cfg;
+}
+
+static mbyClassifierHashCfg getEmAHashCfg
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_byte const              scenario
+)
+{
+    mbyClassifierHashCfg hash_cfg;
+#ifdef USE_NEW_CSRS
+    em_a_hash_cfg_r const * const em_a_hash_cfg = &(cgrp_a_map->EM_A_HASH_CFG[scenario]);
+
+    hash_cfg.mode          = em_a_hash_cfg->MODE;
+    hash_cfg.base_ptr[0]   = em_a_hash_cfg->BASE_PTR_0;
+    hash_cfg.base_ptr[1]   = em_a_hash_cfg->BASE_PTR_1;
+    hash_cfg.hash_size[0]  = em_a_hash_cfg->HASH_SIZE_0;
+    hash_cfg.hash_size[1]  = em_a_hash_cfg->HASH_SIZE_1;
+    hash_cfg.entry_size[0] = em_a_hash_cfg->ENTRY_SIZE_0;
+    hash_cfg.entry_size[1] = em_a_hash_cfg->ENTRY_SIZE_1;
+#else
+    fm_byte const group = 0; // Exact Match "A"
+    fm_uint64 ffu_hash_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_HASH_CFG(group, scenario, 0), &ffu_hash_cfg_reg);
+
+    hash_cfg.mode          = FM_GET_BIT64  (ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, MODE);
+    hash_cfg.base_ptr[0]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_0);
+    hash_cfg.base_ptr[1]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_1);
+    hash_cfg.hash_size[0]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_0);
+    hash_cfg.hash_size[1]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_1);
+    hash_cfg.entry_size[0] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_0);
+    hash_cfg.entry_size[1] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_1);
+#endif
+    return hash_cfg;
+}
+
+static mbyClassifierHashCfg getEmBHashCfg
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map * const cgrp_b_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_byte const              scenario
+)
+{
+    mbyClassifierHashCfg hash_cfg;
+#ifdef USE_NEW_CSRS
+    em_b_hash_cfg_r const * const em_b_hash_cfg = &(cgrp_b_map->EM_B_HASH_CFG[scenario]);
+
+    hash_cfg.mode          = em_b_hash_cfg->MODE;
+    hash_cfg.base_ptr[0]   = em_b_hash_cfg->BASE_PTR_0;
+    hash_cfg.base_ptr[1]   = em_b_hash_cfg->BASE_PTR_1;
+    hash_cfg.hash_size[0]  = em_b_hash_cfg->HASH_SIZE_0;
+    hash_cfg.hash_size[1]  = em_b_hash_cfg->HASH_SIZE_1;
+    hash_cfg.entry_size[0] = em_b_hash_cfg->ENTRY_SIZE_0;
+    hash_cfg.entry_size[1] = em_b_hash_cfg->ENTRY_SIZE_1;
+#else
+    fm_byte const group = 1; // Exact Match "B"
+    fm_uint64 ffu_hash_cfg_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_HASH_CFG(group, scenario, 0), &ffu_hash_cfg_reg);
+
+    hash_cfg.mode          = FM_GET_BIT64  (ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, MODE);
+    hash_cfg.base_ptr[0]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_0);
+    hash_cfg.base_ptr[1]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_1);
+    hash_cfg.hash_size[0]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_0);
+    hash_cfg.hash_size[1]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_1);
+    hash_cfg.entry_size[0] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_0);
+    hash_cfg.entry_size[1] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_1);
+#endif
+    return hash_cfg;
+}
+
+static mbyClassifierHashLookup getEmAHashLookupEntry
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint16 const            lookup_ptr
+)
+{
+    mbyClassifierHashLookup lookup_entry;
+
+#ifdef USE_NEW_CSRS
+    em_a_hash_lookup_r const * const em_a_hash_lookup_entry = &(cgrp_a_map->EM_A_HASH_LOOKUP[lookup_ptr]);
+
+    lookup_entry.PTR      = em_a_hash_lookup_entry->PTR;
+    lookup_entry.SELECT_4 = em_a_hash_lookup_entry->SELECT_4;
+    lookup_entry.SELECT_3 = em_a_hash_lookup_entry->SELECT_3;
+    lookup_entry.SELECT_2 = em_a_hash_lookup_entry->SELECT_2;
+    lookup_entry.SELECT_1 = em_a_hash_lookup_entry->SELECT_1;
+    lookup_entry.SELECT_0 = em_a_hash_lookup_entry->SELECT_0;
+    lookup_entry.MASK     = em_a_hash_lookup_entry->MASK;
+#else
+    fm_byte const group = 0; // Exact Match "A"
+    fm_uint32 ffu_hash_lookup_regs[MBY_FFU_HASH_LOOKUP_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_FFU_HASH_LOOKUP(group, lookup_ptr, 0), MBY_FFU_HASH_LOOKUP_WIDTH, ffu_hash_lookup_regs);
+
+    lookup_entry.PTR      = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, PTR);
+    lookup_entry.SELECT_4 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_4);
+    lookup_entry.SELECT_3 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_3);
+    lookup_entry.SELECT_2 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_2);
+    lookup_entry.SELECT_1 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_1);
+    lookup_entry.SELECT_0 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_0);
+    lookup_entry.MASK     = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, MASK);
+#endif
+    return lookup_entry;
+}
+
+static mbyClassifierHashLookup getEmBHashLookupEntry
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map * const cgrp_b_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint16 const            lookup_ptr
+)
+{
+    mbyClassifierHashLookup lookup_entry;
+
+#ifdef USE_NEW_CSRS
+    em_b_hash_lookup_r const * const em_b_hash_lookup_entry = &(cgrp_b_map->EM_B_HASH_LOOKUP[lookup_ptr]);
+
+    lookup_entry.PTR      = em_b_hash_lookup_entry->PTR;
+    lookup_entry.SELECT_4 = em_b_hash_lookup_entry->SELECT_4;
+    lookup_entry.SELECT_3 = em_b_hash_lookup_entry->SELECT_3;
+    lookup_entry.SELECT_2 = em_b_hash_lookup_entry->SELECT_2;
+    lookup_entry.SELECT_1 = em_b_hash_lookup_entry->SELECT_1;
+    lookup_entry.SELECT_0 = em_b_hash_lookup_entry->SELECT_0;
+    lookup_entry.MASK     = em_b_hash_lookup_entry->MASK;
+#else
+    fm_byte const group = 1; // Exact Match "B"
+    fm_uint32 ffu_hash_lookup_regs[MBY_FFU_HASH_LOOKUP_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_FFU_HASH_LOOKUP(group, lookup_ptr, 0), MBY_FFU_HASH_LOOKUP_WIDTH, ffu_hash_lookup_regs);
+
+    lookup_entry.PTR      = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, PTR);
+    lookup_entry.SELECT_4 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_4);
+    lookup_entry.SELECT_3 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_3);
+    lookup_entry.SELECT_2 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_2);
+    lookup_entry.SELECT_1 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_1);
+    lookup_entry.SELECT_0 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_0);
+    lookup_entry.MASK     = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, MASK);
+#endif
+    return lookup_entry;
+}
+
+static fm_uint64 getEmAHashCamEntry
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            entry,
+    fm_uint32 const            word
+)
+{
+#ifdef USE_NEW_CSRS
+    em_a_hash_cam_r const * const em_a_hash_cam_entry = &(cgrp_a_map->EM_A_HASH_CAM[entry][word]);
+
+    fm_uint64 data = em_a_hash_cam_entry->DATA;
+#else
+    fm_byte const group = 0; // Exact Match "A"
+    fm_uint64 ffu_hash_cam_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM(group, entry, word, 0), &ffu_hash_cam_reg);
+
+    fm_uint64 data = FM_GET_FIELD64(ffu_hash_cam_reg, MBY_FFU_HASH_CAM, DATA);
+#endif
+    return data;
+}
+
+static fm_uint64 getEmBHashCamEntry
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            entry,
+    fm_uint32 const            word
+)
+{
+#ifdef USE_NEW_CSRS
+    em_b_hash_cam_r const * const em_b_hash_cam_entry = &(cgrp_b_map->EM_B_HASH_CAM[entry][word]);
+
+    fm_uint64 data = em_b_hash_cam_entry->DATA;
+#else
+    fm_byte const group = 1; // Exact Match "B"
+    fm_uint64 ffu_hash_cam_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM(group, entry, word, 0), &ffu_hash_cam_reg);
+
+    fm_uint64 data = FM_GET_FIELD64(ffu_hash_cam_reg, MBY_FFU_HASH_CAM, DATA);
+#endif
+    return data;
+}
+
+static fm_uint64 getEmAHashCamMask
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            row,
+    fm_uint32 const            rule
+)
+{
+#ifdef USE_NEW_CSRS
+    em_a_hash_cam_en_r const * const em_a_hash_cam_en = &(cgrp_a_map->EM_A_HASH_CAM_EN[row][rule]);
+
+    fm_uint64 mask = em_a_hash_cam_en->MASK;
+#else
+    fm_byte const group = 0; // Exact Match "A"
+    fm_uint64 ffu_hash_cam_en_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM_EN(group, row, rule, 0), &ffu_hash_cam_en_reg);
+
+    fm_uint64 mask = FM_GET_FIELD64(ffu_hash_cam_en_reg, MBY_FFU_HASH_CAM_EN, MASK);
+#endif
+    return mask;
+}
+
+static fm_uint64 getEmBHashCamMask
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            row,
+    fm_uint32 const            rule
+)
+{
+#ifdef USE_NEW_CSRS
+    em_b_hash_cam_en_r const * const em_b_hash_cam_en = &(cgrp_b_map->EM_B_HASH_CAM_EN[row][rule]);
+
+    fm_uint64 mask = em_b_hash_cam_en->MASK;
+#else
+    fm_byte const group = 0; // Exact Match "A"
+    fm_uint64 ffu_hash_cam_en_reg = 0;
+    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM_EN(group, row, rule, 0), &ffu_hash_cam_en_reg);
+
+    fm_uint64 mask = FM_GET_FIELD64(ffu_hash_cam_en_reg, MBY_FFU_HASH_CAM_EN, MASK);
+#endif
+    return mask;
+}
+
+static inline fm_uint64 getHashRamEntry
+(
+#ifdef USE_NEW_CSRS
+#else
+    fm_uint32       regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const hash_num,
+    fm_uint32 const hash_ram_addr
+)
+{
+    fm_uint64 hash_entry = 0;
+#ifdef USE_NEW_CSRS
+#else
+    if (hash_num == 0) {
+        fm_uint64 hash_entry0_reg = 0;
+        mbyModelReadCSR64(regs, MBY_HASH_ENTRY0(hash_ram_addr, 0), &hash_entry0_reg);
+        hash_entry = FM_GET_FIELD64(hash_entry0_reg, MBY_HASH_ENTRY0, DATA);
+    }
+    else {
+        fm_uint64 hash_entry1_reg = 0;
+        mbyModelReadCSR64(regs, MBY_HASH_ENTRY1(hash_ram_addr, 0), &hash_entry1_reg);
+        hash_entry = FM_GET_FIELD64(hash_entry1_reg, MBY_HASH_ENTRY1, DATA);
+    }
+#endif
+    return hash_entry;
+}
+
+static inline fm_byte getHashRamAlloc
+(
+#ifdef USE_NEW_CSRS
+#else
+    fm_uint32       regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const entry
+)
+{
+    fm_byte ram_alloc = 0;
+
+#ifdef USE_NEW_CSRS
+
+#else
+    fm_uint64 hash_entry_ram_alloc_reg = 0;
+    mbyModelReadCSR64(regs, MBY_HASH_ENTRY_RAM_ALLOC(entry, 0), &hash_entry_ram_alloc_reg);
+    ram_alloc = FM_GET_FIELD64(hash_entry_ram_alloc_reg, MBY_HASH_ENTRY_RAM_ALLOC, GP_SEL);
+#endif
+    return ram_alloc;
+}
+
 static mbyClassifierTcamCfg getWcmTcamCfg
 (
 #ifdef USE_NEW_CSRS
@@ -165,7 +539,7 @@ static fm_uint32 getWcmActionEntry
     return action_entry;
 }
 
-static void selectKeyMask
+static void selectWcmKeyMask
 (
     const mbyClassifierTcamCfg * const tcam_cfg,
     const mbyClassifierKeys    * const keys,
@@ -211,7 +585,7 @@ static void selectKeyMask
     lookup_info->keyInvert = ~lookup_info->key;
 }
 
-static void lookUpTcam
+static void lookUpWcmTcam
 (
 #ifdef USE_NEW_CSRS
     mby_ppe_cgrp_b_map * const cgrp_b_map,
@@ -256,7 +630,7 @@ static void lookUpTcam
     }
 }
 
-static void lookUpTcamCascade
+static void lookUpWcmTcamCascade
 (
 #ifdef USE_NEW_CSRS
     mby_ppe_cgrp_b_map      * const cgrp_b_map,
@@ -326,10 +700,10 @@ static void lookUpTcamCascade
 #endif
             // Compute TCAM key:
             mbyLookupInfo lookup_info;
-            selectKeyMask(&tcam_cfg1, keys, &lookup_info);
+            selectWcmKeyMask(&tcam_cfg1, keys, &lookup_info);
 
             // Look up in the TCAM and update raw hits with results of lookup:
-            lookUpTcam(regs, group, i, tcam_cfg1.CHUNK_MASK, &lookup_info);
+            lookUpWcmTcam(regs, group, i, tcam_cfg1.CHUNK_MASK, &lookup_info);
 
             for (fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
                 hits[j] = (fsc || tcam_cfg1.START_COMPARE || hits[j]) && lookup_info.rawHits[j];
@@ -521,9 +895,9 @@ static void matchWildcard
 
     // Get hit index for each tcam slice:
 #ifdef USE_NEW_CSRS
-    lookUpTcamCascade(cgrp_b_map, keys, scenario, group, tcam_hit_info);
+    lookUpWcmTcamCascade(cgrp_b_map, keys, scenario, group, tcam_hit_info);
 #else
-    lookUpTcamCascade(regs,       keys, scenario, group, tcam_hit_info);
+    lookUpWcmTcamCascade(regs,       keys, scenario, group, tcam_hit_info);
 #endif
 
     // Apply and resolve actions from action RAMs based on tcam hit index per slice:
@@ -532,43 +906,6 @@ static void matchWildcard
 #else
     resolveActions(regs,       scenario, group, tcam_hit_info, actions);
 #endif
-}
-
-static mbyClassifierKeyMaskCfg getKeyMaskCfg
-(
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-#else
-    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
-    fm_byte const               group,
-    fm_byte const               hash_num,
-    fm_byte const               scenario
-)
-{
-    mbyClassifierKeyMaskCfg key_mask_cfg;
-
-#ifdef USE_NEW_CSRS
-    em_a_key_sel0_r const * const key_sel0 = &(cgrp_a_map->EM_A_KEY_SEL0[hash_num]);
-    em_a_key_sel1_r const * const key_sel1 = &(cgrp_a_map->EM_A_KEY_SEL1[hash_num]);
-
-    key_mask_cfg.keyMaskSel = key_sel1->KEY_MASK_SEL; // [51:48]
-    key_mask_cfg.key32Mask  = key_sel1->KEY32_MASK;   // [47:32]
-    key_mask_cfg.key16Mask  = key_sel1->KEY16_MASK;   // [31: 0]
-    key_mask_cfg.key8Mask   = key_sel0->KEY8_MASK;    // [31: 0]
-#else
-    fm_uint64 ffu_key_mask0_reg = 0;
-    fm_uint64 ffu_key_mask1_reg = 0;
-
-    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK0(group, hash_num, scenario, 0), &ffu_key_mask0_reg);
-    mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK1(group, hash_num, scenario, 0), &ffu_key_mask1_reg);
-
-    key_mask_cfg.keyMaskSel = 0; // <--- REVISIT!!!!
-    key_mask_cfg.key32Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
-    key_mask_cfg.key16Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
-    key_mask_cfg.key8Mask   = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
-#endif
-    return key_mask_cfg;
 }
 
 static void applyEmKeyMask
@@ -672,162 +1009,6 @@ static void doKeyCompaction
     *key_size = key_idx;
 }
 
-static mbyClassifierHashCfg getHashCfg
-(
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-#else
-    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
-    fm_byte const              group,
-    fm_byte const              scenario
-)
-{
-    mbyClassifierHashCfg hash_cfg;
-#ifdef USE_NEW_CSRS
-    em_a_hash_cfg_r const * const em_a_hash_cfg = &(cgrp_a_map->EM_A_HASH_CFG[scenario]);
-    em_b_hash_cfg_r const * const em_b_hash_cfg = &(cgrp_b_map->EM_B_HASH_CFG[scenario]);
-
-    hash_cfg.mode          = (group == 0) ? em_a_hash_cfg->MODE         : em_b_hash_cfg->MODE;
-    hash_cfg.base_ptr[0]   = (group == 0) ? em_a_hash_cfg->BASE_PTR_0   : em_b_hash_cfg->BASE_PTR_0;
-    hash_cfg.base_ptr[1]   = (group == 0) ? em_a_hash_cfg->BASE_PTR_1   : em_b_hash_cfg->BASE_PTR_1;
-    hash_cfg.hash_size[0]  = (group == 0) ? em_a_hash_cfg->HASH_SIZE_0  : em_b_hash_cfg->HASH_SIZE_0;
-    hash_cfg.hash_size[1]  = (group == 0) ? em_a_hash_cfg->HASH_SIZE_1  : em_b_hash_cfg->HASH_SIZE_1;
-    hash_cfg.entry_size[0] = (group == 0) ? em_a_hash_cfg->ENTRY_SIZE_0 : em_b_hash_cfg->ENTRY_SIZE_0;
-    hash_cfg.entry_size[1] = (group == 0) ? em_a_hash_cfg->ENTRY_SIZE_1 : em_b_hash_cfg->ENTRY_SIZE_1;
-#else
-    fm_uint64 ffu_hash_cfg_reg = 0;
-    mbyModelReadCSR64(regs, MBY_FFU_HASH_CFG(group, scenario, 0), &ffu_hash_cfg_reg);
-
-    hash_cfg.mode          = FM_GET_BIT64  (ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, MODE);
-    hash_cfg.base_ptr[0]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_0);
-    hash_cfg.base_ptr[1]   = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, BASE_PTR_1);
-    hash_cfg.hash_size[0]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_0);
-    hash_cfg.hash_size[1]  = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, HASH_SIZE_1);
-    hash_cfg.entry_size[0] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_0);
-    hash_cfg.entry_size[1] = FM_GET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_1);
-#endif
-    return hash_cfg;
-}
-
-static mbyClassifierHashLookup getHashLookupEntry
-(
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-#else
-    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
-    fm_byte const              group,
-    fm_uint16 const            lookup_ptr
-)
-{
-    mbyClassifierHashLookup lookup_entry;
-
-#ifdef USE_NEW_CSRS
-    em_a_hash_lookup_r const * const em_a_hash_lookup_entry = &(cgrp_a_map->EM_A_HASH_LOOKUP[lookup_ptr]);
-    em_b_hash_lookup_r const * const em_b_hash_lookup_entry = &(cgrp_b_map->EM_B_HASH_LOOKUP[lookup_ptr]);
-
-    lookup_entry.PTR      = (group == 0) ? em_a_hash_lookup_entry->PTR      : em_b_hash_lookup_entry->PTR;
-    lookup_entry.SELECT_4 = (group == 0) ? em_a_hash_lookup_entry->SELECT_4 : em_b_hash_lookup_entry->SELECT_4;
-    lookup_entry.SELECT_3 = (group == 0) ? em_a_hash_lookup_entry->SELECT_3 : em_b_hash_lookup_entry->SELECT_3;
-    lookup_entry.SELECT_2 = (group == 0) ? em_a_hash_lookup_entry->SELECT_2 : em_b_hash_lookup_entry->SELECT_2;
-    lookup_entry.SELECT_1 = (group == 0) ? em_a_hash_lookup_entry->SELECT_1 : em_b_hash_lookup_entry->SELECT_1;
-    lookup_entry.SELECT_0 = (group == 0) ? em_a_hash_lookup_entry->SELECT_0 : em_b_hash_lookup_entry->SELECT_0;
-    lookup_entry.MASK     = (group == 0) ? em_a_hash_lookup_entry->MASK     : em_b_hash_lookup_entry->MASK;
-#else
-    fm_uint32 ffu_hash_lookup_regs[MBY_FFU_HASH_LOOKUP_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_FFU_HASH_LOOKUP(group, lookup_ptr, 0), MBY_FFU_HASH_LOOKUP_WIDTH, ffu_hash_lookup_regs);
-
-    lookup_entry.PTR      = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, PTR);
-    lookup_entry.SELECT_4 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_4);
-    lookup_entry.SELECT_3 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_3);
-    lookup_entry.SELECT_2 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_2);
-    lookup_entry.SELECT_1 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_1);
-    lookup_entry.SELECT_0 = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, SELECT_0);
-    lookup_entry.MASK     = FM_ARRAY_GET_FIELD(ffu_hash_lookup_regs, MBY_FFU_HASH_LOOKUP, MASK);
-#endif
-    return lookup_entry;
-}
-
-static fm_uint64 getHashCamEntry
-(
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-#else
-    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
-    fm_byte const              group,
-    fm_uint32 const            entry,
-    fm_uint32 const            word
-)
-{
-#ifdef USE_NEW_CSRS
-    em_a_hash_cam_r const * const em_a_hash_cam_entry = &(cgrp_a_map->EM_A_HASH_CAM[entry][word]);
-    em_b_hash_cam_r const * const em_b_hash_cam_entry = &(cgrp_b_map->EM_B_HASH_CAM[entry][word]);
-
-    fm_uint64 data = (group == 0) ? em_a_hash_cam_entry->DATA : em_b_hash_cam_entry->DATA;
-#else
-    fm_uint64 ffu_hash_cam_reg = 0;
-    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM(group, entry, word, 0), &ffu_hash_cam_reg);
-
-    fm_uint64 data = FM_GET_FIELD64(ffu_hash_cam_reg, MBY_FFU_HASH_CAM, DATA);
-#endif
-    return data;
-}
-
-static fm_uint64 getHashCamMask
-(
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-#else
-    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
-    fm_byte const              group,
-    fm_uint32 const            row,
-    fm_uint32 const            rule
-)
-{
-#ifdef USE_NEW_CSRS
-    em_a_hash_cam_en_r const * const em_a_hash_cam_en = &(cgrp_a_map->EM_A_HASH_CAM_EN[row][rule]);
-    em_b_hash_cam_en_r const * const em_b_hash_cam_en = &(cgrp_b_map->EM_B_HASH_CAM_EN[row][rule]);
-
-    fm_uint64 mask = (group == 0) ? em_a_hash_cam_en->MASK : em_b_hash_cam_en->MASK;
-#else
-    fm_uint64 ffu_hash_cam_en_reg = 0;
-    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM_EN(group, row, rule, 0), &ffu_hash_cam_en_reg);
-
-    fm_uint64 mask = FM_GET_FIELD64(ffu_hash_cam_en_reg, MBY_FFU_HASH_CAM_EN, MASK);
-#endif
-    return mask;
-}
-
-static fm_uint64 getHashRamEntry
-(
-          fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_int    hash_num,
-    const fm_uint32 hash_ram_addr
-)
-{
-    fm_uint64 hash_entry = 0;
-
-    if (hash_num == 0) {
-        fm_uint64 hash_entry0_reg = 0;
-        mbyModelReadCSR64(regs, MBY_HASH_ENTRY0(hash_ram_addr, 0), &hash_entry0_reg);
-        hash_entry = FM_GET_FIELD64(hash_entry0_reg, MBY_HASH_ENTRY0, DATA);
-    }
-    else {
-        fm_uint64 hash_entry1_reg = 0;
-        mbyModelReadCSR64(regs, MBY_HASH_ENTRY1(hash_ram_addr, 0), &hash_entry1_reg);
-        hash_entry = FM_GET_FIELD64(hash_entry1_reg, MBY_HASH_ENTRY1, DATA);
-    }
-
-    return hash_entry;
-}
-
 static void getHashRamData
 (
           fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
@@ -860,9 +1041,11 @@ static void getHashRamData
 
     fm_byte ram_alloc[MBY_FFU_KEY_MASK0_ENTRIES_1] = { 0 };
     for (fm_uint i = 0; i < MBY_FFU_KEY_MASK0_ENTRIES_1; i++) {
-        fm_uint64 hash_entry_ram_alloc_reg = 0;
-        mbyModelReadCSR64(regs, MBY_HASH_ENTRY_RAM_ALLOC(i, 0), &hash_entry_ram_alloc_reg);
-        ram_alloc[i] = FM_GET_FIELD64(hash_entry_ram_alloc_reg, MBY_HASH_ENTRY_RAM_ALLOC, GP_SEL);
+#ifdef USE_NEW_CSRS
+        ram_alloc[i] = getHashRamAlloc();
+#else
+        ram_alloc[i] = getHashRamAlloc(regs, i);
+#endif
     }
 
     fm_bool   mode_32b   = (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_32B);
@@ -995,7 +1178,7 @@ static void getHashActions
     }
 }
 
-static void lookUpHash
+static void matchExact // i.e. look up EM hash
 (
 #ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map      * const cgrp_a_map,
@@ -1016,9 +1199,13 @@ static void lookUpHash
 
         // Get FFU_KEY_MASK register fields:
 #ifdef USE_NEW_CSRS
-        mbyClassifierKeyMaskCfg key_mask_cfg = getKeyMaskCfg(cgrp_a_map, group, hash_num, scenario);
+        mbyClassifierKeyMaskCfg key_mask_cfg = (group == 0)
+            ? getEmAKeyMaskCfg(cgrp_a_map, hash_num, scenario)
+            : getEmBKeyMaskCfg(cgrp_b_map, hash_num, scenario);
 #else
-        mbyClassifierKeyMaskCfg key_mask_cfg = getKeyMaskCfg(regs,       group, hash_num, scenario);
+        mbyClassifierKeyMaskCfg key_mask_cfg = (group == 0)
+            ? getEmAKeyMaskCfg(regs,       hash_num, scenario)
+            : getEmBKeyMaskCfg(regs,       hash_num, scenario);
 #endif
         // Apply key mask on FFU keys:
         mbyClassifierKeys hash_keys;
@@ -1042,9 +1229,13 @@ static void lookUpHash
         fm_uint16 hash_more  = (hash >> 16) & 0xffff;
 
 #ifdef USE_NEW_CSRS
-        mbyClassifierHashCfg hash_cfg = getHashCfg(????, group, scenario);
+        mbyClassifierHashCfg hash_cfg = (group == 0)
+            ? getEmAHashCfg(cgrp_a_map, scenario)
+            : getEmBHashCfg(cgrp_b_map, scenario);
 #else
-        mbyClassifierHashCfg hash_cfg = getHashCfg(regs, group, scenario);
+        mbyClassifierHashCfg hash_cfg = (group == 0)
+            ? getEmAHashCfg(regs, scenario)
+            : getEmBHashCfg(regs, scenario);
 #endif
         // Don't perform lookups if hash_num is 1 in non-split mode:
         if ((hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) && (hash_num == MBY_FFU_KEY_MASK0_ENTRIES_1 - 1))
@@ -1059,9 +1250,13 @@ static void lookUpHash
             + ((hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_32B && hash_num == 1) ? 4096 : 0);
 
 #ifdef USE_NEW_CSRS
-        mbyClassifierHashLookup bucket = getHashLookupEntry(cgrp_a_map, cgrp_b_map, group, lookup_ptr);
+        mbyClassifierHashLookup bucket = (group == 0)
+            ? getEmAHashLookupEntry(cgrp_a_map, lookup_ptr)
+            : getEmBHashLookupEntry(cgrp_a_map, lookup_ptr);
 #else
-        mbyClassifierHashLookup bucket = getHashLookupEntry(regs,                   group, lookup_ptr);
+        mbyClassifierHashLookup bucket  = (group == 0)
+            ? getEmAHashLookupEntry(regs, lookup_ptr)
+            : getEmBHashLookupEntry(regs, lookup_ptr);
 #endif
         fm_byte min_cam_key_size = (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) ?
             (MBY_FFU_MAX_HASH_ENTRY_SIZE   - ( MBY_FFU_MAX_HASH_ACTIONS    * 4)) :
@@ -1084,9 +1279,13 @@ static void lookUpHash
 
                 if (entry_64b || (entry_32b && hashn_32b)) {
 #ifdef USE_NEW_CSRS
-                    fm_uint64 cam_entry = getHashCamEntry(cgrp_a_map, cgrp_b_map, group, i, j);
+                    fm_uint64 cam_entry = (group == 0)
+                        ? getEmAHashCamEntry(cgrp_a_map, i, j)
+                        : getEmBHashCamEntry(cgrp_b_map, i, j);
 #else
-                    fm_uint64 cam_entry = getHashCamEntry(regs,                   group, i, j);
+                    fm_uint64 cam_entry = (group == 0)
+                        ? getEmAHashCamEntry(regs, i, j)
+                        : getEmBHashCamEntry(regs, i, j);
 #endif
                     for (fm_uint k = 0; k < 8; k++) {
                         cam_key[key_idx] = (cam_entry >> (8 * (7-k))) & 0xFF;
@@ -1119,18 +1318,26 @@ static void lookUpHash
             if (cam_hit)
             {
 #ifdef USE_NEW_CSRS
-                fm_uint64 scenario_mask = getHashCamMask(cgrp_a_map, cgrp_b_map, group, hash_num, i);
+                fm_uint64 scenario_mask = (group == 0)
+                    ? getEmAHashCamMask(cgrp_a_map, hash_num, i)
+                    : getEmBHashCamMask(cgrp_b_map, hash_num, i);
 #else
-                fm_uint64 scenario_mask = getHashCamMask(regs,                   group, hash_num, i);
+                fm_uint64 scenario_mask = (group == 0)
+                    ? getEmAHashCamMask(regs, hash_num, i)
+                    : getEmBHashCamMask(regs, hash_num, i);
 #endif
                 hash_cam_en = (scenario_mask >> scenario) & 1;
 
                 // 64B entry mode needs to consider CAM_EN[0/1]
                 if (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) {
 #ifdef USE_NEW_CSRS
-                    fm_uint64 scenario_mask = getHashCamMask(cgrp_a_map, cgrp_b_map, group, (hash_num + 1), i);
+                fm_uint64 scenario_mask = (group == 0)
+                    ? getEmAHashCamMask(cgrp_a_map, hash_num + 1, i)
+                    : getEmBHashCamMask(cgrp_b_map, hash_num + 1, i);
 #else
-                    fm_uint64 scenario_mask = getHashCamMask(regs,                   group, (hash_num + 1), i);
+                fm_uint64 scenario_mask = (group == 0)
+                    ? getEmAHashCamMask(regs, hash_num + 1, i)
+                    : getEmBHashCamMask(regs, hash_num + 1, i);
 #endif
                     hash_cam_en &= (scenario_mask >> scenario) & 1;
                 }
@@ -1197,27 +1404,6 @@ static void lookUpHash
             doAction(regs, hash_actions[i], actions);
 
     } // for hash_num
-}
-
-static void matchExact
-(
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map      * const cgrp_a_map,
-    mby_ppe_cgrp_b_map      * const cgrp_b_map,
-#else
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
-    mbyClassifierKeys const * const keys,
-    fm_byte const                   scenario,
-    fm_byte const                   group,
-    mbyClassifierActions    * const actions // = output actions
-)
-{
-#ifdef USE_NEW_CSRS
-    lookUpHash(cgrp_a_map, cgrp_b_map, keys, scenario, group, actions);
-#else
-    lookUpHash(regs,                   keys, scenario, group, actions);
-#endif
 }
 
 static void populateMuxedAction

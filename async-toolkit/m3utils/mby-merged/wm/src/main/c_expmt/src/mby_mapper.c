@@ -10,19 +10,6 @@
 #include "mby_mapper.h"
 #include "mby_classifier.h"
 
-// TODO The function 'rotateKey' is never used.
-static fm_uint32 rotateKey(fm_uint key, fm_uint rot) {
-    return ((key << rot) | (key >> (32 - rot)));
-}
-
-// TODO The function 'generateMask' is never used.
-static fm_uint32 generateMask(fm_uint start, fm_uint len) {
-    fm_uint32 mask = 0;
-    for (fm_uint j = start; j < (start + len); j++)
-        mask |= (1 << j);
-    return mask;
-}
-
 static mbyMapPortCfg getPortCfg
 (
 #ifdef USE_NEW_CSRS
@@ -79,6 +66,233 @@ static mbyMapPortDefaults getPortDefaults
 #endif
     return port_defaults;
 }
+
+static fm_byte getPort
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            rx_port
+)
+{
+    fm_byte port = 0;
+#ifdef USE_NEW_CSRS
+    map_port_r const * const map_port = &(mapper_map->MAP_PORT[rx_port]);
+
+    port = map_port->MAP_PORT;
+#else
+    fm_uint64 map_port_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_PORT(rx_port, 0), &map_port_reg);
+
+    port = FM_GET_FIELD64(map_port_reg, MBY_MAP_PORT, MAP_PORT);
+#endif
+    return port;
+}
+
+static mbyMapProt getProt
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            entry
+)
+{
+    mbyMapProt prot;
+
+#ifdef USE_NEW_CSRS
+    map_prot_r const * const map_prot = &(mapper_map->MAP_PROT[entry]);
+
+    prot.PROT     = map_prot->PROT;
+    prot.MAP_PROT = map_prot->MAP_PROT;
+#else
+    fm_uint64 map_prot_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_PROT(entry, 0), &map_prot_reg);
+
+    prot.PROT     = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, PROT);
+    prot.MAP_PROT = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, MAP_PROT);
+#endif
+    return prot;
+}
+
+static mbyMapDomainProfile getDomainProfile
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            l2_domain
+)
+{
+    mbyMapDomainProfile domain_profile;
+
+#ifdef USE_NEW_CSRS
+    map_domain_profile_r const * const map_domain_profile = &(mapper_map->MAP_DOMAIN_PROFILE[l2_domain]);
+
+    domain_profile.PRIORITY_PROFILE = map_domain_profile->PRIORITY_PROFILE;
+#else
+    fm_uint64 map_domain_profile_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_PROFILE(l2_domain, 0), &map_domain_profile_reg);
+
+    domain_profile.PRIORITY_PROFILE = FM_GET_FIELD64(map_domain_profile_reg, MBY_MAP_DOMAIN_PROFILE, PRIORITY_PROFILE);
+#endif
+    return domain_profile;
+}
+
+static mbyMapDomainAction0 getDomainAction0
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            index
+)
+{
+    mbyMapDomainAction0 domain_action;
+
+#ifdef USE_NEW_CSRS
+    map_domain_action0_r const * const map_domain_action0 = &(mapper_map->MAP_DOMAIN_ACTION0[index]);
+
+    domain_action.L2_DOMAIN         = map_domain_action0->L2_DOMAIN;
+    domain_action.L3_DOMAIN         = map_domain_action0->L3_DOMAIN;
+    domain_action.OPERATOR_ID       = map_domain_action0->OPERATOR_ID;
+    domain_action.UPDATE_DOMAINS    = map_domain_action0->UPDATE_DOMAINS;
+    domain_action.LEARN_EN          = map_domain_action0->LEARN_EN;
+    domain_action.PRIORITY_PROFILE  = map_domain_action0->PRIORITY_PROFILE;
+    domain_action.PRI_SOURCE        = map_domain_action0->PRI_SOURCE;
+    domain_action.FORCE_DEFAULT_PRI = map_domain_action0->FORCE_DEFAULT_PRI;
+    domain_action.DEFAULT_PRI       = map_domain_action0->DEFAULT_PRI;
+#else
+    fm_uint64 map_domain_action0_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION0(index, 0), &map_domain_action0_reg);
+
+    domain_action.L2_DOMAIN         = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, L2_DOMAIN);
+    domain_action.L3_DOMAIN         = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, L3_DOMAIN);
+    domain_action.OPERATOR_ID       = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
+    domain_action.UPDATE_DOMAINS    = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, UPDATE_DOMAINS);
+    domain_action.LEARN_EN          = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, LEARN_EN);
+    domain_action.PRIORITY_PROFILE  = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
+    domain_action.PRI_SOURCE        = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRI_SOURCE);
+    domain_action.FORCE_DEFAULT_PRI = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, FORCE_DEFAULT_PRI);
+    domain_action.DEFAULT_PRI       = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, DEFAULT_PRI);
+#endif
+    return domain_action;
+}
+
+static mbyMapDomainAction1 getDomainAction1
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            index
+)
+{
+    mbyMapDomainAction1 domain_action;
+
+#ifdef USE_NEW_CSRS
+    map_domain_action1_r const * const map_domain_action1 = &(mapper_map->MAP_DOMAIN_ACTION1[index]);
+
+    domain_action.DOMAIN_PROFILE    = map_domain_action1->DOMAIN_PROFILE;
+    domain_action.L2_POLICER        = map_domain_action1->L2_POLICER;
+    domain_action.L3_POLICER        = map_domain_action1->L3_POLICER;
+    domain_action.VLAN_COUNTER      = map_domain_action1->VLAN_COUNTER;
+#else
+    fm_uint64 map_domain_action1_reg = 0;
+    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION1(index, 0), &map_domain_action1_reg);
+
+    domain_action.DOMAIN_PROFILE    = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, DOMAIN_PROFILE);
+    domain_action.L2_POLICER        = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L2_POLICER);
+    domain_action.L3_POLICER        = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L3_POLICER);
+    domain_action.VLAN_COUNTER      = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, VLAN_COUNTER);
+#endif
+    return domain_action;
+}
+
+static mbyMapDomainTcam getDomainTcamEntry
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            index
+)
+{
+    mbyMapDomainTcam cam_entry;
+#ifdef USE_NEW_CSRS
+    map_domain_tcam_r const * const map_domain_tcam = &(mapper_map->MAP_DOMAIN_TCAM[index]);
+
+    cam_entry._RSVD1_           = map_domain_tcam->_RSVD1_;
+    cam_entry.PORT_KEY_INVERT   = map_domain_tcam->PORT_KEY_INVERT;
+    cam_entry.VID2_VALID_INVERT = map_domain_tcam->VID2_VALID_INVERT;
+    cam_entry.VID2_KEY_INVERT   = map_domain_tcam->VID2_KEY_INVERT;
+    cam_entry.VID1_VALID_INVERT = map_domain_tcam->VID1_VALID_INVERT;
+    cam_entry.VID1_KEY_INVERT   = map_domain_tcam->VID1_KEY_INVERT;
+    cam_entry._RSVD0_           = map_domain_tcam->_RSVD0_;
+    cam_entry.PORT_KEY          = map_domain_tcam->PORT_KEY;
+    cam_entry.VID2_VALID        = map_domain_tcam->VID2_VALID;
+    cam_entry.VID2_KEY          = map_domain_tcam->VID2_KEY;
+    cam_entry.VID1_VALID        = map_domain_tcam->VID1_VALID;
+    cam_entry.VID1_KEY          = map_domain_tcam->VID1_KEY;
+#else
+    fm_uint32 map_domain_tcam_regs[MBY_MAP_DOMAIN_TCAM_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_TCAM(index, 0), MBY_MAP_DOMAIN_TCAM_WIDTH, map_domain_tcam_regs);
+
+    cam_entry._RSVD1_           = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, _RSVD1_);
+    cam_entry.PORT_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, PORT_KEY_INVERT);
+    cam_entry.VID2_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_VALID_INVERT);
+    cam_entry.VID2_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_KEY_INVERT);
+    cam_entry.VID1_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_VALID_INVERT);
+    cam_entry.VID1_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_KEY_INVERT);
+    cam_entry._RSVD0_           = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, _RSVD0_);
+    cam_entry.PORT_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, PORT_KEY);
+    cam_entry.VID2_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_VALID);
+    cam_entry.VID2_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_KEY);
+    cam_entry.VID1_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_VALID);
+    cam_entry.VID1_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_KEY);
+#endif
+    return cam_entry;
+}
+
+static mbyMapMac getMac
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            entry
+)
+{
+    mbyMapMac mac;
+
+#ifdef USE_NEW_CSRS
+    map_mac_r const * const map_mac = &(mapper_map->MAP_MAC[entry]);
+
+    mac.MAC_ROUTABLE  = map_mac->MAC_ROUTABLE;
+    mac.MAP_MAC       = map_mac->MAP_MAC;
+    mac.VALID         = map_mac->VALID;
+    mac.IGNORE_LENGTH = map_mac->IGNORE_LENGTH;
+#else
+    fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
+    mbyModelReadCSRMult(regs, MBY_MAP_MAC(entry, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
+
+    mac.MAC_ROUTABLE  = FM_ARRAY_GET_BIT  (map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
+    mac.MAP_MAC       = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
+    mac.VALID         = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, VALID);
+    mac.IGNORE_LENGTH = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
+#endif
+    return mac;
+}
+
+// --------------------------------------------------------------------------------
 
 static void realignKeys
 (
@@ -259,49 +473,35 @@ static void realignKeys
     }
 }
 
-static void getDomainTcamEntry(fm_uint32         regs[MBY_REGISTER_ARRAY_SIZE],
-                               fm_int            cam_index,
-                               mbyMapDomainTcam *cam_entry)
-{
-    fm_uint32 map_domain_tcam_regs[MBY_MAP_DOMAIN_TCAM_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MAP_DOMAIN_TCAM(cam_index, 0), MBY_MAP_DOMAIN_TCAM_WIDTH, map_domain_tcam_regs);
-
-    cam_entry->_RSVD1_           = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, _RSVD1_);
-    cam_entry->PORT_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, PORT_KEY_INVERT);
-    cam_entry->VID2_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_VALID_INVERT);
-    cam_entry->VID2_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_KEY_INVERT);
-    cam_entry->VID1_VALID_INVERT = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_VALID_INVERT);
-    cam_entry->VID1_KEY_INVERT   = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_KEY_INVERT);
-    cam_entry->_RSVD0_           = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, _RSVD0_);
-    cam_entry->PORT_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, PORT_KEY);
-    cam_entry->VID2_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_VALID);
-    cam_entry->VID2_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID2_KEY);
-    cam_entry->VID1_VALID        = FM_ARRAY_GET_BIT  (map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_VALID);
-    cam_entry->VID1_KEY          = FM_ARRAY_GET_FIELD(map_domain_tcam_regs, MBY_MAP_DOMAIN_TCAM, VID1_KEY);
-}
-
-static void lookUpDomainTcam
+static fm_uint32 lookUpDomainTcam
 (
-    fm_uint32         regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32   rx_port,
-    const fm_uint16   pa_keys [MBY_N_PARSER_KEYS],
-    const fm_bool     pa_flags[MBY_N_PARSER_FLGS],
-    fm_uint32 * const tcam_idx
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32 const            rx_port,
+    fm_uint16 const            pa_keys [MBY_N_PARSER_KEYS],
+    fm_bool   const            pa_flags[MBY_N_PARSER_FLGS]
 )
 {
+
     fm_uint16 vid1      = FM_GET_UNNAMED_FIELD(pa_keys[MBY_PA_KEYS_OUTER_VLAN1], 0, 12);
     fm_uint16 vid2      = FM_GET_UNNAMED_FIELD(pa_keys[MBY_PA_KEYS_OUTER_VLAN2], 0, 12);
     fm_byte   vid1Valid = pa_flags[MBY_PA_FLAGS_OTR_L2_VLAN1];
     fm_byte   vid2Valid = pa_flags[MBY_PA_FLAGS_OTR_L2_VLAN2];
 
-    *tcam_idx = 0; // no match
+    fm_uint32 tcam_idx = 0; // TCAM miss (no match)
 
     // The highest numbered DOMAIN_CAM entry has highest precedence
     for (fm_int i = (MBY_MAP_DOMAIN_TCAM_ENTRIES - 1); i >= 0; i--)
     {
-        mbyMapDomainTcam domainTcam;
-        getDomainTcamEntry(regs, i, &domainTcam);
-
+        fm_uint32 index = i; // conv. to unsigned
+#ifdef USE_NEW_CSRS
+        mbyMapDomainTcam domainTcam = getDomainTcamEntry(mapper_map, index);
+#else
+        mbyMapDomainTcam domainTcam = getDomainTcamEntry(regs,       index);
+#endif
         fm_byte   maskPort      = domainTcam.PORT_KEY   ^ domainTcam.PORT_KEY_INVERT;
         fm_byte   maskVid1Valid = domainTcam.VID1_VALID ^ domainTcam.VID1_VALID_INVERT;
         fm_uint16 maskVid1      = domainTcam.VID1_KEY   ^ domainTcam.VID1_KEY_INVERT;
@@ -323,15 +523,21 @@ static void lookUpDomainTcam
                       (FM_GET_UNNAMED_FIELD(domainTcam._RSVD1_, 0, 6) == 0));
 
         if (c0 && c1 && c2 && c3 && c4 && c5) {
-            *tcam_idx = i; // TCAM hit
+            tcam_idx = i; // TCAM hit
             break; // out of for i loop
         }
     }
+
+    return tcam_idx;
 }
 
 static void insertDefaults
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map   * const mapper_map,
+#else
     fm_uint32                    regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     const fm_uint32              rx_port,
     const mbyMapPortCfg          port_cfg,
     mbyClassifierActions * const ffu_actions,
@@ -360,10 +566,11 @@ static void insertDefaults
     // Apply defaults on keys
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-#ifdef USE_NEW_REGS
-        mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, i);
+        fm_uint32 entry = i; // conv. to unsigned
+#ifdef USE_NEW_CSRS
+        mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, entry);
 #else
-        mbyMapPortDefaults port_defaults = getPortDefaults(regs,       rx_port, i);
+        mbyMapPortDefaults port_defaults = getPortDefaults(regs,       rx_port, entry);
 #endif
         fm_byte target = port_defaults.TARGET;
         if (target > MBY_DEFAULT_TARGET_FORCE_KEYS_H)
@@ -426,7 +633,7 @@ static void insertDefaults
     // Apply defaults on actions
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
-#ifdef USE_NEW_REGS
+#ifdef USE_NEW_CSRS
         mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, i);
 #else
         mbyMapPortDefaults port_defaults = getPortDefaults(regs,       rx_port, i);
@@ -509,23 +716,27 @@ static void insertDefaults
 
 static void getTcFromPriSource
 (
-    fm_uint32       regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_bool   pa_flags[MBY_N_PARSER_FLGS],
-    const fm_uint   domain_index,
-    const fm_uint16 realigned_keys[MBY_N_REALIGN_KEYS],
-    const fm_byte   pri_profile,
-    fm_bool * const no_pri_enc,
-    fm_byte * const traffic_class
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map * const mapper_map,
+#else
+    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_bool   const            pa_flags[MBY_N_PARSER_FLGS],
+    fm_uint32 const            domain_index,
+    fm_uint16 const            realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_byte   const            pri_profile,
+    fm_bool            * const no_pri_enc,
+    fm_byte            * const traffic_class
 )
 {
-    fm_uint64 map_domain_action0_reg = 0;
-    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), &map_domain_action0_reg);
-
-    fm_byte pri_source        = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRI_SOURCE);
-    fm_bool force_default_pri = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, FORCE_DEFAULT_PRI);
-
-    fm_int32 tc = -1;    // traffic class
-    fm_bool  np = FALSE; // no priority encoding
+#ifdef USE_NEW_CSRS
+    mbyMapDomainAction0 domain_action0 = getDomainAction0(mapper_map, domain_index);
+#else
+    mbyMapDomainAction0 domain_action0 = getDomainAction0(regs,       domain_index);
+#endif
+    fm_byte  pri_source = domain_action0.PRI_SOURCE;
+    fm_int32 tc         = -1;    // traffic class
+    fm_bool  np         = FALSE; // no priority encoding
 
     // Traffic class mapping - TC is derived from 4 possible sources.
     for (fm_uint i = 0; i < 4; i++)
@@ -535,20 +746,30 @@ static void getTcFromPriSource
             case TC_SOURCE_VPRI:
                 if (pa_flags[MBY_PA_FLAGS_OTR_L2_VLAN1])
                 {
+                    fm_uint32 vpri = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1], 12, 4);
+#ifdef USE_NEW_CSRS
+                    fm_uint64 tc_by_vpri = mapper_map->MAP_VPRI_TC[pri_profile].TC_BY_VPRI;
+                    tc = FM_GET_UNNAMED_FIELD64(tc_by_vpri, (vpri * 3), 3);
+#else
                     fm_uint64 map_vpri_tc_reg = 0;
                     mbyModelReadCSR64(regs, MBY_MAP_VPRI_TC(pri_profile, 0), &map_vpri_tc_reg);
-                    fm_uint32 vpri = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1], 12, 4);
                     tc = FM_GET_UNNAMED_FIELD64(map_vpri_tc_reg, (vpri * 3), 3);
+#endif
                 }
                 break;
 
             case TC_SOURCE_MPLS:
                 if (pa_flags[MBY_PA_FLAGS_OTR_MPLS_V])
                 {
+                    fm_uint32 exp = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_MPLS + 1], 9, 3);
+#ifdef USE_NEW_CSRS
+                    fm_uint64 tc_by_exp = mapper_map->MAP_EXP_TC[pri_profile].TC_BY_EXP;
+                    tc = FM_GET_UNNAMED_FIELD64(tc_by_exp, (exp * 3), 3);
+#else
                     fm_uint64 map_exp_tc_reg = 0;
                     mbyModelReadCSR64(regs, MBY_MAP_EXP_TC(pri_profile, 0), &map_exp_tc_reg);
-                    fm_uint32 exp = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_MPLS + 1], 9, 3);
                     tc = FM_GET_UNNAMED_FIELD64(map_exp_tc_reg, (exp * 3), 3);
+#endif
                 }
                 break;
 
@@ -556,9 +777,14 @@ static void getTcFromPriSource
                 if (pa_flags[MBY_PA_FLAGS_OTR_L3_V])
                 {
                     fm_uint32 dscp = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_DS_FLOW], 10, 6);
+                    fm_uint32 indx = ((pri_profile << 6) | dscp);
+#ifdef USE_NEW_CSRS
+                    tc = mapper_map->MAP_DSCP_TC[indx].TC;
+#else
                     fm_uint64 map_dscp_tc_reg = 0;
-                    mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
+                    mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(indx, 0), &map_dscp_tc_reg);
                     tc = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, TC);
+#endif
                 }
                 break;
 
@@ -571,8 +797,8 @@ static void getTcFromPriSource
             break;
     }
 
-    if (force_default_pri || (tc < 0)) {
-        tc = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, DEFAULT_PRI);
+    if (domain_action0.FORCE_DEFAULT_PRI || (tc < 0)) {
+        tc = domain_action0.DEFAULT_PRI;
         np = TRUE;
     }
 
@@ -582,21 +808,25 @@ static void getTcFromPriSource
 
 static void mapScalar
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map   * const mapper_map,
+#else
     fm_uint32                    regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32              rx_port,
-    const mbyMapPortCfg          port_cfg,
-    const fm_bool                pa_ex_parsing_done,
-    const fm_bool                pa_ex_trunc_header,
-    const fm_bool                pa_ex_depth_exceed,
-    const fm_bool                pa_csum_ok,
-    const fm_bool                pa_flags[MBY_N_PARSER_FLGS],
-    const fm_byte                pa_ptrs [MBY_N_PARSER_PTRS],
-    const fm_uint16              realigned_keys[MBY_N_REALIGN_KEYS],
-    const fm_bool                is_ipv4[MBY_N_IS_IP_BITS],
-    const fm_bool                is_ipv6[MBY_N_IS_IP_BITS],
-    const fm_uint                domain_index,
-    const fm_bool                ihl_ok,
-    const fm_bool                ihl_fits,
+#endif
+    fm_uint32     const          rx_port,
+    mbyMapPortCfg const          port_cfg,
+    fm_bool       const          pa_ex_parsing_done,
+    fm_bool       const          pa_ex_trunc_header,
+    fm_bool       const          pa_ex_depth_exceed,
+    fm_bool       const          pa_csum_ok,
+    fm_bool       const          pa_flags[MBY_N_PARSER_FLGS],
+    fm_byte       const          pa_ptrs [MBY_N_PARSER_PTRS],
+    fm_uint16     const          realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_bool       const          is_ipv4[MBY_N_IS_IP_BITS],
+    fm_bool       const          is_ipv6[MBY_N_IS_IP_BITS],
+    fm_uint32     const          domain_index,
+    fm_bool       const          ihl_ok,
+    fm_bool       const          ihl_fits,
     mbyClassifierActions * const ffu_actions,
     mbyMapProfKey0       * const map_prof_key0,
     mbyMapProfKey1       * const map_prof_key1,
@@ -614,79 +844,74 @@ static void mapScalar
     // initialize
     mapped_key->MAP_INNER_PROT = 0;
     mapped_key->MAP_OUTER_PROT = 0;
-
-    // TODO both variables are assigned a value that is never used
-    fm_uint64 headerIPhi = 0;
-    fm_uint64 headerIPlo = 0;
-
-    fm_uint64 map_port_reg = 0;
-    mbyModelReadCSR64(regs, MBY_MAP_PORT(rx_port, 0), &map_port_reg);
-
-    mapped_key->MAP_PORT = FM_GET_FIELD64(map_port_reg, MBY_MAP_PORT, MAP_PORT);
+#ifdef USE_NEW_CSRS
+    mapped_key->MAP_PORT = getPort(mapper_map, rx_port);
+#else
+    mapped_key->MAP_PORT = getPort(regs,       rx_port);
+#endif
 
     // Compress PROT to 3 bits, highest index match wins
     for (fm_uint i = 0; i < MBY_MAP_PROT_ENTRIES; i++)
     {
-        fm_uint64 map_prot_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MAP_PROT(i, 0), &map_prot_reg);
-
-        fm_byte prot = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, PROT);
-
+        fm_uint32 prot_entry = i;
+#ifdef USE_NEW_CSRS
+        mbyMapProt prot = getProt(mapper_map, prot_entry);
+#else
+        mbyMapProt prot = getProt(regs,       prot_entry);
+#endif
         if (pa_flags[MBY_PA_FLAGS_INR_L3_V] &&
-            (prot == FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_INNER_IP_TTL_PROT], 0, 8)))
-            mapped_key->MAP_INNER_PROT = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, MAP_PROT);
+            (prot.PROT == FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_INNER_IP_TTL_PROT], 0, 8)))
+            mapped_key->MAP_INNER_PROT = prot.MAP_PROT;
 
         if (pa_flags[MBY_PA_FLAGS_OTR_L3_V] &&
-            (prot == FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8)))
-            mapped_key->MAP_OUTER_PROT = FM_GET_FIELD64(map_prot_reg, MBY_MAP_PROT, MAP_PROT);
+            (prot.PROT == FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8)))
+            mapped_key->MAP_OUTER_PROT = prot.MAP_PROT;
     }
 
     // Compress outer DMAC to 4 bits
-    fm_macaddr keyMac = 0;
-    FM_SET_UNNAMED_FIELD64(keyMac,  0, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC + 2]);
-    FM_SET_UNNAMED_FIELD64(keyMac, 16, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC + 1]);
-    FM_SET_UNNAMED_FIELD64(keyMac, 32, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC    ]);
+    fm_macaddr key_mac = 0;
+    FM_SET_UNNAMED_FIELD64(key_mac,  0, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC + 2]);
+    FM_SET_UNNAMED_FIELD64(key_mac, 16, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC + 1]);
+    FM_SET_UNNAMED_FIELD64(key_mac, 32, 16, realigned_keys[MBY_RE_KEYS_OUTER_DMAC    ]);
 
-    fm_bool oDmacMulticast = isMulticastMacAddress(keyMac);
-    fm_bool oDmacBroadcast = isBroadcastMacAddress(keyMac);
+    fm_bool oDmacMulticast = isMulticastMacAddress(key_mac);
+    fm_bool oDmacBroadcast = isBroadcastMacAddress(key_mac);
 
     for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
     {
-        fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
+        fm_uint32 entry = i; // conf. to unsigned
+#ifdef USE_NEW_CSRS
+        mbyMapMac mac = getMac(mapper_map, entry);
+#else
+        mbyMapMac mac = getMac(regs,       entry);
+#endif
+        fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
 
-        fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
-        fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
-        fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
-        fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
-
-        if ((valid & 1) && (mac == (keyMac & mask))) {
-            mapped_key->MAP_OUTER_DMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
-            fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
-            FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 0, 1, un0);
+        if ((mac.VALID & 1) && (mac.MAP_MAC == (key_mac & mask))) {
+            mapped_key->MAP_OUTER_DMAC  = mac.MAP_MAC;
+            map_prof_key1->MAC_ROUTABLE = mac.MAC_ROUTABLE;
             break;
         }
     }
 
     // Compress outer SMAC to 4 bits
-    FM_SET_UNNAMED_FIELD64(keyMac,  0, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC + 2]);
-    FM_SET_UNNAMED_FIELD64(keyMac, 16, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC + 1]);
-    FM_SET_UNNAMED_FIELD64(keyMac, 32, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC    ]);
+    key_mac = 0;
+    FM_SET_UNNAMED_FIELD64(key_mac,  0, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC + 2]);
+    FM_SET_UNNAMED_FIELD64(key_mac, 16, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC + 1]);
+    FM_SET_UNNAMED_FIELD64(key_mac, 32, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC    ]);
 
     for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
     {
-        fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
-        mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
-
-        fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
-        fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
-        fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
-        fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
-
-        if (((valid >> 1) & 1) && (mac == (keyMac  & mask))) {
-            mapped_key->MAP_OUTER_SMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
-            fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
-            FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 1, 1, un0);
+        fm_uint32 entry = i; // conf. to unsigned
+#ifdef USE_NEW_CSRS
+        mbyMapMac mac = getMac(mapper_map, entry);
+#else
+        mbyMapMac mac = getMac(regs,       entry);
+#endif
+        fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
+        if (((mac.VALID >> 1) & 1) && (mac.MAP_MAC == (key_mac  & mask))) {
+            mapped_key->MAP_OUTER_SMAC  = mac.MAP_MAC;
+            map_prof_key1->MAC_ROUTABLE = ((fm_byte) mac.MAC_ROUTABLE) << 1;
             break;
         }
     }
@@ -694,47 +919,45 @@ static void mapScalar
     if (pa_flags[MBY_PA_FLAGS_INR_L2_V])
     {
         // Compress inner DMAC
-        FM_SET_UNNAMED_FIELD64(keyMac,  0, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC + 2]);
-        FM_SET_UNNAMED_FIELD64(keyMac, 16, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC + 1]);
-        FM_SET_UNNAMED_FIELD64(keyMac, 32, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC    ]);
+        key_mac = 0;
+        FM_SET_UNNAMED_FIELD64(key_mac,  0, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC + 2]);
+        FM_SET_UNNAMED_FIELD64(key_mac, 16, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC + 1]);
+        FM_SET_UNNAMED_FIELD64(key_mac, 32, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC    ]);
 
         for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
         {
-            fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
-
-            fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
-            fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
-            fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
-            fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
-
-            if (((valid >> 2) & 1 ) && (mac == (keyMac & mask))) {
-                mapped_key->MAP_INNER_DMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
-                fm_uint32 un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
-                FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 2, 1, un0);
+            fm_uint32 entry = i; // conf. to unsigned
+#ifdef USE_NEW_CSRS
+            mbyMapMac mac = getMac(mapper_map, entry);
+#else
+            mbyMapMac mac = getMac(regs,       entry);
+#endif
+            fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
+            if (((mac.VALID >> 2) & 1 ) && (mac.MAP_MAC == (key_mac & mask))) {
+                mapped_key->MAP_INNER_DMAC  = mac.MAP_MAC;
+                map_prof_key1->MAC_ROUTABLE = ((fm_byte) mac.MAC_ROUTABLE) << 2;
                 break;
             }
         }
 
         // Compress inner SMAC
-        FM_SET_UNNAMED_FIELD64(keyMac,  0, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 2]);
-        FM_SET_UNNAMED_FIELD64(keyMac, 16, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 1]);
-        FM_SET_UNNAMED_FIELD64(keyMac, 32, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 0]);
+        key_mac = 0;
+        FM_SET_UNNAMED_FIELD64(key_mac,  0, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 2]);
+        FM_SET_UNNAMED_FIELD64(key_mac, 16, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 1]);
+        FM_SET_UNNAMED_FIELD64(key_mac, 32, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 0]);
 
         for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
         {
-            fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
-            mbyModelReadCSRMult(regs, MBY_MAP_MAC(i, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
-
-            fm_macaddr mac   = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
-            fm_byte    valid = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
-            fm_uint32  shift = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
-            fm_uint64  mask  = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << shift;
-
-            if (((valid >> 3) & 1 ) && (mac == (keyMac & mask))) {
-                mapped_key->MAP_INNER_SMAC = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
-                fm_bool un0 = FM_ARRAY_GET_BIT(map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
-                FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_ROUTABLE, 3, 1, un0);
+            fm_uint32 entry = i; // conf. to unsigned
+#ifdef USE_NEW_CSRS
+            mbyMapMac mac = getMac(mapper_map, entry);
+#else
+            mbyMapMac mac = getMac(regs,       entry);
+#endif
+            fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
+            if (((mac.VALID >> 3) & 1 ) && (mac.MAP_MAC == (key_mac & mask))) {
+                mapped_key->MAP_INNER_SMAC = mac.MAP_MAC;
+                map_prof_key1->MAC_ROUTABLE = ((fm_byte) mac.MAC_ROUTABLE) << 3;
                 break;
             }
         }
@@ -748,23 +971,33 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)
         {
+#ifdef USE_NEW_CSRS
+            fm_uint32 curr_l4_src = mapper_map->MAP_L4_SRC[i].MAP_L4_SRC;
+            fm_byte   valid       = mapper_map->MAP_L4_SRC[i].VALID;
+            fm_uint32 curr_prot   = mapper_map->MAP_L4_SRC[i].MAP_PROT;
+            fm_uint32 curr_map    = mapper_map->MAP_L4_SRC[i].L4_SRC;
+#else
             fm_uint64 map_l4_src_reg = 0;
             mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i, 0), &map_l4_src_reg);
 
-            fm_uint64 map_l4_src_next_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i+1, 0), &map_l4_src_next_reg);
-
+            fm_uint32 curr_l4_src = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_L4_SRC);
             fm_byte   valid       = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, VALID);
             fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_PROT);
             fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, L4_SRC);
-            fm_uint32 curr_l4_src = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_L4_SRC);
-
+#endif
             if ((valid & 1) && (mapped_key->MAP_OUTER_PROT == curr_prot))
             {
-                fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+                fm_bool next_ok = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+#ifdef USE_NEW_CSRS
+                fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].L4_SRC   : 0;
+                fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].MAP_PROT : 0;
+#else
+                fm_uint64 map_l4_src_next_reg = 0;
+                if (next_ok)
+                    mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i+1, 0), &map_l4_src_next_reg);
                 fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, L4_SRC)   : 0;
                 fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, MAP_PROT) : 0;
-
+#endif
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_OUTER_L4_SRC = curr_l4_src;
             }
@@ -779,23 +1012,33 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)
         {
+#ifdef USE_NEW_CSRS
+            fm_uint32 curr_l4_src = mapper_map->MAP_L4_SRC[i].MAP_L4_SRC;
+            fm_byte   valid       = mapper_map->MAP_L4_SRC[i].VALID;
+            fm_uint32 curr_prot   = mapper_map->MAP_L4_SRC[i].MAP_PROT;
+            fm_uint32 curr_map    = mapper_map->MAP_L4_SRC[i].L4_SRC;
+#else
             fm_uint64 map_l4_src_reg = 0;
             mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i, 0), & map_l4_src_reg);
 
-            fm_uint64 map_l4_src_next_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i+1, 0), &map_l4_src_next_reg);
-
+            fm_uint32 curr_l4_src = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_L4_SRC);
             fm_byte   valid       = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, VALID);
             fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_PROT);
             fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, L4_SRC);
-            fm_uint32 curr_l4_src = FM_GET_FIELD64(map_l4_src_reg, MBY_MAP_L4_SRC, MAP_L4_SRC);
-
+#endif
             if (((valid >> 1) & 1) && (mapped_key->MAP_INNER_PROT == curr_prot))
             {
-                fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+                fm_bool next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+#ifdef USE_NEW_CSRS
+                fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].L4_SRC   : 0;
+                fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].MAP_PROT : 0;
+#else
+                fm_uint64 map_l4_src_next_reg = 0;
+                if (next_ok)
+                    mbyModelReadCSR64(regs, MBY_MAP_L4_SRC(i+1, 0), &map_l4_src_next_reg);
                 fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, L4_SRC)   : 0;
                 fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_src_next_reg, MBY_MAP_L4_SRC, MAP_PROT) : 0;
-
+#endif
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_INNER_L4_SRC = curr_l4_src;
             }
@@ -810,23 +1053,33 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
         {
+#ifdef USE_NEW_CSRS
+            fm_uint32 curr_l4_dst = mapper_map->MAP_L4_DST[i].MAP_L4_DST;
+            fm_byte   valid       = mapper_map->MAP_L4_DST[i].VALID;
+            fm_uint32 curr_prot   = mapper_map->MAP_L4_DST[i].MAP_PROT;
+            fm_uint32 curr_map    = mapper_map->MAP_L4_DST[i].L4_DST;
+#else
             fm_uint64 map_l4_dst_reg = 0;
             mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i, 0), &map_l4_dst_reg);
 
-            fm_uint64 map_l4_dst_next_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i+1, 0), &map_l4_dst_next_reg);
-
+            fm_uint32 curr_l4_dst = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_L4_DST);
             fm_byte   valid       = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, VALID);
             fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_PROT);
             fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, L4_DST);
-            fm_uint32 curr_l4_dst = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_L4_DST);
-
+#endif
             if ((valid & 1) && (mapped_key->MAP_OUTER_PROT == curr_prot))
             {
                 fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+#ifdef USE_NEW_CSRS
+                fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_DST[i+1].L4_DST   : 0;
+                fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_DST[i+1].MAP_PROT : 0;
+#else
+                fm_uint64 map_l4_dst_next_reg = 0;
+                if (next_ok)
+                    mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i+1, 0), &map_l4_dst_next_reg);
                 fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, L4_DST)   : 0;
                 fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, MAP_PROT) : 0;
-
+#endif
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_OUTER_L4_DST = curr_l4_dst;
             }
@@ -841,23 +1094,33 @@ static void mapScalar
 
         for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
         {
+#ifdef USE_NEW_CSRS
+            fm_uint32 curr_l4_dst = mapper_map->MAP_L4_DST[i].MAP_L4_DST;
+            fm_byte   valid       = mapper_map->MAP_L4_DST[i].VALID;
+            fm_uint32 curr_prot   = mapper_map->MAP_L4_DST[i].MAP_PROT;
+            fm_uint32 curr_map    = mapper_map->MAP_L4_DST[i].L4_DST;
+#else
             fm_uint64 map_l4_dst_reg = 0;
             mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i, 0), &map_l4_dst_reg);
 
-            fm_uint64 map_l4_dst_next_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i+1, 0), &map_l4_dst_next_reg);
-
+            fm_uint32 curr_l4_dst = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_L4_DST);
             fm_byte   valid       = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, VALID);
             fm_uint32 curr_prot   = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_PROT);
             fm_uint32 curr_map    = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, L4_DST);
-            fm_uint32 curr_l4_dst = FM_GET_FIELD64(map_l4_dst_reg, MBY_MAP_L4_DST, MAP_L4_DST);
-
+#endif
             if (((valid >> 1) & 1) && (mapped_key->MAP_INNER_PROT == curr_prot))
             {
                 fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+#ifdef USE_NEW_CSRS
+                fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_DST[i+1].L4_DST   : 0;
+                fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_DST[i+1].MAP_PROT : 0;
+#else
+                fm_uint64 map_l4_dst_next_reg = 0;
+                if (next_ok)
+                    mbyModelReadCSR64(regs, MBY_MAP_L4_DST(i+1, 0), &map_l4_dst_next_reg);
                 fm_uint32 next_map  = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, L4_DST)   : 0;
                 fm_uint32 next_prot = (next_ok) ? FM_GET_FIELD64(map_l4_dst_next_reg, MBY_MAP_L4_DST, MAP_PROT) : 0;
-
+#endif
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
                     mapped_key->MAP_INNER_L4_DST = curr_l4_dst;
             }
@@ -895,36 +1158,42 @@ static void mapScalar
     FM_SET_UNNAMED_FIELD(map_prof_key1->MAC_MBCAST, 1, 1, oDmacBroadcast);
 
     // domain TCAM - domain_index is always valid here
-    fm_uint64 map_domain_action0_reg = 0;
-    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION0(domain_index, 0), &map_domain_action0_reg);
-    fm_bool update_domains = FM_GET_BIT64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, UPDATE_DOMAINS);
-
-    if (update_domains)
+#ifdef USE_NEW_CSRS
+    mbyMapDomainAction0 domain_action0 = getDomainAction0(mapper_map, domain_index);
+#else
+    mbyMapDomainAction0 domain_action0 = getDomainAction0(regs,       domain_index);
+#endif
+    if (domain_action0.UPDATE_DOMAINS)
     {
-        *operator_id = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
-        *l2_domain   = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, L2_DOMAIN);
-        *l3_domain   = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, L3_DOMAIN);
-        *pri_profile = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
+        *operator_id = domain_action0.OPERATOR_ID;
+        *l2_domain   = domain_action0.L2_DOMAIN;
+        *l3_domain   = domain_action0.L3_DOMAIN;
+        *pri_profile = domain_action0.PRIORITY_PROFILE;
     }
     else
     {
-        fm_uint64 map_domain_profile_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_PROFILE(*l2_domain, 0), &map_domain_profile_reg);
-
-        *pri_profile = FM_GET_FIELD64(map_domain_profile_reg, MBY_MAP_DOMAIN_PROFILE, PRIORITY_PROFILE);
+#ifdef USE_NEW_CSRS
+        mbyMapDomainProfile domain_profile = getDomainProfile(mapper_map, *l2_domain);
+#else
+        mbyMapDomainProfile domain_profile = getDomainProfile(regs,       *l2_domain);
+#endif
+        *pri_profile = domain_profile.PRIORITY_PROFILE;
     }
 
     map_prof_key1->L2_DOMAIN = *l2_domain;
     map_prof_key1->L3_DOMAIN = *l3_domain;
 
-    fm_bool un0 = FM_GET_BIT64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, LEARN_EN);
-    ffu_actions->act1[MBY_FFU_ACTION_LEARN].val = un0;
+    ffu_actions->act1[MBY_FFU_ACTION_LEARN].val = domain_action0.LEARN_EN;
 
-    *learn_mode = FM_GET_BIT64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE);
+    *learn_mode = domain_action0.LEARN_MODE;
 
     getTcFromPriSource
     (
+#ifdef USE_NEW_CSRS
+        mapper_map,
+#else
         regs,
+#endif
         pa_flags,
         domain_index,
         realigned_keys,
@@ -935,19 +1204,26 @@ static void mapScalar
 
     ffu_actions->act4[MBY_FFU_ACTION_TC].val = *traffic_class;
 
-    fm_uint64 map_domain_action1_reg = 0;
-    mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_ACTION1(domain_index, 0), &map_domain_action1_reg);
+#ifdef USE_NEW_CSRS
+    mbyMapDomainAction1 domain_action1 = getDomainAction1(mapper_map, domain_index);
+#else
+    mbyMapDomainAction1 domain_action1 = getDomainAction1(regs,       domain_index);
+#endif
+    fm_uint16 l2Policer           = domain_action1.L2_POLICER;
+    fm_uint16 l3Policer           = domain_action1.L3_POLICER;
+    map_prof_key1->DOMAIN_PROFILE = domain_action1.DOMAIN_PROFILE;
+    *l2_ivlan1_cnt                = domain_action1.VLAN_COUNTER;
 
-    fm_uint16 l2Policer           = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L2_POLICER);
-    fm_uint16 l3Policer           = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, L3_POLICER);
-    map_prof_key1->DOMAIN_PROFILE = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, DOMAIN_PROFILE);
-    *l2_ivlan1_cnt                = FM_GET_FIELD64(map_domain_action1_reg, MBY_MAP_DOMAIN_ACTION1, VLAN_COUNTER);
-
+#ifdef USE_NEW_CSRS
+    fm_byte l2_color_cfg = mapper_map->MAP_DOMAIN_POL_CFG.L2_COLOR_CFG;
+    fm_byte l3_color_cfg = mapper_map->MAP_DOMAIN_POL_CFG.L3_COLOR_CFG;
+#else
     fm_uint64 map_domain_pol_cfg_reg = 0;
     mbyModelReadCSR64(regs, MBY_MAP_DOMAIN_POL_CFG(0), &map_domain_pol_cfg_reg);
 
     fm_byte l2_color_cfg = FM_GET_FIELD64(map_domain_pol_cfg_reg, MBY_MAP_DOMAIN_POL_CFG, L2_COLOR_CFG);
     fm_byte l3_color_cfg = FM_GET_FIELD64(map_domain_pol_cfg_reg, MBY_MAP_DOMAIN_POL_CFG, L3_COLOR_CFG);
+#endif
 
     if (l2Policer != 0) {
         // if l2_policer is nonzero, then the default POLICER[0] action is (bank=0, index=l2_policer).
@@ -997,7 +1273,11 @@ static void encodeLength
 
 static void getParserInfo
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map      * const mapper_map,
+#else
     fm_uint32                       regs          [MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyMapperToClassifier   * const out,
     const fm_uint32                 rx_port,
     const fm_byte                   pa_adj_seg_len,
@@ -1055,16 +1335,25 @@ static void getParserInfo
        exception, or the MPLS stack was not fully parsed. */
 
     // maximum number of bytes per config
+    fm_byte hdr_len_limit[8] = { 0 };
+#ifdef USE_NEW_CSRS
+    map_len_limit_r const * const map_len_limit = &(mapper_map->MAP_LEN_LIMIT[rx_port]);
+
+    hdr_len_limit[MBY_PA_INFO_OTR_L2]   = (map_len_limit->OTR_L2_LEN_LIMIT) * 4 + 14;
+    hdr_len_limit[MBY_PA_INFO_INR_L2]   = (map_len_limit->INR_L2_LEN_LIMIT) * 4 + 14;
+
+    hdr_len_limit[MBY_PA_INFO_OTR_MPLS] = (map_len_limit->OTR_MPLS_LEN_LIMIT) * 4;
+    hdr_len_limit[MBY_PA_INFO_INR_MPLS] = (map_len_limit->INR_MPLS_LEN_LIMIT) * 4;
+#else
     fm_uint64 mby_map_len_limit_reg = 0;
     mbyModelReadCSR64(regs, MBY_MAP_LEN_LIMIT(rx_port, 0), &mby_map_len_limit_reg);
-
-    fm_byte hdr_len_limit[8] = { 0 };
 
     hdr_len_limit[MBY_PA_INFO_OTR_L2]   = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, OTR_L2_LEN_LIMIT) * 4 + 14;
     hdr_len_limit[MBY_PA_INFO_INR_L2]   = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, INR_L2_LEN_LIMIT) * 4 + 14;
 
     hdr_len_limit[MBY_PA_INFO_OTR_MPLS] = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, OTR_MPLS_LEN_LIMIT) * 4;
     hdr_len_limit[MBY_PA_INFO_INR_MPLS] = FM_GET_FIELD64(mby_map_len_limit_reg, MBY_MAP_LEN_LIMIT, INR_MPLS_LEN_LIMIT) * 4;
+#endif
 
     hdr_len_limit[MBY_PA_INFO_OTR_L3]   = MBY_OTR_L3_LEN_LIMIT * 4;
     hdr_len_limit[MBY_PA_INFO_INR_L3]   = MBY_INR_L3_LEN_LIMIT * 4;
@@ -1234,11 +1523,15 @@ static void getParserInfo
 
 static void getProfile
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map      * const mapper_map,
+#else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyMapperToClassifier   * const out,
-    const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
-    const mbyMapProfKey0            key0,
-    const mbyMapProfKey1            key1,
+    fm_uint16 const                 realigned_keys[MBY_N_REALIGN_KEYS],
+    mbyMapProfKey0 const            key0,
+    mbyMapProfKey1 const            key1,
     mbyClassifierActions    * const ffu_actions,
     mbyMapProfAction        * const map_prof_action,
     fm_byte                 * const ffu_profile
@@ -1262,6 +1555,76 @@ static void getProfile
 
     for (fm_int i = MBY_MAP_PROFILE_KEY0_ENTRIES - 1; i >= 0; i--)
     {
+#ifdef USE_NEW_CSRS
+        map_profile_key0_r        profKey0   = mapper_map->MAP_PROFILE_KEY0        [i];
+        map_profile_key_invert0_r profMask0  = mapper_map->MAP_PROFILE_KEY_INVERT0 [i];
+        map_profile_key1_r        profKey1   = mapper_map->MAP_PROFILE_KEY1        [i];
+        map_profile_key_invert1_r profMask1  = mapper_map->MAP_PROFILE_KEY_INVERT1 [i];
+        map_profile_action_r      profAction = mapper_map->MAP_PROFILE_ACTION      [i];
+
+        if (((~key0.PTRS_ERR)       & profKey0.PTRS_ERR)       || (key0.PTRS_ERR       & profMask0.PTRS_ERR))
+            continue;
+
+        if (((~key0.EX)             & profKey0.EX)             || (key0.EX             & profMask0.EX))
+            continue;
+
+        if (((~key0.CSUM)           & profKey0.CSUM)           || (key0.CSUM           & profMask0.CSUM))
+            continue;
+
+        if (((~key0.IHL_OK)         & profKey0.IHL_OK)         || (key0.IHL_OK         & profMask0.IHL_OK))
+            continue;
+
+        if (((~key0.IHL_FITS)       & profKey0.IHL_FITS)       || (key0.IHL_FITS       & profMask0.IHL_FITS))
+            continue;
+
+        if (((~key0.FLAGS)          & profKey0.FLAGS)          || (key0.FLAGS          & profMask0.FLAGS))
+            continue;
+
+        if (((~key1.L2_DOMAIN)      & profKey1.L2_DOMAIN)      || (key1.L2_DOMAIN      & profMask1.L2_DOMAIN))
+            continue;
+
+        if (((~key1.L3_DOMAIN)      & profKey1.L3_DOMAIN)      || (key1.L3_DOMAIN      & profMask1.L3_DOMAIN))
+            continue;
+
+        if (((~key1.PORT_PROFILE)   & profKey1.PORT_PROFILE)   || (key1.PORT_PROFILE   & profMask1.PORT_PROFILE))
+            continue;
+
+        if (((~key1.DOMAIN_PROFILE) & profKey1.DOMAIN_PROFILE) || (key1.DOMAIN_PROFILE & profMask1.DOMAIN_PROFILE))
+            continue;
+
+        if (((~key1.MAC_ROUTABLE)   & profKey1.MAC_ROUTABLE)   || (key1.MAC_ROUTABLE   & profMask1.MAC_ROUTABLE))
+            continue;
+
+        if (((~key1.MAC_MBCAST)     & profKey1.MAC_MBCAST)     || (key1.MAC_MBCAST     & profMask1.MAC_MBCAST))
+            continue;
+
+        // TODO: add packet type check
+
+        if (profAction.PROFILE_VALID && (profileIdx == 0))
+        {
+            profileIdx                       = i;
+            map_prof_action->PROFILE_VALID   = 1;
+            map_prof_action->PROFILE         = profAction.PROFILE;
+            map_prof_action->REWRITE_PROFILE = profAction.REWRITE_PROFILE;
+        }
+
+        if (profAction.TRIG_VALID && (trigIdx == 0))
+        {
+            trigIdx                          = i;
+            map_prof_action->TRIG_VALID      = 1;
+            map_prof_action->PROFILE_TRIG    = profAction.PROFILE_TRIG;
+            map_prof_action->IP_OPTIONS_MASK = profAction.IP_OPTIONS_MASK;
+            map_prof_action->PARSER_ERROR    = profAction.PARSER_ERROR;
+        }
+
+        if (profAction.PRIOS_VALID && (priosIdx == 0))
+        {
+            priosIdx                     = i;
+            map_prof_action->PRIOS_VALID = 1;
+            map_prof_action->VPRI_TGT    = profAction.VPRI_TGT;
+            map_prof_action->DSCP_TGT    = profAction.DSCP_TGT;
+        }
+#else
         fm_uint64 profKey0 = 0;
         mbyModelReadCSR64(regs, MBY_MAP_PROFILE_KEY0(i, 0), &profKey0);
 
@@ -1351,7 +1714,7 @@ static void getProfile
             map_prof_action->VPRI_TGT    = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, VPRI_TGT);
             map_prof_action->DSCP_TGT    = FM_GET_FIELD64(profAction, MBY_MAP_PROFILE_ACTION, DSCP_TGT);
         }
-
+#endif
         // Found all types
         if ((profileIdx > 0) && (trigIdx > 0) && (priosIdx > 0))
             break;
@@ -1373,14 +1736,14 @@ static void rewriteSourceNybble
     const fm_bool             is_ipv6[MBY_N_IS_IP_BITS],
     const mbyMappedKey        mapped_key,
     const mbyMapProfKey0      map_prof_key0,
-    const fm_uint             nybble_idx,
-    const fm_uint             source_id,
+    const fm_uint32           nybble_idx,
+    const fm_uint32           source_id,
     const fm_byte             ffu_profile,
     mbyClassifierKeys * const ffu_keys
 )
 {
-    fm_uint key_idx = 0;
-    fm_uint key_off = 0;
+    fm_uint32 key_idx = 0;
+    fm_uint32 key_off = 0;
 
     if (nybble_idx < 4)
     {
@@ -1488,24 +1851,28 @@ static void rewriteSourceNybble
 
 static void mapRewrite
 (
-    fm_uint32                    regs[MBY_REGISTER_ARRAY_SIZE],
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map    * const mapper_map,
+#else
+    fm_uint32                     regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyMapperToClassifier * const out,
-    const fm_bool                pa_ex_parsing_done,
-    const fm_bool                pa_ex_trunc_header,
-    const fm_bool                pa_ex_depth_exceed,
-    const fm_bool                pa_flags           [MBY_N_PARSER_FLGS],
-    const fm_uint16              realigned_keys     [MBY_N_REALIGN_KEYS],
-    const fm_bool                realigned_keys_vld [MBY_N_REALIGN_KEYS],
-    const fm_bool                is_ipv6            [MBY_N_IS_IP_BITS],
-    const fm_byte                ffu_profile,
-    const mbyMapProfAction       map_prof_action,
-    const mbyMapProfKey0         map_prof_key0,
-    const mbyMappedKey           mapped_key,
-    const fm_byte                pri_profile,
-    fm_bool                      ip_option[2],
-    fm_bool              * const parser_error,
-    mbyClassifierActions * const ffu_actions,
-    mbyClassifierKeys    * const ffu_keys
+    fm_bool const                 pa_ex_parsing_done,
+    fm_bool const                 pa_ex_trunc_header,
+    fm_bool const                 pa_ex_depth_exceed,
+    fm_bool const                 pa_flags           [MBY_N_PARSER_FLGS],
+    fm_uint16 const               realigned_keys     [MBY_N_REALIGN_KEYS],
+    fm_bool const                 realigned_keys_vld [MBY_N_REALIGN_KEYS],
+    fm_bool const                 is_ipv6            [MBY_N_IS_IP_BITS],
+    fm_byte const                 ffu_profile,
+    mbyMapProfAction const        map_prof_action,
+    mbyMapProfKey0 const          map_prof_key0,
+    mbyMappedKey const            mapped_key,
+    fm_byte const                 pri_profile,
+    fm_bool                       ip_option[2],
+    fm_bool               * const parser_error,
+    mbyClassifierActions  * const ffu_actions,
+    mbyClassifierKeys     * const ffu_keys
 )
 {
     // Rewrite Keys
@@ -1513,11 +1880,16 @@ static void mapRewrite
     {
         for (fm_uint i = 0; i < MBY_MAP_REWRITE_ENTRIES_0; i++)
         {
+            fm_byte   j = map_prof_action.REWRITE_PROFILE;
+#ifdef USE_NEW_CSRS
+            fm_byte   source_id = mapper_map->MAP_REWRITE[j][i].SRC_ID;
+#else
             fm_uint64 map_rewrite_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_REWRITE(map_prof_action.REWRITE_PROFILE, i, 0), &map_rewrite_reg);
+            mbyModelReadCSR64(regs, MBY_MAP_REWRITE(j, i, 0), &map_rewrite_reg);
 
-            fm_byte source_id  = FM_GET_FIELD64(map_rewrite_reg, MBY_MAP_REWRITE, SRC_ID);
-            fm_uint nybble_idx = i;
+            fm_byte   source_id  = FM_GET_FIELD64(map_rewrite_reg, MBY_MAP_REWRITE, SRC_ID);
+#endif
+            fm_uint32 nybble_idx = i;
 
             rewriteSourceNybble
             (
@@ -1538,8 +1910,8 @@ static void mapRewrite
 
     if (map_prof_action.TRIG_VALID == 1)
     {
-        fm_uint   otr_opt_flags;
-        fm_uint   inr_opt_flags;
+        fm_uint32 otr_opt_flags;
+        fm_uint32 inr_opt_flags;
         fm_uint16 otr_l3_len;
         fm_uint16 inr_l3_len;
 
@@ -1570,63 +1942,89 @@ static void mapRewrite
 
     if (map_prof_action.PRIOS_VALID == 1)
     {
-        fm_uint64 map_vpri_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MAP_VPRI(pri_profile, 0), &map_vpri_reg);
-
-        /* vpri_tgt and dscp_tgt, no valid check is needed */
-        if (map_prof_action.VPRI_TGT & 0x4) {
-            /* NOTE: This is place before (vpri_tgt & 0x1) otherwise
-             * vpri will be remapped twice if both bits are set */
-            fm_int vpri     = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
-            ffu_actions->act4[MBY_FFU_ACTION_VPRI_LOW].val = map_vpri;
+        if (map_prof_action.VPRI_TGT & 0x4)
+        {
+            fm_byte vpri = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
+#ifdef USE_NEW_CSRS
+            fm_uint64 vpri_by_vpri = mapper_map->MAP_VPRI[pri_profile].VPRI_BY_VPRI;
+            fm_byte   map_vpri     = FM_GET_UNNAMED_FIELD64(vpri_by_vpri, vpri * 4, 4);
+#else
+            fm_uint64 map_vpri_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_VPRI(pri_profile, 0), &map_vpri_reg);
+            fm_byte   map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
+#endif
+            ffu_actions->act4[MBY_FFU_ACTION_VPRI_LOW ].val = map_vpri;
             ffu_actions->act4[MBY_FFU_ACTION_VPRI_HIGH].val = map_vpri;
         }
 
-        if (map_prof_action.VPRI_TGT & 0x1) {
-            fm_int vpri     = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
+        if (map_prof_action.VPRI_TGT & 0x1)
+        {
+            fm_byte vpri = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4);
+#ifdef USE_NEW_CSRS
+            fm_uint64 vpri_by_vpri = mapper_map->MAP_VPRI[pri_profile].VPRI_BY_VPRI;
+            fm_byte   map_vpri     = FM_GET_UNNAMED_FIELD64(vpri_by_vpri, vpri * 4, 4);
+#else
+            fm_uint64 map_vpri_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_VPRI(pri_profile, 0), &map_vpri_reg);
+            fm_byte   map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
+#endif
             FM_SET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_OUTER_VLAN1], 12, 4, map_vpri)
         }
 
-        if (map_prof_action.VPRI_TGT & 0x2) {
-            fm_int vpri     = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_INNER_VLAN1], 12, 4);
-            fm_int map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
+        if (map_prof_action.VPRI_TGT & 0x2)
+        {
+            fm_byte vpri = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_INNER_VLAN1], 12, 4);
+#ifdef USE_NEW_CSRS
+            fm_uint64 vpri_by_vpri = mapper_map->MAP_VPRI[pri_profile].VPRI_BY_VPRI;
+            fm_byte   map_vpri     = FM_GET_UNNAMED_FIELD64(vpri_by_vpri, vpri * 4, 4);
+#else
+            fm_uint64 map_vpri_reg = 0;
+            mbyModelReadCSR64(regs, MBY_MAP_VPRI(pri_profile, 0), &map_vpri_reg);
+            fm_byte   map_vpri = FM_GET_UNNAMED_FIELD64(map_vpri_reg, vpri * 4, 4);
+#endif
             FM_SET_UNNAMED_FIELD(ffu_keys->key16[MBY_FFU_KEY16_INNER_VLAN1], 12, 4, map_vpri);
         }
 
-        if (map_prof_action.DSCP_TGT & 0x4) {
-            /* NOTE: This is place before (dscp_tgt & 0x1) otherwise
-             * dscp will be remapped twice if both bits are set */
-            fm_int dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
-
+        if (map_prof_action.DSCP_TGT & 0x4)
+        {
+            fm_byte dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
+            fm_byte indx = ((pri_profile << 6) | dscp);
+#ifdef USE_NEW_CSRS
+            fm_byte map_dscp = mapper_map->MAP_DSCP_TC[indx].DSCP;
+#else
             fm_uint64 map_dscp_tc_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
-
-            fm_int map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
-            ffu_actions->act4[MBY_FFU_ACTION_DSCP_LOW].val  = map_dscp & 0xF;
+            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(indx, 0), &map_dscp_tc_reg);
+            fm_byte   map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
+#endif
+            ffu_actions->act4[MBY_FFU_ACTION_DSCP_LOW ].val =  map_dscp & 0xF;
             ffu_actions->act4[MBY_FFU_ACTION_DSCP_HIGH].val = (map_dscp >> 4);
         }
 
         if (map_prof_action.DSCP_TGT & 0x1)
         {
-            fm_int dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
-
+            fm_byte dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
+            fm_byte indx = ((pri_profile << 6) | dscp);
+#ifdef USE_NEW_CSRS
+            fm_byte map_dscp = mapper_map->MAP_DSCP_TC[indx].DSCP;
+#else
             fm_uint64 map_dscp_tc_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
-
-            fm_int map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
+            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(indx, 0), &map_dscp_tc_reg);
+            fm_byte   map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
+#endif
             FM_SET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_OUTER_DS], 2, 6, map_dscp);
         }
 
         if (map_prof_action.DSCP_TGT & 0x2)
         {
-            fm_int dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
-
+            fm_byte dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
+            fm_byte indx = ((pri_profile << 6) | dscp);
+#ifdef USE_NEW_CSRS
+            fm_byte map_dscp = mapper_map->MAP_DSCP_TC[indx].DSCP;
+#else
             fm_uint64 map_dscp_tc_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(((pri_profile << 6) | dscp), 0), &map_dscp_tc_reg);
-
+            mbyModelReadCSR64(regs, MBY_MAP_DSCP_TC(indx, 0), &map_dscp_tc_reg);
             fm_int map_dscp = FM_GET_FIELD64(map_dscp_tc_reg, MBY_MAP_DSCP_TC, DSCP);
+#endif
             FM_SET_UNNAMED_FIELD(ffu_keys->key8[MBY_FFU_KEY8_INNER_DS], 2, 6, map_dscp);
         }
     }
@@ -1639,8 +2037,8 @@ void Mapper
 #else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    const mbyParserToMapper     * const in,
-          mbyMapperToClassifier * const out
+    mbyParserToMapper const     * const in,
+    mbyMapperToClassifier       * const out
 )
 {
     // Read inputs:
@@ -1701,15 +2099,17 @@ void Mapper
         &ihl_fits
     );
 
-    fm_uint domain_index = 0;
-
+    fm_uint32 domain_index =
     lookUpDomainTcam
     (
+#ifdef USE_NEW_CSRS
+        mapper_map,
+#else
         regs,
+#endif
         rx_port,
         pa_keys,
-        pa_flags,
-        &domain_index
+        pa_flags
     );
 
     mbyClassifierActions ffu_actions;
@@ -1717,7 +2117,11 @@ void Mapper
 
     insertDefaults
     (
+#ifdef USE_NEW_CSRS
+        mapper_map,
+#else
         regs,
+#endif
         rx_port,
         port_cfg,
         &ffu_actions,
@@ -1741,7 +2145,11 @@ void Mapper
 
     mapScalar
     (
+#ifdef USE_NEW_CSRS
+        mapper_map,
+#else
         regs,
+#endif
         rx_port,
         port_cfg,
         pa_ex_parsing_done,
@@ -1774,7 +2182,11 @@ void Mapper
 
     getParserInfo
     (
+#ifdef USE_NEW_CSRS
+        mapper_map,
+#else
         regs,
+#endif
         out,
         rx_port,
         pa_adj_seg_len,
@@ -1792,7 +2204,11 @@ void Mapper
 
     getProfile
     (
+#ifdef USE_NEW_CSRS
+        mapper_map,
+#else
         regs,
+#endif
         out,
         realigned_keys,
         map_prof_key0,
@@ -1807,7 +2223,11 @@ void Mapper
 
     mapRewrite
     (
+#ifdef USE_NEW_CSRS
+        mapper_map,
+#else
         regs,
+#endif
         out,
         pa_ex_parsing_done,
         pa_ex_trunc_header,
