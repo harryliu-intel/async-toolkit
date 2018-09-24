@@ -17,14 +17,20 @@
 `include "mby_trig_usage.rdl"
 `include "mby_rx_stats.rdl"
 `include "mby_modify.rdl"
-`include "mby_local_store.rdl"
 `include "mby_shm.rdl"
 `include "mby_mesh_row.rdl"
 `include "mby_rx_voq.rdl"
 `include "mby_tx_voq.rdl"
+<<<<<<< HEAD
 `include "epl.rdl"
 `include "amba_complex.rdl"
 `include "pcie.rdl"
+||||||| merged common ancestors
+=======
+`include "mby_rx_pb.rdl"
+`include "mby_tx_pb.rdl"
+`include "mby_freepointer.rdl"
+>>>>>>> 8e91e436d03b659c3c5ed48a1af91b5b8b8a4045
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -54,22 +60,56 @@ addrmap mby_ppe_tx_top_map {
   mby_ppe_modify_map            modify;
 };
 
-// 1.6T hiearchy
-addrmap mby_mpt_top_map {
-  mby_ppe_rx_top_map            rx_ppe;
-  mby_rx_voq_map                rx_voq;
-  mby_ppe_tx_top_map            tx_ppe;
-  mby_tx_voq_map                tx_voq;
-  mby_local_store_map           ppe_store;
+addrmap mby_freepointer_top_map {
+	mby_freepointer_fifo_map fifo[85];
 };
 
-// 3.2T hiearchy
-addrmap mby_top_map {
-  mby_mpt_top_map mpt[2];
+// MGP = 1.6T hiearchy
+addrmap mby_mgp_top_map {
+  name = "mby_mgp_top_map";
+  desc = "MeGaPort (1.6T)";
+  mby_ppe_rx_top_map            rx_ppe;
+  mby_rx_voq_map                rx_voq;
+  mby_rx_pb_map                 rx_pb;
+  mby_ppe_tx_top_map            tx_ppe;
+  mby_tx_voq_map                tx_voq;
+  mby_tx_pb_map                 tx_pb;
+};
+
+// MPP = 3.2T hiearchy
+addrmap mby_mpp_map {
+  name = "mby_mpp_map";
+  desc = "MegaPort Pair (3.2T)";
+  mby_mgp_top_map mgp[2];
   mby_shm_map     shm;
+<<<<<<< HEAD
   mby_mesh_map    mesh; // one row of the mesh
   epl             epl;
   mby_amba_top_map amba; // TODO: relocate to 'real' top-level mby addrmap (this is a single 3.2 hierarchy)
+||||||| merged common ancestors
+  mby_mesh_map    mesh; // one row of the mesh
+=======
+>>>>>>> 8e91e436d03b659c3c5ed48a1af91b5b8b8a4045
 };
 
+<<<<<<< HEAD
 
+||||||| merged common ancestors
+=======
+// Globals = mesh, amba, tag ring, etc.
+addrmap mby_globals_map {
+  name = "mby_globals_map";
+  desc = "MBY Globals";
+  mby_mesh_row_map        mesh[16];
+  mby_freepointer_top_map freepointer;
+  //mby_amba_top_map        amba;
+};
+
+// top = MPP + globals.
+// Eventually this will be 8 MPPs.
+// (Today let's not make Nebulon take 3 hours to run).
+addrmap mby_top_map {
+  mby_mpp_map     mpp;
+  mby_globals_map globals;
+};
+>>>>>>> 8e91e436d03b659c3c5ed48a1af91b5b8b8a4045

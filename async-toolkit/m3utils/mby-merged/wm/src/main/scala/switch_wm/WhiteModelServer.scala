@@ -358,20 +358,20 @@ object WhiteModelServer {
     val theCsr = mby_top_map()
     val doneCreationTime = System.currentTimeMillis()
     val elapsedTime = doneCreationTime - startCreationTime
-    val x = theCsr.shm(0).FWD_TABLE0(0).FWD_TABLE0(1).DATA
+    val x = theCsr.mpp(0).shm(0).FWD_TABLE0(0).FWD_TABLE0(1).DATA
 
 
     // a, b, c are the same field:
-    val a = theCsr.mpt(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
+    val a = theCsr.mpp(0).mgp(0).rx_ppe(0).policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
     /// rx_ppe is not an array, so it can be referenced through transparently
-    val b = theCsr.mpt(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
+    val b = theCsr.mpp(0).mgp(0).rx_ppe.policers(0).POL_CFG(0).POL_CFG(1).CREDIT_FRAME_ERR
     /// pol_cfg_rf is a 'degenerate' level of hierarchy, so it can be referenced through directly (see how it just looks like another array dinemsion
-    val c : Long = theCsr.mpt(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
+    val c : Long = theCsr.mpp.mgp(0).rx_ppe.policers.POL_CFG(0)(1).CREDIT_FRAME_ERR
 
-    val test = theCsr.mpt(0).rx_ppe.policers
-    println("theCsr.mpt(0).rx_ppe.policers path is " + test.path)
-    theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).USAGE_OVER_LIMIT() = 1
-    theCsr.mpt(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).OVER_LIMIT() = 1
+    val test = theCsr.mpp(0).mgp(0).rx_ppe.policers
+    println("theCsr.mpp(0).mgp(0).rx_ppe.policers path is " + test.path)
+    theCsr.mpp(0).mgp(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).USAGE_OVER_LIMIT() = 1
+    theCsr.mpp(0).mgp(0).rx_ppe.cm_apply(0).CM_APPLY_SOFTDROP_STATE(0).OVER_LIMIT() = 1
 
 
 
@@ -394,11 +394,11 @@ object WhiteModelServer {
       }
     }
     // now, can reference these guys more abstractly
-    val ipv4_h = theCsr.mpt(0).tx_ppe.modify(0).ipv4_hdr
+    val ipv4_h = theCsr.mpp(0).mgp(0).tx_ppe.modify(0).ipv4_hdr
     // or
-    val group2 = theCsr.mpt(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
+    val group2 = theCsr.mpp(0).mgp(0).tx_ppe.modify(0).MOD_PROFILE_GROUP(0).get_group(1).assign(4)
     //
-    val outputshift = theCsr.mpt(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT.reset()
+    val outputshift = theCsr.mpp(0).mgp(0).tx_ppe.modify(0).MOD_MAP_CFG(1).OUTPUT_SHIFT.reset()
     val memoryMap = theCsr.addressRegisterMap(0)
     //outputshift assign 1
 

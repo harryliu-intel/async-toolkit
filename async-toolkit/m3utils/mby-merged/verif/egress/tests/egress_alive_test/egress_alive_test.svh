@@ -94,13 +94,14 @@ class egress_eth_simple_seq extends egress_extended_base_seq;
           foreach (payload[idx])
             payload[idx] == idx;
        }, ("Unable to randomize eth_pkt"))
-    count++;
-    `slu_info(this.get_name(), ("Started eth_frame %d", count))
-    `uvm_send(el_frame)
-    #200_000ps;
-    `slu_info(this.get_name(), ("Sent eth_frame %d", count))
-  end
+      count++;
+      `slu_info(this.get_name(), ("Started eth_frame %d", count))
+      `uvm_send(el_frame)
+      #200_000ps;
+      `slu_info(this.get_name(), ("Sent eth_frame %d", count))
+    end
   endtask
+
 
 endclass // egress_eth_simple_seq
 
