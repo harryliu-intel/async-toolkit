@@ -17,7 +17,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
 
   val stages: IndexedSeq[ParserStage] = (0 until parserStages).map(i => new ParserStage(csr, i))
 
-  def initialState(ph: PacketHeader, port: PortIndex): ParserState = {
+  def initialState(ph: PacketHeader, port: PortIndex): Parser.ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(port.p)
     val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
     val w = initWOffsets.map(off => ph.getWord(off.toInt))

@@ -105,4 +105,18 @@
    <parameter name="tokens">LPAREN</parameter>
   </parameters>
  </check>
+ <check enabled="true" class="org.scalastyle.file.RegexChecker" level="warning">
+  <parameters>
+   <parameter name="regex">(case)?[\s]+(class)[\s]+[a-zA-Z_][a-zA-Z0-9_]*[\s]+[\(]</parameter>
+   <parameter name="line">false</parameter>
+  </parameters>
+  <customMessage>Space before left parentheses after keyword class</customMessage>
+ </check>
+ <check enabled="true" class="org.scalastyle.file.RegexChecker" level="warning">
+  <parameters>
+   <parameter name="regex">(class)[\s]+[a-zA-Z_][a-zA-Z0-9_]*[\s]*[\{]</parameter>
+   <parameter name="line">false</parameter>
+  </parameters>
+  <customMessage>Class without parameters - change to object</customMessage>
+ </check>
 </scalastyle>

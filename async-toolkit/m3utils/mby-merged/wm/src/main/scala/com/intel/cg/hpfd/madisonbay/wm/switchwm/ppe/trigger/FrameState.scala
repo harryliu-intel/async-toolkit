@@ -1,10 +1,9 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe._
 
-
 // TODO: obsolete - to be split into specified outputs
-case class FrameState (egressVidCfg: VID,
+case class FrameState(egressVidCfg: VID,
                       cgrp: CGRP,
                       markRouted: Boolean,
                       fclass: PacketClass.Value,

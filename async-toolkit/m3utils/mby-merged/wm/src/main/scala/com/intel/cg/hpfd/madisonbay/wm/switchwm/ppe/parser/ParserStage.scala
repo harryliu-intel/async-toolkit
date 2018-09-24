@@ -74,7 +74,7 @@ object ParserStage {
   class AnalyzerAction(w_off: List[Short], skip: Short, op: AluOperation,
                        next_state: Short, next_state_mask: Short) {
 
-    def apply (ph: PacketHeader, input: ParserState): ParserState = {
+    def apply(ph: PacketHeader, input: ParserState): Parser.ParserState = {
       val baseOffset = input.ptr + op(input.w(2))
       val outputPtr = baseOffset + skip
       val w = w_off.map(off => (ph(baseOffset + off + 1) << 16 & ph(baseOffset + off)).toShort)
@@ -95,7 +95,7 @@ object ParserStage {
 
   class ExceptionAction(val exOffset: Short, val parsingDone: Boolean) {
 
-    def x (ph: PacketHeader, currentOffset: Int, stage: Int): Option[ParserException] = {
+    def x(ph: PacketHeader, currentOffset: Int, stage: Int): Option[ParserException] = {
        if (eos(ph, currentOffset) & ph.eop ) {
          Some(ParseDepthExceededException(stage))
        } else if (eos(ph, currentOffset) & ph.eop) {
@@ -110,7 +110,7 @@ object ParserStage {
     // EOP = (if last byte of non-FCS payload is in current segment) ? TRUE: FALSE -- stored in packet header
     // at construction time
     // EOS = adjustedSegmentLength < (currentPointer + currentStage.exceptionOffset)
-    def eos  (ph: PacketHeader, currentOffset: Int): Boolean = {
+    def eos(ph: PacketHeader, currentOffset: Int): Boolean = {
       ph.adjustedSegmentLength < currentOffset + exOffset
     }
 

@@ -9,10 +9,6 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.MatchCase
 import scala.collection.immutable.BitSet
 
 
-class TriggerUnit extends PipelineStage[FrameState,FrameState] {
-  val x: FrameState => FrameState = fs => fs
-}
-
 class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
 
   val tcfg = new TrigCfg(ppe_cfg.trig_apply, ppe_cfg.trig_apply_misc, ppe_cfg.trig_usage)
@@ -36,7 +32,7 @@ class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
 
 }
 
-abstract class TriggerCondition {
+trait TriggerCondition {
   val x: FrameState => Boolean
 }
 

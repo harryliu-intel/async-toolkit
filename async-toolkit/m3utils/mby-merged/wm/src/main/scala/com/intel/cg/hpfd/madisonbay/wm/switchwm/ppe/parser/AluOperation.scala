@@ -9,7 +9,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
   * @param rot rotation amount, up to 16 bits
   * @param mask mask field (12 bits)
   */
-class AluOperation (val rot: Short, val mask: Short) {
+class AluOperation(val rot: Short, val mask: Short) {
 
   assert(rot < 16, "Rotate by 16 is the max allowed")
 

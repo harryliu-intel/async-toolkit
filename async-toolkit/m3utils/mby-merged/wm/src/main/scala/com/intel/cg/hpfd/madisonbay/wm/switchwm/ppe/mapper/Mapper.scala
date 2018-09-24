@@ -89,8 +89,8 @@ class Mapper(val csr: mby_ppe_mapper_map) {
 object Mapper {
   type RewriteProfileType = Int
   type RewriteSource = Int
-  case class MACLookupResult (index: Int, routeable: Boolean)
-  case class MACMapperResult (outerDMAC: MACLookupResult,
+  case class MACLookupResult(index: Int, routeable: Boolean)
+  case class MACMapperResult(outerDMAC: MACLookupResult,
                               outerSMAC: MACLookupResult,
                               innerDMAC: MACLookupResult,
                               innerSMAC: MACLookupResult)

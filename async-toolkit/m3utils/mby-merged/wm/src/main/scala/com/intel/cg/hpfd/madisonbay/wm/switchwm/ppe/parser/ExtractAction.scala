@@ -7,7 +7,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 
 class ExtractAction(val protoId: Option[Short], val keyOffset: Short, val flagNum: Option[Short], val flagVal: Boolean, val ptrNum: Int) {
 
-  def apply (input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
+  def apply(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
     val flags: PacketFlags =
       flagNum match {
       case None => input._2

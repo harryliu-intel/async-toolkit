@@ -21,7 +21,8 @@ object FieldVector {
 
 }
 
-class FieldVector {
+// TODO: replace side effect on array
+class FieldVector() {
 
   val array: Array[Byte] = Array.ofDim[Byte](FieldVectorSize)
 
