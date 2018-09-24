@@ -421,7 +421,7 @@ public class DirectiveTable {
         registerDirective(SUBCELL, CYCLE_TIME, CHANNEL_TYPE, FLOAT_TYPE, null);
 
         registerDirective(CELL, CYCLE_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
-        registerDirective(CELL, CYCLE_TIME, FLOAT_TYPE, null);
+        registerDirective(CELL, CYCLE_TIME, FLOAT_TYPE,  new Float(10));
         registerDirective(CELL, CYCLE_TIME_INPUTS, FLOAT_TYPE, null);
         registerDirective(CELL, CYCLE_TIME_OUTPUTS, FLOAT_TYPE, null);
         
