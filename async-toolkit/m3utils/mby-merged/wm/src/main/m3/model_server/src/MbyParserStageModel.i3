@@ -7,7 +7,7 @@ IMPORT ModelStageResult;
 
 TYPE
   Indices = RECORD
-    MptIdx : [0..2-1];
+    MgpIdx : [0..2-1];
   END;
 
 PROCEDURE HandlePacket(ipkt    : Pkt.T;

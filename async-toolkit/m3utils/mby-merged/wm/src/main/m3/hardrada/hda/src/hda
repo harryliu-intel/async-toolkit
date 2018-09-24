@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+
+import argparse
+import sys
+import os
+import common
+import os.path
+import imp
+import rhd
+
+ROOT_ARG = "--root"
+MAKE_ARG = "--make"
+CLEAN_ARG = "--clean"
+HW_LIB_ARG = "--hw_lib"
+PARTS_ARG = "--parts"
+HDA_DIRECTIVES_ARG = "--hda_directives"
+# BUILD_ARG = "--build"
+
+def usage ( ) :
+	print ( "=== hda ===" )
+	print ( "- hda :: prints usage" )
+	print ( "Mandatory arguments: " )
+	print ( "- hda --root ( abs path ) :: configures your directory for hda; simply runs the other commands and uses" )
+	print ( "			      .hda_paths file at abs path" )
+	print ( "Optional arguments (listed in the order in which they are executed): " )
+	print ( "- hda --make :: runs your hda_directives file; does not clean at start by default" )
+	print ( "- hda --clean :: deletes everything from build/ (but NOT the directory itself) and" )
+	print ( "		 all residual *.spec.scm files in parts/. That extension is reserved for" )
+	print ( "		 residual programs. Handwritten Scheme files should simply use the *.scm" )
+	print ( "		 extension to avoid being cleaned." )
+	print ( "=== hda ===" )
+
+# root
+# Generates the hda_paths file if it does not currently exist.
+# Generates any directories that do not currently exist.
+def root( hda_paths ) :
+	assert isinstance( hda_paths , str )
+	if not os.path.isabs( hda_paths ) :
+		print ( "Please provide absolute path for root argument." )
+		sys.exit( common.FAILURE )
+	if os.path.exists( hda_paths ) :
+		print ( ".hda_paths file found at " + hda_paths + "..." )
+	else :
+		my_root = os.path.dirname( hda_paths )
+		print ( "Creating .hda_paths file at " + hda_paths + "..." )
+		print ( "File successfully created... Now generating content..." )
+
+		print ( "hw_lib..." )
+		hw_lib_path = os.path.join( my_root , "hw_lib/" )
+		if os.path.isdir( hw_lib_path ) :
+			print ( "hw_lib already exists. Not creating dir." )
+		else :
+			print ( "hw_lib does not exist. Creating dir." )
+			os.system( "mkdir -p " + hw_lib_path )
+		hda_paths_text = "hw_lib = \"" + hw_lib_path + "\"\n"
+
+		print ( "parts..." )
+		parts_path = os.path.join( my_root , "parts/" )
+		if os.path.isdir( parts_path ) :
+			print ( "parts already eixsts. Not creating dir." )
+		else :
+			print ( "parts does not exist. Creating dir." )
+			os.system( "mkdir -p " + parts_path )
+		hda_paths_text += "parts = \"" + parts_path + "\"\n"
+
+		pe_top_fname = "pe_top.scm"
+		if os.path.isfile( os.path.join( parts_path , pe_top_fname ) ) :
+			print ( "hda refuses to overwrite " + pe_top_fname + "!" )
+			print ( "Please remove " + pe_top_fname + " from the parts/ directory!" )
+			sys.exit( common.FAILURE )
+		hda_paths_text += "pe_top_fname = \"" + pe_top_fname + "\"\n"
+
+		print ( "hda_directives..." )
+		hda_directives_path = os.path.join( my_root , "hda_directives" )
+		if os.path.isfile( hda_directives_path ) :
+			print ( "hda_directives already exists. Not creating file." )
+		else :
+			with open( hda_directives_path , "w" ) as hda_directives_fhandle :
+				hda_directives_fhandle.write( "; static_arg\n" )
+				hda_directives_fhandle.write( ";\n" )
+				hda_directives_fhandle.write( "; argnum - index of the argument\n" )
+				hda_directives_fhandle.write( "; code - value of the argument (str); Scheme code snippet\n" )
+				hda_directives_fhandle.write( "; ( static_arg argnum code )\n" )
+				hda_directives_fhandle.write( "\n" )
+				hda_directives_fhandle.write( "\n" )
+				hda_directives_fhandle.write( "\n" )
+				hda_directives_fhandle.write( "; fn2pe\n" )
+				hda_directives_fhandle.write( ";\n" )
+				hda_directives_fhandle.write( "; fn2pe_name_str - name of the function to be partially evaluated\n" )
+				hda_directives_fhandle.write( "; residual_name_str - name of the residual function\n" )
+				hda_directives_fhandle.write( "; num_of_args - total number of arguments to the function\n" )
+				hda_directives_fhandle.write( "; outfname - output residual file name relative to parts/ directory; do NOT\n" )
+				hda_directives_fhandle.write( "; include the extension; it is assumed to be .spec.scm. That way, clean knows which\n" )
+				hda_directives_fhandle.write( "; targets to delete.\n" )
+				hda_directives_fhandle.write( "; ( fn2pe fn2pe_name_str residual_name_str num_of_args ( list of static_arg's ) )\n" )
+				hda_directives_fhandle.write( "\n" )
+				hda_directives_fhandle.write( "\n" )
+				hda_directives_fhandle.write( "\n" )
+				hda_directives_fhandle.write( "; pe\n" )
+				hda_directives_fhandle.write( ";\n" )
+				hda_directives_fhandle.write( "; src - path to source file relative to hw_lib/ directory\n" )
+				hda_directives_fhandle.write( "; outfname - path to output file relative to parts/ directory \n" )
+				hda_directives_fhandle.write( "; ( pe src outfname ( list of fn2pe's ) )\n" )
+		hda_paths_text += "hda_directives = \"" + hda_directives_path + "\"\n"
+		with open( hda_paths , "w" ) as root_fhandle :
+			root_fhandle.write( hda_paths_text )
+
+# clean
+# Delete pe_top file and the specialized source files.
+def clean( ) :
+	os.system( "rm -rf " + os.path.join( hda_paths.parts , hda_paths.pe_top_fname ) )
+	os.system( "rm -rf " + os.path.join( hda_paths.parts , "*.spec.scm" ) )
+	print ( "hda directory successfully cleaned." )
+
+def make( hda_paths ) :
+	# TODO Typechecking. Check for abs path. etc.
+	rhd.rhd( hda_paths )
+
+if __name__ == "__main__" :
+	# TODO Check for abs paths
+	# TODO Typechecking
+	parser = argparse.ArgumentParser( usage = usage( ) )
+	parser.add_argument( ROOT_ARG , required = True , type = str )
+	parser.add_argument( MAKE_ARG , required = False , action = "store_true" )
+	parser.add_argument( CLEAN_ARG , required = False , action = "store_true" )
+	args = parser.parse_args( )
+	if args.root is not None :
+		root( args.root )
+	# Inspiration from https://stackoverflow.com/questions/18694057/python-always-create-a-file-name-c-why-with-cs-imp-load-sourcecs-f
+	hda_paths_src = ""
+	with open( args.root , "r" ) as args_root_handle :
+		hda_paths_src += args_root_handle.read( )
+	global hda_paths
+	hda_paths = imp.new_module( "hda_paths" )
+	exec hda_paths_src in hda_paths.__dict__
+	if args.make == True :
+		make( args.root )
+	if args.clean == True :
+		clean( )

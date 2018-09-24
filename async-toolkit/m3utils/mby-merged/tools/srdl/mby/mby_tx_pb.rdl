@@ -1,0 +1,168 @@
+
+`include "mby_port_cfg.rdl"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// TX_PB_PORT_CFG
+
+reg tx_pb_port_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Tx PB Port Configuration.";
+  desc = "
+      Port configuration for the Tx Packet Buffer.
+      Buffer allocation is derived from this configuration.
+      The port index is N*4 + M. The port configuration values are:
+
+      [list]
+      [*] 0 = Disable this port.
+      [*] 1 = This port is 100G, 50G, or 25G.
+      [*] 2 = This port is 200G. Only port N.0 or N.2 can be 200G, and the next port must be disabled.
+      [*] 3 = This port is 400G. Only port N.0 can be 400G, and the next 3 ports must be disabled.
+      [/list]
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+<% for (my $i = 0; $i < 16; $i++) { %>
+  field {
+    encode = mby_port_cfg_enum;
+    AccessType = "RW";
+    desc = "Port <%=$i%> configuration";
+    ValRandomize = true;
+  } PORT_<%=$i%> [<%=$i*2+1%>:<%=$i*2%>] = 2'h0;
+<% } %>
+
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// TX_PB_PREFETCH
+
+reg tx_pb_prefetch_r {
+  shared;
+  HandCoded = true;
+  name = "Tx PB Per-port Prefetch Limit Register.";
+  desc = "
+      Per local port, limits the amount of prefetched data.
+      Increasing the value covers more mesh latency jitter.
+      Decreasing the value better respects priority.
+      Recommended values (TBD) depend on the port speed.
+     ";
+  regwidth    = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType    = "RW";
+    desc          = "Defines buffer allocation to the port. The value is 0..128 in units of 256 bytes.";
+    ValRandomize  = true;
+  } BUF_SIZE[7:0] = 8'd0;
+    
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// TX_PB_DATA_JITTER (TENTATIVE)
+
+
+reg tx_pb_data_jitter_r {
+  shared;
+  HandCoded = true;
+
+  name = "Tx PB Per-port Data Jitter Timer Control Register.";
+  desc = "This is Tx per-port jitter timer control register. It configures 
+          the number of switch_clk cycles that must elapse after SOP received 
+          before the packet can be sent to MAC. The required number of elapsed cycles is calculated by 
+          jitter_base - (num_contiguous_bytes_in_buffer * jitter_multiplier) &gt;&gt; jitter_r_shift. 
+          If EOP is received before the timer time-out, the packet will be sent to MAC immediately.
+          NOTE the above formula is from HLP; range could be tweaked for MBY.
+"; 
+
+  regwidth    = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "This configures the value of the right-shift.";
+    ValRandomize = true;
+  } JITTER_R_SHIFT[26:24] = 3'h0; 
+
+  field {
+    AccessType = "RW";
+    desc = "This configures the value of the mulitplier.";
+    ValRandomize = true;
+  } JITTER_MULTIPLIER[20:16] = 5'h0; 
+
+  field {
+    AccessType = "RW";
+    desc = "This configures the base jitter value for calculation of jitter timer value. The value is in 
+            the number of switch_clk cycles.";
+    ValRandomize = true;
+  } JITTER_BASE[13:0] = 14'h0; 
+}; // tx_pb_port_jitter_r
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// TX_PB_TAG_JITTER (TENTATIVE)
+
+reg tx_pb_tag_jitter_r {
+  shared;
+  HandCoded = true;
+
+  name = "Tx PB Per-port Tag Jitter Timer Control Register.";
+  desc = "This is Tx per-port jitter timer control register. It configures 
+          the number of switch_clk cycles that must elapse after SOP received 
+          before the packet data can be fetched (and sent to MAC).
+
+          The required number of elapsed cycles is calculated by 
+          jitter_base - (tags_in_buffer * jitter_multiplier * 16) &gt;&gt; jitter_r_shift. 
+          If EOP is received before the timer time-out, the packet will be fetched and sent to MAC immediately.
+          NOTE the above formula is from HLP; range could be tweaked for MBY.
+"; 
+
+  regwidth    = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "This configures the value of the right-shift.";
+    ValRandomize = true;
+  } JITTER_R_SHIFT[26:24] = 3'h0; 
+
+  field {
+    AccessType = "RW";
+    desc = "This configures the value of the mulitplier.";
+    ValRandomize = true;
+  } JITTER_MULTIPLIER[20:16] = 5'h0; 
+
+  field {
+    AccessType = "RW";
+    desc = "This configures the base jitter value for calculation of jitter timer value. The value is in 
+            the number of switch_clk cycles.";
+    ValRandomize = true;
+  } JITTER_BASE[13:0] = 14'h0; 
+}; // tx_pb_port_jitter_r
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Tx Port Buffer addrmap
+
+addrmap mby_tx_pb_map {
+  name = "mby_tx_pb";
+  desc = "Tx Port Buffer Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  tx_pb_port_cfg_r    TX_PB_PORT_CFG;
+  tx_pb_prefetch_r    TX_PB_PREFETCH[16];
+
+  // architecture still being worked out
+  // tx_pb_data_jitter_r TX_PB_DATA_JITTER[16];
+  // tx_pb_tag_jitter_r  TX_PB_TAG_JITTER[16];
+};

@@ -1,0 +1,22 @@
+( define ( cascade_lookup search_key table_list )
+	( let loop ( ( return_list ( list ) ) ( current_table_list table_list ) )
+		( if ( null? current_table_list )
+			return_list
+			( loop ( append return_list ( list ( lookup search_key
+								    ( car current_table_list ) ) ) )
+				( cdr current_table_list ) )
+		)
+	)
+)
+
+( define ( lookup search_key table )
+	( let loop ( ( index 0 ) ( current_table table ) )
+		( if ( null? current_table )
+			#f
+			( if ( = ( car current_table ) search_key )
+				index
+				( loop ( + index 1 ) ( cdr current_table ) )
+			)
+		)
+	)
+)
