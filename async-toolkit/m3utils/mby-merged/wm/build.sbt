@@ -55,8 +55,8 @@ lazy val root = (project in file("."))
     Settings.commonSettings,
     name := "wm",
     libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
-    mainClass in Compile := Some("switch_wm.WhiteModelServer"),
-    mainClass in assembly := Some("switch_wm.WhiteModelServer"),
+    mainClass in Compile := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
+    mainClass in assembly := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
     assemblyOutputPath in assembly := path
   )
 
