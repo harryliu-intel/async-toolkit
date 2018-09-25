@@ -30,7 +30,7 @@
 	<row>
 		<DUT>mby</DUT>
 		<Stage>mby_alive_test</Stage>
-    <Stage_Exec>subBlock/mby/verif/mby/reglist/level0.list</Stage_Exec>
+    <Stage_Exec>subBlock/mbyc/verif/mby/reglist/level0.list</Stage_Exec>
 		<AdditionalArgs>-disable_work_area_subdir</AdditionalArgs>
 		<XdutStageDep>[mby].[vcs]</XdutStageDep>
 		<PassRate>100</PassRate>
@@ -46,7 +46,7 @@
 	<row>
                 <DUT>mby</DUT>
                 <Stage>mplex_turnin_test</Stage>
-                <Stage_Exec>subBlock/mby/verif/mplex/reglist/turnin.list</Stage_Exec>
+                <Stage_Exec>subBlock/mbyc/verif/mplex/reglist/turnin.list</Stage_Exec>
                 <AdditionalArgs>-disable_work_area_subdir -model mplex_np_nphy </AdditionalArgs>
                 <XdutStageDep>[mby].[vcs]</XdutStageDep>
                 <PassRate>100</PassRate>
