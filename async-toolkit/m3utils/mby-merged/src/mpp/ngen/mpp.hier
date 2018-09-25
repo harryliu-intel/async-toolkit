@@ -1,0 +1,7 @@
+//mpp block 
+
+mpp [
+  foreach $i (0,1) {
+    mgp$i of mgp with mgp.map $i
+  }
+]

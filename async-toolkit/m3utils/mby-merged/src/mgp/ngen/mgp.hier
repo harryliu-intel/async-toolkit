@@ -1,0 +1,9 @@
+//mgp block 
+
+mgp [
+  igr of igr_top with igr.map
+  egr of egr_top with egr.map
+  rxppe of rx_ppe with rxppe.map
+  txppe of tx_ppe with txppe.map
+  ppestm of ppe_stm_top with ppestm.map
+]
