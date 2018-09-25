@@ -163,6 +163,7 @@ static mbyMapDomainAction0 getDomainAction0
     domain_action.OPERATOR_ID       = map_domain_action0->OPERATOR_ID;
     domain_action.UPDATE_DOMAINS    = map_domain_action0->UPDATE_DOMAINS;
     domain_action.LEARN_EN          = map_domain_action0->LEARN_EN;
+    domain_action.LEARN_MODE        = map_domain_action0->LEARN_MODE;
     domain_action.PRIORITY_PROFILE  = map_domain_action0->PRIORITY_PROFILE;
     domain_action.PRI_SOURCE        = map_domain_action0->PRI_SOURCE;
     domain_action.FORCE_DEFAULT_PRI = map_domain_action0->FORCE_DEFAULT_PRI;
@@ -176,6 +177,7 @@ static mbyMapDomainAction0 getDomainAction0
     domain_action.OPERATOR_ID       = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, OPERATOR_ID);
     domain_action.UPDATE_DOMAINS    = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, UPDATE_DOMAINS);
     domain_action.LEARN_EN          = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, LEARN_EN);
+    domain_action.LEARN_MODE        = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE);
     domain_action.PRIORITY_PROFILE  = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRIORITY_PROFILE);
     domain_action.PRI_SOURCE        = FM_GET_FIELD64(map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, PRI_SOURCE);
     domain_action.FORCE_DEFAULT_PRI = FM_GET_BIT64  (map_domain_action0_reg, MBY_MAP_DOMAIN_ACTION0, FORCE_DEFAULT_PRI);
@@ -280,14 +282,16 @@ static mbyMapMac getMac
     mac.MAP_MAC       = map_mac->MAP_MAC;
     mac.VALID         = map_mac->VALID;
     mac.IGNORE_LENGTH = map_mac->IGNORE_LENGTH;
+    mac.MAC           = map_mac->MAC;
 #else
     fm_uint32 map_mac_regs[MBY_MAP_MAC_WIDTH] = { 0 };
     mbyModelReadCSRMult(regs, MBY_MAP_MAC(entry, 0), MBY_MAP_MAC_WIDTH, map_mac_regs);
 
-    mac.MAC_ROUTABLE  = FM_ARRAY_GET_BIT  (map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
-    mac.MAP_MAC       = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, MAP_MAC);
-    mac.VALID         = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, VALID);
-    mac.IGNORE_LENGTH = FM_ARRAY_GET_FIELD(map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
+    mac.MAC_ROUTABLE  = FM_ARRAY_GET_BIT    (map_mac_regs, MBY_MAP_MAC, MAC_ROUTABLE);
+    mac.MAP_MAC       = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, MAP_MAC);
+    mac.VALID         = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, VALID);
+    mac.IGNORE_LENGTH = FM_ARRAY_GET_FIELD  (map_mac_regs, MBY_MAP_MAC, IGNORE_LENGTH);
+    mac.MAC           = FM_ARRAY_GET_FIELD64(map_mac_regs, MBY_MAP_MAC, MAC);
 #endif
     return mac;
 }
@@ -523,7 +527,7 @@ static fm_uint32 lookUpDomainTcam
                       (FM_GET_UNNAMED_FIELD(domainTcam._RSVD1_, 0, 6) == 0));
 
         if (c0 && c1 && c2 && c3 && c4 && c5) {
-            tcam_idx = i; // TCAM hit
+            tcam_idx = index; // TCAM hit
             break; // out of for i loop
         }
     }
@@ -633,10 +637,11 @@ static void insertDefaults
     // Apply defaults on actions
     for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
     {
+        fm_uint32 entry = i; // conv. to unsigned
 #ifdef USE_NEW_CSRS
-        mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, i);
+        mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, entry);
 #else
-        mbyMapPortDefaults port_defaults = getPortDefaults(regs,       rx_port, i);
+        mbyMapPortDefaults port_defaults = getPortDefaults(regs,       rx_port, entry);
 #endif
         fm_byte target = port_defaults.TARGET;
         if (target <= MBY_DEFAULT_TARGET_FORCE_KEYS_H)
@@ -887,7 +892,7 @@ static void mapScalar
 #endif
         fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
 
-        if ((mac.VALID & 1) && (mac.MAP_MAC == (key_mac & mask))) {
+        if ((mac.VALID & 1) && (mac.MAC == (key_mac & mask))) {
             mapped_key->MAP_OUTER_DMAC  = mac.MAP_MAC;
             map_prof_key1->MAC_ROUTABLE = mac.MAC_ROUTABLE;
             break;
@@ -909,9 +914,9 @@ static void mapScalar
         mbyMapMac mac = getMac(regs,       entry);
 #endif
         fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
-        if (((mac.VALID >> 1) & 1) && (mac.MAP_MAC == (key_mac  & mask))) {
+        if (((mac.VALID >> 1) & 1) && (mac.MAC == (key_mac  & mask))) {
             mapped_key->MAP_OUTER_SMAC  = mac.MAP_MAC;
-            map_prof_key1->MAC_ROUTABLE = ((fm_byte) mac.MAC_ROUTABLE) << 1;
+            map_prof_key1->MAC_ROUTABLE = (((fm_byte) mac.MAC_ROUTABLE) << 1);
             break;
         }
     }
@@ -933,9 +938,9 @@ static void mapScalar
             mbyMapMac mac = getMac(regs,       entry);
 #endif
             fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
-            if (((mac.VALID >> 2) & 1 ) && (mac.MAP_MAC == (key_mac & mask))) {
+            if (((mac.VALID >> 2) & 1 ) && (mac.MAC == (key_mac & mask))) {
                 mapped_key->MAP_INNER_DMAC  = mac.MAP_MAC;
-                map_prof_key1->MAC_ROUTABLE = ((fm_byte) mac.MAC_ROUTABLE) << 2;
+                map_prof_key1->MAC_ROUTABLE = (((fm_byte) mac.MAC_ROUTABLE) << 2);
                 break;
             }
         }
@@ -955,9 +960,9 @@ static void mapScalar
             mbyMapMac mac = getMac(regs,       entry);
 #endif
             fm_uint64 mask = FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << mac.IGNORE_LENGTH;
-            if (((mac.VALID >> 3) & 1 ) && (mac.MAP_MAC == (key_mac & mask))) {
-                mapped_key->MAP_INNER_SMAC = mac.MAP_MAC;
-                map_prof_key1->MAC_ROUTABLE = ((fm_byte) mac.MAC_ROUTABLE) << 3;
+            if (((mac.VALID >> 3) & 1 ) && (mac.MAC == (key_mac & mask))) {
+                mapped_key->MAP_INNER_SMAC  = mac.MAP_MAC;
+                map_prof_key1->MAC_ROUTABLE = (((fm_byte) mac.MAC_ROUTABLE) << 3);
                 break;
             }
         }
@@ -1768,7 +1773,7 @@ static void rewriteSourceNybble
     else
         return;
 
-    fm_byte val    = 0;
+    fm_byte val = 0;
 
     if (source_id == SOURCE_NOOP)
         return;
@@ -1777,15 +1782,15 @@ static void rewriteSourceNybble
     else if (source_id == SOURCE_MAP_OUTER_DMAC_H)
         val = mapped_key.MAP_OUTER_DMAC >> 4;
     else if (source_id == SOURCE_MAP_OUTER_DMAC_L)
-        val = mapped_key.MAP_OUTER_DMAC >> 0;
+        val = mapped_key.MAP_OUTER_DMAC;
     else if (source_id == SOURCE_MAP_OUTER_SMAC_H)
         val = mapped_key.MAP_OUTER_SMAC >> 4;
     else if (source_id == SOURCE_MAP_OUTER_SMAC_L)
-        val = mapped_key.MAP_OUTER_SMAC >> 0;
+        val = mapped_key.MAP_OUTER_SMAC;
     else if (source_id == SOURCE_MAP_PORT_H)
         val = mapped_key.MAP_PORT >> 4;
     else if (source_id == SOURCE_MAP_PORT_L)
-            val = mapped_key.MAP_PORT >> 0;
+            val = mapped_key.MAP_PORT;
     else if (source_id >= SOURCE_MAP_OUTER_L4_SRC_L &&
              source_id <= SOURCE_MAP_OUTER_L4_SRC_H)
         val = mapped_key.MAP_OUTER_L4_SRC >> ((SOURCE_MAP_OUTER_L4_SRC_H - source_id) * 4);
@@ -2058,7 +2063,6 @@ void Mapper
     // Outer MPLS valid flag for use in the Classifier:
     fm_bool otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
 
-
 #ifdef USE_NEW_CSRS
     mbyMapPortCfg port_cfg = getPortCfg(mapper_map, rx_port);
 #else
@@ -2080,8 +2084,8 @@ void Mapper
         is_ipv6[0] = !is_ipv4[0];
     }
 
-    fm_uint16 realigned_keys    [MBY_N_REALIGN_KEYS];
-    fm_bool   realigned_keys_vld[MBY_N_REALIGN_KEYS];
+    fm_uint16 realigned_keys    [MBY_N_REALIGN_KEYS] = { 0 };
+    fm_bool   realigned_keys_vld[MBY_N_REALIGN_KEYS] = { FALSE };
 
     fm_bool ihl_ok   = FALSE;
     fm_bool ihl_fits = FALSE;
@@ -2112,8 +2116,8 @@ void Mapper
         pa_flags
     );
 
-    mbyClassifierActions ffu_actions;
-    mbyClassifierKeys    ffu_keys;
+    mbyClassifierActions ffu_actions = { 0 };
+    mbyClassifierKeys    ffu_keys    = { 0 };
 
     insertDefaults
     (
@@ -2178,7 +2182,7 @@ void Mapper
         &l2_ivlan1_cnt
     );
 
-    mbyParserInfo parser_info;
+    mbyParserInfo parser_info = { 0 };
 
     getParserInfo
     (
@@ -2199,7 +2203,7 @@ void Mapper
         &parser_info
     );
 
-    mbyMapProfAction map_prof_action;
+    mbyMapProfAction map_prof_action = { 0 };
     fm_byte ffu_profile = 0;
 
     getProfile

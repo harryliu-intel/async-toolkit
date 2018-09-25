@@ -644,10 +644,11 @@ typedef struct mbyMapProfActionStruct
 
 typedef struct mbyMapMacStruct
 {
-    fm_bool   MAC_ROUTABLE;   //  1b field
-    fm_byte   MAP_MAC;        //  8b
-    fm_byte   VALID;          //  4b
-    fm_byte   IGNORE_LENGTH;  //  6b
+    fm_bool    MAC_ROUTABLE;   //  1b field
+    fm_byte    MAP_MAC;        //  8b
+    fm_byte    VALID;          //  4b
+    fm_byte    IGNORE_LENGTH;  //  6b
+    fm_macaddr MAC;            // 48b
 
 } mbyMapMac;
 
