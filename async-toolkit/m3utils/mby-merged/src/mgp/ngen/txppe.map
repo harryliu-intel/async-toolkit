@@ -1,1 +1,4 @@
 // Placeholder
+ahb_txppe$iteration$_if      >>    ahb_tx_ppe_if
+glb_txppe$iteration$_if      >>    glb_tx_ppe_if
+egr_txppe$iteration$_if      >>    egr_tx_ppe_if

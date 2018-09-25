@@ -6,7 +6,6 @@ V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
 V_DIRS        = -d=../../rtl/igr/verilog \
                 -d=../../rtl/egr/verilog \
-                -d=../../ppe_stm/rtl \
                 -d=../../tx_ppe/rtl \
                 -d=../../rx_ppe/rtl \
                 -d=../../shared/rtl \
