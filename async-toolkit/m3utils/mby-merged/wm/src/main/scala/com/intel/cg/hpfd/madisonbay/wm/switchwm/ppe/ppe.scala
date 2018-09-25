@@ -49,6 +49,7 @@ object ppe {
   }
   //scalastyle:on
 
+  // VLAN Id
   class VID(val vid: Int) extends AnyVal
 
   //scalastyle:off
@@ -66,7 +67,8 @@ object ppe {
   //scalastyle:on
 
   /**
-    * 16-bit glort
+    * 16-bit glort (Global Resource Tag) identifies a logical port or multicast group of link aggregation group
+    *   or load-balancing group.
     * @param glort
     */
   class GLORT(val glort: Short) extends AnyVal {

@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets

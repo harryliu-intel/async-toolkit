@@ -1,11 +1,9 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output
 
 import scala.collection.BitSet
 
 
-
 /**
-  * Parser's output
   * Flags which may be set or cleared by each parser stage
   */
 class PacketFlags(val flags: BitSet) {

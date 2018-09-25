@@ -4,9 +4,10 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
 import ParserTcam._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.PipelineStage
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader}
 
@@ -45,13 +46,14 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
   object Extractor extends PipelineStage[(PacketHeader, ProtoOffsets), PacketFields] {
 
     //scalastyle:off
-    val x = { t: (PacketHeader, ProtoOffsets) =>
+    def process = (t: (PacketHeader, ProtoOffsets)) => {
       val ph = t._1
       val protoOffsets = t._2
       val fieldProfile = 0
       val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile)
 
-      def satacc8b(field: RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable): Unit= saturatingIncrement (255)(field)
+      def satacc8b(field: RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable): Unit = saturatingIncrement(255)(field)
+
       // each of the 80 fields of the vector has a configuration in the CSR
       val f: IndexedSeq[Short] = extractorCsr.map { a =>
         (a.PROTOCOL_ID(), protoOffsets.collect({ case i if i._1 == a.PROTOCOL_ID() => i._2 })) match {
@@ -74,6 +76,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
       }
       PacketFields(f)
     }
+
     //scalastyle:on
 
   }
@@ -94,7 +97,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
     }
   }
 
-  val x: Packet => ParserOutput = pkt => {
+  val process: Packet => ParserOutput = pkt => {
     val ph = PacketHeader(pkt.bytes.slice(0, PacketHeader.maxSegmentSize))
     // setup the initial state
     val rxport = new PortIndex(0) // need to handle this via the function interface somehow...
@@ -114,7 +117,7 @@ class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput
     val (_, pf, po, pe) = stagesResult
 
     // extract the keys
-    val paKeysVal = Extractor.x((ph, po))
+    val paKeysVal = Extractor.process((ph, po))
     // determine the packet type
     val paPacketTypeVal = packetType(pf)
     // now we have the flags and the proto-offsets
@@ -170,6 +173,7 @@ object Parser {
   class ParserException(val stageEncountered: Int)
 
   object ParserException {
+
     def apply(eos: Boolean = false, eop: Boolean = false, done: Boolean = false, stageEncountered: Int): Parser.ParserException = {
       if (done) {
         ParserDoneException(stageEncountered)
@@ -179,6 +183,7 @@ object Parser {
         ParseDepthExceededException(stageEncountered)
       }
     }
+
   }
 
   class AbortParserException(stageEncountered: Int) extends ParserException(stageEncountered)

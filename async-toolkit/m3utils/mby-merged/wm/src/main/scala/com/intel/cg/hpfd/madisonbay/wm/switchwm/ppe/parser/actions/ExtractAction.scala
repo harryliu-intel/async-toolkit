@@ -1,8 +1,8 @@
-
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
 import com.intel.cg.hpfd.csr.generated.parser_ext_r
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 
 
 class ExtractAction(val protoId: Option[Short], val keyOffset: Short, val flagNum: Option[Short], val flagVal: Boolean, val ptrNum: Int) {
@@ -10,9 +10,9 @@ class ExtractAction(val protoId: Option[Short], val keyOffset: Short, val flagNu
   def apply(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
     val flags: PacketFlags =
       flagNum match {
-      case None => input._2
-      case Some(extractedFlagNum) => input._2.assign(extractedFlagNum, flagVal)
-    }
+        case None => input._2
+        case Some(extractedFlagNum) => input._2.assign(extractedFlagNum, flagVal)
+      }
     val fields: ProtoOffsets = protoId match {
       case None => input._1
       case Some(x) => input._1.updated(ptrNum, (x.toInt, keyOffset.toInt))

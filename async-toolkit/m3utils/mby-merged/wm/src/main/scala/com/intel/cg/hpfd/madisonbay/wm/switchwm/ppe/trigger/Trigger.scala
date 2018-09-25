@@ -2,86 +2,13 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{PortIndex, TrafficClass, VID}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.MatchCase
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.{CgrpCondition, SourcePortCondition}
 
 import scala.collection.immutable.BitSet
 
-
-class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
-
-  val tcfg = new TrigCfg(ppe_cfg.trig_apply, ppe_cfg.trig_apply_misc, ppe_cfg.trig_usage)
-
-  def apply(i: Int): Trigger = {
-    new Trigger(tcfg, i)
-  }
-
-  def length: Int = tcfg.TRIGGER_ACTION_CFG_1.length // no way to get this more safely (assumes all of the trigger cfg registers are the same length
-
-  def firingTriggers(fs: FrameState): Iterable[Trigger] = {
-    val result = List.newBuilder[Trigger]
-    var firedThisPrecedenceStage  = false
-    (0 until length).map { i =>
-      val trig = apply(i)
-      if (tcfg.TRIGGER_CONDITION_CFG(i).MATCH_BY_PRECEDENCE() == 0) firedThisPrecedenceStage = false
-      if (!firedThisPrecedenceStage && trig.c(fs)) result += trig
-    }
-    result.result()
-  }
-
-}
-
-trait TriggerCondition {
-  val x: FrameState => Boolean
-}
-
-class CgrpCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
-
-  val tcc = apply_map.TRIGGER_CONDITION_CGRP(index)
-  val condition = MatchCase(apply_map.TRIGGER_CONDITION_CFG(index).MATCH_CGRP().toInt)
-  val x: FrameState => Boolean = fs => {
-    condition match {
-      case MatchCase.Unconditional => true
-      case MatchCase.Equal => fs.cgrp == (tcc.CGRP_ID(), tcc.CGRP_MASK())
-      case MatchCase.NotEqual => !(fs.cgrp == (tcc.CGRP_ID(), tcc.CGRP_MASK()))
-    }
-  }
-
-}
-
-class SourcePortCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
-  lazy val spMask: BitSet =  BitSet.fromBitMask(Array[Long](apply_map.TRIGGER_CONDITION_RX(index).SRC_PORT_MASK()))
-  val x: FrameState => Boolean = fs => {
-    spMask.contains(fs.rxPort.p)
-  }
-}
-
-/**
-  * Abstract trigger CSRs into a single logic operation, so as to avoid requirement
-  * the author know precisely where a given CSR occurs
-  * @param apply_map
-  * @param apply_misc_map
-  * @param usage_map
-  */
-class TrigCfg(val apply_map: mby_ppe_trig_apply_map,
-              val apply_misc_map: mby_ppe_trig_apply_misc_map,
-              val usage_map: mby_ppe_trig_usage_map) {
-  // how can I express an apply method such that
-  // tcfg(1) returns a type that can be implicitly converted into _all_ of the
-  // individual registers at the given index within the several maps?
-}
-
-object TrigCfg {
-  implicit def tcfgToApplyMap(x: TrigCfg): mby_ppe_trig_apply_map = x.apply_map
-  implicit def tcfgToApplyMiscMap(x: TrigCfg): mby_ppe_trig_apply_misc_map = x.apply_misc_map
-  implicit def tcfgToUsageMap(x: TrigCfg): mby_ppe_trig_usage_map = x.usage_map
-}
-
-
-
-
-class Trigger(val tcfg: TrigCfg, val index: Int) {
+class Trigger(val tcfg: TriggerCfg, val index: Int) {
 
   lazy val srcPortCondition = new SourcePortCondition(tcfg, index)
   lazy val cgrpCondition = new CgrpCondition(tcfg, index)
@@ -98,6 +25,31 @@ class Trigger(val tcfg: TrigCfg, val index: Int) {
 
 object Trigger {
 
+  trait TriggerCondition {
+    val x: FrameState => Boolean
+  }
+
+  class CgrpCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
+
+    val tcc = apply_map.TRIGGER_CONDITION_CGRP(index)
+    val condition = MatchCase(apply_map.TRIGGER_CONDITION_CFG(index).MATCH_CGRP().toInt)
+    val x: FrameState => Boolean = fs => {
+      condition match {
+        case MatchCase.Unconditional => true
+        case MatchCase.Equal => fs.cgrp == (tcc.CGRP_ID(), tcc.CGRP_MASK())
+        case MatchCase.NotEqual => !(fs.cgrp == (tcc.CGRP_ID(), tcc.CGRP_MASK()))
+      }
+    }
+
+  }
+
+  class SourcePortCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
+    lazy val spMask: BitSet =  BitSet.fromBitMask(Array[Long](apply_map.TRIGGER_CONDITION_RX(index).SRC_PORT_MASK()))
+    val x: FrameState => Boolean = fs => {
+      spMask.contains(fs.rxPort.p)
+    }
+  }
+
   object MatchCase extends Enumeration {
     val NotEqual: Value = Value(0, "NotEqual")
     val Equal: Value = Value(1, "Equal")
@@ -107,7 +59,7 @@ object Trigger {
   /**
     * Simple case of trigger behaviors defined by a when a precedence group consists of a _single_ trigger
    */
-  class TrigPipeline(csr: mby_ppe_rx_top_map, trigIdx: Int) extends PipelineStage[FrameState, FrameState] {
+  class TriggerPipeline(csr: mby_ppe_rx_top_map, trigIdx: Int) extends PipelineStage[FrameState, FrameState] {
 
     val ta_cfg1 = csr.trig_apply.TRIGGER_ACTION_CFG_1(trigIdx)
     val ta_cfg2 = csr.trig_apply.TRIGGER_ACTION_CFG_2(trigIdx)
@@ -155,7 +107,7 @@ object Trigger {
       }
     }
 
-    val x: FrameState => FrameState = fwdAction andThen tcAction andThen vlanAction
+    def process: FrameState => FrameState = fwdAction andThen tcAction andThen vlanAction
   }
 
 
