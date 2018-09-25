@@ -39,14 +39,6 @@ $ToolConfig_tools{ipconfig} = {
                ENABLE_RECURSIVE_DEP_LIBS => "1",
             },
          }, ## mby
-#         'mbyc' => {
-#            'UDF'   => ["$MODEL_ROOT/cfg/ace/mbyc.udf",],
-#            'SCOPE' => 'mby',
-#            ACERC => {
-#               ENABLE_AUTO_POP_DEP_LIBS  => "0",
-#               ENABLE_RECURSIVE_DEP_LIBS => "1",
-#            },
-#         }, ## mbyc
       }, ## UDF_MAP
    }, ## OTHER
 

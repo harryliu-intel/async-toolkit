@@ -19,7 +19,6 @@ $onecfg{Facet} = {
     values => {
         dut => [qw(
                     mby 
-                    mbyc
 
         )]
     },
