@@ -2,13 +2,12 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_lpm_regs.h"
 #include "mby_lpm.h"
 #include "assert.h"
 
 static void lookUpLpmTcam
 (
-    fm_uint32                regs[MBY_REGISTER_ARRAY_SIZE],
+    MBY_LPM_IN_REGS,
     mbyLpmTcamLookup * const tcam_lookup
 )
 {
@@ -18,7 +17,7 @@ static void lookUpLpmTcam
 
     tcam_lookup->hit_valid = FALSE;
 
-    while (tcam_index < MBY_LPM_MATCH_TCAM_ENTRIES_0)
+    while (tcam_index < MBY_REG_SIZE(LPM_MATCH_TCAM))
     {
         mbyLpmTcamEntry tcam_entry;
         mbyLpmGetTcamEntry(regs, tcam_index, &tcam_entry);
@@ -47,8 +46,6 @@ static fm_bool getBitIn64BitsArray
 )
 {
     assert(array);
-
-    // TODO 100% untested code :)
     return (array[bit_num / 64] >> (bit_num % 64)) & 0x1;
 }
 
@@ -64,7 +61,7 @@ static fm_byte countOneIn64BitsArray
 
     assert(array);
 
-    for (i = 0; i <= bit_num; ++i)
+    for (i = 0; i < bit_num; ++i)
         count += getBitIn64BitsArray(array, i);
 
     return count;
@@ -94,7 +91,7 @@ static fm_bool getSubtrieChildNode
 
 static void exploreSubtrie
 (
-    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
+    MBY_LPM_IN_REGS,
     mbyLpmSubtrie const * const subtrie,
     mbyLpmSubtrieLookup * const st_lookup
 )
@@ -166,7 +163,7 @@ static void exploreSubtrie
 
 void Lpm
 (
-    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+    MBY_LPM_IN_REGS,
     mbyLpmIn    const * const in,
     mbyLpmOut         * const out
 )
@@ -204,7 +201,16 @@ void Lpm
         // TODO verify alignment in SHM_FWD_TABLE0
         out->fwd_table0_idx = st_lookup.hit_ptr * 16;
     }
-
 }
 
-
+//#ifdef UNIT_TEST
+void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs)
+{
+        funcs->_lookUpLpmTcam = lookUpLpmTcam;
+        funcs->_getBitIn64BitsArray = getBitIn64BitsArray;
+        funcs->_countOneIn64BitsArray = countOneIn64BitsArray;
+        funcs->_getSubtriePrefixNode = getSubtriePrefixNode;
+        funcs->_getSubtrieChildNode = getSubtrieChildNode;
+        funcs->_exploreSubtrie = exploreSubtrie;
+}
+//#endif

@@ -3,7 +3,10 @@
 // Copyright (C) 2018 Intel Corporation
 
 #include <cmock/cmock.h>
+
+extern "C" {
 #include "mby_lpm_regs.h"
+}
 
 DECLARE_FUNCTION_MOCK3(Mock_mbyLpmGetTcamEntry, mbyLpmGetTcamEntry,
 						 void (fm_uint32 *, const fm_uint16, mbyLpmTcamEntry * const));

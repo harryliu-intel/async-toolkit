@@ -150,6 +150,21 @@
 #endif /* USE_NEW_CSRS */
 
 
+// Input registers for all the functions in this block
+#ifdef USE_NEW_CSRS
+// It should be called cgrp_a_map, but for simplicity I'll go with regs
+#define MBY_LPM_IN_REGS    mby_ppe_cgrp_a_map     * const regs
+#else
+#define MBY_LPM_IN_REGS    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE]
+#endif
+
+// Retrieve the constant with the number of registers
+#ifdef USE_NEW_CSRS
+#define MBY_REG_SIZE(reg_name) (mby_ppe_cgrp_a_map_## reg_name ##__nd)
+#else
+#define MBY_REG_SIZE(reg_name) (MBY_## reg_name ##_ENTRIES_0)
+#endif
+
 #define MBY_LPM_KEY_MAX_BITS_LEN    (20 * 8)
 
 #define MBY_LPM_BITMAP_SIZE         4
@@ -187,44 +202,28 @@ typedef struct mbyLpmSubtrieStoreStruct
 
 void mbyLpmGetTcamEntry
 (
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-#else
-    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
+    MBY_LPM_IN_REGS,
     const fm_uint16                index,
     mbyLpmTcamEntry        * const tcam_entry
 );
 
 void mbyLpmGetTcamSubtrie
 (
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-#else
-    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
+    MBY_LPM_IN_REGS,
     const fm_uint16                index,
     mbyLpmSubtrie          * const tcam_subtrie
 );
 
 void mbyLpmGetSubtrie
 (
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-#else
-    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
+    MBY_LPM_IN_REGS,
     const fm_uint16                index,
     mbyLpmSubtrie          * const subtrie
 );
 
 void mbyLpmGetSubtrieStore
 (
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-#else
-    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
+    MBY_LPM_IN_REGS,
     const fm_uint16                index,
     mbyLpmSubtrieStore     * const st_store
 );

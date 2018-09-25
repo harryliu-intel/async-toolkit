@@ -8,6 +8,7 @@
 // Includes:
 
 #include "mby_common.h"
+#include "mby_lpm_regs.h"
 
 // Defines:
 
@@ -37,15 +38,14 @@ typedef struct mbyLpmOutStruct
 typedef struct mbyLpmTcamLookupStruct
 {
     fm_uint32               key;
-    fm_uint32               key_invert;
     fm_bool                 hit_valid;
     fm_uint16               hit_index;
 } mbyLpmTcamLookup;
 
 typedef struct mbyLpmSubtrieLookupStruct
 {
-    fm_byte               * key;
-    fm_byte                 key_len;
+    fm_byte         const * key;     // key to search - unprocessed tail only
+    fm_byte                 key_len; // in bits
     fm_bool                 hit_valid;
     fm_uint32               hit_ptr;
 } mbyLpmSubtrieLookup;
@@ -54,9 +54,22 @@ typedef struct mbyLpmSubtrieLookupStruct
 
 void Lpm
 (
-    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+ 	MBY_LPM_IN_REGS,
     mbyLpmIn    const * const in,
     mbyLpmOut         * const out
 );
+
+//#ifdef UNIT_TEST
+struct mbyLpmStaticFuncs {
+	void (*_lookUpLpmTcam)(MBY_LPM_IN_REGS, mbyLpmTcamLookup * const);
+    fm_bool (*_getBitIn64BitsArray)(fm_uint64 const * const, fm_byte);
+    fm_byte (*_countOneIn64BitsArray)(fm_uint64 const * const, fm_byte);
+    fm_bool (*_getSubtriePrefixNode)(mbyLpmSubtrieStore const * const, fm_byte);
+    fm_bool (*_getSubtrieChildNode)(mbyLpmSubtrieStore const * const, fm_byte);
+    void (*_exploreSubtrie)(MBY_LPM_IN_REGS, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
+};
+
+void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs);
+//#endif
 
 #endif /* MYB_LPM_H */

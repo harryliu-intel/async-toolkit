@@ -79,6 +79,7 @@ DELFILES  = $(OBJECTS) *.o *.so
 all: $(OBJECTS) mby_server
 
 mby_common.o     : mby_common.c                      mby_common.h mby_bitfield.h
+mby_bitfield.o   : mby_bitfield.c 	mby_bitfield.h
 mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h mby_bitfield.h
 mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h mby_bitfield.h
 mby_lpm_regs.o   : mby_lpm_regs.c   mby_lpm_regs.h   mby_common.h mby_bitfield.h
@@ -163,22 +164,23 @@ GMOCK_OBJECTS = $(GMOCK_ROOT)/make/gmock_main.a
 
 UT_CFLAGS += -O0 -g -ggdb3
 
-#UT_BINARIES += unit_tests/ut_mapper.exe
-#UT_BINARIES += unit_tests/ut_classifier.exe
 UT_BINARIES += unit_tests/ut_lpm.exe
 
-#unit_tests/ut_mapper.exe: unit_tests/ut_mapper.o
-#unit_tests/ut_classifier.exe: unit_tests/ut_classifier.o
-unit_tests/ut_lpm.exe: unit_tests/ut_lpm.o unit_tests/mock_lpm_regs.o
+unit_tests/liblpm.so: mby_lpm.o mby_lpm_regs.o mby_bitfield.o mby_common.o
+unit_tests/ut_lpm.exe: unit_tests/ut_lpm.o unit_tests/mock_lpm_regs.o unit_tests/liblpm.so
 
-DELFILES += unit_tests/*.o unit_tests/*.exe model_server/msrv
+DELFILES += unit_tests/*.so unit_tests/*.o unit_tests/*.exe model_server/msrv
+
+unit_tests/%.so:
+	@echo '  Linking UT shared lib' $@
+	$(ECHO) $(CC) -shared -o $@ $^
 
 unit_tests/%.o: unit_tests/%.cpp
-	@echo '  Compiling' $<
+	@echo '  Compiling UT' $<
 	$(ECHO) $(GPP) -o $@ $(DEFINES) $(UT_CFLAGS) $(GTEST_INCLUDES) $(GMOCK_INCLUDES) $(INCLUDES) -c $<
 
 unit_tests/%.exe:
-	@echo '  Linking' $<
+	@echo '  Linking UT exe' $@
 	$(ECHO) $(GPP) -o $@ $(DEFINES) $(GMOCK_INCLUDES) $(GTEST_INCLUDES) $(INCLUDES) \
 		-pthread -lpthread -ldl -rdynamic $(GEST_OBJECTS) $(GMOCK_OBJECTS) $^
 
@@ -188,3 +190,4 @@ unit_test: $(UT_BINARIES)
 		echo '  Executing UT' $$ut; \
 		$$ut; \
 	done
+
