@@ -66,7 +66,10 @@ MODEL_SERVER=$(MODEL_SERVER_TARGDIR)/modelserver
 META_STRUCTS=$(MODEL_SERVER_ROOT)/src/mby_struct/$(OS_TARG)/libmby_struct.a
 INTERLANG=$(MODEL_SERVER_ROOT)/src/interlang.scm
 
+# Note: to override the path to hlp_top_map.rdl, use make HLP_TOP_RDL=<path>
+ifeq ($(HLP_TOP_RDL),)
 HLP_TOP_RDL=/p/hlp/hlp_release/drops/hlp-DROP_1P2-17ww50d/src/srdl/hlp_top_map.rdl
+endif
 HLP_BUILD_ROOT=$(GENVIEWS_ROOT)/src/build/hlp
 HLPLIB=$(HLP_BUILD_ROOT)/$(OS_TARG)/libhlp.a
 

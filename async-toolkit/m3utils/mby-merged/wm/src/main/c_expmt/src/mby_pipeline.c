@@ -107,9 +107,9 @@ void TxPipeline
 
     // TX pipeline stages:
 #ifdef USE_NEW_CSRS
-    Modifier   (modify_map,     txi2mod, &mod2txs);
+//  Modifier   (modify_map,     txi2mod, &mod2txs);
 
-    TxStats    (modify_map,    &mod2txs,  txs2mac);
+//  TxStats    (modify_map,    &mod2txs,  txs2mac);
 #else
     Modifier   (regs,           txi2mod, &mod2txs);
 

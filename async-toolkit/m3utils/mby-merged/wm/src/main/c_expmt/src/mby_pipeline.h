@@ -74,6 +74,7 @@ void Classifier
 #ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
+    mby_ppe_entropy_map         * const entropy_map,
 #else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
