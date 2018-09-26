@@ -37,6 +37,7 @@ $ToolConfig_ips{mby} = {
       SEARCH_PATHS        => ["&get_tool_path()",
                               "&get_tool_path()/cfg",
                               "&get_tool_path()/cfg/ace",
+                              "&get_tool_path()/subBlock/mbyc",
                               "&get_tool_var(ipconfig/eth_port, SEARCH_PATHS)",
       ],
       lintra_waiver_dirs  => [],

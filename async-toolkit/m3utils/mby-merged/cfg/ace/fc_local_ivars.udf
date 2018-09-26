@@ -21,7 +21,7 @@ EOF
 	      -models_to_compile =>
 			{
 				merging => "ASSIGN",
-				default => ["mby",]
+				default => ["fc",]
 			},
 		-test_in_model          => { default => 1 },
 		-elab_models            => { default => 1 },
@@ -102,7 +102,7 @@ EOF
             },
             -enable_pwr_intent => { default => 1 },
 		-test              => { default => "mby_alive_test", },
-		-model                        => { default => "mby", },
+		-model                        => { default => "fc", },
 		-test_required                => { default => 1 },
 			
             -test_dependent_libs =>
