@@ -193,7 +193,7 @@ reg lpm_subtrie_bitmaps_r {
   desc = "
             Contains the prefix and child presence bitmaps for each subtrie.
             This register is indexed first by subtrie number, and then by 
-            columns 0..7 representing the 255b of prefix bitmap (columns 0..3) and 256b of
+            columns 0..7, representing the 255b of prefix bitmap (columns 0..3) and 256b of
             child presence bitmap (columns 4..7). 
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -210,7 +210,7 @@ reg lpm_subtrie_bitmaps_r {
   } BITMAP[63:0] = 64'h0;
 };
 regfile lpm_subtrie_bitmaps_rf {
-  lpm_subtrie_bitmaps_r LPM_SUBTRIE_BITMAPS[16] += 8;
+  lpm_subtrie_bitmaps_r LPM_SUBTRIE_BITMAPS[8] += 8;
 };
 
 reg lpm_subtrie_cptr_r {
