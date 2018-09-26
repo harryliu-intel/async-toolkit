@@ -31,8 +31,10 @@
 
 module ppe_stm_top (
 input reset, 
-rx_ppe_ppe_stm_if.stm   rx_ppe_ppe_stm_if, 
-egr_ppe_stm_if.stm egr_ppe_stm_if, 
+rx_ppe_ppe_stm_if.stm   rx_ppe_ppe_stm_if0, 
+rx_ppe_ppe_stm_if.stm   rx_ppe_ppe_stm_if1, 
+egr_ppe_stm_if.stm egr_ppe_stm_if0, 
+egr_ppe_stm_if.stm egr_ppe_stm_if1, 
 //Input List
 input                   cclk                                      
 );
