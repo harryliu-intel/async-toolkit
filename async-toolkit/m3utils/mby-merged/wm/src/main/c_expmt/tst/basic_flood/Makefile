@@ -1,13 +1,9 @@
 SRC_DIR = ../../src
 TST_DIR = .
 
-INC_DIR = ../../../c                                  # uint.h
-INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
-
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
 INCLUDES += -I$(TST_DIR)/../common
-INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
 
 SOURCES  = $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_crc32.c
@@ -26,15 +22,13 @@ SOURCES += $(SRC_DIR)/mby_txstats.c
 SOURCES += $(SRC_DIR)/mby_pipeline.c
 SOURCES += $(SRC_DIR)/mby_model.c
 SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
+SOURCES += $(TST_DIR)/mby_basic_flood_test.c
+SOURCES += $(TST_DIR)/mby_basic_flood_init.c
 SOURCES += $(TST_DIR)/../common/mby_init.c
-
-
-SOURCES += $(TST_DIR)/mby_parser_test.c
-
 
 OBJECTS = $(SOURCES:.c=.o)
 
-TARGET = mby_parser_test
+TARGET = mby_basic_flood_test
 
 # C compiler:
 CC = gcc
@@ -78,7 +72,6 @@ DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
 .PHONY: all
 all: $(TARGET)
 
-$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h $(TST_DIR)/../common/mby_init.h 
 $(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
 $(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
@@ -98,8 +91,8 @@ $(SRC_DIR)/mby_model.o     : $(SRC_DIR)/mby_model.c      $(SRC_DIR)/mby_model.h
 $(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
 
 $(TST_DIR)/../common/mby_init.o     : $(TST_DIR)/../common/mby_init.c      $(TST_DIR)/../common/mby_init.h
-
-
+$(TST_DIR)/mby_basic_flood_init.o   : $(TST_DIR)/mby_basic_flood_init.c    $(TST_DIR)/mby_basic_flood_init.h
+$(TST_DIR)/mby_basic_flood_test.o   : $(TST_DIR)/mby_basic_flood_test.c
 
 .PHONY: clean
 clean:
@@ -108,7 +101,7 @@ clean:
 
 %.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $< 
+	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 $(TARGET): $(OBJECTS)
 	@echo '  Linking' $(TARGET)

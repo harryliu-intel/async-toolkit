@@ -55,6 +55,35 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
     return chksum_ok;
 }
 
+#ifdef USE_NEW_CSRS
+static void lookUpPtypeTcam
+(
+    const parser_ptype_tcam_r tcam[parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
+    const parser_ptype_ram_r  ram [parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
+          fm_uint32           flags,
+          fm_uint16 * const   ptype,
+          fm_byte   * const   extract_idx
+)
+{
+    // No match
+    *ptype       = 0;
+    *extract_idx = 0;
+
+    // The highest numbered PARSER_PTYPE_TCAM entry has highest precedence
+    for (fm_int i = (parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd  - 1); i >= 0; i--)
+    {
+        fm_uint32 mask = tcam[i].KEY ^ tcam[i].KEY_INVERT;
+
+        if ((tcam[i].KEY & tcam[i].KEY_INVERT) == 0 &&
+            (flags & mask) == (tcam[i].KEY & mask)) {
+            *ptype       = ram[i].PTYPE;
+            *extract_idx = ram[i].EXTRACT_IDX;
+            break;
+        }
+    }
+}
+#endif
+
 // Parse the incoming packet and extracts useful fields from it
 void Parser
 (
@@ -107,13 +136,13 @@ void Parser
     fm_bool   pa_ex_depth_exceed = FALSE;
     fm_bool   pa_ex_trunc_header = FALSE;
     fm_bool   pa_ex_parsing_done = FALSE;
-    fm_bool   pa_packet_type     = FALSE;  // added for MBY <-- REVISIT!
 
     fm_uint16 pa_keys       [MBY_N_PARSER_KEYS] = { 0     };
     fm_bool   pa_keys_valid [MBY_N_PARSER_KEYS] = { FALSE };
     fm_bool   pa_flags      [MBY_N_PARSER_FLGS] = { FALSE };
     fm_byte   pa_ptrs       [MBY_N_PARSER_PTRS] = { 0     };
     fm_bool   pa_ptrs_valid [MBY_N_PARSER_PTRS] = { FALSE };
+    fm_byte   pa_prot_id    [MBY_N_PARSER_PTRS] = { MBY_PA_PROT_ID_NOP };
     fm_byte   hit_idx       [MBY_PA_ANA_STAGES] = { 0     };
     fm_bool   hit_idx_v     [MBY_PA_ANA_STAGES] = { FALSE };
 
@@ -135,7 +164,7 @@ void Parser
     // Read in segment data:
     fm_byte seg_data[MBY_PA_MAX_SEG_LEN];
     for (fm_uint i = 0; i < MBY_PA_MAX_SEG_LEN; i++)
-	seg_data[i] = (i < rx_length) ? rx_data_in[i] : 0;
+        seg_data[i] = (i < rx_length) ? rx_data_in[i] : 0;
 
     fm_uint16 w0 = getSegDataWord(init_w0_offset, pa_adj_seg_len, seg_data);
     fm_uint16 w1 = getSegDataWord(init_w1_offset, pa_adj_seg_len, seg_data);
@@ -248,9 +277,10 @@ void Parser
             op_mask =  next_op & MBY_PA_ANA_OP_MASK_BITS;
 
             // Update pointer for next stage:
-            cur_ptr += skip;
-            if (cur_ptr >= MBY_PA_MAX_PTR_LEN)
+            if ((cur_ptr  + skip) >= MBY_PA_MAX_PTR_LEN)
                 cur_ptr = MBY_PA_MAX_PTR_LEN;
+            else
+                cur_ptr += skip;
         }
 
     } // for s ...
@@ -296,13 +326,19 @@ void Parser
 #ifdef USE_NEW_CSRS
                 parser_ext_r const * const ext = &(parser_map->PARSER_EXT[s][r_hit_ex]);
 
-                fm_byte xa_key_start   = 0; // deleted <--- FIXME!!!
-                fm_byte xa_key_len     = 0; // ditto   <--- REVISIT!!!
-                fm_byte xa_protocol_id = ext->PROTOCOL_ID;
-                fm_byte xa_key_offset  = ext->OFFSET;
-                fm_byte xa_flag_num    = ext->FLAG_NUM;
-                fm_bool xa_flag_val    = ext->FLAG_VALUE;
-                fm_byte xa_ptr_num     = ext->PTR_NUM;
+                fm_byte protocol_id = ext->PROTOCOL_ID;
+                fm_byte offset      = ext->OFFSET;
+                fm_byte flag_num    = ext->FLAG_NUM;
+                fm_bool flag_val    = ext->FLAG_VALUE;
+                fm_byte ptr_num     = ext->PTR_NUM;
+
+                if ((flag_num != 0) && (flag_num < MBY_N_PARSER_FLGS))
+                    pa_flags[flag_num] = flag_val;
+
+                if ( (protocol_id != MBY_PA_PROT_ID_NOP) && (ptr_num < MBY_N_PARSER_PTRS) ) {
+                    pa_ptrs   [ptr_num] = ptr[s] + offset;
+                    pa_prot_id[ptr_num] = protocol_id;
+                }
 #else
                 fm_uint64 pa_ext_reg = 0;
                 mbyModelReadCSR64(regs, MBY_PARSER_EXT(s, r_hit_ex, 0), &pa_ext_reg);
@@ -313,7 +349,7 @@ void Parser
                 fm_byte xa_flag_num   = FM_GET_FIELD64(pa_ext_reg, MBY_PARSER_EXT, FLAG_NUM);
                 fm_bool xa_flag_val   = FM_GET_BIT64  (pa_ext_reg, MBY_PARSER_EXT, FLAG_VALUE);
                 fm_byte xa_ptr_num    = FM_GET_FIELD64(pa_ext_reg, MBY_PARSER_EXT, PTR_NUM);
-#endif
+
                 // Apply keys to target key array and track keys_valid:
                 for (fm_uint k = 0; k < xa_key_len; k++)
                 {
@@ -335,7 +371,7 @@ void Parser
                     pa_ptrs      [xa_ptr_num] = ptr[s];
                     pa_ptrs_valid[xa_ptr_num] = TRUE;
                 }
-
+#endif
             } // for wd ...
 
             if (xa_parsing_done == 1) {
@@ -347,6 +383,43 @@ void Parser
         } // if s_ena ...
 
     } // for s ...
+
+#ifdef USE_NEW_CSRS
+    fm_uint32 pa_packet_flags = 0;
+    fm_uint16 pa_packet_type  = 0;
+    fm_byte   pa_extract_idx  = 0;
+
+    for (fm_int i = 0; i < 32; i++)
+        pa_packet_flags |= ((pa_flags[i]) << i);
+
+    /* @todo: should we support index of 1 for PARSER_PTYPE_CAM/RAM ? */
+    lookUpPtypeTcam(parser_map->PARSER_PTYPE_TCAM[0],
+                    parser_map->PARSER_PTYPE_RAM[0],
+                    pa_packet_flags,
+                    &pa_packet_type,
+                    &pa_extract_idx);
+
+    for (fm_uint i = 0; i < parser_extract_cfg_rf_PARSER_EXTRACT_CFG__nd; i++)
+    {
+        parser_extract_cfg_r const * const extract_cfg = &(parser_map->PARSER_EXTRACT_CFG[pa_extract_idx][i]);
+        fm_byte pa_protocol_id = extract_cfg->PROTOCOL_ID;
+
+        if (pa_protocol_id != MBY_PA_PROT_ID_NOP)
+        {
+            for (fm_uint j = 0; j < MBY_N_PARSER_PTRS; j++)
+            {
+                if (pa_prot_id[j] == pa_protocol_id)
+                {
+                    fm_byte offset = extract_cfg->OFFSET + pa_ptrs[j];
+                    w0 = getSegDataWord(offset, pa_adj_seg_len, seg_data);
+
+                    pa_keys[i] = w0;
+                    break;
+                }
+            }
+        }
+    }
+#endif
 
     // Perform checksum offloads & validations (see corresponding section in the func. spec):
     fm_byte pa_csum_ok = 0;
@@ -430,7 +503,9 @@ void Parser
     }
 
     out->PA_L3LEN_ERR       = pa_l3len_err;
-    out->PA_PACKET_TYPE     = pa_packet_type;
+#ifdef USE_NEW_CSRS
+    //out->PA_PACKET_TYPE     = pa_packet_type;
+#endif
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
         out->PA_PTRS      [i] = pa_ptrs      [i];

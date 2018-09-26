@@ -7,7 +7,7 @@
 #include <mby_init.h>
 #include <mby_rxstats.h>
 
-#include "mby_basic_fwd_init.h"
+#include "mby_basic_flood_init.h"
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -23,7 +23,7 @@
                 0x4d, 0x42, 0x59, 0x0a};
 
 const int send_sw = 0;
-const int send_port = 2;
+const int send_port = 0;
 
 inline static int checkOk (const char * test, const fm_status status)
 {
@@ -39,11 +39,11 @@ inline static int checkOk (const char * test, const fm_status status)
     return rv;
 }
 
-fm_status init(fm_uint32 fwd_port, fm_macaddr dmac)
+fm_status init()
 {
     // TODO verify if that's all that we need
     mby_init_common_regs();
-    basic_fwd_init(fwd_port, dmac);
+    basic_flood_init();
     return FM_OK;
 }
 
@@ -59,7 +59,7 @@ fm_status check
 )
 {
     fm_uint32 bank  = 2;
-    fm_uint16 index = (rx_port * 16) + STAT_FIDForwarded;
+    fm_uint16 index = (rx_port * 16) + STAT_FloodForwarded;
     fm_uint64 val;
 
     if ((tx_port != exp_port) || (recv_packet_len != exp_packet_len)) {
@@ -89,11 +89,10 @@ int main()
 
     const uint32_t recv_pkt_buf_len = 1024;
     unsigned char recv_packet_buf[recv_pkt_buf_len];
-    fm_uint32 exp_port = 5;
+    fm_uint32 exp_port = 1;
     fm_uint32 recv_port;
     fm_uint32 exp_packet_len = 1024;
     fm_uint32 recv_packet_len;
-    fm_macaddr dmac = 0x000102030405;
     fm_status status = FM_OK;
 
     printf("--------------------------------------------------------------------------------\n");
@@ -107,7 +106,7 @@ int main()
         if (rv != 0)
             break;
 
-        status = init(exp_port, dmac);
+        status = init();
         rv = checkOk("init", status);
         if (rv != 0)
             break;
@@ -135,7 +134,7 @@ int main()
     else
         printf(COLOR_RED   "[fail]");
 
-    printf(" Basic forwarding tests\n"  COLOR_RESET);
+    printf(" Basic flood tests\n"  COLOR_RESET);
 
     printf("--------------------------------------------------------------------------------\n");
 
