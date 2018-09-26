@@ -204,7 +204,7 @@ Simregress options:
 Simregress Examples:
 ============================================================================================================
 
-simregress -dut mby -model mby        -net -l verif/mby/reglist/level0.list
+simregress -dut mby -model mby        -net -l subBlock/mbyc/verif/mby/reglist/level0.list
 
 
 
