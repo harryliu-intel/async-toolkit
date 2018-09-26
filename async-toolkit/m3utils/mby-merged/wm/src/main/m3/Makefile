@@ -117,11 +117,13 @@ $(SCALA_STRUCTS): $(STRUCTGEN) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_
 	mkdir -p $(dir $@)
 	pushd $(WM_NET_ROOT)/src && $(realpath $<) $(STRUCTGEN_SHARED) $(STRUCTGEN_SCALA) $(STRUCTS_SCALA) $(STRUCTGEN_TOP)
 	rm -rf $(SCALA_IMPLICITS)
-	echo "package com.intel.cg.hpfd.madisonbay.wm.server.dto" > $(SCALA_IMPLICITS)
-	echo "import java.io._" >> $(SCALA_IMPLICITS)
-	echo "object Implicits {" >> $(SCALA_IMPLICITS)
-	grep -h implicit $(WM_NET_ROOT)/scala_generated/{Fm,Iosf}* >> $(SCALA_IMPLICITS)
-	echo "}" >> $(SCALA_IMPLICITS)
+	$(eval tmp_scala_implicits = $(shell mktemp))
+	echo "package com.intel.cg.hpfd.madisonbay.wm.server.dto" > $(tmp_scala_implicits)
+	echo "import java.io._" >> $(tmp_scala_implicits)
+	echo "object Implicits {" >> $(tmp_scala_implicits)
+	grep -h implicit $(WM_NET_ROOT)/scala_generated/{Fm,Iosf}* >> $(tmp_scala_implicits)
+	echo "}" >> $(tmp_scala_implicits)
+	mv $(tmp_scala_implicits) $(SCALA_IMPLICITS)
 
 $(META_STRUCTS): $(STRUCTGEN) $(INTERLANG)
 	mkdir -p $(MODEL_SERVER_ROOT)/src/mby_struct/src
