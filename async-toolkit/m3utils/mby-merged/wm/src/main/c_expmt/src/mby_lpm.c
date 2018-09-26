@@ -2,8 +2,9 @@
 
 // Copyright (C) 2018 Intel Corporation
 
+#include <assert.h>
+#include <stdio.h>
 #include "mby_lpm.h"
-#include "assert.h"
 
 static void lookUpLpmTcam
 (
@@ -117,6 +118,9 @@ static void exploreSubtrie
     fm_bool node_val;
     fm_bool key_bit;
 
+    // The key can't be longer than 16B: 20B total key len - 4B tcam key len
+    assert(st_lookup->key_len < 16 * 8);
+
     mbyLpmGetSubtrieStore(regs, subtrie->root_ptr, &st_store);
 
     do
@@ -129,20 +133,19 @@ static void exploreSubtrie
             st_lookup->hit_valid = TRUE;
         }
 
-        // Check if we have processed the entire key
-        // FIXME double check this because I am not sure it's correct...
-        if (--st_lookup->key_len == 0)
+        // Check if we have processed the entire key.
+        // Note that also if key_len = 0 we might have a match on the root node
+        // so I can't do this check earlier.
+        if (st_lookup->key_len == 0)
             return;
 
         // Read next bit of the key and move to the next node
         key_bit = (key >> (7 - level)) & 0x1;
         node_idx = 1 + 2 * node_idx + key_bit;
+        --st_lookup->key_len;
         ++level;
     }
     while (level < 8);
-
-    if (--st_lookup->key_len == 0)
-        return;
 
     // Process the key lsb by checking the child nodes
     node_idx -= MBY_LPM_NUM_PREFIXES;
