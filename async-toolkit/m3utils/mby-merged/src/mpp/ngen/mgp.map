@@ -46,10 +46,10 @@ egr$y$_ahb_if                   >> egr_ahb_if
 ahb$y$_rx_ppe_if                >> ahb_rx_ppe_if                         
 ahb$y$_txppe0_if                >> ahb_txppe0_if                         
 ahb$y$_txppe1_if                >> ahb_txppe1_if                         
-egr_$epl0$_if                   >> egr_epl0_if                               
-egr_$epl1$_if                   >> egr_epl1_if                               
-egr_$epl2$_if                   >> egr_epl2_if                               
-egr_$epl3$_if                   >> egr_epl3_if                               
+egr$y$_epl0_if                  >> egr_epl0_if                               
+egr$y$_epl1_if                  >> egr_epl1_if                               
+egr$y$_epl2_if                  >> egr_epl2_if                               
+egr$y$_epl3_if                  >> egr_epl3_if                               
 glb$y$_rx_ppe_if                >> glb_rx_ppe_if                         
 glb$y$_txppe0_if                >> glb_txppe0_if                         
 glb$y$_txppe1_if                >> glb_txppe1_if                         
@@ -65,3 +65,4 @@ egr$y$_tagring_if               >> egr_tagring_if
 egr$y$_vp_if0                   >> egr_vp_if0                                
 egr$y$_vp_if1                   >> egr_vp_if1                                
 igr$y$_vp_tx_pfc_xoff           >> igr_vp_tx_pfc_xoff
+rxppe$y$_ppestm_if              >> rx_ppe_ppe_stm_if
