@@ -279,7 +279,7 @@ print "MGM debug : @mbyMgmLibs\n";
                ],
                testcase_globals => {
                    #      -enabled_post_process_modes => "mby_test, mplex_np_nphy", 
-                   #      -post_process_pattern_file => { default => "cfg/ace/mby_post_process.pp" },
+                   #      -post_process_pattern_file => { default => "cfg/ace/mbyc_post_process.pp" },
                     },
 
                elab_opts => [
