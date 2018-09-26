@@ -118,52 +118,632 @@ input                   reset,
 input                   rst_n,                                    //taken from HLP active low for MBY?  
 
 //Interface List
-ahb_rx_ppe_if.ppe                 ahb0_rx_ppe_if,  
-ahb_rx_ppe_if.ppe                 ahb0_txppe0_if,  
-ahb_rx_ppe_if.ppe                 ahb0_txppe1_if,  
-ahb_rx_ppe_if.ppe                 ahb1_rx_ppe_if,  
-ahb_rx_ppe_if.ppe                 ahb1_txppe0_if,  
-ahb_rx_ppe_if.ppe                 ahb1_txppe1_if,  
-egr_ahb_if.egr                    egr0_ahb_if,  //EGR-AHB and DFx Interface  
-egr_mc_table_if.egr               egr0_mc_table_if0,  //EGR-MultiCast Shared Table 0 Interface  
-egr_mc_table_if.egr               egr0_mc_table_if1,  //EGR-MultiCast Shared Table 1 Interface  
-egr_pod_if.egr                    egr0_pod_if,  //EGR-Pod Ring Interface  
-egr_ppe_stm_if.egr                egr0_ppestm_if0,  //EGR-PPE Shared Table Memory 0 Interface   
-egr_ppe_stm_if.egr                egr0_ppestm_if1,  //EGR-PPE Shared Table Memory 1 Interface  
-egr_smm_readarb_if.egr            egr0_smm_readarb_if,  //EGR-SMM_Read_Arb Interface  
-egr_smm_writearb_if.egr           egr0_smm_writearb_if,  //EGR-SMM_Write_Arb Interface  
-egr_statsmgmt_if.egr              egr0_statsmgmt_if,  //EGR-Stats Management Interface  
-egr_tagring_if.egr                egr0_tagring_if,  //EGR-Tag Ring Interface  
-egr_vp_if.egr                     egr0_vp_if0,  //EGR-VP0 Interface  
-egr_vp_if.egr                     egr0_vp_if1,  //EGR-VP1 Interface  
-egr_ahb_if.egr                    egr1_ahb_if,  //EGR-AHB and DFx Interface  
-egr_mc_table_if.egr               egr1_mc_table_if0,  //EGR-MultiCast Shared Table 0 Interface  
-egr_mc_table_if.egr               egr1_mc_table_if1,  //EGR-MultiCast Shared Table 1 Interface  
-egr_pod_if.egr                    egr1_pod_if,  //EGR-Pod Ring Interface  
-egr_ppe_stm_if.egr                egr1_ppestm_if0,  //EGR-PPE Shared Table Memory 0 Interface   
-egr_ppe_stm_if.egr                egr1_ppestm_if1,  //EGR-PPE Shared Table Memory 1 Interface  
-egr_smm_readarb_if.egr            egr1_smm_readarb_if,  //EGR-SMM_Read_Arb Interface  
-egr_smm_writearb_if.egr           egr1_smm_writearb_if,  //EGR-SMM_Write_Arb Interface  
-egr_statsmgmt_if.egr              egr1_statsmgmt_if,  //EGR-Stats Management Interface  
-egr_tagring_if.egr                egr1_tagring_if,  //EGR-Tag Ring Interface  
-egr_vp_if.egr                     egr1_vp_if0,  //EGR-VP0 Interface  
-egr_vp_if.egr                     egr1_vp_if1,  //EGR-VP1 Interface  
-egr_ppe_stm_if.stm                egr_ppe_stm_if,  
-glb_rx_ppe_if.ppe                 glb0_rx_ppe_if,  
-glb_rx_ppe_if.ppe                 glb0_txppe0_if,  
-glb_rx_ppe_if.ppe                 glb0_txppe1_if,  
-glb_rx_ppe_if.ppe                 glb1_rx_ppe_if,  
-glb_rx_ppe_if.ppe                 glb1_txppe0_if,  
-glb_rx_ppe_if.ppe                 glb1_txppe1_if,  
+input  logic            ahb0_rx_ppe_if_ahb_sel,              // Blasted Interface ahb_rx_ppe_if.ppe ahb0_rx_ppe_if
+input  logic            ahb0_rx_ppe_if_ahb_wr,          
+input  logic  [shared_pkg::W_MGMT_ADDR-1:0]  ahb0_rx_ppe_if_ahb_addr,        
+input  logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb0_rx_ppe_if_ahb_wr_data,     
+output logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb0_rx_ppe_if_ahb_rd_data,     
+output logic            ahb0_rx_ppe_if_ahb_rd_ack,      
+
+input  logic            ahb0_txppe0_if_ahb_sel,              // Blasted Interface ahb_rx_ppe_if.ppe ahb0_txppe0_if
+input  logic            ahb0_txppe0_if_ahb_wr,          
+input  logic  [shared_pkg::W_MGMT_ADDR-1:0]  ahb0_txppe0_if_ahb_addr,        
+input  logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb0_txppe0_if_ahb_wr_data,     
+output logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb0_txppe0_if_ahb_rd_data,     
+output logic            ahb0_txppe0_if_ahb_rd_ack,      
+
+input  logic            ahb0_txppe1_if_ahb_sel,              // Blasted Interface ahb_rx_ppe_if.ppe ahb0_txppe1_if
+input  logic            ahb0_txppe1_if_ahb_wr,          
+input  logic  [shared_pkg::W_MGMT_ADDR-1:0]  ahb0_txppe1_if_ahb_addr,        
+input  logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb0_txppe1_if_ahb_wr_data,     
+output logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb0_txppe1_if_ahb_rd_data,     
+output logic            ahb0_txppe1_if_ahb_rd_ack,      
+
+input  logic            ahb1_rx_ppe_if_ahb_sel,              // Blasted Interface ahb_rx_ppe_if.ppe ahb1_rx_ppe_if
+input  logic            ahb1_rx_ppe_if_ahb_wr,          
+input  logic  [shared_pkg::W_MGMT_ADDR-1:0]  ahb1_rx_ppe_if_ahb_addr,        
+input  logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb1_rx_ppe_if_ahb_wr_data,     
+output logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb1_rx_ppe_if_ahb_rd_data,     
+output logic            ahb1_rx_ppe_if_ahb_rd_ack,      
+
+input  logic            ahb1_txppe0_if_ahb_sel,              // Blasted Interface ahb_rx_ppe_if.ppe ahb1_txppe0_if
+input  logic            ahb1_txppe0_if_ahb_wr,          
+input  logic  [shared_pkg::W_MGMT_ADDR-1:0]  ahb1_txppe0_if_ahb_addr,        
+input  logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb1_txppe0_if_ahb_wr_data,     
+output logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb1_txppe0_if_ahb_rd_data,     
+output logic            ahb1_txppe0_if_ahb_rd_ack,      
+
+input  logic            ahb1_txppe1_if_ahb_sel,              // Blasted Interface ahb_rx_ppe_if.ppe ahb1_txppe1_if
+input  logic            ahb1_txppe1_if_ahb_wr,          
+input  logic  [shared_pkg::W_MGMT_ADDR-1:0]  ahb1_txppe1_if_ahb_addr,        
+input  logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb1_txppe1_if_ahb_wr_data,     
+output logic  [shared_pkg::W_MGMT_DATA64-1:0]  ahb1_txppe1_if_ahb_rd_data,     
+output logic            ahb1_txppe1_if_ahb_rd_ack,      
+
+input  logic            egr0_ahb_if_ahb_req_p,              // Blasted Interface egr_ahb_if.egr egr0_ahb_if
+input  logic            egr0_ahb_if_ahb_addr,           
+input  logic            egr0_ahb_if_ahb_wr,             
+input  logic            egr0_ahb_if_ahb_wr_data,        
+output logic            egr0_ahb_if_ahb_ack_p,          
+output logic            egr0_ahb_if_ahb_rd_data,        
+input  logic            egr0_ahb_if_dfxsignal_in,       
+output logic            egr0_ahb_if_dfxsignal_out,      
+
+output logic            egr0_epl0_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr0_epl0_if
+input  logic            egr0_epl0_if_epl_tx_en_port_num,
+input  logic            egr0_epl0_if_epl_tx_enable,     
+output logic            egr0_epl0_if_epl_tx_data_valid, 
+output logic            egr0_epl0_if_epl_tx_port_num,   
+output logic     [9:0]  egr0_epl0_if_epl_tx_metadata,   
+output logic     [1:0]  egr0_epl0_if_epl_tx_data_w_ecc, 
+output logic            egr0_epl0_if_epl_tx_pfc_xoff,   
+input  logic            egr0_epl0_if_epl_tx_flow_control_tc,
+
+output logic            egr0_epl1_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr0_epl1_if
+input  logic            egr0_epl1_if_epl_tx_en_port_num,
+input  logic            egr0_epl1_if_epl_tx_enable,     
+output logic            egr0_epl1_if_epl_tx_data_valid, 
+output logic            egr0_epl1_if_epl_tx_port_num,   
+output logic     [9:0]  egr0_epl1_if_epl_tx_metadata,   
+output logic     [1:0]  egr0_epl1_if_epl_tx_data_w_ecc, 
+output logic            egr0_epl1_if_epl_tx_pfc_xoff,   
+input  logic            egr0_epl1_if_epl_tx_flow_control_tc,
+
+output logic            egr0_epl2_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr0_epl2_if
+input  logic            egr0_epl2_if_epl_tx_en_port_num,
+input  logic            egr0_epl2_if_epl_tx_enable,     
+output logic            egr0_epl2_if_epl_tx_data_valid, 
+output logic            egr0_epl2_if_epl_tx_port_num,   
+output logic     [9:0]  egr0_epl2_if_epl_tx_metadata,   
+output logic     [1:0]  egr0_epl2_if_epl_tx_data_w_ecc, 
+output logic            egr0_epl2_if_epl_tx_pfc_xoff,   
+input  logic            egr0_epl2_if_epl_tx_flow_control_tc,
+
+output logic            egr0_epl3_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr0_epl3_if
+input  logic            egr0_epl3_if_epl_tx_en_port_num,
+input  logic            egr0_epl3_if_epl_tx_enable,     
+output logic            egr0_epl3_if_epl_tx_data_valid, 
+output logic            egr0_epl3_if_epl_tx_port_num,   
+output logic     [9:0]  egr0_epl3_if_epl_tx_metadata,   
+output logic     [1:0]  egr0_epl3_if_epl_tx_data_w_ecc, 
+output logic            egr0_epl3_if_epl_tx_pfc_xoff,   
+input  logic            egr0_epl3_if_epl_tx_flow_control_tc,
+
+output logic            egr0_mc_table_if0_mcsharedtablememory_table_req,              // Blasted Interface egr_mc_table_if.egr egr0_mc_table_if0
+input  logic            egr0_mc_table_if0_mcsharedtablememory_table_rsp,
+input  logic            egr0_mc_table_if0_mcsharedtablememory_table_ack,
+
+output logic            egr0_mc_table_if1_mcsharedtablememory_table_req,              // Blasted Interface egr_mc_table_if.egr egr0_mc_table_if1
+input  logic            egr0_mc_table_if1_mcsharedtablememory_table_rsp,
+input  logic            egr0_mc_table_if1_mcsharedtablememory_table_ack,
+
+input  logic     [7:0]  egr0_pod_if_egr_in_tagring_out,              // Blasted Interface egr_pod_if.egr egr0_pod_if
+output logic     [7:0]  egr0_pod_if_egr_out_tagring_in, 
+
+input  logic     [7:0]  egr0_ppestm_if_wen,              // Blasted Interface egr_ppe_stm_if.stm egr0_ppestm_if
+input  logic   [575:0]  egr0_ppestm_if_wdata,           
+
+output logic     [7:0]  egr0_ppestm_if0_wen,              // Blasted Interface egr_ppe_stm_if.egr egr0_ppestm_if0
+output logic   [575:0]  egr0_ppestm_if0_wdata,          
+
+output logic     [7:0]  egr0_ppestm_if1_wen,              // Blasted Interface egr_ppe_stm_if.egr egr0_ppestm_if1
+output logic   [575:0]  egr0_ppestm_if1_wdata,          
+
+
+output logic     [4:0]  egr0_smm_writearb_if_wreq,              // Blasted Interface egr_smm_writearb_if.egr egr0_smm_writearb_if
+output logic            egr0_smm_writearb_if_wreq_valid,
+input  logic            egr0_smm_writearb_if_wreq_credits,
+
+input  logic            egr0_statsmgmt_if_updatedstats,              // Blasted Interface egr_statsmgmt_if.egr egr0_statsmgmt_if
+input  logic            egr0_statsmgmt_if_localstatsstall,
+output logic            egr0_statsmgmt_if_localstats,   
+
+
+output logic            egr0_vp_if0_epl_vp_tx_ecc,              // Blasted Interface egr_vp_if.egr egr0_vp_if0
+input  logic            egr0_vp_if0_epl_vp_tx_en_port_num,
+input  logic            egr0_vp_if0_epl_vp_tx_enable,   
+output logic            egr0_vp_if0_epl_vp_tx_data_valid,
+output logic            egr0_vp_if0_epl_vp_tx_port_num, 
+output logic     [9:0]  egr0_vp_if0_epl_vp_tx_metadata, 
+output logic     [1:0]  egr0_vp_if0_epl_vp_cpp_tx_metadata,
+output logic     [1:0]  egr0_vp_if0_epl_vp_tx_data_w_ecc,
+output logic            egr0_vp_if0_epl_vp_tx_pfc_xoff, 
+input  logic            egr0_vp_if0_epl_vp_tx_flow_control_tc,
+
+output logic            egr0_vp_if1_epl_vp_tx_ecc,              // Blasted Interface egr_vp_if.egr egr0_vp_if1
+input  logic            egr0_vp_if1_epl_vp_tx_en_port_num,
+input  logic            egr0_vp_if1_epl_vp_tx_enable,   
+output logic            egr0_vp_if1_epl_vp_tx_data_valid,
+output logic            egr0_vp_if1_epl_vp_tx_port_num, 
+output logic     [9:0]  egr0_vp_if1_epl_vp_tx_metadata, 
+output logic     [1:0]  egr0_vp_if1_epl_vp_cpp_tx_metadata,
+output logic     [1:0]  egr0_vp_if1_epl_vp_tx_data_w_ecc,
+output logic            egr0_vp_if1_epl_vp_tx_pfc_xoff, 
+input  logic            egr0_vp_if1_epl_vp_tx_flow_control_tc,
+
+input  logic            egr1_ahb_if_ahb_req_p,              // Blasted Interface egr_ahb_if.egr egr1_ahb_if
+input  logic            egr1_ahb_if_ahb_addr,           
+input  logic            egr1_ahb_if_ahb_wr,             
+input  logic            egr1_ahb_if_ahb_wr_data,        
+output logic            egr1_ahb_if_ahb_ack_p,          
+output logic            egr1_ahb_if_ahb_rd_data,        
+input  logic            egr1_ahb_if_dfxsignal_in,       
+output logic            egr1_ahb_if_dfxsignal_out,      
+
+output logic            egr1_epl0_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr1_epl0_if
+input  logic            egr1_epl0_if_epl_tx_en_port_num,
+input  logic            egr1_epl0_if_epl_tx_enable,     
+output logic            egr1_epl0_if_epl_tx_data_valid, 
+output logic            egr1_epl0_if_epl_tx_port_num,   
+output logic     [9:0]  egr1_epl0_if_epl_tx_metadata,   
+output logic     [1:0]  egr1_epl0_if_epl_tx_data_w_ecc, 
+output logic            egr1_epl0_if_epl_tx_pfc_xoff,   
+input  logic            egr1_epl0_if_epl_tx_flow_control_tc,
+
+output logic            egr1_epl1_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr1_epl1_if
+input  logic            egr1_epl1_if_epl_tx_en_port_num,
+input  logic            egr1_epl1_if_epl_tx_enable,     
+output logic            egr1_epl1_if_epl_tx_data_valid, 
+output logic            egr1_epl1_if_epl_tx_port_num,   
+output logic     [9:0]  egr1_epl1_if_epl_tx_metadata,   
+output logic     [1:0]  egr1_epl1_if_epl_tx_data_w_ecc, 
+output logic            egr1_epl1_if_epl_tx_pfc_xoff,   
+input  logic            egr1_epl1_if_epl_tx_flow_control_tc,
+
+output logic            egr1_epl2_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr1_epl2_if
+input  logic            egr1_epl2_if_epl_tx_en_port_num,
+input  logic            egr1_epl2_if_epl_tx_enable,     
+output logic            egr1_epl2_if_epl_tx_data_valid, 
+output logic            egr1_epl2_if_epl_tx_port_num,   
+output logic     [9:0]  egr1_epl2_if_epl_tx_metadata,   
+output logic     [1:0]  egr1_epl2_if_epl_tx_data_w_ecc, 
+output logic            egr1_epl2_if_epl_tx_pfc_xoff,   
+input  logic            egr1_epl2_if_epl_tx_flow_control_tc,
+
+output logic            egr1_epl3_if_epl_tx_ecc,              // Blasted Interface egr_epl_if.egr egr1_epl3_if
+input  logic            egr1_epl3_if_epl_tx_en_port_num,
+input  logic            egr1_epl3_if_epl_tx_enable,     
+output logic            egr1_epl3_if_epl_tx_data_valid, 
+output logic            egr1_epl3_if_epl_tx_port_num,   
+output logic     [9:0]  egr1_epl3_if_epl_tx_metadata,   
+output logic     [1:0]  egr1_epl3_if_epl_tx_data_w_ecc, 
+output logic            egr1_epl3_if_epl_tx_pfc_xoff,   
+input  logic            egr1_epl3_if_epl_tx_flow_control_tc,
+
+output logic            egr1_mc_table_if0_mcsharedtablememory_table_req,              // Blasted Interface egr_mc_table_if.egr egr1_mc_table_if0
+input  logic            egr1_mc_table_if0_mcsharedtablememory_table_rsp,
+input  logic            egr1_mc_table_if0_mcsharedtablememory_table_ack,
+
+output logic            egr1_mc_table_if1_mcsharedtablememory_table_req,              // Blasted Interface egr_mc_table_if.egr egr1_mc_table_if1
+input  logic            egr1_mc_table_if1_mcsharedtablememory_table_rsp,
+input  logic            egr1_mc_table_if1_mcsharedtablememory_table_ack,
+
+input  logic     [7:0]  egr1_pod_if_egr_in_tagring_out,              // Blasted Interface egr_pod_if.egr egr1_pod_if
+output logic     [7:0]  egr1_pod_if_egr_out_tagring_in, 
+
+input  logic     [7:0]  egr1_ppestm_if_wen,              // Blasted Interface egr_ppe_stm_if.stm egr1_ppestm_if
+input  logic   [575:0]  egr1_ppestm_if_wdata,           
+
+output logic     [7:0]  egr1_ppestm_if0_wen,              // Blasted Interface egr_ppe_stm_if.egr egr1_ppestm_if0
+output logic   [575:0]  egr1_ppestm_if0_wdata,          
+
+output logic     [7:0]  egr1_ppestm_if1_wen,              // Blasted Interface egr_ppe_stm_if.egr egr1_ppestm_if1
+output logic   [575:0]  egr1_ppestm_if1_wdata,          
+
+
+output logic     [4:0]  egr1_smm_writearb_if_wreq,              // Blasted Interface egr_smm_writearb_if.egr egr1_smm_writearb_if
+output logic            egr1_smm_writearb_if_wreq_valid,
+input  logic            egr1_smm_writearb_if_wreq_credits,
+
+input  logic            egr1_statsmgmt_if_updatedstats,              // Blasted Interface egr_statsmgmt_if.egr egr1_statsmgmt_if
+input  logic            egr1_statsmgmt_if_localstatsstall,
+output logic            egr1_statsmgmt_if_localstats,   
+
+
+output logic            egr1_vp_if0_epl_vp_tx_ecc,              // Blasted Interface egr_vp_if.egr egr1_vp_if0
+input  logic            egr1_vp_if0_epl_vp_tx_en_port_num,
+input  logic            egr1_vp_if0_epl_vp_tx_enable,   
+output logic            egr1_vp_if0_epl_vp_tx_data_valid,
+output logic            egr1_vp_if0_epl_vp_tx_port_num, 
+output logic     [9:0]  egr1_vp_if0_epl_vp_tx_metadata, 
+output logic     [1:0]  egr1_vp_if0_epl_vp_cpp_tx_metadata,
+output logic     [1:0]  egr1_vp_if0_epl_vp_tx_data_w_ecc,
+output logic            egr1_vp_if0_epl_vp_tx_pfc_xoff, 
+input  logic            egr1_vp_if0_epl_vp_tx_flow_control_tc,
+
+output logic            egr1_vp_if1_epl_vp_tx_ecc,              // Blasted Interface egr_vp_if.egr egr1_vp_if1
+input  logic            egr1_vp_if1_epl_vp_tx_en_port_num,
+input  logic            egr1_vp_if1_epl_vp_tx_enable,   
+output logic            egr1_vp_if1_epl_vp_tx_data_valid,
+output logic            egr1_vp_if1_epl_vp_tx_port_num, 
+output logic     [9:0]  egr1_vp_if1_epl_vp_tx_metadata, 
+output logic     [1:0]  egr1_vp_if1_epl_vp_cpp_tx_metadata,
+output logic     [1:0]  egr1_vp_if1_epl_vp_tx_data_w_ecc,
+output logic            egr1_vp_if1_epl_vp_tx_pfc_xoff, 
+input  logic            egr1_vp_if1_epl_vp_tx_flow_control_tc,
+
+input  logic            glb0_rx_ppe_if_glb_sync,              // Blasted Interface glb_rx_ppe_if.ppe glb0_rx_ppe_if
+output logic            glb0_rx_ppe_if_glb_ack,         
+
+input  logic            glb0_txppe0_if_glb_sync,              // Blasted Interface glb_rx_ppe_if.ppe glb0_txppe0_if
+output logic            glb0_txppe0_if_glb_ack,         
+
+input  logic            glb0_txppe1_if_glb_sync,              // Blasted Interface glb_rx_ppe_if.ppe glb0_txppe1_if
+output logic            glb0_txppe1_if_glb_ack,         
+
+input  logic            glb1_rx_ppe_if_glb_sync,              // Blasted Interface glb_rx_ppe_if.ppe glb1_rx_ppe_if
+output logic            glb1_rx_ppe_if_glb_ack,         
+
+input  logic            glb1_txppe0_if_glb_sync,              // Blasted Interface glb_rx_ppe_if.ppe glb1_txppe0_if
+output logic            glb1_txppe0_if_glb_ack,         
+
+input  logic            glb1_txppe1_if_glb_sync,              // Blasted Interface glb_rx_ppe_if.ppe glb1_txppe1_if
+output logic            glb1_txppe1_if_glb_ack,         
+
 
 //Output List
 output                  igr0_vp_tx_pfc_xoff,                      //FIXME should this be [1:0] for 2 VP   
 output                  igr1_vp_tx_pfc_xoff                       //FIXME should this be [1:0] for 2 VP   
 );
+// collage-pragma translate_off
 
-egr_epl_if                       egr_();
 egr_igr_if                       egr_igr_if();
-rx_ppe_ppe_stm_if                rx_ppe_ppe_stm_if();
+rx_ppe_ppe_stm_if                rxppe0_ppestm_if();
+rx_ppe_ppe_stm_if                rxppe1_ppestm_if();
+ahb_rx_ppe_if ahb0_rx_ppe_if();
+// Blasted Wires for ahb_rx_ppe_if ppe ahb0_rx_ppe_if;
+    assign ahb0_rx_ppe_if.ahb_sel = ahb0_rx_ppe_if_ahb_sel;
+    assign ahb0_rx_ppe_if.ahb_wr = ahb0_rx_ppe_if_ahb_wr;
+    assign ahb0_rx_ppe_if.ahb_addr = ahb0_rx_ppe_if_ahb_addr;
+    assign ahb0_rx_ppe_if.ahb_wr_data = ahb0_rx_ppe_if_ahb_wr_data;
+    assign ahb0_rx_ppe_if_ahb_rd_data = ahb0_rx_ppe_if.ahb_rd_data;
+    assign ahb0_rx_ppe_if_ahb_rd_ack = ahb0_rx_ppe_if.ahb_rd_ack;
+
+ahb_rx_ppe_if ahb0_txppe0_if();
+// Blasted Wires for ahb_rx_ppe_if ppe ahb0_txppe0_if;
+    assign ahb0_txppe0_if.ahb_sel = ahb0_txppe0_if_ahb_sel;
+    assign ahb0_txppe0_if.ahb_wr = ahb0_txppe0_if_ahb_wr;
+    assign ahb0_txppe0_if.ahb_addr = ahb0_txppe0_if_ahb_addr;
+    assign ahb0_txppe0_if.ahb_wr_data = ahb0_txppe0_if_ahb_wr_data;
+    assign ahb0_txppe0_if_ahb_rd_data = ahb0_txppe0_if.ahb_rd_data;
+    assign ahb0_txppe0_if_ahb_rd_ack = ahb0_txppe0_if.ahb_rd_ack;
+
+ahb_rx_ppe_if ahb0_txppe1_if();
+// Blasted Wires for ahb_rx_ppe_if ppe ahb0_txppe1_if;
+    assign ahb0_txppe1_if.ahb_sel = ahb0_txppe1_if_ahb_sel;
+    assign ahb0_txppe1_if.ahb_wr = ahb0_txppe1_if_ahb_wr;
+    assign ahb0_txppe1_if.ahb_addr = ahb0_txppe1_if_ahb_addr;
+    assign ahb0_txppe1_if.ahb_wr_data = ahb0_txppe1_if_ahb_wr_data;
+    assign ahb0_txppe1_if_ahb_rd_data = ahb0_txppe1_if.ahb_rd_data;
+    assign ahb0_txppe1_if_ahb_rd_ack = ahb0_txppe1_if.ahb_rd_ack;
+
+ahb_rx_ppe_if ahb1_rx_ppe_if();
+// Blasted Wires for ahb_rx_ppe_if ppe ahb1_rx_ppe_if;
+    assign ahb1_rx_ppe_if.ahb_sel = ahb1_rx_ppe_if_ahb_sel;
+    assign ahb1_rx_ppe_if.ahb_wr = ahb1_rx_ppe_if_ahb_wr;
+    assign ahb1_rx_ppe_if.ahb_addr = ahb1_rx_ppe_if_ahb_addr;
+    assign ahb1_rx_ppe_if.ahb_wr_data = ahb1_rx_ppe_if_ahb_wr_data;
+    assign ahb1_rx_ppe_if_ahb_rd_data = ahb1_rx_ppe_if.ahb_rd_data;
+    assign ahb1_rx_ppe_if_ahb_rd_ack = ahb1_rx_ppe_if.ahb_rd_ack;
+
+ahb_rx_ppe_if ahb1_txppe0_if();
+// Blasted Wires for ahb_rx_ppe_if ppe ahb1_txppe0_if;
+    assign ahb1_txppe0_if.ahb_sel = ahb1_txppe0_if_ahb_sel;
+    assign ahb1_txppe0_if.ahb_wr = ahb1_txppe0_if_ahb_wr;
+    assign ahb1_txppe0_if.ahb_addr = ahb1_txppe0_if_ahb_addr;
+    assign ahb1_txppe0_if.ahb_wr_data = ahb1_txppe0_if_ahb_wr_data;
+    assign ahb1_txppe0_if_ahb_rd_data = ahb1_txppe0_if.ahb_rd_data;
+    assign ahb1_txppe0_if_ahb_rd_ack = ahb1_txppe0_if.ahb_rd_ack;
+
+ahb_rx_ppe_if ahb1_txppe1_if();
+// Blasted Wires for ahb_rx_ppe_if ppe ahb1_txppe1_if;
+    assign ahb1_txppe1_if.ahb_sel = ahb1_txppe1_if_ahb_sel;
+    assign ahb1_txppe1_if.ahb_wr = ahb1_txppe1_if_ahb_wr;
+    assign ahb1_txppe1_if.ahb_addr = ahb1_txppe1_if_ahb_addr;
+    assign ahb1_txppe1_if.ahb_wr_data = ahb1_txppe1_if_ahb_wr_data;
+    assign ahb1_txppe1_if_ahb_rd_data = ahb1_txppe1_if.ahb_rd_data;
+    assign ahb1_txppe1_if_ahb_rd_ack = ahb1_txppe1_if.ahb_rd_ack;
+
+egr_ahb_if egr0_ahb_if();
+// Blasted Wires for egr_ahb_if egr egr0_ahb_if;
+    assign egr0_ahb_if.ahb_req_p = ahb_req_p_t'(egr0_ahb_if_ahb_req_p);
+    assign egr0_ahb_if.ahb_addr = ahb_addr_t'(egr0_ahb_if_ahb_addr);
+    assign egr0_ahb_if.ahb_wr = ahb_wr_t'(egr0_ahb_if_ahb_wr);
+    assign egr0_ahb_if.ahb_wr_data = ahb_wr_data_t'(egr0_ahb_if_ahb_wr_data);
+    assign egr0_ahb_if_ahb_ack_p = egr0_ahb_if.ahb_ack_p;
+    assign egr0_ahb_if_ahb_rd_data = egr0_ahb_if.ahb_rd_data;
+    assign egr0_ahb_if.dfxsignal_in = dfxsignal_in_t'(egr0_ahb_if_dfxsignal_in);
+    assign egr0_ahb_if_dfxsignal_out = egr0_ahb_if.dfxsignal_out;
+
+egr_epl_if egr0_epl0_if();
+// Blasted Wires for egr_epl_if egr egr0_epl0_if;
+    assign egr0_epl0_if_epl_tx_ecc = egr0_epl0_if.epl_tx_ecc;
+    assign egr0_epl0_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr0_epl0_if_epl_tx_en_port_num);
+    assign egr0_epl0_if.epl_tx_enable = epl_tx_enable_t'(egr0_epl0_if_epl_tx_enable);
+    assign egr0_epl0_if_epl_tx_data_valid = egr0_epl0_if.epl_tx_data_valid;
+    assign egr0_epl0_if_epl_tx_port_num = egr0_epl0_if.epl_tx_port_num;
+    assign egr0_epl0_if_epl_tx_metadata = egr0_epl0_if.epl_tx_metadata;
+    assign egr0_epl0_if_epl_tx_data_w_ecc = egr0_epl0_if.epl_tx_data_w_ecc;
+    assign egr0_epl0_if_epl_tx_pfc_xoff = egr0_epl0_if.epl_tx_pfc_xoff;
+    assign egr0_epl0_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr0_epl0_if_epl_tx_flow_control_tc);
+
+egr_epl_if egr0_epl1_if();
+// Blasted Wires for egr_epl_if egr egr0_epl1_if;
+    assign egr0_epl1_if_epl_tx_ecc = egr0_epl1_if.epl_tx_ecc;
+    assign egr0_epl1_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr0_epl1_if_epl_tx_en_port_num);
+    assign egr0_epl1_if.epl_tx_enable = epl_tx_enable_t'(egr0_epl1_if_epl_tx_enable);
+    assign egr0_epl1_if_epl_tx_data_valid = egr0_epl1_if.epl_tx_data_valid;
+    assign egr0_epl1_if_epl_tx_port_num = egr0_epl1_if.epl_tx_port_num;
+    assign egr0_epl1_if_epl_tx_metadata = egr0_epl1_if.epl_tx_metadata;
+    assign egr0_epl1_if_epl_tx_data_w_ecc = egr0_epl1_if.epl_tx_data_w_ecc;
+    assign egr0_epl1_if_epl_tx_pfc_xoff = egr0_epl1_if.epl_tx_pfc_xoff;
+    assign egr0_epl1_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr0_epl1_if_epl_tx_flow_control_tc);
+
+egr_epl_if egr0_epl2_if();
+// Blasted Wires for egr_epl_if egr egr0_epl2_if;
+    assign egr0_epl2_if_epl_tx_ecc = egr0_epl2_if.epl_tx_ecc;
+    assign egr0_epl2_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr0_epl2_if_epl_tx_en_port_num);
+    assign egr0_epl2_if.epl_tx_enable = epl_tx_enable_t'(egr0_epl2_if_epl_tx_enable);
+    assign egr0_epl2_if_epl_tx_data_valid = egr0_epl2_if.epl_tx_data_valid;
+    assign egr0_epl2_if_epl_tx_port_num = egr0_epl2_if.epl_tx_port_num;
+    assign egr0_epl2_if_epl_tx_metadata = egr0_epl2_if.epl_tx_metadata;
+    assign egr0_epl2_if_epl_tx_data_w_ecc = egr0_epl2_if.epl_tx_data_w_ecc;
+    assign egr0_epl2_if_epl_tx_pfc_xoff = egr0_epl2_if.epl_tx_pfc_xoff;
+    assign egr0_epl2_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr0_epl2_if_epl_tx_flow_control_tc);
+
+egr_epl_if egr0_epl3_if();
+// Blasted Wires for egr_epl_if egr egr0_epl3_if;
+    assign egr0_epl3_if_epl_tx_ecc = egr0_epl3_if.epl_tx_ecc;
+    assign egr0_epl3_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr0_epl3_if_epl_tx_en_port_num);
+    assign egr0_epl3_if.epl_tx_enable = epl_tx_enable_t'(egr0_epl3_if_epl_tx_enable);
+    assign egr0_epl3_if_epl_tx_data_valid = egr0_epl3_if.epl_tx_data_valid;
+    assign egr0_epl3_if_epl_tx_port_num = egr0_epl3_if.epl_tx_port_num;
+    assign egr0_epl3_if_epl_tx_metadata = egr0_epl3_if.epl_tx_metadata;
+    assign egr0_epl3_if_epl_tx_data_w_ecc = egr0_epl3_if.epl_tx_data_w_ecc;
+    assign egr0_epl3_if_epl_tx_pfc_xoff = egr0_epl3_if.epl_tx_pfc_xoff;
+    assign egr0_epl3_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr0_epl3_if_epl_tx_flow_control_tc);
+
+egr_mc_table_if egr0_mc_table_if0();
+// Blasted Wires for egr_mc_table_if egr egr0_mc_table_if0;
+    assign egr0_mc_table_if0_mcsharedtablememory_table_req = egr0_mc_table_if0.mcsharedtablememory_table_req;
+    assign egr0_mc_table_if0.mcsharedtablememory_table_rsp = mcsharedtablememory_table_rsp_t'(egr0_mc_table_if0_mcsharedtablememory_table_rsp);
+    assign egr0_mc_table_if0.mcsharedtablememory_table_ack = mcsharedtablememory_table_ack_t'(egr0_mc_table_if0_mcsharedtablememory_table_ack);
+
+egr_mc_table_if egr0_mc_table_if1();
+// Blasted Wires for egr_mc_table_if egr egr0_mc_table_if1;
+    assign egr0_mc_table_if1_mcsharedtablememory_table_req = egr0_mc_table_if1.mcsharedtablememory_table_req;
+    assign egr0_mc_table_if1.mcsharedtablememory_table_rsp = mcsharedtablememory_table_rsp_t'(egr0_mc_table_if1_mcsharedtablememory_table_rsp);
+    assign egr0_mc_table_if1.mcsharedtablememory_table_ack = mcsharedtablememory_table_ack_t'(egr0_mc_table_if1_mcsharedtablememory_table_ack);
+
+egr_pod_if egr0_pod_if();
+// Blasted Wires for egr_pod_if egr egr0_pod_if;
+    assign egr0_pod_if.egr_in_tagring_out = cmp_ring_pkt_str_t'(egr0_pod_if_egr_in_tagring_out);
+    assign egr0_pod_if_egr_out_tagring_in = egr0_pod_if.egr_out_tagring_in;
+
+egr_ppe_stm_if egr0_ppestm_if();
+// Blasted Wires for egr_ppe_stm_if stm egr0_ppestm_if;
+    assign egr0_ppestm_if.wen = egr0_ppestm_if_wen;
+    assign egr0_ppestm_if.wdata = egr0_ppestm_if_wdata;
+
+egr_ppe_stm_if egr0_ppestm_if0();
+// Blasted Wires for egr_ppe_stm_if egr egr0_ppestm_if0;
+    assign egr0_ppestm_if0_wen = egr0_ppestm_if0.wen;
+    assign egr0_ppestm_if0_wdata = egr0_ppestm_if0.wdata;
+
+egr_ppe_stm_if egr0_ppestm_if1();
+// Blasted Wires for egr_ppe_stm_if egr egr0_ppestm_if1;
+    assign egr0_ppestm_if1_wen = egr0_ppestm_if1.wen;
+    assign egr0_ppestm_if1_wdata = egr0_ppestm_if1.wdata;
+
+egr_smm_readarb_if egr0_smm_readarb_if();
+// Blasted Wires for egr_smm_readarb_if egr egr0_smm_readarb_if;
+
+egr_smm_writearb_if egr0_smm_writearb_if();
+// Blasted Wires for egr_smm_writearb_if egr egr0_smm_writearb_if;
+    assign egr0_smm_writearb_if_wreq = egr0_smm_writearb_if.wreq;
+    assign egr0_smm_writearb_if_wreq_valid = egr0_smm_writearb_if.wreq_valid;
+    assign egr0_smm_writearb_if.wreq_credits = wreq_credits_t'(egr0_smm_writearb_if_wreq_credits);
+
+egr_statsmgmt_if egr0_statsmgmt_if();
+// Blasted Wires for egr_statsmgmt_if egr egr0_statsmgmt_if;
+    assign egr0_statsmgmt_if.updatedstats = updatedstats_t'(egr0_statsmgmt_if_updatedstats);
+    assign egr0_statsmgmt_if.localstatsstall = localstatsstall_t'(egr0_statsmgmt_if_localstatsstall);
+    assign egr0_statsmgmt_if_localstats = egr0_statsmgmt_if.localstats;
+
+egr_tagring_if egr0_tagring_if();
+// Blasted Wires for egr_tagring_if egr egr0_tagring_if;
+
+egr_vp_if egr0_vp_if0();
+// Blasted Wires for egr_vp_if egr egr0_vp_if0;
+    assign egr0_vp_if0_epl_vp_tx_ecc = egr0_vp_if0.epl_vp_tx_ecc;
+    assign egr0_vp_if0.epl_vp_tx_en_port_num = epl_vp_tx_en_port_num_t'(egr0_vp_if0_epl_vp_tx_en_port_num);
+    assign egr0_vp_if0.epl_vp_tx_enable = epl_vp_tx_enable_t'(egr0_vp_if0_epl_vp_tx_enable);
+    assign egr0_vp_if0_epl_vp_tx_data_valid = egr0_vp_if0.epl_vp_tx_data_valid;
+    assign egr0_vp_if0_epl_vp_tx_port_num = egr0_vp_if0.epl_vp_tx_port_num;
+    assign egr0_vp_if0_epl_vp_tx_metadata = egr0_vp_if0.epl_vp_tx_metadata;
+    assign egr0_vp_if0_epl_vp_cpp_tx_metadata = egr0_vp_if0.epl_vp_cpp_tx_metadata;
+    assign egr0_vp_if0_epl_vp_tx_data_w_ecc = egr0_vp_if0.epl_vp_tx_data_w_ecc;
+    assign egr0_vp_if0_epl_vp_tx_pfc_xoff = egr0_vp_if0.epl_vp_tx_pfc_xoff;
+    assign egr0_vp_if0.epl_vp_tx_flow_control_tc = epl_vp_tx_flow_control_tc_t'(egr0_vp_if0_epl_vp_tx_flow_control_tc);
+
+egr_vp_if egr0_vp_if1();
+// Blasted Wires for egr_vp_if egr egr0_vp_if1;
+    assign egr0_vp_if1_epl_vp_tx_ecc = egr0_vp_if1.epl_vp_tx_ecc;
+    assign egr0_vp_if1.epl_vp_tx_en_port_num = epl_vp_tx_en_port_num_t'(egr0_vp_if1_epl_vp_tx_en_port_num);
+    assign egr0_vp_if1.epl_vp_tx_enable = epl_vp_tx_enable_t'(egr0_vp_if1_epl_vp_tx_enable);
+    assign egr0_vp_if1_epl_vp_tx_data_valid = egr0_vp_if1.epl_vp_tx_data_valid;
+    assign egr0_vp_if1_epl_vp_tx_port_num = egr0_vp_if1.epl_vp_tx_port_num;
+    assign egr0_vp_if1_epl_vp_tx_metadata = egr0_vp_if1.epl_vp_tx_metadata;
+    assign egr0_vp_if1_epl_vp_cpp_tx_metadata = egr0_vp_if1.epl_vp_cpp_tx_metadata;
+    assign egr0_vp_if1_epl_vp_tx_data_w_ecc = egr0_vp_if1.epl_vp_tx_data_w_ecc;
+    assign egr0_vp_if1_epl_vp_tx_pfc_xoff = egr0_vp_if1.epl_vp_tx_pfc_xoff;
+    assign egr0_vp_if1.epl_vp_tx_flow_control_tc = epl_vp_tx_flow_control_tc_t'(egr0_vp_if1_epl_vp_tx_flow_control_tc);
+
+egr_ahb_if egr1_ahb_if();
+// Blasted Wires for egr_ahb_if egr egr1_ahb_if;
+    assign egr1_ahb_if.ahb_req_p = ahb_req_p_t'(egr1_ahb_if_ahb_req_p);
+    assign egr1_ahb_if.ahb_addr = ahb_addr_t'(egr1_ahb_if_ahb_addr);
+    assign egr1_ahb_if.ahb_wr = ahb_wr_t'(egr1_ahb_if_ahb_wr);
+    assign egr1_ahb_if.ahb_wr_data = ahb_wr_data_t'(egr1_ahb_if_ahb_wr_data);
+    assign egr1_ahb_if_ahb_ack_p = egr1_ahb_if.ahb_ack_p;
+    assign egr1_ahb_if_ahb_rd_data = egr1_ahb_if.ahb_rd_data;
+    assign egr1_ahb_if.dfxsignal_in = dfxsignal_in_t'(egr1_ahb_if_dfxsignal_in);
+    assign egr1_ahb_if_dfxsignal_out = egr1_ahb_if.dfxsignal_out;
+
+egr_epl_if egr1_epl0_if();
+// Blasted Wires for egr_epl_if egr egr1_epl0_if;
+    assign egr1_epl0_if_epl_tx_ecc = egr1_epl0_if.epl_tx_ecc;
+    assign egr1_epl0_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr1_epl0_if_epl_tx_en_port_num);
+    assign egr1_epl0_if.epl_tx_enable = epl_tx_enable_t'(egr1_epl0_if_epl_tx_enable);
+    assign egr1_epl0_if_epl_tx_data_valid = egr1_epl0_if.epl_tx_data_valid;
+    assign egr1_epl0_if_epl_tx_port_num = egr1_epl0_if.epl_tx_port_num;
+    assign egr1_epl0_if_epl_tx_metadata = egr1_epl0_if.epl_tx_metadata;
+    assign egr1_epl0_if_epl_tx_data_w_ecc = egr1_epl0_if.epl_tx_data_w_ecc;
+    assign egr1_epl0_if_epl_tx_pfc_xoff = egr1_epl0_if.epl_tx_pfc_xoff;
+    assign egr1_epl0_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr1_epl0_if_epl_tx_flow_control_tc);
+
+egr_epl_if egr1_epl1_if();
+// Blasted Wires for egr_epl_if egr egr1_epl1_if;
+    assign egr1_epl1_if_epl_tx_ecc = egr1_epl1_if.epl_tx_ecc;
+    assign egr1_epl1_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr1_epl1_if_epl_tx_en_port_num);
+    assign egr1_epl1_if.epl_tx_enable = epl_tx_enable_t'(egr1_epl1_if_epl_tx_enable);
+    assign egr1_epl1_if_epl_tx_data_valid = egr1_epl1_if.epl_tx_data_valid;
+    assign egr1_epl1_if_epl_tx_port_num = egr1_epl1_if.epl_tx_port_num;
+    assign egr1_epl1_if_epl_tx_metadata = egr1_epl1_if.epl_tx_metadata;
+    assign egr1_epl1_if_epl_tx_data_w_ecc = egr1_epl1_if.epl_tx_data_w_ecc;
+    assign egr1_epl1_if_epl_tx_pfc_xoff = egr1_epl1_if.epl_tx_pfc_xoff;
+    assign egr1_epl1_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr1_epl1_if_epl_tx_flow_control_tc);
+
+egr_epl_if egr1_epl2_if();
+// Blasted Wires for egr_epl_if egr egr1_epl2_if;
+    assign egr1_epl2_if_epl_tx_ecc = egr1_epl2_if.epl_tx_ecc;
+    assign egr1_epl2_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr1_epl2_if_epl_tx_en_port_num);
+    assign egr1_epl2_if.epl_tx_enable = epl_tx_enable_t'(egr1_epl2_if_epl_tx_enable);
+    assign egr1_epl2_if_epl_tx_data_valid = egr1_epl2_if.epl_tx_data_valid;
+    assign egr1_epl2_if_epl_tx_port_num = egr1_epl2_if.epl_tx_port_num;
+    assign egr1_epl2_if_epl_tx_metadata = egr1_epl2_if.epl_tx_metadata;
+    assign egr1_epl2_if_epl_tx_data_w_ecc = egr1_epl2_if.epl_tx_data_w_ecc;
+    assign egr1_epl2_if_epl_tx_pfc_xoff = egr1_epl2_if.epl_tx_pfc_xoff;
+    assign egr1_epl2_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr1_epl2_if_epl_tx_flow_control_tc);
+
+egr_epl_if egr1_epl3_if();
+// Blasted Wires for egr_epl_if egr egr1_epl3_if;
+    assign egr1_epl3_if_epl_tx_ecc = egr1_epl3_if.epl_tx_ecc;
+    assign egr1_epl3_if.epl_tx_en_port_num = epl_tx_en_port_num_t'(egr1_epl3_if_epl_tx_en_port_num);
+    assign egr1_epl3_if.epl_tx_enable = epl_tx_enable_t'(egr1_epl3_if_epl_tx_enable);
+    assign egr1_epl3_if_epl_tx_data_valid = egr1_epl3_if.epl_tx_data_valid;
+    assign egr1_epl3_if_epl_tx_port_num = egr1_epl3_if.epl_tx_port_num;
+    assign egr1_epl3_if_epl_tx_metadata = egr1_epl3_if.epl_tx_metadata;
+    assign egr1_epl3_if_epl_tx_data_w_ecc = egr1_epl3_if.epl_tx_data_w_ecc;
+    assign egr1_epl3_if_epl_tx_pfc_xoff = egr1_epl3_if.epl_tx_pfc_xoff;
+    assign egr1_epl3_if.epl_tx_flow_control_tc = epl_tx_flow_control_tc_t'(egr1_epl3_if_epl_tx_flow_control_tc);
+
+egr_mc_table_if egr1_mc_table_if0();
+// Blasted Wires for egr_mc_table_if egr egr1_mc_table_if0;
+    assign egr1_mc_table_if0_mcsharedtablememory_table_req = egr1_mc_table_if0.mcsharedtablememory_table_req;
+    assign egr1_mc_table_if0.mcsharedtablememory_table_rsp = mcsharedtablememory_table_rsp_t'(egr1_mc_table_if0_mcsharedtablememory_table_rsp);
+    assign egr1_mc_table_if0.mcsharedtablememory_table_ack = mcsharedtablememory_table_ack_t'(egr1_mc_table_if0_mcsharedtablememory_table_ack);
+
+egr_mc_table_if egr1_mc_table_if1();
+// Blasted Wires for egr_mc_table_if egr egr1_mc_table_if1;
+    assign egr1_mc_table_if1_mcsharedtablememory_table_req = egr1_mc_table_if1.mcsharedtablememory_table_req;
+    assign egr1_mc_table_if1.mcsharedtablememory_table_rsp = mcsharedtablememory_table_rsp_t'(egr1_mc_table_if1_mcsharedtablememory_table_rsp);
+    assign egr1_mc_table_if1.mcsharedtablememory_table_ack = mcsharedtablememory_table_ack_t'(egr1_mc_table_if1_mcsharedtablememory_table_ack);
+
+egr_pod_if egr1_pod_if();
+// Blasted Wires for egr_pod_if egr egr1_pod_if;
+    assign egr1_pod_if.egr_in_tagring_out = cmp_ring_pkt_str_t'(egr1_pod_if_egr_in_tagring_out);
+    assign egr1_pod_if_egr_out_tagring_in = egr1_pod_if.egr_out_tagring_in;
+
+egr_ppe_stm_if egr1_ppestm_if();
+// Blasted Wires for egr_ppe_stm_if stm egr1_ppestm_if;
+    assign egr1_ppestm_if.wen = egr1_ppestm_if_wen;
+    assign egr1_ppestm_if.wdata = egr1_ppestm_if_wdata;
+
+egr_ppe_stm_if egr1_ppestm_if0();
+// Blasted Wires for egr_ppe_stm_if egr egr1_ppestm_if0;
+    assign egr1_ppestm_if0_wen = egr1_ppestm_if0.wen;
+    assign egr1_ppestm_if0_wdata = egr1_ppestm_if0.wdata;
+
+egr_ppe_stm_if egr1_ppestm_if1();
+// Blasted Wires for egr_ppe_stm_if egr egr1_ppestm_if1;
+    assign egr1_ppestm_if1_wen = egr1_ppestm_if1.wen;
+    assign egr1_ppestm_if1_wdata = egr1_ppestm_if1.wdata;
+
+egr_smm_readarb_if egr1_smm_readarb_if();
+// Blasted Wires for egr_smm_readarb_if egr egr1_smm_readarb_if;
+
+egr_smm_writearb_if egr1_smm_writearb_if();
+// Blasted Wires for egr_smm_writearb_if egr egr1_smm_writearb_if;
+    assign egr1_smm_writearb_if_wreq = egr1_smm_writearb_if.wreq;
+    assign egr1_smm_writearb_if_wreq_valid = egr1_smm_writearb_if.wreq_valid;
+    assign egr1_smm_writearb_if.wreq_credits = wreq_credits_t'(egr1_smm_writearb_if_wreq_credits);
+
+egr_statsmgmt_if egr1_statsmgmt_if();
+// Blasted Wires for egr_statsmgmt_if egr egr1_statsmgmt_if;
+    assign egr1_statsmgmt_if.updatedstats = updatedstats_t'(egr1_statsmgmt_if_updatedstats);
+    assign egr1_statsmgmt_if.localstatsstall = localstatsstall_t'(egr1_statsmgmt_if_localstatsstall);
+    assign egr1_statsmgmt_if_localstats = egr1_statsmgmt_if.localstats;
+
+egr_tagring_if egr1_tagring_if();
+// Blasted Wires for egr_tagring_if egr egr1_tagring_if;
+
+egr_vp_if egr1_vp_if0();
+// Blasted Wires for egr_vp_if egr egr1_vp_if0;
+    assign egr1_vp_if0_epl_vp_tx_ecc = egr1_vp_if0.epl_vp_tx_ecc;
+    assign egr1_vp_if0.epl_vp_tx_en_port_num = epl_vp_tx_en_port_num_t'(egr1_vp_if0_epl_vp_tx_en_port_num);
+    assign egr1_vp_if0.epl_vp_tx_enable = epl_vp_tx_enable_t'(egr1_vp_if0_epl_vp_tx_enable);
+    assign egr1_vp_if0_epl_vp_tx_data_valid = egr1_vp_if0.epl_vp_tx_data_valid;
+    assign egr1_vp_if0_epl_vp_tx_port_num = egr1_vp_if0.epl_vp_tx_port_num;
+    assign egr1_vp_if0_epl_vp_tx_metadata = egr1_vp_if0.epl_vp_tx_metadata;
+    assign egr1_vp_if0_epl_vp_cpp_tx_metadata = egr1_vp_if0.epl_vp_cpp_tx_metadata;
+    assign egr1_vp_if0_epl_vp_tx_data_w_ecc = egr1_vp_if0.epl_vp_tx_data_w_ecc;
+    assign egr1_vp_if0_epl_vp_tx_pfc_xoff = egr1_vp_if0.epl_vp_tx_pfc_xoff;
+    assign egr1_vp_if0.epl_vp_tx_flow_control_tc = epl_vp_tx_flow_control_tc_t'(egr1_vp_if0_epl_vp_tx_flow_control_tc);
+
+egr_vp_if egr1_vp_if1();
+// Blasted Wires for egr_vp_if egr egr1_vp_if1;
+    assign egr1_vp_if1_epl_vp_tx_ecc = egr1_vp_if1.epl_vp_tx_ecc;
+    assign egr1_vp_if1.epl_vp_tx_en_port_num = epl_vp_tx_en_port_num_t'(egr1_vp_if1_epl_vp_tx_en_port_num);
+    assign egr1_vp_if1.epl_vp_tx_enable = epl_vp_tx_enable_t'(egr1_vp_if1_epl_vp_tx_enable);
+    assign egr1_vp_if1_epl_vp_tx_data_valid = egr1_vp_if1.epl_vp_tx_data_valid;
+    assign egr1_vp_if1_epl_vp_tx_port_num = egr1_vp_if1.epl_vp_tx_port_num;
+    assign egr1_vp_if1_epl_vp_tx_metadata = egr1_vp_if1.epl_vp_tx_metadata;
+    assign egr1_vp_if1_epl_vp_cpp_tx_metadata = egr1_vp_if1.epl_vp_cpp_tx_metadata;
+    assign egr1_vp_if1_epl_vp_tx_data_w_ecc = egr1_vp_if1.epl_vp_tx_data_w_ecc;
+    assign egr1_vp_if1_epl_vp_tx_pfc_xoff = egr1_vp_if1.epl_vp_tx_pfc_xoff;
+    assign egr1_vp_if1.epl_vp_tx_flow_control_tc = epl_vp_tx_flow_control_tc_t'(egr1_vp_if1_epl_vp_tx_flow_control_tc);
+
+glb_rx_ppe_if glb0_rx_ppe_if();
+// Blasted Wires for glb_rx_ppe_if ppe glb0_rx_ppe_if;
+    assign glb0_rx_ppe_if.glb_sync = glb0_rx_ppe_if_glb_sync;
+    assign glb0_rx_ppe_if_glb_ack = glb0_rx_ppe_if.glb_ack;
+
+glb_rx_ppe_if glb0_txppe0_if();
+// Blasted Wires for glb_rx_ppe_if ppe glb0_txppe0_if;
+    assign glb0_txppe0_if.glb_sync = glb0_txppe0_if_glb_sync;
+    assign glb0_txppe0_if_glb_ack = glb0_txppe0_if.glb_ack;
+
+glb_rx_ppe_if glb0_txppe1_if();
+// Blasted Wires for glb_rx_ppe_if ppe glb0_txppe1_if;
+    assign glb0_txppe1_if.glb_sync = glb0_txppe1_if_glb_sync;
+    assign glb0_txppe1_if_glb_ack = glb0_txppe1_if.glb_ack;
+
+glb_rx_ppe_if glb1_rx_ppe_if();
+// Blasted Wires for glb_rx_ppe_if ppe glb1_rx_ppe_if;
+    assign glb1_rx_ppe_if.glb_sync = glb1_rx_ppe_if_glb_sync;
+    assign glb1_rx_ppe_if_glb_ack = glb1_rx_ppe_if.glb_ack;
+
+glb_rx_ppe_if glb1_txppe0_if();
+// Blasted Wires for glb_rx_ppe_if ppe glb1_txppe0_if;
+    assign glb1_txppe0_if.glb_sync = glb1_txppe0_if_glb_sync;
+    assign glb1_txppe0_if_glb_ack = glb1_txppe0_if.glb_ack;
+
+glb_rx_ppe_if glb1_txppe1_if();
+// Blasted Wires for glb_rx_ppe_if ppe glb1_txppe1_if;
+    assign glb1_txppe1_if.glb_sync = glb1_txppe1_if_glb_sync;
+    assign glb1_txppe1_if_glb_ack = glb1_txppe1_if.glb_ack;
+
 
 
 // module mgp0    from mgp using mgp.map 0
@@ -217,10 +797,10 @@ mgp    mgp0(
 /* Interface ahb_rx_ppe_if.ppe       */ .ahb_txppe0_if                (ahb0_txppe0_if),                         
 /* Interface ahb_rx_ppe_if.ppe       */ .ahb_txppe1_if                (ahb0_txppe1_if),                         
 /* Interface egr_ahb_if.egr          */ .egr_ahb_if                   (egr0_ahb_if),                            
-/* Interface egr_epl_if.egr          */ .egr_epl0_if                  (egr_),                                   
-/* Interface egr_epl_if.egr          */ .egr_epl1_if                  (egr_),                                   
-/* Interface egr_epl_if.egr          */ .egr_epl2_if                  (egr_),                                   
-/* Interface egr_epl_if.egr          */ .egr_epl3_if                  (egr_),                                   
+/* Interface egr_epl_if.egr          */ .egr_epl0_if                  (egr0_epl0_if),                           
+/* Interface egr_epl_if.egr          */ .egr_epl1_if                  (egr0_epl1_if),                           
+/* Interface egr_epl_if.egr          */ .egr_epl2_if                  (egr0_epl2_if),                           
+/* Interface egr_epl_if.egr          */ .egr_epl3_if                  (egr0_epl3_if),                           
 /* Interface egr_igr_if.egr          */ .egr_igr_if                   (egr_igr_if),                             
 /* Interface egr_mc_table_if.egr     */ .egr_mc_table_if0             (egr0_mc_table_if0),                      
 /* Interface egr_mc_table_if.egr     */ .egr_mc_table_if1             (egr0_mc_table_if1),                      
@@ -236,9 +816,18 @@ mgp    mgp0(
 /* Interface glb_rx_ppe_if.ppe       */ .glb_rx_ppe_if                (glb0_rx_ppe_if),                         
 /* Interface glb_rx_ppe_if.ppe       */ .glb_txppe0_if                (glb0_txppe0_if),                         
 /* Interface glb_rx_ppe_if.ppe       */ .glb_txppe1_if                (glb0_txppe1_if),                         
-/* Interface rx_ppe_ppe_stm_if.ppe   */ .rx_ppe_ppe_stm_if            (rx_ppe_ppe_stm_if),                      
+/* Interface rx_ppe_ppe_stm_if.ppe   */ .rx_ppe_ppe_stm_if            (rxppe0_ppestm_if),                       
 /* output logic                      */ .igr_vp_tx_pfc_xoff           (igr0_vp_tx_pfc_xoff));                    //FIXME should this be [1:0] for 2 VP   
 // End of module mgp0 from mgp
+
+
+// module ppestm0    from ppe_stm_top using ppestm.map 0
+ppe_stm_top    ppestm0(
+/* input  logic                    */ .reset                        (reset),                                  
+/* Interface rx_ppe_ppe_stm_if.stm */ .rx_ppe_ppe_stm_if            (rxppe0_ppestm_if),                       
+/* Interface egr_ppe_stm_if.stm    */ .egr_ppe_stm_if               (egr0_ppestm_if),                         
+/* input  logic                    */ .cclk                         (cclk));                                   
+// End of module ppestm0 from ppe_stm_top
 
 
 // module mgp1    from mgp using mgp.map 1
@@ -292,10 +881,10 @@ mgp    mgp1(
 /* Interface ahb_rx_ppe_if.ppe       */ .ahb_txppe0_if                (ahb1_txppe0_if),                         
 /* Interface ahb_rx_ppe_if.ppe       */ .ahb_txppe1_if                (ahb1_txppe1_if),                         
 /* Interface egr_ahb_if.egr          */ .egr_ahb_if                   (egr1_ahb_if),                            
-/* Interface egr_epl_if.egr          */ .egr_epl0_if                  (egr_),                                   
-/* Interface egr_epl_if.egr          */ .egr_epl1_if                  (egr_),                                   
-/* Interface egr_epl_if.egr          */ .egr_epl2_if                  (egr_),                                   
-/* Interface egr_epl_if.egr          */ .egr_epl3_if                  (egr_),                                   
+/* Interface egr_epl_if.egr          */ .egr_epl0_if                  (egr1_epl0_if),                           
+/* Interface egr_epl_if.egr          */ .egr_epl1_if                  (egr1_epl1_if),                           
+/* Interface egr_epl_if.egr          */ .egr_epl2_if                  (egr1_epl2_if),                           
+/* Interface egr_epl_if.egr          */ .egr_epl3_if                  (egr1_epl3_if),                           
 /* Interface egr_igr_if.egr          */ .egr_igr_if                   (egr_igr_if),                             
 /* Interface egr_mc_table_if.egr     */ .egr_mc_table_if0             (egr1_mc_table_if0),                      
 /* Interface egr_mc_table_if.egr     */ .egr_mc_table_if1             (egr1_mc_table_if1),                      
@@ -311,17 +900,19 @@ mgp    mgp1(
 /* Interface glb_rx_ppe_if.ppe       */ .glb_rx_ppe_if                (glb1_rx_ppe_if),                         
 /* Interface glb_rx_ppe_if.ppe       */ .glb_txppe0_if                (glb1_txppe0_if),                         
 /* Interface glb_rx_ppe_if.ppe       */ .glb_txppe1_if                (glb1_txppe1_if),                         
-/* Interface rx_ppe_ppe_stm_if.ppe   */ .rx_ppe_ppe_stm_if            (rx_ppe_ppe_stm_if),                      
+/* Interface rx_ppe_ppe_stm_if.ppe   */ .rx_ppe_ppe_stm_if            (rxppe1_ppestm_if),                       
 /* output logic                      */ .igr_vp_tx_pfc_xoff           (igr1_vp_tx_pfc_xoff));                    //FIXME should this be [1:0] for 2 VP   
 // End of module mgp1 from mgp
 
 
-// module ppestm    from ppe_stm_top using ppestm.map 
-ppe_stm_top    ppestm(
+// module ppestm1    from ppe_stm_top using ppestm.map 1
+ppe_stm_top    ppestm1(
 /* input  logic                    */ .reset                        (reset),                                  
-/* Interface rx_ppe_ppe_stm_if.stm */ .rx_ppe_ppe_stm_if            (rx_ppe_ppe_stm_if),                      
-/* Interface egr_ppe_stm_if.stm    */ .egr_ppe_stm_if               (egr_ppe_stm_if),                         
+/* Interface rx_ppe_ppe_stm_if.stm */ .rx_ppe_ppe_stm_if            (rxppe1_ppestm_if),                       
+/* Interface egr_ppe_stm_if.stm    */ .egr_ppe_stm_if               (egr1_ppestm_if),                         
 /* input  logic                    */ .cclk                         (cclk));                                   
-// End of module ppestm from ppe_stm_top
+// End of module ppestm1 from ppe_stm_top
+
+// collage-pragma translate_on
 
 endmodule // mpp
