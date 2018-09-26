@@ -33,17 +33,19 @@ VCS_SRC  =	$(SHARED_SRC)/rtl/shared_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/pkt_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/pkt_meta_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/rx_ppe_pkg.sv
-VCS_SRC  +=	$(ASSERT_LIB)/SVA_LIB/intel_checkers_pkg.vs
+VCS_SRC  +=	$(ASSERT_LIB)/SVA_LIB/intel_checkers.vs
+VCS_SRC  += $(ASSERT_LIB)/SVA_LIB/intel_checkers_pkg.vs
 VCS_SRC  += $(SHARED_SRC)/interfaces/ahb_rx_ppe_if.sv
 VCS_SRC  += $(SHARED_SRC)/interfaces/glb_rx_ppe_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_rx_ppe_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_igr_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/par_class_if.sv
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/parser/src/parser_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \
-    -assert svaext +define+VCSSIM+INTEL_SVA_OFF+MBY_PARSER_BEHAVE_MEMS \
+    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS \
     -Mdir=$(SIM_DIR)/csrc -o $(SIM_DIR)/$@
 
 default: ppe_stm
