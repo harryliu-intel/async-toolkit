@@ -16,7 +16,7 @@
 		<DUT>mby</DUT>
 		<Stage>vcs</Stage>
 		<Stage_Exec>bman</Stage_Exec>
-		<AdditionalArgs>-s all +s vcs -mc mby,mplex_np_nphy +s vclp +s dvt -nodelete_flow_data</AdditionalArgs>
+		<AdditionalArgs>-s all +s vcs -mc fc,mplex_np_nphy +s vclp +s dvt -nodelete_flow_data</AdditionalArgs>
                 <XdutStageDep>[mby].[genrtl]</XdutStageDep>
 		<IsGating>1</IsGating>
 		<Turnin>1</Turnin>
@@ -30,7 +30,7 @@
 	<row>
 		<DUT>mby</DUT>
 		<Stage>mby_alive_test</Stage>
-		<Stage_Exec>verif/mby/reglist/level0.list</Stage_Exec>
+    <Stage_Exec>subBlock/mbyc/verif/mby/reglist/level0.list</Stage_Exec>
 		<AdditionalArgs>-disable_work_area_subdir</AdditionalArgs>
 		<XdutStageDep>[mby].[vcs]</XdutStageDep>
 		<PassRate>100</PassRate>
@@ -46,7 +46,7 @@
 	<row>
                 <DUT>mby</DUT>
                 <Stage>mplex_turnin_test</Stage>
-                <Stage_Exec>verif/mplex/reglist/turnin.list</Stage_Exec>
+                <Stage_Exec>subBlock/mbyc/verif/mplex/reglist/turnin.list</Stage_Exec>
                 <AdditionalArgs>-disable_work_area_subdir -model mplex_np_nphy </AdditionalArgs>
                 <XdutStageDep>[mby].[vcs]</XdutStageDep>
                 <PassRate>100</PassRate>

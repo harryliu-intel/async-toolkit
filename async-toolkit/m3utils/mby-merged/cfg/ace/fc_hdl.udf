@@ -1,0 +1,214 @@
+#---*-perl-*---
+# vim: noai : ts=3 : sw=3 : expandtab : ft=perl
+
+use ToolConfig;
+
+# Set up the project UDF
+my $vcsVer = &ToolConfig::get_tool_version('vcsmx');
+my $MBY_IOSF_PRI_VC_ROOT = &ToolConfig::get_tool_path('ipconfig/iosf_primary_bfm') . "/ph4";
+my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc');
+my $sva_lib                 = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
+
+my $default_enable_congruency_elab  = 1;
+my $default_enable_xprop_elab       = 1;
+my $default_enable_partcomp_elab    = 1;
+
+my $mby_enable_congruency_elab      = $default_enable_congruency_elab;
+my $mby_enable_xprop_elab           = $default_enable_xprop_elab;
+my $mby_enable_partcomp_elab        = $default_enable_partcomp_elab;
+my $behaveMem = 0;
+my @mbyMgmLibs = ( "target/mby/mgm_run/rtl/mby_memories_common_rel.hdl",
+	           "target/mby/mgm_run/rtl/mby_memories_rel.hdl",);
+
+my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
+                      'target/mby/mgm_run/rtl/mby_memories_wrap_rel.hdl', 
+		    );
+for (my $i = 0; $i < @ARGV; $i++) {
+    if ($ARGV[$i] eq "-mby_behave_mem") {
+ 	$behaveMem = 1;	
+	push (@mbyMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
+	push (@mbyTbMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
+	last;
+    }
+};    
+
+print "MGM debug : @mbyMgmLibs\n";
+
+%audf = (
+   Includes => [],
+   HDLSpec  => {
+      -hdl_compiler => {
+         vcs => {
+            -libDir         => "vcs_lib/${vcsVer}_suse64",
+            -iniFile        => "synopsys_sim.setup",
+            -iniVar         => "SYNOPSYS_SIM_SETUP",
+            -tmpSimIniVar   => "SYNOPSYS_SIM_SETUP",
+            -iniContents    => <<'EOF',
+-------------------------------------------------
+-- Common tool parameters
+------------------------------------------------
+OPTIMIZE = FALSE
+TIME_RESOLUTION = 1PS
+LICENSE_WAIT_TIME = 2
+
+EOF
+         },
+      },
+
+      mby => {
+         coverage => {
+            mti => {
+               cov_mode_a => {
+                  int_ctl_tb_lib          => "t",
+                  int_ctl_test_island_lib => "be",
+                  int_ctl_lib             => "ce",
+                  test                    => "bce",
+               },
+               cov_mode_b => {
+                  int_ctl_tb_lib          => "t",
+                  int_ctl_test_island_lib => "b",
+                  int_ctl_lib             => "bc",
+                  test                    => "e",
+               },
+            },
+            vcs => {
+               cov_mode_a => 'branch+line',
+               cov_mode_b => 'branch+cond+line',
+            },
+         },
+
+         # Define all the libraries which could be compiled
+         libs => {
+
+         },
+
+         models => {
+            fc => {
+               top         => 'mby_tb_lib.mby_tb',
+               jg_elab_top => 'mby_jasper_lib.mby_top',
+
+               enable_congruency_elab  =>  $mby_enable_congruency_elab,
+               enable_xprop_elab       =>  $mby_enable_xprop_elab,
+               enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
+
+               libs => [
+                  "mby_tb_lib",
+                  "mby_rtl_lib",
+                  "sva_lib",
+	          "mby_mgm_lib",
+                  "mby_regflow_lib",
+                  "mby_ti_lib",
+                  "shdv_shared_lib",
+                  "mby_env_lib",
+                  "mby_jasper_lib",
+                  "gen_mby_regflow_lib",
+                  "gen_mby_wm",
+                  "gen_mby_wm_m3",
+                  "mby_test_lib",
+                  "mby_wm_dpi_lib",
+                  "svt_ahb_lib",
+                  "cdn_pcie_lib",
+                  "mby_common_lib",
+               ],
+
+               elab_opts => [
+                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                  libs => [
+                     "mby_rtl_lib",
+                     "mby_regflow_lib",
+                     "mby_ti_lib",
+                     "mby_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/fal",
+                     "verif/mby/ral",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                     "$ENV{SAOLA_HOME}/verilog",
+                     "$ENV{SAOLA_HOME}/verilog_uvm",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+               power_intent => {
+                  power_top => 'mby_tb/mby_top',
+                  upf_files => ['tools/upf/mby_upf.upf'],
+               },
+            },
+
+            mby_lintra => {
+               top  => "mby_rtl_lib.mby",
+               libs => [ "mby_rtl_lib" ],
+            },
+
+            dvt_mby_verif => {
+               top  => 'mby_tb_lib.mby_tb',
+               libs => [
+                  "mby_tb_lib",
+                  "mby_rtl_lib",
+                  "mby_ti_lib",
+                  "shdv_shared_lib",
+                  "mby_env_lib",
+		          "mby_test_lib",
+                  "mby_wm_dpi_lib",
+                  "upf",
+                  "lpa"
+               ],
+
+               export => {
+                  libs => [
+                     "mby_rtl_lib",
+                     "mby_ti_lib",
+                     "mby_env_lib"
+                  ]
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                     "$ENV{SAOLA_HOME}/verilog",
+                     "$ENV{SAOLA_HOME}/verilog_uvm",
+                  ],
+               },
+
+               power_intent => {
+                  power_top => 'mby_tb/mby_top',
+                  upf_files => [ 'tools/upf/mby_upf.upf' ],
+               },
+            },
+
+         },
+      },
+   },
+);

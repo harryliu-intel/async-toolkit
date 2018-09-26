@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.madisonbay
 
 import java.util.TreeMap
@@ -26,7 +27,7 @@ class AddressGuard[V] {
     // ..b c..d e..
     if( !(lb == null || (lb.lim <= ar.pos)) ) { throw new AddressOverlap(lb, ar) }
     if( !(hb == null || (ar.lim <= hb.pos)) ) { throw new AddressOverlap(ar, hb) }
-    map.put(ar, el)
+    val _ = map.put(ar, el)
   }
 
   def +=(tup: (K,V)) {
@@ -54,7 +55,7 @@ object AddressGuard {
   def apply[V]() = new AddressGuard[V]
 
   def apply[V](el: (AddressRange, V), rest: (AddressRange, V)*): AddressGuard[V] = {
-    var guard = AddressGuard[V]()
+    val guard = AddressGuard[V]()
     guard += el
     guard ++= rest
     guard

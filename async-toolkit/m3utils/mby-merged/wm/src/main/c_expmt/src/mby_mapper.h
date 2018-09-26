@@ -518,12 +518,50 @@ typedef struct mbyMapPortCfgStruct
 
 } mbyMapPortCfg;
 
+typedef struct mbyMapProtStruct
+{
+    fm_byte   MAP_PROT; // 3b field
+    fm_byte   PROT;     // 8b
+
+} mbyMapProt;
+
 typedef struct mbyMapPortDefaultsStruct
 {
     fm_uint16 VALUE;
     fm_byte   TARGET;
 
 } mbyMapPortDefaults;
+
+
+typedef struct mbyMapDomainProfileStruct
+{
+    fm_byte PRIORITY_PROFILE;  //  5b field
+
+} mbyMapDomainProfile;
+
+typedef struct mbyMapDomainAction0Struct
+{
+    fm_byte L2_DOMAIN;         //  8b field
+    fm_byte L3_DOMAIN;         //  6b
+    fm_byte OPERATOR_ID;       //  4b
+    fm_bool UPDATE_DOMAINS;    //  1b
+    fm_bool LEARN_EN;          //  1b
+    fm_bool LEARN_MODE;        //  1b
+    fm_byte PRIORITY_PROFILE;  //  5b
+    fm_byte PRI_SOURCE;        //  8b
+    fm_bool FORCE_DEFAULT_PRI; //  1b
+    fm_byte DEFAULT_PRI;       //  3b
+
+} mbyMapDomainAction0;
+
+typedef struct mbyMapDomainAction1Struct
+{
+    fm_byte   DOMAIN_PROFILE;  //  8b
+    fm_uint16 L2_POLICER;      // 12b
+    fm_uint16 L3_POLICER;      // 12b
+    fm_uint16 VLAN_COUNTER;    // 12b
+
+} mbyMapDomainAction1;
 
 typedef struct mbyMapDomainTcamStruct
 {
@@ -603,6 +641,16 @@ typedef struct mbyMapProfActionStruct
     fm_byte   DSCP_TGT;
 
 } mbyMapProfAction;
+
+typedef struct mbyMapMacStruct
+{
+    fm_bool    MAC_ROUTABLE;   //  1b field
+    fm_byte    MAP_MAC;        //  8b
+    fm_byte    VALID;          //  4b
+    fm_byte    IGNORE_LENGTH;  //  6b
+    fm_macaddr MAC;            // 48b
+
+} mbyMapMac;
 
 typedef struct mbyMapRewriteStruct
 {

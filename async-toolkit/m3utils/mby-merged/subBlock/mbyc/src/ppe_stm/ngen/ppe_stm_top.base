@@ -1,0 +1,24 @@
+// -- Author       : Jon Bagge <jon.bagge@intel.com>
+// -- Project Name : MBY
+// -- Description  : PPE shared table memory netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input reset,
+
+rx_ppe_ppe_stm_if.stm   rx_ppe_ppe_stm_if0,
+rx_ppe_ppe_stm_if.stm   rx_ppe_ppe_stm_if1,
+egr_ppe_stm_if.stm egr_ppe_stm_if0,
+egr_ppe_stm_if.stm egr_ppe_stm_if1,
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

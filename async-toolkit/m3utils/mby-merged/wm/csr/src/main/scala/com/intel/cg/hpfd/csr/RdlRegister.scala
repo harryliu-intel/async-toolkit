@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr
 
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
@@ -69,13 +70,11 @@ abstract class RdlRegister[U <: Long](val parent : RdlHierarchy) extends RdlElem
 
   def fields: List[RdlField]
 
-  def foreachResetableField(f: RdlRegister[U64]#HardwareResetable => Unit) = {
-    fields foreach {
-      _ match {
-        case r: RdlRegister[U64]#HardwareResetable => f(r)
-      }
-    }
-  }
+  def foreachResetableField(f: RdlRegister[U64]#HardwareResetable => Unit) =
+    fields
+      .filter(_.isInstanceOf[HardwareResetable])
+      .map(_.asInstanceOf[RdlRegister[U64]#HardwareResetable])
+      .foreach(f)
 
   //  abstract val resetableFields : List[HardwareResetable] = for (x <- fields) if (x.isInstanceOf[HardwareResetable]) yield x
 
