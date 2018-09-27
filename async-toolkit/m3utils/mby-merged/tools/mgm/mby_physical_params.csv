@@ -1,5 +1,5 @@
 Module Name,Unit,Block Name,Ports,Freq[Mhz],Lines,Width,Protection,ECC Signature Width,Write Segment Size,Instantiations,Interleaving,Protection Resolution,Write Segment W/O ECC Size,Width W/O ECC,Type,Words|Number of Rules, Bits/Word,Bit Enable|Slice Enable,Folded,Column Mux,Redundancy,Rows,Columns,Total # Instances,Name,,,,
-mem_parser_metadata_fifo_shell_48x61,parser_metadata_fifo,parser,1r1w,1225,48,69,ECC,8,69,1,1,61,61,61,RF-1R1W,48,69,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
+mem_parser_metadata_fifo_shell_32x120,parser_metadata_fifo,parser,1r1w,1225,32,128,ECC,8,128,1,1,120,120,120,RF-1R1W,32,128,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_map_port_cfg_shell_33x64,map_port_cfg,classifier,1r1w,1225,33,72,ECC,8,72,1,1,64,64,64,RF-1R1W,33,72,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_map_len_limit_shell_33x64,map_len_limit,classifier,1r1w,1225,33,72,ECC,8,72,1,1,64,64,64,RF-1R1W,33,72,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_map_port_shell_33x64,map_port,classifier,1r1w,1225,33,72,ECC,8,72,1,1,64,64,64,RF-1R1W,33,72,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
