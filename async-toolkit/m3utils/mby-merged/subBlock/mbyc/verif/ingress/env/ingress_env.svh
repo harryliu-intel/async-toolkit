@@ -46,19 +46,19 @@ class ingress_env extends ingress_base_env;
 
   // Variable:  cdi_tx_io
   // MAC Client BFM io policy
-  mby_epl_bfm_pkg::mby_epl_cdi_tx_io eth_cdi_tx_io;
+  mby_ec_bfm_pkg::mby_ec_cdi_tx_io eth_cdi_tx_io;
 
   // Variable:  cdi_rx_io
   // MAC Client BFM io policy
-  mby_epl_bfm_pkg::mby_epl_cdi_rx_io eth_cdi_rx_io;
+  mby_ec_bfm_pkg::mby_ec_cdi_rx_io eth_cdi_rx_io;
 
   // Variable:  cdi_tx_vintf
   // MAC Client BFM virtual interface
-  virtual mby_epl_cdi_tx_intf cdi_tx_vintf;
+  virtual mby_ec_cdi_tx_intf cdi_tx_vintf;
 
   // Variable:  cdi_rx_vintf
   // MAC Client BFM virtual interface
-  virtual mby_epl_cdi_rx_intf cdi_rx_vintf;
+  virtual mby_ec_cdi_rx_intf cdi_rx_vintf;
 
   // Variable: env_monitor
   // ingress env event monitor
@@ -86,10 +86,10 @@ class ingress_env extends ingress_base_env;
     if(uvm_config_object::get(this, "","ingress_ti_config",tmp_ti_cfg_obj)) begin
       assert($cast(ti_config,tmp_ti_cfg_obj));
     end
-    if(!uvm_config_db#(virtual mby_epl_cdi_tx_intf)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
+    if(!uvm_config_db#(virtual mby_ec_cdi_tx_intf)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
       `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_tx_vintf was not successful!")
     end
-    if(!uvm_config_db#(virtual mby_epl_cdi_rx_intf)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
+    if(!uvm_config_db#(virtual mby_ec_cdi_rx_intf)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
       `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
     end
 
@@ -102,8 +102,8 @@ class ingress_env extends ingress_base_env;
     //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
     //eth_cdi_bfm.cfg.push_down_knobs();                                                              // Push Down the Config Knobs
 
-    eth_cdi_tx_io = mby_epl_bfm_pkg::mby_epl_cdi_tx_io::type_id::create("eth_cdi_tx_io", this);
-    eth_cdi_rx_io = mby_epl_bfm_pkg::mby_epl_cdi_rx_io::type_id::create("eth_cdi_rx_io", this);
+    eth_cdi_tx_io = mby_ec_bfm_pkg::mby_ec_cdi_tx_io::type_id::create("eth_cdi_tx_io", this);
+    eth_cdi_rx_io = mby_ec_bfm_pkg::mby_ec_cdi_rx_io::type_id::create("eth_cdi_rx_io", this);
     data_phase_mode = SLA_RANDOM_NONE;
     this.max_run_clocks = 2_000_000_000;
 
