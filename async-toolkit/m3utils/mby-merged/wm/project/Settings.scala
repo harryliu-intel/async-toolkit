@@ -5,11 +5,20 @@ import sbt.{Def, inThisBuild}
 import org.scalastyle.sbt.ScalastylePlugin.autoImport._
 
 object Settings {
+
+  val csrName = "csr-model"
+  val wmServerDtoName = "wm-server-dto"
+  val csrMacrosName = "csr-macros"
+  val commonName = "common"
+  val rootName = "wm"
+
+  val intelOrganization = "com.intel.cg.hpfd"
+
   val artifactoryResolver =
     "Artifactory Realm" at "https://ubit-artifactory-or.intel.com/artifactory/dcg-cg-hpfd-or-local/"
 
   val commonSettings: Seq[Def.Setting[_]] = inThisBuild(Seq(
-    organization := "com.intel.cg.hpfd",
+    organization := intelOrganization,
     version := Versions.applicationVersion,
     scalaVersion := Versions.scalaVersion,
     publishTo := Some(artifactoryResolver),
