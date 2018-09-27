@@ -180,7 +180,8 @@ public class RegisterStruct {
     /** returns true if there are errors */
     protected boolean checkForErrors() {
         boolean error = false;
-        for(String desc : fieldsWithArrays.keySet()) {
+        for (Map.Entry<String,RegisterField> entry : fieldsWithArrays.entrySet()) {
+            final String desc = entry.getValue().desc;
             if(Util.systemverilogReservedWords.contains(desc)) {
                 error = true;
                 System.err.println(String.format("ERROR: %s: Field %s is a SystemVerilog reserved word.",
