@@ -24,6 +24,11 @@ test_mapper:
 	@echo "Testing mapper ..."
 	make -C mapper run
 
+.PHONY: test_classifier
+test_classifier:
+	@echo "Testing classifier ..."
+	make -C classifier run
+
 .PHONY: test_basic_fwd
 test_basic_fwd:
 	@echo "Testing basic forwarding ..."

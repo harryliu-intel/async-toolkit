@@ -163,7 +163,7 @@ static mbyClassifierHashLookup getEmAHashLookupEntry
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_uint16 const            lookup_ptr
+    fm_uint16            const lookup_ptr
 )
 {
     mbyClassifierHashLookup lookup_entry;
@@ -201,7 +201,7 @@ static mbyClassifierHashLookup getEmBHashLookupEntry
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_uint16 const            lookup_ptr
+    fm_uint16            const lookup_ptr
 )
 {
     mbyClassifierHashLookup lookup_entry;
@@ -239,14 +239,14 @@ static fm_uint64 getEmAHashCamEntry
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_uint32 const            entry,
-    fm_uint32 const            word
+    fm_uint32            const entry,
+    fm_uint32            const word
 )
 {
 #ifdef USE_NEW_CSRS
-    em_a_hash_cam_r const * const em_a_hash_cam_entry = &(cgrp_a_map->EM_A_HASH_CAM[entry][word]);
+    em_a_hash_cam_r const * const em_a_hash_cam = &(cgrp_a_map->EM_A_HASH_CAM[entry][word]);
 
-    fm_uint64 data = em_a_hash_cam_entry->DATA;
+    fm_uint64 data = em_a_hash_cam->DATA;
 #else
     fm_byte const group = 0; // Exact Match "A"
     fm_uint64 ffu_hash_cam_reg = 0;
@@ -264,8 +264,8 @@ static fm_uint64 getEmBHashCamEntry
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_uint32 const            entry,
-    fm_uint32 const            word
+    fm_uint32            const entry,
+    fm_uint32            const word
 )
 {
 #ifdef USE_NEW_CSRS
@@ -289,8 +289,8 @@ static fm_uint64 getEmAHashCamMask
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_uint32 const            row,
-    fm_uint32 const            rule
+    fm_uint32            const row,
+    fm_uint32            const rule
 )
 {
 #ifdef USE_NEW_CSRS
@@ -314,8 +314,8 @@ static fm_uint64 getEmBHashCamMask
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_uint32 const            row,
-    fm_uint32 const            rule
+    fm_uint32            const row,
+    fm_uint32            const rule
 )
 {
 #ifdef USE_NEW_CSRS
@@ -385,7 +385,7 @@ static inline fm_byte getHashRamAlloc
     return ram_alloc;
 }
 
-static void getHashMissActions
+static void getEmHashMissActions
 (
 #ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map      * const cgrp_a_map,
@@ -466,8 +466,8 @@ static mbyClassifierTcamEntry getWcmTcamEntry
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_byte   const            slice,
-    fm_uint16 const            index
+    fm_byte              const slice,
+    fm_uint16            const index
 )
 {
     mbyClassifierTcamEntry tcam_entry;
@@ -502,9 +502,9 @@ static mbyClassifierActionCfg getWcmActionCfg
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_byte const              group,
-    fm_byte const              scenario,
-    fm_byte const              ram_num
+    fm_byte              const group,
+    fm_byte              const scenario,
+    fm_byte              const ram_num
 )
 {
     mbyClassifierActionCfg action_cfg;
@@ -558,9 +558,9 @@ static fm_uint32 getWcmActionEntry
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_byte   const            ram_num,
-    fm_uint32 const            hit_index,
-    fm_uint32 const            action
+    fm_byte              const ram_num,
+    fm_uint32            const hit_index,
+    fm_uint32            const action
 )
 {
 #ifdef USE_NEW_CSRS
@@ -584,8 +584,8 @@ static mbyClassifierEntropyCfg getEntropyCfg
 #else
     fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_uint32 const             hash_num,
-    fm_byte   const             hash_prof
+    fm_uint32             const hash_num,
+    fm_byte               const hash_prof
 )
 {
     mbyClassifierEntropyCfg entropy_cfg = { 0 };
@@ -749,9 +749,9 @@ static void lookUpWcmTcamCascade
 #else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    const mbyClassifierKeys * const keys,
-    const fm_byte                   scenario,
-    const fm_byte                   group,
+    mbyClassifierKeys const * const keys,
+    fm_byte                   const scenario,
+    fm_byte                   const group,
     mbyClassifierHitInfo            tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1]
 )
 {
@@ -840,7 +840,12 @@ static void lookUpWcmTcamCascade
     }
 }
 
-static inline void setPrec(mbyPrecVal *old, fm_byte prec, fm_uint32 value)
+static inline void setPrec
+(
+    mbyPrecVal * const old,
+    fm_byte      const prec,
+    fm_uint32    const value
+)
 {
     if ((prec >= old->prec) && (prec > 0))
     {
@@ -851,7 +856,7 @@ static inline void setPrec(mbyPrecVal *old, fm_byte prec, fm_uint32 value)
 
 static void doAction
 (
-    fm_uint32 const              action,
+    fm_uint32              const action,
     mbyClassifierActions * const actions
 )
 {
@@ -955,12 +960,12 @@ static void doAction
 static void resolveActions
 (
 #ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_b_map * const   cgrp_b_map,
+    mby_ppe_cgrp_b_map   * const cgrp_b_map,
 #else
     fm_uint32                    regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    const fm_byte                scenario,
-    const fm_byte                group,
+    fm_byte                const scenario,
+    fm_byte                const group,
     mbyClassifierHitInfo         tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1],
     mbyClassifierActions * const actions // = output actions
 )
@@ -998,9 +1003,9 @@ static void matchWildcard
 #else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    const mbyClassifierKeys * const keys,
-    const fm_byte                   scenario,
-    const fm_byte                   group,
+    mbyClassifierKeys const * const keys,
+    fm_byte                   const scenario,
+    fm_byte                   const group,
     mbyClassifierActions    * const actions // = output actions
 )
 {
@@ -1023,9 +1028,9 @@ static void matchWildcard
 
 static void applyEmKeyMask
 (
-    const mbyClassifierKeyMaskCfg         key_mask_cfg,
-    const mbyClassifierKeys               keys,
-          mbyClassifierKeys       * const hash_keys
+    mbyClassifierKeyMaskCfg         const key_mask_cfg,
+    mbyClassifierKeys               const keys,
+    mbyClassifierKeys             * const hash_keys
 )
 {
     for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
@@ -1040,9 +1045,9 @@ static void applyEmKeyMask
 
 static void applyEntropyKeyMask
 (
-    const mbyClassifierEntropyCfg         entropy_cfg,
-    const mbyClassifierKeys               keys,
-          mbyClassifierKeys       * const hash_keys
+    mbyClassifierEntropyCfg         const entropy_cfg,
+    mbyClassifierKeys               const keys,
+    mbyClassifierKeys             * const hash_keys
 )
 {
     for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
@@ -1057,7 +1062,7 @@ static void applyEntropyKeyMask
 
 static void convertKeysToBytes
 (
-    const mbyClassifierKeys keys,
+    mbyClassifierKeys const keys,
     fm_byte                 bytes[MBY_FFU_HASH_KEYS]
 )
 {
@@ -1076,8 +1081,8 @@ static void convertKeysToBytes
 
 static void doKeyCompaction
 (
-    const mbyClassifierKeyMaskCfg         key_mask_cfg,
-    const mbyClassifierKeys               hash_keys,
+    mbyClassifierKeyMaskCfg         const key_mask_cfg,
+    mbyClassifierKeys               const hash_keys,
     fm_byte                               packed_keys[MBY_FFU_HASH_KEYS],
     fm_byte                       * const key_size
 )
@@ -1122,7 +1127,7 @@ static void doKeyCompaction
     *key_size = key_idx;
 }
 
-static void getHashRamData
+static void getEmHashRamData
 (
 #ifdef USE_NEW_CSRS
 
@@ -1260,13 +1265,13 @@ static void getHashRamData
     *ram_data_ok = rd_ram_ok; // output read status
 }
 
-static void getHashActions
+static void getEmHashHitActions
 (
-          fm_byte   entry[MBY_FFU_MAX_HASH_ENTRY_SIZE], // aka cam_key[]
-    const fm_byte   entry_mode,
-    const fm_byte   key_size,
-    const fm_uint16 entry_size,
-    const fm_bool   is_cam,
+    fm_byte         entry[MBY_FFU_MAX_HASH_ENTRY_SIZE], // aka cam_key[]
+    fm_byte   const entry_mode,
+    fm_byte   const key_size,
+    fm_uint16 const entry_size,
+    fm_bool   const is_cam,
     fm_uint32       hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
 )
 {
@@ -1313,8 +1318,8 @@ static void matchExact // i.e. look up EM hash
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
     mbyClassifierKeys const * const keys,
-    fm_byte const                   scenario,
-    fm_byte const                   group,
+    fm_byte                   const scenario,
+    fm_byte                   const group,
     mbyClassifierActions    * const actions // = output actions
 )
 {
@@ -1476,7 +1481,7 @@ static void matchExact // i.e. look up EM hash
                         : (MBY_FFU_MAX_HASH_ENTRY_SIZE / 2);
 
                     fm_bool is_cam = TRUE;
-                    getHashActions(cam_key, hash_cfg.mode, key_size, cam_entry_size, is_cam, hash_actions);
+                    getEmHashHitActions(cam_key, hash_cfg.mode, key_size, cam_entry_size, is_cam, hash_actions);
                     break;
                 }
             }
@@ -1491,9 +1496,9 @@ static void matchExact // i.e. look up EM hash
             fm_bool ram_data_ok = FALSE;
 
 #ifdef USE_NEW_CSRS
-            getHashRamData(      group, hash_num, bucket, hash_cfg, hash_more, hash_ram_key, &ram_data_ok); // <-- REVISIT!!!
+            getEmHashRamData(      group, hash_num, bucket, hash_cfg, hash_more, hash_ram_key, &ram_data_ok); // <-- REVISIT!!!
 #else
-            getHashRamData(regs, group, hash_num, bucket, hash_cfg, hash_more, hash_ram_key, &ram_data_ok);
+            getEmHashRamData(regs, group, hash_num, bucket, hash_cfg, hash_more, hash_ram_key, &ram_data_ok);
 #endif
             // Compare Cam key with packeyKey:
             if (key_size < MBY_FFU_MAX_HASH_ENTRY_SIZE) {
@@ -1512,13 +1517,13 @@ static void matchExact // i.e. look up EM hash
             if (hash_ram_hit) {
                 fm_int  cam_entry_size = hash_cfg.entry_size[hash_num] * 4;
                 fm_bool is_cam = FALSE;
-                getHashActions(hash_ram_key, hash_cfg.mode, key_size, cam_entry_size, is_cam, hash_actions);
+                getEmHashHitActions(hash_ram_key, hash_cfg.mode, key_size, cam_entry_size, is_cam, hash_actions);
             } else {
                 // Get actions from FFU_HASH_MISS register since both cam and ram missed
 #ifdef USE_NEW_CSRS
-                getHashMissActions(cgrp_a_map, cgrp_b_map, group, hash_cfg, hash_num, scenario, hash_actions);
+                getEmHashMissActions(cgrp_a_map, cgrp_b_map, group, hash_cfg, hash_num, scenario, hash_actions);
 #else
-                getHashMissActions(regs,                   group, hash_cfg, hash_num, scenario, hash_actions);
+                getEmHashMissActions(regs,                   group, hash_cfg, hash_num, scenario, hash_actions);
 #endif
             }
 
@@ -1537,9 +1542,9 @@ static void populateMuxedAction
 #else
     fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    const mbyClassifierKeys           keys,
-    const mbyClassifierActions        actions,
-    const fm_byte                     pri_profile,
+    mbyClassifierKeys           const keys,
+    mbyClassifierActions        const actions,
+    fm_byte                     const pri_profile,
     mbyClassifierMuxedAction  * const muxed_action
 )
 {
@@ -1728,8 +1733,8 @@ static void populateEntropy
 #else
     fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    mbyClassifierKeys const            keys,
-    mbyClassifierActions const         actions,
+    mbyClassifierKeys            const keys,
+    mbyClassifierActions         const actions,
     fm_uint32                  * const ecmp_hash,
     fm_uint64                  * const mod_meta
 )
@@ -1813,7 +1818,11 @@ static void populateEntropy
     *mod_meta = (mod_meta_l & ~meta_mask) | (meta_hash & meta_mask);
 }
 
-static fm_macaddr extractDmac(const fm_uint32 ip_lo, const fm_uint32 ip_hi)
+static fm_macaddr extractDmac
+(
+    fm_uint32 const ip_lo,
+    fm_uint32 const ip_hi
+)
 {
     fm_macaddr mac_addr =  ((fm_macaddr)( ip_lo & 0xFFFFFF  )) |
                           (((fm_macaddr)( ip_hi & 0xFDFFFF00)) << 16) |
@@ -1978,12 +1987,12 @@ void Classifier
 )
 {
     // Read inputs from the Mapper:
-    const mbyClassifierActions  actions_in  = in->FFU_ACTIONS;
-    const mbyClassifierKeys     keys        = in->FFU_KEYS;
-    const fm_byte               scenario_in = in->FFU_SCENARIO;
-    const fm_bool * const       ip_option   = in->IP_OPTION;
-    const mbyParserInfo         parser_info = in->PARSER_INFO;
-    const fm_byte               pri_profile = in->PRIORITY_PROFILE;
+    mbyClassifierActions  const actions_in  = in->FFU_ACTIONS;
+    mbyClassifierKeys     const keys        = in->FFU_KEYS;
+    fm_byte               const scenario_in = in->FFU_SCENARIO;
+    fm_bool       const * const ip_option   = in->IP_OPTION;
+    mbyParserInfo         const parser_info = in->PARSER_INFO;
+    fm_byte               const pri_profile = in->PRIORITY_PROFILE;
 
     fm_byte              scenario = scenario_in;
     mbyClassifierActions actions  = actions_in;
