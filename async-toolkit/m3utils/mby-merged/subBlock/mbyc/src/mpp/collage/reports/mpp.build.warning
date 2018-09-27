@@ -1,0 +1,20 @@
+########################################################
+# RTL ports incorrectly marked as OPEN
+# Turn On/Off appropriate interface control parameters to 
+# disable these port associations
+########################################################
+<Interface_port>	<Interface_Instance>	<Interface_Definition>
+
+
+########################################################
+# RTL ports mapped to multiple interface ports
+########################################################
+<rtl_pin_name>		<interface_ports>
+
+
+########################################################
+# Report Interface parameters which are incorrectly set
+########################################################
+<interface-name>	<rtl_pin_name>		<rtl_pin_size>	<interface_size>	<interface-parameter>
+
+
