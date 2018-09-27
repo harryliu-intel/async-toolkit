@@ -1,0 +1,18 @@
+
+//`ifndef mby_port_cfg
+//`define mby_port_cfg
+
+// port config enum; used in:
+//   rx_voq
+//   tx_voq
+//   rx_pb
+//   tx_pb
+
+enum mby_port_cfg_enum {
+  DISABLE = 2'd0 { desc = " Disable this port."; };
+  S100G   = 2'd1 { desc = " This port is 100G, 50G, or 25G."; };
+  S200G   = 2'd2 { desc = " This port is 200G. Only port N.0 or N.2 can be 200G, and the next port must be disabled."; };
+  S400G   = 2'd3 { desc = " This port is 400G. Only port N.0 can be 400G, and the next 3 ports must be disabled."; };
+};
+
+//`endif

@@ -1,3 +1,5 @@
+// DEPRECATED - This storage is now in the mesh.
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 

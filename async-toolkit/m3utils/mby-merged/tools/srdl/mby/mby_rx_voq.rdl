@@ -1,116 +1,121 @@
 
-enum rx_voq_lane_cfg_enum {
-  DISABLE = 2'd0 { desc = " Disable this lane."; };
-  SINGLE  = 2'd1 { desc = " This lane is its own port."; };
-  PAIR    = 2'd2 { desc = " This lane (and lane XOR 1) are a port."; };
-  QUAD    = 2'd3 { desc = " This lane is used in quad mode."; };
-};
+`include "mby_port_cfg.rdl"
 
-reg rx_voq_lane_cfg_r {
+
+
+/////////////////////////////////////////////////////////////////////////////
+// RX_VOQ_PORT_CFG
+
+reg rx_voq_port_cfg_r {
   shared;
   HandCoded = true;
+  name = "Rx VOQ Port Configuration.";
   desc = "
-      Lane configuration for Rx VOQ Tag Sequencer.
+      Port configuration for the Rx VOQ tag sequencer.
+      The tag sequencer derives set-aside buffer allocation and the port timewheel sequence from this configuration.
+      The port index is N*4 + M. The port configuration values are:
+
+      [list]
+      [*] 0 = Disable this port.
+      [*] 1 = This port is 100G, 50G, or 25G.
+      [*] 2 = This port is 200G. Only port N.0 or N.2 can be 200G, and the next port must be disabled.
+      [*] 3 = This port is 400G. Only port N.0 can be 400G, and the next 3 ports must be disabled.
+      [/list]
      ";
   regwidth = 64;
   accesswidth = 64;
+
+<% for (my $i = 0; $i < 16; $i++) { %>
   field {
-    encode = rx_voq_lane_cfg_enum;
+    encode = mby_port_cfg_enum;
     AccessType = "RW";
-    desc = "Lane 15 configuration";
+    desc = "Port <%=$i%> configuration";
     ValRandomize = true;
-  } LANE_15[31:30] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 14 configuration";
-    ValRandomize = true;
-  } LANE_14[29:28] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 13 configuration";
-    ValRandomize = true;
-  } LANE_13[27:26] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 12 configuration";
-    ValRandomize = true;
-  } LANE_12[25:24] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 11 configuration";
-    ValRandomize = true;
-  } LANE_11[23:22] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 10 configuration";
-    ValRandomize = true;
-  } LANE_10[21:20] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 9 configuration";
-    ValRandomize = true;
-  } LANE_9[19:18] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 8 configuration";
-    ValRandomize = true;
-  } LANE_8[17:16] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 7 configuration";
-    ValRandomize = true;
-  } LANE_7[15:14] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 6 configuration";
-    ValRandomize = true;
-  } LANE_6[13:12] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 5 configuration";
-    ValRandomize = true;
-  } LANE_5[11:10] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 4 configuration";
-    ValRandomize = true;
-  } LANE_4[9:8] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 3 configuration";
-    ValRandomize = true;
-  } LANE_3[7:6] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 2 configuration";
-    ValRandomize = true;
-  } LANE_2[5:4] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 1 configuration";
-    ValRandomize = true;
-  } LANE_1[3:2] = 2'h0;
-  field {
-    encode = rx_voq_lane_cfg_enum;
-    AccessType = "RW";
-    desc = "Lane 0 configuration";
-    ValRandomize = true;
-  } LANE_0[1:0] = 2'h0;
+  } PORT_<%=$i%> [<%=$i*2+1%>:<%=$i*2%>] = 2'h0;
+<% } %>
+
 };
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SAF_INGRESS_SPEED
+
+reg saf_ingress_speed_r {
+  shared;
+  HandCoded = true;
+  name = "SAF Speeds for Local Ingress Ports.";
+  desc = "
+      Store-and-forward configuration.
+      Speed settings for normal local ingress ports (virtual ports are always SAF).
+      Must use the same encoding as SAF_EGRESS_SPEED.
+      The packet is forced SAF if SAF_INGRESS_SPEED[local_rx_port] is less than SAF_EGRESS_SPEED[tx_port].
+      Therefore only bits 2:0 of each value are implemented (bit 3 is padding, written and read as 0).
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+<% for (my $i = 0; $i < 16; $i++) { %>
+  field {
+    AccessType = "RW";
+    desc = "Port <%=$i%> speed";
+    ValRandomize = true;
+  } PORT_<%=$i%> [<%=$i*4+3%>:<%=$i*4%>] = 4'h0;
+<% } %>
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SAF_EGRESS_SPEED
+
+reg saf_egress_speed_r {
+  shared;
+  HandCoded = true;
+  name = "SAF Speeds for All Egress Ports.";
+  desc = "
+      Store-and-forward configuration.
+      Speed settings for all normal egress ports (virtual ports are always SAF).
+      Must use the same encoding as SAF_INGRESS_SPEED.
+      The packet is forced SAF if SAF_INGRESS_SPEED[local_rx_port] is less than SAF_EGRESS_SPEED[tx_port].
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "Port speed";
+    ValRandomize = true;
+  } SPEED[2:0] = 3'h0;
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SAF_TC
+
+reg saf_tc_r {
+  shared;
+  HandCoded = true;
+  name = "SAF TC Configuration.";
+  desc = "
+      Store-and-forward configuration.
+      Index is normal ingress port (virtual ports are always SAF).
+      The packet is forced store-and-forward if bit TxTC is set.
+      TBD: How many Tx TCs?
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "SAF bit per TxTC";
+    ValRandomize = true;
+  } saf[63:0] = 64'h0;
+
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Rx VOQ addrmap
 
 addrmap mby_rx_voq_map {
   name = "mby_rx_voq";
@@ -120,5 +125,8 @@ addrmap mby_rx_voq_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  rx_voq_lane_cfg_r RX_VOQ_LANE_CFG;
+  rx_voq_port_cfg_r   RX_VOQ_PORT_CFG;
+  saf_ingress_speed_r SAF_INGRESS_SPEED;
+  saf_egress_speed_r  SAF_EGRESS_SPEED[256];
+  saf_tc_r            SAF_TC[16];
 };

@@ -95,8 +95,6 @@ void mbyLpmGetSubtrieStore
 
 #else /* HLP-like legacy register space */
 
-#include <stdio.h>
-
 void mbyLpmGetTcamEntry
 (
           fm_uint32                regs[MBY_REGISTER_ARRAY_SIZE],
@@ -104,7 +102,6 @@ void mbyLpmGetTcamEntry
     mbyLpmTcamEntry        * const tcam_entry
 )
 {
-    printf("Entry %s()\n", __func__);
     /* FIXME set the 1st index of LPM_MATCH_TCAM[0..1][0..511] */
     const fm_uint16 idx0 = 0;
     fm_uint32 tcam_regs[MBY_LPM_MATCH_TCAM_WIDTH] = { 0 };
