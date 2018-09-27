@@ -13,8 +13,8 @@ ngen: clean pre top post
 
 pre:
 	./pre_process.pl
-	$(V2BBOX) -v ./ppe_stm_shells_wrapper_inc.v -n ppe_stm_shells_wrapper -p ../../../target/mby/mgm_run/ppe_stm/src,../../../target/mby/mgm_run/rtl -o ppe_stm_shells_wrapper.v
-	$(V2BBOX) -v ../../../target/mby/mgm_run/ppe_stm/src/mem_wrap/ppe_stm_sram_mems.v -p ../../../target/mby/mgm_run/ppe_stm/src,../../../target/mby/mgm_run/rtl -o ppe_stm_sram_mems.v
+	$(V2BBOX) -v ./ppe_stm_shells_wrapper_inc.v -n ppe_stm_shells_wrapper -p ../../../../../target/mby/mgm_run/ppe_stm/src,../../../../../target/mby/mgm_run/rtl -o ppe_stm_shells_wrapper.v
+	$(V2BBOX) -v ../../../../../target/mby/mgm_run/ppe_stm/src/mem_wrap/ppe_stm_sram_mems.v -p ../../../../../target/mby/mgm_run/ppe_stm/src,../../../../../target/mby/mgm_run/rtl -o ppe_stm_sram_mems.v
 
 top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)

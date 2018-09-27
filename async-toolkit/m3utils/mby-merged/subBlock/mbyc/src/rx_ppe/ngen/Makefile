@@ -16,8 +16,8 @@ ngen: clean top
 
 pre:
 	./pre_process.pl
-	$(V2BBOX) -v ./parser_shells_wrapper_inc.v -n parser_shells_wrapper -p ../../../target/mby/mgm_run/parser/src,../../../target/mby/mgm_run/rtl -o parser_shells_wrapper.v
-	$(V2BBOX) -v ../../../target/mby/mgm_run/parser/src/mem_wrap/parser_ff_mems.v -p ../../../target/mby/mgm_run/parser/src,../../../target/mby/mgm_run/rtl -o parser_ff_mems.v
+	$(V2BBOX) -v ./parser_shells_wrapper_inc.v -n parser_shells_wrapper -p ../../../../../target/mby/mgm_run/parser/src,../../../../../target/mby/mgm_run/rtl -o parser_shells_wrapper.v
+	$(V2BBOX) -v ../../../../../target/mby/mgm_run/parser/src/mem_wrap/parser_ff_mems.v -p ../../../../../target/mby/mgm_run/parser/src,../../../../../target/mby/mgm_run/rtl -o parser_ff_mems.v
 
 top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
