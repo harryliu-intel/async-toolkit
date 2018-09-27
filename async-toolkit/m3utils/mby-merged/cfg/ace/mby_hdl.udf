@@ -132,7 +132,7 @@ EOF
 
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'ec_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -144,7 +144,7 @@ EOF
 
             mby_ingress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'ec_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -161,7 +161,7 @@ EOF
 
             mby_egress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'ec_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
             
@@ -173,7 +173,7 @@ EOF
 
             mby_egress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'ec_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
