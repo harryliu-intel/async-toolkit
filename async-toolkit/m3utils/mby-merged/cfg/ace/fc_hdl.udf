@@ -39,6 +39,7 @@ my @all_hip_liblist = &get_hip_liblist();
 # TODO &fc_global_vars::gen_hip_liblist();
 
 my @FC_VLOG_OPTIONS = (
+#   "+define+AXI_ENV_ENABLE",
 );
 
 for (my $i = 0; $i < @ARGV; $i++) {
@@ -97,7 +98,17 @@ EOF
 
          # Define all the libraries which could be compiled
          libs => {
-             
+             soc_collage_assemble_lib => {
+                    -tag      => "nonsynth+nonemu",
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/soc_assemble_collage.hdl",
+                    ],
+                    -vlog_opts => [ "+v2k", "-sverilog", ],
+#                    -dependent_libs => [ "sip_shared_lib"],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+
              fc_tests_lib => {
                  -hdl_spec => [
                      "verif/gen/fc_test.hdl",
@@ -210,31 +221,31 @@ EOF
                  ],
              },
 
-#             generated_collateral_lib => {
-#                 -tag      => "nonsynth+nonemu",
-#                 -enable_sim_init => 1,
-#                 -dependent_libs => [ $fc_global_vars::COLLAGE_LIB,],
-#                 -tools          => [ "-vcs_createlib",
-#                                      "-nebulon",
-#                                      "-socfusegen",
-#                                      "-cpp",
-#                                      (&ToolConfig::get_facet('ace_model_name') =~ /dft/) ? "+vtpsim_connect"   : "+dutconnect",
-#                                      (&ToolConfig::get_facet('ace_model_name') =~ /dft/) ? "+gen_dft_testlist" : "+gen_testlist",
-#                                      (&ToolConfig::get_facet('ace_model_name') =~ /dft/) ? "+gen_spf_files"    : (),
-#                                      "+gen_subip",
-#                                      "+gen_default_liblist",
-#                                      #"+sb_decode_gen",
-#                                    ],
-#              },
+             generated_collateral_lib => {
+                 -tag      => "nonsynth+nonemu",
+                 -enable_sim_init => 1,
+                 -dependent_libs => [ $fc_global_vars::COLLAGE_LIB,],
+                 -tools          => [ "-vcs_createlib",
+                                      "-nebulon",
+                                      "-socfusegen",
+                                      "-cpp",
+                                      (&ToolConfig::get_facet('ace_model_name') =~ /dft/) ? "+vtpsim_connect"   : "+dutconnect",
+                                      (&ToolConfig::get_facet('ace_model_name') =~ /dft/) ? "+gen_dft_testlist" : "+gen_testlist",
+                                      (&ToolConfig::get_facet('ace_model_name') =~ /dft/) ? "+gen_spf_files"    : (),
+                                      "+gen_subip",
+                                      "+gen_default_liblist",
+                                      #"+sb_decode_gen",
+                                    ],
+              },
 
-#             fc_top_lib => {
-#                 -generated => 1,
-#                 -hdl_spec => [
-#                     "cfg/ace/HDL/dummy.hdl",
-#                     &ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/soc.hdl",
-#                 ],
-#                 -dependent_libs => ["soc_collage_assemble_lib",],
-#             },
+             fc_top_lib => {
+                 -generated => 1,
+                 -hdl_spec => [
+                     "cfg/ace/HDL/dummy.hdl",
+                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/soc.hdl",
+                 ],
+                 -dependent_libs => ["soc_collage_assemble_lib",],
+             },
 
              fc_hvl_top_lib => {
                  -generated => 1,   # looking up verif/gen
@@ -377,13 +388,14 @@ EOF
                   "gen_mby_regflow_lib",
                   "gen_mby_wm",
                   "gen_mby_wm_m3",
+                  "soc_collage_assemble_lib",
              
-#kl                  (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
+                  (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
                   $fc_global_vars::IP_STUB_LIB,
                   "fc_hdl_top_lib",
                   "fc_hvl_top_lib",
                   "fc_env_lib",
-#kl                  "fc_tests_lib",
+                  "fc_tests_lib",
                   "fc_seq_lib",
                   "generated_collateral_lib",
                   @all_sip_rtl_liblist,
