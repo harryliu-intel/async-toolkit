@@ -3,7 +3,6 @@
 mpp [
   foreach $i (0,1) {
     mgp$i of mgp with mgp.map $i
-    ppestm$i of ppe_stm_top with ppestm.map $i
   }
-  // ppestm of ppe_stm_top with ppestm.map
+  ppestm of ppe_stm_top with ppestm.map
 ]
