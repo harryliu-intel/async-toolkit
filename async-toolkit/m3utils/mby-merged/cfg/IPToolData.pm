@@ -55,6 +55,7 @@ IPToolDataExtras::import_files("ipconfig",\%ToolConfig_tools);
 $ToolConfig_ips{mby}{OTHER}{LIBS} = [
    "&get_tool_path()/cfg",
    "&get_tool_path()/cfg/ace/lib",
+   "&get_tool_path()/cfg/ace",
 ];
 
 push (@{$ToolConfig_ips{mby}{OTHER}{SUB_SCOPES}}, (
@@ -173,4 +174,14 @@ $ToolConfig_ips{fdo_tools} = {
    },
 };
 
+$ToolConfig_ips{VTE_TR_UVM} = {
+    VERSION => "vte-tr-uvm-18ww38a",
+    PATH    => "&get_tool_path(ipconfig/mby)/&get_tool_version()",
+    OTHER   => {
+         SEARCH_PATHS   => "&get_tool_path()",
+    },
+    ENV     => {
+         VTE_TR_UVM_ROOT => "&get_tool_path()",
+    },
+};
 1;
