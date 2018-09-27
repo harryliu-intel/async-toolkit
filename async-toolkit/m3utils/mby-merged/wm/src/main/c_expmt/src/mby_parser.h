@@ -142,6 +142,7 @@
 #define MBY_PA_ANA_OP_MASK_BITS        0xFFF
 #define MBY_PA_ANA_OP_ROT_BITS         0x0F
 #define MBY_PA_ANA_OP_ROT_SHIFT        0xC
+#define MBY_PA_PROT_ID_NOP             0xFF
 
 // Enums:
 
@@ -241,7 +242,7 @@ typedef struct mbyParserToMapperStruct
     fm_uint16               PA_KEYS      [MBY_N_PARSER_KEYS]; // 16-bit parser keys
     fm_bool                 PA_KEYS_VALID[MBY_N_PARSER_KEYS]; // parser keys valid flags
     fm_bool                 PA_L3LEN_ERR;                     // l3 length error
-    fm_byte                 PA_PACKET_TYPE;                   // packet type (new for MBY)
+    fm_uint16               PA_PACKET_TYPE;                   // packet type (new for MBY)
     fm_byte                 PA_PTRS      [MBY_N_PARSER_PTRS]; // pointers to data of interest within packet
     fm_bool                 PA_PTRS_VALID[MBY_N_PARSER_PTRS]; // parser pointers valid flags
     fm_uint32               RX_LENGTH;                        // ingress packet data length [bytes]

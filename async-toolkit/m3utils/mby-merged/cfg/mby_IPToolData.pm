@@ -37,6 +37,7 @@ $ToolConfig_ips{mby} = {
       SEARCH_PATHS        => ["&get_tool_path()",
                               "&get_tool_path()/cfg",
                               "&get_tool_path()/cfg/ace",
+                              "&get_tool_path()/subBlock/mbyc",
                               "&get_tool_var(ipconfig/eth_port, SEARCH_PATHS)",
       ],
       lintra_waiver_dirs  => [],
@@ -53,7 +54,7 @@ $ToolConfig_ips{mby} = {
 ######################################################################
 IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 
-my $epl_version = "eth_port-dev-x0-18ww34b";
+my $epl_version = "eth_port-dev-x0-18ww38c";
 
 $ToolConfig_ips{epl} = {
    PATH    => "$ENV{IP_MODELS}/eth_port/$epl_version",
