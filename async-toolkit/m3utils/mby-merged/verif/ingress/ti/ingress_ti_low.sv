@@ -45,7 +45,6 @@ module ingress_ti_low #(
 
   import sla_pkg::*;
   import ingress_env_pkg::*;
-  import ec_env_pkg::*;
 
 `include "ingress_params.sv"
 `include "ingress_defines.sv"
@@ -53,8 +52,8 @@ module ingress_ti_low #(
   // Adding MBY if to Saola container
   initial begin
     sla_pkg::slu_resource_db#(virtual ingress_env_if)::add("ingress_if", ingress_if, `__FILE__, `__LINE__);
-    uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "cdi_tx_vintf" , cdi_tx_intf);
-    uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "cdi_rx_vintf" , cdi_rx_intf);
+    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "cdi_tx_vintf" , cdi_tx_intf);
+    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "cdi_rx_vintf" , cdi_rx_intf);
   end
 
   ingress_ti_config ti_config;
