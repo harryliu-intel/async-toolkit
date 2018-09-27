@@ -205,6 +205,10 @@ $ToolConfig_tools{jasper_utils} = {
   VERSION => "14.06.20",
 };
 
+# Added sim_init stage for automating FC collaterals generation
+$ToolConfig_tools{stage_bman_sim_init}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/sim_init.pm";
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}},  "&get_tool_var(stage_bman_sim_init, modules)");
+
 $ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
 
 $ToolConfig_tools{"mgm"} = {
