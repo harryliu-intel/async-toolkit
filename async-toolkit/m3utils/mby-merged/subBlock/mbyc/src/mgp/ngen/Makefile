@@ -4,7 +4,7 @@ NGEN          = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/ngen_i/ngen_i.pl
 NGEN_FLAGS    = -fi=INTCNOPWR
 V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
-V_DIRS        = -d=../../rtl/igr/verilog \
+V_DIRS        = -d=../../igr/rtl \
                 -d=../../rtl/egr/verilog \
                 -d=../../tx_ppe/rtl \
                 -d=../../rx_ppe/rtl \
