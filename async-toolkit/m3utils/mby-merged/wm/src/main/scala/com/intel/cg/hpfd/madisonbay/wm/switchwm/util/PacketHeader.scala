@@ -1,24 +1,29 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.Implicits
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader.maxSegmentSize
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader.portionSegmentFPP
 
 object PacketHeader {
 
   def apply(bytes: Array[Byte]): PacketHeader = new PacketHeader(bytes)
 
-  val maxSegmentSize = 192
+  // Full Packet Processing portion of the header segment (192B)
+  // Header information that exceed 192B will be ignored
+  val portionSegmentFPP = 192
+
+  // Light Packet Processing portion of the header segment (128B)
+  val portionSegmentLPP = 128
 
 }
 
 
-class PacketHeader(val bytes: IndexedSeq[Byte]) {
+class PacketHeader(bytes: IndexedSeq[Byte]) {
 
   val adjustedSegmentLength: Int = {
     if (bytes.length < 4) {
       bytes.length
-    } else if ((bytes.length - 4) > maxSegmentSize) {
-      maxSegmentSize
+    } else if ((bytes.length - 4) > portionSegmentFPP) {
+      portionSegmentFPP
     } else {
       bytes.length - 4
     }
@@ -30,20 +35,18 @@ class PacketHeader(val bytes: IndexedSeq[Byte]) {
     * Used in parser to help distinguish between exceeding parser depth and
     * exceeding packet size
     */
-  val eop: Boolean = (bytes.length - 4) <= maxSegmentSize
+  val eop: Boolean = (bytes.length - 4) <= portionSegmentFPP
 
   def apply(addr: Int): Byte = bytes(addr)
 
   def getWord(addr: Int): Short = ((apply(addr + 1) << 8) | apply(addr)).toShort
 
   def ipVersion: IPVersion.Value = bytes(0).nib(1) match {
-      case IPVersion.IpV4Int => IPVersion.IPV4
-      case IPVersion.IpV6Int => IPVersion.IPV6
-    }
-
-  def totalLength: Int = {
-    getWord(2)
+    case IPVersion.IpV4Int => IPVersion.IPV4
+    case IPVersion.IpV6Int => IPVersion.IPV6
   }
+
+  def totalLength: Int = getWord(2)
 
   /**
     * Validate Packet Length from Header. Only checked for IPv4 packets.
