@@ -9,7 +9,7 @@
 #/////////////////////////////////////////////////////////////////////////////
 
 RTL_SRC = ../..
-TARGET_SRC = ../../../target
+TARGET_SRC = ../../../../../target
 DV_SRC = ../sandbox/dv/verilog
 ASSERT_LIB = /p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64
 SHARED_SRC = ../../shared
@@ -23,6 +23,7 @@ INCS += $(TARGET_SRC)/mby/mgm_run/parser/src
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/rtl
 INCS += $(ASSERT_LIB)/SVA_LIB
+INCS += /p/hdk/cad/ctech/v15ww50e/source/v
 
 VCS_INC = $(addprefix +incdir+,$(INCS))
 
