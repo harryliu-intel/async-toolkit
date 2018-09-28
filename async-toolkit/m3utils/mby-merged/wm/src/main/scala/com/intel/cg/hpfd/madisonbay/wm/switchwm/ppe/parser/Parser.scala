@@ -1,7 +1,7 @@
-
+//scalastyle:off regex.tuples
+//scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
-import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
 import ParserTcam._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
@@ -10,71 +10,67 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader}
+import scalaz.State
+import scalaz.syntax.traverse._
+import scalaz.std.list._
 
-
-class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput] {
+class Parser(csr: mby_ppe_parser_map.mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput] {
 
   val stages: IndexedSeq[ParserStage] = (0 until parserStages).map(i => new ParserStage(csr, i))
 
   def initialState(ph: PacketHeader, port: PortIndex): Parser.ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(port.p)
     val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
-    val w = initWOffsets.map(off => ph.getWord(off.toInt))
-    val aluOp = AluOperation(portCfg.INITIAL_OP_ROT.toShort, portCfg.INITIAL_OP_MASK.toShort)
-    val state = portCfg.INITIAL_STATE.toShort
-    val ptr = portCfg.INITIAL_PTR.toShort
-    ParserState(w, aluOp, state, ptr)
+    val w = initWOffsets.map(off => ph.getWord(off().toInt))
+    val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
+    val state = portCfg.INITIAL_STATE().toShort
+    val ptr = portCfg.INITIAL_PTR().toShort
+    ParserState(w,aluOp, state, ptr)
   }
 
   def packetType(pf: PacketFlags): (PacketType, ExtractionIndex) = {
     val interface = 0
-    val tcamCsr = csr.PARSER_PTYPE_TCAM(interface)
-    val sramCsr = csr.PARSER_PTYPE_RAM(interface)
+    val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
+    val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
+
     val tc = tcamMatch.curried(standardTcamMatchBit)
-    tcamCsr.zip(sramCsr).
-      reverse.
-      collectFirst {
-        case (xk,yk) if tc(xk.KEY_INVERT, xk.KEY, pf.toLong) => (yk.PTYPE().toInt, yk.EXTRACT_IDX().toInt)
-      }.
-      getOrElse((0,0))
+    tcamCsr.zip(sramCsr).reverse.collectFirst{
+      case (x,y) if tc(x.KEY_INVERT, x.KEY, pf.toLong) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
+    }.getOrElse((0,0))
   }
 
-  def saturatingIncrement(limit: Long)(field: RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable): Unit = {
-    val u: Long = math.min(limit, field() + 1)
-    field.update(u)
-  }
+  def incrementWithSaturation(saturation: Long): Long => Long = l => math.min(l + 1, saturation)
 
-  //scalastyle:off
+  //scalastyle:off magic.number
   def extractKeys(packetHeader: PacketHeader, protoOffsets: ProtoOffsets): PacketFields = {
+    val ph = packetHeader
     val fieldProfile = 0
-    val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile)
+    val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile).PARSER_EXTRACT_CFG
+    val countersL  = mby_ppe_parser_map.mby_ppe_parser_map._PARSER_COUNTERS
 
-    def satacc8b(field: RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable): Unit = saturatingIncrement(255)(field)
+    def modify(parserExtractCfgReg: parser_extract_cfg_r.parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map.mby_ppe_parser_map), Unit] =
+      State(actualState => {
+        val (result, mbyPpeParserMap) = actualState
+        val protocolId = parserExtractCfgReg.PROTOCOL_ID()
+        def toWordWithOffset(v: Int): Short = ph.getWord(v + parserExtractCfgReg.OFFSET().toInt)
 
-    // each of the 80 fields of the vector has a configuration in the CSR
-    val f: IndexedSeq[Short] = extractorCsr.map { a =>
-      (a.PROTOCOL_ID(), protoOffsets.collect { case i if i._1 == a.PROTOCOL_ID() => i._2 }) match {
-
-        case (0xFF, _) => 0.toShort
-
-        case (_, pofs) => pofs.length match {
-
-          case 0 =>
-            satacc8b(csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID)
-            0.toShort
-
-          case 1 =>
-            packetHeader.getWord(pofs.head + a.OFFSET().toInt)
-
-          case _ => // i.e. > 1
-            // behavior of duplicate condition is a bit arbitrary (should not happen in valid configuration)
-            satacc8b(csr.PARSER_COUNTERS.EXT_DUP_PROTID)
-            packetHeader.getWord(pofs.head + a.OFFSET().toInt)
-
+        (protocolId, protoOffsets.collect { case (pId, baseOffset) if pId == protocolId => baseOffset }.toList) match {
+          case (0xFF, _) => ((0.toShort :: result, mbyPpeParserMap), ())
+          case (_, Nil) =>
+            val next = countersL.modify(_.EXT_UNKNOWN_PROTID.modify(incrementWithSaturation(255)))
+            ((0.toShort :: result, next(mbyPpeParserMap)), ())
+          case (_, h :: Nil) =>
+            ((toWordWithOffset(h) :: result, mbyPpeParserMap),())
+          case (_, h :: _) =>
+            val next = countersL.modify(_.EXT_DUP_PROTID.modify(incrementWithSaturation(255)))
+            ((toWordWithOffset(h) :: result, next(mbyPpeParserMap)), ())
         }
-      }
-    }
-    PacketFields(f)
+      })
+
+    val ((result, _), _) = extractorCsr.toList.traverseS(modify)((List.empty, csr))
+
+    // TODO: handle the state here
+    PacketFields(result.reverse.toIndexedSeq)
   }
   //scalastyle:on
 

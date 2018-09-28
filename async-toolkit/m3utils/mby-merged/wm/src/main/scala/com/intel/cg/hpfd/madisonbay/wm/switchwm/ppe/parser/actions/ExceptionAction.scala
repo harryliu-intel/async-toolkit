@@ -6,7 +6,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 class ExceptionAction(exOffset: Short, parsingDone: Boolean) {
 
   def x(ph: PacketHeader, currentOffset: Int, stage: Int): Option[ParserException] = {
-    if (eos(ph, currentOffset) & ph.eop ) {
+    if (eos(ph, currentOffset) & ph.eop) {
       Some(ParseDepthExceededException(stage))
     } else if (eos(ph, currentOffset) & ph.eop) {
       Some(ParseDepthExceededException(stage))

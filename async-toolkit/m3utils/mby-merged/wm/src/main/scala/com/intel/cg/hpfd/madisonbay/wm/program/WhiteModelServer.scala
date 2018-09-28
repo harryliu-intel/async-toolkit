@@ -5,17 +5,25 @@ import java.io._
 
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
+import java.net._
+import com.intel.cg.hpfd.csr.generated.mby_top_map
+import com.intel.cg.hpfd.madisonbay.Memory._
+import monocle.Optional
 
 object WhiteModelServer {
   val legacyProtocol = false
 
+  val initialAddress = Address at (0 bytes)
+
   // prototype example! -- obviously this ought to be the 'real' CSR state/white model
   val csrSpace = new scala.collection.mutable.HashMap[Int, Byte]
 
-  import java.net._
+  val csrs = mby_top_map.mby_top_map(initialAddress)
+  val paths = mby_top_map.mby_top_map.genOpticsLookup(csrs, Optional.id)
+
   val egressPortToSocketAndStreamMap = new collection.mutable.HashMap[Int, (Socket, DataOutputStream)]()
 
-  val iosfHandling = new IosfHandling(csrSpace)
+  val iosfHandling = new IosfHandling(csrSpace, paths)
   val packetHandling = new PacketHandling(egressPortToSocketAndStreamMap, legacyProtocol)
   val egressInfoHandling = new EgressInfoHandling(egressPortToSocketAndStreamMap, legacyProtocol)
 
@@ -23,7 +31,7 @@ object WhiteModelServer {
     println("Received quit operation!")
   }
 
-  def processMessage(is: DataInputStream, os: DataOutputStream): Any = {
+  def processMessage(mtm: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): Any = {
 
     val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
@@ -34,7 +42,7 @@ object WhiteModelServer {
     hdr.Type match  {
       case FmModelMsgType.Packet => packetHandling.processPacket(is, os, hdr)
       case FmModelMsgType.Mgmt => Unit
-      case FmModelMsgType.Iosf => iosfHandling.processIosf(is, os)
+      case FmModelMsgType.Iosf => iosfHandling.processIosf(mtm, is, os)
       case FmModelMsgType.SetEgressInfo => egressInfoHandling.processEgressInfo(is, toGo, hdr)
       case FmModelMsgType.CommandQuit => assert(false)
       case _ =>
@@ -66,7 +74,7 @@ object WhiteModelServer {
       val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
 
       try {
-        while (true) processMessage(is, os)
+        while (true) processMessage(csrs, is, os)
       } catch {
         case _: EOFException =>
           println("Termination of IO from client without shutdown command " + s.getInetAddress.getHostName)

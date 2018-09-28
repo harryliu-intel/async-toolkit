@@ -20,7 +20,7 @@ lazy val csrMacros = (project in file("csr-macros"))
     Settings.commonSettings,
     name := Settings.csrMacrosName,
     libraryDependencies ++= Dependencies.csrMacrosDeps,
-    addCompilerPlugin(Dependencies.scalaMacros),
+    addCompilerPlugin(Dependencies.scalaMacrosParadise),
     autoCompilerPlugins := true,
     scalacOptions -= "-Ywarn-unused:patvars"
   )
@@ -31,6 +31,8 @@ lazy val csr = (project in file("csr"))
   .settings(
     Settings.commonSettings,
     name := Settings.csrName,
+    addCompilerPlugin(Dependencies.scalaMacrosParadise),
+    libraryDependencies ++= Dependencies.csrDeps,
     version := rdlGitHashShortProjectVersion.value,
     // some imports are unused among generated hierarchy
     scalacOptions -= "-Ywarn-unused:imports"
@@ -58,7 +60,8 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
     mainClass in Compile := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
     mainClass in assembly := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
-    assemblyOutputPath in assembly := path
+    assemblyOutputPath in assembly := path,
+    fork in run := true
   )
 
 val publishArtifacts = taskKey[Unit]("Publish artifacts only if current user is npgadmin.")

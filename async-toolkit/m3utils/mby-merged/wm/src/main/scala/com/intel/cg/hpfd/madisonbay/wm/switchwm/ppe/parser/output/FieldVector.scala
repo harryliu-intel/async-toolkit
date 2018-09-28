@@ -1,4 +1,4 @@
-
+//scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output
 
 import FieldVector._

@@ -34,7 +34,7 @@ object IPV4Util {
           val hibits = (byte.head << 8) & 0xff00
           val lowbits = byte(1) & 0xff
           val addend: Int = lowbits + hibits
-          addUnsignedShort(acc, addend.toShort )
+          addUnsignedShort(acc, addend.toShort)
         }
       }
     // fold the high and low 16 bit components together and bitwise invert the result to get the checksum
