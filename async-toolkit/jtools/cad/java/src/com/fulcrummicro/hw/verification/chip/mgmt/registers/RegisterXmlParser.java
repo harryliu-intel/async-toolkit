@@ -485,6 +485,7 @@ public class RegisterXmlParser {
             int position = Integer.parseInt(childNode(currentFieldNode, "position").getTextContent().trim());
             int length = Integer.parseInt(childNode(currentFieldNode, "length").getTextContent().trim());
             RegisterType fieldType = Enum.valueOf(RegisterType.class, childNode(currentFieldNode, "type").getTextContent());
+            RegisterDataType fieldDataType = Enum.valueOf(RegisterDataType.class, childNode(currentFieldNode, "dataType").getTextContent().toUpperCase());
             String description = childNode(currentFieldNode, "description").getTextContent();
 
             int entries = 1;
@@ -535,7 +536,7 @@ public class RegisterXmlParser {
             HashMap<String, String> implementation = importImplementation(currentFieldNode);
 
             if(fieldName != "") {
-                RegisterField rf = new RegisterField(fieldName, position, length, fieldType, false, typedef, entries, baseEntry);
+                RegisterField rf = new RegisterField(fieldName, position, length, fieldType, fieldDataType, false, typedef, entries, baseEntry);
                 rf.originalDesc = originalFieldName;
                 rf.implementation = implementation;
                 rf.fullDescription = description;
@@ -547,7 +548,7 @@ public class RegisterXmlParser {
 
             }
             if(!excludeOldName && (oldFieldName != "")) {
-                RegisterField rf = new RegisterField(oldFieldName, position, length, fieldType, false, typedef, entries, baseEntry);
+                RegisterField rf = new RegisterField(oldFieldName, position, length, fieldType, fieldDataType, false, typedef, entries, baseEntry);
                 rf.implementation = implementation;
                 rf.fullDescription = description;
                 RegisterField removed = fields.put(oldFieldName.toLowerCase(), rf);

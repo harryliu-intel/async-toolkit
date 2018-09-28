@@ -100,6 +100,7 @@
         <xs:element ref="position"/>
         <xs:element ref="length"/>
         <xs:element ref="type"/>
+        <xs:element ref="dataType"/>
         <xs:element ref="entries" minOccurs="0"/>
         <xs:element ref="baseEntry" minOccurs="0"/>
         <xs:element ref="description"/>
@@ -183,6 +184,15 @@
         <xs:enumeration value="RV"/>
         <xs:enumeration value="NA"/>
         <xs:enumeration value="WO"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+  <xs:element name="dataType">
+    <xs:simpleType>
+      <xs:restriction base="xs:string">
+        <xs:enumeration value="unsigned"/>
+        <xs:enumeration value="signed"/>
+        <xs:enumeration value="bool"/>
       </xs:restriction>
     </xs:simpleType>
   </xs:element>

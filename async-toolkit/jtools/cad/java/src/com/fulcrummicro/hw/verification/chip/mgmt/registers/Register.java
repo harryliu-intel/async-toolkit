@@ -572,7 +572,13 @@ public class Register extends RegisterStruct {
 
             if(field.pos + field.len > 32 * width) {
                 System.err.println("    ERROR*: " + name + "." + field.desc +
-                    "extends beyond end of register width");
+                    " extends beyond end of register width");
+                failed = true;
+            }
+
+            if (field.dataType == RegisterDataType.BOOL && field.len != 1) {
+                System.err.println("    ERROR*: " + name + "." + field.desc +
+                    " has data type bool but length of " + field.len + "!=1");
                 failed = true;
             }
 

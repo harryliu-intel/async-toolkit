@@ -46,7 +46,8 @@ public class RegisterStruct {
                     foundArray = true;
                     int pos = field.pos + i * field.len;
                     RegisterField rf = new RegisterField(String.format("%s_%d", field.desc, i), 
-                                                         pos, field.len, field.type, field.oldVersion, field.typedef,
+                                                         pos, field.len, field.type, field.dataType,
+                                                         field.oldVersion, field.typedef,
                                                          field.entries, field.baseEntry);
                     rf.currentEntry = i;
                     rf.implementation = field.implementation;
@@ -117,7 +118,8 @@ public class RegisterStruct {
             if((currentPos < field.pos) && includeReserved) {
                 RegisterField reserved = new RegisterField(String.format("reserved%d", reservedCount++), 
                                                            currentPos, field.pos - currentPos,
-                                                           RegisterType.RV, false, null);
+                                                           RegisterType.RV, RegisterDataType.UNSIGNED,
+                                                           false, null);
                 if(reversed) result.add(0, reserved); else result.add(reserved);
             }
             if(reversed) result.add(0, field); else result.add(field);

@@ -125,7 +125,7 @@ define <% camelCaseBaseName %>RegisterFields ()() attributes {
       int(<% ((Register)rs).getImplementationWidth() - ((Register)rs).getNumberFieldBits() %>) RESERVED_IMPLEMENTATION_BITS;
 </%if>\
 <%for RegisterField field : rs.getSortedFields(true) %>\
-      int(<% field.len %>) <% field.desc %><%if field.entries>1 %>[<% field.baseEntry %>..<% field.entries-1 %>]</%if>;
+      <% field.dataType.toCspType(field.len) %> <% field.desc %><%if field.entries>1 %>[<% field.baseEntry %>..<% field.entries-1 %>]</%if>;
 </%for>\
 <%else>\
       // ERROR: field overlap

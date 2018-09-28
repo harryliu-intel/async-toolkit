@@ -38,6 +38,7 @@ my @elementIndexes;
 my @fieldName;
 my @fieldWidth;
 my @fieldType;
+my @fieldDataType;
 my @fieldDescription;
 my @fieldDefault;
 my @fieldValueCount;
@@ -314,15 +315,23 @@ while ($line) {
     }
     elsif ( $line =~ m/^\s*\+/ )
     {
-        if ( $line =~ m/^\s*\+(\S*):([^:]*):([^:]*):([^:\s]*)\s*.*$/ )
+        if ( $line =~ m/^\s*\+([^:\s]*):([^:]*)
+                                               (?::([^:]*)
+                                                          (?::([^:]*)
+                                                                     (?::([^:\s]*)
+                                                                     )?
+                                                          )?
+                                               )?
+                        \s*.*$/x )
         {
             # Save running description
             reformat_description();
             # Save new field
             $fieldName[$fieldNo] = $1;
             $fieldWidth[$fieldNo] = $2;
-            $fieldType[$fieldNo] = $3;
-            my $val = $4;
+            $fieldType[$fieldNo] = $3 // "RW";
+            my $val = $4 // '0';
+            $fieldDataType[$fieldNo] = $5 // "unsigned";
             if ( $val =~ m/^(0x[0-9a-zA-Z]*)$/ )
             {
                 $val = $1;
@@ -342,8 +351,8 @@ while ($line) {
                 printf ("Error at line #$lineNo: invalid default printf <$val>\n");
                 $error = 1;
             }
-            
             $fieldDefault[$fieldNo] = $val;
+
             $fieldType[$fieldNo] =~ tr/a-z/A-Z/;
             $fieldDescription[$fieldNo] = "";
             $fieldValueCount[$fieldNo] = 0;
@@ -351,41 +360,7 @@ while ($line) {
             $fieldNo++;
             $inField = 1;
             $descriptionLine = 0;
-        }
-        elsif ( $line =~ m/^\s*\+(\S*):([^:]*):([^:]*)\s*.*$/ )
-        {
-            # Save running description
-            reformat_description();
-            # Save new field
-            $fieldName[$fieldNo] = $1;
-            $fieldWidth[$fieldNo] = $2;
-            $fieldType[$fieldNo] = $3;
-            $fieldType[$fieldNo] =~ tr/a-z/A-Z/;
-            $fieldDefault[$fieldNo] = 0;
-            $fieldDescription[$fieldNo] = "";
-            $fieldValueCount[$fieldNo] = 0;
-            $fieldNote[$fieldNo] = "";
-            $fieldNo++;
-            $inField = 1;
-            $descriptionLine = 0;
-        }
-        elsif ( $line =~ m/^\s*\+(\S*):([^:]*)\s*.*$/ )
-        {
-            # Save running description
-            reformat_description();
-            # Save new field
-            $fieldName[$fieldNo] = $1;
-            $fieldWidth[$fieldNo] = $2;
-            $fieldType[$fieldNo] = "RW";
-            $fieldType[$fieldNo] =~ tr/a-z/A-Z/;
-            $fieldDefault[$fieldNo] = 0;
-            $fieldDescription[$fieldNo] = "";
-            $fieldValueCount[$fieldNo] = 0;
-            $fieldNote[$fieldNo] = "";
-            $fieldNo++;
-            $inField = 1;
-            $descriptionLine = 0;
-        }
+		}
         else
         {
             $error = 1;
@@ -873,6 +848,9 @@ sub write_register
             
             # Write type 
             printf OUTFILE ("              <type>$fieldType[$i]</type>\n");
+
+            # Write data type 
+            printf OUTFILE ("              <dataType>$fieldDataType[$i]</dataType>\n");
             
             # Write number of entries and base entry if needed
             if ( $from >= 0 && $to >= $from )

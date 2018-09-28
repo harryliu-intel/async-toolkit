@@ -38,7 +38,7 @@
         <!ELEMENT fields (field*)>
         <!ELEMENT coverage (test*)>
         <!ELEMENT test (#PCDATA)>
-          <!ELEMENT field (name, oldName?, globalName?, specialFeature?, position, length, type, entries?, baseEntry?, description, default+, values?, notes?, coverage?)>
+          <!ELEMENT field (name, oldName?, globalName?, specialFeature?, position, length, type, dataType, entries?, baseEntry?, description, default+, values?, notes?, coverage?)>
             <!-- name -->
             <!-- oldName -->
             <!ELEMENT globalName (#PCDATA)>
@@ -46,6 +46,7 @@
             <!ELEMENT position (#PCDATA)>
             <!-- length -->
             <!ELEMENT type (#PCDATA)>
+            <!ELEMENT dataType (#PCDATA)>
             <!-- description -->
             <!ELEMENT default (#PCDATA)>
               <!ATTLIST default entryStart CDATA #IMPLIED>

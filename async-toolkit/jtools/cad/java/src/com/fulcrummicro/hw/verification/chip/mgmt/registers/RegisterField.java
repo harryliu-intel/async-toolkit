@@ -31,6 +31,8 @@ public class RegisterField {
     public boolean oldVersion = false;
 
     public RegisterType type;
+
+    public RegisterDataType dataType;
     
     public ConstantsEnum typedef;
     HashMap<String, String> implementation = null;
@@ -39,22 +41,24 @@ public class RegisterField {
     public int baseEntry = 0;
     public int currentEntry = 0;
 
-    protected RegisterField(String desc, int pos, int len, RegisterType type, boolean old, ConstantsEnum typedef) {
+    protected RegisterField(String desc, int pos, int len, RegisterType type, RegisterDataType dataType, boolean old, ConstantsEnum typedef) {
         this.desc = desc;
         this.originalDesc = desc;
         this.pos = pos;
         this.len = len;
         this.type = type;
+        this.dataType = dataType;
         this.oldVersion = old;
         this.typedef = typedef;
     }
 
-    protected RegisterField(String desc, int pos, int len, RegisterType type, boolean old, ConstantsEnum typedef, int entries, int baseEntry) {
+    protected RegisterField(String desc, int pos, int len, RegisterType type, RegisterDataType dataType, boolean old, ConstantsEnum typedef, int entries, int baseEntry) {
         this.desc = desc;
         this.originalDesc = desc;
         this.pos = pos;
         this.len = len;
         this.type = type;
+        this.dataType = dataType;
         this.oldVersion = old;
         this.typedef = typedef;
         this.entries = entries;

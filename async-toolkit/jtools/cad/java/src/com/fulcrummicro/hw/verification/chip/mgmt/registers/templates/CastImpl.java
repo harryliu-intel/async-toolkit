@@ -1309,28 +1309,28 @@ int mgmtDataBits = (group == null) ? 32*maxAtomicWidth : maxSramBits;
       for (RegisterField field : rs.getSortedFields(true) )
       {
         // 127, 56
-        jamonWriter.write("      int(");
-        // 128, 11
-        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(field.len), jamonWriter);
-        // 128, 26
-        jamonWriter.write(") ");
-        // 128, 28
+        jamonWriter.write("      ");
+        // 128, 7
+        org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(field.dataType.toCspType(field.len)), jamonWriter);
+        // 128, 48
+        jamonWriter.write(" ");
+        // 128, 49
         org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(field.desc), jamonWriter);
-        // 128, 44
+        // 128, 65
         if (field.entries>1 )
         {
-          // 128, 67
+          // 128, 88
           jamonWriter.write("[");
-          // 128, 68
-          org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(field.baseEntry), jamonWriter);
           // 128, 89
+          org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(field.baseEntry), jamonWriter);
+          // 128, 110
           jamonWriter.write("..");
-          // 128, 91
-          org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(field.entries-1), jamonWriter);
           // 128, 112
+          org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(field.entries-1), jamonWriter);
+          // 128, 133
           jamonWriter.write("]");
         }
-        // 128, 119
+        // 128, 140
         jamonWriter.write(";\n");
       }
     }
