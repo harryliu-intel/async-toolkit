@@ -1,0 +1,4 @@
+# This file contains global GPIO connectivity specs
+# It should NOT include other connectivity specs
+# See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
+##############################################################################

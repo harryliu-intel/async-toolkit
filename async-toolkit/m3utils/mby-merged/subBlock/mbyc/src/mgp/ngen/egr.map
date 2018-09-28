@@ -9,8 +9,7 @@ egr_tagring_if        >> tagring_if
 egr_statsmgmt_if      >> statsmgmt_if
 egr_txppe0_if         >> tx_ppe_if0
 egr_txppe1_if         >> tx_ppe_if1
-egr_ppestm_if0        >> ppe_stm_if0
-egr_ppestm_if1        >> ppe_stm_if1
+egr_ppestm_if         >> ppe_stm_if
 egr_epl0_if           >> epl_if0
 egr_epl1_if           >> epl_if1
 egr_epl2_if           >> epl_if2

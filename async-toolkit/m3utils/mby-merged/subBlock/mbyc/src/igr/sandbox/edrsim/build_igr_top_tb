@@ -21,13 +21,14 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 -assert enable_diag \
 -assert let \
 -assert enable_hier \
-+incdir+../verilog \
++incdir+../../rtl \
 +incdir+./ \
 +incdir+/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver \
-../verilog/mby_igr_pkg.sv \
+../../rtl/mby_igr_pkg.sv \
 ../../../shared/rtl/shared_pkg.sv \
 ../../../shared/interfaces/igr_rx_ppe_if.sv \
 ../../../shared/interfaces/rx_ppe_igr_if.sv \
-../epl_shim/verilog/igr_epl_shim.sv \
-../verilog/igr_top.sv \
+../../epl_shim/rtl/igr_epl_shim_ctrl.sv \
+../../epl_shim/rtl/igr_epl_shim.sv \
+../../rtl/igr_top.sv \
 ./tb_igr_top.sv

@@ -80,7 +80,7 @@ end
 igr_top
   top(
   // Clock.
-  .clk(cclk),
+  .cclk(cclk),
   // Unsynchronized warm reset.
   .rst_n(rst_n),
       
@@ -129,7 +129,7 @@ igr_top
   .vp_rx_ecc(vp_rx_ecc),
   .vp_rx_port_num(vp_rx_port_num),
   .vp_rx_data_valid(vp_rx_data_valid),
-  .vp_rx_metadata(vp_rx_metatata),
+  .vp_rx_metadata(vp_rx_metadata),
   .vp_rx_time_stamp(vp_rx_time_stamp),
   .vp_cpp_rx_metadata(vp_cpp_rx_metadata),
   .vp_rx_data_w_ecc(vp_rx_data_w_ecc),

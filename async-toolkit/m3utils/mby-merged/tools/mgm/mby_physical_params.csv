@@ -11,6 +11,8 @@ mem_map_profile_key0_shell_96x80,map_profile_key0,classifier,1r1w,1225,96,88,ECC
 mem_map_profile_key_invert0_shell_96x80,map_profile_key_invert0,classifier,1r1w,1225,96,88,ECC,8,88,1,1,80,80,80,FLOPS-1R1W,96,88,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_map_profile_key1_shell_96x80,map_profile_key1,classifier,1r1w,1225,96,88,ECC,8,88,1,1,80,80,80,FLOPS-1R1W,96,88,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_map_profile_key_invert1_shell_96x80,map_profile_key_invert1,classifier,1r1w,1225,96,88,ECC,8,88,1,1,80,80,80,FLOPS-1R1W,96,88,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
+mem_em_a_hash_cfg_shell_64x53,em_a_hash_cfg,classifier,1r1w,1225,64,60,ECC,7,60,1,1,53,53,53,RF-1R1W,64,60,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
+mem_em_b_hash_cfg_shell_64x53,em_b_hash_cfg,classifier,1r1w,1225,64,60,ECC,7,60,1,1,53,53,53,RF-1R1W,64,60,0,0,0,0,1,1,1,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_cmpe_cache_0_0_shell_1024x1320,cache_0_0,cmpe,1r1w,600,1024,1320,None,0,44,1,,,44,1320,RF-1R1W,1024,132,6,0,0,0,1,10,10,ip743rfshpm1r1w1024x132be6p1,,,,
 mem_cmpe_cache_0_1_shell_1024x88,cache_0_1,cmpe,1r1w,600,1024,88,None,0,44,1,,,44,88,RF-1R1W,1024,88,4,0,0,0,1,1,1,ip743rfshpm1r1w1024x88be4p1,,,,
 mem_cmpe_cache_1_0_0_shell_1024x1056,cache_1_0_0,cmpe,1r1w,600,1024,1056,None,0,44,1,,,44,1056,RF-1R1W,1024,132,6,0,0,0,1,8,8,ip743rfshpm1r1w1024x132be6p1,,,,
