@@ -27,6 +27,7 @@ void RxPipeline
 (
 #ifdef USE_NEW_CSRS
     mby_ppe_rx_top_map      * const rx_top_map,
+    mby_shm_map             * const shm_map,
 #else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
@@ -75,6 +76,7 @@ void Classifier
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
     mby_ppe_entropy_map         * const entropy_map,
+    mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
 #else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
 #endif

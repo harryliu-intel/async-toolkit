@@ -8,6 +8,7 @@ void RxPipeline
 (
 #ifdef USE_NEW_CSRS
     mby_ppe_rx_top_map      * const rx_top_map,
+    mby_shm_map             * const shm_map,
 #else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
@@ -52,7 +53,8 @@ void RxPipeline
 
     Classifier (cgrp_a_map,
                 cgrp_b_map,
-                entropy_map, &map2cla, &cla2hsh);
+                entropy_map,
+                shm_map,     &map2cla, &cla2hsh);
 
 //  Hash       (             &cla2hsh, &hsh2nxt);
 

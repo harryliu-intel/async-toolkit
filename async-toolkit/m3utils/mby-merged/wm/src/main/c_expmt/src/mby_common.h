@@ -97,6 +97,13 @@ typedef enum mbyParserInfoIndexEnum
 
 } mbyParserInfoIndex;
 
+typedef enum mbyClassifierGroupEnum
+{
+    MBY_CLA_GROUP_A = 0,
+    MBY_CLA_GROUP_B = 1
+
+} mbyClassifierGroup;
+
 typedef enum mbyMirrorTypeEnum
 {
     MBY_MIRTYPE_NORMAL = 0,

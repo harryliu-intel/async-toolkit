@@ -121,6 +121,7 @@ fm_status mbySendPacket
     // Top CSR map for tile 0 receive pipeline:
 #ifdef USE_NEW_CSRS
         mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpt[0].rx_ppe);
+        mby_shm_map        * const shm_map    = &(top_map.shm);
 #endif
         // Input struct:
         mbyRxMacToParser mac2par;
@@ -132,7 +133,8 @@ fm_status mbySendPacket
 
         // Call RX pipeline:
 #ifdef USE_NEW_CSRS
-        RxPipeline(rx_top_map, &mac2par, &rxs2rxo);
+        RxPipeline(rx_top_map,
+                   shm_map,    &mac2par, &rxs2rxo);
 #else
         RxPipeline(regs,       &mac2par, &rxs2rxo);
 #endif

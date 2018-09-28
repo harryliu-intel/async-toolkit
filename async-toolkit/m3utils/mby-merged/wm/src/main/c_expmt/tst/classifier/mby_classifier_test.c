@@ -14,14 +14,6 @@
 #define COLOR_GREEN   "\x1b[32m"
 #define COLOR_RESET   "\x1b[0m"
 
-typedef struct mbyTestResultsStruct
-{
-    fm_uint32 num_tests;
-    fm_uint32 num_passed;
-    fm_uint32 num_failed;
-
-} mbyTestResults;
-
 void initRegs
 (
 #ifdef USE_NEW_CSRS
@@ -55,7 +47,7 @@ void initRegs
 #endif
 }
 
-void initInputs
+void initDefaultInputs
 (
     mbyMapperToClassifier * const map2cla
 )
@@ -67,30 +59,130 @@ void initInputs
     mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
     fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
 
-    // <initialize inputs here>
+    // mbyClassifierActions:
+    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
+        actions_in->act24[i].prec = 0;
+        actions_in->act24[i].val  = 0;
+    }
+    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
+        actions_in->act4[i].prec  = 0;
+        actions_in->act4[i].val   = 0;
+    }
+    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
+        actions_in->act1[i].prec  = 0;
+        actions_in->act1[i].val   = 0;
+    }
 
+    // mbyClassifierKeys:
+    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+        keys->key32[i] = 0;
+    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
+        keys->key16[i] = 0;
+    for (fm_uint i = 0; i < MBY_FFU_KEY8;  i++)
+        keys->key8 [i] = 0;
+
+    // fm_byte:
+    *scenario_in = 0;
+
+    // fm_bool:
+    *ip_option = FALSE;
+
+    // mbyParserInfo:
+    parser_info->otr_l2_len     = 0;
+    parser_info->otr_l2_vlan1   = 0;
+    parser_info->otr_l2_vlan2   = 0;
+    parser_info->otr_l2_v2first = 0;
+    parser_info->otr_mpls_len   = 0;
+    parser_info->otr_l3_len     = 0;
+    parser_info->otr_l3_v6      = 0;
+    parser_info->otr_l4_udp     = 0;
+    parser_info->otr_l4_tcp     = 0;
+    parser_info->otr_tun_len    = 0;
+    parser_info->inr_l2_len     = 0;
+    parser_info->inr_l2_vlan1   = 0;
+    parser_info->inr_l2_vlan2   = 0;
+    parser_info->inr_l2_v2first = 0;
+    parser_info->inr_mpls_len   = 0;
+    parser_info->inr_l3_len     = 0;
+    parser_info->inr_l3_v6      = 0;
+    parser_info->inr_l4_udp     = 0;
+    parser_info->inr_l4_tcp     = 0;
+
+    // fm_byte
+    *pri_profile                = 0;
 }
 
-mbyTestResults checkOutputs
+void initInputs
 (
+    fm_uint32               const test_num,
+    mbyMapperToClassifier * const map2cla
+)
+{
+    mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
+    mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
+    fm_byte              * const scenario_in = &(map2cla->FFU_SCENARIO);
+    fm_bool              * const ip_option   =   map2cla->IP_OPTION;
+    mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
+    fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
+
+    switch (test_num)
+    {
+    case  0:
+        initDefaultInputs(map2cla);
+        break;
+    case  1:
+        initDefaultInputs(map2cla);
+        break;
+    default:
+        printf("Unsupported test scenario -- exiting!\n");
+        exit(-1);
+    }
+}
+
+fm_status checkOutputs
+(
+    fm_uint32             const test_num,
     mbyClassifierToHash * const cla2hsh
 )
 {
-    mbyTestResults test_results = { 0 };
+    fm_status test_status = FM_OK;
 
-    test_results.num_tests  = 1;
-    test_results.num_passed = 0;
-    test_results.num_failed = test_results.num_tests - test_results.num_passed;
+    switch (test_num)
+    {
+    default:
+    case  0: test_status = FM_FAIL; break;
+    case  1: test_status = FM_OK;   break;
+    }
 
-    return test_results;
+    return test_status;
 }
 
 int main (void)
 {
 #ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map  cgrp_a_map;
-    mby_ppe_cgrp_b_map  cgrp_b_map;
-    mby_ppe_entropy_map entropy_map;
+    mby_ppe_cgrp_a_map *cgrp_a_map = malloc(sizeof(mby_ppe_cgrp_a_map));
+    if (cgrp_a_map == NULL) {
+        printf("Could not allocate heap memory for classifier A map -- exiting!\n");
+        exit(-1);
+    }
+
+    mby_ppe_cgrp_b_map *cgrp_b_map = malloc(sizeof(mby_ppe_cgrp_b_map));
+    if (cgrp_b_map == NULL) {
+        printf("Could not allocate heap memory for classifier B map -- exiting!\n");
+        exit(-1);
+    }
+
+    mby_ppe_entropy_map *entropy_map = malloc(sizeof(mby_ppe_entropy_map));
+    if (entropy_map == NULL) {
+        printf("Could not allocate heap memory for entropy map -- exiting!\n");
+        exit(-1);
+    }
+
+    mby_shm_map *shm_map = malloc(sizeof(mby_shm_map));
+    if (shm_map == NULL) {
+        printf("Could not allocate heap memory for shared memory map -- exiting!\n");
+        exit(-1);
+    }
 #else
     // Allocate storage for registers on the heap:
     fm_uint32 *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
@@ -103,42 +195,56 @@ int main (void)
     mbyMapperToClassifier map2cla = { 0 };
     mbyClassifierToHash   cla2hsh = { 0 };
 
-    initInputs(&map2cla);
+    fm_uint32 num_tests  = 1;
+    fm_uint32 num_passed = 0;
 
-    mbyMapperToClassifier const * const in  = &map2cla;
-    mbyClassifierToHash         * const out = &cla2hsh;
+    for (fm_uint32 test_num = 0; test_num < num_tests; test_num++)
+    {
+        initInputs(test_num, &map2cla);
 
-    Classifier
-    (
+        mbyMapperToClassifier const * const in  = &map2cla;
+        mbyClassifierToHash         * const out = &cla2hsh;
+
+        Classifier
+        (
 #ifdef USE_NEW_CSRS
-        &cgrp_a_map,
-        &cgrp_b_map,
-        &entropy_map,
+            cgrp_a_map,
+            cgrp_b_map,
+            entropy_map,
+            shm_map,
 #else
-        regs,
+            regs,
 #endif
-        in,
-        out
-   );
+            in,
+            out
+        );
 
-    mbyTestResults test_results = checkOutputs(&cla2hsh);
+        fm_status test_status = checkOutputs(test_num, &cla2hsh);
+
+        if (test_status == FM_OK)
+            num_passed++;
+    }
 
     printf("--------------------------------------------------------------------------------\n");
 
-    fm_bool tests_passed = (test_results.num_passed == test_results.num_tests);
+    fm_bool tests_passed = (num_passed == num_tests);
 
     if (tests_passed)
         printf(COLOR_GREEN "[pass]");
     else
         printf(COLOR_RED   "[FAIL]");
 
-    printf("  %3d/%3d - Classifier tests\n"
-           COLOR_RESET, test_results.num_passed, test_results.num_tests);
+    printf("  %3d/%3d - Classifier tests\n" COLOR_RESET, num_passed, num_tests);
 
     printf("--------------------------------------------------------------------------------\n");
 
     // Free up memory:
-#ifndef USE_NEW_CSRS
+#ifdef USE_NEW_CSRS
+    free(cgrp_a_map);
+    free(cgrp_b_map);
+    free(entropy_map);
+    free(shm_map);
+#else
     free(regs);
 #endif
 

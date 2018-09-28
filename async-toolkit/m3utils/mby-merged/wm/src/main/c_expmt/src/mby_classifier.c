@@ -332,7 +332,7 @@ static fm_uint64 getEmBHashCamMask
     return mask;
 }
 
-static inline fm_uint64 getHashEntryRam
+static inline fm_uint64 getEmHashEntryRam
 (
 #ifdef USE_NEW_CSRS
     // REVISIT!!!
@@ -363,7 +363,7 @@ static inline fm_uint64 getHashEntryRam
     return hash_entry;
 }
 
-static inline fm_byte getHashRamAlloc
+static inline fm_byte getEmHashRamAlloc
 (
 #ifdef USE_NEW_CSRS
     // REVISIT!!!
@@ -1164,9 +1164,9 @@ static void getEmHashRamData
     fm_byte ram_alloc[MBY_FFU_KEY_MASK0_ENTRIES_1] = { 0 };
     for (fm_uint i = 0; i < MBY_FFU_KEY_MASK0_ENTRIES_1; i++) {
 #ifdef USE_NEW_CSRS
-        ram_alloc[i] = getHashRamAlloc(      i);
+        ram_alloc[i] = getEmHashRamAlloc(      i);
 #else
-        ram_alloc[i] = getHashRamAlloc(regs, i);
+        ram_alloc[i] = getEmHashRamAlloc(regs, i);
 #endif
     }
 
@@ -1206,9 +1206,9 @@ static void getEmHashRamData
             }
 
 #ifdef USE_NEW_CSRS
-            hash_entry = getHashEntryRam(      hash_num, entry_idx); // REVISIT!!!
+            hash_entry = getEmHashEntryRam(      hash_num, entry_idx); // REVISIT!!!
 #else
-            hash_entry = getHashEntryRam(regs, hash_num, entry_idx);
+            hash_entry = getEmHashEntryRam(regs, hash_num, entry_idx);
 #endif
             entry_idx++;
         }
@@ -1221,9 +1221,9 @@ static void getEmHashRamData
             }
 
 #ifdef USE_NEW_CSRS
-            hash_entry = getHashEntryRam(      rd_ram_num, entry_idx); // REVISIT!!!
+            hash_entry = getEmHashEntryRam(      rd_ram_num, entry_idx); // REVISIT!!!
 #else
-            hash_entry = getHashEntryRam(regs, rd_ram_num, entry_idx);
+            hash_entry = getEmHashEntryRam(regs, rd_ram_num, entry_idx);
 #endif
             if ((entry_idx % 4) == 3) {
                 rd_ram_num = 1;
@@ -1240,9 +1240,9 @@ static void getEmHashRamData
             }
 
 #ifdef USE_NEW_CSRS
-            hash_entry = getHashEntryRam(      rd_ram_num, entry_idx); // REVISIT!!!
+            hash_entry = getEmHashEntryRam(      rd_ram_num, entry_idx); // REVISIT!!!
 #else
-            hash_entry = getHashEntryRam(regs, rd_ram_num, entry_idx);
+            hash_entry = getEmHashEntryRam(regs, rd_ram_num, entry_idx);
 #endif
             if ((entry_idx % 4) == 3)
                 rd_ram_num = 0;
@@ -1979,6 +1979,7 @@ void Classifier
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
     mby_ppe_entropy_map         * const entropy_map,
+    mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
 #else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
@@ -1997,32 +1998,41 @@ void Classifier
     fm_byte              scenario = scenario_in;
     mbyClassifierActions actions  = actions_in;
 
-    // Use group = 0 for now (MBY spec group = 0..1) <-- FIXME!!!!
-    for (fm_byte group = 0; group < 1; group++)
-    {
-        // Perform wildcard match (WCM) lookup:
+    // Exact match A (EM_A):
 #ifdef USE_NEW_CSRS
-        matchWildcard(cgrp_b_map, &keys, scenario, group, &actions);
+    matchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_A, &actions);
 #else
-        matchWildcard(regs,       &keys, scenario, group, &actions);
-#endif
-        // Perform exact match (EM) lookup:
-#ifdef USE_NEW_CSRS
-        matchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, group, &actions);
-#else
-        matchExact(regs,                   &keys, scenario, group, &actions);
+    matchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_A, &actions);
 #endif
 
-#if 0
-        // Remap subset of keys going into next group:
-        remapKeys(...);
+    // Longest Prefix Match (LPM):
+    // < LPM goes here>
+
+    // Exact match B (EM_B):
+#ifdef USE_NEW_CSRS
+    matchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
+#else
+    matchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_B, &actions);
 #endif
-        // Update scenario based on scenario action:
-        for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
-            if (actions.act1[s].prec != 0)
-                FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
-        }
+
+    // Wildcard Match (WCM):
+#ifdef USE_NEW_CSRS
+    matchWildcard(cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
+#else
+    matchWildcard(regs,       &keys, scenario, MBY_CLA_GROUP_B, &actions);
+#endif
+
+#if 0 // is this still needed? <--- REVISIT!!!
+
+    // Remap subset of keys going into next group:
+    remapKeys(...);
+
+    // Update scenario based on scenario action:
+    for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
+        if (actions.act1[s].prec != 0)
+            FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
     }
+#endif
 
     // Populate muxed_action:
     mbyClassifierMuxedAction muxed_action;
