@@ -10,21 +10,21 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
 class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
 
-  private case class Action(aa: AnalyzerAction, extractA: List[ExtractAction], excAction: ExceptionAction) {
+  private case class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
 
     def apply(ps: ParserState, pf: PacketFlags, po: Parser.ProtoOffsets)(ph: PacketHeader ):
           (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
       val currentOffset = ps.ptr
       // is there an error condition requiring an abort (i.e. without processing this stage)
       // or is the exception action to do nothing (or mark 'done')
-      excAction.x(ph, currentOffset, myindex) match {
+      exceptionAction.x(ph, currentOffset, myindex) match {
 
         case e @ Some(_: AbortParserException) => (ps, pf, po, e)
 
         case e =>
-          val newPs = aa(ph, ps) // setup the analyze actions for the next stage
+          val newPs = analyzerAction(ph, ps) // setup the analyze actions for the next stage
           // do all of the extraction operations to add more to the flags and offsets
-          val poPf: (ProtoOffsets, PacketFlags) = extractA.foldLeft(po, pf)({ (prev, f) => f(prev)} )
+          val poPf: (ProtoOffsets, PacketFlags) = extractActions.foldLeft(po, pf)({ (prev, f) => f(prev)} )
           (newPs, poPf._2, poPf._1, e)
       }
     }
@@ -37,7 +37,6 @@ class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
   private def matchingAction(w0: Short, w1: Short, state: Short): Option[Action]  = {
     val wcsr = csr.PARSER_KEY_W(myindex)
     val kcsr = csr.PARSER_KEY_S(myindex)
-
 
     val analyzerActions = (csr.PARSER_ANA_W(myindex) zip csr.PARSER_ANA_S(myindex)).map(x => AnalyzerAction(x._1, x._2))
     val extractActions = (0 until 16).map(e => {

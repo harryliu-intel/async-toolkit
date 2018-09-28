@@ -1,0 +1,204 @@
+foreach $i (0..31) {
+    >> PARSER_ANA_CAM_$i$_CFG_reg_sel
+    >> PARSER_ANA_CAM_$i$_STATUS_reg_sel
+    >> parser_ana_cam_$i$_mem_ls_enter
+    >> parser_ana_cam_$i$_rd_adr
+    >> parser_ana_cam_$i$_rd_en
+    >> parser_ana_cam_$i$_wr_adr
+    >> parser_ana_cam_$i$_wr_data
+    >> parser_ana_cam_$i$_wr_en
+    >> parser_ana_cam_$i$_ecc_uncor_err
+    >> parser_ana_cam_$i$_init_done
+    >> parser_ana_cam_$i$_rd_data
+    >> parser_ana_cam_$i$_rd_valid
+
+    >> PARSER_ANA_EXC_$i$_CFG_reg_sel
+    >> PARSER_ANA_EXC_$i$_STATUS_reg_sel
+    >> parser_ana_exc_$i$_mem_ls_enter
+    >> parser_ana_exc_$i$_rd_adr
+    >> parser_ana_exc_$i$_rd_en
+    >> parser_ana_exc_$i$_wr_adr
+    >> parser_ana_exc_$i$_wr_data
+    >> parser_ana_exc_$i$_wr_en
+    >> parser_ana_exc_$i$_ecc_uncor_err
+    >> parser_ana_exc_$i$_init_done
+    >> parser_ana_exc_$i$_rd_data
+    >> parser_ana_exc_$i$_rd_valid
+
+    >> PARSER_ANA_EXT_$i$_CFG_reg_sel
+    >> PARSER_ANA_EXT_$i$_STATUS_reg_sel
+    >> parser_ana_ext_$i$_mem_ls_enter
+    >> parser_ana_ext_$i$_rd_adr
+    >> parser_ana_ext_$i$_rd_en
+    >> parser_ana_ext_$i$_wr_adr
+    >> parser_ana_ext_$i$_wr_data
+    >> parser_ana_ext_$i$_wr_en
+    >> parser_ana_ext_$i$_ecc_uncor_err
+    >> parser_ana_ext_$i$_init_done
+    >> parser_ana_ext_$i$_rd_data
+    >> parser_ana_ext_$i$_rd_valid
+
+    >> PARSER_ANA_S_$i$_CFG_reg_sel
+    >> PARSER_ANA_S_$i$_STATUS_reg_sel
+    >> parser_ana_s_$i$_mem_ls_enter
+    >> parser_ana_s_$i$_rd_adr
+    >> parser_ana_s_$i$_rd_en
+    >> parser_ana_s_$i$_wr_adr
+    >> parser_ana_s_$i$_wr_data
+    >> parser_ana_s_$i$_wr_en
+    >> parser_ana_s_$i$_ecc_uncor_err
+    >> parser_ana_s_$i$_init_done
+    >> parser_ana_s_$i$_rd_data
+    >> parser_ana_s_$i$_rd_valid
+
+    >> PARSER_ANA_W_$i$_CFG_reg_sel
+    >> PARSER_ANA_W_$i$_STATUS_reg_sel
+    >> parser_ana_w_$i$_mem_ls_enter
+    >> parser_ana_w_$i$_rd_adr
+    >> parser_ana_w_$i$_rd_en
+    >> parser_ana_w_$i$_wr_adr
+    >> parser_ana_w_$i$_wr_data
+    >> parser_ana_w_$i$_wr_en
+    >> parser_ana_w_$i$_ecc_uncor_err
+    >> parser_ana_w_$i$_init_done
+    >> parser_ana_w_$i$_rd_data
+    >> parser_ana_w_$i$_rd_valid
+
+    >> PARSER_KEY_S_$i$_CFG_reg_sel
+    >> PARSER_KEY_S_$i$_STATUS_reg_sel
+    >> parser_key_s_$i$_mem_ls_enter
+    >> parser_key_s_$i$_rd_adr
+    >> parser_key_s_$i$_rd_en
+    >> parser_key_s_$i$_wr_adr
+    >> parser_key_s_$i$_wr_data
+    >> parser_key_s_$i$_wr_en
+    >> parser_key_s_$i$_ecc_uncor_err
+    >> parser_key_s_$i$_init_done
+    >> parser_key_s_$i$_rd_data
+    >> parser_key_s_$i$_rd_valid
+
+    >> PARSER_KEY_W_$i$_CFG_reg_sel
+    >> PARSER_KEY_W_$i$_STATUS_reg_sel
+    >> parser_key_w_$i$_mem_ls_enter
+    >> parser_key_w_$i$_rd_adr
+    >> parser_key_w_$i$_rd_en
+    >> parser_key_w_$i$_wr_adr
+    >> parser_key_w_$i$_wr_data
+    >> parser_key_w_$i$_wr_en
+    >> parser_key_w_$i$_ecc_uncor_err
+    >> parser_key_w_$i$_init_done
+    >> parser_key_w_$i$_rd_data
+    >> parser_key_w_$i$_rd_valid
+}
+
+foreach $i (0..15) {
+    >> PARSER_EXTRACT_CFG_$i$_CFG_reg_sel
+    >> PARSER_EXTRACT_CFG_$i$_STATUS_reg_sel
+    >> parser_extract_cfg_$i$_mem_ls_enter
+    >> parser_extract_cfg_$i$_rd_adr
+    >> parser_extract_cfg_$i$_rd_en
+    >> parser_extract_cfg_$i$_wr_adr
+    >> parser_extract_cfg_$i$_wr_data
+    >> parser_extract_cfg_$i$_wr_en
+    >> parser_extract_cfg_$i$_ecc_uncor_err
+    >> parser_extract_cfg_$i$_init_done
+    >> parser_extract_cfg_$i$_rd_data
+    >> parser_extract_cfg_$i$_rd_valid
+}
+
+foreach $i (0..1) {
+    >> PARSER_CSUM_CFG_$i$_CFG_reg_sel
+    >> PARSER_CSUM_CFG_$i$_STATUS_reg_sel
+    >> parser_csum_cfg_$i$_mem_ls_enter
+    >> parser_csum_cfg_$i$_rd_adr
+    >> parser_csum_cfg_$i$_rd_en
+    >> parser_csum_cfg_$i$_wr_adr
+    >> parser_csum_cfg_$i$_wr_data
+    >> parser_csum_cfg_$i$_wr_en
+    >> parser_csum_cfg_$i$_ecc_uncor_err
+    >> parser_csum_cfg_$i$_init_done
+    >> parser_csum_cfg_$i$_rd_data
+    >> parser_csum_cfg_$i$_rd_valid
+
+    >> PARSER_PORT_CFG_$i$_CFG_reg_sel
+    >> PARSER_PORT_CFG_$i$_STATUS_reg_sel
+    >> parser_port_cfg_$i$_mem_ls_enter
+    >> parser_port_cfg_$i$_rd_adr
+    >> parser_port_cfg_$i$_rd_en
+    >> parser_port_cfg_$i$_wr_adr
+    >> parser_port_cfg_$i$_wr_data
+    >> parser_port_cfg_$i$_wr_en
+    >> parser_port_cfg_$i$_ecc_uncor_err
+    >> parser_port_cfg_$i$_init_done
+    >> parser_port_cfg_$i$_rd_data
+    >> parser_port_cfg_$i$_rd_valid
+}
+
+    >> PARSER_METADATA_FIFO_CFG_reg_sel
+    >> PARSER_METADATA_FIFO_STATUS_reg_sel
+    >> parser_metadata_fifo_mem_ls_enter
+    >> parser_metadata_fifo_rd_adr
+    >> parser_metadata_fifo_rd_en
+    >> parser_metadata_fifo_wr_adr
+    >> parser_metadata_fifo_wr_data
+    >> parser_metadata_fifo_wr_en
+    >> parser_metadata_fifo_ecc_uncor_err
+    >> parser_metadata_fifo_init_done
+    >> parser_metadata_fifo_rd_data
+    >> parser_metadata_fifo_rd_valid
+
+    >> PARSER_PTYPE_RAM_CFG_reg_sel
+    >> PARSER_PTYPE_RAM_STATUS_reg_sel
+    >> parser_ptype_ram_adr
+    >> parser_ptype_ram_mem_ls_enter
+    >> parser_ptype_ram_rd_en
+    >> parser_ptype_ram_wr_data
+    >> parser_ptype_ram_wr_en
+    >> parser_ptype_ram_ecc_uncor_err
+    >> parser_ptype_ram_init_done
+    >> parser_ptype_ram_rd_data
+    >> parser_ptype_ram_rd_valid
+
+    >> PARSER_ECC_COR_ERR_reg_sel
+    >> PARSER_ECC_UNCOR_ERR_reg_sel
+    >> unified_regs_rd
+    >> unified_regs_wr_data
+    >> parser_ecc_int
+    >> parser_init_done
+    >> unified_regs_ack
+    >> unified_regs_rd_data
+
+    >> PARSER_PTYPE_CAM_CFG_reg_sel
+    >> PARSER_PTYPE_CAM_STATUS_reg_sel
+    >> parser_ptype_cam_adr
+    >> parser_ptype_cam_chk_en
+    >> parser_ptype_cam_chk_for_err_trig
+    >> parser_ptype_cam_chk_key
+    >> parser_ptype_cam_chk_mask
+    >> parser_ptype_cam_raw_hit_in
+    >> parser_ptype_cam_rd_en
+    >> parser_ptype_cam_slice_en
+    >> parser_ptype_cam_wr_data
+    >> parser_ptype_cam_wr_en
+    >> parser_ptype_cam_ecc_uncor_err
+    >> parser_ptype_cam_init_done
+    >> parser_ptype_cam_raw_hit_out
+    >> parser_ptype_cam_rd_data
+    >> parser_ptype_cam_rule_hit_num
+    >> parser_ptype_cam_rule_hit_num_vld
+    >> parser_ptype_cam_tcam_chk_rdy
+    >> parser_ptype_cam_tcam_chk_valid
+    >> parser_ptype_cam_tcam_rd_valid
+    >> parser_ptype_cam_tcam_rdwr_rdy
+
+    >> parser_ptype_ram_mem_ls_enter
+    >> parser_ptype_ram_rd_en
+    >> parser_ptype_ram_wr_data
+    >> parser_ptype_ram_wr_en
+    >> parser_ptype_ram_ecc_uncor_err
+    >> parser_ptype_ram_init_done
+    >> parser_ptype_ram_rd_data
+    >> parser_ptype_ram_rd_valid
+
+cclk    >> clk
+reset_n >> reset_n

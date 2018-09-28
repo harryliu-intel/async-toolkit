@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParseDepthExceededException, ParserDoneException, ParserException}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
-class ExceptionAction(val exOffset: Short, val parsingDone: Boolean) {
+class ExceptionAction(exOffset: Short, parsingDone: Boolean) {
 
   def x(ph: PacketHeader, currentOffset: Int, stage: Int): Option[ParserException] = {
     if (eos(ph, currentOffset) & ph.eop ) {
