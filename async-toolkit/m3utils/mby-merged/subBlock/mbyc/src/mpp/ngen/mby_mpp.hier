@@ -1,8 +1,8 @@
 //mpp block 
 
-mpp [
+mby_mpp [
   foreach $i (0,1) {
-    mgp$i of mgp with mgp.map $i
+    mgp$i of mby_mgp with mgp.map $i
   }
   ppestm of ppe_stm_top with ppestm.map
 ]
