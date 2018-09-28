@@ -11,6 +11,8 @@ glb_rx_ppe_if.ppe glb_rx_ppe_if,
 
 igr_rx_ppe_if.ppe igr_rx_ppe_if,
 
+par_class_if.parser par_class_if,
+
 ngen_IO_list
 ngen_IO_end
 
