@@ -34,10 +34,10 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "mesh_defines.vh";                                     // include file with `defines 
+`include "msh_defines.vh";                                     // include file with `defines 
 
-module msh_node 
-import mesh_pkg::*;                                             // import declarations from mesh_pkg.sv
+module msh_wr_req 
+import msh_pkg::*;                                             // import declarations from msh_pkg.sv
 (
 
     input               mclk                                   // mesh clock                                 
@@ -54,42 +54,10 @@ import mesh_pkg::*;                                             // import declar
 
 /// ... stage signals
 
-//**********************************************************************************************************************
-// MESH CONTROL BLOCK INSTANTIATION
-//**********************************************************************************************************************
-
 //-----------------------------------------------------------------------------
 // ..., ... stages :  <short logic description>
 //-----------------------------------------------------------------------------
 // separate module to support physical grouping
-
-msh_ctrl msh_ctrl (
-
-    .mclk   (mclk)
-
-);
-
-
-//**********************************************************************************************************************
-// MESH DATA PATH BLOCK INSTANTIATIONS
-//**********************************************************************************************************************
-
-generate
-for (genvar gv_c=0; gv_c < NUM_MESH_DP_CHUNKS; gv_c++) begin : dp_chunks 
-
-//-----------------------------------------------------------------------------
-// => ..., ... stages :  <short logic description>
-//-----------------------------------------------------------------------------
-// separate modules to support physical grouping
-
-msh_dp msh_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-end : dp_chunks
-endgenerate
 
 
 //**********************************************************************************************************************
@@ -101,4 +69,4 @@ endgenerate
 //-----------------------------------------------------------------------------
 
 
-endmodule // msh_node
+endmodule // msh_wr_req

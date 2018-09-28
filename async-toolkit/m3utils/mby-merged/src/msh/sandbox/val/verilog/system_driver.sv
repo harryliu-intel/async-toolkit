@@ -1,7 +1,7 @@
 ///
 ///  INTEL CONFIDENTIAL
 ///
-///  Copyright 2018 Intel Corporation All Rights Reserved.
+///  Copyright 2017 Intel Corporation All Rights Reserved.
 ///
 ///  The source code contained or described herein and all documents related
 ///  to the source code ("Material") are owned by Intel Corporation or its
@@ -23,25 +23,34 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Jim McCormick <jim.mccormick@intel.com>
 // -- Project Name : ??? 
-// -- Description  : A package file containing definitions that are useful across the testbench. 
+// -- Description  : This file drives DUT reset 
 // ---------------------------------------------------------------------------------------------------------------------
 
-package mesh_sim_pkg;
+`ifndef SYSTEM_DRIVER_SV
+`define SYSTEM_DRIVER_SV
 
-//-----------------------------------------------------------------------------
-// simple typedefs
-//-----------------------------------------------------------------------------
+class system_driver;
 
-//-----------------------------------------------------------------------------
-// struct typedefs
-//-----------------------------------------------------------------------------
+    virtual msh_dut_if dut_if;
 
-//-----------------------------------------------------------------------------
-// functions
-//-----------------------------------------------------------------------------
+    string name;
 
-//-----------------------------------------------------------------------------
-// object classes 
-//-----------------------------------------------------------------------------
+    function new(virtual msh_dut_if dut_if);
 
-endpackage : mesh_sim_pkg
+        this.dut_if = dut_if;
+
+        name = "System Driver";
+
+    endfunction
+
+    // Reset system
+    task reset();
+        dut_if.i_reset = 1;
+        repeat (50) @(posedge dut_if.mclk);
+        dut_if.i_reset = 0;
+        repeat (50) @(posedge dut_if.mclk);
+    endtask
+
+endclass
+
+`endif // SYSTEM_DRIVER_SV

@@ -1,7 +1,7 @@
 ///
 ///  INTEL CONFIDENTIAL
 ///
-///  Copyright 2017 Intel Corporation All Rights Reserved.
+///  Copyright 2018 Intel Corporation All Rights Reserved.
 ///
 ///  The source code contained or described herein and all documents related
 ///  to the source code ("Material") are owned by Intel Corporation or its
@@ -22,35 +22,13 @@
 ///
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Jim McCormick <jim.mccormick@intel.com>
-// -- Project Name : ??? 
-// -- Description  : This file drives DUT reset 
+// -- Description :  Mesh defines 
+// --       - `defines are compiler directives that are executed as soon as they are seen by the compiler and 
+// --       -     apply to the entire compilation scope.  This file is included by other files.
 // ---------------------------------------------------------------------------------------------------------------------
 
-`ifndef SYSTEM_DRIVER_SV
-`define SYSTEM_DRIVER_SV
+`ifndef MSH_DEFINES
+`define MSH_DEFINES
 
-class system_driver;
 
-    virtual tmpl_dut_if dut_if;
-
-    string name;
-
-    function new(virtual tmpl_dut_if dut_if, configuration cfg);
-
-        this.dut_if = dut_if;
-
-        name = "System Driver";
-
-    endfunction
-
-    // Reset system
-    task reset();
-        dut_if.i_reset = 1;
-        repeat (50) @(posedge dut_if.clk);
-        dut_if.i_reset = 0;
-        repeat (50) @(posedge dut_if.clk);
-    endtask
-
-endclass
-
-`endif // SYSTEM_DRIVER_SV
+`endif // MSH_DEFINES

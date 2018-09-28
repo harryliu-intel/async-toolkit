@@ -28,9 +28,9 @@
 // -- Instantiation Hierarchy:                                  definition file
 //                                                              ---------------
 //          module  top                                         top.sv
-//              mesh_dut_if dut_if                              mesh_dut_if.sv
-//              mesh    dut                                     $(CLONE_ROOT)/src/rtl/template/verilog/mesh.sv
-//                  ...                                         (see mesh.sv)
+//              msh_dut_if dut_if                               msh_dut_if.sv
+//              msh    dut                                      $(CLONE_ROOT)/src/rtl/template/verilog/msh.sv
+//                  ...                                         (see msh.sv)
 //              testcase    test                                tests/<testcase>.sv
 //                  env     env                                 env.sv
 //                      system_driver   sys_drvr                system_driver.sv
@@ -46,7 +46,7 @@
 //          bind tmpl_arb                                       $(CLONE_ROOT)/src/rtl/template/sva/template_binds.svh
 //              tmpl_arb_assert a__tmpl_arb_assert              $(CLONE_ROOT)/src/rtl/template/sva/tmpl_arb_asert.sv
 //
-//  note:  verilog/mesh_sim_pkg.sv is included on the compilation command line so that it can be used widely
+//  note:  verilog/msh_sim_pkg.sv is included on the compilation command line so that it can be used widely
 //         without being included everywhere.
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ module top ();
                 clk = ~clk;                     //  invert the clock
 
     // instantiate DUT interface
-    mesh_dut_if dut_if (
+    msh_dut_if dut_if (
         .mclk(clk)                               // pass clock into this interface to make it part of the interface
     );
 
@@ -72,7 +72,7 @@ module top ();
     initial dut_if.i_reset = 1'b1;
 
     // instantiate DUT (Design Under Test)
-    mesh dut (
+    msh dut (
 
         // DUT inputs
         .mclk       (dut_if.mclk          ),      // The interface instantiated above is connected to the DUT 

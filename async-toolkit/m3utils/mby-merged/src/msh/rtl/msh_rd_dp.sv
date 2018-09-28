@@ -34,10 +34,10 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "mesh_defines.vh";                                     // include file with `defines 
+`include "msh_defines.vh";                                     // include file with `defines 
 
 module msh_rd_dp 
-import mesh_pkg::*;                                             // import declarations from mesh_pkg.sv
+import msh_pkg::*;                                             // import declarations from msh_pkg.sv
 (
 
 

@@ -1,6 +1,6 @@
-// template RTL  (mesh_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
+// mesh RTL  (msh_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
 +incdir+$LOGICROOT/rtl
-$LOGICROOT/rtl/mesh_pkg.sv
+$LOGICROOT/rtl/msh_pkg.sv
 -y $LOGICROOT/rtl
 
 //// template assertions and coverage
@@ -8,12 +8,12 @@ $LOGICROOT/rtl/mesh_pkg.sv
 //+incdir+$LOGICROOT/sva
 //-y $LOGICROOT/sva
 
-//// shared
-//-y $LOGICROOT/rtl/shared
+// shared rtl
+-y $LOGICROOT/../common/rtl
 
-// template tb source  (mesh_sim_pkg.sv listed here explictly so it doesn't have to be included everywhere) 
+// template tb source  (msh_sim_pkg.sv listed here explictly so it doesn't have to be included everywhere) 
 +incdir+$LOGICROOT/sandbox/val/verilog
-$LOGICROOT/sandbox/val/verilog/mesh_sim_pkg.sv
+$LOGICROOT/sandbox/val/verilog/msh_sim_pkg.sv
 
 // template tb interface and top
 -y $LOGICROOT/sandbox/val/verilog

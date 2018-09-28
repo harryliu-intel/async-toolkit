@@ -31,25 +31,11 @@
 
 class configuration;
 
-    // declare knob input variables 
-    tmpl_sim_pkg::knob_t            knob_inp_bubble_numerator_min;
-    tmpl_sim_pkg::knob_t            knob_inp_bubble_numerator_max;
-    tmpl_sim_pkg::knob_t            knob_inp_bubble_denominator;
-
-    // declare computed knob variables
-    rand tmpl_sim_pkg::inp_knob_t   inp_bubble_numerators;
-
     // other variables
     string name;
 
     function new(
-        tmpl_sim_pkg::knob_t knob_inp_bubble_numerator_min, 
-        tmpl_sim_pkg::knob_t knob_inp_bubble_numerator_max, 
-        tmpl_sim_pkg::knob_t knob_inp_bubble_denominator
     );
-        this.knob_inp_bubble_numerator_min   = knob_inp_bubble_numerator_min;
-        this.knob_inp_bubble_numerator_max   = knob_inp_bubble_numerator_max;
-        this.knob_inp_bubble_denominator     = knob_inp_bubble_denominator;
 
         name = "configuration.sv";
     endfunction

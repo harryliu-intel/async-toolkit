@@ -34,10 +34,10 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "mesh_defines.vh";                                     // include file with `defines 
+`include "msh_defines.vh";                                     // include file with `defines 
 
-module msh_rd_req 
-import mesh_pkg::*;                                             // import declarations from mesh_pkg.sv
+module msh_ctrl 
+import msh_pkg::*;                                             // import declarations from msh_pkg.sv
 (
 
     input               mclk                                   // mesh clock                                 
@@ -57,8 +57,18 @@ import mesh_pkg::*;                                             // import declar
 //-----------------------------------------------------------------------------
 // ..., ... stages :  <short logic description>
 //-----------------------------------------------------------------------------
-// separate module to support physical grouping
 
+msh_wr_req msh_wr_req (
+
+    .mclk   (mclk)
+
+);
+
+msh_rd_req msh_rd_req (
+
+    .mclk   (mclk)
+
+);
 
 //**********************************************************************************************************************
 // OUTPUT SECTION 
@@ -69,4 +79,4 @@ import mesh_pkg::*;                                             // import declar
 //-----------------------------------------------------------------------------
 
 
-endmodule // msh_rd_req
+endmodule // msh_ctrl

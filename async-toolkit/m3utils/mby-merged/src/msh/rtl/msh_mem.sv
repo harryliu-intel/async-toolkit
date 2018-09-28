@@ -34,10 +34,10 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "mesh_defines.vh";                                     // include file with `defines 
+`include "msh_defines.vh";                                     // include file with `defines 
 
-module msh_dp 
-import mesh_pkg::*;                                             // import declarations from mesh_pkg.sv
+module msh_mem 
+import msh_pkg::*;                                             // import declarations from msh_pkg.sv
 (
 
 
@@ -55,49 +55,6 @@ import mesh_pkg::*;                                             // import declar
 
 /// ... stage signals
 
-//**********************************************************************************************************************
-// MESH SUB-BLOCK INSTANTIATIONS
-//**********************************************************************************************************************
-
-// mesh write datapath
-msh_wr_dp msh_wr_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-// mesh read datapath
-msh_rd_dp msh_rd_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-// mesh memory datapath
-msh_mem_dp msh_mem_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-
-generate
-for (genvar gv_b=0; gv_b < NUM_MESH_NODE_MEM_BANKS; gv_b++) begin : mem_banks 
-
-//-----------------------------------------------------------------------------
-// => ..., ... stages :  <short logic description>
-//-----------------------------------------------------------------------------
-// separate modules to support physical grouping
-
-msh_mem msh_mem (
-    
-    .mclk   (mclk)
-
-);
-    
-end : mem_banks
-endgenerate
-
 
 //**********************************************************************************************************************
 // OUTPUT SECTION 
@@ -108,4 +65,4 @@ endgenerate
 //-----------------------------------------------------------------------------
 
 
-endmodule // msh_dp
+endmodule // msh_mem

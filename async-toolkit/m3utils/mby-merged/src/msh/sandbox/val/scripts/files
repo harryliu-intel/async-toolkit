@@ -1,5 +1,5 @@
 
--file $LOGICROOT/sandbox/val/scripts/files.mesh
+-file $LOGICROOT/sandbox/val/scripts/files.msh
 -file $LOGICROOT/sandbox/val/scripts/files.common
 
 $LOGICROOT/sandbox/val/verilog/top.sv
