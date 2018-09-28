@@ -107,12 +107,6 @@ egr0_mc_table_if1_mcsharedtablememory_table_req	1		out
 egr0_mc_table_if1_mcsharedtablememory_table_rsp	1		in
 egr0_pod_if_egr_in_tagring_out	[7:0]		in
 egr0_pod_if_egr_out_tagring_in	[7:0]		out
-egr0_ppestm_if0_wdata	[575:0]		out
-egr0_ppestm_if0_wen	[7:0]		out
-egr0_ppestm_if1_wdata	[575:0]		out
-egr0_ppestm_if1_wen	[7:0]		out
-egr0_ppestm_if_wdata	[575:0]		in
-egr0_ppestm_if_wen	[7:0]		in
 egr0_smm_writearb_if_wreq	[4:0]		out
 egr0_smm_writearb_if_wreq_credits	1		in
 egr0_smm_writearb_if_wreq_valid	1		out
@@ -191,12 +185,6 @@ egr1_mc_table_if1_mcsharedtablememory_table_req	1		out
 egr1_mc_table_if1_mcsharedtablememory_table_rsp	1		in
 egr1_pod_if_egr_in_tagring_out	[7:0]		in
 egr1_pod_if_egr_out_tagring_in	[7:0]		out
-egr1_ppestm_if0_wdata	[575:0]		out
-egr1_ppestm_if0_wen	[7:0]		out
-egr1_ppestm_if1_wdata	[575:0]		out
-egr1_ppestm_if1_wen	[7:0]		out
-egr1_ppestm_if_wdata	[575:0]		in
-egr1_ppestm_if_wen	[7:0]		in
 egr1_smm_writearb_if_wreq	[4:0]		out
 egr1_smm_writearb_if_wreq_credits	1		in
 egr1_smm_writearb_if_wreq_valid	1		out
@@ -223,70 +211,6 @@ egr1_vp_if1_epl_vp_tx_flow_control_tc	1		in
 egr1_vp_if1_epl_vp_tx_metadata	[9:0]		out
 egr1_vp_if1_epl_vp_tx_pfc_xoff	1		out
 egr1_vp_if1_epl_vp_tx_port_num	1		out
-epl0_igr0_rx_data_valid	[7:0]		in
-epl0_igr0_rx_data_w_ecc	[0:7][71:0]		in
-epl0_igr0_rx_ecc	[7:0]		in
-epl0_igr0_rx_flow_control_tc	[2:0]		in
-epl0_igr0_rx_metadata	[23:0]		in
-epl0_igr0_rx_pfc_xoff	1		in
-epl0_igr0_rx_port_num	[1:0]		in
-epl0_igr0_rx_time_stamp	[35:0]		in
-epl0_igr1_rx_data_valid	[7:0]		in
-epl0_igr1_rx_data_w_ecc	[0:7][71:0]		in
-epl0_igr1_rx_ecc	[7:0]		in
-epl0_igr1_rx_flow_control_tc	[2:0]		in
-epl0_igr1_rx_metadata	[23:0]		in
-epl0_igr1_rx_pfc_xoff	1		in
-epl0_igr1_rx_port_num	[1:0]		in
-epl0_igr1_rx_time_stamp	[35:0]		in
-epl1_igr0_rx_data_valid	[7:0]		in
-epl1_igr0_rx_data_w_ecc	[0:7][71:0]		in
-epl1_igr0_rx_ecc	[7:0]		in
-epl1_igr0_rx_flow_control_tc	[2:0]		in
-epl1_igr0_rx_metadata	[23:0]		in
-epl1_igr0_rx_pfc_xoff	1		in
-epl1_igr0_rx_port_num	[1:0]		in
-epl1_igr0_rx_time_stamp	[35:0]		in
-epl1_igr1_rx_data_valid	[7:0]		in
-epl1_igr1_rx_data_w_ecc	[0:7][71:0]		in
-epl1_igr1_rx_ecc	[7:0]		in
-epl1_igr1_rx_flow_control_tc	[2:0]		in
-epl1_igr1_rx_metadata	[23:0]		in
-epl1_igr1_rx_pfc_xoff	1		in
-epl1_igr1_rx_port_num	[1:0]		in
-epl1_igr1_rx_time_stamp	[35:0]		in
-epl2_igr0_rx_data_valid	[7:0]		in
-epl2_igr0_rx_data_w_ecc	[0:7][71:0]		in
-epl2_igr0_rx_ecc	[7:0]		in
-epl2_igr0_rx_flow_control_tc	[2:0]		in
-epl2_igr0_rx_metadata	[23:0]		in
-epl2_igr0_rx_pfc_xoff	1		in
-epl2_igr0_rx_port_num	[1:0]		in
-epl2_igr0_rx_time_stamp	[35:0]		in
-epl2_igr1_rx_data_valid	[7:0]		in
-epl2_igr1_rx_data_w_ecc	[0:7][71:0]		in
-epl2_igr1_rx_ecc	[7:0]		in
-epl2_igr1_rx_flow_control_tc	[2:0]		in
-epl2_igr1_rx_metadata	[23:0]		in
-epl2_igr1_rx_pfc_xoff	1		in
-epl2_igr1_rx_port_num	[1:0]		in
-epl2_igr1_rx_time_stamp	[35:0]		in
-epl3_igr0_rx_data_valid	[7:0]		in
-epl3_igr0_rx_data_w_ecc	[0:7][71:0]		in
-epl3_igr0_rx_ecc	[7:0]		in
-epl3_igr0_rx_flow_control_tc	[2:0]		in
-epl3_igr0_rx_metadata	[23:0]		in
-epl3_igr0_rx_pfc_xoff	1		in
-epl3_igr0_rx_port_num	[1:0]		in
-epl3_igr0_rx_time_stamp	[35:0]		in
-epl3_igr1_rx_data_valid	[7:0]		in
-epl3_igr1_rx_data_w_ecc	[0:7][71:0]		in
-epl3_igr1_rx_ecc	[7:0]		in
-epl3_igr1_rx_flow_control_tc	[2:0]		in
-epl3_igr1_rx_metadata	[23:0]		in
-epl3_igr1_rx_pfc_xoff	1		in
-epl3_igr1_rx_port_num	[1:0]		in
-epl3_igr1_rx_time_stamp	[35:0]		in
 glb0_rx_ppe_if_glb_ack	1		out
 glb0_rx_ppe_if_glb_sync	1		in
 glb0_txppe0_if_glb_ack	1		out
@@ -299,6 +223,70 @@ glb1_txppe0_if_glb_ack	1		out
 glb1_txppe0_if_glb_sync	1		in
 glb1_txppe1_if_glb_ack	1		out
 glb1_txppe1_if_glb_sync	1		in
+grp_A0_rx_data_valid	[7:0]		in
+grp_A0_rx_data_w_ecc	[0:7][71:0]		in
+grp_A0_rx_ecc	[7:0]		in
+grp_A0_rx_flow_control_tc	[2:0]		in
+grp_A0_rx_metadata	[23:0]		in
+grp_A0_rx_pfc_xoff	1		in
+grp_A0_rx_port_num	[1:0]		in
+grp_A0_rx_time_stamp	[35:0]		in
+grp_A1_rx_data_valid	[7:0]		in
+grp_A1_rx_data_w_ecc	[0:7][71:0]		in
+grp_A1_rx_ecc	[7:0]		in
+grp_A1_rx_flow_control_tc	[2:0]		in
+grp_A1_rx_metadata	[23:0]		in
+grp_A1_rx_pfc_xoff	1		in
+grp_A1_rx_port_num	[1:0]		in
+grp_A1_rx_time_stamp	[35:0]		in
+grp_B0_rx_data_valid	[7:0]		in
+grp_B0_rx_data_w_ecc	[0:7][71:0]		in
+grp_B0_rx_ecc	[7:0]		in
+grp_B0_rx_flow_control_tc	[2:0]		in
+grp_B0_rx_metadata	[23:0]		in
+grp_B0_rx_pfc_xoff	1		in
+grp_B0_rx_port_num	[1:0]		in
+grp_B0_rx_time_stamp	[35:0]		in
+grp_B1_rx_data_valid	[7:0]		in
+grp_B1_rx_data_w_ecc	[0:7][71:0]		in
+grp_B1_rx_ecc	[7:0]		in
+grp_B1_rx_flow_control_tc	[2:0]		in
+grp_B1_rx_metadata	[23:0]		in
+grp_B1_rx_pfc_xoff	1		in
+grp_B1_rx_port_num	[1:0]		in
+grp_B1_rx_time_stamp	[35:0]		in
+grp_C0_rx_data_valid	[7:0]		in
+grp_C0_rx_data_w_ecc	[0:7][71:0]		in
+grp_C0_rx_ecc	[7:0]		in
+grp_C0_rx_flow_control_tc	[2:0]		in
+grp_C0_rx_metadata	[23:0]		in
+grp_C0_rx_pfc_xoff	1		in
+grp_C0_rx_port_num	[1:0]		in
+grp_C0_rx_time_stamp	[35:0]		in
+grp_C1_rx_data_valid	[7:0]		in
+grp_C1_rx_data_w_ecc	[0:7][71:0]		in
+grp_C1_rx_ecc	[7:0]		in
+grp_C1_rx_flow_control_tc	[2:0]		in
+grp_C1_rx_metadata	[23:0]		in
+grp_C1_rx_pfc_xoff	1		in
+grp_C1_rx_port_num	[1:0]		in
+grp_C1_rx_time_stamp	[35:0]		in
+grp_D0_rx_data_valid	[7:0]		in
+grp_D0_rx_data_w_ecc	[0:7][71:0]		in
+grp_D0_rx_ecc	[7:0]		in
+grp_D0_rx_flow_control_tc	[2:0]		in
+grp_D0_rx_metadata	[23:0]		in
+grp_D0_rx_pfc_xoff	1		in
+grp_D0_rx_port_num	[1:0]		in
+grp_D0_rx_time_stamp	[35:0]		in
+grp_D1_rx_data_valid	[7:0]		in
+grp_D1_rx_data_w_ecc	[0:7][71:0]		in
+grp_D1_rx_ecc	[7:0]		in
+grp_D1_rx_flow_control_tc	[2:0]		in
+grp_D1_rx_metadata	[23:0]		in
+grp_D1_rx_pfc_xoff	1		in
+grp_D1_rx_port_num	[1:0]		in
+grp_D1_rx_time_stamp	[35:0]		in
 igr0_vp_cpp_rx_metadata	[19:0]		in
 igr0_vp_rx_data_valid	[7:0]		in
 igr0_vp_rx_data_w_ecc	[0:7][71:0]		in
@@ -414,12 +402,6 @@ egr0_mc_table_if1_mcsharedtablememory_table_req
 egr0_mc_table_if1_mcsharedtablememory_table_rsp
 egr0_pod_if_egr_in_tagring_out
 egr0_pod_if_egr_out_tagring_in
-egr0_ppestm_if0_wdata
-egr0_ppestm_if0_wen
-egr0_ppestm_if1_wdata
-egr0_ppestm_if1_wen
-egr0_ppestm_if_wdata
-egr0_ppestm_if_wen
 egr0_smm_writearb_if_wreq
 egr0_smm_writearb_if_wreq_credits
 egr0_smm_writearb_if_wreq_valid
@@ -498,12 +480,6 @@ egr1_mc_table_if1_mcsharedtablememory_table_req
 egr1_mc_table_if1_mcsharedtablememory_table_rsp
 egr1_pod_if_egr_in_tagring_out
 egr1_pod_if_egr_out_tagring_in
-egr1_ppestm_if0_wdata
-egr1_ppestm_if0_wen
-egr1_ppestm_if1_wdata
-egr1_ppestm_if1_wen
-egr1_ppestm_if_wdata
-egr1_ppestm_if_wen
 egr1_smm_writearb_if_wreq
 egr1_smm_writearb_if_wreq_credits
 egr1_smm_writearb_if_wreq_valid
@@ -530,70 +506,6 @@ egr1_vp_if1_epl_vp_tx_flow_control_tc
 egr1_vp_if1_epl_vp_tx_metadata
 egr1_vp_if1_epl_vp_tx_pfc_xoff
 egr1_vp_if1_epl_vp_tx_port_num
-epl0_igr0_rx_data_valid
-epl0_igr0_rx_data_w_ecc
-epl0_igr0_rx_ecc
-epl0_igr0_rx_flow_control_tc
-epl0_igr0_rx_metadata
-epl0_igr0_rx_pfc_xoff
-epl0_igr0_rx_port_num
-epl0_igr0_rx_time_stamp
-epl0_igr1_rx_data_valid
-epl0_igr1_rx_data_w_ecc
-epl0_igr1_rx_ecc
-epl0_igr1_rx_flow_control_tc
-epl0_igr1_rx_metadata
-epl0_igr1_rx_pfc_xoff
-epl0_igr1_rx_port_num
-epl0_igr1_rx_time_stamp
-epl1_igr0_rx_data_valid
-epl1_igr0_rx_data_w_ecc
-epl1_igr0_rx_ecc
-epl1_igr0_rx_flow_control_tc
-epl1_igr0_rx_metadata
-epl1_igr0_rx_pfc_xoff
-epl1_igr0_rx_port_num
-epl1_igr0_rx_time_stamp
-epl1_igr1_rx_data_valid
-epl1_igr1_rx_data_w_ecc
-epl1_igr1_rx_ecc
-epl1_igr1_rx_flow_control_tc
-epl1_igr1_rx_metadata
-epl1_igr1_rx_pfc_xoff
-epl1_igr1_rx_port_num
-epl1_igr1_rx_time_stamp
-epl2_igr0_rx_data_valid
-epl2_igr0_rx_data_w_ecc
-epl2_igr0_rx_ecc
-epl2_igr0_rx_flow_control_tc
-epl2_igr0_rx_metadata
-epl2_igr0_rx_pfc_xoff
-epl2_igr0_rx_port_num
-epl2_igr0_rx_time_stamp
-epl2_igr1_rx_data_valid
-epl2_igr1_rx_data_w_ecc
-epl2_igr1_rx_ecc
-epl2_igr1_rx_flow_control_tc
-epl2_igr1_rx_metadata
-epl2_igr1_rx_pfc_xoff
-epl2_igr1_rx_port_num
-epl2_igr1_rx_time_stamp
-epl3_igr0_rx_data_valid
-epl3_igr0_rx_data_w_ecc
-epl3_igr0_rx_ecc
-epl3_igr0_rx_flow_control_tc
-epl3_igr0_rx_metadata
-epl3_igr0_rx_pfc_xoff
-epl3_igr0_rx_port_num
-epl3_igr0_rx_time_stamp
-epl3_igr1_rx_data_valid
-epl3_igr1_rx_data_w_ecc
-epl3_igr1_rx_ecc
-epl3_igr1_rx_flow_control_tc
-epl3_igr1_rx_metadata
-epl3_igr1_rx_pfc_xoff
-epl3_igr1_rx_port_num
-epl3_igr1_rx_time_stamp
 glb0_rx_ppe_if_glb_ack
 glb0_rx_ppe_if_glb_sync
 glb0_txppe0_if_glb_ack
@@ -606,6 +518,70 @@ glb1_txppe0_if_glb_ack
 glb1_txppe0_if_glb_sync
 glb1_txppe1_if_glb_ack
 glb1_txppe1_if_glb_sync
+grp_A0_rx_data_valid
+grp_A0_rx_data_w_ecc
+grp_A0_rx_ecc
+grp_A0_rx_flow_control_tc
+grp_A0_rx_metadata
+grp_A0_rx_pfc_xoff
+grp_A0_rx_port_num
+grp_A0_rx_time_stamp
+grp_A1_rx_data_valid
+grp_A1_rx_data_w_ecc
+grp_A1_rx_ecc
+grp_A1_rx_flow_control_tc
+grp_A1_rx_metadata
+grp_A1_rx_pfc_xoff
+grp_A1_rx_port_num
+grp_A1_rx_time_stamp
+grp_B0_rx_data_valid
+grp_B0_rx_data_w_ecc
+grp_B0_rx_ecc
+grp_B0_rx_flow_control_tc
+grp_B0_rx_metadata
+grp_B0_rx_pfc_xoff
+grp_B0_rx_port_num
+grp_B0_rx_time_stamp
+grp_B1_rx_data_valid
+grp_B1_rx_data_w_ecc
+grp_B1_rx_ecc
+grp_B1_rx_flow_control_tc
+grp_B1_rx_metadata
+grp_B1_rx_pfc_xoff
+grp_B1_rx_port_num
+grp_B1_rx_time_stamp
+grp_C0_rx_data_valid
+grp_C0_rx_data_w_ecc
+grp_C0_rx_ecc
+grp_C0_rx_flow_control_tc
+grp_C0_rx_metadata
+grp_C0_rx_pfc_xoff
+grp_C0_rx_port_num
+grp_C0_rx_time_stamp
+grp_C1_rx_data_valid
+grp_C1_rx_data_w_ecc
+grp_C1_rx_ecc
+grp_C1_rx_flow_control_tc
+grp_C1_rx_metadata
+grp_C1_rx_pfc_xoff
+grp_C1_rx_port_num
+grp_C1_rx_time_stamp
+grp_D0_rx_data_valid
+grp_D0_rx_data_w_ecc
+grp_D0_rx_ecc
+grp_D0_rx_flow_control_tc
+grp_D0_rx_metadata
+grp_D0_rx_pfc_xoff
+grp_D0_rx_port_num
+grp_D0_rx_time_stamp
+grp_D1_rx_data_valid
+grp_D1_rx_data_w_ecc
+grp_D1_rx_ecc
+grp_D1_rx_flow_control_tc
+grp_D1_rx_metadata
+grp_D1_rx_pfc_xoff
+grp_D1_rx_port_num
+grp_D1_rx_time_stamp
 igr0_vp_cpp_rx_metadata
 igr0_vp_rx_data_valid
 igr0_vp_rx_data_w_ecc
@@ -638,7 +614,7 @@ rst_n
 #########################################################################
 # Statistics                                                            
 # Num Standard               : 0                                 
-# Num AdHoc                  : 303                               
+# Num AdHoc                  : 291                               
 # Num AdHoc (attribute)      : 0                          
 # Num AdHoc (user tagged)    : 0                          
 #########################################################################

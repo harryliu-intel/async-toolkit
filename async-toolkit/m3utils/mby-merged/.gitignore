@@ -157,3 +157,6 @@ wm/src/main/c_expmt/src/tests/*.exe
 
 # Model server files
 wm/src/main/c_exp/src/mby_server
+
+# generated subIP content
+subIP/

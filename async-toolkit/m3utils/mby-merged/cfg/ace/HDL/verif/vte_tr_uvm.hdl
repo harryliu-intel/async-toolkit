@@ -1,0 +1,53 @@
+# vim: noai : ts=3 : sw=3 : expandtab : ft=perl
+
+use ToolConfig;
+
+my $vte_tr_uvm_path    = &ToolConfig::get_tool_path('ipconfig/VTE_TR_UVM');
+
+$hdl_spec = {
+
+    -vlog_incdirs => [
+         "$ENV{UVM_HOME}/src",
+         "$ENV{OVM_HOME}/src",
+         "$ENV{SAOLA_HOME}/verilog",
+         "$ENV{SAOLA_HOME}/verilog_uvm",
+
+         "$vte_tr_uvm_path/VIPs/dummy_host_1/env/",
+         "$vte_tr_uvm_path/VIPs/dummy_host_2/env/",
+         "$vte_tr_uvm_path/VIPs/dummy_host_a/env/",
+         "$vte_tr_uvm_path/VIPs/dummy_host_b/env/",
+         "$vte_tr_uvm_path/ip1_uvm/verif/tb/env/",
+         "$vte_tr_uvm_path/ip2_slu/verif/tb/env/",
+         "$vte_tr_uvm_path/ip3_uvm/verif/tb/env/",
+         "$vte_tr_uvm_path/ip3_uvm/verif/tb/env/ral",
+    ],
+
+    -vlog_files => [
+         "$vte_tr_uvm_path/VIPs/dummy_host_1/env/host_1_uvm_pkg.sv",
+         "$vte_tr_uvm_path/VIPs/dummy_host_2/env/host_2_uvm_pkg.sv",
+         "$vte_tr_uvm_path/VIPs/dummy_host_a/env/host_a_uvm_pkg.sv",
+         "$vte_tr_uvm_path/VIPs/dummy_host_b/env/host_b_uvm_pkg.sv",
+
+         "$vte_tr_uvm_path/ip1_uvm/verif/tb/top/ip1_tb_intf.sv",
+         "$vte_tr_uvm_path/ip1_uvm/verif/tb/env/ip1_reg_pkg.sv",
+         "$vte_tr_uvm_path/ip1_uvm/verif/tb/env/ip1_uvm_pkg.sv",
+
+         #"$vte_tr_uvm_path/ip2_slu/verif/tb/env/ip2_sla_pkg.sv",
+
+         "$vte_tr_uvm_path/ip3_uvm/verif/tb/top/ip3_tb_intf.sv",
+         "$vte_tr_uvm_path/ip3_uvm/verif/tb/env/ral/ip3_uvm_reg_pkg.sv",
+         "$vte_tr_uvm_path/ip3_uvm/verif/tb/env/ip3_uvm_env_pkg.sv",
+    ],
+
+
+    -vlog_opts => [
+         "-sverilog",
+         "+define+OVM",
+         "+define+XVM",
+         "+define+UVM",
+         "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",
+		   "+define+UVM_NO_DEPRECATED",
+
+         "-override_timescale=1ps/1fs",
+    ],
+};

@@ -145,32 +145,33 @@ Trex options:
 Trex Examples:
 ====================================================================================
 // Run a basic test:
-  trex mby_alive_test -seed 1 -dut mby -model fc
+  trex mby_alive_test -seed 1 -dut mby -model mby
+  trex fc_boot_basic -dut mby -model fc
 
 // Run basic test with coverage enabled:
-  trex mby_alive_test -seed 1 -cc_on -dut mby -model fc
+  trex mby_alive_test -seed 1 -cc_on -dut mby -model mby
 
 // Interative debugging with Verdi
-    trex mby_alive_test -ace_args -sd verdi -ace_args- -seed 1 -dut mby -model fc
+    trex mby_alive_test -ace_args -sd verdi -ace_args- -seed 1 -dut mby -model mby
 
 // Interative debugging with DVE
-    trex mby_alive_test -ace_args -run_with_gui -ace_args- -seed 1 -dut mby -model fc
+    trex mby_alive_test -ace_args -run_with_gui -ace_args- -seed 1 -dut mby -model mby
 
 // Adding runtime VCS plusargs:
-    trex mby_alive_test -ace_args -simv_args +MY_PLUSARG1=value -simv_args +MY_PLUSARG2=v2 -ace_args- -seed 1 -dut mby -model fc
+    trex mby_alive_test -ace_args -simv_args +MY_PLUSARG1=value -simv_args +MY_PLUSARG2=v2 -ace_args- -seed 1 -dut mby -model mby
 
 // Adding runtime VCS plusarg - OVM_VERBOSITY
-    trex mby_alive_test -ace_args -simv_args +OVM_VERBOSITY=OVM_FULL -ace_args- -seed 1 -dut mby -model fc
+    trex mby_alive_test -ace_args -simv_args +OVM_VERBOSITY=OVM_FULL -ace_args- -seed 1 -dut mby -model mby
 
 ---------------
 Signal dumping
 ---------------
 
 // Enable signal dumping with FSDB output: use Plusarg "+fsdb" switch
-  trex mby_alive_test -ace_args -simv_args '"' +fsdb '"' -ace_args- -seed 1 -dut mby -model fc
+  trex mby_alive_test -ace_args -simv_args '"' +fsdb '"' -ace_args- -seed 1 -dut mby -model mby
 
 // Enable signal dumping with VPD output: use Plusarg "+vpd" switch
-  trex mby_alive_test -ace_args -simv_args '"' +vpd '"' -ace_args- -seed 1 -dut mby -model fc
+  trex mby_alive_test -ace_args -simv_args '"' +vpd '"' -ace_args- -seed 1 -dut mby -model mby
 
 
 
@@ -337,7 +338,7 @@ To enable connection of White model server to the testbench, use the plus arg "W
 with -simv_args in trex command.
 
 Example:
-trex mby_wm_reg_rw_test -ace_args -simv_args '"'+UVM_VERBOSITY=UVM_HIGH +WHITE_MODEL_EN'"' -ace_args- -seed 1 -dut mby -model fc
+trex mby_wm_reg_rw_test -ace_args -simv_args '"'+UVM_VERBOSITY=UVM_HIGH +WHITE_MODEL_EN'"' -ace_args- -seed 1 -dut mby -model mby
 
 
 

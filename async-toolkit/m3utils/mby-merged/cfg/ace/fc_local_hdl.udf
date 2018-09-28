@@ -25,6 +25,12 @@
                                     "shdv_lib",
                 ],
             },
+            vte_tr_uvm_lib => {
+                   -hdl_spec       => [ "cfg/ace/HDL/verif/vte_tr_uvm.hdl" ],
+                   -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+                   -tag            => "nonsynth+nonlint",
+            },
             #############################################################
          }, #libs
       }, #mby (scope)

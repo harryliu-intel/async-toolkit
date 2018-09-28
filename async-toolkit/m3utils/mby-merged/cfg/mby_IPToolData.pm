@@ -39,6 +39,7 @@ $ToolConfig_ips{mby} = {
                               "&get_tool_path()/cfg/ace",
                               "&get_tool_path()/subBlock/mbyc",
                               "&get_tool_var(ipconfig/eth_port, SEARCH_PATHS)",
+                              "&get_tool_path()/target/&get_facet(dut)",
       ],
       lintra_waiver_dirs  => [],
       SUB_SCOPES          => ["eth_port",
@@ -47,6 +48,7 @@ $ToolConfig_ips{mby} = {
       TEST_PATTERNS       => ["verif/mby/formal/tests",],
     },
     ENV => {
+      SOC_DUT             => "&get_facet(dut)", # used in DutConnect.pl
     },
 };
 ######################################################################
