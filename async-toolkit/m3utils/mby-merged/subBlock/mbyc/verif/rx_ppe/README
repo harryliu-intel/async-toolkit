@@ -1,0 +1,13 @@
+==================================================================================
+RX_PPE Testbench
+==================================================================================
+
+Building the Model:
+   bman -dut mby -mc rx_ppe
+   
+Running a basic test:
+    trex mby_rx_ppe_alive_test -ace_args -simv_args '"'+UVM_VERBOSITY=UVM_LOW +fsdb '"' -ace_args- -seed 1 -dut mby -model rx_ppe
+    
+
+     
+   
