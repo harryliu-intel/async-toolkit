@@ -33,7 +33,6 @@ program ingress_test_lib;
   import ingress_env_pkg::*;
   import eth_bfm_pkg::*;
   import mby_ec_bfm_pkg::*;
-  import ec_env_pkg::*;
 
 `include "uvm_macros.svh"
 `include "slu_macros.svh"
