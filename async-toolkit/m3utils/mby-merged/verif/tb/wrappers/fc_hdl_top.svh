@@ -16,7 +16,7 @@ module fc_hdl_top #(
 `include "ti_macro_defines.svh"
 `include "hdl_ti_conns.svh"
 
-//FcDutIf fctop_dut_if();
+FcDutIf fctop_dut_if();
 
 // DUT Instantiation
 `ifndef MODEL_WITHOUT_DUT

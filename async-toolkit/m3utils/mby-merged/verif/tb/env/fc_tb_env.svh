@@ -31,7 +31,7 @@ class fc_tb_env extends slu_tb_env;
 
     // Interfaces
     protected virtual sig_if  fc_sig_if;
-    //protected virtual FcDutIf dut_if;
+    protected virtual FcDutIf dut_if;
 
     //EBG Fuse env
 //    FcFuseEnv                  fuse_env;
@@ -102,9 +102,9 @@ class fc_tb_env extends slu_tb_env;
         return fc_sig_if;
     endfunction
 
-    //function virtual FcDutIf getDutIf();
-    //    return dut_if;
-    //endfunction
+    function virtual FcDutIf getDutIf();
+        return dut_if;
+    endfunction
 
     function fc_cfg_obj get_cfg_obj_handle();
         return fcCfgObj;
@@ -243,7 +243,7 @@ class fc_tb_env extends slu_tb_env;
 
         // Get Fc signal interface
         fc_sig_if = fcTbWrapper.get_v_if();
-        //dut_if = fcDutWrapper.get_v_if();
+        dut_if = fcDutWrapper.get_v_if();
         */
 
         uvm_config_db#(virtual sig_if)::get(this, "", "sig_if", fc_sig_if);
