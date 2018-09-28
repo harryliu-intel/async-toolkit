@@ -80,7 +80,7 @@ end
 igr_top
   top(
   // Clock.
-  .clk(cclk),
+  .cclk(cclk),
   // Unsynchronized warm reset.
   .rst_n(rst_n),
       
