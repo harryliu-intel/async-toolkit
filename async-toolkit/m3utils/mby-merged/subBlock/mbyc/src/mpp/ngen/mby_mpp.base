@@ -4,11 +4,12 @@
 // -------------------------------------------------------------------
 ngen_mod_name
 
-print "import shared_pkg\:\:\*\;";
-
 ngen_IO_list
 
 ngen_IO_end
+
+import mby_egr_pkg::*;
+import gmm_pkg::*;
 
 ngen_wires
 
