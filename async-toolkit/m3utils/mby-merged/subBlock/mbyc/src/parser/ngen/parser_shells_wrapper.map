@@ -158,6 +158,38 @@ foreach $i (0..1) {
     >> parser_ptype_ram_init_done
     >> parser_ptype_ram_rd_data
     >> parser_ptype_ram_rd_valid
+    >> parser_ptype_ram_mem_ls_enter
+    >> parser_ptype_ram_rd_en
+    >> parser_ptype_ram_wr_data
+    >> parser_ptype_ram_wr_en
+    >> parser_ptype_ram_ecc_uncor_err
+    >> parser_ptype_ram_init_done
+    >> parser_ptype_ram_rd_data
+    >> parser_ptype_ram_rd_valid
+
+
+    >> PARSER_PTYPE_CAM_CFG_reg_sel
+    >> PARSER_PTYPE_CAM_STATUS_reg_sel
+    >> parser_ptype_cam_adr
+    >> parser_ptype_cam_chk_en
+    >> parser_ptype_cam_chk_for_err_trig
+    >> parser_ptype_cam_chk_key
+    >> parser_ptype_cam_chk_mask
+    >> parser_ptype_cam_raw_hit_in
+    >> parser_ptype_cam_rd_en
+    >> parser_ptype_cam_slice_en
+    >> parser_ptype_cam_wr_data
+    >> parser_ptype_cam_wr_en
+    >> parser_ptype_cam_ecc_uncor_err
+    >> parser_ptype_cam_init_done
+    >> parser_ptype_cam_raw_hit_out
+    >> parser_ptype_cam_rd_data
+    >> parser_ptype_cam_rule_hit_num
+    >> parser_ptype_cam_rule_hit_num_vld
+    >> parser_ptype_cam_tcam_chk_rdy
+    >> parser_ptype_cam_tcam_chk_valid
+    >> parser_ptype_cam_tcam_rd_valid
+    >> parser_ptype_cam_tcam_rdwr_rdy
 
     >> PARSER_ECC_COR_ERR_reg_sel
     >> PARSER_ECC_UNCOR_ERR_reg_sel

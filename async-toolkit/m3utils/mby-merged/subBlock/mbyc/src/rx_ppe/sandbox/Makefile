@@ -9,7 +9,7 @@
 #/////////////////////////////////////////////////////////////////////////////
 
 RTL_SRC = ../..
-TARGET_SRC = ../../../target
+TARGET_SRC = ../../../../../target
 DV_SRC = ../sandbox/dv/verilog
 ASSERT_LIB = /p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64
 SHARED_SRC = ../../shared
@@ -17,12 +17,16 @@ SIM_DIR = dv/run
 
 INCS = $(RTL_SRC)/rx_ppe/rtl
 INCS += $(RTL_SRC)/parser/rtl
+INCS += $(RTL_SRC)/classifier/rtl
 INCS += $(SHARED_SRC)/rtl
 INCS += $(SHARED_SRC)/interfaces
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src
+INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/rtl
 INCS += $(ASSERT_LIB)/SVA_LIB
+INCS += /p/hdk/cad/ctech/v15ww50e/source/v
 
 VCS_INC = $(addprefix +incdir+,$(INCS))
 
@@ -42,10 +46,11 @@ VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_igr_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/par_class_if.sv
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/parser/src/parser_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/classifier/src/classifier_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \
-    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS \
+    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASSIFIER_BEHAVE_MEMS \
     -Mdir=$(SIM_DIR)/csrc -o $(SIM_DIR)/$@
 
 default: ppe_stm

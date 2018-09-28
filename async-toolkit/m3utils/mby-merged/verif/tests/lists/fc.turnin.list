@@ -1,5 +1,2 @@
 .repeat 1
-fc_boot_basic -dut fc 
-fc_axi_basic -dut fc
-.repeat 1
-fc_chi_basic -dut fc
+fc_boot_basic

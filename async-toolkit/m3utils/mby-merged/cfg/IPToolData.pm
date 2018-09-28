@@ -175,8 +175,8 @@ $ToolConfig_ips{fdo_tools} = {
 };
 
 $ToolConfig_ips{VTE_TR_UVM} = {
-    VERSION => "vte-tr-uvm-18ww38a",
-    PATH    => "&get_tool_path(ipconfig/mby)/&get_tool_version()",
+    VERSION => "vte-tr-uvm-18ww38a1",
+    PATH    => "$ENV{IP_RELEASES}/vte-tr-uvm/&get_tool_version()",
     OTHER   => {
          SEARCH_PATHS   => "&get_tool_path()",
     },
