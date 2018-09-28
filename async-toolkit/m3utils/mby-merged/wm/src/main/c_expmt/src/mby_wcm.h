@@ -7,7 +7,7 @@
 
 // Includes:
 
-#include "mby_classifier_regs.h"
+#include "mby_clsfr_regs.h"
 
 // Defines:
 

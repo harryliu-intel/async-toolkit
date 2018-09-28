@@ -9,7 +9,7 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
-#include "mby_classifier_regs.h"
+#include "mby_clsfr_regs.h"
 
 // Defines:
 
