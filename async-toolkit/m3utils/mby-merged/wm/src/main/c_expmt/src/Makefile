@@ -16,6 +16,7 @@ SOURCES += mby_mapper.c
 SOURCES += mby_lpm_regs.c
 SOURCES += mby_lpm.c
 SOURCES += mby_classifier_regs.c
+SOURCES += mby_exactmatch.c
 SOURCES += mby_classifier.c
 SOURCES += mby_hash.c
 SOURCES += mby_nexthop.c
@@ -86,6 +87,7 @@ mby_mapper.o          : mby_mapper.c     mby_mapper.h     mby_common.h mby_bitfi
 mby_lpm_regs.o        : mby_lpm_regs.c   mby_lpm_regs.h   mby_common.h mby_bitfield.h
 mby_lpm.o             : mby_lpm.c        mby_lpm.h        mby_common.h mby_bitfield.h
 mby_classifier_regs.o : mby_classifier_regs.c mby_classifier_regs.h mby_common.h mby_bitfield.h
+mby_exactmatch.o      : mby_exactmatch.c mby_exactmatch.h mby_common.h mby_bitfield.h
 mby_classifier.o      : mby_classifier.c mby_classifier.h mby_common.h mby_bitfield.h
 mby_hash.o            : mby_hash.c       mby_hash.h       mby_common.h mby_bitfield.h
 mby_nexthop.o         : mby_nexthop.c    mby_nexthop.h    mby_common.h mby_bitfield.h

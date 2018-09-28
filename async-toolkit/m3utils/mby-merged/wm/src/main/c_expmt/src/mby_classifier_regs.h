@@ -1037,4 +1037,10 @@ mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
     fm_byte               const hash_prof
 );
 
+void mbyClsConvertKeysToBytes
+(
+    mbyClassifierKeys const keys,
+    fm_byte                 bytes[MBY_FFU_HASH_KEYS]
+);
+
 #endif /* MBY_CLASSIFIER_H */

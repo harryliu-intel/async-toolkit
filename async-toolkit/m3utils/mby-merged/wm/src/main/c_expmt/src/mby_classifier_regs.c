@@ -576,3 +576,25 @@ mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 
     return meta_cfg;
 }
+
+// TODO this function is not strictly used to access the registers but it
+// is used by various blocks of the classifiers
+void mbyClsConvertKeysToBytes
+(
+    mbyClassifierKeys const keys,
+    fm_byte                 bytes[MBY_FFU_HASH_KEYS]
+)
+{
+    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++) {
+        bytes[2*i + 1] =  keys.key16[i]       & 0xFF;
+        bytes[2*i    ] = (keys.key16[i] >> 8) & 0xFF;
+    }
+
+    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
+        bytes[MBY_FFU_KEY16*2 + i] = keys.key8[i];
+
+    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+        for (fm_uint j = 0; j < 4; j++)
+            bytes[MBY_FFU_KEY16*2 + MBY_FFU_KEY8 + i*4 + (3-j)] = (keys.key32[i] >> (j * 8 )) & 0xFF;
+}
+
