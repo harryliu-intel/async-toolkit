@@ -3,7 +3,7 @@
                 <DUT>mby</DUT>
                 <Stage>genrtl</Stage>
                 <Stage_Exec>bman</Stage_Exec>
-                <AdditionalArgs>-s all +s genrtl -nodelete_flow_data</AdditionalArgs>
+                <AdditionalArgs>-mc mby -s all +s genrtl -nodelete_flow_data</AdditionalArgs>
                 <IsGating>1</IsGating>
                 <Turnin>1</Turnin>
                 <Release>1</Release>
