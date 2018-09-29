@@ -45,23 +45,23 @@ class egress_env extends egress_base_env;
 
   // Variable:  eth_cdi_bfm
   // MAC Client BFM agent
-  ec_env_defines::mby_ec_bfm_t eth_cdi_bfm;
+  mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(4)) eth_cdi_bfm;
 
   // Variable:  cdi_tx_io
   // MAC Client BFM io policy
-  ec_env_defines::cdi_tx_io_t eth_cdi_tx_io;
+  mby_ec_bfm_pkg::mby_ec_cdi_tx_io eth_cdi_tx_io;
 
   // Variable:  cdi_rx_io
   // MAC Client BFM io policy
-  ec_env_defines::cdi_rx_io_t eth_cdi_rx_io;
+  mby_ec_bfm_pkg::mby_ec_cdi_rx_io eth_cdi_rx_io;
 
   // Variable:  cdi_tx_vintf
   // MAC Client BFM virtual interface
-  ec_env_defines::cdi_tx_vintf_t cdi_tx_vintf;
+  virtual mby_ec_cdi_tx_intf cdi_tx_vintf;
 
   // Variable:  cdi_rx_vintf
   // MAC Client BFM virtual interface
-  ec_env_defines::cdi_rx_vintf_t cdi_rx_vintf;
+  virtual mby_ec_cdi_rx_intf cdi_rx_vintf;
 
   // Variable: env_monitor
   // egress env event monitor
@@ -89,23 +89,23 @@ class egress_env extends egress_base_env;
     if(uvm_config_object::get(this, "","egress_ti_config",tmp_ti_cfg_obj)) begin
       assert($cast(ti_config,tmp_ti_cfg_obj));
     end
-    if(!uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
+    if(!uvm_config_db#(virtual mby_ec_cdi_tx_intf)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
       `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_tx_vintf was not successful!")
     end
-    if(!uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
+    if(!uvm_config_db#(virtual mby_ec_cdi_rx_intf)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
       `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
     end
 
-    eth_cdi_bfm               = ec_env_defines::mby_ec_bfm_t::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
+    eth_cdi_bfm               = mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(4))::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
     eth_cdi_bfm.cfg.mode      = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
     eth_cdi_bfm.cfg.speed     = eth_bfm_pkg::SPEED_400G;                                            // Configure speed.
     eth_cdi_bfm.cfg.num_ports = 2;                                                                  // Configure num_ports.
     eth_cdi_bfm.cfg.ack_delay = 0;
-    eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
-    eth_cdi_bfm.cfg.push_down_knobs();                                                              // Push Down the Config Knobs
+    //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
+    //eth_cdi_bfm.cfg.push_down_knobs();                                                              // Push Down the Config Knobs
 
-    eth_cdi_tx_io = ec_env_defines::cdi_tx_io_t::type_id::create("eth_cdi_tx_io", this);
-    eth_cdi_rx_io = ec_env_defines::cdi_rx_io_t::type_id::create("eth_cdi_rx_io", this);
+    eth_cdi_tx_io = mby_ec_bfm_pkg::mby_ec_cdi_tx_io::type_id::create("eth_cdi_tx_io", this);
+    eth_cdi_rx_io = mby_ec_bfm_pkg::mby_ec_cdi_rx_io::type_id::create("eth_cdi_rx_io", this);
     data_phase_mode = SLA_RANDOM_NONE;
     this.max_run_clocks = 2_000_000_000;
 

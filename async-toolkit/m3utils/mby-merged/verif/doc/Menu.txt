@@ -64,8 +64,8 @@ Group: Lib  {
       File: cust_axi_master_transaction  (lib/svt_axi_bfm/cust_svt_axi_master_transaction.sv)
       File: cust_svt_axi_system_configuration  (lib/svt_axi_bfm/cust_svt_axi_system_cfg.sv)
       File: svt_axi_bfm_defines.sv  (lib/svt_axi_bfm/svt_axi_bfm_defines.sv)
+      File: svt_axi_bfm_env  (lib/svt_axi_bfm/svt_axi_bfm_env.sv)
       File: svt_axi_bfm_pkg  (lib/svt_axi_bfm/svt_axi_bfm_pkg.sv)
-      File: svt_bfm_env  (lib/svt_axi_bfm/svt_axi_bfm_env.sv)
       File: svt_ethernet_virtual_sequencer  (lib/svt_axi_bfm/svt_axi_virtual_sequencer.sv)
       }  # Group: Svt_axi_bfm
 
