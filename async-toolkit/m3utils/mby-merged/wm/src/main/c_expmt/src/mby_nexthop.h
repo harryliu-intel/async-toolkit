@@ -53,7 +53,7 @@
 #define MBY_ARP_ENTRY_GLORT_WIDTH         2
 #define MBY_ARP_ENTRY_GLORT_l_DGLORT      0
 #define MBY_ARP_ENTRY_GLORT_h_DGLORT      15
-#define MBY_ARP_ENTRY_GLORT_b_markRouted  16
+#define MBY_ARP_ENTRY_GLORT_b_MARK_ROUTED 16
 
 // Below defines are related to L2Lookup and temporary placed in nexthop <-- REVISIT!!!
 #define MBY_FLOOD_GLORT_TABLE_WIDTH                             2

@@ -58,7 +58,7 @@ void RxPipeline
 
 //  Hash       (             &cla2hsh, &hsh2nxt);
 
-//  NextHop    (nexthop_map, &hsh2nxt, &nxt2msk);
+    NextHop    (nexthop_map, &hsh2nxt, &nxt2msk);
 
 //  MaskGen    (             &nxt2msk, &msk2trg);
 
