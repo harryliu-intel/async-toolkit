@@ -7,8 +7,8 @@
 # It should NOT include any connectivity specs
 #################################################################################
 
-set inst_name "mpp1"
-set mod_name "mpp"
+set inst_name "mby_mpp1"
+set mod_name "mby_mpp"
 collage_instantiate_component $mod_name -name $inst_name -noauto -use_hier
 #
 #collage_eval_in_component [collage_get_ip_hier_par -ip_name $inst_name] {

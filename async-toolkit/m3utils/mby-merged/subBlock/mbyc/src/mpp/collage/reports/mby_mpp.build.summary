@@ -2,7 +2,7 @@
 ########################################
 #Info only 
 ########################################
-ip_top_module_name = mpp
+ip_top_module_name = mby_mpp
 KitVendor          = Intel
 KitLibrary         = Intel
 ip_version         = 1.0
