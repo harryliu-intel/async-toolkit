@@ -14,7 +14,7 @@
 
 #ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#else 
+#else
 
 #define MBY_FFU_GROUP_BASE                                      (0x3000000)
 #define MBY_FFU_GROUP_SIZE                                      (0x0300000)
@@ -775,8 +775,8 @@ typedef struct mbyClassifierTcamStruct
 // TODO is this ever used?
 typedef struct mbyClassifierTcamEntryStruct
 {
-    fm_uint64               key;
-    fm_uint64               keyInvert;
+    fm_uint64               KEY;
+    fm_uint64               KEY_INVERT;
 
 } mbyClassifierTcamEntry;
 
@@ -795,21 +795,21 @@ typedef struct mbyClassifierHashLookupStruct
 
 typedef struct mbyClassifierKeyMaskCfgStruct
 {
-    fm_uint32               key8Mask;   // 32b field
-    fm_uint32               key16Mask;  // 32b
-    fm_uint16               key32Mask;  // 16b
-    fm_byte                 keyMaskSel; //  4b
+    fm_uint32               KEY8_MASK;    // 32b field
+    fm_uint32               KEY16_MASK;   // 32b
+    fm_uint16               KEY32_MASK;   // 16b
+    fm_byte                 KEY_MASK_SEL; //  4b
 
 } mbyClassifierKeyMaskCfg;
 
 typedef struct mbyClassifierEntropyCfgStruct
 {
-    fm_uint32               key8Mask;    // 32b field
-    fm_uint32               key16Mask;   // 32b
-    fm_uint16               key32Mask;   // 16b
-    fm_byte                 keyMaskProf; //  4b
-    fm_byte                 symProf;     //  2b
-    fm_bool                 symmetric;   //  1b
+    fm_uint32               KEY8_MASK;        // 32b field
+    fm_uint32               KEY16_MASK;       // 32b
+    fm_uint16               KEY32_MASK;       // 16b
+    fm_byte                 KEY_MASK_PROFILE; //  4b
+    fm_byte                 SYM_PROFILE;      //  2b
+    fm_bool                 SYMMETRIC;        //  1b
 
 } mbyClassifierEntropyCfg;
 

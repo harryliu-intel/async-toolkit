@@ -15,13 +15,13 @@ static void applyEmKeyMask
 )
 {
     for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
-        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.key16Mask, i, 1)) ? keys.key16[i] : 0;
+        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.KEY16_MASK, i, 1)) ? keys.key16[i] : 0;
 
     for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
-        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(key_mask_cfg.key8Mask,  i, 1)) ? keys.key8 [i] : 0;
+        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(key_mask_cfg.KEY8_MASK,  i, 1)) ? keys.key8 [i] : 0;
 
     for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
-        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.key32Mask, i, 1)) ? keys.key32[i] : 0;
+        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.KEY32_MASK, i, 1)) ? keys.key32[i] : 0;
 }
 
 static void doKeyCompaction
@@ -36,7 +36,7 @@ static void doKeyCompaction
 
     // KEY32:
     for (fm_uint i = 0; i < MBY_FFU_KEY32; i++) {
-        if (FM_GET_UNNAMED_FIELD(key_mask_cfg.key32Mask, i, 1)) {
+        if (FM_GET_UNNAMED_FIELD(key_mask_cfg.KEY32_MASK, i, 1)) {
             for (fm_uint j = 0; j < 4; j++)
                 packed_keys[key_idx + j] = (hash_keys.key32[i] >> (8 * (3-j))) & 0xFF;
             key_idx += 4;
@@ -45,7 +45,7 @@ static void doKeyCompaction
 
     // KEY16:
     for (fm_uint i = 0; i < MBY_FFU_KEY16; i++) {
-        if (FM_GET_UNNAMED_FIELD(key_mask_cfg.key16Mask, i, 1)) {
+        if (FM_GET_UNNAMED_FIELD(key_mask_cfg.KEY16_MASK, i, 1)) {
             packed_keys[key_idx    ] = (hash_keys.key16[i] >> 8) & 0xFF;
             packed_keys[key_idx + 1] =  hash_keys.key16[i]       & 0xFF;
             key_idx += 2;
@@ -55,7 +55,7 @@ static void doKeyCompaction
 
     // KEY8:
     for (fm_uint i = 0; i < MBY_FFU_KEY8; i++) {
-        if (FM_GET_UNNAMED_FIELD(key_mask_cfg.key8Mask, i, 1)) {
+        if (FM_GET_UNNAMED_FIELD(key_mask_cfg.KEY8_MASK, i, 1)) {
             packed_keys[key_idx] = hash_keys.key8[i];
             key_idx++;
         }

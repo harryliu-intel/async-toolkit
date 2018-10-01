@@ -6,13 +6,13 @@
 #include "mby_common.h"
 #include "mby_wcm.h"
 
-static mbyLookupInfo selectWcmKeyMask
+static mbyWcmKeyInfo selectWcmKey
 (
     const mbyClassifierTcamCfg * const tcam_cfg,
     const mbyClassifierKeys    * const keys
 )
 {
-    mbyLookupInfo lookup_info = { 0 };
+    mbyWcmKeyInfo wcm_key_info = { 0 };
 
     fm_byte mux[5] = { 0 };
     mux[0] = tcam_cfg->SELECT0;
@@ -21,8 +21,8 @@ static mbyLookupInfo selectWcmKeyMask
     mux[3] = tcam_cfg->SELECT3;
     mux[4] = tcam_cfg->SELECT_TOP + MBY_FFU_KEY16;
 
-    lookup_info.key       = 0;
-    lookup_info.keyInvert = FM_LITERAL_U64(0xFFFFFFFFF);
+    wcm_key_info.key        = 0;
+    wcm_key_info.key_invert = FM_LITERAL_U64(0xFFFFFFFFF);
 
     // Loop through the 5 bytes of key ({7:0}, {15:8}, {23,16}, {31:24}, {39:32})
     for (fm_uint i = 0; i < 5; i++)
@@ -47,12 +47,12 @@ static mbyLookupInfo selectWcmKeyMask
         if ((mux[i] >= MBY_FFU_KEY32_BASE) && (mux[i] < (MBY_FFU_KEY32_BASE + MBY_FFU_KEY32)))
             temp = FM_GET_UNNAMED_FIELD(keys->key32[mux[i] - MBY_FFU_KEY32_BASE], lo_bit, 8);
 
-        FM_SET_UNNAMED_FIELD64(lookup_info.key, lo_bit, 8, temp);
+        FM_SET_UNNAMED_FIELD64(wcm_key_info.key, lo_bit, 8, temp);
     }
 
-    lookup_info.keyInvert = ~lookup_info.key;
+    wcm_key_info.key_invert = ~wcm_key_info.key;
 
-    return lookup_info;
+    return wcm_key_info;
 }
 
 static void lookUpWcmTcam
@@ -62,13 +62,13 @@ static void lookUpWcmTcam
 #else
     fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_byte   const            slice,
-    fm_uint16 const            chunk_mask,
-    mbyLookupInfo      * const lookup_info
+    fm_byte              const slice,
+    fm_uint16            const chunk_mask,
+    mbyWcmKeyInfo      * const wcm_key_info
 )
 {
     for (fm_uint i = 0; i < MBY_FFU_TCAM_ENTRIES_0; i++)
-        lookup_info->rawHits[i] = FALSE;
+        wcm_key_info->raw_hits[i] = FALSE;
 
     fm_uint16 tcam_index = 0;
 
@@ -83,12 +83,12 @@ static void lookUpWcmTcam
 #else
             mbyClassifierTcamEntry tcam_entry = mbyClsGetWcmTcamEntry(regs,       slice, tcam_index);
 #endif
-            fm_uint64 cam_key_inv = tcam_entry.keyInvert;
-            fm_uint64 cam_key     = tcam_entry.key;
+            fm_uint64 cam_key_inv = tcam_entry.KEY_INVERT;
+            fm_uint64 cam_key     = tcam_entry.KEY;
             fm_uint64 mask        = cam_key ^ cam_key_inv;
 
-            if (((cam_key & cam_key_inv) == 0) && ((lookup_info->key & mask) == (cam_key & mask)))
-                lookup_info->rawHits[tcam_index] = TRUE;
+            if (((cam_key & cam_key_inv) == 0) && ((wcm_key_info->key & mask) == (cam_key & mask)))
+                wcm_key_info->raw_hits[tcam_index] = TRUE;
 
             tcam_index++;
         }
@@ -98,6 +98,7 @@ static void lookUpWcmTcam
         }
     }
 }
+
 static void lookUpWcmTcamCascade
 (
 #ifdef USE_NEW_CSRS
@@ -111,7 +112,9 @@ static void lookUpWcmTcamCascade
     mbyClassifierHitInfo            tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1]
 )
 {
+    // --------------------------------------------------------------------------------
     // Compute cascade width:
+
     fm_byte cascade_width[MBY_FFU_TCAM_CFG_ENTRIES_1] = { 0 };
 
     for (fm_uint slice = 0; slice < MBY_FFU_TCAM_CFG_ENTRIES_1; slice++)
@@ -133,9 +136,13 @@ static void lookUpWcmTcamCascade
 #endif
             if (tcam_cfg1.START_COMPARE)
                 break;
+
             cascade_width[slice]++;
         }
     }
+
+    // --------------------------------------------------------------------------------
+    // Iterate through slices to look for a match:
 
     fm_bool fsc           = FALSE;
     fm_bool exclusion_set = FALSE;
@@ -166,36 +173,34 @@ static void lookUpWcmTcamCascade
 #else
             mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(regs,       group, i, scenario);
 #endif
-            // Compute TCAM key:
-            mbyLookupInfo lookup_info = selectWcmKeyMask(&tcam_cfg1, keys);
+            // Select TCAM key:
+            mbyWcmKeyInfo wcm_key_info = selectWcmKey(&tcam_cfg1, keys);
 
             // Look up in the TCAM and update raw hits with results of lookup:
 #ifdef USE_NEW_CSRS
-            lookUpWcmTcam(cgrp_b_map, i, tcam_cfg1.CHUNK_MASK, &lookup_info);
+            lookUpWcmTcam(cgrp_b_map, i, tcam_cfg1.CHUNK_MASK, &wcm_key_info);
 #else
-            lookUpWcmTcam(regs,       i, tcam_cfg1.CHUNK_MASK, &lookup_info);
+            lookUpWcmTcam(regs,       i, tcam_cfg1.CHUNK_MASK, &wcm_key_info);
 #endif
             for (fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
-                hits[j] = (fsc || tcam_cfg1.START_COMPARE || hits[j]) && lookup_info.rawHits[j];
+                hits[j] = (fsc || tcam_cfg1.START_COMPARE || hits[j]) && wcm_key_info.raw_hits[j];
 
-            fsc = (i == slice) && (tcam_cfg1.START_COMPARE == 1) && (tcam_cfg1.CHUNK_MASK == 0);
+            fsc = (i == slice) && tcam_cfg1.START_COMPARE && (tcam_cfg1.CHUNK_MASK == 0);
         }
 
         for (fm_int j = MBY_FFU_TCAM_ENTRIES_0 - 1; j >= 0; j--)
         {
             if (hits[j] && !set_hit) {
-                // introduce slice_info to fix klocwork error
-                fm_uint slice_info = slice + cascade_width[slice]-1;
-                tcam_hit_info[slice_info].hitIndexValid = TRUE;
-                tcam_hit_info[slice_info].hitIndex = j;
-                if (exclusion_set)
+                fm_uint entry = slice + (cascade_width[slice] - 1);
+                tcam_hit_info[entry].hit_index_valid = TRUE;
+                tcam_hit_info[entry].hit_index       = j;
+                if (exclusion_set == TRUE)
                     set_hit = TRUE;
                 break;
             }
         }
     }
 }
-
 
 void mbyMatchWildcard
 (
@@ -215,11 +220,14 @@ void mbyMatchWildcard
     lookUpWcmTcamCascade(regs,       keys, scenario, group, tcam_hit_info);
 #endif
 
+#if 0 // FIXME move this to the top layer file: mby_classifier
+// --------------------------------------------------------------------------------
     // Apply and resolve actions from action RAMs based on tcam hit index per slice:
-    // FIXME move this to the top layer file: mby_classifier
-// #ifdef USE_NEW_CSRS
-//     resolveActions(cgrp_b_map, scenario, group, tcam_hit_info, actions);
-// #else
-//     resolveActions(regs,       scenario, group, tcam_hit_info, actions);
-// #endif
+#ifdef USE_NEW_CSRS
+    resolveActions(cgrp_b_map, scenario, group, tcam_hit_info, actions);
+#else
+    resolveActions(regs,       scenario, group, tcam_hit_info, actions);
+#endif
+// --------------------------------------------------------------------------------
+#endif
 }

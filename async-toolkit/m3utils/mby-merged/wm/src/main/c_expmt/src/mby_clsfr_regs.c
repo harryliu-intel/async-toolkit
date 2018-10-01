@@ -14,10 +14,10 @@ mbyClassifierKeyMaskCfg mbyClsGetEmAKeyMaskCfg
     mbyClassifierKeyMaskCfg key_mask_cfg;
 
 #ifdef USE_NEW_CSRS
-    key_mask_cfg.keyMaskSel = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48]
-    key_mask_cfg.key32Mask  = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
-    key_mask_cfg.key16Mask  = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
-    key_mask_cfg.key8Mask   = cgrp_a_map->EM_A_KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
+    key_mask_cfg.KEY_MASK_SEL = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48]
+    key_mask_cfg.KEY32_MASK   = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
+    key_mask_cfg.KEY16_MASK   = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
+    key_mask_cfg.KEY8_MASK    = cgrp_a_map->EM_A_KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
 #else
     fm_byte const group = 0; // Exact Match "A"
 
@@ -27,10 +27,10 @@ mbyClassifierKeyMaskCfg mbyClsGetEmAKeyMaskCfg
     mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK0(group, hash_num, scenario, 0), &ffu_key_mask0_reg);
     mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK1(group, hash_num, scenario, 0), &ffu_key_mask1_reg);
 
-    key_mask_cfg.keyMaskSel = 0; // <--- REVISIT!!!!
-    key_mask_cfg.key32Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
-    key_mask_cfg.key16Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
-    key_mask_cfg.key8Mask   = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
+    key_mask_cfg.KEY_MASK_SEL = 0; // <--- REVISIT!!!!
+    key_mask_cfg.KEY32_MASK   = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
+    key_mask_cfg.KEY16_MASK   = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    key_mask_cfg.KEY8_MASK    = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
 #endif
     return key_mask_cfg;
 }
@@ -45,10 +45,10 @@ mbyClassifierKeyMaskCfg mbyClsGetEmBKeyMaskCfg
     mbyClassifierKeyMaskCfg key_mask_cfg;
 
 #ifdef USE_NEW_CSRS
-    key_mask_cfg.keyMaskSel = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48]
-    key_mask_cfg.key32Mask  = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
-    key_mask_cfg.key16Mask  = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
-    key_mask_cfg.key8Mask   = cgrp_b_map->EM_B_KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
+    key_mask_cfg.KEY_MASK_SEL = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48]
+    key_mask_cfg.KEY32_MASK   = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
+    key_mask_cfg.KEY16_MASK   = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
+    key_mask_cfg.KEY8_MASK    = cgrp_b_map->EM_B_KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
 #else
     fm_byte const group = 1; // Exact Match "B"
 
@@ -58,10 +58,10 @@ mbyClassifierKeyMaskCfg mbyClsGetEmBKeyMaskCfg
     mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK0(group, hash_num, scenario, 0), &ffu_key_mask0_reg);
     mbyModelReadCSR64(regs, MBY_FFU_KEY_MASK1(group, hash_num, scenario, 0), &ffu_key_mask1_reg);
 
-    key_mask_cfg.keyMaskSel = 0; // <--- REVISIT!!!!
-    key_mask_cfg.key32Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
-    key_mask_cfg.key16Mask  = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
-    key_mask_cfg.key8Mask   = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
+    key_mask_cfg.KEY_MASK_SEL = 0; // <--- REVISIT!!!!
+    key_mask_cfg.KEY32_MASK   = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
+    key_mask_cfg.KEY16_MASK   = FM_GET_FIELD64(ffu_key_mask1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    key_mask_cfg.KEY8_MASK    = FM_GET_FIELD64(ffu_key_mask0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
 #endif
     return key_mask_cfg;
 }
@@ -424,19 +424,19 @@ mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
     fm_uint64 key_top     = ((fm_uint64) wcm_tcam_entry->KEY_TOP)        << 32;
     fm_uint64 key_top_inv = ((fm_uint64) wcm_tcam_entry->KEY_TOP_INVERT) << 32;
 
-    tcam_entry.key        = wcm_tcam_entry->KEY        | key_top;
-    tcam_entry.keyInvert  = wcm_tcam_entry->KEY_INVERT | key_top_inv;
+    tcam_entry.KEY        = wcm_tcam_entry->KEY        | key_top;
+    tcam_entry.KEY_INVERT = wcm_tcam_entry->KEY_INVERT | key_top_inv;
 #else
     fm_byte const group = 1; // group "B"
 
     fm_uint32 ffu_tcam_regs[MBY_FFU_TCAM_WIDTH] = { 0 };
     mbyModelReadCSRMult(regs, MBY_FFU_TCAM(group, slice, index, 0), MBY_FFU_TCAM_WIDTH, ffu_tcam_regs);
 
-    tcam_entry.key       = FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY) |
-                           FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_TOP) << 32;
+    tcam_entry.KEY        = FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY) |
+                            FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_TOP) << 32;
 
-    tcam_entry.keyInvert = FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_INVERT) |
-                           FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_TOP_INVERT) << 32;
+    tcam_entry.KEY_INVERT = FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_INVERT) |
+                            FM_ARRAY_GET_FIELD64(ffu_tcam_regs, MBY_FFU_TCAM, KEY_TOP_INVERT) << 32;
 #endif
     return tcam_entry;
 }
@@ -528,12 +528,12 @@ mbyClassifierEntropyCfg mbyClsGetEntropyCfg
     entropy_hash_cfg1_r const * const entropy_hash_cfg1 = &(entropy_map->ENTROPY_HASH_CFG1[hash_num][hash_prof]);
     entropy_hash_cfg0_r const * const entropy_hash_cfg0 = &(entropy_map->ENTROPY_HASH_CFG0[hash_num][hash_prof]);
 
-    entropy_cfg.symmetric   = entropy_hash_cfg1->SYMMETRIC;        // [54:54]
-    entropy_cfg.symProf     = entropy_hash_cfg1->SYM_PROFILE;      // [53:52]
-    entropy_cfg.keyMaskProf = entropy_hash_cfg1->KEY_MASK_PROFILE; // [51:48]
-    entropy_cfg.key32Mask   = entropy_hash_cfg1->KEY_MASK32;       // [47:32]
-    entropy_cfg.key16Mask   = entropy_hash_cfg1->KEY_MASK16;       // [31: 0]
-    entropy_cfg.key8Mask    = entropy_hash_cfg0->KEY_MASK8;        // [31: 0]
+    entropy_cfg.SYMMETRIC        = entropy_hash_cfg1->SYMMETRIC;        // [54:54]
+    entropy_cfg.SYM_PROFILE      = entropy_hash_cfg1->SYM_PROFILE;      // [53:52]
+    entropy_cfg.KEY_MASK_PROFILE = entropy_hash_cfg1->KEY_MASK_PROFILE; // [51:48]
+    entropy_cfg.KEY32_MASK       = entropy_hash_cfg1->KEY_MASK32;       // [47:32]
+    entropy_cfg.KEY16_MASK       = entropy_hash_cfg1->KEY_MASK16;       // [31: 0]
+    entropy_cfg.KEY8_MASK        = entropy_hash_cfg0->KEY_MASK8;        // [31: 0]
 #else
     fm_uint64 entropy_hash_cfg0_reg = 0;
     fm_uint64 entropy_hash_cfg1_reg = 0;
@@ -541,12 +541,12 @@ mbyClassifierEntropyCfg mbyClsGetEntropyCfg
     mbyModelReadCSR64(regs, MBY_ENTROPY_HASH_CFG0(hash_num, hash_prof, 0), &entropy_hash_cfg0_reg);
     mbyModelReadCSR64(regs, MBY_ENTROPY_HASH_CFG1(hash_num, hash_prof, 0), &entropy_hash_cfg1_reg);
 
-    entropy_cfg.key8Mask    = FM_GET_FIELD64(entropy_hash_cfg0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
-    entropy_cfg.key16Mask   = FM_GET_FIELD64(entropy_hash_cfg1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
-    entropy_cfg.key32Mask   = FM_GET_FIELD64(entropy_hash_cfg1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
-    entropy_cfg.keyMaskProf = 0; // new <--- REVISIT!!!
-    entropy_cfg.symProf     = 0; // new <--- REVISIT!!!
-    entropy_cfg.symmetric   = 0; // new <--- REVISIT!!!
+    entropy_cfg.SYMMETRIC        = 0; // new <--- REVISIT!!!
+    entropy_cfg.SYM_PROFILE      = 0; // new <--- REVISIT!!!
+    entropy_cfg.KEY_MASK_PROFILE = 0; // new <--- REVISIT!!!
+    entropy_cfg.KEY32_MASK       = FM_GET_FIELD64(entropy_hash_cfg1_reg, MBY_FFU_KEY_MASK1, KEY32_MASK);
+    entropy_cfg.KEY16_MASK       = FM_GET_FIELD64(entropy_hash_cfg1_reg, MBY_FFU_KEY_MASK1, KEY16_MASK);
+    entropy_cfg.KEY8_MASK        = FM_GET_FIELD64(entropy_hash_cfg0_reg, MBY_FFU_KEY_MASK0, KEY8_MASK);
 #endif
     return entropy_cfg;
 }
@@ -597,4 +597,3 @@ void mbyClsConvertKeysToBytes
         for (fm_uint j = 0; j < 4; j++)
             bytes[MBY_FFU_KEY16*2 + MBY_FFU_KEY8 + i*4 + (3-j)] = (keys.key32[i] >> (j * 8 )) & 0xFF;
 }
-

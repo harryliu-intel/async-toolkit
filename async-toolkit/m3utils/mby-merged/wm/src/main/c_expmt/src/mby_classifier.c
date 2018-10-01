@@ -151,10 +151,10 @@ static void resolveActions
             continue; // skip action RAM if disabled
 
         fm_uint slice = action_cfg.slice;
-        if (!tcam_hit_info[slice].hitIndexValid)
+        if (!tcam_hit_info[slice].hit_index_valid)
             continue;
 
-        fm_uint hit_index = tcam_hit_info[slice].hitIndex;
+        fm_uint hit_index = tcam_hit_info[slice].hit_index;
         for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
 #ifdef USE_NEW_CSRS
             fm_uint32 action_entry = mbyClsGetWcmActionEntry(cgrp_b_map, ram_num, hit_index, i);
@@ -174,14 +174,14 @@ static void applyEntropyKeyMask
     mbyClassifierKeys             * const hash_keys
 )
 {
+    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY32_MASK, i, 1)) ? keys.key32[i] : 0;
+
     for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
-        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.key16Mask, i, 1)) ? keys.key16[i] : 0;
+        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY16_MASK, i, 1)) ? keys.key16[i] : 0;
 
     for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
-        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(entropy_cfg.key8Mask,  i, 1)) ? keys.key8 [i] : 0;
-
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
-        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.key32Mask, i, 1)) ? keys.key32[i] : 0;
+        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(entropy_cfg.KEY8_MASK,  i, 1)) ? keys.key8 [i] : 0;
 }
 
 static void populateMuxedAction

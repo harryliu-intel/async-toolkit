@@ -15,25 +15,25 @@
 
 // Structs:
 
-typedef struct mbyLookupInfoStruct
+typedef struct mbyWcmKeyInfoStruct
 {
-    fm_uint64               key;       // 40b field
-    fm_uint64               keyInvert; // 40b
+    fm_uint64               key;        // 40b field
+    fm_uint64               key_invert; // 40b
 #ifdef USE_NEW_CSRS
     // FIXME is this the right number of entries?
-    fm_bool                 rawHits[wcm_tcam_rf_WCM_TCAM__n];
+    fm_bool                 raw_hits[wcm_tcam_rf_WCM_TCAM__n];
 #else
-    fm_bool                 rawHits[MBY_FFU_TCAM_ENTRIES_0];
+    fm_bool                 raw_hits[MBY_FFU_TCAM_ENTRIES_0];
 #endif
-    fm_uint32               hitIndex;
-    fm_bool                 hitIndexValid;
+    fm_uint32               hit_index;
+    fm_bool                 hit_index_valid;
 
-} mbyLookupInfo;
+} mbyWcmKeyInfo;
 
 typedef struct mbyClassifierHitInfoStruct
 {
-    fm_uint32               hitIndex;
-    fm_bool                 hitIndexValid;
+    fm_uint32               hit_index;
+    fm_bool                 hit_index_valid;
 
 } mbyClassifierHitInfo;
 
