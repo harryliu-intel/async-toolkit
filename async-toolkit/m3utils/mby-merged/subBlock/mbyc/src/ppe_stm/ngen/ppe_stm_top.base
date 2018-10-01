@@ -14,11 +14,15 @@ egr_ppe_stm_if.stm egr_ppe_stm_if1,
 ngen_IO_list
 ngen_IO_end
 
+`ifndef FIRST_SHELL
+
 ngen_wires
 
 logic reset_n;
 print "assign reset_n = !reset;\n";
 
 ngen_submodules
+
+`endif // FIRST_SHELL
 
 ngen_endmodule

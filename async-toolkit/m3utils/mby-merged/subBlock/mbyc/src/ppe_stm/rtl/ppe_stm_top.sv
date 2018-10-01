@@ -39,6 +39,7 @@ egr_ppe_stm_if.stm egr_ppe_stm_if1,
 input                   cclk                                      
 );
 
+`ifndef FIRST_SHELL
 logic [72:0] ppe_stm_ppe_stm_fwd_tbl0_0_from_mem;
 logic [92:0] ppe_stm_ppe_stm_fwd_tbl0_0_to_mem;
 logic [72:0] ppe_stm_ppe_stm_fwd_tbl0_100_from_mem;
@@ -5798,4 +5799,5 @@ ppe_stm_sram_mems    ppe_stm_sram_mems(
 /* output logic   [72:0] */ .ppe_stm_ppe_stm_fwd_tbl1_50_from_mem  (ppe_stm_ppe_stm_fwd_tbl1_50_from_mem));            
 // End of module ppe_stm_sram_mems from ppe_stm_sram_mems
 
+`endif // FIRST_SHELL
 endmodule // ppe_stm_top
