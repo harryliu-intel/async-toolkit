@@ -19,23 +19,22 @@ object PacketHeader {
 
 class PacketHeader(bytes: IndexedSeq[Byte]) {
 
-  val adjustedSegmentLength: Int = {
-    if (bytes.length < 4) {
-      bytes.length
-    } else if ((bytes.length - 4) > portionSegmentFPP) {
-      portionSegmentFPP
-    } else {
-      bytes.length - 4
-    }
-  }
-
   /**
     * The packetheader  includes the entire packet
     *
+    * condition-end-of-packet
     * Used in parser to help distinguish between exceeding parser depth and
     * exceeding packet size
     */
-  val eop: Boolean = (bytes.length - 4) <= portionSegmentFPP
+  val (adjustedSegmentLength: Int, conditionEOP: Boolean) = {
+    if (bytes.length < 4) {
+      (bytes.length, true)
+    } else if ((bytes.length - 4) > portionSegmentFPP) {
+      (portionSegmentFPP, false)
+    } else {
+      (bytes.length - 4, true)
+    }
+  }
 
   def apply(addr: Int): Byte = bytes(addr)
 
@@ -52,7 +51,6 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
     * Validate Packet Length from Header. Only checked for IPv4 packets.
     *
     * @see https://en.wikipedia.org/wiki/IPv4#Header
-    * @param ph
     * @return
     */
   def ipv4ihlValidate: Boolean = {

@@ -1,17 +1,13 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
-import com.intel.cg.hpfd.csr.generated.{
-  mby_ppe_parser_map,
-  parser_key_s_rf,
-  parser_key_w_rf,
-  parser_ext_rf
-}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserException, ProtoOffsets, ParserState}
+import com.intel.cg.hpfd.csr.generated.{mby_ppe_parser_map, parser_ext_rf, parser_key_s_rf, parser_key_w_rf}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 import com.intel.cg.hpfd.madisonbay.Memory._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import org.scalatest._
 import monocle.state.all._
 import monocle.function.Index._
@@ -61,13 +57,13 @@ class ParserStageSpec extends FlatSpec with Matchers {
       _ <- parserExtL(16).mod_(_.FLAG_VALUE.set(1))
     } yield ()
 
-    val pStage = new ParserStage(stateTransition.exec(csr), idx)
+    val updatedCsr = stateTransition.exec(csr)
 
-    val result: (ParserState, PacketFlags, ProtoOffsets, Option[ParserException]) = pStage.apply(ph, ps, pf, protoOffset, exception = noException)
-    result._2.flags contains 1 shouldEqual true
-    result._2.flags contains 2 shouldEqual false
-    result._2.flags contains 3 shouldEqual false
-    result._2.flags contains 4 shouldEqual true
+    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, idx, ph, ps, pf, protoOffset, exception = noException)
+    result._1.flags contains 1 shouldEqual true
+    result._1.flags contains 2 shouldEqual false
+    result._1.flags contains 3 shouldEqual false
+    result._1.flags contains 4 shouldEqual true
   }
 
 }

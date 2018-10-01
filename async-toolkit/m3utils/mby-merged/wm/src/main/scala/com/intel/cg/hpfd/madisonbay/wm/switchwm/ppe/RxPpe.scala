@@ -13,10 +13,9 @@ class RxPpe(csr: mby_ppe_rx_top_map.mby_ppe_rx_top_map) extends PipelineStage[Ar
 
   val headerExtractor = new HeaderExtraction
 
-  val parser = new Parser(csr.parser)
   // val mapper = new KeyMapper(csr.mapper)
 
   // how do we provide the 'port' here?
-  def process: Array[Byte] => ParserOutput = Epl.process andThen parser.process
+  def process: Array[Byte] => ParserOutput = Epl.process andThen Parser.parse(csr.parser)
 
 }
