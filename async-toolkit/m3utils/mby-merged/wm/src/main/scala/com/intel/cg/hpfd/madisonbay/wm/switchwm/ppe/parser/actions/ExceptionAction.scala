@@ -1,14 +1,14 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParseDepthExceededException, ParserDoneException, ParserException}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.{ParseDepthExceededException, ParserDoneException, ParserException}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
 class ExceptionAction(exOffset: Short, parsingDone: Boolean) {
 
-  def x(ph: PacketHeader, currentOffset: Int, stage: Int): Option[ParserException] = {
-    if (eos(ph, currentOffset) & ph.eop ) {
+  def test(packetHeader: PacketHeader, currentOffset: Int, stage: Int): Option[ParserException] = {
+    if (conditionEOS(packetHeader, currentOffset) & packetHeader.conditionEOP) {
       Some(ParseDepthExceededException(stage))
-    } else if (eos(ph, currentOffset) & ph.eop) {
+    } else if (conditionEOS(packetHeader, currentOffset) & packetHeader.conditionEOP) {
       Some(ParseDepthExceededException(stage))
     } else if (parsingDone) {
       Some(ParserDoneException(stage))
@@ -19,9 +19,10 @@ class ExceptionAction(exOffset: Short, parsingDone: Boolean) {
 
   // EOP = (if last byte of non-FCS payload is in current segment) ? TRUE: FALSE -- stored in packet header
   // at construction time
+  // End-Of-Segment Condition
   // EOS = adjustedSegmentLength < (currentPointer + currentStage.exceptionOffset)
-  def eos(ph: PacketHeader, currentOffset: Int): Boolean = {
-    ph.adjustedSegmentLength < currentOffset + exOffset
+  def conditionEOS(packetHeader: PacketHeader, currentOffset: Int): Boolean = {
+    packetHeader.adjustedSegmentLength < currentOffset + exOffset
   }
 
 }

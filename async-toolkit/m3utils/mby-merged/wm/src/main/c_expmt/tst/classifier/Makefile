@@ -12,6 +12,11 @@ INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
 SOURCES  = $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
+SOURCES += $(SRC_DIR)/mby_lpm.c
+SOURCES += $(SRC_DIR)/mby_lpm_regs.c
+SOURCES += $(SRC_DIR)/mby_wcm.c
+SOURCES += $(SRC_DIR)/mby_exactmatch.c
+SOURCES += $(SRC_DIR)/mby_clsfr_regs.c
 SOURCES += $(SRC_DIR)/mby_classifier.c
 SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
 
@@ -70,6 +75,11 @@ all: $(TARGET)
 $(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
 $(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
+$(SRC_DIR)/mby_lpm.o       : $(SRC_DIR)/mby_lpm.c        $(SRC_DIR)/mby_lpm.h
+$(SRC_DIR)/mby_lpm_regs.o  : $(SRC_DIR)/mby_lpm_regs.c   $(SRC_DIR)/mby_lpm_regs.h
+$(SRC_DIR)/mby_wcm.o       : $(SRC_DIR)/mby_wcm.c        $(SRC_DIR)/mby_wcm.h
+$(SRC_DIR)/mby_exactmatch.o: $(SRC_DIR)/mby_exactmatch.c $(SRC_DIR)/mby_exactmatch.h
+$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_clsfr_regs.c $(SRC_DIR)/mby_clsfr_regs.h
 $(SRC_DIR)/mby_classifier.o: $(SRC_DIR)/mby_classifier.c $(SRC_DIR)/mby_classifier.h
 $(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
 

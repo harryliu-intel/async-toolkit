@@ -2,16 +2,19 @@
 package com.intel.cg.hpfd.madisonbay.wm.program
 
 import java.io.{DataInputStream, DataOutputStream}
+import java.nio.ByteBuffer
 
-import com.intel.cg.hpfd.madisonbay.wm.server.dto._
-import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtArrayByte.RichByteArray
-
-import scala.collection.mutable
-
+import scala.collection.immutable.HashMap
 import scala.language.reflectiveCalls
 
-class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
+import com.intel.cg.hpfd.csr.generated.mby_top_map
+import com.intel.cg.hpfd.madisonbay.Memory._
+import com.intel.cg.hpfd.madisonbay.wm.server.dto._
+import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtArrayByte.Implicits
+import monocle.Optional
+
+class IosfHandling(csrSpace: scala.collection.mutable.HashMap[Int,Byte], paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long]]) {
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
   // (we do not not provide subclasses or trait definitions in the scheme-based generator)
   type dataSig = { def data0: Long ; def data1: Long }
@@ -119,29 +122,34 @@ class IosfHandling(csrSpace : mutable.HashMap[Int, Byte]) {
     os.flush()
   }
 
-  def processReadReg(iosf: IosfRegReadReq, os: DataOutputStream): Unit = {
-    val addr = iosf.addr
-    println("Processing read of 0x" + addr.toHexString)
-    val theArray = Array.ofDim[Byte](8)
-    (0 until 8).foreach( x => theArray(x) = csrSpace.getOrElse((addr + x).toInt, 0))
+  def processReadReg(csrs: mby_top_map.mby_top_map, iosf: IosfRegReadReq, os: DataOutputStream): Unit = {
     val msgLength = 3*4 + IosfRegCompDataHdr.LengthBits / 8 + 8 // 12 bytes of ModelMsgHdr, 8 bytes of IOSF header, 8 bytes of data
+    val registerValue = paths
+      .get(Address at (iosf.addr bytes))
+      .flatMap(_.getOption(csrs))
+      .getOrElse(0L)
+
     os.writeFmModelMessageHdr( FmModelMessageHdr(msgLength, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
     val response = makeReadResponse(iosf)
     os.writeIosfRegCompDataHdr(response)
-    (0 until 8).foreach(x => os.writeByte(theArray(x)))
+
+    ByteBuffer
+      .allocate(8)
+      .putLong(registerValue)
+      .array()
+      .foreach(os.writeByte(_))
 
     os.flush()
-    println("Wrote the response back " + theArray.toIndexedSeq.map(f => f"$f%x"))
+    println(f"Wrote the response back $registerValue%x")
   }
 
-
-  def processIosf(is: DataInputStream, os: DataOutputStream): Unit = {
+  def processIosf(csrs: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): Unit = {
     val array = Array.ofDim[Byte](128 / 8)  // IOSF headers are 16 bytes, except for reg-write, which is 24
 
     is.readFully(array)
     array match {
       case IosfBlkWriteExtractor(writeReg) => processWriteBlk(writeReg, is, os)
-      case IosfReadExtractor(readReg) => processReadReg(readReg, os)
+      case IosfReadExtractor(readReg) => processReadReg(csrs, readReg, os)
       case _ =>
         val extra = Array.ofDim[Byte](64 / 8)
         is.readFully(extra)

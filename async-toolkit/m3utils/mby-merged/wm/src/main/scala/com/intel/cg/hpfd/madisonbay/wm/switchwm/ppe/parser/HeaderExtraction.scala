@@ -13,6 +13,6 @@ object HeaderExtraction {
 
 class HeaderExtraction extends PipelineStage[Packet, PacketHeader] {
 
-  def process: Packet => PacketHeader = p =>  new PacketHeader(p.bytes.slice(0, HeaderExtraction.PacketHeaderOffset))
+  def process: Packet => PacketHeader = packet =>  new PacketHeader(packet.bytes.slice(0, HeaderExtraction.PacketHeaderOffset))
 
 }

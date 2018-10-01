@@ -34,6 +34,11 @@
 #define MBY_FFU_KEY8             64
 #define MBY_FFU_KEY16            32
 #define MBY_FFU_KEY32            16
+
+#define MBY_FFU_KEY16_BASE       0
+#define MBY_FFU_KEY8_BASE        ( MBY_FFU_KEY16_BASE + MBY_FFU_KEY16 )
+#define MBY_FFU_KEY32_BASE       ( MBY_FFU_KEY8_BASE  + MBY_FFU_KEY8 )
+
 #define MBY_FFU_KEYS             ( MBY_FFU_KEY8 + MBY_FFU_KEY16   + MBY_FFU_KEY32   )
 #define MBY_FFU_HASH_KEYS        ( MBY_FFU_KEY8 + MBY_FFU_KEY16*2 + MBY_FFU_KEY32*4 )
 #define MBY_FFU_ACT24            16

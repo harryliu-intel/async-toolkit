@@ -93,7 +93,11 @@ void Hash
 
 void NextHop
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_nexthop_map         * const nexthop,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyHashToNextHop const      * const in,
     mbyNextHopToMaskGen         * const out
 );
