@@ -7,7 +7,7 @@ import ParserExceptions._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader, Tcam}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtLong.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
 import scalaz.State
@@ -105,7 +105,7 @@ object Parser {
       List(ExtractAction(csr.PARSER_EXT(idStage).PARSER_EXT(e)), ExtractAction(csr.PARSER_EXT(idStage).PARSER_EXT(e + 16)))
     }
     val exceptionActions = csr.PARSER_EXC(idStage).PARSER_EXC.map(x => new ExceptionAction(x.EX_OFFSET().toShort, x.PARSING_DONE.apply == 1))
-    val matcher = tcamMatchSeq(parserAnalyzerTcamMatchBit) _
+    val matcher = tcamMatchRegSeq(parserAnalyzerTcamMatchBit) _
 
     (wcsr.PARSER_KEY_W zip kcsr.PARSER_KEY_S) zip ((analyzerActions, extractActions, exceptionActions).zipped.toIterable) collectFirst {
       case (x, y) if matcher(Seq(
@@ -152,7 +152,7 @@ object Parser {
     val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
     val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
-    val tc = tcamMatch(standardTcamMatchBit)(_)
+    val tc = tcamMatchReg(Tcam.standardTcamMatchBit)(_)
     tcamCsr.zip(sramCsr).reverse.collectFirst{
       case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
     }.getOrElse((0,0))
