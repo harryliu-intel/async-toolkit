@@ -180,10 +180,11 @@ static void exploreSubtrie
     }
 }
 
-void mbyMatchLpm
+// Internal LPM function that takes the processed key as an argument
+static void lpmSearch
 (
     MBY_LPM_IN_REGS,
-    mbyLpmIn    const * const in,
+    mbyLpmKey   const * const in,
     mbyLpmOut         * const out
 )
 {
@@ -232,6 +233,36 @@ void mbyMatchLpm
         // TODO verify alignment in SHM_FWD_TABLE0
         out->fwd_table0_idx = st_lookup.hit_ptr * 16;
     }
+}
+
+void mbyMatchLpm
+(
+    MBY_LPM_IN_REGS,
+    mbyClassifierKeys    const * const keys,
+    mbyLpmOut                  * const out
+)
+{
+    mbyLpmKeyMasks key_masks;
+    // TODO where does this come from?
+    fm_byte profile_id = 0;
+
+#ifdef USE_NEW_CSRS
+    mbyLpmGetKeyMasks(cgrp_a_map, profile_id, &key_masks);
+#else
+    mbyLpmGetKeyMasks(regs,       profile_id, &key_masks);
+#endif
+
+    // TODO properly initialize these before calling the internal function
+    mbyLpmKey in = { 0 };
+    // in.key = ...;
+    // in.key_len = ...;
+    
+
+#ifdef USE_NEW_CSRS
+    lpmSearch(cgrp_a_map,   &in, out);
+#else
+    lpmSearch(regs,         &in, out);
+#endif
 }
 
 //#ifdef UNIT_TEST

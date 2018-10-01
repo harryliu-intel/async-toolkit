@@ -8,6 +8,29 @@
 
 #ifdef USE_NEW_CSRS
 
+void mbyLpmGetKeyMasks
+(
+    mby_ppe_cgrp_a_map     * const cgrp_a_map,
+    fm_byte                  const profile_id,
+    mbyLpmKeyMasks         * const key_masks
+)
+{
+    assert(profile_id < 64);
+    assert(key_masks);
+
+    for (fm_uint i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
+        key_masks->key_mask[i] = cgrp_a_map->LPM_KEY_MASK[profile_id][i].MASK;
+
+    key_masks->md_key16_mask = cgrp_a_map->LPM_KEY_SEL0[profile_id].MD_KEY16_MASK;
+
+    key_masks->addr_key8_mask = cgrp_a_map->LPM_KEY_SEL1[profile_id].ADDR_KEY8_MASK;
+    key_masks->md_key8_mask  = cgrp_a_map->LPM_KEY_SEL1[profile_id].MD_KEY8_MASK;
+
+    key_masks->addr_key16_mask = cgrp_a_map->LPM_KEY_SEL2[profile_id].ADDR_KEY16_MASK;
+
+    key_masks->addr_key32_mask = cgrp_a_map->LPM_KEY_SEL3[profile_id].ADDR_KEY32_MASK;
+}
+
 void mbyLpmGetTcamEntry
 (
     mby_ppe_cgrp_a_map     * const cgrp_a_map,
@@ -87,6 +110,50 @@ void mbyLpmGetSubtrieStore
 }
 
 #else /* HLP-like legacy register space */
+
+void mbyLpmGetKeyMasks
+(
+    fm_uint32                      regs[MBY_REGISTER_ARRAY_SIZE],
+    fm_byte                  const profile_id,
+    mbyLpmKeyMasks         * const key_masks
+)
+{
+    /* FIXME set the 1st index of LPM_XXX registers */
+    const fm_uint16 idx0 = 0;
+    fm_uint32 k_regs[MBY_LPM_KEY_MASK_WIDTH] = { 0 };
+
+    assert(profile_id < 64);
+    assert(key_masks);
+
+    for (fm_uint i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
+    {
+        mbyModelReadCSRMult(regs, MBY_LPM_KEY_MASK(idx0, profile_id, i, 0),
+                            MBY_LPM_KEY_MASK_WIDTH, k_regs);
+
+        key_masks->key_mask[i] = FM_ARRAY_GET_FIELD64(k_regs, MBY_LPM_KEY_MASK, MASK);
+    }
+
+    mbyModelReadCSRMult(regs, MBY_LPM_KEY_SEL0(idx0, profile_id, 0),
+                        MBY_LPM_KEY_SEL0_WIDTH, k_regs);
+
+    key_masks->md_key16_mask = FM_ARRAY_GET_FIELD64(k_regs, MBY_LPM_KEY_SEL0, MD_KEY16_MASK);
+
+    mbyModelReadCSRMult(regs, MBY_LPM_KEY_SEL1(idx0, profile_id, 0),
+                        MBY_LPM_KEY_SEL1_WIDTH, k_regs);
+
+    key_masks->addr_key8_mask = FM_ARRAY_GET_FIELD(k_regs, MBY_LPM_KEY_SEL1, ADDR_KEY8_MASK);
+    key_masks->md_key8_mask = FM_ARRAY_GET_FIELD(k_regs, MBY_LPM_KEY_SEL1, MD_KEY8_MASK);
+
+    mbyModelReadCSRMult(regs, MBY_LPM_KEY_SEL2(idx0, profile_id, 0),
+                        MBY_LPM_KEY_SEL2_WIDTH, k_regs);
+
+    key_masks->addr_key16_mask = FM_ARRAY_GET_FIELD64(k_regs, MBY_LPM_KEY_SEL2, ADDR_KEY16_MASK);
+
+    mbyModelReadCSRMult(regs, MBY_LPM_KEY_SEL3(idx0, profile_id, 0),
+                        MBY_LPM_KEY_SEL3_WIDTH, k_regs);
+
+    key_masks->addr_key32_mask = FM_ARRAY_GET_FIELD(k_regs, MBY_LPM_KEY_SEL3, ADDR_KEY32_MASK);
+}
 
 void mbyLpmGetTcamEntry
 (
@@ -188,5 +255,4 @@ void mbyLpmGetSubtrieStore
 
     st_store->action_base_ptr = FM_ARRAY_GET_FIELD(st_regs, MBY_LPM_SUBTRIE_APTR, ACTION_BASE_PTR);
 }
-
 #endif /* USE_NEW_CSRS */

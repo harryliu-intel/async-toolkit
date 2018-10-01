@@ -619,13 +619,12 @@ void Classifier
 #endif
 
     // Longest Prefix Match (LPM):
-    mbyLpmIn  lpm_in  = { 0 };
     mbyLpmOut lpm_out = { 0 };
 
 #ifdef USE_NEW_CSRS
-    mbyMatchLpm(cgrp_a_map, &lpm_in, &lpm_out);
+    mbyMatchLpm(cgrp_a_map, &keys, &lpm_out);
 #else
-    mbyMatchLpm(regs,       &lpm_in, &lpm_out);
+    mbyMatchLpm(regs,       &keys, &lpm_out);
 #endif
 
     // TODO: convert lpm_out to actions here <-- FIXME!!!
