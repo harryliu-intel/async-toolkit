@@ -1,3 +1,4 @@
+//scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
 import com.intel.cg.hpfd.csr.generated.parser_ext_r
@@ -30,7 +31,7 @@ object ExtractAction {
 
   val SpecialProtocolId = 0xff
 
-  def apply(csr: parser_ext_r): ExtractAction = {
+  def apply(csr: parser_ext_r.parser_ext_r): ExtractAction = {
     // 0 is special as a flag number, means do _no_ flag annotation do not update _0_
     val flagNum = csr.FLAG_NUM() match {
       case 0L => None
@@ -42,7 +43,7 @@ object ExtractAction {
       case SpecialProtocolId => None
       case x => Some(x.toShort)
     }
-    new ExtractAction(protoId, csr.OFFSET.toShort, flagNum, csr.FLAG_VALUE() == 1L, csr.PTR_NUM.toShort)
+    new ExtractAction(protoId, csr.OFFSET().toShort, flagNum, csr.FLAG_VALUE() == 1L, csr.PTR_NUM().toShort)
   }
 
 }

@@ -1,6 +1,7 @@
+//scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
-import com.intel.cg.hpfd.csr.RdlRegister
+import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
 
 /**
   * Ternary Content-Addressable Memory
@@ -9,11 +10,11 @@ import com.intel.cg.hpfd.csr.RdlRegister
   */
 object ParserTcam {
 
-  type tcTriple = (RdlRegister[Long]#HardwareReadable, RdlRegister[Long]#HardwareReadable, Long)
+  type tcTriple = (RdlField[_, Long] with HardwareReadable[Long], RdlField[_, Long] with HardwareReadable[Long], Long)
 
   def tcamMatchSeq(f: ((Boolean, Boolean, Boolean)) => Boolean)(x: Seq[tcTriple]): Boolean = {
-    assert(x.forall(t => t._1.size == t._2.size), "key and mask/inverted version should be the same width")
-    x.forall(t => tcamMatch1(f)(t._1.size)(t._1(), t._2(), t._3))
+    assert(x.forall(t => t._1.range.size == t._2.range.size), "key and mask/inverted version should be the same width")
+    x.forall(t => tcamMatch1(f)(t._1.range.size)(t._1(), t._2(), t._3))
   }
 
   val tcamMatch: (((Boolean, Boolean, Boolean)) => Boolean, tcTriple)=> Boolean = {

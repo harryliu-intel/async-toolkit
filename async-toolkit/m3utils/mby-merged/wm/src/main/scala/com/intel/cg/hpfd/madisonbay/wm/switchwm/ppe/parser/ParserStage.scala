@@ -1,3 +1,4 @@
+//scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
@@ -8,11 +9,11 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
 
-class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
+class ParserStage(val csr: mby_ppe_parser_map.mby_ppe_parser_map, val myindex: Int) {
 
   private case class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
 
-    def apply(ps: ParserState, pf: PacketFlags, po: Parser.ProtoOffsets)(ph: PacketHeader ):
+    def apply(ps: ParserState, pf: PacketFlags, po: Parser.ProtoOffsets)(ph: PacketHeader):
           (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
       val currentOffset = ps.ptr
       // is there an error condition requiring an abort (i.e. without processing this stage)
@@ -38,14 +39,14 @@ class ParserStage(val csr: mby_ppe_parser_map, val myindex: Int) {
     val wcsr = csr.PARSER_KEY_W(myindex)
     val kcsr = csr.PARSER_KEY_S(myindex)
 
-    val analyzerActions = (csr.PARSER_ANA_W(myindex) zip csr.PARSER_ANA_S(myindex)).map(x => AnalyzerAction(x._1, x._2))
+    val analyzerActions = (csr.PARSER_ANA_W(myindex).PARSER_ANA_W zip csr.PARSER_ANA_S(myindex).PARSER_ANA_S).map(x => AnalyzerAction(x._1, x._2))
     val extractActions = (0 until 16).map(e => {
-      List(ExtractAction(csr.PARSER_EXT(myindex)(e)), ExtractAction(csr.PARSER_EXT(myindex)(e + 16)))
+      List(ExtractAction(csr.PARSER_EXT(myindex).PARSER_EXT(e)), ExtractAction(csr.PARSER_EXT(myindex).PARSER_EXT(e + 16)))
     })
-    val exceptionActions = csr.PARSER_EXC(myindex).map(x => new ExceptionAction(x.EX_OFFSET.toShort, x.PARSING_DONE.apply == 1))
+    val exceptionActions = csr.PARSER_EXC(myindex).PARSER_EXC.map(x => new ExceptionAction(x.EX_OFFSET().toShort, x.PARSING_DONE.apply == 1))
     val matcher = tcamMatchSeq(parserAnalyzerTcamMatchBit) _
 
-    (wcsr zip kcsr) zip (analyzerActions, extractActions, exceptionActions).zipped.toIterable collectFirst {
+    (wcsr.PARSER_KEY_W zip kcsr.PARSER_KEY_S) zip ((analyzerActions, extractActions, exceptionActions).zipped.toIterable) collectFirst {
       case (x, y) if matcher(Seq(
         (x._1.W0_MASK, x._1.W0_VALUE, w0),
         (x._1.W1_MASK, x._1.W1_VALUE, w1),

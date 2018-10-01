@@ -1,42 +1,67 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
-import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserException, ParserState, ProtoOffsets}
+import com.intel.cg.hpfd.csr.generated.{
+  mby_ppe_parser_map,
+  parser_key_s_rf,
+  parser_key_w_rf,
+  parser_ext_rf
+}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserException, ProtoOffsets, ParserState}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
+import com.intel.cg.hpfd.madisonbay.Memory._
 import org.scalatest._
+import monocle.state.all._
+import monocle.function.Index._
 
 /**
   * Demonstrate some trivial examples how a single parser stage should behave.
   */
 class ParserStageSpec extends FlatSpec with Matchers {
 
-
   "Flag 1 and 4" should "unconditionally be set when rule 0 configured as unconditional match" in {
-    val csr = mby_ppe_parser_map()
-    val myIndex = 0
+    val csr = mby_ppe_parser_map.mby_ppe_parser_map(Address(0,0 bits))
+    val idx = 0
     val pf = PacketFlags()
     val protoOffset = Parser.EmptyProtoOffsets
     val noException = Option.empty[ParserException]
     val ps  = ParserState(List(0,0,0), new AluOperation(0,0), 0, 0)
     val ph = PacketHeader(Array.ofDim[Byte](79))
 
-    csr.foreachResetableField(f => f.reset())
-    csr.PARSER_KEY_S(myIndex)(0).STATE_MASK() = 0
-    csr.PARSER_KEY_S(myIndex)(0).STATE_VALUE() = 0
-    csr.PARSER_KEY_W(myIndex)(0).W0_MASK() = 0
-    csr.PARSER_KEY_W(myIndex)(0).W0_VALUE() = 0
-    csr.PARSER_KEY_W(myIndex)(0).W1_MASK() = 0
-    csr.PARSER_KEY_W(myIndex)(0).W1_VALUE() = 0
+    // TODO: fix that
+    //csr.foreachResetableField(f => f.reset())
 
-    csr.PARSER_EXT(myIndex)(0).FLAG_NUM() = 1
-    csr.PARSER_EXT(myIndex)(0).FLAG_VALUE() = 1
-    csr.PARSER_EXT(myIndex)(16).FLAG_NUM() = 4
-    csr.PARSER_EXT(myIndex)(16).FLAG_VALUE() = 1
+    val parserKeySL = mby_ppe_parser_map.mby_ppe_parser_map._PARSER_KEY_S composeOptional
+      index(idx) composeLens
+      parser_key_s_rf.parser_key_s_rf._PARSER_KEY_S composeOptional
+      index(0)
 
-    val pStage = new ParserStage(csr, myIndex)
+    val parserKeyWL = mby_ppe_parser_map.mby_ppe_parser_map._PARSER_KEY_W composeOptional
+      index(idx) composeLens
+      parser_key_w_rf.parser_key_w_rf._PARSER_KEY_W composeOptional
+      index(0)
+
+    def parserExtL(parserExtRIdx: Int) = mby_ppe_parser_map.mby_ppe_parser_map._PARSER_EXT composeOptional
+      index(idx) composeLens
+      parser_ext_rf.parser_ext_rf._PARSER_EXT composeOptional
+      index(parserExtRIdx)
+
+    val stateTransition = for {
+      _ <- parserKeySL.mod_(_.STATE_MASK.set(0))
+      _ <- parserKeySL.mod_(_.STATE_VALUE.set(0))
+      _ <- parserKeyWL.mod_(_.W0_MASK.set(0))
+      _ <- parserKeyWL.mod_(_.W0_VALUE.set(0))
+      _ <- parserKeyWL.mod_(_.W1_MASK.set(0))
+      _ <- parserKeyWL.mod_(_.W1_VALUE.set(0))
+      _ <- parserExtL(0).mod_(_.FLAG_NUM.set(1))
+      _ <- parserExtL(0).mod_(_.FLAG_VALUE.set(1))
+      _ <- parserExtL(16).mod_(_.FLAG_NUM.set(4))
+      _ <- parserExtL(16).mod_(_.FLAG_VALUE.set(1))
+    } yield ()
+
+    val pStage = new ParserStage(stateTransition.exec(csr), idx)
 
     val result: (ParserState, PacketFlags, ProtoOffsets, Option[ParserException]) = pStage.apply(ph, ps, pf, protoOffset, exception = noException)
     result._2.flags contains 1 shouldEqual true
