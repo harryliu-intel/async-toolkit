@@ -5,7 +5,6 @@ import com.intel.cg.hpfd.madisonbay.Memory._
 import java.io.File
 
 import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
@@ -20,7 +19,6 @@ import org.scalatest.{FlatSpec, Matchers}
 class ParserSpec extends FlatSpec with Matchers {
 
   val cfg = mby_ppe_parser_map.mby_ppe_parser_map(Address(0,0 bits))
-  val parser = new Parser(cfg)
 
   // load a 'canonical' image (tbd, how we're going to get this)
 
