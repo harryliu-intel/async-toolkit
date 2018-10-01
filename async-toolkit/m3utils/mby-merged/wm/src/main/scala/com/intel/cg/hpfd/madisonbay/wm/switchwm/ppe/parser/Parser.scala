@@ -1,5 +1,4 @@
 //scalastyle:off regex.tuples
-//scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.csr.generated._
@@ -10,6 +9,8 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtLong.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.ExtractAction
 import scalaz.State
 import scalaz.syntax.traverse._
 import scalaz.std.list._
@@ -18,28 +19,26 @@ class Parser(csr: mby_ppe_parser_map.mby_ppe_parser_map) extends PipelineStage[P
 
   val stages: IndexedSeq[ParserStage] = (0 until parserStages).map(i => new ParserStage(csr, i))
 
-  def initialState(ph: PacketHeader, port: PortIndex): Parser.ParserState = {
-    val portCfg = csr.PARSER_PORT_CFG(port.p)
+  def initialState(packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
+    val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
     val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
-    val w = initWOffsets.map(off => ph.getWord(off().toInt))
+    val w = initWOffsets.map(off => packetHeader.getWord(off().toInt))
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
     val state = portCfg.INITIAL_STATE().toShort
     val ptr = portCfg.INITIAL_PTR().toShort
     ParserState(w,aluOp, state, ptr)
   }
 
-  def packetType(pf: PacketFlags): (PacketType, ExtractionIndex) = {
+  def packetType(packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
     val interface = 0
     val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
     val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
     val tc = tcamMatch.curried(standardTcamMatchBit)
     tcamCsr.zip(sramCsr).reverse.collectFirst{
-      case (x,y) if tc(x.KEY_INVERT, x.KEY, pf.toLong) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
+      case (x,y) if tc(x.KEY_INVERT, x.KEY, packetFlags.toLong) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
     }.getOrElse((0,0))
   }
-
-  def incrementWithSaturation(saturation: Long): Long => Long = l => math.min(l + 1, saturation)
 
   //scalastyle:off magic.number
   def extractKeys(packetHeader: PacketHeader, protoOffsets: ProtoOffsets): PacketFields = {
@@ -55,14 +54,14 @@ class Parser(csr: mby_ppe_parser_map.mby_ppe_parser_map) extends PipelineStage[P
         def toWordWithOffset(v: Int): Short = ph.getWord(v + parserExtractCfgReg.OFFSET().toInt)
 
         (protocolId, protoOffsets.collect { case (pId, baseOffset) if pId == protocolId => baseOffset }.toList) match {
-          case (0xFF, _) => ((0.toShort :: result, mbyPpeParserMap), ())
+          case (ExtractAction.SpecialProtocolId, _) => ((0.toShort :: result, mbyPpeParserMap), ())
           case (_, Nil) =>
-            val next = countersL.modify(_.EXT_UNKNOWN_PROTID.modify(incrementWithSaturation(255)))
+            val next = countersL.modify(_.EXT_UNKNOWN_PROTID.modify((v: Long) => v.incWithUByteSaturation))
             ((0.toShort :: result, next(mbyPpeParserMap)), ())
           case (_, h :: Nil) =>
             ((toWordWithOffset(h) :: result, mbyPpeParserMap),())
           case (_, h :: _) =>
-            val next = countersL.modify(_.EXT_DUP_PROTID.modify(incrementWithSaturation(255)))
+            val next = countersL.modify(_.EXT_DUP_PROTID.modify((v: Long) => v.incWithUByteSaturation))
             ((toWordWithOffset(h) :: result, next(mbyPpeParserMap)), ())
         }
       })
@@ -100,7 +99,7 @@ class Parser(csr: mby_ppe_parser_map.mby_ppe_parser_map) extends PipelineStage[P
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
 
     val exceptionStage = parserException match {
-      case Some(_) => parserException.get.stageEncountered
+      case Some(pexp) => pexp.stageEncountered
       case _ =>
         assert(assertion = false, "No exception encountered in parse, likely buggy parser image")
         0
@@ -137,7 +136,7 @@ class Parser(csr: mby_ppe_parser_map.mby_ppe_parser_map) extends PipelineStage[P
 
 object Parser {
 
-  case class ParserState(w: List[Short], op: AluOperation, state: Short, ptr: Short)
+  case class ParserState(w: List[Short], aluOperation: AluOperation, state: Short, ptr: Short)
 
   type ProtoId = Int
   type BaseOffset = Int

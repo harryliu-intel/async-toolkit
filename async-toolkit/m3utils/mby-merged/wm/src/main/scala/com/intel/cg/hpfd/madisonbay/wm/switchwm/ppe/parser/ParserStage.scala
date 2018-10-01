@@ -9,7 +9,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
 
-class ParserStage(val csr: mby_ppe_parser_map.mby_ppe_parser_map, val myindex: Int) {
+class ParserStage(csr: mby_ppe_parser_map.mby_ppe_parser_map, val myindex: Int) {
 
   private case class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
 
@@ -18,7 +18,7 @@ class ParserStage(val csr: mby_ppe_parser_map.mby_ppe_parser_map, val myindex: I
       val currentOffset = ps.ptr
       // is there an error condition requiring an abort (i.e. without processing this stage)
       // or is the exception action to do nothing (or mark 'done')
-      exceptionAction.x(ph, currentOffset, myindex) match {
+      exceptionAction.test(ph, currentOffset, myindex) match {
 
         case e @ Some(_: AbortParserException) => (ps, pf, po, e)
 
@@ -55,16 +55,16 @@ class ParserStage(val csr: mby_ppe_parser_map.mby_ppe_parser_map, val myindex: I
     }
   }
 
-  def apply(ph: PacketHeader, ps: ParserState, pf: PacketFlags, fields: ProtoOffsets, exception: Option[ParserException]):
+  def apply(packetHeader: PacketHeader, parserState: ParserState, packetFlags: PacketFlags, fields: ProtoOffsets, exception: Option[ParserException]):
             (ParserState, PacketFlags, ProtoOffsets, Option[ParserException]) = {
-    val action = matchingAction(ps.w(0), ps.w(1), ps.state)
+    val action = matchingAction(parserState.w(0), parserState.w(1), parserState.state)
     (exception, action) match {
       // if an exception has already been encountered, do nothing
-      case(Some(exc), _) => (ps, pf, fields, Some(exc))
+      case(Some(exc), _) => (parserState, packetFlags, fields, Some(exc))
       // if nothing matches, do nothing
-      case (exc, None) => (ps, pf, fields, exc)
+      case (exc, None) => (parserState, packetFlags, fields, exc)
         // otherwise, apply the action
-      case (_, Some(act)) => act(ps, pf, fields)(ph)
+      case (_, Some(act)) => act(parserState, packetFlags, fields)(packetHeader)
     }
   }
 

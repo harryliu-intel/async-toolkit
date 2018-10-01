@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions
 
 object ExtArrayByte {
 
-  implicit class RichByteArray(val self: Array[Byte]) {
+  implicit class Implicits(array: Array[Byte]) {
 
     def hexdump(): Unit = {
       print("Dump is: ")
@@ -14,7 +14,7 @@ object ExtArrayByte {
         count += 1
       }
 
-      self.foreach {s =>
+      array.foreach { s =>
         cr()
         print(f"$s%02X" + " ")
       }

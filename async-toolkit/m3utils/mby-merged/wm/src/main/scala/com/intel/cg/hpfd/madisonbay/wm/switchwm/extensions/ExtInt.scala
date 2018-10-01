@@ -2,7 +2,10 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions
 
 object ExtInt {
 
-  implicit class Implicits(val x: Int) {
+  implicit class Implicits(x: Int) extends ExtIntegers[Int] {
+
+    override def addWithSaturation(number1: Int, number2: Long, limit: Long): Int =
+      Math.min(number1 + number2.toInt, limit.toInt)
 
     def nib(i: Int): Int = {
       val mask = 0xf << i
