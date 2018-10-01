@@ -5,7 +5,7 @@ NGEN_FLAGS    = -fi=INTCNOPWR
 V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
 V_DIRS        = -d=../../igr/rtl \
-                -d=../../rtl/egr/verilog \
+                -d=../../egr/rtl \
                 -d=../../tx_ppe/rtl \
                 -d=../../rx_ppe/rtl \
                 -d=../../shared/rtl \
@@ -39,3 +39,6 @@ clean:
 diff:
 	@echo "Making a difference..." # one byte at a time
 	$(DIFF) ../rtl/$(BLOCK).sv ngen/$(BLOCK).sv
+
+bbox:
+	$(V2BBOX) -v ./ngen/$(BLOCK).sv -n $(BLOCK) -t -o ../bbox/$(BLOCK).sv
