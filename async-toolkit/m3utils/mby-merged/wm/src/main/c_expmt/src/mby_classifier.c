@@ -4,6 +4,7 @@
 
 
 #include "mby_mapper.h"
+#include "mby_clsfr_regs.h"
 #include "mby_lpm.h"
 #include "mby_wcm.h"
 #include "mby_exactmatch.h"
@@ -24,12 +25,14 @@ static inline void setPrec
     }
 }
 
-static void doAction
+void doAction
 (
     fm_uint32              const action,
     mbyClassifierActions * const actions
 )
 {
+#ifndef USE_NEW_CSRS // does not compile with new CSRS: missing defines <-- FIXME !!!!
+
     fm_byte prec   = FM_GET_FIELD        (action, MBY_FFU_ACTION, PREC);
     fm_byte encode = FM_GET_UNNAMED_FIELD(action, MBY_FFU_ACTION_l_ENTRYTYPE, 5);
 
@@ -125,46 +128,7 @@ static void doAction
         case MBY_FFU_ACTION_NOP:
             break;
     }
-}
-
-static void resolveActions
-(
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_b_map   * const cgrp_b_map,
-#else
-    fm_uint32                    regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    fm_byte                const scenario,
-    fm_byte                const group,
-    mbyClassifierHitInfo         tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1],
-    mbyClassifierActions * const actions // = output actions
-)
-{
-    for (fm_uint ram_num = 0; ram_num < MBY_FFU_ACTION_ENTRIES_1; ram_num++)
-    {
-#ifdef USE_NEW_CSRS
-        mbyClassifierActionCfg action_cfg = mbyClsGetWcmActionCfg(cgrp_b_map, group, scenario, ram_num);
-#else
-        mbyClassifierActionCfg action_cfg = mbyClsGetWcmActionCfg(regs,       group, scenario, ram_num);
-#endif
-        if (!action_cfg.enable)
-            continue; // skip action RAM if disabled
-
-        fm_uint slice = action_cfg.slice;
-        if (!tcam_hit_info[slice].hit_index_valid)
-            continue;
-
-        fm_uint hit_index = tcam_hit_info[slice].hit_index;
-        for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
-#ifdef USE_NEW_CSRS
-            fm_uint32 action_entry = mbyClsGetWcmActionEntry(cgrp_b_map, ram_num, hit_index, i);
-#else
-            fm_uint32 action_entry = mbyClsGetWcmActionEntry(regs,       ram_num, hit_index, i);
-#endif
-
-            doAction(action_entry, actions);
-        }
-    }
 }
 
 static void applyEntropyKeyMask
@@ -655,7 +619,16 @@ void Classifier
 #endif
 
     // Longest Prefix Match (LPM):
-    // < LPM goes here>
+    mbyLpmIn  lpm_in  = { 0 };
+    mbyLpmOut lpm_out = { 0 };
+
+#ifdef USE_NEW_CSRS
+    mbyMatchLpm(cgrp_a_map, &lpm_in, &lpm_out);
+#else
+    mbyMatchLpm(regs,       &lpm_in, &lpm_out);
+#endif
+
+    // TODO: convert lpm_out to actions here <-- FIXME!!!
 
     // Exact match B (EM_B):
 #ifdef USE_NEW_CSRS

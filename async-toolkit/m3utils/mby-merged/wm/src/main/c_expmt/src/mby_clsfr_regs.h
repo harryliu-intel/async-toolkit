@@ -14,6 +14,45 @@
 
 #ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
+
+//
+// Note: replace the following magic numbers with parameters extracted from the RDL <-- FIXME!!!
+//
+
+// Wild Card Match (WCM):
+#define MBY_FFU_TCAM_CFG_ENTRIES_0                              wcm_tcam_cfg_rf_WCM_TCAM_CFG__nd // 64
+#define MBY_FFU_TCAM_CFG_ENTRIES_1                              16
+
+#define MBY_FFU_TCAM_ENTRIES_0                                  1024
+#define MBY_FFU_TCAM_ENTRIES_1                                  16
+
+#define MBY_FFU_ACTION_ENTRIES_0                                1024
+#define MBY_FFU_ACTION_ENTRIES_1                                20
+
+#define MBY_FFU_MAX_HASH_ENTRY_SIZE                             64
+#define MBY_FFU_MAX_HASH_ACTIONS                                4
+#define MBY_FFU_HASH_CAM_ETY_7_BITS_31_0                        0
+#define MBY_FFU_HASH_CAM_ETY_7_BITS_63_32                       1
+#define MBY_FFU_HASH_CAM_ETY_6_BITS_31_0                        2
+#define MBY_FFU_HASH_CAM_ETY_6_BITS_63_32                       3
+
+#define MBY_FFU_ACTIONS_PER_ENTRY                               2
+
+// Exact Match (EM):
+#define MBY_FFU_HASH_ENTRY_MODE_32B                             0
+#define MBY_FFU_HASH_ENTRY_MODE_64B                             1
+
+#define MBY_FFU_HASH_CAM_ENTRIES_0                              em_b_hash_cam_rf_EM_B_HASH_CAM__nd // 8
+#define MBY_FFU_HASH_CAM_ENTRIES_1                              32
+
+#define MBY_FFU_KEY_MASK0_ENTRIES_0                             64
+#define MBY_FFU_KEY_MASK0_ENTRIES_1                             2
+
+#define MBY_SV_MOVE_DROP_RESERVED                               0
+#define MBY_SV_MOVE_DROP_PORT                                   1
+#define MBY_SV_MOVE_DROP_ADDR                                   2
+#define MBY_SV_MOVE_DROP_STATIC                                 3
+
 #else
 
 #define MBY_FFU_GROUP_BASE                                      (0x3000000)
@@ -135,10 +174,6 @@
 #define MBY_FFU_ACTION_CFG_h_INDEX_1                            7
 #define MBY_FFU_ACTION_CFG_l_INDEX_0                            0
 #define MBY_FFU_ACTION_CFG_h_INDEX_0                            3
-
-#define MBY_FFU_KEY16_BASE                0
-#define MBY_FFU_KEY8_BASE                 ( MBY_FFU_KEY16_BASE + MBY_FFU_KEY16 )
-#define MBY_FFU_KEY32_BASE                ( MBY_FFU_KEY8_BASE  + MBY_FFU_KEY8 )
 
 #define MBY_FFU_MAX_HASH_ENTRY_SIZE       64
 #define MBY_FFU_MAX_HASH_ACTIONS          4
@@ -590,13 +625,19 @@
 #endif /* USE_NEW_CSRS */
 
 #ifdef USE_NEW_CSRS
-#define MBY_CGRP_A_IN_REGS      mby_ppe_cgrp_a_map * const cgrp_a_map
-#define MBY_CGRP_A_IN_REGS      mby_ppe_cgrp_b_map * const cgrp_a_map
-#define MBY_ENTROPY_MAP_IN_REGS mby_ppe_entropy_map * const entropy_map
+#define MBY_CGRP_A_IN_REGS     mby_ppe_cgrp_a_map  * const cgrp_a_map
+#define MBY_CGRP_A_IN_REGS_P                               cgrp_a_map
+#define MBY_CGRP_B_IN_REGS     mby_ppe_cgrp_b_map  * const cgrp_b_map
+#define MBY_CGRP_B_IN_REGS_P                               cgrp_b_map
+#define MBY_ENTROPY_IN_REGS    mby_ppe_entropy_map * const entropy_map
+#define MBY_ENTROPY_IN_REGS_P                              entropy_map
 #else
-#define MBY_CGRP_A_IN_REGS      fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#define MBY_CGRP_B_IN_REGS      fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#define MBY_ENTROPY_MAP_IN_REGS fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#define MBY_CGRP_A_IN_REGS     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#define MBY_CGRP_A_IN_REGS_P             regs
+#define MBY_CGRP_B_IN_REGS     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#define MBY_CGRP_B_IN_REGS_P             regs
+#define MBY_ENTROPY_IN_REGS    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#define MBY_ENTROPY_IN_REGS_P            regs
 #endif
 
 // Enums:
@@ -1026,14 +1067,14 @@ fm_uint32 mbyClsGetWcmActionEntry
 
 mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 (
-    MBY_ENTROPY_MAP_IN_REGS,
+    MBY_ENTROPY_IN_REGS,
     fm_uint32             const hash_num,
     fm_byte               const hash_prof
 );
 
 mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 (
-    MBY_ENTROPY_MAP_IN_REGS,
+    MBY_ENTROPY_IN_REGS,
     fm_byte               const hash_prof
 );
 

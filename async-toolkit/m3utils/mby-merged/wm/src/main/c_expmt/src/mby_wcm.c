@@ -4,6 +4,7 @@
 
 
 #include "mby_common.h"
+#include "mby_classifier.h" // doAction()
 #include "mby_wcm.h"
 
 static mbyWcmKeyInfo selectWcmKey
@@ -57,11 +58,7 @@ static mbyWcmKeyInfo selectWcmKey
 
 static void lookUpWcmTcam
 (
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-#else
-    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
+    MBY_CGRP_B_IN_REGS,
     fm_byte              const slice,
     fm_uint16            const chunk_mask,
     mbyWcmKeyInfo      * const wcm_key_info
@@ -78,11 +75,8 @@ static void lookUpWcmTcam
 
         if ((chunk_mask >> tcam_chunk) & 1)
         {
-#ifdef USE_NEW_CSRS
-            mbyClassifierTcamEntry tcam_entry = mbyClsGetWcmTcamEntry(cgrp_b_map, slice, tcam_index);
-#else
-            mbyClassifierTcamEntry tcam_entry = mbyClsGetWcmTcamEntry(regs,       slice, tcam_index);
-#endif
+            mbyClassifierTcamEntry tcam_entry = mbyClsGetWcmTcamEntry(MBY_CGRP_B_IN_REGS_P, slice, tcam_index);
+
             fm_uint64 cam_key_inv = tcam_entry.KEY_INVERT;
             fm_uint64 cam_key     = tcam_entry.KEY;
             fm_uint64 mask        = cam_key ^ cam_key_inv;
@@ -101,11 +95,7 @@ static void lookUpWcmTcam
 
 static void lookUpWcmTcamCascade
 (
-#ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_b_map      * const cgrp_b_map,
-#else
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
+    MBY_CGRP_B_IN_REGS,
     mbyClassifierKeys const * const keys,
     fm_byte                   const scenario,
     fm_byte                   const group,
@@ -119,21 +109,15 @@ static void lookUpWcmTcamCascade
 
     for (fm_uint slice = 0; slice < MBY_FFU_TCAM_CFG_ENTRIES_1; slice++)
     {
-#ifdef USE_NEW_CSRS
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(cgrp_b_map, group, slice, scenario);
-#else
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(regs,       group, slice, scenario);
-#endif
+        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, slice, scenario);
+
         if (tcam_cfg.START_COMPARE)
             cascade_width[slice]++;
 
         for (fm_uint i = slice + 1; i < MBY_FFU_TCAM_CFG_ENTRIES_1; i++)
         {
-#ifdef USE_NEW_CSRS
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(cgrp_b_map, group, i, scenario);
-#else
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(regs,       group, i, scenario);
-#endif
+            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, i, scenario);
+
             if (tcam_cfg1.START_COMPARE)
                 break;
 
@@ -153,11 +137,8 @@ static void lookUpWcmTcamCascade
         if (cascade_width[slice] == 0)
             continue;
 
-#ifdef USE_NEW_CSRS
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(cgrp_b_map, group, slice, scenario);
-#else
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(regs,       group, slice, scenario);
-#endif
+        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, slice, scenario);
+
         // Start Exclusion Set
         if (tcam_cfg.START_SET) {
             exclusion_set = TRUE;
@@ -168,20 +149,14 @@ static void lookUpWcmTcamCascade
 
         for (fm_uint i = slice; i < slice + cascade_width[slice]; i++)
         {
-#ifdef USE_NEW_CSRS
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(cgrp_b_map, group, i, scenario);
-#else
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(regs,       group, i, scenario);
-#endif
+            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, i, scenario);
+
             // Select TCAM key:
             mbyWcmKeyInfo wcm_key_info = selectWcmKey(&tcam_cfg1, keys);
 
             // Look up in the TCAM and update raw hits with results of lookup:
-#ifdef USE_NEW_CSRS
-            lookUpWcmTcam(cgrp_b_map, i, tcam_cfg1.CHUNK_MASK, &wcm_key_info);
-#else
-            lookUpWcmTcam(regs,       i, tcam_cfg1.CHUNK_MASK, &wcm_key_info);
-#endif
+            lookUpWcmTcam(MBY_CGRP_B_IN_REGS_P, i, tcam_cfg1.CHUNK_MASK, &wcm_key_info);
+
             for (fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
                 hits[j] = (fsc || tcam_cfg1.START_COMPARE || hits[j]) && wcm_key_info.raw_hits[j];
 
@@ -202,6 +177,34 @@ static void lookUpWcmTcamCascade
     }
 }
 
+static void resolveActions
+(
+    MBY_CGRP_B_IN_REGS,
+    fm_byte                const scenario,
+    fm_byte                const group,
+    mbyClassifierHitInfo         tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1],
+    mbyClassifierActions * const actions // = output actions
+)
+{
+    for (fm_uint ram_num = 0; ram_num < MBY_FFU_ACTION_ENTRIES_1; ram_num++)
+    {
+        mbyClassifierActionCfg action_cfg = mbyClsGetWcmActionCfg(MBY_CGRP_B_IN_REGS_P, group, scenario, ram_num);
+
+        if (!action_cfg.enable)
+            continue; // skip action RAM if disabled
+
+        fm_uint slice = action_cfg.slice;
+        if (!tcam_hit_info[slice].hit_index_valid)
+            continue;
+
+        fm_uint hit_index = tcam_hit_info[slice].hit_index;
+        for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
+            fm_uint32 action_entry = mbyClsGetWcmActionEntry(MBY_CGRP_B_IN_REGS_P, ram_num, hit_index, i);
+            doAction(action_entry, actions);
+        }
+    }
+}
+
 void mbyMatchWildcard
 (
     MBY_CGRP_B_IN_REGS,
@@ -214,20 +217,8 @@ void mbyMatchWildcard
     mbyClassifierHitInfo tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1];
 
     // Get hit index for each tcam slice:
-#ifdef USE_NEW_CSRS
-    lookUpWcmTcamCascade(cgrp_b_map, keys, scenario, group, tcam_hit_info);
-#else
-    lookUpWcmTcamCascade(regs,       keys, scenario, group, tcam_hit_info);
-#endif
+    lookUpWcmTcamCascade(MBY_CGRP_B_IN_REGS_P, keys, scenario, group, tcam_hit_info);
 
-#if 0 // FIXME move this to the top layer file: mby_classifier
-// --------------------------------------------------------------------------------
     // Apply and resolve actions from action RAMs based on tcam hit index per slice:
-#ifdef USE_NEW_CSRS
-    resolveActions(cgrp_b_map, scenario, group, tcam_hit_info, actions);
-#else
-    resolveActions(regs,       scenario, group, tcam_hit_info, actions);
-#endif
-// --------------------------------------------------------------------------------
-#endif
+    resolveActions(MBY_CGRP_B_IN_REGS_P, scenario, group, tcam_hit_info, actions);
 }

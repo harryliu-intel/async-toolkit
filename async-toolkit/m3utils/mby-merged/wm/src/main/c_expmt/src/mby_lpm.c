@@ -21,8 +21,11 @@ static void lookUpLpmTcam
     while (tcam_index < MBY_REG_SIZE(LPM_MATCH_TCAM))
     {
         mbyLpmTcamEntry tcam_entry;
-        mbyLpmGetTcamEntry(regs, tcam_index, &tcam_entry);
-
+#ifdef USE_NEW_CSRS
+        mbyLpmGetTcamEntry(cgrp_a_map, tcam_index, &tcam_entry);
+#else
+        mbyLpmGetTcamEntry(regs,       tcam_index, &tcam_entry);
+#endif
         fm_uint64 cam_key_inv = tcam_entry.key_invert;
         fm_uint64 cam_key     = tcam_entry.key;
         fm_uint64 mask        = cam_key ^ cam_key_inv;
@@ -121,7 +124,11 @@ static void exploreSubtrie
     // The key can't be longer than 16B: 20B total key len - 4B tcam key len
     assert(st_lookup->key_len < 16 * 8);
 
-    mbyLpmGetSubtrieStore(regs, subtrie->root_ptr, &st_store);
+#ifdef USE_NEW_CSRS
+    mbyLpmGetSubtrieStore(cgrp_a_map, subtrie->root_ptr, &st_store);
+#else
+    mbyLpmGetSubtrieStore(regs,       subtrie->root_ptr, &st_store);
+#endif
 
     do
     {
@@ -157,14 +164,23 @@ static void exploreSubtrie
         fm_byte child_idx;
 
         child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
-        mbyLpmGetSubtrie(regs, subtrie->child_base_ptr + child_idx, &child_subtrie);
+
+#ifdef USE_NEW_CSRS
+        mbyLpmGetSubtrie(cgrp_a_map, subtrie->child_base_ptr + child_idx, &child_subtrie);
+#else
+        mbyLpmGetSubtrie(regs,       subtrie->child_base_ptr + child_idx, &child_subtrie);
+#endif
         st_lookup->key = &(st_lookup->key[1]);
 
-        exploreSubtrie(regs, &child_subtrie, st_lookup);
+#ifdef USE_NEW_CSRS
+        exploreSubtrie(cgrp_a_map, &child_subtrie, st_lookup);
+#else
+        exploreSubtrie(regs,       &child_subtrie, st_lookup);
+#endif
     }
 }
 
-void Lpm
+void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
     mbyLpmIn    const * const in,
@@ -180,9 +196,13 @@ void Lpm
     assert(in->key_len < MBY_LPM_KEY_MAX_BITS_LEN);
 
     // FIXME adjust based on how the key is stored in memory
-    tcam_lookup.key = in->key[0] | in->key[1] << 8 | in->key[2] << 16 |in->key[3] << 24;
+    tcam_lookup.key = in->key[0] | (in->key[1] << 8) | (in->key[2] << 16) | (in->key[3] << 24);
 
-    lookUpLpmTcam(regs, &tcam_lookup);
+#ifdef USE_NEW_CSRS
+    lookUpLpmTcam(cgrp_a_map, &tcam_lookup);
+#else
+    lookUpLpmTcam(regs,       &tcam_lookup);
+#endif
 
     if (!tcam_lookup.hit_valid)
     {
@@ -190,13 +210,21 @@ void Lpm
         return;
     }
 
-    mbyLpmGetTcamSubtrie(regs, tcam_lookup.hit_index, &tcam_subtrie);
+#ifdef USE_NEW_CSRS
+    mbyLpmGetTcamSubtrie(cgrp_a_map, tcam_lookup.hit_index, &tcam_subtrie);
+#else
+    mbyLpmGetTcamSubtrie(regs,       tcam_lookup.hit_index, &tcam_subtrie);
+#endif
 
     st_lookup.key       = (fm_byte *) &(in->key[4]);
     st_lookup.key_len   = in->key_len - 32;
     st_lookup.hit_valid = FALSE;
 
-    exploreSubtrie(regs, &tcam_subtrie, &st_lookup);
+#ifdef USE_NEW_CSRS
+    exploreSubtrie(cgrp_a_map, &tcam_subtrie, &st_lookup);
+#else
+    exploreSubtrie(regs,       &tcam_subtrie, &st_lookup);
+#endif
 
     out->hit_valid = st_lookup.hit_valid;
     if (out->hit_valid)

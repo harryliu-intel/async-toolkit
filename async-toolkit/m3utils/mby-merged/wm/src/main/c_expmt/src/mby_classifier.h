@@ -68,4 +68,12 @@ typedef struct mbyClassifierToHashStruct
 
 } mbyClassifierToHash;
 
+// Function prototypes:
+
+void doAction
+(
+    fm_uint32              const action,
+    mbyClassifierActions * const actions
+);
+
 #endif /* MBY_CLASSIFIER_H */

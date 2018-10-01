@@ -517,7 +517,7 @@ fm_uint32 mbyClsGetWcmActionEntry
 
 mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 (
-    MBY_ENTROPY_MAP_IN_REGS,
+    MBY_ENTROPY_IN_REGS,
     fm_uint32             const hash_num,
     fm_byte               const hash_prof
 )
@@ -553,7 +553,7 @@ mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 
 mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 (
-    MBY_ENTROPY_MAP_IN_REGS,
+    MBY_ENTROPY_IN_REGS,
     fm_byte               const hash_prof
 )
 {

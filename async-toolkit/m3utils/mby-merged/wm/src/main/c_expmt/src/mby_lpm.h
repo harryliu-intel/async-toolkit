@@ -52,21 +52,21 @@ typedef struct mbyLpmSubtrieLookupStruct
 
 // Functions :
 
-void Lpm
+void mbyMatchLpm
 (
- 	MBY_LPM_IN_REGS,
+    MBY_LPM_IN_REGS,
     mbyLpmIn    const * const in,
     mbyLpmOut         * const out
 );
 
 //#ifdef UNIT_TEST
 struct mbyLpmStaticFuncs {
-	void (*_lookUpLpmTcam)(MBY_LPM_IN_REGS, mbyLpmTcamLookup * const);
+    void    (*_lookUpLpmTcam)(MBY_LPM_IN_REGS, mbyLpmTcamLookup * const);
     fm_bool (*_getBitIn64BitsArray)(fm_uint64 const * const, fm_byte);
     fm_byte (*_countOneIn64BitsArray)(fm_uint64 const * const, fm_byte);
     fm_bool (*_getSubtriePrefixNode)(mbyLpmSubtrieStore const * const, fm_byte);
     fm_bool (*_getSubtrieChildNode)(mbyLpmSubtrieStore const * const, fm_byte);
-    void (*_exploreSubtrie)(MBY_LPM_IN_REGS, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
+    void    (*_exploreSubtrie)(MBY_LPM_IN_REGS, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
 };
 
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs);
