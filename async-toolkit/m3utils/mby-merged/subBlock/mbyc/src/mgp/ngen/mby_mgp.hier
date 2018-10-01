@@ -1,6 +1,6 @@
 //mgp block 
 
-mgp [
+mby_mgp [
   igr of igr_top with igr.map
   egr of egr_top with egr.map
   rxppe of rx_ppe with rxppe.map

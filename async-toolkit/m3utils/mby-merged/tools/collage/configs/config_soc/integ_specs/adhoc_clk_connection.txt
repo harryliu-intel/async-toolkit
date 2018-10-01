@@ -1,0 +1,14 @@
+##############################################################################
+# This file contains global clock connectivity specs that are not automated
+# It should NOT include other connectivity specs
+# See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
+##############################################################################
+
+
+##############################################################################
+# Text editor settings
+# Local Variables:
+# mode: conf
+# End:
+# vim: set expandtab tabstop=2 shiftwidth=2 softtabstop=2 :
+
