@@ -34,9 +34,9 @@ class Parser(csr: mby_ppe_parser_map.mby_ppe_parser_map) extends PipelineStage[P
     val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
     val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
-    val tc = tcamMatch.curried(standardTcamMatchBit)
+    val tc = tcamMatch(standardTcamMatchBit)(_)
     tcamCsr.zip(sramCsr).reverse.collectFirst{
-      case (x,y) if tc(x.KEY_INVERT, x.KEY, packetFlags.toLong) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
+      case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
     }.getOrElse((0,0))
   }
 

@@ -48,9 +48,9 @@ class ParserStage(csr: mby_ppe_parser_map.mby_ppe_parser_map, val myindex: Int) 
 
     (wcsr.PARSER_KEY_W zip kcsr.PARSER_KEY_S) zip ((analyzerActions, extractActions, exceptionActions).zipped.toIterable) collectFirst {
       case (x, y) if matcher(Seq(
-        (x._1.W0_MASK, x._1.W0_VALUE, w0),
-        (x._1.W1_MASK, x._1.W1_VALUE, w1),
-        (x._2.STATE_MASK, x._2.STATE_VALUE, state)
+        ParserTcam.TcTriple(x._1.W0_MASK, x._1.W0_VALUE, w0),
+        ParserTcam.TcTriple(x._1.W1_MASK, x._1.W1_VALUE, w1),
+        ParserTcam.TcTriple(x._2.STATE_MASK, x._2.STATE_VALUE, state)
       )) => Action(y._1, y._2, y._3)
     }
   }
