@@ -16,5 +16,6 @@ all: $(JAVA_FILES)
 
 %.java: %.jamon
 	cd $(SRCDIR) && \
+	mkdir -p classes && \
 	$(JAMON) --destDir=. $(TMPLDIR)/$(*F) && \
 	$(JAVAC) -d classes $(TMPLDIR)/$(subst .java,*.java,$(@F))
