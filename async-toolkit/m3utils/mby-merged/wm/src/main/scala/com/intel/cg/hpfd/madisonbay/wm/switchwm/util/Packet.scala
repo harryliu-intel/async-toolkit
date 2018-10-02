@@ -73,7 +73,7 @@ object Packet {
     is.readFully(pktArray)
     println(s"Read packet of length ${pktArray.length}, captured at ${new java.util.Date(pkt_hdr.ts_sec.toLong * 1000)}")
     // first incarnation of this just reads the first packet and returns a seq of length 1, need to handle reading many (or 0) packets!
-    Seq(new Packet(pktArray))
+    Seq(Packet(pktArray))
   }
 
 }

@@ -21,8 +21,13 @@ class AnalyzerAction(w_off: List[Short], skip: Short, aluOperation: AluOperation
 object AnalyzerAction {
 
   def apply(anaW: parser_ana_w_r.parser_ana_w_r, anaS: parser_ana_s_r.parser_ana_s_r): AnalyzerAction = {
-    new AnalyzerAction(List(anaW.NEXT_W0_OFFSET().toShort, anaW.NEXT_W1_OFFSET().toShort, anaW.NEXT_W2_OFFSET().toShort),
-      anaW.SKIP().toShort,AluOperation(anaS.NEXT_OP().toShort), anaS.NEXT_STATE().toShort, anaS.NEXT_STATE_MASK().toShort)
+    new AnalyzerAction(
+      List(anaW.NEXT_W0_OFFSET().toShort, anaW.NEXT_W1_OFFSET().toShort, anaW.NEXT_W2_OFFSET().toShort),
+      anaW.SKIP().toShort,
+      AluOperation(anaS.NEXT_OP().toShort),
+      anaS.NEXT_STATE().toShort,
+      anaS.NEXT_STATE_MASK().toShort
+    )
   }
 
 }

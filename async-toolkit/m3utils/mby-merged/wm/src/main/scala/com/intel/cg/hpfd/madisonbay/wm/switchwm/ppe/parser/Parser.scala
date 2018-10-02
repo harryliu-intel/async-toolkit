@@ -16,7 +16,19 @@ import scalaz.std.list._
 
 object Parser {
 
-  def parse(csr: mby_ppe_parser_map.mby_ppe_parser_map): Packet => ParserOutput = packet => {
+  case class ParserState(w: List[Short], aluOperation: AluOperation, state: Short, ptr: Short)
+
+  type ProtoId          = Int
+  type BaseOffset       = Int
+  type PacketType       = Int
+  type ExtractionIndex  = Int
+  type ProtoOffsets     = IndexedSeq[(ProtoId, BaseOffset)]
+
+  val EmptyProtoOffsets: ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
+
+  val NumberOfParsingStages = 32
+
+  def parse(csr: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet): ParserOutput = {
 
     // TODO: support split header to Interface 0 and Interface 1
     val packetHeader = PacketHeader(packet.bytes.slice(0, PacketHeader.portionSegmentFPP))
@@ -24,8 +36,10 @@ object Parser {
     // setup the initial state
     val rxPort = new PortIndex(0) // need to handle this via the function interface somehow...
 
-    val (packetFlags, protoOffsets, parserException) = applyStage(csr, 0, packetHeader, initialState(csr, packetHeader, rxPort),
-      PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException])
+    val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(
+      csr, 0, packetHeader, initialState(csr, packetHeader, rxPort),
+      PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException]
+      )
 
     val (paKeysVal, updatedCsr) = extractKeys(csr, packetHeader, protoOffsets)
 
@@ -33,46 +47,48 @@ object Parser {
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
 
-    val (exceptionStage, depthExceeded, headerTruncated, parsingDone) = scanOutputExceptions(parserException)
+    val (exceptionStage, depthExceeded, headerTruncated, parsingDone) = scanOutputExceptions(parserExceptionOpt)
 
-    ParserOutput(updatedCsr,
-      rxPort = rxPort,
-      pktMeta = 0,
-      rxFlags = 0,
-      segMetaErr = false,
-      paAdjSegLegLen = 0,
-      paKeys = paKeysVal,
-      paFlags = packetFlags,
-      paPointers = protoOffsets,
-      paKeysValid = false,
-      paPointersValid = false,
-      paCsumOk = false,
-      paExceptionStage = exceptionStage,
-      paExceptionDepthExceeded = depthExceeded,
-      paExceptionTruncHeader = headerTruncated,
-      paExParsingDone = parsingDone,
-      paDrop = false,
-      paPacketType = paPacketTypeVal._1 // (what to do with the extract index)?
+    ParserOutput(
+      updatedCsr                = updatedCsr,
+      rxPort                    = rxPort,
+      pktMeta                   = 0,
+      rxFlags                   = 0,
+      segMetaErr                = false,
+      paAdjSegLegLen            = 0,
+      paKeys                    = paKeysVal,
+      paFlags                   = packetFlags,
+      paPointers                = protoOffsets,
+      paKeysValid               = false,
+      paPointersValid           = false,
+      paCsumOk                  = false,
+      paExceptionStage          = exceptionStage,
+      paExceptionDepthExceeded  = depthExceeded,
+      paExceptionTruncHeader    = headerTruncated,
+      paExParsingDone           = parsingDone,
+      paDrop                    = false,
+      paPacketType              = paPacketTypeVal._1 // (what to do with the extract index)?
     )
   }
 
   def applyStage(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, packetHeader: PacketHeader, parserState: ParserState,
-                 packetFlags: PacketFlags, fields: ProtoOffsets, exception: Option[ParserException]):
+                 packetFlags: PacketFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
                         (PacketFlags, ProtoOffsets, Option[ParserException]) = idStage match {
 
-    case NumberOfParsingStages => (packetFlags, fields, exception)
+    case NumberOfParsingStages => (packetFlags, fields, exceptionOpt)
 
     case id =>
       val action = matchingAction(csr, id, parserState.w(0), parserState.w(1), parserState.state)
-      (exception, action) match {
-        // if an exception has already been encountered, do nothing
-        case(Some(exc), _) => (packetFlags, fields, Some(exc))
-        // if nothing matches, do nothing
-        case (exc, None) => (packetFlags, fields, exc)
-        // otherwise, apply the action
-        case (_, Some(act)) =>
-          val stage = act(idStage, parserState, packetFlags, fields)(packetHeader)
-          applyStage(csr, idStage + 1, packetHeader, stage._1, stage._2, stage._3, stage._4)
+      (exceptionOpt, action) match {
+
+        case (Some(exc), _) => (packetFlags, fields, Some(exc))
+
+            // if nothing matches, do nothing
+        case (exOpt, None)  => applyStage(csr, idStage + 1, packetHeader, parserState, packetFlags, fields, exOpt)
+
+        case (_, Some(act)) =>                                    // otherwise, apply the action
+          val (actParsState, actPckFlags, actProtOffs, actPrsExcOpt) = act(idStage, parserState, packetFlags, fields)(packetHeader)
+          applyStage(csr, idStage + 1, packetHeader, actParsState, actPckFlags, actProtOffs, actPrsExcOpt)
     }
   }
 
@@ -80,15 +96,14 @@ object Parser {
     val exceptionStage = parserException match {
       case Some(pexp) => pexp.stageEncountered
       case _ =>
-        assert(assertion = false, "No exception encountered in parse, likely buggy parser image")
+        //assert(assertion = false, "No exception encountered in parse, likely buggy parser image")
         0
-
     }
     val (depthExceeded, headerTruncated, parsingDone) = parserException match {
-      case Some(ParserDoneException(_)) => (false, false, true)
-      case Some(TruncatedHeaderException(_)) => (false, true, false)
-      case Some(ParseDepthExceededException(_)) => (true, false, false)
-      case _ => (false,false,false)
+      case Some(ParserDoneException(_))         => (false, false, true)
+      case Some(TruncatedHeaderException(_))    => (false, true,  false)
+      case Some(ParseDepthExceededException(_)) => (true,  false, false)
+      case _                                    => (false, false, false)
     }
     (exceptionStage, depthExceeded, headerTruncated, parsingDone)
   }
@@ -109,30 +124,31 @@ object Parser {
 
     (wcsr.PARSER_KEY_W zip kcsr.PARSER_KEY_S) zip ((analyzerActions, extractActions, exceptionActions).zipped.toIterable) collectFirst {
       case (x, y) if matcher(Seq(
-        ParserTcam.TcTriple(x._1.W0_MASK, x._1.W0_VALUE, w0),
-        ParserTcam.TcTriple(x._1.W1_MASK, x._1.W1_VALUE, w1),
-        ParserTcam.TcTriple(x._2.STATE_MASK, x._2.STATE_VALUE, state)
-      )) => Action(idStage, y._1, y._2, y._3)
+        ParserTcam.TcTriple(x._1.W0_MASK,     x._1.W0_VALUE,    w0),
+        ParserTcam.TcTriple(x._1.W1_MASK,     x._1.W1_VALUE,    w1),
+        ParserTcam.TcTriple(x._2.STATE_MASK,  x._2.STATE_VALUE, state)
+        )) => Action(idStage, y._1, y._2, y._3)
     }
   }
 
   private case class Action(idStage: Int, analyzerAction: AnalyzerAction, extractActions: List[ExtractAction],
                             exceptionAction: ExceptionAction) {
 
-    def apply(idStage: Int, ps: ParserState, pf: PacketFlags, po: Parser.ProtoOffsets)(ph: PacketHeader):
-    (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
-      val currentOffset = ps.ptr
+    def apply(idStage: Int, parserState: ParserState, parserFlags: PacketFlags, protoOffsets: Parser.ProtoOffsets)
+             (packetHeader: PacketHeader): (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
+      val currentOffset = parserState.ptr
       // is there an error condition requiring an abort (i.e. without processing this stage)
       // or is the exception action to do nothing (or mark 'done')
-      exceptionAction.test(ph, currentOffset, idStage) match {
+      exceptionAction.test(packetHeader, currentOffset, idStage) match {
 
-        case e @ Some(_: AbortParserException) => (ps, pf, po, e)
+        case Some(ape: AbortParserException) => (parserState, parserFlags, protoOffsets, Some(ape))
 
-        case e =>
-          val newPs = analyzerAction(ph, ps) // setup the analyze actions for the next stage
-        // do all of the extraction operations to add more to the flags and offsets
-        val poPf: (ProtoOffsets, PacketFlags) = extractActions.foldLeft(po, pf)({ (prev, f) => f(prev)} )
-          (newPs, poPf._2, poPf._1, e)
+        case parsExcOpt =>
+          val actParserState = analyzerAction(packetHeader, parserState) // setup the analyze actions for the next stage
+            // do all of the extraction operations to add more to the flags and offsets
+          val (actProtOffsets, actPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) { (prev, f) => f(prev) }
+
+          (actParserState, actPckFlags, actProtOffsets, parsExcOpt)
       }
     }
   }
@@ -144,7 +160,7 @@ object Parser {
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
     val state = portCfg.INITIAL_STATE().toShort
     val ptr = portCfg.INITIAL_PTR().toShort
-    ParserState(w,aluOp, state, ptr)
+    ParserState(w, aluOp, state, ptr)
   }
 
   private def packetType(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
@@ -165,41 +181,33 @@ object Parser {
     val countersL  = mby_ppe_parser_map.mby_ppe_parser_map._PARSER_COUNTERS
 
     def modify(parserExtractCfgReg: parser_extract_cfg_r.parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map.mby_ppe_parser_map), Unit] =
-      State(actualState => {
+      State { actualState =>
         val (result, mbyPpeParserMap) = actualState
         val protocolId = parserExtractCfgReg.PROTOCOL_ID()
         def toWordWithOffset(v: Int): Short = packetHeader.getWord(v + parserExtractCfgReg.OFFSET().toInt)
 
         (protocolId, protoOffsets.collect { case (pId, baseOffset) if pId == protocolId => baseOffset }.toList) match {
+
           case (ExtractAction.SpecialProtocolId, _) => ((0.toShort :: result, mbyPpeParserMap), ())
+
           case (_, Nil) =>
             val next = countersL.modify(_.EXT_UNKNOWN_PROTID.modify((v: Long) => v.incWithUByteSaturation))
             ((0.toShort :: result, next(mbyPpeParserMap)), ())
+
           case (_, h :: Nil) =>
             ((toWordWithOffset(h) :: result, mbyPpeParserMap),())
+
           case (_, h :: _) =>
             val next = countersL.modify(_.EXT_DUP_PROTID.modify((v: Long) => v.incWithUByteSaturation))
             ((toWordWithOffset(h) :: result, next(mbyPpeParserMap)), ())
+
         }
-      })
+      }
 
     val ((result, updatedCsr), _) = extractorCsr.toList.traverseS(modify)((List.empty, csr))
 
-    // TODO: handle the state here
     (PacketFields(result.reverse.toIndexedSeq), updatedCsr)
   }
-
-  case class ParserState(w: List[Short], aluOperation: AluOperation, state: Short, ptr: Short)
-
-  type ProtoId = Int
-  type BaseOffset = Int
-  type ProtoOffsets = IndexedSeq[(ProtoId, BaseOffset)]
-  type PacketType = Int
-  type ExtractionIndex = Int
-
-  val EmptyProtoOffsets: ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
-
-  val NumberOfParsingStages = 32
 
   /**
     * Check Payload Length
