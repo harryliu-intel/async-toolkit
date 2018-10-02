@@ -1,0 +1,11 @@
+To do Jamon development, follow these steps:
+
+1. Use rliu68-jamon as a template to create a new Perforce client.  Suppose
+this is mapped to $ROOT on the filesystem.
+2. In $ROOT/com/fulcrummicro/hw/verification/chip/mgmt/registers/templates:
+   a. p4 edit ...
+   b. Update .jamon files
+   b. Type make to compile the template and the resulting Java
+   c. Test with fulcrum --latest registers --java=$ROOT/java ...
+   d. When satisified, p4 revert -a ..., p4 submit.
+   e. Trigger a central build with "trigger all"
