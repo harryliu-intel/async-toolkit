@@ -221,23 +221,14 @@ void mbyMatchLpm
     // TODO where does this come from?
     fm_byte profile_id = 0;
 
-#ifdef USE_NEW_CSRS
-    mbyLpmGetKeyMasks(cgrp_a_map, profile_id, &key_masks);
-#else
-    mbyLpmGetKeyMasks(regs,       profile_id, &key_masks);
-#endif
+    mbyLpmGetKeyMasks(MBY_LPM_IN_REGS_P, profile_id, &key_masks);
 
     // TODO properly initialize these before calling the internal function
     mbyLpmKey in = { 0 };
     // in.key = ...;
     // in.key_len = ...;
-    
 
-#ifdef USE_NEW_CSRS
-    lpmSearch(cgrp_a_map,   &in, out);
-#else
-    lpmSearch(regs,         &in, out);
-#endif
+    lpmSearch(MBY_LPM_IN_REGS_P,   &in, out);
 }
 
 //#ifdef UNIT_TEST
