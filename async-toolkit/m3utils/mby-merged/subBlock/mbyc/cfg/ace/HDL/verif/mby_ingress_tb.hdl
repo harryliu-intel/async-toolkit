@@ -22,7 +22,7 @@ $hdl_spec = {
          "verif/ingress/ti",
          "verif/ingress/tb",
          "verif/ingress/tests",
-         "src/rtl/igr/verilog",
+         "src/igr/rtl",
          "$ENV{SAOLA_HOME}/verilog",
          "$ENV{SAOLA_HOME}/verilog_uvm",
          "$ENV{UVM_HOME}/src",

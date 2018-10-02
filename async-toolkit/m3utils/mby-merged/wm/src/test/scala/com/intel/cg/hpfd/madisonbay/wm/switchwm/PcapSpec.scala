@@ -15,7 +15,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class PcapSpec extends FlatSpec with Matchers {
 
   val pcapFile : File = new File("src/test/data/scapy.pcap")
-  s"The file ${pcapFile}" should s"have one packet in it" in {
+  s"The file $pcapFile" should s"have one packet in it" in {
     println(System.getenv("PWD"))
     Packet.loadPcap(pcapFile).length shouldEqual 1
   }

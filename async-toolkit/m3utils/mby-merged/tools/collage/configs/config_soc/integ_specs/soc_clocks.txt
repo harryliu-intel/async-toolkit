@@ -1,0 +1,121 @@
+
+# Note (satish): to check which clocks are common to the SBR and PSF and merge them in list below
+
+set_design_attribute SpiritName psf_config_ipxact_soc
+set_design_attribute SpiritVersion 1.4
+
+# global activity parameters
+
+set num_psf_clocks 6
+set num_sbr_clocks 13
+set_activity_parameter GClocks NumClocks [expr $num_psf_clocks + $num_sbr_clocks]
+# Clock Gating Enabled
+set_activity_parameter GClocks ClkGating 1
+
+
+# SBR clocks
+set ::sbr_uniq_pfx "chs"
+# Clock rosc_side_clk
+set_activity_parameter GClocks CLKNAME0 	rosc_side_clk
+set_activity_parameter GClocks CLKRSTSIG0 	side_rstb
+set_activity_parameter GClocks CLKRSTPOL0 	low
+set_activity_parameter GClocks CLKFREQ0 	120
+
+# Clock for asyn ports
+set_activity_parameter GClocks CLKNAME1      	biaProxy_clk
+set_activity_parameter GClocks CLKRSTSIG1    	biaProxy_rstb
+set_activity_parameter GClocks CLKRSTPOL1    	low
+set_activity_parameter GClocks CLKFREQ1      	120
+
+set_activity_parameter GClocks CLKNAME2 	sbrProxy_clk
+set_activity_parameter GClocks CLKRSTSIG2 	sbrProxy_rstb
+set_activity_parameter GClocks CLKRSTPOL2 	low
+set_activity_parameter GClocks CLKFREQ2 	120
+
+set_activity_parameter GClocks CLKNAME3 	sbr3_clk
+set_activity_parameter GClocks CLKRSTSIG3 	sbr3_rstb
+set_activity_parameter GClocks CLKRSTPOL3 	low
+set_activity_parameter GClocks CLKFREQ3 	120
+
+set_activity_parameter GClocks CLKNAME4 	sbr4_clk
+set_activity_parameter GClocks CLKRSTSIG4 	sbr4_rstb
+set_activity_parameter GClocks CLKRSTPOL4 	low
+set_activity_parameter GClocks CLKFREQ4 	120
+
+set_activity_parameter GClocks CLKNAME5 	sbrtop_clk
+set_activity_parameter GClocks CLKRSTSIG5 	sbrtop_rstb
+set_activity_parameter GClocks CLKRSTPOL5 	low
+set_activity_parameter GClocks CLKFREQ5 	120
+
+set_activity_parameter GClocks CLKNAME6 	sbrright_clk
+set_activity_parameter GClocks CLKRSTSIG6 	sbrright_rstb
+set_activity_parameter GClocks CLKRSTPOL6 	low
+set_activity_parameter GClocks CLKFREQ6 	120
+
+set_activity_parameter GClocks CLKNAME7 	sbrleft_clk
+set_activity_parameter GClocks CLKRSTSIG7 	sbrleft_rstb
+set_activity_parameter GClocks CLKRSTPOL7 	low
+set_activity_parameter GClocks CLKFREQ7 	120
+
+set_activity_parameter GClocks CLKNAME8 	sbremp_clk
+set_activity_parameter GClocks CLKRSTSIG8 	sbremp_rstb
+set_activity_parameter GClocks CLKRSTPOL8 	low
+set_activity_parameter GClocks CLKFREQ8 	120
+
+set_activity_parameter GClocks CLKNAME9 	sbrbottom_clk
+set_activity_parameter GClocks CLKRSTSIG9 	sbrbottom_rstb
+set_activity_parameter GClocks CLKRSTPOL9 	low
+set_activity_parameter GClocks CLKFREQ9 	120
+
+set_activity_parameter GClocks CLKNAME10 	sbrx_clk
+set_activity_parameter GClocks CLKRSTSIG10 	sbrx_rstb
+set_activity_parameter GClocks CLKRSTPOL10 	low
+set_activity_parameter GClocks CLKFREQ10 	120
+
+set_activity_parameter GClocks CLKNAME11 	sbry_clk
+set_activity_parameter GClocks CLKRSTSIG11 	sbry_rstb
+set_activity_parameter GClocks CLKRSTPOL11 	low
+set_activity_parameter GClocks CLKFREQ11 	120
+
+set_activity_parameter GClocks CLKNAME12 	sbrz_clk
+set_activity_parameter GClocks CLKRSTSIG12 	sbrz_rstb
+set_activity_parameter GClocks CLKRSTPOL12 	low
+set_activity_parameter GClocks CLKFREQ12 	120
+
+
+
+# PSF Clocks
+# psf0
+set_activity_parameter GClocks CLKNAME13 	prim_psf0_clk
+set_activity_parameter GClocks CLKRSTSIG13 	prim_psf0_clk_rst
+set_activity_parameter GClocks CLKFREQ13 	400
+set_activity_parameter GClocks CLKRSTPOL13 	low
+
+# psf1
+set_activity_parameter GClocks CLKNAME14 	prim_psf1_clk
+set_activity_parameter GClocks CLKRSTSIG14 	prim_psf0_clk_rst
+set_activity_parameter GClocks CLKFREQ14 	200
+set_activity_parameter GClocks CLKRSTPOL14 	low
+
+# pmc
+set_activity_parameter GClocks CLKNAME15 	pmc_clk
+set_activity_parameter GClocks CLKRSTSIG15 	pmc_clk_rst
+set_activity_parameter GClocks CLKFREQ15 	133
+set_activity_parameter GClocks CLKRSTPOL15 	low
+
+# hsuart
+set_activity_parameter GClocks CLKNAME16 	hsuart_clk
+set_activity_parameter GClocks CLKRSTSIG16 	hsuart_clk_rst
+set_activity_parameter GClocks CLKFREQ16 	133
+set_activity_parameter GClocks CLKRSTPOL16 	low
+
+# emmc
+set_activity_parameter GClocks CLKNAME18 	emmc_clk
+set_activity_parameter GClocks CLKRSTSIG18 	emmc_clk_rst
+set_activity_parameter GClocks CLKFREQ18 	133
+set_activity_parameter GClocks CLKRSTPOL18 	low
+
+autocomplete_activity GClocks
+set_current_component
+autocomplete_activity GClocks
+set_current_component

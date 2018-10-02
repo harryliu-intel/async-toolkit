@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper
 
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtInt.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.FieldVector._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.Mapper.{MACLookupResult, MACMapperResult, RewriteProfileType, RewriteSource}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields.MACMapperImposed

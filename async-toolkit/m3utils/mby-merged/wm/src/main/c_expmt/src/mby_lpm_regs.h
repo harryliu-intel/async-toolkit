@@ -166,7 +166,8 @@
 #define MBY_REG_SIZE(reg_name) (MBY_## reg_name ##_ENTRIES_0)
 #endif
 
-#define MBY_LPM_KEY_MAX_BITS_LEN    (20 * 8)
+#define MBY_LPM_KEY_MAX_BYTES_LEN   20
+#define MBY_LPM_KEY_MAX_BITS_LEN    (MBY_LPM_KEY_MAX_BYTES_LEN * 8)
 
 #define MBY_LPM_BITMAP_SIZE         4
 #define MBY_LPM_NUM_PREFIXES        255
@@ -175,6 +176,16 @@
 // Enums:
 
 // Structs:
+
+typedef struct mbyLpmKeyMasksStruct
+{
+    fm_uint64               key_mask[MBY_LPM_KEY_MAX_BYTES_LEN];
+    fm_uint32               addr_key8_mask;
+    fm_uint64               addr_key16_mask;
+    fm_uint16               addr_key32_mask;
+    fm_uint32               md_key8_mask;
+    fm_uint64               md_key16_mask;
+} mbyLpmKeyMasks;
 
 typedef struct mbyLpmTcamEntryStruct
 {
@@ -198,8 +209,14 @@ typedef struct mbyLpmSubtrieStoreStruct
     fm_uint32               action_base_ptr; // 19 (or 20?) bits
 } mbyLpmSubtrieStore;
 
-
 // Functions:
+
+void mbyLpmGetKeyMasks
+(
+    MBY_LPM_IN_REGS,
+    fm_byte                  const profile_id,
+    mbyLpmKeyMasks         * const key_masks
+);
 
 void mbyLpmGetTcamEntry
 (
@@ -228,6 +245,5 @@ void mbyLpmGetSubtrieStore
     const fm_uint16                index,
     mbyLpmSubtrieStore     * const st_store
 );
-
 
 #endif /* MYB_LPM_REGS_H */

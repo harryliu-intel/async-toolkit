@@ -3,6 +3,8 @@ import sbt.Keys._
 
 // to break current task with C-c
 cancelable in sbt.Global := true
+parallelExecution := false
+maxErrors := 1
 
 lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar")
 
@@ -80,7 +82,7 @@ publishArtifacts := Def.sequential(
 lazy val testAll = "; all common/test csr/test root/test"
 lazy val cleanAll =
   "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean"
-lazy val publishArtifactsLocally = "; all csr/publishLocal wmServerDto/publishLocal"
+lazy val publishArtifactsLocally = "; csr/publishLocal; wmServerDto/publishLocal"
 lazy val cleanIvyIntelCache =
   s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.csrName}"""" +
   s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.wmServerDtoName}""""
@@ -96,6 +98,6 @@ addCommandAlias("testAll",
   cleanAll + publishArtifactsLocally + cleanIvyIntelCache + testAll)
 addCommandAlias("buildOnNhdk",
   "; testAll" +
-    "; all root/Compile/doc root/assembly" +
+    "; root/Compile/doc; root/assembly" +
     "; publishArtifacts"
 )

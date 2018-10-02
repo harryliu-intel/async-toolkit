@@ -1,0 +1,18 @@
+// -- Author       : Mike Jarvis <michael.a.jarvis@intel.com>
+// -- Project Name : MBY
+// -- Description  : mpp (MegaPort Pair) netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+ngen_IO_list
+
+ngen_IO_end
+
+import mby_egr_pkg::*;
+import gmm_pkg::*;
+
+ngen_wires
+
+ngen_submodules
+
+ngen_endmodule

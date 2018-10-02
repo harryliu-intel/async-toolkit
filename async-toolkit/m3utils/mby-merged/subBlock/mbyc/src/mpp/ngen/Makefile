@@ -1,4 +1,4 @@
-BLOCK         = mpp
+BLOCK         = mby_mpp
 DIFF         := $(if $(DISPLAY),tkdiff,diff -w)
 NGEN          = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/ngen_i/ngen_i.pl
 NGEN_FLAGS    = -fi=INTCNOPWR -B

@@ -1,6 +1,7 @@
 // Placeholder
-$y = $iteration;
 
-rxppe$y$_ppestm_if            >> rx_ppe_ppe_stm_if
-egr$y$_ppestm_if               >> egr_ppe_stm_if
+rxppe0_ppestm_if   >>  rx_ppe_ppe_stm_if0
+rxppe1_ppestm_if   >>  rx_ppe_ppe_stm_if1
+egr0_ppestm_if     >>  egr_ppe_stm_if0
+egr1_ppestm_if     >>  egr_ppe_stm_if1
 

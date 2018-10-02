@@ -12,22 +12,16 @@
 
 // Defines:
 
-#define MBY_LPM_KEY_MAX_BITS_LEN    (20 * 8)
-
-#define MBY_LPM_BITMAP_SIZE         4
-#define MBY_LPM_NUM_PREFIXES        255
-#define MBY_LPM_NUM_CHILD           256
-
 // Enums:
 
 // Structs:
 
-typedef struct mbyLpmInStruct
+typedef struct mbyLpmKeyStruct
 {
     // TODO where does the key come from? Spec says is derived from Profile ID
     fm_byte key[MBY_LPM_KEY_MAX_BITS_LEN / 8];
     fm_byte key_len; // in bits
-} mbyLpmIn;
+} mbyLpmKey;
 
 typedef struct mbyLpmOutStruct
 {
@@ -55,8 +49,8 @@ typedef struct mbyLpmSubtrieLookupStruct
 void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
-    mbyLpmIn    const * const in,
-    mbyLpmOut         * const out
+    mbyClassifierKeys    const * const keys,
+    mbyLpmOut                  * const out
 );
 
 //#ifdef UNIT_TEST

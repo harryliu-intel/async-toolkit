@@ -79,7 +79,16 @@ EOF
 
          # Define all the libraries which could be compiled
          libs => {
-
+                soc_collage_assemble_lib => {
+                    -tag      => "nonsynth+nonemu",
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/soc_assemble_collage.hdl",
+                    ],
+                    -vlog_opts => [ "+v2k", "-sverilog", ],
+#                    -dependent_libs => [ "sip_shared_lib"],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+                },
          },
 
          models => {
@@ -92,6 +101,7 @@ EOF
                enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
 
                libs => [
+                  "soc_collage_assemble_lib",
                   "mby_tb_lib",
                   "mby_rtl_lib",
                   "sva_lib",

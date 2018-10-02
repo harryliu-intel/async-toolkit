@@ -49,7 +49,7 @@ class mby_ral_ahb_access extends mby_ral_base_sequence;
 	     ahb_req.write_tran.burst_size  == svt_ahb_bfm_pkg::cust_svt_ahb_master_transaction::BURST_SIZE_64BIT;
           })  
       end        
-      else if(xact_type == svt_ahb_bfm_pkg::svt_ahb_transaction::READ) begin    
+      else if(xact_type == svt_ahb_bfm_pkg::cust_svt_ahb_master_transaction::READ) begin    
 
          `uvm_do_with(ahb_req, {
              ahb_req.read_tran.xact_type   == xact_type;

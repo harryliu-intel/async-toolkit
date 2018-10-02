@@ -59,11 +59,11 @@ class ParserStageSpec extends FlatSpec with Matchers {
 
     val updatedCsr = stateTransition.exec(csr)
 
-    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, idx, ph, ps, pf, protoOffset, exception = noException)
-    result._1.flags contains 1 shouldEqual true
-    result._1.flags contains 2 shouldEqual false
-    result._1.flags contains 3 shouldEqual false
-    result._1.flags contains 4 shouldEqual true
+    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, idx, ph, ps, pf, protoOffset, exceptionOpt = noException)
+    result._1.get contains 1 shouldEqual true
+    result._1.get contains 2 shouldEqual false
+    result._1.get contains 3 shouldEqual false
+    result._1.get contains 4 shouldEqual true
   }
 
 }

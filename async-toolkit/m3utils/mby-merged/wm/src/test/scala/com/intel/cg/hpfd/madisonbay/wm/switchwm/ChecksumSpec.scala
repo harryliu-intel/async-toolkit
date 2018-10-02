@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import org.scalatest._
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtByte.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtByte.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.IPV4Util.checksum
 
 /**
