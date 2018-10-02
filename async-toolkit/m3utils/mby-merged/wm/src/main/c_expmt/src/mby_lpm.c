@@ -228,9 +228,7 @@ void mbyMatchLpm
     // in.key = ...;
     // in.key_len = ...;
 
-    lpmSearch(MBY_LPM_IN_REGS_P, &in, out);
-
-    // TODO read the action from FWD_TABLE0
+    lpmSearch(MBY_LPM_IN_REGS_P,   &in, out);
 }
 
 //#ifdef UNIT_TEST
