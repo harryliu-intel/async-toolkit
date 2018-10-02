@@ -136,10 +136,11 @@ fm_status mbySendPacket
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-    // Top CSR map for tile 0 receive pipeline:
+        // Top CSR map for tile 0 receive pipeline:
+        // TODO use the pipeline associated to the specific ingress port
 #ifdef USE_NEW_CSRS
-        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpt[0].rx_ppe);
-        mby_shm_map        * const shm_map    = &(top_map.shm);
+        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp.mgp[0].rx_ppe);
+        mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
 #endif
         // Input struct:
         mbyRxMacToParser mac2par;
@@ -176,8 +177,9 @@ fm_status mbyReceivePacket
     else
     {
         // Top CSR map for tile 0 transmit pipeline:
+        // TODO use the pipeline associated to the specific egress port
 #ifdef USE_NEW_CSRS
-        mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpt[0].tx_ppe);
+        mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp.mgp[0].tx_ppe);
 #endif
         // Input struct:
         txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
