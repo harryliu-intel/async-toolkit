@@ -215,12 +215,11 @@ void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
     mbyClassifierKeys    const * const keys,
+    fm_byte                            profile_id,
     mbyLpmOut                  * const out
 )
 {
     mbyLpmKeyMasks key_masks;
-    // TODO where does this come from?
-    fm_byte profile_id = 0;
 
     mbyLpmGetKeyMasks(MBY_LPM_IN_REGS_P, profile_id, &key_masks);
 
@@ -229,7 +228,9 @@ void mbyMatchLpm
     // in.key = ...;
     // in.key_len = ...;
 
-    lpmSearch(MBY_LPM_IN_REGS_P,   &in, out);
+    lpmSearch(MBY_LPM_IN_REGS_P, &in, out);
+
+    // TODO read the action from FWD_TABLE0
 }
 
 //#ifdef UNIT_TEST

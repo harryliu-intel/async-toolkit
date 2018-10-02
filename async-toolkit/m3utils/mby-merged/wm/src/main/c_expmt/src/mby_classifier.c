@@ -621,9 +621,10 @@ void Classifier
     mbyLpmOut lpm_out = { 0 };
 
 #ifdef USE_NEW_CSRS
-    mbyMatchLpm(cgrp_a_map, &keys, &lpm_out);
+    // TODO is the scenario == 6-bit profile ID in the HAS?
+    mbyMatchLpm(cgrp_a_map, &keys, scenario, &lpm_out);
 #else
-    mbyMatchLpm(regs,       &keys, &lpm_out);
+    mbyMatchLpm(regs,       &keys, scenario, &lpm_out);
 #endif
 
     // TODO: convert lpm_out to actions here <-- FIXME!!!

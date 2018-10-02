@@ -50,6 +50,7 @@ void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
     mbyClassifierKeys    const * const keys,
+    fm_byte                            profile_id,
     mbyLpmOut                  * const out
 );
 
