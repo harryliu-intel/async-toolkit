@@ -81,7 +81,7 @@ TEST_F(LpmTests, TcamMatchTest) {
 
 TEST_F(LpmTests, BitInArray) {
 
-	fm_uint64 array[2] = {0x10, 0x4};
+	fm_uint64 array[2] = {0x0800000000000000, 0x2000000000000000};
 
 	EXPECT_EQ(f._getBitIn64BitsArray(array, 0), 0);
 	EXPECT_EQ(f._getBitIn64BitsArray(array, 4), 1);
@@ -92,7 +92,7 @@ TEST_F(LpmTests, BitInArray) {
 
 TEST_F(LpmTests, CountOnes) {
 
-	fm_uint64 array[2] = {0x11, 0x4};
+	fm_uint64 array[2] = {0x8800000000000000, 0x2000000000000000};
 
 	EXPECT_EQ(f._countOneIn64BitsArray(array, 0), 0); // bit 1 is excluded!!
 	EXPECT_EQ(f._countOneIn64BitsArray(array, 1), 1);
@@ -111,11 +111,13 @@ TEST_F(LpmTests, CountOnes) {
 const mbyLpmSubtrieStore empty_store = {{0x0, 0x0, 0x0, 0x0}, {0x0, 0x0, 0x0, 0x0}, 0x0};
 
 // Empty subtrie but has one child - recursion when key[0] = 0x0
-const mbyLpmSubtrieStore parent_store = {{0x0, 0x0, 0x0, 0x0}, {0x1, 0x0, 0x0, 0x0}, 0x0};
+const mbyLpmSubtrieStore parent_store = {{0x0, 0x0, 0x0, 0x0},
+										 {0x8000000000000000, 0x0, 0x0, 0x0}, 0x0};
 
 // Subtrie with single match when key[0] = 0x8
 const fm_uint32 action_base_ptr = 0x12;
-const mbyLpmSubtrieStore match_store = {{0x3, 0x0, 0x0, 0x0}, {0x0, 0x0, 0x0, 0x0},
+const mbyLpmSubtrieStore match_store = {{0xc000000000000000, 0x0, 0x0, 0x0}, 
+										{0x0, 0x0, 0x0, 0x0},
 										action_base_ptr};
 
 const fm_uint16 root_ptr = 0x0;

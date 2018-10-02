@@ -48,7 +48,8 @@ static fm_bool getBitIn64BitsArray
 )
 {
     assert(array);
-    return (array[bit_num / 64] >> (bit_num % 64)) & 0x1;
+    // Used for prefix and child map - bit 0 is the msb
+    return (array[bit_num / 64] >> (63 - (bit_num % 64))) & 0x1;
 }
 
 // Return the number of 1s between array lsb and bit_num (excluded)
