@@ -100,6 +100,9 @@ RESULTS_NBSV    := $(RESULTS_NEB)/output/sverilog
 RESULTS_XML     := $(RESULTS_NEB)/output/xml
 RESULTS_OVM     := $(RESULTS_NEB)/output/ovm
 RESULTS_CRIF    := $(RESULTS_NEB)/output/crif
+
+# todo: cleanup usage of crif directory for UVM ralf/ral output
+RESULTS_RALF    := $(RESULTS_NEB)/output/crif
 RESULTS_GENPG   := $(RESULTS_NEB)/output/genpg
 
 RESULTSXMLFILE  := $(RESULTS_XML)/$(BLK)_top_map.xml
@@ -120,9 +123,14 @@ GEN             := $(MODEL_ROOT)/tools/srdl/scripts/rdl.rb
 
 HDLSPEC_GEN     := $(MODEL_ROOT)/tools/srdl/srdl_make_hdl.pl
 
+UVM_RAL_TARGS   := $(addprefix $(RESULTS_RALF)/,$(addsuffix .ral,$(UVM_RAL_BLOCKS)))
+
+
 # Targets, skip $(GENPG_SV, for now)
 all: $(PREREQS) $(HTM_TABLE) rtl scm ral_env $(HDLSPEC_RTL) nqc
 everything: all xml osxml nqc gen_rdl
+
+uvm_ral: $(UVM_RAL_TARGS)
 
 # Rules
 
@@ -145,6 +153,9 @@ all_shell_ctl_rdl_pre:
 genrdl: $(SHELL_CTL_RDL)
 
 show:
+	@echo UVM_RAL_BLOCKS are $(UVM_RAL_BLOCKS)
+	@echo UVM_RAL_TARGS are $(UVM_RAL_TARGS)
+	@echo RESULTS_NEB is $(RESULTS_NEB)
 	@echo RAL_ENV targets is $(RAL_ENV)
 	@echo RESULTSQC target is $(RESULTSQC)
 	@echo INCLUDE_ARG $(INCLUDE_ARG)
@@ -186,6 +197,15 @@ $(RESULTSXMLFILE) $(RAL_ENV) $(CRIF_FILE): $(ALL_RDL) $(PREREQS)
 	$(info SRDL_DIR1="$(SRDL_DIR1)")
 	$(info SRDL_DIR2="$(SRDL_DIR2)")
 	$(NEBULON) -sv_no_sai_checks -sverilog -xml -chdr -crif -ovm -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTS_NEB) -rtlgencomp -log_file $(RESULTS_NEB)/nebulon_sv_output.log
+
+
+$(RESULTS_CRIF)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
+	$(NEBULON) -sv_no_sai_checks -crif -input $< -timeout 60000 -out_dir $(RESULTS_NEB) -log_file $@.log
+
+%.ralf: %_crif.xml
+	cd $(dir $@) && multi_gen_ralf_crif.py -i $< -o .ralf --bytes 8
+%.ral: %.ralf
+	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(basename $<) $<
 
 # Need dependency on only one output file, since command for nebulon_all generates everything
 nebulon_all: $(RAL_ENV)
