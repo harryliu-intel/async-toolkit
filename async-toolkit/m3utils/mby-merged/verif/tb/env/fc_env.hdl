@@ -11,7 +11,6 @@
 $hdl_spec = {
     # list of VERILOG source files that belong in this library
     -vlog_files => [
-#NA in MBY        &ToolConfig::ToolConfig_get_tool_path("cdn_vip_root")."/tools.lnx86/denali_64bit/ddvapi/sv/uvm/cdn_axi/cdnAxiUvmDefines.sv",
         "verif/tb/env/ral/fc_uvm_reg_pkg.sv",
         "verif/tb/env/fc_env_pkg.sv",
     ],
@@ -31,7 +30,6 @@ $hdl_spec = {
         "verif/tb/env/checkers",
         "verif/tb/env/bfms/",
         "verif/tb/env/bfms/svt_axi_bfm",
-        "verif/tb/env/bfms/cdn_axi_bfm",
         "verif/tb/env/bfms/svt_apb_bfm",
         "verif/tb/env/bfms/svt_chi_bfm",
         "verif/tb/seqlib/seq",

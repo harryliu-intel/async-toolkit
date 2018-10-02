@@ -128,6 +128,7 @@ EOF
                      @all_sip_verif_vlogopts,
                      "+define+XVM",                       
                  ],
+                 -tag => "nonsynth",
              },
 
              fc_lite_tests_lib => {
@@ -147,6 +148,7 @@ EOF
                      @FC_VLOG_OPTIONS,
                      @all_sip_verif_vlogopts,
                  ],
+                 -tag => "nonsynth",
              },
 
              fc_seq_lib => {
@@ -164,6 +166,7 @@ EOF
                      @FC_VLOG_OPTIONS,
                      @all_sip_verif_vlogopts,
                  ],
+                 -tag => "nonsynth",
              },
 
              fc_lite_seq_lib => {
@@ -181,6 +184,7 @@ EOF
                      @FC_VLOG_OPTIONS,
                      @all_sip_verif_vlogopts,
                  ],
+                 -tag => "nonsynth",
              },
 
              fc_env_lib => {
@@ -195,6 +199,7 @@ EOF
                      @all_sip_verif_liblist,
                      $fc_global_vars::COLLAGE_LIB,
                  ],
+                 -tag => "nonsynth",
                  -vlog_opts => [
                      @FC_VLOG_OPTIONS,
                      @all_sip_verif_vlogopts,
@@ -220,6 +225,7 @@ EOF
                      @all_sip_rtl_vlogopts,
                      @top_vrf_vlogopts,
                  ],
+                 -tag => "nonsynth",
              },
 
              generated_collateral_lib => {
@@ -269,6 +275,7 @@ EOF
                      @top_vrf_vlogopts,
                      "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh"
                  ],
+                 -tag => "nonsynth",
              },
 
              fc_hdl_top_lib => {
@@ -290,6 +297,7 @@ EOF
                      "+define+HDL_TOP_LIB=fc_hdl_top_lib",
                      "+define+HDL_TOP_CFG=fc_cfg",
                  ],
+                 -tag => "nonsynth",
              },
 
              fc_lite_hdl_top_lib => {
@@ -311,6 +319,7 @@ EOF
                      "+define+HDL_TOP_LIB=fc_lite_hdl_top_lib",
                      "+define+HDL_TOP_CFG=fc_lite_cfg",
                  ],
+                 -tag => "nonsynth",
              },
 
              fc_lite_hvl_top_lib => {
@@ -337,6 +346,7 @@ EOF
                      "+define+HDL_TOP_CFG=fc_lite_cfg",
                      "+define+HVL_TOP=fc_hvl_top",
                  ],
+                 -tag => "nonsynth",
              },
 
 #              fc_emul_top_lib => {

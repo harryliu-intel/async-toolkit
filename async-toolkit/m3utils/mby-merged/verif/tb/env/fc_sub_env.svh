@@ -28,10 +28,6 @@
   chi_integ_env chi_subenv;
 `endif
 
-`ifdef CDN_AXI_ENV_ENABLE
-  cdn_axi_integ_env cdn_axi_subenv;
-`endif
-
 `ifdef VTE_IP3_UVM_ENV_ENABLE
   vte_ip3Uvm_integ_env vte_ip3_subenv;
 `endif
@@ -63,11 +59,6 @@ function void build_sub_system_envs();
   //-- CHI
   `ifdef CHI_ENV_ENABLE
       chi_subenv = chi_integ_env::type_id::create("chi_subenv", this);
-  `endif
-
-   //-- CDN AXI
-  `ifdef CDN_AXI_ENV_ENABLE
-      cdn_axi_subenv = cdn_axi_integ_env::type_id::create("cdn_axi_subenv", this);
   `endif
 
   `ifdef VTE_IP3_UVM_ENV_ENABLE

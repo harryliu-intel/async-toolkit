@@ -82,23 +82,6 @@ package fc_env_pkg;
     `include "axi_integ_env.svh"
     `endif
 
-    `ifdef CDN_AXI_ENV_ENABLE
-       import DenaliSvMem::*;
-        import DenaliSvCdn_axi::*;
-        import CdnSvVip::*;
-        import cdnAxiUvm::*;
- 
-        typedef class cdn_axi_virtual_sequencer;
-        `include "cdn_axi_system_cfg.svh"
-        `include "cdn_axi_agent.svh"
-        `include "cdn_axi_seq_lib.svh"
-        `include "cdn_axi_env.svh"
-        `include "cdn_axi_integ_env.svh"
-        `include "cdn_axi_virtual_sequencer.svh"
-        `include "cdn_axi_virtual_seq_lib.svh"
-
-    `endif
-
     // APB BFM
     `ifdef APB_ENV_ENABLE
     `include "apb_bfm_defines.svh"

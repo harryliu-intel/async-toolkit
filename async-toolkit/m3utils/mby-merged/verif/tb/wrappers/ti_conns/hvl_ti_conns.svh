@@ -12,7 +12,6 @@
 `include "hvl_axi_ti_conns.svh"
 `include "hvl_apb_ti_conns.svh"
 `include "hvl_chi_ti_conns.svh"
-`include "hvl_cdn_axi_ti_conns.svh"
 
 /*
  *  ----------------
