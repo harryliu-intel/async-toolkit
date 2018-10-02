@@ -766,11 +766,11 @@ int mgmtDataBits = (group == null) ? 32*maxAtomicWidth : maxSramBits;
               // 227, 42
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
               // 227, 61
-              jamonWriter.write("_ENTRIES1-1][0..");
-              // 227, 77
+              jamonWriter.write("_ENTRIES_1-1][0..");
+              // 227, 78
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 227, 96
-              jamonWriter.write("_ENTRIES0-1]");
+              // 227, 97
+              jamonWriter.write("_ENTRIES_0-1]");
             }
             // 228, 1
             else if (reg.getNumEntries2() >  1 )
@@ -780,15 +780,15 @@ int mgmtDataBits = (group == null) ? 32*maxAtomicWidth : maxSramBits;
               // 228, 42
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
               // 228, 61
-              jamonWriter.write("_ENTRIES2-1][0..");
-              // 228, 77
+              jamonWriter.write("_ENTRIES_2-1][0..");
+              // 228, 78
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 228, 96
-              jamonWriter.write("_ENTRIES1-1][0..");
-              // 228, 112
+              // 228, 97
+              jamonWriter.write("_ENTRIES_1-1][0..");
+              // 228, 114
               org.jamon.escaping.Escaping.HTML.write(org.jamon.emit.StandardEmitter.valueOf(reg.getName()), jamonWriter);
-              // 228, 131
-              jamonWriter.write("_ENTRIES0-1]");
+              // 228, 133
+              jamonWriter.write("_ENTRIES_0-1]");
             }
             // 229, 7
             jamonWriter.write(") = (\n      int(");
