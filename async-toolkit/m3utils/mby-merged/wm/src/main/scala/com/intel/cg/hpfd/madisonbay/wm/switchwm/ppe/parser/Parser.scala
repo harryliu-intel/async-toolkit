@@ -26,7 +26,10 @@ object Parser {
 
   val EmptyProtoOffsets: ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
 
-  val NumberOfParsingStages = 32
+  val NumberOfParsingStages       = 32
+
+  val NumberOfExtractionConfs     = 16
+  val OffsetOfNextExtractAction   = 16
 
   def parse(csr: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet): ParserOutput = {
 
@@ -112,22 +115,23 @@ object Parser {
     * Do the TCAM lookup, translate the result into actions
     */
   private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, w0: Short, w1: Short, state: Short): Option[Action]  = {
-    val wcsr = csr.PARSER_KEY_W(idStage)
-    val kcsr = csr.PARSER_KEY_S(idStage)
+    val tcamKeys = csr.PARSER_KEY_W(idStage).PARSER_KEY_W.zip(csr.PARSER_KEY_S(idStage).PARSER_KEY_S)
 
     val analyzerActions = (csr.PARSER_ANA_W(idStage).PARSER_ANA_W zip csr.PARSER_ANA_S(idStage).PARSER_ANA_S).map(x => AnalyzerAction(x._1, x._2))
-    val extractActions = (0 until 16).map { e =>
-      List(ExtractAction(csr.PARSER_EXT(idStage).PARSER_EXT(e)), ExtractAction(csr.PARSER_EXT(idStage).PARSER_EXT(e + 16)))
+    val extractActions = (0 until NumberOfExtractionConfs).map { e =>
+      List(ExtractAction(csr.PARSER_EXT(idStage).PARSER_EXT(e)), ExtractAction(csr.PARSER_EXT(idStage).PARSER_EXT(e + OffsetOfNextExtractAction)))
     }
     val exceptionActions = csr.PARSER_EXC(idStage).PARSER_EXC.map(x => new ExceptionAction(x.EX_OFFSET().toShort, x.PARSING_DONE.apply == 1))
+    val actions = (analyzerActions, extractActions, exceptionActions).zipped.toIterable
+
     val matcher = tcamMatchRegSeq(parserAnalyzerTcamMatchBit) _
 
-    (wcsr.PARSER_KEY_W zip kcsr.PARSER_KEY_S) zip (analyzerActions, extractActions, exceptionActions).zipped.toIterable collectFirst {
-      case (x, y) if matcher(Seq(
-        ParserTcam.TcTriple(x._1.W0_MASK,     x._1.W0_VALUE,    w0),
-        ParserTcam.TcTriple(x._1.W1_MASK,     x._1.W1_VALUE,    w1),
-        ParserTcam.TcTriple(x._2.STATE_MASK,  x._2.STATE_VALUE, state)
-        )) => new Action(y._1, y._2, y._3)
+    tcamKeys.zip(actions).collectFirst {
+      case (tcPair, acts) if matcher(Seq(
+        ParserTcam.TcTriple(tcPair._1.W0_MASK,     tcPair._1.W0_VALUE,    w0),
+        ParserTcam.TcTriple(tcPair._1.W1_MASK,     tcPair._1.W1_VALUE,    w1),
+        ParserTcam.TcTriple(tcPair._2.STATE_MASK,  tcPair._2.STATE_VALUE, state)
+        )) => new Action(acts._1, acts._2, acts._3)
     }
   }
 
