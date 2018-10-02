@@ -152,9 +152,11 @@
 
 // Input registers for all the functions in this block
 #ifdef USE_NEW_CSRS
-#define MBY_LPM_IN_REGS  mby_ppe_cgrp_a_map * const cgrp_a_map
+#define MBY_LPM_IN_REGS    mby_ppe_cgrp_a_map * const cgrp_a_map
+#define MBY_LPM_IN_REGS_P                             cgrp_a_map
 #else
-#define MBY_LPM_IN_REGS  fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#define MBY_LPM_IN_REGS    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#define MBY_LPM_IN_REGS_P            regs
 #endif
 
 // Retrieve the constant with the number of registers
