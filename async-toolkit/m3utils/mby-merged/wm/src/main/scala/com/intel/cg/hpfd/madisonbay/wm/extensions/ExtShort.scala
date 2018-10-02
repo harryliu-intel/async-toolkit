@@ -1,5 +1,5 @@
 //scalastyle:off
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions
+package com.intel.cg.hpfd.madisonbay.wm.extensions
 
 object ExtShort {
 

@@ -16,7 +16,7 @@ class AluOperation(rotationAmount: Short, mask: Short) {
   assert((mask & 0xf000.toShort) == 0, "Only 12 bits of mask allowed")
 
   // no 'logical rotate' operator native to scala
-  def apply(x: Short): Short = (((x.toInt << 16 | x.toInt) >> rotationAmount.toInt) & mask).toShort
+  def calculate(x: Short): Short = (((x.toInt << 16 | x.toInt) >> rotationAmount.toInt) & mask).toShort
 
 }
 

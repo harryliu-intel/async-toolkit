@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam._
 
 
 /**
@@ -10,7 +10,6 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
   * Switches use CAM to store MAC Addrss Table.
   */
 object ParserTcam {
-  import Tcam._
 
   case class TcTriple(keyInvert: RdlField[_, Long] with HardwareReadable[Long],
                       key: RdlField[_, Long] with HardwareReadable[Long],

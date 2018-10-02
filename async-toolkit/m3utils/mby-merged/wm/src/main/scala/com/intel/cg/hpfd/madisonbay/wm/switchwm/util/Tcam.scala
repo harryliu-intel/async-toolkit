@@ -1,6 +1,6 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtLong.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtLong.Implicits
 
 object Tcam {
   case class TcamQuery(keyInvert: Boolean, key: Boolean, input: Boolean)

@@ -2,8 +2,8 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
 
 import java.io.{DataInputStream, FileInputStream}
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtInt.reverseInt
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtShort.reverseShort
+import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtInt.reverseInt
+import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtShort.reverseShort
 //scalastyle:off
 case class Packet(bytes: Array[Byte])
 

@@ -8,7 +8,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader, Tcam}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtLong.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtLong.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
 import scalaz.State
 import scalaz.syntax.traverse._
@@ -87,7 +87,7 @@ object Parser {
         case (exOpt, None)  => applyStage(csr, idStage + 1, packetHeader, parserState, packetFlags, fields, exOpt)
 
         case (_, Some(act)) =>                                    // otherwise, apply the action
-          val (actParsState, actPckFlags, actProtOffs, actPrsExcOpt) = act(idStage, parserState, packetFlags, fields)(packetHeader)
+          val (actParsState, actPckFlags, actProtOffs, actPrsExcOpt) = act.run(idStage, parserState, packetFlags, fields)(packetHeader)
           applyStage(csr, idStage + 1, packetHeader, actParsState, actPckFlags, actProtOffs, actPrsExcOpt)
     }
   }
@@ -122,31 +122,33 @@ object Parser {
     val exceptionActions = csr.PARSER_EXC(idStage).PARSER_EXC.map(x => new ExceptionAction(x.EX_OFFSET().toShort, x.PARSING_DONE.apply == 1))
     val matcher = tcamMatchRegSeq(parserAnalyzerTcamMatchBit) _
 
-    (wcsr.PARSER_KEY_W zip kcsr.PARSER_KEY_S) zip ((analyzerActions, extractActions, exceptionActions).zipped.toIterable) collectFirst {
+    (wcsr.PARSER_KEY_W zip kcsr.PARSER_KEY_S) zip (analyzerActions, extractActions, exceptionActions).zipped.toIterable collectFirst {
       case (x, y) if matcher(Seq(
         ParserTcam.TcTriple(x._1.W0_MASK,     x._1.W0_VALUE,    w0),
         ParserTcam.TcTriple(x._1.W1_MASK,     x._1.W1_VALUE,    w1),
         ParserTcam.TcTriple(x._2.STATE_MASK,  x._2.STATE_VALUE, state)
-        )) => Action(idStage, y._1, y._2, y._3)
+        )) => new Action(y._1, y._2, y._3)
     }
   }
 
-  private case class Action(idStage: Int, analyzerAction: AnalyzerAction, extractActions: List[ExtractAction],
-                            exceptionAction: ExceptionAction) {
+  private class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
 
-    def apply(idStage: Int, parserState: ParserState, parserFlags: PacketFlags, protoOffsets: Parser.ProtoOffsets)
+    def run(idStage: Int, parserState: ParserState, parserFlags: PacketFlags, protoOffsets: Parser.ProtoOffsets)
              (packetHeader: PacketHeader): (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
       val currentOffset = parserState.ptr
       // is there an error condition requiring an abort (i.e. without processing this stage)
       // or is the exception action to do nothing (or mark 'done')
       exceptionAction.test(packetHeader, currentOffset, idStage) match {
 
-        case Some(ape: AbortParserException) => (parserState, parserFlags, protoOffsets, Some(ape))
+        case Some(ape: AbortParserException) =>
+          (parserState, parserFlags, protoOffsets, Some(ape))
 
         case parsExcOpt =>
-          val actParserState = analyzerAction(packetHeader, parserState) // setup the analyze actions for the next stage
+          val actParserState = analyzerAction.analyze(packetHeader, parserState) // setup the analyze actions for the next stage
             // do all of the extraction operations to add more to the flags and offsets
-          val (actProtOffsets, actPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) { (prev, f) => f(prev) }
+          val (actProtOffsets, actPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) {
+              (prev, act) => act.extract(prev)
+            }
 
           (actParserState, actPckFlags, actProtOffsets, parsExcOpt)
       }
