@@ -63,6 +63,7 @@ print "MGM debug : @mbyMgmLibs\n";
             
             mby_mgp_rtl_lib => {
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mgp_rtl.hdl', ],
+               -vlog_opts => [ "+define+FIRST_SHELL", ],
             },
             
             mby_igr_rtl_lib => {
@@ -74,15 +75,19 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             
             mby_rx_ppe_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_rx_ppe_rtl.hdl', ],
             },
             
             mby_tx_ppe_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_tx_ppe_rtl.hdl', ],
             },
             
             mby_ppe_stm_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_rtl.hdl', ],
+               -vlog_opts => [ "+define+FIRST_SHELL", ],
             },
             
             gen_mby_regflow_lib => {

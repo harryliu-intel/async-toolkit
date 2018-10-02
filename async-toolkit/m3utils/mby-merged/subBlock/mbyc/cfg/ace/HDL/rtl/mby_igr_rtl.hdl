@@ -13,7 +13,7 @@ $hdl_spec = {
        "src/igr/rtl/mby_igr_pkg.sv",
        "src/igr/rtl/mby_igr_macros.vh",
        "src/igr/rtl/igr_top.sv",
-       "src/igr/epl_shim/rtl/epl_shim.sv",
+       "src/igr/epl_shim/rtl/igr_epl_shim.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

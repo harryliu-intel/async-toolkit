@@ -223,70 +223,70 @@ glb1_txppe0_if_glb_ack	1		out
 glb1_txppe0_if_glb_sync	1		in
 glb1_txppe1_if_glb_ack	1		out
 glb1_txppe1_if_glb_sync	1		in
-grp_A0_rx_data_valid	[7:0]		in
-grp_A0_rx_data_w_ecc	[0:7][71:0]		in
-grp_A0_rx_ecc	[7:0]		in
-grp_A0_rx_flow_control_tc	[2:0]		in
-grp_A0_rx_metadata	[23:0]		in
-grp_A0_rx_pfc_xoff	1		in
-grp_A0_rx_port_num	[1:0]		in
-grp_A0_rx_time_stamp	[35:0]		in
-grp_A1_rx_data_valid	[7:0]		in
-grp_A1_rx_data_w_ecc	[0:7][71:0]		in
-grp_A1_rx_ecc	[7:0]		in
-grp_A1_rx_flow_control_tc	[2:0]		in
-grp_A1_rx_metadata	[23:0]		in
-grp_A1_rx_pfc_xoff	1		in
-grp_A1_rx_port_num	[1:0]		in
-grp_A1_rx_time_stamp	[35:0]		in
-grp_B0_rx_data_valid	[7:0]		in
-grp_B0_rx_data_w_ecc	[0:7][71:0]		in
-grp_B0_rx_ecc	[7:0]		in
-grp_B0_rx_flow_control_tc	[2:0]		in
-grp_B0_rx_metadata	[23:0]		in
-grp_B0_rx_pfc_xoff	1		in
-grp_B0_rx_port_num	[1:0]		in
-grp_B0_rx_time_stamp	[35:0]		in
-grp_B1_rx_data_valid	[7:0]		in
-grp_B1_rx_data_w_ecc	[0:7][71:0]		in
-grp_B1_rx_ecc	[7:0]		in
-grp_B1_rx_flow_control_tc	[2:0]		in
-grp_B1_rx_metadata	[23:0]		in
-grp_B1_rx_pfc_xoff	1		in
-grp_B1_rx_port_num	[1:0]		in
-grp_B1_rx_time_stamp	[35:0]		in
-grp_C0_rx_data_valid	[7:0]		in
-grp_C0_rx_data_w_ecc	[0:7][71:0]		in
-grp_C0_rx_ecc	[7:0]		in
-grp_C0_rx_flow_control_tc	[2:0]		in
-grp_C0_rx_metadata	[23:0]		in
-grp_C0_rx_pfc_xoff	1		in
-grp_C0_rx_port_num	[1:0]		in
-grp_C0_rx_time_stamp	[35:0]		in
-grp_C1_rx_data_valid	[7:0]		in
-grp_C1_rx_data_w_ecc	[0:7][71:0]		in
-grp_C1_rx_ecc	[7:0]		in
-grp_C1_rx_flow_control_tc	[2:0]		in
-grp_C1_rx_metadata	[23:0]		in
-grp_C1_rx_pfc_xoff	1		in
-grp_C1_rx_port_num	[1:0]		in
-grp_C1_rx_time_stamp	[35:0]		in
-grp_D0_rx_data_valid	[7:0]		in
-grp_D0_rx_data_w_ecc	[0:7][71:0]		in
-grp_D0_rx_ecc	[7:0]		in
-grp_D0_rx_flow_control_tc	[2:0]		in
-grp_D0_rx_metadata	[23:0]		in
-grp_D0_rx_pfc_xoff	1		in
-grp_D0_rx_port_num	[1:0]		in
-grp_D0_rx_time_stamp	[35:0]		in
-grp_D1_rx_data_valid	[7:0]		in
-grp_D1_rx_data_w_ecc	[0:7][71:0]		in
-grp_D1_rx_ecc	[7:0]		in
-grp_D1_rx_flow_control_tc	[2:0]		in
-grp_D1_rx_metadata	[23:0]		in
-grp_D1_rx_pfc_xoff	1		in
-grp_D1_rx_port_num	[1:0]		in
-grp_D1_rx_time_stamp	[35:0]		in
+grp_a0_rx_data_valid	[7:0]		in
+grp_a0_rx_data_w_ecc	[0:7][71:0]		in
+grp_a0_rx_ecc	[7:0]		in
+grp_a0_rx_flow_control_tc	[2:0]		in
+grp_a0_rx_metadata	[23:0]		in
+grp_a0_rx_pfc_xoff	1		in
+grp_a0_rx_port_num	[1:0]		in
+grp_a0_rx_time_stamp	[35:0]		in
+grp_a1_rx_data_valid	[7:0]		in
+grp_a1_rx_data_w_ecc	[0:7][71:0]		in
+grp_a1_rx_ecc	[7:0]		in
+grp_a1_rx_flow_control_tc	[2:0]		in
+grp_a1_rx_metadata	[23:0]		in
+grp_a1_rx_pfc_xoff	1		in
+grp_a1_rx_port_num	[1:0]		in
+grp_a1_rx_time_stamp	[35:0]		in
+grp_b0_rx_data_valid	[7:0]		in
+grp_b0_rx_data_w_ecc	[0:7][71:0]		in
+grp_b0_rx_ecc	[7:0]		in
+grp_b0_rx_flow_control_tc	[2:0]		in
+grp_b0_rx_metadata	[23:0]		in
+grp_b0_rx_pfc_xoff	1		in
+grp_b0_rx_port_num	[1:0]		in
+grp_b0_rx_time_stamp	[35:0]		in
+grp_b1_rx_data_valid	[7:0]		in
+grp_b1_rx_data_w_ecc	[0:7][71:0]		in
+grp_b1_rx_ecc	[7:0]		in
+grp_b1_rx_flow_control_tc	[2:0]		in
+grp_b1_rx_metadata	[23:0]		in
+grp_b1_rx_pfc_xoff	1		in
+grp_b1_rx_port_num	[1:0]		in
+grp_b1_rx_time_stamp	[35:0]		in
+grp_c0_rx_data_valid	[7:0]		in
+grp_c0_rx_data_w_ecc	[0:7][71:0]		in
+grp_c0_rx_ecc	[7:0]		in
+grp_c0_rx_flow_control_tc	[2:0]		in
+grp_c0_rx_metadata	[23:0]		in
+grp_c0_rx_pfc_xoff	1		in
+grp_c0_rx_port_num	[1:0]		in
+grp_c0_rx_time_stamp	[35:0]		in
+grp_c1_rx_data_valid	[7:0]		in
+grp_c1_rx_data_w_ecc	[0:7][71:0]		in
+grp_c1_rx_ecc	[7:0]		in
+grp_c1_rx_flow_control_tc	[2:0]		in
+grp_c1_rx_metadata	[23:0]		in
+grp_c1_rx_pfc_xoff	1		in
+grp_c1_rx_port_num	[1:0]		in
+grp_c1_rx_time_stamp	[35:0]		in
+grp_d0_rx_data_valid	[7:0]		in
+grp_d0_rx_data_w_ecc	[0:7][71:0]		in
+grp_d0_rx_ecc	[7:0]		in
+grp_d0_rx_flow_control_tc	[2:0]		in
+grp_d0_rx_metadata	[23:0]		in
+grp_d0_rx_pfc_xoff	1		in
+grp_d0_rx_port_num	[1:0]		in
+grp_d0_rx_time_stamp	[35:0]		in
+grp_d1_rx_data_valid	[7:0]		in
+grp_d1_rx_data_w_ecc	[0:7][71:0]		in
+grp_d1_rx_ecc	[7:0]		in
+grp_d1_rx_flow_control_tc	[2:0]		in
+grp_d1_rx_metadata	[23:0]		in
+grp_d1_rx_pfc_xoff	1		in
+grp_d1_rx_port_num	[1:0]		in
+grp_d1_rx_time_stamp	[35:0]		in
 igr0_vp_cpp_rx_metadata	[19:0]		in
 igr0_vp_rx_data_valid	[7:0]		in
 igr0_vp_rx_data_w_ecc	[0:7][71:0]		in
@@ -518,70 +518,70 @@ glb1_txppe0_if_glb_ack
 glb1_txppe0_if_glb_sync
 glb1_txppe1_if_glb_ack
 glb1_txppe1_if_glb_sync
-grp_A0_rx_data_valid
-grp_A0_rx_data_w_ecc
-grp_A0_rx_ecc
-grp_A0_rx_flow_control_tc
-grp_A0_rx_metadata
-grp_A0_rx_pfc_xoff
-grp_A0_rx_port_num
-grp_A0_rx_time_stamp
-grp_A1_rx_data_valid
-grp_A1_rx_data_w_ecc
-grp_A1_rx_ecc
-grp_A1_rx_flow_control_tc
-grp_A1_rx_metadata
-grp_A1_rx_pfc_xoff
-grp_A1_rx_port_num
-grp_A1_rx_time_stamp
-grp_B0_rx_data_valid
-grp_B0_rx_data_w_ecc
-grp_B0_rx_ecc
-grp_B0_rx_flow_control_tc
-grp_B0_rx_metadata
-grp_B0_rx_pfc_xoff
-grp_B0_rx_port_num
-grp_B0_rx_time_stamp
-grp_B1_rx_data_valid
-grp_B1_rx_data_w_ecc
-grp_B1_rx_ecc
-grp_B1_rx_flow_control_tc
-grp_B1_rx_metadata
-grp_B1_rx_pfc_xoff
-grp_B1_rx_port_num
-grp_B1_rx_time_stamp
-grp_C0_rx_data_valid
-grp_C0_rx_data_w_ecc
-grp_C0_rx_ecc
-grp_C0_rx_flow_control_tc
-grp_C0_rx_metadata
-grp_C0_rx_pfc_xoff
-grp_C0_rx_port_num
-grp_C0_rx_time_stamp
-grp_C1_rx_data_valid
-grp_C1_rx_data_w_ecc
-grp_C1_rx_ecc
-grp_C1_rx_flow_control_tc
-grp_C1_rx_metadata
-grp_C1_rx_pfc_xoff
-grp_C1_rx_port_num
-grp_C1_rx_time_stamp
-grp_D0_rx_data_valid
-grp_D0_rx_data_w_ecc
-grp_D0_rx_ecc
-grp_D0_rx_flow_control_tc
-grp_D0_rx_metadata
-grp_D0_rx_pfc_xoff
-grp_D0_rx_port_num
-grp_D0_rx_time_stamp
-grp_D1_rx_data_valid
-grp_D1_rx_data_w_ecc
-grp_D1_rx_ecc
-grp_D1_rx_flow_control_tc
-grp_D1_rx_metadata
-grp_D1_rx_pfc_xoff
-grp_D1_rx_port_num
-grp_D1_rx_time_stamp
+grp_a0_rx_data_valid
+grp_a0_rx_data_w_ecc
+grp_a0_rx_ecc
+grp_a0_rx_flow_control_tc
+grp_a0_rx_metadata
+grp_a0_rx_pfc_xoff
+grp_a0_rx_port_num
+grp_a0_rx_time_stamp
+grp_a1_rx_data_valid
+grp_a1_rx_data_w_ecc
+grp_a1_rx_ecc
+grp_a1_rx_flow_control_tc
+grp_a1_rx_metadata
+grp_a1_rx_pfc_xoff
+grp_a1_rx_port_num
+grp_a1_rx_time_stamp
+grp_b0_rx_data_valid
+grp_b0_rx_data_w_ecc
+grp_b0_rx_ecc
+grp_b0_rx_flow_control_tc
+grp_b0_rx_metadata
+grp_b0_rx_pfc_xoff
+grp_b0_rx_port_num
+grp_b0_rx_time_stamp
+grp_b1_rx_data_valid
+grp_b1_rx_data_w_ecc
+grp_b1_rx_ecc
+grp_b1_rx_flow_control_tc
+grp_b1_rx_metadata
+grp_b1_rx_pfc_xoff
+grp_b1_rx_port_num
+grp_b1_rx_time_stamp
+grp_c0_rx_data_valid
+grp_c0_rx_data_w_ecc
+grp_c0_rx_ecc
+grp_c0_rx_flow_control_tc
+grp_c0_rx_metadata
+grp_c0_rx_pfc_xoff
+grp_c0_rx_port_num
+grp_c0_rx_time_stamp
+grp_c1_rx_data_valid
+grp_c1_rx_data_w_ecc
+grp_c1_rx_ecc
+grp_c1_rx_flow_control_tc
+grp_c1_rx_metadata
+grp_c1_rx_pfc_xoff
+grp_c1_rx_port_num
+grp_c1_rx_time_stamp
+grp_d0_rx_data_valid
+grp_d0_rx_data_w_ecc
+grp_d0_rx_ecc
+grp_d0_rx_flow_control_tc
+grp_d0_rx_metadata
+grp_d0_rx_pfc_xoff
+grp_d0_rx_port_num
+grp_d0_rx_time_stamp
+grp_d1_rx_data_valid
+grp_d1_rx_data_w_ecc
+grp_d1_rx_ecc
+grp_d1_rx_flow_control_tc
+grp_d1_rx_metadata
+grp_d1_rx_pfc_xoff
+grp_d1_rx_port_num
+grp_d1_rx_time_stamp
 igr0_vp_cpp_rx_metadata
 igr0_vp_rx_data_valid
 igr0_vp_rx_data_w_ecc

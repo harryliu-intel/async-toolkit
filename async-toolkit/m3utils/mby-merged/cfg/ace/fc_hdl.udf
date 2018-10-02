@@ -389,7 +389,7 @@ EOF
                   "gen_mby_regflow_lib",
                   "gen_mby_wm",
                   "gen_mby_wm_m3",
-                  #"mby_mgm_lib",
+                  "mby_mgm_lib",
                   "soc_collage_assemble_lib",
                   "mby_tx_ppe_rtl_lib",
                   "mby_ppe_stm_rtl_lib",
