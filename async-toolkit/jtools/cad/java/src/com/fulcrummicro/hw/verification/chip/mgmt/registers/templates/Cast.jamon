@@ -224,8 +224,8 @@ define <% camelCaseBaseName %>Management() attributes
 <%if reg.isStructure() %>Reg<% Utility.underscoreToCamelCase(reg.getName(), true) %><%else>int(<% reg.getName() %>_BITS)</%if> -+s\
 <%if     reg.getNumEntries()  == 1 %>\
 <%elseif reg.getNumEntries1() == 1 %>[0..<% reg.getName() %>_ENTRIES-1]\
-<%elseif reg.getNumEntries2() == 1 %>[0..<% reg.getName() %>_ENTRIES1-1,0..<% reg.getName() %>_ENTRIES0-1]\
-<%elseif reg.getNumEntries2() >  1 %>[0..<% reg.getName() %>_ENTRIES2-1,0..<% reg.getName() %>_ENTRIES1-1,0..<% reg.getName() %>_ENTRIES0-1]\
+<%elseif reg.getNumEntries2() == 1 %>[0..<% reg.getName() %>_ENTRIES1-1][0..<% reg.getName() %>_ENTRIES0-1]\
+<%elseif reg.getNumEntries2() >  1 %>[0..<% reg.getName() %>_ENTRIES2-1][0..<% reg.getName() %>_ENTRIES1-1][0..<% reg.getName() %>_ENTRIES0-1]\
 </%if>\
 ) = (
       int(<% reg.getImplementationWidth() %>) data_atomic;
