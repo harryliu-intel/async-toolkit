@@ -1,7 +1,7 @@
 MODULE Main;
 IMPORT ModelServer;
 IMPORT HlpModelServer, HlpModel;
-IMPORT MbyModelServer, MbyModel;
+IMPORT MbyModel, MbyModelServerExt;
 IMPORT Pathname, Env;
 IMPORT Debug;
 IMPORT Scheme, SchemeStubs, SchemeNavigatorEnvironment;
@@ -40,6 +40,7 @@ VAR
   quitOnLast : BOOLEAN;
   model := Models.Hlp;
   doRepl : BOOLEAN;
+  doReflect : BOOLEAN;
 BEGIN
   (* command-line args: *)
   TRY
@@ -49,6 +50,8 @@ BEGIN
       ELSE
         infoPath := Env.Get("WMODEL_INFO_PATH");
       END;
+
+      doReflect := pp.keywordPresent("-reflect");
 
       IF pp.keywordPresent("-if") OR pp.keywordPresent("-infofile") THEN
         infoFile := pp.getNext()
@@ -101,8 +104,9 @@ BEGIN
           factory := NEW(UnsafeUpdaterFactory.T).init())
   |
     Models.Mby =>
-    modelServer := NEW(MbyModelServer.T,
-                       setupChip := MbyModel.SetupMby)
+    modelServer := NEW(MbyModelServerExt.T,
+                       setupChip := MbyModel.SetupMby,
+                       reflect := doReflect)
     .init(infoPath := infoPath,
           infoFileName := infoFile,
           quitOnLastClientExit := quitOnLast,
