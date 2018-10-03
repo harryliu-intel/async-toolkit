@@ -14,7 +14,7 @@
 class axi_virtual_sequencer extends uvm_sequencer;
 
     //Typedef of the reset modport to simplify access
-    typedef virtual AxiResetIf.axi_reset_modport AXI_RESET_MP;
+    typedef virtual axi_reset_if.axi_reset_modport AXI_RESET_MP;
 
     // Reset modport provides access to the reset signal
     AXI_RESET_MP reset_mp;

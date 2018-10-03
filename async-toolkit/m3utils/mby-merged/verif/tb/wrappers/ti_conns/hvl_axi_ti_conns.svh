@@ -11,10 +11,10 @@
 `ifdef AXI_ENV_ENABLE
 
     svt_axi_if    axi_vif();
-    AxiResetIf  axi_reset_vif();
+    axi_reset_if  axi_reset_vif();
 
     //Typedef of the reset modport to simplify access
-    typedef virtual AxiResetIf.axi_reset_modport AXI_RESET_MP;
+    typedef virtual axi_reset_if.axi_reset_modport AXI_RESET_MP;
 
     AXI_RESET_MP axi_reset_mp;
 
@@ -40,9 +40,9 @@
 
         //uvm_config_db#(virtual svt_axi_if)::set(null, $sformatf("%s.axi_bfm","uvm_test_top.tb_env"), "axi_vif", axi_vif);
         uvm_config_db#(virtual svt_axi_if)::set(uvm_root::get(), "*", "axi_vif", axi_vif);
-        uvm_config_db#(virtual AxiResetIf)::set(uvm_root::get(), "*", "axi_reset_vif", axi_reset_vif);
+        uvm_config_db#(virtual axi_reset_if)::set(uvm_root::get(), "*", "axi_reset_vif", axi_reset_vif);
         //uvm_config_db#(virtual axi_reset_vif.axi_reset_modport)::set(uvm_root::get(), $sformatf("%s.axi_bfm*",TB_ENV_PATH), "reset_mp", axi_reset_vif.axi_reset_modport);
-        uvm_config_db#(virtual AxiResetIf.axi_reset_modport)::set(uvm_root::get(), "*", "reset_mp", axi_reset_vif.axi_reset_modport);
+        uvm_config_db#(virtual axi_reset_if.axi_reset_modport)::set(uvm_root::get(), "*", "reset_mp", axi_reset_vif.axi_reset_modport);
 
         // Resetting the AXI Reset Interface Mod port/Reset 
         axi_reset_mp.reset  = 1'b0;

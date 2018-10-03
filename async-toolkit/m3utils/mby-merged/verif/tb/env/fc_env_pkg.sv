@@ -26,7 +26,7 @@ package fc_env_pkg;
 
     import svt_uvm_pkg::*;
     import svt_bfm_shell_uvm_pkg::*;
-//kl    import svt_amba_uvm_pkg::*;
+    import svt_amba_uvm_pkg::*;
     //import svt_axi_uvm_pkg::*;
     //import svt_apb_uvm_pkg::*;
 
@@ -73,22 +73,22 @@ package fc_env_pkg;
 
     `ifdef AXI_ENV_ENABLE
     // AXI BFM
-    `include "axi_bfm_defines.svh"
-    `include "axi_master_txn.svh"
-    `include "axi_system_cfg.svh"
-    `include "axi_scoreboard.svh"
-    `include "svt_axi_virtual_sequencer.svh"
-    `include "axi_bfm_env.svh"
-    `include "axi_integ_env.svh"
+//    `include "axi_bfm_defines.svh"
+//    `include "axi_master_txn.svh"
+//    `include "axi_system_cfg.svh"
+//    `include "axi_scoreboard.svh"
+//    `include "svt_axi_virtual_sequencer.svh"
+//    `include "axi_bfm_env.svh"
+//    `include "axi_integ_env.svh"
     `endif
 
     // APB BFM
     `ifdef APB_ENV_ENABLE
-    `include "apb_bfm_defines.svh"
-    `include "apb_master_txn.svh"
-    `include "apb_shared_cfg.svh"
-    `include "apb_bfm_env.svh"
-    `include "apb_integ_env.svh"
+//    `include "apb_bfm_defines.svh"
+//    `include "apb_master_txn.svh"
+//    `include "apb_shared_cfg.svh"
+//    `include "apb_bfm_env.svh"
+//    `include "apb_integ_env.svh"
     `endif
 
     // CHI BFM
