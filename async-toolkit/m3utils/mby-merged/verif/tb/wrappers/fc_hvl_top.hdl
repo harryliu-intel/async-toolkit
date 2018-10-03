@@ -1,0 +1,37 @@
+# -----------------------------------------------------------------------------
+# INTEL CONFIDENTIAL
+# Copyright(c) 2018, Intel Corporation. All Rights Reserved
+#-----------------------------------------------------------------------------
+#
+# Created By   :  Raghu P Gudla
+# Created On   :  09/22/2018
+# Description  :  HDL file to include testbench top file
+#-----------------------------------------------------------------------------
+
+$hdl_spec = {
+    # List of VERILOG source files that belong in this library
+    -vlog_files => [
+        "verif/tb/env/FC.svh",
+        "verif/tb/wrappers/sig_if.sv",
+        "verif/tb/wrappers/clk_gen.sv", 
+# NA in MBY        &ToolConfig::ToolConfig_get_tool_path("cdn_vip_root")."tools.lnx86/denali_64bit/ddvapi/sv/hdl_interfaces/cdn_axi/cdnAxi4Interface.sv",
+        "verif/tb/wrappers/fc_hvl_top.svh",
+        "verif/tb/wrappers/fc_hvl_config.svh",
+    ],
+
+    # List of include directories (corresponds with the VLOG(AN) '+incdir+' parameter)
+    -vlog_incdirs => [
+        "verif/gen",
+        "verif/tb/wrappers",
+        "verif/tb/wrappers/forces",
+        "verif/tb/wrappers/macros",
+        "verif/tb/wrappers/acb",
+        "verif/tb/wrappers/ti_conns",
+        "verif/tb/wrappers/low_power",
+        "$ENV{OVM_HOME}/src", "$ENV{UVM_HOME}/src", "$ENV{XVM_HOME}/src", "$ENV{XVM_HOME}/src/macros",
+        "$ENV{SAOLA_HOME}/verilog", "$ENV{SAOLA_HOME}/verilog_uvm",
+    ],
+
+    # Arbitrary Verilog compilation options
+    -vlog_opts => [ '+define+SKIP_FC_METHODS', ]
+};

@@ -1,0 +1,89 @@
+# Initial Pin-List - to be removed once pins defined where appropriate
+# TAP pins
+CP TCLK   in
+CP TDI    in
+CP TDO    out
+CP TMS    in
+CP TRST_N in
+
+# PCIe IO
+CP PCIE_RX_DP_0    in 
+CP PCIE_RX_DP_1    in 
+CP PCIE_RX_DP_2    in 
+CP PCIE_RX_DP_3    in 
+CP PCIE_RX_DN_0    in
+CP PCIE_RX_DN_1    in
+CP PCIE_RX_DN_2    in
+CP PCIE_RX_DN_3    in
+CP PCIE_TX_DP_0    out
+CP PCIE_TX_DP_1    out
+CP PCIE_TX_DP_2    out
+CP PCIE_TX_DP_3    out
+CP PCIE_TX_DN_0    out
+CP PCIE_TX_DN_1    out
+CP PCIE_TX_DN_2    out
+CP PCIE_TX_DN_3    out
+CP PCIE_REFCLK_DP  in
+CP PCIE_REFCLK_DN  in
+CP PCIE_PE_RESET_N in
+
+# Core/Serdes ref clks
+CP REFCLK_DP       in
+CP REFCLK_DN       in
+
+# Fabric IO
+CP P01_RX_P_0      in
+CP P01_RX_P_1      in
+CP P01_RX_P_2      in
+CP P01_RX_P_3      in
+CP P01_RX_N_0      in
+CP P01_RX_N_1      in
+CP P01_RX_N_2      in
+CP P01_RX_N_3      in
+CP P01_TX_P_0      out
+CP P01_TX_P_1      out
+CP P01_TX_P_2      out
+CP P01_TX_P_3      out
+CP P01_TX_N_0      out
+CP P01_TX_N_1      out
+CP P01_TX_N_2      out
+CP P01_TX_N_3      out
+
+# SPI
+CP QSPI_CLK        out
+CP QSPI_CS_N       out
+CP QSPI_DQ_0       inout
+CP QSPI_DQ_1       inout
+CP QSPI_DQ_2       inout
+CP QSPI_DQ_3       inout
+
+# MISC
+CP TR_TCK          in
+CP ATPG_MODE_N     in
+CP PAD_TRI_N       in
+CP FUSEBREAK_N     in
+CP PWRGOOD         in
+CP GPIO_0          inout
+CP GPIO_1          inout
+CP GPIO_2          inout
+CP GPIO_3          inout
+CP GPIO_4          inout
+CP GPIO_5          inout
+CP GPIO_6          inout
+CP GPIO_7          inout
+CP GPIO_8          inout
+CP GPIO_9          inout
+CP GPIO_10          inout
+CP GPIO_11          inout
+CP GPIO_12          inout
+CP GPIO_13          inout
+CP GPIO_14          inout
+CP RISC_RST_N      in
+CP RISC_NMI        in
+CP DEBUG_EN_N      in
+
+
+
+
+
+

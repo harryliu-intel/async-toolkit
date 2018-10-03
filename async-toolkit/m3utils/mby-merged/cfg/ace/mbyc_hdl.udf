@@ -1,0 +1,696 @@
+#---*-perl-*---
+# vim: noai : ts=3 : sw=3 : expandtab : ft=perl
+
+use ToolConfig;
+
+# Set up the project UDF
+my $vcsVer = &ToolConfig::get_tool_version('vcsmx');
+my $MBY_IOSF_PRI_VC_ROOT = &ToolConfig::get_tool_path('ipconfig/iosf_primary_bfm') . "/ph4";
+my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc');
+my $sva_lib                 = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
+
+my $default_enable_congruency_elab  = 1;
+my $default_enable_xprop_elab       = 1;
+my $default_enable_partcomp_elab    = 1;
+
+my $mby_enable_congruency_elab      = $default_enable_congruency_elab;
+my $mby_enable_xprop_elab           = $default_enable_xprop_elab;
+my $mby_enable_partcomp_elab        = $default_enable_partcomp_elab;
+my $behaveMem = 0;
+my @mbyMgmLibs = ( "target/mby/mgm_run/rtl/mby_memories_common_rel.hdl",
+	           "target/mby/mgm_run/rtl/mby_memories_rel.hdl",);
+
+my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
+                      'target/mby/mgm_run/rtl/mby_memories_wrap_rel.hdl', 
+		    );
+for (my $i = 0; $i < @ARGV; $i++) {
+    if ($ARGV[$i] eq "-mby_behave_mem") {
+ 	$behaveMem = 1;	
+	push (@mbyMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
+	push (@mbyTbMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
+	last;
+    }
+};    
+
+print "MGM debug : @mbyMgmLibs\n";
+
+%audf = (
+   Includes => [],
+   HDLSpec  => {
+     mby => {
+         # Define all the libraries which could be compiled
+         libs => {
+
+            mby_rtl_lib => {
+               -hdl_spec => [ 'cfg/ace/HDL/rtl/mby_rtl.hdl', ],
+            },
+	     sva_lib => {
+                     -hdl_spec => [ "$sva_lib/intel_checkers_pkg_rtl.hdl", ],
+                    -vlog_opts => ["-sverilog", "-assert svaext"],
+                },
+
+	    mby_mgm_lib => {
+		-generated => 1,
+		-gen_config => "mby: :mby_mgm_lib",
+		-hdl_spec        => [ 
+		     @mbyMgmLibs,
+		    ],
+		    -dependent_libs => ['sva_lib',],
+	    },
+            mby_mpp_rtl_lib => {
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mpp_rtl.hdl', ],
+            },
+            
+            mby_mgp_rtl_lib => {
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mgp_rtl.hdl', ],
+               -vlog_opts => [ "+define+FIRST_SHELL", ],
+            },
+            
+            mby_igr_rtl_lib => {
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_rtl.hdl', ],
+            },
+            
+            mby_cup_rtl_lib => {
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_cup_rtl.hdl', ],
+            },
+            
+            mby_rx_ppe_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_rx_ppe_rtl.hdl', ],
+            },
+            
+            mby_tx_ppe_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_tx_ppe_rtl.hdl', ],
+            },
+            
+            mby_ppe_stm_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_rtl.hdl', ],
+               -vlog_opts => [ "+define+FIRST_SHELL", ],
+            },
+
+            mby_msh_rtl_lib => {
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_rtl.hdl', ],
+            },
+            
+            gen_mby_regflow_lib => {
+                    -generated => 1,
+                    -gen_config => "mby::gen_mby_regflow_lib",
+                    -tools => ["-vcs_createlib"],
+            },
+            mby_cup_proc_rtl_lib => {
+                -hdl_spec  => ["subBlock/mbyc/cfg/ace/HDL/rtl/mby_cup_proc_rtl.hdl",],
+            },
+            mby_cup_no_proc_rtl_lib => {
+                    -hdl_spec  => ["subBlock/mbyc/cfg/ace/HDL/rtl/mby_cup_no_proc_rtl.hdl",],
+            },
+            gen_mby_wm => {
+                    -generated => 1,
+                    -gen_config => "mby::gen_mby_wm",
+                    -tools => ["-vcs_createlib"],
+            },
+            gen_mby_wm_m3 => {
+                    -generated => 1,
+                    -gen_config => "mby::gen_mby_wm_m3",
+                    -tools => ["-vcs_createlib"],
+            },
+
+            mby_regflow_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        'target/GenRTL/regflow/mby/mby_nebulon_rtl.hdl',
+                    ],
+                    -vlog_opts        => ["-sverilog",],
+                    -dependent_libs => [ 'gen_mby_regflow_lib', ],
+            },
+
+            mby_ingress_env_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -tag             => "nonsynth",
+            },
+
+            mby_ingress_ti_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_ingress_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_ingress_env_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_ingress_tb_lib  => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -tag             => "nonsynth",
+            },
+
+            mby_ingress_test_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_ingress_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_ingress_env_lib', 'mby_wm_dpi_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_egr_rtl_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_egr_rtl_lib.hdl' ],
+               -dependent_libs  => [ 'sla_lib'],
+            },
+
+            mby_egress_env_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -tag             => "nonsynth",
+            },
+            
+            mby_egress_ti_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_egress_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_egress_env_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_egress_tb_lib  => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_tb.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -tag             => "nonsynth",
+            },
+
+            mby_egress_test_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_egress_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_egress_env_lib', 'mby_wm_dpi_lib' ],
+               -tag            => "nonsynth",
+            },
+                      
+            mby_gm_rtl_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gm_rtl_lib.hdl' ],
+               -dependent_libs  => [ 'sla_lib'],
+               #-tag             => "nonsynth",
+            },
+
+            mby_env_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_env.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_ti_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_env_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_tb_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_tb.hdl', ],
+#              -dependent_libs => [ 'sip_shared_lib', 'mby_env_lib', 'mby_ti_lib', 'upf', 'lpa' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_env_lib', 'mby_ti_lib', 'mby_test_lib' ],
+               -tag            => "nonsynth",
+            },
+
+	    mby_test_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_env_lib', 'mby_wm_dpi_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_wm_dpi_lib => {
+               -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_wm_dpi.hdl', ],
+               -dependent_libs => [ 'shdv_shared_lib'],
+               -tag            => "nonsynth",
+               -elab_opts => [
+                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mbay_dpi_client.c ",
+               ],
+            },
+            
+            cdn_pcie_lib => {
+                    -hdl_spec => [
+                        "cfg/ace/HDL/verif/cdn_pcie_env.hdl",
+                    ],
+                    -dependent_libs => [
+                        "shdv_shared_lib",
+                    ],
+                    -tools => [
+                        "-FLG_create",
+                        "-lintra_create",
+                        "-sglp_createlib",
+                    ],
+                    -tag => "nonsynth+nonemul+nonlint",
+            },
+            svt_ahb_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/svt_ahb_bfm.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
+            svt_axi_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/svt_axi_env.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
+            
+            mby_common_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/mby_common_pkg.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'svt_ahb_lib' ],
+               -tag            => "nonsynth+nonlint",
+            },
+            
+            mby_mc_env_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mc_env.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'svt_axi_lib', 'svt_ahb_lib'],
+               -tag            => "nonsynth",
+            },
+            
+            mby_mc_test_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mc_test.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib'],
+               -tag            => "nonsynth",
+            },
+            
+            mby_mc_ti_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mc_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'svt_axi_lib', 'svt_ahb_lib' ],
+               -tag            => "nonsynth",
+            },
+            
+            mby_mc_tb_top_np_nphy_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mc_tb_top_np_nphy.hdl', ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_test_lib', 'mby_mc_ti_lib', 'mby_common_lib', 'svt_axi_lib', 
+                                    'svt_ahb_lib',"mby_cup_no_proc_rtl_lib","mby_cup_rtl_lib"],
+               -tag            => "nonsynth",
+            },
+            
+            mby_rx_ppe_env_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_env.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'ec_ti_lib', 'mby_ec_bfm_lib'],
+               -tag            => "nonsynth",
+            },
+
+            mby_rx_ppe_test_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_test.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_rx_ppe_env_lib'],
+               -tag            => "nonsynth",
+            },
+
+            mby_rx_ppe_ti_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_rx_ppe_env_lib' ],
+               -tag            => "nonsynth",
+            },
+
+            mby_rx_ppe_tb_top_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_tb_top.hdl', ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_rx_ppe_env_lib', 'mby_rx_ppe_test_lib', 'mby_rx_ppe_ti_lib', 'mby_common_lib',
+                                     'ec_ti_lib', 'mby_ec_bfm_lib' ],
+               -tag            => "nonsynth",
+            },
+                        
+            mby_jasper_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/rtl/mby_jasper.hdl", "cfg/ace/HDL/rtl/mby_rtl.hdl", ],
+               -tag            => "nonsynth+nonlint",
+            },
+         },
+
+         models => {
+
+            mplex_np_nphy => {
+               top         => 'mby_mc_tb_top_np_nphy_lib.mby_mc_cfg_np_nphy',
+               #jg_elab_top => 'mby_jasper_lib.mby_top',
+
+               #enable_congruency_elab  =>  $mby_enable_congruency_elab,
+               #enable_xprop_elab       =>  $mby_enable_xprop_elab,
+               #enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
+
+               libs => [
+                  "mby_cup_no_proc_rtl_lib",
+                  "mby_cup_rtl_lib",
+                  #"mby_regflow_lib",
+                  #"gen_mby_regflow_lib",
+                  #"gen_mby_wm",
+                  #"gen_mby_wm_m3",
+                  "mby_mc_ti_lib",  
+                  "shdv_shared_lib",
+                  "mby_mc_env_lib", 
+                  "mby_mc_test_lib", 
+                  "mby_mc_tb_top_np_nphy_lib", 
+                  "mby_jasper_lib", 
+                  "mby_wm_dpi_lib",
+                  "cdn_pcie_lib",
+                  "svt_axi_lib",
+                  "svt_ahb_lib",
+                  "mby_common_lib",
+               ],
+               testcase_globals => {
+                   #      -enabled_post_process_modes => "mby_test, mplex_np_nphy", 
+                   #      -post_process_pattern_file => { default => "cfg/ace/mbyc_post_process.pp" },
+                    },
+
+               elab_opts => [
+                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                  libs => [
+                     "mby_cup_rtl_lib",
+                     "mby_regflow_lib",
+                     "mby_mc_ti_lib",
+                     "mby_mc_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mplex",
+                     #"verif/mplex/fal",
+                     "verif/mplex/ral",
+                     "verif/mplex/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                     "$ENV{SAOLA_HOME}/verilog",
+                     "$ENV{SAOLA_HOME}/verilog_uvm",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+            }, # mplex_np_nphy
+            
+            rx_ppe => {
+               top         => 'mby_rx_ppe_tb_top_lib.mby_rx_ppe_tb_top',
+                            
+               use  => [
+                        "eth_port_mby_ec:mby_ec",
+                        "eth_port_common:common"
+                       ],
+
+               libs => [
+                  #"mby_rx_ppe_rtl_lib",
+                  ##"mby_regflow_lib",
+                  ##"gen_mby_regflow_lib",
+                  ##"gen_mby_wm",
+                  ##"gen_mby_wm_m3",
+                  "mby_rx_ppe_ti_lib",
+                  "shdv_shared_lib",
+                  "mby_rx_ppe_env_lib",
+                  "mby_rx_ppe_test_lib",
+                  "mby_rx_ppe_tb_top_lib",
+                  "mby_jasper_lib",
+                  "mby_wm_dpi_lib",
+                  "svt_ahb_lib",
+                  "mby_common_lib",
+               ],
+               testcase_globals => {
+                   #      -enabled_post_process_modes => "mby_test, rx_ppe",
+                   #      -post_process_pattern_file => { default => "cfg/ace/mby_post_process.pp" },
+                    },
+
+               elab_opts => [
+                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+            
+                xport => {
+                  libs => [
+                     "mby_regflow_lib",
+                     "mby_rx_ppe_ti_lib",
+                     "mby_rx_ppe_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "subBlock/mbyc/verif/rx_ppe/",
+                     "subBlock/mbyc/verif/rx_ppe/ral",
+                     "subBlock/mbyc/verif/rx_ppe/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                     "$ENV{SAOLA_HOME}/verilog",
+                     "$ENV{SAOLA_HOME}/verilog_uvm",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+            }, # RX_PPE
+                     
+            ####################################################################
+            ## mby ingress model starts
+            ####################################################################
+            igr => {
+               top  => 'mby_ingress_tb_lib.ingress_tb',
+
+               use  => [
+                        "eth_port_common:common"
+                       ],
+
+               libs => [
+                   "shdv_shared_lib",
+                   "svt_ahb_lib",
+                   "mby_common_lib",
+                   "mby_rtl_lib",
+                   "mby_ingress_tb_lib",
+                   "mby_ingress_ti_lib",
+                   "mby_ingress_env_lib",
+                   "mby_ingress_test_lib",
+                   "mby_wm_dpi_lib",
+                   "upf",
+                   "lpa"
+               ],
+
+               elab_opts => [
+                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                 libs => [
+                     "mby_rtl_lib",
+                     "mby_ingress_ti_lib",
+                     "mby_ingress_env_lib"
+                 ]
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                     "$ENV{SAOLA_HOME}/verilog",
+                     "$ENV{SAOLA_HOME}/verilog_uvm",
+                  ],
+               },
+
+               power_intent => {
+                  power_top => 'mby_tb/mby_top',
+                  upf_files => [ 'tools/upf/mby_upf.upf' ],
+               },
+            },
+            ####################################################################
+            # mby_ingress model ends
+            ####################################################################
+
+            ####################################################################
+            ## mby egress model starts
+            ####################################################################
+            egr => {
+               top  => 'mby_egress_tb_lib.egress_tb',
+
+               use  => [
+                        "eth_port_common:common"
+                       ],
+
+               libs => [
+                   "shdv_shared_lib",
+                   "svt_ahb_lib",
+                   "mby_common_lib",
+                   "mby_egr_rtl_lib",
+                   "mby_rtl_lib",
+                   "mby_egress_tb_lib",
+                   "mby_egress_ti_lib",
+                   "mby_egress_env_lib",
+                   "mby_egress_test_lib",
+                   "mby_wm_dpi_lib",
+                   "upf",
+                   "lpa"
+               ],
+
+               elab_opts => [
+                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                 libs => [
+                     "mby_rtl_lib",
+                     "mby_egress_ti_lib",
+                     "mby_egress_env_lib"
+                 ]
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                     "$ENV{SAOLA_HOME}/verilog",
+                     "$ENV{SAOLA_HOME}/verilog_uvm",
+                  ],
+               },
+
+               power_intent => {
+                  power_top => 'mby_tb/mby_top',
+                  upf_files => [ 'tools/upf/mby_upf.upf' ],
+               },
+            },
+            ####################################################################
+            # mby_egress model ends
+            ####################################################################
+
+            ####################################################################
+            ## mby egr rtl dev model starts
+            ####################################################################
+            egr_rtl_dev => {
+               top  => 'mby_egr_rtl_lib.egr_top_tb',
+
+               use  => [
+                       ],
+
+               libs => [
+                   "sla_lib",
+                   "mby_egr_rtl_lib"
+               ],
+
+               elab_opts => [
+                     "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                     "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
+                     "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                 libs => [
+                 ]
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                  ],
+               },
+
+               power_intent => {
+               },
+            },
+            ####################################################################
+            # mby egr rtl dev model ends
+            ####################################################################
+
+
+            ####################################################################
+            ## mby global manager model starts
+            ####################################################################
+            gm_rtl_dev => {
+               top  => 'mby_gm_rtl_lib.tb_gmm',
+
+               use  => [
+                       ],
+
+               libs => [
+                   "sla_lib",
+                   "mby_gm_rtl_lib"
+               ],
+
+               elab_opts => [
+                     "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                     "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
+                     "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+               ],
+
+               export => {
+                 libs => [
+                 ]
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "verif/mby",
+                     "verif/mby/ral",
+                     "verif/mby/fal",
+                     "verif/mby/env",
+                     "$ENV{OVM_HOME}/src",
+                     "$ENV{UVM_HOME}/src",
+                  ],
+               },
+
+               power_intent => {
+               },
+            },
+            ####################################################################
+            # mby global manager model ends
+            ####################################################################
+
+         },
+      },
+   },
+);

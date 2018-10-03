@@ -4,31 +4,44 @@
 #include <mby_common.h>
 #include <mby_pipeline.h>
 #include <mby_crc32.h>
-
+#include <mby_init.h>
 #include "mby_parser_test.h"
 
-void readRegs(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE])
+#ifdef USE_NEW_CSRS
+#include <mby_top_map.h>
+#endif
+
+void initRegs
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_rx_top_map * const rx_top_map
+#else
+    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#endif
+)
 {
-    FILE *file = fopen ("regs.txt", "r");
-    if (file == NULL) {
-        printf("Could not open file regs.txt -- exiting!\n");
-        exit(-1);
-    }
+    // Initialize model registers
+#ifndef USE_NEW_CSRS
+    mbyResetModel(0);
+#endif
+    mby_init_common_regs
+    (
+#ifdef USE_NEW_CSRS
+        rx_top_map
+#endif
+    );
 
-    int i = 0;
-    while (!feof(file) && (i < MBY_REGISTER_ARRAY_SIZE))
-    {  
-        fm_uint32 val = 0;
-        int rv = fscanf (file, "%u", &val); 
-        if (rv != 1) {
-            printf("Got an error while reading file regs.txt -- exiting!\n");
-            exit(-1);
-        }
-        regs[i] = val;
-        i++;
-    }
 
-    fclose (file);        
+#ifndef USE_NEW_CSRS
+    fm_uint64 val;
+
+    // Copy parser registers to present regs array
+    for(int regIndex = MBY_PARSER_BASE/4; regIndex < MBY_PARSER_BASE/4 + MBY_PARSER_SIZE/4; regIndex+=2) {
+        mbyReadReg(0, regIndex*4, &val);
+        regs[regIndex] = (unsigned int)(val & 0xffffffff);
+        regs[regIndex+1] = (unsigned int)(val >> 32) ;
+    }
+#endif
 }
 
 void initOutput
@@ -146,7 +159,11 @@ fm_uint compareValues(mbyParserToMapper * const out, mbyParserToMapper * const o
 
 fm_status runTest
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_parser_map * const parser_map,
+#else
     fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     const fm_uint             test_num,
     char              * const test_name,
     mbyRxMacToParser  * const mac2par,
@@ -154,7 +171,15 @@ fm_status runTest
     mbyParserToMapper * const par2map_ref
 )
 {
-    Parser(regs, mac2par, par2map);
+    Parser
+    (
+#ifdef USE_NEW_CSRS
+        parser_map,
+#else
+        regs,
+#endif
+        mac2par, par2map
+    );
 
     fm_status test_status = (compareValues(par2map, par2map_ref) > 0) ? FM_FAIL : FM_OK;
 
@@ -183,8 +208,18 @@ int main()
         exit(-1);
     }
 
-    // Read registers from "regs.txt":
-    readRegs(regs);
+#ifdef USE_NEW_CSRS
+    mby_ppe_rx_top_map rx_top_map;
+#endif
+
+    initRegs
+    (
+#ifdef USE_NEW_CSRS
+        &rx_top_map
+#else
+        regs
+#endif
+    );
 
 #if 1
     fm_uint tests_num = TEST_PASS_MAX;
@@ -209,7 +244,15 @@ int main()
 
         prepareData(test_struct, test_num, rx_packet, &mac2par, &par2map, &par2map_ref);
  
-        fm_status test_status = runTest(regs, test_num, test_name, &mac2par, &par2map, &par2map_ref);
+        fm_status test_status = runTest
+        (
+#ifdef USE_NEW_CSRS
+            &(rx_top_map.parser),
+#else
+            regs,
+#endif
+            test_num, test_name, &mac2par, &par2map, &par2map_ref
+        );
 
         if (test_status == FM_OK)
             pass_num++;

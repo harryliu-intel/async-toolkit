@@ -1,10 +1,11 @@
+//scalastyle:off
 package com.intel.cg.hpfd.madisonbay
 
 import scala.annotation.tailrec
 import scala.reflect.api.Universe
 import scala.reflect.runtime.{universe => runtimeUniverse}
 import scala.reflect.macros.blackbox
-
+import scala.language.implicitConversions
 
 object Memory {
   //TODO: provide generalization over word size later on

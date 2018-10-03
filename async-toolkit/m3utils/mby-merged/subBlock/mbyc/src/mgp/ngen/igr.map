@@ -1,0 +1,46 @@
+// Placeholder
+
+//epl0_igr_rx_ecc                >> grp_A_rx_ecc
+//epl1_igr_rx_ecc                >> grp_B_rx_ecc
+//epl2_igr_rx_ecc                >> grp_C_rx_ecc
+//epl3_igr_rx_ecc                >> grp_D_rx_ecc
+//epl0_igr_rx_port_num           >> grp_A_rx_port_num
+//epl1_igr_rx_port_num           >> grp_B_rx_port_num
+//epl2_igr_rx_port_num           >> grp_C_rx_port_num
+//epl3_igr_rx_port_num           >> grp_D_rx_port_num
+//epl0_igr_rx_data_valid         >> grp_A_rx_data_valid
+//epl1_igr_rx_data_valid         >> grp_B_rx_data_valid
+//epl2_igr_rx_data_valid         >> grp_C_rx_data_valid
+//epl3_igr_rx_data_valid         >> grp_D_rx_data_valid
+//epl0_igr_rx_metadata           >> grp_A_rx_metadata
+//epl1_igr_rx_metadata           >> grp_B_rx_metadata
+//epl2_igr_rx_metadata           >> grp_C_rx_metadata
+//epl3_igr_rx_metadata           >> grp_D_rx_metadata
+//epl0_igr_rx_time_stamp         >> grp_A_rx_time_stamp
+//epl1_igr_rx_time_stamp         >> grp_B_rx_time_stamp
+//epl2_igr_rx_time_stamp         >> grp_C_rx_time_stamp
+//epl3_igr_rx_time_stamp         >> grp_D_rx_time_stamp
+//epl0_igr_rx_data_w_ecc         >> grp_A_rx_data_w_ecc
+//epl1_igr_rx_data_w_ecc         >> grp_B_rx_data_w_ecc
+//epl2_igr_rx_data_w_ecc         >> grp_C_rx_data_w_ecc
+//epl3_igr_rx_data_w_ecc         >> grp_D_rx_data_w_ecc
+//epl0_igr_rx_pfc_xoff           >> grp_A_rx_pfc_xoff
+//epl1_igr_rx_pfc_xoff           >> grp_B_rx_pfc_xoff
+//epl2_igr_rx_pfc_xoff           >> grp_C_rx_pfc_xoff
+//epl3_igr_rx_pfc_xoff           >> grp_D_rx_pfc_xoff
+//epl0_igr_rx_flow_control_tc    >> grp_A_rx_flow_control_tc
+//epl1_igr_rx_flow_control_tc    >> grp_B_rx_flow_control_tc
+//epl2_igr_rx_flow_control_tc    >> grp_C_rx_flow_control_tc
+//epl3_igr_rx_flow_control_tc    >> grp_D_rx_flow_control_tc
+
+igr_vp_rx_ecc               >> vp_rx_ecc
+igr_vp_rx_port_num          >> vp_rx_port_num
+igr_vp_rx_data_valid        >> vp_rx_data_valid
+igr_vp_rx_metadata          >> vp_rx_metadata
+igr_vp_rx_time_stamp        >> vp_rx_time_stamp
+igr_vp_cpp_rx_metadata      >> vp_cpp_rx_metadata
+igr_vp_rx_data_w_ecc        >> vp_rx_data_w_ecc
+igr_vp_rx_flow_control_tc   >> vp_rx_flow_control_tc
+igr_vp_tx_pfc_xoff          >> vp_tx_pfc_xoff                        //FIXME should this be [1:0] for 2 VP
+rx_ppe_igr_if               >> rx_ppe_igr
+igr_rx_ppe_if               >> igr_rx_ppe

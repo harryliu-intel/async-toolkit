@@ -9,7 +9,8 @@ lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar"
 lazy val common = (project in file("common"))
   .settings(
     Settings.commonSettings,
-    libraryDependencies ++= Dependencies.commonDeps
+    libraryDependencies ++= Dependencies.commonDeps,
+    scalacOptions -= "-Ywarn-unused:patvars"
   )
 
 lazy val csrMacros = (project in file("csr-macros"))
@@ -19,7 +20,8 @@ lazy val csrMacros = (project in file("csr-macros"))
     name := "csr-macros",
     libraryDependencies ++= Dependencies.csrMacrosDeps,
     addCompilerPlugin(Dependencies.scalaMacros),
-    autoCompilerPlugins := true
+    autoCompilerPlugins := true,
+    scalacOptions -= "-Ywarn-unused:patvars"
   )
 
 lazy val csr = (project in file("csr"))
@@ -28,7 +30,9 @@ lazy val csr = (project in file("csr"))
   .settings(
     Settings.commonSettings,
     name := "csr-model",
-    version := rdlGitHashShortProjectVersion.value
+    version := rdlGitHashShortProjectVersion.value,
+    // some imports are unused among generated hierarchy
+    scalacOptions -= "-Ywarn-unused:imports"
   )
 
 lazy val wmServerDto = (project in file("wm-server-dto"))
@@ -36,7 +40,12 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
   .dependsOn(common)
   .settings(
     Settings.commonSettings,
-    name := "wm-server-dto"
+    // TODO: to be removed
+    scalastyleFailOnError := false,
+    scalastyleFailOnWarning := false,
+    name := "wm-server-dto",
+    // some imports are unused for generated classes
+    scalacOptions -= "-Ywarn-unused:imports"
   )
 
 lazy val root = (project in file("."))
@@ -46,8 +55,8 @@ lazy val root = (project in file("."))
     Settings.commonSettings,
     name := "wm",
     libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
-    mainClass in Compile := Some("switch_wm.WhiteModelServer"),
-    mainClass in assembly := Some("switch_wm.WhiteModelServer"),
+    mainClass in Compile := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
+    mainClass in assembly := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
     assemblyOutputPath in assembly := path
   )
 

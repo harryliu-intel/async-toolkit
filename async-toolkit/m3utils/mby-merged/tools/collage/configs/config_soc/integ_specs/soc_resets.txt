@@ -1,0 +1,60 @@
+################################################################
+# Ad hoc connections
+##################################################################
+#
+#
+# Syntax for this File
+#
+# 1. Export Pin
+#
+#    E <Pin Name> <Port Name>  ?propagate? ?Direction? ?Signal Name? ?Comment?
+#    Example: E i_m_stap/ftap_tck          ftap_clk     1      in    ftap_tck   {To Master DfxUnit}
+#    Note:    Default behaviour is to export the IP pin all the way to top level. Direction is used when inout
+#             IP pin needs to connect to in/out top level pin
+#
+# 2. Connect Pins
+#
+#    C <Driver Pin> {<One or more receivers>} ?Signal Name? ?Comment?
+#    example: C i_socunit/psf_t0_func_disable_rtic      i_psf/t0_func_disable[0]
+#
+# 3. Open connection
+#
+#    O <Pin Name> ?Comment?
+#
+# 4. Constant connection
+#
+#    T <value> <Pin Name> ?Comment?
+#    where <value> can be "zero" or "one" or some constant number such as 10 or 01 etc..
+#
+# 5. TCL command evaluation
+#
+#    V {any valid tcl command, must be fully specified on this line}
+#
+# 6. Disconnect
+#
+#    D <Pin Name>
+#
+# 7. Create Port
+#
+#    CP <Port Name> <Direction> ?Dimensions? ?Context?
+#    example: CP portA  in {2 0} /parssa
+#
+# 8. Rename Port
+#
+#    R <Hierarchy> <Old Port Name> <New Port Name>
+#    example: R    parsc     abc   xyz
+#
+# 9. Create connection and port (IP pin driving other internal IP pins and also exported)
+#
+#    CE <Driver Pin> {<One or more receivers>} <Port Name> ?Comment?
+#
+# 10. Connect Pins (No driver)
+#
+#    CNS   {<One or more receivers>} ?Signal Name? ?Comment?
+#    example: CNS   {i_socunit/psf_t0_func_disable_rtic      i_psf/t0_func_disable[0]}
+#
+# Note: # at the beginning of the line is a comment line
+#
+##################################################################
+
+

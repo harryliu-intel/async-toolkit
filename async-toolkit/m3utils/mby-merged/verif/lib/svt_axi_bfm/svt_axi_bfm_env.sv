@@ -27,10 +27,10 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:    svt_bfm_env
+//   Class:    svt_axi_bfm_env
 //
 //   This is the SVT_AXI_BFM Environment file.
-//   It creates and configures the BFM agenst for MAC,PCS, and/or SERDES
+//   
 
 `ifndef __SVT_AXI_BFM_ENV_GUARD
 `define __SVT_AXI_BFM_ENV_GUARD

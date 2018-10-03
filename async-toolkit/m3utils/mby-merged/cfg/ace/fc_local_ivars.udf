@@ -1,0 +1,354 @@
+#---*-perl-*---------------------------------------------------------------------------------
+
+my $platform_os    = $ENV{SPECMAN_OS};
+my $platform_uc    = uc($platform_os);
+my $saola_platform = ( $platform_uc eq "LINUX" ? "Linux" : "Linux_x86_64" );
+
+%audf = (
+
+    HDLSpec => {
+        -hdl_compiler => {
+            vcs => {
+                -iniContents => <<EOF,
+TIME_RESOLUTION = 1ps
+TIMEBASE = PS
+VLOGAN_CHECK = TRUE
+EOF
+            },
+        },
+    },
+	 InterfaceVars => {
+	      -models_to_compile =>
+			{
+				merging => "ASSIGN",
+				default => ["fc",]
+			},
+		-test_in_model          => { default => 1 },
+		-elab_models            => { default => 1 },
+
+        # JasperGold options
+        -jg_proj_jasper_compile => {
+            type     => "BOOLEAN",
+            alias    => "-jg_pre_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_elab.tcl ".
+                        "-jg_post_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/post_elab.tcl ".
+                        "-jg_pre_analyze_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_analyze.tcl ".
+                        "-jg_bbox memory",
+        },
+
+        -jg_proj_jasper_compile_cov_all => {
+            type     => "BOOLEAN",
+            alias    => "-jg_pre_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_cov_all_elab.tcl ".
+                        "-jg_post_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/post_elab.tcl ".
+                        "-jg_pre_analyze_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_analyze.tcl ".
+                        "-jg_bbox memory",
+        },
+
+        -jg_proj_jasper_compile_afl => {
+            type     => "BOOLEAN",
+            alias    => "-jg_pre_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_elab.tcl ".
+                        "-jg_post_elaborate_scripts $ENV{ACE_ENG}/tools/fpv/common/post_afl_elab.tcl ".
+                        "-jg_pre_analyze_scripts $ENV{ACE_ENG}/tools/fpv/common/pre_afl_analyze.tcl ".
+                        "-jg_bbox memory",
+        },
+        -eclipse => {
+            action   => "eclipse",
+            shortcut => "e",
+            help     => {
+                desc  => "initiate eclipse action",
+                level => 1,
+            },
+        },
+        -enable_sim_init => {
+            type => "BOOLEAN",
+            default => 0,
+            help => {
+                    desc => "enable sim_init flow"
+            },
+        },
+        -enable_PrintHier_pli => { default => 1, },
+        -enable_debussy       => { default => 1 },
+	-save_run_scripts        => { default => 1 },
+        -set_test_plusarg_to_testname => {default => '1'},
+        -name_of_test_plusarg => {default => "UVM_TESTNAME"},
+
+        # This cleans old log files from the test results
+        -pre_clean_test => { default => 1, },
+        -tgl_cov        => {
+            type => "boolean",
+            alias =>
+"-test_elab_opts -cm,tgl -test_elab_opts -cm_tgl,portsonly -test_elab_opts -cm_hier,$ENV{MBY_ROOT}/tools/cov/tgl_cov -simv_args -cm,tgl",
+
+        },
+
+        # this is needed to allow sub_libraries in the mby_hdl.udf file
+        -enable_sub_libraries            => { default => 1 },
+        -use_timestamp                   => { default => 0 },
+        -use_simple_testlog_names        => { default => 1 },
+        -use_incdir_fulldepth_searchpath => { default => 1 },
+        -post_process_pattern_file =>
+          { default => "cfg/ace/mbyc_post_process.pp", },
+         -enabled_post_process_modes => { default => "mby_test", },
+        -debussy_opts => { default => ["-ssy -ssv -ssz"] },
+        -ignore_generated                   => { default => 1, },
+
+        -sim_args     => {
+            default => [
+                "-voptargs='+acc'",
+                "-suppress 3009",    # TSCALE TODO - Need to try to remove
+                "-suppress 3838"
+                ,    # written by continuous and procedural assignment TODO
+                "-vopt",
+                "-dpioutoftheblue 1",             # TODO - Need to try to remove
+                "-permit_unmatched_virtual_intf", # TODO - Need to try to remove
+                "-sv_lib $ENV{SAOLA_HOME}/libs/mti/Linux_x86_64/libsla",
+            ],
+        },
+        mby => {
+            __PROTOTYPES    => { import => [ "TEST", "LOWPOWER" ] },
+            -test_vlog_opts => {
+                default => [ "-Xkeyopt=uvm", ],
+
+            },
+            -enable_pwr_intent => { default => 1 },
+		-test              => { default => "mby_alive_test", },
+		-model                        => { default => "fc", },
+		-test_required                => { default => 1 },
+			
+            -test_dependent_libs =>
+              { default => [ "shdv_shared_lib", "mby_env_lib", ], },
+            -run_regression => {
+                switch => {
+                    doa =>
+"-exec_test -netbatch -testlist doa.list -nb_monitor -rtt -clean_rtt -test_results_subdir doa.list",
+                    level0 =>
+"-exec_test -netbatch -testlist level0.list -nb_monitor -rtt -clean_rtt -test_results_subdir level0.list",
+                    level1 =>
+"-nb_qslot $ENV{NB_DEFAULT_QSLOT} -exec_test -netbatch -testlist level1.list -nb_monitor -rtt -clean_rtt -test_results_subdir level1.list",
+                    rand =>
+"-exec_test -netbatch -testlist rand.list -nb_monitor -simv_args +vcs+lic+wait -rtt -clean_rtt -test_results_subdir rand.list",
+                },
+            },
+
+            -run_with_gui => {
+                type     => "boolean",
+                shortcut => "gg",
+                alias    => '-sd gui -test_elab_opts "-debug_all"',
+            },
+
+            -run_with_debugger => {
+                type     => "boolean",
+                shortcut => "gg",
+                alias    => '-test_elab_opts -debug_access+all -simv_args -debug_access+all',
+            },
+
+            # ACE doesn't come out of the box with a -vpd switch like it does for
+            #   -vcd and -fsdb.
+            -vpd => {
+               type  => "ARRAY",
+               alias => "-simv_args -parallel+vpd=1 -use_my_do_files -user_do_files_vcs tools/vcs/<VAL>",
+               help  => { desc => "alias for generating vpd waves using do files" }
+            },
+
+            -vcdplus => {
+               type  => "ARRAY",
+               alias => "-test_elab_opts +vcs+vcdpluson -test_elab_opts -debug_all",
+               help  => { desc => "alias for generating vpd waves" }
+            },
+
+            -vcs_profiler => {
+                type     => "SCALAR",
+                shortcut => "prof",
+                alias =>
+"-nocleanup -test_elab_opts -simprofile -simv_args -simprofile,<VAL>",
+            },
+
+            -test_required         => { default => 1, },
+            -implicit_runmode_libs => { default => ["mby::RunModes"], },
+            -code_coverage_mode    => { default => "cov_mode_a", },
+            -skip_test_elab        => { default => ['perl'], },
+            -test_run_copy_files   => {
+                default =>
+                  [ "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so", ]
+				      },
+           
+            -test_elab_opts => {
+                default => [
+
+		     "-lca", "-kdb", "-debug_access+all",
+                    "-sverilog",      "-override_timescale=1ps/1ps",
+                    "./libsla.so",    "-Xkeyopt=uvm",
+                    "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
+                    "-liblist_work",  "-liblist_nocelldiff",
+                ],
+                clear_default => 1,
+            },
+            -test_elab_fsdb_opts => {
+                default       => [ "-debug_pp", ],
+                clear_default => 1,
+            },
+            -spyglass_exe_opts => {
+                default => [ "set_option enable_pgnetlist_all_products yes", ],
+            },
+        },
+        -static_check_cfg_file => {
+            default => [
+                #"/p/com/flows/spyglass_methodology/1.0.10/ace_static_check.cfg",
+                "$ENV{MODEL_ROOT}/tools/lint/ace_static_check.lintra.cfg",
+            ],
+        },
+
+        -elab_opts => {
+            default => [
+                "-lca", "-kdb", "-debug_access+all",
+                "-sverilog",      "-override_timescale=1ps/1ps",
+                "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
+                "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
+                "-liblist_work",  "-liblist_nocelldiff",
+            ],
+        },
+
+        -vlog_opts => {
+            default => [
+                "-kdb",
+                "-Xkeyopt=uvm",
+                "+libext+.v+.sv",
+                "-timescale=1ps/1ps",
+                "-sverilog",
+                "+define+OVM+UVM+XVM",
+                "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",
+                "-lca",
+                "+define+MROOT_SPACE_SIGNAL_NAME=mrs",
+                "+define+IOSFTRKCHK_NO_DEPENDENCIES"
+                ,    #2012WW46r121114 primary IOSF compliance
+                "+define+SLA_SOCFUSEGEN2",
+                "+define+INSTANTIATE_NOVAS",
+                "+define+MODEL_ROOT=$ENV{MODEL_ROOT}", 
+            ],
+        },
+        # ---------------------------------------------
+        # DVT Eclipse Options That Everyone Should Use
+        # ---------------------------------------------
+        ### Here you enter models you want DVT to process
+        ### Leave it empty to enable DVT on all models
+        -dvt_models => {
+            default => [
+            ],
+        },
+
+        ### Specify a heap size appropriate for your project (default is 8G)
+        -dvt_heapsize => { default => "4G", },
+
+        ### Global DVT build file options
+        ### To see all build file options, Ctrl+Space inside a <model>.build file
+        -dvt_pre_buildinclude => {
+            default => [
+                ### These you always want
+                "+dvt_build_log_to_file+false", # Don't create the build log
+                "+dvt_file_compile_timeout+90", # 90sec timeout
+
+                ### Uncomment these only for large SOC sized projects
+                #"+dvt_disable_checks+UNDECLARED_IDENTIFIER",
+                #"+dvt_full_compile_checks+OFF",
+
+                ### Special options for improving incremental compile performance for large files and large projects
+                #"+dvt_incremental_compile_checks+FILE",
+                #"+dvt_incremental_compile_checks+LIB", ### restricts the incremental to current library
+                #"+dvt_incremental_compile_checks+PKG", ### restricts the incremental to current package
+                #"+dvt_incremental_compile_max_lines+0",
+            ],
+        },
+
+        ### Exclude all directories matching these names - to improve DVT bring up and build performance
+        -dvt_exclude_names => {
+            default => [
+                "MockTurnin*", ### Note the '*' to wildcard anything with MockTurnin as a the name prefix
+                "GATEKEEPER",
+                "results",
+                "regression",
+                "target", ### Don't exclude this if you want to see your log files or other content
+                "aceroot", ### Exclude this to avoid circular links
+            ],
+        },
+
+        ### Exclude only these directory hierarchies relative to $MODEL_ROOT - to improve DVT bring up and build performance
+        -dvt_exclude_prjrelpaths => {
+            default => [
+                "subIP/*/tools/dvt", ### This is required so that other launch buttons aren't pulled in
+                #"subIP", ### Uncomment this if you want to exclude ALL subIPs for faster build performance
+            ],
+        },
+
+        ### Command line options necessary for launching DVT Eclipse
+        -dvt_cmdopts => {
+            default => [
+                "-lang vlog",
+                #"-lang vhdl", ### Uncomment ONLY if you must have VHDL support. Will use a dvt_vhdl license if you uncomment.
+                "-perspective VLOG", ### Startup perspective. Default perspective is 'DVT' which has fewer toolbar buttons.
+            ],
+        },
+
+        ### Regex filters to remove libraries from DVT build files. Easiest way to get verif only .build file.
+        ### The <model>.build file will be filtered and a <model>_full.build file is available with all library content
+        -dvt_lib_regex => {
+            default => [
+                #'.*rtl_lib$', # Removes all libraries that end with 'rtl_lib'
+                #'.*_rtl_.*', # Removes all libraries that contain '_rtl_'
+            ],
+        },
+    },
+    OSData => {
+        -hier_rtl_dumper => {
+            -enable_flag        => "-enable_PrintHier_pli",
+            -error_if_not_found => 1,
+            vcs                 => {
+                'Linux-SuSE' => {
+                    'i686' => [
+"$ENV{MODEL_ROOT}/scripts/bin/common/PrintHier/PrintHier.tab",
+"$ENV{MODEL_ROOT}/scripts/bin/common/PrintHier/PrintHier.c",
+                    ],
+                    'x86-64' => [
+"$ENV{MODEL_ROOT}/scripts/bin/common/PrintHier/PrintHier.tab",
+"$ENV{MODEL_ROOT}/scripts/bin/common/PrintHier/PrintHier.c",
+                    ],
+                },
+            },
+
+        },
+        '-verdi_pli_libs' => {
+            -enable_flag        => "-enable_debussy",
+            -error_if_not_found => 1,
+            'vcs'               => {
+                'Linux-SuSE' => {
+                    'i686' => [
+                        "$ENV{VERDI_HOME}/share/PLI/VCS/LINUX/novas.tab",
+                        "$ENV{VERDI_HOME}/share/PLI/VCS/LINUX/pli.a",
+                    ],
+                    'x86-64' => [
+                        "$ENV{VERDI_HOME}/share/PLI/VCS/LINUXAMD64/novas.tab",
+                        "$ENV{VERDI_HOME}/share/PLI/VCS/LINUXAMD64/pli.a",
+                    ],
+                },
+            },
+            'mti' => {
+                'Linux-SuSE' => {
+                    'i686' => [
+"$ENV{VERDI_HOME}/share/PLI/MODELSIM/LINUX/novas_fli.so",
+                    ],
+                    'x86-64' => [
+"$ENV{VERDI_HOME}/share/PLI/MODELSIM/LINUXAMD64/novas_fli.so",
+                    ],
+                },
+            },
+        },
+    },
+    CommandMapper => {
+        mby => {
+            -test_manager => {
+                add_activity => { front   => [ "eclipse", ], },
+                add_mod      => { eclipse => ['common::eclipse'], },
+            },
+
+        },
+    },
+);
+
