@@ -17,6 +17,7 @@
 #
 
 SHELL := /usr/intel/bin/tcsh
+.SECONDARY:
 .SUFFIXES:
 .SECONDEXPANSION:
 .NOTPARALLEL:
@@ -123,8 +124,8 @@ GEN             := $(MODEL_ROOT)/tools/srdl/scripts/rdl.rb
 
 HDLSPEC_GEN     := $(MODEL_ROOT)/tools/srdl/srdl_make_hdl.pl
 
-UVM_RAL_TARGS   := $(addprefix $(RESULTS_RALF)/,$(addsuffix .ral,$(UVM_RAL_BLOCKS)))
-
+RESULTS_SUBBLOCK := $(RESULTS_NEB)/subblock
+UVM_RAL_TARGS   := $(addprefix $(RESULTS_SUBBLOCK)/ral_,$(addsuffix .sv,$(UVM_RAL_BLOCKS)))
 
 # Targets, skip $(GENPG_SV, for now)
 all: $(PREREQS) $(HTM_TABLE) rtl scm ral_env $(HDLSPEC_RTL) nqc
@@ -155,6 +156,7 @@ genrdl: $(SHELL_CTL_RDL)
 show:
 	@echo UVM_RAL_BLOCKS are $(UVM_RAL_BLOCKS)
 	@echo UVM_RAL_TARGS are $(UVM_RAL_TARGS)
+	@echo CRIF_TARGS are $(CRIF_TARGS)
 	@echo RESULTS_NEB is $(RESULTS_NEB)
 	@echo RAL_ENV targets is $(RAL_ENV)
 	@echo RESULTSQC target is $(RESULTSQC)
@@ -199,13 +201,17 @@ $(RESULTSXMLFILE) $(RAL_ENV) $(CRIF_FILE): $(ALL_RDL) $(PREREQS)
 	$(NEBULON) -sv_no_sai_checks -sverilog -xml -chdr -crif -ovm -input $(TOP_RDL) -timeout 60000 -out_dir $(RESULTS_NEB) -rtlgencomp -log_file $(RESULTS_NEB)/nebulon_sv_output.log
 
 
-$(RESULTS_CRIF)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
-	$(NEBULON) -sv_no_sai_checks -crif -input $< -timeout 60000 -out_dir $(RESULTS_NEB) -log_file $@.log
+$(RESULTS_SUBBLOCK)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
+	$(eval TMPDIR = $(shell mktemp -d))
+	mkdir -p $(dir $@)
+	$(NEBULON) -sv_no_sai_checks -crif -expand_handcoded_arrays -maximize_crif -input $< -timeout 60000 -out_dir $(TMPDIR) -log_file $@.log
+	cp $(TMPDIR)/output/crif/$(notdir $@) $@
 
 %.ralf: %_crif.xml
-	cd $(dir $@) && multi_gen_ralf_crif.py -i $< -o .ralf --bytes 8
-%.ral: %.ralf
-	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(basename $<) $<
+	cd $(dir $@) && multi_gen_ralf_crif.py -i $< -o .ralf --bytes 8 
+ral_%.sv: %.ralf
+	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(notdir $(basename $<)) -o $(basename $@) $<
+	@echo Generated $@
 
 # Need dependency on only one output file, since command for nebulon_all generates everything
 nebulon_all: $(RAL_ENV)
