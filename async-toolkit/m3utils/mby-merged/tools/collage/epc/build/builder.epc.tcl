@@ -6,15 +6,11 @@ set ::collage_ip_info::ip_name "mby_ec_top"
 set ::collage_ip_info::ip_top_module_name "mby_ec_top"
 set ::collage_ip_info::ip_version "1.0"
 set ::collage_ip_info::ip_intent_sp ""
-# update this pointer once we can use non-temp shell
-set ::collage_ip_info::ip_rtl_inc_dirs "./rtl/"
-
 set ::collage_ip_info::ip_input_language SystemVerilog
 
-### hardcoded until we get toolconfig path working; would need to update this when EPC IP is updated
-### Get current EPC path with:
-### ToolConfig.pl get_tool_path ipconfig/epc
-set ::collage_ip_info::ip_input_files "/p/hdk/rtl/ip_models/nhdk/eth_port/eth_port-dev-x0-18ww39c/src/mby_ec_top/rtl/mby_ec_top.sv"
+set ::env(EPC_ROOT)      [exec ToolConfig.pl get_tool_path ipconfig/epc]
+set ::collage_ip_info::ip_rtl_inc_dirs "$::env(EPC_ROOT)/src/mby_ec_top/rtl/"
+set ::collage_ip_info::ip_input_files "$::env(EPC_ROOT)/src/mby_ec_top/rtl/mby_ec_top.sv"
 
 set ::collage_ip_info::ip_plugin_dir "" ; # Directories - space separated list - with tcl plugin files
 set ::collage_ip_info::ip_ifc_def_hook "epc_create_ifc_instances" ; # Set this to procedure to add IP interfaces - defined below
