@@ -11,7 +11,10 @@ set ::collage_ip_info::ip_rtl_inc_dirs "./rtl/"
 
 set ::collage_ip_info::ip_input_language SystemVerilog
 
-set ::collage_ip_info::ip_input_files "../../../subIP/eth_port/src/mby_ec_top/rtl/mby_ec_top.sv"
+### hardcoded until we get toolconfig path working; would need to update this when EPC IP is updated
+### Get current EPC path with:
+### ToolConfig.pl get_tool_path ipconfig/epc
+set ::collage_ip_info::ip_input_files "/p/hdk/rtl/ip_models/nhdk/eth_port/eth_port-dev-x0-18ww39c/src/mby_ec_top/rtl/mby_ec_top.sv"
 
 set ::collage_ip_info::ip_plugin_dir "" ; # Directories - space separated list - with tcl plugin files
 set ::collage_ip_info::ip_ifc_def_hook "epc_create_ifc_instances" ; # Set this to procedure to add IP interfaces - defined below
