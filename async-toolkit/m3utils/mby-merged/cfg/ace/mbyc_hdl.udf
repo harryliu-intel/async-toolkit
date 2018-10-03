@@ -468,7 +468,7 @@ print "MGM debug : @mbyMgmLibs\n";
                    "shdv_shared_lib",
                    "svt_ahb_lib",
                    "mby_common_lib",
-                   "mby_rtl_lib",
+                   "mby_igr_rtl_lib",
                    "mby_ingress_tb_lib",
                    "mby_ingress_ti_lib",
                    "mby_ingress_env_lib",
