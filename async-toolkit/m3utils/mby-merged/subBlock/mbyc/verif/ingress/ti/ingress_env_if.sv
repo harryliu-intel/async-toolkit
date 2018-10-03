@@ -45,7 +45,7 @@ interface ingress_env_if();
     #5ps;
     enable_primary_clock   = 1;
     enable_secondary_clock = 1;
-    #50_000ps;
+    #8_000ps;
     power_good_reset = 0;
     primary_reset    = 0;
     secondary_reset  = 0;

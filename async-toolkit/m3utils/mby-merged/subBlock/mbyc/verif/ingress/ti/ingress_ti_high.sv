@@ -32,8 +32,14 @@ module ingress_ti_high #(
                         )
   (
     ingress_env_if      ingress_if
-   ,mby_ec_cdi_tx_intf  cdi_tx_intf
-   ,mby_ec_cdi_rx_intf  cdi_rx_intf
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_0
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_0
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_1
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_1
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_2
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_2
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_3
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_3
   );
 
   import uvm_pkg::*;
@@ -56,8 +62,14 @@ module ingress_ti_high #(
   ingress_ti_low #(.IP_ENV(IP_ENV))
     u_ingress_ti_low (
                        .ingress_if  (ingress_if)
-                      ,.cdi_tx_intf (cdi_tx_intf)
-                      ,.cdi_rx_intf (cdi_rx_intf)
+                      ,.eth_bfm_tx_intf_0 (eth_bfm_tx_intf_0)
+                      ,.eth_bfm_rx_intf_0 (eth_bfm_rx_intf_0)
+                      ,.eth_bfm_tx_intf_1 (eth_bfm_tx_intf_1)
+                      ,.eth_bfm_rx_intf_1 (eth_bfm_rx_intf_1)
+                      ,.eth_bfm_tx_intf_2 (eth_bfm_tx_intf_2)
+                      ,.eth_bfm_rx_intf_2 (eth_bfm_rx_intf_2)
+                      ,.eth_bfm_tx_intf_3 (eth_bfm_tx_intf_3)
+                      ,.eth_bfm_rx_intf_3 (eth_bfm_rx_intf_3)
                      );
 
 endmodule
