@@ -36,6 +36,8 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
     }
   }
 
+  def trimmed: PacketHeader = new PacketHeader(bytes.slice(0, PacketHeader.portionSegmentFPP))
+
   def apply(addr: Int): Byte = bytes(addr)
 
   def getWord(addr: Int): Short = ((apply(addr + 1) << 8) | apply(addr)).toShort
