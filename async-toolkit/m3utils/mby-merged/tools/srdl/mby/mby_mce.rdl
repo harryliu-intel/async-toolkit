@@ -1,0 +1,5 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+// MCE table [0..32767]
+
