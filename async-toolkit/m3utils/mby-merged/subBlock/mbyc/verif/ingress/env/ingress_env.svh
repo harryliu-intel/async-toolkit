@@ -40,6 +40,26 @@ class ingress_env extends ingress_base_env;
   // IP Agents and VC's declaration
   // ---------------------------------------------------------------
 
+  // Variable:  vp_bfms
+  // MAC Client BFM agent
+  igr_vp_bfm_t vp_bfms[`NUM_VPS_PER_IGR];
+
+  // Variable:  eth_bfm_tx_io
+  // MAC Client BFM io policy
+  igr_eth_bfm_tx_io_t vp_bfm_tx_io[`NUM_VPS_PER_IGR];
+
+  // Variable:  eth_bfm_rx_io
+  // MAC Client BFM io policy
+  igr_eth_bfm_rx_io_t vp_bfm_rx_io[`NUM_VPS_PER_IGR];
+
+  // Variable:  eth_bfm_tx_vintf
+  // MAC Client BFM virtual interface
+  igr_eth_bfm_tx_intf_t vp_bfm_tx_vintf[`NUM_VPS_PER_IGR];
+
+  // Variable:  eth_bfm_rx_vintf
+  // MAC Client BFM virtual interface
+  igr_eth_bfm_rx_intf_t vp_bfm_rx_vintf[`NUM_VPS_PER_IGR];
+
   // Variable:  eth_bfms
   // MAC Client BFM agent
   igr_eth_bfm_t eth_bfms[`NUM_EPLS_PER_IGR];
@@ -76,8 +96,8 @@ class ingress_env extends ingress_base_env;
 
   // Function: ingress_env build
   // build phase of ingress_env
-  // All VC's and Agent should be build in this pahse.
-  // For each new VC's/Agnet it is recommand to add it an a specific function
+  // All VC's and Agent should be build in this phase.
+  // For each new VC's/Agent it is recommended to add it an a specific function
   virtual function void build_phase(uvm_phase phase);
     uvm_object tmp_ti_cfg_obj;
 
@@ -88,8 +108,26 @@ class ingress_env extends ingress_base_env;
       assert($cast(ti_config,tmp_ti_cfg_obj));
     end
 
-    foreach(eth_bfms[i]) begin
+    foreach(vp_bfms[i]) begin
+      // Get the vp_bfm_vif ptrs
+      if(!uvm_config_db#(igr_eth_bfm_tx_intf_t)::get(this, "",
+        $sformatf("igr_eth_bfm_tx_vintf%0d", i+4), vp_bfm_tx_vintf[i])) begin
+        `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_intf_t was not successful!")
+      end
+      if(!uvm_config_db#(igr_eth_bfm_rx_intf_t)::get(this, "", 
+        $sformatf("igr_eth_bfm_rx_vintf%0d", i+4), vp_bfm_rx_vintf[i])) begin
+        `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_intf_t was not successful!")
+      end
+      // Create the vp bfm instances
+      vp_bfms[i]               = igr_vp_bfm_t::type_id::create($sformatf("igr_vp_bfm%0d", i), this);
+      vp_bfms[i].cfg.mode      = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
+      vp_bfms[i].cfg.speed     = eth_bfm_pkg::SPEED_400G;                             // Configure speed.
+      vp_bfms[i].cfg.num_ports = 1;                                                   // Configure num_ports.
+      vp_bfm_tx_io[i] = igr_eth_bfm_tx_io_t::type_id::create($sformatf("vp_bfm_tx_io%0d", i), this);
+      vp_bfm_rx_io[i] = igr_eth_bfm_rx_io_t::type_id::create($sformatf("vp_bfm_rx_io%0d", i), this);
+    end
 
+    foreach(eth_bfms[i]) begin
       // Get the eth_bfm_vif ptrs
       if(!uvm_config_db#(igr_eth_bfm_tx_intf_t)::get(this, "",
         $sformatf("igr_eth_bfm_tx_vintf%0d", i),eth_bfm_tx_vintf[i])) begin
@@ -99,13 +137,12 @@ class ingress_env extends ingress_base_env;
         $sformatf("igr_eth_bfm_rx_vintf%0d", i), eth_bfm_rx_vintf[i])) begin
         `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_intf_t was not successful!")
       end
-
       // Create the bfm instances
       eth_bfms[i]               = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
       eth_bfms[i].cfg.mode      = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
       eth_bfms[i].cfg.speed     = eth_bfm_pkg::SPEED_400G;                             // Configure speed.
       eth_bfms[i].cfg.num_ports = 1;                                                   // Configure num_ports.
-      eth_bfms[i].cfg.sop_alignment = 68 - i;
+      //eth_bfms[i].cfg.sop_alignment = 68 - i;
       eth_bfm_tx_io[i] = igr_eth_bfm_tx_io_t::type_id::create($sformatf("eth_bfm_tx_io%0d", i), this);
       eth_bfm_rx_io[i] = igr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
     end
@@ -129,6 +166,16 @@ class ingress_env extends ingress_base_env;
     super.connect_phase(phase);
 
     ingress_if = slu_resource_db#(virtual ingress_env_if)::get("ingress_if",`__FILE__,`__LINE__);
+
+    foreach(vp_bfms[i]) begin
+      vp_bfm_tx_io[i].set_vintf(vp_bfm_tx_vintf[i]);
+      vp_bfm_rx_io[i].set_vintf(vp_bfm_rx_vintf[i]);
+      vp_bfms[i].set_io(vp_bfm_tx_io[i], vp_bfm_rx_io[i]);   // Set the IO Policy in the BFM
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx0", i), vp_bfms[i].tx.frame_sequencer[0]));
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx1", i), vp_bfms[i].tx.frame_sequencer[1]));
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx2", i), vp_bfms[i].tx.frame_sequencer[2]));
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx3", i), vp_bfms[i].tx.frame_sequencer[3]));
+    end
 
     foreach(eth_bfms[i]) begin
       eth_bfm_tx_io[i].set_vintf(eth_bfm_tx_vintf[i]);

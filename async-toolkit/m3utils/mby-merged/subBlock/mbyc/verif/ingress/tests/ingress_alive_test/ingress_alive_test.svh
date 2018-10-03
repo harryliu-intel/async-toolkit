@@ -90,7 +90,7 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
         begin
           repeat (20) begin
             `slu_assert(los_frames[auto_i].randomize() with {
-              bubble         inside {[7:13]};
+              bubble         inside {[0:13]};
               kind           inside {BASIC_FRAME,
                                      IPV4_FRAME,
                                      IPV6_FRAME};
