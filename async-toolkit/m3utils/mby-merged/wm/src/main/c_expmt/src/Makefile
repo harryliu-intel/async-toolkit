@@ -30,6 +30,7 @@ SOURCES += mby_txstats.c
 SOURCES += mby_pipeline.c
 SOURCES += mby_reg_ctrl.c
 SOURCES += mby_errors.c
+SOURCES += mby_init.c
 # SOURCES += mby_log_dump.c
 
 OBJECTS = $(SOURCES:.c=.o)
@@ -116,6 +117,7 @@ PIPELINE_STAGES += mby_txstats.o
 mby_pipeline.o   : mby_pipeline.c   mby_pipeline.h   $(PIPELINE_STAGES)
 mby_reg_ctrl.o   : mby_reg_ctrl.c   mby_reg_ctrl.h
 mby_model.o      : mby_model.c      mby_model.h		 mby_pipeline.o
+mby_init.o       : mby_init.c       mby_init.h
 
 %.o: %.c
 	@echo '  Compiling' $<

@@ -4,7 +4,6 @@
 #include <mby_common.h>
 #include <mby_errors.h>
 #include <mby_model.h>
-#include <mby_init.h>
 #include <mby_rxstats.h>
 
 #include "mby_basic_flood_init.h"
@@ -42,7 +41,7 @@ inline static int checkOk (const char * test, const fm_status status)
 fm_status init()
 {
     // TODO verify if that's all that we need
-    mby_init_common_regs();
+    mby_init_regs(send_sw);
     basic_flood_init();
     return FM_OK;
 }

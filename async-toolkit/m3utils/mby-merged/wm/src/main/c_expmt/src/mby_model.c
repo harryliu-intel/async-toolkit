@@ -3,6 +3,7 @@
 #include "mby_pipeline.h"
 #include "mby_reg_ctrl.h"
 #include "mby_errors.h"
+#include <mby_init.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -26,6 +27,23 @@ fm_status mbyResetModel(const fm_uint32 sw)
         // mbyModelLoadDefaults(top_map); <-- FIXME!!!
 #else
         mbyModelLoadDefaults(regs);
+#endif
+    }
+    return sts;
+}
+
+fm_status mby_init_regs(const fm_uint32 sw)
+{
+    fm_status sts = FM_OK;
+
+    if (sw != 0)
+        sts = FM_ERR_UNSUPPORTED;
+    else
+    {
+#ifdef USE_NEW_CSRS
+        // mby_init_common_regs(top_map); <-- FIXME!!!
+#else
+        mby_init_common_regs(regs);
 #endif
     }
     return sts;

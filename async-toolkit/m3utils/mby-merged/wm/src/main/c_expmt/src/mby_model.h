@@ -11,6 +11,8 @@
 /* Public interfaces exposed by the MBY functional model */
 fm_status mbyResetModel(const fm_uint32 sw);
 
+fm_status mby_init_regs(const fm_uint32 sw);
+
 fm_status mbyReadReg
 (
     const fm_uint32   sw,

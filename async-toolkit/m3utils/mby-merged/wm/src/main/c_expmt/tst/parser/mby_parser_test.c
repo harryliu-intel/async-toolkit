@@ -6,10 +6,10 @@
 #include <mby_top_map.h>
 #endif
 
-#include <mby_common.h>
 #include <mby_pipeline.h>
 #include <mby_crc32.h>
 #include <mby_init.h>
+#include <mby_reg_ctrl.h>
 #include "mby_parser_test.h"
 
 void initRegs
@@ -23,26 +23,16 @@ void initRegs
 {
     // Initialize model registers
 #ifndef USE_NEW_CSRS
-    mbyResetModel(0);
+    mbyModelLoadDefaults(regs);
 #endif
     mby_init_common_regs
     (
 #ifdef USE_NEW_CSRS
         rx_top_map
+#else
+        regs
 #endif
     );
-
-
-#ifndef USE_NEW_CSRS
-    fm_uint64 val;
-
-    // Copy parser registers to present regs array
-    for(int regIndex = MBY_PARSER_BASE/4; regIndex < MBY_PARSER_BASE/4 + MBY_PARSER_SIZE/4; regIndex+=2) {
-        mbyReadReg(0, regIndex*4, &val);
-        regs[regIndex] = (unsigned int)(val & 0xffffffff);
-        regs[regIndex+1] = (unsigned int)(val >> 32) ;
-    }
-#endif
 }
 
 void initOutput
