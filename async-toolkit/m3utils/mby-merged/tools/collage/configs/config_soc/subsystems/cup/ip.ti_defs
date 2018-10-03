@@ -1,0 +1,6 @@
+#################################################################################
+# This file contains Test Island Definitions that are processed during Testbench
+# generation
+# 
+# It would typically include one or more "collage_ti_definition" 
+#################################################################################

@@ -293,9 +293,9 @@ static void simple_tcp_map_smac_test_setup(fm_uint32 reg[MBY_REGISTER_ARRAY_SIZE
 
 static int simple_tcp_map_smac_test_check(fm_uint32 reg[MBY_REGISTER_ARRAY_SIZE], const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_SCENARIO == 0x3, "FFU_SCENARIO");
-    MAPPER_TEST_ASSERT(in->IP_OPTION[0], "IP_OPTION[0]");
-    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[13] == 0x7e, "key13[13]");
+    MAPPER_TEST_ASSERT(in->FFU_SCENARIO       == 0x3,  "FFU_SCENARIO");
+    MAPPER_TEST_ASSERT(in->IP_OPTION[0]       == TRUE, "IP_OPTION[0]");
+    MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[13] == 0x7e, "key16[13]");
 
     return 1;
 }
@@ -393,14 +393,14 @@ static void simple_tcp_LEARN_MODE_test_setup(fm_uint32 reg[MBY_REGISTER_ARRAY_SI
 {
     fm_uint32 map_domain_action0_vals[MBY_MAP_DOMAIN_ACTION0_WIDTH] = { 0 };
 
-    FM_ARRAY_SET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE, 1);
+    FM_ARRAY_SET_BIT(map_domain_action0_vals, MBY_MAP_DOMAIN_ACTION0, LEARN_MODE, TRUE);
 
     mbyModelWriteCSRMult(reg, MBY_MAP_DOMAIN_ACTION0(0, 0), MBY_MAP_DOMAIN_ACTION0_WIDTH, map_domain_action0_vals);
 }
 
 static int simple_tcp_LEARN_MODE_test_check(fm_uint32 reg[MBY_REGISTER_ARRAY_SIZE], const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->LEARN_MODE, "LEARN_MODE");
+    MAPPER_TEST_ASSERT((in->LEARN_MODE == TRUE), "LEARN_MODE");
 
     return 1;
 }
@@ -443,7 +443,7 @@ int main()
     SIMPLE_TCP_TEST(VLAN_COUNTER,        fails); tests++;
 
     fm_uint passes = (tests > fails) ? tests - fails : 0;
-    
+
     printf("--------------------------------------------------------------------------------\n");
 
     if (fails == 0)
