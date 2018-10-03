@@ -130,10 +130,10 @@ object Parser {
             ParserTcam.TcTriple(kW.W1_MASK,    kW.W1_VALUE,    w1),
             ParserTcam.TcTriple(kS.STATE_MASK, kS.STATE_VALUE, state)
           )) => Some(new Action(
-              AnalyzerAction(aW, aS),
-              List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
-              new ExceptionAction(ec.EX_OFFSET().toShort, ec.PARSING_DONE.apply() == 1)
-              ))
+                  AnalyzerAction(aW, aS),
+                  List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
+                  new ExceptionAction(ec.EX_OFFSET().toShort, ec.PARSING_DONE.apply() == 1)
+                  ))
 
         case (_ :: kWs, _ :: kSs, _ :: aWs, _ :: aSs, _ :: exs, _ :: ecs) => findAction(kWs, kSs, aWs, aSs, exs, ecs)
 

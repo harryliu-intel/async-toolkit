@@ -8,6 +8,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import org.scalatest._
 import monocle.state.all._
 import monocle.function.Index._
@@ -25,6 +26,7 @@ class ParserStageSpec extends FlatSpec with Matchers {
     val noException = Option.empty[ParserException]
     val ps  = ParserState(List(0,0,0), new AluOperation(0,0), 0, 0)
     val ph = PacketHeader(Array.ofDim[Byte](79))
+    val ps2 = Parser.initialState(csr, ph, new PortIndex(0))
 
     // TODO: fix that
     //csr.foreachResetableField(f => f.reset())
@@ -64,6 +66,12 @@ class ParserStageSpec extends FlatSpec with Matchers {
     result._1.get contains 2 shouldEqual false
     result._1.get contains 3 shouldEqual false
     result._1.get contains 4 shouldEqual true
+
+    val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, idx, ph, ps2, pf, protoOffset, exceptionOpt = noException)
+    result2._1.get contains 1 shouldEqual true
+    result2._1.get contains 2 shouldEqual false
+    result2._1.get contains 3 shouldEqual false
+    result2._1.get contains 4 shouldEqual true
   }
 
 }
