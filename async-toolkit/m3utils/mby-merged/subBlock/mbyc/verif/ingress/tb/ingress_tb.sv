@@ -140,6 +140,9 @@ module ingress_tb ();
   mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (ingress_power_good_reset, primary_clock);
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (ingress_power_good_reset, primary_clock);
 
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_4 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_4 (ingress_power_good_reset, primary_clock);
+
   assign eth_bfm_tx_intf_1.enable = 1;
   assign eth_bfm_tx_intf_2.enable = 1;
   assign eth_bfm_tx_intf_3.enable = 1;
@@ -158,6 +161,8 @@ module ingress_tb ();
                    ,.eth_bfm_rx_intf_2   (eth_bfm_rx_intf_2)
                    ,.eth_bfm_tx_intf_3   (eth_bfm_tx_intf_3)
                    ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
+                   ,.eth_bfm_tx_intf_4   (eth_bfm_tx_intf_4)
+                   ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_4)
                   );
 
 `include "std_ace_util.vic"

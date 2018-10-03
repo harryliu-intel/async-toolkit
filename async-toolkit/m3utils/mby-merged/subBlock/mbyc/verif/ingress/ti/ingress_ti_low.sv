@@ -8,7 +8,7 @@
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This moudle will hold all the "shared" TB content between the IP and
+// This module will hold all the "shared" TB content between the IP and
 // the integration level.
 // INGRESS_TOP_RTL define should be use to monitor internal signals.
 // This define will be overriden at integration level.
@@ -38,6 +38,8 @@ module ingress_ti_low #(
    ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_2
    ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_3
    ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_3
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_4
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_4
   );
 
   import uvm_pkg::*;
@@ -66,6 +68,8 @@ module ingress_ti_low #(
     uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf2" , eth_bfm_rx_intf_2);
     uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf3" , eth_bfm_tx_intf_3);
     uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf3" , eth_bfm_rx_intf_3);
+    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf4" , eth_bfm_tx_intf_4);
+    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf4" , eth_bfm_rx_intf_4);
   end
 
   ingress_ti_config ti_config;
