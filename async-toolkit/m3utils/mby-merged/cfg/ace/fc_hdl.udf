@@ -26,6 +26,8 @@ my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
 		    );
 
 my @models_use = (
+     "eth_port_mby_ec:mby_ec",
+     "eth_port_common:common",
 );
 my @all_sip_rtl_liblist = &get_all_sip_rtl_libs();
 my @all_sip_rtl_vlogopts = &get_all_sip_rtl_vlogopts();
