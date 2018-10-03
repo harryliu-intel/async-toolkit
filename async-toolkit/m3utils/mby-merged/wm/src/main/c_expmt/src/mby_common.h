@@ -31,7 +31,7 @@
 #define MBY_N_PARSER_FLGS        48
 #define MBY_N_PARSER_PTRS         8
 
-#define MBY_FFU_KEY8             64
+#define MBY_FFU_KEY8             32
 #define MBY_FFU_KEY16            32
 #define MBY_FFU_KEY32            16
 
