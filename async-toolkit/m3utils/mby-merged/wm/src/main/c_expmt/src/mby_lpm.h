@@ -18,8 +18,7 @@
 
 typedef struct mbyLpmKeyStruct
 {
-    // TODO where does the key come from? Spec says is derived from Profile ID
-    fm_byte key[MBY_LPM_KEY_MAX_BITS_LEN / 8];
+    fm_byte key[MBY_LPM_KEY_MAX_BYTES_LEN];
     fm_byte key_len; // in bits
 } mbyLpmKey;
 

@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include "mby_lpm.h"
 
 static void lookUpLpmTcam
@@ -211,6 +212,50 @@ static void lpmSearch
     }
 }
 
+static void generateKey
+(
+    MBY_LPM_IN_REGS,
+    mbyClassifierKeys    const * const keys,
+    fm_byte                            profile_id,
+    mbyLpmKey                  * const lpmKey
+)
+{
+    mbyLpmKeyMasks key_masks;
+    fm_byte len = 0;
+    fm_byte i;
+
+    assert(keys);
+    assert(lpmKey);
+    assert(profile_id < 64); // 6 bits value
+
+    mbyLpmGetKeyMasks(MBY_LPM_IN_REGS_P, profile_id, &key_masks);
+
+    lpmKey->key_len = 0; // remember this is in bits
+    memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
+
+
+#define PACK_LPM_KEY(key_type, key_size)                                       \
+    for(i = 0; i < MBY_FFU_KEY ##key_size ; ++i)                               \
+    {                                                                          \
+        if ((key_masks.key_type ## _key ## key_size ## _mask >> i) & 0x1)      \
+        {                                                                      \
+            memcpy(lpmKey->key + len, keys->key## key_size + i, key_size / 8); \
+            len += key_size / 8;                                               \
+        }                                                                      \
+    }
+
+    // Start from the LSB (address key8s) to the MSB (metadata key16s)
+    PACK_LPM_KEY(addr, 8);
+    PACK_LPM_KEY(addr, 16);
+    PACK_LPM_KEY(addr, 32);
+    PACK_LPM_KEY(md,   8);
+    PACK_LPM_KEY(md,   16);
+
+    // TODO apply the 160 bit mask
+
+    lpmKey->key_len = len * 8;
+}
+
 void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
@@ -219,16 +264,10 @@ void mbyMatchLpm
     mbyLpmOut                  * const out
 )
 {
-    mbyLpmKeyMasks key_masks;
+    mbyLpmKey lpmKey;
+    generateKey(MBY_LPM_IN_REGS_P, keys, profile_id, &lpmKey);
 
-    mbyLpmGetKeyMasks(MBY_LPM_IN_REGS_P, profile_id, &key_masks);
-
-    // TODO properly initialize these before calling the internal function
-    mbyLpmKey in = { 0 };
-    // in.key = ...;
-    // in.key_len = ...;
-
-    lpmSearch(MBY_LPM_IN_REGS_P, &in, out);
+    lpmSearch(MBY_LPM_IN_REGS_P, &lpmKey, out);
 
     // TODO read the action from FWD_TABLE0
 }
