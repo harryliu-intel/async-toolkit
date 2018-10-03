@@ -1,0 +1,148 @@
+#!/usr/intel/bin/perl
+# vim:et:sw=4:ts=4:tw=79:
+#
+# report_coverage.pl
+
+use Cwd qw(abs_path getcwd);
+use File::Spec::Functions;
+use FindBin qw($Bin);
+use File::Temp;
+use IO::File;
+use List::MoreUtils 'uniq';
+use DBI();
+
+
+use lib "$Bin/../scripts";
+use lib "$Bin/../shared/perl";
+
+$Bin =~ s/(.*)\/scripts/$1/;
+# verification toplevel
+my $root = $Bin;
+use strict 'vars';
+use strict 'subs';
+
+######################### GLOBAL SYMBOLS ####################################
+#output disk to store coverage data published to database
+my $global_merged_dir="/p/rrc/verification/merged_coverage";
+my $user = $ENV{"USER"};
+my $pwd=getcwd();
+
+
+my $DEBUG_LEVEL=1;
+
+# coverage ID list
+my @cov_id=();
+
+#sql database
+my $dbh;
+my $sth;
+my $coverage_table="coverage_stats";
+
+########################### MAIN #################################
+&parseArgs(@ARGV);
+
+die usage() if (scalar(@cov_id) == 0);
+
+
+
+
+delete_id_from_table(@cov_id);
+
+
+######################## FUNCTIONS ################################
+sub parseArgs() {
+    my @args = @_;
+    my $help = 0; $help = 1 if (@args==0);
+    foreach my $arg (@args) {
+        next if($arg =~ /^\#/ );
+        if ($arg =~ /^--(.*)/) {
+            # key-value pair
+            my ($key, $value) = split("=",$1,2);
+            if (!defined $value) { $value=1; } # fulcrum standard, assume 1
+            if ($key eq "include" || $key eq "config" ) {
+                my @config_args = ();
+                includeConfig($value,\@config_args);
+                &parseArgs(@config_args);
+            } elsif ($key eq "help") {
+                $help = 1;
+            } elsif($key eq "id") {
+                @cov_id = split(/[:|,]/,$value);
+            } else {
+               debug_print(0, "WARNING: unknown argument $arg\n");
+            }
+        }
+    }
+
+    die usage() if $help;
+}
+
+sub usage {
+    local $"=",";
+
+    my $usages = <<ET;
+
+Delete Coverage. 
+
+USAGE: $0 [options]
+
+  Options:
+    --help\t\t(display this usage manual)
+    --id=[] (Coverage ID. Seperated by ":". The coverage report of specified ID will be deleted.)
+ET
+   return $usages;
+}
+
+sub uniq_array{
+    my @s = uniq(sort(@_));
+    return @s;
+}
+
+
+
+sub delete_report_dir {
+    my($dir)=@_;
+    system("rm -rf $dir");
+    my @dirs=split("\/",$dir);
+    pop @dirs;
+    $dir=join("\/",@dirs);
+    while($dir !~ /merged_coverage$/){
+        if(is_folder_empty($dir)){
+            system("rm -rf $dir");
+            pop @dirs;
+            $dir=join("\/",@dirs);
+        }else{last;}
+    }
+}
+
+sub is_folder_empty {
+    my ($dirname) = @_;
+    opendir(my $dh, $dirname) or die "Not a directory $dirname";
+    return scalar(grep { $_ ne "." && $_ ne ".." } readdir($dh)) == 0;
+}
+
+###### SQL functions ######
+sub delete_id_from_table {
+    my (@ids)=@_;
+    print "***Infromation: Connecting to database...\n";
+    $dbh = DBI->connect("DBI:mysql:database=pfhistory;host=tsyvweb03",
+                     "pfhistory", "pfhistory1", { RaiseError => 1 });
+    foreach my $id (@ids){
+        my $ary_ref = $dbh->selectcol_arrayref(
+                  "SELECT report_dir from $coverage_table where id=$id"
+                );
+        if(scalar(@$ary_ref)==0){
+            print "***Infromation: No id=$id in database\n";
+        }
+        foreach my $report_dir (@$ary_ref){
+            print "***Infromation: Deleting $report_dir...\n";
+            delete_report_dir($report_dir);
+        }
+        $sth = $dbh->prepare(qq{
+              DELETE from $coverage_table where id=$id
+            });
+        $sth->execute();
+    }
+    $dbh->disconnect();
+}
+
+
