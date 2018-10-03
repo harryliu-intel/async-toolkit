@@ -15,7 +15,6 @@ mkdir  $COLLAGE_WORK
 setenv COLLAGE_IP_KITS $cwd/ip_kits
 
 
-source /p/hdk/rtl/proj_tools/psetup/master/v15ww09b/$setupTool_ver/bin/setupTool coretools $coretools_ver
 source /p/hdk/rtl/proj_tools/psetup/master/v15ww09b/$setupTool_ver/bin/setupTool collage   $collage_ver
 
 setenv COLLAGE_INTF_DEF /p/hdk/rtl/cad/x86-64_linux30/intel/collage_intf_def/$collage_intf_ver
