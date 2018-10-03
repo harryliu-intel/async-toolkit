@@ -90,7 +90,7 @@ print "MGM debug : @mbyMgmLibs\n";
                -vlog_opts => [ "+define+FIRST_SHELL", ],
             },
 
-            mby_msh_rtl.hdl => {
+            mby_msh_rtl_lib => {
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_rtl.hdl', ],
             },
             
