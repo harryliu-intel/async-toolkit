@@ -121,7 +121,7 @@ static void exploreSubtrie
     fm_bool key_bit;
 
     // The key can't be longer than 16B: 20B total key len - 4B tcam key len
-    assert(st_lookup->key_len < 16 * 8);
+//T:assert(st_lookup->key_len < 16 * 8);
 
     mbyLpmGetSubtrieStore(MBY_LPM_IN_REGS_P, subtrie->root_ptr, &st_store);
 
@@ -181,8 +181,8 @@ static void lpmSearch
     mbyLpmSubtrieLookup       st_lookup;
 
     // TODO verify what happens when key_len < 33 bits (i.e. TCAM key len + 1)
-    assert(in->key_len >= 33);
-    assert(in->key_len < MBY_LPM_KEY_MAX_BITS_LEN);
+//T:assert(in->key_len >= 33);
+//T:assert(in->key_len < MBY_LPM_KEY_MAX_BITS_LEN);
 
     // FIXME adjust based on how the key is stored in memory
     tcam_lookup.key = in->key[0] | (in->key[1] << 8) | (in->key[2] << 16) | (in->key[3] << 24);

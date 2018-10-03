@@ -17,9 +17,9 @@
 void initRegs
 (
 #ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map  cgrp_a_map,
-    mby_ppe_cgrp_b_map  cgrp_b_map,
-    mby_ppe_entropy_map entropy_map
+    mby_ppe_cgrp_a_map  * const cgrp_a_map,
+    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_entropy_map * const entropy_map
 #else
     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
 #endif
@@ -35,7 +35,7 @@ void initRegs
     fm_uint64 data  = 0xDeadBeefBaadC0deuLL;
 
 #ifdef USE_NEW_CSRS
-    em_b_hash_cam_r * const em_b_hash_cam = &(cgrp_b_map.EM_B_HASH_CAM[entry][word]);
+    em_b_hash_cam_r * const em_b_hash_cam = &(cgrp_b_map->EM_B_HASH_CAM[entry][word]);
     em_b_hash_cam->DATA = data;
 #else
     fm_byte const group = 1; // Exact Match "B"
@@ -157,74 +157,106 @@ fm_status checkOutputs
     return test_status;
 }
 
-int main (void)
-{
 #ifdef USE_NEW_CSRS
-    mby_ppe_cgrp_a_map *cgrp_a_map = malloc(sizeof(mby_ppe_cgrp_a_map));
-    if (cgrp_a_map == NULL) {
+void allocMem
+(
+    mby_ppe_cgrp_a_map  **cgrp_a_map,
+    mby_ppe_cgrp_b_map  **cgrp_b_map,
+    mby_ppe_entropy_map **entropy_map,
+    mby_shm_map         **shm_map
+)
+{
+    *cgrp_a_map = malloc(sizeof(mby_ppe_cgrp_a_map));
+    if (*cgrp_a_map == NULL) {
         printf("Could not allocate heap memory for classifier A map -- exiting!\n");
         exit(-1);
     }
 
-    mby_ppe_cgrp_b_map *cgrp_b_map = malloc(sizeof(mby_ppe_cgrp_b_map));
-    if (cgrp_b_map == NULL) {
+    *cgrp_b_map = malloc(sizeof(mby_ppe_cgrp_b_map));
+    if (*cgrp_b_map == NULL) {
         printf("Could not allocate heap memory for classifier B map -- exiting!\n");
         exit(-1);
     }
 
-    mby_ppe_entropy_map *entropy_map = malloc(sizeof(mby_ppe_entropy_map));
-    if (entropy_map == NULL) {
+    *entropy_map = malloc(sizeof(mby_ppe_entropy_map));
+    if (*entropy_map == NULL) {
         printf("Could not allocate heap memory for entropy map -- exiting!\n");
         exit(-1);
     }
 
-    mby_shm_map *shm_map = malloc(sizeof(mby_shm_map));
-    if (shm_map == NULL) {
+    *shm_map = malloc(sizeof(mby_shm_map));
+    if (*shm_map == NULL) {
         printf("Could not allocate heap memory for shared memory map -- exiting!\n");
         exit(-1);
     }
+}
+
+void freeMem
+(
+    mby_ppe_cgrp_a_map  * const cgrp_a_map,
+    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_entropy_map * const entropy_map,
+    mby_shm_map         * const shm_map
+)
+{
+    free( cgrp_a_map);
+    free( cgrp_b_map);
+    free(entropy_map);
+    free(    shm_map);
+}
+
 #else
+
+void allocRegs
+(
+    fm_uint32 **regs
+)
+{
     // Allocate storage for registers on the heap:
-    fm_uint32 *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
-    if (regs == NULL) {
+    *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
+    if (*regs == NULL) {
         printf("Could not allocate heap memory for register buffer -- exiting!\n");
         exit(-1);
     }
+}
+void freeRegs
+(
+    fm_uint32 *regs
+)
+{
+    free(regs);
+}
 #endif
 
-    mbyMapperToClassifier map2cla = { 0 };
-    mbyClassifierToHash   cla2hsh = { 0 };
+void updateTestStats
+(
+    char      * const test_name,
+    fm_status         test_status,
+    fm_uint32 * const num_tests,
+    fm_uint32 * const num_passed
+)
+{
+    if (test_status == FM_OK)
+        printf(COLOR_GREEN "[pass]" COLOR_RESET);
+    else
+        printf(COLOR_RED   "[FAIL]" COLOR_RESET);
 
-    fm_uint32 num_tests  = 1;
-    fm_uint32 num_passed = 0;
+    fm_uint32 test_num = *num_tests;
 
-    for (fm_uint32 test_num = 0; test_num < num_tests; test_num++)
-    {
-        initInputs(test_num, &map2cla);
+    printf(" Test number %3d:  %s\n", test_num, test_name);
 
-        mbyMapperToClassifier const * const in  = &map2cla;
-        mbyClassifierToHash         * const out = &cla2hsh;
+    (*num_tests)++;
 
-        Classifier
-        (
-#ifdef USE_NEW_CSRS
-            cgrp_a_map,
-            cgrp_b_map,
-            entropy_map,
-            shm_map,
-#else
-            regs,
-#endif
-            in,
-            out
-        );
+    if (test_status == FM_OK)
+        (*num_passed)++;
+}
 
-        fm_status test_status = checkOutputs(test_num, &cla2hsh);
-
-        if (test_status == FM_OK)
-            num_passed++;
-    }
-
+fm_bool reportTestStats
+(
+    fm_uint32 const num_tests,
+    fm_uint32 const num_passed
+)
+{
     printf("--------------------------------------------------------------------------------\n");
 
     fm_bool tests_passed = (num_passed == num_tests);
@@ -238,14 +270,122 @@ int main (void)
 
     printf("--------------------------------------------------------------------------------\n");
 
+    return tests_passed;
+}
+
+fm_status testWildCardMatch
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map    * const cgrp_a_map,
+    mby_ppe_cgrp_b_map    * const cgrp_b_map,
+    mby_ppe_entropy_map   * const entropy_map,
+    mby_shm_map           * const shm_map,
+#else
+    fm_uint32                     regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    mbyMapperToClassifier * const in,
+    mbyClassifierToHash   * const out
+)
+{
+    // Initialize inputs:
+
+    initDefaultInputs(in);
+
+    mbyClassifierActions * const actions_in  = &(in->FFU_ACTIONS);
+    mbyClassifierKeys    * const keys        = &(in->FFU_KEYS);
+    fm_byte              * const scenario_in = &(in->FFU_SCENARIO);
+    fm_bool              * const ip_option   =   in->IP_OPTION;
+    mbyParserInfo        * const parser_info = &(in->PARSER_INFO);
+    fm_byte              * const pri_profile = &(in->PRIORITY_PROFILE);
+
+    // Initialize registers:
+
+    // <...>
+
+    Classifier
+    (
+#ifdef USE_NEW_CSRS
+        cgrp_a_map,
+        cgrp_b_map,
+        entropy_map,
+        shm_map,
+#else
+        regs,
+#endif
+        in,
+        out
+    );
+
+    // Check outputs:
+
+    fm_status test_status = FM_FAIL; // check for real <-- FIXME!!!
+
+    return test_status;
+}
+
+int main (void)
+{
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map   *cgrp_a_map = NULL;
+    mby_ppe_cgrp_b_map   *cgrp_b_map = NULL;
+    mby_ppe_entropy_map *entropy_map = NULL;
+    mby_shm_map             *shm_map = NULL;
+
+    allocMem(&cgrp_a_map, &cgrp_b_map, &entropy_map, &shm_map);
+#else
+    fm_uint32 *regs = NULL;
+
+    allocRegs(&regs);
+#endif
+
+    mbyMapperToClassifier map2cla = { 0 };
+    mbyClassifierToHash   cla2hsh = { 0 };
+
+    fm_uint32 num_tests   = 0;
+    fm_uint32 num_passed  = 0;
+    fm_status test_status = FM_OK;
+
+    printf("--------------------------------------------------------------------------------\n");
+
+    // --------------------------------------------------------------------------------
+    // Wild Card Match (WCM) Test
+    // --------------------------------------------------------------------------------
+#ifdef USE_NEW_CSRS
+    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+#else
+    test_status = testWildCardMatch(regs,                                         &map2cla, &cla2hsh);
+#endif
+    updateTestStats("Wild Card Match (WCM)", test_status, &num_tests, &num_passed);
+
+    // --------------------------------------------------------------------------------
+    // Exact Match (EM) Test
+    // --------------------------------------------------------------------------------
+#ifdef USE_NEW_CSRS
+    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+#else
+    test_status = testWildCardMatch(regs,                                         &map2cla, &cla2hsh);
+#endif
+    updateTestStats("Exact Match (EM)", test_status, &num_tests, &num_passed);
+
+    // --------------------------------------------------------------------------------
+    // Longest Prefix Match (LPM) Test
+    // --------------------------------------------------------------------------------
+#ifdef USE_NEW_CSRS
+    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+#else
+    test_status = testWildCardMatch(regs,                                         &map2cla, &cla2hsh);
+#endif
+    updateTestStats("Longest Prefix Match (LPM)", test_status, &num_tests, &num_passed);
+
+    // --------------------------------------------------------------------------------
+
+    fm_bool tests_passed = reportTestStats(num_tests, num_passed);
+
     // Free up memory:
 #ifdef USE_NEW_CSRS
-    free(cgrp_a_map);
-    free(cgrp_b_map);
-    free(entropy_map);
-    free(shm_map);
+    freeMem(cgrp_a_map, cgrp_b_map, entropy_map, shm_map);
 #else
-    free(regs);
+    freeRegs(regs);
 #endif
 
     int rv = (tests_passed) ? 0 : -1;
