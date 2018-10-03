@@ -1,0 +1,45 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+    ## need to remove the following
+       "src/shared/rtl/shared_pkg.sv",
+    ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/mesh/rtl/mesh_defines.vh",
+       "src/mesh/rtl/mesh_pkg.sv",
+       "src/mesh/rtl/msh_ctrl.sv",
+       "src/mesh/rtl/msh_dp.sv",
+       "src/mesh/rtl/msh_mem.sv",
+       "src/mesh/rtl/msh_mem_dp.sv",
+       "src/mesh/rtl/msh_node.sv",
+       "src/mesh/rtl/msh_rd_dp.sv",
+       "src/mesh/rtl/msh_rd_req.sv",
+       "src/mesh/rtl/msh_wr_dp.sv",
+       "src/mesh/rtl/msh_wr_req.sv",
+       "src/mesh/rtl/mesh.sv",
+     ],
+    
+    # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     "src/mesh/rtl",
+     ],
+    
+    # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+    
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+     "src/mesh/rtl",
+     ],
+    
+    # Arbitrary VLOG options
+    -vlog_opts => [],
+    
+    
+    };
+
