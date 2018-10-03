@@ -28,6 +28,10 @@ my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
 my @models_use = (
     "eth_port_common:common",
 );
+if (exists ($fc_global_vars::ALL_IP_LIST{"tbd"})) {
+#    push(@models_use, (""));
+};
+
 my @all_sip_rtl_liblist = &get_all_sip_rtl_libs();
 my @all_sip_rtl_vlogopts = &get_all_sip_rtl_vlogopts();
 my @all_sip_verif_liblist = &get_all_sip_verif_libs();
