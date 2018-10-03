@@ -240,6 +240,12 @@ print "MGM debug : @mbyMgmLibs\n";
                                    ],
                -tag            => "nonsynth+nonlint",
             },
+            svt_amba_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/svt_amba_env.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
             
             mby_common_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/mby_common_pkg.hdl" ],
@@ -322,12 +328,13 @@ print "MGM debug : @mbyMgmLibs\n";
                   #"gen_mby_wm_m3",
                   "mby_mc_ti_lib",  
                   "shdv_shared_lib",
+                  "ext_shared_lib",
                   "mby_mc_env_lib", 
                   "mby_mc_test_lib", 
                   "mby_mc_tb_top_np_nphy_lib", 
                   "mby_jasper_lib", 
                   "mby_wm_dpi_lib",
-                  "cdn_pcie_lib",
+                  #"cdn_pcie_lib",
                   "svt_axi_lib",
                   "svt_ahb_lib",
                   "mby_common_lib",
