@@ -89,6 +89,10 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_rtl.hdl', ],
                -vlog_opts => [ "+define+FIRST_SHELL", ],
             },
+
+            mby_msh_rtl_lib => {
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_rtl.hdl', ],
+            },
             
             gen_mby_regflow_lib => {
                     -generated => 1,
