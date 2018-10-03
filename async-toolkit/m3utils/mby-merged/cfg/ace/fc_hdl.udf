@@ -40,7 +40,7 @@ my @all_hip_liblist = &get_hip_liblist();
 # TODO &fc_global_vars::gen_hip_liblist();
 
 my @FC_VLOG_OPTIONS = (
-   "+define+AXI_ENV_ENABLE",
+# TODO   "+define+AXI_ENV_ENABLE",
 );
 
 for (my $i = 0; $i < @ARGV; $i++) {
