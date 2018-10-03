@@ -12,6 +12,8 @@ $hdl_spec = {
     # list of VERILOG source files that belong in this library
     -vlog_files => [
         "verif/tb/env/ral/fc_uvm_reg_pkg.sv",
+        "verif/lib/svt_apb_bfm/apb_reset_if.svh",
+        "verif/lib/svt_axi_bfm/svt_axi_reset_if.sv",
         "verif/tb/env/fc_env_pkg.sv",
     ],
 
