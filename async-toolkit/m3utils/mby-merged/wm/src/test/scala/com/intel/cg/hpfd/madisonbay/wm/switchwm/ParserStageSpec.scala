@@ -5,8 +5,8 @@ import com.intel.cg.hpfd.csr.generated.{mby_ppe_parser_map, parser_ext_rf, parse
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 import com.intel.cg.hpfd.madisonbay.Memory._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import org.scalatest._

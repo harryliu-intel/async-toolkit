@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay.wm.extensions
+package com.intel.cg.hpfd.madisonbay.wm.utils.extensions
 
 object ExtByte {
 

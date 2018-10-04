@@ -7,7 +7,7 @@ import java.io.File
 import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
 // import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 // import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags.TypicalPacketFlags
-// import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Packet
+// import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Packet
 import org.scalatest.{FlatSpec, Matchers}
 
 /**

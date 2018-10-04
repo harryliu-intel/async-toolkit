@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{Packet, PacketHeader}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
 
 // from parser to multiple stages; parser output
 

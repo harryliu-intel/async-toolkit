@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
 object IPVersion extends Enumeration  {
 

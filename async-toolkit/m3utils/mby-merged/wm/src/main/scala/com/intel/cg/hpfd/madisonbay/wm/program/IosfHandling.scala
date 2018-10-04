@@ -11,7 +11,7 @@ import com.intel.cg.hpfd.csr.generated.mby_top_map
 import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
-import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtArrayByte.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtArrayByte.Implicits
 import monocle.Optional
 
 class IosfHandling(csrSpace: scala.collection.mutable.HashMap[Int,Byte], paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long]]) {

@@ -1,7 +1,7 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
-import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtInt.Implicits
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader.portionSegmentFPP
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
+import PacketHeader.portionSegmentFPP
 
 object PacketHeader {
 

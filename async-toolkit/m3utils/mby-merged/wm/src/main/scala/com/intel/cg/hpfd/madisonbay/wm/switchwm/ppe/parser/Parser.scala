@@ -4,11 +4,12 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 import com.intel.cg.hpfd.csr.generated._
 import ParserTcam._
 import ParserExceptions._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{IPVersion, Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader, Tcam}
-import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtLong.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtLong.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
 import scalaz.State
 import scalaz.syntax.traverse._

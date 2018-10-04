@@ -1,6 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
+import com.intel.cg.hpfd.madisonbay.wm.utils.Binary
 import org.scalatest._
 
 import scala.collection.BitSet
@@ -13,18 +14,18 @@ class PacketFlagsSpec extends FlatSpec with Matchers {
   }
 
   "Packet Flags" should " fit proper flags" in {
-    PacketFlags().set(1).set(3).set(7).toLong.toInt shouldEqual Integer.parseInt("10001010", 2)
+    PacketFlags().set(1).set(3).set(7).toLong.toInt shouldEqual Binary("10001010")
   }
 
   "Packet Flags" should " fit proper flags with BitSet constructor" in {
-    PacketFlags(BitSet(4,5,8)).toLong.toInt shouldEqual Integer.parseInt("100110000", 2)
+    PacketFlags(BitSet(4,5,8)).toLong.toInt shouldEqual Binary("100110000")
   }
 
   "Packet Flags" should " clear flags" in {
-    PacketFlags(BitSet(4,5,8)).clear(8).toLong.toInt shouldEqual Integer.parseInt("00110000", 2)
+    PacketFlags(BitSet(4,5,8)).clear(8).toLong.toInt shouldEqual Binary("00110000")
   }
 
   "Packet Flags" should " assign flags" in {
-    PacketFlags(BitSet(4,5,8)).assign(8, false).assign(1, true).toLong.toInt shouldEqual Integer.parseInt("00110010", 2)
+    PacketFlags(BitSet(4,5,8)).assign(8, false).assign(1, true).toLong.toInt shouldEqual Binary("00110010")
   }
 }

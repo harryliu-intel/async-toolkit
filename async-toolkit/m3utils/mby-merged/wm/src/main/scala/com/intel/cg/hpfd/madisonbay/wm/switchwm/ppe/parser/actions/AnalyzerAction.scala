@@ -1,9 +1,9 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
 import com.intel.cg.hpfd.csr.generated.{parser_ana_s_r, parser_ana_w_r}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.{AluOperation, Parser}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
 class AnalyzerAction(w_off: List[Short], skip: Short, aluOperation: AluOperation,
                      next_state: Short, next_state_mask: Short) {

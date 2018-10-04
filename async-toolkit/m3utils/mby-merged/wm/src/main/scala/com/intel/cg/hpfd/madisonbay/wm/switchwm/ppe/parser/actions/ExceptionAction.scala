@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.{ParseDepthExceededException, ParserDoneException, ParserException}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.PacketHeader
 
 class ExceptionAction(exOffset: Short, parsingDone: Boolean) {
 

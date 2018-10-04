@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay.wm.extensions
+package com.intel.cg.hpfd.madisonbay.wm.utils.extensions
 
 object ExtInt {
 
@@ -12,6 +12,7 @@ object ExtInt {
       (x & mask) >> (4 * i)
     }
 
+    def reverse: Int = reverseInt(x)
   }
 
   def reverseInt(i: Int): Int = {
