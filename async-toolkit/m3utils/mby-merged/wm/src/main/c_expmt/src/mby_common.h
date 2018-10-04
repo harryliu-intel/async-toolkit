@@ -18,7 +18,7 @@
 
 // Defines:
 
-#define MBY_PORTS_COUNT          24 // <-- REVISIT!!!
+#define MBY_PORTS_COUNT          16 // <-- REVISIT!!!
 #define MBY_FABRIC_LOG_PORTS     MBY_PORTS_COUNT
 
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000

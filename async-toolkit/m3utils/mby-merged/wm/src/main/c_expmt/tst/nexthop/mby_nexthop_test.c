@@ -186,14 +186,12 @@ static fm_bool nexthop_test_verify
 }
 static void nexthop_run_test(nh_test_data * const test_data)
 {
-    mbyHashToNextHop    hashToNextHop = { 0 };
-
 #ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map nexthop_map;
 #else
     fm_uint32 *         regs;
 #endif
-
+    mbyHashToNextHop    hashToNextHop = { 0 };
     mbyNextHopToMaskGen out  = { 0 };
     fm_bool             pass = FALSE;
 

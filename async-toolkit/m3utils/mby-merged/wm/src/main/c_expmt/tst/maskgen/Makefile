@@ -11,12 +11,13 @@ INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
 SOURCES  = $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
 SOURCES += $(SRC_DIR)/mby_common.c
-SOURCES += $(SRC_DIR)/mby_nexthop.c
-SOURCES += $(TST_DIR)/mby_nexthop_test.c
+SOURCES += $(SRC_DIR)/mby_maskgen.c
+SOURCES += $(TST_DIR)/mby_maskgen_test.c
+SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
-TARGET = mby_nexthop_test
+TARGET = mby_maskgen_test
 
 # C compiler:
 CC = gcc
@@ -41,6 +42,7 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
+#CFLAGS += -DUSE_NEW_CSRS
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O -g -ggdb3
@@ -62,8 +64,9 @@ all: $(TARGET)
 
 $(SRC_DIR)/mby_common.o       : $(SRC_DIR)/mby_common.c $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_bitfield.o     : $(SRC_DIR)/mby_bitfield.c $(SRC_DIR)/mby_bitfield.h $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_nexthop.o      : $(SRC_DIR)/mby_nexthop.c $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h
-$(TST_DIR)/mby_nexthop_test.o : $(TST_DIR)/mby_nexthop_test.c $(TST_DIR)/mby_nexthop_test.h $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/mby_maskgen.o      : $(SRC_DIR)/mby_maskgen.c $(SRC_DIR)/mby_maskgen.h $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/mby_reg_ctrl.o     : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
+$(TST_DIR)/mby_maskgen_test.o : $(TST_DIR)/mby_maskgen_test.c $(TST_DIR)/mby_maskgen_test.h $(SRC_DIR)/mby_maskgen.h $(SRC_DIR)/mby_common.h
 
 .PHONY: clean
 clean:

@@ -108,9 +108,15 @@ void NextHop
 
 void MaskGen
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    mbyNextHopToMaskGen const   * const in,
-    mbyMaskGenToTriggers        * const out
+#ifdef USE_NEW_CSRS
+    mby_ppe_fwd_misc_map       * const fwd_misc,
+    mby_ppe_mst_glort_map      * const glort_map,
+    mby_ppe_cm_apply_map       * const cm_apply,
+#else
+    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    mbyNextHopToMaskGen  const * const in,
+    mbyMaskGenToTriggers       * const out
 );
 
 void Triggers

@@ -3,13 +3,6 @@
 
 #include "mby_nexthop.h"
 
-#ifdef USE_NEW_CSRS
-#define TEST_PASS_MAX 29
-#else
-#define TEST_PASS_MAX 250 //322
-#endif
-#define TEST_FAIL_MAX 48 
-
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
 #define COLOR_RESET   "\x1b[0m"
