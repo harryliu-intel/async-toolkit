@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr.macros.MacroUtils.Control
@@ -266,7 +267,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory { self =>
     val qAccesswidth = new qAlign("accesswidth")
     val qAlignment   = new qAlign("alignment")
 
-    var qDefault = new qProps("default")
+    val qDefault = new qProps("default")
 
     // parse each entity
     val newBody = body.flatMap { child =>
@@ -305,9 +306,6 @@ class RegImpl(val c: Context) extends Control with LiftableMemory { self =>
     cAssert(cwidth <= accesswidth.toBits) {
       s"Register's contents are wider than its accesswidth (${accesswidth.toBits} < $cwidth)"
     }
-
-    //TODO: handle address map
-    val addrMap = guard.toAddrMap
 
     // apply defaults to fields' props
     qDefault.defs.map { case (k,v) =>

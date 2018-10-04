@@ -1,0 +1,9 @@
+// Classifier block
+
+classifier_top [
+  classifier_shells_wrapper of classifier_shells_wrapper with classifier_shells_wrapper.map
+  classifier_ff_mems of classifier_ff_mems with classifier_ff_mems.map
+  classifier_rf_mems of classifier_rf_mems with classifier_rf_mems.map
+  classifier_sram_mems of classifier_sram_mems with classifier_sram_mems.map
+  classifier_tcam_mems of classifier_tcam_mems with classifier_tcam_mems.map
+]

@@ -1,0 +1,95 @@
+
+`include "mby_port_cfg.rdl"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// RX_PB_PORT_CFG
+
+reg rx_pb_port_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Rx PB Port Configuration.";
+  desc = "
+      Port configuration for the Rx Packet Buffer.
+      Buffer allocation is derived from this configuration.
+      The port index is N*4 + M. The port configuration values are:
+
+      [list]
+      [*] 0 = Disable this port.
+      [*] 1 = This port is 100G, 50G, or 25G.
+      [*] 2 = This port is 200G. Only port N.0 or N.2 can be 200G, and the next port must be disabled.
+      [*] 3 = This port is 400G. Only port N.0 can be 400G, and the next 3 ports must be disabled.
+      [/list]
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+<% for (my $i = 0; $i < 16; $i++) { %>
+  field {
+    encode = mby_port_cfg_enum;
+    AccessType = "RW";
+    desc = "Port <%=$i%> configuration";
+    ValRandomize = true;
+  } PORT_<%=$i%> [<%=$i*2+1%>:<%=$i*2%>] = 2'h0;
+<% } %>
+
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// RX_PB_WM
+
+reg rx_pb_wm_r {
+  shared;
+  HandCoded = true;
+  name = "Rx PB Pause and Drop Watermarks.";
+  desc = "
+      Watermarks for pause and drop.
+      First index is Rx logical port (0..17; includes virtual ports).
+      Second index is Rx TC.
+      The watermarks are compared against the total amount of header data that the port is using in the ingress packet buffer (data is not counted per TC, but each TC can have a different watermark value).
+      If the port is configured to use PAUSE, then the port will be paused when any of its TCs is paused.
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType   = "RW";
+    desc         = "Set to indicate a lossless traffic class.";
+    ValRandomize = true;
+  } LOSSLESS[20:20] = 1'd0;
+
+  field {
+    AccessType   = "RW";
+    desc         = "Pause XON watermark. Defines total ingress buffer level below which the TC is unpaused. The value is 0..512 in units of 1KB.";
+    ValRandomize = true;
+  } XON[19:10]   = 10'd512;
+
+  field {
+    AccessType   = "RW";
+    desc         = "XOFF or drop watermark. In lossless mode, defines total ingress buffer level above which the TC is paused. In lossy mode, defines total ingress buffer level above which packets are dropped. The value is 0..512 in units of 1KB.";
+    ValRandomize = true;
+  } XOFF_OR_DROP[9:0]   = 10'd512;
+    
+};
+regfile rx_pb_wm_rf {
+  rx_pb_wm_r RX_PB_WM[8] += 8;
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Rx Port Buffer addrmap
+
+addrmap mby_rx_pb_map {
+  name = "mby_rx_pb";
+  desc = "Rx Port Buffer Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  rx_pb_port_cfg_r RX_PB_PORT_CFG;
+  rx_pb_wm_rf      RX_PB_WM[18];
+};

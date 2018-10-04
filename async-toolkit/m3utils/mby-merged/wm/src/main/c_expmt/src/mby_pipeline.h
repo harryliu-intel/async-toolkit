@@ -5,6 +5,9 @@
 #ifndef MBY_PIPELINE_H
 #define MBY_PIPELINE_H
 
+#ifdef USE_NEW_CSRS
+#include <mby_top_map.h>
+#endif
 #include "mby_common.h"
 #include "mby_parser.h"
 #include "mby_mapper.h"
@@ -22,95 +25,117 @@
 
 void RxPipeline
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_rx_top_map      * const rx_top_map,
+#else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxMacToParser  * const mac2par,
-          mbyRxStatsToRxOut * const rxs2rxo
+#endif
+    mbyRxMacToParser  const * const mac2par,
+    mbyRxStatsToRxOut       * const rxs2rxo
 );
 
 void TxPipeline
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_tx_top_map      * const tx_top_map,
+#else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyTxInToModifier * const txi2mod,
-          mbyTxStatsToTxMac * const txs2mac
+#endif
+    mbyTxInToModifier const * const txi2mod,
+    mbyTxStatsToTxMac       * const txs2mac
 );
 
 // TODO all the following should be moved to the header files corresponding to
 // the C file where the function is actually implemented.
 void Parser
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_parser_map          * const parser_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyRxMacToParser      * const in,
-          mbyParserToMapper     * const out
+#endif
+    mbyRxMacToParser const      * const in,
+    mbyParserToMapper           * const out
 );
 
 void Mapper
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_mapper_map          * const mapper_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserToMapper     * const in,
-          mbyMapperToClassifier * const out
+#endif
+    mbyParserToMapper const     * const in,
+    mbyMapperToClassifier       * const out
 );
 
 void Classifier
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_cgrp_a_map          * const cgrp_a_map,
+    mby_ppe_cgrp_b_map          * const cgrp_b_map,
+    mby_ppe_entropy_map         * const entropy_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMapperToClassifier * const in,
-          mbyClassifierToHash   * const out
+#endif
+    mbyMapperToClassifier const * const in,
+    mbyClassifierToHash         * const out
 );
 
 void Hash
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyClassifierToHash   * const in,
-          mbyHashToNextHop      * const out
+    mbyClassifierToHash const   * const in,
+    mbyHashToNextHop            * const out
 );
 
 void NextHop
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyHashToNextHop      * const in,
-          mbyNextHopToMaskGen   * const out
+    mbyHashToNextHop const      * const in,
+    mbyNextHopToMaskGen         * const out
 );
 
 void MaskGen
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyNextHopToMaskGen   * const in,
-          mbyMaskGenToTriggers  * const out
+    mbyNextHopToMaskGen const   * const in,
+    mbyMaskGenToTriggers        * const out
 );
 
 void Triggers
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyMaskGenToTriggers  * const in,
-          mbyTriggersToCongMgmt * const out
+    mbyMaskGenToTriggers const  * const in,
+    mbyTriggersToCongMgmt       * const out
 );
 
 void CongMgmt
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyTriggersToCongMgmt * const in,
-          mbyCongMgmtToRxStats  * const out
+    mbyTriggersToCongMgmt const * const in,
+    mbyCongMgmtToRxStats        * const out
 );
 
 void RxStats
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyCongMgmtToRxStats  * const in,
-          mbyRxStatsToRxOut     * const out
+    mbyCongMgmtToRxStats const  * const in,
+    mbyRxStatsToRxOut           * const out
 );
 
 void Modifier
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyTxInToModifier     * const in,
-          mbyModifierToTxStats  * const out
+    mbyTxInToModifier const     * const in,
+    mbyModifierToTxStats        * const out
 );
 
 void TxStats
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyModifierToTxStats  * const in,
-          mbyTxStatsToTxMac     * const out
+    mbyModifierToTxStats const  * const in,
+    mbyTxStatsToTxMac           * const out
 );
 
 #endif

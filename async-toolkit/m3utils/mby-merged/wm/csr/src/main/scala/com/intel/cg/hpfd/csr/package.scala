@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd
 
 /** Provides classes and associated objects for interfacing the configuration and status registers

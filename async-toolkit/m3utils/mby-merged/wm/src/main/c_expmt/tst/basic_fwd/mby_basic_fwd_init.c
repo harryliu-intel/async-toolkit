@@ -20,10 +20,6 @@
 
 void basic_fwd_init(fm_uint32 fwd_port, fm_macaddr dmac)
 {
-    /* Overwrite FWD_PORT_CFG_1 values. */
-    for (fm_int i = 0; i < 24; i++)
-        mbyWriteReg(0, MBY_FWD_PORT_CFG_1(i, 0), 0x31FFFFF);
-
     /* Add L2 entry to match on. */
     fm_uint32 ma_table_regs[MBY_MA_TABLE_WIDTH] = { 0 };
 

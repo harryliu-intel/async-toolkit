@@ -1,11 +1,9 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr.macros
 
 import scala.reflect.ClassTag
 import scala.language.experimental.macros
-import scala.reflect.api.Trees
 import scala.reflect.macros.whitebox.Context
-import shapeless._
-import syntax.singleton._
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.auto._
@@ -91,27 +89,27 @@ object SizedArray {
   }
   implicit def toScalar[T](array: SizedArray[T, W.`1`.T]): T = array.data(0)
 
-  def ofDim[T](size: Int) = macro ofDimImpl[T]
-  def ofDim[T](n1: Int, n2: Int) = macro ofDim2Impl[T]
-  def fill[T](size: Int)(el: => T) = macro fillImpl[T]
-  def fill[T](n1: Int, n2: Int)(el: => T) = macro fill2Impl[T]
-  def apply[T](el0: T, el1: T, rest: T*) = macro applyImpl[T]
+  def ofDim[T](size: Int): SizedArrayLike[T] = macro ofDimImpl[T]
+  def ofDim[T](n1: Int, n2: Int): SizedArrayLike[SizedArrayLike[T]] = macro ofDim2Impl[T]
+  def fill[T](size: Int)(el: => T): SizedArrayLike[T] = macro fillImpl[T]
+  def fill[T](n1: Int, n2: Int)(el: => T): SizedArrayLike[SizedArrayLike[T]] = macro fill2Impl[T]
+  def apply[T](el0: T, el1: T, rest: T*): SizedArrayLike[T] = macro applyImpl[T]
 
-  def ofDimImpl[T: c.WeakTypeTag](c: Context)(size: c.Expr[Int]): c.Expr[Any] = {
+  def ofDimImpl[T: c.WeakTypeTag](c: Context)(size: c.Expr[Int]): c.Expr[SizedArrayLike[T]] = {
     import c.universe._
     val sizeVal = c.eval[Int](size)
     val sizeTypeName = TermName(sizeVal.toString)
     val typeName = implicitly[c.WeakTypeTag[T]]
-    c.Expr[Any](q"new SizedArray[$typeName, W.`$sizeTypeName`.T]($size)")
+    c.Expr[SizedArrayLike[T]](q"new SizedArray[$typeName, W.`$sizeTypeName`.T]($size)")
   }
-  def ofDim2Impl[T: c.WeakTypeTag](c: Context)(n1: c.Expr[Int], n2: c.Expr[Int]): c.Expr[Any] = {
+  def ofDim2Impl[T: c.WeakTypeTag](c: Context)(n1: c.Expr[Int], n2: c.Expr[Int]): c.Expr[SizedArrayLike[SizedArrayLike[T]]] = {
     import c.universe._
     val n1val = c.eval[Int](n1)
     val n2val = c.eval[Int](n2)
     val typeName = implicitly[c.WeakTypeTag[T]]
-    c.Expr[Any](q"SizedArray.fill($n1val)(SizedArray.ofDim[$typeName]($n2val))")
+    c.Expr[SizedArrayLike[SizedArrayLike[T]]](q"SizedArray.fill($n1val)(SizedArray.ofDim[$typeName]($n2val))")
   }
-  def fillImpl[T: c.WeakTypeTag](c: Context)(size: c.Expr[Int])(el: c.Expr[T]): c.Expr[Any] = {
+  def fillImpl[T: c.WeakTypeTag](c: Context)(size: c.Expr[Int])(el: c.Expr[T]): c.Expr[SizedArrayLike[T]] = {
     import c.universe._
     val sizeVal = c.eval[Int](size)
     val sizeTypeName = TermName(sizeVal.toString)
@@ -120,15 +118,15 @@ object SizedArray {
     val decl = q"val result = new SizedArray[$typeName, W.`$sizeTypeName`.T]($size)"
     val body = (0 until sizeVal).map(i => q"result($i) = $el").toList
     val code = decl :: body ::: q"result" :: Nil
-    c.Expr[Any](q"..$code")
+    c.Expr[SizedArrayLike[T]](q"..$code")
   }
-  def fill2Impl[T: c.WeakTypeTag](c: Context)(n1: c.Expr[Int], n2: c.Expr[Int])(el: c.Expr[T]): c.Expr[Any] = {
+  def fill2Impl[T: c.WeakTypeTag](c: Context)(n1: c.Expr[Int], n2: c.Expr[Int])(el: c.Expr[T]): c.Expr[SizedArrayLike[SizedArrayLike[T]]] = {
     import c.universe._
     val n1val = c.eval[Int](n1)
     val n2val = c.eval[Int](n2)
-    c.Expr[Any](q"SizedArray.fill($n1val)(SizedArray.fill($n2val)($el))")
+    c.Expr[SizedArrayLike[SizedArrayLike[T]]](q"SizedArray.fill($n1val)(SizedArray.fill($n2val)($el))")
   }
-  def applyImpl[T: c.WeakTypeTag](c: Context)(el0: c.Expr[T], el1: c.Expr[T], rest: c.Expr[T]*): c.Expr[Any] = {
+  def applyImpl[T: c.WeakTypeTag](c: Context)(el0: c.Expr[T], el1: c.Expr[T], rest: c.Expr[T]*): c.Expr[SizedArrayLike[T]] = {
     import c.universe._
     val list = el0 :: el1 :: rest.toList
     val size = list.length
@@ -138,7 +136,7 @@ object SizedArray {
     val decl = q"val result = new SizedArray[$typeName, W.`$sizeTypeName`.T]($size)"
     val body = list.zipWithIndex.map{ case (el,i) => q"result($i) = $el" }
     val code = decl :: body ::: q"result" :: Nil
-    c.Expr[Any](q"..$code")
+    c.Expr[SizedArrayLike[T]](q"..$code")
   }
 }
 
