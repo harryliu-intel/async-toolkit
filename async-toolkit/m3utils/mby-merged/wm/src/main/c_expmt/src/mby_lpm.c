@@ -212,7 +212,7 @@ static void lpmSearch
     }
 }
 
-static void generateKey
+static void generateLpmKey
 (
     MBY_LPM_IN_REGS,
     mbyClassifierKeys    const * const keys,
@@ -232,7 +232,6 @@ static void generateKey
 
     lpmKey->key_len = 0; // remember this is in bits
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
-
 
 #define PACK_LPM_KEY(key_type, key_size)                                       \
     for(i = 0; i < MBY_FFU_KEY ##key_size ; ++i)                               \
@@ -265,7 +264,7 @@ void mbyMatchLpm
 )
 {
     mbyLpmKey lpmKey;
-    generateKey(MBY_LPM_IN_REGS_P, keys, profile_id, &lpmKey);
+    generateLpmKey(MBY_LPM_IN_REGS_P, keys, profile_id, &lpmKey);
 
     lpmSearch(MBY_LPM_IN_REGS_P, &lpmKey, out);
 
@@ -281,5 +280,7 @@ void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs)
         funcs->_getSubtriePrefixNode = getSubtriePrefixNode;
         funcs->_getSubtrieChildNode = getSubtrieChildNode;
         funcs->_exploreSubtrie = exploreSubtrie;
+        funcs->_lpmSearch = lpmSearch;
+        funcs->_generateLpmKey = generateLpmKey;
 }
 //#endif

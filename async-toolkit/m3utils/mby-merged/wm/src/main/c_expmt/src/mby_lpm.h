@@ -61,6 +61,8 @@ struct mbyLpmStaticFuncs {
     fm_bool (*_getSubtriePrefixNode)(mbyLpmSubtrieStore const * const, fm_byte);
     fm_bool (*_getSubtrieChildNode)(mbyLpmSubtrieStore const * const, fm_byte);
     void    (*_exploreSubtrie)(MBY_LPM_IN_REGS, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
+    void    (*_lpmSearch)(MBY_LPM_IN_REGS, mbyLpmKey const * const, mbyLpmOut * const);
+    void    (*_generateLpmKey)(MBY_LPM_IN_REGS, mbyClassifierKeys const * const, fm_byte, mbyLpmKey * const);
 };
 
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs);

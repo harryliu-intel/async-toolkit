@@ -31,6 +31,7 @@ class LpmTests : public testing::Test {
 		StrictMock<Mock_mbyLpmGetTcamSubtrie> mock_getTcamSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrie> mock_getSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrieStore> mock_getSubtrieStore;
+		StrictMock<Mock_mbyLpmGetKeyMasks> mock_getKeyMasks;
 
 		struct mbyLpmStaticFuncs f;
 
@@ -45,6 +46,49 @@ class LpmTests : public testing::Test {
 			/* Do any other cleanup if necessary. (Semaphores, etc) */
 		}
 };
+
+
+/* =============== Key generation tests ==================== */
+
+#define PROFILE_ID 0x10
+#define KEY8_IDX 25
+#define KEY8_VAL 0xfc
+#define KEY16_IDX 7
+#define KEY16_VAL 0xabcd
+#define KEY32_IDX 13
+#define KEY32_VAL 0x87654321
+
+TEST_F(LpmTests, KeyGenSingle) {
+
+    mbyLpmKeyMasks key_masks = {0};
+	key_masks.addr_key8_mask = 0x1 << KEY8_IDX;
+	key_masks.addr_key16_mask = 0x1 << KEY16_IDX;
+	key_masks.addr_key32_mask = 0x1 << KEY32_IDX;
+
+	mbyClassifierKeysStruct keys = {0};
+	keys.key8[KEY8_IDX]   = KEY8_VAL;
+	keys.key16[KEY16_IDX] = KEY16_VAL;
+	keys.key32[KEY32_IDX] = KEY32_VAL;
+
+	mbyLpmKey lpmKey;
+
+	EXPECT_FUNCTION_CALL(mock_getKeyMasks, (NULL, PROFILE_ID, _))
+		.Times(1)
+		.WillRepeatedly(SetArgPointee<2>(key_masks));
+
+	f._generateLpmKey(NULL, &keys, PROFILE_ID, &lpmKey);
+
+	EXPECT_EQ(lpmKey.key[0], KEY8_VAL);
+	EXPECT_EQ(lpmKey.key[1], KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[2], (KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[3], KEY32_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[4], (KEY32_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[5], (KEY32_VAL >> 16) & 0xff);
+	EXPECT_EQ(lpmKey.key[6], (KEY32_VAL >> 24) & 0xff);
+	EXPECT_EQ(lpmKey.key[7], 0x0);
+	EXPECT_EQ(lpmKey.key_len, 8 + 16 + 32);
+}
+
 
 
 /* =============== LPM TCAM tests ==================== */
