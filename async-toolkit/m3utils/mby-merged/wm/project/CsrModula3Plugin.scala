@@ -1,4 +1,15 @@
-import sbt.Keys.{logLevel, managedSourceDirectories, sLog, sourceGenerators, clean, streams}
+import sbt.Keys.{
+  logLevel,
+  managedSourceDirectories,
+  managedSources,
+  baseDirectory,
+  sLog,
+  sourceGenerators,
+  clean,
+  packageSrc,
+  mappings
+}
+import sbt.Path.{relativeTo, flat}
 import sbt.{AutoPlugin, Def, File, Level, file, taskKey}
 import sbt.io.syntax._
 import sbt.io.FileFilter._
@@ -42,6 +53,13 @@ object CsrModula3Plugin extends AutoPlugin {
     logLevel in sourceGenerators in Compile := Level.Info,
     sourceGenerators in Compile += csrCodeGeneration.taskValue,
     managedSourceDirectories in Compile += file(s"$m3BuildPath/src"),
+    // publish generated sources
+    mappings in (Compile, packageSrc) ++= {
+      val srcs = (managedSources in Compile).value
+      val sdirs = (managedSourceDirectories in Compile).value
+      val base = baseDirectory.value
+      (((srcs --- sdirs --- base) pair (relativeTo(sdirs) | relativeTo(base) | flat)) toSeq)
+    },
     clean := clean.dependsOn(cleanModula3).value
   )
 }
