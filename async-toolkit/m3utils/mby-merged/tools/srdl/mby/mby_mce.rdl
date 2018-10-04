@@ -1,0 +1,25 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+// MCE table [0..32767] [0..256] 257 bits, 256 bits port, 1 bit for virtual port
+// This table will be accessed by software as follows
+// Command bit [0] =  '0' = read, '1' = write 
+// Go bit [0] =  '1' means hardware execute the command, single tone bit, generates a pulse to hardware
+// Address [15:0] , pointing to entry
+// Done bit -- hardware writes it, software reads it.
+// Each new command, hardware resets the Done bit. After executing the command, hw sets the done bit
+// WrData Register[0..8] = Total 258 bits bits 257 = parity bit, 256:0 = Data bits
+// RdData Register[0..8] = Total 258 bits bits 257 = parity bit, 256:0 = Data bits
+
+// Flow will be as below. 
+// SW wants to update the entry #135 with 257 bits value, parity bit = 258, 
+// SW writes in data reg [0..8]
+// SW write in Address[15:0] = 0x
+// SW writes Command = '1'
+
+
+
+
+ 
+
+
