@@ -18,14 +18,14 @@ class PacketFlagsSpec extends FlatSpec with Matchers {
   }
 
   "Packet Flags" should " fit proper flags with BitSet constructor" in {
-    PacketFlags(BitSet(4,5,8)).toLong.toInt shouldEqual Binary("100110000")
+    PacketFlags(BitSet(4,5,8)).toInt shouldEqual Binary("100110000")
   }
 
   "Packet Flags" should " clear flags" in {
-    PacketFlags(BitSet(4,5,8)).clear(8).toLong.toInt shouldEqual Binary("00110000")
+    PacketFlags(BitSet(4,5,8)).clear(8).toInt shouldEqual Binary("00110000")
   }
 
   "Packet Flags" should " assign flags" in {
-    PacketFlags(BitSet(4,5,8)).assign(8, false).assign(1, true).toLong.toInt shouldEqual Binary("00110010")
+    PacketFlags(BitSet(4,5,8)).assign(8, false).assign(1, true).toInt shouldEqual Binary("00110010")
   }
 }

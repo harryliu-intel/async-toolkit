@@ -47,16 +47,16 @@ object Parser {
       PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException]
       )
 
-    val (paKeysVal, updatedCsr) = extractKeys(csr, packetHeader, protoOffsets)
+    val (paKeysVal, csrExtractedKeys) = extractKeys(csr, packetHeader, protoOffsets)
 
-    val paPacketTypeVal = packetType(updatedCsr, packetFlags)
+    val paPacketTypeVal = packetType(csrExtractedKeys, packetFlags)
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
 
     val (exceptionStage, depthExceeded, headerTruncated, parsingDone) = scanOutputExceptions(parserExceptionOpt)
 
     ParserOutput(
-      updatedCsr                = updatedCsr,
+      updatedCsr                = csrExtractedKeys,
       rxPort                    = rxPort,
       pktMeta                   = 0,
       rxFlags                   = 0,

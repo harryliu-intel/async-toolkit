@@ -17,6 +17,8 @@ class PacketFlags(flags: BitSet) {
 
   def toLong: Long = flags.foldLeft(0L)((acc, bit) => acc | (1 << bit))
 
+  def toInt: Int = toLong.toInt
+
 }
 
 object PacketFlags {
