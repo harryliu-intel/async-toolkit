@@ -29,8 +29,8 @@
 //                                                              ---------------
 //          module  top                                         top.sv
 //              msh_dut_if dut_if                               msh_dut_if.sv
-//              msh    dut                                      $(CLONE_ROOT)/src/rtl/template/verilog/msh.sv
-//                  ...                                         (see msh.sv)
+//              msh_node    dut                                 $(CLONE_ROOT)/src/msh/rtl/mby_msh_node.sv
+//                  ...                                         (see mby_msh.sv)
 //              testcase    test                                tests/<testcase>.sv
 //                  env     env                                 env.sv
 //                      system_driver   sys_drvr                system_driver.sv
@@ -52,7 +52,9 @@
 
 // A module is a top-level-module if is defined but never instantiated
 
-module top ();
+module top 
+import mby_msh_pkg::*;
+();
 
     logic clk = 0;                              // declare clock
 
@@ -68,17 +70,88 @@ module top ();
         .mclk(clk)                               // pass clock into this interface to make it part of the interface
     );
 
+//**********************************************************************************************************************
+// MESH NODE INTERFACE INSTANTIATIONS
+//**********************************************************************************************************************
+
+// north boundary interfaces
+
+mby_msh_col_wr_if north_nb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if north_nb_rd_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_wr_if north_sb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if north_sb_rd_ifs[NUM_MSH_COLS-1:0]();
+
+// south boundary interfaces
+
+mby_msh_col_wr_if south_nb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if south_nb_rd_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_wr_if south_sb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if south_sb_rd_ifs[NUM_MSH_COLS-1:0]();
+
+// east boundary interfaces
+
+mby_msh_row_wr_if east_eb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if east_eb_rd_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_wr_if east_wb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if east_wb_rd_ifs[NUM_MSH_ROWS-1:0]();
+
+// west boundary interfaces
+
+mby_msh_row_wr_if west_eb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if west_eb_rd_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_wr_if west_wb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if west_wb_rd_ifs[NUM_MSH_ROWS-1:0]();
+
+logic reset;
+
     // start firing reset immediately to protect reset guarded assertions
     initial dut_if.i_reset = 1'b1;
+    initial reset = 1'b1;
 
     // instantiate DUT (Design Under Test)
-    msh dut (
+//    mby_msh dut (
+//
+//        // DUT inputs
+//        .mclk       (dut_if.mclk          ),      // The interface instantiated above is connected to the DUT 
+//        .i_reset    (dut_if.i_reset       )      // Note the naming convention i_<???> for inputs.
+//       
+//    );
 
-        // DUT inputs
-        .mclk       (dut_if.mclk          ),      // The interface instantiated above is connected to the DUT 
-        .i_reset    (dut_if.i_reset       )      // Note the naming convention i_<???> for inputs.
-       
-    );
+mby_msh msh(
+
+    
+    .mclk(clk),                                // mesh clock                                 
+    .i_reset(reset),                            // reset
+
+    // north boundary interfaces
+
+    .o_north_nb_wr_ifs    (north_nb_wr_ifs),
+    .o_north_nb_rd_ifs    (north_nb_rd_ifs),
+    .i_north_sb_wr_ifs    (north_sb_wr_ifs),
+    .i_north_sb_rd_ifs    (north_sb_rd_ifs),
+
+    // south boundary interfaces
+
+    .i_south_nb_wr_ifs    (south_nb_wr_ifs),
+    .i_south_nb_rd_ifs    (south_nb_rd_ifs),
+    .o_south_sb_wr_ifs    (south_sb_wr_ifs),
+    .o_south_sb_rd_ifs    (south_sb_rd_ifs),
+
+    // east boundary interfaces
+
+    .o_east_eb_wr_ifs     (east_eb_wr_ifs),
+    .o_east_eb_rd_ifs     (east_eb_rd_ifs),
+    .i_east_wb_wr_ifs     (east_wb_wr_ifs),
+    .i_east_wb_rd_ifs     (east_wb_rd_ifs),
+
+    // west boundary interfaces
+
+    .i_west_eb_wr_ifs     (west_eb_wr_ifs),
+    .i_west_eb_rd_ifs     (west_eb_rd_ifs),
+    .o_west_wb_wr_ifs     (west_wb_wr_ifs),
+    .o_west_wb_rd_ifs     (west_wb_rd_ifs)
+
+);
 
     // instantiate testcase
     testcase test(

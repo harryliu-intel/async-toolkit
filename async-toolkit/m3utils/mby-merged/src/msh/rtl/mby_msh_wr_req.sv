@@ -34,14 +34,13 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "msh_defines.vh";                                     // include file with `defines 
+`include "mby_msh_defines.vh"                                  // include file with `defines 
 
-module msh_dp 
-import msh_pkg::*;                                             // import declarations from msh_pkg.sv
+module mby_msh_wr_req 
+import mby_msh_pkg::*;                                         // import declarations from mby_msh_pkg.sv
 (
 
-
-    input               mclk                                    // mesh clock                                 
+    input               mclk                                   // mesh clock                                 
 
 );
 
@@ -55,48 +54,10 @@ import msh_pkg::*;                                             // import declara
 
 /// ... stage signals
 
-//**********************************************************************************************************************
-// MESH SUB-BLOCK INSTANTIATIONS
-//**********************************************************************************************************************
-
-// mesh write datapath
-msh_wr_dp msh_wr_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-// mesh read datapath
-msh_rd_dp msh_rd_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-// mesh memory datapath
-msh_mem_dp msh_mem_dp (
-    
-    .mclk   (mclk)
-
-);
-    
-
-generate
-for (genvar gv_b=0; gv_b < NUM_MSH_NODE_MEM_BANKS; gv_b++) begin : mem_banks 
-
 //-----------------------------------------------------------------------------
-// => ..., ... stages :  <short logic description>
+// ..., ... stages :  <short logic description>
 //-----------------------------------------------------------------------------
-// separate modules to support physical grouping
-
-msh_mem msh_mem (
-    
-    .mclk   (mclk)
-
-);
-    
-end : mem_banks
-endgenerate
+// separate module to support physical grouping
 
 
 //**********************************************************************************************************************
@@ -108,4 +69,4 @@ endgenerate
 //-----------------------------------------------------------------------------
 
 
-endmodule // msh_dp
+endmodule // mby_msh_wr_req

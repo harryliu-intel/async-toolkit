@@ -34,13 +34,14 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "msh_defines.vh";                                     // include file with `defines 
+`include "mby_msh_defines.vh"                                 // include file with `defines 
 
-module msh_wr_req 
-import msh_pkg::*;                                             // import declarations from msh_pkg.sv
+module mby_msh_mem 
+import mby_msh_pkg::*;                                        // import declarations from mby_msh_pkg.sv
 (
 
-    input               mclk                                   // mesh clock                                 
+
+    input               mclk                                    // mesh clock                                 
 
 );
 
@@ -54,11 +55,6 @@ import msh_pkg::*;                                             // import declara
 
 /// ... stage signals
 
-//-----------------------------------------------------------------------------
-// ..., ... stages :  <short logic description>
-//-----------------------------------------------------------------------------
-// separate module to support physical grouping
-
 
 //**********************************************************************************************************************
 // OUTPUT SECTION 
@@ -69,4 +65,4 @@ import msh_pkg::*;                                             // import declara
 //-----------------------------------------------------------------------------
 
 
-endmodule // msh_wr_req
+endmodule // mby_msh_mem

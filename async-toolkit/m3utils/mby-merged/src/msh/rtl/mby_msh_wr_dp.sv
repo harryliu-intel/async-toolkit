@@ -34,10 +34,10 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "msh_defines.vh";                                     // include file with `defines 
+`include "mby_msh_defines.vh"                                 // include file with `defines 
 
-module msh_mem 
-import msh_pkg::*;                                             // import declarations from msh_pkg.sv
+module mby_msh_wr_dp
+import mby_msh_pkg::*;                                        // import declarations from mby_msh_pkg.sv
 (
 
 
@@ -65,4 +65,4 @@ import msh_pkg::*;                                             // import declara
 //-----------------------------------------------------------------------------
 
 
-endmodule // msh_mem
+endmodule // mby_msh_wr_dp

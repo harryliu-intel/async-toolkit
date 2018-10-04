@@ -1,6 +1,6 @@
-// mesh RTL  (msh_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
+// mesh RTL  (mby_msh_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
 +incdir+$LOGICROOT/rtl
-$LOGICROOT/rtl/msh_pkg.sv
+$LOGICROOT/rtl/mby_msh_pkg.sv
 -y $LOGICROOT/rtl
 
 //// template assertions and coverage

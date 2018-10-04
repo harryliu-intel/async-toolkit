@@ -23,13 +23,13 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Jim McCormick <jim.mccormick@intel.com>
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : This is the top level of the mesh.  It defines an interconnected 2-dimensional array of mesh nodes. 
+// -- Description  : THIS FILE NOT CURRENTLY USED.  IT MIGHT BECOME A MSH WRAPPER.
 //
 //      Node array indexing 
 //      -------------------
 //
-//      Nodes (N) are instantiated as a row x column array (N[row][col]) with the northmost row being row 0 and the westmost 
-//      column being column 0:
+//      Nodes (N) are instantiated as a row x column array (N[row][col]) with the northmost row being row 0 and the 
+//      westmost column being column 0:
 //  
 //                                       (north)
 //                 |---------|---------|---------|---------|---------|
@@ -65,52 +65,14 @@
 //  crdt_rtn    = credit return
 //
 //
-// -- Pipeline Stages: 
-//
-//      ... TBD ... 
-//                                                                                  ---------------
-// -- Instantiation Hierarchy:                                                      definition file
-//                                                                                  ---------------
-//          module  msh                                                             msh.sv
-//
-//              `include "msh_defines.vh"                                           msh_defines.vh
-//              import msh_pkg                                                      msh_pkg.sv
-//
-//              for (genvar gv_row=0; gv_row < NUM_MSH_ROWS; gv_row++) begin : mesh_rows
-//                  for (genvar gv_col=0; gv_col < NUM_MSH_colS; gv_col++) begin : mesh_cols
-//
-//                      msh_node    msh_node                                        msh_node.sv
-//
-//                          msh_ctrl    msh_ctrl                                    msh_ctrl.sv
-//                              msh_wr_req  msh_wr_req                              msh_wr_req.sv
-//                              msh_rd_req  msh_rd_req                              msh_rd_req.sv
-//
-//                          for (genvar gv_c=0; gv_c < NUM_MSH_DP_CHUNKS; gv_c++) begin : dp_chunks 
-//
-//                              msh_dp      msh_dp                                  msh_dp.sv
-//                                  msh_wr_dp   msh_wr_dp                           msh_wr_dp.sv
-//                                  msh_rd_dp   msh_rd_dp                           msh_rd_dp.sv
-//                                  msh_mem_dp  msh_mem_dp                          msh_mem_dp.sv
-//
-//                                  for (genvar gv_b=0; gv_b < NUM_MSH_NODE_MEM_BANKS; gv_b++) begin : mem_banks
-//
-//                                      msh_mem     msh_mem                         msh_mem_dp.sv
-//
-//                                  end : mem_banks
-//                          end : dp_chunks
-//
-//                  end : msh_cols
-//              end : msh_rows
-//
-// 
 // ---------------------------------------------------------------------------------------------------------------------
 
 // note that the dashed lines above represents recommended viewing window width
 
-`include "msh_defines.vh";                                     // include file with `defines 
+`include "mby_msh_defines.vh"                                  // include file with `defines 
 
-module msh 
-import msh_pkg::*;                                             // import declarations from msh_pkg.sv
+module mby_msh_top 
+import mby_msh_pkg::*;                                         // import declarations from mby_msh_pkg.sv
 (
 
     // inputs
@@ -143,20 +105,20 @@ import msh_pkg::*;                                             // import declara
     input  msh_dbus_t       i_eb_rd_dbus                [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
     input  msh_dbus_t       i_wb_rd_dbus                [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
 
-    input  logic             i_crdt_rtn_for_nb_wr_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    input  logic             i_crdt_rtn_for_sb_wr_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    input  msh_row_crdts_t   i_crdt_rtns_for_eb_wr_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
-    input  msh_row_crdts_t   i_crdt_rtns_for_wb_wr_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_nb_wr_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_sb_wr_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    input  msh_row_crdts_t  i_crdt_rtns_for_eb_wr_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    input  msh_row_crdts_t  i_crdt_rtns_for_wb_wr_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
 
-    input  logic             i_crdt_rtn_for_nb_rd_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    input  logic             i_crdt_rtn_for_sb_rd_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    input  msh_row_crdts_t   i_crdt_rtns_for_eb_rd_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
-    input  msh_row_crdts_t   i_crdt_rtns_for_wb_rd_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_nb_rd_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_sb_rd_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    input  msh_row_crdts_t  i_crdt_rtns_for_eb_rd_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    input  msh_row_crdts_t  i_crdt_rtns_for_wb_rd_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
 
-    input  logic             i_crdt_rtn_for_nb_rd_rsp                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    input  logic             i_crdt_rtn_for_sb_rd_rsp                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    input  logic             i_crdt_rtn_for_eb_rd_rsp   [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
-    input  logic             i_crdt_rtn_for_wb_rd_rsp   [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_nb_rd_rsp                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_sb_rd_rsp                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_eb_rd_rsp    [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    input  logic            i_crdt_rtn_for_wb_rd_rsp    [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
 
 
     // outputs
@@ -186,20 +148,20 @@ import msh_pkg::*;                                             // import declara
     output msh_dbus_t       o_eb_rd_dbus                [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
     output msh_dbus_t       o_wb_rd_dbus                [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
 
-    output logic             o_crdt_rtn_for_nb_wr_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    output logic             o_crdt_rtn_for_sb_wr_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    output msh_row_crdts_t   o_crdt_rtns_for_eb_wr_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
-    output msh_row_crdts_t   o_crdt_rtns_for_wb_wr_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    output logic            o_crdt_rtn_for_nb_wr_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    output logic            o_crdt_rtn_for_sb_wr_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    output msh_row_crdts_t  o_crdt_rtns_for_eb_wr_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    output msh_row_crdts_t  o_crdt_rtns_for_wb_wr_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
 
-    output logic             o_crdt_rtn_for_nb_rd_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    output logic             o_crdt_rtn_for_sb_rd_req                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    output msh_row_crdts_t   o_crdt_rtns_for_eb_rd_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
-    output msh_row_crdts_t   o_crdt_rtns_for_wb_rd_reqs [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    output logic            o_crdt_rtn_for_nb_rd_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    output logic            o_crdt_rtn_for_sb_rd_req                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    output msh_row_crdts_t  o_crdt_rtns_for_eb_rd_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    output msh_row_crdts_t  o_crdt_rtns_for_wb_rd_reqs  [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
 
-    output logic             o_crdt_rtn_for_nb_rd_rsp                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    output logic             o_crdt_rtn_for_sb_rd_rsp                     [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
-    output logic             o_crdt_rtn_for_eb_rd_rsp   [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
-    output logic             o_crdt_rtn_for_wb_rd_rsp   [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0] 
+    output logic            o_crdt_rtn_for_nb_rd_rsp                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    output logic            o_crdt_rtn_for_sb_rd_rsp                      [NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0],
+    output logic            o_crdt_rtn_for_eb_rd_rsp    [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0],
+    output logic            o_crdt_rtn_for_wb_rd_rsp    [NUM_MSH_ROWS-1:0]                  [NUM_MSH_PLANES-1:0] 
 
 );
 
@@ -297,116 +259,83 @@ logic             crdt_rtn_for_eb_rd_rsp_out    [NUM_MSH_ROWS-1:0][NUM_MSH_COLS-
 logic             crdt_rtn_for_wb_rd_rsp_out    [NUM_MSH_ROWS-1:0][NUM_MSH_COLS-1:0][NUM_MSH_PLANES-1:0];
 
 
+//**********************************************************************************************************************
+// MESH NODE INTERFACE INSTANTIATIONS
+//**********************************************************************************************************************
+
+// north boundary interfaces
+
+mby_msh_col_wr_if north_nb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if north_nb_rd_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_wr_if north_sb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if north_sb_rd_ifs[NUM_MSH_COLS-1:0]();
+
+// south boundary interfaces
+
+mby_msh_col_wr_if south_nb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if south_nb_rd_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_wr_if south_sb_wr_ifs[NUM_MSH_COLS-1:0]();
+mby_msh_col_rd_if south_sb_rd_ifs[NUM_MSH_COLS-1:0]();
+
+// east boundary interfaces
+
+mby_msh_row_wr_if east_eb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if east_eb_rd_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_wr_if east_wb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if east_wb_rd_ifs[NUM_MSH_ROWS-1:0]();
+
+// west boundary interfaces
+
+mby_msh_row_wr_if west_eb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if west_eb_rd_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_wr_if west_wb_wr_ifs[NUM_MSH_ROWS-1:0]();
+mby_msh_row_rd_if west_wb_rd_ifs[NUM_MSH_ROWS-1:0]();
 
 //**********************************************************************************************************************
-// MESH NODE INSTANTIATIONS 
+// MESH INSTANTIATION
 //**********************************************************************************************************************
 
-//-----------------------------------------------------------------------------
-// => ..., ... stages :  <short logic description>
-//-----------------------------------------------------------------------------
+mby_msh msh(
 
-generate
-for (genvar gv_row=0; gv_row < NUM_MSH_ROWS; gv_row++) begin : mesh_rows
-    for (genvar gv_col=0; gv_col < NUM_MSH_COLS; gv_col++) begin : mesh_cols
+    
+    .mclk(mclk),                                // mesh clock                                 
+    .i_reset(i_reset),                          // reset
 
-msh_node msh_node (
+    // north boundary interfaces
 
-    .mclk                           (mclk                                           ),
-    .i_reset                        (                                               ),
+    .o_north_nb_wr_ifs    (o_north_nb_wr_ifs),
+    .o_north_nb_rd_ifs    (o_north_nb_rd_ifs),
+    .i_north_sb_wr_ifs    (i_north_sb_wr_ifs),
+    .i_north_sb_rd_ifs    (i_north_sb_rd_ifs),
 
-    .i_nb_wr_req                    (nb_wr_req_in                   [gv_row][gv_col]),
-    .i_sb_wr_req                    (sb_wr_req_in                   [gv_row][gv_col]),
-    .i_eb_wr_req                    (eb_wr_req_in                   [gv_row][gv_col]),
-    .i_wb_wr_req                    (wb_wr_req_in                   [gv_row][gv_col]),
+    // south boundary interfaces
 
-    .i_nb_wr_dbus                   (nb_wr_dbus_in                  [gv_row][gv_col]),
-    .i_sb_wr_dbus                   (sb_wr_dbus_in                  [gv_row][gv_col]),
-    .i_eb_wr_dbus                   (eb_wr_dbus_in                  [gv_row][gv_col]),
-    .i_wb_wr_dbus                   (wb_wr_dbus_in                  [gv_row][gv_col]),
+    .i_south_nb_wr_ifs    (i_south_nb_wr_ifs),
+    .i_south_nb_rd_ifs    (i_south_nb_rd_ifs),
+    .o_south_sb_wr_ifs    (o_south_sb_wr_ifs),
+    .o_south_sb_rd_ifs    (o_south_sb_rd_ifs),
 
-    .i_nb_rd_req                    (nb_rd_req_in                   [gv_row][gv_col]),
-    .i_sb_rd_req                    (sb_rd_req_in                   [gv_row][gv_col]),
-    .i_eb_rd_req                    (eb_rd_req_in                   [gv_row][gv_col]),
-    .i_wb_rd_req                    (wb_rd_req_in                   [gv_row][gv_col]),
+    // east boundary interfaces
 
-    .i_nb_rd_rsp                    (nb_rd_rsp_in                   [gv_row][gv_col]),
-    .i_sb_rd_rsp                    (sb_rd_rsp_in                   [gv_row][gv_col]),
-    .i_eb_rd_rsp                    (eb_rd_rsp_in                   [gv_row][gv_col]),
-    .i_wb_rd_rsp                    (wb_rd_rsp_in                   [gv_row][gv_col]),
+    .o_east_eb_wr_ifs     (o_east_eb_wr_ifs),
+    .o_east_eb_rd_ifs     (o_east_eb_rd_ifs),
+    .i_east_wb_wr_ifs     (i_east_wb_wr_ifs),
+    .i_east_wb_rd_ifs     (i_east_wb_rd_ifs),
 
-    .i_nb_rd_dbus                   (nb_rd_dbus_in                  [gv_row][gv_col]),
-    .i_sb_rd_dbus                   (sb_rd_dbus_in                  [gv_row][gv_col]),
-    .i_eb_rd_dbus                   (eb_rd_dbus_in                  [gv_row][gv_col]),
-    .i_wb_rd_dbus                   (wb_rd_dbus_in                  [gv_row][gv_col]),
+    // west boundary interfaces
 
-    .i_crdt_rtn_for_nb_wr_req       (crdt_rtn_for_nb_wr_req_in      [gv_row][gv_col]),
-    .i_crdt_rtn_for_sb_wr_req       (crdt_rtn_for_sb_wr_req_in      [gv_row][gv_col]),
-    .i_crdt_rtns_for_eb_wr_reqs     (crdt_rtns_for_eb_wr_reqs_in    [gv_row][gv_col]),
-    .i_crdt_rtns_for_wb_wr_reqs     (crdt_rtns_for_wb_wr_reqs_in    [gv_row][gv_col]),
-
-    .i_crdt_rtn_for_nb_rd_req       (crdt_rtn_for_nb_rd_req_in      [gv_row][gv_col]),
-    .i_crdt_rtn_for_sb_rd_req       (crdt_rtn_for_sb_rd_req_in      [gv_row][gv_col]),
-    .i_crdt_rtns_for_eb_rd_reqs     (crdt_rtns_for_eb_rd_reqs_in    [gv_row][gv_col]),
-    .i_crdt_rtns_for_wb_rd_reqs     (crdt_rtns_for_wb_rd_reqs_in    [gv_row][gv_col]),
-
-    .i_crdt_rtn_for_nb_rd_rsp       (crdt_rtn_for_nb_rd_rsp_in      [gv_row][gv_col]),
-    .i_crdt_rtn_for_sb_rd_rsp       (crdt_rtn_for_sb_rd_rsp_in      [gv_row][gv_col]),
-    .i_crdt_rtn_for_eb_rd_rsp       (crdt_rtn_for_eb_rd_rsp_in      [gv_row][gv_col]),
-    .i_crdt_rtn_for_wb_rd_rsp       (crdt_rtn_for_wb_rd_rsp_in      [gv_row][gv_col]),
-
-    // outputs
-   
-    .o_nb_wr_req                    (nb_wr_req_out                  [gv_row][gv_col]),
-    .o_sb_wr_req                    (sb_wr_req_out                  [gv_row][gv_col]),
-    .o_eb_wr_req                    (eb_wr_req_out                  [gv_row][gv_col]),
-    .o_wb_wr_req                    (wb_wr_req_out                  [gv_row][gv_col]),
-
-    .o_nb_wr_dbus                   (nb_wr_dbus_out                 [gv_row][gv_col]),
-    .o_sb_wr_dbus                   (sb_wr_dbus_out                 [gv_row][gv_col]),
-    .o_eb_wr_dbus                   (eb_wr_dbus_out                 [gv_row][gv_col]),
-    .o_wb_wr_dbus                   (wb_wr_dbus_out                 [gv_row][gv_col]),
-
-    .o_nb_rd_req                    (nb_rd_req_out                  [gv_row][gv_col]),
-    .o_sb_rd_req                    (sb_rd_req_out                  [gv_row][gv_col]),
-    .o_eb_rd_req                    (eb_rd_req_out                  [gv_row][gv_col]),
-    .o_wb_rd_req                    (wb_rd_req_out                  [gv_row][gv_col]),
-
-    .o_nb_rd_rsp                    (nb_rd_rsp_out                  [gv_row][gv_col]),
-    .o_sb_rd_rsp                    (sb_rd_rsp_out                  [gv_row][gv_col]),
-    .o_eb_rd_rsp                    (eb_rd_rsp_out                  [gv_row][gv_col]),
-    .o_wb_rd_rsp                    (wb_rd_rsp_out                  [gv_row][gv_col]),
-
-    .o_nb_rd_dbus                   (nb_rd_dbus_out                 [gv_row][gv_col]),
-    .o_sb_rd_dbus                   (sb_rd_dbus_out                 [gv_row][gv_col]),
-    .o_eb_rd_dbus                   (eb_rd_dbus_out                 [gv_row][gv_col]),
-    .o_wb_rd_dbus                   (wb_rd_dbus_out                 [gv_row][gv_col]),
-
-    .o_crdt_rtn_for_nb_wr_req       (crdt_rtn_for_nb_wr_req_out     [gv_row][gv_col]),
-    .o_crdt_rtn_for_sb_wr_req       (crdt_rtn_for_sb_wr_req_out     [gv_row][gv_col]),
-    .o_crdt_rtns_for_eb_wr_reqs     (crdt_rtns_for_eb_wr_reqs_out   [gv_row][gv_col]),
-    .o_crdt_rtns_for_wb_wr_reqs     (crdt_rtns_for_wb_wr_reqs_out   [gv_row][gv_col]),
-                                                                                          
-    .o_crdt_rtn_for_nb_rd_req       (crdt_rtn_for_nb_rd_req_out     [gv_row][gv_col]),
-    .o_crdt_rtn_for_sb_rd_req       (crdt_rtn_for_sb_rd_req_out     [gv_row][gv_col]),
-    .o_crdt_rtns_for_eb_rd_reqs     (crdt_rtns_for_eb_rd_reqs_out   [gv_row][gv_col]),
-    .o_crdt_rtns_for_wb_rd_reqs     (crdt_rtns_for_wb_rd_reqs_out   [gv_row][gv_col]),
-                                                                                          
-    .o_crdt_rtn_for_nb_rd_rsp       (crdt_rtn_for_nb_rd_rsp_out     [gv_row][gv_col]),
-    .o_crdt_rtn_for_sb_rd_rsp       (crdt_rtn_for_sb_rd_rsp_out     [gv_row][gv_col]),
-    .o_crdt_rtn_for_eb_rd_rsp       (crdt_rtn_for_eb_rd_rsp_out     [gv_row][gv_col]),
-    .o_crdt_rtn_for_wb_rd_rsp       (crdt_rtn_for_wb_rd_rsp_out     [gv_row][gv_col])
+    .west_eb_wr_ifs     (west_eb_wr_ifs),
+    .west_eb_rd_ifs     (west_eb_rd_ifs),
+    .west_wb_wr_ifs     (west_wb_wr_ifs),
+    .west_wb_rd_ifs     (west_wb_rd_ifs)
 
 );
-    
-    end : mesh_cols
-end : mesh_rows
-endgenerate
 
 
 //**********************************************************************************************************************
 // MESH NODE CONNECTIONS
 //**********************************************************************************************************************
+
 
 always_comb begin 
     for (int row=0; row < NUM_MSH_ROWS; row++)  begin
@@ -468,6 +397,7 @@ always_comb begin
                     crdt_rtns_for_eb_rd_reqs_in [row][col][plane] = i_crdt_rtns_for_eb_rd_reqs  [row]     [plane];
                     crdt_rtn_for_eb_rd_rsp_in   [row][col][plane] = i_crdt_rtn_for_eb_rd_rsp    [row]     [plane];
                 end else begin
+
                     eb_wr_req_in                [row][col][plane] = eb_wr_req_out               [row][col-1][plane];
                     eb_wr_dbus_in               [row][col][plane] = eb_wr_dbus_out              [row][col-1][plane];
                     eb_rd_req_in                [row][col][plane] = eb_rd_req_out               [row][col-1][plane];
@@ -579,17 +509,4 @@ always_comb begin
     end // for row 
 end // always_comb            
 
-//msh_arb_weighted # (
-//    .NUM_BIDS(4)
-//) arb (
-//    .mclk           (mclk),
-//    .i_reset        (i_reset),
-//    .i_bids         (4'b1111),
-//    .i_weights      ({7'd8, 7'd7, 7'd3, 7'd2}),
-//    .i_fifo_depths  ({5'd0, 5'd0, 5'd0, 5'd0}),
-//
-//    .o_winners      ()
-//);
-
-
-endmodule // mesh
+endmodule // mby_mesh_top

@@ -34,7 +34,7 @@
 // note that the dashed lines above represents recommended viewing window width
 
 
-`include "msh_defines.vh";                                      // include file with `defines 
+`include "mby_msh_defines.vh"                                   // include file with `defines 
 
 
 typedef logic [6:0]  msh_arb_weight_t;
@@ -42,8 +42,8 @@ typedef logic [6:0]  msh_arb_weight_multiple_t;
 typedef logic [6:0]  msh_arb_weight_remainder_t;
 typedef logic [4:0]  msh_fifo_depth_t;
 
-module msh_arb_weighted 
-import msh_pkg::*;                                              // import declarations from msh_pkg.sv
+module mby_msh_arb_weighted 
+import mby_msh_pkg::*;                                          // import declarations from mby_msh_pkg.sv
 # (
     parameter           NUM_BIDS = 2                            // the number of bids
 )
@@ -276,4 +276,4 @@ always_comb
 
 assign o_winners = winners;
 
-endmodule // msh_arb_weighted
+endmodule // mby_msh_arb_weighted

@@ -26,7 +26,7 @@
 // --
 // ---------------------------------------------------------------------------------------------------------------------
 
-package msh_pkg;
+package mby_msh_pkg;
 
 
 //-----------------------------------------------------------------------------
@@ -39,12 +39,13 @@ localparam NUM_MSH_PLANES       = 2;        // number of mesh planes
 localparam MSH_DATA_WIDTH       = 64 * 8;   // width of mesh data
 localparam MSH_ECC_WIDTH        = 8 * 8;    // width of ECC associated with mesh data buses
 localparam MSH_ID_WIDTH         = 16;       // width of IDs sent with rd reqs/rsps
-localparam NUM_MSH_DP_CHUNKS    = 4;        // the data path is broken bitwise into this number of chunks 
+localparam NUM_MSH_DP_CHUNKS    = 2;        // the data path is broken bitwise into this number of chunks 
+localparam MSH_DBUS_WIDTH       = MSH_DATA_WIDTH + MSH_ECC_WIDTH;
+localparam MSH_DP_CHUNK_WIDTH   = MSH_DBUS_WIDTH / NUM_MSH_DP_CHUNKS; // width of data path chunk
 
 
 localparam MSH_NODE_MEM_BYTES        = 1024 * 1024; // each mesh node contains 1MB of memory 
 localparam NUM_MSH_NODE_MEM_BANKS    = 4;           // the memory is broken into this number of banks 
-
 
 //-----------------------------------------------------------------------------
 // derived parameters
@@ -63,6 +64,7 @@ localparam MSH_NODE_BANK_IDX_WIDTH     = MSH_NODE_ADDR_WIDTH - LOG_NUM_MSH_NODE_
 
 typedef logic   [MSH_DATA_WIDTH-1:0]        msh_data_t;
 typedef logic   [MSH_ECC_WIDTH-1:0]         msh_ecc_t;
+typedef logic   [MSH_DP_CHUNK_WIDTH-1:0]    msh_dp_chunk_t;
 typedef logic   [MSH_ID_WIDTH-1:0]          msh_rd_id_t;
 
 typedef logic   [LOG_NUM_MSH_ROWS-1:0]      msh_row_t;
@@ -158,4 +160,4 @@ typedef struct packed {
 // functions
 //-----------------------------------------------------------------------------
 
-endpackage : msh_pkg
+endpackage : mby_msh_pkg

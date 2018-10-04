@@ -27,8 +27,8 @@
 // --       -     apply to the entire compilation scope.  This file is included by other files.
 // ---------------------------------------------------------------------------------------------------------------------
 
-`ifndef MSH_DEFINES
-`define MSH_DEFINES
+`ifndef MBY_MSH_DEFINES
+`define MBY_MSH_DEFINES
 
 
-`endif // MSH_DEFINES
+`endif // MBY_MSH_DEFINES
