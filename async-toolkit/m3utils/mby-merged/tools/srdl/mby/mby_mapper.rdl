@@ -337,20 +337,20 @@ reg map_domain_action0_r {
   field {
     AccessType = "RW";
     desc = "
-     A network addressing domain or operator ID. Used when update_domains=1.
+     A network addressing domain or NAD . Used when update_domains=1.
 
            ";
     ValRandomize = true;
-  } OPERATOR_ID[23:20] = 4'h0;
+  } NAD[23:20] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
     Used only for packets sent to the CPP. When set, use the domains, 
-    priority_profile, and operator_id from the action,
-    and write the domain and operator_id fields into the metadata that will be
+    priority_profile, and NAD the action,
+    and write the domain and NAD fields into the metadata that will be
     sent to the CPP.
 
-    If update_domains=0, then use the l2_domain, l3_domain, and operator_id fields
+    If update_domains=0, then use the l2_domain, l3_domain, and NAD fields
     received in the packet's ONPI metadata. Do not overwrite those fields. And use
     the priority_profile retrieved from MAP_DOMAIN_PROFILE instead.
 
