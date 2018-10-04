@@ -37,7 +37,7 @@ program egress_test_lib;
 `include "uvm_macros.svh"
 `include "slu_macros.svh"
 `include "egress_base_test.svh"
-`include "egress_alive_test.svh"
+`include "egress_rand_test.svh"
 
   // UVM Start test
   initial begin

@@ -37,7 +37,7 @@ program ingress_test_lib;
 `include "uvm_macros.svh"
 `include "slu_macros.svh"
 `include "ingress_base_test.svh"
-`include "ingress_alive_test.svh"
+`include "ingress_rand_test.svh"
 
   // UVM Start test
   initial begin

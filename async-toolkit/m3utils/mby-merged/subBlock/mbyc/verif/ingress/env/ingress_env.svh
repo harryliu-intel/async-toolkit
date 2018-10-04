@@ -138,11 +138,12 @@ class ingress_env extends ingress_base_env;
         `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_intf_t was not successful!")
       end
       // Create the bfm instances
-      eth_bfms[i]               = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
-      eth_bfms[i].cfg.mode      = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
-      eth_bfms[i].cfg.speed     = eth_bfm_pkg::SPEED_400G;                             // Configure speed.
-      eth_bfms[i].cfg.num_ports = 1;                                                   // Configure num_ports.
-      //eth_bfms[i].cfg.sop_alignment = 68 - i;
+      eth_bfms[i]                   = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
+      eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
+      eth_bfms[i].cfg.speed         = eth_bfm_pkg::SPEED_400G;                             // Configure speed.
+      eth_bfms[i].cfg.num_ports     = 1;                                                   // Configure num_ports.
+      eth_bfms[i].cfg.group_size    = 8;
+      eth_bfms[i].cfg.sop_alignment = 8;
       eth_bfm_tx_io[i] = igr_eth_bfm_tx_io_t::type_id::create($sformatf("eth_bfm_tx_io%0d", i), this);
       eth_bfm_rx_io[i] = igr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
     end

@@ -2,7 +2,7 @@
 // Title         : Ingress alive test
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : ingress_alive_test.svh
+// File          : ingress_rand_test.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -17,8 +17,8 @@
 // Modification history :
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
-`ifndef INGRESS_ALIVE_TEST__SVH
-`define INGRESS_ALIVE_TEST__SVH
+`ifndef INGRESS_RAND_TEST__SVH
+`define INGRESS_RAND_TEST__SVH
 
 class ingress_dummy_seq extends ingress_extended_base_seq;
 
@@ -116,11 +116,11 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
 
 endclass
 
-class ingress_alive_test extends ingress_base_test;
+class ingress_rand_test extends ingress_base_test;
 
-  `uvm_component_utils(ingress_alive_test)
+  `uvm_component_utils(ingress_rand_test)
 
-  function new (string name="ingress_alive_test", uvm_component parent=null);
+  function new (string name="ingress_rand_test", uvm_component parent=null);
     super.new (name, parent);
   endfunction :  new
 
@@ -143,6 +143,6 @@ class ingress_alive_test extends ingress_base_test;
     env.set_test_phase_type("env", "USER_DATA_PHASE",  "ingress_eth_simple_seq");
   endfunction : connect_phase
 
-endclass : ingress_alive_test
+endclass : ingress_rand_test
 
 `endif
