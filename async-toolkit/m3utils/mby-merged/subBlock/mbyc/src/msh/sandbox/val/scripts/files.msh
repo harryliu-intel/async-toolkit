@@ -1,6 +1,6 @@
 // mesh RTL  (mby_msh_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
 +incdir+$LOGICROOT/rtl
-$LOGICROOT/rtl/mby_msh_pkg.sv
+$LOGICROOT/../shared/rtl/mby_msh_pkg.sv
 -y $LOGICROOT/rtl
 
 //// template assertions and coverage
@@ -9,7 +9,8 @@ $LOGICROOT/rtl/mby_msh_pkg.sv
 //-y $LOGICROOT/sva
 
 // shared rtl
--y $LOGICROOT/../common/rtl
+-y $LOGICROOT/../shared/rtl
+-y $LOGICROOT/../shared/interfaces
 
 // template tb source  (msh_sim_pkg.sv listed here explictly so it doesn't have to be included everywhere) 
 +incdir+$LOGICROOT/sandbox/val/verilog
