@@ -8,7 +8,7 @@
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This class builds and connects the differents agents/BFMs/VCs needed by this
+// This class builds and connects the different agents/BFMs/VCs needed by this
 // cluster test environment
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
@@ -24,7 +24,6 @@ class egress_env extends egress_base_env;
   // Variable: ti_config
   // test island configuration object
   egress_ti_config ti_config;
-
   //protected string egress_ti_low_path   = "XYZ_tb.u_egress_ti";
 
   // Variable: _egress_env
@@ -33,35 +32,35 @@ class egress_env extends egress_base_env;
 
   // Variable: egress_if
   // Egress env interface
-  virtual egress_env_if egress_if;
+  egr_env_if_t egress_if;
 
   // Variable: egress_epool
   // Egress event pool
-  uvm_event_pool    egress_epool;
+  uvm_event_pool egress_epool;
 
   // ---------------------------------------------------------------
   // IP Agents and VC's declaration
   // ---------------------------------------------------------------
 
-  // Variable:  eth_cdi_bfm
+  // Variable:  eth_bfms
   // MAC Client BFM agent
-  mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(4)) eth_cdi_bfm;
+  egr_eth_bfm_t eth_bfms[`NUM_EPLS_PER_EGR];
 
-  // Variable:  cdi_tx_io
+  // Variable:  eth_bfm_tx_io
   // MAC Client BFM io policy
-  mby_ec_bfm_pkg::mby_ec_cdi_tx_io eth_cdi_tx_io;
+  egr_eth_bfm_tx_io_t eth_bfm_tx_io[`NUM_EPLS_PER_EGR];
 
-  // Variable:  cdi_rx_io
+  // Variable:  eth_bfm_rx_io
   // MAC Client BFM io policy
-  mby_ec_bfm_pkg::mby_ec_cdi_rx_io eth_cdi_rx_io;
+  egr_eth_bfm_rx_io_t eth_bfm_rx_io[`NUM_EPLS_PER_EGR];
 
-  // Variable:  cdi_tx_vintf
+  // Variable:  eth_bfm_tx_vintf
   // MAC Client BFM virtual interface
-  virtual mby_ec_cdi_tx_intf cdi_tx_vintf;
+  egr_eth_bfm_tx_intf_t eth_bfm_tx_vintf[`NUM_EPLS_PER_EGR];
 
-  // Variable:  cdi_rx_vintf
+  // Variable:  eth_bfm_rx_vintf
   // MAC Client BFM virtual interface
-  virtual mby_ec_cdi_rx_intf cdi_rx_vintf;
+  egr_eth_bfm_rx_intf_t eth_bfm_rx_vintf[`NUM_EPLS_PER_EGR];
 
   // Variable: env_monitor
   // egress env event monitor
@@ -86,26 +85,33 @@ class egress_env extends egress_base_env;
 
     super.build_phase(phase);
 
-    if(uvm_config_object::get(this, "","egress_ti_config",tmp_ti_cfg_obj)) begin
+    if(uvm_config_object::get(this, "",
+        "egress_ti_config",tmp_ti_cfg_obj)) begin
       assert($cast(ti_config,tmp_ti_cfg_obj));
     end
-    if(!uvm_config_db#(virtual mby_ec_cdi_tx_intf)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
-      `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_tx_vintf was not successful!")
-    end
-    if(!uvm_config_db#(virtual mby_ec_cdi_rx_intf)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
-      `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
+
+    foreach(eth_bfms[i]) begin
+
+      // Get the eth_bfm_vif ptrs
+      if(!uvm_config_db#(egr_eth_bfm_tx_intf_t)::get(this, "",
+        $sformatf("egr_eth_bfm_tx_vintf%0d", i),eth_bfm_tx_vintf[i])) begin
+        `uvm_fatal(get_name(),"Config_DB.get() for ENV's egr_eth_bfm_tx_intf_t was not successful!")
+      end
+      if(!uvm_config_db#(egr_eth_bfm_rx_intf_t)::get(this, "", 
+        $sformatf("egr_eth_bfm_rx_vintf%0d", i), eth_bfm_rx_vintf[i])) begin
+        `uvm_fatal(get_name(),"Config_DB.get() for ENV's egr_eth_bfm_rx_intf_t was not successful!")
+      end
+
+      // Create the bfm instances
+      eth_bfms[i]               = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
+      eth_bfms[i].cfg.mode      = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
+      eth_bfms[i].cfg.speed     = eth_bfm_pkg::SPEED_400G;                             // Configure speed.
+      eth_bfms[i].cfg.num_ports = 1;                                                   // Configure num_ports.
+      
+      eth_bfm_tx_io[i] = egr_eth_bfm_tx_io_t::type_id::create($sformatf("eth_bfm_tx_io%0d", i), this);
+      eth_bfm_rx_io[i] = egr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
     end
 
-    eth_cdi_bfm               = mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(4))::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
-    eth_cdi_bfm.cfg.mode      = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
-    eth_cdi_bfm.cfg.speed     = eth_bfm_pkg::SPEED_400G;                                            // Configure speed.
-    eth_cdi_bfm.cfg.num_ports = 2;                                                                  // Configure num_ports.
-    eth_cdi_bfm.cfg.ack_delay = 0;
-    //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
-    //eth_cdi_bfm.cfg.push_down_knobs();                                                              // Push Down the Config Knobs
-
-    eth_cdi_tx_io = mby_ec_bfm_pkg::mby_ec_cdi_tx_io::type_id::create("eth_cdi_tx_io", this);
-    eth_cdi_rx_io = mby_ec_bfm_pkg::mby_ec_cdi_rx_io::type_id::create("eth_cdi_rx_io", this);
     data_phase_mode = SLA_RANDOM_NONE;
     this.max_run_clocks = 2_000_000_000;
 
@@ -126,13 +132,15 @@ class egress_env extends egress_base_env;
 
     egress_if = slu_resource_db#(virtual egress_env_if)::get("egress_if",`__FILE__,`__LINE__);
 
-    eth_cdi_tx_io.set_vintf(cdi_tx_vintf);
-    eth_cdi_rx_io.set_vintf(cdi_rx_vintf);
-    eth_cdi_bfm.set_io(eth_cdi_tx_io, eth_cdi_rx_io);   // Set the IO Policy in the CDI BFM
-    void'(this.add_sequencer("eth_agent", "tx0", eth_cdi_bfm.tx.frame_sequencer[0]));
-    void'(this.add_sequencer("eth_agent", "tx1", eth_cdi_bfm.tx.frame_sequencer[1]));
-    void'(this.add_sequencer("eth_agent", "tx2", eth_cdi_bfm.tx.frame_sequencer[2]));
-    void'(this.add_sequencer("eth_agent", "tx3", eth_cdi_bfm.tx.frame_sequencer[3]));
+    foreach(eth_bfms[i]) begin
+      eth_bfm_tx_io[i].set_vintf(eth_bfm_tx_vintf[i]);
+      eth_bfm_rx_io[i].set_vintf(eth_bfm_rx_vintf[i]);
+      eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);   // Set the IO Policy in the BFM
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx0", i), eth_bfms[i].tx.frame_sequencer[0]));
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx1", i), eth_bfms[i].tx.frame_sequencer[1]));
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx2", i), eth_bfms[i].tx.frame_sequencer[2]));
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx3", i), eth_bfms[i].tx.frame_sequencer[3]));
+    end
 
     if (env_monitor != null) begin
       env_monitor.egress_if = egress_if;

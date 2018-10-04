@@ -158,7 +158,8 @@ module fc_hvl_top #(
 
     //------------------------------------------------------------------------
     //-- MBY White Model
+    // commented out per Subodh suggestion WW40.2 - 2018
     //------------------------------------------------------------------------
-    mby_wm_top mby_wm();
+    // mby_wm_top mby_wm();
 
 endmodule

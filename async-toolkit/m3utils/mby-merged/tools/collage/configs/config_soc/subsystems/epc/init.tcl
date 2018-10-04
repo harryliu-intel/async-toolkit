@@ -7,7 +7,7 @@
 # 
 #################################################################################
 
-#collage_install_ip_kit -ip_name  "<ip name>" \
-#                       -kit_name "<corekit name>" \
-#                       -src_dir  "<path to corekit>" \
-#                       -dest_dir $install_kits_root
+collage_install_ip_kit -ip_name  "mby_ec_top" \
+                       -kit_name "mby_ec_top" \
+                       -src_dir  "$::env(MODEL_ROOT)/tools/collage/epc/ip_kits" \
+                       -dest_dir $install_kits_root

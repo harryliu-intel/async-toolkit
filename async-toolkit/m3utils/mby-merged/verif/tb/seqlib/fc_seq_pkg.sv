@@ -29,7 +29,7 @@ import sla_pkg::*;
 
    import svt_uvm_pkg::*;
    import svt_bfm_shell_uvm_pkg::*;
-//kl   import svt_amba_uvm_pkg::*;
+   import svt_amba_uvm_pkg::*;
    //import svt_axi_uvm_pkg::*;
    //import svt_apb_uvm_pkg::*;
 

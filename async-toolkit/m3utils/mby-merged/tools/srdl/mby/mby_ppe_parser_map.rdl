@@ -19,6 +19,30 @@ enum parser_csum_cfg_validate_l3_length_enum {
 };
 
 
+// PARSER_LPP_CONFIG [0]
+
+reg parser_lpp_config {
+  shared;
+  HandCoded = true;
+  name = "Sets PARSER in LPP Mode"; 
+  desc = "
+  This bit sets the parser in LPP mode 
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } LPP_MODE[0:0] = 1'h0;
+};
+
+
 
 
 // PARSER_PORT_CFG[0..23]
@@ -103,6 +127,42 @@ reg parser_csum_cfg_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "
+        IPv4 header checksum and/or drop on IPV4 header checksum error,
+
+           ";
+    ValRandomize = true;
+  } VALIDATE_IPV4_HDR_CSUM[9:9] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        IPv4 header trucation check and/or drop on IPV4 header tuncation check error,
+
+           ";
+    ValRandomize = true;
+  } VALIDATE_IPV4_HDR_TRUNCATION[8:8] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "
+        IPv4 header length value check and/or drop on IPV4 header length value check error,
+
+           ";
+    ValRandomize = true;
+  } VALIDATE_IPV4_HDR_LENGTH[7:7] = 1'h0;
+
+  field {
+    AccessType = "RW";
+    desc = "
+        IPv4 length check validation and/or drop on IPV4 length check error,
+
+           ";
+    ValRandomize = true;
+  } VALIDATE_IPV4_LENGTH[6:6] = 1'h0;
+
   field {
     encode = parser_csum_cfg_validate_l4_csum_enum;
     AccessType = "RW";
