@@ -1,10 +1,9 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
-import com.intel.cg.hpfd.madisonbay.Memory._
 import java.io.File
 
-import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr
 // import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 // import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags.TypicalPacketFlags
 // import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Packet
@@ -21,7 +20,7 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class ParserSpec extends FlatSpec with Matchers {
 
-  val csr = mby_ppe_parser_map.mby_ppe_parser_map(Address(0,0 bits))
+  val csr = Csr().getRxPpe(0).csrRxPpe.parser
 
   // load a 'canonical' image (tbd, how we're going to get this)
 

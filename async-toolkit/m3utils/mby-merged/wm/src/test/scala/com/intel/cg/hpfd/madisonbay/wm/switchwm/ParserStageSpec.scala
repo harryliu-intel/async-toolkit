@@ -18,7 +18,7 @@ import monocle.state.all._
 class ParserStageSpec extends FlatSpec with Matchers {
 
   "Flag 1 and 4" should "unconditionally be set when rule 0 configured as unconditional match" in {
-    val csrParser = Csr.topRxPpe0.parser
+    val csrParser = Csr().getParser(0).csrParser
     val idx = 0
     val pf = PacketFlags()
     val protoOffset = Parser.EmptyProtoOffsets
