@@ -1,0 +1,146 @@
+######## IP Build Summary Report #######
+########################################
+#Info only 
+########################################
+ip_top_module_name = mesh
+KitVendor          = Intel
+KitLibrary         = Intel
+ip_version         = 1.0
+
+########################################
+# RTL Parameters (info only)
+########################################
+#RTL Parameter	Value
+
+########################################
+# Ports with PortWidth and PortDirection (info only)
+########################################
+#Port_name	PortWidth	Port_Direction
+i_eb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_eb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_eb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_eb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_eb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_nb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_nb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_nb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_nb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_nb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_reset	1		in
+i_sb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_sb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_sb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_sb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_sb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_wb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_wb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_wb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_wb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+i_wb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		in
+mclk	1		in
+o_crdt_rtn_for_eb_rd_rsp	1		out
+o_crdt_rtn_for_nb_rd_req	1		out
+o_crdt_rtn_for_nb_rd_rsp	1		out
+o_crdt_rtn_for_nb_wr_req	1		out
+o_crdt_rtn_for_sb_rd_req	1		out
+o_crdt_rtn_for_sb_rd_rsp	1		out
+o_crdt_rtn_for_sb_wr_req	1		out
+o_crdt_rtn_for_wb_rd_rsp	1		out
+o_crdt_rtns_for_eb_rd_reqs	[(@NUM_MESH_COLS-1):0]		out
+o_crdt_rtns_for_eb_wr_reqs	[(@NUM_MESH_COLS-1):0]		out
+o_crdt_rtns_for_wb_rd_reqs	[(@NUM_MESH_COLS-1):0]		out
+o_crdt_rtns_for_wb_wr_reqs	[(@NUM_MESH_COLS-1):0]		out
+o_eb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_eb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_eb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_eb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_eb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_nb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_nb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_nb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_nb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_nb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_sb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_sb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_sb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_sb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_sb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_wb_rd_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_wb_rd_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_wb_rd_rsp	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_wb_wr_dbus	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+o_wb_wr_req	[(@work.mesh_pkg.NUM_MESH_PLANES-1):0]		out
+
+########################################
+# Non-standard Interfaces Ports (info only)
+########################################
+i_eb_rd_dbus
+i_eb_rd_req
+i_eb_rd_rsp
+i_eb_wr_dbus
+i_eb_wr_req
+i_nb_rd_dbus
+i_nb_rd_req
+i_nb_rd_rsp
+i_nb_wr_dbus
+i_nb_wr_req
+i_reset
+i_sb_rd_dbus
+i_sb_rd_req
+i_sb_rd_rsp
+i_sb_wr_dbus
+i_sb_wr_req
+i_wb_rd_dbus
+i_wb_rd_req
+i_wb_rd_rsp
+i_wb_wr_dbus
+i_wb_wr_req
+mclk
+o_crdt_rtn_for_eb_rd_rsp
+o_crdt_rtn_for_nb_rd_req
+o_crdt_rtn_for_nb_rd_rsp
+o_crdt_rtn_for_nb_wr_req
+o_crdt_rtn_for_sb_rd_req
+o_crdt_rtn_for_sb_rd_rsp
+o_crdt_rtn_for_sb_wr_req
+o_crdt_rtn_for_wb_rd_rsp
+o_crdt_rtns_for_eb_rd_reqs
+o_crdt_rtns_for_eb_wr_reqs
+o_crdt_rtns_for_wb_rd_reqs
+o_crdt_rtns_for_wb_wr_reqs
+o_eb_rd_dbus
+o_eb_rd_req
+o_eb_rd_rsp
+o_eb_wr_dbus
+o_eb_wr_req
+o_nb_rd_dbus
+o_nb_rd_req
+o_nb_rd_rsp
+o_nb_wr_dbus
+o_nb_wr_req
+o_sb_rd_dbus
+o_sb_rd_req
+o_sb_rd_rsp
+o_sb_wr_dbus
+o_sb_wr_req
+o_wb_rd_dbus
+o_wb_rd_req
+o_wb_rd_rsp
+o_wb_wr_dbus
+o_wb_wr_req
+
+#########################################################################
+# Non-standard Interfaces Ports with IfUnconnected attribute 
+#########################################################################
+
+#########################################################################
+# Non-standard Interfaces Ports with user defined tags 
+#########################################################################
+
+#########################################################################
+# Statistics                                                            
+# Num Standard               : 0                                 
+# Num AdHoc                  : 54                               
+# Num AdHoc (attribute)      : 0                          
+# Num AdHoc (user tagged)    : 0                          
+#########################################################################

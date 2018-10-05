@@ -63,7 +63,11 @@ $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_asse
 # <<< Hash table whose key defines a list of IP groups supported
 #################################################################
 my %sip_list = (
-    'boot'       => ['amba','axi','apb','chi'],
+    'boot'       => ['amba','axi','apb','chi','imc'],
+    'imc'        => ['imc'],
+    'epc'        => ['epc'],
+    'mpp'        => ['mpp'],
+    'msh'        => ['msh'],
 
 );
 # >>>
@@ -76,8 +80,12 @@ my %sip_list = (
 # HIP related lib should be move to HIP_RTL_LIBS (NON-SYNTH related)
 # SIP rtl lib should contain only synthesizable code (SYNTH related )
 my %sip_rtl_libs = (
-    'boot'               => [
-                            ],
+    'boot'               => [],
+    'imc'                => [],
+#    'epc'                => [],
+    'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
+    'msh'                => ['mby_msh_rtl_lib',],
+
 );
 
 sub get_sip_rtl_libs {
