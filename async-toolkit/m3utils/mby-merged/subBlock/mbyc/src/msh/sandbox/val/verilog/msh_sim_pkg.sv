@@ -22,47 +22,26 @@
 ///
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Jim McCormick <jim.mccormick@intel.com>
-// -- Project Name : Madison Bay (MBY) 
-// -- Description  : This file defines a mesh node 
-// 
-// -- Pipeline Stages: 
-//
-//      ... TBD ... 
-//                                                                                  ---------------
+// -- Project Name : ??? 
+// -- Description  : A package file containing definitions that are useful across the testbench. 
 // ---------------------------------------------------------------------------------------------------------------------
 
-// note that the dashed lines above represents recommended viewing window width
-
-
-`include "mesh_defines.vh";                                     // include file with `defines 
-
-module msh_wr_dp 
-import mesh_pkg::*;                                             // import declarations from mesh_pkg.sv
-(
-
-
-    input               mclk                                    // mesh clock                                 
-
-);
-
+package msh_sim_pkg;
 
 //-----------------------------------------------------------------------------
-// Declarations 
+// simple typedefs
 //-----------------------------------------------------------------------------
 
-// Pipeline stage names are appended to the end of signal names to ease understanding of signal timing relationships.
-// Any equation that mixes signals with different pipeline stage names should be given careful thought.
-
-/// ... stage signals
-
-
-//**********************************************************************************************************************
-// OUTPUT SECTION 
-//**********************************************************************************************************************
-
 //-----------------------------------------------------------------------------
-// Assign Output Signals
+// struct typedefs
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+// functions
+//-----------------------------------------------------------------------------
 
-endmodule // msh_wr_dp
+//-----------------------------------------------------------------------------
+// object classes 
+//-----------------------------------------------------------------------------
+
+endpackage : msh_sim_pkg
