@@ -31,11 +31,11 @@
 
 class system_driver;
 
-    virtual tmpl_dut_if dut_if;
+    virtual msh_dut_if dut_if;
 
     string name;
 
-    function new(virtual tmpl_dut_if dut_if, configuration cfg);
+    function new(virtual msh_dut_if dut_if);
 
         this.dut_if = dut_if;
 
@@ -46,9 +46,9 @@ class system_driver;
     // Reset system
     task reset();
         dut_if.i_reset = 1;
-        repeat (50) @(posedge dut_if.clk);
+        repeat (50) @(posedge dut_if.mclk);
         dut_if.i_reset = 0;
-        repeat (50) @(posedge dut_if.clk);
+        repeat (50) @(posedge dut_if.mclk);
     endtask
 
 endclass

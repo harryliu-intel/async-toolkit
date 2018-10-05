@@ -1,7 +1,7 @@
 ///
 ///  INTEL CONFIDENTIAL
 ///
-///  Copyright 2018 Intel Corporation All Rights Reserved.
+///  Copyright 2017 Intel Corporation All Rights Reserved.
 ///
 ///  The source code contained or described herein and all documents related
 ///  to the source code ("Material") are owned by Intel Corporation or its
@@ -23,25 +23,19 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Jim McCormick <jim.mccormick@intel.com>
 // -- Project Name : ??? 
-// -- Description  : A package file containing definitions that are useful across the testbench. 
+// -- Description  : Test execution loop 
 // ---------------------------------------------------------------------------------------------------------------------
 
-package mesh_sim_pkg;
+for (int loop=0; loop<loops; loop++) begin
+    $display("---loop%0d start---",loop);
 
-//-----------------------------------------------------------------------------
-// simple typedefs
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-// struct typedefs
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-// functions
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-// object classes 
-//-----------------------------------------------------------------------------
-
-endpackage : mesh_sim_pkg
+    env.reset();                    // reset the DUT and testbench
+//    env.load_stimulus(num_reqs);    // put stimulus in a testbench FIFO
+//    env.drive_stimulus();           // pull stimulus out of testbench FIFO and apply to DUT
+//    env.wait_done(10);              // wait for 10 clocks after done
+//    env.final_state_check();        // check for any irregularities in final state of DUT
+//    env.print_cfg();                // print configuration information
+//    env.print_stats();              // print statistics
+    env.wait_delay(100);             // wait for 10 cycles
+    $display("---loop%0d end---",loop);
+end
