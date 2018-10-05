@@ -23,7 +23,7 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Jim McCormick <jim.mccormick@intel.com>
 // -- Project Name : Madison Bay (MBY)
-// -- Description  : The Mesh DUT interface 
+// -- Description  : Mesh column read interface 
 // ---------------------------------------------------------------------------------------------------------------------
 
 // This is a connectivity only interface and thus is just a named bundle of nets that can be passed around as a group 
@@ -32,19 +32,60 @@
 //      <interface name>.<net name>
 //
 
-interface mesh_dut_if (
-   input mclk                                        // mclk is passed in a parameter and becomes part of the interface
+`include "mby_msh_defines.vh"                                   // include file with `defines 
+
+interface mby_msh_col_rd_if 
+import mby_msh_pkg::*;                                         // import declarations from mby_msh_pkg.sv
+();
+
+msh_col_rd_req_t    i_rd_req                 [NUM_MSH_PLANES-1:0];
+msh_col_rd_req_t    o_rd_req                 [NUM_MSH_PLANES-1:0];
+logic               i_crdt_rtn_for_rd_req    [NUM_MSH_PLANES-1:0];
+logic               o_crdt_rtn_for_rd_req    [NUM_MSH_PLANES-1:0];
+
+msh_col_rd_rsp_t    i_rd_rsp                 [NUM_MSH_PLANES-1:0];
+msh_col_rd_rsp_t    o_rd_rsp                 [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_rd_dbus                [NUM_MSH_PLANES-1:0];
+msh_dbus_t          o_rd_dbus                [NUM_MSH_PLANES-1:0];
+logic               i_crdt_rtn_for_rd_rsp    [NUM_MSH_PLANES-1:0];
+logic               o_crdt_rtn_for_rd_rsp    [NUM_MSH_PLANES-1:0];
+
+modport requestor (
+
+    // inputs
+    
+    input  i_rd_rsp,
+    input  i_rd_dbus,
+    input  i_crdt_rtn_for_rd_req,
+
+    // outputs
+    
+    output o_rd_req,
+    output o_crdt_rtn_for_rd_rsp
+
 );
 
+modport responder (
 
-// local paramters
-
-
-// DUT inputs  (direction not specified in this interface)
-logic               i_reset;                                // reset
-
-
-// DUT outputs  (direction not specified in this interface)
+    // inputs
+    
+    input  i_rd_req,
+    input  i_crdt_rtn_for_rd_rsp,
 
 
-endinterface // mesh_dut_if
+    // outputs
+    
+    output o_rd_rsp,
+    output o_rd_dbus,
+    output o_crdt_rtn_for_rd_req
+
+);
+
+assign i_rd_req                 = o_rd_req;
+assign i_crdt_rtn_for_rd_req    = o_crdt_rtn_for_rd_req;
+assign i_rd_rsp                 = o_rd_rsp;
+assign i_rd_dbus                = o_rd_dbus;
+assign i_crdt_rtn_for_rd_rsp    = o_crdt_rtn_for_rd_rsp;
+
+
+endinterface // mby_msh_col_rd_if

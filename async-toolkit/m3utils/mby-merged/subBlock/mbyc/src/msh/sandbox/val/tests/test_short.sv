@@ -27,43 +27,37 @@
 // --                for demonstrating good design practices.
 // ---------------------------------------------------------------------------------------------------------------------
 
-//`include "env.sv"                   // defines most of the testbench
+`include "env.sv"                   // defines most of the testbench
 
-program testcase (                   // a program is a system verilog testbench entry point
-    mesh_dut_if dut_if               // mesh DUT interface 
+program testcase (                  // a program is a system verilog testbench entry point
+    msh_dut_if dut_if               // mesh DUT interface 
 );     
 
 
-//    // declare testcase variables
-//    integer loops;
-//    integer num_reqs;
-//
-//    // instantiate testbench environment 
-//    
-//    env env = new(
-//
-//        .dut_if                         (dut_if   ),      // pass in the interface
-//
-//        // input bubble rate between 1/100 and 25/100 
-//        .knob_inp_bubble_numerator_min  (1      ),
-//        .knob_inp_bubble_numerator_max  (25     ),
-//        .knob_inp_bubble_denominator    (100    )
-//
-//    );
-//
-//    // testcase execution
-//
+    // declare testcase variables
+    integer loops;
+    integer num_reqs;
+
+    // instantiate testbench environment 
+    
+    env env = new(
+
+        .dut_if                         (dut_if   )       // pass in the interface
+
+    );
+
+    // testcase execution
+
     initial begin                   // an "initial" procedure is executed at the beginning of a simulation
-//
-//        loops    = 1;               // number of times to run the test loop 
-//        num_reqs = 10;              // number of requests to be sent to each port for each iteration 
-//
-//        env.cfg.randomize();        // randomize configuration
-//
-//
-//        // Run test
-//        `include "test_loop_include.sv"     // the test loop (see sandbox/verilog/test_loop_include.sv)
-//
+
+        loops    = 1;               // number of times to run the test loop 
+        num_reqs = 10;              // number of requests to be sent to each port for each iteration 
+
+
+
+        // Run test
+        `include "test_loop_include.sv"     // the test loop (see sandbox/verilog/test_loop_include.sv)
+
         $display("Simulation PASSED");      // test exits immediately upon errors, so it passes if this line is reached
         $finish();                          // ca  the final procedure (if it exists) and exits the simulation
 //
