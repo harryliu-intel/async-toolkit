@@ -63,7 +63,8 @@ $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_asse
 # <<< Hash table whose key defines a list of IP groups supported
 #################################################################
 my %sip_list = (
-    'boot'       => ['amba','axi','apb','chi', 'igr'],
+    #'boot'       => ['amba','axi','apb','chi', 'igr'],
+    'boot'       => ['igr'],
 
 );
 # >>>
