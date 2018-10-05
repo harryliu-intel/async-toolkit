@@ -8,7 +8,7 @@
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This moudle will hold all the "shared" TB content between the IP and
+// This module will hold all the "shared" TB content between the IP and
 // the integration level.
 // INGRESS_TOP_RTL define should be use to monitor internal signals.
 // This define will be overriden at integration level.
@@ -30,8 +30,16 @@ module ingress_ti_low #(
                    )
   (
     ingress_env_if      ingress_if
-   ,mby_ec_cdi_tx_intf  cdi_tx_intf
-   ,mby_ec_cdi_rx_intf  cdi_rx_intf
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_0
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_0
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_1
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_1
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_2
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_2
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_3
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_3
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_4
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_4
   );
 
   import uvm_pkg::*;
@@ -52,8 +60,16 @@ module ingress_ti_low #(
   // Adding MBY if to Saola container
   initial begin
     sla_pkg::slu_resource_db#(virtual ingress_env_if)::add("ingress_if", ingress_if, `__FILE__, `__LINE__);
-    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "cdi_tx_vintf" , cdi_tx_intf);
-    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "cdi_rx_vintf" , cdi_rx_intf);
+    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf0" , eth_bfm_tx_intf_0);
+    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf0" , eth_bfm_rx_intf_0);
+    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf1" , eth_bfm_tx_intf_1);
+    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf1" , eth_bfm_rx_intf_1);
+    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf2" , eth_bfm_tx_intf_2);
+    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf2" , eth_bfm_rx_intf_2);
+    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf3" , eth_bfm_tx_intf_3);
+    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf3" , eth_bfm_rx_intf_3);
+    uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf4" , eth_bfm_tx_intf_4);
+    uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf4" , eth_bfm_rx_intf_4);
   end
 
   ingress_ti_config ti_config;

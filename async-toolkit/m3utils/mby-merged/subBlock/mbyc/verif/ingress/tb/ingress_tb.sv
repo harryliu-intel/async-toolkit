@@ -21,7 +21,7 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-`timescale 1ps/1ps
+`timescale 1ps/1fs
 
 `include "ingress_defines.sv"
 //`include "igr_top.sv"
@@ -75,7 +75,6 @@ module ingress_tb ();
   // ===============================================
   // Clock block instance
   // ===============================================
-
   int idle_conter;
 
   initial begin
@@ -85,8 +84,8 @@ module ingress_tb ();
     idle_conter         = 0;
   end
 
-  always #5000 primary_clock   = (ingress_if.enable_primary_clock   ? ~primary_clock   : 0);
-  always #5000 secondary_clock = (ingress_if.enable_secondary_clock ? ~secondary_clock : 0);
+  always #416666fs primary_clock   = (ingress_if.enable_primary_clock   ? ~primary_clock   : 0);
+  always #833333fs secondary_clock = (ingress_if.enable_secondary_clock ? ~secondary_clock : 0);
 
   always @(primary_clock) begin
     if (idle_conter > 8) begin
@@ -122,26 +121,48 @@ module ingress_tb ();
   assign ingress_if.secondary_clock  = secondary_clock;
   assign ingress_if.ingress_int_wire = 0;
 
-  mby_ec_cdi_tx_intf cdi_tx_intf (ingress_power_good_reset, primary_clock);
-  mby_ec_cdi_rx_intf cdi_rx_intf (ingress_power_good_reset, primary_clock);
-  assign cdi_rx_intf.ecc             = cdi_tx_intf.ecc;
-  assign cdi_rx_intf.port_num        = cdi_tx_intf.port_num;
-  assign cdi_rx_intf.data_valid      = cdi_tx_intf.data_valid;
-  assign cdi_rx_intf.metadata        = cdi_tx_intf.metadata;
-  assign cdi_rx_intf.data_w_ecc      = cdi_tx_intf.data_w_ecc;
-  assign cdi_rx_intf.pfc_xoff        = cdi_tx_intf.pfc_xoff;
-  assign cdi_rx_intf.au_credits      = cdi_tx_intf.au_credits;
-  assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc;
-  assign cdi_tx_intf.enable          = 1;
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_0 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_0 (ingress_power_good_reset, primary_clock);
+  assign eth_bfm_rx_intf_0.ecc             = eth_bfm_tx_intf_0.ecc;
+  assign eth_bfm_rx_intf_0.port_num        = eth_bfm_tx_intf_0.port_num;
+  assign eth_bfm_rx_intf_0.data_valid      = eth_bfm_tx_intf_0.data_valid;
+  assign eth_bfm_rx_intf_0.metadata        = eth_bfm_tx_intf_0.metadata;
+  assign eth_bfm_rx_intf_0.data_w_ecc      = eth_bfm_tx_intf_0.data_w_ecc;
+  assign eth_bfm_rx_intf_0.pfc_xoff        = eth_bfm_tx_intf_0.pfc_xoff;
+  assign eth_bfm_rx_intf_0.au_credits      = eth_bfm_tx_intf_0.au_credits;
+  assign eth_bfm_rx_intf_0.flow_control_tc = eth_bfm_tx_intf_0.flow_control_tc;
+  assign eth_bfm_tx_intf_0.enable          = 1;
+
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_1 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_1 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_2 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_2 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (ingress_power_good_reset, primary_clock);
+
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_4 (ingress_power_good_reset, primary_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_4 (ingress_power_good_reset, primary_clock);
+
+  assign eth_bfm_tx_intf_1.enable = 1;
+  assign eth_bfm_tx_intf_2.enable = 1;
+  assign eth_bfm_tx_intf_3.enable = 1;
 
   // ===============================================
   // Test Island instance
   // ===============================================
   ingress_ti_high #()
     u_ingress_ti_high (
-                    .ingress_if      (ingress_if)
-                   ,.cdi_tx_intf     (cdi_tx_intf)
-                   ,.cdi_rx_intf     (cdi_rx_intf)
+                    .ingress_if          (ingress_if)
+                   ,.eth_bfm_tx_intf_0   (eth_bfm_tx_intf_0)
+                   ,.eth_bfm_rx_intf_0   (eth_bfm_rx_intf_0)
+                   ,.eth_bfm_tx_intf_1   (eth_bfm_tx_intf_1)
+                   ,.eth_bfm_rx_intf_1   (eth_bfm_rx_intf_1)
+                   ,.eth_bfm_tx_intf_2   (eth_bfm_tx_intf_2)
+                   ,.eth_bfm_rx_intf_2   (eth_bfm_rx_intf_2)
+                   ,.eth_bfm_tx_intf_3   (eth_bfm_tx_intf_3)
+                   ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
+                   ,.eth_bfm_tx_intf_4   (eth_bfm_tx_intf_4)
+                   ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_4)
                   );
 
 `include "std_ace_util.vic"

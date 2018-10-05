@@ -161,12 +161,6 @@ module igr_epl_shim
   end    
 //rx datapath delay stages end  
   
-  assign s1_port_num = {(s1q_rx_port_num == 2'b11),
-                        (s1q_rx_port_num == 2'b10),
-                        (s1q_rx_port_num == 2'b01),
-                        (s1q_rx_port_num == 2'b00)};
-  always_ff @(posedge cclk) s2q_port <= s1_port_num;
-  
   igr_epl_shim_ctrl ctrl0(
     .cclk(cclk),
     .rst(rst),

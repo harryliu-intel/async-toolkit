@@ -26,7 +26,8 @@ my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
 		    );
 
 my @models_use = (
-    "eth_port_common:common",
+     "eth_port_mby_ec:mby_ec",
+     "eth_port_common:common",
 );
 if (exists ($fc_global_vars::ALL_IP_LIST{"tbd"})) {
 #    push(@models_use, (""));
