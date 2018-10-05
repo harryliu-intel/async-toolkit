@@ -2,11 +2,10 @@
 package com.intel.cg.hpfd.madisonbay.wm.program
 
 import java.io.{DataInputStream, DataOutputStream}
-import java.nio.ByteBuffer
+import java.nio.{ByteBuffer, ByteOrder}
 
 import scala.collection.immutable.HashMap
 import scala.language.reflectiveCalls
-
 import com.intel.cg.hpfd.csr.generated.mby_top_map
 import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
@@ -14,12 +13,16 @@ import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtArrayByte.Implicits
 import monocle.Optional
 
-class IosfHandling(csrSpace: scala.collection.mutable.HashMap[Int,Byte], paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long]]) {
+import scala.collection.mutable
+
+class IosfHandling(paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long]]) {
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
   // (we do not not provide subclasses or trait definitions in the scheme-based generator)
   type dataSig = { def data0: Long ; def data1: Long }
   type addrSig = { def addr0: Long ; def addr1: Long; def addr2: Long  }
   type iosfSig = dataSig with addrSig
+
+  val regSize = 8
 
   // Rich-Wrappers pattern automatically enables 'addr' and 'data' shorthands when appropriate
   implicit class IosfHasData(i: dataSig) {
@@ -71,22 +74,60 @@ class IosfHandling(csrSpace: scala.collection.mutable.HashMap[Int,Byte], paths: 
     }
   }
 
-  def processWriteBlk(iosf: IosfRegBlkWriteReqHdr, is: DataInputStream, os: DataOutputStream): Unit = {
-    val addr = iosf.addr
-    println("Processing block write @" + addr.toHexString + " of "  + iosf.ndw + " words")
-    val array = Array.ofDim[Byte](iosf.ndw.toInt * 4)
-    is.readFully(array)
-    array.hexdump()
-    //    + array.toList.map(f => f"$f%x"))
-    for(i <- addr until addr + 4 * iosf.ndw) {
-      csrSpace.put(i.toInt, array((i - addr).toInt))
+  private def arrayToLongs(array: Array[Byte]) = {
+    assert(array.length % regSize == 0)
+    val buffer = ByteBuffer.wrap(array).order(ByteOrder.BIG_ENDIAN)
+    val output = mutable.ListBuffer[Long]()
+
+    // buffer is mutable, so we have to iterate
+    (1 to array.length / regSize).foreach(_ => {
+      output.append(buffer.getLong())
+    })
+    output.toList
+  }
+
+  def processWriteBlk(csrs: mby_top_map.mby_top_map,
+                      iosf: IosfRegBlkWriteReqHdr,
+                      is: DataInputStream,
+                      os: DataOutputStream): mby_top_map.mby_top_map = {
+    val blockAddr = iosf.addr
+    println("Processing block write @" + blockAddr.toHexString + " of "  + iosf.ndw + " words")
+    val writeSizeInBytes = iosf.ndw.toInt * 4
+    val noOfRegisters = writeSizeInBytes / regSize
+    val registerDataArray = Array.ofDim[Byte](writeSizeInBytes)
+    is.readFully(registerDataArray)
+    registerDataArray.hexdump()
+
+    if (writeSizeInBytes % regSize != 0) {
+      println(s"Invalid write of size $writeSizeInBytes; only multiplities of 8 are supported")
+      csrs
+    } else {
+
+      val registerAddresses = (0 until noOfRegisters).map(number => blockAddr + regSize * number).toList
+      val registerDatas = arrayToLongs(registerDataArray)
+      val registerWriteCommands = registerAddresses zip registerDatas
+
+      val newCsrs = registerWriteCommands.foldLeft(csrs)((currentCsrs: mby_top_map.mby_top_map,
+                                            writeCommand: (Long, Long)) => {
+        val (writeAddress, writeData) = writeCommand
+
+        val newCsrOption = for (
+          optionalForRegister <- paths.get(Address at (writeAddress bytes));
+          modifierForRegister <- Some(optionalForRegister.modify(_ => writeData))
+        ) yield modifierForRegister
+
+        newCsrOption.getOrElse((x : mby_top_map.mby_top_map) => x)(currentCsrs)
+      })
+
+      val response = makeResponse(iosf)
+      val hdr = FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
+      os.writeFmModelMessageHdr(hdr)
+      os.writeIosfRegCompNoData(response)
+      os.flush()
+      println(" Wrote the response, ok")
+
+      newCsrs
     }
-    val response = makeResponse(iosf)
-    val hdr = FmModelMessageHdr(20, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue)
-    os.writeFmModelMessageHdr(hdr)
-    os.writeIosfRegCompNoData(response)
-    os.flush()
-    println(" Wrote the response, ok")
   }
 
   type respondable = { def opcode: Long; def dest: Long;  def source: Long; def tag: Long }
@@ -143,13 +184,15 @@ class IosfHandling(csrSpace: scala.collection.mutable.HashMap[Int,Byte], paths: 
     println(f"Wrote the response back $registerValue%x")
   }
 
-  def processIosf(csrs: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): Unit = {
+  def processIosf(csrs: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map.mby_top_map = {
     val array = Array.ofDim[Byte](128 / 8)  // IOSF headers are 16 bytes, except for reg-write, which is 24
 
     is.readFully(array)
     array match {
-      case IosfBlkWriteExtractor(writeReg) => processWriteBlk(writeReg, is, os)
-      case IosfReadExtractor(readReg) => processReadReg(csrs, readReg, os)
+      case IosfBlkWriteExtractor(writeReg) => processWriteBlk(csrs, writeReg, is, os)
+      case IosfReadExtractor(readReg) =>
+        processReadReg(csrs, readReg, os)
+        csrs
       case _ =>
         val extra = Array.ofDim[Byte](64 / 8)
         is.readFully(extra)
@@ -158,7 +201,7 @@ class IosfHandling(csrSpace: scala.collection.mutable.HashMap[Int,Byte], paths: 
           case IosfRegWriteExtractor(writeReg) => processWriteReg(writeReg, os)
           case _ => assert(assertion = false, "Failed to parse IOSF packet, after trying 192-bit sized regwrite")
         }
-
+        csrs
     }
   }
 }

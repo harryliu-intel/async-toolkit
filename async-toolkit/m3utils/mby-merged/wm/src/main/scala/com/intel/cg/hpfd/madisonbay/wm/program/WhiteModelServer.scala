@@ -15,15 +15,12 @@ object WhiteModelServer {
 
   val initialAddress = Address at (0 bytes)
 
-  // prototype example! -- obviously this ought to be the 'real' CSR state/white model
-  val csrSpace = new scala.collection.mutable.HashMap[Int, Byte]
-
   val csrs = mby_top_map.mby_top_map(initialAddress)
   val paths = mby_top_map.mby_top_map.genOpticsLookup(csrs, Optional.id)
 
   val egressPortToSocketAndStreamMap = new collection.mutable.HashMap[Int, (Socket, DataOutputStream)]()
 
-  val iosfHandling = new IosfHandling(csrSpace, paths)
+  val iosfHandling = new IosfHandling(paths)
   val packetHandling = new PacketHandling(egressPortToSocketAndStreamMap, legacyProtocol)
   val egressInfoHandling = new EgressInfoHandling(egressPortToSocketAndStreamMap, legacyProtocol)
 
@@ -31,7 +28,7 @@ object WhiteModelServer {
     println("Received quit operation!")
   }
 
-  def processMessage(mtm: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): Any = {
+  def processMessage(mtm: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map.mby_top_map = {
 
     val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
@@ -40,12 +37,12 @@ object WhiteModelServer {
 
 
     hdr.Type match  {
-      case FmModelMsgType.Packet => packetHandling.processPacket(is, os, hdr)
-      case FmModelMsgType.Mgmt => Unit
+      case FmModelMsgType.Packet => packetHandling.processPacket(is, os, hdr); mtm
+      case FmModelMsgType.Mgmt => mtm
       case FmModelMsgType.Iosf => iosfHandling.processIosf(mtm, is, os)
-      case FmModelMsgType.SetEgressInfo => egressInfoHandling.processEgressInfo(is, toGo, hdr)
-      case FmModelMsgType.CommandQuit => assert(false)
-      case _ =>
+      case FmModelMsgType.SetEgressInfo => egressInfoHandling.processEgressInfo(is, toGo, hdr); mtm
+      case FmModelMsgType.CommandQuit => assert(false); mtm
+      case _ => mtm
     }
   }
 
@@ -74,7 +71,8 @@ object WhiteModelServer {
       val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
 
       try {
-        while (true) processMessage(csrs, is, os)
+        def processMessageLoop(loopCsrs: mby_top_map.mby_top_map): Nothing = processMessageLoop(processMessage(loopCsrs, is, os))
+        processMessageLoop(csrs)
       } catch {
         case _: EOFException =>
           println("Termination of IO from client without shutdown command " + s.getInetAddress.getHostName)
