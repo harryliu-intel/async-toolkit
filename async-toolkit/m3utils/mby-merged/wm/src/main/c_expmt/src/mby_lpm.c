@@ -29,13 +29,11 @@ static void lookUpLpmTcam
         fm_uint64 cam_key     = tcam_entry.key;
         fm_uint64 mask        = cam_key ^ cam_key_inv;
 
-        // TODO verify this check: I copy pasted it from the classifier
         if (((cam_key & cam_key_inv) == 0) && ((tcam_lookup->key & mask) == (cam_key & mask)))
         {
             tcam_lookup->hit_valid = TRUE;
             tcam_lookup->hit_index = tcam_index;
-            // TODO verify it is OK to return on the first hit
-            return;
+            // Search the entire table and return the match with highest index
         }
 
         ++tcam_index;
