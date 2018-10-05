@@ -104,7 +104,7 @@ EOF
          # Define all the libraries which could be compiled
          libs => {
 
-             soc_collage_assemble_lib => {
+             $fc_global_vars::COLLAGE_LIB => {
                     -tag      => "nonsynth+nonemu",
                     -generated => 1,
                     -hdl_spec => [
@@ -113,6 +113,20 @@ EOF
                     -vlog_opts => [ "+v2k", "-sverilog", ],
 #                    -dependent_libs => [ "sip_shared_lib"],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+
+             $fc_global_vars::IP_STUB_LIB => {
+                    -generated => 1,
+                    -hdl_spec => [
+                          "cfg/ace/HDL/rtl/dummy.hdl",
+                          "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
+                    ],
+                    -dependent_libs => [
+                       "sip_shared_lib",
+                       "shdv_shared_lib",
+                       $fc_global_vars::COLLAGE_LIB,
+                    ],
+                    -tag            => "nonsynth",
              },
 
              fc_tests_lib => {
@@ -263,7 +277,7 @@ EOF
                      "cfg/ace/HDL/dummy.hdl",
                      "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/soc.hdl",
                  ],
-                 -dependent_libs => ["soc_collage_assemble_lib",],
+                 -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
 
              fc_hvl_top_lib => {
@@ -372,7 +386,7 @@ EOF
 
          models => {
             fc => {
-               top         => 'fc_hdl_top_lib.fc_cfg fc_hvl_top_lib.fc_hvl_top_cfg',
+               top         => 'fc_hdl_top_lib.fc_hdl_top_cfg fc_hvl_top_lib.fc_hvl_top_cfg',
 #               jg_elab_top => 'mby_jasper_lib.mby_top',
 
                enable_congruency_elab  =>  $mby_enable_congruency_elab,
@@ -415,7 +429,7 @@ EOF
 #                  "gen_mby_wm",
 #                  "gen_mby_wm_m3",
 #                  "mby_mgm_lib",
-                  "soc_collage_assemble_lib",
+                  $fc_global_vars::COLLAGE_LIB,
                   "mby_tx_ppe_rtl_lib",
                   "mby_ppe_stm_rtl_lib",
                   "mby_igr_rtl_lib",
@@ -496,7 +510,7 @@ EOF
                enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
 
                libs => [
-                  "soc_collage_assemble_lib",
+                  $fc_global_vars::COLLAGE_LIB,
                   "mby_tb_lib",
                   "mby_rtl_lib",
                   "sva_lib",
@@ -657,7 +671,7 @@ EOF
 #                  "gen_mby_wm",
 #                  "gen_mby_wm_m3",
 #                  "mby_mgm_lib",
-                  "soc_collage_assemble_lib",
+                  $fc_global_vars::COLLAGE_LIB,
                   "mby_tx_ppe_rtl_lib",
                   "mby_ppe_stm_rtl_lib",
                   "mby_igr_rtl_lib",
