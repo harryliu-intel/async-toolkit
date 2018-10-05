@@ -24,17 +24,10 @@ class fc_boot_basic_seq extends fc_seq_pkg::fc_base_seq;
     endfunction
 
     virtual task body();
-        `ifdef AXI_ENV_ENABLE
-        fc_axi_basic_txn_seq axi_basic_txn_seq;
-        `endif
-      
         `uvm_info(get_name(), "enter fc_boot_basic_seq", UVM_LOW);
  
 
         #10us;
-       /* `uvm_do_on_with(axi_basic_txn_seq, 
-                        tb_env.axi_subenv.axi_bfm.axi_system_env.master[0].sequencer,
-                        {sequence_length == 1;}) */
 
         `uvm_info(get_name(), "exit fc_boot_basic_seq", UVM_LOW);
     endtask : body
