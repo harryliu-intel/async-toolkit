@@ -57,9 +57,9 @@ BINDIR    ?= $(BINROOT)/$*#@               Compile in ./BINDIR (default: ./bin/<
 RUNDIR    ?= $(RUNROOT)/$*#@               Run in ./RUNDIR (default: ./run/<test>)
 URG_REPORTDIR := report#@        URG Report direcotry (default: report)
 TIMESTAMP := $(shell date +'%Y%m%d%H%M%S')
-DUT_TOP   := top.dut
+DUT_TOP   := top.msh
 DUT_FILE_LIST_NAME := 2_dut_file_list
-PKG_TOP   := mesh_pkg 
+PKG_TOP   := mby_msh_pkg 
 PKG_FILE_LIST_NAME := 1_pkg_file_list
 
 ################################################################################

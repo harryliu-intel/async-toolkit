@@ -22,13 +22,54 @@
 ///
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Jim McCormick <jim.mccormick@intel.com>
-// -- Description :  Mesh defines 
-// --       - `defines are compiler directives that are executed as soon as they are seen by the compiler and 
-// --       -     apply to the entire compilation scope.  This file is included by other files.
+// -- Project Name : Madison Bay (MBY)
+// -- Description  : Mesh row write interface 
 // ---------------------------------------------------------------------------------------------------------------------
 
-`ifndef MESH_DEFINES
-`define MESH_DEFINES
+// This is a connectivity only interface and thus is just a named bundle of nets that can be passed around as a group 
+// to save typing.  Anywhere an interface is defined, individual nets in the interface can be referenced as follows:    
+//
+//      <interface name>.<net name>
+//
+
+`include "mby_msh_defines.vh"                                   // include file with `defines 
+
+interface mby_msh_row_wr_if 
+import mby_msh_pkg::*;                                         // import declarations from mby_msh_pkg.sv
+();
+
+msh_row_wr_req_t    i_wr_req                [NUM_MSH_PLANES-1:0];
+msh_row_wr_req_t    o_wr_req                [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_wr_dbus               [NUM_MSH_PLANES-1:0];
+msh_dbus_t          o_wr_dbus               [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t     i_crdt_rtns_for_wr_reqs [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t     o_crdt_rtns_for_wr_reqs [NUM_MSH_PLANES-1:0];
+
+modport requestor (
+
+    // inputs
+    
+    input i_crdt_rtns_for_wr_reqs,
+
+    // outputs
+    
+    output o_wr_req,
+    output o_wr_dbus
+
+);
+
+modport responder (
+
+    // inputs
+    
+    input  i_wr_req,
+    input  i_wr_dbus,
+
+    // outputs
+    
+    output o_crdt_rtns_for_wr_reqs
+
+);
 
 
-`endif // TMPL_DEFINES
+endinterface // mby_msh_row_wr_if

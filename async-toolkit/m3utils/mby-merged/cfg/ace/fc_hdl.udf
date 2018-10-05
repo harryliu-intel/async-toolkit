@@ -29,6 +29,10 @@ my @models_use = (
      "eth_port_mby_ec:mby_ec",
      "eth_port_common:common",
 );
+if (exists ($fc_global_vars::ALL_IP_LIST{"tbd"})) {
+#    push(@models_use, (""));
+};
+
 my @all_sip_rtl_liblist = &get_all_sip_rtl_libs();
 my @all_sip_rtl_vlogopts = &get_all_sip_rtl_vlogopts();
 my @all_sip_verif_liblist = &get_all_sip_verif_libs();
@@ -224,6 +228,7 @@ EOF
                      "shdv_shared_lib",
                      "ext_shared_lib",
                      "mby_common_lib",
+                     "vte_tr_uvm_lib",
                      @all_sip_verif_liblist,
                      $fc_global_vars::COLLAGE_LIB,
                  ],
@@ -353,6 +358,7 @@ EOF
                      "+define+HVL_TOP_LIB=fc_lite_hvl_top_lib",
                      "+define+HDL_TOP_CFG=fc_lite_cfg",
                      "+define+HVL_TOP=fc_hvl_top",
+                     "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh"
                  ],
                  -tag => "nonsynth",
              },
@@ -663,11 +669,11 @@ EOF
              
                   (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
                   $fc_global_vars::IP_STUB_LIB,
-                  "fc_hdl_top_lib",
-                  "fc_hvl_top_lib",
-                  "fc_env_lib",
-                  "fc_tests_lib",
-                  "fc_seq_lib",
+                  "fc_lite_hdl_top_lib",
+                  "fc_lite_hvl_top_lib",
+                  "fc_lite_env_lib",
+                  "fc_lite_tests_lib",
+                  "fc_lite_seq_lib",
                   "generated_collateral_lib",
                   @all_sip_rtl_liblist,
                   @all_sip_verif_liblist,
