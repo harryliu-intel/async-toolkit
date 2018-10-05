@@ -20,11 +20,13 @@ $onecfg{Facet} = {
         dut => [qw(
                     mby 
 
-        )]
+        )],
+        ace_model_name => [qw( fc fc_lite fc_effm fc_nlp dft_no_dut dft_rtl_dbg dft_rtl_quick dft_gls_dbg dft_gls_quick )],
     },
     defaults => {
         dut => "mby",
-    }
+        ace_model_name => "fc",
+    },
 };
 
 ######################################################################

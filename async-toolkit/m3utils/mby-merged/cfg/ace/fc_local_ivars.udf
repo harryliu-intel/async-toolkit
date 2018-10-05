@@ -58,6 +58,13 @@ EOF
                 level => 1,
             },
         },
+        -enable_sim_init => {
+            type => "BOOLEAN",
+            default => 0,
+            help => {
+                    desc => "enable sim_init flow"
+            },
+        },
         -enable_PrintHier_pli => { default => 1, },
         -enable_debussy       => { default => 1 },
 	-save_run_scripts        => { default => 1 },
@@ -82,6 +89,8 @@ EOF
           { default => "cfg/ace/mbyc_post_process.pp", },
          -enabled_post_process_modes => { default => "mby_test", },
         -debussy_opts => { default => ["-ssy -ssv -ssz"] },
+        -ignore_generated                   => { default => 1, },
+
         -sim_args     => {
             default => [
                 "-voptargs='+acc'",

@@ -63,6 +63,7 @@ print "MGM debug : @mbyMgmLibs\n";
             
             mby_mgp_rtl_lib => {
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mgp_rtl.hdl', ],
+               -vlog_opts => [ "+define+FIRST_SHELL", ],
             },
             
             mby_igr_rtl_lib => {
@@ -74,15 +75,23 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             
             mby_rx_ppe_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_rx_ppe_rtl.hdl', ],
             },
             
             mby_tx_ppe_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_tx_ppe_rtl.hdl', ],
             },
             
             mby_ppe_stm_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_rtl.hdl', ],
+               -vlog_opts => [ "+define+FIRST_SHELL", ],
+            },
+
+            mby_msh_rtl_lib => {
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_rtl.hdl', ],
             },
             
             gen_mby_regflow_lib => {
@@ -235,6 +244,12 @@ print "MGM debug : @mbyMgmLibs\n";
                                    ],
                -tag            => "nonsynth+nonlint",
             },
+            svt_amba_lib => {
+               -hdl_spec       => [ "cfg/ace/HDL/verif/svt_amba_env.hdl" ],
+               -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
             
             mby_common_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/mby_common_pkg.hdl" ],
@@ -317,12 +332,13 @@ print "MGM debug : @mbyMgmLibs\n";
                   #"gen_mby_wm_m3",
                   "mby_mc_ti_lib",  
                   "shdv_shared_lib",
+                  "ext_shared_lib",
                   "mby_mc_env_lib", 
                   "mby_mc_test_lib", 
                   "mby_mc_tb_top_np_nphy_lib", 
                   "mby_jasper_lib", 
                   "mby_wm_dpi_lib",
-                  "cdn_pcie_lib",
+                  #"cdn_pcie_lib",
                   "svt_axi_lib",
                   "svt_ahb_lib",
                   "mby_common_lib",
@@ -463,7 +479,7 @@ print "MGM debug : @mbyMgmLibs\n";
                    "shdv_shared_lib",
                    "svt_ahb_lib",
                    "mby_common_lib",
-                   "mby_rtl_lib",
+                   "mby_igr_rtl_lib",
                    "mby_ingress_tb_lib",
                    "mby_ingress_ti_lib",
                    "mby_ingress_env_lib",

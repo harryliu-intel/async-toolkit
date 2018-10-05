@@ -20,10 +20,24 @@
                -hdl_spec       => ["cfg/ace/HDL/verif/sla.hdl"],
                -tag            => "nonsynth",
                 },
-             shdv_shared_lib => {
+            shdv_shared_lib => {
                 -sub_libs      => [ "sla_lib",
                                     "shdv_lib",
                 ],
+            },
+            ext_shared_lib => {
+                -sub_libs      => [ "svt_amba_lib",
+                                    "cdn_pcie_lib",
+                ],
+                -dependent_libs => [ 'shdv_shared_lib',
+                ],                                                  
+                -tag            => "nonsynth",
+            },
+            vte_tr_uvm_lib => {
+                   -hdl_spec       => [ "cfg/ace/HDL/verif/vte_tr_uvm.hdl" ],
+                   -dependent_libs => [ 'shdv_shared_lib',
+                                   ],
+                   -tag            => "nonsynth+nonlint",
             },
             #############################################################
          }, #libs

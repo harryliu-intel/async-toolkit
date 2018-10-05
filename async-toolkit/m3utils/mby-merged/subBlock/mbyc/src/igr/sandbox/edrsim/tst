@@ -1,4 +1,43 @@
-
+  rst <= 1'b1;
 repeat(10)
   @(posedge cclk);
- 
+  
+  rst <= 1'b0;
+  grp_A_rx_data_valid <= '0;
+ repeat(10)
+  @(posedge cclk);
+  grp_A_rx_data_valid[7:0] <= '1;
+  grp_A_rx_data_w_ecc[0].data <= {2{32'hdead_beef}};
+  grp_A_rx_data_w_ecc[1].data <= {8{8'hff}};
+  grp_A_rx_data_w_ecc[2].data <= {8{8'h22}};
+  grp_A_rx_data_w_ecc[3].data <= {8{8'h33}};
+  grp_A_rx_data_w_ecc[4].data <= {8{8'h44}};
+  grp_A_rx_data_w_ecc[5].data <= {8{8'h55}};
+  grp_A_rx_data_w_ecc[6].data <= {8{8'h66}};
+  grp_A_rx_data_w_ecc[7].data <= {8{8'h77}};
+
+  grp_A_rx_metadata.eop <= 1'b1;
+  grp_A_rx_metadata.sop <= 1'b1;
+
+  grp_A_rx_metadata.eop_pos <= 3'd0;
+  grp_A_rx_metadata.sop_pos <= 3'd1;
+  repeat(1)
+    @(posedge cclk);
+  grp_A_rx_metadata <= '0;
+  grp_A_rx_metadata.eop <= 1'b1;
+  grp_A_rx_metadata.eop_pos <= 3'd1;
+  grp_A_rx_data_valid <= 8'b0000_0011;
+  grp_A_rx_data_w_ecc[0].data <= {8{8'hee}};
+  grp_A_rx_data_w_ecc[1].data <= {2{32'hdead_beef}};
+  grp_A_rx_data_w_ecc[2].data <= {8{8'h22}};
+  grp_A_rx_data_w_ecc[3].data <= {8{8'h33}};
+  grp_A_rx_data_w_ecc[4].data <= {8{8'h44}};
+  grp_A_rx_data_w_ecc[5].data <= {8{8'h55}};
+  grp_A_rx_data_w_ecc[6].data <= {8{8'h66}};
+  grp_A_rx_data_w_ecc[7].data <= {8{8'h77}};
+     repeat(1)
+  @(posedge cclk);
+  grp_A_rx_metadata <= '0;
+  grp_A_rx_data_valid <= 8'b0000_0000; 
+     repeat(10)
+  @(posedge cclk);

@@ -10,7 +10,7 @@ module TB_IGR_TOP
   // Clock.
   logic                               cclk;
   // Unsynchronized warm reset.
-  logic                               rst_n= '1;
+  logic                               rst= '0;
   
   logic [7:0]                       grp_A_rx_ecc = '0;
   logic [7:0]                       grp_B_rx_ecc = '0;
@@ -22,7 +22,7 @@ module TB_IGR_TOP
   logic [1:0]                  grp_C_rx_port_num = '0;
   logic [1:0]                  grp_D_rx_port_num = '0;
   
-  logic [7:0]                grp_A_rx_data_valid = '1;
+  logic [7:0]                grp_A_rx_data_valid = '0;
   logic [7:0]                grp_B_rx_data_valid = '0;
   logic [7:0]                grp_C_rx_data_valid = '0;
   logic [7:0]                grp_D_rx_data_valid = '0;
@@ -82,7 +82,7 @@ igr_top
   // Clock.
   .cclk(cclk),
   // Unsynchronized warm reset.
-  .rst_n(rst_n),
+  .rst(rst),
       
 // EPL I/O from MBY FS Dataplane Interface signals.
   //EPL0

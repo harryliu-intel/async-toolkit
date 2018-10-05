@@ -77,7 +77,7 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
     `slu_info(this.get_name(), ("Starting eth simple sequence..."))
     foreach(los_sequencers[i]) begin
       `slu_assert($cast(los_sequencers[i], 
-        el_ambiente.get_slu_sqcr().pick_sequencer($sformatf("tx%0d", i))),
+        el_ambiente.get_slu_sqcr().pick_sequencer($sformatf("eth_bfm_%0d_tx0", i))),
         ("Could not get a pointer to the sequencer%0d", i))
     end
     foreach(los_frames[i]) begin
@@ -90,7 +90,7 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
         begin
           repeat (20) begin
             `slu_assert(los_frames[auto_i].randomize() with {
-              bubble         inside {[7:13]};
+              bubble         inside {[0:13]};
               kind           inside {BASIC_FRAME,
                                      IPV4_FRAME,
                                      IPV6_FRAME};
@@ -129,6 +129,9 @@ class ingress_alive_test extends ingress_base_test;
     // TODO: Create config obj here.
   endfunction : build_phase
 
+  // Function: connect_phase
+  // sequences are defined for each of the run sub-phases.
+  // user data phase sequence is set to egress_eth_simple_seq.
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
     // TODO: Set data phase seq here.

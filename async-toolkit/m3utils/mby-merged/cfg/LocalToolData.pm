@@ -96,6 +96,7 @@ $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "
 $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_VER}                             = "&get_tool_version(jaspergold)/";
 $ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}                          = "&get_tool_version(jaspergold)";
 $ToolConfig_tools{runtools}{ENV}{DESIGNWARE_HOME}                            = "&get_tool_path(vipsvt)";
+$ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "$MODEL_ROOT/regression/&get_facet(dut)/tests";
 
 #####################################################
 #    Configure Environment variables for Nebulon    #
@@ -264,6 +265,10 @@ $ToolConfig_tools{jasper_utils} = {
   PATH    => "$ENV{RTL_PROJ_TOOLS}/jasper_utils/nhdk/&get_tool_version()",
   VERSION => "14.06.20",
 };
+
+# Added sim_init stage for automating FC collaterals generation
+$ToolConfig_tools{stage_bman_sim_init}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/sim_init.pm";
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}},  "&get_tool_var(stage_bman_sim_init, modules)");
 
 $ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
 
