@@ -63,7 +63,7 @@ $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_asse
 # <<< Hash table whose key defines a list of IP groups supported
 #################################################################
 my %sip_list = (
-    'boot'       => ['amba','axi','apb','chi'],
+    'boot'       => ['amba','axi','apb','chi', 'igr'],
 
 );
 # >>>
@@ -191,7 +191,7 @@ sub gen_liblist {
 # <<< SIP VERIF LIBRARIES
 #############################################################
 my %sip_verif_libs = (
-    'boot'               => [
+    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib"
                              ],
 );
 
