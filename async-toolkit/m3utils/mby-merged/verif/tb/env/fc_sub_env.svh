@@ -15,19 +15,6 @@
 //-- reset checker
 //fc_rst_sig_chk rst_sig_chk;
 
-
-`ifdef AXI_ENV_ENABLE
-  axi_integ_env axi_subenv;
-`endif
-
-`ifdef APB_ENV_ENABLE
-  apb_integ_env apb_subenv;
-`endif
-
-`ifdef CHI_ENV_ENABLE
-  chi_integ_env chi_subenv;
-`endif
-
 `ifdef VTE_IP3_UVM_ENV_ENABLE
   vte_ip3Uvm_integ_env vte_ip3_subenv;
 `endif
@@ -46,20 +33,6 @@
 // ------------------------------------------------------------------------
 function void build_sub_system_envs();
   //-- build sub-system envs
-
-  //-- AXI
-  `ifdef AXI_ENV_ENABLE
-      axi_subenv = axi_integ_env::type_id::create("axi_subenv", this);
-  `endif
-    
-  //-- APB
-  `ifdef APB_ENV_ENABLE
-      apb_subenv = apb_integ_env::type_id::create("apb_subenv", this);
-  `endif
-  //-- CHI
-  `ifdef CHI_ENV_ENABLE
-      chi_subenv = chi_integ_env::type_id::create("chi_subenv", this);
-  `endif
 
   `ifdef VTE_IP3_UVM_ENV_ENABLE
       vte_ip3_subenv = vte_ip3Uvm_integ_env::type_id::create("vte_ip3_subenv", this);
