@@ -451,7 +451,6 @@ EOF
                   @all_sip_verif_liblist,
                   @all_hip_liblist,
 
-                  "svt_ahb_lib",
                   "ext_shared_lib",
 #                  "cdn_pcie_lib",
                ],
@@ -526,8 +525,7 @@ EOF
                   "gen_mby_wm_m3",
                   "mby_test_lib",
                   "mby_wm_dpi_lib",
-                  "svt_ahb_lib",
-#                  "cdn_pcie_lib",
+                  "ext_shared_lib",
                   "mby_common_lib",
                ],
 
@@ -693,9 +691,7 @@ EOF
                   @all_sip_verif_liblist,
                   @all_hip_liblist,
 
-                  "svt_ahb_lib",
                   "ext_shared_lib",
-#                  "cdn_pcie_lib",
                ],
 
                # List of full path to PLI libraries to use
