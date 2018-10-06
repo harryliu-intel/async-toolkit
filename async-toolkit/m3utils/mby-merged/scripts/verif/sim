@@ -122,9 +122,9 @@ while($_=shift @ARGV ) {
     } elsif(/^-+verdi$/i) {
         $gui = '-sd verdi';
     } elsif(/^-+wav$/i) {
-        $wav = $wav . ' -vpd';
+        $wav = $wav . ' -vcd';
     } elsif(/^-+vpd$/i) {
-        $wav = $wav . ' -vpd';
+        $wav = $wav . ' -vcd';
     } elsif(/^-+fsdb$/i) {
         $wav = $wav . ' -fsdb';
     } elsif(/^-+mda$/i) {

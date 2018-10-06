@@ -34,7 +34,8 @@ source ${chassis_config_dir}/patches/mi_patches.tcl
 ##########################################################################################
 set gen_specs_dir "gen"
 set fp_stubs_dir ${gen_specs_dir}/stubs/floorplan
-set vp_stubs_dir ${gen_specs_dir}/stubs/verification
+#set vp_stubs_dir ${gen_specs_dir}/stubs/verification
+set vp_stubs_dir $::env(BUILD_TARGET_RELATIVE)/${env(DUT)}/collage/work/soc/gen/stubs/verification
 set nl_stubs_dir ${gen_specs_dir}/stubs/fp_netlist
 set nl_leaf_stubs_dir ${gen_specs_dir}/stubs/fp_leaf_netlist
 set gen_rtl_dir  ${gen_specs_dir}/source/rtl
