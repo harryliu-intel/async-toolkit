@@ -213,6 +213,7 @@ sub get_sip_verif_libs {
 my %sip_verif_vlog_opts = (
     'boot'               => [ 
                               "+define+PMU_ENV_ENABLE",
+                              "+define+IGR_ENV_ENABLE",
                              ],
 );
 

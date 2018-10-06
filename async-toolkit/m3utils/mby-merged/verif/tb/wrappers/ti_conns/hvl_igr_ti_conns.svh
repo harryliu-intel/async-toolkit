@@ -11,8 +11,47 @@
 //                 fc_64 - 16 igr TI's (8 MPP's)
 //------------------------------------------------------------------------------
 
-//`ifdef IGR_ENV_ENABLE
+`ifdef IGR_ENV_ENABLE
 
+    //Ingress env interface
+    ingress_env_if ingress_if[`NUM_IGR]();   
+
+    //Client Data interface. This is the interface between the ETH MAC and ingress.
+    //4 EPL + 1 for VP
+    //IGR0
+    mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_0[`NUM_IGR]();
+    mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_0[`NUM_IGR]();
+    mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_1[`NUM_IGR]();
+    mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_1[`NUM_IGR]();
+    mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_2[`NUM_IGR]();
+    mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_2[`NUM_IGR]();
+    mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_3[`NUM_IGR]();
+    mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_3[`NUM_IGR]();
+    mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_4[`NUM_IGR]();
+    mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_4[`NUM_IGR]();
+
+    genvar i;
+    generate
+        for (i=0; i< `NUM_IGR; i++) begin :generate_igr_ti
+            ingress_ti_high #()
+                u_ingress_ti[i] (
+                    .ingress_if          (ingress_if[i])
+                   ,.eth_bfm_tx_intf_0   (eth_bfm_tx_intf_igr_0[i])
+                   ,.eth_bfm_rx_intf_0   (eth_bfm_rx_intf_igr_0[i])
+                   ,.eth_bfm_tx_intf_1   (eth_bfm_tx_intf_igr_1[i])
+                   ,.eth_bfm_rx_intf_1   (eth_bfm_rx_intf_igr_1[i])
+                   ,.eth_bfm_tx_intf_2   (eth_bfm_tx_intf_igr_2[i])
+                   ,.eth_bfm_rx_intf_2   (eth_bfm_rx_intf_igr_2[i])
+                   ,.eth_bfm_tx_intf_3   (eth_bfm_tx_intf_igr_3[i])
+                   ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_igr_3[i])
+                   ,.eth_bfm_tx_intf_4   (eth_bfm_tx_intf_igr_4[i])
+                   ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_igr_4[i])
+                  );
+        end
+    endgenerate
+
+
+/*
     //Ingress env interface
     ingress_env_if ingress_if_0();   
     ingress_env_if ingress_if_1();   
@@ -474,7 +513,8 @@
                        ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_igr15_4)
                       );
     `endif
-//`endif
+*/
+`endif
 
 // <<< VIM SETTINGS
 // vim: ts=4 et
