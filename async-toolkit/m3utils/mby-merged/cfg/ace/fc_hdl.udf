@@ -480,15 +480,15 @@ EOF
                   -post_process_pattern_file => { default => "cfg/ace/fc_postsim.pp" },
 
                   mby => {
-#                       -user_do_files_vcs => [
-#                           "cfg/vcs/fc.do",
-#                       ],
-#                       -vcd_do_files_vcs => [
-#                           "cfg/vcs/fc_vpd.do",
-#                       ],
-#                       -fsdb_do_files_vcs => [
-#                           "cfg/vcs/fc_fsdb.do",
-#                       ],
+                       -user_do_files_vcs => [
+                           "cfg/vcs/fc.do",
+                       ],
+                       -vcd_do_files_vcs => [
+                           "cfg/vcs/fc_vpd.do",
+                       ],
+                       -fsdb_do_files_vcs => [
+                           "cfg/vcs/fc_fsdb.do",
+                       ],
                        -test_run_copy_files => [
                        ],
                        -name_of_test_plusarg => "UVM_TESTNAME",
