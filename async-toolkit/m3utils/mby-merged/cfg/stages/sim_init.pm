@@ -853,7 +853,8 @@ sub run {
     my $ip_stub_lib = "soc_ip_stub_lib";
     my @model_list = @{$self->get_clo()->get_option( -flag => '-this_model', -scope => 'NON_SCOPED' )};
 
-
+    my $gen_dir = $self->{scoped_vars}->{build_target_static}. "/verif/gen";
+    &RTL_mkDir($gen_dir) if(not -e $gen_dir);
 
     foreach my $this_model (@model_list) {
       if (grep {$_ eq $this_model} @allowed_model_list) {
@@ -864,11 +865,8 @@ sub run {
       
       #my $rel_path = $self->{scoped_vars}->{build_target_static}. "/verif/gen";
       #$rel_path =~ s/$ENV{MODEL_ROOT}\/?//;
-      my $default_liblist_inc_file = $self->{scoped_vars}->{build_target_static}. "/verif/gen" . "/" .$this_model."_config_include.svh";;
+      my $default_liblist_inc_file = $gen_dir . "/" .$this_model."_config_include.svh";;
       
-      my $gen_dir = $self->{scoped_vars}->{build_target_static}. "/verif/gen";
-      &RTL_mkDir($gen_dir) if(not -e $gen_dir);
-
       RTL_cd($ENV{MODEL_ROOT});
       
       write_file($default_liblist_inc_file, "    default liblist ");
