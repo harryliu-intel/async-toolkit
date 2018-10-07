@@ -37,7 +37,9 @@
       import uvm_pkg::*;
       import svt_ahb_uvm_pkg::*;
         
+      // kl - added to fulfill the SVT macros consumed by svt_axi_bfm_pkg
       import svt_amba_common_uvm_pkg::*;
+      `include "svt_ahb_common_defines.svi"
 
        `include "svt_ahb_bfm_defines.sv"
        `include "svt_uvm_util.svi"
