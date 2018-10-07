@@ -68,8 +68,14 @@ package fc_env_pkg;
 
     // VTE-UVM-TR
     `ifdef VTE_IP3_UVM_ENV_ENABLE
-    `include "vte_ip3_uvm_integ_env.svh"
+        `include "vte_ip3_uvm_integ_env.svh"
     `endif // VTE_IP3_UVM_ENV_ENABLE
+
+    // IGR 
+    //`ifdef IGR_ENV_ENABLE
+        import ingress_env_pkg::*;
+        `include "igr_integ_env.svh"
+    //`endif // IGR_ENV_ENABLE
 
     // AM, AG, SM classes
     //`include "fc_sm_am_env.svh"

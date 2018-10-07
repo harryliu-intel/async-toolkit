@@ -19,6 +19,10 @@
   vte_ip3Uvm_integ_env vte_ip3_subenv;
 `endif
 
+//`ifdef IGR_ENV_ENABLE
+  igr_integ_env igr_subenv;
+//`endif
+
 //-----------------------------------------------------------------------
 
 //-- build reset checker
@@ -38,6 +42,9 @@ function void build_sub_system_envs();
       vte_ip3_subenv = vte_ip3Uvm_integ_env::type_id::create("vte_ip3_subenv", this);
   `endif
 
+  //`ifdef IGR_ENV_ENABLE
+      igr_subenv = igr_integ_env::type_id::create("igr_subenv", this);
+  //`endif
 endfunction: build_sub_system_envs
 
 `endif
