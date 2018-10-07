@@ -518,6 +518,7 @@ EOF
                   "mby_regflow_lib",
                   "mby_ti_lib",
                   "shdv_shared_lib",
+                  "svt_ahb_lib",
                   "mby_env_lib",
                   "mby_jasper_lib",
                   "gen_mby_regflow_lib",
