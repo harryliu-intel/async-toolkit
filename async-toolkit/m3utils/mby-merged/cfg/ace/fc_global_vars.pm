@@ -58,6 +58,10 @@ $CTECH_EXP_LIB_NAME = ($VT_TYPE eq "") ?  "CTECH_EXP_v_rtl_lib" : "CTECH_EXP_p12
 $IP_STUB_LIB = "soc_ip_stub_lib";
 $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_assemble_upf_lib" : "soc_collage_assemble_lib";
 
+# for Cadance PCIe BFMs
+my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+
+
 #################################################################
 # Section A:
 # <<< Hash table whose key defines a list of IP groups supported
@@ -212,6 +216,7 @@ sub get_sip_verif_libs {
 my %sip_verif_vlog_opts = (
     'boot'               => [ 
                               "+define+PMU_ENV_ENABLE",
+                              "+define+CDN_PCIE_ENV_ENABLE",
                              ],
 );
 
@@ -267,10 +272,17 @@ sub gen_hip_liblist {
 ## <<< SIP specific ELAB OPTS
 ##############################################################
 my %sip_elab_opts = (
-#   'pcie'              => [
-#                              # required .so file for pcie_bfm
-#                              ("-iosf_pri_enable" ~~ @ARGV) ? "" : &ToolConfig::ToolConfig_get_tool_path('ipconfig/pcie_bfm_sv')."/results/vcs_lib/pcie_bfm_sv_lib/pcie_bfm_sv/Linux-SuSE/x86-64/libpcie.so",
-#                          ],                           
+   'cdn_pcie_lib' => [
+                        "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
+                        "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
+                        "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
+                        "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
+                        "-P ${DENALI}/verilog/cdnsv.tab",
+                        "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",
+                        "${DENALI}/ddvapi/sv/denaliMemSvIf.c",
+                        "${DENALI}/ddvapi/sv/denaliPcieSvIf.c",
+                     ],
+		
 );
 
 sub get_sip_elab_opts {
