@@ -1,7 +1,7 @@
 # vim: noai : ts=4 : sw=4 : ft=perl
 
-my $denali_src = &ToolConfig::get_tool_env_var( 'vipcat', 'DENALI' );
-my $vrst_src   = &ToolConfig::get_tool_env_var( 'vipcat', 'VRST_HOME' );
+my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+
 
 $hdl_spec = {
 
@@ -12,17 +12,17 @@ $hdl_spec = {
 		"$ENV{XVM_HOME}/src/macros",
 		"$ENV{SAOLA_HOME}/verilog",
 		"$ENV{SAOLA_HOME}/verilog_uvm",
-		"$denali_src/ddvapi/sv/",
-		#"$denali_src/ddvapi/sv/ovm/pcie",
-		"$denali_src/ddvapi/sv/uvm/pcie",
+		"$DENALI/ddvapi/sv/",
+		#"$DENALI/ddvapi/sv/ovm/pcie",
+		"$DENALI/ddvapi/sv/uvm/pcie",
 		"verif/lib/cdn_pcie_bfm",
 		"verif/lib/cdn_pcie_bfm/cdn_pcie",
 	],
 
 	-vlog_files => [
-		"$denali_src/ddvapi/sv/denaliMem.sv",
-		"$denali_src/ddvapi/sv/denaliPcie.sv",
-		"$denali_src/ddvapi/sv/uvm/pcie/cdnPcieUvmTop.sv",
+		"$DENALI/ddvapi/sv/denaliMem.sv",
+		"$DENALI/ddvapi/sv/denaliPcie.sv",
+		"$DENALI/ddvapi/sv/uvm/pcie/cdnPcieUvmTop.sv",
 		"verif/lib/cdn_pcie_bfm/cdn_pcie_pkg.sv",
 		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon.sv",
 		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm.sv",
