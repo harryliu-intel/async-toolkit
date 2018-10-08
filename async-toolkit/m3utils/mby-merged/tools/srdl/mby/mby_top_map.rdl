@@ -56,8 +56,8 @@ addrmap mby_freepointer_top_map {
 addrmap mby_mgp_top_map {
   name = "mby_mgp_top_map";
   desc = "MeGaPort (1.6T)";
-  mby_ppe_rx_top_map            rx_ppe;
-  mby_rx_voq_map                rx_voq;
+  mby_ppe_rx_top_map            rx_ppe @0x00000;
+  mby_rx_voq_map                rx_voq @0x10000;
   mby_rx_pb_map                 rx_pb;
   mby_ppe_tx_top_map            tx_ppe;
   mby_tx_voq_map                tx_voq;
