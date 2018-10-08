@@ -330,6 +330,11 @@ foreach our $ace_ip_to_add (@ace_add_ips) {
                         populate_ip_verif_attr("boot");
         }
 
+        case ["mp0"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+NO_SERDES",);
+
+        }
+
         # Integrates all IPs
         # add new arrays here as well
         case ["all" , "no_stub"] {
