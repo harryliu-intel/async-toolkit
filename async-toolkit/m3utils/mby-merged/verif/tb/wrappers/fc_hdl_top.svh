@@ -14,7 +14,6 @@ module fc_hdl_top #(
 );
 
 `include "ti_macro_defines.svh"
-`include "hdl_ti_conns.svh"
 
 FcDutIf fctop_dut_if();
 
@@ -25,18 +24,18 @@ FcDutIf fctop_dut_if();
 `endif
 
 // AXI DUT Instantiation
-`ifdef AXI_ENV_ENABLE
-`include "axi_svt_dut_sv_wrapper.svh"
-`endif
+//`ifdef AXI_ENV_ENABLE
+//`include "axi_svt_dut_sv_wrapper.svh"
+//`endif
 
 // APB DUT Instantiation
-`ifdef APB_ENV_ENABLE
-`include "apb_svt_dut_sv_wrapper.svh"
-`endif
+//`ifdef APB_ENV_ENABLE
+//`include "apb_svt_dut_sv_wrapper.svh"
+//`endif
 
 // CHI DUT Instantiation
-`ifdef CHI_ENV_ENABLE
-`include "chi_svt_dut_sv_wrapper.svh"
-`endif
+//`ifdef CHI_ENV_ENABLE
+//`include "chi_svt_dut_sv_wrapper.svh"
+//`endif
 
 endmodule

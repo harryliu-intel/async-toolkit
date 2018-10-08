@@ -33,19 +33,29 @@ module igr_epl_shim_seg
 (
   input logic cclk,
   input logic rst,
-  input data64_w_ecc_t [0:7]  i_rx_data,
-  input epl_md_t               i_seg_md,
-  input shimfsel_t            i_seg_sel,
-  input logic [7:0]            i_seg_we,
+  input data64_w_ecc_t [0:7]    i_rx_data,
+  input epl_ts_t                  i_rx_ts,
+  input epl_md_t                 i_seg_md,
+  input logic                 i_seg_sop_e,
+  input shimfsel_t              i_seg_sel,
+  input logic [7:0]              i_seg_we,
+  input logic                    i_seg_e,
+  output shim_ts_md_t          o_seg_ts_md,
   output data64_w_ecc_t [0:7]  o_seg_data
 );
 
   data64_w_ecc_t [0:7]    rx_data_seg;
-  data64_w_ecc_t [0:7]  q_rx_data_seg;
+  data64_w_ecc_t [0:7]  s4q_rx_data_seg;
   data64_w_ecc_t             data_pad;
+  shim_ts_md_t             s4q_seg_ts_md;
   
-  assign o_seg_data = q_rx_data_seg;  
+  logic       seg_sop;
+  logic [1:0] seg_sop_err;
+  logic [2:0] seg_sop_tc;
+  epl_ts_t    seg_sop_ts;
   
+  assign o_seg_data = s4q_rx_data_seg;  
+  assign o_seg_ts_md = s4q_seg_ts_md;
   assign data_pad = {8'h06, 64'h0};  //when sel=8 then write data_pad;
   
   
@@ -119,9 +129,50 @@ module igr_epl_shim_seg
   genvar g_i;
     for(g_i=0; g_i<8; g_i++) begin: gen_shim_seg_q
       always_ff @(posedge cclk)
-        q_rx_data_seg[g_i] <= (rst)? data_pad: (i_seg_we[g_i])? rx_data_seg[g_i]: q_rx_data_seg[g_i]; 
+        s4q_rx_data_seg[g_i] <= (rst)? data_pad: (i_seg_we[g_i])? rx_data_seg[g_i]: s4q_rx_data_seg[g_i]; 
     end //for
   endgenerate
+  
+  
+//metadata
+//Unaligned segments can have eop sop in the same unaligned segment
+//certain md fields are only valid with sop
+//seg_sop_e will capture those fields when a sop follows an eop 
+//in that case the sop put into another segment and that will be a partial segment
+//until the next valid unaligned data segment arrives to complete the partial sop segment
+
+  always_ff @(posedge cclk) begin
+    if(rst || i_seg_e) begin
+      seg_sop     <= '0;
+      seg_sop_err <= '0;
+      seg_sop_tc  <= '0;
+      seg_sop_ts  <= '0;
+    end 
+    else if(i_seg_sop_e) begin
+      seg_sop     <= i_seg_md.sop;
+      seg_sop_err <= i_seg_md.error;
+      seg_sop_tc  <= i_seg_md.tc;
+      seg_sop_ts  <= i_rx_ts;
+    end
+  end
+  
+  always_ff @(posedge cclk) begin
+    if(rst) s4q_seg_ts_md <= '0;
+    else if(i_seg_e) begin
+       s4q_seg_ts_md.md.multi      <= i_seg_md.multi;
+       s4q_seg_ts_md.md.fast       <= i_seg_md.fast;
+       s4q_seg_ts_md.md.fcs_hint   <= i_seg_md.fcs_hint;
+       s4q_seg_ts_md.md.dei        <= i_seg_md.dei;
+       s4q_seg_ts_md.md.error[1:0] <= seg_sop_err[1:0] | i_seg_md.error[1:0];
+       s4q_seg_ts_md.md.eop        <= i_seg_md.eop;
+       s4q_seg_ts_md.md.eop_pos    <= i_seg_md.eop_pos;
+       s4q_seg_ts_md.md.byte_pos   <= i_seg_md.byte_pos;
+       s4q_seg_ts_md.md.sop        <= (seg_sop)? seg_sop: i_seg_md.sop;
+       s4q_seg_ts_md.md.sop_pos    <= i_seg_md.sop_pos;  //should be 0
+       s4q_seg_ts_md.md.tc         <= (seg_sop)? seg_sop_tc: i_seg_md.tc;       
+       s4q_seg_ts_md.ts            <= (seg_sop)? seg_sop_ts: i_rx_ts;    
+    end
+  end
   
     
 
