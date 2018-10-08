@@ -333,9 +333,17 @@ foreach our $ace_ip_to_add (@ace_add_ips) {
 
         case ["mp0"] {
                         push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+NO_SERDES",);
-
         }
-
+        case ["mp1"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8",);
+        }
+        case ["mp2"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+NO_SERDES",);
+        }
+        case ["mp3"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2",);
+        }
+  
         # Integrates all IPs
         # add new arrays here as well
         case ["all" , "no_stub"] {
