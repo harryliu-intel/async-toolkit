@@ -33,25 +33,33 @@ module igr_epl_shim_segs
 (
   input logic cclk,
   input logic rst,  //taken from HLP active low for MBY?
-  input data64_w_ecc_t [0:7]  i_rx_data,
-  input epl_md_t              i_seg0_md,
-  input epl_md_t              i_seg1_md,
-  input epl_md_t              i_seg2_md,
-  input shimfsel_t           i_seg0_sel,
-  input shimfsel_t           i_seg1_sel,
-  input shimfsel_t           i_seg2_sel,
-  input logic [7:0]           i_seg0_we,
-  input logic [7:0]           i_seg1_we,
-  input logic [7:0]           i_seg2_we,
-  input logic [2:0]             i_seg_e,  //q3 dly
-  output shim_pb_data_t  o_shim_pb_data,
-  output logic [2:0]          o_shim_pb_v
+  input data64_w_ecc_t [0:7]   i_rx_data,
+  input epl_ts_t                 i_rx_ts,
+  input epl_md_t               i_seg0_md,
+  input epl_md_t               i_seg1_md,
+  input epl_md_t               i_seg2_md,
+  input logic               i_seg0_sop_e,
+  input logic               i_seg1_sop_e,
+  input logic               i_seg2_sop_e,
+  input shimfsel_t            i_seg0_sel,
+  input shimfsel_t            i_seg1_sel,
+  input shimfsel_t            i_seg2_sel,
+  input logic [7:0]            i_seg0_we,
+  input logic [7:0]            i_seg1_we,
+  input logic [7:0]            i_seg2_we,
+  input logic [2:0]              i_seg_e,  //q3 dly
+  output shim_pb_data_t   o_shim_pb_data,
+  output shim_pb_md_t       o_shim_pb_md,
+  output logic [2:0]         o_shim_pb_v
 );
 
 
   data64_w_ecc_t [0:7] seg0_data;
   data64_w_ecc_t [0:7] seg1_data;
   data64_w_ecc_t [0:7] seg2_data;
+  shim_ts_md_t         seg_ts_md0;
+  shim_ts_md_t         seg_ts_md1;
+  shim_ts_md_t         seg_ts_md2;
 
 // 2 segemts may have to write at the same time but only one segment write to PB per cycle
 // counter will accumulate extra writes and drain accumulated writes until zero.
@@ -64,21 +72,28 @@ module igr_epl_shim_segs
   assign o_shim_pb_data.seg2 = seg2_data;
   assign o_shim_pb_data.seg1 = seg1_data;
   assign o_shim_pb_data.seg0 = seg0_data;
+  assign o_shim_pb_md.md0    = seg_ts_md0;
+  assign o_shim_pb_md.md1    = seg_ts_md1;
+  assign o_shim_pb_md.md2    = seg_ts_md2;
+
   assign o_shim_pb_v         = s4q_seg_pb_e;
 
 //outputs end
  
-    
   always_ff @(posedge cclk) s4q_seg_pb_e <= i_seg_e;  
-  
+
   
   igr_epl_shim_seg seg0(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(i_rx_data),
+    .i_rx_ts(i_rx_ts),
     .i_seg_md(i_seg0_md),
+    .i_seg_sop_e(i_seg0_sop_e),
     .i_seg_sel(i_seg0_sel),
     .i_seg_we(i_seg0_we),
+    .i_seg_e(i_seg_e[0]),
+    .o_seg_ts_md(seg_ts_md0),
     .o_seg_data(seg0_data)  
   );
 
@@ -86,9 +101,13 @@ module igr_epl_shim_segs
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(i_rx_data),
+    .i_rx_ts(i_rx_ts),
     .i_seg_md(i_seg1_md),
+    .i_seg_sop_e(i_seg1_sop_e),    
     .i_seg_sel(i_seg1_sel),
     .i_seg_we(i_seg1_we),
+    .i_seg_e(i_seg_e[1]),
+    .o_seg_ts_md(seg_ts_md1),
     .o_seg_data(seg1_data)    
   );  
 
@@ -97,8 +116,12 @@ module igr_epl_shim_segs
     .rst(rst),
     .i_rx_data(i_rx_data),
     .i_seg_md(i_seg2_md),
+    .i_rx_ts(i_rx_ts),
+    .i_seg_sop_e(i_seg2_sop_e),
     .i_seg_sel(i_seg2_sel),
     .i_seg_we(i_seg2_we),
+    .i_seg_e(i_seg_e[2]),
+    .o_seg_ts_md(seg_ts_md2),
     .o_seg_data(seg2_data)    
   );  
 

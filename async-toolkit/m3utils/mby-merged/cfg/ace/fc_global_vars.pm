@@ -63,7 +63,8 @@ $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_asse
 # <<< Hash table whose key defines a list of IP groups supported
 #################################################################
 my %sip_list = (
-    'boot'       => ['amba','axi','apb','chi'],
+    #'boot'       => ['amba','axi','apb','chi', 'igr'],
+    'boot'       => ['igr'],
 
 );
 # >>>
@@ -191,7 +192,7 @@ sub gen_liblist {
 # <<< SIP VERIF LIBRARIES
 #############################################################
 my %sip_verif_libs = (
-    'boot'               => [
+    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib"
                              ],
 );
 
@@ -212,6 +213,7 @@ sub get_sip_verif_libs {
 my %sip_verif_vlog_opts = (
     'boot'               => [ 
                               "+define+PMU_ENV_ENABLE",
+                              "+define+IGR_ENV_ENABLE",
                              ],
 );
 
@@ -329,6 +331,19 @@ foreach our $ace_ip_to_add (@ace_add_ips) {
                         populate_ip_verif_attr("boot");
         }
 
+        case ["mp0"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+NO_SERDES",);
+        }
+        case ["mp1"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8",);
+        }
+        case ["mp2"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+NO_SERDES",);
+        }
+        case ["mp3"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2",);
+        }
+  
         # Integrates all IPs
         # add new arrays here as well
         case ["all" , "no_stub"] {
