@@ -865,7 +865,8 @@ sub run {
       
       #my $rel_path = $self->{scoped_vars}->{build_target_static}. "/verif/gen";
       #$rel_path =~ s/$ENV{MODEL_ROOT}\/?//;
-      my $default_liblist_inc_file = $gen_dir . "/" .$this_model."_config_include.svh";;
+      # TBD klee18 my $default_liblist_inc_file = $gen_dir . "/" .$this_model."_config_include.svh";;
+      my $default_liblist_inc_file = $gen_dir . "/fc_config_include.svh";;
       
       RTL_cd($ENV{MODEL_ROOT});
       
