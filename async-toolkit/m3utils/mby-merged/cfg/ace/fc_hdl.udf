@@ -628,121 +628,12 @@ EOF
                },
             },
 
-            fc_lite => {
-               top         => 'fc_lite_hdl_top_lib.fc_lite_cfg fc_lite_hvl_top_lib.fc_hvl_top_cfg',
-#               jg_elab_top => 'mby_jasper_lib.mby_top',
-
-               enable_congruency_elab  =>  $mby_enable_congruency_elab,
-               enable_xprop_elab       =>  $mby_enable_xprop_elab,
-               enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
-
-               use => \@models_use,
-
-               elab_opts => [
-                   "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
-                   "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                   "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
-                    @all_sip_elab_opts,
-               ],
-
-               top_language => 'SystemVerilog',
-
-               power_intent => {
-                      power_top => 'fc_hdl_top/dut',
-                      ##[RG]
-                      upf_files => ['src/gen/upf/fc_par/mst.sim.upf',],
-                      ## Chaning UPF to hacked file for temporary debug and fixes
-                      #upf_files => ['src/upfGen/temp_HACK/fc_nlp_upf/mst.sim.upf',],
-                      },
-
-               pli_libs => [
-                   "-hier_rtl_dumper",
-               ],
-
-               libs => [
-                  "sva_lib",
-                  "shdv_shared_lib",
-                  "ext_shared_lib",
-                  "mby_wm_dpi_lib",
-                  "mby_common_lib",
-                  "vte_tr_uvm_lib",
-
-# Per Subodh suggestion to temporary disable WM - WW40.2 2018
-#                  "gen_mby_regflow_lib",
-#                  "gen_mby_wm",
-#                  "gen_mby_wm_m3",
-#                  "mby_mgm_lib",
-                  $fc_global_vars::COLLAGE_LIB,
-                  "mby_tx_ppe_rtl_lib",
-                  "mby_ppe_stm_rtl_lib",
-                  "mby_igr_rtl_lib",
-                  "mby_egr_rtl_lib",
-                  "mby_mgp_rtl_lib",
-                  "mby_rx_ppe_rtl_lib",
-                  "mby_mpp_rtl_lib",
-             
-                  (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-                  $fc_global_vars::IP_STUB_LIB,
-                  "fc_lite_hdl_top_lib",
-                  "fc_lite_hvl_top_lib",
-                  "fc_lite_env_lib",
-                  "fc_lite_tests_lib",
-                  "fc_lite_seq_lib",
-                  "generated_collateral_lib",
-                  @all_sip_rtl_liblist,
-                  @all_sip_verif_liblist,
-                  @all_hip_liblist,
-
-                  "ext_shared_lib",
-               ],
-
-               # List of full path to PLI libraries to use
-               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
-
-               lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
-
-               # Specify a set of test case specific options (must be valid test options)
-               testcase_globals => {
-                  -test_vlog_opts    => [ -sverilog ],
-                  -test_vlog_files   => [],
-                  -test_vlog_incdirs => [
-                     "verif/mby",
-                     "verif/mby/fal",
-                     "verif/mby/ral",
-                     "verif/mby/env",
-                     "$ENV{OVM_HOME}/src",
-                     "$ENV{OVM_HOME}/src",
-                     "$ENV{UVM_HOME}/src",
-                     "$ENV{SAOLA_HOME}/verilog",
-                     "$ENV{SAOLA_HOME}/verilog_uvm",
-                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
-                  ],
-                  #TODO -enabled_post_process_modes => "mby_test, mplex_np_nphy", 
-                  -post_process_pattern_file => { default => "cfg/ace/fc_postsim.pp" },
-
-                  mby => {
-#                       -user_do_files_vcs => [
-#                           "cfg/vcs/fc.do",
-#                       ],
-#                       -vcd_do_files_vcs => [
-#                           "cfg/vcs/fc_vpd.do",
-#                       ],
-#                       -fsdb_do_files_vcs => [
-#                           "cfg/vcs/fc_fsdb.do",
-#                       ],
-                       -test_run_copy_files => [
-                       ],
-                       -name_of_test_plusarg => "UVM_TESTNAME",
-                   },
-               },
-
-               power_intent => {
-                  power_top => 'mby_tb/mby_top',
-                  upf_files => ['tools/upf/mby_upf.upf'],
-               },
-            },
+            # fc_lite => $audf{HDLSpec}{mby}{models}{fc};
 
          }, # Models
       },
    },
 );
+
+$audf{HDLSpec}{mby}{models}{fc_lite} = $audf{HDLSpec}{mby}{models}{fc};
+
