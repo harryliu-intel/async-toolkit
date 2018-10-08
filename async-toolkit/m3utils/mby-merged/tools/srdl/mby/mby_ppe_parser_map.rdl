@@ -1,3 +1,7 @@
+`include "lib_udp.rdl"
+`include "mby_ip.rdl"
+
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 

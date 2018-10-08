@@ -25,6 +25,8 @@ SHELL_CTL_RDL   := $(MODEL_ROOT)/results/mgm/gmf/mby_shell_ctl_mgmt.rdl
 # IP_INCLUDE_ARG += $(LSM_ROOT)/tools/srdl/reg
 
 #PREREQS := $(NOC_RDL)
+UVM_RAL_BLOCKS := mby_ppe_parser_map 
+
 include $(MODEL_ROOT)/tools/srdl/Makefile
 
 # genrdl: $(SHELL_CTL_RDL)
