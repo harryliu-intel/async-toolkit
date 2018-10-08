@@ -20,9 +20,6 @@ class fc_tb_env extends slu_tb_env;
     // static protected sla_ral_env ral;
     //fc_im_env tb_im;
 
-    // Testbench Components
-    //fc_mem_access fcMemAccess;
-
     // File Name manager (contains all the settings for the File Names)
     protected fc_file_names _fileNames;
 
@@ -33,26 +30,9 @@ class fc_tb_env extends slu_tb_env;
     protected virtual sig_if  fc_sig_if;
     protected virtual FcDutIf dut_if;
 
-    //EBG Fuse env
-//    FcFuseEnv                  fuse_env;
-//
     // RAL
     fc_uvm_reg_map regModel;
   
-    `ifdef AXI_ENV_ENABLE
-            uvm_sequencer_base            axi_seqr;
-    `endif
-    `ifdef APB_ENV_ENABLE
-            uvm_sequencer_base            apb_master_seqr;
-    `endif
-    `ifdef CHI_ENV_ENABLE
-            uvm_sequencer_base            chi_req_node_seqr;
-    `endif
-
-    //Semaphore
-    semaphore  sem_p_ral_adaptor;
-    semaphore  sem_sb_ral_adaptor;
-
     // ------------------------------------------------------------------------
     // Debug output files
     // ------------------------------------------------------------------------
@@ -71,14 +51,6 @@ class fc_tb_env extends slu_tb_env;
 
         super.new(n, p);
 
-        //repServ = new();
-        //globserv = new();
-        //globserv.set_server(repServ);
-        //repServ.set_max_quit_count(100);
-
-        sem_p_ral_adaptor = new(1);
-        sem_sb_ral_adaptor = new(1);
-
         if (_tb_env == null)
             _tb_env = this;
 
@@ -86,11 +58,6 @@ class fc_tb_env extends slu_tb_env;
             ral_type  = "fc_ral_env";
             sm_type   = "fc_sm_env";
             im_type   = "fc_im_env";
-            //ssn fuse_type = "FcFuseEnv";
-
-        //    if($test$plusargs("FULL_HVM") || $test$plusargs("DFX_HVM_PREAMBLE")) begin
-        //        fuse_type = "DftsFuseEnv";
-        //    end      
         end      
 
     endfunction : new
@@ -220,61 +187,7 @@ class fc_tb_env extends slu_tb_env;
     // ------------------------------------------------------------------------
 
     function void fetchVintf();
-        /*
-        slu_vif_container #(virtual sig_if)  fcTbWrapper;
-        //slu_vif_container #(virtual FcDutIf) fcDutWrapper;
-        TbUtilsPkg::VintfBundle fc_vintfBundle;
-        uvm_pkg::uvm_object tmpObj;
-        bit rc;
-
-        rc = uvm_config_object::get(this, "",FC::VINTF_BUNDLE_NAME, tmpObj);
-        `slu_assert(rc, ("No interface wrapper is found in the cfg db"));
-
-        // Get Virtual Interface Wrapper class
-        rc = $cast(fc_vintfBundle, tmpObj);
-        `slu_assert(rc, ("Type mismatch when casting fcTbWrapper"));
-
-        rc = $cast(fcTbWrapper, fc_vintfBundle.getData(FC::FCSIGIFNAME));
-        `slu_assert(rc, ("Interface wrapper is of incorrect type for %s", FC::FCSIGIFNAME))
-
-        //rc = $cast(fcDutWrapper, fc_vintfBundle.getData(FC::FCDUTIFNAME));
-        //`slu_assert(rc, ("Interface wrapper is of incorrect type for %s", FC::FCSIGIFNAME))
-
-
-        // Get Fc signal interface
-        fc_sig_if = fcTbWrapper.get_v_if();
-        dut_if = fcDutWrapper.get_v_if();
-        */
-
         uvm_config_db#(virtual sig_if)::get(this, "", "sig_if", fc_sig_if);
-
-
-        update_st_dis_ips();
-    endfunction
-
-    // ------------------------------------------------------------------------
-    // Update the flags in sig_if with corresponding ip enables
-    // ------------------------------------------------------------------------
-    virtual function void update_st_dis_ips();
-        /*
-        FC:MSTIp_t ip_e;
-        int ip_cnt = ip_e.num();
-        int ip_enable_sz;
-        // ------------------------------------------------------------------------
-        // As there is a dependency between the total IP count and enum, have a check
-        // It is better for the simulation to fail here than at run time.
-        // ------------------------------------------------------------------------
-        ip_enable_sz = $size(fc_sig_if.ip_enable);
-        if (ip_cnt > ip_enable_sz) begin
-            `uvm_fatal(get_full_name(),$sformatf("ip_enable in fc_sig_if is sized at %02d, while number of IPs specified in FC is %02d. Resize ip_enable bus",ip_enable_sz,ip_cnt));
-        end      
-        ip_e = ip_e.first();
-        do begin
-            fc_sig_if.ip_enable[ip_e] = fcCfgObj.fcChipCfgObj.fcIpCfgObj[ip_e].en;
-            `uvm_info(get_type_name(), $psprintf("ip_e = %s, ip_enable = %b", ip_e.name, fc_sig_if.ip_enable[ip_e]), UVM_DEBUG)
-            ip_e = ip_e.next();
-        end       while (ip_e != ip_e.first);
-        */
     endfunction
 
     // ------------------------------------------------------------------------
@@ -286,134 +199,11 @@ class fc_tb_env extends slu_tb_env;
 
       super.connect_phase(phase);
 
-        //`slu_assert($cast(tb_im,slu_im_env::get_ptr()) && tb_im != null, ("Unable to get handle to Saola IM"));
-
-  //      $cast(fuse_env, slu_fuse_env::get_ptr());
-  //      if (fuse_env == null)
-  //      uvm_report_fatal(get_type_name(),"FcFuseEnv is null, so exiting...");
-
-      `ifdef AXI_ENV_ENABLE
-         axi_seqr = _tb_env.axi_subenv.axi_bfm.axi_system_env.master[0].sequencer;            
-         void'(this.add_sequencer("AXI", "axi_slu",  axi_seqr));
-      `endif
-      `ifdef APB_ENV_ENABLE
-         apb_master_seqr = _tb_env.apb_subenv.apb_bfm.apb_master_env.master.sequencer;            
-         void'(this.add_sequencer("APB", "apb_slu",  apb_master_seqr));
-      `endif
-      `ifdef CHI_ENV_ENABLE
-         chi_req_node_seqr = _tb_env.chi_subenv.chi_bfm.chi_system_env.sequencer.chi_system_sequencer[0].rn_virt_seqr[0].rn_xact_seqr;
-         void'(this.add_sequencer("CHI", "chi_slu",  chi_req_node_seqr));
-      `endif
-
       // Connect UVM RAL
       uvm_ral_connect();
 
       `uvm_info(get_name(), "Exit FC connect()", UVM_LOW);
     endfunction
-
-    //------------------------------------------------------
-    // Custom function to adjust RAL sideband bar
-    //------------------------------------------------------
-    protected function void _adjustRalSidebandBar(
-        string          mxtba_name,
-        string          mxpba_name
-    );
-
-    endfunction : _adjustRalSidebandBar
-
-     //------------------------------------------------------
-    // Custom function to adjust RAL BDF
-    //------------------------------------------------------
-    protected function void _adjustRalBdf(
-        string          rf_name,
-        bit [15:0]      bdf_val
-    );
-        sla_ral_file    f;
-        sla_ral_reg     r[$], dbg_r;
-
-        `slu_assert($cast(f, ral.find_file(rf_name)), ("Unable to get handle to %0s.", rf_name))
-
-        f.get_regs(r);
-        foreach (r[i])
-        begin
-            if (r[i].get_space() inside {"MEM"})
-            begin
-                r[i].set_bus_num(bdf_val[15:8]);
-                r[i].set_dev_num(bdf_val[7:3]);
-                r[i].set_func_num(bdf_val[2:0]);
-                r[i].set_msg_opcode("MEM-SB");
-                r[i].set_fid(.fid(bdf_val[7:0]),.opcode(r[i].get_msg_opcode()));
-                r[i].set_bar(5);
-                dbg_r = r[i];
-            end      
-            else if (r[i].get_space() inside {"IO"})
-            begin
-                r[i].set_bus_num(bdf_val[15:8]);
-                r[i].set_dev_num(bdf_val[7:3]);
-                r[i].set_func_num(bdf_val[2:0]);
-                r[i].set_msg_opcode("IO-SB");
-                r[i].set_fid(.fid(bdf_val[7:0]),.opcode(r[i].get_msg_opcode()));
-                r[i].set_bar(4);
-                dbg_r = r[i];
-            end      
-            else if (r[i].get_space() inside {"CFG"})
-            begin
-                r[i].set_bus_num(bdf_val[15:8]);
-                r[i].set_dev_num(bdf_val[7:3]);
-                r[i].set_func_num(bdf_val[2:0]);
-                r[i].set_msg_opcode("CFG-SB");
-                r[i].set_fid(.fid(bdf_val[7:0]),.opcode(r[i].get_msg_opcode()));
-                dbg_r = r[i];
-            end      
-        end      
-        if (dbg_r != null)
-        begin
-            `slu_msg(UVM_MEDIUM, "Adjusted BDF", ("[%0s] -> set[B:%2h, D:%2h, F:%1h], get[B:%2h, D:%2h, F:%1h]", rf_name, bdf_val[15:8], bdf_val[7:3],
-bdf_val[2:0], dbg_r.get_bus_num(), dbg_r.get_dev_num(), dbg_r.get_func_num()))
-            `slu_msg(UVM_HIGH, get_name(),(dbg_r.sprint()))
-        end      
-    endfunction : _adjustRalBdf
-
-    //--------------------------------------------------------------------------
-    // Custom function to adjust RAL's sideband PID space_address.
-    //--------------------------------------------------------------------------
-    protected function void _adjustRalMsg(
-        string          rf_name,
-        int             pid_val,
-        int             add_base = 0,
-        int             base_addr =0
-    );
-        sla_ral_file    f;
-        sla_ral_reg     r[$], dbg_r;
-
-        `slu_assert($cast(f, ral.find_file(rf_name)),
-            ("Unable to get handle to %0s.", rf_name))
-
-        f.get_regs(r);
-        foreach (r[i])
-        begin
-            if (add_base) f.set_base(base_addr);
-
-            r[i].set_space_addr("msg_bus_port", pid_val);
-            if (!(r[i].get_space() inside {"CFG", "IO", "MEM", "MSG"}))
-            begin
-                r[i].set_space("MSG");
-                r[i].set_space_addr("MSG", (r[i].get_base_addr_val() * add_base) + r[i].get_offset());
-                `slu_warning(get_name(),
-                    ("%-s.%0d -> -- FIXME -- setting MSG type as space is not defined",
-                        rf_name, i))
-            end       else
-                r[i].set_space_addr("MSG", r[i].get_space_addr(r[i].get_space()));
-            dbg_r = r[i];
-        end      
-        if (dbg_r != null)
-        begin
-            `slu_msg(UVM_MEDIUM, "Adjusted PID",
-                ("[%0s] -> set[%2h], get[%2h]",
-                rf_name, pid_val[7:0], dbg_r.get_space_addr("msg_bus_port")))
-            `slu_msg(UVM_HIGH, get_name(),(dbg_r.sprint()))
-        end      
-    endfunction : _adjustRalMsg
 
     //--------------------------------------------------------------------------
     // UVM end_of_elaboration function.
@@ -520,17 +310,12 @@ bdf_val[2:0], dbg_r.get_bus_num(), dbg_r.get_dev_num(), dbg_r.get_func_num()))
     // UVM RAL Connect method 
     // -----------------------------------------------------------------------
     virtual function void uvm_ral_connect ();
-      `ifdef AXI_ENV_ENABLE
-        if (_tb_env.axi_subenv.axi_bfm_cfg.master_cfg[0].is_active == UVM_ACTIVE) begin
-          regModel.axi_reg_map.set_sequencer(axi_seqr, _tb_env.axi_subenv.axi_bfm.reg2axi_adapter);
-          //regModel.apb_reg_map.set_sequencer(axiSeqr, _tb_env.axi_subenv.axi_bfm.reg2axi_adapter);
-        end
-      `endif
-      `ifdef APB_ENV_ENABLE
-        if (_tb_env.apb_subenv.apb_bfm_cfg.master_cfg.is_active == UVM_ACTIVE) begin
-          regModel.apb_reg_map.set_sequencer(apb_master_seqr, _tb_env.apb_subenv.apb_bfm.reg2apb_adapter);
-        end
-      `endif
+      //`ifdef AXI_ENV_ENABLE
+      //  if (_tb_env.axi_subenv.axi_bfm_cfg.master_cfg[0].is_active == UVM_ACTIVE) begin
+      //    regModel.axi_reg_map.set_sequencer(axi_seqr, _tb_env.axi_subenv.axi_bfm.reg2axi_adapter);
+      //    //regModel.apb_reg_map.set_sequencer(axiSeqr, _tb_env.axi_subenv.axi_bfm.reg2axi_adapter);
+      //  end
+      //`endif
     endfunction : uvm_ral_connect
 
     // -----------------------------------------------------------------------

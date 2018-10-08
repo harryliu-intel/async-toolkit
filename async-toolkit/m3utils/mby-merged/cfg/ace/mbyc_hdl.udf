@@ -238,13 +238,13 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             svt_ahb_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/svt_ahb_bfm.hdl" ],
-               -dependent_libs => [ 'shdv_shared_lib',
+               -dependent_libs => [ 'shdv_shared_lib','ext_shared_lib',
                                    ],
                -tag            => "nonsynth+nonlint",
             },
             svt_axi_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/svt_axi_env.hdl" ],
-               -dependent_libs => [ 'shdv_shared_lib',
+               -dependent_libs => [ 'shdv_shared_lib', 'ext_shared_lib',
                                    ],
                -tag            => "nonsynth+nonlint",
             },
@@ -252,18 +252,19 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec       => [ "cfg/ace/HDL/verif/svt_amba_env.hdl" ],
                -dependent_libs => [ 'shdv_shared_lib',
                                    ],
+               -vlog_opts      => [ "+define+SVT_AMBA_OPTIMIZED_COMPILE" ],
                -tag            => "nonsynth+nonlint",
             },
             
             mby_common_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/mby_common_pkg.hdl" ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'svt_ahb_lib' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'ext_shared_lib' , 'svt_ahb_lib',],
                -tag            => "nonsynth+nonlint",
             },
             
             mby_mc_env_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mc_env.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'svt_axi_lib', 'svt_ahb_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'ext_shared_lib', 'svt_ahb_lib', 'svt_axi_lib',],
                -tag            => "nonsynth",
             },
             
@@ -275,14 +276,14 @@ print "MGM debug : @mbyMgmLibs\n";
             
             mby_mc_ti_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mc_ti.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'svt_axi_lib', 'svt_ahb_lib' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'ext_shared_lib' , 'svt_axi_lib', ],
                -tag            => "nonsynth",
             },
             
             mby_mc_tb_top_np_nphy_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mc_tb_top_np_nphy.hdl', ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_test_lib', 'mby_mc_ti_lib', 'mby_common_lib', 'svt_axi_lib', 
-                                    'svt_ahb_lib',"mby_cup_no_proc_rtl_lib","mby_cup_rtl_lib"],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mc_env_lib', 'mby_mc_test_lib', 'mby_mc_ti_lib', 'mby_common_lib', 'ext_shared_lib', 
+                                    'svt_axi_lib', "mby_cup_no_proc_rtl_lib","mby_cup_rtl_lib"],
                -tag            => "nonsynth",
             },
             
@@ -337,14 +338,13 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_mc_ti_lib",  
                   "shdv_shared_lib",
                   "ext_shared_lib",
+                  "svt_ahb_lib",
+                  "svt_axi_lib",
                   "mby_mc_env_lib", 
                   "mby_mc_test_lib", 
                   "mby_mc_tb_top_np_nphy_lib", 
                   "mby_jasper_lib", 
                   "mby_wm_dpi_lib",
-                  #"cdn_pcie_lib",
-                  "svt_axi_lib",
-                  "svt_ahb_lib",
                   "mby_common_lib",
                ],
                testcase_globals => {
@@ -413,12 +413,13 @@ print "MGM debug : @mbyMgmLibs\n";
                   ##"gen_mby_wm_m3",
                   "mby_rx_ppe_ti_lib",
                   "shdv_shared_lib",
+                  "svt_ahb_lib",
                   "mby_rx_ppe_env_lib",
                   "mby_rx_ppe_test_lib",
                   "mby_rx_ppe_tb_top_lib",
                   "mby_jasper_lib",
                   "mby_wm_dpi_lib",
-                  "svt_ahb_lib",
+                  "ext_shared_lib",
                   "mby_common_lib",
                ],
                testcase_globals => {
@@ -481,6 +482,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                    "shdv_shared_lib",
+                   "ext_shared_lib",
                    "svt_ahb_lib",
                    "mby_common_lib",
                    "mby_igr_rtl_lib",
@@ -547,6 +549,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                    "shdv_shared_lib",
+                   "ext_shared_lib",
                    "svt_ahb_lib",
                    "mby_common_lib",
                    "mby_egr_rtl_lib",
