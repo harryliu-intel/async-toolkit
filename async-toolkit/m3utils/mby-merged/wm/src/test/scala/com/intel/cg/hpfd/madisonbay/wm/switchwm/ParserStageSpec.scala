@@ -8,7 +8,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLense
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
-import com.intel.cg.hpfd.madisonbay.wm.utils.Binary
+import com.intel.cg.hpfd.madisonbay.wm.utils.Binary.BinaryInterpolator
 import org.scalatest._
 import monocle.state.all._
 
@@ -51,7 +51,7 @@ class ParserStageSpec extends FlatSpec with Matchers {
     result._1.get contains 4 shouldEqual true
 
     val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, idx, ph, ps2, pf, protoOffset, exceptionOpt = noException)
-    result2._1.toInt shouldEqual Binary("10010")
+    result2._1.toInt shouldEqual b"10010"
   }
 
 }
