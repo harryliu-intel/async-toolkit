@@ -421,6 +421,7 @@ EOF
                   "sva_lib",
                   "shdv_shared_lib",
                   "ext_shared_lib",
+                  "svt_ahb_lib",
                   "mby_wm_dpi_lib",
                   "mby_common_lib",
                   "vte_tr_uvm_lib",
