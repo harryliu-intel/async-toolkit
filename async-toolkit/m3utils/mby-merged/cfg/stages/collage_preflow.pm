@@ -43,11 +43,9 @@ sub run {
       # Custom Stage Code
       # ###########################################
 
-      if ($ENV{ENABLE_UPF_GEN} == 1) {
-        #$cmd = "echo COLLAGE_PRE_FLOW";
-        $cmd = "/usr/intel/bin/tcsh -c $ENV{MODEL_ROOT}/tools/upf/scripts/hip_power_pin_spec_gen/RUN.GENERATE.HIP_POWER_PINS";
-        $status = $self->shell_exec( JOBS=>[{ cmd=>$cmd, log=>$logfile, },], );
-      }
+      # generate corekits
+      $cmd = "/usr/intel/bin/tcsh -c $ENV{MODEL_ROOT}/scripts/create_all_corekits.csh";
+      $status = $self->shell_exec( JOBS=>[{ cmd=>$cmd, log=>$logfile, },], );
 
       # ############################################
       # Custom Stage Code Ends here
