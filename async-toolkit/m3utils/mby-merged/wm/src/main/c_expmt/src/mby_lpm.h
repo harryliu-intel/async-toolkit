@@ -12,6 +12,8 @@
 
 // Defines:
 
+#define MBY_LPM_MAX_ACTIONS_NUM 4
+
 // Enums:
 
 // Structs:
@@ -22,11 +24,11 @@ typedef struct mbyLpmKeyStruct
     fm_byte key_len; // in bits
 } mbyLpmKey;
 
-typedef struct mbyLpmOutStruct
+typedef struct mbyLpmSearchResultStruct
 {
     fm_bool   hit_valid;
     fm_uint64 fwd_table0_idx;
-} mbyLpmOut;
+} mbyLpmSearchResult;
 
 typedef struct mbyLpmTcamLookupStruct
 {
@@ -48,9 +50,12 @@ typedef struct mbyLpmSubtrieLookupStruct
 void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
+#ifdef USE_NEW_CSRS
+    mby_shm_map                * const shm_map,
+#endif
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
-    mbyLpmOut                  * const out
+    fm_uint32                          actions[4]
 );
 
 //#ifdef UNIT_TEST
@@ -61,8 +66,8 @@ struct mbyLpmStaticFuncs {
     fm_bool (*_getSubtriePrefixNode)(mbyLpmSubtrieStore const * const, fm_byte);
     fm_bool (*_getSubtrieChildNode)(mbyLpmSubtrieStore const * const, fm_byte);
     void    (*_exploreSubtrie)(MBY_LPM_IN_REGS, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
-    void    (*_lpmSearch)(MBY_LPM_IN_REGS, mbyLpmKey const * const, mbyLpmOut * const);
-    void    (*_generateLpmKey)(MBY_LPM_IN_REGS, mbyClassifierKeys const * const, fm_byte, mbyLpmKey * const);
+    void    (*_lpmSearch)(MBY_LPM_IN_REGS, mbyLpmKey const * const, mbyLpmSearchResult * const);
+    void    (*_lpmGenerateKey)(MBY_LPM_IN_REGS, mbyClassifierKeys const * const, fm_byte, mbyLpmKey * const);
 };
 
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs);

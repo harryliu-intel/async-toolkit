@@ -76,7 +76,7 @@ TEST_F(LpmTests, KeyGenSingle) {
 		.Times(1)
 		.WillRepeatedly(SetArgPointee<2>(key_masks));
 
-	f._generateLpmKey(NULL, &keys, PROFILE_ID, &lpmKey);
+	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
 
 	EXPECT_EQ(lpmKey.key[0], KEY8_VAL);
 	EXPECT_EQ(lpmKey.key[1], KEY16_VAL & 0xff);

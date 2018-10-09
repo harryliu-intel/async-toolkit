@@ -618,16 +618,16 @@ void Classifier
 #endif
 
     // Longest Prefix Match (LPM):
-    mbyLpmOut lpm_out = { 0 };
+    fm_uint32 lpm_out[MBY_LPM_MAX_ACTIONS_NUM];
 
 #ifdef USE_NEW_CSRS
     // TODO is the scenario == 6-bit profile ID in the HAS?
-    mbyMatchLpm(cgrp_a_map, &keys, scenario, &lpm_out);
+    mbyMatchLpm(cgrp_a_map, shm_map, &keys, scenario, lpm_out);
 #else
-    mbyMatchLpm(regs,       &keys, scenario, &lpm_out);
+    mbyMatchLpm(regs,                &keys, scenario, lpm_out);
 #endif
 
-    // TODO: convert lpm_out to actions here <-- FIXME!!!
+    // TODO: process output of EM_AM and LPM to resolve actions!!! <<-- FIXME
 
     // Exact match B (EM_B):
 #ifdef USE_NEW_CSRS
