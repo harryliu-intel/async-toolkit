@@ -69,6 +69,10 @@ my $DENALI =  &ToolConfig::get_tool_path("denali");
 my %sip_list = (
     #'boot'       => ['amba','axi','apb','chi', 'igr'],
     'boot'       => ['igr'],
+    'imc'        => ['imc'],
+    'epc'        => ['epc'],
+    'mpp'        => ['mpp'],
+    'msh'        => ['msh'],
 
 );
 # >>>
@@ -81,8 +85,13 @@ my %sip_list = (
 # HIP related lib should be move to HIP_RTL_LIBS (NON-SYNTH related)
 # SIP rtl lib should contain only synthesizable code (SYNTH related )
 my %sip_rtl_libs = (
-    'boot'               => [
-                            ],
+    'boot'               => [],
+    'imc'                => [],
+#    'epc'                => [],
+    'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
+#    'msh'                => ['mby_msh_rtl_lib',],
+    'msh'                => [],
+
 );
 
 sub get_sip_rtl_libs {
