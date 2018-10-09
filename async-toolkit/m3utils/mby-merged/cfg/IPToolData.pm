@@ -31,7 +31,7 @@ $ToolConfig_tools{ipconfig} = {
    OTHER => {
       IMPORT  => ["cfg/mby_IPToolData.pm",],
       UDF_MAP => {
-         'mby' => {
+         'default' => {
             'UDF'   => ["$MODEL_ROOT/cfg/ace/fc.udf",],
             'SCOPE' => 'mby',
             ACERC => {
@@ -184,4 +184,29 @@ $ToolConfig_ips{VTE_TR_UVM} = {
          VTE_TR_UVM_ROOT => "&get_tool_path()",
     },
 };
+
+
+# for Cadence PCIe BFMs
+$ToolConfig_ips{cdn_vip_root} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
+                                  PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()",
+                                };
+$ToolConfig_ips{vipcat} = { PATH => "&get_tool_path(cdn_vip_root)",
+                              OTHER => {
+                                 CDS_ARCH => "lnx86",
+                                 VIPCAT_LIBS => "&get_tool_path(cdn_vip_root)/tools.lnx86/lib/64bit",
+                              },
+                            };
+$ToolConfig_ips{denali} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
+                            #VERSION => '&get_tool_version(cdn_vip_root)',
+                              PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()/tools/denali_64bit",
+                              #PATH    => "&get_tool_path(cdn_vip_root)/tools/denali_64bit",
+                              OTHER => {
+                                DENALI_LIBS => "&get_tool_path()/verilog",
+                                VIPCAT_LIBS => "&get_tool_path()/tools.lnx86/lib/64bit",
+                              },
+                            };
+#VIPCAT update
+$ToolConfig_tools{buildman}{ENV}{CDN_VIP_ROOT} = "&get_tool_path(cdn_vip_root)";
+$ToolConfig_tools{buildman}{ENV}{DENALI} = "&get_tool_path(denali)";
+
 1;

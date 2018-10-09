@@ -1,0 +1,1820 @@
+`include "lib_udp.rdl"
+`include "mby_ip.rdl"
+
+
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+
+
+// MAP_PORT_CFG[0..17]
+
+reg map_port_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Mapper configuration per port";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    default SGLORT value, used if default_sglort_en is set.
+
+           ";
+    ValRandomize = true;
+  } DEFAULT_SGLORT[24:9] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    overwrite the SGLORT parser key (after the IP rearrange step creates space).
+
+           ";
+    ValRandomize = true;
+  } DEFAULT_SGLORT_EN[8:8] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Bits to feed into packet profile CAM.
+
+           ";
+    ValRandomize = true;
+  } PORT_PROFILE[7:0] = 8'h0;
+};
+
+
+
+// MAP_PORT_DEFAULT[0..17,0..5]
+
+reg map_port_default_r {
+  shared;
+  HandCoded = true;
+  name = "Default parse keys per port";
+  desc = "
+  For each packet, 6 entries are used:
+  MAP_PORT_DEFAULT[port][0..5]
+
+  Apply the defaults in the following order:
+  [list]
+  [*] For target field less than 96, set key_valid for keys modified by the value field.
+  [*] Copy dscp/vpri/vid to actions, overriding the default values inserted above for keys_valid
+  [*] Insert the rest of default targets in 96..223.
+  [/list]
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    The immediate value to use.
+
+           ";
+    ValRandomize = true;
+  } VALUE[31:16] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    target indicates where to put the value.
+    [list]
+    [*] 0..79 = keys (if not already valid)
+    [*] 80..95 = force into key 12..27 (ignore validity from parser)
+    [*] 96..191 = initial Classifier actions.
+    [*] 96..111 = act24 lower 16
+    [*] 112..127 = act24 upper 8   (act24[target-112][23:16] = value[7:0])
+    [*] 128..159 = act4, 4 consecutive nybbles. Must be a multiple of 4.
+    [*] 160..191 = act4, 2 consecutive nybbles. Must be a multiple of 2.
+    [*] 192..223 = act4, 1 nybble
+    [*] 224 = set flags[15:0]
+    [*] 225..254 = reserved
+    [*] 255 = NOP (discard the value)
+    [/list]
+
+           ";
+    ValRandomize = true;
+  } TARGET[7:0] = 8'hff;
+};
+regfile map_port_default_rf {
+  map_port_default_r MAP_PORT_DEFAULT[6] += 8;
+};
+
+
+
+// MAP_LEN_LIMIT[0..17]
+
+reg map_len_limit_r {
+  shared;
+  HandCoded = true;
+  name = "parser_info length limits";
+  desc = "
+    Indexed by logical rx port. This register controls how many 4B tags (or labels)
+    Modify can add versus how many can be removed.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+      Outer L2 length limit. The datapath is unable to pop more than otr_l2_len_limit outer L2 tags,
+      or to push more than (4-otr_l2_len_limit) outer L2 tags.
+
+           ";
+    ValRandomize = true;
+  } OTR_L2_LEN_LIMIT[11:9] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+      Inner L2 length limit. The datapath is unable to pop more than inr_l2_len_limit inner L2 tags,
+      or to push more than (4-inr_l2_len_limit) inner L2 tags.
+
+           ";
+    ValRandomize = true;
+  } INR_L2_LEN_LIMIT[8:6] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+      Outer MPLS length limit. The datapath is unable to pop more than otr_mpls_len_limit outer
+      MPLS labels, or to push more than (7-otr_mpls_len_limit) outer MPLS labels.
+
+           ";
+    ValRandomize = true;
+  } OTR_MPLS_LEN_LIMIT[5:3] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+      Inner MPLS length limit. The datapath is unable to pop more than inr_mpls_len_limit inner
+      MPLS labels, or to push more than (7-inr_mpls_len_limit) inner MPLS labels.
+
+           ";
+    ValRandomize = true;
+  } INR_MPLS_LEN_LIMIT[2:0] = 3'h0;
+};
+
+
+
+// MAP_DOMAIN_TCAM[0..4095]
+
+reg map_domain_tcam_r {
+  shared;
+  HandCoded = true;
+  name = "Domain mapper TCAM entries";
+  desc = "
+   Configures an entry in the TCAM. 
+    [br][br]
+    A match occurs when the data searched is equal to the content, as defined
+    in the table below.
+    [br][br]
+    A key is loaded by writing the key into 'Key' (KEY / KEY_TOP) and loading its 1s
+    compliment in KeyInvert (KEY_INVERT / KEY_TOP_INVERT). Writing both 'Key' and 'KeyInvert' with 1
+    on same bit in both fields will invalidate the entry while writing
+    0 on same bit in both field is equivalent of ignoring this bit in
+    the seach.
+    [br][br]
+    The table below shows the encoded data value stored (Content)
+    based on the Key and KeyInvert values.
+    [code]
+
+          +-----------------------------------------------------+
+          | KeyInvert    | Key          |        Content        |
+          =======================================================
+          |      0       |      0       |   X (always match)    |
+          +-----------------------------------------------------+
+          |      0       |      1       |           1           |
+          +-----------------------------------------------------+
+          |      1       |      0       |           0           |
+          +-----------------------------------------------------+
+          |      1       |      1       | Always mismatch state |
+          +-----------------------------------------------------+
+
+    [/code]
+    The highest index has precedence in case there is more than one match.
+    [br][br]
+    Note, when performing the match function, in addition to the main fields and their corresponding 
+    invert ones, _RSVD0_ and _RSVD1_ fields are partially used in hit generation. To make the hit 
+    independent of those fields, they should be programmed to zero (always match) so they do not 
+    affect the hit.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 128;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[127:108] = 20'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+      Inverted ingress port mask. With port_key set to all zeros, set a 1 bit in this
+      field only for ports to be excluded from matching.
+
+           ";
+    ValRandomize = true;
+  } PORT_KEY_INVERT[107:90] = 18'h3ffff;
+  field {
+    AccessType = "RW";
+    desc = "
+      Inverted validity for outer VLAN2
+
+           ";
+    ValRandomize = true;
+  } VID2_VALID_INVERT[89:89] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+      Inverted outer VLAN2
+
+           ";
+    ValRandomize = true;
+  } VID2_KEY_INVERT[88:77] = 12'hfff;
+  field {
+    AccessType = "RW";
+    desc = "
+      Inverted validity for outer VLAN1
+
+           ";
+    ValRandomize = true;
+  } VID1_VALID_INVERT[76:76] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+      Inverted outer VLAN1
+
+           ";
+    ValRandomize = true;
+  } VID1_KEY_INVERT[75:64] = 12'hfff;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[63:44] = 20'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+      Ingress port mask. Set to all zeros and control matching with port_key_invert.
+
+           ";
+    ValRandomize = true;
+  } PORT_KEY[43:26] = 18'h3ffff;
+  field {
+    AccessType = "RW";
+    desc = "
+      Valid state for outer VLAN2
+
+           ";
+    ValRandomize = true;
+  } VID2_VALID[25:25] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+      Outer VLAN2
+
+           ";
+    ValRandomize = true;
+  } VID2_KEY[24:13] = 12'hfff;
+  field {
+    AccessType = "RW";
+    desc = "
+      Valid state for outer VLAN1
+
+           ";
+    ValRandomize = true;
+  } VID1_VALID[12:12] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+      Outer VLAN1
+
+           ";
+    ValRandomize = true;
+  } VID1_KEY[11:0] = 12'hfff;
+};
+
+
+
+// MAP_DOMAIN_ACTION0[0..4095]
+
+reg map_domain_action0_r {
+  shared;
+  HandCoded = true;
+  name = "Dommain mapper Action entries";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     An L2 domain value used downstream. Used when update_domains=1.
+
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[37:30] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     An L3 domain value used downstream. Used when update_domains=1.
+
+           ";
+    ValRandomize = true;
+  } L3_DOMAIN[29:24] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     A network addressing domain or operator ID. Used when update_domains=1.
+
+           ";
+    ValRandomize = true;
+  } OPERATOR_ID[23:20] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Used only for packets sent to the CPP. When set, use the domains, 
+    priority_profile, and operator_id from the action,
+    and write the domain and operator_id fields into the metadata that will be
+    sent to the CPP.
+
+    If update_domains=0, then use the l2_domain, l3_domain, and operator_id fields
+    received in the packet's ONPI metadata. Do not overwrite those fields. And use
+    the priority_profile retrieved from MAP_DOMAIN_PROFILE instead.
+
+           ";
+    ValRandomize = true;
+  } UPDATE_DOMAINS[19:19] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Learning notification enable/disable.
+     This is used as the default value for the Classifier 'LEARN' action.
+
+           ";
+    ValRandomize = true;
+  } LEARN_EN[18:18] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Select shared(0) or independent(1) VLAN learning notification.
+
+           ";
+    ValRandomize = true;
+  } LEARN_MODE[17:17] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     A profile index for remapping ingress priorities. Used when update_domains=1.
+
+           ";
+    ValRandomize = true;
+  } PRIORITY_PROFILE[16:12] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Defines TC precedence sources
+     [list]
+     [*] pri_source[7:6] = highest precedence TC source ID
+     [*] pri_source[1:0] = lowest precedence TC source  ID
+     [/list]
+     where each 2b field is uniquely one of:
+     [code]
+     00: MAP_VPRI_TC
+     01: MAP_EXP_TC
+     10: MAP_DSCP_TC
+     11: TC specified in metadata from CPU
+     [/code]
+
+           ";
+    ValRandomize = true;
+  } PRI_SOURCE[11:4] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Force 3b DEFAULT_PRI as the default TC value, overriding all
+    precedence sources
+
+           ";
+    ValRandomize = true;
+  } FORCE_DEFAULT_PRI[3:3] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    default TC value, used if none of the precedence sources are present
+    and metadata does not provide TC
+
+           ";
+    ValRandomize = true;
+  } DEFAULT_PRI[2:0] = 3'h0;
+};
+
+
+
+// MAP_DOMAIN_ACTION1[0..4095]
+
+reg map_domain_action1_r {
+  shared;
+  HandCoded = true;
+  name = "Dommain mapper Action entries";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Bits to feed into packet profile CAM.
+
+           ";
+    ValRandomize = true;
+  } DOMAIN_PROFILE[43:36] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     A policer index associated with the L2 domain.
+     If l2_policer is nonzero, then the default POLICER[0] action is (bank=0, index=l2_policer).
+
+           ";
+    ValRandomize = true;
+  } L2_POLICER[35:24] = 12'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     A policer index associated with the L3 domain.
+     If l3_policer is nonzero, then the default POLICER[1] action is (bank=5, index=l3_policer).
+
+           ";
+    ValRandomize = true;
+  } L3_POLICER[23:12] = 12'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     A VLAN counter index indicating the VLAN counter to be used for counting RX stats on this tuple.
+
+           ";
+    ValRandomize = true;
+  } VLAN_COUNTER[11:0] = 12'h0;
+};
+
+
+
+// MAP_DOMAIN_PROFILE[0..511]
+
+reg map_domain_profile_r {
+  shared;
+  HandCoded = true;
+  name = "Priority Profile to use when DOMAIN_ACTION[].UpdateDomains is 0.";
+  desc = "
+  Indexed by l2_domain.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     A profile index for remapping ingress priorities.
+     Used when DOMAIN_ACTION[].update_domains=0.
+
+           ";
+    ValRandomize = true;
+  } PRIORITY_PROFILE[4:0] = 5'h0;
+};
+
+
+
+// MAP_PORT[0..17]
+
+reg map_port_r {
+  shared;
+  HandCoded = true;
+  name = "Configures source port to 8-bit mapping";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Resulting MAP_PORT per source port
+
+           ";
+    ValRandomize = true;
+  } MAP_PORT[7:0] = 8'h0;
+};
+
+
+
+// MAP_MAC[0..95]
+
+reg map_mac_r {
+  shared;
+  HandCoded = true;
+  name = "Configures 48-bit to 4-bit MAC address mapping";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 128;
+  accesswidth = 128;
+  field {
+    AccessType = "RW";
+    desc = "
+        Is this a virtual router destination MAC?
+
+           ";
+    ValRandomize = true;
+  } MAC_ROUTABLE[66:66] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        8-bit mapped MAC
+
+           ";
+    ValRandomize = true;
+  } MAP_MAC[65:58] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        [list]
+        [*] bit 0 = entry valid for outer DMAC
+        [*] bit 1 = entry valid for outer SMAC
+        [*] bit 2 = entry valid for inner DMAC
+        [*] bit 3 = entry valid for inner SMAC
+        [/list]
+
+           ";
+    ValRandomize = true;
+  } VALID[57:54] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Ignore this many LSB bits when matching
+
+           ";
+    ValRandomize = true;
+  } IGNORE_LENGTH[53:48] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Ethernet MAC Key. Ignored bits must be set to 0. 
+
+           ";
+    ValRandomize = true;
+  } MAC[47:0] = 48'h0;
+};
+
+
+
+// MAP_PROT[0..7]
+
+reg map_prot_r {
+  shared;
+  HandCoded = true;
+  name = "Configures 8-bit to 3-bit L4 Protocol mapping";
+  desc = "
+    The same mapping is used for both inner and outer PROT.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        3-bit mapped IP protocol number
+
+           ";
+    ValRandomize = true;
+  } MAP_PROT[10:8] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Input IP protocol number
+
+           ";
+    ValRandomize = true;
+  } PROT[7:0] = 8'h0;
+};
+
+
+
+// MAP_L4_SRC[0..63]
+
+reg map_l4_src_r {
+  shared;
+  HandCoded = true;
+  name = "Configures 16-bit to 4-bit L4 source port mapping";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Mapped result
+
+           ";
+    ValRandomize = true;
+  } MAP_L4_SRC[36:21] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        [list]
+        [*] bit 0 = this entry valid for outer L4_src
+        [*] bit 1 = this entry valid for inner L4_src
+        [/list]
+
+           ";
+    ValRandomize = true;
+  } VALID[20:19] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        3-bit MAP_PROT key that must match to enable this entry
+
+           ";
+    ValRandomize = true;
+  } MAP_PROT[18:16] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        L4 source port key
+
+           ";
+    ValRandomize = true;
+  } L4_SRC[15:0] = 16'h0;
+};
+
+
+
+// MAP_L4_DST[0..63]
+
+reg map_l4_dst_r {
+  shared;
+  HandCoded = true;
+  name = "Configures 16-bit to 4-bit L4 destination port mapping";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Mapped result
+
+           ";
+    ValRandomize = true;
+  } MAP_L4_DST[36:21] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        [list]
+        [*] bit 0 = this entry valid for outer L4_dst
+        [*] bit 1 = this entry valid for inner L4_dst
+        [/list]
+
+           ";
+    ValRandomize = true;
+  } VALID[20:19] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        3-bit MAP_PROT key that must match to enable this entry
+
+           ";
+    ValRandomize = true;
+  } MAP_PROT[18:16] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        L4 destination port key
+
+           ";
+    ValRandomize = true;
+  } L4_DST[15:0] = 16'h0;
+};
+
+
+
+// MAP_EXP_TC[0..31]
+
+reg map_exp_tc_r {
+  shared;
+  HandCoded = true;
+  name = "Maps EXP to TC";
+  desc = "
+    Indexed by 5-bit priority_profile.Refer to QoS Chapter Priority Management for programming guide.
+    One field for each possible ingress EXP value.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines the TC associated with this ingress EXP.  Laid out as an array of 8 3-bit integers, in little-endian order.  The TC associated with EXP x is located at bits [ 3x : 3(x+1) )
+
+          ";
+    ValRandomize = true;
+  } TC_BY_EXP[23:0];
+//
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_7[23:21] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_6[20:18] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_5[17:15] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_4[14:12] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_3[11:9] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_2[8:6] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_1[5:3] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        TC to set for this EXP.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_0[2:0] = 3'h0;
+};
+
+
+
+// MAP_DSCP_TC[0..2047]
+
+reg map_dscp_tc_r {
+  shared;
+  HandCoded = true;
+  name = "Maps ingress DSCP to TC and DSCP";
+  desc = "
+    Indexed by {priority_profile[4:0], dscp[5:0]}. Refer to QoS Chapter Priority Management for programming guide.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        TC to set for this ingress DSCP
+
+           ";
+    ValRandomize = true;
+  } TC[8:6] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        internal DSCP to set for this ingress DSCP
+
+           ";
+    ValRandomize = true;
+  } DSCP[5:0] = 6'h0;
+};
+
+
+
+// MAP_VPRI_TC[0..31]
+
+reg map_vpri_tc_r {
+  shared;
+  HandCoded = true;
+  name = "Maps ingress VPRI to TC";
+  desc = "
+    Indexed by 5-bit priority_profile. Refer to QoS Chapter Priority Management for programming guide.
+    One field for each possible ingress VPRI value.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines the TC associated with this ingress VPRI.  Laid out as an array of 16 3-bit integers, in little-endian order.  The TC associated with VPRI v is located at bits [ 3v : 3(v+1) )
+  
+           ";
+    ValRandomize = true;
+  } TC_BY_VPRI[47:0];
+  
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_15[47:45] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_14[44:42] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_13[41:39] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_12[38:36] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_11[35:33] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_10[32:30] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_9[29:27] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_8[26:24] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_7[23:21] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_6[20:18] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_5[17:15] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_4[14:12] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_3[11:9] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_2[8:6] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_1[5:3] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the TC associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } TC_0[2:0] = 3'h0;
+};
+
+
+
+// MAP_VPRI[0..31]
+
+reg map_vpri_r {
+  shared;
+  HandCoded = true;
+  name = "Maps ingress VPRI to internal VPRI";
+  desc = "
+    Indexed by 5-bit priority_profile.
+    One field for each possible ingress VPRI value.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines the internal VPRI associated with each ingress VPRI.  Laid out as an array of 16 4-bit integers, in little-endian order.  The internal VPRI associated with ingress VPRI v is located at bits [ 4v : 4(v+1) )
+  
+
+           ";
+    ValRandomize = true;
+    } VPRI_BY_VPRI[63:0];
+//    
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_15[63:60] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_14[59:56] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_13[55:52] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_12[51:48] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_11[47:44] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_10[43:40] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_9[39:36] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_8[35:32] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_7[31:28] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_6[27:24] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_5[23:20] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_4[19:16] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_3[15:12] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_2[11:8] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_1[7:4] = 4'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//        Defines the internal VPRI associated with this ingress VPRI.
+//
+//           ";
+//    ValRandomize = true;
+//  } VPRI_0[3:0] = 4'h0;
+};
+
+
+
+// MAP_PROFILE_KEY0[0..95]
+
+reg map_profile_key0_r {
+  shared;
+  HandCoded = true;
+  name = "Packet profile CAM key value 0";
+  desc = "
+  Packet profile KEY0 is parser flags.
+  This register provides the key values to compare against. The same format is used for key and key invert. 
+
+  The semantic is identical to that used in the FFU_TCAM register.
+
+  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:60] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+   An error occured in pointer calculation for parser_info, indicating a header length is too small. 
+   ptrs_err=0 in windowed parsing mode.
+
+           ";
+    ValRandomize = true;
+  } PTRS_ERR[59:59] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        ex[2]=depth_exceed, ex[1]=trunc_header, ex[0]=parsing_done
+
+           ";
+    ValRandomize = true;
+  } EX[58:56] = 3'h7;
+  field {
+    AccessType = "RW";
+    desc = "
+  	For non-IPv4 packets, both of these bits are 1.  For IPv4 packets, these bits indicate
+    the validity of the IP header checksum field:
+       [list]
+       [*] csum[0] indicates if the outer IP header checksum is valid
+       [*] csum[1] indicates if the inner IP header checksum is valid
+       [/list]
+
+           ";
+    ValRandomize = true;
+  } CSUM[55:54] = 2'h3;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[53:50] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Indicates that the IHL is at least 5 or the packet is not IPv4.
+
+           ";
+    ValRandomize = true;
+  } IHL_OK[49:49] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+     Indicates that the payload length is at least 4*IHL, or the packet is
+     not IPv4.
+
+           ";
+    ValRandomize = true;
+  } IHL_FITS[48:48] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+     parser flags 47..1
+
+           ";
+    ValRandomize = true;
+  } FLAGS[47:1] = 47'h7fffffffffff;
+  field {
+    AccessType = "RW";
+    desc = "
+     Reserved. Set to 0. Parser flag 0 is not used.
+
+           ";
+    ValRandomize = true;
+  } RSVD[0:0] = 1'h1;
+};
+
+
+
+// MAP_PROFILE_KEY_INVERT0[0..95]
+
+reg map_profile_key_invert0_r {
+  shared;
+  HandCoded = true;
+  name = "Packet profile CAM key invert 0";
+  desc = "
+  Packet profile KEY0 is parser flags.
+  This register selects which key bits to compare. The same format is used for key and key invert. 
+
+  The semantic is identical to that used in the FFU_TCAM register.
+
+  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:60] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+   An error occured in pointer calculation for parser_info, indicating a header length too small 
+   or not having the expected residue mod 4. ptrs_err=0 in windowed parsing mode.
+
+           ";
+    ValRandomize = true;
+  } PTRS_ERR[59:59] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        ex[2]=depth_exceed, ex[1]=trunc_header, ex[0]=parsing_done
+
+           ";
+    ValRandomize = true;
+  } EX[58:56] = 3'h7;
+  field {
+    AccessType = "RW";
+    desc = "
+  	parser IPv4 checksum results
+
+           ";
+    ValRandomize = true;
+  } CSUM[55:54] = 2'h3;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[53:50] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Indicates that the IHL is at least 5 or the packet is not IPv4.
+
+           ";
+    ValRandomize = true;
+  } IHL_OK[49:49] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+     Indicates that the payload length is at least 4*IHL, or the packet is
+     not IPv4.
+
+           ";
+    ValRandomize = true;
+  } IHL_FITS[48:48] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+     parser flags 47..1
+
+           ";
+    ValRandomize = true;
+  } FLAGS[47:1] = 47'h7fffffffffff;
+  field {
+    AccessType = "RW";
+    desc = "
+     Reserved. Set to 0. Parser flag 0 is not used.
+
+           ";
+    ValRandomize = true;
+  } RSVD[0:0] = 1'h1;
+};
+
+
+
+// MAP_PROFILE_KEY1[0..95]
+
+reg map_profile_key1_r {
+  shared;
+  HandCoded = true;
+  name = "Packet profile CAM key value 1";
+  desc = "
+  Packet profile KEY1 is mapping.
+  This register provides the key values to compare against. The same format is used for key and key invert. 
+
+  The semantic is identical to that used in the FFU_TCAM register.
+
+  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:50] = 14'h0000;
+  field {
+    AccessType = "RW";
+    desc = "
+     From parser, representing a digest of the parser flags
+           ";
+    ValRandomize = true;
+  } PTYPE[49:40] = 10'h000;
+  field {
+    AccessType = "RW";
+    desc = "
+     Provided by MAP_DOMAIN_ACTION0 or specified by the CPU
+     in packet metadata.
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[39:32] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+     Provided by MAP_DOMAIN_ACTION0.
+           ";
+    ValRandomize = true;
+  } L3_DOMAIN[31:26] = 6'h3f;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[25:22] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     8 bits from MAP_PORT_CFG
+
+           ";
+    ValRandomize = true;
+  } PORT_PROFILE[21:14] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+     8 bits from MAP_DOMAIN_ACTION
+
+           ";
+    ValRandomize = true;
+  } DOMAIN_PROFILE[13:6] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+     [list]
+     [*] mac_routable[0] = outer DMAC routable
+     [*] mac_routable[1] = outer SMAC routable
+     [*] mac_routable[2] = inner DMAC routable
+     [*] mac_routable[3] = inner SMAC routable
+     [/list]
+
+           ";
+    ValRandomize = true;
+  } MAC_ROUTABLE[5:2] = 4'hf;
+  field {
+    AccessType = "RW";
+    desc = "
+     [list]
+     [*] mac_mbcast[0] = outer DMAC multicast bit set
+     [*] mac_mbcast[1] = outer DMAC is broadcast address
+     [/list]
+
+           ";
+    ValRandomize = true;
+  } MAC_MBCAST[1:0] = 2'h3;
+};
+
+
+
+// MAP_PROFILE_KEY_INVERT1[0..95]
+
+reg map_profile_key_invert1_r {
+  shared;
+  HandCoded = true;
+  name = "Packet profile CAM key invert 1";
+  desc = "
+  Packet profile KEY1 is mapping.
+  This register selects which key bits to compare. The same format is used for key and key invert. 
+
+  The semantic is identical to that used in the FFU_TCAM register.
+
+  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:50] = 14'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     From parser, representing a digest of the parser flags
+           ";
+    ValRandomize = true;
+  } PTYPE[49:40] = 10'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+     Provided by MAP_DOMAIN_ACTION0 or specified by the CPU
+     in packet metadata.
+           ";
+    ValRandomize = true;
+  } L2_DOMAIN[39:32] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+     Provided by MAP_DOMAIN_ACTION0.
+           ";
+    ValRandomize = true;
+  } L3_DOMAIN[31:26] = 6'h3f;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[25:22] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     8 bits from MAP_PORT_CFG
+
+           ";
+    ValRandomize = true;
+  } PORT_PROFILE[21:14] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+     8 bits from port configuration
+
+           ";
+    ValRandomize = true;
+  } DOMAIN_PROFILE[13:6] = 8'hff;
+  field {
+    AccessType = "RW";
+    desc = "
+     [list]
+     [*] mac_routable[0] = outer DMAC routable
+     [*] mac_routable[1] = outer SMAC routable
+     [*] mac_routable[2] = inner DMAC routable
+     [*] mac_routable[3] = inner SMAC routable
+     [/list]
+
+           ";
+    ValRandomize = true;
+  } MAC_ROUTABLE[5:2] = 4'hf;
+  field {
+    AccessType = "RW";
+    desc = "
+     [list]
+     [*] mac_mbcast[0] = outer DMAC multicast bit set
+     [*] mac_mbcast[1] = outer DMAC is broadcast address
+     [/list]
+
+           ";
+    ValRandomize = true;
+  } MAC_MBCAST[1:0] = 2'h3;
+};
+
+
+
+// MAP_PROFILE_ACTION[0..95]
+
+reg map_profile_action_r {
+  shared;
+  HandCoded = true;
+  name = "Packet profile action value";
+  desc = "
+  The packet profile mapper is used for three functions:
+
+  [list]
+  [*] For packet profile and key-rewrite generation the mapper produces a packet profile value and key rewrite profile, based on the highest matching rule that has profile_valid=1
+  [*] For trigger ID generation, the mapper produces a downstream trigger ID value, based on the higest matching rule that has trig_valid=1
+  [*] For priority profile selection, the mapper provides input as to how VPRI and DSCP are remapped, based on the highest matching rule that has prios_valid=1
+  [/list]
+
+  An entry may have multiple valid bits set, allowing the entry to participate in more than one resolution (and thus produce more then one set of outputs).  For example a rule may generate both packet profile and a trigger ID.  
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    When profile_valid is set, this rule participates in MAP_PROFILE_ACTION profile resolution.
+    The packet profile and MAP_REWRITE values for the highest-numbered matching rule
+    having profile_valid are used.
+
+           ";
+    ValRandomize = true;
+  } PROFILE_VALID[34:34] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Initial packet profile value for Classifier
+
+           ";
+    ValRandomize = true;
+  } PROFILE[33:28] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    When profile_valid is set, this field selects which profile in MAP_REWRITE to use.
+
+           ";
+    ValRandomize = true;
+  } REWRITE_PROFILE[27:24] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    When trig_valid is set, this rule participates in MAP_PROFILE_ACTION triggers resolution.
+    The profile_trig value, parser_error, and ip_options_mask for the highest-numbered matching rule
+    having trig_valid are used.
+
+           ";
+    ValRandomize = true;
+  } TRIG_VALID[23:23] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Default triggers value to use.
+    (for handling DHCP/BOOTP/ARP/ICMP, tagging violation, parse error, etc.)
+
+           ";
+    ValRandomize = true;
+  } PROFILE_TRIG[22:15] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Generate a parser_error action in Fwd, which will drop the packet.
+    parser_error is logged in RX_STATS bank 2, bin 3.
+
+           ";
+    ValRandomize = true;
+  } PARSER_ERROR[14:14] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Mask to select which parser flags will generate TRAP_IP_OPTIONS.
+    The formula is as follows, where:[br]
+      otr_opt_flags[6] = IPv4 case[br]
+      otr_opt_flags[5:0] from parser[br]
+      inr_opt_flags[6] = IPv4 case[br]
+      inr_opt_flags[5:0] from parser
+      [list]
+      [*] otr_opt_flags = {otr_l3_v && !otr_v6 && otr_l3_len > 20, parser_flags[37:32]}                      
+      [*] inr_opt_flags = {inr_l3_v && !inr_v6 && inr_l3_len > 20, parser_flags[43:38]}                    
+      [*] ip_options[0] = |(ip_options_mask & otr_opt_flags)
+      [*] ip_options[1] = |(ip_options_mask & inr_opt_flags)
+      [/list]
+
+    Finally trap_ip_options = ip_options[mod_idx.decap]
+
+           ";
+    ValRandomize = true;
+  } IP_OPTIONS_MASK[13:7] = 7'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    When prios_valid is set, this rule participates in MAP_PROFILE_ACTION priority resolution.
+    The vpri_tgt and dscp_tgt for the highest-numbered matching rule having prios_valid are used.
+
+           ";
+    ValRandomize = true;
+  } PRIOS_VALID[6:6] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Bit vector selecting which VPRIs to apply the p=priority_profile translation to.
+     [br][br]
+     If bit 0 is set:
+     key16[OUTER_VLAN1].vpri = MAP_VPRI[p, key16[OUTER_VLAN1].vpri] 
+     [br][br]
+     If bit 1 is set:
+     key16[INNER_VLAN1].vpri = MAP_VPRI[p, key16[INNER_VLAN1].vpri] 
+     [br][br]
+     If bit 2 is set:
+     act4[VPRI0] = act4[VPRI1] = MAP_VPRI[p, key16[OUTER_VLAN1].vpri] 
+     [br][br]
+     vpri_tgt takes precedence over key rewrite in the case of conflict.  Multiple bits may be set.
+
+           ";
+    ValRandomize = true;
+  } VPRI_TGT[5:3] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Bit vector selecting which DSCPs to apply the p=priority_profile translation to.
+     [br][br]
+     If bit 0 is set:
+     key8[OUTER_DS].vpri = MAP_DSCP_TC[p, key8 [OUTER_DS].dscp].dscp
+     [br][br]
+     If bit 1 is set:
+     key8 [INNER_DS].dscp = MAP_DSCP_TC[p, key8 [INNER_DS].dscp].dscp
+     [br][br]
+     If bit 2 is set:
+     act4[DSCP_HI:DSCP_LO] = MAP_DSCP_TC[p, key8 [OUTER_DS].dscp].dscp
+     [br][br]
+     dscp_tgt takes precedence over key rewrite in the case of conflict.  Multiple bits may be set.
+
+           ";
+    ValRandomize = true;
+  } DSCP_TGT[2:0] = 3'h0;
+};
+
+
+
+// MAP_DOMAIN_POL_CFG
+
+reg map_domain_pol_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Provides the per-color linked-counter configuration for domain TCAM assigned policers.";
+  desc = "
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    Provides the G/Y/R linked-counter enables for the policer command associated with the L3 policer output of
+    MAP_DOMAIN_ACTION1.
+
+           ";
+    ValRandomize = true;
+  } L3_COLOR_CFG[5:3] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Provides the G/Y/R linked-counter enables for the policer command associated with the L2 policer output of
+    MAP_DOMAIN_ACTION1.
+
+           ";
+    ValRandomize = true;
+  } L2_COLOR_CFG[2:0] = 3'h0;
+};
+
+
+
+// MAP_REWRITE[0..15][0..31]
+
+reg map_rewrite_r {
+  shared;
+  HandCoded = true;
+  name = "Key rewrite selector";
+  desc = "
+  This register is indexed by the output of the rewrite_profile output of the packet profile CAM.rule number, 
+  and by target nybble.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Select which rewrite source nybble to use for this target nybble.
+     If src_id=0, then do not rewrite the target nybble (leave as received from parser).
+
+           ";
+    ValRandomize = true;
+  } SRC_ID[5:0] = 6'h0;
+};
+regfile map_rewrite_rf {
+  map_rewrite_r MAP_REWRITE[32] += 8;
+};
+
+
+
+// Begin reg2rdl addrmap section
+
+addrmap mby_ppe_mapper_map {
+  name = "mby_mapper";
+  desc = "Mapper Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  map_port_cfg_r             MAP_PORT_CFG[18]              @0x0 += 8;
+  map_port_default_rf        MAP_PORT_DEFAULT[18]          @0x200 += 64;
+  map_len_limit_r            MAP_LEN_LIMIT[18]             @0x1100 += 8;
+  map_domain_tcam_r          MAP_DOMAIN_TCAM[4096]         @0x10000 += 16;
+  map_domain_action0_r       MAP_DOMAIN_ACTION0[4096]      @0x20000 += 8;
+  map_domain_action1_r       MAP_DOMAIN_ACTION1[4096]      @0x28000 += 8;
+  map_domain_profile_r       MAP_DOMAIN_PROFILE[512]       @0x30000 += 8;
+  map_port_r                 MAP_PORT[18]                  @0x31000 += 8;
+  map_mac_r                  MAP_MAC[96]                   @0x31800 += 16;
+  map_prot_r                 MAP_PROT[8]                   @0x32200 += 8;
+  map_l4_src_r               MAP_L4_SRC[64]                @0x32400 += 8;
+  map_l4_dst_r               MAP_L4_DST[64]                @0x32600 += 8;
+  map_exp_tc_r               MAP_EXP_TC[32]                @0x32800 += 8;
+  map_dscp_tc_r              MAP_DSCP_TC[2048]             @0x34000 += 8;
+  map_vpri_tc_r              MAP_VPRI_TC[32]               @0x38000 += 8;
+  map_vpri_r                 MAP_VPRI[32]                  @0x38100 += 8;
+  map_profile_key0_r         MAP_PROFILE_KEY0[96]          @0x38400 += 8;
+  map_profile_key_invert0_r  MAP_PROFILE_KEY_INVERT0[96]   @0x38800 += 8;
+  map_profile_key1_r         MAP_PROFILE_KEY1[96]          @0x38c00 += 8;
+  map_profile_key_invert1_r  MAP_PROFILE_KEY_INVERT1[96]   @0x39000 += 8;
+  map_profile_action_r       MAP_PROFILE_ACTION[96]        @0x39400 += 8;
+  map_domain_pol_cfg_r       MAP_DOMAIN_POL_CFG            @0x39800;
+  map_rewrite_rf             MAP_REWRITE[16]               @0x3a000 += 256;
+}; // final size: 0x3b000 <= 0x40000 = 8<<15

@@ -58,6 +58,22 @@ EOF
                 level => 1,
             },
         },
+        # RTL and test island/validation environment stubbing command options
+        -en_ip => {
+            type => "ARRAY",
+            merging => "ASSIGN",
+            default => "all",
+            help => {
+                desc => "Enable a list of IPs to be enabled: usage -en_ip=boot,pcie",
+            },
+        },
+        -rtl_stub => {
+            action    => "y2k_config_gen",
+            default   => (("-cc" ~~ @ARGV || "-ccud" ~~ @ARGV) && ("fc_lite" ~~ @ARGV) ? 1 : 0),
+            help  => {
+                    desc => "generate y2k config file"
+            },
+        },
         -enable_sim_init => {
             type => "BOOLEAN",
             default => 0,
