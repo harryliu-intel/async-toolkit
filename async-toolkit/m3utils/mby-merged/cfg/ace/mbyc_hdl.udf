@@ -9,6 +9,10 @@ my $MBY_IOSF_PRI_VC_ROOT = &ToolConfig::get_tool_path('ipconfig/iosf_primary_bfm
 my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc');
 my $sva_lib                 = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
 
+# for Cadance PCIe BFMs
+my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+
+
 my $default_enable_congruency_elab  = 1;
 my $default_enable_xprop_elab       = 1;
 my $default_enable_partcomp_elab    = 1;
@@ -230,7 +234,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "-lintra_create",
                         "-sglp_createlib",
                     ],
-                    -tag => "nonsynth+nonemul+nonlint",
+                    -tag => "nonsynth+nonemul+nonlint", 
             },
             svt_ahb_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/svt_ahb_bfm.hdl" ],

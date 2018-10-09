@@ -18,7 +18,7 @@ class igr_integ_env extends subsystem_base_env;
    `uvm_component_utils(igr_integ_env)
    
    // igr env
-   ingress_env       ingress_env_inst;
+   ingress_env       ingress_env_inst[`NUM_IGR];
  
    //
    // constructor
@@ -34,7 +34,7 @@ class igr_integ_env extends subsystem_base_env;
      `uvm_info(get_type_name(), "start IGR ENV build phase", UVM_MEDIUM)
      super.build_phase(phase);
  
-     //build_igr_env();
+     build_igr_env();
  
      `uvm_info(get_type_name(), "end of IGR ENV build phase", UVM_MEDIUM)
    endfunction : build_phase
@@ -63,7 +63,10 @@ class igr_integ_env extends subsystem_base_env;
    function void build_igr_env ();
  
      // creating both CFG and env's 
-     ingress_env_inst     = ingress_env::type_id::create("ingress_env_inst", this);
+     for (int i=0; i<`NUM_IGR; i++) begin
+         ingress_env_inst[i] = ingress_env::type_id::create($sformatf("ingress_env_inst_%0d", i), this);
+         `uvm_info(get_name(),  $sformatf("build_igr_env: ingress_env_inst[%0d] created",i),UVM_MEDIUM)
+     end
 
      // pass-in the IP3 reg_model from FC regmodel
      //ingress_env_cfg_inst.regModel  = fc_cfg_obj_handle.reg_model._ingress_env_reg_blk;

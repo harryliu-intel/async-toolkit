@@ -35,6 +35,7 @@
 `define HDL_TOP_REALMIA_CFG  `HDL_TOP``_realmia_cfg
 `define RTL_STUB_LIB         soc_ip_stub_lib
 `define FCGPIO_IF            `HVL_TOP.fc_gpio_if1
+`define FC_ENV               uvm_test_top.tb_env
 
 `ifdef FC_64
      `define NUM_IGR 16
