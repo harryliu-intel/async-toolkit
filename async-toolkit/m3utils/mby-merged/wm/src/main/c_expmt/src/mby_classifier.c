@@ -34,7 +34,6 @@ void doAction
     fm_byte prec   = FM_GET_FIELD        (action, MBY_FFU_ACTION, PREC);
     fm_byte encode = FM_GET_UNNAMED_FIELD(action, MBY_FFU_ACTION_l_ENTRYTYPE, 5);
 
-#ifndef USE_NEW_CSRS // does not compile with new CSRS: missing defines <-- FIXME !!!!
     mbyClassifierActionEntryType entryType =
         (encode == 1)                ? MBY_FFU_ACTION_SET4_4B  :
         (encode == 2)                ? MBY_FFU_ACTION_SET8_1B  :
@@ -127,7 +126,6 @@ void doAction
         case MBY_FFU_ACTION_NOP:
             break;
     }
-#endif
 }
 
 static void applyEntropyKeyMask
