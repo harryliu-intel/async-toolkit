@@ -1,7 +1,0 @@
-#################################################################################
-# This file contains Testbench connectivity specifications
-#
-# It would typically include any ad-hoc connectivity specs for miscellaneous 
-# pins on System Verilog interfaces that are instantiated in the testbench
-#################################################################################
-

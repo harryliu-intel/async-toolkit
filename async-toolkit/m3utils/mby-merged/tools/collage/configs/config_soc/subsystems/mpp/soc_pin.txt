@@ -1,8 +1,0 @@
-#################################################################################
-# This file contains pins to be exported to the top level (SoC)
-#
-# It should NOT include connectivity specs
-#
-# See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
-# 
-#################################################################################

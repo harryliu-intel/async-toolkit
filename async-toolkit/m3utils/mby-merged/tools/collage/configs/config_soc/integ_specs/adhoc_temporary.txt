@@ -1,86 +1,305 @@
 # Initial Pin-List - to be removed once pins defined where appropriate
-# TAP pins
-CP TCLK   in
-CP TDI    in
-CP TDO    out
-CP TMS    in
-CP TRST_N in
-
-# PCIe IO
-CP PCIE_RX_DP_0    in 
-CP PCIE_RX_DP_1    in 
-CP PCIE_RX_DP_2    in 
-CP PCIE_RX_DP_3    in 
-CP PCIE_RX_DN_0    in
-CP PCIE_RX_DN_1    in
-CP PCIE_RX_DN_2    in
-CP PCIE_RX_DN_3    in
-CP PCIE_TX_DP_0    out
-CP PCIE_TX_DP_1    out
-CP PCIE_TX_DP_2    out
-CP PCIE_TX_DP_3    out
-CP PCIE_TX_DN_0    out
-CP PCIE_TX_DN_1    out
-CP PCIE_TX_DN_2    out
-CP PCIE_TX_DN_3    out
-CP PCIE_REFCLK_DP  in
-CP PCIE_REFCLK_DN  in
-CP PCIE_PE_RESET_N in
-
-# Core/Serdes ref clks
-CP REFCLK_DP       in
-CP REFCLK_DN       in
-
-# Fabric IO
-CP P01_RX_P_0      in
-CP P01_RX_P_1      in
-CP P01_RX_P_2      in
-CP P01_RX_P_3      in
-CP P01_RX_N_0      in
-CP P01_RX_N_1      in
-CP P01_RX_N_2      in
-CP P01_RX_N_3      in
-CP P01_TX_P_0      out
-CP P01_TX_P_1      out
-CP P01_TX_P_2      out
-CP P01_TX_P_3      out
-CP P01_TX_N_0      out
-CP P01_TX_N_1      out
-CP P01_TX_N_2      out
-CP P01_TX_N_3      out
-
-# SPI
-CP QSPI_CLK        out
-CP QSPI_CS_N       out
-CP QSPI_DQ_0       inout
-CP QSPI_DQ_1       inout
-CP QSPI_DQ_2       inout
-CP QSPI_DQ_3       inout
-
-# MISC
-CP TR_TCK          in
-CP ATPG_MODE_N     in
-CP PAD_TRI_N       in
-CP FUSEBREAK_N     in
-CP PWRGOOD         in
-CP GPIO_0          inout
-CP GPIO_1          inout
-CP GPIO_2          inout
-CP GPIO_3          inout
-CP GPIO_4          inout
-CP GPIO_5          inout
-CP GPIO_6          inout
-CP GPIO_7          inout
-CP GPIO_8          inout
-CP GPIO_9          inout
-CP GPIO_10          inout
-CP GPIO_11          inout
-CP GPIO_12          inout
-CP GPIO_13          inout
-CP GPIO_14          inout
-CP RISC_RST_N      in
-CP RISC_NMI        in
-CP DEBUG_EN_N      in
+CP	TCLK	in	
+CP	TDI	in	
+CP	TDO	out	
+CP	TMS	in	
+CP	TRST_N	in	
+CP	PCIE_RX_DP	in	{3 0}
+CP	PCIE_RX_DN	in	{3 0}
+CP	PCIE_TX_DP	out	{3 0}
+CP	PCIE_TX_DN	out	{3 0}
+CP	PCIE_ATEST	out	
+CP	PCIE_REFCLK_DP	in	
+CP	PCIE_REFCLK_DN	in	
+CP	PCIE_PE_RESET_N	in	
+CP	QSPI_CLK	out	
+CP	QSPI_CS_N	out	
+CP	QSPI_DQ	inout	{3 0}
+CP	ATPG_MODE_N	in	
+CP	PAD_TRI_N	in	
+CP	 FUSEBREAK_N	in	
+CP	EXTCLK_DP	in	{3 0}
+CP	EXTCLK_DN	in	{3 0}
+CP	SYNCE_DP	out	
+CP	SYNCE_DN	out	
+CP	PWRGOOD	in	
+CP	GPIO	inout	{19 0}
+CP	UART_TX	out	
+CP	CLKOBS_DP	out	{1 0}
+CP	CLKOBS_DN	out	{1 0}
+CP	RISC_RST_N	in	
+CP	RISC_NMI	in	
+CP	EXP_CLK	out	
+CP	EXP_DATA_IN	in	
+CP	EXP_DATA_OUT	out	
+CP	EXP_SAMPLE	out	
+CP	I2C_CLK	inout	{1 0}
+CP	I2C_DATA	inout	{1 0}
+CP	DEBUG_EN_N	in	
+CP	THERM_IN	in	
+CP	THERM_OUT	out	
+CP	VCC_OBS_DP	out	
+CP	VSS_VCC_OBS_DN	out	
+CP	VCCH1p8_OBS_DP	out	
+CP	HSS_P01_RX_DN	in	{3 0}
+CP	HSS_P01_RX_DP	in	{3 0}
+CP	HSS_P01_TX_DN	out	{3 0}
+CP	HSS_P01_TX_DP	out	{3 0}
+CP	HSS_P02_RX_DN	in	{3 0}
+CP	HSS_P02_RX_DP	in	{3 0}
+CP	HSS_P02_TX_DN	out	{3 0}
+CP	HSS_P02_TX_DP	out	{3 0}
+CP	HSS_P03_RX_DN	in	{3 0}
+CP	HSS_P03_RX_DP	in	{3 0}
+CP	HSS_P03_TX_DN	out	{3 0}
+CP	HSS_P03_TX_DP	out	{3 0}
+CP	HSS_P04_RX_DN	in	{3 0}
+CP	HSS_P04_RX_DP	in	{3 0}
+CP	HSS_P04_TX_DN	out	{3 0}
+CP	HSS_P04_TX_DP	out	{3 0}
+CP	HSS_P05_RX_DN	in	{3 0}
+CP	HSS_P05_RX_DP	in	{3 0}
+CP	HSS_P05_TX_DN	out	{3 0}
+CP	HSS_P05_TX_DP	out	{3 0}
+CP	HSS_P06_RX_DN	in	{3 0}
+CP	HSS_P06_RX_DP	in	{3 0}
+CP	HSS_P06_TX_DN	out	{3 0}
+CP	HSS_P06_TX_DP	out	{3 0}
+CP	HSS_P07_RX_DN	in	{3 0}
+CP	HSS_P07_RX_DP	in	{3 0}
+CP	HSS_P07_TX_DN	out	{3 0}
+CP	HSS_P07_TX_DP	out	{3 0}
+CP	HSS_P08_RX_DN	in	{3 0}
+CP	HSS_P08_RX_DP	in	{3 0}
+CP	HSS_P08_TX_DN	out	{3 0}
+CP	HSS_P08_TX_DP	out	{3 0}
+CP	HSS_P09_RX_DN	in	{3 0}
+CP	HSS_P09_RX_DP	in	{3 0}
+CP	HSS_P09_TX_DN	out	{3 0}
+CP	HSS_P09_TX_DP	out	{3 0}
+CP	HSS_P10_RX_DN	in	{3 0}
+CP	HSS_P10_RX_DP	in	{3 0}
+CP	HSS_P10_TX_DN	out	{3 0}
+CP	HSS_P10_TX_DP	out	{3 0}
+CP	HSS_P11_RX_DN	in	{3 0}
+CP	HSS_P11_RX_DP	in	{3 0}
+CP	HSS_P11_TX_DN	out	{3 0}
+CP	HSS_P11_TX_DP	out	{3 0}
+CP	HSS_P12_RX_DN	in	{3 0}
+CP	HSS_P12_RX_DP	in	{3 0}
+CP	HSS_P12_TX_DN	out	{3 0}
+CP	HSS_P12_TX_DP	out	{3 0}
+CP	HSS_P13_RX_DN	in	{3 0}
+CP	HSS_P13_RX_DP	in	{3 0}
+CP	HSS_P13_TX_DN	out	{3 0}
+CP	HSS_P13_TX_DP	out	{3 0}
+CP	HSS_P14_RX_DN	in	{3 0}
+CP	HSS_P14_RX_DP	in	{3 0}
+CP	HSS_P14_TX_DN	out	{3 0}
+CP	HSS_P14_TX_DP	out	{3 0}
+CP	HSS_P15_RX_DN	in	{3 0}
+CP	HSS_P15_RX_DP	in	{3 0}
+CP	HSS_P15_TX_DN	out	{3 0}
+CP	HSS_P15_TX_DP	out	{3 0}
+CP	HSS_P16_RX_DN	in	{3 0}
+CP	HSS_P16_RX_DP	in	{3 0}
+CP	HSS_P16_TX_DN	out	{3 0}
+CP	HSS_P16_TX_DP	out	{3 0}
+CP	HSS_P17_RX_DN	in	{3 0}
+CP	HSS_P17_RX_DP	in	{3 0}
+CP	HSS_P17_TX_DN	out	{3 0}
+CP	HSS_P17_TX_DP	out	{3 0}
+CP	HSS_P18_RX_DN	in	{3 0}
+CP	HSS_P18_RX_DP	in	{3 0}
+CP	HSS_P18_TX_DN	out	{3 0}
+CP	HSS_P18_TX_DP	out	{3 0}
+CP	HSS_P19_RX_DN	in	{3 0}
+CP	HSS_P19_RX_DP	in	{3 0}
+CP	HSS_P19_TX_DN	out	{3 0}
+CP	HSS_P19_TX_DP	out	{3 0}
+CP	HSS_P20_RX_DN	in	{3 0}
+CP	HSS_P20_RX_DP	in	{3 0}
+CP	HSS_P20_TX_DN	out	{3 0}
+CP	HSS_P20_TX_DP	out	{3 0}
+CP	HSS_P21_RX_DN	in	{3 0}
+CP	HSS_P21_RX_DP	in	{3 0}
+CP	HSS_P21_TX_DN	out	{3 0}
+CP	HSS_P21_TX_DP	out	{3 0}
+CP	HSS_P22_RX_DN	in	{3 0}
+CP	HSS_P22_RX_DP	in	{3 0}
+CP	HSS_P22_TX_DN	out	{3 0}
+CP	HSS_P22_TX_DP	out	{3 0}
+CP	HSS_P23_RX_DN	in	{3 0}
+CP	HSS_P23_RX_DP	in	{3 0}
+CP	HSS_P23_TX_DN	out	{3 0}
+CP	HSS_P23_TX_DP	out	{3 0}
+CP	HSS_P24_RX_DN	in	{3 0}
+CP	HSS_P24_RX_DP	in	{3 0}
+CP	HSS_P24_TX_DN	out	{3 0}
+CP	HSS_P24_TX_DP	out	{3 0}
+CP	HSS_P25_RX_DN	in	{3 0}
+CP	HSS_P25_RX_DP	in	{3 0}
+CP	HSS_P25_TX_DN	out	{3 0}
+CP	HSS_P25_TX_DP	out	{3 0}
+CP	HSS_P26_RX_DN	in	{3 0}
+CP	HSS_P26_RX_DP	in	{3 0}
+CP	HSS_P26_TX_DN	out	{3 0}
+CP	HSS_P26_TX_DP	out	{3 0}
+CP	HSS_P27_RX_DN	in	{3 0}
+CP	HSS_P27_RX_DP	in	{3 0}
+CP	HSS_P27_TX_DN	out	{3 0}
+CP	HSS_P27_TX_DP	out	{3 0}
+CP	HSS_P28_RX_DN	in	{3 0}
+CP	HSS_P28_RX_DP	in	{3 0}
+CP	HSS_P28_TX_DN	out	{3 0}
+CP	HSS_P28_TX_DP	out	{3 0}
+CP	HSS_P29_RX_DN	in	{3 0}
+CP	HSS_P29_RX_DP	in	{3 0}
+CP	HSS_P29_TX_DN	out	{3 0}
+CP	HSS_P29_TX_DP	out	{3 0}
+CP	HSS_P30_RX_DN	in	{3 0}
+CP	HSS_P30_RX_DP	in	{3 0}
+CP	HSS_P30_TX_DN	out	{3 0}
+CP	HSS_P30_TX_DP	out	{3 0}
+CP	HSS_P31_RX_DN	in	{3 0}
+CP	HSS_P31_RX_DP	in	{3 0}
+CP	HSS_P31_TX_DN	out	{3 0}
+CP	HSS_P31_TX_DP	out	{3 0}
+CP	HSS_P32_RX_DN	in	{3 0}
+CP	HSS_P32_RX_DP	in	{3 0}
+CP	HSS_P32_TX_DN	out	{3 0}
+CP	HSS_P32_TX_DP	out	{3 0}
+CP	HSS_P33_RX_DN	in	{3 0}
+CP	HSS_P33_RX_DP	in	{3 0}
+CP	HSS_P33_TX_DN	out	{3 0}
+CP	HSS_P33_TX_DP	out	{3 0}
+CP	HSS_P34_RX_DN	in	{3 0}
+CP	HSS_P34_RX_DP	in	{3 0}
+CP	HSS_P34_TX_DN	out	{3 0}
+CP	HSS_P34_TX_DP	out	{3 0}
+CP	HSS_P35_RX_DN	in	{3 0}
+CP	HSS_P35_RX_DP	in	{3 0}
+CP	HSS_P35_TX_DN	out	{3 0}
+CP	HSS_P35_TX_DP	out	{3 0}
+CP	HSS_P36_RX_DN	in	{3 0}
+CP	HSS_P36_RX_DP	in	{3 0}
+CP	HSS_P36_TX_DN	out	{3 0}
+CP	HSS_P36_TX_DP	out	{3 0}
+CP	HSS_P37_RX_DN	in	{3 0}
+CP	HSS_P37_RX_DP	in	{3 0}
+CP	HSS_P37_TX_DN	out	{3 0}
+CP	HSS_P37_TX_DP	out	{3 0}
+CP	HSS_P38_RX_DN	in	{3 0}
+CP	HSS_P38_RX_DP	in	{3 0}
+CP	HSS_P38_TX_DN	out	{3 0}
+CP	HSS_P38_TX_DP	out	{3 0}
+CP	HSS_P39_RX_DN	in	{3 0}
+CP	HSS_P39_RX_DP	in	{3 0}
+CP	HSS_P39_TX_DN	out	{3 0}
+CP	HSS_P39_TX_DP	out	{3 0}
+CP	HSS_P40_RX_DN	in	{3 0}
+CP	HSS_P40_RX_DP	in	{3 0}
+CP	HSS_P40_TX_DN	out	{3 0}
+CP	HSS_P40_TX_DP	out	{3 0}
+CP	HSS_P41_RX_DN	in	{3 0}
+CP	HSS_P41_RX_DP	in	{3 0}
+CP	HSS_P41_TX_DN	out	{3 0}
+CP	HSS_P41_TX_DP	out	{3 0}
+CP	HSS_P42_RX_DN	in	{3 0}
+CP	HSS_P42_RX_DP	in	{3 0}
+CP	HSS_P42_TX_DN	out	{3 0}
+CP	HSS_P42_TX_DP	out	{3 0}
+CP	HSS_P43_RX_DN	in	{3 0}
+CP	HSS_P43_RX_DP	in	{3 0}
+CP	HSS_P43_TX_DN	out	{3 0}
+CP	HSS_P43_TX_DP	out	{3 0}
+CP	HSS_P44_RX_DN	in	{3 0}
+CP	HSS_P44_RX_DP	in	{3 0}
+CP	HSS_P44_TX_DN	out	{3 0}
+CP	HSS_P44_TX_DP	out	{3 0}
+CP	HSS_P45_RX_DN	in	{3 0}
+CP	HSS_P45_RX_DP	in	{3 0}
+CP	HSS_P45_TX_DN	out	{3 0}
+CP	HSS_P45_TX_DP	out	{3 0}
+CP	HSS_P46_RX_DN	in	{3 0}
+CP	HSS_P46_RX_DP	in	{3 0}
+CP	HSS_P46_TX_DN	out	{3 0}
+CP	HSS_P46_TX_DP	out	{3 0}
+CP	HSS_P47_RX_DN	in	{3 0}
+CP	HSS_P47_RX_DP	in	{3 0}
+CP	HSS_P47_TX_DN	out	{3 0}
+CP	HSS_P47_TX_DP	out	{3 0}
+CP	HSS_P48_RX_DN	in	{3 0}
+CP	HSS_P48_RX_DP	in	{3 0}
+CP	HSS_P48_TX_DN	out	{3 0}
+CP	HSS_P48_TX_DP	out	{3 0}
+CP	HSS_P49_RX_DN	in	{3 0}
+CP	HSS_P49_RX_DP	in	{3 0}
+CP	HSS_P49_TX_DN	out	{3 0}
+CP	HSS_P49_TX_DP	out	{3 0}
+CP	HSS_P50_RX_DN	in	{3 0}
+CP	HSS_P50_RX_DP	in	{3 0}
+CP	HSS_P50_TX_DN	out	{3 0}
+CP	HSS_P50_TX_DP	out	{3 0}
+CP	HSS_P51_RX_DN	in	{3 0}
+CP	HSS_P51_RX_DP	in	{3 0}
+CP	HSS_P51_TX_DN	out	{3 0}
+CP	HSS_P51_TX_DP	out	{3 0}
+CP	HSS_P52_RX_DN	in	{3 0}
+CP	HSS_P52_RX_DP	in	{3 0}
+CP	HSS_P52_TX_DN	out	{3 0}
+CP	HSS_P52_TX_DP	out	{3 0}
+CP	HSS_P53_RX_DN	in	{3 0}
+CP	HSS_P53_RX_DP	in	{3 0}
+CP	HSS_P53_TX_DN	out	{3 0}
+CP	HSS_P53_TX_DP	out	{3 0}
+CP	HSS_P54_RX_DN	in	{3 0}
+CP	HSS_P54_RX_DP	in	{3 0}
+CP	HSS_P54_TX_DN	out	{3 0}
+CP	HSS_P54_TX_DP	out	{3 0}
+CP	HSS_P55_RX_DN	in	{3 0}
+CP	HSS_P55_RX_DP	in	{3 0}
+CP	HSS_P55_TX_DN	out	{3 0}
+CP	HSS_P55_TX_DP	out	{3 0}
+CP	HSS_P56_RX_DN	in	{3 0}
+CP	HSS_P56_RX_DP	in	{3 0}
+CP	HSS_P56_TX_DN	out	{3 0}
+CP	HSS_P56_TX_DP	out	{3 0}
+CP	HSS_P57_RX_DN	in	{3 0}
+CP	HSS_P57_RX_DP	in	{3 0}
+CP	HSS_P57_TX_DN	out	{3 0}
+CP	HSS_P57_TX_DP	out	{3 0}
+CP	HSS_P58_RX_DN	in	{3 0}
+CP	HSS_P58_RX_DP	in	{3 0}
+CP	HSS_P58_TX_DN	out	{3 0}
+CP	HSS_P58_TX_DP	out	{3 0}
+CP	HSS_P59_RX_DN	in	{3 0}
+CP	HSS_P59_RX_DP	in	{3 0}
+CP	HSS_P59_TX_DN	out	{3 0}
+CP	HSS_P59_TX_DP	out	{3 0}
+CP	HSS_P60_RX_DN	in	{3 0}
+CP	HSS_P60_RX_DP	in	{3 0}
+CP	HSS_P60_TX_DN	out	{3 0}
+CP	HSS_P60_TX_DP	out	{3 0}
+CP	HSS_P61_RX_DN	in	{3 0}
+CP	HSS_P61_RX_DP	in	{3 0}
+CP	HSS_P61_TX_DN	out	{3 0}
+CP	HSS_P61_TX_DP	out	{3 0}
+CP	HSS_P62_RX_DN	in	{3 0}
+CP	HSS_P62_RX_DP	in	{3 0}
+CP	HSS_P62_TX_DN	out	{3 0}
+CP	HSS_P62_TX_DP	out	{3 0}
+CP	HSS_P63_RX_DN	in	{3 0}
+CP	HSS_P63_RX_DP	in	{3 0}
+CP	HSS_P63_TX_DN	out	{3 0}
+CP	HSS_P63_TX_DP	out	{3 0}
+CP	HSS_P64_RX_DN	in	{3 0}
+CP	HSS_P64_RX_DP	in	{3 0}
+CP	HSS_P64_TX_DN	out	{3 0}
+CP	HSS_P64_TX_DP	out	{3 0}
+CP	HSS_ATEST	out	{7 0}
+CP	HSS_REFCLK_DP	in	{3 0}
+CP	HSS_REFCLK_DN	in	{3 0}
 
 
 
