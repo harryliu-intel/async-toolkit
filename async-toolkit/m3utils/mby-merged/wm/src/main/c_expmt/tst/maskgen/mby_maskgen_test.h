@@ -1,5 +1,5 @@
-#ifndef MBY_NEXTHOP_TEST_H
-#define MBY_NEXTHOP_TEST_H
+#ifndef MBY_MASKGEN_TEST_H
+#define MBY_MASKGEN_TEST_H
 
 #include "mby_maskgen.h"
 
