@@ -6,9 +6,12 @@ import java.io._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import java.net._
+
 import com.intel.cg.hpfd.csr.generated.mby_top_map
 import com.intel.cg.hpfd.madisonbay.Memory._
 import monocle.Optional
+
+import scala.annotation.tailrec
 
 object WhiteModelServer {
   val legacyProtocol = false
@@ -28,15 +31,15 @@ object WhiteModelServer {
     println("Received quit operation!")
   }
 
-  def processMessage(mtm: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map.mby_top_map = {
-
+  @tailrec
+  def processMessages(mtm: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map.mby_top_map = {
     val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)
     val toGo = hdr.Msglength - 12
 
 
-    hdr.Type match  {
+    val newRegs = hdr.Type match  {
       case FmModelMsgType.Packet => packetHandling.processPacket(is, os, hdr); mtm
       case FmModelMsgType.Mgmt => mtm
       case FmModelMsgType.Iosf => iosfHandling.processIosf(mtm, is, os)
@@ -44,6 +47,8 @@ object WhiteModelServer {
       case FmModelMsgType.CommandQuit => assert(false); mtm
       case _ => mtm
     }
+
+    processMessages(newRegs, is, os)
   }
 
   def runModelServer(file: File): Unit = {
@@ -71,11 +76,10 @@ object WhiteModelServer {
       val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
 
       try {
-        def processMessageLoop(loopCsrs: mby_top_map.mby_top_map): Nothing = processMessageLoop(processMessage(loopCsrs, is, os))
-        processMessageLoop(csrs)
+        processMessages(csrs, is, os)
       } catch {
-        case _: EOFException =>
-          println("Termination of IO from client without shutdown command " + s.getInetAddress.getHostName)
+        case _: IOException =>
+          println("IO error while handling client " + s.getInetAddress.getHostName)
 
       }
       println("Disconnected.")
@@ -84,9 +88,6 @@ object WhiteModelServer {
       os.flush()
       os.close()
       s.close()
-      egressPortToSocketAndStreamMap.retain {
-        case (_, (socket, _)) => socket != s
-      }
     }
     server.close()
   }
