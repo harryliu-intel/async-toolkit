@@ -490,7 +490,8 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop;end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -586,8 +587,10 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]   = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop;end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop;end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -600,19 +603,20 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]   = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
             end            
             s2q_eflit[7]: begin
-              fsel0            = 32'h4321_0000;
-              fsel1            = 32'h8888_8765;
-              seg0_md.eop      = 1'b0;
+              fsel0           = 32'h4321_0000;
+              fsel1           = 32'h8888_8765;
+              seg0_md.eop     = 1'b0;
               seg1_md.eop_pos = 3'd2;
-              seg1_we[7:0]   = 8'b1111_1111;
-              seg_e            = 3'b011;
-              nxt_flit         = 5'd16;
+              seg1_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b011;
+              nxt_flit        = 5'd16;
               flit_err = s2q_sop_v; //There should not be a valid Sop 
             end                        
           endcase //reverse
@@ -685,9 +689,12 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]   = 8'b1111_1111;
               seg_e            = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
+                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
@@ -699,8 +706,10 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -713,7 +722,8 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -785,62 +795,72 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]   = 8'b1111_1111;
               seg_e            = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel2 = 32'h0000_0004; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd6: begin fsel2 = 32'h0000_0054; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd7: begin fsel2 = 32'h0000_0654; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
-                4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
+                4'd5: begin fsel2 = 32'h0000_0004; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel2 = 32'h0000_0054; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_0654; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
             end            
             s2q_eflit[4]: begin
-              fsel0            = 32'h2100_0000;
-              fsel1            = 32'h8888_8843;
+              fsel0           = 32'h2100_0000;
+              fsel1           = 32'h8888_8843;
               seg1_md.eop_pos = 3'd1;
-              seg1_we[7:0]   = 8'b1111_1111;
-              seg_e            = 3'b011;              
+              seg1_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
+                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel0            = 32'h2100_0000;
-              fsel1            = 32'h8888_8543;
+              fsel0           = 32'h2100_0000;
+              fsel1           = 32'h8888_8543;
               seg1_md.eop_pos = 3'd2;
-              seg1_we[7:0]   = 8'b1111_1111;
-              seg_e            = 3'b011;
+              seg1_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
             end            
             s2q_eflit[6]: begin
-              fsel0            = 32'h2100_0000;
-              fsel1            = 32'h8888_6543;
-              seg0_md.eop      = 1'b0;
+              fsel0           = 32'h2100_0000;
+              fsel1           = 32'h8888_6543;
+              seg0_md.eop     = 1'b0;
               seg1_md.eop_pos = 3'd3;
-              seg1_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b011;
+              seg1_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
             end            
             s2q_eflit[7]: begin
-              fsel0            = 32'h2100_0000;
-              fsel1            = 32'h8887_6543;
-              seg0_md.eop      = 1'b0;
+              fsel0           = 32'h2100_0000;
+              fsel1           = 32'h8887_6543;
+              seg0_md.eop     = 1'b0;
               seg1_md.eop_pos = 3'd4;
-              seg1_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b011;
-              nxt_flit         = 5'd16;
+              seg1_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b011;
+              nxt_flit        = 5'd16;
               flit_err = s2q_sop_v; //There should not be a valid Sop 
             end                        
           endcase //reverse
@@ -888,11 +908,16 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 3 to get here
-                4'd4: begin fsel2 = 32'h0000_0003; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd5: begin fsel2 = 32'h0000_0043; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd6: begin fsel2 = 32'h0000_0543; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
-                4'd7: begin fsel2 = 32'h0000_6543; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
-                4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
+                4'd4: begin fsel2 = 32'h0000_0003; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel2 = 32'h0000_0043; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel2 = 32'h0000_0543; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_6543; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
@@ -905,10 +930,14 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel2 = 32'h0000_0004; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd6: begin fsel2 = 32'h0000_0054; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd7: begin fsel2 = 32'h0000_0654; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
-                4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
+                4'd5: begin fsel2 = 32'h0000_0004; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel2 = 32'h0000_0054; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_0654; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
@@ -921,9 +950,12 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
+                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
@@ -936,8 +968,10 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -950,7 +984,8 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -996,12 +1031,18 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 2 to get here
-                4'd3: begin fsel2 = 32'h0000_0002; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd4: begin fsel2 = 32'h0000_0032; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd5: begin fsel2 = 32'h0000_0432; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
-                4'd6: begin fsel2 = 32'h0000_5432; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
-                4'd7: begin fsel2 = 32'h0006_5432; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
-                4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
+                4'd3: begin fsel2 = 32'h0000_0002; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd4: begin fsel2 = 32'h0000_0032; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel2 = 32'h0000_0432; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel2 = 32'h0000_5432; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0006_5432; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[1:0]) | ((s2q_cnt_ones > 4'd2) & ~s2q_sflit[2]));
@@ -1014,11 +1055,16 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 3 to get here
-                4'd4: begin fsel2 = 32'h0000_0003; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd5: begin fsel2 = 32'h0000_0043; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd6: begin fsel2 = 32'h0000_0543; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
-                4'd7: begin fsel2 = 32'h0000_6543; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
-                4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
+                4'd4: begin fsel2 = 32'h0000_0003; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel2 = 32'h0000_0043; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel2 = 32'h0000_0543; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_6543; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
@@ -1031,10 +1077,14 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel2 = 32'h0000_0004; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd6: begin fsel2 = 32'h0000_0054; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd7: begin fsel2 = 32'h0000_0654; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
-                4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
+                4'd5: begin fsel2 = 32'h0000_0004; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel2 = 32'h0000_0054; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_0654; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
@@ -1047,9 +1097,12 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
-                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
+                4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel2 = 32'h0000_0065; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
@@ -1062,8 +1115,10 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
-                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -1076,7 +1131,8 @@ module igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17;
+                            seg1_sop_e = 1'b0; seg2_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -1367,14 +1423,15 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
             end            
             s2q_eflit[6]: begin
-              fsel1            = 32'h5432_1000;
-              fsel2            = 32'h8888_8886;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h5432_1000;
+              fsel2           = 32'h8888_8886;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd0;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b011;
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd1; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd1;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -1469,8 +1526,10 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]  = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
+                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -1483,7 +1542,8 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -1568,9 +1628,12 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
+                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
@@ -1583,8 +1646,10 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
+                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -1597,7 +1662,8 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -1624,13 +1690,13 @@ module igr_epl_shim_ctrl
               fsel1            = 32'h8800_0000;
               seg1_md.eop_pos = 3'd5;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
-                4'd2: begin fsel2 = 32'h0000_0001; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd3: begin fsel2 = 32'h0000_0021; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd4: begin fsel2 = 32'h0000_0321; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd5: begin fsel2 = 32'h0000_4321; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
-                4'd6: begin fsel2 = 32'h0005_4321; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
-                4'd7: begin fsel2 = 32'h0065_4321; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
-                4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
+                4'd2: begin fsel2 = 32'h0000_0001; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
+                4'd3: begin fsel2 = 32'h0000_0021; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd4: begin fsel2 = 32'h0000_0321; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
+                4'd5: begin fsel2 = 32'h0000_4321; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
+                4'd6: begin fsel2 = 32'h0005_4321; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
+                4'd7: begin fsel2 = 32'h0065_4321; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
+                4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & (s2q_sflit[0] | ((s2q_cnt_ones > 4'd1) & ~s2q_sflit[1]));
@@ -1639,12 +1705,12 @@ module igr_epl_shim_ctrl
               fsel1            = 32'h8100_0000;
               seg1_md.eop_pos = 3'd6;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 2 to get here
-                4'd3: begin fsel2 = 32'h0000_0002; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd4: begin fsel2 = 32'h0000_0032; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd5: begin fsel2 = 32'h0000_0432; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd6: begin fsel2 = 32'h0000_5432; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
-                4'd7: begin fsel2 = 32'h0006_5432; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
-                4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
+                4'd3: begin fsel2 = 32'h0000_0002; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
+                4'd4: begin fsel2 = 32'h0000_0032; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd5: begin fsel2 = 32'h0000_0432; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
+                4'd6: begin fsel2 = 32'h0000_5432; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
+                4'd7: begin fsel2 = 32'h0006_5432; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
+                4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[1:0]) | ((s2q_cnt_ones > 4'd2) & ~s2q_sflit[2]));
@@ -1653,11 +1719,11 @@ module igr_epl_shim_ctrl
               fsel1            = 32'h2100_0000;
               seg1_md.eop_pos = 3'd7;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 3 to get here
-                4'd4: begin fsel2 = 32'h0000_0003; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd5: begin fsel2 = 32'h0000_0043; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd6: begin fsel2 = 32'h0000_0543; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd7: begin fsel2 = 32'h0000_6543; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
-                4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
+                4'd4: begin fsel2 = 32'h0000_0003; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
+                4'd5: begin fsel2 = 32'h0000_0043; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
+                4'd6: begin fsel2 = 32'h0000_0543; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
+                4'd7: begin fsel2 = 32'h0000_6543; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
+                4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
                 default: nxt_flit = 5'd16;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
@@ -1670,10 +1736,14 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel0 = 32'h0000_0004; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd6: begin fsel0 = 32'h0000_0054; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd7: begin fsel0 = 32'h0000_0654; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
-                4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
+                4'd5: begin fsel0 = 32'h0000_0004; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel0 = 32'h0000_0054; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_0654; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
@@ -1686,9 +1756,12 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
+                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
@@ -1701,8 +1774,10 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
+                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -1715,7 +1790,8 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -1768,18 +1844,23 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & ((|s2q_sflit[1:0]) | ((s2q_cnt_ones > 4'd2) & ~s2q_sflit[2]));
             end
             s2q_eflit[2]: begin
-              fsel1            = 32'h1000_0000;
-              fsel2            = 32'h8888_8882;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h1000_0000;
+              fsel2           = 32'h8888_8882;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd0;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 3 to get here
-                4'd4: begin fsel0 = 32'h0000_0003; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd5: begin fsel0 = 32'h0000_0043; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd6: begin fsel0 = 32'h0000_0543; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
-                4'd7: begin fsel0 = 32'h0000_6543; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
-                4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
+                4'd4: begin fsel0 = 32'h0000_0003; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel0 = 32'h0000_0043; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel0 = 32'h0000_0543; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_6543; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
@@ -1792,52 +1873,62 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel0 = 32'h0000_0004; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd6: begin fsel0 = 32'h0000_0054; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd7: begin fsel0 = 32'h0000_0654; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
-                4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
+                4'd5: begin fsel0 = 32'h0000_0004; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel0 = 32'h0000_0054; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_0654; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
             end            
             s2q_eflit[4]: begin
-              fsel1            = 32'h1000_0000;
-              fsel2            = 32'h8888_8432;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h1000_0000;
+              fsel2           = 32'h8888_8432;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd2;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;              
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
+                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel1            = 32'h1000_0000;
-              fsel2            = 32'h8888_5432;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h1000_0000;
+              fsel2           = 32'h8888_5432;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd3;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
+                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
             end            
             s2q_eflit[6]: begin
-              fsel1            = 32'h1000_0000;
-              fsel2            = 32'h8886_5432;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h1000_0000;
+              fsel2           = 32'h8886_5432;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd4;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -1876,81 +1967,101 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & (s2q_sflit[0] | ((s2q_cnt_ones > 4'd1) & ~s2q_sflit[1]));
             end
             s2q_eflit[1]: begin
-              fsel1            = 32'h0000_0000;
-              fsel2            = 32'h8888_8881;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h0000_0000;
+              fsel2           = 32'h8888_8881;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd0;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 2 to get here
-                4'd3: begin fsel0 = 32'h0000_0002; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd4: begin fsel0 = 32'h0000_0032; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd5: begin fsel0 = 32'h0000_0432; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
-                4'd6: begin fsel0 = 32'h0000_5432; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
-                4'd7: begin fsel0 = 32'h0006_5432; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
-                4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
+                4'd3: begin fsel0 = 32'h0000_0002; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd4: begin fsel0 = 32'h0000_0032; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel0 = 32'h0000_0432; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel0 = 32'h0000_5432; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0006_5432; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[1:0]) | ((s2q_cnt_ones > 4'd2) & ~s2q_sflit[2]));
             end
             s2q_eflit[2]: begin
-              fsel1            = 32'h0000_0000;
-              fsel2            = 32'h8888_8821;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h0000_0000;
+              fsel2           = 32'h8888_8821;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd1;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 3 to get here
-                4'd4: begin fsel0 = 32'h0000_0003; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd5: begin fsel0 = 32'h0000_0043; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd6: begin fsel0 = 32'h0000_0543; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
-                4'd7: begin fsel0 = 32'h0000_6543; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
-                4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
+                4'd4: begin fsel0 = 32'h0000_0003; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel0 = 32'h0000_0043; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel0 = 32'h0000_0543; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_6543; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
             end
             s2q_eflit[3]: begin
-              fsel1            = 32'h0000_0000;
-              fsel2            = 32'h8888_8321;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h0000_0000;
+              fsel2           = 32'h8888_8321;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd2;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;              
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel0 = 32'h0000_0004; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd6: begin fsel0 = 32'h0000_0054; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd7: begin fsel0 = 32'h0000_0654; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
-                4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
+                4'd5: begin fsel0 = 32'h0000_0004; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel0 = 32'h0000_0054; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_0654; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
             end            
             s2q_eflit[4]: begin
-              fsel1            = 32'h0000_0000;
-              fsel2            = 32'h8888_4321;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h0000_0000;
+              fsel2           = 32'h8888_4321;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd3;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;              
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
-                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
+                4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel0 = 32'h0000_0065; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel1            = 32'h0000_0000;
-              fsel2            = 32'h8885_4321;
-              seg1_md.eop      = 1'b0;
+              fsel1           = 32'h0000_0000;
+              fsel2           = 32'h8885_4321;
+              seg1_md.eop     = 1'b0;
               seg2_md.eop_pos = 3'd4;
-              seg2_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b110;
+              seg2_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
-                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
+                4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -1963,7 +2074,8 @@ module igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01;
+                            seg2_sop_e = 1'b0; seg0_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -2262,7 +2374,8 @@ module igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e            = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -2351,15 +2464,17 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel2            = 32'h4321_0000;
-              fsel0            = 32'h8888_8885;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h4321_0000;
+              fsel0           = 32'h8888_8885;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd0;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
+                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -2372,19 +2487,20 @@ module igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e            = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
             end            
             s2q_eflit[7]: begin
-              fsel2            = 32'h4321_0000;
-              fsel0            = 32'h8888_8765;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h4321_0000;
+              fsel0           = 32'h8888_8765;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd2;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;
-              nxt_flit         = 5'd08;
+              seg_e           = 3'b101;
+              nxt_flit        = 5'd08;
               flit_err = s2q_sop_v; //There should not be a valid Sop 
             end                        
           endcase //reverse
@@ -2450,29 +2566,34 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
             end            
             s2q_eflit[4]: begin
-              fsel2            = 32'h3210_0000;
-              fsel0            = 32'h8888_8884;
+              fsel2           = 32'h3210_0000;
+              fsel0           = 32'h8888_8884;
               seg0_md.eop_pos = 3'd0;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;              
+              seg_e           = 3'b101;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
+                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel2            = 32'h3210_0000;
-              fsel0            = 32'h8888_8854;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h3210_0000;
+              fsel0           = 32'h8888_8854;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd1;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
+                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -2485,19 +2606,20 @@ module igr_epl_shim_ctrl
               seg0_we[7:0]      = 8'b1111_1111;
               seg_e            = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
             end            
             s2q_eflit[7]: begin
-              fsel2            = 32'h3210_0000;
-              fsel0            = 32'h8888_7654;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h3210_0000;
+              fsel0           = 32'h8888_7654;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd3;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;
-              nxt_flit         = 5'd08;
+              seg_e           = 3'b101;
+              nxt_flit        = 5'd08;
               flit_err = s2q_sop_v; //There should not be a valid Sop 
             end                        
           endcase //reverse
@@ -2509,7 +2631,7 @@ module igr_epl_shim_ctrl
           seg2_md.sop  = 1'b0; //this segment will not have a sop
           unique case(1'b1) inside
             s2q_eflit[0]: begin
-              fsel2            = 32'h8800_0000;
+              fsel2           = 32'h8800_0000;
               seg2_md.eop_pos = 3'd5;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
                 4'd2: begin fsel0 = 32'h0000_0001; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2551,46 +2673,55 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
             end
             s2q_eflit[3]: begin
-              fsel2            = 32'h2100_0000;
-              fsel0            = 32'h8888_8883;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h2100_0000;
+              fsel0           = 32'h8888_8883;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd0;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;              
+              seg_e           = 3'b101;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel1 = 32'h0000_0004; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd6: begin fsel1 = 32'h0000_0054; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd7: begin fsel1 = 32'h0000_0654; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
+                4'd5: begin fsel1 = 32'h0000_0004; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel1 = 32'h0000_0054; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_0654; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
             end            
             s2q_eflit[4]: begin
-              fsel2            = 32'h2100_0000;
-              fsel0            = 32'h8888_8843;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h2100_0000;
+              fsel0           = 32'h8888_8843;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd1;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;              
+              seg_e           = 3'b101;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
+                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel2            = 32'h2100_0000;
-              fsel0            = 32'h8888_8543;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h2100_0000;
+              fsel0           = 32'h8888_8543;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd2;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
+                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
@@ -2603,19 +2734,20 @@ module igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e            = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
             end            
             s2q_eflit[7]: begin
-              fsel2            = 32'h2100_0000;
-              fsel0            = 32'h8887_6543;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h2100_0000;
+              fsel0           = 32'h8887_6543;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd4;
               seg0_we[7:0]    = 8'b1111_1111;
-              seg_e            = 3'b101;
-              nxt_flit         = 5'd08;
+              seg_e           = 3'b101;
+              nxt_flit        = 5'd08;
               flit_err = s2q_sop_v; //There should not be a valid Sop 
             end                        
           endcase //reverse
@@ -2627,7 +2759,7 @@ module igr_epl_shim_ctrl
           seg2_md.sop  = 1'b0; //this segment will not have a sop
           unique case(1'b1) inside
             s2q_eflit[0]: begin
-              fsel2            = 32'h8000_0000;
+              fsel2           = 32'h8000_0000;
               seg2_md.eop_pos = 3'd6;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
                 4'd2: begin fsel0 = 32'h0000_0001; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2656,76 +2788,91 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & ((|s2q_sflit[1:0]) | ((s2q_cnt_ones > 4'd2) & ~s2q_sflit[2]));
             end
             s2q_eflit[2]: begin
-              fsel2            = 32'h1000_0000;
-              fsel0            = 32'h8888_8882;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h1000_0000;
+              fsel0           = 32'h8888_8882;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd0;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 3 to get here
-                4'd4: begin fsel1 = 32'h0000_0003; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd5: begin fsel1 = 32'h0000_0043; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd6: begin fsel1 = 32'h0000_0543; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd7: begin fsel1 = 32'h0000_6543; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
-                4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
+                4'd4: begin fsel1 = 32'h0000_0003; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel1 = 32'h0000_0043; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel1 = 32'h0000_0543; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_6543; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
             end
             s2q_eflit[3]: begin
-              fsel2            = 32'h1000_0000;
-              fsel0            = 32'h8888_8832;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h1000_0000;
+              fsel0           = 32'h8888_8832;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd1;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;              
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel1 = 32'h0000_0004; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd6: begin fsel1 = 32'h0000_0054; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd7: begin fsel1 = 32'h0000_0654; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
+                4'd5: begin fsel1 = 32'h0000_0004; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel1 = 32'h0000_0054; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_0654; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
             end            
             s2q_eflit[4]: begin
-              fsel2            = 32'h1000_0000;
-              fsel0            = 32'h8888_8432;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h1000_0000;
+              fsel0           = 32'h8888_8432;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd2;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;              
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
+                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel2            = 32'h1000_0000;
-              fsel0            = 32'h8888_5432;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h1000_0000;
+              fsel0           = 32'h8888_5432;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd3;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
+                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
             end            
             s2q_eflit[6]: begin
-              fsel2            = 32'h1000_0000;
-              fsel0            = 32'h8886_5432;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h1000_0000;
+              fsel0           = 32'h8886_5432;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd4;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
@@ -2749,7 +2896,7 @@ module igr_epl_shim_ctrl
           seg2_md.sop  = 1'b0; //this segment will not have a sop
           unique case(1'b1) inside
             s2q_eflit[0]: begin
-              fsel2            = 32'h0000_0000;
+              fsel2           = 32'h0000_0000;
               seg2_md.eop_pos = 3'd7;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
                 4'd2: begin fsel0 = 32'h0000_0001; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2764,106 +2911,127 @@ module igr_epl_shim_ctrl
               flit_err = s2q_sop_v & (s2q_sflit[0] | ((s2q_cnt_ones > 4'd1) & ~s2q_sflit[1]));
             end
             s2q_eflit[1]: begin
-              fsel2            = 32'h0000_0000;
-              fsel0            = 32'h8888_8881;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h0000_0000;
+              fsel0           = 32'h8888_8881;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd0;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 2 to get here
-                4'd3: begin fsel1 = 32'h0000_0002; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd4: begin fsel1 = 32'h0000_0032; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd5: begin fsel1 = 32'h0000_0432; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd6: begin fsel1 = 32'h0000_5432; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
-                4'd7: begin fsel1 = 32'h0006_5432; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
-                4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
+                4'd3: begin fsel1 = 32'h0000_0002; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd4: begin fsel1 = 32'h0000_0032; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel1 = 32'h0000_0432; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel1 = 32'h0000_5432; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0006_5432; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[1:0]) | ((s2q_cnt_ones > 4'd2) & ~s2q_sflit[2]));
             end
             s2q_eflit[2]: begin
-              fsel2            = 32'h0000_0000;
-              fsel0            = 32'h8888_8821;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h0000_0000;
+              fsel0           = 32'h8888_8821;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd1;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 3 to get here
-                4'd4: begin fsel1 = 32'h0000_0003; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd5: begin fsel1 = 32'h0000_0043; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd6: begin fsel1 = 32'h0000_0543; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd7: begin fsel1 = 32'h0000_6543; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
-                4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
+                4'd4: begin fsel1 = 32'h0000_0003; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd5: begin fsel1 = 32'h0000_0043; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel1 = 32'h0000_0543; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_6543; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[2:0]) | ((s2q_cnt_ones > 4'd3) & ~s2q_sflit[3]));
             end
             s2q_eflit[3]: begin
-              fsel2            = 32'h0000_0000;
-              fsel0            = 32'h8888_8321;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h0000_0000;
+              fsel0           = 32'h8888_8321;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd2;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;              
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 4 to get here
-                4'd5: begin fsel1 = 32'h0000_0004; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd6: begin fsel1 = 32'h0000_0054; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd7: begin fsel1 = 32'h0000_0654; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
-                4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
+                4'd5: begin fsel1 = 32'h0000_0004; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd6: begin fsel1 = 32'h0000_0054; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_0654; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[3:0]) | ((s2q_cnt_ones > 4'd4) & ~s2q_sflit[4]));
             end            
             s2q_eflit[4]: begin
-              fsel2            = 32'h0000_0000;
-              fsel0            = 32'h8888_4321;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h0000_0000;
+              fsel0           = 32'h8888_4321;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd3;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;              
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;              
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 5 to get here
-                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
-                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
+                4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd7: begin fsel1 = 32'h0000_0065; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[4:0]) | ((s2q_cnt_ones > 4'd5) & ~s2q_sflit[5]));
             end            
             s2q_eflit[5]: begin
-              fsel2            = 32'h0000_0000;
-              fsel0            = 32'h8885_4321;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h0000_0000;
+              fsel0           = 32'h8885_4321;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd4;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 6 to get here
-                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
-                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
+                4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
+                4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[5:0]) | ((s2q_cnt_ones > 4'd6) & ~s2q_sflit[6]));
             end            
             s2q_eflit[6]: begin
-              fsel2            = 32'h0000_0000;
-              fsel0            = 32'h8865_4321;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h0000_0000;
+              fsel0           = 32'h8865_4321;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd5;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
               unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 7 to get here
-                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end  //FIXME this shold be Sop does sop md need to be held
+                4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09;
+                            seg0_sop_e = 1'b0; seg1_sop_e = s2q_rx_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //s2q_cnt_ones
               flit_err = s2q_sop_v & ((|s2q_sflit[6:0]) | ((s2q_cnt_ones > 4'd7) & ~s2q_sflit[7]));
             end            
             s2q_eflit[7]: begin
-              fsel2            = 32'h0000_0000;
-              fsel0            = 32'h8765_4321;
-              seg2_md.eop      = 1'b0;
+              fsel2           = 32'h0000_0000;
+              fsel0           = 32'h8765_4321;
+              seg2_md.eop     = 1'b0;
               seg0_md.eop_pos = 3'd6;
-              seg0_we[7:0]     = 8'b1111_1111;
-              seg_e            = 3'b101;
-              nxt_flit         = 5'd08;
+              seg0_we[7:0]    = 8'b1111_1111;
+              seg_e           = 3'b101;
+              nxt_flit        = 5'd08;
               flit_err = s2q_sop_v; //There should not be a valid Sop 
             end                        
           endcase //reverse
