@@ -27,6 +27,7 @@ $hdl_spec = {
 		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon.sv",
 		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm.sv",
 		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_mon_phy.sv",
+		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_ep_bfm_phy.sv",
 		"verif/lib/cdn_pcie_bfm/cdn_pcie/pcie_rc_bfm_phy.sv",
 	],
 

@@ -27,6 +27,7 @@ package cdn_pcie_pkg;
    `include "mby_cp_pcie_cfg.sv"
    `include "pcie_agent.sv"
    `include "pcie_env.sv"
+   `include "pcie_ep_env.sv"
    `include "pcie_sve.sv"
    `include "pcie_cover.sv"
    `include "pcie_seq_lib.sv"
