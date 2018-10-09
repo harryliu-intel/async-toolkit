@@ -77,6 +77,15 @@ package fc_env_pkg;
         `include "igr_integ_env.svh"
     //`endif // IGR_ENV_ENABLE
 
+    // PEP
+    `ifdef CDN_PCIE_ENV_ENABLE
+        import DenaliSvPcie::*;
+        import DenaliSvMem::*;
+        import cdnPcieUvm::*;
+        import cdn_pcie_pkg::*;
+        `include "pep_integ_env.svh"
+    `endif
+
     // AM, AG, SM classes
     //`include "fc_sm_am_env.svh"
     //`include "fc_sm_ag_env.svh"
