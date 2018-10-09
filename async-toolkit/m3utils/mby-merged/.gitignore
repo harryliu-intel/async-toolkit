@@ -26,6 +26,9 @@ regression
 *simv.vdb/*
 .acetestinfo.log
 
+# collage generated
+tools/collage/*/ip_kits/
+
 # Dump related files
 vdCovLog/
 verdiLog/

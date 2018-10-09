@@ -53,9 +53,6 @@ $ToolConfig_tools{collage_cache_cmd} = { # Can we avoid running collage by copyi
 $ToolConfig_tools{collage_cmd} = { # This runs collage, unconditionally
       EXEC => "rm -rf $MODEL_ROOT/src/gen/collage/*;mkdir -p $MODEL_ROOT/src/gen/collage;&get_tool_path('coretools')/bin/coreAssembler -timeout 5 -shell -x \'source &get_tool_path('collage')/core/common/tcl/collage_init.tcl\' -f $MODEL_ROOT/tools/collage/configs/config_soc/assemble/assembler.soc.tcl",
 };
-$ToolConfig_tools{upf_collage_cmd} = {
-      EXEC => "rm -rf $MODEL_ROOT/src/gen/collage/*; rm -rf $MODEL_ROOT/src/gen/upf/*;mkdir -p $MODEL_ROOT/src/gen/collage;mkdir -p $MODEL_ROOT/src/gen/upf; &get_tool_path('coretools')/bin/coreAssembler -timeout 5 -shell -x \'source &get_tool_path('collage')/core/common/tcl/collage_init.tcl\' -f $MODEL_ROOT/tools/collage/configs/config_ebg/soc/assemble/assembler.soc.tcl",
-};
 #rkoganti.  Updated Flowbee version to fix a bug with deps not working
 # when a stage is default_active off
 $ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{VERSION} = "1.01.08";
@@ -73,11 +70,9 @@ push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL
 push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_postflow.pm");
 push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/preflow_stage.pm.template");
 $ToolConfig_tools{stage_bman_collage}{OTHER}{pre_flow} = { 
-#                                                           "(.dut_type=upf.)" => "collage_preflow",
-                                                           "(.default.)" => "preflow_stage",
+                                                           "(.default.)" => "collage_preflow",
                                                          };
 $ToolConfig_tools{stage_bman_collage}{OTHER}{post_flow} = { 
-#                                                            "(.dut_type=upf.)" => "collage_postflow",
                                                             "(.default.)" => "collage_postflow",
                                                           };
 $ToolConfig_tools{buildman}{SUB_TOOLS}{stages}{SUB_TOOLS}{collage_postflow}{OTHER}{relevant_tools} = [qw( collage )];
