@@ -125,14 +125,6 @@ proc soc_nightly_release {} {
 # Finalize hook
 # ----------------------------------------------------------------------------------------
 proc soc_hook_finalize { {assign_soc_check 0} } {
-  #set ::collage_supply_pin_include  "i_bgref_1p0"
-  #set ::collage_supply_pin_exception "vnn_powergood vnn_powergood_b"
-  set ::collage_supply_pin_exception ""
-  set ::collage_supply_pin_include  ""
- 
-  collage_add_ifdef_supply_ground -folder_path $::env(COLLAGE_WORK)/gen/source/rtl \
-                                  -supply_pin_exception $::collage_supply_pin_exception \
-                                  -supply_pin_include   $::collage_supply_pin_include 
 }
 
 # ----------------------------------------------------------------------------------------
