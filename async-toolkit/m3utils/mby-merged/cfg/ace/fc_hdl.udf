@@ -105,6 +105,15 @@ EOF
          # Define all the libraries which could be compiled
          libs => {
 
+             clkstub_rtl_lib => {
+                    -vlog_files => [
+                        "src/rtl/clkstub/mby_parclk.sv",
+                        "src/rtl/clkstub/pll_stub.sv",
+                        "src/rtl/clkstub/xtal_rcvr.sv",
+                        "src/rtl/clkstub/clk_mux_2to1_glitchfree.sv",
+                    ],
+             },
+
              $fc_global_vars::COLLAGE_LIB => {
                     -tag      => "nonsynth+nonemu",
                     -generated => 1,
