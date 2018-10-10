@@ -94,6 +94,7 @@ class ingress_env extends ingress_base_env;
     _ingress_env = this;
   endfunction: new
 
+  //////////////////////////////////////////////////////////////////////////////
   // Function: ingress_env build
   // build phase of ingress_env
   // All VC's and Agent should be build in this phase.
@@ -108,6 +109,72 @@ class ingress_env extends ingress_base_env;
       assert($cast(ti_config,tmp_ti_cfg_obj));
     end
 
+    build_vpt_bfms();
+    build_eth_bfms();
+
+    //data_phase_mode = SLA_RANDOM_NONE;
+    //this.max_run_clocks = 2_000_000_000;
+
+    // Env monitor
+    assert($cast(env_monitor, create_component("ingress_env_monitor","env_monitor")));
+    env_monitor.set_monitor_enable(cfg.get_monitors_enabled());
+
+    // get global event pool
+    ingress_epool = ingress_epool.get_global_pool();
+
+  endfunction // void
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: ingress_env connect
+  // connect phase of ingress_env
+  function void connect_phase(uvm_phase phase);
+    uvm_object temp;
+    super.connect_phase(phase);
+    connect_vpt_bfms();
+    connect_eth_bfms();
+    ingress_if = slu_resource_db#(virtual ingress_env_if)::get("ingress_if",`__FILE__,`__LINE__);
+
+    if (env_monitor != null) begin
+      env_monitor.ingress_if = ingress_if;
+    end
+  endfunction // void
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: ingress_env end_of_elaboration
+  // end_of_elaboration  phase of ingress_env
+  // In this pahse we randomize the fuse env
+  virtual function void end_of_elaboration_phase (uvm_phase phase);
+    super.end_of_elaboration_phase(phase);
+  endfunction
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: ingress_env start_of_simulation
+  // start_of_simulation  phase of ingress_env
+  virtual function void start_of_simulation_phase (uvm_phase phase);
+    super.start_of_simulation_phase(phase);
+  endfunction
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: ingress_env  run
+  // run  phase of ingress_env
+  virtual task run_phase (uvm_phase phase);
+    super.run_phase(phase);
+    //fork
+    //  if (_level == SLA_TOP)
+        //// this task is called only in IP level
+        //ingress_im_monitor();
+    //join_none
+  endtask // run
+
+  // ---------------------------------------------------------------
+  // Ingress ENV VC"s & VC's  UVM phases functions / tasks
+  // ---------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: build_vpt_bfms
+  // Gets the virtual port interfaces from the configuration database and 
+  // creates the virtual port Bus Functional Model instances
+  function void build_vpt_bfms();
     foreach(vp_bfms[i]) begin
       // Get the vp_bfm_vif ptrs
       if(!uvm_config_db#(igr_eth_bfm_tx_intf_t)::get(this, "",
@@ -126,7 +193,13 @@ class ingress_env extends ingress_base_env;
       vp_bfm_tx_io[i] = igr_eth_bfm_tx_io_t::type_id::create($sformatf("vp_bfm_tx_io%0d", i), this);
       vp_bfm_rx_io[i] = igr_eth_bfm_rx_io_t::type_id::create($sformatf("vp_bfm_rx_io%0d", i), this);
     end
+  endfunction
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: build_eth_bfms
+  // Gets the eth interfaces from the configuration database and creates
+  // the ethernet Bus Functional Model instances
+  function void build_eth_bfms();
     foreach(eth_bfms[i]) begin
       // Get the eth_bfm_vif ptrs
       if(!uvm_config_db#(igr_eth_bfm_tx_intf_t)::get(this, "",
@@ -147,88 +220,61 @@ class ingress_env extends ingress_base_env;
       eth_bfm_tx_io[i] = igr_eth_bfm_tx_io_t::type_id::create($sformatf("eth_bfm_tx_io%0d", i), this);
       eth_bfm_rx_io[i] = igr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
     end
+  endfunction
 
-    data_phase_mode = SLA_RANDOM_NONE;
-    this.max_run_clocks = 2_000_000_000;
-
-    // Env monitor
-    assert($cast(env_monitor, create_component("ingress_env_monitor","env_monitor")));
-    env_monitor.set_monitor_enable(cfg.get_monitors_enabled());
-
-    // get global event pool
-    ingress_epool = ingress_epool.get_global_pool();
-
-  endfunction // void
-
-  // Function: ingress_env connect
-  // connect phase of ingress_env
-  function void connect_phase(uvm_phase phase);
-    uvm_object temp;
-    super.connect_phase(phase);
-
-    ingress_if = slu_resource_db#(virtual ingress_env_if)::get("ingress_if",`__FILE__,`__LINE__);
-
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: connect_vpt_bfms
+  // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
+  // pointer to SLA vsqr
+  function void connect_vpt_bfms();
     foreach(vp_bfms[i]) begin
       vp_bfm_tx_io[i].set_vintf(vp_bfm_tx_vintf[i]);
       vp_bfm_rx_io[i].set_vintf(vp_bfm_rx_vintf[i]);
-      vp_bfms[i].set_io(vp_bfm_tx_io[i], vp_bfm_rx_io[i]);   // Set the IO Policy in the BFM
-      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx0", i), vp_bfms[i].tx.frame_sequencer[0]));
-      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx1", i), vp_bfms[i].tx.frame_sequencer[1]));
-      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx2", i), vp_bfms[i].tx.frame_sequencer[2]));
-      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), $sformatf("vp_bfm_%0d_tx3", i), vp_bfms[i].tx.frame_sequencer[3]));
+      vp_bfms[i].set_io(vp_bfm_tx_io[i], vp_bfm_rx_io[i]);
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
+        $sformatf("vp_bfm_%0d_tx0", i), vp_bfms[i].tx.frame_sequencer[0]));
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
+        $sformatf("vp_bfm_%0d_tx1", i), vp_bfms[i].tx.frame_sequencer[1]));
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
+        $sformatf("vp_bfm_%0d_tx2", i), vp_bfms[i].tx.frame_sequencer[2]));
+      void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
+        $sformatf("vp_bfm_%0d_tx3", i), vp_bfms[i].tx.frame_sequencer[3]));
     end
+  endfunction
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: connect_eth_bfms
+  // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
+  // pointer to SLA vsqr
+  function void connect_eth_bfms();
     foreach(eth_bfms[i]) begin
       eth_bfm_tx_io[i].set_vintf(eth_bfm_tx_vintf[i]);
       eth_bfm_rx_io[i].set_vintf(eth_bfm_rx_vintf[i]);
-      eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);   // Set the IO Policy in the BFM
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx0", i), eth_bfms[i].tx.frame_sequencer[0]));
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx1", i), eth_bfms[i].tx.frame_sequencer[1]));
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx2", i), eth_bfms[i].tx.frame_sequencer[2]));
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx3", i), eth_bfms[i].tx.frame_sequencer[3]));
+      eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
+        $sformatf("eth_bfm_%0d_tx0", i), eth_bfms[i].tx.frame_sequencer[0]));
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
+        $sformatf("eth_bfm_%0d_tx1", i), eth_bfms[i].tx.frame_sequencer[1]));
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
+        $sformatf("eth_bfm_%0d_tx2", i), eth_bfms[i].tx.frame_sequencer[2]));
+      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
+        $sformatf("eth_bfm_%0d_tx3", i), eth_bfms[i].tx.frame_sequencer[3]));
     end
-
-    if (env_monitor != null) begin
-      env_monitor.ingress_if = ingress_if;
-    end
-  endfunction // void
-
-  // Function: ingress_env end_of_elaboration
-  // end_of_elaboration  phase of ingress_env
-  // In this pahse we randomize the fuse env
-  virtual function void end_of_elaboration_phase (uvm_phase phase);
-    super.end_of_elaboration_phase(phase);
   endfunction
 
-  // Function: ingress_env start_of_simulation
-  // start_of_simulation  phase of ingress_env
-  virtual function void start_of_simulation_phase (uvm_phase phase);
-    super.start_of_simulation_phase(phase);
-  endfunction
-
-  // Function: ingress_env  run
-  // run  phase of ingress_env
-  virtual task run_phase (uvm_phase phase);
-    super.run_phase(phase);
-    //fork
-    //  if (_level == SLA_TOP)
-        //// this task is called only in IP level
-        //ingress_im_monitor();
-    //join_none
-  endtask // run
-
-  // ---------------------------------------------------------------
-  // Ingress ENV VC"s & VC's  UVM phases functions / tasks
-  // ---------------------------------------------------------------
 
   // ---------------------------------------------------------------
   // Ingress ENV Saola functions / tasks
   // ---------------------------------------------------------------
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Function: get_ingress_env
+  // Returns pointer to self
   static function ingress_env get_ingress_env();
     return _ingress_env;
   endfunction
 
+  //////////////////////////////////////////////////////////////////////////////
   // Saola TB clk
   virtual task set_clk_rst();
     fork
@@ -255,6 +301,7 @@ class ingress_env extends ingress_base_env;
   // Ingress ENV Specific functions / tasks
   // ---------------------------------------------------------------
 
+  //////////////////////////////////////////////////////////////////////////////
   // Task: ingress_im_monitor
   // Wait for interuppt event and trigger IM
   // ISR (Interrupt Service Routine) only in IP level
