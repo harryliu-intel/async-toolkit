@@ -254,7 +254,7 @@ EOF
                 "+define+INSTANTIATE_NOVAS",
                 "+define+MODEL_ROOT=$ENV{MODEL_ROOT}", 
                 # gerards - for Cadence PCIe 
-                "-full64 -sverilog -ucli -LDFLAGS -Wl,-E",
+                #"-full64 -sverilog -ucli -LDFLAGS -Wl,-E",
                 "+define+DENALI_SV_VCS -lca -ntb_opts svp",
                 "+define+DENALI_UVM",
                 "+vpi", # gerards: for Denali PCIe
