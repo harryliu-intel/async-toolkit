@@ -28,9 +28,9 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../../shared/rtl/shared_pkg.sv \
 ../../../shared/interfaces/igr_rx_ppe_if.sv \
 ../../../shared/interfaces/rx_ppe_igr_if.sv \
-../../epl_shim/rtl/igr_epl_shim_ctrl.sv \
-../../epl_shim/rtl/igr_epl_shim_seg.sv \
-../../epl_shim/rtl/igr_epl_shim_segs.sv \
-../../epl_shim/rtl/igr_epl_shim.sv \
+../../epl_shim/rtl/mby_igr_epl_shim_ctrl.sv \
+../../epl_shim/rtl/mby_igr_epl_shim_seg.sv \
+../../epl_shim/rtl/mby_igr_epl_shim_segs.sv \
+../../epl_shim/rtl/mby_igr_epl_shim.sv \
 ../../rtl/igr_top.sv \
 ./tb_igr_top.sv

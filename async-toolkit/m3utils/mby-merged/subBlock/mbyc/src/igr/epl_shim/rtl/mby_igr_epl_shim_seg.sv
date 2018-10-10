@@ -28,7 +28,7 @@
 
 
 
-module igr_epl_shim_seg 
+module mby_igr_epl_shim_seg 
   import mby_igr_pkg::*;
 (
   input logic cclk,
