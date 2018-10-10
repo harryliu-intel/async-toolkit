@@ -275,6 +275,9 @@ collage_report_hierarchy -rep_fn "reports/${design}.hierarchy.report"
 
 # in obviate init to not initialize clocks
 obviate reset_clock_spec
+
+  print_time "Start connectivity report"
+
 # Generate connectivity reports
 collage_report_pin_connectivity -rep_fn "reports/${design}.ip2ip_pin_connectivity.report"
 #soc_populate_obv_clocks 1
@@ -292,19 +295,6 @@ if {[info proc soc_hook_finalize] != ""} {
 }
 
 print_time "RTL Assembly : END"
-
-##########################################################################################
-# UPF generation   ---added 9/28/17 RJS
-##########################################################################################
- 
- if {[info exists ::env(ENABLE_UPF_GEN)] && ($::env(ENABLE_UPF_GEN) == "1")} {
-   # --- Load the UPF configuration file
-     ::upf::load_config ${soc_integ_specs_dir}/soc_upf_config.tcl ${soc_integ_specs_dir}/soc_upf_clamp.txt 1
-   # --- Generate the UPF files
-      ::upf::generate $::design
-	  collage_batch_exit
-
- }
 
 ################################
 # exit unless debugging

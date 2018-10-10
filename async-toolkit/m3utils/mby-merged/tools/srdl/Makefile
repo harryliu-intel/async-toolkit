@@ -209,7 +209,7 @@ $(RESULTS_SUBBLOCK)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
 	cp $(TMPDIR)/output/crif/$(notdir $@) $@
 
 %.ralf: %_crif.xml
-	cd $(dir $@) && multi_gen_ralf_crif.py -i $< -o .ralf --bytes 8 
+	cd $(dir $@) && multi_gen_ralf_crif.py -i $< -o .ralf --bytes 0 
 ral_%.sv: %.ralf
 	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(notdir $(basename $<)) -o $(basename $@) $<
 	@echo Generated $@
