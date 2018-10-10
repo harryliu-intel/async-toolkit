@@ -63,12 +63,12 @@ EOF
             },
         },
         # RTL and test island/validation environment stubbing command options
-        -en_ip => {
+        -variant => {
             type => "ARRAY",
             merging => "ASSIGN",
             default => "all",
             help => {
-                desc => "Enable a list of IPs to be enabled: usage -en_ip=boot,pcie",
+                desc => "select a variant mode for lite model building",
             },
         },
         -rtl_stub => {
