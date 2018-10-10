@@ -103,79 +103,8 @@
 # 
 ##################################################################
 
-C   mby_ec_top_{%inst_num}/grp_a0_rx_data_valid         mby_mpp_{%inst_num}/grp_a0_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_a0_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_a0_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_a0_rx_ecc                mby_mpp_{%inst_num}/grp_a0_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_a0_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_a0_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_a0_rx_metadata           mby_mpp_{%inst_num}/grp_a0_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_a0_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_a0_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_a0_rx_port_num           mby_mpp_{%inst_num}/grp_a0_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_a0_rx_time_stamp         mby_mpp_{%inst_num}/grp_a0_rx_time_stamp
+CRn mby_ec_top_{%inst_num}/grp_*     mby_mpp_{%inst_num}/grp_*   exact_name_match
 
-C   mby_ec_top_{%inst_num}/grp_a1_rx_data_valid         mby_mpp_{%inst_num}/grp_a1_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_a1_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_a1_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_a1_rx_ecc                mby_mpp_{%inst_num}/grp_a1_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_a1_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_a1_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_a1_rx_metadata           mby_mpp_{%inst_num}/grp_a1_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_a1_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_a1_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_a1_rx_port_num           mby_mpp_{%inst_num}/grp_a1_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_a1_rx_time_stamp         mby_mpp_{%inst_num}/grp_a1_rx_time_stamp
-
-C   mby_ec_top_{%inst_num}/grp_b0_rx_data_valid         mby_mpp_{%inst_num}/grp_b0_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_b0_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_b0_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_b0_rx_ecc                mby_mpp_{%inst_num}/grp_b0_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_b0_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_b0_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_b0_rx_metadata           mby_mpp_{%inst_num}/grp_b0_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_b0_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_b0_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_b0_rx_port_num           mby_mpp_{%inst_num}/grp_b0_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_b0_rx_time_stamp         mby_mpp_{%inst_num}/grp_b0_rx_time_stamp
-
-C   mby_ec_top_{%inst_num}/grp_b1_rx_data_valid         mby_mpp_{%inst_num}/grp_b1_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_b1_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_b1_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_b1_rx_ecc                mby_mpp_{%inst_num}/grp_b1_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_b1_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_b1_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_b1_rx_metadata           mby_mpp_{%inst_num}/grp_b1_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_b1_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_b1_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_b1_rx_port_num           mby_mpp_{%inst_num}/grp_b1_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_b1_rx_time_stamp         mby_mpp_{%inst_num}/grp_b1_rx_time_stamp
-
-C   mby_ec_top_{%inst_num}/grp_c0_rx_data_valid         mby_mpp_{%inst_num}/grp_c0_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_c0_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_c0_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_c0_rx_ecc                mby_mpp_{%inst_num}/grp_c0_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_c0_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_c0_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_c0_rx_metadata           mby_mpp_{%inst_num}/grp_c0_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_c0_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_c0_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_c0_rx_port_num           mby_mpp_{%inst_num}/grp_c0_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_c0_rx_time_stamp         mby_mpp_{%inst_num}/grp_c0_rx_time_stamp
-
-C   mby_ec_top_{%inst_num}/grp_c1_rx_data_valid         mby_mpp_{%inst_num}/grp_c1_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_c1_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_c1_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_c1_rx_ecc                mby_mpp_{%inst_num}/grp_c1_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_c1_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_c1_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_c1_rx_metadata           mby_mpp_{%inst_num}/grp_c1_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_c1_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_c1_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_c1_rx_port_num           mby_mpp_{%inst_num}/grp_c1_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_c1_rx_time_stamp         mby_mpp_{%inst_num}/grp_c1_rx_time_stamp
-
-C   mby_ec_top_{%inst_num}/grp_d0_rx_data_valid         mby_mpp_{%inst_num}/grp_d0_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_d0_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_d0_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_d0_rx_ecc                mby_mpp_{%inst_num}/grp_d0_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_d0_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_d0_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_d0_rx_metadata           mby_mpp_{%inst_num}/grp_d0_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_d0_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_d0_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_d0_rx_port_num           mby_mpp_{%inst_num}/grp_d0_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_d0_rx_time_stamp         mby_mpp_{%inst_num}/grp_d0_rx_time_stamp
-
-C   mby_ec_top_{%inst_num}/grp_d1_rx_data_valid         mby_mpp_{%inst_num}/grp_d1_rx_data_valid
-C   mby_ec_top_{%inst_num}/grp_d1_rx_data_w_ecc         mby_mpp_{%inst_num}/grp_d1_rx_data_w_ecc
-C   mby_ec_top_{%inst_num}/grp_d1_rx_ecc                mby_mpp_{%inst_num}/grp_d1_rx_ecc
-C   mby_ec_top_{%inst_num}/grp_d1_rx_flow_control_tc    mby_mpp_{%inst_num}/grp_d1_rx_flow_control_tc
-C   mby_ec_top_{%inst_num}/grp_d1_rx_metadata           mby_mpp_{%inst_num}/grp_d1_rx_metadata
-C   mby_ec_top_{%inst_num}/grp_d1_rx_pfc_xoff           mby_mpp_{%inst_num}/grp_d1_rx_pfc_xoff
-C   mby_ec_top_{%inst_num}/grp_d1_rx_port_num           mby_mpp_{%inst_num}/grp_d1_rx_port_num
-#C   mby_ec_top_{%inst_num}/grp_d1_rx_time_stamp         mby_mpp_{%inst_num}/grp_d1_rx_time_stamp
-
-#C   mby_mpp_{%inst_num}/egr0_epl0_if_epl_tx_ecc         mby_ec_top_{%inst_num}/grp_a0_tx_ecc
 
 ##############################################################################
 # Local Variables:
