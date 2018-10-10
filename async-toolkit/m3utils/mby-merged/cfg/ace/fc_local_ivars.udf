@@ -224,16 +224,6 @@ EOF
                 "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
                 "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
                 "-liblist_work",  "-liblist_nocelldiff",
-
-                # gerards: for Cadance PCIe BFMs
-                "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
-                "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
-                "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
-                "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
-                "-P ${DENALI}/verilog/cdnsv.tab",
-                "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",
-                "${DENALI}/ddvapi/sv/denaliMemSvIf.c",
-                "${DENALI}/ddvapi/sv/denaliPcieSvIf.c",
             ],
         },
 
@@ -253,15 +243,6 @@ EOF
                 "+define+SLA_SOCFUSEGEN2",
                 "+define+INSTANTIATE_NOVAS",
                 "+define+MODEL_ROOT=$ENV{MODEL_ROOT}", 
-                # gerards - for Cadence PCIe 
-                #"-full64 -sverilog -ucli -LDFLAGS -Wl,-E",
-                "+define+DENALI_SV_VCS -lca -ntb_opts svp",
-                "+define+DENALI_UVM",
-                "+vpi", # gerards: for Denali PCIe
-                "+define+VCS -ntb_opts uvm-1.2", # gerards: for Denali PCIe
-                "+incdir+${DENALI}/ddvapi/sv",   # gerards: for Denali PCIe
-                "+incdir+${DENALI}/ddvapi/sv/uvm/pcie", # gerards: for Denali PCIe
-
             ],
         },
         # ---------------------------------------------
