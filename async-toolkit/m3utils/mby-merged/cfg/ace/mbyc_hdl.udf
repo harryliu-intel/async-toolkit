@@ -481,32 +481,35 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                   "shdv_shared_lib",
-                   "ext_shared_lib",
-                   "svt_ahb_lib",
-                   "mby_common_lib",
-                   "mby_igr_rtl_lib",
-                   "mby_ingress_tb_lib",
-                   "mby_ingress_ti_lib",
-                   "mby_ingress_env_lib",
-                   "mby_ingress_test_lib",
-                   "mby_wm_dpi_lib",
-                   "upf",
-                   "lpa"
-               ],
+                        "shdv_shared_lib",
+                        "ext_shared_lib",
+                        "svt_ahb_lib",
+                        "mby_common_lib",
+                        "mby_wm_dpi_lib",
+                        "mby_jasper_lib",
+                        #"mby_rx_ppe_ti_lib",
+                        #"mby_rx_ppe_env_lib",
+                        "mby_igr_rtl_lib",
+                        "mby_ingress_tb_lib",
+                        "mby_ingress_ti_lib",
+                        "mby_ingress_env_lib",
+                        "mby_ingress_test_lib",
+                        "upf",
+                        "lpa"
+                       ],
 
                elab_opts => [
-                  "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
-                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                  "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
-               ],
+                             "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                             "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                             "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                            ],
 
                export => {
                  libs => [
-                     "mby_rtl_lib",
-                     "mby_ingress_ti_lib",
-                     "mby_ingress_env_lib"
-                 ]
+                          "mby_igr_rtl_lib",
+                          "mby_ingress_ti_lib",
+                          "mby_ingress_env_lib"
+                         ]
                },
 
                # List of full path to PLI libraries to use
@@ -528,10 +531,10 @@ print "MGM debug : @mbyMgmLibs\n";
                   ],
                },
 
-               power_intent => {
-                  power_top => 'mby_tb/mby_top',
-                  upf_files => [ 'tools/upf/mby_upf.upf' ],
-               },
+               #power_intent => {
+               #   power_top => 'mby_tb/mby_top',
+               #   upf_files => [ 'tools/upf/mby_upf.upf' ],
+               #},
             },
             ####################################################################
             # mby_ingress model ends
@@ -596,10 +599,10 @@ print "MGM debug : @mbyMgmLibs\n";
                   ],
                },
 
-               power_intent => {
-                  power_top => 'mby_tb/mby_top',
-                  upf_files => [ 'tools/upf/mby_upf.upf' ],
-               },
+               #power_intent => {
+               #   power_top => 'mby_tb/mby_top',
+               #   upf_files => [ 'tools/upf/mby_upf.upf' ],
+               #},
             },
             ####################################################################
             # mby_egress model ends

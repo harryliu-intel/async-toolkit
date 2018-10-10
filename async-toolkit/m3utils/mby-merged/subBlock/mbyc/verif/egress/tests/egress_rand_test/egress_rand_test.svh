@@ -2,7 +2,7 @@
 // Title         : Egress alive test
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_alive_test.svh
+// File          : egress_rand_test.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -17,8 +17,8 @@
 // Modification history :
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
-`ifndef EGRESS_ALIVE_TEST__SVH
-`define EGRESS_ALIVE_TEST__SVH
+`ifndef EGRESS_RAND_TEST__SVH
+`define EGRESS_RAND_TEST__SVH
 
 class egress_dummy_seq extends egress_extended_base_seq;
 
@@ -120,13 +120,13 @@ class egress_eth_simple_seq extends egress_extended_base_seq;
 endclass // egress_eth_simple_seq
 
 
-class egress_alive_test extends egress_base_test;
+class egress_rand_test extends egress_base_test;
 
-  `uvm_component_utils(egress_alive_test)
+  `uvm_component_utils(egress_rand_test)
 
   // Function: new
   // Constructor
-  function new (string name="egress_alive_test", uvm_component parent=null);
+  function new (string name="egress_rand_test", uvm_component parent=null);
     super.new (name, parent);
   endfunction :  new
 
@@ -149,6 +149,6 @@ class egress_alive_test extends egress_base_test;
     env.set_test_phase_type("env", "USER_DATA_PHASE",  "egress_eth_simple_seq");
   endfunction : connect_phase
 
-endclass : egress_alive_test
+endclass : egress_rand_test
 
 `endif

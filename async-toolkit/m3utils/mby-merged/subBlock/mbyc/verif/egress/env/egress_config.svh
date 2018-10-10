@@ -30,7 +30,7 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-class egress_config extends slu_config_object;
+class egress_config extends shdv_base_config;
 
   // Variable: egress_primary_access
   // egress primary access method string
