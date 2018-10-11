@@ -24,6 +24,8 @@ class ingress_dummy_seq extends ingress_extended_base_seq;
 
   `uvm_object_utils(ingress_dummy_seq)
 
+  // Function: new
+  // Constructor
   function new(string name = "ingress_dummy_seq", uvm_component parent = null);
     super.new(name);
   endfunction
@@ -55,7 +57,7 @@ class ingress_dummy_seq extends ingress_extended_base_seq;
     `uvm_info(get_name(), "Finished ingress_dummy_seq", UVM_LOW)
   endtask: body
 
-endclass
+endclass // ingress_dummy_seq
 
 class ingress_eth_simple_seq extends ingress_extended_base_seq;
 
@@ -66,12 +68,16 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
   eth_frame      los_frames[4];
   eth_sequencer  los_sequencers[4];
 
+  // Function: new
+  // Constructor
   function new (string name="ingress_eth_simple_seq");
     super.new (name);
     `slu_assert($cast(el_ambiente, slu_utils::get_comp_by_name("env")),
                 ("Could not get mby env pointer"))
   endfunction :  new
 
+  // Task: body()
+  // Main task.
   virtual task body();
     int count[4] = {0,0,0,0};
     `slu_info(this.get_name(), ("Starting eth simple sequence..."))
@@ -90,11 +96,11 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
         begin
           repeat (20) begin
             `slu_assert(los_frames[auto_i].randomize() with {
-              bubble         inside {[0:13]};
+              bubble          == 0;
               kind           inside {BASIC_FRAME,
                                      IPV4_FRAME,
                                      IPV6_FRAME};
-              payload.size() inside {[64:512]};
+              payload.size() inside {[64:66]};
               dmac            == 'h000102030405 + count[auto_i];
               smac            == 'h060708090a0b + count[auto_i];
               tc              == count[auto_i][3:0];
@@ -103,10 +109,11 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
                    payload[idx] == idx;
               }, ("Unable to randomize eth_pkt"))
             count[auto_i]++;
-            `slu_info(this.get_name(), ("Started eth_frame %0d %0d", auto_i, count[auto_i]))
+            `slu_info(this.get_name(), ("Started eth_frame %0d in EPL%0d, port0", count[auto_i], auto_i))
+            los_frames[auto_i].print();
             `uvm_send(los_frames[auto_i])
             //#200_000ps;
-            `slu_info(this.get_name(), ("Sent eth_frame %0d %0d", auto_i, count[auto_i]))
+            `slu_info(this.get_name(), ("Sent eth_frame %0d in EPL%0d, port0", count[auto_i], auto_i))
           end
         end
       join_none
@@ -114,12 +121,14 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
     wait fork;
   endtask
 
-endclass
+endclass // ingress_eth_simple_seq
 
 class ingress_rand_test extends ingress_base_test;
 
   `uvm_component_utils(ingress_rand_test)
 
+  // Function: new
+  // Constructor
   function new (string name="ingress_rand_test", uvm_component parent=null);
     super.new (name, parent);
   endfunction :  new

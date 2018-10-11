@@ -24,31 +24,19 @@ interface ingress_env_if();
   logic power_good_reset;
 
   // Primary interface clk & reset
-  logic primary_reset;
-  logic primary_clock;
-  logic enable_primary_clock;
-
-  //  Secondary interface clk & reset
-  logic secondary_reset;
-  logic secondary_clock;
-  logic enable_secondary_clock;
+  logic reset;
+  logic clock;
 	
   // Dummy interrupt wire for monitoring.
   logic ingress_int_wire;
 
   initial begin
+    ingress_int_wire = 0;
     power_good_reset = 1;
-    primary_reset = 1;
-    secondary_reset = 1;
-    enable_primary_clock   = 0;
-    enable_secondary_clock = 0;
-    #5ps;
-    enable_primary_clock   = 1;
-    enable_secondary_clock = 1;
+    reset = 1;
     #8_000ps;
     power_good_reset = 0;
-    primary_reset    = 0;
-    secondary_reset  = 0;
+    reset = 0;
   end
   
 endinterface
