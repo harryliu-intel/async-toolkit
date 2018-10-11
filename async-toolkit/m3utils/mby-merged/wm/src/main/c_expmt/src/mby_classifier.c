@@ -641,10 +641,12 @@ void Classifier
 #endif
 
     // Wildcard Match (WCM):
+    fm_uint32 wcm_out[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
+
 #ifdef USE_NEW_CSRS
-    mbyMatchWildcard(cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
+    mbyMatchWildcard(cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
 #else
-    mbyMatchWildcard(regs,       &keys, scenario, MBY_CLA_GROUP_B, &actions);
+    mbyMatchWildcard(regs,       &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
 #endif
 
 #if 0 // is this still needed? <--- REVISIT!!!

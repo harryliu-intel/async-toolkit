@@ -176,13 +176,13 @@ static void lookUpWcmTcamCascade
     }
 }
 
-static void resolveActions
+static void wcmActions
 (
     MBY_CGRP_B_IN_REGS,
     fm_byte                const scenario,
     fm_byte                const group,
     mbyClassifierHitInfo         tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1],
-    mbyClassifierActions * const actions // = output actions
+    fm_uint32                    actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     for (fm_uint ram_num = 0; ram_num < MBY_FFU_ACTION_ENTRIES_1; ram_num++)
@@ -199,8 +199,7 @@ static void resolveActions
         fm_uint hit_index = tcam_hit_info[slice].hit_index;
         for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
             fm_uint32 action_entry = mbyClsGetWcmActionEntry(MBY_CGRP_B_IN_REGS_P, ram_num, hit_index, i);
-            // FIXME return only the list of action_entry
-            // doAction(action_entry, actions);
+            actions[MBY_FFU_ACTIONS_PER_ENTRY * ram_num + i] = action_entry;
         }
     }
 }
@@ -211,7 +210,7 @@ void mbyMatchWildcard
     mbyClassifierKeys const * const keys,
     fm_byte                   const scenario,
     fm_byte                   const group,
-    mbyClassifierActions    * const actions // = output actions
+    fm_uint32                 actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     mbyClassifierHitInfo tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1];
@@ -219,6 +218,6 @@ void mbyMatchWildcard
     // Get hit index for each tcam slice:
     lookUpWcmTcamCascade(MBY_CGRP_B_IN_REGS_P, keys, scenario, group, tcam_hit_info);
 
-    // Apply and resolve actions from action RAMs based on tcam hit index per slice:
-    resolveActions(MBY_CGRP_B_IN_REGS_P, scenario, group, tcam_hit_info, actions);
+    // Get the list of action_entry from action RAMs based on tcam hit index per slice:
+    wcmActions(MBY_CGRP_B_IN_REGS_P, scenario, group, tcam_hit_info, actions);
 }
