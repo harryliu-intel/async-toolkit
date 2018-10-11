@@ -359,6 +359,7 @@ public class DirectiveTable {
         registerDirective(CSP, CSP_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, null);
         registerDirective(CSP, CSP_TIME_INPUTS, FLOAT_TYPE, null);
         registerDirective(CSP, CSP_TIME_OUTPUTS, FLOAT_TYPE, null);
+        registerDirective(CSP, SEND_CTRL_LATENCY, FLOAT_TYPE, new Float(1));
         registerDirective(CSP, CONDITION_TIME, POSSIBLY_WIDE_CHANNEL_TYPE, FLOAT_TYPE, new Float(0));
 
         // see bug 6085

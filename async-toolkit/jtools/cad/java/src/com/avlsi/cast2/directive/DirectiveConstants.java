@@ -242,6 +242,7 @@ public interface DirectiveConstants {
     String CONDITION_TIME = "condition_time";
     String CONDITION_ORDER = "condition_order";
     String CONDITION_GROUP = "condition_group";
+    String SEND_CTRL_LATENCY = "send_ctrl_latency";
 
     /** ASTA directives */
     String ASTA_BLACKBOX = "asta_blackbox";
