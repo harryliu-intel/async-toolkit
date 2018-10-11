@@ -23,6 +23,11 @@
   igr_integ_env igr_subenv;
 //`endif
 
+`ifdef CDN_PCIE_ENV_ENABLE
+    pep_integ_env pep_subenv;
+`endif
+
+
 //-----------------------------------------------------------------------
 
 //-- build reset checker
@@ -45,6 +50,11 @@ function void build_sub_system_envs();
   //`ifdef IGR_ENV_ENABLE
       igr_subenv = igr_integ_env::type_id::create("igr_subenv", this);
   //`endif
+
+  `ifdef CDN_PCIE_ENV_ENABLE
+      pep_subenv = pep_integ_env::type_id::create("pep_subenv", this);
+  `endif
+
 endfunction: build_sub_system_envs
 
 `endif

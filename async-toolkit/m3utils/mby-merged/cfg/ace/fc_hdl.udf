@@ -48,6 +48,30 @@ my @FC_VLOG_OPTIONS = (
 # TODO   "+define+AXI_ENV_ENABLE",
 );
 
+
+# gerards - for Cadence PCIe
+my $DENALI =  &ToolConfig::ToolConfig_get_tool_path("denali");
+my @CDN_PCIE_VLOG_OPTS = (
+    "-full64 -sverilog -ucli -LDFLAGS -Wl,-E",
+    "+define+DENALI_SV_VCS -lca -ntb_opts svp",
+    "+define+DENALI_UVM",
+    "+vpi", # gerards: for Denali PCIe
+    "+define+VCS -ntb_opts uvm-1.2", # gerards: for Denali PCIe
+    "+incdir+${DENALI}/ddvapi/sv",   # gerards: for Denali PCIe
+    "+incdir+${DENALI}/ddvapi/sv/uvm/pcie", # gerards: for Denali PCIe
+);
+
+my @CDN_PCIE_ELAB_OPTS = (
+    "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
+    "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
+    "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
+    "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
+    "-P ${DENALI}/verilog/cdnsv.tab",
+    "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",
+    "${DENALI}/ddvapi/sv/denaliMemSvIf.c",
+    "${DENALI}/ddvapi/sv/denaliPcieSvIf.c",
+);
+
 for (my $i = 0; $i < @ARGV; $i++) {
     if ($ARGV[$i] eq "-mby_behave_mem") {
  	$behaveMem = 1;	
@@ -309,7 +333,8 @@ EOF
                      @all_sip_verif_vlogopts,
                      @all_sip_rtl_vlogopts,
                      @top_vrf_vlogopts,
-                     "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh"
+                     "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh",
+                     @CDN_PCIE_VLOG_OPTS,
                  ],
                  -tag => "nonsynth",
              },
@@ -410,6 +435,7 @@ EOF
                    "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
                    "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
                     @all_sip_elab_opts,
+                    @CDN_PCIE_ELAB_OPTS, 
                ],
 
                top_language => 'SystemVerilog',

@@ -59,7 +59,7 @@ $IP_STUB_LIB = "soc_ip_stub_lib";
 $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_assemble_upf_lib" : "soc_collage_assemble_lib";
 
 # for Cadance PCIe BFMs
-my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+my $DENALI =  &ToolConfig::get_tool_path("denali");
 
 
 #################################################################
