@@ -41,9 +41,6 @@
 //    <mby_mesh_warm_reset_seq.sv>           - Warm_Reset sequence, drops the Warm Reset after a delay. (Ran third)
 
 
-`ifndef __MBY_MESH_SEQ_LIB_GUARD
-`define __MBY_MESH_SEQ_LIB_GUARD
-
 package mby_mesh_seq_lib;
 
 
@@ -55,15 +52,13 @@ package mby_mesh_seq_lib;
    `include "uvm_macros.svh"
    `include "slu_macros.svh"
 
-   `define __INSIDE_MBY_MESH_SEQ_LIB
+   `define  __INSIDE_MBY_MESH_SEQ_LIB
    `include "mby_mesh_env_base_seq.svh"
    `include "mby_mesh_power_good_seq.svh"
    `include "mby_mesh_hard_reset_seq.svh"
    `include "mby_mesh_warm_reset_seq.svh"
    `include "mby_mesh_env_cfg_seq.svh"
-   
    `undef  __INSIDE_MBY_MESH_SEQ_LIB
 
 endpackage: mby_mesh_seq_lib
 
-`endif // __MBY_MESH_SEQ_LIB_GUARD

@@ -33,8 +33,6 @@
 //   This is the main Env Package file. Holds all Environment files that will be included in MESH IP env.
 
 
-`ifndef __MBY_MESH_ENV_PKG_GUARD
-`define __MBY_MESH_ENV_PKG_GUARD
 
 package mby_mesh_env_pkg;
 
@@ -49,13 +47,11 @@ package mby_mesh_env_pkg;
 
    `define __INSIDE_MBY_MESH_ENV_PKG
 
-   `include "mby_mesh_defines.svh"
    `include "mby_mesh_env_cfg.svh"
+   `include "mby_mesh_dut_cfg.svh"
+   `include "mby_mesh_tb_top_cfg.svh"
    `include "mby_mesh_env.svh"
-  
-   `undef  __INSIDE_MBY_MESH_ENV_PKG
-
+    `undef  __INSIDE_MBY_MESH_ENV_PKG
 endpackage: mby_mesh_env_pkg
 
-`endif // __MBY_MESH_ENV_PKG_GUARD
 

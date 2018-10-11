@@ -47,17 +47,7 @@
 
 class mby_mesh_env_base_seq extends mby_common_pkg::mby_base_seq;
 
-    // Variable: env
-    // Mesh Top Level Env.
-    mby_mesh_env_pkg::mby_mesh_env         env;
 
-    // Variable: cfg
-    // Mesh environment cfg.
-    mby_mesh_env_pkg::mby_mesh_env_cfg     cfg;
-
-    // Variable: vif
-    // Handle to Mesh Tb interface.
-    virtual mby_mesh_tb_if                 vif;
 
     // ------------------------------------------------------------------------
     //  Constructor: new
@@ -67,26 +57,6 @@ class mby_mesh_env_base_seq extends mby_common_pkg::mby_base_seq;
     function new(string name = "mby_mesh_env_base_seq");
         super.new();
     endfunction : new
-
-    // ------------------------------------------------------------------------
-    virtual function void set_env(slu_tb_env tb_env);
-        mby_mesh_env_pkg::mby_mesh_env temp_env;
-        bit stat;
-
-        stat = $cast(temp_env,tb_env);
-        if(!stat) begin
-            `uvm_fatal(get_name(), "Cast of sla_tb_env failed");
-        end
-        if(temp_env == null) begin
-            `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
-        end
-
-        this.env = temp_env;
-        this.cfg = temp_env.get_tb_cfg();
-        //this.ral = temp_env.get_tb_ral();
-        this.vif = temp_env.get_tb_vif();
-
-    endfunction : set_env
 
 endclass : mby_mesh_env_base_seq
 

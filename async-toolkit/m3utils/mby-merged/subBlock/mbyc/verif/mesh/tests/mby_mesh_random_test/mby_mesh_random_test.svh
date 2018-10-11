@@ -26,27 +26,23 @@
 //   Author        : Dhivya Sankar
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
-
-//   Class:    mby_mesh_alive_test
+//
+//   Class:    mby_mesh_random_test
 //
 
-`ifndef MBY_MESH_ALIVE_TEST__SV
-`define MBY_MESH_ALIVE_TEST__SV
+`ifndef MBY_MESH_RANDOM_TEST__SV
+`define MBY_MESH_RANDOM_TEST__SV
 
-`ifndef __INSIDE_MBY_MESH_TEST_LIB
-`error "Attempt to include file outside of mby_mesh_test_lib."
-`endif
+class mby_mesh_random_test extends mby_mesh_base_test;
 
-class mby_mesh_alive_test extends mby_mesh_base_test;
-
-    `uvm_component_utils(mby_mesh_alive_test)
+    `uvm_component_utils(mby_mesh_random_test)
     //------------------------------------------------------------------------------
     // Constructor: new
     //  Arguments:
-    //  name   - Mesh alive test object name.
+    //  name   - Mesh random test object name.
     //  parent - Component parent object.
     //------------------------------------------------------------------------------
-    function new (string name="mby_mesh_alive_test", uvm_component parent=null);
+    function new (string name="mby_mesh_random_test", uvm_component parent=null);
         super.new (name, parent);
     endfunction :  new
 
@@ -68,23 +64,22 @@ class mby_mesh_alive_test extends mby_mesh_base_test;
     //------------------------------------------------------------------------------
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        env.set_test_phase_type("env", "USER_DATA_PHASE", "mby_mesh_alive_seq");
+        env.set_test_phase_type("env", "USER_DATA_PHASE", "mby_mesh_random_seq");
     endfunction : connect_phase
 
-endclass : mby_mesh_alive_test
+endclass : mby_mesh_random_test
 
-class mby_mesh_alive_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
+class mby_mesh_random_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
 
-    `uvm_object_utils(mby_mesh_alive_seq)
+    `uvm_object_utils(mby_mesh_random_seq)
 
     //------------------------------------------------------------------------------
     //  Constructor: new
     //  Arguments:
-    //  name   - Mesh alive test  seq object name.
+    //  name   - Mesh random test  seq object name.
     //------------------------------------------------------------------------------
-    function new (string name="mby_mesh_alive_seq");
+    function new (string name="mby_mesh_random_seq");
         super.new (name);
-        set_env(slu_tb_env::get_top_tb_env());
     endfunction :  new
 
     //------------------------------------------------------------------------------
@@ -93,15 +88,14 @@ class mby_mesh_alive_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
     //------------------------------------------------------------------------------
     task body ();
         int count;
-        `ovm_info(get_name(), "mby_mesh_alive_seq is running!", OVM_MEDIUM);
+        `ovm_info(get_name(), "mby_mesh_random_seq is running!", OVM_MEDIUM);
         repeat(50) begin
-            @(posedge vif.fab_clk);
             count++;
-            `ovm_info(get_name(), $sformatf("mby_mesh_alive_seq: clock edge %0d",count), OVM_FULL);
+            `ovm_info(get_name(), $sformatf("mby_mesh_random_seq: clock edge %0d",count), OVM_FULL);
         end
 
     endtask
 
-endclass : mby_mesh_alive_seq
+endclass : mby_mesh_random_seq
 
-`endif // MBY_MESH_ALIVE_TEST__SV
+`endif // MBY_MESH_RANDOM_TEST__SV

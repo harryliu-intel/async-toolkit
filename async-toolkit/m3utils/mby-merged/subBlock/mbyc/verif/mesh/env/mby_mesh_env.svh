@@ -44,7 +44,7 @@ class mby_mesh_env extends shdv_base_env;
 
    // Variable:  tb_cfg
    // Protected Top Level mesh environment configuration.
-   protected mby_mesh_env_cfg                              tb_cfg;
+   protected mby_mesh_tb_top_cfg                           tb_cfg;
 
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
@@ -66,7 +66,7 @@ class mby_mesh_env extends shdv_base_env;
    function new(string name = "mby_mesh_env", uvm_component parent = null);
       super.new(name, parent);
 
-      config_type = "mby_mesh_env_cfg";
+      config_type = "mby_mesh_tb_top_cfg";
 
    endfunction : new
 
@@ -82,12 +82,12 @@ class mby_mesh_env extends shdv_base_env;
 
       super.build_phase(phase);
 
-      if(get_config_object("mby_mesh_env_cfg", tmp_cfg)) begin
+      if(get_config_object("mby_mesh_tb_top_cfg", tmp_cfg)) begin
          $cast(tb_cfg, tmp_cfg);
       end
 
       if (tb_cfg == null) begin
-         `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mesh_env_cfg object!")
+         `uvm_fatal(get_full_name(), "Unable to acquire handle to mby_mesh_tb_top_cfg object!")
       end
 
       `uvm_info (get_full_name , $sformatf("Mesh Top _cfg : %s", tb_cfg.sprint()), UVM_FULL)
@@ -157,9 +157,9 @@ class mby_mesh_env extends shdv_base_env;
 
    //---------------------------------------------------------------------------
    // Function: get_tb_cfg()
-   // Returns object handle to mesh env configuration (mby_mesh_env_cfg)
+   // Returns object handle to mesh env configuration (mby_mesh_tb_top_cfg)
    //---------------------------------------------------------------------------
-   function mby_mesh_env_cfg get_tb_cfg();
+   function mby_mesh_tb_top_cfg get_tb_cfg();
       return tb_cfg;
    endfunction : get_tb_cfg
 

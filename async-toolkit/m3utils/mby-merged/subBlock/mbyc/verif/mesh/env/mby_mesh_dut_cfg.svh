@@ -26,35 +26,61 @@
 //   Author        : Dhivya Sankar
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
-
-//   Defines : mby_mesh_defines
+//------------------------------------------------------------------------------
+// Class: mby_mesh_dut_cfg
 //
-//  This file contain any PARAMETERS or Defines.  Also contains Topology
-//  configuration ENUM.
+// This is the configuration object to control Mesh DUT configuration.
+//------------------------------------------------------------------------------
 
-`ifndef __MBY_MESH_DEFINES_GUARD
-`define __MBY_MESH_DEFINES_GUARD
+`ifndef __MBY_MESH_DUT_CFG_GUARD
+`define __MBY_MESH_DUT_CFG_GUARD
 
 `ifndef __INSIDE_MBY_MESH_ENV_PKG
 `error "Attempt to include file outside of mby_mesh_env_pkg."
 `endif
 
+class mby_mesh_dut_cfg extends shdv_base_config;
 
-class mby_mesh_defines extends uvm_object;
+    // Variable: reset_type
+    // Definition of the RESET type
+    reset_type_e                     reset_type ;
 
-    `uvm_object_utils(mby_mesh_env_pkg::mby_mesh_defines)
+
+    `uvm_object_utils_begin(mby_mesh_dut_cfg)
+        `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
+    `uvm_object_utils_end
+
 
     //---------------------------------------------------------------------------
-    //  Constructor: new
-    //  Collect any plusargs and re-configure variables from default, if used.
-    //  Arguments:
-    //  name   - Mesh Defines object name.
+    // Constructor: new
+    //
+    // Constructor.
+    //
+    // Arguments:
+    //    string name - mby_mesh_dut_cfg object name
     //---------------------------------------------------------------------------
-    function       new(string name = "mby_mesh_defines");
+    function new( string name = "mby_mesh_dut_cfg");
         super.new(name);
-
+       
     endfunction: new
 
-endclass: mby_mesh_defines
+    //---------------------------------------------------------------------------
+    // Function: pre_randomize
+    //---------------------------------------------------------------------------
+    function void pre_randomize();
+        super.pre_randomize();
+    endfunction: pre_randomize
 
-`endif // __MBY_MESH_DEFINES_GUARD
+    //---------------------------------------------------------------------------
+    // Function: post_randomize
+    // Collect Plusargs here, then push down cfg changes to any bfm/IP
+    //---------------------------------------------------------------------------
+    function void post_randomize();
+        super.post_randomize();
+
+    endfunction: post_randomize
+
+
+endclass: mby_mesh_dut_cfg
+
+`endif // __MBY_MESH_DUT_CFG_GUARD

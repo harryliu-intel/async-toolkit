@@ -49,19 +49,6 @@ class mby_mesh_env_cfg extends shdv_base_config;
    `uvm_object_utils_begin(mby_mesh_env_cfg)
    `uvm_object_utils_end
 
-    // Variable: ti_path
-    // Definition from the Test Island, of TI Path
-    string                           ti_path;
-
-    // Variable: rtl_top_path
-    // Definition from the Test Island, of RTL_TOP Path
-    string                           rtl_top_path;
-
-    // Variable: reset_type
-    // Definition of the RESET type
-    reset_type_e                     reset_type ;
-
-
    //---------------------------------------------------------------------------
    // Constructor: new
    //

@@ -40,10 +40,6 @@
 
 class mby_mesh_env_cfg_seq extends shdv_base_config_seq;
 
-    // Variable: env
-    // Protected Mesh Top Level Env
-    protected mby_mesh_env_pkg::mby_mesh_env   env;
-
 
     `uvm_object_utils(mby_mesh_env_cfg_seq)
     `uvm_declare_p_sequencer(slu_sequencer)
@@ -58,26 +54,7 @@ class mby_mesh_env_cfg_seq extends shdv_base_config_seq;
     //------------------------------------------------------------------------------
     function new(input string name = "mby_mesh_warm_reset_seq");
         super.new(name);
-        set_env(slu_tb_env::get_top_tb_env());
     endfunction: new
-
-    //------------------------------------------------------------------------------
-    //  Function: set_env
-    //  Handle to Mesh Top Level env for use in sequences
-    //
-    //  Arguments:
-    //  slu_tb_env tb_env  -  Handle to the ENV
-    //------------------------------------------------------------------------------
-    virtual function void set_env(slu_tb_env tb_env);
-        mby_mesh_env_pkg::mby_mesh_env temp_env;
-        bit stat;
-
-        stat = $cast(temp_env,tb_env);
-        `slu_assert(    stat, ($psprintf("Cast of $s(type: $s) failed!!!",tb_env.get_name(),tb_env.get_type_name())));
-        `slu_assert(temp_env, ("Could not fetch slu_tb_env handle!!!"));
-
-        this.env    = temp_env;
-    endfunction : set_env
 
     //------------------------------------------------------------------------------
     //  Function: sm_config

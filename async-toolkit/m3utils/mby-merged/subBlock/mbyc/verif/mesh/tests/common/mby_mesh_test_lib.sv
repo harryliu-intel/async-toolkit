@@ -52,10 +52,8 @@ program mby_mesh_test_lib;
     import shdv_base_pkg::*;
     import mby_mesh_env_pkg::*;
 
-    `define __INSIDE_MBY_MESH_TEST_LIB
     `include "mby_mesh_base_test.svh"
-    `include "mby_mesh_alive_test.svh"
-    `undef __INSIDE_MBY_MESH_TEST_LIB
+    `include "mby_mesh_random_test.svh"
 
     // UVM Start test
     initial begin
