@@ -220,18 +220,18 @@ typedef struct mbyClassifierKeysStruct
 
 } mbyClassifierKeys;
 
-typedef struct mbyPrecValStruct
+typedef struct mbyActionPrecValStruct
 {
-    fm_byte                 prec; // 3b field
+    fm_byte                 prec : 3; // 3b field
     fm_uint32               val;  // act24.val is 24b, act4.val is 4b, act1.val is 1b
 
-} mbyPrecVal;
+} mbyActionPrecVal;
 
 typedef struct mbyClassifierActionsStruct
 {
-    mbyPrecVal              act24[MBY_FFU_ACT24];
-    mbyPrecVal              act4 [MBY_FFU_ACT4 ];
-    mbyPrecVal              act1 [MBY_FFU_ACT1 ];
+    mbyActionPrecVal        act24[MBY_FFU_ACT24];
+    mbyActionPrecVal        act4 [MBY_FFU_ACT4 ];
+    mbyActionPrecVal        act1 [MBY_FFU_ACT1 ];
 
 } mbyClassifierActions;
 

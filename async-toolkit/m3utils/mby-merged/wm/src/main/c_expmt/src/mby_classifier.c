@@ -11,21 +11,25 @@
 #include "mby_classifier.h"
 #include "mby_crc32.h"
 
-static inline void setPrec
+/* Check precedence and set the action with the new value */
+static inline void setAct
 (
-    mbyPrecVal * const old,
-    fm_byte      const prec,
-    fm_uint32    const value
+    mbyActionPrecVal * const action, // the current value
+    fm_byte            const new_prec,
+    fm_uint32          const new_value
 )
 {
-    if ((prec >= old->prec) && (prec > 0))
+    if ((new_prec >= action->prec) && (new_prec > 0))
     {
-        old->prec = prec;
-        old->val  = value;
+        action->prec = new_prec;
+        action->val  = new_value;
     }
 }
 
-void doAction
+/* Action Set format: https://securewiki.ith.intel.com/x/XxDpKQ
+ * Formerly called doAction()
+ */
+static void resolveActionSet
 (
     fm_uint32              const action,
     mbyClassifierActions * const actions
@@ -51,7 +55,7 @@ void doAction
             for (fm_uint i = 0; i < 4; i++) {
                 fm_uint j = index * 4 + i;
                 if ((j < MBY_FFU_ACT4) && (enable & (1uL << i)))
-                    setPrec(&(actions->act4[j]), prec, ((value >> 4*i) & 0xF));
+                    setAct(&(actions->act4[j]), prec, ((value >> 4*i) & 0xF));
             }
             break;
         }
@@ -64,7 +68,7 @@ void doAction
             for (fm_uint i = 0; i < 8; i++) {
                 fm_uint j = index * 8 + i;
                 if ((j < MBY_FFU_ACT1) && (enable & (1uL << i)))
-                    setPrec(&(actions->act1[j]), prec, ((value >> i) & 0x1));
+                    setAct(&(actions->act1[j]), prec, ((value >> i) & 0x1));
             }
             break;
         }
@@ -75,19 +79,21 @@ void doAction
             fm_bool enableA = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EA);
             fm_byte valueA  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VA);
             if (enableA && (indexA < MBY_FFU_ACT1))
-                setPrec(&(actions->act1[indexA]), prec, valueA);
+                setAct(&(actions->act1[indexA]), prec, valueA);
 
             fm_byte indexB  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXB);
             fm_bool enableB = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EB);
             fm_byte valueB  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VB);
+            // FIXME for NOP, set _B=_A
             if (enableB && (indexB < MBY_FFU_ACT1))
-                setPrec(&(actions->act1[indexB]), prec, valueB);
+                setAct(&(actions->act1[indexB]), prec, valueB);
 
             fm_byte indexC  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXC);
             fm_bool enableC = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EC);
             fm_byte valueC  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VC);
+            // FIXME for NOP, set _C=_A
             if (enableC && (indexC < MBY_FFU_ACT1))
-                setPrec(&(actions->act1[indexC]), prec, valueC);
+                setAct(&(actions->act1[indexC]), prec, valueC);
 
             break;
         }
@@ -97,17 +103,17 @@ void doAction
             fm_byte indexA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXA);
             fm_byte valueA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEA);
             if (indexA < MBY_FFU_ACT4)
-                setPrec(&(actions->act4[indexA]), prec, valueA);
+                setAct(&(actions->act4[indexA]), prec, valueA);
 
             fm_byte indexB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXB);
             fm_byte valueB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEB);
             if (indexB < MBY_FFU_ACT4)
-                setPrec(&(actions->act4[indexB]), prec, valueB);
+                setAct(&(actions->act4[indexB]), prec, valueB);
 
             fm_byte indexC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXC);
             fm_byte valueC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEC);
             if (indexC < MBY_FFU_ACT4)
-                setPrec(&(actions->act4[indexC]), prec, valueC);
+                setAct(&(actions->act4[indexC]), prec, valueC);
 
             break;
         }
@@ -117,7 +123,7 @@ void doAction
             fm_byte   index = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_INDEX);
             fm_uint32 value = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_VALUE);
             if(index < MBY_FFU_ACT24)
-                setPrec(&(actions->act24[index]), prec, value);
+                setAct(&(actions->act24[index]), prec, value);
             break;
         }
 

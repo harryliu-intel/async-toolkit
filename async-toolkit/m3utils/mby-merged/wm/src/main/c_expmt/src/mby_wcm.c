@@ -4,7 +4,6 @@
 
 
 #include "mby_common.h"
-#include "mby_classifier.h" // doAction()
 #include "mby_wcm.h"
 
 static mbyWcmKeyInfo selectWcmKey
@@ -200,7 +199,8 @@ static void resolveActions
         fm_uint hit_index = tcam_hit_info[slice].hit_index;
         for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
             fm_uint32 action_entry = mbyClsGetWcmActionEntry(MBY_CGRP_B_IN_REGS_P, ram_num, hit_index, i);
-            doAction(action_entry, actions);
+            // FIXME return only the list of action_entry
+            // doAction(action_entry, actions);
         }
     }
 }

@@ -70,10 +70,4 @@ typedef struct mbyClassifierToHashStruct
 
 // Function prototypes:
 
-void doAction
-(
-    fm_uint32              const action,
-    mbyClassifierActions * const actions
-);
-
 #endif /* MBY_CLASSIFIER_H */
