@@ -85,7 +85,7 @@ my %sip_list = (
 # HIP related lib should be move to HIP_RTL_LIBS (NON-SYNTH related)
 # SIP rtl lib should contain only synthesizable code (SYNTH related )
 my %sip_rtl_libs = (
-    'boot'               => [],
+    'boot'               => ['clkstub_rtl_lib'],
     'imc'                => [],
 #    'epc'                => [],
     'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
