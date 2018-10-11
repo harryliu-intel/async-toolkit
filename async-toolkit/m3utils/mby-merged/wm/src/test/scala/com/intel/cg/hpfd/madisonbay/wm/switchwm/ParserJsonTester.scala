@@ -4,12 +4,13 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Packet
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
-import com.intel.cg.hpfd.madisonbay.wm.utils.Json
+import com.intel.cg.hpfd.madisonbay.wm.utils.Loader
 import org.scalatest.{FlatSpec, Matchers}
 
+//scalastyle:off
 class ParserJsonTester extends FlatSpec with Matchers {
-val json = Json.parse(scala.io.Source.fromFile("src/test/resources/json/parser_packets.json").mkString)
-val parserStr = "Parser"
+  val json = Loader.loadJson("src/test/resources/json/parser_packets.json").get
+  val parserStr = "Parser"
 
   for ((name, test) <- json) {
     val mapOfTestCase = test.asInstanceOf[Map[String, Any]]

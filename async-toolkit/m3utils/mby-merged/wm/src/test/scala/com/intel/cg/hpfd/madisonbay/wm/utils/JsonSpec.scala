@@ -41,9 +41,15 @@ class JsonSpec extends FlatSpec with Matchers {
     )
 
     getOpt(json, "parsers(1).p2")    shouldEqual Some(List(4,5,6))
+    getListOpt(json, "parsers(1).p2")    shouldEqual Some(List(4,5,6))
     getOpt(json, "parsers(1).p2(2)") shouldEqual Some(6)
+    getIntOpt(json, "parsers(1).p2(2)") shouldEqual Some(6)
+    getMapOpt(json, "parsers(1).p2(2)") shouldEqual None
+    getListOpt(json, "parsers(1).p2(2)") shouldEqual None
     getOpt(json, "headers(0)(0)")    shouldEqual Some("h1")
+    getStringOpt(json, "headers(0)(0)")    shouldEqual Some("h1")
     getOpt(json, "headers(0)(3).h12")    shouldEqual Some(Map("a"->0))
+    getMapOpt(json, "headers(0)(3).h12")    shouldEqual Some(Map("a"->0))
     getOpt(json, "headers(0)(3).h12.a")    shouldEqual Some(0)
 
     getOpt(json, "parsers(1).p2a")    shouldEqual None
@@ -58,16 +64,21 @@ class JsonSpec extends FlatSpec with Matchers {
   it should "get paths from json" in {
     val inputJson = parse(input)
     getOpt(inputJson.get, "fields(1)(2)") shouldEqual Some(false)
+    getBooleanOpt(inputJson.get, "fields(1)(2)") shouldEqual Some(false)
   }
 
 
   it should "properly load json and extract fields" in {
 
-    val json = Loader.loadJson("json/test.json").getOrElse(Map())
+    val json = Loader.loadJson("src/test/resources/json/test.json").getOrElse(Map())
     json should not equal Map()
 
+    getDoubleOpt(json, "double_test") shouldEqual Some(0.5)
+    getIntOpt(json, "double_test") shouldEqual None
     getOpt(json, "header_types(1).fields(0)(1)") shouldEqual Some(9)
+    getIntOpt(json, "header_types(1).fields(0)(1)") shouldEqual Some(9)
     getOpt(json, "headers(2).name") shouldEqual Some("ethernet")
+    getStringOpt(json, "headers(2).name") shouldEqual Some("ethernet")
     getOpt(json, "parsers(0).parse_states(0).parser_ops(0).parameters(0).type") shouldEqual Some("regular")
   }
 

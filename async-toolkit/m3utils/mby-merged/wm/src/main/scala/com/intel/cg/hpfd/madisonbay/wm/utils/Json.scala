@@ -54,4 +54,33 @@ object Json {
       }
     )
 
+  def getListOpt(json: Map[String, Any], path: String): Option[List[Any]] = getOpt(json, path) match {
+    case result@Some(_: List[_]) => result.asInstanceOf[Option[List[Any]]]
+    case _ => None
+  }
+
+  def getMapOpt(json: Map[String, Any], path: String): Option[Map[String, Any]] = getOpt(json, path) match {
+    case result@Some(_: Map[_, _]) => result.asInstanceOf[Option[Map[String, Any]]]
+    case _ => None
+  }
+
+  def getStringOpt(json: Map[String, Any], path: String): Option[String] = getOpt(json, path) match {
+    case result@Some(_: String) => result.asInstanceOf[Option[String]]
+    case _ => None
+  }
+
+  def getIntOpt(json: Map[String, Any], path: String): Option[Int] = getOpt(json, path) match {
+    case result@Some(_: Int) => result.asInstanceOf[Option[Int]]
+    case _ => None
+  }
+
+  def getDoubleOpt(json: Map[String, Any], path: String): Option[Double] = getOpt(json, path) match {
+    case result@Some(_: Double) => result.asInstanceOf[Option[Double]]
+    case _ => None
+  }
+
+  def getBooleanOpt(json: Map[String, Any], path: String): Option[Boolean] = getOpt(json, path) match {
+    case result@Some(_: Boolean) => result.asInstanceOf[Option[Boolean]]
+    case _ => None
+  }
 }
