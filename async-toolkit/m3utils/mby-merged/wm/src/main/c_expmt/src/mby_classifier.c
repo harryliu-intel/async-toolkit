@@ -84,14 +84,12 @@ static void resolveActionSet
             fm_byte indexB  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXB);
             fm_bool enableB = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EB);
             fm_byte valueB  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VB);
-            // FIXME for NOP, set _B=_A
             if (enableB && (indexB < MBY_FFU_ACT1))
                 setAct(&(actions->act1[indexB]), prec, valueB);
 
             fm_byte indexC  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXC);
             fm_bool enableC = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EC);
             fm_byte valueC  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VC);
-            // FIXME for NOP, set _C=_A
             if (enableC && (indexC < MBY_FFU_ACT1))
                 setAct(&(actions->act1[indexC]), prec, valueC);
 
@@ -615,11 +613,17 @@ void Classifier
     mbyClassifierActions actions  = actions_in;
 
     // Exact match A (EM_A):
+    fm_uint32 em_a_out[MBY_EM_A_MAX_ACTIONS_NUM];
+
 #ifdef USE_NEW_CSRS
+    // TODO change function to return a list of action sets (i.e. em_a_out)
     mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_A, &actions);
 #else
     mbyMatchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_A, &actions);
 #endif
+
+    for (fm_uint i = 0; i < MBY_EM_A_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(em_a_out[i], &actions);
 
     // Longest Prefix Match (LPM):
     fm_uint32 lpm_out[MBY_LPM_MAX_ACTIONS_NUM];
@@ -631,14 +635,21 @@ void Classifier
     mbyMatchLpm(regs,                &keys, scenario, lpm_out);
 #endif
 
-    // TODO: process output of EM_AM and LPM to resolve actions!!! <<-- FIXME
+    for (fm_uint i = 0; i < MBY_LPM_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(lpm_out[i], &actions);
 
     // Exact match B (EM_B):
+    fm_uint32 em_b_out[MBY_EM_B_MAX_ACTIONS_NUM];
+
 #ifdef USE_NEW_CSRS
+    // TODO change function to return a list of action sets (i.e. em_b_out)
     mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
 #else
     mbyMatchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_B, &actions);
 #endif
+
+    for (fm_uint i = 0; i < MBY_EM_B_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(em_b_out[i], &actions);
 
     // Wildcard Match (WCM):
     fm_uint32 wcm_out[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
@@ -648,6 +659,10 @@ void Classifier
 #else
     mbyMatchWildcard(regs,       &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
 #endif
+
+    for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(wcm_out[i], &actions);
+
 
 #if 0 // is this still needed? <--- REVISIT!!!
 
@@ -662,6 +677,7 @@ void Classifier
 #endif
 
     // Populate muxed_action:
+    // TODO What are these? Add reference to MBY spec or remove
     mbyClassifierMuxedAction muxed_action;
 
     populateMuxedAction

@@ -12,6 +12,7 @@
 
 // Defines:
 
+// TODO review this with architects
 #define MBY_LPM_MAX_ACTIONS_NUM 4
 
 // Enums:
