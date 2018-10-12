@@ -24,8 +24,12 @@ class ingress_base_test extends uvm_test;
 
   `uvm_component_utils(ingress_base_test)
 
+  // Variable: env
+  // The egress environment class
   ingress_env env;
 
+  // Function: new
+  // Constructor
   function new (string name="ingress_base_test", uvm_component parent=null);
     super.new (name, parent);
     $timeformat(-9, 0, "ns", 10);
