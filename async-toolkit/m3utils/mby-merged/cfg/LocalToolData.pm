@@ -323,7 +323,7 @@ $ToolConfig_tools{"NaturalDocs"} = {
 $ToolConfig_tools{"sbt"} = {
     VERSION => "1.1.2",
     PATH => "/usr/intel/pkgs/sbt/&get_tool_version()",
-    EXEC => "&get_tool_path()/bin/sbt -Dhttp.proxyHost=proxy-chain.intel.com -Dhttp.proxyPort=911 -Dhttps.proxyHost=proxy-chain.intel.com -Dhttps.proxyPort=911 -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
+    EXEC => "&get_tool_path()/bin/sbt  -J-Xmx2G  -Dhttp.proxyHost=proxy-chain.intel.com -Dhttp.proxyPort=911 -Dhttps.proxyHost=proxy-chain.intel.com -Dhttps.proxyPort=911 -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
     ENV_APPEND => {
       PATH => "&get_tool_path()/bin",
     },

@@ -112,6 +112,7 @@ print "MGM debug : @mbyMgmLibs\n";
             gen_mby_wm => {
                     -generated => 1,
                     -gen_config => "mby::gen_mby_wm",
+                    -dependent_libs => [ 'gen_mby_wm_m3' ], # make dependent on M3, because M3 makefile will be called by this generator
                     -tools => ["-vcs_createlib"],
             },
             gen_mby_wm_m3 => {
