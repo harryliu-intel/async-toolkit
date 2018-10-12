@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{Packet, PacketHeader}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
 
 // from parser to multiple stages; parser output
 
@@ -13,6 +13,6 @@ object HeaderExtraction {
 
 class HeaderExtraction extends PipelineStage[Packet, PacketHeader] {
 
-  def process: Packet => PacketHeader = p =>  new PacketHeader(p.bytes.slice(0, HeaderExtraction.PacketHeaderOffset))
+  def process: Packet => PacketHeader = packet =>  new PacketHeader(packet.bytes.slice(0, HeaderExtraction.PacketHeaderOffset))
 
 }

@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mby_common.h>
-#include <mby_pipeline.h>
-#include <mby_crc32.h>
-#include <mby_init.h>
-#include "mby_parser_test.h"
 
 #ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
 #endif
+
+#include <mby_pipeline.h>
+#include <mby_crc32.h>
+#include <mby_init.h>
+#include <mby_reg_ctrl.h>
+#include "mby_parser_test.h"
 
 void initRegs
 (
@@ -22,26 +23,16 @@ void initRegs
 {
     // Initialize model registers
 #ifndef USE_NEW_CSRS
-    mbyResetModel(0);
+    mbyModelLoadDefaults(regs);
 #endif
     mby_init_common_regs
     (
 #ifdef USE_NEW_CSRS
         rx_top_map
+#else
+        regs
 #endif
     );
-
-
-#ifndef USE_NEW_CSRS
-    fm_uint64 val;
-
-    // Copy parser registers to present regs array
-    for(int regIndex = MBY_PARSER_BASE/4; regIndex < MBY_PARSER_BASE/4 + MBY_PARSER_SIZE/4; regIndex+=2) {
-        mbyReadReg(0, regIndex*4, &val);
-        regs[regIndex] = (unsigned int)(val & 0xffffffff);
-        regs[regIndex+1] = (unsigned int)(val >> 32) ;
-    }
-#endif
 }
 
 void initOutput
@@ -53,16 +44,16 @@ void initOutput
     out->PA_ADJ_SEG_LEN = 0;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
-        out->PA_KEYS      [i] = 0;  
-        out->PA_KEYS_VALID[i] = FALSE;  
+        out->PA_KEYS      [i] = 0;
+        out->PA_KEYS_VALID[i] = FALSE;
     }
 
     for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
-        out->PA_FLAGS[i] = 0; 
+        out->PA_FLAGS[i] = 0;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
-        out->PA_PTRS      [i] = 0; 
-        out->PA_PTRS_VALID[i] = FALSE; 
+        out->PA_PTRS      [i] = 0;
+        out->PA_PTRS_VALID[i] = FALSE;
     }
 
     out->PA_CSUM_OK         = 0;
@@ -88,7 +79,7 @@ void prepareData
     // Prepare input:
     fm_uint32 rx_port   = test_struct.in.RX_PORT;
     fm_uint32 rx_length = test_struct.in.RX_LENGTH;
-    
+
     // Scan in RX_DATA from string:
     const char *  pkt_str_ptr = (char *) test_struct.in.RX_DATA;
     const fm_uint pkt_str_len = (fm_uint) strlen(pkt_str_ptr);
@@ -196,13 +187,13 @@ fm_status runTest
 int main()
 {
     // Allocate storage for registers on the heap:
-    fm_uint32 *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32)); 
+    fm_uint32 *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
     if (regs == NULL) {
         printf("Could not allocate heap memory for register buffer -- exiting!\n");
         exit(-1);
     }
 
-    fm_byte *rx_packet = malloc(MBY_MAX_PACKET_SIZE * sizeof(fm_byte)); 
+    fm_byte *rx_packet = malloc(MBY_MAX_PACKET_SIZE * sizeof(fm_byte));
     if (rx_packet == NULL) {
         printf("Could not allocate heap memory for rx packet buffer -- exiting!\n");
         exit(-1);
@@ -232,7 +223,7 @@ int main()
     printf("--------------------------------------------------------------------------------\n");
 
     fm_uint pass_num = 0;
-    
+
     for (fm_uint test_num = 0; test_num < tests_num; test_num++)
     {
         struct TestData    test_struct = test_data[test_num];
@@ -243,7 +234,7 @@ int main()
         mbyParserToMapper par2map_ref; // reference output
 
         prepareData(test_struct, test_num, rx_packet, &mac2par, &par2map, &par2map_ref);
- 
+
         fm_status test_status = runTest
         (
 #ifdef USE_NEW_CSRS
@@ -264,7 +255,7 @@ int main()
 
     if (tests_passed)
         printf(COLOR_GREEN "[pass]");
-    else 
+    else
         printf(COLOR_RED   "[FAIL]");
 
     printf("  %3d/%3d - Parser tests\n" COLOR_RESET, pass_num, TEST_PASS_MAX);
@@ -274,7 +265,7 @@ int main()
     // Free up buffer memory:
     free(regs);
     free(rx_packet);
-    
+
     int rv = (tests_passed) ? 0 : -1;
 
     return rv;

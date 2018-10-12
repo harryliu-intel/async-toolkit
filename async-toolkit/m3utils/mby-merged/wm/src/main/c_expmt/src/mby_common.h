@@ -18,7 +18,7 @@
 
 // Defines:
 
-#define MBY_PORTS_COUNT          24 // <-- REVISIT!!!
+#define MBY_PORTS_COUNT          16 // <-- REVISIT!!!
 #define MBY_FABRIC_LOG_PORTS     MBY_PORTS_COUNT
 
 #define MBY_REGISTER_ARRAY_SIZE  0x1800000
@@ -31,13 +31,19 @@
 #define MBY_N_PARSER_FLGS        48
 #define MBY_N_PARSER_PTRS         8
 
-#define MBY_FFU_KEY8             64
+// TODO consider replace FFU acronym since it's never used in MBY specs
+#define MBY_FFU_KEY8             32
 #define MBY_FFU_KEY16            32
 #define MBY_FFU_KEY32            16
+
+#define MBY_FFU_KEY16_BASE       0
+#define MBY_FFU_KEY8_BASE        ( MBY_FFU_KEY16_BASE + MBY_FFU_KEY16 )
+#define MBY_FFU_KEY32_BASE       ( MBY_FFU_KEY8_BASE  + MBY_FFU_KEY8 )
+
 #define MBY_FFU_KEYS             ( MBY_FFU_KEY8 + MBY_FFU_KEY16   + MBY_FFU_KEY32   )
 #define MBY_FFU_HASH_KEYS        ( MBY_FFU_KEY8 + MBY_FFU_KEY16*2 + MBY_FFU_KEY32*4 )
 #define MBY_FFU_ACT24            16
-#define MBY_FFU_ACT4             23
+#define MBY_FFU_ACT4             26
 #define MBY_FFU_ACT1             24
 #define MBY_FFU_REMAP_ACTIONS     8
 #define MBY_FFU_POL_ACTIONS       4  // MBY_FFU_ACTION_POLICER[0..3]
@@ -96,6 +102,13 @@ typedef enum mbyParserInfoIndexEnum
     MBY_PA_INFO_INR_L4   = 7
 
 } mbyParserInfoIndex;
+
+typedef enum mbyClassifierGroupEnum
+{
+    MBY_CLA_GROUP_A = 0,
+    MBY_CLA_GROUP_B = 1
+
+} mbyClassifierGroup;
 
 typedef enum mbyMirrorTypeEnum
 {
@@ -207,18 +220,18 @@ typedef struct mbyClassifierKeysStruct
 
 } mbyClassifierKeys;
 
-typedef struct mbyPrecValStruct
+typedef struct mbyActionPrecValStruct
 {
-    fm_byte                 prec; // 3b field
+    fm_byte                 prec : 3; // 3b field
     fm_uint32               val;  // act24.val is 24b, act4.val is 4b, act1.val is 1b
 
-} mbyPrecVal;
+} mbyActionPrecVal;
 
 typedef struct mbyClassifierActionsStruct
 {
-    mbyPrecVal              act24[MBY_FFU_ACT24];
-    mbyPrecVal              act4 [MBY_FFU_ACT4 ];
-    mbyPrecVal              act1 [MBY_FFU_ACT1 ];
+    mbyActionPrecVal        act24[MBY_FFU_ACT24];
+    mbyActionPrecVal        act4 [MBY_FFU_ACT4 ];
+    mbyActionPrecVal        act1 [MBY_FFU_ACT1 ];
 
 } mbyClassifierActions;
 
