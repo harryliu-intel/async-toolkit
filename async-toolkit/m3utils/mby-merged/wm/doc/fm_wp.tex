@@ -80,8 +80,10 @@
 \end{abstract}
 
 \tableofcontents
-\listoffigures
-\listoftables
+%\listoffigures
+%\listoftables
+
+\newpage
 
 \section{Introduction}
 
@@ -116,7 +118,29 @@ case of B; design methodologies to manage complexity remain a pressing
 issue even today.
 
 
-\section{Context, Motivation, and Goals}
+\section{Structure and Approach}
+
+We take meeting Gordon Moore's 1979 challenge as the goal of our work.
+
+In this document, we will first, in section~\ref{sec:context} explore
+the context of Moore's idea and how it has been addressed by different
+groups.  We will then explore the historical perspective, mostly from
+a software point of view, in section~\ref{sec:historical}.  After
+that, we will state our central thesis in section~\ref{sec:our-view},
+where we will attempt to succinctly identify the path we advocate.  In
+following sections, we explore some of the shortcomings of alternative
+views, some of the history of how we came to our view
+(section~\ref{sec:our-history}), and some of the topics relating to
+our current practices, our current customers, and some of the major
+challenges we are currently dealing with
+(section~\ref{sec:challenges}).  We will finish with a number of
+sections, starting with section~\ref{sec:general-principles} and to
+the end of the document, giving prescriptions and other consequences
+of our view of the task at hand.  Among the closing appendices is an
+extensive bibliography.
+
+
+\section{Context, Motivation, and Goals}\label{sec:context}
 
 In our team, we feel that Gordon Moore's 1979 challenge to the digital
 VLSI industry has only been imperfectly addressed, especially at large
@@ -177,15 +201,8 @@ in theory can be used as described, it is in practice very difficult
 to do so, for a large number of reasons, which we will examine in more
 detail on its own, in section~\ref{sec:sv_shortcomings}.  
 
-\section{Structure and Approach}
 
-We start with a historical overview of the general concept of design
-complexity in digital systems (software and hardware).  Several
-strands of development from software engineering in response to the
-so-called software crisis will be shown to be relevant to hardware
-design.  
-
-\section{Historical Perspective}
+\section{Historical Perspective}\label{sec:historical}
 
 Concerns regarding design complexity in engineered systems are not
 unique to the hardware business.  Similar concerns have arisen as
@@ -262,7 +279,7 @@ conclude that the best way we know to tackle design complexity in hardware
 design (at least without inventing completely new technologies) is to apply,
 judiciously, techniques from the software world to the hardware design process.
 
-\subsection{The response of software engineering to the software crisis}
+\subsection{The response of software engineering to the software crisis}\label{sec:sw-crisis-responses}
 
 Software leaders in the late 1960s and early 1970s responded to the software
 crisis in several ways.  The most obvious was a strong emphasis on structured
@@ -275,9 +292,9 @@ development of software
 
 \item Modular programming (Wirth's Modula)\cite{pascal,modula}
 
-\item Structured concurrent programming (Hoare's monitors\cite{monitors}, as applied in Hansen's Concurrent Pascal\cite{concurrent-pascal})
+\item Structured concurrent programming (Hoare's monitors\cite{monitors}, as applied in Brinch Hansen's Concurrent Pascal\cite{concurrent-pascal})
 
-\item Communicating Sequential Processes\cite{ref:csp}
+\item Communicating Sequential Processes (CSP)\cite{ref:csp}
 \end{itemize}
 
 At the same time that these techniques were being developed, a strong effort to
@@ -401,12 +418,17 @@ the number of states available to even a fairly small digital circuit.  Therefor
 the argument that hardware design is somehow different from software design
 because of the finiteness of (a specific piece of) hardware, as opposed to the unboundedness (of a piece of portable-to-future-systems software) is futile.
 
-\subsection{Summary}
+\subsection{Summary}\label{sec:invariant-summary}
 
 In summary, then, the issue with proving the correctness of the given program is not
 mainly with the proof algorithm but rather that the programmer has neglected to state
 the theorem he used when he developed the program.
 For a discussion on why programmers are negligent in their program description, see appendix~\ref{apdx:annotations}.
+
+The solution to the halting problem is to use the loop invariant and
+variant function\cite{semantics-pred-calc}.  But these cannot in general be derived from the
+program text: they must be stated by the programmer as
+``predocumentation.''
 
 The fact remains that more than eighty years of work in theoretical
 computer science shows that methods that attempt to find bugs in
@@ -420,6 +442,37 @@ Therefore, the cardinal rule is: {\em instead of expending inordinate
   effort on removing bugs from a designed system, expend that effort on
   developing the design in such a way that there are fewer bugs in it in
   the first place.}\cite{ewd209}
+
+\section{Our View of Functional Modeling}\label{sec:our-view}
+
+We now get to the central thesis of our work.
+
+Our view is to adopt functional modeling, i.e., the development of an executable
+model of our hardware architecture, as a central description of the architecture.
+The goal is to use a functional-modeling approach as a means of expressing
+architectural intent and to have this model be written in a way that it is
+immediately useful to a large number of consumers within (and possibly outside)
+the company.  In an ideal world, the functional model would capture every
+structural relationship present in the design.
+
+As a central unifying formal description of the design, the idea is that the
+functional model can repeat a large amount of duplicated work, as it is common
+in the hardware-design world to generate a large number of independent models for
+a single hardware design.  Our idea is to represent all these models in a format
+that is manipulable enough to serve the needs formerly served by each of the many
+models used.
+
+Since no commercial or even research-grade tools are able to represent all the views
+necessary for a large product design in a commercial environment (some, such as CAST,
+come close), it follows that an amount of software development has to be performed
+by our team.  It would defeat the purpose to farm this work out on other teams,
+except in small, well-defined chunks: part of our goal is to put the needs of
+architects and engineering teams in a position where they can drive not only
+the hardware-design effort but also the design of the entire development process.
+
+Some of the concepts mentioned here (e.g., ``design'', ``consumers'') are somewhat
+vague and will be elucidated in later sections.
+
 
 
 \section{Shortcomings of SystemVerilog as a Functional Modeling Environment}\label{sec:sv_shortcomings}
@@ -463,14 +516,563 @@ We are not the first to point out shortcomings in contemporary common
 practice\cite{must-change}.
 
 \section{A Brief History of Functional Modeling Frameworks in the Intel Switching Team}
+\label{sec:our-history}
+
+\subsection{Early history: Caltech research group}\label{sec:caltech}
+
+The history of functional modeling as used by our team can be traced
+back to the work in asynchronous circuit design by A.~J.~Martin at
+Caltech, starting in the 1980s, and others.  These practitioners
+followed the developments in software engineering in the 1960s and
+1970s described in section~\ref{sec:sw-crisis-responses} and applied
+those software techniques to hardware design, i.e., ``programming in
+silicon.''  Martin in particular realized that the techniques for
+concurrency pioneered by Dijkstra, Hoare, and Brinch Hansen could be
+taken to a logical extreme, where the ultimate view is of the
+communicating processes being very small circuits, possibly as small
+as a single transistor.  This viewpoint leads naturally to
+speed-independent~\cite{de_muller} or, more accurately, quasi
+delay-insensitive circuit design~\cite{qdi}.
+
+The view of hardware as concurrent programming in silicon has
+far-reaching implications.  While many critics of the approach have
+fixated on the challenges in commercializing {\em asynchronous
+  circuits,} we believe that the implications of the viewpoint in
+terms of high-level system design are at least as great, with much
+less controversy regarding tools, implementability, etc.  However,
+the difference in viewpoint is immense.
+
+The concurrent-programming view of asynchronous silicon development
+involves a number of concepts (beyond clockless operation) that are relatively foreign to
+practitioners of mainstream design methodology:
+\begin{itemize}
+
+\item Top-down design by decomposition and successive refinement.
+
+\item Correctness by construction (through invariant-based reasoning
+  applied to the {\em decomposition steps,} i.e., by an argument
+  ``lifted'' from the level of the design to the level of the design
+  methodology itself).
+
+\item (Corollary of the above) traceable sequence of more-and-more decomposed designs from a specification to a final implementation.
+
+\item Universal use of handshake protocols at every level of the design.
+
+\item Latency-insensitive design style.
+
+\end{itemize}
+
+Of course, not every item in this list has been perfectly achieved in
+every design.  In particular, the decomposition techniques used have
+generally been more ambitious (or haphazard?) than for them to be
+amenable to formal proof techniques.  It is not clear that there exist
+formalisms able to fully handle the very sophisticated reasoning required to prove
+the correctness of the decomposition techniques.  Nevertheless, the
+ambitions are clear and undoubtedly quite different from what most
+hardware designers are familiar with.  (Although some of these techniques
+have started to become used in ``normal'' synchronous design, in particular,
+latency-insensitive design.)
+
+One of the great challenges in adopting a decomposition-driven
+methodology within standard EDA tools is that SystemVerilog has no
+support for this approach (see section~\ref{sec:sv_shortcomings}).
+However, design by refinement is not unusual in industry (although it
+is almost never done to the extent implied here).  The current industrial
+solution is to have about two models, one in SystemVerilog RTL and the
+other in a SystemVerilog validation framework such as UVM.  These two
+models are stitched together using an elaborate object-oriented
+framework and then the models can be run and compared.  This procedure
+is extremely labor-intensive and costly and accounts for a large fraction
+of the development costs of a new design.  In comparison, it is possible
+to deploy the multi-level Martin method in a way that accomplishes more
+thorough verification with vastly less human labor.
+
+
+
+\subsection{Fulcrum years}\label{sec:fulcrum-cast}
+
+During the years that our group was part of Fulcrum Microsystems, the
+design approach followed the Martin approach, with the {\em CAST\/}\cite{rajit_cast}
+language used to describe hierarchy, decomposition, and refinement.
+Custom tools were used to perform cosimulation between arbitary
+(refinement) levels of description and of almost arbitrary subsystems.
+
+It is important to realize that in this view, the higher-level model
+of the hardware was not really an independent model but the specification
+itself, where the specification was expressed in an executable form
+(namely, in a CSP-derived language, variously called CHP (Caltech) or CSP (Fulcrum)).
+
+\subsection{Alta/Red Rock Canyon/Highland Park}\label{sec:alta-rrc-hlp}
+
+Starting with the Alta (Canyon) (FM6000) program\cite{hotalta}, customer demand led
+to the creation of a C ``white model'' of the design.  This was
+continued into Red Rock Canyon (RRC) (FM10000).  Starting with RRC,
+design validation, in the normal industrial sense, could use the white
+model to do cosimulation and OVM scoreboarding.  While certainly a
+great advance over not having the white model available, it is clear
+from the above discussion that many ways this was a big step back for
+the methodology: the validation could only occur at a few carefully
+(and manually) chosen cut points, and only against a single other
+model (the white model) rather than the full sequence of
+transformations available in Alta and earlier programs.
+
+Highland Park (HLP) continued the approach used in RRC but with more
+systematic test plans and in general better (earlier) execution.
+Another important point to consider is that HLP's software drivers
+were (are being) developed using the same interfaces used within the
+white model for CSR access.  Also, HLP was modeled in Simics (see
+section~\ref{sec:simics}), where the Simics model was written from
+scratch in Simics DML, but using the HLP white model as a guide.
+
+In programs up to and including HLP, the representation of the CSRs was as
+a flat chunk of memory coupled with a descriptive set of memory macros,
+allowing registers and register fields to be read out of the flat memory.
+
+\subsection{Mount Steller/Mount Evans}
+
+For management reasons, the Mount Steller (MST) team decided to modify
+their approach to CSRs in order that it could more closely match
+Simics DML directly.  Since CSRs are required also to be accessed by address
+(by e.g., a remote host), the translation of data in this model had to
+proceed ``backwards'' from HLP practice: operations on flat memory had
+to be converted to operations on DML data structures.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Current Practice of Functional Modeling in the Intel Switching Team}
 
-\section{Consumers of Functional Modeling of the Intel Switching Team}
+The current design of the functional model synthesizes work from
+Highland Park and Mount Steller.  It is written in a combination of
+programming languages, and there is an effort to study functional modeling
+in Scala.  (See section~\ref{sec:challenges}.)
 
-\section{General Principles of Design}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{What Does ``Good Code'' Look Like?}
+\section{Consumers of Functional Modeling of the Intel Switching Team}\label{sec:consumers}
+
+Before embarking on the functional modeling effort for the current
+program, we investigated the uses of functional modeling in previous
+programs (in particular Highland Park) and set out some goals for improvement.
+
+\subsection{Design validation}
+
+In our current view, as described in section~\ref{sec:alta-rrc-hlp},
+functional modeling is a key part of digital design validation.  For
+this to be effective, bit accurate modeling of a usefully large subset
+of the chip's behaviors must be accomplished.  We have followed prior programs
+in not attempting to model congestion and queuing, because doing so and maintaining
+bit accuracy would necessitate a cycle-accurate model of the design, which stands
+in contradition to the latency-insensitive design style we are advocating.
+
+In general, design validation frameworks such as OVM and UVM have great difficulty
+with nondeterminism.  This is a serious shortcoming of these frameworks, because
+nondeterminism is an extremely useful tool in formal specifications.\cite{discipline}
+
+In any case, design validation teams can use the functional model in several ways,
+to approach the CAST-based design style of times past.
+
+\subsubsection{Full system}
+
+The ``full system'' simulation model of a chip design (or large
+subsystem) is a simulation of the entire chip (or large subsystem), where the ``full''
+system usually involves a design at a level where it would be directly interacted
+with from system software.  This is the most basic form of modeling that the functional
+modeling framework can achieve.
+
+\subsubsection{Partial system}\label{sec:partial-system-validation}
+
+The functional modeling framework can also be used to model smaller
+subsystems, e.g., at the level of the independently designed RTL
+blocks of the design.  These subsystems have to be developed in a way
+that the RTL interfaces at that level match the more abstract
+interfaces in the functional model.  Because of the different tools
+and programming languages involved, and the need for automating the tasks
+of setting up the details of these simulations, generating the necessary
+glue code for these types of simulations is a challenging software engineering
+task, which is still in progress as of this writing.
+
+
+\subsection{``Shift-left'' software strategy}\label{sec:shift-left}
+
+``Shift left'' is what we call the technique E.~W.~Dijkstra described having
+practiced around 1955\cite{ewd1308}: ``the practice of programming for
+nonexistent machines.''  However, the quality of today's
+specifications is not as high as they were in those days, and accordingly,
+we do not expect our software teams to program against a written,
+nonexecutable specification.  Instead, we use the functional model as
+an executable specification against which the system programmers may
+develop their system software (long before the hardware has been
+manufactured, or for that matter, even long before it has been
+designed).
+
+From the preceding paragraph it is clear that the quality of the functional
+model must be very high if this approach is to work---it must be at least as
+high as the quality of a well-written programmer's reference manual.  
+
+\subsection{Architectural exploration}
+
+Architectural exploration is an obvious use of functional modeling resources.  As
+functional modeling is closely tied to architecture in the first place, and the amount
+of work required to adjust the functional model is very small, there is great potential
+for collaborative development of new hardware and software features in this area.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Documentation}
+
+The functional model can be used for documentation in two ways: either
+documentation can be embedded in it, either explicitly or implicitly in the
+structure of the model.  The functional model can also be used itself as documentation.
+
+\subsubsection{Using FM to generate documentation (``Literate programming'')}
+
+{\em Literate programming\/} is the name given to a type of program
+development pioneeered by D.~E.~Knuth in 1984 that allows a program to be
+seen either as an executable program or as a publishable
+document~\cite{literate-programming}.  Literate programming normally implies
+the ability to rearrange code fragments almost arbitrarily in the published
+form of the program, but language-specific
+software-documentation systems such as javadoc can be seen as a weaker
+version of this concept (usually without the ability to rearrange code fragments
+in arbitrary orders).
+
+The literate programming concept is straightforward to incorporate in
+functional modeling: either documentation can be made an output of the
+functional model (this is done as a matter of course to some extent),
+or the language-agnostic literate-programming tools developed by Knuth
+and others can be applied to the functional model.
+
+All the approaches of literate programming (including systems such as javadoc) involve using program comments as
+documentation and generating markup or typesetter controls from the program comments,
+which are written in specific formats.
+
+\subsubsection{Using FM as documentation}\label{sec:fm-spec}
+
+A more interesting approach to documentation, which derives from the
+Martin synthesis method, is to see the functional model itself as a
+form of documentation.  There is an important distinction here against
+the classic view of literate programming: in literate programming,
+documentation is comments in code.  In the Martin view (which we share
+to a large extent) the functional model's executable text is itself
+the documentation.  One may view this as an instance of the somewhat
+loosely defined concept ``self-documenting code'' (which sometimes
+really just means that the programmer couldn't be bothered to write
+down the necessary comments for understanding).  But at the same time,
+we need to remember that the functional model does not exist in a vacuum.
+In the Martin method, a block of code can be the implementation of a higher-level
+specification and the specification for a lower-level implementation.  In that sense,
+when reading the lower-level implementation, the middle-level code can fruitfully
+be approached both as specification and documentation for the lower-level code.
+
+There are important caveats here regarding program invariants (see
+section~\ref{sec:invariant-summary}) and ``predocumentation'' (see
+appendix~\ref{apdx:annotations}).  The point here being that one
+cannot entirely escape the need for auxiliary information, such as
+program invariants, by using the successive-refinement method of program
+development.  In fact, consider the case of introducing a loop to make
+concrete some (more abstract) atomic notion.  In order to be able to show
+that the introduced loop in fact implements the atomic higher-level notion,
+the loop invariant of the new lower-level loop is necessarily required and
+must be stated, ideally in a machine-processable form, or otherwise as
+a human-readable program comment.
+
+In our work, this idea of ``functional model as specification'' is central to our work,
+because we have found that text documents written in English are neither
+easy to use (owing to their size) nor are they specific enough about technical
+details (because there are no automated checks to guard against vagueness,
+ambiguity, or inconsistency of English documentation).  The alternative we
+are following is to use a rudimentary English description of the system at
+a high level and fill in the details of the architecture with the functional model.
+This in some sense reverses the roles of modeler and hardware architect: the modeler
+takes on the role of the hardware architect, whereas the hardware architect is left
+to document the model.  Our goal is that the formal, functional model will be
+the ``golden'' architectural model.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Architectural model vs. microarchitectural model}
+
+A challenge for functional modeling is to decide the subblocks of the
+model.  Design validation pressures are that the functional model
+match the hardware microarchitecture to the extent possible, so that
+validation of subblocks can proceed using the functional model.  (See
+section~\ref{sec:partial-system-validation}.)
+
+The introduction of microarchitectural requirements into the functional
+model sets up challenges for the functional modeling team.  The purpose
+of the functional model is to serve as a specification for the design, therefore
+it cannot be counted on to be elaborated at the microarchitectural level (since
+it by definition precedes the microarchitecture).
+
+The solution to the problem here is to allow multiple implementations
+to exist in the functional model.  The Fulcrum CAST tools already
+permitted this (see section~\ref{sec:fulcrum-cast}).  In this case it
+is unobjectionable for there to exist a high-level architectural model
+together with more elaborate microarchitectural models.  It is
+important to realize that what is advocated here is not a morphing of
+a single architectural model into a microarchitectural model; rather
+what we wish to do is maintain a clear sequence of models that proceed
+from initial specification to final implementation.  A number of
+challenges exist here, not the least of which is that the initial
+specifications are likely to be highly nondeterministic.  The
+challenges have mostly been met within the CAST framework, so there is an
+existing prototype.
+
+If CAST cannot be used, for whatever reason, the progression of models
+can be captured using object-oriented programming.  The sequence of
+refinements would in this case be captured as a sequence of object
+types (a.k.a.\ ``classes'').  Desire for formal verification suggests
+the use of the easy-to-handle formats described in
+section~\ref{sec:input} for the program text.
+
+
+\subsection{High-level synthesis specification}
+
+One potential area of use for the formal functional model is to use it as a specification
+for high-level synthesis (HLS) directly to gates.  One challenge with this approach is that
+it would put very high demands on the quality of the functional model, because it makes
+regular ``design validation'' impossible, since there would no longer be two
+independently developed models that can be checked against each other.  However, this
+is not an insurmountable obstacle, and in fact, the fact that traditional techniques
+have multiple models for the same object is precisely the problem we were trying to
+solve in the first place.  Instead of validating the designs by comparing them
+against each other (which we know is difficult and frequently impossible to do
+well) we will need to develop languages and methods for describing the architectural
+intent and validating that that intent is captured in the design.  In the long run,
+this is likely to be a more fruitful way of developing our designs in any case.
+
+In the short term, the desire to support HLS is a challenge because HLS implies
+a need for describing detailed functional behavior.  Our preference is always not
+to tie ourselves to specific proprietary tools and methods, so to do this in a way that
+is adaptable to different HLS approaches will likely require some careful engineering.  See section~\ref{sec:programming-languages}.
+
+\subsection{Security modeling}
+
+\subsection{High-level formal validation}
+
+\subsection{Simics}\label{sec:simics}
+
+What's special about this?
+
+\subsection{Emulation}
+
+\subsection{FM team itself}
+
+\subsection{Internal vs. external customers of FM}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Some Major Challenges to Functional Modeling}\label{sec:challenges}
+
+The general goal of our functional modeling effort is to collect
+design collateral (for both software and hardware designs) in formats that
+make design automation (again, both software and hardware) easy or at least
+possible.  This suggests using sophisticated software-engineering environments.
+
+For many years (since at least the 1980s) it has been obvious that the
+software-engineering tools that are the most popular are not the most
+convenient to use when designing new systems.  Unfortunately (and
+somewhat unexpectedly) the explosion of open-source software in the
+decades since does not appear to have improved the situation.  We
+still live in a world where low-level errors such as memory
+corruption, deadlocks, lack of reasonable support for concurrency,
+lack of expressive type systems, lack of name space isolation, and
+many other similar problems, are still the norm, both in commercial
+software development and in open-source projects.  This is even though
+software systems have existed since at least the early 1970s that have
+demonstrated how to avoid these issues.  Pascal\cite{pascal},
+Modula\cite{modula}, Concurrent Pascal\cite{hansen-book},
+Modula-3\cite{spwm3}, and Java\cite{java} are all by now decades old
+and have demonstrated how to avoid many of the software-engineering
+deficiencies of C and C++, yet nothing of the sort is widely used
+today in our field.  In fact, even the use of C for modeling hardware
+is in some quarters still considered quite cutting-edge, as there remain
+groups that simply do not produce software-based models of their designs
+and instead proceed directly to synthesizable RTL from English-language
+specification documents.
+
+The application of strict coding standards can somewhat alleviate the
+problems of using antiquated software-development environments, but
+the application of such coding standards requires careful code review
+and strict management practices, which are also costly measures.
+
+\subsection{Choice of programming tools (including programming languages)}\label{sec:programming-languages}
+
+Our general direction is to work towards using the best technologies
+for the task at hand.  A large part of the functional modeling team is
+working towards demonstrating effective functional modeling in the
+Scala programming language\cite{scala,functional-scala}.  This effort
+is still somewhat experimental: from prior programs the hardware
+modeling was performed in the C programming language, which suffers
+from all the shortcomings mentioned above.  The main line model
+currently is written mostly in C but with infrastructure in
+Modula-3\cite{spwm3} and Scheme\cite{scheme,r4rs}.  The mixture of
+programming languages causes some headaches (see
+section~\ref{sec:agnostic}) but is mostly unavoidable and in any case
+we believe its benefits far outweigh its drawbacks.
+
+
+\subsection{Language agnostic approaches}\label{sec:agnostic}
+
+We advocate language-agnostic approaches.  There are several reasons
+for this.  Certain interfaces need to be exported in specific
+programming languages (usually C or Verilog) to be useful to some of the
+consumers identified in section~\ref{sec:consumers}.  Another reason is that
+it is difficult and expensive to rewrite everything in a functional model
+from the ground up; in other words, components already exist or are easily
+generated in specific programming languages.  Even when new code is written,
+staffing constraints may demand that certain technologies be used and avoided.
+
+Our solution to this is to expend significant effort on inter-language
+translation software.  Such software already exists in the forms of
+SWIG\cite{swig}, Google's Protocol Buffers\cite{protobuf}, Apache
+Thrift\cite{thrift}, and others.  However, none of these systems are
+hardware centric, in the sense of supporting data types with the level
+of specificity necessary or available to hardware designers (i.e.,
+bit-accurate representations).  Also, perhaps more importantly, the
+information that the programmer has to specify in order to enable
+inter-language linkage contains enough information to be useful for
+many other things (such as tagging for debugging, logging, and
+serialization for other purposes than linkage); the existing
+frameworks have generally not been designed in such a way that their
+input descriptions can easily be reused for arbitrary purposes.  A
+further, and very important, reason for using the multi-language
+approach is that it enables our modeling system to transition slowly
+from one technology to another: we do not need to throw everything
+away and start from scratch, which in a commercial environment can be
+very difficult to do.  The multi-language approach therefore lowers
+the overall risks associated with adopting new technology (since they
+can be adopted piecemeal and rejected without restarting the entire
+program).
+
+A final, and perhaps obvious, advantage of the language-agnostic
+approach is that a great many programming languages have been created
+over the years, and many of them are suited for different things.  The
+language-agnostic approach, for example, allows strongly-typed
+languages such as Modula-3 to be used where there is a high cost to
+making type errors at the same time as easy-to-parse languages such as
+Scheme can be used in contexts where that is a more important goal
+(see section~\ref{sec:general-principles}).
+
+
+\section{General Principles of Design}\label{sec:general-principles}
+
+The major idea behind the work of the functional modeling team is to
+capture design information in a way that makes that information conveniently
+available for further processing by machine (i.e., amenable to automation).
+
+\subsection{Input formats}\label{sec:input}
+
+This means that data formats used must be:
+\begin{itemize}
+
+\item open (not proprietary)
+
+\item possible to parse with tools we are able to produce ourselves
+
+\item fit for purpose (i.e., fit for describing hardware structures and networking protocols and the other objects of our designs)
+
+\item effective (see section~\ref{sec:goodcode})
+  
+\end{itemize}
+
+Formats that {\em syntactically\/} meet the above requirements include
+JSON\cite{json} and Lisp\cite{mccarthy} S-expressions (e.g., Scheme code).
+Of course, what {\em semantically\/} is stated in the format is more related
+to our design problems and tools.
+
+S-expressions are particularly effective because they allow us {\em embed\/} a
+domain-specific language (of our design) in an existing and well-defined programming
+language (i.e., Scheme).  See section~4.2 of Abelson and Sussman\cite{sicp} for more information about embedded languages.
+
+Formats that do {\em not\/} meet the above requirements include
+Microsoft Word, SystemVerilog, and other proprietary formats but even
+open formats such as C source code that are difficult to parse
+(extract information from).
+
+\subsection{Human time is the scarce resource}
+
+The scarcest resource of all in engineering is human time.  The goal
+of the design process must therefore be to capture this human input in
+a succinct format.  An example we run across frequently is when deciding
+what code to ``check in'' (i.e., to store in our revision-control systems).
+The basic idea is that only human-generated inputs are saved.  The rest of
+the design collaterals (and there may be dozens of automated steps
+between a human input and the ultimate output) are re-generated as a
+matter of course.  Caching of intermediate results is not in itself
+objectionable but these intermediate results should {\em never\/} be accorded
+the status of ``source code''.  Strict adherence to this rule leads to
+an efficient engineering environment; sloppiness can easily lead to many
+megabytes of text being accorded the status of ``source code,'' at which
+point human engineers are overwhelmed and productivity falls near zero if
+that code ever needs to be modified in any way.
+
+\subsection{Tool performance matters}
+
+It is a direct corollary of the previous sections that the runtime of design
+tools cannot be allowed to grow without bound.  If tools run quickly, the
+temptation to treat intermediate data as source code is much less enticing than
+if it takes hours or days to generate some intermediate format.
+
+\subsection{``Elegance'' is not pointless}
+
+A well-designed system is much easier to work with than one that is haphazardly
+designed with many special cases and unexplainable legacy.  Therefore, we often
+allow ourselves the time to ``reinvent the wheel'' (when there is some problem
+with the original wheel).  The reason for this is that the time spent in redesigning
+a tool is usually repaid (with interest) even within a single program (not to mention
+if that cost can be amortized over several programs).  {\em It is almost always
+  easier and faster to do the job right than to look for a shortcut.}
+
+
+\section{Hardware/Software Co-Design and Co-Engineering}\label{sec:codesign}
+
+As the functional modeling effort straddles the hardware/software interface in
+several ways (it both involves making software models of hardware and modeling
+specifically that aspect of hardware that most closely communicates with software),
+it is natural for the functional modeling to contemplate moving the boundaries
+of what is designed.  Several questions are evident:
+\begin{itemize}
+
+\item Since the functional modeling effort involves system software
+  communicating with hardware modeled with software, it is easy to
+  model the movement of features from software implementation to
+  hardware implementation and vice versa.
+
+\item Perhaps more importantly, if the modeling effort involves system
+  software communicating with the modeled hardware, an important
+  question arises: what, precisely, is being modeled?  Is it the
+  hardware, or is it the hardware/software system, i.e., the product
+  seen by the ultimate customer?
+\end{itemize}
+
+A reasonable answer to the second question above is that the goal of the
+modeling team is not really to model the specific hardware behavior, but to
+model an entire system, together with system software.  This is because the
+customer is buying not hardware for its own sake but for the sake of the services
+provided by that hardware.  The customer is really unlikely to be overly concerned
+with how the engineering teams accomplish their mission, as long as it implements
+an agreed-upon interface with agreed-upon performance characteristics.
+
+The concept being advanced here is known as hardware/software
+codesign\cite{hw-sw}.  This is in fact always how systems are ultimately delivered
+to customers, but in the hardware industry it is still sometimes
+considered eccentric to choose the ultimate customer's software
+interface to the product as the important modeling target.  In fact,
+at Intel it is quite common that the software team for a new product
+is not even identified until well after the hardware design has been
+mostly finalized.  In our analysis, this is backwards---the software
+ought to come first, or be done very early, so that time is not
+expended on hardware features that no one will use.  Experienced
+readers will see that this design approach is the natural consequence
+of following a top-down design style through a system large enough to
+encompass both hardware and system software.  See for example
+Dijkstra's discussion in EWD1308\cite{ewd1308}.
+
+
+\section{What Does ``Good Code'' Look Like?}\label{sec:goodcode}
 
 An important question that engineers and their managers have to
 address every day is, ``what does good code look like?''  Some would
@@ -480,6 +1082,8 @@ fault is that implies the existence of a kind of programming
 guild---that programming can only learned through apprenticeship.
 This runs counter to our objective of articulating clear goals and
 directions.
+
+\subsection{Kolmogorov complexity}
 
 Certainly one aspect of ``good code'' comes from the concept of the
 Kolmogorov complexity\cite{cover+thomas} of the code.  Kolmogorov
@@ -502,7 +1106,9 @@ written by humans should have Kolmogorov complexity that is not too far from
 their length.  Replicated code and coordinated strings should be avoided,
 following the old maxim {\em never write the same code twice.}
 
-However, Kolmogorov complexity is not the whole story here.  Many
+\subsection{More traditional software engineering metrics}
+
+However, Kolmogorov complexity is not the whole story here---that would be too easy.  Many
 program-design methodologies involve a number of program fragments
 having closely coordinated structure, which implies low Kolmogorov
 complexity.  One example is objected-oriented programming, for example
@@ -517,7 +1123,7 @@ method than human validation (usually program testing).
 In other words, in falling order of desirability:
 \begin{itemize}
 
-\item A code fragment is written only once.  (Excellent)
+\item A code fragment is written only once.  {\em Excellent}
 
 \item A code fragment is written multiple times and the correspondence is checked at compile time.  {\em Good}
 
@@ -529,22 +1135,103 @@ In other words, in falling order of desirability:
 
 \end{itemize}
 
+\section{Indirection}
+
+From the observations on input formats in section~\ref{sec:input} and
+desirable qualities of source code in section~\ref{sec:goodcode} we
+have an outline of what human engineers should be producing as input
+to the design process.  It is not unusual that some tool or some step or steps
+of the design process requires input with properties quite different from
+what we recommend.  We can draw a very simple conclusion from this: in cases
+we must use such tools are go through such design steps, the input to those
+tools {\em must be automatically generated.}  In other words, to solve the
+problem that we require low-complexity input at some point in our process but
+we have made a rule that humans only are to produce high-complexity input, we add
+{\em indirection.}
+
+Motto: {\em Any problem in computer science can be solved with another level of indirection.} (Attributed to David Wheeler\cite{lampson}.)
+
+\section{Effects on Hardware Microarchitecture of Our Choices}
+
+As described in section~\ref{sec:caltech}, one of the properties of the
+design style we pursue here is latency-insensitivity (insensitivity to pipelining
+depth).  This may not always be desirable in systems with tight decision
+loops (e.g., CPUs and similar hardware).  It is an open question how much
+or how little our approach is applicable to such designs.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Organizational Observations}
+
+We now have to make a diversion into a topic that we have been avoiding, that is,
+organizational structure.  The functional modeling approach, in particular, the
+functional-model-as-specification (section~\ref{sec:fm-spec})
+
+\subsection{Interactions between hardware modelers and software team}
+
+In large companies, hardware and software teams are often insulated from
+each other.  Hardware development is driven ``open loop'' by hardware architects
+who work on the basis of many years of experience architecting hardware systems.
+The problem with this is that in case of truly new features or feedback from
+software developers, the feedback to the hardware designers is too little, too late.
+The situation is exacerbated by the engineering teams' use of completely different
+tools: different programming languages, different documentation standards, different
+revision-control systems, and different issue-tracking systems.  Hardware and
+software developers working on the same product generally work in completely
+different, siloed environments, where in the cases that they are working on the
+same code, the code is forked into two completely different versions and never
+again merged.  Sometimes the hardware and software designers do not even know of
+each others' existence.  Clearly, this type of environment is a great challenge
+for the kind of development cycle we are advocating here.
+
+Our recommendation is to management to integrate the hardware and
+software teams tighter on a technical level, or we feel that the
+chances of producing a coherent product to the customer are very low.
+Specific recommendations are for the teams to work on the same code
+base, to work in parallel (not sequentially), and to have software
+teams available to provide feedback on hardware design features early
+on in the design process.  In fact, following the description of Dijkstra's
+work in the 1950s\cite{ewd1308} and the general idea of top-down design, it makes sense
+to start software development {\em before\/} hardware development, not after, and it
+makes sense for software designers to be working closely with hardware architects
+on defining hardware features.
 
 
-\section{Guidelines for System Design}
+\subsection{Interactions between hardware modelers and hardware architects}
 
-\section{Hardware and Software Considerations}
+The view that the functional model is the architectural specification of the
+design that is presented in section~\ref{sec:shift-left} places new organizational
+demands on the development process.  Functional modeling programmers are generally
+not extremely experienced in silicon architecture, and silicon architects are
+often not highly skilled software engineers.  In other words, for us to have a hope
+that the functional model will capture the intended silicon architecture requires
+that the silicon architects and functional modelers work very closely with each
+other.
 
+\subsection{Interactions between hardware modelers and software architects}
+
+Software architects develop the overall design direction of the
+software systems that will run on our hardware.  From the remarks on
+the subject of hardware/software codesign in
+section~\ref{sec:codesign} it is clear that the design approach that we are
+advocating involves bringing software and hardware design closer together
+than is traditionally done in large hardware companies.  Our team faces challenges
+in this area, because corporate management may even be unaware of these engineering
+requests, and so even rudimentary issues such as software staffing and budgets have
+not yet been worked out by the time our team starts to engage the technical issues.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Acknowledgements}
 
-Michael Wrighton
+Michael Wrighton has given many comments and been instrumental in expressing many
+of the ideas described in this document.
 
 \appendix
 
 \section{On Usable Annotations}\label{apdx:annotations}
 
-An exchange from the 1968 NATO report.\cite{crisis}
+{\em An exchange from the 1968 NATO report.}\cite{crisis}
 
 Dijkstra: I have a point with respect to the fact that people are
 willing to write programs and fail to make the documentation
@@ -574,7 +1261,7 @@ crossed.
 Perlis: The point that Dijkstra just made is an extremely important
 one, and will probably be one of the major advantages of
 conversational languages over non-conversational ones. However, there
-is another reason why people don’t do predocumentation: They don’t
+is another reason why people don’t do predocumentation: They don't
 have a good language for it since we have no way of writing predicates
 describing the state of a computation.
 
@@ -793,6 +1480,9 @@ endmodule
     Integration.}  Caltech Computer Science Technical Report 3340.
   Pasadena, Calif.: California Institute of Technology, January 1979, pp.~55--63.}
 
+\bibitem{m+c} {Carver Mead and Lynn Conway, {\it Introduction to VLSI
+Systems.}  Reading, Mass.:\ Addison-Wesley, 1980.}
+
 \bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with
     Modula-3.}  Prentice-Hall Series in Innovative Technology.
   Prentice-Hall, 1991.}
@@ -876,10 +1566,15 @@ Language and Libraries. Waltham, MA, 2004.}
 
 \bibitem{structured}{Edsger~W.~Dijkstra.  Notes on Structured Programming.  EWD249.  Technische Hogeschool Eindhoven, Department of Mathematics, Report 70-WSK-03, August 1969--April 1970.}  
 
+\bibitem{ewd1308}{Edsger~W.~Dijkstra.  What led to ``Notes on Structured Programming.''  EWD1308.  Nuenen, the Netherlands: 10 June 2001.}
+
+\bibitem{ewd123}{Edsger~W.~Dijkstra.  Cooperating Sequential Processes.  EWD123.  Lecture notes.  September 1965.}
 
 \bibitem{org-man}{William~H.~Whyte.  {\it The Organization Man.}  New York:\ Simon~\&~Schuster, 1956.}
 
 \bibitem{ewd340}{Edsger~W.~Dijkstra.  The humble programmer.  EWD340.  1972~Turing~Lecture.  {\it Communications of the ACM,} {\bf 15}(10):859--866, 1972.}
+
+\bibitem{lampson}{Butler Lampson.  Principles for computer system design.  1993~Turing~Lecture.  ACM, February 1993.}
 
 \bibitem{ewd209}{Edsger~W.~Dijkstra.  A constructive approach to the problem of program correctness.  EWD209.  August 1967.  Also in {\it BIT\/} {\bf 8}, pp.~174--186, 1968.}
 
@@ -935,16 +1630,6 @@ Language and Libraries. Waltham, MA, 2004.}
 
 \bibitem{hoare-logic}{C.A.R.~Hoare.  An axiomatic basis for computer programming.  {\it CACM\/} {\bf 12}(10), pp.~576--580.}
 
-\bibitem{pascal}{Nicklaus Wirth}
-
-\bibitem{modula}{Nicklaus Wirth}
-
-\bibitem{simula}{Ole-Johan Dahl}
-
-\bibitem{smalltalk-72}{Alan Kay}
-
-\bibitem{smalltalk-80}{Adele Goldberg}
-
 \bibitem{java}{James Gosling, Bill Joy, Guy Steele, Gilad Bracha, and Alex Buckley.  {\it The Java Language Specification, Java SE 8 Edition.}  Redwood City, Calif.:\ Oracle, 2015.}
 
 \bibitem{scala}{Martin Odersky, Lex Spoon, and Bill Venners.  {\it Programming in Scala,} third edition.  Walnut Creek, Calif.:\ Artima Press, 2016.}
@@ -962,7 +1647,105 @@ Language and Libraries. Waltham, MA, 2004.}
 \bibitem{hansen-book}{Per Brinch Hansen.  {\it The Architecture of Concurrent Programs.} Englewood Cliffs, N.J.:\ Prentice-Hall, 1977.}
 
 \bibitem{adt-liskov}{Barbara Liskov}
+
+\bibitem{hw-sw}{David~A.~Patterson and John~L.~Hennessey.  {\it
+    Computer Organization and Design: The Hardware/Software
+    Interface,} fifth edition.  Elsevier Morgan Kaufmann, 2014.}
+
+\bibitem{scheme}{Gerald Jay Sussman and Guy Lewis Steele Jr.  {\it SCHEME: An Interpreter for Extended Lambda Calculus.}  Massachusetts Institute of Technology, Artificial Intelligence Laboratory Memo AIM-349.  December 1975.}
   
+\bibitem{r4rs}{William Clinger and Jonathan Rees, eds.  {\it
+    Revised$^4$ Report on the Algorithmic Language Scheme.} Cambridge,
+  Mass.:\ Massachusetts Institute of Technology, 2 November 1991.}
+
+\bibitem{sicp}{Harold Abelson and Gerald Jay Sussman with Julie
+  Sussman.  {\it Structure and Interpretation of Computer Programs,}
+  second edition.  Cambridge, Mass.:\ MIT Press, 1996.}
+
+\bibitem{mccarthy}{John McCarthy.  Recursive functions of symbolic expressions and their computation by machine, Part I.  {\it CACM,} {\bf 3}(4), pp.~184--195, April 1960.}
+  
+\bibitem{alpha_architecture}{Alpha Architecture Committee.  {\it Alpha Architect
+ure Reference Manual}, third edition.  Boston, Mass.:\ Digital Press, 1998.}
+
+\bibitem{abe_bs}{Abraham Ankumah.  Designing an Energy-Efficient Asynchronous 80
+C51 Microcontroller.  B.S. thesis, California Institute of Technology, Division
+of Engineering and Applied Science, Department of Electrical Engineering, 2001.}
+
+\bibitem{algol60}{J.~W.~Backus, F.~L.~Bauer, J.~Green, C.~Katz, J.~McCarthy,
+P.~Naur, A.~J.~Perlis, H.~Rutishauser, K.~Samelson, B.~Vauquois, J.~H.~Wegstein,
+ A.~van~Wijngaarden, and M.~Woodger. {\it Revised Report on the Algorithmic Lang
+uage}~{\scshape Algol 60}.  Berlin:\ Springer-Verlag, 1969.}
+
+\bibitem{ref:burns_ms}  Steven~M.~Burns. {\it Automated Compilation of Concurren
+t Programs into Self-timed Circuits.} M.S.\ thesis, Caltech \hbox{CS-TR-88-2}, C
+alifornia Institute of Technology, 1988.
+
+\bibitem{filter}{U.~V.~Cummings, A.~M.~Lines, and A.~J.~Martin.  An Asynchronous
+ Pipelined  Lattice Structured Filter.  In {\it Proceedings of the International
+ Symposium on Advanced Research in Asynchronous Circuits and Systems.}  Los Alam
+itos, Calif.:\ IEEE Computer Society Press, 1994.}
+
+\bibitem{andrew_ms} {Andrew Lines.  {\it Pipelined Asynchronous
+Circuits.}  M.S.\ thesis, California Institute of Technology CS-TR-95-21, 1995.}
+
+\bibitem{rajit_cast}{Rajit Manohar.  {\it Cast: Caltech Asynchronous Tools.} \TeX{}info documentation package.  Unpublished, California Institute of Technology
+Department of Computer Science/Cornell University Department of Electrical Engineering, 1998--2001. }
+
+
+
+\bibitem{what??}{A.~J.~Martin. Programming in VLSI: From communicating
+processes to delay-insensitive VLSI circuits. In C.~A.~R.~Hoare,
+ed., {\it Developments in Concurrency and Communication}, in UT Year of Programm
+ing Series, pp.~1--64. Englewood Cliffs, N.J.:\ Addison-Wesley, 1990. }
+
+\bibitem{ref:uP}{Alain~J.~Martin, Steven~M.~Burns, Tak-Kwan Lee, Drazen
+Borkovic, and Pieter~J.~Hazewindus. The design of an asynchronous
+microprocessor. In Charles L. Seitz, ed., {\it Advanced Research in
+VLSI:\ Proceedings of the Decennial Caltech Conference on VLSI\/},
+pp.~351--373. Cambridge, Mass.:\ MIT Press, 1991.}
+
+\bibitem{synthesis_tr} {Alain~J.~Martin.  {\it Synthesis of Asynchronous VLSI Ci
+rcuits.}  Caltech Computer Science Technical Report \hbox{CS-TR-93-28}.  Pasaden
+a, Calif.:\ California Institute of Technology Computer Science Department, 1993
+.}
+
+\bibitem{mips97} {A.~J.~Martin, A.~Lines, R.~Manohar, M.~Nystr\"{o}m,
+P.~P\'enzes, R.~Southworth, U.~Cummings, and T.~K.~Lee.  The Design of an
+Asynchronous MIPS R3000 Processor. In R.~B.~Brown and A.~T.~Ishii, eds., {\it Pr
+oceedings of the 17th
+Conference on Advanced Research in VLSI.}  Los Alamitos, Calif.:\ IEEE
+Computer Society Press, 1997.}
+
+\bibitem{de_muller}{D.~E.~Muller and W.~S.~Bartky.  A theory of asynchronous circuits.  In {\it The Annals of the Computation Laboratory of Harvard University.
+ Volume~XXIX:\ Proceedings of an International Symposium on the Theory of Switch
+ing, Part~I.}, 1959, pp.~204--243.}
+
+\bibitem{qdi} {A.~J.~Martin.  The limitations to delay-insensitivity
+in asynchronous circuits.  In W.~J.~Dally, ed., {\em Sixth MIT Conference on Advanced
+Research in VLSI}.  Cambridge, Mass.:\ MIT Press, 1990.}
+
+\bibitem{literate-programming}{Donald~E.~Knuth.  {\it Literate Programming.}  Stanford, Calif.:\ Stanford University Center for the Study of Language and Information, 1992.} 
+
+\bibitem{semantics-pred-calc}{Edsger~W.~Dijkstra and Carel~S.~Scholten.  {\it Predicate Calculus and Program Semantics.}  Berlin:\ Springer, 1990.}
+
+\bibitem{swig}{{\it SWIG Users Manual.} {\tt http://www.swig.org/Doc1.3/Contents.html}}
+
+\bibitem{protobuf}{Google Protocol Buffers.  {\tt https://developers.google.com/protocol-buffers/}}
+
+\bibitem{thrift}{Apache Thrift. {\tt https://thrift.apache.org/}}
+
+\bibitem{json}{JSON.  {\tt https://www.json.org/}}
+
+\bibitem{pascal}{Kathleen Jensen and Nicklaus Wirth.  {\it PASCAL - User Manual and Report.}  Lecture Notes in Computer Science {\bf 18}. Berlin: Springer-Verlag, 1974.}
+
+\bibitem{modula}{Nicklaus Wirth.  Modula: A language for modular programming.  {\it Software-Practice and Experience,} {\bf 7}, pp.~37--65, 1977.}
+
+\bibitem{simula}{Ole-Johan Dahl, Bj{\o}rn Myhrhaug, and Kristen Nygaard.  {\it Common Base Language.}  Oslo:\ Norwegian Computing Center, 1970.}
+
+\bibitem{smalltalk-72}{Adele Goldberg and Alan Kay, eds.  {\it Smalltalk-72 Instruction Manual.}  Palo Alto, Calif.:\ Xerox Palo Alto Research Center, 1976.}
+
+\bibitem{smalltalk-80}{Adele Goldberg, David Robson, and Michael~A.~Harrison.  {\it Smalltalk-80: The Language and its Implementation.}  Addison-Wesley, May 1983.}
+
 \end{thebibliography}
 
 \newpage
