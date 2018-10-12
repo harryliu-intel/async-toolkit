@@ -90,6 +90,7 @@ class mby_mesh_random_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
         int count;
         `ovm_info(get_name(), "mby_mesh_random_seq is running!", OVM_MEDIUM);
         repeat(50) begin
+            @(posedge vif.fab_clk);
             count++;
             `ovm_info(get_name(), $sformatf("mby_mesh_random_seq: clock edge %0d",count), OVM_FULL);
         end
