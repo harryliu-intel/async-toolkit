@@ -76,8 +76,6 @@ $ToolConfig_tools{stage_bman_collage}{OTHER}{post_flow} = {
                                                             "(.default.)" => "collage_postflow",
                                                           };
 $ToolConfig_tools{buildman}{SUB_TOOLS}{stages}{SUB_TOOLS}{collage_postflow}{OTHER}{relevant_tools} = [qw( collage )];
-$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/bman_preflow.pm";
-$ToolConfig_tools{buildman}{OTHER}{pre_flow} = "UserCode::prescripts";
 ### End collage related updates ***
 
 #####################################################
@@ -132,6 +130,7 @@ $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "
 
 # Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
 $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
+$ToolConfig_tools{buildman}{OTHER}{pre_flow} = "UserCode::ndocs";
 
 $ToolConfig_tools{vipsvt} = {
     VERSION    => "O-2018.06",
