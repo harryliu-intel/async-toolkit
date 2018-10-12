@@ -5,6 +5,7 @@
 # Never add Natural_Docs output -  directory Data
 /verif/doc/Data
 /verif/doc/Working Data
+*.nd
 
 # DVT Eclipse
 .dvt
