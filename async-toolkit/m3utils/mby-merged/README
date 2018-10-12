@@ -93,6 +93,7 @@ mplex_np_nphy          -  bman -mc mplex_np_nphy                 # Management co
 igr                    -  bman -mc igr                           # Ingress testbench
 egr                    -  bman -mc egr                           # Egress testbench
 rx_ppe                 -  bman -mc rx_ppe                        # RX_PPE Testbench
+mesh                   -  bman -mc mesh                          # Mesh Testbench
 
 Compile ALL:
   bman -dut mby -mc fc
