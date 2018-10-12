@@ -41,19 +41,35 @@ public class DSimUtil {
     private Node START;
     private Node DLY;
     private Node ERROR;
-    private Node ENV_RESET;
 
     public static final int STANDARD_RESET = 0;
 
-    public static final HierName _RESET_NAME =
-        HierName.makeHierName("_RESET");
-    public static final HierName START_NAME =
-        HierName.makeHierName("START");
-    public static final HierName DLY_NAME =
-        HierName.makeHierName("DLY");
-    // FIXME: _env should not be hardcoded here, as it could be different
-    public static final HierName ENV_RESET_NAME =
-        HierName.append(HierName.makeHierName("_env"), _RESET_NAME);
+    // TODO BUG 28502: use reset_net/start_net/delay_net directives instead
+    public static HierName _RESET_NAME = HierName.makeHierName("_RESET");
+    public static HierName START_NAME  = HierName.makeHierName("START");
+    public static HierName DLY_NAME    = HierName.makeHierName("DLY");
+
+    /** Get a node from top level or env (TODO BUG 28502: eliminate) **/
+    private static Node getTopOrEnvNode(HierName name) {
+        Node n = DSim.get().findNode(name);
+        if (n==null) n = DSim.get().findNode(HierName.append(HierName.makeHierName("_env"),name));
+        return n;
+    }
+    
+    /** Return the _RESET node (TODO BUG 28502: query list of reset_net inputs) **/
+    public static Node getResetNode() {
+        return getTopOrEnvNode(_RESET_NAME);
+    }
+
+    /** Return the START node (TODO BUG 28502: query list of start_net inputs) **/
+    public static Node getStartNode() {
+        return getTopOrEnvNode(START_NAME);
+    }
+
+    /** Return the DLY node (TODO BUG 28502: query list of delay_net inputs) **/
+    public static Node getDelayNode() {
+        return getTopOrEnvNode(DLY_NAME);
+    }
 
     /**
      * DSimUtil constructor.  Looks up nodes in preparation for
@@ -63,11 +79,10 @@ public class DSimUtil {
         dsim = DSim.get();
         GND = dsim.findNode("GND");
         Vdd = dsim.findNode("Vdd");
-        _RESET = dsim.findNode(_RESET_NAME);
-        START  = dsim.findNode(START_NAME);
-        DLY    = dsim.findNode(DLY_NAME);
-        ENV_RESET = dsim.findNode(ENV_RESET_NAME);
         ERROR = dsim.findNode("ERROR");
+        _RESET = getResetNode();
+        START  = getStartNode();
+        DLY    = getDelayNode();
     }
 
     /** 
@@ -97,12 +112,9 @@ public class DSimUtil {
         if (Vdd!=null) Vdd.setValueAndEnqueueDependents(Node.VALUE_1);
 
         if (protocol == STANDARD_RESET) {
-            Node resetNode = _RESET;
-            if (resetNode == null) resetNode = ENV_RESET;
-               
             // Reset and cycle
             if (DLY!=null) DLY.setValueAndEnqueueDependents(Node.VALUE_0); // might be overridden by env
-            if (resetNode!=null) resetNode.scheduleImmediate(Node.VALUE_0);
+            if (_RESET!=null) _RESET.scheduleImmediate(Node.VALUE_0);
             if (START!=null) START.scheduleImmediate(Node.VALUE_0);
             initResetNodes(init);
             dsim.cycle(-1);
@@ -121,13 +133,13 @@ public class DSimUtil {
             }
 
             // de-assert _RESET
-            if (resetNode!=null) {
-                resetNode.scheduleImmediate(Node.VALUE_1);
+            if (_RESET!=null) {
+                _RESET.scheduleImmediate(Node.VALUE_1);
             }
 
             // second phase doreset if START node exists
             if (START!=null) {
-                if (resetNode!=null) dsim.cycle(-1);
+                if (_RESET!=null) dsim.cycle(-1);
                 START.scheduleImmediate(Node.VALUE_1);
             }
         }
@@ -136,21 +148,6 @@ public class DSimUtil {
                 "Unknown reset protocol specified: "+protocol);
         }
 
-    }
-
-    /**
-     * Returns the best of what DSim has to offer in the way of reset
-     * nodes.  Preferentially picks _RESET, then _env._RESET, then
-     * null.
-     **/
-    public static Node getResetNode() {
-        Node n = DSim.get().findNode(_RESET_NAME);
-        if (n == null) n = DSim.get().findNode(ENV_RESET_NAME);
-        return n;
-    }
-
-    public static Node getStartNode() {
-        return DSim.get().findNode(START_NAME);
     }
 
     /**
@@ -227,8 +224,7 @@ public class DSimUtil {
 
     public void resetInputNodes(final CellInterface cell,
                                 final String instanceName) {
-        final Node reset = DSimUtil.getResetNode();
-        if (reset != null) {
+        if (_RESET != null) {
             // identify all input ports
             final Collection<Node> inputPorts = new HashSet<Node>();
             (new CellUtils.MarkPort() {
@@ -238,7 +234,7 @@ public class DSimUtil {
                     if (newDir < 0) {
                         final Node n = dsim.findNode(instanceName + "." + name);
                         // don't add special nodes
-                        if (n != null && n != GND && n != Vdd && n != reset) {
+                        if (n != null && n != GND && n != Vdd && n != _RESET) {
                             inputPorts.add(n);
                         }
                     }
@@ -246,7 +242,7 @@ public class DSimUtil {
             }).mark(cell);
 
             if (!inputPorts.isEmpty()) {
-                reset.addWatch(new NodeWatcher() {
+                _RESET.addWatch(new NodeWatcher() {
                     public final void nodeChanged(Node node, long time) {
                         if (node.getValue() == Node.VALUE_0) {
                             for (Node inputPort : inputPorts) {
