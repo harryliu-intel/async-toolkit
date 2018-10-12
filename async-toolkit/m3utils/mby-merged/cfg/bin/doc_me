@@ -5,7 +5,7 @@ setenv REPO_ROOT $MODEL_ROOT
 
 setenv NATURAL_DOCS_EXEC `ToolConfig.pl get_tool_exec NaturalDocs`
 
-set InputDir = "${REPO_ROOT}/verif"
+set InputDir = "${REPO_ROOT}/subBlock/mbyc/verif"
 set DocDir   = "${InputDir}/doc"
 
 # make NaturalDocs directory if it doesn't already exist

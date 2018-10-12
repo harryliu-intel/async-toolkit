@@ -28,7 +28,7 @@
 
 
 
-module igr_epl_shim 
+module mby_igr_epl_shim 
   import mby_igr_pkg::*;
 (
 
@@ -182,7 +182,7 @@ module igr_epl_shim
   end    
 //rx datapath delay stages end  
   
-  igr_epl_shim_ctrl ctrl0(
+  mby_igr_epl_shim_ctrl ctrl0(
     .cclk(cclk),
     .rst(rst),
     .rx_port_e(s2q_port[0]),
@@ -203,7 +203,7 @@ module igr_epl_shim
     .o_seg_e(seg_e_p0)
   );
   
-  igr_epl_shim_segs segs0(
+  mby_igr_epl_shim_segs segs0(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(s3q_p0_rx_data),
@@ -226,7 +226,7 @@ module igr_epl_shim
     .o_shim_pb_v(o_shim_pb_v_p0)
   );
   
-  igr_epl_shim_ctrl ctrl1(
+  mby_igr_epl_shim_ctrl ctrl1(
     .cclk(cclk),
     .rst(rst),
     .rx_port_e(s2q_port[1]),
@@ -247,7 +247,7 @@ module igr_epl_shim
     .o_seg_e(seg_e_p1)
   );
   
-  igr_epl_shim_segs segs1(
+  mby_igr_epl_shim_segs segs1(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(s3q_p1_rx_data),
@@ -271,7 +271,7 @@ module igr_epl_shim
 
   );
   
-  igr_epl_shim_ctrl ctrl2(
+  mby_igr_epl_shim_ctrl ctrl2(
     .cclk(cclk),
     .rst(rst),
     .rx_port_e(s2q_port[2]),
@@ -292,7 +292,7 @@ module igr_epl_shim
     .o_seg_e(seg_e_p2)
   );
   
-  igr_epl_shim_segs segs2(
+  mby_igr_epl_shim_segs segs2(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(s3q_p1_rx_data),
@@ -315,7 +315,7 @@ module igr_epl_shim
     .o_shim_pb_v(o_shim_pb_v_p2)
   );
  
-  igr_epl_shim_ctrl ctrl3(
+  mby_igr_epl_shim_ctrl ctrl3(
     .cclk(cclk),
     .rst(rst),
     .rx_port_e(s2q_port[3]),
@@ -336,7 +336,7 @@ module igr_epl_shim
     .o_seg_e(seg_e_p3)
   );
   
-  igr_epl_shim_segs segs3(
+  mby_igr_epl_shim_segs segs3(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(s3q_p1_rx_data),

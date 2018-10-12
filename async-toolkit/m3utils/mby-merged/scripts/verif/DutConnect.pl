@@ -132,7 +132,7 @@ sub read_module_file {
             push @wire_definitions, $_;
             # remove wire type
             s/^wire\s*//g;
-            if(/^\S+$/) {
+            if(/^\S+|^\S+(\[\d+:\d+\])\S+$/) {
                 push @signal_names, $_;
             } else {
                 die("ERROR: can not understand port name '$_'\n");
@@ -161,6 +161,7 @@ sub gen_signal_connections {
     my $sig;
     my @signal_connections;
     foreach $sig (@signal_names) {
+        $sig =~ s/\[\d+:\d+\]\s+//g;
         my $aligned_sig = $sig;
         while(length $aligned_sig < 32) { $aligned_sig .= " "; }
         push @signal_connections, "    .$aligned_sig ($fctop_dut_if$sig)";

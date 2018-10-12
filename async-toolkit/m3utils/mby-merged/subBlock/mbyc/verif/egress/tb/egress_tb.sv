@@ -10,8 +10,10 @@
 //-----------------------------------------------------------------------------
 // Description :
 //   This top module will:
-//   1. Instance 1 RTL Unit
+//   1. Instance DUT
 //   2. Control Dumping features for FSDB/DVE.
+//   3. Create interface instances and test island.
+//   4. Create clock/reset
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -24,7 +26,6 @@
 `timescale 1ps/1fs
 
 `include "egress_defines.sv"
-//`include "egr_top.sv"
 
 module egress_tb ();
 
@@ -37,13 +38,6 @@ module egress_tb ();
 
   import uvm_pkg::*;
   
-  logic primary_clock;
-  logic gated_primary_clock;
-  logic secondary_clock;
-  logic gated_secondary_clock;
-  logic egress_primary_reset;
-  logic egress_primary_clock;
-
   // ===============================================
   // =                FSDB variable                =
   // ===============================================
@@ -54,7 +48,9 @@ module egress_tb ();
   string  str;
   logic   vccRail;
 
-  
+  logic egress_clock;
+  logic egress_reset;
+
   // ===============================================
   // Verification Test Library
   // ===============================================
@@ -72,77 +68,44 @@ module egress_tb ();
   // Interfaces instance
   // ===============================================
 
+  // eth_bfm interfaces
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_0 (egress_reset, egress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_0 (egress_reset, egress_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_1 (egress_reset, egress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_1 (egress_reset, egress_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_2 (egress_reset, egress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_2 (egress_reset, egress_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (egress_reset, egress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (egress_reset, egress_clock);
+
+  assign eth_bfm_tx_intf_0.enable = 1;
+  assign eth_bfm_tx_intf_1.enable = 1;
+  assign eth_bfm_tx_intf_2.enable = 1;
+  assign eth_bfm_tx_intf_3.enable = 1;
+
   // ===============================================
   // Clock block instance
   // ===============================================
-  int idle_conter;
+  shdv_clk_gen  egress_clk_gen(egress_clock);
 
-  initial begin
-    primary_clock       = 1'b0;
-    gated_primary_clock = 1'b0;
-    secondary_clock     = 1'b0;
-    idle_conter         = 0;
+  initial begin : clk_gen_settings
+    egress_clk_gen.period = 833333fs;
+    egress_clk_gen.jitter = 0ps;
   end
 
-  always #416666fs primary_clock   = (egress_if.enable_primary_clock   ? ~primary_clock   : 0);
-  always #833333fs secondary_clock = (egress_if.enable_secondary_clock ? ~secondary_clock : 0);
-
-  always @(primary_clock) begin
-    if (idle_conter > 8) begin
-      gated_primary_clock <= 0;
-    end else begin
-      gated_primary_clock <=  primary_clock;
-    end
-  end
-
-  // ===============================================
-  // Reset block instance
-  // ===============================================
 
   // ===============================================
   // INSTANCES
   // ===============================================
-  // Egress controller instance + signal connections
-  // ===============================================
 
-  // Connecting clocks to RTL
   // ===============================================
-  assign egress_primary_clock   = gated_primary_clock;
-  assign egress_secondary_clock = gated_secondary_clock;
-
   // Instance Egress env interface
   // This is done in the TB if the IP need to drive also signals.
   // ===============================================
   egress_env_if egress_if();
-  assign egress_power_good_reset    = egress_if.power_good_reset;
-  assign egress_secondary_reset     = egress_if.secondary_reset;
-  assign egress_primary_reset       = egress_if.primary_reset;
-  assign egress_if.primary_clock    = primary_clock;
-  assign egress_if.secondary_clock  = secondary_clock;
-  assign egress_if.egress_int_wire = 0;
+  assign egress_reset       = egress_if.reset;
+  assign egress_if.clock    = egress_clock;
 
-  mby_ec_cdi_tx_intf eth_bfm_tx_intf_0 (egress_power_good_reset, primary_clock);
-  mby_ec_cdi_rx_intf eth_bfm_rx_intf_0 (egress_power_good_reset, primary_clock);
-  assign eth_bfm_rx_intf_0.ecc             = eth_bfm_tx_intf_0.ecc;
-  assign eth_bfm_rx_intf_0.port_num        = eth_bfm_tx_intf_0.port_num;
-  assign eth_bfm_rx_intf_0.data_valid      = eth_bfm_tx_intf_0.data_valid;
-  assign eth_bfm_rx_intf_0.metadata        = eth_bfm_tx_intf_0.metadata;
-  assign eth_bfm_rx_intf_0.data_w_ecc      = eth_bfm_tx_intf_0.data_w_ecc;
-  assign eth_bfm_rx_intf_0.pfc_xoff        = eth_bfm_tx_intf_0.pfc_xoff;
-  assign eth_bfm_rx_intf_0.au_credits      = eth_bfm_tx_intf_0.au_credits;
-  assign eth_bfm_rx_intf_0.flow_control_tc = eth_bfm_tx_intf_0.flow_control_tc;
-  assign eth_bfm_tx_intf_0.enable          = 1;
-
-  mby_ec_cdi_tx_intf eth_bfm_tx_intf_1 (ingress_power_good_reset, primary_clock);
-  mby_ec_cdi_rx_intf eth_bfm_rx_intf_1 (ingress_power_good_reset, primary_clock);
-  mby_ec_cdi_tx_intf eth_bfm_tx_intf_2 (ingress_power_good_reset, primary_clock);
-  mby_ec_cdi_rx_intf eth_bfm_rx_intf_2 (ingress_power_good_reset, primary_clock);
-  mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (ingress_power_good_reset, primary_clock);
-  mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (ingress_power_good_reset, primary_clock);
-
-  assign eth_bfm_tx_intf_1.enable = 1;
-  assign eth_bfm_tx_intf_2.enable = 1;
-  assign eth_bfm_tx_intf_3.enable = 1;
 
   // ===============================================
   // Test Island instance
@@ -179,36 +142,37 @@ module egress_tb ();
       $vcdpluson();
     end
 
-    if($test$plusargs("fsdb")) begin                                      // Plusarg to enable FSDB dump
-      if ($value$plusargs("FSDB_ON=%s",str)) begin                        // Plusarg to enable a start sample time after a delay
-        fsdb_on = convert_time(str);                                      // Time to start (Converted time via plusarg)
+    if($test$plusargs("fsdb")) begin                                    // Plusarg to enable FSDB dump
+      if ($value$plusargs("FSDB_ON=%s",str)) begin                      // Plusarg to enable a start sample time after a delay
+        fsdb_on = convert_time(str);                                    // Time to start (Converted time via plusarg)
         $display("FSDB DUMP:  Waiting %s before starting fsdb dump", str);
-        #fsdb_on;                                                         // Wait - time before start
+        #fsdb_on;                                                       // Wait - time before start
       end else begin
-        fsdb_on = 0;                                                      // Time to start (no specified Time, so start at 0)
+        fsdb_on = 0;                                                    // Time to start (no specified Time, so start at 0)
       end
 
-      if ($value$plusargs("FSDB_SIZE=%d",fsdb_file_size)) begin           // Plusarg to specify a FSDB dump file size Limit
-        if (fsdb_file_size<32) begin                                      // Must be at least 32
+      if ($value$plusargs("FSDB_SIZE=%d",fsdb_file_size)) begin         // Plusarg to specify a FSDB dump file size Limit
+        if (fsdb_file_size<32) begin                                    // Must be at least 32
           fsdb_file_size = 32;
         end
       end
 
-      $value$plusargs("FSDB_FILE=%s",fsdb_file);                         // Plusarg to specify user defined FSDB dump file name
+      $value$plusargs("FSDB_FILE=%s",fsdb_file);                        // Plusarg to specify user defined FSDB dump file name
 
       $fsdbAutoSwitchDumpfile(fsdb_file_size,fsdb_file,0,{fsdb_file,"_vf.log"}); // Enablement of Auto file switching
 
-      if ($test$plusargs("fsdb_config")) begin                           // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
+      if ($test$plusargs("fsdb_config")) begin                          // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
         $fsdbDumpvarsToFile ("fsdb.dump.config");
       end else begin
-        $fsdbDumpvars(0,egress_tb,"+all");                                 // Default - FSDB dump of all signals in the design
+        $fsdbDumpvars(0,egress_tb,"+all");                             // Default - FSDB dump of all signals in the design
+        $fsdbDumpSVA();
       end
 
-      if ($value$plusargs("FSDB_OFF=%s",str)) begin                      // Plusarg to Enable a stop time of sampling
+      if ($value$plusargs("FSDB_OFF=%s",str)) begin                     // Plusarg to Enable a stop time of sampling
         fsdb_off = convert_time(str) - fsdb_on;                         // Overall Time to stop, not a length of time. (Converted time via plusarg, subtract Start time)
         $display("FSDB DUMP:  Stopping FSDB dump in %s", str);
         if (fsdb_off>0) begin                                           // calculated difference must be greater than 0, else stop imediately
-          #fsdb_off;                                                   // Wait - time before stop
+          #fsdb_off;                                                    // Wait - time before stop
         end
         $fsdbDumpoff();                                                 // Turn off FSDB dumping
         $display("FSDB DUMP :  Stopped FSDB dump");

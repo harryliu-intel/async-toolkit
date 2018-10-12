@@ -25,7 +25,7 @@ $hdl_spec = {
      "$ENV{OVM_HOME}/src",
      "$ENV{ACE_HOME}/lib/Verilog",
      "verif/egress/tests/common",
-     "verif/egress/tests/egress_alive_test",
+     "verif/egress/tests/egress_rand_test",
      "verif/egress/tests/egress_lintra_test",
      ],
 

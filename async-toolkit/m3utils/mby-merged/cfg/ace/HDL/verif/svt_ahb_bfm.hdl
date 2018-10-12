@@ -23,12 +23,12 @@ $hdl_spec = {
     ],
 
     -vlog_files => [
-#         "$snps_svt_path/include/sverilog/svt.uvm.pkg",
-#         "$snps_svt_path/include/sverilog/svt_ahb.uvm.pkg",
-#         "$snps_svt_path/include/sverilog/svt_ahb_system_configuration.uvm.pkg",
-#         "$snps_svt_path/include/sverilog/svt_bfm_shell.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt_ahb.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt_ahb_system_configuration.uvm.pkg",
+         "$snps_svt_path/include/sverilog/svt_bfm_shell.uvm.pkg",
          "verif/lib/svt_ahb_bfm/ahb_reset_if.svi",
-#         "verif/lib/svt_ahb_bfm/svt_ahb_if.svi",
+         "verif/lib/svt_ahb_bfm/svt_ahb_if.svi",
          "verif/lib/svt_ahb_bfm/svt_ahb_bfm_pkg.sv",
     ],
 

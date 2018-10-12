@@ -28,7 +28,7 @@
 
 
 
-module igr_epl_shim_segs 
+module mby_igr_epl_shim_segs 
   import mby_igr_pkg::*;
 (
   input logic cclk,
@@ -83,7 +83,7 @@ module igr_epl_shim_segs
   always_ff @(posedge cclk) s4q_seg_pb_e <= i_seg_e;  
 
   
-  igr_epl_shim_seg seg0(
+  mby_igr_epl_shim_seg seg0(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(i_rx_data),
@@ -97,7 +97,7 @@ module igr_epl_shim_segs
     .o_seg_data(seg0_data)  
   );
 
-  igr_epl_shim_seg seg1(
+  mby_igr_epl_shim_seg seg1(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(i_rx_data),
@@ -111,7 +111,7 @@ module igr_epl_shim_segs
     .o_seg_data(seg1_data)    
   );  
 
-  igr_epl_shim_seg seg2(
+  mby_igr_epl_shim_seg seg2(
     .cclk(cclk),
     .rst(rst),
     .i_rx_data(i_rx_data),
