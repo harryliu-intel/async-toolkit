@@ -21,7 +21,7 @@ class ExtractAction(registerExt: parser_ext_r) {
   }
 
   def toStringRegExt: String = {
-    val state = f"${registerExt.state}%x"
+    val state = f"${registerExt.companion._state.get(registerExt).extract[Long]}%x"
     s"$registerExt ($state) (FLAG_NUM=${registerExt.FLAG_NUM()}, FLAG_VALUE=${registerExt.FLAG_VALUE()}, " +
       s"PROTOCOL_ID=${registerExt.PROTOCOL_ID()}, PTR_NUM=${registerExt.PTR_NUM()}, OFFSET=${registerExt.OFFSET()})"
   }

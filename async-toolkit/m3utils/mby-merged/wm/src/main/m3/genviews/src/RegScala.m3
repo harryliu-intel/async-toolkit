@@ -580,6 +580,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     gs.main("package madisonbay.csr\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
     gs.main("import com.intel.cg.hpfd.csr.macros.annotations.reg\n");
+    gs.main("import monocle.macros.Lenses\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
     gs.main("trait %s_instance {\n", myTn);
     gs.main("@reg class %s {\n", myTn);

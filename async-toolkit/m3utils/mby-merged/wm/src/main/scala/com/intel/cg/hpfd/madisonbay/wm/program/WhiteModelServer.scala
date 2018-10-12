@@ -7,6 +7,7 @@ import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import java.net._
 
+import com.intel.cg.hpfd.madisonbay.BitVector
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.Memory._
 import monocle.Optional
@@ -16,10 +17,10 @@ import scala.annotation.tailrec
 object WhiteModelServer {
   val legacyProtocol = false
 
-  val initialAddress = Address at (0 bytes)
+  val initialAddress: Address = Address at (0 bytes)
 
   val csrs = mby_top_map(initialAddress)
-  val paths = mby_top_map.genOpticsLookup(csrs, Optional.id)
+  val paths: Map[Address, Optional[mby_top_map, BitVector]] = mby_top_map.genOpticsLookup(csrs, Optional.id)
 
   val egressPortToSocketAndStreamMap = new collection.mutable.HashMap[Int, (Socket, DataOutputStream)]()
 

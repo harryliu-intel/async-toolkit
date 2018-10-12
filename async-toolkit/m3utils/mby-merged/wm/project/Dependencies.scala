@@ -23,7 +23,7 @@ object Dependencies {
 
   lazy val csrMacrosDeps = Seq(shapeless, refined)
 
-  lazy val commonDeps = Seq(reflect, scalaTest % "test", scalaCheck % "test")
+  lazy val commonDeps = Seq(monocleCore, monocleMacro, shapeless, reflect, scalaTest % "test", scalaCheck % "test")
   lazy val csrDeps = Seq(monocleCore, monocleMacro, scalaTest % "test", scalaCheck % "test")
   lazy val tcpDeps = Seq(shapeless, scalaTest % "test", scalaz)
   def mainDeps(csrVersion: String) = Seq(fs2, fs2io, csrModel(csrVersion))

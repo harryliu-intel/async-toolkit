@@ -192,6 +192,12 @@ object Parser {
     val fieldProfile = 0
     val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile).PARSER_EXTRACT_CFG
     val countersL  = mby_ppe_parser_map._PARSER_COUNTERS
+    val ext_unknown_protid = countersL composeLens
+      parser_counters_r._EXT_UNKNOWN_PROTID composeLens
+      parser_counters_r.EXT_UNKNOWN_PROTID._value
+    val ext_dup_protid = countersL composeLens
+      parser_counters_r._EXT_DUP_PROTID composeLens
+      parser_counters_r.EXT_DUP_PROTID._value
 
     def modify(parserExtractCfgReg: parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map), Unit] =
       State { actualState =>
@@ -204,14 +210,14 @@ object Parser {
           case (ExtractAction.SpecialProtocolId, _) => ((0.toShort :: result, mbyPpeParserMap), ())
 
           case (_, Nil) =>
-            val next = countersL.modify(_.EXT_UNKNOWN_PROTID.modify((v: Long) => v.incWithUByteSaturation))
+            val next = ext_unknown_protid.modify((v: Long) => v.incWithUByteSaturation)
             ((0.toShort :: result, next(mbyPpeParserMap)), ())
 
           case (_, h :: Nil) =>
             ((toWordWithOffset(h) :: result, mbyPpeParserMap),())
 
           case (_, h :: _) =>
-            val next = countersL.modify(_.EXT_DUP_PROTID.modify((v: Long) => v.incWithUByteSaturation))
+            val next = ext_dup_protid.modify((v: Long) => v.incWithUByteSaturation)
             ((toWordWithOffset(h) :: result, next(mbyPpeParserMap)), ())
 
         }

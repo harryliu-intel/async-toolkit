@@ -3,21 +3,35 @@
 package com.intel.cg.hpfd.csr.testData
 
 import com.intel.cg.hpfd.csr.macros.annotations._
+import com.intel.cg.hpfd.madisonbay.BitVector
 import com.intel.cg.hpfd.madisonbay.Memory._
+
+import scala.collection.immutable.HashMap
 import monocle.Optional
 import monocle.macros.Lenses
-import scala.collection.immutable.HashMap
 
 package object common {
   @Lenses("_")
   case class Register(address: Address, value: Long) {
     def range: AddressRange = AddressRange(address, 64.bits)
+    def companion: Register.type = Register
+    def serialize: BitVector = BitVector(value)
   }
   object Register {
+    def deserialize(bvec: BitVector): Register = Register(Address(0.bits), bvec.extract[Long])
+
     def apply(address: Address): Register =
       Register(AddressRange.placeReg(address, Alignment(8 bytes)).pos, 0xDEADBEEF)
-    def genOpticsLookup[A](me: Register, path: Optional[A, Register]): HashMap[Address, Optional[A, Long]] =
-      HashMap(me.range.pos -> (path composeOptional Register._value.asOptional))
+
+    def genOpticsLookup[A](me: Register, path: Optional[A, Register]): HashMap[Address, Optional[A, BitVector]] = {
+      val valueOpt = Optional[Register, BitVector] {
+        r => Some(r.serialize)
+      } {
+        newValue => _.companion.deserialize(newValue)
+      }
+
+      HashMap(me.range.pos -> (path composeOptional valueOpt))
+    }
   }
 }
 
@@ -26,99 +40,99 @@ package object optics {
   @Initialize
   @GenOpticsLookup
   case class AddressMap(
-    range: AddressRange,
-    @OfSize(2) opticsRegFilesA: List[optics.RegisterFileA],
-    @At(0x68) opticsRegFileB: optics.RegisterFileB
-  )
+                         range: AddressRange,
+                         @OfSize(2) opticsRegFilesA: List[optics.RegisterFileA],
+                         @At(0x68) opticsRegFileB: optics.RegisterFileB
+                       )
   @Lenses("_")
   @Initialize
   @GenOpticsLookup
   case class RegisterFileA(
-    range: AddressRange,
-    @At(0x18) reg: common.Register,
-    @OfSize(2) l: List[common.Register]
-  )
+                            range: AddressRange,
+                            @At(0x18) reg: common.Register,
+                            @OfSize(2) l: List[common.Register]
+                          )
   @Initialize
   @Lenses("_")
   @GenOpticsLookup
   case class RegisterFileB(
-    range: AddressRange,
-    @OfSize(2) regs: List[common.Register],
-    r: common.Register
-  )
+                            range: AddressRange,
+                            @OfSize(2) regs: List[common.Register],
+                            r: common.Register
+                          )
 }
 
 package object at {
   @Initialize
   case class AddressMap(
-    range: AddressRange,
-    @OfSize(2) atRegFilesA: List[at.RegisterFileA],
-    // move 13 words forward
-    @At(0x68) atRegFileB: at.RegisterFileB
-  )
+                         range: AddressRange,
+                         @OfSize(2) atRegFilesA: List[at.RegisterFileA],
+                         // move 13 words forward
+                         @At(0x68) atRegFileB: at.RegisterFileB
+                       )
   @Initialize
   case class RegisterFileA(
-    range: AddressRange,
-    // move three words forward
-    @At(0x18) reg: common.Register,
-    @OfSize(2) l: List[common.Register]
-  )
+                            range: AddressRange,
+                            // move three words forward
+                            @At(0x18) reg: common.Register,
+                            @OfSize(2) l: List[common.Register]
+                          )
   @Initialize
   case class RegisterFileB(
-    range: AddressRange,
-    @OfSize(2) regs: List[common.Register],
-    r: common.Register
-  )
+                            range: AddressRange,
+                            @OfSize(2) regs: List[common.Register],
+                            r: common.Register
+                          )
 }
 
 package object modulo {
   @Initialize
   case class AddressMap(
-    range: AddressRange,
-    @At(0x200) @OfSize(1)
-    moduloRegFilesA: List[modulo.RegisterFileA],
-    @Modulo(0x20)
-    moduloRegFileB: modulo.RegisterFileB
-  )
+                         range: AddressRange,
+                         @At(0x200) @OfSize(1)
+                         moduloRegFilesA: List[modulo.RegisterFileA],
+                         @Modulo(0x20)
+                         moduloRegFileB: modulo.RegisterFileB
+                       )
   @Initialize
   case class RegisterFileA(
-    range: AddressRange,
-    reg: common.Register,
-    @OfSize(1)
-    l: List[common.Register]
-  )
+                            range: AddressRange,
+                            reg: common.Register,
+                            @OfSize(1)
+                            l: List[common.Register]
+                          )
   @Initialize
   case class RegisterFileB(
-    range: AddressRange,
-    @OfSize(5)
-    regs: List[common.Register],
-    @Modulo(0x80)
-    r: common.Register
-  )
+                            range: AddressRange,
+                            @OfSize(5)
+                            regs: List[common.Register],
+                            @Modulo(0x80)
+                            r: common.Register
+                          )
 }
 
 package object increment {
   @Initialize
   case class AddressMap(
-    range: AddressRange,
-    @OfSize(3) @Increment(0x280)
-    incrementRegFilesA: List[increment.RegisterFileA],
-    incrementRegFileB: increment.RegisterFileB
-  )
+                         range: AddressRange,
+                         @OfSize(3) @Increment(0x280)
+                         incrementRegFilesA: List[increment.RegisterFileA],
+                         incrementRegFileB: increment.RegisterFileB
+                       )
   @Initialize
   case class RegisterFileA(
-    range: AddressRange,
-    reg: common.Register,
-    @OfSize(5) @Increment(0x10)
-    l: List[common.Register]
-  )
+                            range: AddressRange,
+                            reg: common.Register,
+                            @OfSize(5) @Increment(0x10)
+                            l: List[common.Register]
+                          )
   @Initialize
   case class RegisterFileB(
-    range: AddressRange,
-    @OfSize(3) @Increment(0x20)
-    regs: List[common.Register],
-    r: common.Register
-  )
+                            range: AddressRange,
+                            @OfSize(3) @Increment(0x20)
+                            regs: List[common.Register],
+                            r: common.Register
+                          )
 }
 
 package object all {
@@ -187,11 +201,11 @@ package object all {
     */
   @Initialize
   case class AddressMap(
-     range: AddressRange,
-     @OfSize(3) regFilesA: List[all.RegisterFileA],
-     // move 64000 bytes forward
-     @OfSize(2) @At(0xFA00) @Increment(0x8000) regFilesB: List[all.RegisterFileB]
-  )
+                         range: AddressRange,
+                         @OfSize(3) regFilesA: List[all.RegisterFileA],
+                         // move 64000 bytes forward
+                         @OfSize(2) @At(0xFA00) @Increment(0x8000) regFilesB: List[all.RegisterFileB]
+                       )
 
   /**
     * '@Initialize macro should generate following code:
@@ -305,24 +319,24 @@ package object all {
 package nonContiguous {
   @Initialize
   case class AddressMap(
-    range: AddressRange,
-    @OfSize(2) @Increment(0x280)
-    incrementRegFilesA: List[nonContiguous.RegisterFileA],
-    incrementRegFileB: nonContiguous.RegisterFileB
-  )
+                         range: AddressRange,
+                         @OfSize(2) @Increment(0x280)
+                         incrementRegFilesA: List[nonContiguous.RegisterFileA],
+                         incrementRegFileB: nonContiguous.RegisterFileB
+                       )
   @Initialize
   case class RegisterFileA(
-    range: AddressRange,
-    reg: common.Register,
-    @OfSize(2) @Increment(0x12)
-    l: List[common.Register]
-  )
+                            range: AddressRange,
+                            reg: common.Register,
+                            @OfSize(2) @Increment(0x12)
+                            l: List[common.Register]
+                          )
   @Initialize
   case class RegisterFileB(
-    range: AddressRange,
-    @OfSize(2) @Increment(0x24)
-    regs: List[common.Register],
-    r: common.Register
-  )
+                            range: AddressRange,
+                            @OfSize(2) @Increment(0x24)
+                            regs: List[common.Register],
+                            r: common.Register
+                          )
 }
 

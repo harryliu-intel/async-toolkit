@@ -259,7 +259,7 @@ object Memory {
     * @param width width in bits
     * */
   case class AddressRange private (pos: Address, width: Bits) {
-    require(width.toLong > 0L)  // pos <= lim
+    require(width.toLong >= 0L, s"address range must have positive length, found: $width ($pos until $lim)")  // pos <= lim
 
     /** First address free after this range,
       * e.g. AddressRange(Address(32.bytes), 8.bytes).lim == Address(40.bytes)

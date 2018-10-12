@@ -1,5 +1,7 @@
 package com.intel.cg.hpfd.csr.macros.annotations
 
+import com.intel.cg.hpfd.madisonbay.BitVector
+
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.macros._
@@ -39,10 +41,11 @@ class GenOpticsLookupImpl(val c: whitebox.Context) {
   }
 
   private def generateGenOpticsLookup(tpname: c.Name, params: List[ValDef]): c.Tree = {
+    val bvecTy = typeOf[BitVector]
     val results: List[c.Tree] = params.map {
       // ignore AddressRange
       case q"$_ val range: AddressRange = $expr" =>
-        q"_root_.scala.collection.immutable.HashMap[Address, Optional[A,Long]]()"
+        q"_root_.scala.collection.immutable.HashMap[Address, Optional[A, $bvecTy]]()"
       case q"$_ val $tname: List[$tpt] = $_" => generateCodeForList(tpname, tname, tpt)
       case q"$_ val $tname: $tpt = $_" => generateCodeForSingleElement(tpname, tname, tpt)
       case other => c.abort(
@@ -57,7 +60,7 @@ class GenOpticsLookupImpl(val c: whitebox.Context) {
        def genOpticsLookup[A](
          me: ${tpname.toTypeName},
          path: _root_.monocle.Optional[A,${tpname.toTypeName}]
-       ): _root_.scala.collection.immutable.HashMap[Address, _root_.monocle.Optional[A,Long]] = {
+       ): _root_.scala.collection.immutable.HashMap[Address, _root_.monocle.Optional[A,$bvecTy]] = {
          import _root_.monocle.function.Index._
          import _root_.monocle.Optional
 

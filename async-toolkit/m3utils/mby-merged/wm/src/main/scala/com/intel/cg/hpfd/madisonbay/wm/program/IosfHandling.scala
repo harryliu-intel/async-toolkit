@@ -4,9 +4,9 @@ package com.intel.cg.hpfd.madisonbay.wm.program
 import java.io.{DataInputStream, DataOutputStream}
 import java.nio.{ByteBuffer, ByteOrder}
 
-import scala.collection.immutable.HashMap
 import scala.language.reflectiveCalls
 import madisonbay.csr.all._
+import com.intel.cg.hpfd.madisonbay.BitVector
 import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
@@ -15,7 +15,7 @@ import monocle.Optional
 
 import scala.collection.mutable
 
-class IosfHandling(paths: HashMap[Address, Optional[mby_top_map,Long]]) {
+class IosfHandling(paths: Map[Address, Optional[mby_top_map,BitVector]]) {
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
   // (we do not not provide subclasses or trait definitions in the scheme-based generator)
   type dataSig = { def data0: Long ; def data1: Long }
@@ -83,7 +83,7 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map,Long]]) {
     (1 to array.length / regSize).foreach(_ => {
       output.append(buffer.getLong())
     })
-    output.toList
+    output.map(BitVector(_)).toList
   }
 
   def processWriteBlk(csrs: mby_top_map,
@@ -108,15 +108,15 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map,Long]]) {
       val registerWriteCommands = registerAddresses zip registerDatas
 
       val newCsrs = registerWriteCommands.foldLeft(csrs)((currentCsrs: mby_top_map,
-                                            writeCommand: (Long, Long)) => {
+                                            writeCommand: (Long, BitVector)) => {
         val (writeAddress, writeData) = writeCommand
 
-        val newCsrOption = for (
-          optionalForRegister <- paths.get(Address at (writeAddress bytes));
+        val newCsrOption = for {
+          optionalForRegister <- paths.get(Address at (writeAddress bytes))
           modifierForRegister <- Some(optionalForRegister.modify(_ => writeData))
-        ) yield modifierForRegister
+        } yield modifierForRegister
 
-        newCsrOption.getOrElse((x : mby_top_map) => x)(currentCsrs)
+        newCsrOption.getOrElse((x: mby_top_map) => x)(currentCsrs)
       })
 
       val response = makeResponse(iosf)
@@ -168,7 +168,7 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map,Long]]) {
     val registerValue = paths
       .get(Address at (iosf.addr bytes))
       .flatMap(_.getOption(csrs))
-      .getOrElse(0L)
+      .getOrElse(BitVector(0L))
 
     os.writeFmModelMessageHdr( FmModelMessageHdr(msgLength, 2.shortValue(), FmModelMsgType.Iosf, 0x0.shortValue, 0.shortValue))
     val response = makeReadResponse(iosf)
@@ -176,12 +176,12 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map,Long]]) {
 
     ByteBuffer
       .allocate(8)
-      .putLong(registerValue)
+      .putLong(registerValue.extract[Long])
       .array()
       .foreach(os.writeByte(_))
 
     os.flush()
-    println(f"Wrote the response back $registerValue%x")
+    println(f"Wrote the response back ${registerValue.extract[Long]}%x")
   }
 
   def processIosf(csrs: mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map = {

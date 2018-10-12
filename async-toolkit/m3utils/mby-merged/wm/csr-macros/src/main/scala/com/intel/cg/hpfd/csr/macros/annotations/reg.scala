@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.macros.MacroUtils.{Control, HygienicUnquote}
-import com.intel.cg.hpfd.madisonbay.{AddressGuard, AddressOverlap}
+import com.intel.cg.hpfd.madisonbay.AddressGuard
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
@@ -12,119 +12,153 @@ import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay._
 
 
+/** Macro creating [[RdlRegister register classes]], used as a modifier similar to case.
+  *
+  * Maps pretty close to RDL as for grammar.
+  *
+  * Checks bit bounds, sizes and props existence.
+  *
+  * Example:
+  * {{{
+  *   @reg class small_tcam {
+  *     regwidth = 64
+  *     default resetValue = 0L
+  *
+  *     field mask(0 until 16) {
+  *       resetValue = ~0L
+  *       desc = "Bit mask over value"
+  *     }
+  *     field value(16 until 32)
+  *     field ready(32 until 33) {
+  *       encode = Boolean
+  *       resetValue = true
+  *       desc = "Whenever tcam value is ready to read"
+  *     }
+  *   }
+  * }}}
+  *
+  */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
 class reg extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro RegImpl.impl
 }
 
+/** Macro bundle providing implementation for @reg. */
 class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicUnquote { self =>
   import c.universe._
 
-  // for implicit revolution
-  val imports = c.typecheck(q"""
-    // import _root_.com.intel.cg.hpfd.madisonbay.Encode._
-  """)
+  /** Lenses annotation for any generated public case class.
+    *
+    * Requires full import of Lenses macro.
+    */
+  val lens = q"""new Lenses("_")"""
 
+  /** Unlift for continuous ranges, i.e. no {{{by}}}. */
   implicit val unliftContinuousRange = Unliftable[Range] {
     case q"${start: Int} to ${end: Int}" => start to end
     case q"${start: Int} until ${end: Int}" => start until end
   }
 
+  /** Lifting continuous range, i.e. no {{{by}}}. */
   implicit val liftContinuousRange = Liftable[Range] { r => q"(${r.start} to ${r.last})" }
 
-
-  def evalExpr[T](tree: c.Tree): T = c.eval[T](c.Expr(tree))
-
-
-  def extractClassParts(classDecl: ClassDef): (TypeName, List[c.Tree]) = classDecl match {
-    case q"class $name { ..$body }" => (name, body)
+  /** Extracts @reg class declaration basic parts.
+    *
+    * No generic parameters allowed.
+    * Type parameters are generated automatically, user-defined type parameters are not supported.
+    */
+  def extractClassParts(classDecl: ClassDef): (TypeName, Modifiers, List[Tree]) = {
+    implicit val pos = classDecl.pos
+    classDecl match {
+      case q"$mods class $name { ..$body }" => (name, mods, body)
+      case q"$mods class $name[..$params] { ..$body }" =>
+        cAbort("reg-classes cannot have generic parameters")
+      case q"$mods class $name[..$params](...$args) { ..$body }" =>
+        cAbort("reg-classes cannot have type arguments")
+      case _ => cAbort("reg-class declaration")
+    }
   }
 
-  /** Shortcut for Context capture. */
-  def parseField(name: c.TermName, args: List[c.Tree]): FieldInfo = {
-    val fparse = new FieldParser
-    fparse(name.toString, args)
+  /** Parses field arguments. */
+  def parseField(name: TermName, args: List[Tree]): FieldInfo = {
+    implicit val pos = wrappingPos(args)
+    val (defaultHard, defaultSoft) = ("R+W", "R+W")
+    val (range, tail) = args match {
+      case q"${range: Range}" :: tail => (range, tail)
+      case _ => cAbort("Invalid arguments for reg's field")
+    }
+    cAssert(range.start <= range.last) {
+      s"Register field cannot have zero width, found: ${range.start} .. ${range.end}"
+    }
+    //TODO: loop?
+    val (hard, soft) = tail match {
+      case Nil                                                       => (defaultHard, defaultSoft)
+      case q"soft=${soft: String}" :: Nil                            => (defaultHard, soft)
+      case q"hard=${hard: String}" :: q"soft=${soft: String}" :: Nil => (hard, soft)
+      case q"${hard: String}" :: Nil                                 => (hard, defaultSoft)
+      case q"${hard: String}" :: q"soft=${soft: String}" :: Nil      => (hard, soft)
+      case q"${hard: String}" :: q"${soft: String}" :: Nil           => (hard, soft)
+      case _ => cAbort("Invalid arguments for reg's field")
+    }
+    FieldInfo(name.toString, range, hard, soft)
   }
 
 
   /** Basic information on raw parsed field data.
-    * @param name
+    * @param name RDL name
     * @param range range of offsets in bits
-    * @param traits by their RDL-like names (e.g. hard="R", not HardwareReadable)
+    * @param traits traits mixed into the type
     */
   case class FieldInfo(name: String, range: Range, traits: List[Type])
   object FieldInfo {
-    //TODO: check if strings are all legit in a proper way
+    /** Basic constructor from RDL-like spec.
+      * @param name RDL name
+      * @param range range of offsets in bits
+      * @param hard hardware traits by their RDL names (e.g. hard="R", not HardwareReadable)
+      * @param soft software traits by their RDL names (e.g. soft="R", not SoftwareReadable)
+      * @param others other traits by their RDL name
+      * @return info object
+      */
     def apply(name: String, range: Range, hard: String, soft: String, others: String = ""): FieldInfo = {
       require(range.start < range.end)
       new FieldInfo(name, range, hardwareMap(hard) ::: softwareMap(soft) ::: getOthers(others))
     }
 
+    /** Get other traits from comma-separated string-list. */
     def getOthers(others: String): List[Type] =
       if (others.isEmpty) { List() } else { others.split(",").toList.map(x => otherMap(x)) }
 
+    /** Mapping of hardware, name->trait. */
     val hardwareMap = Map(
       "R" -> List(typeOf[HardwareReadable[_]]),
       "W" -> List(typeOf[HardwareWritable[_, _]]),
       "R+W" -> List(typeOf[HardwareReadable[_]], typeOf[HardwareWritable[_, _]])
     )
 
+    /** Mapping of software, name->trait. */
     val softwareMap = Map(
       "" -> List[Type]()
-      /*
-      "R" -> List(typeOf[SoftwareReadable[_]]),
-      "W" -> List(typeOf[SoftwareWritable[_]]),
-      "R+W" -> List(typeOf[SoftwareReadable[_]], typeOf[SoftwareWritable[_]])
-      */
     )
 
-    val otherMap = Map[String, Type](
-      /*
-      "ROR" -> typeOf[ResetOnRead]
-      */
-      //TODO: others
-    )
-  }
-
-
-  /** Parses "field" annotation into FieldInfo. */
-  class FieldParser {
-    def apply(name: String, args: List[c.Tree]): FieldInfo = {
-      implicit val pos = wrappingPos(args)
-      val (defaultHard, defaultSoft) = ("R+W", "R+W")
-      val (range, tail) = args match {
-        case q"${range: Range}" :: tail => (range, tail)
-        case _ => cAbort("Invalid arguments for reg's field")
-      }
-      cAssert(range.start <= range.last) {
-        s"Register field cannot have zero width, found: ${range.start} .. ${range.end}"
-      }
-      //TODO: loop?
-      val (hard, soft) = tail match {
-        case Nil                                                       => (defaultHard, defaultSoft)
-        case q"soft=${soft: String}" :: Nil                            => (defaultHard, soft)
-        case q"hard=${hard: String}" :: q"soft=${soft: String}" :: Nil => (hard, soft)
-        case q"${hard: String}" :: Nil                                 => (hard, defaultSoft)
-        case q"${hard: String}" :: q"soft=${soft: String}" :: Nil      => (hard, soft)
-        case q"${hard: String}" :: q"${soft: String}" :: Nil           => (hard, soft)
-        case _ => cAbort("Invalid arguments for reg's field")
-      }
-      FieldInfo(name, range, hard, soft)
-    }
+    /** Mapping of other traits, name->trait. */
+    val otherMap = Map[String, Type]()
   }
 
 
   /** Field data container and handler.
-    * @param name field's name
+    * @param name RDL name
     * @param range range of offsets in bits
     * @param traits names of traits to extend, generates AST analogue, parents
     * @param body props' code, generates AST analogue, defs
     */
-  class FieldData(val parentTy: TypeName, val name: TermName, var typ: Option[Type], val range: Range, traits: List[Type], body: List[c.Tree]) {
+  class FieldData(val parentTy: TypeName, val name: TermName, var typ: Option[Type], val range: Range, traits: List[Type], body: List[Tree]) {
     import FieldData._
 
+    /** Parents to extend. */
     var parents: Set[Type] = traits.toSet
-    var defs: Map[c.TermName, c.Tree] = body.map { el =>
+
+    /** Props as defined in RDL. */
+    var props: Map[TermName, Tree] = body.map { el =>
       el match {
         case q"$name = $value" => (TermName(name.toString), value)
         case q"type $name = $value" => (TermName(name.toString), value)
@@ -133,21 +167,34 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
       }
     }.toMap
 
-    def getDef(name: String): c.Tree = defs(TermName(name))
+    val parentMap = parents.flatMap(x => getProps(x)).toMap
+    val map = fieldMap ++ parentMap
 
-    def tryGetDef(name: String): Option[c.Tree] = defs.get(TermName(name))
+    /** Get prop by string name. */
+    def getProp(name: String): Tree = props(TermName(name))
 
-    def getDefOr(name: String, tree: => c.Tree): c.Tree = defs.getOrElse(TermName(name), tree)
+    /** Get prop option by string name. */
+    def tryGetProp(name: String): Option[Tree] = props.get(TermName(name))
 
-    def removeDef(name: String): Unit = defs = defs - TermName(name)
+    /** Get prop by string name or return a default tree. */
+    def getPropOr(name: String, tree: => Tree): Tree = props.getOrElse(TermName(name), tree)
 
-    def getResetValue: c.Tree = {
+    /** Remove prop. */
+    def removeProp(name: String): Unit = props = props - TermName(name)
+
+    /** Gets resetValue prop.
+      *
+      * Defaults to encoding's default.
+      */
+    def getResetValue: Tree = {
       val enTy = typeOf[Encode[_]]
-      val instTy = appliedType(enTy, typeOf[Long])
-      getDefOr("resetValue", q"implicitly[$instTy].default")
+      val ty = typ.getOrElse(typeOf[Long])
+      val instTy = appliedType(enTy, ty)
+      getPropOr("resetValue", q"implicitly[$instTy].default")
     }
 
-    def getRawResetValue: c.Tree = {
+    /** Gets raw resetValue. */
+    def getRawResetValue: Tree = {
       val enTy = typeOf[Encode[_]]
       typ match {
         case Some(ty) if ty == typeOf[Long] => getResetValue
@@ -156,10 +203,9 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
       }
     }
 
+    /** Gets modifiers. */
     protected def getMods(sym: Symbol): Modifiers = {
-      import c.universe.Flag._
-      var flags: FlagSet = NoFlags
-      if (!sym.isAbstract) flags |= OVERRIDE
+      val flags = if (sym.isAbstract) { NoFlags } else { Flag.OVERRIDE }
       val mods = Modifiers(flags)
       mods
     }
@@ -184,9 +230,6 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
       case t: MethodSymbol => q"$mods def $k = $v"
     }
 
-    val parentMap = parents.flatMap(x => getProps(x)).toMap
-    val map = fieldMap ++ parentMap
-
     /** Is this prop special? */
     def isSpecial(name: TermName): Boolean = specialProps.contains(name)
 
@@ -199,15 +242,15 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     /** Add defaults */
     def addDefaults(defaults: Map[TermName, Tree]): Unit = {
       defaults.foreach { case (k,v) =>
-        if(!defs.contains(k) && mapContains(k)) {
-          defs = defs + (k -> v)
+        if(!props.contains(k) && mapContains(k)) {
+          props = props + (k -> v)
         }
       }
     }
 
     /** Add stuff default for the type, not parent. They can access field's data, e.g. name. */
     def addUniversalDefaults(): Unit = {
-      val map = Map(
+      var map = Map(
         TermName("encode") -> tq"Long",
         TermName("name") -> q"${name.toString}"
       )
@@ -215,8 +258,8 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     }
 
     /** Generates properties tree */
-    def genProps: List[c.Tree] = {
-      defs.toList map {
+    def genProps: List[Tree] = {
+      props.toList map {
         case (k, v) => {
           implicit val pos = v.pos
           val prop = mapGet(k) | s"Unknown field property: $k"
@@ -228,66 +271,82 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     /** Takes ownership (i.e. removes) final props.
       *
       * They're bound to be treated specially (they can't be overriten anyway. */
-    def takeFinalProps(): Map[TermName, c.Tree] = {
-      val finals = defs collect { case (k, v) if mapGet(k).map(_.isFinal).getOrElse(false) => (k, v) }
-      defs = defs -- finals.keySet
+    def takeFinalProps(): Map[TermName, Tree] = {
+      val finals = props collect { case (k, v) if mapGet(k).map(_.isFinal).getOrElse(false) => (k, v) }
+      props = props -- finals.keySet
       finals
     }
 
     /** Takes ownership (i.e. removes) of all special props. */
-    def takeSpecialProps(): Map[TermName, c.Tree] = {
+    def takeSpecialProps(): Map[TermName, Tree] = {
       val finals = takeFinalProps()
-      val specials = defs filter { case (k,_) => isSpecial(k) }
-      defs = defs -- specials.keySet
+      val specials = props filter { case (k,_) => isSpecial(k) }
+      props = props -- specials.keySet
       finals ++ specials
     }
 
     /** Generates field's final AST */
-    def generate: c.Tree = {
+    def generate(): (Tree, Tree) = {
+      val nameClass = name.toTypeName
+
       addUniversalDefaults()
       val finals = takeSpecialProps()
       val encodeTree = asType(finals(TermName("encode")))
-      val encode = c.typecheck(encodeTree, c.TYPEmode).tpe
+      val (encode, enImpl) = encodeTree match {
+        case tq"Raw" => {
+          val enSy = symbolOf[Encode[_]].companion
+          val encodeTy = typeOf[Encode[Long]]
+          (typeOf[Long], q"lazy val en: $encodeTy = $enSy.encodeRaw(${range.last - range.start + 1})")
+        }
+        case _ => {
+          val encode = c.typecheck(encodeTree, c.TYPEmode).tpe
+          val encodeTy = appliedTypeTree(typeOf[Encode[_]], tq"$encode")
+          (encode, q"lazy val en: $encodeTy = implicitly[$encodeTy]")
+        }
+      }
       typ = Some(encode)
 
-      //val instTy = tq"${typeOf[RdlField[_, _]].typeConstructor}[$parentTy, $encode]"
-      val instParents = parents.map(p =>
+
+      val fieldTy = appliedTypeTree(typeOf[RdlField[_, _]], tq"$nameClass", tq"$encode")
+      val fieldCompTy = appliedTypeTree(typeOf[RdlFieldCompanion[_, _]], tq"$nameClass", tq"$encode")
+
+      val instParents = fieldTy :: parents.map(p =>
         (p.etaExpand.typeParams.length) match {
           case 0 => tq"$p"
           case 1 => tq"${p.typeConstructor.typeSymbol}[$encode]"
-          case 2 => tq"${p.typeConstructor.typeSymbol}[$parentTy, $encode]"
+          case 2 => tq"${p.typeConstructor.typeSymbol}[$nameClass, $encode]"
           case _ => cAbort(body.head.pos, s"Too many generic arguments for type: $p")
         }
-      )
-      val fieldTy = appliedTypeTree(typeOf[RdlField[_, _]], tq"$parentTy", tq"$encode")
-      val encodeTy = appliedTypeTree(typeOf[Encode[_]], tq"$encode")
+      ).toList
 
-      val parent = c.freshName(TermName("parent"))
+      val compParents = fieldCompTy :: Nil
+
       val rangeTy = typeOf[Range]
+      val parentComp = parentTy.toTermName
 
-      q"""
-        val $name = {
-          ..$imports
-          val $parent: $parentTy = this
-          new $fieldTy with ..$instParents {
-            val reg: $parentTy = $parent
-            val en: $encodeTy = implicitly[$encodeTy]
+      val mods = Modifiers(Flag.CASEACCESSOR | Flag.PARAMACCESSOR)
+
+      (q"""$mods val $name: $parentComp.$nameClass = $parentComp.$name()""",
+        q"""
+          @$lens
+          case class $nameClass(value: $encode) extends ..$instParents {
             val range: $rangeTy = $range
+            lazy val companion: $fieldCompTy = $name
             ..$genProps
           }
-        }
-      """
+          object $name extends ..$compParents {
+            def name: String = ${name.toString}
+            $enImpl
+            def width: Int = ${range.last - range.start + 1}
+            def apply(value: $encode): $nameClass = new $nameClass(value)
+           ..$genProps
+          }
+      """)
     }
   }
   object FieldData {
+    /** Get map members of a type, name->symbol format. */
     def getProps(ty: Type): Map[Name, Symbol] = ty.members.map(x => (x.name.decodedName, x)).toMap
-    protected def getMods(sym: Symbol): Modifiers = {
-      import c.universe.Flag._
-      var flags: FlagSet = NoFlags
-      if (!sym.isAbstract) flags |= OVERRIDE
-      val mods = Modifiers(flags)
-      mods
-    }
 
     /** Example (non-abstract) representant. */
     val instTy: Type = typeOf[RdlField[_, Long]]
@@ -297,18 +356,20 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     val specialProps = Set("range", "encode", "sw", "hw").map(s => TermName(s))
   }
 
-  def handleField(parentTy: TypeName, name: c.TermName, args: List[c.Tree], body: List[c.Tree], guard: AddressGuard[String]): FieldData = {
+  /** Handle field declaration.
+    *
+    * Check the guard and produce field's data object.
+    */
+  def handleField(parentTy: TypeName, name: TermName, args: List[Tree], body: List[Tree], guard: AddressGuard[String]): (FieldData, AddressGuard[String]) = {
     implicit val cpos = wrappingPos(args)
     val info = parseField(name, args)
     val range = info.range
-    val (pos, lim) = (range.start, range.last+1)
-    val ar = AddressRange(Address(pos.bits), (lim-pos).bits)
-    try {
-      guard += (ar, name.toString)
-    }
-    catch {
-      case AddressOverlap(first, second) => cError {
-        s"Register cannot have overlapping fields, found: ${first.rangeString}, ${second.rangeString}"
+    val (pos, lim) = (range.start, range.last + 1)
+    val ar = AddressRange(Address(pos.bits), (lim - pos).bits)
+    val newGuard = guard.tryAdd(ar, name.toString) match {
+      case Right(guard) => guard
+      case Left(conflict) => cAbort {
+        s"Register cannot have overlapping fields, found: ${ar.rangeString}, ${conflict.rangeString}"
       }
     }
 
@@ -316,7 +377,9 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
       case q"{..$li}" :: rest => li ::: rest
       case _ => body
     }
-    new FieldData(parentTy, name, None, range, info.traits, deblockedBody)
+
+    val data = new FieldData(parentTy, name, None, range, info.traits, deblockedBody)
+    (data, newGuard)
   }
 
   /**
@@ -326,21 +389,18 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     *  * name = number (will emit an info on implicit bits interpretation)
     * Aborts compilation if the alignment is encountered more than once.
     */
-  class qAlign(val name: String) {
-    /** Value of the parsed alignment. */
-    var value: Option[Alignment] = None
-
+  case class qAlign(name: String, value: Option[Alignment] = None) {
     /** Try to parse prop assignment from tree */
-    def unapply(tree: c.Tree): Option[(Alignment, List[c.Tree])] = {
+    def unapply(tree: Tree): Option[(Alignment, Tree, qAlign)] = {
       implicit val pos = tree.pos
 
       /** Take memory unit as alignment, generate code. */
-      def take(munit: MemoryUnit): (Alignment, List[c.Tree]) = {
+      def take(munit: MemoryUnit): (Alignment, Tree, qAlign) = {
         value.isEmpty                      | s"register can't have multiple $name assignments"
         val bytes = munit.tryBytes         | s"register can't have $name which not being full bytes, found: $munit"
         val alignment = bytes.tryAlignment | s"register must have $name = 2^N bytes"
-        value = Some(alignment)
-        (alignment, List(q"override val ${TermName(name)} = $alignment"))
+        val newValue = Some(alignment)
+        (alignment, q"override val ${TermName(name)} = $alignment", qAlign(name, newValue))
       }
 
       Some(tree) collect {
@@ -364,17 +424,11 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     *  * field name(range[, hard_access[, soft_access]]) [{ props }]
     *  * field name(range[, hard = hard_access][, soft = soft_access]) [{ props }]
     */
-  class qField(val parentTy: TypeName) {
-    /** Address guard of fields.
-      *
-      * Throws an error if overlapping is detecyted.
-      * Can generate address map. */
-    var guard = AddressGuard[String]()
+  case class qField(parentTy: TypeName,
+                    var guard: AddressGuard[String] = AddressGuard[String](),
+                    var fields: List[FieldData] = Nil) {
 
-    /** Parsed fields' data. */
-    var fields = List[FieldData]()
-
-    def unapply(tree: c.Tree): Option[(c.TermName, List[c.Tree], List[c.Tree])] = Option(tree) collect {
+    def unapply(tree: Tree): Option[(TermName, Tree, Tree, qField)] = Option(tree) collect {
       case q"field.$name($details)" => {
         val (args, body) = details match {
           // name(el)
@@ -385,13 +439,15 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
           case Apply(q"(..$args)", body) => (args, body)
           case _ => cAbort(details.pos, "Invalid field declaration")
         }
-        fields = handleField(parentTy, name, args, body, guard) :: fields
-        (name, args, body)
+        val (newField, newGuard) = handleField(parentTy, name, args, body, guard)
+        val newFields = newField :: fields
+        (name, q"..$args", q"..$body", qField(parentTy, newGuard, newFields))
       }
       // field name(...)
       case q"field.$name(..$args)" => {
-        fields = handleField(parentTy, name, args, List(), guard) :: fields
-        (name, args, List())
+        val (newField, newGuard) = handleField(parentTy, name, args, List(), guard)
+        val newFields = newField :: fields
+        (name, q"..$args", q"", qField(parentTy, newGuard, newFields))
       }
     }
   }
@@ -399,82 +455,115 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
   /** Extractor for special attributes of register itself, e.g. "default". Accepts syntax:
     * * name pname = pimpl
     */
-  class qProps(val name: String) {
-    /** Parsed props */
-    var defs = Map[c.TermName, c.Tree]()
-    def unapply(tree: c.Tree): Option[(c.TermName, c.Tree)] = Some(tree) collect {
+  case class qProps(name: String, props: Map[TermName, Tree] = Map[TermName, Tree]()) {
+    def unapply(tree: Tree): Option[(TermName, Tree, qProps)] = Some(tree) collect {
       case q"$pref.$pname = $pimpl" if pref.toString == name => {
-        cAssert(tree.pos, !defs.contains(pname), s"register can't have multiple $name for $pname")
-        defs = defs + (pname -> pimpl)
-        (pname, pimpl)
+        cAssert(tree.pos, !props.contains(pname), s"register can't have multiple $name for $pname")
+        val newProps = props + (pname -> pimpl)
+        (pname, pimpl, qProps(name, props))
       }
     }
   }
 
 
-  /** Implements resetted instance constructor. */
-  def resetImpl(fields: List[FieldData]): c.Tree = {// implement generic reset
-    val regTy = typeOf[RdlRegister[_]]
-    val regObj = regTy.companionInst
-    val stateChanges = fields.map(f => q"state = $regObj.writeState(state, ${f.range}, ${f.getRawResetValue})")
-    q"""var state = 0L; ..${stateChanges}; apply(addr, state)"""
+  /** Implements register serialization. */
+  def serializeImpl(name: TypeName, fields: List[FieldData]): Tree = {
+    val bvecCompSym = symbolOf[BitVector].companion
+    val li = fields.map(_.name).foldRight(q"$bvecCompSym.empty": Tree) {
+      (f,v) => q"$v | ($f, $f.pos)"
+    }
+    q"..$li"
   }
 
+  /** Implements register deserialization. */
+  def deserializeImpl(name: TypeName, fields: List[FieldData]): Tree = {
+    def extractField(field: FieldData): (Tree, Tree) = {
+      val (name, pos) = (field.name, field.range.start)
+      val tname = name.toTypeName
+      val fname = c.freshName(TermName("_" + name.toString))
+      (q"val $fname = vec.extract[$tname]($pos)", q"$fname": Tree)
+    }
+    val (vals, fnames) = fields.map(extractField).unzip
+    val addrRangeCompSy = typeOf[AddressRange].typeSymbol.companion
+    val addrCompSy = typeOf[Address].typeSymbol.companion
+    val addr = q"$addrRangeCompSy($addrCompSy(${0.bytes}), ${8.bytes})"  // arbitrary 0..64
+    val constr = q"new $name($addr, ..$fnames)"
+    q"..$vals; $constr"
+  }
 
   /** Parses DSL code and generates proper Scala.
     *
     * Checks various invariants.
     */
-  def modifiedDeclaration(classDef: ClassDef): c.Tree = {
+  def modifiedDeclaration(classDef: ClassDef): Tree = {
     implicit val pos = classDef.pos
-    val (name, body) = extractClassParts(classDef)
+    val (name, _mods, body) = extractClassParts(classDef)
+    val mods = Modifiers(_mods.flags | Flag.CASE)
+      .mapAnnotations(_ => lens :: _mods.annotations)
 
-    val qRegwidth    = new qAlign("regwidth")
-    val qAccesswidth = new qAlign("accesswidth")
-    val qAlignment   = new qAlign("alignment")
+    case class State(tree1: Tree,
+                     tree2: Tree,
+                     props: qProps,
+                     regwidth: qAlign,
+                     accesswidth: qAlign,
+                     alignment: qAlign,
+                     fields: qField)
 
-    val qDefault = new qProps("default")
-    qDefault.defs += TermName("encode") -> tq"Long"
+    val state0 = {
+      val qRegwidth    = new qAlign("regwidth")
+      val qAccesswidth = new qAlign("accesswidth")
+      val qAlignment   = new qAlign("alignment")
 
-    val qRdlField = new qField(name)
+      val qDefault = new qProps("default", Map(TermName("encode") -> tq"Raw"))
 
-    // parse each entity
-    val (newBody, companionBody) = {
-      val (a, b) = body.map { child =>
-        child match {
-          // defaults generate no code
-          case qDefault(_, _) => (List(), List())
+      val qRdlField = new qField(name)
 
-          // parse alignments
-          case qRegwidth(_, code)    => (code, code)
-          case qAccesswidth(_, code) => (code, code)
-          case qAlignment(_, code)   => (code, code)
-
-          // fields are dealt with after applying defaults etc.
-          case qRdlField(_, _, _) => (List(), List())
-
-          // other children (e.g. defs) are left as-is
-          case _ => (List(child), List())
-        }
-      }.unzip
-      (a.flatten, b.flatten)
+      State(q"", q"", qDefault, qRegwidth, qAccesswidth, qAlignment, qRdlField)
     }
 
-    val (fields, guard) = (qRdlField.fields, qRdlField.guard)
+    // parse each entity
+    val state: State = body.foldRight(state0) {
+      (tree, state) => {
+        import state._
+        val changes = tree match {
+          // defaults generate no code
+          case state.props(_, _, props) => copy(q"", q"", props = props)
+
+          // parse alignments
+          case state.regwidth(_, code, newValue) => copy(q"", code, regwidth = newValue)
+          case state.accesswidth(_, code, newValue) => copy(q"", code, accesswidth = newValue)
+          case state.alignment(_, code, newValue) => copy(q"", code, alignment = newValue)
+
+          // fields are dealt with after applying defaults etc.
+          case state.fields(_, _, _, newValue) => copy(q"", q"", fields = newValue)
+
+          // other children (e.g. defs) are left as-is
+          case x => copy(q"", x)
+        }
+        val newTree1 = q"..${state.tree1}; ${changes.tree1}"
+        val newTree2 = q"..${state.tree2}; ${changes.tree2}"
+        changes.copy(tree1 = newTree1, tree2 = newTree2)
+      }
+    }
+
+    val (_, companionBody) = (state.tree1, state.tree2)
+
+
+    val (fields, guard) = (state.fields.fields, state.fields.guard)
     cAssert(guard.length > 0) { s"Register must have at least one field" }
 
     // default values:
     //   regwidth = 4 bytes
     //   accesswidth = regwidth
-    val regwidth = qRegwidth.value.getOrElse(8.bytes.toAlignment)
-    val accesswidth = qAccesswidth.value.getOrElse(regwidth)
+    val regwidth = state.regwidth.value.getOrElse(8.bytes.toAlignment)
+    val accesswidth = state.accesswidth.value.getOrElse(regwidth)
 
     cAssert(regwidth >= accesswidth) {
       s"Register must have regwidth >= accesswidth (found: ${regwidth.toBytes} < ${accesswidth.toBytes})"
     }
 
     // all fields span through total width of...
-    // val cwidth = guard.width
+    val cwidth = guard.width
     //TODO: uncomment when M3 generator gives you enough info
     /*
     cAssert(cwidth <= accesswidth.toBits) {
@@ -482,52 +571,56 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     }
     */
 
+    //TODO: handle address map
+    val addrMap = guard.toAddrMap
+
     // apply defaults to fields' props
-    fields.foreach(_.addDefaults(qDefault.defs))
+    fields.foreach(_.addDefaults(state.props.props))
 
     val regTy = appliedTypeTree(typeOf[RdlRegister[_]], tq"$name")
     val regCompTy = appliedTypeTree(typeOf[RdlRegisterCompanion[_]], tq"$name")
+
     val longTy = typeOf[Long]
     val addrTy = typeOf[Address]
     val addrRanTy = typeOf[AddressRange]
     val addrRanComp = addrRanTy.companionInst
+    val bvecTy = typeOf[BitVector]
+
     val sname = name.toString
     val cname = name.toTermName
 
+    val (fieldsClassImpl, fieldsCompImpl) = {
+      val (a, b) = fields.map(_.generate()).unzip
+      (a, b.flatMap(_.children))
+    }
+
+    //TODO: genOpticsLookup --- encaps
     q"""
-        @_root_.monocle.macros.Lenses("_")
-        case class $name(range: $addrRanTy, state: $longTy) extends $regTy {
-          ..$imports
-          val name: String = $sname
+        $mods class $name(val range: $addrRanTy, ..$fieldsClassImpl) extends $regTy {
           val companion: $regCompTy = $cname
-          def rawCopy(range: $addrRanTy = range, state: $longTy = state): $name = new $name(range, state)
-          ..${newBody ++ fields.map(_.generate)}
+
+          def fields: List[${typeOf[RdlField[_, _]]}] = List(..${fields.map(_.name)})
+
+          def serialize: $bvecTy = ${serializeImpl(name, fields)}
         }
         object $cname extends $regCompTy {
-          ..$imports
-          def apply(addr: $addrTy, state: $longTy): $name = {
-            val range = $addrRanComp.placeReg(addr, regwidth, alignment, Some(accesswidth))
-            new $name(range, state)
-          }
-          def apply(addr: $addrTy): $name = ${resetImpl(fields)}
+          val name: String = $sname
 
-          def genOpticsLookup[A](
-            me: $name,
-            path: _root_.monocle.Optional[A, $name]
-          ): _root_.scala.collection.immutable.HashMap[Address, _root_.monocle.Optional[A, Long]] = {
-            val stateOptional = _root_.monocle.Optional[$name,$longTy] {
-              r => Some(r.state)
-            } {
-              newValue => _.copy(state = newValue)
-            }
-            _root_.scala.collection.immutable.HashMap(me.range.pos -> (path composeOptional stateOptional))
+          def apply(addr: $addrTy): $name = {
+            val range = $addrRanComp.placeReg(addr, regwidth, alignment, Some(accesswidth))
+            new $name(range = range)
           }
+
+          def deserialize(vec: $bvecTy): $name = ${deserializeImpl(name, fields)}
+
+          ..$fieldsCompImpl
 
           ..$companionBody
         }
      """
   }
 
+  /** Implement @reg macro. */
   def impl(annottees: c.Expr[Any]*): c.Expr[Any] = {
     // only handles class declarations
     val input = annottees.map(_.tree).toList
@@ -535,7 +628,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
       case (classDecl: ClassDef) :: Nil => modifiedDeclaration(classDecl)
       case x => c.abort(wrappingPos(x), "Only class declarations can be annotated as \"reg\"")
     }
-    // println(output)
+    // println(showCode(output))
     c.Expr[Any](q"..$output")
   }
 }
