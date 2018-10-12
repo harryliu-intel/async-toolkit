@@ -47,7 +47,13 @@
 
 class mby_mesh_env_base_seq extends mby_common_pkg::mby_base_seq;
 
+    // Variable: dut_cfg
+    // Mesh dut cfg.
+    mby_mesh_env_pkg::mby_mesh_dut_cfg     dut_cfg;
 
+    // Variable: vif
+    // Handle to Mesh Tb interface.
+    virtual mby_mesh_tb_if                 vif;
 
     // ------------------------------------------------------------------------
     //  Constructor: new
@@ -56,7 +62,32 @@ class mby_mesh_env_base_seq extends mby_common_pkg::mby_base_seq;
     // ------------------------------------------------------------------------
     function new(string name = "mby_mesh_env_base_seq");
         super.new();
+        set_cfg(slu_tb_env::get_top_tb_env());
     endfunction : new
+
+    // ------------------------------------------------------------------------
+    // Function : set_cfg
+    // Sets the handle to the dut_cfg and tb vif. 
+    // ------------------------------------------------------------------------
+    virtual function void set_cfg(slu_tb_env tb_env);
+
+        mby_mesh_env_pkg::mby_mesh_env temp_env;
+        mby_mesh_env_pkg::mby_mesh_tb_top_cfg temp_tb_cfg;
+        bit stat;
+
+        stat = $cast(temp_env,tb_env);
+        if(!stat) begin
+            `uvm_fatal(get_name(), "Cast of sla_tb_env failed");
+        end
+        if(temp_env == null) begin
+            `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
+        end
+
+        temp_tb_cfg  = temp_env.get_tb_cfg();
+        this.dut_cfg = temp_tb_cfg.dut_cfg;
+        this.vif     = temp_env.get_tb_vif();
+
+    endfunction : set_cfg
 
 endclass : mby_mesh_env_base_seq
 
