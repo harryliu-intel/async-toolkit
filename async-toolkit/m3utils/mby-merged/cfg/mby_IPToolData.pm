@@ -65,7 +65,8 @@ $ToolConfig_ips{mby}{ENV}{LD_LIBRARY_PATH} .=  join(':',
 my $epl_version = "eth_port-dev-x0-18ww39c";
 
 $ToolConfig_ips{epc} = {
-   PATH    => "/nfs/sc/disks/sc_mby_00055/layhockk/mby/work_root/MBY/$epl_version",
+   #PATH    => "/nfs/sc/disks/sc_mby_00055/layhockk/mby/work_root/MBY/$epl_version",
+   PATH    => "$ENV{IP_MODELS}/eth_port/$epl_versio",
    VERSION => "$epl_version",
    OTHER   => {
       SEARCH_PATHS => ["&get_tool_path()",],
