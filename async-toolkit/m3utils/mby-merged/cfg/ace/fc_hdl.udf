@@ -414,6 +414,15 @@ EOF
                  -tag => "nonsynth",
              },
 
+            #### LH : FEBE Tophiergen
+            dump_filelist_lib => {                                                                                                                              
+                -vlog_files => [
+                    "tools/febe/utility/dump_filelist.sv",
+                ],
+                -vlog_incdirs => [
+                    "$ENV{ACE_HOME}/lib/Verilog",
+                ],},
+
 #              fc_emul_top_lib => {
 #                  -hdl_spec => [
 #                      "emul/wrappers/fc_emul_top.hdl",
@@ -439,6 +448,7 @@ EOF
                    "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
                     @all_sip_elab_opts,
                     @CDN_PCIE_ELAB_OPTS, 
+                    "dump_filelist_lib.dump_filelist",
                ],
 
                top_language => 'SystemVerilog',
@@ -493,6 +503,7 @@ EOF
                   @all_hip_liblist,
 
                   "ext_shared_lib",
+                  'dump_filelist_lib',
 #                  "cdn_pcie_lib",
                ],
 
