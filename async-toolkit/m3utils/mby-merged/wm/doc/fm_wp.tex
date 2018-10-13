@@ -122,7 +122,7 @@ issue even today.
 
 We take meeting Gordon Moore's 1979 challenge as the goal of our work.
 
-In this document, we will first, in section~\ref{sec:context} explore
+In this document, we will first, in section~\ref{sec:context}, explore
 the context of Moore's idea and how it has been addressed by different
 groups.  We will then explore the historical perspective, mostly from
 a software point of view, in section~\ref{sec:historical}.  After
@@ -225,7 +225,7 @@ be able to avoid those issues here, try as we may.  {\em End brief aside.}
 \subsection{Software engineering and the Software Crisis}
 
 Perhaps the purest instance of design complexity's becoming
-overwhelming was observed in the work of our software colleagues,
+overwhelming was observed in the 1960s in the work of our software colleagues,
 namely in the then-nascent field of software engineering.  Electrical
 engineers, hardware designers, civil engineers, can always attempt to
 shift the blame of difficulties to physical issues: ``the technical
@@ -242,7 +242,7 @@ in his 1972 Turing Lecture,
 more powerful machines were available, programming would no longer be
 a problem, for then the struggle to push the machine to its limits
 would no longer be necessary and that was all what programming was
-about, wasn’t it? But in the next decades something completely
+about, wasn't it? But in the next decades something completely
 different happened: more powerful machines became available, not just
 an order of magnitude more powerful, even several orders of magnitude
 more powerful. But instead of finding ourselves in the state of
@@ -283,7 +283,7 @@ judiciously, techniques from the software world to the hardware design process.
 
 Software leaders in the late 1960s and early 1970s responded to the software
 crisis in several ways.  The most obvious was a strong emphasis on structured
-development of software
+development of software, as in the following list of technologies.
 
 \begin{itemize}
 \item Structured programming (Dijkstra)\cite{structured}
@@ -315,9 +315,14 @@ written was underway.
   
 \end{itemize}
 
-\subsection{Model checking}
+\subsection{Model checking}\label{sec:model-checking}
 
-In the  second list, model checking stands out, for two reasons: it is
+We will now discuss model checking, not because it is a central topic
+of our further discussions but because it is a technology with a special
+relationship to hardware design, and we can draw general conclusions from
+some aspects of this relationship.
+
+In the  second list above, model checking stands out, for two reasons: it is
 the only technique on the list that is limited to bounded-size (in
 time and space) systems, and it was from the start developed in the
 context of hardware verification (probably because of its limitation
@@ -341,7 +346,7 @@ a significant impact on staffing costs or development schedules
 (although one can certainly argue that the presence of model-checking
 tools ensures higher-quality end results).  The reason for this is
 simple: model checking deals with design problems ``in the small,'' on
-the level of a single finite-state machine (FSM).  Because model
+the level of a single finite-state machine (FSM), or very few such machines.  Because model
 checking executes code until it reaches a fixed point, it
 fundamentally cannot deal with systems that can have unbounded
 behavior.  A hardware designer now objects: all hardware systems are finite,
@@ -389,9 +394,9 @@ design exploits a classic theorem in discrete mathematics.
 The fact that the correctness of the example program (or another one
 of similar complexity) is on its own beyond mechanical and human
 understanding is a simple consequence of what is known in computability
-theory as the ``Halting Problem,'' shown by Turing in 1937 to be unsolvable\cite{turing}.
+theory as the ``Halting Problem,'' shown by Turing in 1936--1937 to be unsolvable\cite{turing}.
 
-\subsection{The finite and specific size of hardware designs is not a safe haven}
+\subsection{The finite and specific size of hardware designs is not a safe haven}\label{sec:finite}
 
 That the halting problem has immediate and practical consequences can
 be seen from a study of the so-called ``Busy Beaver'' problem, which
@@ -402,7 +407,7 @@ complicated behaviors\cite{busy-beaver}.
 {\em Straw man argument.} any piece of hardware is of finite extent (well,
 once the size parameters are bound, and we do not care about hardware
 with unbound size parameters, because we will only build hardware with
-bound sizes [we already take issue with this restriction]).  Therefore
+bound sizes [in reality, we already take issue with this restriction]).  Therefore
 hardware can be validated by considering the entire state space of the
 hardware.  In software, we are, in contrast, often interested in having software
 that can run on hardware the characteristics of which (the size, in particular) we do
@@ -434,7 +439,7 @@ The fact remains that more than eighty years of work in theoretical
 computer science shows that methods that attempt to find bugs in
 already designed systems presented without design invariants lead to
 intractable problems for anything but the most trivial of examples and
-that this approach is generally doomed to fail.  Industrial practice
+that this approach is generally doomed to failure.  Industrial practice
 is to concentrate on more or less haphazard approaches to program
 testing, which, no matter how sophisticated they appear, can only explore
 infinitesimal parts of the state space and are often no better.
@@ -456,7 +461,7 @@ the company.  In an ideal world, the functional model would capture every
 structural relationship present in the design.
 
 As a central unifying formal description of the design, the idea is that the
-functional model can repeat a large amount of duplicated work, as it is common
+functional model can replace a large amount of duplicated work, as it is common
 in the hardware-design world to generate a large number of independent models for
 a single hardware design.  Our idea is to represent all these models in a format
 that is manipulable enough to serve the needs formerly served by each of the many
@@ -620,7 +625,7 @@ Highland Park (HLP) continued the approach used in RRC but with more
 systematic test plans and in general better (earlier) execution.
 Another important point to consider is that HLP's software drivers
 were (are being) developed using the same interfaces used within the
-white model for CSR access.  Also, HLP was modeled in Simics (see
+white model for access to configuration and status registers (CSRs).  Also, HLP was modeled in Simics (see
 section~\ref{sec:simics}), where the Simics model was written from
 scratch in Simics DML, but using the HLP white model as a guide.
 
@@ -630,10 +635,10 @@ allowing registers and register fields to be read out of the flat memory.
 
 \subsection{Mount Steller/Mount Evans}
 
-For management reasons, the Mount Steller (MST) team decided to modify
+For staffing reasons, the Mount Steller (MST) team decided to modify
 their approach to CSRs in order that it could more closely match
 Simics DML directly.  Since CSRs are required also to be accessed by address
-(by e.g., a remote host), the translation of data in this model had to
+(by, e.g., a remote host), the translation of data in this model had to
 proceed ``backwards'' from HLP practice: operations on flat memory had
 to be converted to operations on DML data structures.
 
@@ -835,7 +840,7 @@ for high-level synthesis (HLS) directly to gates.  One challenge with this appro
 it would put very high demands on the quality of the functional model, because it makes
 regular ``design validation'' impossible, since there would no longer be two
 independently developed models that can be checked against each other.  However, this
-is not an insurmountable obstacle, and in fact, the fact that traditional techniques
+is not an insurmountable obstacle, and indeed, the fact that traditional techniques
 have multiple models for the same object is precisely the problem we were trying to
 solve in the first place.  Instead of validating the designs by comparing them
 against each other (which we know is difficult and frequently impossible to do
@@ -888,7 +893,7 @@ Modula-3\cite{spwm3}, and Java\cite{java} are all by now decades old
 and have demonstrated how to avoid many of the software-engineering
 deficiencies of C and C++, yet nothing of the sort is widely used
 today in our field.  In fact, even the use of C for modeling hardware
-is in some quarters still considered quite cutting-edge, as there remain
+is in some quarters still considered quite novel, as there remain
 groups that simply do not produce software-based models of their designs
 and instead proceed directly to synthesizable RTL from English-language
 specification documents.
@@ -896,7 +901,8 @@ specification documents.
 The application of strict coding standards can somewhat alleviate the
 problems of using antiquated software-development environments, but
 the application of such coding standards requires careful code review
-and strict management practices, which are also costly measures.
+and strict management practices, which are also costly measures.  They also
+tend to require superhuman discipline to follow consistently.
 
 \subsection{Choice of programming tools (including programming languages)}\label{sec:programming-languages}
 
@@ -923,7 +929,7 @@ consumers identified in section~\ref{sec:consumers}.  Another reason is that
 it is difficult and expensive to rewrite everything in a functional model
 from the ground up; in other words, components already exist or are easily
 generated in specific programming languages.  Even when new code is written,
-staffing constraints may demand that certain technologies be used and avoided.
+staffing constraints may demand that certain technologies be used and others avoided.
 
 Our solution to this is to expend significant effort on inter-language
 translation software.  Such software already exists in the forms of
@@ -944,8 +950,8 @@ from one technology to another: we do not need to throw everything
 away and start from scratch, which in a commercial environment can be
 very difficult to do.  The multi-language approach therefore lowers
 the overall risks associated with adopting new technology (since they
-can be adopted piecemeal and rejected without restarting the entire
-program).
+can be adopted piecemeal and in case of unsatisfactory progress
+rejected without restarting the entire program).
 
 A final, and perhaps obvious, advantage of the language-agnostic
 approach is that a great many programming languages have been created
@@ -991,6 +997,9 @@ Formats that do {\em not\/} meet the above requirements include
 Microsoft Word, SystemVerilog, and other proprietary formats but even
 open formats such as C source code that are difficult to parse
 (extract information from).
+
+As mentioned in section~\ref{sec:agnostic}, which format is used in what context
+can vary based on the domain-specific requirements in each case.
 
 \subsection{Human time is the scarce resource}
 
@@ -1066,7 +1075,7 @@ is not even identified until well after the hardware design has been
 mostly finalized.  In our analysis, this is backwards---the software
 ought to come first, or be done very early, so that time is not
 expended on hardware features that no one will use.  Experienced
-readers will see that this design approach is the natural consequence
+readers will see that this design approach is also the natural consequence
 of following a top-down design style through a system large enough to
 encompass both hardware and system software.  See for example
 Dijkstra's discussion in EWD1308\cite{ewd1308}.
@@ -1080,8 +1089,8 @@ say, ``I know it when I see it,'' but similarly to the case in
 constitutional law, this approach has its faults.  Probably its major
 fault is that implies the existence of a kind of programming
 guild---that programming can only learned through apprenticeship.
-This runs counter to our objective of articulating clear goals and
-directions.
+This mindset runs counter to our objective of articulating clear goals and
+directions.  Therefore, we are obligated to attempt to define what ``good code'' is.
 
 \subsection{Kolmogorov complexity}
 
@@ -1098,7 +1107,7 @@ low: it is the length of a program for finding digits of $\pi$ plus
 the length of the specification of the number of digits, which can be
 close to zero for some numbers but never more than $\log n$.  The
 exact value of Kolmogorov complexity is uncomputable because of the
-Halting Problem and the existence of Busy Beavers.  See Cover and
+Halting Problem and the existence of Busy Beavers (see sections~\ref{sec:model-checking}--\ref{sec:finite}).  See Cover and
 Thomas\cite{cover+thomas} for more detail on this topic.
 
 The application of Kolmogorov complexity to programming is that the programs
@@ -1131,7 +1140,7 @@ In other words, in falling order of desirability:
 
 \item A code fragment is written multiple times and the correspondence is conditionally checked at runtime.  {\em Poor}
 
-\item A code fragment is writen multiple times  and the correspondence is checked only when a specific test for the correspondence is deployed.  {\em Unacceptable}
+\item A code fragment is written multiple times  and the correspondence is checked only when a specific test for the correspondence is deployed.  {\em Unacceptable}
 
 \end{itemize}
 
@@ -1143,7 +1152,7 @@ have an outline of what human engineers should be producing as input
 to the design process.  It is not unusual that some tool or some step or steps
 of the design process requires input with properties quite different from
 what we recommend.  We can draw a very simple conclusion from this: in cases
-we must use such tools are go through such design steps, the input to those
+we must use such tools or go through such design steps, the input to those
 tools {\em must be automatically generated.}  In other words, to solve the
 problem that we require low-complexity input at some point in our process but
 we have made a rule that humans only are to produce high-complexity input, we add
@@ -1165,7 +1174,8 @@ or how little our approach is applicable to such designs.
 
 We now have to make a diversion into a topic that we have been avoiding, that is,
 organizational structure.  The functional modeling approach, in particular, the
-functional-model-as-specification (section~\ref{sec:fm-spec})
+functional-model-as-specification (section~\ref{sec:fm-spec}) is sufficiently
+different from common practice that it makes new (or different) demands on organizational structure.
 
 \subsection{Interactions between hardware modelers and software team}
 
@@ -1222,10 +1232,14 @@ not yet been worked out by the time our team starts to engage the technical issu
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Summary and Conclusion}
+
 \section{Acknowledgements}
 
 Michael Wrighton has given many comments and been instrumental in expressing many
 of the ideas described in this document.
+
+\newpage
 
 \appendix
 
@@ -1264,6 +1278,8 @@ conversational languages over non-conversational ones. However, there
 is another reason why people don’t do predocumentation: They don't
 have a good language for it since we have no way of writing predicates
 describing the state of a computation.
+
+\newpage
 
 \section{{\tt corners} module}\label{apdx:corners}
 
@@ -1461,7 +1477,7 @@ endmodule
 \end{verbatim}
 
 
-
+\newpage
 
 \begin{thebibliography}{99}
 
@@ -1628,7 +1644,7 @@ Language and Libraries. Waltham, MA, 2004.}
   Proceedings of Symposium on Applied Mathematics {\bf 19}. American
   Mathematical Society, 1967.}
 
-\bibitem{hoare-logic}{C.A.R.~Hoare.  An axiomatic basis for computer programming.  {\it CACM\/} {\bf 12}(10), pp.~576--580.}
+\bibitem{hoare-logic}{C.A.R.~Hoare.  An axiomatic basis for computer programming.  {\it CACM\/} {\bf 12}(10), pp.~576--580, October 1969.}
 
 \bibitem{java}{James Gosling, Bill Joy, Guy Steele, Gilad Bracha, and Alex Buckley.  {\it The Java Language Specification, Java SE 8 Edition.}  Redwood City, Calif.:\ Oracle, 2015.}
 
@@ -1673,12 +1689,9 @@ of Engineering and Applied Science, Department of Electrical Engineering, 2001.}
 
 \bibitem{algol60}{J.~W.~Backus, F.~L.~Bauer, J.~Green, C.~Katz, J.~McCarthy,
 P.~Naur, A.~J.~Perlis, H.~Rutishauser, K.~Samelson, B.~Vauquois, J.~H.~Wegstein,
- A.~van~Wijngaarden, and M.~Woodger. {\it Revised Report on the Algorithmic Lang
-uage}~{\scshape Algol 60}.  Berlin:\ Springer-Verlag, 1969.}
+ A.~van~Wijngaarden, and M.~Woodger. {\it Revised Report on the Algorithmic Language}~{\scshape Algol 60}.  Berlin:\ Springer-Verlag, 1969.}
 
-\bibitem{ref:burns_ms}  Steven~M.~Burns. {\it Automated Compilation of Concurren
-t Programs into Self-timed Circuits.} M.S.\ thesis, Caltech \hbox{CS-TR-88-2}, C
-alifornia Institute of Technology, 1988.
+\bibitem{ref:burns_ms}  Steven~M.~Burns. {\it Automated Compilation of Concurrent Programs into Self-timed Circuits.} M.S.\ thesis, Caltech \hbox{CS-TR-88-2}, California Institute of Technology, 1988.
 
 \bibitem{filter}{U.~V.~Cummings, A.~M.~Lines, and A.~J.~Martin.  An Asynchronous
  Pipelined  Lattice Structured Filter.  In {\it Proceedings of the International
@@ -1704,21 +1717,17 @@ microprocessor. In Charles L. Seitz, ed., {\it Advanced Research in
 VLSI:\ Proceedings of the Decennial Caltech Conference on VLSI\/},
 pp.~351--373. Cambridge, Mass.:\ MIT Press, 1991.}
 
-\bibitem{synthesis_tr} {Alain~J.~Martin.  {\it Synthesis of Asynchronous VLSI Ci
-rcuits.}  Caltech Computer Science Technical Report \hbox{CS-TR-93-28}.  Pasaden
-a, Calif.:\ California Institute of Technology Computer Science Department, 1993
-.}
+\bibitem{synthesis_tr} {Alain~J.~Martin.  {\it Synthesis of Asynchronous VLSI Circuits.}  Caltech Computer Science Technical Report \hbox{CS-TR-93-28}.  Pasaden
+a, Calif.:\ California Institute of Technology Computer Science Department, 1993.}
 
 \bibitem{mips97} {A.~J.~Martin, A.~Lines, R.~Manohar, M.~Nystr\"{o}m,
 P.~P\'enzes, R.~Southworth, U.~Cummings, and T.~K.~Lee.  The Design of an
-Asynchronous MIPS R3000 Processor. In R.~B.~Brown and A.~T.~Ishii, eds., {\it Pr
-oceedings of the 17th
+Asynchronous MIPS R3000 Processor. In R.~B.~Brown and A.~T.~Ishii, eds., {\it Proceedings of the 17th
 Conference on Advanced Research in VLSI.}  Los Alamitos, Calif.:\ IEEE
 Computer Society Press, 1997.}
 
 \bibitem{de_muller}{D.~E.~Muller and W.~S.~Bartky.  A theory of asynchronous circuits.  In {\it The Annals of the Computation Laboratory of Harvard University.
- Volume~XXIX:\ Proceedings of an International Symposium on the Theory of Switch
-ing, Part~I.}, 1959, pp.~204--243.}
+ Volume~XXIX:\ Proceedings of an International Symposium on the Theory of Switching, Part~I.}, pp.~204--243, 1959.}
 
 \bibitem{qdi} {A.~J.~Martin.  The limitations to delay-insensitivity
 in asynchronous circuits.  In W.~J.~Dally, ed., {\em Sixth MIT Conference on Advanced
@@ -1726,7 +1735,7 @@ Research in VLSI}.  Cambridge, Mass.:\ MIT Press, 1990.}
 
 \bibitem{literate-programming}{Donald~E.~Knuth.  {\it Literate Programming.}  Stanford, Calif.:\ Stanford University Center for the Study of Language and Information, 1992.} 
 
-\bibitem{semantics-pred-calc}{Edsger~W.~Dijkstra and Carel~S.~Scholten.  {\it Predicate Calculus and Program Semantics.}  Berlin:\ Springer, 1990.}
+\bibitem{semantics-pred-calc}{Edsger~W.~Dijkstra and Carel~S.~Scholten.  {\it Predicate Calculus and Program Semantics.}  Berlin:\ Springer-Verlag, 1990.}
 
 \bibitem{swig}{{\it SWIG Users Manual.} {\tt http://www.swig.org/Doc1.3/Contents.html}}
 
@@ -1736,9 +1745,9 @@ Research in VLSI}.  Cambridge, Mass.:\ MIT Press, 1990.}
 
 \bibitem{json}{JSON.  {\tt https://www.json.org/}}
 
-\bibitem{pascal}{Kathleen Jensen and Nicklaus Wirth.  {\it PASCAL - User Manual and Report.}  Lecture Notes in Computer Science {\bf 18}. Berlin: Springer-Verlag, 1974.}
+\bibitem{pascal}{Kathleen Jensen and Niklaus Wirth.  {\it PASCAL~---~User Manual and Report.}  Lecture Notes in Computer Science {\bf 18}. Berlin: Springer-Verlag, 1974.}
 
-\bibitem{modula}{Nicklaus Wirth.  Modula: A language for modular programming.  {\it Software-Practice and Experience,} {\bf 7}, pp.~37--65, 1977.}
+\bibitem{modula}{Niklaus Wirth.  Modula: A language for modular programming.  {\it Software~---~Practice and Experience,} {\bf 7}, pp.~37--65, 1977.}
 
 \bibitem{simula}{Ole-Johan Dahl, Bj{\o}rn Myhrhaug, and Kristen Nygaard.  {\it Common Base Language.}  Oslo:\ Norwegian Computing Center, 1970.}
 
