@@ -8,7 +8,7 @@ GENFIGURES=
 
 all: $(DOC).ps $(DOC).pdf 
 
-$(DOC).dvi: $(GENFIGURES)
+$(DOC).dvi: $(GENFIGURES) productivity.eps
 
 .png.eps:
 	pngtopnm $*.png | pamscale -pixels $(MAXGRAPHICS) |  pnmtops > $*.eps

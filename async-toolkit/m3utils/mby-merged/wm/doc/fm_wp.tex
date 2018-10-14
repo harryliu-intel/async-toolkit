@@ -36,6 +36,17 @@
   \end{figure}
 }
 
+\def\insrot_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
 \def\rotins_epsfig_listcaption#1#2#3#4#5{
   \begin{figure}[!tbph!]
   \bigskip
@@ -61,8 +72,8 @@
 \renewcommand{\headrulewidth}{0pt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{Functional Modeling of Digital Networking Hardware: \\
-  Challenges, Opportunities, and Perspectives}
+\title{Defining Hardware Architecture Through Functional Modeling}
+
 \author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} }
 %\date{January 22, 2018}
 \date{\today}
@@ -221,6 +232,11 @@ to understand that issues relating to team structure, recruiting,
 communications within teams, etc., are never far away when we discuss
 engineering methodology. at least in a commercial environment.  We won't fully
 be able to avoid those issues here, try as we may.  {\em End brief aside.}
+
+In the broader hardware-design community, the concept of the ``design gap'' was
+identified at least as early as the 2000 ITRS roadmap\cite{itrs2000,kahng}.
+See figure~\ref{fig:productivity}.
+\insrot_epsfig{5in}{productivity}{Illustration of the design gap from the ITRS roadmap.  From Kahng\cite{kahng}.}{270}
 
 \subsection{Software engineering and the Software Crisis}
 
@@ -483,8 +499,11 @@ vague and will be elucidated in later sections.
 \section{Shortcomings of SystemVerilog as a Functional Modeling Environment}\label{sec:sv_shortcomings}
 
 SystemVerilog\cite{sv} is the de-facto standard HDL today in industry.
-A large number of CAD tools vendors support the various facilities
-available in SystemVerilog (to a greater or lesser extent).  Obviously
+A number of CAD tools vendors support the various facilities
+available in SystemVerilog.  The language is enormously complex, with a language
+reference manual over 1,000 pages.  Simulation tools (e.g., VCS) must support
+basically every feature of the language, and synthesis tools support a standard
+subset.  Obviously
 CAD tools vendors are well aware of the costs of developing hardware,
 and indeed, SystemVerilog today incorporates a large number of
 facilities for parameterization of designs, specifying assertions and
@@ -498,14 +517,22 @@ of the cause.
 One of the biggest problems with SystemVerilog is that once design data
 has been entered into the SystemVerilog language, it becomes very difficult
 to extract it from the design again.  The language is obscenely complex in
-definition, and no usable parsers (to our knowledge) are available that are not
-directly coupled to a tool vendor's (usually quite expensive) CAD tool.  As
-a result, only what the tool vendors have decided is achievable is achievable.
-It is extremely difficult to innovate or to simplify in the environment.  Straightforward
-ideas, such as cosimulation, become difficult and expensive to implement, requiring
-special-purpose tools, special-purpose libraries, special-purpose training, and even
-special-purpose personnel.  It becomes completely impossible to pursue a unified
-design methodology.
+definition, and for example, no open-source parsing tools are available.  While
+commercial parsing tools are available, such as Verific, the issue is really
+that SystemVerilog's complexity comes with relatively little benefit, because
+the system description remains at a low level.  The difficulties of parsing
+the language are illustrated by Intel's in-house tool Lira, which is very difficult
+to deploy, and when deployed, fails on standard language construts.
+
+Most hardware design groups choose not to engage directly with
+developing tools that take SystemVerilog as input.  As a result, only
+what the tool vendors have decided is achievable is achievable.  It is
+extremely difficult to innovate or to simplify in the environment.
+Straightforward ideas, such as cosimulation, become difficult and
+expensive to implement, requiring special-purpose tools,
+special-purpose libraries, special-purpose training, and even
+special-purpose personnel.  It becomes completely impossible to pursue
+a unified design methodology.
 
 From the larger point of view of the electronics industry, it becomes unclear
 who really is to do the innovation in SystemVerilog.  The hardware designers
@@ -579,7 +606,7 @@ have started to become used in ``normal'' synchronous design, in particular,
 latency-insensitive design.)
 
 One of the great challenges in adopting a decomposition-driven
-methodology within standard EDA tools is that SystemVerilog has no
+methodology within standard EDA tools is that SystemVerilog has poor
 support for this approach (see section~\ref{sec:sv_shortcomings}).
 However, design by refinement is not unusual in industry (although it
 is almost never done to the extent implied here).  The current industrial
@@ -1027,13 +1054,43 @@ if it takes hours or days to generate some intermediate format.
 
 \subsection{``Elegance'' is not pointless}
 
-A well-designed system is much easier to work with than one that is haphazardly
-designed with many special cases and unexplainable legacy.  Therefore, we often
-allow ourselves the time to ``reinvent the wheel'' (when there is some problem
-with the original wheel).  The reason for this is that the time spent in redesigning
-a tool is usually repaid (with interest) even within a single program (not to mention
-if that cost can be amortized over several programs).  {\em It is almost always
-  easier and faster to do the job right than to look for a shortcut.}
+A well-designed system is much easier to work with than one that is
+haphazardly designed with many special cases and unexplainable legacy.
+Therefore, we often allow ourselves the time to ``reinvent the wheel''
+(when there is some problem with the original wheel).  The reason for
+this is that the time spent in redesigning a tool is usually repaid
+(with interest) even within a single program (not to mention if that
+cost can be amortized over several programs).  {\em It is almost
+  always easier and faster to do the job right than to look for a
+  shortcut.}
+
+Note that the above paragraph justifies the pursuit of elegant design
+solutions by appealing to the narrow benefit of getting {\em this\/}
+project done with {\em these\/} resources in {\em this\/} amount of
+time.  But the benefits of pursuing such designs go much further.
+Elegant designs allow for a higher level of understanding of the
+design problem, and in the long run they therefore are highly
+beneficial to productivity.  Another nontrivial benefit is that an
+environment where elegant designs are allowed to be pursued attracts
+more talented engineers, who generally are interested in seeing the
+types of career benefits that groundbreaking or at least publishable
+designs can deliver.  Finally, the psychological effect of being able
+to present good designs on customers, competitors, and peers in
+various settings should not be underestimated.  Delivering quality
+products is one of the stated corporate values of Intel (and probably
+every other company in our business), and this value should not be
+discarded lightly in the name of ``expediency'' (and it is clear from
+the above that we do not even believe that it is generally expedient
+to do so).
+
+One of the corollaries of pursuing a search for elegant solutions is that
+some amount of experimentation must be allowed, and if the experimentation
+turns out to be successful, the results must be advanced towards products,
+for all the reasons stated above.  In our team we are accordingly pursuing
+a multi-pronged strategy that on the one hand seeks to make incremental
+improvements to the pre-existing C modeling strategy but also is open to
+much more dramatic changes through the use of functional programming,
+modern programming languages, etc.
 
 
 \section{Hardware/Software Co-Design and Co-Engineering}\label{sec:codesign}
@@ -1158,7 +1215,103 @@ problem that we require low-complexity input at some point in our process but
 we have made a rule that humans only are to produce high-complexity input, we add
 {\em indirection.}
 
-Motto: {\em Any problem in computer science can be solved with another level of indirection.} (Attributed to David Wheeler\cite{lampson}.)
+Motto: {\em Any problem in computer science can be solved with another
+  level of indirection.} (Attributed to David Wheeler by Butler
+Lampson\cite{lampson}.)
+
+\section{Advanced Software Development Techniques}
+
+One of the reasons for working with the language-agnostic approaches
+discussed in section~\ref{sec:agnostic} is that many modern
+software-engineering techniques are (far) easier to practice in
+programming languages other than C.
+
+\subsection{Strongly-typed programming}
+
+One of the most common sources of static errors in code written in C
+and SystemVerilog that go uncaught by the compilers has to do with
+unsafe type transfers.  SystemVerilog, understandably, has a type system
+that as regards basic data types is strongly oriented towards arrays of
+binary data.  What is less clear is why this programming language permits
+unsafe type transfers of almost any kind with very little effort.  In C the
+situation is similar, but in some cases worse, because of a small set of
+basic data types and few opportunities to catch, either at compile time or
+at runtime, loss of data owing to, for example, transfer of data between
+rvalues and lvalues that do not have fully matching types.
+
+We pursue data type checks to avoid unexpected loss of data in a few ways.
+Numerous environments that we use have more carefully designed type systems
+than C (Modula-3, Scala) and can check for these types of errors.  Even
+when some of the code is written in C, there may be opportunities to
+check for these types of errors when data is passed to other environments.
+Also, because we do strive to capture enough design information in
+formats from which code can be generated, we can also program strong
+types ``into'' C by adding explicit checks for type errors.
+
+\subsection{Object-oriented programming}
+
+Object-oriented programming is a well-known technique for sharing
+code, but more importantly, for describing relationships between
+interfaces.  The code sharing ability of object-oriented programming
+has successfully been demonstrated in C by, for example, the X11
+windowing system\cite{x11}.  (However, at the cost of type unsafety.)
+Object-oriented programming is obviously directly supported by
+languages such as Java and Modula-3, and even better by Scala, which
+has more sophisticated mechanisms for denoting type variance within
+an object-oriented framework than the older languages.
+
+\subsection{Functional programming}
+
+Functional programming,\footnote{Note that the sense of the word
+  ``functional'' in ``functional programming'' is different from in
+  ``functional modeling.''  ``Functional programming'' refers to
+  programming using mathematical functions, in the sense of
+  McCarthy\cite{mccarthy}, whereas with ``functional modeling'' we
+  simply mean modeling the function of some physical object.}
+  that is, the writing of programs in ways that
+side effects are deliberately quarantined into specialized parts of
+the programs or even implictly into the runtime system, was originally
+popularized by languages in the Lisp\cite{mccarthy,scheme} family but
+is today strongly supported by programming languages with very
+different attributes from those languages.  The promise of functional
+programming is code that is easier to understand ``in the large''
+because the temporal aspect to the meaning of expressions has in some
+sense been removed.  This facilitates concurrency and code reusability
+in various ways.  Functional programming is usually seen together with
+advanced programming concepts such as higher-order functions and
+very flexible type systems.\cite{scala,sml,scheme}
+
+
+
+
+\section{Effects on Hardware Architecture of Our Choices}
+
+Almost all that is said in the preceding sections about ``code''
+applies with minor changes to hardware architecture.  In the field of
+most of our products (data center network switches), for example,
+there is a constant struggle in product definition: should products be
+highly programmable and flexible or should they be special-cased for
+the protocols that customers are most likely to run into?  There are
+no easy answers to this question, and the history of our products
+shows indecision on this point.  Our suggestion is to broadly seek to
+build general-purpose architectures in preference to special-purpose
+architectures.  In fact, even when a decision has been made to build a
+special-purpose architecture for some reason, it can be beneficial to
+treat such an architecture as an instance of a general-purpose
+architecture.  This is at first glance counterintuitive, because the
+state space of the general-purpose architecture is far larger than
+that of a special-purpose architecture (so validation coverage is
+harder to achieve, for example).  But the general-purpose architecture
+is conceptually simpler, and in the long run, this is a very big
+benefit.  Product definitions should not be built from a starting
+point that customers need special-purpose hardware and only in
+exceptional cases should they be provided with general-purpose
+hardware; instead, the general-purpose hardware architecture should be
+treated as the default and the special-purpose only pursued when it is
+clear that the product cannot meet performance or cost targets with
+the general-purpose hardware.
+
+
 
 \section{Effects on Hardware Microarchitecture of Our Choices}
 
@@ -1755,6 +1908,14 @@ Research in VLSI}.  Cambridge, Mass.:\ MIT Press, 1990.}
 
 \bibitem{smalltalk-80}{Adele Goldberg, David Robson, and Michael~A.~Harrison.  {\it Smalltalk-80: The Language and its Implementation.}  Addison-Wesley, May 1983.}
 
+\bibitem{kahng}{Andrew~B.~Kahng.  Design productivity in the DSM era.  {\it Proceedings of the ASP-DAC 2001.  Asia and South Pacific Design Automation Conference 2001.}  IEEE, 2001.}
+
+\bibitem{itrs2000}{International Technology Roadmap for Semiconductors.  Semiconductor Industry Association, 2000.}
+
+\bibitem{x11}{Robert~W.~Scheifler and James Gettys.  {\it X Window System: The Complete Reference to Xlib, Xprotocol, ICCCM, XFLD.}  Digital Press, 1990.}
+
+\bibitem{sml}{Robin Milner, Mads Tofte, Robert Harper, and David MacQueen.  {\it The Definition of Standard ML (Revised).}  Cambridge, Mass.: MIT Press, 1997.}
+  
 \end{thebibliography}
 
 \newpage
