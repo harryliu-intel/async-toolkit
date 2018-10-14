@@ -1,0 +1,509 @@
+#!/usr/intel/bin/perl -w
+# This script is to compile/run dft* simulations
+
+use strict;
+use Cwd;
+$| = 1;
+use File::Basename;
+
+#my $user = $ENV{"USER"};
+#my $curr_dir = getcwd();
+#my $realpath = "/users/$user/bin/$osname/realpath";
+
+my $tool_name = basename($0);
+my $single_fc_dut = ($ENV{"GIT_REPOS"} =~ /cpghdk/) ? 'mby' : '';
+my $file_prefix = (exists $ENV{"DFT_SIM_LOG_DIR"} ? $ENV{"DFT_SIM_LOG_DIR"} : '') . "$tool_name." . &date_and_time();
+my $ace_model = '';
+my $dut_name = '';
+my $test_pkg = '';
+my $ace_testname  = '';
+my $log_enabled = 0;
+my $mode = '';
+my $sched = '-sched local';
+my $current_system_cmd = '';
+my $passing_processes = '';
+my $part_comp = '';
+my $variant = '';
+my $func_replay = '';
+my $stf_tp_mode = '';
+my $bman_debug = '';
+my $elab_opts = '';
+my $gui = '';
+my $wav = '';
+my $vcs_debug = '';
+my $do_file = '';
+my $vre_dir = '';
+my $repo_dir = '';
+my $simv_args = '';
+my $trex_args = '';
+my $ace_args = '';
+my $seed = '';
+my $bman_args = '';
+my $quick_vre = '';
+my $disable_moat = '';
+my $vcd_capture = '';
+my $email = 0;
+my $text = 0;
+my $in_fork = 0;
+my $cote = "";   # continue on test error
+my @child_ports;
+my @commands;
+my $command_line = join(' ', ($tool_name, @ARGV));
+my $hostname = `hostname`; chomp $hostname;
+my $nodut_fusegen_file = "target/dft_no_dut/aceroot/results/fusegen/output/fuse/EBG_classes.svh";
+my $upf_dut_type = '';
+my $compile_flag = '-mc ';
+my $inc_compile = 0;
+my $no_gen_flags = '';
+my $sim_only = '';
+my $tgt_dir = '';
+my $testrun_dir = '';
+my $mock_run = 0;
+my $disable_xprop_elab = '';
+
+# Print out help message if no arguments were entered on command line
+if( @ARGV == 0 ) {
+    print_help_message();
+    exit 1;
+}
+
+# Pre-check args and repo
+my $args = join(" ", @ARGV);
+if($args =~ /repo_dir/ and $args =~ /-cc?\b/) {
+    die "$tool_name does not support both -repo_dir and compile\n";
+}
+if(not -d 'verif' and not $args =~ /repo_dir/) {
+    die "$tool_name must be run from base repo (or specify -repo_dir)\n";
+}
+
+# Pre-process modes
+while($_=shift @ARGV ) {
+    if(/^-*help$/i or /^-+h$/) {
+        print_help_message();
+        exit 1;
+    } elsif(/^-+mock$/i) {
+        $mock_run = 1;
+    } elsif(/^-+no_?gen$/i) {
+        $no_gen_flags = '-s collage -s socfusegen -s sim_init';
+    } elsif(/^-+sim_?only$/i) {
+        $sim_only = '-s FLG -s lintra -s bman.hcx.nebqc_filter.nebqc_filter_hca_nebqc_filter_lib -s bman.hcx.nebqc_filter.nebqc_filter_hct_nebqc_filter_lib -s bman.hcx.nebulon.nebulon_hca_rdl_integration_test_lib -s bman.hcx.nebulon.nebulon_hct_rdl_integration_test_lib -s emu -s hip_listgen';
+    } elsif(/^-+tgt_dir$/i) {
+        $tgt_dir = '--target_prefix "'. (shift @ARGV) . '"'; 
+    } elsif(/^-+mcrd$/i) {
+        $testrun_dir = "-mcrd " . (shift @ARGV) ;
+    } elsif(/^-+log$/i) {
+        $log_enabled = 1;
+        open(LOGFILE, ">$file_prefix.log") or die "Could not open $tool_name log file: $!";
+        select((select(LOGFILE), $|=1)[0]);
+    } elsif(/^-+dve_debug$/i) {
+        $vcs_debug = '-vcs_debug_mode=-debug_access+all';
+    } elsif(/^-+partcomp$/i) {
+        $part_comp = '-partcomp_vcs';
+        $vcs_debug = '-vcs_debug_mode=-debug_pp';
+    } elsif(/^-+variant=/i) {
+        $variant = $_;
+    } elsif(/^-+func_replay$/i) {
+        $func_replay = '-1c -func_replay 1 -1c-';
+    } elsif(/^-+stf_tp_mode$/i) {
+        $stf_tp_mode = '-1c -stf_tp_mode 1 -1c-';
+    } elsif(/^-+bman_debug$/i) {
+        $bman_debug = '-enable_tool_debug -enable_dump_rtl';
+    } elsif(/^-+elab_opts/i and (@ARGV > 0)) {
+        $elab_opts = '-elab_opts "' . (shift @ARGV) . '"';
+    } elsif(/^-+debug_all$/i) {
+        $vcs_debug = '-vcs_debug_mode=-debug_access+all';
+    } elsif(/^-+nb$/i or /^-+netbatch$/i) {
+        $sched = '';
+    } elsif(/^-+gui$/i) {
+        $gui = '-sd gui';
+    } elsif(/^-+verdi$/i) {
+        $gui = '-sd verdi';
+    } elsif(/^-+wav$/i) {
+        $wav = $wav . ' -vcd';
+    } elsif(/^-+vpd$/i) {
+        $wav = $wav . ' -vcd';
+    } elsif(/^-+fsdb$/i) {
+        $wav = $wav . ' -fsdb';
+    } elsif(/^-+mda$/i) {
+        $wav = $wav.' -mda ';
+    } elsif(/^-+func_fast$/i) {
+        $bman_args = $bman_args . " -func_fast ";
+        $ace_args = $ace_args . " -func_fast -testdev_mode";
+    } elsif(/^-+epi$/i) {
+        $bman_args = $bman_args . " -epi ";
+    } elsif(/^-+all_cov$/i) {
+        $bman_args = $bman_args . " -all_cov ";
+        $ace_args  = $ace_args  . " -all_cov ";
+    } elsif(/^-+tgl_cov$/i) {
+        $bman_args = $bman_args . " -tgl_cov ";
+        $ace_args  = $ace_args  . " -tgl_cov ";
+    } elsif(/^-+do_file$/i) {
+        $do_file = '-do_file '. shift @ARGV;
+    } elsif(/^-+vre_dir$/i) {
+        $vre_dir = '-vre_dir '. shift @ARGV;
+    } elsif(/^-+repo_dir$/i) {
+        $repo_dir = '-ver '. shift @ARGV;
+    } elsif(/^-+simv_args$/i) {
+        $simv_args .= "-simv_args " . join(" -simv_args ", split(" ", &get_args_until('^-+simv_args-+$')));
+    } elsif(/^-+trex_args$/i) {
+        $trex_args .= &get_args_until('^-+trex_args-+$');
+    } elsif(/^-+bman_args$/i) {
+        $bman_args .= &get_args_until('^-+bman_args-+$');
+    } elsif(/^-+ace_args$/i) {
+        $ace_args .= &get_args_until('^-+ace_args-+$');
+    } elsif(/^-+seed$/i) {
+        $seed = '-seed '. shift @ARGV;
+    } elsif(/^-+quick_vre$/i) {
+        $quick_vre = '-quick_vre';
+    } elsif(/^-+vcd_capture$/i) {
+        $vcd_capture = '-vcd_capture';
+    } elsif(/^-+disable_moat$/i) {
+        $disable_moat = '-disable_moat';
+    } elsif(/^-+vcd_capture_jtag$/i) {
+        $vcd_capture = '-vcd_capture_jtag';
+    } elsif(/^-+disable_xprop_elab$/i) {
+        $disable_xprop_elab = '-disable_xprop_elab';
+    } elsif(/^-+e?mail$/i) {
+        $email = 1;
+    } elsif(/^-+te?xt$/i) {
+        $text = 1;
+    } elsif(/^-+upf$/i) {
+        $upf_dut_type = '-dut_type upf';
+    } else {
+        push @commands, $_;
+    }
+}
+
+&log_and_print("$command_line\n");
+
+# Run commands for each option selected
+&process_commands(@commands);
+
+# Check for pending child processes
+my $child_pid;
+PORT: while(@child_ports > 0) {
+    &log_and_print("Waiting on " . scalar @child_ports . " child processes.\n");
+    my $child_port = $child_ports[0];
+    while($_ = <$child_port>) {
+        if(/Command FAILED/) {
+            &failing_exit($_);
+        } elsif(/Command PASSED/) {
+            &log_and_print($_);
+        } elsif(/Child run PASSED/) {
+            shift @child_ports;
+            next PORT;
+        } elsif(/Starting system command/) {
+            &log_and_print($_);
+        }
+        print;
+    }
+}
+
+&failing_exit("Failing exit due to previous test error.") if($cote eq "failed");
+
+my $passing_msg;
+if($passing_processes ne '') {
+    $passing_msg = "PASSING SUB-PROCESSES:\n$passing_processes";
+    $passing_msg .= "<<< $tool_name PASSED >>>\n";
+    print $passing_msg;
+}
+&send_email_text("PASSED", $passing_msg);
+
+
+### Sub-routines
+sub process_commands {
+    my @cmds = @_;
+    while( $_ = shift @cmds ) {
+        if(/^-+mc?$/i or /^-+model$/i or /^-+dut$/) {
+            $mode = 'model_name';
+        } elsif(/^-+x$/i or /^-+t$/i) {
+            $mode = 'ace_testname';
+        } elsif(/^-+tl$/i) {
+            $mode = 'ace_testlist';
+#        } elsif(/^-+dvt$/i) {
+#            print "Running DVT on dut $dut_name with ace model $ace_model\n";
+#            &failing_exit("ERROR: -m <model> not specified before compile command\n") if($ace_model eq '');
+#            &run_bman("csh -f scripts/verif/dft/dvt_launcher.csh", '');
+        } elsif(/^-+clean$/i) {
+            &log_and_print("Cleaning generated directories\n");
+            my $system_cmd = "rm -rf target regression";
+            &log_and_print("Running system command: $system_cmd\n");
+            system($system_cmd);
+        } elsif(/^-+clean_t$/i) {
+            &log_and_print("Cleaning generated target directory only\n");
+            my $system_cmd = "rm -rf target";
+            &log_and_print("Running system command: $system_cmd\n");
+            system($system_cmd);
+        } elsif(/^-+cc$/i) {
+            &run_bman('clean compile');
+        } elsif(/^-+c$/i) {
+            $inc_compile = 1;
+            &run_bman('repeat compile');
+#        } elsif(/^-+xterm$/i) {
+#            &run_bman('xterm for HDL debug');
+        } elsif(/^-+e?spf(model)?$/i) {
+            &run_bman('espfmodel stage only', '-s all +s espfmodel -sched local');
+        } elsif(/^-+collage$/i) {
+            &run_bman('collage stage only', '-rundeps collage -force collage');
+        } elsif(/^-+gen_only$/i) {
+            &log_and_print("Running gen stages only\n");
+            &exit_on_failure(&run_system_cmd("bman -s all +s socfusegen +s genrtl", "bman PASSED"));
+        } elsif(/^-+sim_?init$/i) {
+            &run_bman('sim_init stage only', '-s all +s sim_init');
+        } elsif($mode eq 'model_name') {
+            $ace_model = $_;
+            $mode = '';
+            if($ace_model =~ /^dft/) {
+                $dut_name = $single_fc_dut ne '' ? $single_fc_dut : $ace_model;
+                $test_pkg = '-test_pkg dft_test_pkg';
+                &failing_exit("ERROR: Quick model $ace_model not supported.\n") if($ace_model =~ /quick$/);
+            } elsif($ace_model =~ /^sb2tapctrl$/) {
+                $dut_name = 'sb2tapctrl';
+                $test_pkg = '-test_pkg iosftest_pkg';
+            } elsif($ace_model =~ /^tap2sbctrl$/) {
+                $dut_name = 'tap2sbctrl';
+                $test_pkg = '-test_pkg tap2sb_pkg'; 
+            } elsif($ace_model =~ /^jtagctrl$/) {
+                $dut_name = 'jtagctrl';
+                $test_pkg = '-test_pkg TestPkg';
+            } elsif($ace_model =~ /^sigacc$/) {
+                $dut_name = 'sigacc';
+                $test_pkg = '-test_pkg test_pkg';
+            } elsif($ace_model =~ /^fc$/) {
+                $dut_name = $single_fc_dut ne '' ? $single_fc_dut : "mby";
+            } elsif($ace_model =~ /^hc[abt]$/) {
+                $single_fc_dut = 'hcx';
+                $dut_name = 'hcx';
+                $test_pkg = '';
+            } elsif($ace_model =~ /^fc_lite$/) {
+                #$dut_name = 'fc_lite';
+                $dut_name = $single_fc_dut ne '' ? $single_fc_dut : "mby";
+            } else {
+                &failing_exit("Trying to change to unsupported model: $ace_model\n");
+            }
+        } elsif(($mode eq 'ace_testlist') or (($mode eq 'ace_testname') and ((/\.list$/) or (/^(\w+)\:(\d+)\:seed/)))) {
+            &failing_exit("ERROR: -m <model> not specified before run command\n") if($ace_model eq '');
+            $ace_testname = $_;
+            $mode = '';            
+            $simv_args .= '-disable_moat -simv_args  "+DIS_FUSE_SCBD " -simv_args  "+DIS_PWRGD_TIMERS " -simv_args "+disable_sb_scoreboard"' if($ace_testname =~ /fcfunc_replay_vcd_functional/);
+            &exit_on_failure(&run_system_cmd("simregress -l $ace_testname -save -dut $dut_name -1c -ace_model_name $ace_model -dut $dut_name -1c- $trex_args $repo_dir -ace_args $test_pkg -m $ace_model $gui $wav $do_file $vre_dir $simv_args $vcd_capture $quick_vre $seed $ace_args -ace_args-", "Feeder launched successfully"));
+        } elsif($mode eq 'ace_testname') {
+            &failing_exit("ERROR: -m <model> not specified before run command\n") if($ace_model eq '');
+            $ace_testname = $_;
+            $mode = '';
+            $simv_args .= '-disable_moat -simv_args  "+DIS_FUSE_SCBD " -simv_args "+DIS_PWRGD_TIMERS " -simv_args "+disable_sb_scoreboard"' if($ace_testname =~ /fcfunc_replay_vcd_functional/);
+            &exit_on_failure(&run_system_cmd("trex $ace_testname -dut $dut_name -1c -ace_model_name $ace_model -dut $dut_name -1c- $trex_args $repo_dir -ace_args $test_pkg -m $ace_model $gui $wav $do_file $vre_dir $simv_args $vcd_capture $quick_vre $seed $ace_args -ace_args-", "Exiting now with exit status 0"));
+        } elsif(/^-+cote$/i) {
+            $cote = "continue";
+        } elsif(/^-+sote$/i) {
+            &failing_exit("Exiting due to -sote on previous error.") if($cote eq "failed");
+            $cote = "";
+        } elsif(/^-+fork$/i) {
+            my @fork_cmds;
+            my $child_pid;
+            while($_ = shift @cmds) {
+                if(/^-+fork$/i) {
+                    &fork_commands(@fork_cmds);
+                    @fork_cmds = ();
+                } else {
+                    push @fork_cmds, $_;
+                }
+            }
+            &fork_commands(@fork_cmds);
+            
+        } else {
+            &failing_exit("Invalid argument: $_\n");
+        }
+    }
+}
+
+sub fork_commands {
+    my @fork_cmds = @_;
+    if(@fork_cmds > 0) {
+        if($child_pid = open(my $from_child, "-|")) {
+            push @child_ports, $from_child;
+            &log_and_print("Forked off the process $child_pid with commands: " . join(" ", @fork_cmds) . "\n");
+            sleep(2);
+        } else {
+            $in_fork = 1;
+            $log_enabled = 0;
+            select((select(STDOUT), $|=1)[0]);
+            sleep(1);
+            &process_commands(@fork_cmds);
+            print STDOUT "Child run PASSED\n";
+            exit 0;
+        }
+    }
+}
+
+sub send_email_text {
+    my ($status, $msg) = @_;
+    my $subject = "$tool_name $status at $ENV{PWD} on $hostname";
+    if($email) {
+        open(EMAIL, "|mail $ENV{USER} -s '$subject' ") or die "Could not open mail command: $!";
+        print EMAIL "$tool_name run from: " . $ENV{PWD} . "\n";
+        print EMAIL $msg;
+        close(EMAIL);
+    }
+    if(defined $ENV{DFT_SIM_TEXT} and ($email or $text)) {
+        open(EMAIL, "|mail $ENV{DFT_SIM_TEXT}") or die "Could not open text command: $!";
+        print EMAIL "$subject\n";
+        print EMAIL "Command: $command_line\n";
+        close(EMAIL);
+    }
+}
+
+sub exit_on_failure {
+    my $failed = shift;
+    if($failed) {
+        if(($cote ne "") and $current_system_cmd =~ /trex/) {
+            $cote = "failed";
+            return; # handle continue on test error condition
+        }
+        my $msg;
+        $msg .= "PASSING SUB-PROCESSES:\n$passing_processes" if($passing_processes ne '');
+        $msg .= "FAILING SUB-PROCESS:\n$current_system_cmd";
+        #if(@commands > 0) {
+        #    $msg .= "Exiting $tool_name with the following commands remaining: " . join(" ", @commands) . "\n";
+        #}
+        &failing_exit($msg);
+    } else {
+        $passing_processes .= $current_system_cmd;
+        $current_system_cmd = '';
+    }
+}
+
+sub failing_exit {
+    my $msg = shift;
+    &log_and_print($msg);
+    &send_email_text("FAILED", $msg);
+    print "\n";
+    exit 1;
+}
+
+sub run_system_cmd {
+    my ($system_cmd, $pass_search) = @_;
+    my $failed = 1;
+    $current_system_cmd = "$system_cmd\n";
+    &log_and_print("Starting system command: $system_cmd\n");
+    if($mock_run) {
+        &log_and_print("Skipping execution of command due to -mock set on command line\n");
+        return 0;   # cause all commands to pass in mock mode
+    }
+    open(SYS, "$system_cmd|") or die "Could not run system command";
+    while(<SYS>) {
+        print;
+        $failed = 0 if(/$pass_search/);
+    }
+    close(SYS);
+    &log_and_print("Command " . ($failed ? "FAILED" : "PASSED") . ": $system_cmd\n");
+    return $failed;
+}
+
+sub run_bman {
+    my $build_desc = shift @_;
+    &failing_exit("ERROR: -m <model> not specified before compile command\n") if($ace_model eq '');
+    &log_and_print("Running $build_desc on dut $dut_name with ace model $ace_model\n");
+    my $bman_add_opts = (@_ > 0) ? shift @_ : "$bman_debug $func_replay $stf_tp_mode $vcs_debug $part_comp $variant $elab_opts $no_gen_flags $sim_only $tgt_dir $disable_xprop_elab";
+    if ($inc_compile and ($ace_model =~ /^hc.$/))  {
+        $bman_add_opts = $bman_add_opts . " -s all +s hcx.vcs.elab_${ace_model} +s hcx.vcs.vlogan_${ace_model}_seq_lib +s hcx.vcs.vlogan_${ace_model}_tests_lib +s hcx.vcs.vlogan_${ace_model}_ti_lib +s hcx.vcs.vlogan.${ace_model}_rtl_top_lib +s hcx.vcs.vlogan_${ace_model}_tb_lib +s hcx.vcs.vlogan_${ace_model}_env_lib +s sim_init";
+    }
+    if ($inc_compile and (($ace_model eq 'fc') or ($ace_model eq 'fc_lite'))) {
+        $bman_add_opts = $bman_add_opts . " -s all +s ${dut_name}.vcs.elab_${ace_model} +s ${dut_name}.vcs.vcs_createlib_${ace_model}_seq_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_tests_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_hvl_top_lib +s ${dut_name}.vcs.vcs_createlib_fc_top_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_hdl_top_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_env_lib +s sim_init +s collage";
+    }
+    &exit_on_failure(&run_system_cmd("bman -dut $dut_name $compile_flag $ace_model $sched -1c -ace_model_name $ace_model $upf_dut_type -1c- $bman_add_opts $bman_args", "bman PASSED"));
+}
+
+sub run_simbuild_pre_flow {
+    if(not -e "src/GenRTL/sha1sum.value" or (-C "cfg/SIPToolData.pm" < -C "src/GenRTL/sha1sum.value")) {
+        &exit_on_failure(&run_system_cmd("simbuild -s all +s collage +s fusegen +s ip_visa_insert", "simbuild PASSED"));
+    }
+#### TODO: Re-enable this check once GenRTL flow exists
+#    &failing_exit("src/GenRTL/sha1sum.value file doesn't exist for VISA insertion") if(not -e "src/GenRTL/sha1sum.value");
+}
+
+sub log_and_print {
+    my $msg = &date_and_time() . ": " . shift;
+    print STDOUT $msg;
+    if($log_enabled) {
+        print LOGFILE $msg;
+    }
+}
+
+sub get_args_until {
+    my $end_arg = shift;
+    my $all_args = '';
+    my $arg;
+    while($arg=shift @ARGV) {
+        if($arg =~ /$end_arg/) {
+            return $all_args;
+        }
+        $all_args .= "$arg ";
+    }
+    return $all_args;
+}
+
+sub date_and_time {
+    my ($sec, $min, $hour, $mday, $mon, $year) = localtime;
+    $year = $year + 1900;
+    $mon  = $mon  + 1;
+    $mon  = '0' . $mon  if(length $mon  < 2);
+    $mday = '0' . $mday if(length $mday < 2);
+    $hour = '0' . $hour if(length $hour < 2);
+    $min  = '0' . $min  if(length $min  < 2);
+    $sec  = '0' . $sec  if(length $sec  < 2);
+    return "${year}-${mon}-${mday}_${hour}:${min}:${sec}";
+}
+
+sub print_help_message {
+  print "\nUsage: $tool_name [arguments]\n";
+  print "The following arguments are commands which are processed in order:\n";
+  print "   -m <name>           Ace model to compile/run.\n";
+  print "   -clean              Clean target and regression directories.\n";
+  print "   -cc                 Clean compile.\n";
+  print "   -c                  Repeat compile (must do a -cc initially).\n";
+  print "   -x <test>           Execute/run a test.\n";
+  print "   -t <test>           Execute/run a test.\n";
+  print "   -tl <file>          Execute/run a test list in netbatch.\n";
+  print "   -x <test>:<#>:seed  Execute/run a test <#> times in netbatch.\n";
+  print "   -cote               Continue on test error.\n";
+  print "   -sote               Stop on test error.\n";
+  print "   -fork               Fork off the remaining commands into a perl thread.\n";
+  print "The following arguments are options which are global settings:\n";
+  print "   -help               Print this Usage info and exit.\n";
+  print "   -dve_debug          Compile VCS with debug enabled for DVE.\n";
+  print "   -debug_all          Compile VCS with -debug_all option.\n";
+  print "   -partcomp           Compile VCS with -partcomp option.\n";
+  print "   -variant=<model>    Compile VCS lite model with MBY specific variant\n";
+  print "   -func_replay        Compile VCS with replay elements enabled in the func testbench.\n";
+  print "   -stf_tp_mode        enable user to use Test port BFM instead of STF BFM.\n";
+  print "   -bman_debug         Run bman with -enable_tool_debug -enable_dump_rtl options.\n";
+  print "   -elab_opts <opts>   Compile VCS with custom elaboration options.\n";
+  print "   -netbatch           Run trex in netbatch mode.\n";
+  print "   -verdi              Launch VCS in Verdi GUI mode.\n";
+  print "   -gui                Launch VCS in GUI mode.\n";
+  print "   -wav                Launch VCS with the standard waves for the model.\n";
+  print "   -vpd                Launch VCS with the standard VPD for the model.\n";
+  print "   -fsdb               Launch VCS with the standard FSDB for the model.\n";
+  print "   -do_file <file>     Launch VCS with a custom do-file.\n";
+  print "   -vre_dir <dir>      Run VTPSim with a custom vre file from vre_dir.\n";
+  print "   -repo_dir <dir>     Run a test from a compiled repo located at <dir>.\n";
+  print "   -vcd_capture        Runs a script to create VCD for replay.\n";
+  print "   -disable_moat       Disables MOAT in FC TB.\n";
+  print "   -simv_args <+arg>   Add arguments.\n";
+  print "   -seed <num>         Set seed for tests.\n";
+  print "   -dvt                Start DVT/Eclipse after model is compiled.\n";
+  print "   -quick_vre          Run quick vre scripts.\n";
+  print "   -log                Print out ${tool_name}.<date>_<time>.log file.\n";
+  print "   -email              Send email at end of $tool_name run.\n";
+  print "   -collage            Run collage stage and all it's dependency only. (Other stages will be skipped)\n";
+  print "   -gen_only           Run gen stages. (Other stages will be skipped)\n";
+  print "   -sim_init           Run sim_init stage only. (Other stages will be skipped)\n";
+  print "   -upf                Run in UPF-enabled mode.\n";
+  print "   -no_gen             Skip generation stages for builds.\n";
+  print "   -mock               Print run commands but do not execute them.\n";
+  print "   -text               Send run summary to email address in DFT_SIM_TEXT env var.\n";
+  print "\n";
+}
+
+exit 0;

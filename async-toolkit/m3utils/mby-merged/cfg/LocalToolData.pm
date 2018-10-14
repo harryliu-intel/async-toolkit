@@ -26,6 +26,59 @@ $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'}                 = "
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'}                    = "&get_tool_path(lintra)";
 
 #####################################################
+#    Collage related definitions                    #
+#####################################################
+$ToolConfig_tools{coretools}{VERSION} = "N-2017.12-SP1-2";
+$ToolConfig_tools{collage}{VERSION} = "4.10";
+$ToolConfig_tools{collage_intf_def}{VERSION} = "3.7.6";
+$ToolConfig_tools{collage_intf_def}{PATH} = "/p/hdk/rtl/cad/x86-64_linux30/intel/collage_intf_def/&get_tool_version('collage_intf_def')";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_INTF_DEF} = "&get_tool_path('collage_intf_def')";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_WORK} = "$MODEL_ROOT/target/&get_facet(dut)/collage/work/soc";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_CFG} = "$MODEL_ROOT/tools/collage/configs";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_DESIGN} = "soc";
+$ToolConfig_tools{collage}{ENV}{CHASSIS_ID} = "config_soc";
+$ToolConfig_tools{collage_utils}->{VERSION} = 'v13ww42a';
+$ToolConfig_tools{collage}{OTHER}{collage_base_dir} = "&get_facet(dut)/collage";
+$ToolConfig_tools{collage}{OTHER}{collage_work_dir} = "work";
+#$ToolConfig_tools{collage}{OTHER}{collage_corekit_dir} = "ip_kits";
+$ToolConfig_tools{collage}{OTHER}{collage_log_dir} = "log";
+##$ToolConfig_tools{collage}{OTHER}{collage_reports_dir} = "reports";
+$ToolConfig_tools{collage}{OTHER}{collage_rtl_dir} = "work/soc/gen/source/rtl";
+$ToolConfig_tools{collage_build_cmd} = { # This is a conditional run of collage. It depends upon: collage_cache_cmd, collage_cmd
+      EXEC => "$MODEL_ROOT/scripts/bin/common/run_collage.pl",
+};
+$ToolConfig_tools{collage_cache_cmd} = { # Can we avoid running collage by copying the output from a central cache?
+    EXEC => q($vte_automation_ROOT/gk/bin/cache.pl -task collage -prj mst -get -alt gen),
+};
+$ToolConfig_tools{collage_cmd} = { # This runs collage, unconditionally
+      EXEC => "rm -rf $MODEL_ROOT/src/gen/collage/*;mkdir -p $MODEL_ROOT/src/gen/collage;&get_tool_path('coretools')/bin/coreAssembler -timeout 5 -shell -x \'source &get_tool_path('collage')/core/common/tcl/collage_init.tcl\' -f $MODEL_ROOT/tools/collage/configs/config_soc/assemble/assembler.soc.tcl",
+};
+#rkoganti.  Updated Flowbee version to fix a bug with deps not working
+# when a stage is default_active off
+$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{VERSION} = "1.01.08";
+$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{PATH} = "$RTL_PROJ_TOOLS/flowbee/master/&get_tool_version(rtltools/flowbee)";
+$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{OTHER}{modules} = [ "&get_tool_path(stage_ace)",
+                              "&get_tool_path(stage_ace_command)",
+                              "&get_tool_path(stage_collage_assemble)",
+                              ];
+$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{OTHER}{default_dut} = "mby";
+$ToolConfig_tools{runtools}{OTHER}{default_dut} = "mby";
+
+$ToolConfig_tools{buildman}{SUB_TOOLS}{collage} = $ToolConfig_tools{collage};
+
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_preflow.pm");
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_postflow.pm");
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/preflow_stage.pm.template");
+$ToolConfig_tools{stage_bman_collage}{OTHER}{pre_flow} = { 
+                                                           "(.default.)" => "collage_preflow",
+                                                         };
+$ToolConfig_tools{stage_bman_collage}{OTHER}{post_flow} = { 
+                                                            "(.default.)" => "collage_postflow",
+                                                          };
+$ToolConfig_tools{buildman}{SUB_TOOLS}{stages}{SUB_TOOLS}{collage_postflow}{OTHER}{relevant_tools} = [qw( collage )];
+### End collage related updates ***
+
+#####################################################
 #    Configure Environment variables for Trex/Run   #
 #####################################################
 $ToolConfig_tools{runtools}{ENV}{TREX_PACKAGES}                              = "&get_tool_path(casa/casa_utils)/trex/casa_TREX.pm";
@@ -36,6 +89,7 @@ $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "
 $ToolConfig_tools{runtools}{ENV}{JASPERGOLD_VER}                             = "&get_tool_version(jaspergold)/";
 $ToolConfig_tools{runtools}{ENV}{JG_VERSION_LATEST}                          = "&get_tool_version(jaspergold)";
 $ToolConfig_tools{runtools}{ENV}{DESIGNWARE_HOME}                            = "&get_tool_path(vipsvt)";
+$ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "$MODEL_ROOT/regression/&get_facet(dut)/tests";
 
 #####################################################
 #    Configure Environment variables for Nebulon    #
@@ -76,6 +130,7 @@ $ToolConfig_tools{buildman}{ENV}{JASPERGOLD_UXDB_ARGS}                       = "
 
 # Natural Docs hook to call cfg/bin/doc_me as a preflow to vcs
 $ToolConfig_tools{'buildman'}{SUB_TOOLS}{'flowbee'}{OTHER}{USERCODE} .= ":$ENV{MODEL_ROOT}/cfg/stages/UserCode.pm";
+$ToolConfig_tools{buildman}{OTHER}{pre_flow} = "UserCode::ndocs";
 
 $ToolConfig_tools{vipsvt} = {
     VERSION    => "O-2018.06",
@@ -205,6 +260,10 @@ $ToolConfig_tools{jasper_utils} = {
   VERSION => "14.06.20",
 };
 
+# Added sim_init stage for automating FC collaterals generation
+$ToolConfig_tools{stage_bman_sim_init}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/sim_init.pm";
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}},  "&get_tool_var(stage_bman_sim_init, modules)");
+
 $ToolConfig_tools{feedtools}{ENV}{JASPER_UTILS}= "&get_tool_path(jasper_utils)";
 
 $ToolConfig_tools{"mgm"} = {
@@ -299,3 +358,28 @@ $ToolConfig_tools{"regs2html"} = {
     VERSION => "18.05.14",
     PATH => "$ENV{RTL_PROJ_TOOLS}/regs2html/nhdk/&get_tool_version()",
 };
+
+# for Cadence PCIe BFMs
+$ToolConfig_tools{cdn_vip_root} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
+                                  PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()",
+                                };
+$ToolConfig_tools{vipcat} = { PATH => "&get_tool_path(cdn_vip_root)",
+                              OTHER => {
+                                 CDS_ARCH => "lnx86",
+                                 VIPCAT_LIBS => "&get_tool_path(cdn_vip_root)/tools.lnx86/lib/64bit",
+                              },
+                            };
+$ToolConfig_tools{denali} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
+                            #VERSION => '&get_tool_version(cdn_vip_root)',
+                              PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()/tools/denali_64bit",
+                              #PATH    => "&get_tool_path(cdn_vip_root)/tools/denali_64bit",
+                              OTHER => {
+                                DENALI_LIBS => "&get_tool_path()/verilog",
+                                VIPCAT_LIBS => "&get_tool_path()/tools.lnx86/lib/64bit",
+                              },
+                            };
+#VIPCAT update
+$ToolConfig_tools{buildman}{ENV}{CDN_VIP_ROOT} = "&get_tool_path(cdn_vip_root)";
+$ToolConfig_tools{buildman}{ENV}{DENALI} = "&get_tool_path(denali)";
+
+1;

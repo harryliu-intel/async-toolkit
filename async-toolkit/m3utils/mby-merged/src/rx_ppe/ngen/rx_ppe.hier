@@ -1,5 +1,0 @@
-// rx_ppe block
-
-rx_ppe [
-  parser_top of parser_top with parser_top.map
-]

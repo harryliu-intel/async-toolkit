@@ -1,0 +1,16 @@
+# script to setup env variables neccessrary for running Synopsys Design
+# Compiler (those versions not available under setupTool).
+#
+
+alias modpath  'set modpath=(\!*);source /usr/intel/common/pkgs/eclogin/1.0/bin/modpath;unset modpath'
+
+setenv SYNOPSYS /p/hdk/rtl/cad/x86-64_linux26/synopsys/designcompiler/K-2015.06-SP5_lc
+#setenv SYNOPSYS /p/inway/tools/synopsys/dc/L-2016.03-SP2
+
+set syn_bin = "$SYNOPSYS/suse64/syn/bin"
+set syn_lic = '26586@plxs0412.pdx.intel.com'
+modpath -q -f -v SNPSLMD_LICENSE_FILE -d $syn_lic
+modpath -q -n 1 -f -v SNPSLMD_LICENSE_FILE $syn_lic
+modpath -q -f -d $syn_bin
+modpath -q -n 1 -f $syn_bin 
+unset syn_bin syn_lic

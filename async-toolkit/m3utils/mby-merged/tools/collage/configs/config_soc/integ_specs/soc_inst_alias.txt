@@ -1,0 +1,4 @@
+#`define SOC_TOP       soc
+#`define SOC_TB        soc_tb
+
+

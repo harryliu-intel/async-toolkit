@@ -17,8 +17,8 @@ $hdl_spec = {
          "verif/lib/svt_axi_bfm",
          "$snps_svt_path/src/sverilog/vcs",
          "$snps_svt_path/include/sverilog",
-         "$snps_svt_path/src/verilog/vcs",
-         "$snps_svt_path/include/verilog",
+#         "$snps_svt_path/src/verilog/vcs",
+#         "$snps_svt_path/include/verilog",
     ],
 
     -vlog_files => [

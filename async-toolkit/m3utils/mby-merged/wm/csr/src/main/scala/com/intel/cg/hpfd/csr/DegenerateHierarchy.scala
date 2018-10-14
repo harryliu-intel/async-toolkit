@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr
 
 trait DegenerateHierarchy[T <: IndexedSeq[_ <: RdlElement]] extends RdlHierarchy {

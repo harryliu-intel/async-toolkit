@@ -1,3 +1,4 @@
+//scalastyle:off
 package com.intel.cg.hpfd.csr
 
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes.U64
@@ -17,12 +18,6 @@ abstract class RdlHierarchy(val parent : Option[RdlHierarchy]) extends RdlElemen
   def children : List[IndexedSeq[_ <: RdlElement]]
   def foreachResetableField(f : RdlRegister[U64]#HardwareResetable => Unit) = {
     children foreach (_.foreach(_.foreachResetableField(f)))
-  }
-
-  def mySeq(s : IndexedSeq[RdlElement]) : Boolean  = {
-    s.contains()
-      true
-
   }
 
   /**
