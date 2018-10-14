@@ -155,6 +155,7 @@ EOF
              },
 
              fc_tests_lib => {
+                 -generated => 1,
                  -hdl_spec => [
                      "verif/gen/fc_test.hdl",
                  ],
@@ -177,6 +178,7 @@ EOF
              },
 
              fc_lite_tests_lib => {
+                 -generated => 1,
                  -hdl_spec => [
                      "verif/gen/fc_test.hdl",
                  ],
@@ -662,5 +664,8 @@ EOF
    },
 );
 
-$audf{HDLSpec}{mby}{models}{fc_lite} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_64} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_64_serdes} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_8_serdes} = $audf{HDLSpec}{mby}{models}{fc};
 
