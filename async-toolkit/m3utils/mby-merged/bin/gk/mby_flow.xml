@@ -27,20 +27,6 @@
 		<Singleton>0</Singleton>
 		<Type>build</Type>
   </row>
-  <row>
-		<DUT>fc_lite</DUT>
-		<Stage>vcs</Stage>
-		<Stage_Exec>bman</Stage_Exec>
-		<AdditionalArgs>-s all +s collage +s vcs -mc fc_lite +s sim_init -variant=fc_8 -nodelete_flow_data</AdditionalArgs>
-		<IsGating>1</IsGating>
-		<Turnin>1</Turnin>
-		<Release>1</Release>
-		<PostRelease>0</PostRelease>
-		<Conditional></Conditional>
-		<Active>1</Active>
-		<Singleton>0</Singleton>
-		<Type>build</Type>
-	</row>
 	<row>
 		<DUT>mby</DUT>
 		<Stage>mby_alive_test</Stage>

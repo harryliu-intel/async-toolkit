@@ -164,6 +164,7 @@ EOF
              },
 
              fc_tests_lib => {
+                 -generated => 1,
                  -hdl_spec => [
                      "verif/gen/fc_test.hdl",
                  ],
@@ -186,6 +187,7 @@ EOF
              },
 
              fc_lite_tests_lib => {
+                 -generated => 1,
                  -hdl_spec => [
                      "verif/gen/fc_test.hdl",
                  ],
@@ -470,15 +472,6 @@ EOF
 #                  "gen_mby_wm_m3",
 #                  "mby_mgm_lib",
                   $fc_global_vars::COLLAGE_LIB,
-                  "mby_tx_ppe_rtl_lib",
-                  "mby_ppe_stm_rtl_lib",
-                  "mby_igr_rtl_lib",
-                  "mby_egr_rtl_lib",
-                  "mby_mgp_rtl_lib",
-                  "mby_rx_ppe_rtl_lib",
-                  "mby_mpp_rtl_lib",
-                  #"mby_msh_rtl_lib",
-                  "clkstub_rtl_lib",
 
                   (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
                   $fc_global_vars::IP_STUB_LIB,
@@ -675,5 +668,8 @@ EOF
    },
 );
 
-$audf{HDLSpec}{mby}{models}{fc_lite} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_64} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_64_serdes} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_8_serdes} = $audf{HDLSpec}{mby}{models}{fc};
 
