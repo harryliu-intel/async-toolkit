@@ -18,16 +18,15 @@ class ParserJsonTester extends FlatSpec with Matchers {
   val parserStr = "Parser"
 
   Json.getListOpt(packets, "packets").get.foreach { test =>
-    val mapOfTestCase = test.asInstanceOf[Map[String, Any]]
-    val name = mapOfTestCase("name").asInstanceOf[String]
-    val dataString = mapOfTestCase("data").asInstanceOf[String]
+    val testCase = test.asInstanceOf[Map[String, Any]]
+    val name = testCase("name").asInstanceOf[String]
 
-    val packet = Packet(dataString.grouped(2).map(Integer.parseUnsignedInt(_, 16).toByte).toArray)
+    val packet = Packet.strHexToPacket(testCase("data").asInstanceOf[String])
 
     val parseResult = Parser.parse(parserMap, packet)
     val parserFlags = parseResult.paFlags.get
 
-    val expectedFlags = Json.getListOpt(mapOfTestCase, "out.flags").get.asInstanceOf[List[String]]
+    val expectedFlags = Json.getOpt(testCase, "out.flags").get.asInstanceOf[List[String]]
 
     parserStr should "correctly identify TCP in " + name in {
       parserFlags.contains(PacketFlags.TypicalPacketFlags.otr_l4_tcp_v.id) shouldEqual expectedFlags.contains("tcp")
@@ -36,7 +35,6 @@ class ParserJsonTester extends FlatSpec with Matchers {
     parserStr should "correctly identify UDP in " + name in {
       parserFlags.contains(PacketFlags.TypicalPacketFlags.otr_l4_udp_v.id) shouldEqual expectedFlags.contains("udp")
     }
-
   }
 
 }
