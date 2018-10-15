@@ -40,7 +40,7 @@ void mbyMatchWildcard
 (
     MBY_CGRP_B_IN_REGS,
     mbyClassifierKeys const * const keys,
-    fm_byte                   const profile,
+    fm_byte                   const profile_id,
     fm_byte                   const group,
     fm_uint32                 actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 );
