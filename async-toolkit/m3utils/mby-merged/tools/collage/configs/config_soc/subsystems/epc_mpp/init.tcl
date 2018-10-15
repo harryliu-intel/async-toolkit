@@ -23,6 +23,8 @@ collage_generate_wrapper_corekit_rtl \
   -ip_name mby_ec_top \
   -ip_kit_src_dir "$::env(MODEL_ROOT)/tools/collage/epc/ip_kits" \
   -blast_adhoc_2D_ports
+# release rtl and generate hdl to be used in ace;
+collage_release_rtl  -dest_rtl_dir $::env(BUILD_TARGET_RELATIVE)/$::env(DUT)/collage/work/soc/${gen_rtl_dir} -gen_hdl -file_extension sv
 
 collage_generate_wrapper_corekit_rtl \
   -top_wrap_name $mpp_wrap_name \
@@ -30,6 +32,8 @@ collage_generate_wrapper_corekit_rtl \
   -ip_name mby_mpp \
   -ip_kit_src_dir "$::env(MODEL_ROOT)/tools/collage/mpp/ip_kits" \
   -blast_adhoc_2D_ports
+# release rtl and generate hdl to be used in ace;
+collage_release_rtl  -dest_rtl_dir $::env(BUILD_TARGET_RELATIVE)/$::env(DUT)/collage/work/soc/${gen_rtl_dir} -gen_hdl -file_extension sv
 
 # restore this var
 set ::env(COLLAGE_DESIGN) $tmp_collage_design

@@ -129,6 +129,15 @@ EOF
          # Define all the libraries which could be compiled
          libs => {
 
+             clkstub_rtl_lib => {
+                    -vlog_files => [
+                        "src/rtl/clkstub/mby_parclk.sv",
+                        "src/rtl/clkstub/pll_stub.sv",
+                        "src/rtl/clkstub/xtal_rcvr.sv",
+                        "src/rtl/clkstub/clk_mux_2to1_glitchfree.sv",
+                    ],
+             },
+
              $fc_global_vars::COLLAGE_LIB => {
                     -tag      => "nonsynth+nonemu",
                     -generated => 1,
@@ -302,6 +311,9 @@ EOF
                  -generated => 1,
                  -hdl_spec => [
                      "cfg/ace/HDL/dummy.hdl",
+                     # these wrapper hdl's should be temp, until top level shells remove 2d arrays
+                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_ec_top_wrapper.hdl",
+                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_mpp_wrapper.hdl",
                      "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/soc.hdl",
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
@@ -460,15 +472,7 @@ EOF
 #                  "gen_mby_wm_m3",
 #                  "mby_mgm_lib",
                   $fc_global_vars::COLLAGE_LIB,
-                  "mby_tx_ppe_rtl_lib",
-                  "mby_ppe_stm_rtl_lib",
-                  "mby_igr_rtl_lib",
-                  "mby_egr_rtl_lib",
-                  "mby_mgp_rtl_lib",
-                  "mby_rx_ppe_rtl_lib",
-                  "mby_mpp_rtl_lib",
-                  #"mby_msh_rtl_lib",
-             
+
                   (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
                   $fc_global_vars::IP_STUB_LIB,
                   "fc_hdl_top_lib",

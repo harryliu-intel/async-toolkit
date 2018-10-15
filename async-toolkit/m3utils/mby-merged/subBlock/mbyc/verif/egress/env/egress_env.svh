@@ -187,19 +187,19 @@ class egress_env extends egress_base_env;
   virtual task set_clk_rst();
     fork
       forever begin
-        @(egress_if.primary_clock);
+        @(egress_if.clock);
         #0;
-        if (egress_if.primary_clock === 1'b1)
+        if (egress_if.clock === 1'b1)
           ->sys_clk_r;
-        if (egress_if.primary_clock === 1'b0)
+        if (egress_if.clock === 1'b0)
           ->sys_clk_f;
       end
       forever begin
-        @(egress_if.primary_reset);
+        @(egress_if.reset);
         #0;
-        if (egress_if.primary_reset === 1'b1)
+        if (egress_if.reset === 1'b1)
           -> sys_rst_r;
-        if (egress_if.primary_reset === 1'b0)
+        if (egress_if.reset === 1'b0)
           -> sys_rst_f;
       end
     join_none

@@ -25,8 +25,8 @@ always_comb rx_ppe_igr_if_i.intf0 = 0;
 always_comb rx_ppe_igr_if_i.intf1 = 0;
 
 igr_top igr_top_i (
-  .cclk(ingress_primary_clock),
-	.rst(ingress_primary_reset),
+  .cclk(ingress_clock),
+	.rst(ingress_reset),
 	.grp_a_rx_ecc(eth_bfm_tx_intf_0.ecc),
 	.grp_b_rx_ecc(eth_bfm_tx_intf_1.ecc),
 	.grp_c_rx_ecc(eth_bfm_tx_intf_2.ecc),
