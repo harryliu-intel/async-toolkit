@@ -1,19 +1,20 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Packet
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
-import com.intel.cg.hpfd.madisonbay.wm.utils.Loader
+import com.intel.cg.hpfd.madisonbay.wm.utils.{Json, Loader}
 import org.scalatest.{FlatSpec, Matchers}
 
 //scalastyle:off
 class ParserJsonTester extends FlatSpec with Matchers {
-  val json = Loader.loadJson("src/test/resources/json/parser_packets.json").get
+  val packets: Map[String, Any] = Loader.loadJson("src/test/resources/json/parser_packets.json").get
   val parserStr = "Parser"
 
-  for ((name, test) <- json) {
+  Json.getListOpt(packets, "packets").get.foreach { test =>
     val mapOfTestCase = test.asInstanceOf[Map[String, Any]]
+    val name = mapOfTestCase("name").asInstanceOf[String]
     val dataString = mapOfTestCase("data").asInstanceOf[String]
 
     val packet = Packet(dataString.grouped(2).map(Integer.parseUnsignedInt(_, 16).toByte).toArray)

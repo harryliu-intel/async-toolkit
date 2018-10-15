@@ -1,16 +1,16 @@
 //scalastyle:off
-package com.intel.cg.hpfd.madisonbay.wm.switchwm
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import com.intel.cg.hpfd.madisonbay.wm.utils.Binary.BinaryInterpolator
-import org.scalatest._
 import monocle.state.all._
+import org.scalatest._
 
 /**
   * Demonstrate some trivial examples how a single parser stage should behave.
