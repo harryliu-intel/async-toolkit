@@ -6,10 +6,15 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.utils.{Json, Loader}
 import org.scalatest.{FlatSpec, Matchers}
+import com.intel.cg.hpfd.madisonbay.wm.utils.progparser.ParserProgrammer
 
 //scalastyle:off
 class ParserJsonTester extends FlatSpec with Matchers {
   val packets: Map[String, Any] = Loader.loadJson("src/test/resources/json/parser_packets.json").get
+  val programmer: Map[String, Any] = Loader.loadJson("src/test/resources/json/parser_input.json").get
+  val csr = Csr()
+  val parserMap = ParserProgrammer(programmer, csr)
+
   val parserStr = "Parser"
 
   Json.getListOpt(packets, "packets").get.foreach { test =>
@@ -19,17 +24,19 @@ class ParserJsonTester extends FlatSpec with Matchers {
 
     val packet = Packet(dataString.grouped(2).map(Integer.parseUnsignedInt(_, 16).toByte).toArray)
 
-    val csr = Csr().getRxPpe(0).csrRxPpe.parser
-    val parseResult = Parser.parse(csr, packet)
+    val parseResult = Parser.parse(parserMap, packet)
+    val parserFlags = parseResult.paFlags.get
 
-    mapOfTestCase.get("tcp").foreach(shouldBeTcp => {
-      val shouldBeTcpBool = shouldBeTcp.asInstanceOf[Boolean]
-      parserStr should "correctly identify TCP in " + name in {
-        // TODO here parse actual flags
-        parseResult.paFlags.get.contains(PacketFlags.TypicalPacketFlags.otr_l4_tcp_v.id) shouldEqual shouldBeTcpBool
-      }
-    })
+    val expectedFlags = Json.getListOpt(mapOfTestCase, "out.flags").get.asInstanceOf[List[String]]
 
-    // TODO same for udp...
+    parserStr should "correctly identify TCP in " + name in {
+      parserFlags.contains(PacketFlags.TypicalPacketFlags.otr_l4_tcp_v.id) shouldEqual expectedFlags.contains("tcp")
+    }
+
+    parserStr should "correctly identify UDP in " + name in {
+      parserFlags.contains(PacketFlags.TypicalPacketFlags.otr_l4_udp_v.id) shouldEqual expectedFlags.contains("udp")
+    }
+
   }
+
 }
