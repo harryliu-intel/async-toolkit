@@ -258,7 +258,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "-lintra_create",
                         "-sglp_createlib",
                     ],
-                    -tag => "nonsynth+nonemul+nonlint", 
+                    -tag => "nonsynth+nonlint", 
             },
             svt_ahb_lib => {
                -hdl_spec       => [ "cfg/ace/HDL/verif/svt_ahb_bfm.hdl" ],
