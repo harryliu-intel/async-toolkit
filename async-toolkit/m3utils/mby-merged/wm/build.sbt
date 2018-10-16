@@ -3,8 +3,6 @@ import sbt.Keys._
 
 // to break current task with C-c
 cancelable in sbt.Global := true
-parallelExecution := false
-maxErrors := 1
 
 lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar")
 
@@ -51,6 +49,13 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
     name := Settings.wmServerDtoName,
     // some imports are unused for generated classes
     scalacOptions -= "-Ywarn-unused:imports"
+  )
+
+lazy val tcp = (project in file("tcp"))
+  .dependsOn(common,csrMacros)
+  .settings(
+    Settings.commonSettings,
+    libraryDependencies ++= Dependencies.tcpDeps
   )
 
 lazy val root = (project in file("."))

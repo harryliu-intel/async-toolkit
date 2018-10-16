@@ -22,6 +22,7 @@ object Dependencies {
 
   lazy val commonDeps = Seq(reflect, scalaTest % "test", scalaCheck % "test")
   lazy val csrDeps = Seq(monocleCore, monocleMacro, scalaTest % "test", scalaCheck % "test")
+  lazy val tcpDeps = Seq(shapeless, scalaTest % "test", scalaz)
   def whiteModelDeps(csrVersion: String) = Seq(
     scalaTest % "test",
     scalaCheck % "test",
