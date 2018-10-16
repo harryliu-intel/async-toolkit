@@ -97,9 +97,9 @@ rx_ppe                 -  bman -mc rx_ppe                        # RX_PPE Testbe
 *The following FC variant models require 'sim' script support. To enable that please run the following:
 * %source scripts/verif/fc.env 
 fc_64                  -  sim -m fc_64 -cc                       # FC_64 configuraton of full chip model
-fc_64_serdes           -  sim -m fc_64_serdes -cc                # FC_64 with SERDES configuraton of full chip model
+fc_64_no_phy           -  sim -m fc_64_no_phy -cc                # FC_64 without PHY configuraton of full chip model
 fc_8                   -  sim -m fc_8 -cc                        # FC_8 configuraton of full chip model
-fc_8_serdes            -  sim -m fc_8_serdes -cc                 # FC_8 with SERDES configuraton of full chip model
+fc_8_no_phy            -  sim -m fc_8_no_phy -cc                 # FC_8 without PHY configuraton of full chip model
 
 Compile ALL:
   bman -dut mby -mc fc
