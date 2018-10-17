@@ -21,16 +21,10 @@
 `include "mby_mesh_row.rdl"
 `include "mby_rx_voq.rdl"
 `include "mby_tx_voq.rdl"
-<<<<<<< HEAD
-`include "epl.rdl"
-`include "amba_complex.rdl"
-`include "pcie.rdl"
-||||||| merged common ancestors
-=======
 `include "mby_rx_pb.rdl"
 `include "mby_tx_pb.rdl"
 `include "mby_freepointer.rdl"
->>>>>>> 8e91e436d03b659c3c5ed48a1af91b5b8b8a4045
+`include "mby_mce.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;
@@ -48,12 +42,6 @@ addrmap mby_ppe_rx_top_map {
   mby_ppe_trig_apply_map        trig_apply;
   mby_ppe_trig_apply_misc_map   trig_apply_misc;
   mby_ppe_trig_usage_map        trig_usage;
-};
-
-// Top-level AMBA Management complex 
-addrmap mby_amba_top_map {
-  imc            imc;
-  pep            pep;
 };
 
 addrmap mby_ppe_tx_top_map {
@@ -82,20 +70,8 @@ addrmap mby_mpp_map {
   desc = "MegaPort Pair (3.2T)";
   mby_mgp_top_map mgp[2];
   mby_shm_map     shm;
-<<<<<<< HEAD
-  mby_mesh_map    mesh; // one row of the mesh
-  epl             epl;
-  mby_amba_top_map amba; // TODO: relocate to 'real' top-level mby addrmap (this is a single 3.2 hierarchy)
-||||||| merged common ancestors
-  mby_mesh_map    mesh; // one row of the mesh
-=======
->>>>>>> 8e91e436d03b659c3c5ed48a1af91b5b8b8a4045
 };
 
-<<<<<<< HEAD
-
-||||||| merged common ancestors
-=======
 // Globals = mesh, amba, tag ring, etc.
 addrmap mby_globals_map {
   name = "mby_globals_map";
@@ -112,4 +88,3 @@ addrmap mby_top_map {
   mby_mpp_map     mpp;
   mby_globals_map globals;
 };
->>>>>>> 8e91e436d03b659c3c5ed48a1af91b5b8b8a4045

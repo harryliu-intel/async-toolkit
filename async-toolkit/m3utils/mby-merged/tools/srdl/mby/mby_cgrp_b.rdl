@@ -1137,13 +1137,6 @@ addrmap mby_ppe_cgrp_b_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  wcm_tcam_rf                 WCM_TCAM[20]          ;
-  wcm_action_rf               WCM_ACTION[24]        ;
-  wcm_tcam_cfg_rf             WCM_TCAM_CFG[20]      ;
-  wcm_action_cfg_r            WCM_ACTION_CFG[64]    ;
-  wcm_ip_r                    WCM_IP                ;
-  wcm_im_r                    WCM_IM                ;
-  em_b_hash_lookup_r          EM_B_HASH_LOOKUP[8192];
   em_b_hash_cam_rf            EM_B_HASH_CAM[32]     ;
   em_b_hash_cam_en_rf         EM_B_HASH_CAM_EN[2]   ;
   em_b_key_sel0_rf            EM_B_KEY_SEL0[2]      ;
@@ -1151,4 +1144,11 @@ addrmap mby_ppe_cgrp_b_map {
   em_b_key_mask_rf            EM_B_KEY_MASK[2]      ;
   em_b_hash_miss_rf           EM_B_HASH_MISS[2]     ;
   em_b_hash_cfg_r             EM_B_HASH_CFG[64]     ;
+  em_b_hash_lookup_r          EM_B_HASH_LOOKUP[8192];
+  wcm_tcam_rf                 WCM_TCAM[20]          ;
+  wcm_action_rf               WCM_ACTION[24]        ;
+  wcm_tcam_cfg_rf             WCM_TCAM_CFG[20]      ;
+  wcm_action_cfg_r            WCM_ACTION_CFG[64]    ;
+  wcm_ip_r                    WCM_IP                ;
+  wcm_im_r                    WCM_IM                ;
 }; // final size: 0x22600 <= 0x40000 = 8<<15

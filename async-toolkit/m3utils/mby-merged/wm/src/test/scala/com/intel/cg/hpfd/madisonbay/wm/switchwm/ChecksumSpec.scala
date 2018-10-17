@@ -3,8 +3,8 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import org.scalatest._
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtShort.Implicits
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.IPV4Util.checksum
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtByte.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.IPV4Util.checksum
 
 /**
   * Validate 1's complement based checksum computation over arrays of bytes. Use publically available
