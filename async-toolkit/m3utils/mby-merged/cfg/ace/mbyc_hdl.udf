@@ -206,11 +206,23 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag            => "nonsynth",
             },
                       
-            mby_gm_rtl_lib => {
-               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gm_rtl_lib.hdl' ],
+            mby_gmm_s_rtl_lib => {
+               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gmm_s_rtl.hdl' ],
                -dependent_libs  => [ 'sla_lib'],
                #-tag             => "nonsynth",
             },
+
+            #mby_gmm_s_tb_lib => {
+            #   -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gmm_s_tb.hdl' ],
+            #   -dependent_libs  => [ 'sla_lib'],
+            #   #-tag             => "nonsynth",
+            #},
+
+            #mby_gmm_s_test_lib => {
+            #   -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_egress_test.hdl', ],
+            #   -dependent_libs => [ 'sip_shared_lib', 'mby_egress_env_lib', 'mby_wm_dpi_lib' ],
+            #   -tag            => "nonsynth",
+            #},
 
             mby_env_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_env.hdl' ],
@@ -756,15 +768,17 @@ print "MGM debug : @mbyMgmLibs\n";
             ####################################################################
             ## mby global manager model starts
             ####################################################################
-            gm_rtl_dev => {
-               top  => 'mby_gm_rtl_lib.tb_gmm',
+            gmm_s => {
+               top  => 'mby_gmm_s_rtl_lib.mby_gmm_s',
 
                use  => [
                        ],
 
                libs => [
                    "sla_lib",
-                   "mby_gm_rtl_lib"
+                   "mby_common_lib",
+                   "mby_jasper_lib",
+                   "mby_gmm_s_rtl_lib"
                ],
 
                elab_opts => [
@@ -775,6 +789,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                export => {
                  libs => [
+                          "mby_gmm_s_rtl_lib",
                  ]
                },
 
