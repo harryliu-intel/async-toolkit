@@ -59,7 +59,7 @@ $IP_STUB_LIB = "soc_ip_stub_lib";
 $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_assemble_upf_lib" : "soc_collage_assemble_lib";
 
 # for Cadance PCIe BFMs
-my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+my $DENALI =  &ToolConfig::get_tool_path("denali");
 
 
 #################################################################
@@ -85,7 +85,7 @@ my %sip_list = (
 # HIP related lib should be move to HIP_RTL_LIBS (NON-SYNTH related)
 # SIP rtl lib should contain only synthesizable code (SYNTH related )
 my %sip_rtl_libs = (
-    'boot'               => [],
+    'boot'               => ['clkstub_rtl_lib'],
     'imc'                => [],
 #    'epc'                => [],
     'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
@@ -345,16 +345,16 @@ foreach our $ace_ip_to_add (@ace_add_ips) {
 
     switch ($ace_ip_to_add) {
         case ["fc_64"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+NO_SERDES +define+FC_64",);
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64",);
         }
-        case ["fc_64_serdes"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64_SERDES",);
+        case ["fc_64_no_phy"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64_NO_PHY +define+NO_SERDES",);
         }
         case ["fc_8"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+NO_SERDES +define+FC_8",);
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8",);
         }
-        case ["fc_8_serdes"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8_SERDES",);
+        case ["fc_8_no_phy"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8_NO_PHY +define+NO_SERDES",);
         }
   
     } # switch

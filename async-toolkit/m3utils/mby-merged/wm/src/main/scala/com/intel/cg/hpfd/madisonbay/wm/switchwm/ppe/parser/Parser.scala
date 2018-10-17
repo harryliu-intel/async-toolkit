@@ -1,198 +1,242 @@
-
+//scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
-import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.generated._
 import ParserTcam._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
+import ParserExceptions._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{IPVersion, Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.{IPVersion, Packet, PacketHeader}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtLong.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
+import scalaz.State
+import scalaz.syntax.traverse._
+import scalaz.std.list._
 
+import scala.annotation.tailrec
 
-class Parser(csr: mby_ppe_parser_map) extends PipelineStage[Packet, ParserOutput] {
+object Parser {
 
-  val parserStages = 32
+  case class ParserState(w: List[Short], aluOperation: AluOperation, state: Short, ptr: Short)
 
-  val stages: IndexedSeq[ParserStage] = (0 until parserStages).map(i => new ParserStage(csr, i))
+  type ProtoId          = Int
+  type BaseOffset       = Int
+  type PacketType       = Int
+  type ExtractionIndex  = Int
+  type ProtoOffsets     = IndexedSeq[(ProtoId, BaseOffset)]
 
-  def initialState(ph: PacketHeader, port: PortIndex): Parser.ParserState = {
-    val portCfg = csr.PARSER_PORT_CFG(port.p)
-    val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
-    val w = initWOffsets.map(off => ph.getWord(off.toInt))
-    val aluOp = AluOperation(portCfg.INITIAL_OP_ROT.toShort, portCfg.INITIAL_OP_MASK.toShort)
-    val state = portCfg.INITIAL_STATE.toShort
-    val ptr = portCfg.INITIAL_PTR.toShort
-    ParserState(w,aluOp, state, ptr)
+  val EmptyProtoOffsets: ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
+
+  val NumberOfParsingStages       = 32
+
+  val NumberOfExtractionConfs     = 16
+  val OffsetOfNextExtractAction   = 16
+
+  def parse(csr: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet): ParserOutput = {
+
+    // TODO: support split header to Interface 0 and Interface 1
+    val packetHeader = PacketHeader(packet.bytes).trimmed
+
+    // setup the initial state
+    val rxPort = new PortIndex(0) // need to handle this via the function interface somehow...
+
+    val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(
+      csr, 0, packetHeader, initialState(csr, packetHeader, rxPort),
+      PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException]
+      )
+
+    val (paKeysVal, csrExtractedKeys) = extractKeys(csr, packetHeader, protoOffsets)
+
+    val paPacketTypeVal = packetType(csrExtractedKeys, packetFlags)
+    // now we have the flags and the proto-offsets
+    // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
+
+    val (exceptionStage, depthExceeded, headerTruncated, parsingDone) = scanOutputExceptions(parserExceptionOpt)
+
+    ParserOutput(
+      updatedCsr                = csrExtractedKeys,
+      rxPort                    = rxPort,
+      pktMeta                   = 0,
+      rxFlags                   = 0,
+      segMetaErr                = false,
+      paAdjSegLegLen            = 0,
+      paKeys                    = paKeysVal,
+      paFlags                   = packetFlags,
+      paPointers                = protoOffsets,
+      paKeysValid               = false,
+      paPointersValid           = false,
+      paCsumOk                  = false,
+      paExceptionStage          = exceptionStage,
+      paExceptionDepthExceeded  = depthExceeded,
+      paExceptionTruncHeader    = headerTruncated,
+      paExParsingDone           = parsingDone,
+      paDrop                    = false,
+      paPacketType              = paPacketTypeVal._1 // (what to do with the extract index)?
+    )
   }
 
-  def packetType(pf: PacketFlags): (PacketType, ExtractionIndex) = {
+  def applyStage(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, packetHeader: PacketHeader, parserState: ParserState,
+                 packetFlags: PacketFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
+                        (PacketFlags, ProtoOffsets, Option[ParserException]) = idStage match {
+
+    case NumberOfParsingStages => (packetFlags, fields, exceptionOpt)
+
+    case id =>
+      val action = matchingAction(csr, id, parserState.w(0), parserState.w(1), parserState.state)
+      (exceptionOpt, action) match {
+
+        case (Some(exc), _) => (packetFlags, fields, Some(exc))
+
+            // if nothing matches, do nothing
+        case (exOpt, None)  => applyStage(csr, idStage + 1, packetHeader, parserState, packetFlags, fields, exOpt)
+
+        case (_, Some(act)) =>                                    // otherwise, apply the action
+          val (actParsState, actPckFlags, actProtOffs, actPrsExcOpt) = act.run(idStage, parserState, packetFlags, fields)(packetHeader)
+          applyStage(csr, idStage + 1, packetHeader, actParsState, actPckFlags, actProtOffs, actPrsExcOpt)
+    }
+  }
+
+  private def scanOutputExceptions(parserException: Option[ParserException]): (Int, Boolean, Boolean, Boolean) = {
+    val exceptionStage = parserException match {
+      case Some(pexp) => pexp.stageEncountered
+      case _ =>
+        //assert(assertion = false, "No exception encountered in parse, likely buggy parser image")
+        0
+    }
+    val (depthExceeded, headerTruncated, parsingDone) = parserException match {
+      case Some(ParserDoneException(_))         => (false, false, true)
+      case Some(TruncatedHeaderException(_))    => (false, true,  false)
+      case Some(ParseDepthExceededException(_)) => (true,  false, false)
+      case _                                    => (false, false, false)
+    }
+    (exceptionStage, depthExceeded, headerTruncated, parsingDone)
+  }
+
+  /**
+    * Do the TCAM lookup, translate the result into actions
+    */
+  private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, w0: Short, w1: Short, state: Short): Option[Action]  = {
+    val matcher = tcamMatchRegSeq(parserAnalyzerTcamMatchBit) _
+
+    // All lists have size of 16
+    @tailrec
+    def findAction(keysW: List[parser_key_w_r.parser_key_w_r], keysS: List[parser_key_s_r.parser_key_s_r],
+                   anaWs: List[parser_ana_w_r.parser_ana_w_r], anaSs: List[parser_ana_s_r.parser_ana_s_r],
+                   exts:  List[parser_ext_r.parser_ext_r],     excs:  List[parser_exc_r.parser_exc_r]): Option[Action] =
+      (keysW, keysS, anaWs, anaSs, exts, excs) match {
+        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if matcher(Seq(
+            ParserTcam.TcTriple(kW.W0_MASK,    kW.W0_VALUE,    w0),
+            ParserTcam.TcTriple(kW.W1_MASK,    kW.W1_VALUE,    w1),
+            ParserTcam.TcTriple(kS.STATE_MASK, kS.STATE_VALUE, state)
+          )) => Some(new Action(
+                  AnalyzerAction(aW, aS),
+                  List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
+                  new ExceptionAction(ec.EX_OFFSET().toShort, ec.PARSING_DONE.apply() == 1)
+                  ))
+
+        case (_ :: kWs, _ :: kSs, _ :: aWs, _ :: aSs, _ :: exs, _ :: ecs) => findAction(kWs, kSs, aWs, aSs, exs, ecs)
+
+        case (_, _, _, _, _, _) => None
+      }
+
+    findAction(csr.PARSER_KEY_W(idStage).PARSER_KEY_W, csr.PARSER_KEY_S(idStage).PARSER_KEY_S,
+               csr.PARSER_ANA_W(idStage).PARSER_ANA_W, csr.PARSER_ANA_S(idStage).PARSER_ANA_S,
+               csr.PARSER_EXT(idStage).PARSER_EXT,     csr.PARSER_EXC(idStage).PARSER_EXC)
+  }
+
+  private class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
+
+    def run(idStage: Int, parserState: ParserState, parserFlags: PacketFlags, protoOffsets: Parser.ProtoOffsets)
+             (packetHeader: PacketHeader): (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
+      val currentOffset = parserState.ptr
+      // is there an error condition requiring an abort (i.e. without processing this stage)
+      // or is the exception action to do nothing (or mark 'done')
+      exceptionAction.test(packetHeader, currentOffset, idStage) match {
+
+        case Some(ape: AbortParserException) =>
+          (parserState, parserFlags, protoOffsets, Some(ape))
+
+        case parsExcOpt =>
+          val actParserState = analyzerAction.analyze(packetHeader, parserState) // setup the analyze actions for the next stage
+            // do all of the extraction operations to add more to the flags and offsets
+          val (actProtOffsets, actPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) {
+              (prev, act) => act.extract(prev)
+            }
+
+          (actParserState, actPckFlags, actProtOffsets, parsExcOpt)
+      }
+    }
+  }
+
+  def initialState(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
+    val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
+    val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
+    val w = initWOffsets.map(off => packetHeader.getWord(off().toInt))
+    val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
+    val state = portCfg.INITIAL_STATE().toShort
+    val ptr = portCfg.INITIAL_PTR().toShort
+    ParserState(w, aluOp, state, ptr)
+  }
+
+  private def packetType(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
     val interface = 0
-    val tcamCsr = csr.PARSER_PTYPE_TCAM(interface)
-    val sramCsr = csr.PARSER_PTYPE_RAM(interface)
-    val tc = tcamMatch.curried(standardTcamMatchBit)
-    tcamCsr.zip(sramCsr).reverse.collectFirst {
-      case (xk,yk) if tc(xk.KEY_INVERT, xk.KEY, pf.toLong) => (yk.PTYPE().toInt, yk.EXTRACT_IDX().toInt)
+    val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
+    val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
+
+    val tc = tcamMatchReg(Tcam.standardTcamMatchBit)(_)
+    tcamCsr.zip(sramCsr).reverse.collectFirst{
+      case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
     }.getOrElse((0,0))
   }
 
-  def saturatingIncrement(limit: Long)(field: RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable): Unit = {
-    val u: Long = math.min(limit, field() + 1)
-    field.update(u)
-  }
+  private def extractKeys(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader,
+                          protoOffsets: ProtoOffsets): (PacketFields, mby_ppe_parser_map.mby_ppe_parser_map) = {
+    val fieldProfile = 0
+    val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile).PARSER_EXTRACT_CFG
+    val countersL  = mby_ppe_parser_map.mby_ppe_parser_map._PARSER_COUNTERS
 
-  object Extractor extends PipelineStage[(PacketHeader, ProtoOffsets), PacketFields] {
+    def modify(parserExtractCfgReg: parser_extract_cfg_r.parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map.mby_ppe_parser_map), Unit] =
+      State { actualState =>
+        val (result, mbyPpeParserMap) = actualState
+        val protocolId = parserExtractCfgReg.PROTOCOL_ID()
+        def toWordWithOffset(v: Int): Short = packetHeader.getWord(v + parserExtractCfgReg.OFFSET().toInt)
 
-    //scalastyle:off
-    def process = (t: (PacketHeader, ProtoOffsets)) => {
-      val ph = t._1
-      val protoOffsets = t._2
-      val fieldProfile = 0
-      val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile)
+        (protocolId, protoOffsets.collect { case (pId, baseOffset) if pId == protocolId => baseOffset }.toList) match {
 
-      def satacc8b(field: RdlRegister[Long]#HardwareWritable with RdlRegister[Long]#HardwareReadable): Unit = saturatingIncrement(255)(field)
+          case (ExtractAction.SpecialProtocolId, _) => ((0.toShort :: result, mbyPpeParserMap), ())
 
-      // each of the 80 fields of the vector has a configuration in the CSR
-      val f: IndexedSeq[Short] = extractorCsr.map { a =>
-        (a.PROTOCOL_ID(), protoOffsets.collect({ case i if i._1 == a.PROTOCOL_ID() => i._2 })) match {
-          case (0xFF, _) => 0.toShort
-          case (_, pofs) => pofs.length match {
-            case 0 =>
-              satacc8b(csr.PARSER_COUNTERS.EXT_UNKNOWN_PROTID)
-              0.toShort
+          case (_, Nil) =>
+            val next = countersL.modify(_.EXT_UNKNOWN_PROTID.modify((v: Long) => v.incWithUByteSaturation))
+            ((0.toShort :: result, next(mbyPpeParserMap)), ())
 
-            case 1 =>
-              ph.getWord(pofs.head + a.OFFSET().toInt)
+          case (_, h :: Nil) =>
+            ((toWordWithOffset(h) :: result, mbyPpeParserMap),())
 
-            case _ => // i.e. > 1
-              // behavior of duplicate condition is a bit arbitrary (should not happen in valid configuration)
-              satacc8b(csr.PARSER_COUNTERS.EXT_DUP_PROTID)
-              ph.getWord(pofs.head + a.OFFSET().toInt)
+          case (_, h :: _) =>
+            val next = countersL.modify(_.EXT_DUP_PROTID.modify((v: Long) => v.incWithUByteSaturation))
+            ((toWordWithOffset(h) :: result, next(mbyPpeParserMap)), ())
 
-          }
         }
       }
-      PacketFields(f)
-    }
 
-    //scalastyle:on
+    val ((result, updatedCsr), _) = extractorCsr.toList.traverseS(modify)((List.empty, csr))
 
+    (PacketFields(result.reverse.toIndexedSeq), updatedCsr)
   }
-
-  // def csumValidate(ph: PacketHeader, pf: PacketFields): Boolean = {
-    // false // wiki spec of validation behavior not complete (8/17/2018)
-  // }
 
   /**
     * Check Payload Length
     */
-  def payloadValidate(pkt: Packet, ph: PacketHeader, otr_l3_ptr: Int): Boolean = {
+  def payloadValidate(packet: Packet, header: PacketHeader, otr_l3_ptr: Int): Boolean = {
     // length check varies based on IPv4 (where the length includes the IP header)
     // versus IPv6 (where the payload length includes all extension headers but not the IP header itself)
-    ph.ipVersion match {
-      case IPVersion.IPV4 => ph.totalLength <= (pkt.bytes.length - otr_l3_ptr - 4)
-      case IPVersion.IPV6 => ph.totalLength <= (pkt.bytes.length - otr_l3_ptr - 40 - 4)
+    header.ipVersion match {
+      case IPVersion.IPV4 => header.totalLength <= (packet.bytes.length - otr_l3_ptr - 4)
+      case IPVersion.IPV6 => header.totalLength <= (packet.bytes.length - otr_l3_ptr - 40 - 4)
     }
   }
-
-  val process: Packet => ParserOutput = pkt => {
-    val ph = PacketHeader(pkt.bytes.slice(0, PacketHeader.maxSegmentSize))
-    // setup the initial state
-    val rxport = new PortIndex(0) // need to handle this via the function interface somehow...
-    val is = initialState(ph, rxport)
-    val emptyFlags = PacketFlags()
-    val init = (is, emptyFlags, Parser.EmptyProtoOffsets, Option.empty[ParserException])
-
-
-    // implicit val packetheader: PacketHeader = ph
-
-    // apply all the parser stages, the packetheader is the same, but pass the other state down the line
-    // this needs cleanup!
-    val stagesResult  = stages.foldLeft(init) {
-      (previous, stage) => { stage(ph, previous._1, previous._2, previous._3, previous._4) }
-    }
-
-    val (_, pf, po, pe) = stagesResult
-
-    // extract the keys
-    val paKeysVal = Extractor.process((ph, po))
-    // determine the packet type
-    val paPacketTypeVal = packetType(pf)
-    // now we have the flags and the proto-offsets
-    // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
-
-    val exceptionStage = pe match {
-      case Some(_) => pe.get.stageEncountered
-      case _ =>
-        assert(assertion = false, "No exception encountered in parse, likely buggy parser image")
-        0
-
-    }
-    val (depthExceeded, headerTruncated, parsingDone) = pe match {
-      case Some(ParserDoneException(_)) => (false, false, true)
-      case Some(TruncatedHeaderException(_)) => (false, true, false)
-      case Some(ParseDepthExceededException(_)) => (true, false, false)
-      case _ => (false,false,false)
-    }
-
-    ParserOutput(
-      rxPort = rxport,
-      pktMeta = 0,
-      rxFlags = 0,
-      segMetaErr= false,
-      paAdjSegLegLen = 0,
-      paKeys = paKeysVal,
-      paFlags = pf,
-      paPointers = po,
-      paKeysValid = false,
-      paPointersValid = false,
-      paCsumOk = false,
-      paExceptionStage = exceptionStage,
-      paExceptionDepthExceeded = depthExceeded,
-      paExceptionTruncHeader = headerTruncated,
-      paExParsingDone = parsingDone,
-      paDrop = false,
-      paPacketType = paPacketTypeVal._1 // (what to do with the extract index)?
-    )
-  }
-}
-
-object Parser {
-
-  case class ParserState(w: List[Short], op: AluOperation, state: Short, ptr: Short)
-
-  type ProtoId = Int
-  type BaseOffset = Int
-  type ProtoOffsets = IndexedSeq[(ProtoId, BaseOffset)]
-  type PacketType = Int
-  type ExtractionIndex = Int
-  val EmptyProtoOffsets: ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
-
-  class ParserException(val stageEncountered: Int)
-
-  object ParserException {
-
-    def apply(eos: Boolean = false, eop: Boolean = false, done: Boolean = false, stageEncountered: Int): Parser.ParserException = {
-      if (done) {
-        ParserDoneException(stageEncountered)
-      } else if (eos & eop) {
-        TruncatedHeaderException(stageEncountered)
-      } else {
-        ParseDepthExceededException(stageEncountered)
-      }
-    }
-
-  }
-
-  class AbortParserException(stageEncountered: Int) extends ParserException(stageEncountered)
-
-  case class TruncatedHeaderException(override val stageEncountered: Int) extends AbortParserException(stageEncountered)
-
-  case class ParseDepthExceededException(override val stageEncountered: Int) extends AbortParserException(stageEncountered)
-
-  case class ParserDoneException(override val stageEncountered: Int) extends ParserException(stageEncountered)
 
 }
 

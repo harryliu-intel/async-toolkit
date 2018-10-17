@@ -32,9 +32,9 @@ class mby_cp_pcie_coverage extends uvm_component;
       `uvm_field_int(coverage_enable, UVM_DEFAULT)
    `uvm_component_utils_end
 
-   virtual function void build();
-      super.build();
-   endfunction : build
+   virtual function void build_phase(uvm_phase phase);
+      super.build_phase(phase);
+   endfunction : build_phase
 
    covergroup pcie_cg;
       // option.per_instance = 1;
@@ -207,7 +207,7 @@ class mby_cp_pcie_coverage extends uvm_component;
    endgroup : pcie_reset_cg
 
    virtual function void configure();
-      super.configure();
+// FIXME:      super.configure();
       pcie_dma_cg.sample();
       pcie_reset_cg.sample();
    endfunction : configure

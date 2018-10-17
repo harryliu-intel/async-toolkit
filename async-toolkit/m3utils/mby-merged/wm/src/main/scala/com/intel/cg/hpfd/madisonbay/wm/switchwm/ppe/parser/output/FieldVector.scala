@@ -1,4 +1,4 @@
-
+//scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output
 
 import FieldVector._
@@ -19,14 +19,15 @@ object FieldVector {
     (n._1 | n._2 << 4 | n._3 << 8 | n._4 << 12).toShort
   }
 
+  def apply(array: Array[Byte]): FieldVector = new FieldVector(array)
+
+  def apply(): FieldVector = apply(Array.ofDim[Byte](FieldVectorSize))
+
 }
 
-// TODO: replace side effect on array
-class FieldVector() {
+class FieldVector(array: Array[Byte]) {
 
-  val array: Array[Byte] = Array.ofDim[Byte](FieldVectorSize)
-
-  def update(i: Int)(k: Key8) { array(i) = k }
+  def updated(i: Int)(k: Key8): FieldVector = FieldVector(array.updated(i, k))
 
   def k16(i: Int): Key16 = {
     require(i %2 == 0)

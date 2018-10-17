@@ -3,8 +3,10 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm
 
 import java.io.File
 
-import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr
+// import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
+// import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags.TypicalPacketFlags
+// import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Packet
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
@@ -18,19 +20,17 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class ParserSpec extends FlatSpec with Matchers {
 
-  val cfg = mby_ppe_parser_map()
-  cfg.foreachResetableField(f => f.reset())
-  val parser = new Parser(cfg)
+  val csr = Csr().getRxPpe(0).csrRxPpe.parser
 
   // load a 'canonical' image (tbd, how we're going to get this)
 
   // for each of some packets, confirm that they are aligned with the expected parse output
   // https://en.wikipedia.org/wiki/IPv4_header_checksum
-  val pcapFile : File = new File("src/test/data/scapy.pcap")
-  s"${pcapFile}" should s" have an UDP header" in {
-    // val pkt = Packet.loadPcap(pcapFile)(0)
-    // val pout = parser.x(pkt) // (crashes without correct image)
+  val pcapFile: File = new File("src/test/resources/scapy.pcap")
+  s"$pcapFile" should s" have an UDP header" in {
+    /*val pkt = Packet.loadPcap(pcapFile)(0)
+    val pout = Parser.parse(csr, pkt) // (crashes without correct image)
     // can't actually do this assertion yet (no parser image)
-    // pout.paFlags.flags should contain (TypicalPacketFlags.otr_l4_udp_v.id)
+    pout.paFlags.get should contain (TypicalPacketFlags.otr_l4_udp_v.id)*/
   }
 }

@@ -10,8 +10,10 @@ rx_ppe_igr_if.ppe rx_ppe_igr_if,
 ngen_IO_list
 ngen_IO_end
 
+`ifndef FIRST_SHELL
 ngen_wires
 
 ngen_submodules
 
+`endif // FIRST_SHELL
 ngen_endmodule
