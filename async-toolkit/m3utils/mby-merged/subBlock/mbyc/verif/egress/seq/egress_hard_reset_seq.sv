@@ -43,31 +43,19 @@ class egress_hard_reset_seq extends egress_extended_base_seq;
 
     //Reset and power up flow
     env_if.power_good_reset = 0;
-    env_if.primary_reset = 0;
-    env_if.secondary_reset = 0;
-    env_if.enable_secondary_clock = 0;
-    env_if.enable_primary_clock = 0;
+    env_if.reset = 0;
 
     //power good
     #1;
     env_if.power_good_reset = 1;
 
-    // Secondeary interface
-    #1;
-    env_if.enable_secondary_clock = 1;
-    repeat (10) begin
-      @(posedge env_if.secondary_clock);
-    end
-    env_if.secondary_reset = 1;
-
     egress_fusepull_comp_e.wait_trigger();
 
     //Primary interface
-    env_if.enable_primary_clock = 1;
     repeat (10) begin
-      @(posedge env_if.primary_clock);
+      @(posedge env_if.clock);
     end
-    env_if.primary_reset = 1;
+    env_if.reset = 1;
 
   endtask // body
 

@@ -30,9 +30,6 @@ import sla_pkg::*;
    import svt_uvm_pkg::*;
    import svt_bfm_shell_uvm_pkg::*;
    import svt_amba_uvm_pkg::*;
-   //import svt_axi_uvm_pkg::*;
-   //import svt_apb_uvm_pkg::*;
-
 
   `ifdef PMU_ENV_ENABLE
       //import pmuKLVSeq_pkg::*;
@@ -52,34 +49,6 @@ import sla_pkg::*;
     `include "vcd_player_seq.svh"
     `endif
 
-
-    `ifdef AXI_ENV_ENABLE
-    `include "fc_axi_master_base_seq.svh"
-    `include "fc_axi_slave_mem_rsp_seq.svh"
-    `include "fc_axi_basic_txn_seq.svh" 
-    `include "fc_axi_txn_seq.svh"
-    `include "fc_axi_reorder_txn_seq.svh" 
-    `endif
-
-    `ifdef APB_ENV_ENABLE
-    `include "fc_apb_master_base_seq.svh"
-    `include "fc_apb_slave_mem_rsp_seq.svh"
-    `include "fc_apb_basic_txn_seq.svh"
-    `include "fc_apb_reorder_txn_seq.svh" 
-     `include "fc_apb_txn_seq.svh"
- 
-    //`include "fc_apb_ral_txn_seq.svh"
-    `endif
-
-    `ifdef CHI_ENV_ENABLE
-    //import svt_chi_uvm_pkg::*;
-    `include "svt_chi_common_defines.svi"
-    `include "svt_chi_port_defines.svi"
-    `include "fc_chi_rn_basic_seq.svh"
-    `include "fc_chi_sn_basic_seq.svh"
-     `include "fc_chi_txn_seq.svh"
-    `endif
-
     // saola phase sequences
     `include "fc_powergood_seq.svh"
     `include "fc_training_seq.svh"
@@ -93,18 +62,6 @@ import sla_pkg::*;
     //clk gating enable seq
 
     //reset seq
-
-    `ifdef AXI_ENV_ENABLE
-    `include "axi_ral_adapter_seq.svh"
-    `endif
-    `ifdef APB_ENV_ENABLE
-    `include "apb_ral_adapter_seq.svh"
-    `endif
-    `ifdef CHI_ENV_ENABLE
-    `include "chi_ral_adapter_seq.svh"
-    `endif
-    
-
 
 endpackage
 

@@ -23,8 +23,7 @@ my $sched = '-sched local';
 my $current_system_cmd = '';
 my $passing_processes = '';
 my $part_comp = '';
-my $en_ip = '';
-my $stub_mode = '';
+my $variant = '';
 my $func_replay = '';
 my $stf_tp_mode = '';
 my $bman_debug = '';
@@ -101,10 +100,8 @@ while($_=shift @ARGV ) {
     } elsif(/^-+partcomp$/i) {
         $part_comp = '-partcomp_vcs';
         $vcs_debug = '-vcs_debug_mode=-debug_pp';
-    } elsif(/^-+en_ip=/i) {
-        $en_ip = $_;
-    } elsif(/^-+stub_mode=/i) {
-        $stub_mode = $_;
+    } elsif(/^-+variant=/i) {
+        $variant = $_;
     } elsif(/^-+func_replay$/i) {
         $func_replay = '-1c -func_replay 1 -1c-';
     } elsif(/^-+stf_tp_mode$/i) {
@@ -122,9 +119,9 @@ while($_=shift @ARGV ) {
     } elsif(/^-+verdi$/i) {
         $gui = '-sd verdi';
     } elsif(/^-+wav$/i) {
-        $wav = $wav . ' -vpd';
+        $wav = $wav . ' -vcd';
     } elsif(/^-+vpd$/i) {
-        $wav = $wav . ' -vpd';
+        $wav = $wav . ' -vcd';
     } elsif(/^-+fsdb$/i) {
         $wav = $wav . ' -fsdb';
     } elsif(/^-+mda$/i) {
@@ -272,14 +269,18 @@ sub process_commands {
             } elsif($ace_model =~ /^sigacc$/) {
                 $dut_name = 'sigacc';
                 $test_pkg = '-test_pkg test_pkg';
-            } elsif($ace_model =~ /fc/) {
+            } elsif($ace_model =~ /^fc$/) {
                 $dut_name = $single_fc_dut ne '' ? $single_fc_dut : "mby";
             } elsif($ace_model =~ /^hc[abt]$/) {
                 $single_fc_dut = 'hcx';
                 $dut_name = 'hcx';
                 $test_pkg = '';
+            } elsif($ace_model =~ /^(fc_.*)$/) {
+                #$dut_name = 'fc_lite';
+                $dut_name = $1;
+                $variant = "-variant $1";
             } else {
-                &failing_exit("Trying to change to unsupported model: $ace_model\n");
+                &failing_exit("Trying to change to unsupported model: $ace_model $dut_name\n");
             }
         } elsif(($mode eq 'ace_testlist') or (($mode eq 'ace_testname') and ((/\.list$/) or (/^(\w+)\:(\d+)\:seed/)))) {
             &failing_exit("ERROR: -m <model> not specified before run command\n") if($ace_model eq '');
@@ -404,8 +405,7 @@ sub run_bman {
     my $build_desc = shift @_;
     &failing_exit("ERROR: -m <model> not specified before compile command\n") if($ace_model eq '');
     &log_and_print("Running $build_desc on dut $dut_name with ace model $ace_model\n");
-    $stub_mode = '-en_ip=boot' if (($ace_model =~ /_lite$/) and $stub_mode eq '');
-    my $bman_add_opts = (@_ > 0) ? shift @_ : "$bman_debug $func_replay $stf_tp_mode $vcs_debug $part_comp $en_ip $stub_mode $elab_opts $no_gen_flags $sim_only $tgt_dir $disable_xprop_elab";
+    my $bman_add_opts = (@_ > 0) ? shift @_ : "$bman_debug $func_replay $stf_tp_mode $vcs_debug $part_comp $variant $elab_opts $no_gen_flags $sim_only $tgt_dir $disable_xprop_elab";
     if ($inc_compile and ($ace_model =~ /^hc.$/))  {
         $bman_add_opts = $bman_add_opts . " -s all +s hcx.vcs.elab_${ace_model} +s hcx.vcs.vlogan_${ace_model}_seq_lib +s hcx.vcs.vlogan_${ace_model}_tests_lib +s hcx.vcs.vlogan_${ace_model}_ti_lib +s hcx.vcs.vlogan.${ace_model}_rtl_top_lib +s hcx.vcs.vlogan_${ace_model}_tb_lib +s hcx.vcs.vlogan_${ace_model}_env_lib +s sim_init";
     }
@@ -475,8 +475,7 @@ sub print_help_message {
   print "   -dve_debug          Compile VCS with debug enabled for DVE.\n";
   print "   -debug_all          Compile VCS with -debug_all option.\n";
   print "   -partcomp           Compile VCS with -partcomp option.\n";
-  print "   -en_ip=<IPS>        Compile VCS lite model with only <IPS> enabled.  Used with -stub_mode.\n";
-  print "   -stub_mode=<rtl/val> Specifies whether to default all IPs removed (rtl) or just the verif IPs (val).\n";
+  print "   -variant=<model>    Compile VCS lite model with MBY specific variant\n";
   print "   -func_replay        Compile VCS with replay elements enabled in the func testbench.\n";
   print "   -stf_tp_mode        enable user to use Test port BFM instead of STF BFM.\n";
   print "   -bman_debug         Run bman with -enable_tool_debug -enable_dump_rtl options.\n";

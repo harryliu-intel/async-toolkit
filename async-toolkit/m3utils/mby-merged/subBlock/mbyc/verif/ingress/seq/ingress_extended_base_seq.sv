@@ -31,4 +31,4 @@ class ingress_extended_base_seq extends ingress_env_base_seq;
     super.new(name /*, sequencer, parent_seq*/);
   endfunction
 
-endclass
+endclass // ingress_extended_base_seq

@@ -40,6 +40,7 @@
         `include "sla_macros.svh"
 `endif
 
+
         import uvm_pkg::*;
         import sla_pkg::*;
         `include "uvm_macros.svh"
@@ -49,6 +50,10 @@
         import svt_uvm_pkg::*;
         import svt_bfm_shell_uvm_pkg::*;
         import svt_axi_uvm_pkg::*;
+
+        // kl - added to fulfill the SVT macros consumed by svt_axi_bfm_pkg
+        import svt_amba_common_uvm_pkg::*;
+        `include "svt_axi_common_defines.svi"
 
         `define __INSIDE_SVT_AXI_BFM_PKG__
         

@@ -5,6 +5,7 @@
 # Never add Natural_Docs output -  directory Data
 /verif/doc/Data
 /verif/doc/Working Data
+*.nd
 
 # DVT Eclipse
 .dvt
@@ -25,6 +26,9 @@ regression
 *simv.daidir/*
 *simv.vdb/*
 .acetestinfo.log
+
+# collage generated
+tools/collage/*/ip_kits/
 
 # Dump related files
 vdCovLog/
@@ -160,3 +164,6 @@ wm/src/main/c_exp/src/mby_server
 
 # generated subIP content
 subIP/
+
+# RALF typically generated from RDL or Nebulon output
+*.ralf

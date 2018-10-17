@@ -9,9 +9,8 @@
 //------------------------------------------------------------------------------
 
 `include "hvl_fc_conns.svh"
-`include "hvl_axi_ti_conns.svh"
-`include "hvl_apb_ti_conns.svh"
-`include "hvl_chi_ti_conns.svh"
+`include "hvl_igr_ti_conns.svh"
+`include "hvl_pep_ti_conns.svh"
 
 /*
  *  ----------------

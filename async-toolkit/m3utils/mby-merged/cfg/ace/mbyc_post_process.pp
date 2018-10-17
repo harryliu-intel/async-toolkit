@@ -81,11 +81,18 @@
 					   #EndString    => '/Report/',
 					   #RequiredText => ['Report',],
 					   okErrors     => [
-		                                       # [AK]:8/20/18 - Filter AXI cfg object error fields.
+		                               # [AK]:8/20/18 - Filter AXI cfg object error fields.
 				                       # TODO: Findout if there is a way to turn off AMBA VIP config 
-						       # object print.
-						       '/allow_cache_update_on_coherent_error_response/',
-		                                       '/flag_cacheline_and_memory_coherency_check_per_xact_as_error/',
+						               # object print.
+						               '/allow_cache_update_on_coherent_error_response/',
+		                               '/flag_cacheline_and_memory_coherency_check_per_xact_as_error/',
+
+                                       #Subodh Nanal 10/5/18
+                                       #error keyword used in AMBA VIP
+                                       '/^.*svt_err_check_stats_cov_htrans_not_changed_to_idle_during_error.*$/',
+                                       '/^.*svt_err_check_stats_cov_two_cycle_error_resp.*$/',
+                                       '/^.*svt_ahb_slave_transaction_error_sequence.*$/',
+                                       '/^.*svt_ahb_arb_abort_on_error_resp_virtual_sequence.*$/',
 		                          ],
                                    
 					   #okErrors_multiLine => [
