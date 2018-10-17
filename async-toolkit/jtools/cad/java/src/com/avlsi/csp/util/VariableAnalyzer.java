@@ -115,6 +115,8 @@ public class VariableAnalyzer {
      **/
     CSPCellInfo cellInfo;
 
+    private Map<String,Type> portTypes;
+
     public VariableAnalyzer(CSPCellInfo cellInfo) {
         this.cellInfo = cellInfo;
     }
@@ -127,6 +129,7 @@ public class VariableAnalyzer {
         private Map<String,ParseRange> undeclaredReads; 
         private Map<String,ParseRange> undeclaredWrites;
         private Map<String,Type> undeclaredTypes;
+        private final Map<String,Type> portTypes;
         private Map/*<ExpressionInterface,Type>*/ expressionTypes;
         private Map<IdentifierExpression,Type> identUse;
         private Set<String> identRef;
@@ -138,15 +141,18 @@ public class VariableAnalyzer {
         private Set declarationWarned = new HashSet();
         private Collection<TypeError> errors;
 
-        public Results(final RefinementResolver resolver) {
-            this(resolver, Collections.EMPTY_MAP);
+        public Results(final RefinementResolver resolver,
+                       final Map<String,Type> portTypes) {
+            this(resolver, Collections.EMPTY_MAP, portTypes);
         }
 
         public Results(final RefinementResolver resolver,
-                       final Map<IdentifierExpression,Type> identUse) {
+                       final Map<IdentifierExpression,Type> identUse,
+                       final Map<String,Type> portTypes) {
             undeclaredReads = new HashMap<String,ParseRange>();
             undeclaredWrites = new HashMap<String,ParseRange>();
             undeclaredTypes = new HashMap<String,Type>();
+            this.portTypes = portTypes;
             expressionTypes = new HashMap/*<ExpressionInterface,Type>*/();
             // XXX: We really want to used IdentityLinkedHashMap here
             this.identUse = new LinkedHashMap<>(identUse);
@@ -271,6 +277,10 @@ public class VariableAnalyzer {
             undeclaredTypes.put(s, t);
         }
 
+        public Map<String,Type> getPortTypes() {
+            return portTypes;
+        }
+
         /** 
          * Returns a map from expressions to the types of expressions, or maps 
          * to null if the type is unknown.
@@ -327,6 +337,9 @@ public class VariableAnalyzer {
             Type result = identUse.get(id);
             if (result == null) {
                 result = getUndeclaredTypes().get(id.getIdentifier());
+            }
+            if (result == null) {
+                result = getPortTypes().get(id.getIdentifier());
             }
             return result;
         }
@@ -415,7 +428,6 @@ public class VariableAnalyzer {
      **/
     public Results getResults (CSPProgram p, RefinementResolver resolver)
         throws VariableAnalysisException {
-        Results results = new Results(resolver);
         Map<String,Type> predeclared = new HashMap<String,Type>();
         
         // Get metaparameters.
@@ -424,13 +436,15 @@ public class VariableAnalyzer {
 
         // Get ports.
 
-        predeclared.putAll(getPortMap());
+        final Map<String,Type> portMaps = getPortMap();
+        predeclared.putAll(portMaps);
 
         // Walk the syntax tree of the main program, if defined.  Otherwise,
         // return an empty set.
 
         SequentialStatement initSI = p.getInitializerStatement();
         StatementInterface si = p.getStatement();
+        Results results = new Results(resolver, portMaps);
         if (initSI != null || si != null)
             computeTypes (initSI, si, predeclared, Collections.EMPTY_MAP,
                           resolver, results, false);
@@ -459,7 +473,8 @@ public class VariableAnalyzer {
 
         // Get the set of ports.
 
-        predeclared.putAll (getPortMap());
+        final Map<String,Type> portMaps = getPortMap();
+        predeclared.putAll(portMaps);
 
         // Get the set of formal arguments
 
@@ -488,7 +503,7 @@ public class VariableAnalyzer {
 
         // Walk the syntax tree of the function body
 
-        final Results results = new Results(resolver, identUse);
+        final Results results = new Results(resolver, identUse, portMaps);
 
         computeTypes(initStmt, f.getBodyStatement(), predeclared, funcParams,
                      resolver, results, true);
@@ -622,18 +637,20 @@ public class VariableAnalyzer {
 
     /** Get a Map of the ports of the current cell.  **/
     private /*@ non_null @*/ Map<String,Type> getPortMap() {
-        Map<String,Type> results = new HashMap<String,Type>();
-        for (Iterator i = cellInfo.getPortDefinitions(); i.hasNext(); ) {
-            PortDefinition d = (PortDefinition) i.next();
-            // TODO: We probably want to ignore Vdd, GND, and _RESET,
-            // but eventually we will not want to ignore other nodes.
-            results.put(d.getName(),
-                        port2AST(d.getType(),
-                                 PortDefinition.updateDirection(
-                                     d.getDirection(),
-                                     PortDefinition.FORWARD)));
+        if (portTypes == null) {
+            portTypes = new HashMap<String,Type>();
+            for (Iterator i = cellInfo.getPortDefinitions(); i.hasNext(); ) {
+                PortDefinition d = (PortDefinition) i.next();
+                // TODO: We probably want to ignore Vdd, GND, and _RESET,
+                // but eventually we will not want to ignore other nodes.
+                portTypes.put(d.getName(),
+                              port2AST(d.getType(),
+                                       PortDefinition.updateDirection(
+                                           d.getDirection(),
+                                           PortDefinition.FORWARD)));
+            }
         }
-        return results;
+        return portTypes;
     }
 
     /**

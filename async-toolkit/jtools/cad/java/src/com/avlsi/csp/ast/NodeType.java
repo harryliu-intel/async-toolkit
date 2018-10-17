@@ -50,6 +50,13 @@ public class NodeType extends Type {
         return width;
     }
 
+    /**
+     * Returns the direction of the channel, input or output.
+     **/
+    public /*@ non_null @*/ PortDirection getDirection() {
+        return direction;
+    }
+
     public int dimension() {
         return 0;
     }

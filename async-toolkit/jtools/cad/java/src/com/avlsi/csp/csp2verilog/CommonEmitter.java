@@ -46,6 +46,11 @@ abstract class CommonEmitter implements VisitorInterface {
         return t.getDeclaredWidth() == null || t.isSigned();
     }
 
+    protected String getNodeType(final NodeType t) {
+        final int width = t.getWidth();
+        return "bit [" + (width - 1) + ":0]";
+    }
+
     protected String getRegisterType(final IntegerType t)
         throws VisitorException {
         final boolean signed = isRegisterSigned(t);

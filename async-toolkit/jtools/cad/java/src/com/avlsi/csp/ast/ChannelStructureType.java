@@ -23,11 +23,11 @@ public class ChannelStructureType extends Type {
      **/
     private String name;
 
-    private final Map/*<String,Type>*/ members;
+    private final Map<String,Type> members;
 
     public ChannelStructureType (final String name) {
         this.name = name;
-        this.members = new HashMap/*<String,Type>*/();
+        this.members = new HashMap<>();
     }
 
     public int dimension() {
@@ -49,7 +49,7 @@ public class ChannelStructureType extends Type {
     }
 
     public Type getMemberType(final /*@ non_null @*/ String name) {
-        return (Type) members.get(name);
+        return members.get(name);
     }
 
     /**
@@ -57,7 +57,7 @@ public class ChannelStructureType extends Type {
      *
      * @return members of the structure
      **/
-    public Map/*<String,Type>*/ getMembers() {
+    public Map<String,Type> getMembers() {
         return Collections.unmodifiableMap(members);
     }
 
