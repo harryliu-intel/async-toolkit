@@ -92,8 +92,8 @@ void Parser
 #else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
-    const mbyRxMacToParser  * const in,
-          mbyParserToMapper * const out
+    mbyRxMacToParser  const * const in,
+    mbyParserToMapper       * const out
 )
 {
     // Read inputs:

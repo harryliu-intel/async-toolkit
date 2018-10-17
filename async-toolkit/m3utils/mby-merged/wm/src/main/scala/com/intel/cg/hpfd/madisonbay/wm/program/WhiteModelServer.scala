@@ -5,17 +5,25 @@ import java.io._
 
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
+import java.net._
+
+import com.intel.cg.hpfd.csr.generated.mby_top_map
+import com.intel.cg.hpfd.madisonbay.Memory._
+import monocle.Optional
+
+import scala.annotation.tailrec
 
 object WhiteModelServer {
   val legacyProtocol = false
 
-  // prototype example! -- obviously this ought to be the 'real' CSR state/white model
-  val csrSpace = new scala.collection.mutable.HashMap[Int, Byte]
+  val initialAddress = Address at (0 bytes)
 
-  import java.net._
+  val csrs = mby_top_map.mby_top_map(initialAddress)
+  val paths = mby_top_map.mby_top_map.genOpticsLookup(csrs, Optional.id)
+
   val egressPortToSocketAndStreamMap = new collection.mutable.HashMap[Int, (Socket, DataOutputStream)]()
 
-  val iosfHandling = new IosfHandling(csrSpace)
+  val iosfHandling = new IosfHandling(paths)
   val packetHandling = new PacketHandling(egressPortToSocketAndStreamMap, legacyProtocol)
   val egressInfoHandling = new EgressInfoHandling(egressPortToSocketAndStreamMap, legacyProtocol)
 
@@ -23,22 +31,24 @@ object WhiteModelServer {
     println("Received quit operation!")
   }
 
-  def processMessage(is: DataInputStream, os: DataOutputStream): Any = {
-
+  @tailrec
+  def processMessages(mtm: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map.mby_top_map = {
     val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)
     val toGo = hdr.Msglength - 12
 
 
-    hdr.Type match  {
-      case FmModelMsgType.Packet => packetHandling.processPacket(is, os, hdr)
-      case FmModelMsgType.Mgmt => Unit
-      case FmModelMsgType.Iosf => iosfHandling.processIosf(is, os)
-      case FmModelMsgType.SetEgressInfo => egressInfoHandling.processEgressInfo(is, toGo, hdr)
-      case FmModelMsgType.CommandQuit => assert(false)
-      case _ =>
+    val newRegs = hdr.Type match  {
+      case FmModelMsgType.Packet => packetHandling.processPacket(is, os, hdr); mtm
+      case FmModelMsgType.Mgmt => mtm
+      case FmModelMsgType.Iosf => iosfHandling.processIosf(mtm, is, os)
+      case FmModelMsgType.SetEgressInfo => egressInfoHandling.processEgressInfo(is, toGo, hdr); mtm
+      case FmModelMsgType.CommandQuit => assert(false); mtm
+      case _ => mtm
     }
+
+    processMessages(newRegs, is, os)
   }
 
   def runModelServer(file: File): Unit = {
@@ -66,10 +76,10 @@ object WhiteModelServer {
       val os = new DataOutputStream(new BufferedOutputStream(s.getOutputStream))
 
       try {
-        while (true) processMessage(is, os)
+        processMessages(csrs, is, os)
       } catch {
-        case _: EOFException =>
-          println("Termination of IO from client without shutdown command " + s.getInetAddress.getHostName)
+        case _: IOException =>
+          println("IO error while handling client " + s.getInetAddress.getHostName)
 
       }
       println("Disconnected.")
@@ -78,9 +88,6 @@ object WhiteModelServer {
       os.flush()
       os.close()
       s.close()
-      egressPortToSocketAndStreamMap.retain {
-        case (_, (socket, _)) => socket != s
-      }
     }
     server.close()
   }

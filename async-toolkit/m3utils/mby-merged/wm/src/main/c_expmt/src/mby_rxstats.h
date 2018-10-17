@@ -10,7 +10,19 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 
+#ifdef USE_NEW_CSRS
+#include <mby_top_map.h>
+#endif
+
 // Defines:
+
+#ifdef USE_NEW_CSRS
+#define MBY_STATS_IN_REGS     mby_ppe_rx_stats_map * const stats_map
+#define MBY_STATS_IN_REGS_P                                stats_map
+#else
+#define MBY_STATS_IN_REGS     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
+#define MBY_STATS_IN_REGS_P             regs
+#endif
 
 /******** RX_STATS_BASE *******/
 #define MBY_RX_STATS_BASE                                       (0x3F18000)

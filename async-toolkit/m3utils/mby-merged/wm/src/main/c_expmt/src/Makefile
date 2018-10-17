@@ -15,6 +15,9 @@ SOURCES += mby_parser.c
 SOURCES += mby_mapper.c
 SOURCES += mby_lpm_regs.c
 SOURCES += mby_lpm.c
+SOURCES += mby_clsfr_regs.c
+SOURCES += mby_wcm.c
+SOURCES += mby_exactmatch.c
 SOURCES += mby_classifier.c
 SOURCES += mby_hash.c
 SOURCES += mby_nexthop.c
@@ -27,6 +30,7 @@ SOURCES += mby_txstats.c
 SOURCES += mby_pipeline.c
 SOURCES += mby_reg_ctrl.c
 SOURCES += mby_errors.c
+SOURCES += mby_init.c
 # SOURCES += mby_log_dump.c
 
 OBJECTS = $(SOURCES:.c=.o)
@@ -79,11 +83,14 @@ DELFILES  = $(OBJECTS) *.o *.so
 all: $(OBJECTS) mby_server
 
 mby_common.o     : mby_common.c                      mby_common.h mby_bitfield.h
-mby_bitfield.o   : mby_bitfield.c 	mby_bitfield.h
+mby_bitfield.o   : mby_bitfield.c 	 mby_bitfield.h
 mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h mby_bitfield.h
 mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h mby_bitfield.h
+mby_clsfr_regs.o : mby_clsfr_regs.c mby_clsfr_regs.h mby_common.h mby_bitfield.h
 mby_lpm_regs.o   : mby_lpm_regs.c   mby_lpm_regs.h   mby_common.h mby_bitfield.h
 mby_lpm.o        : mby_lpm.c        mby_lpm.h        mby_common.h mby_bitfield.h
+mby_wcm.o        : mby_wcm.c        mby_wcm.h        mby_common.h mby_bitfield.h
+mby_exactmatch.o : mby_exactmatch.c mby_exactmatch.h mby_common.h mby_bitfield.h
 mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h mby_bitfield.h
 mby_hash.o       : mby_hash.c       mby_hash.h       mby_common.h mby_bitfield.h
 mby_nexthop.o    : mby_nexthop.c    mby_nexthop.h    mby_common.h mby_bitfield.h
@@ -98,7 +105,8 @@ mby_errors.o     : mby_errors.c     mby_errors.h
 PIPELINE_STAGES += mby_parser.o
 PIPELINE_STAGES += mby_mapper.o
 PIPELINE_STAGES += mby_lpm.o        mby_lpm_regs.o
-PIPELINE_STAGES += mby_classifier.o
+PIPELINE_STAGES += mby_wcm.o        mby_exactmatch.o
+PIPELINE_STAGES += mby_classifier.o mby_clsfr_regs.o
 PIPELINE_STAGES += mby_hash.o
 PIPELINE_STAGES += mby_nexthop.o
 PIPELINE_STAGES += mby_maskgen.o
@@ -109,6 +117,7 @@ PIPELINE_STAGES += mby_txstats.o
 mby_pipeline.o   : mby_pipeline.c   mby_pipeline.h   $(PIPELINE_STAGES)
 mby_reg_ctrl.o   : mby_reg_ctrl.c   mby_reg_ctrl.h
 mby_model.o      : mby_model.c      mby_model.h		 mby_pipeline.o
+mby_init.o       : mby_init.c       mby_init.h
 
 %.o: %.c
 	@echo '  Compiling' $<

@@ -1,0 +1,33 @@
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.csr
+
+import com.intel.cg.hpfd.csr.generated.{mby_ppe_parser_map, mby_ppe_rx_top_map, mby_top_map}
+import com.intel.cg.hpfd.madisonbay.Memory._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr._
+
+object Csr {
+
+  final object Initial {
+    val topMap: mby_top_map.mby_top_map = mby_top_map.mby_top_map(Address(0, 0 bits))
+  }
+
+  def apply(): Csr = new Csr(Initial.topMap)
+
+  def apply(csr: mby_top_map.mby_top_map): Csr = new Csr(csr)
+
+  case class CsrRxPpe(idMgp: Int, csrRxPpe:  mby_ppe_rx_top_map.mby_ppe_rx_top_map)
+
+  case class CsrParser(idMgp: Int, csrParser:  mby_ppe_parser_map.mby_ppe_parser_map)
+
+}
+
+class Csr(csr: mby_top_map.mby_top_map) {
+
+  def topMap: mby_top_map.mby_top_map = csr
+
+  def updated[A](csrNode: A)(implicit ev: CsrUpdater[A]): Csr = ev.updated(csr, csrNode)
+
+  def getRxPpe(idMgp: Int): CsrRxPpe = CsrRxPpe(idMgp, csr.mpp.mgp(idMgp).rx_ppe)
+
+  def getParser(idMgp: Int): CsrParser = CsrParser(idMgp, csr.mpp.mgp(idMgp).rx_ppe.parser)
+
+}
