@@ -1,0 +1,16 @@
+CLK_REF_SYNC_E_N  input   vccinfaon {ext_off 1.00}
+CLK_REF_SYNC_E_P  input   vccinfaon {ext_off 1.00}
+NET_CLK_REF0_P    input   vccinfaon {ext_off 1.00}
+NET_CLK_REF1_N    input   vccinfaon {ext_off 1.00} 
+TIME_REF_N        input   vccinfaon {ext_off 1.00}
+TIME_REF_P        input   vccinfaon {ext_off 1.00}
+TIME_SYNC_N       input   vccinfaon {ext_off 1.00}
+TIME_SYNC_P       input   vccinfaon {ext_off 1.00}
+XTAL_IN           input   vccinfaon {ext_off 1.00}
+CLK_SYNCE0_N      output  vccinfaon {ext_off 1.00}
+CLK_SYNCE0_P      output  vccinfaon {ext_off 1.00}
+CLK_SYNCE1_N      output  vccinfaon {ext_off 1.00}
+CLK_SYNCE1_P      output  vccinfaon {ext_off 1.00}
+ONE_PPS_OUT_N     output  vccinfaon {ext_off 1.00}
+ONE_PPS_OUT_P     output  vccinfaon {ext_off 1.00}
+XTAL_OUT          output  vccinfaon {ext_off 1.00}

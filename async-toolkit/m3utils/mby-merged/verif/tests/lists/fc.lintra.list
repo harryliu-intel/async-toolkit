@@ -1,0 +1,6 @@
+#!/usr/intel/bin/perl
+
+# for each turnin, gate_keeper runs the following tests against the lbgns model
+# as part of its the 'integrate' phase.
+@testlist = qw(
+);

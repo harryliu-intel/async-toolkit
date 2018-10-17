@@ -1,10 +1,11 @@
+//scalastyle:off
 package com.intel.cg.hpfd.madisonbay
 
 import scala.annotation.tailrec
 import scala.reflect.api.Universe
 import scala.reflect.runtime.{universe => runtimeUniverse}
 import scala.reflect.macros.blackbox
-
+import scala.language.implicitConversions
 
 object Memory {
   //TODO: provide generalization over word size later on
@@ -93,7 +94,7 @@ object Memory {
 
     def nextPower: Bits = nextPowerBits
 
-    override def toString = value.toString + " bits"
+    override def toString = s"$value.bits"
   }
 
   /** Bytes value.
@@ -116,9 +117,8 @@ object Memory {
 
     def nextPower: Bytes = nextPowerBytes
 
-    override def toString = value.toString + " bytes"
+    override def toString = f"0x$value%X.bytes"
   }
-
 
   /** Memory units-related Numeric types utilities. */
   implicit class asMemoryUnits(val value: Long) extends AnyVal {
@@ -135,9 +135,9 @@ object Memory {
 
 
   /** 2 pow N bytes (runtime check) adapter. Can't be a value class so it can have a requirement. */
-  class Alignment private (val value: Long) extends AnyVal with Ordered[Alignment] {
+  case class Alignment private (value: Long) extends Ordered[Alignment] {
     def toLong: Long = value
-    def toBytes: Bytes = toLong.bytes
+    def toBytes: Bytes = value.bytes
     def toBits: Bits = toBytes.toBits
 
     def compare(other: Alignment): Int = toLong.compare(other.toLong)
@@ -150,7 +150,7 @@ object Memory {
       val value = fbytes.toBytes.toLong
       require( value > 0L )
       require( value.bytes.isPower )
-      new Alignment(value)
+      Alignment(value)
     }
 
     /** Simple extractor to bytes */
@@ -178,7 +178,7 @@ object Memory {
   val WordSize = 64
 
   /** Address in memory. Word-aware. */
-  class Address private (val offset: Long) extends AnyVal with Ordered[Address] {
+  case class Address private (offset: Long) extends Ordered[Address] {
 
     /** Address moved by memory shift. */
     def +[M <: MemoryUnit](munit: M): Address = Address(toBits + munit)
@@ -216,13 +216,13 @@ object Memory {
     /** Bit offset from full words */
     def bits: Bits = (toBits.toLong % WordSize).bits
 
-    override def toString = "Address at " + words + ".words + " + bits + ".bits"
+    override def toString = s"Address at ($fullBytes + $bits)"
   }
   object Address {
     /** From raw memory */
     def apply[M <: MemoryUnit](munit: M): Address = {
       require(munit.toLong >= 0)
-      new Address(munit.toBits.toLong)
+      Address(munit.toBits.toLong)
     }
 
     /** From word number and bit offset.
@@ -258,7 +258,7 @@ object Memory {
     * @param pos starting poing of the range
     * @param width width in bits
     * */
-  class AddressRange(val pos: Address, val width: Bits) {
+  case class AddressRange private (pos: Address, width: Bits) {
     require(width.toLong > 0L)  // pos <= lim
 
     /** First address free after this range,
@@ -268,19 +268,19 @@ object Memory {
 
     /** Position and the next position after the range,
       * e.g. AddressRange(Address(32.bytes), 8.bytes).toAddressPair == (Address(32.bytes), Address(40.bytes)) */
-    def toAddressPair = (pos, lim)
+    def toAddressPair: (Address, Address) = (pos, lim)
 
-    override def toString = "AddressRange(pos: " + pos + ", lim: " + lim + ")"
+    override def toString: String = "AddressRange(pos: " + pos + ", lim: " + lim + ")"
 
     /** Highly friendly and readable range form */
-    def rangeString = "" + pos.toBits.toLong + ".." + lim.toBits.toLong
+    def rangeString: String = "" + pos.toBits.toLong + ".." + lim.toBits.toLong
   }
   object AddressRange {
-    /** Simple explcit constructor */
+    /** Simple explicit constructor */
     def apply[M <: MemoryUnit](addr: Address, munit: M) = new AddressRange(addr, munit.toBits)
 
     /** Construct from two addresses. */
-    def apply[M <: MemoryUnit](pos: Address, lim: Address): AddressRange = AddressRange(pos, lim-pos)
+    def apply(pos: Address, lim: Address): AddressRange = AddressRange(pos, (lim-pos).toBits)
 
     /** Field constructor */
     def makeField[M <: MemoryUnit](addr: Address, munit: M) = AddressRange(addr, munit.toBits)

@@ -37,7 +37,9 @@ $ToolConfig_ips{mby} = {
       SEARCH_PATHS        => ["&get_tool_path()",
                               "&get_tool_path()/cfg",
                               "&get_tool_path()/cfg/ace",
+                              "&get_tool_path()/subBlock/mbyc",
                               "&get_tool_var(ipconfig/eth_port, SEARCH_PATHS)",
+                              "&get_tool_path()/target/&get_facet(dut)",
       ],
       lintra_waiver_dirs  => [],
       SUB_SCOPES          => ["eth_port",
@@ -46,6 +48,7 @@ $ToolConfig_ips{mby} = {
       TEST_PATTERNS       => ["verif/mby/formal/tests",],
     },
     ENV => {
+      SOC_DUT             => "&get_facet(dut)", # used in DutConnect.pl
     },
 };
 ######################################################################
@@ -53,9 +56,15 @@ $ToolConfig_ips{mby} = {
 ######################################################################
 IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 
-my $epl_version = "eth_port-dev-x0-18ww34b";
+#Added for Cadence PCIe bfms
+$ToolConfig_ips{mby}{ENV}{LD_LIBRARY_PATH} .=  join(':',
+                                                    "&get_tool_var(denali, DENALI_LIBS)",
+                                                    "&get_tool_var(vipcat, VIPCAT_LIBS)",
+                                                  );
 
-$ToolConfig_ips{epl} = {
+my $epl_version = "eth_port-dev-x0-18ww39c";
+
+$ToolConfig_ips{epc} = {
    PATH    => "$ENV{IP_MODELS}/eth_port/$epl_version",
    VERSION => "$epl_version",
    OTHER   => {
@@ -66,6 +75,6 @@ $ToolConfig_ips{epl} = {
 ######################################################################
 # Executes the import statement above
 ######################################################################
-IPToolDataExtras::import_files("epl", \%ToolConfig_ips);
+IPToolDataExtras::import_files("epc", \%ToolConfig_ips);
 
 1;

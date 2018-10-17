@@ -1,14 +1,23 @@
 SRC_DIR = ../../src
 TST_DIR = .
 
+INC_DIR = ../../../c                                  # uint.h
+INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
+INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
 
-SOURCES  = $(SRC_DIR)/mby_crc32.c
+SOURCES  = $(SRC_DIR)/mby_common.c
+SOURCES += $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
-SOURCES += $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_parser.c
+SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
+SOURCES += $(SRC_DIR)/mby_init.c
+
+
 SOURCES += $(TST_DIR)/mby_parser_test.c
+
 
 OBJECTS = $(SOURCES:.c=.o)
 
@@ -56,11 +65,13 @@ DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
 .PHONY: all
 all: $(TARGET)
 
-$(SRC_DIR)/mby_common.o :      $(SRC_DIR)/mby_common.c $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_crc32.o :       $(SRC_DIR)/mby_crc32.c $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_bitfield.o :    $(SRC_DIR)/mby_bitfield.c $(SRC_DIR)/mby_bitfield.h $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_parser.o :      $(SRC_DIR)/mby_parser.c $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_common.h
-$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h
+$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h $(SRC_DIR)/mby_init.h 
+$(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
+$(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
+$(SRC_DIR)/mby_parser.o    : $(SRC_DIR)/mby_parser.c     $(SRC_DIR)/mby_parser.h
+$(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
+$(SRC_DIR)/mby_init.o      : $(SRC_DIR)/mby_init.c       $(SRC_DIR)/mby_init.h
 
 .PHONY: clean
 clean:

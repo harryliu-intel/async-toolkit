@@ -1,0 +1,15 @@
+// Placeholder
+
+sreset                            >> rst
+
+igr_vp_rx_ecc               >> vp_rx_ecc
+igr_vp_rx_port_num          >> vp_rx_port_num
+igr_vp_rx_data_valid        >> vp_rx_data_valid
+igr_vp_rx_metadata          >> vp_rx_metadata
+igr_vp_rx_time_stamp        >> vp_rx_time_stamp
+igr_vp_rx_data_w_ecc         >> vp_rx_data_w_ecc
+igr_vp_cpp_rx_metadata      >> vp_cpp_rx_metadata
+igr_vp_rx_flow_control_tc   >> vp_rx_flow_control_tc
+igr_vp_tx_pfc_xoff          >> vp_tx_pfc_xoff                        //FIXME should this be [1:0] for 2 VP
+rx_ppe_igr_if               >> rx_ppe_igr
+igr_rx_ppe_if               >> igr_rx_ppe

@@ -5,11 +5,14 @@ clean:
 	@echo "Cleaning ..."
 	make -C parser clean
 	make -C mapper clean
+	make -C nexthop clean
+	make -C maskgen clean
+	make -C rxstats clean
 	make -C basic_fwd clean
 	make -C basic_flood clean
 
 .PHONY: all
-all: test_parser test_mapper test_basic_fwd test_basic_flood
+all: test_parser test_mapper test_nexthop test_maskgen test_rxstats test_basic_fwd test_basic_flood
 
 .PHONY: test_all
 test_all: all
@@ -23,6 +26,26 @@ test_parser:
 test_mapper:
 	@echo "Testing mapper ..."
 	make -C mapper run
+
+.PHONY: test_classifier
+test_classifier:
+	@echo "Testing classifier ..."
+	make -C classifier run
+
+.PHONY: test_nexthop
+test_nexthop:
+	@echo "Testing nexthop ..."
+	make -C nexthop run
+
+.PHONY: test_maskgen
+test_maskgen:
+	@echo "Testing maskgen ..."
+	make -C maskgen run
+
+.PHONY: test_rxstats
+test_rxstats:
+	@echo "Testing rxstats ..."
+	make -C rxstats run
 
 .PHONY: test_basic_fwd
 test_basic_fwd:

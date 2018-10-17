@@ -1,0 +1,4 @@
+#instance                       Parent Module 
+mby_parclk                      parclk                                  
+xtal_rcvr                       parclk                                  
+                                  

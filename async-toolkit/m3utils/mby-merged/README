@@ -88,16 +88,27 @@ Examples of Build Manager commands for DUTs:
 ------------------------------------------------------------------------------------------------------------
 Models                    Commands                                 Description
 ------------------------------------------------------------------------------------------------------------
-MBY                    -  bman -mc mby                           # Madison Bay Configuration
+MBY                    -  bman -mc fc                            # Madison Bay Configuration
 mplex_np_nphy          -  bman -mc mplex_np_nphy                 # Management complex model with no Processor and no PHY.   
 igr                    -  bman -mc igr                           # Ingress testbench
 egr                    -  bman -mc egr                           # Egress testbench
+rx_ppe                 -  bman -mc rx_ppe                        # RX_PPE Testbench
+mesh                   -  bman -mc mesh                          # Mesh Testbench
+gmm_s                  -  bman -mc gmm_s                         # GMM_S RTL  
+
+------------------------------------------------------------------------------------------------------------
+*The following FC variant models require 'sim' script support. To enable that please run the following:
+* %source scripts/verif/fc.env 
+fc_64                  -  sim -m fc_64 -cc                       # FC_64 configuraton of full chip model
+fc_64_no_phy           -  sim -m fc_64_no_phy -cc                # FC_64 without PHY configuraton of full chip model
+fc_8                   -  sim -m fc_8 -cc                        # FC_8 configuraton of full chip model
+fc_8_no_phy            -  sim -m fc_8_no_phy -cc                 # FC_8 without PHY configuraton of full chip model
 
 Compile ALL:
-  bman -dut mby -mc mby
+  bman -dut mby -mc fc
 
 Compile VCS only:
-  bman -dut mby -mc mby -s all +s vcs
+  bman -dut mby -mc fc -s all +s vcs
 
 Compile VCS with coverage:
   bman -dut mby -s all +s vcs
@@ -145,6 +156,7 @@ Trex Examples:
 ====================================================================================
 // Run a basic test:
   trex mby_alive_test -seed 1 -dut mby -model mby
+  trex fc_boot_basic -dut mby -model fc
 
 // Run basic test with coverage enabled:
   trex mby_alive_test -seed 1 -cc_on -dut mby -model mby
@@ -204,7 +216,7 @@ Simregress options:
 Simregress Examples:
 ============================================================================================================
 
-simregress -dut mby -model mby        -net -l verif/mby/reglist/level0.list
+simregress -dut mby -model fc        -net -l subBlock/mbyc/verif/mby/reglist/level0.list
 
 
 
@@ -233,7 +245,7 @@ Post Simulation Debugging
 Simulation Profiling     -  This info was Cut-n-Pasted CRK Gen 2.Step 1 still
                             needs to be modified for MBY
 =============================================================================
-1. Uncomment '-lca -simprofile' in cfg/mby_local_ivars.udf
+1. Uncomment '-lca -simprofile' in cfg/fc_local_ivars.udf
 2. Elaborate desired model using bman.
 3. Run test with sim profile enabled
     -ace_args -simv_args '"'-simprofile time'"' -ace_args-
@@ -258,7 +270,7 @@ to be turned off from running XPROP.
 2 ways to disable XPROP.
 
 First - easiest and disables all DUTs with 1 switch.
-        In cfg/ace/mby_hdl.udf.  Find "$default_enable_xprop_elab", and set to = 0.
+        In cfg/ace/mbyc_hdl.udf.  Find "$default_enable_xprop_elab", and set to = 0.
 
 Second - Control for each DUT.
          In tools/xprop/<dut>.xprop file, comment out or clear the
@@ -279,7 +291,7 @@ ex. -moduletree svt_ethernet_bfm                   // Removes Synopsys Ethhernet
 
 
 To completely disable CONGRUENCY.
-        In cfg/ace/mby_hdl.udf.  Find "$default_enable_congruency_elab", and set to = 0.
+        In cfg/ace/mbyc_hdl.udf.  Find "$default_enable_congruency_elab", and set to = 0.
 
 
 
@@ -323,7 +335,7 @@ Execute the following:
 
 Current Model List :
 ---------------------
-mby                           # Madison Bay Configuration
+fc                           # Madison Bay Configuration
 
 
 OLD:   Needs .dvt/<model>.build files to be updated manually.    $MODEL_ROOT/tools/dvt/dvt_runme.csh

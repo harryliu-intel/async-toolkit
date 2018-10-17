@@ -1,0 +1,51 @@
+# -----------------------------------------------------------------------------
+# INTEL CONFIDENTIAL
+# Copyright(c) 2018, Intel Corporation. All Rights Reserved
+#-----------------------------------------------------------------------------
+#
+# Created by   :  Raghu P Gudla
+# Created on   :  09/22/2018
+#-------------------------------------------------------------------------------
+
+# this is a HDL spec file - it defines the unit and how to compile it.
+
+$hdl_spec = {
+    # list of VERILOG source files that belong in this library
+    -vlog_files => [
+        'verif/tb/seqlib/fc_seq_pkg.sv',
+    ],
+
+    # list of verilog library source dirs (corresponds with the VLOG(AN) '-y' parameter)
+    -vlog_lib_dirs => [],
+
+    # list of verilog library source files (corresponds with the VLOG(AN) '-v' parameter)
+    -vlog_lib_files => [],
+
+    # list of include directories (corresponds with the VLOG(AN) '+incdir+' parameter)
+    -vlog_incdirs => [
+        "$ENV{OVM_HOME}/src", "$ENV{UVM_HOME}/src", "$ENV{XVM_HOME}/src", "$ENV{XVM_HOME}/src/macros",
+        "$ENV{SAOLA_HOME}/verilog", "$ENV{SAOLA_HOME}/verilog_uvm",
+        "verif/tb/seqlib",
+#         &ToolConfig::get_tool_path('ipconfig/vte_dfx_val')."/verif/dft_tb/env",
+#         &ToolConfig::get_tool_path('ipconfig/vte_dfx_val')."/verif/dft_tb/wrappers",
+#         &ToolConfig::get_tool_path('ipconfig/vte_dfx_val')."/verif/dft_tb/generic",
+        "verif/tb/seqlib/saola",
+        "verif/tb/seqlib/seq",
+#        &ToolConfig::ToolConfig_get_tool_path("ipconfig/vipsvt")."/include/sverilog",
+         &ToolConfig::get_tool_env_var('vipsvt', 'DESIGNWARE_HOME')."/include/sverilog",
+        #"verif/tb/seqlib/ral",
+        "verif/tb/env"
+    ],
+
+    # arbitrary verilog compilation options
+    -vlog_opts => '',
+
+    # list of specific VHDL source files
+    -vhdl_files => [],
+
+    # arbitrary VHDL compilation options
+    -vcom_opts => '',
+
+    # other hdl spec files to include
+    -hdl_spec => [],
+};

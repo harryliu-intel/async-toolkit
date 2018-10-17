@@ -4,7 +4,6 @@
 #include <mby_common.h>
 #include <mby_errors.h>
 #include <mby_model.h>
-#include <mby_init.h>
 #include <mby_rxstats.h>
 
 #include "mby_basic_fwd_init.h"
@@ -42,8 +41,7 @@ inline static int checkOk (const char * test, const fm_status status)
 fm_status init(fm_uint32 fwd_port, fm_macaddr dmac)
 {
     // TODO verify if that's all that we need
-    init_nvm_img();
-    init_common();
+    mby_init_regs(send_sw);
     basic_fwd_init(fwd_port, dmac);
     return FM_OK;
 }
