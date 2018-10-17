@@ -14,4 +14,5 @@ object Versions {
   val csrModel = applicationVersion
   val wmServerDto = applicationVersion
   val scalaz = "7.2.18"
+  val jackson = "2.9.5"
 }

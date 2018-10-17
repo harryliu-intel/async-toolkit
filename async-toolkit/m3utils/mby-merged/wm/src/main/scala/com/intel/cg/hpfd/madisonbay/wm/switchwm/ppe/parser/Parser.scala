@@ -34,13 +34,13 @@ object Parser {
   val NumberOfExtractionConfs     = 16
   val OffsetOfNextExtractAction   = 16
 
-  def parse(csr: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet): ParserOutput = {
+  def parse(csr: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet, portIndex: Int): ParserOutput = {
 
     // TODO: support split header to Interface 0 and Interface 1
     val packetHeader = PacketHeader(packet.bytes).trimmed
 
     // setup the initial state
-    val rxPort = new PortIndex(0) // need to handle this via the function interface somehow...
+    val rxPort = new PortIndex(portIndex) // need to handle this via the function interface somehow...
 
     val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(
       csr, 0, packetHeader, initialState(csr, packetHeader, rxPort),

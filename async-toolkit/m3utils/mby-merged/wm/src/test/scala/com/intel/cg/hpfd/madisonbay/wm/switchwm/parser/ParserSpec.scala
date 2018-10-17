@@ -1,5 +1,5 @@
 //scalastyle:off
-package com.intel.cg.hpfd.madisonbay.wm.switchwm
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
 import java.io.File
 
@@ -26,7 +26,7 @@ class ParserSpec extends FlatSpec with Matchers {
 
   // for each of some packets, confirm that they are aligned with the expected parse output
   // https://en.wikipedia.org/wiki/IPv4_header_checksum
-  val pcapFile: File = new File("src/test/data/scapy.pcap")
+  val pcapFile: File = new File("src/test/resources/scapy.pcap")
   s"$pcapFile" should s" have an UDP header" in {
     /*val pkt = Packet.loadPcap(pcapFile)(0)
     val pout = Parser.parse(csr, pkt) // (crashes without correct image)

@@ -11,6 +11,8 @@
 
 // Defines:
 
+#define MBY_WCM_MAX_ACTIONS_NUM 48
+
 // Enums:
 
 // Structs:
@@ -38,9 +40,9 @@ void mbyMatchWildcard
 (
     MBY_CGRP_B_IN_REGS,
     mbyClassifierKeys const * const keys,
-    fm_byte                   const scenario,
+    fm_byte                   const profile_id,
     fm_byte                   const group,
-    mbyClassifierActions    * const actions // = output actions
+    fm_uint32                 actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 );
 
 #endif /* MBY_WCM_H */

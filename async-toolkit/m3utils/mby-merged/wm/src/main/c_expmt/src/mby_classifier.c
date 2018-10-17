@@ -11,21 +11,25 @@
 #include "mby_classifier.h"
 #include "mby_crc32.h"
 
-static inline void setPrec
+/* Check precedence and set the action with the new value */
+static inline void setAct
 (
-    mbyPrecVal * const old,
-    fm_byte      const prec,
-    fm_uint32    const value
+    mbyActionPrecVal * const action, // the current value
+    fm_byte            const new_prec,
+    fm_uint32          const new_value
 )
 {
-    if ((prec >= old->prec) && (prec > 0))
+    if ((new_prec >= action->prec) && (new_prec > 0))
     {
-        old->prec = prec;
-        old->val  = value;
+        action->prec = new_prec;
+        action->val  = new_value;
     }
 }
 
-void doAction
+/* Action Set format: https://securewiki.ith.intel.com/x/XxDpKQ
+ * Formerly called doAction()
+ */
+static void resolveActionSet
 (
     fm_uint32              const action,
     mbyClassifierActions * const actions
@@ -34,7 +38,6 @@ void doAction
     fm_byte prec   = FM_GET_FIELD        (action, MBY_FFU_ACTION, PREC);
     fm_byte encode = FM_GET_UNNAMED_FIELD(action, MBY_FFU_ACTION_l_ENTRYTYPE, 5);
 
-#ifndef USE_NEW_CSRS // does not compile with new CSRS: missing defines <-- FIXME !!!!
     mbyClassifierActionEntryType entryType =
         (encode == 1)                ? MBY_FFU_ACTION_SET4_4B  :
         (encode == 2)                ? MBY_FFU_ACTION_SET8_1B  :
@@ -52,7 +55,7 @@ void doAction
             for (fm_uint i = 0; i < 4; i++) {
                 fm_uint j = index * 4 + i;
                 if ((j < MBY_FFU_ACT4) && (enable & (1uL << i)))
-                    setPrec(&(actions->act4[j]), prec, ((value >> 4*i) & 0xF));
+                    setAct(&(actions->act4[j]), prec, ((value >> 4*i) & 0xF));
             }
             break;
         }
@@ -65,7 +68,7 @@ void doAction
             for (fm_uint i = 0; i < 8; i++) {
                 fm_uint j = index * 8 + i;
                 if ((j < MBY_FFU_ACT1) && (enable & (1uL << i)))
-                    setPrec(&(actions->act1[j]), prec, ((value >> i) & 0x1));
+                    setAct(&(actions->act1[j]), prec, ((value >> i) & 0x1));
             }
             break;
         }
@@ -76,19 +79,19 @@ void doAction
             fm_bool enableA = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EA);
             fm_byte valueA  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VA);
             if (enableA && (indexA < MBY_FFU_ACT1))
-                setPrec(&(actions->act1[indexA]), prec, valueA);
+                setAct(&(actions->act1[indexA]), prec, valueA);
 
             fm_byte indexB  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXB);
             fm_bool enableB = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EB);
             fm_byte valueB  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VB);
             if (enableB && (indexB < MBY_FFU_ACT1))
-                setPrec(&(actions->act1[indexB]), prec, valueB);
+                setAct(&(actions->act1[indexB]), prec, valueB);
 
             fm_byte indexC  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXC);
             fm_bool enableC = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EC);
             fm_byte valueC  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VC);
             if (enableC && (indexC < MBY_FFU_ACT1))
-                setPrec(&(actions->act1[indexC]), prec, valueC);
+                setAct(&(actions->act1[indexC]), prec, valueC);
 
             break;
         }
@@ -98,17 +101,17 @@ void doAction
             fm_byte indexA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXA);
             fm_byte valueA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEA);
             if (indexA < MBY_FFU_ACT4)
-                setPrec(&(actions->act4[indexA]), prec, valueA);
+                setAct(&(actions->act4[indexA]), prec, valueA);
 
             fm_byte indexB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXB);
             fm_byte valueB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEB);
             if (indexB < MBY_FFU_ACT4)
-                setPrec(&(actions->act4[indexB]), prec, valueB);
+                setAct(&(actions->act4[indexB]), prec, valueB);
 
             fm_byte indexC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXC);
             fm_byte valueC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEC);
             if (indexC < MBY_FFU_ACT4)
-                setPrec(&(actions->act4[indexC]), prec, valueC);
+                setAct(&(actions->act4[indexC]), prec, valueC);
 
             break;
         }
@@ -118,7 +121,7 @@ void doAction
             fm_byte   index = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_INDEX);
             fm_uint32 value = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_VALUE);
             if(index < MBY_FFU_ACT24)
-                setPrec(&(actions->act24[index]), prec, value);
+                setAct(&(actions->act24[index]), prec, value);
             break;
         }
 
@@ -127,8 +130,130 @@ void doAction
         case MBY_FFU_ACTION_NOP:
             break;
     }
-#endif
 }
+
+/* Remap Keys
+ * Replaces keys at the end of each Classifier Group.
+ */
+static void remapKeys
+(
+    mbyClassifierActions  * const actions,
+    mbyClassifierKeys     * const keys
+)
+{
+    fm_uint32               remapAction;
+    fm_uint16               value16;
+    fm_byte                 value8;
+    fm_byte                 mask;
+    fm_int                  i;
+    fm_byte                 key;
+    fm_byte                 index[MBY_FFU_REMAP_ACTIONS];
+    fm_uint                 keyIdx;
+    fm_byte                 idx16;
+    fm_uint                 set1_16_base;
+
+    /* Resolve precedence between remap actions*/
+
+    for (i = 0; i < MBY_FFU_REMAP_ACTIONS; i++)
+    {
+        index[i] = FM_GET_FIELD(actions->act24[MBY_FFU_ACTION_REMAP0+i].val,
+                                MBY_FFU_REMAP,
+                                SET1_16B_INDEX);
+    }
+
+    for (i = 0; i < MBY_FFU_REMAP_ACTIONS; i++)
+    {
+        if (actions->act24[MBY_FFU_ACTION_REMAP0+i].prec == 0)
+        {
+            actions->act24[MBY_FFU_ACTION_REMAP0+i].val = 0;
+            continue;
+        }
+        remapAction = actions->act24[MBY_FFU_ACTION_REMAP0+i].val;
+        set1_16_base = MBY_FFU_KEY32*4 + MBY_FFU_KEY16*2 + MBY_FFU_KEY8;
+        /* SET1_16b */
+        if(index[i] >= (set1_16_base))
+        {
+            idx16 = index[i] - set1_16_base;
+            value16 = FM_GET_FIELD(remapAction,
+                                   MBY_FFU_REMAP,
+                                   SET1_16B_VALUE);
+
+            if (idx16 < MBY_FFU_KEY16)
+            {
+                keys->key16[idx16] = value16;
+            }
+            else
+            {
+                /* set 16-bits of KEY32 */
+                keyIdx = (idx16 - MBY_FFU_KEY16) >> 1;
+                FM_SET_UNNAMED_FIELD(keys->key32[keyIdx],
+                                     (idx16 % 2) * 16,
+                                     16,
+                                     value16);
+            }
+        }
+        /* SET8_1b */
+        else
+        {
+            mask = FM_GET_FIELD(remapAction,
+                                MBY_FFU_REMAP,
+                                SET8_1B_MASK);
+
+            if (mask != 0)
+            {
+                value8 = FM_GET_FIELD(remapAction,
+                                      MBY_FFU_REMAP,
+                                      SET8_1B_VALUE);
+
+                if (index[i] < MBY_FFU_KEY16*2)
+                {
+                    /* set 8-bits of KEY16 */
+                    key = FM_GET_UNNAMED_FIELD(keys->key16[index[i] >> 1],
+                                               (index[i] % 2) * 8,
+                                               8);
+                    key = ( key & ~mask ) | ( value8 & mask);
+
+                    FM_SET_UNNAMED_FIELD(keys->key16[index[i] >> 1],
+                                         (index[i] % 2) * 8,
+                                         8,
+                                         key);
+                }
+                else if (index[i] < (MBY_FFU_KEY16*2 + MBY_FFU_KEY8))
+                {
+                    /* set entire KEY8 */
+                    key = keys->key8[index[i] - (MBY_FFU_KEY16*2)];
+
+                    key = ( key & ~mask ) | ( value8 & mask);
+
+                    keys->key8[index[i] - (MBY_FFU_KEY16*2)]  = key;
+                }
+                else
+                {
+                    /* set 8-bits of KEY32 */
+                    keyIdx = (index[i] - (MBY_FFU_KEY16*2 +
+                                MBY_FFU_KEY8)) >> 2;
+                    key = FM_GET_UNNAMED_FIELD(keys->key32[keyIdx],
+                                              (index[i] % 4) * 8,
+                                              8);
+                    key = ( key & ~mask ) | ( value8 & mask);
+
+                    FM_SET_UNNAMED_FIELD(keys->key32[keyIdx],
+                                        (index[i] % 4) * 8,
+                                         8,
+                                         key);
+                }
+
+            }
+
+        }
+
+        /* After remap action is applied to keys, zero out the remap action so that next group
+         * doesnot take same remap action */
+        actions->act24[MBY_FFU_ACTION_REMAP0+i].val = 0;
+        actions->act24[MBY_FFU_ACTION_REMAP0+i].prec = 1;
+    }
+
+}   /* end remapKeys */
 
 static void applyEntropyKeyMask
 (
@@ -601,7 +726,7 @@ void Classifier
 {
     // Read inputs from the Mapper:
     mbyClassifierActions  const actions_in  = in->FFU_ACTIONS;
-    mbyClassifierKeys     const keys        = in->FFU_KEYS;
+    mbyClassifierKeys     const keys_in     = in->FFU_KEYS;
     fm_byte               const scenario_in = in->FFU_SCENARIO;
     fm_bool       const * const ip_option   = in->IP_OPTION;
     mbyParserInfo         const parser_info = in->PARSER_INFO;
@@ -609,53 +734,71 @@ void Classifier
 
     fm_byte              scenario = scenario_in;
     mbyClassifierActions actions  = actions_in;
+    mbyClassifierKeys    keys     = keys_in;
+
 
     // Exact match A (EM_A):
+    fm_uint32 em_a_out[MBY_EM_A_MAX_ACTIONS_NUM] = { 0 };
+
 #ifdef USE_NEW_CSRS
+    // TODO change function to return a list of action sets (i.e. em_a_out)
     mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_A, &actions);
 #else
     mbyMatchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_A, &actions);
 #endif
 
+    for (fm_uint i = 0; i < MBY_EM_A_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(em_a_out[i], &actions);
+
     // Longest Prefix Match (LPM):
-    mbyLpmOut lpm_out = { 0 };
+    fm_uint32 lpm_out[MBY_LPM_MAX_ACTIONS_NUM];
 
 #ifdef USE_NEW_CSRS
     // TODO is the scenario == 6-bit profile ID in the HAS?
-    mbyMatchLpm(cgrp_a_map, &keys, scenario, &lpm_out);
+    mbyMatchLpm(cgrp_a_map, shm_map, &keys, scenario, lpm_out);
 #else
-    mbyMatchLpm(regs,       &keys, scenario, &lpm_out);
+    mbyMatchLpm(regs,                &keys, scenario, lpm_out);
 #endif
 
-    // TODO: convert lpm_out to actions here <-- FIXME!!!
+    for (fm_uint i = 0; i < MBY_LPM_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(lpm_out[i], &actions);
 
-    // Exact match B (EM_B):
-#ifdef USE_NEW_CSRS
-    mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
-#else
-    mbyMatchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_B, &actions);
-#endif
-
-    // Wildcard Match (WCM):
-#ifdef USE_NEW_CSRS
-    mbyMatchWildcard(cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
-#else
-    mbyMatchWildcard(regs,       &keys, scenario, MBY_CLA_GROUP_B, &actions);
-#endif
-
-#if 0 // is this still needed? <--- REVISIT!!!
-
-    // Remap subset of keys going into next group:
-    remapKeys(...);
+    // Remap takes effect between CGRP_A and CGRP_B
+    remapKeys(&actions, &keys);
 
     // Update scenario based on scenario action:
     for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
         if (actions.act1[s].prec != 0)
             FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
     }
+
+    // Exact match B (EM_B):
+    fm_uint32 em_b_out[MBY_EM_B_MAX_ACTIONS_NUM] = { 0 };
+
+#ifdef USE_NEW_CSRS
+    // TODO change function to return a list of action sets (i.e. em_b_out)
+    mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
+#else
+    mbyMatchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_B, &actions);
 #endif
 
+    for (fm_uint i = 0; i < MBY_EM_B_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(em_b_out[i], &actions);
+
+    // Wildcard Match (WCM):
+    fm_uint32 wcm_out[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
+
+#ifdef USE_NEW_CSRS
+    mbyMatchWildcard(cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
+#else
+    mbyMatchWildcard(regs,       &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
+#endif
+
+    for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; ++i)
+        resolveActionSet(wcm_out[i], &actions);
+
     // Populate muxed_action:
+    // TODO What are these? Add reference to MBY spec or remove
     mbyClassifierMuxedAction muxed_action;
 
     populateMuxedAction

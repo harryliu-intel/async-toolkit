@@ -11,9 +11,8 @@ trait CsrUpdater[A] {
 object CsrUpdater {
 
   implicit object CsrUpdaterRxPpe extends CsrUpdater[CsrRxPpe] {
-    def updated(csr: mby_top_map.mby_top_map, crsRxPpe: CsrRxPpe): Csr = {
+    def updated(csr: mby_top_map.mby_top_map, crsRxPpe: CsrRxPpe): Csr =
      Csr(rxPpeL(crsRxPpe.idMgp).modify(_ => crsRxPpe.csrRxPpe)(csr))
-    }
   }
 
   implicit object CsrUpdaterParser extends CsrUpdater[CsrParser] {

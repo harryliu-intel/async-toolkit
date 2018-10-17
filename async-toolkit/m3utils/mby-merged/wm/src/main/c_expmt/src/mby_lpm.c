@@ -29,13 +29,11 @@ static void lookUpLpmTcam
         fm_uint64 cam_key     = tcam_entry.key;
         fm_uint64 mask        = cam_key ^ cam_key_inv;
 
-        // TODO verify this check: I copy pasted it from the classifier
         if (((cam_key & cam_key_inv) == 0) && ((tcam_lookup->key & mask) == (cam_key & mask)))
         {
             tcam_lookup->hit_valid = TRUE;
             tcam_lookup->hit_index = tcam_index;
-            // TODO verify it is OK to return on the first hit
-            return;
+            // Search the entire table and return the match with highest index
         }
 
         ++tcam_index;
@@ -173,8 +171,8 @@ static void exploreSubtrie
 static void lpmSearch
 (
     MBY_LPM_IN_REGS,
-    mbyLpmKey   const * const in,
-    mbyLpmOut         * const out
+    mbyLpmKey    const * const in,
+    mbyLpmSearchResult * const out
 )
 {
     mbyLpmTcamLookup          tcam_lookup;
@@ -212,7 +210,7 @@ static void lpmSearch
     }
 }
 
-static void generateLpmKey
+static void lpmGenerateKey
 (
     MBY_LPM_IN_REGS,
     mbyClassifierKeys    const * const keys,
@@ -255,20 +253,56 @@ static void generateLpmKey
     lpmKey->key_len = len * 8;
 }
 
+#ifdef USE_NEW_CSRS
+// The shared fwd table doesn't exist in the old register defs
+static void lpmActions
+(
+    mby_shm_map                * const shm_map,
+    fm_byte                            profile_id,
+    mbyLpmSearchResult   const * const searchResult,
+    fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
+)
+{
+
+    assert(searchResult);
+    assert(actions);
+
+    // By default all actions are NOP
+    memset(actions, 0, MBY_LPM_MAX_ACTIONS_NUM * sizeof(fm_uint32));
+
+    if (!searchResult->hit_valid)
+        return;
+
+    // FIXME use profile_id to decide how many actions to read...HOW?
+    fm_uint64 fwd_table_entry = shm_map->FWD_TABLE0[searchResult->fwd_table0_idx][0].DATA;
+    actions[1] = fwd_table_entry >> 32 & 0xffffffff;
+    actions[0] = fwd_table_entry & 0xffffffff;
+}
+#endif
+
 void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
+#ifdef USE_NEW_CSRS
+    mby_shm_map                * const shm_map,
+#endif
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
-    mbyLpmOut                  * const out
+    fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
 )
 {
-    mbyLpmKey lpmKey;
-    generateLpmKey(MBY_LPM_IN_REGS_P, keys, profile_id, &lpmKey);
+    mbyLpmSearchResult searchResult;
+    mbyLpmKey key;
 
-    lpmSearch(MBY_LPM_IN_REGS_P, &lpmKey, out);
+    lpmGenerateKey(MBY_LPM_IN_REGS_P, keys, profile_id, &key);
 
-    // TODO read the action from FWD_TABLE0
+    lpmSearch(MBY_LPM_IN_REGS_P, &key, &searchResult);
+
+#ifdef USE_NEW_CSRS
+    lpmActions(shm_map, profile_id, &searchResult, actions);
+#else
+    memset(actions, 0, MBY_LPM_MAX_ACTIONS_NUM * sizeof(fm_uint32));
+#endif
 }
 
 //#ifdef UNIT_TEST
@@ -281,6 +315,6 @@ void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs)
         funcs->_getSubtrieChildNode = getSubtrieChildNode;
         funcs->_exploreSubtrie = exploreSubtrie;
         funcs->_lpmSearch = lpmSearch;
-        funcs->_generateLpmKey = generateLpmKey;
+        funcs->_lpmGenerateKey = lpmGenerateKey;
 }
 //#endif

@@ -76,7 +76,7 @@ TEST_F(LpmTests, KeyGenSingle) {
 		.Times(1)
 		.WillRepeatedly(SetArgPointee<2>(key_masks));
 
-	f._generateLpmKey(NULL, &keys, PROFILE_ID, &lpmKey);
+	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
 
 	EXPECT_EQ(lpmKey.key[0], KEY8_VAL);
 	EXPECT_EQ(lpmKey.key[1], KEY16_VAL & 0xff);
@@ -108,21 +108,39 @@ TEST_F(LpmTests, TcamEmptyTest) {
 	EXPECT_EQ(lookup.hit_valid, FALSE);
 }
 
-TEST_F(LpmTests, TcamMatchTest) {
-
-	mbyLpmTcamLookup lookup   = {TCAM_TEST_KEY, FALSE, 0};
+TEST_F(LpmTests, TcamSingleMatchTest) {
 
 	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
-		.Times(2)
+		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
 		.WillOnce(SetArgPointee<2>(entry_inv))
-		.WillOnce(SetArgPointee<2>(entry_key));
+		.WillOnce(SetArgPointee<2>(entry_key))
+		.WillRepeatedly(SetArgPointee<2>(entry_inv));
 
+	mbyLpmTcamLookup lookup = {TCAM_TEST_KEY, FALSE, 0};
 	f._lookUpLpmTcam(NULL, &lookup);
 
 	EXPECT_EQ(lookup.hit_valid, TRUE);
 	EXPECT_EQ(lookup.hit_index, 1);
 }
 
+TEST_F(LpmTests, TcamMultiMatchTest) {
+
+	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
+		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
+		.WillOnce(SetArgPointee<2>(entry_inv))
+		.WillOnce(SetArgPointee<2>(entry_key)) // match but lower priority
+		.WillOnce(SetArgPointee<2>(entry_inv))
+		.WillOnce(SetArgPointee<2>(entry_key)) // match with highest priority
+		.WillRepeatedly(SetArgPointee<2>(entry_inv));
+
+	mbyLpmTcamLookup lookup = {TCAM_TEST_KEY, FALSE, 0};
+	f._lookUpLpmTcam(NULL, &lookup);
+
+	EXPECT_EQ(lookup.hit_valid, TRUE);
+	EXPECT_EQ(lookup.hit_index, 3);
+}
+
+/* =============== Bitmap registers utilities tests ==================== */
 TEST_F(LpmTests, BitInArray) {
 
 	fm_uint64 array[2] = {0x0800000000000000, 0x2000000000000000};

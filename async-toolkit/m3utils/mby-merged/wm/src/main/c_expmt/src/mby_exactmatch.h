@@ -11,6 +11,10 @@
 
 // Defines:
 
+// FIXME random number - needs to be reviewed by architect
+#define MBY_EM_A_MAX_ACTIONS_NUM 48
+#define MBY_EM_B_MAX_ACTIONS_NUM 48
+
 // Enums:
 
 // Structs:

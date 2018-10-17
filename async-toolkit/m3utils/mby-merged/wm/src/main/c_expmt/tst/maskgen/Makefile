@@ -42,7 +42,6 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
-#CFLAGS += -DUSE_NEW_CSRS
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O -g -ggdb3

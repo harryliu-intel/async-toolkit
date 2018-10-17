@@ -42,10 +42,8 @@ class EgressInfoHandling(egressPortToSocketAndStreamMap: scala.collection.mutabl
     // first determine whether we already have a connection to the client on this port
     egressPortToSocketAndStreamMap.get(switchPort) match {
       case Some((s, _)) =>
-        s.close()
-        egressPortToSocketAndStreamMap.remove(switchPort)
-        assert(assertion = false, "Reassinging an egress port not tested functionality")
-
+          s.close()
+          egressPortToSocketAndStreamMap.remove(switchPort)
       case None =>
     }
 

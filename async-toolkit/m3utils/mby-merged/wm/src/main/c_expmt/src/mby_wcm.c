@@ -4,7 +4,6 @@
 
 
 #include "mby_common.h"
-#include "mby_classifier.h" // doAction()
 #include "mby_wcm.h"
 
 static mbyWcmKeyInfo selectWcmKey
@@ -97,7 +96,7 @@ static void lookUpWcmTcamCascade
 (
     MBY_CGRP_B_IN_REGS,
     mbyClassifierKeys const * const keys,
-    fm_byte                   const scenario,
+    fm_byte                   const profile_id,
     fm_byte                   const group,
     mbyClassifierHitInfo            tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1]
 )
@@ -109,14 +108,14 @@ static void lookUpWcmTcamCascade
 
     for (fm_uint slice = 0; slice < MBY_FFU_TCAM_CFG_ENTRIES_1; slice++)
     {
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, slice, scenario);
+        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, slice, profile_id);
 
         if (tcam_cfg.START_COMPARE)
             cascade_width[slice]++;
 
         for (fm_uint i = slice + 1; i < MBY_FFU_TCAM_CFG_ENTRIES_1; i++)
         {
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, i, scenario);
+            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, i, profile_id);
 
             if (tcam_cfg1.START_COMPARE)
                 break;
@@ -137,7 +136,7 @@ static void lookUpWcmTcamCascade
         if (cascade_width[slice] == 0)
             continue;
 
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, slice, scenario);
+        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, slice, profile_id);
 
         // Start Exclusion Set
         if (tcam_cfg.START_SET) {
@@ -149,7 +148,7 @@ static void lookUpWcmTcamCascade
 
         for (fm_uint i = slice; i < slice + cascade_width[slice]; i++)
         {
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, i, scenario);
+            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(MBY_CGRP_B_IN_REGS_P, group, i, profile_id);
 
             // Select TCAM key:
             mbyWcmKeyInfo wcm_key_info = selectWcmKey(&tcam_cfg1, keys);
@@ -177,18 +176,18 @@ static void lookUpWcmTcamCascade
     }
 }
 
-static void resolveActions
+static void wcmActions
 (
     MBY_CGRP_B_IN_REGS,
-    fm_byte                const scenario,
+    fm_byte                const profile_id,
     fm_byte                const group,
     mbyClassifierHitInfo         tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1],
-    mbyClassifierActions * const actions // = output actions
+    fm_uint32                    actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     for (fm_uint ram_num = 0; ram_num < MBY_FFU_ACTION_ENTRIES_1; ram_num++)
     {
-        mbyClassifierActionCfg action_cfg = mbyClsGetWcmActionCfg(MBY_CGRP_B_IN_REGS_P, group, scenario, ram_num);
+        mbyClassifierActionCfg action_cfg = mbyClsGetWcmActionCfg(MBY_CGRP_B_IN_REGS_P, group, profile_id, ram_num);
 
         if (!action_cfg.enable)
             continue; // skip action RAM if disabled
@@ -200,7 +199,7 @@ static void resolveActions
         fm_uint hit_index = tcam_hit_info[slice].hit_index;
         for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
             fm_uint32 action_entry = mbyClsGetWcmActionEntry(MBY_CGRP_B_IN_REGS_P, ram_num, hit_index, i);
-            doAction(action_entry, actions);
+            actions[MBY_FFU_ACTIONS_PER_ENTRY * ram_num + i] = action_entry;
         }
     }
 }
@@ -209,16 +208,16 @@ void mbyMatchWildcard
 (
     MBY_CGRP_B_IN_REGS,
     mbyClassifierKeys const * const keys,
-    fm_byte                   const scenario,
+    fm_byte                   const profile_id,
     fm_byte                   const group,
-    mbyClassifierActions    * const actions // = output actions
+    fm_uint32                 actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     mbyClassifierHitInfo tcam_hit_info[MBY_FFU_TCAM_CFG_ENTRIES_1];
 
     // Get hit index for each tcam slice:
-    lookUpWcmTcamCascade(MBY_CGRP_B_IN_REGS_P, keys, scenario, group, tcam_hit_info);
+    lookUpWcmTcamCascade(MBY_CGRP_B_IN_REGS_P, keys, profile_id, group, tcam_hit_info);
 
-    // Apply and resolve actions from action RAMs based on tcam hit index per slice:
-    resolveActions(MBY_CGRP_B_IN_REGS_P, scenario, group, tcam_hit_info, actions);
+    // Get the list of action_entry from action RAMs based on tcam hit index per slice:
+    wcmActions(MBY_CGRP_B_IN_REGS_P, profile_id, group, tcam_hit_info, actions);
 }

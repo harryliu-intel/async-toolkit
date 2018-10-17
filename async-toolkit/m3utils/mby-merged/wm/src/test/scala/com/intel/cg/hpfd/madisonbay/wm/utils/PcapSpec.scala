@@ -1,5 +1,5 @@
 //scalastyle:off
-package com.intel.cg.hpfd.madisonbay.wm.switchwm
+package com.intel.cg.hpfd.madisonbay.wm.utils
 
 import java.io.File
 
@@ -14,7 +14,7 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class PcapSpec extends FlatSpec with Matchers {
 
-  val pcapFile : File = new File("src/test/data/scapy.pcap")
+  val pcapFile: File = new File("src/test/resources/pcap/scapy.pcap")
   s"The file $pcapFile" should s"have one packet in it" in {
     println(System.getenv("PWD"))
     Pcap.loadPcap(pcapFile).length shouldEqual 1
