@@ -132,6 +132,129 @@ static void resolveActionSet
     }
 }
 
+/* Remap Keys
+ * Replaces keys at the end of each Classifier Group.
+ */
+static void remapKeys
+(
+    mbyClassifierActions  * const actions,
+    mbyClassifierKeys     * const keys
+)
+{
+    fm_uint32               remapAction;
+    fm_uint16               value16;
+    fm_byte                 value8;
+    fm_byte                 mask;
+    fm_int                  i;
+    fm_byte                 key;
+    fm_byte                 index[MBY_FFU_REMAP_ACTIONS];
+    fm_uint                 keyIdx;
+    fm_byte                 idx16;
+    fm_uint                 set1_16_base;
+
+    /* Resolve precedence between remap actions*/
+
+    for (i = 0; i < MBY_FFU_REMAP_ACTIONS; i++)
+    {
+        index[i] = FM_GET_FIELD(actions->act24[MBY_FFU_ACTION_REMAP0+i].val,
+                                MBY_FFU_REMAP,
+                                SET1_16B_INDEX);
+    }
+
+    for (i = 0; i < MBY_FFU_REMAP_ACTIONS; i++)
+    {
+        if (actions->act24[MBY_FFU_ACTION_REMAP0+i].prec == 0)
+        {
+            actions->act24[MBY_FFU_ACTION_REMAP0+i].val = 0;
+            continue;
+        }
+        remapAction = actions->act24[MBY_FFU_ACTION_REMAP0+i].val;
+        set1_16_base = MBY_FFU_KEY32*4 + MBY_FFU_KEY16*2 + MBY_FFU_KEY8;
+        /* SET1_16b */
+        if(index[i] >= (set1_16_base))
+        {
+            idx16 = index[i] - set1_16_base;
+            value16 = FM_GET_FIELD(remapAction,
+                                   MBY_FFU_REMAP,
+                                   SET1_16B_VALUE);
+
+            if (idx16 < MBY_FFU_KEY16)
+            {
+                keys->key16[idx16] = value16;
+            }
+            else
+            {
+                /* set 16-bits of KEY32 */
+                keyIdx = (idx16 - MBY_FFU_KEY16) >> 1;
+                FM_SET_UNNAMED_FIELD(keys->key32[keyIdx],
+                                     (idx16 % 2) * 16,
+                                     16,
+                                     value16);
+            }
+        }
+        /* SET8_1b */
+        else
+        {
+            mask = FM_GET_FIELD(remapAction,
+                                MBY_FFU_REMAP,
+                                SET8_1B_MASK);
+
+            if (mask != 0)
+            {
+                value8 = FM_GET_FIELD(remapAction,
+                                      MBY_FFU_REMAP,
+                                      SET8_1B_VALUE);
+
+                if (index[i] < MBY_FFU_KEY16*2)
+                {
+                    /* set 8-bits of KEY16 */
+                    key = FM_GET_UNNAMED_FIELD(keys->key16[index[i] >> 1],
+                                               (index[i] % 2) * 8,
+                                               8);
+                    key = ( key & ~mask ) | ( value8 & mask);
+
+                    FM_SET_UNNAMED_FIELD(keys->key16[index[i] >> 1],
+                                         (index[i] % 2) * 8,
+                                         8,
+                                         key);
+                }
+                else if (index[i] < (MBY_FFU_KEY16*2 + MBY_FFU_KEY8))
+                {
+                    /* set entire KEY8 */
+                    key = keys->key8[index[i] - (MBY_FFU_KEY16*2)];
+
+                    key = ( key & ~mask ) | ( value8 & mask);
+
+                    keys->key8[index[i] - (MBY_FFU_KEY16*2)]  = key;
+                }
+                else
+                {
+                    /* set 8-bits of KEY32 */
+                    keyIdx = (index[i] - (MBY_FFU_KEY16*2 +
+                                MBY_FFU_KEY8)) >> 2;
+                    key = FM_GET_UNNAMED_FIELD(keys->key32[keyIdx],
+                                              (index[i] % 4) * 8,
+                                              8);
+                    key = ( key & ~mask ) | ( value8 & mask);
+
+                    FM_SET_UNNAMED_FIELD(keys->key32[keyIdx],
+                                        (index[i] % 4) * 8,
+                                         8,
+                                         key);
+                }
+
+            }
+
+        }
+
+        /* After remap action is applied to keys, zero out the remap action so that next group
+         * doesnot take same remap action */
+        actions->act24[MBY_FFU_ACTION_REMAP0+i].val = 0;
+        actions->act24[MBY_FFU_ACTION_REMAP0+i].prec = 1;
+    }
+
+}   /* end remapKeys */
+
 static void applyEntropyKeyMask
 (
     mbyClassifierEntropyCfg         const entropy_cfg,
@@ -603,7 +726,7 @@ void Classifier
 {
     // Read inputs from the Mapper:
     mbyClassifierActions  const actions_in  = in->FFU_ACTIONS;
-    mbyClassifierKeys     const keys        = in->FFU_KEYS;
+    mbyClassifierKeys     const keys_in     = in->FFU_KEYS;
     fm_byte               const scenario_in = in->FFU_SCENARIO;
     fm_bool       const * const ip_option   = in->IP_OPTION;
     mbyParserInfo         const parser_info = in->PARSER_INFO;
@@ -611,6 +734,8 @@ void Classifier
 
     fm_byte              scenario = scenario_in;
     mbyClassifierActions actions  = actions_in;
+    mbyClassifierKeys    keys     = keys_in;
+
 
     // Exact match A (EM_A):
     fm_uint32 em_a_out[MBY_EM_A_MAX_ACTIONS_NUM] = { 0 };
@@ -638,6 +763,15 @@ void Classifier
     for (fm_uint i = 0; i < MBY_LPM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(lpm_out[i], &actions);
 
+    // Remap takes effect between CGRP_A and CGRP_B
+    remapKeys(&actions, &keys);
+
+    // Update scenario based on scenario action:
+    for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
+        if (actions.act1[s].prec != 0)
+            FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
+    }
+
     // Exact match B (EM_B):
     fm_uint32 em_b_out[MBY_EM_B_MAX_ACTIONS_NUM] = { 0 };
 
@@ -662,19 +796,6 @@ void Classifier
 
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(wcm_out[i], &actions);
-
-
-#if 0 // is this still needed? <--- REVISIT!!!
-
-    // Remap subset of keys going into next group:
-    remapKeys(...);
-
-    // Update scenario based on scenario action:
-    for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
-        if (actions.act1[s].prec != 0)
-            FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
-    }
-#endif
 
     // Populate muxed_action:
     // TODO What are these? Add reference to MBY spec or remove
