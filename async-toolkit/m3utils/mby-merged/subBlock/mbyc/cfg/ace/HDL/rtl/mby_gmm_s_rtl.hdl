@@ -11,7 +11,7 @@ $hdl_spec = {
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
-       "src/gmm_s/src/top/mby_gmm_s.sv",
+       "src/gmm/gmm_s/top/rtl/mby_gmm_s.sv",
        #"src/rtl/gm/gmm/verilog/gmm_if.sv",
        #"src/rtl/gm/gmm/verilog/gmm_top.sv",
        #"src/rtl/gm/gmm/sandbox/verilog/clients_of_gmm.sv",

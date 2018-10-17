@@ -7,7 +7,7 @@
 
 void Triggers
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    MBY_TRG_IN_REGS,
     const mbyMaskGenToTriggers  * const in,
           mbyTriggersToCongMgmt * const out
 )

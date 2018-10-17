@@ -847,7 +847,7 @@ use strict;
 sub run {
     my $self = shift;
     my $enable_flag = $self->get_clo()->get_option(-flag => "-enable_sim_init");
-    my @allowed_model_list = ("fc_lite", "fc", "fc_64", "fc_64_serdes", "fc_8", "fc_8_serdes"); #only models in this listed are enabled.
+    my @allowed_model_list = ("fc", "fc_64", "fc_64_no_phy", "fc_8", "fc_8_no_phy"); #only models in this listed are enabled.
     
     my $status = 0;
     my $ip_stub_lib = "soc_ip_stub_lib";

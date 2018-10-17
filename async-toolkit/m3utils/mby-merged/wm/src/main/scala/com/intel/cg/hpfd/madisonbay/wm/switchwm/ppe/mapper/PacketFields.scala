@@ -1,8 +1,8 @@
 
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper
 
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.MACAddress
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields.MACMapperImposed
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.MACAddress
 
 
 class PacketFields(val fields: IndexedSeq[Short]) {
