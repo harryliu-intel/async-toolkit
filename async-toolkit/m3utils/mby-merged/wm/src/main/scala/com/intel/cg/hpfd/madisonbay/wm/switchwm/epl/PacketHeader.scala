@@ -40,7 +40,14 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
 
   def apply(addr: Int): Byte = bytes(addr)
 
-  def getWord(addr: Int): Short = ((apply(addr).toShort << 8) | apply(addr + 1).toShort & 0xFF).toShort
+  def getWord(addr: Int): Short = {
+    if (addr + 1 >= bytes.length) {
+      0.toShort
+    } else {
+      ((apply(addr).toShort << 8) | (apply(addr + 1).toShort & 0xFF)).toShort
+    }
+  }
+  //def getWord(addr: Int): Short = (((apply(addr + 1).toShort & 0xff) << 8) | (apply(addr).toShort & 0xff)).toShort
 
   def ipVersion: IPVersion.Value = bytes(0).nib(1) match {
     case IPVersion.IpV4Int => IPVersion.IPV4

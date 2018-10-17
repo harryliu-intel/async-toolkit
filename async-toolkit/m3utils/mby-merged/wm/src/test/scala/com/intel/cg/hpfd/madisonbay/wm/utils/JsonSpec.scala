@@ -1,15 +1,13 @@
+//scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.utils
 
 import org.scalatest.{FlatSpec, Matchers}
 import Json._
 
-//scalastyle:off
 class JsonSpec extends FlatSpec with Matchers {
 
   "Json id of element in nested lists" should "match" in {
-
     "abc(3)(5)(8)".matches(Json.PatternListApplyElement) shouldEqual true
-
   }
 
   val input: String =
@@ -26,7 +24,6 @@ class JsonSpec extends FlatSpec with Matchers {
     """.stripMargin
 
   "Json" should "parse string" in {
-
     Json.parse(input).get.get("name") shouldEqual Some("scalars_0")
 
     val json: Map[String, Any] = Map(
@@ -67,10 +64,8 @@ class JsonSpec extends FlatSpec with Matchers {
     getBooleanOpt(inputJson.get, "fields(1)(2)") shouldEqual Some(false)
   }
 
-
   it should "properly load json and extract fields" in {
-
-    val json = Loader.loadJson("src/test/resources/json/test.json").getOrElse(Map())
+    val json = Loader.loadJson("src/test/resources/json/p4_output_test.json").getOrElse(Map())
     json should not equal Map()
 
     getDoubleOpt(json, "double_test") shouldEqual Some(0.5)
@@ -80,6 +75,18 @@ class JsonSpec extends FlatSpec with Matchers {
     getOpt(json, "headers(2).name") shouldEqual Some("ethernet")
     getStringOpt(json, "headers(2).name") shouldEqual Some("ethernet")
     getOpt(json, "parsers(0).parse_states(0).parser_ops(0).parameters(0).type") shouldEqual Some("regular")
+  }
+
+  it should "read big ints" in {
+    val bigInteger = "1234567890987654321212121232245354353465654645"
+    val m = parse(" { \"number\": " + bigInteger + " } ").get
+    m.getAnyInt("number") shouldEqual BigInt(bigInteger)
+  }
+
+  it should "read big decimals" in {
+    val bigDecimal = "1234567890987654321212121232245354353465654645.5"
+    val m = parse(" { \"number\": " + bigDecimal + " } ").get
+    m.getAnyDecimal("number") shouldBe a [BigDecimal]
   }
 
 }
