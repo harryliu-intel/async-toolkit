@@ -41,7 +41,7 @@ fm_status mby_init_regs(const fm_uint32 sw)
     else
     {
 #ifdef USE_NEW_CSRS
-        // mby_init_common_regs(top_map); <-- FIXME!!!
+        mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe));
 #else
         mby_init_common_regs(regs);
 #endif

@@ -17,6 +17,12 @@ typedef struct port_cfg_2_struct
 
 } port_cfg_2;
 
+typedef struct egress_vid_table_struct
+{
+    fm_uint32         membership;
+
+} egress_vid_table;
+
 typedef struct sys_cfg_1_struct
 {
     fm_bool           store_trap_action;
@@ -42,8 +48,8 @@ typedef struct fwd_lag_cfg_struct
 
 typedef struct lpbk_suppress_struct
 {
-    fm_uint16 glort_mask;
-    fm_uint16 glort;
+    fm_uint16         glort_mask;
+    fm_uint16         glort;
 } lpbk_suppress;
 
 typedef struct glort_cam_ram_struct
@@ -66,6 +72,34 @@ typedef struct glort_map_struct
     fm_uint32         dest_mask;
 } glort_map;
 
+typedef struct ingress_mst_table_struct
+{
+    fm_byte           stp_state_17;
+    fm_byte           stp_state_16;
+    fm_byte           stp_state_15;
+    fm_byte           stp_state_14;
+    fm_byte           stp_state_13;
+    fm_byte           stp_state_12;
+    fm_byte           stp_state_11;
+    fm_byte           stp_state_10;
+    fm_byte           stp_state_9;
+    fm_byte           stp_state_8;
+    fm_byte           stp_state_7;
+    fm_byte           stp_state_6;
+    fm_byte           stp_state_5;
+    fm_byte           stp_state_4;
+    fm_byte           stp_state_3;
+    fm_byte           stp_state_2;
+    fm_byte           stp_state_1;
+    fm_byte           stp_state_0;
+
+} ingress_mst_table;
+
+typedef struct egress_mst_table_struct
+{
+    fm_uint64         forwarding;
+} egress_mst_table;
+
 typedef struct mby_maskgen_test_data_in_struct
 {
     /* Maskgen input data. */
@@ -76,9 +110,6 @@ typedef struct mby_maskgen_test_data_in_struct
     fm_uint16         l2_ivid1;
     fm_uint16         l2_evid1;
     fm_bool           l2_ivlan1_membership;
-    fm_uint32         l2_evlan1_membership;
-    mbyStpState       l2_ifid1_state;
-    fm_uint32         l2_efid1_state;
     fm_uint16         l2_edomain_in;
     fm_uint64         amask;
     fm_bool           mark_routed;
@@ -96,6 +127,9 @@ typedef struct mby_maskgen_test_data_in_struct
 
     /* Input data for FWD_PORT_CFG_2 register. */
     port_cfg_2        port_cfg_2;
+
+    /* Input data for EGRESS_VID_TABLE register. */
+    egress_vid_table  evid_table;
 
     /* Input data for FWD_SYS_CFG_1 register. */
     sys_cfg_1         sys_cfg_1;
@@ -115,6 +149,11 @@ typedef struct mby_maskgen_test_data_in_struct
     /* GLORT_DIRECT_MAP register. */
     glort_map         glort_map;
 
+    /* INGRESS_MST_TABLE register. */
+    ingress_mst_table ingress_mst_table;
+
+    /* EGRESS_MST_TABLE register. */
+    egress_mst_table egress_mst_table;
 } mby_maskgen_test_data_in;
 
 typedef struct mby_maskgen_test_data_out_struct
@@ -153,9 +192,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .amask                        = 0,
             .mark_routed                  = TRUE,
@@ -168,6 +204,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
              {
@@ -188,6 +228,14 @@ maskgen_test_data maskgen_tests[] =
                  .key_invert              = 0xFFFF,
                  .skip_dglort_dec         = FALSE,
                  .strict                  = MBY_GLORT_RAM_STRICT_DETERMINISTIC,
+             },
+             .ingress_mst_table =
+             {
+                 .stp_state_0             = MBY_STP_STATE_FORWARD,
+             },
+             .egress_mst_table =
+             {
+                 .forwarding              = 0xFFFF,
              },
         },
         .out =
@@ -218,9 +266,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .amask                        = 0,
             .mark_routed                  = FALSE,
@@ -235,6 +280,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -259,6 +308,14 @@ maskgen_test_data maskgen_tests[] =
             .glort_map =
             {
                 .dest_mask               = 0xFFFF,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =
@@ -288,9 +345,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .amask                        = 0,
             .mark_routed                  = FALSE,
@@ -305,6 +359,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0x0,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -328,6 +386,14 @@ maskgen_test_data maskgen_tests[] =
             .glort_map =
             {
                 .dest_mask               = 0xFFFF,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =
@@ -356,9 +422,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .amask                        = 0,
             .mark_routed                  = FALSE,
@@ -373,6 +436,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -398,6 +465,14 @@ maskgen_test_data maskgen_tests[] =
             {
                 .dest_mask               = 0xFFFF,
                 .ip_multicast_index      = 1,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =
@@ -425,9 +500,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .glort_dmask_in               = 0,
             .parser_error                 = TRUE,
@@ -440,6 +512,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -459,6 +535,14 @@ maskgen_test_data maskgen_tests[] =
                 .key                     = 0xFFFF,
                 .key_invert              = 0xFFFF,
                 .skip_dglort_dec         = FALSE,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =
@@ -484,9 +568,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .glort_dmask_in               = 0,
             .parser_error                 = FALSE,
@@ -500,6 +581,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -524,6 +609,14 @@ maskgen_test_data maskgen_tests[] =
             .glort_map =
             {
                 .dest_mask               = 0xFFFF,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =
@@ -550,9 +643,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .glort_dmask_in               = 0,
             .parser_error                 = FALSE,
@@ -566,6 +656,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -590,6 +684,14 @@ maskgen_test_data maskgen_tests[] =
             .glort_map =
             {
                 .dest_mask               = 0xFFFF,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =
@@ -616,9 +718,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .glort_dmask_in               = 0,
             .parser_error                 = FALSE,
@@ -631,6 +730,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -655,6 +758,14 @@ maskgen_test_data maskgen_tests[] =
             .glort_map =
             {
                 .dest_mask               = 0xFFFF,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =
@@ -681,9 +792,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .glort_dmask_in               = 0,
             .parser_error                 = FALSE,
@@ -696,6 +804,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -725,6 +837,14 @@ maskgen_test_data maskgen_tests[] =
             {
                 .dest_mask               = 0xFFFF,
             },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
+            },
         },
         .out =
         {
@@ -750,9 +870,6 @@ maskgen_test_data maskgen_tests[] =
             .l2_ivid1                     = 1,
             .l2_evid1                     = 1,
             .l2_ivlan1_membership         = TRUE,
-            .l2_evlan1_membership         = 0xFFFF,
-            .l2_ifid1_state               = MBY_STP_STATE_FORWARD,
-            .l2_efid1_state               = 0xFFFF,
             .l2_edomain_in                = 0,
             .glort_dmask_in               = 0,
             .parser_error                 = FALSE,
@@ -767,6 +884,10 @@ maskgen_test_data maskgen_tests[] =
             .port_cfg_2 =
             {
                 .destination_mask         = 0xFFFF,
+            },
+            .evid_table =
+            {
+                .membership               = 0xFFFF,
             },
             .sys_cfg_1 =
             {
@@ -792,6 +913,14 @@ maskgen_test_data maskgen_tests[] =
             {
                 .dest_mask               = 0xFFFF,
                 .ip_multicast_index      = 1,
+            },
+            .ingress_mst_table =
+            {
+                .stp_state_1             = MBY_STP_STATE_FORWARD,
+            },
+            .egress_mst_table =
+            {
+                .forwarding              = 0xFFFF,
             },
         },
         .out =

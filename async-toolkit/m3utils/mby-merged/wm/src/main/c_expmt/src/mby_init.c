@@ -4024,7 +4024,78 @@ void mby_init_common_regs
     );
 
 #ifdef USE_NEW_CSRS
-    /* @TODO: port below code to new struct. */
+    for (fm_uint i = 0; i < 64; i++) {
+        glort_cam_r * glort_cam = &(rx_top_map->mst_glort.GLORT_CAM[i]);
+        glort_cam->KEY        = 0xffff;
+        glort_cam->KEY_INVERT = 0xffff;
+    }
+
+    /* Port GLORT allocation. */
+    glort_cam_r * glort_cam = &(rx_top_map->mst_glort.GLORT_CAM[0]);
+    glort_cam->KEY                = 0x0100;
+    glort_cam->KEY_INVERT         = 0xFEE0;
+
+    glort_ram_r * glort_ram = &(rx_top_map->mst_glort.GLORT_RAM[0]);
+    glort_ram->STRICT             = 0x3;
+    glort_ram->DEST_INDEX         = 0x0;
+    glort_ram->RANGE_SUB_INDEX_A  = 0x50;
+    glort_ram->RANGE_SUB_INDEX_B  = 0x0;
+    glort_ram->DEST_COUNT         = 0x0;
+    glort_ram->HASH_ROTATION      = 0x0;
+    glort_ram->SKIP_DGLORT_DEC    = 0x0;
+
+    /* Flood GLORT allocation. */
+    glort_cam             = &(rx_top_map->mst_glort.GLORT_CAM[1]);
+    glort_cam->KEY        = 0x0400;
+    glort_cam->KEY_INVERT = 0xfb00;
+
+    glort_ram                    = &(rx_top_map->mst_glort.GLORT_RAM[1]);
+    glort_ram->STRICT            = 0x3;
+    glort_ram->DEST_INDEX        = 0x14;
+    glort_ram->RANGE_SUB_INDEX_A = 0x40;
+    glort_ram->RANGE_SUB_INDEX_B = 0x80;
+    glort_ram->DEST_COUNT        = 0x0;
+    glort_ram->HASH_ROTATION     = 0x0;
+    glort_ram->SKIP_DGLORT_DEC   = 0x0;
+
+    glort_direct_map_dst0_r * const map_dst0 = &(rx_top_map->mst_glort.GLORT_DIRECT_MAP_DST0);
+    glort_direct_map_dst4_r * const map_dst4 = &(rx_top_map->mst_glort.GLORT_DIRECT_MAP_DST4);
+    map_dst4->IP_MULTICAST_INDEX             = 0x1;
+    map_dst0->DEST_MASK                      = 0x1fffff;
+
+    flood_glort_table_r * const flood_glort_table = &(rx_top_map->nexthop.FLOOD_GLORT_TABLE[0]);
+    flood_glort_table->BROADCAST_GLORT       = 0x0400;
+    flood_glort_table->FLOOD_MULTICAST_GLORT = 0x0400;
+    flood_glort_table->FLOOD_UNICAST_GLORT   = 0x0400;
+
+    for (fm_uint i = 0; i < 18/* Number of ports? */; i++) {
+        map_port_default_r * map_port_default = &(rx_top_map->mapper.MAP_PORT_DEFAULT[i][0]);
+
+        map_port_default->TARGET = 0x52;
+        map_port_default->VALUE  = 1;
+
+        map_port_default = &(rx_top_map->mapper.MAP_PORT_DEFAULT[i][1]);
+
+        map_port_default->TARGET = 0x0f;
+        map_port_default->VALUE  = 1;
+
+        map_port_default = &(rx_top_map->mapper.MAP_PORT_DEFAULT[i][2]);
+
+        map_port_default->TARGET = 0x2c;
+        map_port_default->VALUE  = 0;
+
+        map_len_limit_r * const map_len_limit = &(rx_top_map->mapper.MAP_LEN_LIMIT[i]);
+        map_len_limit->INR_MPLS_LEN_LIMIT = 0x5;
+        map_len_limit->OTR_MPLS_LEN_LIMIT = 0x5;
+        map_len_limit->INR_L2_LEN_LIMIT   = 0x2;
+        map_len_limit->OTR_L2_LEN_LIMIT   = 0x2;
+
+        map_port_cfg_r * const map_port_cfg = &(rx_top_map->mapper.MAP_PORT_CFG[i]);
+        map_port_cfg->PORT_PROFILE      = 0x0;
+        map_port_cfg->DEFAULT_SGLORT_EN = 0x1;
+        map_port_cfg->DEFAULT_SGLORT    = 0x100 + i;
+    }
+
 #else
     /* Port GLORT allocation. */
     mbyModelWriteCSR64(regs, MBY_GLORT_CAM(0x0, 0x0), 0xfee00100);
@@ -4048,4 +4119,52 @@ void mby_init_common_regs
         mbyModelWriteCSR64(regs, MBY_MAP_PORT_CFG(i, 0x0), 0x2010 + (i * 0x20));
     }
 #endif
+
+    /* Init some defaults for now <-- REVISIT!!! */
+#ifdef USE_NEW_CSRS
+
+    for (fm_uint i = 0; i < 18/* Number of ports? */; i++) {
+        fwd_port_cfg_1_r * const port_cfg_1 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_1[i]);
+
+        port_cfg_1->LEARNING_ENABLE     = 0x1;
+        port_cfg_1->FILTER_VLAN_INGRESS = 0x1;
+        port_cfg_1->DESTINATION_MASK    = 0x3ffff;
+    }
+
+    for (fm_uint i = 0; i < 256; i++) {
+        fwd_port_cfg_2_r * const port_cfg_2 = &(rx_top_map->fwd_misc.FWD_PORT_CFG_2[i]);
+
+        port_cfg_2->DESTINATION_MASK = 0x3ffff;
+    }
+
+    for (fm_uint i = 0; i < 64; i++) {
+        em_a_hash_cfg_r * const em_a_hash_cfg = &(rx_top_map->cgrp_a.EM_A_HASH_CFG[i]);
+        em_b_hash_cfg_r * const em_b_hash_cfg = &(rx_top_map->cgrp_b.EM_B_HASH_CFG[i]);
+
+        em_a_hash_cfg->ENTRY_SIZE_0 = 0;
+        em_a_hash_cfg->ENTRY_SIZE_1 = 0;
+        em_b_hash_cfg->ENTRY_SIZE_0 = 0;
+        em_b_hash_cfg->ENTRY_SIZE_1 = 0;
+    }
+
+    for (fm_uint i = 0; i < 32; i++) {
+        cm_apply_loopback_suppress_r * const lpbk_sup =
+            &(rx_top_map->cm_apply.CM_APPLY_LOOPBACK_SUPPRESS[i]);
+
+        lpbk_sup->GLORT_MASK = 0x0;
+        lpbk_sup->GLORT      = 0xFFFF;
+    }
+#else
+    for (fm_uint group = 0; group < 2; group++) {
+        for (fm_uint i = 0; i < 64; i++) {
+            fm_uint64 ffu_hash_cfg_reg = 0;
+
+            FM_SET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_0, 0);
+            FM_SET_FIELD64(ffu_hash_cfg_reg, MBY_FFU_HASH_CFG, ENTRY_SIZE_1, 0);
+
+            mbyModelWriteCSR64(regs, MBY_FFU_HASH_CFG(group, i, 0), ffu_hash_cfg_reg);
+        }
+    }
+#endif
+
 }

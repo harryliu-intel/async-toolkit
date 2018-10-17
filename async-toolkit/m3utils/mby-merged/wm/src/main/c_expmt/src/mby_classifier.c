@@ -613,7 +613,7 @@ void Classifier
     mbyClassifierActions actions  = actions_in;
 
     // Exact match A (EM_A):
-    fm_uint32 em_a_out[MBY_EM_A_MAX_ACTIONS_NUM];
+    fm_uint32 em_a_out[MBY_EM_A_MAX_ACTIONS_NUM] = { 0 };
 
 #ifdef USE_NEW_CSRS
     // TODO change function to return a list of action sets (i.e. em_a_out)
@@ -639,7 +639,7 @@ void Classifier
         resolveActionSet(lpm_out[i], &actions);
 
     // Exact match B (EM_B):
-    fm_uint32 em_b_out[MBY_EM_B_MAX_ACTIONS_NUM];
+    fm_uint32 em_b_out[MBY_EM_B_MAX_ACTIONS_NUM] = { 0 };
 
 #ifdef USE_NEW_CSRS
     // TODO change function to return a list of action sets (i.e. em_b_out)

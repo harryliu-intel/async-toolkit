@@ -159,73 +159,73 @@ void lookUpAddress
         }
     }
 }
+#endif
 
-static void getIvidTableEntry
+static mbyIngressVidTable getIvidTableEntry
 (
-    fm_uint32                  regs[MBY_REGISTER_ARRAY_SIZE],
-    fm_uint16                  vid,
-    mbyIngressVidTable * const entry
+#ifdef USE_NEW_CSRS
+    mby_ppe_nexthop_map * const nexthop,
+#else
+    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint16                   vid
 )
 {
+    mbyIngressVidTable entry;
+
+#ifdef USE_NEW_CSRS
+    ingress_vid_table_r * const vid_table = &(nexthop->INGRESS_VID_TABLE[vid]);
+
+    entry.TRAP_IGMP  = vid_table->TRAP_IGMP;
+    entry.REFLECT    = vid_table->REFLECT;
+    entry.MEMBERSHIP = vid_table->MEMBERSHIP;
+#else
     fm_uint64 ivid_table_reg = 0;
     mbyModelReadCSR64(regs, MBY_INGRESS_VID_TABLE(vid, 0), &ivid_table_reg);
 
-    entry->TRAP_IGMP  = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, TRAP_IGMP);
-    entry->REFLECT    = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, REFLECT);
-    entry->MEMBERSHIP = FM_GET_FIELD64(ivid_table_reg, MBY_INGRESS_VID_TABLE, MEMBERSHIP);
-}
+    entry.TRAP_IGMP  = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, TRAP_IGMP);
+    entry.REFLECT    = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, REFLECT);
+    entry.MEMBERSHIP = FM_GET_FIELD64(ivid_table_reg, MBY_INGRESS_VID_TABLE, MEMBERSHIP);
+#endif
 
-static void getEvidTableEntry
-(
-    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
-    fm_uint16                 vid,
-    mbyEgressVidTable * const entry
-)
-{
-    fm_uint64 evid_table_reg = 0;
-    mbyModelReadCSR64(regs, MBY_EGRESS_VID_TABLE(vid, 0), &evid_table_reg);
-
-    entry->TRIG_ID    = FM_GET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, TRIG_ID);
-    entry->MEMBERSHIP = FM_GET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, MEMBERSHIP);
+    return entry;
 }
 
 void lookUpL2
 (
-    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
-    fm_uint32           rx_port,
-    fm_macaddr          l2_dmac,
-    fm_uint16           ivid1,
-    fm_uint16           evid1,
-    fm_bool             flood_set,
-    fm_uint16           l2_edomain,
-    fm_bool             learn_mode,
-    fm_uint16   * const idglort,
-    fm_bool     * const glort_forwarded,
-    fm_bool     * const flood_forwarded,
-    fm_bool     * const da_hit,
-    mbyMaTable  * const da_result,
-    fm_uint64   * const amask,
-    fm_bool     * const l2_ivlan1_membership,
-    fm_bool     * const l2_ivlan1_reflect,
-    fm_uint32   * const l2_evlan1_membership,
-    fm_bool     * const trap_igmp,
-    mbyStpState * const l2_ifid1_state,
-    fm_uint32   * const l2_efid1_state
+#ifdef USE_NEW_CSRS
+    mby_ppe_nexthop_map * const nexthop,
+#else
+    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint32                   rx_port,
+    fm_macaddr                  l2_dmac,
+    fm_uint16                   ivid1,
+    fm_uint16                   evid1,
+    fm_bool                     flood_set,
+    fm_uint16                   l2_edomain,
+    fm_bool                     learn_mode,
+    fm_uint16   * const         idglort,
+    fm_bool     * const         glort_forwarded,
+    fm_bool     * const         flood_forwarded,
+    fm_bool     * const         da_hit,
+    mbyMaTable  * const         da_result,
+    fm_uint64   * const         amask,
+    fm_bool     * const         l2_ivlan1_membership,
+    fm_bool     * const         l2_ivlan1_reflect,
+    fm_bool     * const         trap_igmp
 )
 {
-    /***************************************************
-     * Perform ingress & egress VLAN lookups.
-     **************************************************/
-    mbyEgressVidTable  evidTable;
-    mbyIngressVidTable ividTable;
-
-    getIvidTableEntry(regs, ivid1, &ividTable);
-    getEvidTableEntry(regs, evid1, &evidTable);
+    /* Perform ingress VLAN lookup. */
+#ifdef USE_NEW_CSRS
+    mbyIngressVidTable ividTable = getIvidTableEntry(nexthop, ivid1);
+#else
+    mbyIngressVidTable ividTable = getIvidTableEntry(regs, ivid1);
+#endif
 
     *l2_ivlan1_reflect    = ividTable.REFLECT;
     *trap_igmp           &= ividTable.TRAP_IGMP;
     *l2_ivlan1_membership = FM_GET_UNNAMED_FIELD(ividTable.MEMBERSHIP, rx_port, 1);
-    *l2_evlan1_membership = evidTable.MEMBERSHIP;
 
     *glort_forwarded = 0;
     *flood_forwarded = 0;
@@ -239,12 +239,15 @@ void lookUpL2
         *glort_forwarded = 1;
     else
     {
+#ifdef USE_NEW_CSRS
+        flood_glort_table_r * const flood_glort_table = &(nexthop->FLOOD_GLORT_TABLE[l2_edomain]);
+#else
         fm_uint64 flood_glort_table_reg = 0;
         mbyModelReadCSR64(regs, MBY_FLOOD_GLORT_TABLE(l2_edomain, 0), &flood_glort_table_reg);
 
         lookUpAddress(regs, l2_dmac, ivid1, l2_edomain, learn_mode, da_hit, da_result);
-
-        if (da_hit && da_result->D_GLORT)
+#endif
+        if (*da_hit && da_result->D_GLORT)
         {
             *idglort = da_result->D_GLORT;
             if(da_result->ENTRY_TYPE == MBY_MA_LOOKUP_ENTRY_TYPE_PROVISIONAL)
@@ -254,31 +257,31 @@ void lookUpL2
             /* no change to dglort */
             *glort_forwarded = 1;
         else if (isBroadcastMacAddress(l2_dmac))
+#ifdef USE_NEW_CSRS
+            *idglort = flood_glort_table->BROADCAST_GLORT;
+#else
             *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, BROADCAST_GLORT);
+#endif
         else if (isMulticastMacAddress(l2_dmac))
         {
+#ifdef USE_NEW_CSRS
+            *idglort = flood_glort_table->FLOOD_MULTICAST_GLORT;
+#else
             *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_MULTICAST_GLORT);
+#endif
             *flood_forwarded = 1;
         }
         else
         {
+#ifdef USE_NEW_CSRS
+            *idglort = flood_glort_table->FLOOD_UNICAST_GLORT;
+#else
             *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_UNICAST_GLORT);
+#endif
             *flood_forwarded = 1;
         }
     }
-
-    /***************************************************
-     * Perform ingress & egress forwarding ID lookups.
-     **************************************************/
-    fm_uint64 ingress_mst_table_reg = 0;
-    mbyModelReadCSR64(regs, MBY_INGRESS_MST_TABLE(ivid1, 0), &ingress_mst_table_reg);
-    *l2_ifid1_state = FM_GET_UNNAMED_FIELD64(ingress_mst_table_reg, rx_port * 2, 2);
-
-    fm_uint64 egress_mst_table_reg = 0;
-    mbyModelReadCSR64(regs, MBY_EGRESS_MST_TABLE(evid1, 0), &egress_mst_table_reg);
-    *l2_efid1_state = FM_GET_FIELD64(egress_mst_table_reg, MBY_EGRESS_MST_TABLE, FORWARDING);
 }
-#endif
 
 void NextHop
 (
@@ -373,13 +376,14 @@ void NextHop
     fm_uint64   amask                = 0;
     fm_bool     l2_ivlan1_membership = FALSE;
     fm_bool     l2_ivlan1_reflect    = FALSE;
-    fm_uint32   l2_evlan1_membership = 0;
-    mbyStpState l2_ifid1_state       = MBY_STP_STATE_DISABLE;
-    fm_uint32   l2_efid1_state       = 0;
-#ifndef USE_NEW_CSRS
+#ifdef USE_NEW_CSRS
+    lookUpL2(nexthop, rx_port, l2_dmac, l2_ivid1, l2_evid1, flood_set, l2_edomain, learn_mode, &idglort,
+             &glort_forwarded, &flood_forwarded, &da_hit, &da_result, &amask, &l2_ivlan1_membership,
+             &l2_ivlan1_reflect, &trap_igmp);
+#else
     lookUpL2(regs, rx_port, l2_dmac, l2_ivid1, l2_evid1, flood_set, l2_edomain, learn_mode, &idglort,
              &glort_forwarded, &flood_forwarded, &da_hit, &da_result, &amask, &l2_ivlan1_membership,
-             &l2_ivlan1_reflect, &l2_evlan1_membership, &trap_igmp, &l2_ifid1_state, &l2_efid1_state);
+             &l2_ivlan1_reflect, &trap_igmp);
 #endif
     // Write outputs:
     out->AMASK                = amask;
@@ -394,11 +398,8 @@ void NextHop
     out->IDGLORT              = idglort;
     out->L2_DMAC              = l2_dmac;
     out->L2_EDOMAIN           = l2_edomain;
-    out->L2_EFID1_STATE       = l2_efid1_state;
     out->L2_EVID1             = l2_evid1;
-    out->L2_EVLAN1_MEMBERSHIP = l2_evlan1_membership;
     out->L2_IDOMAIN           = l2_idomain;
-    out->L2_IFID1_STATE       = l2_ifid1_state;
     out->L2_IVID1             = l2_ivid1;
     out->L2_IVLAN1_MEMBERSHIP = l2_ivlan1_membership;
     out->L2_IVLAN1_REFLECT    = l2_ivlan1_reflect;
