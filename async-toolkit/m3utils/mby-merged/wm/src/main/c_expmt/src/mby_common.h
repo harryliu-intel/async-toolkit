@@ -32,6 +32,7 @@
 #define MBY_N_PARSER_PTRS         8
 
 // TODO consider replace FFU acronym since it's never used in MBY specs
+// Changes to these constants must be reflected also in mbyLpmKeyMasks
 #define MBY_FFU_KEY8             64
 #define MBY_FFU_KEY16            32
 #define MBY_FFU_KEY32            16
