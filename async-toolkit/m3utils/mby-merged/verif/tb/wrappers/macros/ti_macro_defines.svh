@@ -39,8 +39,10 @@
 
 `ifdef FC_64
      `define NUM_IGR 16
+     `define NUM_EPC 8
 `else
      `define NUM_IGR 4
+     `define NUM_EPC 2
 `endif
 
 /*
