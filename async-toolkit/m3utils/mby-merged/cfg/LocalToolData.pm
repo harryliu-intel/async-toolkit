@@ -24,6 +24,10 @@ $ToolConfig_tools{flowbee}{OTHER}{default_dut}                               = "
 $ToolConfig_tools{'febe3'}{OTHER}{resource_def}                              = "$ENV{MODEL_ROOT}/cfg/resource.xml";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'}                 = "&get_tool_version(lintra)";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'}                    = "&get_tool_path(lintra)";
+$ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH} = "&get_general_var(std_linux_libs)";
+$ToolConfig_tools{febe3}{VERSION} = "3.2.18";
+$ToolConfig_tools{febe3}{OTHER}{project_settings}                            = "$MODEL_ROOT/tools/febe/inputs/dc_config.cfg";
+$ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "$MODEL_ROOT/tools/febe/inputs/finalized.cfg";
 
 #####################################################
 #    Collage related definitions                    #
@@ -274,6 +278,8 @@ $ToolConfig_tools{"mgm"} = {
             mby => ["parser",
                     "classifier",
                     "ppe_stm",
+                    "igr",
+                    "egr",
                    ],
         },
         PHYSICAL_PARAMS => "$ENV{MODEL_ROOT}/tools/mgm/mby_physical_params.csv",
@@ -323,7 +329,7 @@ $ToolConfig_tools{"NaturalDocs"} = {
 $ToolConfig_tools{"sbt"} = {
     VERSION => "1.1.2",
     PATH => "/usr/intel/pkgs/sbt/&get_tool_version()",
-    EXEC => "&get_tool_path()/bin/sbt -Dhttp.proxyHost=proxy-chain.intel.com -Dhttp.proxyPort=911 -Dhttps.proxyHost=proxy-chain.intel.com -Dhttps.proxyPort=911 -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
+    EXEC => "&get_tool_path()/bin/sbt  -J-Xmx3G  -Dhttp.proxyHost=proxy-chain.intel.com -Dhttp.proxyPort=911 -Dhttps.proxyHost=proxy-chain.intel.com -Dhttps.proxyPort=911 -java-home &get_tool_path('java') -sbt-dir /tmp/$ENV{USER}/dot_sbt -ivy /tmp/$ENV{USER}/dot_ivy -sbt-boot /tmp/$ENV{USER}/dot_sbt/boot",
     ENV_APPEND => {
       PATH => "&get_tool_path()/bin",
     },

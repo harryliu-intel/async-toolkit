@@ -46,7 +46,7 @@ class AddressGuard[V] {
   def pos: Address = map.firstKey.pos
   def lim: Address = map.lastKey.lim
   def width: Bits = lim - pos
-  def range = AddressRange(pos, lim)
+  def range = AddressRange(pos, width)
 
   /** Converts to a plain address map. */
   def toAddrMap: SortedMap[Address, V] = map.asScala.map { case(ar, el) => (ar.pos, el) } (breakOut)

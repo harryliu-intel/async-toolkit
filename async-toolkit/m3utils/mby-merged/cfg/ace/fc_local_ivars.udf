@@ -111,6 +111,13 @@ EOF
         -debussy_opts => { default => ["-ssy -ssv -ssz"] },
         -ignore_generated                   => { default => 1, },
 
+        -lintra_compile_opts => {
+            default => [
+                "-wf \"*.xml\"",
+                "-wf \"*.lwv\"",
+                "-wd $ENV{MODEL_ROOT}/tools/lint/lintra_waivers",],
+        },
+
         -sim_args     => {
             default => [
                 "-voptargs='+acc'",

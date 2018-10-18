@@ -12,28 +12,24 @@
 
 // Defines:
 
-#define MBY_LPM_KEY_MAX_BITS_LEN    (20 * 8)
-
-#define MBY_LPM_BITMAP_SIZE         4
-#define MBY_LPM_NUM_PREFIXES        255
-#define MBY_LPM_NUM_CHILD           256
+// TODO review this with architects
+#define MBY_LPM_MAX_ACTIONS_NUM 4
 
 // Enums:
 
 // Structs:
 
-typedef struct mbyLpmInStruct
+typedef struct mbyLpmKeyStruct
 {
-    // TODO where does the key come from? Spec says is derived from Profile ID
-    fm_byte key[MBY_LPM_KEY_MAX_BITS_LEN / 8];
+    fm_byte key[MBY_LPM_KEY_MAX_BYTES_LEN];
     fm_byte key_len; // in bits
-} mbyLpmIn;
+} mbyLpmKey;
 
-typedef struct mbyLpmOutStruct
+typedef struct mbyLpmSearchResultStruct
 {
     fm_bool   hit_valid;
     fm_uint64 fwd_table0_idx;
-} mbyLpmOut;
+} mbyLpmSearchResult;
 
 typedef struct mbyLpmTcamLookupStruct
 {
@@ -52,21 +48,27 @@ typedef struct mbyLpmSubtrieLookupStruct
 
 // Functions :
 
-void Lpm
+void mbyMatchLpm
 (
- 	MBY_LPM_IN_REGS,
-    mbyLpmIn    const * const in,
-    mbyLpmOut         * const out
+    MBY_LPM_IN_REGS,
+#ifdef USE_NEW_CSRS
+    mby_shm_map                * const shm_map,
+#endif
+    mbyClassifierKeys    const * const keys,
+    fm_byte                            profile_id,
+    fm_uint32                          actions[4]
 );
 
 //#ifdef UNIT_TEST
 struct mbyLpmStaticFuncs {
-	void (*_lookUpLpmTcam)(MBY_LPM_IN_REGS, mbyLpmTcamLookup * const);
+    void    (*_lookUpLpmTcam)(MBY_LPM_IN_REGS, mbyLpmTcamLookup * const);
     fm_bool (*_getBitIn64BitsArray)(fm_uint64 const * const, fm_byte);
     fm_byte (*_countOneIn64BitsArray)(fm_uint64 const * const, fm_byte);
     fm_bool (*_getSubtriePrefixNode)(mbyLpmSubtrieStore const * const, fm_byte);
     fm_bool (*_getSubtrieChildNode)(mbyLpmSubtrieStore const * const, fm_byte);
-    void (*_exploreSubtrie)(MBY_LPM_IN_REGS, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
+    void    (*_exploreSubtrie)(MBY_LPM_IN_REGS, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
+    void    (*_lpmSearch)(MBY_LPM_IN_REGS, mbyLpmKey const * const, mbyLpmSearchResult * const);
+    void    (*_lpmGenerateKey)(MBY_LPM_IN_REGS, mbyClassifierKeys const * const, fm_byte, mbyLpmKey * const);
 };
 
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs);

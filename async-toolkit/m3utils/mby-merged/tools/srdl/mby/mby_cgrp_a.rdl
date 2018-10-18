@@ -723,7 +723,6 @@ addrmap mby_ppe_cgrp_a_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  em_a_hash_lookup_r          EM_A_HASH_LOOKUP[32768];
   em_a_hash_cam_rf            EM_A_HASH_CAM[32]     ;
   em_a_hash_cam_en_rf         EM_A_HASH_CAM_EN[2]   ;
   em_a_key_sel0_rf            EM_A_KEY_SEL0[2]      ;
@@ -731,6 +730,7 @@ addrmap mby_ppe_cgrp_a_map {
   em_a_key_mask_rf            EM_A_KEY_MASK[2]      ;
   em_a_hash_miss_rf           EM_A_HASH_MISS[2]     ;
   em_a_hash_cfg_r             EM_A_HASH_CFG[64]     ;
+  em_a_hash_lookup_r          EM_A_HASH_LOOKUP[32768];
 
   lpm_subtrie_aptr_r          LPM_SUBTRIE_APTR[24576];
   lpm_subtrie_cptr_r          LPM_SUBTRIE_CPTR[24576];

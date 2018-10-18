@@ -3,13 +3,17 @@ TST_DIR = .
 
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
-INCLUDES += -I$(TST_DIR)/../common
 
 SOURCES  = $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
 SOURCES += $(SRC_DIR)/mby_parser.c
 SOURCES += $(SRC_DIR)/mby_mapper.c
+SOURCES += $(SRC_DIR)/mby_lpm.c
+SOURCES += $(SRC_DIR)/mby_lpm_regs.c
+SOURCES += $(SRC_DIR)/mby_wcm.c
+SOURCES += $(SRC_DIR)/mby_exactmatch.c
+SOURCES += $(SRC_DIR)/mby_clsfr_regs.c
 SOURCES += $(SRC_DIR)/mby_classifier.c
 SOURCES += $(SRC_DIR)/mby_hash.c
 SOURCES += $(SRC_DIR)/mby_nexthop.c
@@ -22,9 +26,9 @@ SOURCES += $(SRC_DIR)/mby_txstats.c
 SOURCES += $(SRC_DIR)/mby_pipeline.c
 SOURCES += $(SRC_DIR)/mby_model.c
 SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
+SOURCES += $(SRC_DIR)/mby_init.c
 SOURCES += $(TST_DIR)/mby_basic_fwd_test.c
 SOURCES += $(TST_DIR)/mby_basic_fwd_init.c
-SOURCES += $(TST_DIR)/../common/mby_init.c
 SOURCES += $(TST_DIR)/borrowed/mby_srv_utils.c
 
 OBJECTS = $(SOURCES:.c=.o)
@@ -78,6 +82,11 @@ $(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
 $(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
 $(SRC_DIR)/mby_parser.o    : $(SRC_DIR)/mby_parser.c     $(SRC_DIR)/mby_parser.h
 $(SRC_DIR)/mby_mapper.o    : $(SRC_DIR)/mby_mapper.c     $(SRC_DIR)/mby_mapper.h
+$(SRC_DIR)/mby_lpm.o       : $(SRC_DIR)/mby_lpm.c        $(SRC_DIR)/mby_lpm.h
+$(SRC_DIR)/mby_lpm_regs.o  : $(SRC_DIR)/mby_lpm_regs.c   $(SRC_DIR)/mby_lpm_regs.h
+$(SRC_DIR)/mby_wcm.o       : $(SRC_DIR)/mby_wcm.c        $(SRC_DIR)/mby_wcm.h
+$(SRC_DIR)/mby_exactmatch.o: $(SRC_DIR)/mby_exactmatch.c $(SRC_DIR)/mby_exactmatch.h
+$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_clsfr_regs.c $(SRC_DIR)/mby_clsfr_regs.h
 $(SRC_DIR)/mby_classifier.o: $(SRC_DIR)/mby_classifier.c $(SRC_DIR)/mby_classifier.h
 $(SRC_DIR)/mby_hash.o      : $(SRC_DIR)/mby_hash.c       $(SRC_DIR)/mby_hash.h
 $(SRC_DIR)/mby_nexthop.o   : $(SRC_DIR)/mby_nexthop.c    $(SRC_DIR)/mby_nexthop.h
@@ -90,10 +99,10 @@ $(SRC_DIR)/mby_txstats.o   : $(SRC_DIR)/mby_txstats.c    $(SRC_DIR)/mby_txstats.
 $(SRC_DIR)/mby_pipeline.o  : $(SRC_DIR)/mby_pipeline.c   $(SRC_DIR)/mby_pipeline.h
 $(SRC_DIR)/mby_model.o     : $(SRC_DIR)/mby_model.c      $(SRC_DIR)/mby_model.h
 $(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
+$(SRC_DIR)/mby_init.o      : $(SRC_DIR)/mby_init.c       $(SRC_DIR)/mby_init.h
 
 $(TST_DIR)/borrowed/mby_srv_errno.o : $(TST_DIR)/borrowed/mby_srv_errno.c  $(TST_DIR)/borrowed/mby_srv_errno.h
 $(TST_DIR)/borrowed/mby_srv_utils.o : $(TST_DIR)/borrowed/mby_srv_utils.c  $(TST_DIR)/borrowed/mby_srv_utils.h
-$(TST_DIR)/../common/mby_init.o     : $(TST_DIR)/../common/mby_init.c      $(TST_DIR)/../common/mby_init.h
 $(TST_DIR)/mby_basic_fwd_init.o     : $(TST_DIR)/mby_basic_fwd_init.c      $(TST_DIR)/mby_basic_fwd_init.h
 $(TST_DIR)/mby_basic_fwd_test.o     : $(TST_DIR)/mby_basic_fwd_test.c
 
