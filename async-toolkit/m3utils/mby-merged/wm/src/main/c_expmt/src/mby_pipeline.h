@@ -27,6 +27,7 @@ void RxPipeline
 (
 #ifdef USE_NEW_CSRS
     mby_ppe_rx_top_map      * const rx_top_map,
+    mby_shm_map             * const shm_map,
 #else
     fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
@@ -75,6 +76,7 @@ void Classifier
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
     mby_ppe_entropy_map         * const entropy_map,
+    mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
 #else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
 #endif
@@ -84,42 +86,71 @@ void Classifier
 
 void Hash
 (
+#ifdef USE_NEW_CSRS
+
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyClassifierToHash const   * const in,
     mbyHashToNextHop            * const out
 );
 
 void NextHop
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_nexthop_map         * const nexthop,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyHashToNextHop const      * const in,
     mbyNextHopToMaskGen         * const out
 );
 
 void MaskGen
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    mbyNextHopToMaskGen const   * const in,
-    mbyMaskGenToTriggers        * const out
+#ifdef USE_NEW_CSRS
+    mby_ppe_fwd_misc_map       * const fwd_misc,
+    mby_ppe_mst_glort_map      * const glort_map,
+    mby_ppe_cm_apply_map       * const cm_apply,
+#else
+    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    mbyNextHopToMaskGen  const * const in,
+    mbyMaskGenToTriggers       * const out
 );
 
 void Triggers
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_trig_apply_map      * const trig_apply_map,
+    mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
+    mby_ppe_trig_usage_map      * const trig_usage_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyMaskGenToTriggers const  * const in,
     mbyTriggersToCongMgmt       * const out
 );
 
 void CongMgmt
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_cm_apply_map        * const cm_apply_map,
+    mby_ppe_cm_usage_map        * const cm_usage_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyTriggersToCongMgmt const * const in,
     mbyCongMgmtToRxStats        * const out
 );
 
 void RxStats
 (
+#ifdef USE_NEW_CSRS
+    mby_ppe_rx_stats_map        * const stats_map,
+#else
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
     mbyCongMgmtToRxStats const  * const in,
     mbyRxStatsToRxOut           * const out
 );

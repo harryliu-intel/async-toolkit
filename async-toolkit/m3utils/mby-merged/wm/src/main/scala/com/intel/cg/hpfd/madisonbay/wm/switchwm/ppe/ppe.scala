@@ -9,11 +9,7 @@ object ppe {
 //scalastyle:on
   class PortIndex(val p: Int) extends AnyVal
 
-  class SourcePortMask(l: Long) {
-
-    val bs = BitSet(l.toInt)
-
-  }
+  class SourcePortMask(l: Long) {  val bs = BitSet(l.toInt)  }
 
   type EplRxFlags = Int
 
@@ -23,9 +19,9 @@ object ppe {
 
   //scalastyle:off
   object PacketClass extends Enumeration {
-    val Unicast: Value = Value(0x1, "Unicast")
-    val Broadcast: Value = Value(0x2, "Broadcast")
-    val Multicast: Value = Value(0x4, "Multicast")
+    val Unicast:    Value = Value(0x1, "Unicast")
+    val Broadcast:  Value = Value(0x2, "Broadcast")
+    val Multicast:  Value = Value(0x4, "Multicast")
   }
   //scalastyle:on
 
@@ -38,14 +34,14 @@ object ppe {
     */
   object ActionFlag extends Enumeration {
     /* Uncorrectable ECC or parity error detected while doing lookup */
-    val DropPError: Value = Value(0, "DropPError")
-    val Special: Value = Value(1,"Special")
-    val DropParserErr: Value = Value(2, "DropParserErr")
+    val DropPError:        Value = Value(0, "DropPError")
+    val Special:           Value = Value(1,"Special")
+    val DropParserErr:     Value = Value(2, "DropParserErr")
     // ...
     /* Frame was mirrored as a result of a CGRP action. */
     val MirrorIngressCGRP: Value = Value(43, "MirrorIngressCGRP")
     /* Reserved */
-    val Reserved: Value = Value(44, "Reserved")
+    val Reserved:          Value = Value(44, "Reserved")
   }
   //scalastyle:on
 

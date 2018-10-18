@@ -5,6 +5,7 @@
 # Never add Natural_Docs output -  directory Data
 /verif/doc/Data
 /verif/doc/Working Data
+*.nd
 
 # DVT Eclipse
 .dvt
@@ -163,3 +164,6 @@ wm/src/main/c_exp/src/mby_server
 
 # generated subIP content
 subIP/
+
+# RALF typically generated from RDL or Nebulon output
+*.ralf

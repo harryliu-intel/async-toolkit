@@ -574,7 +574,7 @@ reg pol_dscp_r {
   HandCoded = true;
   name = "DSCP Color Definitions";
   desc = "
-  Indexed by (operator ID, 6-bit DSCP value from ingress packet).
+  Indexed by (MAD, 6-bit DSCP value from ingress packet).
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -635,7 +635,7 @@ reg pol_vpri_r {
   HandCoded = true;
   name = "VPRI Color Definitions";
   desc = "
-  Indexed by (operator ID, 4-bit VPRI value from ingress packet).
+  Indexed by (NAD, 4-bit VPRI value from ingress packet).
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;

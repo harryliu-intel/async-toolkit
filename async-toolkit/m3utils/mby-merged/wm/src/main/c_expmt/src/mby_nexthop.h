@@ -53,7 +53,7 @@
 #define MBY_ARP_ENTRY_GLORT_WIDTH         2
 #define MBY_ARP_ENTRY_GLORT_l_DGLORT      0
 #define MBY_ARP_ENTRY_GLORT_h_DGLORT      15
-#define MBY_ARP_ENTRY_GLORT_b_markRouted  16
+#define MBY_ARP_ENTRY_GLORT_b_MARK_ROUTED 16
 
 // Below defines are related to L2Lookup and temporary placed in nexthop <-- REVISIT!!!
 #define MBY_FLOOD_GLORT_TABLE_WIDTH                             2
@@ -254,11 +254,8 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool                 IS_IPV6;              // packet is IPv6
     fm_macaddr              L2_DMAC;              // layer 2 destination MAC address
     fm_uint16               L2_EDOMAIN;           // egress L2 domain
-    fm_uint32               L2_EFID1_STATE;       // 24-bit egress forwarding vector
     fm_uint16               L2_ETYPE;             // 16-bit innermost Ethernet type
     fm_uint16               L2_EVID1;             // 12-bit egress VLAN ID
-    fm_uint32               L2_EVLAN1_MEMBERSHIP; // 24-bit egress VLAN port membership vector
-    mbyStpState             L2_IFID1_STATE;       // 2-bit spanning tree state for the ingress port
     fm_uint16               L2_IVID1;             // 12-bit ingress VLAN ID
     fm_bool                 L2_IVLAN1_MEMBERSHIP; // ingress port is part of the ingress VLAN flag
     fm_bool                 L2_IVLAN1_REFLECT;    // ingress VLAN reflection is enabled
