@@ -127,7 +127,7 @@ $(TARGET): $(OBJECTS)
 run: $(TARGET)
 	@echo '  Running $(TARGET)'
 	@/usr/bin/time --format='Ran for %e seconds.' \
-            $(TARGET) | tee run.log
+            ./$(TARGET) | tee run.log
 
 .PHONY: valgrind
 valgrind: $(TARGET)
