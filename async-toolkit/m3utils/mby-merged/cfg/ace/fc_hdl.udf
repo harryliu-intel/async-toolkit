@@ -139,7 +139,7 @@ EOF
              },
 
              $fc_global_vars::COLLAGE_LIB => {
-                    -tag      => "nonsynth+nonemu",
+                    #-tag      => "nonsynth+nonemu",
                     -generated => 1,
                     -hdl_spec => [
                         "cfg/ace/HDL/soc_assemble_collage.hdl",
@@ -160,7 +160,7 @@ EOF
                        "shdv_shared_lib",
                        $fc_global_vars::COLLAGE_LIB,
                     ],
-                    -tag            => "nonsynth",
+                    #-tag            => "nonsynth",
              },
 
              fc_tests_lib => {
@@ -310,11 +310,11 @@ EOF
              fc_top_lib => {
                  -generated => 1,
                  -hdl_spec => [
-                     "cfg/ace/HDL/dummy.hdl",
+                     "cfg/ace/HDL/rtl/dummy.hdl",
                      # these wrapper hdl's should be temp, until top level shells remove 2d arrays
-                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_ec_top_wrapper.hdl",
-                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_mpp_wrapper.hdl",
-                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/soc.hdl",
+                     "collage/work/soc/gen/source/rtl/mby_ec_top_wrapper.hdl",
+                     "collage/work/soc/gen/source/rtl/mby_mpp_wrapper.hdl",
+                     "collage/work/soc/gen/source/rtl/soc.hdl",
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
@@ -416,6 +416,15 @@ EOF
                  -tag => "nonsynth",
              },
 
+            #### LH : FEBE Tophiergen
+            dump_filelist_lib => {                                                                                                                              
+                -vlog_files => [
+                    "tools/febe/utility/dump_filelist.sv",
+                ],
+                -vlog_incdirs => [
+                    "$ENV{ACE_HOME}/lib/Verilog",
+                ],},
+
 #              fc_emul_top_lib => {
 #                  -hdl_spec => [
 #                      "emul/wrappers/fc_emul_top.hdl",
@@ -441,6 +450,7 @@ EOF
                    "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
                     @all_sip_elab_opts,
                     @CDN_PCIE_ELAB_OPTS, 
+                    "dump_filelist_lib.dump_filelist",
                ],
 
                top_language => 'SystemVerilog',
@@ -486,6 +496,7 @@ EOF
                   @all_hip_liblist,
 
                   "ext_shared_lib",
+                  'dump_filelist_lib',
 #                  "cdn_pcie_lib",
                ],
 
@@ -610,8 +621,24 @@ EOF
             },
 
             mby_lintra => {
-               top  => "mby_rtl_lib.mby",
-               libs => [ "mby_rtl_lib" ],
+               top  => "fc_top_lib.soc",
+               use => \@models_use,
+               libs => [
+                  $fc_global_vars::COLLAGE_LIB,
+                  "mby_tx_ppe_rtl_lib",
+                  "mby_ppe_stm_rtl_lib",
+                  "mby_igr_rtl_lib",
+                  "mby_egr_rtl_lib",
+                  "mby_mgp_rtl_lib",
+                  "mby_rx_ppe_rtl_lib",
+                  "mby_mpp_rtl_lib",
+                  "clkstub_rtl_lib",
+                  (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
+            #      $fc_global_vars::IP_STUB_LIB,
+                  @all_sip_rtl_liblist,
+                  @all_hip_liblist,
+               ], 
+               lintra_test_list => [ "$ENV{MODEL_ROOT}/tools/lint/tests/mby_top_lintra_test.list"],
             },
 
             dvt_mby_verif => {
@@ -669,7 +696,7 @@ EOF
 );
 
 $audf{HDLSpec}{mby}{models}{fc_64} = $audf{HDLSpec}{mby}{models}{fc};
-$audf{HDLSpec}{mby}{models}{fc_64_serdes} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_64_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
-$audf{HDLSpec}{mby}{models}{fc_8_serdes} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 

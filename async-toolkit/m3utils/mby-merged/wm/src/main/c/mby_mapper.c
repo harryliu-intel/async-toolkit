@@ -686,7 +686,7 @@ static void mapScalar
 
     // TODO: how to get L2 and L3 domains from metadata.
     if (map_domain_action0.UPDATE_DOMAINS) {
-        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  0, 4, map_domain_action0.OPERATOR_ID);
+        FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  0, 4, map_domain_action0.NAD);
         FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4),  4, 9, map_domain_action0.L2_DOMAIN);
         FM_ARRAY_SET_UNNAMED_FIELD((fm_uint32*)(in->PKT_META + 5*4), 13, 6, map_domain_action0.L3_DOMAIN);
 

@@ -15,3 +15,6 @@ IMPLEMENT_FUNCTION_MOCK3(Mock_mbyLpmGetSubtrie, mbyLpmGetSubtrie,
 
 IMPLEMENT_FUNCTION_MOCK3(Mock_mbyLpmGetSubtrieStore, mbyLpmGetSubtrieStore,
 						 void (fm_uint32 *, const fm_uint16, mbyLpmSubtrieStore * const));
+
+IMPLEMENT_FUNCTION_MOCK3(Mock_mbyLpmGetKeyMasks, mbyLpmGetKeyMasks,
+						 void (fm_uint32 *, const fm_byte, mbyLpmKeyMasks * const));

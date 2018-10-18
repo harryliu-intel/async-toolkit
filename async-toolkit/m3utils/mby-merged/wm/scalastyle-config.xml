@@ -97,7 +97,7 @@
  <check level="warning" class="org.scalastyle.file.NoNewLineAtEofChecker" enabled="false"></check>
  <check enabled="true" class="org.scalastyle.scalariform.DisallowSpaceBeforeTokenChecker" level="warning">
   <parameters>
-   <parameter name="tokens">COLON, COMMA</parameter>
+   <parameter name="tokens">COLON, COMMA, RPAREN</parameter>
   </parameters>
  </check>
  <check enabled="true" class="org.scalastyle.scalariform.DisallowSpaceAfterTokenChecker" level="warning">
@@ -106,6 +106,19 @@
   </parameters>
  </check>
  <check enabled="true" class="org.scalastyle.file.RegexChecker" level="warning">
+  <parameters>
+   <parameter name="regex">(?m)^\s\*$(\r|)\n^\s*$(\r|)\n</parameter>
+  </parameters>
+  <customMessage>No double blank lines</customMessage>
+ </check>
+ <check enabled="true" class="org.scalastyle.file.RegexChecker" level="warning" customId="regex.tuples">
+  <parameters>
+   <parameter name="regex">(\._1)|(\._2)</parameter>
+   <parameter name="line">false</parameter>
+  </parameters>
+  <customMessage>Tuples have extractors! You'd better use them instead of ._1 or ._2 ...</customMessage>
+ </check>
+  <check enabled="true" class="org.scalastyle.file.RegexChecker" level="warning">
   <parameters>
    <parameter name="regex">(case)?[\s]+(class)[\s]+[a-zA-Z_][a-zA-Z0-9_]*[\s]+[\(]</parameter>
    <parameter name="line">false</parameter>

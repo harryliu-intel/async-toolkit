@@ -46,7 +46,7 @@
 
 #define MBY_FFU_TCAM_CFG_WIDTH                                  2
 #define MBY_FFU_TCAM_CFG_ENTRIES_0                              64
-#define MBY_FFU_TCAM_CFG_ENTRIES_1                              16
+#define MBY_FFU_TCAM_CFG_ENTRIES_1                              20
 #define MBY_FFU_TCAM_CFG_ENTRIES_2                              3
 #define MBY_FFU_TCAM_CFG(index2, index1, index0, word)          ((0x0100000) * ((index2) - 0)+(0x0000200) * ((index1) - 0) + (0x0000008) * ((index0) - 0) + ((word)*4)+ (0x0080000) + (MBY_FFU_GROUP_BASE))
 

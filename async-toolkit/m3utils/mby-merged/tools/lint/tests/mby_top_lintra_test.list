@@ -1,0 +1,3 @@
+.options -ace_args -mc mby_lintra -model_compile_results_dir $MODEL_ROOT/target/mby/lintra -static_check -lira_use_filter Synthesis -noepi -ace_args- -dut mby -model mby_lintra -facet -lintra_mode lint -facet- -no_compress -save 
+
+mby_top_lintra_test 

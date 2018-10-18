@@ -1,5 +1,7 @@
 // Placeholder
 
+cclk                  >> clk
+
 egr_igr_if            >> igr_if
 egr_pod_if            >> pod_if
 egr_ahb_if            >> ahb_if

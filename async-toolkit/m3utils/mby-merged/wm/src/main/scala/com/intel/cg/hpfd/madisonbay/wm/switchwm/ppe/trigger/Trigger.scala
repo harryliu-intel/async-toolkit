@@ -5,8 +5,10 @@ import com.intel.cg.hpfd.csr.generated._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{PortIndex, TrafficClass, VID}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.{CgrpCondition, SourcePortCondition}
+import com.intel.cgr.hpfd.madisonbay.wm.switchwm.ppe.trigger.TriggerCfg
 
 import scala.collection.immutable.BitSet
+
 
 class Trigger(val tcfg: TriggerCfg, val index: Int) {
 
@@ -16,7 +18,11 @@ class Trigger(val tcfg: TriggerCfg, val index: Int) {
 
   val c: FrameState => Boolean = fs => {
     val fire = List(cgrpCondition.x, srcPortCondition.x).forall(x => x(fs))
-    if (fire) stats.COUNT() = stats.COUNT() + 1
+
+    if (fire) {
+      // TODO: handle the state here
+      val _ = stats.COUNT.modify(_ + 1)
+    }
     fire
   }
 
@@ -29,7 +35,7 @@ object Trigger {
     val x: FrameState => Boolean
   }
 
-  class CgrpCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
+  class CgrpCondition(apply_map: mby_ppe_trig_apply_map.mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
 
     val tcc = apply_map.TRIGGER_CONDITION_CGRP(index)
     val condition = MatchCase(apply_map.TRIGGER_CONDITION_CFG(index).MATCH_CGRP().toInt)
@@ -43,7 +49,7 @@ object Trigger {
 
   }
 
-  class SourcePortCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
+  class SourcePortCondition(apply_map: mby_ppe_trig_apply_map.mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
     lazy val spMask: BitSet =  BitSet.fromBitMask(Array[Long](apply_map.TRIGGER_CONDITION_RX(index).SRC_PORT_MASK()))
     val x: FrameState => Boolean = fs => {
       spMask.contains(fs.rxPort.p)
@@ -59,7 +65,7 @@ object Trigger {
   /**
     * Simple case of trigger behaviors defined by a when a precedence group consists of a _single_ trigger
    */
-  class TriggerPipeline(csr: mby_ppe_rx_top_map, trigIdx: Int) extends PipelineStage[FrameState, FrameState] {
+  class TriggerPipeline(csr: mby_ppe_rx_top_map.mby_ppe_rx_top_map, trigIdx: Int) extends PipelineStage[FrameState, FrameState] {
 
     val ta_cfg1 = csr.trig_apply.TRIGGER_ACTION_CFG_1(trigIdx)
     val ta_cfg2 = csr.trig_apply.TRIGGER_ACTION_CFG_2(trigIdx)
