@@ -71,6 +71,7 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             
             mby_igr_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_rtl.hdl', ],
             },
             
