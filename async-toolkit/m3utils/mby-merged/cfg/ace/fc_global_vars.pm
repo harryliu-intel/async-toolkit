@@ -345,16 +345,16 @@ foreach our $ace_ip_to_add (@ace_add_ips) {
 
     switch ($ace_ip_to_add) {
         case ["fc_64"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+NO_SERDES +define+FC_64",);
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64",);
         }
-        case ["fc_64_serdes"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64_SERDES",);
+        case ["fc_64_no_phy"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64_NO_PHY +define+NO_SERDES",);
         }
         case ["fc_8"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+NO_SERDES +define+FC_8",);
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8",);
         }
-        case ["fc_8_serdes"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8_SERDES",);
+        case ["fc_8_no_phy"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8_NO_PHY +define+NO_SERDES",);
         }
   
     } # switch

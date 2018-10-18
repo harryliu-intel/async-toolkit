@@ -4,8 +4,10 @@
 #include <mby_common.h>
 #include <mby_errors.h>
 #include <mby_model.h>
-#include <mby_init.h>
 #include <mby_rxstats.h>
+#include <mby_init.h>
+#include <mby_parser.h>
+#include <mby_pipeline.h>
 
 #include "mby_basic_flood_init.h"
 
@@ -25,6 +27,12 @@
 const int send_sw = 0;
 const int send_port = 0;
 
+#ifdef USE_NEW_CSRS
+static mby_top_map top_map;
+
+static mbyRxStatsToRxOut rxs2rxo;
+#endif
+
 inline static int checkOk (const char * test, const fm_status status)
 {
     int rv = (status == FM_OK) ? 0 : -1;
@@ -42,8 +50,14 @@ inline static int checkOk (const char * test, const fm_status status)
 fm_status init()
 {
     // TODO verify if that's all that we need
-    mby_init_common_regs();
+#ifdef USE_NEW_CSRS
+    mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe));
+    basic_flood_init(&(top_map.mpp.mgp[0].rx_ppe));
+#else
+    mby_init_regs(send_sw);
     basic_flood_init();
+#endif
+
     return FM_OK;
 }
 
@@ -68,6 +82,21 @@ fm_status check
     }
 
     // Check RX counters
+#ifdef USE_NEW_CSRS
+    rx_stats_bank_frame_r * const bank_frame = &(top_map.mpp.mgp[0].rx_ppe.stats.RX_STATS_BANK_FRAME[bank][index]);
+
+    if (bank_frame->FRAME_COUNTER != 1) {
+        printf("Frame counter is invalid\n");
+        return FM_FAIL;
+    }
+
+    rx_stats_bank_byte_r * const bank_byte = &(top_map.mpp.mgp[0].rx_ppe.stats.RX_STATS_BANK_BYTE[bank][index]);
+
+    if (bank_byte->BYTE_COUNTER != exp_packet_len) {
+        printf("Byte counter is invalid\n");
+        return FM_FAIL;
+    }
+#else
     mbyReadReg(sw, MBY_RX_STATS_BANK_FRAME(bank, index, 0), &val);
     if (val != 1) {
         printf("Frame counter is invalid\n");
@@ -79,9 +108,79 @@ fm_status check
         printf("Byte counter is invalid\n");
         return FM_FAIL;
     }
+#endif
 
     return FM_OK;
 }
+
+#ifdef USE_NEW_CSRS
+static fm_status sendPacket
+(
+    const fm_uint32         sw,
+    const fm_uint32         port,
+    const fm_byte   * const packet,
+    const fm_uint32         length
+)
+{
+    fm_status sts = FM_OK;
+
+    if (sw != 0)
+        sts = FM_ERR_UNSUPPORTED;
+    else
+    {
+        // Top CSR map for tile 0 receive pipeline:
+        // TODO use the pipeline associated to the specific ingress port
+
+        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp.mgp[0].rx_ppe);
+        mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
+
+        // Input struct:
+        mbyRxMacToParser mac2par;
+
+        // Populate input:
+        mac2par.RX_DATA   = (fm_byte *) packet;
+        mac2par.RX_LENGTH = (fm_uint32) length;
+        mac2par.RX_PORT   = (fm_uint32) port;
+
+        // Call RX pipeline:
+        RxPipeline(rx_top_map, shm_map, &mac2par, &rxs2rxo);
+    }
+    return sts;
+}
+
+static fm_status receivePacket
+(
+    const fm_uint32         sw,
+    fm_uint32       * const port,
+    fm_byte         * const packet,
+    fm_uint32       * const length,
+    const fm_uint32         max_pkt_size
+)
+{
+    fm_status sts = FM_OK;
+
+    if (sw != 0)
+        sts = FM_ERR_UNSUPPORTED;
+    else
+    {
+        /* TxPipeline function will be called when modifier code is ready. */
+
+        // Select egress port:
+        fm_uint32 tx_port = 0;
+
+        for (fm_uint i = 0; i < 18; i++)
+            if (rxs2rxo.FNMASK & (1uL << i)) {
+                tx_port = i;
+                break;
+            }
+
+        // Populate output:
+        *port   = tx_port;
+        *length = rxs2rxo.RX_LENGTH;
+    }
+    return sts;
+}
+#endif
 
 int main()
 {
@@ -101,6 +200,22 @@ int main()
 
     for (fm_uint i = 0; i < 1; i++) {
 
+#ifdef USE_NEW_CSRS
+        status = init();
+        rv = checkOk("init", status);
+        if (rv != 0)
+            break;
+
+        status = sendPacket(send_sw, send_port, sent_packet, sizeof(sent_packet));
+        rv = checkOk("sendPacket", status);
+        if (rv != 0)
+            break;
+
+        status = receivePacket(send_sw, &recv_port, recv_packet_buf, &recv_packet_len, recv_pkt_buf_len);
+        rv = checkOk("receivePacket", status);
+        if (rv != 0)
+            break;
+#else
         status = mbyResetModel(send_sw);
         rv = checkOk("mbyResetModel", status);
         if (rv != 0)
@@ -117,12 +232,13 @@ int main()
             break;
 
         status = mbyReceivePacket(send_sw, &recv_port, recv_packet_buf, &recv_packet_len, recv_pkt_buf_len);
-        checkOk("mbyReceivePacket", status);
+        rv = checkOk("mbyReceivePacket", status);
         if (rv != 0)
             break;
+#endif
 
         status = check(send_sw, send_port, recv_port, exp_port, recv_packet_len, exp_packet_len);
-        checkOk("check", status);
+        rv = checkOk("check", status);
         if (rv != 0)
             break;
     }

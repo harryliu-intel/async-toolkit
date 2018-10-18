@@ -1,0 +1,89 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+
+// MCE table [0..32767] [0..256] 257 bits, 256 bits ports [0...255], 1 bit for virtual port[256], 1 bit for parity [257]
+// This table will be accessed by software as follows
+// Command bit [0] =  '0' = read, '1' = write 
+// Go bit [0] =  '1' means hardware execute the command, generates a pulse to hardware
+// Address [15:0] , pointing to entry
+// Done bit -- hardware writes it, software reads it.
+// Each new command, hardware resets the Done bit. After executing the command, hw sets the done bit
+// WrData Register[0..8] = Total 258 bits,bit 257 = parity bit, 256:0 = Port bits
+// RdData Register[0..8] = Total 258 bits,bit 257 = parity bit, 256:0 = Port bits
+
+// Flow will be as below. 
+// SW write
+// SW wants to update the entry #135 with 257 bits value, parity bit = 258, 
+// SW writes in data reg [0..8]
+// SW write in Address[15:0] = 0x89
+// SW writes Command = '1'
+// SW writes Go bit
+// SW reads done bit, if set, it can move to next register
+
+
+// SW read
+// SW wants to read the entry #135 with 257 bits value, parity bit = 258, 
+// SW writes in data reg [0..8]
+// SW write in Address[15:0] = 0x89
+// SW writes Command = '0'
+// SW writes Go bit
+// SW reads done bit, if set, 
+// SW reads registers [0..8] 
+// SW moves to next transaction
+
+
+// Address Map
+// MCE Staging registers to update the MCGRP Table
+
+reg mce_control_reg_0 {
+  shared;
+  HandCoded = true;
+  name = "MCE Control Reg"; 
+  desc = "
+  The control bits are used to communicate with the Memory/Registers >64 bits and need to be updated/read with atomic operation
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+           ";
+    ValRandomize = true;
+  } MCE_CMD[0:0] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+           ";
+    ValRandomize = true;
+  } MCE_Addr[16:1] = 16'h0;
+  field {
+    AccessType = "R";
+    desc = "
+     Done bit written by HW, Read by SW
+           ";
+    ValRandomize = true;
+  } MCE_Done[17] = 1'h0;
+};
+
+
+
+
+
+// Command bit [0] =  '0' = read, '1' = write 
+// Go bit [0] =  '1' means hardware execute the command, generates a pulse to hardware
+// Address [15:0] , pointing to entry
+// Done bit -- hardware writes it, software reads it.
+// Each new command, hardware resets the Done bit. After executing the command, hw sets the done bit
+// WrData Register[0..8] = Total 258 bits,bit 257 = parity bit, 256:0 = Port bits
+// RdData Register[0..8] = Total 258 bits,bit 257 = parity bit, 256:0 = Port bits
+
+
+
+
+
+ 
+
+

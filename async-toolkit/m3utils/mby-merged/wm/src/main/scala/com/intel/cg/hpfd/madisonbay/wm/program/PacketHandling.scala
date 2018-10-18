@@ -6,7 +6,7 @@ import java.net.Socket
 
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.extensions.ExtArrayByte.RichByteArray
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtArrayByte.Implicits
 
 class PacketHandling(egressPortToSocketAndStreamMap: scala.collection.mutable.HashMap[Int, (Socket, DataOutputStream)],
                      legacyProtocol: Boolean) {
