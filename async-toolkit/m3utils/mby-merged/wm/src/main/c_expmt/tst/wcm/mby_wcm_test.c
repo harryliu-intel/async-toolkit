@@ -60,31 +60,6 @@ static void freeMem
     free( cgrp_b_map);
 }
 
-#else
-
-static void allocRegs
-(
-    fm_uint32 **regs
-)
-{
-    // Allocate storage for registers on the heap:
-    *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
-    if (*regs == NULL) {
-        printf("Could not allocate heap memory for register buffer -- exiting!\n");
-        exit(-1);
-    }
-}
-
-static void freeRegs
-(
-    fm_uint32 *regs
-)
-{
-    free(regs);
-}
-
-#endif
-
 static void set_WCM_ACTION_REG
 (
     mby_ppe_cgrp_b_map  * const cgrp_b_map,
@@ -98,12 +73,12 @@ static void set_WCM_ACTION_REG
 
     switch(nr_action)
     {
-        case 0: em_b_wcm_action->ACTION0=value; break;
-        case 1: em_b_wcm_action->ACTION1=value; break;
+        case 0: em_b_wcm_action->ACTION0 = value; break;
+        case 1: em_b_wcm_action->ACTION1 = value; break;
         default:
         {
-            em_b_wcm_action->ACTION0=0x0;
-            em_b_wcm_action->ACTION1=0x0;
+            em_b_wcm_action->ACTION0 = 0x0;
+            em_b_wcm_action->ACTION1 = 0x0;
         }
     }
 }
@@ -121,7 +96,6 @@ static void init_WCM_ACTION_REG
         }
     }
 }
-
 
 static void cpy_actions
 (
@@ -157,10 +131,10 @@ static void set_WCM_TCAM_REG
 )
 {
     wcm_tcam_r * const em_b_wcm_tcam = &(cgrp_b_map->WCM_TCAM[i][j]);
-    em_b_wcm_tcam->KEY_TOP_INVERT=key_top_invert;
-    em_b_wcm_tcam->KEY_INVERT=key_invert;
-    em_b_wcm_tcam->KEY_TOP=key_top;
-    em_b_wcm_tcam->KEY=key;
+    em_b_wcm_tcam->KEY_TOP_INVERT = key_top_invert;
+    em_b_wcm_tcam->KEY_INVERT = key_invert;
+    em_b_wcm_tcam->KEY_TOP = key_top;
+    em_b_wcm_tcam->KEY = key;
 }
 
 static void init_WCM_TCAM_REG
@@ -350,13 +324,13 @@ static void init_actions(mbyClassifierActions * const actions_in)
     }
 
     for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
-        actions_in->act4[i].prec  = 1;
-        actions_in->act4[i].val   = 0;
+        actions_in->act4[i].prec = 1;
+        actions_in->act4[i].val = 0;
     }
 
     for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
-        actions_in->act1[i].prec  = 1;
-        actions_in->act1[i].val   = 0;
+        actions_in->act1[i].prec = 1;
+        actions_in->act1[i].val = 0;
     }
 }
 
@@ -403,6 +377,14 @@ static void setInputs_ipv4_frame
     mbyMapperToClassifier * const map2cla
 )
 {
+    /*
+    set based on the SQA test
+
+    Frame Header Data:
+    00  12  34  56  78  90  00  07  08  09  0a  0b  08  00  45  00
+    00  14  00  00  00  00  05  11  70  ca  aa  bb  cc  dd  11  aa
+    bb  cc
+    */
     map2cla->FFU_KEYS.key32[0] = 0xAABBCCDD;
     map2cla->FFU_KEYS.key32[1] = 0x11AABBCC;
     map2cla->FFU_KEYS.key32[4] = 0x11AABBCC;
@@ -471,6 +453,31 @@ static void simple_wcm_dip_ipv4_test_setup
     mbyMapperToClassifier * const map2cla
 )
 {
+    /*
+    set based on the SQA test
+
+    tbl.acl_instance          = IES_ACL_NO_INSTANCE;
+    tbl.location              = IES_ACL_FFU_GROUP_0;
+    tbl.scenario              = IES_ACL_SCENARIO_INGRS_IPV4;
+    tbl.condition             = IES_ACL_MATCH_DIP;
+    tbl.mask.dip.addr[0]      = htonl(0xffffffff);
+    tbl.mask.dip.is_ipv6      = false;
+    tbl.min_entries           = 1;
+    tbl.max_entries           = 1024;
+
+    cond.val.dip.addr[0] = htonl(0x11223344);
+    cond.val.dip.is_ipv6 = false;
+
+    cond.mask.dip.addr[0] = htonl(0xffffffff);
+    cond.mask.dip.is_ipv6 = false;
+
+    rule.precedence = 512;
+    rule.condition = tbl.condition;
+    rule.cond = cond;
+    rule.action = IES_ACL_ACTION_PERMIT;
+    rule.act_val = act_val;
+    rule.state = IES_ACL_RULE_ENTRY_STATE_VALID;
+    */
     initRegs(cgrp_b_map);
 
     set_WCM_TCAM_REG(cgrp_b_map, 0, 512, 0x0, 0xee554433, 0x0, 0x11aabbcc);
@@ -499,6 +506,7 @@ static int simple_wcm_dip_ipv4_test_check
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; i++) {
         if (actions[i] != 0x0 && i != 0)
             return 1;
+        // act24[4].prec = 3, act24[4].val = 259 -> FWD
         if (actions[i] != 0x640000c1 && i == 0)
             return 1;
     }
@@ -512,6 +520,27 @@ static void simple_wcm_mac_test_setup
     mbyMapperToClassifier * const map2cla
 )
 {
+    /*
+    set based on the SQA test
+
+    tbl.acl_instance          = IES_ACL_NO_INSTANCE;
+    tbl.location              = IES_ACL_FFU_GROUP_0;
+    tbl.scenario              = IES_ACL_SCENARIO_INGRS_IPV4;
+    tbl.condition             = IES_ACL_MATCH_DMAC;
+	tbl.mask.dmac             = htonl(0xffffffffffff);
+    tbl.min_entries           = 1;
+    tbl.max_entries           = 1024;
+
+    cond.val.dmac = htonl(0x001234567890);
+    cond.mask.dmac = htonl(0xffffffffffff);
+
+    rule.precedence = 512;
+    rule.condition = tbl.condition;
+    rule.cond = cond;
+    rule.action = IES_LITERAL_U64(2);
+    rule.act_val = act_val;
+    rule.state = IES_ACL_RULE_ENTRY_STATE_VALID;
+    */
     initRegs(cgrp_b_map);
 
     set_WCM_TCAM_REG(cgrp_b_map, 0, 512, 0x0, 0x90785634, 0x0, 0x6f87a9cb);
@@ -521,7 +550,7 @@ static void simple_wcm_mac_test_setup
     set_WCM_TCAM_CFG_REG(cgrp_b_map, 1, 16, 0xffff, 0x1, 0x1, 0x0, 0x8, 0x8, 0x7, 0x7);
 
     set_WCM_ACTION_REG(cgrp_b_map, 0, 512, 0, 0x640000c1);
-    set_WCM_ACTION_REG(cgrp_b_map, 1, 512, 0, 0x640000c1);
+    set_WCM_ACTION_REG(cgrp_b_map, 1, 512, 0, 0x74000103);
 
     for (fm_uint i = 0; i < 63; i++) {
         set_index_WCM_ACTION_REG(cgrp_b_map, i, 1, 0x1);
@@ -537,16 +566,16 @@ static int simple_wcm_mac_test_check
     fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM]
 )
 {
-        for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; i++) {
+    for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; i++) {
         if (actions[i] != 0x0 && i != 2)
             return 1;
-        if (actions[i] != 0x640000c1 && i == 2)
+        // act1[1].prec = 3, act1[1].val = 1 -> TRAP
+        if (actions[i] != 0x74000103 && i == 2)
             return 1;
     }
 
     return 0;
 }
-
 
 static int run_on_simple_wcm
 (
@@ -597,6 +626,8 @@ static int run_on_simple_wcm
     return ret;
 }
 
+#endif
+
 int main(void)
 {
     printf("--------------------------------------------------------------------------------\n");
@@ -604,8 +635,11 @@ int main(void)
     fm_uint tests = 0;
     fm_uint fails = 0;
 #ifdef USE_NEW_CSRS
+    // default values
     SIMPLE_WCM_TEST(basic,                fails); tests++;
+    // case with 1 slace cascade
     SIMPLE_WCM_TEST(dip_ipv4,             fails); tests++;
+    // case with 2 slace cascade
     SIMPLE_WCM_TEST(mac,                  fails); tests++;
 #else
         printf("No tests for not NEW_CSRS mode.\n");
@@ -625,7 +659,6 @@ int main(void)
     printf("--------------------------------------------------------------------------------\n");
 
     int rv = (fails == 0) ? 0 : -1;
-    return rv;
 
     return rv;
 }

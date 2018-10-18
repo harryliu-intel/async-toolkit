@@ -1,4 +1,5 @@
 {
+  "double_test" :  0.5,
   "header_types" : [
     {
       "name" : "scalars_0",

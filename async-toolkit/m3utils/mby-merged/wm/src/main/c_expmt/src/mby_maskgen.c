@@ -9,8 +9,6 @@
 #include <mby_top_map.h>
 #endif
 
-#include <stdio.h>
-
 static mbyFwdPortCfg1 getPortCfg1
 (
 #ifdef USE_NEW_CSRS
@@ -257,6 +255,33 @@ static mbyGlortRam getGlortRamEntry
 #endif
 
     return ram_entry;
+}
+
+static mbyEgressVidTable getEvidTableEntry
+(
+#ifdef USE_NEW_CSRS
+    mby_ppe_mst_glort_map * const mst_glort,
+#else
+    fm_uint32                     regs[MBY_REGISTER_ARRAY_SIZE],
+#endif
+    fm_uint16                     vid
+)
+{
+    mbyEgressVidTable entry;
+
+#ifdef USE_NEW_CSRS
+    egress_vid_table_r * const vid_table = &(mst_glort->EGRESS_VID_TABLE[vid][0]);
+
+    entry.MEMBERSHIP = vid_table->MEMBERSHIP;
+#else
+    fm_uint64 evid_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_EGRESS_VID_TABLE(vid, 0), &evid_table_reg);
+
+    entry.TRIG_ID    = FM_GET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, TRIG_ID);
+    entry.MEMBERSHIP = FM_GET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, MEMBERSHIP);
+#endif
+
+    return entry;
 }
 
 static fm_status lookUpRamEntry
@@ -578,6 +603,38 @@ static void resolveAction
 }
 
 #ifdef USE_NEW_CSRS
+static fm_byte getIfid1
+(
+    fm_byte                           rx_port,
+    ingress_mst_table_r const * const ingress_mst_table
+)
+{
+    switch (rx_port)
+    {
+        case 0: return ingress_mst_table->STP_STATE_0;
+        case 1: return ingress_mst_table->STP_STATE_1;
+        case 2: return ingress_mst_table->STP_STATE_2;
+        case 3: return ingress_mst_table->STP_STATE_3;
+        case 4: return ingress_mst_table->STP_STATE_4;
+        case 5: return ingress_mst_table->STP_STATE_5;
+        case 6: return ingress_mst_table->STP_STATE_6;
+        case 7: return ingress_mst_table->STP_STATE_7;
+        case 8: return ingress_mst_table->STP_STATE_8;
+        case 9: return ingress_mst_table->STP_STATE_9;
+        case 10: return ingress_mst_table->STP_STATE_10;
+        case 11: return ingress_mst_table->STP_STATE_11;
+        case 12: return ingress_mst_table->STP_STATE_12;
+        case 13: return ingress_mst_table->STP_STATE_13;
+        case 14: return ingress_mst_table->STP_STATE_14;
+        case 15: return ingress_mst_table->STP_STATE_15;
+        case 16: return ingress_mst_table->STP_STATE_16;
+        case 17: return ingress_mst_table->STP_STATE_17;
+        default: return ingress_mst_table->STP_STATE_0;
+    }
+}
+#endif
+
+#ifdef USE_NEW_CSRS
 static fm_byte getMacAction
 (
     fm_byte                                      action_index,
@@ -684,11 +741,8 @@ void MaskGen
     const fm_bool            is_ipv6                = in->IS_IPV6;
     const fm_macaddr         l2_dmac                = in->L2_DMAC;
     const fm_uint16          l2_edomain_in          = in->L2_EDOMAIN;
-    const fm_uint32          l2_efid1_state         = in->L2_EFID1_STATE;
     const fm_uint16          l2_etype               = in->L2_ETYPE;
     const fm_uint16          l2_evid1               = in->L2_EVID1;
-    const fm_uint32          l2_evlan1_membership   = in->L2_EVLAN1_MEMBERSHIP;
-    const mbyStpState        l2_ifid1_state         = in->L2_IFID1_STATE;
     const fm_uint16          l2_ivid1               = in->L2_IVID1;
     const fm_bool            l2_ivlan1_membership   = in->L2_IVLAN1_MEMBERSHIP;
     const fm_bool            l2_ivlan1_reflect      = in->L2_IVLAN1_REFLECT;
@@ -752,6 +806,7 @@ void MaskGen
     // GLORT:
     mbyGlortRam glort_ram;
     fm_bool glort_cam_miss = FALSE;
+
 #ifdef USE_NEW_CSRS
     if (lookUpRamEntry(glort_map, idglort, &glort_ram) != FM_OK)
         glort_cam_miss = TRUE; // GLORT CAM miss
@@ -784,6 +839,17 @@ void MaskGen
 
     // --------------------------------------------------------------------------------
     // Learning:
+
+    /* Perform ingress forwarding ID lookup. */
+    mbyStpState l2_ifid1_state = MBY_STP_STATE_DISABLE;
+#ifdef USE_NEW_CSRS
+    ingress_mst_table_r * const ingress_mst_table = &(glort_map->INGRESS_MST_TABLE[l2_ivid1]);
+    l2_ifid1_state = getIfid1(rx_port, ingress_mst_table);
+#else
+    fm_uint64 ingress_mst_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_INGRESS_MST_TABLE(l2_ivid1, 0), &ingress_mst_table_reg);
+    l2_ifid1_state = FM_GET_UNNAMED_FIELD64(ingress_mst_table_reg, rx_port * 2, 2);
+#endif
 
     fm_bool l2_ifid1_learn   = ((l2_ifid1_state == MBY_STP_STATE_LEARNING) ||
                                 (l2_ifid1_state == MBY_STP_STATE_FORWARD));
@@ -1011,7 +1077,12 @@ void MaskGen
     }
     else if (!targeted_deterministic)
     {
-        pre_resolve_dmask &= l2_evlan1_membership; // VLAN egress filtering
+#ifdef USE_NEW_CSRS
+        mbyEgressVidTable evidTable = getEvidTableEntry(glort_map, l2_evid1);
+#else
+        mbyEgressVidTable evidTable = getEvidTableEntry(regs, l2_evid1);
+#endif
+        pre_resolve_dmask &= evidTable.MEMBERSHIP; // VLAN egress filtering
         if (pre_resolve_dmask == 0)
             amask |= MBY_AMASK_DROP_EV; // VLAN egress violation: dropping frame
     }
@@ -1098,6 +1169,17 @@ void MaskGen
 
     // --------------------------------------------------------------------------------
     // Egress STP state:
+
+    /* Perform egress forwarding ID lookup. */
+    fm_uint32 l2_efid1_state;
+#ifdef USE_NEW_CSRS
+    egress_mst_table_r * const egress_mst_table = &(glort_map->EGRESS_MST_TABLE[l2_evid1][0]);
+    l2_efid1_state = egress_mst_table->FORWARDING;
+#else
+    fm_uint64 egress_mst_table_reg = 0;
+    mbyModelReadCSR64(regs, MBY_EGRESS_MST_TABLE(l2_evid1, 0), &egress_mst_table_reg);
+    l2_efid1_state = FM_GET_FIELD64(egress_mst_table_reg, MBY_EGRESS_MST_TABLE, FORWARDING);
+#endif
 
     dmask = pre_resolve_dmask; // 24-bit destination mask
     if (((amask & MBY_AMASK_SPECIAL) == 0) && (dmask != 0)) {

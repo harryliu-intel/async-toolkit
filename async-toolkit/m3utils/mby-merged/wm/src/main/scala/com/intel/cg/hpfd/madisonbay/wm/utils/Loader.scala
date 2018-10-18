@@ -7,7 +7,7 @@ object Loader {
 
   def loadJson(filename: String): Try[Map[String, Any]] =
     for {
-      src <- Try(Source.fromResource(filename))
+      src <- Try(Source.fromFile(filename))
       result <- Json.parse(src.getLines().toList.mkString(""))
       _ <- Try(src.close())
     } yield result
