@@ -88,7 +88,7 @@ Examples of Build Manager commands for DUTs:
 ------------------------------------------------------------------------------------------------------------
 Models                    Commands                                 Description
 ------------------------------------------------------------------------------------------------------------
-MBY                    -  bman -mc fc                            # Madison Bay Configuration
+fc                     -  bman -mc fc                            # Madison Bay FC model
 mplex_np_nphy          -  bman -mc mplex_np_nphy                 # Management complex model with no Processor and no PHY.   
 igr                    -  bman -mc igr                           # Ingress testbench
 egr                    -  bman -mc egr                           # Egress testbench
