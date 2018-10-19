@@ -104,7 +104,7 @@ module mby_igr_tb ();
   // Instance Ingress env interface
   // This is done in the TB if the IP need to drive also signals.
   // ===============================================
-  ingress_env_if ingress_if();
+  mby_igr_env_if ingress_if();
   assign ingress_reset               = ingress_if.reset;
   assign ingress_if.clock            = ingress_clock;
 
