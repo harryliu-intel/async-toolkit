@@ -132,31 +132,6 @@ clean:
 	@echo '  Cleaning'
 	$(ECHO) rm -f $(DELFILES)
 
-# ============================ Model server ===============================
-
-DELFILES += model_server/*.o mby_server
-
-model_server/%.o: model_server/%.c
-	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
-
-MS_OBJECTS += model_server/mby_srv_main.o
-MS_OBJECTS += model_server/mby_srv_time.o
-MS_OBJECTS += model_server/mby_srv_socket.o
-MS_OBJECTS += model_server/mby_srv_utils.o
-MS_OBJECTS += model_server/mby_srv_message.o
-MS_OBJECTS += model_server/mby_srv_handlers.o
-MS_OBJECTS += model_server/mby_srv_nvmimg.o
-
-# Search libmbymodel.so in the same folder and remember it in the binary (-R)
-MS_FLAGS += -Wl,-R -Wl,. -L.
-
-mby_server: $(MS_OBJECTS) libmbymodel.so
-	@echo '  Linking mby_server'
-	$(ECHO) $(CC) -o model_server/mby_server $(DEFINES) $(INCLUDES) \
-	$^ -pthread -lpthread -ldl -lrt -rdynamic $(MS_FLAGS) -lmbymodel
-	@mv model_server/mby_server .
-
 
 # ========================== Unit testing ==================================
 
