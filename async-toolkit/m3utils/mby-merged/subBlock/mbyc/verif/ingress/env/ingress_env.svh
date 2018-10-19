@@ -112,9 +112,6 @@ class ingress_env extends ingress_base_env;
     build_vpt_bfms();
     build_eth_bfms();
 
-    //data_phase_mode = SLA_RANDOM_NONE;
-    //this.max_run_clocks = 2_000_000_000;
-
     // Env monitor
     assert($cast(env_monitor, create_component("ingress_env_monitor","env_monitor")));
     env_monitor.set_monitor_enable(cfg.get_monitors_enabled());
@@ -279,19 +276,19 @@ class ingress_env extends ingress_base_env;
   virtual task set_clk_rst();
     fork
       forever begin
-        @(ingress_if.primary_clock);
+        @(ingress_if.clock);
         #0;
-        if (ingress_if.primary_clock === 1'b1)
+        if (ingress_if.clock === 1'b1)
           ->sys_clk_r;
-        if (ingress_if.primary_clock === 1'b0)
+        if (ingress_if.clock === 1'b0)
           ->sys_clk_f;
       end
       forever begin
-        @(ingress_if.primary_reset);
+        @(ingress_if.reset);
         #0;
-        if (ingress_if.primary_reset === 1'b1)
+        if (ingress_if.reset === 1'b1)
           -> sys_rst_r;
-        if (ingress_if.primary_reset === 1'b0)
+        if (ingress_if.reset === 1'b0)
           -> sys_rst_f;
       end
     join_none

@@ -112,11 +112,11 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
            begin
              repeat (20) begin
                assert(los_frames[auto_i].randomize() with {
-                 bubble         inside {[0:13]};
+                 bubble         == 0;
                  kind           inside {BASIC_FRAME,
                                         IPV4_FRAME,
                                         IPV6_FRAME};
-                 payload.size() inside {[64:512]};
+                 payload.size() inside {[64:66]};
                  dmac            == 'h000102030405 + count[auto_i];
                  smac            == 'h060708090a0b + count[auto_i];
                  tc              == count[auto_i][3:0];

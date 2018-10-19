@@ -1,3 +1,4 @@
+//scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
 import com.intel.cg.hpfd.csr.generated.parser_ext_r
@@ -5,15 +6,15 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 
 
-class ExtractAction(val protoId: Option[Short], val keyOffset: Short, val flagNum: Option[Short], val flagVal: Boolean, val ptrNum: Int) {
+class ExtractAction(protocolId: Option[Short], keyOffset: Short, flagNum: Option[Short], flagVal: Boolean, ptrNum: Int) {
 
-  def apply(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
+  def extract(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
     val flags: PacketFlags =
       flagNum match {
         case None => input._2
         case Some(extractedFlagNum) => input._2.assign(extractedFlagNum, flagVal)
       }
-    val fields: ProtoOffsets = protoId match {
+    val fields: ProtoOffsets = protocolId match {
       case None => input._1
       case Some(x) => input._1.updated(ptrNum, (x.toInt, keyOffset.toInt))
     }
@@ -21,28 +22,32 @@ class ExtractAction(val protoId: Option[Short], val keyOffset: Short, val flagNu
   }
 
   override def toString: String = {
-    s"pid = $protoId, koff = $keyOffset, flagnum = $flagNum, flagval = $flagVal, ptrNum = $ptrNum"
+    s"pid = $protocolId, koff = $keyOffset, flagnum = $flagNum, flagval = $flagVal, ptrNum = $ptrNum"
   }
 
 }
 
 object ExtractAction {
 
+  // To avoid extracting a header pointer, set the protocol ID associated with the extraction to 0xFF
   val SpecialProtocolId = 0xff
 
-  def apply(csr: parser_ext_r): ExtractAction = {
+  // To avoid setting a parser flag, use the NOP flag number of 0 (implying that flag 0 is unusable)
+  val FlagNOP = 0L
+
+  def apply(csr: parser_ext_r.parser_ext_r): ExtractAction = {
     // 0 is special as a flag number, means do _no_ flag annotation do not update _0_
     val flagNum = csr.FLAG_NUM() match {
-      case 0L => None
+      case FlagNOP => None
       case x => Some(x.toShort)
     }
 
     // 0xff is  special proto-id, do no annotation to the fields in that case
-    val protoId = csr.PROTOCOL_ID() match {
+    val protocolId = csr.PROTOCOL_ID() match {
       case SpecialProtocolId => None
       case x => Some(x.toShort)
     }
-    new ExtractAction(protoId, csr.OFFSET.toShort, flagNum, csr.FLAG_VALUE() == 1L, csr.PTR_NUM.toShort)
+    new ExtractAction(protocolId, csr.OFFSET().toShort, flagNum, csr.FLAG_VALUE() == 1L, csr.PTR_NUM().toShort)
   }
 
 }

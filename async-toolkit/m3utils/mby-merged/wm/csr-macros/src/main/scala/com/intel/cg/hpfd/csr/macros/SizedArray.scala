@@ -79,6 +79,13 @@ class SizedArray[T: ClassTag, Size](len: Size) extends SizedArrayLike[T] {
     res
   }
 
+  /*TODO: defect - equals method defined on object with mutable state*/
+  override def equals(other: Any): Boolean =
+    other match {
+      case that: SizedArray[_,_] => that.array.deep == this.array.deep
+      case _ => false
+    }
+
   override def toString: String = "SizedArray[" + length + "](" + data.mkString(",") + ")"
 }
 object SizedArray {

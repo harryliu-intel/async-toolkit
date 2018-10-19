@@ -71,5 +71,8 @@ modport responder (
 
 );
 
+assign i_wr_req                 = o_wr_req;
+assign i_wr_dbus                = o_wr_dbus;
+assign i_crdt_rtns_for_wr_reqs  = o_crdt_rtns_for_wr_reqs;
 
 endinterface // mby_msh_row_wr_if

@@ -45,7 +45,7 @@ $ToolConfig_ips{mby} = {
       SUB_SCOPES          => ["eth_port",
                               "&get_tool_var(ipconfig/eth_port, SUB_SCOPES)",
       ],
-      TEST_PATTERNS       => ["verif/mby/formal/tests",],
+      TEST_PATTERNS       => ["verif/mby/formal/tests","tools/lint/tests",],
     },
     ENV => {
       SOC_DUT             => "&get_facet(dut)", # used in DutConnect.pl
@@ -65,6 +65,7 @@ $ToolConfig_ips{mby}{ENV}{LD_LIBRARY_PATH} .=  join(':',
 my $epl_version = "eth_port-dev-x0-18ww39c";
 
 $ToolConfig_ips{epc} = {
+   #PATH    => "/nfs/sc/disks/sc_mby_00055/layhockk/mby/work_root/MBY/$epl_version",
    PATH    => "$ENV{IP_MODELS}/eth_port/$epl_version",
    VERSION => "$epl_version",
    OTHER   => {

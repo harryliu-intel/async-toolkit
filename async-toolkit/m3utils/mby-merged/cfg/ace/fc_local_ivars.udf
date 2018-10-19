@@ -4,6 +4,10 @@ my $platform_os    = $ENV{SPECMAN_OS};
 my $platform_uc    = uc($platform_os);
 my $saola_platform = ( $platform_uc eq "LINUX" ? "Linux" : "Linux_x86_64" );
 
+# for Cadance PCIe BFMs
+my $DENALI =  &ToolConfig::ToolConfig_get_tool_path("denali");
+
+
 %audf = (
 
     HDLSpec => {
@@ -151,6 +155,13 @@ EOF
         -debussy_opts => { default => ["-ssy -ssv -ssz"] },
         -ignore_generated                   => { default => 1, },
 
+        -lintra_compile_opts => {
+            default => [
+                "-wf \"*.xml\"",
+                "-wf \"*.lwv\"",
+                "-wd $ENV{MODEL_ROOT}/tools/lint/lintra_waivers",],
+        },
+
         -sim_args     => {
             default => [
                 "-voptargs='+acc'",
@@ -278,7 +289,7 @@ EOF
         -elab_opts => {
             default => [
                 "-lca", "-kdb", "-debug_access+all",
-                "-sverilog",      "-override_timescale=1ps/1ps",
+                "-sverilog",      "-override_timescale=1ps/1fs",
                 "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
                 "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
                 "-liblist_work",  "-liblist_nocelldiff",
@@ -291,7 +302,7 @@ EOF
                 "-kdb",
                 "-Xkeyopt=uvm",
                 "+libext+.v+.sv",
-                "-timescale=1ps/1ps",
+                "-timescale=1ps/1fs",
                 "-sverilog",
                 "+define+OVM+UVM+XVM",
                 "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",

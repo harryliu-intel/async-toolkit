@@ -557,7 +557,7 @@ PROCEDURE SortFieldsIfAllSpecified(seq : RegFieldSeq.T) =
 
   (**********************************************************************)
 
-CONST StdFieldAttrs = "RdlField with HardwareReadable with HardwareWritable with HardwareResetable";
+CONST StdFieldAttrs = "RdlField with HardwareReadable with HardwareWritable";
 
 PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
@@ -579,31 +579,57 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package com.intel.cg.hpfd.csr.generated\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
-    gs.main("import com.intel.cg.hpfd.csr.RdlRegister\n");
-    gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
+    gs.main("import com.intel.cg.hpfd.csr.macros.annotations.reg\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("class %s(parent : RdlHierarchy) extends RdlRegister[%s.Underlying](parent) {\n", myTn, myTn);
+    gs.main("object %s {\n", myTn);
+    gs.main("@reg class %s {\n", myTn);
+    (*
+    gs.main("case class %s(addr: Address, state: Long) extends RdlRegister[%s] {\n", myTn, myTn);
+    gs.main("  val name: String = \"%s\"\n", myTn);
+    gs.main("\n");
+    gs.main("  def copy(addr: Address = this.addr, state: Long = this.state): %s = new %s(addr, state)\n", myTn, myTn);
+    gs.main("  def copy(newState: Long): %s = new %s(addr, newState)\n", myTn, myTn);
+    gs.main("\n");
+    gs.main("  def reset(): %s = copy(0xDEADBEEFl)\n", myTn);
+    gs.main("\n");
+    *)
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f  = r.fields.get(i),
-           nm = f.name(debug := TRUE),
-           dv = DefVal(f.defVal) DO
-        gs.main("  def %s = new %s {\n", nm, StdFieldAttrs);
-        gs.main("    val r = %s until %s\n", Int(f.lsb), Int(f.lsb+f.width));
-        gs.main("    val resetValue = 0x%sl\n", BigInt.Format(dv,base:=16));
+           nm = f.name(debug := FALSE),
+           (* nm = f.name(debug := TRUE), *)
+           dv = DefVal(f.defVal),
+           myEn = "Long" (* for now *) DO
+        (*
+        gs.main("  def %s = new RdlField[%s, %s](this) ", nm, myTn, myEn);
+        gs.main("with HardwareReadable[%s] with HardwareWritable[%s, %s] {\n", myEn, myTn, myEn);
+
+        gs.main("    val name = \"%s\"\n", f.name(debug := FALSE));
+        gs.main("    val range = %s until %s\n", Int(f.lsb), Int(f.lsb+f.width));
+        gs.main("    override val resetValue = 0x%sl\n", BigInt.Format(dv,base:=16));
+        gs.main("  }\n");
+        *)
+        gs.main("  field %s(%s until %s, hard = \"R+W\", soft = \"\") {\n", nm, Int(f.lsb), Int(f.lsb+f.width));
+        gs.main("    resetValue = 0x%sl\n", BigInt.Format(dv, base := 16));
         gs.main("  }\n");
       END
     END;
-    gs.main("  def fields = List("); PutFields(); gs.main(")\n");
-    gs.main("  def resetableFields : List[HardwareResetable] = List("); PutFields(); gs.main(")\n");
-    gs.main("  protected var underlyingState = 0xDEADBEEFl\n");
-    gs.main("\n");
+    (* gs.main("\n"); *)
 
     (* GenRegInit(r, gs); *)
+    gs.main("}\n");
     gs.main("}\n\n");
-    
-    PutRegObject(myTn, gs);
+
+    (* sth like put reg object *)
+    (*
+    gs.main("  object %s {\n", myTn);
+    gs.main("    def apply(address: Address): %s = {\n", myTn);
+    gs.main("      %s(AddressRange.placeReg(address, Alignment(8 bytes)).pos, 0xDEADBEEF)\n", myTn);
+    gs.main("    }\n");
+    gs.main("  }\n");
+    gs.main("}\n");
+    *)
+
+    (*PutRegObject(myTn, gs);*)
   END GenReg;
 
 PROCEDURE PutChildrenDef(children : RegChildSeq.T;
@@ -660,35 +686,31 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
-    gs.main("import com.intel.cg.hpfd.csr.DegenerateHierarchy\n");
-    gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
-    gs.main("import com.intel.cg.hpfd.csr.RdlRegisterFile\n");
-    gs.main("import scala.collection.immutable.SortedMap\n");
+    gs.main("import monocle.macros.Lenses\n");
+    gs.main("import com.intel.cg.hpfd.csr.macros.annotations._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlRegisterFile(parent) ", myTn);
-    IF rf.children.size() = 1 THEN
-      WITH c = rf.children.get(0),
-           tn = ComponentTypeName(c.comp,gs) DO
-           gs.main("with DegenerateHierarchy[IndexedSeq[%s]]", tn);
-      END
-    END;
-    gs.main("{\n");
+
+    gs.main("object %s {\n", myTn);
+
+    gs.main("  @Initialize\n");
+    gs.main("  @Lenses(\"_\")\n");
+    gs.main("  @GenOpticsLookup\n");
+    gs.main("  case class %s(\n", myTn);
+    gs.main("    range: AddressRange");
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
-        gs.main("  val %s = IndexedSeq.fill[%s](%s)(%s(this))\n",
-                IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn);
-        IF rf.children.size() = 1 THEN
-          gs.main("  def next : IndexedSeq[%s] = %s\n", tn, IdiomName(c.nm));
-        END
+        gs.main(",\n    @OfSize(%s) %s: List[%s.%s]", Int(ArrSz(c.array)), IdiomName(c.nm), tn, tn);
       END
     END;
+    gs.main("\n  )\n");
 
-    PutChildrenDef(rf.children, gs);
+    gs.main("}");
+
+    (*PutChildrenDef(rf.children, gs);*)
     (* PutAddrMapDef(rf.children, gs); *)
     (* GenRegfileInit(rf, gs); *)
-    gs.main("}\n");
-    PutObject(myTn, gs);
+    (*PutObject(myTn, gs);*)
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c = rf.children.get(i) DO
         <*ASSERT c.comp # NIL*>
@@ -706,33 +728,31 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package com.intel.cg.hpfd.csr.generated\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
-    gs.main("import com.intel.cg.hpfd.csr.DegenerateIndexedSeq\n");
-    gs.main("import com.intel.cg.hpfd.csr.RdlAddressMap\n");
-    gs.main("import com.intel.cg.hpfd.csr.RdlHierarchy\n");
-    gs.main("import com.intel.cg.hpfd.csr.RdlElement\n");
-    gs.main("import scala.collection.immutable.SortedMap\n");
-
+    gs.main("import monocle.macros.Lenses\n");
+    gs.main("import com.intel.cg.hpfd.csr.macros.annotations._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("class %s(parent : Option[RdlHierarchy]) extends RdlAddressMap(parent) {\n", myTn);
+    gs.main("object %s {\n", myTn);
+    gs.main("  @Lenses(\"_\")\n");
+    gs.main("  @GenOpticsLookup\n");
+    gs.main("  @Initialize\n");
+    gs.main("  case class %s(\n", myTn);
+    gs.main("    range: AddressRange");
     FOR i := 0 TO map.children.size()-1 DO
       WITH c  = map.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
         IF (c.array = NIL) THEN
-          gs.main("  val %s = DegenerateIndexedSeq[%s](%s(this))\n",
-                  IdiomName(c.nm), tn, tn)
+          gs.main(",\n    %s: %s.%s", IdiomName(c.nm), tn, tn)
         ELSE
-          gs.main("  val %s = IndexedSeq.fill[%s](%s)(%s(this))\n",
-                  IdiomName(c.nm), tn, Int(ArrSz(c.array)), tn)
+          gs.main(",\n    @OfSize(%s) %s: List[%s.%s]", Int(ArrSz(c.array)), IdiomName(c.nm), tn, tn)
         END
       END
     END;
-    PutChildrenDef(map.children, gs);
-    PutAddrMapDef(map.children, gs);
+    gs.main("\n  )\n");
     gs.main("}\n");
 
-    PutObject(myTn, gs);
+    (*PutChildrenDef(map.children, gs);*)
+    (*PutAddrMapDef(map.children, gs);*)
+    (*PutObject(myTn, gs);*)
     FOR i := 0 TO map.children.size()-1 DO
       WITH c = map.children.get(i) DO
         <*ASSERT c.comp # NIL*>
@@ -757,8 +777,8 @@ PROCEDURE PutObject(tn : TEXT; gs : GenState) =
   PROCEDURE PutRegObject(tn : TEXT; gs : GenState) =
     BEGIN
       gs.main("object %s {\n", tn);
-      gs.main("  def apply(parent : RdlHierarchy) : %s = {\n", tn);
-      gs.main("    new %s(parent)\n", tn);
+      gs.main("  def apply(address : Address) : %s = {\n", tn);
+      gs.main("    new %s(???, 0xDEADBEEFl)\n", tn);
       gs.main("  }\n");
       gs.main("  type Underlying = U64\n");
 

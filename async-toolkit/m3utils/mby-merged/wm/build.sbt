@@ -9,6 +9,7 @@ lazy val path = new File(sys.env("MODEL_ROOT") + "/target/GenRTL/wm/mbay_wm.jar"
 lazy val common = (project in file("common"))
   .settings(
     Settings.commonSettings,
+    name := Settings.commonName,
     libraryDependencies ++= Dependencies.commonDeps,
     scalacOptions -= "-Ywarn-unused:patvars"
   )
@@ -17,19 +18,21 @@ lazy val csrMacros = (project in file("csr-macros"))
   .dependsOn(common)
   .settings(
     Settings.commonSettings,
-    name := "csr-macros",
+    name := Settings.csrMacrosName,
     libraryDependencies ++= Dependencies.csrMacrosDeps,
-    addCompilerPlugin(Dependencies.scalaMacros),
+    addCompilerPlugin(Dependencies.scalaMacrosParadise),
     autoCompilerPlugins := true,
     scalacOptions -= "-Ywarn-unused:patvars"
   )
 
 lazy val csr = (project in file("csr"))
-  .enablePlugins(CsrGenerationPlugin, RdlGitHashPlugin)
+  .enablePlugins(CsrModula3Plugin, RdlGitHashPlugin)
   .dependsOn(csrMacros)
   .settings(
     Settings.commonSettings,
-    name := "csr-model",
+    name := Settings.csrName,
+    addCompilerPlugin(Dependencies.scalaMacrosParadise),
+    libraryDependencies ++= Dependencies.csrDeps,
     version := rdlGitHashShortProjectVersion.value,
     // some imports are unused among generated hierarchy
     scalacOptions -= "-Ywarn-unused:imports"
@@ -43,9 +46,16 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
     // TODO: to be removed
     scalastyleFailOnError := false,
     scalastyleFailOnWarning := false,
-    name := "wm-server-dto",
+    name := Settings.wmServerDtoName,
     // some imports are unused for generated classes
     scalacOptions -= "-Ywarn-unused:imports"
+  )
+
+lazy val tcp = (project in file("tcp"))
+  .dependsOn(common,csrMacros)
+  .settings(
+    Settings.commonSettings,
+    libraryDependencies ++= Dependencies.tcpDeps
   )
 
 lazy val root = (project in file("."))
@@ -53,25 +63,46 @@ lazy val root = (project in file("."))
   .enablePlugins(RdlGitHashPlugin)
   .settings(
     Settings.commonSettings,
-    name := "wm",
+    name := Settings.rootName,
     libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
     mainClass in Compile := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
     mainClass in assembly := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
-    assemblyOutputPath in assembly := path
+    assemblyOutputPath in assembly := path,
+    fork in run := true
   )
 
-val buildOnNhdk = taskKey[Unit]("Build task for nhdk environment.")
-buildOnNhdk := Def.sequential(
-  clean in csr,
-  clean in wmServerDto,
-  clean in root,
-  publishLocal in csr,
-  publishLocal in wmServerDto,
-  update in root,
-  compile in Compile in root,
-  doc in Compile in root,
-  assembly in root,
-  publish in root,
+val publishArtifacts = taskKey[Unit]("Publish artifacts only if current user is npgadmin.")
+publishArtifacts := Def.sequential(
+  Def.task {
+    val user = sys.env.get("USER")
+    require(
+      user.contains("npgadmin"),
+      "Publish check failed. Only npgadmin can publish artifacts!"
+    )
+  },
   publish in csr,
   publish in wmServerDto
 ).value
+
+lazy val testAll = "; all common/test csr/test root/test"
+lazy val cleanAll =
+  "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean"
+lazy val publishArtifactsLocally = "; csr/publishLocal; wmServerDto/publishLocal"
+lazy val cleanIvyIntelCache =
+  s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.csrName}"""" +
+  s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.wmServerDtoName}""""
+
+addCommandAlias("cleanAll", cleanAll)
+addCommandAlias("cleanIvyIntelCache", cleanIvyIntelCache)
+addCommandAlias("publishArtifactsLocally", publishArtifactsLocally)
+addCommandAlias("compileCurrent",
+  cleanAll + publishArtifactsLocally + cleanIvyIntelCache + "; root/Compile/compile")
+addCommandAlias("runCurrent",
+  cleanAll + publishArtifactsLocally + cleanIvyIntelCache + "; root/run")
+addCommandAlias("testAll",
+  cleanAll + publishArtifactsLocally + cleanIvyIntelCache + testAll)
+addCommandAlias("buildOnNhdk",
+  "; testAll" +
+    "; root/Compile/doc; root/assembly" +
+    "; publishArtifacts"
+)

@@ -230,20 +230,20 @@ regfile wcm_tcam_cfg_rf {
 
 
 
-// WCM_ACTION_CFG[0..63]
+// WCM_ACTION_CFG_EN[0..23]
 
-reg wcm_action_cfg_r {
+reg wcm_action_cfg_en_r {
   shared;
   HandCoded = true;
-  name = "Configures action RAM source.";
+  name = "Configures action RAM Enable bits source.";
   desc = "
   This register is indexed by scenario.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 128;
-  accesswidth = 128;
+  regwidth = 24;
+  accesswidth = 64;
   field {
     AccessType = "RW";
     desc = "
@@ -251,7 +251,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_19[99:99] = 1'h0;
+  } ENABLE_23[23:23] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -259,7 +259,8 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_18[98:98] = 1'h0;
+  } ENABLE_22[22:22] = 1'h0;
+
   field {
     AccessType = "RW";
     desc = "
@@ -267,7 +268,8 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_17[97:97] = 1'h0;
+  } ENABLE_21[21:21] = 1'h0;
+
   field {
     AccessType = "RW";
     desc = "
@@ -275,7 +277,8 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_16[96:96] = 1'h0;
+  } ENABLE_20[20:20] = 1'h0;
+
   field {
     AccessType = "RW";
     desc = "
@@ -283,7 +286,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_15[95:95] = 1'h0;
+  } ENABLE_19[19:19] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -291,7 +294,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_14[94:94] = 1'h0;
+  } ENABLE_18[18:18] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -299,7 +302,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_13[93:93] = 1'h0;
+  } ENABLE_17[17:17] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -307,7 +310,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_12[92:92] = 1'h0;
+  } ENABLE_16[16:16] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -315,7 +318,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_11[91:91] = 1'h0;
+  } ENABLE_15[15:15] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -323,7 +326,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_10[90:90] = 1'h0;
+  } ENABLE_14[14:14] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -331,7 +334,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_9[89:89] = 1'h0;
+  } ENABLE_13[13:13] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -339,7 +342,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_8[88:88] = 1'h0;
+  } ENABLE_12[12:12] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -347,7 +350,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_7[87:87] = 1'h0;
+  } ENABLE_11[11:11] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -355,7 +358,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_6[86:86] = 1'h0;
+  } ENABLE_10[10:10] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -363,7 +366,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_5[85:85] = 1'h0;
+  } ENABLE_9[9:9] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -371,7 +374,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_4[84:84] = 1'h0;
+  } ENABLE_8[8:8] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -379,7 +382,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_3[83:83] = 1'h0;
+  } ENABLE_7[7:7] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -387,7 +390,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_2[82:82] = 1'h0;
+  } ENABLE_6[6:6] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -395,7 +398,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_1[81:81] = 1'h0;
+  } ENABLE_5[5:5] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -403,7 +406,59 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } ENABLE_0[80:80] = 1'h0;
+  } ENABLE_4[4:4] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Enables the Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } ENABLE_3[3:3] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Enables the Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } ENABLE_2[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Enables the Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } ENABLE_1[1:1] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Enables the Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } ENABLE_0[0:0] = 1'h0;
+};
+
+
+
+
+// WCM_ACTION_CFG_IDX1[0..63]
+
+reg wcm_action_cfg_idx1_r {
+  shared;
+  HandCoded = true;
+  name = "Configures action RAM Enable bits source.";
+  desc = "
+  This register is indexed by scenario.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 60;
+  accesswidth = 64;
+
   field {
     AccessType = "RW";
     desc = "
@@ -411,7 +466,8 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_19[79:76] = 4'h0;
+  } INDEX_23[59:55] = 5'h0;
+
   field {
     AccessType = "RW";
     desc = "
@@ -419,7 +475,8 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_18[75:72] = 4'h0;
+  } INDEX_22[54:50] = 5'h0;
+
   field {
     AccessType = "RW";
     desc = "
@@ -427,7 +484,8 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_17[71:68] = 4'h0;
+  } INDEX_19[49:45] = 5'h0;
+
   field {
     AccessType = "RW";
     desc = "
@@ -435,7 +493,8 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_16[67:64] = 4'h0;
+  } INDEX_19[44:40] = 5'h0;
+
   field {
     AccessType = "RW";
     desc = "
@@ -443,7 +502,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_15[63:60] = 4'h0;
+  } INDEX_19[39:35] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -451,7 +510,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_14[59:56] = 4'h0;
+  } INDEX_18[34:30] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -459,7 +518,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_13[55:52] = 4'h0;
+  } INDEX_17[29:25] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -467,7 +526,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_12[51:48] = 4'h0;
+  } INDEX_16[24:20] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -475,7 +534,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_11[47:44] = 4'h0;
+  } INDEX_15[19:15] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -483,7 +542,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_10[43:40] = 4'h0;
+  } INDEX_14[14:10] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -491,7 +550,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_9[39:36] = 4'h0;
+  } INDEX_13[9:5] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -499,7 +558,26 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_8[35:32] = 4'h0;
+  } INDEX_12[4:0] = 5'h0;
+);
+
+
+
+// WCM_ACTION_CFG_IDX2[0..63]
+
+reg wcm_action_cfg_idx2_r {
+  shared;
+  HandCoded = true;
+  name = "Configures action RAM Enable bits source.";
+  desc = "
+  This register is indexed by scenario.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 60;
+  accesswidth = 64;
+
   field {
     AccessType = "RW";
     desc = "
@@ -507,7 +585,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_7[31:28] = 4'h0;
+  } INDEX_11[59:55] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -515,7 +593,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_6[27:24] = 4'h0;
+  } INDEX_10[54:50] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -523,7 +601,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_5[23:20] = 4'h0;
+  } INDEX_9[49:45] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -531,7 +609,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_4[19:16] = 4'h0;
+  } INDEX_8[44:40] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -539,7 +617,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_3[15:12] = 4'h0;
+  } INDEX_7[39:35] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -547,7 +625,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_2[11:8] = 4'h0;
+  } INDEX_6[34:30] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -555,7 +633,7 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_1[7:4] = 4'h0;
+  } INDEX_5[29:25] = 5'h0;
   field {
     AccessType = "RW";
     desc = "
@@ -563,7 +641,39 @@ reg wcm_action_cfg_r {
 
            ";
     ValRandomize = true;
-  } INDEX_0[3:0] = 4'h0;
+  } INDEX_4[24:20] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Select which TCAM slice controls Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } INDEX_3[19:15] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Select which TCAM slice controls Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } INDEX_2[14:10] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Select which TCAM slice controls Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } INDEX_1[9:5] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    Select which TCAM slice controls Nth action RAM bank.
+
+           ";
+    ValRandomize = true;
+  } INDEX_0[4:0] = 5'h0;
 };
 
 
