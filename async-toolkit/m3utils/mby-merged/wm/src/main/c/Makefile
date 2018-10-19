@@ -3,10 +3,9 @@
 # Copyright (C) 2018 Intel Corporation
 
 INC_DIR1 = .
-INC_DIR2 = ../../c                                  # uint.h
-INC_DIR3 = ../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+INC_DIR2 = ../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
 
-INCLUDES = -I$(INC_DIR1) -I$(INC_DIR2) -I$(INC_DIR3)
+INCLUDES = -I$(INC_DIR1) -I$(INC_DIR2)
 
 SOURCES += mby_crc32.c
 SOURCES += mby_bitfield.c
@@ -79,7 +78,7 @@ endif
 DELFILES  = $(OBJECTS) *.o *.so
 
 .PHONY: all
-all: $(OBJECTS) mby_server
+all: $(OBJECTS)
 
 mby_common.o     : mby_common.c                      mby_common.h mby_bitfield.h
 mby_bitfield.o   : mby_bitfield.c 	 mby_bitfield.h
