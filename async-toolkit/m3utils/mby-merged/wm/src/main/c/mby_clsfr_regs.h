@@ -12,7 +12,7 @@
 
 // Defines:
 
-#include <mby_top_map.h>
+#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 #define MBY_CGRP_A_IN_REGS     mby_ppe_cgrp_a_map  * const cgrp_a_map
 #define MBY_CGRP_A_IN_REGS_P                               cgrp_a_map
 #define MBY_CGRP_B_IN_REGS     mby_ppe_cgrp_b_map  * const cgrp_b_map

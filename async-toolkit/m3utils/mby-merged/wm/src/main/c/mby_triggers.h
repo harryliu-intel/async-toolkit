@@ -10,7 +10,7 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 
-#include <mby_top_map.h>
+#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 // Defines:
 #define MBY_TRG_IN_REGS    mby_ppe_trig_apply_map      * const trig_apply_map, \

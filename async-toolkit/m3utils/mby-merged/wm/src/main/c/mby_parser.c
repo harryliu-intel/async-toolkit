@@ -2,7 +2,7 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include <mby_top_map.h>
+#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 #include "mby_parser.h"
 

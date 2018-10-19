@@ -5,7 +5,7 @@
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
 
-#include <mby_top_map.h>
+#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 static mbyFwdPortCfg1 getPortCfg1
 (
