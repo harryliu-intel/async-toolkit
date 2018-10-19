@@ -5,6 +5,7 @@ import shapeless.{ CNil, Generic, HList, Lazy, :+: }
 import shapeless.ops.coproduct.Inject
 import scalaz.MonadError
 import scalaz.syntax.all._
+import scalaz.StateT
 
 package object iosf {
 
@@ -42,15 +43,21 @@ package object iosf {
   ): ByteArrayDecoder[A] = {
     val _ = List(inj,gen,badEv,bitSize)
     new ByteArrayDecoder[A] {
-      def decode[F[_]](array: Array[Byte])(implicit me: MonadError[F,Throwable]): F[A] = {
-        def decompressToBits: Array[Byte] =
-          for {
-            byte <- array.take(bitSize.getBytes)
-            idx <- (0 to 7)
-            bit = if ((byte & (1 << idx)) == 0) 0.toByte else 1.toByte
-          } yield bit
+      def decode[F[_]](implicit me: MonadError[F,Throwable]): StateT[F,Array[Byte],A] = {
+        def decompressToBits(array: Array[Byte]): Array[Byte] =
+            for {
+              byte <- array.take(bitSize.getBytes)
+              idx <- (0 to 7)
+              bit = if ((byte & (1 << idx)) == 0) 0.toByte else 1.toByte
+            } yield bit
 
-        badEv.value.decode[F](decompressToBits).map(gen.from)
+        StateT(array => {
+          badEv
+            .value
+            .decode[F]
+            .run(decompressToBits(array))
+            .map{ case (a,repr) => (a,gen.from(repr)) }
+        })
       }
     }
   }
