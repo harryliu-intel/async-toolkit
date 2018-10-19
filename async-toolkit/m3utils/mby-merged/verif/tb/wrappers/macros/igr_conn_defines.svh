@@ -10,7 +10,7 @@
 
 `define igr_conn(FC_ENV_PATH, DUT_PATH, IDX) \
     \
-    ingress_env_if ingress_if_``IDX``(); \
+    mby_igr_env_if ingress_if_``IDX``(); \
     mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_0_``IDX``(); \
     mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_0_``IDX``(); \
     mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_1_``IDX``(); \
