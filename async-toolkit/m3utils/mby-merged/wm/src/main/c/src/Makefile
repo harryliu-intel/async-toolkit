@@ -31,7 +31,6 @@ SOURCES += mby_pipeline.c
 SOURCES += mby_reg_ctrl.c
 SOURCES += mby_errors.c
 SOURCES += mby_init.c
-# SOURCES += mby_log_dump.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
