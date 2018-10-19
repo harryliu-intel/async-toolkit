@@ -60,8 +60,8 @@ class LpmTests : public testing::Test {
 
 TEST_F(LpmTests, KeyGenSingle) {
 
-    mbyLpmKeyMasks key_masks = {0};
-	key_masks.addr_key8_mask = 0x1 << KEY8_IDX;
+    mbyLpmKeyMasks key_masks  = {0};
+	key_masks.addr_key8_mask  = 0x1 << KEY8_IDX;
 	key_masks.addr_key16_mask = 0x1 << KEY16_IDX;
 	key_masks.addr_key32_mask = 0x1 << KEY32_IDX;
 

@@ -15,13 +15,12 @@ object ParserTcam {
                       key: RdlField[_, Long] with HardwareReadable[Long],
                       input: Long)
 
-  def tcamMatchRegSeq(behavior: TcamMatchingBehavior)(dataSequence: Seq[TcTriple]): Boolean = {
+  def tcamMatchRegSeq(behavior: TcamQuery => Boolean)(dataSequence: Seq[TcTriple]): Boolean = {
     assert(dataSequence.forall(t => t.keyInvert.range.size == t.key.range.size), "key and mask/inverted version should be the same width")
     dataSequence.forall(t => tcamMatchLong(behavior)(t.keyInvert.range.size)(t.keyInvert(), t.key(), t.input))
   }
 
-  def tcamMatchReg(behavior: TcamMatchingBehavior)(data: TcTriple): Boolean =
-    tcamMatchRegSeq(behavior)(Seq(data))
+  def tcamMatchReg(behavior: TcamQuery => Boolean)(data: TcTriple): Boolean = tcamMatchRegSeq(behavior)(Seq(data))
 
   /**
     * Parser Analyzer TCAMs have a special encoding

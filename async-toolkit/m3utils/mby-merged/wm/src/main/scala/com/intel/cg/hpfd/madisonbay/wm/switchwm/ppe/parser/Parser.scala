@@ -53,8 +53,6 @@ object Parser {
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
 
-    val (exceptionStage, depthExceeded, headerTruncated, parsingDone) = scanOutputExceptions(parserExceptionOpt)
-
     ParserOutput(
       updatedCsr                = csrExtractedKeys,
       rxPort                    = rxPort,
@@ -68,10 +66,7 @@ object Parser {
       paKeysValid               = false,
       paPointersValid           = false,
       paCsumOk                  = false,
-      paExceptionStage          = exceptionStage,
-      paExceptionDepthExceeded  = depthExceeded,
-      paExceptionTruncHeader    = headerTruncated,
-      paExParsingDone           = parsingDone,
+      paParseException          = parserExceptionOpt,
       paDrop                    = false,
       paPacketType              = paPacketTypeVal._1 // (what to do with the extract index)?
     )
@@ -98,22 +93,6 @@ object Parser {
     }
   }
 
-  private def scanOutputExceptions(parserException: Option[ParserException]): (Int, Boolean, Boolean, Boolean) = {
-    val exceptionStage = parserException match {
-      case Some(pexp) => pexp.stageEncountered
-      case _ =>
-        //assert(assertion = false, "No exception encountered in parse, likely buggy parser image")
-        0
-    }
-    val (depthExceeded, headerTruncated, parsingDone) = parserException match {
-      case Some(ParserDoneException(_))         => (false, false, true)
-      case Some(TruncatedHeaderException(_))    => (false, true,  false)
-      case Some(ParseDepthExceededException(_)) => (true,  false, false)
-      case _                                    => (false, false, false)
-    }
-    (exceptionStage, depthExceeded, headerTruncated, parsingDone)
-  }
-
   /**
     * Do the TCAM lookup, translate the result into actions
     */
@@ -130,11 +109,12 @@ object Parser {
             ParserTcam.TcTriple(kW.W0_MASK,    kW.W0_VALUE,    w0),
             ParserTcam.TcTriple(kW.W1_MASK,    kW.W1_VALUE,    w1),
             ParserTcam.TcTriple(kS.STATE_MASK, kS.STATE_VALUE, state)
-          )) => Some(new Action(
+          )) =>
+                Some(new Action(
                   AnalyzerAction(aW, aS),
                   List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
                   new ExceptionAction(ec.EX_OFFSET().toShort, ec.PARSING_DONE.apply() == 1)
-                  ))
+                ))
 
         case (_ :: kWs, _ :: kSs, _ :: aWs, _ :: aSs, _ :: exs, _ :: ecs) => findAction(kWs, kSs, aWs, aSs, exs, ecs)
 
@@ -185,7 +165,7 @@ object Parser {
     val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
     val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
-    val tc = tcamMatchReg(Tcam.standardTcamMatchBit)(_)
+    val tc = tcamMatchReg(Tcam.tcamMatchBit)(_)
     tcamCsr.zip(sramCsr).reverse.collectFirst{
       case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
     }.getOrElse((0,0))

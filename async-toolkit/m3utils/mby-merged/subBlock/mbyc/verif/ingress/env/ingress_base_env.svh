@@ -18,7 +18,7 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-class ingress_base_env extends slu_tb_env;
+class ingress_base_env extends shdv_base_env;
 
   protected ingress_config cfg;
 

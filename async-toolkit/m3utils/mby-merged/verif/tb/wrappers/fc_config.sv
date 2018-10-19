@@ -34,28 +34,44 @@ config fc_hdl_top_cfg;
     `endif
 
     `ifdef MPP_8
-        instance `soc.mby_mpp1 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp2 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp3 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp4 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp5 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp6 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp7 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp8 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_1 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_2 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_3 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_4 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_5 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_6 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_7 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_8 liblist mby_mpp_rtl_lib;
     `elsif MPP_2
-        instance `soc.mby_mpp1 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp2 liblist mby_mpp_rtl_lib;
-        //instance `soc.mby_mpp3 liblist soc_ip_stub_lib;
-        //instance `soc.mby_mpp4 liblist soc_ip_stub_lib;
-        //instance `soc.mby_mpp5 liblist soc_ip_stub_lib;
-        //instance `soc.mby_mpp6 liblist soc_ip_stub_lib; 
-        //instance `soc.mby_mpp7 liblist soc_ip_stub_lib;
-        //instance `soc.mby_mpp8 liblist soc_ip_stub_lib;
-    `else
-        instance `soc.mby_mpp1 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_1 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_2 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_3 liblist soc_ip_stub_lib;
+        instance `soc.mby_mpp_4 liblist soc_ip_stub_lib;
+        instance `soc.mby_mpp_5 liblist soc_ip_stub_lib;
+        instance `soc.mby_mpp_6 liblist soc_ip_stub_lib; 
+        instance `soc.mby_mpp_7 liblist soc_ip_stub_lib;
+        instance `soc.mby_mpp_8 liblist soc_ip_stub_lib;
     `endif
 
-    `ifdef EPC_2
+    `ifdef EPC_8
+        instance `soc.mby_ec_top_1 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_2 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_3 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_4 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_5 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_6 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_7 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_8 liblist mby_ec_top_lib;
+    `elsif EPC_2
+        instance `soc.mby_ec_top_1 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_2 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_3 liblist soc_ip_stub_lib;
+        instance `soc.mby_ec_top_4 liblist soc_ip_stub_lib;
+        instance `soc.mby_ec_top_5 liblist soc_ip_stub_lib;
+        instance `soc.mby_ec_top_6 liblist soc_ip_stub_lib; 
+        instance `soc.mby_ec_top_7 liblist soc_ip_stub_lib;
+        instance `soc.mby_ec_top_8 liblist soc_ip_stub_lib;
+
     `endif
 
     `ifdef MPP_WITH_SERDES

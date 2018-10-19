@@ -59,7 +59,7 @@ $IP_STUB_LIB = "soc_ip_stub_lib";
 $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_assemble_upf_lib" : "soc_collage_assemble_lib";
 
 # for Cadance PCIe BFMs
-my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+my $DENALI =  &ToolConfig::get_tool_path("denali");
 
 
 #################################################################
@@ -69,6 +69,10 @@ my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
 my %sip_list = (
     #'boot'       => ['amba','axi','apb','chi', 'igr'],
     'boot'       => ['igr'],
+    'imc'        => ['imc'],
+    'epc'        => ['epc'],
+    'mpp'        => ['mpp'],
+    'msh'        => ['msh'],
 
 );
 # >>>
@@ -81,8 +85,13 @@ my %sip_list = (
 # HIP related lib should be move to HIP_RTL_LIBS (NON-SYNTH related)
 # SIP rtl lib should contain only synthesizable code (SYNTH related )
 my %sip_rtl_libs = (
-    'boot'               => [
-                            ],
+    'boot'               => ['clkstub_rtl_lib'],
+    'imc'                => [],
+#    'epc'                => [],
+    'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
+#    'msh'                => ['mby_msh_rtl_lib',],
+    'msh'                => [],
+
 );
 
 sub get_sip_rtl_libs {
@@ -326,60 +335,30 @@ my @ALL_SIP_VERIF_VLOGOPTS = ();
 our @enabled_sip_list = ();
 
 # Populate the bootable RTL/verif libraries & vlogopts
+foreach $ip_key (keys %sip_list) {
+    populate_ip_rtl_attr("$ip_key");
+    populate_ip_syn_attr("$ip_key");
+    populate_ip_verif_attr("$ip_key");
+}
 
 foreach our $ace_ip_to_add (@ace_add_ips) {
 
     switch ($ace_ip_to_add) {
-
-        case ["boot"] {
-                        # if RTL stub is not specified, ensure all RTLs are compiled
-                        if (@ace_stub_ips[0] eq "no_stub" && $stub_mode eq "val") {
-                            foreach $ip_key (keys %sip_list) {
-                                populate_ip_rtl_attr("$ip_key");
-                            }
-                        } else {
-                            populate_ip_rtl_attr("boot");
-                        }
-                        populate_ip_verif_attr("boot");
+        case ["fc_64"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64",);
         }
-
-        case ["mp0"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+NO_SERDES",);
+        case ["fc_64_no_phy"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64_NO_PHY +define+NO_SERDES",);
         }
-        case ["mp1"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8",);
+        case ["fc_8"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8",);
         }
-        case ["mp2"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+NO_SERDES",);
-        }
-        case ["mp3"] {
-                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2",);
+        case ["fc_8_no_phy"] {
+                        push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_2 +define+EPC_2 +define+FC_8_NO_PHY +define+NO_SERDES",);
         }
   
-        # Integrates all IPs
-        # add new arrays here as well
-        case ["all" , "no_stub"] {
-                        foreach $ip_key (keys %sip_list) {
-                            populate_ip_rtl_attr("$ip_key");
-                            populate_ip_syn_attr("$ip_key");
-                            populate_ip_verif_attr("$ip_key");
-                        }
-        }
-        else {
-            if (exists($sip_list{$ace_ip_to_add})) {
-                populate_ip_rtl_attr("$ace_ip_to_add");
-                populate_ip_verif_attr("$ace_ip_to_add");
-            } else {
-                print "IP_TO_ADD: ERROR - ip_to_add $ace_ip_to_add not found in switch statement in fc_global_var.pm. Check your spelling or add the IP to the sip_list\n";
-            }
-        }
-
     } # switch
 
-    if ($stub_mode eq "rtl") {
-        # Add pch_stub_lib option whenever RTL stub is attempted
-        push (@ALL_SIP_RTL_LIBLIST, "$IP_STUB_LIB");
-    }
 } # foreach
 
 sub get_all_sip_rtl_libs {

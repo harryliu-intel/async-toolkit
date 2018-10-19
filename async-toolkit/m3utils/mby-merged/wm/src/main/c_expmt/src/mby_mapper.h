@@ -80,8 +80,8 @@
 #define MBY_MAP_DOMAIN_ACTION0_h_L2_DOMAIN                      37
 #define MBY_MAP_DOMAIN_ACTION0_l_L3_DOMAIN                      24
 #define MBY_MAP_DOMAIN_ACTION0_h_L3_DOMAIN                      29
-#define MBY_MAP_DOMAIN_ACTION0_l_OPERATOR_ID                    20
-#define MBY_MAP_DOMAIN_ACTION0_h_OPERATOR_ID                    23
+#define MBY_MAP_DOMAIN_ACTION0_l_NAD                            20
+#define MBY_MAP_DOMAIN_ACTION0_h_NAD                            23
 #define MBY_MAP_DOMAIN_ACTION0_b_UPDATE_DOMAINS                 19
 #define MBY_MAP_DOMAIN_ACTION0_b_LEARN_EN                       18
 #define MBY_MAP_DOMAIN_ACTION0_b_LEARN_MODE                     17
@@ -543,7 +543,7 @@ typedef struct mbyMapDomainAction0Struct
 {
     fm_byte L2_DOMAIN;         //  8b field
     fm_byte L3_DOMAIN;         //  6b
-    fm_byte OPERATOR_ID;       //  4b
+    fm_byte NAD;               //  4b
     fm_bool UPDATE_DOMAINS;    //  1b
     fm_bool LEARN_EN;          //  1b
     fm_bool LEARN_MODE;        //  1b
@@ -669,7 +669,7 @@ typedef struct mbyMapperToClassifierStruct
     fm_byte                 L3_IDOMAIN;       // L3 ingress domain
     fm_bool                 LEARN_MODE;       // learning mode: 0=SVL, 1=IVL
     fm_bool                 NO_PRI_ENC;       // mapper priority encoding
-    fm_bool                 OPERATOR_ID;      // operator ID
+    fm_bool                 NAD;              // NAD (former operator ID)
     fm_bool                 OTR_MPLS_V;       // parser outer MPLS packet valid
     fm_bool                 PARSER_ERROR;     // header parse error
     mbyParserInfo           PARSER_INFO;      // parser info structure

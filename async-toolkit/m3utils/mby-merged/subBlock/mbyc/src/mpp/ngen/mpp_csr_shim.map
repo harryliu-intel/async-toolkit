@@ -1,0 +1,53 @@
+// Placeholder
+
+sreset                             >> reset
+
+//  /* input  logic         */ .i_reqValid                 (i_reqValid),
+//  /* input  logic  [31:0] */ .i_reqAddr                  (reqAddr),
+//  /* input  logic         */ .i_reqWr                    (reqWr),                 // '0'= read
+//  /* input  logic  [63:0] */ .i_reqWrData                (reqWrData),
+//  /* input  logic   [7:0] */ .i_reqID                    (i_reqID),               // from iMC axi
+//  /* input  logic         */ .i_reqParity                (i_reqParity),           // odd parity bit to cover req
+//  /* input  logic         */ .i_respValid                (respValid),
+//  /* input  logic  [63:0] */ .i_respData                 (respData),
+//  /* input  logic   [7:0] */ .i_respID                   (respID),                // same as reqID
+//  /* input  logic         */ .i_respParity               (respParity),            // parity bit to cover neighbor resp
+//  /* output logic         */ .o_respValid                (respValid),
+//  /* output logic  [63:0] */ .o_respData                 (respData),
+//  /* output logic   [7:0] */ .o_respID                   (respID),
+//  /* output logic         */ .o_respParity               (respParity),
+//  /* input  logic         */ .i_fifoFilled               (fifoFilled),
+//  /* input  logic         */ .i_fifoEmpty                (fifoEmpty),
+//  /* output logic         */ .o_fifoFilled               (fifoFilled),
+//  /* output logic         */ .o_fifoEmpty                (fifoEmpty),
+
+       >> o_reqValid_rTable
+       >> o_reqValid_m0
+       >> o_reqValid_m1
+       >> o_reqAddr
+       >> o_reqWr
+       >> o_reqWrData
+
+ 1'b0  >> i_igrAck_m0
+64'b0  >> i_igrData_m0
+ 1'b0  >> i_egrAck_m0
+64'b0  >> i_egrData_m0
+ 1'b0  >> i_rxppeAck_m0
+64'b0  >> i_rxppeData_m0
+ 1'b0  >> i_txppe0Ack_m0
+64'b0  >> i_txppe0Data_m0
+ 1'b0  >> i_txppe1Ack_m0
+64'b0  >> i_txppe1Data_m0
+ 1'b0  >> i_igrAck_m1
+64'b0  >> i_igrData_m1
+ 1'b0  >> i_egrAck_m1
+64'b0  >> i_egrData_m1
+ 1'b0  >> i_rxppeAck_m1
+64'b0  >> i_rxppeData_m1
+ 1'b0  >> i_txppe0Ack_m1
+64'b0  >> i_txppe0Data_m1
+ 1'b0  >> i_txppe1Ack_m1
+64'b0  >> i_txppe1Data_m1
+ 1'b0  >> i_rTableAck
+64'b0  >> i_rTableData
+

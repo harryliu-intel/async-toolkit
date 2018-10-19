@@ -4154,6 +4154,16 @@ void mby_init_common_regs
         lpbk_sup->GLORT_MASK = 0x0;
         lpbk_sup->GLORT      = 0xFFFF;
     }
+
+    for (fm_uint i = 0; i < MBY_FFU_TCAM_CFG_ENTRIES_1; i++)
+        for (fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
+        {
+            wcm_tcam_r * wcm_tcam_entry    = &(rx_top_map->cgrp_b.WCM_TCAM[i][j]);
+            wcm_tcam_entry->KEY            = 0xffffffff;
+            wcm_tcam_entry->KEY_INVERT     = 0xffffffff;
+            wcm_tcam_entry->KEY_TOP        = 0xff;
+            wcm_tcam_entry->KEY_TOP_INVERT = 0xff;
+        }
 #else
     for (fm_uint group = 0; group < 2; group++) {
         for (fm_uint i = 0; i < 64; i++) {

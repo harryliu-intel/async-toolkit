@@ -21,11 +21,10 @@ class ParserJsonTester extends FlatSpec with Matchers {
   val testsFromC: Map[String, Any] = Loader.loadJson(s"$jsonPath/tests_from_c.json").get
 
   testsFromC.getList[Map[String,Any]]("tests").foreach { testCase =>
-    //val name = testCase.getString("dscr")
+    val name = testCase.getString("dscr")
     val packet = Packet.strHexToPacket(testCase.getString("in.data"))
     val parseResult = parseFromCConfig(packet)
-    println(parseResult.paKeys.fields)
-    println(parseResult.paFlags.get)
+    println(s"$name\n${parseResult.simplifiedString}")
   }
 
   testsFromScapy.getList[Map[String,Any]]("packets").foreach { testCase =>
@@ -52,7 +51,7 @@ class ParserJsonTester extends FlatSpec with Matchers {
 
   def parseFromCConfig(packet: Packet): ParserOutput = {
     val parserMap = ParserProgrammer(progFromC, csr)
-    Parser.parse(parserMap, packet, 1)
+    Parser.parse(parserMap, packet, 0)
   }
 
 }

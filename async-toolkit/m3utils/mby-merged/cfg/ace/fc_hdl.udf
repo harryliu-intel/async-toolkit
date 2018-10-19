@@ -48,6 +48,30 @@ my @FC_VLOG_OPTIONS = (
 # TODO   "+define+AXI_ENV_ENABLE",
 );
 
+
+# gerards - for Cadence PCIe
+my $DENALI =  &ToolConfig::ToolConfig_get_tool_path("denali");
+my @CDN_PCIE_VLOG_OPTS = (
+    "-full64 -sverilog -ucli -LDFLAGS -Wl,-E",
+    "+define+DENALI_SV_VCS -lca -ntb_opts svp",
+    "+define+DENALI_UVM",
+    "+vpi", # gerards: for Denali PCIe
+    "+define+VCS -ntb_opts uvm-1.2", # gerards: for Denali PCIe
+    "+incdir+${DENALI}/ddvapi/sv",   # gerards: for Denali PCIe
+    "+incdir+${DENALI}/ddvapi/sv/uvm/pcie", # gerards: for Denali PCIe
+);
+
+my @CDN_PCIE_ELAB_OPTS = (
+    "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
+    "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
+    "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
+    "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
+    "-P ${DENALI}/verilog/cdnsv.tab",
+    "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",
+    "${DENALI}/ddvapi/sv/denaliMemSvIf.c",
+    "${DENALI}/ddvapi/sv/denaliPcieSvIf.c",
+);
+
 for (my $i = 0; $i < @ARGV; $i++) {
     if ($ARGV[$i] eq "-mby_behave_mem") {
  	$behaveMem = 1;	
@@ -105,6 +129,15 @@ EOF
          # Define all the libraries which could be compiled
          libs => {
 
+             clkstub_rtl_lib => {
+                    -vlog_files => [
+                        "src/rtl/clkstub/mby_parclk.sv",
+                        "src/rtl/clkstub/pll_stub.sv",
+                        "src/rtl/clkstub/xtal_rcvr.sv",
+                        "src/rtl/clkstub/clk_mux_2to1_glitchfree.sv",
+                    ],
+             },
+
              $fc_global_vars::COLLAGE_LIB => {
                     -tag      => "nonsynth+nonemu",
                     -generated => 1,
@@ -131,6 +164,7 @@ EOF
              },
 
              fc_tests_lib => {
+                 -generated => 1,
                  -hdl_spec => [
                      "verif/gen/fc_test.hdl",
                  ],
@@ -153,6 +187,7 @@ EOF
              },
 
              fc_lite_tests_lib => {
+                 -generated => 1,
                  -hdl_spec => [
                      "verif/gen/fc_test.hdl",
                  ],
@@ -276,6 +311,9 @@ EOF
                  -generated => 1,
                  -hdl_spec => [
                      "cfg/ace/HDL/dummy.hdl",
+                     # these wrapper hdl's should be temp, until top level shells remove 2d arrays
+                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_ec_top_wrapper.hdl",
+                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_mpp_wrapper.hdl",
                      "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/soc.hdl",
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
@@ -300,7 +338,8 @@ EOF
                      @all_sip_verif_vlogopts,
                      @all_sip_rtl_vlogopts,
                      @top_vrf_vlogopts,
-                     "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh"
+                     "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh",
+                     @CDN_PCIE_VLOG_OPTS,
                  ],
                  -tag => "nonsynth",
              },
@@ -401,6 +440,7 @@ EOF
                    "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
                    "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
                     @all_sip_elab_opts,
+                    @CDN_PCIE_ELAB_OPTS, 
                ],
 
                top_language => 'SystemVerilog',
@@ -432,14 +472,7 @@ EOF
 #                  "gen_mby_wm_m3",
 #                  "mby_mgm_lib",
                   $fc_global_vars::COLLAGE_LIB,
-                  "mby_tx_ppe_rtl_lib",
-                  "mby_ppe_stm_rtl_lib",
-                  "mby_igr_rtl_lib",
-                  "mby_egr_rtl_lib",
-                  "mby_mgp_rtl_lib",
-                  "mby_rx_ppe_rtl_lib",
-                  "mby_mpp_rtl_lib",
-             
+
                   (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
                   $fc_global_vars::IP_STUB_LIB,
                   "fc_hdl_top_lib",
@@ -635,5 +668,8 @@ EOF
    },
 );
 
-$audf{HDLSpec}{mby}{models}{fc_lite} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_64} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_64_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 

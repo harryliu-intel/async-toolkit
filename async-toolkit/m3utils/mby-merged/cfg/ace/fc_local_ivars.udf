@@ -4,6 +4,10 @@ my $platform_os    = $ENV{SPECMAN_OS};
 my $platform_uc    = uc($platform_os);
 my $saola_platform = ( $platform_uc eq "LINUX" ? "Linux" : "Linux_x86_64" );
 
+# for Cadance PCIe BFMs
+my $DENALI =  &ToolConfig::ToolConfig_get_tool_path("denali");
+
+
 %audf = (
 
     HDLSpec => {
@@ -59,12 +63,12 @@ EOF
             },
         },
         # RTL and test island/validation environment stubbing command options
-        -en_ip => {
+        -variant => {
             type => "ARRAY",
             merging => "ASSIGN",
             default => "all",
             help => {
-                desc => "Enable a list of IPs to be enabled: usage -en_ip=boot,pcie",
+                desc => "select a variant mode for lite model building",
             },
         },
         -rtl_stub => {
@@ -216,7 +220,7 @@ EOF
         -elab_opts => {
             default => [
                 "-lca", "-kdb", "-debug_access+all",
-                "-sverilog",      "-override_timescale=1ps/1ps",
+                "-sverilog",      "-override_timescale=1ps/1fs",
                 "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
                 "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
                 "-liblist_work",  "-liblist_nocelldiff",
@@ -228,7 +232,7 @@ EOF
                 "-kdb",
                 "-Xkeyopt=uvm",
                 "+libext+.v+.sv",
-                "-timescale=1ps/1ps",
+                "-timescale=1ps/1fs",
                 "-sverilog",
                 "+define+OVM+UVM+XVM",
                 "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",

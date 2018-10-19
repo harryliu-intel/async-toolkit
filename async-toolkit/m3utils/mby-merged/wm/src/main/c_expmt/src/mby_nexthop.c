@@ -230,13 +230,13 @@ void lookUpL2
     *glort_forwarded = 0;
     *flood_forwarded = 0;
 
-
-    *glort_forwarded = 0;
-    *flood_forwarded = 0;
-
     if (*idglort && !flood_set)
         /* no change to dglort */
+#ifdef USE_NEW_CSRS
+        *glort_forwarded = 0;
+#else
         *glort_forwarded = 1;
+#endif
     else
     {
 #ifdef USE_NEW_CSRS

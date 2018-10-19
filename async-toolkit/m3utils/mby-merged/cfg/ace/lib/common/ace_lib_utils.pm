@@ -113,8 +113,8 @@ sub add_ip {
     {
       print "ACE arg = $ace_arg \n" if ($dbg);
       if (
-          ($ace_arg =~ /^-en_ip$b/)||($ace_arg =~ /^-en_ip$/)||($ace_arg =~ /^-en_ip$/)||($ace_arg =~ /^-en_ip$/) ||
-          ($ace_arg =~ /^-en_ip=/)||($ace_arg =~ /^-en_ip=/)||($ace_arg =~ /^-en_ip=$/)||($ace_arg =~ /^-en_ip=/)
+          ($ace_arg =~ /^-variant$b/)||($ace_arg =~ /^-variant$/)||($ace_arg =~ /^-variant$/)||($ace_arg =~ /^-variant$/) ||
+          ($ace_arg =~ /^-variant=/)||($ace_arg =~ /^-variant=/)||($ace_arg =~ /^-variant=$/)||($ace_arg =~ /^-variant=/)
          ) 
       {
     
@@ -136,7 +136,7 @@ sub add_ip {
         } 
         else 
         {
-            print ("Didn't find en_ip=xxxx,yyyy") if ($dbg);
+            print ("Didn't find variant=xxxx,yyyy") if ($dbg);
             return 1;
         }
       } 

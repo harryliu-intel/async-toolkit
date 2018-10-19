@@ -1,8 +1,12 @@
 SRC_DIR = ../../src
 TST_DIR = .
 
+INC_DIR = ../../../c                                   # uint.h
+INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
+INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
 
 SOURCES  = $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_crc32.c
@@ -123,7 +127,7 @@ $(TARGET): $(OBJECTS)
 run: $(TARGET)
 	@echo '  Running $(TARGET)'
 	@/usr/bin/time --format='Ran for %e seconds.' \
-            $(TARGET) | tee run.log
+            ./$(TARGET) | tee run.log
 
 .PHONY: valgrind
 valgrind: $(TARGET)

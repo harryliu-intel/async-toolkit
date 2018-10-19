@@ -1,0 +1,5 @@
+#   T 1 parclk_imc/imc_pll_en
+#   T 1 parclk_imc/syscon_pll_en
+   C mby_parclk/ref_clk xtal_rcvr/ref_clk
+
+ 
