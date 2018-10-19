@@ -3,9 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#endif
 
 #include <mby_common.h>
 #include <mby_pipeline.h>
@@ -16,13 +14,9 @@
 
 void initRegs
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map  * const cgrp_a_map,
     mby_ppe_cgrp_b_map  * const cgrp_b_map,
     mby_ppe_entropy_map * const entropy_map
-#else
-    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#endif
 )
 {
     // <initialize registers here>
@@ -34,17 +28,8 @@ void initRegs
     fm_uint32 word  = 0;
     fm_uint64 data  = 0xDeadBeefBaadC0deuLL;
 
-#ifdef USE_NEW_CSRS
     em_b_hash_cam_r * const em_b_hash_cam = &(cgrp_b_map->EM_B_HASH_CAM[entry][word]);
     em_b_hash_cam->DATA = data;
-#else
-    fm_byte const group = 1; // Exact Match "B"
-    fm_uint64 em_b_hash_cam_reg = data;
-    mbyModelWriteCSR64(regs, MBY_FFU_HASH_CAM(group, entry, word, 0), em_b_hash_cam_reg);
-    fm_uint64 em_b_hash_cam_tmp = 0;
-    mbyModelReadCSR64(regs, MBY_FFU_HASH_CAM(group, entry, word, 0), &em_b_hash_cam_tmp);
-    assert(em_b_hash_cam_tmp == em_b_hash_cam_reg);
-#endif
 }
 
 void initDefaultInputs
@@ -157,7 +142,6 @@ fm_status checkOutputs
     return test_status;
 }
 
-#ifdef USE_NEW_CSRS
 void allocMem
 (
     mby_ppe_cgrp_a_map  **cgrp_a_map,
@@ -205,28 +189,6 @@ void freeMem
     free(    shm_map);
 }
 
-#else
-
-void allocRegs
-(
-    fm_uint32 **regs
-)
-{
-    // Allocate storage for registers on the heap:
-    *regs = malloc(MBY_REGISTER_ARRAY_SIZE * sizeof(fm_uint32));
-    if (*regs == NULL) {
-        printf("Could not allocate heap memory for register buffer -- exiting!\n");
-        exit(-1);
-    }
-}
-void freeRegs
-(
-    fm_uint32 *regs
-)
-{
-    free(regs);
-}
-#endif
 
 void updateTestStats
 (
@@ -275,14 +237,10 @@ fm_bool reportTestStats
 
 fm_status testWildCardMatch
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map    * const cgrp_a_map,
     mby_ppe_cgrp_b_map    * const cgrp_b_map,
     mby_ppe_entropy_map   * const entropy_map,
     mby_shm_map           * const shm_map,
-#else
-    fm_uint32                     regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mbyMapperToClassifier * const in,
     mbyClassifierToHash   * const out
 )
@@ -304,14 +262,10 @@ fm_status testWildCardMatch
 
     Classifier
     (
-#ifdef USE_NEW_CSRS
         cgrp_a_map,
         cgrp_b_map,
         entropy_map,
         shm_map,
-#else
-        regs,
-#endif
         in,
         out
     );
@@ -325,18 +279,12 @@ fm_status testWildCardMatch
 
 int main (void)
 {
-#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map   *cgrp_a_map = NULL;
     mby_ppe_cgrp_b_map   *cgrp_b_map = NULL;
     mby_ppe_entropy_map *entropy_map = NULL;
     mby_shm_map             *shm_map = NULL;
 
     allocMem(&cgrp_a_map, &cgrp_b_map, &entropy_map, &shm_map);
-#else
-    fm_uint32 *regs = NULL;
-
-    allocRegs(&regs);
-#endif
 
     mbyMapperToClassifier map2cla = { 0 };
     mbyClassifierToHash   cla2hsh = { 0 };
@@ -350,31 +298,19 @@ int main (void)
     // --------------------------------------------------------------------------------
     // Wild Card Match (WCM) Test
     // --------------------------------------------------------------------------------
-#ifdef USE_NEW_CSRS
     test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
-#else
-    test_status = testWildCardMatch(regs,                                         &map2cla, &cla2hsh);
-#endif
     updateTestStats("Wild Card Match (WCM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
     // Exact Match (EM) Test
     // --------------------------------------------------------------------------------
-#ifdef USE_NEW_CSRS
     test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
-#else
-    test_status = testWildCardMatch(regs,                                         &map2cla, &cla2hsh);
-#endif
     updateTestStats("Exact Match (EM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
     // Longest Prefix Match (LPM) Test
     // --------------------------------------------------------------------------------
-#ifdef USE_NEW_CSRS
     test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
-#else
-    test_status = testWildCardMatch(regs,                                         &map2cla, &cla2hsh);
-#endif
     updateTestStats("Longest Prefix Match (LPM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
@@ -382,11 +318,7 @@ int main (void)
     fm_bool tests_passed = reportTestStats(num_tests, num_passed);
 
     // Free up memory:
-#ifdef USE_NEW_CSRS
     freeMem(cgrp_a_map, cgrp_b_map, entropy_map, shm_map);
-#else
-    freeRegs(regs);
-#endif
 
     int rv = (tests_passed) ? 0 : -1;
 

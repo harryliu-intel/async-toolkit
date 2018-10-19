@@ -5,9 +5,7 @@
 #include <mby_pipeline.h>
 #include <mby_reg_ctrl.h>
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#endif
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -31,7 +29,6 @@ void test_fail(const char * name)
     tests++;
 }
 
-#ifdef USE_NEW_CSRS
 static void maskgen_default_reg_setup
 (
     mby_ppe_fwd_misc_map  * const fwd_misc,
@@ -46,17 +43,12 @@ static void maskgen_default_reg_setup
         glort_cam->KEY        = 0xFFFF;
     }
 }
-#endif
 
 static void maskgen_test_setup
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_fwd_misc_map     * const fwd_misc,
     mby_ppe_mst_glort_map    * const glort_map,
     mby_ppe_cm_apply_map     * const cm_apply,
-#else
-    fm_uint32                        regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mbyNextHopToMaskGen      * const nexthopToMaskgen,
     mby_maskgen_test_data_in * const test_in
 )
@@ -80,47 +72,23 @@ static void maskgen_test_setup
     nexthopToMaskgen->CSGLORT              = test_in->csglort;
 
     /* Set FWD_PORT_CFG_1 register. */
-#ifdef USE_NEW_CSRS
     fwd_port_cfg_1_r * const port_cfg_1 = &(fwd_misc->FWD_PORT_CFG_1[test_in->rx_port]);
 
     port_cfg_1->LEARNING_ENABLE     = test_in->port_cfg_1.learning_enable;
     port_cfg_1->FILTER_VLAN_INGRESS = test_in->port_cfg_1.filter_vlan_ingress;
     port_cfg_1->DESTINATION_MASK    = test_in->port_cfg_1.destination_mask;
-#else
-    fm_uint64 fwd_port_cfg1_reg = 0;
-
-    FM_SET_BIT64  (fwd_port_cfg1_reg, MBY_FWD_PORT_CFG_1, LEARNING_ENABLE, test_in->port_cfg_1.learning_enable);
-    FM_SET_BIT64  (fwd_port_cfg1_reg, MBY_FWD_PORT_CFG_1, FILTER_VLAN_INGRESS, test_in->port_cfg_1.filter_vlan_ingress);
-    FM_SET_FIELD64(fwd_port_cfg1_reg, MBY_FWD_PORT_CFG_1, DESTINATION_MASK, test_in->port_cfg_1.destination_mask);
-    mbyModelWriteCSR64(regs, MBY_FWD_PORT_CFG_1(test_in->rx_port, 0), fwd_port_cfg1_reg);
-#endif
 
     /* Set FWD_PORT_CFG_2 register. */
-#ifdef USE_NEW_CSRS
     fwd_port_cfg_2_r * const port_cfg_2 = &(fwd_misc->FWD_PORT_CFG_2[test_in->l2_edomain_in]);
 
     port_cfg_2->DESTINATION_MASK = test_in->port_cfg_2.destination_mask;
-#else
-    fm_uint64 fwd_port_cfg2_reg = 0;
-
-    FM_SET_FIELD64(fwd_port_cfg2_reg, MBY_FWD_PORT_CFG_2, DESTINATION_MASK, test_in->port_cfg_2.destination_mask);
-    mbyModelWriteCSR64(regs, MBY_FWD_PORT_CFG_2(test_in->l2_edomain_in, 0), fwd_port_cfg2_reg);
-#endif
 
     /* Set EGRESS_VID_TABLE register. */
-#ifdef USE_NEW_CSRS
     egress_vid_table_r * const vid_table = &(glort_map->EGRESS_VID_TABLE[test_in->l2_evid1][0]);
 
     vid_table->MEMBERSHIP = test_in->evid_table.membership;
-#else
-    fm_uint64 evid_table_reg = 0;
-
-    FM_SET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, MEMBERSHIP, test_in->evid_table.membership);
-    mbyModelWriteCSR64(regs, MBY_EGRESS_VID_TABLE(test_in->l2_evid1, 0), evid_table_reg);
-#endif
 
     /* Set FWD_SYS_CFG_1 register. */
-#ifdef USE_NEW_CSRS
     fwd_sys_cfg_1_r * const sys_cfg_1 = &(fwd_misc->FWD_SYS_CFG_1);
 
     sys_cfg_1->STORE_TRAP_ACTION       = test_in->sys_cfg_1.store_trap_action;
@@ -128,71 +96,33 @@ static void maskgen_test_setup
     sys_cfg_1->DROP_INVALID_SMAC       = test_in->sys_cfg_1.drop_invalid_smac;
     sys_cfg_1->ENABLE_TRAP_PLUS_LOG    = test_in->sys_cfg_1.enable_trap_plus_log;
     sys_cfg_1->TRAP_MTU_VIOLATIONS     = test_in->sys_cfg_1.trap_mtu_violations;
-#else
-    fm_uint64 fwd_sys_cfg1_reg = 0;
-    mbyModelReadCSR64(regs, MBY_FWD_SYS_CFG_1(0), &fwd_sys_cfg1_reg);
-
-    FM_SET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, STORE_TRAP_ACTION, test_in->sys_cfg_1.store_trap_action);
-    FM_SET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, DROP_MAC_CTRL_ETHERTYPE, test_in->sys_cfg_1.drop_mac_ctrl_ethertype);
-    FM_SET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, DROP_INVALID_SMAC, test_in->sys_cfg_1.drop_invalid_smac);
-    FM_SET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, ENABLE_TRAP_PLUS_LOG, test_in->sys_cfg_1.enable_trap_plus_log);
-    FM_SET_BIT64(fwd_sys_cfg1_reg, MBY_FWD_SYS_CFG_1, TRAP_MTU_VIOLATIONS, test_in->sys_cfg_1.trap_mtu_violations);
-#endif
 
     /* Set FWD_CPU_MAC register. */
-#ifdef USE_NEW_CSRS
     fwd_cpu_mac_r * const cpu_mac = &(fwd_misc->FWD_CPU_MAC);
 
     cpu_mac->MAC_ADDR = test_in->fwd_cpu_mac.cpu_mac_addr;
-#else
-    fm_uint64 fwd_cpu_mac_reg = 0;
-
-    FM_SET_FIELD64(fwd_cpu_mac_reg, MBY_FWD_CPU_MAC, MAC_ADDR, test_in->fwd_cpu_mac.cpu_mac_addr);
-    mbyModelWriteCSR64(regs, MBY_FWD_CPU_MAC(0), fwd_cpu_mac_reg);
-#endif
 
     /* Set FWD_LAG_CFG register. */
     for (fm_uint i = 0; i < MBY_FABRIC_LOG_PORTS; i++)
     {
-#ifdef USE_NEW_CSRS
         fwd_lag_cfg_r * const lag_cfg = &(fwd_misc->FWD_LAG_CFG[i]);
 
         lag_cfg->IN_LAG        = test_in->fwd_lag_cfg.in_lag;
         lag_cfg->HASH_ROTATION = test_in->fwd_lag_cfg.hash_rotation;
         lag_cfg->INDEX         = test_in->fwd_lag_cfg.index;
         lag_cfg->LAG_SIZE      = test_in->fwd_lag_cfg.lag_size;
-#else
-        fm_uint64 fwd_lag_cfg_reg = 0;
-
-        FM_SET_BIT64  (fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, IN_LAG, test_in->fwd_lag_cfg.in_lag);
-        FM_SET_BIT64  (fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, HASH_ROTATION, test_in->fwd_lag_cfg.hash_rotation);
-        FM_SET_FIELD64(fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, INDEX, test_in->fwd_lag_cfg.index);
-        FM_SET_FIELD64(fwd_lag_cfg_reg, MBY_FWD_LAG_CFG, LAG_SIZE, test_in->fwd_lag_cfg.lag_size);
-
-        mbyModelWriteCSR64(regs, MBY_FWD_LAG_CFG(i, 0), fwd_lag_cfg_reg);
-#endif
     }
 
     /* Set CM_APPLY_LOOPBACK_SUPPRESS register. */
     for (fm_uint i = 0; i < MBY_FABRIC_LOG_PORTS; i++)
     {
-#ifdef USE_NEW_CSRS
         cm_apply_loopback_suppress_r * const lpbk_sup = &(cm_apply->CM_APPLY_LOOPBACK_SUPPRESS[i]);
 
         lpbk_sup->GLORT_MASK = test_in->lpbk_suppress.glort_mask;
         lpbk_sup->GLORT      = test_in->lpbk_suppress.glort;
-#else
-        fm_uint64 cm_lpbk_suppress_reg = 0;
-
-        FM_SET_FIELD64(cm_lpbk_suppress_reg, MBY_CM_APPLY_LOOPBACK_SUPPRESS, GLORT_MASK, test_in->lpbk_suppress.glort_mask);
-        FM_SET_FIELD64(cm_lpbk_suppress_reg, MBY_CM_APPLY_LOOPBACK_SUPPRESS, GLORT, test_in->lpbk_suppress.glort);
-
-        mbyModelWriteCSR64(regs, MBY_CM_APPLY_LOOPBACK_SUPPRESS(i, 0), cm_lpbk_suppress_reg);
-#endif
     }
     /* Set GLORT_CAM/GLORT_RAM registers. */
     int index = 1;
-#ifdef USE_NEW_CSRS
     glort_cam_r * const glort_cam = &(glort_map->GLORT_CAM[index]);
     glort_cam->KEY_INVERT               = test_in->glort_cam_ram.key_invert;
     glort_cam->KEY                      = test_in->glort_cam_ram.key;
@@ -205,22 +135,6 @@ static void maskgen_test_setup
     glort_ram->RANGE_SUB_INDEX_B        = test_in->glort_cam_ram.range_sub_index_b;
     glort_ram->DEST_INDEX               = test_in->glort_cam_ram.dest_index;
     glort_ram->STRICT                   = test_in->glort_cam_ram.strict;
-#else
-    fm_uint64 glort_cam_reg = 0;
-    FM_SET_FIELD64(glort_cam_reg, MBY_GLORT_CAM, KEY_INVERT, test_in->glort_cam_ram.key_invert);
-    FM_SET_FIELD64(glort_cam_reg, MBY_GLORT_CAM, KEY, test_in->glort_cam_ram.key);
-    mbyModelWriteCSR64(regs, MBY_GLORT_CAM(index, 0), glort_cam_reg);
-
-    fm_uint64 glort_ram_reg = 0;
-    FM_SET_BIT64  (glort_ram_reg, MBY_GLORT_RAM, SKIP_DGLORT_DEC, test_in->glort_cam_ram.skip_dglort_dec);
-    FM_SET_BIT64  (glort_ram_reg, MBY_GLORT_RAM, HASH_ROTATION, test_in->glort_cam_ram.hash_rotation);
-    FM_SET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, DEST_COUNT, test_in->glort_cam_ram.dest_count);
-    FM_SET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, RANGE_SUB_INDEX_A, test_in->glort_cam_ram.range_sub_index_a);
-    FM_SET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, RANGE_SUB_INDEX_B, test_in->glort_cam_ram.range_sub_index_b);
-    FM_SET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, DEST_INDEX, test_in->glort_cam_ram.dest_index);
-    FM_SET_FIELD64(glort_ram_reg, MBY_GLORT_RAM, STRICT, test_in->glort_cam_ram.strict);
-    mbyModelWriteCSR64(regs, MBY_GLORT_RAM(index, 0), glort_ram_reg);
-#endif
 
     /* Set GLORT_DIRECT_MAP registers. */
     /* Calculate dest_index. */
@@ -244,7 +158,6 @@ static void maskgen_test_setup
         dest_index = test_in->glort_cam_ram.dest_index + (hash << length_a) + glort_a;
     }
 
-#ifdef USE_NEW_CSRS
     /* Temporary use only two proxy registers
      * - GLORT_DIRECT_MAP_DST0 - for DEST_MASK
      * - GLORT_DIRECT_MAP_DST4 - for IP_MULTICAST_INDEX
@@ -255,15 +168,8 @@ static void maskgen_test_setup
 
     map_dst4->IP_MULTICAST_INDEX = test_in->glort_map.ip_multicast_index;
     map_dst0->DEST_MASK          = test_in->glort_map.dest_mask;
-#else
-    fm_uint64 glort_dest_table_reg = 0;
-    FM_SET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, IP_MULTICAST_INDEX, test_in->glort_map.ip_multicast_index);
-    FM_SET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, DEST_MASK, test_in->glort_map.dest_mask);
-    mbyModelWriteCSR64(regs, MBY_GLORT_DEST_TABLE(dest_index, 0), glort_dest_table_reg);
-#endif
 
     /* Set INGRESS_MST_TABLE register. */
-#ifdef USE_NEW_CSRS
     ingress_mst_table_r * const ingress_mst_table = &(glort_map->INGRESS_MST_TABLE[test_in->l2_ivid1]);
 
     ingress_mst_table->STP_STATE_0 = test_in->ingress_mst_table.stp_state_0;
@@ -284,41 +190,11 @@ static void maskgen_test_setup
     ingress_mst_table->STP_STATE_15 = test_in->ingress_mst_table.stp_state_15;
     ingress_mst_table->STP_STATE_16 = test_in->ingress_mst_table.stp_state_16;
     ingress_mst_table->STP_STATE_17 = test_in->ingress_mst_table.stp_state_17;
-#else
-    fm_uint64 ingress_mst_table_reg = 0;
-
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 0, 2, test_in->ingress_mst_table.stp_state_0);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 2, 2, test_in->ingress_mst_table.stp_state_1);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 4, 2, test_in->ingress_mst_table.stp_state_2);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 6, 2, test_in->ingress_mst_table.stp_state_3);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 8, 2, test_in->ingress_mst_table.stp_state_4);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 10, 2, test_in->ingress_mst_table.stp_state_5);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 12, 2, test_in->ingress_mst_table.stp_state_6);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 14, 2, test_in->ingress_mst_table.stp_state_7);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 16, 2, test_in->ingress_mst_table.stp_state_8);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 18, 2, test_in->ingress_mst_table.stp_state_9);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 20, 2, test_in->ingress_mst_table.stp_state_10);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 20, 2, test_in->ingress_mst_table.stp_state_11);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 24, 2, test_in->ingress_mst_table.stp_state_12);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 26, 2, test_in->ingress_mst_table.stp_state_13);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 28, 2, test_in->ingress_mst_table.stp_state_14);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 30, 2, test_in->ingress_mst_table.stp_state_15);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 32, 2, test_in->ingress_mst_table.stp_state_16);
-    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 34, 2, test_in->ingress_mst_table.stp_state_17);
-    mbyModelWriteCSR64(regs, MBY_INGRESS_MST_TABLE(test_in->l2_ivid1, 0), ingress_mst_table_reg);
-#endif
 
     /* Set EGRESS_MST_TABLE register. */
-#ifdef USE_NEW_CSRS
     egress_mst_table_r * const egress_mst_table = &(glort_map->EGRESS_MST_TABLE[test_in->l2_evid1][0]);
 
     egress_mst_table->FORWARDING = test_in->egress_mst_table.forwarding;
-#else
-    fm_uint64 egress_mst_table_reg = 0;
-
-    FM_SET_FIELD64(egress_mst_table_reg, MBY_EGRESS_MST_TABLE, FORWARDING, test_in->egress_mst_table.forwarding);
-    mbyModelWriteCSR64(regs, MBY_EGRESS_MST_TABLE(test_in->l2_evid1, 0), egress_mst_table_reg);
-#endif
 }
 
 static fm_bool maskgen_test_verify
@@ -365,35 +241,19 @@ static fm_bool maskgen_test_verify
 
 static void maskgen_run_test(maskgen_test_data * const test_data)
 {
-#ifdef USE_NEW_CSRS
     mby_ppe_fwd_misc_map  fwd_misc;
     mby_ppe_mst_glort_map glort_map;
     mby_ppe_cm_apply_map  cm_apply;
-#else
-    fm_uint32 *           regs;
-#endif
 
     mbyNextHopToMaskGen  nexthopToMaskgen = { 0 };
     mbyMaskGenToTriggers out              = { 0 };
 
-#ifdef USE_NEW_CSRS
     maskgen_default_reg_setup(&fwd_misc, &glort_map, &cm_apply);
 
     maskgen_test_setup(&fwd_misc, &glort_map, &cm_apply, &nexthopToMaskgen, &(test_data->in));
 
     MaskGen(&fwd_misc, &glort_map, &cm_apply, &nexthopToMaskgen, &out);
 
-#else
-    regs = calloc(MBY_REGISTER_ARRAY_SIZE, sizeof(fm_uint32));
-
-    mbyModelLoadDefaults(regs);
-
-    maskgen_test_setup(regs, &nexthopToMaskgen, &(test_data->in));
-
-    MaskGen(regs, &nexthopToMaskgen, &out);
-
-    free(regs);
-#endif
 
     fm_bool pass = maskgen_test_verify(&out, &(test_data->out));
 

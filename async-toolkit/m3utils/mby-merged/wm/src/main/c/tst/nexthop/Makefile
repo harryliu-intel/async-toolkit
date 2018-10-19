@@ -1,7 +1,7 @@
 INC_DIR = ../../../c                                  # uint.h
 INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
 
-SRC_DIR = ../../src
+SRC_DIR = ../..
 TST_DIR = .
 
 INCLUDES  = -I$(SRC_DIR)

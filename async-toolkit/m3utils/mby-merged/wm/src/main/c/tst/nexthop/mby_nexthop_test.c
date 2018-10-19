@@ -5,9 +5,7 @@
 #include <mby_classifier.h>
 #include <mby_pipeline.h>
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#endif
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -33,11 +31,7 @@ void test_fail(const char * name)
 
 static void nexthop_test_setup
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map * const nexthop_map,
-#else
-    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mbyHashToNextHop    * const hashToNextHop,
     mby_nh_test_data_in * const test_data_in
 )
@@ -63,7 +57,6 @@ static void nexthop_test_setup
         fm_uint16 arp_tbl_idx  = (test_data_in->arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
 
         /* Set registers. */
-#ifdef USE_NEW_CSRS
         nexthop_neighbors_table_0_r * const nh_table_0 = &(nexthop_map->NH_NEIGHBORS_0[arp_tbl_idx]);
         nexthop_neighbors_table_1_r * const nh_table_1 = &(nexthop_map->NH_NEIGHBORS_1[arp_tbl_idx]);
 
@@ -86,41 +79,12 @@ static void nexthop_test_setup
             nh_table_1->MARK_ROUTED = test_data_in->mark_routed;
             nh_table_0->DGLORT      = test_data_in->dglort;
         }
-#else
-        fm_uint32 arp_table_regs[MBY_ARP_TABLE_WIDTH] = { 0 };
-
-        FM_ARRAY_SET_BIT    (arp_table_regs, MBY_ARP_TABLE, ENTRY_TYPE, test_data_in->entry_type);
-        FM_ARRAY_SET_BIT    (arp_table_regs, MBY_ARP_TABLE, IPV6_ENTRY, test_data_in->ipv6_entry);
-        FM_ARRAY_SET_FIELD64(arp_table_regs, MBY_ARP_TABLE, EVID, test_data_in->evid);
-        FM_ARRAY_SET_FIELD64(arp_table_regs, MBY_ARP_TABLE, MTU_INDEX, test_data_in->mtu_index);
-        FM_ARRAY_SET_FIELD64(arp_table_regs, MBY_ARP_TABLE, MOD_IDX, test_data_in->mod_idx);
-        FM_ARRAY_SET_FIELD64(arp_table_regs, MBY_ARP_TABLE, L3_DOMAIN, test_data_in->l3_domain);
-        FM_ARRAY_SET_FIELD64(arp_table_regs, MBY_ARP_TABLE, L2_DOMAIN, test_data_in->l2_domain);
-        FM_ARRAY_SET_BIT    (arp_table_regs, MBY_ARP_TABLE, UPDATE_L3_DOMAIN, test_data_in->update_l3_domain);
-        FM_ARRAY_SET_BIT    (arp_table_regs, MBY_ARP_TABLE, UPDATE_L2_DOMAIN, test_data_in->update_l2_domain);
-
-        if (test_data_in->entry_type == MBY_ARP_TYPE_MAC) {
-            if (test_data_in->ipv6_entry)
-                hashToNextHop->DMAC_FROM_IPV6 = test_data_in->dmac;
-            else
-                FM_ARRAY_SET_FIELD64(arp_table_regs, MBY_ARP_TABLE, DST_MAC, test_data_in->dmac);
-        } else {
-            FM_ARRAY_SET_FIELD64(arp_table_regs, MBY_ARP_ENTRY_GLORT, DGLORT, test_data_in->dglort);
-            FM_ARRAY_SET_BIT    (arp_table_regs, MBY_ARP_ENTRY_GLORT, MARK_ROUTED, test_data_in->mark_routed);
-        }
-
-        mbyModelWriteCSRMult(regs, MBY_ARP_TABLE(arp_tbl_idx, 0), MBY_ARP_TABLE_WIDTH, arp_table_regs);
-#endif
     }
 }
 
 static fm_bool nexthop_test_verify
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map * const  nexthop,
-#else
-    fm_uint32                    regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mby_nh_test_data_in  * const test_data_in,
     mbyNextHopToMaskGen  * const nexthopToMaskGen,
     mby_nh_test_data_out * const test_data_out
@@ -171,48 +135,23 @@ static fm_bool nexthop_test_verify
         if (nexthopToMaskGen->ENCAP != test_data_out->encap)
             return FALSE;
 
-#ifdef USE_NEW_CSRS
-#else
-        fm_uint64 arp_used_reg = 0;
-        mbyModelReadCSR64(regs, MBY_ARP_USED((test_data_in->arp_tbl_idx >> 6), 0), &arp_used_reg);
-
-        fm_uint64 used_value = FM_GET_FIELD64(arp_used_reg, MBY_ARP_USED, USED);
-        if (used_value != test_data_out->arp_used)
-            return FALSE;
-#endif
     }
 
     return TRUE;
 }
 static void nexthop_run_test(nh_test_data * const test_data)
 {
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map nexthop_map;
-#else
-    fm_uint32 *         regs;
-#endif
     mbyHashToNextHop    hashToNextHop = { 0 };
     mbyNextHopToMaskGen out  = { 0 };
     fm_bool             pass = FALSE;
 
-#ifdef USE_NEW_CSRS
     nexthop_test_setup(&nexthop_map, &hashToNextHop, &(test_data->in));
 
     NextHop(&nexthop_map, &hashToNextHop, &out);
 
     pass = nexthop_test_verify(&nexthop_map, &(test_data->in), &out, &(test_data->out));
 
-#else
-    regs = calloc(MBY_REGISTER_ARRAY_SIZE, sizeof(fm_uint32));
-
-    nexthop_test_setup(regs, &hashToNextHop, &(test_data->in));
-
-    NextHop(regs, &hashToNextHop, &out);
-
-    pass = nexthop_test_verify(regs, &(test_data->in), &out, &(test_data->out));
-
-    free(regs);
-#endif
 
     if (pass)
         test_pass(test_data->name);

@@ -3,11 +3,7 @@
 
 #include "mby_parser.h"
 
-#ifdef USE_NEW_CSRS
 #define TEST_PASS_MAX 29
-#else
-#define TEST_PASS_MAX 250 //322
-#endif
 #define TEST_FAIL_MAX 48 
 
 #define COLOR_RED     "\x1b[31m"
@@ -39,11 +35,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 7967,
         .PA_KEYS[11] = 7967,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Unicast DMAC"
 },
@@ -63,11 +55,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 48093,
         .PA_KEYS[11] = 61183,
         .PA_KEYS[12] = 43690,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Unicast SMAC"
 },
@@ -87,11 +75,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 21845,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Multicast DMAC"
 },
@@ -111,11 +95,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 21845,
         .PA_KEYS[11] = 5461,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Multicast SMAC"
 },
@@ -135,11 +115,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Broadcast DMAC"
 },
@@ -159,11 +135,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 65535,
         .PA_KEYS[11] = 65535,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Broadcast SMAC"
 },
@@ -183,11 +155,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet zero-DMAC"
 },
@@ -207,11 +175,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 0,
         .PA_KEYS[11] = 0,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet zero-SMAC"
 },
@@ -230,11 +194,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 0,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet zero Ethertype"
 },
@@ -254,11 +214,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet 64 length"
 },
@@ -278,11 +234,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet 128 length"
 },
@@ -302,11 +254,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 34824,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Flow Control"
 },
@@ -326,11 +274,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35045,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet MACSEC"
 },
@@ -350,11 +294,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 2054,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet ARP"
 },
@@ -374,11 +314,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32821,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Reverse ARP"
 },
@@ -398,11 +334,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35020,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[2] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet LLDP"
 },
@@ -422,11 +354,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35078,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet FCoE"
 },
@@ -446,11 +374,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35092,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet FCoE Init"
 },
@@ -470,11 +394,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 2114,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet Wake on Lan"
 },
@@ -494,11 +414,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35063,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet PTP"
 },
@@ -518,11 +434,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 34915,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet PPPoE DS"
 },
@@ -542,11 +454,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 34916,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet PPPoE SS"
 },
@@ -566,11 +474,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 8947,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 14
- #endif
     },
     .name = "L2 Ethernet PPPoE DS"
 },
@@ -593,11 +497,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 10922,
         .PA_KEYS[31] = 10922,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 18
- #endif
     },
     .name = "L2 Ethernet Vlan 0xAAA 0x2"
 },
@@ -620,11 +520,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 21845,
         .PA_KEYS[31] = 21845,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2]= 18
- #endif
     },
     .name = "L2 Ethernet Vlan 0x555 0x5"
 },
@@ -647,12 +543,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 0,
         .PA_KEYS[31] = 0,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_FLAGS[17] = 1,
-        .PA_PTRS[2]= 18
- #endif
     },
     .name = "L2 Ethernet VLAN Priority Tagged (zero-VID) zero-pri"
 },
@@ -675,12 +566,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 4096,
         .PA_KEYS[31] = 4096,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_FLAGS[17] = 1,
-        .PA_PTRS[2] = 18
- #endif
     },
     .name = "L2 Ethernet VLAN Priority Tagged (zero-VID) non-zero-pri"
 },
@@ -703,11 +589,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 61439,
         .PA_KEYS[31] = 61439,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2] = 18
- #endif
     },
     .name = "L2 Ethernet Vlan 0xFFF 0xE"
 },
@@ -730,11 +612,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 4097,
         .PA_KEYS[31] = 4097,
- #ifdef USE_NEW_CSRS
         .PA_PTRS[0] = 0
- #else
-        .PA_PTRS[2] = 18
- #endif
     },
     .name = "L2 Ethernet Vlan 0x001 0x1 - Invalid CFI"
 },

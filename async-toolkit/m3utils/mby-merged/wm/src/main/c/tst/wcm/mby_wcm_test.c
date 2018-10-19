@@ -7,9 +7,7 @@
 #include <mby_wcm.h>
 #include <mby_mapper.h>
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#endif
 
 #include <mby_common.h>
 #include <mby_pipeline.h>
@@ -18,7 +16,6 @@
 #define COLOR_GREEN   "\x1b[32m"
 #define COLOR_RESET   "\x1b[0m"
 
-#ifdef USE_NEW_CSRS
 
 #define SIMPLE_WCM_TEST(name, fails) {if (!run_on_simple_wcm(simple_wcm_ ## name ## _test_setup, \
                 simple_wcm_ ## name ## _test_check)) pass(#name); else {++fails; fail(#name);} }
@@ -584,15 +581,10 @@ static int run_on_simple_wcm
 )
 {
 
-#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_b_map   *cgrp_b_map = NULL;
     allocMem(&cgrp_b_map);
     initRegs(cgrp_b_map);
 
-#else
-    fm_uint32 *regs = NULL;
-    allocRegs(&regs);
-#endif
 
     mbyMapperToClassifier map2cla = { 0 };
   
@@ -603,11 +595,7 @@ static int run_on_simple_wcm
 
     mbyMatchWildcard
     (
-#ifdef USE_NEW_CSRS
         cgrp_b_map,
-#else
-        regs,
-#endif
         &(in->FFU_KEYS),
         in->FFU_SCENARIO,
         0,
@@ -617,16 +605,11 @@ static int run_on_simple_wcm
     int ret = check(actions);
 
     // Free up memory:
-#ifdef USE_NEW_CSRS
     freeMem(cgrp_b_map);
-#else
-    freeRegs(regs);
-#endif
 
     return ret;
 }
 
-#endif
 
 int main(void)
 {
@@ -634,16 +617,12 @@ int main(void)
 
     fm_uint tests = 0;
     fm_uint fails = 0;
-#ifdef USE_NEW_CSRS
     // default values
     SIMPLE_WCM_TEST(basic,                fails); tests++;
     // case with 1 slace cascade
     SIMPLE_WCM_TEST(dip_ipv4,             fails); tests++;
     // case with 2 slace cascade
     SIMPLE_WCM_TEST(mac,                  fails); tests++;
-#else
-        printf("No tests for not NEW_CSRS mode.\n");
-#endif
 
     fm_uint passes = (tests > fails) ? tests - fails : 0;
 

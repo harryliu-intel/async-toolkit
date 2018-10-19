@@ -1,4 +1,4 @@
-SRC_DIR  = ../../src
+SRC_DIR  = ../..
 TST_DIR  = .
 
 INC_DIR  = ../../../c                                  # uint.h

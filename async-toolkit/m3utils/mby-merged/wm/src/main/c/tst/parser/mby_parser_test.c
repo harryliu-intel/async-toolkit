@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#endif
 
 #include <mby_pipeline.h>
 #include <mby_crc32.h>
@@ -14,24 +12,13 @@
 
 void initRegs
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_rx_top_map * const rx_top_map
-#else
-    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#endif
 )
 {
     // Initialize model registers
-#ifndef USE_NEW_CSRS
-    mbyModelLoadDefaults(regs);
-#endif
     mby_init_common_regs
     (
-#ifdef USE_NEW_CSRS
         rx_top_map
-#else
-        regs
-#endif
     );
 }
 
@@ -150,11 +137,7 @@ fm_uint compareValues(mbyParserToMapper * const out, mbyParserToMapper * const o
 
 fm_status runTest
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_parser_map * const parser_map,
-#else
-    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     const fm_uint             test_num,
     char              * const test_name,
     mbyRxMacToParser  * const mac2par,
@@ -164,11 +147,7 @@ fm_status runTest
 {
     Parser
     (
-#ifdef USE_NEW_CSRS
         parser_map,
-#else
-        regs,
-#endif
         mac2par, par2map
     );
 
@@ -199,17 +178,11 @@ int main()
         exit(-1);
     }
 
-#ifdef USE_NEW_CSRS
     mby_ppe_rx_top_map rx_top_map;
-#endif
 
     initRegs
     (
-#ifdef USE_NEW_CSRS
         &rx_top_map
-#else
-        regs
-#endif
     );
 
 #if 1
@@ -237,11 +210,7 @@ int main()
 
         fm_status test_status = runTest
         (
-#ifdef USE_NEW_CSRS
             &(rx_top_map.parser),
-#else
-            regs,
-#endif
             test_num, test_name, &mac2par, &par2map, &par2map_ref
         );
 

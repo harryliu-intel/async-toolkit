@@ -20,12 +20,9 @@
 
 void basic_flood_init
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_rx_top_map * const rx_top_map
-#endif
 )
 {
-#ifdef USE_NEW_CSRS
     ingress_vid_table_r * const ivid_table = &(rx_top_map->nexthop.INGRESS_VID_TABLE[1]);
 
     ivid_table->TRAP_IGMP  = 0;
@@ -60,112 +57,4 @@ void basic_flood_init
     egress_mst_table_r * const egress_mst_table = &(rx_top_map->mst_glort.EGRESS_MST_TABLE[1][0]);
 
     egress_mst_table->FORWARDING = 0x3ffff;
-#else
-    // TODO uncomment once these regs exist
-    mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_INGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_EGRESS_VID_TABLE(0x1, 0x0), 0x1fffff);
-    //mbyWriteReg(0, MBY_MOD_VLAN_TAG(0x1, 0x0), 0x0);
-    //mbyWriteReg(0, MBY_INGRESS_MST_TABLE(0x1, 0x0), 0xffffffffffff);
-    //mbyWriteReg(0, MBY_EGRESS_MST_TABLE(0x1, 0x0), 0x1fffff);
-#endif
 }

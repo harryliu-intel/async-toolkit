@@ -27,11 +27,9 @@
 const int send_sw = 0;
 const int send_port = 2;
 
-#ifdef USE_NEW_CSRS
 static mby_top_map top_map;
 
 static mbyRxStatsToRxOut rxs2rxo;
-#endif
 
 inline static int checkOk (const char * test, const fm_status status)
 {
@@ -50,13 +48,8 @@ inline static int checkOk (const char * test, const fm_status status)
 fm_status init(fm_uint32 fwd_port, fm_macaddr dmac)
 {
     // TODO verify if that's all that we need
-#ifdef USE_NEW_CSRS
     mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe));
     basic_fwd_init(&(top_map.mpp.mgp[0].rx_ppe), fwd_port, dmac);
-#else
-    mby_init_regs(send_sw);
-    basic_fwd_init(fwd_port, dmac);
-#endif
     return FM_OK;
 }
 
@@ -80,7 +73,6 @@ fm_status check
     }
 
     // Check RX counters
-#ifdef USE_NEW_CSRS
     rx_stats_bank_frame_r * const bank_frame = &(top_map.mpp.mgp[0].rx_ppe.stats.RX_STATS_BANK_FRAME[bank][index]);
 
     if (bank_frame->FRAME_COUNTER != 1) {
@@ -94,24 +86,10 @@ fm_status check
         printf("Byte counter is invalid\n");
         return FM_FAIL;
     }
-#else
-    mbyReadReg(sw, MBY_RX_STATS_BANK_FRAME(bank, index, 0), &val);
-    if (val != 1) {
-        printf("Frame counter is invalid\n");
-        return FM_FAIL;
-    }
-
-    mbyReadReg(sw, MBY_RX_STATS_BANK_BYTE(bank, index, 0), &val);
-    if (val != exp_packet_len) {
-        printf("Byte counter is invalid\n");
-        return FM_FAIL;
-    }
-#endif
 
     return FM_OK;
 }
 
-#ifdef USE_NEW_CSRS
 static fm_status sendPacket
 (
     const fm_uint32         sw,
@@ -178,7 +156,6 @@ static fm_status receivePacket
     }
     return sts;
 }
-#endif
 
 int main()
 {
@@ -199,7 +176,6 @@ int main()
 
     for (fm_uint i = 0; i < 1; i++) {
 
-#ifdef USE_NEW_CSRS
         status = init(exp_port, dmac);
         rv = checkOk("init", status);
         if (rv != 0)
@@ -214,27 +190,6 @@ int main()
         rv = checkOk("receivePacket", status);
         if (rv != 0)
             break;
-#else
-        status = mbyResetModel(send_sw);
-        rv = checkOk("mbyResetModel", status);
-        if (rv != 0)
-            break;
-
-        status = init(exp_port, dmac);
-        rv = checkOk("init", status);
-        if (rv != 0)
-            break;
-
-        status = mbySendPacket(send_sw, send_port, sent_packet, sizeof(sent_packet));
-        rv = checkOk("mbySendPacket", status);
-        if (rv != 0)
-            break;
-
-        status = mbyReceivePacket(send_sw, &recv_port, recv_packet_buf, &recv_packet_len, recv_pkt_buf_len);
-        rv = checkOk("mbyReceivePacket", status);
-        if (rv != 0)
-            break;
-#endif
 
         status = check(send_sw, send_port, recv_port, exp_port, recv_packet_len, exp_packet_len);
         rv = checkOk("check", status);
