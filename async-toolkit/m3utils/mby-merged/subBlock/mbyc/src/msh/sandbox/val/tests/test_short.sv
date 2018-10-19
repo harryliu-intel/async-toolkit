@@ -60,7 +60,7 @@ program testcase (                  // a program is a system verilog testbench e
 
         $display("Simulation PASSED");      // test exits immediately upon errors, so it passes if this line is reached
         $finish();                          // ca  the final procedure (if it exists) and exits the simulation
-//
+
     end // initial
 
 endprogram // testcase
