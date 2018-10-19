@@ -131,7 +131,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -143,7 +143,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_ingress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -160,7 +160,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_egress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
             
@@ -172,7 +172,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_egress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -474,7 +474,7 @@ print "MGM debug : @mbyMgmLibs\n";
             ## mby ingress model starts
             ####################################################################
             igr => {
-               top  => 'mby_ingress_tb_lib.ingress_tb',
+               top  => 'mby_ingress_tb_lib.mby_igr_tb',
 
                use  => [
                         "eth_port_common:common"
@@ -486,7 +486,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "svt_ahb_lib",
                         "mby_common_lib",
                         "mby_wm_dpi_lib",
-                        "mby_jasper_lib",
+                        #"mby_jasper_lib",
                         #"mby_rx_ppe_ti_lib",
                         #"mby_rx_ppe_env_lib",
                         "mby_igr_rtl_lib",
@@ -501,7 +501,7 @@ print "MGM debug : @mbyMgmLibs\n";
                elab_opts => [
                              "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
                              "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                             "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                             "-kdb", "-lca",
                             ],
 
                export => {
