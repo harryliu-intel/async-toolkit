@@ -1,9 +1,0 @@
-{
- %opts = (
-     -model    => "igr",
-     -static_check_top => "igr_rtl_lib.igr_top",
-     -static_check_tools => [ "lintra", ],
-     -lintra_post_process_modes => "AceLintra_default",
-     -post_process_pattern_file => "$ENV{ACE_HOME}/udf/ace_base_postsim.pp",
- );
-}
