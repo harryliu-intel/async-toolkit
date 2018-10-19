@@ -51,9 +51,7 @@ typedef struct mbyLpmSubtrieLookupStruct
 void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
-#ifdef USE_NEW_CSRS
     mby_shm_map                * const shm_map,
-#endif
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     fm_uint32                          actions[4]

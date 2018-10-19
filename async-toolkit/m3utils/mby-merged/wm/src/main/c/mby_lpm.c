@@ -253,7 +253,6 @@ static void lpmGenerateKey
     lpmKey->key_len = len * 8;
 }
 
-#ifdef USE_NEW_CSRS
 // The shared fwd table doesn't exist in the old register defs
 static void lpmActions
 (
@@ -278,14 +277,11 @@ static void lpmActions
     actions[1] = fwd_table_entry >> 32 & 0xffffffff;
     actions[0] = fwd_table_entry & 0xffffffff;
 }
-#endif
 
 void mbyMatchLpm
 (
     MBY_LPM_IN_REGS,
-#ifdef USE_NEW_CSRS
     mby_shm_map                * const shm_map,
-#endif
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
@@ -298,11 +294,7 @@ void mbyMatchLpm
 
     lpmSearch(MBY_LPM_IN_REGS_P, &key, &searchResult);
 
-#ifdef USE_NEW_CSRS
     lpmActions(shm_map, profile_id, &searchResult, actions);
-#else
-    memset(actions, 0, MBY_LPM_MAX_ACTIONS_NUM * sizeof(fm_uint32));
-#endif
 }
 
 //#ifdef UNIT_TEST

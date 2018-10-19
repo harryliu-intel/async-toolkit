@@ -274,11 +274,7 @@ static void applyEntropyKeyMask
 
 static void populateMuxedAction
 (
-#ifdef USE_NEW_CSRS
 
-#else
-    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mbyClassifierKeys           const keys,
     mbyClassifierActions        const actions,
     fm_byte                     const pri_profile,
@@ -313,26 +309,14 @@ static void populateMuxedAction
             case 2: // ECN-CTRL[1:0] = 2 : ECN source is MPLS label 1, i.e. MPLS_MUX_EXP_DS[mpls_labels[0].exp].ecn
             {
                 exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3);
-#ifdef USE_NEW_CSRS
                 muxed_action->ecn = 0; // FIXME!!!
-#else
-                fm_uint64 mpls_mux_exp_ds_reg = 0;
-                mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
-                muxed_action->ecn = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, ECN);
-#endif
                 break;
             }
             case 3: // ECN_CTRL[1:0]=3: ECN source is MPLS label exposed after MPLS_POP
             {
                 exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
                       (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0;
-#ifdef USE_NEW_CSRS
                 muxed_action->ecn = 0; // FIXME!!!
-#else
-                fm_uint64 mpls_mux_exp_ds_reg = 0;
-                mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
-                muxed_action->ecn = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, ECN);
-#endif
                 break;
             }
 
@@ -370,13 +354,7 @@ static void populateMuxedAction
     }
 
     if (dscp_ctrl == 6 || ((dscp_ctrl >= 8) && (dscp_ctrl <= 11))) {
-#ifdef USE_NEW_CSRS
         muxed_action->dscp = 0; // FIXME!!!
-#else
-        fm_uint64 mpls_mux_exp_ds_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
-        muxed_action->dscp = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, DSCP);
-#endif
     }
 
     // Update SWPRI:
@@ -389,25 +367,13 @@ static void populateMuxedAction
         case  4:
         {
             dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
-#ifdef USE_NEW_CSRS
             muxed_action->swpri = 0; // FIXME!!!
-#else
-            fm_uint64 mpls_mux_dscp_tc_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), &mpls_mux_dscp_tc_reg);
-            muxed_action->swpri = FM_GET_FIELD64(mpls_mux_dscp_tc_reg, MBY_MPLS_MUX_DSCP_TC, TC);
-#endif
             break;
         }
         case  5:
         {
             dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
-#ifdef USE_NEW_CSRS
             muxed_action->swpri = 0; // FIXME!!!
-#else
-            fm_uint64 mpls_mux_dscp_tc_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MPLS_MUX_DSCP_TC(dscp, 0), &mpls_mux_dscp_tc_reg);
-            muxed_action->swpri = FM_GET_FIELD64(mpls_mux_dscp_tc_reg, MBY_MPLS_MUX_DSCP_TC, TC);
-#endif
             break;
         }
     case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
@@ -422,13 +388,7 @@ static void populateMuxedAction
     }
 
     if (tc_ctrl == 6 || (tc_ctrl >= 8 && tc_ctrl <= 11)) {
-#ifdef USE_NEW_CSRS
         muxed_action->swpri = 0; // FIXME!!!
-#else
-        fm_uint64 mpls_mux_exp_ds_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MPLS_MUX_EXP_DS(((pri_profile << 3) | exp), 0), &mpls_mux_exp_ds_reg);
-        muxed_action->swpri = FM_GET_FIELD64(mpls_mux_exp_ds_reg, MBY_MPLS_MUX_EXP_DS, TC);
-#endif
     }
 
     // get TTL value based on TTL_CTRL Action:
@@ -465,11 +425,7 @@ static void populateMuxedAction
 
 static void populateEntropy
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_entropy_map        * const entropy_map,
-#else
-    fm_uint32                          regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mbyClassifierKeys            const keys,
     mbyClassifierActions         const actions,
     fm_uint32                  * const ecmp_hash,
@@ -488,11 +444,7 @@ static void populateEntropy
         hash_profiles[hash_num] = prof;
 
         // Get FFU_KEY_MASK register fields:
-#ifdef USE_NEW_CSRS
         mbyClassifierEntropyCfg entropy_cfg = mbyClsGetEntropyCfg(entropy_map, hash_num, prof);
-#else
-        mbyClassifierEntropyCfg entropy_cfg = mbyClsGetEntropyCfg(regs,        hash_num, prof);
-#endif
         // Apply key mask on FFU keys:
         mbyClassifierKeys hash_keys;
         applyEntropyKeyMask(entropy_cfg, keys, &hash_keys);
@@ -512,11 +464,7 @@ static void populateEntropy
     *ecmp_hash = hash_values[0] & 0xFFFFFF;
 
     // Populate MOD_META for use by the Modifier:
-#ifdef USE_NEW_CSRS
     mbyEntropyMetaCfg meta_cfg = mbyClsGetEntropyMetaCfg(entropy_map, hash_profiles[1]);
-#else
-    mbyEntropyMetaCfg meta_cfg = mbyClsGetEntropyMetaCfg(regs,        hash_profiles[1]);
-#endif
 
     fm_uint64 mod_meta_l = 0; // local var
 
@@ -712,14 +660,10 @@ static void transformActions
 
 void Classifier
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
     mby_ppe_entropy_map         * const entropy_map,
     mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
-#else
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
 )
@@ -740,12 +684,8 @@ void Classifier
     // Exact match A (EM_A):
     fm_uint32 em_a_out[MBY_EM_A_MAX_ACTIONS_NUM] = { 0 };
 
-#ifdef USE_NEW_CSRS
     // TODO change function to return a list of action sets (i.e. em_a_out)
     mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_A, &actions);
-#else
-    mbyMatchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_A, &actions);
-#endif
 
     for (fm_uint i = 0; i < MBY_EM_A_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_a_out[i], &actions);
@@ -753,12 +693,8 @@ void Classifier
     // Longest Prefix Match (LPM):
     fm_uint32 lpm_out[MBY_LPM_MAX_ACTIONS_NUM];
 
-#ifdef USE_NEW_CSRS
     // TODO is the scenario == 6-bit profile ID in the HAS?
     mbyMatchLpm(cgrp_a_map, shm_map, &keys, scenario, lpm_out);
-#else
-    mbyMatchLpm(regs,                &keys, scenario, lpm_out);
-#endif
 
     for (fm_uint i = 0; i < MBY_LPM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(lpm_out[i], &actions);
@@ -775,12 +711,8 @@ void Classifier
     // Exact match B (EM_B):
     fm_uint32 em_b_out[MBY_EM_B_MAX_ACTIONS_NUM] = { 0 };
 
-#ifdef USE_NEW_CSRS
     // TODO change function to return a list of action sets (i.e. em_b_out)
     mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
-#else
-    mbyMatchExact(regs,                   &keys, scenario, MBY_CLA_GROUP_B, &actions);
-#endif
 
     for (fm_uint i = 0; i < MBY_EM_B_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_b_out[i], &actions);
@@ -788,11 +720,7 @@ void Classifier
     // Wildcard Match (WCM):
     fm_uint32 wcm_out[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
 
-#ifdef USE_NEW_CSRS
     mbyMatchWildcard(cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
-#else
-    mbyMatchWildcard(regs,       &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
-#endif
 
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(wcm_out[i], &actions);
@@ -803,11 +731,7 @@ void Classifier
 
     populateMuxedAction
     (
-#ifdef USE_NEW_CSRS
 
-#else
-        regs,
-#endif
         keys,
         actions,
         pri_profile,
@@ -820,11 +744,7 @@ void Classifier
 
     populateEntropy
     (
-#ifdef USE_NEW_CSRS
         entropy_map,
-#else
-        regs,
-#endif
         keys,
         actions,
         &ecmp_hash,

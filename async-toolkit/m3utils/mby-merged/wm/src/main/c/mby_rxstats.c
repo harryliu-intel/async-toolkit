@@ -35,43 +35,21 @@ static void updateRxStatsBank
 )
 {
     // Update (read/modify/write) frame count:
-#ifdef USE_NEW_CSRS
     rx_stats_bank_frame_r * const bank_frame = &(stats_map->RX_STATS_BANK_FRAME[bank][index]);
     fm_uint64 frame_cnt = bank_frame->FRAME_COUNTER;
-#else
-    fm_uint64 rx_stats_bank_frame_reg = 0;
-    mbyModelReadCSR64(regs, MBY_RX_STATS_BANK_FRAME(bank, index, 0), &rx_stats_bank_frame_reg);
-    fm_uint64 frame_cnt = FM_GET_FIELD64(rx_stats_bank_frame_reg, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER);
-#endif
 
     fm_uint64 one = FM_LITERAL_U64(1);
     frame_cnt = incrRxCounter(frame_cnt, one);
 
-#ifdef USE_NEW_CSRS
     bank_frame->FRAME_COUNTER = frame_cnt;
-#else
-    FM_SET_FIELD64(rx_stats_bank_frame_reg, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER, frame_cnt);
-    mbyModelWriteCSR64(regs, MBY_RX_STATS_BANK_FRAME(bank, index, 0), rx_stats_bank_frame_reg);
-#endif
 
     // Update (read/modify/write) byte count:
-#ifdef USE_NEW_CSRS
     rx_stats_bank_byte_r * const bank_byte = &(stats_map->RX_STATS_BANK_BYTE[bank][index]);
     fm_uint64 byte_cnt = bank_byte->BYTE_COUNTER;
-#else
-    fm_uint64 rx_stats_bank_byte_reg = 0;
-    mbyModelReadCSR64(regs, MBY_RX_STATS_BANK_BYTE(bank, index, 0), &rx_stats_bank_byte_reg);
-    fm_uint64 byte_cnt = FM_GET_FIELD64(rx_stats_bank_byte_reg, MBY_RX_STATS_BANK_BYTE, BYTE_COUNTER);
-#endif
 
     byte_cnt = incrRxCounter(byte_cnt, len);
 
-#ifdef USE_NEW_CSRS
     bank_byte->BYTE_COUNTER = byte_cnt;
-#else
-    FM_SET_FIELD64(rx_stats_bank_byte_reg, MBY_RX_STATS_BANK_BYTE, BYTE_COUNTER, byte_cnt);
-    mbyModelWriteCSR64(regs, MBY_RX_STATS_BANK_BYTE(bank, index, 0), rx_stats_bank_byte_reg);
-#endif
 }
 
 static void updateRxStatsVlan
@@ -82,43 +60,21 @@ static void updateRxStatsVlan
 )
 {
     // Update (read/modify/write) frame count:
-#ifdef USE_NEW_CSRS
     rx_stats_vlan_frame_r * const vlan_frame = &(stats_map->RX_STATS_VLAN_FRAME[index]);
     fm_uint64 frame_cnt = vlan_frame->FRAME_COUNTER;
-#else
-    fm_uint64 rx_stats_vlan_frame_reg = 0;
-    mbyModelReadCSR64(regs, MBY_RX_STATS_VLAN_FRAME(index, 0), &rx_stats_vlan_frame_reg);
-    fm_uint64 frame_cnt = FM_GET_FIELD64(rx_stats_vlan_frame_reg, MBY_RX_STATS_BANK_FRAME, FRAME_COUNTER);
-#endif
 
     fm_uint64 one = FM_LITERAL_U64(1);
     frame_cnt = incrRxCounter(frame_cnt, one);
 
-#ifdef USE_NEW_CSRS
     vlan_frame->FRAME_COUNTER = frame_cnt;
-#else
-    FM_SET_FIELD64(rx_stats_vlan_frame_reg, MBY_RX_STATS_VLAN_FRAME, FRAME_COUNTER, frame_cnt);
-    mbyModelWriteCSR64(regs, MBY_RX_STATS_VLAN_FRAME(index, 0), rx_stats_vlan_frame_reg);
-#endif
 
     // Update (read/modify/write) byte count:
-#ifdef USE_NEW_CSRS
     rx_stats_vlan_byte_r * const vlan_byte = &(stats_map->RX_STATS_VLAN_BYTE[index]);
     fm_uint64 byte_cnt = vlan_byte->BYTE_COUNTER;
-#else
-    fm_uint64 rx_stats_vlan_byte_reg = 0;
-    mbyModelReadCSR64(regs, MBY_RX_STATS_VLAN_BYTE(index, 0), &rx_stats_vlan_byte_reg);
-    fm_uint64 byte_cnt = FM_GET_FIELD64(rx_stats_vlan_byte_reg, MBY_RX_STATS_VLAN_BYTE, BYTE_COUNTER);
-#endif
 
     byte_cnt = incrRxCounter(byte_cnt, len);
 
-#ifdef USE_NEW_CSRS
     vlan_byte->BYTE_COUNTER = byte_cnt;
-#else
-    FM_SET_FIELD64(rx_stats_vlan_byte_reg, MBY_RX_STATS_VLAN_BYTE, BYTE_COUNTER, byte_cnt);
-    mbyModelWriteCSR64(regs, MBY_RX_STATS_VLAN_BYTE(index, 0), rx_stats_vlan_byte_reg);
-#endif
 }
 
 static void handleRxBank0

@@ -2,9 +2,7 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#endif
 
 #include "mby_classifier.h"
 #include "mby_hash.h"
@@ -14,17 +12,12 @@
 
 static mbyArpTable getARPTableEntry
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map * const nexthop,
-#else
-          fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     const fm_uint16             arp_tbl_idx
 )
 {
     mbyArpTable arp_table;
 
-#ifdef USE_NEW_CSRS
     nexthop_neighbors_table_0_r const * const nh_table_0 = &(nexthop->NH_NEIGHBORS_0[arp_tbl_idx]);
     nexthop_neighbors_table_1_r const * const nh_table_1 = &(nexthop->NH_NEIGHBORS_1[arp_tbl_idx]);
 
@@ -46,158 +39,44 @@ static mbyArpTable getARPTableEntry
     arp_table.DGLORT     = (type_glort) ? dglort      : 0;
     arp_table.markRouted = (type_glort) ? mark_routed : FALSE;
 
-#else
-    fm_uint32 arp_table_regs[MBY_ARP_TABLE_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_ARP_TABLE(arp_tbl_idx, 0), MBY_ARP_TABLE_WIDTH, arp_table_regs);
-
-    arp_table.DMAC           = FM_ARRAY_GET_FIELD64(arp_table_regs, MBY_ARP_TABLE, DST_MAC);
-    arp_table.EntryType      = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, ENTRY_TYPE);
-    arp_table.IPv6Entry      = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, IPV6_ENTRY);
-    arp_table.EVID           = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, EVID);
-    arp_table.MTU_Index      = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, MTU_INDEX);
-    arp_table.ModIdx         = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, MOD_IDX);
-    arp_table.L3Domain       = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, L3_DOMAIN);
-    arp_table.L2Domain       = FM_ARRAY_GET_FIELD  (arp_table_regs, MBY_ARP_TABLE, L2_DOMAIN);
-    arp_table.UpdateL3Domain = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, UPDATE_L3_DOMAIN);
-    arp_table.UpdateL2Domain = FM_ARRAY_GET_BIT    (arp_table_regs, MBY_ARP_TABLE, UPDATE_L2_DOMAIN);
-
-    fm_uint16 dglort      = FM_ARRAY_GET_FIELD(arp_table_regs, MBY_ARP_ENTRY_GLORT, DGLORT);
-    fm_bool   mark_routed = FM_ARRAY_GET_BIT  (arp_table_regs, MBY_ARP_ENTRY_GLORT, MARK_ROUTED);
-    fm_bool   type_glort  = (arp_table.EntryType == MBY_ARP_TYPE_GLORT);
-
-    arp_table.DGLORT     = (type_glort) ? dglort      : 0;
-    arp_table.markRouted = (type_glort) ? mark_routed : FALSE;
-#endif
 
     return arp_table;
 }
 
 static void setARPUsedEntry
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map * const nexthop,
-#else
-          fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     const fm_uint32             arp_tbl_idx
 )
 {
-#ifdef USE_NEW_CSRS
     nexthop_used_r * const nh_used = &(nexthop->NH_USED[arp_tbl_idx >> 6]);
 
     fm_uint64 used_value = nh_used->USED;
     used_value          |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
     nh_used->USED        = used_value;
-#else
-    fm_uint64 arp_used_reg = 0;
-    mbyModelReadCSR64(regs, MBY_ARP_USED((arp_tbl_idx >> 6), 0), &arp_used_reg);
-
-    fm_uint64 used_value = FM_GET_FIELD64(arp_used_reg, MBY_ARP_USED, USED);
-
-    used_value |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
-
-    FM_SET_FIELD64(arp_used_reg, MBY_ARP_USED, USED, used_value);
-
-    mbyModelWriteCSR64(regs, MBY_ARP_USED(arp_tbl_idx >> 6, 0), arp_used_reg);
-#endif
 }
 
-#ifndef USE_NEW_CSRS
-static void getMaTableEntry
-(
-          fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_byte             set,
-    const fm_uint16           ma_tbl_idx,
-          mbyMaTable  * const entry
-)
-{
-    fm_uint32 ma_table_regs[MBY_MA_TABLE_WIDTH] = { 0 };
-    mbyModelReadCSRMult(regs, MBY_MA_TABLE(set, ma_tbl_idx, 0), MBY_MA_TABLE_WIDTH, ma_table_regs);
-
-    entry->OLD_PORT    = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, OLD_PORT);
-    entry->NEW_PORT    = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, NEW_PORT);
-    entry->ENTRY_TYPE  = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, ENTRY_TYPE);
-    entry->TRIG_ID     = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, TRIG_ID);
-    entry->S_GLORT     = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, S_GLORT);
-    entry->D_GLORT     = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, D_GLORT);
-    entry->L2_DOMAIN   = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, L2_DOMAIN);
-    entry->VID         = FM_ARRAY_GET_FIELD  (ma_table_regs, MBY_MA_TABLE, VID);
-    entry->MAC_ADDRESS = FM_ARRAY_GET_FIELD64(ma_table_regs, MBY_MA_TABLE, MAC_ADDRESS);
-}
-
-void lookUpAddress
-(
-          fm_uint32          regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_macaddr         mac_addr,
-    const fm_uint16          vid,
-    const fm_uint16          l2_domain,
-    const fm_bool            learn_mode,
-          fm_bool    * const hit,
-          mbyMaTable * const entry
-)
-{
-    // learn_mode = 1 for IVL, LEARN_MODE = 0 for SVL
-    fm_uint16 lvid      = (learn_mode) ? vid : 0;
-    fm_uint16 cam_index = MBY_MA_TABLE_TCAM_SIZE;
-    fm_byte   lset      = MBY_MAC_ADDR_BANK_COUNT - 1; // using only bank = 5 <-- REVISIT!!!
-
-    *hit = FALSE; // not hit, by default
-
-    while (cam_index > 0)
-    {
-        cam_index--;
-
-        getMaTableEntry(regs, lset, cam_index, entry);
-
-        if ((entry->MAC_ADDRESS == mac_addr) &&
-            (entry->VID         == lvid) &&
-            (entry->L2_DOMAIN   == l2_domain) &&
-            (entry->ENTRY_TYPE  != MBY_MA_ENTRY_TYPE_NOT_USED))
-        {
-            *hit = TRUE;
-            break;
-        }
-    }
-}
-#endif
 
 static mbyIngressVidTable getIvidTableEntry
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map * const nexthop,
-#else
-    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     fm_uint16                   vid
 )
 {
     mbyIngressVidTable entry;
 
-#ifdef USE_NEW_CSRS
     ingress_vid_table_r * const vid_table = &(nexthop->INGRESS_VID_TABLE[vid]);
 
     entry.TRAP_IGMP  = vid_table->TRAP_IGMP;
     entry.REFLECT    = vid_table->REFLECT;
     entry.MEMBERSHIP = vid_table->MEMBERSHIP;
-#else
-    fm_uint64 ivid_table_reg = 0;
-    mbyModelReadCSR64(regs, MBY_INGRESS_VID_TABLE(vid, 0), &ivid_table_reg);
-
-    entry.TRAP_IGMP  = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, TRAP_IGMP);
-    entry.REFLECT    = FM_GET_BIT64  (ivid_table_reg, MBY_INGRESS_VID_TABLE, REFLECT);
-    entry.MEMBERSHIP = FM_GET_FIELD64(ivid_table_reg, MBY_INGRESS_VID_TABLE, MEMBERSHIP);
-#endif
 
     return entry;
 }
 
 void lookUpL2
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map * const nexthop,
-#else
-    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     fm_uint32                   rx_port,
     fm_macaddr                  l2_dmac,
     fm_uint16                   ivid1,
@@ -217,11 +96,7 @@ void lookUpL2
 )
 {
     /* Perform ingress VLAN lookup. */
-#ifdef USE_NEW_CSRS
     mbyIngressVidTable ividTable = getIvidTableEntry(nexthop, ivid1);
-#else
-    mbyIngressVidTable ividTable = getIvidTableEntry(regs, ivid1);
-#endif
 
     *l2_ivlan1_reflect    = ividTable.REFLECT;
     *trap_igmp           &= ividTable.TRAP_IGMP;
@@ -232,21 +107,10 @@ void lookUpL2
 
     if (*idglort && !flood_set)
         /* no change to dglort */
-#ifdef USE_NEW_CSRS
         *glort_forwarded = 0;
-#else
-        *glort_forwarded = 1;
-#endif
     else
     {
-#ifdef USE_NEW_CSRS
         flood_glort_table_r * const flood_glort_table = &(nexthop->FLOOD_GLORT_TABLE[l2_edomain]);
-#else
-        fm_uint64 flood_glort_table_reg = 0;
-        mbyModelReadCSR64(regs, MBY_FLOOD_GLORT_TABLE(l2_edomain, 0), &flood_glort_table_reg);
-
-        lookUpAddress(regs, l2_dmac, ivid1, l2_edomain, learn_mode, da_hit, da_result);
-#endif
         if (*da_hit && da_result->D_GLORT)
         {
             *idglort = da_result->D_GLORT;
@@ -257,27 +121,15 @@ void lookUpL2
             /* no change to dglort */
             *glort_forwarded = 1;
         else if (isBroadcastMacAddress(l2_dmac))
-#ifdef USE_NEW_CSRS
             *idglort = flood_glort_table->BROADCAST_GLORT;
-#else
-            *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, BROADCAST_GLORT);
-#endif
         else if (isMulticastMacAddress(l2_dmac))
         {
-#ifdef USE_NEW_CSRS
             *idglort = flood_glort_table->FLOOD_MULTICAST_GLORT;
-#else
-            *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_MULTICAST_GLORT);
-#endif
             *flood_forwarded = 1;
         }
         else
         {
-#ifdef USE_NEW_CSRS
             *idglort = flood_glort_table->FLOOD_UNICAST_GLORT;
-#else
-            *idglort = FM_GET_FIELD64(flood_glort_table_reg, MBY_FLOOD_GLORT_TABLE, FLOOD_UNICAST_GLORT);
-#endif
             *flood_forwarded = 1;
         }
     }
@@ -285,11 +137,7 @@ void lookUpL2
 
 void NextHop
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_nexthop_map       * const nexthop,
-#else
-    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     const mbyHashToNextHop    * const in,
           mbyNextHopToMaskGen * const out
 )
@@ -335,11 +183,7 @@ void NextHop
     }
     else // do ARP lookup
     {
-#ifdef USE_NEW_CSRS
         mbyArpTable arp_table = getARPTableEntry(nexthop, arp_tbl_idx);
-#else
-        mbyArpTable arp_table = getARPTableEntry(regs, arp_tbl_idx);
-#endif
 
         fm_bool arp_type_mac = (arp_table.EntryType == MBY_ARP_TYPE_MAC);
 
@@ -361,11 +205,7 @@ void NextHop
         mod_index  = (arp_table.ModIdx >> 2) & 0xFFFF;
         decap      = (arp_table.ModIdx >> 1) & 0x1;
         encap      =  arp_table.ModIdx       & 0x1;
-#ifdef USE_NEW_CSRS
         setARPUsedEntry(nexthop, arp_tbl_idx);
-#else
-        setARPUsedEntry(regs, arp_tbl_idx);
-#endif
     }
 
     // l2Lookup is temporary placed in nexthop - will be moved to Exact Match table <-- REVISIT!!!
@@ -376,15 +216,9 @@ void NextHop
     fm_uint64   amask                = 0;
     fm_bool     l2_ivlan1_membership = FALSE;
     fm_bool     l2_ivlan1_reflect    = FALSE;
-#ifdef USE_NEW_CSRS
     lookUpL2(nexthop, rx_port, l2_dmac, l2_ivid1, l2_evid1, flood_set, l2_edomain, learn_mode, &idglort,
              &glort_forwarded, &flood_forwarded, &da_hit, &da_result, &amask, &l2_ivlan1_membership,
              &l2_ivlan1_reflect, &trap_igmp);
-#else
-    lookUpL2(regs, rx_port, l2_dmac, l2_ivid1, l2_evid1, flood_set, l2_edomain, learn_mode, &idglort,
-             &glort_forwarded, &flood_forwarded, &da_hit, &da_result, &amask, &l2_ivlan1_membership,
-             &l2_ivlan1_reflect, &trap_igmp);
-#endif
     // Write outputs:
     out->AMASK                = amask;
     out->ARP_TABLE_INDEX      = arp_tbl_idx;

@@ -12,7 +12,6 @@
 
 // Defines:
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
 #define MBY_CGRP_A_IN_REGS     mby_ppe_cgrp_a_map  * const cgrp_a_map
 #define MBY_CGRP_A_IN_REGS_P                               cgrp_a_map
@@ -20,14 +19,6 @@
 #define MBY_CGRP_B_IN_REGS_P                               cgrp_b_map
 #define MBY_ENTROPY_IN_REGS    mby_ppe_entropy_map * const entropy_map
 #define MBY_ENTROPY_IN_REGS_P                              entropy_map
-#else
-#define MBY_CGRP_A_IN_REGS     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#define MBY_CGRP_A_IN_REGS_P             regs
-#define MBY_CGRP_B_IN_REGS     fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#define MBY_CGRP_B_IN_REGS_P             regs
-#define MBY_ENTROPY_IN_REGS    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#define MBY_ENTROPY_IN_REGS_P            regs
-#endif
 
 #define MBY_FFU_GROUP_BASE                                      (0x3000000)
 #define MBY_FFU_GROUP_SIZE                                      (0x0300000)
@@ -956,33 +947,21 @@ fm_uint64 mbyClsGetEmBHashCamMask
 
 fm_uint64 mbyClsGetEmHashEntryRam
 (
-#ifdef USE_NEW_CSRS
     // REVISIT!!!
-#else
-    fm_uint32       regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     fm_uint32 const hash_num,
     fm_uint32 const hash_ram_addr
 );
 
 fm_byte mbyClsGetEmHashRamAlloc
 (
-#ifdef USE_NEW_CSRS
     // REVISIT!!!
-#else
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     fm_uint32            const entry
 );
 
 void mbyClsGetEmHashMissActions
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map      * const cgrp_a_map,
     mby_ppe_cgrp_b_map      * const cgrp_b_map,
-#else
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     fm_byte                   const group,
     mbyClassifierHashCfg      const hash_cfg,
     fm_uint32                 const hash_num,

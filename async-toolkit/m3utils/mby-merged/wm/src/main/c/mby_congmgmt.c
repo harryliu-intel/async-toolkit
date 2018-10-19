@@ -7,12 +7,8 @@
 
 void CongMgmt
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_cm_apply_map        * const cm_apply_map,
     mby_ppe_cm_usage_map        * const cm_usage_map,
-#else
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     const mbyTriggersToCongMgmt * const in,
           mbyCongMgmtToRxStats  * const out
 )

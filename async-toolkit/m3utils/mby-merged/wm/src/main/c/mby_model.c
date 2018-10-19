@@ -9,11 +9,7 @@
 #include <stdio.h>
 
 // This is the persistent state of the model registers:
-#ifdef USE_NEW_CSRS
 static mby_top_map top_map;
-#else
-static fm_uint32   regs[MBY_REGISTER_ARRAY_SIZE];
-#endif
 
 fm_status mbyResetModel(const fm_uint32 sw)
 {
@@ -23,11 +19,7 @@ fm_status mbyResetModel(const fm_uint32 sw)
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-#ifdef USE_NEW_CSRS
         // mbyModelLoadDefaults(top_map); <-- FIXME!!!
-#else
-        mbyModelLoadDefaults(regs);
-#endif
     }
     return sts;
 }
@@ -40,11 +32,7 @@ fm_status mby_init_regs(const fm_uint32 sw)
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-#ifdef USE_NEW_CSRS
         mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe));
-#else
-        mby_init_common_regs(regs);
-#endif
     }
     return sts;
 }
@@ -63,11 +51,7 @@ fm_status mbyReadReg
     else
     {
         // FM_LOG_PRINT("Read64 register addr=0x%x\n", addr);
-#ifdef USE_NEW_CSRS
         // FIXME!!!
-#else
-        sts = mbyModelReadCSR64(regs, addr, val);
-#endif
     }
     return sts;
 }
@@ -86,11 +70,7 @@ fm_status mbyWriteRegMult
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-#ifdef USE_NEW_CSRS
         // FIXME!!!
-#else
-        sts = mbyModelWriteCSRMult(regs, addr, len, val);
-#endif
     }
     return sts;
 }
@@ -109,11 +89,7 @@ fm_status mbyWriteReg
     else
     {
         // FM_LOG_PRINT("Write64 register addr=0x%x val=0x%llx\n", addr, val);
-#ifdef USE_NEW_CSRS
         // FIXME!!!
-#else
-        sts = mbyModelWriteCSR64(regs, addr, val);
-#endif
     }
     return sts;
 }
@@ -138,10 +114,8 @@ fm_status mbySendPacket
     {
         // Top CSR map for tile 0 receive pipeline:
         // TODO use the pipeline associated to the specific ingress port
-#ifdef USE_NEW_CSRS
         mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp.mgp[0].rx_ppe);
         mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
-#endif
         // Input struct:
         mbyRxMacToParser mac2par;
 
@@ -151,12 +125,8 @@ fm_status mbySendPacket
         mac2par.RX_PORT   = (fm_uint32) port;
 
         // Call RX pipeline:
-#ifdef USE_NEW_CSRS
         RxPipeline(rx_top_map,
                    shm_map,    &mac2par, &rxs2rxo);
-#else
-        RxPipeline(regs,       &mac2par, &rxs2rxo);
-#endif
     }
     return sts;
 }
@@ -178,9 +148,7 @@ fm_status mbyReceivePacket
     {
         // Top CSR map for tile 0 transmit pipeline:
         // TODO use the pipeline associated to the specific egress port
-#ifdef USE_NEW_CSRS
         mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp.mgp[0].tx_ppe);
-#endif
         // Input struct:
         txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
         txi2mod.ECN           = rxs2rxo.ECN;
@@ -211,11 +179,7 @@ fm_status mbyReceivePacket
         mbyTxStatsToTxMac txs2mac;
 
         // Call RX pipeline:
-#ifdef USE_NEW_CSRS
         TxPipeline(tx_top_map, &txi2mod, &txs2mac);
-#else
-        TxPipeline(regs,       &txi2mod, &txs2mac);
-#endif
 
         // Populate output:
         *port   = txs2mac.TX_PORT;

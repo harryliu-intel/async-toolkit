@@ -10,22 +10,15 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 
-#ifdef USE_NEW_CSRS
 #include <mby_top_map.h>
-#endif
 
 // Defines:
 
-#ifdef USE_NEW_CSRS
 #define MBY_CGM_IN_REGS    mby_ppe_cm_apply_map * const cm_apply_map, \
                            mby_ppe_cm_usage_map * const cm_usage_map
 
 #define MBY_CGM_IN_REGS_P                               cm_apply_map, \
                                                         cm_usage_map
-#else
-#define MBY_CGM_IN_REGS    fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE]
-#define MBY_CGM_IN_REGS_P            regs
-#endif
 
 // Enums:
 

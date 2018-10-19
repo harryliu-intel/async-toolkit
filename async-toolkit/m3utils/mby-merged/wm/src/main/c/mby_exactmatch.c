@@ -118,11 +118,7 @@ static void getEmHashHitActions
 
 static void getEmHashRamData
 (
-#ifdef USE_NEW_CSRS
 
-#else
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     fm_byte                   const group,
     fm_uint32                 const hash_num,
     mbyClassifierHashLookup   const bucket,
@@ -152,11 +148,7 @@ static void getEmHashRamData
 
     fm_byte ram_alloc[MBY_FFU_KEY_MASK0_ENTRIES_1] = { 0 };
     for (fm_uint i = 0; i < MBY_FFU_KEY_MASK0_ENTRIES_1; i++) {
-#ifdef USE_NEW_CSRS
         ram_alloc[i] = mbyClsGetEmHashRamAlloc(      i);
-#else
-        ram_alloc[i] = mbyClsGetEmHashRamAlloc(regs, i);
-#endif
     }
 
     fm_bool   mode_32b   = (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_32B);
@@ -194,11 +186,7 @@ static void getEmHashRamData
                 break;
             }
 
-#ifdef USE_NEW_CSRS
             hash_entry = mbyClsGetEmHashEntryRam(      hash_num, entry_idx); // REVISIT!!!
-#else
-            hash_entry = mbyClsGetEmHashEntryRam(regs, hash_num, entry_idx);
-#endif
             entry_idx++;
         }
         else if (rd_ram_num == 0)
@@ -209,11 +197,7 @@ static void getEmHashRamData
                 break;
             }
 
-#ifdef USE_NEW_CSRS
             hash_entry = mbyClsGetEmHashEntryRam(      rd_ram_num, entry_idx); // REVISIT!!!
-#else
-            hash_entry = mbyClsGetEmHashEntryRam(regs, rd_ram_num, entry_idx);
-#endif
             if ((entry_idx % 4) == 3) {
                 rd_ram_num = 1;
                 entry_idx = (entry_idx / 4) * 4;
@@ -228,11 +212,7 @@ static void getEmHashRamData
                 break;
             }
 
-#ifdef USE_NEW_CSRS
             hash_entry = mbyClsGetEmHashEntryRam(      rd_ram_num, entry_idx); // REVISIT!!!
-#else
-            hash_entry = mbyClsGetEmHashEntryRam(regs, rd_ram_num, entry_idx);
-#endif
             if ((entry_idx % 4) == 3)
                 rd_ram_num = 0;
 
@@ -256,12 +236,8 @@ static void getEmHashRamData
 
 void mbyMatchExact // i.e. look up EM hash
 (
-#ifdef USE_NEW_CSRS
     mby_ppe_cgrp_a_map      * const cgrp_a_map,
     mby_ppe_cgrp_b_map      * const cgrp_b_map,
-#else
-    fm_uint32                       regs[MBY_REGISTER_ARRAY_SIZE],
-#endif
     mbyClassifierKeys const * const keys,
     fm_byte                   const scenario,
     fm_byte                   const group,
@@ -274,15 +250,9 @@ void mbyMatchExact // i.e. look up EM hash
         fm_uint32 hash_actions[MBY_FFU_MAX_HASH_ACTIONS] = { 0 };
 
         // Get FFU_KEY_MASK register fields:
-#ifdef USE_NEW_CSRS
         mbyClassifierKeyMaskCfg key_mask_cfg = (group == 0)
             ? mbyClsGetEmAKeyMaskCfg(cgrp_a_map, hash_num, scenario)
             : mbyClsGetEmBKeyMaskCfg(cgrp_b_map, hash_num, scenario);
-#else
-        mbyClassifierKeyMaskCfg key_mask_cfg = (group == 0)
-            ? mbyClsGetEmAKeyMaskCfg(regs,       hash_num, scenario)
-            : mbyClsGetEmBKeyMaskCfg(regs,       hash_num, scenario);
-#endif
         // Apply key mask on FFU keys:
         mbyClassifierKeys hash_keys;
         applyEmKeyMask(key_mask_cfg, *keys, &hash_keys);
@@ -304,15 +274,9 @@ void mbyMatchExact // i.e. look up EM hash
         fm_uint16 hash_index =  hash        & 0x1fff;
         fm_uint16 hash_more  = (hash >> 16) & 0xffff;
 
-#ifdef USE_NEW_CSRS
         mbyClassifierHashCfg hash_cfg = (group == 0)
             ? mbyClsGetEmAHashCfg(cgrp_a_map, scenario)
             : mbyClsGetEmBHashCfg(cgrp_b_map, scenario);
-#else
-        mbyClassifierHashCfg hash_cfg = (group == 0)
-            ? mbyClsGetEmAHashCfg(regs, scenario)
-            : mbyClsGetEmBHashCfg(regs, scenario);
-#endif
         // Don't perform lookups if hash_num is 1 in non-split mode:
         if ((hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) && (hash_num == MBY_FFU_KEY_MASK0_ENTRIES_1 - 1))
            break;
@@ -325,15 +289,9 @@ void mbyMatchExact // i.e. look up EM hash
             + (hash_index % (1uL << hash_cfg.hash_size[hash_num]))
             + ((hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_32B && hash_num == 1) ? 4096 : 0);
 
-#ifdef USE_NEW_CSRS
         mbyClassifierHashLookup bucket = (group == 0)
             ? mbyClsGetEmAHashLookupEntry(cgrp_a_map, lookup_ptr)
             : mbyClsGetEmBHashLookupEntry(cgrp_b_map, lookup_ptr);
-#else
-        mbyClassifierHashLookup bucket  = (group == 0)
-            ? mbyClsGetEmAHashLookupEntry(regs, lookup_ptr)
-            : mbyClsGetEmBHashLookupEntry(regs, lookup_ptr);
-#endif
         fm_byte min_cam_key_size = (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) ?
             (MBY_FFU_MAX_HASH_ENTRY_SIZE   - ( MBY_FFU_MAX_HASH_ACTIONS    * 4)) :
             (MBY_FFU_MAX_HASH_ENTRY_SIZE/2 - ((MBY_FFU_MAX_HASH_ACTIONS/2) * 4)) ;
@@ -354,15 +312,9 @@ void mbyMatchExact // i.e. look up EM hash
                 fm_bool hashn_32b = ( ((hash_num == 0) && (j < 4)) || ((hash_num == 1) && (j >= 4)) );
 
                 if (entry_64b || (entry_32b && hashn_32b)) {
-#ifdef USE_NEW_CSRS
                     fm_uint64 cam_entry = (group == 0)
                         ? mbyClsGetEmAHashCamEntry(cgrp_a_map, i, j)
                         : mbyClsGetEmBHashCamEntry(cgrp_b_map, i, j);
-#else
-                    fm_uint64 cam_entry = (group == 0)
-                        ? mbyClsGetEmAHashCamEntry(regs, i, j)
-                        : mbyClsGetEmBHashCamEntry(regs, i, j);
-#endif
                     for (fm_uint k = 0; k < 8; k++) {
                         cam_key[key_idx] = (cam_entry >> (8 * (7-k))) & 0xFF;
                         key_idx++;
@@ -393,28 +345,16 @@ void mbyMatchExact // i.e. look up EM hash
 
             if (cam_hit)
             {
-#ifdef USE_NEW_CSRS
                 fm_uint64 scenario_mask = (group == 0)
                     ? mbyClsGetEmAHashCamMask(cgrp_a_map, hash_num, i)
                     : mbyClsGetEmBHashCamMask(cgrp_b_map, hash_num, i);
-#else
-                fm_uint64 scenario_mask = (group == 0)
-                    ? mbyClsGetEmAHashCamMask(regs, hash_num, i)
-                    : mbyClsGetEmBHashCamMask(regs, hash_num, i);
-#endif
                 hash_cam_en = (scenario_mask >> scenario) & 1;
 
                 // 64B entry mode needs to consider CAM_EN[0/1]
                 if (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) {
-#ifdef USE_NEW_CSRS
                 fm_uint64 scenario_mask = (group == 0)
                     ? mbyClsGetEmAHashCamMask(cgrp_a_map, hash_num + 1, i)
                     : mbyClsGetEmBHashCamMask(cgrp_b_map, hash_num + 1, i);
-#else
-                fm_uint64 scenario_mask = (group == 0)
-                    ? mbyClsGetEmAHashCamMask(regs, hash_num + 1, i)
-                    : mbyClsGetEmBHashCamMask(regs, hash_num + 1, i);
-#endif
                     hash_cam_en &= (scenario_mask >> scenario) & 1;
                 }
 
@@ -440,11 +380,7 @@ void mbyMatchExact // i.e. look up EM hash
             fm_byte hash_ram_key[MBY_FFU_MAX_HASH_ENTRY_SIZE] = { 0 };
             fm_bool ram_data_ok = FALSE;
 
-#ifdef USE_NEW_CSRS
             getEmHashRamData(      group, hash_num, bucket, hash_cfg, hash_more, hash_ram_key, &ram_data_ok); // <-- REVISIT!!!
-#else
-            getEmHashRamData(regs, group, hash_num, bucket, hash_cfg, hash_more, hash_ram_key, &ram_data_ok);
-#endif
             // Compare Cam key with packeyKey:
             if (key_size < MBY_FFU_MAX_HASH_ENTRY_SIZE) {
                 for (fm_uint j = 0; j < key_size; j++) {
@@ -465,11 +401,7 @@ void mbyMatchExact // i.e. look up EM hash
                 getEmHashHitActions(hash_ram_key, hash_cfg.mode, key_size, cam_entry_size, is_cam, hash_actions);
             } else {
                 // Get actions from FFU_HASH_MISS register since both cam and ram missed
-#ifdef USE_NEW_CSRS
                 mbyClsGetEmHashMissActions(cgrp_a_map, cgrp_b_map, group, hash_cfg, hash_num, scenario, hash_actions);
-#else
-                mbyClsGetEmHashMissActions(regs,                   group, hash_cfg, hash_num, scenario, hash_actions);
-#endif
             }
 
         } // if !hash_cam_en
