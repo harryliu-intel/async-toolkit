@@ -15,7 +15,7 @@ package fc_uvm_reg_pkg;
   import uvm_pkg::*;
   `include "uvm_macros.svh"
 
-  import ip3_uvm_reg_pkg::*;
+  //import ip3_uvm_reg_pkg::*;
 
  // FC reg map
  `include "fc_uvm_reg_map.sv"
