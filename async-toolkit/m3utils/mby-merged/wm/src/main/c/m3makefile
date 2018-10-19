@@ -3,6 +3,9 @@ SYSTEM_CC = SYSTEM_CC & " -std=gnu99"
 h_source ("mby_common")
 c_source ("mby_common")
 
+h_source ("mby_pipeline")
+c_source ("mby_pipeline")
+
 h_source ("mby_parser")
 c_source ("mby_parser")
 
@@ -11,8 +14,8 @@ c_source ("mby_mapper")
 
 c_source ("mby_model_basic")
 
-h_source ("fm_bitfield")
-c_source ("fm_bitfield")
+h_source ("mby_bitfield")
+c_source ("mby_bitfield")
 
 h_source ("fm_defs")
 h_source ("fm_types")
