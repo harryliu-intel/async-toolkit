@@ -186,28 +186,6 @@ EOF
                  -tag => "nonsynth",
              },
 
-             fc_lite_tests_lib => {
-                 -generated => 1,
-                 -hdl_spec => [
-                     "verif/gen/fc_test.hdl",
-                 ],
-                 -dependent_libs => [
-                     "shdv_shared_lib",
-                     "ext_shared_lib",
-                     "mby_common_lib",
-                     "fc_lite_env_lib",
-                     "fc_lite_seq_lib",
-                     $fc_global_vars::COLLAGE_LIB,
-                     "generated_collateral_lib",
-                     @all_sip_verif_liblist,
-                 ],
-                 -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_verif_vlogopts,
-                 ],
-                 -tag => "nonsynth",
-             },
-
              fc_seq_lib => {
                  -hdl_spec => [
                      "verif/tb/seqlib/fcseq.hdl",
@@ -217,25 +195,6 @@ EOF
                      "ext_shared_lib",
                      "mby_common_lib",
                      "fc_env_lib",
-                     $fc_global_vars::COLLAGE_LIB,
-                     @all_sip_verif_liblist,
-                 ],
-                 -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_verif_vlogopts,
-                 ],
-                 -tag => "nonsynth",
-             },
-
-             fc_lite_seq_lib => {
-                 -hdl_spec => [
-                     "verif/tb/seqlib/fcseq.hdl",
-                 ],
-                 -dependent_libs => [
-                     "shdv_shared_lib",
-                     "ext_shared_lib",
-                     "mby_common_lib",
-                     "fc_lite_env_lib",
                      $fc_global_vars::COLLAGE_LIB,
                      @all_sip_verif_liblist,
                  ],
@@ -266,28 +225,6 @@ EOF
                      @all_sip_rtl_vlogopts,
                      @top_vrf_vlogopts,
                  ],
-             },
-
-             fc_lite_env_lib => {
-                 -generated => 1,
-                 -hdl_spec => [
-                     "verif/tb/env/fc_env.hdl",
-                 ],
-                 -dependent_libs => [
-                     "shdv_shared_lib",
-                     "ext_shared_lib",
-                     "mby_common_lib",
-                     "vte_tr_uvm_lib",
-                     @all_sip_verif_liblist,
-                     $fc_global_vars::COLLAGE_LIB,
-                 ],
-                 -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_verif_vlogopts,
-                     @all_sip_rtl_vlogopts,
-                     @top_vrf_vlogopts,
-                 ],
-                 -tag => "nonsynth",
              },
 
              generated_collateral_lib => {
@@ -362,56 +299,6 @@ EOF
                      "+define+FC_MODEL",
                      "+define+HDL_TOP_LIB=fc_hdl_top_lib",
                      "+define+HDL_TOP_CFG=fc_cfg",
-                 ],
-                 -tag => "nonsynth",
-             },
-
-             fc_lite_hdl_top_lib => {
-                 -generated => 1,   # looking up verif/gen
-                 -hdl_spec => [
-                     "verif/tb/wrappers/fc_hdl_top.hdl",
-                     "verif/gen/FcDutConnect.hdl",
-                 ],
-                 -dependent_libs => [
-                     $fc_global_vars::COLLAGE_LIB,
-                     "generated_collateral_lib",
-                 ],
-                  -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_rtl_vlogopts,
-                     @all_sip_verif_vlogopts,
-                     @top_vrf_vlogopts,
-                     "+define+FC_LITE_MODEL",
-                     "+define+HDL_TOP_LIB=fc_lite_hdl_top_lib",
-                     "+define+HDL_TOP_CFG=fc_lite_cfg",
-                 ],
-                 -tag => "nonsynth",
-             },
-
-             fc_lite_hvl_top_lib => {
-                 -generated => 1,   # looking up verif/gen
-                 -hdl_spec => [
-                     "verif/tb/wrappers/fc_hvl_top.hdl",
-                 ],
-                  -dependent_libs => [
-                     "sip_shared_lib",
-                     "fc_lite_env_lib",
-                     "fc_lite_tests_lib",
-                     "fc_lite_seq_lib",
-                     $fc_global_vars::COLLAGE_LIB,
-                     @all_sip_verif_liblist,
-                 ],
-                 -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_verif_vlogopts,
-                     @all_sip_rtl_vlogopts,
-                     @top_vrf_vlogopts,
-                     "+define+FC_LITE_MODEL",
-                     "+define+HDL_TOP_LIB=fc_lite_hdl_top_lib",
-                     "+define+HVL_TOP_LIB=fc_lite_hvl_top_lib",
-                     "+define+HDL_TOP_CFG=fc_lite_cfg",
-                     "+define+HVL_TOP=fc_hvl_top",
-                     "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh"
                  ],
                  -tag => "nonsynth",
              },
@@ -687,8 +574,6 @@ EOF
                   upf_files => [ 'tools/upf/mby_upf.upf' ],
                },
             },
-
-            # fc_lite => $audf{HDLSpec}{mby}{models}{fc};
 
          }, # Models
       },
