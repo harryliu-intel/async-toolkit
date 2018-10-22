@@ -128,7 +128,7 @@ class mby_rx_ppe_alive_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
                             }, ("Unable to randomize eth_pkt"))
                         count[auto_i]++;
                         `slu_info(this.get_name(), ("Started eth_frame %0d %0d", auto_i, count[auto_i]))
-                        `uvm_send(los_frames[auto_i])
+                        //`uvm_send(los_frames[auto_i])
 
                         `slu_info(this.get_name(), ("Sent eth_frame %0d %0d", auto_i, count[auto_i]))
                     end
