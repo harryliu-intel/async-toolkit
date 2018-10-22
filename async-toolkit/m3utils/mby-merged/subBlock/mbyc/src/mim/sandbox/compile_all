@@ -1,0 +1,29 @@
+#! /bin/csh -f 
+
+rm simv
+rm simv.daidir/.vcs.timestamp
+
+#setenv SHARED_RTL `ToolConfig.pl get_tool_path ipconfig/sl2_library`
+#setenv IP16 `ToolConfig.pl get_tool_path ipconfig/sl2lib_ip16`
+#setenv IP16 /nfs/site/disks/sdg74_mod_fhdk16_0001/sl2lib_ip16/sl2lib_ip16-srvr10nm-16ww27c
+#setenv CTECH_LIB `ToolConfig.pl get_tool_path ipconfig/ctech`
+#setenv NEBULON `ToolConfig.pl get_tool_path nebulon`
+#setenv DFTW_RTL  `ToolConfig.pl get_tool_path ipconfig/dftw_library`
+#setenv QSPI_PATH `ToolConfig.pl get_tool_path ipconfig/cdns_qspi_flash_ctrl`
+
+#echo $SHARED_RTL
+#echo $IP16
+#echo $CTECH_LIB
+#echo $NEBULON
+#echo $DFTW_RTL
+#echo $QSPI_PATH
+
+#vcs +vpdupdate +vpdfilesize+500 -M -Mupdate -PP +define+SHRTL_LIB_MODEL \
+vcs +vpdupdate +vpdfilesize+500 -M -Mupdate -PP \
+     -f mim.f \
+     -debug_pp \
+     -sverilog
+
+#simv +vpddrivers -l sim_log.txt -gui      
+#simv +vpddrivers -l sim_log.txt +vcs+lic+wait     
+     

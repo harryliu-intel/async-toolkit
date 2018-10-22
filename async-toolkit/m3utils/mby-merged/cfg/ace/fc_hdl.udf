@@ -214,7 +214,7 @@ EOF
                      "shdv_shared_lib",
                      "ext_shared_lib",
                      "mby_common_lib",
-                     "vte_tr_uvm_lib",
+                     #ssn "vte_tr_uvm_lib",
                      @all_sip_verif_liblist,
                      $fc_global_vars::COLLAGE_LIB,
                  ],
@@ -225,6 +225,28 @@ EOF
                      @all_sip_rtl_vlogopts,
                      @top_vrf_vlogopts,
                  ],
+             },
+
+             fc_lite_env_lib => {
+                 -generated => 1,
+                 -hdl_spec => [
+                     "verif/tb/env/fc_env.hdl",
+                 ],
+                 -dependent_libs => [
+                     "shdv_shared_lib",
+                     "ext_shared_lib",
+                     "mby_common_lib",
+                     #ssn "vte_tr_uvm_lib",
+                     @all_sip_verif_liblist,
+                     $fc_global_vars::COLLAGE_LIB,
+                 ],
+                 -vlog_opts => [
+                     @FC_VLOG_OPTIONS,
+                     @all_sip_verif_vlogopts,
+                     @all_sip_rtl_vlogopts,
+                     @top_vrf_vlogopts,
+                 ],
+                 -tag => "nonsynth",
              },
 
              generated_collateral_lib => {
@@ -361,7 +383,7 @@ EOF
                   "svt_ahb_lib",
                   "mby_wm_dpi_lib",
                   "mby_common_lib",
-                  "vte_tr_uvm_lib",
+                  #ssn "vte_tr_uvm_lib",
 
 # Per Subodh suggestion to temporary disable WM - WW40.2 2018
 #                  "gen_mby_regflow_lib",
