@@ -28,10 +28,10 @@
 // Class: mby_igr_base_env
 //-------------------------------------------------------------------------------
 class mby_igr_base_env extends uvm_env; // PJP: TODO: Change to extend shared_dv_env once shared dv libraray is pure UVM.
-   protected mby_igr_cfg cfg;
+   protected mby_igr_tb_cfg tb_cfg;
 
    `uvm_component_utils_begin(mby_igr_base_env)
-      `uvm_field_object(cfg, UVM_ALL_ON)
+      `uvm_field_object(tb_cfg, UVM_ALL_ON)
    `uvm_component_utils_end
 
    protected static mby_igr_base_env      _top_tb_env;
@@ -53,8 +53,8 @@ class mby_igr_base_env extends uvm_env; // PJP: TODO: Change to extend shared_dv
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
 
-      cfg = mby_igr_cfg::type_id::create("igr_cfg", this); // PJP: TODO: Remove this line once the shared dv library is pure UVM.
-//PJP assert ($cast(cfg, config_obj)); // TODO: Uncomment once shared dv library is pure UVM.
+      tb_cfg = mby_igr_tb_cfg::type_id::create("igr_tb_cfg", this); // PJP: TODO: Remove this line once the shared dv library is pure UVM.
+//PJP assert ($cast(tb_cfg, config_obj)); // TODO: Uncomment once shared dv library is pure UVM.
 
       // populate the static members only if the top most tb has not already been constructed
       if(_top_tb_env == null) begin
