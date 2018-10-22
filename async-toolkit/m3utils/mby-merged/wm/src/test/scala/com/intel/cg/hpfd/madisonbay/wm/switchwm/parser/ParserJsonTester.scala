@@ -50,8 +50,13 @@ class ParserJsonTester extends FlatSpec with Matchers {
   }
 
   def parseFromCConfig(packet: Packet): ParserOutput = {
+    val fullPacket = if (packet.bytes.length < 32) {
+      Packet(packet.bytes ++ Array.fill[Byte](32)(0))
+    } else {
+      packet
+    }
     val parserMap = ParserProgrammer(progFromC, csr)
-    Parser.parse(parserMap, packet, 0)
+    Parser.parse(parserMap, fullPacket, 1)
   }
 
 }

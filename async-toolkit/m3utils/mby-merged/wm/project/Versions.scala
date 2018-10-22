@@ -1,7 +1,7 @@
 object Versions {
 
   val applicationVersion = "0.1-SNAPSHOT"
-  val scalaVersion = "2.12.6"
+  val scalaVersion = "2.12.7"
 
   val scalaTest = "3.0.5"
   val scopt = "3.7.0"

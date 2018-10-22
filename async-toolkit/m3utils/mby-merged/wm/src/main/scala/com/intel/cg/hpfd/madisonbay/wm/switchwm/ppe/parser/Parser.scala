@@ -2,7 +2,6 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.csr.generated._
-import ParserTcam._
 import ParserExceptions._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{IPVersion, Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
@@ -39,8 +38,7 @@ object Parser {
     // TODO: support split header to Interface 0 and Interface 1
     val packetHeader = PacketHeader(packet.bytes).trimmed
 
-    // setup the initial state
-    val rxPort = new PortIndex(portIndex) // need to handle this via the function interface somehow...
+    val rxPort = new PortIndex(portIndex)
 
     val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(
       csr, 0, packetHeader, initialState(csr, packetHeader, rxPort),
@@ -78,8 +76,8 @@ object Parser {
 
     case NumberOfParsingStages => (packetFlags, fields, exceptionOpt)
 
-    case id =>
-      val action = matchingAction(csr, id, parserState.w(0), parserState.w(1), parserState.state)
+    case stage =>
+      val action = matchingAction(csr, stage, parserState.w(0), parserState.w(1), parserState.state)
       (exceptionOpt, action) match {
 
         case (Some(exc), _) => (packetFlags, fields, Some(exc))
@@ -97,15 +95,13 @@ object Parser {
     * Do the TCAM lookup, translate the result into actions
     */
   private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, w0: Short, w1: Short, state: Short): Option[Action]  = {
-    val matcher = tcamMatchRegSeq(parserAnalyzerTcamMatchBit) _
-
     // All lists have size of 16
     @tailrec
     def findAction(keysW: List[parser_key_w_r.parser_key_w_r], keysS: List[parser_key_s_r.parser_key_s_r],
                    anaWs: List[parser_ana_w_r.parser_ana_w_r], anaSs: List[parser_ana_s_r.parser_ana_s_r],
                    exts:  List[parser_ext_r.parser_ext_r],     excs:  List[parser_exc_r.parser_exc_r]): Option[Action] =
       (keysW, keysS, anaWs, anaSs, exts, excs) match {
-        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if matcher(Seq(
+        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.matchRegisterSeq(Seq(
             ParserTcam.TcTriple(kW.W0_MASK,    kW.W0_VALUE,    w0),
             ParserTcam.TcTriple(kW.W1_MASK,    kW.W1_VALUE,    w1),
             ParserTcam.TcTriple(kS.STATE_MASK, kS.STATE_VALUE, state)
@@ -153,7 +149,7 @@ object Parser {
   def initialState(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
     val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
-    val w = initWOffsets.map(off => packetHeader.getWord(off().toInt))
+    val w = initWOffsets.map(offset => packetHeader.getWord(offset().toInt))
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
     val state = portCfg.INITIAL_STATE().toShort
     val ptr = portCfg.INITIAL_PTR().toShort
@@ -165,7 +161,7 @@ object Parser {
     val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
     val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
-    val tc = tcamMatchReg(Tcam.tcamMatchBit)(_)
+    val tc = ParserTcam.matchRegister(Tcam.matchBitFun)(_)
     tcamCsr.zip(sramCsr).reverse.collectFirst{
       case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
     }.getOrElse((0,0))
