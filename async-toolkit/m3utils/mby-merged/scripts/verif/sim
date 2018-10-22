@@ -137,6 +137,8 @@ while($_=shift @ARGV ) {
     } elsif(/^-+tgl_cov$/i) {
         $bman_args = $bman_args . " -tgl_cov ";
         $ace_args  = $ace_args  . " -tgl_cov ";
+    } elsif(/^-+inc$/i) {
+        $bman_args = $bman_args." -enable_incremental_scheduling";
     } elsif(/^-+do_file$/i) {
         $do_file = '-do_file '. shift @ARGV;
     } elsif(/^-+vre_dir$/i) {
@@ -275,7 +277,7 @@ sub process_commands {
                 $single_fc_dut = 'hcx';
                 $dut_name = 'hcx';
                 $test_pkg = '';
-            } elsif($ace_model =~ /^(fc_.*)$/) {
+            } elsif($ace_model =~ /(fc_64_no_phy|fc_64|fc_8_no_phy|fc_8)$/) {
                 #$dut_name = 'fc_lite';
                 $dut_name = $1;
                 $variant = "-variant $1";
@@ -463,6 +465,7 @@ sub print_help_message {
   print "   -clean              Clean target and regression directories.\n";
   print "   -cc                 Clean compile.\n";
   print "   -c                  Repeat compile (must do a -cc initially).\n";
+  print "   -inc                Use BMAN internal scheduling method for incremental compile\n";
   print "   -x <test>           Execute/run a test.\n";
   print "   -t <test>           Execute/run a test.\n";
   print "   -tl <file>          Execute/run a test list in netbatch.\n";

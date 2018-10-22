@@ -16,7 +16,7 @@
 //fc_rst_sig_chk rst_sig_chk;
 
 `ifdef VTE_IP3_UVM_ENV_ENABLE
-  vte_ip3Uvm_integ_env vte_ip3_subenv;
+  //vte_ip3Uvm_integ_env vte_ip3_subenv;
 `endif
 
 `ifdef IGR_ENV_ENABLE
@@ -47,7 +47,7 @@ function void build_sub_system_envs();
   //-- build sub-system envs
 
   `ifdef VTE_IP3_UVM_ENV_ENABLE
-      vte_ip3_subenv = vte_ip3Uvm_integ_env::type_id::create("vte_ip3_subenv", this);
+      //vte_ip3_subenv = vte_ip3Uvm_integ_env::type_id::create("vte_ip3_subenv", this);
   `endif
 
   `ifdef IGR_ENV_ENABLE
