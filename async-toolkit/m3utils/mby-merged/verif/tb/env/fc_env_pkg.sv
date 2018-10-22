@@ -29,10 +29,10 @@ package fc_env_pkg;
     import svt_amba_uvm_pkg::*;
 
     // VTE UVM ip1 pkg (native UVM based)
-    import ip1_uvm_pkg::*;
+    //import ip1_uvm_pkg::*;
 
     // VTE UVM ip3 pkg (native UVM based)
-    import ip3_uvm_env_pkg::*;
+    //import ip3_uvm_env_pkg::*;
 
     // FC UVM reg
     import fc_uvm_reg_pkg::*;
@@ -68,7 +68,7 @@ package fc_env_pkg;
 
     // VTE-UVM-TR
     `ifdef VTE_IP3_UVM_ENV_ENABLE
-        `include "vte_ip3_uvm_integ_env.svh"
+        //`include "vte_ip3_uvm_integ_env.svh"
     `endif // VTE_IP3_UVM_ENV_ENABLE
 
     // IGR 

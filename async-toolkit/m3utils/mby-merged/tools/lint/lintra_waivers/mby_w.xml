@@ -13,4 +13,5 @@
   <waiver descr="DfxSecurePlugin" owner="yklein1" nd_date="8000-12-31" open_date="Wed Nov 26 2014" limit="-1" id="yklein11416994891" rule="50007" file=".*/rtl/dfxsecure_plugin/dfxsecure_plugin.sv" message="" hierarchy=".*cmi_top.*" />
   <waiver descr="Unused bit" owner="efratv" nd_date="" open_date="Thu Feb 5 2015" limit="-1" id="efratv1423120300" rule="70045" file=".*/cmi/visa_rtl/cmi_data_router.sv" module="cmi_data_router" library="cmi_lib" message="" key="post_mux_rst_b_req_arr \(post_mux_rst_b_req_arr\[3\]\),cmi_data_router" hierarchy=".*cmi_top.*" />
   <waiver descr="" owner="ypolache" nd_date="" open_date="Wed May 20 2015" limit="-1" id="IP_ypolache_1432145797" rule="70601" file=".*/cmi/visa_rtl/cmi_top.sv" module="visa_.*" library="cmi_lib" message="" key="lane_in,visa_.*" hierarchy=".*cmi_top.*" />
+    <waiver desc="TAG:SOCWaived : Source code between translate_off and translate_on pragmas will be ignored" limit="-1" open_date="Tue Aug 16 2016" message="Source code between translate_off and translate_on pragmas will be ignored.*" id="zz_pch_pchglobal_00101" rule="2218" file=".*/.*\.(v|sv|vs|inc|svh)+" owner="cchia3" />
 </LINTRA_WAIVERS>

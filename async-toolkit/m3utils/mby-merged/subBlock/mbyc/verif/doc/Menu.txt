@@ -276,6 +276,32 @@ Group: Mby  {
 
    }  # Group: Mby
 
+Group: Tests  {
+
+   File: mby_mesh_base_test  (mesh/tests/common/mby_mesh_base_test.svh)
+   File: mby_mesh_random_test/mby_mesh_random_test.svh  (mesh/tests/mby_mesh_random_test/mby_mesh_random_test.svh)
+   File: mby_mesh_test_lib  (mesh/tests/common/mby_mesh_test_lib.sv)
+   }  # Group: Tests
+
+Group: Env  {
+
+   File: mby_mesh_dut_cfg.svh  (mesh/env/mby_mesh_dut_cfg.svh)
+   File: mby_mesh_env.svh  (mesh/env/mby_mesh_env.svh)
+   File: mby_mesh_env_cfg  (mesh/env/mby_mesh_env_cfg.svh)
+   File: mby_mesh_env_pkg  (mesh/env/mby_mesh_env_pkg.sv)
+   File: mby_mesh_tb_top_cfg  (mesh/env/mby_mesh_tb_top_cfg.svh)
+   }  # Group: Env
+
+Group: Seq  {
+
+   File: mby_mesh_env_base_seq  (mesh/seq/mby_mesh_env_base_seq.svh)
+   File: mby_mesh_env_cfg_seq  (mesh/seq/mby_mesh_env_cfg_seq.svh)
+   File: mby_mesh_hard_reset_seq  (mesh/seq/mby_mesh_hard_reset_seq.svh)
+   File: mby_mesh_power_good_seq  (mesh/seq/mby_mesh_power_good_seq.svh)
+   File: mby_mesh_seq_lib  (mesh/seq/mby_mesh_seq_lib.sv)
+   File: mby_mesh_warm_reset_seq  (mesh/seq/mby_mesh_warm_reset_seq.svh)
+   }  # Group: Seq
+
 Group: Index  {
 
    Index: Everything

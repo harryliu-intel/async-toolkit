@@ -88,12 +88,14 @@ Examples of Build Manager commands for DUTs:
 ------------------------------------------------------------------------------------------------------------
 Models                    Commands                                 Description
 ------------------------------------------------------------------------------------------------------------
-MBY                    -  bman -mc fc                            # Madison Bay Configuration
+fc                     -  bman -mc fc                            # Madison Bay FC model
 mplex_np_nphy          -  bman -mc mplex_np_nphy                 # Management complex model with no Processor and no PHY.   
 igr                    -  bman -mc igr                           # Ingress testbench
 egr                    -  bman -mc egr                           # Egress testbench
 rx_ppe                 -  bman -mc rx_ppe                        # RX_PPE Testbench
 mesh                   -  bman -mc mesh                          # Mesh Testbench
+gmm_s                  -  bman -mc gmm_s                         # GMM_S RTL  
+
 ------------------------------------------------------------------------------------------------------------
 *The following FC variant models require 'sim' script support. To enable that please run the following:
 * %source scripts/verif/fc.env 

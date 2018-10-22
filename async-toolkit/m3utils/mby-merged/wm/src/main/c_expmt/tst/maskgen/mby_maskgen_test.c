@@ -71,9 +71,6 @@ static void maskgen_test_setup
     nexthopToMaskgen->L2_EVID1             = test_in->l2_evid1;
     nexthopToMaskgen->AMASK                = test_in->amask;
     nexthopToMaskgen->L2_IVLAN1_MEMBERSHIP = test_in->l2_ivlan1_membership;
-    nexthopToMaskgen->L2_EVLAN1_MEMBERSHIP = test_in->l2_evlan1_membership;
-    nexthopToMaskgen->L2_IFID1_STATE       = test_in->l2_ifid1_state;
-    nexthopToMaskgen->L2_EFID1_STATE       = test_in->l2_efid1_state;
     nexthopToMaskgen->L2_EDOMAIN           = test_in->l2_edomain_in;
     nexthopToMaskgen->MARK_ROUTED          = test_in->mark_routed;
     nexthopToMaskgen->PARSER_ERROR         = test_in->parser_error;
@@ -108,6 +105,18 @@ static void maskgen_test_setup
 
     FM_SET_FIELD64(fwd_port_cfg2_reg, MBY_FWD_PORT_CFG_2, DESTINATION_MASK, test_in->port_cfg_2.destination_mask);
     mbyModelWriteCSR64(regs, MBY_FWD_PORT_CFG_2(test_in->l2_edomain_in, 0), fwd_port_cfg2_reg);
+#endif
+
+    /* Set EGRESS_VID_TABLE register. */
+#ifdef USE_NEW_CSRS
+    egress_vid_table_r * const vid_table = &(glort_map->EGRESS_VID_TABLE[test_in->l2_evid1][0]);
+
+    vid_table->MEMBERSHIP = test_in->evid_table.membership;
+#else
+    fm_uint64 evid_table_reg = 0;
+
+    FM_SET_FIELD64(evid_table_reg, MBY_EGRESS_VID_TABLE, MEMBERSHIP, test_in->evid_table.membership);
+    mbyModelWriteCSR64(regs, MBY_EGRESS_VID_TABLE(test_in->l2_evid1, 0), evid_table_reg);
 #endif
 
     /* Set FWD_SYS_CFG_1 register. */
@@ -251,6 +260,64 @@ static void maskgen_test_setup
     FM_SET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, IP_MULTICAST_INDEX, test_in->glort_map.ip_multicast_index);
     FM_SET_FIELD64(glort_dest_table_reg, MBY_GLORT_DEST_TABLE, DEST_MASK, test_in->glort_map.dest_mask);
     mbyModelWriteCSR64(regs, MBY_GLORT_DEST_TABLE(dest_index, 0), glort_dest_table_reg);
+#endif
+
+    /* Set INGRESS_MST_TABLE register. */
+#ifdef USE_NEW_CSRS
+    ingress_mst_table_r * const ingress_mst_table = &(glort_map->INGRESS_MST_TABLE[test_in->l2_ivid1]);
+
+    ingress_mst_table->STP_STATE_0 = test_in->ingress_mst_table.stp_state_0;
+    ingress_mst_table->STP_STATE_1 = test_in->ingress_mst_table.stp_state_1;
+    ingress_mst_table->STP_STATE_2 = test_in->ingress_mst_table.stp_state_2;
+    ingress_mst_table->STP_STATE_3 = test_in->ingress_mst_table.stp_state_3;
+    ingress_mst_table->STP_STATE_4 = test_in->ingress_mst_table.stp_state_4;
+    ingress_mst_table->STP_STATE_5 = test_in->ingress_mst_table.stp_state_5;
+    ingress_mst_table->STP_STATE_6 = test_in->ingress_mst_table.stp_state_6;
+    ingress_mst_table->STP_STATE_7 = test_in->ingress_mst_table.stp_state_7;
+    ingress_mst_table->STP_STATE_8 = test_in->ingress_mst_table.stp_state_8;
+    ingress_mst_table->STP_STATE_9 = test_in->ingress_mst_table.stp_state_9;
+    ingress_mst_table->STP_STATE_10 = test_in->ingress_mst_table.stp_state_10;
+    ingress_mst_table->STP_STATE_11 = test_in->ingress_mst_table.stp_state_11;
+    ingress_mst_table->STP_STATE_12 = test_in->ingress_mst_table.stp_state_12;
+    ingress_mst_table->STP_STATE_13 = test_in->ingress_mst_table.stp_state_13;
+    ingress_mst_table->STP_STATE_14 = test_in->ingress_mst_table.stp_state_14;
+    ingress_mst_table->STP_STATE_15 = test_in->ingress_mst_table.stp_state_15;
+    ingress_mst_table->STP_STATE_16 = test_in->ingress_mst_table.stp_state_16;
+    ingress_mst_table->STP_STATE_17 = test_in->ingress_mst_table.stp_state_17;
+#else
+    fm_uint64 ingress_mst_table_reg = 0;
+
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 0, 2, test_in->ingress_mst_table.stp_state_0);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 2, 2, test_in->ingress_mst_table.stp_state_1);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 4, 2, test_in->ingress_mst_table.stp_state_2);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 6, 2, test_in->ingress_mst_table.stp_state_3);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 8, 2, test_in->ingress_mst_table.stp_state_4);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 10, 2, test_in->ingress_mst_table.stp_state_5);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 12, 2, test_in->ingress_mst_table.stp_state_6);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 14, 2, test_in->ingress_mst_table.stp_state_7);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 16, 2, test_in->ingress_mst_table.stp_state_8);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 18, 2, test_in->ingress_mst_table.stp_state_9);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 20, 2, test_in->ingress_mst_table.stp_state_10);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 20, 2, test_in->ingress_mst_table.stp_state_11);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 24, 2, test_in->ingress_mst_table.stp_state_12);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 26, 2, test_in->ingress_mst_table.stp_state_13);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 28, 2, test_in->ingress_mst_table.stp_state_14);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 30, 2, test_in->ingress_mst_table.stp_state_15);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 32, 2, test_in->ingress_mst_table.stp_state_16);
+    FM_SET_UNNAMED_FIELD64(ingress_mst_table_reg, 34, 2, test_in->ingress_mst_table.stp_state_17);
+    mbyModelWriteCSR64(regs, MBY_INGRESS_MST_TABLE(test_in->l2_ivid1, 0), ingress_mst_table_reg);
+#endif
+
+    /* Set EGRESS_MST_TABLE register. */
+#ifdef USE_NEW_CSRS
+    egress_mst_table_r * const egress_mst_table = &(glort_map->EGRESS_MST_TABLE[test_in->l2_evid1][0]);
+
+    egress_mst_table->FORWARDING = test_in->egress_mst_table.forwarding;
+#else
+    fm_uint64 egress_mst_table_reg = 0;
+
+    FM_SET_FIELD64(egress_mst_table_reg, MBY_EGRESS_MST_TABLE, FORWARDING, test_in->egress_mst_table.forwarding);
+    mbyModelWriteCSR64(regs, MBY_EGRESS_MST_TABLE(test_in->l2_evid1, 0), egress_mst_table_reg);
 #endif
 }
 
