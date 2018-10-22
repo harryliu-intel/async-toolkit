@@ -154,6 +154,7 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
+                          "cfg/ace/HDL/rtl/collage_deps.hdl",
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
@@ -391,7 +392,7 @@ EOF
                   $fc_global_vars::COLLAGE_LIB,
 
                   (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-                 # $fc_global_vars::IP_STUB_LIB,
+                  $fc_global_vars::IP_STUB_LIB,
                   "fc_hdl_top_lib",
                   "fc_hvl_top_lib",
                   "fc_env_lib",
