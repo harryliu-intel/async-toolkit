@@ -248,12 +248,14 @@ static void lpmGenerateKey
     PACK_LPM_KEY(md,   8);
     PACK_LPM_KEY(md,   16);
 
-    // TODO apply the 160 bit mask
+    // Apply the 160 bit mask
+    for (i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
+        // FIXME why is the mask 20 x 64 bits long?
+        lpmKey->key_len = key_masks.key_mask[i] & 0xff;
 
     lpmKey->key_len = len * 8;
 }
 
-// The shared fwd table doesn't exist in the old register defs
 static void lpmActions
 (
     mby_shm_map                * const shm_map,
