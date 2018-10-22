@@ -89,10 +89,10 @@
 		                       '/svt_ahb_arb_abort_on_error_resp_virtual_sequence/',
 
                                #[ssnanal] EPC setup is incorrect and ec_env handle is not uniquified across multiple mby_ec_top
-                               #Since the POR is to move to UVM RAL these errors will not be fixed. A side effect of this is however
-                               '/^.*ec_env\[\d+\].ec_core_regs already exists.*$/',
-                               '/^.*Register file ec_env\[\d+\].mac_regs\[\d+\] already exists.*$/',
-		                          ],
+                               #Since the POR is to move to UVM RAL these errors will not be fixed. 
+                               #'/^.*ec_env\[\d+\].ec_core_regs already exists.*$/',
+                               #'/^.*Register file ec_env\[\d+\].mac_regs\[\d+\] already exists.*$/',
+		               ],
                                    
 					   #okErrors_multiLine => [
 								  #[3, "/ERROR.*\(introduced error\)/", "/At time/", "/ERROR - example multi-line error/"],
