@@ -16,12 +16,12 @@ ip_version         = 1.0
 # Ports with PortWidth and PortDirection (info only)
 ########################################
 #Port_name	PortWidth	Port_Direction
-ahb0_rx_ppe_if_ahb_addr	[(@work.shared_pkg.W_MGMT_ADDR-1):0]		in
-ahb0_rx_ppe_if_ahb_rd_ack	1		out
-ahb0_rx_ppe_if_ahb_rd_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		out
-ahb0_rx_ppe_if_ahb_sel	1		in
-ahb0_rx_ppe_if_ahb_wr	1		in
-ahb0_rx_ppe_if_ahb_wr_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		in
+ahb0_rxppe_if_ahb_addr	[(@work.shared_pkg.W_MGMT_ADDR-1):0]		in
+ahb0_rxppe_if_ahb_rd_ack	1		out
+ahb0_rxppe_if_ahb_rd_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		out
+ahb0_rxppe_if_ahb_sel	1		in
+ahb0_rxppe_if_ahb_wr	1		in
+ahb0_rxppe_if_ahb_wr_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		in
 ahb0_txppe0_if_ahb_addr	[(@work.shared_pkg.W_MGMT_ADDR-1):0]		in
 ahb0_txppe0_if_ahb_rd_ack	1		out
 ahb0_txppe0_if_ahb_rd_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		out
@@ -34,12 +34,12 @@ ahb0_txppe1_if_ahb_rd_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		out
 ahb0_txppe1_if_ahb_sel	1		in
 ahb0_txppe1_if_ahb_wr	1		in
 ahb0_txppe1_if_ahb_wr_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		in
-ahb1_rx_ppe_if_ahb_addr	[(@work.shared_pkg.W_MGMT_ADDR-1):0]		in
-ahb1_rx_ppe_if_ahb_rd_ack	1		out
-ahb1_rx_ppe_if_ahb_rd_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		out
-ahb1_rx_ppe_if_ahb_sel	1		in
-ahb1_rx_ppe_if_ahb_wr	1		in
-ahb1_rx_ppe_if_ahb_wr_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		in
+ahb1_rxppe_if_ahb_addr	[(@work.shared_pkg.W_MGMT_ADDR-1):0]		in
+ahb1_rxppe_if_ahb_rd_ack	1		out
+ahb1_rxppe_if_ahb_rd_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		out
+ahb1_rxppe_if_ahb_sel	1		in
+ahb1_rxppe_if_ahb_wr	1		in
+ahb1_rxppe_if_ahb_wr_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		in
 ahb1_txppe0_if_ahb_addr	[(@work.shared_pkg.W_MGMT_ADDR-1):0]		in
 ahb1_txppe0_if_ahb_rd_ack	1		out
 ahb1_txppe0_if_ahb_rd_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		out
@@ -54,7 +54,6 @@ ahb1_txppe1_if_ahb_wr	1		in
 ahb1_txppe1_if_ahb_wr_data	[(@work.shared_pkg.W_MGMT_DATA64-1):0]		in
 arst_n	1		in
 cclk	1		in
-clk	1		in
 egr0_ahb_if_ahb_ack_p	1		out
 egr0_ahb_if_ahb_addr	1		in
 egr0_ahb_if_ahb_rd_data	1		out
@@ -63,42 +62,6 @@ egr0_ahb_if_ahb_wr	1		in
 egr0_ahb_if_ahb_wr_data	1		in
 egr0_ahb_if_dfxsignal_in	1		in
 egr0_ahb_if_dfxsignal_out	1		out
-egr0_epl0_if_epl_tx_data_valid	1		out
-egr0_epl0_if_epl_tx_data_w_ecc	[1:0]		out
-egr0_epl0_if_epl_tx_ecc	1		out
-egr0_epl0_if_epl_tx_en_port_num	1		in
-egr0_epl0_if_epl_tx_enable	1		in
-egr0_epl0_if_epl_tx_flow_control_tc	1		in
-egr0_epl0_if_epl_tx_metadata	[9:0]		out
-egr0_epl0_if_epl_tx_pfc_xoff	1		out
-egr0_epl0_if_epl_tx_port_num	1		out
-egr0_epl1_if_epl_tx_data_valid	1		out
-egr0_epl1_if_epl_tx_data_w_ecc	[1:0]		out
-egr0_epl1_if_epl_tx_ecc	1		out
-egr0_epl1_if_epl_tx_en_port_num	1		in
-egr0_epl1_if_epl_tx_enable	1		in
-egr0_epl1_if_epl_tx_flow_control_tc	1		in
-egr0_epl1_if_epl_tx_metadata	[9:0]		out
-egr0_epl1_if_epl_tx_pfc_xoff	1		out
-egr0_epl1_if_epl_tx_port_num	1		out
-egr0_epl2_if_epl_tx_data_valid	1		out
-egr0_epl2_if_epl_tx_data_w_ecc	[1:0]		out
-egr0_epl2_if_epl_tx_ecc	1		out
-egr0_epl2_if_epl_tx_en_port_num	1		in
-egr0_epl2_if_epl_tx_enable	1		in
-egr0_epl2_if_epl_tx_flow_control_tc	1		in
-egr0_epl2_if_epl_tx_metadata	[9:0]		out
-egr0_epl2_if_epl_tx_pfc_xoff	1		out
-egr0_epl2_if_epl_tx_port_num	1		out
-egr0_epl3_if_epl_tx_data_valid	1		out
-egr0_epl3_if_epl_tx_data_w_ecc	[1:0]		out
-egr0_epl3_if_epl_tx_ecc	1		out
-egr0_epl3_if_epl_tx_en_port_num	1		in
-egr0_epl3_if_epl_tx_enable	1		in
-egr0_epl3_if_epl_tx_flow_control_tc	1		in
-egr0_epl3_if_epl_tx_metadata	[9:0]		out
-egr0_epl3_if_epl_tx_pfc_xoff	1		out
-egr0_epl3_if_epl_tx_port_num	1		out
 egr0_mc_table_if0_mcsharedtablememory_table_ack	1		in
 egr0_mc_table_if0_mcsharedtablememory_table_req	1		out
 egr0_mc_table_if0_mcsharedtablememory_table_rsp	1		in
@@ -141,42 +104,6 @@ egr1_ahb_if_ahb_wr	1		in
 egr1_ahb_if_ahb_wr_data	1		in
 egr1_ahb_if_dfxsignal_in	1		in
 egr1_ahb_if_dfxsignal_out	1		out
-egr1_epl0_if_epl_tx_data_valid	1		out
-egr1_epl0_if_epl_tx_data_w_ecc	[1:0]		out
-egr1_epl0_if_epl_tx_ecc	1		out
-egr1_epl0_if_epl_tx_en_port_num	1		in
-egr1_epl0_if_epl_tx_enable	1		in
-egr1_epl0_if_epl_tx_flow_control_tc	1		in
-egr1_epl0_if_epl_tx_metadata	[9:0]		out
-egr1_epl0_if_epl_tx_pfc_xoff	1		out
-egr1_epl0_if_epl_tx_port_num	1		out
-egr1_epl1_if_epl_tx_data_valid	1		out
-egr1_epl1_if_epl_tx_data_w_ecc	[1:0]		out
-egr1_epl1_if_epl_tx_ecc	1		out
-egr1_epl1_if_epl_tx_en_port_num	1		in
-egr1_epl1_if_epl_tx_enable	1		in
-egr1_epl1_if_epl_tx_flow_control_tc	1		in
-egr1_epl1_if_epl_tx_metadata	[9:0]		out
-egr1_epl1_if_epl_tx_pfc_xoff	1		out
-egr1_epl1_if_epl_tx_port_num	1		out
-egr1_epl2_if_epl_tx_data_valid	1		out
-egr1_epl2_if_epl_tx_data_w_ecc	[1:0]		out
-egr1_epl2_if_epl_tx_ecc	1		out
-egr1_epl2_if_epl_tx_en_port_num	1		in
-egr1_epl2_if_epl_tx_enable	1		in
-egr1_epl2_if_epl_tx_flow_control_tc	1		in
-egr1_epl2_if_epl_tx_metadata	[9:0]		out
-egr1_epl2_if_epl_tx_pfc_xoff	1		out
-egr1_epl2_if_epl_tx_port_num	1		out
-egr1_epl3_if_epl_tx_data_valid	1		out
-egr1_epl3_if_epl_tx_data_w_ecc	[1:0]		out
-egr1_epl3_if_epl_tx_ecc	1		out
-egr1_epl3_if_epl_tx_en_port_num	1		in
-egr1_epl3_if_epl_tx_enable	1		in
-egr1_epl3_if_epl_tx_flow_control_tc	1		in
-egr1_epl3_if_epl_tx_metadata	[9:0]		out
-egr1_epl3_if_epl_tx_pfc_xoff	1		out
-egr1_epl3_if_epl_tx_port_num	1		out
 egr1_mc_table_if0_mcsharedtablememory_table_ack	1		in
 egr1_mc_table_if0_mcsharedtablememory_table_req	1		out
 egr1_mc_table_if0_mcsharedtablememory_table_rsp	1		in
@@ -211,85 +138,228 @@ egr1_vp_if1_epl_vp_tx_flow_control_tc	1		in
 egr1_vp_if1_epl_vp_tx_metadata	[9:0]		out
 egr1_vp_if1_epl_vp_tx_pfc_xoff	1		out
 egr1_vp_if1_epl_vp_tx_port_num	1		out
-glb0_rx_ppe_if_glb_ack	1		out
-glb0_rx_ppe_if_glb_sync	1		in
+glb0_rxppe_if_glb_ack	1		out
+glb0_rxppe_if_glb_sync	1		in
 glb0_txppe0_if_glb_ack	1		out
 glb0_txppe0_if_glb_sync	1		in
 glb0_txppe1_if_glb_ack	1		out
 glb0_txppe1_if_glb_sync	1		in
-glb1_rx_ppe_if_glb_ack	1		out
-glb1_rx_ppe_if_glb_sync	1		in
+glb1_rxppe_if_glb_ack	1		out
+glb1_rxppe_if_glb_sync	1		in
 glb1_txppe0_if_glb_ack	1		out
 glb1_txppe0_if_glb_sync	1		in
 glb1_txppe1_if_glb_ack	1		out
 glb1_txppe1_if_glb_sync	1		in
+grp_a0_rx0_data_w_ecc	[71:0]		in
+grp_a0_rx1_data_w_ecc	[71:0]		in
+grp_a0_rx2_data_w_ecc	[71:0]		in
+grp_a0_rx3_data_w_ecc	[71:0]		in
+grp_a0_rx4_data_w_ecc	[71:0]		in
+grp_a0_rx5_data_w_ecc	[71:0]		in
+grp_a0_rx6_data_w_ecc	[71:0]		in
+grp_a0_rx7_data_w_ecc	[71:0]		in
 grp_a0_rx_data_valid	[7:0]		in
-grp_a0_rx_data_w_ecc	[0:7][71:0]		in
 grp_a0_rx_ecc	[7:0]		in
 grp_a0_rx_flow_control_tc	[2:0]		in
 grp_a0_rx_metadata	[23:0]		in
 grp_a0_rx_pfc_xoff	1		in
 grp_a0_rx_port_num	[1:0]		in
 grp_a0_rx_time_stamp	[35:0]		in
+grp_a0_tx_data_valid	1		out
+grp_a0_tx_data_w_ecc	[1:0]		out
+grp_a0_tx_ecc	1		out
+grp_a0_tx_en_port_num	1		in
+grp_a0_tx_enable	1		in
+grp_a0_tx_flow_control_tc	1		in
+grp_a0_tx_metadata	[9:0]		out
+grp_a0_tx_pfc_xoff	1		out
+grp_a0_tx_port_num	1		out
+grp_a1_rx0_data_w_ecc	[71:0]		in
+grp_a1_rx1_data_w_ecc	[71:0]		in
+grp_a1_rx2_data_w_ecc	[71:0]		in
+grp_a1_rx3_data_w_ecc	[71:0]		in
+grp_a1_rx4_data_w_ecc	[71:0]		in
+grp_a1_rx5_data_w_ecc	[71:0]		in
+grp_a1_rx6_data_w_ecc	[71:0]		in
+grp_a1_rx7_data_w_ecc	[71:0]		in
 grp_a1_rx_data_valid	[7:0]		in
-grp_a1_rx_data_w_ecc	[0:7][71:0]		in
 grp_a1_rx_ecc	[7:0]		in
 grp_a1_rx_flow_control_tc	[2:0]		in
 grp_a1_rx_metadata	[23:0]		in
 grp_a1_rx_pfc_xoff	1		in
 grp_a1_rx_port_num	[1:0]		in
 grp_a1_rx_time_stamp	[35:0]		in
+grp_a1_tx_data_valid	1		out
+grp_a1_tx_data_w_ecc	[1:0]		out
+grp_a1_tx_ecc	1		out
+grp_a1_tx_en_port_num	1		in
+grp_a1_tx_enable	1		in
+grp_a1_tx_flow_control_tc	1		in
+grp_a1_tx_metadata	[9:0]		out
+grp_a1_tx_pfc_xoff	1		out
+grp_a1_tx_port_num	1		out
+grp_b0_rx0_data_w_ecc	[71:0]		in
+grp_b0_rx1_data_w_ecc	[71:0]		in
+grp_b0_rx2_data_w_ecc	[71:0]		in
+grp_b0_rx3_data_w_ecc	[71:0]		in
+grp_b0_rx4_data_w_ecc	[71:0]		in
+grp_b0_rx5_data_w_ecc	[71:0]		in
+grp_b0_rx6_data_w_ecc	[71:0]		in
+grp_b0_rx7_data_w_ecc	[71:0]		in
 grp_b0_rx_data_valid	[7:0]		in
-grp_b0_rx_data_w_ecc	[0:7][71:0]		in
 grp_b0_rx_ecc	[7:0]		in
 grp_b0_rx_flow_control_tc	[2:0]		in
 grp_b0_rx_metadata	[23:0]		in
 grp_b0_rx_pfc_xoff	1		in
 grp_b0_rx_port_num	[1:0]		in
 grp_b0_rx_time_stamp	[35:0]		in
+grp_b0_tx_data_valid	1		out
+grp_b0_tx_data_w_ecc	[1:0]		out
+grp_b0_tx_ecc	1		out
+grp_b0_tx_en_port_num	1		in
+grp_b0_tx_enable	1		in
+grp_b0_tx_flow_control_tc	1		in
+grp_b0_tx_metadata	[9:0]		out
+grp_b0_tx_pfc_xoff	1		out
+grp_b0_tx_port_num	1		out
+grp_b1_rx0_data_w_ecc	[71:0]		in
+grp_b1_rx1_data_w_ecc	[71:0]		in
+grp_b1_rx2_data_w_ecc	[71:0]		in
+grp_b1_rx3_data_w_ecc	[71:0]		in
+grp_b1_rx4_data_w_ecc	[71:0]		in
+grp_b1_rx5_data_w_ecc	[71:0]		in
+grp_b1_rx6_data_w_ecc	[71:0]		in
+grp_b1_rx7_data_w_ecc	[71:0]		in
 grp_b1_rx_data_valid	[7:0]		in
-grp_b1_rx_data_w_ecc	[0:7][71:0]		in
 grp_b1_rx_ecc	[7:0]		in
 grp_b1_rx_flow_control_tc	[2:0]		in
 grp_b1_rx_metadata	[23:0]		in
 grp_b1_rx_pfc_xoff	1		in
 grp_b1_rx_port_num	[1:0]		in
 grp_b1_rx_time_stamp	[35:0]		in
+grp_b1_tx_data_valid	1		out
+grp_b1_tx_data_w_ecc	[1:0]		out
+grp_b1_tx_ecc	1		out
+grp_b1_tx_en_port_num	1		in
+grp_b1_tx_enable	1		in
+grp_b1_tx_flow_control_tc	1		in
+grp_b1_tx_metadata	[9:0]		out
+grp_b1_tx_pfc_xoff	1		out
+grp_b1_tx_port_num	1		out
+grp_c0_rx0_data_w_ecc	[71:0]		in
+grp_c0_rx1_data_w_ecc	[71:0]		in
+grp_c0_rx2_data_w_ecc	[71:0]		in
+grp_c0_rx3_data_w_ecc	[71:0]		in
+grp_c0_rx4_data_w_ecc	[71:0]		in
+grp_c0_rx5_data_w_ecc	[71:0]		in
+grp_c0_rx6_data_w_ecc	[71:0]		in
+grp_c0_rx7_data_w_ecc	[71:0]		in
 grp_c0_rx_data_valid	[7:0]		in
-grp_c0_rx_data_w_ecc	[0:7][71:0]		in
 grp_c0_rx_ecc	[7:0]		in
 grp_c0_rx_flow_control_tc	[2:0]		in
 grp_c0_rx_metadata	[23:0]		in
 grp_c0_rx_pfc_xoff	1		in
 grp_c0_rx_port_num	[1:0]		in
 grp_c0_rx_time_stamp	[35:0]		in
+grp_c0_tx_data_valid	1		out
+grp_c0_tx_data_w_ecc	[1:0]		out
+grp_c0_tx_ecc	1		out
+grp_c0_tx_en_port_num	1		in
+grp_c0_tx_enable	1		in
+grp_c0_tx_flow_control_tc	1		in
+grp_c0_tx_metadata	[9:0]		out
+grp_c0_tx_pfc_xoff	1		out
+grp_c0_tx_port_num	1		out
+grp_c1_rx0_data_w_ecc	[71:0]		in
+grp_c1_rx1_data_w_ecc	[71:0]		in
+grp_c1_rx2_data_w_ecc	[71:0]		in
+grp_c1_rx3_data_w_ecc	[71:0]		in
+grp_c1_rx4_data_w_ecc	[71:0]		in
+grp_c1_rx5_data_w_ecc	[71:0]		in
+grp_c1_rx6_data_w_ecc	[71:0]		in
+grp_c1_rx7_data_w_ecc	[71:0]		in
 grp_c1_rx_data_valid	[7:0]		in
-grp_c1_rx_data_w_ecc	[0:7][71:0]		in
 grp_c1_rx_ecc	[7:0]		in
 grp_c1_rx_flow_control_tc	[2:0]		in
 grp_c1_rx_metadata	[23:0]		in
 grp_c1_rx_pfc_xoff	1		in
 grp_c1_rx_port_num	[1:0]		in
 grp_c1_rx_time_stamp	[35:0]		in
+grp_c1_tx_data_valid	1		out
+grp_c1_tx_data_w_ecc	[1:0]		out
+grp_c1_tx_ecc	1		out
+grp_c1_tx_en_port_num	1		in
+grp_c1_tx_enable	1		in
+grp_c1_tx_flow_control_tc	1		in
+grp_c1_tx_metadata	[9:0]		out
+grp_c1_tx_pfc_xoff	1		out
+grp_c1_tx_port_num	1		out
+grp_d0_rx0_data_w_ecc	[71:0]		in
+grp_d0_rx1_data_w_ecc	[71:0]		in
+grp_d0_rx3_data_w_ecc	[71:0]		in
+grp_d0_rx4_data_w_ecc	[71:0]		in
+grp_d0_rx5_data_w_ecc	[71:0]		in
+grp_d0_rx6_data_w_ecc	[71:0]		in
+grp_d0_rx7_data_w_ecc	[71:0]		in
 grp_d0_rx_data_valid	[7:0]		in
-grp_d0_rx_data_w_ecc	[0:7][71:0]		in
 grp_d0_rx_ecc	[7:0]		in
 grp_d0_rx_flow_control_tc	[2:0]		in
 grp_d0_rx_metadata	[23:0]		in
 grp_d0_rx_pfc_xoff	1		in
 grp_d0_rx_port_num	[1:0]		in
 grp_d0_rx_time_stamp	[35:0]		in
+grp_d0_tx_data_valid	1		out
+grp_d0_tx_data_w_ecc	[1:0]		out
+grp_d0_tx_ecc	1		out
+grp_d0_tx_en_port_num	1		in
+grp_d0_tx_enable	1		in
+grp_d0_tx_flow_control_tc	1		in
+grp_d0_tx_metadata	[9:0]		out
+grp_d0_tx_pfc_xoff	1		out
+grp_d0_tx_port_num	1		out
+grp_d1_rx0_data_w_ecc	[71:0]		in
+grp_d1_rx1_data_w_ecc	[71:0]		in
+grp_d1_rx3_data_w_ecc	[71:0]		in
+grp_d1_rx4_data_w_ecc	[71:0]		in
+grp_d1_rx5_data_w_ecc	[71:0]		in
+grp_d1_rx6_data_w_ecc	[71:0]		in
+grp_d1_rx7_data_w_ecc	[71:0]		in
 grp_d1_rx_data_valid	[7:0]		in
-grp_d1_rx_data_w_ecc	[0:7][71:0]		in
 grp_d1_rx_ecc	[7:0]		in
 grp_d1_rx_flow_control_tc	[2:0]		in
 grp_d1_rx_metadata	[23:0]		in
 grp_d1_rx_pfc_xoff	1		in
 grp_d1_rx_port_num	[1:0]		in
 grp_d1_rx_time_stamp	[35:0]		in
+grp_d1_tx_data_valid	1		out
+grp_d1_tx_data_w_ecc	[1:0]		out
+grp_d1_tx_ecc	1		out
+grp_d1_tx_en_port_num	1		in
+grp_d1_tx_enable	1		in
+grp_d1_tx_flow_control_tc	1		in
+grp_d1_tx_metadata	[9:0]		out
+grp_d1_tx_pfc_xoff	1		out
+grp_d1_tx_port_num	1		out
+grp_d_rx20_data_w_ecc	[71:0]		in
+grp_d_rx21_data_w_ecc	[71:0]		in
+i_mpp_csr_end	[31:0]		in
+i_mpp_csr_start	[31:0]		in
+i_reqAddr	[31:0]		in
+i_reqID	[7:0]		in
+i_reqParity	1		in
+i_reqValid	1		in
+i_reqWr	1		in
+i_reqWrData	[63:0]		in
 igr0_vp_cpp_rx_metadata	[19:0]		in
+igr0_vp_rx0_data_w_ecc	[71:0]		in
+igr0_vp_rx1_data_w_ecc	[71:0]		in
+igr0_vp_rx2_data_w_ecc	[71:0]		in
+igr0_vp_rx3_data_w_ecc	[71:0]		in
+igr0_vp_rx4_data_w_ecc	[71:0]		in
+igr0_vp_rx5_data_w_ecc	[71:0]		in
+igr0_vp_rx6_data_w_ecc	[71:0]		in
+igr0_vp_rx7_data_w_ecc	[71:0]		in
 igr0_vp_rx_data_valid	[7:0]		in
-igr0_vp_rx_data_w_ecc	[0:7][71:0]		in
 igr0_vp_rx_ecc	[7:0]		in
 igr0_vp_rx_flow_control_tc	[2:0]		in
 igr0_vp_rx_metadata	[23:0]		in
@@ -297,26 +367,32 @@ igr0_vp_rx_port_num	[1:0]		in
 igr0_vp_rx_time_stamp	[35:0]		in
 igr0_vp_tx_pfc_xoff	1		out
 igr1_vp_cpp_rx_metadata	[19:0]		in
+igr1_vp_rx0_data_w_ecc	[71:0]		in
+igr1_vp_rx1_data_w_ecc	[71:0]		in
+igr1_vp_rx2_data_w_ecc	[71:0]		in
+igr1_vp_rx3_data_w_ecc	[71:0]		in
+igr1_vp_rx4_data_w_ecc	[71:0]		in
+igr1_vp_rx5_data_w_ecc	[71:0]		in
+igr1_vp_rx6_data_w_ecc	[71:0]		in
+igr1_vp_rx7_data_w_ecc	[71:0]		in
 igr1_vp_rx_data_valid	[7:0]		in
-igr1_vp_rx_data_w_ecc	[0:7][71:0]		in
 igr1_vp_rx_ecc	[7:0]		in
 igr1_vp_rx_flow_control_tc	[2:0]		in
 igr1_vp_rx_metadata	[23:0]		in
 igr1_vp_rx_port_num	[1:0]		in
 igr1_vp_rx_time_stamp	[35:0]		in
 igr1_vp_tx_pfc_xoff	1		out
-reset	1		in
-rst_n	1		in
+sreset	1		in
 
 ########################################
 # Non-standard Interfaces Ports (info only)
 ########################################
-ahb0_rx_ppe_if_ahb_addr
-ahb0_rx_ppe_if_ahb_rd_ack
-ahb0_rx_ppe_if_ahb_rd_data
-ahb0_rx_ppe_if_ahb_sel
-ahb0_rx_ppe_if_ahb_wr
-ahb0_rx_ppe_if_ahb_wr_data
+ahb0_rxppe_if_ahb_addr
+ahb0_rxppe_if_ahb_rd_ack
+ahb0_rxppe_if_ahb_rd_data
+ahb0_rxppe_if_ahb_sel
+ahb0_rxppe_if_ahb_wr
+ahb0_rxppe_if_ahb_wr_data
 ahb0_txppe0_if_ahb_addr
 ahb0_txppe0_if_ahb_rd_ack
 ahb0_txppe0_if_ahb_rd_data
@@ -329,12 +405,12 @@ ahb0_txppe1_if_ahb_rd_data
 ahb0_txppe1_if_ahb_sel
 ahb0_txppe1_if_ahb_wr
 ahb0_txppe1_if_ahb_wr_data
-ahb1_rx_ppe_if_ahb_addr
-ahb1_rx_ppe_if_ahb_rd_ack
-ahb1_rx_ppe_if_ahb_rd_data
-ahb1_rx_ppe_if_ahb_sel
-ahb1_rx_ppe_if_ahb_wr
-ahb1_rx_ppe_if_ahb_wr_data
+ahb1_rxppe_if_ahb_addr
+ahb1_rxppe_if_ahb_rd_ack
+ahb1_rxppe_if_ahb_rd_data
+ahb1_rxppe_if_ahb_sel
+ahb1_rxppe_if_ahb_wr
+ahb1_rxppe_if_ahb_wr_data
 ahb1_txppe0_if_ahb_addr
 ahb1_txppe0_if_ahb_rd_ack
 ahb1_txppe0_if_ahb_rd_data
@@ -349,7 +425,6 @@ ahb1_txppe1_if_ahb_wr
 ahb1_txppe1_if_ahb_wr_data
 arst_n
 cclk
-clk
 egr0_ahb_if_ahb_ack_p
 egr0_ahb_if_ahb_addr
 egr0_ahb_if_ahb_rd_data
@@ -358,42 +433,6 @@ egr0_ahb_if_ahb_wr
 egr0_ahb_if_ahb_wr_data
 egr0_ahb_if_dfxsignal_in
 egr0_ahb_if_dfxsignal_out
-egr0_epl0_if_epl_tx_data_valid
-egr0_epl0_if_epl_tx_data_w_ecc
-egr0_epl0_if_epl_tx_ecc
-egr0_epl0_if_epl_tx_en_port_num
-egr0_epl0_if_epl_tx_enable
-egr0_epl0_if_epl_tx_flow_control_tc
-egr0_epl0_if_epl_tx_metadata
-egr0_epl0_if_epl_tx_pfc_xoff
-egr0_epl0_if_epl_tx_port_num
-egr0_epl1_if_epl_tx_data_valid
-egr0_epl1_if_epl_tx_data_w_ecc
-egr0_epl1_if_epl_tx_ecc
-egr0_epl1_if_epl_tx_en_port_num
-egr0_epl1_if_epl_tx_enable
-egr0_epl1_if_epl_tx_flow_control_tc
-egr0_epl1_if_epl_tx_metadata
-egr0_epl1_if_epl_tx_pfc_xoff
-egr0_epl1_if_epl_tx_port_num
-egr0_epl2_if_epl_tx_data_valid
-egr0_epl2_if_epl_tx_data_w_ecc
-egr0_epl2_if_epl_tx_ecc
-egr0_epl2_if_epl_tx_en_port_num
-egr0_epl2_if_epl_tx_enable
-egr0_epl2_if_epl_tx_flow_control_tc
-egr0_epl2_if_epl_tx_metadata
-egr0_epl2_if_epl_tx_pfc_xoff
-egr0_epl2_if_epl_tx_port_num
-egr0_epl3_if_epl_tx_data_valid
-egr0_epl3_if_epl_tx_data_w_ecc
-egr0_epl3_if_epl_tx_ecc
-egr0_epl3_if_epl_tx_en_port_num
-egr0_epl3_if_epl_tx_enable
-egr0_epl3_if_epl_tx_flow_control_tc
-egr0_epl3_if_epl_tx_metadata
-egr0_epl3_if_epl_tx_pfc_xoff
-egr0_epl3_if_epl_tx_port_num
 egr0_mc_table_if0_mcsharedtablememory_table_ack
 egr0_mc_table_if0_mcsharedtablememory_table_req
 egr0_mc_table_if0_mcsharedtablememory_table_rsp
@@ -436,42 +475,6 @@ egr1_ahb_if_ahb_wr
 egr1_ahb_if_ahb_wr_data
 egr1_ahb_if_dfxsignal_in
 egr1_ahb_if_dfxsignal_out
-egr1_epl0_if_epl_tx_data_valid
-egr1_epl0_if_epl_tx_data_w_ecc
-egr1_epl0_if_epl_tx_ecc
-egr1_epl0_if_epl_tx_en_port_num
-egr1_epl0_if_epl_tx_enable
-egr1_epl0_if_epl_tx_flow_control_tc
-egr1_epl0_if_epl_tx_metadata
-egr1_epl0_if_epl_tx_pfc_xoff
-egr1_epl0_if_epl_tx_port_num
-egr1_epl1_if_epl_tx_data_valid
-egr1_epl1_if_epl_tx_data_w_ecc
-egr1_epl1_if_epl_tx_ecc
-egr1_epl1_if_epl_tx_en_port_num
-egr1_epl1_if_epl_tx_enable
-egr1_epl1_if_epl_tx_flow_control_tc
-egr1_epl1_if_epl_tx_metadata
-egr1_epl1_if_epl_tx_pfc_xoff
-egr1_epl1_if_epl_tx_port_num
-egr1_epl2_if_epl_tx_data_valid
-egr1_epl2_if_epl_tx_data_w_ecc
-egr1_epl2_if_epl_tx_ecc
-egr1_epl2_if_epl_tx_en_port_num
-egr1_epl2_if_epl_tx_enable
-egr1_epl2_if_epl_tx_flow_control_tc
-egr1_epl2_if_epl_tx_metadata
-egr1_epl2_if_epl_tx_pfc_xoff
-egr1_epl2_if_epl_tx_port_num
-egr1_epl3_if_epl_tx_data_valid
-egr1_epl3_if_epl_tx_data_w_ecc
-egr1_epl3_if_epl_tx_ecc
-egr1_epl3_if_epl_tx_en_port_num
-egr1_epl3_if_epl_tx_enable
-egr1_epl3_if_epl_tx_flow_control_tc
-egr1_epl3_if_epl_tx_metadata
-egr1_epl3_if_epl_tx_pfc_xoff
-egr1_epl3_if_epl_tx_port_num
 egr1_mc_table_if0_mcsharedtablememory_table_ack
 egr1_mc_table_if0_mcsharedtablememory_table_req
 egr1_mc_table_if0_mcsharedtablememory_table_rsp
@@ -506,85 +509,228 @@ egr1_vp_if1_epl_vp_tx_flow_control_tc
 egr1_vp_if1_epl_vp_tx_metadata
 egr1_vp_if1_epl_vp_tx_pfc_xoff
 egr1_vp_if1_epl_vp_tx_port_num
-glb0_rx_ppe_if_glb_ack
-glb0_rx_ppe_if_glb_sync
+glb0_rxppe_if_glb_ack
+glb0_rxppe_if_glb_sync
 glb0_txppe0_if_glb_ack
 glb0_txppe0_if_glb_sync
 glb0_txppe1_if_glb_ack
 glb0_txppe1_if_glb_sync
-glb1_rx_ppe_if_glb_ack
-glb1_rx_ppe_if_glb_sync
+glb1_rxppe_if_glb_ack
+glb1_rxppe_if_glb_sync
 glb1_txppe0_if_glb_ack
 glb1_txppe0_if_glb_sync
 glb1_txppe1_if_glb_ack
 glb1_txppe1_if_glb_sync
+grp_a0_rx0_data_w_ecc
+grp_a0_rx1_data_w_ecc
+grp_a0_rx2_data_w_ecc
+grp_a0_rx3_data_w_ecc
+grp_a0_rx4_data_w_ecc
+grp_a0_rx5_data_w_ecc
+grp_a0_rx6_data_w_ecc
+grp_a0_rx7_data_w_ecc
 grp_a0_rx_data_valid
-grp_a0_rx_data_w_ecc
 grp_a0_rx_ecc
 grp_a0_rx_flow_control_tc
 grp_a0_rx_metadata
 grp_a0_rx_pfc_xoff
 grp_a0_rx_port_num
 grp_a0_rx_time_stamp
+grp_a0_tx_data_valid
+grp_a0_tx_data_w_ecc
+grp_a0_tx_ecc
+grp_a0_tx_en_port_num
+grp_a0_tx_enable
+grp_a0_tx_flow_control_tc
+grp_a0_tx_metadata
+grp_a0_tx_pfc_xoff
+grp_a0_tx_port_num
+grp_a1_rx0_data_w_ecc
+grp_a1_rx1_data_w_ecc
+grp_a1_rx2_data_w_ecc
+grp_a1_rx3_data_w_ecc
+grp_a1_rx4_data_w_ecc
+grp_a1_rx5_data_w_ecc
+grp_a1_rx6_data_w_ecc
+grp_a1_rx7_data_w_ecc
 grp_a1_rx_data_valid
-grp_a1_rx_data_w_ecc
 grp_a1_rx_ecc
 grp_a1_rx_flow_control_tc
 grp_a1_rx_metadata
 grp_a1_rx_pfc_xoff
 grp_a1_rx_port_num
 grp_a1_rx_time_stamp
+grp_a1_tx_data_valid
+grp_a1_tx_data_w_ecc
+grp_a1_tx_ecc
+grp_a1_tx_en_port_num
+grp_a1_tx_enable
+grp_a1_tx_flow_control_tc
+grp_a1_tx_metadata
+grp_a1_tx_pfc_xoff
+grp_a1_tx_port_num
+grp_b0_rx0_data_w_ecc
+grp_b0_rx1_data_w_ecc
+grp_b0_rx2_data_w_ecc
+grp_b0_rx3_data_w_ecc
+grp_b0_rx4_data_w_ecc
+grp_b0_rx5_data_w_ecc
+grp_b0_rx6_data_w_ecc
+grp_b0_rx7_data_w_ecc
 grp_b0_rx_data_valid
-grp_b0_rx_data_w_ecc
 grp_b0_rx_ecc
 grp_b0_rx_flow_control_tc
 grp_b0_rx_metadata
 grp_b0_rx_pfc_xoff
 grp_b0_rx_port_num
 grp_b0_rx_time_stamp
+grp_b0_tx_data_valid
+grp_b0_tx_data_w_ecc
+grp_b0_tx_ecc
+grp_b0_tx_en_port_num
+grp_b0_tx_enable
+grp_b0_tx_flow_control_tc
+grp_b0_tx_metadata
+grp_b0_tx_pfc_xoff
+grp_b0_tx_port_num
+grp_b1_rx0_data_w_ecc
+grp_b1_rx1_data_w_ecc
+grp_b1_rx2_data_w_ecc
+grp_b1_rx3_data_w_ecc
+grp_b1_rx4_data_w_ecc
+grp_b1_rx5_data_w_ecc
+grp_b1_rx6_data_w_ecc
+grp_b1_rx7_data_w_ecc
 grp_b1_rx_data_valid
-grp_b1_rx_data_w_ecc
 grp_b1_rx_ecc
 grp_b1_rx_flow_control_tc
 grp_b1_rx_metadata
 grp_b1_rx_pfc_xoff
 grp_b1_rx_port_num
 grp_b1_rx_time_stamp
+grp_b1_tx_data_valid
+grp_b1_tx_data_w_ecc
+grp_b1_tx_ecc
+grp_b1_tx_en_port_num
+grp_b1_tx_enable
+grp_b1_tx_flow_control_tc
+grp_b1_tx_metadata
+grp_b1_tx_pfc_xoff
+grp_b1_tx_port_num
+grp_c0_rx0_data_w_ecc
+grp_c0_rx1_data_w_ecc
+grp_c0_rx2_data_w_ecc
+grp_c0_rx3_data_w_ecc
+grp_c0_rx4_data_w_ecc
+grp_c0_rx5_data_w_ecc
+grp_c0_rx6_data_w_ecc
+grp_c0_rx7_data_w_ecc
 grp_c0_rx_data_valid
-grp_c0_rx_data_w_ecc
 grp_c0_rx_ecc
 grp_c0_rx_flow_control_tc
 grp_c0_rx_metadata
 grp_c0_rx_pfc_xoff
 grp_c0_rx_port_num
 grp_c0_rx_time_stamp
+grp_c0_tx_data_valid
+grp_c0_tx_data_w_ecc
+grp_c0_tx_ecc
+grp_c0_tx_en_port_num
+grp_c0_tx_enable
+grp_c0_tx_flow_control_tc
+grp_c0_tx_metadata
+grp_c0_tx_pfc_xoff
+grp_c0_tx_port_num
+grp_c1_rx0_data_w_ecc
+grp_c1_rx1_data_w_ecc
+grp_c1_rx2_data_w_ecc
+grp_c1_rx3_data_w_ecc
+grp_c1_rx4_data_w_ecc
+grp_c1_rx5_data_w_ecc
+grp_c1_rx6_data_w_ecc
+grp_c1_rx7_data_w_ecc
 grp_c1_rx_data_valid
-grp_c1_rx_data_w_ecc
 grp_c1_rx_ecc
 grp_c1_rx_flow_control_tc
 grp_c1_rx_metadata
 grp_c1_rx_pfc_xoff
 grp_c1_rx_port_num
 grp_c1_rx_time_stamp
+grp_c1_tx_data_valid
+grp_c1_tx_data_w_ecc
+grp_c1_tx_ecc
+grp_c1_tx_en_port_num
+grp_c1_tx_enable
+grp_c1_tx_flow_control_tc
+grp_c1_tx_metadata
+grp_c1_tx_pfc_xoff
+grp_c1_tx_port_num
+grp_d0_rx0_data_w_ecc
+grp_d0_rx1_data_w_ecc
+grp_d0_rx3_data_w_ecc
+grp_d0_rx4_data_w_ecc
+grp_d0_rx5_data_w_ecc
+grp_d0_rx6_data_w_ecc
+grp_d0_rx7_data_w_ecc
 grp_d0_rx_data_valid
-grp_d0_rx_data_w_ecc
 grp_d0_rx_ecc
 grp_d0_rx_flow_control_tc
 grp_d0_rx_metadata
 grp_d0_rx_pfc_xoff
 grp_d0_rx_port_num
 grp_d0_rx_time_stamp
+grp_d0_tx_data_valid
+grp_d0_tx_data_w_ecc
+grp_d0_tx_ecc
+grp_d0_tx_en_port_num
+grp_d0_tx_enable
+grp_d0_tx_flow_control_tc
+grp_d0_tx_metadata
+grp_d0_tx_pfc_xoff
+grp_d0_tx_port_num
+grp_d1_rx0_data_w_ecc
+grp_d1_rx1_data_w_ecc
+grp_d1_rx3_data_w_ecc
+grp_d1_rx4_data_w_ecc
+grp_d1_rx5_data_w_ecc
+grp_d1_rx6_data_w_ecc
+grp_d1_rx7_data_w_ecc
 grp_d1_rx_data_valid
-grp_d1_rx_data_w_ecc
 grp_d1_rx_ecc
 grp_d1_rx_flow_control_tc
 grp_d1_rx_metadata
 grp_d1_rx_pfc_xoff
 grp_d1_rx_port_num
 grp_d1_rx_time_stamp
+grp_d1_tx_data_valid
+grp_d1_tx_data_w_ecc
+grp_d1_tx_ecc
+grp_d1_tx_en_port_num
+grp_d1_tx_enable
+grp_d1_tx_flow_control_tc
+grp_d1_tx_metadata
+grp_d1_tx_pfc_xoff
+grp_d1_tx_port_num
+grp_d_rx20_data_w_ecc
+grp_d_rx21_data_w_ecc
+i_mpp_csr_end
+i_mpp_csr_start
+i_reqAddr
+i_reqID
+i_reqParity
+i_reqValid
+i_reqWr
+i_reqWrData
 igr0_vp_cpp_rx_metadata
+igr0_vp_rx0_data_w_ecc
+igr0_vp_rx1_data_w_ecc
+igr0_vp_rx2_data_w_ecc
+igr0_vp_rx3_data_w_ecc
+igr0_vp_rx4_data_w_ecc
+igr0_vp_rx5_data_w_ecc
+igr0_vp_rx6_data_w_ecc
+igr0_vp_rx7_data_w_ecc
 igr0_vp_rx_data_valid
-igr0_vp_rx_data_w_ecc
 igr0_vp_rx_ecc
 igr0_vp_rx_flow_control_tc
 igr0_vp_rx_metadata
@@ -592,16 +738,22 @@ igr0_vp_rx_port_num
 igr0_vp_rx_time_stamp
 igr0_vp_tx_pfc_xoff
 igr1_vp_cpp_rx_metadata
+igr1_vp_rx0_data_w_ecc
+igr1_vp_rx1_data_w_ecc
+igr1_vp_rx2_data_w_ecc
+igr1_vp_rx3_data_w_ecc
+igr1_vp_rx4_data_w_ecc
+igr1_vp_rx5_data_w_ecc
+igr1_vp_rx6_data_w_ecc
+igr1_vp_rx7_data_w_ecc
 igr1_vp_rx_data_valid
-igr1_vp_rx_data_w_ecc
 igr1_vp_rx_ecc
 igr1_vp_rx_flow_control_tc
 igr1_vp_rx_metadata
 igr1_vp_rx_port_num
 igr1_vp_rx_time_stamp
 igr1_vp_tx_pfc_xoff
-reset
-rst_n
+sreset
 
 #########################################################################
 # Non-standard Interfaces Ports with IfUnconnected attribute 
@@ -614,7 +766,7 @@ rst_n
 #########################################################################
 # Statistics                                                            
 # Num Standard               : 0                                 
-# Num AdHoc                  : 291                               
+# Num AdHoc                  : 367                               
 # Num AdHoc (attribute)      : 0                          
 # Num AdHoc (user tagged)    : 0                          
 #########################################################################
