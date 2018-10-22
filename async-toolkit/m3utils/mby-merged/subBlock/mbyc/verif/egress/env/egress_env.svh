@@ -103,10 +103,13 @@ class egress_env extends egress_base_env;
       end
 
       // Create the bfm instances
-      eth_bfms[i]               = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
-      eth_bfms[i].cfg.mode      = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
-      eth_bfms[i].cfg.speed     = eth_bfm_pkg::SPEED_400G;                             // Configure speed.
-      eth_bfms[i].cfg.num_ports = 1;                                                   // Configure num_ports.
+      eth_bfms[i]                = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
+      eth_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
+      eth_bfms[i].cfg.port_speed = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
+                                    eth_bfm_pkg::SPEED_OFF,
+                                    eth_bfm_pkg::SPEED_OFF,
+                                    eth_bfm_pkg::SPEED_OFF};
+      //eth_bfms[i].cfg.num_ports = 1;                                                   // Configure num_ports.
       
       eth_bfm_tx_io[i] = egr_eth_bfm_tx_io_t::type_id::create($sformatf("eth_bfm_tx_io%0d", i), this);
       eth_bfm_rx_io[i] = egr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
