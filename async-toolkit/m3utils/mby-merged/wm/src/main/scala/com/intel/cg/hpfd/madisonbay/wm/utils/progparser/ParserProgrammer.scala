@@ -2,6 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.utils.progparser
 
 import com.intel.cg.hpfd.csr.generated._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr
+import com.intel.cg.hpfd.madisonbay.wm.utils.Json.JsonMap
 import monocle.function.Index.listIndex
 
 import scala.annotation.tailrec
@@ -75,19 +76,19 @@ object ParserProgrammer {
   private def readParserProgram(lines: List[List[Any]], parser: mby_ppe_parser_map.mby_ppe_parser_map): mby_ppe_parser_map.mby_ppe_parser_map = lines match {
     case Nil => parser
     case line :: tail => line match {
-      case "MBY_PARSER_PORT_CFG" :: _ => readParserProgram(tail, lens_MBY_PARSER_PORT_CFG(id(line(1))).set(getLong(line(2)))(parser))
-      case "MBY_PARSER_KEY_W" :: _ => readParserProgram(tail, lens_MBY_PARSER_KEY_W(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
-      case "MBY_PARSER_KEY_S" :: _ => readParserProgram(tail, lens_MBY_PARSER_KEY_S(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
-      case "MBY_PARSER_ANA_W" :: _ => readParserProgram(tail, lens_MBY_PARSER_ANA_W(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
-      case "MBY_PARSER_ANA_S" :: _ => readParserProgram(tail, lens_MBY_PARSER_ANA_S(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
-      case "MBY_PARSER_EXC" :: _ => readParserProgram(tail, lens_MBY_PARSER_EXC(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
-      case "MBY_PARSER_EXT" :: _ => readParserProgram(tail, lens_MBY_PARSER_EXT(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
+      case "MBY_PARSER_PORT_CFG"  :: _ => readParserProgram(tail, lens_MBY_PARSER_PORT_CFG(id(line(1))).set(getLong(line(2)))(parser))
+      case "MBY_PARSER_KEY_W"     :: _ => readParserProgram(tail, lens_MBY_PARSER_KEY_W(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
+      case "MBY_PARSER_KEY_S"     :: _ => readParserProgram(tail, lens_MBY_PARSER_KEY_S(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
+      case "MBY_PARSER_ANA_W"     :: _ => readParserProgram(tail, lens_MBY_PARSER_ANA_W(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
+      case "MBY_PARSER_ANA_S"     :: _ => readParserProgram(tail, lens_MBY_PARSER_ANA_S(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
+      case "MBY_PARSER_EXC"       :: _ => readParserProgram(tail, lens_MBY_PARSER_EXC(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
+      case "MBY_PARSER_EXT"       :: _ => readParserProgram(tail, lens_MBY_PARSER_EXT(id(line(1)), id(line(2))).set(getLong(line(3)))(parser))
       case _ => assert(false, s"unexpected line $line in readProgrammer"); parser
     }
   }
 
   def apply(fromJson: Map[String, Any], csr: Csr): mby_ppe_parser_map.mby_ppe_parser_map = {
-    readParserProgram(fromJson("input").asInstanceOf[List[List[Any]]], csr.getRxPpe(0).csrRxPpe.parser)
+    readParserProgram(fromJson.getList[List[Any]]("input"), csr.getRxPpe(0).csrRxPpe.parser)
   }
 
 }
