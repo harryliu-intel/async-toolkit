@@ -23,7 +23,7 @@ class ParserStageSpec extends FlatSpec with Matchers {
     val pf = PacketFlags()
     val protoOffset = Parser.EmptyProtoOffsets
     val noException = Option.empty[ParserException]
-    val ps = ParserState(List(0,0,0), new AluOperation(0,0), 0, 0)
+    val ps = ParserState(Array(0,0,0), new AluOperation(0,0), 0, 0)
     val ph = PacketHeader(Array.ofDim[Byte](79))
     val ps2 = Parser.initialState(csrParser, ph, new PortIndex(0))
 
