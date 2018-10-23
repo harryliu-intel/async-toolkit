@@ -623,12 +623,19 @@ EOF
             mby_lintra => {
                top  => "fc_top_lib.soc",
                use => \@models_use,
+               pli_libs => [
+                  "-hier_rtl_dumper",
+               ],
+               elab_opts => [
+                    "-config_verbose",
+                    "dump_filelist_lib.dump_filelist",
+               ],
                libs => [
                   $fc_global_vars::COLLAGE_LIB,
                   "mby_tx_ppe_rtl_lib",
                   "mby_ppe_stm_rtl_lib",
                   "mby_igr_rtl_lib",
-                  "mby_egr_rtl_lib",
+                  #"mby_egr_rtl_lib",
                   "mby_mgp_rtl_lib",
                   "mby_rx_ppe_rtl_lib",
                   "mby_mpp_rtl_lib",
@@ -637,6 +644,7 @@ EOF
             #      $fc_global_vars::IP_STUB_LIB,
                   @all_sip_rtl_liblist,
                   @all_hip_liblist,
+                  'dump_filelist_lib',
                ], 
                lintra_test_list => [ "$ENV{MODEL_ROOT}/tools/lint/tests/mby_top_lintra_test.list"],
             },
