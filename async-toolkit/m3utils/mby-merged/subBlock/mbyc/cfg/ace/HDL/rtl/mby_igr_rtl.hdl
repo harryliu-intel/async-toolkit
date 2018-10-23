@@ -52,7 +52,9 @@ $hdl_spec = {
 		  "+warn=noUII-L",
 		  "-timescale=10ps/10ps",
 		  "-debug_pp",
-		  "+define+VCSSIM+INTEL_SVA_OFF+MBY_IGR_BEHAVE_MEMS",
+		  "+define+VCSSIM",
+		  "+define+INTEL_SVA_OFF",
+		  "+define+MBY_IGR_BEHAVE_MEMS",
 		  "-assert svaext",
 		],
     
