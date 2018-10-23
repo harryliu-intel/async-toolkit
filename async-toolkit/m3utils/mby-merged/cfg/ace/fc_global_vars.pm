@@ -73,6 +73,7 @@ my %sip_list = (
     'epc'        => ['epc'],
     'mpp'        => ['mpp'],
     'msh'        => ['msh'],
+    'gmm'        => ['gmm'],
 
 );
 # >>>
@@ -89,8 +90,8 @@ my %sip_rtl_libs = (
     'imc'                => [],
 #    'epc'                => [],
     'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
-#    'msh'                => ['mby_msh_rtl_lib',],
-    'msh'                => [],
+    'msh'                => ['mby_msh_rtl_lib',],
+#    'gmm'                => ['mby_gmm_s_rtl_lib', 'mby_gmm_n_rtl_lib'],
 
 );
 
@@ -205,7 +206,7 @@ sub gen_liblist {
 # <<< SIP VERIF LIBRARIES
 #############################################################
 my %sip_verif_libs = (
-    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib"
+    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_top_env_lib", "mby_ec_top_ti_lib"
                              ],
 );
 
@@ -228,6 +229,7 @@ my %sip_verif_vlog_opts = (
                               "+define+PMU_ENV_ENABLE",
                               "+define+CDN_PCIE_ENV_ENABLE",
                               "+define+IGR_ENV_ENABLE",
+                              "+define+EPC_ENV_ENABLE",
                              ],
 );
 

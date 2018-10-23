@@ -103,7 +103,19 @@
 # 
 ##################################################################
 
-CRn mby_ec_top_{%inst_num}/grp_*     mby_mpp_{%inst_num}/grp_*   exact_name_match
+
+#CRn mby_ec_top_{%inst_num}/grp_*     mby_mpp_{%inst_num}/grp_*   exact_name_match
+# Connect all pins with same name between EPC & MPP
+V collage_connect_pins_same_name -iplist {mby_ec_top_{%inst_num} mby_mpp_{%inst_num}}
+
+# used to strap csr start & end values according to:
+# mpp0 (start - end) = 32'h2000_0000 - 32'h23FF_FFFF;  // for mgp0  and 1
+#    ...
+# mpp7 (start - end) = 32'h3C00_0000 - 32'h3FFF_FFFF;  // for mgp14 and 15
+V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x20000000]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_start}
+V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x23FFFFFF]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_end}
+
+
 
 
 ##############################################################################

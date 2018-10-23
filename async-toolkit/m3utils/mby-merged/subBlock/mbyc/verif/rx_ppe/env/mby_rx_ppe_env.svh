@@ -156,10 +156,14 @@ class mby_rx_ppe_env extends shdv_base_env;
     //---------------------------------------------------------------------------
     function void build_eth_bfm();
 
-        eth_cdi_bfm               = ec_env_defines::mby_ec_bfm_t::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
-        eth_cdi_bfm.cfg.mode      = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
-        eth_cdi_bfm.cfg.speed     = eth_bfm_pkg::SPEED_400G;                                            // Configure speed.
-        eth_cdi_bfm.cfg.num_ports = 4;                                                                  // Configure num_ports.
+        eth_cdi_bfm                    = ec_env_defines::mby_ec_bfm_t::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
+        eth_cdi_bfm.cfg.mode           = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
+        eth_cdi_bfm.cfg.port_speed     = {eth_bfm_pkg::SPEED_400G,                                           // Configure speed.
+                                          eth_bfm_pkg::SPEED_OFF,
+                                          eth_bfm_pkg::SPEED_OFF,
+                                          eth_bfm_pkg::SPEED_OFF};
+
+        //eth_cdi_bfm.cfg.num_ports = 4;                                                                  // Configure num_ports.
         eth_cdi_bfm.cfg.sop_alignment = 67;
         //eth_cdi_bfm.cfg.ack_delay = 0;
         //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
