@@ -19,7 +19,6 @@ object BitField {
 
   implicit def byteArrayDecoder[W <: Int](implicit witness: Witness.Aux[W]): ByteArrayDecoder[BitField[W]] =
     ByteArrayDecoder.decoder(
-      _.size < witness.value,
       new EOFException(),
       array => BitField[W](
         array.take(witness.value).zipWithIndex.foldLeft(0L){

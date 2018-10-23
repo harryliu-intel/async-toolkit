@@ -13,9 +13,9 @@ object FmModelMgmtType extends Enumeration {
   val Write64 = Value(7, "Write64")
   val Write64Ack = Value(8, "Write64Ack")
 
+  implicit val size: BitSize[FmModelMgmtType.Value] = BitSize.bitSizeOf(8)
   implicit val bae: ByteArrayEncoder[FmModelMgmtType.Value] =
     fmmmt => ByteArrayEncoder.u8bae.encode(fmmmt.id.byteValue())
   implicit val bad: ByteArrayDecoder[FmModelMgmtType.Value] =
-    ByteArrayDecoder.decoder(_.isEmpty, new EOFException(), a => FmModelMgmtType(a(0)))
-  implicit val size: BitSize[FmModelMgmtType.Value] = BitSize.bitSizeOf(8)
+    ByteArrayDecoder.decoder(new EOFException(), a => FmModelMgmtType(a(0)))
 }

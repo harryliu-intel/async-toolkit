@@ -15,7 +15,7 @@ class Mapper(csr: mby_ppe_mapper_map.mby_ppe_mapper_map) {
     implicit class MacMapperEntry(val c: map_mac_r.map_mac_r) {
 
       def matches(mac: MACAddress): Boolean = {
-        val mask = (1 << (c.IGNORE_LENGTH() + 1)) - 1
+        val mask = (1L << (c.IGNORE_LENGTH() + 1L)) - 1L
         c.MAC() == (mac.addr & mask)
       }
 
