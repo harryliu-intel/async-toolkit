@@ -65,6 +65,7 @@ class igr_integ_env extends subsystem_base_env;
      // creating both CFG and env's 
      for (int i=0; i<`NUM_IGR; i++) begin
          ingress_env_inst[i] = ingress_env::type_id::create($sformatf("ingress_env_inst_%0d", i), this);
+         ingress_env_inst[i].set_level(SLA_SUB);
          `uvm_info(get_name(),  $sformatf("build_igr_env: ingress_env_inst[%0d] created",i),UVM_MEDIUM)
      end
 
