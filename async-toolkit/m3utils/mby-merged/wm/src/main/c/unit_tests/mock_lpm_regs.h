@@ -20,5 +20,5 @@ DECLARE_FUNCTION_MOCK3(Mock_mbyLpmGetSubtrie, mbyLpmGetSubtrie,
 DECLARE_FUNCTION_MOCK3(Mock_mbyLpmGetSubtrieStore, mbyLpmGetSubtrieStore,
                        void (fm_uint32 *, const fm_uint16, mbyLpmSubtrieStore * const));
 
-DECLARE_FUNCTION_MOCK3(Mock_mbyLpmGetKeyMasks, mbyLpmGetKeyMasks,
+DECLARE_FUNCTION_MOCK3(Mock_mbyLpmGetKeySels, mbyLpmGetKeyMasks,
                        void (fm_uint32 *, const fm_byte, mbyLpmKeyMasks * const));

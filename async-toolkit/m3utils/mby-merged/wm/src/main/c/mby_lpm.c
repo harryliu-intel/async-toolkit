@@ -218,7 +218,7 @@ static void lpmGenerateKey
     mbyLpmKey                  * const lpmKey
 )
 {
-    mbyLpmKeyMasks key_masks;
+    mbyLpmKeySels key_sels;
     fm_byte len = 0;
     fm_byte i;
 
@@ -226,7 +226,7 @@ static void lpmGenerateKey
     assert(lpmKey);
     assert(profile_id < 64); // 6 bits value
 
-    mbyLpmGetKeyMasks(MBY_LPM_IN_REGS_P, profile_id, &key_masks);
+    mbyLpmGetKeySels(MBY_LPM_IN_REGS_P, profile_id, &key_sels);
 
     lpmKey->key_len = 0; // remember this is in bits
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
@@ -234,7 +234,7 @@ static void lpmGenerateKey
 #define PACK_LPM_KEY(key_type, key_size)                                       \
     for(i = 0; i < MBY_FFU_KEY ##key_size ; ++i)                               \
     {                                                                          \
-        if ((key_masks.key_type ## _key ## key_size ## _mask >> i) & 0x1)      \
+        if ((key_sels.key_type ## _key ## key_size ## _sel >> i) & 0x1)      \
         {                                                                      \
             memcpy(lpmKey->key + len, keys->key## key_size + i, key_size / 8); \
             len += key_size / 8;                                               \
@@ -251,7 +251,7 @@ static void lpmGenerateKey
     // Apply the 160 bit mask
     for (i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
         // FIXME why is the mask 20 x 64 bits long?
-        lpmKey->key_len = key_masks.key_mask[i] & 0xff;
+        lpmKey->key_len = key_sels.key_mask[i] & 0xff;
 
     lpmKey->key_len = len * 8;
 }

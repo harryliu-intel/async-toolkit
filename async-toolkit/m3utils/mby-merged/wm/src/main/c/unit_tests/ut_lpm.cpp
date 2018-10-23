@@ -31,7 +31,7 @@ class LpmTests : public testing::Test {
 		StrictMock<Mock_mbyLpmGetTcamSubtrie> mock_getTcamSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrie> mock_getSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrieStore> mock_getSubtrieStore;
-		StrictMock<Mock_mbyLpmGetKeyMasks> mock_getKeyMasks;
+		StrictMock<Mock_mbyLpmGetKeySels> mock_getKeyMasks;
 
 		struct mbyLpmStaticFuncs f;
 
@@ -60,10 +60,10 @@ class LpmTests : public testing::Test {
 
 TEST_F(LpmTests, KeyGenSingle) {
 
-    mbyLpmKeyMasks key_masks  = {0};
-	key_masks.addr_key8_mask  = 0x1 << KEY8_IDX;
-	key_masks.addr_key16_mask = 0x1 << KEY16_IDX;
-	key_masks.addr_key32_mask = 0x1 << KEY32_IDX;
+    mbyLpmKeySels key_sels  = {0};
+	key_sels.addr_key8_mask  = 0x1 << KEY8_IDX;
+	key_sels.addr_key16_mask = 0x1 << KEY16_IDX;
+	key_sels.addr_key32_mask = 0x1 << KEY32_IDX;
 
 	mbyClassifierKeysStruct keys = {0};
 	keys.key8[KEY8_IDX]   = KEY8_VAL;
@@ -74,7 +74,7 @@ TEST_F(LpmTests, KeyGenSingle) {
 
 	EXPECT_FUNCTION_CALL(mock_getKeyMasks, (NULL, PROFILE_ID, _))
 		.Times(1)
-		.WillRepeatedly(SetArgPointee<2>(key_masks));
+		.WillRepeatedly(SetArgPointee<2>(key_sels));
 
 	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
 

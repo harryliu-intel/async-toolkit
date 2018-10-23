@@ -34,15 +34,15 @@
 
 // Structs:
 
-typedef struct mbyLpmKeyMasksStruct
+typedef struct mbyLpmKeySelsStruct
 {
     fm_uint64               key_mask[MBY_LPM_KEY_MAX_BYTES_LEN];
-    fm_uint64               addr_key8_mask;
-    fm_uint32               addr_key16_mask;
-    fm_uint16               addr_key32_mask;
-    fm_uint64               md_key8_mask;
-    fm_uint32               md_key16_mask;
-} mbyLpmKeyMasks;
+    fm_uint64               addr_key8_sel;
+    fm_uint32               addr_key16_sel;
+    fm_uint16               addr_key32_sel;
+    fm_uint64               md_key8_sel;
+    fm_uint32               md_key16_sel;
+} mbyLpmKeySels;
 
 typedef struct mbyLpmTcamEntryStruct
 {
@@ -68,11 +68,11 @@ typedef struct mbyLpmSubtrieStoreStruct
 
 // Functions:
 
-void mbyLpmGetKeyMasks
+void mbyLpmGetKeySels
 (
     MBY_LPM_IN_REGS,
     fm_byte                  const profile_id,
-    mbyLpmKeyMasks         * const key_masks
+    mbyLpmKeySels          * const key_sels
 );
 
 void mbyLpmGetTcamEntry

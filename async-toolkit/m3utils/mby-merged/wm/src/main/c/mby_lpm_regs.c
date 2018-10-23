@@ -7,27 +7,27 @@
 #include "assert.h"
 
 
-void mbyLpmGetKeyMasks
+void mbyLpmGetKeySels
 (
     mby_ppe_cgrp_a_map     * const cgrp_a_map,
     fm_byte                  const profile_id,
-    mbyLpmKeyMasks         * const key_masks
+    mbyLpmKeySels          * const key_sels
 )
 {
     assert(profile_id < 64);
-    assert(key_masks);
+    assert(key_sels);
 
     for (fm_uint i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
-        key_masks->key_mask[i] = cgrp_a_map->LPM_KEY_MASK[profile_id][i].MASK;
+        key_sels->key_mask[i] = cgrp_a_map->LPM_KEY_MASK[profile_id][i].MASK;
 
-    key_masks->md_key16_mask   = cgrp_a_map->LPM_KEY_SEL0[profile_id].MD_KEY16_MASK;
+    key_sels->md_key16_sel   = cgrp_a_map->LPM_KEY_SEL0[profile_id].MD_KEY16_SEL;
 
-    key_masks->addr_key8_mask  = cgrp_a_map->LPM_KEY_SEL1[profile_id].ADDR_KEY8_MASK;
-    key_masks->md_key8_mask    = cgrp_a_map->LPM_KEY_SEL1[profile_id].MD_KEY8_MASK;
+    key_sels->addr_key8_sel  = cgrp_a_map->LPM_KEY_SEL1[profile_id].ADDR_KEY8_SEL;
+    key_sels->md_key8_sel    = cgrp_a_map->LPM_KEY_SEL1[profile_id].MD_KEY8_SEL;
 
-    key_masks->addr_key16_mask = cgrp_a_map->LPM_KEY_SEL2[profile_id].ADDR_KEY16_MASK;
+    key_sels->addr_key16_sel = cgrp_a_map->LPM_KEY_SEL2[profile_id].ADDR_KEY16_SEL;
 
-    key_masks->addr_key32_mask = cgrp_a_map->LPM_KEY_SEL3[profile_id].ADDR_KEY32_MASK;
+    key_sels->addr_key32_sel = cgrp_a_map->LPM_KEY_SEL3[profile_id].ADDR_KEY32_SEL;
 }
 
 void mbyLpmGetTcamEntry
