@@ -18,7 +18,7 @@ import scala.annotation.tailrec
 
 object Parser {
 
-  case class ParserState(w: List[Short], aluOperation: AluOperation, state: Short, ptr: Short)
+  case class ParserState(w: Array[Short], aluOperation: AluOperation, state: Short, ptr: Short)
 
   type ProtoId          = Int
   type BaseOffset       = Int
@@ -94,7 +94,7 @@ object Parser {
   /**
     * Do the TCAM lookup, translate the result into actions
     */
-  private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, w0: Short, w1: Short, state: Short): Option[Action]  = {
+  private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, w0: Short, w1: Short, state: Short): Option[Action] = {
     // All lists have size of 16
     @tailrec
     def findAction(keysW: List[parser_key_w_r.parser_key_w_r], keysS: List[parser_key_s_r.parser_key_s_r],
@@ -131,8 +131,7 @@ object Parser {
       // or is the exception action to do nothing (or mark 'done')
       exceptionAction.test(packetHeader, currentOffset, idStage) match {
 
-        case Some(ape: AbortParserException) =>
-          (parserState, parserFlags, protoOffsets, Some(ape))
+        case Some(ape: AbortParserException) => (parserState, parserFlags, protoOffsets, Some(ape))
 
         case parsExcOpt =>
           val actParserState = analyzerAction.analyze(packetHeader, parserState) // setup the analyze actions for the next stage
@@ -148,7 +147,7 @@ object Parser {
 
   def initialState(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
-    val initWOffsets = List(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
+    val initWOffsets = Array(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
     val w = initWOffsets.map(offset => packetHeader.getWord(offset().toInt))
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
     val state = portCfg.INITIAL_STATE().toShort
@@ -162,7 +161,7 @@ object Parser {
     val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
     val tc = ParserTcam.matchRegister(Tcam.matchBitFun)(_)
-    tcamCsr.zip(sramCsr).reverse.collectFirst{
+    tcamCsr.zip(sramCsr).reverse.collectFirst {
       case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
     }.getOrElse((0,0))
   }
