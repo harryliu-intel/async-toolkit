@@ -20,7 +20,7 @@ $hdl_spec = {
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
-       "src/shared/include",
+       "src/shared/interfaces",
        "src/shared/rtl",
        "src/gmm/gmm_n/top/rtl",
      ],
@@ -30,7 +30,7 @@ $hdl_spec = {
     
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-       "src/shared/include",
+       "src/shared/interfaces",
        "src/shared/rtl",
        "src/gmm/gmm_n/top/rtl",
      ],
