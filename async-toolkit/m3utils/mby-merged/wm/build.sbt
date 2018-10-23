@@ -58,6 +58,15 @@ lazy val tcp = (project in file("tcp"))
     libraryDependencies ++= Dependencies.tcpDeps
   )
 
+lazy val main = (project in file("main"))
+  .dependsOn(tcp)
+  .settings(
+    Settings.commonSettings,
+    addCompilerPlugin(Dependencies.kindProjector),
+    libraryDependencies ++= Dependencies.mainDeps,
+    fork in run := true
+  )
+
 lazy val root = (project in file("."))
   .dependsOn(common, csrMacros)
   .enablePlugins(RdlGitHashPlugin)
