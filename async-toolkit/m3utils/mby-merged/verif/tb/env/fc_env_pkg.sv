@@ -73,7 +73,7 @@ package fc_env_pkg;
 
     // IGR 
     `ifdef IGR_ENV_ENABLE
-        import ingress_env_pkg::*;
+        import mby_igr_env_pkg::*;
         `include "igr_integ_env.svh"
     `endif // IGR_ENV_ENABLE
 

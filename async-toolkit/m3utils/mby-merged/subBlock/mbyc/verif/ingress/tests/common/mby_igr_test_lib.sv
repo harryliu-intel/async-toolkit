@@ -1,14 +1,15 @@
+// vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 //-----------------------------------------------------------------------------
-// Title         : Ingress Test island config
+// Title         : Ingress test library
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : ingress_ti_config.svh
+// File          : mby_igr_test_lib.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the configuration object to control the MBY rtl env.
+// 
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -18,19 +19,24 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-class ingress_ti_config extends uvm_object;
+program mby_igr_test_lib;
 
- string ingress_ti_low_path;
- int ingress_has_reset_pkg;
+   import uvm_pkg::*;
+   import mby_igr_env_pkg::*;
+   import eth_bfm_pkg::*;
+   import mby_ec_bfm_pkg::*;
 
-  `uvm_object_utils_begin(ingress_ti_config)
-     `uvm_field_string(ingress_ti_low_path, UVM_ALL_ON)
-     `uvm_field_int(ingress_has_reset_pkg, UVM_ALL_ON)
-   `uvm_object_utils_end
+   `include "uvm_macros.svh"
+   `include "mby_igr_base_test.svh"
+   `include "mby_igr_rand_test.svh"
 
-  //function: new 
-  function new( string         name = "");
-    super.new(name);
-  endfunction
-  
-endclass
+   // UVM Start test
+   initial begin
+      string testname;
+      if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
+         $display ("INGRESS_tb Started Running %s in UVM mode!\n",testname);
+      end
+      uvm_pkg::run_test(testname);
+   end
+
+endprogram

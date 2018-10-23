@@ -1,14 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Ingress extended base sequence
+// Title         : Ingress types
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : ingress_extended_base_seq.sv
+// File          : ingress_types.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-//
+// Type definitions for ingress cte
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -17,18 +17,22 @@
 // Modification history :
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
+`ifndef MBY_IGR_TYPES_SV
+`define MBY_IGR_TYPES_SV
 
-class ingress_extended_base_seq extends ingress_env_base_seq;
+`define NUM_VPS_PER_IGR   1
+`define NUM_PORTS_PER_VP  4
+`define NUM_EPLS_PER_IGR  4
+`define NUM_PORTS_PER_EPL 4
 
-  `uvm_object_utils(ingress_extended_base_seq)
-  `uvm_declare_p_sequencer(slu_sequencer)
+typedef virtual mby_igr_env_if                                   igr_env_if_t;
 
-  //---------------------------------------------------------------------------
-  // Function: new
-  //---------------------------------------------------------------------------
-  function new(input string name = "ingress_extended_base_seq",
-               uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
-    super.new(name /*, sequencer, parent_seq*/);
-  endfunction
+typedef mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(`NUM_PORTS_PER_VP))  igr_vp_bfm_t;
+typedef mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(`NUM_PORTS_PER_EPL)) igr_eth_bfm_t;
+typedef mby_ec_bfm_pkg::mby_ec_cdi_tx_io                         igr_eth_bfm_tx_io_t;
+typedef mby_ec_bfm_pkg::mby_ec_cdi_rx_io                         igr_eth_bfm_rx_io_t;
+typedef virtual mby_ec_cdi_tx_intf                               igr_eth_bfm_tx_intf_t;
+typedef virtual mby_ec_cdi_rx_intf                               igr_eth_bfm_rx_intf_t;
 
-endclass // ingress_extended_base_seq
+`endif // MBY_IGR_TYPES_SV
+

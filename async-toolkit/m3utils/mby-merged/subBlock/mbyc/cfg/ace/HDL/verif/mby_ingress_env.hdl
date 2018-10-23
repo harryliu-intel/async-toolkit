@@ -7,7 +7,7 @@ $hdl_spec = {
 
     # List of specific VERILOG source files
     -vlog_files => [
-         "verif/ingress/env/ingress_env_pkg.sv",
+         "verif/ingress/env/mby_igr_env_pkg.sv",
      ],
 
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
@@ -20,14 +20,11 @@ $hdl_spec = {
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
         "$ENV{UVM_HOME}/src",
-        "$ENV{OVM_HOME}/src",
-        "$ENV{SAOLA_HOME}/verilog",
-        "$ENV{SAOLA_HOME}/verilog_uvm",
         "verif/ingress",
         "verif/ingress/tb",
         "verif/ingress/seq",
-        "verif/ingress/ral",
-        "verif/ingress/fal",
+#        "verif/ingress/ral",
+#        "verif/ingress/fal",
         "verif/ingress/ti",
         "verif/ingress/env",
      ],

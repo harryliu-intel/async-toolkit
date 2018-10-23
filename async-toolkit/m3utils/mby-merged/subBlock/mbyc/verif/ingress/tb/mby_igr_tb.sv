@@ -3,7 +3,7 @@
 // Title         : Ingress testbench module
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : ingress_tb.sv
+// File          : mby_igr_tb.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -26,16 +26,9 @@
 
 `timescale 1ps/1fs
 
-`include "ingress_defines.sv"
+`include "mby_igr_defines.sv"
 
-module ingress_tb ();
-
-`ifdef XVM
-  import ovm_pkg::*;
-  import xvm_pkg::*;
- `include "ovm_macros.svh"
- `include "slu_macros.svh"
-`endif
+module mby_igr_tb ();
 
   import uvm_pkg::*;
   
@@ -51,19 +44,19 @@ module ingress_tb ();
 
   logic ingress_clock;
   logic ingress_reset;
-
+  
   // ===============================================
   // Verification Test Library
   // ===============================================
-  ingress_test_lib test();
+  mby_igr_test_lib test();
   
   // ===============================================
   // DUT RTL instance
   // ===============================================
-  `include "ingress_top_inst.v"
+`include "mby_igr_top_inst.v"
 
   // Parameters for interfaces
-  `include "ingress_params.sv"
+`include "mby_igr_params.sv"
 
   // ===============================================
   // Interfaces instance
@@ -111,14 +104,14 @@ module ingress_tb ();
   // Instance Ingress env interface
   // This is done in the TB if the IP need to drive also signals.
   // ===============================================
-  ingress_env_if ingress_if();
+  mby_igr_env_if ingress_if();
   assign ingress_reset               = ingress_if.reset;
   assign ingress_if.clock            = ingress_clock;
 
   // ===============================================
   // Test Island instance
   // ===============================================
-  ingress_ti_high #()
+  mby_igr_ti_high #()
     u_ingress_ti_high (
                     .ingress_if          (ingress_if)
                    ,.eth_bfm_tx_intf_0   (eth_bfm_tx_intf_0)
@@ -174,7 +167,7 @@ module ingress_tb ();
       if ($test$plusargs("fsdb_config")) begin                          // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
         $fsdbDumpvarsToFile ("fsdb.dump.config");
       end else begin
-        $fsdbDumpvars(0,ingress_tb,"+all");                             // Default - FSDB dump of all signals in the design
+        $fsdbDumpvars(0,mby_igr_tb,"+all");                             // Default - FSDB dump of all signals in the design
         $fsdbDumpSVA();
       end
 
@@ -201,4 +194,4 @@ module ingress_tb ();
     return out;
   endfunction // convert_time()
 
-endmodule // ingress_tb
+endmodule // mby_igr_tb

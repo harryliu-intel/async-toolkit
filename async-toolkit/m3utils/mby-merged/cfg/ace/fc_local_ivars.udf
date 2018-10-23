@@ -21,14 +21,59 @@ EOF
             },
         },
     },
-	 InterfaceVars => {
-	      -models_to_compile =>
-			{
-				merging => "ASSIGN",
-				default => ["fc",]
-			},
-		-test_in_model          => { default => 1 },
-		-elab_models            => { default => 1 },
+    InterfaceVars => {
+        -models_to_compile =>
+            {
+                merging => "ASSIGN",
+                default => ["fc",]
+            },
+        -test_in_model          => { default => 1 },
+        -elab_models            => { default => 1 },
+
+        # simulation aliases for all scopes
+        -verb_no => {
+            alias    => "-PREPEND -simv_args=+UVM_VERBOSITY=UVM_NONE",
+            help     => {
+                desc  => "set UVM verbosity to UVM_NONE",
+                group => "SIMULATION",
+            },
+        },
+        -verb_lo => {
+            alias    => "-PREPEND -simv_args=+UVM_VERBOSITY=UVM_LOW",
+            help     => {
+                desc  => "set UVM verbosity to UVM_LOW",
+                group => "SIMULATION",
+            },
+        },
+        -verb_med => {
+            alias    => "-PREPEND -simv_args=+UVM_VERBOSITY=UVM_MEDIUM",
+            help     => {
+                desc  => "set UVM verbosity to UVM_MEDIUM",
+                group => "SIMULATION",
+            },
+        },
+        -verb_hi => {
+            alias    => "-PREPEND -simv_args=+UVM_VERBOSITY=UVM_HIGH",
+            help     => {
+                desc  => "set UVM verbosity to UVM_HIGH",
+                group => "SIMULATION",
+            },
+        },
+        -verb_fu => {
+            alias    => "-PREPEND -simv_args=+UVM_VERBOSITY=UVM_FULL",
+            help     => {
+                desc  => "set UVM verbosity to UVM_FULL",
+                group => "SIMULATION",
+            },
+        },
+        -verb_de => {
+            alias    => "-PREPEND -simv_args=+UVM_VERBOSITY=UVM_DEBUG",
+            help     => {
+                desc  => "set UVM verbosity to UVM_DEBUG",
+                group => "SIMULATION",
+            },
+        },
+
 
         # JasperGold options
         -jg_proj_jasper_compile => {
@@ -87,7 +132,7 @@ EOF
         },
         -enable_PrintHier_pli => { default => 1, },
         -enable_debussy       => { default => 1 },
-	-save_run_scripts        => { default => 1 },
+        -save_run_scripts     => { default => 1 },
         -set_test_plusarg_to_testname => {default => '1'},
         -name_of_test_plusarg => {default => "UVM_TESTNAME"},
 
@@ -95,8 +140,7 @@ EOF
         -pre_clean_test => { default => 1, },
         -tgl_cov        => {
             type => "boolean",
-            alias =>
-"-test_elab_opts -cm,tgl -test_elab_opts -cm_tgl,portsonly -test_elab_opts -cm_hier,$ENV{MBY_ROOT}/tools/cov/tgl_cov -simv_args -cm,tgl",
+            alias => "-test_elab_opts -cm,tgl -test_elab_opts -cm_tgl,portsonly -test_elab_opts -cm_hier,$ENV{MBY_ROOT}/tools/cov/tgl_cov -simv_args -cm,tgl",
 
         },
 
@@ -124,8 +168,7 @@ EOF
             default => [
                 "-voptargs='+acc'",
                 "-suppress 3009",    # TSCALE TODO - Need to try to remove
-                "-suppress 3838"
-                ,    # written by continuous and procedural assignment TODO
+                "-suppress 3838" ,    # written by continuous and procedural assignment TODO
                 "-vopt",
                 "-dpioutoftheblue 1",             # TODO - Need to try to remove
                 "-permit_unmatched_virtual_intf", # TODO - Need to try to remove
@@ -139,22 +182,18 @@ EOF
 
             },
             -enable_pwr_intent => { default => 1 },
-		-test              => { default => "mby_alive_test", },
-		-model                        => { default => "fc", },
-		-test_required                => { default => 1 },
-			
+            -test              => { default => "mby_alive_test", },
+            -model             => { default => "fc", },
+            -test_required     => { default => 1 },
+            
             -test_dependent_libs =>
               { default => [ "shdv_shared_lib", "mby_env_lib", ], },
             -run_regression => {
                 switch => {
-                    doa =>
-"-exec_test -netbatch -testlist doa.list -nb_monitor -rtt -clean_rtt -test_results_subdir doa.list",
-                    level0 =>
-"-exec_test -netbatch -testlist level0.list -nb_monitor -rtt -clean_rtt -test_results_subdir level0.list",
-                    level1 =>
-"-nb_qslot $ENV{NB_DEFAULT_QSLOT} -exec_test -netbatch -testlist level1.list -nb_monitor -rtt -clean_rtt -test_results_subdir level1.list",
-                    rand =>
-"-exec_test -netbatch -testlist rand.list -nb_monitor -simv_args +vcs+lic+wait -rtt -clean_rtt -test_results_subdir rand.list",
+                    doa    => "-exec_test -netbatch -testlist doa.list -nb_monitor -rtt -clean_rtt -test_results_subdir doa.list",
+                    level0 => "-exec_test -netbatch -testlist level0.list -nb_monitor -rtt -clean_rtt -test_results_subdir level0.list",
+                    level1 => "-nb_qslot $ENV{NB_DEFAULT_QSLOT} -exec_test -netbatch -testlist level1.list -nb_monitor -rtt -clean_rtt -test_results_subdir level1.list",
+                    rand   => "-exec_test -netbatch -testlist rand.list -nb_monitor -simv_args +vcs+lic+wait -rtt -clean_rtt -test_results_subdir rand.list",
                 },
             },
 
@@ -184,11 +223,35 @@ EOF
                help  => { desc => "alias for generating vpd waves" }
             },
 
+            ## Activate do_file defined by '-vcd_do_files_vcs <path/file>'
+            -wave_vpd => {
+                alias    => "-vcd",
+                help     => {
+                    desc  => "execute user do file to generate waveform dumps",
+                    group => "SIMULATION",
+                },
+            },
+            ## Activate do_file defined by '-fsdb_do_files_vcs <path/file>'
+            -wave_fsdb => {
+                alias    => "-fsdb",
+                help     => {
+                    desc  => "execute user do file to generate waveform dumps",
+                    group => "SIMULATION",
+                },
+            },
+            ## Activate default wave generation do_file
+            -wave => {
+                alias    => "-wave_fsdb",
+                help     => {
+                    desc  => "execute user do file to generate waveform dumps",
+                    group => "SIMULATION",
+                },
+            },
+
             -vcs_profiler => {
                 type     => "SCALAR",
                 shortcut => "prof",
-                alias =>
-"-nocleanup -test_elab_opts -simprofile -simv_args -simprofile,<VAL>",
+                alias => "-nocleanup -test_elab_opts -simprofile -simv_args -simprofile,<VAL>",
             },
 
             -test_required         => { default => 1, },
@@ -198,12 +261,11 @@ EOF
             -test_run_copy_files   => {
                 default =>
                   [ "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so", ]
-				      },
+                      },
            
             -test_elab_opts => {
                 default => [
-
-		     "-lca", "-kdb", "-debug_access+all",
+                    "-lca", "-kdb", "-debug_access+all",
                     "-sverilog",      "-override_timescale=1ps/1ps",
                     "./libsla.so",    "-Xkeyopt=uvm",
                     "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
@@ -233,6 +295,7 @@ EOF
                 "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
                 "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
                 "-liblist_work",  "-liblist_nocelldiff",
+                "+warn=noFCICIO", # Removes note from log file: Note-[FCICIO] Instance coverage is ON
             ],
         },
 
@@ -252,6 +315,7 @@ EOF
                 "+define+SLA_SOCFUSEGEN2",
                 "+define+INSTANTIATE_NOVAS",
                 "+define+MODEL_ROOT=$ENV{MODEL_ROOT}", 
+
             ],
         },
         # ---------------------------------------------
