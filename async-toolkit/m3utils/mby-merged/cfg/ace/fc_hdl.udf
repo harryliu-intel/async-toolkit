@@ -154,6 +154,7 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
+                          "cfg/ace/HDL/rtl/collage_deps.hdl",
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
@@ -270,10 +271,8 @@ EOF
                  -generated => 1,
                  -hdl_spec => [
                      "cfg/ace/HDL/rtl/dummy.hdl",
-                     # these wrapper hdl's should be temp, until top level shells remove 2d arrays
-                     "collage/work/soc/gen/source/rtl/mby_ec_top_wrapper.hdl",
-                     "collage/work/soc/gen/source/rtl/mby_mpp_wrapper.hdl",
                      "collage/work/soc/gen/source/rtl/soc.hdl",
+                     "cfg/ace/HDL/rtl/collage_deps.hdl",
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },

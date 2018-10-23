@@ -28,10 +28,9 @@
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
-// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
 module mby_gmm_s
-  import sla_pkg::*, shared_pkg::*, mby_gmm_pkg::*;
+  import shared_pkg::*, mby_gmm_pkg::*;
 (
    input                              cclk,
    input                              reset_n,

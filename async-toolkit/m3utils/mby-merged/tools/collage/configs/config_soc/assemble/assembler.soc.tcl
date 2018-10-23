@@ -279,11 +279,12 @@ obviate reset_clock_spec
   print_time "Start connectivity report"
 
 # Generate connectivity reports
-collage_report_pin_connectivity -rep_fn "reports/${design}.ip2ip_pin_connectivity.report"
-#soc_populate_obv_clocks 1
-collage_report_interface_connectivity -rep_fn "reports/${design}.ip2ip_std_connectivity.report"
-#soc_collage_report_opens_stats  "reports/${design}.unconnected.pre_process.report" reports/subsystem_opens
-collage_report_sub_optimal_connectivity -rep_fn "reports/${design}.duplicate_ports.report"
+### TEMP something in these reports is taking a long time, commenting out for now
+#collage_report_pin_connectivity -rep_fn "reports/${design}.ip2ip_pin_connectivity.report"
+##soc_populate_obv_clocks 1
+#collage_report_interface_connectivity -rep_fn "reports/${design}.ip2ip_std_connectivity.report"
+##soc_collage_report_opens_stats  "reports/${design}.unconnected.pre_process.report" reports/subsystem_opens
+#collage_report_sub_optimal_connectivity -rep_fn "reports/${design}.duplicate_ports.report"
 
 ##########################################################################################
 # Finalize hook
