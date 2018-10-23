@@ -211,7 +211,7 @@ print "MGM debug : @mbyMgmLibs\n";
                       
             mby_gmm_s_rtl_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gmm_s_rtl.hdl', ],
-               -dependent_libs  => [ 'sla_lib'],
+               #-dependent_libs  => [ 'sla_lib'],
                #-tag             => "nonsynth",
             },
 
@@ -229,7 +229,7 @@ print "MGM debug : @mbyMgmLibs\n";
               
              mby_gmm_n_rtl_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gmm_n_rtl.hdl', ],
-               -dependent_libs  => [ 'sla_lib'],
+               #-dependent_libs  => [ 'sla_lib'],
                #-tag             => "nonsynth",
             },
 
@@ -796,13 +796,13 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                   "sla_lib",
-                   "shdv_shared_lib",
-                   "svt_ahb_lib",
-                   "mby_common_lib",
-                   "mby_wm_dpi_lib",
-                   "mby_jasper_lib",
-                   "mby_gmm_s_rtl_lib"
+                  "sla_lib",
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "mby_common_lib",
+                  "mby_wm_dpi_lib",
+                  "mby_jasper_lib",
+                  "mby_gmm_s_rtl_lib"
                ],
 
                elab_opts => [
@@ -848,7 +848,7 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                   "sla_lib",
+                  # "sla_lib",
                    "shdv_shared_lib",
                    "svt_ahb_lib",
                    "mby_common_lib",

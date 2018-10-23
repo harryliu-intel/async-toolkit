@@ -16,15 +16,17 @@ $hdl_spec = {
        "src/gmm/gmm_s/gcm/rtl/mby_gcm_top.sv",
        "src/gmm/gmm_s/mce/rtl/mby_mce_top.sv",
        "src/gmm/gmm_s/gpl/rtl/mby_gpl_top.sv",
-       #"src/rtl/gm/gmm/verilog/gmm_if.sv",
-       #"src/rtl/gm/gmm/verilog/gmm_top.sv",
-       #"src/rtl/gm/gmm/sandbox/verilog/clients_of_gmm.sv",
-       #"src/rtl/gm/gmm/sandbox/verilog/tb_gmm.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
-       "src/mby/rtl",
+       "src/shared/interfaces",
+       "src/shared/rtl",
+       "src/gmm/gmm_s/top/rtl",
+       "src/gmm/gmm_s/gpm/rtl",
+       "src/gmm/gmm_s/gcm/rtl",
+       "src/gmm/gmm_s/mce/rtl",
+       "src/gmm/gmm_s/gpl/rtl", 
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -32,8 +34,13 @@ $hdl_spec = {
     
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-       "src/mby/rtl",
-       "src/gmm/gmm_s/gpm/rtl",
+       "src/shared/interfaces",
+       "src/shared/rtl",
+       "src/gmm/gmm_s/top/rtl",
+       "src/gmm/gmm_s/gpm/rtl", 
+       "src/gmm/gmm_s/gcm/rtl",
+       "src/gmm/gmm_s/mce/rtl",
+       "src/gmm/gmm_s/gpl/rtl", 
      ],
     
     # Arbitrary VLOG options

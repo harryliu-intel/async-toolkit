@@ -30,14 +30,24 @@
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
-// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
 module mby_mce_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
    // CLock and reset
    input                              cclk,
-   input                              reset_n
+   input                              reset_n,
+
+   // MCE enqueue
+   input logic [MBY_MAX_NUM_MGP-1:0]  mc_deep_q_wr,
+
+   // mesh read requests for the MC deep-Q
+
+   // mesh read responses for the MC deep-Q
+
+   // MC tag ring
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left  [3:0],
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right [3:0]
  	  
 );
 

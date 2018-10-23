@@ -31,7 +31,7 @@
 // To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
 module mby_gmm_s_top
-  import sla_pkg::*, shared_pkg::*, mby_gmm_pkg::*;
+  import shared_pkg::*, mby_gmm_pkg::*;
 (
    input                              cclk,
    input                              reset_n,
@@ -133,7 +133,10 @@ module mby_gmm_s_top
    // Multicast/Mirror engine
    //-----------------------------------------------------------------------------------------------------
    mby_mce_top mby_mce_top ( .cclk                     (cclk),
-			     .reset_n                  (reset_n)
+			     .reset_n                  (reset_n),
+			     .mc_deep_q_wr             (mc_deep_q_wr),
+                             .mc_tag_ring_out_left     (mc_tag_ring_out_left),
+                             .mc_tag_ring_out_right    (mc_tag_ring_out_right)    
 			    );
    
    //-----------------------------------------------------------------------------------------------------
@@ -141,7 +144,7 @@ module mby_gmm_s_top
    //-----------------------------------------------------------------------------------------------------
    mby_gpl_top mby_gpl_top ( .cclk                     (cclk),
 			     .reset_n                  (reset_n)
-			   );
+			    );
    
 
 endmodule // mby_gmm_s
