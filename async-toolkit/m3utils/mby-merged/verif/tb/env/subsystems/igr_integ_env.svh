@@ -18,7 +18,7 @@ class igr_integ_env extends subsystem_base_env;
    `uvm_component_utils(igr_integ_env)
    
    // igr env
-   ingress_env       ingress_env_inst[`NUM_IGR];
+   mby_igr_env       ingress_env_inst[`NUM_IGR];
  
    //
    // constructor
