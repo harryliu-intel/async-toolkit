@@ -65,8 +65,8 @@ EOF
         # RTL and test island/validation environment stubbing command options
         -variant => {
             type => "ARRAY",
-            merging => "ASSIGN",
-            default => "all",
+            #merging => "ASSIGN",
+            default => "fc_64",
             help => {
                 desc => "select a variant mode for lite model building",
             },
