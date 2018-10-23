@@ -22,7 +22,7 @@
     mby_ec_cdi_tx_intf eth_bfm_tx_intf_igr_4_``IDX``(); \
     mby_ec_cdi_rx_intf eth_bfm_rx_intf_igr_4_``IDX``(); \
     \
-    ingress_ti_high #( \
+    mby_igr_ti_high #( \
         .IP_ENV(``"FC_ENV_PATH``.igr_subenv.ingress_env_inst_``IDX``") \
     ) u_ingress_ti_``IDX`` ( \
         .ingress_if(ingress_if_``IDX``), \
