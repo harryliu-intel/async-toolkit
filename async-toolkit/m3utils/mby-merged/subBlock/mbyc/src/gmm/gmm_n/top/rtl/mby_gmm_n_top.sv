@@ -29,7 +29,13 @@
 // 17-10-2018 intital version
 //
 //=======================================================================================================================================
-module mby_gmm_n
+
+`ifndef MBY_GMM_N_TOP_SV
+ `define MBY_GMM_N_TOP_SV
+
+// collage-pragma translate_on
+
+module mby_gmm_n_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
    input                              cclk,
@@ -50,7 +56,12 @@ module mby_gmm_n
    output mby_deque_t                 mby_deque_from_vp
  
 );
+   
+// collage-pragma translate_off
+   
+// collage-pragma translate_on
 
 endmodule // mby_gmm_s
 
+`endif
    

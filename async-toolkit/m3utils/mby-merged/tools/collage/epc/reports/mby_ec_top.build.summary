@@ -23,14 +23,11 @@ cfg_dn_pclk_cnt_0	[7:0]		in
 cfg_dn_pclk_cnt_1	[7:0]		in
 cfg_dn_pclk_cnt_2	[7:0]		in
 cfg_dn_pclk_cnt_3	[7:0]		in
-cfg_en_grant	[3:0]		in
 cfg_pcs_1_1_1_1	1		in
 cfg_pcs_1_1_2	1		in
 cfg_pcs_2_1_1	1		in
 cfg_pcs_2_2	1		in
 cfg_pcs_4	1		in
-cfg_pcs_bypass_scrambling	[3:0]		in
-cfg_serdes_speed	[3:0]		in
 cfg_up_dclk_cnt_0	[7:0]		in
 cfg_up_dclk_cnt_1	[7:0]		in
 cfg_up_dclk_cnt_2	[7:0]		in
@@ -396,14 +393,11 @@ cfg_dn_pclk_cnt_0
 cfg_dn_pclk_cnt_1
 cfg_dn_pclk_cnt_2
 cfg_dn_pclk_cnt_3
-cfg_en_grant
 cfg_pcs_1_1_1_1
 cfg_pcs_1_1_2
 cfg_pcs_2_1_1
 cfg_pcs_2_2
 cfg_pcs_4
-cfg_pcs_bypass_scrambling
-cfg_serdes_speed
 cfg_up_dclk_cnt_0
 cfg_up_dclk_cnt_1
 cfg_up_dclk_cnt_2
@@ -770,7 +764,7 @@ tx_out_valid
 #########################################################################
 # Statistics                                                            
 # Num Standard               : 0                                 
-# Num AdHoc                  : 369                               
+# Num AdHoc                  : 366                               
 # Num AdHoc (attribute)      : 0                          
 # Num AdHoc (user tagged)    : 0                          
 #########################################################################

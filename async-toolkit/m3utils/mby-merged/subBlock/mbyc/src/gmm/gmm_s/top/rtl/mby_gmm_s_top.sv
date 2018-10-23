@@ -30,6 +30,12 @@
 //
 // To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
+
+`ifndef MBY_GMM_S_TOP_SV
+ `define MBY_GMM_S_TOP_SV
+
+// collage-pragma translate_on
+
 module mby_gmm_s_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
@@ -83,6 +89,8 @@ module mby_gmm_s_top
  
 );
 
+// collage-pragma translate_off
+   
    //-----------------------------------------------------------------------------------------------------
    // FLOP repeaters for rings (may create its own module)
    //-----------------------------------------------------------------------------------------------------
@@ -146,7 +154,10 @@ module mby_gmm_s_top
 			     .reset_n                  (reset_n)
 			    );
    
+// collage-pragma translate_on
+   
+endmodule // mby_gmm_s_top
 
-endmodule // mby_gmm_s
+`endif //  `ifndef MBY_GMM_S_TOP_SV
 
    
