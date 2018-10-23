@@ -9,24 +9,26 @@ $hdl_spec = {
     -vlog_files => [
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_msh_pkg.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
-       "src/mesh/rtl/mesh_defines.vh",
-       "src/mesh/rtl/mesh_pkg.sv",
-       "src/mesh/rtl/msh_ctrl.sv",
-       "src/mesh/rtl/msh_dp.sv",
-       "src/mesh/rtl/msh_mem.sv",
-       "src/mesh/rtl/msh_mem_dp.sv",
-       "src/mesh/rtl/msh_node.sv",
-       "src/mesh/rtl/msh_rd_dp.sv",
-       "src/mesh/rtl/msh_rd_req.sv",
-       "src/mesh/rtl/msh_wr_dp.sv",
-       "src/mesh/rtl/msh_wr_req.sv",
-       "src/mesh/rtl/mesh.sv",
+       "src/msh/rtl/mby_msh_defines.vh",
+       "src/msh/rtl/mby_msh_ctrl.sv",
+       "src/msh/rtl/mby_msh_arb_weighted.sv",
+       "src/msh/rtl/mby_arb_lprr.sv",
+       "src/msh/rtl/mby_msh_dp.sv",
+       "src/msh/rtl/mby_msh_mem.sv",
+       "src/msh/rtl/mby_msh_mem_dp.sv",
+       "src/msh/rtl/mby_msh_node.sv",
+       "src/msh/rtl/mby_msh_rd_dp.sv",
+       "src/msh/rtl/mby_msh_rd_req.sv",
+       "src/msh/rtl/mby_msh_wr_dp.sv",
+       "src/msh/rtl/mby_msh_wr_req.sv",
+       "src/msh/rtl/mby_msh.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
-     "src/mesh/rtl",
+     "src/msh/rtl",
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -34,7 +36,7 @@ $hdl_spec = {
     
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-     "src/mesh/rtl",
+     "src/msh/rtl",
      ],
     
     # Arbitrary VLOG options

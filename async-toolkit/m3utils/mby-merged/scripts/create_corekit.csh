@@ -6,7 +6,9 @@ set my_tcl = $argv
 set psetupbase       = `ToolConfig.pl get_tool_path psetup`
 set collage_ver      = `ToolConfig.pl get_tool_version collage`
 set collage_intf_def = `ToolConfig.pl get_tool_path collage_intf_def`
+set coretoolsver     = `ToolConfig.pl get_tool_version coretools`
 
+setenv CORE_TOOLS_VER $coretoolsver
 setenv COLLAGE_WORK $cwd/output
 setenv COLLAGE_IP_KITS $cwd/ip_kits
 setenv COLLAGE_INTF_DEF $collage_intf_def

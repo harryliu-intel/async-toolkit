@@ -7,7 +7,13 @@
 # 
 #################################################################################
 
-#collage_install_ip_kit -ip_name  "<ip name>" \
-#                       -kit_name "<corekit name>" \
-#                       -src_dir  "<path to corekit>" \
-#                       -dest_dir $install_kits_root
+collage_install_ip_kit -ip_name  "mby_gmm_n" \
+                       -kit_name "mby_gmm_n" \
+                       -src_dir  "$::env(MODEL_ROOT)/tools/collage/gmm_n/ip_kits" \
+                       -dest_dir $install_kits_root
+
+collage_install_ip_kit -ip_name  "mby_gmm_s" \
+                       -kit_name "mby_gmm_s" \
+                       -src_dir  "$::env(MODEL_ROOT)/tools/collage/gmm_s/ip_kits" \
+                       -dest_dir $install_kits_root
+
