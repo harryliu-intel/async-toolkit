@@ -15,25 +15,26 @@
 
   `include "igr_conn_defines.svh"
 
+
   //Instantiate and connect the IGR TI
-  //`igr_conn(`FC_ENV, `HDL_TOP``.igr, 0)
-  `igr_conn(`FC_ENV, `HDL_TOP, 0)
-  `igr_conn(`FC_ENV, `HDL_TOP, 1)
-  `igr_conn(`FC_ENV, `HDL_TOP, 2)
-  `igr_conn(`FC_ENV, `HDL_TOP, 3)
+  //`define igr_conn(FC_ENV_PATH, DUT_PATH, MPP_IDX, MGP_IDX, IDX) \
+  `igr_conn(`FC_ENV, `soc, 0, 0, 0)
+  `igr_conn(`FC_ENV, `soc, 0, 1, 1)
+  `igr_conn(`FC_ENV, `soc, 1, 0, 2)
+  `igr_conn(`FC_ENV, `soc, 1, 1, 3)
   `ifdef FC_64
-      `igr_conn(`FC_ENV, `HDL_TOP, 4)
-      `igr_conn(`FC_ENV, `HDL_TOP, 5)
-      `igr_conn(`FC_ENV, `HDL_TOP, 6)
-      `igr_conn(`FC_ENV, `HDL_TOP, 7)
-      `igr_conn(`FC_ENV, `HDL_TOP, 8)
-      `igr_conn(`FC_ENV, `HDL_TOP, 9)
-      `igr_conn(`FC_ENV, `HDL_TOP, 10)
-      `igr_conn(`FC_ENV, `HDL_TOP, 11)
-      `igr_conn(`FC_ENV, `HDL_TOP, 12)
-      `igr_conn(`FC_ENV, `HDL_TOP, 13)
-      `igr_conn(`FC_ENV, `HDL_TOP, 14)
-      `igr_conn(`FC_ENV, `HDL_TOP, 15)
+      `igr_conn(`FC_ENV, `soc, 2, 0, 4)
+      `igr_conn(`FC_ENV, `soc, 2, 1, 5)
+      `igr_conn(`FC_ENV, `soc, 3, 0, 6)
+      `igr_conn(`FC_ENV, `soc, 3, 1, 7)
+      `igr_conn(`FC_ENV, `soc, 4, 0, 8)
+      `igr_conn(`FC_ENV, `soc, 4, 1, 9)
+      `igr_conn(`FC_ENV, `soc, 5, 0, 10)
+      `igr_conn(`FC_ENV, `soc, 5, 1, 11)
+      `igr_conn(`FC_ENV, `soc, 6, 0, 12)
+      `igr_conn(`FC_ENV, `soc, 6, 1, 13)
+      `igr_conn(`FC_ENV, `soc, 7, 0, 14)
+      `igr_conn(`FC_ENV, `soc, 7, 1, 15)
   `endif
 
 `endif
