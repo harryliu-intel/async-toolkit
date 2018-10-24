@@ -36,16 +36,13 @@ set ::soc_integ_specs_dir [file join $::soc_repo_dir "integ_specs"]
 set ::soc_tb_specs_dir [file join $soc_repo_dir "tb_specs"]
 set ::soc_integ_suffix ""
 
-# <subsystem name> <subsystem dir, relative or absolute>
+# <subsystem name> <subsystem dir, relative or absolute> <number of instances>
 # subsystem name is useless, what is it for????
+# warning:  No comments (lines starting with #) in the soc_subsystem definition
 set ::soc_subsystems {
-    epc	        epc
-    cup         cup
-    glbl_mgmt   glbl_mgmt
-    mpp         mpp
-    msh         msh
-    rcf         rcf
-#    collage collage
+    clocking    clocking      1
+    epc_mpp     epc_mpp       8
+    msh         msh           1
 }
 
 #System Verilog construct support

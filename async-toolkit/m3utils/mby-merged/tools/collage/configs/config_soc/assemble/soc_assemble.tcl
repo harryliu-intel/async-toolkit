@@ -13,11 +13,14 @@ proc soc_register_subsystems {} {
   #set in configurations.tcl
   set queried_subsys_list $::soc_subsystems
 
-  foreach "ssid ssdir" $queried_subsys_list {
+  foreach "ssid ssdir total_num_inst" $queried_subsys_list {
     set specdir [file join ${::soc_subsys_specs_dir} $ssdir]
-
     print_info "Auto-register subsystem: -subsystem_id $ssid -subsystem_spec_dir $specdir"
-    collage_register_subsystem -subsystem_id $ssid -subsystem_spec_dir ${specdir}
+    # do loop for each instance of subsystem, will replace inst_num variable passed into subsystem with iteration num
+    for {set i 1} {$i <= $total_num_inst} {incr i} {
+       set subst_list [list [list inst_num $i]]
+       collage_register_subsystem -subsystem_id ${ssid}_$i -subsystem_spec_dir $specdir -subsystem_copy $subst_list -subsystem_target_dir $::env(COLLAGE_WORK)/subsystem
+    }
   }
 }
 
@@ -33,7 +36,7 @@ proc soc_specify_subsystem {} {
   #collage_process_ifc_conn_file -hier_lookup -file ${::soc_integ_specs_dir}/std_clk_connection.cfg
   #Process global std connection file from subsystem areas
   set queried_subsys_list $::soc_subsystems
-  foreach "ssid ssdir" $queried_subsys_list {
+  foreach "ssid ssdir numinst" $queried_subsys_list {
     set specdir [file join ${::soc_subsys_specs_dir} $ssdir]
     if { [file exists ${specdir}/global_std_connection.cfg] } {
       print_info "Processing global std_connections: -subsystem_id $ssid"
@@ -41,7 +44,7 @@ proc soc_specify_subsystem {} {
     }
   }
   #Process stubs overrides, adding pass-through
-  foreach "ssid ssdir" $queried_subsys_list {
+  foreach "ssid ssdir numinst" $queried_subsys_list {
     set specdir [file join ${::soc_subsys_specs_dir} $ssdir]
     if { [file exists ${specdir}/stub_override.tcl] } {
       print_info "Sourcing stubs override: -subsystem_id $ssid"
@@ -65,7 +68,7 @@ proc soc_complete_connections {} {
   #should contain IP connections to globals
   set global_ss_adhocs ""
   set queried_subsys_list $::soc_subsystems
-  foreach "ssid ssdir" $queried_subsys_list {
+  foreach "ssid ssdir numinst" $queried_subsys_list {
     set subsys_dir "[collage_get_subsystem_spec_dir -subsystem_id $ssdir]"
     if { [file exists ${subsys_dir}/global_adhoc_connection.txt] } {
       print_info "Adding global adhoc: -subsystem_id $ssid"
@@ -122,14 +125,6 @@ proc soc_nightly_release {} {
 # Finalize hook
 # ----------------------------------------------------------------------------------------
 proc soc_hook_finalize { {assign_soc_check 0} } {
-  #set ::collage_supply_pin_include  "i_bgref_1p0"
-  #set ::collage_supply_pin_exception "vnn_powergood vnn_powergood_b"
-  set ::collage_supply_pin_exception ""
-  set ::collage_supply_pin_include  ""
- 
-  collage_add_ifdef_supply_ground -folder_path $::env(COLLAGE_WORK)/gen/source/rtl \
-                                  -supply_pin_exception $::collage_supply_pin_exception \
-                                  -supply_pin_include   $::collage_supply_pin_include 
 }
 
 # ----------------------------------------------------------------------------------------

@@ -32,8 +32,14 @@ module egress_ti_high #(
                         )
   (
     egress_env_if      egress_if
-   ,mby_ec_cdi_tx_intf  cdi_tx_intf
-   ,mby_ec_cdi_rx_intf  cdi_rx_intf
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_0
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_0
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_1
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_1
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_2
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_2
+   ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_3
+   ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_3
   );
 
   import uvm_pkg::*;
@@ -55,9 +61,15 @@ module egress_ti_high #(
   // ===============================================
   egress_ti_low #(.IP_ENV(IP_ENV))
     u_egress_ti_low (
-                       .egress_if  (egress_if)
-                      ,.cdi_tx_intf (cdi_tx_intf)
-                      ,.cdi_rx_intf (cdi_rx_intf)
+                       .egress_if         (egress_if)
+                      ,.eth_bfm_tx_intf_0 (eth_bfm_tx_intf_0)
+                      ,.eth_bfm_rx_intf_0 (eth_bfm_rx_intf_0)
+                      ,.eth_bfm_tx_intf_1 (eth_bfm_tx_intf_1)
+                      ,.eth_bfm_rx_intf_1 (eth_bfm_rx_intf_1)
+                      ,.eth_bfm_tx_intf_2 (eth_bfm_tx_intf_2)
+                      ,.eth_bfm_rx_intf_2 (eth_bfm_rx_intf_2)
+                      ,.eth_bfm_tx_intf_3 (eth_bfm_tx_intf_3)
+                      ,.eth_bfm_rx_intf_3 (eth_bfm_rx_intf_3)
                      );
 
 endmodule

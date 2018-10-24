@@ -1,8 +1,8 @@
 `include "lib_udp.rdl"
 `include "mby_ip.rdl"
 
-`include "mby_parser.rdl"
-`include "mby_mapper.rdl"
+`include "mby_ppe_parser_map.rdl"
+`include "mby_ppe_mapper_map.rdl"
 `include "mby_cgrp_a.rdl"
 `include "mby_cgrp_b.rdl"
 `include "mby_nexthop.rdl"
@@ -24,6 +24,7 @@
 `include "mby_rx_pb.rdl"
 `include "mby_tx_pb.rdl"
 `include "mby_freepointer.rdl"
+`include "mby_mce.rdl"
 
 addrmap mby_ppe_rx_top_map {
   mby_ppe_parser_map            parser;

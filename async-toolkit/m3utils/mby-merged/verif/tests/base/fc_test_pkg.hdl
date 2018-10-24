@@ -1,0 +1,44 @@
+#-----------------------------------------------------------------------------
+# INTEL CONFIDENTIAL
+# copyright(c) 2018, intel corporation. all rights reserved
+#-----------------------------------------------------------------------------
+#
+# created by   :  raghu P gudla
+# created on   :  09/22/2018
+#-------------------------------------------------------------------------------
+
+# this is a HDL spec file - it defines the unit and how to compile it.
+
+$hdl_spec = {
+    # list of VERILOG source files that belong in this library
+    -vlog_files => [
+        'verif/tests/base/fc_test_pkg.svh',
+    ],
+
+    # list of verilog library source dirs (corresponds with the VLOG(AN) '-y' parameter)
+    -vlog_lib_dirs => [],
+
+    # list of verilog library source files (corresponds with the VLOG(AN) '-v' parameter)
+    -vlog_lib_files => [],
+
+    # list of include directories (corresponds with the VLOG(AN) '+incdir+' parameter)
+    -vlog_incdirs => [
+        "$ENV{OVM_HOME}/src", "$ENV{UVM_HOME}/src", "$ENV{XVM_HOME}/src",
+        "$ENV{SAOLA_HOME}/verilog", "$ENV{SAOLA_HOME}/verilog_uvm",
+        "verif/gen",
+        "verif/tests/base",
+        "verif/tests",
+    ],
+
+    # arbitrary verilog compilation options
+    -vlog_opts => '',
+
+    # list of specific VHDL source files
+    -vhdl_files => [],
+
+    # arbitrary VHDL compilation options
+    -vcom_opts => '',
+
+    # other hdl spec files to include
+    -hdl_spec => [],
+};

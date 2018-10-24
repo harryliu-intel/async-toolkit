@@ -21,7 +21,7 @@ reg lpm_key_sel0_r {
     Selects which of the KEY16 fields to use for the metadata portion of the LPM key.
            ";
     ValRandomize = true;
-  } MD_KEY16_MASK[63:0] = 64'h0;
+  } MD_KEY16_SEL[63:0] = 64'h0;
 };
 
 reg lpm_key_sel1_r {
@@ -42,14 +42,14 @@ reg lpm_key_sel1_r {
     Selects which of the KEY8 fields to use for the address portion of the LPM key.
            ";
     ValRandomize = true;
-  } ADDR_KEY8_MASK[63:32] = 32'h0;
+  } ADDR_KEY8_SEL[63:32] = 32'h0;
   field {
     AccessType = "RW";
     desc = "
     Selects which of the KEY8 fields to use for the metadata portion of the LPM key.
            ";
     ValRandomize = true;
-  } MD_KEY8_MASK[31:0] = 32'h0;
+  } MD_KEY8_SEL[31:0] = 32'h0;
 };
 
 reg lpm_key_sel2_r {
@@ -70,7 +70,7 @@ reg lpm_key_sel2_r {
     Selects which of the KEY16 fields to use for the address portion of the LPM key.
            ";
     ValRandomize = true;
-  } ADDR_KEY16_MASK[63:0] = 64'h0;
+  } ADDR_KEY16_SEL[63:0] = 64'h0;
 };
 
 reg lpm_key_sel3_r {
@@ -91,7 +91,7 @@ reg lpm_key_sel3_r {
     Selects which of the KEY32 fields to use for the address portion of the LPM key.
            ";
     ValRandomize = true;
-  } ADDR_KEY32_MASK[15:0] = 16'h0;
+  } ADDR_KEY32_SEL[15:0] = 16'h0;
 };
 
 reg lpm_key_mask_r {
@@ -723,7 +723,6 @@ addrmap mby_ppe_cgrp_a_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  em_a_hash_lookup_r          EM_A_HASH_LOOKUP[32768];
   em_a_hash_cam_rf            EM_A_HASH_CAM[32]     ;
   em_a_hash_cam_en_rf         EM_A_HASH_CAM_EN[2]   ;
   em_a_key_sel0_rf            EM_A_KEY_SEL0[2]      ;
@@ -731,6 +730,7 @@ addrmap mby_ppe_cgrp_a_map {
   em_a_key_mask_rf            EM_A_KEY_MASK[2]      ;
   em_a_hash_miss_rf           EM_A_HASH_MISS[2]     ;
   em_a_hash_cfg_r             EM_A_HASH_CFG[64]     ;
+  em_a_hash_lookup_r          EM_A_HASH_LOOKUP[32768];
 
   lpm_subtrie_aptr_r          LPM_SUBTRIE_APTR[24576];
   lpm_subtrie_cptr_r          LPM_SUBTRIE_CPTR[24576];

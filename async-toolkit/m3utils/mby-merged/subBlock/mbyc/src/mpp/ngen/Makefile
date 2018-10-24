@@ -7,7 +7,8 @@ V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 V_DIRS        = -d=../../mgp/rtl \
                 -d=../../ppe_stm/rtl \
                 -d=../../shared/rtl \
-                -d=../../rtl/egr/verilog \
+                -d=../../egr/rtl \
+                -d=../../igr/rtl \
                 -d=../../rtl/gm/gmm/verilog \
                 -d=../../shared/interfaces
 V_LIBS        =

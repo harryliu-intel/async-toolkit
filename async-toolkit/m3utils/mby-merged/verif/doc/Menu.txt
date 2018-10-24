@@ -71,18 +71,41 @@ Group: Lib  {
 
    }  # Group: Lib
 
+Group: Tb  {
+
+   Group: Bfms  {
+
+      File: sequencer  (tb/env/bfms/svt_axi_bfm/svt_axi_virtual_sequencer.svh)
+      File: svt_apb_bfm/apb_bfm_env.svh  (tb/env/bfms/svt_apb_bfm/apb_bfm_env.svh)
+      File: svt_axi_bfm/axi_bfm_env.svh  (tb/env/bfms/svt_axi_bfm/axi_bfm_env.svh)
+      File: svt_chi_bfm/chi_bfm_env.svh  (tb/env/bfms/svt_chi_bfm/chi_bfm_env.svh)
+      }  # Group: Bfms
+
+   Group: Subsystems  {
+
+      File: apb_integ_env.svh  (tb/env/subsystems/apb_integ_env.svh)
+      File: axi_integ_env.svh  (tb/env/subsystems/axi_integ_env.svh)
+      File: chi_integ_env.svh  (tb/env/subsystems/chi_integ_env.svh)
+      File: get_tb_cfg&lparen;&rparen;  (tb/env/subsystems/cdn_axi_integ_env.svh)
+      }  # Group: Subsystems
+
+   }  # Group: Tb
+
 Group: Lib  {
 
-   File: mby_base_seq  (lib/mby_common_pkg/mby_base_seq.svh)
-   File: mby_common_pkg  (lib/mby_common_pkg/mby_common_pkg.sv)
-   File: mby_ral_ahb_access  (lib/mby_common_pkg/mby_ral_ahb_access.sv)
-   }  # Group: Lib
+   Group: mby_common_pkg  {
 
-File: ahb_bfm_env.sv  (lib/svt_ahb_bfm/ahb_bfm_env.sv)
-File: cust_svt_ahb_slave_transaction  (lib/svt_ahb_bfm/cust_svt_ahb_slave_transaction.sv)
-File: cust_svt_ahb_system_configuration  (lib/svt_ahb_bfm/cust_svt_ahb_system_configuration.sv)
-File: svt_ahb_bfm_defines.sv  (lib/svt_ahb_bfm/svt_ahb_bfm_defines.sv)
-File: svt_ahb_bfm_pkg  (lib/svt_ahb_bfm/svt_ahb_bfm_pkg.sv)
+      File: mby_base_seq  (lib/mby_common_pkg/mby_base_seq.svh)
+      File: mby_common_pkg  (lib/mby_common_pkg/mby_common_pkg.sv)
+      File: mby_ral_ahb_access  (lib/mby_common_pkg/mby_ral_ahb_access.sv)
+      }  # Group: mby_common_pkg
+
+   File: ahb_bfm_env.sv  (lib/svt_ahb_bfm/ahb_bfm_env.sv)
+   File: cust_svt_ahb_slave_transaction  (lib/svt_ahb_bfm/cust_svt_ahb_slave_transaction.sv)
+   File: cust_svt_ahb_system_configuration  (lib/svt_ahb_bfm/cust_svt_ahb_system_configuration.sv)
+   File: svt_ahb_bfm_defines.sv  (lib/svt_ahb_bfm/svt_ahb_bfm_defines.sv)
+   File: svt_ahb_bfm_pkg  (lib/svt_ahb_bfm/svt_ahb_bfm_pkg.sv)
+   }  # Group: Lib
 
 Group: Index  {
 

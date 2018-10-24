@@ -10,8 +10,11 @@
 //-----------------------------------------------------------------------------
 // Description :
 //   This top module will:
-//   1. Instance 1 RTL Unit
+//   1. Instance DUT
 //   2. Control Dumping features for FSDB/DVE.
+//   3. Create interface instances and test island.
+//   4. Create clock/reset
+//   5. Instance white model
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -21,10 +24,9 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-`timescale 1ps/1ps
+`timescale 1ps/1fs
 
 `include "ingress_defines.sv"
-//`include "igr_top.sv"
 
 module ingress_tb ();
 
@@ -37,13 +39,6 @@ module ingress_tb ();
 
   import uvm_pkg::*;
   
-  logic primary_clock;
-  logic gated_primary_clock;
-  logic secondary_clock;
-  logic gated_secondary_clock;
-  logic ingress_primary_reset;
-  logic ingress_primary_clock;
-
   // ===============================================
   // =                FSDB variable                =
   // ===============================================
@@ -54,7 +49,9 @@ module ingress_tb ();
   string  str;
   logic   vccRail;
 
-  
+  logic ingress_clock;
+  logic ingress_reset;
+
   // ===============================================
   // Verification Test Library
   // ===============================================
@@ -63,85 +60,77 @@ module ingress_tb ();
   // ===============================================
   // DUT RTL instance
   // ===============================================
-`include "ingress_top_inst.v"
+  `include "ingress_top_inst.v"
 
   // Parameters for interfaces
-`include "ingress_params.sv"
+  `include "ingress_params.sv"
 
   // ===============================================
   // Interfaces instance
   // ===============================================
 
+  // eth_bfm interfaces
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_0 (ingress_reset, ingress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_0 (ingress_reset, ingress_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_1 (ingress_reset, ingress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_1 (ingress_reset, ingress_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_2 (ingress_reset, ingress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_2 (ingress_reset, ingress_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (ingress_reset, ingress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (ingress_reset, ingress_clock);
+  mby_ec_cdi_tx_intf eth_bfm_tx_intf_4 (ingress_reset, ingress_clock);
+  mby_ec_cdi_rx_intf eth_bfm_rx_intf_4 (ingress_reset, ingress_clock);
+
+  assign eth_bfm_tx_intf_0.enable = 1;
+  assign eth_bfm_tx_intf_1.enable = 1;
+  assign eth_bfm_tx_intf_2.enable = 1;
+  assign eth_bfm_tx_intf_3.enable = 1;
+  assign eth_bfm_tx_intf_4.enable = 1;
+
   // ===============================================
   // Clock block instance
   // ===============================================
+  shdv_clk_gen  ingress_clk_gen(ingress_clock);
 
-  int idle_conter;
-
-  initial begin
-    primary_clock       = 1'b0;
-    gated_primary_clock = 1'b0;
-    secondary_clock     = 1'b0;
-    idle_conter         = 0;
+  initial begin : clk_gen_settings
+    ingress_clk_gen.period = 833333fs;
+    ingress_clk_gen.jitter = 0ps;
   end
 
-  always #5000 primary_clock   = (ingress_if.enable_primary_clock   ? ~primary_clock   : 0);
-  always #5000 secondary_clock = (ingress_if.enable_secondary_clock ? ~secondary_clock : 0);
-
-  always @(primary_clock) begin
-    if (idle_conter > 8) begin
-      gated_primary_clock <= 0;
-    end else begin
-      gated_primary_clock <=  primary_clock;
-    end
-  end
-
-  // ===============================================
-  // Reset block instance
-  // ===============================================
 
   // ===============================================
   // INSTANCES
   // ===============================================
-  // Ingress controller instance + signal connections
-  // ===============================================
 
-  // Connecting clocks to RTL
   // ===============================================
-  assign ingress_primary_clock   = gated_primary_clock;
-  assign ingress_secondary_clock = gated_secondary_clock;
+  // MBY White Model instance
+  // ===============================================
+  mby_wm_top mby_wm();
 
+  // ===============================================
   // Instance Ingress env interface
   // This is done in the TB if the IP need to drive also signals.
   // ===============================================
   ingress_env_if ingress_if();
-  assign ingress_power_good_reset    = ingress_if.power_good_reset;
-  assign ingress_secondary_reset     = ingress_if.secondary_reset;
-  assign ingress_primary_reset       = ingress_if.primary_reset;
-  assign ingress_if.primary_clock    = primary_clock;
-  assign ingress_if.secondary_clock  = secondary_clock;
-  assign ingress_if.ingress_int_wire = 0;
-
-  mby_ec_cdi_tx_intf cdi_tx_intf (ingress_power_good_reset, primary_clock);
-  mby_ec_cdi_rx_intf cdi_rx_intf (ingress_power_good_reset, primary_clock);
-  assign cdi_rx_intf.ecc             = cdi_tx_intf.ecc;
-  assign cdi_rx_intf.port_num        = cdi_tx_intf.port_num;
-  assign cdi_rx_intf.data_valid      = cdi_tx_intf.data_valid;
-  assign cdi_rx_intf.metadata        = cdi_tx_intf.metadata;
-  assign cdi_rx_intf.data_w_ecc      = cdi_tx_intf.data_w_ecc;
-  assign cdi_rx_intf.pfc_xoff        = cdi_tx_intf.pfc_xoff;
-  assign cdi_rx_intf.au_credits      = cdi_tx_intf.au_credits;
-  assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc;
-  assign cdi_tx_intf.enable          = 1;
+  assign ingress_reset               = ingress_if.reset;
+  assign ingress_if.clock            = ingress_clock;
 
   // ===============================================
   // Test Island instance
   // ===============================================
   ingress_ti_high #()
     u_ingress_ti_high (
-                    .ingress_if      (ingress_if)
-                   ,.cdi_tx_intf     (cdi_tx_intf)
-                   ,.cdi_rx_intf     (cdi_rx_intf)
+                    .ingress_if          (ingress_if)
+                   ,.eth_bfm_tx_intf_0   (eth_bfm_tx_intf_0)
+                   ,.eth_bfm_rx_intf_0   (eth_bfm_rx_intf_0)
+                   ,.eth_bfm_tx_intf_1   (eth_bfm_tx_intf_1)
+                   ,.eth_bfm_rx_intf_1   (eth_bfm_rx_intf_1)
+                   ,.eth_bfm_tx_intf_2   (eth_bfm_tx_intf_2)
+                   ,.eth_bfm_rx_intf_2   (eth_bfm_rx_intf_2)
+                   ,.eth_bfm_tx_intf_3   (eth_bfm_tx_intf_3)
+                   ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
+                   ,.eth_bfm_tx_intf_4   (eth_bfm_tx_intf_4)
+                   ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_4)
                   );
 
 `include "std_ace_util.vic"

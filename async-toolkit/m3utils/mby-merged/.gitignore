@@ -5,6 +5,7 @@
 # Never add Natural_Docs output -  directory Data
 /verif/doc/Data
 /verif/doc/Working Data
+*.nd
 
 # DVT Eclipse
 .dvt
@@ -16,6 +17,9 @@ verif/.dvt
 verif/.project
 build/
 
+# VS Code settings files
+.vscode/*
+
 # BMAN generated files
 target
 results
@@ -25,6 +29,9 @@ regression
 *simv.daidir/*
 *simv.vdb/*
 .acetestinfo.log
+
+# collage generated
+tools/collage/*/ip_kits/
 
 # Dump related files
 vdCovLog/
@@ -157,3 +164,9 @@ wm/src/main/c_expmt/src/tests/*.exe
 
 # Model server files
 wm/src/main/c_exp/src/mby_server
+
+# generated subIP content
+subIP/
+
+# RALF typically generated from RDL or Nebulon output
+*.ralf

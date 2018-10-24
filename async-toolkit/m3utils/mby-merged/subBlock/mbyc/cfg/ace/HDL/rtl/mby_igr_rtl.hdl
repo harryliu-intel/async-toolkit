@@ -10,10 +10,15 @@ $hdl_spec = {
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/shared/interfaces/igr_rx_ppe_if.sv",
+       "src/shared/interfaces/rx_ppe_igr_if.sv",
        "src/igr/rtl/mby_igr_pkg.sv",
        "src/igr/rtl/mby_igr_macros.vh",
+       "src/igr/epl_shim/rtl/mby_igr_epl_shim_ctrl.sv",
+       "src/igr/epl_shim/rtl/mby_igr_epl_shim_seg.sv",
+       "src/igr/epl_shim/rtl/mby_igr_epl_shim_segs.sv",
+       "src/igr/epl_shim/rtl/mby_igr_epl_shim.sv",
        "src/igr/rtl/igr_top.sv",
-       "src/igr/epl_shim/rtl/epl_shim.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
@@ -27,6 +32,7 @@ $hdl_spec = {
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
      "src/igr/rtl",
+     "/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver"
      ],
     
     # Arbitrary VLOG options

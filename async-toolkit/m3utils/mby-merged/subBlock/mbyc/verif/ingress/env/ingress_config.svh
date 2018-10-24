@@ -30,7 +30,7 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-class ingress_config extends slu_config_object;
+class ingress_config extends shdv_base_config;
 
     string ingress_primary_access  = "primary";
     string ingress_sideband_access = "sideband";

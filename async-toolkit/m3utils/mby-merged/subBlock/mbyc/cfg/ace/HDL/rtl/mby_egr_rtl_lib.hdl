@@ -24,9 +24,7 @@ $hdl_spec = {
        "src/egr/rtl/egr_statsmgmt_if.sv",
        "src/egr/rtl/egr_tagring_if.sv",
        "src/egr/rtl/egr_vp_if.sv",
-       "src/egr/sandbox/egr_dummy_if.sv",
        "src/egr/rtl/egr_top.sv",
-       "src/egr/sandbox/egr_top_tb.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

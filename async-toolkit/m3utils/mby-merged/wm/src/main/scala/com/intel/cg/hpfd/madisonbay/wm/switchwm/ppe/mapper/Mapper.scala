@@ -1,18 +1,21 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper
 
 import com.intel.cg.hpfd.csr.generated._
-import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtInt.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.MACAddress
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.FieldVector._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.Mapper.{MACLookupResult, MACMapperResult, RewriteProfileType, RewriteSource}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields.MACMapperImposed
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.MACAddress
 
 
-class Mapper(val csr: mby_ppe_mapper_map.mby_ppe_mapper_map) {
+class Mapper(csr: mby_ppe_mapper_map.mby_ppe_mapper_map) {
+
   object MACMapper {
+
     implicit class MacMapperEntry(val c: map_mac_r.map_mac_r) {
+
       def matches(mac: MACAddress): Boolean = {
-        val mask = (1 << (c.IGNORE_LENGTH() + 1)) - 1
+        val mask = (1L << (c.IGNORE_LENGTH() + 1L)) - 1L
         c.MAC() == (mac.addr & mask)
       }
 

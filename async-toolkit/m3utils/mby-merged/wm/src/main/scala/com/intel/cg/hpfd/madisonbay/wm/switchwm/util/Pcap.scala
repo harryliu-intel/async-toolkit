@@ -2,8 +2,9 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.util
 
 import java.io.{DataInputStream, FileInputStream}
 
-import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtInt.reverseInt
-import com.intel.cg.hpfd.madisonbay.wm.extensions.ExtShort.reverseShort
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Packet
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.reverseInt
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtShort.reverseShort
 
 object Pcap {
 

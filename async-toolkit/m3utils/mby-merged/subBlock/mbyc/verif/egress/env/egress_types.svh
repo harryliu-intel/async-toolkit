@@ -20,6 +20,16 @@
 `ifndef EGRESS_TYPES_SV
 `define EGRESS_TYPES_SV
 
+`define NUM_EPLS_PER_EGR  4
+`define NUM_PORTS_PER_EPL 4
+
+typedef virtual egress_env_if                                   egr_env_if_t;
+
+typedef mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(`NUM_PORTS_PER_EPL)) egr_eth_bfm_t;
+typedef mby_ec_bfm_pkg::mby_ec_cdi_tx_io                         egr_eth_bfm_tx_io_t;
+typedef mby_ec_bfm_pkg::mby_ec_cdi_rx_io                         egr_eth_bfm_rx_io_t;
+typedef virtual mby_ec_cdi_tx_intf                               egr_eth_bfm_tx_intf_t;
+typedef virtual mby_ec_cdi_rx_intf                               egr_eth_bfm_rx_intf_t;
 
 `endif // EGRESS_TYPES_SV
 

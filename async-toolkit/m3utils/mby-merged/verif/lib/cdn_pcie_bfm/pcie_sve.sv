@@ -26,11 +26,11 @@ class pcie_sve extends uvm_env;
 
    function new(string name = "pcie_sve", uvm_component parent);
       super.new(name,parent);
-      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmSequencer::get_type(),   pcie_sequencer::get_type());
-      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmDriver::get_type(),      pcie_driver::get_type());
-      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmInstance::get_type(),    pcie_instance::get_type());
-      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmMonitor::get_type(),     pcie_monitor::get_type());
-      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmMemInstance::get_type(), pcie_mem_instance::get_type());
+//      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmSequencer::get_type(),   pcie_sequencer::get_type());
+//      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmDriver::get_type(),      pcie_driver::get_type());
+//      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmInstance::get_type(),    pcie_instance::get_type());
+//      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmMonitor::get_type(),     pcie_monitor::get_type());
+//      factory.set_type_override_by_type(cdnPcieUvm::cdnPcieUvmMemInstance::get_type(), pcie_mem_instance::get_type());
       `uvm_info(get_type_name(),"End of Sve new",UVM_LOW);
    endfunction // new
 

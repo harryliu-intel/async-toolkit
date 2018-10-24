@@ -5,4 +5,5 @@ mby_mpp [
     mgp$i of mby_mgp with mgp.map $i
   }
   ppestm of ppe_stm_top with ppestm.map
+  mpp_csr_shim of mby_mpp_csr_shim with mpp_csr_shim.map
 ]
