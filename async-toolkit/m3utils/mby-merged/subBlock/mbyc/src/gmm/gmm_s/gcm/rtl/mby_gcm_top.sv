@@ -30,7 +30,6 @@
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
-// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
 module mby_gcm_top
   import shared_pkg::*, mby_gmm_pkg::*;
@@ -55,11 +54,11 @@ module mby_gcm_top
    output mby_cm_tx_wm_t              tx_cm_wm_out_left,
    output mby_cm_tx_wm_t              tx_cm_wm_out_right,
 
-   output mby_cm_shared_mem_wm_t      rx_cm_sm_wm_out_left,
-   output mby_cm_shared_mem_wm_t      rx_cm_sm_wm_out_right,
+   output mby_cm_shared_mem_rx_wm_t   rx_cm_sm_wm_out_left,
+   output mby_cm_shared_mem_rx_wm_t   rx_cm_sm_wm_out_right,
 
-   output mby_cm_shared_mem_wm_t      tx_cm_sm_wm_out_left,
-   output mby_cm_shared_mem_wm_t      tx_cm_sm_wm_out_right
+   output mby_cm_shared_mem_tx_wm_t   tx_cm_sm_wm_out_left,
+   output mby_cm_shared_mem_tx_wm_t   tx_cm_sm_wm_out_right
 	  
 );
 

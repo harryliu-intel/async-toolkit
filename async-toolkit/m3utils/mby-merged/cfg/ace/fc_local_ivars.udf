@@ -111,7 +111,7 @@ EOF
         -variant => {
             type => "ARRAY",
             #merging => "ASSIGN",
-            default => "fc_64",
+            default => "fc",
             help => {
                 desc => "select a variant mode for lite model building",
             },
