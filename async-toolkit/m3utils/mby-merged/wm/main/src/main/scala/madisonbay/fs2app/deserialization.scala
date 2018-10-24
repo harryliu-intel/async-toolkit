@@ -8,10 +8,12 @@ import scalaz.MonadError
 import scalaz.StateT
 import scalaz.syntax.all._
 
-import madisonbay.messages._
 import madisonbay.logger.Logger
 import madisonbay.tcp._
 import madisonbay.tcp.iosf._
+import madisonbay.fs2app.algebra.messages._
+
+import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
 
 package object deserialization {
   // DST stands for 'Deserialization StateT'
@@ -24,13 +26,13 @@ package object deserialization {
   // import S._ // for 'put' and 'get' functions on StateT
   // so this is the reason why this class is defined here...
   class StateTExtensions[F[_]: Monad,S] {
-    val MF = Monad[F]
-    def getS: StateT[F,S,S] = StateT(s => MF.point((s,s)))
-    def putS(newS: S): StateT[F,S,Unit] = StateT(_ => MF.point((newS,())))
+    def getS: StateT[F,S,S] = StateT(s => (s,s).point[F])
+    def putS(newS: S): StateT[F,S,Unit] = StateT(_ => (newS,()).point[F])
     def liftS[A](fu: F[A]): StateT[F,S,A] = StateT(s => fu.map(a => (s,a)))
   }
 
   def notSupported[F[_]: Monad]: DST[F,NotSupported.type] = NotSupported.point[DST[F,?]]
+  def quit[F[_]: Monad]: DST[F,Quit.type] = Quit.point[DST[F,?]]
 
   def iosf[F[_]](implicit me: MonadError[F,Throwable]): DST[F,Message] = {
     val S = new StateTExtensions[F,Array[Byte]]
@@ -41,11 +43,12 @@ package object deserialization {
     val regWriteReqDec = ByteArrayDecoder[IosfRegWriteReq]
 
     for {
-      msgBytes <- getS
+      initial  <- getS
       header   <- regBlkWriteReqDec.decode[F]
-      _        <- putS(msgBytes)
+      blkBytes <- getS
+      _        <- putS(initial)
       msg      <- header.opcode.value match {
-        case RegBlkWrite => IosfRegBlkWrite(header).point[DST[F,?]]
+        case RegBlkWrite => IosfRegBlkWrite(header, blkBytes).point[DST[F,?]]
         case RegRead     => regReadReqDec.decode[F].map(IosfRegRead)
         case RegWrite    => regWriteReqDec.decode[F].map(IosfRegWrite)
         case _           => notSupported[F]
@@ -65,6 +68,38 @@ package object deserialization {
     } yield EgressSocketInfo(hostname, port)
   }
 
+  def packet[F[_]: Logger](port: U16)(implicit me: MonadError[F,Throwable]): DST[F,Packets] = {
+    val S = new StateTExtensions[F,Array[Byte]]
+    import S._
+    val logger = Logger[F]
+
+    lazy val result: DST[F,Packets] = for {
+      dataType       <- ByteArrayDecoder[FmModelDataType.Value].decode[F]
+      length         <- ByteArrayDecoder[U32].decode[F]
+      bytes          <- getS
+      (content, next) = bytes.splitAt(length)
+      packet          = Packet(port, content)
+      items          <- liftS {
+        import FmModelDataType._
+        lazy val continuation = result.run(next)
+        (dataType, next.isEmpty) match {
+          case (PacketMeta, false) => continuation.map { case (_,p) => packet :: p.items }
+          case (PacketMeta, true) => (packet :: Nil).point[F]
+          case (other, false) =>
+            for {
+              _     <- logger.warn(s"Not supported packet [$other]. Will be skipped!")
+              _     <- logger.warn(s"For now only ${PacketMeta} is supported.")
+              _     <- logger.warn(s"Skipping ->> [${content.size}] <<- bytes of metadata.")
+              elems <- continuation.map { case (_,p) => p.items }
+            } yield elems
+          case (_,_) => Nil.point[F]
+        }
+      }
+    } yield Packets(items)
+
+    result
+  }
+
   def deserialize[F[_]: Logger](array: Array[Byte])(implicit me: MonadError[F,Throwable]): F[Stream[F,Message]] = {
 
     val S = new StateTExtensions[F,Array[Byte]]
@@ -72,12 +107,14 @@ package object deserialization {
 
     val logger = Logger[F]
 
-    def deserializationDispatcher[F[_]](implicit me: MonadError[F,Throwable]): DST[F,Message] =
+    def deserializationDispatcher: DST[F,Message] =
       for {
         header  <- headerDecoder.decode[F]
         message <- header.Type match {
           case FmModelMsgType.SetEgressInfo => egressSocketInfo[F]
           case FmModelMsgType.Iosf          => iosf[F]
+          case FmModelMsgType.Packet        => packet[F](header.Port)
+          case FmModelMsgType.CommandQuit   => quit[F]
           case _                            => notSupported[F]
         }
       } yield message
@@ -89,7 +126,7 @@ package object deserialization {
         _               <- liftS(logger.trace(s"Header received: $header"))
         (current, next) =  msgBytes.splitAt(header.Msglength)
         _               <- putS(current)
-        msg             <- deserializationDispatcher[F]
+        msg             <- deserializationDispatcher
       } yield (next,msg)
 
       if (arr.isEmpty) {

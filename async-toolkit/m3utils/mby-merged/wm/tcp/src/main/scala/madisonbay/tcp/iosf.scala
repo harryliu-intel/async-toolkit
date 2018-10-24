@@ -41,7 +41,7 @@ package object iosf {
     badEv: Lazy[ByteArrayDecoder[Repr]],
     bitSize: BitSize[A]
   ): ByteArrayDecoder[A] = {
-    val _ = List(inj,gen,badEv,bitSize)
+    val _ = inj
     new ByteArrayDecoder[A] {
       def decode[F[_]](implicit me: MonadError[F,Throwable]): StateT[F,Array[Byte],A] = {
         def decompressToBits(array: Array[Byte]): Array[Byte] =
@@ -52,11 +52,13 @@ package object iosf {
             } yield bit
 
         StateT(array => {
+          val (current,next) = array.splitAt(bitSize.getBytes)
+
           badEv
             .value
             .decode[F]
-            .run(decompressToBits(array))
-            .map{ case (a,repr) => (a,gen.from(repr)) }
+            .run(decompressToBits(current))
+            .map { case (_,repr) => (next, gen.from(repr)) }
         })
       }
     }
@@ -83,3 +85,4 @@ package object iosf {
   }
 
 }
+
