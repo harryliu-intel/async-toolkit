@@ -40,10 +40,9 @@ object Parser {
 
     val rxPort = new PortIndex(portIndex)
 
-    val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(
-      csrParser, 0, packetHeader, initialState(csrParser, packetHeader, rxPort),
-      PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException]
-      )
+    val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(csrParser, packetHeader)(0,
+      initialState(csrParser, packetHeader, rxPort),
+      PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException])
 
     val (paKeysVal, csrExtractedKeys) = extractKeys(csrParser, packetHeader, protoOffsets)
 
@@ -70,8 +69,9 @@ object Parser {
     )
   }
 
-  def applyStage(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, packetHeader: PacketHeader, parserState: ParserState,
-                 packetFlags: PacketFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
+  @tailrec
+  def applyStage(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader)
+       (idStage: Int, parserState: ParserState, packetFlags: PacketFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
                         (PacketFlags, ProtoOffsets, Option[ParserException]) = idStage match {
 
     case NumberOfParsingStages => (packetFlags, fields, exceptionOpt)
@@ -83,11 +83,11 @@ object Parser {
         case (Some(exc), _) => (packetFlags, fields, Some(exc))
 
             // if nothing matches, do nothing
-        case (exOpt, None)  => applyStage(csr, idStage + 1, packetHeader, parserState, packetFlags, fields, exOpt)
+        case (exOpt, None)  => applyStage(csr, packetHeader)(idStage + 1, parserState, packetFlags, fields, exOpt)
 
         case (_, Some(act)) =>                                    // otherwise, apply the action
           val (actParsState, actPckFlags, actProtOffs, actPrsExcOpt) = act.run(idStage, parserState, packetFlags, fields)(packetHeader)
-          applyStage(csr, idStage + 1, packetHeader, actParsState, actPckFlags, actProtOffs, actPrsExcOpt)
+          applyStage(csr, packetHeader)(idStage + 1, actParsState, actPckFlags, actProtOffs, actPrsExcOpt)
     }
   }
 
@@ -101,15 +101,15 @@ object Parser {
                    anaWs: List[parser_ana_w_r.parser_ana_w_r], anaSs: List[parser_ana_s_r.parser_ana_s_r],
                    exts:  List[parser_ext_r.parser_ext_r],     excs:  List[parser_exc_r.parser_exc_r]): Option[Action] =
       (keysW, keysS, anaWs, anaSs, exts, excs) match {
-        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.matchRegisterSeq(Seq(
-            ParserTcam.TcTriple(kW.W0_MASK,    kW.W0_VALUE,    parserState.w(0)),
-            ParserTcam.TcTriple(kW.W1_MASK,    kW.W1_VALUE,    parserState.w(1)),
-            ParserTcam.TcTriple(kS.STATE_MASK, kS.STATE_VALUE, parserState.state)
+        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.camMatching(Seq(
+            ParserTcam.ToMatch(kW.W0_MASK().toShort,    kW.W0_VALUE().toShort,    parserState.w(0)),
+            ParserTcam.ToMatch(kW.W1_MASK().toShort,    kW.W1_VALUE().toShort,    parserState.w(1)),
+            ParserTcam.ToMatch(kS.STATE_MASK().toShort, kS.STATE_VALUE().toShort, parserState.state)
           )) =>
                 Some(new Action(
                   AnalyzerAction(aW, aS),
                   List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
-                  new ExceptionAction(ec.EX_OFFSET().toShort, ec.PARSING_DONE.apply() == 1)
+                  ExceptionAction(ec)
                 ))
 
         case (_ :: kWs, _ :: kSs, _ :: aWs, _ :: aSs, _ :: exs, _ :: ecs) => findAction(kWs, kSs, aWs, aSs, exs, ecs)
@@ -117,8 +117,7 @@ object Parser {
         case (_, _, _, _, _, _) => None
       }
 
-    // reverse because:
-    // When multiple rules hit, the highest numbered rule within the stage wins
+    // reverse because: when multiple rules hit, the highest numbered rule within the stage wins
     findAction(csr.PARSER_KEY_W(idStage).PARSER_KEY_W.reverse, csr.PARSER_KEY_S(idStage).PARSER_KEY_S.reverse,
                csr.PARSER_ANA_W(idStage).PARSER_ANA_W.reverse, csr.PARSER_ANA_S(idStage).PARSER_ANA_S.reverse,
                csr.PARSER_EXT(idStage).PARSER_EXT.reverse,     csr.PARSER_EXC(idStage).PARSER_EXC.reverse)
@@ -136,21 +135,21 @@ object Parser {
         case Some(ape: AbortParserException) => (parserState, parserFlags, protoOffsets, Some(ape))
 
         case parsExcOpt =>
-          val actParserState = analyzerAction.analyze(packetHeader, parserState) // setup the analyze actions for the next stage
+          val updatedParserState = analyzerAction.analyze(packetHeader, parserState) // setup the analyze actions for the next stage
             // do all of the extraction operations to add more to the flags and offsets
-          val (actProtOffsets, actPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) {
+          val (updatedProtoOffsets, updatedPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) {
               (prev, act) => act.extract(prev)
             }
 
-          (actParserState, actPckFlags, actProtOffsets, parsExcOpt)
+          (updatedParserState, updatedPckFlags, updatedProtoOffsets, parsExcOpt)
       }
     }
   }
 
   def initialState(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
-    val initWOffsets = Array(portCfg.INITIAL_W0_OFFSET, portCfg.INITIAL_W1_OFFSET, portCfg.INITIAL_W2_OFFSET)
-    val w = initWOffsets.map(offset => packetHeader.getWord(offset().toInt))
+    val initWOffsets = Array(portCfg.INITIAL_W0_OFFSET().toShort, portCfg.INITIAL_W1_OFFSET().toShort, portCfg.INITIAL_W2_OFFSET().toShort)
+    val w = initWOffsets.map(offset => packetHeader.getWord(offset))
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
     val state = portCfg.INITIAL_STATE().toShort
     val ptr = portCfg.INITIAL_PTR().toShort

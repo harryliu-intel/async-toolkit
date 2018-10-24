@@ -9,13 +9,13 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 class ExtractAction(registerExt: parser_ext_r.parser_ext_r) {
 
   def extract(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
-    val flags: PacketFlags = registerExt.FLAG_NUM() match {
-      case ExtractAction.FlagNOP  => input._2
-      case extractedFlagNum       => input._2.assign(extractedFlagNum.toInt, registerExt.FLAG_VALUE() == 1L)
-    }
     val fields: ProtoOffsets = registerExt.PROTOCOL_ID() match {
       case ExtractAction.SpecialProtocolId  => input._1
       case protoId => input._1.updated(registerExt.PTR_NUM().toShort, (protoId.toInt, registerExt.OFFSET().toInt))
+    }
+    val flags: PacketFlags = registerExt.FLAG_NUM() match {
+      case ExtractAction.FlagNOP  => input._2
+      case extractedFlagNum       => input._2.assign(extractedFlagNum.toInt, registerExt.FLAG_VALUE() == 1L)
     }
     (fields, flags)
   }
