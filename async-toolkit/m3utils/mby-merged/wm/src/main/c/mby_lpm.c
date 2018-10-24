@@ -19,7 +19,9 @@ static void lookUpLpmTcam
 
     tcam_lookup->hit_valid = FALSE;
 
-    while (tcam_index < MBY_REG_SIZE(LPM_MATCH_TCAM))
+    while (tcam_index < //MBY_LPM_REG_SIZE(LPM_MATCH_TCAM)
+           mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n
+           )
     {
         mbyLpmTcamEntry tcam_entry;
 
