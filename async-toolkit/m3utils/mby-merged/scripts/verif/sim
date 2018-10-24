@@ -283,7 +283,7 @@ sub process_commands {
             } elsif($ace_model =~ /(fc_64_no_phy|fc_64|fc_8_no_phy|fc_8)$/) {
                 #$dut_name = 'fc_lite';
                 $dut_name = $1;
-                $variant = "-variant $1";
+                $variant = "-variant=$1";
             } else {
                 &failing_exit("Trying to change to unsupported model: $ace_model $dut_name\n");
             }
