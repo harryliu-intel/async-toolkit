@@ -17,6 +17,8 @@ ip_version         = 1.0
 ########################################
 #Port_name	PortWidth	Port_Direction
 cclk	1		in
+gpol_update_bcast_out_left	1		out
+gpol_update_bcast_out_right	1		out
 mby_deque_from_egr_left	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		in
 mby_deque_from_egr_right	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		in
 mby_deque_from_vp	1		in
@@ -49,6 +51,8 @@ tx_cm_wm_out_right	1		out
 # Non-standard Interfaces Ports (info only)
 ########################################
 cclk
+gpol_update_bcast_out_left
+gpol_update_bcast_out_right
 mby_deque_from_egr_left
 mby_deque_from_egr_right
 mby_deque_from_vp
@@ -88,7 +92,7 @@ tx_cm_wm_out_right
 #########################################################################
 # Statistics                                                            
 # Num Standard               : 0                                 
-# Num AdHoc                  : 28                               
+# Num AdHoc                  : 30                               
 # Num AdHoc (attribute)      : 0                          
 # Num AdHoc (user tagged)    : 0                          
 #########################################################################

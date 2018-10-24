@@ -2,7 +2,7 @@
 ########################################
 #Info only 
 ########################################
-ip_top_module_name = mby_gmm_n_top
+ip_top_module_name = mby_gmm_n
 KitVendor          = Intel
 KitLibrary         = Intel
 ip_version         = 1.0
