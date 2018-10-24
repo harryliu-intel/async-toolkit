@@ -33,7 +33,7 @@ object Parser {
   val NumberOfExtractionConfs     = 16
   val OffsetOfNextExtractAction   = 16
 
-  def parse(csr: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet, portIndex: Int): ParserOutput = {
+  def parse(csrParser: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet, portIndex: Int): ParserOutput = {
 
     // TODO: support split header to Interface 0 and Interface 1
     val packetHeader = PacketHeader(packet.bytes).trimmed
@@ -41,18 +41,18 @@ object Parser {
     val rxPort = new PortIndex(portIndex)
 
     val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(
-      csr, 0, packetHeader, initialState(csr, packetHeader, rxPort),
+      csrParser, 0, packetHeader, initialState(csrParser, packetHeader, rxPort),
       PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException]
       )
 
-    val (paKeysVal, csrExtractedKeys) = extractKeys(csr, packetHeader, protoOffsets)
+    val (paKeysVal, csrExtractedKeys) = extractKeys(csrParser, packetHeader, protoOffsets)
 
     val paPacketTypeVal = packetType(csrExtractedKeys, packetFlags)
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
 
     ParserOutput(
-      updatedCsr                = csrExtractedKeys,
+      updatedParserCsr          = csrExtractedKeys,
       rxPort                    = rxPort,
       pktMeta                   = 0,
       rxFlags                   = 0,
@@ -77,7 +77,7 @@ object Parser {
     case NumberOfParsingStages => (packetFlags, fields, exceptionOpt)
 
     case stage =>
-      val action = matchingAction(csr, stage, parserState.w(0), parserState.w(1), parserState.state)
+      val action = matchingAction(csr, stage, parserState)
       (exceptionOpt, action) match {
 
         case (Some(exc), _) => (packetFlags, fields, Some(exc))
@@ -94,7 +94,7 @@ object Parser {
   /**
     * Do the TCAM lookup, translate the result into actions
     */
-  private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, w0: Short, w1: Short, state: Short): Option[Action] = {
+  private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, parserState: ParserState): Option[Action] = {
     // All lists have size of 16
     @tailrec
     def findAction(keysW: List[parser_key_w_r.parser_key_w_r], keysS: List[parser_key_s_r.parser_key_s_r],
@@ -102,9 +102,9 @@ object Parser {
                    exts:  List[parser_ext_r.parser_ext_r],     excs:  List[parser_exc_r.parser_exc_r]): Option[Action] =
       (keysW, keysS, anaWs, anaSs, exts, excs) match {
         case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.matchRegisterSeq(Seq(
-            ParserTcam.TcTriple(kW.W0_MASK,    kW.W0_VALUE,    w0),
-            ParserTcam.TcTriple(kW.W1_MASK,    kW.W1_VALUE,    w1),
-            ParserTcam.TcTriple(kS.STATE_MASK, kS.STATE_VALUE, state)
+            ParserTcam.TcTriple(kW.W0_MASK,    kW.W0_VALUE,    parserState.w(0)),
+            ParserTcam.TcTriple(kW.W1_MASK,    kW.W1_VALUE,    parserState.w(1)),
+            ParserTcam.TcTriple(kS.STATE_MASK, kS.STATE_VALUE, parserState.state)
           )) =>
                 Some(new Action(
                   AnalyzerAction(aW, aS),
@@ -117,9 +117,11 @@ object Parser {
         case (_, _, _, _, _, _) => None
       }
 
-    findAction(csr.PARSER_KEY_W(idStage).PARSER_KEY_W, csr.PARSER_KEY_S(idStage).PARSER_KEY_S,
-               csr.PARSER_ANA_W(idStage).PARSER_ANA_W, csr.PARSER_ANA_S(idStage).PARSER_ANA_S,
-               csr.PARSER_EXT(idStage).PARSER_EXT,     csr.PARSER_EXC(idStage).PARSER_EXC)
+    // reverse because:
+    // When multiple rules hit, the highest numbered rule within the stage wins
+    findAction(csr.PARSER_KEY_W(idStage).PARSER_KEY_W.reverse, csr.PARSER_KEY_S(idStage).PARSER_KEY_S.reverse,
+               csr.PARSER_ANA_W(idStage).PARSER_ANA_W.reverse, csr.PARSER_ANA_S(idStage).PARSER_ANA_S.reverse,
+               csr.PARSER_EXT(idStage).PARSER_EXT.reverse,     csr.PARSER_EXC(idStage).PARSER_EXC.reverse)
   }
 
   private class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
