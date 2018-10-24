@@ -12,10 +12,6 @@ $hdl_spec = {
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
        "src/gmm/gmm_n/top/rtl/mby_gmm_n.sv",
-       #"src/rtl/gm/gmm/verilog/gmm_if.sv",
-       #"src/rtl/gm/gmm/verilog/gmm_top.sv",
-       #"src/rtl/gm/gmm/sandbox/verilog/clients_of_gmm.sv",
-       #"src/rtl/gm/gmm/sandbox/verilog/tb_gmm.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

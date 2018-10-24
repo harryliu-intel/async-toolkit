@@ -22,47 +22,36 @@
 ///  must be express and approved by Intel in writing.                           
 ///=======================================================================================================================================
 //
-// MBY_GMM_S.SV
+// MBY_MCE_TOP.SV
+//
+// MBY Multicast/Mirror Engine
 //
 // HISTORY
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
 //=======================================================================================================================================
-
-`ifndef MBY_GMM_N_SV
- `define MBY_GMM_N_SV
-
-// collage-pragma translate_on
-
-module mby_gmm_n
-  import shared_pkg::*;
-  import mby_gmm_pkg::*;
+module mby_mce_top
+  import shared_pkg::*, mby_gmm_pkg::*;
 (
+   // CLock and reset
    input                              cclk,
    input                              reset_n,
- 
-   // pod pointer ring interface
 
-   input  logic                       pod_ring_stall_in, // Signal from GPM to egress to stall egress from injecting a new dirty pod
-	  
-   // Tag ring interface (ingress -to- egress/GMM)
-   input  mby_tag_ring_t              tag_ring_in_0  [MBY_MAX_NUM_MGP-1:0],
-   input  mby_tag_ring_t              tag_ring_in_1  [MBY_MAX_NUM_MGP-1:0],
+   // MCE enqueue
+   input logic [MBY_MAX_NUM_MGP-1:0]  mc_deep_q_wr,
 
-   // MultiCast tag ring interafce (MCE-to-egress)
-   input  mby_mc_tag_ring_t           mc_tag_ring_in [3:0],
+   // mesh read requests for the MC deep-Q
 
-   // Dequeue (EGress-to-GMM)
-   output mby_deque_t                 mby_deque_from_vp
- 
+   // mesh read responses for the MC deep-Q
+
+   // MC tag ring
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left  [3:0],
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right [3:0]
+ 	  
 );
-   
-// collage-pragma translate_off
-   
-// collage-pragma translate_on
 
-endmodule // mby_gmm_s
+endmodule // mby_gpm_top
 
-`endif
+
    

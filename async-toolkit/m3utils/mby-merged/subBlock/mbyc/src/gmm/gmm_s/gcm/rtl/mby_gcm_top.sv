@@ -22,47 +22,48 @@
 ///  must be express and approved by Intel in writing.                           
 ///=======================================================================================================================================
 //
-// MBY_GMM_S.SV
+// MBY_GCM_TOP.SV
+//
+// Global Congestion Management for the MBY shared memory
 //
 // HISTORY
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
+// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
-
-`ifndef MBY_GMM_N_SV
- `define MBY_GMM_N_SV
-
-// collage-pragma translate_on
-
-module mby_gmm_n
-  import shared_pkg::*;
-  import mby_gmm_pkg::*;
+module mby_gcm_top
+  import shared_pkg::*, mby_gmm_pkg::*;
 (
+   // CLock and reset
    input                              cclk,
    input                              reset_n,
  
-   // pod pointer ring interface
-
-   input  logic                       pod_ring_stall_in, // Signal from GPM to egress to stall egress from injecting a new dirty pod
-	  
-   // Tag ring interface (ingress -to- egress/GMM)
+   // Enqueue
    input  mby_tag_ring_t              tag_ring_in_0  [MBY_MAX_NUM_MGP-1:0],
    input  mby_tag_ring_t              tag_ring_in_1  [MBY_MAX_NUM_MGP-1:0],
 
-   // MultiCast tag ring interafce (MCE-to-egress)
-   input  mby_mc_tag_ring_t           mc_tag_ring_in [3:0],
+   // Dequeue
+   input  mby_deque_t                 mby_deque_from_egr_left  [MBY_MAX_NUM_MGP-1:0],
+   input  mby_deque_t                 mby_deque_from_egr_right [MBY_MAX_NUM_MGP-1:0],
+   input  mby_deque_t                 mby_deque_from_vp,
 
-   // Dequeue (EGress-to-GMM)
-   output mby_deque_t                 mby_deque_from_vp
- 
+   // Congestion Management ring 
+   output mby_cm_rx_wm_t              rx_cm_wm_out_left,
+   output mby_cm_rx_wm_t              rx_cm_wm_out_right,
+
+   output mby_cm_tx_wm_t              tx_cm_wm_out_left,
+   output mby_cm_tx_wm_t              tx_cm_wm_out_right,
+
+   output mby_cm_shared_mem_wm_t      rx_cm_sm_wm_out_left,
+   output mby_cm_shared_mem_wm_t      rx_cm_sm_wm_out_right,
+
+   output mby_cm_shared_mem_wm_t      tx_cm_sm_wm_out_left,
+   output mby_cm_shared_mem_wm_t      tx_cm_sm_wm_out_right
+	  
 );
-   
-// collage-pragma translate_off
-   
-// collage-pragma translate_on
 
-endmodule // mby_gmm_s
+endmodule // mby_gpm_top
 
-`endif
+
    

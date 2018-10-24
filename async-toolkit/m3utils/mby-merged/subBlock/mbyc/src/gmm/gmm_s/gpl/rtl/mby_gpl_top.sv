@@ -22,47 +22,26 @@
 ///  must be express and approved by Intel in writing.                           
 ///=======================================================================================================================================
 //
-// MBY_GMM_S.SV
+// MBY_GPL_TOP.SV
+//
+// Global Policer
 //
 // HISTORY
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
+// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
-
-`ifndef MBY_GMM_N_SV
- `define MBY_GMM_N_SV
-
-// collage-pragma translate_on
-
-module mby_gmm_n
-  import shared_pkg::*;
-  import mby_gmm_pkg::*;
+module mby_gpl_top
+  import shared_pkg::*, mby_gmm_pkg::*;
 (
+   // CLock and reset
    input                              cclk,
-   input                              reset_n,
- 
-   // pod pointer ring interface
-
-   input  logic                       pod_ring_stall_in, // Signal from GPM to egress to stall egress from injecting a new dirty pod
+   input                              reset_n
 	  
-   // Tag ring interface (ingress -to- egress/GMM)
-   input  mby_tag_ring_t              tag_ring_in_0  [MBY_MAX_NUM_MGP-1:0],
-   input  mby_tag_ring_t              tag_ring_in_1  [MBY_MAX_NUM_MGP-1:0],
-
-   // MultiCast tag ring interafce (MCE-to-egress)
-   input  mby_mc_tag_ring_t           mc_tag_ring_in [3:0],
-
-   // Dequeue (EGress-to-GMM)
-   output mby_deque_t                 mby_deque_from_vp
- 
 );
-   
-// collage-pragma translate_off
-   
-// collage-pragma translate_on
 
-endmodule // mby_gmm_s
+endmodule // mby_gpm_top
 
-`endif
+
    

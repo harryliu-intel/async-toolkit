@@ -30,10 +30,20 @@ pod_ring_right_out	1		out
 pod_ring_stall_left_out	1		out
 pod_ring_stall_right_out	1		out
 reset_n	1		in
+rx_cm_sm_wm_out_left	1		out
+rx_cm_sm_wm_out_right	1		out
+rx_cm_wm_out_left	1		out
+rx_cm_wm_out_right	1		out
 tag_ring_in_0	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		in
 tag_ring_in_1	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		in
+tag_ring_in_policer_idx_0	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		in
+tag_ring_in_policer_idx_1	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		in
 tag_ring_out_0	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		out
 tag_ring_out_1	[(@work.mby_gmm_pkg.MBY_MAX_NUM_MGP-1):0]		out
+tx_cm_sm_wm_out_left	1		out
+tx_cm_sm_wm_out_right	1		out
+tx_cm_wm_out_left	1		out
+tx_cm_wm_out_right	1		out
 
 ########################################
 # Non-standard Interfaces Ports (info only)
@@ -52,10 +62,20 @@ pod_ring_right_out
 pod_ring_stall_left_out
 pod_ring_stall_right_out
 reset_n
+rx_cm_sm_wm_out_left
+rx_cm_sm_wm_out_right
+rx_cm_wm_out_left
+rx_cm_wm_out_right
 tag_ring_in_0
 tag_ring_in_1
+tag_ring_in_policer_idx_0
+tag_ring_in_policer_idx_1
 tag_ring_out_0
 tag_ring_out_1
+tx_cm_sm_wm_out_left
+tx_cm_sm_wm_out_right
+tx_cm_wm_out_left
+tx_cm_wm_out_right
 
 #########################################################################
 # Non-standard Interfaces Ports with IfUnconnected attribute 
@@ -68,7 +88,7 @@ tag_ring_out_1
 #########################################################################
 # Statistics                                                            
 # Num Standard               : 0                                 
-# Num AdHoc                  : 18                               
+# Num AdHoc                  : 28                               
 # Num AdHoc (attribute)      : 0                          
 # Num AdHoc (user tagged)    : 0                          
 #########################################################################
