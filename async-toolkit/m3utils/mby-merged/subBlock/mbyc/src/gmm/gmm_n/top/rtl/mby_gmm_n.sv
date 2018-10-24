@@ -30,12 +30,12 @@
 //
 //=======================================================================================================================================
 
-`ifndef MBY_GMM_N_TOP_SV
- `define MBY_GMM_N_TOP_SV
+`ifndef MBY_GMM_N_SV
+ `define MBY_GMM_N_SV
 
 // collage-pragma translate_on
 
-module mby_gmm_n_top
+module mby_gmm_n
   import shared_pkg::*;
   import mby_gmm_pkg::*;
 (
