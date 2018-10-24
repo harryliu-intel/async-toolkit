@@ -99,7 +99,7 @@ gmm_s                  -  bman -mc gmm_s                         # GMM_S RTL
 ------------------------------------------------------------------------------------------------------------
 *The following FC variant models require 'sim' script support. To enable that please run the following:
 * %source scripts/verif/fc.env 
-fc_64_no_phy           -  sim -m fc_64_no_phy -cc                # FC_64 without PHY configuraton of full chip model
+fc_no_phy              -  sim -m fc_no_phy -cc                   # FC without PHY configuraton of full chip model
 fc_8                   -  sim -m fc_8 -cc                        # FC_8 configuraton of full chip model
 fc_8_no_phy            -  sim -m fc_8_no_phy -cc                 # FC_8 without PHY configuraton of full chip model
 

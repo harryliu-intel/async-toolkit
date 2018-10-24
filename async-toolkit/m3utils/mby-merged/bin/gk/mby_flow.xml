@@ -28,7 +28,7 @@
 		<Type>build</Type>
   </row>
   <row>
-		<DUT>fc_64</DUT>
+		<DUT>fc</DUT>
 		<Stage>vcs</Stage>
 		<Stage_Exec>bman</Stage_Exec>
 		<AdditionalArgs>-s all +s collage +s vcs -mc fc +s sim_init +s vclp +s dvt -nodelete_flow_data</AdditionalArgs>

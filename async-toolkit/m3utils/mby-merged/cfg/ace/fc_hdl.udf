@@ -599,7 +599,7 @@ EOF
    },
 );
 
-$audf{HDLSpec}{mby}{models}{fc_64_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 
