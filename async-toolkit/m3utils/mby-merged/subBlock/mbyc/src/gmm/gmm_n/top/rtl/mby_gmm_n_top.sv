@@ -36,7 +36,8 @@
 // collage-pragma translate_on
 
 module mby_gmm_n_top
-  import shared_pkg::*, mby_gmm_pkg::*;
+  import shared_pkg::*;
+  import mby_gmm_pkg::*;
 (
    input                              cclk,
    input                              reset_n,

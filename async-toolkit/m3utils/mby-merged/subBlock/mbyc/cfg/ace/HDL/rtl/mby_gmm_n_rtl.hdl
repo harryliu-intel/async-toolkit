@@ -11,7 +11,7 @@ $hdl_spec = {
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
-       "src/gmm/gmm_n/top/rtl/mby_gmm_n_top.sv",
+       "src/gmm/gmm_n/top/rtl/mby_gmm_n.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

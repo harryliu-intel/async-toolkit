@@ -811,7 +811,7 @@ print "MGM debug : @mbyMgmLibs\n";
             ## mby global manager model starts
             ####################################################################
             gmm_s => {
-               top  => 'mby_gmm_s_rtl_lib.mby_gmm_s_top',
+               top  => 'mby_gmm_s_rtl_lib.mby_gmm_s',
 
                use  => [
                        ],
@@ -861,9 +861,11 @@ print "MGM debug : @mbyMgmLibs\n";
                },
             },
 
-                   
+            ####################################################################
+            ## mby global manager model starts
+            ####################################################################       
             gmm_n => {
-               top  => 'mby_gmm_n_rtl_lib.mby_gmm_n_top',
+               top  => 'mby_gmm_n_rtl_lib.mby_gmm_n',
 
                use  => [
                        ],

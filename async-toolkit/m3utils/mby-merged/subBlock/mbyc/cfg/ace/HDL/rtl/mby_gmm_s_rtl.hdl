@@ -11,7 +11,7 @@ $hdl_spec = {
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
-       "src/gmm/gmm_s/top/rtl/mby_gmm_s_top.sv",
+       "src/gmm/gmm_s/top/rtl/mby_gmm_s.sv",
        "src/gmm/gmm_s/gpm/rtl/mby_gpm_top.sv",
        "src/gmm/gmm_s/gcm/rtl/mby_gcm_top.sv",
        "src/gmm/gmm_s/mce/rtl/mby_mce_top.sv",
