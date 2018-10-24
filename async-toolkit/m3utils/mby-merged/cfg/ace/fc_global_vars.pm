@@ -346,10 +346,10 @@ foreach $ip_key (keys %sip_list) {
 foreach our $ace_ip_to_add (@ace_add_ips) {
 
     switch ($ace_ip_to_add) {
-        case ["fc_64"] {
+        case ["fc"] {
                         push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64",);
         }
-        case ["fc_64_no_phy"] {
+        case ["fc_no_phy"] {
                         push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64_NO_PHY +define+NO_SERDES",);
         }
         case ["fc_8"] {

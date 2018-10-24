@@ -1,8 +1,6 @@
 //scalastyle:off
 package madisonbay.tcp
 import com.intel.cg.hpfd.csr.macros.SizedArray
-// import com.intel.cg.hpfd.madisonbay.wm.server.dto.{IosfRegWriteReq => Old}
-// import com.intel.cg.hpfd.madisonbay.wm.server.dto.{IosfRegBlkAddr => Old}
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
 import org.scalatest.{FlatSpec, Matchers}
 import scala.reflect._
@@ -28,9 +26,12 @@ class ByteArrayEncoderTest extends FlatSpec with Matchers {
       val encoder = ByteArrayEncoder[A]
       val decoder = ByteArrayDecoder[A]
 
-      initialValue shouldEqual decoder.decode[Id](
+      val (arrayAfterConsumption, testedValue) = decoder.decode[Id].run(
         encoder.encode(initialValue)
       )
+
+      initialValue shouldEqual testedValue
+      arrayAfterConsumption shouldBe empty
     }
   }
 

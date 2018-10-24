@@ -76,7 +76,7 @@
 					   Required     => 1,
 					   #StartString  => '/OVM_INFO @ 0: reporter \[RNTST\] Running test/',
 					   StartString  => '/OUTPUT START/',
-					   RequiredText=> ['/OVM Report Summary/i',],
+					   RequiredText=> ['/Report Summary/i',],
 					   EndString    => '/Report\s+counts\s+by\s+severity/',
 					   #EndString    => '/Report/',
 					   #RequiredText => ['Report',],

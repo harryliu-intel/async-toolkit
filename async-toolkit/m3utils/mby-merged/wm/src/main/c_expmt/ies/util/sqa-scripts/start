@@ -1,9 +1,0 @@
-#!/bin/sh
-
-insmod tun.o
-insmod fm2224ep.ko
-insmod focalpoint.ko
-
-echo Set the following environment variables
-echo PERL5LIB=`pwd`/perl
-echo LD_LIBRARY_PATH=`pwd`/perl/Chip/Tahoe/Environments/FM2224EP/Libraries
