@@ -30,15 +30,15 @@
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
-// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
 module mby_gpl_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
    // CLock and reset
    input                              cclk,
-   input                              reset_n
-	  
+   input                              reset_n,
+   output mby_gpol_state_bcast_t      gpol_update_bcast_out_left,
+   output mby_gpol_state_bcast_t      gpol_update_bcast_out_right
 );
 
 endmodule // mby_gpm_top

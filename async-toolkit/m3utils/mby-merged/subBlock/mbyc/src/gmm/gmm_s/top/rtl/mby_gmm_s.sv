@@ -49,7 +49,7 @@ module mby_gmm_s
    output mby_pod_ptr_ring_t          pod_ring_left_out,
    output mby_pod_ptr_ring_t          pod_ring_right_out,
 
-   output logic                       pod_ring_stall_left_out, // Signal from GPM to egress to stall egress from injecting a new dirty pod
+   output logic                       pod_ring_stall_left_out,  // Signal from GPM to egress to stall egress from injecting a new dirty pod
    output logic                       pod_ring_stall_right_out,
 	  
    // Tag ring interface (ingress -to- egress/GMM)
@@ -82,11 +82,15 @@ module mby_gmm_s
    output mby_cm_tx_wm_t              tx_cm_wm_out_left,
    output mby_cm_tx_wm_t              tx_cm_wm_out_right,
 
-   output mby_cm_shared_mem_wm_t      rx_cm_sm_wm_out_left,
-   output mby_cm_shared_mem_wm_t      rx_cm_sm_wm_out_right,
+   output mby_cm_shared_mem_rx_wm_t   rx_cm_sm_wm_out_left,
+   output mby_cm_shared_mem_rx_wm_t   rx_cm_sm_wm_out_right,
 
-   output mby_cm_shared_mem_wm_t      tx_cm_sm_wm_out_left,
-   output mby_cm_shared_mem_wm_t      tx_cm_sm_wm_out_right
+   output mby_cm_shared_mem_tx_wm_t   tx_cm_sm_wm_out_left,
+   output mby_cm_shared_mem_tx_wm_t   tx_cm_sm_wm_out_right,
+
+   // Global Policer update broadcast
+   output mby_gpol_state_bcast_t      gpol_update_bcast_out_left,
+   output mby_gpol_state_bcast_t      gpol_update_bcast_out_right
  
 );
 
