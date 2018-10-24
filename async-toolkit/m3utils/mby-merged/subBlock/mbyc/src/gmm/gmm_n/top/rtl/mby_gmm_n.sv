@@ -28,10 +28,16 @@
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
-// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
+
+`ifndef MBY_GMM_N_SV
+ `define MBY_GMM_N_SV
+
+// collage-pragma translate_on
+
 module mby_gmm_n
-  import sla_pkg::*, shared_pkg::*, mby_gmm_pkg::*;
+  import shared_pkg::*;
+  import mby_gmm_pkg::*;
 (
    input                              cclk,
    input                              reset_n,
@@ -51,7 +57,12 @@ module mby_gmm_n
    output mby_deque_t                 mby_deque_from_vp
  
 );
+   
+// collage-pragma translate_off
+   
+// collage-pragma translate_on
 
 endmodule // mby_gmm_s
 
+`endif
    

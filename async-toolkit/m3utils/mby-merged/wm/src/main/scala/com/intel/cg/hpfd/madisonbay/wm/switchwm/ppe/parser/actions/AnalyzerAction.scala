@@ -5,29 +5,28 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.{AluOperation, Parser}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
 
-class AnalyzerAction(w_off: List[Short], skip: Short, aluOperation: AluOperation,
-                     next_state: Short, next_state_mask: Short) {
+class AnalyzerAction(nextOffsets: Array[Short], skip: Short, aluOperation: AluOperation,
+                     nextState: Short, nextStateMask: Short) {
 
-  def analyze(packetHeader: PacketHeader, input: ParserState): Parser.ParserState = {
-    val baseOffset = input.ptr + aluOperation.calculate(input.w(2))
+  def analyze(packetHeader: PacketHeader, inputState: ParserState): Parser.ParserState = {
+    val baseOffset = inputState.ptr + aluOperation.calculate(inputState.w(2))
     val outputPtr = baseOffset + skip
-    val w = w_off.map(off => (packetHeader(baseOffset + off + 1) << 16 & packetHeader(baseOffset + off)).toShort)
-    val state = (input.state & ~next_state_mask) | (next_state & next_state_mask)
-    ParserState(w, aluOperation, state.toShort, outputPtr.toShort)
+    val updatedWOffsets = nextOffsets.map(nextOffset => packetHeader.getWord(baseOffset + nextOffset))
+    val anaState = (inputState.state & ~nextStateMask) | (nextState & nextStateMask)
+    ParserState(updatedWOffsets, aluOperation, anaState.toShort, outputPtr.toShort)
   }
 
 }
 
 object AnalyzerAction {
 
-  def apply(anaW: parser_ana_w_r.parser_ana_w_r, anaS: parser_ana_s_r.parser_ana_s_r): AnalyzerAction = {
+  def apply(anaW: parser_ana_w_r.parser_ana_w_r, anaS: parser_ana_s_r.parser_ana_s_r): AnalyzerAction =
     new AnalyzerAction(
-      List(anaW.NEXT_W0_OFFSET().toShort, anaW.NEXT_W1_OFFSET().toShort, anaW.NEXT_W2_OFFSET().toShort),
+      Array(anaW.NEXT_W0_OFFSET().toShort, anaW.NEXT_W1_OFFSET().toShort, anaW.NEXT_W2_OFFSET().toShort),
       anaW.SKIP().toShort,
       AluOperation(anaS.NEXT_OP().toShort),
       anaS.NEXT_STATE().toShort,
       anaS.NEXT_STATE_MASK().toShort
     )
-  }
 
 }

@@ -9,21 +9,18 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 class ExtractAction(protocolId: Option[Short], keyOffset: Short, flagNum: Option[Short], flagVal: Boolean, ptrNum: Int) {
 
   def extract(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
-    val flags: PacketFlags =
-      flagNum match {
-        case None => input._2
+    val flags: PacketFlags = flagNum match {
+        case None                   => input._2
         case Some(extractedFlagNum) => input._2.assign(extractedFlagNum, flagVal)
       }
     val fields: ProtoOffsets = protocolId match {
-      case None => input._1
-      case Some(x) => input._1.updated(ptrNum, (x.toInt, keyOffset.toInt))
+      case None           => input._1
+      case Some(protoId)  => input._1.updated(ptrNum, (protoId.toInt, keyOffset.toInt))
     }
     (fields, flags)
   }
 
-  override def toString: String = {
-    s"pid = $protocolId, koff = $keyOffset, flagnum = $flagNum, flagval = $flagVal, ptrNum = $ptrNum"
-  }
+  override def toString: String = s"pid = $protocolId, koff = $keyOffset, flagnum = $flagNum, flagval = $flagVal, ptrNum = $ptrNum"
 
 }
 
@@ -44,8 +41,8 @@ object ExtractAction {
 
     // 0xff is  special proto-id, do no annotation to the fields in that case
     val protocolId = csr.PROTOCOL_ID() match {
-      case SpecialProtocolId => None
-      case x => Some(x.toShort)
+      case SpecialProtocolId  => None
+      case protoId            => Some(protoId.toShort)
     }
     new ExtractAction(protocolId, csr.OFFSET().toShort, flagNum, csr.FLAG_VALUE() == 1L, csr.PTR_NUM().toShort)
   }

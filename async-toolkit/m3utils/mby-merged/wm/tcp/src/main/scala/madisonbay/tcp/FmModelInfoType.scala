@@ -8,10 +8,10 @@ object FmModelInfoType extends Enumeration {
 
   implicit val encoder: ByteArrayEncoder[FmModelInfoType.Value] =
     value => ByteArrayEncoder.u8bae.encode(value.id.byteValue())
-  implicit val decoder: ByteArrayDecoder[FmModelInfoType.Value] =
-    ByteArrayDecoder.decoder(_.isEmpty, new EOFException, a => FmModelInfoType(a(0)))
   implicit val bitSize: BitSize[FmModelInfoType.Value] = {
     val eightBits = 8
     BitSize.bitSizeOf(eightBits)
   }
+  implicit val decoder: ByteArrayDecoder[FmModelInfoType.Value] =
+    ByteArrayDecoder.decoder(new EOFException, a => FmModelInfoType(a(0)))
 }

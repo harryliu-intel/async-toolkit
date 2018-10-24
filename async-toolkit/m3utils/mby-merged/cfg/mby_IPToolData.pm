@@ -62,7 +62,7 @@ $ToolConfig_ips{mby}{ENV}{LD_LIBRARY_PATH} .=  join(':',
                                                     "&get_tool_var(vipcat, VIPCAT_LIBS)",
                                                   );
 
-my $epl_version = "eth_port-dev-x0-18ww39c";
+my $epl_version = "eth_port-dev-x0-18ww43b";
 
 $ToolConfig_ips{epc} = {
    #PATH    => "/nfs/sc/disks/sc_mby_00055/layhockk/mby/work_root/MBY/$epl_version",

@@ -22,11 +22,11 @@ object FmModelMsgType extends Enumeration {
   val NvmRead = Value(14, "NvmRead")
   val CommandQuit = Value(15, "CommandQuit")
 
+  implicit val bitSize: BitSize[FmModelMsgType.Value] = BitSize.bitSizeOf(16)
   implicit val bae: ByteArrayEncoder[FmModelMsgType.Value] =
     fmmmt => ByteArrayEncoder.u16bae.encode(fmmmt.id.byteValue())
   implicit val bad: ByteArrayDecoder[FmModelMsgType.Value] =
-    ByteArrayDecoder.decoder(_.size < 2, new EOFException(), a =>
+    ByteArrayDecoder.decoder(new EOFException(), a =>
       FmModelMsgType(ByteBuffer.wrap(a).getShort())
     )
-  implicit val bitSize: BitSize[FmModelMsgType.Value] = BitSize.bitSizeOf(16)
 }
