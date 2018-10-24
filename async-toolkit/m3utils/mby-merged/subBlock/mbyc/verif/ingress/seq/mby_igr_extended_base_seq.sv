@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title         : Ingress sequence library
+// Title         : Ingress extended base sequence
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : ingress_seqlib.sv
+// File          : mby_igr_extended_base_seq.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -18,6 +18,19 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-`include "ingress_env_base_seq.sv"
-`include "ingress_extended_base_seq.sv"
-`include "ingress_hard_reset_seq.sv"
+//-----------------------------------------------------------------------------
+// Class: mby_igr_extended_base_seq
+//-----------------------------------------------------------------------------
+class mby_igr_extended_base_seq extends mby_igr_env_base_seq;
+
+   `uvm_object_utils(mby_igr_extended_base_seq)
+
+   //---------------------------------------------------------------------------
+   // Function: new
+   //---------------------------------------------------------------------------
+   function new(input string name = "mby_igr_extended_base_seq",
+               uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
+      super.new(name /*, sequencer, parent_seq*/);
+   endfunction
+
+endclass : mby_igr_extended_base_seq

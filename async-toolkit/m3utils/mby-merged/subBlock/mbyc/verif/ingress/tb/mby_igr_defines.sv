@@ -1,19 +1,16 @@
 //-----------------------------------------------------------------------------
-// Title         : Ingress env base sequence
+// Title         : Ingress definitions
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : ingress_env_base_seq.sv
+// File          : ingress_defines.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This file contain all of the MBY base sequences.
-// Class: ingress_env_base_seq
-// Base sequence for all the sequences.
-// This base sequence setup the MBY RAL reg file pointer in the sequence which
-// will be used by all the config seq to access MBY registers
-// TODO: re-enable wm & sm
+//  This file contain all the IP macros (`define)
+//   each define must be protected with "ifndef" to be able to be overide 
+//   from the command line
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -23,17 +20,10 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-class ingress_env_base_seq extends mby_base_seq;
+`ifndef MBY_IGR_TOP
+ `define MBY_IGR_TOP igr_tb.igr_top
+`endif
+`ifndef MBY_IGR_TOP_PATH
+ `define MBY_IGR_TOP_PATH igr_tb
+`endif
 
-  `uvm_object_utils(ingress_env_base_seq)
-  `uvm_declare_p_sequencer(slu_sequencer)
-
-  sla_ral_env ral;
-
-  function new(input string name = "ingress_env_base_seq");
-    super.new(name);
-    `slu_assert($cast(ral, sla_ral_env::get_ptr()),
-                ("Unable to get handle to RAL."))
-  endfunction
-
-endclass
