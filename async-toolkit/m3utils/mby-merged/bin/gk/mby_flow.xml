@@ -107,11 +107,11 @@
                 <Type>regress</Type>
         </row>
         <row>
-		            <DUT>fc_64</DUT>
+		            <DUT>fc</DUT>
 		            <Stage>fc_boot_basic</Stage>
                 <Stage_Exec>verif/tests/lists/fc.turnin.list</Stage_Exec>
 		            <AdditionalArgs>-disable_work_area_subdir -model fc</AdditionalArgs>
-		            <XdutStageDep>[fc_64].[vcs]</XdutStageDep>
+		            <XdutStageDep>[fc].[vcs]</XdutStageDep>
 		            <PassRate>100</PassRate>
 		            <IsGating>1</IsGating>
 		            <Turnin>1</Turnin>
