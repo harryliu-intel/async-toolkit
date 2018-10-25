@@ -1,0 +1,11 @@
+// Turn on all blocks inside SoC
+tree { soc } { xpropOn };
+
+// Turn off all blocks inside parimc partition
+// instance { fc_hdl_top.dut.parimc } { xpropOff };
+
+// Turn off all instances of pll_stub (but not the sub-blocks inside it)
+//module { pll_stub } { xpropOff };
+
+// merge =xmerge;
+merge =tmerge;

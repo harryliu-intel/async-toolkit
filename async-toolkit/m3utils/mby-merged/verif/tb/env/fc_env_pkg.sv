@@ -72,10 +72,16 @@ package fc_env_pkg;
     `endif // VTE_IP3_UVM_ENV_ENABLE
 
     // IGR 
-    //`ifdef IGR_ENV_ENABLE
-        import ingress_env_pkg::*;
+    `ifdef IGR_ENV_ENABLE
+        import mby_igr_env_pkg::*;
         `include "igr_integ_env.svh"
-    //`endif // IGR_ENV_ENABLE
+    `endif // IGR_ENV_ENABLE
+
+    // EPC 
+    `ifdef EPC_ENV_ENABLE
+        import mby_ec_top_env_pkg::*;
+        `include "epc_integ_env.svh"
+    `endif // EPC_ENV_ENABLE
 
     // PEP
     `ifdef CDN_PCIE_ENV_ENABLE

@@ -6,7 +6,6 @@ case class Packet(bytes: Array[Byte])
 object Packet {
 
   def strHexToBytesArray(packetData: String): Array[Byte] = packetData.
-    toUpperCase.
     grouped(2).
     map(Integer.parseUnsignedInt(_, 16).toByte).
     toArray

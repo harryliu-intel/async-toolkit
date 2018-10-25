@@ -154,7 +154,7 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
-                          "cfg/ace/HDL/rtl/collage_deps.hdl",
+                          "cfg/ace/HDL/rtl/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
@@ -272,7 +272,7 @@ EOF
                  -hdl_spec => [
                      "cfg/ace/HDL/rtl/dummy.hdl",
                      "collage/work/soc/gen/source/rtl/soc.hdl",
-                     "cfg/ace/HDL/rtl/collage_deps.hdl",
+                     "cfg/ace/HDL/rtl/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
@@ -319,7 +319,7 @@ EOF
                      @top_vrf_vlogopts,
                      "+define+FC_MODEL",
                      "+define+HDL_TOP_LIB=fc_hdl_top_lib",
-                     "+define+HDL_TOP_CFG=fc_cfg",
+                     "+define+HDL_TOP_CFG=fc_hdl_top_cfg",
                  ],
                  -tag => "nonsynth",
              },
@@ -402,8 +402,6 @@ EOF
                   @all_sip_rtl_liblist,
                   @all_sip_verif_liblist,
                   @all_hip_liblist,
-
-                  "ext_shared_lib",
                   'dump_filelist_lib',
 #                  "cdn_pcie_lib",
                ],
@@ -609,8 +607,7 @@ EOF
    },
 );
 
-$audf{HDLSpec}{mby}{models}{fc_64} = $audf{HDLSpec}{mby}{models}{fc};
-$audf{HDLSpec}{mby}{models}{fc_64_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 

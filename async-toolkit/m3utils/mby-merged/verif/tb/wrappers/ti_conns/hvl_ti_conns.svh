@@ -11,6 +11,7 @@
 `include "hvl_fc_conns.svh"
 `include "hvl_igr_ti_conns.svh"
 `include "hvl_pep_ti_conns.svh"
+`include "hvl_epc_ti_conns.svh"
 
 /*
  *  ----------------

@@ -1,0 +1,4969 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+`include "lib_udp.rdl"
+
+
+
+// PCIE_CFG_ID
+
+reg pcie_cfg_id_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } VendorID[31:16] = 16'h8086;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DeviceID[15:0] = 16'h15A4;
+};
+
+
+
+// PCIE_CFG_CMD
+
+reg pcie_cfg_cmd_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        I/O Access Enable. Not used in this design. Always set to zero.
+
+           ";
+    ValRandomize = true;
+  } IOSpaceEn[31:31] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Memory Access Enable.  
+
+           ";
+    ValRandomize = true;
+  } MemSpaceEn[30:30] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable Mastering, also named Bus Master Enable (BME)).
+
+           ";
+    ValRandomize = true;
+  } BusMasterEn[29:29] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Special Cycle Monitoring - Hardwire to 0.
+
+           ";
+    ValRandomize = true;
+  } SpecialCycEn[28:28] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        MWI Enable - Hardwire to 0.
+
+           ";
+    ValRandomize = true;
+  } MemWrInv[27:27] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Palette Snoop Enable - Hardwire to 0.
+
+           ";
+    ValRandomize = true;
+  } VGAPaletteSnp[26:26] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Parity Error Response.
+
+           ";
+    ValRandomize = true;
+  } ParErrResp[25:25] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Wait Cycle Enable - Hardwired to 0b.
+
+           ";
+    ValRandomize = true;
+  } IdselStep[24:24] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        SERR# Enable.
+
+           ";
+    ValRandomize = true;
+  } SERRnEn[23:23] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Fast Back-to-Back Enable - Hardwire to 0.
+
+           ";
+    ValRandomize = true;
+  } FastB2BEn[22:22] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Interrupt Disable. When set, devices are prevented from generating legacy interrupt messages.
+
+           ";
+    ValRandomize = true;
+  } INTAssertDis[21:21] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align_20_13_[20:13] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Interrupt Status.
+
+           ";
+    ValRandomize = true;
+  } INTStat[12:12] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+         New Capabilities: Indicates that this device implements extended capabilities, it supports PCI Power Management, Message Signaled Interrupts (MSI), Enhanced Message Signaled Interrupts (MSI-X), VPD and the PCIe extensions.
+
+           ";
+    ValRandomize = true;
+  } CapList[11:11] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        66 MHz Capable - Hard wire to 0b.
+
+           ";
+    ValRandomize = true;
+  } Cap66Mhz[10:10] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align_9_[9:9] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Fast Back-to-Back Capable - Hard wire to 0b.
+
+           ";
+    ValRandomize = true;
+  } CapFastB2B[8:8] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Data Parity Reported.
+
+           ";
+    ValRandomize = true;
+  } MstrDataParErr[7:7] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        DEVSEL Timing - Hard wire to 0b.
+
+           ";
+    ValRandomize = true;
+  } DevselTiming[6:5] = 2'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Signaled Target Abort.
+
+           ";
+    ValRandomize = true;
+  } SigTgtAbort[4:4] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Received Target Abort.
+
+           ";
+    ValRandomize = true;
+  } RcvTgtAbort[3:3] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Received Master Abort.
+
+           ";
+    ValRandomize = true;
+  } RcvMstAbort[2:2] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Signaled System Error.
+
+           ";
+    ValRandomize = true;
+  } SigSysErr[1:1] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Detected Parity Error.
+
+           ";
+    ValRandomize = true;
+  } DetectParErr[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_1
+
+reg pcie_cfg_1_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Set to 0 for first version. 
+
+           ";
+    ValRandomize = true;
+  } RevisionID[31:24] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        The class code is a read-only value that identifies the device functionality, it is set to 0x020000 (Ethernet Adapter) by default.     
+
+           ";
+    ValRandomize = true;
+  } ClassCode[23:0] = 24'h020000;
+};
+
+
+
+// PCIE_CFG_2
+
+reg pcie_cfg_2_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        This field is implemented by PCIe devices as a read/write field for legacy compatibility purposes but has no impact on any PCIe device functionality. 
+
+           ";
+    ValRandomize = true;
+  } CacheLineSize[31:24] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not used. 
+
+           ";
+    ValRandomize = true;
+  } LatencyTimer[23:16] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Tied to 0 for Endpoint.    
+
+           ";
+    ValRandomize = true;
+  } HeaderType[15:9] = 7'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Must be set to 1b by NVM/BSM whenever SR-IOV is enabled (which is the default). 
+
+           ";
+    ValRandomize = true;
+  } MultiFunction[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } BIST[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_BAR0
+
+reg pcie_cfg_bar0_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Only type 0 (MEMORY) is supported
+
+           ";
+    ValRandomize = true;
+  } AccessType[31:31] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Address size on address decoding.
+    
+            *Mode32(0)
+            *Mode64(2)
+
+           ";
+    ValRandomize = true;
+  } AddressSize[30:29] = 2'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        The PEP address space does not contain volatile registers.
+
+           ";
+    ValRandomize = true;
+  } Prefetchable[28:28] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Bits [21:4] of base address assigned to this device. 4MB Region. 
+
+           ";
+    ValRandomize = true;
+  } Zero[27:10] = 18'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bits [31:22] of base address assigned to this device. 
+
+           ";
+    ValRandomize = true;
+  } Address[9:0] = 10'h0;
+};
+
+
+
+// PCIE_CFG_BAR1
+
+reg pcie_cfg_bar1_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bits [63:32] of base address assigned to this device. Only used if 64 bit addressing is active. 
+
+           ";
+    ValRandomize = true;
+  } AddressHigh[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_BAR2
+
+reg pcie_cfg_bar2_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Only type 0 (MEMORY) is supported
+
+           ";
+    ValRandomize = true;
+  } AccessType[30:30] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Address size on address decoding.
+    
+            *Mode32(0)
+            *Mode64(2)
+
+           ";
+    ValRandomize = true;
+  } AddressSize[29:28] = 2'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        The PEP address space does contain volatile registers.
+
+           ";
+    ValRandomize = true;
+  } Prefetchable[27:27] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Bits [12:4] of base address assigned to this device. 8KB Region. 
+
+           ";
+    ValRandomize = true;
+  } Zero[26:18] = 9'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bits [31:13] of base address assigned to this device. 
+
+           ";
+    ValRandomize = true;
+  } Address[17:0] = 18'h0;
+};
+
+
+
+// PCIE_CFG_BAR3
+
+reg pcie_cfg_bar3_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bits [63:32] of base address assigned to this device. Only used if 64 bit addressing is active. 
+
+           ";
+    ValRandomize = true;
+  } AddressHigh[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_BAR4
+
+reg pcie_cfg_bar4_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Only type 0 (MEMORY) is supported
+
+           ";
+    ValRandomize = true;
+  } AccessType[31:31] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Address size on address decoding.
+    
+            *Mode32(0)
+            *Mode64(2)
+
+           ";
+    ValRandomize = true;
+  } AddressSize[30:29] = 2'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        The PEP address space does not contain volatile registers.
+
+           ";
+    ValRandomize = true;
+  } Prefetchable[28:28] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Bits [25:4] of base address assigned to this device. 64MB Region.
+
+           ";
+    ValRandomize = true;
+  } Zero[27:6] = 22'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bits [31:26] of base address assigned to this device. 
+
+           ";
+    ValRandomize = true;
+  } Address[5:0] = 6'h0;
+};
+
+
+
+// PCIE_CFG_BAR5
+
+reg pcie_cfg_bar5_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bits [63:32] of base address assigned ot this device. Only used if 64 bit addressing is active. 
+
+           ";
+    ValRandomize = true;
+  } AddressHigh[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_CARDBUS
+
+reg pcie_cfg_cardbus_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not used. 
+
+           ";
+    ValRandomize = true;
+  } CardbusPtr[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_SUBID
+
+reg pcie_cfg_subid_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+      This value can be loaded automatically from the EEPROM at power up or reset. A value of 0x8086 is the default for this field at power up if the EEPROM does not respond or is not programmed. All functions are initialized to the same value.
+
+           ";
+    ValRandomize = true;
+  } SubVendorID[31:16] = 16'h8086;
+  field {
+    AccessType = "RO";
+    desc = "
+      This value can be loaded automatically from the EEPROM at power up with a default value of 0x0000.
+
+           ";
+    ValRandomize = true;
+  } SubDeviceID[15:0] = 16'h0;
+};
+
+
+
+// PCIE_CFG_EXP_ROM
+
+reg pcie_cfg_exp_rom_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not used. 
+
+           ";
+    ValRandomize = true;
+  } Enable[31:31] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align__[30:21] = 10'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not used. 
+
+           ";
+    ValRandomize = true;
+  } Address[20:0] = 21'h0;
+};
+
+
+
+// PCIE_CFG_CAP_PTR
+
+reg pcie_cfg_cap_ptr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+      The Capabilities Pointer field (Cap_Ptr) is an 8-bit field that provides an offset in the PCI configuration space for the location of the first item in the capabilities linked list. The value is 0x40, which is the address of the first entry: PCI power management.
+
+           ";
+    ValRandomize = true;
+  } CapabilityPtr[7:0] = 8'h40;
+};
+
+
+
+// PCIE_CFG_RSVD
+
+reg pcie_cfg_rsvd_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Reserved[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_INT
+
+reg pcie_cfg_int_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Read/write register programmed by software to indicate which of the system interrupt request lines the device interrupt pin is bound to. Refer to the PCI definition for more details. Each PCI function has its own register.      
+
+           ";
+    ValRandomize = true;
+  } InterruptLine[31:24] = 8'hff;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not used in this design.      
+
+           ";
+    ValRandomize = true;
+  } InterruptPin[23:16] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Min_Gnt not used. Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } MinGrant[15:8] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Max_Lat not used. Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } MaxLatency[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_PM_CAP
+
+reg pcie_cfg_pm_cap_r {
+  shared;
+  HandCoded = true;
+  name = "Power Management Capability";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Fixed. Identify PMC
+
+           ";
+    ValRandomize = true;
+  } CapID[29:22] = 8'h01;
+  field {
+    AccessType = "RO";
+    desc = "
+        Pointer to next capability. 
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[21:14] = 8'h70;
+  field {
+    AccessType = "RO";
+    desc = "
+        Version - The device complies with the PCI PM specification revision 1.2.         
+
+           ";
+    ValRandomize = true;
+  } PM_Version[13:11] = 3'h3;
+  field {
+    AccessType = "RO";
+    desc = "
+        PME_Clock - Disabled. Hard wire to 0b.         
+
+           ";
+    ValRandomize = true;
+  } PME_Clock[10:10] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved__[9:9] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        The device requires its device driver to be executed following a transition to the D0 un-initialized state.          
+
+           ";
+    ValRandomize = true;
+  } DSI[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        AUX Current - Required current defined in the Data register.         
+
+           ";
+    ValRandomize = true;
+  } AUX_Current[7:6] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        The device does not support the D1 state.          
+
+           ";
+    ValRandomize = true;
+  } D1_Support[5:5] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        The device does not support the D2 state.
+
+           ";
+    ValRandomize = true;
+  } D2_Support[4:4] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        PME_Support. This 5-bit field indicates the power states in which the function can assert PME#.
+
+           ";
+    ValRandomize = true;
+  } PME_Support[3:0] = 4'h0;
+};
+
+
+
+// PCIE_CFG_PM_CTRL
+
+reg pcie_cfg_pm_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "Power Management Control and Status";
+  desc = "
+    This register (shown in the following table) is used to control and monitor power management events in the device. Note that each device function has its own PMCSR.   
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        PowerState. This field is used to set and report the power state of a function as follows:      
+          
+            *DO(0)
+            *D1(1) : ignored if this value is written
+            *D2(2) : ignored if this value is written
+            *D3(3)
+
+           ";
+    ValRandomize = true;
+  } PwrState[31:30] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align_29_[29:29] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        No_Soft_Reset. This bit is always set to 1b to indicate that the device does not perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits. Otherwise, the configuration context would be lost upon transition from the D3hot to the D0 state, and a full re-initialization sequence would be needed to return the device to the D0 Initialized state.        
+
+           ";
+    ValRandomize = true;
+  } NoSoftRst[28:28] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align_27_24_[27:24] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        PME_En. Writing a 1b to this register enables Wakeup.   
+
+           ";
+    ValRandomize = true;
+  } PMEEn[23:23] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        This 4-bit field is used to select which data is to be reported through the Data register and Data_Scale field. These bits are writeable only when power management is enabled via the EEPROM.
+            
+        Note used in this design.        
+
+           ";
+    ValRandomize = true;
+  } Data_Select[22:19] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        This field indicates the scaling factor that’s used when interpreting the value of the Data register.
+          
+        This field equals 01b (indicating 0.1 watt/units) and the Data_Select field is set to 0, 3, 4, 7, (or 8 for function 0). Otherwise, it equals 00b.
+          
+        Note used in this design.
+
+           ";
+    ValRandomize = true;
+  } Data_Scale[18:17] = 2'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        This bit is set to 1b when the function detects a wake-up event independent of the state of the PME_En bit. Writing a 1b clears this bit.
+
+           ";
+    ValRandomize = true;
+  } PME_Status[16:16] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Bridge Support Extension. Not used in this design.
+
+           ";
+    ValRandomize = true;
+  } BSE[15:8] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Data returned from Data Select. Not used in this design. 
+
+           ";
+    ValRandomize = true;
+  } Data[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_PCIE_CAP
+
+reg pcie_cfg_pcie_cap_r {
+  shared;
+  HandCoded = true;
+  name = "PCI Express Capability";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        This field equals 0x10 indicating that the linked list item as being the PCIe Capabilities registers.
+
+           ";
+    ValRandomize = true;
+  } CapID[29:22] = 8'h10;
+  field {
+    AccessType = "RO";
+    desc = "
+        Offset to the next capability item in the capability list. 
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[21:14] = 8'hb0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates the PCIe capability structure version. The device supports PCIe version 2 (also loaded from EEPROM).
+
+           ";
+    ValRandomize = true;
+  } CapabilityVersion[13:10] = 4'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates the type of PCIe functions. All functions are native PCI functions with a value of 0000b.
+
+           ";
+    ValRandomize = true;
+  } DevicePortType[9:6] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        The device does not implement slot options. Therefore, this field is hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } SlotImplemented[5:5] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        The device does not implement multiple MSI per function. As a result, this field is hard wired to 0x0.
+
+           ";
+    ValRandomize = true;
+  } InterrruptMessageNumber[4:0] = 5'h0;
+};
+
+
+
+// PCIE_CFG_PCIE_DEV_CAP
+
+reg pcie_cfg_pcie_dev_cap_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Max Payload Size Supported. This field indicates the maximum payload that the device can support for TLPs. It is loaded from the EEPROM with a default value of 512 bytes. Supported values are 000b to 010b (128B to 512B).
+
+           ";
+    ValRandomize = true;
+  } MaxPayloadSize[28:26] = 3'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not supported by the device.
+
+           ";
+    ValRandomize = true;
+  } PhantomFunctionSupport[25:24] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Maximum supported size of the Tag field. The device supports a 5-bit Tag field for all functions.
+
+           ";
+    ValRandomize = true;
+  } ExtendedTagField[23:23] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        This field indicates the acceptable latency that the device can withstand due to the transition from L0s state to the L0 state. Value loaded from EEPROM.
+
+        A value of 011b equals 512 ns.
+
+           ";
+    ValRandomize = true;
+  } EndpointL0Latency[22:20] = 3'h3;
+  field {
+    AccessType = "RO";
+    desc = "
+        This field indicates the acceptable latency that the device can withstand due to the transition from L1 state to the L0 state.
+
+        A value of 110b equals 32 μs-64 μs.
+
+           ";
+    ValRandomize = true;
+  } EndpointL1Latency[19:17] = 3'h6;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hard wired in the device to 0b.
+
+           ";
+    ValRandomize = true;
+  } AttentionButtonPreset[16:16] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hard wired in the device to 0b.
+
+           ";
+    ValRandomize = true;
+  } AttentionIndicatorPreset[15:15] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hard wired in the device to 0b.
+
+           ";
+    ValRandomize = true;
+  } PowerIndicatorPreset[14:14] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Role Based Error Reporting. Hard wired in the device to 1b.
+
+           ";
+    ValRandomize = true;
+  } RoleBasedErrorReporting[13:13] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align__[12:11] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Used in upstream ports only. This value is set by the Set_Slot_Power_Limit Message.
+
+           ";
+    ValRandomize = true;
+  } SlotPowerLimit[10:3] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Slot Power Limit Scale. Used in upstream ports only. This value is set by the Set_Slot_Power_Limit Message.
+
+           ";
+    ValRandomize = true;
+  } SlotPowerScale[2:1] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        A value of 1b indicates the Function supports the optional Function Level Reset (FLR) mechanism.
+
+           ";
+    ValRandomize = true;
+  } FunctionLevelReset[0:0] = 1'h1;
+};
+
+
+
+// PCIE_CFG_PCIE_DEV_CTRL
+
+reg pcie_cfg_pcie_dev_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable error report.
+
+           ";
+    ValRandomize = true;
+  } CorrectableErrorReportingEnable[21:21] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable error report.
+
+           ";
+    ValRandomize = true;
+  } NonFatalErrorReportingEnable[20:20] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable error report.
+
+           ";
+    ValRandomize = true;
+  } FatalErrorReportingEnable[19:19] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable error report.
+
+           ";
+    ValRandomize = true;
+  } UnsupportedRequestReportingEnable[18:18] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        If this bit is set, RRC is permitted to set the Relaxed Ordering bit in the Attribute field of write transactions that do not need strong ordering. Refer to the CTRL_EXT register bit RO_DIS for more details.
+
+           ";
+    ValRandomize = true;
+  } EnableRelaxedOrdering[17:17] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        This field sets the maximum TLP payload size for RRC functions. As a receiver, RRC must handle TLPs as large as the set value. As a transmitter, RRC must not generate TLPs exceeding the set value.
+      
+        The Max Payload Size field supported in the Device Capabilities register indicates permissible values that can be programmed.
+      
+        In ARI mode, Max Payload Size is determined solely by the field in function 0 while it is meaningless in the other function(s).
+
+           ";
+    ValRandomize = true;
+  } MaxPayloadSize[16:14] = 3'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not implemented in RRC.
+
+           ";
+    ValRandomize = true;
+  } ExtendedTagfieldEnable[13:13] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Not implemented in RRC.
+
+           ";
+    ValRandomize = true;
+  } PhantomFunctionsEnable[12:12] = 1'h0;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+        The bit is SRW to reflect the PCIe block capability to support auxiliary power though RRC may not have auxiliary power source.         
+
+           ";
+    ValRandomize = true;
+  } AuxiliaryPowerPMEnable[11:11] = 1'h0;
+  field {
+    AccessType = "RW/P";
+    desc = "
+        When set, the Function is permitted to set the No Snoop bit in the Requester Attributes of transactions it initiates that do not require hardware enforced cache coherency. 
+
+           ";
+    ValRandomize = true;
+  } EnableNoSnoop[10:10] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        This field sets maximum read request size for RRC as a requester.
+          
+            *MAX_128(0)
+            *MAX_256(1)
+            *MAX_512(2)
+            *MAX_1024(3)
+            *MAX_2048(4)
+            *MAX_4096(5)
+
+           ";
+    ValRandomize = true;
+  } MaxReadRequestSize[9:7] = 3'h2;
+  field {
+    AccessType = "RW";
+    desc = "
+        A write of 1b initiates FLR to the function. The value read by software from this bit is always 0b.
+
+           ";
+    ValRandomize = true;
+  } InitiateFLR[6:6] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Indicates status of correctable error detection.
+
+           ";
+    ValRandomize = true;
+  } CorrectableDetected[5:5] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Indicates status of non-fatal error detection.
+
+           ";
+    ValRandomize = true;
+  } NonFatalErrorDetected[4:4] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Indicates status of fatal error detection.
+
+           ";
+    ValRandomize = true;
+  } FatalErrorDetected[3:3] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Indicates that RRC received an unsupported request. This field is identical in all functions. RRC can’t distinguish which function causes the error.
+
+           ";
+    ValRandomize = true;
+  } UnsupportedRequestDetected[2:2] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        If Aux Power is detected, this field is set to 1b. It is a strapping signal from the periphery and is identical for all functions. Resets on LAN Power Good and PE_RST_N only.
+
+           ";
+    ValRandomize = true;
+  } AuxPowerDetected[1:1] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates whether RRC has ANY transactions pending. (transactions include completions for any outstanding non-posted request for all used traffic classes).
+
+           ";
+    ValRandomize = true;
+  } TransactionPending[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_PCIE_LINK_CAP
+
+reg pcie_cfg_pcie_link_cap_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Supported Link Speeds. This field indicates the supported Link speed(s) of the associated link port.
+          
+        Defined encodings are:
+          
+            * 0001b = 2.5 GbE link speed supported.
+            * 0010b = 5 GbE and 2.5 GbE link speeds supported.
+            * 0011b = 8 GbE, 5 GbE and 2.5 GbE link speeds supported.
+
+           ";
+    ValRandomize = true;
+  } SupportedLinkSpeeds[31:28] = 4'h3;
+  field {
+    AccessType = "RO";
+    desc = "
+        Max Link Width. Indicates the maximum link width. Depending on the SKU, RRC supports a x1, x2, x4 and x8-link width with a default value of eight lanes.
+          
+        Defined encoding:
+          
+            * 000000b = Reserved
+            * 000001b = x1
+            * 000010b = x2
+            * 000100b = x4
+            * 001000b = x8
+
+           ";
+    ValRandomize = true;
+  } MaxLinkWidth[27:22] = 6'h8;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates the level of the active state of power management supported in RRC. Defined encodings are:
+          
+            * 00b = No ASPM Support.
+            * 01b = Reserved.
+            * 10b = L1 supported. This is the default.
+            * 11b = Reserved.
+          
+        Value loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } ActiveStateLinkPMSupport[21:20] = 2'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        L0s Exit Latency. Indicates the exit latency from L0s to L0 state. 
+        
+            * 000b = Less than 64 ns.
+            * 001b = 64 ns - 128 ns.
+            * 010b = 128ns - 256 ns.
+            * 011b = 256 ns - 512 ns.
+            * 100b = 512 ns -- 1 μs.
+            * 101b = 1 μs - 2 μs.
+            * 110b = 2 μs - 4 μs.
+            * 111b = Reserved.
+          
+        Value loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } L0sExitLatency[19:17] = 3'h3;
+  field {
+    AccessType = "RO";
+    desc = "
+        L1 Exit Latency. Indicates the exit latency from L1 to L0 state.
+          
+            * 000b = Less than 1 μs.
+            * 001b = 1 μs -- 2 μs.
+            * 010b = 2 μs -- 4 μs.
+            * 011b = 4 μs -- 8 μs.
+            * 100b = 8 μs -- 16 μs.
+            * 101b = 16 μs -- 32 μs.
+            * 110b = 32 μs -- 64 μs.
+            * 111b = L1 transition not supported.
+          
+        Value loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } L1ExitLatency[16:14] = 3'h6;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } ClockPowerManagement[13:13] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } SurpriseDownErrorReportingCapable[12:12] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } DataLinkLayerLinkActiveReportingCapable[11:11] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } LinkBandwidthNotificationCapability[10:10] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        ASPM Optional Compliance.
+        This bit must be set to 1b. Components that were implemented according to an earlier PCIe specification version has this bit set to 0b.
+        Software is permitted to use the value of this bit to help determine whether to enable ASPM or run ASPM compliance tests.    
+
+           ";
+    ValRandomize = true;
+  } ASPMOptionalCompliance[9:9] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align__[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        The PCIe port number for the given PCIe link. This field is set in the link training phase.
+
+           ";
+    ValRandomize = true;
+  } PortNumber[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_PCIE_LINK_CTRL
+
+reg pcie_cfg_pcie_link_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Active State Link PM Control. This field controls the active state PM supported on the link. Link PM functionality is determined by the lowest common denominator of all functions. Defined encodings are:
+          
+            * 00b = ASPM Disabled.
+            * 01b = Reserved.
+            * 10b = L1 entry Enabled.
+            * 11b = Reserved.
+          
+        In ARI mode, the ASPM is determined solely by the field in function 0 while it is meaningless in the other function(s).
+
+           ";
+    ValRandomize = true;
+  } ActStateLinkPM[31:30] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align_29_[29:29] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Read Completion Boundary.
+
+           ";
+    ValRandomize = true;
+  } RdCplBoundary[28:28] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Link Disable. Reserved for endpoint devices. Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } LinkDisable[27:27] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Retrain Clock. Not applicable for endpoint devices. Hard wire to 0b.
+
+           ";
+    ValRandomize = true;
+  } RetrainClock[26:26] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Common Clock Configuration. When set, indicates that RRC and the component at the other end of the link are operating with a common reference clock. A value of 0b indicates that they are operating with an asynchronous clock. This parameter affects the L0s exit latencies.
+          
+        In ARI mode, the common clock configuration is determined solely by the field in function 0 while it is meaningless in the other function(s).
+
+           ";
+    ValRandomize = true;
+  } CommonClkCfg[25:25] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        When set, this bit forces an extended Tx of the FTS ordered set in FTS and an extra TS1 at the exit from L0s prior to entering L0.
+
+           ";
+    ValRandomize = true;
+  } ExtSync[24:24] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable clock power management - not supported in RRC.
+
+           ";
+    ValRandomize = true;
+  } EnClkPwrMan[23:23] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Hardware Autonomous Width Disable. 
+
+           ";
+    ValRandomize = true;
+  } __HWAutoWidthDis__[22:22] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Link Bandwidth Management Interrupt Enable. Not supported in RRC. Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } LinkBandwdMgmtIntEn[21:21] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Link Autonomous Bandwidth Interrupt Enable.Not supported in RRC. Hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } LinkAutoBandwdIntEn[20:20] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align_19_16_[19:16] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        This field indicates the negotiated link speed of the given PCIe link. Defined encodings are:
+          
+            * 0001b = 2.5 GbE PCIe link.
+            * 0010b = 5 GbE PCIe link.
+            * 0011b = 8 GbE PCIe link.
+
+        All other encodings are reserved.
+
+           ";
+    ValRandomize = true;
+  } CurrentLinkSpeed[15:12] = 4'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Negotiated Link Width. Indicates the negotiated width of the link.
+          
+        Relevant encodings for RRC are:
+          
+            * 00001b = x1.
+            * 00010b = X2.
+            * 00100b = x4.
+            * 01000b = x8.
+
+           ";
+    ValRandomize = true;
+  } CurrentLinkWidth[11:7] = 5'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __align_6_5_[6:5] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Link Training. Indicates that link training is in progress.
+          
+        This field is not applicable and is reserved for endpoint devices, and is hard wired to 0b.
+
+           ";
+    ValRandomize = true;
+  } LnkTraining[4:4] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Slot Clock Configuration. When set, indicates that RRC uses the physical reference clock that the platform provides at the connector. This bit must be cleared if RRC uses an independent clock. The Slot Clock Configuration bit is loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } SlotClkCfg[3:3] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Data Link Layer Link Active. Not supported in RRC. Hard wire to 0b.
+
+           ";
+    ValRandomize = true;
+  } DataLinkAct[2:2] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Link Bandwidth Management Status. Not supported in RRC. Hard wire to 0b.
+
+           ";
+    ValRandomize = true;
+  } LinkBandStat[1:1] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Link Autonomous Bandwidth Status. This bit is not applicable and is reserved for endpoints.
+
+           ";
+    ValRandomize = true;
+  } LinkAutoBandStat[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_PCIE_DEV_CAP2
+
+reg pcie_cfg_pcie_dev_cap2_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Completion Timeout Ranges Supported. This field indicates RRC’s support for the optional completion timeout programmability mechanism.
+
+        Four time value ranges are defined:
+
+            * Range A: 50 μs to 10 ms.
+            * Range B: 10 ms to 250 ms.
+            * Range C: 250 ms to 4 s.
+            * Range D: 4 s to 64 s.
+
+        Bits are set according to the following values to show the timeout value ranges that RRC supports.
+
+            * 0000b = Completion timeout programming not supported. RRC must implement a timeout value in the range of 50 µs to 50 ms.
+            * 0001b = Range A.
+            * 0010b = Range B.
+            * 0011b = Ranges A and B.
+            * 0110b = Ranges B and C.
+            * 0111b = Ranges A, B and C.
+            * 1110b = Ranges B, C and D.
+            * 1111b = Ranges A, B, C and D.
+    
+        All other values are reserved.
+
+           ";
+    ValRandomize = true;
+  } CplTimeoutCfg[13:10] = 4'hf;
+  field {
+    AccessType = "RO";
+    desc = "
+        Completion Timeout Disable Supported
+
+           ";
+    ValRandomize = true;
+  } CplTimeoutDisSuppt[9:9] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved__[8:2] = 7'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        TPH Completer Supported – Value indicates Completer support for TPH or Extended TPH. Defined encodings are:
+           * 00b: TPH and Extended TPH Completer not supported.
+           * 01b: TPH Completer supported; Extended TPH Completer not supported.
+           * 10b: Reserved.
+           * 11b: Both TPH and Extended TPH Completer supported.
+        When TPH is enabled, the device is enabled as both a requester and a completer. No control is given to support these features individually.
+
+           ";
+    ValRandomize = true;
+  } TPHCplSup[1:0] = 2'h1;
+};
+
+
+
+// PCIE_CFG_PCIE_DEV_CTRL2
+
+reg pcie_cfg_pcie_dev_ctrl2_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Completion Timeout Value. For devices that support completion timeout programmability, this field enables system software to modify the completion timeout value.
+
+        Defined encodings:
+
+            * 0000b = Default range: 50 μs to 50 ms.
+
+        Note: It is strongly recommended that the completion timeout mechanism not expire in less than 10 ms.
+
+        Values available if Range A (50 μs to 10 ms) programmability range is supported:
+
+            * 0001b = 50 μs to 100 μs.
+            * 0010b = 1 ms to 10 ms.
+
+        Values available if Range B (10 ms to 250 ms) programmability range is supported:
+
+            * 0101b = 16 ms to 55 ms.
+            * 0110b = 65 ms to 210 ms.
+
+        Values available if Range C (250 ms to 4 s) programmability range is supported:
+
+            * 1001b = 260 ms to 900 ms.
+            * 1010b = 1 s to 3.5 s.
+
+        Values available if the Range D (4 s to 64 s) programmability range is supported:
+
+            * 1101b = 4 s to 13 s.
+            * 1110b = 17 s to 64 s.
+
+        Values not defined are reserved.
+
+        Software is permitted to change the value of this field at any time. For requests already pending when the completion timeout value is changed, hardware is permitted to use either the new or the old value for the outstanding requests and is permitted to base the start time for each request either on when this value was changed or on when each request was issued.
+
+           ";
+    ValRandomize = true;
+  } CplTimeoutVal[4:1] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Completion Timeout Disable. When set to 1b, this bit disables the completion timeout mechanism.
+
+        Software is permitted to set or clear this bit at any time. When set, the completion timeout detection mechanism is disabled. If there are outstanding requests when the bit is cleared, it is permitted but not required for hardware to apply the completion timeout mechanism to the outstanding requests. If this is done, it is permitted to base the start time for each request on either the time this bit was cleared or the time each request was issued.
+
+           ";
+    ValRandomize = true;
+  } CplTimeoutDis[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_PCIE_LINK_CTRL2
+
+reg pcie_cfg_pcie_link_ctrl2_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/P";
+    desc = "
+        Target Link Speed. This field is used to set the target compliance mode speed when software is using the Enter Compliance bit to force a link into compliance mode.
+                    
+        Defined encodings are:
+          
+            * 0001b = 2.5 GbE target link speed.
+            * 0010b = 5 GbE target link speed.
+            * 0011b = 8 GbE target link speed.
+	    * 0100b = 16 GbE target link speed
+          
+        All other encodings are reserved.
+          
+        If a value is written to this field that does not correspond to a speed included in the Supported Link Speeds field, the result is undefined.
+          
+        The default value of this field is the highest link speed supported by RRC (as reported in the Supported Link Speeds field of the Link Capabilities register).
+
+           ";
+    ValRandomize = true;
+  } TargetSpeed[27:24] = 4'h3;
+  field {
+    AccessType = "RW/P";
+    desc = "
+        Enter Compliance. Software is permitted to force a link to enter compliance mode at the speed indicated in the Target Link Speed field by setting this bit to 1b in both components on a link and then initiating a hot reset on the link.
+          
+        The default value of this field following a fundamental reset is 0b.
+
+           ";
+    ValRandomize = true;
+  } EnterCompliance[23:23] = 1'h0;
+  field {
+    AccessType = "RW/P";
+    desc = "
+        Hardware Autonomous Speed Disable. When set to 1b, this bit disables hardware from changing the link speed for reasons other than attempting to correct unreliable link operation by reducing link speed.
+
+           ";
+    ValRandomize = true;
+  } HwAutoSpeedDis[22:22] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Selectable De-Emphasis.          
+
+           ";
+    ValRandomize = true;
+  } SelectDeEmphasis[21:21] = 1'h0;
+  field {
+    AccessType = "RW/P";
+    desc = "
+        Transmit Margin. This field controls the value of the non de emphasized voltage level at the Transmitter pins.
+          
+        Encodings:
+          
+            * 000b = Normal operating range.
+            * 001b = 800-1200 mV for full swing and 400-700 mV for half-swing.
+            * 010b = (n-1) -- Values must be monotonic with a non-zero slope. The value of n must be greater than 3 and less than 7. At least two of these must be below the normal operating range of n: 200-400 mV for full-swing and 100-200 mV for half-swing.            
+            * 111b= (n) reserved.
+
+           ";
+    ValRandomize = true;
+  } TransmitMargin[20:18] = 3'h0;
+  field {
+    AccessType = "RW/P";
+    desc = "
+        Enter Modified Compliance. When this bit is set to 1b, the device transmits modified compliance pattern if the LTSSM enters Polling.Compliance state.
+
+           ";
+    ValRandomize = true;
+  } EnterModeComp[17:17] = 1'h0;
+  field {
+    AccessType = "RW/P";
+    desc = "
+        Compliance SOS. When set to 1b, the LTSSM is required to send SOS periodically in between the (modified) compliance patterns.
+
+           ";
+    ValRandomize = true;
+  } CompSOS[16:16] = 1'h0;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+	Compliance Preset/De-emphasis
+	For 8.0 GT/s Data Rate: This field sets the Transmitter Preset in Polling. Compliance  state if the entry occurred due tothe Enter Compliance bit being 1b.
+	For 5.0 GT/s Data Rate: This field sets the de-emphasis level in Polling. Compliance state if the entry occurred due to the Enter Compliance bit being 1b.
+	When the Link is operating at 2.5 GT/s, the setting of this bit field has no effect.
+	Defined Encodings are:
+	    * 0001b -3.5 dB
+	    * 0000b -6 dB
+
+           ";
+    ValRandomize = true;
+  } PCIE_CAP_COMPLIANCE_PRESET[15:12] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Current De-emphasis Level. When the Link is operating at 5.0 GT/s speed, this bit reflects the level of de-emphasis.
+        Encodings:
+           * 1b = 3.5 dB
+           * 0b = -6 dB
+        The value in this bit is undefined when the Link is not operating at 5.0 GT/s speed.
+        The default value of this field is changed automatically by hardware upon link setup. 
+
+           ";
+    ValRandomize = true;
+  } CAPCURRDEEMPHASIS[11:11] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved__[10:0] = 11'h0;
+};
+
+
+
+// PCIE_CFG_MSIX_CAP
+
+reg pcie_cfg_msix_cap_r {
+  shared;
+  HandCoded = true;
+  name = "MSI-X Capability";
+  desc = "
+    More than one MSI-X capability structure per function is prohibited while a function is permitted to have both an MSI and an MSI-X capability structure.    
+    
+    In contrast to the MSI capability structure, which directly contains all of the control/status information for the function's vectors, the MSI-X capability structure instead points to an MSI-X table structure and an MSI-X Pending Bit Array (PBA) structure, each residing in memory space.    
+    
+    Each structure is mapped by a BAR belonging to the function that begins at 0x10 in the configuration space. A BAR Indicator Register (BIR) indicates which BAR and a Qword-aligned offset indicates where the structure begins relative to the base address associated with the BAR. The BAR is 64-bit, but must map to the memory space. A function is permitted to map both structures with the same BAR or map each structure with a different BAR.   
+    
+    The MSI-X table structure typically contains multiple entries, each consisting of several fields: Message Address, Message Upper Address, Message Data, and Vector Control. Each entry is capable of specifying a unique vector.
+        
+    The PBA structure contains the function's pending bits, one per table entry, organized as a packed array of bits within Qwords. The last Qword is not necessarily fully populated.    
+    
+    To request service using a given MSI-X table entry, a function performs a Dword memory write transaction using:   
+    
+    The contents of the Message Data field entry for data
+    
+    The contents of the Message Upper Address field for the upper 32 bits of the address
+    
+    The contents of the Message Address field entry for the lower 32 bits of the address
+    
+    A memory read transaction from the address targeted by the MSI-X message produces undefined results.
+    
+    The MSI-X table and MSI-X PBA are permitted to co-reside within a naturally aligned 4 KB address range, though they must not overlap with each other.
+    
+    MSI-X table entries and Pending bits are each numbered 0 through N-1, where N-1 is indicated by the Table Size field in the MSI-X Message Control register. For a given arbitrary MSI-X table entry K, its starting address can be calculated with the formula:
+    
+    Entry starting address = Table base + K*16   
+    
+    For the associated Pending bit K, its address for Qword access and bit number within that Qword can be calculated with the formulas:
+    
+    Qword address = PBA base + (K div 64)*8   
+    
+    Qword bit# = K mod 64  
+    
+    Software that chooses to read Pending bit K with Dword accesses can use these formulas: 
+    
+    Dword address = PBA base + (K div 32)*4  
+    
+    Dword bit# = K mod 32 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Capability ID      
+
+           ";
+    ValRandomize = true;
+  } CapID[31:24] = 8'h11;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next capability offset    
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[23:16] = 8'hD0;
+  field {
+    AccessType = "RO";
+    desc = "
+       System software reads this field to determine the MSI-X Table Size N, which is encoded as N-1. The device supports up to 256 different interrupt vectors for the physical function.
+
+           ";
+    ValRandomize = true;
+  } TableSize[15:5] = 11'hFF;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved__[4:2] = 3'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        If 1b, all of the vectors associated with the function are masked, regardless of their per-vector Mask bit states.
+        
+        If 0b, each vector’s Mask bit determines whether the vector is masked or not.
+        
+        Setting or clearing the MSI-X Function Mask bit has no effect on the state of the per-vector Mask bits.
+
+           ";
+    ValRandomize = true;
+  } FunctionMask[1:1] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        If 1b and the MSI Enable bit in the MSI Message Control register is 0b, the function is permitted to use MSI-X to request service and is prohibited from using its INTx# pin.
+      
+        System configuration software sets this bit to enable MSI-X. A device driver is prohibited from writing this bit to mask a function’s service request.
+      
+        If 0b, the function is prohibited from using MSI-X to request service.
+
+           ";
+    ValRandomize = true;
+  } MSIX_Enable[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_MSIX_TABLE_OFFSET
+
+reg pcie_cfg_msix_table_offset_r {
+  shared;
+  HandCoded = true;
+  name = "MSI-X Table Offset Register";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates which one of a functions BARs, beginning at 0x10 in the configuration space, is used to map the functions MSI-X table into the memory space. while BIR values: 0...5 correspond to BARs 0x10...0x 24 respectively.
+
+           ";
+    ValRandomize = true;
+  } BIR[31:29] = 3'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        Used as an offset from the address contained in one of the functions BARs to point to the base of the MSI-X table. The lower three Table BIR bits are masked off (set to 0b) by software to form a 32-bit Qword-aligned offset.
+          
+        Note that this field is read only.
+
+           ";
+    ValRandomize = true;
+  } Offset[28:0] = 29'h0;
+};
+
+
+
+// PCIE_CFG_MSIX_PBA
+
+reg pcie_cfg_msix_pba_r {
+  shared;
+  HandCoded = true;
+  name = "MSI-X Pending Bit Array -- PBA Offset";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates which one of a functions BARs, beginning at 0x10 in the configuration space, is used to map the functions MSI-X PBA into the memory space. while BIR values: 0...5 correspond to BARs 0x10...0x 24 respectively.
+
+           ";
+    ValRandomize = true;
+  } BIR[31:29] = 3'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        Used as an offset from the address contained in one of the functions BARs to point to the base of the MSI-X PBA. The lower three PBA BIR bits are masked off (set to 0b) by software to form a 32-bit Qword-aligned offset.
+        
+        This field is read only.
+
+           ";
+    ValRandomize = true;
+  } Offset[28:0] = 29'h0200;
+};
+
+
+
+// PCIE_CFG_VPD_CAP
+
+reg pcie_cfg_vpd_cap_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        This field equals 0x11 indicating the linked list item as being the VPD registers.
+
+           ";
+    ValRandomize = true;
+  } CapID[31:24] = 8'h3;
+  field {
+    AccessType = "RO";
+    desc = "
+        Offset to the next capability item in the capability list. A 0x00 value indicates that it is the last item in the capability-linked list.
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[23:16] = 8'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+        Dword-aligned byte address of the VPD area in the NVM to be accessed. The register is read/write, and the initial value at power-up is indeterminate. The two LSBs are RO as zero.
+
+           ";
+    ValRandomize = true;
+  } Address[15:1] = 15'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Flag used to indicate when the transfer of data between the VPD Data register and the storage component completes. The Flag register is written when the VPD Address register is written.
+        
+        * 0b = Read. Set by hardware when data is valid.
+        * 1b = Write. Cleared by hardware when data write is complete.
+        
+        The VPD address and data should not be modified before the action is done.
+
+           ";
+    ValRandomize = true;
+  } Write[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_VPD_DATA
+
+reg pcie_cfg_vpd_data_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        VPD Data: VPD data can be read or written through this register. The LS byte of this register (at offset 4 in this capability structure) corresponds to the byte of VPD at the address specified by the VPD Address register. The data read from or written to this register uses the normal PCI byte transfer capabilities. Four bytes are always transferred between this register and the VPD storage component. Reading or writing data outside of the VPD space in the storage component is not allowed. In a write access, the data should be set before the address and the flag is set.
+
+           ";
+    ValRandomize = true;
+  } Data[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_AER_HDR
+
+reg pcie_cfg_aer_hdr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Extended Capability ID. PCIe extended capability ID indicating advanced error reporting capability.
+
+           ";
+    ValRandomize = true;
+  } ExtCapId[31:16] = 16'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Version Number. PCIe advanced error reporting extended capability version number.
+
+           ";
+    ValRandomize = true;
+  } Version[15:12] = 4'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next Capability Pointer. 
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[11:0] = 12'h148;
+};
+
+
+
+// PCIE_CFG_AER_UNERR_STATUS
+
+reg pcie_cfg_aer_unerr_status_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+        The Uncorrectable Error Status register reports error status of individual uncorrectable error sources on a PCIe device. An individual error status bit that is set to 1b indicates that a particular error occurred; software can clear an error status by writing a 1b to the respective bit. Register is cleared by LAN_PWR_GOOD.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_21_18_[21:18] = 4'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Data Link Protocol Error Status.
+
+           ";
+    ValRandomize = true;
+  } DLPError[17:17] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Surprise Down Error Status.
+
+           ";
+    ValRandomize = true;
+  } SurpriseDownError[16:16] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_15_10_[15:10] = 6'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Poisoned TLP Status.
+
+           ";
+    ValRandomize = true;
+  } PoisonedTLP[9:9] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Flow Control Protocol Error Status.
+
+           ";
+    ValRandomize = true;
+  } FlowControlError[8:8] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Completion Timeout Status.
+
+           ";
+    ValRandomize = true;
+  } CompletionTimeout[7:7] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Completer Abort Status.
+
+           ";
+    ValRandomize = true;
+  } CompleterAbort[6:6] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Unexpected Completion Status.
+
+           ";
+    ValRandomize = true;
+  } UnexpecteCompl[5:5] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Receiver Overflow Status.
+
+           ";
+    ValRandomize = true;
+  } RxOverflow[4:4] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Malformed TLP Status.
+
+           ";
+    ValRandomize = true;
+  } MalformedTLP[3:3] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        ECRC Error Status.
+
+           ";
+    ValRandomize = true;
+  } ECRCError[2:2] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Unsupported Request Error Status.
+
+           ";
+    ValRandomize = true;
+  } UnsupportedRequestError[1:1] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        ACS Violation Status.
+
+           ";
+    ValRandomize = true;
+  } ACSViolation[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_AER_UNERR_MASK
+
+reg pcie_cfg_aer_unerr_mask_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+      The Uncorrectable Error Mask register controls reporting of individual uncorrectable errors by device to the host bridge via a PCIe error message. A masked error (respective bit set in mask register) is not reported to the host bridge by an individual device. Note that there is a mask bit per bit of the Uncorrectable Error Status register. This register fields are sticky (reset on power up only).   
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_31_28_[31:28] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Data Link Protocol Error Mask.
+
+           ";
+    ValRandomize = true;
+  } DLPError[27:27] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Surprise Down Error Mask.
+
+           ";
+    ValRandomize = true;
+  } SurpriseDownError[26:26] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_25_20_[25:20] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Poisoned TLP Mask.
+
+           ";
+    ValRandomize = true;
+  } PoisonedTLP[19:19] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Flow Control Protocol Error Mask.
+
+           ";
+    ValRandomize = true;
+  } FlowControlError[18:18] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Completion Timeout Mask.
+
+           ";
+    ValRandomize = true;
+  } CompletionTimeout[17:17] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Completer Abort Mask.
+
+           ";
+    ValRandomize = true;
+  } CompleterAbort[16:16] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Unexpected Completion Mask.
+
+           ";
+    ValRandomize = true;
+  } UnexpecteCompl[15:15] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receiver Overflow Mask.
+
+           ";
+    ValRandomize = true;
+  } RxOverflow[14:14] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Malformed TLP Mask.
+
+           ";
+    ValRandomize = true;
+  } MalformedTLP[13:13] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        ECRC Error Mask.
+
+           ";
+    ValRandomize = true;
+  } ECRCError[12:12] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Unsupported Request Error Mask.
+
+           ";
+    ValRandomize = true;
+  } UnsupportedRequestError[11:11] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_10_[10:10] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UncorrectableInternalError[9:9] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_8_[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } AtomicOpEggressBlocked[7:7] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } TLPPrefixBlockedError[6:6] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_5_0_[5:0] = 6'h0;
+};
+
+
+
+// PCIE_CFG_AER_UNERR_SEVERITY
+
+reg pcie_cfg_aer_unerr_severity_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+      The Uncorrectable Error Severity register controls whether an individual uncorrectable error is reported as a fatal error. An uncorrectable error is reported as fatal when the corresponding error bit in the severity register is set. If the bit is cleared, the corresponding error is considered non-fatal. This register fields are sticky (reset on power up only).
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_31_28_[31:28] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Data Link Protocol Error Severity.
+
+           ";
+    ValRandomize = true;
+  } DLPError[27:27] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Surprise Down Error Severity.
+
+           ";
+    ValRandomize = true;
+  } SurpriseDownError[26:26] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_25_20_[25:20] = 6'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        Poisoned TLP Severity.
+
+           ";
+    ValRandomize = true;
+  } PoisonedTLP[19:19] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Flow Control Protocol Error Severity.
+
+           ";
+    ValRandomize = true;
+  } FlowControlError[18:18] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        Completion Timeout Severity.
+
+           ";
+    ValRandomize = true;
+  } CompletionTimeout[17:17] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Completer Abort Severity.
+
+           ";
+    ValRandomize = true;
+  } CompleterAbort[16:16] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Unexpected Completion Severity.
+
+           ";
+    ValRandomize = true;
+  } UnexpecteCompl[15:15] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receiver Overflow Severity.
+
+           ";
+    ValRandomize = true;
+  } RxOverflow[14:14] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        Malformed TLP Severity.
+
+           ";
+    ValRandomize = true;
+  } MalformedTLP[13:13] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        ECRC Error Severity.
+
+           ";
+    ValRandomize = true;
+  } ECRCError[12:12] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Unsupported Request Error Severity.
+
+           ";
+    ValRandomize = true;
+  } UnsupportedRequestError[11:11] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_10_[10:10] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UncorrectableInternalError[9:9] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_8_[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } AtomicOpEggressBlocked[7:7] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } TLPPrefixBlockedError[6:6] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_5_0_[5:0] = 6'h0;
+};
+
+
+
+// PCIE_CFG_AER_COERR_STATUS
+
+reg pcie_cfg_aer_coerr_status_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+      The Correctable Error Status register reports error status of individual correctable error sources on a PCIe device. When an individual error status bit is set to 1b it indicates that a particular error occurred; software can clear an error status by writing a 1b to the respective bit. Register is cleared by LAN_PWR_GOOD.    
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Receiver Error Status.
+
+           ";
+    ValRandomize = true;
+  } RxError[14:14] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_13_9_[13:9] = 5'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Bad TLP Status.
+
+           ";
+    ValRandomize = true;
+  } BadTLP[8:8] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Bad DLLP Status.
+
+           ";
+    ValRandomize = true;
+  } BadDLLP[7:7] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        REPLAY_NUM Rollover Status.
+
+           ";
+    ValRandomize = true;
+  } ReplayRollover[6:6] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_5_3_[5:3] = 3'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Replay Timer Timeout Status.
+
+           ";
+    ValRandomize = true;
+  } ReplayTimeout[2:2] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Advisory Non-Fatal Error Status.
+
+           ";
+    ValRandomize = true;
+  } NonFatalError[1:1] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Corrected Internal Error Status.
+
+           ";
+    ValRandomize = true;
+  } CorrectableInternalError[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_AER_COERR_MASK
+
+reg pcie_cfg_aer_coerr_mask_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+      The Correctable Error Mask register controls reporting of individual correctable errors by device to the host bridge via a PCIe error message. A masked error (respective bit set in mask register) is not reported to the host bridge by an individual device. There is a mask bit per bit in the Correctable Error Status register. This register fields are sticky (reset on power up only).
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receiver Error Mask.
+
+           ";
+    ValRandomize = true;
+  } RxError[14:14] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_13_9_[13:9] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bad TLP Mask.
+
+           ";
+    ValRandomize = true;
+  } BadTLP[8:8] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Bad DLLP Mask.
+
+           ";
+    ValRandomize = true;
+  } BadDLLP[7:7] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        REPLAY_NUM Rollover Mask.
+
+           ";
+    ValRandomize = true;
+  } ReplayRollover[6:6] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_5_3_[5:3] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Replay Timer Timeout Mask.
+
+           ";
+    ValRandomize = true;
+  } ReplayTimeout[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Advisory Non-Fatal Error Mask.
+
+           ";
+    ValRandomize = true;
+  } NonFatalError[1:1] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        Corrected Internal Error Mask.
+
+           ";
+    ValRandomize = true;
+  } CorrectableInternalError[0:0] = 1'h1;
+};
+
+
+
+// PCIE_CFG_AER_CTRL
+
+reg pcie_cfg_aer_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Vector pointing to the first recorded error in the Uncorrectable Error Status register. This is a read-only field that identifies the bit position of the first uncorrectable error reported in the Uncorrectable Error Status register.
+
+           ";
+    ValRandomize = true;
+  } ErrorIndex[8:4] = 5'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        ECRC Generation Capable. If set, this bit indicates that the function is capable of generating ECRC.
+          
+        This bit is loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } ECRCGenCap[3:3] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        ECRC Generation Enable. When set, ECRC generation is enabled. This field is sticky (reset on power up only).
+
+           ";
+    ValRandomize = true;
+  } ECRCGenEn[2:2] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        ECRC Check Capable. If set, this bit indicates that the function is capable of checking ECRC.
+          
+        This bit is loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } ECRCCheckCap[1:1] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        ECRC Check Enable.When set Set, ECRC checking is enabled. This field is sticky (reset on power up only).
+
+           ";
+    ValRandomize = true;
+  } ECRCCheckEn[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_AER_HEADER_LOG0
+
+reg pcie_cfg_aer_header_log0_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The header log register captures the header for the transaction that generated an error.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Header of the packet in error (TLP or DLLP).
+
+           ";
+    ValRandomize = true;
+  } Header[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_AER_HEADER_LOG1
+
+reg pcie_cfg_aer_header_log1_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The header log register captures the header for the transaction that generated an error.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Header of the packet in error (TLP or DLLP).
+
+           ";
+    ValRandomize = true;
+  } Header[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_AER_HEADER_LOG2
+
+reg pcie_cfg_aer_header_log2_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The header log register captures the header for the transaction that generated an error.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Header of the packet in error (TLP or DLLP).
+
+           ";
+    ValRandomize = true;
+  } Header[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_AER_HEADER_LOG3
+
+reg pcie_cfg_aer_header_log3_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The header log register captures the header for the transaction that generated an error.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Header of the packet in error (TLP or DLLP).   
+
+           ";
+    ValRandomize = true;
+  } Header[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_SPD_HDR
+
+reg pcie_cfg_spd_hdr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The PCIe device serial number capability is an optional extended capability that can be implemented by any PCIe device. The device serial number is a read-only 64-bit value that is unique for a given PCIe device.
+    
+    All multi-function devices that implement this capability must implement it for function 0; other functions that implement this capability must return the same device serial number value as that reported by function 0.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Capability ID.
+
+           ";
+    ValRandomize = true;
+  } CapId[31:16] = 16'h3;
+  field {
+    AccessType = "RO";
+    desc = "
+        Version
+
+           ";
+    ValRandomize = true;
+  } Version[15:12] = 4'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next capability pointer
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[11:0] = 12'h158;
+};
+
+
+
+// PCIE_CFG_SPD_NUMBER_L
+
+reg pcie_cfg_spd_number_l_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The Serial Number register is a 64-bit field that contains the IEEE defined
+    64-bit Extended Unique Identifier (EUI-64*). 
+    
+        PCIE_CFG_SPD_NUMBER_L.SerialNumber[0] = EUI[7] = LSB of Extension ID
+        PCIE_CFG_SPD_NUMBER_L.SerialNumber[1] = EUI[6] = Middle byte
+        PCIE_CFG_SPD_NUMBER_L.SerialNumber[2] = EUI[5] = MSB of Extension ID
+        PCIE_CFG_SPD_NUMBER_L.SerialNumber[3] = EUI[4] = 0xFF
+        PCIE_CFG_SPD_NUMBER_H.SerialNumber[0] = EUI[3] = 0xFF
+        PCIE_CFG_SPD_NUMBER_H.SerialNumber[1] = EUI[2] = LSB of Company ID
+        PCIE_CFG_SPD_NUMBER_H.SerialNumber[2] = EUI[1] = Middle byte
+        PCIE_CFG_SPD_NUMBER_H.SerialNumber[3] = EUI[0] = MSB of Company ID
+        
+    For example, assume that the company ID is (Intel) 00-A0-C9 and the
+    extension identifier is 23-45-67, then the registers contains:
+    
+        PCIE_CFG_SPD_NUMBER_L = 0xFF234567
+        PCIE_CFG_SPD_NUMBER_H = 0x00A0C9FF
+        
+    Refer to the official document defining the eui numbering: 
+        http://standards.ieee.org/regauth/oui/tutorials/EUI64.html
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 7..4 (reverse order). 
+        
+        * SerialNumber[0] = EUI[7]
+        * SerialNumber[1] = EUI[6]
+        * SerialNumber[2] = EUI[5]
+        * SerialNumber[3] = EUI[4]
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_0[31:24] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 7..4 (reverse order). 
+        
+        * SerialNumber[0] = EUI[7]
+        * SerialNumber[1] = EUI[6]
+        * SerialNumber[2] = EUI[5]
+        * SerialNumber[3] = EUI[4]
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_1[23:16] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 7..4 (reverse order). 
+        
+        * SerialNumber[0] = EUI[7]
+        * SerialNumber[1] = EUI[6]
+        * SerialNumber[2] = EUI[5]
+        * SerialNumber[3] = EUI[4]
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_2[15:8] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 7..4 (reverse order). 
+        
+        * SerialNumber[0] = EUI[7]
+        * SerialNumber[1] = EUI[6]
+        * SerialNumber[2] = EUI[5]
+        * SerialNumber[3] = EUI[4]
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_3[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_SPD_NUMBER_H
+
+reg pcie_cfg_spd_number_h_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    See PCIE_CFG_SPD_NUMBER_L for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 3..0 (reverse order). 
+        
+        * SerialNumber[0] = EUI[3] 
+        * SerialNumber[1] = EUI[2] 
+        * SerialNumber[2] = EUI[1] 
+        * SerialNumber[3] = EUI[0]  
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_0[31:24] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 3..0 (reverse order). 
+        
+        * SerialNumber[0] = EUI[3] 
+        * SerialNumber[1] = EUI[2] 
+        * SerialNumber[2] = EUI[1] 
+        * SerialNumber[3] = EUI[0]  
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_1[23:16] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 3..0 (reverse order). 
+        
+        * SerialNumber[0] = EUI[3] 
+        * SerialNumber[1] = EUI[2] 
+        * SerialNumber[2] = EUI[1] 
+        * SerialNumber[3] = EUI[0]  
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_2[15:8] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        EUI bytes 3..0 (reverse order). 
+        
+        * SerialNumber[0] = EUI[3] 
+        * SerialNumber[1] = EUI[2] 
+        * SerialNumber[2] = EUI[1] 
+        * SerialNumber[3] = EUI[0]  
+
+           ";
+    ValRandomize = true;
+  } SerialNumber_3[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_ARI_HDR
+
+reg pcie_cfg_ari_hdr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    In order to allow more than eight functions per endpoint without requesting an internal switch, as is usually needed in virtualization scenarios, the PCI-SIG defines a new capability that allows a different interpretation of the Bus, Device, and Function fields. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Capability ID
+
+           ";
+    ValRandomize = true;
+  } CapID[31:16] = 16'h000E;
+  field {
+    AccessType = "RO";
+    desc = "
+        Version      
+
+           ";
+    ValRandomize = true;
+  } Version[15:12] = 4'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next capability pointer.
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[11:0] = 12'h168;
+};
+
+
+
+// PCIE_CFG_ARI_CTRL
+
+reg pcie_cfg_ari_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_15_8_[15:8] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next function pointer, zero as there is none. 
+
+           ";
+    ValRandomize = true;
+  } NFP[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_SPCIE_HDR
+
+reg pcie_cfg_spcie_hdr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The Secondary PCI Express Extended Capability structure is required for all Ports and RCRBs that support a Link speed of 8.0 GT/s or higher. For Multi-Function Upstream Ports, this capability must be implemented in Function 0 and must not be implemented in other Functions.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Capability ID
+
+           ";
+    ValRandomize = true;
+  } CapID[31:16] = 16'h0019;
+  field {
+    AccessType = "RO";
+    desc = "
+        Version      
+
+           ";
+    ValRandomize = true;
+  } Version[15:12] = 4'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next capability pointer.
+
+           ";
+    ValRandomize = true;
+  } NextCapPtr[11:0] = 12'h188;
+};
+
+
+
+// PCIE_CFG_SPCIE_LINK_CTRL3
+
+reg pcie_cfg_spcie_link_ctrl3_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } PerfEq[1:1] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } LinkEqIntEn[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_SPCIE_ERR_STS
+
+reg pcie_cfg_spcie_err_sts_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    Each bit indicates if the corresponding Lane detected a Lane-based error. A value of 1b indicates that a Lane based-error was detected on the corresponding Lane Number
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } LaneErrSts[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_SPCIE_LINK_EQ01
+
+reg pcie_cfg_spcie_link_eq01_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    The Equalization Control register consists of control fields required for per Lane equalization and number of entries in this register are sized by Maximum Link Width
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset0[31:28] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint0[27:25] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_24_[24:24] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset0[23:20] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint0[19:17] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_16_[16:16] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset1[15:12] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint1[11:9] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_8_[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset1[7:4] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint1[3:1] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_0_[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_SPCIE_LINK_EQ23
+
+reg pcie_cfg_spcie_link_eq23_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset2[31:28] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint2[27:25] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_24_[24:24] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset2[23:20] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint2[19:17] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_16_[16:16] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset3[15:12] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint3[11:9] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_8_[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset3[7:4] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint3[3:1] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_0_[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_SPCIE_LINK_EQ45
+
+reg pcie_cfg_spcie_link_eq45_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset4[31:28] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint4[27:25] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_24_[24:24] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset4[23:20] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint4[19:17] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_16_[16:16] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset5[15:12] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint5[11:9] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_8_[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset5[7:4] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint5[3:1] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_0_[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_SPCIE_LINK_EQ67
+
+reg pcie_cfg_spcie_link_eq67_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset6[31:28] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint6[27:25] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_24_[24:24] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset6[23:20] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint6[19:17] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_16_[16:16] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnTxPreset7[15:12] = 4'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } DwnRxPresetHint7[11:9] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_8_[8:8] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpTxPreset7[7:4] = 4'hF;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } UpRxPresetHint7[3:1] = 3'h7;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_0_[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_HDR
+
+reg pcie_cfg_sriov_hdr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        PCIe Extended Capability ID. PCIe extended capability ID for the SR-IOV capability.
+
+           ";
+    ValRandomize = true;
+  } ID[31:16] = 16'h0010;
+  field {
+    AccessType = "RO";
+    desc = "
+        Capability Version. This field is a PCI-SIG defined version number that indicates the version of the capability structure present.
+          
+        Must be 0x1 for this version of the specification.
+
+           ";
+    ValRandomize = true;
+  } Version[15:12] = 4'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next Capability Offset. This field contains the offset to the next PCIe extended capability structure or 0x000 if no other items exist in the linked list of capabilities.
+This field shall be set to 0x000 in NVM/BSM by default for not exposing the TPH Capabilities.
+
+           ";
+    ValRandomize = true;
+  } Nextpointer[11:0] = 12'h1c8;
+};
+
+
+
+// PCIE_CFG_SRIOV_CAP
+
+reg pcie_cfg_sriov_cap_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+        Not supported.
+
+           ";
+    ValRandomize = true;
+  } __reserved_31_[31:31] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        ARI Capable Hierarchy Preserved. If Set, the ARI Capable Hierarchy bit is preserved across certain power state transitions.
+
+           ";
+    ValRandomize = true;
+  } ARICapHierPre[30:30] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+        Not supported.
+
+           ";
+    ValRandomize = true;
+  } __reserved_29_0_[29:0] = 30'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_CTRL
+
+reg pcie_cfg_sriov_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        VF Enable/Disable.
+          
+        VF Enable manages the assignment of VFs to the associated PF. If VF Enable is set to 1b, VFs must be enabled, associated with the PF, and exists in the PCIe fabric. When enabled, VFs must respond to and can issue PCIe transactions following all other rules for PCIe functions.
+          
+        If set to 0b, VFs must be disabled and not visible in the PCIe fabric; VFs cannot respond to or issue PCIe transactions.
+          
+        In addition, if VF Enable is cleared after having been set, all of the VFs must no longer:
+            
+              * Issue PCIe transactions
+              * Respond to configuration space or memory space accesses.
+          
+        The behavior must be as if an FLR was issued to each of the VFs. Specifically, VFs must not retain any context after VF Enable has been cleared. Any errors already logged via PF error reporting registers, remain logged. However, no new VF errors must be logged after VF Enable is cleared.
+
+           ";
+    ValRandomize = true;
+  } VFE[4:4] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_3_2_[3:2] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Memory Space Enable for Virtual Functions.          
+          
+        VF MSE controls memory space enable for all VFs associated with this PF as with the Memory Space Enable bit in a functions PCI command register. The default value for this bit is 0b.
+          
+        When VF Enable is 1, virtual function memory space access is permitted only when VF MSE is Set. VFs shall follow the same error reporting rules as defined in the base specification if an attempt is made to access a virtual functions memory space when VF Enable is 1 and VF MSE is zero.
+          
+        Implementation Note: Virtual functions memory space cannot be accessed when VF Enable is zero. Thus, VF MSE is don't care when VF Enable is zero, however, software may choose to set VF MSE after programming the VF BARn registers, prior to setting VF Enable to 1.
+
+           ";
+    ValRandomize = true;
+  } VFMSE[1:1] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        VF ARI Enable. Device can locate VFs in function numbers 8 to 255 of the captured bus number.
+
+           ";
+    ValRandomize = true;
+  } VFARI[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_CFG
+
+reg pcie_cfg_sriov_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        InitialVFs indicates the number of VFs that are initially associated with the PF. If VF Migration Capable is cleared, this field must contain the same value as TotalVFs.
+          
+        This field is loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } InitialVFs[31:16] = 16'h64;
+  field {
+    AccessType = "RO";
+    desc = "
+        TotalVFs defines the maximum number of VFs that can be associated with the PF. In RRC this field reflects the setting made in InitialVFs field. 
+
+           ";
+    ValRandomize = true;
+  } TotalVFs[15:0] = 16'h64;
+};
+
+
+
+// PCIE_CFG_SRIOV_NUM
+
+reg pcie_cfg_sriov_num_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Num VFs defines the number of VFs software has assigned to the PF. Software sets NumVFs to any value between one and the TotalVFs as part of the process of creating VFs. NumVFs VFs must be visible in the PCIe fabric after both NumVFs is set to a valid value and VF Enable is set to 1b.
+
+           ";
+    ValRandomize = true;
+  } NumVFs[23:8] = 16'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Function Dependency Link . Defines dependencies between physical functions allocation. In RRC there are no constraints.
+
+           ";
+    ValRandomize = true;
+  } FDL[7:0] = 8'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_MAP
+
+reg pcie_cfg_sriov_map_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        First VF offset defines the requestor ID (RID) offset of the first VF that is associated with the PF that contains this capability structure. 
+          
+        The content of this field is valid only when VF Enable is set. If VF Enable is 0b, the contents are undefined.
+          
+        Note that enabling SR-IOV requires ARI Enable bit be set.
+
+           ";
+    ValRandomize = true;
+  } FVO[31:16] = 16'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        VF stride defines the requestor ID (RID) offset from one VF to the next one for all VFs associated with the PF that contains this capability structure. The next VFs 16-bit RID is calculated by adding the contents of this field to the RID of the current VF.
+          
+        The contents of this field is valid only when VF Enable is set and NumVFs is non-zero. If VF Enable is 0b or if NumVFs is zero, the contents are undefined.
+
+           ";
+    ValRandomize = true;
+  } VFS[15:0] = 16'h01;
+};
+
+
+
+// PCIE_CFG_SRIOV_DEVID
+
+reg pcie_cfg_sriov_devid_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_31_16_[31:16] = 16'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        VF Device ID. This field contains the device ID that should be presented for every VF to the Virtual Machine (VM).
+          
+        The value of this field can be read from the IOV Control Word 2 in the EEPROM.
+
+           ";
+    ValRandomize = true;
+  } DEVID[15:0] = 16'h15A5;
+};
+
+
+
+// PCIE_CFG_SRIOV_PAGE_SUP
+
+reg pcie_cfg_sriov_page_sup_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        For PFs that supports the stride-based BAR mechanism, this field defines the supported page sizes. This PF supports a page size of 2^(n+12) if bit n is set. For example, if bit 0 is Set, the Endpoint (EP) supports 4KB page sizes.
+          
+        Endpoints are required to support 4 KB, 8 KB, 64 KB, 256 KB, 1 MB and 4 MB page sizes. All other page sizes are optional.
+
+           ";
+    ValRandomize = true;
+  } SuppPageSize[31:0] = 32'h553;
+};
+
+
+
+// PCIE_CFG_SRIOV_PAGE_CFG
+
+reg pcie_cfg_sriov_page_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        This field defines the page size the system uses to map the PF's and associated VFs' memory addresses. Software must set the value of the System Page Size to one of the page sizes set in the Supported Page Sizes field. As with Supported Page Sizes, if bit n is set in System Page Size, the PF and its associated VFs are required to support a page size of 2^(n+12). For example, if bit 1 is set, the system is using an 8 KB page size. The results are undefined if more than one bit is set in System Page Size. The results are undefined if a bit is set in System Page Size that is not set in Supported Page Sizes.
+          
+          
+        When System Page Size is set, the PF and associated VFs are required to align all BAR resources on a System Page Size boundary. Each BAR size, including VF BARn Size (described later) must be aligned on a System Page Size boundary. Each BAR size, including VF BARn Size must be sized to consume a multiple of System Page Size bytes. All fields requiring page size alignment within a function must be aligned on a System Page Size boundary. VF Enable must be zero when System Page Size is set. The results are undefined if System Page Size is set when VF Enable is set.
+
+           ";
+    ValRandomize = true;
+  } Pagesize[31:0] = 32'h1;
+};
+
+
+
+// PCIE_CFG_SRIOV_BAR0
+
+reg pcie_cfg_sriov_bar0_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        0b indicates memory space.
+
+           ";
+    ValRandomize = true;
+  } Mem[31:31] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates the address space size. Only 64-bit supported.
+          
+        This bit is loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } MemType[30:29] = 2'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        This bit is loaded from EEPROM.
+            
+            * 0b = Non-prefetchable space.
+            * 1b = Prefetchable space.
+
+           ";
+    ValRandomize = true;
+  } PrefetchMem[28:28] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        Which bits are RW bits and which are RO to 0x0 depend on the memory mapping window size. The size is a maximum between 2MB and the page size.
+
+           ";
+    ValRandomize = true;
+  } MemAddrSpace[27:0] = 28'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_BAR1
+
+reg pcie_cfg_sriov_bar1_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        MSB part of BAR0.
+
+           ";
+    ValRandomize = true;
+  } Addresshigh[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_BAR2
+
+reg pcie_cfg_sriov_bar2_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        0b indicates memory space.
+
+           ";
+    ValRandomize = true;
+  } Mem[31:31] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates the address space size. Only 64-bit supported.
+          
+        This bit is loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } MemType[30:29] = 2'h2;
+  field {
+    AccessType = "RO";
+    desc = "
+        This bit is loaded from EEPROM.
+            
+            * 0b = Non-prefetchable space.
+            * 1b = Prefetchable space.
+
+           ";
+    ValRandomize = true;
+  } PrefetchMem[28:28] = 1'h1;
+  field {
+    AccessType = "RW";
+    desc = "
+        Which bits are RW bits and which are RO to 0x0 depend on the memory mapping window size. The size is a maximum between 8KB and the page size.
+
+           ";
+    ValRandomize = true;
+  } MemAddrSpace[27:0] = 28'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_BAR3
+
+reg pcie_cfg_sriov_bar3_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        MSB part of BAR2.
+
+           ";
+    ValRandomize = true;
+  } Addresshigh[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_BAR4
+
+reg pcie_cfg_sriov_bar4_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        0b indicates memory space.
+
+           ";
+    ValRandomize = true;
+  } Mem[31:31] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates the address space size. Only 64-bit supported.
+          
+        This bit is loaded from EEPROM.
+
+           ";
+    ValRandomize = true;
+  } MemType[30:29] = 2'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        This bit is loaded from EEPROM.
+            
+            * 0b = Non-prefetchable space.
+            * 1b = Prefetchable space.
+
+           ";
+    ValRandomize = true;
+  } PrefetchMem[28:28] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Which bits are RW bits and which are RO to 0x0 depend on the memory mapping window size. The size is a maximum between 16 KB and the page size. It is RO since VFs have no access to BAR4.
+
+           ";
+    ValRandomize = true;
+  } MemAddrSpace[27:0] = 28'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_BAR5
+
+reg pcie_cfg_sriov_bar5_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        MSB part of BAR4. It is RO since VFs have no access to BAR4.
+
+           ";
+    ValRandomize = true;
+  } Addresshigh[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_SRIOV_MIG
+
+reg pcie_cfg_sriov_mig_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    SR-IOV VF Migration State Array Offset Register 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+        Not implemented in this device.
+
+           ";
+    ValRandomize = true;
+  } Reserved[31:0] = 32'h0;
+};
+
+
+
+// PCIE_CFG_TPH_HDR
+
+reg pcie_cfg_tph_hdr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        PCIe Extended Capability ID. PCIe extended capability ID for the SR-IOV capability.
+
+           ";
+    ValRandomize = true;
+  } ID[31:16] = 16'h0017;
+  field {
+    AccessType = "RO";
+    desc = "
+        Capability Version. This field is a PCI-SIG defined version number that indicates the version of the capability structure present.
+          
+        Must be 0x1 for this version of the specification.
+
+           ";
+    ValRandomize = true;
+  } Version[15:12] = 4'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next Capability Offset. This field contains the offset to the next PCIe extended capability structure or 0x000 if no other items exist in the linked list of capabilities. 
+The field shall be set to 0x1D8 by NVM/BSM to get the ACS capability exposed to host. 
+
+           ";
+    ValRandomize = true;
+  } Nextpointer[11:0] = 12'h000;
+};
+
+
+
+// PCIE_CFG_TPH_CAP
+
+reg pcie_cfg_tph_cap_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does support 
+
+           ";
+    ValRandomize = true;
+  } NoStMode[31:31] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support Interrupt Vector Mode of operation
+
+           ";
+    ValRandomize = true;
+  } InterruptVector[30:30] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support Device Specific Mode of operation
+
+           ";
+    ValRandomize = true;
+  } DeviceSpecific[29:29] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_28_24_[28:24] = 5'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Cleared to indicate that the function is not capable of generating requests with Extended TPH TLP Prefix
+
+           ";
+    ValRandomize = true;
+  } ExtendedTPH[23:23] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Value indicates if and where the ST Table is located. ST table is not available in Red Rock Canyon.
+
+           ";
+    ValRandomize = true;
+  } StTableLocation[22:21] = 2'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_20_16_[20:16] = 5'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Sets to 0, not used.
+
+           ";
+    ValRandomize = true;
+  } StTableSize[15:0] = 16'h0;
+};
+
+
+
+// PCIE_CFG_TPH_CTRL
+
+reg pcie_cfg_tph_ctrl_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+    	Indicates the ST mode of operation selected. Defined encodings are:
+    	
+    	* 000b: No Table Mode
+    	* 001b: Interrupt Vector Mode (not supported by RRC)
+    	* 010b: Device Specific Mode (not supported by RRC)
+    	* 0thers: reserved for future use
+    	
+    	Only a value of 000 is supported to indicates No Table mode of operation. 
+
+           ";
+    ValRandomize = true;
+  } StModeSelect[8:6] = 3'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_5_1_[5:1] = 5'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+    	Controls the ability to issue Request TLPs using TPH. Defined Encodings are:
+    	
+    	* 0b: Red Rock Canyon is not permitted to issue transactions with TPH as Requester
+    	* 1b: Red Rock Canyon is permitted to issue transactions with TPH as Requester a
+
+    	The default value of this field is 0b.
+
+           ";
+    ValRandomize = true;
+  } TPH_ReqEn[0:0] = 1'h0;
+};
+
+
+
+// PCIE_CFG_ACS_HDR
+
+reg pcie_cfg_acs_hdr_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    This capability is not exposed by default, unless TPH next pointer is changed by NVM setting. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        PCIe Extended Capability ID. PCIe extended capability ID for the SR-IOV capability.
+
+           ";
+    ValRandomize = true;
+  } ID[31:16] = 16'h0D;
+  field {
+    AccessType = "RO";
+    desc = "
+        Capability Version. This field is a PCI-SIG defined version number that indicates the version of the capability structure present.
+          
+        Must be 0x1 for this version of the specification.
+
+           ";
+    ValRandomize = true;
+  } Version[15:12] = 4'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+        Next Capability Offset. This field contains the offset to the next PCIe extended capability structure or 0x000 if no other items exist in the linked list of capabilities.
+
+           ";
+    ValRandomize = true;
+  } Nextpointer[11:0] = 12'h0;
+};
+
+
+
+// PCIE_CFG_ACS_CAP
+
+reg pcie_cfg_acs_cap_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support 
+
+           ";
+    ValRandomize = true;
+  } SourceValidation[30:30] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } TranslationBlocking[29:29] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } P2PRequestRedirect[28:28] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } P2PCompletionRedirect[27:27] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } UpstreamForwarding[26:26] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } P2PEgressControl[25:25] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } DirectTranslatedP2P[24:24] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_23_[23:23] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } EgressControlVectorSize[22:15] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Must be hardwired to 0b since the ACS Source Validation functionality is not supported.
+
+           ";
+    ValRandomize = true;
+  } SourceValidationEnable[14:14] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } TranslationBlockingEnable[13:13] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } P2PRequestRedirectEnable[12:12] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } P2PCompletionRedirectEnable[11:11] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } UpstreamForwardingEnable[10:10] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } P2PEgressControlEnable[9:9] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Red Rock Canyon does not support
+
+           ";
+    ValRandomize = true;
+  } DirectTranslatedP2PEnable[8:8] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_7_0_[7:0] = 8'h0;
+};
+
+
+
+// PCIE_PORTLOGIC
+
+reg pcie_portlogic_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        This is the base address of the debug and test registers of the link layer.
+        Refer to the link layer documentation for further details. They are visible
+        and accesssible only via BAR4. 
+
+           ";
+    ValRandomize = true;
+  } portlogic[31:0] = 32'h0;
+};
+
+
+
+// PCIE_PORTLOGIC_LINK_STATE
+
+reg pcie_portlogic_link_state_r {
+  shared;
+  HandCoded = true;
+  name = "";
+  desc = "
+    State of selected internal link layer signals, for debugging purposes.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        LTSSM current state.
+
+        * 0x00 : DETECT_QUIET         
+        * 0x01 : DETECT_ACT           
+        * 0x02 : POLL_ACTIVE          
+        * 0x03 : POLL_COMPLIANCE      
+        * 0x04 : POLL_CONFIG          
+        * 0x05 : PRE_DETECT_QUIET     
+        * 0x06 : DETECT_WAIT          
+        * 0x07 : CFG_LINKWD_START     
+        * 0x08 : CFG_LINKWD_ACEPT     
+        * 0x09 : CFG_LANENUM_WAIT     
+        * 0x0A : CFG_LANENUM_ACEPT    
+        * 0x0B : CFG_COMPLETE         
+        * 0x0C : CFG_IDLE             
+        * 0x0D : RCVRY_LOCK           
+        * 0x0E : RCVRY_SPEED          
+        * 0x0F : RCVRY_RCVRCFG        
+        * 0x10 : RCVRY_IDLE           
+        * 0x11 : L0                   
+        * 0x12 : L0S                  
+        * 0x13 : L123_SEND_EIDLE      
+        * 0x14 : L1_IDLE              
+        * 0x15 : L2_IDLE              
+        * 0x16 : L2_WAKE              
+        * 0x17 : DISABLED_ENTRY       
+        * 0x18 : DISABLED_IDLE        
+        * 0x19 : DISABLED             
+        * 0x1A : LPBK_ENTRY           
+        * 0x1B : LPBK_ACTIVE          
+        * 0x1C : LPBK_EXIT            
+        * 0x1D : LPBK_EXIT_TIMEOUT    
+        * 0x1E : HOT_RESET_ENTRY      
+        * 0x1F : HOT_RESET            
+        * 0x20 : RCVRY_EQ0            
+        * 0x21 : RCVRY_EQ1            
+        * 0x22 : RCVRY_EQ2            
+        * 0x23 : RCVRY_EQ3            
+
+           ";
+    ValRandomize = true;
+  } xmlh_ltssm_state[63:58] = 6'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        PIPE transmit K indication
+
+           ";
+    ValRandomize = true;
+  } mac_phy_txdatak[57:56] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        PIPE Transmit data
+
+           ";
+    ValRandomize = true;
+  } mac_phy_txdata[55:40] = 16'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Receiver is receiving logical idle; 2n symbol is also idle (16bit PHY interface only)
+
+           ";
+    ValRandomize = true;
+  } rmlh_rcvd_idle1[39:39] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Receiver is receiving logical idle
+
+           ";
+    ValRandomize = true;
+  } rmlh_rcvd_idle0[38:38] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Currently receiving k237 (PAD) in place of link number
+
+           ";
+    ValRandomize = true;
+  } rmlh_ts_link_num_is_k237[37:37] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Currently receiving k237 (PAD) in place of lane number
+
+           ";
+    ValRandomize = true;
+  } rmlh_ts_lane_num_is_k237[36:36] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Link control bits advertised by link partner
+
+           ";
+    ValRandomize = true;
+  } rmlh_ts_link_ctrl[35:32] = 4'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Receiver detected lane reversal
+
+           ";
+    ValRandomize = true;
+  } rmlh_rcvd_lane_rev[31:31] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        TS2 training sequence received (pulse)
+
+           ";
+    ValRandomize = true;
+  } rmlh_ts2_rcvd[30:30] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        TS1 training sequence received (pulse)
+
+           ";
+    ValRandomize = true;
+  } rmlh_ts1_rcvd[29:29] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Receiver reports skip reception
+
+           ";
+    ValRandomize = true;
+  } rmlh_inskip_rcv[28:28] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        LTSSM reports PHY link up
+
+           ";
+    ValRandomize = true;
+  } xmlh_link_up[27:27] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        A skip ordered set has been transmitted
+
+           ";
+    ValRandomize = true;
+  } xmtbyte_skip_sent[26:26] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_25_24_[25:24] = 2'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Link number advertised/confirmed by link partner
+
+           ";
+    ValRandomize = true;
+  } rmlh_ts_link_num[23:16] = 8'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_15_13_[15:13] = 3'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Application request to initiate training reset
+
+           ";
+    ValRandomize = true;
+  } app_init_rst[12:12] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        PIPE transmit compliance request
+
+           ";
+    ValRandomize = true;
+  } mac_phy_txcompliance[11:11] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        PIPE transmit electrical idle request
+
+           ";
+    ValRandomize = true;
+  } mac_phy_txelecidle[10:10] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        PIPE receiver detect/loopback request
+
+           ";
+    ValRandomize = true;
+  } mac_phy_txdetectrx_loopback[9:9] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_8_5_[8:5] = 4'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        LTSSM-negotiated link reset
+
+           ";
+    ValRandomize = true;
+  } xmlh_training_rst_n[4:4] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        LTSSM testing for polarity reversal
+
+           ";
+    ValRandomize = true;
+  } xmlh_rcvr_revrs_pol_en[3:3] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        LTSSM performing link training
+
+           ";
+    ValRandomize = true;
+  } xmlh_link_in_training[2:2] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        LTSSM in DISABLE state. Link inoperable
+
+           ";
+    ValRandomize = true;
+  } xmlh_link_disable[1:1] = 1'h0;
+  field {
+    AccessType = "RO/V";
+    desc = "
+        Scrambling disabled for the link
+
+           ";
+    ValRandomize = true;
+  } xmlh_scrambler_disable[0:0] = 1'h0;
+};
+
+
+
+// Begin reg2rdl addrmap section
+
+addrmap PCIE_CFG_map {
+  name = "PCIE_CFG";
+  desc = "PCI Express Configuration Registers - Physical Function";
+
+  pcie_cfg_id_r              PCIE_CFG_ID                   @0x0;
+  pcie_cfg_cmd_r             PCIE_CFG_CMD                  @0x8;
+  pcie_cfg_1_r               PCIE_CFG_1                    @0x10;
+  pcie_cfg_2_r               PCIE_CFG_2                    @0x18;
+  pcie_cfg_bar0_r            PCIE_CFG_BAR0                 @0x20;
+  pcie_cfg_bar1_r            PCIE_CFG_BAR1                 @0x28;
+  pcie_cfg_bar2_r            PCIE_CFG_BAR2                 @0x30;
+  pcie_cfg_bar3_r            PCIE_CFG_BAR3                 @0x38;
+  pcie_cfg_bar4_r            PCIE_CFG_BAR4                 @0x40;
+  pcie_cfg_bar5_r            PCIE_CFG_BAR5                 @0x48;
+  pcie_cfg_cardbus_r         PCIE_CFG_CARDBUS              @0x50;
+  pcie_cfg_subid_r           PCIE_CFG_SUBID                @0x58;
+  pcie_cfg_exp_rom_r         PCIE_CFG_EXP_ROM              @0x60;
+  pcie_cfg_cap_ptr_r         PCIE_CFG_CAP_PTR              @0x68;
+  pcie_cfg_rsvd_r            PCIE_CFG_RSVD                 @0x70;
+  pcie_cfg_int_r             PCIE_CFG_INT                  @0x78;
+  pcie_cfg_pm_cap_r          PCIE_CFG_PM_CAP               @0x80;
+  pcie_cfg_pm_ctrl_r         PCIE_CFG_PM_CTRL              @0x88;
+  pcie_cfg_pcie_cap_r        PCIE_CFG_PCIE_CAP             @0x90;
+  pcie_cfg_pcie_dev_cap_r    PCIE_CFG_PCIE_DEV_CAP         @0x98;
+  pcie_cfg_pcie_dev_ctrl_r   PCIE_CFG_PCIE_DEV_CTRL        @0xa0;
+  pcie_cfg_pcie_link_cap_r   PCIE_CFG_PCIE_LINK_CAP        @0xa8;
+  pcie_cfg_pcie_link_ctrl_r  PCIE_CFG_PCIE_LINK_CTRL       @0xb0;
+  pcie_cfg_pcie_dev_cap2_r   PCIE_CFG_PCIE_DEV_CAP2        @0xb8;
+  pcie_cfg_pcie_dev_ctrl2_r  PCIE_CFG_PCIE_DEV_CTRL2       @0xc0;
+  pcie_cfg_pcie_link_ctrl2_r PCIE_CFG_PCIE_LINK_CTRL2      @0xc8;
+  pcie_cfg_msix_cap_r        PCIE_CFG_MSIX_CAP             @0xd0;
+  pcie_cfg_msix_table_offset_r PCIE_CFG_MSIX_TABLE_OFFSET    @0xd8;
+  pcie_cfg_msix_pba_r        PCIE_CFG_MSIX_PBA             @0xe0;
+  pcie_cfg_vpd_cap_r         PCIE_CFG_VPD_CAP              @0xe8;
+  pcie_cfg_vpd_data_r        PCIE_CFG_VPD_DATA             @0xf0;
+  pcie_cfg_aer_hdr_r         PCIE_CFG_AER_HDR              @0xf8;
+  pcie_cfg_aer_unerr_status_r PCIE_CFG_AER_UNERR_STATUS     @0x100;
+  pcie_cfg_aer_unerr_mask_r  PCIE_CFG_AER_UNERR_MASK       @0x108;
+  pcie_cfg_aer_unerr_severity_r PCIE_CFG_AER_UNERR_SEVERITY   @0x110;
+  pcie_cfg_aer_coerr_status_r PCIE_CFG_AER_COERR_STATUS     @0x118;
+  pcie_cfg_aer_coerr_mask_r  PCIE_CFG_AER_COERR_MASK       @0x120;
+  pcie_cfg_aer_ctrl_r        PCIE_CFG_AER_CTRL             @0x128;
+  pcie_cfg_aer_header_log0_r PCIE_CFG_AER_HEADER_LOG0      @0x130;
+  pcie_cfg_aer_header_log1_r PCIE_CFG_AER_HEADER_LOG1      @0x138;
+  pcie_cfg_aer_header_log2_r PCIE_CFG_AER_HEADER_LOG2      @0x140;
+  pcie_cfg_aer_header_log3_r PCIE_CFG_AER_HEADER_LOG3      @0x148;
+  pcie_cfg_spd_hdr_r         PCIE_CFG_SPD_HDR              @0x150;
+  pcie_cfg_spd_number_l_r    PCIE_CFG_SPD_NUMBER_L         @0x158;
+  pcie_cfg_spd_number_h_r    PCIE_CFG_SPD_NUMBER_H         @0x160;
+  pcie_cfg_ari_hdr_r         PCIE_CFG_ARI_HDR              @0x168;
+  pcie_cfg_ari_ctrl_r        PCIE_CFG_ARI_CTRL             @0x170;
+  pcie_cfg_spcie_hdr_r       PCIE_CFG_SPCIE_HDR            @0x178;
+  pcie_cfg_spcie_link_ctrl3_r PCIE_CFG_SPCIE_LINK_CTRL3     @0x180;
+  pcie_cfg_spcie_err_sts_r   PCIE_CFG_SPCIE_ERR_STS        @0x188;
+  pcie_cfg_spcie_link_eq01_r PCIE_CFG_SPCIE_LINK_EQ01      @0x190;
+  pcie_cfg_spcie_link_eq23_r PCIE_CFG_SPCIE_LINK_EQ23      @0x198;
+  pcie_cfg_spcie_link_eq45_r PCIE_CFG_SPCIE_LINK_EQ45      @0x1a0;
+  pcie_cfg_spcie_link_eq67_r PCIE_CFG_SPCIE_LINK_EQ67      @0x1a8;
+  pcie_cfg_sriov_hdr_r       PCIE_CFG_SRIOV_HDR            @0x1b0;
+  pcie_cfg_sriov_cap_r       PCIE_CFG_SRIOV_CAP            @0x1b8;
+  pcie_cfg_sriov_ctrl_r      PCIE_CFG_SRIOV_CTRL           @0x1c0;
+  pcie_cfg_sriov_cfg_r       PCIE_CFG_SRIOV_CFG            @0x1c8;
+  pcie_cfg_sriov_num_r       PCIE_CFG_SRIOV_NUM            @0x1d0;
+  pcie_cfg_sriov_map_r       PCIE_CFG_SRIOV_MAP            @0x1d8;
+  pcie_cfg_sriov_devid_r     PCIE_CFG_SRIOV_DEVID          @0x1e0;
+  pcie_cfg_sriov_page_sup_r  PCIE_CFG_SRIOV_PAGE_SUP       @0x1e8;
+  pcie_cfg_sriov_page_cfg_r  PCIE_CFG_SRIOV_PAGE_CFG       @0x1f0;
+  pcie_cfg_sriov_bar0_r      PCIE_CFG_SRIOV_BAR0           @0x1f8;
+  pcie_cfg_sriov_bar1_r      PCIE_CFG_SRIOV_BAR1           @0x200;
+  pcie_cfg_sriov_bar2_r      PCIE_CFG_SRIOV_BAR2           @0x208;
+  pcie_cfg_sriov_bar3_r      PCIE_CFG_SRIOV_BAR3           @0x210;
+  pcie_cfg_sriov_bar4_r      PCIE_CFG_SRIOV_BAR4           @0x218;
+  pcie_cfg_sriov_bar5_r      PCIE_CFG_SRIOV_BAR5           @0x220;
+  pcie_cfg_sriov_mig_r       PCIE_CFG_SRIOV_MIG            @0x228;
+  pcie_cfg_tph_hdr_r         PCIE_CFG_TPH_HDR              @0x230;
+  pcie_cfg_tph_cap_r         PCIE_CFG_TPH_CAP              @0x238;
+  pcie_cfg_tph_ctrl_r        PCIE_CFG_TPH_CTRL             @0x240;
+  pcie_cfg_acs_hdr_r         PCIE_CFG_ACS_HDR              @0x248;
+  pcie_cfg_acs_cap_r         PCIE_CFG_ACS_CAP              @0x250;
+  pcie_portlogic_r           PCIE_PORTLOGIC                @0x258;
+  pcie_portlogic_link_state_r PCIE_PORTLOGIC_LINK_STATE     @0x260;
+}; // final size: 0x268 <= 0x400 = 8<<7

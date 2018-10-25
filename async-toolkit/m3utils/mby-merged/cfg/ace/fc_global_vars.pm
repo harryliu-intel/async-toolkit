@@ -91,7 +91,7 @@ my %sip_rtl_libs = (
 #    'epc'                => [],
     'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
     'msh'                => ['mby_msh_rtl_lib',],
-#    'gmm'                => ['mby_gmm_s_rtl_lib', 'mby_gmm_n_rtl_lib'],
+    'gmm'                => ['mby_gmm_s_rtl_lib', 'mby_gmm_n_rtl_lib'],
 
 );
 
@@ -206,7 +206,7 @@ sub gen_liblist {
 # <<< SIP VERIF LIBRARIES
 #############################################################
 my %sip_verif_libs = (
-    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib"
+    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_top_env_lib", "mby_ec_top_ti_lib"
                              ],
 );
 
@@ -229,6 +229,7 @@ my %sip_verif_vlog_opts = (
                               "+define+PMU_ENV_ENABLE",
                               "+define+CDN_PCIE_ENV_ENABLE",
                               "+define+IGR_ENV_ENABLE",
+                              "+define+EPC_ENV_ENABLE",
                              ],
 );
 
@@ -345,10 +346,10 @@ foreach $ip_key (keys %sip_list) {
 foreach our $ace_ip_to_add (@ace_add_ips) {
 
     switch ($ace_ip_to_add) {
-        case ["fc_64"] {
+        case ["fc"] {
                         push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64",);
         }
-        case ["fc_64_no_phy"] {
+        case ["fc_no_phy"] {
                         push (@ALL_SIP_RTL_VLOGOPTS, "+define+MPP_8 +define+EPC_8 +define+FC_64_NO_PHY +define+NO_SERDES",);
         }
         case ["fc_8"] {

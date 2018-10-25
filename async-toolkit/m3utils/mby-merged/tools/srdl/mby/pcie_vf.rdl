@@ -1,0 +1,1983 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+`include "lib_udp.rdl"
+
+enum pcie_vfrxdctl_drop_on_empty_enum {
+  DROP = 1'd1 { desc = " Drop the frame if queue has no descriptors"; };
+  HOLD = 1'd0 { desc = " Hold onto the frame if queue has no descriptors until descriptors become available. "; };
+};
+
+
+enum pcie_vftxdctl_push_desc_enum {
+  PUSH = 1'd1 { desc = " Descriptors written by host into controller "; };
+  PULL = 1'd0 { desc = " Descriptors read by controller from host memory"; };
+};
+
+
+enum pcie_vftqdloc_size_enum {
+  FIVE  = 4'd32  { desc = " when DMA_CTRL.MaxNumOfQs is set to 00b (256 Qs)."; };
+  SIX   = 4'd64  { desc = " when DMA_CTRL.MaxNumOfQs is set to 01b (128 Qs)."; };
+  SEVEN = 4'd128 { desc = " when DMA_CTRL.MaxNumOfQs is set to 10b (64 Qs)."; };
+};
+
+
+
+
+// PCIE_VFCTRL
+
+reg pcie_vfctrl_r {
+  shared;
+  HandCoded = true;
+  name = "PCI Express Registers - Virtual Function";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Reserved to have follow on bits aligned to PCIE_CTRL.   
+
+           ";
+    ValRandomize = true;
+  } __reservedPF__[3:1] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        VF Reset. This bit performs a reset of the interrupt registers of the VF. It has a similar effect than a VFLR (reseting the VF internal states) excepted that it does not reset the VF configuration space. only portions of the ITR registers are reset. The PendingX and TimerXExpired values are reset in the ITR register, while the IntervalX, Automask, and Mask are not affected. The driver shall set the bit for at least 100usec before clearing it.
+In order to complete the VF reset, all the queues owned by the VF shall be disabled by the driver. 
+
+           ";
+    ValRandomize = true;
+  } RST[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFPBACL[0..7]
+
+reg pcie_vfpbacl_r {
+  shared;
+  HandCoded = true;
+  name = "VF MSI-X PBA Clear";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        MSI-X Pending Bits Clear. Writing a 1b to any bit clears the corresponding MSIXPBA bit; writing a 0x0 has no effect.
+
+        Reading this register returns the PBA vector.
+
+           ";
+    ValRandomize = true;
+  } PENBIT[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFMBX
+
+reg pcie_vfmbx_r {
+  shared;
+  HandCoded = true;
+  name = "VF Mailbox";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Hardware semaphore. The requester reads this field to claim ownership over the mailbox. If it is read as 1b, it means it has been granted ownership. If it is read as 0b, it means ownership has already been granted to another software entity, it shall try again later on. The owner writes a 1b to this field to release ownership. Writing zero has no effect. 
+* Do not use this bit. Hardware semaphore mechanism is not operational. Use a lockless mailbox mechanism instead, where the mailbox memory is split in two halves, one half for the PF and one half for the VF *
+
+           ";
+    ValRandomize = true;
+  } Owner[6:6] = 1'h1;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+        Message from VF for PF is ready. Setting this bit causes an interrupt to be latched in PCIE_MBX[vf].PFReqInterrupt. This bit always reads as zero. 
+
+           ";
+    ValRandomize = true;
+  } PFReq[5:5] = 1'h0;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+        Message from PF to VF was received. Setting this bit causes an interrupt to be latched in PCIE_MBX[vf].PFAckInterrupt. This bit always reads as zero. 
+
+           ";
+    ValRandomize = true;
+  } PFAck[4:4] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Set when message from PF to VF is ready.  
+
+           ";
+    ValRandomize = true;
+  } ReqInterrupt[3:3] = 1'h0;
+  field {
+    AccessType = "RW/1C/V";
+    desc = "
+        Set when message from VF to PF has been read by PF.  
+
+           ";
+    ValRandomize = true;
+  } AckInterrupt[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Controls if mailbox interrtups to VF are enabled or not. Read as 0 if disabled, read as 1 if enabled.
+          * 0 or 3: do not change the mode
+          * 1: enable mailbox interrupts to VF
+          * 2: disable mailbox interrupts to VF
+
+           ";
+    ValRandomize = true;
+  } InterruptEnable[1:0] = 2'h0;
+};
+
+
+
+// PCIE_VFMBMEM[0..15]
+
+reg pcie_vfmbmem_r {
+  shared;
+  HandCoded = true;
+  name = "VF Mailbox Memory";
+  desc = "
+    Mailbox memory for PF and VF drivers communication. The mailbox size for each VM is 64 bytes accessed by 32-bit registers. Locations must be accessed as 32-bit words.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Mailbox Data field composed of 16 x 4 byte registers.
+
+           ";
+    ValRandomize = true;
+  } MailboxData[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFINT_MAP[0..15]
+
+reg pcie_vfint_map_r {
+  shared;
+  HandCoded = true;
+  name = "VF Interrupt Mapping";
+  desc = "
+    Defines the interrupt number for each source (VF). The index to this table indicates the type of interrupt and the output is the index to the MSI-X vector table offset relative to the section reserved for this VF.   
+    
+    The following vectors are used:
+    
+    * PCIE_VFINT_MAP[0]: Mailbox
+    
+    The PCIE_VFINT_MAP[1..15] are not used and reserved for future usage. They are all mapped to entry [0] for read and write.     
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+         Interrupt number.
+
+           ";
+    ValRandomize = true;
+  } Interrupt[9:5] = 5'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Reserved to have follow on bits aligned to PCIE_INT_MAP.  
+
+           ";
+    ValRandomize = true;
+  } __reservedPF__[4:2] = 3'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines which timer to use for interrupt vector. Valid values are 0,1,2 or 3:
+        
+        * 0 : use ITR timer 0
+        * 1 : use ITR timer 1
+        * 2 : use ITR timer 2 (immediate, no timer)
+        * 3 : disable this interrupt   
+
+        Whenever an INT_MAP register is transitioned in/out of Timer 3 (disabled) state, the driver shall either disable the interrupt before, or clean up any associated cause thereafter. 
+
+           ";
+    ValRandomize = true;
+  } InterruptTimer[1:0] = 2'h0;
+};
+
+
+
+// PCIE_VFSYSTIME
+
+reg pcie_vfsystime_r {
+  shared;
+  HandCoded = true;
+  name = "System Time Register";
+  desc = "
+    Copy of PCIE_SYSTIME
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        System time LSB register.
+
+           ";
+    ValRandomize = true;
+  } CurrentTime[63:0] = 64'h0;
+};
+
+
+
+// PCIE_VFITR[0..31]
+
+reg pcie_vfitr_r {
+  shared;
+  HandCoded = true;
+  name = "Interrupt Timers";
+  desc = "
+    This is the VF view of the PCIE_ITR[0..767] table. See PCIE_ITR for definition. The VF view is limited to the portion belonging to this VF and the index 0..N is relative to that view.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines minimum interval between interrupts, timer 0
+
+           ";
+    ValRandomize = true;
+  } Interval0[31:20] = 12'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines minimum interval between interrupts, timer 1
+
+           ";
+    ValRandomize = true;
+  } Interval1[19:8] = 12'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates timer 0 has expired
+
+           ";
+    ValRandomize = true;
+  } Timer0Expired[7:7] = 1'h0 ;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates timer 1 has expired
+
+           ";
+    ValRandomize = true;
+  } Timer1Expired[6:6] = 1'h0 ;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+        Indicates a pending event is waiting for time 0 expiration. Writing '1' sets the interrupt. Writing 0 has no effect. 
+
+           ";
+    ValRandomize = true;
+  } Pending0[5:5] = 1'h0;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+        Indicates a pending event is waiting for time 1 expiration. Writing '1' sets the interrupt. Writing 0 has no effect.
+
+           ";
+    ValRandomize = true;
+  } Pending1[4:4] = 1'h0;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+        Indicates a pending event is waiting for time 2 expiration. Writing '1' sets the interrupt. Writing 0 has no effect.
+
+           ";
+    ValRandomize = true;
+  } Pending2[3:3] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines if interrupt is auto masked by hardware. If set to '1', the hardware will automatically block interrupts (Mask set to 1) when the interrupt is posted thus block future interrupts until the software writes the clear mask command in the Mask field.  
+
+           ";
+    ValRandomize = true;
+  } AutoMask[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Control masking of this interrupt:
+        
+        On write:
+        
+            * 0 : do not change mask status
+            * 1 : set mask (block interrupts)
+            * 2 : clear mask (unblock interrupts)
+            
+        On read:
+        
+            * 0 : interrupt not blocked
+            * 1 : interrupt blocked
+
+           ";
+    ValRandomize = true;
+  } Mask[1:0] = 2'h1;
+};
+
+
+
+// PCIE_VFMRQC
+
+reg pcie_vfmrqc_r {
+  shared;
+  HandCoded = true;
+  name = "Multiple Receive Queues Command Register";
+  desc = "
+    VF view of PCIE_MRQC, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable TcpIPv4 hash function.
+
+           ";
+    ValRandomize = true;
+  } TcpIPv4[7:7] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable IPv4 hash function.
+
+           ";
+    ValRandomize = true;
+  } IPv4[6:6] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_5_4_[5:4] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable IPv6 hash function.
+
+           ";
+    ValRandomize = true;
+  } IPv6[3:3] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable TcpIPv6 hash function.
+
+           ";
+    ValRandomize = true;
+  } TcpIPv6[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable UdpIPv4 hash function.
+
+           ";
+    ValRandomize = true;
+  } UdpIPv4[1:1] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Enable UdpIPv6 hash function.
+
+           ";
+    ValRandomize = true;
+  } UdpIPv6[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFRSSRK[0..9]
+
+reg pcie_vfrssrk_r {
+  shared;
+  HandCoded = true;
+  name = "RSS Random Key Register";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        RSS Key Byte [4*n+0] of the RSS random key, for each register [n].
+
+           ";
+    ValRandomize = true;
+  } K0[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        RSS Key Byte [4*n+1] of the RSS random key, for each register [n].
+
+           ";
+    ValRandomize = true;
+  } K1[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        RSS Key Byte [4*n+2] of the RSS random key, for each register [n].
+
+           ";
+    ValRandomize = true;
+  } K2[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        RSS Key Byte [4*n+3] of the RSS random key, for each register [n].
+
+           ";
+    ValRandomize = true;
+  } K3[7:0] = 8'h0;
+};
+
+
+
+// PCIE_VFRETA[0..31]
+
+reg pcie_vfreta_r {
+  shared;
+  HandCoded = true;
+  name = "Redirection Table";
+  desc = "
+    The contents of the redirection table are not defined following reset of the Memory Configuration registers. System software must initialize the table prior to enabling multiple receive queues. It can also update the redirection table during run time. Such updates of the table are not synchronized with the arrival time of received packets. Therefore, it is not guaranteed that a table update takes effect on a specific packet boundary.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Entry0 defines the RSS output index for hash value [4*n+0]. While [n] is the register index, equals to 0...31.
+
+           ";
+    ValRandomize = true;
+  } Entry0[31:24] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Entry1 defines the RSS output index for hash value [4*n+1]. While [n] is the register index, equals to 0...31.
+
+           ";
+    ValRandomize = true;
+  } Entry1[23:16] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Entry2 defines the RSS output index for hash value [4*n+2]. While [n] is the register index, equals to 0...31.
+
+           ";
+    ValRandomize = true;
+  } Entry2[15:8] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Entry3 defines the RSS output index for hash value [4*n+3]. While [n] is the register index, equals to 0...31.
+
+           ";
+    ValRandomize = true;
+  } Entry3[7:0] = 8'h0;
+};
+
+
+
+// PCIE_VFRDBAL
+
+reg pcie_vfrdbal_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Descriptor Base Address Low";
+  desc = "
+    VF view of PCIE_RDBAL, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_31_25_[31:25] = 7'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receive Descriptor Base Address Low.
+
+           ";
+    ValRandomize = true;
+  } RDBAL[24:0] = 25'h0;
+};
+
+
+
+// PCIE_VFRDBAH
+
+reg pcie_vfrdbah_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Descriptor Base Address High";
+  desc = "
+    VF view of PCIE_RDBAH, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receive Descriptor Base Address [63:32].
+
+           ";
+    ValRandomize = true;
+  } RDBAH[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFRDLEN
+
+reg pcie_vfrdlen_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Descriptor Length";
+  desc = "
+    VF view of PCIE_RDLEN, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_19_13_[19:13] = 7'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } LEN[12:0] = 13'h20;
+};
+
+
+
+// PCIE_VFTPH_RXCTRL
+
+reg pcie_vftph_rxctrl_r {
+  shared;
+  HandCoded = true;
+  name = "Rx TPH Control Register";
+  desc = "
+    VF view of PCIE_RXCTRL, see this register for details. This register
+    is READ ONLY for VF.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Reserved1[31:27] = 5'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Descriptor TPH EN. When set, hardware enables TPH for all Rx descriptors written back into memory. When cleared, hardware does not enable TPH for descriptor write-backs.
+
+           ";
+    ValRandomize = true;
+  } RxDescriptorTPHEN[26:26] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Rx Header TPH EN. When set, hardware enables TPH for all received header buffers. When cleared, hardware does not enable TPH for Rx Headers.
+
+           ";
+    ValRandomize = true;
+  } RxHeaderTPHEN[25:25] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Payload TPH EN. When set, hardware enables TPH for all Ethernet payloads written into memory. When cleared, hardware does not enable TPH for Ethernet payloads. Default cleared.
+
+           ";
+    ValRandomize = true;
+  } RxPayloadTPHEN[24:24] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Reserved2[23:23] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Rx Descriptor Read Relax Order Enable
+
+           ";
+    ValRandomize = true;
+  } RXdescReadROEn[22:22] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Reserved3[21:21] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Rx Descriptor Write Back Relax Order Enable. This bit must be 0b to enable correct functionality of the descriptors write back.
+
+           ";
+    ValRandomize = true;
+  } RXdescWBROen[20:20] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Reserved4[19:19] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Rx data Write Relax Order Enable
+
+           ";
+    ValRandomize = true;
+  } RXdataWriteROEn[18:18] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Reserved5[17:17] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Rx Split Header Relax Order Enable
+
+           ";
+    ValRandomize = true;
+  } RxRepHeaderROEn[16:16] = 1'h1;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Reserved6[15:8] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Physical ID for TPH operated in DeviceSpecific mode.
+
+        Legacy TPH capable platforms -- the device driver, upon discovery of the physical CPU ID and CPU bus ID, programs the CPUID field with the physical CPU and bus ID associated with this Rx queue.
+
+        TPH 1.0 capable platforms -- the device driver programs a value, based on the relevant APIC ID, associated with this Rx queue.
+
+        * This field is not operational in RRC *
+
+           ";
+    ValRandomize = true;
+  } CPUID[7:0] = 8'h0;
+};
+
+
+
+// PCIE_VFRDH
+
+reg pcie_vfrdh_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Descriptor Head";
+  desc = "
+    VF view of PCIE_RDH, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } RDH[15:0] = 16'h0;
+};
+
+
+
+// PCIE_VFRDT
+
+reg pcie_vfrdt_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Descriptor Tail";
+  desc = "
+    VF view of PCIE_RDT, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+       Data    
+
+           ";
+    ValRandomize = true;
+  } RDT[15:0] = 16'h0;
+};
+
+
+
+// PCIE_VFRXQCTL
+
+reg pcie_vfrxqctl_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Queue Control";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receive Queue Enable. When set, the ENABLE bit enables the operation of the specific receive queue.
+
+           ";
+    ValRandomize = true;
+  } ENABLE[8:8] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved__[7:7] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates to which VF this queue belongs. This register field is RW when accessed from PF and RO when accessed from VF. 
+
+           ";
+    ValRandomize = true;
+  } VF[6:1] = 6'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates this queue belongs to a Virtual Function, it invalidates the VF field if cleared. This register field is RW when accessed from PF and RO when accessed from VF.
+
+           ";
+    ValRandomize = true;
+  } OwnedByVF[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFRXDCTL
+
+reg pcie_vfrxdctl_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Descriptor Control";
+  desc = "
+    VF view of PCIE_RXDCTL, see this register for details. This register is
+    READ ONLY.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+       Max time before writing back descriptors. Time is in 512 * PCLK periods.   A value of 0 means no delay. Only used on end of packet descriptors. For non-end of packet descriptors, the descriptors are hold until a cache line if full and then written.    
+
+           ";
+    ValRandomize = true;
+  } MaxTime[10:3] = 8'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+       Defines if descriptor written back immediately regardless how full is a 64B cache line.
+
+           ";
+    ValRandomize = true;
+  } WriteBackImm[2:2] = 1'h0;
+  field {
+    encode = pcie_vfrxdctl_drop_on_empty_enum;
+    AccessType = "RO";
+    desc = "
+        Defines if frames are dropped or hold when a queue is empty.
+        
+
+           ";
+    ValRandomize = true;
+  } DropOnEmpty[1:1] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Defines, for 16B descriptor, if the RSS-HASH field or DGLORT/SGLORT gets written to the descriptor. For 32B descriptors, both fields get written.
+        
+           * RSS_HASH(1) : write RSS Hash (32b) to descriptor
+           * DGLORT/SGLORT : write DGLORT/SGLORT to descriptor
+        
+        **OBSOLETE, NOT IMPLEMENTED**
+
+           ";
+    ValRandomize = true;
+  } WriteRSSHash[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFRXINT
+
+reg pcie_vfrxint_r {
+  shared;
+  HandCoded = true;
+  name = "Receive Interrupt";
+  desc = "
+    VF view of PCIE_RXINT, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines the MSI-X interrupt vector number used by this queue. This number is relative to the base of the interrupt blocks assigned to a VF or PF.
+
+           ";
+    ValRandomize = true;
+  } Interrupt[9:2] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines which timer to use for interrupt vector. Valid values are 0,1,2 or 3:
+        
+        * 0 : use ITR timer 0
+        * 1 : use ITR timer 1
+        * 2 : use ITR timer 2 (immediate, no timer)
+        * 3 : disable this interrupt
+
+           ";
+    ValRandomize = true;
+  } InterruptTimer[1:0] = 2'h0;
+};
+
+
+
+// PCIE_VFSRRCTL
+
+reg pcie_vfsrrctl_r {
+  shared;
+  HandCoded = true;
+  name = "Split Receive Control Registers";
+  desc = "
+    VF view of PCIE_VFSRRCTL, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receive Buffer Size for Packet Buffer. The value is in 256 bytes resolution. Value can be from 256B to 16KB. Default buffer size is 2 KB. This field should not be set to 0x0. 
+
+           ";
+    ValRandomize = true;
+  } BSIZEPACKET[31:24] = 8'h8;
+  field {
+    AccessType = "RW";
+    desc = "
+        Receive Buffer Size for Header Buffer. The value is in 64 bytes resolution. Value can be from 64 bytes to 1024 bytes. Note that the maximum supported header size is limited to 1023. Default buffer size is 256 bytes. 
+
+        Values above 1024 bytes are reserved for internal use only.
+
+           ";
+    ValRandomize = true;
+  } BSIZEHEADER[23:18] = 6'h4;
+  field {
+    AccessType = "RW";
+    desc = "
+        Define the descriptor type in Rx:
+        
+        * 0: No header split
+        * 1: Header split. Header uses header buffer, unless it can't fit. Packet split boundary defined in PSRTYPE.  
+        * 2: Small/larger split. Small packets use small packet buffer, large packets use normal packet data buffer.
+        
+        Note: If DESCTYPE is set to 1 or 2, then BSIZEHEADER must be bigger than zero and BufferChainingEn must be set to zero. Otherwise, no header split occurs.
+
+           ";
+    ValRandomize = true;
+  } DESCTYPE[17:16] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_0[15:15] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_1[14:14] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_2[13:13] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_3[12:12] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_4[11:11] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_5[10:10] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_6[9:9] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_7[8:8] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_8[7:7] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_9[6:6] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_10[5:5] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_11[4:4] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_12[3:3] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Packets are split according to the lowest-indexed entry that applies to the packet and that is enabled. For example, if bits 6 and 8 are set, then an IPv4 packet that is not TCP is split after the IPv4 header.
+    
+        This bit mask table enables or disables each type of header to be split. A value of 1b enables an entry.
+        
+            * PSTYPE[0]: split after TCP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[1]: split after UDP of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[2]: split after IPv4 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[3]: split after IPv6 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[4]: split after L2 of inner header (VXLAN, NVGRE, or NGE)
+            * PSTYPE[5]: split after NVGRE/VXLAN/NGE header, but not inner packet
+            * PSTYPE[6]: split after TCP of outer header
+            * PSTYPE[7]: split after UDP of outer header
+            * PSTYPE[8]: split after IPv4 of outer header
+            * PSTYPE[9]: split after IPv6 of outer header
+            * PSTYPE[10]: split after L2 of outer header
+
+           ";
+    ValRandomize = true;
+  } PSRTYPE_13[2:2] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines if Loopback Suppress (compare SGLORT) is enabled or not. 
+
+           ";
+    ValRandomize = true;
+  } LoopbackSuppress[1:1] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Buffer Chaining enable. When set to 1b, a packet can be spread over more than one single receive data buffer. When clear to 0b, any packet longer than the data buffer size is terminated with a TOO_BIG error status in Rx descriptor write-back. The remainder of the frame is not posted to host, it is silently dropped.
+
+           ";
+    ValRandomize = true;
+  } BufferChainingEn[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFQPRC
+
+reg pcie_vfqprc_r {
+  shared;
+  HandCoded = true;
+  name = "Queue Packets Received Count";
+  desc = "
+    VF view of PCIE_QPRC, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+       Data    
+
+           ";
+    ValRandomize = true;
+  } Data[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFQPRDC
+
+reg pcie_vfqprdc_r {
+  shared;
+  HandCoded = true;
+  name = "Queue Packets Received Drop Count";
+  desc = "
+    VF view of PCIE_QPRDC, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } PRDC[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFQBRC_L
+
+reg pcie_vfqbrc_l_r {
+  shared;
+  HandCoded = true;
+  name = "Queue Bytes Received Count Low";
+  desc = "
+    VF view of PCIE_QBRC_L, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } BRC_L[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFQBRC_H
+
+reg pcie_vfqbrc_h_r {
+  shared;
+  HandCoded = true;
+  name = "Queue Bytes Received Count High";
+  desc = "
+    VF view of PCIE_QBRC_H, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } BRC_H[15:0] = 16'h0;
+};
+
+
+
+// PCIE_VFTDBAL
+
+reg pcie_vftdbal_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Descriptor Base Address Low";
+  desc = "
+    VF view of PCIE_TDBAL, see this register for details.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_31_25_[31:25] = 7'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } TDBAL[24:0] = 25'h0;
+};
+
+
+
+// PCIE_VFTDBAH
+
+reg pcie_vftdbah_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Descriptor Base Address High";
+  desc = "
+    VF view of PCIE_TDBAH, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } TDBAH[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFTDLEN
+
+reg pcie_vftdlen_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Descriptor Length";
+  desc = "
+    VF view of PCIE_TDLEN, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_19_13_[19:13] = 7'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } LEN[12:0] = 13'h4;
+};
+
+
+
+// PCIE_VFTPH_TXCTRL
+
+reg pcie_vftph_txctrl_r {
+  shared;
+  HandCoded = true;
+  name = "Tx TPH Control Registers";
+  desc = "
+    VF view of PCIE_TPH_TXCTRL, see this register for details. This register is READ ONLY when accessed from VF.  
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_31_27_[31:27] = 5'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Descriptor TPH Enable. When set, hardware enables TPH for all Tx descriptors written back into memory. When cleared, hardware does not enable TPH for descriptor write-backs. This bit is cleared as a default.
+
+           ";
+    ValRandomize = true;
+  } TxDescriptorTPHEN[26:26] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_25_23_[25:23] = 3'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Tx Descriptor Read Relax Order Enable.
+
+           ";
+    ValRandomize = true;
+  } TXdescRDROEn[22:22] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_21_[21:21] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Relax Order Enable of Tx Descriptor as well as head pointer write back (when set).
+
+           ";
+    ValRandomize = true;
+  } TXdescWBROen[20:20] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_19_[19:19] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Tx Data Read Relax Order Enable.
+
+           ";
+    ValRandomize = true;
+  } TXDataReadROEn[18:18] = 1'h1;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_17_8_[17:8] = 10'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Physical ID for TPH operated in DeviceSpecific mode.
+
+        Legacy TPH capable platforms -- the device driver, upon discovery of the physical CPU ID and CPU bus ID, programs the CPUID field with the physical CPU and bus ID associated with this Tx queue.
+
+        TPH 1.0 capable platforms -- the device driver programs a value, based on the relevant APIC ID, associated with this Tx queue.
+
+        * This field is not operational in RRC *
+
+           ";
+    ValRandomize = true;
+  } CPUID[7:0] = 8'h0;
+};
+
+
+
+// PCIE_VFTDH
+
+reg pcie_vftdh_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Descriptor Head";
+  desc = "
+    VF view of PCIE_TDH, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } TDH[15:0] = 16'h0;
+};
+
+
+
+// PCIE_VFTDT
+
+reg pcie_vftdt_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Descriptor Tail";
+  desc = "
+    VF view of PCIE_TDT, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } TDT[15:0] = 16'h0;
+};
+
+
+
+// PCIE_VFTXDCTL
+
+reg pcie_vftxdctl_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Descriptor Control";
+  desc = "
+    VF view of PCIE_TXDCTL, see this register for details. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        **OBSOLETE, NOT IMPLEMENTED**
+
+        Pre-Fetch Threshold
+
+        Controls when a prefetch of descriptors is considered. This threshold refers to the number of valid, unprocessed transmit descriptors the  has in its on-chip buffer. If this number drops below PTHRESH, the algorithm considers pre-fetching descriptors from host memory. However, this fetch does not happen unless there are at least HTHRESH valid descriptors in host memory to fetch.
+
+        Note: HTHRESH should be given a non-zero value each time PTHRESH is used.
+
+           ";
+    ValRandomize = true;
+  } PTHRESH[28:22] = 7'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        **OBSOLETE, NOT IMPLEMENTED**
+
+        Host Threshold.
+
+           ";
+    ValRandomize = true;
+  } HTHRESH[21:15] = 7'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Transmit Queue Enable.
+
+        When set, this bit enables the operation of a specific transmit queue:
+
+        Default value for all queues is 0b.
+
+           ";
+    ValRandomize = true;
+  } ENABLE[14:14] = 1'h0;
+  field {
+    AccessType = "RSV";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } __reserved_13_[13:13] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Max idle time before posting last descriptor write back and an interrupt. Time is in 512 * PCLK periods. The RS overwrites the write back. A value of 0 means no delay.
+
+           ";
+    ValRandomize = true;
+  } MaxTime[12:1] = 12'h0;
+  field {
+    encode = pcie_vftxdctl_push_desc_enum;
+    AccessType = "RW";
+    desc = "
+        Defines if this queue has the descriptors written into the controller (push model) or if the controller read descriptors from host memory (pull model). 
+        
+
+        Setting this bit to 1 is meaningless if PCIE_VFTXQCTL.PushModeDis has been asserted by PF. 
+
+           ";
+    ValRandomize = true;
+  } PushDesc[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFTXQCTL
+
+reg pcie_vftxqctl_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Queue Control";
+  desc = "
+    This register is RW when accessed from PF and RO when accessed from VF.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates to which VF this queue belongs. This register field is RW when accessed from PF and RO when accessed from VF.
+
+           ";
+    ValRandomize = true;
+  } VF[29:24] = 6'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Indicates this queue belongs to a Virtual Function, it invalidates the VF field if cleared. This register field is RW when accessed from PF and RO when accessed from VF.
+
+           ";
+    ValRandomize = true;
+  } OwnedByVF[23:23] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Defines the Priority Flow Control Class (Pause Class). This register field is RW when accessed from PF and RO when accessed from VF.
+
+           ";
+    ValRandomize = true;
+  } PC[22:20] = 3'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Traffic class, defines the shaping group to which this queue belongs. Meaningful only when UnlimitedBW bit is cleared.
+
+           ";
+    ValRandomize = true;
+  } TC[19:14] = 6'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        Defines the default VLAN ID for the queue if none supplied. This value could be 0. If this default VLAN ID is set to 0 and the host set to 0 then the switch will assign a default VLAN ID. This register field is RW when accessed from PF and RO when accessed from VF.
+
+           ";
+    ValRandomize = true;
+  } VID[13:2] = 12'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        This bit provides the ability to create a 65th TC with unlimited bandwidth. Usage model envisaged is for the PF's queue when there are 64 enabled VFs, each one with its own TC. Setting this bit makes the TC field meaningless.
+
+           ";
+    ValRandomize = true;
+  } UnlimitedBW[1:1] = 1'h0;
+  field {
+    AccessType = "RO";
+    desc = "
+        This bit provides the ability for the PF to not allow the VF to use the queue in push mode. This is a chicken bit for the case a security issue will be found in push mode. 
+
+           ";
+    ValRandomize = true;
+  } PushModeDis[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFTXINT
+
+reg pcie_vftxint_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Interrupt";
+  desc = "
+    VF view of PCIE_TXINT, see this register for details.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines the MSI-X interrupt vector number used by this queue. This number is relative to the base of the interrupt blocks assigned to a VF or PF.
+
+           ";
+    ValRandomize = true;
+  } Interrupt[9:2] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        Defines which timer to use for interrupt vector. Valid values are 0,1,2 or 3:
+        
+        * 0 : use ITR timer 0
+        * 1 : use ITR timer 1
+        * 2 : use ITR timer 2 (immediate, no timer)
+        * 3 : disable this interrupt        
+
+           ";
+    ValRandomize = true;
+  } InterruptTimer[1:0] = 2'h0;
+};
+
+
+
+// PCIE_VFQPTC
+
+reg pcie_vfqptc_r {
+  shared;
+  HandCoded = true;
+  name = "Queue Packets Transmitted Count";
+  desc = "
+    VF view of PCIE_QPTC, see this register for details.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } PTC[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFQBTC_L
+
+reg pcie_vfqbtc_l_r {
+  shared;
+  HandCoded = true;
+  name = "Queue Bytes Transmitted Count Low";
+  desc = "
+    VF view of PCIE_QBTC_L, see this register for details.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } BTCL[31:0] = 32'h0;
+};
+
+
+
+// PCIE_VFQBTC_H
+
+reg pcie_vfqbtc_h_r {
+  shared;
+  HandCoded = true;
+  name = "Queue Bytes Transmitted Count High";
+  desc = "
+    VF view of PCIE_QBTC_H, see this register for details.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } BTCH[15:0] = 16'h0;
+};
+
+
+
+// PCIE_VFTQDLOC
+
+reg pcie_vftqdloc_r {
+  shared;
+  HandCoded = true;
+  name = "Tx Descriptors Location in Tx Cache";
+  desc = "
+    VF view of PCIE_TQLOC, see this register for details. This register
+    is READ ONLY, VF cannot change the location of descriptors in the cache. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Defines the base location of the descriptor area in 64B chunks. Only 3 allocation schemes are supported where Base for Q index i is set to 
+           * ix8: when DMA_CTRL.MaxNumOfQs is set to 00b (256 Qs).
+           * ix16: when DMA_CTRL.MaxNumOfQs is set to 01b (128 Qs).
+           * ix32: when DMA_CTRL.MaxNumOfQs is set to 10b (64 Qs).
+
+           ";
+    ValRandomize = true;
+  } Base[19:4] = 16'h0;
+  field {
+    encode = pcie_vftqdloc_size_enum;
+    AccessType = "RO";
+    desc = "
+        Defines the size of the descriptor area in log2(N). Minimum is 2 (4 descriptors) and maximum is 8 (256 descriptors).  Only 3 Sizes supported
+
+           ";
+    ValRandomize = true;
+  } Size[3:0] = 4'h0;
+};
+
+
+
+// PCIE_VFTXSGLORT
+
+reg pcie_vftxsglort_r {
+  shared;
+  HandCoded = true;
+  name = "Source Glort for each Q";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+        Source GLORT to use when sending a packet to switch for this Q. This field is read only to VF.
+
+           ";
+    ValRandomize = true;
+  } SGlort[15:0] = 16'h0;
+};
+
+
+
+// PCIE_VFVTCTL
+
+reg pcie_vfvtctl_r {
+  shared;
+  HandCoded = true;
+  name = "VT Control Register";
+  desc = "
+    VF view of PCIE_PFVTCTL, see this register for details. This register
+    is READ ONLY, VF cannot change the FTAG insertion permission. 
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RO";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } FTagDescEnable[0:0] = 1'h0;
+};
+
+
+
+// PCIE_VFTX_DESC[0..255,0..255,0..3]
+
+reg pcie_vftx_desc_r {
+  shared;
+  HandCoded = true;
+  name = "Transmit Descriptor Cache";
+  desc = "
+    Used to store data and control. Indexing is [queue#,desc#,word#].
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW/1S/V";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } Data[31:0] = 32'h0;
+};
+regfile pcie_vftx_desc_rf {
+  pcie_vftx_desc_r PCIE_VFTX_DESC[4] += 8;
+};
+regfile pcie_vftx_desc_rff {
+  pcie_vftx_desc_rf PCIE_VFTX_DESC[256] += 32;
+};
+
+
+
+// Begin reg2rdl addrmap section
+
+addrmap PCIE_VF_map {
+  name = "PCIE_VF";
+  desc = "PCI Express Registers - Virtual Function";
+
+  pcie_vfctrl_r              PCIE_VFCTRL                   @0x0;
+  pcie_vfpbacl_r             PCIE_VFPBACL[8]               @0x40 += 8;
+  pcie_vfmbx_r               PCIE_VFMBX                    @0x80;
+  pcie_vfmbmem_r             PCIE_VFMBMEM[16]              @0x100 += 8;
+  pcie_vfint_map_r           PCIE_VFINT_MAP[16]            @0x180 += 8;
+  pcie_vfsystime_r           PCIE_VFSYSTIME                @0x200;
+  pcie_vfitr_r               PCIE_VFITR[32]                @0x300 += 8;
+  pcie_vfmrqc_r              PCIE_VFMRQC                   @0x400;
+  pcie_vfrssrk_r             PCIE_VFRSSRK[10]              @0x480 += 8;
+  pcie_vfreta_r              PCIE_VFRETA[32]               @0x500 += 8;
+  pcie_vfrdbal_r             PCIE_VFRDBAL                  @0x600;
+  pcie_vfrdbah_r             PCIE_VFRDBAH                  @0x608;
+  pcie_vfrdlen_r             PCIE_VFRDLEN                  @0x610;
+  pcie_vftph_rxctrl_r        PCIE_VFTPH_RXCTRL             @0x618;
+  pcie_vfrdh_r               PCIE_VFRDH                    @0x620;
+  pcie_vfrdt_r               PCIE_VFRDT                    @0x628;
+  pcie_vfrxqctl_r            PCIE_VFRXQCTL                 @0x630;
+  pcie_vfrxdctl_r            PCIE_VFRXDCTL                 @0x638;
+  pcie_vfrxint_r             PCIE_VFRXINT                  @0x640;
+  pcie_vfsrrctl_r            PCIE_VFSRRCTL                 @0x648;
+  pcie_vfqprc_r              PCIE_VFQPRC                   @0x650;
+  pcie_vfqprdc_r             PCIE_VFQPRDC                  @0x658;
+  pcie_vfqbrc_l_r            PCIE_VFQBRC_L                 @0x660;
+  pcie_vfqbrc_h_r            PCIE_VFQBRC_H                 @0x668;
+  pcie_vftdbal_r             PCIE_VFTDBAL                  @0x670;
+  pcie_vftdbah_r             PCIE_VFTDBAH                  @0x678;
+  pcie_vftdlen_r             PCIE_VFTDLEN                  @0x680;
+  pcie_vftph_txctrl_r        PCIE_VFTPH_TXCTRL             @0x688;
+  pcie_vftdh_r               PCIE_VFTDH                    @0x690;
+  pcie_vftdt_r               PCIE_VFTDT                    @0x698;
+  pcie_vftxdctl_r            PCIE_VFTXDCTL                 @0x6a0;
+  pcie_vftxqctl_r            PCIE_VFTXQCTL                 @0x6a8;
+  pcie_vftxint_r             PCIE_VFTXINT                  @0x6b0;
+  pcie_vfqptc_r              PCIE_VFQPTC                   @0x6b8;
+  pcie_vfqbtc_l_r            PCIE_VFQBTC_L                 @0x6c0;
+  pcie_vfqbtc_h_r            PCIE_VFQBTC_H                 @0x6c8;
+  pcie_vftqdloc_r            PCIE_VFTQDLOC                 @0x6d0;
+  pcie_vftxsglort_r          PCIE_VFTXSGLORT               @0x6d8;
+  pcie_vfvtctl_r             PCIE_VFVTCTL                  @0x6e0;
+  pcie_vftx_desc_rff         PCIE_VFTX_DESC[256]           @0x200000 += 8192;
+}; // final size: 0x400000 <= 0x400000 = 8<<19

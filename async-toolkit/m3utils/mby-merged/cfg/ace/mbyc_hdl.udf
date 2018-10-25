@@ -7,7 +7,7 @@ use ToolConfig;
 my $vcsVer = &ToolConfig::get_tool_version('vcsmx');
 my $MBY_IOSF_PRI_VC_ROOT = &ToolConfig::get_tool_path('ipconfig/iosf_primary_bfm') . "/ph4";
 my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc');
-my $sva_lib                 = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
+my $sva_lib              = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
 
 # for Cadance PCIe BFMs
 my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
@@ -158,7 +158,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -170,7 +170,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_ingress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -187,7 +187,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_egress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
             
@@ -199,7 +199,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_egress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'common_intfs_lib', 'mst_epl_bfm_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_egress_env_lib', 'mby_egress_ti_lib', 'mby_egress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -210,38 +210,59 @@ print "MGM debug : @mbyMgmLibs\n";
             },
                       
             mby_gmm_s_rtl_lib => {
-               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gmm_s_rtl.hdl', ],
-               -dependent_libs  => [ 'sla_lib'],
-               #-tag             => "nonsynth",
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gmm_s_rtl.hdl', ],
             },
 
+            #mby_gmm_s_env_lib => {
+            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_env.hdl' ],
+            #  -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib' ],
+            #  -tag             => "nonsynth",
+            #,
+
             #mby_gmm_s_tb_lib => {
-            #   -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gmm_s_tb.hdl' ],
-            #   -dependent_libs  => [ 'sla_lib'],
-            #   #-tag             => "nonsynth",
+            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_tb.hdl' ],
+            #   -dependent_libs  => [ 'sla_lib', 'shdv_shared_lib', 'mby_common_lib' ],
+            #   -tag             => "nonsynth",
             #},
 
             #mby_gmm_s_test_lib => {
-            #   -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_gmm_s_test.hdl', ],
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_test.hdl', ],
             #   -dependent_libs => [ 'sip_shared_lib', 'mby_gmm_s_env_lib', 'mby_wm_dpi_lib' ],
             #   -tag            => "nonsynth",
             #},
-              
-             mby_gmm_n_rtl_lib => {
-               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_gmm_n_rtl.hdl', ],
-               -dependent_libs  => [ 'sla_lib'],
-               #-tag             => "nonsynth",
+             
+            #mby_gmm_s_ti_lib => {
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_ti.hdl' ],
+            #   -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
+            #   -tag            => "nonsynth",
+            #},
+  
+            
+            mby_gmm_n_rtl_lib => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gmm_n_rtl.hdl', ],
             },
 
+            #mby_gmm_n_env_lib => {
+            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_env.hdl' ],
+            #  -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib' ],
+            #  -tag             => "nonsynth",
+            #,
+
             #mby_gmm_n_tb_lib => {
-            #   -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gmm_n_tb.hdl' ],
-            #   -dependent_libs  => [ 'sla_lib'],
-            #   #-tag             => "nonsynth",
+            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_tb.hdl' ],
+            #   -dependent_libs  => [ 'sla_lib', 'shdv_shared_lib', 'mby_common_lib' ],
+            #   -tag             => "nonsynth",
             #},
 
             #mby_gmm_n_test_lib => {
-            #   -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_gmm_n_test.hdl', ],
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_test.hdl', ],
             #   -dependent_libs => [ 'sip_shared_lib', 'mby_gmm_n_env_lib', 'mby_wm_dpi_lib' ],
+            #   -tag            => "nonsynth",
+            #},
+             
+            #mby_gmm_n_ti_lib => {
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_ti.hdl' ],
+            #   -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
             #   -tag            => "nonsynth",
             #},
 
@@ -529,7 +550,7 @@ print "MGM debug : @mbyMgmLibs\n";
             ## mby ingress model starts
             ####################################################################
             igr => {
-               top  => 'mby_ingress_tb_lib.ingress_tb',
+               top  => 'mby_ingress_tb_lib.mby_igr_tb',
 
                use  => [
                         "eth_port_common:common"
@@ -540,7 +561,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "svt_ahb_lib",
                         "mby_common_lib",
                         "mby_wm_dpi_lib",
-                        "mby_jasper_lib",
+                        #"mby_jasper_lib",
                         #"mby_rx_ppe_ti_lib",
                         #"mby_rx_ppe_env_lib",
                         "mby_igr_rtl_lib",
@@ -555,7 +576,7 @@ print "MGM debug : @mbyMgmLibs\n";
                elab_opts => [
                              "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
                              "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
-                             "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                             "-kdb", "-lca",
                             ],
 
                export => {
@@ -796,24 +817,24 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                   "sla_lib",
-                   "shdv_shared_lib",
-                   "svt_ahb_lib",
-                   "mby_common_lib",
-                   "mby_wm_dpi_lib",
-                   "mby_jasper_lib",
-                   "mby_gmm_s_rtl_lib"
+                  "sla_lib",
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "mby_common_lib",
+                  "mby_wm_dpi_lib",
+                  "mby_jasper_lib",
+                  "mby_gmm_s_rtl_lib"
                ],
 
                elab_opts => [
-                   "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
-                   "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
-                   "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                     "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
+                     "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\" ",
+                     "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
                ],
 
                export => {
                  libs => [
-                          "mby_gmm_s_rtl_lib",
+                   "mby_gmm_s_rtl_lib",
                  ]
                },
 
@@ -840,7 +861,9 @@ print "MGM debug : @mbyMgmLibs\n";
                },
             },
 
-                   
+            ####################################################################
+            ## mby global manager model starts
+            ####################################################################       
             gmm_n => {
                top  => 'mby_gmm_n_rtl_lib.mby_gmm_n',
 
@@ -848,7 +871,7 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                   "sla_lib",
+                  # "sla_lib",
                    "shdv_shared_lib",
                    "svt_ahb_lib",
                    "mby_common_lib",
