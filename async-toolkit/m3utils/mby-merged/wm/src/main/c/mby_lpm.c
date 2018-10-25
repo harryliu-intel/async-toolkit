@@ -304,13 +304,13 @@ void mbyMatchLpm
 //#ifdef UNIT_TEST
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs)
 {
-        funcs->_lookUpLpmTcam = lookUpLpmTcam;
-        funcs->_getBitIn64BitsArray = getBitIn64BitsArray;
+        funcs->_lookUpLpmTcam         = lookUpLpmTcam;
+        funcs->_getBitIn64BitsArray   = getBitIn64BitsArray;
         funcs->_countOneIn64BitsArray = countOneIn64BitsArray;
-        funcs->_getSubtriePrefixNode = getSubtriePrefixNode;
-        funcs->_getSubtrieChildNode = getSubtrieChildNode;
-        funcs->_exploreSubtrie = exploreSubtrie;
-        funcs->_lpmSearch = lpmSearch;
-        funcs->_lpmGenerateKey = lpmGenerateKey;
+        funcs->_getSubtriePrefixNode  = getSubtriePrefixNode;
+        funcs->_getSubtrieChildNode   = getSubtrieChildNode;
+        funcs->_exploreSubtrie        = exploreSubtrie;
+        funcs->_lpmSearch             = lpmSearch;
+        funcs->_lpmGenerateKey        = lpmGenerateKey;
 }
 //#endif

@@ -104,7 +104,7 @@ mbyClassifierHashLookup mbyClsGetEmBHashLookupEntry
 {
     mbyClassifierHashLookup lookup_entry;
 
-    em_b_hash_lookup_r const * const em_b_hash_lookup_entry = &(cgrp_b_map->B.EM_HASH_LOOKUP[lookup_ptr]);
+    em_hash_lookup_r const * const em_b_hash_lookup_entry = &(cgrp_b_map->B.EM_HASH_LOOKUP[lookup_ptr]);
 
     lookup_entry.PTR      = em_b_hash_lookup_entry->PTR;
     lookup_entry.SELECT_4 = em_b_hash_lookup_entry->SELECT_4;
