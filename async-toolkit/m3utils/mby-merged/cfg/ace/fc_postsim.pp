@@ -75,7 +75,7 @@
 			    mby_test   => {
 					   Required     => 1,
 					   StartString  => '/OUTPUT START/',
-					   RequiredText=> ['/OVM Report Summary/i',],
+					   RequiredText=> ['/Report Summary/i',],
 					   EndString    => '/Report\s+counts\s+by\s+severity/',
 					   okErrors     => [
 		                       # [AK]:8/20/18 - Filter AXI cfg object error fields.
