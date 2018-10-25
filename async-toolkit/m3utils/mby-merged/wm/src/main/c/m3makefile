@@ -39,6 +39,9 @@ c_source ("mby_maskgen")
 h_source ("mby_triggers")
 c_source ("mby_triggers")
 
+h_source ("mby_triggers_regs")
+c_source ("mby_triggers_regs")
+
 h_source ("mby_congmgmt")
 c_source ("mby_congmgmt")
 
