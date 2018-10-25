@@ -154,7 +154,7 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
-                          "cfg/ace/HDL/rtl/collage_deps.hdl",
+                          "cfg/ace/HDL/rtl/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
@@ -272,7 +272,7 @@ EOF
                  -hdl_spec => [
                      "cfg/ace/HDL/rtl/dummy.hdl",
                      "collage/work/soc/gen/source/rtl/soc.hdl",
-                     "cfg/ace/HDL/rtl/collage_deps.hdl",
+                     "cfg/ace/HDL/rtl/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
