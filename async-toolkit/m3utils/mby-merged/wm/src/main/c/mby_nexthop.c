@@ -74,7 +74,7 @@ static mbyIngressVidTable getIvidTableEntry
     return entry;
 }
 
-void lookUpL2
+static void lookUpL2
 (
     mby_ppe_nexthop_map * const nexthop,
     fm_uint32                   rx_port,
@@ -216,9 +216,28 @@ void NextHop
     fm_uint64   amask                = 0;
     fm_bool     l2_ivlan1_membership = FALSE;
     fm_bool     l2_ivlan1_reflect    = FALSE;
-    lookUpL2(nexthop, rx_port, l2_dmac, l2_ivid1, l2_evid1, flood_set, l2_edomain, learn_mode, &idglort,
-             &glort_forwarded, &flood_forwarded, &da_hit, &da_result, &amask, &l2_ivlan1_membership,
-             &l2_ivlan1_reflect, &trap_igmp);
+
+    lookUpL2
+    (
+        nexthop,
+        rx_port,
+        l2_dmac,
+        l2_ivid1,
+        l2_evid1,
+        flood_set,
+        l2_edomain,
+        learn_mode,
+        &idglort,
+        &glort_forwarded,
+        &flood_forwarded,
+        &da_hit,
+        &da_result,
+        &amask,
+        &l2_ivlan1_membership,
+        &l2_ivlan1_reflect,
+        &trap_igmp
+    );
+
     // Write outputs:
     out->AMASK                = amask;
     out->ARP_TABLE_INDEX      = arp_tbl_idx;

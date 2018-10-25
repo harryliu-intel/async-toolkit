@@ -228,7 +228,7 @@ static void lpmGenerateKey
     assert(lpmKey);
     assert(profile_id < 64); // 6 bits value
 
-    mbyLpmGetKeySels(MBY_LPM_IN_REGS_P, profile_id, &key_sels);
+    mbyLpmGetKeySels(&(MBY_LPM_IN_REGS_P->A), profile_id, &key_sels);
 
     lpmKey->key_len = 0; // remember this is in bits
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
@@ -304,13 +304,13 @@ void mbyMatchLpm
 //#ifdef UNIT_TEST
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs)
 {
-        funcs->_lookUpLpmTcam = lookUpLpmTcam;
-        funcs->_getBitIn64BitsArray = getBitIn64BitsArray;
+        funcs->_lookUpLpmTcam         = lookUpLpmTcam;
+        funcs->_getBitIn64BitsArray   = getBitIn64BitsArray;
         funcs->_countOneIn64BitsArray = countOneIn64BitsArray;
-        funcs->_getSubtriePrefixNode = getSubtriePrefixNode;
-        funcs->_getSubtrieChildNode = getSubtrieChildNode;
-        funcs->_exploreSubtrie = exploreSubtrie;
-        funcs->_lpmSearch = lpmSearch;
-        funcs->_lpmGenerateKey = lpmGenerateKey;
+        funcs->_getSubtriePrefixNode  = getSubtriePrefixNode;
+        funcs->_getSubtrieChildNode   = getSubtrieChildNode;
+        funcs->_exploreSubtrie        = exploreSubtrie;
+        funcs->_lpmSearch             = lpmSearch;
+        funcs->_lpmGenerateKey        = lpmGenerateKey;
 }
 //#endif

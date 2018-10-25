@@ -98,7 +98,7 @@ reg lpm_key_mask_r {
   HandCoded = true;
   name = "Key mask for LPM";
   desc = "
-        Configures the 160b mask used against the LPM key for lookup.  This 
+        Configures the 160b mask used against the LPM key for lookup.  This
         register is indexed first by profile.  The second index j selects
         the j'th 64b chunk of the mask.
            ";
@@ -191,9 +191,9 @@ reg lpm_subtrie_bitmaps_r {
   name = "Sub-trie storage for LPM";
   desc = "
             Contains the prefix and child presence bitmaps for each subtrie.
-            This register is indexed first by subtrie number, and then by 
+            This register is indexed first by subtrie number, and then by
             columns 0..7, representing the 255b of prefix bitmap (columns 0..3) and 256b of
-            child presence bitmap (columns 4..7). 
+            child presence bitmap (columns 4..7).
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -253,7 +253,7 @@ reg lpm_subtrie_aptr_r {
   HandCoded = true;
   name = "Sub-trie storage for LPM";
   desc = "
-            Contains the ACTION_BASE_PTR for each subtrie.  This references a 
+            Contains the ACTION_BASE_PTR for each subtrie.  This references a
             pointer into SHM_FWD_TABLE0.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -265,7 +265,7 @@ reg lpm_subtrie_aptr_r {
     AccessType = "RW";
     desc = "
             Indicates the base pointer for the actions for this subtrie.  This value is
-            in 16B units and indicates the address into SHM_FWD_TABLE0. 
+            in 16B units and indicates the address into SHM_FWD_TABLE0.
            ";
     ValRandomize = true;
   } ACTION_BASE_PTR[18:0] = 19'h0;
@@ -281,8 +281,8 @@ reg em_a_hash_lookup_r {
   In split-4K lookup mode,
   * LOOKUP0 = EM_A_LOOKUP[0..4095]
   * LOOKUP1 = EM_A_LOOKUP[4096..8192]
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
+  Noted that per-group above explicitly implies only FFU groups 0..1.
+  While these registers exist for FFU group 2, none of them should be
   written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -383,9 +383,9 @@ reg em_a_hash_cam_r {
   independently: the 1-2 actions from the highest-numbered matching entry within each row
   are used. To form a 32B entry, a key 24B or less is padded with 0s to 24B and followed
   by two actions. In the case of a 28B key in 32B mode, there is only 1 action.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
+
+  Noted that per-group above explicitly implies only FFU groups 0..1.
+  While these registers exist for FFU group 2, none of them should be
   written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -416,9 +416,9 @@ reg em_a_hash_cam_en_r {
   desc = "
   When EM_A_HASH_CAM_EN[group][row][rule].mask[s] is set, then
   EM_A_HASH_CAM[group][rule][row*4 +: 4] is used in scenario s.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
+
+  Noted that per-group above explicitly implies only FFU groups 0..1.
+  While these registers exist for FFU group 2, none of them should be
   written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -455,9 +455,9 @@ reg em_a_key_sel0_r {
   Before matching, the selected (Key32, Key16, Key8) are compacted
   in big endian form. If the result is an odd number of bytes,
   a padding 0 byte is added.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
+
+  Noted that per-group above explicitly implies only FFU groups 0..1.
+  While these registers exist for FFU group 2, none of them should be
   written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -468,7 +468,7 @@ reg em_a_key_sel0_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key8s to participate in hashing and matching. 
+     Selects FFU key8s to participate in hashing and matching.
      Key8Mask[i] selects key8[i].
 
            ";
@@ -495,9 +495,9 @@ reg em_a_key_sel1_r {
   Before matching, the selected (Key32, Key16, Key8) are compacted
   in big endian form. If the result is an odd number of bytes,
   a padding 0 byte is added.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
+
+  Noted that per-group above explicitly implies only FFU groups 0..1.
+  While these registers exist for FFU group 2, none of them should be
   written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -508,7 +508,7 @@ reg em_a_key_sel1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects one of 16 128 bit masks stored in EM_A_KEY_MASK to 
+     Selects one of 16 128 bit masks stored in EM_A_KEY_MASK to
      apply to the key during comparison.
            ";
     ValRandomize = true;
@@ -516,7 +516,7 @@ reg em_a_key_sel1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key32s to participate in hashing and matching. 
+     Selects FFU key32s to participate in hashing and matching.
      Key32Mask[i] selects key32[i].
 
            ";
@@ -525,7 +525,7 @@ reg em_a_key_sel1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key16s to participate in hashing and matching. 
+     Selects FFU key16s to participate in hashing and matching.
      Key16Mask[i] selects key16[i].
 
            ";
@@ -586,9 +586,9 @@ reg em_a_hash_miss_r {
   If there is no key match in ENTRY_RAM or CAM, then both actions are taken.
   The format of the action is the same as EM_A_ACTION,
   HASH_ENTRY_RAM, and EM_A_HASH_CAM.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
+
+  Noted that per-group above explicitly implies only FFU groups 0..1.
+  While these registers exist for FFU group 2, none of them should be
   written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -625,9 +625,9 @@ reg em_a_hash_cfg_r {
   name = "Configure FFU hashing";
   desc = "
   This register is indexed by the scenario.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
+
+  Noted that per-group above explicitly implies only FFU groups 0..1.
+  While these registers exist for FFU group 2, none of them should be
   written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -720,7 +720,8 @@ addrmap mby_ppe_cgrp_a_nested_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  em_hash_lookup_r            EM_HASH_LOOKUP[8192];
+//em_hash_lookup_r            EM_HASH_LOOKUP[8192];
+  em_hash_lookup_r            EM_HASH_LOOKUP[32768]; // 32k
 
   lpm_subtrie_aptr_r          LPM_SUBTRIE_APTR[24576];
   lpm_subtrie_cptr_r          LPM_SUBTRIE_CPTR[24576];

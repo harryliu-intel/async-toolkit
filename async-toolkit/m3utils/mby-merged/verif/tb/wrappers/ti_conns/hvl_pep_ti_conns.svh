@@ -77,22 +77,31 @@
 
     // define clock used by test cases
     // 250MHz clock from denali_model
-    wire clk = denali_model.CLK_TX;
+    //wire clk = denali_model.CLK_TX;
+    clkgen_if #(.PERIOD(4000), .DELAY(0), .DUTYCYCLE(50)) pcie_ref_clk(); 
+
+    wire clk = pcie_ref_clk.clk; // denali_model.CLK_TX;
+    wire aClk = denali_model.CLK_TX;
+    wire CLK_TX;
+    wire CLK_RX;
 
     // system reset
-    reg PERST_;
+    reg PERST_n;
     initial begin
-         PERST_ = 0;
+         PERST_n = 0;
          #10;
-         PERST_ = 1;
+         PERST_n = 1;
     end
 
 
     `ifdef DUT_IS_DENALI
         // denali dut
-        //dyn_pcie_device_with_reset #(linkWidth) DUT (
-        pcie_ep_bfm_phy DUT (
-            .PERST_(PERST_),
+        defparam DUT.interface_soma = {soma_dir,"/pcie_device_ep_with_reset_", `DENALI_DUT_VER, linkWidthStr,".spc"};
+        pcie_device_with_reset #(linkWidth) DUT (
+        //pcie_ep_bfm_phy DUT (
+            .CLK_TX(),
+            .CLK_RX(),
+            .PERST_n(PERST_n),
             .TX(TX),
             .TX_(TX_),
             .RX(RX),
@@ -111,9 +120,12 @@
     `endif
 
     // monitor - between dut and bfm
-    //dyn_pcie_monitor_with_reset #(linkWidth) denali_monitor (
-    pcie_ep_mon_phy denali_monitor (
-        .PERST_(PERST_),
+    defparam denali_monitor.interface_soma = {soma_dir,"/pcie_monitor_ep_with_reset_",`DENALI_DUT_VER,linkWidthStr,".spc"};
+    pcie_monitor_with_reset #(linkWidth) denali_monitor (
+    //pcie_ep_mon_phy denali_monitor (
+        .CLK_TX(),
+        .CLK_RX(),
+        .PERST_n(PERST_n),
         .TX(TX),
         .TX_(TX_),
         .RX(RX),
@@ -121,10 +133,14 @@
       );
 
     // model - bfm
-    //dyn_pcie_model_with_reset #(linkWidth) denali_model (
-    pcie_rc_bfm_phy denali_model (
-        .PERST_(PERST_),
-        .TX(RX),
+    defparam denali_model.interface_soma = {"cfg_0_0:",soma_dir,"/pcie_model_rc_with_reset_",`DENALI_MODEL_VER, linkWidthStr,".spc",
+                                            " p_0.cfg_0_0:",soma_dir,"/pcie_device_ep_with_reset_",`DENALI_DUT_VER,linkWidthStr,".spc"};
+    pcie_model_with_reset #(linkWidth) denali_model (
+    //pcie_rc_bfm_phy denali_model (
+        .CLK_TX(CLK_TX),
+        .CLK_RX(CLK_RX),
+        .PERST_n(PERST_n),
+        .TX(RX),   // notice rx/tx swap
         .TX_(RX_),
         .RX(TX),
         .RX_(TX_)
