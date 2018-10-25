@@ -684,7 +684,7 @@ void Classifier
     // Exact match A (EM_A):
     fm_uint32 em_a_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    mbyMatchExact(cgrp_a_map, cgrp_b_map, shm_map, &keys, scenario, MBY_CLA_GROUP_A, em_a_out);
+    mbyMatchExact(cgrp_a_map->A.EM_HASH_LOOKUP, &(cgrp_a_map->EM), shm_map, &keys, scenario, MBY_CLA_GROUP_A, em_a_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_a_out[i], &actions);
@@ -710,7 +710,7 @@ void Classifier
     // Exact match B (EM_B):
     fm_uint32 em_b_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    mbyMatchExact(cgrp_a_map, cgrp_b_map, shm_map, &keys, scenario, MBY_CLA_GROUP_B, em_b_out);
+    mbyMatchExact(cgrp_b_map->B.EM_HASH_LOOKUP, &(cgrp_b_map->EM), shm_map, &keys, scenario, MBY_CLA_GROUP_B, em_b_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_b_out[i], &actions);

@@ -80,39 +80,43 @@ static void freeMem
     free(shm_map);
 }
 
+// EM_X_HASH_LOOKUP
+
+static void set_EM_HASH_LOOKUP
+(
+    em_hash_lookup_r * const em_hash_lookup_reg,
+    fm_uint            const bucket,
+    uint20             const ptr,
+    uint4              const select_4,
+    uint4              const select_3,
+    uint4              const select_2,
+    uint4              const select_1,
+    uint4              const select_0,
+    uint32             const mask
+)
+{
+    em_hash_lookup_r * const em_hash_lookup = &(em_hash_lookup_reg[bucket]);
+
+    em_hash_lookup->PTR      = ptr;
+    em_hash_lookup->SELECT_4 = select_4;
+    em_hash_lookup->SELECT_3 = select_3;
+    em_hash_lookup->SELECT_2 = select_2;
+    em_hash_lookup->SELECT_1 = select_1;
+    em_hash_lookup->SELECT_0 = select_0;
+    em_hash_lookup->MASK     = mask;
+}
+
 // EM_A_HASH_LOOKUP
 
-static void set_EM_A_HASH_LOOKUP
+static void init_EM_HASH_LOOKUP_REG
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_uint bucket,
-    uint20 ptr,
-    uint4 select_4,
-    uint4 select_3,
-    uint4 select_2,
-    uint4 select_1,
-    uint4 select_0,
-    uint32 mask
+    em_hash_lookup_r * const em_hash_lookup_reg,
+    fm_uint            const em_hash_lookup__n
 )
 {
-    em_a_hash_lookup_r * const em_a_hash_lookup = &(cgrp_a_map->EM_A_HASH_LOOKUP[bucket]);
-    em_a_hash_lookup->PTR       = ptr;
-    em_a_hash_lookup->SELECT_4  = select_4;
-    em_a_hash_lookup->SELECT_3  = select_3;
-    em_a_hash_lookup->SELECT_2  = select_2;
-    em_a_hash_lookup->SELECT_1  = select_1;
-    em_a_hash_lookup->SELECT_0  = select_0;
-    em_a_hash_lookup->MASK      = mask;
-}
-
-static void init_EM_A_HASH_LOOKUP_REG
-(
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
-)
-{
-    for (fm_uint bucket = 0 ; bucket < MBY_EM_A_HASH_LOOKUP_ENTRIES ; bucket++)
+    for (fm_uint bucket = 0 ; bucket < em_hash_lookup__n ; bucket++)
     {
-        set_EM_A_HASH_LOOKUP(cgrp_a_map,
+        set_EM_HASH_LOOKUP(em_hash_lookup_reg,
             bucket,
             0x00000, // 20b field
             0x0,
@@ -124,118 +128,122 @@ static void init_EM_A_HASH_LOOKUP_REG
     }
 }
 
-// EM_A_HASH_CAM
+// EM_X_HASH_CAM
 
-static void set_EM_A_HASH_CAM
+static void set_EM_HASH_CAM
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_byte entry,
-    fm_byte word,
-    fm_uint64 DATA
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_byte               const entry,
+    fm_byte               const word,
+    fm_uint64             const DATA
 )
 {
-    em_a_hash_cam_r * const em_a_hash_cam = &(cgrp_a_map->EM_A_HASH_CAM[entry][word]);
-    em_a_hash_cam->DATA = DATA;
+    em_hash_cam_r * const em_hash_cam = &(cgrp_em_map->HASH_CAM[entry][word]);
+
+    em_hash_cam->DATA = DATA;
 }
 
-static void init_EM_A_HASH_CAM_REG
+static void init_EM_HASH_CAM_REG
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
+    mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint entry = 0 ; entry < MBY_FFU_HASH_CAM_ENTRIES_1 ; entry++)
+    for (fm_uint entry = 0 ; entry < mby_ppe_cgrp_em_map_HASH_CAM__n ; entry++)
     {
-        for(fm_uint word = 0 ; word < MBY_FFU_HASH_CAM_ENTRIES_0 ; word++)
+        for(fm_uint word = 0 ; word < em_hash_cam_rf_EM_HASH_CAM__n ; word++)
         {
-            set_EM_A_HASH_CAM(cgrp_a_map, entry, word, (fm_uint64)0x0000000000000000);
+            set_EM_HASH_CAM(cgrp_em_map, entry, word, (fm_uint64)0x0000000000000000);
         }
     }
 }
 
-// EM_A_HASH_CAM_EN
+// EM_HASH_CAM_EN
 
-static void set_EM_A_HASH_CAM_EN
+static void set_EM_HASH_CAM_EN
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_byte row,
-    fm_byte rule,
-    fm_byte select
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_byte               const row,
+    fm_byte               const rule,
+    fm_uint64             const mask
 )
 {
-    em_a_hash_cam_en_r * const em_a_hash_cam_en = &(cgrp_a_map->EM_A_HASH_CAM_EN[rule][row]);
-    em_a_hash_cam_en->MASK |= 1 << select;
+    em_hash_cam_en_r * const em_hash_cam_en = &(cgrp_em_map->HASH_CAM_EN[rule][row]);
+
+    em_hash_cam_en->MASK = mask;
 }
 
-static void init_EM_A_HASH_CAM_EN_REG
+static void init_EM_HASH_CAM_EN_REG
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
+    mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint row = 0 ; row < MBY_FFU_HASH_CAM_EN_ENTRIES_1 ; row++)
+    for (fm_uint row = 0 ; row < mby_ppe_cgrp_em_map_HASH_CAM_EN__n ; row++)
     {
-        for(fm_uint rule = 0 ; rule < MBY_FFU_HASH_CAM_EN_ENTRIES_0 ; rule++)
+        for(fm_uint rule = 0 ; rule < em_hash_cam_en_rf_EM_HASH_CAM_EN__n ; rule++)
         {
-            set_EM_A_HASH_CAM_EN(cgrp_a_map, row, rule, 0x00);
+            set_EM_HASH_CAM_EN(cgrp_em_map, row, rule, (fm_uint64)0x0000000000000000);
         }
     }
 }
 
-// EM_A_KEY_SEL0
+// EM_KEY_SEL0
 
-static void set_EM_A_KEY_SEL0
+static void set_EM_KEY_SEL0
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_bool hash,
-    fm_byte scenario,
-    fm_uint32 key8_mask
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_bool               const hash,
+    fm_byte               const scenario,
+    fm_uint32             const key8_mask
 )
 {
-    em_a_key_sel0_r * const em_a_key_sel0 = &(cgrp_a_map->EM_A_KEY_SEL0[hash][scenario]);
-    em_a_key_sel0->KEY8_MASK = key8_mask;
+    em_key_sel0_r * const em_key_sel0 = &(cgrp_em_map->KEY_SEL0[hash][scenario]);
+
+    em_key_sel0->KEY8_MASK = key8_mask;
 }
 
-static void init_EM_A_KEY_SEL0_REG
+static void init_EM_KEY_SEL0_REG
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
+    mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint hash = 0 ; hash < MBY_FFU_KEY_MASK0_ENTRIES_1 ; hash++)
+    for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL0__n ; hash++)
     {
-        for(fm_uint scenario = 0 ; scenario < MBY_FFU_KEY_MASK0_ENTRIES_0 ; scenario++)
+        for(fm_uint scenario = 0 ; scenario < em_key_sel0_rf_EM_KEY_SEL0__n ; scenario++)
         {
-            set_EM_A_KEY_SEL0(cgrp_a_map, hash, scenario, 0x00000000);
+            set_EM_KEY_SEL0(cgrp_em_map, hash, scenario, 0x00000000);
         }
     }
 }
 
-// EM_A_KEY_SEL1
+// EM_KEY_SEL1
 
-static void set_EM_A_KEY_SEL1
+static void set_EM_KEY_SEL1
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_bool hash,
-    fm_byte scenario,
-    uint4 key_mask_sel,
-    uint16 key32_mask,
-    uint32 key16_mask
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_bool               const hash,
+    fm_byte               const scenario,
+    uint4                 const key_mask_sel,
+    uint16                const key32_mask,
+    uint32                const key16_mask
 )
 {
-    em_a_key_sel1_r * const em_a_key_sel1 = &(cgrp_a_map->EM_A_KEY_SEL1[hash][scenario]);
-    em_a_key_sel1->KEY_MASK_SEL = key_mask_sel;
-    em_a_key_sel1->KEY32_MASK   = key32_mask;
-    em_a_key_sel1->KEY16_MASK   = key16_mask;
+    em_key_sel1_r * const em_key_sel1 = &(cgrp_em_map->KEY_SEL1[hash][scenario]);
+
+    em_key_sel1->KEY_MASK_SEL = key_mask_sel;
+    em_key_sel1->KEY32_MASK   = key32_mask;
+    em_key_sel1->KEY16_MASK   = key16_mask;
 }
 
-static void init_EM_A_KEY_SEL1_REG
+static void init_EM_KEY_SEL1_REG
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
+    mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint hash = 0 ; hash < MBY_FFU_KEY_MASK0_ENTRIES_1 ; hash++)
+    for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL1__n ; hash++)
     {
-        for (fm_uint scenario = 0 ; scenario < MBY_FFU_KEY_MASK0_ENTRIES_0 ; scenario++)
+        for (fm_uint scenario = 0 ; scenario < em_key_sel1_rf_EM_KEY_SEL1__n ; scenario++)
         {
-            set_EM_A_KEY_SEL1(cgrp_a_map, hash, scenario,
+            set_EM_KEY_SEL1(cgrp_em_map, hash, scenario,
                 (uint4)0x0,
                 (uint16)0x0000,
                 (uint32)0x00000000);
@@ -243,372 +251,109 @@ static void init_EM_A_KEY_SEL1_REG
     }
 }
 
-// EM_A_KEY_MASK
+// EM_KEY_MASK
 
-static void set_EM_A_KEY_MASK
+static void set_EM_KEY_MASK
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_bool hash,
-    fm_byte key_mask_sel,
-    fm_byte dw,
-    uint64 mask
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_bool               const hash,
+    fm_byte               const key_mask_sel,
+    fm_byte               const dw,
+    uint64                const mask
 )
 {
     fm_byte mask_id = (key_mask_sel * 2) + dw;
-    em_a_key_mask_r * const em_a_key_mask = &(cgrp_a_map->EM_A_KEY_MASK[hash][mask_id]);
-    em_a_key_mask->MASK = mask;
+
+    em_key_mask_r * const em_key_mask = &(cgrp_em_map->KEY_MASK[hash][mask_id]);
+
+    em_key_mask->MASK = mask;
 }
 
-static void init_EM_A_KEY_MASK_REG
+static void init_EM_KEY_MASK_REG
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
+    mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint hash = 0 ; hash < MBY_FFU_KEY_MASK0_ENTRIES_1 ; hash++)
+    fm_uint dw__n = 2;
+    fm_uint key_mask_sel__n = em_key_mask_rf_EM_KEY_MASK__n / dw__n; // <-- 16?? hash key profiles number REVISIT!!!
+
+    for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_MASK__n ; hash++)
     {
-        for (fm_uint key_mask_sel = 0 ; key_mask_sel < 16 ; key_mask_sel++) // <-- 16?? hash key profiles number REVISIT!!!
+        for (fm_uint key_mask_sel = 0 ; key_mask_sel < key_mask_sel__n ; key_mask_sel++)
         {
-            for (fm_uint dw = 0 ; dw < 2 ; dw++)
+            for (fm_uint dw = 0 ; dw < dw__n ; dw++)
             {
-                set_EM_A_KEY_MASK(cgrp_a_map, hash, key_mask_sel, dw, (uint64)0x00000000);
+                set_EM_KEY_MASK(cgrp_em_map, hash, key_mask_sel, dw, (uint64)0x0000000000000000);
             }
         }
     }
 }
 
-// EM_A_HASH_MISS
+// EM_HASH_MISS
 
-static void set_EM_A_HASH_MISS
+static void set_EM_HASH_MISS
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_bool hash,
-    fm_byte profile,
-    fm_uint32 action1,
-    fm_uint32 action0
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_bool               const hash,
+    fm_byte               const profile,
+    fm_uint32             const action1,
+    fm_uint32             const action0
 )
 {
-    em_a_hash_miss_r * const em_a_hash_miss = &(cgrp_a_map->EM_A_HASH_MISS[hash][profile]);
-    em_a_hash_miss->ACTION1 = action1;
-    em_a_hash_miss->ACTION0 = action0;
+    em_hash_miss_r * const em_hash_miss = &(cgrp_em_map->HASH_MISS[hash][profile]);
+
+    em_hash_miss->ACTION1 = action1;
+    em_hash_miss->ACTION0 = action0;
 }
 
-static void init_EM_A_HASH_MISS_REG
+static void init_EM_HASH_MISS_REG
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
+    mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint hash = 0 ; hash < MBY_FFU_HASH_MISS_ENTRIES_1 ; hash++)
+    for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_HASH_MISS__n ; hash++)
     {
-        for (fm_uint profile = 0 ; profile < MBY_FFU_HASH_MISS_ENTRIES_0 ; profile++)
+        for (fm_uint profile = 0 ; profile < em_hash_miss_rf_EM_HASH_MISS__n ; profile++)
         {
-            set_EM_A_HASH_MISS(cgrp_a_map, hash, profile, (uint32)0x0000, (uint32)0x0000);
+            set_EM_HASH_MISS(cgrp_em_map, hash, profile, (uint32)0x00000000, (uint32)0x00000000);
         }
     }
 }
 
-// EM_A_HASH_CFG
+// EM_HASH_CFG
 
-static void set_EM_A_HASH_CFG
+static void set_EM_HASH_CFG
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    fm_byte profile,
-    fm_bool mode,
-    fm_uint16 base_ptr_0,
-    fm_uint16 base_ptr_1,
-    fm_byte hash_size_0,
-    fm_byte hash_size_1,
-    fm_byte entry_size_0,
-    fm_byte entry_size_1
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_byte               const profile,
+    fm_bool               const mode,
+    fm_uint16             const base_ptr_0,
+    fm_uint16             const base_ptr_1,
+    fm_byte               const hash_size_0,
+    fm_byte               const hash_size_1,
+    fm_byte               const entry_size_0,
+    fm_byte               const entry_size_1
 )
 {
-    em_a_hash_cfg_r * const em_a_hash_cfg = &(cgrp_a_map->EM_A_HASH_CFG[profile]);
-    em_a_hash_cfg->MODE         = mode;
-    em_a_hash_cfg->BASE_PTR_0   = base_ptr_0;
-    em_a_hash_cfg->BASE_PTR_1   = base_ptr_1;
-    em_a_hash_cfg->HASH_SIZE_0  = hash_size_0;
-    em_a_hash_cfg->HASH_SIZE_1  = hash_size_1;
-    em_a_hash_cfg->ENTRY_SIZE_0 = entry_size_0;
-    em_a_hash_cfg->ENTRY_SIZE_1 = entry_size_1;
+    em_hash_cfg_r * const em_hash_cfg = &(cgrp_em_map->HASH_CFG[profile]);
+
+    em_hash_cfg->MODE         = mode;
+    em_hash_cfg->BASE_PTR_0   = base_ptr_0;
+    em_hash_cfg->BASE_PTR_1   = base_ptr_1;
+    em_hash_cfg->HASH_SIZE_0  = hash_size_0;
+    em_hash_cfg->HASH_SIZE_1  = hash_size_1;
+    em_hash_cfg->ENTRY_SIZE_0 = entry_size_0;
+    em_hash_cfg->ENTRY_SIZE_1 = entry_size_1;
 }
 
-static void init_EM_A_HASH_CFG_REG
+static void init_EM_HASH_CFG_REG
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map
+    mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint profile = 0 ; profile < MBY_FFU_HASH_CFG_ENTRIES_0 ; profile++)
+    for (fm_uint profile = 0 ; profile < mby_ppe_cgrp_em_map_HASH_CFG__n ; profile++)
     {
-        set_EM_A_HASH_CFG(cgrp_a_map, profile,
-            FALSE,
-            (uint13)0x00,
-            (uint13)0x00,
-            (uint5)0x0,
-            (uint5)0x0,
-            (uint5)0x0,
-            (uint5)0x0
-            );
-    }
-}
-
-// EM_B_HASH_LOOKUP
-
-static void set_EM_B_HASH_LOOKUP
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_uint bucket,
-    uint20 ptr,
-    uint4 select_4,
-    uint4 select_3,
-    uint4 select_2,
-    uint4 select_1,
-    uint4 select_0,
-    uint32 mask
-)
-{
-    em_b_hash_lookup_r * const em_b_hash_lookup = &(cgrp_b_map->EM_B_HASH_LOOKUP[bucket]);
-    em_b_hash_lookup->PTR       = ptr;
-    em_b_hash_lookup->SELECT_4  = select_4;
-    em_b_hash_lookup->SELECT_3  = select_3;
-    em_b_hash_lookup->SELECT_2  = select_2;
-    em_b_hash_lookup->SELECT_1  = select_1;
-    em_b_hash_lookup->SELECT_0  = select_0;
-    em_b_hash_lookup->MASK      = mask;
-}
-
-static void init_EM_B_HASH_LOOKUP_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint bucket = 0 ; bucket < MBY_EM_B_HASH_LOOKUP_ENTRIES ; bucket++)
-    {
-        set_EM_B_HASH_LOOKUP(cgrp_b_map,
-            bucket,
-            0x00000, // 20b field
-            0x0,
-            0x0,
-            0x0,
-            0x0,
-            0x0,
-            0x00000000);
-    }
-}
-
-// EM_B_HASH_CAM
-
-static void set_EM_B_HASH_CAM
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte entry,
-    fm_byte word,
-    fm_uint64 DATA
-)
-{
-    em_b_hash_cam_r * const em_b_hash_cam = &(cgrp_b_map->EM_B_HASH_CAM[entry][word]);
-    em_b_hash_cam->DATA = DATA;
-}
-
-static void init_EM_B_HASH_CAM_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint entry = 0 ; entry < MBY_FFU_HASH_CAM_ENTRIES_1 ; entry++)
-    {
-        for(fm_uint word = 0 ; word < MBY_FFU_HASH_CAM_ENTRIES_0 ; word++)
-        {
-            set_EM_B_HASH_CAM(cgrp_b_map, entry, word, (fm_uint64)0x0000000000000000);
-        }
-    }
-}
-
-// EM_B_HASH_CAM_EN
-
-static void set_EM_B_HASH_CAM_EN
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte row,
-    fm_byte rule,
-    fm_byte select
-)
-{
-    em_b_hash_cam_en_r * const em_b_hash_cam_en = &(cgrp_b_map->EM_B_HASH_CAM_EN[rule][row]);
-    em_b_hash_cam_en->MASK |= 1 << select;
-}
-
-static void init_EM_B_HASH_CAM_EN_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint row = 0 ; row < MBY_FFU_HASH_CAM_EN_ENTRIES_1 ; row++)
-    {
-        for(fm_uint rule = 0 ; rule < MBY_FFU_HASH_CAM_EN_ENTRIES_0 ; rule++)
-        {
-            set_EM_B_HASH_CAM_EN(cgrp_b_map, row, rule, 0x00);
-        }
-    }
-}
-
-// EM_B_KEY_SEL0
-
-static void set_EM_B_KEY_SEL0
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_bool hash,
-    fm_byte scenario,
-    fm_uint32 key8_mask
-)
-{
-    em_b_key_sel0_r * const em_b_key_sel0 = &(cgrp_b_map->EM_B_KEY_SEL0[hash][scenario]);
-    em_b_key_sel0->KEY8_MASK = key8_mask;
-}
-
-static void init_EM_B_KEY_SEL0_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint hash = 0 ; hash < MBY_FFU_KEY_MASK0_ENTRIES_1 ; hash++)
-    {
-        for(fm_uint scenario = 0 ; scenario < MBY_FFU_KEY_MASK0_ENTRIES_0 ; scenario++)
-        {
-            set_EM_B_KEY_SEL0(cgrp_b_map, hash, scenario, 0x00000000);
-        }
-    }
-}
-
-// EM_B_KEY_SEL1
-
-static void set_EM_B_KEY_SEL1
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_bool hash,
-    fm_byte scenario,
-    uint4 key_mask_sel,
-    uint16 key32_mask,
-    uint32 key16_mask
-)
-{
-    em_b_key_sel1_r * const em_b_key_sel1 = &(cgrp_b_map->EM_B_KEY_SEL1[hash][scenario]);
-    em_b_key_sel1->KEY_MASK_SEL = key_mask_sel;
-    em_b_key_sel1->KEY32_MASK   = key32_mask;
-    em_b_key_sel1->KEY16_MASK   = key16_mask;
-}
-
-static void init_EM_B_KEY_SEL1_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint hash = 0 ; hash < MBY_FFU_KEY_MASK0_ENTRIES_1 ; hash++)
-    {
-        for (fm_uint scenario = 0 ; scenario < MBY_FFU_KEY_MASK0_ENTRIES_0 ; scenario++)
-        {
-            set_EM_B_KEY_SEL1(cgrp_b_map, hash, scenario,
-                (uint4)0x0,
-                (uint16)0x0000,
-                (uint32)0x00000000);
-        }
-    }
-}
-
-// EM_B_KEY_MASK
-
-static void set_EM_B_KEY_MASK
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_bool hash,
-    fm_byte key_mask_sel,
-    fm_byte dw,
-    uint64 mask
-)
-{
-    fm_byte mask_id = (key_mask_sel * 2) + dw;
-    em_b_key_mask_r * const em_b_key_mask = &(cgrp_b_map->EM_B_KEY_MASK[hash][mask_id]);
-    em_b_key_mask->MASK = mask;
-}
-
-static void init_EM_B_KEY_MASK_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint hash = 0 ; hash < MBY_FFU_KEY_MASK0_ENTRIES_1 ; hash++)
-    {
-        for (fm_uint key_mask_sel = 0 ; key_mask_sel < 16 ; key_mask_sel++) // <-- 16?? hash key profiles number REVISIT!!!
-        {
-            for (fm_uint dw = 0 ; dw < 2 ; dw++)
-            {
-                set_EM_B_KEY_MASK(cgrp_b_map, hash, key_mask_sel, dw, (uint64)0x00000000);
-            }
-        }
-    }
-}
-
-// EM_B_HASH_MISS
-
-static void set_EM_B_HASH_MISS
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_bool hash,
-    fm_byte profile,
-    fm_uint32 action1,
-    fm_uint32 action0
-)
-{
-    em_b_hash_miss_r * const em_b_hash_miss = &(cgrp_b_map->EM_B_HASH_MISS[hash][profile]);
-    em_b_hash_miss->ACTION1 = action1;
-    em_b_hash_miss->ACTION0 = action0;
-}
-
-static void init_EM_B_HASH_MISS_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint hash = 0 ; hash < MBY_FFU_HASH_MISS_ENTRIES_1 ; hash++)
-    {
-        for (fm_uint profile = 0 ; profile < MBY_FFU_HASH_MISS_ENTRIES_0 ; profile++)
-        {
-            set_EM_B_HASH_MISS(cgrp_b_map, hash, profile, (uint32)0x0000, (uint32)0x0000);
-        }
-    }
-}
-
-// EM_B_HASH_CFG
-
-static void set_EM_B_HASH_CFG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte profile,
-    fm_bool mode,
-    fm_uint16 base_ptr_0,
-    fm_uint16 base_ptr_1,
-    fm_byte hash_size_0,
-    fm_byte hash_size_1,
-    fm_byte entry_size_0,
-    fm_byte entry_size_1
-)
-{
-    em_b_hash_cfg_r * const em_b_hash_cfg = &(cgrp_b_map->EM_B_HASH_CFG[profile]);
-    em_b_hash_cfg->MODE = mode;
-    em_b_hash_cfg->BASE_PTR_0 = base_ptr_0;
-    em_b_hash_cfg->BASE_PTR_1 = base_ptr_1;
-    em_b_hash_cfg->HASH_SIZE_0 = hash_size_0;
-    em_b_hash_cfg->HASH_SIZE_1 = hash_size_1;
-    em_b_hash_cfg->ENTRY_SIZE_0 = entry_size_0;
-    em_b_hash_cfg->ENTRY_SIZE_1 = entry_size_1;
-}
-
-static void init_EM_B_HASH_CFG_REG
-(
-    mby_ppe_cgrp_b_map * const cgrp_b_map
-)
-{
-    for (fm_uint profile = 0 ; profile < MBY_FFU_HASH_CFG_ENTRIES_0 ; profile++)
-    {
-        set_EM_B_HASH_CFG(cgrp_b_map, profile,
+        set_EM_HASH_CFG(cgrp_em_map, profile,
             FALSE,
             (uint13)0x00,
             (uint13)0x00,
@@ -737,24 +482,35 @@ static void initRegs
     mby_shm_map        * const shm_map
 )
 {
+    em_hash_lookup_r * em_hash_lookup_reg = NULL;
+    mby_ppe_cgrp_em_map * cgrp_em_map = NULL;
+
     // Clasifier A regs
-    init_EM_A_HASH_LOOKUP_REG(cgrp_a_map);
-    init_EM_A_HASH_CAM_REG(cgrp_a_map);
-    init_EM_A_HASH_CAM_EN_REG(cgrp_a_map);
-    init_EM_A_KEY_SEL0_REG(cgrp_a_map);
-    init_EM_A_KEY_SEL1_REG(cgrp_a_map);
-    init_EM_A_KEY_MASK_REG(cgrp_a_map);
-    init_EM_A_HASH_MISS_REG(cgrp_a_map);
-    init_EM_A_HASH_CFG_REG(cgrp_a_map);
+    em_hash_lookup_reg = cgrp_a_map->A.EM_HASH_LOOKUP;
+    cgrp_em_map = &(cgrp_a_map->EM);
+
+    init_EM_HASH_LOOKUP_REG(em_hash_lookup_reg, mby_ppe_cgrp_a_nested_map_EM_HASH_LOOKUP__n);
+    init_EM_HASH_CAM_REG(cgrp_em_map);
+    init_EM_HASH_CAM_EN_REG(cgrp_em_map);
+    init_EM_KEY_SEL0_REG(cgrp_em_map);
+    init_EM_KEY_SEL1_REG(cgrp_em_map);
+    init_EM_KEY_MASK_REG(cgrp_em_map);
+    init_EM_HASH_MISS_REG(cgrp_em_map);
+    init_EM_HASH_CFG_REG(cgrp_em_map);
+
     // Clasifier B regs
-    init_EM_B_HASH_LOOKUP_REG(cgrp_b_map);
-    init_EM_B_HASH_CAM_REG(cgrp_b_map);
-    init_EM_B_HASH_CAM_EN_REG(cgrp_b_map);
-    init_EM_B_KEY_SEL0_REG(cgrp_b_map);
-    init_EM_B_KEY_SEL1_REG(cgrp_b_map);
-    init_EM_B_KEY_MASK_REG(cgrp_b_map);
-    init_EM_B_HASH_MISS_REG(cgrp_b_map);
-    init_EM_B_HASH_CFG_REG(cgrp_b_map);
+    em_hash_lookup_reg = cgrp_a_map->A.EM_HASH_LOOKUP;
+    cgrp_em_map = &(cgrp_b_map->EM);
+
+    init_EM_HASH_LOOKUP_REG(em_hash_lookup_reg, mby_ppe_cgrp_b_nested_map_EM_HASH_LOOKUP__n);
+    init_EM_HASH_CAM_REG(cgrp_em_map);
+    init_EM_HASH_CAM_EN_REG(cgrp_em_map);
+    init_EM_KEY_SEL0_REG(cgrp_em_map);
+    init_EM_KEY_SEL1_REG(cgrp_em_map);
+    init_EM_KEY_MASK_REG(cgrp_em_map);
+    init_EM_HASH_MISS_REG(cgrp_em_map);
+    init_EM_HASH_CFG_REG(cgrp_em_map);
+
     // Shared memory
     init_FWD_TABLE0_REG(shm_map);
     init_FWD_TABLE1_REG(shm_map);
@@ -781,15 +537,18 @@ static void setRegs_basic
     mby_shm_map           * const shm_map
 )
 {
+    mby_ppe_cgrp_a_nested_map * cgrp_a_nested_map = &(cgrp_a_map->A);
+    mby_ppe_cgrp_em_map * cgrp_em_map = &(cgrp_a_map->EM);
+
     // EM_A_KEY_SEL0[hash][scenario])
-    set_EM_A_KEY_SEL0(cgrp_a_map,
+    set_EM_KEY_SEL0(cgrp_em_map,
         0,  // hash
         17, // scenario <-- profile? REVISIT!!!
         0x20    // key8_mask  (0000 0000 0000 0000 0000 0000 0010 0000 == KEY8[5] )
     );
 
     // EM_A_KEY_SEL1[hash][scenario])
-    set_EM_A_KEY_SEL1(cgrp_a_map,
+    set_EM_KEY_SEL1(cgrp_em_map,
         0,  // hash
         17, // scenario <-- profile? REVISIT!!!
         0x0,    // key_mask_sel <-- Might need to REVISIT!!!
@@ -798,7 +557,7 @@ static void setRegs_basic
     );
 
     // EM_A_HASH_CFG[scenario]
-    set_EM_A_HASH_CFG(cgrp_a_map,
+    set_EM_HASH_CFG(cgrp_em_map,
         17, // scenario <-- profile? REVISIT!!!
         1,      // mode (64B == non-split mode)
         0x0,    // base_ptr_0
@@ -810,7 +569,7 @@ static void setRegs_basic
     );
 
     // EM_A_HASH_LOOKUP[bucket]
-    set_EM_A_HASH_LOOKUP(cgrp_a_map,
+    set_EM_HASH_LOOKUP(cgrp_a_nested_map->EM_HASH_LOOKUP,
         0xc, // bucket
         0x0,    // ptr
         0x4,    // select_4
@@ -947,8 +706,8 @@ static int run_on_simple_exactmatch
 
     mbyMatchExact
     (
-        cgrp_a_map,
-        cgrp_b_map,
+        cgrp_a_map->A.EM_HASH_LOOKUP,
+        &(cgrp_a_map->EM),
         shm_map,
         &(in->FFU_KEYS),
         in->FFU_SCENARIO,

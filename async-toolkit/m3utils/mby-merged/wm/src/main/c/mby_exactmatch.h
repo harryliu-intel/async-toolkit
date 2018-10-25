@@ -21,8 +21,8 @@
 
 void mbyMatchExact // i.e. look up EM hash
 (
-    mby_ppe_cgrp_a_map      * const cgrp_a_map,
-    mby_ppe_cgrp_b_map      * const cgrp_b_map,
+    em_hash_lookup_r        * const em_hash_lookup_reg,
+    mby_ppe_cgrp_em_map     * const cgrp_em_map,
     mby_shm_map             * const shm_map,
     mbyClassifierKeys const * const keys,
     fm_byte                   const profile,

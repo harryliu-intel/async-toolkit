@@ -874,73 +874,41 @@ typedef struct mbyIppRxTagStruct
 
 // Functions:
 
-mbyClassifierKeyMaskCfg mbyClsGetEmAKeyMaskCfg
+mbyClassifierHashLookup mbyClsGetEmHashLookupEntry
 (
-    MBY_CGRP_A_IN_REGS,
-    fm_byte              const hash_num,
-    fm_byte              const scenario
+    em_hash_lookup_r * const em_hash_lookup_reg,
+    fm_uint16          const lookup_ptr
 );
 
-mbyClassifierKeyMaskCfg mbyClsGetEmBKeyMaskCfg
+mbyClassifierKeyMaskCfg mbyClsGetEmKeyMaskCfg
 (
-    MBY_CGRP_B_IN_REGS,
-    fm_byte              const hash_num,
-    fm_byte              const scenario
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_byte               const hash_num,
+    fm_byte               const scenario
 );
 
-mbyClassifierHashCfg mbyClsGetEmAHashCfg
+mbyClassifierHashCfg mbyClsGetEmHashCfg
 (
-    MBY_CGRP_A_IN_REGS,
-    fm_byte              const scenario
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_byte               const scenario
 );
 
-mbyClassifierHashCfg mbyClsGetEmBHashCfg
+
+fm_uint64 mbyClsGetEmHashCamEntry
 (
-    MBY_CGRP_B_IN_REGS,
-    fm_byte              const scenario
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_uint32             const entry,
+    fm_uint32             const word
 );
 
-mbyClassifierHashLookup mbyClsGetEmAHashLookupEntry
+fm_uint64 mbyClsGetEmHashCamMask
 (
-    MBY_CGRP_A_IN_REGS,
-    fm_uint16            const lookup_ptr
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    fm_uint32             const row,
+    fm_uint32             const rule
 );
 
-mbyClassifierHashLookup mbyClsGetEmBHashLookupEntry
-(
-    MBY_CGRP_B_IN_REGS,
-    fm_uint16            const lookup_ptr
-);
-
-fm_uint64 mbyClsGetEmAHashCamEntry
-(
-    MBY_CGRP_A_IN_REGS,
-    fm_uint32            const entry,
-    fm_uint32            const word
-);
-
-fm_uint64 mbyClsGetEmBHashCamEntry
-(
-    MBY_CGRP_B_IN_REGS,
-    fm_uint32            const entry,
-    fm_uint32            const word
-);
-
-fm_uint64 mbyClsGetEmAHashCamMask
-(
-    MBY_CGRP_A_IN_REGS,
-    fm_uint32            const row,
-    fm_uint32            const rule
-);
-
-fm_uint64 mbyClsGetEmBHashCamMask
-(
-    MBY_CGRP_B_IN_REGS,
-    fm_uint32            const row,
-    fm_uint32            const rule
-);
-
-fm_uint64 mbyClsGetEmAShmEntry
+fm_uint64 mbyClsGetEmAShmEntry // <-- REVISIT!!!
 (
     mby_shm_map * const shm_map,
     // fm_uint32     const hash_num, // How is this used in MBY? <-- REVISIT!!!
@@ -956,13 +924,11 @@ fm_uint64 mbyClsGetEmBShmEntry
 
 void mbyClsGetEmHashMissActions
 (
-    mby_ppe_cgrp_a_map      * const cgrp_a_map,
-    mby_ppe_cgrp_b_map      * const cgrp_b_map,
-    fm_byte                   const group,
-    mbyClassifierHashCfg      const hash_cfg,
-    fm_uint32                 const hash_num,
-    fm_byte                   const scenario,
-    fm_uint32                       hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
+    mby_ppe_cgrp_em_map * const cgrp_em_map,
+    mbyClassifierHashCfg  const hash_cfg,
+    fm_uint32             const hash_num,
+    fm_byte               const scenario,
+    fm_uint32                   hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
 );
 
 mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
