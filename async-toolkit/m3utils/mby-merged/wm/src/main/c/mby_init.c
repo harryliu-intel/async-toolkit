@@ -2211,8 +2211,8 @@ void mby_init_common_regs
     }
 
     for (fm_uint i = 0; i < 64; i++) {
-        em_a_hash_cfg_r * const em_a_hash_cfg = &(rx_top_map->cgrp_a.EM_A_HASH_CFG[i]);
-        em_b_hash_cfg_r * const em_b_hash_cfg = &(rx_top_map->cgrp_b.EM_B_HASH_CFG[i]);
+        em_hash_cfg_r * const em_a_hash_cfg = &(rx_top_map->cgrp_a.EM.HASH_CFG[i]);
+        em_hash_cfg_r * const em_b_hash_cfg = &(rx_top_map->cgrp_b.EM.HASH_CFG[i]);
 
         em_a_hash_cfg->ENTRY_SIZE_0 = 0;
         em_a_hash_cfg->ENTRY_SIZE_1 = 0;
@@ -2231,7 +2231,7 @@ void mby_init_common_regs
     for (fm_uint i = 0; i < MBY_FFU_TCAM_CFG_ENTRIES_1; i++)
         for (fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
         {
-            wcm_tcam_r * wcm_tcam_entry    = &(rx_top_map->cgrp_b.WCM_TCAM[i][j]);
+            wcm_tcam_r * wcm_tcam_entry    = &(rx_top_map->cgrp_b.B.WCM_TCAM[i][j]);
             wcm_tcam_entry->KEY            = 0xffffffff;
             wcm_tcam_entry->KEY_INVERT     = 0xffffffff;
             wcm_tcam_entry->KEY_TOP        = 0xff;

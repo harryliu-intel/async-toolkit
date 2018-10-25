@@ -47,7 +47,7 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
       bytes(addr).toShort
     } else {
       // Packet data is big endian (network order)
-      (((bytes(addr).toShort << 8)  & 0xff00) |     // version from mby_parser.c and rdl
+      (((bytes(addr).toShort << 8) & 0xff00) |     // version from mby_parser.c and rdl
         (bytes(addr + 1).toShort & 0x00ff)).toShort
     }
 
