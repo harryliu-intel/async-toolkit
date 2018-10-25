@@ -682,12 +682,11 @@ void Classifier
 
 
     // Exact match A (EM_A):
-    fm_uint32 em_a_out[MBY_EM_A_MAX_ACTIONS_NUM] = { 0 };
+    fm_uint32 em_a_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    // TODO change function to return a list of action sets (i.e. em_a_out)
-    mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_A, &actions);
+    mbyMatchExact(cgrp_a_map, cgrp_b_map, shm_map, &keys, scenario, MBY_CLA_GROUP_A, em_a_out);
 
-    for (fm_uint i = 0; i < MBY_EM_A_MAX_ACTIONS_NUM; ++i)
+    for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_a_out[i], &actions);
 
     // Longest Prefix Match (LPM):
@@ -709,12 +708,11 @@ void Classifier
     }
 
     // Exact match B (EM_B):
-    fm_uint32 em_b_out[MBY_EM_B_MAX_ACTIONS_NUM] = { 0 };
+    fm_uint32 em_b_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    // TODO change function to return a list of action sets (i.e. em_b_out)
-    mbyMatchExact(cgrp_a_map, cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, &actions);
+    mbyMatchExact(cgrp_a_map, cgrp_b_map, shm_map, &keys, scenario, MBY_CLA_GROUP_B, em_b_out);
 
-    for (fm_uint i = 0; i < MBY_EM_B_MAX_ACTIONS_NUM; ++i)
+    for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_b_out[i], &actions);
 
     // Wildcard Match (WCM):

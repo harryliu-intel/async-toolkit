@@ -17,6 +17,9 @@ verif/.dvt
 verif/.project
 build/
 
+# VS Code settings files
+.vscode/*
+
 # BMAN generated files
 target
 results

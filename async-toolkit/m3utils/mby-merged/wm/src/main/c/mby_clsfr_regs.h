@@ -331,8 +331,10 @@
 #define MBY_FGHASH_SIZE                                         (0x00C0000)
 
 #define MBY_FFU_HASH_LOOKUP_WIDTH                               4
-#define MBY_FFU_HASH_LOOKUP_ENTRIES_0                           8192
-#define MBY_FFU_HASH_LOOKUP_ENTRIES_1                           3
+#define MBY_EM_A_HASH_LOOKUP_ENTRIES                            32768
+#define MBY_EM_A_HASH_MODE_32B_LOOKUP_ENTRIES                   MBY_EM_A_HASH_LOOKUP_ENTRIES / 2
+#define MBY_EM_B_HASH_LOOKUP_ENTRIES                            8192
+#define MBY_EM_B_HASH_MODE_32B_LOOKUP_ENTRIES                   MBY_EM_B_HASH_LOOKUP_ENTRIES / 2
 #define MBY_FFU_HASH_LOOKUP(index1, index0, word)               ((0x0040000) * ((index1) - 0) + (0x0000010) * ((index0) - 0) + ((word)*4)+ (0x0000000) + (MBY_FGHASH_BASE))
 
 #define MBY_FFU_HASH_LOOKUP_l_PTR                               64
@@ -452,13 +454,6 @@
 
 #define MBY_HASH_ENTRY1_l_DATA                                  0
 #define MBY_HASH_ENTRY1_h_DATA                                  63
-
-#define MBY_HASH_ENTRY_RAM_ALLOC_WIDTH                          2
-#define MBY_HASH_ENTRY_RAM_ALLOC_ENTRIES                        2
-#define MBY_HASH_ENTRY_RAM_ALLOC(index, word)                   ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0100000) + (MBY_HASH_ENTRY_RAM_BASE))
-
-#define MBY_HASH_ENTRY_RAM_ALLOC_l_GP_SEL                       0
-#define MBY_HASH_ENTRY_RAM_ALLOC_h_GP_SEL                       7
 
 #define MBY_HASH_ENTRY_RAM_ERR_WRITE_WIDTH                      2
 #define MBY_HASH_ENTRY_RAM_ERR_WRITE_ENTRIES_0                  2
@@ -783,7 +778,7 @@ typedef struct mbyClassifierHashLookupStruct
 
 typedef struct mbyClassifierKeyMaskCfgStruct
 {
-    fm_uint32               KEY8_MASK;    // 32b field
+    fm_uint32               KEY8_MASK;    // 32b field <-- Should it be 64b field? REVISIT!!!
     fm_uint32               KEY16_MASK;   // 32b
     fm_uint16               KEY32_MASK;   // 16b
     fm_byte                 KEY_MASK_SEL; //  4b
@@ -804,9 +799,9 @@ typedef struct mbyClassifierEntropyCfgStruct
 typedef struct mbyClassifierHashCfgStruct
 {
     fm_bool                 mode;
-    fm_uint16               base_ptr  [2]; // 13b field
-    fm_byte                 hash_size [2]; //  5b
-    fm_byte                 entry_size[2]; //  5b
+    fm_uint16               base_ptr  [2]; // 2 x 13b field
+    fm_byte                 hash_size [2]; // 2 x  5b
+    fm_byte                 entry_size[2]; // 2 x  5b
 
 } mbyClassifierHashCfg;
 
@@ -945,17 +940,18 @@ fm_uint64 mbyClsGetEmBHashCamMask
     fm_uint32            const rule
 );
 
-fm_uint64 mbyClsGetEmHashEntryRam
+fm_uint64 mbyClsGetEmAShmEntry
 (
-    // REVISIT!!!
-    fm_uint32 const hash_num,
-    fm_uint32 const hash_ram_addr
+    mby_shm_map * const shm_map,
+    // fm_uint32     const hash_num, // How is this used in MBY? <-- REVISIT!!!
+    fm_uint32     const entry_idx
 );
 
-fm_byte mbyClsGetEmHashRamAlloc
+fm_uint64 mbyClsGetEmBShmEntry
 (
-    // REVISIT!!!
-    fm_uint32            const entry
+    mby_shm_map * const shm_map,
+    // fm_uint32     const hash_num, // How is this used in MBY? <-- REVISIT!!!
+    fm_uint32     const entry_idx
 );
 
 void mbyClsGetEmHashMissActions

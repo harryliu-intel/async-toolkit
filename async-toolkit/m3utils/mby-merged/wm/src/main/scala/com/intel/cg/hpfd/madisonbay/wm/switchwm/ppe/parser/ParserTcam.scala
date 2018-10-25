@@ -16,6 +16,8 @@ object ParserTcam {
                       key: RdlField[_, Long] with HardwareReadable[Long],
                       input: Long)
 
+  case class ToMatch(mask: Short, value: Short, input: Short)
+
   val parserMatchBitFun: TcamQuery => Boolean = tcq => parserMatchBit(tcq)
 
   def matchRegisterSeq(behavior: TcamQuery => Boolean)(dataSequence: Seq[TcTriple]): Boolean = {
@@ -24,6 +26,9 @@ object ParserTcam {
   }
 
   def matchRegisterSeq(dataSequence: Seq[TcTriple]): Boolean = matchRegisterSeq(parserMatchBitFun)(dataSequence)
+
+  // added temporary to keep compatibility with c
+  def camMatching(dataSeq: Seq[ToMatch]): Boolean = dataSeq.forall(d => (d.input & d.mask).toShort == d.value)
 
   def matchRegister(behavior: TcamQuery => Boolean)(data: TcTriple): Boolean = matchRegisterSeq(behavior)(Seq(data))
 
