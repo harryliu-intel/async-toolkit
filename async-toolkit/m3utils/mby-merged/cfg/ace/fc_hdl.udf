@@ -43,6 +43,7 @@ my @all_hip_liblist = &get_hip_liblist();
 
 my @fc_rtl_liblist = (
     "sva_lib",
+    "mby_mgm_lib",
      (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
      $fc_global_vars::IP_STUB_LIB,
 );
@@ -172,7 +173,7 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
-                          "cfg/ace/HDL/rtl/collage_deps.hdl",
+                          "cfg/ace/HDL/rtl/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
@@ -290,7 +291,7 @@ EOF
                  -hdl_spec => [
                      "cfg/ace/HDL/rtl/dummy.hdl",
                      "collage/work/soc/gen/source/rtl/soc.hdl",
-                     "cfg/ace/HDL/rtl/collage_deps.hdl",
+                     "cfg/ace/HDL/rtl/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
@@ -527,12 +528,19 @@ EOF
             mby_lintra => {
                top  => "fc_top_lib.soc",
                use => \@models_use,
+               pli_libs => [
+                  "-hier_rtl_dumper",
+               ],
+               elab_opts => [
+                    "-config_verbose",
+                    "dump_filelist_lib.dump_filelist",
+               ],
                libs => [
                   $fc_global_vars::COLLAGE_LIB,
                   "mby_tx_ppe_rtl_lib",
                   "mby_ppe_stm_rtl_lib",
                   "mby_igr_rtl_lib",
-                  "mby_egr_rtl_lib",
+                  #"mby_egr_rtl_lib",
                   "mby_mgp_rtl_lib",
                   "mby_rx_ppe_rtl_lib",
                   "mby_mpp_rtl_lib",
@@ -541,6 +549,7 @@ EOF
             #      $fc_global_vars::IP_STUB_LIB,
                   @all_sip_rtl_liblist,
                   @all_hip_liblist,
+                  'dump_filelist_lib',
                ], 
                lintra_test_list => [ "$ENV{MODEL_ROOT}/tools/lint/tests/mby_top_lintra_test.list"],
             },

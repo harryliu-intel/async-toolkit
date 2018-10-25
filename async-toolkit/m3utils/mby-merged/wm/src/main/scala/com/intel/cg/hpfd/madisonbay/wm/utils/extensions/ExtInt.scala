@@ -13,6 +13,9 @@ object ExtInt {
     }
 
     def reverse: Int = reverseInt(x)
+
+    def addWithUShortSaturation(number2: Long): Int = super.addWithUShortSaturation(x, number2)
+
   }
 
   def reverseInt(i: Int): Int = {

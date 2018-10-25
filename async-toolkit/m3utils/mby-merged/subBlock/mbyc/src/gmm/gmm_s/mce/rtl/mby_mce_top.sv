@@ -31,10 +31,15 @@
 // 17-10-2018 intital version
 //
 //=======================================================================================================================================
+`ifndef MBY_MCE_TOP_SV
+ `define MBY_MCE_TOP_SV
+
+// collage-pragma translate_on
+
 module mby_mce_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
-   // CLock and reset
+   // Clock and reset
    input                              cclk,
    input                              reset_n,
 
@@ -46,12 +51,23 @@ module mby_mce_top
    // mesh read responses for the MC deep-Q
 
    // MC tag ring
-   output mby_mc_tag_ring_t           mc_tag_ring_out_left  [3:0],
-   output mby_mc_tag_ring_t           mc_tag_ring_out_right [3:0]
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_3,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_2,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_1,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_0,
+ 
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_3,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_2,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_1,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_0
  	  
 );
 
+    // collage-pragma translate_off
+
+    // collage-pragma translate_on
+
 endmodule // mby_gpm_top
 
-
-   
+`endif
+     

@@ -1,0 +1,1379 @@
+//
+//
+        reg apb_reset_ctrl {
+            name = "MAILBOX Reset Register";
+            IntelRsvd=false;
+            desc = "Register containing top-level resets ";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Reset to entire ASIC, all logic and registers including persistent and PCIe1 = reset asserted 0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_reset_ctrl.hard_reset_all";
+            } hard_reset_all [0:0] = 1'h0;
+            field {
+                desc = "Reset to entire ASIC, all logic and registers including persistent. PCIe is not affected1 = reset asserted 0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_reset_ctrl.hard_reset_int";
+            } hard_reset_int [1:1] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_reset_ctrl.reserved_3_2";
+            } reserved_3_2 [3:2] = 2'h0;
+            field {
+                desc = "Reset to entire ASIC, all logic and non-persistent registers including PCIe1 = reset asserted 0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_reset_ctrl.soft_reset_all";
+            } soft_reset_all [4:4] = 1'h0;
+            field {
+                desc = "Reset to entire ASIC, all logic and non-persistent registers, PCIe is not affected 1 = reset asserted 0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_reset_ctrl.soft_reset_int";
+            } soft_reset_int [5:5] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_reset_ctrl.reserved_7_6";
+            } reserved_7_6 [7:6] = 2'h0;
+            field {
+                desc = "Reset to Cport processor (BReset)1 = reset asserted0 = no reset";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_reset_ctrl.cport_reset";
+            } cport_reset [8:8] = 1'h0;
+            field {
+                desc = "Reset to Cport processor's debug logic (DReset) 1 = reset asserted 0 = no reset";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_reset_ctrl.cport_debug_reset";
+            } cport_debug_reset [9:9] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_reset_ctrl.reserved_15_10";
+            } reserved_15_10 [15:10] = 6'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_reset_ctrl.reserved_16";
+            } reserved_16 [16:16] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_reset_ctrl.reserved_31_17";
+            } reserved_31_17 [31:17] = 15'h0;
+        };  // end register apb_reset_ctrl
+
+        reg apb_boot_config {
+            name = "Boot Configuration";
+            IntelRsvd=false;
+            desc = "Register used by boot code to determine boot process to run. ";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Sets the boot mode of the Cport processor. Initially set by fuses/strapping (details TBD).
+                        NOTE: Bits 1:0 have only flags for FW access by boot code
+                        0b000 Load signed FW image from an external EEPROM/FLASH on from the QSPI bus0b001 Load signed FW image from an external EEPROM/FLASH on from the Alt Boot I3C bus.0b010 Use signed FW image in instruction memory (loaded from CPP)0b011 Reserved (treat as 0b010)0b1xx Stall processor (processor is reset when leaving this state)";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_boot_config.cport_load_config";
+            } cport_load_config [2:0] = 3'h0;
+            field {
+                desc = "apb_boot_config_reesrved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_boot_config.reesrved";
+            } reesrved [7:3] = 5'h0;
+            field {
+                desc = "Scratchpad flags for FW use only. No hardware functionality is assigned to these bits.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_boot_config.boot_flags70";
+            } boot_flags70 [15:8] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_boot_config.reserved_23_16";
+            } reserved_23_16 [23:16] = 8'h0;
+            field {
+                desc = "Processor configuration flags for use by FW, hard-strapped to appropriate value0b0000 Cport processor0b0001 Link processor0b001x reserved0b01xx Huron Bay processor0b1xxx reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_boot_config.proc_config30";
+            } proc_config30 [27:24] = 4'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_boot_config.reserved_31_28";
+            } reserved_31_28 [31:28] = 4'h0;
+        };  // end register apb_boot_config
+
+        reg apb_boot_status {
+            name = "Boot Status Register";
+            IntelRsvd=false;
+            desc = "Boot/image load status information ";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Parity error detectedset by hardware cleared by firmware";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_boot_status.boot_load_parity_err";
+            } boot_load_parity_err [0:0] = 1'h0;
+            field {
+                desc = "Boot loader error codes, set by firmware
+                        0b00 ? error 0b01 ?? error 0b10 ??? error 0b11 ???? error";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_boot_status.boot_load_err";
+            } boot_load_err [2:1] = 2'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_boot_status.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "SBE error detectedset by hardwarecleared by FW";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_boot_status.iram_dram_sbe_err";
+            } iram_dram_sbe_err [8:8] = 1'h0;
+            field {
+                desc = "Image load error codes, set by firmware
+                        0b00 ? error 0b01 ?? error 0b10 ??? error 0b11 ???? error";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_boot_status.image_load_err";
+            } image_load_err [10:9] = 2'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_boot_status.reserved_31_11";
+            } reserved_31_11 [31:11] = 21'h0;
+        };  // end register apb_boot_status
+
+        reg apb_write_privilege_ctrl1 {
+            name = "Write Privilege Control Register #1";
+            IntelRsvd=false;
+            desc = "To support Intel's security requirements, Madison Bay leverages the AXI specification's
+                    protection signals to provide two-tiered access to registers. ";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "If set, gives PCIe master access to all CSRs on the EPL complex's local AHB bus";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.epl_local_csr_access";
+            } epl_local_csr_access [0:0] = 1'h0;
+            field {
+                desc = "Always 0, there is no write access to statistic memory space in the EPL mailboxes.";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.epl_mailbox_stats_access";
+            } epl_mailbox_stats_access [1:1] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to CSRs and command queue space in the EPL mailboxes";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.epl_mailbox_control_access";
+            } epl_mailbox_control_access [2:2] = 1'h0;
+            field {
+                desc = "Reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "If set, gives PCIe master access to the PPE route table memory space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.route_table_access";
+            } route_table_access [8:8] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the MPP statistics CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.megaport_stats_access";
+            } megaport_stats_access [9:9] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the MPP control CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.megaport_control_access";
+            } megaport_control_access [10:10] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.reserved_30_11";
+            } reserved_30_11 [30:11] = 20'h0;
+            field {
+                desc = "set, gives PCIe master full access to all writeable memory space
+                        Note: All privilege bits initial values are set under fuse control";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl1.pcie_full_access";
+            } pcie_full_access [31:31] = 1'h0;
+        };  // end register apb_write_privilege_ctrl1
+
+        reg apb_write_privilege_ctrl2 {
+            name = "APB Write Privilege Control Register #2";
+            IntelRsvd=false;
+            desc = "To support Intel's security requirements, Madison Bay leverages the AXI specification's
+                    protection signals to provide two-tiered access to registers. ";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Always 0, there is not write access to the Cport's Boot RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.cport_boot_ram_access";
+            } cport_boot_ram_access [0:0] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Cport's instruction RAM space
+                        Note: For security purposes, write access is only allowed when Cport is held in reset.";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.cport_instruct_ram_access";
+            } cport_instruct_ram_access [1:1] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Cport's data RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.cport_data_ram_access";
+            } cport_data_ram_access [2:2] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "Always 0, there is not write access to the Link processors' Boot RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.link_boot_ram_access";
+            } link_boot_ram_access [8:8] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Link processors' instruction RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.link_instruction_ram_access";
+            } link_instruction_ram_access [9:9] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Link processors' data and system RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.link_data_ram_access";
+            } link_data_ram_access [10:10] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.reserved_15_11";
+            } reserved_15_11 [15:11] = 5'h0;
+            field {
+                desc = "If set, gives PCIe master access to the named I3C channel's CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.i3c_fpga_access";
+            } i3c_fpga_access [16:16] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the named I3C channel's CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.i3c_alt_boot_access";
+            } i3c_alt_boot_access [17:17] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the QSPI's CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.qspi_access";
+            } qspi_access [18:18] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the UART's CSRs 
+                        Note: All privilege bits initial values are set under fuse control";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.uart_access";
+            } uart_access [19:19] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_write_privilege_ctrl2.reserved_31_20";
+            } reserved_31_20 [31:20] = 12'h0;
+        };  // end register apb_write_privilege_ctrl2
+
+        reg apb_read_privilege_ctrl1 {
+            name = "APB Read Privilege Control Register #1";
+            IntelRsvd=false;
+            desc = "To support Intel's security requirements, Madison Bay leverages the AXI specification's
+                    protection signals to provide two-tiered access to registers. ";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "If set, gives PCIe master access to all CSRs on the EPL complex's local AHB bus";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.epl_local_csr_access";
+            } epl_local_csr_access [0:0] = 1'h0;
+            field {
+                desc = "Always 0, there is no write access to statistic memory space in the EPL mailboxes.";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.epl_mailbox_stats_access";
+            } epl_mailbox_stats_access [1:1] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to CSRs and command queue space in the EPL mailboxes";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.epl_mailbox_control_access";
+            } epl_mailbox_control_access [2:2] = 1'h0;
+            field {
+                desc = "Reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "If set, gives PCIe master access to the PPE route table memory space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.route_table_access";
+            } route_table_access [8:8] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the MPP statistics CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.megaport_stats_access";
+            } megaport_stats_access [9:9] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the MPP control CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.megaport_control_access";
+            } megaport_control_access [10:10] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.reserved_30_11";
+            } reserved_30_11 [30:11] = 20'h0;
+            field {
+                desc = "set, gives PCIe master full access to all writeable memory space
+                        Note: All privilege bits initial values are set under fuse control";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl1.pcie_full_access";
+            } pcie_full_access [31:31] = 1'h0;
+        };  // end register apb_read_privilege_ctrl1
+
+        reg apb_read_privilege_ctrl2 {
+            name = "APB Read Privilege Control Register #2";
+            IntelRsvd=false;
+            desc = "To support Intel's security requirements, Madison Bay leverages the AXI specification's
+                    protection signals to provide two-tiered access to registers. ";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Always 0, there is not write access to the Cport's Boot RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.cport_boot_ram_access";
+            } cport_boot_ram_access [0:0] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Cport's instruction RAM space
+                        Note: For security purposes, write access is only allowed when Cport is held in reset.";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.cport_instruct_ram_access";
+            } cport_instruct_ram_access [1:1] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Cport's data RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.cport_data_ram_access";
+            } cport_data_ram_access [2:2] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "Always 0, there is not write access to the Link processors' Boot RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.link_boot_ram_access";
+            } link_boot_ram_access [8:8] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Link processors' instruction RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.link_instruction_ram_access";
+            } link_instruction_ram_access [9:9] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the Link processors' data and system RAM space";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.link_data_ram_access";
+            } link_data_ram_access [10:10] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.reserved_15_11";
+            } reserved_15_11 [15:11] = 5'h0;
+            field {
+                desc = "If set, gives PCIe master access to the named I3C channel's CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.i3c_fpga_access";
+            } i3c_fpga_access [16:16] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the named I3C channel's CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.i3c_alt_boot_access";
+            } i3c_alt_boot_access [17:17] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the QSPI's CSRs";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.qspi_access";
+            } qspi_access [18:18] = 1'h0;
+            field {
+                desc = "If set, gives PCIe master access to the UART's CSRs 
+                        Note: All privilege bits initial values are set under fuse control";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.uart_access";
+            } uart_access [19:19] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_read_privilege_ctrl2.reserved_31_20";
+            } reserved_31_20 [31:20] = 12'h0;
+        };  // end register apb_read_privilege_ctrl2
+
+        reg apb_pll_f00 {
+            name = "APB PLL Placeholder Register";
+            IntelRsvd=false;
+            desc = "Placeholder for when PLL registers are defined";
+            regwidth = 32;
+            accesswidth = 32;
+            field {
+                desc = "apb_pll_f00_pll_foo";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_pll_f00.pll_foo";
+            } pll_foo [31:0] = 32'h0;
+        };  // end register apb_pll_f00
+
+        reg apb_int_steering_ctl1 {
+            name = "APB Interrupt Steering Control Register #1";
+            IntelRsvd=false;
+            desc = "This register controls the top-level destination for interrupts generated by sub-blocks:
+                    either PCIe or Cport.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Always 1 as the PCIe master is the destination for all Cport interrupts";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.cport_to_pcie_doorbells";
+            } cport_to_pcie_doorbells [7:0] = 8'hff;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.reserved_15_8";
+            } reserved_15_8 [15:8] = 8'h0;
+            field {
+                desc = "If set, steers interrupts to PCIe master for the named I3C channel, otherwise to Cport";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.i3c_fpga_int_dest";
+            } i3c_fpga_int_dest [16:16] = 1'h0;
+            field {
+                desc = "If set, steers interrupts to PCIe master for the named I3C channel, otherwise to Cport";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.i3c_alt_boot_int_dest";
+            } i3c_alt_boot_int_dest [17:17] = 1'h0;
+            field {
+                desc = "If set, steers interrupts to PCIe master for the named I3C channel, otherwise to Cport";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.i3c_slave_int_dest";
+            } i3c_slave_int_dest [18:18] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.reserved_23_19";
+            } reserved_23_19 [23:19] = 5'h0;
+            field {
+                desc = "If set, steers interrupts to PCIe master for the QSPI, otherwise to Cport";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.qspi_int_dest";
+            } qspi_int_dest [24:24] = 1'h0;
+            field {
+                desc = "If set, steers interrupts to PCIe master for the UART, otherwise to Cport";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.uart_int_dest";
+            } uart_int_dest [25:25] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.reserved_30_26";
+            } reserved_30_26 [30:26] = 5'h0;
+            field {
+                desc = "If set, steers all interrupts to PCIe master overriding all other bit settings in this register";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl1.pcie_mailbox_int_dest";
+            } pcie_mailbox_int_dest [31:31] = 1'h0;
+        };  // end register apb_int_steering_ctl1
+
+        reg apb_int_steering_ctl2 {
+            name = "APB Interrupt Steering Control Register #2";
+            IntelRsvd=false;
+            desc = "This register controls the top-level destination for interrupts generated by sub-blocks:
+                    either PCIe or Cport.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "If set, steers interrupts to PCIe master for the Cport Doorbells, EPLs 7:0";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl2.epl_int_dest_cport";
+            } epl_int_dest_cport [7:0] = 8'h0;
+            field {
+                desc = "If set, steers interrupts to PCIe master for the CPP Doorbells, EPLs 7:0";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl2.epl_int_dest_pcie";
+            } epl_int_dest_pcie [15:8] = 8'h0;
+            field {
+                desc = "If set, steers interrupts to PCIe master for the MPPs 15:0";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_int_steering_ctl2.megaport_int_dest";
+            } megaport_int_dest [31:16] = 16'h0;
+        };  // end register apb_int_steering_ctl2
+
+        reg apb_pcie_doorbell {
+            name = "APB PCIE Doorbell Register";
+            IntelRsvd=false;
+            desc = "This register allows the PCIe master to generate doorbell interrupts to the Cport and/or
+                    link processors.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "If set, generates the doorbell interrupts to the EPLSBit 0 = EPL 0
+                        Bit 1 = EPL 1, etc
+                        Bits are self-clearing";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_pcie_doorbell.doorbell_int_to_epl";
+            } doorbell_int_to_epl [7:0] = 8'h0;
+            field {
+                desc = "Determines the doorbell number to ring on the selected EPL(s)";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_pcie_doorbell.epl_doorbell_number";
+            } epl_doorbell_number [10:8] = 3'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_doorbell.reserved_15_11";
+            } reserved_15_11 [15:11] = 5'h0;
+            field {
+                desc = "If set, generates the PCIe doorbell interrupt to the Cport
+                        Bits are self-clearing";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_pcie_doorbell.doorbell_int_to_cport";
+            } doorbell_int_to_cport [23:16] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_doorbell.reserved_31_24";
+            } reserved_31_24 [31:24] = 8'h0;
+        };  // end register apb_pcie_doorbell
+
+        reg apb_pcie_raw_int_stat {
+            name = "APB PCIE Raw Interrupt Status Register";
+            IntelRsvd=false;
+            desc = "This register gives the 'raw' status of any interrupts that have been steered to the PCIe
+                    master.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "apb_pcie_raw_int_stat_cport_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.cport_raw_int_stat";
+            } cport_raw_int_stat [7:0] = 8'h0;
+            field {
+                desc = "apb_pcie_raw_int_stat_epl_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.epl_raw_int_stat";
+            } epl_raw_int_stat [15:8] = 8'h0;
+            field {
+                desc = "apb_pcie_raw_int_stat_i3c_fpga_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.i3c_fpga_raw_int_stat";
+            } i3c_fpga_raw_int_stat [16:16] = 1'h0;
+            field {
+                desc = "apb_pcie_raw_int_stat_i3c_alt_boot_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.i3c_alt_boot_raw_int_stat";
+            } i3c_alt_boot_raw_int_stat [17:17] = 1'h0;
+            field {
+                desc = "apb_pcie_raw_int_stat_i3c_slave_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.i3c_slave_raw_int_stat";
+            } i3c_slave_raw_int_stat [18:18] = 1'h0;
+            field {
+                desc = "apb_pcie_raw_int_stat_qspi_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.qspi_raw_int_stat";
+            } qspi_raw_int_stat [19:19] = 1'h0;
+            field {
+                desc = "apb_pcie_raw_int_stat_uart_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.uart_raw_int_stat";
+            } uart_raw_int_stat [20:20] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.reserved_23_21";
+            } reserved_23_21 [23:21] = 3'h0;
+            field {
+                desc = "apb_pcie_raw_int_stat_megaport_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.megaport_raw_int_stat";
+            } megaport_raw_int_stat [24:24] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_raw_int_stat.reserved_31_25";
+            } reserved_31_25 [31:25] = 7'h0;
+        };  // end register apb_pcie_raw_int_stat
+
+        reg apb_pcie_masked_int_stat {
+            name = "APB PCIe Masked Interrupt Status Register";
+            IntelRsvd=false;
+            desc = "This register gives the 'masked' status of any interrupts that have been steered to the
+                    PCIe master.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "apb_pcie_masked_int_stat_cport_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.cport_mask_int_stat";
+            } cport_mask_int_stat [7:0] = 8'h0;
+            field {
+                desc = "apb_pcie_masked_int_stat_epl_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.epl_mask_int_stat";
+            } epl_mask_int_stat [15:8] = 8'h0;
+            field {
+                desc = "apb_pcie_masked_int_stat_i3c_fpga_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.i3c_fpga_raw_int_stat";
+            } i3c_fpga_raw_int_stat [16:16] = 1'h0;
+            field {
+                desc = "apb_pcie_masked_int_stat_i3c_mask_alt_boot_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.i3c_mask_alt_boot_int_stat";
+            } i3c_mask_alt_boot_int_stat [17:17] = 1'h0;
+            field {
+                desc = "apb_pcie_masked_int_stat_i3c_mask_slave_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.i3c_mask_slave_int_stat";
+            } i3c_mask_slave_int_stat [18:18] = 1'h0;
+            field {
+                desc = "apb_pcie_masked_int_stat_qspi_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.qspi_mask_int_stat";
+            } qspi_mask_int_stat [19:19] = 1'h0;
+            field {
+                desc = "apb_pcie_masked_int_stat_uart_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.uart_mask_int_stat";
+            } uart_mask_int_stat [20:20] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.reserved_23_21";
+            } reserved_23_21 [23:21] = 3'h0;
+            field {
+                desc = "apb_pcie_masked_int_stat_megaport_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.megaport_mask_int_stat";
+            } megaport_mask_int_stat [24:24] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_masked_int_stat.reserved_31_25";
+            } reserved_31_25 [31:25] = 7'h0;
+        };  // end register apb_pcie_masked_int_stat
+
+        reg apb_pcie_int_masks {
+            name = "APB PCIe Interrupt Mask Register";
+            IntelRsvd=false;
+            desc = "This register gives the 'masked' status of any interrupts that have been steered to the
+                    PCIe master.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "apb_pcie_int_masks_cport_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.cport_int_mask";
+            } cport_int_mask [7:0] = 8'h0;
+            field {
+                desc = "apb_pcie_int_masks_epl_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.epl_int_mask";
+            } epl_int_mask [15:8] = 8'h0;
+            field {
+                desc = "apb_pcie_int_masks_i3c_fpga_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.i3c_fpga_int_mask";
+            } i3c_fpga_int_mask [16:16] = 1'h0;
+            field {
+                desc = "apb_pcie_int_masks_i3c_alt_boot_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.i3c_alt_boot_int_mask";
+            } i3c_alt_boot_int_mask [17:17] = 1'h0;
+            field {
+                desc = "apb_pcie_int_masks_i3c_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.i3c_int_mask";
+            } i3c_int_mask [18:18] = 1'h0;
+            field {
+                desc = "apb_pcie_int_masks_qspi_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.qspi_int_stat";
+            } qspi_int_stat [19:19] = 1'h0;
+            field {
+                desc = "apb_pcie_int_masks_uart_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.uart_int_mask";
+            } uart_int_mask [20:20] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.reserved_23_21";
+            } reserved_23_21 [23:21] = 3'h0;
+            field {
+                desc = "apb_pcie_int_masks_megaport_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.megaport_int_mask";
+            } megaport_int_mask [24:24] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_pcie_int_masks.reserved_31_25";
+            } reserved_31_25 [31:25] = 7'h0;
+        };  // end register apb_pcie_int_masks
+
+        reg apb_cport_doorbell {
+            name = "APB Cport Doorbell Register";
+            IntelRsvd=false;
+            desc = "This register allows the Cport master to generate doorbell interrupts to the PCIe master
+                    and/or link processors.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "If set, generates the doorbell interrupts to the EPLSBit 0 = EPL 0
+                        Bit 1 = EPL 1, etc
+                        Bits are self-clearing";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_cport_doorbell.doorbell_int_to_epl";
+            } doorbell_int_to_epl [7:0] = 8'h0;
+            field {
+                desc = "Determines the doorbell number to ring on the selected EPL(s)";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_cport_doorbell.epl_doorbell_number";
+            } epl_doorbell_number [10:8] = 3'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_doorbell.reserved_15_11";
+            } reserved_15_11 [15:11] = 5'h0;
+            field {
+                desc = "If set, generates the Cport doorbell interrupt to the PCIe
+                        Bits are self-clearing";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_cport_doorbell.doorbell_int_to_pcie";
+            } doorbell_int_to_pcie [23:16] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_doorbell.reserved_31_24";
+            } reserved_31_24 [31:24] = 8'h0;
+        };  // end register apb_cport_doorbell
+
+        reg apb_cport_raw_int_stat {
+            name = "APB Cport Raw Interrupt Status Register";
+            IntelRsvd=false;
+            desc = "This register gives the 'raw' status of any interrupts that have been steered to the Cport
+                    master.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "apb_cport_raw_int_stat_cport_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.cport_raw_int_stat";
+            } cport_raw_int_stat [7:0] = 8'h0;
+            field {
+                desc = "apb_cport_raw_int_stat_epl_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.epl_raw_int_stat";
+            } epl_raw_int_stat [15:8] = 8'h0;
+            field {
+                desc = "apb_cport_raw_int_stat_i3c_fpga_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.i3c_fpga_raw_int_stat";
+            } i3c_fpga_raw_int_stat [16:16] = 1'h0;
+            field {
+                desc = "apb_cport_raw_int_stat_i3c_alt_boot_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.i3c_alt_boot_raw_int_stat";
+            } i3c_alt_boot_raw_int_stat [17:17] = 1'h0;
+            field {
+                desc = "apb_cport_raw_int_stat_i3c_slave_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.i3c_slave_raw_int_stat";
+            } i3c_slave_raw_int_stat [18:18] = 1'h0;
+            field {
+                desc = "apb_cport_raw_int_stat_qspi_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.qspi_raw_int_stat";
+            } qspi_raw_int_stat [19:19] = 1'h0;
+            field {
+                desc = "apb_cport_raw_int_stat_uart_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.uart_raw_int_stat";
+            } uart_raw_int_stat [20:20] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.reserved_23_21";
+            } reserved_23_21 [23:21] = 3'h0;
+            field {
+                desc = "apb_cport_raw_int_stat_megaport_raw_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.megaport_raw_int_stat";
+            } megaport_raw_int_stat [24:24] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_raw_int_stat.reserved_31_25";
+            } reserved_31_25 [31:25] = 7'h0;
+        };  // end register apb_cport_raw_int_stat
+
+        reg apb_cport_masked_int_stat {
+            name = "APB Cport Masked Interrupt Status Register";
+            IntelRsvd=false;
+            desc = "This register gives the 'masked' status of any interrupts that have been steered to the
+                    Cport master.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "apb_cport_masked_int_stat_cport_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.cport_mask_int_stat";
+            } cport_mask_int_stat [7:0] = 8'h0;
+            field {
+                desc = "apb_cport_masked_int_stat_epl_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.epl_mask_int_stat";
+            } epl_mask_int_stat [15:8] = 8'h0;
+            field {
+                desc = "apb_cport_masked_int_stat_i3c_mask_slave_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.i3c_mask_slave_int_stat";
+            } i3c_mask_slave_int_stat [16:16] = 1'h0;
+            field {
+                desc = "apb_cport_masked_int_stat_i3c_mask_slave_int_stat_17";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.i3c_mask_slave_int_stat_17";
+            } i3c_mask_slave_int_stat_17 [17:17] = 1'h0;
+            field {
+                desc = "apb_cport_masked_int_stat_i3c_mask_slave_int_stat_18";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.i3c_mask_slave_int_stat_18";
+            } i3c_mask_slave_int_stat_18 [18:18] = 1'h0;
+            field {
+                desc = "apb_cport_masked_int_stat_qspi_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.qspi_mask_int_stat";
+            } qspi_mask_int_stat [19:19] = 1'h0;
+            field {
+                desc = "apb_cport_masked_int_stat_uart_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.uart_mask_int_stat";
+            } uart_mask_int_stat [20:20] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.reserved_23_21";
+            } reserved_23_21 [23:21] = 3'h0;
+            field {
+                desc = "apb_cport_masked_int_stat_megaport_mask_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.megaport_mask_int_stat";
+            } megaport_mask_int_stat [24:24] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_masked_int_stat.reserved_31_25";
+            } reserved_31_25 [31:25] = 7'h0;
+        };  // end register apb_cport_masked_int_stat
+
+        reg apb_cport_int_masks {
+            name = "APB Cport Interrupt Mask Register";
+            IntelRsvd=false;
+            desc = "This register gives the 'masked' status of any interrupts that have been steered to the
+                    Cport master.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "apb_cport_int_masks_cport_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.cport_int_mask";
+            } cport_int_mask [7:0] = 8'h0;
+            field {
+                desc = "apb_cport_int_masks_epl_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.epl_int_mask";
+            } epl_int_mask [15:8] = 8'h0;
+            field {
+                desc = "apb_cport_int_masks_i3c_fpga_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.i3c_fpga_int_mask";
+            } i3c_fpga_int_mask [16:16] = 1'h0;
+            field {
+                desc = "apb_cport_int_masks_i3c_alt_boot_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.i3c_alt_boot_int_mask";
+            } i3c_alt_boot_int_mask [17:17] = 1'h0;
+            field {
+                desc = "apb_cport_int_masks_i3c_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.i3c_int_mask";
+            } i3c_int_mask [18:18] = 1'h0;
+            field {
+                desc = "apb_cport_int_masks_qspi_int_stat";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.qspi_int_stat";
+            } qspi_int_stat [19:19] = 1'h0;
+            field {
+                desc = "apb_cport_int_masks_uart_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.uart_int_mask";
+            } uart_int_mask [20:20] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.reserved_23_21";
+            } reserved_23_21 [23:21] = 3'h0;
+            field {
+                desc = "apb_cport_int_masks_megaport_int_mask";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.megaport_int_mask";
+            } megaport_int_mask [24:24] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_cport_int_masks.reserved_31_25";
+            } reserved_31_25 [31:25] = 7'h0;
+        };  // end register apb_cport_int_masks
+
+        reg apb_route_table_update {
+            name = "APB Route Table Update Register";
+            IntelRsvd=false;
+            desc = "This register provides pipeline delay-matched control signals to the PPE's route table
+                    blocks to allow synchronized switchover of tables.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Controls pipeline delay-matched signal to each Megaport
+                        0 - Route table partition A active1 - Route table partition B active";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_route_table_update.active_table";
+            } active_table [0:0] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_route_table_update.reserved_31_1";
+            } reserved_31_1 [31:1] = 31'h0;
+        };  // end register apb_route_table_update
+
+        reg apb_route_table_sync {
+            name = "APB Route Table Sync Register";
+            IntelRsvd=false;
+            desc = "This register provides a programmable interval, pipeline delay-matched control signal to
+                    the PPE's to allow synchronization of PPEs.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "Divider for delay-matched sync-pulse to each Megaport to allow for PPE synchronization. A single-clock-wide pulse is generated at the rate of core_clk/sync_pulse_div.Note: 0x00 and 0x01 are invalid settings however there is no hardware enforcement.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_route_table_sync.sync_pulse_div";
+            } sync_pulse_div [15:0] = 16'h0100;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_route_table_sync.reserved_30_16";
+            } reserved_30_16 [30:16] = 15'h0;
+            field {
+                desc = "Enable for sync-pulse generator 
+                        0 - Sync pulse generator disabled1 - Sync pulse generator enabled";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_route_table_sync.sync_pulse_en";
+            } sync_pulse_en [31:31] = 1'h0;
+        };  // end register apb_route_table_sync
+
+        reg apb_route_fifo_stat {
+            name = "APB Route FIFO Status Register";
+            IntelRsvd=false;
+            desc = "This register monitors FIFO status signals from the megaport CSR access
+                    FIFOs.";
+            regwidth = 32;
+            accesswidth = 32;
+
+            field {
+                desc = "FIFO empty flags for the 8 Megaport Pairs Bit 0 = MPP0/1, Bit 1= MPP 2/3, Bit2= MPP4/5, etc
+                        0 - Write FIFO not empty1 - Write FIFO empty";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_route_fifo_stat.mpg_fifo_empty70";
+            } mpg_fifo_empty70 [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_route_fifo_stat.reserved_15_8";
+            } reserved_15_8 [15:8] = 8'h0;
+            field {
+                desc = "FIFO threshold exceeded flags for the 8 Megaport Pairs. Threshold value is set in MPP CSR space. Bit 0 = MPP0/1, Bit 1= MPP 2/3, Bit2= MPP4/5, etc 
+                        0 - Write FIFO not exceeding programmable threshold1 - Write FIFO exceeding programmable threshold";
+                AccessType = "RO/V";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_route_fifo_stat.mpg_fifo_thresh70";
+            } mpg_fifo_thresh70 [23:16] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.apb_route_fifo_stat.reserved_31_24";
+            } reserved_31_24 [31:24] = 8'h0;
+        };  // end register apb_route_fifo_stat
+
+        reg apb_lm_f00 {
+            name = "APB Logic Monitor Control Register";
+            IntelRsvd=false;
+            desc = "Placeholder for CSRs that will control/monitor the processor complex's logic
+                    monitor.";
+            regwidth = 32;
+            accesswidth = 32;
+            field {
+                desc = "placeholder for now";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_lm_f00.lm_foo";
+            } lm_foo [31:0] = 32'h0;
+        };  // end register apb_lm_f00
+
+        reg apb_lm_trig_f00 {
+            name = "APB Logic Monitor Cross-Trigger Register";
+            IntelRsvd=false;
+            desc = "Placeholder for CSRs that will control/monitor the triggers between the various blocks'
+                    logic monitors.";
+            regwidth = 32;
+            accesswidth = 32;
+            field {
+                desc = "placeholder for now";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.apb_lm_trig_f00.lm_tri_foo";
+            } lm_tri_foo [31:0] = 32'h0;
+        };  // end register apb_lm_trig_f00
+

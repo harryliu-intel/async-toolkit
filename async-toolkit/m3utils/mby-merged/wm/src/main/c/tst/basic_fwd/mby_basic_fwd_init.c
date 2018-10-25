@@ -78,7 +78,7 @@ void basic_fwd_init
     prof_action->PROFILE_VALID = 1;
     prof_action->PROFILE       = profile;
 
-    wcm_tcam_cfg_r * wcm_tcam_cfg = &(rx_top_map->cgrp_b.WCM_TCAM_CFG[slice][profile]);
+    wcm_tcam_cfg_r * wcm_tcam_cfg = &(rx_top_map->cgrp_b.B.WCM_TCAM_CFG[slice][profile]);
 
     wcm_tcam_cfg->START_COMPARE = 1;
     wcm_tcam_cfg->SELECT_TOP    = 0x0;
@@ -86,7 +86,7 @@ void basic_fwd_init
     wcm_tcam_cfg->SELECT1       = 0x8;
     wcm_tcam_cfg->CHUNK_MASK    = 0xffff;
 
-    wcm_tcam_cfg = &(rx_top_map->cgrp_b.WCM_TCAM_CFG[slice+1][profile]);
+    wcm_tcam_cfg = &(rx_top_map->cgrp_b.B.WCM_TCAM_CFG[slice+1][profile]);
     wcm_tcam_cfg->SELECT_TOP    = 0x0;
     wcm_tcam_cfg->SELECT0       = 0x7;
     wcm_tcam_cfg->SELECT1       = 0x7;
@@ -94,27 +94,27 @@ void basic_fwd_init
     wcm_tcam_cfg->SELECT3       = 0x6;
     wcm_tcam_cfg->CHUNK_MASK    = 0xffff;
 
-    wcm_tcam_cfg = &(rx_top_map->cgrp_b.WCM_TCAM_CFG[slice+2][profile]);
+    wcm_tcam_cfg = &(rx_top_map->cgrp_b.B.WCM_TCAM_CFG[slice+2][profile]);
     wcm_tcam_cfg->START_COMPARE = 1;
 
     /* Set KEYS to DMAC. */
-    wcm_tcam_r * wcm_tcam_entry = &(rx_top_map->cgrp_b.WCM_TCAM[slice][index]);
+    wcm_tcam_r * wcm_tcam_entry = &(rx_top_map->cgrp_b.B.WCM_TCAM[slice][index]);
     wcm_tcam_entry->KEY            = dmac & 0xffff;
     wcm_tcam_entry->KEY_INVERT     = ~wcm_tcam_entry->KEY;
     wcm_tcam_entry->KEY_TOP        = 0x0;
     wcm_tcam_entry->KEY_TOP_INVERT = 0x0;
 
-    wcm_tcam_entry = &(rx_top_map->cgrp_b.WCM_TCAM[slice+1][index]);
+    wcm_tcam_entry = &(rx_top_map->cgrp_b.B.WCM_TCAM[slice+1][index]);
     wcm_tcam_entry->KEY            = (dmac >> 16) & 0xffffffff;
     wcm_tcam_entry->KEY_INVERT     = ~wcm_tcam_entry->KEY;
     wcm_tcam_entry->KEY_TOP        = 0x0;
     wcm_tcam_entry->KEY_TOP_INVERT = 0x0;
 
-    wcm_action_cfg_r * const wcm_action_cfg = &(rx_top_map->cgrp_b.WCM_ACTION_CFG[ram_num]);
+    wcm_action_cfg_r * const wcm_action_cfg = &(rx_top_map->cgrp_b.B.WCM_ACTION_CFG[ram_num]);
     wcm_action_cfg->ENABLE_0 = TRUE;
     wcm_action_cfg->INDEX_0  = slice + 1;
 
-    wcm_action_r * const wcm_action = &(rx_top_map->cgrp_b.WCM_ACTION[ram_num][index]);
+    wcm_action_r * const wcm_action = &(rx_top_map->cgrp_b.B.WCM_ACTION[ram_num][index]);
     FM_SET_FIELD(wcm_action->ACTION0, MBY_FFU_ACTION, SET1_24B_INDEX, 4);
     FM_SET_FIELD(wcm_action->ACTION0, MBY_FFU_ACTION, SET1_24B_VALUE, (0x100 + fwd_port));
     FM_SET_FIELD(wcm_action->ACTION0, MBY_FFU_ACTION, PREC, 1);

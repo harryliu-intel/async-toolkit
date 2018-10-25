@@ -9,17 +9,13 @@
 
 #include "mby_common.h"
 #include "mby_bitfield.h"
+#include "mby_maskgen.h"
+#include "mby_triggers_regs.h"
 
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 // Defines:
-#define MBY_TRG_IN_REGS    mby_ppe_trig_apply_map      * const trig_apply_map, \
-                           mby_ppe_trig_apply_misc_map * const trig_apply_misc_map, \
-                           mby_ppe_trig_usage_map      * const trig_usage_map
-
-#define MBY_TRG_IN_REGS_P                                      trig_apply_map, \
-                                                               trig_apply_misc_map, \
-                                                               trig_usage_map
+#define MBY_TRIGGERS_COUNT  96
 
 // Enums:
 

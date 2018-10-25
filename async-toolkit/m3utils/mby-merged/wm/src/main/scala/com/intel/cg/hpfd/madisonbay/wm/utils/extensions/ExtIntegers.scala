@@ -24,4 +24,10 @@ trait ExtIntegers[A] {
 
   def incWithUIntSaturation(number: A): A = incWithSaturation(number, SaturationUInt)
 
+  def addWithUByteSaturation(number: A, number2: Long): A = addWithSaturation(number, number2, SaturationUByte)
+
+  def addWithUShortSaturation(number: A, number2: Long): A = addWithSaturation(number, number2, SaturationUShort)
+
+  def addWithUIntSaturation(number: A, number2: Long): A = addWithSaturation(number, number2, SaturationUInt)
+
 }

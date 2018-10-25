@@ -292,7 +292,7 @@ EOF
             default => [
                 "-lca", "-kdb", "-debug_access+all",
                 "-sverilog",      "-override_timescale=1ps/1fs",
-                "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
+                #"$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
                 "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
                 "-liblist_work",  "-liblist_nocelldiff",
                 "+warn=noFCICIO", # Removes note from log file: Note-[FCICIO] Instance coverage is ON

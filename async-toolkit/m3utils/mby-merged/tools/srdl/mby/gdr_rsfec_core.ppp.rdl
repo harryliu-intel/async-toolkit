@@ -1,0 +1,736 @@
+// FILEINFO common_defs.rdl:1
+// ##########################################################################
+//
+// $Id: //depot/tmbu/eng/rdldk/main/rdlpp/common_defs.rdl#2 $
+//
+// Module:      Common
+//
+// Description: Global RDL definitions
+//
+// ##########################################################################
+// intel_start_of_header
+//
+// INTEL CONFIDENTIAL
+// Copyright 2014 Intel Corporation
+//
+// The source code contained or described herein and all documents related
+// to the source code ("Material") are owned by Intel Corporation or
+// its suppliers or licensors. Title to the Material remains with Intel
+// Corporation or its suppliers and licensors. The Material contains trade
+// secrets and proprietary and confidential information of Intel or its
+// suppliers and licensors. The Material is protected by worldwide copyright
+// and trade secret laws and treaty provisions. No part of the Material
+// may be used, copied, reproduced, modified, published, uploaded, posted,
+// transmitted, distributed, or disclosed in any way without Intel's prior
+// express written permission.
+//
+// No license under any patent, copyright, trade secret or other intellectual
+// property right is granted to or conferred upon you by disclosure or
+// delivery of the Materials, either expressly, by implication, inducement,
+// estoppel or otherwise. Any license under such intellectual property
+// rights must be express and approved by Intel in writing.
+//
+// intel_end_of_header
+// ##########################################################################
+
+// User defined properties --------------------------------------------------
+// Describe indexing of tables. Syntax of the string is the same as the desc
+// property.
+property indexdesc { type = string; component = reg | addrmap | regfile; };
+
+// Address map size: Specify the required size for an address map, used to
+// reserve additional space for a block.
+property addrmapsize { type = number; component = addrmap; };
+
+// Section start: User specified document break that leads documentation
+// generator to segment output into hierarchical folders
+property sectionstart { type = boolean; component = addrmap; };
+// Properties to control User manual section and register order
+property umsections { type = string; component = addrmap; };
+property umgroup    { type = string; component = addrmap | reg | regfile; };
+property umregorder { type = number; component = reg; };
+
+// Used specified description of an addrmap to show up in pdf.
+// Syntax of the string is the same as the desc property.
+property longdesc { type = string; component = addrmap; };
+
+// Indirect addressing: Specify indexing field and number of entries for tables
+// that use indirect addressing.
+property indirectindex { type = string; component = reg; };
+property indirectentries { type = number; component = reg; };
+
+// Write exclusive: Indicates that this field is the only one present in the
+// register access word, and any reserved bits can be written without side-
+// effects, both now and in the future.
+property wrexcl { type = boolean; component = field; };
+
+// Sub-unit: Indicates that the addrmap is to be treated as a sub-unit.
+property subunit { type = boolean; component = addrmap; default = false; };
+
+// Release name: Set the official name to be used for this chip when naming
+// files etc. (Only to be used for address maps that represent the chip top.)
+property releasename { type = string; component = addrmap; };
+// release name by be used by software (for prefixing etc)
+property swreleasename { type = string; component = addrmap; };
+// release name by be used by genhdr (for prefixing etc)
+property hdrreleasename { type = string; component = addrmap; };
+
+// Maximum sizes: properties to set the maximum width of fields and maximum
+// number of entries in an array (both normal and indirectly addressed). Used to
+// allow the parser to checked that fields and registers have been placed in a
+// scalable way.
+property maxfieldwidth { type = number; component = field; };
+property maxentries { type = number; component = reg; };
+
+// RTL Parameters: properties that lets the width of an element be controlled by
+// a parameter in RTL, and allows a parameter to control whether an element is
+// included or not.
+property widthparam { type = string; component = field; };
+property entriesparam { type = string; component = addrmap | reg | regfile; };
+property presentparam { type = string; component = addrmap | reg | regfile | field; };
+
+// Allow addrmap with allowoverlap = true to have an address space which
+// overlap the address space of other addrmaps.
+property allowoverlap { type = boolean; component = addrmap | reg | regfile; default = false; };
+
+// Indicate that a field is an array of bytes
+property bytearray { type = boolean; component = field; default = false; };
+
+// Roots: Specifies the root addrmaps to be included in the model.
+// Any roots not specified are removed from the model.
+// The roots are listed in the string as addrmap IDs (?*-globs) separated
+// by ' ' (space).
+// The roots can only be specified by a default assignment to the property
+// in the root scope. No other assignment has any effect.
+//   default roots = "<list-of-roots-separated-by-space>"; // In root scope
+property roots { type = string; component = addrmap; };
+
+// HDL Path property for UVM Back-door access. Paths are relative to component.
+// When using generated RTL: only addrmap property is required and should be
+// assigned per instance.
+// All automatic code can be inferred. This includes the name of the addrmap,
+// and paths for reg, regfile and field. Paths should be separated with /
+property hdlpath { type = string; component = addrmap | reg | regfile | field; };
+
+// Field type definitions ---------------------------------------------------
+// Common definitions of _CFG, _STAT, _HOLD, _CHLD, and _INTEN fields
+field cfg_f {
+  sw = rw;
+  hw = r;
+};
+field stat_f {
+  sw = r;
+  hw = w;
+};
+field hold_f {
+  sw = rw;
+  woclr;
+  hw = w;
+  stickybit;
+};
+field hold_intr_f {
+  sw = rw;
+  woclr;
+  hw = w;
+  stickybit;
+  level intr;
+};
+field chld_intr_f {
+  sw = rw;
+  woclr;
+  hw = w;
+  stickybit;
+  bothedge intr;
+};
+field inten_f {
+  sw = rw;
+  hw = na;
+};
+// Counters with and without option for software to clear
+field count_f {
+  sw = r;
+  hw = rw;
+  counter;
+};
+field count_clr_f {
+  sw = rw;
+  hw = rw;
+  counter;
+};
+// Other common fields: read-only/write-only
+field ro_f {
+  sw = r;
+  hw = w;
+};
+field wo_f {
+  sw = w;
+  hw = r;
+};
+field rw_f {
+  sw = rw;
+  hw = rw;
+};
+
+// Set default access width to 32 bits
+ default accesswidth = 32;
+
+// The functions below will ease the implementation of stat/hold/chld/inten
+// registers via the three steps listed below.
+// (example below uses <p .. p> to enclose Perl to avoid Perl pre-processing on
+// the example snippets. Replace by proper Perl enclosing when used.
+// Step #1: First create a Perl hash with all the fields defined, see example
+// below:
+//
+//   #// The 'incl' field contains a letter for each of the register types where the field is to be included.
+//   #// S: Include in STAT  (status register)
+//   #// H: Include in HOLD  (hold register)
+//   #// C: Include in CHLD  (change hold register)
+//   #// I: Include in INTEN (interrupt enable register). When I is present the change hold bit is used as interrupt source if present, else the hold bit.
+//   <p my $fields =    [{'name' => 'dataRcvd', 'bits' => '0:0',   'incl' =>  'H',    'desc' => "Data active on input."},
+//                       {'name' => 'sfIn',     'bits' => '1:1',   'incl' =>  'SH',   'desc' => "Signal fail present on the Decap input."},
+//                       {'name' => 'lfd',      'bits' => '10:10', 'incl' =>  'SHCI', 'desc' => "Loss of frame delineation."}]; p>
+//
+// Step #2: Create each of the needed registers:
+//
+//  reg GFTS_DEC_STAT {
+//    desc = "Decap status";
+//    <p generate_fields('STAT',$fields); p>
+//  } GFTS_DEC_STAT @ 0x008;
+//
+//  reg GFTS_DEC_HOLD {
+//    desc = "Decap status hold register";
+//    <p generate_fields('HOLD',$fields); p>
+//  } GFTS_DEC_HOLD @ 0x010;
+//
+//  reg GFTS_DEC_CHLD {
+//    desc = "Decap status change hold register";
+//    <p generate_fields('CHLD',$fields); p>
+//  } GFTS_DEC_CHLD @ 0x014;
+//
+//  reg GFTS_DEC_INTEN {
+//    desc = "Decap interrupt enable register";
+//    <p generate_fields('INTEN',$fields); p>
+//  } GFTS_DEC_INTEN @ 0x018;
+//
+// Step #3: Finally generate the interrupt connections:
+//
+//  Single entry in hold, chld & inten:
+//    <p generate_int_connect('GFTS_DEC_HOLD', 'GFTS_DEC_CHLD', 'GFTS_DEC_INTEN', $fields); p>
+//    Generates code like:
+//      GFTS_DEC_HOLD.lfd->enable = GFTS_DEC_INTEN.lfd;
+//
+//  Multiple entries in hold, chld & inten. Last argument is number of entries in array:
+//    <p generate_int_connect('GFTS_DEC_HOLD', 'GFTS_DEC_CHLD', 'GFTS_DEC_INTEN', $fields, entries); p>
+//    Generates code like:
+//      GFTS_DEC_HOLD[0].lfd->enable         = GFTS_DEC_INTEN[0].lfd;
+//      GFTS_DEC_HOLD[1].lfd->enable         = GFTS_DEC_INTEN[1].lfd;
+//      GFTS_DEC_HOLD[2].lfd->enable         = GFTS_DEC_INTEN[2].lfd;
+//      ...
+//      GFTS_DEC_HOLD[entries-1].lfd->enable = GFTS_DEC_INTEN[entries-1].lfd;
+//
+// FILEINFO common_defs.rdl:279
+// FILEINFO /p/psg/legacy/data1/mstribae/p4work/work1/dtc/fpga/modules/gdr_rsfec/main/rdl/gdr_rsfec_core.rdl:1
+// ##########################################################################
+//
+// $Id: //depot/ssg/dtc/fpga/modules/gdr_rsfec/main/rdl/gdr_rsfec_core.rdl#7 $
+//
+// Module:      Gunderson Rock (GDR) RSFEC Core
+//
+// Description: RSFEC Core registers
+//
+// ##########################################################################
+// intel_start_of_header
+//
+// INTEL CONFIDENTIAL
+// Copyright 2018 Intel Corporation
+//
+// The source code contained or described herein and all documents related
+// to the source code ("Material") are owned by Intel Corporation or
+// its suppliers or licensors. Title to the Material remains with Intel
+// Corporation or its suppliers and licensors. The Material contains trade
+// secrets and proprietary and confidential information of Intel or its
+// suppliers and licensors. The Material is protected by worldwide copyright
+// and trade secret laws and treaty provisions. No part of the Material
+// may be used, copied, reproduced, modified, published, uploaded, posted,
+// transmitted, distributed, or disclosed in any way without Intel's prior
+// express written permission.
+//
+// No license under any patent, copyright, trade secret or other intellectual
+// property right is granted to or conferred upon you by disclosure or
+// delivery of the Materials, either expressly, by implication, inducement,
+// estoppel or otherwise. Any license under such intellectual property
+// rights must be express and approved by Intel in writing.
+//
+// intel_end_of_header
+// ##########################################################################
+
+addrmap gdr_rsfec_core_block {
+
+// =======================================================================
+// General stuff
+// =======================================================================
+
+  // Split this out as a section for a separate chapter for documentation
+  sectionstart = true;
+  addrmapsize = 0x400;
+  addressing  = fullalign;
+// FILEINFO /p/psg/legacy/data1/mstribae/p4work/work1/dtc/fpga/modules/gdr_rsfec/main/rdl/gdr_rsfec_core.rdl:49
+
+// =======================================================================
+// RSFEC registers
+// =======================================================================
+  desc        = "RS-FEC Core Submodule Registers";
+  longdesc    = "When configuring an N-lane client, N <= 4, the lowest numbered entry allocated to that client is used.[br]
+                 When configuring 8- and 16-lane clients the lowest numbered entry in each participating submodule are used. I.e. entry number 0 in each participating submodule shall be configured.[br]
+                 For 8- and 16-lane clients, status that applies to the client as a whole is reported in RSFEC_LANES_RX_*[0] in the lowest numbered participating submodule.";
+
+  regfile gdr_rsfec_core_regs {
+
+    reg RSFEC_CORE_INFO {
+      desc = "RSFEC core 4-lane submodule static info";
+
+      enum maxClw_enum {
+        maxClw4   = 2'd0 { desc = "Max client width is 4 lanes, i.e. this core is standalone."; };
+        maxClw8   = 2'd1 { desc = "Max client width is 8 lanes, i.e. this is one of 2 interconnected submodules."; };
+        maxClw16  = 2'd2 { desc = "Max client width is 16 lanes, i.e. this is one of 4 interconnected submodules."; };
+      };
+
+      stat_f maxClw[2];   maxClw->desc   = "Maximum client width supported:";
+                          maxClw->encode = maxClw_enum;
+      stat_f sliceNum[2]; sliceNum->desc = "Slicenumber for this submodule. 0 if max client width is 4, 0 or 1 if max client width is 8, 0..3 if max client width is 16.";
+      // stat_f vers[31:16]; vers->desc    = "Version ?.";
+    } RSFEC_CORE_INFO;
+
+    // ================================================
+    // Configuration and mode bits
+    // ================================================
+
+    reg RSFEC_CORE_CFG {
+      desc = "RSFEC core 4-lane submodule configuration";
+
+      enum frac_enum {
+        ln1111    = 3'd0 { desc = "4 clients each 1 lane."; };
+        ln112     = 3'd1 { desc = "1 client with 2 lanes and 2 clients each 1 lane. I.e. lanes 3,2,(1,0)."; };
+        ln211     = 3'd2 { desc = "2 clients each 1 lane and 1 client with 2 lanes. I.e. lanes (3,2),1,0."; };
+        ln22      = 3'd3 { desc = "2 clients each 2 lanes. I.e. lanes (3,2),(1,0)."; };
+        ln4       = 3'd4 { desc = "1 client with 4 lanes (~100G). I.e. lanes (3,2,1,0)."; };
+        ln8       = 3'd5 { desc = "Part of client with 8 lanes (~200G). A pair of submodules (0,1) or (2,3) must be allocated the client and both submodules must be configured the same."; };
+        ln16      = 3'd6 { desc = "Part of client with 16 lanes (~400G). A quad of submodules (0,1,2,3) must be allocated the client and all 4 submodules must be configured the same."; };
+      };
+
+      //----------------------------------------------
+      // Configuration with CRAM reset values
+      //----------------------------------------------
+      // Global configuration
+      cfg_f frac[3]             = 0; frac->desc          = "Main operation mode:";
+                                     frac->encode        = frac_enum;
+      cfg_f twoLaneEn[4:4]      = 0; twoLaneEn->desc     = "Used in ln4 mode only. If set, then the patterns transmitted in the last AM on FEC lanes 1,2,3 become those for PCS lanes 17,18,19.[br]
+                                                            If clear then the pattern for PCS lane 16 is transmitted in the last AM on all 4 FEC lanes.[br]
+                                                            Shall only be set if transmitting on 2 physical lanes.";
+      cfg_f engPcsScrDis[1]     = 0; engPcsScrDis->desc  = "Engineering mode. Should be zero during normal operation.[br]
+                                                            Disable scrambling/descrambling of the transcoded 257b blocks with 8- and 16-lane clients.";
+      cfg_f engEnterAlign[11:8] = 0; engEnterAlign->desc = "Engineering mode, should be zero during normal operation.[br]
+                                                            When non-zero it specifies the number of consecutive error-free/correctable FEC codewords before entering the locked/aligned state.
+                                                            The first of these codewords must be error-free. The value zero causes the standard's value of 2 to be used. Only applicable for 32GFC.";
+      cfg_f engExitAlign[15:12] = 0; engExitAlign->desc  = "Engineering mode, should be zero during normal operation.[br]
+                                                            When non-zero it specifies the number of consecutive uncorrectable FEC codewords causing exit of the locked/aligned state.
+                                                            The RSFEC_LANE_RX_STAT.fec3Bad is then based on this number (instead of 3, the standard value).";
+      cfg_f engTest[31:16]      = 0; engTest->desc       = "Engineering mode, should be zero during normal operation.[br]
+                                                            Controls various internal test features.";
+    } RSFEC_CORE_CFG;
+
+    reg RSFEC_LANE_CFG0 {
+      desc = "RSFEC per lane configuration";
+      indexdesc = "PMA lane number";
+
+      enum fecSel_enum {
+        rs528      = 2'd0 { desc = "Use RS(528,514)."; };
+        rs272      = 2'd1 { desc = "Use RS(272,258)."; };
+        rs544      = 2'd3 { desc = "Use RS(544,514)."; };
+      };
+
+      //----------------------------------------------
+      // Configuration with CRAM reset values
+      //----------------------------------------------
+      // Per lane configuration
+      cfg_f fecSel[2]        = 0; fecSel->desc        = "Selects the RS FEC employed in the encoder and decoder.";
+                                  fecSel->encode      = fecSel_enum;
+      cfg_f fc[1]            = 0; fc->desc            = "Set to enable Fibre Channel mode.";
+      cfg_f fcScr[1]         = 0; fcScr->desc         = "Set to enable PN-5280 scrambling/descrambling of FEC codewords.[br]
+                                                         Must be set to 1 when single lane client and RSFEC_LANE_CFG0.fc=1 (i.e. 32GFC), otherwise it must be set to 0.";
+      cfg_f indicByp[1]      = 0; indicByp->desc      = "Bypass error indication (to reduce latency):[br]
+                                                         0: Sync headers in the 66b words extracted from uncorrectable FEC codewords are
+                                                         deliberately invalidated.[br]
+                                                         1: 66b words extracted from uncorrectable codewords are not explicitly marked bad.
+                                                         When number of FEC symbol errors in a block of 8192 consecutive codewords has exceeded 417 with RS528, 6380 with RS544 and 800 with RS272, then
+                                                         sync header errors will be generated towards the PCS layer for a period of 60ms to 75ms.";
+      cfg_f corrByp[1]        = 0; corrByp->desc      = "Bypass error correction (to reduce latency). To be compliant .indicByp and .corrByp shall not both be set.[br]
+                                                         If both are set anyway, then Rx data is forwarded directly to the client without the client being notified of any errors.";
+      cfg_f transByp[1]       = 0; transByp->desc     = "Set to bypass transcoder and marker processing in both directions.";
+      cfg_f amSfTxRdSel[11:8] = 0; amSfTxRdSel->desc  = "Selects the value of the RD bit in the transmitted am_sf. It becomes [br]
+                                                         (amSfTxRdSel[3] AND degrSer) OR [br]
+                                                         (amSfTxRdSel[2] AND LD from peer) OR [br]
+                                                         (amSfTxRdSel[1] AND RD from client) OR amSfTxRdSel[0].[br]
+                                                         Applicable for 8- and 16-lane clients.";
+      cfg_f amSfTxLdSel[2]   = 0; amSfTxLdSel->desc   = "Selects the value of the LD bit in the transmitted am_sf. It becomes [br]
+                                                         (amSfTxLdSel[1] AND LD from client) OR amSfTxLdSel[0].[br]
+                                                         Applicable for 8- and 16-lane clients.";
+      cfg_f amSfTxRsrSel[2]  = 0; amSfTxRsrSel->desc  = "Selects the value of the reserved bit in the transmitted am_sf. It becomes [br]
+                                                         (amSfTxRsrSel[1] AND reserved bit from client) OR amSfTxRsrSel[0].[br]
+                                                         Applicable for 8- and 16-lane clients.";
+      cfg_f engJoinLanes[1]  = 0; engJoinLanes->desc  = "Engineering mode. Should be zero during normal operation.[br]
+                                                         Set to treat 2 PMA lanes as a single, logical FEC lane. Only used when two PMA lanes are aggregated, i.e. with a ~50G client.[br]
+                                                         If set, then a single locking instance is active and deskewing is not applicable.[br]
+                                                         The two lanes into the RSFEC core must be in lockstep. The two lanes would typically be carried by the same PAM4 transceiver.";
+      cfg_f engSfDis[1]      = 0; engSfDis->desc      = "Engineering mode. Should be zero during normal operation.[br]
+                                                         Disable consequent action on incoming signal fail.";
+      cfg_f engFec3BadDis[1] = 0; engFec3BadDis->desc = "Engineering mode. Should be zero during normal operation.[br]
+                                                         Set to disable consequent action of three bad FEC codewords.";
+      cfg_f engAm5BadDis[1]  = 0; engAm5BadDis->desc  = "Engineering mode. Should be zero during normal operation.[br]
+                                                         Set to disable consequent action of five bad alignment/codeword markers.";
+      cfg_f engBlkChkDis[1]  = 0; engBlkChkDis->desc  = "Engineering mode. Should be zero during normal operation.[br]
+                                                         Set to disable checks for client specific block types (then all 15 block types are treated as being valid). 
+                                                         Affects both 257b to 66b transcoding in Rx direction and RSFEC_LANE_TX_STAT/HOLD.blkInv detection in Tx direction.";
+      cfg_f engSwaps[4]      = 0; engSwaps->desc      = "Engineering mode. Should be zero during normal operation.[br]
+                                                         Controls various internal swaps.";
+      cfg_f engCons25g[1]    = 0; engCons25g->desc    = "Engineering mode. Should be zero during normal operation.[br]
+                                                         With 25GE the last bit in the codeword marker transmitted is set if this bit is set (Consortium style).[br]
+                                                         Otherwise the bit is clear (IEEE style).";
+    } RSFEC_LANE_CFG0[4];
+
+    // ===================================================================
+    // Additional configuration to support other protocols like e.g. FlexO
+    // ===================================================================
+    reg RSFEC_LANE_CFG1 {
+      desc = "RSFEC per lane custom configuration part 1";
+      indexdesc = "PMA lane number";
+      //--------------------------------------------------------------------------
+      // Enabling of custom AM and period, AM period and 1st/only AM pattern
+      //--------------------------------------------------------------------------
+      // Per lane configuration
+      cfg_f custAm1st[23:0] = 0;    custAm1st->desc       = "Only used when .custAmEn set.[br]
+                                                             First or only AM pattern to recognize on Rx. Bit order is right to left, so e.g. 0x2168C1 would be the standard value for 100GE/25GE.";
+      cfg_f custLog2Mrk[27:24] = 0; custLog2Mrk->desc     = "Only used when .custAmEn set.[br]
+                                                             Distance between markers on the lane is 2**.custLog2Mrk times 5280 bits (RS528) or 5440 bits (RS544 and RS272).[br]
+                                                             The maximum values is 10.[br]
+                                                             With 2-lane clients and wider the minimum value supported is 6 with RS528 and 5 with RS544/RS272.";
+      cfg_f custAmEn[31:31] = 0;    custAmEn->desc        = "If set, then the custom AM period and patterns are used.";
+    } RSFEC_LANE_CFG1[4];
+
+    reg RSFEC_LANE_CFG2 {
+      desc = "RSFEC per lane custom configuration part 2";
+      indexdesc = "Lane number";
+      //----------------------------------------------------------------------------------------------
+      // 2nd AM pattern used in aggregate modes. Only used if custom AM period and patterns enabled
+      //----------------------------------------------------------------------------------------------
+      // FEC lane patterns
+      cfg_f custAm2nd[23:0] = 0;    custAm2nd->desc       = "Only used when .custAmEn set.[br]
+                                                             Second AM pattern recognized in the Rx path in the aggregate modes to determine the FEC lane number. Bit order is right to left.[br]
+                                                             When PMA lanes 0,1 are allocated to a 2-lane client, then entries 0,1 specify the 2 patterns to match for that client.[br]
+                                                             When PMA lanes 2,3 are allocated to a 2-lane client, then entries 2,3 specify the 2 patterns to match for that client.[br]
+                                                             For a 4-lane client entries 0-3 specify the 4 patterns to match for the client.[br]
+                                                             For an 8-lane client entries 0-3 in the 1st (even) submodule in the pair specify the patterns for FEC lanes 0-3,[br]
+                                                             and entries 0-3 in the 2nd (odd) submodule specify the patterns for FEC lanes 4-7.[br]
+                                                             For a 16-lane client the entries in the 1st, 2nd, 3rd and 4th submodule specify the patterns [br]
+                                                             for FEC lanes 0-3, 4-7, 8-11 and 12-15 respectively.";
+    } RSFEC_LANE_CFG2[4];
+
+    // ===================================================================
+    // Additional configuration to support FEC degraded SER mechanism
+    // ===================================================================
+    reg RSFEC_LANE_CFG3 {
+      desc = "RSFEC per lane custom configuration part 3";
+      indexdesc = "Lane number";
+      cfg_f degrSerAct[32] = 0; degrSerAct->desc   = "FEC degraded SER activate threshold. If the number of symbol errors in a FEC degraded SER interval exceeds this, then the degrSer status is set.";
+    } RSFEC_LANE_CFG3[4];
+
+    reg RSFEC_LANE_CFG4 {
+      desc = "RSFEC per lane custom configuration part 4";
+      indexdesc = "Lane number";
+      cfg_f degrSerDeact[32]  = 0; degrSerDeact->desc = "FEC degraded SER deactivate threshold. If the number of symbol errors in a FEC degraded SER interval is less than this, then the degrSer status is cleared.";
+    } RSFEC_LANE_CFG4[4];
+
+    reg RSFEC_LANE_CFG5 {
+      desc = "RSFEC per lane custom configuration part 5";
+      indexdesc = "Lane number";
+      cfg_f degrSerIntvl[32]  = 0; degrSerIntvl->desc = "FEC degraded SER interval. Number of codewords over which symbol errors are counted when determining the degrSer status. If 0, then degrSer is cleared.";
+    } RSFEC_LANE_CFG5[4];
+
+
+    // ================================================
+    // Status bits (most of which have corresponding "hold" bits)
+    // ================================================
+    reg RSFEC_LANE_TX_STAT {
+      desc = "RSFEC per lane Tx status";
+      indexdesc = "PMA lane number";
+      stat_f hdrInv[1];             hdrInv->desc    = "PCS Tx 66b invalid sync header.";
+      stat_f blkInv[1];             blkInv->desc    = "PCS Tx 66b invalid block type.";
+      stat_f resync[1];             resync->desc    = "PCS Tx alignment/codeword marker resync.";
+      stat_f paceInv[1];            paceInv->desc   = "PCS Tx pacing violation:[br]
+                                                       With RS528 .paceInv is never set.[br]
+                                                       With RS544 and RS272 .paceInv is set when the layer above presents valid Tx data in more than 33 consecutive cycles.";
+      stat_f amSfTxIn[3];           amSfTxIn->desc  = "am_sf presented on Tx by upper layer. Only valid with 8- and 16-lane clients and only in entry 0 in the first RS-FEC submodule for the client.[br]
+                                                       Order is {RD bit (Remote Degraded), LD bit (Local Degraded), reserved bit}.";
+    } RSFEC_LANE_TX_STAT[4];
+
+    reg RSFEC_LANE_TX_HOLD {
+      desc = "RSFEC per lane Tx status hold";
+      indexdesc = "PMA lane number";
+      hold_f hdrInv[1];             hdrInv->desc    = "PCS Tx 66b invalid sync header.";
+      hold_f blkInv[1];             blkInv->desc    = "PCS Tx 66b invalid block type.";
+      hold_f resync[1];             resync->desc    = "PCS Tx alignment/codeword marker resync.";
+      hold_f paceInv[1];            paceInv->desc   = "PCS Tx pacing violation:[br]
+                                                       With RS528 .paceInv is never set.[br]
+                                                       With RS544 and RS272 .paceInv is set when the layer above presents valid Tx data in more than 33 consecutive cycles.";
+      hold_f amSfTxIn[3];           amSfTxIn->desc  = "am_sf presented on Tx by upper layer. Only valid with 8- and 16-lane clients and only in entry 0 in the first RS-FEC submodule for the client.[br]
+                                                       Order is {RD bit (Remote Degraded), LD bit (Local Degraded), reserved bit}.";
+    } RSFEC_LANE_TX_HOLD[4];
+
+    reg RSFEC_LANE_RX_STAT {
+      desc = "RSFEC per lane Rx status";
+      indexdesc = "PMA lane number";
+      stat_f sf[1];                 sf->desc        = "Incoming signal fail (transceiver unable to lock to signal).[br]
+                                                       One entry per PMA lane, regardless of RSFEC_CORE_CFG.frac.";
+      stat_f notLocked[1];          notLocked->desc = "Rx lane not locked.[br]
+                                                       Not locked to alignment/codeword markers (400GE/200GE/100GE/128GFC/50GE/25GE) or to FEC codewords (32GFC).[br]
+                                                       One entry per PMA lane, regardless of RSFEC_CORE_CFG.frac.";
+      stat_f fec3Bad[1];            fec3Bad->desc   = "Rx was locked (and aligned if part of an aggregation) but 3 consecutive FEC codewords could not be corrected.[br]
+                                                       Restarts the synchronization.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      stat_f am5Bad[1];             am5Bad->desc    = "Rx was locked (and aligned if part of an aggregation) but 5 consecutive alignment/codeword markers were not valid.[br]
+                                                       Restarts the synchronization.";
+      stat_f hiSer[1];              hiSer->desc     = "High symbol error rate.[br]
+                                                       Set when the number of symbol errors in a window of 8K consecutive codewords has exceeded 417 with RS528 and 6380 with RS544.[br]
+                                                       With RS272 the threshold is 800 symbol errors in a window of 16K codewords.[br]
+                                                       The bit remains set for 60ms to 75ms after the threshold has been reached.[br]
+                                                       If RSFEC_LANE_CFG0.indicByp = 1, then sync header errors will be generated towards the PCS layer while hiSer is set.[br]
+                                                       For 8- and 16-lane clients entry number 0 in the lowest numbered participating submodule is used.";
+      stat_f corrCw[1];             corrCw->desc    = "Set when a FEC codeword had one or more errors that were corrected.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      stat_f uncorrCw[1];           uncorrCw->desc  = "Set when a FEC codeword could not be corrected due to too many errors.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      stat_f corrCwBins[23:8];      corrCwBins->desc = "Set when 0-15 symbols were corrected in a codeword. LSB set if no err in a CW, MSB set if 15 symbols were corrected.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      stat_f degrSer[1];            degrSer->desc   = "Set when the FEC degraded SER status is set.[br]
+                                                       For 8- and 16-lane clients entry number 0 in the lowest numbered participating submodule is used.";
+      stat_f amSfRxIn[3];           amSfRxIn->desc  = "am_sf received from peer. Only valid with 8- and 16-lane clients and only in entry 0 in the first RS-FEC submodule for the client.[br]
+                                                       Order is {RD bit (Remote Degraded), LD bit (Local Degraded), reserved bit}.[br]
+                                                       For 8- and 16-lane clients entry number 0 in the lowest numbered participating submodule is used.";
+    } RSFEC_LANE_RX_STAT[4];
+
+    reg RSFEC_LANE_RX_HOLD {
+      desc = "RSFEC per lane Rx status hold";
+      indexdesc = "PMA lane number";
+      hold_f sf[1];                 sf->desc        = "Incoming signal fail (transceiver unable to lock to signal).[br]
+                                                       One entry per PMA lane, regardless of RSFEC_CORE_CFG.frac.";
+      hold_f notLocked[1];          notLocked->desc = "Rx lane not locked.[br]
+                                                       Not locked to alignment/codeword markers (400GE/200GE/100GE/128GFC/50GE/25GE) or to FEC codewords (32GFC).[br]
+                                                       One entry per PMA lane, regardless of RSFEC_CORE_CFG.frac.";
+      hold_f fec3Bad[1];            fec3Bad->desc   = "Rx was locked (and aligned if part of an aggregation) but 3 consecutive FEC codewords could not be corrected.[br]
+                                                       Restarts the synchronization.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      hold_f am5Bad[1];             am5Bad->desc    = "Rx was locked (and aligned if part of an aggregation) but 5 consecutive alignment/codeword markers were not valid.[br]
+                                                       Restarts the synchronization.";
+      hold_f hiSer[1];              hiSer->desc     = "High symbol error rate.[br]
+                                                       Set when the number of symbol errors in a window of 8K consecutive codewords has exceeded 417 with RS528 and 6380 with RS544.[br]
+                                                       With RS272 the threshold is 800 symbol errors in a window of 16K codewords.[br]
+                                                       The bit remains set for 60ms to 75ms after the threshold has been reached.[br]
+                                                       If RSFEC_LANE_CFG0.indicByp = 1, then sync header errors will be generated towards the PCS layer while hiSer is set.[br]
+                                                       For 8- and 16-lane clients entry number 0 in the lowest numbered participating submodule is used.";
+      hold_f corrCw[1];             corrCw->desc    = "Set when a FEC codeword had one or more errors that were corrected.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      hold_f uncorrCw[1];           uncorrCw->desc  = "Set when a FEC codeword could not be corrected due to too many errors.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      hold_f corrCwBins[23:8];      corrCwBins->desc = "Set when 0-15 symbols were corrected in a codeword. LSB set if no err in a CW, MSB set if 15 symbols were corrected.[br]
+                                                       For 8-lane clients entry number 0 in each of the two participating submodules are used.[br]
+                                                       For 16-lane clients entry number 0 in submodules 0 and 2 are used.";
+      hold_f degrSer[1];            degrSer->desc   = "Set when the FEC degraded SER status is set.[br]
+                                                       For 8- and 16-lane clients entry number 0 in the lowest numbered participating submodule is used.";
+      hold_f amSfRxIn[3];           amSfRxIn->desc  = "am_sf received from peer. Only valid with 8- and 16-lane clients and only in entry 0 in the first RS-FEC submodule for the client.[br]
+                                                       Order is {RD bit (Remote Degraded), LD bit (Local Degraded), reserved bit}.[br]
+                                                       For 8- and 16-lane clients entry number 0 in the lowest numbered participating submodule is used.";
+    } RSFEC_LANE_RX_HOLD[4];
+
+    reg RSFEC_LANES_RX_STAT {
+      desc = "RSFEC per client aggregate Rx status";
+      indexdesc = "PMA lane pair number";
+      stat_f notAlign[1];           notAlign->desc  = "Client's Rx lanes not aligned (state).[br]
+                                                       Incoming signal fail, not all participating Rx lanes locked, alignment markers not unique or skew too large.[br]
+                                                       Only applicable when the client has multiple logical FEC lanes.[br]
+                                                       For a 4-lane client entry number 0 is used. For an 8- or 16-lane client entry number 0 in the lowest numbered submodule is used.";
+      stat_f notDeskew[1];          notDeskew->desc = "Client's Rx lanes were all locked but the alignment markers were not unique or the skew was too large.[br]
+                                                       This is an event signal. To determine the current alignment state .notAlign shall be used instead.[br]
+                                                       This event restarts the synchronization.[br]
+                                                       Only applicable when the client has multiple logical FEC lanes.[br]
+                                                       For a 4-lane client entry number 0 is used. For an 8- or 16-lane client entry number 0 in the lowest numbered submodule is used.";
+      stat_f lastLane[4];            lastLane->desc = "Last Rx PMA lane for client (only the hold version of this is needed).[br]
+                                                       Only applicable when the client has multiple logical FEC lanes.[br]
+                                                       When all the Rx lanes become aligned this field shows which PMA lane was the latest.[br]
+                                                       For an N-lane client the number is in the range 0..N-1, where 0 is for the lowest numbered PMA lane in the aggregation.[br]
+                                                       Regardless of dynamic skew variations it will not change as long as the lanes stay aligned and it shows the lane whose CW pos shall be used.[br]
+                                                       For a 4-lane client entry number 0 is used. For an 8- or 16-lane client entry number 0 in the lowest numbered, participating submodule is used.";
+    } RSFEC_LANES_RX_STAT[2];
+
+    reg RSFEC_LANES_RX_HOLD {
+      desc = "RSFEC per client aggregate Rx status";
+      indexdesc = "PMA lane pair number";
+      hold_f notAlign[1];           notAlign->desc  = "Client's Rx lanes not aligned (state).[br]
+                                                       Incoming signal fail, not all participating Rx lanes locked, alignment markers not unique or skew too large.[br]
+                                                       Only applicable when the client has multiple logical FEC lanes.[br]
+                                                       For a 4-lane client entry number 0 is used. For an 8- or 16-lane client entry number 0 in the lowest numbered submodule is used.";
+      hold_f notDeskew[1];          notDeskew->desc = "Client's Rx lanes were all locked but the alignment markers were not unique or the skew was too large.[br]
+                                                       This is an event signal. To determine the current alignment state .notAlign shall be used instead.[br]
+                                                       This event restarts the synchronization.[br]
+                                                       Only applicable when the client has multiple logical FEC lanes.[br]
+                                                       For a 4-lane client entry number 0 is used. For an 8- or 16-lane client entry number 0 in the lowest numbered submodule is used.";
+      hold_f lastLane[4];            lastLane->desc = "Last Rx PMA lane for client (only the hold version of this is needed).[br]
+                                                       Only applicable when the client has multiple logical FEC lanes.[br]
+                                                       When all the Rx lanes become aligned this field shows which PMA lane was the latest.[br]
+                                                       For an N-lane client the number is in the range 0..N-1, where 0 is for the lowest numbered PMA lane in the aggregation.[br]
+                                                       Regardless of dynamic skew variations it will not change as long as the lanes stay aligned and it shows the lane whose CW pos shall be used.[br]
+                                                       For a 4-lane client entry number 0 is used. For an 8- or 16-lane client entry number 0 in the lowest numbered, participating submodule is used.";
+    } RSFEC_LANES_RX_HOLD[2];
+
+    reg RSFEC_LN_MAPPING_RX {
+      desc = "RSFEC FEC lane mapping";
+      indexdesc = "PMA lane number";
+      stat_f fecLane[4];            fecLane->desc   = "FEC lane number received on the PMA lane.[br]
+                                                       Only applicable when the lane is locked and the client has multiple logical FEC lanes.";
+    } RSFEC_LN_MAPPING_RX[4];
+
+    reg RSFEC_LN_SKEW_RX {
+      desc = "RSFEC lane skew";
+      indexdesc = "PMA lane number";
+      stat_f skew[8];               skew->desc      = "Lane skew value (unit is 40 bits).[br]
+                                                       Only valid when the Rx lanes are aligned.[br]
+                                                       The value shows approximately how much the lane is delayed relative to the earliest lane of the client.[br]
+                                                       Only applicable when the client has multiple logical FEC lanes.";
+    } RSFEC_LN_SKEW_RX[4];
+
+    reg RSFEC_CW_POS_RX {
+      desc = "RSFEC codeword bit position on Rx";
+      indexdesc = "PMA lane number";
+      stat_f num[15];               num->desc       = "Bit number of first bit in FEC codeword.[br]
+                                                       Intended for debug of deterministic latency.";
+    } RSFEC_CW_POS_RX[4];
+
+    reg RSFEC_CORE_ECC_HOLD {
+      desc = "RSFEC SRAM ECC status hold";
+      hold_f sbe[8];            sbe->desc           = "SRAM ECC correctable (single bit) error detected.[br]
+                                                       Should not become set during normal operation. One bit per SRAM.[br]
+                                                       Bits 0-3 covers the deskew buffers for PMA lanes 0-3 (only used for aggregated lanes).[br]
+                                                       Bits 4-7 covers the data delay buffers within the RS decoder.";
+      hold_f mbe[8];            mbe->desc           = "SRAM ECC uncorrectable error detected.[br]
+                                                       Same bit ordering as for .sbe above.";
+    } RSFEC_CORE_ECC_HOLD;
+
+
+    // ================================================
+    // 64 bit statistics counters
+    // ================================================
+
+    reg RSFEC_CORR_CW_CNT {
+      desc      = "RSFEC number of codewords with correctable errors";
+      indexdesc = "PMA lane number";
+      count_clr_f stat[64]        = 0;       stat->desc          = "Statistics value.[br]
+                                                                    For an N lane client only the entry for the 1st lane assigned to the client is used.[br]
+                                                                    For an 8- or 16-lane client the counter is located in entry number 0 in the 1st submodule assigned to the client.";
+      accesswidth = 64;
+      regwidth    = 64;
+    } RSFEC_CORR_CW_CNT[4];
+
+    reg RSFEC_UNCORR_CW_CNT {
+      desc      = "RSFEC number of uncorrectable codewords";
+      indexdesc = "PMA lane number";
+      count_clr_f stat[64]        = 0;       stat->desc          = "Statistics value.[br]
+                                                                    For an N lane client only the entry for the 1st lane assigned to the client is used.[br]
+                                                                    For an 8- or 16-lane client the counter is located in entry number 0 in the 1st submodule assigned to the client.";
+      accesswidth = 64;
+      regwidth    = 64;
+    } RSFEC_UNCORR_CW_CNT[4];
+
+    reg RSFEC_CORR_CWBIN_CNT {
+      desc      = "RSFEC number of corrected codewords having Errs=0,1,..,15 errored symbols";
+      indexdesc = "(PMA lane number)*16+Errs";
+      count_clr_f stat[8]        = 0;       stat->desc          = "Statistics value.[br]
+                                                                    For a 2- and 4-lane client only the 16 entries for the 1st lane assigned to the client is used.[br]
+                                                                    For an 8-lane client the 16 counters in entries 0..15 in each of the two participating submodules are used.[br]
+                                                                    For a 16-lane client the 16 counters in entries 0..15 in each of submodules 0 and 2 are used.";
+      accesswidth = 8; // Width has tentatively been reduced to 8 to save resources. The purpose with these counters is to see how close
+      regwidth    = 8; // we are at getting uncorrectable CWs. If narrow, the counters should probably be made saturating
+    } RSFEC_CORR_CWBIN_CNT[64];
+
+    reg RSFEC_CORR_SYMS_CNT {
+      desc      = "RSFEC number of 10b symbols corrected for the lane";
+      indexdesc = "PMA lane number";
+      count_clr_f stat[64]        = 0;       stat->desc          = "Statistics value.";
+      accesswidth = 64;
+      regwidth    = 64;
+    } RSFEC_CORR_SYMS_CNT[4];
+
+    reg RSFEC_CORR_0S_CNT {
+      desc      = "RSFEC number of bits corrected 0->1 for the lane";
+      indexdesc = "PMA lane number";
+      count_clr_f stat[64]        = 0;       stat->desc          = "Statistics value.";
+      accesswidth = 64;
+      regwidth    = 64;
+    } RSFEC_CORR_0S_CNT[4];
+
+    reg RSFEC_CORR_1S_CNT {
+      desc      = "RSFEC number of bits corrected 1->0 for the lane";
+      indexdesc = "PMA lane number";
+      count_clr_f stat[64]        = 0;       stat->desc          = "Statistics value.";
+      accesswidth = 64;
+      regwidth    = 64;
+    } RSFEC_CORR_1S_CNT[4];
+
+    // ================================================
+    // Error injection test mode bits (which must always power up as zero)
+    // ================================================
+    reg RSFEC_ERR_INJ_TX {
+      desc = "RSFEC error injection mode";
+      indexdesc = "PMA lane number";
+      cfg_f rate[8] = 0;       rate->desc                     = "Tx error injection rate for each PMA lane.[br]
+                                                                 Data is output towards the PMA 66 bits at a time (not to be
+                                                                 confused with 66b PCS symbols). The value specifies the
+                                                                 fraction of such 66b words to hit. The unit is 1/256th so a
+                                                                 value of, say, 7 causes 7/256th of the 66b words being sent on
+                                                                 the lane to be hit.[br]
+                                                                 One entry per PMA lane, regardless of RSFEC_CORE_CFG.frac.";
+
+      cfg_f pat[8] = 0;        pat->desc                      = "Tx error injection pattern for each lane.[br]
+                                                                 Value specifies which bits are being toggled on each lane, when
+                                                                 that lane is hit. There is an 8b pattern per lane. When a 66b
+                                                                 word on a lane is hit, 8 consecutive bits out of these 66 are
+                                                                 XOR'ed with the pattern.[br]
+                                                                 One entry per PMA lane, regardless of RSFEC_CORE_CFG.frac.";
+    } RSFEC_ERR_INJ_TX[4];
+
+    //----------------------------------------------
+    // Error injection status (no corresponding hold)
+    //----------------------------------------------
+    reg RSFEC_ERR_VAL_TX {
+      desc = "RSFEC per lane error injection status";
+      indexdesc = "PMA lane number";
+      stat_f inj0s[8];                   inj0s->desc          = "Number of bits (modulo 256) that were changed from 1 to 0 on each PMA lane.[br]
+                                                                 Cleared when the corresponding RSFEC_ERR_INJ_TX.rate is written with a non-zero value 
+                                                                 after being all zero, i.e. when a test is initiated. A value read from this 
+                                                                 register is not reliable while injecting. A value read is reliable when the test is
+                                                                 completed, i.e. after the lane's RSFEC_ERR_INJ_TX.rate or RSFEC_ERR_INJ_TX.pat has
+                                                                 been cleared.[br]
+                                                                 One entry per PMA lane, regardless of RSFEC_CORE_CFG.frac.";
+      stat_f inj1s[8];                   inj1s->desc          = "Same for bits changed from 0 to 1 on each PMA lane.";
+    } RSFEC_ERR_VAL_TX[4];
+
+  } gdr_rsfec_core_regs;
+};
+
+
+default roots = "gdr_rsfec_core_block";

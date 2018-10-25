@@ -30,18 +30,30 @@
 // ----------------------------------------------------------------------------------
 // 17-10-2018 intital version
 //
-// To DO: remove slg_pkt::* once we ahve TB
 //=======================================================================================================================================
+
+`ifndef MBY_GPL_TOP_SV
+ `define MBY_GPL_TOP_SV
+
+// collage-pragma translate_on
+
 module mby_gpl_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
    // CLock and reset
    input                              cclk,
-   input                              reset_n
-	  
+   input                              reset_n,
+   output mby_gpol_state_bcast_t      gpol_update_bcast_out_left,
+   output mby_gpol_state_bcast_t      gpol_update_bcast_out_right
 );
 
+// collage-pragma translate_off
+
+// collage-pragma translate_on
+
 endmodule // mby_gpm_top
+
+`endif //  `ifndef MBY_GPL_TOP_SV
 
 
    

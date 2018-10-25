@@ -2,4 +2,5 @@ $default_logical_path		= $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/*block*/mem
 $default_block_top_path		= $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/*block*/rtl/*block*_top.sv
 $default_block_list_path	= None
 $default_dest_path		= $ENV{'MODEL_ROOT'}/target/mby/mgm_run/*block*
+gmm_s $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/gmm/gmm_s/mem $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/gmm/gmm_s/top/rtl/mby_gmm_s.sv NONE default
 

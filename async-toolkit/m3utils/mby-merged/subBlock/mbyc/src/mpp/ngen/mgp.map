@@ -13,7 +13,6 @@ $y = $iteration;
 
 \{igr$y$_vp_rx0_data_w_ecc[71:0], igr$y$_vp_rx1_data_w_ecc[71:0], igr$y$_vp_rx2_data_w_ecc[71:0], igr$y$_vp_rx3_data_w_ecc[71:0], igr$y$_vp_rx4_data_w_ecc[71:0], igr$y$_vp_rx5_data_w_ecc[71:0], igr$y$_vp_rx6_data_w_ecc[71:0], igr$y$_vp_rx7_data_w_ecc[71:0]\}  >> igr_vp_rx_data_w_ecc
 
-
 grp_a$y$_rx_data_valid       >> grp_a_rx_data_valid                
 grp_a$y$_rx_ecc              >> grp_a_rx_ecc                       
 grp_a$y$_rx_flow_control_tc  >> grp_a_rx_flow_control_tc           
@@ -54,10 +53,10 @@ egr$y$_ahb_if                   >> egr_ahb_if
 ahb$y$_rxppe_if                 >> ahb_rx_ppe_if                         
 ahb$y$_txppe0_if                >> ahb_txppe0_if                         
 ahb$y$_txppe1_if                >> ahb_txppe1_if                         
-grp_a$y                      >> egr_epl0_if                               
-grp_b$y                      >> egr_epl1_if                               
-grp_c$y                      >> egr_epl2_if                               
-grp_d$y                      >> egr_epl3_if                               
+grp_a$y                         >> egr_epl0_if                               
+grp_b$y                         >> egr_epl1_if                               
+grp_c$y                         >> egr_epl2_if                               
+grp_d$y                         >> egr_epl3_if                               
 glb$y$_rxppe_if                 >> glb_rx_ppe_if                         
 glb$y$_txppe0_if                >> glb_txppe0_if                         
 glb$y$_txppe1_if                >> glb_txppe1_if                         
@@ -65,11 +64,45 @@ egr$y$_mc_table_if0             >> egr_mc_table_if0
 egr$y$_mc_table_if1             >> egr_mc_table_if1                          
 egr$y$_pod_if                   >> egr_pod_if                                
 egr$y$_ppestm_if                >> egr_ppestm_if
-egr$y$_smm_readarb_if           >> egr_smm_readarb_if                        
+egr$y$_smm_readarb_if0          >> egr_smm_readarb_if0
+egr$y$_smm_readarb_if1          >> egr_smm_readarb_if1
 egr$y$_smm_writearb_if          >> egr_smm_writearb_if                       
 egr$y$_statsmgmt_if             >> egr_statsmgmt_if                          
-egr$y$_tagring_if               >> egr_tagring_if                            
-egr$y$_vp_if0                   >> egr_vp_if0                                
-egr$y$_vp_if1                   >> egr_vp_if1                                
+egr$y$_tagring_if0              >> egr_tagring_if0
+egr$y$_tagring_if1              >> egr_tagring_if1
+egr$y$_tagring_if2              >> egr_tagring_if2
+egr$y$_tagring_if3              >> egr_tagring_if3
+egr$y$_tagring_if4              >> egr_tagring_if4
+egr$y$_tagring_if5              >> egr_tagring_if5
+egr$y$_tagring_if6              >> egr_tagring_if6
+egr$y$_tagring_if7              >> egr_tagring_if7
+egr$y$_tagring_if8              >> egr_tagring_if8
+egr$y$_tagring_if9              >> egr_tagring_if9
+egr$y$_tagring_if10             >> egr_tagring_if10
+egr$y$_tagring_if11             >> egr_tagring_if11
+egr$y$_tagring_if12             >> egr_tagring_if12
+egr$y$_tagring_if13             >> egr_tagring_if13
+egr$y$_tagring_if14             >> egr_tagring_if14
+egr$y$_tagring_if15             >> egr_tagring_if15
+egr$y$_tagring_if16             >> egr_tagring_if16
+egr$y$_tagring_if17             >> egr_tagring_if17
+egr$y$_tagring_if18             >> egr_tagring_if18
+egr$y$_tagring_if19             >> egr_tagring_if19
+egr$y$_tagring_if20             >> egr_tagring_if20
+egr$y$_tagring_if21             >> egr_tagring_if21
+egr$y$_tagring_if22             >> egr_tagring_if22
+egr$y$_tagring_if23             >> egr_tagring_if23
+egr$y$_tagring_if24             >> egr_tagring_if24
+egr$y$_tagring_if25             >> egr_tagring_if25
+egr$y$_tagring_if26             >> egr_tagring_if26
+egr$y$_tagring_if27             >> egr_tagring_if27
+egr$y$_tagring_if28             >> egr_tagring_if28
+egr$y$_tagring_if29             >> egr_tagring_if29
+egr$y$_tagring_if30             >> egr_tagring_if30
+egr$y$_tagring_if31             >> egr_tagring_if31                            
+egr$y$_mce_tagring_if0          >> egr_mce_tagring_if0
+egr$y$_mce_tagring_if1          >> egr_mce_tagring_if1
+egr$y$_mce_tagring_if2          >> egr_mce_tagring_if2
+egr$y$_mce_tagring_if3          >> egr_mce_tagring_if3
 igr$y$_vp_tx_pfc_xoff           >> igr_vp_tx_pfc_xoff
 rxppe$y$_ppestm_if              >> rx_ppe_ppe_stm_if

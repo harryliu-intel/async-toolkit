@@ -8,7 +8,7 @@
 $hdl_spec = {
     # List of specific VERILOG src files
     -vlog_files => [
-         # temp add this until gmm connectivity in place
+         # these are addded to resolve dependencies that are missing from collage generated code
 	 "subBlock/mbyc/src/shared/rtl/mby_gmm_pkg.sv",
      ],
 	
