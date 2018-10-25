@@ -19,7 +19,9 @@ static void lookUpLpmTcam
 
     tcam_lookup->hit_valid = FALSE;
 
-    while (tcam_index < MBY_REG_SIZE(LPM_MATCH_TCAM))
+    while (tcam_index < //MBY_LPM_REG_SIZE(LPM_MATCH_TCAM)
+           mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n
+           )
     {
         mbyLpmTcamEntry tcam_entry;
 
@@ -226,7 +228,7 @@ static void lpmGenerateKey
     assert(lpmKey);
     assert(profile_id < 64); // 6 bits value
 
-    mbyLpmGetKeySels(MBY_LPM_IN_REGS_P, profile_id, &key_sels);
+    mbyLpmGetKeySels(&(MBY_LPM_IN_REGS_P->A), profile_id, &key_sels);
 
     lpmKey->key_len = 0; // remember this is in bits
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);

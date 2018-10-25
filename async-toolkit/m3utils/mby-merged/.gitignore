@@ -32,6 +32,7 @@ regression
 
 # collage generated
 tools/collage/*/ip_kits/
+tools/collage/*/reports/
 
 # Dump related files
 vdCovLog/

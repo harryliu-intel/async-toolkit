@@ -33,7 +33,7 @@ $ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "
 #    Collage related definitions                    #
 #####################################################
 $ToolConfig_tools{coretools}{VERSION} = "N-2017.12-SP1-2";
-$ToolConfig_tools{collage}{VERSION} = "4.10";
+$ToolConfig_tools{collage}{VERSION} = "4.17";
 $ToolConfig_tools{collage_intf_def}{VERSION} = "3.7.6";
 $ToolConfig_tools{collage_intf_def}{PATH} = "/p/hdk/rtl/cad/x86-64_linux30/intel/collage_intf_def/&get_tool_version('collage_intf_def')";
 $ToolConfig_tools{collage}{ENV}{COLLAGE_INTF_DEF} = "&get_tool_path('collage_intf_def')";
@@ -154,7 +154,7 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.08.14",
+    VERSION => "18.09.12",
     ENV_APPEND  => {
         'PATH'  => "&get_tool_path()/bin",
     },
@@ -280,6 +280,7 @@ $ToolConfig_tools{"mgm"} = {
                     "ppe_stm",
                     "igr",
                     "egr",
+                    "gmm_s",
                    ],
         },
         PHYSICAL_PARAMS => "$ENV{MODEL_ROOT}/tools/mgm/mby_physical_params.csv",

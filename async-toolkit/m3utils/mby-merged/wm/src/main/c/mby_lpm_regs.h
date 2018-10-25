@@ -21,7 +21,7 @@
 #define MBY_LPM_IN_REGS_P                             cgrp_a_map
 
 // Retrieve the constant with the number of registers
-#define MBY_REG_SIZE(reg_name) (mby_ppe_cgrp_a_map_## reg_name ##__nd)
+#define MBY_LPM_REG_SIZE(reg_name) (mby_ppe_cgrp_a_map_## reg_name ##__nd)
 
 #define MBY_LPM_KEY_MAX_BYTES_LEN   20
 #define MBY_LPM_KEY_MAX_BITS_LEN    (MBY_LPM_KEY_MAX_BYTES_LEN * 8)
@@ -70,7 +70,9 @@ typedef struct mbyLpmSubtrieStoreStruct
 
 void mbyLpmGetKeySels
 (
-    MBY_LPM_IN_REGS,
+ //    MBY_LPM_IN_REGS,
+     mby_ppe_cgrp_a_nested_map     * const cgrp_a_map,
+
     fm_byte                  const profile_id,
     mbyLpmKeySels          * const key_sels
 );

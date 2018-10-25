@@ -13,11 +13,10 @@ mbyClassifierKeyMaskCfg mbyClsGetEmAKeyMaskCfg
 {
     mbyClassifierKeyMaskCfg key_mask_cfg;
 
-    key_mask_cfg.KEY_MASK_SEL = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48] IT IS NOT USED IN THE MODEL <-- REVISIT!!!
-    key_mask_cfg.KEY32_MASK   = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
-    key_mask_cfg.KEY16_MASK   = cgrp_a_map->EM_A_KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
-    key_mask_cfg.KEY8_MASK    = cgrp_a_map->EM_A_KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
-
+    key_mask_cfg.KEY_MASK_SEL = cgrp_a_map->EM.KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48]
+    key_mask_cfg.KEY32_MASK   = cgrp_a_map->EM.KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
+    key_mask_cfg.KEY16_MASK   = cgrp_a_map->EM.KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
+    key_mask_cfg.KEY8_MASK    = cgrp_a_map->EM.KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
     return key_mask_cfg;
 }
 
@@ -30,11 +29,10 @@ mbyClassifierKeyMaskCfg mbyClsGetEmBKeyMaskCfg
 {
     mbyClassifierKeyMaskCfg key_mask_cfg;
 
-    key_mask_cfg.KEY_MASK_SEL = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48] IT IS NOT USED IN THE MODEL <-- REVISIT!!!
-    key_mask_cfg.KEY32_MASK   = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
-    key_mask_cfg.KEY16_MASK   = cgrp_b_map->EM_B_KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
-    key_mask_cfg.KEY8_MASK    = cgrp_b_map->EM_B_KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
-
+    key_mask_cfg.KEY_MASK_SEL = cgrp_b_map->EM.KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48]
+    key_mask_cfg.KEY32_MASK   = cgrp_b_map->EM.KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
+    key_mask_cfg.KEY16_MASK   = cgrp_b_map->EM.KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
+    key_mask_cfg.KEY8_MASK    = cgrp_b_map->EM.KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
     return key_mask_cfg;
 }
 
@@ -46,7 +44,7 @@ mbyClassifierHashCfg mbyClsGetEmAHashCfg
 {
     mbyClassifierHashCfg hash_cfg;
 
-    em_a_hash_cfg_r const * const em_a_hash_cfg = &(cgrp_a_map->EM_A_HASH_CFG[scenario]);
+    em_hash_cfg_r const * const em_a_hash_cfg = &(cgrp_a_map->EM.HASH_CFG[scenario]);
 
     hash_cfg.mode          = em_a_hash_cfg->MODE;
     hash_cfg.base_ptr[0]   = em_a_hash_cfg->BASE_PTR_0;
@@ -55,7 +53,6 @@ mbyClassifierHashCfg mbyClsGetEmAHashCfg
     hash_cfg.hash_size[1]  = em_a_hash_cfg->HASH_SIZE_1;
     hash_cfg.entry_size[0] = em_a_hash_cfg->ENTRY_SIZE_0;
     hash_cfg.entry_size[1] = em_a_hash_cfg->ENTRY_SIZE_1;
-
     return hash_cfg;
 }
 
@@ -67,7 +64,7 @@ mbyClassifierHashCfg mbyClsGetEmBHashCfg
 {
     mbyClassifierHashCfg hash_cfg;
 
-    em_b_hash_cfg_r const * const em_b_hash_cfg = &(cgrp_b_map->EM_B_HASH_CFG[scenario]);
+    em_hash_cfg_r const * const em_b_hash_cfg = &(cgrp_b_map->EM.HASH_CFG[scenario]);
 
     hash_cfg.mode          = em_b_hash_cfg->MODE;
     hash_cfg.base_ptr[0]   = em_b_hash_cfg->BASE_PTR_0;
@@ -76,7 +73,6 @@ mbyClassifierHashCfg mbyClsGetEmBHashCfg
     hash_cfg.hash_size[1]  = em_b_hash_cfg->HASH_SIZE_1;
     hash_cfg.entry_size[0] = em_b_hash_cfg->ENTRY_SIZE_0;
     hash_cfg.entry_size[1] = em_b_hash_cfg->ENTRY_SIZE_1;
-
     return hash_cfg;
 }
 
@@ -88,7 +84,7 @@ mbyClassifierHashLookup mbyClsGetEmAHashLookupEntry
 {
     mbyClassifierHashLookup lookup_entry;
 
-    em_a_hash_lookup_r const * const em_a_hash_lookup_entry = &(cgrp_a_map->EM_A_HASH_LOOKUP[lookup_ptr]);
+    em_hash_lookup_r const * const em_a_hash_lookup_entry = &(cgrp_a_map->A.EM_HASH_LOOKUP[lookup_ptr]);
 
     lookup_entry.PTR      = em_a_hash_lookup_entry->PTR;
     lookup_entry.SELECT_4 = em_a_hash_lookup_entry->SELECT_4;
@@ -97,7 +93,6 @@ mbyClassifierHashLookup mbyClsGetEmAHashLookupEntry
     lookup_entry.SELECT_1 = em_a_hash_lookup_entry->SELECT_1;
     lookup_entry.SELECT_0 = em_a_hash_lookup_entry->SELECT_0;
     lookup_entry.MASK     = em_a_hash_lookup_entry->MASK;
-
     return lookup_entry;
 }
 
@@ -109,7 +104,7 @@ mbyClassifierHashLookup mbyClsGetEmBHashLookupEntry
 {
     mbyClassifierHashLookup lookup_entry;
 
-    em_b_hash_lookup_r const * const em_b_hash_lookup_entry = &(cgrp_b_map->EM_B_HASH_LOOKUP[lookup_ptr]);
+    em_b_hash_lookup_r const * const em_b_hash_lookup_entry = &(cgrp_b_map->B.EM_HASH_LOOKUP[lookup_ptr]);
 
     lookup_entry.PTR      = em_b_hash_lookup_entry->PTR;
     lookup_entry.SELECT_4 = em_b_hash_lookup_entry->SELECT_4;
@@ -118,7 +113,6 @@ mbyClassifierHashLookup mbyClsGetEmBHashLookupEntry
     lookup_entry.SELECT_1 = em_b_hash_lookup_entry->SELECT_1;
     lookup_entry.SELECT_0 = em_b_hash_lookup_entry->SELECT_0;
     lookup_entry.MASK     = em_b_hash_lookup_entry->MASK;
-
     return lookup_entry;
 }
 
@@ -129,10 +123,9 @@ fm_uint64 mbyClsGetEmAHashCamEntry
     fm_uint32            const word
 )
 {
-    em_a_hash_cam_r const * const em_a_hash_cam = &(cgrp_a_map->EM_A_HASH_CAM[entry][word]);
+    em_hash_cam_r const * const em_a_hash_cam = &(cgrp_a_map->EM.HASH_CAM[entry][word]);
 
     fm_uint64 data = em_a_hash_cam->DATA;
-
     return data;
 }
 
@@ -143,10 +136,9 @@ fm_uint64 mbyClsGetEmBHashCamEntry
     fm_uint32            const word
 )
 {
-    em_b_hash_cam_r const * const em_b_hash_cam_entry = &(cgrp_b_map->EM_B_HASH_CAM[entry][word]);
+    em_hash_cam_r const * const em_b_hash_cam_entry = &(cgrp_b_map->EM.HASH_CAM[entry][word]);
 
     fm_uint64 data = em_b_hash_cam_entry->DATA;
-
     return data;
 }
 
@@ -157,10 +149,9 @@ fm_uint64 mbyClsGetEmAHashCamMask
     fm_uint32            const rule
 )
 {
-    em_a_hash_cam_en_r const * const em_a_hash_cam_en = &(cgrp_a_map->EM_A_HASH_CAM_EN[row][rule]);
+    em_hash_cam_en_r const * const em_a_hash_cam_en = &(cgrp_a_map->EM.HASH_CAM_EN[row][rule]);
 
     fm_uint64 mask = em_a_hash_cam_en->MASK;
-
     return mask;
 }
 
@@ -171,10 +162,9 @@ fm_uint64 mbyClsGetEmBHashCamMask
     fm_uint32            const rule
 )
 {
-    em_b_hash_cam_en_r const * const em_b_hash_cam_en = &(cgrp_b_map->EM_B_HASH_CAM_EN[row][rule]);
+    em_hash_cam_en_r const * const em_b_hash_cam_en = &(cgrp_b_map->EM.HASH_CAM_EN[row][rule]);
 
     fm_uint64 mask = em_b_hash_cam_en->MASK;
-
     return mask;
 }
 
@@ -221,10 +211,10 @@ void mbyClsGetEmHashMissActions
     fm_uint32                       hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
 )
 {
-    em_a_hash_miss_r const * const em_a_hash_miss   = &(cgrp_a_map->EM_A_HASH_MISS[hash_num][scenario]);
-    em_a_hash_miss_r const * const em_a_hash_miss_1 = &(cgrp_a_map->EM_A_HASH_MISS[1][scenario]);
-    em_b_hash_miss_r const * const em_b_hash_miss   = &(cgrp_b_map->EM_B_HASH_MISS[hash_num][scenario]);
-    em_b_hash_miss_r const * const em_b_hash_miss_1 = &(cgrp_b_map->EM_B_HASH_MISS[1][scenario]);
+    em_hash_miss_r const * const em_a_hash_miss   = &(cgrp_a_map->EM.HASH_MISS[hash_num][scenario]);
+    em_hash_miss_r const * const em_a_hash_miss_1 = &(cgrp_a_map->EM.HASH_MISS[1][scenario]);
+    em_hash_miss_r const * const em_b_hash_miss   = &(cgrp_b_map->EM.HASH_MISS[hash_num][scenario]);
+    em_hash_miss_r const * const em_b_hash_miss_1 = &(cgrp_b_map->EM.HASH_MISS[1][scenario]);
 
     hash_actions[0] = (group == MBY_CLA_GROUP_A) ? em_a_hash_miss->ACTION0 : em_b_hash_miss->ACTION0;
     hash_actions[1] = (group == MBY_CLA_GROUP_A) ? em_a_hash_miss->ACTION1 : em_b_hash_miss->ACTION1;
@@ -245,7 +235,7 @@ mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 {
     mbyClassifierTcamCfg tcam_cfg;
 
-    wcm_tcam_cfg_r const * const wcm_tcam_cfg = &(cgrp_b_map->WCM_TCAM_CFG[slice][scenario]);
+    wcm_tcam_cfg_r const * const wcm_tcam_cfg = &(cgrp_b_map->B.WCM_TCAM_CFG[slice][scenario]);
 
     tcam_cfg.CHUNK_MASK    = wcm_tcam_cfg->CHUNK_MASK;
     tcam_cfg.START_COMPARE = wcm_tcam_cfg->START_COMPARE;
@@ -255,7 +245,6 @@ mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
     tcam_cfg.SELECT1       = wcm_tcam_cfg->SELECT1;
     tcam_cfg.SELECT2       = wcm_tcam_cfg->SELECT2;
     tcam_cfg.SELECT3       = wcm_tcam_cfg->SELECT3;
-
     return tcam_cfg;
 }
 
@@ -268,14 +257,13 @@ mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 {
     mbyClassifierTcamEntry tcam_entry;
 
-    wcm_tcam_r const * const wcm_tcam_entry = &(cgrp_b_map->WCM_TCAM[slice][index]);
+    wcm_tcam_r const * const wcm_tcam_entry = &(cgrp_b_map->B.WCM_TCAM[slice][index]);
 
     fm_uint64 key_top     = ((fm_uint64) wcm_tcam_entry->KEY_TOP)        << 32;
     fm_uint64 key_top_inv = ((fm_uint64) wcm_tcam_entry->KEY_TOP_INVERT) << 32;
 
     tcam_entry.KEY        = wcm_tcam_entry->KEY        | key_top;
     tcam_entry.KEY_INVERT = wcm_tcam_entry->KEY_INVERT | key_top_inv;
-
     return tcam_entry;
 }
 
@@ -288,7 +276,7 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 )
 {
     mbyClassifierActionCfg action_cfg;
-    wcm_action_cfg_r const * const wcm_action_cfg = &(cgrp_b_map->WCM_ACTION_CFG[ram_num]);
+    wcm_action_cfg_r const * const wcm_action_cfg = &(cgrp_b_map->B.WCM_ACTION_CFG[ram_num]);
 
     fm_bool enable = 0;
     fm_byte index  = 0;
@@ -320,7 +308,6 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 
     action_cfg.enable = enable;
     action_cfg.slice  = index;
-
     return action_cfg;
 }
 
@@ -332,10 +319,8 @@ fm_uint32 mbyClsGetWcmActionEntry
     fm_uint32            const action
 )
 {
-    wcm_action_r const * const wcm_action = &(cgrp_b_map->WCM_ACTION[ram_num][hit_index]);
-
+    wcm_action_r const * const wcm_action = &(cgrp_b_map->B.WCM_ACTION[ram_num][hit_index]);
     fm_uint32 action_entry = (action == 0) ? wcm_action->ACTION0 : wcm_action->ACTION1;
-
     return action_entry;
 }
 
@@ -357,7 +342,6 @@ mbyClassifierEntropyCfg mbyClsGetEntropyCfg
     entropy_cfg.KEY32_MASK       = entropy_hash_cfg1->KEY_MASK32;       // [47:32]
     entropy_cfg.KEY16_MASK       = entropy_hash_cfg1->KEY_MASK16;       // [31: 0]
     entropy_cfg.KEY8_MASK        = entropy_hash_cfg0->KEY_MASK8;        // [31: 0]
-
     return entropy_cfg;
 }
 
