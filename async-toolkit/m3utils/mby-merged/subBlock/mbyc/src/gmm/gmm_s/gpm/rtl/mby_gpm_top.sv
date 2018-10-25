@@ -31,6 +31,11 @@
 // 17-10-2018 intital version
 //
 //=======================================================================================================================================
+`ifndef MBY_GPM_TOP_SV
+ `define MBY_GPM_TOP_SV
+
+// collage-pragma translate_on
+
 module mby_gpm_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
@@ -47,7 +52,12 @@ module mby_gpm_top
    output logic                       pod_ring_stall_right_out	  
 );
 
+   // collage-pragma translate_off
+   
+   // collage-pragma translate_on
+   
 endmodule // mby_gpm_top
 
+`endif //  `ifndef MBY_GPM_TOP_SV
 
    
