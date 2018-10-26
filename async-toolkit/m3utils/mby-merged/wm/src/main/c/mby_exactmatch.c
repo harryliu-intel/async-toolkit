@@ -16,13 +16,13 @@ static void applyEmKeyMask
     mbyClassifierKeys             * const hash_keys
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
         hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.KEY16_MASK, i, 1)) ? keys.key16[i] : 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8; i++)
         hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(key_mask_cfg.KEY8_MASK,  i, 1)) ? keys.key8 [i] : 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (key_mask_cfg.KEY32_MASK, i, 1)) ? keys.key32[i] : 0;
 }
 
@@ -30,13 +30,13 @@ static fm_byte doKeyCompaction
 (
     mbyClassifierKeyMaskCfg         const key_mask_cfg,
     mbyClassifierKeys               const hash_keys,
-    fm_byte                               packed_keys[MBY_FFU_HASH_KEYS]
+    fm_byte                               packed_keys[MBY_CGRP_HASH_KEYS]
 )
 {
     fm_byte key_idx = 0;
 
     // KEY32:
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++) {
         if (FM_GET_UNNAMED_FIELD(key_mask_cfg.KEY32_MASK, i, 1)) {
             for (fm_uint j = 0; j < 4; j++)
                 packed_keys[key_idx + j] = (hash_keys.key32[i] >> (8 * (3-j))) & 0xFF;
@@ -45,7 +45,7 @@ static fm_byte doKeyCompaction
     }
 
     // KEY16:
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++) {
         if (FM_GET_UNNAMED_FIELD(key_mask_cfg.KEY16_MASK, i, 1)) {
             packed_keys[key_idx    ] = (hash_keys.key16[i] >> 8) & 0xFF;
             packed_keys[key_idx + 1] =  hash_keys.key16[i]       & 0xFF;
@@ -55,7 +55,7 @@ static fm_byte doKeyCompaction
     }
 
     // KEY8:
-    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8; i++) {
         if (FM_GET_UNNAMED_FIELD(key_mask_cfg.KEY8_MASK, i, 1)) {
             packed_keys[key_idx] = hash_keys.key8[i];
             key_idx++;
@@ -66,7 +66,7 @@ static fm_byte doKeyCompaction
     for (fm_uint i = (key_idx % 4); (0 < i) && (i < 4); i++) {
         packed_keys[key_idx] = 0;
         key_idx++;
-        if (key_idx == MBY_FFU_HASH_KEYS)
+        if (key_idx == MBY_CGRP_HASH_KEYS)
             break;
     }
 
@@ -84,13 +84,13 @@ static void calculateHash(
 )
 {
     // Convert Keys into array of bytes:
-    fm_byte hash_bytes[MBY_FFU_HASH_KEYS] = { 0 };
+    fm_byte hash_bytes[MBY_CGRP_HASH_KEYS] = { 0 };
     mbyClsConvertKeysToBytes(hash_keys, hash_bytes);
 
     // Get hash value from CRC:
     fm_uint32 hash = (hash_num == 0) ?
-        mbyCrc32ByteSwap (hash_bytes, MBY_FFU_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
-        mbyCrc32CByteSwap(hash_bytes, MBY_FFU_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
+        mbyCrc32ByteSwap (hash_bytes, MBY_CGRP_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
+        mbyCrc32CByteSwap(hash_bytes, MBY_CGRP_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
 
     // for EM_A lookup size is 32768, for E_B lookup size is 8192
     fm_uint16 hash_mask  = (group == MBY_CLA_GROUP_A) ? 0x7fff : 0x1fff;
@@ -172,7 +172,7 @@ static fm_bool checkCamHits
     fm_byte               const group,
     fm_uint               const hash_num,
     fm_byte               const profile,
-    fm_byte               const packed_keys[MBY_FFU_HASH_KEYS],
+    fm_byte               const packed_keys[MBY_CGRP_HASH_KEYS],
     fm_byte               const key_size,
     fm_byte               const max_hash_actions_num,
     fm_uint32                   hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
@@ -287,7 +287,7 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
     fm_uint32 hash_lookup_addr = (bucket.PTR + offset * hash_cfg.entry_size[hash_num]) * 4;
 
     fm_bool   group_A    = group == MBY_CLA_GROUP_A;
-    fm_bool   mode_32b   = (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_32B); // split_mode
+    fm_bool   mode_32b   = (hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_32B); // split_mode
     fm_byte   start_bit  = ((mode_32b) ? 5 : 6);
     fm_uint16 line       = FM_GET_UNNAMED_FIELD(hash_lookup_addr, start_bit, 14);
     fm_byte   start_byte = FM_GET_UNNAMED_FIELD(hash_lookup_addr, 0, 5);
@@ -362,7 +362,7 @@ static void checkLookupHits
     fm_byte                 const group,
     fm_uint                 const hash_num,
     fm_byte                 const profile,
-    fm_byte                 const packed_keys[MBY_FFU_HASH_KEYS],
+    fm_byte                 const packed_keys[MBY_CGRP_HASH_KEYS],
     fm_byte                 const key_size,
     mbyClassifierHashLookup const bucket,
     mbyClassifierHashCfg    const hash_cfg,
@@ -422,13 +422,13 @@ void mbyMatchExact // i.e. look up EM hash
     {
         // Initialize actions
         fm_uint32 hash_actions[MBY_FFU_MAX_HASH_ACTIONS] = { 0 };
-        fm_byte packed_keys[MBY_FFU_HASH_KEYS] = { 0 };
+        fm_byte packed_keys[MBY_CGRP_HASH_KEYS] = { 0 };
 
         // Get EM_X_HASH_CFG register fields:
         mbyClassifierHashCfg hash_cfg = mbyClsGetEmHashCfg(cgrp_em_map, profile);
 
         // Get split mode, for split mode is true, for non-split mode is false:
-        fm_bool split_mode = hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_32B;
+        fm_bool split_mode = hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_32B;
 
         // Don't perform lookups if non-split mode and hash_num is 1:
         if (!split_mode && (hash_num == MBY_FFU_KEY_MASK0_ENTRIES_1 - 1))

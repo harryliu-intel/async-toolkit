@@ -45,95 +45,95 @@
 /* The following are written manually based on the specs - do not delete */
 
 /* FFU Action set entry encoding */
-#define MBY_FFU_ACTIONS_PER_ENTRY         2
-#define MBY_FFU_ACTION_PREC_WIDTH         3
-#define MBY_FFU_ACTION_l_PREC             29
-#define MBY_FFU_ACTION_h_PREC             31
-#define MBY_FFU_ACTION_l_ENTRYTYPE        24
-#define MBY_FFU_ACTION_h_ENTRYTYPE        28
-#define MBY_FFU_ACTION_l_SET1_24B_INDEX   24
-#define MBY_FFU_ACTION_h_SET1_24B_INDEX   27
-#define MBY_FFU_ACTION_l_SET1_24B_VALUE   0
-#define MBY_FFU_ACTION_h_SET1_24B_VALUE   23
+#define MBY_CGRP_ACTIONS_PER_ENTRY         2
+#define MBY_CGRP_ACTION_PREC_WIDTH         3
+#define MBY_CGRP_ACTION_l_PREC             29
+#define MBY_CGRP_ACTION_h_PREC             31
+#define MBY_CGRP_ACTION_l_ENTRYTYPE        24
+#define MBY_CGRP_ACTION_h_ENTRYTYPE        28
+#define MBY_CGRP_ACTION_l_SET1_24B_INDEX   24
+#define MBY_CGRP_ACTION_h_SET1_24B_INDEX   27
+#define MBY_CGRP_ACTION_l_SET1_24B_VALUE   0
+#define MBY_CGRP_ACTION_h_SET1_24B_VALUE   23
 
-#define MBY_FFU_ACTION_l_SET3_4B_INDEXC   22
-#define MBY_FFU_ACTION_h_SET3_4B_INDEXC   26
-#define MBY_FFU_ACTION_l_SET3_4B_INDEXB   17
-#define MBY_FFU_ACTION_h_SET3_4B_INDEXB   21
-#define MBY_FFU_ACTION_l_SET3_4B_INDEXA   12
-#define MBY_FFU_ACTION_h_SET3_4B_INDEXA   16
-#define MBY_FFU_ACTION_l_SET3_4B_VALUEC   8
-#define MBY_FFU_ACTION_h_SET3_4B_VALUEC   11
-#define MBY_FFU_ACTION_l_SET3_4B_VALUEB   4
-#define MBY_FFU_ACTION_h_SET3_4B_VALUEB   7
-#define MBY_FFU_ACTION_l_SET3_4B_VALUEA   0
-#define MBY_FFU_ACTION_h_SET3_4B_VALUEA   3
+#define MBY_CGRP_ACTION_l_SET3_4B_INDEXC   22
+#define MBY_CGRP_ACTION_h_SET3_4B_INDEXC   26
+#define MBY_CGRP_ACTION_l_SET3_4B_INDEXB   17
+#define MBY_CGRP_ACTION_h_SET3_4B_INDEXB   21
+#define MBY_CGRP_ACTION_l_SET3_4B_INDEXA   12
+#define MBY_CGRP_ACTION_h_SET3_4B_INDEXA   16
+#define MBY_CGRP_ACTION_l_SET3_4B_VALUEC   8
+#define MBY_CGRP_ACTION_h_SET3_4B_VALUEC   11
+#define MBY_CGRP_ACTION_l_SET3_4B_VALUEB   4
+#define MBY_CGRP_ACTION_h_SET3_4B_VALUEB   7
+#define MBY_CGRP_ACTION_l_SET3_4B_VALUEA   0
+#define MBY_CGRP_ACTION_h_SET3_4B_VALUEA   3
 
-#define MBY_FFU_ACTION_l_SET3_1B_INDEXC   16
-#define MBY_FFU_ACTION_h_SET3_1B_INDEXC   21
-#define MBY_FFU_ACTION_b_SET3_1B_VC       22
-#define MBY_FFU_ACTION_b_SET3_1B_EC       23
-#define MBY_FFU_ACTION_l_SET3_1B_INDEXB   8
-#define MBY_FFU_ACTION_h_SET3_1B_INDEXB   13
-#define MBY_FFU_ACTION_b_SET3_1B_VB       14
-#define MBY_FFU_ACTION_b_SET3_1B_EB       15
-#define MBY_FFU_ACTION_l_SET3_1B_INDEXA   0
-#define MBY_FFU_ACTION_h_SET3_1B_INDEXA   5
-#define MBY_FFU_ACTION_b_SET3_1B_VA       6
-#define MBY_FFU_ACTION_b_SET3_1B_EA       7
+#define MBY_CGRP_ACTION_l_SET3_1B_INDEXC   16
+#define MBY_CGRP_ACTION_h_SET3_1B_INDEXC   21
+#define MBY_CGRP_ACTION_b_SET3_1B_VC       22
+#define MBY_CGRP_ACTION_b_SET3_1B_EC       23
+#define MBY_CGRP_ACTION_l_SET3_1B_INDEXB   8
+#define MBY_CGRP_ACTION_h_SET3_1B_INDEXB   13
+#define MBY_CGRP_ACTION_b_SET3_1B_VB       14
+#define MBY_CGRP_ACTION_b_SET3_1B_EB       15
+#define MBY_CGRP_ACTION_l_SET3_1B_INDEXA   0
+#define MBY_CGRP_ACTION_h_SET3_1B_INDEXA   5
+#define MBY_CGRP_ACTION_b_SET3_1B_VA       6
+#define MBY_CGRP_ACTION_b_SET3_1B_EA       7
 
-#define MBY_FFU_ACTION_l_SET8_1B_ENABLE   8
-#define MBY_FFU_ACTION_h_SET8_1B_ENABLE   15
-#define MBY_FFU_ACTION_l_SET8_1B_INDEX    16
-#define MBY_FFU_ACTION_h_SET8_1B_INDEX    19
-#define MBY_FFU_ACTION_l_SET8_1B_VALUE    0
-#define MBY_FFU_ACTION_h_SET8_1B_VALUE    7
+#define MBY_CGRP_ACTION_l_SET8_1B_ENABLE   8
+#define MBY_CGRP_ACTION_h_SET8_1B_ENABLE   15
+#define MBY_CGRP_ACTION_l_SET8_1B_INDEX    16
+#define MBY_CGRP_ACTION_h_SET8_1B_INDEX    19
+#define MBY_CGRP_ACTION_l_SET8_1B_VALUE    0
+#define MBY_CGRP_ACTION_h_SET8_1B_VALUE    7
 
-#define MBY_FFU_ACTION_l_SET4_4B_ENABLE   20
-#define MBY_FFU_ACTION_h_SET4_4B_ENABLE   23
-#define MBY_FFU_ACTION_l_SET4_4B_INDEX    16
-#define MBY_FFU_ACTION_h_SET4_4B_INDEX    19
-#define MBY_FFU_ACTION_l_SET4_4B_VALUE    0
-#define MBY_FFU_ACTION_h_SET4_4B_VALUE    15
+#define MBY_CGRP_ACTION_l_SET4_4B_ENABLE   20
+#define MBY_CGRP_ACTION_h_SET4_4B_ENABLE   23
+#define MBY_CGRP_ACTION_l_SET4_4B_INDEX    16
+#define MBY_CGRP_ACTION_h_SET4_4B_INDEX    19
+#define MBY_CGRP_ACTION_l_SET4_4B_VALUE    0
+#define MBY_CGRP_ACTION_h_SET4_4B_VALUE    15
 
 /* FFU Remap Entry Encoding */
-#define MBY_FFU_REMAP_b_ENTRYTYPE         23
-#define MBY_FFU_REMAP_l_SET8_1B_INDEX     16
-#define MBY_FFU_REMAP_h_SET8_1B_INDEX     23
-#define MBY_FFU_REMAP_l_SET8_1B_VALUE     8
-#define MBY_FFU_REMAP_h_SET8_1B_VALUE     15
-#define MBY_FFU_REMAP_l_SET8_1B_MASK      0
-#define MBY_FFU_REMAP_h_SET8_1B_MASK      7
+#define MBY_CGRP_REMAP_b_ENTRYTYPE         23
+#define MBY_CGRP_REMAP_l_SET8_1B_INDEX     16
+#define MBY_CGRP_REMAP_h_SET8_1B_INDEX     23
+#define MBY_CGRP_REMAP_l_SET8_1B_VALUE     8
+#define MBY_CGRP_REMAP_h_SET8_1B_VALUE     15
+#define MBY_CGRP_REMAP_l_SET8_1B_MASK      0
+#define MBY_CGRP_REMAP_h_SET8_1B_MASK      7
 
-#define MBY_FFU_REMAP_l_SET1_16B_INDEX     16
-#define MBY_FFU_REMAP_h_SET1_16B_INDEX     23
-#define MBY_FFU_REMAP_l_SET1_16B_VALUE     0
-#define MBY_FFU_REMAP_h_SET1_16B_VALUE     15
+#define MBY_CGRP_REMAP_l_SET1_16B_INDEX     16
+#define MBY_CGRP_REMAP_h_SET1_16B_INDEX     23
+#define MBY_CGRP_REMAP_l_SET1_16B_VALUE     0
+#define MBY_CGRP_REMAP_h_SET1_16B_VALUE     15
 
-#define MBY_FFU_HASH_ENTRY_MODE_32B   0
-#define MBY_FFU_HASH_ENTRY_MODE_64B   1
+#define MBY_CGRP_HASH_ENTRY_MODE_32B   0
+#define MBY_CGRP_HASH_ENTRY_MODE_64B   1
 
 /* Bit number for fields of FFU_SLICE_SRAM.RouteData */
 /* Bit numbers when RouteType==GLORT */
-#define MBY_FFU_ROUTE_l_DGLORT        0
-#define MBY_FFU_ROUTE_h_DGLORT        15
-#define MBY_FFU_ROUTE_b_FLOODSET      16
+#define MBY_CGRP_ROUTE_l_DGLORT        0
+#define MBY_CGRP_ROUTE_h_DGLORT        15
+#define MBY_CGRP_ROUTE_b_FLOODSET      16
 
 /* Bit numbers when RouteType==ARP */
-#define MBY_FFU_ROUTE_l_ARP_INDEX     0
-#define MBY_FFU_ROUTE_h_ARP_INDEX     15
-#define MBY_FFU_ROUTE_l_GROUP_SIZE    16
-#define MBY_FFU_ROUTE_h_GROUP_SIZE    19
-#define MBY_FFU_ROUTE_b_GROUP_TYPE    20
-#define MBY_FFU_ROUTE_b_ARP_ROUTE     21
+#define MBY_CGRP_ROUTE_l_ARP_INDEX     0
+#define MBY_CGRP_ROUTE_h_ARP_INDEX     15
+#define MBY_CGRP_ROUTE_l_GROUP_SIZE    16
+#define MBY_CGRP_ROUTE_h_GROUP_SIZE    19
+#define MBY_CGRP_ROUTE_b_GROUP_TYPE    20
+#define MBY_CGRP_ROUTE_b_ARP_ROUTE     21
 
 /* Bit number for FFU Flags */
-#define MBY_FFU_FLAGS_b_DROP          0
-#define MBY_FFU_FLAGS_b_TRAP          1
-#define MBY_FFU_FLAGS_b_LOG           2
-#define MBY_FFU_FLAGS_b_NO_ROUTE      3
-#define MBY_FFU_FLAGS_b_RX_MIRROR     4
-#define MBY_FFU_FLAGS_b_CAPTURE_TIME  5
+#define MBY_CGRP_FLAGS_b_DROP          0
+#define MBY_CGRP_FLAGS_b_TRAP          1
+#define MBY_CGRP_FLAGS_b_LOG           2
+#define MBY_CGRP_FLAGS_b_NO_ROUTE      3
+#define MBY_CGRP_FLAGS_b_RX_MIRROR     4
+#define MBY_CGRP_FLAGS_b_CAPTURE_TIME  5
 
 #define MBY_N_MA_HASH_KEYS            9
 
@@ -179,194 +179,194 @@
 #define MBY_IPV6_OPTION_AUTH          51
 
 /* FFU mux selects */
-#define MBY_FFU_SELECT_MAP_DIP_MAP_SIP       0
-#define MBY_FFU_SELECT_MAP_DMAC_MAP_SMAC     1
-#define MBY_FFU_SELECT_MAP_PROT_MAP_LENGTH   2
-#define MBY_FFU_SELECT_MAP_SRC_MAP_TYPE      3
-#define MBY_FFU_SELECT_USER                  4
-#define MBY_FFU_SELECT_FTYPE_SWPRI           5
-#define MBY_FFU_SELECT_IPMISC                6
-#define MBY_FFU_SELECT_TOS                   7
-#define MBY_FFU_SELECT_PROT                  8
-#define MBY_FFU_SELECT_TTL                   9
-#define MBY_FFU_SELECT_SRC_PORT             10
-#define MBY_FFU_SELECT_VPRI_VID_11_8        11
-#define MBY_FFU_SELECT_VID_7_0              12
-#define MBY_FFU_SELECT_RXTAG                13
-#define MBY_FFU_SELECT_L2_DMAC_15_0         14
-#define MBY_FFU_SELECT_L2_DMAC_31_16        15
-#define MBY_FFU_SELECT_L2_DMAC_47_32        16
-#define MBY_FFU_SELECT_L2_SMAC_15_0         17
-#define MBY_FFU_SELECT_L2_SMAC_31_16        18
-#define MBY_FFU_SELECT_L2_SMAC_47_32        19
-#define MBY_FFU_SELECT_DGLORT               20
-#define MBY_FFU_SELECT_SGLORT               21
-#define MBY_FFU_SELECT_VPRI_VID             22
-#define MBY_FFU_SELECT_VPRI2_VID2           23
-#define MBY_FFU_SELECT_L2_TYPE              24
-#define MBY_FFU_SELECT_L4_DST               25
-#define MBY_FFU_SELECT_L4_SRC               26
-#define MBY_FFU_SELECT_MAP_L4_DST           27
-#define MBY_FFU_SELECT_MAP_L4_SRC           28
-#define MBY_FFU_SELECT_L4A                  29
-#define MBY_FFU_SELECT_L4B                  30
-#define MBY_FFU_SELECT_L4C                  31
-#define MBY_FFU_SELECT_L4D                  32
-#define MBY_FFU_SELECT_MAP_VPRI1_VID1       33
-#define MBY_FFU_SELECT_L3_DIP_31_0          34
-#define MBY_FFU_SELECT_L3_DIP_63_32         35
-#define MBY_FFU_SELECT_L3_DIP_95_64         36
-#define MBY_FFU_SELECT_L3_DIP_127_96        37
-#define MBY_FFU_SELECT_L3_SIP_31_0          38
-#define MBY_FFU_SELECT_L3_SIP_63_32         39
-#define MBY_FFU_SELECT_L3_SIP_95_64         40
-#define MBY_FFU_SELECT_L3_SIP_127_96        41
+#define MBY_CGRP_SELECT_MAP_DIP_MAP_SIP       0
+#define MBY_CGRP_SELECT_MAP_DMAC_MAP_SMAC     1
+#define MBY_CGRP_SELECT_MAP_PROT_MAP_LENGTH   2
+#define MBY_CGRP_SELECT_MAP_SRC_MAP_TYPE      3
+#define MBY_CGRP_SELECT_USER                  4
+#define MBY_CGRP_SELECT_FTYPE_SWPRI           5
+#define MBY_CGRP_SELECT_IPMISC                6
+#define MBY_CGRP_SELECT_TOS                   7
+#define MBY_CGRP_SELECT_PROT                  8
+#define MBY_CGRP_SELECT_TTL                   9
+#define MBY_CGRP_SELECT_SRC_PORT             10
+#define MBY_CGRP_SELECT_VPRI_VID_11_8        11
+#define MBY_CGRP_SELECT_VID_7_0              12
+#define MBY_CGRP_SELECT_RXTAG                13
+#define MBY_CGRP_SELECT_L2_DMAC_15_0         14
+#define MBY_CGRP_SELECT_L2_DMAC_31_16        15
+#define MBY_CGRP_SELECT_L2_DMAC_47_32        16
+#define MBY_CGRP_SELECT_L2_SMAC_15_0         17
+#define MBY_CGRP_SELECT_L2_SMAC_31_16        18
+#define MBY_CGRP_SELECT_L2_SMAC_47_32        19
+#define MBY_CGRP_SELECT_DGLORT               20
+#define MBY_CGRP_SELECT_SGLORT               21
+#define MBY_CGRP_SELECT_VPRI_VID             22
+#define MBY_CGRP_SELECT_VPRI2_VID2           23
+#define MBY_CGRP_SELECT_L2_TYPE              24
+#define MBY_CGRP_SELECT_L4_DST               25
+#define MBY_CGRP_SELECT_L4_SRC               26
+#define MBY_CGRP_SELECT_MAP_L4_DST           27
+#define MBY_CGRP_SELECT_MAP_L4_SRC           28
+#define MBY_CGRP_SELECT_L4A                  29
+#define MBY_CGRP_SELECT_L4B                  30
+#define MBY_CGRP_SELECT_L4C                  31
+#define MBY_CGRP_SELECT_L4D                  32
+#define MBY_CGRP_SELECT_MAP_VPRI1_VID1       33
+#define MBY_CGRP_SELECT_L3_DIP_31_0          34
+#define MBY_CGRP_SELECT_L3_DIP_63_32         35
+#define MBY_CGRP_SELECT_L3_DIP_95_64         36
+#define MBY_CGRP_SELECT_L3_DIP_127_96        37
+#define MBY_CGRP_SELECT_L3_SIP_31_0          38
+#define MBY_CGRP_SELECT_L3_SIP_63_32         39
+#define MBY_CGRP_SELECT_L3_SIP_95_64         40
+#define MBY_CGRP_SELECT_L3_SIP_127_96        41
 
 
 // Enums:
 
 typedef enum mbyClassifierActionEntryTypeEnum
 {
-    MBY_FFU_ACTION_NOP = 0,
-    MBY_FFU_ACTION_SET4_4B,
-    MBY_FFU_ACTION_SET8_1B,
-    MBY_FFU_ACTION_SET3_1B,
-    MBY_FFU_ACTION_SET3_4B,
-    MBY_FFU_ACTION_SET1_24B
+    MBY_CGRP_ACTION_NOP = 0,
+    MBY_CGRP_ACTION_SET4_4B,
+    MBY_CGRP_ACTION_SET8_1B,
+    MBY_CGRP_ACTION_SET3_1B,
+    MBY_CGRP_ACTION_SET3_4B,
+    MBY_CGRP_ACTION_SET1_24B
 
 } mbyClassifierActionEntryType;
 
 typedef enum mbyClassifierAct1Enum
 {
-    MBY_FFU_ACTION_DROP                   =  0,
-    MBY_FFU_ACTION_TRAP                   =  1,
-    MBY_FFU_ACTION_LOG                    =  2,
-    MBY_FFU_ACTION_NO_ROUTE               =  3,
-    MBY_FFU_ACTION_RX_MIRROR              =  4,
-    MBY_FFU_ACTION_CAPT_TIME              =  5,
-    MBY_FFU_ACTION_TX_TAG0                =  6,
-    MBY_FFU_ACTION_TX_TAG1                =  7,
-    MBY_FFU_ACTION_TRIGGER0               =  8,
-    MBY_FFU_ACTION_TRIGGER1               =  9,
-    MBY_FFU_ACTION_TRIGGER2               = 10,
-    MBY_FFU_ACTION_TRIGGER3               = 11,
-    MBY_FFU_ACTION_TRIGGER4               = 12,
-    MBY_FFU_ACTION_TRIGGER5               = 13,
-    MBY_FFU_ACTION_TRIGGER6               = 14,
-    MBY_FFU_ACTION_TRIGGER7               = 15,
-    MBY_FFU_ACTION_SCENARIO0              = 16,
-    MBY_FFU_ACTION_SCENARIO1              = 17,
-    MBY_FFU_ACTION_SCENARIO2              = 18,
-    MBY_FFU_ACTION_SCENARIO3              = 19,
-    MBY_FFU_ACTION_SCENARIO4              = 20,
-    MBY_FFU_ACTION_SCENARIO5              = 21,
-    MBY_FFU_ACTION_LEARN                  = 22,
-    MBY_FFU_ACTION_COPY_OTR_VPRI          = 23
+    MBY_CGRP_ACTION_DROP                   =  0,
+    MBY_CGRP_ACTION_TRAP                   =  1,
+    MBY_CGRP_ACTION_LOG                    =  2,
+    MBY_CGRP_ACTION_NO_ROUTE               =  3,
+    MBY_CGRP_ACTION_RX_MIRROR              =  4,
+    MBY_CGRP_ACTION_CAPT_TIME              =  5,
+    MBY_CGRP_ACTION_TX_TAG0                =  6,
+    MBY_CGRP_ACTION_TX_TAG1                =  7,
+    MBY_CGRP_ACTION_TRIGGER0               =  8,
+    MBY_CGRP_ACTION_TRIGGER1               =  9,
+    MBY_CGRP_ACTION_TRIGGER2               = 10,
+    MBY_CGRP_ACTION_TRIGGER3               = 11,
+    MBY_CGRP_ACTION_TRIGGER4               = 12,
+    MBY_CGRP_ACTION_TRIGGER5               = 13,
+    MBY_CGRP_ACTION_TRIGGER6               = 14,
+    MBY_CGRP_ACTION_TRIGGER7               = 15,
+    MBY_CGRP_ACTION_SCENARIO0              = 16,
+    MBY_CGRP_ACTION_SCENARIO1              = 17,
+    MBY_CGRP_ACTION_SCENARIO2              = 18,
+    MBY_CGRP_ACTION_SCENARIO3              = 19,
+    MBY_CGRP_ACTION_SCENARIO4              = 20,
+    MBY_CGRP_ACTION_SCENARIO5              = 21,
+    MBY_CGRP_ACTION_LEARN                  = 22,
+    MBY_CGRP_ACTION_COPY_OTR_VPRI          = 23
 
 } mbyClassifierAct1;
 
 typedef enum mbyClasifierAct4Enum
 {
-    MBY_FFU_ACTION_DSCP_CTRL              =  0,
-    MBY_FFU_ACTION_TTL_CTRL               =  1,
-    MBY_FFU_ACTION_TC_CTRL                =  2,
-    MBY_FFU_ACTION_ECN_CTRL               =  3,
-    MBY_FFU_ACTION_VID_LOW                =  4,
-    MBY_FFU_ACTION_VID_MID                =  5,
-    MBY_FFU_ACTION_VID_HIGH               =  6,
-    MBY_FFU_ACTION_VPRI_LOW               =  7,
-    MBY_FFU_ACTION_DSCP_LOW               =  8,
-    MBY_FFU_ACTION_DSCP_HIGH              =  9,
-    MBY_FFU_ACTION_TC                     = 10,
+    MBY_CGRP_ACTION_DSCP_CTRL              =  0,
+    MBY_CGRP_ACTION_TTL_CTRL               =  1,
+    MBY_CGRP_ACTION_TC_CTRL                =  2,
+    MBY_CGRP_ACTION_ECN_CTRL               =  3,
+    MBY_CGRP_ACTION_VID_LOW                =  4,
+    MBY_CGRP_ACTION_VID_MID                =  5,
+    MBY_CGRP_ACTION_VID_HIGH               =  6,
+    MBY_CGRP_ACTION_VPRI_LOW               =  7,
+    MBY_CGRP_ACTION_DSCP_LOW               =  8,
+    MBY_CGRP_ACTION_DSCP_HIGH              =  9,
+    MBY_CGRP_ACTION_TC                     = 10,
     // alternate VPRI address when combining DSCP/SWPRI_CTRL/VPRI actions
-    MBY_FFU_ACTION_VPRI_HIGH              = 11,
-    MBY_FFU_ACTION_HASH_PROFILE_ECMP_0    = 12,
-    MBY_FFU_ACTION_HASH_PROFILE_ECMP_1    = 13,
-    MBY_FFU_ACTION_HASH_PROFILE_MOD_0     = 14,
-    MBY_FFU_ACTION_HASH_PROFILE_MOD_1     = 15,
-    MBY_FFU_ACTION_META0_LOW              = 16,
-    MBY_FFU_ACTION_META0_HIGH             = 17,
-    MBY_FFU_ACTION_META1_LOW              = 18,
-    MBY_FFU_ACTION_META1_HIGH             = 19,
-    MBY_FFU_ACTION_META2_LOW              = 20,
-    MBY_FFU_ACTION_META2_HIGH             = 21,
-    MBY_FFU_ACTION_MPLS_POP               = 22
+    MBY_CGRP_ACTION_VPRI_HIGH              = 11,
+    MBY_CGRP_ACTION_HASH_PROFILE_ECMP_0    = 12,
+    MBY_CGRP_ACTION_HASH_PROFILE_ECMP_1    = 13,
+    MBY_CGRP_ACTION_HASH_PROFILE_MOD_0     = 14,
+    MBY_CGRP_ACTION_HASH_PROFILE_MOD_1     = 15,
+    MBY_CGRP_ACTION_META0_LOW              = 16,
+    MBY_CGRP_ACTION_META0_HIGH             = 17,
+    MBY_CGRP_ACTION_META1_LOW              = 18,
+    MBY_CGRP_ACTION_META1_HIGH             = 19,
+    MBY_CGRP_ACTION_META2_LOW              = 20,
+    MBY_CGRP_ACTION_META2_HIGH             = 21,
+    MBY_CGRP_ACTION_MPLS_POP               = 22
 
 } mbyClasifierAct4;
 
 typedef enum mbyClassifierAct24Enum
 {
-    MBY_FFU_ACTION_POLICER0               =  0,
-    MBY_FFU_ACTION_POLICER1               =  1,
-    MBY_FFU_ACTION_POLICER2               =  2,
-    MBY_FFU_ACTION_POLICER3               =  3,
-    MBY_FFU_ACTION_FWD                    =  4,
-    MBY_FFU_ACTION_MOD_IDX                =  5,
-    MBY_FFU_ACTION_REMAP0                 =  6,
-    MBY_FFU_ACTION_REMAP1                 =  7,
-    MBY_FFU_ACTION_REMAP2                 =  8,
-    MBY_FFU_ACTION_REMAP3                 =  9,
-    MBY_FFU_ACTION_REMAP4                 = 10,
-    MBY_FFU_ACTION_REMAP5                 = 11,
-    MBY_FFU_ACTION_REMAP6                 = 12,
-    MBY_FFU_ACTION_REMAP7                 = 13
+    MBY_CGRP_ACTION_POLICER0               =  0,
+    MBY_CGRP_ACTION_POLICER1               =  1,
+    MBY_CGRP_ACTION_POLICER2               =  2,
+    MBY_CGRP_ACTION_POLICER3               =  3,
+    MBY_CGRP_ACTION_FWD                    =  4,
+    MBY_CGRP_ACTION_MOD_IDX                =  5,
+    MBY_CGRP_ACTION_REMAP0                 =  6,
+    MBY_CGRP_ACTION_REMAP1                 =  7,
+    MBY_CGRP_ACTION_REMAP2                 =  8,
+    MBY_CGRP_ACTION_REMAP3                 =  9,
+    MBY_CGRP_ACTION_REMAP4                 = 10,
+    MBY_CGRP_ACTION_REMAP5                 = 11,
+    MBY_CGRP_ACTION_REMAP6                 = 12,
+    MBY_CGRP_ACTION_REMAP7                 = 13
 
 } mbyClassifierAct24;
 
 typedef enum mbyClassifierKey8Enum
 {
-    MBY_FFU_KEY8_MPLS_LABEL5_0 = 0,
-    MBY_FFU_KEY8_MPLS_LABEL5_1 = 1,
-    MBY_FFU_KEY8_MPLS_LABEL5_2 = 2,
-    MBY_FFU_KEY8_MPLS_LABEL5_3 = 3,
-    MBY_FFU_KEY8_MPLS_LABEL6_0 = 4,
-    MBY_FFU_KEY8_MPLS_LABEL6_1 = 5,
-    MBY_FFU_KEY8_MPLS_LABEL6_2 = 6,
-    MBY_FFU_KEY8_MPLS_LABEL6_3 = 7,
-    MBY_FFU_KEY8_INNER_TTL     = 8,
-    MBY_FFU_KEY8_INNER_PROT    = 9,
-    MBY_FFU_KEY8_INNER_LEN     = 10,
-    MBY_FFU_KEY8_INNER_DS      = 12,
-    MBY_FFU_KEY8_OUTER_TTL     = 20,
-    MBY_FFU_KEY8_OUTER_PROT    = 21,
-    MBY_FFU_KEY8_OUTER_LEN     = 22,
-    MBY_FFU_KEY8_OUTER_DS      = 24
+    MBY_CGRP_KEY8_MPLS_LABEL5_0 = 0,
+    MBY_CGRP_KEY8_MPLS_LABEL5_1 = 1,
+    MBY_CGRP_KEY8_MPLS_LABEL5_2 = 2,
+    MBY_CGRP_KEY8_MPLS_LABEL5_3 = 3,
+    MBY_CGRP_KEY8_MPLS_LABEL6_0 = 4,
+    MBY_CGRP_KEY8_MPLS_LABEL6_1 = 5,
+    MBY_CGRP_KEY8_MPLS_LABEL6_2 = 6,
+    MBY_CGRP_KEY8_MPLS_LABEL6_3 = 7,
+    MBY_CGRP_KEY8_INNER_TTL     = 8,
+    MBY_CGRP_KEY8_INNER_PROT    = 9,
+    MBY_CGRP_KEY8_INNER_LEN     = 10,
+    MBY_CGRP_KEY8_INNER_DS      = 12,
+    MBY_CGRP_KEY8_OUTER_TTL     = 20,
+    MBY_CGRP_KEY8_OUTER_PROT    = 21,
+    MBY_CGRP_KEY8_OUTER_LEN     = 22,
+    MBY_CGRP_KEY8_OUTER_DS      = 24
 
 } mbyClassifierKey8;
 
 typedef enum mbyClassifierKey16Enum
 {
-    MBY_FFU_KEY16_OUTER_VLAN1     = 14,
-    MBY_FFU_KEY16_INNER_VLAN1     = 20,
-    MBY_FFU_KEY16_MPLS_LABEL1_0   = 24,
-    MBY_FFU_KEY16_MPLS_LABEL1_1   = 25,
-    MBY_FFU_KEY16_MPLS_LABEL2_0   = 26,
-    MBY_FFU_KEY16_MPLS_LABEL2_1   = 27,
-    MBY_FFU_KEY16_MPLS_LABEL3_0   = 28,
-    MBY_FFU_KEY16_MPLS_LABEL3_1   = 29,
-    MBY_FFU_KEY16_MPLS_LABEL4_0   = 30,
-    MBY_FFU_KEY16_MPLS_LABEL4_1   = 31
+    MBY_CGRP_KEY16_OUTER_VLAN1     = 14,
+    MBY_CGRP_KEY16_INNER_VLAN1     = 20,
+    MBY_CGRP_KEY16_MPLS_LABEL1_0   = 24,
+    MBY_CGRP_KEY16_MPLS_LABEL1_1   = 25,
+    MBY_CGRP_KEY16_MPLS_LABEL2_0   = 26,
+    MBY_CGRP_KEY16_MPLS_LABEL2_1   = 27,
+    MBY_CGRP_KEY16_MPLS_LABEL3_0   = 28,
+    MBY_CGRP_KEY16_MPLS_LABEL3_1   = 29,
+    MBY_CGRP_KEY16_MPLS_LABEL4_0   = 30,
+    MBY_CGRP_KEY16_MPLS_LABEL4_1   = 31
 
 } mbyClassifierKey16;
 
 typedef enum mbyClassifierKey32Enum
 {
-    MBY_FFU_KEY32_OUTER_SIP_127_96    = 0,
-    MBY_FFU_KEY32_OUTER_SIP_95_64     = 1,
-    MBY_FFU_KEY32_OUTER_SIP_63_32     = 2,
-    MBY_FFU_KEY32_OUTER_SIP_31_0      = 3,
-    MBY_FFU_KEY32_OUTER_DIP_127_96    = 4,
-    MBY_FFU_KEY32_OUTER_DIP_95_64     = 5,
-    MBY_FFU_KEY32_OUTER_DIP_63_32     = 6,
-    MBY_FFU_KEY32_OUTER_DIP_31_0      = 7,
-    MBY_FFU_KEY32_INNER_SIP_127_96    = 8,
-    MBY_FFU_KEY32_INNER_SIP_95_64     = 9,
-    MBY_FFU_KEY32_INNER_SIP_63_32     = 10,
-    MBY_FFU_KEY32_INNER_SIP_31_0      = 11,
-    MBY_FFU_KEY32_INNER_DIP_127_96    = 12,
-    MBY_FFU_KEY32_INNER_DIP_95_64     = 13,
-    MBY_FFU_KEY32_INNER_DIP_63_32     = 14,
-    MBY_FFU_KEY32_INNER_DIP_31_0      = 15
+    MBY_CGRP_KEY32_OUTER_SIP_127_96    = 0,
+    MBY_CGRP_KEY32_OUTER_SIP_95_64     = 1,
+    MBY_CGRP_KEY32_OUTER_SIP_63_32     = 2,
+    MBY_CGRP_KEY32_OUTER_SIP_31_0      = 3,
+    MBY_CGRP_KEY32_OUTER_DIP_127_96    = 4,
+    MBY_CGRP_KEY32_OUTER_DIP_95_64     = 5,
+    MBY_CGRP_KEY32_OUTER_DIP_63_32     = 6,
+    MBY_CGRP_KEY32_OUTER_DIP_31_0      = 7,
+    MBY_CGRP_KEY32_INNER_SIP_127_96    = 8,
+    MBY_CGRP_KEY32_INNER_SIP_95_64     = 9,
+    MBY_CGRP_KEY32_INNER_SIP_63_32     = 10,
+    MBY_CGRP_KEY32_INNER_SIP_31_0      = 11,
+    MBY_CGRP_KEY32_INNER_DIP_127_96    = 12,
+    MBY_CGRP_KEY32_INNER_DIP_95_64     = 13,
+    MBY_CGRP_KEY32_INNER_DIP_63_32     = 14,
+    MBY_CGRP_KEY32_INNER_DIP_31_0      = 15
 
 } mbyClassifierKey32;
 
@@ -619,7 +619,7 @@ mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 void mbyClsConvertKeysToBytes
 (
     mbyClassifierKeys const keys,
-    fm_byte                 bytes[MBY_FFU_HASH_KEYS]
+    fm_byte                 bytes[MBY_CGRP_HASH_KEYS]
 );
 
 #endif /* MBY_CLASSIFIER_H */

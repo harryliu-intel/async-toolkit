@@ -115,9 +115,9 @@ void basic_fwd_init
     wcm_action_cfg->INDEX_0  = slice + 1;
 
     wcm_action_r * const wcm_action = &(rx_top_map->cgrp_b.B.WCM_ACTION[ram_num][index]);
-    FM_SET_FIELD(wcm_action->ACTION0, MBY_FFU_ACTION, SET1_24B_INDEX, 4);
-    FM_SET_FIELD(wcm_action->ACTION0, MBY_FFU_ACTION, SET1_24B_VALUE, (0x100 + fwd_port));
-    FM_SET_FIELD(wcm_action->ACTION0, MBY_FFU_ACTION, PREC, 1);
+    FM_SET_FIELD(wcm_action->ACTION0, MBY_CGRP_ACTION, SET1_24B_INDEX, 4);
+    FM_SET_FIELD(wcm_action->ACTION0, MBY_CGRP_ACTION, SET1_24B_VALUE, (0x100 + fwd_port));
+    FM_SET_FIELD(wcm_action->ACTION0, MBY_CGRP_ACTION, PREC, 1);
     FM_SET_UNNAMED_FIELD(wcm_action->ACTION0, 28, 1, 1);
 
 }

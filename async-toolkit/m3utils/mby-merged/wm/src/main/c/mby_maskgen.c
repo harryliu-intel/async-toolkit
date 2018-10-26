@@ -572,7 +572,7 @@ void MaskGen
     const fm_uint16          csglort                = in->CSGLORT;
     const fm_bool            da_hit                 = in->DA_HIT;
     const fm_bool            drop_ttl               = in->DROP_TTL;
-    const mbyClassifierFlags ffu_flags              = in->FFU_FLAGS;
+    const mbyClassifierFlags cgrp_flags              = in->CGRP_FLAGS;
     const fm_bool            flood_forwarded        = in->FLOOD_FORWARDED;
     const fm_uint32          glort_dmask_in         = in->GLORT_DMASK;
     const fm_bool            glort_forwarded        = in->GLORT_FORWARDED;
@@ -878,13 +878,13 @@ void MaskGen
     // --------------------------------------------------------------------------------
     // Classifier Flags:
 
-    if (ffu_flags.drop)
+    if (cgrp_flags.drop)
         amask |= MBY_AMASK_DROP_FFU; // dropping frame
 
-    if (ffu_flags.trap)
+    if (cgrp_flags.trap)
         amask |= MBY_AMASK_TRAP_FFU; // trapping frame
 
-    if (ffu_flags.log)
+    if (cgrp_flags.log)
         log_amask |= MBY_LOG_TYPE_FFU; // logging fram
 
     fm_bool rx_mirror           = rx_mirror_in;
@@ -893,7 +893,7 @@ void MaskGen
     fm_byte mirror0_profile_idx = 0;
     fm_byte mirror1_profile_idx = 0;
 
-    if (ffu_flags.rx_mirror)
+    if (cgrp_flags.rx_mirror)
     {
         rx_mirror         = TRUE;  // RX mirroring frame
         mirror1_profile_v = rx_mirror;

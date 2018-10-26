@@ -66,8 +66,8 @@ void RxPipeline
 
     hsh2nxt.L2_DMAC        = cla2hsh.L2_DMAC;
     hsh2nxt.L2_SMAC        = cla2hsh.L2_SMAC;
-    hsh2nxt.FFU_FLAGS      = cla2hsh.FFU_FLAGS;
-    hsh2nxt.FFU_ROUTE      = cla2hsh.FFU_ROUTE;
+    hsh2nxt.CGRP_FLAGS     = cla2hsh.CGRP_FLAGS;
+    hsh2nxt.CGRP_ROUTE     = cla2hsh.CGRP_ROUTE;
     hsh2nxt.ENCAP          = cla2hsh.ENCAP;
     hsh2nxt.DECAP          = cla2hsh.DECAP;
     hsh2nxt.DMAC_FROM_IPV6 = cla2hsh.DMAC_FROM_IPV6;

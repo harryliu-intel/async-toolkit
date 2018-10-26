@@ -143,8 +143,8 @@ void NextHop
 )
 {
     // Read inputs:
-    const mbyClassifierFlags ffu_flags   = in->FFU_FLAGS;
-    const fm_uint32          ffu_route   = in->FFU_ROUTE;
+    const mbyClassifierFlags cgrp_flags  = in->CGRP_FLAGS;
+    const fm_uint32          cgrp_route  = in->CGRP_ROUTE;
           fm_bool            encap       = in->ENCAP;
           fm_bool            decap       = in->DECAP;
     const fm_macaddr         dmac_ipv6   = in->DMAC_FROM_IPV6;
@@ -162,13 +162,13 @@ void NextHop
           fm_bool            trap_igmp   = in->TRAP_IGMP;
     const fm_uint32          rx_port     = in->RX_PORT;
 
-    fm_bool   no_route     = ffu_flags.no_route;
-    fm_bool   group_type   = FM_GET_BIT  (ffu_route, MBY_FFU_ROUTE, GROUP_TYPE);
-    fm_byte   group_size   = FM_GET_FIELD(ffu_route, MBY_FFU_ROUTE, GROUP_SIZE);
-    fm_uint16 arp_index    = FM_GET_FIELD(ffu_route, MBY_FFU_ROUTE, ARP_INDEX) & 0x3fff; // 14-bits
-    fm_bool   glort_routed = !FM_GET_BIT (ffu_route, MBY_FFU_ROUTE, ARP_ROUTE);
-    fm_uint16 dglort       = FM_GET_FIELD(ffu_route, MBY_FFU_ROUTE, DGLORT);
-    fm_bool   flood_set    = (glort_routed) ? FM_GET_BIT  (ffu_route, MBY_FFU_ROUTE, FLOODSET) : 0;
+    fm_bool   no_route     = cgrp_flags.no_route;
+    fm_bool   group_type   = FM_GET_BIT  (cgrp_route, MBY_CGRP_ROUTE, GROUP_TYPE);
+    fm_byte   group_size   = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, GROUP_SIZE);
+    fm_uint16 arp_index    = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, ARP_INDEX) & 0x3fff; // 14-bits
+    fm_bool   glort_routed = !FM_GET_BIT (cgrp_route, MBY_CGRP_ROUTE, ARP_ROUTE);
+    fm_uint16 dglort       = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, DGLORT);
+    fm_bool   flood_set    = (glort_routed) ? FM_GET_BIT  (cgrp_route, MBY_CGRP_ROUTE, FLOODSET) : 0;
     fm_byte   sel_hash     = (group_type == 0) ? arp_hash[group_size] : ((raw_hash << group_size) >> 12);
     fm_uint16 arp_tbl_idx  = (arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
     fm_uint16 idglort      = 0;
@@ -270,7 +270,7 @@ void NextHop
     out->CPU_TRAP               = in->CPU_TRAP;
     out->CSGLORT                = in->CSGLORT;
     out->DROP_TTL               = in->DROP_TTL;
-    out->FFU_FLAGS              = in->FFU_FLAGS;
+    out->CGRP_FLAGS             = in->CGRP_FLAGS;
     out->GLORT_DMASK            = in->GLORT_DMASK;
     out->HASH_ROT_A             = in->HASH_ROT_A;
     out->HASH_ROT_B             = in->HASH_ROT_B;

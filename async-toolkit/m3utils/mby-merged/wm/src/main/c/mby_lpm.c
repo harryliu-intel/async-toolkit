@@ -232,7 +232,7 @@ static void lpmGenerateKey
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
 
 #define PACK_LPM_KEY(key_type, key_size)                                       \
-    for(i = 0; i < MBY_FFU_KEY ##key_size ; ++i)                               \
+    for(i = 0; i < MBY_CGRP_KEY ##key_size ; ++i)                              \
     {                                                                          \
         if ((key_sels.key_type ## _key ## key_size ## _sel >> i) & 0x1)      \
         {                                                                      \

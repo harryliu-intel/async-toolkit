@@ -243,7 +243,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint16               CSGLORT;              // 16-bit canonical source GLORT
     fm_bool                 DA_HIT;               // destination MAC address lookup hit
     fm_bool                 DROP_TTL;             // packet should be dropped
-    mbyClassifierFlags      FFU_FLAGS;            // flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
+    mbyClassifierFlags      CGRP_FLAGS;           // flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
     fm_bool                 FLOOD_FORWARDED;      // glort is flood-forwarded
     fm_uint32               GLORT_DMASK;          // 24-bit GLORT-based destination mask
     fm_bool                 GLORT_FORWARDED;      // glort forwarded due to FFU rule

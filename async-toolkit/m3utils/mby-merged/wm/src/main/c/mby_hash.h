@@ -86,8 +86,8 @@ typedef struct mbyHashToNextHopStruct
     fm_macaddr              DMAC_FROM_IPV6;
     fm_bool                 DROP_TTL;               // packet should be dropped
     fm_bool                 ENCAP;
-    mbyClassifierFlags      FFU_FLAGS;              // flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
-    fm_uint32               FFU_ROUTE;
+    mbyClassifierFlags      CGRP_FLAGS;             // flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
+    fm_uint32               CGRP_ROUTE;
     fm_bool                 GLORT_CAM_MISS;         // GLORT lookup resulted in a miss flag
     fm_uint32               GLORT_DMASK;            // 24-bit GLORT-based destination mask
     fm_uint16               IP_MCAST_IDX;           // index into the MCAST_VLAN_TABLE

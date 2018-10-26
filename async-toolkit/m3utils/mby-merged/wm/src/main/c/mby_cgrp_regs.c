@@ -134,7 +134,7 @@ void mbyClsGetEmHashMissActions
     hash_actions[0] = em_hash_miss->ACTION0;
     hash_actions[1] = em_hash_miss->ACTION1;
 
-    if (hash_cfg.mode == MBY_FFU_HASH_ENTRY_MODE_64B) {
+    if (hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_64B) {
         hash_actions[2] = em_hash_miss_1->ACTION0;
         hash_actions[3] = em_hash_miss_1->ACTION1;
     }
@@ -282,18 +282,18 @@ mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 void mbyClsConvertKeysToBytes
 (
     mbyClassifierKeys const keys,
-    fm_byte                 bytes[MBY_FFU_HASH_KEYS]
+    fm_byte                 bytes[MBY_CGRP_HASH_KEYS]
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++) {
         bytes[2*i + 1] =  keys.key16[i]       & 0xFF;
         bytes[2*i    ] = (keys.key16[i] >> 8) & 0xFF;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
-        bytes[MBY_FFU_KEY16*2 + i] = keys.key8[i];
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8; i++)
+        bytes[MBY_CGRP_KEY16*2 + i] = keys.key8[i];
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         for (fm_uint j = 0; j < 4; j++)
-            bytes[MBY_FFU_KEY16*2 + MBY_FFU_KEY8 + i*4 + (3-j)] = (keys.key32[i] >> (j * 8 )) & 0xFF;
+            bytes[MBY_CGRP_KEY16*2 + MBY_CGRP_KEY8 + i*4 + (3-j)] = (keys.key32[i] >> (j * 8 )) & 0xFF;
 }

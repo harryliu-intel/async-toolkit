@@ -753,8 +753,8 @@ void Hash
 
     // Pass thru:
 
-    out->FFU_FLAGS               = in->FFU_FLAGS;
-    out->FFU_ROUTE               = in->FFU_ROUTE;
+    out->CGRP_FLAGS              = in->CGRP_FLAGS;
+    out->CGRP_ROUTE              = in->CGRP_ROUTE;
     out->ENCAP                   = in->ENCAP;
     out->DECAP                   = in->DECAP;
     out->DMAC_FROM_IPV6          = in->DMAC_FROM_IPV6;

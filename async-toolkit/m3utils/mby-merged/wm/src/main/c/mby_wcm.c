@@ -19,7 +19,7 @@ static mbyWcmKeyInfo selectWcmKey
     mux[1] = tcam_cfg->SELECT1;
     mux[2] = tcam_cfg->SELECT2;
     mux[3] = tcam_cfg->SELECT3;
-    mux[4] = tcam_cfg->SELECT_TOP + MBY_FFU_KEY16;
+    mux[4] = tcam_cfg->SELECT_TOP + MBY_CGRP_KEY16;
 
     wcm_key_info.key        = 0;
     wcm_key_info.key_invert = FM_LITERAL_U64(0xFFFFFFFFF);
@@ -32,20 +32,20 @@ static mbyWcmKeyInfo selectWcmKey
 
         // key8:
         fm_byte temp = 0;
-        if ((mux[i] >= MBY_FFU_KEY8_BASE) && (mux[i] < (MBY_FFU_KEY8_BASE + MBY_FFU_KEY8)))
-            temp = keys->key8[mux[i] - MBY_FFU_KEY8_BASE];
+        if ((mux[i] >= MBY_CGRP_KEY8_BASE) && (mux[i] < (MBY_CGRP_KEY8_BASE + MBY_CGRP_KEY8)))
+            temp = keys->key8[mux[i] - MBY_CGRP_KEY8_BASE];
 
         // key16 and key32 are invalid for SelectTop:
         if (i >= 4)
             continue;
 
         // key16:
-        if (mux[i] < (MBY_FFU_KEY16_BASE + MBY_FFU_KEY16))
-            temp = FM_GET_UNNAMED_FIELD(keys->key16[mux[i] - MBY_FFU_KEY16_BASE], lo_bit % 16, 8);
+        if (mux[i] < (MBY_CGRP_KEY16_BASE + MBY_CGRP_KEY16))
+            temp = FM_GET_UNNAMED_FIELD(keys->key16[mux[i] - MBY_CGRP_KEY16_BASE], lo_bit % 16, 8);
 
         // key32:
-        if ((mux[i] >= MBY_FFU_KEY32_BASE) && (mux[i] < (MBY_FFU_KEY32_BASE + MBY_FFU_KEY32)))
-            temp = FM_GET_UNNAMED_FIELD(keys->key32[mux[i] - MBY_FFU_KEY32_BASE], lo_bit, 8);
+        if ((mux[i] >= MBY_CGRP_KEY32_BASE) && (mux[i] < (MBY_CGRP_KEY32_BASE + MBY_CGRP_KEY32)))
+            temp = FM_GET_UNNAMED_FIELD(keys->key32[mux[i] - MBY_CGRP_KEY32_BASE], lo_bit, 8);
 
         FM_SET_UNNAMED_FIELD64(wcm_key_info.key, lo_bit, 8, temp);
     }
@@ -197,9 +197,9 @@ static void wcmActions
             continue;
 
         fm_uint hit_index = tcam_hit_info[slice].hit_index;
-        for (fm_uint i = 0; i < MBY_FFU_ACTIONS_PER_ENTRY; i++) {
+        for (fm_uint i = 0; i < MBY_CGRP_ACTIONS_PER_ENTRY; i++) {
             fm_uint32 action_entry = mbyClsGetWcmActionEntry(cgrp_b_map, ram_num, hit_index, i);
-            actions[MBY_FFU_ACTIONS_PER_ENTRY * ram_num + i] = action_entry;
+            actions[MBY_CGRP_ACTIONS_PER_ENTRY * ram_num + i] = action_entry;
         }
     }
 }

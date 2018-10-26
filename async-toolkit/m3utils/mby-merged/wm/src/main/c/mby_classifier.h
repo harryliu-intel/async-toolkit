@@ -25,9 +25,9 @@ typedef struct mbyClassifierToHashStruct
     fm_bool                 DROP_TTL;                            // drop packet (depending on TTL value)
     fm_byte                 ECN;                                 // egress ECN value
     fm_bool                 ENCAP;                               // encapsulate flag
-    mbyClassifierFlags      FFU_FLAGS;                           // classifier flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
-    fm_uint32               FFU_ROUTE;                           // classifier route
-    fm_byte                 FFU_TRIG;                            // classifier action triggers
+    mbyClassifierFlags      CGRP_FLAGS;                          // classifier flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
+    fm_uint32               CGRP_ROUTE;                          // classifier route
+    fm_byte                 CGRP_TRIG;                           // classifier action triggers
     fm_uint16               IDGLORT;                             // 16-bit ingress destination GLORT
     fm_uint16               INNER_L3_LENGTH;                     // 16-bit IPv4 datagram length for Inner header
     fm_bool                 IS_IPV4;                             // packet is of type IP version 4
@@ -42,7 +42,7 @@ typedef struct mbyClassifierToHashStruct
     fm_byte                 MPLS_POP;                            // # of MPLS labels to pop in Modify
     fm_bool                 NO_LEARN;                            // disable learning
     fm_uint16               OUTER_L3_LENGTH;                     // 16-bit IPv4 datagram length for outer header
-    fm_uint32               POLICER_ACTION[MBY_FFU_POL_ACTIONS]; // policer actions
+    fm_uint32               POLICER_ACTION[MBY_CGRP_POL_ACTIONS];// policer actions
     fm_byte                 QOS_L2_VPRI1;                        // 4-bit QOS VLAN priority
     fm_byte                 QOS_L3_DSCP;                         // 6-bit QOS Differentiated Services Code Point (DSCP):
     fm_byte                 QOS_SWPRI;                           // 4-bit quality of service priority

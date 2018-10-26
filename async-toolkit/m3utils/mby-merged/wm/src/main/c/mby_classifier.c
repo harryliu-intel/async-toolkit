@@ -35,99 +35,99 @@ static void resolveActionSet
     mbyClassifierActions * const actions
 )
 {
-    fm_byte prec   = FM_GET_FIELD        (action, MBY_FFU_ACTION, PREC);
-    fm_byte encode = FM_GET_UNNAMED_FIELD(action, MBY_FFU_ACTION_l_ENTRYTYPE, 5);
+    fm_byte prec   = FM_GET_FIELD        (action, MBY_CGRP_ACTION, PREC);
+    fm_byte encode = FM_GET_UNNAMED_FIELD(action, MBY_CGRP_ACTION_l_ENTRYTYPE, 5);
 
     mbyClassifierActionEntryType entryType =
-        (encode == 1)                ? MBY_FFU_ACTION_SET4_4B  :
-        (encode == 2)                ? MBY_FFU_ACTION_SET8_1B  :
-        (encode == 4)                ? MBY_FFU_ACTION_SET3_1B  :
-        (((encode >> 3) & 0x3) == 1) ? MBY_FFU_ACTION_SET3_4B  :
-        (((encode >> 4) & 0x1) == 1) ? MBY_FFU_ACTION_SET1_24B : MBY_FFU_ACTION_NOP;
+        (encode == 1)                ? MBY_CGRP_ACTION_SET4_4B  :
+        (encode == 2)                ? MBY_CGRP_ACTION_SET8_1B  :
+        (encode == 4)                ? MBY_CGRP_ACTION_SET3_1B  :
+        (((encode >> 3) & 0x3) == 1) ? MBY_CGRP_ACTION_SET3_4B  :
+        (((encode >> 4) & 0x1) == 1) ? MBY_CGRP_ACTION_SET1_24B : MBY_CGRP_ACTION_NOP;
 
     switch (entryType)
     {
-        case MBY_FFU_ACTION_SET4_4B:
+        case MBY_CGRP_ACTION_SET4_4B:
         {
-            fm_byte   index  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET4_4B_INDEX);
-            fm_byte   enable = FM_GET_FIELD(action, MBY_FFU_ACTION, SET4_4B_ENABLE);
-            fm_uint32 value  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET4_4B_VALUE);
+            fm_byte   index  = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET4_4B_INDEX);
+            fm_byte   enable = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET4_4B_ENABLE);
+            fm_uint32 value  = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET4_4B_VALUE);
             for (fm_uint i = 0; i < 4; i++) {
                 fm_uint j = index * 4 + i;
-                if ((j < MBY_FFU_ACT4) && (enable & (1uL << i)))
+                if ((j < MBY_CGRP_ACT4) && (enable & (1uL << i)))
                     setAct(&(actions->act4[j]), prec, ((value >> 4*i) & 0xF));
             }
             break;
         }
 
-        case MBY_FFU_ACTION_SET8_1B:
+        case MBY_CGRP_ACTION_SET8_1B:
         {
-            fm_byte   index  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET8_1B_INDEX);
-            fm_byte   enable = FM_GET_FIELD(action, MBY_FFU_ACTION, SET8_1B_ENABLE);
-            fm_uint32 value  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET8_1B_VALUE);
+            fm_byte   index  = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET8_1B_INDEX);
+            fm_byte   enable = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET8_1B_ENABLE);
+            fm_uint32 value  = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET8_1B_VALUE);
             for (fm_uint i = 0; i < 8; i++) {
                 fm_uint j = index * 8 + i;
-                if ((j < MBY_FFU_ACT1) && (enable & (1uL << i)))
+                if ((j < MBY_CGRP_ACT1) && (enable & (1uL << i)))
                     setAct(&(actions->act1[j]), prec, ((value >> i) & 0x1));
             }
             break;
         }
 
-        case MBY_FFU_ACTION_SET3_1B:
+        case MBY_CGRP_ACTION_SET3_1B:
         {
-            fm_byte indexA  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXA);
-            fm_bool enableA = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EA);
-            fm_byte valueA  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VA);
-            if (enableA && (indexA < MBY_FFU_ACT1))
+            fm_byte indexA  = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_1B_INDEXA);
+            fm_bool enableA = FM_GET_BIT  (action, MBY_CGRP_ACTION, SET3_1B_EA);
+            fm_byte valueA  = FM_GET_BIT  (action, MBY_CGRP_ACTION, SET3_1B_VA);
+            if (enableA && (indexA < MBY_CGRP_ACT1))
                 setAct(&(actions->act1[indexA]), prec, valueA);
 
-            fm_byte indexB  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXB);
-            fm_bool enableB = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EB);
-            fm_byte valueB  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VB);
-            if (enableB && (indexB < MBY_FFU_ACT1))
+            fm_byte indexB  = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_1B_INDEXB);
+            fm_bool enableB = FM_GET_BIT  (action, MBY_CGRP_ACTION, SET3_1B_EB);
+            fm_byte valueB  = FM_GET_BIT  (action, MBY_CGRP_ACTION, SET3_1B_VB);
+            if (enableB && (indexB < MBY_CGRP_ACT1))
                 setAct(&(actions->act1[indexB]), prec, valueB);
 
-            fm_byte indexC  = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_1B_INDEXC);
-            fm_bool enableC = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_EC);
-            fm_byte valueC  = FM_GET_BIT  (action, MBY_FFU_ACTION, SET3_1B_VC);
-            if (enableC && (indexC < MBY_FFU_ACT1))
+            fm_byte indexC  = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_1B_INDEXC);
+            fm_bool enableC = FM_GET_BIT  (action, MBY_CGRP_ACTION, SET3_1B_EC);
+            fm_byte valueC  = FM_GET_BIT  (action, MBY_CGRP_ACTION, SET3_1B_VC);
+            if (enableC && (indexC < MBY_CGRP_ACT1))
                 setAct(&(actions->act1[indexC]), prec, valueC);
 
             break;
         }
 
-        case MBY_FFU_ACTION_SET3_4B:
+        case MBY_CGRP_ACTION_SET3_4B:
         {
-            fm_byte indexA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXA);
-            fm_byte valueA = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEA);
-            if (indexA < MBY_FFU_ACT4)
+            fm_byte indexA = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_4B_INDEXA);
+            fm_byte valueA = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_4B_VALUEA);
+            if (indexA < MBY_CGRP_ACT4)
                 setAct(&(actions->act4[indexA]), prec, valueA);
 
-            fm_byte indexB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXB);
-            fm_byte valueB = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEB);
-            if (indexB < MBY_FFU_ACT4)
+            fm_byte indexB = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_4B_INDEXB);
+            fm_byte valueB = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_4B_VALUEB);
+            if (indexB < MBY_CGRP_ACT4)
                 setAct(&(actions->act4[indexB]), prec, valueB);
 
-            fm_byte indexC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_INDEXC);
-            fm_byte valueC = FM_GET_FIELD(action, MBY_FFU_ACTION, SET3_4B_VALUEC);
-            if (indexC < MBY_FFU_ACT4)
+            fm_byte indexC = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_4B_INDEXC);
+            fm_byte valueC = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET3_4B_VALUEC);
+            if (indexC < MBY_CGRP_ACT4)
                 setAct(&(actions->act4[indexC]), prec, valueC);
 
             break;
         }
 
-        case MBY_FFU_ACTION_SET1_24B:
+        case MBY_CGRP_ACTION_SET1_24B:
         {
-            fm_byte   index = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_INDEX);
-            fm_uint32 value = FM_GET_FIELD(action, MBY_FFU_ACTION, SET1_24B_VALUE);
-            if(index < MBY_FFU_ACT24)
+            fm_byte   index = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET1_24B_INDEX);
+            fm_uint32 value = FM_GET_FIELD(action, MBY_CGRP_ACTION, SET1_24B_VALUE);
+            if(index < MBY_CGRP_ACT24)
                 setAct(&(actions->act24[index]), prec, value);
             break;
         }
 
         default:
 
-        case MBY_FFU_ACTION_NOP:
+        case MBY_CGRP_ACTION_NOP:
             break;
     }
 }
@@ -147,45 +147,45 @@ static void remapKeys
     fm_byte                 mask;
     fm_int                  i;
     fm_byte                 key;
-    fm_byte                 index[MBY_FFU_REMAP_ACTIONS];
+    fm_byte                 index[MBY_CGRP_REMAP_ACTIONS];
     fm_uint                 keyIdx;
     fm_byte                 idx16;
     fm_uint                 set1_16_base;
 
     /* Resolve precedence between remap actions*/
 
-    for (i = 0; i < MBY_FFU_REMAP_ACTIONS; i++)
+    for (i = 0; i < MBY_CGRP_REMAP_ACTIONS; i++)
     {
-        index[i] = FM_GET_FIELD(actions->act24[MBY_FFU_ACTION_REMAP0+i].val,
-                                MBY_FFU_REMAP,
+        index[i] = FM_GET_FIELD(actions->act24[MBY_CGRP_ACTION_REMAP0+i].val,
+                                MBY_CGRP_REMAP,
                                 SET1_16B_INDEX);
     }
 
-    for (i = 0; i < MBY_FFU_REMAP_ACTIONS; i++)
+    for (i = 0; i < MBY_CGRP_REMAP_ACTIONS; i++)
     {
-        if (actions->act24[MBY_FFU_ACTION_REMAP0+i].prec == 0)
+        if (actions->act24[MBY_CGRP_ACTION_REMAP0+i].prec == 0)
         {
-            actions->act24[MBY_FFU_ACTION_REMAP0+i].val = 0;
+            actions->act24[MBY_CGRP_ACTION_REMAP0+i].val = 0;
             continue;
         }
-        remapAction = actions->act24[MBY_FFU_ACTION_REMAP0+i].val;
-        set1_16_base = MBY_FFU_KEY32*4 + MBY_FFU_KEY16*2 + MBY_FFU_KEY8;
+        remapAction = actions->act24[MBY_CGRP_ACTION_REMAP0+i].val;
+        set1_16_base = MBY_CGRP_KEY32*4 + MBY_CGRP_KEY16*2 + MBY_CGRP_KEY8;
         /* SET1_16b */
         if(index[i] >= (set1_16_base))
         {
             idx16 = index[i] - set1_16_base;
             value16 = FM_GET_FIELD(remapAction,
-                                   MBY_FFU_REMAP,
+                                   MBY_CGRP_REMAP,
                                    SET1_16B_VALUE);
 
-            if (idx16 < MBY_FFU_KEY16)
+            if (idx16 < MBY_CGRP_KEY16)
             {
                 keys->key16[idx16] = value16;
             }
             else
             {
                 /* set 16-bits of KEY32 */
-                keyIdx = (idx16 - MBY_FFU_KEY16) >> 1;
+                keyIdx = (idx16 - MBY_CGRP_KEY16) >> 1;
                 FM_SET_UNNAMED_FIELD(keys->key32[keyIdx],
                                      (idx16 % 2) * 16,
                                      16,
@@ -196,16 +196,16 @@ static void remapKeys
         else
         {
             mask = FM_GET_FIELD(remapAction,
-                                MBY_FFU_REMAP,
+                                MBY_CGRP_REMAP,
                                 SET8_1B_MASK);
 
             if (mask != 0)
             {
                 value8 = FM_GET_FIELD(remapAction,
-                                      MBY_FFU_REMAP,
+                                      MBY_CGRP_REMAP,
                                       SET8_1B_VALUE);
 
-                if (index[i] < MBY_FFU_KEY16*2)
+                if (index[i] < MBY_CGRP_KEY16*2)
                 {
                     /* set 8-bits of KEY16 */
                     key = FM_GET_UNNAMED_FIELD(keys->key16[index[i] >> 1],
@@ -218,20 +218,20 @@ static void remapKeys
                                          8,
                                          key);
                 }
-                else if (index[i] < (MBY_FFU_KEY16*2 + MBY_FFU_KEY8))
+                else if (index[i] < (MBY_CGRP_KEY16*2 + MBY_CGRP_KEY8))
                 {
                     /* set entire KEY8 */
-                    key = keys->key8[index[i] - (MBY_FFU_KEY16*2)];
+                    key = keys->key8[index[i] - (MBY_CGRP_KEY16*2)];
 
                     key = ( key & ~mask ) | ( value8 & mask);
 
-                    keys->key8[index[i] - (MBY_FFU_KEY16*2)]  = key;
+                    keys->key8[index[i] - (MBY_CGRP_KEY16*2)]  = key;
                 }
                 else
                 {
                     /* set 8-bits of KEY32 */
-                    keyIdx = (index[i] - (MBY_FFU_KEY16*2 +
-                                MBY_FFU_KEY8)) >> 2;
+                    keyIdx = (index[i] - (MBY_CGRP_KEY16*2 +
+                                MBY_CGRP_KEY8)) >> 2;
                     key = FM_GET_UNNAMED_FIELD(keys->key32[keyIdx],
                                               (index[i] % 4) * 8,
                                               8);
@@ -249,8 +249,8 @@ static void remapKeys
 
         /* After remap action is applied to keys, zero out the remap action so that next group
          * doesnot take same remap action */
-        actions->act24[MBY_FFU_ACTION_REMAP0+i].val = 0;
-        actions->act24[MBY_FFU_ACTION_REMAP0+i].prec = 1;
+        actions->act24[MBY_CGRP_ACTION_REMAP0+i].val = 0;
+        actions->act24[MBY_CGRP_ACTION_REMAP0+i].prec = 1;
     }
 
 }   /* end remapKeys */
@@ -262,13 +262,13 @@ static void applyEntropyKeyMask
     mbyClassifierKeys             * const hash_keys
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY32_MASK, i, 1)) ? keys.key32[i] : 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
         hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY16_MASK, i, 1)) ? keys.key16[i] : 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY8; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8; i++)
         hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(entropy_cfg.KEY8_MASK,  i, 1)) ? keys.key8 [i] : 0;
 }
 
@@ -281,11 +281,11 @@ static void populateMuxedAction
     mbyClassifierMuxedAction  * const muxed_action
 )
 {
-    fm_byte mpls_pop  = actions.act4[MBY_FFU_ACTION_MPLS_POP].val;
-    fm_byte ecn_ctrl  = actions.act4[MBY_FFU_ACTION_ECN_CTRL].val;
-    fm_byte tc_ctrl   = actions.act4[MBY_FFU_ACTION_TC_CTRL].val;
-    fm_byte ttl_ctrl  = actions.act4[MBY_FFU_ACTION_TTL_CTRL].val;
-    fm_byte dscp_ctrl = actions.act4[MBY_FFU_ACTION_DSCP_CTRL].val;
+    fm_byte mpls_pop  = actions.act4[MBY_CGRP_ACTION_MPLS_POP].val;
+    fm_byte ecn_ctrl  = actions.act4[MBY_CGRP_ACTION_ECN_CTRL].val;
+    fm_byte tc_ctrl   = actions.act4[MBY_CGRP_ACTION_TC_CTRL].val;
+    fm_byte ttl_ctrl  = actions.act4[MBY_CGRP_ACTION_TTL_CTRL].val;
+    fm_byte dscp_ctrl = actions.act4[MBY_CGRP_ACTION_DSCP_CTRL].val;
 
     // Update ECN:
     muxed_action->ecn         = 0;
@@ -303,19 +303,19 @@ static void populateMuxedAction
     {
         switch (ecn_ctrl & 3) // ECN
         {
-            case 0: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 0, 2); break;
-            case 1: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 0, 2); break;
+            case 0: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_OUTER_DS], 0, 2); break;
+            case 1: muxed_action->ecn = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_INNER_DS], 0, 2); break;
 
             case 2: // ECN-CTRL[1:0] = 2 : ECN source is MPLS label 1, i.e. MPLS_MUX_EXP_DS[mpls_labels[0].exp].ecn
             {
-                exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3);
+                exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 9, 3);
                 muxed_action->ecn = 0; // FIXME!!!
                 break;
             }
             case 3: // ECN_CTRL[1:0]=3: ECN source is MPLS label exposed after MPLS_POP
             {
-                exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
-                      (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0;
+                exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
+                      (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0;
                 muxed_action->ecn = 0; // FIXME!!!
                 break;
             }
@@ -336,19 +336,19 @@ static void populateMuxedAction
 
     switch (dscp_ctrl)
     {
-        case  0: muxed_action->dscp = (actions.act4[MBY_FFU_ACTION_DSCP_LOW ].val & 0xF) |
-                                     ((actions.act4[MBY_FFU_ACTION_DSCP_HIGH].val & 0xF) << 4); break;
+        case  0: muxed_action->dscp = (actions.act4[MBY_CGRP_ACTION_DSCP_LOW ].val & 0xF) |
+                                     ((actions.act4[MBY_CGRP_ACTION_DSCP_HIGH].val & 0xF) << 4); break;
 
-        case  4: muxed_action->dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6); break;
-        case  5: muxed_action->dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 2, 6); break;
+        case  4: muxed_action->dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6); break;
+        case  5: muxed_action->dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_INNER_DS], 2, 6); break;
 
-        case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
-                       (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_2  + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
+        case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 9, 3) :
+                       (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_MPLS_LABEL5_2  + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
 
-        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3); break;
-        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL2_1], 9, 3); break;
-        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL3_1], 9, 3); break;
-        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL4_1], 9, 3); break;
+        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 9, 3); break;
+        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL2_1], 9, 3); break;
+        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL3_1], 9, 3); break;
+        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL4_1], 9, 3); break;
 
         default: break;
     }
@@ -362,27 +362,27 @@ static void populateMuxedAction
 
     switch (tc_ctrl)
     {
-        case  0: muxed_action->swpri = actions.act4[MBY_FFU_ACTION_TC].val; break;
+        case  0: muxed_action->swpri = actions.act4[MBY_CGRP_ACTION_TC].val; break;
 
         case  4:
         {
-            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_OUTER_DS], 2, 6);
+            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
             muxed_action->swpri = 0; // FIXME!!!
             break;
         }
         case  5:
         {
-            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_FFU_KEY8_INNER_DS], 2, 6);
+            dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_INNER_DS], 2, 6);
             muxed_action->swpri = 0; // FIXME!!!
             break;
         }
-    case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
-                   (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8 [MBY_FFU_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
+    case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
+                   (mpls_pop < 6) ? FM_GET_UNNAMED_FIELD(keys.key8 [MBY_CGRP_KEY8_MPLS_LABEL5_2 + ((mpls_pop - 4) * 4)], 1, 3) : 0; break;
 
-        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 9, 3); break;
-        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL2_1], 9, 3); break;
-        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL3_1], 9, 3); break;
-        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL4_1], 9, 3); break;
+        case  8: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 9, 3); break;
+        case  9: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL2_1], 9, 3); break;
+        case 10: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL3_1], 9, 3); break;
+        case 11: exp = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL4_1], 9, 3); break;
 
         default: break;
     }
@@ -396,14 +396,14 @@ static void populateMuxedAction
 
     switch (ttl_ctrl)
     {
-        case  0: ttl = keys.key8[MBY_FFU_KEY8_OUTER_TTL]; break;
-        case  1: ttl = keys.key8[MBY_FFU_KEY8_INNER_TTL]; break;
-        case  2: ttl = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 0, 8) :
-                       (mpls_pop < 6) ? keys.key8[MBY_FFU_KEY8_MPLS_LABEL5_3 + ((mpls_pop - 4) * 4)] : 0; break;
-        case  4: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL1_1], 0, 8); break;
-        case  5: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL2_1], 0, 8); break;
-        case  6: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL3_1], 0, 8); break;
-        case  7: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_FFU_KEY16_MPLS_LABEL4_1], 0, 8); break;
+        case  0: ttl = keys.key8[MBY_CGRP_KEY8_OUTER_TTL]; break;
+        case  1: ttl = keys.key8[MBY_CGRP_KEY8_INNER_TTL]; break;
+        case  2: ttl = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)], 0, 8) :
+                       (mpls_pop < 6) ? keys.key8[MBY_CGRP_KEY8_MPLS_LABEL5_3 + ((mpls_pop - 4) * 4)] : 0; break;
+        case  4: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1], 0, 8); break;
+        case  5: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL2_1], 0, 8); break;
+        case  6: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL3_1], 0, 8); break;
+        case  7: ttl = FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL4_1], 0, 8); break;
 
         default: break;
     }
@@ -417,10 +417,10 @@ static void populateMuxedAction
 
     muxed_action->ttl_ctrl = ttl_ctrl;
 
-    muxed_action->vpri = (actions.act4[MBY_FFU_ACTION_VPRI_LOW].prec >= actions.act4[MBY_FFU_ACTION_VPRI_HIGH].prec) ?
-        actions.act4[MBY_FFU_ACTION_VPRI_LOW].val : actions.act4[MBY_FFU_ACTION_VPRI_HIGH].val;
+    muxed_action->vpri = (actions.act4[MBY_CGRP_ACTION_VPRI_LOW].prec >= actions.act4[MBY_CGRP_ACTION_VPRI_HIGH].prec) ?
+        actions.act4[MBY_CGRP_ACTION_VPRI_LOW].val : actions.act4[MBY_CGRP_ACTION_VPRI_HIGH].val;
 
-    muxed_action->route = (actions.act1[MBY_FFU_ACTION_NO_ROUTE].val == 0 && actions.act24[MBY_FFU_ACTION_FWD].val != 0);
+    muxed_action->route = (actions.act1[MBY_CGRP_ACTION_NO_ROUTE].val == 0 && actions.act24[MBY_CGRP_ACTION_FWD].val != 0);
 }
 
 static void populateEntropy
@@ -437,8 +437,8 @@ static void populateEntropy
 
     for (fm_uint hash_num = 0; hash_num < 2; hash_num++)
     {
-        fm_byte val0 = (actions.act4[MBY_FFU_ACTION_HASH_PROFILE_ECMP_0 + (2 * hash_num)].val);
-        fm_byte val1 = (actions.act4[MBY_FFU_ACTION_HASH_PROFILE_ECMP_1 + (2 * hash_num)].val & 0x3);
+        fm_byte val0 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_0 + (2 * hash_num)].val);
+        fm_byte val1 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_1 + (2 * hash_num)].val & 0x3);
         fm_byte prof = (val1 << 4) | val0;
 
         hash_profiles[hash_num] = prof;
@@ -450,13 +450,13 @@ static void populateEntropy
         applyEntropyKeyMask(entropy_cfg, keys, &hash_keys);
 
         // Convert Keys into array of bytes:
-        fm_byte hash_bytes[MBY_FFU_HASH_KEYS] = { 0 };
+        fm_byte hash_bytes[MBY_CGRP_HASH_KEYS] = { 0 };
         mbyClsConvertKeysToBytes(hash_keys, hash_bytes);
 
         // Get hash value from CRC:
          hash_values[hash_num] = (hash_num == 0) ?
-            mbyCrc32ByteSwap (hash_bytes, MBY_FFU_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
-            mbyCrc32CByteSwap(hash_bytes, MBY_FFU_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
+            mbyCrc32ByteSwap (hash_bytes, MBY_CGRP_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
+            mbyCrc32CByteSwap(hash_bytes, MBY_CGRP_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
     }
 
 
@@ -475,16 +475,16 @@ static void populateEntropy
         switch (s)
         {
             case 0:
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_FFU_ACTION_META0_LOW ].val);
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_FFU_ACTION_META0_HIGH].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_CGRP_ACTION_META0_LOW ].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_CGRP_ACTION_META0_HIGH].val);
                 break;
             case 1:
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_FFU_ACTION_META1_LOW ].val);
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_FFU_ACTION_META1_HIGH].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_CGRP_ACTION_META1_LOW ].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_CGRP_ACTION_META1_HIGH].val);
                 break;
             case 2:
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_FFU_ACTION_META2_LOW ].val);
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_FFU_ACTION_META2_HIGH].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_CGRP_ACTION_META2_LOW ].val);
+                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_CGRP_ACTION_META2_HIGH].val);
                 break;
             case 3:
                 FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     8, 0);
@@ -543,8 +543,8 @@ static void transformActions
     fm_bool                  * const drop_ttl,
     fm_bool                  * const trap_icmp,
     fm_bool                  * const trap_igmp,
-    mbyClassifierFlags       * const ffu_flags,
-    fm_uint32                * const ffu_route,
+    mbyClassifierFlags       * const cgrp_flags,
+    fm_uint32                * const cgrp_route,
     fm_bool                  * const no_learn,
     fm_uint16                * const l2_ivid1,
     fm_byte                  * const qos_l2_vpri1,
@@ -552,10 +552,10 @@ static void transformActions
     fm_uint32                * const policer_action
 )
 {
-    *decap    = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 1) & 0x1;
-    *encap    =  actions.act24[MBY_FFU_ACTION_MOD_IDX ].val & 0x1;
-    *mod_idx  = (actions.act24[MBY_FFU_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
-    *mpls_pop =  actions.act4 [MBY_FFU_ACTION_MPLS_POP].val;
+    *decap    = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 1) & 0x1;
+    *encap    =  actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val & 0x1;
+    *mod_idx  = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
+    *mpls_pop =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP].val;
 
     *sglort = 0;
     FM_SET_UNNAMED_FIELD64(*sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
@@ -577,10 +577,10 @@ static void transformActions
 
     *l2_etype = (*decap) ? keys.key16[MBY_RE_KEYS_INNER_ETYPE] : keys.key16[MBY_RE_KEYS_OUTER_ETYPE];
 
-    fm_uint16  ip_prot = (*decap) ? keys.key8[MBY_FFU_KEY8_INNER_PROT] : keys.key8[MBY_FFU_KEY8_OUTER_PROT];
+    fm_uint16  ip_prot = (*decap) ? keys.key8[MBY_CGRP_KEY8_INNER_PROT] : keys.key8[MBY_CGRP_KEY8_OUTER_PROT];
 
-    fm_uint    dmac_ipv6_off_lo = (*decap) ? MBY_FFU_KEY32_INNER_DIP_31_0  : MBY_FFU_KEY32_OUTER_DIP_31_0;
-    fm_uint    dmac_ipv6_off_hi = (*decap) ? MBY_FFU_KEY32_INNER_DIP_63_32 : MBY_FFU_KEY32_OUTER_DIP_63_32;
+    fm_uint    dmac_ipv6_off_lo = (*decap) ? MBY_CGRP_KEY32_INNER_DIP_31_0  : MBY_CGRP_KEY32_OUTER_DIP_31_0;
+    fm_uint    dmac_ipv6_off_hi = (*decap) ? MBY_CGRP_KEY32_INNER_DIP_63_32 : MBY_CGRP_KEY32_OUTER_DIP_63_32;
 
     *dmac_from_ipv6 = extractDmac(keys.key32[dmac_ipv6_off_lo], keys.key32[dmac_ipv6_off_hi]);
 
@@ -590,7 +590,7 @@ static void transformActions
     *is_ipv6 = (*decap) ? (parser_info.inr_l3_len &&  parser_info.inr_l3_v6)
                         : (parser_info.otr_l3_len &&  parser_info.otr_l3_v6);
 
-    fm_uint32 l3_length_off = (*decap) ? MBY_FFU_KEY8_INNER_LEN : MBY_FFU_KEY8_OUTER_LEN;
+    fm_uint32 l3_length_off = (*decap) ? MBY_CGRP_KEY8_INNER_LEN : MBY_CGRP_KEY8_OUTER_LEN;
     *l3_length = 0;
     FM_SET_UNNAMED_FIELD64(*l3_length, 0, 8, keys.key8[l3_length_off + 1]);
     FM_SET_UNNAMED_FIELD64(*l3_length, 8, 8, keys.key8[l3_length_off    ]);
@@ -616,45 +616,45 @@ static void transformActions
     FM_SET_UNNAMED_FIELD64(*outer_l3_length, 0, 8, keys.key8[outer_index]);
     FM_SET_UNNAMED_FIELD64(*outer_l3_length, 8, 8, keys.key8[outer_index - 1]);
 
-    ffu_flags->drop         = actions.act1[MBY_FFU_ACTION_DROP     ].val;
-    ffu_flags->trap         = actions.act1[MBY_FFU_ACTION_TRAP     ].val;
-    ffu_flags->log          = actions.act1[MBY_FFU_ACTION_LOG      ].val;
-    ffu_flags->no_route     = actions.act1[MBY_FFU_ACTION_NO_ROUTE ].val;
-    ffu_flags->rx_mirror    = actions.act1[MBY_FFU_ACTION_RX_MIRROR].val;
-    ffu_flags->capture_time = actions.act1[MBY_FFU_ACTION_CAPT_TIME].val;
+    cgrp_flags->drop         = actions.act1[MBY_CGRP_ACTION_DROP     ].val;
+    cgrp_flags->trap         = actions.act1[MBY_CGRP_ACTION_TRAP     ].val;
+    cgrp_flags->log          = actions.act1[MBY_CGRP_ACTION_LOG      ].val;
+    cgrp_flags->no_route     = actions.act1[MBY_CGRP_ACTION_NO_ROUTE ].val;
+    cgrp_flags->rx_mirror    = actions.act1[MBY_CGRP_ACTION_RX_MIRROR].val;
+    cgrp_flags->capture_time = actions.act1[MBY_CGRP_ACTION_CAPT_TIME].val;
 
-    // FIXME cppcheck (error) Uninitialized struct member: ffu_flags.tx_tag
+    // FIXME cppcheck (error) Uninitialized struct member: cgrp_flags.tx_tag
     for (fm_uint i = 0; i <= 1; i++)
-        FM_SET_UNNAMED_FIELD(ffu_flags->tx_tag, i, 1, actions.act1[i+MBY_FFU_ACTION_TX_TAG0].val);
+        FM_SET_UNNAMED_FIELD(cgrp_flags->tx_tag, i, 1, actions.act1[i+MBY_CGRP_ACTION_TX_TAG0].val);
 
-    *ffu_route = 0;
-    FM_SET_UNNAMED_FIELD64(*ffu_route, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_FFU_ACTION_FWD].val, 0, 22));
+    *cgrp_route = 0;
+    FM_SET_UNNAMED_FIELD64(*cgrp_route, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_CGRP_ACTION_FWD].val, 0, 22));
 
     *no_learn = FALSE;
-    FM_SET_UNNAMED_FIELD(*no_learn, 0, 1, ~actions.act1[MBY_FFU_ACTION_LEARN].val);
+    FM_SET_UNNAMED_FIELD(*no_learn, 0, 1, ~actions.act1[MBY_CGRP_ACTION_LEARN].val);
 
     *l2_ivid1 = 0;
-    if (*decap && actions.act4[MBY_FFU_ACTION_VID_LOW].prec <= 1)
+    if (*decap && actions.act4[MBY_CGRP_ACTION_VID_LOW].prec <= 1)
         *l2_ivid1 = keys.key16[MBY_RE_KEYS_INNER_VLAN1];
     else
-        for (fm_uint i = 0; i <= (MBY_FFU_ACTION_VID_HIGH - MBY_FFU_ACTION_VID_LOW); i++)
-            FM_SET_UNNAMED_FIELD(*l2_ivid1, i * 4, 4, actions.act4[MBY_FFU_ACTION_VID_LOW+i].val);
+        for (fm_uint i = 0; i <= (MBY_CGRP_ACTION_VID_HIGH - MBY_CGRP_ACTION_VID_LOW); i++)
+            FM_SET_UNNAMED_FIELD(*l2_ivid1, i * 4, 4, actions.act4[MBY_CGRP_ACTION_VID_LOW+i].val);
 
     fm_bool qos_l2_vpri1_sel = *decap
-        && (actions.act4[MBY_FFU_ACTION_VPRI_LOW ].val <= 1)
-        && (actions.act4[MBY_FFU_ACTION_VPRI_HIGH].val <= 1);
+        && (actions.act4[MBY_CGRP_ACTION_VPRI_LOW ].val <= 1)
+        && (actions.act4[MBY_CGRP_ACTION_VPRI_HIGH].val <= 1);
 
-    fm_byte qos_l2_vpri1_decap = (actions.act1[MBY_FFU_ACTION_COPY_OTR_VPRI].val)
+    fm_byte qos_l2_vpri1_decap = (actions.act1[MBY_CGRP_ACTION_COPY_OTR_VPRI].val)
            ? ((keys.key16[MBY_RE_KEYS_OUTER_VLAN1] >> 12) & 0xF)
            : ((keys.key16[MBY_RE_KEYS_INNER_VLAN1] >> 12) & 0xF);
 
     *qos_l2_vpri1 = (qos_l2_vpri1_sel) ? qos_l2_vpri1_decap : muxed_action.vpri;
 
     *ffu_trig = 0;
-    for (fm_uint i = MBY_FFU_ACTION_TRIGGER0; i <= MBY_FFU_ACTION_TRIGGER7; i++)
-        FM_SET_UNNAMED_FIELD(*ffu_trig, i - MBY_FFU_ACTION_TRIGGER0, 1, actions.act1[i].val);
+    for (fm_uint i = MBY_CGRP_ACTION_TRIGGER0; i <= MBY_CGRP_ACTION_TRIGGER7; i++)
+        FM_SET_UNNAMED_FIELD(*ffu_trig, i - MBY_CGRP_ACTION_TRIGGER0, 1, actions.act1[i].val);
 
-    for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
+    for (fm_uint i = MBY_CGRP_ACTION_POLICER0; i <= MBY_CGRP_ACTION_POLICER3; i++)
         policer_action[i] = actions.act24[i].val;
 }
 
@@ -684,8 +684,8 @@ void Classifier
     // Exact match A (EM_A):
     fm_uint32 em_a_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    // TODO rename packet_profile to packet_profile
-    mbyMatchExact(cgrp_a_map->A.EM_HASH_LOOKUP, &(cgrp_a_map->EM), shm_map, &keys, packet_profile, MBY_CLA_GROUP_A, em_a_out);
+    mbyMatchExact(cgrp_a_map->A.EM_HASH_LOOKUP, &(cgrp_a_map->EM), shm_map,
+                  &keys, packet_profile, MBY_CLA_GROUP_A, em_a_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_a_out[i], &actions);
@@ -695,7 +695,6 @@ void Classifier
     // Longest Prefix Match (LPM):
     fm_uint32 lpm_out[MBY_LPM_MAX_ACTIONS_NUM];
 
-    // TODO is the packet_profile == 6-bit profile ID in the HAS?
     mbyMatchLpm(cgrp_a_map, shm_map, &keys, packet_profile, lpm_out);
 
     for (fm_uint i = 0; i < MBY_LPM_MAX_ACTIONS_NUM; ++i)
@@ -705,7 +704,7 @@ void Classifier
     remapKeys(&actions, &keys);
 
     // Update packet_profile based on profile action:
-    for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
+    for (fm_uint s = MBY_CGRP_ACTION_SCENARIO0, i = 0; s <= MBY_CGRP_ACTION_SCENARIO5; s++, i++) {
         if (actions.act1[s].prec != 0)
             FM_SET_UNNAMED_FIELD(packet_profile, i, 1, actions.act1[s].val & 1);
     }
@@ -713,7 +712,8 @@ void Classifier
     // Exact match B (EM_B):
     fm_uint32 em_b_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    mbyMatchExact(cgrp_b_map->B.EM_HASH_LOOKUP, &(cgrp_b_map->EM), shm_map, &keys, packet_profile, MBY_CLA_GROUP_B, em_b_out);
+    mbyMatchExact(cgrp_b_map->B.EM_HASH_LOOKUP, &(cgrp_b_map->EM), shm_map,
+                  &keys, packet_profile, MBY_CLA_GROUP_B, em_b_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_b_out[i], &actions);
@@ -773,14 +773,14 @@ void Classifier
     fm_bool                  drop_ttl        = FALSE;
     fm_bool                  trap_icmp       = FALSE;
     fm_bool                  trap_igmp       = FALSE;
-    mbyClassifierFlags       ffu_flags       = { 0 };
-    fm_uint32                ffu_route       = 0;
+    mbyClassifierFlags       cgrp_flags      = { 0 };
+    fm_uint32                cgrp_route      = 0;
     fm_bool                  no_learn        = FALSE;
     fm_uint16                l2_ivid1        = 0;
     fm_byte                  qos_l2_vpri1    = 0;
     fm_byte                  ffu_trig        = 0;
 
-    fm_uint32                policer_action[MBY_FFU_ACTION_POLICER3 + 1] = { 0 };
+    fm_uint32                policer_action[MBY_CGRP_ACTION_POLICER3 + 1] = { 0 };
 
     transformActions
     (
@@ -810,8 +810,8 @@ void Classifier
         &drop_ttl,
         &trap_icmp,
         &trap_igmp,
-        &ffu_flags,
-        &ffu_route,
+        &cgrp_flags,
+        &cgrp_route,
         &no_learn,
         &l2_ivid1,
         &qos_l2_vpri1,
@@ -828,9 +828,9 @@ void Classifier
     out->DROP_TTL         = drop_ttl;
     out->ECN              = muxed_action.ecn;
     out->ENCAP            = encap;
-    out->FFU_FLAGS        = ffu_flags;
-    out->FFU_ROUTE        = ffu_route;
-    out->FFU_TRIG         = ffu_trig;
+    out->CGRP_FLAGS       = cgrp_flags;
+    out->CGRP_ROUTE       = cgrp_route;
+    out->CGRP_TRIG        = ffu_trig;
     out->IDGLORT          = idglort;
     out->INNER_L3_LENGTH  = inner_l3_length;
     out->IS_IPV4          = is_ipv4;
@@ -847,7 +847,7 @@ void Classifier
     out->OUTER_L3_LENGTH  = outer_l3_length;
     out->PARSER_INFO      = parser_info;
 
-    for (fm_uint i = MBY_FFU_ACTION_POLICER0; i <= MBY_FFU_ACTION_POLICER3; i++)
+    for (fm_uint i = MBY_CGRP_ACTION_POLICER0; i <= MBY_CGRP_ACTION_POLICER3; i++)
         out->POLICER_ACTION[i] = policer_action[i];
 
     out->QOS_L2_VPRI1     = qos_l2_vpri1;
@@ -858,7 +858,7 @@ void Classifier
     out->TRAP_IGMP        = trap_igmp;
     out->TRAP_IP_OPTIONS  = trap_ip_options;
     out->TTL_CTRL         = muxed_action.ttl_ctrl;
-    out->TX_TAG           = ffu_flags.tx_tag;
+    out->TX_TAG           = cgrp_flags.tx_tag;
 
     // Pass thru:
 
