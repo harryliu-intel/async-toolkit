@@ -9,8 +9,8 @@
 
 static void lookUpLpmTcam
 (
-    MBY_LPM_IN_REGS,
-    mbyLpmTcamLookup * const tcam_lookup
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
+    mbyLpmTcamLookup   * const tcam_lookup
 )
 {
     fm_uint16 tcam_index = 0;
@@ -19,13 +19,11 @@ static void lookUpLpmTcam
 
     tcam_lookup->hit_valid = FALSE;
 
-    while (tcam_index < //MBY_LPM_REG_SIZE(LPM_MATCH_TCAM)
-           mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n
-           )
+    while (tcam_index < mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
     {
         mbyLpmTcamEntry tcam_entry;
 
-        mbyLpmGetTcamEntry(MBY_LPM_IN_REGS_P, tcam_index, &tcam_entry);
+        mbyLpmGetTcamEntry(cgrp_a_map, tcam_index, &tcam_entry);
 
         fm_uint64 cam_key_inv = tcam_entry.key_invert;
         fm_uint64 cam_key     = tcam_entry.key;
@@ -95,7 +93,7 @@ static fm_bool getSubtrieChildNode
 
 static void exploreSubtrie
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map  * const cgrp_a_map,
     mbyLpmSubtrie const * const subtrie,
     mbyLpmSubtrieLookup * const st_lookup
 )
@@ -124,7 +122,7 @@ static void exploreSubtrie
     // The key can't be longer than 16B: 20B total key len - 4B tcam key len
 //T:assert(st_lookup->key_len < 16 * 8);
 
-    mbyLpmGetSubtrieStore(MBY_LPM_IN_REGS_P, subtrie->root_ptr, &st_store);
+    mbyLpmGetSubtrieStore(cgrp_a_map, subtrie->root_ptr, &st_store);
 
     do
     {
@@ -161,18 +159,18 @@ static void exploreSubtrie
 
         child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
 
-        mbyLpmGetSubtrie(MBY_LPM_IN_REGS_P, subtrie->child_base_ptr + child_idx, &child_subtrie);
+        mbyLpmGetSubtrie(cgrp_a_map, subtrie->child_base_ptr + child_idx, &child_subtrie);
 
         st_lookup->key = &(st_lookup->key[1]);
 
-        exploreSubtrie(MBY_LPM_IN_REGS_P, &child_subtrie, st_lookup);
+        exploreSubtrie(cgrp_a_map, &child_subtrie, st_lookup);
     }
 }
 
 // Internal LPM function that takes the processed key as an argument
 static void lpmSearch
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
     mbyLpmKey    const * const in,
     mbyLpmSearchResult * const out
 )
@@ -188,7 +186,7 @@ static void lpmSearch
     // FIXME adjust based on how the key is stored in memory
     tcam_lookup.key = in->key[0] | (in->key[1] << 8) | (in->key[2] << 16) | (in->key[3] << 24);
 
-    lookUpLpmTcam(MBY_LPM_IN_REGS_P, &tcam_lookup);
+    lookUpLpmTcam(cgrp_a_map, &tcam_lookup);
 
     if (!tcam_lookup.hit_valid)
     {
@@ -196,13 +194,13 @@ static void lpmSearch
         return;
     }
 
-    mbyLpmGetTcamSubtrie(MBY_LPM_IN_REGS_P, tcam_lookup.hit_index, &tcam_subtrie);
+    mbyLpmGetTcamSubtrie(cgrp_a_map, tcam_lookup.hit_index, &tcam_subtrie);
 
     st_lookup.key       = (fm_byte *) &(in->key[4]);
     st_lookup.key_len   = in->key_len - 32;
     st_lookup.hit_valid = FALSE;
 
-    exploreSubtrie(MBY_LPM_IN_REGS_P, &tcam_subtrie, &st_lookup);
+    exploreSubtrie(cgrp_a_map, &tcam_subtrie, &st_lookup);
 
     out->hit_valid = st_lookup.hit_valid;
     if (out->hit_valid)
@@ -214,7 +212,7 @@ static void lpmSearch
 
 static void lpmGenerateKey
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map * const cgrp_a_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     mbyLpmKey                  * const lpmKey
@@ -228,7 +226,7 @@ static void lpmGenerateKey
     assert(lpmKey);
     assert(profile_id < 64); // 6 bits value
 
-    mbyLpmGetKeySels(&(MBY_LPM_IN_REGS_P->A), profile_id, &key_sels);
+    mbyLpmGetKeySels(&(cgrp_a_map->A), profile_id, &key_sels);
 
     lpmKey->key_len = 0; // remember this is in bits
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
@@ -286,7 +284,7 @@ static void lpmActions
 
 void mbyMatchLpm
 (
-    MBY_LPM_IN_REGS, // TODO remove this macro
+    mby_ppe_cgrp_a_map         * const cgrp_a_map,
     mby_shm_map                * const shm_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
@@ -296,9 +294,9 @@ void mbyMatchLpm
     mbyLpmSearchResult searchResult;
     mbyLpmKey key;
 
-    lpmGenerateKey(MBY_LPM_IN_REGS_P, keys, profile_id, &key);
+    lpmGenerateKey(cgrp_a_map, keys, profile_id, &key);
 
-    lpmSearch(MBY_LPM_IN_REGS_P, &key, &searchResult);
+    lpmSearch(cgrp_a_map, &key, &searchResult);
 
     lpmActions(shm_map, profile_id, &searchResult, actions);
 }

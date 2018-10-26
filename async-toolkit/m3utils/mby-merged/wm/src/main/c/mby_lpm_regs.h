@@ -14,12 +14,6 @@
 
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
-
-
-// Input registers for all the functions in this block
-#define MBY_LPM_IN_REGS    mby_ppe_cgrp_a_map * const cgrp_a_map
-#define MBY_LPM_IN_REGS_P                             cgrp_a_map
-
 // Retrieve the constant with the number of registers
 #define MBY_LPM_REG_SIZE(reg_name) (mby_ppe_cgrp_a_map_## reg_name ##__nd)
 
@@ -70,37 +64,35 @@ typedef struct mbyLpmSubtrieStoreStruct
 
 void mbyLpmGetKeySels
 (
- //    MBY_LPM_IN_REGS,
-     mby_ppe_cgrp_a_nested_map     * const cgrp_a_map,
-
-    fm_byte                  const profile_id,
-    mbyLpmKeySels          * const key_sels
+    mby_ppe_cgrp_a_nested_map     * const cgrp_a_map,
+    fm_byte                         const profile_id,
+    mbyLpmKeySels                 * const key_sels
 );
 
 void mbyLpmGetTcamEntry
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map     * const cgrp_a_map,
     const fm_uint16                index,
     mbyLpmTcamEntry        * const tcam_entry
 );
 
 void mbyLpmGetTcamSubtrie
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map     * const cgrp_a_map,
     const fm_uint16                index,
     mbyLpmSubtrie          * const tcam_subtrie
 );
 
 void mbyLpmGetSubtrie
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map     * const cgrp_a_map,
     const fm_uint16                index,
     mbyLpmSubtrie          * const subtrie
 );
 
 void mbyLpmGetSubtrieStore
 (
-    MBY_LPM_IN_REGS,
+    mby_ppe_cgrp_a_map     * const cgrp_a_map,
     const fm_uint16                index,
     mbyLpmSubtrieStore     * const st_store
 );

@@ -31,7 +31,7 @@ class LpmTests : public testing::Test {
 		StrictMock<Mock_mbyLpmGetTcamSubtrie> mock_getTcamSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrie> mock_getSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrieStore> mock_getSubtrieStore;
-		StrictMock<Mock_mbyLpmGetKeySels> mock_getKeyMasks;
+		StrictMock<Mock_mbyLpmGetKeySels> mock_getKeySels;
 
 		struct mbyLpmStaticFuncs f;
 
@@ -61,9 +61,9 @@ class LpmTests : public testing::Test {
 TEST_F(LpmTests, KeyGenSingle) {
 
     mbyLpmKeySels key_sels  = {0};
-	key_sels.addr_key8_mask  = 0x1 << KEY8_IDX;
-	key_sels.addr_key16_mask = 0x1 << KEY16_IDX;
-	key_sels.addr_key32_mask = 0x1 << KEY32_IDX;
+	key_sels.addr_key8_sel  = 0x1 << KEY8_IDX;
+	key_sels.addr_key16_sel = 0x1 << KEY16_IDX;
+	key_sels.addr_key32_sel = 0x1 << KEY32_IDX;
 
 	mbyClassifierKeysStruct keys = {0};
 	keys.key8[KEY8_IDX]   = KEY8_VAL;
@@ -72,7 +72,7 @@ TEST_F(LpmTests, KeyGenSingle) {
 
 	mbyLpmKey lpmKey;
 
-	EXPECT_FUNCTION_CALL(mock_getKeyMasks, (NULL, PROFILE_ID, _))
+	EXPECT_FUNCTION_CALL(mock_getKeySels, (NULL, PROFILE_ID, _))
 		.Times(1)
 		.WillRepeatedly(SetArgPointee<2>(key_sels));
 
@@ -99,7 +99,7 @@ static const mbyLpmTcamEntry entry_key = {TCAM_TEST_KEY, ~(fm_uint32)TCAM_TEST_K
 TEST_F(LpmTests, TcamEmptyTest) {
 
 	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
-		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
+		.Times(mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
 		.WillRepeatedly(SetArgPointee<2>(entry_inv));
 
 	mbyLpmTcamLookup lookup = {TCAM_TEST_KEY, FALSE, 0};
@@ -111,7 +111,7 @@ TEST_F(LpmTests, TcamEmptyTest) {
 TEST_F(LpmTests, TcamSingleMatchTest) {
 
 	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
-		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
+		.Times(mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
 		.WillOnce(SetArgPointee<2>(entry_inv))
 		.WillOnce(SetArgPointee<2>(entry_key))
 		.WillRepeatedly(SetArgPointee<2>(entry_inv));
@@ -126,7 +126,7 @@ TEST_F(LpmTests, TcamSingleMatchTest) {
 TEST_F(LpmTests, TcamMultiMatchTest) {
 
 	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
-		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
+		.Times(mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
 		.WillOnce(SetArgPointee<2>(entry_inv))
 		.WillOnce(SetArgPointee<2>(entry_key)) // match but lower priority
 		.WillOnce(SetArgPointee<2>(entry_inv))
