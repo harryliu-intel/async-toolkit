@@ -21,6 +21,7 @@ class AluOperation(rotationAmount: Short, mask: Short) {
       ((((x.toInt << 16) & 0xffff0000) | (x.toInt & 0x0000ffff)) >> rotationAmount.toInt) & mask
     ).toShort
 
+  override def toString: String = s"AluOperation(rotation=$rotationAmount, mask=$mask)"
 }
 
 object AluOperation {

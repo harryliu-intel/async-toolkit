@@ -19,21 +19,18 @@ class CsrSpec extends FlatSpec with Matchers {
     val updatedParser = CsrLenses.execute(parser.csrParser, for {
       _ <- pl.keyS(idRule).mod_(_.STATE_MASK.set(5))
       _ <- pl.keyS(idRule).mod_(_.STATE_VALUE.set(6))
+      _ <- pl.actExt(idRule).mod_(_.PROTOCOL_ID.set(18))
       } yield ())
 
     val updatedCsr = csr.updated(CsrParser(parser.idMgp, updatedParser))
 
-    val keyS = updatedCsr.
-      topMap.
-      mpp.
-      mgp(parser.idMgp).
-      rx_ppe.
-      parser.
-      PARSER_KEY_S(idStage).
-      PARSER_KEY_S(idRule)
+    val newParser = updatedCsr.topMap.mpp.mgp(parser.idMgp).rx_ppe.parser
+    val keyS = newParser.PARSER_KEY_S(idStage).PARSER_KEY_S(idRule)
+    val actExt = newParser.PARSER_EXT(idStage).PARSER_EXT(idRule)
 
     keyS.STATE_MASK.get() shouldEqual 5
     keyS.STATE_VALUE.get() shouldEqual 6
+    actExt.PROTOCOL_ID.get() shouldEqual 18
   }
 
 }

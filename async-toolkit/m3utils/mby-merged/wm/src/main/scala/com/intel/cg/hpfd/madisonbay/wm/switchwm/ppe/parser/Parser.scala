@@ -18,7 +18,9 @@ import scala.annotation.tailrec
 
 object Parser {
 
-  case class ParserState(w: Array[Short], aluOperation: AluOperation, state: Short, ptr: Short)
+  case class ParserState(w: Array[Short], aluOperation: AluOperation, state: Short, ptr: Short) {
+    override def toString: String = s"ParserState(${w.toList},$aluOperation,$state,$ptr)"
+  }
 
   type ProtoId          = Int
   type BaseOffset       = Int
@@ -44,12 +46,12 @@ object Parser {
       initialState(csrParser, packetHeader, rxPort),
       PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException])
 
+    val paPacketTypeVal = packetType(csrParser, packetFlags)
+
     val (paKeysVal, csrExtractedKeys) = extractKeys(csrParser, packetHeader, protoOffsets)
 
-    val paPacketTypeVal = packetType(csrExtractedKeys, packetFlags)
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
-
     ParserOutput(
       updatedParserCsr          = csrExtractedKeys,
       rxPort                    = rxPort,
@@ -83,7 +85,9 @@ object Parser {
         case (Some(exc), _) => (packetFlags, fields, Some(exc))
 
             // if nothing matches, do nothing
-        case (exOpt, None)  => applyStage(csr, packetHeader)(idStage + 1, parserState, packetFlags, fields, exOpt)
+        case (exOpt, None)  =>
+          print(s"no matching action in stage $idStage\n")
+          applyStage(csr, packetHeader)(idStage + 1, parserState, packetFlags, fields, exOpt)
 
         case (_, Some(act)) =>                                    // otherwise, apply the action
           val (actParsState, actPckFlags, actProtOffs, actPrsExcOpt) = act.run(idStage, parserState, packetFlags, fields)(packetHeader)
@@ -106,6 +110,19 @@ object Parser {
             ParserTcam.ToMatch(kW.W1_MASK().toShort,    kW.W1_VALUE().toShort,    parserState.w(1)),
             ParserTcam.ToMatch(kS.STATE_MASK().toShort, kS.STATE_VALUE().toShort, parserState.state)
           )) =>
+
+          //scalastyle:off
+            print(s"found action in stage $idStage rule ${keysS.length-1}\nkey w: (w1 value: ${kW.W1_VALUE()}, w1 mask: ${kW.W1_MASK()}, w0 value: " +
+              kW.W0_VALUE() + ", w0 mask: " + kW.W0_MASK() + ")\n")
+            print("key s: (state value: " + kS.STATE_VALUE() + ", state mask: " + kS.STATE_MASK() + ")\n")
+            print("ana w: (next w0 offset: " + aW.NEXT_W0_OFFSET() + ", next w1 offset: " + aW.NEXT_W1_OFFSET() +
+              ", next w2 offset: " + aW.NEXT_W2_OFFSET() + ", skip: " + aW.SKIP() + ")\n")
+            print("ana s: (next state: " + aS.NEXT_STATE() + ", next state mask: " + aS.NEXT_STATE_MASK() +
+              ", next op: " + aS.NEXT_OP() + ")\n")
+            print("exc: (ex offset: " + ec.EX_OFFSET() + ", parsing done: " + ec.PARSING_DONE() + ")\n")
+            print("ext: (protocol id: " + ex.PROTOCOL_ID() + ", offset: " + ex.OFFSET() + ", flag num: " + ex.FLAG_NUM() +
+              ", flag value: " + ex.FLAG_VALUE() + ", ptr num: " + ex.PTR_NUM() + ")\n")
+
                 Some(new Action(
                   AnalyzerAction(aW, aS),
                   List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
@@ -141,9 +158,12 @@ object Parser {
               (prev, act) => act.extract(prev)
             }
 
+          print(s"after actions:\nparser state: $updatedParserState, protoOffsets: $updatedProtoOffsets, pckFlags: $updatedPckFlags\n")
+
           (updatedParserState, updatedPckFlags, updatedProtoOffsets, parsExcOpt)
       }
     }
+
   }
 
   def initialState(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {

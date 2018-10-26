@@ -19,6 +19,8 @@ class PacketFlags(flags: BitSet) {
 
   def toInt: Int = toLong.toInt
 
+  override def toString: String = s"PacketFlags(${flags.toString()})"
+
 }
 
 object PacketFlags {
