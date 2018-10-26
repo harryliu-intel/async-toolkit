@@ -41,6 +41,25 @@ my @all_sip_elab_opts = &get_all_sip_elab_opts();
 my @top_vrf_vlogopts = &get_top_vrf_vlogopts();
 my @all_hip_liblist = &get_hip_liblist();
 
+my @fc_rtl_liblist = (
+    "sva_lib",
+    "mby_mgm_lib",
+     (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
+     $fc_global_vars::IP_STUB_LIB,
+);
+my @fc_verif_liblist = (
+    "shdv_shared_lib",
+    "ext_shared_lib",
+    "svt_ahb_lib",
+    "mby_wm_dpi_lib",
+    "mby_common_lib",
+    "fc_hdl_top_lib",
+    "fc_hvl_top_lib",
+    "fc_env_lib",
+    "fc_tests_lib",
+    "fc_seq_lib",
+);
+
 # TODO &fc_global_vars::gen_liblist();
 # TODO &fc_global_vars::gen_hip_liblist();
 
@@ -376,34 +395,14 @@ EOF
                ],
 
                libs => [
-                  "sva_lib",
-                  "shdv_shared_lib",
-                  "ext_shared_lib",
-                  "svt_ahb_lib",
-                  "mby_wm_dpi_lib",
-                  "mby_common_lib",
-                  #ssn "vte_tr_uvm_lib",
-
-# Per Subodh suggestion to temporary disable WM - WW40.2 2018
-#                  "gen_mby_regflow_lib",
-#                  "gen_mby_wm",
-#                  "gen_mby_wm_m3",
-                  "mby_mgm_lib",
                   $fc_global_vars::COLLAGE_LIB,
-
-                  (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-                  $fc_global_vars::IP_STUB_LIB,
-                  "fc_hdl_top_lib",
-                  "fc_hvl_top_lib",
-                  "fc_env_lib",
-                  "fc_tests_lib",
-                  "fc_seq_lib",
+                  @fc_rtl_liblist,
+                  @fc_verif_liblist,
                   "generated_collateral_lib",
                   @all_sip_rtl_liblist,
                   @all_sip_verif_liblist,
                   @all_hip_liblist,
                   'dump_filelist_lib',
-#                  "cdn_pcie_lib",
                ],
 
                # List of full path to PLI libraries to use
