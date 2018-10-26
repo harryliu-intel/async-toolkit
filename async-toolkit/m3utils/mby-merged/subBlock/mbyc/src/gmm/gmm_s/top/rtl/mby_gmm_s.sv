@@ -53,10 +53,71 @@ module mby_gmm_s
    output logic                       pod_ring_stall_right_out,
 	  
    // Tag ring interface (ingress -to- egress/GMM)
-   input  mby_tag_ring_t              tag_ring_in_0  [MBY_MAX_NUM_MGP-1:0],
-   input  mby_tag_ring_t              tag_ring_in_1  [MBY_MAX_NUM_MGP-1:0],
-   output mby_tag_ring_t              tag_ring_out_0 [MBY_MAX_NUM_MGP-1:0],
-   output mby_tag_ring_t              tag_ring_out_1 [MBY_MAX_NUM_MGP-1:0],
+   input  mby_tag_ring_t              tag_ring_in_15_1 ,
+   input  mby_tag_ring_t              tag_ring_in_15_0 ,
+   input  mby_tag_ring_t              tag_ring_in_14_1 ,
+   input  mby_tag_ring_t              tag_ring_in_14_0 ,
+   input  mby_tag_ring_t              tag_ring_in_13_1 ,
+   input  mby_tag_ring_t              tag_ring_in_13_0 ,
+   input  mby_tag_ring_t              tag_ring_in_12_1 ,
+   input  mby_tag_ring_t              tag_ring_in_12_0 ,
+   input  mby_tag_ring_t              tag_ring_in_11_1 ,
+   input  mby_tag_ring_t              tag_ring_in_11_0 ,
+   input  mby_tag_ring_t              tag_ring_in_10_1 ,
+   input  mby_tag_ring_t              tag_ring_in_10_0 ,
+   input  mby_tag_ring_t              tag_ring_in_9_1  ,
+   input  mby_tag_ring_t              tag_ring_in_9_0  ,
+   input  mby_tag_ring_t              tag_ring_in_8_1  ,
+   input  mby_tag_ring_t              tag_ring_in_8_0  ,
+   input  mby_tag_ring_t              tag_ring_in_7_1  ,
+   input  mby_tag_ring_t              tag_ring_in_7_0  ,
+   input  mby_tag_ring_t              tag_ring_in_6_1  ,
+   input  mby_tag_ring_t              tag_ring_in_6_0  ,
+   input  mby_tag_ring_t              tag_ring_in_5_1  ,
+   input  mby_tag_ring_t              tag_ring_in_5_0  ,
+   input  mby_tag_ring_t              tag_ring_in_4_1  ,
+   input  mby_tag_ring_t              tag_ring_in_4_0  ,
+   input  mby_tag_ring_t              tag_ring_in_3_1  ,
+   input  mby_tag_ring_t              tag_ring_in_3_0  ,
+   input  mby_tag_ring_t              tag_ring_in_2_1  ,
+   input  mby_tag_ring_t              tag_ring_in_2_0  ,
+   input  mby_tag_ring_t              tag_ring_in_1_1  ,
+   input  mby_tag_ring_t              tag_ring_in_1_0  ,
+   input  mby_tag_ring_t              tag_ring_in_0_1  ,
+   input  mby_tag_ring_t              tag_ring_in_0_0  ,
+  
+   output mby_tag_ring_t              tag_ring_out_15_1,
+   output mby_tag_ring_t              tag_ring_out_15_0,
+   output mby_tag_ring_t              tag_ring_out_14_1,
+   output mby_tag_ring_t              tag_ring_out_14_0,
+   output mby_tag_ring_t              tag_ring_out_13_1,
+   output mby_tag_ring_t              tag_ring_out_13_0,
+   output mby_tag_ring_t              tag_ring_out_12_1,
+   output mby_tag_ring_t              tag_ring_out_12_0,
+   output mby_tag_ring_t              tag_ring_out_11_1,
+   output mby_tag_ring_t              tag_ring_out_11_0,
+   output mby_tag_ring_t              tag_ring_out_10_1,
+   output mby_tag_ring_t              tag_ring_out_10_0,
+   output mby_tag_ring_t              tag_ring_out_9_1,
+   output mby_tag_ring_t              tag_ring_out_9_0,
+   output mby_tag_ring_t              tag_ring_out_8_1,
+   output mby_tag_ring_t              tag_ring_out_8_0,
+   output mby_tag_ring_t              tag_ring_out_7_1,
+   output mby_tag_ring_t              tag_ring_out_7_0,
+   output mby_tag_ring_t              tag_ring_out_6_1,
+   output mby_tag_ring_t              tag_ring_out_6_0,
+   output mby_tag_ring_t              tag_ring_out_5_1,
+   output mby_tag_ring_t              tag_ring_out_5_0,
+   output mby_tag_ring_t              tag_ring_out_4_1,
+   output mby_tag_ring_t              tag_ring_out_4_0,
+   output mby_tag_ring_t              tag_ring_out_3_1,
+   output mby_tag_ring_t              tag_ring_out_3_0,
+   output mby_tag_ring_t              tag_ring_out_2_1,
+   output mby_tag_ring_t              tag_ring_out_2_0,
+   output mby_tag_ring_t              tag_ring_out_1_1,
+   output mby_tag_ring_t              tag_ring_out_1_0,
+   output mby_tag_ring_t              tag_ring_out_0_1,
+   output mby_tag_ring_t              tag_ring_out_0_0,
    
    input  logic [MBY_MAX_NUM_MGP-1:0] tag_ring_in_policer_idx_0, // part of the tag ring but the destination is to GPL not egress
    input  logic [MBY_MAX_NUM_MGP-1:0] tag_ring_in_policer_idx_1, // part of the tag ring but the destination is to GPL not egress
@@ -65,13 +126,50 @@ module mby_gmm_s
    input  logic [MBY_MAX_NUM_MGP-1:0] mc_deep_q_wr,
  
    // MultiCast tag ring interafce (MCE-to-egress)
-   output mby_mc_tag_ring_t           mc_tag_ring_out_left  [3:0],
-   output mby_mc_tag_ring_t           mc_tag_ring_out_right [3:0],
-
-   // Dequeue (EGress -to- GMM)
-   input  mby_deque_t                 mby_deque_from_egr_left  [MBY_MAX_NUM_MGP-1:0],
-   input  mby_deque_t                 mby_deque_from_egr_right [MBY_MAX_NUM_MGP-1:0],
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_3  ,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_2  ,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_1  ,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_left_0  ,
  
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_3 ,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_2 ,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_1 ,
+   output mby_mc_tag_ring_t           mc_tag_ring_out_right_0 ,
+
+   // Dequeue (Egress -to- GMM)
+   input  mby_deque_t                 mby_deque_from_egr_15_1,
+   input  mby_deque_t                 mby_deque_from_egr_15_0,
+   input  mby_deque_t                 mby_deque_from_egr_14_1,
+   input  mby_deque_t                 mby_deque_from_egr_14_0,
+   input  mby_deque_t                 mby_deque_from_egr_13_1,
+   input  mby_deque_t                 mby_deque_from_egr_13_0,
+   input  mby_deque_t                 mby_deque_from_egr_12_1,
+   input  mby_deque_t                 mby_deque_from_egr_12_0,
+   input  mby_deque_t                 mby_deque_from_egr_11_1,
+   input  mby_deque_t                 mby_deque_from_egr_11_0,
+   input  mby_deque_t                 mby_deque_from_egr_10_1,
+   input  mby_deque_t                 mby_deque_from_egr_10_0,
+   input  mby_deque_t                 mby_deque_from_egr_9_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_9_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_8_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_8_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_7_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_7_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_6_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_6_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_5_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_5_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_4_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_4_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_3_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_3_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_2_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_2_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_1_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_1_0 ,
+   input  mby_deque_t                 mby_deque_from_egr_0_1 ,
+   input  mby_deque_t                 mby_deque_from_egr_0_0 ,
+  
    // Dequeue from Virtual Port Egress
    input  mby_deque_t                 mby_deque_from_vp,
 
@@ -102,10 +200,38 @@ module mby_gmm_s
 
    // Tag ring
    always_ff @(posedge cclk) begin
-      for (int i = 0; i < MBY_MAX_NUM_MGP; i++) begin
-	 tag_ring_out_1 <= tag_ring_in_1;
-	 tag_ring_out_0 <= tag_ring_in_0;
-      end
+      tag_ring_out_15_1 <= tag_ring_in_15_1;
+      tag_ring_out_15_0 <= tag_ring_in_15_0;
+      tag_ring_out_14_1 <= tag_ring_in_14_1;
+      tag_ring_out_14_0 <= tag_ring_in_14_0;
+      tag_ring_out_13_1 <= tag_ring_in_13_1;
+      tag_ring_out_13_0 <= tag_ring_in_13_0;
+      tag_ring_out_12_1 <= tag_ring_in_12_1;
+      tag_ring_out_12_0 <= tag_ring_in_12_0;
+      tag_ring_out_11_1 <= tag_ring_in_11_1;
+      tag_ring_out_11_0 <= tag_ring_in_11_0;
+      tag_ring_out_10_1 <= tag_ring_in_10_1;
+      tag_ring_out_10_0 <= tag_ring_in_10_0;
+      tag_ring_out_9_1  <= tag_ring_in_9_1;
+      tag_ring_out_9_0  <= tag_ring_in_9_0;
+      tag_ring_out_8_1  <= tag_ring_in_8_1;
+      tag_ring_out_8_0  <= tag_ring_in_8_0;
+      tag_ring_out_7_1  <= tag_ring_in_7_1;
+      tag_ring_out_7_0  <= tag_ring_in_7_0;
+      tag_ring_out_6_1  <= tag_ring_in_6_1;
+      tag_ring_out_6_0  <= tag_ring_in_6_0;
+      tag_ring_out_5_1  <= tag_ring_in_5_1;
+      tag_ring_out_5_0  <= tag_ring_in_5_0;
+      tag_ring_out_4_1  <= tag_ring_in_4_1;
+      tag_ring_out_4_0  <= tag_ring_in_4_0;
+      tag_ring_out_3_1  <= tag_ring_in_3_1;
+      tag_ring_out_3_0  <= tag_ring_in_3_0;
+      tag_ring_out_2_1  <= tag_ring_in_2_1;
+      tag_ring_out_2_0  <= tag_ring_in_2_0;
+      tag_ring_out_1_1  <= tag_ring_in_1_1;
+      tag_ring_out_1_0  <= tag_ring_in_1_0;
+      tag_ring_out_0_1  <= tag_ring_in_0_1;
+      tag_ring_out_0_0  <= tag_ring_in_0_0;
    end
    
 
@@ -125,13 +251,77 @@ module mby_gmm_s
    //-----------------------------------------------------------------------------------------------------
    // Global Congestion Management
    //-----------------------------------------------------------------------------------------------------
-   mby_gcm_top mby_gcm_top ( .cclk                     (cclk),
-			     .reset_n                  (reset_n),
-			     .tag_ring_in_0            (tag_ring_in_0),
-			     .tag_ring_in_1            (tag_ring_in_1),
-			     .mby_deque_from_egr_left  (mby_deque_from_egr_left),
-			     .mby_deque_from_egr_right (mby_deque_from_egr_right),
-			     .mby_deque_from_vp        (mby_deque_from_vp),
+   mby_gcm_top mby_gcm_top ( .cclk                       (cclk),
+			     .reset_n                    (reset_n),
+			     // TAG RING inputs
+			     .tag_ring_in_15_1           (tag_ring_in_15_1),
+			     .tag_ring_in_15_0           (tag_ring_in_15_0),
+			     .tag_ring_in_14_1           (tag_ring_in_14_1),
+			     .tag_ring_in_14_0           (tag_ring_in_14_0),
+			     .tag_ring_in_13_1           (tag_ring_in_13_1),
+			     .tag_ring_in_13_0           (tag_ring_in_13_0),
+			     .tag_ring_in_12_1           (tag_ring_in_12_1),
+			     .tag_ring_in_12_0           (tag_ring_in_12_0),
+			     .tag_ring_in_11_1           (tag_ring_in_11_1),
+			     .tag_ring_in_11_0           (tag_ring_in_11_0),
+			     .tag_ring_in_10_1           (tag_ring_in_10_1),
+			     .tag_ring_in_10_0           (tag_ring_in_10_0),
+			     .tag_ring_in_9_1            (tag_ring_in_9_1),
+			     .tag_ring_in_9_0            (tag_ring_in_9_0),
+			     .tag_ring_in_8_1            (tag_ring_in_8_1),
+			     .tag_ring_in_8_0            (tag_ring_in_8_0),
+			     .tag_ring_in_7_1            (tag_ring_in_7_1),
+			     .tag_ring_in_7_0            (tag_ring_in_7_0),
+			     .tag_ring_in_6_1            (tag_ring_in_6_1),
+			     .tag_ring_in_6_0            (tag_ring_in_6_0),
+			     .tag_ring_in_5_1            (tag_ring_in_5_1),
+			     .tag_ring_in_5_0            (tag_ring_in_5_0),
+			     .tag_ring_in_4_1            (tag_ring_in_4_1),
+			     .tag_ring_in_4_0            (tag_ring_in_4_0),
+			     .tag_ring_in_3_1            (tag_ring_in_3_1),
+			     .tag_ring_in_3_0            (tag_ring_in_3_0),
+			     .tag_ring_in_2_1            (tag_ring_in_2_1),
+			     .tag_ring_in_2_0            (tag_ring_in_2_0),
+			     .tag_ring_in_1_1            (tag_ring_in_1_1),
+			     .tag_ring_in_1_0            (tag_ring_in_1_0),
+			     .tag_ring_in_0_1            (tag_ring_in_0_1),
+			     .tag_ring_in_0_0            (tag_ring_in_0_0),
+			     // Dequeue 
+			     .mby_deque_from_egr_15_1    (mby_deque_from_egr_15_1),
+			     .mby_deque_from_egr_14_0    (mby_deque_from_egr_15_0),
+			     .mby_deque_from_egr_14_1    (mby_deque_from_egr_14_1),
+			     .mby_deque_from_egr_14_0    (mby_deque_from_egr_14_0),
+			     .mby_deque_from_egr_13_1    (mby_deque_from_egr_13_1),
+			     .mby_deque_from_egr_13_0    (mby_deque_from_egr_13_0),
+			     .mby_deque_from_egr_12_1    (mby_deque_from_egr_12_1),
+			     .mby_deque_from_egr_12_0    (mby_deque_from_egr_12_0),
+			     .mby_deque_from_egr_11_1    (mby_deque_from_egr_11_1),
+			     .mby_deque_from_egr_11_0    (mby_deque_from_egr_11_0),
+			     .mby_deque_from_egr_10_1    (mby_deque_from_egr_10_1),
+			     .mby_deque_from_egr_10_0    (mby_deque_from_egr_10_0),
+			     .mby_deque_from_egr_9_1     (mby_deque_from_egr_9_1),
+			     .mby_deque_from_egr_9_0     (mby_deque_from_egr_9_0),
+			     .mby_deque_from_egr_8_1     (mby_deque_from_egr_8_1),
+			     .mby_deque_from_egr_8_0     (mby_deque_from_egr_8_0),
+			     .mby_deque_from_egr_7_1     (mby_deque_from_egr_7_1),
+			     .mby_deque_from_egr_7_0     (mby_deque_from_egr_7_0),
+			     .mby_deque_from_egr_6_1     (mby_deque_from_egr_6_1),
+			     .mby_deque_from_egr_6_0     (mby_deque_from_egr_6_0),
+	                     .mby_deque_from_egr_5_1     (mby_deque_from_egr_5_1),
+			     .mby_deque_from_egr_5_0     (mby_deque_from_egr_5_0),
+                             .mby_deque_from_egr_4_1     (mby_deque_from_egr_4_1),
+			     .mby_deque_from_egr_4_0     (mby_deque_from_egr_4_0),
+                             .mby_deque_from_egr_3_1     (mby_deque_from_egr_3_1),
+			     .mby_deque_from_egr_3_0     (mby_deque_from_egr_3_0),
+                             .mby_deque_from_egr_2_1     (mby_deque_from_egr_2_1),
+			     .mby_deque_from_egr_2_0     (mby_deque_from_egr_2_0),
+                             .mby_deque_from_egr_1_1     (mby_deque_from_egr_1_1),
+			     .mby_deque_from_egr_1_0     (mby_deque_from_egr_1_0),
+                             .mby_deque_from_egr_0_1     (mby_deque_from_egr_0_1),
+			     .mby_deque_from_egr_0_0     (mby_deque_from_egr_0_0),
+		             // Dequeue from VP
+			     .mby_deque_from_vp          (mby_deque_from_vp),
+			     // Water Mark 
 			     .rx_cm_wm_out_left        (rx_cm_wm_out_left),
 			     .rx_cm_wm_out_right       (rx_cm_wm_out_right),
 			     .tx_cm_wm_out_left        (tx_cm_wm_out_left),
@@ -148,15 +338,23 @@ module mby_gmm_s
    mby_mce_top mby_mce_top ( .cclk                     (cclk),
 			     .reset_n                  (reset_n),
 			     .mc_deep_q_wr             (mc_deep_q_wr),
-                             .mc_tag_ring_out_left     (mc_tag_ring_out_left),
-                             .mc_tag_ring_out_right    (mc_tag_ring_out_right)    
+                             .mc_tag_ring_out_left_3   (mc_tag_ring_out_left_3),
+			     .mc_tag_ring_out_left_2   (mc_tag_ring_out_left_2),
+			     .mc_tag_ring_out_left_1   (mc_tag_ring_out_left_1),
+			     .mc_tag_ring_out_left_0   (mc_tag_ring_out_left_0),
+                             .mc_tag_ring_out_right_3  (mc_tag_ring_out_right_3),
+			     .mc_tag_ring_out_right_2  (mc_tag_ring_out_right_2),
+			     .mc_tag_ring_out_right_1  (mc_tag_ring_out_right_1),
+			     .mc_tag_ring_out_right_0  (mc_tag_ring_out_right_0)
 			    );
    
    //-----------------------------------------------------------------------------------------------------
    // Global Policier
    //-----------------------------------------------------------------------------------------------------
-   mby_gpl_top mby_gpl_top ( .cclk                     (cclk),
-			     .reset_n                  (reset_n)
+   mby_gpl_top mby_gpl_top ( .cclk                        (cclk),
+			     .reset_n                     (reset_n),
+			     .gpol_update_bcast_out_left  (gpol_update_bcast_out_left ),
+			     .gpol_update_bcast_out_right (gpol_update_bcast_out_right)
 			    );
    
 // collage-pragma translate_on

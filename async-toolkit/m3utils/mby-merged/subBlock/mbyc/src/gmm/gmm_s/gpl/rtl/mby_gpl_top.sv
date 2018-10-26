@@ -31,6 +31,12 @@
 // 17-10-2018 intital version
 //
 //=======================================================================================================================================
+
+`ifndef MBY_GPL_TOP_SV
+ `define MBY_GPL_TOP_SV
+
+// collage-pragma translate_on
+
 module mby_gpl_top
   import shared_pkg::*, mby_gmm_pkg::*;
 (
@@ -41,7 +47,13 @@ module mby_gpl_top
    output mby_gpol_state_bcast_t      gpol_update_bcast_out_right
 );
 
+// collage-pragma translate_off
+
+// collage-pragma translate_on
+
 endmodule // mby_gpm_top
+
+`endif //  `ifndef MBY_GPL_TOP_SV
 
 
    

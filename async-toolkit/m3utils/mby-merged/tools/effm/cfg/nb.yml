@@ -1,0 +1,64 @@
+NETBATCH:
+    PDX:
+        POOL: pdx_critical_gk
+        SLOT: /SDG/sdg74/fe/build/mc
+        CLASS: (SLES11SP4||SLES11SP2)&&2G
+        LOCAL: 0
+        ANALYZE:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&6G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&4G
+        FRONTEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&32G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&16G
+        BACKEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&16G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&12G
+    IIL:
+        POOL: iil_normal
+#        SLOT: /cse_cont/logic/e40g 
+        SLOT: /cse_cont/fpga/test
+        CLASS: (SLES11SP4||SLES11SP2)&&32G
+        LOCAL: 0
+        ANALYZE:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&6G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&16G
+        FRONTEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&16G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&64G
+        BACKEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&12G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&64G
+
+
+    SC:
+        POOL: sc_normal
+        SLOT: /mst/fe/rgr
+        CLASS: (SLES11SP4||SLES11SP2)&&32G
+        LOCAL: 0
+        ANALYZE:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&6G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&16G
+        FRONTEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&8G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&64G
+        BACKEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&12G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&64G
