@@ -8,13 +8,28 @@ GLOBAL:
    ACE_METAFILES:
       EMULATION:
          FILE:  target/$ENV{DUT}/emu/$ENV{MODEL}/$ENV{EMU_SCOPE}.M$ENV{MODEL}.filelist.pl
-   NETBATCH_FILE:  $ENV{EMUL_CFG_DIR}/cfg/nb.yml      
+   NETBATCH_FILE: $ENV{EMUL_CFG_DIR}/cfg/nb.yml      
 ############################
 # MOD_LIBS 
 ############################
    REMOVE_LIBS:
      # NOT EFFM COMPLIANT
      - soc_collage_assemble_lib 
+     - .*_bfm_lib
+     - .*_tb_lib
+     - .*_env_lib
+     - .*_ti_lib
+     - common_intfs_lib
+     - ext_shared_lib
+# extra libs may need to be removed if using fc model, instead of fc_effm
+#     - mby_common_lib
+#     - svt_ahb_lib
+#     - shdv_shared_lib
+#     - csr_bfm_lib
+#     - mby_wm_dpi_lib
+#     #- ovm_lib 
+#     #- sip_shared_lib
+#     #- sla_lib
    MOD_LIBS:
       .*:
           DEFINES:
