@@ -4,7 +4,7 @@
 
 
 #include "mby_mapper.h"
-#include "mby_clsfr_regs.h"
+#include "mby_cgrp_regs.h"
 #include "mby_lpm.h"
 #include "mby_wcm.h"
 #include "mby_exactmatch.h"

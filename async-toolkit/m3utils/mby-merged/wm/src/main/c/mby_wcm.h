@@ -7,7 +7,7 @@
 
 // Includes:
 
-#include "mby_clsfr_regs.h"
+#include "mby_cgrp_regs.h"
 
 // Defines:
 

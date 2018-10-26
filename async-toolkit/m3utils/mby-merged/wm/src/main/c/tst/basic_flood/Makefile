@@ -17,7 +17,7 @@ SOURCES += $(SRC_DIR)/mby_lpm.c
 SOURCES += $(SRC_DIR)/mby_lpm_regs.c
 SOURCES += $(SRC_DIR)/mby_wcm.c
 SOURCES += $(SRC_DIR)/mby_exactmatch.c
-SOURCES += $(SRC_DIR)/mby_clsfr_regs.c
+SOURCES += $(SRC_DIR)/mby_cgrp_regs.c
 SOURCES += $(SRC_DIR)/mby_classifier.c
 SOURCES += $(SRC_DIR)/mby_hash.c
 SOURCES += $(SRC_DIR)/mby_nexthop.c
@@ -89,7 +89,7 @@ $(SRC_DIR)/mby_lpm.o       : $(SRC_DIR)/mby_lpm.c        $(SRC_DIR)/mby_lpm.h
 $(SRC_DIR)/mby_lpm_regs.o  : $(SRC_DIR)/mby_lpm_regs.c   $(SRC_DIR)/mby_lpm_regs.h
 $(SRC_DIR)/mby_wcm.o       : $(SRC_DIR)/mby_wcm.c        $(SRC_DIR)/mby_wcm.h
 $(SRC_DIR)/mby_exactmatch.o: $(SRC_DIR)/mby_exactmatch.c $(SRC_DIR)/mby_exactmatch.h
-$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_clsfr_regs.c $(SRC_DIR)/mby_clsfr_regs.h
+$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_cgrp_regs.c $(SRC_DIR)/mby_cgrp_regs.h
 $(SRC_DIR)/mby_classifier.o: $(SRC_DIR)/mby_classifier.c $(SRC_DIR)/mby_classifier.h
 $(SRC_DIR)/mby_hash.o      : $(SRC_DIR)/mby_hash.c       $(SRC_DIR)/mby_hash.h
 $(SRC_DIR)/mby_nexthop.o   : $(SRC_DIR)/mby_nexthop.c    $(SRC_DIR)/mby_nexthop.h

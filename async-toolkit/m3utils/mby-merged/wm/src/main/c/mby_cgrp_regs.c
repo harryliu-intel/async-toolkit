@@ -2,7 +2,7 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_clsfr_regs.h"
+#include "mby_cgrp_regs.h"
 
 mbyClassifierHashLookup mbyClsGetEmHashLookupEntry
 (

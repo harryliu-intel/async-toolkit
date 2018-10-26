@@ -15,8 +15,8 @@ c_source ("mby_mapper")
 h_source ("mby_classifier")
 c_source ("mby_classifier")
 
-h_source ("mby_clsfr_regs")
-c_source ("mby_clsfr_regs")
+h_source ("mby_cgrp_regs")
+c_source ("mby_cgrp_regs")
 
 h_source ("mby_exactmatch")
 c_source ("mby_exactmatch")
