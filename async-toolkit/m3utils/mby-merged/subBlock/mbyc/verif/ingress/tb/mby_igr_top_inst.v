@@ -24,7 +24,7 @@ igr_rx_ppe_if igr_rx_ppe_if_i();
 always_comb rx_ppe_igr_if_i.intf0 = 0;
 always_comb rx_ppe_igr_if_i.intf1 = 0;
 
-igr_top igr_top_i (
+mby_igr_top igr_top_i (
    .cclk(ingress_primary_clock),
    .rst(ingress_primary_reset),
    .grp_a_rx_ecc(eth_bfm_tx_intf_0.ecc),
