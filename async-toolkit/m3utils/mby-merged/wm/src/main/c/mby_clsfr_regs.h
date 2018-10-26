@@ -13,12 +13,6 @@
 // Defines:
 
 #include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-#define MBY_CGRP_A_IN_REGS     mby_ppe_cgrp_a_map  * const cgrp_a_map
-#define MBY_CGRP_A_IN_REGS_P                               cgrp_a_map
-#define MBY_CGRP_B_IN_REGS     mby_ppe_cgrp_b_map  * const cgrp_b_map
-#define MBY_CGRP_B_IN_REGS_P                               cgrp_b_map
-#define MBY_ENTROPY_IN_REGS    mby_ppe_entropy_map * const entropy_map
-#define MBY_ENTROPY_IN_REGS_P                              entropy_map
 
 // FIXME replace these with the new constants in mby_top_map.h
 #define MBY_FFU_TCAM_ENTRIES_0                                  1024
@@ -824,7 +818,7 @@ void mbyClsGetEmHashMissActions
 
 mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
     fm_byte              const group,
     fm_byte              const slice,
     fm_byte              const scenario
@@ -832,14 +826,14 @@ mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 
 mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
     fm_byte              const slice,
     fm_uint16            const index
 );
 
 mbyClassifierActionCfg mbyClsGetWcmActionCfg
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map  * const cgrp_b_map,
     fm_byte              const group,
     fm_byte              const scenario,
     fm_byte              const ram_num
@@ -847,7 +841,7 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 
 fm_uint32 mbyClsGetWcmActionEntry
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map  * const cgrp_b_map,
     fm_byte              const ram_num,
     fm_uint32            const hit_index,
     fm_uint32            const action
@@ -855,14 +849,14 @@ fm_uint32 mbyClsGetWcmActionEntry
 
 mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 (
-    MBY_ENTROPY_IN_REGS,
+    mby_ppe_entropy_map * const entropy_map,
     fm_uint32             const hash_num,
     fm_byte               const hash_prof
 );
 
 mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 (
-    MBY_ENTROPY_IN_REGS,
+    mby_ppe_entropy_map * const entropy_map,
     fm_byte               const hash_prof
 );
 

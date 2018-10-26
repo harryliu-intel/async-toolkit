@@ -142,7 +142,7 @@ void mbyClsGetEmHashMissActions
 
 mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
     fm_byte              const group,
     fm_byte              const slice,
     fm_byte              const profile
@@ -165,7 +165,7 @@ mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 
 mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
     fm_byte              const slice,
     fm_uint16            const index
 )
@@ -184,7 +184,7 @@ mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 
 mbyClassifierActionCfg mbyClsGetWcmActionCfg
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
     fm_byte              const group,
     fm_byte              const profile,
     fm_byte              const ram_num
@@ -228,7 +228,7 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 
 fm_uint32 mbyClsGetWcmActionEntry
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map * const cgrp_b_map,
     fm_byte              const ram_num,
     fm_uint32            const hit_index,
     fm_uint32            const action
@@ -241,7 +241,7 @@ fm_uint32 mbyClsGetWcmActionEntry
 
 mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 (
-    MBY_ENTROPY_IN_REGS,
+    mby_ppe_entropy_map * const entropy_map,
     fm_uint32             const hash_num,
     fm_byte               const hash_prof
 )
@@ -262,7 +262,7 @@ mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 
 mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 (
-    MBY_ENTROPY_IN_REGS,
+    mby_ppe_entropy_map * const entropy_map,
     fm_byte               const hash_prof
 )
 {
