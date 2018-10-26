@@ -318,7 +318,7 @@ static void simple_tcp_map_smac_test_setup
 
 static int simple_tcp_map_smac_test_check(const mbyMapperToClassifier* in)
 {
-    MAPPER_TEST_ASSERT(in->FFU_SCENARIO       == 0x3,  "FFU_SCENARIO");
+    MAPPER_TEST_ASSERT(in->FFU_PROFILE        == 0x3,  "FFU_PROFILE");
     MAPPER_TEST_ASSERT(in->IP_OPTION[0]       == TRUE, "IP_OPTION[0]");
     MAPPER_TEST_ASSERT(in->FFU_KEYS.key16[13] == 0x7e, "key16[13]");
 

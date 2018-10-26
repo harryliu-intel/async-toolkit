@@ -20,7 +20,7 @@ void setEmKeySel0
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_uint32             const lookup,  // a.k.a. hash number
-    fm_byte               const profile, // a.k.a. scenario
+    fm_byte               const profile, // a.k.a. packet profile ID
     fm_uint32             const key8_mask
 )
 {
@@ -36,7 +36,7 @@ void setEmKeySel1
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_uint32             const lookup,  // a.k.a. hash number
-    fm_byte               const profile, // a.k.a. scenario
+    fm_byte               const profile, // a.k.a. packet profile ID
     fm_uint32             const key16_mask,
     fm_uint16             const key32_mask,
     fm_byte               const key_mask_sel
@@ -61,7 +61,7 @@ void setEmKeySel1
 void setEmHashCfg
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_byte               const profile, // a.k.a. scenario
+    fm_byte               const profile, // a.k.a. packet profile ID
     fm_byte               const mode,
     fm_uint16             const base_ptrs  [2],
     fm_byte               const hash_sizes [2],
@@ -93,7 +93,7 @@ void setEmHashCfg
 void setEmHashCamEn
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_byte               const profile,  // a.k.a. scenario
+    fm_byte               const profile,  // a.k.a. packet profile ID
     fm_uint32             const row,
     fm_uint32             const rule
 )
@@ -139,7 +139,7 @@ void setEmHashMiss
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_uint32             const row,        // row = [0 .. 1]
-    fm_byte               const profile,    // a.k.a. scenario
+    fm_byte               const profile,    // a.k.a. packet profile ID
     fm_uint32             const actions[2]  // 2 actions per row
 )
 {
@@ -246,7 +246,7 @@ void initDefaultInputs
 {
     mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(map2cla->FFU_PROFILE);
     fm_bool              * const ip_option   =   map2cla->IP_OPTION;
     mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
     fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
@@ -312,7 +312,7 @@ void initInputs
 {
     mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(map2cla->FFU_PROFILE);
     fm_bool              * const ip_option   =   map2cla->IP_OPTION;
     mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
     fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
@@ -326,7 +326,7 @@ void initInputs
         initDefaultInputs(map2cla);
         break;
     default:
-        printf("Unsupported test scenario -- exiting!\n");
+        printf("Unsupported scenario -- exiting!\n");
         exit(-1);
     }
 }
@@ -458,7 +458,7 @@ fm_status testWildCardMatch
 
     mbyClassifierActions * const actions_in  = &(in->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(in->FFU_KEYS);
-    fm_byte              * const scenario_in = &(in->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(in->FFU_PROFILE);
     fm_bool              * const ip_option   =   in->IP_OPTION;
     mbyParserInfo        * const parser_info = &(in->PARSER_INFO);
     fm_byte              * const pri_profile = &(in->PRIORITY_PROFILE);
@@ -518,7 +518,7 @@ fm_status testExactMatch
 
     mbyClassifierActions * const actions_in  = &(in->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(in->FFU_KEYS);
-    fm_byte              * const scenario_in = &(in->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(in->FFU_PROFILE);
     fm_bool              * const ip_option   =   in->IP_OPTION;
     mbyParserInfo        * const parser_info = &(in->PARSER_INFO);
     fm_byte              * const pri_profile = &(in->PRIORITY_PROFILE);
@@ -529,7 +529,7 @@ fm_status testExactMatch
 
     // Init key selects:
     fm_uint32 lookup       = 0; // a.k.a. hash number
-    fm_uint32 profile      = 0; // a.k.a. scenario
+    fm_uint32 profile      = 0; // a.k.a. packet profile ID
     fm_uint32 key8_mask    = 0;
     fm_uint32 key16_mask   = 0;
     fm_uint16 key32_mask   = 0;

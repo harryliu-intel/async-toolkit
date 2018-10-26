@@ -669,31 +669,34 @@ void Classifier
 )
 {
     // Read inputs from the Mapper:
-    mbyClassifierActions  const actions_in  = in->FFU_ACTIONS;
-    mbyClassifierKeys     const keys_in     = in->FFU_KEYS;
-    fm_byte               const scenario_in = in->FFU_SCENARIO;
-    fm_bool       const * const ip_option   = in->IP_OPTION;
-    mbyParserInfo         const parser_info = in->PARSER_INFO;
-    fm_byte               const pri_profile = in->PRIORITY_PROFILE;
+    mbyClassifierActions  const actions_in        = in->FFU_ACTIONS;
+    mbyClassifierKeys     const keys_in           = in->FFU_KEYS;
+    fm_byte               const packet_profile_in = in->FFU_PROFILE;
+    fm_bool       const * const ip_option         = in->IP_OPTION;
+    mbyParserInfo         const parser_info       = in->PARSER_INFO;
+    fm_byte               const pri_profile       = in->PRIORITY_PROFILE;
 
-    fm_byte              scenario = scenario_in;
-    mbyClassifierActions actions  = actions_in;
-    mbyClassifierKeys    keys     = keys_in;
+    fm_byte              packet_profile = packet_profile_in;
+    mbyClassifierActions actions        = actions_in;
+    mbyClassifierKeys    keys           = keys_in;
 
 
     // Exact match A (EM_A):
     fm_uint32 em_a_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    mbyMatchExact(cgrp_a_map->A.EM_HASH_LOOKUP, &(cgrp_a_map->EM), shm_map, &keys, scenario, MBY_CLA_GROUP_A, em_a_out);
+    // TODO rename packet_profile to packet_profile
+    mbyMatchExact(cgrp_a_map->A.EM_HASH_LOOKUP, &(cgrp_a_map->EM), shm_map, &keys, packet_profile, MBY_CLA_GROUP_A, em_a_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_a_out[i], &actions);
 
+    // FIXME if EM_A_LPP.EN = 1 skip the LPM
+
     // Longest Prefix Match (LPM):
     fm_uint32 lpm_out[MBY_LPM_MAX_ACTIONS_NUM];
 
-    // TODO is the scenario == 6-bit profile ID in the HAS?
-    mbyMatchLpm(cgrp_a_map, shm_map, &keys, scenario, lpm_out);
+    // TODO is the packet_profile == 6-bit profile ID in the HAS?
+    mbyMatchLpm(cgrp_a_map, shm_map, &keys, packet_profile, lpm_out);
 
     for (fm_uint i = 0; i < MBY_LPM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(lpm_out[i], &actions);
@@ -701,16 +704,16 @@ void Classifier
     // Remap takes effect between CGRP_A and CGRP_B
     remapKeys(&actions, &keys);
 
-    // Update scenario based on scenario action:
+    // Update packet_profile based on profile action:
     for (fm_uint s = MBY_FFU_ACTION_SCENARIO0, i = 0; s <= MBY_FFU_ACTION_SCENARIO5; s++, i++) {
         if (actions.act1[s].prec != 0)
-            FM_SET_UNNAMED_FIELD(scenario, i, 1, actions.act1[s].val & 1);
+            FM_SET_UNNAMED_FIELD(packet_profile, i, 1, actions.act1[s].val & 1);
     }
 
     // Exact match B (EM_B):
     fm_uint32 em_b_out[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
-    mbyMatchExact(cgrp_b_map->B.EM_HASH_LOOKUP, &(cgrp_b_map->EM), shm_map, &keys, scenario, MBY_CLA_GROUP_B, em_b_out);
+    mbyMatchExact(cgrp_b_map->B.EM_HASH_LOOKUP, &(cgrp_b_map->EM), shm_map, &keys, packet_profile, MBY_CLA_GROUP_B, em_b_out);
 
     for (fm_uint i = 0; i < MBY_EM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(em_b_out[i], &actions);
@@ -718,7 +721,7 @@ void Classifier
     // Wildcard Match (WCM):
     fm_uint32 wcm_out[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
 
-    mbyMatchWildcard(cgrp_b_map, &keys, scenario, MBY_CLA_GROUP_B, wcm_out);
+    mbyMatchWildcard(cgrp_b_map, &keys, packet_profile, MBY_CLA_GROUP_B, wcm_out);
 
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(wcm_out[i], &actions);

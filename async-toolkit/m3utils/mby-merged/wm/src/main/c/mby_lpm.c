@@ -208,7 +208,7 @@ static void lpmSearch
     if (out->hit_valid)
     {
         // TODO verify alignment in SHM_FWD_TABLE0
-        out->fwd_table0_idx = st_lookup.hit_ptr * 16;
+        out->fwd_table0_idx = st_lookup.hit_ptr * 8;
     }
 }
 
@@ -250,6 +250,8 @@ static void lpmGenerateKey
     PACK_LPM_KEY(md,   8);
     PACK_LPM_KEY(md,   16);
 
+    // TODO truncate the key to 160bits
+
     // Apply the 160 bit mask
     for (i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
         // FIXME why is the mask 20 x 64 bits long?
@@ -284,7 +286,7 @@ static void lpmActions
 
 void mbyMatchLpm
 (
-    MBY_LPM_IN_REGS,
+    MBY_LPM_IN_REGS, // TODO remove this macro
     mby_shm_map                * const shm_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,

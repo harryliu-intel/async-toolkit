@@ -29,15 +29,15 @@ mbyClassifierKeyMaskCfg mbyClsGetEmKeyMaskCfg
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_byte               const hash_num,
-    fm_byte               const scenario
+    fm_byte               const profile
 )
 {
     mbyClassifierKeyMaskCfg key_mask_cfg;
 
-    key_mask_cfg.KEY_MASK_SEL = cgrp_em_map->KEY_SEL1[hash_num][scenario].KEY_MASK_SEL; // [51:48]
-    key_mask_cfg.KEY32_MASK   = cgrp_em_map->KEY_SEL1[hash_num][scenario].KEY32_MASK;   // [47:32]
-    key_mask_cfg.KEY16_MASK   = cgrp_em_map->KEY_SEL1[hash_num][scenario].KEY16_MASK;   // [31: 0]
-    key_mask_cfg.KEY8_MASK    = cgrp_em_map->KEY_SEL0[hash_num][scenario].KEY8_MASK;    // [31: 0]
+    key_mask_cfg.KEY_MASK_SEL = cgrp_em_map->KEY_SEL1[hash_num][profile].KEY_MASK_SEL; // [51:48]
+    key_mask_cfg.KEY32_MASK   = cgrp_em_map->KEY_SEL1[hash_num][profile].KEY32_MASK;   // [47:32]
+    key_mask_cfg.KEY16_MASK   = cgrp_em_map->KEY_SEL1[hash_num][profile].KEY16_MASK;   // [31: 0]
+    key_mask_cfg.KEY8_MASK    = cgrp_em_map->KEY_SEL0[hash_num][profile].KEY8_MASK;    // [31: 0]
 
     return key_mask_cfg;
 }
@@ -45,12 +45,12 @@ mbyClassifierKeyMaskCfg mbyClsGetEmKeyMaskCfg
 mbyClassifierHashCfg mbyClsGetEmHashCfg
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_byte               const scenario
+    fm_byte               const profile
 )
 {
     mbyClassifierHashCfg hash_cfg;
 
-    em_hash_cfg_r const * const em_hash_cfg = &(cgrp_em_map->HASH_CFG[scenario]);
+    em_hash_cfg_r const * const em_hash_cfg = &(cgrp_em_map->HASH_CFG[profile]);
 
     hash_cfg.mode          = em_hash_cfg->MODE;
     hash_cfg.base_ptr[0]   = em_hash_cfg->BASE_PTR_0;
@@ -124,12 +124,12 @@ void mbyClsGetEmHashMissActions
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     mbyClassifierHashCfg  const hash_cfg,
     fm_uint32             const hash_num,
-    fm_byte               const scenario,
+    fm_byte               const profile,
     fm_uint32                   hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
 )
 {
-    em_hash_miss_r const * const em_hash_miss   = &(cgrp_em_map->HASH_MISS[hash_num][scenario]);
-    em_hash_miss_r const * const em_hash_miss_1 = &(cgrp_em_map->HASH_MISS[1][scenario]);
+    em_hash_miss_r const * const em_hash_miss   = &(cgrp_em_map->HASH_MISS[hash_num][profile]);
+    em_hash_miss_r const * const em_hash_miss_1 = &(cgrp_em_map->HASH_MISS[1][profile]);
 
     hash_actions[0] = em_hash_miss->ACTION0;
     hash_actions[1] = em_hash_miss->ACTION1;
@@ -145,12 +145,12 @@ mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
     MBY_CGRP_B_IN_REGS,
     fm_byte              const group,
     fm_byte              const slice,
-    fm_byte              const scenario
+    fm_byte              const profile
 )
 {
     mbyClassifierTcamCfg tcam_cfg;
 
-    wcm_tcam_cfg_r const * const wcm_tcam_cfg = &(cgrp_b_map->B.WCM_TCAM_CFG[slice][scenario]);
+    wcm_tcam_cfg_r const * const wcm_tcam_cfg = &(cgrp_b_map->B.WCM_TCAM_CFG[slice][profile]);
 
     tcam_cfg.CHUNK_MASK    = wcm_tcam_cfg->CHUNK_MASK;
     tcam_cfg.START_COMPARE = wcm_tcam_cfg->START_COMPARE;
@@ -186,7 +186,7 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 (
     MBY_CGRP_B_IN_REGS,
     fm_byte              const group,
-    fm_byte              const scenario,
+    fm_byte              const profile,
     fm_byte              const ram_num
 )
 {

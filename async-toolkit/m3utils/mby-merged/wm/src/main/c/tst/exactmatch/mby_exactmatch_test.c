@@ -192,11 +192,11 @@ static void set_EM_KEY_SEL0
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_bool               const hash,
-    fm_byte               const scenario,
+    fm_byte               const profile,
     fm_uint32             const key8_mask
 )
 {
-    em_key_sel0_r * const em_key_sel0 = &(cgrp_em_map->KEY_SEL0[hash][scenario]);
+    em_key_sel0_r * const em_key_sel0 = &(cgrp_em_map->KEY_SEL0[hash][profile]);
 
     em_key_sel0->KEY8_MASK = key8_mask;
 }
@@ -208,9 +208,9 @@ static void init_EM_KEY_SEL0_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL0__n ; hash++)
     {
-        for(fm_uint scenario = 0 ; scenario < em_key_sel0_rf_EM_KEY_SEL0__n ; scenario++)
+        for(fm_uint profile = 0 ; profile < em_key_sel0_rf_EM_KEY_SEL0__n ; profile++)
         {
-            set_EM_KEY_SEL0(cgrp_em_map, hash, scenario, 0x00000000);
+            set_EM_KEY_SEL0(cgrp_em_map, hash, profile, 0x00000000);
         }
     }
 }
@@ -221,13 +221,13 @@ static void set_EM_KEY_SEL1
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_bool               const hash,
-    fm_byte               const scenario,
+    fm_byte               const profile,
     uint4                 const key_mask_sel,
     uint16                const key32_mask,
     uint32                const key16_mask
 )
 {
-    em_key_sel1_r * const em_key_sel1 = &(cgrp_em_map->KEY_SEL1[hash][scenario]);
+    em_key_sel1_r * const em_key_sel1 = &(cgrp_em_map->KEY_SEL1[hash][profile]);
 
     em_key_sel1->KEY_MASK_SEL = key_mask_sel;
     em_key_sel1->KEY32_MASK   = key32_mask;
@@ -241,9 +241,9 @@ static void init_EM_KEY_SEL1_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL1__n ; hash++)
     {
-        for (fm_uint scenario = 0 ; scenario < em_key_sel1_rf_EM_KEY_SEL1__n ; scenario++)
+        for (fm_uint profile = 0 ; profile < em_key_sel1_rf_EM_KEY_SEL1__n ; profile++)
         {
-            set_EM_KEY_SEL1(cgrp_em_map, hash, scenario,
+            set_EM_KEY_SEL1(cgrp_em_map, hash, profile,
                 (uint4)0x0,
                 (uint16)0x0000,
                 (uint32)0x00000000);
@@ -521,13 +521,13 @@ static void initInputs
     mbyMapperToClassifier * const map2cla
 )
 {
-    mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_SCENARIO);
+    mbyClassifierActions * const actions_in     = &(map2cla->FFU_ACTIONS);
+    mbyClassifierKeys    * const keys           = &(map2cla->FFU_KEYS);
+    fm_byte              * const packet_profile = &(map2cla->FFU_PROFILE);
 
     init_actions(actions_in);
     init_keys(keys);
-    *scenario_in = 0;
+    *packet_profile = 0;
 }
 
 static void setRegs_basic
@@ -540,25 +540,25 @@ static void setRegs_basic
     mby_ppe_cgrp_a_nested_map * cgrp_a_nested_map = &(cgrp_a_map->A);
     mby_ppe_cgrp_em_map * cgrp_em_map = &(cgrp_a_map->EM);
 
-    // EM_A_KEY_SEL0[hash][scenario])
+    // EM_A_KEY_SEL0[hash][profile])
     set_EM_KEY_SEL0(cgrp_em_map,
-        0,  // hash
-        17, // scenario <-- profile? REVISIT!!!
+        0,      // hash
+        17,     // packet profile
         0x20    // key8_mask  (0000 0000 0000 0000 0000 0000 0010 0000 == KEY8[5] )
     );
 
-    // EM_A_KEY_SEL1[hash][scenario])
+    // EM_A_KEY_SEL1[hash][profile])
     set_EM_KEY_SEL1(cgrp_em_map,
-        0,  // hash
-        17, // scenario <-- profile? REVISIT!!!
+        0,      // hash
+        17,     // packet profile
         0x0,    // key_mask_sel <-- Might need to REVISIT!!!
         0x10,   // key32_mask (0000 0000 0001 0000                     == KEY32[4])
         0x0     // key16_mask (0000 0000 0000 0000 0000 0000 0000 0000 == NONE    )
     );
 
-    // EM_A_HASH_CFG[scenario]
+    // EM_A_HASH_CFG[profile]
     set_EM_HASH_CFG(cgrp_em_map,
-        17, // scenario <-- profile? REVISIT!!!
+        17,     // packet profile
         1,      // mode (64B == non-split mode)
         0x0,    // base_ptr_0
         0x0,    // base_ptr_1
@@ -645,7 +645,7 @@ static void setInputs_basic
     map2cla->FFU_ACTIONS.act1[20].val = 1;
     map2cla->FFU_ACTIONS.act1[22].val = 1;
 
-    map2cla->FFU_SCENARIO = 0x11; // 17
+    map2cla->FFU_PROFILE = 0x11; // 17
 }
 
 static void simple_exactmatch_basic_test_setup
@@ -710,7 +710,7 @@ static int run_on_simple_exactmatch
         &(cgrp_a_map->EM),
         shm_map,
         &(in->FFU_KEYS),
-        in->FFU_SCENARIO,
+        in->FFU_PROFILE,
         MBY_CLA_GROUP_A,
         actions
     );

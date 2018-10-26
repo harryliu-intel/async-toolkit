@@ -1763,7 +1763,7 @@ void Mapper
 
     out->FFU_ACTIONS      = ffu_actions;
     out->FFU_KEYS         = ffu_keys;
-    out->FFU_SCENARIO     = ffu_profile; // name change <-- REVISIT!!!
+    out->FFU_PROFILE      = ffu_profile;
     out->IP_OPTION[0]     = ip_option[0];
     out->IP_OPTION[1]     = ip_option[1];
     out->L2_IDOMAIN       = l2_domain;

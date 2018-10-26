@@ -360,13 +360,13 @@ static void initInputs
     mbyMapperToClassifier * const map2cla
 )
 {
-    mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_SCENARIO);
+    mbyClassifierActions * const actions_in        = &(map2cla->FFU_ACTIONS);
+    mbyClassifierKeys    * const keys              = &(map2cla->FFU_KEYS);
+    fm_byte              * const packet_profile_in = &(map2cla->FFU_PROFILE);
 
     init_actions(actions_in);
     init_keys(keys);
-    *scenario_in = 0;
+    *packet_profile_in = 0;
 }
 
 static void setInputs_ipv4_frame
@@ -418,7 +418,7 @@ static void setInputs_ipv4_frame
     map2cla->FFU_ACTIONS.act1[20].val = 1;
     map2cla->FFU_ACTIONS.act1[22].val = 1;
 
-    map2cla->FFU_SCENARIO = 16;
+    map2cla->FFU_PROFILE = 16;
 }
 
 static void simple_wcm_basic_test_setup
@@ -597,7 +597,7 @@ static int run_on_simple_wcm
     (
         cgrp_b_map,
         &(in->FFU_KEYS),
-        in->FFU_SCENARIO,
+        in->FFU_PROFILE,
         0,
         actions
     );

@@ -662,7 +662,7 @@ typedef struct mbyMapperToClassifierStruct
 {
     mbyClassifierActions    FFU_ACTIONS;      // classifier actions
     mbyClassifierKeys       FFU_KEYS;         // classifier TCAM lookup keys
-    fm_byte                 FFU_SCENARIO;     // 6-bit classifier scenario
+    fm_byte                 FFU_PROFILE;      // 6-bit packet profile ID
     fm_bool                 IP_OPTION[2];     // trap_ip_iptions count
     fm_uint16               L2_IDOMAIN;       // L2 ingress domain
     fm_uint16               L2_IVLAN1_CNT;    // ingress VLAN counter
