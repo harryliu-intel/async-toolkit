@@ -11,14 +11,22 @@ $hdl_spec = {
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
-       "src/gmm/gmm_n/top/rtl/mby_gmm_n.sv",
+       "src/gmm/gms/top/rtl/mby_gms.sv",
+       "src/gmm/gms/gpm/rtl/mby_gpm_top.sv",
+       "src/gmm/gms/gcm/rtl/mby_gcm_top.sv",
+       "src/gmm/gms/mce/rtl/mby_mce_top.sv",
+       "src/gmm/gms/gpl/rtl/mby_gpl_top.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
        "src/shared/interfaces",
        "src/shared/rtl",
-       "src/gmm/gmm_n/top/rtl",
+       "src/gmm/gms/top/rtl",
+       "src/gmm/gms/gpm/rtl",
+       "src/gmm/gms/gcm/rtl",
+       "src/gmm/gms/mce/rtl",
+       "src/gmm/gms/gpl/rtl", 
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -28,7 +36,11 @@ $hdl_spec = {
     -vlog_incdirs => [
        "src/shared/interfaces",
        "src/shared/rtl",
-       "src/gmm/gmm_n/top/rtl",
+       "src/gmm/gms/top/rtl",
+       "src/gmm/gms/gpm/rtl", 
+       "src/gmm/gms/gcm/rtl",
+       "src/gmm/gms/mce/rtl",
+       "src/gmm/gms/gpl/rtl", 
      ],
     
     # Arbitrary VLOG options
