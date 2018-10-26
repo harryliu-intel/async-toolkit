@@ -17,7 +17,7 @@ proc soc_register_subsystems {} {
     set specdir [file join ${::soc_subsys_specs_dir} $ssdir]
     print_info "Auto-register subsystem: -subsystem_id $ssid -subsystem_spec_dir $specdir"
     # do loop for each instance of subsystem, will replace inst_num variable passed into subsystem with iteration num
-    for {set i 1} {$i <= $total_num_inst} {incr i} {
+    for {set i 0} {$i < $total_num_inst} {incr i} {
        set subst_list [list [list inst_num $i]]
        collage_register_subsystem -subsystem_id ${ssid}_$i -subsystem_spec_dir $specdir -subsystem_copy $subst_list -subsystem_target_dir $::env(COLLAGE_WORK)/subsystem
     }

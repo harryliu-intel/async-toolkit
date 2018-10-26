@@ -14,14 +14,6 @@
 
 // Defines:
 
-#define MBY_TRG_IN_REGS    mby_ppe_trig_apply_map      * const trig_apply_map, \
-                           mby_ppe_trig_apply_misc_map * const trig_apply_misc_map, \
-                           mby_ppe_trig_usage_map      * const trig_usage_map
-
-#define MBY_TRG_IN_REGS_P                                      trig_apply_map, \
-                                                               trig_apply_misc_map, \
-                                                               trig_usage_map
-
 // Enums:
 
 typedef enum {
@@ -180,7 +172,7 @@ typedef struct mbyTriggerActionsStruct
 
     /** TRIGGERS rate limiter action */
     mbyTriggerActionRateLimit           rateLimitAction;
-    fm_byte                             newRateLimitNum; 
+    fm_byte                             newRateLimitNum;
 
     /** TRIGGERS metadata action */
     fm_byte                             metadataActionSlot;
@@ -198,7 +190,7 @@ typedef struct mbyTriggerActionsStruct
     /** TRIGGERS policer action */
 	mbyTriggerActionPolicer             policerAction;
 
-    /** TRIGGERS noModify action */     
+    /** TRIGGERS noModify action */
     mbyTriggerActionNoModify            noModifyAction;
     fm_byte                             metadataMaskSel;
     fm_uint64                           metadataRevMask[4];
@@ -209,50 +201,50 @@ typedef struct mbyTriggerActionsStruct
 
 mbyTriggerConditionCfg mbyTrigGetConditionCfg
 (
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 mbyTriggerConditionParam mbyTrigGetConditionParam
-(   
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+(
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 mbyTriggerConditionCGRP mbyTrigGetConditionCGRP
 (
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 mbyTriggerConditionGlort mbyTrigGetConditionGlort
 (
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 mbyTriggerConditionRx mbyTrigGetConditionRx
 (
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 mbyTriggerConditionAmask1 mbyTrigGetConditionAmask1
 (
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
 (
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 mbyTriggerActions mbyTriggerGetActions
 (
-    MBY_TRG_IN_REGS,
-    fm_byte            const trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 );
 
 #endif /* MBY_TRIGGERS_H */

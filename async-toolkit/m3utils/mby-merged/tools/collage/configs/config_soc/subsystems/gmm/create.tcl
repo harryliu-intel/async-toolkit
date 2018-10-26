@@ -7,9 +7,13 @@
 # It should NOT include any connectivity specs
 #################################################################################
 
-#set inst_name "<ip instance name>1"
-#set mod_name "<module name>"
-#collage_instantiate_component $mod_name -name $inst_name -noauto -use_hier
+set inst_name "mby_gmm_n_0"
+set mod_name "mby_gmm_n"
+collage_instantiate_component $mod_name -name $inst_name -noauto -use_hier
+set inst_name "mby_gmm_s_0"
+set mod_name "mby_gmm_s"
+collage_instantiate_component $mod_name -name $inst_name -noauto -use_hier
+
 #
 #collage_eval_in_component [collage_get_ip_hier_par -ip_name $inst_name] {
 #    set_configuration_parameter -component $inst_name <module parameter> <value> 

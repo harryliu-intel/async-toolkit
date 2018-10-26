@@ -7,8 +7,8 @@
 
 static inline void incrementTrigCounter
 (
-    MBY_TRG_IN_REGS,
-    fm_byte   trig
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_byte                  const trig
 )
 {
     mbyTriggerStats trig_stats;
@@ -20,17 +20,19 @@ static inline void incrementTrigCounter
 
 static fm_bool evaluateTrigger
 (
-    MBY_TRG_IN_REGS,
-    fm_int                  const trig,
-    fm_uint16             * const l2_evid1,
-    fm_byte               * const qos_swpri,
-    fm_uint16             * const idglort,
-    fm_byte               * const l2_edomain,
-    fm_byte               * const fclass,
-    fm_bool               * const mark_routed,
-    fm_uint32             * const dmask,
-    fm_uint32             * const rx_port,
-    fm_uint64             * const amask 
+    mby_ppe_trig_apply_map      * const trig_apply_map,
+//  mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
+//  mby_ppe_trig_usage_map      * const trig_usage_map,
+    fm_int                        const trig,
+    fm_uint16                   * const l2_evid1,
+    fm_byte                     * const qos_swpri,
+    fm_uint16                   * const idglort,
+    fm_byte                     * const l2_edomain,
+    fm_byte                     * const fclass,
+    fm_bool                     * const mark_routed,
+    fm_uint32                   * const dmask,
+    fm_uint32                   * const rx_port,
+    fm_uint64                   * const amask
 )
 {
     mbyTriggerConditionCfg          cond_cfg;
@@ -54,13 +56,14 @@ static fm_bool evaluateTrigger
     fm_uint64                       action_mask;
     fm_uint64                       action_mask2;
 
-    cond_cfg = mbyTrigGetConditionCfg(MBY_TRG_IN_REGS_P, trig);
-    cond_cgrp = mbyTrigGetConditionCGRP(MBY_TRG_IN_REGS_P, trig);
-    cond_param = mbyTrigGetConditionParam(MBY_TRG_IN_REGS_P, trig);
-    cond_glort = mbyTrigGetConditionGlort(MBY_TRG_IN_REGS_P, trig);
+    cond_cfg   = mbyTrigGetConditionCfg   (trig_apply_map, trig);
+    cond_cgrp  = mbyTrigGetConditionCGRP  (trig_apply_map, trig);
+    cond_param = mbyTrigGetConditionParam (trig_apply_map, trig);
+    cond_glort = mbyTrigGetConditionGlort (trig_apply_map, trig);
+
     //GetConditionType(model, trig, &condType); <- it's removed
     //GetConditionMetadata(model, trig, &condMetadata); <- it's removed
-      
+
     //This code doesn't match RTL. So DV should not enable WM for matchRandom
     //tests
     // <--- REVISIT!!!!
@@ -121,7 +124,7 @@ static fm_bool evaluateTrigger
     /* Match on EgressDomainValue. */
     egress_domain = ((*l2_edomain & 0x3f) << 9) | (*l2_edomain & 0x1ff);
     egress_domain_hit = ( (egress_domain &   cond_param.EGRESS_DOMAIN_MASK) ==
-    		            (  cond_param.EGRESS_DOMAIN_VALUE & cond_param.EGRESS_DOMAIN_MASK) );
+                            (  cond_param.EGRESS_DOMAIN_VALUE & cond_param.EGRESS_DOMAIN_MASK) );
     hit &= ( ( !egress_domain_hit && (   cond_cfg.MATCH_EGRESS_DOMAIN == 0 ) ) ||
              ( egress_domain_hit && (   cond_cfg.MATCH_EGRESS_DOMAIN == 1 ) ) ||
              (   cond_cfg.MATCH_EGRESS_DOMAIN == 2 ) );
@@ -145,7 +148,7 @@ static fm_bool evaluateTrigger
              (  cond_cfg.MATCH_RANDOM_IF_LESS == 0) &&
              (trig_lfsr1 > (FM_LITERAL_U64(1) <<   cond_cfg.MATCH_RANDOM_THRESHOLD) ) );
 
-	hit &= r_hit;
+        hit &= r_hit;
 
     /* Match on the packet class (Layer 2 unicast, broadcast or multicast). */
     hit &= ( ( (*fclass ==  MBY_FCLASS_UNICAST) &&
@@ -156,7 +159,8 @@ static fm_bool evaluateTrigger
                ( (  cond_param.FRAME_CLASS_MASK & 0x4) != 0 ) ) );
 
     /* Match on the ingress port. */
-    cond_rx = mbyTrigGetConditionRx(MBY_TRG_IN_REGS_P, trig);
+    cond_rx = mbyTrigGetConditionRx(trig_apply_map, trig);
+
     src_port_mask = cond_rx.SRC_PORT_MASK;
 
     hit &= ( (src_port_mask & (1 << *rx_port)) != 0 );
@@ -169,16 +173,16 @@ static fm_bool evaluateTrigger
     switch (  cond_cfg.MATCH_TX)
     {
         case MBY_TRIGGER_CONDITION_CFG_MATCH_TX_MASK_Z:
-            hit &= ( (*dmask & dest_port_mask) == 0); 
+            hit &= ( (*dmask & dest_port_mask) == 0);
             break;
         case MBY_TRIGGER_CONDITION_CFG_MATCH_TX_MASK_NZ:
-            hit &= ( (*dmask & dest_port_mask) != 0); 
+            hit &= ( (*dmask & dest_port_mask) != 0);
             break;
         case MBY_TRIGGER_CONDITION_CFG_MATCH_TX_EXACT_EQ:
-            hit &= (  *dmask == dest_port_mask ); 
+            hit &= (  *dmask == dest_port_mask );
             break;
         case MBY_TRIGGER_CONDITION_CFG_MATCH_TX_EXACT_NE:
-            hit &= (  *dmask != dest_port_mask ); 
+            hit &= (  *dmask != dest_port_mask );
             break;
         default:
             hit = 0;
@@ -192,15 +196,15 @@ static fm_bool evaluateTrigger
                ( (  cond_param.ROUTED_MASK & 0x2) != 0 ) ) );
 
     /* Match on one or more bits of the frame handler action mask. */
-    cond_amask1 = mbyTrigGetConditionAmask1(MBY_TRG_IN_REGS_P, trig);
+    cond_amask1 = mbyTrigGetConditionAmask1(trig_apply_map, trig);
     action_mask = cond_amask1.HANDLER_ACTION_MASK;
 
-    cond_amask2 = mbyTrigGetConditionAmask2(MBY_TRG_IN_REGS_P, trig);
+    cond_amask2 = mbyTrigGetConditionAmask2(trig_apply_map, trig);
     action_mask2 = cond_amask2.HANDLER_ACTION_MASK;
-    FM_SET_UNNAMED_FIELD64(action_mask, 
-                         32, 
+    FM_SET_UNNAMED_FIELD64(action_mask,
+                         32,
                          13,
-                         action_mask2); 
+                         action_mask2);
 
     hit &= ( (*amask & action_mask) != 0 );
 
@@ -241,7 +245,7 @@ static void applyPrecedenceResolution
         lo->mirroringAction0 = hi->mirroringAction0;
         lo->mirrorProfileIndex0 = hi->mirrorProfileIndex0;
     }
-    
+
     if ( hi->mirroringAction1 > lo->mirroringAction1 )
     {
         lo->mirroringAction1 = hi->mirroringAction1;
@@ -264,7 +268,7 @@ static void applyPrecedenceResolution
     {
         lo->learningAction = hi->learningAction;
     }
-    
+
     if ( hi->rateLimitAction > lo->rateLimitAction )
     {
         lo->rateLimitAction = hi->rateLimitAction;
@@ -294,7 +298,7 @@ static void applyPrecedenceResolution
         lo->metadataValue[hi->metadataActionSlot] = hi->metadataValue[hi->metadataActionSlot];
         lo->metadataSource[hi->metadataActionSlot] = hi->metadataSource[hi->metadataActionSlot];
         lo->metadataOffset[hi->metadataActionSlot] = hi->metadataOffset[hi->metadataActionSlot];
-    } 
+    }
 
     if ( hi->noModifyAction > lo->noModifyAction)
     {
@@ -305,12 +309,14 @@ static void applyPrecedenceResolution
 
 static void resolveTriggers
 (
-    MBY_TRG_IN_REGS,
-    fm_uint64              const hit_mask_hi,
-	fm_uint64              const hit_mask_lo,
-    fm_uint64            * const trig_hit_mask_resolved_lo,
-    fm_int64             * const trig_hit_mask_resolved_hi,
-    mbyTriggerActions    * const lo
+    mby_ppe_trig_apply_map      * const trig_apply_map,
+//  mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
+//  mby_ppe_trig_usage_map      * const trig_usage_map,
+    fm_uint64                     const hit_mask_hi,
+    fm_uint64                     const hit_mask_lo,
+    fm_uint64                   * const trig_hit_mask_resolved_lo,
+    fm_int64                    * const trig_hit_mask_resolved_hi,
+    mbyTriggerActions           * const lo
 )
 {
     mbyTriggerActions           hi;
@@ -323,27 +329,27 @@ static void resolveTriggers
 
     for (fm_int i = 0; i < MBY_TRIGGERS_COUNT; i++)
     {
-        mbyTriggerConditionCfg cond_cfg = mbyTrigGetConditionCfg(MBY_TRG_IN_REGS_P, i);
+        mbyTriggerConditionCfg cond_cfg = mbyTrigGetConditionCfg(trig_apply_map, i);
         prec_winner &=   cond_cfg.MATCH_BY_PRECEDENCE;
 
         if (i < 64)
         {
             if ( ( (hit_mask_lo & (FM_LITERAL_U64(1) << i)) != 0 ) && !prec_winner )
             {
-            	prec_winner = TRUE;
-                hi = mbyTriggerGetActions(MBY_TRG_IN_REGS_P, i);
+                prec_winner = TRUE;
+                hi = mbyTriggerGetActions(trig_apply_map, i);
                 applyPrecedenceResolution(lo, i, &hi);
             }
             else if ( ( (hit_mask_lo & (FM_LITERAL_U64(1) << i)) != 0 ) && prec_winner )
                 *trig_hit_mask_resolved_lo &= ~(FM_LITERAL_U64(1) << i);
-            
+
         }
         else
         {
             if ( ( (hit_mask_hi & (FM_LITERAL_U64(1) << (i - 64))) != 0 ) && !prec_winner )
             {
-            	prec_winner = TRUE;
-                hi = mbyTriggerGetActions(MBY_TRG_IN_REGS_P, i);
+                prec_winner = TRUE;
+                hi = mbyTriggerGetActions(trig_apply_map, i);
                 applyPrecedenceResolution(lo, i, &hi);
             }
             else if ( ( (hit_mask_hi & (FM_LITERAL_U64(1) << (i - 64))) != 0 ) && prec_winner )
@@ -357,18 +363,18 @@ static void applyTriggers
 (
     mbyTriggerActions * const actions,
     mbyTriggerResults * const results,
-    fm_uint32         * const action,     
-    fm_uint32         * const dmask,     
+    fm_uint32         * const action,
+    fm_uint32         * const dmask,
     fm_uint16         * const idglort,
     fm_bool           * const qcn_mirror0_profile_v,
     fm_bool           * const qcn_mirror1_profile_v,
     fm_uint32         * const mirror0_profile_idx,
     fm_byte           * const mirror0_profile_v,
     fm_uint32         * const mirror1_profile_idx,
-    fm_byte           * const mirror1_profile_v,    
+    fm_byte           * const mirror1_profile_v,
     fm_byte           * const qos_swpri,
     fm_uint16         * const l2_evid1,
-    fm_bool           * const learning_enabled               
+    fm_bool           * const learning_enabled
 )
 {
     //hlp_modelState           *state = &model->packetState;
@@ -380,28 +386,28 @@ static void applyTriggers
     fm_uint32                *actionMetadataMask;
 
     results->filterDestMask = TRUE;
-    
+
     /* store the action in the triggerResults channel */
-    results->forwardingAction = actions->forwardingAction; 
+    results->forwardingAction = actions->forwardingAction;
 
     switch (actions->forwardingAction)
     {
         case MBY_TRIG_ACTION_FORWARDING_FORWARD:
         // <--- REVISIT!!!!
             /*if ( state->PRE_RESOLVE_DMASK != 0 )
-            {    
+            {
                 dglort = (state->PRE_RESOLVE_DGLORT & ~actions->newDestGlortMask) |
                          (actions->newDestGlort & actions->newDestGlortMask);
                 results->destGlort = dglort;
                 results->destMask = state->PRE_RESOLVE_DMASK;
                 results->action = *action;
-            } 
+            }
             else
             {*/
                 results->destGlort = *idglort;
                 results->destMask = *dmask;
                 results->action = *action;
-            //}    
+            //}
             break;
 
         case MBY_TRIG_ACTION_FORWARDING_REDIRECT:
@@ -414,15 +420,15 @@ static void applyTriggers
             if ( results->destMask == 0)
                 results->action = MBY_ACTION_DROP_TRIG;
 
-            else 
+            else
                 results->action = MBY_ACTION_REDIRECT_TRIG;
-            
+
             break;
 
         case MBY_TRIG_ACTION_FORWARDING_DROP:
             results->destGlort = *idglort;
             results->destMask = *dmask & ~actions->dropMask;
-            
+
             if ( ( *dmask != 0 ) && ( results->destMask == 0 ) )
                 results->action = MBY_ACTION_DROP_TRIG;
             else
@@ -435,7 +441,7 @@ static void applyTriggers
             results->action = *action;
             break;
     }
-    
+
     /* store trapAction in the triggerResults channel */
     results->trapAction = actions->trapAction;
     results->logAction = 0;
@@ -485,7 +491,7 @@ static void applyTriggers
     }
     else if (actions->mirroringAction0 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/
           results->mirror0ProfileV   = 0;
-    
+
     else/* no change in mirroring disposition; leave mirrors as they are */
     {
         results->mirror0ProfileV   = *mirror0_profile_v;
@@ -498,7 +504,7 @@ static void applyTriggers
         results->mirror1ProfileIdx = actions->mirrorProfileIndex1;
         results->qcnValid1 = 0;
     }
-    else if (actions->mirroringAction1 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/     
+    else if (actions->mirroringAction1 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/
         results->mirror1ProfileV   = 0;
     else/* no change in mirroring disposition; leave mirrors as they are */
     {
@@ -528,7 +534,7 @@ static void applyTriggers
 
     /* store the action in the triggerResults channel */
     results->learningAction = actions->learningAction;
-    
+
     if(actions->learningAction == MBY_TRIG_ACTION_LEARNING_DONT_LEARN)
         *learning_enabled = 0;
     else if(actions->learningAction == MBY_TRIG_ACTION_LEARNING_FORCE_LEARN)
@@ -536,7 +542,7 @@ static void applyTriggers
 
     /* store the action in the triggerResults channel */
     results->rateLimitAction = actions->rateLimitAction;
-    
+
     if( actions->rateLimitAction == MBY_TRIG_ACTION_RATE_LIMIT_APPLY)
         results->rateLimitNum = actions->newRateLimitNum;
 
@@ -558,11 +564,11 @@ static void applyTriggers
 
 static void triggersStatsUpdate
 (
-    MBY_TRG_IN_REGS,
-    fm_uint64        * const trig_hit_mask_resolved_lo,
-    fm_int64         * const trig_hit_mask_resolved_hi,
-    fm_uint64          const hitMaskHi,
-	fm_uint64          const hitMaskLo
+    mby_ppe_trig_apply_map * const trig_apply_map,
+    fm_uint64              * const trig_hit_mask_resolved_lo,
+    fm_int64               * const trig_hit_mask_resolved_hi,
+    fm_uint64                const hitMaskHi,
+    fm_uint64                const hitMaskLo
 )
 {
     for (fm_int i = 0; i < MBY_TRIGGERS_COUNT; i++)
@@ -571,20 +577,22 @@ static void triggersStatsUpdate
         {
             if ( (hitMaskLo & (FM_LITERAL_U64(1) << i)) != 0 )
                 if ( (*trig_hit_mask_resolved_lo & (FM_LITERAL_U64(1) << i)) )
-                    incrementTrigCounter(MBY_TRG_IN_REGS_P, i); 
+                    incrementTrigCounter(trig_apply_map, i);
         } else
             if ( (hitMaskHi & (FM_LITERAL_U64(1) << (i - 64))) != 0 )
                 if ( (*trig_hit_mask_resolved_hi & (FM_LITERAL_U64(1) << (i - 64))) )
-                    incrementTrigCounter(MBY_TRG_IN_REGS_P, i);
+                    incrementTrigCounter(trig_apply_map, i);
     }
 }
 
 void Triggers
 (
-    //mby_ppe_fwd_misc_map        * const fwd_misc_map,
-    MBY_TRG_IN_REGS,
-    const mbyMaskGenToTriggers  * const in,
-          mbyTriggersToCongMgmt * const out
+    mby_ppe_trig_apply_map      * const trig_apply_map,
+    mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
+    mby_ppe_trig_usage_map      * const trig_usage_map,
+//  mby_ppe_fwd_misc_map        * const fwd_misc_map,
+    mbyMaskGenToTriggers  const * const in,
+    mbyTriggersToCongMgmt       * const out
 )
 {
     // Read inputs from the MaskGen:
@@ -597,14 +605,14 @@ void Triggers
     fm_uint32 dmask       = in->DMASK;
     fm_uint32 rx_port     = in->RX_PORT;
     fm_uint32 action      = in->ACTION;
-    fm_uint64 amask       = in->AMASK; 
+    fm_uint64 amask       = in->AMASK;
     fm_bool   qcn_mirror0_profile_v = in->QCN_MIRROR0_PROFILE_V;
     fm_bool   qcn_mirror1_profile_v = in->QCN_MIRROR1_PROFILE_V;
     fm_uint32 mirror0_profile_idx = in->MIRROR0_PROFILE_IDX;
     fm_byte   mirror0_profile_v = in->MIRROR0_PROFILE_V;
     fm_uint32 mirror1_profile_idx = in->MIRROR1_PROFILE_IDX;
     fm_byte   mirror1_profile_v = in->MIRROR1_PROFILE_V;
-    fm_bool   learning_enabled = in->LEARNING_ENABLED;  
+    fm_bool   learning_enabled = in->LEARNING_ENABLED;
 
     mbyTriggerActions           actions;
     fm_bool                     hit;
@@ -620,7 +628,7 @@ void Triggers
 
     /* EvaluateTrigger first */
     /*for (fm_int i = 0; i < MBY_TRIGGERS_COUNT; i++)
-    {   
+    {
         hit = evaluateTrigger(
                 MBY_TRG_IN_REGS_P,
                 i,
@@ -639,23 +647,28 @@ void Triggers
         {
             if (hit)
                 hit_mask_lo |= FM_LITERAL_U64(1) << i;
-        } 
+        }
         else
             if (hit)
                 hit_mask_hi |= FM_LITERAL_U64(1) << (i - 64);
     }
 
-    resolveTriggers(
-        MBY_TRG_IN_REGS_P,
+    resolveTriggers
+    (
+        trig_apply_map,
+     // trig_apply_misc_map,
+     // trig_usage_map,
         hit_mask_hi,
         hit_mask_lo,
         &trig_hit_mask_resolved_lo,
         &trig_hit_mask_resolved_hi,
-        &actions);
+        &actions
+    );
 
-    applyTriggers(
-        &actions, 
-        &results, 
+    applyTriggers
+    (
+        &actions,
+        &results,
         &action,
         &dmask,
         &idglort,
@@ -667,14 +680,19 @@ void Triggers
         &mirror1_profile_v,
         &qos_swpri,
         &l2_evid1,
-        &learning_enabled);
+        &learning_enabled
+    );
 
-    triggersStatsUpdate(
-        MBY_TRG_IN_REGS_P,
+    triggersStatsUpdate
+    (
+        trig_apply_map,
+     // trig_apply_misc_map,
+     // trig_usage_map,
         &trig_hit_mask_resolved_lo,
         &trig_hit_mask_resolved_hi,
         hit_mask_hi,
-        hit_mask_lo);
+        hit_mask_lo
+    );
 
     fm_uint64 trig_ip_lo;
     fm_uint64 trig_ip_hi;
@@ -682,19 +700,19 @@ void Triggers
     trig_ip_lo = trig_apply_misc_map->TRIGGER_IP[0].PENDING;
     trig_ip_lo |= ((FM_LITERAL_U64(1)<<48)-1) & trig_hit_mask_resolved_lo;
     trig_apply_misc_map->TRIGGER_IP[0].PENDING = trig_ip_lo;
-    
+
     trig_ip_hi = trig_apply_misc_map->TRIGGER_IP[1].PENDING;
-	new_trig_ip_hi = 0;*/
+    new_trig_ip_hi = 0;*/
 
     /*take upper 16 bits of resolved_hit_lo*/
-    /*FM_SET_UNNAMED_FIELD64(new_trig_ip_hi, 
-                            0, 
-                            16, 
+    /*FM_SET_UNNAMED_FIELD64(new_trig_ip_hi,
+                            0,
+                            16,
                             trig_hit_mask_resolved_lo >> 48);*/
     /*take lower 36 bits of resolved_hit_hi*/
-    /*FM_SET_UNNAMED_FIELD64(new_trig_ip_hi, 
-                            (64-48), 
-                            36, 
+    /*FM_SET_UNNAMED_FIELD64(new_trig_ip_hi,
+                            (64-48),
+                            36,
                             ((FM_LITERAL_U64(1)<<36)-1) & trig_hit_mask_resolved_hi);
     trig_ip_hi |= new_trig_ip_hi;
     trig_apply_misc_map->TRIGGER_IP[1].PENDING = trig_ip_hi;*/
@@ -709,7 +727,7 @@ void Triggers
     fm_bool fwd_ip_trig;
     fm_bool fwd_ip_entry_count;
     fwd_misc_map->FWD_IP.TRIGGER = (((trig_ip_hi & ~trig_im_hi) != 0) |
-						  ((trig_ip_lo & ~trig_im_lo) != 0));
+                                                  ((trig_ip_lo & ~trig_im_lo) != 0));
 
     fwd_ip_trig = fwd_misc_map->FWD_IP.TRIGGER;
     fwd_ip_entry_count = fwd_misc_map->FWD_IP.ENTRY_COUNT;
@@ -720,14 +738,14 @@ void Triggers
     fwd_im_entry_count = fwd_misc_map->FWD_IM.ENTRY_COUNT;
 
     fm_byte global_int_fwd = 0;*/
-    
 
 
-     // <--- REVISIT!!!!   
+
+     // <--- REVISIT!!!!
     /*if ((fwd_ip_entry_count & ~fwd_im_entry_count) || (fwd_ip_trig & ~fwd_im_trig))
         global_int_fwd = 1;
-	if ((fwd_im_entry_count & ~fwd_im_entry_count) == 0 && (fwd_ip_trig & ~fwd_im_trig) == 0)
-		global_int_fwd = 0;
+        if ((fwd_im_entry_count & ~fwd_im_entry_count) == 0 && (fwd_ip_trig & ~fwd_im_trig) == 0)
+                global_int_fwd = 0;
     */
     // <--- REVISIT!!!!
     //regPtr = FM_MODEL_GET_REG_PTR(model, HLP_GLOBAL_INTERRUPT(0));

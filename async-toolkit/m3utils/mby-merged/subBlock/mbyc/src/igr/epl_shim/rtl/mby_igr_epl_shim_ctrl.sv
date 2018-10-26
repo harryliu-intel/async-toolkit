@@ -3042,153 +3042,406 @@ module mby_igr_epl_shim_ctrl
       else begin  //no EOP so the unaligned flit is full sop should only then be in flits 0, 8, 16
         unique case(current_flit) inside  //FIXME shoud current_flit be a 1-hot vector[23:0]??
           5'd0: begin
-            seg0_we[7:0] = 8'b1111_1111;
-            seg_e        = 3'b001;
-            nxt_flit     = 5'd08;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+              4'd2: begin fsel0 = 32'h0000_0010; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd02; end
+              4'd3: begin fsel0 = 32'h0000_0210; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
+              4'd4: begin fsel0 = 32'h0000_3210; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
+              4'd5: begin fsel0 = 32'h0004_3210; seg0_we[7:0] = 8'b0001_1111; nxt_flit = 5'd05; end
+              4'd6: begin fsel0 = 32'h0054_3210; seg0_we[7:0] = 8'b0011_1111; nxt_flit = 5'd06; end
+              4'd7: begin fsel0 = 32'h0654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd07; end
+              4'd8: begin fsel0 = 32'h7654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd08; seg_e = 3'b001; end
+              default: nxt_flit = 5'd00;
+            endcase //s2q_cnt_ones
           end //d0
           5'd1: begin
-            seg0_we[7:0] = 8'b1111_1110;
-            seg1_we[7:0] = 8'b0000_0001;
-            seg_e        = 3'b001;
-            nxt_flit     = 5'd09;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_0010; nxt_flit = 5'd02; end
+              4'd2: begin fsel0 = 32'h0000_0100; seg0_we[7:0] = 8'b0000_0110; nxt_flit = 5'd03; end
+              4'd3: begin fsel0 = 32'h0000_2100; seg0_we[7:0] = 8'b0000_1110; nxt_flit = 5'd04; end
+              4'd4: begin fsel0 = 32'h0003_2100; seg0_we[7:0] = 8'b0001_1110; nxt_flit = 5'd05; end
+              4'd5: begin fsel0 = 32'h0043_2100; seg0_we[7:0] = 8'b0011_1110; nxt_flit = 5'd06; end
+              4'd6: begin fsel0 = 32'h0543_2100; seg0_we[7:0] = 8'b0111_1110; nxt_flit = 5'd07; end
+              4'd7: begin fsel0 = 32'h6543_2100; seg0_we[7:0] = 8'b1111_1110; nxt_flit = 5'd08; seg_e = 3'b001; end
+              4'd8: begin fsel0 = 32'h6543_2100; seg0_we[7:0] = 8'b1111_1110; nxt_flit = 5'd09; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0007; seg1_we[7:0] = 8'b0000_0001; end
+              default: nxt_flit = 5'd01;
+            endcase //s2q_cnt_ones
           end //d0
           5'd2: begin
-            seg0_we[7:0] = 8'b1111_1100;
-            seg1_we[7:0] = 8'b0000_0011;
-            seg_e        = 3'b001;
-            nxt_flit     = 5'd10;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_0100; nxt_flit = 5'd03; end
+              4'd2: begin fsel0 = 32'h0000_1000; seg0_we[7:0] = 8'b0000_1100; nxt_flit = 5'd04; end
+              4'd3: begin fsel0 = 32'h0002_1000; seg0_we[7:0] = 8'b0001_1100; nxt_flit = 5'd05; end
+              4'd4: begin fsel0 = 32'h0032_1000; seg0_we[7:0] = 8'b0011_1100; nxt_flit = 5'd06; end
+              4'd5: begin fsel0 = 32'h0432_1000; seg0_we[7:0] = 8'b0111_1100; nxt_flit = 5'd07; end
+              4'd6: begin fsel0 = 32'h5432_1000; seg0_we[7:0] = 8'b1111_1100; nxt_flit = 5'd08; seg_e = 3'b001; end
+              4'd7: begin fsel0 = 32'h5432_1000; seg0_we[7:0] = 8'b1111_1100; nxt_flit = 5'd09; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0006; seg1_we[7:0] = 8'b0000_0001; end
+              4'd8: begin fsel0 = 32'h5432_1000; seg0_we[7:0] = 8'b1111_1100; nxt_flit = 5'd10; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0076; seg1_we[7:0] = 8'b0000_0011; end
+              default: nxt_flit = 5'd02;
+            endcase //s2q_cnt_ones
           end //d0
           5'd3: begin
-            seg0_we[7:0] = 8'b1111_1000;
-            seg1_we[7:0] = 8'b0000_0111;
-            seg_e        = 3'b001;
-            nxt_flit     = 5'd11;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_1000; nxt_flit = 5'd04; end
+              4'd2: begin fsel0 = 32'h0001_0000; seg0_we[7:0] = 8'b0001_1000; nxt_flit = 5'd05; end
+              4'd3: begin fsel0 = 32'h0021_0000; seg0_we[7:0] = 8'b0011_1000; nxt_flit = 5'd06; end
+              4'd4: begin fsel0 = 32'h0321_0000; seg0_we[7:0] = 8'b0111_1000; nxt_flit = 5'd07; end
+              4'd5: begin fsel0 = 32'h4321_0000; seg0_we[7:0] = 8'b1111_1000; nxt_flit = 5'd08; seg_e = 3'b001; end
+              4'd6: begin fsel0 = 32'h4321_0000; seg0_we[7:0] = 8'b1111_1000; nxt_flit = 5'd09; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0005; seg1_we[7:0] = 8'b0000_0001; end
+              4'd7: begin fsel0 = 32'h4321_0000; seg0_we[7:0] = 8'b1111_1000; nxt_flit = 5'd10; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0065; seg1_we[7:0] = 8'b0000_0011; end
+              4'd8: begin fsel0 = 32'h4321_0000; seg0_we[7:0] = 8'b1111_1000; nxt_flit = 5'd11; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0765; seg1_we[7:0] = 8'b0000_0111; end
+              default: nxt_flit = 5'd03;
+            endcase //s2q_cnt_ones
           end //d0
           5'd4: begin
-            seg0_we[7:0] = 8'b1111_0000;
-            seg1_we[7:0] = 8'b0000_1111;
-            seg_e        = 3'b001;
-            nxt_flit     = 5'd12;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0001_0000; nxt_flit = 5'd05; end
+              4'd2: begin fsel0 = 32'h0010_0000; seg0_we[7:0] = 8'b0011_0000; nxt_flit = 5'd06; end
+              4'd3: begin fsel0 = 32'h0210_0000; seg0_we[7:0] = 8'b0111_0000; nxt_flit = 5'd07; end
+              4'd4: begin fsel0 = 32'h3210_0000; seg0_we[7:0] = 8'b1111_0000; nxt_flit = 5'd08; seg_e = 3'b001; end
+              4'd5: begin fsel0 = 32'h3210_0000; seg0_we[7:0] = 8'b1111_0000; nxt_flit = 5'd09; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0004; seg1_we[7:0] = 8'b0000_0001;end
+              4'd6: begin fsel0 = 32'h3210_0000; seg0_we[7:0] = 8'b1111_0000; nxt_flit = 5'd10; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0054; seg1_we[7:0] = 8'b0000_0011; end
+              4'd7: begin fsel0 = 32'h3210_0000; seg0_we[7:0] = 8'b1111_0000; nxt_flit = 5'd11; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0654; seg1_we[7:0] = 8'b0000_0111; end
+              4'd8: begin fsel0 = 32'h3210_0000; seg0_we[7:0] = 8'b1111_0000; nxt_flit = 5'd12; seg_e = 3'b001;
+                          fsel1 = 32'h0000_7654; seg1_we[7:0] = 8'b0000_1111; end
+              default: nxt_flit = 5'd04;
+            endcase //s2q_cnt_ones
           end //d0
           5'd5: begin
-            seg0_we[7:0] = 8'b1110_0000;
-            seg1_we[7:0] = 8'b0001_1111;
-            seg_e        = 3'b001;
-            nxt_flit     = 5'd13;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0010_0000; nxt_flit = 5'd06; end
+              4'd2: begin fsel0 = 32'h0100_0000; seg0_we[7:0] = 8'b0110_0000; nxt_flit = 5'd07; end
+              4'd3: begin fsel0 = 32'h2100_0000; seg0_we[7:0] = 8'b1110_0000; nxt_flit = 5'd08; seg_e = 3'b001; end
+              4'd4: begin fsel0 = 32'h2100_0000; seg0_we[7:0] = 8'b1110_0000; nxt_flit = 5'd09; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0003; seg1_we[7:0] = 8'b0000_0001; end
+              4'd5: begin fsel0 = 32'h2100_0000; seg0_we[7:0] = 8'b1110_0000; nxt_flit = 5'd10; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0043; seg1_we[7:0] = 8'b0000_0011; end
+              4'd6: begin fsel0 = 32'h2100_0000; seg0_we[7:0] = 8'b1110_0000; nxt_flit = 5'd11; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0543; seg1_we[7:0] = 8'b0000_0111; end
+              4'd7: begin fsel0 = 32'h2100_0000; seg0_we[7:0] = 8'b1110_0000; nxt_flit = 5'd12; seg_e = 3'b001;
+                          fsel1 = 32'h0000_6543; seg1_we[7:0] = 8'b0000_1111; end
+              4'd8: begin fsel0 = 32'h2100_0000; seg0_we[7:0] = 8'b1110_0000; nxt_flit = 5'd13; seg_e = 3'b001;
+                          fsel1 = 32'h0007_6543; seg1_we[7:0] = 8'b0001_1111; end
+              default: nxt_flit = 5'd05;
+            endcase //s2q_cnt_ones
           end //d0 
           5'd6: begin
-            seg0_we[7:0] = 8'b1100_0000;
-            seg1_we[7:0] = 8'b0011_1111;
-            seg_e        = 3'b001;
-            nxt_flit    = 5'd14;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0100_0000; nxt_flit = 5'd07; end
+              4'd2: begin fsel0 = 32'h1000_0000; seg0_we[7:0] = 8'b1100_0000; nxt_flit = 5'd08; seg_e = 3'b001; end
+              4'd3: begin fsel0 = 32'h1000_0000; seg0_we[7:0] = 8'b1100_0000; nxt_flit = 5'd09; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0002; seg1_we[7:0] = 8'b0000_0001; end
+              4'd4: begin fsel0 = 32'h1000_0000; seg0_we[7:0] = 8'b1100_0000; nxt_flit = 5'd10; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0032; seg1_we[7:0] = 8'b0000_0011; end
+              4'd5: begin fsel0 = 32'h1000_0000; seg0_we[7:0] = 8'b1100_0000; nxt_flit = 5'd11; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0432; seg1_we[7:0] = 8'b0000_0111; end
+              4'd6: begin fsel0 = 32'h1000_0000; seg0_we[7:0] = 8'b1100_0000; nxt_flit = 5'd12; seg_e = 3'b001;
+                          fsel1 = 32'h0000_5432; seg1_we[7:0] = 8'b0000_1111; end
+              4'd7: begin fsel0 = 32'h1000_0000; seg0_we[7:0] = 8'b1100_0000; nxt_flit = 5'd13; seg_e = 3'b001;
+                          fsel1 = 32'h0006_5432; seg1_we[7:0] = 8'b0001_1111; end
+              4'd8: begin fsel0 = 32'h1000_0000; seg0_we[7:0] = 8'b1100_0000; nxt_flit = 5'd14; seg_e = 3'b001;
+                          fsel1 = 32'h0076_5432; seg1_we[7:0] = 8'b0011_1111; end
+              default: nxt_flit = 5'd06;
+            endcase //s2q_cnt_ones
           end //d0
           5'd7: begin
-            seg0_we[7:0] = 8'b1000_0000;
-            seg1_we[7:0] = 8'b0111_1111;
-            seg_e        = 3'b001;
-            nxt_flit    = 5'd15;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd08; seg_e = 3'b001; end
+              4'd2: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd09; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0001; seg1_we[7:0] = 8'b0000_0001; end
+              4'd3: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd10; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0021; seg1_we[7:0] = 8'b0000_0011; end
+              4'd4: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd11; seg_e = 3'b001;
+                          fsel1 = 32'h0000_0321; seg1_we[7:0] = 8'b0000_0111; end
+              4'd5: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd12; seg_e = 3'b001;
+                          fsel1 = 32'h0000_4321; seg1_we[7:0] = 8'b0000_1111; end
+              4'd6: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd13; seg_e = 3'b001;
+                          fsel1 = 32'h0005_4321; seg1_we[7:0] = 8'b0001_1111; end
+              4'd7: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd14; seg_e = 3'b001;
+                          fsel1 = 32'h0065_4321; seg1_we[7:0] = 8'b0011_1111; end
+              4'd8: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b1000_0000; nxt_flit = 5'd15; seg_e = 3'b001;
+                          fsel1 = 32'h0765_4321; seg1_we[7:0] = 8'b0111_1111; end
+              default: nxt_flit = 5'd07;
+            endcase //s2q_cnt_ones
           end //d0
           5'd8: begin
-            seg1_we[7:0] = 8'b1111_1111;
-            seg_e        = 3'b010;
-            nxt_flit     = 5'd16;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+              4'd2: begin fsel1 = 32'h0000_0010; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd10; end
+              4'd3: begin fsel1 = 32'h0000_0210; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
+              4'd4: begin fsel1 = 32'h0000_3210; seg1_we[7:0] = 8'b0000_1111; nxt_flit = 5'd12; end
+              4'd5: begin fsel1 = 32'h0004_3210; seg1_we[7:0] = 8'b0001_1111; nxt_flit = 5'd13; end
+              4'd6: begin fsel1 = 32'h0054_3210; seg1_we[7:0] = 8'b0011_1111; nxt_flit = 5'd14; end
+              4'd7: begin fsel1 = 32'h0654_3210; seg1_we[7:0] = 8'b1111_1111; nxt_flit = 5'd15; end
+              4'd8: begin fsel1 = 32'h7654_3210; seg1_we[7:0] = 8'b1111_1111; nxt_flit = 5'd16; seg_e = 3'b010; end
+              default: nxt_flit = 5'd08;
+            endcase //s2q_cnt_ones
           end //d0
           5'd9: begin
-            seg1_we[7:0] = 8'b1111_1110;
-            seg2_we[7:0] = 8'b0000_0001;
-            seg_e        = 3'b010;
-            nxt_flit    = 5'd17;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0000_0010; nxt_flit = 5'd10; end
+              4'd2: begin fsel1 = 32'h0000_0100; seg1_we[7:0] = 8'b0000_0110; nxt_flit = 5'd11; end
+              4'd3: begin fsel1 = 32'h0000_2100; seg1_we[7:0] = 8'b0000_1110; nxt_flit = 5'd12; end
+              4'd4: begin fsel1 = 32'h0003_2100; seg1_we[7:0] = 8'b0001_1110; nxt_flit = 5'd13; end
+              4'd5: begin fsel1 = 32'h0043_2100; seg1_we[7:0] = 8'b0011_1110; nxt_flit = 5'd14; end
+              4'd6: begin fsel1 = 32'h0543_2100; seg1_we[7:0] = 8'b0111_1110; nxt_flit = 5'd15; end
+              4'd7: begin fsel1 = 32'h6543_2100; seg1_we[7:0] = 8'b1111_1110; nxt_flit = 5'd16; seg_e = 3'b010; end
+              4'd8: begin fsel1 = 32'h6543_2100; seg1_we[7:0] = 8'b1111_1110; nxt_flit = 5'd17; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0007; seg2_we[7:0] = 8'b0000_0001; end
+              default: nxt_flit = 5'd09;
+            endcase //s2q_cnt_ones
           end //d0
           5'd10: begin
-            seg1_we[7:0] = 8'b1111_1100;
-            seg2_we[7:0] = 8'b0000_0011;
-            seg_e        = 3'b010;
-            nxt_flit     = 5'd18;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0000_0100; nxt_flit = 5'd11; end
+              4'd2: begin fsel1 = 32'h0000_1000; seg1_we[7:0] = 8'b0000_1100; nxt_flit = 5'd12; end
+              4'd3: begin fsel1 = 32'h0002_1000; seg1_we[7:0] = 8'b0001_1100; nxt_flit = 5'd13; end
+              4'd4: begin fsel1 = 32'h0032_1000; seg1_we[7:0] = 8'b0011_1100; nxt_flit = 5'd14; end
+              4'd5: begin fsel1 = 32'h0432_1000; seg1_we[7:0] = 8'b0111_1100; nxt_flit = 5'd15; end
+              4'd6: begin fsel1 = 32'h5432_1000; seg1_we[7:0] = 8'b1111_1100; nxt_flit = 5'd16; seg_e = 3'b010; end
+              4'd7: begin fsel1 = 32'h5432_1000; seg1_we[7:0] = 8'b1111_1100; nxt_flit = 5'd17; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0006; seg2_we[7:0] = 8'b0000_0001; end
+              4'd8: begin fsel1 = 32'h5432_1000; seg1_we[7:0] = 8'b1111_1100; nxt_flit = 5'd18; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0076; seg2_we[7:0] = 8'b0000_0011; end
+              default: nxt_flit = 5'd10;
+            endcase //s2q_cnt_ones
           end //d0
           5'd11: begin
-            seg1_we[7:0] = 8'b1111_1000;
-            seg2_we[7:0] = 8'b0000_0111;
-            seg_e        = 3'b010;
-            nxt_flit     = 5'd19;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0000_1000; nxt_flit = 5'd12; end
+              4'd2: begin fsel1 = 32'h0001_0000; seg1_we[7:0] = 8'b0001_1000; nxt_flit = 5'd13; end
+              4'd3: begin fsel1 = 32'h0021_0000; seg1_we[7:0] = 8'b0011_1000; nxt_flit = 5'd14; end
+              4'd4: begin fsel1 = 32'h0321_0000; seg1_we[7:0] = 8'b0111_1000; nxt_flit = 5'd15; end
+              4'd5: begin fsel1 = 32'h4321_0000; seg1_we[7:0] = 8'b1111_1000; nxt_flit = 5'd16; seg_e = 3'b010; end
+              4'd6: begin fsel1 = 32'h4321_0000; seg1_we[7:0] = 8'b1111_1000; nxt_flit = 5'd17; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0005; seg2_we[7:0] = 8'b0000_0001; end
+              4'd7: begin fsel1 = 32'h4321_0000; seg1_we[7:0] = 8'b1111_1000; nxt_flit = 5'd18; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0065; seg2_we[7:0] = 8'b0000_0011; end
+              4'd8: begin fsel1 = 32'h4321_0000; seg1_we[7:0] = 8'b1111_1000; nxt_flit = 5'd19; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0765; seg2_we[7:0] = 8'b0000_0111; end
+              default: nxt_flit = 5'd11;
+            endcase //s2q_cnt_ones
           end //d0
           5'd12: begin
-            seg1_we[7:0] = 8'b1111_0000;
-            seg2_we[7:0] = 8'b0000_1111;
-            seg_e        = 3'b010;
-            nxt_flit     = 5'd20;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0001_0000; nxt_flit = 5'd13; end
+              4'd2: begin fsel1 = 32'h0010_0000; seg1_we[7:0] = 8'b0011_0000; nxt_flit = 5'd14; end
+              4'd3: begin fsel1 = 32'h0210_0000; seg1_we[7:0] = 8'b0111_0000; nxt_flit = 5'd15; end
+              4'd4: begin fsel1 = 32'h3210_0000; seg1_we[7:0] = 8'b1111_0000; nxt_flit = 5'd16; seg_e = 3'b010; end
+              4'd5: begin fsel1 = 32'h3210_0000; seg1_we[7:0] = 8'b1111_0000; nxt_flit = 5'd17; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0004; seg2_we[7:0] = 8'b0000_0001; end
+              4'd6: begin fsel1 = 32'h3210_0000; seg1_we[7:0] = 8'b1111_0000; nxt_flit = 5'd18; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0054; seg2_we[7:0] = 8'b0000_0011; end
+              4'd7: begin fsel1 = 32'h3210_0000; seg1_we[7:0] = 8'b1111_0000; nxt_flit = 5'd19; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0654; seg2_we[7:0] = 8'b0000_0111; end
+              4'd8: begin fsel1 = 32'h3210_0000; seg1_we[7:0] = 8'b1111_0000; nxt_flit = 5'd20; seg_e = 3'b010;
+                          fsel2 = 32'h0000_7654; seg2_we[7:0] = 8'b0000_1111; end
+              default: nxt_flit = 5'd12;
+            endcase //s2q_cnt_ones
           end //d0
           5'd13: begin
-            seg1_we[7:0] = 8'b1110_0000;
-            seg2_we[7:0] = 8'b0001_1111;
-            seg_e        = 3'b010;
-            nxt_flit     = 5'd21;    
-          end //d0
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0010_0000; nxt_flit = 5'd14; end
+              4'd2: begin fsel1 = 32'h0100_0000; seg1_we[7:0] = 8'b0110_0000; nxt_flit = 5'd15; end
+              4'd3: begin fsel1 = 32'h2100_0000; seg1_we[7:0] = 8'b1110_0000; nxt_flit = 5'd16; seg_e = 3'b010; end
+              4'd4: begin fsel1 = 32'h2100_0000; seg1_we[7:0] = 8'b1110_0000; nxt_flit = 5'd17; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0003; seg2_we[7:0] = 8'b0000_0001; end
+              4'd5: begin fsel1 = 32'h2100_0000; seg1_we[7:0] = 8'b1110_0000; nxt_flit = 5'd18; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0043; seg2_we[7:0] = 8'b0000_0011; end
+              4'd6: begin fsel1 = 32'h2100_0000; seg1_we[7:0] = 8'b1110_0000; nxt_flit = 5'd19; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0543; seg2_we[7:0] = 8'b0000_0111; end
+              4'd7: begin fsel1 = 32'h2100_0000; seg1_we[7:0] = 8'b1110_0000; nxt_flit = 5'd20; seg_e = 3'b010;
+                          fsel2 = 32'h0000_6543; seg2_we[7:0] = 8'b0000_1111; end
+              4'd8: begin fsel1 = 32'h2100_0000; seg1_we[7:0] = 8'b1110_0000; nxt_flit = 5'd21; seg_e = 3'b010;
+                          fsel2 = 32'h0007_6543; seg2_we[7:0] = 8'b0001_1111; end
+              default: nxt_flit = 5'd13;
+            endcase //s2q_cnt_ones
+          end //d0 
           5'd14: begin
-            seg1_we[7:0] = 8'b1100_0000;
-            seg2_we[7:0] = 8'b0011_1111;
-            seg_e        = 3'b010;
-            nxt_flit     = 5'd22;
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0100_0000; nxt_flit = 5'd15; end
+              4'd2: begin fsel1 = 32'h1000_0000; seg1_we[7:0] = 8'b1100_0000; nxt_flit = 5'd16; seg_e = 3'b010; end
+              4'd3: begin fsel1 = 32'h1000_0000; seg1_we[7:0] = 8'b1100_0000; nxt_flit = 5'd17; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0002; seg2_we[7:0] = 8'b0000_0001; end
+              4'd4: begin fsel1 = 32'h1000_0000; seg1_we[7:0] = 8'b1100_0000; nxt_flit = 5'd18; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0032; seg2_we[7:0] = 8'b0000_0011; end
+              4'd5: begin fsel1 = 32'h1000_0000; seg1_we[7:0] = 8'b1100_0000; nxt_flit = 5'd19; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0432; seg2_we[7:0] = 8'b0000_0111; end
+              4'd6: begin fsel1 = 32'h1000_0000; seg1_we[7:0] = 8'b1100_0000; nxt_flit = 5'd20; seg_e = 3'b010;
+                          fsel2 = 32'h0000_5432; seg2_we[7:0] = 8'b0000_1111; end
+              4'd7: begin fsel1 = 32'h1000_0000; seg1_we[7:0] = 8'b1100_0000; nxt_flit = 5'd21; seg_e = 3'b010;
+                          fsel2 = 32'h0006_5432; seg2_we[7:0] = 8'b0001_1111; end
+              4'd8: begin fsel1 = 32'h1000_0000; seg1_we[7:0] = 8'b1100_0000; nxt_flit = 5'd22; seg_e = 3'b010;
+                          fsel2 = 32'h0076_5432; seg2_we[7:0] = 8'b0011_1111; end
+              default: nxt_flit = 5'd14;
+            endcase //s2q_cnt_ones
           end //d0
           5'd15: begin
-            seg1_we[7:0] = 8'b1000_0000;
-            seg2_we[7:0] = 8'b0111_1111;
-            seg_e        = 3'b010;
-            nxt_flit     = 5'd23;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd16; seg_e = 3'b010; end
+              4'd2: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd17; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0001; seg2_we[7:0] = 8'b0000_0001; end
+              4'd3: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd18; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0021; seg2_we[7:0] = 8'b0000_0011; end
+              4'd4: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd19; seg_e = 3'b010;
+                          fsel2 = 32'h0000_0321; seg2_we[7:0] = 8'b0000_0111; end
+              4'd5: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd20; seg_e = 3'b010;
+                          fsel2 = 32'h0000_4321; seg2_we[7:0] = 8'b0000_1111; end
+              4'd6: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd21; seg_e = 3'b010;
+                          fsel2 = 32'h0005_4321; seg2_we[7:0] = 8'b0001_1111; end
+              4'd7: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd22; seg_e = 3'b010;
+                          fsel2 = 32'h0065_4321; seg2_we[7:0] = 8'b0011_1111; end
+              4'd8: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b1000_0000; nxt_flit = 5'd23; seg_e = 3'b010;
+                          fsel2 = 32'h0765_4321; seg2_we[7:0] = 8'b0111_1111; end
+              default: nxt_flit = 5'd15;
+            endcase //s2q_cnt_ones
           end //d0
           5'd16: begin
-            seg2_we[7:0] = 8'b1111_1111;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd0;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+              4'd2: begin fsel2 = 32'h0000_0010; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd18; end
+              4'd3: begin fsel2 = 32'h0000_0210; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
+              4'd4: begin fsel2 = 32'h0000_3210; seg2_we[7:0] = 8'b0000_1111; nxt_flit = 5'd20; end
+              4'd5: begin fsel2 = 32'h0004_3210; seg2_we[7:0] = 8'b0001_1111; nxt_flit = 5'd21; end
+              4'd6: begin fsel2 = 32'h0054_3210; seg2_we[7:0] = 8'b0011_1111; nxt_flit = 5'd22; end
+              4'd7: begin fsel2 = 32'h0654_3210; seg2_we[7:0] = 8'b1111_1111; nxt_flit = 5'd23; end
+              4'd8: begin fsel2 = 32'h7654_3210; seg2_we[7:0] = 8'b1111_1111; nxt_flit =  5'd0; seg_e = 3'b100; end
+              default: nxt_flit = 5'd16;
+            endcase //s2q_cnt_ones
           end //d0
           5'd17: begin
-            seg2_we[7:0] = 8'b1111_1110;
-            seg0_we[7:0] = 8'b0000_0001;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd01;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0000_0010; nxt_flit = 5'd18; end
+              4'd2: begin fsel2 = 32'h0000_0100; seg2_we[7:0] = 8'b0000_0110; nxt_flit = 5'd19; end
+              4'd3: begin fsel2 = 32'h0000_2100; seg2_we[7:0] = 8'b0000_1110; nxt_flit = 5'd20; end
+              4'd4: begin fsel2 = 32'h0003_2100; seg2_we[7:0] = 8'b0001_1110; nxt_flit = 5'd21; end
+              4'd5: begin fsel2 = 32'h0043_2100; seg2_we[7:0] = 8'b0011_1110; nxt_flit = 5'd22; end
+              4'd6: begin fsel2 = 32'h0543_2100; seg2_we[7:0] = 8'b0111_1110; nxt_flit = 5'd23; end
+              4'd7: begin fsel2 = 32'h6543_2100; seg2_we[7:0] = 8'b1111_1110; nxt_flit =  5'd0; seg_e = 3'b100; end
+              4'd8: begin fsel2 = 32'h6543_2100; seg2_we[7:0] = 8'b1111_1110; nxt_flit = 5'd01; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0007; seg0_we[7:0] = 8'b0000_0001; end
+              default: nxt_flit = 5'd17;
+            endcase //s2q_cnt_ones
           end //d0
           5'd18: begin
-            seg2_we[7:0] = 8'b1111_1100;
-            seg0_we[7:0] = 8'b0000_0011;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd02;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0000_0100; nxt_flit = 5'd19; end
+              4'd2: begin fsel2 = 32'h0000_1000; seg2_we[7:0] = 8'b0000_1100; nxt_flit = 5'd20; end
+              4'd3: begin fsel2 = 32'h0002_1000; seg2_we[7:0] = 8'b0001_1100; nxt_flit = 5'd21; end
+              4'd4: begin fsel2 = 32'h0032_1000; seg2_we[7:0] = 8'b0011_1100; nxt_flit = 5'd22; end
+              4'd5: begin fsel2 = 32'h0432_1000; seg2_we[7:0] = 8'b0111_1100; nxt_flit = 5'd23; end
+              4'd6: begin fsel2 = 32'h5432_1000; seg2_we[7:0] = 8'b1111_1100; nxt_flit =  5'd0; seg_e = 3'b100; end
+              4'd7: begin fsel2 = 32'h5432_1000; seg2_we[7:0] = 8'b1111_1100; nxt_flit = 5'd01; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0006; seg0_we[7:0] = 8'b0000_0001; end
+              4'd8: begin fsel2 = 32'h5432_1000; seg2_we[7:0] = 8'b1111_1100; nxt_flit = 5'd02; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0076; seg0_we[7:0] = 8'b0000_0011; end
+              default: nxt_flit = 5'd18;
+            endcase //s2q_cnt_ones
           end //d0
           5'd19: begin
-            seg2_we[7:0] = 8'b1111_1000;
-            seg0_we[7:0] = 8'b0000_0111;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd03;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0000_1000; nxt_flit = 5'd20; end
+              4'd2: begin fsel2 = 32'h0001_0000; seg2_we[7:0] = 8'b0001_1000; nxt_flit = 5'd21; end
+              4'd3: begin fsel2 = 32'h0021_0000; seg2_we[7:0] = 8'b0011_1000; nxt_flit = 5'd22; end
+              4'd4: begin fsel2 = 32'h0321_0000; seg2_we[7:0] = 8'b0111_1000; nxt_flit = 5'd23; end
+              4'd5: begin fsel2 = 32'h4321_0000; seg2_we[7:0] = 8'b1111_1000; nxt_flit =  5'd0; seg_e = 3'b100; end
+              4'd6: begin fsel2 = 32'h4321_0000; seg2_we[7:0] = 8'b1111_1000; nxt_flit = 5'd01; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0005; seg0_we[7:0] = 8'b0000_0001; end
+              4'd7: begin fsel2 = 32'h4321_0000; seg2_we[7:0] = 8'b1111_1000; nxt_flit = 5'd02; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0065; seg0_we[7:0] = 8'b0000_0011; end
+              4'd8: begin fsel2 = 32'h4321_0000; seg2_we[7:0] = 8'b1111_1000; nxt_flit = 5'd03; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0765; seg0_we[7:0] = 8'b0000_0111; end
+              default: nxt_flit = 5'd19;
+            endcase //s2q_cnt_ones
           end //d0
           5'd20: begin
-            seg2_we[7:0] = 8'b1111_0000;
-            seg0_we[7:0] = 8'b0000_1111;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd04;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0001_0000; nxt_flit = 5'd21; end
+              4'd2: begin fsel2 = 32'h0010_0000; seg2_we[7:0] = 8'b0011_0000; nxt_flit = 5'd22; end
+              4'd3: begin fsel2 = 32'h0210_0000; seg2_we[7:0] = 8'b0111_0000; nxt_flit = 5'd23; end
+              4'd4: begin fsel2 = 32'h3210_0000; seg2_we[7:0] = 8'b1111_0000; nxt_flit =  5'd0; seg_e = 3'b100; end
+              4'd5: begin fsel2 = 32'h3210_0000; seg2_we[7:0] = 8'b1111_0000; nxt_flit = 5'd01; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0004; seg0_we[7:0] = 8'b0000_0001; end
+              4'd6: begin fsel2 = 32'h3210_0000; seg2_we[7:0] = 8'b1111_0000; nxt_flit = 5'd02; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0054; seg0_we[7:0] = 8'b0000_0011; end
+              4'd7: begin fsel2 = 32'h3210_0000; seg2_we[7:0] = 8'b1111_0000; nxt_flit = 5'd03; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0654; seg0_we[7:0] = 8'b0000_0111; end
+              4'd8: begin fsel2 = 32'h3210_0000; seg2_we[7:0] = 8'b1111_0000; nxt_flit = 5'd04; seg_e = 3'b100;
+                          fsel0 = 32'h0000_7654; seg0_we[7:0] = 8'b0000_1111; end
+              default: nxt_flit = 5'd20;
+            endcase //s2q_cnt_ones
           end //d0
           5'd21: begin
-            seg2_we[7:0] = 8'b1110_0000;
-            seg0_we[7:0] = 8'b0001_1111;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd05;    
-         end //d0
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0010_0000; nxt_flit = 5'd22; end
+              4'd2: begin fsel2 = 32'h0100_0000; seg2_we[7:0] = 8'b0110_0000; nxt_flit = 5'd23; end
+              4'd3: begin fsel2 = 32'h2100_0000; seg2_we[7:0] = 8'b1110_0000; nxt_flit =  5'd0; seg_e = 3'b100; end
+              4'd4: begin fsel2 = 32'h2100_0000; seg2_we[7:0] = 8'b1110_0000; nxt_flit = 5'd01; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0003; seg0_we[7:0] = 8'b0000_0001; end
+              4'd5: begin fsel2 = 32'h2100_0000; seg2_we[7:0] = 8'b1110_0000; nxt_flit = 5'd02; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0043; seg0_we[7:0] = 8'b0000_0011; end
+              4'd6: begin fsel2 = 32'h2100_0000; seg2_we[7:0] = 8'b1110_0000; nxt_flit = 5'd03; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0543; seg0_we[7:0] = 8'b0000_0111; end
+              4'd7: begin fsel2 = 32'h2100_0000; seg2_we[7:0] = 8'b1110_0000; nxt_flit = 5'd04; seg_e = 3'b100;
+                          fsel0 = 32'h0000_6543; seg0_we[7:0] = 8'b0000_1111; end
+              4'd8: begin fsel2 = 32'h2100_0000; seg2_we[7:0] = 8'b1110_0000; nxt_flit = 5'd05; seg_e = 3'b100;
+                          fsel0 = 32'h0007_6543; seg0_we[7:0] = 8'b0001_1111; end
+              default: nxt_flit = 5'd21;
+            endcase //s2q_cnt_ones
+          end //d0 
           5'd22: begin
-            seg2_we[7:0] = 8'b1100_0000;
-            seg0_we[7:0] = 8'b0011_1111;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd06;    
-         end //d0
-          5'd23: begin
-            seg2_we[7:0] = 8'b1000_0000;
-            seg0_we[7:0] = 8'b0111_1111;
-            seg_e        = 3'b100;
-            nxt_flit     = 5'd07;    
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0100_0000; nxt_flit = 5'd23; end
+              4'd2: begin fsel2 = 32'h1000_0000; seg2_we[7:0] = 8'b1100_0000; nxt_flit =  5'd0; seg_e = 3'b100; end
+              4'd3: begin fsel2 = 32'h1000_0000; seg2_we[7:0] = 8'b1100_0000; nxt_flit = 5'd01; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0002; seg0_we[7:0] = 8'b0000_0001; end
+              4'd4: begin fsel2 = 32'h1000_0000; seg2_we[7:0] = 8'b1100_0000; nxt_flit = 5'd02; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0032; seg0_we[7:0] = 8'b0000_0011; end
+              4'd5: begin fsel2 = 32'h1000_0000; seg2_we[7:0] = 8'b1100_0000; nxt_flit = 5'd03; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0432; seg0_we[7:0] = 8'b0000_0111; end
+              4'd6: begin fsel2 = 32'h1000_0000; seg2_we[7:0] = 8'b1100_0000; nxt_flit = 5'd04; seg_e = 3'b100;
+                          fsel0 = 32'h0000_5432; seg0_we[7:0] = 8'b0000_1111; end
+              4'd7: begin fsel2 = 32'h1000_0000; seg2_we[7:0] = 8'b1100_0000; nxt_flit = 5'd05; seg_e = 3'b100;
+                          fsel0 = 32'h0006_5432; seg0_we[7:0] = 8'b0001_1111; end
+              4'd8: begin fsel2 = 32'h1000_0000; seg2_we[7:0] = 8'b1100_0000; nxt_flit = 5'd06; seg_e = 3'b100;
+                          fsel0 = 32'h0076_5432; seg0_we[7:0] = 8'b0011_1111; end
+              default: nxt_flit = 5'd22;
+            endcase //s2q_cnt_ones
           end //d0
-          default: ;
-        endcase      
+          5'd23: begin
+            unique case(s2q_cnt_ones) inside  //s2q_cnt_ones has to be at least 1 to get here
+              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit =  5'd0; seg_e = 3'b100; end
+              4'd2: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit = 5'd01; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0001; seg0_we[7:0] = 8'b0000_0001; end
+              4'd3: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit = 5'd02; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0021; seg0_we[7:0] = 8'b0000_0011; end
+              4'd4: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit = 5'd03; seg_e = 3'b100;
+                          fsel0 = 32'h0000_0321; seg0_we[7:0] = 8'b0000_0111; end
+              4'd5: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit = 5'd04; seg_e = 3'b100;
+                          fsel0 = 32'h0000_4321; seg0_we[7:0] = 8'b0000_1111; end
+              4'd6: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit = 5'd05; seg_e = 3'b100;
+                          fsel0 = 32'h0005_4321; seg0_we[7:0] = 8'b0001_1111; end
+              4'd7: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit = 5'd06; seg_e = 3'b100;
+                          fsel0 = 32'h0065_4321; seg0_we[7:0] = 8'b0011_1111; end
+              4'd8: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b1000_0000; nxt_flit = 5'd07; seg_e = 3'b100;
+                          fsel0 = 32'h0765_4321; seg0_we[7:0] = 8'b0111_1111; end
+              default: nxt_flit = 5'd23;
+            endcase //s2q_cnt_ones
+          end //d0
+        default: ;
+      endcase //current_flit
       end //else
     end // rx_v
   end //always_comb
 
   
-  
-
 endmodule

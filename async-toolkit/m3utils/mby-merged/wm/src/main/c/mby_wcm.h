@@ -38,7 +38,7 @@ typedef struct mbyClassifierHitInfoStruct
 
 void mbyMatchWildcard
 (
-    MBY_CGRP_B_IN_REGS,
+    mby_ppe_cgrp_b_map      * const cgrp_b_map,
     mbyClassifierKeys const * const keys,
     fm_byte                   const profile_id,
     fm_byte                   const group,

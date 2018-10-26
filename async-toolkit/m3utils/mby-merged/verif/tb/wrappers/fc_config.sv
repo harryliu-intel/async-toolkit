@@ -34,17 +34,17 @@ config fc_hdl_top_cfg;
     `endif
 
     `ifdef MPP_8
-        instance `soc.mby_mpp_1 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_2 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_3 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_4 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_5 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_6 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_7 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_8 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_1 liblist fc_top_lib;
+        instance `soc.mby_mpp_2 liblist fc_top_lib;
+        instance `soc.mby_mpp_3 liblist fc_top_lib;
+        instance `soc.mby_mpp_4 liblist fc_top_lib;
+        instance `soc.mby_mpp_5 liblist fc_top_lib;
+        instance `soc.mby_mpp_6 liblist fc_top_lib;
+        instance `soc.mby_mpp_7 liblist fc_top_lib;
+        instance `soc.mby_mpp_8 liblist fc_top_lib;
     `elsif MPP_2
-        instance `soc.mby_mpp_1 liblist mby_mpp_rtl_lib;
-        instance `soc.mby_mpp_2 liblist mby_mpp_rtl_lib;
+        instance `soc.mby_mpp_1 liblist fc_top_lib;
+        instance `soc.mby_mpp_2 liblist fc_top_lib;
         instance `soc.mby_mpp_3 liblist soc_ip_stub_lib;
         instance `soc.mby_mpp_4 liblist soc_ip_stub_lib;
         instance `soc.mby_mpp_5 liblist soc_ip_stub_lib;
@@ -54,17 +54,17 @@ config fc_hdl_top_cfg;
     `endif
 
     `ifdef EPC_8
-        instance `soc.mby_ec_top_1 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_2 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_3 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_4 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_5 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_6 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_7 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_8 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_1 liblist fc_top_lib;
+        instance `soc.mby_ec_top_2 liblist fc_top_lib;
+        instance `soc.mby_ec_top_3 liblist fc_top_lib;
+        instance `soc.mby_ec_top_4 liblist fc_top_lib;
+        instance `soc.mby_ec_top_5 liblist fc_top_lib;
+        instance `soc.mby_ec_top_6 liblist fc_top_lib;
+        instance `soc.mby_ec_top_7 liblist fc_top_lib;
+        instance `soc.mby_ec_top_8 liblist fc_top_lib;
     `elsif EPC_2
-        instance `soc.mby_ec_top_1 liblist mby_ec_top_lib;
-        instance `soc.mby_ec_top_2 liblist mby_ec_top_lib;
+        instance `soc.mby_ec_top_1 liblist fc_top_lib;
+        instance `soc.mby_ec_top_2 liblist fc_top_lib;
         instance `soc.mby_ec_top_3 liblist soc_ip_stub_lib;
         instance `soc.mby_ec_top_4 liblist soc_ip_stub_lib;
         instance `soc.mby_ec_top_5 liblist soc_ip_stub_lib;

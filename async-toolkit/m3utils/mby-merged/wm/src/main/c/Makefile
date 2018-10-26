@@ -21,6 +21,7 @@ SOURCES += mby_classifier.c
 SOURCES += mby_hash.c
 SOURCES += mby_nexthop.c
 SOURCES += mby_maskgen.c
+SOURCES += mby_triggers_regs.c
 SOURCES += mby_triggers.c
 SOURCES += mby_congmgmt.c
 SOURCES += mby_rxstats.c
@@ -39,7 +40,6 @@ GPP = g++
 
 # Linker:
 LD  = ld
-
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -76,41 +76,41 @@ DELFILES  = $(OBJECTS) *.o *.so
 .PHONY: all
 all: $(OBJECTS)
 
-mby_common.o     : mby_common.c                      mby_common.h mby_bitfield.h
-mby_bitfield.o   : mby_bitfield.c 	 mby_bitfield.h
-mby_parser.o     : mby_parser.c     mby_parser.h     mby_common.h mby_bitfield.h
-mby_mapper.o     : mby_mapper.c     mby_mapper.h     mby_common.h mby_bitfield.h
-mby_clsfr_regs.o : mby_clsfr_regs.c mby_clsfr_regs.h mby_common.h mby_bitfield.h
-mby_lpm_regs.o   : mby_lpm_regs.c   mby_lpm_regs.h   mby_common.h mby_bitfield.h
-mby_lpm.o        : mby_lpm.c        mby_lpm.h        mby_common.h mby_bitfield.h
-mby_wcm.o        : mby_wcm.c        mby_wcm.h        mby_common.h mby_bitfield.h
-mby_exactmatch.o : mby_exactmatch.c mby_exactmatch.h mby_common.h mby_bitfield.h
-mby_classifier.o : mby_classifier.c mby_classifier.h mby_common.h mby_bitfield.h
-mby_hash.o       : mby_hash.c       mby_hash.h       mby_common.h mby_bitfield.h
-mby_nexthop.o    : mby_nexthop.c    mby_nexthop.h    mby_common.h mby_bitfield.h
-mby_maskgen.o    : mby_maskgen.c    mby_maskgen.h    mby_common.h mby_bitfield.h
-mby_triggers.o   : mby_triggers.c   mby_triggers.h   mby_common.h mby_bitfield.h
-mby_congmgmt.o   : mby_congmgmt.c   mby_congmgmt.h   mby_common.h mby_bitfield.h
-mby_rxstats.o    : mby_rxstats.c    mby_rxstats.h    mby_common.h mby_bitfield.h
-mby_modifier.o   : mby_modifier.c   mby_modifier.h   mby_common.h mby_bitfield.h
-mby_txstats.o    : mby_txstats.c    mby_txstats.h    mby_common.h mby_bitfield.h
-mby_errors.o     : mby_errors.c     mby_errors.h
+mby_errors.o        : mby_errors.c     	   mby_errors.h
+mby_bitfield.o      : mby_bitfield.c 	   mby_bitfield.h
+mby_common.o        : mby_common.c                          mby_common.h mby_bitfield.h
+mby_parser.o        : mby_parser.c     	   mby_parser.h     mby_common.h mby_bitfield.h
+mby_mapper.o        : mby_mapper.c     	   mby_mapper.h     mby_common.h mby_bitfield.h
+mby_clsfr_regs.o    : mby_clsfr_regs.c 	   mby_clsfr_regs.h mby_common.h mby_bitfield.h
+mby_lpm_regs.o      : mby_lpm_regs.c   	   mby_lpm_regs.h   mby_common.h mby_bitfield.h
+mby_lpm.o           : mby_lpm.c        	   mby_lpm.h        mby_common.h mby_bitfield.h
+mby_wcm.o           : mby_wcm.c        	   mby_wcm.h        mby_common.h mby_bitfield.h
+mby_exactmatch.o    : mby_exactmatch.c 	   mby_exactmatch.h mby_common.h mby_bitfield.h
+mby_classifier.o    : mby_classifier.c 	   mby_classifier.h mby_common.h mby_bitfield.h
+mby_hash.o          : mby_hash.c       	   mby_hash.h       mby_common.h mby_bitfield.h
+mby_nexthop.o       : mby_nexthop.c    	   mby_nexthop.h    mby_common.h mby_bitfield.h
+mby_maskgen.o       : mby_maskgen.c    	   mby_maskgen.h    mby_common.h mby_bitfield.h
+mby_triggers_regs.o : mby_triggers_regs.c  mby_triggers.h   mby_common.h mby_bitfield.h
+mby_triggers.o      : mby_triggers.c   	   mby_triggers.h   mby_common.h mby_bitfield.h
+mby_congmgmt.o      : mby_congmgmt.c   	   mby_congmgmt.h   mby_common.h mby_bitfield.h
+mby_rxstats.o       : mby_rxstats.c    	   mby_rxstats.h    mby_common.h mby_bitfield.h
+mby_modifier.o      : mby_modifier.c   	   mby_modifier.h   mby_common.h mby_bitfield.h
+mby_txstats.o       : mby_txstats.c    	   mby_txstats.h    mby_common.h mby_bitfield.h
 
 PIPELINE_STAGES += mby_parser.o
 PIPELINE_STAGES += mby_mapper.o
-PIPELINE_STAGES += mby_lpm.o        mby_lpm_regs.o
-PIPELINE_STAGES += mby_wcm.o        mby_exactmatch.o
-PIPELINE_STAGES += mby_classifier.o mby_clsfr_regs.o
+PIPELINE_STAGES += mby_clsfr_regs.o mby_lpm.o mby_lpm_regs.o mby_wcm.o mby_exactmatch.o mby_classifier.o
 PIPELINE_STAGES += mby_hash.o
 PIPELINE_STAGES += mby_nexthop.o
 PIPELINE_STAGES += mby_maskgen.o
+PIPELINE_STAGES += mby_triggers_regs.o mby_triggers.o
 PIPELINE_STAGES += mby_rxstats.o
 PIPELINE_STAGES += mby_modifier.o
 PIPELINE_STAGES += mby_txstats.o
 
 mby_pipeline.o   : mby_pipeline.c   mby_pipeline.h   $(PIPELINE_STAGES)
 mby_reg_ctrl.o   : mby_reg_ctrl.c   mby_reg_ctrl.h
-mby_model.o      : mby_model.c      mby_model.h		 mby_pipeline.o
+mby_model.o      : mby_model.c      mby_model.h      mby_pipeline.o
 mby_init.o       : mby_init.c       mby_init.h
 
 %.o: %.c
@@ -168,4 +168,3 @@ unit_test: $(UT_BINARIES)
 		echo '  Executing UT' $$ut; \
 		$$ut; \
 	done
-
