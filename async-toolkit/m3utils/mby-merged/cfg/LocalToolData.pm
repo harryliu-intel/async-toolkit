@@ -389,4 +389,8 @@ $ToolConfig_tools{denali} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18'
 $ToolConfig_tools{buildman}{ENV}{CDN_VIP_ROOT} = "&get_tool_path(cdn_vip_root)";
 $ToolConfig_tools{buildman}{ENV}{DENALI} = "&get_tool_path(denali)";
 
+### Emubuild Vars
+$ToolConfig_tools{emubuild}{VERSION} = "2.7.11";
+###
+
 1;
