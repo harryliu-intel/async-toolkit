@@ -42,103 +42,103 @@
 
 class mby_rx_ppe_tb_top_cfg extends shdv_base_config;
 
-    // Topology/Test Island items
-    mby_rx_ppe_defines::rx_ppe_topology_e topology = mby_rx_ppe_defines::RX_PPE_FULL;;
+   // Topology/Test Island items
+   mby_rx_ppe_defines::rx_ppe_topology_e topology = mby_rx_ppe_defines::RX_PPE_FULL;;
 
-    // Variable: ral_type
-    // Definition of the RAL type
-    string                           ral_type = "mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env";
+   // Variable: ral_type
+   // Definition of the RAL type
+   string                           ral_type = "mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env";
 
-    // Variable: ti_path
-    // Definition from the Test Island, of TI Path
-    string                           ti_path;
+   // Variable: ti_path
+   // Definition from the Test Island, of TI Path
+   string                           ti_path;
 
-    // Variable: rtl_top_path
-    // Definition from the Test Island, of RTL_TOP Path
-    string                           rtl_top_path;
+   // Variable: rtl_top_path
+   // Definition from the Test Island, of RTL_TOP Path
+   string                           rtl_top_path;
 
-    // Variable: reset_type
-    // Definition of the RESET type
-    reset_type_e                     reset_type ;
+   // Variable: reset_type
+   // Definition of the RESET type
+   reset_type_e                     reset_type ;
 
-    // Variable: dut_cfg
-    // rx_ppe DUT cfg object
-    rand mby_rx_ppe_dut_cfg              dut_cfg ;
+   // Variable: dut_cfg
+   // rx_ppe DUT cfg object
+   rand mby_rx_ppe_dut_cfg              dut_cfg ;
 
-    // Variable: env_cfg
-    // rx_ppe TB env cfg object
-    rand mby_rx_ppe_env_cfg              env_cfg ;
-
-
-    `uvm_object_utils_begin(mby_rx_ppe_tb_top_cfg)
-        `uvm_field_string(ti_path,                                                      UVM_DEFAULT)
-        `uvm_field_string(rtl_top_path,                                                 UVM_DEFAULT)
-        `uvm_field_string(ral_type,                                                     UVM_DEFAULT)
-        `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
-        `uvm_field_enum  (mby_rx_ppe_defines::rx_ppe_topology_e, topology,              UVM_DEFAULT)
-        `uvm_field_object(dut_cfg,                                                      UVM_DEFAULT)
-        `uvm_field_object(env_cfg,                                                      UVM_DEFAULT)
-    `uvm_object_utils_end
+   // Variable: env_cfg
+   // rx_ppe TB env cfg object
+   rand mby_rx_ppe_env_cfg              env_cfg ;
 
 
-    //---------------------------------------------------------------------------
-    // Constructor: new
-    //
-    // Constructor.
-    //
-    // Arguments:
-    //    string name - mby_rx_ppe_tb_top_cfg object name
-    //---------------------------------------------------------------------------
-    function new( string name = "mby_rx_ppe_tb_top_cfg");
-        super.new(name);
+   `uvm_object_utils_begin(mby_rx_ppe_tb_top_cfg)
+      `uvm_field_string(ti_path,                                                      UVM_DEFAULT)
+      `uvm_field_string(rtl_top_path,                                                 UVM_DEFAULT)
+      `uvm_field_string(ral_type,                                                     UVM_DEFAULT)
+      `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
+      `uvm_field_enum  (mby_rx_ppe_defines::rx_ppe_topology_e, topology,              UVM_DEFAULT)
+      `uvm_field_object(dut_cfg,                                                      UVM_DEFAULT)
+      `uvm_field_object(env_cfg,                                                      UVM_DEFAULT)
+   `uvm_object_utils_end
 
-        dut_cfg = mby_rx_ppe_dut_cfg::type_id::create("dut_cfg");
-        env_cfg = mby_rx_ppe_env_cfg::type_id::create("env_cfg");
 
-    endfunction: new
+   //---------------------------------------------------------------------------
+   // Constructor: new
+   //
+   // Constructor.
+   //
+   // Arguments:
+   //    string name - mby_rx_ppe_tb_top_cfg object name
+   //---------------------------------------------------------------------------
+   function new( string name = "mby_rx_ppe_tb_top_cfg");
+      super.new(name);
 
-    //---------------------------------------------------------------------------
-    // Function: pre_randomize
-    //---------------------------------------------------------------------------
-    function void pre_randomize();
-        super.pre_randomize();
-    endfunction: pre_randomize
+      dut_cfg = mby_rx_ppe_dut_cfg::type_id::create("dut_cfg");
+      env_cfg = mby_rx_ppe_env_cfg::type_id::create("env_cfg");
 
-    //---------------------------------------------------------------------------
-    // Function: post_randomize
-    // Collect Plusargs here, then push down cfg changes to any bfm/IP
-    //---------------------------------------------------------------------------
-    function void post_randomize();
-        super.post_randomize();
+   endfunction: new
 
-        push_down_knobs();
-    endfunction: post_randomize
+   //---------------------------------------------------------------------------
+   // Function: pre_randomize
+   //---------------------------------------------------------------------------
+   function void pre_randomize();
+      super.pre_randomize();
+   endfunction: pre_randomize
 
-    //---------------------------------------------------------------------------
-    // Function: push_down_knobs
-    //---------------------------------------------------------------------------
-    function void push_down_knobs();
-    endfunction: push_down_knobs
+   //---------------------------------------------------------------------------
+   // Function: post_randomize
+   // Collect Plusargs here, then push down cfg changes to any bfm/IP
+   //---------------------------------------------------------------------------
+   function void post_randomize();
+      super.post_randomize();
 
-    //---------------------------------------------------------------------------
-    // Function: get_ral_type
-    // Retrieve the RAL type
-    //
-    // Returns:
-    // string ral_type - Value indicating the RAL Type.
-    //---------------------------------------------------------------------------
-    function string get_ral_type();
-        return ral_type;
-    endfunction: get_ral_type
+      push_down_knobs();
+   endfunction: post_randomize
 
-    //---------------------------------------------------------------------------
-    // Function: get_tb_topology
-    // Returns:
-    // rx_ppe_topology_e - Value indicating the rx_ppe Testbench Topology.
-    //---------------------------------------------------------------------------
-    function mby_rx_ppe_defines::rx_ppe_topology_e get_tb_topology();
-        return topology;
-    endfunction : get_tb_topology
+   //---------------------------------------------------------------------------
+   // Function: push_down_knobs
+   //---------------------------------------------------------------------------
+   function void push_down_knobs();
+   endfunction: push_down_knobs
+
+   //---------------------------------------------------------------------------
+   // Function: get_ral_type
+   // Retrieve the RAL type
+   //
+   // Returns:
+   // string ral_type - Value indicating the RAL Type.
+   //---------------------------------------------------------------------------
+   function string get_ral_type();
+      return ral_type;
+   endfunction: get_ral_type
+
+   //---------------------------------------------------------------------------
+   // Function: get_tb_topology
+   // Returns:
+   // rx_ppe_topology_e - Value indicating the rx_ppe Testbench Topology.
+   //---------------------------------------------------------------------------
+   function mby_rx_ppe_defines::rx_ppe_topology_e get_tb_topology();
+      return topology;
+   endfunction : get_tb_topology
 
 endclass: mby_rx_ppe_tb_top_cfg
 
