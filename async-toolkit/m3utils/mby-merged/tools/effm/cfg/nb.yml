@@ -1,4 +1,24 @@
 NETBATCH:
+    SC:
+        POOL: sc_normal
+        SLOT: /DCG/MadisonBay/RTL/general
+        CLASS: (SLES11SP4||SLES11SP2)&&32G
+        LOCAL: 0
+        ANALYZE:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&4G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&16G
+        FRONTEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&8G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&64G
+        BACKEND:
+            LIGHT:
+               CLASS: (SLES11SP4||SLES11SP2)&&12G
+            HEAVY:
+               CLASS: (SLES11SP4||SLES11SP2)&&64G
     PDX:
         POOL: pdx_critical_gk
         SLOT: /SDG/sdg74/fe/build/mc
@@ -41,24 +61,3 @@ NETBATCH:
             HEAVY:
                CLASS: (SLES11SP4||SLES11SP2)&&64G
 
-
-    SC:
-        POOL: sc_normal
-        SLOT: /mst/fe/rgr
-        CLASS: (SLES11SP4||SLES11SP2)&&32G
-        LOCAL: 0
-        ANALYZE:
-            LIGHT:
-               CLASS: (SLES11SP4||SLES11SP2)&&6G
-            HEAVY:
-               CLASS: (SLES11SP4||SLES11SP2)&&16G
-        FRONTEND:
-            LIGHT:
-               CLASS: (SLES11SP4||SLES11SP2)&&8G
-            HEAVY:
-               CLASS: (SLES11SP4||SLES11SP2)&&64G
-        BACKEND:
-            LIGHT:
-               CLASS: (SLES11SP4||SLES11SP2)&&12G
-            HEAVY:
-               CLASS: (SLES11SP4||SLES11SP2)&&64G

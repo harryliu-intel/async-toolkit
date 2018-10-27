@@ -210,59 +210,59 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag            => "nonsynth",
             },
                       
-            mby_gmm_s_rtl_lib => {
-               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gmm_s_rtl.hdl', ],
+            mby_gms_rtl_lib => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gms_rtl.hdl', ],
             },
 
-            #mby_gmm_s_env_lib => {
-            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_env.hdl' ],
+            #mby_gms_env_lib => {
+            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_env.hdl' ],
             #  -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib' ],
             #  -tag             => "nonsynth",
             #,
 
-            #mby_gmm_s_tb_lib => {
-            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_tb.hdl' ],
+            #mby_gms_tb_lib => {
+            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_tb.hdl' ],
             #   -dependent_libs  => [ 'sla_lib', 'shdv_shared_lib', 'mby_common_lib' ],
             #   -tag             => "nonsynth",
             #},
 
-            #mby_gmm_s_test_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_test.hdl', ],
-            #   -dependent_libs => [ 'sip_shared_lib', 'mby_gmm_s_env_lib', 'mby_wm_dpi_lib' ],
+            #mby_gms_test_lib => {
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_test.hdl', ],
+            #   -dependent_libs => [ 'sip_shared_lib', 'mby_gms_env_lib', 'mby_wm_dpi_lib' ],
             #   -tag            => "nonsynth",
             #},
              
-            #mby_gmm_s_ti_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_s_ti.hdl' ],
+            #mby_gms_ti_lib => {
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gms_ti.hdl' ],
             #   -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
             #   -tag            => "nonsynth",
             #},
   
             
-            mby_gmm_n_rtl_lib => {
-               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gmm_n_rtl.hdl', ],
+            mby_gmn_rtl_lib => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gmn_rtl.hdl', ],
             },
 
-            #mby_gmm_n_env_lib => {
-            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_env.hdl' ],
+            #mby_gmn_env_lib => {
+            #  -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_env.hdl' ],
             #  -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib' ],
             #  -tag             => "nonsynth",
             #,
 
-            #mby_gmm_n_tb_lib => {
-            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_tb.hdl' ],
+            #mby_gmn_tb_lib => {
+            #   -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_tb.hdl' ],
             #   -dependent_libs  => [ 'sla_lib', 'shdv_shared_lib', 'mby_common_lib' ],
             #   -tag             => "nonsynth",
             #},
 
-            #mby_gmm_n_test_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_test.hdl', ],
-            #   -dependent_libs => [ 'sip_shared_lib', 'mby_gmm_n_env_lib', 'mby_wm_dpi_lib' ],
+            #mby_gmn_test_lib => {
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_test.hdl', ],
+            #   -dependent_libs => [ 'sip_shared_lib', 'mby_gmn_env_lib', 'mby_wm_dpi_lib' ],
             #   -tag            => "nonsynth",
             #},
              
-            #mby_gmm_n_ti_lib => {
-            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmm_n_ti.hdl' ],
+            #mby_gmn_ti_lib => {
+            #   -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gmn_ti.hdl' ],
             #   -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
             #   -tag            => "nonsynth",
             #},
@@ -811,8 +811,8 @@ print "MGM debug : @mbyMgmLibs\n";
             ####################################################################
             ## mby global manager model starts
             ####################################################################
-            gmm_s => {
-               top  => 'mby_gmm_s_rtl_lib.mby_gmm_s',
+            gms => {
+               top  => 'mby_gms_rtl_lib.mby_gms',
 
                use  => [
                        ],
@@ -824,7 +824,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_common_lib",
                   "mby_wm_dpi_lib",
                   "mby_jasper_lib",
-                  "mby_gmm_s_rtl_lib"
+                  "mby_gms_rtl_lib"
                ],
 
                elab_opts => [
@@ -835,7 +835,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                export => {
                  libs => [
-                   "mby_gmm_s_rtl_lib",
+                   "mby_gms_rtl_lib",
                  ]
                },
 
@@ -865,8 +865,8 @@ print "MGM debug : @mbyMgmLibs\n";
             ####################################################################
             ## mby global manager model starts
             ####################################################################       
-            gmm_n => {
-               top  => 'mby_gmm_n_rtl_lib.mby_gmm_n',
+            gmn => {
+               top  => 'mby_gmn_rtl_lib.mby_gmn',
 
                use  => [
                        ],
@@ -878,7 +878,7 @@ print "MGM debug : @mbyMgmLibs\n";
                    "mby_common_lib",
                    "mby_wm_dpi_lib",
                    "mby_jasper_lib",
-                   "mby_gmm_n_rtl_lib"
+                   "mby_gmn_rtl_lib"
                ],
 
                elab_opts => [
@@ -889,7 +889,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                export => {
                  libs => [
-                          "mby_gmm_n_rtl_lib",
+                          "mby_gmn_rtl_lib",
                  ]
                },
 
