@@ -280,7 +280,7 @@ $ToolConfig_tools{"mgm"} = {
                     "ppe_stm",
                     "igr",
                     "egr",
-                    "gmm_s",
+                    "gms",
                    ],
         },
         PHYSICAL_PARAMS => "$ENV{MODEL_ROOT}/tools/mgm/mby_physical_params.csv",
