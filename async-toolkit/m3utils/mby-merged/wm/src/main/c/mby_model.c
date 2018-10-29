@@ -160,9 +160,11 @@ fm_status mbyReceivePacket
         txi2mod.MARK_ROUTED   = rxs2rxo.MARK_ROUTED;
         txi2mod.MIRTYP        = rxs2rxo.MIRTYP;
         txi2mod.MOD_IDX       = rxs2rxo.MOD_IDX;
+        txi2mod.MOD_PROF_IDX  = rxs2rxo.MOD_PROF_IDX;
         txi2mod.NO_MODIFY     = rxs2rxo.NO_MODIFY;
         txi2mod.OOM           = rxs2rxo.OOM;
         txi2mod.PARSER_INFO   = rxs2rxo.PARSER_INFO;
+        txi2mod.PA_HDR_PTRS   = rxs2rxo.PA_HDR_PTRS;
         txi2mod.PM_ERR        = rxs2rxo.PM_ERR;
         txi2mod.PM_ERR_NONSOP = rxs2rxo.PM_ERR_NONSOP;
         txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;

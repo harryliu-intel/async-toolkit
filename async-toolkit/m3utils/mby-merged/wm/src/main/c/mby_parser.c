@@ -116,14 +116,14 @@ void Parser
     fm_bool   pa_ex_trunc_header = FALSE;
     fm_bool   pa_ex_parsing_done = FALSE;
 
-    fm_uint16 pa_keys       [MBY_N_PARSER_KEYS] = { 0     };
-    fm_bool   pa_keys_valid [MBY_N_PARSER_KEYS] = { FALSE };
-    fm_bool   pa_flags      [MBY_N_PARSER_FLGS] = { FALSE };
-    fm_byte   pa_ptrs       [MBY_N_PARSER_PTRS] = { 0     };
-    fm_bool   pa_ptrs_valid [MBY_N_PARSER_PTRS] = { FALSE };
-    fm_byte   pa_prot_id    [MBY_N_PARSER_PTRS] = { MBY_PA_PROT_ID_NOP };
-    fm_byte   hit_idx       [MBY_PA_ANA_STAGES] = { 0     };
-    fm_bool   hit_idx_v     [MBY_PA_ANA_STAGES] = { FALSE };
+    fm_uint16 pa_keys        [MBY_N_PARSER_KEYS] = { 0     };
+    fm_bool   pa_keys_valid  [MBY_N_PARSER_KEYS] = { FALSE };
+    fm_bool   pa_flags       [MBY_N_PARSER_FLGS] = { FALSE };
+    fm_byte   pa_offset      [MBY_N_PARSER_PTRS] = { 0     };
+    fm_bool   pa_offset_valid[MBY_N_PARSER_PTRS] = { FALSE };
+    fm_byte   pa_prot_id     [MBY_N_PARSER_PTRS] = { MBY_PA_PROT_ID_NOP };
+    fm_byte   hit_idx        [MBY_PA_ANA_STAGES] = { 0     };
+    fm_bool   hit_idx_v      [MBY_PA_ANA_STAGES] = { FALSE };
 
     // Calculate end-of-packet (EOP) and adjusted segment length (adj_seg_len):
     fm_uint32 pa_adj_seg_len = 0;
@@ -273,8 +273,9 @@ void Parser
                     pa_flags[flag_num] = flag_val;
 
                 if ( (protocol_id != MBY_PA_PROT_ID_NOP) && (ptr_num < MBY_N_PARSER_PTRS) ) {
-                    pa_ptrs   [ptr_num] = ptr[s] + offset;
-                    pa_prot_id[ptr_num] = protocol_id;
+                    pa_offset      [ptr_num] = ptr[s] + offset;
+                    pa_offset_valid[ptr_num] = TRUE;
+                    pa_prot_id     [ptr_num] = protocol_id;
                 }
             } // for wd ...
 
@@ -313,7 +314,7 @@ void Parser
             {
                 if (pa_prot_id[j] == pa_protocol_id)
                 {
-                    fm_byte offset = extract_cfg->OFFSET + pa_ptrs[j];
+                    fm_byte offset = extract_cfg->OFFSET + pa_offset[j];
                     w0 = getSegDataWord(offset, pa_adj_seg_len, seg_data);
 
                     pa_keys[i] = w0;
@@ -329,11 +330,11 @@ void Parser
     for (fm_uint p = 0; p <= 1; p++)
     {
         fm_byte pr = 2 + (p * 4); // 4 bytes / ptr
-        fm_byte p0 = pa_ptrs[pr  ];
-        fm_byte p1 = pa_ptrs[pr+1] - 1;
+        fm_byte p0 = pa_offset[pr  ];
+        fm_byte p1 = pa_offset[pr+1] - 1;
 
         // Validate checksum:
-        if (pa_ptrs_valid[pr] && pa_ptrs_valid[pr+1]) {
+        if (pa_offset_valid[pr] && pa_offset_valid[pr+1]) {
             fm_bool csum_chk_result = checkIPv4Chksum(seg_data, p0, p1);
             if ( csum_chk_result && ((p1 - p0) <= 64) && (((fm_uint32) (p1 + 1)) <= rx_length))
                 pa_csum_ok |= (1 << p);  // ok -> set bit p
@@ -341,7 +342,7 @@ void Parser
     } // for p ...
 
     // Fetch flags and pointers:
-    fm_byte otr_l3_ptr = pa_ptrs[MBY_OTR_L3_PTR];
+    fm_byte otr_l3_ptr = pa_offset[MBY_OTR_L3_PTR];
     fm_bool otr_l3_v   = pa_flags[MBY_PA_OTR_L3_V_FLAG];
 
     // TODO Variable 'is_ipv4' is assigned a value that is never used.
@@ -351,7 +352,7 @@ void Parser
     fm_byte ip_len   = (is_ipv6) ?  4 : 1; // IPv6 Length field (2 empty keys precede IPv6 hdr)
     fm_byte n_keys   = (is_ipv6) ? 16 : 4; // number of outer IP addr keys
 
-    fm_bool l3_vld_chk = pa_ptrs_valid[MBY_OTR_L3_PTR] && pa_keys_valid[MBY_OTR_IPHDR_KEY + ip_len];
+    fm_bool l3_vld_chk = pa_offset_valid[MBY_OTR_L3_PTR] && pa_keys_valid[MBY_OTR_IPHDR_KEY + ip_len];
     for (fm_uint i = 0; i < n_keys; i++)
         l3_vld_chk &= pa_keys_valid[MBY_OTR_IPADDR_KEY + i];
 
@@ -401,8 +402,9 @@ void Parser
     //out->PA_PACKET_TYPE     = pa_packet_type;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
-        out->PA_PTRS      [i] = pa_ptrs      [i];
-        out->PA_PTRS_VALID[i] = pa_ptrs_valid[i];
+        out->PA_HDR_PTRS.OFFSET      [i] = pa_offset      [i];
+        out->PA_HDR_PTRS.OFFSET_VALID[i] = pa_offset_valid[i];
+        out->PA_HDR_PTRS.PROT_ID     [i] = pa_prot_id     [i];
     }
 
     out->RX_DATA            = rx_packet;

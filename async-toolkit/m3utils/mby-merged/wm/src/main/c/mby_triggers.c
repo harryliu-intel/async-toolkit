@@ -781,9 +781,11 @@ void Triggers
     out->MARK_ROUTED       = in->MARK_ROUTED;
     out->MIRTYP            = in->MIRTYP;
     out->MOD_IDX           = in->MOD_IDX;
+    out->MOD_PROF_IDX      = in->MOD_PROF_IDX;
     out->NO_MODIFY         = no_modify; //results.noModifyAction; //no_modify;
     out->OOM               = in->OOM;
     out->PARSER_INFO       = in->PARSER_INFO;
+    out->PA_HDR_PTRS       = in->PA_HDR_PTRS;
     out->PM_ERR            = in->PM_ERR;
     out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP       = in->QOS_L3_DSCP;

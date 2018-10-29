@@ -290,8 +290,10 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint16               L2_IVLAN1_CNT;        // ingress VLAN counter
     mbyMirrorType           MIRTYP;               // mirror type
     fm_uint32               MOD_IDX;              // index into the MODIFY descriptor tables
+    fm_byte                 MOD_PROF_IDX;         // modify profile index
     fm_bool                 OOM;                  // out of memory
     mbyParserInfo           PARSER_INFO;          // parser info structure
+    mbyParserHdrPtrs        PA_HDR_PTRS;          // parser header pointers
     fm_bool                 PM_ERR;               // ECC error on PM
     fm_bool                 PM_ERR_NONSOP;        //
     fm_byte                 QOS_L3_DSCP;          // 6-bit QOS Differentiated Services Code Point (DSCP):
@@ -299,7 +301,6 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint64               TAIL_CSUM_LEN;        // L4 CSUM related information
     fm_byte                 TRAFFIC_CLASS;        // traffic class
     fm_byte                 TX_TAG;               // transmit tag from Classifier
-
     fm_uint16               ARP_TABLE_INDEX;
     fm_bool                 ENCAP;
     fm_bool                 DECAP;

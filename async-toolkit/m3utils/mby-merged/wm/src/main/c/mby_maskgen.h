@@ -569,8 +569,10 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_uint16               L2_IVLAN1_CNT;          // ingress VLAN counter
     mbyMirrorType           MIRTYP;                 // mirror type
     fm_uint32               MOD_IDX;                // index into the MODIFY descriptor tables
+    fm_byte                 MOD_PROF_IDX;           // modify profile index
     fm_bool                 OOM;                    // out of memory
     mbyParserInfo           PARSER_INFO;            // parser info struct
+    mbyParserHdrPtrs        PA_HDR_PTRS;            // parser header pointers
     fm_bool                 PM_ERR;                 // ECC error on PM
     fm_bool                 PM_ERR_NONSOP;
     fm_byte                 QOS_L3_DSCP;            // 6-bit QOS Differentiated Services Code Point (DSCP)

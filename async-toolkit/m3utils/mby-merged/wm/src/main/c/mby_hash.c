@@ -763,9 +763,11 @@ void Hash
     out->L3_IDOMAIN              = in->L3_IDOMAIN;
     out->L2_IVID1                = in->L2_IVID1;
     out->LEARN_MODE              = in->LEARN_MODE;
+    out->MOD_PROF_IDX            = in->MOD_PROF_IDX;
     out->PARITY_ERROR            = in->PARITY_ERROR;
     out->PARSER_ERROR            = in->PARSER_ERROR;
     out->PARSER_INFO             = in->PARSER_INFO;
+    out->PA_HDR_PTRS             = in->PA_HDR_PTRS;
     out->PA_L3LEN_ERR            = in->PA_L3LEN_ERR;
     out->RX_DATA                 = in->RX_DATA;
     out->RX_LENGTH               = in->RX_LENGTH;

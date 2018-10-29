@@ -39,6 +39,7 @@ typedef struct mbyClassifierToHashStruct
     fm_uint64               L34_HASH;                            // hash value to be used by ARP_TABLE
     fm_uint16               L3_LENGTH;                           // 16-bit IPv4 datagram length for outer/inner header
     fm_uint32               MOD_IDX;                             // index into the MODIFY descriptor tables
+    fm_byte                 MOD_PROF_IDX;                        // modify profile index
     fm_byte                 MPLS_POP;                            // # of MPLS labels to pop in Modify
     fm_bool                 NO_LEARN;                            // disable learning
     fm_uint16               OUTER_L3_LENGTH;                     // 16-bit IPv4 datagram length for outer header
@@ -61,6 +62,7 @@ typedef struct mbyClassifierToHashStruct
     fm_bool                 PARITY_ERROR;                        // parity error detected flag
     fm_bool                 PA_DROP;                             // checksum validation error, drop pkt in tail
     fm_bool                 PA_L3LEN_ERR;                        // l3 length error
+    mbyParserHdrPtrs        PA_HDR_PTRS;                         // parser header pointers
     fm_byte               * RX_DATA;                             // ingress (receive) packet data
     fm_uint32               RX_LENGTH;                           // ingress packet data length [bytes]
     fm_uint32               RX_PORT;                             // ingress port

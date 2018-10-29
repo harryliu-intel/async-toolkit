@@ -99,6 +99,7 @@ typedef struct mbyHashToNextHopStruct
     fm_byte                 L3_IDOMAIN;
     fm_bool                 LEARN_MODE;
     fm_uint32               MIRROR0_PROFILE_IDX;    // mirror 0 profile index
+    fm_byte                 MOD_PROF_IDX;           // modify profile index
     fm_bool                 MTU_VIOLATION;          // packet violates the MTU
     fm_bool                 NO_LEARN;               // learning is diabled flag
     fm_byte                 OPERATOR_ID;            // 4-bit operator ID
@@ -108,6 +109,7 @@ typedef struct mbyHashToNextHopStruct
     fm_bool                 PARSER_WINDOW_V;        // parser window valid flag
     fm_bool                 PA_DROP;                // checksum validation error, drop pkt in tail proc
     fm_bool                 PA_L3LEN_ERR;           // l3 length error
+    mbyParserHdrPtrs        PA_HDR_PTRS;            // parser header pointers
     fm_uint32               PRE_RESOLVE_DMASK;      // destination mask before action resolution
     fm_byte                 QOS_SWPRI;              // 4-bit switch priority
     fm_byte               * RX_DATA;                // ingress (receive) packet data

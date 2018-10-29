@@ -243,8 +243,7 @@ typedef struct mbyParserToMapperStruct
     fm_bool                 PA_KEYS_VALID[MBY_N_PARSER_KEYS]; // parser keys valid flags
     fm_bool                 PA_L3LEN_ERR;                     // l3 length error
     fm_uint16               PA_PACKET_TYPE;                   // packet type (new for MBY)
-    fm_byte                 PA_PTRS      [MBY_N_PARSER_PTRS]; // pointers to data of interest within packet
-    fm_bool                 PA_PTRS_VALID[MBY_N_PARSER_PTRS]; // parser pointers valid flags
+    mbyParserHdrPtrs        PA_HDR_PTRS;                      // parser header pointers
     fm_uint32               RX_LENGTH;                        // ingress packet data length [bytes]
     fm_byte               * RX_DATA;                          // ingress (receive) packet data
     fm_uint32               RX_PORT;                          // ingress port

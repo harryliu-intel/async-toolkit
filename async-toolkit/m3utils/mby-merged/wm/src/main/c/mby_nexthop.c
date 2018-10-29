@@ -279,6 +279,7 @@ void NextHop
     out->IS_IPV6                = in->IS_IPV6;
     out->L2_ETYPE               = in->L2_ETYPE;
     out->MIRROR0_PROFILE_IDX    = in->MIRROR0_PROFILE_IDX;
+    out->MOD_PROF_IDX           = in->MOD_PROF_IDX;
     out->MTU_VIOLATION          = in->MTU_VIOLATION;
     out->NO_LEARN               = in->NO_LEARN;
     out->OPERATOR_ID            = in->OPERATOR_ID;
@@ -287,6 +288,7 @@ void NextHop
     out->PARSER_INFO            = in->PARSER_INFO;
     out->PARSER_WINDOW_V        = in->PARSER_WINDOW_V;
     out->PA_DROP                = in->PA_DROP;
+    out->PA_HDR_PTRS            = in->PA_HDR_PTRS;
     out->PA_L3LEN_ERR           = in->PA_L3LEN_ERR;
     out->PRE_RESOLVE_DMASK      = in->PRE_RESOLVE_DMASK;
     out->QOS_SWPRI              = in->QOS_SWPRI;

@@ -76,10 +76,12 @@ void RxPipeline
     hsh2nxt.L3_IDOMAIN     = cla2hsh.L3_IDOMAIN;
     hsh2nxt.L2_IVID1       = cla2hsh.L2_IVID1;
     hsh2nxt.LEARN_MODE     = cla2hsh.LEARN_MODE;
+    hsh2nxt.MOD_PROF_IDX   = cla2hsh.MOD_PROF_IDX;
     hsh2nxt.PARITY_ERROR   = cla2hsh.PARITY_ERROR;
     hsh2nxt.PARSER_ERROR   = cla2hsh.PARSER_ERROR;
     hsh2nxt.PARSER_INFO    = cla2hsh.PARSER_INFO;
     hsh2nxt.PA_L3LEN_ERR   = cla2hsh.PA_L3LEN_ERR;
+    hsh2nxt.PA_HDR_PTRS    = cla2hsh.PA_HDR_PTRS;
     hsh2nxt.RX_DATA        = cla2hsh.RX_DATA;
     hsh2nxt.RX_LENGTH      = cla2hsh.RX_LENGTH;
     hsh2nxt.RX_PORT        = cla2hsh.RX_PORT;

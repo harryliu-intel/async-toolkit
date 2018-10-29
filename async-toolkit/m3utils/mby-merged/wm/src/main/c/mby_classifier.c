@@ -549,13 +549,15 @@ static void transformActions
     fm_uint16                * const l2_ivid1,
     fm_byte                  * const qos_l2_vpri1,
     fm_byte                  * const ffu_trig,
-    fm_uint32                * const policer_action
+    fm_uint32                * const policer_action,
+    fm_byte                  * const mod_prof_idx
 )
 {
-    *decap    = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 1) & 0x1;
-    *encap    =  actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val & 0x1;
-    *mod_idx  = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
-    *mpls_pop =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP].val;
+    *decap        = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 1) & 0x1;
+    *encap        =  actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val & 0x1;
+    *mod_idx      = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
+    *mod_prof_idx =  actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val & 0x3F;
+    *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP].val;
 
     *sglort = 0;
     FM_SET_UNNAMED_FIELD64(*sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
@@ -779,6 +781,7 @@ void Classifier
     fm_uint16                l2_ivid1        = 0;
     fm_byte                  qos_l2_vpri1    = 0;
     fm_byte                  ffu_trig        = 0;
+    fm_byte                  mod_prof_idx    = 0;
 
     fm_uint32                policer_action[MBY_CGRP_ACTION_POLICER3 + 1] = { 0 };
 
@@ -816,7 +819,8 @@ void Classifier
         &l2_ivid1,
         &qos_l2_vpri1,
         &ffu_trig,
-        policer_action
+        policer_action,
+        &mod_prof_idx
     );
 
     // Write outputs:
@@ -842,6 +846,7 @@ void Classifier
     out->L34_HASH         = ecmp_hash;
     out->L3_LENGTH        = l3_length;
     out->MOD_IDX          = mod_idx;
+    out->MOD_PROF_IDX     = mod_prof_idx;
     out->MPLS_POP         = mpls_pop;
     out->NO_LEARN         = no_learn;
     out->OUTER_L3_LENGTH  = outer_l3_length;
@@ -868,6 +873,7 @@ void Classifier
     out->PARITY_ERROR     = in->PARITY_ERROR;
     out->PARSER_ERROR     = in->PARSER_ERROR;
     out->PA_DROP          = in->PA_DROP;
+    out->PA_HDR_PTRS      = in->PA_HDR_PTRS;
     out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
     out->RX_DATA          = in->RX_DATA;
     out->RX_LENGTH        = in->RX_LENGTH;

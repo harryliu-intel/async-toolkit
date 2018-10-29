@@ -1589,11 +1589,11 @@ void Mapper
     const fm_bool           pa_ex_parsing_done = in->PA_EX_PARSING_DONE;
     const fm_byte           pa_ex_stage        = in->PA_EX_STAGE;   // unsed <-- REVISIT!!!
     const fm_bool           pa_ex_trunc_header = in->PA_EX_TRUNC_HEADER;
-    const fm_bool   * const pa_flags           = in->PA_FLAGS;      // [MBY_N_PARSER_FLGS]
-    const fm_uint16 * const pa_keys            = in->PA_KEYS;       // [MBY_N_PARSER_KEYS]
-    const fm_bool   * const pa_keys_valid      = in->PA_KEYS_VALID; // [MBY_N_PARSER_KEYS]
-    const fm_byte   * const pa_ptrs            = in->PA_PTRS;       // [MBY_N_PARSER_PTRS]
-    const fm_bool   * const pa_ptrs_valid      = in->PA_PTRS_VALID; // [MBY_N_PARSER_PTRS]
+    const fm_bool   * const pa_flags           = in->PA_FLAGS;                 // [MBY_N_PARSER_FLGS]
+    const fm_uint16 * const pa_keys            = in->PA_KEYS;                  // [MBY_N_PARSER_KEYS]
+    const fm_bool   * const pa_keys_valid      = in->PA_KEYS_VALID;            // [MBY_N_PARSER_KEYS]
+    const fm_byte   * const pa_ptrs            = in->PA_HDR_PTRS.OFFSET;       // [MBY_N_PARSER_PTRS]
+    const fm_bool   * const pa_ptrs_valid      = in->PA_HDR_PTRS.OFFSET_VALID; // [MBY_N_PARSER_PTRS]
     const fm_uint32         rx_port            = in->RX_PORT;
 
     // Outer MPLS valid flag for use in the Classifier:
@@ -1783,6 +1783,7 @@ void Mapper
 
     out->PARITY_ERROR     = FALSE; // parked at 0 <-- REVISIT!!!
     out->PA_DROP          = in->PA_DROP;
+    out->PA_HDR_PTRS      = in->PA_HDR_PTRS;
     out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
     out->RX_DATA          = in->RX_DATA;
     out->RX_LENGTH        = in->RX_LENGTH;
