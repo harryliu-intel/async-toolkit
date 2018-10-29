@@ -1,12 +1,12 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output
 
-import com.intel.cg.hpfd.csr.generated.mby_ppe_parser_map
+import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{EplRxFlags, PortIndex}
 
-case class ParserOutput(updatedParserCsr: mby_ppe_parser_map.mby_ppe_parser_map,
+case class ParserOutput(updatedParserCsr: mby_ppe_parser_map,
                         rxPort: PortIndex,
                         pktMeta: Int,
                         rxFlags: EplRxFlags,

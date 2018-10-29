@@ -1,7 +1,7 @@
 //scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
-import com.intel.cg.hpfd.csr.generated._
+import madisonbay.csr.all._
 import ParserExceptions._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{IPVersion, Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
@@ -35,7 +35,7 @@ object Parser {
   val NumberOfExtractionConfs     = 16
   val OffsetOfNextExtractAction   = 16
 
-  def parse(csrParser: mby_ppe_parser_map.mby_ppe_parser_map, packet: Packet, portIndex: Int): ParserOutput = {
+  def parse(csrParser: mby_ppe_parser_map, packet: Packet, portIndex: Int): ParserOutput = {
 
     // TODO: support split header to Interface 0 and Interface 1
     val packetHeader = PacketHeader(packet.bytes).trimmed
@@ -72,7 +72,7 @@ object Parser {
   }
 
   @tailrec
-  def applyStage(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader)
+  def applyStage(csr: mby_ppe_parser_map, packetHeader: PacketHeader)
        (idStage: Int, parserState: ParserState, packetFlags: PacketFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
                         (PacketFlags, ProtoOffsets, Option[ParserException]) = idStage match {
 
@@ -98,12 +98,12 @@ object Parser {
   /**
     * Do the TCAM lookup, translate the result into actions
     */
-  private def matchingAction(csr: mby_ppe_parser_map.mby_ppe_parser_map, idStage: Int, parserState: ParserState): Option[Action] = {
+  private def matchingAction(csr: mby_ppe_parser_map, idStage: Int, parserState: ParserState): Option[Action] = {
     // All lists have size of 16
     @tailrec
-    def findAction(keysW: List[parser_key_w_r.parser_key_w_r], keysS: List[parser_key_s_r.parser_key_s_r],
-                   anaWs: List[parser_ana_w_r.parser_ana_w_r], anaSs: List[parser_ana_s_r.parser_ana_s_r],
-                   exts:  List[parser_ext_r.parser_ext_r],     excs:  List[parser_exc_r.parser_exc_r]): Option[Action] =
+    def findAction(keysW: List[parser_key_w_r], keysS: List[parser_key_s_r],
+                   anaWs: List[parser_ana_w_r], anaSs: List[parser_ana_s_r],
+                   exts:  List[parser_ext_r],     excs:  List[parser_exc_r]): Option[Action] =
       (keysW, keysS, anaWs, anaSs, exts, excs) match {
         case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.camMatching(Seq(
             ParserTcam.ToMatch(kW.W0_MASK().toShort,    kW.W0_VALUE().toShort,    parserState.w(0)),
@@ -166,7 +166,7 @@ object Parser {
 
   }
 
-  def initialState(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
+  def initialState(csr: mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
     val initWOffsets = Array(portCfg.INITIAL_W0_OFFSET().toShort, portCfg.INITIAL_W1_OFFSET().toShort, portCfg.INITIAL_W2_OFFSET().toShort)
     val w = initWOffsets.map(offset => packetHeader.getWord(offset))
@@ -176,7 +176,7 @@ object Parser {
     ParserState(w, aluOp, state, ptr)
   }
 
-  private def packetType(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
+  private def packetType(csr: mby_ppe_parser_map, packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
     val interface = 0
     val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
     val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
@@ -187,13 +187,13 @@ object Parser {
     }.getOrElse((0,0))
   }
 
-  private def extractKeys(csr: mby_ppe_parser_map.mby_ppe_parser_map, packetHeader: PacketHeader,
-                          protoOffsets: ProtoOffsets): (PacketFields, mby_ppe_parser_map.mby_ppe_parser_map) = {
+  private def extractKeys(csr: mby_ppe_parser_map, packetHeader: PacketHeader,
+                          protoOffsets: ProtoOffsets): (PacketFields, mby_ppe_parser_map) = {
     val fieldProfile = 0
     val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile).PARSER_EXTRACT_CFG
-    val countersL  = mby_ppe_parser_map.mby_ppe_parser_map._PARSER_COUNTERS
+    val countersL  = mby_ppe_parser_map._PARSER_COUNTERS
 
-    def modify(parserExtractCfgReg: parser_extract_cfg_r.parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map.mby_ppe_parser_map), Unit] =
+    def modify(parserExtractCfgReg: parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map), Unit] =
       State { actualState =>
         val (result, mbyPpeParserMap) = actualState
         val protocolId = parserExtractCfgReg.PROTOCOL_ID()

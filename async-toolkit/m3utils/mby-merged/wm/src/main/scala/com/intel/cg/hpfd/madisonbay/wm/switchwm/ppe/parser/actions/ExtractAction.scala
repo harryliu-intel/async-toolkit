@@ -1,12 +1,12 @@
 //scalastyle:off regex.tuples
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
-import com.intel.cg.hpfd.csr.generated.parser_ext_r
+import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 
 
-class ExtractAction(registerExt: parser_ext_r.parser_ext_r) {
+class ExtractAction(registerExt: parser_ext_r) {
 
   def extract(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
     val fields: ProtoOffsets = registerExt.PROTOCOL_ID() match {
@@ -36,6 +36,6 @@ object ExtractAction {
   // To avoid setting a parser flag, use the NOP flag number of 0 (implying that flag 0 is unusable)
   val FlagNOP = 0L
 
-  def apply(registerExt: parser_ext_r.parser_ext_r): ExtractAction = new ExtractAction(registerExt)
+  def apply(registerExt: parser_ext_r): ExtractAction = new ExtractAction(registerExt)
 
 }

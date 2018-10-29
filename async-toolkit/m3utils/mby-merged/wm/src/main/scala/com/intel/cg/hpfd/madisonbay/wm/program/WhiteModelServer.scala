@@ -7,7 +7,7 @@ import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import java.net._
 
-import com.intel.cg.hpfd.csr.generated.mby_top_map
+import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.Memory._
 import monocle.Optional
 
@@ -18,8 +18,8 @@ object WhiteModelServer {
 
   val initialAddress = Address at (0 bytes)
 
-  val csrs = mby_top_map.mby_top_map(initialAddress)
-  val paths = mby_top_map.mby_top_map.genOpticsLookup(csrs, Optional.id)
+  val csrs = mby_top_map(initialAddress)
+  val paths = mby_top_map.genOpticsLookup(csrs, Optional.id)
 
   val egressPortToSocketAndStreamMap = new collection.mutable.HashMap[Int, (Socket, DataOutputStream)]()
 
@@ -32,7 +32,7 @@ object WhiteModelServer {
   }
 
   @tailrec
-  def processMessages(mtm: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map.mby_top_map = {
+  def processMessages(mtm: mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map = {
     val hdr: FmModelMessageHdr = is.readFmModelMessageHdr()
 
     println ("Processing message with hdr" + hdr)

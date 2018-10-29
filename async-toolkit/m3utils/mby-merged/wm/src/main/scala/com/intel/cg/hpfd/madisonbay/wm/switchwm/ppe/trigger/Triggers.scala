@@ -1,9 +1,9 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
-import com.intel.cg.hpfd.csr.generated.mby_ppe_rx_top_map
+import madisonbay.csr.all._
 import com.intel.cgr.hpfd.madisonbay.wm.switchwm.ppe.trigger.TriggerCfg
 
-class Triggers(val ppe_cfg: mby_ppe_rx_top_map.mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
+class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
 
   val tcfg = new TriggerCfg(ppe_cfg.trig_apply, ppe_cfg.trig_apply_misc, ppe_cfg.trig_usage)
 

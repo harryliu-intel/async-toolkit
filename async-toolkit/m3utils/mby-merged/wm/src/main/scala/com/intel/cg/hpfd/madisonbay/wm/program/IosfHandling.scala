@@ -6,7 +6,7 @@ import java.nio.{ByteBuffer, ByteOrder}
 
 import scala.collection.immutable.HashMap
 import scala.language.reflectiveCalls
-import com.intel.cg.hpfd.csr.generated.mby_top_map
+import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto._
 import com.intel.cg.hpfd.madisonbay.wm.server.dto.Implicits._
@@ -15,7 +15,7 @@ import monocle.Optional
 
 import scala.collection.mutable
 
-class IosfHandling(paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long]]) {
+class IosfHandling(paths: HashMap[Address, Optional[mby_top_map,Long]]) {
   // use "duck-typing" to specify which classes are have certain IOSF characteristics
   // (we do not not provide subclasses or trait definitions in the scheme-based generator)
   type dataSig = { def data0: Long ; def data1: Long }
@@ -86,10 +86,10 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long
     output.toList
   }
 
-  def processWriteBlk(csrs: mby_top_map.mby_top_map,
+  def processWriteBlk(csrs: mby_top_map,
                       iosf: IosfRegBlkWriteReqHdr,
                       is: DataInputStream,
-                      os: DataOutputStream): mby_top_map.mby_top_map = {
+                      os: DataOutputStream): mby_top_map = {
     val blockAddr = iosf.addr
     println("Processing block write @" + blockAddr.toHexString + " of "  + iosf.ndw + " words")
     val writeSizeInBytes = iosf.ndw.toInt * 4
@@ -107,7 +107,7 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long
       val registerDatas = arrayToLongs(registerDataArray)
       val registerWriteCommands = registerAddresses zip registerDatas
 
-      val newCsrs = registerWriteCommands.foldLeft(csrs)((currentCsrs: mby_top_map.mby_top_map,
+      val newCsrs = registerWriteCommands.foldLeft(csrs)((currentCsrs: mby_top_map,
                                             writeCommand: (Long, Long)) => {
         val (writeAddress, writeData) = writeCommand
 
@@ -116,7 +116,7 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long
           modifierForRegister <- Some(optionalForRegister.modify(_ => writeData))
         ) yield modifierForRegister
 
-        newCsrOption.getOrElse((x : mby_top_map.mby_top_map) => x)(currentCsrs)
+        newCsrOption.getOrElse((x : mby_top_map) => x)(currentCsrs)
       })
 
       val response = makeResponse(iosf)
@@ -163,7 +163,7 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long
     os.flush()
   }
 
-  def processReadReg(csrs: mby_top_map.mby_top_map, iosf: IosfRegReadReq, os: DataOutputStream): Unit = {
+  def processReadReg(csrs: mby_top_map, iosf: IosfRegReadReq, os: DataOutputStream): Unit = {
     val msgLength = 3*4 + IosfRegCompDataHdr.LengthBits / 8 + 8 // 12 bytes of ModelMsgHdr, 8 bytes of IOSF header, 8 bytes of data
     val registerValue = paths
       .get(Address at (iosf.addr bytes))
@@ -184,7 +184,7 @@ class IosfHandling(paths: HashMap[Address, Optional[mby_top_map.mby_top_map,Long
     println(f"Wrote the response back $registerValue%x")
   }
 
-  def processIosf(csrs: mby_top_map.mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map.mby_top_map = {
+  def processIosf(csrs: mby_top_map, is: DataInputStream, os: DataOutputStream): mby_top_map = {
     val array = Array.ofDim[Byte](128 / 8)  // IOSF headers are 16 bytes, except for reg-write, which is 24
 
     is.readFully(array)

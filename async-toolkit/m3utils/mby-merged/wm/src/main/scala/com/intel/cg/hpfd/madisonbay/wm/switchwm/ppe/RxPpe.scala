@@ -1,6 +1,6 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe
 
-import com.intel.cg.hpfd.csr.generated.mby_ppe_rx_top_map
+import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Epl
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
@@ -9,7 +9,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.{HeaderExtraction, Pa
 
 // TODO: split pipeline from different abstract layers
 
-class RxPpe(csr: mby_ppe_rx_top_map.mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], ParserOutput] {
+class RxPpe(csr: mby_ppe_rx_top_map) extends PipelineStage[Array[Byte], ParserOutput] {
 
   val headerExtractor = new HeaderExtraction
 

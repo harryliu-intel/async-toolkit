@@ -1,10 +1,10 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
-import com.intel.cg.hpfd.csr.generated.parser_exc_r
+import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions._
 
-class ExceptionAction(registerExc: parser_exc_r.parser_exc_r) {
+class ExceptionAction(registerExc: parser_exc_r) {
 
   val exOffset: Short       = registerExc.EX_OFFSET().toShort
   val parsingDone: Boolean  = registerExc.PARSING_DONE.apply() == 1
@@ -34,6 +34,6 @@ class ExceptionAction(registerExc: parser_exc_r.parser_exc_r) {
 
 object ExceptionAction {
 
-  def apply(registerExc: parser_exc_r.parser_exc_r): ExceptionAction = new ExceptionAction(registerExc)
+  def apply(registerExc: parser_exc_r): ExceptionAction = new ExceptionAction(registerExc)
 
 }
