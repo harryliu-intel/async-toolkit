@@ -30,18 +30,18 @@
 
 interface mby_rx_ppe_tb_if();
 
-    logic power_good_reset;
+   logic power_good_reset;
 
-    logic hard_reset;
+   logic hard_reset;
 
-    logic warm_reset;
+   logic warm_reset;
 
-    logic fab_clk;
-       
-    initial begin
-        power_good_reset     = 0;
-        hard_reset           = 0;
-        warm_reset           = 0;
-    end
-    
+   logic fab_clk;
+
+   initial begin
+      power_good_reset     = 0;
+      hard_reset           = 0;
+      warm_reset           = 0;
+   end
+
 endinterface

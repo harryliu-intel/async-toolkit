@@ -493,7 +493,7 @@ EOF
                   "mby_tb_lib",
                   "mby_rtl_lib",
                   "sva_lib",
-	          "mby_mgm_lib",
+                  "mby_mgm_lib",
                   "mby_regflow_lib",
                   "mby_ti_lib",
                   "shdv_shared_lib",

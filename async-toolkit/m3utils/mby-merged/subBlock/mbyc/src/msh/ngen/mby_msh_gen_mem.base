@@ -1,0 +1,24 @@
+// -- Author       : Steve Olson <steve.olson@intel.com>
+// -- Project Name : MBY
+// -- Description  : Mesh node memory wrapper netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input i_reset,
+
+mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank0_if,
+mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank1_if,
+mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank2_if,
+mby_mem_msh_bank_ram_shell_4096x552_func_if.mem msh_mem_bank3_if,
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !i_reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

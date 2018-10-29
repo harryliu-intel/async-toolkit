@@ -7,7 +7,7 @@ set ::collage_ip_info::ip_top_module_name "mby_msh"
 set ::collage_ip_info::ip_version "1.0"
 set ::collage_ip_info::ip_intent_sp ""
 # update this pointer once we can use non-temp shell
-set ::collage_ip_info::ip_rtl_inc_dirs "$::env(MODEL_ROOT)/subBlock/mbyc/src/msh/rtl/"
+set ::collage_ip_info::ip_rtl_inc_dirs "$::env(MODEL_ROOT)/subBlock/mbyc/src/msh/rtl/ $::env(MODEL_ROOT)/target/mby/mgm_run/rtl/ $::env(MODEL_ROOT)/target/mby/mgm_run/msh/src/"
 
 set ::collage_ip_info::ip_input_language SystemVerilog
 
