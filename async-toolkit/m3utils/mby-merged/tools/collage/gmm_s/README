@@ -1,3 +1,0 @@
-# recreate corekit with following:
-cd $MODEL_ROOT/tools/collage/gmm_s
-$MODEL_ROOT/scripts/create_corekit.csh build/builder.gmm_s.tcl 

@@ -42,30 +42,30 @@
 
 class mby_rx_ppe_defines extends uvm_object;
 
-    // Enumeration: rx_ppe_topology_e
-    // Definition of different rx_ppe TB topologies.
-    //    -UNK_TOPO          -Used to detect integration error
-    //    -RX_PPE_FULL       -Complete RX PPE pipeline Testbench
+   // Enumeration: rx_ppe_topology_e
+   // Definition of different rx_ppe TB topologies.
+   //    -UNK_TOPO          -Used to detect integration error
+   //    -RX_PPE_FULL       -Complete RX PPE pipeline Testbench
 
-    typedef enum int {
-        UNK_TOPO           = 0,
-        RX_PPE_FULL        = 1
-    } rx_ppe_topology_e ;
+   typedef enum int {
+      UNK_TOPO           = 0,
+      RX_PPE_FULL        = 1
+   } rx_ppe_topology_e ;
 
 
-    `uvm_object_utils(mby_rx_ppe_env_pkg::mby_rx_ppe_defines)
+   `uvm_object_utils(mby_rx_ppe_env_pkg::mby_rx_ppe_defines)
 
-    //---------------------------------------------------------------------------
-    //  Constructor: new
-    //  Collect any plusargs and re-configure variables from default, if used.
-    //  Arguments:
-    //  name   - MC Defines object name.
-    //---------------------------------------------------------------------------
-    function       new(string name = "mby_rx_ppe_defines");
-        super.new(name);
-    //  $value$plusargs("DISABLE_END2END_FRAME_SB=%d",  disable_end2end_frame_sb);
+   //---------------------------------------------------------------------------
+   //  Constructor: new
+   //  Collect any plusargs and re-configure variables from default, if used.
+   //  Arguments:
+   //  name   - MC Defines object name.
+   //---------------------------------------------------------------------------
+   function       new(string name = "mby_rx_ppe_defines");
+      super.new(name);
+   //  $value$plusargs("DISABLE_END2END_FRAME_SB=%d",  disable_end2end_frame_sb);
 
-    endfunction: new
+   endfunction: new
 
 endclass: mby_rx_ppe_defines
 

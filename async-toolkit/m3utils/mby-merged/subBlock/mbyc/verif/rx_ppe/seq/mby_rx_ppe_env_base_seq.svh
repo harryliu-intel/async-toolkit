@@ -30,12 +30,12 @@
 
 //   Class:  mby_rx_ppe_env_base_seq
 //
-//   This is the rx_ppe base seq extended from MBY Base seq which is in-turn extended 
-//   from shdv_base_seq. This sequence class has methods to setup rx_ppe env object handle 
+//   This is the rx_ppe base seq extended from MBY Base seq which is in-turn extended
+//   from shdv_base_seq. This sequence class has methods to setup rx_ppe env object handle
 //   and methods to perform register access both for RTL and WM.
 //
 //  All the sequences in rx_ppe env will extend from this base sequence to inherit its
-//  functionality.  
+//  functionality.
 
 
 `ifndef __MBY_RX_PPE_ENV_BASE_SEQ_GUARD
@@ -47,50 +47,50 @@
 
 class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
 
-    // Variable: env
-    // rx_ppe Top Level Env.
-    mby_rx_ppe_env_pkg::mby_rx_ppe_env         env;
+   // Variable: env
+   // rx_ppe Top Level Env.
+   mby_rx_ppe_env_pkg::mby_rx_ppe_env         env;
 
-    // Variable: cfg
-    // rx_ppe environment cfg.
-    mby_rx_ppe_env_pkg::mby_rx_ppe_tb_top_cfg  cfg;
+   // Variable: cfg
+   // rx_ppe environment cfg.
+   mby_rx_ppe_env_pkg::mby_rx_ppe_tb_top_cfg  cfg;
 
-    // Variable: ral
-    // rx_ppe RAL env.
-    mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env     ral;
+   // Variable: ral
+   // rx_ppe RAL env.
+   mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env     ral;
 
-    // Variable: vif
-    // Handle to rx_ppe Tb interface.
-    virtual mby_rx_ppe_tb_if                   vif;
+   // Variable: vif
+   // Handle to rx_ppe Tb interface.
+   virtual mby_rx_ppe_tb_if                   vif;
 
-    // ------------------------------------------------------------------------
-    //  Constructor: new
-    //  Arguments:
-    //  string name   - rx_ppe env base sequence object name.
-    // ------------------------------------------------------------------------
-    function new(string name = "mby_rx_ppe_env_base_seq");
-        super.new();
-    endfunction : new
+   // ------------------------------------------------------------------------
+   //  Constructor: new
+   //  Arguments:
+   //  string name   - rx_ppe env base sequence object name.
+   // ------------------------------------------------------------------------
+   function new(string name = "mby_rx_ppe_env_base_seq");
+      super.new();
+   endfunction : new
 
-    // ------------------------------------------------------------------------
-    virtual function void set_env(slu_tb_env tb_env);
-        mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
-        bit stat;
+   // ------------------------------------------------------------------------
+   virtual function void set_env(slu_tb_env tb_env);
+      mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
+      bit stat;
 
-        stat = $cast(temp_env,tb_env);
-        if(!stat) begin
-            `ovm_fatal(get_name(), "Cast of sla_tb_env failed");
-        end
-        if(temp_env == null) begin
-            `ovm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
-        end
+      stat = $cast(temp_env,tb_env);
+      if(!stat) begin
+         `ovm_fatal(get_name(), "Cast of sla_tb_env failed");
+      end
+      if(temp_env == null) begin
+         `ovm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
+      end
 
-        this.env = temp_env;
-        this.cfg = temp_env.get_tb_cfg();
-        this.ral = temp_env.get_tb_ral();
-        this.vif = temp_env.get_tb_vif();
+      this.env = temp_env;
+      this.cfg = temp_env.get_tb_cfg();
+      this.ral = temp_env.get_tb_ral();
+      this.vif = temp_env.get_tb_vif();
 
-    endfunction : set_env
+   endfunction : set_env
 
 endclass : mby_rx_ppe_env_base_seq
 

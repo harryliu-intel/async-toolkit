@@ -42,63 +42,63 @@
 
 class mby_rx_ppe_warm_reset_seq extends shdv_base_reset_seq;
 
-    // Variable: env
-    // Protected rx_ppe Top Level Env
-    protected mby_rx_ppe_env_pkg::mby_rx_ppe_env            env;
+   // Variable: env
+   // Protected rx_ppe Top Level Env
+   protected mby_rx_ppe_env_pkg::mby_rx_ppe_env            env;
 
-    // Variable: tb_vif;
-    // Handle to rx_ppe TB interface.
-    virtual mby_rx_ppe_tb_if                            tb_vif;
+   // Variable: tb_vif;
+   // Handle to rx_ppe TB interface.
+   virtual mby_rx_ppe_tb_if                            tb_vif;
 
 
-    `uvm_object_utils(mby_rx_ppe_warm_reset_seq)
-    `uvm_declare_p_sequencer(slu_sequencer)
+   `uvm_object_utils(mby_rx_ppe_warm_reset_seq)
+   `uvm_declare_p_sequencer(slu_sequencer)
 
-    //------------------------------------------------------------------------------
-    //  Constructor: new
-    //  New rx_ppe Warm Reset Sequence Object.
-    //  Gets handle to the rx_ppe ENV.
-    //
-    //  Arguments:
-    //  string name  - rx_ppe Top WarmReset sequence object name.
-    //------------------------------------------------------------------------------
-    function new(input string name = "mby_rx_ppe_warm_reset_seq");
-        super.new(name);
-        set_env(slu_tb_env::get_top_tb_env());
+   //------------------------------------------------------------------------------
+   //  Constructor: new
+   //  New rx_ppe Warm Reset Sequence Object.
+   //  Gets handle to the rx_ppe ENV.
+   //
+   //  Arguments:
+   //  string name  - rx_ppe Top WarmReset sequence object name.
+   //------------------------------------------------------------------------------
+   function new(input string name = "mby_rx_ppe_warm_reset_seq");
+      super.new(name);
+      set_env(slu_tb_env::get_top_tb_env());
 
-        tb_vif = env.get_tb_vif();
-    endfunction: new
+      tb_vif = env.get_tb_vif();
+   endfunction: new
 
-    //------------------------------------------------------------------------------
-    //  Function: set_env
-    //  Handle to rx_ppe Top Level env for use in sequences
-    //
-    //  Arguments:
-    //  slu_tb_env tb_env  -  Handle to the ENV
-    //------------------------------------------------------------------------------
-    virtual function void set_env(slu_tb_env tb_env);
-        mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
-        bit stat;
+   //------------------------------------------------------------------------------
+   //  Function: set_env
+   //  Handle to rx_ppe Top Level env for use in sequences
+   //
+   //  Arguments:
+   //  slu_tb_env tb_env  -  Handle to the ENV
+   //------------------------------------------------------------------------------
+   virtual function void set_env(slu_tb_env tb_env);
+      mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
+      bit stat;
 
-        stat = $cast(temp_env,tb_env);
-        `slu_assert(    stat, ($psprintf("Cast of $s(type: $s) failed!!!",tb_env.get_name(),tb_env.get_type_name())));
-        `slu_assert(temp_env, ("Could not fetch slu_tb_env handle!!!"));
+      stat = $cast(temp_env,tb_env);
+      `slu_assert(    stat, ($psprintf("Cast of $s(type: $s) failed!!!",tb_env.get_name(),tb_env.get_type_name())));
+      `slu_assert(temp_env, ("Could not fetch slu_tb_env handle!!!"));
 
-        this.env    = temp_env;
-    endfunction : set_env
+      this.env    = temp_env;
+   endfunction : set_env
 
-    //------------------------------------------------------------------------------
-    //  Task: body
-    //  Sequence body is used to control Warm_Reset (Delay -> Clear).
-    //------------------------------------------------------------------------------
-    task body();
+   //------------------------------------------------------------------------------
+   //  Task: body
+   //  Sequence body is used to control Warm_Reset (Delay -> Clear).
+   //------------------------------------------------------------------------------
+   task body();
 
-        repeat (100) @(posedge tb_vif.fab_clk);
+      repeat (100) @(posedge tb_vif.fab_clk);
 
-        `uvm_info(get_name(), $sformatf("Warm_Reset Cleared"), UVM_NONE);
-        tb_vif.warm_reset                 = 0;
+      `uvm_info(get_name(), $sformatf("Warm_Reset Cleared"), UVM_NONE);
+      tb_vif.warm_reset                 = 0;
 
-    endtask: body
+   endtask: body
 
 endclass: mby_rx_ppe_warm_reset_seq
 

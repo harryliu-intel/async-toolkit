@@ -41,44 +41,44 @@
 
 class mby_rx_ppe_dut_cfg extends shdv_base_config;
 
-    // Variable: reset_type
-    // Definition of the RESET type
-    reset_type_e                     reset_type ;
+   // Variable: reset_type
+   // Definition of the RESET type
+   reset_type_e                     reset_type ;
 
 
-    `uvm_object_utils_begin(mby_rx_ppe_dut_cfg)
-        `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
-    `uvm_object_utils_end
+   `uvm_object_utils_begin(mby_rx_ppe_dut_cfg)
+      `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
+   `uvm_object_utils_end
 
 
-    //---------------------------------------------------------------------------
-    // Constructor: new
-    //
-    // Constructor.
-    //
-    // Arguments:
-    //    string name - mby_rx_ppe_dut_cfg object name
-    //---------------------------------------------------------------------------
-    function new( string name = "mby_rx_ppe_dut_cfg");
-        super.new(name);
+   //---------------------------------------------------------------------------
+   // Constructor: new
+   //
+   // Constructor.
+   //
+   // Arguments:
+   //    string name - mby_rx_ppe_dut_cfg object name
+   //---------------------------------------------------------------------------
+   function new( string name = "mby_rx_ppe_dut_cfg");
+      super.new(name);
 
-    endfunction: new
+   endfunction: new
 
-    //---------------------------------------------------------------------------
-    // Function: pre_randomize
-    //---------------------------------------------------------------------------
-    function void pre_randomize();
-        super.pre_randomize();
-    endfunction: pre_randomize
+   //---------------------------------------------------------------------------
+   // Function: pre_randomize
+   //---------------------------------------------------------------------------
+   function void pre_randomize();
+      super.pre_randomize();
+   endfunction: pre_randomize
 
-    //---------------------------------------------------------------------------
-    // Function: post_randomize
-    // Collect Plusargs here, then push down cfg changes to any bfm/IP
-    //---------------------------------------------------------------------------
-    function void post_randomize();
-        super.post_randomize();
+   //---------------------------------------------------------------------------
+   // Function: post_randomize
+   // Collect Plusargs here, then push down cfg changes to any bfm/IP
+   //---------------------------------------------------------------------------
+   function void post_randomize();
+      super.post_randomize();
 
-    endfunction: post_randomize
+   endfunction: post_randomize
 
 
 endclass: mby_rx_ppe_dut_cfg
