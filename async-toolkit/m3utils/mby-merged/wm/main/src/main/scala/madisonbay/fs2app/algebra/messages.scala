@@ -3,6 +3,7 @@ package fs2app
 package algebra
 
 import madisonbay.tcp._
+import scalaz.StateT
 
 package object messages {
 
@@ -16,4 +17,21 @@ package object messages {
   case object NotSupported extends Message
   case object Quit extends Message
 
+  trait MessageHandler[F[_],A] {
+
+    type Transition = StateT[F,A,Array[Byte]]
+
+    def quit: F[Unit]
+    def notSupported: F[Unit]
+    def packets(p: Packets): Transition
+    def regWrite(i: IosfRegWrite): Transition
+    def regRead(i: IosfRegRead): Transition
+    def regBlkWrite(i: IosfRegBlkWrite): Transition
+    def egressSocketInfo(esi: EgressSocketInfo): F[Unit]
+
+  }
+
+  object MessageHandler {
+    def apply[F[_],A](implicit mh: MessageHandler[F,A]): MessageHandler[F,A] = mh
+  }
 }

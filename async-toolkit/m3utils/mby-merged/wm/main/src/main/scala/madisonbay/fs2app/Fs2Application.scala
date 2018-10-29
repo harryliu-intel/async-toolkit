@@ -8,20 +8,16 @@ import cats.effect.{ Concurrent, ConcurrentEffect }
 import java.net.InetSocketAddress
 import java.net.InetAddress
 
-import madisonbay.tcp._
-import madisonbay.tcp.iosf._
-
 import madisonbay.logger.Logger
 import madisonbay.fs2app.algebra.messages._
 import madisonbay.fs2app.deserialization._
 import madisonbay.fs2app.algebra._
 
 import scalaz.MonadError
+import scalaz.StateT
 import scalaz.syntax.all._
 
 import java.nio.channels.AsynchronousChannelGroup
-
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
 
 object Fs2Application {
 
@@ -61,79 +57,15 @@ object Fs2Application {
       ConcurrentEffect:
       Concurrent:
       ServerSocket:
-      PublisherSocket
-  ](egressSocketInfoQ: Queue[F,EgressSocketInfo], quitS: SignallingRef[F,Boolean])
+      PublisherSocket:
+      λ[G[_] => MessageHandler[G,Int]]
+  ](egressSocketInfoQ: Queue [F,EgressSocketInfo], quitS: SignallingRef[F,Boolean])
     (implicit me: MonadError[F,Throwable]) {
 
     val logger = Logger[F]
     val serverSocket = ServerSocket[F]
     val publisherSocket = PublisherSocket[F]
-
-    //scalastyle:off method.length
-    def handleMessage(msg: Message): Stream[F,Array[Byte]] = msg match {
-      case esi @ EgressSocketInfo(_,_) =>
-        val esiS = Stream.eval(esi.point[F])
-        for {
-          info <- esiS
-          _    <- Stream.eval(logger.trace(s"Queuing egress socket info: $info"))
-          _    <- egressSocketInfoQ.enqueue(esiS)
-        } yield Array.empty[Byte]
-      case io @ IosfRegBlkWrite(req,_) => Stream.eval(
-        for {
-          _ <- logger.debug(s"Received IosfRegBlkWrite: $io")
-          _ <- logger.debug("Sending back dummy response without any internal processing.")
-          header = FmModelMessageHdr(
-            BitSize[FmModelMessageHdr].getBytes + BitSize[IosfRegCompNoData].getBytes,
-            2.shortValue(),
-            FmModelMsgType.Iosf,
-            0.shortValue,
-            0.shortValue
-          )
-          iosfNoData = IosfRegCompNoData(
-            sai = BitField(1),
-            dest = req.source,
-            source = req.dest,
-            tag = req.tag,
-            rsp = BitField(0),
-            rsvd0 = BitField(0)
-          )
-        } yield ByteArrayEncoder[FmModelMessageHdr].encode(header) ++
-          ByteArrayEncoder[IosfRegCompNoData].encode(iosfNoData)
-      )
-      case io @ (IosfRegRead(req)) => Stream.eval(
-        for {
-          _ <- logger.debug(s"Received $io")
-          header = FmModelMessageHdr(
-            BitSize[FmModelMessageHdr].getBytes
-              + BitSize[IosfRegCompDataHdr].getBytes
-              + BitSize[U64].getBytes,
-            2.shortValue(),
-            FmModelMsgType.Iosf,
-            0.shortValue,
-            0.shortValue
-          )
-          iosfData = IosfRegCompDataHdr(
-            sai = BitField(1),
-            dest = req.source,
-            source = req.dest,
-            tag = req.tag,
-            rsp = BitField(0),
-            rsvd0 = BitField(0)
-          )
-          registerValue = 0L
-          _ <- logger.debug(s"Sending back hardcoded register value: $registerValue")
-        } yield ByteArrayEncoder[FmModelMessageHdr].encode(header) ++
-          ByteArrayEncoder[IosfRegCompDataHdr].encode(iosfData) ++
-          ByteArrayEncoder[U64].encode(registerValue)
-      )
-      case Quit => Stream.eval(
-        for {
-          _ <- logger.debug("Terminating program! Bye bye!")
-          _ <- quitS.set(true)
-        } yield Array.empty[Byte]
-      )
-      case _ => handleMessage(Quit)
-    }
+    val messageHandler = MessageHandler[F,Int]
 
     def serverStream: Stream[F,Stream[F,Unit]] =
       for {
@@ -145,7 +77,7 @@ object Fs2Application {
         .map(deserialize[F])
         .evalMap(identity)
         .flatMap(identity)
-        .flatMap(handleMessage)
+        .through(messageDispatcher)
         .map(array => socket.write(Chunk.boxed(array)))
         .evalMap(identity)
 
@@ -153,15 +85,43 @@ object Fs2Application {
       egressSocketInfoQ.dequeue
         .flatMap(publisherSocket.create)
         .map(socket => Stream.eval(socket.close))
+
+    private def messageDispatcher: Pipe[F,Message,Array[Byte]] = {
+      def stateTransition(state: StateT[F,Int,Array[Byte]]): Stream[F,Array[Byte]] =
+        Stream.eval(state.run(0).map { case (_,arr) => arr })
+
+      in => in.flatMap {
+        case io  @ IosfRegBlkWrite(_, _) => stateTransition(messageHandler.regBlkWrite(io))
+        case io  @ IosfRegWrite(_)       => stateTransition(messageHandler.regWrite(io))
+        case io  @ IosfRegRead(_)        => stateTransition(messageHandler.regRead(io))
+        case p   @ Packets(_)            => stateTransition(messageHandler.packets(p))
+        case esi @ EgressSocketInfo(_,_) => Stream.eval(
+          messageHandler.egressSocketInfo(esi)
+            .flatMap(_ => egressSocketInfoQ.enqueue1(esi))
+            .map(_ => Array.empty[Byte])
+        )
+        case NotSupported                => Stream.eval(
+          messageHandler.notSupported
+            .map(_ => Array.empty[Byte])
+        )
+        case Quit                        => Stream.eval(
+          messageHandler.quit
+            .flatMap(_ => quitS.set(true))
+            .map(_ => Array.empty[Byte])
+        )
+      }
+    }
   }
 
-  def program[F[_]:
+  def fs2Program[F[_]:
       Logger:
       Concurrent:
       ConcurrentEffect:
       ServerSocket:
-      PublisherSocket
-  ](implicit me: MonadError[F,Throwable]): F[Unit] = {
+      PublisherSocket:
+      λ[G[_] => MonadError[G,Throwable]]:
+      λ[G[_] => MessageHandler[G,Int]]
+  ]: F[Unit] = {
     val queueSize = 1
 
     val stream = for {
