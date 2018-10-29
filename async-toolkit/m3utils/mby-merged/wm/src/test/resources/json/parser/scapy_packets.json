@@ -1,0 +1,24 @@
+{
+  "packets": [
+    {
+      "name": "simple_udp",
+      "data": "FFFFFFFFFFFF00000000000008004500001C0001000040117CCE7F0000017F0000010035003500080172",
+      "scapy": "Ether()/IP()/UDP()",
+      "out": {
+        "flags": [
+          "udp"
+        ]
+      }
+    },
+    {
+      "name": "simple_tcp",
+      "data": "FFFFFFFFFFFF0000000000000800450000280001000040067CCD7F0000017F00000100140050000000000000000050022000917C0000",
+      "scapy": "Ether()/IP()/TCP()",
+      "out": {
+        "flags": [
+          "tcp"
+        ]
+      }
+    }
+  ]
+}

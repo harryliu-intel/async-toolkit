@@ -1,7 +1,8 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam.TcamQuery
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
 
 
 /**
@@ -15,18 +16,26 @@ object ParserTcam {
                       key: RdlField[_, Long] with HardwareReadable[Long],
                       input: Long)
 
-  def tcamMatchRegSeq(behavior: TcamMatchingBehavior)(dataSequence: Seq[TcTriple]): Boolean = {
+  case class ToMatch(mask: Short, value: Short, input: Short)
+
+  val parserMatchBitFun: TcamQuery => Boolean = tcq => parserMatchBit(tcq)
+
+  def matchRegisterSeq(behavior: TcamQuery => Boolean)(dataSequence: Seq[TcTriple]): Boolean = {
     assert(dataSequence.forall(t => t.keyInvert.range.size == t.key.range.size), "key and mask/inverted version should be the same width")
-    dataSequence.forall(t => tcamMatchLong(behavior)(t.keyInvert.range.size)(t.keyInvert(), t.key(), t.input))
+    dataSequence.forall(t => Tcam.matchLong(behavior)(t.keyInvert.range.size)(t.keyInvert(), t.key(), t.input))
   }
 
-  def tcamMatchReg(behavior: TcamMatchingBehavior)(data: TcTriple): Boolean =
-    tcamMatchRegSeq(behavior)(Seq(data))
+  def matchRegisterSeq(dataSequence: Seq[TcTriple]): Boolean = matchRegisterSeq(parserMatchBitFun)(dataSequence)
+
+  // added temporary to keep compatibility with c
+  def camMatching(dataSeq: Seq[ToMatch]): Boolean = dataSeq.forall(d => (d.input & d.mask).toShort == d.value)
+
+  def matchRegister(behavior: TcamQuery => Boolean)(data: TcTriple): Boolean = matchRegisterSeq(behavior)(Seq(data))
 
   /**
     * Parser Analyzer TCAMs have a special encoding
     */
-  def parserAnalyzerTcamMatchBit(x: TcamQuery): Boolean = {
+  def parserMatchBit(x: TcamQuery): Boolean = {
     x match {
       // keyInvert: Boolean, key: Boolean,  input: Boolean
       case TcamQuery(false, false, _)     => true // dont care

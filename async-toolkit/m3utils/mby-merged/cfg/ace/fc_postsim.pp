@@ -74,19 +74,25 @@
 
 			    mby_test   => {
 					   Required     => 1,
-					   #StartString  => '/OVM_INFO @ 0: reporter \[RNTST\] Running test/',
 					   StartString  => '/OUTPUT START/',
-					   RequiredText=> ['/OVM Report Summary/i',],
+					   RequiredText=> ['/Report Summary/i',],
 					   EndString    => '/Report\s+counts\s+by\s+severity/',
-					   #EndString    => '/Report/',
-					   #RequiredText => ['Report',],
 					   okErrors     => [
-		                                       # [AK]:8/20/18 - Filter AXI cfg object error fields.
-				                       # TODO: Findout if there is a way to turn off AMBA VIP config 
+		                       # [AK]:8/20/18 - Filter AXI cfg object error fields.
+				               # TODO: Findout if there is a way to turn off AMBA VIP config 
 						       # object print.
 						       '/allow_cache_update_on_coherent_error_response/',
-		                                       '/flag_cacheline_and_memory_coherency_check_per_xact_as_error/',
-		                          ],
+		                       '/flag_cacheline_and_memory_coherency_check_per_xact_as_error/',
+		                       '/svt_err_check_stats_cov_htrans_not_changed_to_idle_during_error/',
+		                       '/svt_err_check_stats_cov_two_cycle_error_resp/',
+		                       '/svt_ahb_slave_transaction_error_sequence/',
+		                       '/svt_ahb_arb_abort_on_error_resp_virtual_sequence/',
+
+                               #[ssnanal] EPC setup is incorrect and ec_env handle is not uniquified across multiple mby_ec_top
+                               #Since the POR is to move to UVM RAL these errors will not be fixed. 
+                               #'/^.*ec_env\[\d+\].ec_core_regs already exists.*$/',
+                               #'/^.*Register file ec_env\[\d+\].mac_regs\[\d+\] already exists.*$/',
+		               ],
                                    
 					   #okErrors_multiLine => [
 								  #[3, "/ERROR.*\(introduced error\)/", "/At time/", "/ERROR - example multi-line error/"],

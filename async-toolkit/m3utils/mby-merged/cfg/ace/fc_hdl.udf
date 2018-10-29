@@ -41,6 +41,25 @@ my @all_sip_elab_opts = &get_all_sip_elab_opts();
 my @top_vrf_vlogopts = &get_top_vrf_vlogopts();
 my @all_hip_liblist = &get_hip_liblist();
 
+my @fc_rtl_liblist = (
+    "sva_lib",
+    "mby_mgm_lib",
+     (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
+     $fc_global_vars::IP_STUB_LIB,
+);
+my @fc_verif_liblist = (
+    "shdv_shared_lib",
+    "ext_shared_lib",
+    "svt_ahb_lib",
+    "mby_wm_dpi_lib",
+    "mby_common_lib",
+    "fc_hdl_top_lib",
+    "fc_hvl_top_lib",
+    "fc_env_lib",
+    "fc_tests_lib",
+    "fc_seq_lib",
+);
+
 # TODO &fc_global_vars::gen_liblist();
 # TODO &fc_global_vars::gen_hip_liblist();
 
@@ -139,7 +158,7 @@ EOF
              },
 
              $fc_global_vars::COLLAGE_LIB => {
-                    -tag      => "nonsynth+nonemu",
+                    #-tag      => "nonsynth+nonemu",
                     -generated => 1,
                     -hdl_spec => [
                         "cfg/ace/HDL/soc_assemble_collage.hdl",
@@ -154,13 +173,14 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
+                          "cfg/ace/HDL/rtl/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
                        "shdv_shared_lib",
                        $fc_global_vars::COLLAGE_LIB,
                     ],
-                    -tag            => "nonsynth",
+                    #-tag            => "nonsynth",
              },
 
              fc_tests_lib => {
@@ -186,28 +206,6 @@ EOF
                  -tag => "nonsynth",
              },
 
-             fc_lite_tests_lib => {
-                 -generated => 1,
-                 -hdl_spec => [
-                     "verif/gen/fc_test.hdl",
-                 ],
-                 -dependent_libs => [
-                     "shdv_shared_lib",
-                     "ext_shared_lib",
-                     "mby_common_lib",
-                     "fc_lite_env_lib",
-                     "fc_lite_seq_lib",
-                     $fc_global_vars::COLLAGE_LIB,
-                     "generated_collateral_lib",
-                     @all_sip_verif_liblist,
-                 ],
-                 -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_verif_vlogopts,
-                 ],
-                 -tag => "nonsynth",
-             },
-
              fc_seq_lib => {
                  -hdl_spec => [
                      "verif/tb/seqlib/fcseq.hdl",
@@ -227,25 +225,6 @@ EOF
                  -tag => "nonsynth",
              },
 
-             fc_lite_seq_lib => {
-                 -hdl_spec => [
-                     "verif/tb/seqlib/fcseq.hdl",
-                 ],
-                 -dependent_libs => [
-                     "shdv_shared_lib",
-                     "ext_shared_lib",
-                     "mby_common_lib",
-                     "fc_lite_env_lib",
-                     $fc_global_vars::COLLAGE_LIB,
-                     @all_sip_verif_liblist,
-                 ],
-                 -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_verif_vlogopts,
-                 ],
-                 -tag => "nonsynth",
-             },
-
              fc_env_lib => {
                  -generated => 1,
                  -hdl_spec => [
@@ -255,7 +234,7 @@ EOF
                      "shdv_shared_lib",
                      "ext_shared_lib",
                      "mby_common_lib",
-                     "vte_tr_uvm_lib",
+                     #ssn "vte_tr_uvm_lib",
                      @all_sip_verif_liblist,
                      $fc_global_vars::COLLAGE_LIB,
                  ],
@@ -277,7 +256,7 @@ EOF
                      "shdv_shared_lib",
                      "ext_shared_lib",
                      "mby_common_lib",
-                     "vte_tr_uvm_lib",
+                     #ssn "vte_tr_uvm_lib",
                      @all_sip_verif_liblist,
                      $fc_global_vars::COLLAGE_LIB,
                  ],
@@ -310,11 +289,9 @@ EOF
              fc_top_lib => {
                  -generated => 1,
                  -hdl_spec => [
-                     "cfg/ace/HDL/dummy.hdl",
-                     # these wrapper hdl's should be temp, until top level shells remove 2d arrays
-                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_ec_top_wrapper.hdl",
-                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/mby_mpp_wrapper.hdl",
-                     "target/".&ToolConfig::get_facet('dut') . "/collage/work/soc/gen/source/rtl/soc.hdl",
+                     "cfg/ace/HDL/rtl/dummy.hdl",
+                     "collage/work/soc/gen/source/rtl/soc.hdl",
+                     "cfg/ace/HDL/rtl/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
@@ -361,60 +338,19 @@ EOF
                      @top_vrf_vlogopts,
                      "+define+FC_MODEL",
                      "+define+HDL_TOP_LIB=fc_hdl_top_lib",
-                     "+define+HDL_TOP_CFG=fc_cfg",
+                     "+define+HDL_TOP_CFG=fc_hdl_top_cfg",
                  ],
                  -tag => "nonsynth",
              },
 
-             fc_lite_hdl_top_lib => {
-                 -generated => 1,   # looking up verif/gen
-                 -hdl_spec => [
-                     "verif/tb/wrappers/fc_hdl_top.hdl",
-                     "verif/gen/FcDutConnect.hdl",
-                 ],
-                 -dependent_libs => [
-                     $fc_global_vars::COLLAGE_LIB,
-                     "generated_collateral_lib",
-                 ],
-                  -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_rtl_vlogopts,
-                     @all_sip_verif_vlogopts,
-                     @top_vrf_vlogopts,
-                     "+define+FC_LITE_MODEL",
-                     "+define+HDL_TOP_LIB=fc_lite_hdl_top_lib",
-                     "+define+HDL_TOP_CFG=fc_lite_cfg",
-                 ],
-                 -tag => "nonsynth",
-             },
-
-             fc_lite_hvl_top_lib => {
-                 -generated => 1,   # looking up verif/gen
-                 -hdl_spec => [
-                     "verif/tb/wrappers/fc_hvl_top.hdl",
-                 ],
-                  -dependent_libs => [
-                     "sip_shared_lib",
-                     "fc_lite_env_lib",
-                     "fc_lite_tests_lib",
-                     "fc_lite_seq_lib",
-                     $fc_global_vars::COLLAGE_LIB,
-                     @all_sip_verif_liblist,
-                 ],
-                 -vlog_opts => [
-                     @FC_VLOG_OPTIONS,
-                     @all_sip_verif_vlogopts,
-                     @all_sip_rtl_vlogopts,
-                     @top_vrf_vlogopts,
-                     "+define+FC_LITE_MODEL",
-                     "+define+HDL_TOP_LIB=fc_lite_hdl_top_lib",
-                     "+define+HVL_TOP_LIB=fc_lite_hvl_top_lib",
-                     "+define+HDL_TOP_CFG=fc_lite_cfg",
-                     "+define+HVL_TOP=fc_hvl_top",
-                     "$ENV{MODEL_ROOT}/verif/tb/wrappers/macros/ti_macro_defines.svh"
-                 ],
-                 -tag => "nonsynth",
-             },
+            #### LH : FEBE Tophiergen
+            dump_filelist_lib => {                                                                                                                              
+                -vlog_files => [
+                    "tools/febe/utility/dump_filelist.sv",
+                ],
+                -vlog_incdirs => [
+                    "$ENV{ACE_HOME}/lib/Verilog",
+                ],},
 
 #              fc_emul_top_lib => {
 #                  -hdl_spec => [
@@ -441,6 +377,7 @@ EOF
                    "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
                     @all_sip_elab_opts,
                     @CDN_PCIE_ELAB_OPTS, 
+                    "dump_filelist_lib.dump_filelist",
                ],
 
                top_language => 'SystemVerilog',
@@ -458,35 +395,14 @@ EOF
                ],
 
                libs => [
-                  "sva_lib",
-                  "shdv_shared_lib",
-                  "ext_shared_lib",
-                  "svt_ahb_lib",
-                  "mby_wm_dpi_lib",
-                  "mby_common_lib",
-                  "vte_tr_uvm_lib",
-
-# Per Subodh suggestion to temporary disable WM - WW40.2 2018
-#                  "gen_mby_regflow_lib",
-#                  "gen_mby_wm",
-#                  "gen_mby_wm_m3",
-#                  "mby_mgm_lib",
                   $fc_global_vars::COLLAGE_LIB,
-
-                  (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-                  $fc_global_vars::IP_STUB_LIB,
-                  "fc_hdl_top_lib",
-                  "fc_hvl_top_lib",
-                  "fc_env_lib",
-                  "fc_tests_lib",
-                  "fc_seq_lib",
+                  @fc_rtl_liblist,
+                  @fc_verif_liblist,
                   "generated_collateral_lib",
                   @all_sip_rtl_liblist,
                   @all_sip_verif_liblist,
                   @all_hip_liblist,
-
-                  "ext_shared_lib",
-#                  "cdn_pcie_lib",
+                  'dump_filelist_lib',
                ],
 
                # List of full path to PLI libraries to use
@@ -535,6 +451,35 @@ EOF
                },
             },
 
+            fc_effm => {
+               top         => 'fc_top_lib.soc',
+               top_language => 'SystemVerilog',
+               use => \@models_use,
+                      
+               effm_opts => [   
+                    "-cfg ZSE -cfg-",
+                    "-use_emubuild_tooldata",  # Remove this when we use HDK greater than 1.4.7
+                    "-top fc_top_lib.soc",
+                    "-effm 2",
+                    "-target $ENV{MODEL_ROOT}/target/".&ToolConfig::get_facet("dut")."/emu/",
+                    "-yml $ENV{MODEL_ROOT}/tools/effm/cfg/buildProjectCfg.yml",
+                    "-schedArgs -define_delegate_in_child",
+               ],
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-hier_rtl_dumper", ],
+
+               libs => [
+                  "mby_mgm_lib",
+                  $fc_global_vars::COLLAGE_LIB,
+                  "fc_top_lib",
+                  "generated_collateral_lib",
+                  @all_sip_rtl_liblist,
+                  @all_hip_liblist,   
+                  'dump_filelist_lib',
+               ],
+ 
+            },
+
             mby => {
                top         => 'mby_tb_lib.mby_tb',
                jg_elab_top => 'mby_jasper_lib.mby_top',
@@ -548,7 +493,7 @@ EOF
                   "mby_tb_lib",
                   "mby_rtl_lib",
                   "sva_lib",
-	          "mby_mgm_lib",
+                  "mby_mgm_lib",
                   "mby_regflow_lib",
                   "mby_ti_lib",
                   "shdv_shared_lib",
@@ -610,8 +555,32 @@ EOF
             },
 
             mby_lintra => {
-               top  => "mby_rtl_lib.mby",
-               libs => [ "mby_rtl_lib" ],
+               top  => "fc_top_lib.soc",
+               use => \@models_use,
+               pli_libs => [
+                  "-hier_rtl_dumper",
+               ],
+               elab_opts => [
+                    "-config_verbose",
+                    "dump_filelist_lib.dump_filelist",
+               ],
+               libs => [
+                  $fc_global_vars::COLLAGE_LIB,
+                  "mby_tx_ppe_rtl_lib",
+                  "mby_ppe_stm_rtl_lib",
+                  "mby_igr_rtl_lib",
+                  #"mby_egr_rtl_lib",
+                  "mby_mgp_rtl_lib",
+                  "mby_rx_ppe_rtl_lib",
+                  "mby_mpp_rtl_lib",
+                  "clkstub_rtl_lib",
+                  (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
+            #      $fc_global_vars::IP_STUB_LIB,
+                  @all_sip_rtl_liblist,
+                  @all_hip_liblist,
+                  'dump_filelist_lib',
+               ], 
+               lintra_test_list => [ "$ENV{MODEL_ROOT}/tools/lint/tests/mby_top_lintra_test.list"],
             },
 
             dvt_mby_verif => {
@@ -661,15 +630,12 @@ EOF
                },
             },
 
-            # fc_lite => $audf{HDLSpec}{mby}{models}{fc};
-
          }, # Models
       },
    },
 );
 
-$audf{HDLSpec}{mby}{models}{fc_64} = $audf{HDLSpec}{mby}{models}{fc};
-$audf{HDLSpec}{mby}{models}{fc_64_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+$audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 

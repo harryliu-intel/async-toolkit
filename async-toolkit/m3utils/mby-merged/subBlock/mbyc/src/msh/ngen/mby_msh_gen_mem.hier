@@ -1,0 +1,6 @@
+// Mesh block
+
+mby_msh_gen_mem [
+  msh_shells_wrapper of msh_shells_wrapper with msh_shells_wrapper.map
+  msh_sram_mems of msh_sram_mems with msh_sram_mems.map
+]

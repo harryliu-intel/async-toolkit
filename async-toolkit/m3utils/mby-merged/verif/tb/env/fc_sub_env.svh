@@ -16,17 +16,20 @@
 //fc_rst_sig_chk rst_sig_chk;
 
 `ifdef VTE_IP3_UVM_ENV_ENABLE
-  vte_ip3Uvm_integ_env vte_ip3_subenv;
+  //vte_ip3Uvm_integ_env vte_ip3_subenv;
 `endif
 
-//`ifdef IGR_ENV_ENABLE
+`ifdef IGR_ENV_ENABLE
   igr_integ_env igr_subenv;
-//`endif
+`endif
 
 `ifdef CDN_PCIE_ENV_ENABLE
     pep_integ_env pep_subenv;
 `endif
 
+`ifdef EPC_ENV_ENABLE
+  epc_integ_env epc_subenv;
+`endif
 
 //-----------------------------------------------------------------------
 
@@ -44,15 +47,19 @@ function void build_sub_system_envs();
   //-- build sub-system envs
 
   `ifdef VTE_IP3_UVM_ENV_ENABLE
-      vte_ip3_subenv = vte_ip3Uvm_integ_env::type_id::create("vte_ip3_subenv", this);
+      //vte_ip3_subenv = vte_ip3Uvm_integ_env::type_id::create("vte_ip3_subenv", this);
   `endif
 
-  //`ifdef IGR_ENV_ENABLE
+  `ifdef IGR_ENV_ENABLE
       igr_subenv = igr_integ_env::type_id::create("igr_subenv", this);
-  //`endif
+  `endif
 
   `ifdef CDN_PCIE_ENV_ENABLE
       pep_subenv = pep_integ_env::type_id::create("pep_subenv", this);
+  `endif
+
+  `ifdef EPC_ENV_ENABLE
+      epc_subenv = epc_integ_env::type_id::create("epc_subenv", this);
   `endif
 
 endfunction: build_sub_system_envs

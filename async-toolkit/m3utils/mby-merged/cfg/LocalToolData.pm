@@ -24,12 +24,16 @@ $ToolConfig_tools{flowbee}{OTHER}{default_dut}                               = "
 $ToolConfig_tools{'febe3'}{OTHER}{resource_def}                              = "$ENV{MODEL_ROOT}/cfg/resource.xml";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'}                 = "&get_tool_version(lintra)";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'}                    = "&get_tool_path(lintra)";
+$ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH} = "&get_general_var(std_linux_libs)";
+$ToolConfig_tools{febe3}{VERSION} = "3.2.18";
+$ToolConfig_tools{febe3}{OTHER}{project_settings}                            = "$MODEL_ROOT/tools/febe/inputs/dc_config.cfg";
+$ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "$MODEL_ROOT/tools/febe/inputs/finalized.cfg";
 
 #####################################################
 #    Collage related definitions                    #
 #####################################################
 $ToolConfig_tools{coretools}{VERSION} = "N-2017.12-SP1-2";
-$ToolConfig_tools{collage}{VERSION} = "4.10";
+$ToolConfig_tools{collage}{VERSION} = "4.17";
 $ToolConfig_tools{collage_intf_def}{VERSION} = "3.7.6";
 $ToolConfig_tools{collage_intf_def}{PATH} = "/p/hdk/rtl/cad/x86-64_linux30/intel/collage_intf_def/&get_tool_version('collage_intf_def')";
 $ToolConfig_tools{collage}{ENV}{COLLAGE_INTF_DEF} = "&get_tool_path('collage_intf_def')";
@@ -150,7 +154,7 @@ $ToolConfig_tools{dc_shell} = {
 
 $ToolConfig_tools{meta} = {
     PATH => "$ENV{RTL_PROJ_TOOLS}/meta/nhdk/&get_tool_version()",
-    VERSION => "18.08.14",
+    VERSION => "18.09.12",
     ENV_APPEND  => {
         'PATH'  => "&get_tool_path()/bin",
     },
@@ -274,6 +278,10 @@ $ToolConfig_tools{"mgm"} = {
             mby => ["parser",
                     "classifier",
                     "ppe_stm",
+                    "igr",
+                    "egr",
+                    "gms",
+                    "msh",
                    ],
         },
         PHYSICAL_PARAMS => "$ENV{MODEL_ROOT}/tools/mgm/mby_physical_params.csv",
@@ -381,5 +389,9 @@ $ToolConfig_tools{denali} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18'
 #VIPCAT update
 $ToolConfig_tools{buildman}{ENV}{CDN_VIP_ROOT} = "&get_tool_path(cdn_vip_root)";
 $ToolConfig_tools{buildman}{ENV}{DENALI} = "&get_tool_path(denali)";
+
+### Emubuild Vars
+$ToolConfig_tools{emubuild}{VERSION} = "2.7.11";
+###
 
 1;

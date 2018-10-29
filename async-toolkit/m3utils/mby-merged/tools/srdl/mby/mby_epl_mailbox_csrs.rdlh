@@ -1,0 +1,733 @@
+//
+//
+        reg epl_from_ahb_reset_ctrl {
+            name = "EPL Reset Register";
+            IntelRsvd=false;
+            desc = "Register containing EPL complex resets ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Reset to entire EPL complex, all logic and registers including persistent CSRs1 = reset asserted0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_reset_ctrl.hard_reset_all";
+            } hard_reset_all [0:0] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_reset_ctrl.reserved_3_1";
+            } reserved_3_1 [3:1] = 3'h0;
+            field {
+                desc = "Reset to entire EPL complex, all logic and non-persistent registers1 = reset asserted0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_reset_ctrl.soft_reset_all";
+            } soft_reset_all [4:4] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_reset_ctrl.reserved_7_5";
+            } reserved_7_5 [7:5] = 3'h0;
+            field {
+                desc = "Reset to link processor (BReset)1 = reset asserted0 = no reset";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_reset_ctrl.link_reset";
+            } link_reset [8:8] = 1'h0;
+            field {
+                desc = "Reset to link processor's debug logic (DReset) 1 = reset asserted 0 = no reset";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_reset_ctrl.link_debug_reset";
+            } link_debug_reset [9:9] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_reset_ctrl.reserved_63_10";
+            } reserved_63_10 [63:10] = 54'h0;
+        };  // end register epl_from_ahb_reset_ctrl
+
+        reg epl_from_ahb_boot_config {
+            name = "Boot Configuration";
+            IntelRsvd=false;
+            desc = "Register used by boot code to determine boot process to run. ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Sets the boot mode of the Link processor. 
+                        NOTE: Bits 1:0 have only flags for FW access by boot code
+                        0b000 Reserved in Link processor complex0b001 Reserved in Link processor complex0b010 Use signed FW image in instruction memory (loaded from CPP or Cport) 0b011 Reserved 0b1xx Stall processor (processor is reset when leaving this state)";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_boot_config.epl_load_config";
+            } epl_load_config [2:0] = 3'h2;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_boot_config.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "Scratchpad flags for FW use only. No hardware functionality is assigned to these bits.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_boot_config.boot_flags70";
+            } boot_flags70 [15:8] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_boot_config.reserved_23_16";
+            } reserved_23_16 [23:16] = 8'h0;
+            field {
+                desc = "Processor configuration flags for use by FW, hard-strapped to appropriate value0b0000 Cport processor0b0001 Link processor0b001x reserved0b01xx Huron Bay processor0b1xxx reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_boot_config.proc_config30";
+            } proc_config30 [27:24] = 4'h1;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_boot_config.reserved_63_28";
+            } reserved_63_28 [63:28] = 36'h0;
+        };  // end register epl_from_ahb_boot_config
+
+        reg epl_from_ahb_boot_status {
+            name = "Boot Status Register";
+            IntelRsvd=false;
+            desc = "Boot/image load status information ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Parity error detectedset by hardware cleared by firmware";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_boot_status.boot_load_parity_err";
+            } boot_load_parity_err [0:0] = 1'h0;
+            field {
+                desc = "Boot loader error codes, set by firmware
+                        0b00 ? error 0b01 ?? error 0b10 ??? error 0b11 ???? error";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_boot_status.boot_load_err";
+            } boot_load_err [2:1] = 2'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_boot_status.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "SBE error detectedset by hardwarecleared by FW";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_boot_status.iram_dram_sbe_err";
+            } iram_dram_sbe_err [8:8] = 1'h0;
+            field {
+                desc = "Image load error codes, set by firmware
+                        0b00 ? error 0b01 ?? error 0b10 ??? error 0b11 ???? error";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_boot_status.image_load_err";
+            } image_load_err [10:9] = 2'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_boot_status.reserved_63_11";
+            } reserved_63_11 [63:11] = 53'h0;
+        };  // end register epl_from_ahb_boot_status
+
+        reg epl_from_ahb_interrupt_source_ctl {
+            name = "Interrupt Source Control Register ";
+            IntelRsvd=false;
+            desc = "Control for interrupt source passed to AXI bus masters from the EPL complex.
+                    ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "If set, the interrupt lines from the four groups of EPL pairs which normally are monitored by the Link processor (interrupts 0-3) are logically OR'ed together and drive the EPL's cpp interrupt line to the AXI AXI complex. The EPL's cport interrupt is never asserted if this bit is set.
+                        Note: Interrupt steering bit from AHB and AXI sides are OR'ed together to control interrupt steering.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_interrupt_source_ctl.epl_hw_interupts_from_ahb";
+            } epl_hw_interupts_from_ahb [0:0] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_interrupt_source_ctl.reserved_63_1";
+            } reserved_63_1 [63:1] = 63'h0;
+        };  // end register epl_from_ahb_interrupt_source_ctl
+
+        reg epl_from_ahb_dbell_to_cpp_reg {
+            name = "Doorbells to CPP Control ";
+            IntelRsvd=false;
+            desc = "Register for EPL processor to generate an interrupt to the PCIe (CPP) bus master. Normally
+                    cleared by an access by the CPP to the corresponding AXI register.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Doorbell interrupt to the PCIe (CPP) AXI bus master. 
+                        Setting any bi will cause the CPP interrupt line from the EPL to assert.
+                        Note: Interrupt steering at top-level may actually route this to either bus master.";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_to_cpp_reg.cpp_doorbells";
+            } cpp_doorbells [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_to_cpp_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_dbell_to_cpp_reg
+
+        reg epl_from_ahb_dbell_to_cport_reg {
+            name = "Doorbells to CPort Register ";
+            IntelRsvd=false;
+            desc = "Register for EPL processor to generate an interrupt to the Cport bus master. Normally
+                    cleared by an access by the Cport to the corresponding AXI register.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Doorbell interrupt to the CPort AXI bus master. 
+                        Setting any bit will cause the CPort interrupt line from this EPL to assert.
+                        NOTE: Interrupt steering at top-level may actually route this to either bus master.";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_to_cport_reg.cport_doorbells";
+            } cport_doorbells [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_to_cport_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_dbell_to_cport_reg
+
+        reg epl_from_ahb_raw_dbell_from_cpp_stat {
+            name = "Raw Doorbell From CPP Status ";
+            IntelRsvd=false;
+            desc = "Raw status of doorbells set by the CPP. Masks have no effect on what is
+                    reported.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Raw doorbell interrupts to the Link processor. Nominally controlled by the CPP but not enforced by hardware.
+                        Any unmasked doorbell bit results in interrupt 26 being asserted to the link processor";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_raw_dbell_from_cpp_stat.raw_dbell_from_cpp";
+            } raw_dbell_from_cpp [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_raw_dbell_from_cpp_stat.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_raw_dbell_from_cpp_stat
+
+        reg epl_from_ahb_masked_dbell_from_cpp_stat {
+            name = "Masked Doorbell from CPP Status Register ";
+            IntelRsvd=false;
+            desc = "Masked status of doorbells set by the CPP. Masks filter what is reported.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Masked doorbell interrupts to the Link processor. Nominally controlled by the CPP but not enforced by hardware.
+                        Any unmasked doorbell bit results in interrupt 26 being asserted to the link processor";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_masked_dbell_from_cpp_stat.mask_dbell_from_cpp";
+            } mask_dbell_from_cpp [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_masked_dbell_from_cpp_stat.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_masked_dbell_from_cpp_stat
+
+        reg epl_from_ahb_dbell_from_cpp_mask_reg {
+            name = "Doorbell from CPP Mask Register ";
+            IntelRsvd=false;
+            desc = "Masks for CPP doorbells to the EPL's link processor.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Masks for CPP doorbell interrupts to the Link processor.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cpp_mask_reg.dbell_from_cpp_mask";
+            } dbell_from_cpp_mask [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cpp_mask_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_dbell_from_cpp_mask_reg
+
+        reg epl_from_ahb_dbell_from_cpp_clear_reg {
+            name = "Doorbell from CPP Clear Register ";
+            IntelRsvd=false;
+            desc = "Clear control for doorbells from the CPP to the EPL's link processor.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Clear control bits for CPP doorbell interrupts to the Link processor.";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cpp_clear_reg.dbell_from_cpp_clear";
+            } dbell_from_cpp_clear [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cpp_clear_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_dbell_from_cpp_clear_reg
+
+        reg epl_from_ahb_raw_dbell_from_cport_stat {
+            name = "Raw Doorbell From CPort Status Register ";
+            IntelRsvd=false;
+            desc = "Raw status of doorbells set by the Cport. Masks have no effect on what is
+                    reported.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Raw doorbell interrupts to the Link processor. Nominally controlled by the CPort but not enforced by hardware.
+                        Any unmasked doorbell bit results in interrupt 27 being asserted to the link processor";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_raw_dbell_from_cport_stat.raw_dbell_from_cport";
+            } raw_dbell_from_cport [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_raw_dbell_from_cport_stat.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_raw_dbell_from_cport_stat
+
+        reg epl_from_ahb_masked_dbell_from_cport_stat {
+            name = "Masked Doorbell from CPort Status Register ";
+            IntelRsvd=false;
+            desc = "Masked status of doorbells set by the Cport. Masks filter what is reported.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Masked doorbell interrupts to the Link processor. Nominally controlled by the CPort but not enforced by hardware.
+                        Any unmasked doorbell bit results in interrupt 27 being asserted to the link processor";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_masked_dbell_from_cport_stat.mask_dbell_from_cport";
+            } mask_dbell_from_cport [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_masked_dbell_from_cport_stat.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_masked_dbell_from_cport_stat
+
+        reg epl_from_ahb_dbell_from_cport_mask_reg {
+            name = "Doorbell from CPP Mask Register ";
+            IntelRsvd=false;
+            desc = "Masks for Cport doorbells to the EPL's link processor.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Masks for CPort doorbell interrupts to the Link processor.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cport_mask_reg.dbell_from_cpport_mask";
+            } dbell_from_cpport_mask [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cport_mask_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_dbell_from_cport_mask_reg
+
+        reg epl_from_ahb_dbell_from_cport_clear_reg {
+            name = "Doorbell from CPP Clear Register ";
+            IntelRsvd=false;
+            desc = "Clear control for doorbells from the Cport to the EPL's link processor.";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Clear control bits for CPort doorbell interrupts to the Link processor.";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cport_clear_reg.dbell_from_cport_clear";
+            } dbell_from_cport_clear [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_ahb_dbell_from_cport_clear_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_ahb_dbell_from_cport_clear_reg
+
+        reg epl_from_axi_reset_ctrl {
+            name = "EPL Reset Register";
+            IntelRsvd=false;
+            desc = "Register containing EPL complex resets. ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Reset to entire EPL complex, all logic and registers including persistent CSRs1 = reset asserted0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_reset_ctrl.hard_reset_all_axi";
+            } hard_reset_all_axi [0:0] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_reset_ctrl.reserved_3_1";
+            } reserved_3_1 [3:1] = 3'h0;
+            field {
+                desc = "Reset to entire EPL complex, all logic and non-persistent registers1 = reset asserted0 = no reset";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_reset_ctrl.soft_reset_all_axi";
+            } soft_reset_all_axi [4:4] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_reset_ctrl.reserved_7_5";
+            } reserved_7_5 [7:5] = 3'h0;
+            field {
+                desc = "Reset to link processor (BReset)1 = reset asserted0 = no reset";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_reset_ctrl.link_reset_axi";
+            } link_reset_axi [8:8] = 1'h0;
+            field {
+                desc = "Reset to link processor's debug logic (DReset) 1 = reset asserted 0 = no reset";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_reset_ctrl.link_debug_reset_axi";
+            } link_debug_reset_axi [9:9] = 1'h0;
+            field {
+                desc = "reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_reset_ctrl.reserved_63_10";
+            } reserved_63_10 [63:10] = 54'h0;
+        };  // end register epl_from_axi_reset_ctrl
+
+        reg epl_from_axi_boot_config {
+            name = "Boot Configuration";
+            IntelRsvd=false;
+            desc = "Register used by boot code to determine boot process to run. ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Sets the boot mode of the Link processor. 
+                        NOTE: Bits 1:0 have only flags for FW access by boot code
+                        0b000 Reserved in Link processor complex0b001 Reserved in Link processor complex0b010 Use signed FW image in instruction memory (loaded from CPP or Cport) 0b011 Reserved0b1xx Stall processor (processor is reset when leaving this state)
+                        Note: All bits are logically OR'ed with bits from equivalent register accessed from the EPL's AHB AHB bus.";
+                AccessType = "RW/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_boot_config.epl_load_config_axi20";
+            } epl_load_config_axi20 [2:0] = 3'h2;
+            field {
+                desc = "epl_from_axi_boot_config_reesrved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_config.reesrved";
+            } reesrved [7:3] = 5'h0;
+            field {
+                desc = "Scratchpad flags for FW use only. No hardware functionality is assigned to these bits.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_boot_config.boot_flags_axi70";
+            } boot_flags_axi70 [15:8] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_config.reserved_23_16";
+            } reserved_23_16 [23:16] = 8'h0;
+            field {
+                desc = "Processor configuration flags for use by FW, hard-strapped to appropriate value0b0000 Cport processor0b0001 Link processor0b001x reserved0b01xx Huron Bay processor0b1xxx reserved";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_config.proc_config_axi30";
+            } proc_config_axi30 [27:24] = 4'h1;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_config.reserved_63_28";
+            } reserved_63_28 [63:28] = 36'h0;
+        };  // end register epl_from_axi_boot_config
+
+        reg epl_from_axi_boot_status {
+            name = "Boot Status Register";
+            IntelRsvd=false;
+            desc = "Boot/image load status information ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Parity error detectedset by hardware cleared by firmware";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_boot_status.boot_load_parity_err_axi";
+            } boot_load_parity_err_axi [0:0] = 1'h0;
+            field {
+                desc = "Boot loader error codes, set by firmware
+                        0b00 ? error 0b01 ?? error 0b10 ??? error 0b11 ???? error";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_status.boot_load_err_axi";
+            } boot_load_err_axi [2:1] = 2'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_status.reserved_7_3";
+            } reserved_7_3 [7:3] = 5'h0;
+            field {
+                desc = "SBE error detectedset by hardwarecleared by FW";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_boot_status.iram_dram_sbe_err_axi";
+            } iram_dram_sbe_err_axi [8:8] = 1'h0;
+            field {
+                desc = "Image load error codes, set by firmware
+                        0b00 ? error 0b01 ?? error 0b10 ??? error 0b11 ???? error";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_status.image_load_err_axi";
+            } image_load_err_axi [10:9] = 2'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_boot_status.reserved_63_11";
+            } reserved_63_11 [63:11] = 53'h0;
+        };  // end register epl_from_axi_boot_status
+
+        reg epl_from_axi_interrupt_source_ctl {
+            name = "Interrupt Source Control Register ";
+            IntelRsvd=false;
+            desc = "Control for interrupt source passed to AXI bus masters from the EPL complex.
+                    ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "If set, the interrupt lines from the four groups of EPL pairs which normally are monitored by the Link processor (interrupts 0-3) are logically OR'ed together and drive the EPL's cpp interrupt line to the AXI AXI complex. The EPL's cport interrupt is never asserted if this bit is set.
+                        Note: Iterrupt steering bit from AHB and AXI sides are OR'ed together to control interrupt steering.";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_interrupt_source_ctl.epl_hw_interupts_from_axi";
+            } epl_hw_interupts_from_axi [0:0] = 1'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_interrupt_source_ctl.reserved_63_1";
+            } reserved_63_1 [63:1] = 63'h0;
+        };  // end register epl_from_axi_interrupt_source_ctl
+
+        reg epl_from_axi_dbell_to_cpp_reg {
+            name = "Doorbells to CPP Status ";
+            IntelRsvd=false;
+            desc = "Status register to read/clear PCIe (CPP) bus master doorbells from EPL complex.
+                    ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Doorbell interrupts to the PCIe (CPP) AXI bus master.";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_dbell_to_cpp_reg.cpp_doorbells";
+            } cpp_doorbells [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_dbell_to_cpp_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_axi_dbell_to_cpp_reg
+
+        reg epl_from_axi_dbell_to_cport_reg {
+            name = "Doorbells to CPort Status ";
+            IntelRsvd=false;
+            desc = "Status register to read/clear Cport bus master doorbells from EPL complex.
+                    ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Doorbell interrupt to the CPort AXI bus master.";
+                AccessType = "RW/1C/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_dbell_to_cport_reg.cport_doorbells";
+            } cport_doorbells [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_dbell_to_cport_reg.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_axi_dbell_to_cport_reg
+
+        reg epl_from_axi_dbell_from_cpp_ctl {
+            name = "Doorbell From CPP Register";
+            IntelRsvd=false;
+            desc = "Doorbells to EPL's link processor nominally set by the CPP. ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Doorbell interrupts to the Link processor. Nominally controlled by the CPP but not enforced by hardware.";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_dbell_from_cpp_ctl.dbell_from_cpp";
+            } dbell_from_cpp [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_dbell_from_cpp_ctl.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_axi_dbell_from_cpp_ctl
+
+        reg epl_from_axi_dbell_from_cport_ctl {
+            name = "Doorbell From Cport Register";
+            IntelRsvd=false;
+            desc = "Doorbells to EPL's link processor nominally set by the Cport. ";
+            regwidth = 64;
+            accesswidth = 64;
+
+            field {
+                desc = "Doorbell interrupts to the Link processor. Nominally controlled by the Cport but not enforced by hardware.";
+                AccessType = "RW/1S/V";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_from_axi_dbell_from_cport_ctl.dbell_from_cport";
+            } dbell_from_cport [7:0] = 8'h0;
+            field {
+                desc = "Unused Field";
+                AccessType = "RO";
+                IntelRsvd=false;
+                ValRandomize = false;
+                ValRTLSignal = "NA.epl_from_axi_dbell_from_cport_ctl.reserved_63_8";
+            } reserved_63_8 [63:8] = 56'h0;
+        };  // end register epl_from_axi_dbell_from_cport_ctl
+
+        reg epl_lm_foo {
+            name = "EPL Logic Monitor Control Register";
+            IntelRsvd=false;
+            desc = "Placeholder for CSRs that will control/monitor the EPL complex's logic
+                    monitor.";
+            regwidth = 64;
+            accesswidth = 64;
+            field {
+                desc = "placeholder for now";
+                AccessType = "RW";
+                IntelRsvd=false;
+                ValRandomize = true;
+                ValRTLSignal = "NA.epl_lm_foo.lm_foo";
+            } lm_foo [63:0] = 64'h0;
+        };  // end register epl_lm_foo
+
