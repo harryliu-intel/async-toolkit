@@ -252,25 +252,25 @@ void initDefaultInputs
     fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
 
     // mbyClassifierActions:
-    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         actions_in->act24[i].prec = 0;
         actions_in->act24[i].val  = 0;
     }
-    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         actions_in->act4[i].prec  = 0;
         actions_in->act4[i].val   = 0;
     }
-    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         actions_in->act1[i].prec  = 0;
         actions_in->act1[i].val   = 0;
     }
 
     // mbyClassifierKeys:
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         keys->key32[i] = 0;
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
         keys->key16[i] = 0;
-    for (fm_uint i = 0; i < MBY_FFU_KEY8;  i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8;  i++)
         keys->key8 [i] = 0;
 
     // fm_byte:

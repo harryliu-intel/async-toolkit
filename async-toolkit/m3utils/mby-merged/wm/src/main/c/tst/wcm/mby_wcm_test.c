@@ -100,17 +100,17 @@ static void cpy_actions
     mbyClassifierActions * const out
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         out->act24[i].prec = in->act24[i].prec;
         out->act24[i].val = in->act24[i].val;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         out->act4[i].prec = in->act4[i].prec;
         out->act4[i].val = in->act4[i].val;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         out->act1[i].prec = in->act1[i].prec;
         out->act1[i].val = in->act1[i].val;
     }
@@ -227,7 +227,7 @@ static void set_enable_WCM_ACTION_REG
         case 8: em_b_wcm_action_cfg->ENABLE_8 = value; break;
         case 9: em_b_wcm_action_cfg->ENABLE_9 = value; break;
         case 10: em_b_wcm_action_cfg->ENABLE_10 = value; break;
-        case 11: em_b_wcm_action_cfg->ENABLE_11 = value; break; 
+        case 11: em_b_wcm_action_cfg->ENABLE_11 = value; break;
         case 12:em_b_wcm_action_cfg->ENABLE_12 = value; break;
         case 13: em_b_wcm_action_cfg->ENABLE_13 = value; break;
         case 14: em_b_wcm_action_cfg->ENABLE_14 = value; break;
@@ -315,17 +315,17 @@ static void init_WCM_TCAM_CFG_REG
 
 static void init_actions(mbyClassifierActions * const actions_in)
 {
-    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         actions_in->act24[i].prec = 1;
         actions_in->act24[i].val  = 0;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         actions_in->act4[i].prec = 1;
         actions_in->act4[i].val = 0;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         actions_in->act1[i].prec = 1;
         actions_in->act1[i].val = 0;
     }
@@ -333,13 +333,13 @@ static void init_actions(mbyClassifierActions * const actions_in)
 
 static void init_keys(mbyClassifierKeys    * const keys)
 {
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         keys->key32[i] = 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
         keys->key16[i] = 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY8;  i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8;  i++)
         keys->key8 [i] = 0;
 }
 
@@ -587,7 +587,7 @@ static int run_on_simple_wcm
 
 
     mbyMapperToClassifier map2cla = { 0 };
-  
+
     mbyMapperToClassifier const * const in  = &map2cla;
     mbyClassifierActions * const actions_out = &(map2cla.FFU_ACTIONS);
     setup(cgrp_b_map, &map2cla);

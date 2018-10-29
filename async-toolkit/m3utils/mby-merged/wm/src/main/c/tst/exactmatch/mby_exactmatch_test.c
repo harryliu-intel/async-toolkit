@@ -429,17 +429,17 @@ static void cpy_actions
     mbyClassifierActions * const out
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         out->act24[i].prec = in->act24[i].prec;
         out->act24[i].val = in->act24[i].val;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         out->act4[i].prec = in->act4[i].prec;
         out->act4[i].val = in->act4[i].val;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         out->act1[i].prec = in->act1[i].prec;
         out->act1[i].val = in->act1[i].val;
     }
@@ -447,17 +447,17 @@ static void cpy_actions
 
 static void init_actions(mbyClassifierActions * const actions_in)
 {
-    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         actions_in->act24[i].prec = 1;
         actions_in->act24[i].val  = 0;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         actions_in->act4[i].prec = 1;
         actions_in->act4[i].val = 0;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         actions_in->act1[i].prec = 1;
         actions_in->act1[i].val = 0;
     }
@@ -465,13 +465,13 @@ static void init_actions(mbyClassifierActions * const actions_in)
 
 static void init_keys(mbyClassifierKeys * const keys)
 {
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         keys->key32[i] = 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
         keys->key16[i] = 0;
 
-    for (fm_uint i = 0; i < MBY_FFU_KEY8;  i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8;  i++)
         keys->key8 [i] = 0;
 }
 
