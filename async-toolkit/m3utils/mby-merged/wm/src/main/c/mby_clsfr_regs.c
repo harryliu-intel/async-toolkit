@@ -285,7 +285,7 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
     fm_bool enable = 0;
     fm_byte index  = 0;
 
-    assert (scenario < 24);
+    assert (scenario < wcm_action_cfg_en_r_ENABLE__n);
     enable = FM_GET_UNNAMED_FIELD(wcm_action_cfg_en->ENABLE,  scenario,   1);
     index  = FM_GET_UNNAMED_FIELD(wcm_action_cfg->INDEX    ,  scenario*5, 5);
     action_cfg.enable = enable;
