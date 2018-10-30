@@ -46,6 +46,7 @@ use lib "$ENV{RTL_PROJ_BIN}/perllib";
 use ToolConfig;
 use Switch;
 use common::ace_lib_utils;
+my $debug = 0;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(get_sip_rtl_libs get_all_sip_rtl_libs get_all_sip_verif_libs get_sip_verif_libs get_all_sip_rtl_vlogopts get_all_sip_verif_vlogopts get_all_sip_elab_opts get_func_simv_opts get_hip_liblist get_all_sip_rtl_synthopts get_top_vrf_vlogopts get_nlp_elab_opts get_nlp_sim_opts);

@@ -274,7 +274,8 @@ sub process_commands {
             } elsif($ace_model =~ /^sigacc$/) {
                 $dut_name = 'sigacc';
                 $test_pkg = '-test_pkg test_pkg';
-            } elsif($ace_model =~ /^fc$/) {
+            } elsif($ace_model =~ /^(fc)$/) {
+                $variant = "-variant=$1";
                 $dut_name = $single_fc_dut ne '' ? $single_fc_dut : "mby";
             } elsif($ace_model =~ /^hc[abt]$/) {
                 $single_fc_dut = 'hcx';
