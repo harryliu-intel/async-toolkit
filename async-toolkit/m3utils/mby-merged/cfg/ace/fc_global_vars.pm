@@ -67,8 +67,8 @@ my $DENALI =  &ToolConfig::get_tool_path("denali");
 # <<< Hash table whose key defines a list of IP groups supported
 #################################################################
 my %sip_list = (
-    #'boot'       => ['amba','axi','apb','chi', 'igr'],
-    'boot'       => ['igr'],
+    'boot'       => ['imc'], #amba','axi','apb','chi', 'igr'],
+    'igr'        => ['igr'],
     'imc'        => ['imc'],
     'epc'        => ['epc'],
     'mpp'        => ['mpp'],
