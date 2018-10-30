@@ -526,6 +526,7 @@ EOF
                enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
 
                libs => [
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   "mby_tb_lib",
                   "mby_rtl_lib",
@@ -602,6 +603,7 @@ EOF
                     "dump_filelist_lib.dump_filelist",
                ],
                libs => [
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   "mby_tx_ppe_rtl_lib",
                   "mby_ppe_stm_rtl_lib",
