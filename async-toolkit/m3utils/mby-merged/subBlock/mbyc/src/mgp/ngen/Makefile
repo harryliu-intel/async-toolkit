@@ -9,7 +9,9 @@ V_DIRS        = -d=../../igr/rtl \
                 -d=../../tx_ppe/rtl \
                 -d=../../rx_ppe/rtl \
                 -d=../../shared/rtl \
-                -d=../../shared/interfaces
+                -d=../../shared/interfaces \
+                -d=../../../../../target/mby/mgm_run/igr/src \
+                -d=../../../../../target/mby/mgm_run/rtl
 V_LIBS        =
 
 .PHONY: ngen pre top post rtl copy clean diff
