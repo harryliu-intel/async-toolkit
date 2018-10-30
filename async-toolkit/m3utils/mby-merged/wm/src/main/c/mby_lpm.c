@@ -99,7 +99,7 @@ static void exploreSubtrie
 )
 {
     /* Exploration steps
-     * - Explore the trie 1 bit at a time
+     * - Explore the trie 1 bit at a time starting from the MSB
      * - if 1 => update the hit since we are looking for longest match
      * - Decrease the key_len at each step
      *
@@ -161,7 +161,7 @@ static void exploreSubtrie
 
         mbyLpmGetSubtrie(cgrp_a_map, subtrie->child_base_ptr + child_idx, &child_subtrie);
 
-        st_lookup->key = &(st_lookup->key[1]);
+        st_lookup->key = &(st_lookup->key[-1]);
 
         exploreSubtrie(cgrp_a_map, &child_subtrie, st_lookup);
     }
@@ -183,8 +183,11 @@ static void lpmSearch
 //T:assert(in->key_len >= 33);
 //T:assert(in->key_len < MBY_LPM_KEY_MAX_BITS_LEN);
 
-    // FIXME adjust based on how the key is stored in memory
-    tcam_lookup.key = in->key[0] | (in->key[1] << 8) | (in->key[2] << 16) | (in->key[3] << 24);
+    // TCAM key is stored in the 4 MSB
+    tcam_lookup.key = (in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 1] << 24) |
+                      (in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 2] << 16) |
+                      (in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 3] << 8)  |
+                      in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 4];
 
     lookUpLpmTcam(cgrp_a_map, &tcam_lookup);
 
@@ -196,7 +199,7 @@ static void lpmSearch
 
     mbyLpmGetTcamSubtrie(cgrp_a_map, tcam_lookup.hit_index, &tcam_subtrie);
 
-    st_lookup.key       = (fm_byte *) &(in->key[4]);
+    st_lookup.key       = &(in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 5]);
     st_lookup.key_len   = in->key_len - 32;
     st_lookup.hit_valid = FALSE;
 
