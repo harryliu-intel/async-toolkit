@@ -59,6 +59,13 @@ my @fc_verif_liblist = (
     "fc_tests_lib",
     "fc_seq_lib",
 );
+my @fc_collage_build_liblist = (
+    "msh_collage_build_lib",
+    "mpp_collage_build_lib",
+    "epc_collage_build_lib",
+    "gmn_collage_build_lib",
+    "gms_collage_build_lib",
+);
 
 # TODO &fc_global_vars::gen_liblist();
 # TODO &fc_global_vars::gen_hip_liblist();
@@ -157,14 +164,51 @@ EOF
                     ],
              },
 
+             msh_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_msh.hdl",
+                    ],
+                    -dependent_libs => [ "mby_mgm_lib"],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             mpp_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_mpp.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             epc_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_epc.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             gmn_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_gmn.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             gms_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_gms.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+
              $fc_global_vars::COLLAGE_LIB => {
                     #-tag      => "nonsynth+nonemu",
                     -generated => 1,
                     -hdl_spec => [
-                        "cfg/ace/HDL/soc_assemble_collage.hdl",
+                        "cfg/ace/HDL/collage/soc_assemble_collage.hdl",
                     ],
                     -vlog_opts => [ "+v2k", "-sverilog", ],
-#                    -dependent_libs => [ "sip_shared_lib"],
+                    -dependent_libs => [ @fc_collage_build_liblist, ],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
              },
 
@@ -173,7 +217,7 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
-                          "cfg/ace/HDL/rtl/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
+                          "cfg/ace/HDL/collage/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
@@ -291,7 +335,7 @@ EOF
                  -hdl_spec => [
                      "cfg/ace/HDL/rtl/dummy.hdl",
                      "collage/work/soc/gen/source/rtl/soc.hdl",
-                     "cfg/ace/HDL/rtl/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
+                     "cfg/ace/HDL/collage/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
@@ -382,19 +426,12 @@ EOF
 
                top_language => 'SystemVerilog',
 
-               power_intent => {
-                      power_top => 'fc_hdl_top/dut',
-                      ##[RG]
-                      upf_files => ['src/gen/upf/fc_par/mst.sim.upf',],
-                      ## Chaning UPF to hacked file for temporary debug and fixes
-                      #upf_files => ['src/upfGen/temp_HACK/fc_nlp_upf/mst.sim.upf',],
-                      },
-
                pli_libs => [
                    "-hier_rtl_dumper",
                ],
 
                libs => [
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   @fc_rtl_liblist,
                   @fc_verif_liblist,
@@ -470,9 +507,9 @@ EOF
 
                libs => [
                   "mby_mgm_lib",
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   "fc_top_lib",
-                  "generated_collateral_lib",
                   @all_sip_rtl_liblist,
                   @all_hip_liblist,   
                   'dump_filelist_lib',
