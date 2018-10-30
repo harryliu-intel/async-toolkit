@@ -51,24 +51,34 @@ class LpmTests : public testing::Test {
 /* =============== Key generation tests ==================== */
 
 #define PROFILE_ID 0x10
-#define KEY8_IDX 25
-#define KEY8_VAL 0xfc
-#define KEY16_IDX 7
-#define KEY16_VAL 0xabcd
-#define KEY32_IDX 13
-#define KEY32_VAL 0x87654321
+
+#define MD_KEY8_IDX 12
+#define MD_KEY8_VAL 0x3d
+#define MD_KEY16_IDX 9
+#define MD_KEY16_VAL 0x3435
+
+#define ADDR_KEY8_IDX 25
+#define ADDR_KEY8_VAL 0xfc
+#define ADDR_KEY16_IDX 7
+#define ADDR_KEY16_VAL 0xabcd
+#define ADDR_KEY32_IDX 13
+#define ADDR_KEY32_VAL 0x87654321
+
+#define LPM_KEY_LEN 20
 
 TEST_F(LpmTests, KeyGenSingle) {
 
     mbyLpmKeySels key_sels  = {0};
-	key_sels.addr_key8_sel  = 0x1 << KEY8_IDX;
-	key_sels.addr_key16_sel = 0x1 << KEY16_IDX;
-	key_sels.addr_key32_sel = 0x1 << KEY32_IDX;
+	key_sels.md_key16_sel 	= 0x1 << MD_KEY16_IDX;
+	key_sels.addr_key8_sel  = 0x1 << ADDR_KEY8_IDX;
+	key_sels.addr_key16_sel = 0x1 << ADDR_KEY16_IDX;
+	key_sels.addr_key32_sel = 0x1 << ADDR_KEY32_IDX;
 
 	mbyClassifierKeysStruct keys = {0};
-	keys.key8[KEY8_IDX]   = KEY8_VAL;
-	keys.key16[KEY16_IDX] = KEY16_VAL;
-	keys.key32[KEY32_IDX] = KEY32_VAL;
+	keys.key16[MD_KEY16_IDX]   = MD_KEY16_VAL;
+	keys.key8[ADDR_KEY8_IDX]   = ADDR_KEY8_VAL;
+	keys.key16[ADDR_KEY16_IDX] = ADDR_KEY16_VAL;
+	keys.key32[ADDR_KEY32_IDX] = ADDR_KEY32_VAL;
 
 	mbyLpmKey lpmKey;
 
@@ -78,15 +88,23 @@ TEST_F(LpmTests, KeyGenSingle) {
 
 	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
 
-	EXPECT_EQ(lpmKey.key[0], KEY8_VAL);
-	EXPECT_EQ(lpmKey.key[1], KEY16_VAL & 0xff);
-	EXPECT_EQ(lpmKey.key[2], (KEY16_VAL >> 8) & 0xff);
-	EXPECT_EQ(lpmKey.key[3], KEY32_VAL & 0xff);
-	EXPECT_EQ(lpmKey.key[4], (KEY32_VAL >> 8) & 0xff);
-	EXPECT_EQ(lpmKey.key[5], (KEY32_VAL >> 16) & 0xff);
-	EXPECT_EQ(lpmKey.key[6], (KEY32_VAL >> 24) & 0xff);
-	EXPECT_EQ(lpmKey.key[7], 0x0);
-	EXPECT_EQ(lpmKey.key_len, 8 + 16 + 32);
+
+	// Packed meta-data - starting from key MSB
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 1], (MD_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 2], MD_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 3], 0x0);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 4], 0x0);
+	// Packed address
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 5], (ADDR_KEY32_VAL >> 24) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 6], (ADDR_KEY32_VAL >> 16) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 7], (ADDR_KEY32_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 8], ADDR_KEY32_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 9], (ADDR_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -10], ADDR_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -11], ADDR_KEY8_VAL);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -12], 0x0);
+
+	EXPECT_EQ(lpmKey.key_len, 16 + 16 + 8 + 16 + 32);
 }
 
 

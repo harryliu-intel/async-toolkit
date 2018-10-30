@@ -234,19 +234,21 @@ static void lpmGenerateKey
 #define PACK_LPM_KEY(key_type, key_size)                                       \
     for(i = 0; i < MBY_CGRP_KEY ##key_size ; ++i)                              \
     {                                                                          \
-        if ((key_sels.key_type ## _key ## key_size ## _sel >> i) & 0x1)      \
+        if ((key_sels.key_type ## _key ## key_size ## _sel >> i) & 0x1)        \
         {                                                                      \
-            memcpy(lpmKey->key + len, keys->key## key_size + i, key_size / 8); \
+            int offset = MBY_LPM_KEY_MAX_BYTES_LEN - len - key_size / 8;       \
+            memcpy(lpmKey->key + offset, keys->key## key_size + i, key_size / 8); \
             len += key_size / 8;                                               \
         }                                                                      \
     }
 
-    // Start from the LSB (address key8s) to the MSB (metadata key16s)
-    PACK_LPM_KEY(addr, 8);
-    PACK_LPM_KEY(addr, 16);
-    PACK_LPM_KEY(addr, 32);
-    PACK_LPM_KEY(md,   8);
+    // Start from the MSB (metadata key16s) to the LSB (address key8s)
     PACK_LPM_KEY(md,   16);
+    PACK_LPM_KEY(md,   8);
+    len = 4; // Metadata must take exactly 32 bits
+    PACK_LPM_KEY(addr, 32);
+    PACK_LPM_KEY(addr, 16);
+    PACK_LPM_KEY(addr, 8);
 
     // TODO truncate the key to 160bits
 
