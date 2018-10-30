@@ -19,7 +19,7 @@ import scala.annotation.tailrec
 object Parser {
 
   case class ParserState(w: Array[Short], aluOperation: AluOperation, state: Short, ptr: Short) {
-    override def toString: String = s"ParserState(${w.toList},$aluOperation,$state,$ptr)"
+    override def toString: String = s"ParserState(${w.toList.map(e => f"$e%x")},$aluOperation,state=$state,ptr=$ptr)"
   }
 
   type ProtoId          = Int
@@ -105,12 +105,7 @@ object Parser {
                    anaWs: List[parser_ana_w_r], anaSs: List[parser_ana_s_r],
                    exts:  List[parser_ext_r],     excs:  List[parser_exc_r]): Option[Action] =
       (keysW, keysS, anaWs, anaSs, exts, excs) match {
-        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.camMatching(Seq(
-            ParserTcam.ToMatch(kW.W0_MASK().toShort,    kW.W0_VALUE().toShort,    parserState.w(0)),
-            ParserTcam.ToMatch(kW.W1_MASK().toShort,    kW.W1_VALUE().toShort,    parserState.w(1)),
-            ParserTcam.ToMatch(kS.STATE_MASK().toShort, kS.STATE_VALUE().toShort, parserState.state)
-          )) =>
-
+        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.camMatching(kW, kS, parserState) =>
           //scalastyle:off
             print(s"found action in stage $idStage rule ${keysS.length-1}\nkey w: (w1 value: ${kW.W1_VALUE()}, w1 mask: ${kW.W1_MASK()}, w0 value: " +
               kW.W0_VALUE() + ", w0 mask: " + kW.W0_MASK() + ")\n")

@@ -2,6 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
 import PacketHeader.portionSegmentFPP
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers
 
 object PacketHeader {
 
@@ -47,8 +48,8 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
       bytes(addr).toShort
     } else {
       // Packet data is big endian (network order)
-      (((bytes(addr).toShort << 8) & 0xff00) |     // version from mby_parser.c and rdl
-        (bytes(addr + 1).toShort & 0x00ff)).toShort
+      (((bytes(addr).toInt << 8) & UIntegers.MaskUpper8From16) |     // version from mby_parser.c and rdl
+        (bytes(addr + 1).toInt & UIntegers.MaskLower8)).toShort
     }
 
   //def getWord(addr: Int): Short = (((apply(addr + 1).toShort & 0xff) << 8) | (apply(addr).toShort & 0xff)).toShort

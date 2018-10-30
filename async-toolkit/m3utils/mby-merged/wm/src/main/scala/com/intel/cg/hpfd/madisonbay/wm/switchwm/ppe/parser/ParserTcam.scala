@@ -1,5 +1,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
+import madisonbay.csr.all._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
 import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam.TcamQuery
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
@@ -28,7 +30,13 @@ object ParserTcam {
   def matchRegisterSeq(dataSequence: Seq[TcTriple]): Boolean = matchRegisterSeq(parserMatchBitFun)(dataSequence)
 
   // added temporary to keep compatibility with c
-  def camMatching(dataSeq: Seq[ToMatch]): Boolean = dataSeq.forall(d => (d.input & d.mask).toShort == d.value)
+  def camMatching(keyW: parser_key_w_r, keyS: parser_key_s_r, parserState: ParserState): Boolean = {
+    Seq(ToMatch(keyW.W0_MASK().toShort,  keyW.W0_VALUE().toShort,    parserState.w(0)),
+      ToMatch(keyW.W1_MASK().toShort,    keyW.W1_VALUE().toShort,    parserState.w(1)),
+      ToMatch(keyS.STATE_MASK().toShort, keyS.STATE_VALUE().toShort, parserState.state)).forall {
+        d => (d.input & d.mask).toShort == d.value
+      }
+  }
 
   def matchRegister(behavior: TcamQuery => Boolean)(data: TcTriple): Boolean = matchRegisterSeq(behavior)(Seq(data))
 
