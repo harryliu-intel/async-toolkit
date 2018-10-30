@@ -1586,7 +1586,9 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
         TypeHier.Addr =>
         gs.put(Section.IComponents, F("    tab : ARRAY[0..%s+1-1] OF CompAddr.T;\n",
                                       Fmt.Int(ccnt)));
-        gs.put(Section.IComponents, F("    mono := NEW(CompRange.Monotonic).init();\n"));
+      gs.put(Section.IComponents, F("    nonmono := FALSE;\n"));
+      gs.put(Section.IComponents, F("    monomap : REF ARRAY OF CARDINAL;\n"));
+      gs.put(Section.IComponents, F("    min, max: CompAddr.T;\n"));
       |
         TypeHier.Unsafe => (* skip *)
       |
