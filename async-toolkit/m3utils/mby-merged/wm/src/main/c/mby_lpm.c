@@ -250,12 +250,13 @@ static void lpmGenerateKey
     PACK_LPM_KEY(addr, 16);
     PACK_LPM_KEY(addr, 8);
 
-    // TODO truncate the key to 160bits
+    // Key cannot exceeds 160 bits
+    len = MIN(len, MBY_LPM_KEY_MAX_BYTES_LEN);
 
     // Apply the 160 bit mask
     for (i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
-        // FIXME why is the mask 20 x 64 bits long?
-        lpmKey->key_len = key_sels.key_mask[i] & 0xff;
+        // TODO key_mask should be a fm_uint8 so the last part is not required
+        lpmKey->key[i] &= key_sels.key_mask[i] & 0xff;
 
     lpmKey->key_len = len * 8;
 }

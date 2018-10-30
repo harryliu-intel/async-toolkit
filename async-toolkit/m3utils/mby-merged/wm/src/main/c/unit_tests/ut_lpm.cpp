@@ -66,28 +66,34 @@ class LpmTests : public testing::Test {
 
 #define LPM_KEY_LEN 20
 
-TEST_F(LpmTests, KeyGenSingle) {
+static void configureKeys(mbyLpmKeySels *key_sels,
+						  mbyClassifierKeysStruct *keys)
+{
+	key_sels->md_key16_sel 	 = 0x1 << MD_KEY16_IDX;
+	key_sels->addr_key8_sel  = 0x1 << ADDR_KEY8_IDX;
+	key_sels->addr_key16_sel = 0x1 << ADDR_KEY16_IDX;
+	key_sels->addr_key32_sel = 0x1 << ADDR_KEY32_IDX;
+	for (int i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
+		key_sels->key_mask[i] = 0xff;
+
+	keys->key16[MD_KEY16_IDX]   = MD_KEY16_VAL;
+	keys->key8[ADDR_KEY8_IDX]   = ADDR_KEY8_VAL;
+	keys->key16[ADDR_KEY16_IDX] = ADDR_KEY16_VAL;
+	keys->key32[ADDR_KEY32_IDX] = ADDR_KEY32_VAL;
+}
+
+TEST_F(LpmTests, KeyGenSimple) {
 
     mbyLpmKeySels key_sels  = {0};
-	key_sels.md_key16_sel 	= 0x1 << MD_KEY16_IDX;
-	key_sels.addr_key8_sel  = 0x1 << ADDR_KEY8_IDX;
-	key_sels.addr_key16_sel = 0x1 << ADDR_KEY16_IDX;
-	key_sels.addr_key32_sel = 0x1 << ADDR_KEY32_IDX;
-
 	mbyClassifierKeysStruct keys = {0};
-	keys.key16[MD_KEY16_IDX]   = MD_KEY16_VAL;
-	keys.key8[ADDR_KEY8_IDX]   = ADDR_KEY8_VAL;
-	keys.key16[ADDR_KEY16_IDX] = ADDR_KEY16_VAL;
-	keys.key32[ADDR_KEY32_IDX] = ADDR_KEY32_VAL;
-
-	mbyLpmKey lpmKey;
+	configureKeys(&key_sels, &keys);
 
 	EXPECT_FUNCTION_CALL(mock_getKeySels, (NULL, PROFILE_ID, _))
 		.Times(1)
 		.WillRepeatedly(SetArgPointee<2>(key_sels));
 
+	mbyLpmKey lpmKey;
 	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
-
 
 	// Packed meta-data - starting from key MSB
 	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 1], (MD_KEY16_VAL >> 8) & 0xff);
@@ -107,6 +113,38 @@ TEST_F(LpmTests, KeyGenSingle) {
 	EXPECT_EQ(lpmKey.key_len, 16 + 16 + 8 + 16 + 32);
 }
 
+// This is exactly like the test above, but uses also the key mask
+TEST_F(LpmTests, KeyGenMasked) {
+
+    mbyLpmKeySels key_sels  = {0};
+	mbyClassifierKeysStruct keys = {0};
+	configureKeys(&key_sels, &keys);
+	key_sels.key_mask[LPM_KEY_LEN - 8] = 0x0;
+
+	EXPECT_FUNCTION_CALL(mock_getKeySels, (NULL, PROFILE_ID, _))
+		.Times(1)
+		.WillRepeatedly(SetArgPointee<2>(key_sels));
+
+	mbyLpmKey lpmKey;
+	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
+
+	// Packed meta-data - starting from key MSB
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 1], (MD_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 2], MD_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 3], 0x0);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 4], 0x0);
+	// Packed address
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 5], (ADDR_KEY32_VAL >> 24) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 6], (ADDR_KEY32_VAL >> 16) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 7], (ADDR_KEY32_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 8], 0x0);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 9], (ADDR_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -10], ADDR_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -11], ADDR_KEY8_VAL);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -12], 0x0);
+
+	EXPECT_EQ(lpmKey.key_len, 16 + 16 + 8 + 16 + 32);
+}
 
 
 /* =============== LPM TCAM tests ==================== */
