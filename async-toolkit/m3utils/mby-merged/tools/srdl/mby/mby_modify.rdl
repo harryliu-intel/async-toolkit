@@ -871,6 +871,28 @@ reg mod_csum_en_cfg_r {
     ValRandomize = true;
   } D0_IPV4_EN[0:0] = 1'h1;
 };
+reg mod_lpp_en {
+  shared;
+  HandCoded = true;
+  name = "LPP Enable";
+  desc = "
+  Defines LPP Enable in modify.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  
+  field {
+    AccessType = "RW";
+    desc = "
+        LPP mode Enable
+
+           ";
+    ValRandomize = true;
+  } LPP_EN[63:0] = 64'h0;
+};
 
 addrmap mby_ppe_modify_map {
   name = "modify";
