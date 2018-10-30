@@ -157,7 +157,7 @@
 #define MBY_CGRP_SELECT_MAP_PROT_MAP_LENGTH   2
 #define MBY_CGRP_SELECT_MAP_SRC_MAP_TYPE      3
 #define MBY_CGRP_SELECT_USER                  4
-#define MBY_CGRP_SELECT_FTYPE_SWPRI           5
+#define MBY_CGRP_SELECT_FTYPE_TC              5
 #define MBY_CGRP_SELECT_IPMISC                6
 #define MBY_CGRP_SELECT_TOS                   7
 #define MBY_CGRP_SELECT_PROT                  8
@@ -217,7 +217,7 @@ typedef enum mbyClassifierAct1Enum
     MBY_CGRP_ACTION_LOG                    =  2,
     MBY_CGRP_ACTION_NO_ROUTE               =  3,
     MBY_CGRP_ACTION_RX_MIRROR              =  4,
-    MBY_CGRP_ACTION_CAPT_TIME              =  5,
+    MBY_CGRP_ACTION_CAPT_TIME              =  5, // Removed in MBY. Reserved for future use. REVISIT!!!
     MBY_CGRP_ACTION_TX_TAG0                =  6,
     MBY_CGRP_ACTION_TX_TAG1                =  7,
     MBY_CGRP_ACTION_TRIGGER0               =  8,
@@ -228,14 +228,14 @@ typedef enum mbyClassifierAct1Enum
     MBY_CGRP_ACTION_TRIGGER5               = 13,
     MBY_CGRP_ACTION_TRIGGER6               = 14,
     MBY_CGRP_ACTION_TRIGGER7               = 15,
-    MBY_CGRP_ACTION_SCENARIO0              = 16,
-    MBY_CGRP_ACTION_SCENARIO1              = 17,
-    MBY_CGRP_ACTION_SCENARIO2              = 18,
-    MBY_CGRP_ACTION_SCENARIO3              = 19,
-    MBY_CGRP_ACTION_SCENARIO4              = 20,
-    MBY_CGRP_ACTION_SCENARIO5              = 21,
-    MBY_CGRP_ACTION_LEARN                  = 22,
-    MBY_CGRP_ACTION_COPY_OTR_VPRI          = 23
+    MBY_CGRP_ACTION_PROFILE0               = 16,
+    MBY_CGRP_ACTION_PROFILE1               = 17,
+    MBY_CGRP_ACTION_PROFILE2               = 18,
+    MBY_CGRP_ACTION_PROFILE3               = 19,
+    MBY_CGRP_ACTION_PROFILE4               = 20,
+    MBY_CGRP_ACTION_PROFILE5               = 21,
+    MBY_CGRP_ACTION_LEARN_NOTIFY           = 22,
+    MBY_CGRP_ACTION_COPY_OTR_VPRI          = 23  // Removed in MBY. Reserved for future use. REVISIT!!!
 
 } mbyClassifierAct1;
 
@@ -252,19 +252,23 @@ typedef enum mbyClasifierAct4Enum
     MBY_CGRP_ACTION_DSCP_LOW               =  8,
     MBY_CGRP_ACTION_DSCP_HIGH              =  9,
     MBY_CGRP_ACTION_TC                     = 10,
-    // alternate VPRI address when combining DSCP/SWPRI_CTRL/VPRI actions
+    // alternate VPRI address when combining DSCP/TC_CTRL/VPRI actions
     MBY_CGRP_ACTION_VPRI_HIGH              = 11,
-    MBY_CGRP_ACTION_HASH_PROFILE_ECMP_0    = 12,
-    MBY_CGRP_ACTION_HASH_PROFILE_ECMP_1    = 13,
-    MBY_CGRP_ACTION_HASH_PROFILE_MOD_0     = 14,
-    MBY_CGRP_ACTION_HASH_PROFILE_MOD_1     = 15,
+    MBY_CGRP_ACTION_HASH_PROFILE_ECMP_LOW  = 12,
+    MBY_CGRP_ACTION_HASH_PROFILE_ECMP_HIGH = 13,
+    MBY_CGRP_ACTION_HASH_PROFILE_MOD_LOW   = 14,
+    MBY_CGRP_ACTION_HASH_PROFILE_MOD_HIGH  = 15,
     MBY_CGRP_ACTION_META0_LOW              = 16,
     MBY_CGRP_ACTION_META0_HIGH             = 17,
     MBY_CGRP_ACTION_META1_LOW              = 18,
     MBY_CGRP_ACTION_META1_HIGH             = 19,
     MBY_CGRP_ACTION_META2_LOW              = 20,
     MBY_CGRP_ACTION_META2_HIGH             = 21,
-    MBY_CGRP_ACTION_MPLS_POP               = 22
+    MBY_CGRP_ACTION_META3_LOW              = 22,
+    MBY_CGRP_ACTION_META3_HIGH             = 23,
+    MBY_CGRP_ACTION_HASH_PROFILE_LAG_LOW   = 24,
+    MBY_CGRP_ACTION_HASH_PROFILE_LAG_HIGH  = 25,
+    MBY_CGRP_ACTION_MPLS_POP               = 26 // Removed in MBY <-- REVISIT!!!
 
 } mbyClasifierAct4;
 
@@ -275,7 +279,7 @@ typedef enum mbyClassifierAct24Enum
     MBY_CGRP_ACTION_POLICER2               =  2,
     MBY_CGRP_ACTION_POLICER3               =  3,
     MBY_CGRP_ACTION_FWD                    =  4,
-    MBY_CGRP_ACTION_MOD_IDX                =  5,
+    MBY_CGRP_ACTION_MOD_PROFILE            =  5,
     MBY_CGRP_ACTION_REMAP0                 =  6,
     MBY_CGRP_ACTION_REMAP1                 =  7,
     MBY_CGRP_ACTION_REMAP2                 =  8,
@@ -283,7 +287,8 @@ typedef enum mbyClassifierAct24Enum
     MBY_CGRP_ACTION_REMAP4                 = 10,
     MBY_CGRP_ACTION_REMAP5                 = 11,
     MBY_CGRP_ACTION_REMAP6                 = 12,
-    MBY_CGRP_ACTION_REMAP7                 = 13
+    MBY_CGRP_ACTION_REMAP7                 = 13,
+    MBY_CGRP_ACTION_USED                   = 14
 
 } mbyClassifierAct24;
 
@@ -453,7 +458,7 @@ typedef struct mbyClassifierMuxedActionStruct
 {
     fm_byte                 ecn;
     fm_bool                 aqm_mark_en;
-    fm_byte                 swpri;
+    fm_byte                 tc;
     fm_byte                 ttl_ctrl;
     fm_byte                 ttl01;
     fm_byte                 dscp;

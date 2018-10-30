@@ -902,7 +902,7 @@ static void mapScalar
     map_prof_key1->L2_DOMAIN = *l2_domain;
     map_prof_key1->L3_DOMAIN = *l3_domain;
 
-    ffu_actions->act1[MBY_CGRP_ACTION_LEARN].val = domain_action0.LEARN_EN;
+    ffu_actions->act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val = domain_action0.LEARN_EN;
 
     *learn_mode = domain_action0.LEARN_MODE;
 
@@ -1316,7 +1316,7 @@ static void getProfile
 
     // Set Scenario action
     for (fm_uint i = 0; i < 6; i++)
-        ffu_actions->act1[MBY_CGRP_ACTION_SCENARIO0 + i].val = ((*ffu_profile) >> i) & 1;
+        ffu_actions->act1[MBY_CGRP_ACTION_PROFILE0 + i].val = ((*ffu_profile) >> i) & 1;
 }
 
 static void rewriteSourceNybble

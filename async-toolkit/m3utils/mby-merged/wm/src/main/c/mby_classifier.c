@@ -357,23 +357,23 @@ static void populateMuxedAction
         muxed_action->dscp = 0; // FIXME!!!
     }
 
-    // Update SWPRI:
-    muxed_action->swpri = 0;
+    // Update TC:
+    muxed_action->tc = 0;
 
     switch (tc_ctrl)
     {
-        case  0: muxed_action->swpri = actions.act4[MBY_CGRP_ACTION_TC].val; break;
+        case  0: muxed_action->tc = actions.act4[MBY_CGRP_ACTION_TC].val; break;
 
         case  4:
         {
             dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
-            muxed_action->swpri = 0; // FIXME!!!
+            muxed_action->tc = 0; // FIXME!!!
             break;
         }
         case  5:
         {
             dscp = FM_GET_UNNAMED_FIELD(keys.key8[MBY_CGRP_KEY8_INNER_DS], 2, 6);
-            muxed_action->swpri = 0; // FIXME!!!
+            muxed_action->tc = 0; // FIXME!!!
             break;
         }
     case  6: exp = (mpls_pop < 4) ? FM_GET_UNNAMED_FIELD(keys.key16[MBY_CGRP_KEY16_MPLS_LABEL1_1 + (mpls_pop * 2)],   9, 3) :
@@ -388,7 +388,7 @@ static void populateMuxedAction
     }
 
     if (tc_ctrl == 6 || (tc_ctrl >= 8 && tc_ctrl <= 11)) {
-        muxed_action->swpri = 0; // FIXME!!!
+        muxed_action->tc = 0; // FIXME!!!
     }
 
     // get TTL value based on TTL_CTRL Action:
@@ -437,8 +437,8 @@ static void populateEntropy
 
     for (fm_uint hash_num = 0; hash_num < 2; hash_num++)
     {
-        fm_byte val0 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_0 + (2 * hash_num)].val);
-        fm_byte val1 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_1 + (2 * hash_num)].val & 0x3);
+        fm_byte val0 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_LOW + (2 * hash_num)].val);
+        fm_byte val1 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_HIGH + (2 * hash_num)].val & 0x3);
         fm_byte prof = (val1 << 4) | val0;
 
         hash_profiles[hash_num] = prof;
@@ -553,10 +553,10 @@ static void transformActions
     fm_byte                  * const mod_prof_idx
 )
 {
-    *decap        = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 1) & 0x1;
-    *encap        =  actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val & 0x1;
-    *mod_idx      = (actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val >> 2) & 0xFFFF;
-    *mod_prof_idx =  actions.act24[MBY_CGRP_ACTION_MOD_IDX ].val & 0x3F;
+    *decap        = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val >> 1) & 0x1;
+    *encap        =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val & 0x1;
+    *mod_idx      = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val >> 2) & 0xFFFF;
+    *mod_prof_idx =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val & 0x3F;
     *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP].val;
 
     *sglort = 0;
@@ -568,21 +568,21 @@ static void transformActions
     FM_SET_UNNAMED_FIELD64(*idglort, 8, 16, keys.key8[(MBY_RE_KEYS_DGLORT - MBY_RE_KEYS_GENERAL_8B)*2    ]);
 
     *l2_smac = 0;
-    fm_uint    l2_smac_off = (*decap) ? MBY_RE_KEYS_INNER_SMAC : MBY_RE_KEYS_OUTER_SMAC;
+    fm_uint l2_smac_off = (*decap) ? MBY_RE_KEYS_INNER_SMAC : MBY_RE_KEYS_OUTER_SMAC;
     for (fm_uint i = 0; i <= 2; i++)
         FM_SET_UNNAMED_FIELD64(*l2_smac, (16 * i), 16, keys.key16[l2_smac_off + (2 - i)])
 
-    *l2_dmac  = 0;
-    fm_uint   l2_dmac_off = (*decap) ? MBY_RE_KEYS_INNER_DMAC : MBY_RE_KEYS_OUTER_DMAC;
+    *l2_dmac = 0;
+    fm_uint l2_dmac_off = (*decap) ? MBY_RE_KEYS_INNER_DMAC : MBY_RE_KEYS_OUTER_DMAC;
     for (fm_uint i = 0; i <= 2; i++)
         FM_SET_UNNAMED_FIELD64(*l2_dmac, (16 * i), 16, keys.key16[l2_dmac_off + (2 - i)])
 
     *l2_etype = (*decap) ? keys.key16[MBY_RE_KEYS_INNER_ETYPE] : keys.key16[MBY_RE_KEYS_OUTER_ETYPE];
 
-    fm_uint16  ip_prot = (*decap) ? keys.key8[MBY_CGRP_KEY8_INNER_PROT] : keys.key8[MBY_CGRP_KEY8_OUTER_PROT];
+    fm_uint16 ip_prot = (*decap) ? keys.key8[MBY_CGRP_KEY8_INNER_PROT] : keys.key8[MBY_CGRP_KEY8_OUTER_PROT];
 
-    fm_uint    dmac_ipv6_off_lo = (*decap) ? MBY_CGRP_KEY32_INNER_DIP_31_0  : MBY_CGRP_KEY32_OUTER_DIP_31_0;
-    fm_uint    dmac_ipv6_off_hi = (*decap) ? MBY_CGRP_KEY32_INNER_DIP_63_32 : MBY_CGRP_KEY32_OUTER_DIP_63_32;
+    fm_uint   dmac_ipv6_off_lo = (*decap) ? MBY_CGRP_KEY32_INNER_DIP_31_0  : MBY_CGRP_KEY32_OUTER_DIP_31_0;
+    fm_uint   dmac_ipv6_off_hi = (*decap) ? MBY_CGRP_KEY32_INNER_DIP_63_32 : MBY_CGRP_KEY32_OUTER_DIP_63_32;
 
     *dmac_from_ipv6 = extractDmac(keys.key32[dmac_ipv6_off_lo], keys.key32[dmac_ipv6_off_hi]);
 
@@ -633,7 +633,7 @@ static void transformActions
     FM_SET_UNNAMED_FIELD64(*cgrp_route, 0, 22, FM_GET_UNNAMED_FIELD64(actions.act24[MBY_CGRP_ACTION_FWD].val, 0, 22));
 
     *no_learn = FALSE;
-    FM_SET_UNNAMED_FIELD(*no_learn, 0, 1, ~actions.act1[MBY_CGRP_ACTION_LEARN].val);
+    FM_SET_UNNAMED_FIELD(*no_learn, 0, 1, ~actions.act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val);
 
     *l2_ivid1 = 0;
     if (*decap && actions.act4[MBY_CGRP_ACTION_VID_LOW].prec <= 1)
@@ -706,7 +706,7 @@ void Classifier
     remapKeys(&actions, &keys);
 
     // Update packet_profile based on profile action:
-    for (fm_uint s = MBY_CGRP_ACTION_SCENARIO0, i = 0; s <= MBY_CGRP_ACTION_SCENARIO5; s++, i++) {
+    for (fm_uint s = MBY_CGRP_ACTION_PROFILE0, i = 0; s <= MBY_CGRP_ACTION_PROFILE5; s++, i++) {
         if (actions.act1[s].prec != 0)
             FM_SET_UNNAMED_FIELD(packet_profile, i, 1, actions.act1[s].val & 1);
     }
@@ -855,28 +855,28 @@ void Classifier
     for (fm_uint i = MBY_CGRP_ACTION_POLICER0; i <= MBY_CGRP_ACTION_POLICER3; i++)
         out->POLICER_ACTION[i] = policer_action[i];
 
-    out->QOS_L2_VPRI1     = qos_l2_vpri1;
-    out->QOS_L3_DSCP      = muxed_action.dscp;
-    out->QOS_SWPRI        = muxed_action.swpri;
-    out->SGLORT           = sglort;
-    out->TRAP_ICMP        = trap_icmp;
-    out->TRAP_IGMP        = trap_igmp;
-    out->TRAP_IP_OPTIONS  = trap_ip_options;
-    out->TTL_CTRL         = muxed_action.ttl_ctrl;
-    out->TX_TAG           = cgrp_flags.tx_tag;
+    out->QOS_L2_VPRI1    = qos_l2_vpri1;
+    out->QOS_L3_DSCP     = muxed_action.dscp;
+    out->QOS_TC          = muxed_action.tc;
+    out->SGLORT          = sglort;
+    out->TRAP_ICMP       = trap_icmp;
+    out->TRAP_IGMP       = trap_igmp;
+    out->TRAP_IP_OPTIONS = trap_ip_options;
+    out->TTL_CTRL        = muxed_action.ttl_ctrl;
+    out->TX_TAG          = cgrp_flags.tx_tag;
 
     // Pass thru:
 
-    out->LEARN_MODE       = in->LEARN_MODE;
-    out->L2_IDOMAIN       = in->L2_IDOMAIN;
-    out->L3_IDOMAIN       = in->L3_IDOMAIN;
-    out->PARITY_ERROR     = in->PARITY_ERROR;
-    out->PARSER_ERROR     = in->PARSER_ERROR;
-    out->PA_DROP          = in->PA_DROP;
-    out->PA_HDR_PTRS      = in->PA_HDR_PTRS;
-    out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
-    out->RX_DATA          = in->RX_DATA;
-    out->RX_LENGTH        = in->RX_LENGTH;
-    out->RX_PORT          = in->RX_PORT;
-    out->TRAFFIC_CLASS    = in->TRAFFIC_CLASS;
+    out->LEARN_MODE      = in->LEARN_MODE;
+    out->L2_IDOMAIN      = in->L2_IDOMAIN;
+    out->L3_IDOMAIN      = in->L3_IDOMAIN;
+    out->PARITY_ERROR    = in->PARITY_ERROR;
+    out->PARSER_ERROR    = in->PARSER_ERROR;
+    out->PA_DROP         = in->PA_DROP;
+    out->PA_HDR_PTRS     = in->PA_HDR_PTRS;
+    out->PA_L3LEN_ERR    = in->PA_L3LEN_ERR;
+    out->RX_DATA         = in->RX_DATA;
+    out->RX_LENGTH       = in->RX_LENGTH;
+    out->RX_PORT         = in->RX_PORT;
+    out->TRAFFIC_CLASS   = in->TRAFFIC_CLASS;
 }

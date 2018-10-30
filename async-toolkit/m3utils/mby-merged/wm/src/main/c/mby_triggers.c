@@ -15,6 +15,7 @@ static inline void incrementTrigCounter
 
     trig_stats.COUNT = trig_apply_map->TRIGGER_STATS[trig].COUNT; // [63:0]
     trig_stats.COUNT = (trig_stats.COUNT == FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF)) ? 0 : trig_stats.COUNT + 1;
+
     trig_apply_map->TRIGGER_STATS[trig].COUNT = trig_stats.COUNT;
 }
 
@@ -25,7 +26,7 @@ static fm_bool evaluateTrigger
 //  mby_ppe_trig_usage_map      * const trig_usage_map,
     fm_int                        const trig,
     fm_uint16                   * const l2_evid1,
-    fm_byte                     * const qos_swpri,
+    fm_byte                     * const qos_tc,
     fm_uint16                   * const idglort,
     fm_byte                     * const l2_edomain,
     fm_byte                     * const fclass,
@@ -35,26 +36,26 @@ static fm_bool evaluateTrigger
     fm_uint64                   * const amask
 )
 {
-    mbyTriggerConditionCfg          cond_cfg;
-    mbyTriggerConditionCGRP         cond_cgrp;
-    mbyTriggerConditionParam        cond_param;
-    mbyTriggerConditionGlort        cond_glort;
-    mbyTriggerConditionRx           cond_rx;
-    mbyTriggerConditionAmask1       cond_amask1;
-    mbyTriggerConditionAmask2       cond_amask2;
-    fm_uint16                       egress_domain = 0;
-    fm_bool                         cgrp_hit;
-    fm_bool                         dglort_hit;
-    fm_bool                         egress_domain_hit;
-    fm_bool                         r_hit;
-    fm_bool                         hit = TRUE;
-    fm_uint32                       trig_lfsr0 = 0;
-    fm_uint32                       trig_lfsr1 = 0;
+    mbyTriggerConditionCfg    cond_cfg;
+    mbyTriggerConditionCGRP   cond_cgrp;
+    mbyTriggerConditionParam  cond_param;
+    mbyTriggerConditionGlort  cond_glort;
+    mbyTriggerConditionRx     cond_rx;
+    mbyTriggerConditionAmask1 cond_amask1;
+    mbyTriggerConditionAmask2 cond_amask2;
+    fm_uint16                 egress_domain = 0;
+    fm_bool                   cgrp_hit;
+    fm_bool                   dglort_hit;
+    fm_bool                   egress_domain_hit;
+    fm_bool                   r_hit;
+    fm_bool                   hit = TRUE;
+    fm_uint32                 trig_lfsr0 = 0;
+    fm_uint32                 trig_lfsr1 = 0;
 
-    fm_uint32                       src_port_mask;
-    fm_uint32                       dest_port_mask = 0;
-    fm_uint64                       action_mask;
-    fm_uint64                       action_mask2;
+    fm_uint32                 src_port_mask;
+    fm_uint32                 dest_port_mask = 0;
+    fm_uint64                 action_mask;
+    fm_uint64                 action_mask2;
 
     cond_cfg   = mbyTrigGetConditionCfg   (trig_apply_map, trig);
     cond_cgrp  = mbyTrigGetConditionCGRP  (trig_apply_map, trig);
@@ -89,45 +90,41 @@ static fm_bool evaluateTrigger
     /* MATCH_HIT_SADA - removed from TRIGGER_CONDITION_CFG */
 
     /* Match on the egress VLAN ID. */
-    hit &= ( ( ( *l2_evid1 !=   cond_param.VID_ID ) &&
-               (   cond_cfg.MATCH_VLAN == 0 ) ) ||
-             ( ( *l2_evid1 ==   cond_param.VID_ID ) &&
-               (   cond_cfg.MATCH_VLAN == 1 ) ) ||
-             (   cond_cfg.MATCH_VLAN == 2 ) );
+    hit &= ( ( *l2_evid1 != cond_param.VID_ID && cond_cfg.MATCH_VLAN == 0 ) ||
+             ( *l2_evid1 == cond_param.VID_ID && cond_cfg.MATCH_VLAN == 1 ) ||
+             (                                   cond_cfg.MATCH_VLAN == 2 ) );
 
     /* Match on the FFU lookup result. */
     // <--- REVISIT!!!!
     //state->FFU_TRIG &
-    cgrp_hit = ( (cond_cgrp.CGRP_MASK) ==
-               (  cond_cgrp.CGRP_ID & cond_cgrp.CGRP_MASK) );
-    hit &= ( ( !cgrp_hit && (   cond_cfg.MATCH_CGRP == 0 ) ) ||
-             ( cgrp_hit && (   cond_cfg.MATCH_CGRP == 1 ) ) ||
-             (   cond_cfg.MATCH_CGRP == 2 ) );
+    cgrp_hit = ( cond_cgrp.CGRP_MASK ==
+               ( cond_cgrp.CGRP_ID & cond_cgrp.CGRP_MASK ) );
+    hit &= ( ( !cgrp_hit && cond_cfg.MATCH_CGRP == 0 ) ||
+             (  cgrp_hit && cond_cfg.MATCH_CGRP == 1 ) ||
+             (              cond_cfg.MATCH_CGRP == 2 ) );
 
     /* Match on the traffic class (TC). */
-    hit &= ( ( ( *qos_swpri !=   cond_param.TC ) &&
-               (   cond_cfg.MATCH_TC == 0 ) ) ||
-             ( ( *qos_swpri ==   cond_param.TC ) &&
-               (   cond_cfg.MATCH_TC == 1 ) ) ||
-             (   cond_cfg.MATCH_TC == 2 ) );
+    hit &= ( ( *qos_tc != cond_param.TC && cond_cfg.MATCH_TC == 0 ) ||
+             ( *qos_tc == cond_param.TC && cond_cfg.MATCH_TC == 1 ) ||
+             (                             cond_cfg.MATCH_TC == 2 ) );
 
     /* Match on the Ethernet type. */
     /* removed register */
 
     /* Match on the destination GLORT. */
-    dglort_hit = ( (*idglort &   cond_glort.GLORT_MASK) ==
-                  (  cond_glort.DEST_GLORT & cond_glort.GLORT_MASK) );
-    hit &= ( ( !dglort_hit && (   cond_cfg.MATCH_DEST_GLORT == 0 ) ) ||
-             ( dglort_hit && (   cond_cfg.MATCH_DEST_GLORT == 1 ) ) ||
-             (   cond_cfg.MATCH_DEST_GLORT == 2 ) );
+    dglort_hit = ( (*idglort               & cond_glort.GLORT_MASK) ==
+                   ( cond_glort.DEST_GLORT & cond_glort.GLORT_MASK) );
+    hit &= ( ( !dglort_hit && cond_cfg.MATCH_DEST_GLORT == 0 ) ||
+             (  dglort_hit && cond_cfg.MATCH_DEST_GLORT == 1 ) ||
+             (                cond_cfg.MATCH_DEST_GLORT == 2 ) );
 
     /* Match on EgressDomainValue. */
     egress_domain = ((*l2_edomain & 0x3f) << 9) | (*l2_edomain & 0x1ff);
-    egress_domain_hit = ( (egress_domain &   cond_param.EGRESS_DOMAIN_MASK) ==
-                            (  cond_param.EGRESS_DOMAIN_VALUE & cond_param.EGRESS_DOMAIN_MASK) );
-    hit &= ( ( !egress_domain_hit && (   cond_cfg.MATCH_EGRESS_DOMAIN == 0 ) ) ||
-             ( egress_domain_hit && (   cond_cfg.MATCH_EGRESS_DOMAIN == 1 ) ) ||
-             (   cond_cfg.MATCH_EGRESS_DOMAIN == 2 ) );
+    egress_domain_hit = ( (egress_domain                  & cond_param.EGRESS_DOMAIN_MASK) ==
+                          (cond_param.EGRESS_DOMAIN_VALUE & cond_param.EGRESS_DOMAIN_MASK) );
+    hit &= ( ( !egress_domain_hit && cond_cfg.MATCH_EGRESS_DOMAIN == 0 ) ||
+             (  egress_domain_hit && cond_cfg.MATCH_EGRESS_DOMAIN == 1 ) ||
+             (                       cond_cfg.MATCH_EGRESS_DOMAIN == 2 ) );
 
     /* Match on MetadataValue0. */
     /* MATCH_METADATA0 - removed from TRIGGER_CONDITION_CFG register */
@@ -135,28 +132,28 @@ static fm_bool evaluateTrigger
     /* Match on MetadataValue1. */
     /* MATCH_METADATA1 - removed from TRIGGER_CONDITION_CFG register */
 
-    r_hit = ( (  cond_cfg.MATCH_RANDOM_NUMBER == 0) &&
-             (  cond_cfg.MATCH_RANDOM_IF_LESS == 1) &&
-             (trig_lfsr0 <= (FM_LITERAL_U64(1) <<   cond_cfg.MATCH_RANDOM_THRESHOLD) ) ) ||
-           ( (  cond_cfg.MATCH_RANDOM_NUMBER == 0) &&
-             (  cond_cfg.MATCH_RANDOM_IF_LESS == 0) &&
-             (trig_lfsr0 > (FM_LITERAL_U64(1) <<   cond_cfg.MATCH_RANDOM_THRESHOLD) ) ) ||
-           ( (  cond_cfg.MATCH_RANDOM_NUMBER == 1) &&
-             (  cond_cfg.MATCH_RANDOM_IF_LESS == 1) &&
-             (trig_lfsr1 <= (FM_LITERAL_U64(1) <<   cond_cfg.MATCH_RANDOM_THRESHOLD) ) ) ||
-           ( (  cond_cfg.MATCH_RANDOM_NUMBER == 1) &&
-             (  cond_cfg.MATCH_RANDOM_IF_LESS == 0) &&
-             (trig_lfsr1 > (FM_LITERAL_U64(1) <<   cond_cfg.MATCH_RANDOM_THRESHOLD) ) );
+    r_hit = ( ( cond_cfg.MATCH_RANDOM_NUMBER  == 0 ) &&
+              ( cond_cfg.MATCH_RANDOM_IF_LESS == 1 ) &&
+              ( trig_lfsr0 <= (FM_LITERAL_U64(1) << cond_cfg.MATCH_RANDOM_THRESHOLD ) ) ) ||
+            ( ( cond_cfg.MATCH_RANDOM_NUMBER  == 0 ) &&
+              ( cond_cfg.MATCH_RANDOM_IF_LESS == 0 ) &&
+              ( trig_lfsr0 >  (FM_LITERAL_U64(1) << cond_cfg.MATCH_RANDOM_THRESHOLD) ) ) ||
+            ( ( cond_cfg.MATCH_RANDOM_NUMBER  == 1 ) &&
+              ( cond_cfg.MATCH_RANDOM_IF_LESS == 1 ) &&
+              ( trig_lfsr1 <= (FM_LITERAL_U64(1) << cond_cfg.MATCH_RANDOM_THRESHOLD) ) ) ||
+            ( ( cond_cfg.MATCH_RANDOM_NUMBER  == 1 ) &&
+              ( cond_cfg.MATCH_RANDOM_IF_LESS == 0 ) &&
+              ( trig_lfsr1 >  (FM_LITERAL_U64(1) << cond_cfg.MATCH_RANDOM_THRESHOLD) ) );
 
         hit &= r_hit;
 
     /* Match on the packet class (Layer 2 unicast, broadcast or multicast). */
-    hit &= ( ( (*fclass ==  MBY_FCLASS_UNICAST) &&
-               ( (  cond_param.FRAME_CLASS_MASK & 0x1) != 0 ) ) ||
-             ( (*fclass ==  MBY_FCLASS_BROADCAST) &&
-               ( (  cond_param.FRAME_CLASS_MASK & 0x2) != 0 ) ) ||
-             ( (*fclass ==  MBY_FCLASS_MULTICAST) &&
-               ( (  cond_param.FRAME_CLASS_MASK & 0x4) != 0 ) ) );
+    hit &= ( ( (*fclass == MBY_FCLASS_UNICAST) &&
+               ( ( cond_param.FRAME_CLASS_MASK & 0x1 ) != 0 ) ) ||
+             ( (*fclass == MBY_FCLASS_BROADCAST) &&
+               ( ( cond_param.FRAME_CLASS_MASK & 0x2 ) != 0 ) ) ||
+             ( (*fclass == MBY_FCLASS_MULTICAST) &&
+               ( ( cond_param.FRAME_CLASS_MASK & 0x4 ) != 0 ) ) );
 
     /* Match on the ingress port. */
     cond_rx = mbyTrigGetConditionRx(trig_apply_map, trig);
@@ -190,21 +187,16 @@ static fm_bool evaluateTrigger
     }
 
     /* Match on the packet's route status. */
-    hit &= ( ( !*mark_routed &&
-               ( (  cond_param.ROUTED_MASK & 0x1) != 0 ) ) ||
-             ( *mark_routed &&
-               ( (  cond_param.ROUTED_MASK & 0x2) != 0 ) ) );
+    hit &= ( ( !*mark_routed && ( (cond_param.ROUTED_MASK & 0x1) != 0 ) ) ||
+             (  *mark_routed && ( (cond_param.ROUTED_MASK & 0x2) != 0 ) ) );
 
     /* Match on one or more bits of the frame handler action mask. */
     cond_amask1 = mbyTrigGetConditionAmask1(trig_apply_map, trig);
     action_mask = cond_amask1.HANDLER_ACTION_MASK;
 
-    cond_amask2 = mbyTrigGetConditionAmask2(trig_apply_map, trig);
+    cond_amask2  = mbyTrigGetConditionAmask2(trig_apply_map, trig);
     action_mask2 = cond_amask2.HANDLER_ACTION_MASK;
-    FM_SET_UNNAMED_FIELD64(action_mask,
-                         32,
-                         13,
-                         action_mask2);
+    FM_SET_UNNAMED_FIELD64(action_mask, 32, 13, action_mask2);
 
     hit &= ( (*amask & action_mask) != 0 );
 
@@ -213,9 +205,9 @@ static fm_bool evaluateTrigger
 
 static void applyPrecedenceResolution
 (
-    mbyTriggerActions       * const lo,
-    fm_int                    const trig,
-    mbyTriggerActions       * const hi
+    mbyTriggerActions * const lo,
+    fm_int              const trig,
+    mbyTriggerActions * const hi
 )
 {
 
@@ -225,11 +217,11 @@ static void applyPrecedenceResolution
     else if ( hi->forwardingAction > lo->forwardingAction )
     {
         lo->forwardingAction = hi->forwardingAction;
-        lo->dropMask = hi->dropMask;
-        lo->newDestGlort = hi->newDestGlort;
+        lo->dropMask         = hi->dropMask;
+        lo->newDestGlort     = hi->newDestGlort;
         lo->newDestGlortMask = hi->newDestGlortMask;
-        lo->newDestMask = hi->newDestMask;
-        lo->filterDestMask = hi->filterDestMask;
+        lo->newDestMask      = hi->newDestMask;
+        lo->filterDestMask   = hi->filterDestMask;
     }
 
     if ( hi->trapAction > lo->trapAction )
@@ -242,26 +234,26 @@ static void applyPrecedenceResolution
 
     if ( hi->mirroringAction0 > lo->mirroringAction0 )
     {
-        lo->mirroringAction0 = hi->mirroringAction0;
+        lo->mirroringAction0    = hi->mirroringAction0;
         lo->mirrorProfileIndex0 = hi->mirrorProfileIndex0;
     }
 
     if ( hi->mirroringAction1 > lo->mirroringAction1 )
     {
-        lo->mirroringAction1 = hi->mirroringAction1;
+        lo->mirroringAction1    = hi->mirroringAction1;
         lo->mirrorProfileIndex1 = hi->mirrorProfileIndex1;
     }
 
     if ( hi->TCAction > lo->TCAction )
     {
         lo->TCAction = hi->TCAction;
-        lo->newTC = hi->newTC;
+        lo->newTC    = hi->newTC;
     }
 
     if ( hi->vlanAction > lo->vlanAction )
     {
         lo->vlanAction = hi->vlanAction;
-        lo->newVlan = hi->newVlan;
+        lo->newVlan    = hi->newVlan;
     }
 
     if ( hi->learningAction > lo->learningAction )
@@ -293,11 +285,11 @@ static void applyPrecedenceResolution
     if ( hi->metadataAction[hi->metadataActionSlot] > lo->metadataAction[hi->metadataActionSlot] )
     {
         lo->metadataTrigNum[hi->metadataActionSlot] = trig;
-        lo->metadataAction[hi->metadataActionSlot] = hi->metadataAction[hi->metadataActionSlot];
-        lo->metadataMask[hi->metadataActionSlot] = hi->metadataMask[hi->metadataActionSlot];
-        lo->metadataValue[hi->metadataActionSlot] = hi->metadataValue[hi->metadataActionSlot];
-        lo->metadataSource[hi->metadataActionSlot] = hi->metadataSource[hi->metadataActionSlot];
-        lo->metadataOffset[hi->metadataActionSlot] = hi->metadataOffset[hi->metadataActionSlot];
+        lo->metadataAction[ hi->metadataActionSlot] = hi->metadataAction[hi->metadataActionSlot];
+        lo->metadataMask[   hi->metadataActionSlot] = hi->metadataMask[  hi->metadataActionSlot];
+        lo->metadataValue[  hi->metadataActionSlot] = hi->metadataValue[ hi->metadataActionSlot];
+        lo->metadataSource[ hi->metadataActionSlot] = hi->metadataSource[hi->metadataActionSlot];
+        lo->metadataOffset[ hi->metadataActionSlot] = hi->metadataOffset[hi->metadataActionSlot];
     }
 
     if ( hi->noModifyAction > lo->noModifyAction)
@@ -319,8 +311,8 @@ static void resolveTriggers
     mbyTriggerActions           * const lo
 )
 {
-    mbyTriggerActions           hi;
-    fm_bool                     prec_winner = FALSE;
+    mbyTriggerActions hi;
+    fm_bool           prec_winner = FALSE;
 
     *trig_hit_mask_resolved_hi = hit_mask_hi;
     *trig_hit_mask_resolved_lo = hit_mask_lo;
@@ -372,18 +364,18 @@ static void applyTriggers
     fm_byte           * const mirror0_profile_v,
     fm_uint32         * const mirror1_profile_idx,
     fm_byte           * const mirror1_profile_v,
-    fm_byte           * const qos_swpri,
+    fm_byte           * const qos_tc,
     fm_uint16         * const l2_evid1,
     fm_bool           * const learning_enabled
 )
 {
-    //hlp_modelState           *state = &model->packetState;
+    // hlp_modelState          *state = &model->packetState;
     fm_uint16                dglort;
     fm_uint16                pkt_meta_16;
     fm_uint16                pkt_meta_16_src;
     mbyTriggerActionMetadata actionMetadata;
     fm_byte                  PKT_META_CPY[32];
-    fm_uint32                *actionMetadataMask;
+    fm_uint32              * actionMetadataMask;
 
     results->filterDestMask = TRUE;
 
@@ -405,16 +397,16 @@ static void applyTriggers
             else
             {*/
                 results->destGlort = *idglort;
-                results->destMask = *dmask;
-                results->action = *action;
+                results->destMask  = *dmask;
+                results->action    = *action;
             //}
             break;
 
         case MBY_TRIG_ACTION_FORWARDING_REDIRECT:
             dglort = (*idglort & ~actions->newDestGlortMask) |
                      (actions->newDestGlort & actions->newDestGlortMask);
-            results->destGlort = dglort;
-            results->destMask = actions->newDestMask;
+            results->destGlort      = dglort;
+            results->destMask       = actions->newDestMask;
             results->filterDestMask = actions->filterDestMask;
 
             if ( results->destMask == 0)
@@ -427,7 +419,7 @@ static void applyTriggers
 
         case MBY_TRIG_ACTION_FORWARDING_DROP:
             results->destGlort = *idglort;
-            results->destMask = *dmask & ~actions->dropMask;
+            results->destMask  = *dmask & ~actions->dropMask;
 
             if ( ( *dmask != 0 ) && ( results->destMask == 0 ) )
                 results->action = MBY_ACTION_DROP_TRIG;
@@ -437,14 +429,14 @@ static void applyTriggers
 
         default:
             results->destGlort = *idglort;
-            results->destMask = *dmask;
-            results->action = *action;
+            results->destMask  = *dmask;
+            results->action    = *action;
             break;
     }
 
     /* store trapAction in the triggerResults channel */
     results->trapAction = actions->trapAction;
-    results->logAction = 0;
+    results->logAction  = 0;
     switch (actions->trapAction)
     {
         case MBY_TRIG_ACTION_TRAP_TRAP:
@@ -490,7 +482,7 @@ static void applyTriggers
         results->qcnValid0 = 0;
     }
     else if (actions->mirroringAction0 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/
-          results->mirror0ProfileV   = 0;
+          results->mirror0ProfileV = 0;
 
     else/* no change in mirroring disposition; leave mirrors as they are */
     {
@@ -515,7 +507,7 @@ static void applyTriggers
     /* store the action in the triggerResults channel */
     results->TCAction = actions->TCAction;
 
-    results->TC = *qos_swpri;
+    results->TC = *qos_tc;
 
     if ( actions->TCAction ==
          MBY_TRIG_ACTION_TC_REASSIGN )
@@ -597,7 +589,7 @@ void Triggers
 {
     // Read inputs from the MaskGen:
     /*fm_uint16 l2_evid1    = in->L2_EVID1;
-    fm_byte   qos_swpri   = in->QOS_SWPRI;
+    fm_byte   qos_tc      = in->QOS_TC;
     fm_uint16 idglort     = in->IDGLORT;
     fm_byte   l2_edomain  = in->L2_EDOMAIN;
     fm_byte   fclass      = in->FCLASS;
@@ -633,7 +625,7 @@ void Triggers
                 MBY_TRG_IN_REGS_P,
                 i,
                 &l2_evid1,
-                &qos_swpri,
+                &qos_tc,
                 &idglort,
                 &l2_edomain,
                 &fclass,
@@ -678,7 +670,7 @@ void Triggers
         &mirror0_profile_v,
         &mirror1_profile_idx,
         &mirror1_profile_v,
-        &qos_swpri,
+        &qos_tc,
         &l2_evid1,
         &learning_enabled
     );
@@ -752,7 +744,7 @@ void Triggers
     //FM_ARRAY_SET_BIT(regPtr, HLP_GLOBAL_INTERRUPT, FWD, globalIntFwd);
 
     // <--- REVISIT!!!!
-    //state->QOS_SWPRI = state->TRIGGERS.TC;
+    //state->QOS_TC = state->TRIGGERS.TC;
     //state->DMASK = state->TRIGGERS.destMask;
     //state->IDGLORT = state->TRIGGERS.destGlort;
 
@@ -767,36 +759,36 @@ void Triggers
 
 
     // Pass thru:
-    out->ACTION            = in->ACTION; //results.action; //in->ACTION;
-    out->DROP_TTL          = in->DROP_TTL;
-    out->ECN               = in->ECN;
-    out->EDGLORT           = in->EDGLORT;
-    out->FNMASK            = in->FNMASK;
-    out->IS_IPV4           = in->IS_IPV4;
-    out->IS_IPV6           = in->IS_IPV6;
-    out->IS_TIMEOUT        = in->IS_TIMEOUT;
-    out->L2_DMAC           = in->L2_DMAC;
-    out->L2_EVID1          = in->L2_EVID1; //results.vlan; //in->L2_EVID1;
-    out->L2_IVLAN1_CNT     = in->L2_IVLAN1_CNT;
-    out->MARK_ROUTED       = in->MARK_ROUTED;
-    out->MIRTYP            = in->MIRTYP;
-    out->MOD_IDX           = in->MOD_IDX;
-    out->MOD_PROF_IDX      = in->MOD_PROF_IDX;
-    out->NO_MODIFY         = no_modify; //results.noModifyAction; //no_modify;
-    out->OOM               = in->OOM;
-    out->PARSER_INFO       = in->PARSER_INFO;
-    out->PA_HDR_PTRS       = in->PA_HDR_PTRS;
-    out->PM_ERR            = in->PM_ERR;
-    out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
-    out->QOS_L3_DSCP       = in->QOS_L3_DSCP;
-    out->RX_DATA           = in->RX_DATA;
-    out->RX_LENGTH         = in->RX_LENGTH;
-    out->RX_PORT           = in->RX_PORT;
-    out->SAF_ERROR         = in->SAF_ERROR;
-    out->SEG_META_ERR      = in->SEG_META_ERR;
-    out->TAIL_CSUM_LEN     = in->TAIL_CSUM_LEN;
-    out->TRAFFIC_CLASS     = in->TRAFFIC_CLASS;
-    out->TX_DROP           = in->TX_DROP;
-    out->TX_TAG            = in->TX_TAG;
-    out->XCAST             = in->XCAST;
+    out->ACTION        = in->ACTION; //results.action; //in->ACTION;
+    out->DROP_TTL      = in->DROP_TTL;
+    out->ECN           = in->ECN;
+    out->EDGLORT       = in->EDGLORT;
+    out->FNMASK        = in->FNMASK;
+    out->IS_IPV4       = in->IS_IPV4;
+    out->IS_IPV6       = in->IS_IPV6;
+    out->IS_TIMEOUT    = in->IS_TIMEOUT;
+    out->L2_DMAC       = in->L2_DMAC;
+    out->L2_EVID1      = in->L2_EVID1; //results.vlan; //in->L2_EVID1;
+    out->L2_IVLAN1_CNT = in->L2_IVLAN1_CNT;
+    out->MARK_ROUTED   = in->MARK_ROUTED;
+    out->MIRTYP        = in->MIRTYP;
+    out->MOD_IDX       = in->MOD_IDX;
+    out->MOD_PROF_IDX  = in->MOD_PROF_IDX;
+    out->NO_MODIFY     = no_modify; //results.noModifyAction; //no_modify;
+    out->OOM           = in->OOM;
+    out->PARSER_INFO   = in->PARSER_INFO;
+    out->PA_HDR_PTRS   = in->PA_HDR_PTRS;
+    out->PM_ERR        = in->PM_ERR;
+    out->PM_ERR_NONSOP = in->PM_ERR_NONSOP;
+    out->QOS_L3_DSCP   = in->QOS_L3_DSCP;
+    out->RX_DATA       = in->RX_DATA;
+    out->RX_LENGTH     = in->RX_LENGTH;
+    out->RX_PORT       = in->RX_PORT;
+    out->SAF_ERROR     = in->SAF_ERROR;
+    out->SEG_META_ERR  = in->SEG_META_ERR;
+    out->TAIL_CSUM_LEN = in->TAIL_CSUM_LEN;
+    out->TRAFFIC_CLASS = in->TRAFFIC_CLASS;
+    out->TX_DROP       = in->TX_DROP;
+    out->TX_TAG        = in->TX_TAG;
+    out->XCAST         = in->XCAST;
 }
