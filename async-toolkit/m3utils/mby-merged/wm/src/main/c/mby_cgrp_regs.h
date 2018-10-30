@@ -12,34 +12,7 @@
 
 // Defines:
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
-// FIXME replace these with the new constants in mby_top_map.h
-#define MBY_FFU_TCAM_ENTRIES_0                                  1024
-#define MBY_FFU_TCAM_CFG_ENTRIES_0                              64
-#define MBY_FFU_TCAM_CFG_ENTRIES_1                              20
-#define MBY_FFU_TCAM_CFG_ENTRIES_2                              3
-
-#define MBY_FFU_ACTION_ENTRIES_0                                1024
-#define MBY_FFU_ACTION_ENTRIES_1                                20
-#define MBY_FFU_ACTION_ENTRIES_2                                3
-
-#define MBY_FFU_MAX_HASH_ENTRY_SIZE       64
-#define MBY_FFU_MAX_HASH_ACTIONS          4
-#define MBY_FFU_HASH_CAM_ETY_7_BITS_31_0  0
-#define MBY_FFU_HASH_CAM_ETY_7_BITS_63_32 1
-#define MBY_FFU_HASH_CAM_ETY_6_BITS_31_0  2
-#define MBY_FFU_HASH_CAM_ETY_6_BITS_63_32 3
-
-#define MBY_EM_A_HASH_LOOKUP_ENTRIES                            32768
-#define MBY_EM_B_HASH_LOOKUP_ENTRIES                            8192
-#define MBY_EM_A_HASH_MODE_32B_LOOKUP_ENTRIES                   MBY_EM_A_HASH_LOOKUP_ENTRIES / 2
-#define MBY_EM_B_HASH_MODE_32B_LOOKUP_ENTRIES                   MBY_EM_B_HASH_LOOKUP_ENTRIES / 2
-
-#define MBY_FFU_HASH_CAM_ENTRIES_0                              8
-#define MBY_FFU_HASH_CAM_ENTRIES_1                              32
-#define MBY_FFU_KEY_MASK0_ENTRIES_1                             2
-
+#include "mby_top_map.h"
 
 /* --------------------------------------------------------------------- */
 /* The following are written manually based on the specs - do not delete */
@@ -552,15 +525,15 @@ fm_uint64 mbyClsGetEmHashCamMask
 fm_uint64 mbyClsGetEmAShmEntry // <-- REVISIT!!!
 (
     mby_shm_map * const shm_map,
-    // fm_uint32     const hash_num, // How is this used in MBY? <-- REVISIT!!!
-    fm_uint32     const entry_idx
+    fm_uint16     const block,
+    fm_uint16     const cell
 );
 
 fm_uint64 mbyClsGetEmBShmEntry
 (
     mby_shm_map * const shm_map,
-    // fm_uint32     const hash_num, // How is this used in MBY? <-- REVISIT!!!
-    fm_uint32     const entry_idx
+    fm_uint16     const block,
+    fm_uint16     const cell
 );
 
 void mbyClsGetEmHashMissActions
@@ -569,38 +542,36 @@ void mbyClsGetEmHashMissActions
     mbyClassifierHashCfg  const hash_cfg,
     fm_uint32             const hash_num,
     fm_byte               const scenario,
-    fm_uint32                   hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
+    fm_uint32                 * hash_actions
 );
 
 mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 (
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte              const group,
-    fm_byte              const slice,
-    fm_byte              const scenario
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const slice,
+    fm_byte                     const scenario
 );
 
 mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 (
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte              const slice,
-    fm_uint16            const index
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const slice,
+    fm_uint16                   const index
 );
 
 mbyClassifierActionCfg mbyClsGetWcmActionCfg
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
-    fm_byte              const group,
-    fm_byte              const scenario,
-    fm_byte              const ram_num
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const scenario,
+    fm_byte                     const ram_num
 );
 
 fm_uint32 mbyClsGetWcmActionEntry
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
-    fm_byte              const ram_num,
-    fm_uint32            const hit_index,
-    fm_uint32            const action
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const ram_num,
+    fm_uint32                   const hit_index,
+    fm_uint32                   const action
 );
 
 mbyClassifierEntropyCfg mbyClsGetEntropyCfg

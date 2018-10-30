@@ -84,6 +84,7 @@ fm_uint64 mbyClsGetEmHashCamMask
     fm_uint32             const rule
 )
 {
+
     em_hash_cam_en_r const * const em_a_hash_cam_en = &(cgrp_em_map->HASH_CAM_EN[row][rule]);
 
     fm_uint64 mask = em_a_hash_cam_en->MASK;
@@ -91,28 +92,28 @@ fm_uint64 mbyClsGetEmHashCamMask
     return mask;
 }
 
-fm_uint64 mbyClsGetEmAShmEntry // <-- REVISIT!!!
+fm_uint64 mbyClsGetEmAShmEntry
 (
     mby_shm_map * const shm_map,
-    // fm_uint32     const hash_num, // How is this used in MBY? <-- REVISIT!!!
-    fm_uint32     const entry_idx
+    fm_uint16     const block,
+    fm_uint16     const cell
 )
 {
-    fwd_table0_r const * const fwd_table0 = &(shm_map->FWD_TABLE0[entry_idx][0]); // How to access correct piece of shared fwd. memory? <-- REVISIT!!!
+    fwd_table0_r const * const fwd_table0 = &(shm_map->FWD_TABLE0[block][cell]);
 
     fm_uint64 data = fwd_table0->DATA;
 
     return data;
 }
 
-fm_uint64 mbyClsGetEmBShmEntry // <-- REVISIT!!!
+fm_uint64 mbyClsGetEmBShmEntry
 (
     mby_shm_map * const shm_map,
-    // fm_uint32     const hash_num, // How is this used in MBY? <-- REVISIT!!!
-    fm_uint32     const entry_idx
+    fm_uint16     const block,
+    fm_uint16     const cell
 )
 {
-    fwd_table1_r const * const fwd_table1 = &(shm_map->FWD_TABLE1[entry_idx][0]); // How to access correct piece of shared fwd. memory? <-- REVISIT!!!
+    fwd_table1_r const * const fwd_table1 = &(shm_map->FWD_TABLE1[block][cell]);
 
     fm_uint64 data = fwd_table1->DATA;
 
@@ -125,7 +126,7 @@ void mbyClsGetEmHashMissActions
     mbyClassifierHashCfg  const hash_cfg,
     fm_uint32             const hash_num,
     fm_byte               const profile,
-    fm_uint32                   hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
+    fm_uint32                 * hash_actions
 )
 {
     em_hash_miss_r const * const em_hash_miss   = &(cgrp_em_map->HASH_MISS[hash_num][profile]);
@@ -142,15 +143,14 @@ void mbyClsGetEmHashMissActions
 
 mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 (
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte              const group,
-    fm_byte              const slice,
-    fm_byte              const profile
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const slice,
+    fm_byte                     const profile
 )
 {
     mbyClassifierTcamCfg tcam_cfg;
 
-    wcm_tcam_cfg_r const * const wcm_tcam_cfg = &(cgrp_b_map->B.WCM_TCAM_CFG[slice][profile]);
+    wcm_tcam_cfg_r const * const wcm_tcam_cfg = &(cgrp_b_map->WCM_TCAM_CFG[slice][profile]);
 
     tcam_cfg.CHUNK_MASK    = wcm_tcam_cfg->CHUNK_MASK;
     tcam_cfg.START_COMPARE = wcm_tcam_cfg->START_COMPARE;
@@ -165,14 +165,14 @@ mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 
 mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 (
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte              const slice,
-    fm_uint16            const index
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const slice,
+    fm_uint16                   const index
 )
 {
     mbyClassifierTcamEntry tcam_entry;
 
-    wcm_tcam_r const * const wcm_tcam_entry = &(cgrp_b_map->B.WCM_TCAM[slice][index]);
+    wcm_tcam_r const * const wcm_tcam_entry = &(cgrp_b_map->WCM_TCAM[slice][index]);
 
     fm_uint64 key_top     = ((fm_uint64) wcm_tcam_entry->KEY_TOP)        << 32;
     fm_uint64 key_top_inv = ((fm_uint64) wcm_tcam_entry->KEY_TOP_INVERT) << 32;
@@ -184,14 +184,13 @@ mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 
 mbyClassifierActionCfg mbyClsGetWcmActionCfg
 (
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte              const group,
-    fm_byte              const profile,
-    fm_byte              const ram_num
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const profile,
+    fm_byte                     const ram_num
 )
 {
     mbyClassifierActionCfg action_cfg;
-    wcm_action_cfg_r const * const wcm_action_cfg = &(cgrp_b_map->B.WCM_ACTION_CFG[ram_num]);
+    wcm_action_cfg_r const * const wcm_action_cfg = &(cgrp_b_map->WCM_ACTION_CFG[ram_num]);
 
     fm_bool enable = 0;
     fm_byte index  = 0;
@@ -228,13 +227,13 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 
 fm_uint32 mbyClsGetWcmActionEntry
 (
-    mby_ppe_cgrp_b_map * const cgrp_b_map,
-    fm_byte              const ram_num,
-    fm_uint32            const hit_index,
-    fm_uint32            const action
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    fm_byte                     const ram_num,
+    fm_uint32                   const hit_index,
+    fm_uint32                   const action
 )
 {
-    wcm_action_r const * const wcm_action = &(cgrp_b_map->B.WCM_ACTION[ram_num][hit_index]);
+    wcm_action_r const * const wcm_action = &(cgrp_b_map->WCM_ACTION[ram_num][hit_index]);
     fm_uint32 action_entry = (action == 0) ? wcm_action->ACTION0 : wcm_action->ACTION1;
     return action_entry;
 }

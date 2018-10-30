@@ -721,7 +721,7 @@ void Classifier
     // Wildcard Match (WCM):
     fm_uint32 wcm_out[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
 
-    mbyMatchWildcard(cgrp_b_map, &keys, packet_profile, MBY_CLA_GROUP_B, wcm_out);
+    mbyMatchWildcard(&(cgrp_b_map->B), &keys, packet_profile, wcm_out);
 
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; ++i)
         resolveActionSet(wcm_out[i], &actions);

@@ -376,6 +376,7 @@ static void set_FWD_TABLE0
 )
 {
     fwd_table0_r * const fwd_table0 = &(shm_map->FWD_TABLE0[i][j]);
+
     fwd_table0->DATA = data;
 }
 
@@ -388,8 +389,7 @@ static void init_FWD_TABLE0_REG
     {
         for (fm_uint j = 0 ; j < 256 ; j++)
         {
-            fm_uint64 data = 0x0000000000000000;
-            set_FWD_TABLE0(shm_map, i, j, data);
+            set_FWD_TABLE0(shm_map, i, j, (uint64)0x0000000000000000);
         }
     }
 }
@@ -405,6 +405,7 @@ static void set_FWD_TABLE1
 )
 {
     fwd_table1_r * const fwd_table1 = &(shm_map->FWD_TABLE1[i][j]);
+
     fwd_table1->DATA = data;
 }
 
@@ -417,8 +418,7 @@ static void init_FWD_TABLE1_REG
     {
         for (fm_uint j = 0 ; j < 256 ; j++)
         {
-            fm_uint64 data = 0x0000000000000000;
-            set_FWD_TABLE1(shm_map, i, j, data);
+            set_FWD_TABLE1(shm_map, i, j, (uint64)0x0000000000000000);
         }
     }
 }
@@ -580,17 +580,17 @@ static void setRegs_basic
         0x20000 // mask (0000 0000 0000 0010 0000 0000 0000 0000 == 17)
     );
 
-    // FWD_TABLE0[entry_idx][port_id]
+    // FWD_TABLE0[block][cell]
     set_FWD_TABLE0(shm_map,
-        0,  // entry_idx
-        0,  // port_id ? <-- REVISIT!
+        0,  // block
+        0,  // cell
         0x12341234ULL << 32 // hash_entry_keys
     );
 
-    // FWD_TABLE0[entry_idx][port_id]
+    // FWD_TABLE0[block][cell]
     set_FWD_TABLE0(shm_map,
-        1,  // entry_idx
-        0,  // port_id ? <-- REVISIT!
+        0,  // block
+        1,  // cell
         0x54210000ULL << 32 // hash_actions[0]=0x54210000
     );
 }

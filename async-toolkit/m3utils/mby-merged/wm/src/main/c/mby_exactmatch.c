@@ -111,8 +111,8 @@ static fm_uint16 calculateLookupPtr(
     // Start from the 2nd half of the bucket table if hash_num is 1 in split mode
     if (hash_num == 1)
         lookup_start_index = (group == MBY_CLA_GROUP_A)
-            ? MBY_EM_A_HASH_MODE_32B_LOOKUP_ENTRIES
-            : MBY_EM_B_HASH_MODE_32B_LOOKUP_ENTRIES;
+            ? mby_ppe_cgrp_a_nested_map_EM_HASH_LOOKUP__n / 2
+            : mby_ppe_cgrp_b_nested_map_EM_HASH_LOOKUP__n / 2;
 
     fm_uint16 lookup_base_ptr = hash_cfg.base_ptr[hash_num];
     fm_uint16 bucket_table_index = hash_index % (1uL << hash_cfg.hash_size[hash_num]);
@@ -124,12 +124,12 @@ static fm_uint16 calculateLookupPtr(
 
 static void getEmHashHitActions
 (
-    fm_byte         entry[MBY_FFU_MAX_HASH_ENTRY_SIZE], // aka cam_keys[] or hash_lookup_keys[]
+    fm_byte         entry[MBY_CGRP_MAX_HASH_ENTRY_SIZE], // aka cam_keys[] or hash_lookup_keys[]
     fm_bool   const split_mode,
     fm_byte   const key_size,
     fm_uint16 const entry_size,
     fm_bool   const is_cam,
-    fm_uint32       hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
+    fm_uint32       hash_actions[MBY_EM_MAX_ACTIONS_NUM]
 )
 {
     fm_uint max_bytes_num  = split_mode ? 8 : 16;
@@ -147,13 +147,13 @@ static void getEmHashHitActions
         {
             switch (i+1)
             {
-            case MBY_FFU_HASH_CAM_ETY_7_BITS_63_32:
+            case MBY_CGRP_HASH_CAM_ETY_7_BITS_63_32:
                 act_idx++;
                 break;
-            case MBY_FFU_HASH_CAM_ETY_6_BITS_31_0:
+            case MBY_CGRP_HASH_CAM_ETY_6_BITS_31_0:
                 act_idx = 0;
                 break;
-            case MBY_FFU_HASH_CAM_ETY_6_BITS_63_32:
+            case MBY_CGRP_HASH_CAM_ETY_6_BITS_63_32:
                 act_idx = 1;
                 break;
             default:
@@ -175,24 +175,24 @@ static fm_bool checkCamHits
     fm_byte               const packed_keys[MBY_CGRP_HASH_KEYS],
     fm_byte               const key_size,
     fm_byte               const max_hash_actions_num,
-    fm_uint32                   hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
+    fm_uint32                   hash_actions[MBY_EM_MAX_ACTIONS_NUM]
 )
 {
     fm_byte max_hash_entry_size = split_mode
-        ? MBY_FFU_MAX_HASH_ENTRY_SIZE / 2
-        : MBY_FFU_MAX_HASH_ENTRY_SIZE;
+        ? MBY_CGRP_MAX_HASH_ENTRY_SIZE / 2
+        : MBY_CGRP_MAX_HASH_ENTRY_SIZE;
 
     fm_byte min_cam_key_size = max_hash_entry_size - (max_hash_actions_num * 4);
 
     fm_bool hash_cam_en = FALSE;
-    for (fm_int hash_entry_idx = MBY_FFU_HASH_CAM_ENTRIES_1 - 1 ; hash_entry_idx >= 0 ; hash_entry_idx--)
+    for (fm_int hash_entry_idx = mby_ppe_cgrp_em_map_HASH_CAM__n - 1 ; hash_entry_idx >= 0 ; hash_entry_idx--)
     {
         // Initialize cam keys to 0
-        fm_byte cam_keys[MBY_FFU_MAX_HASH_ENTRY_SIZE] = { 0 };
+        fm_byte cam_keys[MBY_CGRP_MAX_HASH_ENTRY_SIZE] = { 0 };
 
         // Build Cam Key
         fm_uint key_idx = 0;
-        for (fm_uint j = 0; j < MBY_FFU_HASH_CAM_ENTRIES_0; j++)
+        for (fm_uint j = 0; j < em_hash_cam_rf_EM_HASH_CAM__n; j++)
         {
             fm_bool hashn_32b = ( ((hash_num == 0) && (j < 4)) || ((hash_num == 1) && (j >= 4)) );
 
@@ -208,7 +208,7 @@ static fm_bool checkCamHits
 
         // Compare cam_keys with packed_keys.
         fm_bool cam_hit = TRUE;
-        if (key_size < MBY_FFU_MAX_HASH_ENTRY_SIZE)
+        if (key_size < MBY_CGRP_MAX_HASH_ENTRY_SIZE)
         {
             for (fm_uint j = 0; j < key_size; j++) {
                 // Should a 128b KEY_MASK from EM_X_KEY_MASK be applied here? <--REVISIT!!!
@@ -264,7 +264,7 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
     mbyClassifierHashLookup   const bucket,
     mbyClassifierHashCfg      const hash_cfg,
     fm_uint16                 const hash_more,
-    fm_byte                         hash_lookup_key[MBY_FFU_MAX_HASH_ENTRY_SIZE],
+    fm_byte                         hash_lookup_key[MBY_CGRP_MAX_HASH_ENTRY_SIZE],
     fm_bool                 * const lookup_data_ok
 )
 {
@@ -294,8 +294,8 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
     fm_uint32 entry_idx0 = (line*4 + start_byte/8);
     fm_uint32 entry_idx1 = ((hash_lookup_addr/8) & 0xFFFF);
     fm_uint32 entry_idx  = (mode_32b) ? entry_idx1 : entry_idx0;
-    fm_uint   max_bytes  = (mode_32b) ? (MBY_FFU_MAX_HASH_ENTRY_SIZE / 2) : MBY_FFU_MAX_HASH_ENTRY_SIZE;
-    // What is rd_lookup_num? Replaced by group in calls to mbyClsGetEmAShmEntry / mbyClsGetEmBShmEntry. <-- REVISIT!!!
+    fm_uint   max_bytes  = (mode_32b) ? (MBY_CGRP_MAX_HASH_ENTRY_SIZE / 2) : MBY_CGRP_MAX_HASH_ENTRY_SIZE;
+    // How to access SHM in split mode? How to use rd_lookup_num? <-- REVISIT!!!
     fm_bool   rd_lookup_num = (mode_32b) ? 0 : FM_GET_UNNAMED_FIELD(hash_lookup_addr, 5, 1);
 
     if (!mode_32b) // reassign start_byte to 6b to indicate its position in 64B
@@ -312,16 +312,18 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
     for (fm_uint i = 0; i < num_entries; i++)
     {
         fm_uint64 hash_entry = 0;
+        fm_uint16 block = entry_idx / fwd_table0_rf_FWD_TABLE0__n;
+        fm_uint16 cell = entry_idx % fwd_table0_rf_FWD_TABLE0__n;
 
         if (mode_32b)
         {
-            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, entry_idx) : mbyClsGetEmBShmEntry(shm_map, entry_idx);
+            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
 
             entry_idx++;
         }
         else if (rd_lookup_num == 0) // && mode_64b
         {
-            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, entry_idx) : mbyClsGetEmBShmEntry(shm_map, entry_idx);
+            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
 
             if ((entry_idx % 4) == 3) {
                 rd_lookup_num = 1;
@@ -332,7 +334,7 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
         }
         else // rd_lookup_num == 1 && mode_64b
         {
-            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, entry_idx) : mbyClsGetEmBShmEntry(shm_map, entry_idx);
+            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
 
             if ((entry_idx % 4) == 3)
                 rd_lookup_num = 0;
@@ -355,9 +357,8 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
     *lookup_data_ok = rd_lookup_ok; // output read status
 }
 
-static void checkLookupHits
+static fm_bool checkLookupHits
 (
-    mby_ppe_cgrp_em_map   * const cgrp_em_map,
     mby_shm_map           * const shm_map,
     fm_byte                 const group,
     fm_uint                 const hash_num,
@@ -367,18 +368,18 @@ static void checkLookupHits
     mbyClassifierHashLookup const bucket,
     mbyClassifierHashCfg    const hash_cfg,
     fm_uint16               const hash_more,
-    fm_uint32                     hash_actions[MBY_FFU_MAX_HASH_ACTIONS]
+    fm_uint32                     hash_actions[MBY_EM_MAX_ACTIONS_NUM]
 
 )
 {
     fm_bool hash_lookup_hit = TRUE;
-    fm_byte hash_lookup_key[MBY_FFU_MAX_HASH_ENTRY_SIZE] = { 0 };
+    fm_byte hash_lookup_key[MBY_CGRP_MAX_HASH_ENTRY_SIZE] = { 0 };
 
     fm_bool lookup_data_ok = FALSE;
     getEmHashShmData(shm_map, group, hash_num, bucket, hash_cfg, hash_more, hash_lookup_key, &lookup_data_ok); // <-- REVISIT!!!
 
     // Compare hash lookup keys with packed keys:
-    if (key_size < MBY_FFU_MAX_HASH_ENTRY_SIZE) {
+    if (key_size < MBY_CGRP_MAX_HASH_ENTRY_SIZE) {
         for (fm_uint j = 0; j < key_size; j++) {
             // Should a 128b KEY_MASK from EM_X_KEY_MASK be applied here? <--REVISIT!!!
             if (packed_keys[j] != hash_lookup_key[j]) {
@@ -399,10 +400,8 @@ static void checkLookupHits
         // Get actions from FWD_TABLE0/1 register since lookup hit
         getEmHashHitActions(hash_lookup_key, hash_cfg.mode, key_size, lookup_entry_size, is_cam, hash_actions);
     }
-    else // Get actions from FFU_HASH_MISS register since both CAM and lookup missed
-    {
-        mbyClsGetEmHashMissActions(cgrp_em_map, hash_cfg, hash_num, profile, hash_actions);
-    }
+
+    return hash_lookup_hit;
 }
 
 void mbyMatchExact // i.e. look up EM hash
@@ -413,15 +412,15 @@ void mbyMatchExact // i.e. look up EM hash
     mbyClassifierKeys const * const keys,
     fm_byte                   const profile,
     fm_byte                   const group,
-    fm_uint32               * const actions // = the list of action entries to action resolution
+    fm_uint32                       actions[MBY_EM_MAX_ACTIONS_NUM] // = the list of action entries to action resolution
 )
 {
     // In split mode are 2 lookups: hash_num = 0 and hash_num = 1
     // In non-split mode is only 1 lookup and this loop for hash_num = 1 is ommited
-    for (fm_uint hash_num = 0; hash_num < MBY_FFU_KEY_MASK0_ENTRIES_1; hash_num++)
+    for (fm_uint hash_num = 0 ; hash_num < mby_ppe_cgrp_em_map_KEY_SEL0__n ; hash_num++)
     {
         // Initialize actions
-        fm_uint32 hash_actions[MBY_FFU_MAX_HASH_ACTIONS] = { 0 };
+        fm_uint32 hash_actions[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
         fm_byte packed_keys[MBY_CGRP_HASH_KEYS] = { 0 };
 
         // Get EM_X_HASH_CFG register fields:
@@ -431,7 +430,7 @@ void mbyMatchExact // i.e. look up EM hash
         fm_bool split_mode = hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_32B;
 
         // Don't perform lookups if non-split mode and hash_num is 1:
-        if (!split_mode && (hash_num == MBY_FFU_KEY_MASK0_ENTRIES_1 - 1))
+        if (!split_mode && (hash_num == mby_ppe_cgrp_em_map_KEY_SEL0__n - 1))
            break;
 
         // Don't perform lookups if hash entry size is 0:
@@ -463,13 +462,19 @@ void mbyMatchExact // i.e. look up EM hash
             ? MBY_EM_MAX_ACTIONS_NUM / 2
             : MBY_EM_MAX_ACTIONS_NUM;
 
-        // Check CAM hits
-        fm_bool hash_cam_en = checkCamHits(cgrp_em_map, split_mode, group, hash_num, profile, packed_keys, key_size, max_hash_actions_num, hash_actions);
+        // Check CAM hits and if hit then get actions from HASH_CAM
+        fm_bool hash_cam_en;
+        hash_cam_en = checkCamHits(cgrp_em_map, split_mode, group, hash_num, profile, packed_keys, key_size, max_hash_actions_num, hash_actions);
 
+        // Check Hash lookup hits and if hit then then get actions from SHM
+        fm_bool hash_lookup_hit;
         if (!hash_cam_en)
         {
-            // Check if hit Hash lookup, then get actions from SHM
-            checkLookupHits(cgrp_em_map, shm_map, group, hash_num, profile, packed_keys, key_size, bucket, hash_cfg, hash_more, hash_actions);
+            hash_lookup_hit = checkLookupHits(shm_map, group, hash_num, profile, packed_keys, key_size, bucket, hash_cfg, hash_more, hash_actions);
+
+            // If both CAM and Hash lookup missed, then get actions from HASH_MISS
+            if(!hash_lookup_hit)
+                mbyClsGetEmHashMissActions(cgrp_em_map, hash_cfg, hash_num, profile, hash_actions);
         }
 
         // Copy actions to output

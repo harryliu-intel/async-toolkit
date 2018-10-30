@@ -22,7 +22,7 @@
 
 typedef void(*run_on_simple_wcm_setup_fn)
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     mbyMapperToClassifier * const map2cla
 );
 typedef int(*run_on_simple_wcm_check_fn)(fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM]);
@@ -39,10 +39,10 @@ static void fail(const char* name)
 
 static void allocMem
 (
-    mby_ppe_cgrp_b_map  **cgrp_b_map
+    mby_ppe_cgrp_b_nested_map  **cgrp_b_map
 )
 {
-    *cgrp_b_map = malloc(sizeof(mby_ppe_cgrp_b_map));
+    *cgrp_b_map = malloc(sizeof(mby_ppe_cgrp_b_nested_map));
     if (*cgrp_b_map == NULL) {
         printf("Could not allocate heap memory for classifier B map -- exiting!\n");
         exit(-1);
@@ -51,7 +51,7 @@ static void allocMem
 
 static void freeMem
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map
 )
 {
     free( cgrp_b_map);
@@ -59,7 +59,7 @@ static void freeMem
 
 static void set_WCM_ACTION_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
     fm_uint j,
     fm_uint nr_action,
@@ -82,12 +82,12 @@ static void set_WCM_ACTION_REG
 
 static void init_WCM_ACTION_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_ACTION_ENTRIES_1; i++)
+    for (fm_uint i = 0; i < mby_ppe_cgrp_b_nested_map_WCM_ACTION__n; i++)
     {
-        for(fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
+        for(fm_uint j = 0; j < wcm_tcam_rf_WCM_TCAM__n; j++)
         {
             set_WCM_ACTION_REG(cgrp_b_map, i, j, -1, 0x0);
         }
@@ -118,7 +118,7 @@ static void cpy_actions
 
 static void set_WCM_TCAM_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
     fm_uint j,
     fm_byte key_top_invert,
@@ -136,12 +136,12 @@ static void set_WCM_TCAM_REG
 
 static void init_WCM_TCAM_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_TCAM_CFG_ENTRIES_1; i++)
+    for (fm_uint i = 0; i < mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n; i++)
     {
-        for(fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
+        for(fm_uint j = 0; j < wcm_tcam_rf_WCM_TCAM__n; j++)
         {
             set_WCM_TCAM_REG(cgrp_b_map, i, j, 0xff, 0xffffffff, 0xff, 0xffffffff);
         }
@@ -150,7 +150,7 @@ static void init_WCM_TCAM_REG
 
 static void set_index_WCM_ACTION_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
     fm_uint index_nr,
     fm_byte value
@@ -207,7 +207,7 @@ static void set_index_WCM_ACTION_REG
 
 static void set_enable_WCM_ACTION_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
     fm_uint enable_nr,
     fm_byte value
@@ -263,7 +263,7 @@ static void set_enable_WCM_ACTION_REG
 }
 static void init_WCM_ACTION_CFG_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map
 )
 {
     for(fm_uint i = 0; i < 64; i++)
@@ -275,7 +275,7 @@ static void init_WCM_ACTION_CFG_REG
 
 static void set_WCM_TCAM_CFG_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
     fm_uint j,
     uint16 chunk_mask,
@@ -301,10 +301,10 @@ static void set_WCM_TCAM_CFG_REG
 
 static void init_WCM_TCAM_CFG_REG
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map
 )
 {
-    for (fm_uint i = 0; i < MBY_FFU_TCAM_CFG_ENTRIES_1; i++)
+    for (fm_uint i = 0; i < mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n; i++)
     {
         for(fm_uint j = 0; j < 64; j++)
         {
@@ -345,7 +345,7 @@ static void init_keys(mbyClassifierKeys    * const keys)
 
 static void initRegs
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map
 )
 {
     init_WCM_ACTION_REG(cgrp_b_map);
@@ -423,7 +423,7 @@ static void setInputs_ipv4_frame
 
 static void simple_wcm_basic_test_setup
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     mbyMapperToClassifier * const map2cla
 )
 {
@@ -446,7 +446,7 @@ static int simple_wcm_basic_test_check
 
 static void simple_wcm_dip_ipv4_test_setup
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     mbyMapperToClassifier * const map2cla
 )
 {
@@ -513,7 +513,7 @@ static int simple_wcm_dip_ipv4_test_check
 
 static void simple_wcm_mac_test_setup
 (
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
+    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     mbyMapperToClassifier * const map2cla
 )
 {
@@ -581,7 +581,7 @@ static int run_on_simple_wcm
 )
 {
 
-    mby_ppe_cgrp_b_map   *cgrp_b_map = NULL;
+    mby_ppe_cgrp_b_nested_map   *cgrp_b_map = NULL;
     allocMem(&cgrp_b_map);
     initRegs(cgrp_b_map);
 
@@ -598,7 +598,6 @@ static int run_on_simple_wcm
         cgrp_b_map,
         &(in->FFU_KEYS),
         in->FFU_PROFILE,
-        0,
         actions
     );
 

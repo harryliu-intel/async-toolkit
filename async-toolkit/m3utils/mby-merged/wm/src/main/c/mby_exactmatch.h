@@ -12,6 +12,11 @@
 // Defines:
 
 #define MBY_EM_MAX_ACTIONS_NUM 4
+#define MBY_CGRP_MAX_HASH_ENTRY_SIZE      64
+#define MBY_CGRP_HASH_CAM_ETY_7_BITS_31_0  0
+#define MBY_CGRP_HASH_CAM_ETY_7_BITS_63_32 1
+#define MBY_CGRP_HASH_CAM_ETY_6_BITS_31_0  2
+#define MBY_CGRP_HASH_CAM_ETY_6_BITS_63_32 3
 
 // Enums:
 
@@ -27,7 +32,7 @@ void mbyMatchExact // i.e. look up EM hash
     mbyClassifierKeys const * const keys,
     fm_byte                   const profile,
     fm_byte                   const group,
-    fm_uint32               * const actions // = the list of action entries to action resolution
+    fm_uint32                       actions[MBY_EM_MAX_ACTIONS_NUM] // = the list of action entries to action resolution
 );
 
 #endif /* MBY_EXACTMATCH_H */
