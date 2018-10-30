@@ -64,9 +64,9 @@ typedef struct mbyLpmSubtrieStoreStruct
 
 void mbyLpmGetKeySels
 (
-    mby_ppe_cgrp_a_nested_map     * const cgrp_a_map,
-    fm_byte                         const profile_id,
-    mbyLpmKeySels                 * const key_sels
+    mby_ppe_cgrp_a_map     * const cgrp_a_map,
+    fm_byte                  const profile_id,
+    mbyLpmKeySels          * const key_sels
 );
 
 void mbyLpmGetTcamEntry

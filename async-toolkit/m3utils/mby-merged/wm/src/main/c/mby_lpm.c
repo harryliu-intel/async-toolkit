@@ -212,7 +212,7 @@ static void lpmSearch
 
 static void lpmGenerateKey
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
+    mby_ppe_cgrp_a_map         * const cgrp_a_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     mbyLpmKey                  * const lpmKey
@@ -226,7 +226,7 @@ static void lpmGenerateKey
     assert(lpmKey);
     assert(profile_id < 64); // 6 bits value
 
-    mbyLpmGetKeySels(&(cgrp_a_map->A), profile_id, &key_sels);
+    mbyLpmGetKeySels(cgrp_a_map, profile_id, &key_sels);
 
     lpmKey->key_len = 0; // remember this is in bits
     memset(lpmKey->key, 0, MBY_LPM_KEY_MAX_BYTES_LEN);
