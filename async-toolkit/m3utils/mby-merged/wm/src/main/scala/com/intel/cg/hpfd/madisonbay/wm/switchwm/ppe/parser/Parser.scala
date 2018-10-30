@@ -10,6 +10,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtLong.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
 import scalaz.State
 import scalaz.syntax.traverse._
 import scalaz.std.list._
@@ -19,7 +20,7 @@ import scala.annotation.tailrec
 object Parser {
 
   case class ParserState(w: Array[Short], aluOperation: AluOperation, state: Short, ptr: Short) {
-    override def toString: String = s"ParserState(${w.toList.map(e => f"$e%x")},$aluOperation,state=$state,ptr=$ptr)"
+    override def toString: String = s"ParserState(${w.toList.map(e => f"0x$e%X")},$aluOperation,state=$state,ptr=$ptr)"
   }
 
   type ProtoId          = Int
@@ -163,8 +164,9 @@ object Parser {
 
   def initialState(csr: mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
     val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
-    val initWOffsets = Array(portCfg.INITIAL_W0_OFFSET().toShort, portCfg.INITIAL_W1_OFFSET().toShort, portCfg.INITIAL_W2_OFFSET().toShort)
-    val w = initWOffsets.map(offset => packetHeader.getWord(offset))
+    val w = Array(portCfg.INITIAL_W0_OFFSET(), portCfg.INITIAL_W1_OFFSET(), portCfg.INITIAL_W2_OFFSET()).map(offset =>
+      packetHeader.getWord(getLower16(offset))
+    )
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
     val state = portCfg.INITIAL_STATE().toShort
     val ptr = portCfg.INITIAL_PTR().toShort
@@ -178,7 +180,8 @@ object Parser {
 
     val tc = ParserTcam.matchRegister(Tcam.matchBitFun)(_)
     tcamCsr.zip(sramCsr).reverse.collectFirst {
-      case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (y.PTYPE().toInt, y.EXTRACT_IDX().toInt)
+      case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) =>
+        (getLower32(y.PTYPE()).toInt, getLower32(y.EXTRACT_IDX()).toInt)
     }.getOrElse((0,0))
   }
 
@@ -187,18 +190,14 @@ object Parser {
     val fieldProfile = 0
     val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile).PARSER_EXTRACT_CFG
     val countersL  = mby_ppe_parser_map._PARSER_COUNTERS
-    val ext_unknown_protid = countersL composeLens
-      parser_counters_r._EXT_UNKNOWN_PROTID composeLens
-      parser_counters_r.EXT_UNKNOWN_PROTID._value
-    val ext_dup_protid = countersL composeLens
-      parser_counters_r._EXT_DUP_PROTID composeLens
-      parser_counters_r.EXT_DUP_PROTID._value
+    val ext_unknown_protid = countersL composeLens parser_counters_r._EXT_UNKNOWN_PROTID composeLens parser_counters_r.EXT_UNKNOWN_PROTID._value
+    val ext_dup_protid = countersL composeLens parser_counters_r._EXT_DUP_PROTID composeLens parser_counters_r.EXT_DUP_PROTID._value
 
     def modify(parserExtractCfgReg: parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map), Unit] =
       State { actualState =>
         val (result, mbyPpeParserMap) = actualState
         val protocolId = parserExtractCfgReg.PROTOCOL_ID()
-        def toWordWithOffset(v: Int): Short = packetHeader.getWord(v + parserExtractCfgReg.OFFSET().toInt)
+        def toWordWithOffset(v: Int): Short = packetHeader.getWord(v + getLower32(parserExtractCfgReg.OFFSET()).toInt)
 
         (protocolId, protoOffsets.collect { case (pId, baseOffset) if pId == protocolId => baseOffset }.toList) match {
 

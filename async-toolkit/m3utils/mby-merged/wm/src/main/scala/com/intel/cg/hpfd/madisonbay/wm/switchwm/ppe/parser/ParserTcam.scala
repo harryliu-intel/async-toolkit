@@ -5,6 +5,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
 import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam.TcamQuery
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
 
 
 /**
@@ -34,7 +35,7 @@ object ParserTcam {
     Seq(ToMatch(keyW.W0_MASK().toShort,  keyW.W0_VALUE().toShort,    parserState.w(0)),
       ToMatch(keyW.W1_MASK().toShort,    keyW.W1_VALUE().toShort,    parserState.w(1)),
       ToMatch(keyS.STATE_MASK().toShort, keyS.STATE_VALUE().toShort, parserState.state)).forall {
-        d => (d.input & d.mask).toShort == d.value
+        d => getLower16(d.input & d.mask) == getLower16(d.value)
       }
   }
 

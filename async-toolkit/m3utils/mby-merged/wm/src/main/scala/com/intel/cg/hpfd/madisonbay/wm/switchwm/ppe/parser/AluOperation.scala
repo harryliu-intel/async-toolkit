@@ -1,6 +1,8 @@
 
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
+
 /**
   * Arithmetic Logic Unit
   *
@@ -18,7 +20,7 @@ class AluOperation(rotationAmount: Short, mask: Short) {
   // no 'logical rotate' operator native to scala
   def calculate(x: Short): Short =
     (
-      ((((x.toInt << 16) & 0xffff0000) | (x.toInt & 0x0000ffff)) >> rotationAmount.toInt) & mask
+      ((getUpper16From32(x.toInt << 16) | getLower16(x.toInt)) >> rotationAmount.toInt) & getLower16(mask)
     ).toShort
 
   override def toString: String = s"AluOperation(rotation=$rotationAmount, mask=$mask)"
@@ -31,7 +33,7 @@ object AluOperation {
 
   def apply(rotationAmount: Short, mask: Short): AluOperation = new AluOperation(rotationAmount.toShort, mask.toShort)
 
-  def extractRotation(rotationAndMask: Short): Short = ((rotationAndMask >> 12) & 0xF).toShort
+  def extractRotation(rotationAndMask: Short): Short = ((getLower16(rotationAndMask) >> 12) & 0xF).toShort
 
   def extractMask(rotationAndMask: Short): Short = (rotationAndMask & 0xFFF).toShort
 }

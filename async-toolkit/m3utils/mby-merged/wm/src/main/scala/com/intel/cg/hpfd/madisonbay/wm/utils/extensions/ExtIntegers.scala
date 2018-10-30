@@ -4,11 +4,11 @@ import ExtIntegers._
 
 object ExtIntegers {
 
-  val SaturationUByte: Long   = 0xff
+  val SaturationUByte: Long   = 0xffL
 
-  val SaturationUShort: Long  = 0xffff
+  val SaturationUShort: Long  = 0xffffL
 
-  val SaturationUInt: Long    = 0xffffffff
+  val SaturationUInt: Long    = 0xffffffffL
 
 }
 

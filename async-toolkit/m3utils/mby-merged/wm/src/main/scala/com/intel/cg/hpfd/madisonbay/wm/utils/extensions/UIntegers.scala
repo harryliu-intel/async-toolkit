@@ -18,4 +18,16 @@ object UIntegers {
 
   def toInt(v: Byte): Int = (v & MaskLower8).toInt
 
+  def getLower8(v: Long): Int = (v & MaskLower8).toInt
+
+  def getLower16(v: Long): Int = (v & MaskLower16).toInt
+
+  def getUpper8From16(v: Long): Int = (v & MaskUpper8From16).toInt
+
+  def getUpper16From32(v: Long): Int = (v & MaskUpper16From32).toInt
+
+  def getLower32(v: Long): Long = v & MaskLower32
+
+  def getUpper32From64(v: Long): Long = v & MaskUpper32From64
+
 }

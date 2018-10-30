@@ -4,22 +4,25 @@ import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.{AluOperation, Parser}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
-import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtShort.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
 
 class AnalyzerAction(anaW: parser_ana_w_r, anaS: parser_ana_s_r) {
 
   def analyze(packetHeader: PacketHeader, inputState: ParserState): Parser.ParserState = {
-    val baseOffset = inputState.ptr.addWithUShortSaturation(inputState.aluOperation.calculate(inputState.w(2)))
+    val baseOffset = getLower16(inputState.ptr).
+      addWithUShortSaturation(getLower16(inputState.aluOperation.calculate(inputState.w(2))))
 
-    val nextW = Array(anaW.NEXT_W0_OFFSET().toShort, anaW.NEXT_W1_OFFSET().toShort, anaW.NEXT_W2_OFFSET().toShort).
-      map(nextOffset => packetHeader.getWord(baseOffset + nextOffset))
+    val nextW = Array(anaW.NEXT_W0_OFFSET(), anaW.NEXT_W1_OFFSET(), anaW.NEXT_W2_OFFSET()).map(nextOffset =>
+      packetHeader.getWord(baseOffset + getLower16(nextOffset))
+    )
 
-    val nextState = anaS.NEXT_STATE().toShort
-    val nextStateMask = anaS.NEXT_STATE_MASK().toShort
-    val anaState = (inputState.state & (~nextStateMask)) | (nextState & nextStateMask)
+    val nextState = getLower16(anaS.NEXT_STATE())
+    val nextStateMask = getLower16(anaS.NEXT_STATE_MASK())
+    val anaState = (getLower16(inputState.state) & (~nextStateMask)) | (nextState & nextStateMask)
 
     val nextAluOperation = AluOperation(anaS.NEXT_OP().toShort)
-    val outputPtr = baseOffset.addWithUShortSaturation(anaW.SKIP().toShort)
+    val outputPtr = baseOffset.addWithUShortSaturation(getLower16(anaW.SKIP()))
 
     ParserState(nextW, nextAluOperation, anaState.toShort, outputPtr.toShort)
   }
@@ -28,7 +31,6 @@ class AnalyzerAction(anaW: parser_ana_w_r, anaS: parser_ana_s_r) {
 
 object AnalyzerAction {
 
-  def apply(anaW: parser_ana_w_r, anaS: parser_ana_s_r): AnalyzerAction =
-    new AnalyzerAction(anaW, anaS)
+  def apply(anaW: parser_ana_w_r, anaS: parser_ana_s_r): AnalyzerAction = new AnalyzerAction(anaW, anaS)
 
 }
