@@ -99,8 +99,9 @@ while($_=shift @ARGV ) {
     } elsif(/^-+dve_debug$/i) {
         $vcs_debug = '-vcs_debug_mode=-debug_access+all';
     } elsif(/^-+partcomp$/i) {
-        $part_comp = '-partcomp_vcs';
-        $vcs_debug = '-vcs_debug_mode=-debug_pp';
+        # MBY has partcomp enabled by default
+#        $part_comp = '-partcomp_vcs';
+#        $vcs_debug = '-vcs_debug_mode=-debug_pp';
     } elsif(/^-+variant=/i) {
         $variant = $_;
     } elsif(/^-+func_replay$/i) {
@@ -481,7 +482,7 @@ sub print_help_message {
   print "   -help               Print this Usage info and exit.\n";
   print "   -dve_debug          Compile VCS with debug enabled for DVE.\n";
   print "   -debug_all          Compile VCS with -debug_all option.\n";
-  print "   -partcomp           Compile VCS with -partcomp option.\n";
+  print "   -partcomp           [NA in MBY since it's enabled by default].\n";
   print "   -variant=<model>    Compile VCS lite model with MBY specific variant\n";
   print "   -func_replay        Compile VCS with replay elements enabled in the func testbench.\n";
   print "   -stf_tp_mode        enable user to use Test port BFM instead of STF BFM.\n";
