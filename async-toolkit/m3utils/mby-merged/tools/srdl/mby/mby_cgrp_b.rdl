@@ -236,340 +236,58 @@ regfile wcm_tcam_cfg_rf {
 
 
 
-// WCM_ACTION_CFG[0..63]
+// WCM_ACTION_CFG_EN[0..23]
 
-reg wcm_action_cfg_r {
+reg wcm_action_cfg_en_r {
   shared;
   HandCoded = true;
-  name = "Configures action RAM source.";
+  name = "Configures action RAM Enable bits source.";
   desc = "
   This register is indexed by scenario.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 128;
-  accesswidth = 128;
+  regwidth = 64;
+  accesswidth = 64;
   field {
     AccessType = "RW";
     desc = "
-    Enables the Nth action RAM bank.
+    Bit N enables the Nth action RAM bank.
 
            ";
     ValRandomize = true;
-  } ENABLE_19[99:99] = 1'h0;
+  } ENABLE[23:0] = 1'h0;
+};
+
+// WCM_ACTION_CFG_IDX1[0..63]
+
+reg wcm_action_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Configures action RAM Enable bits source.";
+  desc = "
+  This register is indexed by scenario.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+
   field {
     AccessType = "RW";
     desc = "
-    Enables the Nth action RAM bank.
+    Select which TCAM slice controls Nth action RAM bank.  The field contains 12 5-b quantities denoting the TCAM slice for the Nth bank in the bits [ 5*N :+ 5] (little-endian order).
 
            ";
     ValRandomize = true;
-  } ENABLE_18[98:98] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
+  } INDEX[59:0] ;
+};
 
-           ";
-    ValRandomize = true;
-  } ENABLE_17[97:97] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_16[96:96] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_15[95:95] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_14[94:94] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_13[93:93] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_12[92:92] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_11[91:91] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_10[90:90] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_9[89:89] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_8[88:88] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_7[87:87] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_6[86:86] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_5[85:85] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_4[84:84] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_3[83:83] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_2[82:82] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_1[81:81] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Enables the Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } ENABLE_0[80:80] = 1'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_19[79:76] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_18[75:72] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_17[71:68] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_16[67:64] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_15[63:60] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_14[59:56] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_13[55:52] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_12[51:48] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_11[47:44] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_10[43:40] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_9[39:36] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_8[35:32] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_7[31:28] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_6[27:24] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_5[23:20] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_4[19:16] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_3[15:12] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_2[11:8] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_1[7:4] = 4'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-    Select which TCAM slice controls Nth action RAM bank.
-
-           ";
-    ValRandomize = true;
-  } INDEX_0[3:0] = 4'h0;
+regfile wcm_action_cfg_rf {
+  desc = "Two registers for configuring entries in action RAM.  Reg 0 configures N=0..11, Reg 1 configures N=12..23.";
+  wcm_action_cfg_r IDX[2];
 };
 
 reg wcm_ip_r {
@@ -687,13 +405,13 @@ addrmap mby_ppe_cgrp_b_nested_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-//em_b_hash_lookup_r          EM_HASH_LOOKUP[8192];
   em_hash_lookup_r            EM_HASH_LOOKUP[8192]; // 8k
 
   wcm_tcam_rf                 WCM_TCAM[20]          ;
   wcm_action_rf               WCM_ACTION[24]        ;
   wcm_tcam_cfg_rf             WCM_TCAM_CFG[20]      ;
-  wcm_action_cfg_r            WCM_ACTION_CFG[64]    ;
+  wcm_action_cfg_en_r         WCM_ACTION_CFG_EN[64] ;
+  wcm_action_cfg_rf           WCM_ACTION_CFG[64]    ;
   wcm_ip_r                    WCM_IP                ;
   wcm_im_r                    WCM_IM                ;
 };
