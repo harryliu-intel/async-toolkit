@@ -62,7 +62,7 @@ static void set_WCM_ACTION_REG
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
     fm_uint j,
-    fm_uint nr_action,
+    fm_int nr_action,
     fm_uint32 value
 )
 {
@@ -152,114 +152,45 @@ static void set_index_WCM_ACTION_REG
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
-    fm_uint index_nr,
-    fm_byte value
+    fm_int index_nr,
+    fm_uint64 value
 )
 {
-    wcm_action_cfg_r * const em_b_wcm_action_cfg = &(cgrp_b_map->WCM_ACTION_CFG[i]);
-    switch(index_nr)
+
+    if(index_nr > -1 && index_nr < (fm_int)mby_ppe_cgrp_b_nested_map_WCM_ACTION__n)
     {
-        case 0: em_b_wcm_action_cfg->INDEX_0 = value; break;
-        case 1: em_b_wcm_action_cfg->INDEX_1 = value; break;
-        case 2: em_b_wcm_action_cfg->INDEX_2 = value; break;
-        case 3: em_b_wcm_action_cfg->INDEX_3 = value; break;
-        case 4: em_b_wcm_action_cfg->INDEX_4 = value; break;
-        case 5: em_b_wcm_action_cfg->INDEX_5 = value; break;
-        case 6: em_b_wcm_action_cfg->INDEX_6 = value; break;
-        case 7: em_b_wcm_action_cfg->INDEX_7 = value; break;
-        case 8: em_b_wcm_action_cfg->INDEX_8 = value; break;
-        case 9: em_b_wcm_action_cfg->INDEX_9 = value; break;
-        case 10: em_b_wcm_action_cfg->INDEX_10 = value; break;
-        case 11: em_b_wcm_action_cfg->INDEX_11 = value; break;
-        case 12: em_b_wcm_action_cfg->INDEX_12 = value; break;
-        case 13: em_b_wcm_action_cfg->INDEX_13 = value; break;
-        case 14: em_b_wcm_action_cfg->INDEX_14 = value; break;
-        case 15: em_b_wcm_action_cfg->INDEX_15 = value; break;
-        case 16: em_b_wcm_action_cfg->INDEX_16 = value; break;
-        case 17: em_b_wcm_action_cfg->INDEX_17 = value; break;
-        case 18: em_b_wcm_action_cfg->INDEX_18 = value; break;
-        case 19: em_b_wcm_action_cfg->INDEX_19 = value; break;
-        default:
-        {
-            em_b_wcm_action_cfg->INDEX_0 = 0x0;
-            em_b_wcm_action_cfg->INDEX_1 = 0x0;
-            em_b_wcm_action_cfg->INDEX_2 = 0x0;
-            em_b_wcm_action_cfg->INDEX_3 = 0x0;
-            em_b_wcm_action_cfg->INDEX_4 = 0x0;
-            em_b_wcm_action_cfg->INDEX_5 = 0x0;
-            em_b_wcm_action_cfg->INDEX_6 = 0x0;
-            em_b_wcm_action_cfg->INDEX_7 = 0x0;
-            em_b_wcm_action_cfg->INDEX_8 = 0x0;
-            em_b_wcm_action_cfg->INDEX_9 = 0x0;
-            em_b_wcm_action_cfg->INDEX_10 = 0x0;
-            em_b_wcm_action_cfg->INDEX_11 = 0x0;
-            em_b_wcm_action_cfg->INDEX_12 = 0x0;
-            em_b_wcm_action_cfg->INDEX_13 = 0x0;
-            em_b_wcm_action_cfg->INDEX_14 = 0x0;
-            em_b_wcm_action_cfg->INDEX_15 = 0x0;
-            em_b_wcm_action_cfg->INDEX_16 = 0x0;
-            em_b_wcm_action_cfg->INDEX_17 = 0x0;
-            em_b_wcm_action_cfg->INDEX_18 = 0x0;
-            em_b_wcm_action_cfg->INDEX_19 = 0x0;
-        }
+        wcm_action_cfg_r * const em_b_wcm_action_cfg_idx = &(cgrp_b_map->WCM_ACTION_CFG[i][index_nr/
+                                                           (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)]);
+        em_b_wcm_action_cfg_idx->INDEX &= ~(0x1f << ((index_nr % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)) * MBY_WCM_ACTION_CFG_INDEX_WIDTH));
+        em_b_wcm_action_cfg_idx->INDEX |= (value << ((index_nr % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)) * MBY_WCM_ACTION_CFG_INDEX_WIDTH));
     }
+    else
+    {
+        wcm_action_cfg_r * const em_b_wcm_action_cfg_idx0 = &(cgrp_b_map->WCM_ACTION_CFG[i][0]);
+        em_b_wcm_action_cfg_idx0->INDEX = 0x0;
+        wcm_action_cfg_r * const em_b_wcm_action_cfg_idx1 = &(cgrp_b_map->WCM_ACTION_CFG[i][1]);
+        em_b_wcm_action_cfg_idx1->INDEX = 0x0;
+    }
+
 }
 
 static void set_enable_WCM_ACTION_REG
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
     fm_uint i,
-    fm_uint enable_nr,
-    fm_byte value
+    fm_int enable_nr,
+    fm_uint32 value
 )
 {
-    wcm_action_cfg_r * const em_b_wcm_action_cfg = &(cgrp_b_map->WCM_ACTION_CFG[i]);
-    switch(enable_nr)
+    wcm_action_cfg_en_r * const em_b_wcm_action_cfg_en = &(cgrp_b_map->WCM_ACTION_CFG_EN[i]);
+
+    if(enable_nr > -1 && enable_nr < (fm_int)mby_ppe_cgrp_b_nested_map_WCM_ACTION__n)
     {
-        case 0: em_b_wcm_action_cfg->ENABLE_0 = value; break;
-        case 1: em_b_wcm_action_cfg->ENABLE_1 = value; break;
-        case 2: em_b_wcm_action_cfg->ENABLE_2 = value; break;
-        case 3: em_b_wcm_action_cfg->ENABLE_3 = value; break;
-        case 4: em_b_wcm_action_cfg->ENABLE_4 = value; break;
-        case 5: em_b_wcm_action_cfg->ENABLE_5 = value; break;
-        case 6: em_b_wcm_action_cfg->ENABLE_6 = value; break;
-        case 7: em_b_wcm_action_cfg->ENABLE_7 = value; break;
-        case 8: em_b_wcm_action_cfg->ENABLE_8 = value; break;
-        case 9: em_b_wcm_action_cfg->ENABLE_9 = value; break;
-        case 10: em_b_wcm_action_cfg->ENABLE_10 = value; break;
-        case 11: em_b_wcm_action_cfg->ENABLE_11 = value; break;
-        case 12:em_b_wcm_action_cfg->ENABLE_12 = value; break;
-        case 13: em_b_wcm_action_cfg->ENABLE_13 = value; break;
-        case 14: em_b_wcm_action_cfg->ENABLE_14 = value; break;
-        case 15: em_b_wcm_action_cfg->ENABLE_15 = value; break;
-        case 16: em_b_wcm_action_cfg->ENABLE_16 = value; break;
-        case 17: em_b_wcm_action_cfg->ENABLE_17 = value; break;
-        case 18: em_b_wcm_action_cfg->ENABLE_18 = value; break;
-        case 19: em_b_wcm_action_cfg->ENABLE_19 = value; break;
-        default:
-        {
-            em_b_wcm_action_cfg->ENABLE_0 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_1 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_2 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_3 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_4 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_5 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_6 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_7 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_8 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_9 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_10 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_11 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_12 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_13 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_14 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_15 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_16 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_17 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_18 = 0x0;
-            em_b_wcm_action_cfg->ENABLE_19 = 0x0;
-        }
+        em_b_wcm_action_cfg_en->ENABLE &= ~(0x1 << enable_nr);
+        em_b_wcm_action_cfg_en->ENABLE |= (value << enable_nr);
     }
+    else
+        em_b_wcm_action_cfg_en->ENABLE = 0x0;
 }
 static void init_WCM_ACTION_CFG_REG
 (
@@ -486,7 +417,7 @@ static void simple_wcm_dip_ipv4_test_setup
     set_WCM_ACTION_REG(cgrp_b_map, 0, 512, 0, 0x640000c1);
     set_WCM_ACTION_REG(cgrp_b_map, 1, 512, 0, 0x640000c1);
 
-    for (fm_uint i = 0; i < 63; i++) {
+    for (fm_uint i = 0; i < 64; i++) {
         set_index_WCM_ACTION_REG(cgrp_b_map, i, 0, 0x1);
         set_enable_WCM_ACTION_REG(cgrp_b_map, i, 0, 0x1);
     }
@@ -549,7 +480,7 @@ static void simple_wcm_mac_test_setup
     set_WCM_ACTION_REG(cgrp_b_map, 0, 512, 0, 0x640000c1);
     set_WCM_ACTION_REG(cgrp_b_map, 1, 512, 0, 0x74000103);
 
-    for (fm_uint i = 0; i < 63; i++) {
+    for (fm_uint i = 0; i < 64; i++) {
         set_index_WCM_ACTION_REG(cgrp_b_map, i, 1, 0x1);
         set_enable_WCM_ACTION_REG(cgrp_b_map, i, 1, 0x1);
     }

@@ -195,6 +195,7 @@
 #define MBY_CGRP_SELECT_L3_SIP_95_64         40
 #define MBY_CGRP_SELECT_L3_SIP_127_96        41
 
+#define MBY_WCM_ACTION_CFG_INDEX_WIDTH        5
 
 // Enums:
 

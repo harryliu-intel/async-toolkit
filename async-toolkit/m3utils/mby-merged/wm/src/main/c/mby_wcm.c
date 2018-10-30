@@ -96,7 +96,7 @@ static void lookUpWcmTcamCascade
 (
     mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
     mbyClassifierKeys const   * const keys,
-    fm_byte                     const profile_id,
+    fm_byte                     const profile,
     mbyClassifierHitInfo              tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n]
 )
 {
@@ -107,14 +107,14 @@ static void lookUpWcmTcamCascade
 
     for (fm_uint slice = 0; slice < mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n; slice++)
     {
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(cgrp_b_map, slice, profile_id);
+        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(cgrp_b_map, slice, profile);
 
         if (tcam_cfg.START_COMPARE)
             cascade_width[slice]++;
 
         for (fm_uint i = slice + 1; i < mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n; i++)
         {
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(cgrp_b_map, i, profile_id);
+            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(cgrp_b_map, i, profile);
 
             if (tcam_cfg1.START_COMPARE)
                 break;
@@ -135,7 +135,7 @@ static void lookUpWcmTcamCascade
         if (cascade_width[slice] == 0)
             continue;
 
-        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(cgrp_b_map, slice, profile_id);
+        mbyClassifierTcamCfg tcam_cfg = mbyClsGetWcmTcamCfg(cgrp_b_map, slice, profile);
 
         // Start Exclusion Set
         if (tcam_cfg.START_SET) {
@@ -147,7 +147,7 @@ static void lookUpWcmTcamCascade
 
         for (fm_uint i = slice; i < slice + cascade_width[slice]; i++)
         {
-            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(cgrp_b_map, i, profile_id);
+            mbyClassifierTcamCfg tcam_cfg1 = mbyClsGetWcmTcamCfg(cgrp_b_map, i, profile);
 
             // Select TCAM key:
             mbyWcmKeyInfo wcm_key_info = selectWcmKey(&tcam_cfg1, keys);
@@ -178,14 +178,14 @@ static void lookUpWcmTcamCascade
 static void wcmActions
 (
     mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    fm_byte                     const profile_id,
+    fm_byte                     const profile,
     mbyClassifierHitInfo              tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n],
     fm_uint32                         actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     for (fm_uint ram_num = 0; ram_num < mby_ppe_cgrp_b_nested_map_WCM_ACTION__n; ram_num++)
     {
-        mbyClassifierActionCfg action_cfg = mbyClsGetWcmActionCfg(cgrp_b_map, profile_id, ram_num);
+        mbyClassifierActionCfg action_cfg = mbyClsGetWcmActionCfg(cgrp_b_map, profile, ram_num);
 
         if (!action_cfg.enable)
             continue; // skip action RAM if disabled
@@ -206,15 +206,15 @@ void mbyMatchWildcard
 (
     mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
     mbyClassifierKeys const   * const keys,
-    fm_byte                     const profile_id,
+    fm_byte                     const profile,
     fm_uint32                         actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     mbyClassifierHitInfo tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n];
 
     // Get hit index for each tcam slice:
-    lookUpWcmTcamCascade(cgrp_b_map, keys, profile_id, tcam_hit_info);
+    lookUpWcmTcamCascade(cgrp_b_map, keys, profile, tcam_hit_info);
 
     // Get the list of action_entry from action RAMs based on tcam hit index per slice:
-    wcmActions(cgrp_b_map, profile_id, tcam_hit_info, actions);
+    wcmActions(cgrp_b_map, profile, tcam_hit_info, actions);
 }

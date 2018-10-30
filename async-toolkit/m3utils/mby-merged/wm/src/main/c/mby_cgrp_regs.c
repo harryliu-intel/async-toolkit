@@ -190,38 +190,15 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 )
 {
     mbyClassifierActionCfg action_cfg;
-    wcm_action_cfg_r const * const wcm_action_cfg = &(cgrp_b_map->WCM_ACTION_CFG[ram_num]);
+    wcm_action_cfg_en_r const * const wcm_action_cfg_en = &(cgrp_b_map->WCM_ACTION_CFG_EN[profile]);
+    wcm_action_cfg_r const * const wcm_action_cfg_idx = &(cgrp_b_map->WCM_ACTION_CFG[profile][ram_num/
+                                                        (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)]);
 
-    fm_bool enable = 0;
-    fm_byte index  = 0;
+    action_cfg.enable = (wcm_action_cfg_en->ENABLE >> ram_num) & 0x1;
+    fm_byte slice_shift = ((ram_num % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH))
+                          * MBY_WCM_ACTION_CFG_INDEX_WIDTH);
+    action_cfg.slice = (wcm_action_cfg_idx->INDEX >> slice_shift) & 0x1f;
 
-    switch (ram_num)
-    {
-        case  0: enable = wcm_action_cfg->ENABLE_0;  index = wcm_action_cfg->INDEX_0;  break;
-        case  1: enable = wcm_action_cfg->ENABLE_1;  index = wcm_action_cfg->INDEX_1;  break;
-        case  2: enable = wcm_action_cfg->ENABLE_2;  index = wcm_action_cfg->INDEX_2;  break;
-        case  3: enable = wcm_action_cfg->ENABLE_3;  index = wcm_action_cfg->INDEX_3;  break;
-        case  4: enable = wcm_action_cfg->ENABLE_4;  index = wcm_action_cfg->INDEX_4;  break;
-        case  5: enable = wcm_action_cfg->ENABLE_5;  index = wcm_action_cfg->INDEX_5;  break;
-        case  6: enable = wcm_action_cfg->ENABLE_6;  index = wcm_action_cfg->INDEX_6;  break;
-        case  7: enable = wcm_action_cfg->ENABLE_7;  index = wcm_action_cfg->INDEX_7;  break;
-        case  8: enable = wcm_action_cfg->ENABLE_8;  index = wcm_action_cfg->INDEX_8;  break;
-        case  9: enable = wcm_action_cfg->ENABLE_9;  index = wcm_action_cfg->INDEX_9;  break;
-        case 10: enable = wcm_action_cfg->ENABLE_10; index = wcm_action_cfg->INDEX_10; break;
-        case 11: enable = wcm_action_cfg->ENABLE_11; index = wcm_action_cfg->INDEX_11; break;
-        case 12: enable = wcm_action_cfg->ENABLE_12; index = wcm_action_cfg->INDEX_12; break;
-        case 13: enable = wcm_action_cfg->ENABLE_13; index = wcm_action_cfg->INDEX_13; break;
-        case 14: enable = wcm_action_cfg->ENABLE_14; index = wcm_action_cfg->INDEX_14; break;
-        case 15: enable = wcm_action_cfg->ENABLE_15; index = wcm_action_cfg->INDEX_15; break;
-        case 16: enable = wcm_action_cfg->ENABLE_16; index = wcm_action_cfg->INDEX_16; break;
-        case 17: enable = wcm_action_cfg->ENABLE_17; index = wcm_action_cfg->INDEX_17; break;
-        case 18: enable = wcm_action_cfg->ENABLE_18; index = wcm_action_cfg->INDEX_18; break;
-        case 19: enable = wcm_action_cfg->ENABLE_19; index = wcm_action_cfg->INDEX_19; break;
-        default: enable = 0;                         index = 0;
-    }
-
-    action_cfg.enable = enable;
-    action_cfg.slice  = index;
     return action_cfg;
 }
 
