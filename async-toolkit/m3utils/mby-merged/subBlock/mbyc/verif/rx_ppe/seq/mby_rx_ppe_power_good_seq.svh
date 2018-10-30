@@ -45,66 +45,66 @@
 
 class mby_rx_ppe_power_good_seq extends shdv_base_reset_seq;
 
-    // Variable: env
-    // Protected rx_ppe Top Level Env
-    protected mby_rx_ppe_env_pkg::mby_rx_ppe_env            env;
+   // Variable: env
+   // Protected rx_ppe Top Level Env
+   protected mby_rx_ppe_env_pkg::mby_rx_ppe_env            env;
 
-    // Variable: tb_vif;
-    // Handle to rx_ppe TB interface.
-    virtual mby_rx_ppe_tb_if            tb_vif;
+   // Variable: tb_vif;
+   // Handle to rx_ppe TB interface.
+   virtual mby_rx_ppe_tb_if            tb_vif;
 
-    `uvm_object_utils(mby_rx_ppe_power_good_seq)
-    `uvm_declare_p_sequencer(slu_sequencer)
+   `uvm_object_utils(mby_rx_ppe_power_good_seq)
+   `uvm_declare_p_sequencer(slu_sequencer)
 
-    //------------------------------------------------------------------------------
-    //  Constructor: new
-    //  New Power_Good_Seq Object.
-    //  Gets handle to the rx_ppe ENV.
-    //
-    //  Arguments:
-    //  string name  - rx_ppe TOP power good sequence object name.
-    //------------------------------------------------------------------------------
-    function new(input string name = "mby_rx_ppe_power_good_seq");
-        super.new(name);
-        set_env(slu_tb_env::get_top_tb_env());
-        
-        tb_vif = env.get_tb_vif();        
-    endfunction: new
+   //------------------------------------------------------------------------------
+   //  Constructor: new
+   //  New Power_Good_Seq Object.
+   //  Gets handle to the rx_ppe ENV.
+   //
+   //  Arguments:
+   //  string name  - rx_ppe TOP power good sequence object name.
+   //------------------------------------------------------------------------------
+   function new(input string name = "mby_rx_ppe_power_good_seq");
+      super.new(name);
+      set_env(slu_tb_env::get_top_tb_env());
 
-    //------------------------------------------------------------------------------
-    //  Function: set_env
-    //  Handle to rx_ppe Top Level env for use in sequences
-    //
-    //  Arguments:
-    //  slu_tb_env tb_env  -  Handle to the ENV
-    //------------------------------------------------------------------------------
-    virtual function void set_env(slu_tb_env tb_env);
-        mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
-        bit stat;
+      tb_vif = env.get_tb_vif();
+   endfunction: new
 
-        stat = $cast(temp_env,tb_env);
-        `slu_assert(    stat, ($psprintf("Cast of $s(type: $s) failed!!!",tb_env.get_name(),tb_env.get_type_name())));
-        `slu_assert(temp_env, ("Could not fetch slu_tb_env handle!!!"));
+   //------------------------------------------------------------------------------
+   //  Function: set_env
+   //  Handle to rx_ppe Top Level env for use in sequences
+   //
+   //  Arguments:
+   //  slu_tb_env tb_env  -  Handle to the ENV
+   //------------------------------------------------------------------------------
+   virtual function void set_env(slu_tb_env tb_env);
+      mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
+      bit stat;
 
-        this.env    = temp_env;
-    endfunction : set_env
+      stat = $cast(temp_env,tb_env);
+      `slu_assert(    stat, ($psprintf("Cast of $s(type: $s) failed!!!",tb_env.get_name(),tb_env.get_type_name())));
+      `slu_assert(temp_env, ("Could not fetch slu_tb_env handle!!!"));
 
-    //------------------------------------------------------------------------------
-    //  Task: body
-    //  Sequence body is used to control Power_Good (Initial Clear -> Delay -> Set),
-    // as well as Hard_Reset/Warm_Reset (Initial Clear)
-    //------------------------------------------------------------------------------
-    task body();
+      this.env    = temp_env;
+   endfunction : set_env
 
-        tb_vif.power_good_reset           = 0;
-        tb_vif.hard_reset                 = 0;
-        tb_vif.warm_reset                 = 0;
+   //------------------------------------------------------------------------------
+   //  Task: body
+   //  Sequence body is used to control Power_Good (Initial Clear -> Delay -> Set),
+   // as well as Hard_Reset/Warm_Reset (Initial Clear)
+   //------------------------------------------------------------------------------
+   task body();
 
-        #10;
-        `uvm_info(get_name(), $sformatf("Power_Good_Reset Set"), UVM_NONE);
-        tb_vif.power_good_reset           = 1;
+      tb_vif.power_good_reset           = 0;
+      tb_vif.hard_reset                 = 0;
+      tb_vif.warm_reset                 = 0;
 
-    endtask: body
+      #10;
+      `uvm_info(get_name(), $sformatf("Power_Good_Reset Set"), UVM_NONE);
+      tb_vif.power_good_reset           = 1;
+
+   endtask: body
 
 endclass: mby_rx_ppe_power_good_seq
 

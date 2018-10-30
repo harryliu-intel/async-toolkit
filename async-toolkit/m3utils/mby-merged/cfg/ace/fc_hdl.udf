@@ -451,6 +451,35 @@ EOF
                },
             },
 
+            fc_effm => {
+               top         => 'fc_top_lib.soc',
+               top_language => 'SystemVerilog',
+               use => \@models_use,
+                      
+               effm_opts => [   
+                    "-cfg ZSE -cfg-",
+                    "-use_emubuild_tooldata",  # Remove this when we use HDK greater than 1.4.7
+                    "-top fc_top_lib.soc",
+                    "-effm 2",
+                    "-target $ENV{MODEL_ROOT}/target/".&ToolConfig::get_facet("dut")."/emu/",
+                    "-yml $ENV{MODEL_ROOT}/tools/effm/cfg/buildProjectCfg.yml",
+                    "-schedArgs -define_delegate_in_child",
+               ],
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-hier_rtl_dumper", ],
+
+               libs => [
+                  "mby_mgm_lib",
+                  $fc_global_vars::COLLAGE_LIB,
+                  "fc_top_lib",
+                  "generated_collateral_lib",
+                  @all_sip_rtl_liblist,
+                  @all_hip_liblist,   
+                  'dump_filelist_lib',
+               ],
+ 
+            },
+
             mby => {
                top         => 'mby_tb_lib.mby_tb',
                jg_elab_top => 'mby_jasper_lib.mby_top',
@@ -464,7 +493,7 @@ EOF
                   "mby_tb_lib",
                   "mby_rtl_lib",
                   "sva_lib",
-	          "mby_mgm_lib",
+                  "mby_mgm_lib",
                   "mby_regflow_lib",
                   "mby_ti_lib",
                   "shdv_shared_lib",

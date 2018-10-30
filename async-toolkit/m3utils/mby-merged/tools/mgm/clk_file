@@ -6,6 +6,7 @@ car_core_upper_clk            446.667		CLK_DOMAIN_4
 car_core_lower_clk            446.667		CLK_DOMAIN_5
 car_core_rxctl_clk            446.667		CLK_DOMAIN_6
 car_core_psm_clk              446.667		CLK_DOMAIN_7
+mclk                          1800		CLK_DOMAIN_8
 car_core_upper_ana_clk        625		CLK_DOMAIN_10
 car_misc_clk                  830.07		CLK_DOMAIN_11
 car_mng_clk                   312.5		CLK_DOMAIN_12
