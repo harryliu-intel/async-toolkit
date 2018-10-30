@@ -22,6 +22,7 @@ SOURCES += $(SRC_DIR)/mby_classifier.c
 SOURCES += $(SRC_DIR)/mby_hash.c
 SOURCES += $(SRC_DIR)/mby_nexthop.c
 SOURCES += $(SRC_DIR)/mby_maskgen.c
+SOURCES += $(SRC_DIR)/mby_triggers_regs.c
 SOURCES += $(SRC_DIR)/mby_triggers.c
 SOURCES += $(SRC_DIR)/mby_congmgmt.c
 SOURCES += $(SRC_DIR)/mby_rxstats.c

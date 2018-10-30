@@ -12,7 +12,7 @@
 
 // Defines:
 
-#include "mby_top_map.h"
+#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 
 /* --------------------------------------------------------------------- */
 /* The following are written manually based on the specs - do not delete */
