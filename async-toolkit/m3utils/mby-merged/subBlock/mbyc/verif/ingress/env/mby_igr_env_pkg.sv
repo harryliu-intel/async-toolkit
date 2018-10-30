@@ -27,8 +27,7 @@ package mby_igr_env_pkg;
 
    import shdv_base_pkg::*;
    import mby_wm_dpi_pkg::*;
-   import mby_common_pkg::*;
-
+//PJP   import mby_common_pkg::*; 
    import mby_ec_bfm_pkg::*;
 
    `include "uvm_macros.svh"
