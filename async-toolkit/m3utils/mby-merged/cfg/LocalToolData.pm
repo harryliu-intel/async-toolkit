@@ -279,6 +279,9 @@ $ToolConfig_tools{"mgm"} = {
             LOCAL_ASIC_MEMORIES => "YES",
     }, 
 };
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_8}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_no_phy}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_8_no_phy}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
 $ToolConfig_tools{buildman}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
 $ToolConfig_tools{runtools}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
 $ToolConfig_tools{buildman}{ENV}{MGM_TSMC_N7}  = "YES";
