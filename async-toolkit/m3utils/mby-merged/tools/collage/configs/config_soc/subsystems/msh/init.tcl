@@ -9,5 +9,6 @@
 
 collage_install_ip_kit -ip_name  "mby_msh" \
                        -kit_name "mby_msh" \
-                       -src_dir  "$::env(MODEL_ROOT)/tools/collage/msh/ip_kits" \
+                       -src_dir  $src_kits_root \
                        -dest_dir $install_kits_root
+

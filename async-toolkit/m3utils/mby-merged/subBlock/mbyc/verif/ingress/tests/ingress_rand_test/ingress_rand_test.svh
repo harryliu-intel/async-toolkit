@@ -83,7 +83,7 @@ class ingress_eth_simple_seq extends ingress_extended_base_seq;
     `slu_info(this.get_name(), ("Starting eth simple sequence..."))
     foreach(los_sequencers[i]) begin
       `slu_assert($cast(los_sequencers[i], 
-        el_ambiente.get_slu_sqcr().pick_sequencer($sformatf("eth_bfm_%0d_tx0", i))),
+        el_ambiente.get_slu_sqcr().pick_sequencer($sformatf("eth_bfm_%0d_rx0", i))),
         ("Could not get a pointer to the sequencer%0d", i))
     end
     foreach(los_frames[i]) begin

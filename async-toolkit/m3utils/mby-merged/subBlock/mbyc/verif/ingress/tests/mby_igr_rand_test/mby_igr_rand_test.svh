@@ -97,7 +97,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
 
       `uvm_info(this.get_name(), ("Starting eth simple sequence..."), UVM_LOW)
       foreach(los_sequencers[i]) begin
-         assert($cast(los_sequencers[i], mby_igr_env_pkg::mby_igr_tb_sequencer::pick_sequencer($sformatf("eth_bfm_%0d_tx0", i))))
+         assert($cast(los_sequencers[i], mby_igr_env_pkg::mby_igr_tb_sequencer::pick_sequencer($sformatf("eth_bfm_%0d_rx0", i))))
          else begin
             `uvm_error(get_name(), $sformatf("Could not get a pointer to the sequencer%0d", i));
          end
