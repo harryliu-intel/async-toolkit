@@ -20,4 +20,4 @@
 
 `include "egress_env_base_seq.sv"
 `include "egress_extended_base_seq.sv"
-`include "egress_hard_reset_seq.sv"
+//PJP`include "egress_hard_reset_seq.sv"
