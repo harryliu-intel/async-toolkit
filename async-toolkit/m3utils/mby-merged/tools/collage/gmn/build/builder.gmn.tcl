@@ -11,9 +11,7 @@ set ::collage_ip_info::ip_rtl_inc_dirs "$::env(MODEL_ROOT)/subBlock/mbyc/src/gmm
 
 set ::collage_ip_info::ip_input_language SystemVerilog
 
-#set ::collage_ip_info::ip_input_files "$::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/mby_gmm_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/shared_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/gmm/gmn/top/rtl/mby_gmn.sv"
-### TEMP solution until sla_pkg is removed from mby_gmn.sv
-set ::collage_ip_info::ip_input_files "$::env(MODEL_ROOT)/tools/collage/corekit_stubs/sla_pkg_stub.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/mby_gmm_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/shared_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/gmm/gmn/top/rtl/mby_gmn.sv"
+set ::collage_ip_info::ip_input_files "$::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/mby_gmm_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/shared_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/gmm/gmn/top/rtl/mby_gmn.sv"
 
 set ::collage_ip_info::ip_plugin_dir "" ; # Directories - space separated list - with tcl plugin files
 set ::collage_ip_info::ip_ifc_def_hook "gmn_create_ifc_instances" ; # Set this to procedure to add IP interfaces - defined below

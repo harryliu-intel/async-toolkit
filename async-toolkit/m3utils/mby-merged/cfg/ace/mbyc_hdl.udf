@@ -159,6 +159,12 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag            => "nonsynth",
             },
 
+            mby_base_pkg_lib    => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_base_pkg.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib' ],
+               -tag             => "nonsynth",
+            },
+
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
                -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_wm_dpi_lib' ],
@@ -566,7 +572,10 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_wm_dpi_lib",
                         #"mby_rx_ppe_ti_lib",
                         #"mby_rx_ppe_env_lib",
+                        "sva_lib",
+                        "mby_mgm_lib",
                         "mby_igr_rtl_lib",
+                        "mby_base_pkg_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
                         "mby_ingress_env_lib",
@@ -614,7 +623,7 @@ print "MGM debug : @mbyMgmLibs\n";
                #},
             },
             ####################################################################
-            # mby_ingress model ends
+            # mby ingress model ends
             ####################################################################
 
             ####################################################################
@@ -681,7 +690,7 @@ print "MGM debug : @mbyMgmLibs\n";
                #},
             },
             ####################################################################
-            # mby_egress model ends
+            # mby egress model ends
             ####################################################################
 
             ####################################################################
