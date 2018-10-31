@@ -184,7 +184,7 @@ class ingress_env extends ingress_base_env;
       end
       // Create the vp bfm instances
       vp_bfms[i]                = igr_vp_bfm_t::type_id::create($sformatf("igr_vp_bfm%0d", i), this);
-      vp_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
+      vp_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;                            // Configure as MASTER
       vp_bfms[i].cfg.port_speed = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
                                    eth_bfm_pkg::SPEED_OFF,
                                    eth_bfm_pkg::SPEED_OFF,
@@ -212,7 +212,7 @@ class ingress_env extends ingress_base_env;
       end
       // Create the bfm instances
       eth_bfms[i]                   = igr_eth_bfm_t::type_id::create($sformatf("igr_eth_bfm%0d", i), this);
-      eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_MASTER;                            // Configure as MASTER
+      eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as MASTER
       eth_bfms[i].cfg.port_speed    = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
                                        eth_bfm_pkg::SPEED_OFF,
                                        eth_bfm_pkg::SPEED_OFF,
@@ -235,13 +235,13 @@ class ingress_env extends ingress_base_env;
       vp_bfm_rx_io[i].set_vintf(vp_bfm_rx_vintf[i]);
       vp_bfms[i].set_io(vp_bfm_tx_io[i], vp_bfm_rx_io[i]);
       void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
-        $sformatf("vp_bfm_%0d_tx0", i), vp_bfms[i].tx.frame_sequencer[0]));
+        $sformatf("vp_bfm_%0d_rx0", i), vp_bfms[i].rx.frame_sequencer[0]));
       void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
-        $sformatf("vp_bfm_%0d_tx1", i), vp_bfms[i].tx.frame_sequencer[1]));
+        $sformatf("vp_bfm_%0d_rx1", i), vp_bfms[i].rx.frame_sequencer[1]));
       void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
-        $sformatf("vp_bfm_%0d_tx2", i), vp_bfms[i].tx.frame_sequencer[2]));
+        $sformatf("vp_bfm_%0d_rx2", i), vp_bfms[i].rx.frame_sequencer[2]));
       void'(this.add_sequencer($sformatf("vp_bfm_%0d", i), 
-        $sformatf("vp_bfm_%0d_tx3", i), vp_bfms[i].tx.frame_sequencer[3]));
+        $sformatf("vp_bfm_%0d_rx3", i), vp_bfms[i].rx.frame_sequencer[3]));
     end
   endfunction
 
@@ -255,13 +255,13 @@ class ingress_env extends ingress_base_env;
       eth_bfm_rx_io[i].set_vintf(eth_bfm_rx_vintf[i]);
       eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);
       void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
-        $sformatf("eth_bfm_%0d_tx0", i), eth_bfms[i].tx.frame_sequencer[0]));
+        $sformatf("eth_bfm_%0d_rx0", i), eth_bfms[i].rx.frame_sequencer[0]));
       void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
-        $sformatf("eth_bfm_%0d_tx1", i), eth_bfms[i].tx.frame_sequencer[1]));
+        $sformatf("eth_bfm_%0d_rx1", i), eth_bfms[i].rx.frame_sequencer[1]));
       void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
-        $sformatf("eth_bfm_%0d_tx2", i), eth_bfms[i].tx.frame_sequencer[2]));
+        $sformatf("eth_bfm_%0d_rx2", i), eth_bfms[i].rx.frame_sequencer[2]));
       void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), 
-        $sformatf("eth_bfm_%0d_tx3", i), eth_bfms[i].tx.frame_sequencer[3]));
+        $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].rx.frame_sequencer[3]));
     end
   endfunction
 
