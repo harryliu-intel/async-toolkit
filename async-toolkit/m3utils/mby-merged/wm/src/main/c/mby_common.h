@@ -229,7 +229,7 @@ typedef struct mbyClassifierKeysStruct
 
 typedef struct mbyActionPrecValStruct
 {
-    fm_byte                 prec : 3; // 3b field
+    fm_byte                 prec; // 3b field
     fm_uint32               val;  // act24.val is 24b, act4.val is 4b, act1.val is 1b
 
 } mbyActionPrecVal;
