@@ -27,6 +27,21 @@
 		<Singleton>0</Singleton>
 		<Type>build</Type>
   </row>
+  row>
+		<DUT>fc_8</DUT>
+		<Stage>vcs</Stage>
+		<Stage_Exec>bman</Stage_Exec>
+		<AdditionalArgs>-s all +s collage +s vcs -mc fc_8 +s sim_init -1c -ace_model_name fc_8  -1c- -variant=fc_8 -nodelete_flow_data</AdditionalArgs>
+                <XdutStageDep>[mby].[genrtl]</XdutStageDep>
+		<IsGating>1</IsGating>
+		<Turnin>1</Turnin>
+		<Release>1</Release>
+		<PostRelease>0</PostRelease>
+		<Conditional></Conditional>
+		<Active>1</Active>
+		<Singleton>0</Singleton>
+		<Type>build</Type>
+  </row>
 	<row>
 		<DUT>mby</DUT>
 		<Stage>mby_alive_test</Stage>
