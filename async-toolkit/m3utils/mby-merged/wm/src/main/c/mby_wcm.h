@@ -40,7 +40,7 @@ void mbyMatchWildcard
 (
     mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
     mbyClassifierKeys const   * const keys,
-    fm_byte                     const profile,
+    fm_byte                     const packet_profile,
     fm_uint32                         actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 );
 

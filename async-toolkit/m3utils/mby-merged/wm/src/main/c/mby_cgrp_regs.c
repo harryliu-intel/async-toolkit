@@ -191,13 +191,13 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 {
     mbyClassifierActionCfg action_cfg;
     wcm_action_cfg_en_r const * const wcm_action_cfg_en = &(cgrp_b_map->WCM_ACTION_CFG_EN[profile]);
-    wcm_action_cfg_r const * const wcm_action_cfg_idx = &(cgrp_b_map->WCM_ACTION_CFG[profile][ram_num/
-                                                        (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)]);
+    wcm_action_cfg_r const * const wcm_action_cfg_idx   = &(cgrp_b_map->WCM_ACTION_CFG[profile][ram_num/
+                                                            (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)]);
 
-    action_cfg.enable = (wcm_action_cfg_en->ENABLE >> ram_num) & 0x1;
+    action_cfg.enable   = (wcm_action_cfg_en->ENABLE >> ram_num) & 0x1;
     fm_byte slice_shift = ((ram_num % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH))
-                          * MBY_WCM_ACTION_CFG_INDEX_WIDTH);
-    action_cfg.slice = (wcm_action_cfg_idx->INDEX >> slice_shift) & 0x1f;
+                            * MBY_WCM_ACTION_CFG_INDEX_WIDTH);
+    action_cfg.slice    = (wcm_action_cfg_idx->INDEX >> slice_shift) & 0x1f;
 
     return action_cfg;
 }

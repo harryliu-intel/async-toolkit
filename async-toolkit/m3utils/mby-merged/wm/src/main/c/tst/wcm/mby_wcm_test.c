@@ -22,10 +22,13 @@
 
 typedef void(*run_on_simple_wcm_setup_fn)
 (
-    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    mbyMapperToClassifier * const map2cla
+    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
+    mbyMapperToClassifier     * const map2cla
 );
-typedef int(*run_on_simple_wcm_check_fn)(fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM]);
+typedef int(*run_on_simple_wcm_check_fn)
+(
+    fm_uint32 const actions[MBY_WCM_MAX_ACTIONS_NUM]
+);
 
 static void pass(const char* name)
 {
@@ -60,10 +63,10 @@ static void freeMem
 static void set_WCM_ACTION_REG
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    fm_uint i,
-    fm_uint j,
-    fm_int nr_action,
-    fm_uint32 value
+    fm_uint                      const i,
+    fm_uint                      const j,
+    fm_int                       const nr_action,
+    fm_uint32                    const value
 )
 {
     wcm_action_r * const em_b_wcm_action = &(cgrp_b_map->WCM_ACTION[i][j]);
@@ -102,36 +105,36 @@ static void cpy_actions
 {
     for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         out->act24[i].prec = in->act24[i].prec;
-        out->act24[i].val = in->act24[i].val;
+        out->act24[i].val  = in->act24[i].val;
     }
 
     for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         out->act4[i].prec = in->act4[i].prec;
-        out->act4[i].val = in->act4[i].val;
+        out->act4[i].val  = in->act4[i].val;
     }
 
     for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         out->act1[i].prec = in->act1[i].prec;
-        out->act1[i].val = in->act1[i].val;
+        out->act1[i].val  = in->act1[i].val;
     }
 }
 
 static void set_WCM_TCAM_REG
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    fm_uint i,
-    fm_uint j,
-    fm_byte key_top_invert,
-    fm_uint32 key_invert,
-    fm_byte key_top,
-    fm_uint32 key
+    fm_uint                      const i,
+    fm_uint                      const j,
+    fm_byte                      const key_top_invert,
+    fm_uint32                    const key_invert,
+    fm_byte                      const key_top,
+    fm_uint32                    const key
 )
 {
     wcm_tcam_r * const em_b_wcm_tcam = &(cgrp_b_map->WCM_TCAM[i][j]);
-    em_b_wcm_tcam->KEY_TOP_INVERT = key_top_invert;
-    em_b_wcm_tcam->KEY_INVERT = key_invert;
-    em_b_wcm_tcam->KEY_TOP = key_top;
-    em_b_wcm_tcam->KEY = key;
+    em_b_wcm_tcam->KEY_TOP_INVERT    = key_top_invert;
+    em_b_wcm_tcam->KEY_INVERT        = key_invert;
+    em_b_wcm_tcam->KEY_TOP           = key_top;
+    em_b_wcm_tcam->KEY               = key;
 }
 
 static void init_WCM_TCAM_REG
@@ -151,24 +154,28 @@ static void init_WCM_TCAM_REG
 static void set_index_WCM_ACTION_REG
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    fm_uint i,
-    fm_int index_nr,
-    fm_uint64 value
+    fm_uint                      const i,
+    fm_int                       const index_nr,
+    fm_uint64                    const value
 )
 {
 
-    if(index_nr > -1 && index_nr < (fm_int)mby_ppe_cgrp_b_nested_map_WCM_ACTION__n)
+    if((index_nr > -1) && (index_nr < (fm_int)mby_ppe_cgrp_b_nested_map_WCM_ACTION__n))
     {
         wcm_action_cfg_r * const em_b_wcm_action_cfg_idx = &(cgrp_b_map->WCM_ACTION_CFG[i][index_nr/
-                                                           (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)]);
-        em_b_wcm_action_cfg_idx->INDEX &= ~(0x1f << ((index_nr % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)) * MBY_WCM_ACTION_CFG_INDEX_WIDTH));
-        em_b_wcm_action_cfg_idx->INDEX |= (value << ((index_nr % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)) * MBY_WCM_ACTION_CFG_INDEX_WIDTH));
+                                                            (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH)]);
+
+        em_b_wcm_action_cfg_idx->INDEX &= ~(0x1f << ((index_nr % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH))
+                                            * MBY_WCM_ACTION_CFG_INDEX_WIDTH));
+        em_b_wcm_action_cfg_idx->INDEX |= (value << ((index_nr % (wcm_action_cfg_r_INDEX__n/MBY_WCM_ACTION_CFG_INDEX_WIDTH))
+                                            * MBY_WCM_ACTION_CFG_INDEX_WIDTH));
     }
     else
     {
         wcm_action_cfg_r * const em_b_wcm_action_cfg_idx0 = &(cgrp_b_map->WCM_ACTION_CFG[i][0]);
-        em_b_wcm_action_cfg_idx0->INDEX = 0x0;
         wcm_action_cfg_r * const em_b_wcm_action_cfg_idx1 = &(cgrp_b_map->WCM_ACTION_CFG[i][1]);
+
+        em_b_wcm_action_cfg_idx0->INDEX = 0x0;
         em_b_wcm_action_cfg_idx1->INDEX = 0x0;
     }
 
@@ -177,14 +184,14 @@ static void set_index_WCM_ACTION_REG
 static void set_enable_WCM_ACTION_REG
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    fm_uint i,
-    fm_int enable_nr,
-    fm_uint32 value
+    fm_uint                      const i,
+    fm_int                       const enable_nr,
+    fm_uint32                    const value
 )
 {
     wcm_action_cfg_en_r * const em_b_wcm_action_cfg_en = &(cgrp_b_map->WCM_ACTION_CFG_EN[i]);
 
-    if(enable_nr > -1 && enable_nr < (fm_int)mby_ppe_cgrp_b_nested_map_WCM_ACTION__n)
+    if((enable_nr > -1) && (enable_nr < (fm_int)mby_ppe_cgrp_b_nested_map_WCM_ACTION__n))
     {
         em_b_wcm_action_cfg_en->ENABLE &= ~(0x1 << enable_nr);
         em_b_wcm_action_cfg_en->ENABLE |= (value << enable_nr);
@@ -207,27 +214,27 @@ static void init_WCM_ACTION_CFG_REG
 static void set_WCM_TCAM_CFG_REG
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    fm_uint i,
-    fm_uint j,
-    uint16 chunk_mask,
-    uint8 start_compare,
-    uint8 start_set,
-    uint6 select_top,
-    uint7 select0,
-    uint7 select1,
-    uint7 select2,
-    uint7 select3
+    fm_uint                      const i,
+    fm_uint                      const j,
+    uint16                       const chunk_mask,
+    uint8                        const start_compare,
+    uint8                        const start_set,
+    uint6                        const select_top,
+    uint7                        const select0,
+    uint7                        const select1,
+    uint7                        const select2,
+    uint7                        const select3
 )
 {
     wcm_tcam_cfg_r * const em_b_wcm_tcam_cfg = &(cgrp_b_map->WCM_TCAM_CFG[i][j]);
-    em_b_wcm_tcam_cfg->CHUNK_MASK = chunk_mask;
-    em_b_wcm_tcam_cfg->START_COMPARE = start_compare;
-    em_b_wcm_tcam_cfg->START_SET = start_set;
-    em_b_wcm_tcam_cfg->SELECT_TOP = select_top;
-    em_b_wcm_tcam_cfg->SELECT0 = select0;
-    em_b_wcm_tcam_cfg->SELECT1 = select1;
-    em_b_wcm_tcam_cfg->SELECT2 = select2;
-    em_b_wcm_tcam_cfg->SELECT3 = select3;
+    em_b_wcm_tcam_cfg->CHUNK_MASK            = chunk_mask;
+    em_b_wcm_tcam_cfg->START_COMPARE         = start_compare;
+    em_b_wcm_tcam_cfg->START_SET             = start_set;
+    em_b_wcm_tcam_cfg->SELECT_TOP            = select_top;
+    em_b_wcm_tcam_cfg->SELECT0               = select0;
+    em_b_wcm_tcam_cfg->SELECT1               = select1;
+    em_b_wcm_tcam_cfg->SELECT2               = select2;
+    em_b_wcm_tcam_cfg->SELECT3               = select3;
 }
 
 static void init_WCM_TCAM_CFG_REG
@@ -238,13 +245,14 @@ static void init_WCM_TCAM_CFG_REG
     for (fm_uint i = 0; i < mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n; i++)
     {
         for(fm_uint j = 0; j < 64; j++)
-        {
             set_WCM_TCAM_CFG_REG(cgrp_b_map, i, j, 0x0, 0x1, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0);
-        }
     }
 }
 
-static void init_actions(mbyClassifierActions * const actions_in)
+static void init_actions
+(
+    mbyClassifierActions * const actions_in
+)
 {
     for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         actions_in->act24[i].prec = 1;
@@ -253,16 +261,19 @@ static void init_actions(mbyClassifierActions * const actions_in)
 
     for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         actions_in->act4[i].prec = 1;
-        actions_in->act4[i].val = 0;
+        actions_in->act4[i].val  = 0;
     }
 
     for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         actions_in->act1[i].prec = 1;
-        actions_in->act1[i].val = 0;
+        actions_in->act1[i].val  = 0;
     }
 }
 
-static void init_keys(mbyClassifierKeys    * const keys)
+static void init_keys
+(
+    mbyClassifierKeys    * const keys
+)
 {
     for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         keys->key32[i] = 0;
@@ -313,13 +324,13 @@ static void setInputs_ipv4_frame
     00  14  00  00  00  00  05  11  70  ca  aa  bb  cc  dd  11  aa
     bb  cc
     */
-    map2cla->FFU_KEYS.key32[0] = 0xAABBCCDD;
-    map2cla->FFU_KEYS.key32[1] = 0x11AABBCC;
-    map2cla->FFU_KEYS.key32[4] = 0x11AABBCC;
-    map2cla->FFU_KEYS.key16[6] = 0x12;
-    map2cla->FFU_KEYS.key16[7] = 0x3456;
-    map2cla->FFU_KEYS.key16[8] = 0x7890;
-    map2cla->FFU_KEYS.key16[9] = 0x7;
+    map2cla->FFU_KEYS.key32[ 0] = 0xAABBCCDD;
+    map2cla->FFU_KEYS.key32[ 1] = 0x11AABBCC;
+    map2cla->FFU_KEYS.key32[ 4] = 0x11AABBCC;
+    map2cla->FFU_KEYS.key16[ 6] = 0x12;
+    map2cla->FFU_KEYS.key16[ 7] = 0x3456;
+    map2cla->FFU_KEYS.key16[ 8] = 0x7890;
+    map2cla->FFU_KEYS.key16[ 9] = 0x7;
     map2cla->FFU_KEYS.key16[10] = 0x809;
     map2cla->FFU_KEYS.key16[11] = 0xA0B;
     map2cla->FFU_KEYS.key16[12] = 0x800;
@@ -329,23 +340,23 @@ static void setInputs_ipv4_frame
     map2cla->FFU_KEYS.key16[16] = 0x1;
     map2cla->FFU_KEYS.key16[17] = 0x203;
     map2cla->FFU_KEYS.key16[19] = 0x203;
-    map2cla->FFU_KEYS.key8[3] = 0x10;
-    map2cla->FFU_KEYS.key8[6] = 0x4;
-    map2cla->FFU_KEYS.key8[7] = 0x5;
-    map2cla->FFU_KEYS.key8[20] = 0x5;
-    map2cla->FFU_KEYS.key8[21] = 0x11;
-    map2cla->FFU_KEYS.key8[23] = 0x14;
-    map2cla->FFU_KEYS.key8[25] = 0x40;
-    map2cla->FFU_KEYS.key8[28] = 0x1;
-    map2cla->FFU_KEYS.key8[29] = 0x1;
-    map2cla->FFU_KEYS.key8[45] = 0x1;
-    map2cla->FFU_KEYS.key8[55] = 0xa1;
-    map2cla->FFU_KEYS.key8[56] = 0x7;
-    map2cla->FFU_KEYS.key8[57] = 0xf6;
-    map2cla->FFU_KEYS.key8[58] = 0xe5;
-    map2cla->FFU_KEYS.key8[59] = 0xd4;
+    map2cla->FFU_KEYS.key8 [ 3] = 0x10;
+    map2cla->FFU_KEYS.key8 [ 6] = 0x4;
+    map2cla->FFU_KEYS.key8 [ 7] = 0x5;
+    map2cla->FFU_KEYS.key8 [20] = 0x5;
+    map2cla->FFU_KEYS.key8 [21] = 0x11;
+    map2cla->FFU_KEYS.key8 [23] = 0x14;
+    map2cla->FFU_KEYS.key8 [25] = 0x40;
+    map2cla->FFU_KEYS.key8 [28] = 0x1;
+    map2cla->FFU_KEYS.key8 [29] = 0x1;
+    map2cla->FFU_KEYS.key8 [45] = 0x1;
+    map2cla->FFU_KEYS.key8 [55] = 0xa1;
+    map2cla->FFU_KEYS.key8 [56] = 0x7;
+    map2cla->FFU_KEYS.key8 [57] = 0xf6;
+    map2cla->FFU_KEYS.key8 [58] = 0xe5;
+    map2cla->FFU_KEYS.key8 [59] = 0xd4;
 
-    map2cla->FFU_ACTIONS.act4[4].val = 1;
+    map2cla->FFU_ACTIONS.act4[ 4].val = 1;
     map2cla->FFU_ACTIONS.act1[20].val = 1;
     map2cla->FFU_ACTIONS.act1[22].val = 1;
 
@@ -355,7 +366,7 @@ static void setInputs_ipv4_frame
 static void simple_wcm_basic_test_setup
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    mbyMapperToClassifier * const map2cla
+    mbyMapperToClassifier      * const map2cla
 )
 {
     initRegs(cgrp_b_map);
@@ -364,7 +375,7 @@ static void simple_wcm_basic_test_setup
 
 static int simple_wcm_basic_test_check
 (
-    fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM]
+    fm_uint32 const actions[MBY_WCM_MAX_ACTIONS_NUM]
 )
 {
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; i++) {
@@ -378,7 +389,7 @@ static int simple_wcm_basic_test_check
 static void simple_wcm_dip_ipv4_test_setup
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    mbyMapperToClassifier * const map2cla
+    mbyMapperToClassifier      * const map2cla
 )
 {
     /*
@@ -400,11 +411,11 @@ static void simple_wcm_dip_ipv4_test_setup
     cond.mask.dip.is_ipv6 = false;
 
     rule.precedence = 512;
-    rule.condition = tbl.condition;
-    rule.cond = cond;
-    rule.action = IES_ACL_ACTION_PERMIT;
-    rule.act_val = act_val;
-    rule.state = IES_ACL_RULE_ENTRY_STATE_VALID;
+    rule.condition  = tbl.condition;
+    rule.cond       = cond;
+    rule.action     = IES_ACL_ACTION_PERMIT;
+    rule.act_val    = act_val;
+    rule.state      = IES_ACL_RULE_ENTRY_STATE_VALID;
     */
     initRegs(cgrp_b_map);
 
@@ -428,7 +439,7 @@ static void simple_wcm_dip_ipv4_test_setup
 
 static int simple_wcm_dip_ipv4_test_check
 (
-    fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM]
+    fm_uint32 const actions[MBY_WCM_MAX_ACTIONS_NUM]
 )
 {
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; i++) {
@@ -445,7 +456,7 @@ static int simple_wcm_dip_ipv4_test_check
 static void simple_wcm_mac_test_setup
 (
     mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    mbyMapperToClassifier * const map2cla
+    mbyMapperToClassifier      * const map2cla
 )
 {
     /*
@@ -463,11 +474,11 @@ static void simple_wcm_mac_test_setup
     cond.mask.dmac = htonl(0xffffffffffff);
 
     rule.precedence = 512;
-    rule.condition = tbl.condition;
-    rule.cond = cond;
-    rule.action = IES_LITERAL_U64(2);
-    rule.act_val = act_val;
-    rule.state = IES_ACL_RULE_ENTRY_STATE_VALID;
+    rule.condition  = tbl.condition;
+    rule.cond       = cond;
+    rule.action     = IES_LITERAL_U64(2);
+    rule.act_val    = act_val;
+    rule.state      = IES_ACL_RULE_ENTRY_STATE_VALID;
     */
     initRegs(cgrp_b_map);
 
@@ -491,7 +502,7 @@ static void simple_wcm_mac_test_setup
 
 static int simple_wcm_mac_test_check
 (
-    fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM]
+    fm_uint32 const actions[MBY_WCM_MAX_ACTIONS_NUM]
 )
 {
     for (fm_uint i = 0; i < MBY_WCM_MAX_ACTIONS_NUM; i++) {
@@ -511,7 +522,6 @@ static int run_on_simple_wcm
     run_on_simple_wcm_check_fn check
 )
 {
-
     mby_ppe_cgrp_b_nested_map   *cgrp_b_map = NULL;
     allocMem(&cgrp_b_map);
     initRegs(cgrp_b_map);
@@ -519,8 +529,8 @@ static int run_on_simple_wcm
 
     mbyMapperToClassifier map2cla = { 0 };
 
-    mbyMapperToClassifier const * const in  = &map2cla;
-    mbyClassifierActions * const actions_out = &(map2cla.FFU_ACTIONS);
+    mbyMapperToClassifier const * const in          = &map2cla;
+    mbyClassifierActions        * const actions_out = &(map2cla.FFU_ACTIONS);
     setup(cgrp_b_map, &map2cla);
     fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
 
