@@ -3,12 +3,12 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.utils.Binary.BinaryInterpolator
 import monocle.state.all._
 import org.scalatest._
@@ -19,14 +19,15 @@ import org.scalatest._
 class ParserStageSpec extends FlatSpec with Matchers {
 
   "Flag 1 and 4" should "unconditionally be set when rule 0 configured as unconditional match" in {
-    val csrParser = Csr().getParser(0).csrParser
+    val csrParser = Csr().getParser(0)
     val idx = 0
     val pf = PacketFlags()
     val protoOffset = Parser.EmptyProtoOffsets
     val noException = Option.empty[ParserException]
     val ps = ParserState(Array(0,0,0), new AluOperation(0,0), 0, 0)
-    val ph = PacketHeader(Array.ofDim[Byte](79))
-    val ps2 = Parser.initialState(csrParser, ph, new PortIndex(0))
+    val pck = Packet(Array.ofDim[Byte](79))
+    val ph = PacketHeader(pck)
+    val ps2 = Parser.initialState(csrParser, ph, Port(0))
 
     // TODO: fix that
     //csr.foreachResetableField(f => f.reset())
@@ -51,7 +52,7 @@ class ParserStageSpec extends FlatSpec with Matchers {
     def parserExtLvalue(parserExtRIdx: Int) = pl.actExt(parserExtRIdx) composeLens
       parser_ext_r._FLAG_VALUE composeLens parser_ext_r.FLAG_VALUE._value
 
-    val updatedCsr = CsrLenses.execute(csrParser, for {
+    val updatedParserMap = CsrLenses.execute(csrParser.ppeParserMap, for {
       _ <- parserKeySLmask.assign_(0)
       _ <- parserKeySLvalue.assign_(0)
       _ <- parserKeyWLw0mask.assign_(0)
@@ -63,14 +64,15 @@ class ParserStageSpec extends FlatSpec with Matchers {
       _ <- parserExtLnum(16).assign_(4)
       _ <- parserExtLvalue(16).assign_(1)
     } yield ())
+    val updatedCsrParser = csrParser.copy(ppeParserMap = updatedParserMap)
 
-    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, ph)(idx, ps, pf, protoOffset, exceptionOpt = noException)
+    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps, pf, protoOffset, exceptionOpt = noException)
     result._1.get contains 1 shouldEqual true
     result._1.get contains 2 shouldEqual false
     result._1.get contains 3 shouldEqual false
     result._1.get contains 4 shouldEqual true
 
-    val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, ph)(idx, ps2, pf, protoOffset, exceptionOpt = noException)
+    val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps2, pf, protoOffset, exceptionOpt = noException)
     result2._1.toInt shouldEqual b"10010"
   }
 

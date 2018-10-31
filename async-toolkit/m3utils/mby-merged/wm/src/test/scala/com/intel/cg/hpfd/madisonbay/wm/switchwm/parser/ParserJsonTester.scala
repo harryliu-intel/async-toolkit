@@ -1,9 +1,11 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.Packet
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.utils.Loader
 import com.intel.cg.hpfd.madisonbay.wm.utils.Json.JsonMap
 import org.scalatest.{FlatSpec, Matchers}
@@ -55,12 +57,12 @@ class ParserJsonTester extends FlatSpec with Matchers {
 
   def parseFromCConfig(packet: Packet, port: Int): ParserOutput = {
     val parserMap = ParserProgrammer.readVer1(progFromC, csr)
-    Parser.parse(parserMap, packet, port)
+    Parser.parse(CsrParser(0, parserMap), packet, Port(port))
   }
 
   def parseFromCConfig2(packet: Packet, port: Int): ParserOutput = {
     val parserMap = ParserProgrammer.readVer2(prog2FromC, csr)
-    Parser.parse(parserMap, packet, port)
+    Parser.parse(CsrParser(0, parserMap), packet, Port(port))
   }
 
 }

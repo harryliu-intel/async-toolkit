@@ -20,7 +20,7 @@ class CsrSpec extends FlatSpec with Matchers {
 
     val smL = pl.keyS(idRule) composeLens parser_key_s_r._STATE_MASK composeLens parser_key_s_r.STATE_MASK._value
     val svL = pl.keyS(idRule) composeLens parser_key_s_r._STATE_VALUE composeLens parser_key_s_r.STATE_VALUE._value
-    val updatedParser = CsrLenses.execute(parser.csrParser, for {
+    val updatedParser = CsrLenses.execute(parser.ppeParserMap, for {
       _ <- smL.assign_(5)
       _ <- svL.assign_(6)
       } yield ())

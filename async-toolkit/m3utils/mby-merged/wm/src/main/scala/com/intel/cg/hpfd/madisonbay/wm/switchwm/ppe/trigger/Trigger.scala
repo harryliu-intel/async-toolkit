@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{PortIndex, TrafficClass, VID}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{Port, TrafficClass, VID}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.{CgrpCondition, SourcePortCondition}
 import com.intel.cgr.hpfd.madisonbay.wm.switchwm.ppe.trigger.TriggerCfg
 
@@ -52,7 +52,7 @@ object Trigger {
   class SourcePortCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
     lazy val spMask: BitSet =  BitSet.fromBitMask(Array[Long](apply_map.TRIGGER_CONDITION_RX(index).SRC_PORT_MASK()))
     val x: FrameState => Boolean = fs => {
-      spMask.contains(fs.rxPort.p)
+      spMask.contains(fs.rxPort.index)
     }
   }
 
@@ -71,7 +71,7 @@ object Trigger {
     val ta_cfg2 = csr.trig_apply.TRIGGER_ACTION_CFG_2(trigIdx)
 
     // (obviously needs to actually do filtering!
-    def lagFilter(dm: Set[PortIndex]): Set[PortIndex] = dm
+    def lagFilter(dm: Set[Port]): Set[Port] = dm
 
     /**
       * A forwarding action is special, in that it should halt further actions in this precedence groupo

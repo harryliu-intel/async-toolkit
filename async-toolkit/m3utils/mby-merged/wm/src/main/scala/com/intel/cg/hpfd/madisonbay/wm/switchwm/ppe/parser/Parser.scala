@@ -3,10 +3,11 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import madisonbay.csr.all._
 import ParserExceptions._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{IPVersion, Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtLong.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
@@ -36,12 +37,10 @@ object Parser {
   val NumberOfExtractionConfs     = 16
   val OffsetOfNextExtractAction   = 16
 
-  def parse(csrParser: mby_ppe_parser_map, packet: Packet, portIndex: Int): ParserOutput = {
+  def parse(csrParser: CsrParser, packet: Packet, rxPort: Port): ParserOutput = {
 
     // TODO: support split header to Interface 0 and Interface 1
-    val packetHeader = PacketHeader(packet.bytes).trimmed
-
-    val rxPort = new PortIndex(portIndex)
+    val packetHeader = PacketHeader(packet).trimmed
 
     val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(csrParser, packetHeader)(0,
       initialState(csrParser, packetHeader, rxPort),
@@ -73,7 +72,7 @@ object Parser {
   }
 
   @tailrec
-  def applyStage(csr: mby_ppe_parser_map, packetHeader: PacketHeader)
+  def applyStage(csr: CsrParser, packetHeader: PacketHeader)
        (idStage: Int, parserState: ParserState, packetFlags: PacketFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
                         (PacketFlags, ProtoOffsets, Option[ParserException]) = idStage match {
 
@@ -99,7 +98,7 @@ object Parser {
   /**
     * Do the TCAM lookup, translate the result into actions
     */
-  private def matchingAction(csr: mby_ppe_parser_map, idStage: Int, parserState: ParserState): Option[Action] = {
+  private def matchingAction(csrParser: CsrParser, idStage: Int, parserState: ParserState): Option[Action] = {
     // All lists have size of 16
     @tailrec
     def findAction(keysW: List[parser_key_w_r], keysS: List[parser_key_s_r],
@@ -130,10 +129,11 @@ object Parser {
         case (_, _, _, _, _, _) => None
       }
 
+    val parserMap = csrParser.ppeParserMap
     // reverse because: when multiple rules hit, the highest numbered rule within the stage wins
-    findAction(csr.PARSER_KEY_W(idStage).PARSER_KEY_W.reverse, csr.PARSER_KEY_S(idStage).PARSER_KEY_S.reverse,
-               csr.PARSER_ANA_W(idStage).PARSER_ANA_W.reverse, csr.PARSER_ANA_S(idStage).PARSER_ANA_S.reverse,
-               csr.PARSER_EXT(idStage).PARSER_EXT.reverse,     csr.PARSER_EXC(idStage).PARSER_EXC.reverse)
+    findAction(parserMap.PARSER_KEY_W(idStage).PARSER_KEY_W.reverse, parserMap.PARSER_KEY_S(idStage).PARSER_KEY_S.reverse,
+      parserMap.PARSER_ANA_W(idStage).PARSER_ANA_W.reverse, parserMap.PARSER_ANA_S(idStage).PARSER_ANA_S.reverse,
+      parserMap.PARSER_EXT(idStage).PARSER_EXT.reverse,     parserMap.PARSER_EXC(idStage).PARSER_EXC.reverse)
   }
 
   private class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
@@ -162,8 +162,8 @@ object Parser {
 
   }
 
-  def initialState(csr: mby_ppe_parser_map, packetHeader: PacketHeader, portIndex: PortIndex): Parser.ParserState = {
-    val portCfg = csr.PARSER_PORT_CFG(portIndex.p)
+  def initialState(csrParser: CsrParser, packetHeader: PacketHeader, port: Port): Parser.ParserState = {
+    val portCfg = csrParser.ppeParserMap.PARSER_PORT_CFG(port.index)
     val w = Array(portCfg.INITIAL_W0_OFFSET(), portCfg.INITIAL_W1_OFFSET(), portCfg.INITIAL_W2_OFFSET()).map(offset =>
       packetHeader.getWord(getLower16(offset))
     )
@@ -173,10 +173,10 @@ object Parser {
     ParserState(w, aluOp, state, ptr)
   }
 
-  private def packetType(csr: mby_ppe_parser_map, packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
+  private def packetType(csrParser: CsrParser, packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
     val interface = 0
-    val tcamCsr = csr.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
-    val sramCsr = csr.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
+    val tcamCsr = csrParser.ppeParserMap.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
+    val sramCsr = csrParser.ppeParserMap.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
     val tc = ParserTcam.matchRegister(Tcam.matchBitFun)(_)
     tcamCsr.zip(sramCsr).reverse.collectFirst {
@@ -185,10 +185,10 @@ object Parser {
     }.getOrElse((0,0))
   }
 
-  private def extractKeys(csr: mby_ppe_parser_map, packetHeader: PacketHeader,
-                          protoOffsets: ProtoOffsets): (PacketFields, mby_ppe_parser_map) = {
+  private def extractKeys(csrParser: CsrParser, packetHeader: PacketHeader,
+                          protoOffsets: ProtoOffsets): (PacketFields, CsrParser) = {
     val fieldProfile = 0
-    val extractorCsr = csr.PARSER_EXTRACT_CFG(fieldProfile).PARSER_EXTRACT_CFG
+    val extractorCsr = csrParser.ppeParserMap.PARSER_EXTRACT_CFG(fieldProfile).PARSER_EXTRACT_CFG
     val countersL  = mby_ppe_parser_map._PARSER_COUNTERS
     val ext_unknown_protid = countersL composeLens parser_counters_r._EXT_UNKNOWN_PROTID composeLens parser_counters_r.EXT_UNKNOWN_PROTID._value
     val ext_dup_protid = countersL composeLens parser_counters_r._EXT_DUP_PROTID composeLens parser_counters_r.EXT_DUP_PROTID._value
@@ -217,9 +217,9 @@ object Parser {
         }
       }
 
-    val ((result, updatedCsr), _) = extractorCsr.toList.traverseS(modify)((List.empty, csr))
+    val ((result, updatedParserMap), _) = extractorCsr.toList.traverseS(modify)((List.empty, csrParser.ppeParserMap))
 
-    (PacketFields(result.reverse.toIndexedSeq), updatedCsr)
+    (PacketFields(result.reverse.toIndexedSeq), csrParser.copy(ppeParserMap = updatedParserMap))
   }
 
   /**

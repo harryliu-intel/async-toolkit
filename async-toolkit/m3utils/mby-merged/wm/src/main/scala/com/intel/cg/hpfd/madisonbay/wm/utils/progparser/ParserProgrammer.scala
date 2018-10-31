@@ -90,25 +90,19 @@ object ParserProgrammer {
   }
 
   def readVer1(fromJson: Map[String, Any], csr: Csr): mby_ppe_parser_map =
-    readParserVer1(fromJson.getList[List[Any]]("input"), csr.getRxPpe(0).csrRxPpe.parser)
+    readParserVer1(fromJson.getList[List[Any]]("input"), csr.getRxPpe(0).ppeRxMap.parser)
 
   @tailrec
   private def readParserCfgVer2(lines: List[Map[String, Any]], parser: mby_ppe_parser_map): mby_ppe_parser_map = lines match {
     case Nil => parser
     case cfg :: tail =>
       val lensCfg = ParserLenses(0).portCfg(cfg.getInt("id"))
-      val lensInitialW0 = lensCfg composeLens parser_port_cfg_r._INITIAL_W0_OFFSET composeLens
-        parser_port_cfg_r.INITIAL_W0_OFFSET._value
-      val lensInitialW1 = lensCfg composeLens parser_port_cfg_r._INITIAL_W1_OFFSET composeLens
-        parser_port_cfg_r.INITIAL_W1_OFFSET._value
-      val lensInitialPtr = lensCfg composeLens parser_port_cfg_r._INITIAL_PTR composeLens
-        parser_port_cfg_r.INITIAL_PTR._value
-      val lensInitialState = lensCfg composeLens parser_port_cfg_r._INITIAL_STATE composeLens
-        parser_port_cfg_r.INITIAL_STATE._value
-      val lensInitialOpMask = lensCfg composeLens parser_port_cfg_r._INITIAL_OP_MASK composeLens
-        parser_port_cfg_r.INITIAL_OP_MASK._value
-      val lensInitialOpRot = lensCfg composeLens parser_port_cfg_r._INITIAL_OP_ROT composeLens
-        parser_port_cfg_r.INITIAL_OP_ROT._value
+      val lensInitialW0 = lensCfg composeLens parser_port_cfg_r._INITIAL_W0_OFFSET composeLens parser_port_cfg_r.INITIAL_W0_OFFSET._value
+      val lensInitialW1 = lensCfg composeLens parser_port_cfg_r._INITIAL_W1_OFFSET composeLens parser_port_cfg_r.INITIAL_W1_OFFSET._value
+      val lensInitialPtr = lensCfg composeLens parser_port_cfg_r._INITIAL_PTR composeLens parser_port_cfg_r.INITIAL_PTR._value
+      val lensInitialState = lensCfg composeLens parser_port_cfg_r._INITIAL_STATE composeLens parser_port_cfg_r.INITIAL_STATE._value
+      val lensInitialOpMask = lensCfg composeLens parser_port_cfg_r._INITIAL_OP_MASK composeLens parser_port_cfg_r.INITIAL_OP_MASK._value
+      val lensInitialOpRot = lensCfg composeLens parser_port_cfg_r._INITIAL_OP_ROT composeLens parser_port_cfg_r.INITIAL_OP_ROT._value
       val updatedCsr = CsrLenses.execute(parser, for {
         _ <- lensInitialW0.assign_(cfg.getInt("INITIAL_W0_OFFSET"))
         _ <- lensInitialW1.assign_(cfg.getInt("INITIAL_W1_OFFSET"))
@@ -135,46 +129,26 @@ object ParserProgrammer {
       val pl = ParserLenses(idStage)
       val rule = cfg.getInt("rule")
       val keyW = cfg.getMap("PARSER_KEY_W")
-      val lensKeyW1 = pl.keyW(rule) composeLens parser_key_w_r._W1_VALUE composeLens
-        parser_key_w_r.W1_VALUE._value
-      val lensKeyW0 = pl.keyW(rule) composeLens parser_key_w_r._W0_VALUE composeLens
-        parser_key_w_r.W0_VALUE._value
-      val lensKeyW0Mask = pl.keyW(rule) composeLens parser_key_w_r._W0_MASK composeLens
-        parser_key_w_r.W0_MASK._value
-      val lensKeyW1Mask = pl.keyW(rule) composeLens parser_key_w_r._W1_MASK composeLens
-        parser_key_w_r.W1_MASK._value
-      val lensKeySMask = pl.keyS(rule) composeLens parser_key_s_r._STATE_MASK composeLens
-        parser_key_s_r.STATE_MASK._value
-      val lensKeySValue = pl.keyS(rule) composeLens parser_key_s_r._STATE_VALUE composeLens
-        parser_key_s_r.STATE_VALUE._value
-      val lensAnaW0 = pl.anaW(rule) composeLens parser_ana_w_r._NEXT_W0_OFFSET composeLens
-        parser_ana_w_r.NEXT_W0_OFFSET._value
-      val lensAnaW1 = pl.anaW(rule) composeLens parser_ana_w_r._NEXT_W1_OFFSET composeLens
-        parser_ana_w_r.NEXT_W1_OFFSET._value
-      val lensAnaW2 = pl.anaW(rule) composeLens parser_ana_w_r._NEXT_W2_OFFSET composeLens
-        parser_ana_w_r.NEXT_W2_OFFSET._value
-      val lensAnaWSkip = pl.anaW(rule) composeLens parser_ana_w_r._SKIP composeLens
-        parser_ana_w_r.SKIP._value
-      val lensAnaSNextState = pl.anaS(rule) composeLens parser_ana_s_r._NEXT_STATE composeLens
-        parser_ana_s_r.NEXT_STATE._value
-      val lensAnaSNextStateMask = pl.anaS(rule) composeLens parser_ana_s_r._NEXT_STATE_MASK composeLens
-        parser_ana_s_r.NEXT_STATE_MASK._value
-      val lensAnaSNextOp = pl.anaS(rule) composeLens parser_ana_s_r._NEXT_OP composeLens
-        parser_ana_s_r.NEXT_OP._value
-      val lensExcOffset = pl.actExc(rule) composeLens parser_exc_r._EX_OFFSET composeLens
-        parser_exc_r.EX_OFFSET._value
-      val lensExcParsingDone = pl.actExc(rule) composeLens parser_exc_r._PARSING_DONE composeLens
-        parser_exc_r.PARSING_DONE._value
-      val lensExtProtocolId = pl.actExt(rule) composeLens parser_ext_r._PROTOCOL_ID composeLens
-        parser_ext_r.PROTOCOL_ID._value
-      val lensExtOffset = pl.actExt(rule) composeLens parser_ext_r._OFFSET composeLens
-        parser_ext_r.OFFSET._value
-      val lensExtFlagNum = pl.actExt(rule) composeLens parser_ext_r._FLAG_NUM composeLens
-        parser_ext_r.FLAG_NUM._value
-      val lensExtFlagValue = pl.actExt(rule) composeLens parser_ext_r._FLAG_VALUE composeLens
-        parser_ext_r.FLAG_VALUE._value
-      val lensExtPtrNum = pl.actExt(rule) composeLens parser_ext_r._PTR_NUM composeLens
-        parser_ext_r.PTR_NUM._value
+      val lensKeyW1 = pl.keyW(rule) composeLens parser_key_w_r._W1_VALUE composeLens parser_key_w_r.W1_VALUE._value
+      val lensKeyW0 = pl.keyW(rule) composeLens parser_key_w_r._W0_VALUE composeLens parser_key_w_r.W0_VALUE._value
+      val lensKeyW0Mask = pl.keyW(rule) composeLens parser_key_w_r._W0_MASK composeLens parser_key_w_r.W0_MASK._value
+      val lensKeyW1Mask = pl.keyW(rule) composeLens parser_key_w_r._W1_MASK composeLens parser_key_w_r.W1_MASK._value
+      val lensKeySMask = pl.keyS(rule) composeLens parser_key_s_r._STATE_MASK composeLens parser_key_s_r.STATE_MASK._value
+      val lensKeySValue = pl.keyS(rule) composeLens parser_key_s_r._STATE_VALUE composeLens parser_key_s_r.STATE_VALUE._value
+      val lensAnaW0 = pl.anaW(rule) composeLens parser_ana_w_r._NEXT_W0_OFFSET composeLens parser_ana_w_r.NEXT_W0_OFFSET._value
+      val lensAnaW1 = pl.anaW(rule) composeLens parser_ana_w_r._NEXT_W1_OFFSET composeLens parser_ana_w_r.NEXT_W1_OFFSET._value
+      val lensAnaW2 = pl.anaW(rule) composeLens parser_ana_w_r._NEXT_W2_OFFSET composeLens parser_ana_w_r.NEXT_W2_OFFSET._value
+      val lensAnaWSkip = pl.anaW(rule) composeLens parser_ana_w_r._SKIP composeLens parser_ana_w_r.SKIP._value
+      val lensAnaSNextState = pl.anaS(rule) composeLens parser_ana_s_r._NEXT_STATE composeLens parser_ana_s_r.NEXT_STATE._value
+      val lensAnaSNextStateMask = pl.anaS(rule) composeLens parser_ana_s_r._NEXT_STATE_MASK composeLens parser_ana_s_r.NEXT_STATE_MASK._value
+      val lensAnaSNextOp = pl.anaS(rule) composeLens parser_ana_s_r._NEXT_OP composeLens parser_ana_s_r.NEXT_OP._value
+      val lensExcOffset = pl.actExc(rule) composeLens parser_exc_r._EX_OFFSET composeLens parser_exc_r.EX_OFFSET._value
+      val lensExcParsingDone = pl.actExc(rule) composeLens parser_exc_r._PARSING_DONE composeLens parser_exc_r.PARSING_DONE._value
+      val lensExtProtocolId = pl.actExt(rule) composeLens parser_ext_r._PROTOCOL_ID composeLens parser_ext_r.PROTOCOL_ID._value
+      val lensExtOffset = pl.actExt(rule) composeLens parser_ext_r._OFFSET composeLens parser_ext_r.OFFSET._value
+      val lensExtFlagNum = pl.actExt(rule) composeLens parser_ext_r._FLAG_NUM composeLens parser_ext_r.FLAG_NUM._value
+      val lensExtFlagValue = pl.actExt(rule) composeLens parser_ext_r._FLAG_VALUE composeLens parser_ext_r.FLAG_VALUE._value
+      val lensExtPtrNum = pl.actExt(rule) composeLens parser_ext_r._PTR_NUM composeLens parser_ext_r.PTR_NUM._value
       val updatedCsr = CsrLenses.execute(parser, for {
         _ <- lensKeyW1.assign_(keyW.getInt("W1_VALUE"))
         _ <- lensKeyW0.assign_(keyW.getInt("W0_VALUE"))
@@ -212,7 +186,7 @@ object ParserProgrammer {
   def readVer2(fromJson: Map[String, Any], csr: Csr): mby_ppe_parser_map = {
     val parserAfterCfgRead = readParserCfgVer2(
         fromJson.getList[Map[String,Any]]("input.PARSER_PORT_CFG"),
-        csr.getRxPpe(0).csrRxPpe.parser
+        csr.getRxPpe(0).ppeRxMap.parser
     )
     readParserStagesVer2(fromJson.getList[Map[String, Any]]("input.stages"), parserAfterCfgRead)
   }

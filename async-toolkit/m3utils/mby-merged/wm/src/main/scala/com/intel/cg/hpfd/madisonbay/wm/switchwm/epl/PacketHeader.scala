@@ -6,7 +6,7 @@ import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers
 
 object PacketHeader {
 
-  def apply(bytes: Array[Byte]): PacketHeader = new PacketHeader(bytes)
+  def apply(packet: Packet): PacketHeader = new PacketHeader(packet.bytes)
 
   // Full Packet Processing portion of the header segment (192B)
   // Header information that exceed 192B will be ignored
