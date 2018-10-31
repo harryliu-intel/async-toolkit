@@ -1,0 +1,7 @@
+
+$LOGICROOT/shared/rtl/mby_msh_pkg.sv
+$LOGICROOT/shared/rtl/shared_pkg.sv
+$LOGICROOT/egr/rtl/mby_egr_pkg.sv
+$LOGICROOT/mim/rtl/mby_mim.sv   
+
+

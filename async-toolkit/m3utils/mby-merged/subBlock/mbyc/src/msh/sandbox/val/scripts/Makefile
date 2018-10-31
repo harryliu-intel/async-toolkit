@@ -119,10 +119,8 @@ build_%: mshnode $(TBROOT)/tests/%.sv
 
 mshnode:
 	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val clean
-	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val build_test_short
+	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val mgm_mem
 
-mgm_mem:
-	mgm -c msh_node -cnfg $(TBROOT)/../../../msh_node/mem/msh_node_sandbox_config_file -includes $(MODEL_ROOT)/tools/mgm/blocks_inclusion -apr_struct $(MODEL_ROOT)/tools/mgm/apr_structure -csv $(MODEL_ROOT)/tools/mgm/mby_physical_params.csv -unique mby -clk $(MODEL_ROOT)/tools/mgm/clk_file -rprt_dir $(TBROOT)/verilog/mgm_run/rtl -relative_path_from $(MODEL_ROOT)
 
 .PHONY : clean realclean
 clean:

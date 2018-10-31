@@ -1,6 +1,7 @@
 
 -file $LOGICROOT/msh/sandbox/val/scripts/files.msh
 -file $LOGICROOT/msh_node/sandbox/val/scripts/files.msh_node
+-file $LOGICROOT/mim/sandbox/files.mim
 -file $LOGICROOT/msh/sandbox/val/scripts/files.common
 
 -file $LOGICROOT/msh/sandbox/val/scripts/files.msh_tb
