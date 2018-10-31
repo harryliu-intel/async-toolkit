@@ -309,6 +309,16 @@ Group: Seq  {
 
 File: mby_igr_eth_simple_seq  (ingress/tests/mby_igr_rand_test/mby_igr_rand_test.svh)
 
+Group: Lib  {
+
+   File: mby_base_agent  (lib/base/mby_base_agent.svh)
+   File: mby_base_config  (lib/base/mby_base_config.svh)
+   File: mby_base_driver  (lib/base/mby_base_driver.svh)
+   File: mby_base_monitor  (lib/base/mby_base_monitor.svh)
+   File: mby_base_sequence_item  (lib/base/mby_base_sequence_item.svh)
+   File: mby_base_sequencer  (lib/base/mby_base_sequencer.svh)
+   }  # Group: Lib
+
 Group: Index  {
 
    Index: Everything
