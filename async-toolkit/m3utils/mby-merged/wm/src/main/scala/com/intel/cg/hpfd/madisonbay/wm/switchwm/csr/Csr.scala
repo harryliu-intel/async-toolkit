@@ -14,6 +14,8 @@ object Csr {
 
   def apply(csr: mby_top_map): Csr = new Csr(csr)
 
+  def apply(csr: Csr): Csr = new Csr(csr.topMap)
+
   case class CsrRxPpe(idMgp: Int, ppeRxMap:  mby_ppe_rx_top_map)
 
   case class CsrParser(idMgp: Int, ppeParserMap:  mby_ppe_parser_map)

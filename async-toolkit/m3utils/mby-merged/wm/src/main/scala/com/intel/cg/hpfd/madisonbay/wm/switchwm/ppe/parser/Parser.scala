@@ -86,7 +86,6 @@ object Parser {
 
             // if nothing matches, do nothing
         case (exOpt, None)  =>
-          print(s"no matching action in stage $idStage\n")
           applyStage(csr, packetHeader)(idStage + 1, parserState, packetFlags, fields, exOpt)
 
         case (_, Some(act)) =>                                    // otherwise, apply the action
@@ -106,18 +105,6 @@ object Parser {
                    exts:  List[parser_ext_r],     excs:  List[parser_exc_r]): Option[Action] =
       (keysW, keysS, anaWs, anaSs, exts, excs) match {
         case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.camMatching(kW, kS, parserState) =>
-          //scalastyle:off
-            print(s"found action in stage $idStage rule ${keysS.length-1}\nkey w: (w1 value: ${kW.W1_VALUE()}, w1 mask: ${kW.W1_MASK()}, w0 value: " +
-              kW.W0_VALUE() + ", w0 mask: " + kW.W0_MASK() + ")\n")
-            print("key s: (state value: " + kS.STATE_VALUE() + ", state mask: " + kS.STATE_MASK() + ")\n")
-            print("ana w: (next w0 offset: " + aW.NEXT_W0_OFFSET() + ", next w1 offset: " + aW.NEXT_W1_OFFSET() +
-              ", next w2 offset: " + aW.NEXT_W2_OFFSET() + ", skip: " + aW.SKIP() + ")\n")
-            print("ana s: (next state: " + aS.NEXT_STATE() + ", next state mask: " + aS.NEXT_STATE_MASK() +
-              ", next op: " + aS.NEXT_OP() + ")\n")
-            print("exc: (ex offset: " + ec.EX_OFFSET() + ", parsing done: " + ec.PARSING_DONE() + ")\n")
-            print("ext: (protocol id: " + ex.PROTOCOL_ID() + ", offset: " + ex.OFFSET() + ", flag num: " + ex.FLAG_NUM() +
-              ", flag value: " + ex.FLAG_VALUE() + ", ptr num: " + ex.PTR_NUM() + ")\n")
-
                 Some(new Action(
                   AnalyzerAction(aW, aS),
                   List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
@@ -153,9 +140,6 @@ object Parser {
           val (updatedProtoOffsets, updatedPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) {
               (prev, act) => act.extract(prev)
             }
-
-          print(s"after actions:\nparser state: $updatedParserState, protoOffsets: $updatedProtoOffsets, pckFlags: $updatedPckFlags\n")
-
           (updatedParserState, updatedPckFlags, updatedProtoOffsets, parsExcOpt)
       }
     }
