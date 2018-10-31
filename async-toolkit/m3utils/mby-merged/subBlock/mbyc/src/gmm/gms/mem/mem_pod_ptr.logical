@@ -1,6 +1,6 @@
 Ram Type                  <REGULAR, ROM, TCAM>                = REGULAR
 Ram Ports                 <1rw, 1r1w, 2rw>                    = 1rw
-Ram Lines Number          <Integer Number>                    = 8192
+Ram Lines Number          <Integer Number>                    = 4096
 Ram Data Width            <Integer Number>                    = 24
 Ram Write Resolution      <Divider of Data Width>             = 24
 Ram Protection Type       <ECC, Parity, None>                 = ECC
