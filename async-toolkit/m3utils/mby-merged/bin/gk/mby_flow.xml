@@ -27,7 +27,7 @@
 		<Singleton>0</Singleton>
 		<Type>build</Type>
   </row>
-  row>
+  <row>
 		<DUT>fc_8</DUT>
 		<Stage>vcs</Stage>
 		<Stage_Exec>bman</Stage_Exec>
