@@ -18283,6 +18283,50 @@
           }
         ]
       }
+    ],
+    "PARSER_EXTRACT_CFG": [
+      {
+        "extract_profile": 0,
+        "extract_word": 6,
+        "protocol_id": 0,
+        "offset": 0
+      },
+      {
+        "extract_profile": 0,
+        "extract_word": 7,
+        "protocol_id": 0,
+        "offset": 2
+      },
+      {
+        "extract_profile": 0,
+        "extract_word": 8,
+        "protocol_id": 0,
+        "offset": 4
+      },
+      {
+        "extract_profile": 0,
+        "extract_word": 9,
+        "protocol_id": 0,
+        "offset": 6
+      },
+      {
+        "extract_profile": 0,
+        "extract_word": 10,
+        "protocol_id": 0,
+        "offset": 8
+      },
+      {
+        "extract_profile": 0,
+        "extract_word": 11,
+        "protocol_id": 0,
+        "offset": 10
+      },
+      {
+        "extract_profile": 0,
+        "extract_word": 12,
+        "protocol_id": 0,
+        "offset": 12
+      }
     ]
   }
 }

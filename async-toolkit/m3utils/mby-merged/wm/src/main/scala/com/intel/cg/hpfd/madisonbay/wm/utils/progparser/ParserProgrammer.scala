@@ -183,12 +183,35 @@ object ParserProgrammer {
       readParserRulesVer2(idStage, tail, updatedCsr)
   }
 
+  private def readParserExtractCfgEntryVer2(entry: Map[String, Any], parser: mby_ppe_parser_map): mby_ppe_parser_map = {
+    val profile = entry.getInt("extract_profile")
+    val word = entry.getInt("extract_word")
+
+    val lensRegister = ParserLenses(0).extractCfg(profile, word)
+    val lensProtocolId = lensRegister composeLens parser_extract_cfg_r._PROTOCOL_ID composeLens parser_extract_cfg_r.PROTOCOL_ID._value
+    val lensOffset = lensRegister composeLens parser_extract_cfg_r._OFFSET composeLens parser_extract_cfg_r.OFFSET._value
+
+    CsrLenses.execute(parser, for {
+        _ <- lensProtocolId.assign_(entry.getInt("protocol_id"))
+        _ <- lensOffset.assign_(entry.getInt("offset"))
+      } yield ())
+  }
+
+  @tailrec
+  private def readParserExtractCfgVer2(extractCfgs: List[Map[String, Any]], parser: mby_ppe_parser_map): mby_ppe_parser_map = extractCfgs match {
+    case Nil => parser
+    case cfg :: tail =>
+      readParserExtractCfgVer2(tail, readParserExtractCfgEntryVer2(cfg, parser))
+  }
+
   def readVer2(fromJson: Map[String, Any], csr: Csr): mby_ppe_parser_map = {
     val parserAfterCfgRead = readParserCfgVer2(
         fromJson.getList[Map[String,Any]]("input.PARSER_PORT_CFG"),
         csr.getRxPpe(0).ppeRxMap.parser
     )
-    readParserStagesVer2(fromJson.getList[Map[String, Any]]("input.stages"), parserAfterCfgRead)
+
+    val parserAfterStages = readParserStagesVer2(fromJson.getList[Map[String, Any]]("input.stages"), parserAfterCfgRead)
+    readParserExtractCfgVer2(fromJson.getList[Map[String, Any]]("input.PARSER_EXTRACT_CFG"), parserAfterStages)
   }
 
 }

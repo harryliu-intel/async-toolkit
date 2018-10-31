@@ -29,6 +29,9 @@ class ParserLenses(idStage: Int) {
 
   def actExc(idRule: Int): Optional[mby_ppe_parser_map, parser_exc_r] = _actExc composeLens parser_exc_rf._PARSER_EXC composeOptional index(idRule)
 
+  def extractCfg(extract_profile: Int, word: Int): Optional[mby_ppe_parser_map, parser_extract_cfg_r] = mby_ppe_parser_map._PARSER_EXTRACT_CFG composeOptional
+    index(extract_profile) composeLens parser_extract_cfg_rf._PARSER_EXTRACT_CFG composeOptional index(word)
+
   private val _keyW: Optional[mby_ppe_parser_map, parser_key_w_rf] = mby_ppe_parser_map._PARSER_KEY_W composeOptional index(idStage)
 
   private val _keyS: Optional[mby_ppe_parser_map, parser_key_s_rf] = mby_ppe_parser_map._PARSER_KEY_S composeOptional index(idStage)
