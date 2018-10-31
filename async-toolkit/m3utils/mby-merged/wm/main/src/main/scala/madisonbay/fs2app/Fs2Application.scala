@@ -5,6 +5,7 @@ import fs2._
 import fs2.concurrent.{ Queue, SignallingRef }
 import fs2.io.tcp._
 import cats.effect.{ Concurrent, ConcurrentEffect }
+import cats.effect.concurrent.Ref
 import java.net.InetSocketAddress
 import java.net.InetAddress
 
@@ -33,10 +34,9 @@ object Fs2Application {
         val isa = new InetSocketAddress(serverHostname, serverPort)
 
         for {
-          _        <- Stream.eval(logger.info(s"Starting server..."))
+          _        <- Stream.eval(logger.info(s"Server should be started at [$serverHostname:$serverPort]! Enjoy!"))
           _        <- Stream.bracket(CF.delay(acg))(asyncCg => CF.delay(asyncCg.shutdown))
           resource <- server[F](bind = isa)
-          _        <- Stream.eval(logger.info(s"Server started at $serverHostname:$serverPort"))
           socket   <- Stream.resource(resource)
         } yield socket
       }
@@ -52,20 +52,25 @@ object Fs2Application {
       }
     }
 
-  private class Application[F[_]:
-      Logger:
-      ConcurrentEffect:
-      Concurrent:
-      ServerSocket:
-      PublisherSocket:
-      λ[G[_] => MessageHandler[G,Int]]
-  ](egressSocketInfoQ: Queue [F,EgressSocketInfo], quitS: SignallingRef[F,Boolean])
-    (implicit me: MonadError[F,Throwable]) {
+  private class Application[
+    RegistersState,
+    F[_]:
+        Logger:
+        ConcurrentEffect:
+        Concurrent:
+        ServerSocket:
+        PublisherSocket:
+        λ[G[_] => MonadError[G,Throwable]]:
+        λ[G[_] => MessageHandler[G,RegistersState]]
+  ](stateR: Ref[F,RegistersState],
+    egressSocketInfoQ: Queue[F,EgressSocketInfo],
+    quitS: SignallingRef[F,Boolean]) {
 
     val logger = Logger[F]
     val serverSocket = ServerSocket[F]
     val publisherSocket = PublisherSocket[F]
-    val messageHandler = MessageHandler[F,Int]
+    val messageHandler = MessageHandler[F,RegistersState]
+    val me = MonadError[F,Throwable]
 
     def serverStream: Stream[F,Stream[F,Unit]] =
       for {
@@ -78,62 +83,77 @@ object Fs2Application {
         .evalMap(identity)
         .flatMap(identity)
         .through(messageDispatcher)
-        .map(array => socket.write(Chunk.boxed(array)))
-        .evalMap(identity)
+        .through(errorHandler)
+        .evalMap(array => socket.write(Chunk.boxed(array)))
 
     def publisherStream: Stream[F,Stream[F,Unit]] =
       egressSocketInfoQ.dequeue
         .flatMap(publisherSocket.create)
         .map(socket => Stream.eval(socket.close))
 
-    private def messageDispatcher: Pipe[F,Message,Array[Byte]] = {
-      def stateTransition(state: StateT[F,Int,Array[Byte]]): Stream[F,Array[Byte]] =
-        Stream.eval(state.run(0).map { case (_,arr) => arr })
+    private val emptyResponse: Any => Array[Byte] = _ => Array.empty[Byte]
 
-      in => in.flatMap {
+    private def errorHandler: Pipe[F,Array[Byte],Array[Byte]] =
+      _.attempt.evalMap(
+        _.fold(
+          error => logger.error(
+            s"""|Error occured: ${error.getMessage}
+                |${error.getStackTrace().map(_.toString).mkString("\n")}
+                |""".stripMargin
+          ).map(emptyResponse),
+          _.point[F]
+        )
+      )
+
+    private def messageDispatcher: Pipe[F,Message,Array[Byte]] = {
+      def stateTransition(stateTransition: StateT[F,RegistersState,Array[Byte]]): F[Array[Byte]] = for {
+        s <- stateR.get
+        result <- stateTransition.run(s)
+        (next,arr) = result
+        _ <- stateR.set(next)
+      } yield (arr)
+
+      _.evalMap {
         case io  @ IosfRegBlkWrite(_, _) => stateTransition(messageHandler.regBlkWrite(io))
         case io  @ IosfRegWrite(_)       => stateTransition(messageHandler.regWrite(io))
         case io  @ IosfRegRead(_)        => stateTransition(messageHandler.regRead(io))
         case p   @ Packets(_)            => stateTransition(messageHandler.packets(p))
-        case esi @ EgressSocketInfo(_,_) => Stream.eval(
+        case esi @ EgressSocketInfo(_,_) =>
           messageHandler.egressSocketInfo(esi)
             .flatMap(_ => egressSocketInfoQ.enqueue1(esi))
-            .map(_ => Array.empty[Byte])
-        )
-        case NotSupported                => Stream.eval(
-          messageHandler.notSupported
-            .map(_ => Array.empty[Byte])
-        )
-        case Quit                        => Stream.eval(
-          messageHandler.quit
-            .flatMap(_ => quitS.set(true))
-            .map(_ => Array.empty[Byte])
-        )
+            .map(emptyResponse)
+        case NotSupported                =>
+          messageHandler.notSupported.map(emptyResponse)
+        case Quit                        =>
+          messageHandler.quit.flatMap(_ => quitS.set(true)).map(emptyResponse)
       }
     }
   }
 
-  def fs2Program[F[_]:
+  def fs2Program[
+    RegistersState,
+    F[_]:
       Logger:
       Concurrent:
       ConcurrentEffect:
       ServerSocket:
       PublisherSocket:
       λ[G[_] => MonadError[G,Throwable]]:
-      λ[G[_] => MessageHandler[G,Int]]
-  ]: F[Unit] = {
+      λ[G[_] => MessageHandler[G,RegistersState]]
+  ](init: RegistersState): F[Unit] = {
     val queueSize = 1
 
     val stream = for {
-      egressQ <- Stream.eval(Queue.bounded[F,EgressSocketInfo](queueSize))
-      quitS   <- Stream.eval(SignallingRef[F,Boolean](false))
-      app     =  new Application[F](egressQ, quitS)
-      par     =  10 //scalastyle:ignore magic.number
+      stateR    <- Stream.eval(Ref.of[F,RegistersState](init))
+      egressQ   <- Stream.eval(Queue.bounded[F,EgressSocketInfo](queueSize))
+      quitS     <- Stream.eval(SignallingRef[F,Boolean](false))
+      app        =  new Application[RegistersState,F](stateR, egressQ, quitS)
+      maxStreams =  10 //scalastyle:ignore magic.number
       _       <- {
         import app._
         (serverStream concurrently publisherStream)
           .interruptWhen(quitS)
-          .parJoin(par)
+          .parJoin(maxStreams)
       }
     } yield ()
 

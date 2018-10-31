@@ -16,6 +16,6 @@ object Versions {
   val monocle = "1.5.0"
   val csrModel = applicationVersion
   val wmServerDto = applicationVersion
-  val scalaz = "7.2.18"
+  val scalaz = "7.2.26"
   val jackson = "2.9.7"
 }
