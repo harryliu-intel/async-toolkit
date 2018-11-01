@@ -45,7 +45,6 @@ my @fc_rtl_liblist = (
     "sva_lib",
     "mby_mgm_lib",
      (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-     $fc_global_vars::IP_STUB_LIB,
 );
 my @fc_verif_liblist = (
     "shdv_shared_lib",
