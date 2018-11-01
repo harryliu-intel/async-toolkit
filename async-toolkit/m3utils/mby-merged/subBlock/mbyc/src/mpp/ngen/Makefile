@@ -10,6 +10,7 @@ V_DIRS        = -d=../../mgp/rtl \
                 -d=../../egr/rtl \
                 -d=../../igr/rtl \
                 -d=../../rtl/gm/gmm/verilog \
+                -t=../../../../../target/mby/mgm_run/ \
                 -d=../../shared/interfaces
 V_LIBS        =
 
