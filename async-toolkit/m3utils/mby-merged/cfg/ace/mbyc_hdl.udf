@@ -465,7 +465,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mplex",
-                     #"verif/mplex/fal",
                      "verif/mplex/ral",
                      "verif/mplex/env",
                      "$ENV{OVM_HOME}/src",
@@ -608,7 +607,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -675,7 +673,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -803,7 +800,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -859,7 +855,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -913,7 +908,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",

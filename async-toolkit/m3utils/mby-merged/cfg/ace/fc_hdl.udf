@@ -454,7 +454,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -575,7 +574,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -655,7 +653,6 @@ EOF
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
