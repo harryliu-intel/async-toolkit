@@ -62,12 +62,13 @@ print "MGM debug : @mbyMgmLibs\n";
 		    -dependent_libs => ['sva_lib',],
 	    },
             mby_mpp_rtl_lib => {
-               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mpp_rtl.hdl', ],
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mpp_rtl.hdl',],
 	       -dependent_libs => ['mby_mgp_rtl_lib','mby_ppe_stm_rtl_lib',],
             },
             
             mby_mgp_rtl_lib => {
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mgp_rtl.hdl', ],
+	       -dependent_libs => ['mby_igr_rtl_lib','mby_egr_rtl_lib','mby_rx_ppe_rtl_lib','mby_tx_ppe_rtl_lib',],
             },
             
             mby_igr_rtl_lib => {

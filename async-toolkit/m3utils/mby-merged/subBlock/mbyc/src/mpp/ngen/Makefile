@@ -9,14 +9,13 @@ V_DIRS        = -d=../../mgp/rtl \
                 -d=../../shared/rtl \
                 -d=../../egr/rtl \
                 -d=../../igr/rtl \
-                -d=../../rtl/gm/gmm/verilog \
                 -t=../../../../../target/mby/mgm_run/ \
                 -d=../../shared/interfaces
 V_LIBS        =
 
 .PHONY: ngen pre top post rtl copy clean diff
 
-ngen: clean top
+ngen: clean top 
 
 pre:
 	./pre_process.pl
@@ -27,9 +26,8 @@ top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
 
 post:
-	rm -f mpp_shells_wrapper_inc.v
-	rm -f mpp_shells_wrapper.v
-	rm -f mpp_ff_mems.v
+	#./post_process.pl	
+	#mv ngen/mby_mpp_fixed.sv ngen/mby_mpp.sv
 
 rtl copy:
 	cp ngen/$(BLOCK).sv ../rtl/$(BLOCK).sv
