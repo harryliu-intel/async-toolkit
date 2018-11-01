@@ -27,7 +27,6 @@ $hdl_spec = {
         "verif/egress/tb",
         "verif/egress/seq",
         "verif/egress/ral",
-        "verif/egress/fal",
         "verif/egress/ti",
         "verif/egress/env",
      ],
