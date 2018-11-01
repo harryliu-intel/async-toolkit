@@ -1,7 +1,5 @@
 
-$LOGICROOT/shared/rtl/mby_msh_pkg.sv
-$LOGICROOT/shared/rtl/shared_pkg.sv
-$LOGICROOT/egr/rtl/mby_egr_pkg.sv
+// this file is used by msh sandbox build to specify files needed to build MIM
 $LOGICROOT/mim/rtl/mby_mim.sv   
 
 

@@ -1,6 +1,4 @@
-// mesh RTL  (mby_msh_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
 +incdir+$LOGICROOT/msh/rtl
-$LOGICROOT/shared/rtl/mby_msh_pkg.sv
 -y $LOGICROOT/msh/rtl
 
 

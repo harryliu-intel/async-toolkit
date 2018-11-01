@@ -1,6 +1,6 @@
 
+-file $LOGICROOT/msh_node/sandbox/val/scripts/files.common
 -file $LOGICROOT/msh_node/sandbox/val/scripts/files.msh_node
 -file $LOGICROOT/msh_node/sandbox/val/scripts/files.msh_node_tb
--file $LOGICROOT/msh_node/sandbox/val/scripts/files.common
 
 $LOGICROOT/msh_node/sandbox/val/verilog/top.sv

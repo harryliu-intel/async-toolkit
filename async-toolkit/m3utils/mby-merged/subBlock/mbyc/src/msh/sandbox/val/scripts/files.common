@@ -9,7 +9,9 @@ $ASSERT_LIB/SVA_LIB/intel_checkers.vs
 $ASSERT_LIB/SVA_LIB/intel_checkers_pkg.vs
 
 // MBY shared rtl
+$LOGICROOT/shared/rtl/shared_pkg.sv
 $LOGICROOT/shared/rtl/mby_msh_pkg.sv
+$LOGICROOT/shared/rtl/mby_egr_pkg.sv
 -y $LOGICROOT/shared/rtl
 -y $LOGICROOT/shared/interfaces
 
