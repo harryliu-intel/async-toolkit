@@ -1,0 +1,7 @@
+$hdl_spec = {
+# Assumed to be in the same directory as the .hdl file
+  -collage_build_file => [
+                          "$ENV{MODEL_ROOT}/tools/collage/gmn/build/builder.gmn.tcl",
+                       ],
+  -collage_build_design =>  'gmn' ,
+};

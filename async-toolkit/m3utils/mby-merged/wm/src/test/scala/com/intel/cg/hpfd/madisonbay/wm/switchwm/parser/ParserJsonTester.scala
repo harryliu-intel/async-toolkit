@@ -20,12 +20,14 @@ class ParserJsonTester extends FlatSpec with Matchers {
   val progFromC: Map[String, Any] = Loader.loadJson(s"$jsonPath/program_from_c.json").get
   val testsFromC: Map[String, Any] = Loader.loadJson(s"$jsonPath/tests_from_c.json").get
 
+  val payload = "123456789abcdef"
   testsFromC.getList[Map[String,Any]]("tests").foreach { testCase =>
-    //val name = testCase.getString("dscr")
-    val packet = Packet.strHexToPacket(testCase.getString("in.data"))
-    val parseResult = parseFromCConfig(packet)
-    println(parseResult.paKeys.fields)
-    println(parseResult.paFlags.get)
+    val name = testCase.getString("dscr")
+    println(s"taking test: $name")
+    val packet = Packet.strHexToPacket(testCase.getString("in.data") + payload)
+    val port = testCase.getIntOpt("in.port").getOrElse(0)
+    val parseResult = parseFromCConfig(packet, port)
+    println(parseResult.simplifiedString)
   }
 
   testsFromScapy.getList[Map[String,Any]]("packets").foreach { testCase =>
@@ -50,9 +52,9 @@ class ParserJsonTester extends FlatSpec with Matchers {
 
   }
 
-  def parseFromCConfig(packet: Packet): ParserOutput = {
+  def parseFromCConfig(packet: Packet, port: Int): ParserOutput = {
     val parserMap = ParserProgrammer(progFromC, csr)
-    Parser.parse(parserMap, packet, 1)
+    Parser.parse(parserMap, packet, port)
   }
 
 }

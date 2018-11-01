@@ -58,6 +58,15 @@ lazy val tcp = (project in file("tcp"))
     libraryDependencies ++= Dependencies.tcpDeps
   )
 
+lazy val main = (project in file("main"))
+  .dependsOn(tcp)
+  .settings(
+    Settings.commonSettings,
+    addCompilerPlugin(Dependencies.kindProjector),
+    libraryDependencies ++= Dependencies.mainDeps,
+    fork in run := true
+  )
+
 lazy val root = (project in file("."))
   .dependsOn(common, csrMacros)
   .enablePlugins(RdlGitHashPlugin)
@@ -72,17 +81,13 @@ lazy val root = (project in file("."))
   )
 
 val publishArtifacts = taskKey[Unit]("Publish artifacts only if current user is npgadmin.")
-publishArtifacts := Def.sequential(
-  Def.task {
-    val user = sys.env.get("USER")
-    require(
-      user.contains("npgadmin"),
-      "Publish check failed. Only npgadmin can publish artifacts!"
-    )
-  },
-  publish in csr,
-  publish in wmServerDto
-).value
+publishArtifacts := Def.taskDyn {
+  val log = streams.value.log
+  if (sys.env.get("USER").contains("npgadmin"))
+    Def.sequential(publish in csr, publish in wmServerDto)
+  else
+    Def.task(log.warn("Will not publish artifacts! $USER != npgadmin"))
+}.value
 
 lazy val testAll = "; all common/test csr/test root/test"
 lazy val cleanAll =

@@ -24,6 +24,9 @@ $hdl_spec = {
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
      "src/igr/rtl",
+     "target/mby/mgm_run/igr/src",
+     "target/mby/mgm_run/igr/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -32,11 +35,28 @@ $hdl_spec = {
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
      "src/igr/rtl",
-     "/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver"
+     "/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver",
+     "target/mby/mgm_run/igr/src",
+     "target/mby/mgm_run/igr/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
      ],
     
     # Arbitrary VLOG options
-    -vlog_opts => [],
+    -vlog_opts => [
+      "+libext+.v+.sv+.vh+.svh+.vs+.vm+.sva",
+		  "-full64",
+		  "+v2k",
+		  "-notice",
+		  "-sverilog",
+		  "+vcs+lic+wait",
+		  "+warn=noUII-L",
+		  "-timescale=10ps/10ps",
+		  "-debug_pp",
+		  "+define+VCSSIM",
+		  "+define+INTEL_SVA_OFF",
+		  "+define+MBY_IGR_BEHAVE_MEMS",
+		  "-assert svaext",
+		],
     
     
     };

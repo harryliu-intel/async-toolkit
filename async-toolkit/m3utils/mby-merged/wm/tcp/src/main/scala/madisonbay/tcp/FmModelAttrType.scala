@@ -11,7 +11,7 @@ object FmModelAttrType extends Enumeration {
 
   implicit val encoder: ByteArrayEncoder[FmModelAttrType.Value] =
     fmat => ByteArrayEncoder.u8bae.encode(fmat.id.byteValue())
-  implicit val decoder: ByteArrayDecoder[FmModelAttrType.Value] =
-    ByteArrayDecoder.decoder(_.isEmpty, new EOFException, a => FmModelAttrType(a(0)))
   implicit val bitSize: BitSize[FmModelAttrType.Value] = BitSize.bitSizeOf(8)
+  implicit val decoder: ByteArrayDecoder[FmModelAttrType.Value] =
+    ByteArrayDecoder.decoder(new EOFException, a => FmModelAttrType(a(0)))
 }

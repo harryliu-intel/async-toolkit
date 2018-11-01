@@ -40,13 +40,17 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
 
   def apply(addr: Int): Byte = bytes(addr)
 
-  def getWord(addr: Int): Short = {
-    if (addr + 1 >= bytes.length) {
+  def getWord(addr: Int): Short =
+    if (addr + 1 > bytes.length) {
       0.toShort
+    } else if (addr + 1 == bytes.length){
+      bytes(addr).toShort
     } else {
-      ((apply(addr).toShort << 8) | (apply(addr + 1).toShort & 0xFF)).toShort
+      // Packet data is big endian (network order)
+      (((bytes(addr).toShort << 8) & 0xff00) |     // version from mby_parser.c and rdl
+        (bytes(addr + 1).toShort & 0x00ff)).toShort
     }
-  }
+
   //def getWord(addr: Int): Short = (((apply(addr + 1).toShort & 0xff) << 8) | (apply(addr).toShort & 0xff)).toShort
 
   def ipVersion: IPVersion.Value = bytes(0).nib(1) match {

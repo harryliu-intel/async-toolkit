@@ -51,6 +51,10 @@ class pcie_env extends uvm_env;
    endfunction : build
 
    virtual task run();
+      int regVal, status;
+
+      `uvm_info(get_type_name(), "Setting callbacks", UVM_LOW);
+
       // Enable PureSpec callbacks. Uncomment as necessary
       // Refer to the User Guide for callbacks description
 
@@ -58,26 +62,40 @@ class pcie_env extends uvm_env;
       rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_RX_packet);
       rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_TX_packet);
       rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_DL_TX_queue_exit);
-      // rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_DL_RX_queue_exit);
+      rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_DL_RX_queue_exit);
       rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_user_queue_exit);
       rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_transmit_queue_enter);
       rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_PL_TX_end_packet);
-      // rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_PL_RX_end_packet);
-      // rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_to_DL);
-      // rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_DL_to_TL);
-      // rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_TX_completion_queue_enter);
-      // rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_TX_completion_queue_exit);
-      // rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TX_trans_done);
+      rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_PL_RX_end_packet);
+      rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_to_DL);
+      rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_DL_to_TL);
+      rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_TX_completion_queue_enter);
+      rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TL_TX_completion_queue_exit);
+      rc_bfm.setCallback(DenaliSvPcie::PCIE_CB_TX_trans_done);
+
+   // FIXME: this bypasses the training sequence, remove when real DUT comes online
+    `uvm_info(get_type_name(), "Writing the byPassPLSpd16GT", UVM_LOW);
+    regVal = rc_bfm.regInst.readReg(DenaliSvPcie::PCIE_REG_DEN_SIM_ST);
+    regVal |= DenaliSvPcie::PCIE_Rmask__DEN_SIM_ST_byPassPLSpd16GT;
+    rc_bfm.regInst.writeReg(DenaliSvPcie::PCIE_REG_DEN_SIM_ST, regVal);
 
       // Passive Ep
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_TL_RX_packet);
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_TL_TX_packet);
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_DL_TX_queue_exit);
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_DL_RX_queue_exit);
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_PL_TX_end_packet);
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_PL_RX_end_packet);
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_TL_to_DL);
-      // ep_mon.setCallback(DenaliSvPcie::PCIE_CB_DL_to_TL);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_TL_RX_packet);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_TL_TX_packet);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_DL_TX_queue_exit);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_DL_RX_queue_exit);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_PL_TX_end_packet);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_PL_RX_end_packet);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_TL_to_DL);
+      ep_mon.setCallback(DenaliSvPcie::PCIE_CB_DL_to_TL);
+
+   // FIXME: this bypasses the training sequence, remove when real DUT comes online
+   `uvm_info(get_type_name(), "Writing the byPassPLSpd16GT", UVM_LOW);
+    regVal = ep_mon.regInst.readReg(DenaliSvPcie::PCIE_REG_DEN_SIM_ST);
+    regVal |= DenaliSvPcie::PCIE_Rmask__DEN_SIM_ST_byPassPLSpd16GT;
+    ep_mon.regInst.writeReg(DenaliSvPcie::PCIE_REG_DEN_SIM_ST, regVal);
+
+      `uvm_info(get_type_name(), "Setting callbacks ... DONE", UVM_LOW);
 
       super.run();
    endtask : run

@@ -23,7 +23,7 @@ class ParserStageSpec extends FlatSpec with Matchers {
     val pf = PacketFlags()
     val protoOffset = Parser.EmptyProtoOffsets
     val noException = Option.empty[ParserException]
-    val ps = ParserState(List(0,0,0), new AluOperation(0,0), 0, 0)
+    val ps = ParserState(Array(0,0,0), new AluOperation(0,0), 0, 0)
     val ph = PacketHeader(Array.ofDim[Byte](79))
     val ps2 = Parser.initialState(csrParser, ph, new PortIndex(0))
 
@@ -44,13 +44,13 @@ class ParserStageSpec extends FlatSpec with Matchers {
       _ <- pl.actExt(16).mod_(_.FLAG_VALUE.set(1))
     } yield ())
 
-    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, idx, ph, ps, pf, protoOffset, exceptionOpt = noException)
+    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, ph)(idx, ps, pf, protoOffset, exceptionOpt = noException)
     result._1.get contains 1 shouldEqual true
     result._1.get contains 2 shouldEqual false
     result._1.get contains 3 shouldEqual false
     result._1.get contains 4 shouldEqual true
 
-    val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, idx, ph, ps2, pf, protoOffset, exceptionOpt = noException)
+    val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, ph)(idx, ps2, pf, protoOffset, exceptionOpt = noException)
     result2._1.toInt shouldEqual b"10010"
   }
 

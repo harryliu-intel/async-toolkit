@@ -41,122 +41,122 @@
 
 class mby_rx_ppe_base_test extends shdv_base_test;
 
-    // Variable: cfg
-    // Top level rx_ppe env configuration
-    mby_rx_ppe_tb_top_cfg cfg;
+   // Variable: cfg
+   // Top level rx_ppe env configuration
+   mby_rx_ppe_tb_top_cfg cfg;
 
-    // Variable: env
-    // Top level ENV
-    mby_rx_ppe_env    env;
+   // Variable: env
+   // Top level ENV
+   mby_rx_ppe_env    env;
 
-    `uvm_component_utils_begin(mby_rx_ppe_base_test)
-        `uvm_field_object(cfg,  UVM_DEFAULT)
-        `uvm_field_object(env,      UVM_DEFAULT)
-    `uvm_component_utils_end
+   `uvm_component_utils_begin(mby_rx_ppe_base_test)
+      `uvm_field_object(cfg,  UVM_DEFAULT)
+      `uvm_field_object(env,      UVM_DEFAULT)
+   `uvm_component_utils_end
 
-    //------------------------------------------------------------------------------
-    // Constructor: new
-    // Configure the TimeFormat - $timeformat(-9, 0, "ns", 10);
-    //
-    //  Arguments:
-    //  name   - rx_ppe base test object name.
-    //  parent - Component parent object.
-    //------------------------------------------------------------------------------
-    function      new(string name = "mby_rx_ppe_base_test", uvm_component parent = null);
-        super.new (name, parent);
-        $timeformat(-9, 0, "ns", 10);
-    endfunction: new
+   //------------------------------------------------------------------------------
+   // Constructor: new
+   // Configure the TimeFormat - $timeformat(-9, 0, "ns", 10);
+   //
+   //  Arguments:
+   //  name   - rx_ppe base test object name.
+   //  parent - Component parent object.
+   //------------------------------------------------------------------------------
+   function      new(string name = "mby_rx_ppe_base_test", uvm_component parent = null);
+      super.new (name, parent);
+      $timeformat(-9, 0, "ns", 10);
+   endfunction: new
 
-    //------------------------------------------------------------------------------
-    // Function: report_phase
-    // Checks the Global report server as well as the Test for Errors.  Indicates End_of_Test PASS or FAIL
-    //
-    //  Arguments:
-    //  phase - uvm_phase object.
-    //------------------------------------------------------------------------------
-    virtual function void report_phase(uvm_phase phase);
-        uvm_report_server foo;
-        int err_cnt;
-        super.report_phase(phase);
-        foo = uvm_top.get_report_server();
+   //------------------------------------------------------------------------------
+   // Function: report_phase
+   // Checks the Global report server as well as the Test for Errors.  Indicates End_of_Test PASS or FAIL
+   //
+   //  Arguments:
+   //  phase - uvm_phase object.
+   //------------------------------------------------------------------------------
+   virtual function void report_phase(uvm_phase phase);
+      uvm_report_server foo;
+      int err_cnt;
+      super.report_phase(phase);
+      foo = uvm_top.get_report_server();
 
-        // sum num of errors from sequences (use global report server)
-        err_cnt = foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL);
+      // sum num of errors from sequences (use global report server)
+      err_cnt = foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL);
 
-        // sum num of errors from this test.
-        foo = get_report_server();
-        err_cnt += (foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL));
+      // sum num of errors from this test.
+      foo = get_report_server();
+      err_cnt += (foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL));
 
-        if (err_cnt == 0) begin
-            uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "         _______  _______  _______  _______         ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |       ||   _   ||       ||       |        ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |    _  ||  |_|  ||  _____||  _____|        ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |   |_| ||       || |_____ | |_____         ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |    ___||       ||_____  ||_____  |        ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |   |    |   _   | _____| | _____| |        ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |___|    |__| |__||_______||_______|        ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-        end
-        else begin
-            uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "         _______  _______  ___   ___                ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |       ||   _   ||   | |   |               ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |    ___||  |_|  ||   | |   |               ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |   |___ |       ||   | |   |               ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |    ___||       ||   | |   |___            ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |   |    |   _   ||   | |       |           ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "        |___|    |__| |__||___| |_______|           ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-            uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-        end
-    endfunction
+      if (err_cnt == 0) begin
+         uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "         _______  _______  _______  _______         ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |       ||   _   ||       ||       |        ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |    _  ||  |_|  ||  _____||  _____|        ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |   |_| ||       || |_____ | |_____         ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |    ___||       ||_____  ||_____  |        ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |   |    |   _   | _____| | _____| |        ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |___|    |__| |__||_______||_______|        ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+      end
+      else begin
+         uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "         _______  _______  ___   ___                ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |       ||   _   ||   | |   |               ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |    ___||  |_|  ||   | |   |               ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |   |___ |       ||   | |   |               ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |    ___||       ||   | |   |___            ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |   |    |   _   ||   | |       |           ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "        |___|    |__| |__||___| |_______|           ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+         uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+      end
+   endfunction
 
-    //------------------------------------------------------------------------------
-    // Function: build_phase
-    // Creates cfg, then Randomizes cfg's. Sets the cfg object. Then creates the mby_rx_ppe_env.
-    //
-    //  Arguments:
-    //  phase - uvm_phase object.
-    //------------------------------------------------------------------------------
-    virtual function void build_phase(uvm_phase phase);
-        uvm_report_info(get_full_name(),"Build", UVM_LOG);
+   //------------------------------------------------------------------------------
+   // Function: build_phase
+   // Creates cfg, then Randomizes cfg's. Sets the cfg object. Then creates the mby_rx_ppe_env.
+   //
+   //  Arguments:
+   //  phase - uvm_phase object.
+   //------------------------------------------------------------------------------
+   virtual function void build_phase(uvm_phase phase);
+      uvm_report_info(get_full_name(),"Build", UVM_LOG);
 
-        cfg = mby_rx_ppe_tb_top_cfg::type_id::create("cfg", this);                      // Create a Top-Level Configuration object
+      cfg = mby_rx_ppe_tb_top_cfg::type_id::create("cfg", this);                      // Create a Top-Level Configuration object
 
-        randomize_cfg();                                                                // Randomize the Top_Config
+      randomize_cfg();                                                                // Randomize the Top_Config
 
-        set_config_object("env", "mby_rx_ppe_tb_top_cfg", cfg, 0);
+      set_config_object("env", "mby_rx_ppe_tb_top_cfg", cfg, 0);
 
-        env     = mby_rx_ppe_env::type_id::create("env",this);                          // Create the Top Environment object
-    endfunction : build_phase
+      env     = mby_rx_ppe_env::type_id::create("env",this);                          // Create the Top Environment object
+   endfunction : build_phase
 
 
-    //------------------------------------------------------------------------------
-    // Function: connect_phase
-    //
-    //  Arguments:
-    //  phase - uvm_phase object.
-    //------------------------------------------------------------------------------
-    virtual function void connect_phase(uvm_phase phase);
-        super.connect_phase(phase);
-        env.set_test_phase_type("env", "POWER_GOOD_PHASE", "mby_rx_ppe_power_good_seq");   // Specify the Phase to run the Power_Good sequence
-        env.set_test_phase_type("env", "HARD_RESET_PHASE", "mby_rx_ppe_hard_reset_seq");   // Specify the Phase to run the Hard_Reset sequence
-        env.set_test_phase_type("env", "WARM_RESET_PHASE", "mby_rx_ppe_warm_reset_seq");   // Specify the Phase to run the Warm_Reset sequence
-        env.set_test_phase_type("env", "CONFIG_PHASE",     "mby_rx_ppe_env_cfg_seq");
-    endfunction : connect_phase
+   //------------------------------------------------------------------------------
+   // Function: connect_phase
+   //
+   //  Arguments:
+   //  phase - uvm_phase object.
+   //------------------------------------------------------------------------------
+   virtual function void connect_phase(uvm_phase phase);
+      super.connect_phase(phase);
+//PJP      env.set_test_phase_type("env", "POWER_GOOD_PHASE", "mby_rx_ppe_power_good_seq");   // Specify the Phase to run the Power_Good sequence
+//PJP      env.set_test_phase_type("env", "HARD_RESET_PHASE", "mby_rx_ppe_hard_reset_seq");   // Specify the Phase to run the Hard_Reset sequence
+//PJP      env.set_test_phase_type("env", "WARM_RESET_PHASE", "mby_rx_ppe_warm_reset_seq");   // Specify the Phase to run the Warm_Reset sequence
+//PJP      env.set_test_phase_type("env", "CONFIG_PHASE",     "mby_rx_ppe_env_cfg_seq");
+   endfunction : connect_phase
 
-    //------------------------------------------------------------------------------
-    // Function: randomize_cfg()
-    // Randomizes the Top_cfg, which will randomizes any sub-level cfg as well.
-    //------------------------------------------------------------------------------
-    virtual function void randomize_cfg();
-        `uvm_info(get_name(), "mby_rx_ppe_base_test randomize_cfg was called!", UVM_HIGH);
-        if (!this.randomize(cfg)) begin
-            `uvm_fatal(get_name, "randomization of mby_rx_ppe_tb_top_cfg failed");
-        end
+   //------------------------------------------------------------------------------
+   // Function: randomize_cfg()
+   // Randomizes the Top_cfg, which will randomizes any sub-level cfg as well.
+   //------------------------------------------------------------------------------
+   virtual function void randomize_cfg();
+      `uvm_info(get_name(), "mby_rx_ppe_base_test randomize_cfg was called!", UVM_HIGH);
+      if (!this.randomize(cfg)) begin
+         `uvm_fatal(get_name, "randomization of mby_rx_ppe_tb_top_cfg failed");
+      end
 
-    endfunction : randomize_cfg
+   endfunction : randomize_cfg
 
 endclass : mby_rx_ppe_base_test
 

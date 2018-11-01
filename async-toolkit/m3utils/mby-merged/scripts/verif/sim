@@ -59,7 +59,8 @@ my $sim_only = '';
 my $tgt_dir = '';
 my $testrun_dir = '';
 my $mock_run = 0;
-my $disable_xprop_elab = '';
+my $enable_xprop_elab = '-enable_xprop_elab';
+my $enable_congruency_elab = '-enable_congruency_elab';
 
 # Print out help message if no arguments were entered on command line
 if( @ARGV == 0 ) {
@@ -98,8 +99,9 @@ while($_=shift @ARGV ) {
     } elsif(/^-+dve_debug$/i) {
         $vcs_debug = '-vcs_debug_mode=-debug_access+all';
     } elsif(/^-+partcomp$/i) {
-        $part_comp = '-partcomp_vcs';
-        $vcs_debug = '-vcs_debug_mode=-debug_pp';
+        # MBY has partcomp enabled by default
+#        $part_comp = '-partcomp_vcs';
+#        $vcs_debug = '-vcs_debug_mode=-debug_pp';
     } elsif(/^-+variant=/i) {
         $variant = $_;
     } elsif(/^-+func_replay$/i) {
@@ -164,7 +166,9 @@ while($_=shift @ARGV ) {
     } elsif(/^-+vcd_capture_jtag$/i) {
         $vcd_capture = '-vcd_capture_jtag';
     } elsif(/^-+disable_xprop_elab$/i) {
-        $disable_xprop_elab = '-disable_xprop_elab';
+        $enable_xprop_elab = ' ';
+    } elsif(/^-+disable_congruency_elab$/i) {
+        $enable_congruency_elab = ' ';
     } elsif(/^-+e?mail$/i) {
         $email = 1;
     } elsif(/^-+te?xt$/i) {
@@ -271,16 +275,17 @@ sub process_commands {
             } elsif($ace_model =~ /^sigacc$/) {
                 $dut_name = 'sigacc';
                 $test_pkg = '-test_pkg test_pkg';
-            } elsif($ace_model =~ /^fc$/) {
+            } elsif($ace_model =~ /^(fc)$/) {
+                $variant = "-variant=$1";
                 $dut_name = $single_fc_dut ne '' ? $single_fc_dut : "mby";
             } elsif($ace_model =~ /^hc[abt]$/) {
                 $single_fc_dut = 'hcx';
                 $dut_name = 'hcx';
                 $test_pkg = '';
-            } elsif($ace_model =~ /(fc_64_no_phy|fc_64|fc_8_no_phy|fc_8)$/) {
+            } elsif($ace_model =~ /(fc_no_phy|fc_8_no_phy|fc_8)$/) {
                 #$dut_name = 'fc_lite';
                 $dut_name = $1;
-                $variant = "-variant $1";
+                $variant = "-variant=$1";
             } else {
                 &failing_exit("Trying to change to unsupported model: $ace_model $dut_name\n");
             }
@@ -407,7 +412,7 @@ sub run_bman {
     my $build_desc = shift @_;
     &failing_exit("ERROR: -m <model> not specified before compile command\n") if($ace_model eq '');
     &log_and_print("Running $build_desc on dut $dut_name with ace model $ace_model\n");
-    my $bman_add_opts = (@_ > 0) ? shift @_ : "$bman_debug $func_replay $stf_tp_mode $vcs_debug $part_comp $variant $elab_opts $no_gen_flags $sim_only $tgt_dir $disable_xprop_elab";
+    my $bman_add_opts = (@_ > 0) ? shift @_ : "$bman_debug $func_replay $stf_tp_mode $vcs_debug $part_comp $variant $elab_opts $no_gen_flags $sim_only $tgt_dir $enable_xprop_elab $enable_congruency_elab";
     if ($inc_compile and ($ace_model =~ /^hc.$/))  {
         $bman_add_opts = $bman_add_opts . " -s all +s hcx.vcs.elab_${ace_model} +s hcx.vcs.vlogan_${ace_model}_seq_lib +s hcx.vcs.vlogan_${ace_model}_tests_lib +s hcx.vcs.vlogan_${ace_model}_ti_lib +s hcx.vcs.vlogan.${ace_model}_rtl_top_lib +s hcx.vcs.vlogan_${ace_model}_tb_lib +s hcx.vcs.vlogan_${ace_model}_env_lib +s sim_init";
     }
@@ -477,7 +482,7 @@ sub print_help_message {
   print "   -help               Print this Usage info and exit.\n";
   print "   -dve_debug          Compile VCS with debug enabled for DVE.\n";
   print "   -debug_all          Compile VCS with -debug_all option.\n";
-  print "   -partcomp           Compile VCS with -partcomp option.\n";
+  print "   -partcomp           [NA in MBY since it's enabled by default].\n";
   print "   -variant=<model>    Compile VCS lite model with MBY specific variant\n";
   print "   -func_replay        Compile VCS with replay elements enabled in the func testbench.\n";
   print "   -stf_tp_mode        enable user to use Test port BFM instead of STF BFM.\n";

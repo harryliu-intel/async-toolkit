@@ -1,7 +1,13 @@
 SYSTEM_CC = SYSTEM_CC & " -std=gnu99"
 
+h_source ("uint")
+c_source ("uint")
+
 h_source ("mby_common")
 c_source ("mby_common")
+
+h_source ("mby_pipeline")
+c_source ("mby_pipeline")
 
 h_source ("mby_parser")
 c_source ("mby_parser")
@@ -9,10 +15,49 @@ c_source ("mby_parser")
 h_source ("mby_mapper")
 c_source ("mby_mapper")
 
+h_source ("mby_classifier")
+c_source ("mby_classifier")
+
+h_source ("mby_clsfr_regs")
+c_source ("mby_clsfr_regs")
+
+h_source ("mby_exactmatch")
+c_source ("mby_exactmatch")
+
+h_source ("mby_lpm")
+c_source ("mby_lpm")
+
+h_source ("mby_lpm_regs")
+c_source ("mby_lpm_regs")
+
+h_source ("mby_wcm")
+c_source ("mby_wcm")
+
+h_source ("mby_nexthop")
+c_source ("mby_nexthop")
+
+h_source ("mby_maskgen")
+c_source ("mby_maskgen")
+
+h_source ("mby_triggers")
+c_source ("mby_triggers")
+
+h_source ("mby_triggers_regs")
+c_source ("mby_triggers_regs")
+
+h_source ("mby_congmgmt")
+c_source ("mby_congmgmt")
+
+h_source ("mby_rxstats")
+c_source ("mby_rxstats")
+
 c_source ("mby_model_basic")
 
-h_source ("fm_bitfield")
-c_source ("fm_bitfield")
+h_source ("mby_bitfield")
+c_source ("mby_bitfield")
+
+h_source ("mby_crc32")
+c_source ("mby_crc32")
 
 h_source ("fm_defs")
 h_source ("fm_types")
