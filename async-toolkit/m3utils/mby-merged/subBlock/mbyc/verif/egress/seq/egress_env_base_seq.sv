@@ -26,14 +26,14 @@
 class egress_env_base_seq extends mby_base_seq;
 
   `uvm_object_utils(egress_env_base_seq)
-  `uvm_declare_p_sequencer(slu_sequencer)
+//PJP  `uvm_declare_p_sequencer(slu_sequencer)
 
-  sla_ral_env ral;
+//PJP  sla_ral_env ral;
 
   function new(input string name = "ingress_env_base_seq");
     super.new(name);
-    `slu_assert($cast(ral, sla_ral_env::get_ptr()),
-                ("Unable to get handle to RAL."))
+//PJP    `slu_assert($cast(ral, sla_ral_env::get_ptr()),
+//PJP                ("Unable to get handle to RAL."))
   endfunction
 
 endclass // egress_env_base_seq

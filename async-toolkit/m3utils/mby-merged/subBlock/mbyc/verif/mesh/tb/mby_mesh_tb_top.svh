@@ -39,9 +39,7 @@
 module mby_mesh_tb_top();
    
    import uvm_pkg::*;
-   import sla_pkg::*;
    `include "uvm_macros.svh"
-   `include "slu_macros.svh"
 
 
    // =============================================== 

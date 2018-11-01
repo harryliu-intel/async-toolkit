@@ -21,7 +21,7 @@
 class egress_extended_base_seq extends egress_env_base_seq;
 
   `uvm_object_utils(egress_extended_base_seq)
-  `uvm_declare_p_sequencer(slu_sequencer)
+//PJP  `uvm_declare_p_sequencer(slu_sequencer)
 
   //---------------------------------------------------------------------------
   // Function: new

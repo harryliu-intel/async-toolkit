@@ -1,42 +1,38 @@
 //-----------------------------------------------------------------------------
-// Title         : Egress env pkg
+// Title         : Madison Bay Base Package
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_env_pkg.sv
+// File          : mby_base_pkg.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
-// Created       : 21.08.2018
-// Last modified : 21.08.2018
+// Created       : 29.10.2018
+// Last modified : 29.10.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Egress env pkg definition
+// This is the base sequencer class for Madison Bay
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
 // file requires a written license from Intel Corporation.
 //------------------------------------------------------------------------------
 // Modification history :
-// 21.08.2018 : created
+// 29.10.2018 : created
 //-----------------------------------------------------------------------------
+`ifndef __MBY_BASE_PKG__
+`define __MBY_BASE_PKG__
 
-package egress_env_pkg;
+package mby_base_pkg;
 
-  import uvm_pkg::*;
+   import uvm_pkg::*;
+   import shdv_base_pkg::*;
 
-  import shdv_base_pkg::*;
-  //import mby_wm_dpi_pkg::*;
-  import mby_common_pkg::*;
+   `include "uvm_macros.svh"
+   `include "mby_base_config.svh"
+   `include "mby_base_sequence_item.svh"
+   `include "mby_base_sequencer.svh"
+   `include "mby_base_monitor.svh"
+   `include "mby_base_driver.svh"
+   `include "mby_base_agent.svh"
 
-  import mby_ec_bfm_pkg::*;
+endpackage
 
-`include "uvm_macros.svh"
-
-`include "egress_types.svh"
-`include "egress_ti_config.svh"
-`include "egress_config.svh"
-//PJP`include "egress_ral_env.svh"
-`include "egress_env_monitor.svh"
-`include "egress_base_env.svh"
-`include "egress_env.svh"
-`include "egress_seqlib.sv"
-
-endpackage // egress_env_pkg
+`endif

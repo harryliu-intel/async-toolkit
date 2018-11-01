@@ -82,10 +82,10 @@ class egress_env_monitor extends uvm_component;
     forever begin
       @(posedge egress_if.egress_int_wire);
       egress_int_assert_e.trigger();
-      `slu_msg (UVM_HIGH, get_name(), ("EGRESS_INT_ASSERT event detected"));
+//PJP      `slu_msg (UVM_HIGH, get_name(), ("EGRESS_INT_ASSERT event detected"));
       @(negedge egress_if.egress_int_wire);
       egress_int_deassert_e.trigger();
-      `slu_msg (UVM_HIGH, get_name(), ("EGRESS_INT_DEASSERT event detected"));
+//PJP      `slu_msg (UVM_HIGH, get_name(), ("EGRESS_INT_DEASSERT event detected"));
     end
   endtask // egress_int_monitor
 
