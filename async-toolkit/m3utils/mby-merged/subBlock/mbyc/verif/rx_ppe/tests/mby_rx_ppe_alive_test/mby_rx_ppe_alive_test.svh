@@ -68,7 +68,7 @@ class mby_rx_ppe_alive_test extends mby_rx_ppe_base_test;
    //------------------------------------------------------------------------------
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
-      env.set_test_phase_type("env", "USER_DATA_PHASE", "mby_rx_ppe_alive_seq");
+//PJP      env.set_test_phase_type("env", "USER_DATA_PHASE", "mby_rx_ppe_alive_seq");
    endfunction : connect_phase
 
 endclass : mby_rx_ppe_alive_test
@@ -86,7 +86,7 @@ class mby_rx_ppe_alive_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
    //------------------------------------------------------------------------------
    function new (string name="mby_rx_ppe_alive_seq");
       super.new (name);
-      set_env(slu_tb_env::get_top_tb_env());
+//PJP      set_env(slu_tb_env::get_top_tb_env());
    endfunction :  new
 
    //------------------------------------------------------------------------------
@@ -95,6 +95,7 @@ class mby_rx_ppe_alive_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
    //------------------------------------------------------------------------------
    virtual task body();
 
+/* PJP
       int count[4] = {0,0,0,0};
 
       `slu_info(this.get_name(), ("Starting eth simple sequence..."))
@@ -136,6 +137,7 @@ class mby_rx_ppe_alive_seq extends mby_rx_ppe_seq_lib::mby_rx_ppe_env_base_seq;
          join_none
       end
       wait fork;
+*/
    endtask
 
 endclass : mby_rx_ppe_alive_seq

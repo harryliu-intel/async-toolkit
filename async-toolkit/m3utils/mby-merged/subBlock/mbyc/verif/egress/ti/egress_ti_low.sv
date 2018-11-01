@@ -42,14 +42,6 @@ module egress_ti_low #(
 
   import uvm_pkg::*;
 
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
-  import sla_pkg::*;
   import egress_env_pkg::*;
 
 `include "egress_params.sv"
@@ -57,7 +49,7 @@ module egress_ti_low #(
 
   // Adding MBY if to Saola container
   initial begin
-    sla_pkg::slu_resource_db#(virtual egress_env_if)::add("egress_if", egress_if, `__FILE__, `__LINE__);
+//PJP    sla_pkg::slu_resource_db#(virtual egress_env_if)::add("egress_if", egress_if, `__FILE__, `__LINE__);
     uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_tx_vintf0" , eth_bfm_tx_intf_0);
     uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_rx_vintf0" , eth_bfm_rx_intf_0);
     uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "egr_eth_bfm_tx_vintf1" , eth_bfm_tx_intf_1);

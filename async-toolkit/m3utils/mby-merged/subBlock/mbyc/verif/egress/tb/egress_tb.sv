@@ -29,13 +29,6 @@
 
 module egress_tb ();
 
-`ifdef XVM
-  import ovm_pkg::*;
-  import xvm_pkg::*;
- `include "ovm_macros.svh"
- `include "slu_macros.svh"
-`endif
-
   import uvm_pkg::*;
   
   // ===============================================

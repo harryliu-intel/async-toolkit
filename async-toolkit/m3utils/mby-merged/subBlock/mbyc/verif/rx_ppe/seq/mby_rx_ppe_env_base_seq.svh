@@ -45,7 +45,7 @@
 `error "Attempt to include file outside of mby_rx_ppe_seq_lib."
 `endif
 
-class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
+class mby_rx_ppe_env_base_seq extends uvm_sequence; //PJP: mby_common_pkg::mby_base_seq;
 
    // Variable: env
    // rx_ppe Top Level Env.
@@ -57,7 +57,7 @@ class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
 
    // Variable: ral
    // rx_ppe RAL env.
-   mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env     ral;
+//PJP   mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env     ral;
 
    // Variable: vif
    // Handle to rx_ppe Tb interface.
@@ -73,6 +73,7 @@ class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
    endfunction : new
 
    // ------------------------------------------------------------------------
+/* PJP
    virtual function void set_env(slu_tb_env tb_env);
       mby_rx_ppe_env_pkg::mby_rx_ppe_env temp_env;
       bit stat;
@@ -91,6 +92,7 @@ class mby_rx_ppe_env_base_seq extends mby_common_pkg::mby_base_seq;
       this.vif = temp_env.get_tb_vif();
 
    endfunction : set_env
+*/
 
 endclass : mby_rx_ppe_env_base_seq
 

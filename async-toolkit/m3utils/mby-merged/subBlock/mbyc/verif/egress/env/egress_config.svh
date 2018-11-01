@@ -48,7 +48,6 @@ class egress_config extends shdv_base_config;
   // Function: new
   function new (string name = "egress_config");
     super.new(name);
-    set_parent_name(name);
   endfunction
 
 endclass // egress_config

@@ -27,6 +27,12 @@ class mby_igr_base_test extends uvm_test;
 
    `uvm_component_utils(mby_igr_base_test)
 
+   // Variable: cfg
+   // Top level Ingress env configuration
+   mby_igr_tb_cfg cfg;
+
+   // Variable: env
+   // Top level ENV
    mby_igr_env env;
 
    //-----------------------------------------------------------------------------
@@ -37,6 +43,7 @@ class mby_igr_base_test extends uvm_test;
       $timeformat(-9, 0, "ns", 10);
    endfunction : new
 
+   extern virtual function void randomize_cfg();
    extern function void build_phase(uvm_phase phase);
    extern function void connect_phase(uvm_phase phase);
    extern virtual function void report_phase(uvm_phase phase);
@@ -45,56 +52,37 @@ class mby_igr_base_test extends uvm_test;
 
 endclass : mby_igr_base_test
 
-//-----------------------------------------------------------------------------
-// Function: report_phase()
-//-----------------------------------------------------------------------------
-function void mby_igr_base_test::report_phase(uvm_phase phase);
-   uvm_report_server foo;
-   int err_cnt;
-   super.report_phase(phase);
-   foo = uvm_top.get_report_server();
+//------------------------------------------------------------------------------
+// Function: randomize_cfg()
+// Randomizes the Top_cfg, which will randomizes any sub-level cfg as well.
+//------------------------------------------------------------------------------
+function void mby_igr_base_test::randomize_cfg();
+   `uvm_info(get_name(), "mby_igr_base_test randomize_cfg was called!", UVM_HIGH);
 
-   // sum num of errors from sequences (use global report server)
-   err_cnt = foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL);
-
-   // sum num of errors from this test.
-   foo = get_report_server();
-   err_cnt += (foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL));
-
-   if (err_cnt == 0) begin
-      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "         _______  _______  _______  _______         ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |       ||   _   ||       ||       |        ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |    _  ||  |_|  ||  _____||  _____|        ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |   |_| ||       || |_____ | |_____         ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |    ___||       ||_____  ||_____  |        ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |   |    |   _   | _____| | _____| |        ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |___|    |__| |__||_______||_______|        ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-   end
-   else begin
-      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "         _______  _______  ___   ___                ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |       ||   _   ||   | |   |               ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |    ___||  |_|  ||   | |   |               ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |   |___ |       ||   | |   |               ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |    ___||       ||   | |   |___            ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |   |    |   _   ||   | |       |           ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "        |___|    |__| |__||___| |_______|           ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
-      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+   if (!this.randomize(cfg)) begin
+      `uvm_fatal(get_name, "randomization of mby_igr_tb_top_cfg failed");
    end
 
-endfunction : report_phase
+endfunction : randomize_cfg
 
 //-----------------------------------------------------------------------------
 // Function: build_phase()
 //-----------------------------------------------------------------------------
 function void mby_igr_base_test::build_phase(uvm_phase phase);
    uvm_report_info(get_full_name(),"Build", UVM_LOG);
+
+   cfg = mby_igr_tb_cfg::type_id::create("cfg", this);
+
+   randomize_cfg(); // Randomize the testbench config object.
+
+   // "set" the testbench configuration object in the UVM config database.  
+   // The testbench env will "get" the config object and distribute it to the 
+   // rest of the env.
+   uvm_config_db#(mby_igr_tb_cfg)::set(this, "env", "igr_tb_cfg", cfg);
    env = mby_igr_env::type_id::create("env",this);
 
    set_type_overrides();
+
 endfunction : build_phase
 
 //-----------------------------------------------------------------------------
@@ -143,5 +131,47 @@ function void mby_igr_base_test::set_default_sequences();
    uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.main_phase", "default_sequence.max_random_count", 1);
 
 endfunction : set_default_sequences
+
+//-----------------------------------------------------------------------------
+// Function: report_phase()
+//-----------------------------------------------------------------------------
+function void mby_igr_base_test::report_phase(uvm_phase phase);
+   uvm_report_server foo;
+   int err_cnt;
+   super.report_phase(phase);
+   foo = uvm_top.get_report_server();
+
+   // sum num of errors from sequences (use global report server)
+   err_cnt = foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL);
+
+   // sum num of errors from this test.
+   foo = get_report_server();
+   err_cnt += (foo.get_severity_count(UVM_ERROR) + foo.get_severity_count(UVM_FATAL));
+
+   if (err_cnt == 0) begin
+      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "         _______  _______  _______  _______         ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |       ||   _   ||       ||       |        ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |    _  ||  |_|  ||  _____||  _____|        ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |   |_| ||       || |_____ | |_____         ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |    ___||       ||_____  ||_____  |        ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |   |    |   _   | _____| | _____| |        ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |___|    |__| |__||_______||_______|        ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+   end
+   else begin
+      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "         _______  _______  ___   ___                ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |       ||   _   ||   | |   |               ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |    ___||  |_|  ||   | |   |               ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |   |___ |       ||   | |   |               ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |    ___||       ||   | |   |___            ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |   |    |   _   ||   | |       |           ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "        |___|    |__| |__||___| |_______|           ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+      uvm_report_info(get_full_name(),  "                                                    ", UVM_LOG);
+   end
+
+endfunction : report_phase
 
 `endif

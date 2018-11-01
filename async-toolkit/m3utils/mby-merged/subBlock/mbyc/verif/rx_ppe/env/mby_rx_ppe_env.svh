@@ -52,7 +52,7 @@ class mby_rx_ppe_env extends shdv_base_env;
 
    // Variable:  tb_ral
    // Protected Top Level rx_ppe RAL env handle.
-   protected mby_rx_ppe_ral_env                                tb_ral;
+//PJP   protected mby_rx_ppe_ral_env                                tb_ral;
 
    // Variable:  eth_cdi_bfm
    // MAC Client BFM agent
@@ -88,9 +88,6 @@ class mby_rx_ppe_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function new(string name = "mby_rx_ppe_env", uvm_component parent = null);
       super.new(name, parent);
-
-      ral_type = "mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env";
-
    endfunction : new
 
    //---------------------------------------------------------------------------
@@ -141,10 +138,10 @@ class mby_rx_ppe_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
       end
 
-      $cast(tb_ral,ral);
-      if(tb_ral == null) begin
-         `ovm_fatal(get_name(),"Unable to acquire handle to TB RAL!");
-      end
+//PJP      $cast(tb_ral,ral);
+//PJP      if(tb_ral == null) begin
+//PJP         `ovm_fatal(get_name(),"Unable to acquire handle to TB RAL!");
+//PJP      end
 
       build_eth_bfm();
 
@@ -182,16 +179,13 @@ class mby_rx_ppe_env extends shdv_base_env;
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
 
-      if( _level == SLA_TOP ) begin
-      end
-
       eth_cdi_tx_io.set_vintf(cdi_tx_vintf);
       eth_cdi_rx_io.set_vintf(cdi_rx_vintf);
       eth_cdi_bfm.set_io(eth_cdi_tx_io, eth_cdi_rx_io);   // Set the IO Policy in the CDI BFM
-      void'(this.add_sequencer("eth_agent", "tx0", eth_cdi_bfm.tx.frame_sequencer[0]));
-      void'(this.add_sequencer("eth_agent", "tx1", eth_cdi_bfm.tx.frame_sequencer[1]));
-      void'(this.add_sequencer("eth_agent", "tx2", eth_cdi_bfm.tx.frame_sequencer[2]));
-      void'(this.add_sequencer("eth_agent", "tx3", eth_cdi_bfm.tx.frame_sequencer[3]));
+//PJP      void'(this.add_sequencer("eth_agent", "tx0", eth_cdi_bfm.tx.frame_sequencer[0]));
+//PJP      void'(this.add_sequencer("eth_agent", "tx1", eth_cdi_bfm.tx.frame_sequencer[1]));
+//PJP      void'(this.add_sequencer("eth_agent", "tx2", eth_cdi_bfm.tx.frame_sequencer[2]));
+//PJP      void'(this.add_sequencer("eth_agent", "tx3", eth_cdi_bfm.tx.frame_sequencer[3]));
 
    endfunction: connect_phase
 
@@ -204,9 +198,6 @@ class mby_rx_ppe_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function void end_of_elaboration_phase(uvm_phase phase);
       super.end_of_elaboration_phase(phase);
-
-      if (_level == SLA_TOP) begin
-      end
 
    endfunction: end_of_elaboration_phase
 
@@ -240,9 +231,9 @@ class mby_rx_ppe_env extends shdv_base_env;
    // Function: get_tb_ral()
    // Returns object handle to rx_ppe RAL env (mby_rx_ppe_ral_env)
    //---------------------------------------------------------------------------
-   function mby_rx_ppe_ral_env get_tb_ral();
-      return tb_ral;
-   endfunction : get_tb_ral
+//PJP   function mby_rx_ppe_ral_env get_tb_ral();
+//PJP      return tb_ral;
+//PJP   endfunction : get_tb_ral
 
 endclass
 
