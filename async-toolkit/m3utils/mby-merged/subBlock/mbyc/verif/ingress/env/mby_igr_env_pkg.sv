@@ -38,7 +38,6 @@ package mby_igr_env_pkg;
    `include "mby_igr_env_cfg.svh"
    `include "mby_igr_tb_cfg.svh"
    //PJP`include "mby_igr_ral_env.svh"
-   `include "mby_igr_tb_sequencer.svh"
    `include "mby_igr_base_env.svh"
    `include "mby_igr_env_monitor.svh"
    `include "mby_igr_env.svh"
