@@ -5,6 +5,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{EplRxFlags, Port}
+import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 
 case class ParserOutput(updatedParserCsr: CsrParser,
                         rxPort: Port,
@@ -14,7 +15,7 @@ case class ParserOutput(updatedParserCsr: CsrParser,
                         paAdjSegLegLen: Int,
                         paKeys: PacketFields, // should be 'option' values?
                         paKeysValid: Boolean,
-                        paFlags: PacketFlags,
+                        paFlags: BitFlags,
                         paPointers: ProtoOffsets,
                         paPointersValid: Boolean,
                         paCsumOk: Boolean,

@@ -6,11 +6,12 @@ import ParserExceptions._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{IPVersion, Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFlags, ParserOutput}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtLong.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
+import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
 import scalaz.State
 import scalaz.syntax.traverse._
@@ -47,7 +48,7 @@ object Parser {
 
     val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(csrParser, packetHeader)(0,
       initialState(csrParser, packetHeader, rxPort),
-      PacketFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException])
+      BitFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException])
 
     val paPacketTypeVal = packetType(csrParser, packetFlags)
 
@@ -76,8 +77,8 @@ object Parser {
 
   @tailrec
   def applyStage(csr: CsrParser, packetHeader: PacketHeader)
-       (idStage: Int, parserState: ParserState, packetFlags: PacketFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
-                        (PacketFlags, ProtoOffsets, Option[ParserException]) = idStage match {
+       (idStage: Int, parserState: ParserState, packetFlags: BitFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
+                        (BitFlags, ProtoOffsets, Option[ParserException]) = idStage match {
 
     case NumberOfParsingStages => (packetFlags, fields, exceptionOpt)
 
@@ -128,8 +129,8 @@ object Parser {
 
   private class Action(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
 
-    def run(idStage: Int, parserState: ParserState, parserFlags: PacketFlags, protoOffsets: Parser.ProtoOffsets)
-             (packetHeader: PacketHeader): (ParserState, PacketFlags, Parser.ProtoOffsets, Option[ParserException]) = {
+    def run(idStage: Int, parserState: ParserState, parserFlags: BitFlags, protoOffsets: Parser.ProtoOffsets)
+             (packetHeader: PacketHeader): (ParserState, BitFlags, Parser.ProtoOffsets, Option[ParserException]) = {
       val currentOffset = parserState.ptr
       // is there an error condition requiring an abort (i.e. without processing this stage)
       // or is the exception action to do nothing (or mark 'done')
@@ -140,10 +141,8 @@ object Parser {
         case parsExcOpt =>
           val updatedParserState = analyzerAction.analyze(packetHeader, parserState) // setup the analyze actions for the next stage
             // do all of the extraction operations to add more to the flags and offsets
-          val (updatedProtoOffsets, updatedPckFlags) = extractActions.foldLeft(protoOffsets, parserFlags) {
-              (prev, act) => act.extract(prev)
-            }
-          (updatedParserState, updatedPckFlags, updatedProtoOffsets, parsExcOpt)
+          val (updatedProtoOffsets, updatedPaFlags) = ExtractAction.extractActions(extractActions, protoOffsets, parserFlags)
+          (updatedParserState, updatedPaFlags, updatedProtoOffsets, parsExcOpt)
       }
     }
 
@@ -155,20 +154,17 @@ object Parser {
       packetHeader.getWord(getLower16(offset))
     )
     val aluOp = AluOperation(portCfg.INITIAL_OP_ROT().toShort, portCfg.INITIAL_OP_MASK().toShort)
-    val state = portCfg.INITIAL_STATE().toShort
-    val ptr = portCfg.INITIAL_PTR().toShort
-    ParserState(w, aluOp, state, ptr)
+    ParserState(w, aluOp, portCfg.INITIAL_STATE().toShort, portCfg.INITIAL_PTR().toShort)
   }
 
-  private def packetType(csrParser: CsrParser, packetFlags: PacketFlags): (PacketType, ExtractionIndex) = {
+  private def packetType(csrParser: CsrParser, packetFlags: BitFlags): (PacketType, ExtractionIndex) = {
     val interface = 0
     val tcamCsr = csrParser.ppeParserMap.PARSER_PTYPE_TCAM(interface).PARSER_PTYPE_TCAM
     val sramCsr = csrParser.ppeParserMap.PARSER_PTYPE_RAM(interface).PARSER_PTYPE_RAM
 
     val tc = ParserTcam.matchRegister(Tcam.matchBitFun)(_)
     tcamCsr.zip(sramCsr).reverse.collectFirst {
-      case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) =>
-        (getLower32(y.PTYPE()).toInt, getLower32(y.EXTRACT_IDX()).toInt)
+      case (x,y) if tc(ParserTcam.TcTriple(x.KEY_INVERT, x.KEY, packetFlags.toLong)) => (getLower32(y.PTYPE()).toInt, getLower32(y.EXTRACT_IDX()).toInt)
     }.getOrElse((0,0))
   }
 

@@ -7,9 +7,9 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.utils.Binary.BinaryInterpolator
+import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 import monocle.state.all._
 import org.scalatest._
 
@@ -21,7 +21,7 @@ class ParserStageSpec extends FlatSpec with Matchers {
   "Flag 1 and 4" should "unconditionally be set when rule 0 configured as unconditional match" in {
     val csrParser = Csr().getParser(0)
     val idx = 0
-    val pf = PacketFlags()
+    val pf = BitFlags()
     val protoOffset = Parser.EmptyProtoOffsets
     val noException = Option.empty[ParserException]
     val ps = ParserState(Array(0,0,0), new AluOperation(0,0), 0, 0)
@@ -66,13 +66,13 @@ class ParserStageSpec extends FlatSpec with Matchers {
     } yield ())
     val updatedCsrParser = csrParser.copy(ppeParserMap = updatedParserMap)
 
-    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps, pf, protoOffset, exceptionOpt = noException)
+    val result: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps, pf, protoOffset, exceptionOpt = noException)
     result._1.get contains 1 shouldEqual true
     result._1.get contains 2 shouldEqual false
     result._1.get contains 3 shouldEqual false
     result._1.get contains 4 shouldEqual true
 
-    val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps2, pf, protoOffset, exceptionOpt = noException)
+    val result2: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps2, pf, protoOffset, exceptionOpt = noException)
     result2._1.toInt shouldEqual b"10010"
   }
 

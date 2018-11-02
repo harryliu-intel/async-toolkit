@@ -1,35 +1,10 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output
 
-import scala.collection.BitSet
-
-/**
-  * Flags which may be set or cleared by each parser stage
-  */
-class PacketFlags(flags: BitSet) {
-
-  def get: BitSet = flags
-
-  def set(x: Int): PacketFlags = if (x == 0) { this } else { PacketFlags(flags + x) }
-
-  def clear(x: Int): PacketFlags = if (x == 0) { this } else { PacketFlags(flags - x) }
-
-  def assign(x: Int, v: Boolean): PacketFlags = if (v) { set(x) } else { clear(x) }
-
-  def toLong: Long = flags.foldLeft(0L)((acc, bit) => acc | (1 << bit))
-
-  def toInt: Int = toLong.toInt
-
-  override def toString: String = s"PacketFlags(${flags.toString()})"
-
-}
-
 object PacketFlags {
 
-  def apply(): PacketFlags = new PacketFlags(BitSet.empty)
-
-  def apply(bitSet: BitSet): PacketFlags = new PacketFlags(bitSet)
-
-  sealed trait GenericPacketFlag
+  sealed trait GenericPacketFlag {
+    def flagOpt: Option[Int] = getGenericFlagId(this)
+  }
   case object Flag_NOP                extends GenericPacketFlag
   case object Flag_otr_l2_vlan1       extends GenericPacketFlag
   case object Flag_otr_l2_vlan2       extends GenericPacketFlag
