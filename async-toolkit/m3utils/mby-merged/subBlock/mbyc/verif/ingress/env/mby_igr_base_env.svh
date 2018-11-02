@@ -34,7 +34,7 @@ class mby_igr_base_env extends shdv_base_env;
    `uvm_component_utils_end
 
    protected static mby_igr_base_env     _top_tb_env;
-   protected static mby_igr_tb_sequencer _tb_sequencer;
+   protected static shdv_base_tb_sequencer _tb_sequencer;
 
    //---------------------------------------------------------------------------
    // Function: new
@@ -55,7 +55,7 @@ class mby_igr_base_env extends shdv_base_env;
       // populate the static members only if the top most tb has not already been constructed
       if(_top_tb_env == null) begin
          _top_tb_env = this;
-         _tb_sequencer = mby_igr_tb_sequencer::type_id::create("mby_igr_tb_sequencer",this);
+         _tb_sequencer = shdv_base_tb_sequencer::type_id::create("mby_igr_tb_sequencer",this);
          _tb_sequencer.add_sequencer("TB_SEQUENCER",get_name(),_tb_sequencer);
       end
    endfunction : build_phase
@@ -94,7 +94,7 @@ class mby_igr_base_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    // Function: get_tb_seqr
    //---------------------------------------------------------------------------
-   static function mby_igr_tb_sequencer get_tb_seqr();
+   static function shdv_base_tb_sequencer get_tb_seqr();
       return(_tb_sequencer);
    endfunction : get_tb_seqr
 

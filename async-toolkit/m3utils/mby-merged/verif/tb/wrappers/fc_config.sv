@@ -19,11 +19,6 @@
 `include "chi_svt_dut.sv"
 `endif
 
-//config pmu_sb_cfg;
-//    design pmu_rtl_lib.pmusb;
-//    cell pmu_sbebase liblist pmu_rtl_lib;
-//endconfig
-
 //config `HDL_TOP_CFG;
 config fc_hdl_top_cfg;
 
@@ -80,8 +75,6 @@ config fc_hdl_top_cfg;
     `ifdef EPC_WITH_SERDES
     `endif
 
-  //   cell pmusb use `HDL_TOP_LIB.pmu_sb_cfg;
-  //      `include "axi_svt_dut.sv"
 endconfig
 
 
