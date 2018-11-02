@@ -2,7 +2,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
 
 import madisonbay.csr.all._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{HeaderPointer, ProtoOffsets}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
 
 
@@ -11,7 +11,7 @@ class ExtractAction(registerExt: parser_ext_r) {
   def extract(input: (ProtoOffsets, PacketFlags)): (ProtoOffsets, PacketFlags) = {
     val fields: ProtoOffsets = registerExt.PROTOCOL_ID() match {
       case ExtractAction.SpecialProtocolId  => input._1
-      case protoId => input._1.updated(registerExt.PTR_NUM().toShort, (protoId.toInt, registerExt.OFFSET().toInt))
+      case protoId => input._1.updated(registerExt.PTR_NUM().toShort, HeaderPointer(protoId.toInt, registerExt.OFFSET().toInt))
     }
     val flags: PacketFlags = registerExt.FLAG_NUM() match {
       case ExtractAction.FlagNOP  => input._2

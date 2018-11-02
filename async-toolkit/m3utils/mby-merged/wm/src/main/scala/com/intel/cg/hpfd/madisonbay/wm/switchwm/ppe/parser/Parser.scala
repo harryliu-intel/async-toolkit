@@ -24,13 +24,16 @@ object Parser {
     override def toString: String = s"ParserState(${w.toList.map(e => f"0x$e%X")},$aluOperation,state=$state,ptr=$ptr)"
   }
 
+  case class HeaderPointer(protocolId: ProtoId, offset: BaseOffset)
+
   type ProtoId          = Int
   type BaseOffset       = Int
   type PacketType       = Int
   type ExtractionIndex  = Int
-  type ProtoOffsets     = IndexedSeq[(ProtoId, BaseOffset)]
+  type PointerNumber    = Int
+  type ProtoOffsets     = Map[PointerNumber, HeaderPointer]
 
-  val EmptyProtoOffsets: ProtoOffsets = Vector[(ProtoId, BaseOffset)]((0,0))
+  val EmptyProtoOffsets: ProtoOffsets = Map[PointerNumber, HeaderPointer]()
 
   val NumberOfParsingStages       = 32
 
@@ -183,7 +186,7 @@ object Parser {
         val protocolId = parserExtractCfgReg.PROTOCOL_ID()
         def toWordWithOffset(v: Int): Short = packetHeader.getWord(v + getLower32(parserExtractCfgReg.OFFSET()).toInt)
 
-        (protocolId, protoOffsets.collect { case (pId, baseOffset) if pId == protocolId => baseOffset }.toList) match {
+        (protocolId, protoOffsets.collect { case (_, HeaderPointer(pId, baseOffset)) if pId == protocolId => baseOffset }.toList) match {
 
           case (ExtractAction.SpecialProtocolId, _) => ((0.toShort :: result, mbyPpeParserMap), ())
 
