@@ -77,21 +77,12 @@ Group: Egress  {
       File: mby_regs_regs.svh  (egress/ral/egress_regs_regs.svh)
       }  # Group: Ral
 
-   Group: Fal  {
-
-      File: MBY_classes.svh  (egress/fal/egress_classes.svh)
-      File: mby_fuse_env.sv  (egress/fal/egress_fuse_env.sv)
-      File: mby_fuse_regs.svh  (egress/fal/egress_fuse_regs.svh)
-      File: toplevel_fuse_env.svh  (egress/fal/toplevel_fuse_env.svh)
-      }  # Group: Fal
-
    }  # Group: Egress
 
 Group: Ingress  {
 
    Group: Env  {
 
-      File: ingress_env.svh  (ingress/env/ingress_env.svh)
       File: mby_igr_base_env  (ingress/env/mby_igr_base_env.svh)
       File: mby_igr_dut_cfg  (ingress/env/mby_igr_dut_cfg.svh)
       File: mby_igr_env  (ingress/env/mby_igr_env.svh)
@@ -110,12 +101,6 @@ Group: Ingress  {
       File: mby_igr_hard_reset_seq  (ingress/seq/mby_igr_hard_reset_seq.sv)
       }  # Group: Seq
 
-   Group: Tests  {
-
-      File: ingress_rand_test.svh  (no auto-title, ingress/tests/ingress_rand_test/ingress_rand_test.svh)
-      File: mby_igr_base_test  (ingress/tests/common/mby_igr_base_test.svh)
-      }  # Group: Tests
-
    Group: Ral  {
 
       File: MBY_ral_rtl_monitor.svh  (ingress/ral/ingress_ral_rtl_monitor.svh)
@@ -123,14 +108,8 @@ Group: Ingress  {
       File: mby_regs_regs.svh  (ingress/ral/ingress_regs_regs.svh)
       }  # Group: Ral
 
-   Group: Fal  {
-
-      File: MBY_classes.svh  (ingress/fal/ingress_classes.svh)
-      File: mby_fuse_env.sv  (ingress/fal/ingress_fuse_env.sv)
-      File: mby_fuse_regs.svh  (ingress/fal/ingress_fuse_regs.svh)
-      File: toplevel_fuse_env.svh  (ingress/fal/toplevel_fuse_env.svh)
-      }  # Group: Fal
-
+   File: mby_igr_base_test  (ingress/tests/common/mby_igr_base_test.svh)
+   File: mby_igr_base_test  (ingress/tests/common/mby_igr_base_test.svh)
    }  # Group: Ingress
 
 Group: Mplex  {
@@ -270,14 +249,6 @@ Group: Mby  {
       File: mby_regs_ral_rtl_monitor.svh  (mby/ral/mby_regs_ral_rtl_monitor.svh)
       File: mby_regs_regs.svh  (mby/ral/mby_regs_regs.svh)
       }  # Group: Ral
-
-   Group: Fal  {
-
-      File: MBY_classes.svh  (mby/fal/mby_classes.svh)
-      File: mby_fuse_env.sv  (mby/fal/mby_fuse_env.sv)
-      File: mby_fuse_regs.svh  (mby/fal/mby_fuse_regs.svh)
-      File: toplevel_fuse_env.svh  (mby/fal/toplevel_fuse_env.svh)
-      }  # Group: Fal
 
    }  # Group: Mby
 
