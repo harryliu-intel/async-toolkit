@@ -12,6 +12,7 @@ $hdl_spec = {
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
        "src/gmm/gms/top/rtl/mby_gms.sv",
+       "src/gmm/gms/top/rtl/mby_gms_top.sv",
        "src/gmm/gms/gpm/rtl/mby_gpm_top.sv",
        "src/gmm/gms/gcm/rtl/mby_gcm_top.sv",
        "src/gmm/gms/mce/rtl/mby_mce_top.sv",
