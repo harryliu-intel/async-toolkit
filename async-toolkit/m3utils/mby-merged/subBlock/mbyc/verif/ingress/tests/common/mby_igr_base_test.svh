@@ -75,8 +75,8 @@ function void mby_igr_base_test::build_phase(uvm_phase phase);
 
    randomize_cfg(); // Randomize the testbench config object.
 
-   // "set" the testbench configuration object in the UVM config database.  
-   // The testbench env will "get" the config object and distribute it to the 
+   // "set" the testbench configuration object in the UVM config database.
+   // The testbench env will "get" the config object and distribute it to the
    // rest of the env.
    uvm_config_db#(mby_igr_tb_cfg)::set(this, "env", "igr_tb_cfg", cfg);
    env = mby_igr_env::type_id::create("env",this);
@@ -105,7 +105,7 @@ endfunction : set_type_overrides
 function void mby_igr_base_test::set_default_sequences();
 
    // Set up default cold reset sequence
-//PJP: TODO Uncomment the following code once reset and configuration sequences are devloped.
+//PJP: TODO Uncomment the following code once reset and configuration sequences are developed.
 /*
    uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence", igr_env_pkg::mby_igr_hard_reset_seq::type_id::get());
    uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence.min_random_count", 1);

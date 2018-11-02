@@ -5,7 +5,6 @@
 // File          : mby_base_driver.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 30.10.2018
-// Last modified : 30.10.2018
 //-----------------------------------------------------------------------------
 // Description :
 // Base driver class for Madison Bay
@@ -13,9 +12,23 @@
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
 // file requires a written license from Intel Corporation.
-//------------------------------------------------------------------------------
-// Modification history :
-// 30.10.2018 : created
+//
+// The source code contained or described herein and all documents related to
+// the source code ("Material") are owned by Intel Corporation or its suppliers
+// or licensors. Title to the Material remains with Intel Corporation or its
+// suppliers and licensors. The Material contains trade secrets and proprietary
+// and confidential information of Intel or its suppliers and licensors. The
+// Material is protected by worldwide copyright and trade secret laws and
+// treaty provisions. No part of the Material may be used, copied, reproduced,
+// modified, published, uploaded, posted, transmitted, distributed, or
+// disclosed in any way without Intel's prior express written permission.
+//
+// No license under any patent, copyright, trade secret or other intellectual
+// property right is granted to or conferred upon you by disclosure or delivery
+// of the Materials, either expressly, by implication, inducement, estoppel or
+// otherwise. Any license under such intellectual property rights must be
+// express and approved by Intel in writing.
+//
 //-----------------------------------------------------------------------------
 `ifndef __MBY_BASE_PKG__
 `error "Attempt to include file outside of mby_igr_env_pkg."
@@ -34,9 +47,9 @@
 //-----------------------------------------------------------------------------
 class mby_base_driver
    #(
-      type          T_req = mby_base_sequence_item,
-      type          T_rsp = T_req,
-      type          T_vif
+      type T_req = mby_base_sequence_item,
+      type T_rsp = T_req,
+      type T_vif
    )
    extends uvm_driver
    #(
@@ -56,7 +69,6 @@ class mby_base_driver
    // Macro to register new class type
    // -------------------------------------------------------------------------
    `uvm_component_param_utils_begin(mby_base_driver#(T_req, T_rsp, T_vif))
-      `uvm_field_object(cfg_obj, UVM_ALL_ON)
    `uvm_component_utils_end
 
    // -------------------------------------------------------------------------
@@ -75,20 +87,45 @@ class mby_base_driver
    // -------------------------------------------------------------------------
    // FUNCTION: build_phase()
    //
-   // Gets the driver's config object and virtual interface
    //
    // -------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
-      // Obtain a handle to the Configuration Object
-      if(!uvm_config_db#(mby_base_config)::get(this, "", "cfg_obj", cfg_obj)) begin
-         `uvm_fatal("CFG_ERROR", {"Configuration object must be set for: ", get_full_name(), ".cfg_obj"})
-      end
-      // Obtain the Virtual Interface
-      if(!uvm_config_db #(T_vif)::get(this, "", "vintf", vintf)) begin
-         `uvm_fatal("VIF_ERROR", {"Virtual interface must be set for: ", get_full_name(), ".vintf"})
-      end
    endfunction : build_phase
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: assign_vif()
+   //
+   // This function is called by the agent once the driver is created and the
+   // agent has accessed the configuration database to obtain the virtual intf.
+   // This is to reduce the number of config db accesses as it has a toll in
+   // performance.
+   //
+   // ARGUMENTS:
+   //     T_vif vif - A pointer to the virtual interface to be used by the
+   //                 driver
+   //
+   // -------------------------------------------------------------------------
+   function void assign_vif(T_vif vif);
+      this.vintf = vif;
+   endfunction
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: assign_cfg()
+   //
+   // This function is called by the agent once the driver is created and the
+   // agent has accessed the configuration database to obtain the config obj.
+   // This is to reduce the number of config db accesses as it has a toll in
+   // performance.
+   //
+   // ARGUMENTS:
+   //     mby_base_config cfg - A pointer to the config obj to be used by the
+   //                 driver
+   //
+   // -------------------------------------------------------------------------
+   function void assign_cfg(mby_base_config cfg);
+      this.cfg_obj = cfg;
+   endfunction
 
    // -------------------------------------------------------------------------
    // FUNCTION: connect_phase()
@@ -104,23 +141,23 @@ class mby_base_driver
    //
    // User defined hook, gets called before passing sequence item to interface
    // -------------------------------------------------------------------------
-   virtual task pre_drive_cb(T_rsp item);
+   virtual protected task pre_drive_cb(T_rsp item);
    endtask : pre_drive_cb
 
    // -------------------------------------------------------------------------
-   // TASK: pst_drive_cb
+   // TASK: post_drive_cb
    //
    // User defined hook, gets called after sequence item is returned from interface
    // -------------------------------------------------------------------------
-   virtual task pst_drive_cb(T_rsp item);
-   endtask : pst_drive_cb
+   virtual protected task post_drive_cb(T_rsp item);
+   endtask : post_drive_cb
 
    // -------------------------------------------------------------------------
    // TASK: drive_data
    //
    // Driver task passing in seq_item fields into interface task
    // -------------------------------------------------------------------------
-   task drive_data();
+   virtual protected task drive_data();
       vintf.drive_data(
          rsp.data_pkt ,
          rsp.debug_pkt,
@@ -129,36 +166,57 @@ class mby_base_driver
    endtask : drive_data
 
    // -------------------------------------------------------------------------
-   // TASK: run_phase
+   // TASK: get_and_drive
    //
-   // The run phase gets the next sequence item from the sequencer, clones it,
-   // calls the pre-drive callback task (which can be defined in a sub-class), 
-   // then it drives the sequence item by calling the virtual interface's 
-   // drive_data task, calls the post-drive callback (also can be defined in
-   // a sub-class), then marks the sequence item done.
-   // 
+   // Main driver task thread gets the next sequence item from the sequencer,
+   // clones it, calls the pre-drive callback task (which can be defined in a
+   // sub-class), then it drives the sequence item by calling the virtual
+   // interface's drive_data task, calls the post-drive callback (also can be
+   // defined in a sub-class), then marks the sequence item done.
+   //
    // -------------------------------------------------------------------------
-   task run_phase(uvm_phase phase);
-      forever begin
+   virtual protected task get_and_drive();
+      forever begin : main_drive_thread
          // Get the next sequence item from sequencer
          seq_item_port.get_next_item(req);
-         `uvm_info("gt_uvm_driver::run_phase():: Got seq_item below...", req.sprint(), UVM_NONE)
+         `uvm_info("get_and_drive()::starts driving ",             req.convert2string(), UVM_MEDIUM)
+         `uvm_info("get_and_drive()::starts driving ",             req.sprint(),         UVM_HIGH)
          // Clone the req item and copy id info
          $cast(rsp, req.clone());
          rsp.set_id_info(req);
          // Call pre-drive methods (may be defined in a sub-class)
+         `uvm_info("get_and_drive()::calling pre_drive callback",  rsp.convert2string(), UVM_DEBUG)
          pre_drive_cb(rsp);
          // Call the interface's drive_data task
+         `uvm_info("get_and_drive()::calling drive_data",          rsp.convert2string(), UVM_DEBUG)
          drive_data();
          // Call post-drive method (may be defined in a sub-class)
-         pst_drive_cb(rsp);
+         `uvm_info("get_and_drive()::calling post_drive callback", rsp.convert2string(), UVM_DEBUG)
+         post_drive_cb(rsp);
          // Mark sequence item as done
+         `uvm_info("get_and_drive()::setting item done",           rsp.convert2string(), UVM_DEBUG)
          seq_item_port.item_done();
          // Send the response back
-         if (req.rsp_req) begin
+         if (req.rsp_req || cfg_obj.rsp_req) begin
+            `uvm_info("get_and_drive()::sending back a response",  rsp.convert2string(), UVM_DEBUG)
             seq_item_port.put(rsp);
          end
-      end // forever
+         `uvm_info("get_and_drive()::exiting!",                    rsp.convert2string(), UVM_DEBUG)
+      end // main_drive_thread
+   endtask : get_and_drive
+
+   // -------------------------------------------------------------------------
+   // TASK: run_phase
+   //
+   // The run phase
+   //
+   // -------------------------------------------------------------------------
+   task run_phase(uvm_phase phase);
+      fork
+         begin : drive_thread
+            get_and_drive();
+         end
+      join
    endtask : run_phase
 
 endclass
