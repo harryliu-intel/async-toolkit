@@ -1,0 +1,28 @@
+#% This is a simple text file containing all the info needed to
+#% describe clocks for this chip.
+#%
+# NOTES: 
+#% * Lines beginning with "#%" get ignored when writing the clocks table to a .csv file.
+#% * "-" means to use the DEFAULT value in the table.
+#  * Columns with multiple values must have curly braces (e.g., '{sccp scsh}').
+#  * You can leave the period for generated clocks default; they are calculated in the flow.
+#  * If active modes for generated clocks are default, they are inherited from the master clock.
+#  * Rootnodes is a list of all ports or pins that could possibly be a source for this clock at any level.
+#
+#
+
+#%                            signoff_marg      ideal
+#% clkname  margin_signoff_s  margin_signoff_h   margin_idealclks_s  margin_idealclks_h   ideal_slew
+#% -------  ----------------  ----------------   ------------------  ------------------   ----------
+DEFAULT                0.125             0.040                0.300               0.040    0.080
+
+
+#%                                                                                                                                                                                         ----------------------------------generated_clocks--------------------------------------------------------------------------
+#% clkname                      period   PLL        active_modes                     distribution                                                    output_sink                           internal_only is_generated gen_master_clock           masterpin             gen_divby waveform gen_edges invert  gen_combi  rootnode
+#% -------                      ------   ---        ------------                     ------------                                                    -----------                           ------------- ------------ ----------------           ---------             --------- -------- --------- ------- ---------- ---------
+DEFAULT                           1      none       {func lbm1 lbm2 sccp scsh alls}     none                                                         {o_clk_observe}                           F             F            none                       none                   F        ""        F         F       F      xcclk*
+                                                    
+## System clocks:                                   
+#<YOUR_DEFAULT_CLOCK_NAME>                              1.100  uclk_pll   {func   				 }   {<YOUR_TOP_MODULE_NAME>} 	- - - - - - - - - - {<YOUR_TOP_MODULE_NAME>*}
+#cclk                              1.100  uclk_pll   {func   				 }   {tmpl_dut} 	- - - - - - - - - - {cclk*}
+cclk                              0.800  uclk_pll   {func   				 }   {tmpl_dut} 	- - - - - - - - - - {cclk*}

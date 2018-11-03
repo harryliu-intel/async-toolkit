@@ -9,7 +9,7 @@
 # Directories
 ################################################################################
 TBROOT       := $(shell pwd)
-LOGICROOT    ?= $(shell pwd | sed 's/\/msh\/sandbox\/val//')
+LOGICROOT    ?= $(shell pwd | sed 's/\/msh_node\/sandbox\/val//')
 #LOGICROOT    ?= $(shell pwd | sed 's/\/sandbox\/val//')
 #SL2_LIB      ?= $(shell ToolConfig.pl get_tool_var ipconfig/sl2_library INC_PATH)
 #SL2_LIB_IP16 ?= $(shell ToolConfig.pl get_tool_var ipconfig/sl2lib_ip16 INC_PATH)
@@ -59,7 +59,7 @@ BINDIR    ?= $(BINROOT)/$*#@               Compile in ./BINDIR (default: ./bin/<
 RUNDIR    ?= $(RUNROOT)/$*#@               Run in ./RUNDIR (default: ./run/<test>)
 URG_REPORTDIR := report#@        URG Report direcotry (default: report)
 TIMESTAMP := $(shell date +'%Y%m%d%H%M%S')
-DUT_TOP   := top.msh
+DUT_TOP   := top.msh_node
 DUT_FILE_LIST_NAME := 2_dut_file_list
 PKG_TOP   := mby_msh_pkg 
 PKG_FILE_LIST_NAME := 1_pkg_file_list
@@ -108,7 +108,7 @@ BUILD_OPTS += -sverilog +systemverilogext+.v+.sv+.svh+.sva -M -Mupdate -PP \
 #              +vcs+lic+wait +notimingcheck -Mdir=$(MDIR) -o $(BINDIR)/simv \
 #              -l $(BINDIR)/compile.log $(BUILD_USER) -bfl $(BINROOT)/$(DUT_FILE_LIST_NAME)
 
-build_%: mshnode $(TBROOT)/tests/%.sv
+build_%: mgm_mem $(TBROOT)/tests/%.sv
 	@# Builds monolithic simulator (RTL + test) in bin/$(BINDIR)/test_<test>
 	@# VCS version set in VCS_HOME
 	@# Mdir set in MDIR
@@ -117,16 +117,14 @@ build_%: mshnode $(TBROOT)/tests/%.sv
 	$(VCS_HOME)/bin/vcs $(strip $(BUILD_OPTS)) $(TBROOT)/tests/$*.sv
 	cat $(BINROOT)/*.bfl | $(TBROOT)/scripts/create_rtl_list.pl > $(BINROOT)/rtl_list.tcl
 
-mshnode:
-	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val clean
-	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val mgm_mem
-
+mgm_mem:
+	mgm -c msh -cnfg $(TBROOT)/../../mem/msh_node_sandbox_config_file -includes $(MODEL_ROOT)/tools/mgm/blocks_inclusion -apr_struct $(MODEL_ROOT)/tools/mgm/apr_structure -csv $(MODEL_ROOT)/tools/mgm/mby_physical_params.csv -unique mby -clk $(MODEL_ROOT)/tools/mgm/clk_file -rprt_dir $(TBROOT)/verilog/mgm_run/rtl -relative_path_from $(MODEL_ROOT)
 
 .PHONY : clean realclean
 clean:
 	@# Removes $(BINROOT)
 	rm -rf $(BINROOT)
-	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val clean
+	rm -rf $(TBROOT)/verilog/mgm_run
 realclean : clean
 	@# Removes $(RUNROOT) and $(URG_REPORTDIR)
 	rm -rf $(RUNROOT)

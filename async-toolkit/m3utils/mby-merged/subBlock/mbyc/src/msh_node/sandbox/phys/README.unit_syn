@@ -1,0 +1,61 @@
+Overview:
+
+	Existing FHDK16 Unit Synthesis and QuickFloorplanning
+		- Operates on non-project defined RTL hierarchies; aka non-partitions as understood by the PD RDT flow
+		- Template clock and i/o definition files are available in the LD Phys Sandbox git repo
+		- Runs RDT Synthesis flow, uses a ?unit synthesis? template and default block_setup.tcl file
+		- Metrics has been adjusted to upload and analyze results
+		- Quickfloorplanning utilities are available
+
+
+Quick How-To:
+	Setup
+	- git clone /p/hdk/rtl/git_repos/shdk74/ip/sl2_library-srvr10nm/
+	- cd sl2_library-srvr10nm/shrtl_template/sandbox/unit_syn  (aka LD_REPO_PTH)
+	- Create a bare/new directory somewhere that makes sense
+	- Copy and edit (appropriately) 
+	- $LD_REPO_PTH/unit_syn.clocks.tbl ; used to define the clocks in your module hierarchy
+	- $LD_REPO_PTH/unit_syn.io.tbl ; used to map the I/O to clocks defined above, plus some timing stuff
+	- Need rtl_list.tcl file;  <generation is WIP>
+
+	Execute PD Unit Synthesis Flow
+	- Execute: /p/sl2/utils/bin/fhdk16_unit_syn; see back slide with usage
+	- Creates a ward and runs synthesis
+	- Iterating in this PD backend ward will allow you to edit block_setup.tcl file and push the implementation as far as the PD flow is enabled to go? goes pretty far, but more is <wip>
+	- Metrics is available; more information coming on how to use and interpret
+	- https://f16metricsdev.echo.intel.com/index.php/unit-syn/index/apr
+
+
+	Execute PD Quick Floorplanning 
+	- On successful synthesis results of, at a minimum, synthesis "compile" stage..
+      	execute:
+			  1. CD to block backend ward directory: /?/soc_apr-be-sl2-a0/module_name-be
+			  2. Example: /?/soc_apr-be-sl2-a0/apr_cport_pif_shim-be
+			  3. /p/sl2/utils/bin/fhdk16setup; see backup slides for usage
+			  4. /p/sl2/utils/bin/fhdk16_runsyn runRDT -load compile -standalone
+
+
+Usage: fhdk16_unit_syn
+
+	fhdk16_unit_syn <PROJECT> <MODULE> <RTL_LIST_DIR>  -cfg <CONFIG> \
+	-clk  <PATH TO YOUR>/unit_syn.clocks.tbl \
+	-io <PATH TO YOUR>/unit_syn.io.tbl
+
+	EXAMPLE
+	 
+	fhdk16_unit_syn apr apr_cport_pif_shim /nfs/sc/disks/slx_1205/mlpriest/sl2/sl2.2/apr_rtl_builds/apr-srvr10nm-a0-17ww42d/target/apr/aceroot/results/DC/apr_cp_core_top/collateral/rtl \
+	-cfg APRA0P10  \
+	-clk ./unit_syn.clocks.tbl \
+	-io unit_syn.io.tbl
+	
+	Wiki PD page
+	https://securewiki.ith.intel.com/display/STL2/FHDK16+Unit+Synthesis
+
+
+Usage: fhdk16setup
+	/p/sl2/utils/bin/fhdk16setup -c <CONFIG>
+	
+	EXAMPLE 
+	/p/sl2/utils/bin/fhdk16setup -c APRA0P10 
+
+

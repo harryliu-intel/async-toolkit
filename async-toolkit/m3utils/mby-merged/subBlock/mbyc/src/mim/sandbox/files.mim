@@ -1,0 +1,5 @@
+
+// this file is used by msh sandbox build to specify files needed to build MIM
+$LOGICROOT/mim/rtl/mby_mim.sv   
+
+

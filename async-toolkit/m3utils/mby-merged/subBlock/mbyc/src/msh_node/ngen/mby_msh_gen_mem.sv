@@ -63,6 +63,10 @@ input                   mclk,
 output                  aary_pwren_b_sram                         
 );
 
+logic         msh_mem_bank0_if;               
+logic         msh_mem_bank1_if;               
+logic         msh_mem_bank2_if;               
+logic         msh_mem_bank3_if;               
 logic [552:0] msh_msh_bank_ram_0_from_mem;    
 logic [572:0] msh_msh_bank_ram_0_to_mem;      
 logic [552:0] msh_msh_bank_ram_1_from_mem;    
@@ -148,8 +152,8 @@ msh_sram_mems    msh_sram_mems(
 /* input  logic          */ .fary_enblfloat_sram                (fary_enblfloat_sram),                    
 /* input  logic    [1:0] */ .fary_fwen_sram                     (fary_fwen_sram),                         
 /* input  logic   [19:0] */ .fary_ffuse_data_misc_sram          (fary_ffuse_data_misc_sram),              
-/* input  logic          */ .fary_pwren_b_sram                  (fary_pwren_b_sram),                      
 /* input  logic          */ .car_raw_lan_power_good_with_byprst (1'b1),                                   
+/* input  logic          */ .fary_pwren_b_sram                  (fary_pwren_b_sram),                      
 /* input  logic          */ .fary_stm_enable                    (fary_stm_enable),                        
 /* input  logic          */ .fary_stm_hilo                      (fary_stm_hilo),                          
 /* input  logic          */ .fary_wakeup_sram                   (fary_wakeup_sram),                       

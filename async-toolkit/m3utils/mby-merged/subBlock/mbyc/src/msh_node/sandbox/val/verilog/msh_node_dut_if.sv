@@ -21,9 +21,9 @@
 ///  must be express and approved by Intel in writing.
 ///
 // ---------------------------------------------------------------------------------------------------------------------
-// -- Author : Steve Olson <steve.olson@intel.com>
+// -- Author : Jim McCormick <jim.mccormick@intel.com>
 // -- Project Name : Madison Bay (MBY)
-// -- Description  : Mesh memory interface 
+// -- Description  : The Mesh DUT interface 
 // ---------------------------------------------------------------------------------------------------------------------
 
 // This is a connectivity only interface and thus is just a named bundle of nets that can be passed around as a group 
@@ -32,32 +32,19 @@
 //      <interface name>.<net name>
 //
 
-`include "mby_msh_node_defines.vh"                             // include file with `defines 
+interface msh_node_dut_if (
+   input mclk                                        // mclk is passed in a parameter and becomes part of the interface
+);
 
-interface mby_mem_msh_bank_ram_shell_4096x552_func_if
-import mby_msh_pkg::*;                                         // import declarations from mby_msh_pkg.sv
-();
 
-    /* input  */ logic               wr_en, rd_en;
-    /* input  */ logic[11:0]         adr;
-    /* input  */ logic[551:0]        wr_data;
-    /* output */ logic               rd_valid;
-    /* output */ logic[551:0]        rd_data;
+// local paramters
 
-    modport mem (
-       input  /* logic          */   wr_en, rd_en,
-       input  /* logic[11:0]    */   adr,
-       input  /* logic[551:0]   */   wr_data,
-       output /* logic          */   rd_valid,
-       output /* logic[551:0]   */   rd_data
-    );
 
-    modport rtl (
-       output /* logic          */   wr_en, rd_en,
-       output /* logic[11:0]    */   adr,
-       output /* logic[551:0]   */   wr_data,
-       input  /* logic          */   rd_valid,
-       input  /* logic[551:0]   */   rd_data
-    );
+// DUT inputs  (direction not specified in this interface)
+logic               i_reset;                                // reset
 
-endinterface // mby_mem_msh_bank_ram_shell_4096x552_func_if
+
+// DUT outputs  (direction not specified in this interface)
+
+
+endinterface // msh_node_dut_if
