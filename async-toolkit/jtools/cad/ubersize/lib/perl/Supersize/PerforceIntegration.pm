@@ -274,6 +274,7 @@ sub p4_add {
             }
         }
     }
+
     # cdsp4add dfII views
     if ($do_dfII) {
         if (!exists $SS_r->{GS}{P4_DFII_CLIENT}) {
@@ -283,6 +284,14 @@ sub p4_add {
               " dfII floorplan views...\n";
         foreach my $cell (@{$cells_lr}) {
             my $cadence_cell = to_cadence($cell);
+
+            # skip source views that don't exist (i.e. CSP only cells)
+            my $src_view_dir = get_cadence_cell_view_dir($SS_r->{GS}{DFII_DIR}, 
+                               $cadence_cell, "floorplan");
+            unless (-e $src_view_dir) {
+                print "Warning: Skipping non-existent floorplan view for $cell.\n";
+                next;
+            }
 
             # check if the view already exists in the client space
             my $add = 1;
@@ -301,16 +310,17 @@ sub p4_add {
                     }
                 }
                 else {
-                    print "Warning: Skipping existing layout view for $cell.\n";
+                    print "Warning: Skipping existing floorplan view for $cell.\n";
                     push @{$skipped_views_lr}, $cell;
                     next;
                 }
             }
+
             # copy view
             print "Copying view for cell $cell.\n" if ($SS_r->{GS}{DEBUG});
             copy_cadence_cell_view($SS_r, $SS_r->{GS}{DFII_DIR}, $cell,
                 "floorplan", $p4_dfII_dir, $cell, "floorplan", 0, 1);
-            
+
             # add the view
             if ($add) {
                 my $cmd = (path_to_tool($SS_r, "cdsp4add", $LOCAL_JOB))[0];
