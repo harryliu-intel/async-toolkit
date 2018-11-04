@@ -35,7 +35,7 @@ module mby_igr_epl_shim_seg
   input logic rst,
   input data64_w_ecc_t [0:7]    i_rx_data,
   input epl_ts_t                  i_rx_ts,
-  input epl_md_t                 i_seg_md,
+  input shim_md_t                 i_seg_md,
   input logic                 i_seg_sop_e,
   input shimfsel_t              i_seg_sel,
   input logic [7:0]              i_seg_we,

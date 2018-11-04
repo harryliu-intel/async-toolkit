@@ -77,7 +77,7 @@ forever
 end
 
 
-igr_top
+mby_igr_top
   top(
   // Clock.
   .cclk(cclk),

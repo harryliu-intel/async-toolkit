@@ -12,6 +12,8 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +define+FSDB_DISABLE \
 +define+INST_ON  \
 +define+SVA_OFF \
++define+INTEL_SVA_OFF \
++define+MBY_IGR_BEHAVE_MEMS \
 -ignore driver_checks \
 -assert api_event \
 -assert api \
@@ -24,7 +26,11 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +incdir+../../rtl \
 +incdir+./ \
 +incdir+/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designcompiler/M-2016.12-SP3/dw/sim_ver \
++incdir+../../../../../../target/mby/mgm_run/igr/src \
++incdir+../../../../../../target/mby/mgm_run/igr/src/mem_wrap \
++incdir+../../../../../../target/mby/mgm_run/rtl \
 ../../rtl/mby_igr_pkg.sv \
+../../pb/rtl/mby_igr_pb_pkg.sv \
 ../../../shared/rtl/shared_pkg.sv \
 ../../../shared/interfaces/igr_rx_ppe_if.sv \
 ../../../shared/interfaces/rx_ppe_igr_if.sv \
@@ -32,5 +38,14 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../epl_shim/rtl/mby_igr_epl_shim_seg.sv \
 ../../epl_shim/rtl/mby_igr_epl_shim_segs.sv \
 ../../epl_shim/rtl/mby_igr_epl_shim.sv \
-../../rtl/igr_top.sv \
+../../dpc/rtl/mby_igr_dpc.sv \
+../../dpc/rtl/mby_igr_dpc_wrap.sv \
+-y ../../../../../../target/mby/mgm_run/igr/src \
+-y ../../../../../../target/mby/mgm_run/igr/src/mem_wrap \
+-y ../../../../../../target/mby/mgm_run/rtl \
+../../pb/rtl/mby_igr_pb_ctrl421.sv \
+../../../../../../target/mby/mgm_run/igr/src/mby_mem_igr_pb0_ram_shell_1024x644.v \
+../../pb/rtl/mby_igr_pb_mem_shell.sv \
+../../pb/rtl/mby_igr_pb.sv \
+../../rtl/mby_igr_top.sv \
 ./tb_igr_top.sv
