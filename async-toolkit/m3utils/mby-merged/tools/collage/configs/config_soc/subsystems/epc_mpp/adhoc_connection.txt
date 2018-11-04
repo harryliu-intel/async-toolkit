@@ -104,8 +104,8 @@
 ##################################################################
 
 
-#CRn mby_ec_top_{%inst_num}/grp_*     mby_mpp_{%inst_num}/grp_*   exact_name_match
 # Connect all pins with same name between EPC & MPP
+#CRn mby_ec_top_{%inst_num}/grp_*     mby_mpp_{%inst_num}/grp_*   exact_name_match
 V collage_connect_pins_same_name -iplist {mby_ec_top_{%inst_num} mby_mpp_{%inst_num}}
 
 # used to strap csr start & end values according to:
@@ -115,7 +115,75 @@ V collage_connect_pins_same_name -iplist {mby_ec_top_{%inst_num} mby_mpp_{%inst_
 V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x20000000]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_start}
 V eval {set i [format 0x%x [expr ({%inst_num}<<26)+0x23FFFFFF]]} ; {create_connection -constant $i mby_mpp_{%inst_num}/i_mpp_csr_end}
 
+# Connect to GMM; connect 1 port to member of struct on another port
+#C mby_gmn_0/tag_ring_out_0_0.parity                         mby_mpp_{%inst_num}/
+#C mby_gmn_0/tag_ring_out_0_0.mirror
+C mby_gmn_0/tag_ring_out_0_0.dst_tc                         mby_mpp_0/egr0_tagring_if0_0_llt_tc
+#C mby_gmn_0/tag_ring_out_0_0.dst_port_id                    mby_mpp_{%inst_num}/egr0_tagring_if0_0_llt_dst  # width mismatch...
+C mby_gmn_0/tag_ring_out_0_0.next_len                       mby_mpp_0/egr0_tagring_if0_0_dqtag_next_len
+C mby_gmn_0/tag_ring_out_0_0.sll                            mby_mpp_0/egr0_tagring_if0_0_dqtag_ssl
+C mby_gmn_0/tag_ring_out_0_0.src_tc                         mby_mpp_0/egr0_tagring_if0_0_dqtag_src_tc
+C mby_gmn_0/tag_ring_out_0_0.src_port_id                    mby_mpp_0/egr0_tagring_if0_0_dqtag_src_port
+C mby_gmn_0/tag_ring_out_0_0.at_egr_rate                    mby_mpp_0/egr0_tagring_if0_0_dqtag_at_egr_rate
+C mby_gmn_0/tag_ring_out_0_0.multi_copy                     mby_mpp_0/egr0_tagring_if0_0_dqtag_multi_copy
+C mby_gmn_0/tag_ring_out_0_0.err_xmd                        mby_mpp_0/egr0_tagring_if0_0_dqtag_err_xmd
+C mby_gmn_0/tag_ring_out_0_0.eop                            mby_mpp_0/egr0_tagring_if0_0_dqtag_eop
+C mby_gmn_0/tag_ring_out_0_0.length                         mby_mpp_0/egr0_tagring_if0_0_dqtag_length
+C mby_gmn_0/tag_ring_out_0_0.ptr_toggle                     mby_mpp_0/egr0_tagring_if0_0_dqtag_ptr_toggle
+C mby_gmn_0/tag_ring_out_0_0.ptr                            mby_mpp_0/egr0_tagring_if0_0_dqtag_ptr
+C mby_gmn_0/tag_ring_out_0_0.valid                          mby_mpp_0/egr0_tagring_if0_0_lltformat_valid 
+### can also connect struct type to struct type, if that's how ports are defined
+#C mby_gmn_0/tag_ring_out_0_0                                mby_mpp_{%inst_num}/egr0_tag_ring_fromgmn_0_0  
 
+## mpp ports for tagring
+#input  logic  [20-1:0]  egr0_tagring_if0_dqtag_ptr,              // Blasted Interface egr_tagring_if.egr egr0_tagring_if0
+#input  logic   [4-1:0]  egr0_tagring_if0_dqtag_ptr_toggle,
+#input  logic   [8-1:0]  egr0_tagring_if0_dqtag_length,  
+#input  logic            egr0_tagring_if0_dqtag_eop,     
+#input  logic            egr0_tagring_if0_dqtag_err_xmd, 
+#input  logic            egr0_tagring_if0_dqtag_multi_copy,
+#input  logic            egr0_tagring_if0_dqtag_at_egr_rate,
+#input  logic   [4-1:0]  egr0_tagring_if0_dqtag_src_port,
+#input  logic   [3-1:0]  egr0_tagring_if0_dqtag_src_tc,  
+#input  logic   [3-1:0]  egr0_tagring_if0_dqtag_ssl,     
+#input  logic   [2-1:0]  egr0_tagring_if0_dqtag_next_len,
+#input  logic  [16-1:0]  egr0_tagring_if0_llt_dst,       
+#input  logic   [4-1:0]  egr0_tagring_if0_llt_tc,        
+#input  logic   [9-1:0]  egr0_tagring_if0_llt_mirror_dest1,
+#input  logic   [2-1:0]  egr0_tagring_if0_llt_mirror_dest2,
+#input  logic  [14-1:0]  egr0_tagring_if0_llt_policer_idx,
+#input  logic            egr0_tagring_if0_lltformat_valid,
+
+## GMM struct
+#typedef struct packed {
+#   logic [MBY_TAG_RING_PARITY_MSB:0]    parity;   
+#   logic [MBY_TAG_RING_RSVRD_MSB:0]     rsvrd;
+#   logic                                mirror;
+#   logic [MBY_TAG_TX_TC_MSB:0]          dst_tc;
+#   logic [MBY_TAG_TX_PORT_MSB:0]        dst_port_id;
+#   logic [MBY_TAG_NEXT_LEN_MSB:0]       next_len;      
+#   logic [MBY_TAG_SLL_MSB:0]            sll;
+#   logic [MBY_TAG_RX_TC_MSB:0]          src_tc;                
+#   logic [MBY_PORTID_IN_MGP_MSB:0]      src_port_id;
+#   logic                                at_egr_rate; 
+#   logic                                multi_copy;
+#   logic                                err_xmd; 
+#   logic                                eop;            // End-of_packet
+#   logic [MBY_TAG_LENGTH_MSB:0]         length;         // length of packets data in this segment in bytes
+#   logic [MBY_SEG_PTR_TOGGLE_MSB:0]     ptr_toggle;     // Semaphore for 4 64B words
+#   logic [MBY_SEG_PTR_MSB:0]            ptr;            // Segment Pointer
+#   logic                                valid;          // Valid
+#} mby_tag_ring_t;   
+
+
+### Write ports
+## WB MPPs (4 MPPs)
+# MPP0
+# mim 0a
+### WIP
+#C mby_msh_0/o_igr_{%mpp_msh_side}_wreq_credits[{%mpp_msh_row_indx}][0]        mby_mpp_{%inst_num}/i_mim0_wreq_credits_w0   
+#C mby_msh_0/o_igr_{%mpp_msh_side}_wreq_credits[{%mpp_msh_row_indx}][1]        mby_mpp_{%inst_num}/i_mim0_wreq_credits_w1   
+#C mby_msh_0/o_igr_{%mpp_msh_side}_wb_wreq_credits[{%mpp_msh_row_indx}][2]     mby_mpp_{%inst_num}/i_mim0_wreq_credits_w2   
 
 
 ##############################################################################
