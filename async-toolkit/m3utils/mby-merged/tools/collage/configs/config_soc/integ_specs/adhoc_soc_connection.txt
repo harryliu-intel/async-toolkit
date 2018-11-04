@@ -3,6 +3,26 @@
 # See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
 ##############################################################################
 
+# Connect to GMM; connect 1 port to member of struct on another port
+#C mby_gmn_0/tag_ring_out_0_0.parity                         mby_mpp_0/
+#C mby_gmn_0/tag_ring_out_0_0.mirror
+C mby_gmn_0/tag_ring_out_0_0.dst_tc                         mby_mpp_0/egr0_tagring_if0_0_llt_tc
+#C mby_gmn_0/tag_ring_out_0_0.dst_port_id                    mby_mpp_0/egr0_tagring_if0_0_llt_dst  # width mismatch...
+C mby_gmn_0/tag_ring_out_0_0.next_len                       mby_mpp_0/egr0_tagring_if0_0_dqtag_next_len
+C mby_gmn_0/tag_ring_out_0_0.sll                            mby_mpp_0/egr0_tagring_if0_0_dqtag_ssl
+C mby_gmn_0/tag_ring_out_0_0.src_tc                         mby_mpp_0/egr0_tagring_if0_0_dqtag_src_tc
+C mby_gmn_0/tag_ring_out_0_0.src_port_id                    mby_mpp_0/egr0_tagring_if0_0_dqtag_src_port
+C mby_gmn_0/tag_ring_out_0_0.at_egr_rate                    mby_mpp_0/egr0_tagring_if0_0_dqtag_at_egr_rate
+C mby_gmn_0/tag_ring_out_0_0.multi_copy                     mby_mpp_0/egr0_tagring_if0_0_dqtag_multi_copy
+C mby_gmn_0/tag_ring_out_0_0.err_xmd                        mby_mpp_0/egr0_tagring_if0_0_dqtag_err_xmd
+C mby_gmn_0/tag_ring_out_0_0.eop                            mby_mpp_0/egr0_tagring_if0_0_dqtag_eop
+C mby_gmn_0/tag_ring_out_0_0.length                         mby_mpp_0/egr0_tagring_if0_0_dqtag_length
+C mby_gmn_0/tag_ring_out_0_0.ptr_toggle                     mby_mpp_0/egr0_tagring_if0_0_dqtag_ptr_toggle
+C mby_gmn_0/tag_ring_out_0_0.ptr                            mby_mpp_0/egr0_tagring_if0_0_dqtag_ptr
+C mby_gmn_0/tag_ring_out_0_0.valid                          mby_mpp_0/egr0_tagring_if0_0_lltformat_valid
+### can also connect struct type to struct type, if that's how ports are defined
+#C mby_gmn_0/tag_ring_out_0_0                                mby_mpp_0/egr0_tag_ring_fromgmn_0_0
+
 ### connections from MPP to MSH
 ### Write ports
 ## WB MPPs (4 MPPs)
