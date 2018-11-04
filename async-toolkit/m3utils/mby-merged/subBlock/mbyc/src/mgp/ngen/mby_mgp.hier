@@ -1,7 +1,7 @@
 //mgp block 
 
 mby_mgp [
-  igr of mby_igr_top with igr.map
+  igr of igr_top with igr.map
   egr of egr_top with egr.map
   rxppe of rx_ppe with rxppe.map
   foreach $i (0,1) {
