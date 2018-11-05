@@ -47,5 +47,5 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../../../../../target/mby/mgm_run/igr/src/mby_mem_igr_pb0_ram_shell_1024x644.v \
 ../../pb/rtl/mby_igr_pb_mem_shell.sv \
 ../../pb/rtl/mby_igr_pb.sv \
-../../rtl/mby_igr_top.sv \
+../../rtl/igr_top.sv \
 ./tb_igr_top.sv

@@ -66,6 +66,15 @@ module mby_igr_epl_shim
   data64_w_ecc_t [0:7]          qs1_data_p1;
   data64_w_ecc_t [0:7]          qs1_data_p2;
   data64_w_ecc_t [0:7]          qs1_data_p3;
+  data64_w_ecc_t [0:7]          qs2_data_p0;
+  data64_w_ecc_t [0:7]          qs2_data_p1;
+  data64_w_ecc_t [0:7]          qs2_data_p2;
+  data64_w_ecc_t [0:7]          qs2_data_p3;
+  data64_w_ecc_t [0:7]          qs3_data_p0;
+  data64_w_ecc_t [0:7]          qs3_data_p1;
+  data64_w_ecc_t [0:7]          qs3_data_p2;
+  data64_w_ecc_t [0:7]          qs3_data_p3;
+
   data64_w_ecc_t [0:7]           rx_data_align;
   shimfsel_t                        seg0_sel_p0;
   shimfsel_t                        seg1_sel_p0;
@@ -154,6 +163,9 @@ module mby_igr_epl_shim
       qs1_data_p0 <= i_pb_shim[0].d;
     end
   end
+ always_ff @(posedge cclk) qs2_data_p0 <= qs1_data_p0;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p0 <= qs2_data_p0;
+
 //logical port1  
   always_ff @(posedge cclk) begin
     if(rst) begin
@@ -165,6 +177,9 @@ module mby_igr_epl_shim
       qs1_data_p1 <= i_pb_shim[1].d;
     end
   end
+ always_ff @(posedge cclk) qs2_data_p1 <= qs1_data_p1;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p1 <= qs2_data_p1;
+
 //logical port2  
   always_ff @(posedge cclk) begin
     if(rst) begin
@@ -176,6 +191,9 @@ module mby_igr_epl_shim
       qs1_data_p2 <= i_pb_shim[2].d;
     end
   end
+ always_ff @(posedge cclk) qs2_data_p2 <= qs1_data_p2;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p2 <= qs2_data_p2;
+
 //logical port3  
   always_ff @(posedge cclk) begin
     if(rst) begin
@@ -187,6 +205,9 @@ module mby_igr_epl_shim
       qs1_data_p3 <= i_pb_shim[3].d;
     end
   end
+ always_ff @(posedge cclk) qs2_data_p3 <= qs1_data_p3;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p3 <= qs2_data_p3;
+
 //rx datapath delay stages end  
   
   mby_igr_epl_shim_ctrl ctrl0(
@@ -215,7 +236,7 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs0(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(qs1_data_p0),
+    .i_rx_data(qs3_data_p0),
     .i_seg0_ts(seg0_ts_p0),
     .i_seg1_ts(seg1_ts_p0),
     .i_seg2_ts(seg2_ts_p0),
@@ -263,7 +284,7 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs1(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(qs1_data_p1),
+    .i_rx_data(qs3_data_p1),
     .i_seg0_ts(seg0_ts_p1),
     .i_seg1_ts(seg1_ts_p1),
     .i_seg2_ts(seg2_ts_p1),
@@ -312,7 +333,7 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs2(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(qs1_data_p2),
+    .i_rx_data(qs3_data_p2),
     .i_seg0_ts(seg0_ts_p2),
     .i_seg1_ts(seg1_ts_p2),
     .i_seg2_ts(seg2_ts_p2),
@@ -360,7 +381,7 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs3(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(qs1_data_p3),
+    .i_rx_data(qs3_data_p3),
     .i_seg0_ts(seg0_ts_p3),
     .i_seg1_ts(seg1_ts_p3),
     .i_seg2_ts(seg2_ts_p3),

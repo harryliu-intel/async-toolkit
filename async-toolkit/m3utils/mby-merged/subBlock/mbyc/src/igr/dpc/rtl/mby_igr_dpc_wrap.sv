@@ -111,10 +111,10 @@ module mby_igr_dpc_wrap
     .rx_data(grp_a_rx_data_w_ecc),
     .rx_pfc_xoff(grp_a_rx_pfc_xoff),  
     .rx_flow_control_tc(grp_a_rx_flow_control_tc),
-    .o_dpc_pb_p3(o_dpc_pb0_p0),
-    .o_dpc_pb_p2(o_dpc_pb0_p1),
-    .o_dpc_pb_p1(o_dpc_pb0_p2),
-    .o_dpc_pb_p0(o_dpc_pb0_p3)
+    .o_dpc_pb_p0(o_dpc_pb0_p0),
+    .o_dpc_pb_p1(o_dpc_pb0_p1),
+    .o_dpc_pb_p2(o_dpc_pb0_p2),
+    .o_dpc_pb_p3(o_dpc_pb0_p3)
   );
   
   mby_igr_dpc dpc_1(  
@@ -129,10 +129,10 @@ module mby_igr_dpc_wrap
     .rx_data(grp_b_rx_data_w_ecc),
     .rx_pfc_xoff(grp_b_rx_pfc_xoff),  
     .rx_flow_control_tc(grp_b_rx_flow_control_tc),
-    .o_dpc_pb_p3(o_dpc_pb1_p0),
-    .o_dpc_pb_p2(o_dpc_pb1_p1),
-    .o_dpc_pb_p1(o_dpc_pb1_p2),
-    .o_dpc_pb_p0(o_dpc_pb1_p3)
+    .o_dpc_pb_p0(o_dpc_pb1_p0),
+    .o_dpc_pb_p1(o_dpc_pb1_p1),
+    .o_dpc_pb_p2(o_dpc_pb1_p2),
+    .o_dpc_pb_p3(o_dpc_pb1_p3)
   );
 
     mby_igr_dpc dpc_2(  
@@ -147,10 +147,10 @@ module mby_igr_dpc_wrap
     .rx_data(grp_c_rx_data_w_ecc),
     .rx_pfc_xoff(grp_c_rx_pfc_xoff),  
     .rx_flow_control_tc(grp_c_rx_flow_control_tc),
-    .o_dpc_pb_p3(o_dpc_pb2_p0),
-    .o_dpc_pb_p2(o_dpc_pb2_p1),
-    .o_dpc_pb_p1(o_dpc_pb2_p2),
-    .o_dpc_pb_p0(o_dpc_pb2_p3)
+    .o_dpc_pb_p0(o_dpc_pb2_p0),
+    .o_dpc_pb_p1(o_dpc_pb2_p1),
+    .o_dpc_pb_p2(o_dpc_pb2_p2),
+    .o_dpc_pb_p3(o_dpc_pb2_p3)
   );
 
     mby_igr_dpc dpc_3(  
@@ -165,10 +165,10 @@ module mby_igr_dpc_wrap
     .rx_data(grp_d_rx_data_w_ecc),
     .rx_pfc_xoff(grp_d_rx_pfc_xoff),  
     .rx_flow_control_tc(grp_d_rx_flow_control_tc),
-    .o_dpc_pb_p3(o_dpc_pb3_p0),
-    .o_dpc_pb_p2(o_dpc_pb3_p1),
-    .o_dpc_pb_p1(o_dpc_pb3_p2),
-    .o_dpc_pb_p0(o_dpc_pb3_p3)
+    .o_dpc_pb_p0(o_dpc_pb3_p0),
+    .o_dpc_pb_p1(o_dpc_pb3_p1),
+    .o_dpc_pb_p2(o_dpc_pb3_p2),
+    .o_dpc_pb_p3(o_dpc_pb3_p3)
   );
 
 

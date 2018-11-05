@@ -119,16 +119,16 @@ module mby_igr_dpc
                       qs1_rx_md.sop,
                       qs1_rx_md.sop_pos,
                       qs1_rx_md.tc};
-
-
+                      
   assign s1_port_num = {(qs1_rx_port_num == 2'b11),
                         (qs1_rx_port_num == 2'b10),
                         (qs1_rx_port_num == 2'b01),
                         (qs1_rx_port_num == 2'b00)};
-  always_ff @(posedge cclk) qs2_port_v <= s1_port_num;
   
 //rx datapath delay stages begin  
   assign s1_or_rx_data_v = |qs1_rx_data_v;
+  
+  always_ff @(posedge cclk) qs2_port_v <= s1_port_num & {4{s1_or_rx_data_v}};
   
   always_ff @(posedge cclk) qs2_or_rx_data_v <= s1_or_rx_data_v;
   always_ff @(posedge cclk) qs1_rx_data      <= rx_data;

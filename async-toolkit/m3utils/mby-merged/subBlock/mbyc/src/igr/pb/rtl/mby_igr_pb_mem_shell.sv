@@ -39,7 +39,7 @@ module mby_igr_pb_mem_shell
   output pb_shell_rdata_t      [PB_BANKS-1:0] o_pb_shell_rdata,
   
   input  [`MBY_IGR_IGR_PB0_RAM_FROM_MEM_WIDTH-1:0] i_frm_pb_mem_bus [PB_BANKS-1:0],
-  output [`MBY_IGR_IGR_PB0_RAM_FROM_MEM_WIDTH-1:0] o_to_pb_mem_bus  [PB_BANKS-1:0]
+  output [`MBY_IGR_IGR_PB0_RAM_TO_MEM_WIDTH-1:0]   o_to_pb_mem_bus  [PB_BANKS-1:0]
 );
 
 
