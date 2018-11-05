@@ -212,6 +212,12 @@ void mbyMatchWildcard
 {
     mbyClassifierHitInfo tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n];
 
+    for (fm_uint i = 0; i < mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n; i++)
+    {
+        tcam_hit_info[i].hit_index       = 0;
+        tcam_hit_info[i].hit_index_valid = FALSE;
+    }
+
     // Get hit index for each tcam slice:
     lookUpWcmTcamCascade(cgrp_b_map, keys, packet_profile, tcam_hit_info);
 
