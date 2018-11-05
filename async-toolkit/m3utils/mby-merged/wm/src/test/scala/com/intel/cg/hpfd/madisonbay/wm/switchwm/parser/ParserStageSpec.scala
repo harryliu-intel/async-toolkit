@@ -4,7 +4,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
@@ -21,17 +21,9 @@ class ParserStageSpec extends FlatSpec with Matchers {
   "Flag 1 and 4" should "unconditionally be set when rule 0 configured as unconditional match" in {
     val csrParser = Csr().getParser(0)
     val idx = 0
-    val pf = BitFlags()
-    val protoOffset = Parser.EmptyProtoOffsets
-    val noException = Option.empty[ParserException]
-    val ps = ParserState(Array(0,0,0), new AluOperation(0,0), 0, 0)
+    val port = Port(0)
     val pck = Packet(Array.ofDim[Byte](79))
     val ph = PacketHeader(pck)
-    val ps2 = Parser.initialState(csrParser, ph, Port(0))
-
-    // TODO: fix that
-    //csr.foreachResetableField(f => f.reset())
-
     val pl = ParserLenses(idx)
 
     val parserKeySLmask = pl.keyS(0) composeLens parser_key_s_r._STATE_MASK composeLens parser_key_s_r.STATE_MASK._value
@@ -66,13 +58,13 @@ class ParserStageSpec extends FlatSpec with Matchers {
     } yield ())
     val updatedCsrParser = csrParser.copy(ppeParserMap = updatedParserMap)
 
-    val result: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps, pf, protoOffset, exceptionOpt = noException)
+    val result: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
     result._1.get contains 1 shouldEqual true
     result._1.get contains 2 shouldEqual false
     result._1.get contains 3 shouldEqual false
     result._1.get contains 4 shouldEqual true
 
-    val result2: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsrParser, ph)(idx, ps2, pf, protoOffset, exceptionOpt = noException)
+    val result2: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
     result2._1.toInt shouldEqual b"10010"
   }
 
