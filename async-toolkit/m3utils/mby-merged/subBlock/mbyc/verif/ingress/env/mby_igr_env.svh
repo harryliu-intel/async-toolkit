@@ -22,8 +22,13 @@
 //-----------------------------------------------------------------------------
 // Class: mby_igr_env
 //-----------------------------------------------------------------------------
-class mby_igr_env extends mby_igr_base_env;
+class mby_igr_env extends shdv_base_env;
+   // Variable: tb_cfg
+   // static pointer to the testbench configuration class
+   protected mby_igr_tb_cfg tb_cfg;
 
+   // Variable: ti_config
+   // static pointer to the env
    mby_igr_ti_cfg ti_config;
    //protected string ingress_ti_low_path   = "XYZ_tb.u_ingress_ti";
 
@@ -114,7 +119,7 @@ class mby_igr_env extends mby_igr_base_env;
       // "get" the testbench configuration object set from the ingress base test
       uvm_config_db#(mby_igr_tb_cfg)::get(this, "", "igr_tb_cfg", tb_cfg);
       if(tb_cfg == null) begin
-         //PJP: TODO `uvm_fatal(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!"));
+         //PJP: TODO `uvm_fatal(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!")); // Need to fix this as it currently breaks the fullchip integration.
          `uvm_warning(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!"));
       end
 

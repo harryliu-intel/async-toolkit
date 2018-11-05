@@ -97,7 +97,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
 
       `uvm_info(this.get_name(), ("Starting eth simple sequence..."), UVM_LOW)
       foreach(los_sequencers[i]) begin
-         assert($cast(los_sequencers[i], mby_igr_env_pkg::shdv_base_tb_sequencer::pick_sequencer($sformatf("eth_bfm_%0d_rx0", i))))
+         assert($cast(los_sequencers[i], shdv_base_pkg::shdv_base_tb_sequencer::pick_sequencer($sformatf("eth_bfm_%0d_rx0", i))))
          else begin
             `uvm_error(get_name(), $sformatf("Could not get a pointer to the sequencer%0d", i));
          end
@@ -178,11 +178,11 @@ class mby_igr_rand_test extends mby_igr_base_test;
    function void set_default_sequences();
       super.set_default_sequences();
 
-      uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.reset_phase",      "default_sequence", mby_igr_dummy_seq::type_id::get());
-      uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.post_reset_phase", "default_sequence", mby_igr_dummy_seq::type_id::get());
-      uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.configure_phase",  "default_sequence", mby_igr_dummy_seq::type_id::get());
-      uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.shutdown_phase",   "default_sequence", mby_igr_dummy_seq::type_id::get());
-      uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.main_phase",       "default_sequence", mby_igr_eth_simple_seq::type_id::get());
+      uvm_config_db#(uvm_object_wrapper)::set(this, "env.tb_seqr.reset_phase",      "default_sequence", mby_igr_dummy_seq::type_id::get());
+      uvm_config_db#(uvm_object_wrapper)::set(this, "env.tb_seqr.post_reset_phase", "default_sequence", mby_igr_dummy_seq::type_id::get());
+      uvm_config_db#(uvm_object_wrapper)::set(this, "env.tb_seqr.configure_phase",  "default_sequence", mby_igr_dummy_seq::type_id::get());
+      uvm_config_db#(uvm_object_wrapper)::set(this, "env.tb_seqr.shutdown_phase",   "default_sequence", mby_igr_dummy_seq::type_id::get());
+      uvm_config_db#(uvm_object_wrapper)::set(this, "env.tb_seqr.main_phase",       "default_sequence", mby_igr_eth_simple_seq::type_id::get());
 
    endfunction : set_default_sequences
 
