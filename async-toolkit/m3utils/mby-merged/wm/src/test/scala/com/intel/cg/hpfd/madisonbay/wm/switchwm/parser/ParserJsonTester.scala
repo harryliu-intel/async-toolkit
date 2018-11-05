@@ -51,6 +51,17 @@ class ParserJsonTester extends FlatSpec with Matchers {
           }
         }
       }
+
+      testCase.getListOpt[List[Int]]("out.PA_KEYS").foreach { expectedKeys =>
+        expectedKeys.foreach { key =>
+          val index = key(0)
+          val value = key(1)
+          it should "have correct PA_KEY #" + index.toString in {
+            // TODO verify if key16 is appropriate here... we might need to include in JSON what key* is this
+            parseResult.paKeys.key16(index) shouldEqual value.shortValue
+          }
+        }
+      }
     }
 
     println(parseResult.simplifiedString)

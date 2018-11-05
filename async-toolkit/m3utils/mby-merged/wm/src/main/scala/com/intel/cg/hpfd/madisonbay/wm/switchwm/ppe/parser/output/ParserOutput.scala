@@ -25,7 +25,7 @@ case class ParserOutput(updatedParserCsr: CsrParser,
                       ) {
   def simplifiedString: String =
     s"""ParserOutput(updatedParserCsr=..., rxPort=$rxPort, pktMeta=$pktMeta, rxFlags=$rxFlags, segMetaErr=$segMetaErr, paAdjSegLegLen=$paAdjSegLegLen,
-       | paKeys=${paKeys.fields},
+       | paKeys=$paKeys,
        | paKeysValid=$paKeysValid, paFlags=${paFlags.get}, paPointers=$paPointers, paPointersValid=$paPointersValid, paCsumOk=$paCsumOk,
        | paParseException=$paParseException, paDrop=$paDrop, paPacketType=$paPacketType)
      """.stripMargin

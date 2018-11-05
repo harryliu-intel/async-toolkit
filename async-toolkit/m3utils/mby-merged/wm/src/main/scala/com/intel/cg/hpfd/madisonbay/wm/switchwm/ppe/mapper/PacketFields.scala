@@ -5,12 +5,13 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.MACAddress
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields.MACMapperImposed
 
 
-class PacketFields(val fields: IndexedSeq[Short]) {
+class PacketFields private (fields: Map[Int, Short]) {
 
   // 80 fields, of 2 bytes each
   def populateField(startField: Int, contents: Seq[Short]): PacketFields = {
     // obviously need to support field of size > 1!
-    new PacketFields(fields.patch(startField, contents, contents.length))
+    val newFields = contents.indices.view.map(index => (startField + index, contents(index)))
+    new PacketFields(fields ++ newFields)
   }
 
   def key8(i: Int): Byte = {
@@ -38,15 +39,16 @@ class PacketFields(val fields: IndexedSeq[Short]) {
   // as expected by the _mapper_
   def assumeIPv4Parsed: PacketFields with MACMapperImposed = new PacketFields(fields) with MACMapperImposed
 
+  override def toString: String = fields.view.toList.sortBy{case (key, _) => key}.map{case (idx, value) => (idx, value & 0xffff)}.toString
 }
 
 object PacketFields {
 
   //scalastyle:off
   // TODO: find dependency between 80 from HeaderExtraction and here
-  def apply(): PacketFields = new PacketFields(Vector.fill[Short](80)(0.toShort))
+  def apply(): PacketFields = new PacketFields(Map[Int, Short]())
 
-  def apply(x: IndexedSeq[Short]): PacketFields = new PacketFields(x.toVector)
+  def apply(fields: Map[Int, Short]): PacketFields = new PacketFields(fields)
 
   trait MACMapperImposed {
     this: PacketFields =>
