@@ -46,8 +46,22 @@ interface mim_rd_if ();
   logic [W_REQ_ID-1:0]          mim_rrsp_req_id;      //[12:0]
   logic [W_WORD_BITS-1:0]       mim_rd_data;          //64 x 8
 
-    
+
+  
 modport request(
+    output mim_rreq_valid,
+    output mim_seg_ptr,
+    output mim_sema,
+    output mim_wd_sel,
+    output mim_req_id,
+    input  mim_rreq_credits,
+    input  mim_rrsp_valid,
+    input  mim_rrsp_dest_block,
+    input  mim_rrsp_req_id,    
+    input  mim_rd_data        
+    );  
+   
+modport receive(
     input  mim_rreq_valid,
     input  mim_seg_ptr,
     input  mim_sema,
@@ -60,17 +74,5 @@ modport request(
     output mim_rd_data        
     );
 
-modport receive(
-    output mim_rreq_valid,
-    output mim_seg_ptr,
-    output mim_sema,
-    output mim_wd_sel,
-    output mim_req_id,
-    input  mim_rreq_credits,
-    input  mim_rrsp_valid,
-    input  mim_rrsp_dest_block,
-    input  mim_rrsp_req_id,    
-    input  mim_rd_data        
-    );
 
 endinterface : mim_rd_if
