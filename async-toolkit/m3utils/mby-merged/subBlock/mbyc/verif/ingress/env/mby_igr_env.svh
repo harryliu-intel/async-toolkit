@@ -161,7 +161,7 @@ class mby_igr_env extends shdv_base_env;
    //--------------------------------------------------------------------------
    // Function: mby_igr_env end_of_elaboration
    // end_of_elaboration  phase of mby_igr_env
-   // In this pahse we randomize the fuse env
+   // In this phase we randomize the fuse env
    //--------------------------------------------------------------------------
    virtual function void end_of_elaboration_phase (uvm_phase phase);
       super.end_of_elaboration_phase(phase);
@@ -189,7 +189,7 @@ class mby_igr_env extends shdv_base_env;
 
    //--------------------------------------------------------------------------
    // Function: build_vpt_bfms
-   // Gets the virtual port interfaces from the configuration database and 
+   // Gets the virtual port interfaces from the configuration database and
    // creates the virtual port Bus Functional Model instances
    //--------------------------------------------------------------------------
    function void build_vpt_bfms();
@@ -295,7 +295,7 @@ class mby_igr_env extends shdv_base_env;
 
    //---------------------------------------------------------------------------
    // Task: ingress_im_monitor
-   // Wait for interuppt event and trigger IM
+   // Wait for interrupt event and trigger IM
    // ISR (Interrupt Service Routine) only in IP level
    //---------------------------------------------------------------------------
    task ingress_im_monitor();

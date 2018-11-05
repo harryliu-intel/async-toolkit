@@ -29,21 +29,17 @@
 
 
 module mby_igr_epl_shim 
-  import mby_igr_pkg::*;
+  import mby_igr_pkg::*, mby_igr_pb_pkg::*;
 (
 
   input logic cclk,
   input logic rst,
   
 // EPL I/O from MBY FS Dataplane Interface signals.
-  input  logic [7:0]                          rx_ecc,
-  input  logic [1:0]                     rx_port_num,  
-  input  logic [7:0]                       rx_data_v,
-  input  data64_w_ecc_t [0:7]                rx_data,  
-  input  epl_md_t                              rx_md,
-  input  epl_ts_t                              rx_ts,  
-  input  logic                           rx_pfc_xoff,  
-  input  logic [2:0]              rx_flow_control_tc,
+//  input  logic [1:0]                     rx_port_num,  
+//  input  logic [7:0]                       rx_data_v,
+//  input  data64_w_ecc_t [0:7]                rx_data,
+  input  dpc_pb_t       [PB_BANKS-1:0]    i_pb_shim,
   output shim_pb_data_t            o_shim_pb_data_p0,
   output shim_pb_data_t            o_shim_pb_data_p1,
   output shim_pb_data_t            o_shim_pb_data_p2,
@@ -60,26 +56,26 @@ module mby_igr_epl_shim
 
 //s1 ..sn are stages thru the shim.  Ctrl block is s2->s3
 
-  logic [7:0]                       s1q_rx_ecc;
-  logic [1:0]                  s1q_rx_port_num;
-  logic [3:0]                      s1_port_num;  //onehot ddecode q1_rx_port_num
-  logic [3:0]                         s2q_port;  //onehot ddecode q1_rx_port_num
-  logic [7:0]                    s1q_rx_data_v;
-  logic                        s1_or_rx_data_v;
-  logic                       s2q_or_rx_data_v;    
-  epl_md_t                           s1q_rx_md;
-  epl_ts_t                           s1q_rx_ts;
-  epl_ts_t                           s2q_rx_ts;
-  epl_ts_t                           s3q_rx_ts;  
-  data64_w_ecc_t [0:7]             s1q_rx_data;
-  data64_w_ecc_t [0:7]             s2q_rx_data;
-  data64_w_ecc_t [0:7]          s3q_p0_rx_data;
-  data64_w_ecc_t [0:7]          s3q_p1_rx_data;
-  data64_w_ecc_t [0:7]          s3q_p2_rx_data;
-  data64_w_ecc_t [0:7]          s3q_p3_rx_data;
+  logic [3:0]                          s1_port;  //onehot ddecode q1_rx_port_num
+  logic [3:0]                         qs1_port;  //onehot ddecode q1_rx_port_num
+  dpc_ts_md_t                      qs1_tsmd_p0;
+  dpc_ts_md_t                      qs1_tsmd_p1;
+  dpc_ts_md_t                      qs1_tsmd_p2;
+  dpc_ts_md_t                      qs1_tsmd_p3;
+  data64_w_ecc_t [0:7]          qs1_data_p0;
+  data64_w_ecc_t [0:7]          qs1_data_p1;
+  data64_w_ecc_t [0:7]          qs1_data_p2;
+  data64_w_ecc_t [0:7]          qs1_data_p3;
+  data64_w_ecc_t [0:7]          qs2_data_p0;
+  data64_w_ecc_t [0:7]          qs2_data_p1;
+  data64_w_ecc_t [0:7]          qs2_data_p2;
+  data64_w_ecc_t [0:7]          qs2_data_p3;
+  data64_w_ecc_t [0:7]          qs3_data_p0;
+  data64_w_ecc_t [0:7]          qs3_data_p1;
+  data64_w_ecc_t [0:7]          qs3_data_p2;
+  data64_w_ecc_t [0:7]          qs3_data_p3;
+
   data64_w_ecc_t [0:7]           rx_data_align;
-  logic                        s1q_rx_pfc_xoff;  
-  logic [2:0]           s1q_rx_flow_control_tc;
   shimfsel_t                        seg0_sel_p0;
   shimfsel_t                        seg1_sel_p0;
   shimfsel_t                        seg2_sel_p0;
@@ -110,18 +106,31 @@ module mby_igr_epl_shim
   logic [7:0]                        seg1_we_p3;
   logic [7:0]                        seg2_we_p3;
       
-   epl_md_t                           seg0_md_p0;  //FIXME need copy for each port?
-   epl_md_t                           seg1_md_p0;
-   epl_md_t                           seg2_md_p0;
-   epl_md_t                           seg0_md_p1;  //FIXME need copy for each port?
-   epl_md_t                           seg1_md_p1;
-   epl_md_t                           seg2_md_p1;
-   epl_md_t                           seg0_md_p2;  //FIXME need copy for each port?
-   epl_md_t                           seg1_md_p2;
-   epl_md_t                           seg2_md_p2;
-   epl_md_t                           seg0_md_p3;  //FIXME need copy for each port?
-   epl_md_t                           seg1_md_p3;
-   epl_md_t                           seg2_md_p3;
+   shim_md_t                           seg0_md_p0;  //FIXME need copy for each port?
+   shim_md_t                           seg1_md_p0;
+   shim_md_t                           seg2_md_p0;
+   shim_md_t                           seg0_md_p1;  //FIXME need copy for each port?
+   shim_md_t                           seg1_md_p1;
+   shim_md_t                           seg2_md_p1;
+   shim_md_t                           seg0_md_p2;  //FIXME need copy for each port?
+   shim_md_t                           seg1_md_p2;
+   shim_md_t                           seg2_md_p2;
+   shim_md_t                           seg0_md_p3;  //FIXME need copy for each port?
+   shim_md_t                           seg1_md_p3;
+   shim_md_t                           seg2_md_p3;
+   epl_ts_t                           seg0_ts_p0;  //FIXME need copy for each port?
+   epl_ts_t                           seg1_ts_p0;
+   epl_ts_t                           seg2_ts_p0;
+   epl_ts_t                           seg0_ts_p1;  //FIXME need copy for each port?
+   epl_ts_t                           seg1_ts_p1;
+   epl_ts_t                           seg2_ts_p1;
+   epl_ts_t                           seg0_ts_p2;  //FIXME need copy for each port?
+   epl_ts_t                           seg1_ts_p2;
+   epl_ts_t                           seg2_ts_p2;
+   epl_ts_t                           seg0_ts_p3;  //FIXME need copy for each port?
+   epl_ts_t                           seg1_ts_p3;
+   epl_ts_t                           seg2_ts_p3;
+
   logic                               seg0_sop_e_p0;
   logic                               seg1_sop_e_p0;
   logic                               seg2_sop_e_p0;
@@ -134,63 +143,84 @@ module mby_igr_epl_shim
   logic                               seg0_sop_e_p3;
   logic                               seg1_sop_e_p3;
   logic                               seg2_sop_e_p3;
-   
-//EPL input buffers interface to partition so no clk gating
-  always_ff @(posedge cclk) s1q_rx_ecc             <= rx_ecc;
-  always_ff @(posedge cclk) s1q_rx_port_num        <= rx_port_num;
-  always_ff @(posedge cclk) s1q_rx_data_v          <= rx_data_v;
-  always_ff @(posedge cclk) s1q_rx_md              <= rx_md;
-  always_ff @(posedge cclk) s1q_rx_ts              <= rx_ts;
-  always_ff @(posedge cclk) s1q_rx_pfc_xoff        <= rx_pfc_xoff;
-  always_ff @(posedge cclk) s1q_rx_flow_control_tc <= rx_flow_control_tc;
-
-  assign s1_port_num = {(s1q_rx_port_num == 2'b11),
-                        (s1q_rx_port_num == 2'b10),
-                        (s1q_rx_port_num == 2'b01),
-                        (s1q_rx_port_num == 2'b00)};
-  always_ff @(posedge cclk) s2q_port <= s1_port_num;
   
-//rx datapath delay stages begin  
-  assign s1_or_rx_data_v = |s1q_rx_data_v;
-  always_ff @(posedge cclk) s2q_or_rx_data_v <= s1_or_rx_data_v;
-  always_ff @(posedge cclk) s1q_rx_data <= rx_data;
-  always_ff @(posedge cclk) s2q_rx_data <= (rst)? '0: (s1_or_rx_data_v)? s1q_rx_data: s2q_rx_data;
 
-//timestamp
-  always_ff @(posedge cclk) s2q_rx_ts <= (rst)? '0: (s1_or_rx_data_v)?  s1q_rx_ts: s2q_rx_ts;
-  always_ff @(posedge cclk) s3q_rx_ts <= (rst)? '0: (s2q_or_rx_data_v)? s2q_rx_ts: s3q_rx_ts;
+  assign s1_port = {i_pb_shim[3].v,
+                    i_pb_shim[2].v,
+                    i_pb_shim[1].v,
+                    i_pb_shim[0].v};
+  always_ff @(posedge cclk) qs1_port <= s1_port;
   
+
 //logical port0  
   always_ff @(posedge cclk) begin
-    if(rst)                                  s3q_p0_rx_data <= '0;
-    else if(s2q_or_rx_data_v && s2q_port[0]) s3q_p0_rx_data <= s2q_rx_data;
+    if(rst) begin
+      qs1_tsmd_p0 <= '0;
+      qs1_data_p0 <= '0;
+    end    
+    else if(i_pb_shim[0].v) begin
+      qs1_tsmd_p0 <= i_pb_shim[0].tsmd;
+      qs1_data_p0 <= i_pb_shim[0].d;
+    end
   end
+ always_ff @(posedge cclk) qs2_data_p0 <= qs1_data_p0;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p0 <= qs2_data_p0;
+
 //logical port1  
   always_ff @(posedge cclk) begin
-    if(rst)                                  s3q_p1_rx_data <= '0;
-    else if(s2q_or_rx_data_v && s2q_port[1]) s3q_p1_rx_data <= s2q_rx_data;
+    if(rst) begin
+      qs1_tsmd_p1 <= '0;
+      qs1_data_p1 <= '0;
+    end    
+    else if(i_pb_shim[1].v) begin
+      qs1_tsmd_p1 <= i_pb_shim[1].tsmd;
+      qs1_data_p1 <= i_pb_shim[1].d;
+    end
   end
+ always_ff @(posedge cclk) qs2_data_p1 <= qs1_data_p1;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p1 <= qs2_data_p1;
+
 //logical port2  
   always_ff @(posedge cclk) begin
-    if(rst)                                  s3q_p2_rx_data <= '0;
-    else if(s2q_or_rx_data_v && s2q_port[2]) s3q_p2_rx_data <= s2q_rx_data;
+    if(rst) begin
+      qs1_tsmd_p2 <= '0;
+      qs1_data_p2 <= '0;
+    end    
+    else if(i_pb_shim[2].v) begin
+      qs1_tsmd_p2 <= i_pb_shim[2].tsmd;
+      qs1_data_p2 <= i_pb_shim[2].d;
+    end
   end
+ always_ff @(posedge cclk) qs2_data_p2 <= qs1_data_p2;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p2 <= qs2_data_p2;
+
 //logical port3  
   always_ff @(posedge cclk) begin
-    if(rst)                                  s3q_p3_rx_data <= '0;
-    else if(s2q_or_rx_data_v && s2q_port[3]) s3q_p3_rx_data <= s2q_rx_data;
-  end    
+    if(rst) begin
+      qs1_tsmd_p3 <= '0;
+      qs1_data_p3 <= '0;
+    end    
+    else if(i_pb_shim[3].v) begin
+      qs1_tsmd_p3 <= i_pb_shim[3].tsmd;
+      qs1_data_p3 <= i_pb_shim[3].d;
+    end
+  end
+ always_ff @(posedge cclk) qs2_data_p3 <= qs1_data_p3;  //FIXME clk gate
+ always_ff @(posedge cclk) qs3_data_p3 <= qs2_data_p3;
+
 //rx datapath delay stages end  
   
   mby_igr_epl_shim_ctrl ctrl0(
     .cclk(cclk),
     .rst(rst),
-    .rx_port_e(s2q_port[0]),
-    .rx_data_v(s1q_rx_data_v),  //s2 stage inside ctrl block
-    .rx_md(s1q_rx_md),          //s2 stage inside ctrl block
+    .i_port_e(qs1_port[0]),
+    .i_tsmd(qs1_tsmd_p0),          //s2 stage inside ctrl block
     .o_seg0_md(seg0_md_p0),
     .o_seg1_md(seg1_md_p0),
     .o_seg2_md(seg2_md_p0),
+    .o_seg0_ts(seg0_ts_p0),
+    .o_seg1_ts(seg1_ts_p0),
+    .o_seg2_ts(seg2_ts_p0),
     .o_seg0_sop_e(seg0_sop_e_p0),
     .o_seg1_sop_e(seg1_sop_e_p0),
     .o_seg2_sop_e(seg2_sop_e_p0),
@@ -206,8 +236,10 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs0(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(s3q_p0_rx_data),
-    .i_rx_ts(s3q_rx_ts),
+    .i_rx_data(qs3_data_p0),
+    .i_seg0_ts(seg0_ts_p0),
+    .i_seg1_ts(seg1_ts_p0),
+    .i_seg2_ts(seg2_ts_p0),
     .i_seg0_md(seg0_md_p0),
     .i_seg1_md(seg1_md_p0),
     .i_seg2_md(seg2_md_p0),
@@ -229,12 +261,14 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_ctrl ctrl1(
     .cclk(cclk),
     .rst(rst),
-    .rx_port_e(s2q_port[1]),
-    .rx_data_v(s1q_rx_data_v),  //s2 stage inside ctrl block
-    .rx_md(s1q_rx_md),          //s2 stage inside ctrl block
+    .i_port_e(qs1_port[1]),
+    .i_tsmd(qs1_tsmd_p1),          //s2 stage inside ctrl block
     .o_seg0_md(seg0_md_p1),
     .o_seg1_md(seg1_md_p1),
     .o_seg2_md(seg2_md_p1),
+    .o_seg0_ts(seg0_ts_p1),
+    .o_seg1_ts(seg1_ts_p1),
+    .o_seg2_ts(seg2_ts_p1),
     .o_seg0_sop_e(seg0_sop_e_p1),
     .o_seg1_sop_e(seg1_sop_e_p1),
     .o_seg2_sop_e(seg2_sop_e_p1),
@@ -250,8 +284,10 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs1(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(s3q_p1_rx_data),
-    .i_rx_ts(s3q_rx_ts),
+    .i_rx_data(qs3_data_p1),
+    .i_seg0_ts(seg0_ts_p1),
+    .i_seg1_ts(seg1_ts_p1),
+    .i_seg2_ts(seg2_ts_p1),
     .i_seg0_md(seg0_md_p1),
     .i_seg1_md(seg1_md_p1),
     .i_seg2_md(seg2_md_p1),
@@ -274,12 +310,14 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_ctrl ctrl2(
     .cclk(cclk),
     .rst(rst),
-    .rx_port_e(s2q_port[2]),
-    .rx_data_v(s1q_rx_data_v),  //s2 stage inside ctrl block
-    .rx_md(s1q_rx_md),          //s2 stage inside ctrl block
+    .i_port_e(qs1_port[2]),
+    .i_tsmd(qs1_tsmd_p2),          //s2 stage inside ctrl block
     .o_seg0_md(seg0_md_p2),
     .o_seg1_md(seg1_md_p2),
     .o_seg2_md(seg2_md_p2),
+    .o_seg0_ts(seg0_ts_p2),
+    .o_seg1_ts(seg1_ts_p2),
+    .o_seg2_ts(seg2_ts_p2),
     .o_seg0_sop_e(seg0_sop_e_p2),
     .o_seg1_sop_e(seg1_sop_e_p2),
     .o_seg2_sop_e(seg2_sop_e_p2),
@@ -295,8 +333,10 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs2(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(s3q_p1_rx_data),
-    .i_rx_ts(s3q_rx_ts),
+    .i_rx_data(qs3_data_p2),
+    .i_seg0_ts(seg0_ts_p2),
+    .i_seg1_ts(seg1_ts_p2),
+    .i_seg2_ts(seg2_ts_p2),
     .i_seg0_md(seg0_md_p2),
     .i_seg1_md(seg1_md_p2),
     .i_seg2_md(seg2_md_p2),
@@ -318,12 +358,14 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_ctrl ctrl3(
     .cclk(cclk),
     .rst(rst),
-    .rx_port_e(s2q_port[3]),
-    .rx_data_v(s1q_rx_data_v),  //s2 stage inside ctrl block
-    .rx_md(s1q_rx_md),          //s2 stage inside ctrl block
+    .i_port_e(qs1_port[3]),
+    .i_tsmd(qs1_tsmd_p3),          //s2 stage inside ctrl block
     .o_seg0_md(seg0_md_p3),
     .o_seg1_md(seg1_md_p3),
     .o_seg2_md(seg2_md_p3),
+    .o_seg0_ts(seg0_ts_p3),
+    .o_seg1_ts(seg1_ts_p3),
+    .o_seg2_ts(seg2_ts_p3),
     .o_seg0_sop_e(seg0_sop_e_p3),
     .o_seg1_sop_e(seg1_sop_e_p3),
     .o_seg2_sop_e(seg2_sop_e_p3),
@@ -339,8 +381,10 @@ module mby_igr_epl_shim
   mby_igr_epl_shim_segs segs3(
     .cclk(cclk),
     .rst(rst),
-    .i_rx_data(s3q_p1_rx_data),
-    .i_rx_ts(s3q_rx_ts),
+    .i_rx_data(qs3_data_p3),
+    .i_seg0_ts(seg0_ts_p3),
+    .i_seg1_ts(seg1_ts_p3),
+    .i_seg2_ts(seg2_ts_p3),
     .i_seg0_md(seg0_md_p3),
     .i_seg1_md(seg1_md_p3),
     .i_seg2_md(seg2_md_p3),
