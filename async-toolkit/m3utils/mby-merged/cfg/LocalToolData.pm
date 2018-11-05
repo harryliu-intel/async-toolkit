@@ -25,7 +25,7 @@ $ToolConfig_tools{'febe3'}{OTHER}{resource_def}                              = "
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'}                 = "&get_tool_version(lintra)";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'}                    = "&get_tool_path(lintra)";
 $ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH} = "&get_general_var(std_linux_libs)";
-$ToolConfig_tools{febe3}{VERSION} = "3.2.18";
+$ToolConfig_tools{febe3}{VERSION} = "3.3.08";
 $ToolConfig_tools{febe3}{OTHER}{project_settings}                            = "$MODEL_ROOT/tools/febe/inputs/dc_config.cfg";
 $ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "$MODEL_ROOT/tools/febe/inputs/finalized.cfg";
 
@@ -279,6 +279,9 @@ $ToolConfig_tools{"mgm"} = {
             LOCAL_ASIC_MEMORIES => "YES",
     }, 
 };
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_8}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_no_phy}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_8_no_phy}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
 $ToolConfig_tools{buildman}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
 $ToolConfig_tools{runtools}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
 $ToolConfig_tools{buildman}{ENV}{MGM_TSMC_N7}  = "YES";

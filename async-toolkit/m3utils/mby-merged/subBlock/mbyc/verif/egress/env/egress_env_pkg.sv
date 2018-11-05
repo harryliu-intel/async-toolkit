@@ -20,14 +20,6 @@
 
 package egress_env_pkg;
 
-`ifdef XVM
-  import ovm_pkg::*;
-  import xvm_pkg::*;
-`include "ovm_macros.svh"
-`include "sla_macros.svh"
-`endif
-
-  import sla_pkg::*;
   import uvm_pkg::*;
 
   import shdv_base_pkg::*;
@@ -37,12 +29,11 @@ package egress_env_pkg;
   import mby_ec_bfm_pkg::*;
 
 `include "uvm_macros.svh"
-`include "slu_macros.svh"
 
 `include "egress_types.svh"
 `include "egress_ti_config.svh"
 `include "egress_config.svh"
-`include "egress_ral_env.svh"
+//PJP`include "egress_ral_env.svh"
 `include "egress_env_monitor.svh"
 `include "egress_base_env.svh"
 `include "egress_env.svh"

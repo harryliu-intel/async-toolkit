@@ -115,12 +115,12 @@ class egress_env extends egress_base_env;
       eth_bfm_rx_io[i] = egr_eth_bfm_rx_io_t::type_id::create($sformatf("eth_bfm_rx_io%0d", i), this);
     end
 
-    data_phase_mode = SLA_RANDOM_NONE;
-    this.max_run_clocks = 2_000_000_000;
+//PJP    data_phase_mode = SLA_RANDOM_NONE;
+//PJP    this.max_run_clocks = 2_000_000_000;
 
     // Env monitor
     assert($cast(env_monitor, create_component("egress_env_monitor","env_monitor")));
-    env_monitor.set_monitor_enable(cfg.get_monitors_enabled());
+//PJP    env_monitor.set_monitor_enable(cfg.get_monitors_enabled());
 
     // get global event pool
     egress_epool = egress_epool.get_global_pool();
@@ -133,21 +133,21 @@ class egress_env extends egress_base_env;
     uvm_object temp;
     super.connect_phase(phase);
 
-    egress_if = slu_resource_db#(virtual egress_env_if)::get("egress_if",`__FILE__,`__LINE__);
+//PJP    egress_if = slu_resource_db#(virtual egress_env_if)::get("egress_if",`__FILE__,`__LINE__);
 
-    foreach(eth_bfms[i]) begin
-      eth_bfm_tx_io[i].set_vintf(eth_bfm_tx_vintf[i]);
-      eth_bfm_rx_io[i].set_vintf(eth_bfm_rx_vintf[i]);
-      eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);   // Set the IO Policy in the BFM
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx0", i), eth_bfms[i].tx.frame_sequencer[0]));
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx1", i), eth_bfms[i].tx.frame_sequencer[1]));
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx2", i), eth_bfms[i].tx.frame_sequencer[2]));
-      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx3", i), eth_bfms[i].tx.frame_sequencer[3]));
-    end
+//PJP    foreach(eth_bfms[i]) begin
+//PJP      eth_bfm_tx_io[i].set_vintf(eth_bfm_tx_vintf[i]);
+//PJP      eth_bfm_rx_io[i].set_vintf(eth_bfm_rx_vintf[i]);
+//PJP      eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);   // Set the IO Policy in the BFM
+//PJP      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx0", i), eth_bfms[i].tx.frame_sequencer[0]));
+//PJP      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx1", i), eth_bfms[i].tx.frame_sequencer[1]));
+//PJP      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx2", i), eth_bfms[i].tx.frame_sequencer[2]));
+//PJP      void'(this.add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_tx3", i), eth_bfms[i].tx.frame_sequencer[3]));
+//PJP    end
 
-    if (env_monitor != null) begin
-      env_monitor.egress_if = egress_if;
-    end
+//PJP    if (env_monitor != null) begin
+//PJP      env_monitor.egress_if = egress_if;
+//PJP    end
   endfunction // void
 
   // Function: egress_env end_of_elaboration
@@ -181,32 +181,9 @@ class egress_env extends egress_base_env;
   // ---------------------------------------------------------------
   // Egress ENV Saola functions / tasks
   // ---------------------------------------------------------------
-
   static function egress_env get_egress_env();
     return _egress_env;
   endfunction
-
-  // Saola TB clk
-  virtual task set_clk_rst();
-    fork
-      forever begin
-        @(egress_if.clock);
-        #0;
-        if (egress_if.clock === 1'b1)
-          ->sys_clk_r;
-        if (egress_if.clock === 1'b0)
-          ->sys_clk_f;
-      end
-      forever begin
-        @(egress_if.reset);
-        #0;
-        if (egress_if.reset === 1'b1)
-          -> sys_rst_r;
-        if (egress_if.reset === 1'b0)
-          -> sys_rst_f;
-      end
-    join_none
-  endtask // set_clk_rst
 
   // ---------------------------------------------------------------
   // Egress ENV Specific functions / tasks

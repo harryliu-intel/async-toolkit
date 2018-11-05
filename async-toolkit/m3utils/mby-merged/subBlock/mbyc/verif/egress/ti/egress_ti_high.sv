@@ -44,15 +44,6 @@ module egress_ti_high #(
 
   import uvm_pkg::*;
 
-`ifdef XVM
-  import ovm_pkg::*;
-  import xvm_pkg::*;
-`include "ovm_macros.svh"
-`include "sla_macros.svh"
-`endif
-
-  import sla_pkg::*;
-
 `include "egress_params.sv"
 `include "egress_defines.sv"
 

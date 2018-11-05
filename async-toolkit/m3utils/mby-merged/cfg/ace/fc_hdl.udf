@@ -45,7 +45,7 @@ my @fc_rtl_liblist = (
     "sva_lib",
     "mby_mgm_lib",
      (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-     $fc_global_vars::IP_STUB_LIB,
+     (&ToolConfig::get_facet('dut') =~ /fc_8|fc_8_no_phy|fc_64_no_phy/) ? $fc_global_vars::IP_STUB_LIB : "",
 );
 my @fc_verif_liblist = (
     "shdv_shared_lib",
@@ -419,6 +419,7 @@ EOF
                    "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
                    "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
                    "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                   "-config_verbose",
                     @all_sip_elab_opts,
                     @CDN_PCIE_ELAB_OPTS, 
                     "dump_filelist_lib.dump_filelist",
@@ -453,7 +454,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -574,7 +574,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -654,7 +653,6 @@ EOF
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -677,4 +675,5 @@ EOF
 $audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+
 

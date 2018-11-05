@@ -9,11 +9,12 @@ $hdl_spec = {
     -vlog_files => [
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
-       "src/rtl/gm/gmm/verilog/gmm_pkg.sv",
+       "src/shared/rtl/mby_gmm_pkg.sv",
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/shared/interfaces/egr_ppe_stm_if.sv",
        "src/shared/interfaces/egr_tx_ppe_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/igr/rtl/mby_igr_pkg.sv",
        "src/mpp/rtl/mby_mpp_csr_shim.sv",
        "src/mpp/rtl/mby_mpp.sv",
      ],
@@ -21,14 +22,23 @@ $hdl_spec = {
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
        ## remove once shared lib in place
-       "subBlock/mbyc/src/shared/interfaces/",
+       "subBlock/mbyc/src/shared/interfaces",
+       "subBlock/mbyc/src/shared/rtl",
+       "target/mby/mgm_run/igr/src",
+       "target/mby/mgm_run/igr/src/mem_wrap",
+       "target/mby/mgm_run/rtl",
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
     -vlog_lib_files => [],
     
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
-    -vlog_incdirs => [],
+    -vlog_incdirs => [
+       "src/igr/rtl",
+       "target/mby/mgm_run/igr/src",
+       "target/mby/mgm_run/igr/src/mem_wrap",
+       "target/mby/mgm_run/rtl",
+    ],
     
     # Arbitrary VLOG options
     -vlog_opts => [],

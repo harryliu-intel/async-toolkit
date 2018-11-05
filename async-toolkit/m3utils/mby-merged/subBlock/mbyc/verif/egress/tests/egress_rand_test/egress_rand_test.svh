@@ -62,7 +62,6 @@ endclass // egress_dummy_seq
 class egress_eth_simple_seq extends egress_extended_base_seq;
 
   `uvm_object_utils(egress_eth_simple_seq)
-  `uvm_declare_p_sequencer(slu_sequencer)
 
   egress_env     el_ambiente;
   eth_frame      los_frames[4];
@@ -70,11 +69,12 @@ class egress_eth_simple_seq extends egress_extended_base_seq;
 
   function new (string name="egress_eth_simple_seq");
     super.new (name);
-    `slu_assert($cast(el_ambiente, slu_utils::get_comp_by_name("env")),
-                ("Could not get mby env pointer"))
+//PJP    `slu_assert($cast(el_ambiente, slu_utils::get_comp_by_name("env")),
+//PJP                ("Could not get mby env pointer"))
   endfunction :  new
 
   virtual task body();
+/*
     int count[4] = {0,0,0,0};
     `slu_info(this.get_name(), ("Starting eth simple sequence..."))
     foreach(los_sequencers[i]) begin
@@ -114,6 +114,7 @@ class egress_eth_simple_seq extends egress_extended_base_seq;
       join_none
     end
     wait fork;
+*/
   endtask
 
 
@@ -141,12 +142,12 @@ class egress_rand_test extends egress_base_test;
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
     // TODO: Set data phase seq here.
-    env.set_test_phase_type("env", "POWER_GOOD_PHASE", "egress_dummy_seq");
-    env.set_test_phase_type("env", "HARD_RESET_PHASE", "egress_dummy_seq");
-    env.set_test_phase_type("env", "WARM_RESET_PHASE", "egress_dummy_seq");
-    env.set_test_phase_type("env", "TRAINING_PHASE",   "egress_dummy_seq");
-    env.set_test_phase_type("env", "CONFIG_PHASE",     "egress_dummy_seq");
-    env.set_test_phase_type("env", "USER_DATA_PHASE",  "egress_eth_simple_seq");
+//PJP    env.set_test_phase_type("env", "POWER_GOOD_PHASE", "egress_dummy_seq");
+//PJP    env.set_test_phase_type("env", "HARD_RESET_PHASE", "egress_dummy_seq");
+//PJP    env.set_test_phase_type("env", "WARM_RESET_PHASE", "egress_dummy_seq");
+//PJP    env.set_test_phase_type("env", "TRAINING_PHASE",   "egress_dummy_seq");
+//PJP    env.set_test_phase_type("env", "CONFIG_PHASE",     "egress_dummy_seq");
+//PJP    env.set_test_phase_type("env", "USER_DATA_PHASE",  "egress_eth_simple_seq");
   endfunction : connect_phase
 
 endclass : egress_rand_test

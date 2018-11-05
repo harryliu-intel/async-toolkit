@@ -1,0 +1,67 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+    ## need to remove the following
+       "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_msh_pkg.sv",
+       "src/shared/interfaces/mby_mem_msh_bank_ram_shell_4096x552_func_if.sv",
+    ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/msh_node/rtl/mby_msh_node_defines.vh",
+       "src/msh_node/rtl/mby_msh_ctrl.sv",
+       "src/msh_node/rtl/mby_msh_arb_weighted.sv",
+       "src/msh_node/rtl/mby_arb_lprr.sv",
+       "src/msh_node/rtl/mby_msh_dp.sv",
+       "src/msh_node/rtl/mby_msh_mem.sv",
+       "src/msh_node/rtl/mby_msh_mem_dp.sv",
+       "src/msh_node/rtl/mby_msh_node.sv",
+       "src/msh_node/rtl/mby_msh_rd_dp.sv",
+       "src/msh_node/rtl/mby_msh_rd_req.sv",
+       "src/msh_node/rtl/mby_msh_wr_dp.sv",
+       "src/msh_node/rtl/mby_msh_wr_req.sv",
+     ],
+    
+    # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     "src/msh_node/rtl",
+     "target/mby/mgm_run/msh/src",
+     "target/mby/mgm_run/msh/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
+     ],
+    
+    # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+    
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+     "src/msh_node/rtl",
+     "target/mby/mgm_run/msh/src",
+     "target/mby/mgm_run/msh/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
+     ],
+    
+    # Arbitrary VLOG options
+    -vlog_opts => [
+      "+libext+.v+.sv+.vh+.svh+.vs+.vm+.sva",
+		  "-full64",
+		  "+v2k",
+		  "-notice",
+		  "-sverilog",
+		  "+vcs+lic+wait",
+		  "+warn=noUII-L",
+		  "-timescale=10ps/10ps",
+		  "-debug_pp",
+		  "+define+VCSSIM",
+		  "+define+INTEL_SVA_OFF",
+		  "+define+MBY_IGR_BEHAVE_MEMS",
+		  "-assert svaext",
+		],
+    
+    
+    };
+

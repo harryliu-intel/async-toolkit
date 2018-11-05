@@ -21,17 +21,17 @@ my $mby_enable_congruency_elab      = $default_enable_congruency_elab;
 my $mby_enable_xprop_elab           = $default_enable_xprop_elab;
 my $mby_enable_partcomp_elab        = $default_enable_partcomp_elab;
 my $behaveMem = 0;
-my @mbyMgmLibs = ( "target/mby/mgm_run/rtl/mby_memories_common_rel.hdl",
-	           "target/mby/mgm_run/rtl/mby_memories_rel.hdl",);
+my @mbyMgmLibs = ( "target/mby/mgm_run/rtl/".&ToolConfig::get_facet('dut')."_memories_common_rel.hdl",
+	           "target/mby/mgm_run/rtl/".&ToolConfig::get_facet('dut')."_memories_rel.hdl",);
 
-my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
-                      'target/mby/mgm_run/rtl/mby_memories_wrap_rel.hdl', 
+my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/'.&ToolConfig::get_facet('dut').'_memories_tb_rel.hdl',
+                      'target/mby/mgm_run/rtl/'.&ToolConfig::get_facet('dut').'_memories_wrap_rel.hdl', 
 		    );
 for (my $i = 0; $i < @ARGV; $i++) {
     if ($ARGV[$i] eq "-mby_behave_mem") {
  	$behaveMem = 1;	
-	push (@mbyMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
-	push (@mbyTbMgmLibs, "target/mby/mgm_run/rtl/mby_mgm_BEHAVE_def.hdl");
+	push (@mbyMgmLibs, "target/mby/mgm_run/rtl/".&ToolConfig::get_facet('dut_type')."_mgm_BEHAVE_def.hdl");
+	push (@mbyTbMgmLibs, "target/mby/mgm_run/rtl/".&ToolConfig::get_facet('dut_type')."_mgm_BEHAVE_def.hdl");
 	last;
     }
 };    
@@ -62,12 +62,15 @@ print "MGM debug : @mbyMgmLibs\n";
 		    -dependent_libs => ['sva_lib',],
 	    },
             mby_mpp_rtl_lib => {
-               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mpp_rtl.hdl', ],
-	       -dependent_libs => ['mby_mgp_rtl_lib','mby_ppe_stm_rtl_lib',],
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mpp_rtl.hdl',],
+	       -dependent_libs => ['mby_mgp_rtl_lib','mby_ppe_stm_rtl_lib','mby_mgm_lib'],
             },
             
             mby_mgp_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_mgp_rtl.hdl', ],
+	       -dependent_libs => ['mby_mgm_lib','mby_igr_rtl_lib','mby_egr_rtl_lib','mby_rx_ppe_rtl_lib','mby_tx_ppe_rtl_lib',],
             },
             
             mby_igr_rtl_lib => {
@@ -100,6 +103,12 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_msh_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
+            },
+            
+            mby_msh_node_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_node_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
             
@@ -159,9 +168,15 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag            => "nonsynth",
             },
 
+            mby_base_pkg_lib    => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_base_pkg.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib' ],
+               -tag             => "nonsynth",
+            },
+
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_wm_dpi_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -173,7 +188,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_ingress_tb_lib  => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -459,7 +474,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mplex",
-                     #"verif/mplex/fal",
                      "verif/mplex/ral",
                      "verif/mplex/env",
                      "$ENV{OVM_HOME}/src",
@@ -561,13 +575,15 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                         "shdv_shared_lib",
-                        "svt_ahb_lib",
-                        "mby_common_lib",
+                        #PJP"svt_ahb_lib",
+                        #PJP"mby_common_lib",
                         "mby_wm_dpi_lib",
-                        #"mby_jasper_lib",
                         #"mby_rx_ppe_ti_lib",
                         #"mby_rx_ppe_env_lib",
+                        "sva_lib",
+                        "mby_mgm_lib",
                         "mby_igr_rtl_lib",
+                        "mby_base_pkg_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
                         "mby_ingress_env_lib",
@@ -600,7 +616,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -615,7 +630,7 @@ print "MGM debug : @mbyMgmLibs\n";
                #},
             },
             ####################################################################
-            # mby_ingress model ends
+            # mby ingress model ends
             ####################################################################
 
             ####################################################################
@@ -667,7 +682,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -682,7 +696,7 @@ print "MGM debug : @mbyMgmLibs\n";
                #},
             },
             ####################################################################
-            # mby_egress model ends
+            # mby egress model ends
             ####################################################################
 
             ####################################################################
@@ -703,6 +717,8 @@ print "MGM debug : @mbyMgmLibs\n";
                   "svt_ahb_lib",
                   "mby_mesh_env_lib",
                   "mby_mesh_tb_lib",
+                  "mby_msh_rtl_lib",
+                  "mby_msh_node_rtl_lib",
                   "mby_mesh_test_lib",
                   "mby_mesh_tb_top_lib",
                   "mby_jasper_lib",
@@ -795,7 +811,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -851,7 +866,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -905,7 +919,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",

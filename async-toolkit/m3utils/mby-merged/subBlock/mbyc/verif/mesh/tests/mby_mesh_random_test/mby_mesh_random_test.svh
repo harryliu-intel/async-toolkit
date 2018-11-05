@@ -64,12 +64,12 @@ class mby_mesh_random_test extends mby_mesh_base_test;
     //------------------------------------------------------------------------------
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        env.set_test_phase_type("env", "USER_DATA_PHASE", "mby_mesh_random_seq");
+//PJP        env.set_test_phase_type("env", "USER_DATA_PHASE", "mby_mesh_random_seq");
     endfunction : connect_phase
 
 endclass : mby_mesh_random_test
 
-class mby_mesh_random_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
+class mby_mesh_random_seq extends uvm_sequence; //PJP mby_mesh_seq_lib::mby_mesh_env_base_seq;
 
     `uvm_object_utils(mby_mesh_random_seq)
 
@@ -88,12 +88,15 @@ class mby_mesh_random_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
     //------------------------------------------------------------------------------
     task body ();
         int count;
-        `ovm_info(get_name(), "mby_mesh_random_seq is running!", OVM_MEDIUM);
+        `uvm_info(get_name(), "mby_mesh_random_seq is running!", UVM_MEDIUM);
+        #500;
+/* PJP TEMPORARY
         repeat(50) begin
             @(posedge vif.fab_clk);
             count++;
-            `ovm_info(get_name(), $sformatf("mby_mesh_random_seq: clock edge %0d",count), OVM_FULL);
+            `uvm_info(get_name(), $sformatf("mby_mesh_random_seq: clock edge %0d",count), UVM_FULL);
         end
+*/
 
     endtask
 
