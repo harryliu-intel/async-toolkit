@@ -34,21 +34,14 @@ object Parser {
   type PointerNumber    = Int
   type ProtoOffsets     = Map[PointerNumber, HeaderPointer]
 
-  val EmptyProtoOffsets: ProtoOffsets = Map[PointerNumber, HeaderPointer]()
-
-  val NumberOfParsingStages       = 32
-
-  val NumberOfExtractionConfs     = 16
-  val OffsetOfNextExtractAction   = 16
+  val NumberOfParsingStages = 32
 
   def parse(csrParser: CsrParser, packet: Packet, rxPort: Port): ParserOutput = {
 
     // TODO: support split header to Interface 0 and Interface 1
     val packetHeader = PacketHeader(packet).trimmed
 
-    val (packetFlags, protoOffsets, parserExceptionOpt) = applyStage(csrParser, packetHeader)(0,
-      initialState(csrParser, packetHeader, rxPort),
-      BitFlags(), Parser.EmptyProtoOffsets, Option.empty[ParserException])
+    val (packetFlags, protoOffsets, parserExceptionOpt) = applyActions(csrParser, packetHeader, rxPort)
 
     val paPacketTypeVal = packetType(csrParser, packetFlags)
 
@@ -75,8 +68,12 @@ object Parser {
     )
   }
 
+  def applyActions(csr: CsrParser, packetHeader: PacketHeader, rxPort: Port): (BitFlags, ProtoOffsets, Option[ParserException]) =
+    applyStage(csr, packetHeader)(0, initialState(csr, packetHeader, rxPort),
+      BitFlags(), Map[PointerNumber, HeaderPointer](), Option.empty[ParserException])
+
   @tailrec
-  def applyStage(csr: CsrParser, packetHeader: PacketHeader)
+  private def applyStage(csr: CsrParser, packetHeader: PacketHeader)
        (idStage: Int, parserState: ParserState, packetFlags: BitFlags, fields: ProtoOffsets, exceptionOpt: Option[ParserException]):
                         (BitFlags, ProtoOffsets, Option[ParserException]) = idStage match {
 
@@ -106,12 +103,12 @@ object Parser {
     @tailrec
     def findAction(keysW: List[parser_key_w_r], keysS: List[parser_key_s_r],
                    anaWs: List[parser_ana_w_r], anaSs: List[parser_ana_s_r],
-                   exts:  List[parser_ext_r],     excs:  List[parser_exc_r]): Option[Action] =
+                   exts:  List[parser_ext_r],   excs:  List[parser_exc_r]): Option[Action] =
       (keysW, keysS, anaWs, anaSs, exts, excs) match {
-        case (kW :: _, kS :: _, aW :: _, aS :: _, ex :: _, ec :: _) if ParserTcam.camMatching(kW, kS, parserState) =>
+        case (kW :: _, kS :: _, aW :: _, aS :: _, _ :: _, ec :: _) if ParserTcam.camMatching(kW, kS, parserState) =>
                 Some(new Action(
                   AnalyzerAction(aW, aS),
-                  List(ExtractAction(ex), ExtractAction(exts(OffsetOfNextExtractAction))),
+                  ExtractAction(exts),
                   ExceptionAction(ec)
                 ))
 

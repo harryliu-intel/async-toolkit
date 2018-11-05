@@ -20,6 +20,8 @@ object Csr {
 
   case class CsrParser(idMgp: Int, ppeParserMap:  mby_ppe_parser_map)
 
+  case class CsrMapper(idMgp: Int, ppeMapperMap:  mby_ppe_mapper_map)
+
 }
 
 class Csr(csr: mby_top_map) {
@@ -31,5 +33,7 @@ class Csr(csr: mby_top_map) {
   def getRxPpe(idMgp: Int): CsrRxPpe = CsrRxPpe(idMgp, csr.mpp.mgp(idMgp).rx_ppe)
 
   def getParser(idMgp: Int): CsrParser = CsrParser(idMgp, csr.mpp.mgp(idMgp).rx_ppe.parser)
+
+  def getMapper(idMgp: Int): CsrMapper = CsrMapper(idMgp, csr.mpp.mgp(idMgp).rx_ppe.mapper)
 
 }

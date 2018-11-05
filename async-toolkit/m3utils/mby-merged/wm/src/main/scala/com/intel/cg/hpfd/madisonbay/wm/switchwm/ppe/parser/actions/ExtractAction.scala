@@ -30,13 +30,16 @@ class ExtractAction(registerExt: parser_ext_r) {
 
 object ExtractAction {
 
+  val OffsetOfNextExtractAction   = 16
+
   // To avoid extracting a header pointer, set the protocol ID associated with the extraction to 0xFF
   val SpecialProtocolId = 0xffL
 
   // To avoid setting a parser flag, use the NOP flag number of 0 (implying that flag 0 is unusable)
   val FlagNOP = 0L
 
-  def apply(registerExt: parser_ext_r): ExtractAction = new ExtractAction(registerExt)
+  def apply(registerExts: List[parser_ext_r]): List[ExtractAction] =
+    List(new ExtractAction(registerExts.head), new ExtractAction(registerExts(OffsetOfNextExtractAction)))
 
   def extractActions(actions: List[ExtractAction], protoOffsets: ProtoOffsets, packetFlags: BitFlags): (ProtoOffsets, BitFlags) =
     actions.foldLeft(protoOffsets, packetFlags) { (accumulator, act) => act.extract(accumulator._1, accumulator._2) }
