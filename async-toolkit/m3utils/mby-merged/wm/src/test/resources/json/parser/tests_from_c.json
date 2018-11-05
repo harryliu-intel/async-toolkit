@@ -7,7 +7,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 1], [7, 515], [8, 1029], [9, 7967], [10, 7967], [11, 7967], [12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Unicast DMAC"
     },
@@ -18,7 +22,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 1], [7, 515], [8, 1029], [9, 52394], [10, 48093], [11, 61183], [12, 43690]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Unicast SMAC"
     },
@@ -29,7 +37,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426], [7, 48093], [8, 61183], [9, 61937], [10, 61937], [11, 61937], [12, 21845]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Multicast DMAC"
     },
@@ -40,7 +52,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 61937],[7, 61937],[8, 61937],[9, 65365],[10, 21845],[11, 5461],[12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Multicast SMAC"
     },
@@ -51,7 +67,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 65535],[7, 65535],[8, 65535],[9, 61937],[10, 61937],[11, 61937],[12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Broadcast DMAC"
     },
@@ -62,7 +82,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 61937],[7, 61937],[8, 61937],[9, 65535],[10, 65535],[11, 65535],[12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Broadcast SMAC"
     },
@@ -73,7 +97,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 0],[7, 0],[8, 0],[9, 61937],[10, 61937],[11, 61937],[12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet zero-DMAC"
     },
@@ -84,7 +112,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 61937],[7, 61937],[8, 61937],[9, 0],[10, 0],[11, 0],[12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet zero-SMAC"
     },
@@ -95,7 +127,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 0]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet zero Ethertype"
     },
@@ -106,7 +142,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet 64 length"
     },
@@ -117,7 +157,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 32768]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet 128 length"
     },
@@ -128,7 +172,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 34824]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Flow Control"
     },
@@ -139,7 +187,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 35045]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet MACSEC"
     },
@@ -150,7 +202,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 2054]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet ARP"
     },
@@ -161,7 +217,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 32821]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Reverse ARP"
     },
@@ -172,7 +232,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 35020]],
-        "PA_PTRS" : [[2, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet LLDP"
     },
@@ -183,7 +247,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 35078]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet FCoE"
     },
@@ -194,7 +262,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 35092]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet FCoE Init"
     },
@@ -205,7 +277,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 2114]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet Wake on Lan"
     },
@@ -216,7 +292,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 35063]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet PTP"
     },
@@ -227,9 +307,13 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 34915]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
-      "dscr": "L2 Ethernet PPPoE DS"
+      "dscr": "L2 Ethernet PPPoE DS 1"
     },
     {
       "in": {
@@ -238,7 +322,11 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 34916]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
       "dscr": "L2 Ethernet PPPoE SS"
     },
@@ -249,9 +337,13 @@
       },
       "out": {
         "PA_KEYS" : [[6, 426],[7, 48093],[8, 61183],[9, 61937],[10, 61937],[11, 61937],[12, 8947]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 0
+        }]
       },
-      "dscr": "L2 Ethernet PPPoE DS"
+      "dscr": "L2 Ethernet PPPoE DS 2"
     },
     {
       "in": {
@@ -261,7 +353,11 @@
       "out": {
         "PA_FLAGS" : [[18, 1]],
         "PA_KEYS" : [[6, 1],[7, 515],[8, 1029],[9, 52394],[10, 48076],[11, 56814],[12, 32768],[14, 10922],[31, 10922]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 1
+        }]
       },
       "dscr": "L2 Ethernet Vlan 0xAAA 0x2"
     },
@@ -273,7 +369,11 @@
       "out": {
         "PA_FLAGS" : [[18, 1]],
         "PA_KEYS" : [[6, 1],[7, 515],[8, 1029],[9, 52394],[10, 48076],[11, 56814],[12, 32768],[14, 21845],[31, 21845]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 1
+        }]
       },
       "dscr": "L2 Ethernet Vlan 0x555 0x5"
     },
@@ -285,7 +385,11 @@
       "out": {
         "PA_FLAGS" : [[18, 1]],
         "PA_KEYS" : [[6, 1],[7, 515],[8, 1029],[9, 52394],[10, 48076],[11, 56814],[12, 32768],[14, 0],[31, 0]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 1
+        }]
       },
       "dscr": "L2 Ethernet VLAN Priority Tagged (zero-VID) zero-pri"
     },
@@ -297,7 +401,11 @@
       "out": {
         "PA_FLAGS" : [[18, 1]],
         "PA_KEYS" : [[6, 1],[7, 515],[8, 1029],[9, 52394],[10, 48076],[11, 56814],[12, 32768],[14, 4096],[31, 4096]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 1
+        }]
       },
       "dscr": "L2 Ethernet VLAN Priority Tagged (zero-VID) non-zero-pri"
     },
@@ -309,7 +417,11 @@
       "out": {
         "PA_FLAGS" : [[18, 1]],
         "PA_KEYS" : [[6, 1],[7, 515],[8, 1029],[9, 52394],[10, 48076],[11, 56814],[12, 32768],[14, 61439],[31, 61439]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 1
+        }]
       },
       "dscr": "L2 Ethernet Vlan 0xFFF 0xE"
     },
@@ -321,7 +433,11 @@
       "out": {
         "PA_FLAGS" : [[18, 1]],
         "PA_KEYS" : [[6, 1],[7, 515],[8, 1029],[9, 52394],[10, 48076],[11, 56814],[12, 32768],[14, 4097],[31, 4097]],
-        "PA_PTRS" : [[0, 0]]
+        "PA_HDR_PTRS" : [{
+          "pointer_number": 0,
+          "offset": 0,
+          "protocol_id": 1
+        }]
       },
       "dscr": "L2 Ethernet Vlan 0x001 0x1 - Invalid CFI"
     }
