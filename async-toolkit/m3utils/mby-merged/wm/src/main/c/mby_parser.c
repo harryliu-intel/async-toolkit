@@ -8,7 +8,8 @@
 
 // Get 16-bit word at given index in the segment data buffer
 static inline fm_uint16 getSegDataWord(fm_byte index, fm_uint32 adj_seg_len,
-                                      fm_byte seg_data[MBY_PA_MAX_SEG_LEN]) {
+                                       fm_byte seg_data[MBY_PA_MAX_SEG_LEN])
+{
     fm_uint16 value = 0;
     if ( ((fm_uint32) index) < (adj_seg_len - 1) )
         value = ((((fm_uint16) seg_data[index    ]) << 8) & 0xff00) |
@@ -45,7 +46,8 @@ static fm_uint16 calcGenericChksum(fm_byte *buf, fm_uint16 len)
 
 // Verify IPv4 header checksum value
 static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
-                               fm_uint32 p_beg, fm_uint32 p_end) {
+                               fm_uint32 p_beg, fm_uint32 p_end)
+{
     fm_byte  *buf = seg_data + p_beg;
     fm_uint16 len = (p_end > p_beg) ? (p_end - p_beg + 1) : 0;
     fm_uint32 chksum = calcGenericChksum(buf, len);
@@ -55,11 +57,11 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
 
 static void lookUpPtypeTcam
 (
-    const parser_ptype_tcam_r tcam[parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
-    const parser_ptype_ram_r  ram [parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
-          fm_uint32           flags,
-          fm_uint16 * const   ptype,
-          fm_byte   * const   extract_idx
+    parser_ptype_tcam_r const tcam[parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
+    parser_ptype_ram_r  const ram [parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
+          fm_uint32     const flags,
+          fm_uint16   * const ptype,
+          fm_byte     * const extract_idx
 )
 {
     // No match
@@ -89,12 +91,12 @@ void Parser
 )
 {
     // Read inputs:
-    const fm_byte * const rx_data_in = in->RX_DATA;
-    const fm_uint32       rx_length  = in->RX_LENGTH;
-    const fm_uint32       rx_port    = in->RX_PORT;
+    fm_byte   const * const rx_data_in = in->RX_DATA;
+    fm_uint32 const         rx_length  = in->RX_LENGTH;
+    fm_uint32 const         rx_port    = in->RX_PORT;
 
     // Initialize:
-    fm_byte * const rx_packet        = (fm_byte *) rx_data_in;
+    fm_byte * const rx_packet = (fm_byte *) rx_data_in;
 
     // On initial entry to the parser block, read in the inital pointer, analyzer state, ALU op,
     // and word offsets from the MBY_PARSER_PORT_CFG register file:
@@ -381,7 +383,6 @@ void Parser
     }
 
     // Write outputs:
-
     out->PA_ADJ_SEG_LEN     = pa_adj_seg_len;
     out->PA_CSUM_OK         = pa_csum_ok;
     out->PA_DROP            = pa_drop;
@@ -399,7 +400,7 @@ void Parser
     }
 
     out->PA_L3LEN_ERR       = pa_l3len_err;
-    //out->PA_PACKET_TYPE     = pa_packet_type;
+    out->PA_PACKET_TYPE     = pa_packet_type;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
         out->PA_HDR_PTRS.OFFSET      [i] = pa_offset      [i];
