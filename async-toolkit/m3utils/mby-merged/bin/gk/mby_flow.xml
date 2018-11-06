@@ -31,7 +31,7 @@
       <DUT>fc_8_no_phy</DUT>
       <Stage>vcs</Stage>
       <Stage_Exec>bman</Stage_Exec>
-      <AdditionalArgs>-s all +s collage +s vcs -mc fc_8_no_phy -variant=fc_8_no_phy -nodelete_flow_data</AdditionalArgs>
+      <AdditionalArgs>-s all +s collage +s vcs +s genrtl +s sim_init -mc fc_8_no_phy -variant=fc_8_no_phy -nodelete_flow_data</AdditionalArgs>
       <XdutStageDep>[mby].[genrtl]</XdutStageDep>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
