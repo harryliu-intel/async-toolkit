@@ -155,7 +155,7 @@ void NextHop
           fm_uint16          l2_edomain  = in->L2_IDOMAIN;
           fm_byte            l3_edomain  = in->L3_IDOMAIN;
     const fm_bool            learn_mode  = in->LEARN_MODE;
-    const fm_uint16          raw_hash    = in->RAW_HASH;
+    const fm_uint16          ecmp_hash   = in->ECMP_HASH;
     const fm_byte * const    arp_hash    = in->ARP_HASH; // [16]
           fm_bool            trap_igmp   = in->TRAP_IGMP;
     const fm_uint32          rx_port     = in->RX_PORT;
@@ -167,7 +167,7 @@ void NextHop
     fm_bool   glort_routed = !FM_GET_BIT (cgrp_route, MBY_CGRP_ROUTE, ARP_ROUTE);
     fm_uint16 dglort       = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, DGLORT);
     fm_bool   flood_set    = (glort_routed) ? FM_GET_BIT  (cgrp_route, MBY_CGRP_ROUTE, FLOODSET) : 0;
-    fm_byte   sel_hash     = (group_type == 0) ? arp_hash[group_size] : ((raw_hash << group_size) >> 12);
+    fm_byte   sel_hash     = (group_type == 0) ? arp_hash[group_size] : ((ecmp_hash << group_size) >> 12);
     fm_uint16 arp_tbl_idx  = (arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
     fm_uint16 idglort      = 0;
     fm_bool   mark_routed  = !glort_routed && !no_route;

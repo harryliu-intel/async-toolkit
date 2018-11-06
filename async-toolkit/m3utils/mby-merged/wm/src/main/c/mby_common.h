@@ -43,13 +43,15 @@
 #define MBY_CGRP_KEY8_BASE       ( MBY_CGRP_KEY16_BASE + MBY_CGRP_KEY16 )
 #define MBY_CGRP_KEY32_BASE      ( MBY_CGRP_KEY8_BASE  + MBY_CGRP_KEY8 )
 
-#define MBY_CGRP_KEYS            ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16   + MBY_CGRP_KEY32   )
-#define MBY_CGRP_HASH_KEYS       ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16*2 + MBY_CGRP_KEY32*4 )
-#define MBY_CGRP_ACT24           16
-#define MBY_CGRP_ACT4            26
-#define MBY_CGRP_ACT1            24
-#define MBY_CGRP_REMAP_ACTIONS    8
-#define MBY_CGRP_POL_ACTIONS      4  // MBY_CGRP_ACTION_POLICER[0..3]
+#define MBY_CGRP_KEYS                 ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16   + MBY_CGRP_KEY32   )
+#define MBY_CGRP_HASH_KEYS            ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16*2 + MBY_CGRP_KEY32*4 )
+#define MBY_CGRP_ACT24                16
+#define MBY_CGRP_ACT4                 26
+#define MBY_CGRP_ACT1                 24
+#define MBY_CGRP_REMAP_ACTIONS         8
+#define MBY_CGRP_POL_ACTIONS           4  // MBY_CGRP_ACTION_POLICER[0..3]
+#define MBY_CGRP_HASH_PROFILE_ACTIONS  3  // MBY_CGRP_ACTION_HASH_PROFILE[0..2] == ECMP, MOD, LAG
+#define MBY_CGRP_META_ACTIONS          4  // MBY_CGRP_ACTION_META[0..3]
 
 #define MBY_PROT_TCP              6
 #define MBY_PROT_UDP             17

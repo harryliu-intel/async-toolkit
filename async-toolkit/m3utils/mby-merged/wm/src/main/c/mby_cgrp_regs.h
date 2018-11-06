@@ -104,7 +104,6 @@
 #define MBY_CGRP_FLAGS_b_LOG           2
 #define MBY_CGRP_FLAGS_b_NO_ROUTE      3
 #define MBY_CGRP_FLAGS_b_RX_MIRROR     4
-#define MBY_CGRP_FLAGS_b_CAPTURE_TIME  5
 
 #define MBY_N_MA_HASH_KEYS            9
 
@@ -215,7 +214,7 @@ typedef enum mbyClassifierAct1Enum
     MBY_CGRP_ACTION_LOG                    =  2,
     MBY_CGRP_ACTION_NO_ROUTE               =  3,
     MBY_CGRP_ACTION_RX_MIRROR              =  4,
-    MBY_CGRP_ACTION_CAPT_TIME              =  5, // Removed in MBY. Reserved for future use. REVISIT!!!
+    // MBY_CGRP_ACTION_RESERVED               =  5,
     MBY_CGRP_ACTION_TX_TAG0                =  6,
     MBY_CGRP_ACTION_TX_TAG1                =  7,
     MBY_CGRP_ACTION_TRIGGER0               =  8,
@@ -351,141 +350,132 @@ typedef enum mbyClassifierKey32Enum
 
 typedef struct mbyClassifierTcamCfgStruct
 {
-    fm_uint16               CHUNK_MASK;
-    fm_bool                 START_COMPARE;
-    fm_bool                 START_SET;
-    fm_byte                 SELECT_TOP;
-    fm_byte                 SELECT0;
-    fm_byte                 SELECT1;
-    fm_byte                 SELECT2;
-    fm_byte                 SELECT3;
+    fm_uint16 CHUNK_MASK;
+    fm_bool   START_COMPARE;
+    fm_bool   START_SET;
+    fm_byte   SELECT_TOP;
+    fm_byte   SELECT0;
+    fm_byte   SELECT1;
+    fm_byte   SELECT2;
+    fm_byte   SELECT3;
 
 } mbyClassifierTcamCfg;
 
 typedef struct mbyClassifierTcamStruct
 {
-    fm_uint32               _RSVD1_;
-    fm_byte                 KEY_TOP_INVERT;
-    fm_uint32               KEY_INVERT;
-    fm_uint32               _RSVD0_;
-    fm_byte                 KEY_TOP;
-    fm_uint32               KEY;
+    fm_uint32 _RSVD1_;
+    fm_byte   KEY_TOP_INVERT;
+    fm_uint32 KEY_INVERT;
+    fm_uint32 _RSVD0_;
+    fm_byte   KEY_TOP;
+    fm_uint32 KEY;
 
 } mbyClassifierTcam;
 
 // TODO is this ever used?
 typedef struct mbyClassifierTcamEntryStruct
 {
-    fm_uint64               KEY;
-    fm_uint64               KEY_INVERT;
+    fm_uint64 KEY;
+    fm_uint64 KEY_INVERT;
 
 } mbyClassifierTcamEntry;
 
 typedef struct mbyClassifierHashLookupStruct
 {
-    fm_uint32               PTR;
-    fm_uint16               RSVD1_;
-    fm_byte                 SELECT_4;
-    fm_byte                 SELECT_3;
-    fm_byte                 SELECT_2;
-    fm_byte                 SELECT_1;
-    fm_byte                 SELECT_0;
-    fm_uint32               MASK;
+    fm_uint32 PTR;
+    fm_uint16 RSVD1_;
+    fm_byte   SELECT_4;
+    fm_byte   SELECT_3;
+    fm_byte   SELECT_2;
+    fm_byte   SELECT_1;
+    fm_byte   SELECT_0;
+    fm_uint32 MASK;
 
 } mbyClassifierHashLookup;
 
 typedef struct mbyClassifierKeyMaskCfgStruct
 {
-    fm_uint32               KEY8_MASK;    // 32b field <-- Should it be 64b field? REVISIT!!!
-    fm_uint32               KEY16_MASK;   // 32b
-    fm_uint16               KEY32_MASK;   // 16b
-    fm_byte                 KEY_MASK_SEL; //  4b
+    fm_uint32 KEY8_MASK;    // 32b field <-- Should it be 64b field? REVISIT!!!
+    fm_uint32 KEY16_MASK;   // 32b
+    fm_uint16 KEY32_MASK;   // 16b
+    fm_byte   KEY_MASK_SEL; //  4b
 
 } mbyClassifierKeyMaskCfg;
 
 typedef struct mbyClassifierEntropyCfgStruct
 {
-    fm_uint32               KEY8_MASK;        // 32b field
-    fm_uint32               KEY16_MASK;       // 32b
-    fm_uint16               KEY32_MASK;       // 16b
-    fm_byte                 KEY_MASK_PROFILE; //  4b
-    fm_byte                 SYM_PROFILE;      //  2b
-    fm_bool                 SYMMETRIC;        //  1b
+    fm_uint32 KEY8_MASK;        // 32b field
+    fm_uint32 KEY16_MASK;       // 32b
+    fm_uint16 KEY32_MASK;       // 16b
+    fm_byte   KEY_MASK_PROFILE; //  4b
+    fm_byte   SYM_PROFILE;      //  2b
+    fm_bool   SYMMETRIC;        //  1b
 
 } mbyClassifierEntropyCfg;
 
 typedef struct mbyClassifierHashCfgStruct
 {
-    fm_bool                 mode;
-    fm_uint16               base_ptr  [2]; // 2 x 13b field
-    fm_byte                 hash_size [2]; // 2 x  5b
-    fm_byte                 entry_size[2]; // 2 x  5b
+    fm_bool   mode;
+    fm_uint16 base_ptr  [2]; // 2 x 13b field
+    fm_byte   hash_size [2]; // 2 x  5b
+    fm_byte   entry_size[2]; // 2 x  5b
 
 } mbyClassifierHashCfg;
 
 typedef struct mbyMplsMuxExpDsStruct
 {
-    fm_byte                 DSCP;
-    fm_byte                 ECN;
-    fm_byte                 TC;
+    fm_byte   DSCP;
+    fm_byte   ECN;
+    fm_byte   TC;
 
 } mbyMplsMuxExpDs;
 
 typedef struct mbyMplsMuxDscpTc
 {
-    fm_byte                 TC;
+    fm_byte   TC;
 
 } mbyMplsMuxDscpTc;
 
-typedef struct mbyEntropyMetaCfg
-{
-    fm_uint16               BYTE_DEFAULTS;
-    fm_byte                 HASH_START;
-    fm_byte                 HASH_SIZE;
-
-} mbyEntropyMetaCfg;
-
 typedef struct mbyClassifierActionCfgStruct
 {
-    fm_bool                 enable; // 1b field
-    fm_byte                 slice;  // 4b
+    fm_bool   enable; // 1b field
+    fm_byte   slice;  // 4b
 
 } mbyClassifierActionCfg;
 
 typedef struct mbyClassifierMuxedActionStruct
 {
-    fm_byte                 ecn;
-    fm_bool                 aqm_mark_en;
-    fm_byte                 tc;
-    fm_byte                 ttl_ctrl;
-    fm_byte                 ttl01;
-    fm_byte                 dscp;
-    fm_byte                 vpri;
-    fm_bool                 route;
+    fm_byte   ecn;
+    fm_bool   aqm_mark_en;
+    fm_byte   tc;
+    fm_byte   ttl_ctrl;
+    fm_byte   ttl01;
+    fm_byte   dscp;
+    fm_byte   vpri;
+    fm_bool   route;
 
 } mbyClassifierMuxedAction;
 
 typedef struct mbyClassifierFlags
 {
-    fm_bool                 drop;
-    fm_bool                 trap;
-    fm_bool                 log;
-    fm_bool                 no_route;
-    fm_bool                 rx_mirror;
-    fm_bool                 capture_time;
-    fm_byte                 tx_tag;
+    fm_bool   drop;
+    fm_bool   trap;
+    fm_bool   log;
+    fm_bool   no_route;
+    fm_bool   rx_mirror;
+    fm_byte   tx_tag;
 
 } mbyClassifierFlags;
 
 typedef struct mbyIppRxTagStruct
 {
-    fm_bool                 custom;
-    fm_bool                 mpls;
-    fm_bool                 ipv6;
-    fm_bool                 ipv4;
-    fm_bool                 v2first;
-    fm_bool                 vlan2;
-    fm_bool                 vlan1;
+    fm_bool   custom;
+    fm_bool   mpls;
+    fm_bool   ipv6;
+    fm_bool   ipv4;
+    fm_bool   v2first;
+    fm_bool   vlan2;
+    fm_bool   vlan1;
 
 } mbyRxTag;
 
@@ -576,19 +566,6 @@ fm_uint32 mbyClsGetWcmActionEntry
     fm_byte                     const ram_num,
     fm_uint32                   const hit_index,
     fm_uint32                   const action
-);
-
-mbyClassifierEntropyCfg mbyClsGetEntropyCfg
-(
-    mby_ppe_entropy_map * const entropy_map,
-    fm_uint32             const hash_num,
-    fm_byte               const hash_prof
-);
-
-mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
-(
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_prof
 );
 
 void mbyClsConvertKeysToBytes

@@ -55,7 +55,6 @@ void Classifier
 (
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
-    mby_ppe_entropy_map         * const entropy_map,
     mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
@@ -63,7 +62,8 @@ void Classifier
 
 void Hash
 (
-
+    mby_ppe_entropy_map         * const entropy_map,
+    fwd_hashing_cfg_r           * const fwd_hashing_cfg_reg,
     mbyClassifierToHash const   * const in,
     mbyHashToNextHop            * const out
 );
@@ -77,11 +77,11 @@ void NextHop
 
 void MaskGen
 (
-    mby_ppe_fwd_misc_map       * const fwd_misc,
-    mby_ppe_mst_glort_map      * const glort_map,
-    mby_ppe_cm_apply_map       * const cm_apply,
-    mbyNextHopToMaskGen  const * const in,
-    mbyMaskGenToTriggers       * const out
+    mby_ppe_fwd_misc_map        * const fwd_misc,
+    mby_ppe_mst_glort_map       * const glort_map,
+    mby_ppe_cm_apply_map        * const cm_apply,
+    mbyNextHopToMaskGen   const * const in,
+    mbyMaskGenToTriggers        * const out
 );
 
 void Triggers

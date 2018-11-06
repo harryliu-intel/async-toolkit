@@ -49,11 +49,11 @@ static void nexthop_test_setup
         FM_SET_FIELD(hashToNextHop->CGRP_ROUTE, MBY_CGRP_ROUTE, GROUP_SIZE, test_data_in->group_size);
 
         hashToNextHop->ARP_HASH[test_data_in->group_size] = test_data_in->arp_hash;
-        hashToNextHop->RAW_HASH                           = test_data_in->raw_hash;
+        hashToNextHop->ECMP_HASH                           = test_data_in->ecmp_hash;
 
         fm_byte sel_hash = (test_data_in->group_type == 0) ?
                     test_data_in->arp_hash :
-                    ((test_data_in->raw_hash << test_data_in->group_size) >> 12);
+                    ((test_data_in->ecmp_hash << test_data_in->group_size) >> 12);
         fm_uint16 arp_tbl_idx  = (test_data_in->arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
 
         /* Set registers. */

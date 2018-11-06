@@ -4,7 +4,6 @@
 
 
 #include "mby_mapper.h"
-#include "mby_cgrp_regs.h"
 #include "mby_lpm.h"
 #include "mby_wcm.h"
 #include "mby_exactmatch.h"
@@ -255,36 +254,18 @@ static void remapKeys
 
 }   /* end remapKeys */
 
-static void applyEntropyKeyMask
-(
-    mbyClassifierEntropyCfg         const entropy_cfg,
-    mbyClassifierKeys               const keys,
-    mbyClassifierKeys             * const hash_keys
-)
-{
-    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
-        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY32_MASK, i, 1)) ? keys.key32[i] : 0;
-
-    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
-        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY16_MASK, i, 1)) ? keys.key16[i] : 0;
-
-    for (fm_uint i = 0; i < MBY_CGRP_KEY8; i++)
-        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(entropy_cfg.KEY8_MASK,  i, 1)) ? keys.key8 [i] : 0;
-}
-
 static void populateMuxedAction
 (
-
     mbyClassifierKeys           const keys,
     mbyClassifierActions        const actions,
     fm_byte                     const pri_profile,
     mbyClassifierMuxedAction  * const muxed_action
 )
 {
-    fm_byte mpls_pop  = actions.act4[MBY_CGRP_ACTION_MPLS_POP].val;
-    fm_byte ecn_ctrl  = actions.act4[MBY_CGRP_ACTION_ECN_CTRL].val;
-    fm_byte tc_ctrl   = actions.act4[MBY_CGRP_ACTION_TC_CTRL].val;
-    fm_byte ttl_ctrl  = actions.act4[MBY_CGRP_ACTION_TTL_CTRL].val;
+    fm_byte mpls_pop  = actions.act4[MBY_CGRP_ACTION_MPLS_POP ].val;
+    fm_byte ecn_ctrl  = actions.act4[MBY_CGRP_ACTION_ECN_CTRL ].val;
+    fm_byte tc_ctrl   = actions.act4[MBY_CGRP_ACTION_TC_CTRL  ].val;
+    fm_byte ttl_ctrl  = actions.act4[MBY_CGRP_ACTION_TTL_CTRL ].val;
     fm_byte dscp_ctrl = actions.act4[MBY_CGRP_ACTION_DSCP_CTRL].val;
 
     // Update ECN:
@@ -423,86 +404,6 @@ static void populateMuxedAction
     muxed_action->route = (actions.act1[MBY_CGRP_ACTION_NO_ROUTE].val == 0 && actions.act24[MBY_CGRP_ACTION_FWD].val != 0);
 }
 
-static void populateEntropy
-(
-    mby_ppe_entropy_map        * const entropy_map,
-    mbyClassifierKeys            const keys,
-    mbyClassifierActions         const actions,
-    fm_uint32                  * const ecmp_hash,
-    fm_uint64                  * const mod_meta
-)
-{
-    fm_byte   hash_profiles[2] = { 0 };
-    fm_uint32 hash_values  [2] = { 0 };
-
-    for (fm_uint hash_num = 0; hash_num < 2; hash_num++)
-    {
-        fm_byte val0 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_LOW + (2 * hash_num)].val);
-        fm_byte val1 = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_HIGH + (2 * hash_num)].val & 0x3);
-        fm_byte prof = (val1 << 4) | val0;
-
-        hash_profiles[hash_num] = prof;
-
-        // Get FFU_KEY_MASK register fields:
-        mbyClassifierEntropyCfg entropy_cfg = mbyClsGetEntropyCfg(entropy_map, hash_num, prof);
-        // Apply key mask on FFU keys:
-        mbyClassifierKeys hash_keys;
-        applyEntropyKeyMask(entropy_cfg, keys, &hash_keys);
-
-        // Convert Keys into array of bytes:
-        fm_byte hash_bytes[MBY_CGRP_HASH_KEYS] = { 0 };
-        mbyClsConvertKeysToBytes(hash_keys, hash_bytes);
-
-        // Get hash value from CRC:
-         hash_values[hash_num] = (hash_num == 0) ?
-            mbyCrc32ByteSwap (hash_bytes, MBY_CGRP_HASH_KEYS) : // HASH0: CRC-32 (Ethernet)
-            mbyCrc32CByteSwap(hash_bytes, MBY_CGRP_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
-    }
-
-
-    // ECMP HASH for ARP_TABLE:
-    *ecmp_hash = hash_values[0] & 0xFFFFFF;
-
-    // Populate MOD_META for use by the Modifier:
-    mbyEntropyMetaCfg meta_cfg = mbyClsGetEntropyMetaCfg(entropy_map, hash_profiles[1]);
-
-    fm_uint64 mod_meta_l = 0; // local var
-
-    // Apply Defaults to MOD_META:
-    for (fm_uint i = 0; i < 6; i++)
-    {
-        fm_byte s = FM_GET_UNNAMED_FIELD(meta_cfg.BYTE_DEFAULTS, i*2, 2);
-        switch (s)
-        {
-            case 0:
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_CGRP_ACTION_META0_LOW ].val);
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_CGRP_ACTION_META0_HIGH].val);
-                break;
-            case 1:
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_CGRP_ACTION_META1_LOW ].val);
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_CGRP_ACTION_META1_HIGH].val);
-                break;
-            case 2:
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     4, actions.act4[MBY_CGRP_ACTION_META2_LOW ].val);
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8 + 4, 4, actions.act4[MBY_CGRP_ACTION_META2_HIGH].val);
-                break;
-            case 3:
-                FM_SET_UNNAMED_FIELD64(mod_meta_l, i*8,     8, 0);
-                break;
-        }
-    }
-
-    // Apply Hash to MOD_META:
-    fm_uint64 meta_mask = 0;
-    for (fm_uint i = 0; i < 48; i++)
-        if ((i >= meta_cfg.HASH_START) && (i < (meta_cfg.HASH_START + meta_cfg.HASH_SIZE)))
-            meta_mask |= (FM_LITERAL_U64(1) << i);
-
-    fm_uint64 meta_hash = (((fm_uint64) hash_values[1]) << 32) | hash_values[1];
-
-    *mod_meta = (mod_meta_l & ~meta_mask) | (meta_hash & meta_mask);
-}
-
 static fm_macaddr extractDmac
 (
     fm_uint32 const ip_lo,
@@ -522,8 +423,6 @@ static void transformActions
     mbyClassifierMuxedAction   const muxed_action,
     fm_bool                    const ip_option[2],
     mbyParserInfo              const parser_info,
-    fm_uint32                  const ecmp_hash,
-    fm_uint64                  const mod_meta,
     fm_bool                  * const decap,
     fm_bool                  * const encap,
     fm_byte                  * const mod_idx,
@@ -548,16 +447,18 @@ static void transformActions
     fm_bool                  * const no_learn,
     fm_uint16                * const l2_ivid1,
     fm_byte                  * const qos_l2_vpri1,
+    fm_byte                  * const hash_profile,
+    fm_byte                  * const mod_meta,
     fm_byte                  * const ffu_trig,
     fm_uint32                * const policer_action,
     fm_byte                  * const mod_prof_idx
 )
 {
-    *decap        = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val >> 1) & 0x1;
-    *encap        =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val & 0x1;
-    *mod_idx      = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val >> 2) & 0xFFFF;
-    *mod_prof_idx =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE ].val & 0x3F;
-    *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP].val;
+    *decap        = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val >> 1) & 0x1;
+    *encap        =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val       & 0x1;
+    *mod_idx      = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val >> 2) & 0xFFFF;
+    *mod_prof_idx =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val       & 0x3F;
+    *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP   ].val;
 
     *sglort = 0;
     FM_SET_UNNAMED_FIELD64(*sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
@@ -618,12 +519,11 @@ static void transformActions
     FM_SET_UNNAMED_FIELD64(*outer_l3_length, 0, 8, keys.key8[outer_index]);
     FM_SET_UNNAMED_FIELD64(*outer_l3_length, 8, 8, keys.key8[outer_index - 1]);
 
-    cgrp_flags->drop         = actions.act1[MBY_CGRP_ACTION_DROP     ].val;
-    cgrp_flags->trap         = actions.act1[MBY_CGRP_ACTION_TRAP     ].val;
-    cgrp_flags->log          = actions.act1[MBY_CGRP_ACTION_LOG      ].val;
-    cgrp_flags->no_route     = actions.act1[MBY_CGRP_ACTION_NO_ROUTE ].val;
-    cgrp_flags->rx_mirror    = actions.act1[MBY_CGRP_ACTION_RX_MIRROR].val;
-    cgrp_flags->capture_time = actions.act1[MBY_CGRP_ACTION_CAPT_TIME].val;
+    cgrp_flags->drop      = actions.act1[MBY_CGRP_ACTION_DROP     ].val;
+    cgrp_flags->trap      = actions.act1[MBY_CGRP_ACTION_TRAP     ].val;
+    cgrp_flags->log       = actions.act1[MBY_CGRP_ACTION_LOG      ].val;
+    cgrp_flags->no_route  = actions.act1[MBY_CGRP_ACTION_NO_ROUTE ].val;
+    cgrp_flags->rx_mirror = actions.act1[MBY_CGRP_ACTION_RX_MIRROR].val;
 
     // FIXME cppcheck (error) Uninitialized struct member: cgrp_flags.tx_tag
     for (fm_uint i = 0; i <= 1; i++)
@@ -652,6 +552,22 @@ static void transformActions
 
     *qos_l2_vpri1 = (qos_l2_vpri1_sel) ? qos_l2_vpri1_decap : muxed_action.vpri;
 
+    hash_profile[0] = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_HIGH].val & 0x3) << 4 // bits 4..5
+                    | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_ECMP_LOW ].val & 0xF);     // bits 0..3
+                     //What about bit 6? (7 is reserved) <-- REVISIT!!!
+    hash_profile[1] = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_MOD_HIGH ].val & 0x3) << 4 // bits 4..5
+                    | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_MOD_LOW  ].val & 0xF);     // bits 0..3
+                     //What about bit 6? (7 is reserved) <-- REVISIT!!!
+    hash_profile[2] = (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_LAG_HIGH ].val & 0x3) << 4 // bits 4..5
+                    | (actions.act4[MBY_CGRP_ACTION_HASH_PROFILE_LAG_LOW  ].val & 0xF);     // bits 0..3
+                     //What about bit 6? (7 is reserved) <-- REVISIT!!!
+
+    for (fm_byte i = 0 ; i < MBY_CGRP_META_ACTIONS ; i++)
+    {
+        mod_meta[i] = (actions.act4[MBY_CGRP_ACTION_META0_HIGH + 2 * i].val & 0xF) << 4 // bits 4..7
+                    | (actions.act4[MBY_CGRP_ACTION_META0_LOW  + 2 * i].val & 0xF);     // bits 0..3
+    }
+
     *ffu_trig = 0;
     for (fm_uint i = MBY_CGRP_ACTION_TRIGGER0; i <= MBY_CGRP_ACTION_TRIGGER7; i++)
         FM_SET_UNNAMED_FIELD(*ffu_trig, i - MBY_CGRP_ACTION_TRIGGER0, 1, actions.act1[i].val);
@@ -664,7 +580,6 @@ void Classifier
 (
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
-    mby_ppe_entropy_map         * const entropy_map,
     mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
@@ -734,56 +649,43 @@ void Classifier
 
     populateMuxedAction
     (
-
         keys,
         actions,
         pri_profile,
         &muxed_action
     );
 
-    // Populate ecmp_hash and mod_meta:
-    fm_uint32 ecmp_hash = 0;
-    fm_uint64 mod_meta  = 0;
-
-    populateEntropy
-    (
-        entropy_map,
-        keys,
-        actions,
-        &ecmp_hash,
-        &mod_meta
-    );
-
     // Transform exisiting keys, actions, etc. into desired output:
 
-    fm_bool                  decap           = FALSE;
-    fm_bool                  encap           = FALSE;
-    fm_byte                  mod_idx         = 0;
-    fm_uint16                l2_etype        = 0;
-    fm_byte                  mpls_pop        = 0;
-    fm_uint64                sglort          = 0;
-    fm_uint64                idglort         = 0;
-    fm_macaddr               l2_smac         = 0;
-    fm_macaddr               l2_dmac         = 0;
-    fm_macaddr               dmac_from_ipv6  = 0;
-    fm_bool                  is_ipv4         = FALSE;
-    fm_bool                  is_ipv6         = FALSE;
-    fm_uint16                l3_length       = 0;
-    fm_uint16                inner_l3_length = 0;
-    fm_uint16                outer_l3_length = 0;
-    fm_bool                  trap_ip_options = FALSE;
-    fm_bool                  drop_ttl        = FALSE;
-    fm_bool                  trap_icmp       = FALSE;
-    fm_bool                  trap_igmp       = FALSE;
-    mbyClassifierFlags       cgrp_flags      = { 0 };
-    fm_uint32                cgrp_route      = 0;
-    fm_bool                  no_learn        = FALSE;
-    fm_uint16                l2_ivid1        = 0;
-    fm_byte                  qos_l2_vpri1    = 0;
-    fm_byte                  ffu_trig        = 0;
-    fm_byte                  mod_prof_idx    = 0;
-
-    fm_uint32                policer_action[MBY_CGRP_ACTION_POLICER3 + 1] = { 0 };
+    fm_bool            decap           = FALSE;
+    fm_bool            encap           = FALSE;
+    fm_byte            mod_idx         = 0;
+    fm_uint16          l2_etype        = 0;
+    fm_byte            mpls_pop        = 0;
+    fm_uint64          sglort          = 0;
+    fm_uint64          idglort         = 0;
+    fm_macaddr         l2_smac         = 0;
+    fm_macaddr         l2_dmac         = 0;
+    fm_macaddr         dmac_from_ipv6  = 0;
+    fm_bool            is_ipv4         = FALSE;
+    fm_bool            is_ipv6         = FALSE;
+    fm_uint16          l3_length       = 0;
+    fm_uint16          inner_l3_length = 0;
+    fm_uint16          outer_l3_length = 0;
+    fm_bool            trap_ip_options = FALSE;
+    fm_bool            drop_ttl        = FALSE;
+    fm_bool            trap_icmp       = FALSE;
+    fm_bool            trap_igmp       = FALSE;
+    mbyClassifierFlags cgrp_flags      = { 0 };
+    fm_uint32          cgrp_route      = 0;
+    fm_bool            no_learn        = FALSE;
+    fm_uint16          l2_ivid1        = 0;
+    fm_byte            qos_l2_vpri1    = 0;
+    fm_byte            ffu_trig        = 0;
+    fm_byte            mod_prof_idx    = 0;
+    fm_byte            hash_profile[MBY_CGRP_HASH_PROFILE_ACTIONS] = { 0 };
+    fm_byte            mod_meta[MBY_CGRP_META_ACTIONS]             = { 0 };
+    fm_uint32          policer_action[MBY_CGRP_POL_ACTIONS]        = { 0 };
 
     transformActions
     (
@@ -792,8 +694,6 @@ void Classifier
         muxed_action,
         ip_option,
         parser_info,
-        ecmp_hash,
-        mod_meta,
         &decap,
         &encap,
         &mod_idx,
@@ -818,41 +718,44 @@ void Classifier
         &no_learn,
         &l2_ivid1,
         &qos_l2_vpri1,
+        hash_profile,
+        mod_meta,
         &ffu_trig,
         policer_action,
         &mod_prof_idx
     );
 
     // Write outputs:
+    out->AQM_MARK_EN     = muxed_action.aqm_mark_en;
+    out->DECAP           = decap;
+    out->DMAC_FROM_IPV6  = dmac_from_ipv6;
+    out->DROP_TTL        = drop_ttl;
+    out->ECN             = muxed_action.ecn;
+    out->ENCAP           = encap;
+    out->CGRP_FLAGS      = cgrp_flags;
+    out->CGRP_ROUTE      = cgrp_route;
+    out->CGRP_TRIG       = ffu_trig;
+    out->IDGLORT         = idglort;
+    out->INNER_L3_LENGTH = inner_l3_length;
+    out->IS_IPV4         = is_ipv4;
+    out->IS_IPV6         = is_ipv6;
+    out->L2_DMAC         = l2_dmac;
+    out->L2_ETYPE        = l2_etype;
+    out->L2_IVID1        = l2_ivid1;
+    out->L2_SMAC         = l2_smac;
+    out->L3_LENGTH       = l3_length;
+    out->MOD_IDX         = mod_idx;
+    out->MOD_PROF_IDX    = mod_prof_idx;
+    out->MPLS_POP        = mpls_pop;
+    out->NO_LEARN        = no_learn;
+    out->OUTER_L3_LENGTH = outer_l3_length;
+    out->PARSER_INFO     = parser_info;
 
-    // Write outputs:
-    out->AQM_MARK_EN      = muxed_action.aqm_mark_en;
-    out->DECAP            = decap;
-    out->DMAC_FROM_IPV6   = dmac_from_ipv6;
-    out->DROP_TTL         = drop_ttl;
-    out->ECN              = muxed_action.ecn;
-    out->ENCAP            = encap;
-    out->CGRP_FLAGS       = cgrp_flags;
-    out->CGRP_ROUTE       = cgrp_route;
-    out->CGRP_TRIG        = ffu_trig;
-    out->IDGLORT          = idglort;
-    out->INNER_L3_LENGTH  = inner_l3_length;
-    out->IS_IPV4          = is_ipv4;
-    out->IS_IPV6          = is_ipv6;
-    out->L2_DMAC          = l2_dmac;
-    out->L2_ETYPE         = l2_etype;
-    out->L2_IVID1         = l2_ivid1;
-    out->L2_SMAC          = l2_smac;
-    out->L34_HASH         = ecmp_hash;
-    out->L3_LENGTH        = l3_length;
-    out->MOD_IDX          = mod_idx;
-    out->MOD_PROF_IDX     = mod_prof_idx;
-    out->MPLS_POP         = mpls_pop;
-    out->NO_LEARN         = no_learn;
-    out->OUTER_L3_LENGTH  = outer_l3_length;
-    out->PARSER_INFO      = parser_info;
-
-    for (fm_uint i = MBY_CGRP_ACTION_POLICER0; i <= MBY_CGRP_ACTION_POLICER3; i++)
+    for (fm_uint i = 0 ; i < MBY_CGRP_HASH_PROFILE_ACTIONS ; i++)
+        out->HASH_PROFILE[i] = hash_profile[i];
+    for (fm_uint i = 0 ; i < MBY_CGRP_META_ACTIONS ; i++)
+        out->MOD_META[i] = mod_meta[i];
+    for (fm_uint i = 0 ; i <= MBY_CGRP_POL_ACTIONS ; i++)
         out->POLICER_ACTION[i] = policer_action[i];
 
     out->QOS_L2_VPRI1    = qos_l2_vpri1;
@@ -866,7 +769,7 @@ void Classifier
     out->TX_TAG          = cgrp_flags.tx_tag;
 
     // Pass thru:
-
+    out->FFU_KEYS        = in->FFU_KEYS;
     out->LEARN_MODE      = in->LEARN_MODE;
     out->L2_IDOMAIN      = in->L2_IDOMAIN;
     out->L3_IDOMAIN      = in->L3_IDOMAIN;

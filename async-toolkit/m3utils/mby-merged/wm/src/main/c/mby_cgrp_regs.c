@@ -130,12 +130,13 @@ void mbyClsGetEmHashMissActions
 )
 {
     em_hash_miss_r const * const em_hash_miss   = &(cgrp_em_map->HASH_MISS[hash_num][profile]);
-    em_hash_miss_r const * const em_hash_miss_1 = &(cgrp_em_map->HASH_MISS[1][profile]);
 
     hash_actions[0] = em_hash_miss->ACTION0;
     hash_actions[1] = em_hash_miss->ACTION1;
 
     if (hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_64B) {
+        em_hash_miss_r const * const em_hash_miss_1 = &(cgrp_em_map->HASH_MISS[1][profile]);
+
         hash_actions[2] = em_hash_miss_1->ACTION0;
         hash_actions[3] = em_hash_miss_1->ACTION1;
     }
@@ -179,6 +180,7 @@ mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 
     tcam_entry.KEY        = wcm_tcam_entry->KEY        | key_top;
     tcam_entry.KEY_INVERT = wcm_tcam_entry->KEY_INVERT | key_top_inv;
+
     return tcam_entry;
 }
 
@@ -211,46 +213,10 @@ fm_uint32 mbyClsGetWcmActionEntry
 )
 {
     wcm_action_r const * const wcm_action = &(cgrp_b_map->WCM_ACTION[ram_num][hit_index]);
+
     fm_uint32 action_entry = (action == 0) ? wcm_action->ACTION0 : wcm_action->ACTION1;
+
     return action_entry;
-}
-
-mbyClassifierEntropyCfg mbyClsGetEntropyCfg
-(
-    mby_ppe_entropy_map * const entropy_map,
-    fm_uint32             const hash_num,
-    fm_byte               const hash_prof
-)
-{
-    mbyClassifierEntropyCfg entropy_cfg = { 0 };
-
-    entropy_hash_cfg1_r const * const entropy_hash_cfg1 = &(entropy_map->ENTROPY_HASH_CFG1[hash_num][hash_prof]);
-    entropy_hash_cfg0_r const * const entropy_hash_cfg0 = &(entropy_map->ENTROPY_HASH_CFG0[hash_num][hash_prof]);
-
-    entropy_cfg.SYMMETRIC        = entropy_hash_cfg1->SYMMETRIC;        // [54:54]
-    entropy_cfg.SYM_PROFILE      = entropy_hash_cfg1->SYM_PROFILE;      // [53:52]
-    entropy_cfg.KEY_MASK_PROFILE = entropy_hash_cfg1->KEY_MASK_PROFILE; // [51:48]
-    entropy_cfg.KEY32_MASK       = entropy_hash_cfg1->KEY_MASK32;       // [47:32]
-    entropy_cfg.KEY16_MASK       = entropy_hash_cfg1->KEY_MASK16;       // [31: 0]
-    entropy_cfg.KEY8_MASK        = entropy_hash_cfg0->KEY_MASK8;        // [31: 0]
-    return entropy_cfg;
-}
-
-mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
-(
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_prof
-)
-{
-    mbyEntropyMetaCfg meta_cfg = { 0 };
-
-    entropy_meta_cfg_r const * const entropy_meta_cfg = &(entropy_map->ENTROPY_META_CFG[hash_prof]);
-
-    meta_cfg.BYTE_DEFAULTS = entropy_meta_cfg->BYTE_DEFAULTS; // [23:12]
-    meta_cfg.HASH_START    = entropy_meta_cfg->HASH_START;    // [11: 6]
-    meta_cfg.HASH_SIZE     = entropy_meta_cfg->HASH_SIZE;     // [ 5: 0]
-
-    return meta_cfg;
 }
 
 // TODO this function is not strictly used to access the registers but it

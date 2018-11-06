@@ -46,47 +46,9 @@ void RxPipeline
 
     Classifier (cgrp_a_map,
                 cgrp_b_map,
-                entropy_map,
                 shm_map,             &map2cla, &cla2hsh);
 
-//  Hash       (                     &cla2hsh, &hsh2nxt);
-
-    /* Remove below assignments after HASH module is updated <--REVISIT!!! */
-    for (fm_uint i = 0; i < 16; i++)
-        hsh2nxt.ARP_HASH[i]         = 0;
-
-    mbyHashKeys hash_keys = { 0 };
-    hsh2nxt.HASH_KEYS               = hash_keys;
-    hsh2nxt.HASH_ROT_A              = 0;
-    hsh2nxt.HASH_ROT_A_PTABLE_INDEX = 0;
-    hsh2nxt.HASH_ROT_B              = 0;
-    hsh2nxt.HASH_ROT_B_PTABLE_INDEX = 0;
-    hsh2nxt.RAW_HASH                = 0;
-    hsh2nxt.SV_DROP                 = MBY_SV_MOVE_DROP_RESERVED;
-
-    hsh2nxt.L2_DMAC        = cla2hsh.L2_DMAC;
-    hsh2nxt.L2_SMAC        = cla2hsh.L2_SMAC;
-    hsh2nxt.CGRP_FLAGS     = cla2hsh.CGRP_FLAGS;
-    hsh2nxt.CGRP_ROUTE     = cla2hsh.CGRP_ROUTE;
-    hsh2nxt.ENCAP          = cla2hsh.ENCAP;
-    hsh2nxt.DECAP          = cla2hsh.DECAP;
-    hsh2nxt.DMAC_FROM_IPV6 = cla2hsh.DMAC_FROM_IPV6;
-    hsh2nxt.DROP_TTL       = cla2hsh.DROP_TTL;
-    hsh2nxt.L2_IDOMAIN     = cla2hsh.L2_IDOMAIN;
-    hsh2nxt.L3_IDOMAIN     = cla2hsh.L3_IDOMAIN;
-    hsh2nxt.L2_IVID1       = cla2hsh.L2_IVID1;
-    hsh2nxt.LEARN_MODE     = cla2hsh.LEARN_MODE;
-    hsh2nxt.MOD_PROF_IDX   = cla2hsh.MOD_PROF_IDX;
-    hsh2nxt.PARITY_ERROR   = cla2hsh.PARITY_ERROR;
-    hsh2nxt.PARSER_ERROR   = cla2hsh.PARSER_ERROR;
-    hsh2nxt.PARSER_INFO    = cla2hsh.PARSER_INFO;
-    hsh2nxt.PA_L3LEN_ERR   = cla2hsh.PA_L3LEN_ERR;
-    hsh2nxt.PA_HDR_PTRS    = cla2hsh.PA_HDR_PTRS;
-    hsh2nxt.RX_DATA        = cla2hsh.RX_DATA;
-    hsh2nxt.RX_LENGTH      = cla2hsh.RX_LENGTH;
-    hsh2nxt.RX_PORT        = cla2hsh.RX_PORT;
-    hsh2nxt.TRAFFIC_CLASS  = cla2hsh.TRAFFIC_CLASS;
-    hsh2nxt.TRAP_IGMP      = cla2hsh.TRAP_IGMP;
+    Hash       (entropy_map, &(nexthop_map->FWD_HASHING_CFG), &cla2hsh, &hsh2nxt);
 
     NextHop    (nexthop_map,         &hsh2nxt, &nxt2msk);
 
