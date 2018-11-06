@@ -122,9 +122,12 @@ class mby_base_agent
       // TODO: accesses to config db has performance issues, consider adding the
       // vif to the config object and then pass it over to the driver/mon
       //
+      // TODO: change cfg access so it comes from the env
+      //
       if(!uvm_config_db #(mby_base_config)::get(this, "", "cfg_obj", cfg_obj)) begin
          `uvm_fatal("CFG_ERROR", {"Config object must be set for: ", get_full_name(), ".cfg_obj"})
       end
+      // TODO: document why we are accessing the vif and not the cfg.
       if(cfg_obj.driver_active == UVM_ACTIVE || cfg_obj.monitor_active == UVM_ACTIVE) begin
          if(!uvm_config_db #(T_vif)::get(this, "", "vintf", vintf)) begin
             `uvm_fatal("VIF_ERROR", {"Virtual interface must be set for: ",get_full_name(),".vintf"})
