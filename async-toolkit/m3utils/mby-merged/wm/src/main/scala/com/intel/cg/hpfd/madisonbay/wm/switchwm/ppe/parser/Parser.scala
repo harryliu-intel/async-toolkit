@@ -13,9 +13,6 @@ import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtLong.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
 import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
-import scalaz.State
-import scalaz.syntax.traverse._
-import scalaz.std.list._
 
 import scala.annotation.tailrec
 
@@ -173,33 +170,32 @@ object Parser {
     val ext_unknown_protid = countersL composeLens parser_counters_r._EXT_UNKNOWN_PROTID composeLens parser_counters_r.EXT_UNKNOWN_PROTID._value
     val ext_dup_protid = countersL composeLens parser_counters_r._EXT_DUP_PROTID composeLens parser_counters_r.EXT_DUP_PROTID._value
 
-    def modify(parserExtractCfgReg: parser_extract_cfg_r): State[(List[Short], mby_ppe_parser_map), Unit] =
-      State { actualState =>
-        val (result, mbyPpeParserMap) = actualState
+    def modify(actualState: (Map[Int, Short], mby_ppe_parser_map, Int), parserExtractCfgReg: parser_extract_cfg_r) = {
+        val (result, mbyPpeParserMap, counter) = actualState
         val protocolId = parserExtractCfgReg.PROTOCOL_ID()
         def toWordWithOffset(v: Int): Short = packetHeader.getWord(v + getLower32(parserExtractCfgReg.OFFSET()).toInt)
 
         (protocolId, protoOffsets.collect { case (_, HeaderPointer(pId, baseOffset)) if pId == protocolId => baseOffset }.toList) match {
 
-          case (ExtractAction.SpecialProtocolId, _) => ((0.toShort :: result, mbyPpeParserMap), ())
+          case (ExtractAction.SpecialProtocolId, _) => (result, mbyPpeParserMap, counter + 1)
 
           case (_, Nil) =>
             val next = ext_unknown_protid.modify((v: Long) => v.incWithUByteSaturation)
-            ((0.toShort :: result, next(mbyPpeParserMap)), ())
+            (result, next(mbyPpeParserMap), counter + 1)
 
           case (_, h :: Nil) =>
-            ((toWordWithOffset(h) :: result, mbyPpeParserMap),())
+            (result.updated(counter, toWordWithOffset(h)), mbyPpeParserMap, counter + 1)
 
           case (_, h :: _) =>
             val next = ext_dup_protid.modify((v: Long) => v.incWithUByteSaturation)
-            ((toWordWithOffset(h) :: result, next(mbyPpeParserMap)), ())
+            (result.updated(counter, toWordWithOffset(h)), next(mbyPpeParserMap), counter + 1)
 
         }
-      }
+    }
 
-    val ((result, updatedParserMap), _) = extractorCsr.toList.traverseS(modify)((List.empty, csrParser.ppeParserMap))
+    val (result, updatedParserMap, _) = extractorCsr.foldLeft((Map[Int, Short](), csrParser.ppeParserMap, 0))(modify)
 
-    (PacketFields(result.reverse.toIndexedSeq), csrParser.copy(ppeParserMap = updatedParserMap))
+    (PacketFields(result), csrParser.copy(ppeParserMap = updatedParserMap))
   }
 
   /**
