@@ -1,14 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Egress env pkg
+// Title         : Egress Test island config
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_env_pkg.sv
+// File          : mby_egr_ti_config.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Egress env pkg definition
+// This is the configuration object to control the MBY rtl env.
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -18,25 +18,24 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-package egress_env_pkg;
+//-------------------------------------------------------------------------------
+// Class: mby_igr_ti_cfg
+//-------------------------------------------------------------------------------
+class mby_egr_ti_cfg extends uvm_object;
 
-  import uvm_pkg::*;
+  string egress_ti_low_path;
+  int    egress_has_reset_pkg;
 
-  import shdv_base_pkg::*;
-  //import mby_wm_dpi_pkg::*;
-  import mby_common_pkg::*;
+  `uvm_object_utils_begin(mby_egr_ti_cfg)
+     `uvm_field_string(egress_ti_low_path, UVM_ALL_ON)
+     `uvm_field_int(egress_has_reset_pkg, UVM_ALL_ON)
+   `uvm_object_utils_end
 
-  import mby_ec_bfm_pkg::*;
-
-`include "uvm_macros.svh"
-
-`include "egress_types.svh"
-`include "egress_ti_config.svh"
-`include "egress_config.svh"
-//PJP`include "egress_ral_env.svh"
-`include "egress_env_monitor.svh"
-`include "egress_base_env.svh"
-`include "egress_env.svh"
-`include "egress_seqlib.sv"
-
-endpackage // egress_env_pkg
+   //---------------------------------------------------------------------------
+   // Function: new
+   //---------------------------------------------------------------------------
+   function new(string name = "");
+      super.new(name);
+   endfunction : new
+  
+endclass : mby_egr_ti_cfg

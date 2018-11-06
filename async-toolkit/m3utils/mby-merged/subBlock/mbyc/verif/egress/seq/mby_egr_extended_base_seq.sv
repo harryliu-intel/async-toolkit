@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title         : Egress sequence library
+// Title         : Egress extended base sequence
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_seqlib.sv
+// File          : mby_egr_extended_base_seq.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -18,6 +18,20 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-`include "egress_env_base_seq.sv"
-`include "egress_extended_base_seq.sv"
-//PJP`include "egress_hard_reset_seq.sv"
+//-----------------------------------------------------------------------------
+// Class: mby_egr_extended_base_seq
+//-----------------------------------------------------------------------------
+class mby_egr_extended_base_seq extends mby_egr_env_base_seq;
+
+  `uvm_object_utils(mby_egr_extended_base_seq)
+//PJP  `uvm_declare_p_sequencer(slu_sequencer)
+
+   //---------------------------------------------------------------------------
+   // Function: new
+   //---------------------------------------------------------------------------
+   function new(input string name = "mby_egr_extended_base_seq",
+               uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
+      super.new(name /*, sequencer, parent_seq*/);
+   endfunction
+
+endclass : mby_egr_extended_base_seq

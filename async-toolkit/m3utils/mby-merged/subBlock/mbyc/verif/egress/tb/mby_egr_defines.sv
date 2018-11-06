@@ -1,14 +1,16 @@
 //-----------------------------------------------------------------------------
-// Title         : Egress params file
+// Title         : Egress definitions
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_params.sv
+// File          : mby_egr_defines.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// interface definitions, parameters, etc.
+//  This file contain all the IP macros (`define)
+//   each define must be protected with "ifndef" to be able to be overide 
+//   from the command line
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -18,5 +20,10 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-`define EGRESS_SOME_NUM 1
+`ifndef MBY_EGR_TOP
+ `define MBY_EGR_TOP egr_tb.egr_top
+`endif
+`ifndef MBY_EGR_TOP_PATH
+ `define MBY_EGR_TOP_PATH egr_tb
+`endif
 

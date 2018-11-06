@@ -3,7 +3,7 @@
 // Title         : Egress test library
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_test_lib.sv
+// File          : mby_egr_test_lib.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -19,24 +19,24 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-program egress_test_lib;
+program mby_egr_test_lib;
 
   import uvm_pkg::*;
-  import egress_env_pkg::*;
+  import mby_egr_env_pkg::*;
   import eth_bfm_pkg::*;
   import mby_ec_bfm_pkg::*;
 
 `include "uvm_macros.svh"
-`include "egress_base_test.svh"
-`include "egress_rand_test.svh"
+`include "mby_egr_base_test.svh"
+`include "mby_egr_rand_test.svh"
 
-  // UVM Start test
-  initial begin
-    string testname;
-    if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-      $display ("EGRESS_tb Started Running %s in UVM mode!\n",testname);
-    end
-    uvm_pkg::run_test(testname);
-  end
+   // UVM Start test
+   initial begin
+      string testname;
+      if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
+         $display ("EGRESS_tb Started Running %s in UVM mode!\n",testname);
+      end
+      uvm_pkg::run_test(testname);
+   end
 
 endprogram

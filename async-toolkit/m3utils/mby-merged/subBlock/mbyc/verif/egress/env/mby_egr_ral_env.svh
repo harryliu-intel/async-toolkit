@@ -2,7 +2,7 @@
 // Title         : Egress RAL env class
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_ral_env.svh
+// File          : mby_egr_ral_env.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018

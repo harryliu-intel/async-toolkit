@@ -637,7 +637,7 @@ print "MGM debug : @mbyMgmLibs\n";
             ## mby egress model starts
             ####################################################################
             egr => {
-               top  => 'mby_egress_tb_lib.egress_tb',
+               top  => 'mby_egress_tb_lib.mby_egr_tb',
 
                use  => [
                         "eth_port_common:common"
