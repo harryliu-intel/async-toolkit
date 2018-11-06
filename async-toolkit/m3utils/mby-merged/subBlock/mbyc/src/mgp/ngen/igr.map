@@ -14,26 +14,5 @@ igr_vp_tx_pfc_xoff          >> vp_tx_pfc_xoff                        //FIXME sho
 rx_ppe_igr_if               >> rx_ppe_igr
 igr_rx_ppe_if               >> igr_rx_ppe
 
-// Temporarily tie off igr_egr connections.
-  1'b0                    >> i_egr_wreq_valid
- 20'b0                    >> i_egr_wr_seg_ptr
-  4'b0                    >> i_egr_wr_sema
-  3'b0                    >> i_egr_wr_wd_sel
- 13'b0                    >> i_egr_wreq_id
-512'b0                    >> i_egr_wr_data
-  2'b0                    >> i_egr_rreq_credits
-  1'b0                    >> i_egr_rrsp_valid
-  3'b0                    >> i_egr_rrsp_dest_block
- 13'b0                    >> i_egr_rrsp_req_id
-512'b0                    >> i_egr_rd_data
-
-
-                          >> o_egr_req_id
-                          >> o_egr_rreq_valid
-                          >> o_egr_seg_ptr
-                          >> o_egr_sema
-                          >> o_egr_wd_sel
-                          >> o_egr_wreq_credits
-
 
 
