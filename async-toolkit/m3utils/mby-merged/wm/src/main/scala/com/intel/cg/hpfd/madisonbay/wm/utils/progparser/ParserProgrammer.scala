@@ -204,6 +204,27 @@ object ParserProgrammer {
       readParserExtractCfgVer2(tail, readParserExtractCfgEntryVer2(cfg, parser))
   }
 
+  private def programTcamAndRam(parser: mby_ppe_parser_map, idProfile: Int, extractionId: Int, key: Long, keyInvert: Long, extractIdx: Long, ptype: Long) = {
+    val lensTcam = ParserLenses.ptypeTcam(idProfile, extractionId)
+    val lensRam = ParserLenses.ptypeRam(idProfile, extractionId)
+    val lensKeyInvert = lensTcam composeLens parser_ptype_tcam_r._KEY_INVERT composeLens parser_ptype_tcam_r.KEY_INVERT._value
+    val lensKey = lensTcam composeLens parser_ptype_tcam_r._KEY composeLens parser_ptype_tcam_r.KEY._value
+    val lensExtractIdx = lensRam composeLens parser_ptype_ram_r._EXTRACT_IDX composeLens parser_ptype_ram_r.EXTRACT_IDX._value
+    val lensPtype = lensRam composeLens parser_ptype_ram_r._PTYPE composeLens parser_ptype_ram_r.PTYPE._value
+
+    CsrLenses.execute(parser, for {
+      _ <- lensKeyInvert.assign_(keyInvert)
+      _ <- lensKey.assign_(key)
+      _ <- lensExtractIdx.assign_(extractIdx)
+      _ <- lensPtype.assign_(ptype)
+    } yield ())
+  }
+
+  private def programTcamBlank(parser: mby_ppe_parser_map) = {
+    (0 to 64).foldLeft(parser)((runningParser, extractionId) =>
+      programTcamAndRam(runningParser, 0, extractionId, 0xffffffff, 0xffffffff, 0, 0))
+  }
+
   def readStringHex(hex: String): Int = Integer.parseUnsignedInt(hex.substring(2), 16)
 
   def readVer2(fromJson: Map[String, Any], csr: Csr): mby_ppe_parser_map = {
@@ -217,26 +238,17 @@ object ParserProgrammer {
 
     val parserAfterExtractCfg = readParserExtractCfgVer2(fromJson.getList[Map[String, Any]]("input.PARSER_EXTRACT_CFG"), parserAfterStages)
 
-    fromJson.getList[Map[String, Any]]("input.PACKET_TYPE").foldLeft(parserAfterExtractCfg) {
+    val parserAfterBlankingTcam = programTcamBlank(parserAfterExtractCfg)
+
+    fromJson.getList[Map[String, Any]]("input.PACKET_TYPE").foldLeft(parserAfterBlankingTcam) {
       case (parserMap, entity) =>
         val idProfile = entity.getInt("id")
         entity.getList[Map[String, Any]]("extractions").foldLeft(parserMap) {
           case (parser, e) =>
             print(s"programming $e \n")
             val extractionId = e.getInt("id")
-            val lensTcam = ParserLenses.ptypeTcam(idProfile, extractionId)
-            val lensRam = ParserLenses.ptypeRam(idProfile, extractionId)
-            val lensKeyInvert = lensTcam composeLens parser_ptype_tcam_r._KEY_INVERT composeLens parser_ptype_tcam_r.KEY_INVERT._value
-            val lensKey = lensTcam composeLens parser_ptype_tcam_r._KEY composeLens parser_ptype_tcam_r.KEY._value
-            val lensExtractIdx = lensRam composeLens parser_ptype_ram_r._EXTRACT_IDX composeLens parser_ptype_ram_r.EXTRACT_IDX._value
-            val lensPtype = lensRam composeLens parser_ptype_ram_r._PTYPE composeLens parser_ptype_ram_r.PTYPE._value
-
-            CsrLenses.execute(parser, for {
-              _ <- lensKeyInvert.assign_(readStringHex(e.getString("key_invert")))
-              _ <- lensKey.assign_(readStringHex(e.getString("key")))
-              _ <- lensExtractIdx.assign_(e.getInt("extract_idx"))
-              _ <- lensPtype.assign_(e.getInt("ptype"))
-            } yield ())
+            programTcamAndRam(parser, idProfile, extractionId, readStringHex(e.getString("key")),
+              readStringHex(e.getString("key_invert")), e.getInt("extract_idx"), e.getInt("ptype"))
         }
     }
 

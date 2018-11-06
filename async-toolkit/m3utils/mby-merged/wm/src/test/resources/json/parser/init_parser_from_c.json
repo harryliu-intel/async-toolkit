@@ -18326,6 +18326,60 @@
         "extract_word": 12,
         "protocol_id": 0,
         "offset": 12
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 6,
+        "protocol_id": 1,
+        "offset": 0
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 7,
+        "protocol_id": 1,
+        "offset": 2
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 8,
+        "protocol_id": 1,
+        "offset": 4
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 9,
+        "protocol_id": 1,
+        "offset": 6
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 10,
+        "protocol_id": 1,
+        "offset": 8
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 11,
+        "protocol_id": 1,
+        "offset": 10
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 12,
+        "protocol_id": 1,
+        "offset": 16
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 14,
+        "protocol_id": 1,
+        "offset": 14
+      },
+      {
+        "extract_profile": 1,
+        "extract_word": 31,
+        "protocol_id": 1,
+        "offset": 14
       }
     ],
     "PACKET_TYPE": [
