@@ -2,7 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.utils.progparser
 
 import com.intel.cg.hpfd.madisonbay.BitVector
 import madisonbay.csr.all._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses, ParserStageLenses}
 import com.intel.cg.hpfd.madisonbay.wm.utils.Json.JsonMap
 import monocle.function.Index.listIndex
 import monocle.state.all._
@@ -96,7 +96,7 @@ object ParserProgrammer {
   private def readParserCfgVer2(lines: List[Map[String, Any]], parser: mby_ppe_parser_map): mby_ppe_parser_map = lines match {
     case Nil => parser
     case cfg :: tail =>
-      val lensCfg = ParserLenses(0).portCfg(cfg.getInt("id"))
+      val lensCfg = ParserLenses.portCfg(cfg.getInt("id"))
       val lensInitialW0 = lensCfg composeLens parser_port_cfg_r._INITIAL_W0_OFFSET composeLens parser_port_cfg_r.INITIAL_W0_OFFSET._value
       val lensInitialW1 = lensCfg composeLens parser_port_cfg_r._INITIAL_W1_OFFSET composeLens parser_port_cfg_r.INITIAL_W1_OFFSET._value
       val lensInitialPtr = lensCfg composeLens parser_port_cfg_r._INITIAL_PTR composeLens parser_port_cfg_r.INITIAL_PTR._value
@@ -126,7 +126,7 @@ object ParserProgrammer {
   private def readParserRulesVer2(idStage: Int, rules: List[Map[String, Any]], parser: mby_ppe_parser_map): mby_ppe_parser_map = rules match {
     case Nil => parser
     case cfg :: tail =>
-      val pl = ParserLenses(idStage)
+      val pl = ParserStageLenses(idStage)
       val rule = cfg.getInt("rule")
       val keyW = cfg.getMap("PARSER_KEY_W")
       val lensKeyW1 = pl.keyW(rule) composeLens parser_key_w_r._W1_VALUE composeLens parser_key_w_r.W1_VALUE._value
@@ -187,7 +187,7 @@ object ParserProgrammer {
     val profile = entry.getInt("extract_profile")
     val word = entry.getInt("extract_word")
 
-    val lensRegister = ParserLenses(0).extractCfg(profile, word)
+    val lensRegister = ParserLenses.extractCfg(profile, word)
     val lensProtocolId = lensRegister composeLens parser_extract_cfg_r._PROTOCOL_ID composeLens parser_extract_cfg_r.PROTOCOL_ID._value
     val lensOffset = lensRegister composeLens parser_extract_cfg_r._OFFSET composeLens parser_extract_cfg_r.OFFSET._value
 
@@ -204,14 +204,42 @@ object ParserProgrammer {
       readParserExtractCfgVer2(tail, readParserExtractCfgEntryVer2(cfg, parser))
   }
 
+  def readStringHex(hex: String): Int = Integer.parseUnsignedInt(hex.substring(2), 16)
+
   def readVer2(fromJson: Map[String, Any], csr: Csr): mby_ppe_parser_map = {
+
     val parserAfterCfgRead = readParserCfgVer2(
         fromJson.getList[Map[String,Any]]("input.PARSER_PORT_CFG"),
         csr.getRxPpe(0).ppeRxMap.parser
     )
 
     val parserAfterStages = readParserStagesVer2(fromJson.getList[Map[String, Any]]("input.stages"), parserAfterCfgRead)
-    readParserExtractCfgVer2(fromJson.getList[Map[String, Any]]("input.PARSER_EXTRACT_CFG"), parserAfterStages)
+
+    val parserAfterExtractCfg = readParserExtractCfgVer2(fromJson.getList[Map[String, Any]]("input.PARSER_EXTRACT_CFG"), parserAfterStages)
+
+    fromJson.getList[Map[String, Any]]("input.PACKET_TYPE").foldLeft(parserAfterExtractCfg) {
+      case (parserMap, entity) =>
+        val idProfile = entity.getInt("id")
+        entity.getList[Map[String, Any]]("extractions").foldLeft(parserMap) {
+          case (parser, e) =>
+            print(s"programming $e \n")
+            val extractionId = e.getInt("id")
+            val lensTcam = ParserLenses.ptypeTcam(idProfile, extractionId)
+            val lensRam = ParserLenses.ptypeRam(idProfile, extractionId)
+            val lensKeyInvert = lensTcam composeLens parser_ptype_tcam_r._KEY_INVERT composeLens parser_ptype_tcam_r.KEY_INVERT._value
+            val lensKey = lensTcam composeLens parser_ptype_tcam_r._KEY composeLens parser_ptype_tcam_r.KEY._value
+            val lensExtractIdx = lensRam composeLens parser_ptype_ram_r._EXTRACT_IDX composeLens parser_ptype_ram_r.EXTRACT_IDX._value
+            val lensPtype = lensRam composeLens parser_ptype_ram_r._PTYPE composeLens parser_ptype_ram_r.PTYPE._value
+
+            CsrLenses.execute(parser, for {
+              _ <- lensKeyInvert.assign_(readStringHex(e.getString("key_invert")))
+              _ <- lensKey.assign_(readStringHex(e.getString("key")))
+              _ <- lensExtractIdx.assign_(e.getInt("extract_idx"))
+              _ <- lensPtype.assign_(e.getInt("ptype"))
+            } yield ())
+        }
+    }
+
   }
 
 }

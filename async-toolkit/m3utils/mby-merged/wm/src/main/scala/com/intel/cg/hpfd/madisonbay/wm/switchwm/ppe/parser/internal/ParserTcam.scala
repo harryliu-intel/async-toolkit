@@ -38,6 +38,11 @@ object ParserTcam {
       }
   }
 
+  def matchPtype(tcamKey: Int, tcamKeyInvert: Int, flags: Int): Boolean = {
+    val mask = tcamKey ^ tcamKeyInvert
+    (tcamKey & tcamKeyInvert) == 0 && (flags & mask) == (tcamKey & mask)
+  }
+
   def matchRegister(behavior: TcamQuery => Boolean)(data: TcTriple): Boolean = matchRegisterSeq(behavior)(Seq(data))
 
   /**

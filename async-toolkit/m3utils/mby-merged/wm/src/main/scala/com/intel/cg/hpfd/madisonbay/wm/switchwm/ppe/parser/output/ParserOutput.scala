@@ -12,21 +12,21 @@ case class ParserOutput(updatedParserCsr: CsrParser,
                         rxFlags: EplRxFlags,
                         segMetaErr: Boolean,
                         paAdjSegLegLen: Int,
-                        paKeys: PacketFields, // should be 'option' values?
-                        paKeysValid: Boolean,
-                        paFlags: BitFlags,
-                        paPointers: ProtoOffsets,
-                        paPointersValid: Boolean,
-                        paCsumOk: Boolean,
-                        paParseException: Option[ParserException],
-                        paDrop: Boolean,
-                        paPacketType: Int
+                        parserKeys: PacketFields,
+                        parserKeysValid: Boolean,
+                        parserFlags: BitFlags,
+                        parserPointers: ProtoOffsets,
+                        parserPointersValid: Boolean,
+                        parserCsumOk: Boolean,
+                        parserException: Option[ParserException],
+                        drop: Boolean,
+                        packetType: Int
                       ) {
   def simplifiedString: String =
     s"""ParserOutput(updatedParserCsr=..., rxPort=$rxPort, pktMeta=$pktMeta, rxFlags=$rxFlags, segMetaErr=$segMetaErr, paAdjSegLegLen=$paAdjSegLegLen,
-       | paKeys=$paKeys,
-       | paKeysValid=$paKeysValid, paFlags=${paFlags.get}, paPointers=$paPointers, paPointersValid=$paPointersValid, paCsumOk=$paCsumOk,
-       | paParseException=$paParseException, paDrop=$paDrop, paPacketType=$paPacketType)
+       | parserKeys=$parserKeys,
+       | parserKeysValid=$parserKeysValid, parserFlags=${parserFlags.get}, parserPointers=$parserPointers, parserPointersValid=$parserPointersValid,
+       | parserCsumOk=$parserCsumOk, parserException=$parserException, drop=$drop, paPacketType=$packetType)
      """.stripMargin
 }
 

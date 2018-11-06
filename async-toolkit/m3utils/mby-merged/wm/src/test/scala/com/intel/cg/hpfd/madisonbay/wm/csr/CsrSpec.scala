@@ -2,7 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.csr
 
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserStageLenses}
 import org.scalatest._
 import monocle.state.all._
 
@@ -16,7 +16,7 @@ class CsrSpec extends FlatSpec with Matchers {
 
     val idStage = 0
     val idRule = 0
-    val pl = ParserLenses(idStage)
+    val pl = ParserStageLenses(idStage)
 
     val smL = pl.keyS(idRule) composeLens parser_key_s_r._STATE_MASK composeLens parser_key_s_r.STATE_MASK._value
     val svL = pl.keyS(idRule) composeLens parser_key_s_r._STATE_VALUE composeLens parser_key_s_r.STATE_VALUE._value

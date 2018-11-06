@@ -2,7 +2,7 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
 import madisonbay.csr.all._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserStageLenses}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserExceptions.ParserException
@@ -24,7 +24,7 @@ class ParserStageSpec extends FlatSpec with Matchers {
     val port = Port(0)
     val pck = Packet(Array.ofDim[Byte](79))
     val ph = PacketHeader(pck)
-    val pl = ParserLenses(idx)
+    val pl = ParserStageLenses(idx)
 
     val parserKeySLmask = pl.keyS(0) composeLens parser_key_s_r._STATE_MASK composeLens parser_key_s_r.STATE_MASK._value
 

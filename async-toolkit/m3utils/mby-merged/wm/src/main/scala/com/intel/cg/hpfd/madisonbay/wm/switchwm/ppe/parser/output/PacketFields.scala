@@ -25,9 +25,7 @@ class PacketFields(val fields: Map[Int, Short]) {
     fields(i)
   }
 
-  def key16Updated(i: Int, x: Short): PacketFields = {
-    new PacketFields(fields.updated(i, x))
-  }
+  def key16Updated(i: Int, x: Short): PacketFields = new PacketFields(fields.updated(i, x))
 
   def key32(i: Int): Int = {
     require((0 until 16).contains(i))
@@ -47,5 +45,3 @@ object PacketFields {
   def apply(fields: Map[Int, Short]): PacketFields = new PacketFields(fields)
 
 }
-
-
