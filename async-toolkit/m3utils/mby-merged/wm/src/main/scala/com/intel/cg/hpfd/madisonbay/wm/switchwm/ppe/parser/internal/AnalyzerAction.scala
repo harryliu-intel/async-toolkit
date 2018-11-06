@@ -1,8 +1,8 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal
 
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.{AluOperation, Parser}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._

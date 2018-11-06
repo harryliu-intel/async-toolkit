@@ -1,19 +1,21 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper
 
 /*import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrMapper
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserOutput*/
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
+import output.PacketProfile
 
-object Mapper {
+class Mapper(csr: CsrMapper, parserOutput: ParserOutput) {
 
-  case class MacLookupResult(index: Int, routeable: Boolean)
-  case class MacMapperResult(outerDMAC: MacLookupResult,
-                             outerSMAC: MacLookupResult,
-                             innerDMAC: MacLookupResult,
-                             innerSMAC: MacLookupResult)
+  def applyMapping(): Unit = {
 
+  }
 
-  /*def applyMapping(csr: CsrMapper, parserOutput: ParserOutput): Unit = {
+  def packetProfile(): PacketProfile = {
+    PacketProfile()
+  }
 
-  }*/
+  def extendPacketFields(): Unit = {}
 
 }
+*/
+object Mapper

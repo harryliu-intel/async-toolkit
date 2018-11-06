@@ -1,7 +1,7 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFields
 import org.scalatest.{FlatSpec, Matchers}
 
 class PacketFieldsSpec extends FlatSpec with Matchers {

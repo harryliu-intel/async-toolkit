@@ -2,15 +2,14 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
 
 import madisonbay.csr.all._
-import ParserExceptions._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserExceptions._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{IPVersion, Packet, PacketHeader}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.PacketFields
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.{PacketFields, ParserOutput}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtLong.Implicits
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions.{AnalyzerAction, ExceptionAction, ExtractAction}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal._
 import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
 

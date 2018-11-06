@@ -1,5 +1,5 @@
 //scalastyle:off regex.tuples
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal
 
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{HeaderPointer, ProtoOffsets}

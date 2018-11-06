@@ -1,12 +1,11 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal
 
-import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
-import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam.TcamQuery
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam
-import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
-
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.util.Tcam.TcamQuery
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers.getLower16
+import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
+import madisonbay.csr.all._
 
 /**
   * Ternary Content-Addressable Memory

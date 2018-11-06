@@ -1,8 +1,8 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.actions
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal
 
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserExceptions._
 
 class ExceptionAction(registerExc: parser_exc_r) {
 

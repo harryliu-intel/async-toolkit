@@ -1,9 +1,10 @@
-package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.internal
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.mapper.Mapper.MacMapperResult
-import madisonbay.csr.all._
-import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
+import MacMapper.MacMapperResult
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.FieldVector._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFields
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
+import madisonbay.csr.all._
 
 class KeyRewrite(csr: mby_ppe_mapper_map) {
   type RewriteProfileType = Int
