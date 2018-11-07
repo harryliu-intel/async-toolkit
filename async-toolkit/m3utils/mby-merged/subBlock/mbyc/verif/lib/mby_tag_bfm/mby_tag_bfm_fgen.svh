@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay Base Config Class
+// Title         : Madison Bay Tag BFM Frame Generator
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_base_config.svh
+// File          : mby_tag_bfm_fgen.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
-// Created       : 30.10.2018
+// Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Base configuration object for Madison Bay.
+// This is the frame generator class used by the Tag BFM
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,32 +30,24 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_BASE_PKG__
-`error "Attempt to include file outside of mby_igr_env_pkg."
+`ifndef __MBY_TAG_BFM_PKG__
+`error "Attempt to include file outside of mby_tag_bfm_pkg."
 `endif
-`ifndef __MBY_BASE_CONFIG__
-`define __MBY_BASE_CONFIG__
+`ifndef __MBY_TAG_BFM_FGEN__
+`define __MBY_TAG_BFM_FGEN__
+//`uvm_analysis_imp_decl(_fprt)
+//`uvm_analysis_imp_decl(_frame)
 //-----------------------------------------------------------------------------
-// CLASS: mby_base_config
+// CLASS: mby_tag_bfm_fgen
+//
+// This is the frame generator that is instantiated in the tag bfm. It handles
+// frame reception/generator
 //
 //-----------------------------------------------------------------------------
-class mby_base_config extends shdv_base_config;
+class mby_tag_bfm_fgen extends uvm_component;
 
-   // VARIABLE: driver_active
-   // Agent is configured to be active or passive
-   // TODO: add "_is_" e.g. driver_is_active
-   uvm_active_passive_enum driver_active;
-
-   // VARIABLE: monitor_active
-   // Agent is configured to be active or passive
-   uvm_active_passive_enum monitor_active;
-
-   // VARIABLE: rsp_req
-   // Responses are required for this agent.
-   bit rsp_req = 0;
-
-   // UVM object utils macro
-   `uvm_object_utils(mby_base_config)
+   // Registering class with the factory
+   `uvm_component_utils(mby_tag_bfm_fgen)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -63,29 +55,14 @@ class mby_base_config extends shdv_base_config;
    // Constructor
    //
    // ARGUMENTS:
-   //    string name - An identifier for this configuration object.
+   //    string name          - An instance name of the frame generator.
+   //    uvm_component parent - The generators's parent component.
    // -------------------------------------------------------------------------
-   function new(string name = "mby_base_config");
-      super.new(name);
+   function new(string name, uvm_component parent);
+      super.new(name, parent);
    endfunction : new
 
-   // -------------------------------------------------------------------------
-   // FUNCTION: do_print
-   //
-   // print and sprint functions use the do_print function to print out the
-   // class, here the driver/monitor active are printed out.
-   //
-   // ARGUMENTS:
-   //    uvm_printer printer - APIs of the uvm_printer class are used to print
-   //    the class information.
-   // -------------------------------------------------------------------------
-   virtual function void do_print(uvm_printer printer);
-      super.do_print(printer);
-      // pretty print the configuration object
-      printer.print_field("driver_active" , driver_active , 1);
-      printer.print_field("monitor_active", monitor_active, 1);
-      printer.print_field("resp_req", rsp_req, 1);
-   endfunction : do_print
+endclass : mby_tag_bfm_fgen
 
-endclass : mby_base_config
 `endif
+
