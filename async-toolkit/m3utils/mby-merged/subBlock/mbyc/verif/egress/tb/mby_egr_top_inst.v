@@ -1,14 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Egress Test island config
+// Title         : Egress top instance module
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_ti_config.svh
+// File          : mby_egr_top_inst.v
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the configuration object to control the MBY rtl env.
+// 
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -18,24 +18,7 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-class egress_ti_config extends uvm_object;
-
-  // Variable: egress_ti_low_path
-  // egress test island path
-  string egress_ti_low_path;
-
-  // Variable: egress_has_reset_pkg
-  // egress reset pkg property
-  int    egress_has_reset_pkg;
-
-  `uvm_object_utils_begin(egress_ti_config)
-     `uvm_field_string(egress_ti_low_path, UVM_ALL_ON)
-     `uvm_field_int(egress_has_reset_pkg, UVM_ALL_ON)
-   `uvm_object_utils_end
-
-  //function: new 
-  function new(string name = "");
-    super.new(name);
-  endfunction
-  
-endclass // egress_ti_config
+//egr_top egress(
+//                .clk   (egress_primary_clock)
+//               ,.rst_n (egress_primary_reset)
+//               );

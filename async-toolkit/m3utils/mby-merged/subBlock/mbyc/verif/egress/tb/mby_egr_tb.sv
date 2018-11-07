@@ -3,7 +3,7 @@
 // Title         : Egress testbench module
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_tb.sv
+// File          : mby_egr_tb.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -25,9 +25,9 @@
 
 `timescale 1ps/1fs
 
-`include "egress_defines.sv"
+`include "mby_egr_defines.sv"
 
-module egress_tb ();
+module mby_egr_tb ();
 
   import uvm_pkg::*;
   
@@ -47,15 +47,15 @@ module egress_tb ();
   // ===============================================
   // Verification Test Library
   // ===============================================
-  egress_test_lib test();
+  mby_egr_test_lib test();
   
   // ===============================================
   // DUT RTL instance
   // ===============================================
-`include "egress_top_inst.v"
+`include "mby_egr_top_inst.v"
 
   // Parameters for interfaces
-`include "egress_params.sv"
+`include "mby_egr_params.sv"
 
   // ===============================================
   // Interfaces instance
@@ -95,7 +95,7 @@ module egress_tb ();
   // Instance Egress env interface
   // This is done in the TB if the IP need to drive also signals.
   // ===============================================
-  egress_env_if egress_if();
+  mby_egr_env_if egress_if();
   assign egress_reset       = egress_if.reset;
   assign egress_if.clock    = egress_clock;
 
@@ -103,7 +103,7 @@ module egress_tb ();
   // ===============================================
   // Test Island instance
   // ===============================================
-  egress_ti_high #()
+  mby_egr_ti_high #()
     u_egress_ti_high (
                     .egress_if           (egress_if)
                    ,.eth_bfm_tx_intf_0   (eth_bfm_tx_intf_0)
@@ -157,7 +157,7 @@ module egress_tb ();
       if ($test$plusargs("fsdb_config")) begin                          // Plusarg to indicate a FSDB.dump.config file will be used. It indicates which modules to sample.
         $fsdbDumpvarsToFile ("fsdb.dump.config");
       end else begin
-        $fsdbDumpvars(0,egress_tb,"+all");                             // Default - FSDB dump of all signals in the design
+        $fsdbDumpvars(0,mby_egr_tb,"+all");                             // Default - FSDB dump of all signals in the design
         $fsdbDumpSVA();
       end
 
@@ -184,4 +184,4 @@ module egress_tb ();
     return out;
   endfunction // convert_time()
 
-endmodule // egress_tb
+endmodule // mby_egr_tb

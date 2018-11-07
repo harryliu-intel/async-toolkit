@@ -2,7 +2,7 @@
 // Title         : Egress registers ral env class
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : egress_regs_ral_env.svh
+// File          : mby_egr_regs_ral_env.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 21.08.2018
 // Last modified : 21.08.2018
@@ -22,29 +22,29 @@
 `define SLA_PATH_TO_STRING(SIG_PATH) `"SIG_PATH`"
 `endif
 
-`include "egress_regs_regs.svh"
+`include "mby_egr_regs_regs.svh"
 
-class egress_regs_ral_env extends sla_ral_env;
+class mby_egr_regs_ral_env extends sla_ral_env;
 
-  `ovm_component_utils(egress_regs_ral_env);
+  `ovm_component_utils(mby_egr_regs_ral_env);
 
-  rand egress_regs_file egress_regs;
+  rand mby_egr_regs_file mby_egr_regs;
 
   // --------------------------
-  function new( string n="egress_regs_ral_env", ovm_component p = null, string hdl_path = "");
+  function new( string n="mby_egr_regs_ral_env", ovm_component p = null, string hdl_path = "");
     super.new( n, p, hdl_path);
   endfunction : new
 
   // --------------------------
   virtual function void build();
     super.build();
-    egress_regs = egress_regs_file::type_id::create("egress_regs", this);
-    add_file("egress_regs", egress_regs);
+    mby_egr_regs = mby_egr_regs_file::type_id::create("mby_egr_regs", this);
+    add_file("mby_egr_regs", mby_egr_regs);
   endfunction : build
 
   // --------------------------
   function void connect();
-    egress_regs.set_base(4'h0);
+    mby_egr_regs.set_base(4'h0);
     set_bit_blasting(1);
   endfunction : connect
 
@@ -53,4 +53,4 @@ class egress_regs_ral_env extends sla_ral_env;
      return({"Generated SV RAL Env ---> ", `__FILE__}); 
   endfunction  
 
-endclass : egress_regs_ral_env
+endclass : mby_egr_regs_ral_env
