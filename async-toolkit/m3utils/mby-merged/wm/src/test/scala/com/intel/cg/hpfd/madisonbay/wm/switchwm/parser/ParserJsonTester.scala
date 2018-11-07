@@ -26,7 +26,7 @@ class ParserJsonTester extends FlatSpec with Matchers {
   val payload = "123456789abcdef"
   testsFromC.getList[Map[String,Any]]("tests").foreach { testCase =>
     val name = testCase.getString("dscr")
-    println(s"taking test: $name")
+   // println(s"taking test: $name")
     val packet = Packet.strHexToPacket(testCase.getString("in.data") + payload)
     val port = testCase.getIntOpt("in.port").getOrElse(0)
     val parseResult = parseFromCConfig2(packet, port)
