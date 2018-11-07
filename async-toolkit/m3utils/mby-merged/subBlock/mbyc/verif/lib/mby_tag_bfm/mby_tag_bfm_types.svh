@@ -39,17 +39,27 @@
 // -------------------------------------------------------------------------
 // Main struct type definitions for TAG BFM
 // -------------------------------------------------------------------------
+// Re-using the low-latency tag format from the RTL libraries, this will be
+// the main data type of the transaction item used by the tag bfm.
 typedef lltformat_t mby_tag_bfm_data_t;
-typedef logic       mby_tag_bfm_debg_t;
+// Defining the debug type to be a simple logic for now.
+typedef logic mby_tag_bfm_debg_t;
+// This are the modes of operation of the Tag BFM, variable to be included in
+// the configuration object.
+typedef enum bit {
+   TAG_BFM_IGR_MODE,
+   TAG_BFM_EGR_MODE
+} mby_tag_bfm_mode_t;
 
 // -------------------------------------------------------------------------
 // Main class & VIF type definitions for TAG BFM
 // -------------------------------------------------------------------------
+// Creating a virtual interface type.
 typedef virtual mby_tag_bfm_if mby_tag_bfm_vif;
-typedef class mby_tag_bfm_xaction; // fwd declaration of the transaction class
+// Forward declaration of the transaction class (in the tag_bfm_pkg this file
+// is compiled before the transaction item.
+typedef class mby_tag_bfm_xaction;
+// Defining the tag agent as a parameterized base agent.
 typedef mby_base_agent#(.T_req(mby_tag_bfm_xaction), .T_vif(mby_tag_bfm_vif)) mby_tag_bfm_agent;
 
 `endif
-
-
-

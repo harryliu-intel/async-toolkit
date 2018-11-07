@@ -40,14 +40,36 @@
 //
 // This is the configuration class used by the tag bfm. It contains fields to
 // control the tag agent's driver/monitor behavior and also to control the
-// frame generator capabilities.
-//
+// frame generator capabilities. This class needs to be randomized specifying
+// the mode of operation (IGR or EGR), the rest of the fields will be
+// constrained based off of that. E.g.
+// (start code)
+//    tag_bfm_cfg.randomize() with { bfm_mode == TAG_BFM_IGR_MODE; }
+// (end)
 //-----------------------------------------------------------------------------
 class mby_tag_bfm_cfg extends mby_base_config;
 
    // VARIABLE: frame_gen_active
    // Agent is configured to be active or passive
    uvm_active_passive_enum frame_gen_active;
+
+   // VARIABLE: bfm_mode
+   // The tag bfm can be configured to be in ingress or egress modes.
+   mby_tag_bfm_mode_t bfm_mode;
+
+   // CONSTRAINT: ingress_constraint
+   // Sets proper values for driver/monitor enables when operating in ingress mode
+   constraint ingress_constraint {
+      if (bfm_mode == TAG_BFM_IGR_MODE) {
+         monitor_active   == UVM_ACTIVE;
+         driver_active    == UVM_PASSIVE;
+         frame_gen_active == UVM_PASSIVE;
+      } else {
+         monitor_active   == UVM_ACTIVE;
+         driver_active    == UVM_ACTIVE;
+         frame_gen_active == UVM_ACTIVE;
+      }
+   }
 
    // UVM object utils macro
    `uvm_object_utils(mby_tag_bfm_cfg)
