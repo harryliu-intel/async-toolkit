@@ -3067,6 +3067,9 @@ module mby_igr_epl_shim_ctrl
 //end of seg2
       endcase //current_flit
       end //if(eop)
+//FIXME add detection of SOP position due to dropped packets.
+//For dropped packet case SOP amy not be in flit0 position due unaligned packed 64B word where
+//packet flits and EOP from a dropped packet occupy flits above the SOP position.
       else begin  //no EOP so the unaligned flit is full sop should only then be in flits 0, 8, 16
         unique case(current_flit) inside  //FIXME shoud current_flit be a 1-hot vector[23:0]??
           5'd0: begin
