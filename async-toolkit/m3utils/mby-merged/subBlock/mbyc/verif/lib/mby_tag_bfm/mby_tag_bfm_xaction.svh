@@ -47,8 +47,8 @@
 //-----------------------------------------------------------------------------
 class mby_tag_bfm_xaction extends mby_base_sequence_item
 #(
-   .T_data (),
-   .T_debug()
+   .T_data (mby_tag_bfm_data_t),
+   .T_debug(mby_tag_bfm_debg_t)
 );
 
    // -------------------------------------------------------------------------
@@ -76,6 +76,12 @@ class mby_tag_bfm_xaction extends mby_base_sequence_item
    //
    // -------------------------------------------------------------------------
    virtual function string convert2string();
+      string msg_str = "";
+      string lns_str = { {8{" -------- "}}, "\n" };
+      msg_str = super.convert2string();
+      msg_str = { msg_str, $sformatf("tag_xaction::seg_ptr = %020h\n", this.data_pkt.segment.ptr_handle.seg_ptr) };
+      msg_str = { msg_str, lns_str };
+      return msg_str;
    endfunction : convert2string
 
    // -------------------------------------------------------------------------

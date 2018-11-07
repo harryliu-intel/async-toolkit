@@ -38,12 +38,14 @@ package mby_tag_bfm_pkg;
    import uvm_pkg::*;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
-   //import mby_igr_pkg::*;
-
+   import shared_pkg::*;
+   import mby_egr_pkg::*; // TODO: getting the data type definitions from here
+                          //       need to change to shared_pkg, once that's
+                          //       available
    `include "uvm_macros.svh"
    `include "mby_tag_bfm_defines.svh"
-   `include "mby_tag_bfm_xaction.svh"
    `include "mby_tag_bfm_types.svh"
+   `include "mby_tag_bfm_xaction.svh"
    `include "mby_tag_bfm_cfg.svh"
    `include "mby_tag_bfm_fgen.svh"
    `include "mby_tag_bfm.svh"

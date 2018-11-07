@@ -33,7 +33,35 @@
 `ifndef __MBY_TAG_BFM_IF__
 `define __MBY_TAG_BFM_IF__
 
-interface mby_tag_bfm_if;
+interface mby_tag_bfm_if(input logic clk, input logic rst);
+   import mby_egr_pkg::*;
+
+   lltformat_t intf_data_pkt;
+   logic       debg_data_pkt;
+
+   localparam DATA_WIDTH = $bits(lltformat_t);
+   localparam DEBG_WIDTH = 1;
+
+   initial begin : initialize_intf
+      intf_data_pkt <= 0;
+   end
+
+   task drive_data(logic [DATA_WIDTH-1:0] data_pkt, logic[DEBG_WIDTH-1:0] debg_pkt);
+      @(posedge clk);
+      intf_data_pkt = data_pkt;
+      debg_data_pkt = debg_pkt;
+   endtask
+
+   task mon_start();
+      // wait for valid signal
+      // wait(intf_data_pkt.tc !== 0);
+   endtask
+
+   task mon_data(output logic [DATA_WIDTH-1:0] data_pkt, output logic[DEBG_WIDTH-1:0] debg_pkt);
+      data_pkt = intf_data_pkt;
+      debg_pkt = debg_data_pkt;
+   endtask
+
 endinterface : mby_tag_bfm_if
 
 `endif

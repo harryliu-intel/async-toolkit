@@ -36,10 +36,18 @@
 `ifndef __MBY_TAG_BFM_TYPES__
 `define __MBY_TAG_BFM_TYPES__
 
-// Type definitions
-typedef virtual mby_tag_bfm_if mby_tag_bfm_vif;
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_tag_bfm_xaction), .T_vif(mby_tag_bfm_vif)) tag_bfm_agent;
+// -------------------------------------------------------------------------
+// Main struct type definitions for TAG BFM
+// -------------------------------------------------------------------------
+typedef lltformat_t mby_tag_bfm_data_t;
+typedef logic       mby_tag_bfm_debg_t;
 
+// -------------------------------------------------------------------------
+// Main class & VIF type definitions for TAG BFM
+// -------------------------------------------------------------------------
+typedef virtual mby_tag_bfm_if mby_tag_bfm_vif;
+typedef class mby_tag_bfm_xaction; // fwd declaration of the transaction class
+typedef mby_base_agent#(.T_req(mby_tag_bfm_xaction), .T_vif(mby_tag_bfm_vif)) mby_tag_bfm_agent;
 
 `endif
 

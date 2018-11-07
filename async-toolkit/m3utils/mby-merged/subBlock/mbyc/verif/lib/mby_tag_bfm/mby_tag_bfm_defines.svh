@@ -36,33 +36,4 @@
 `ifndef __MBY_TAG_BFM_DEFINES__
 `define __MBY_TAG_BFM_DEFINES__
 // Definitions & local parameters
-
-// Sizes
-localparam  W_BYTE      =               8; // Byte Size
-localparam  W_WORD      =              64; // Bytes per Word
-localparam  W_WORD_BITS = (W_BYTE*W_WORD); // Bits per Word
-localparam  W_FLIT      =              64; // EPL data flit width
-localparam  N_FLIT      =               8; // EPL data number of flits
-localparam  W_SEG_PTR   =              20; // Segment Pointer Size
-localparam  W_SEMA      =               4; // Semaphore Bits Size
-localparam  W_WD_SEL    =               2; // Segment Word Selector Size
-
-localparam  W_DQTAG_LENGTH     =         8; // Deep-Queue Tag Length of Packet Width
-localparam  W_DQTAG_SRC_PORT   =         4; // Deep-Queue Tag IGR Source Port Width       //TODO maybe can be inherited
-localparam  W_DQTAG_SRC_TC     =         3; // Deep-Queue Tag IGR Traffic Class Width     //TODO maybe can be inherited
-localparam  W_DQTAG_SSL        =         3; // Deep-Queue Tag Switch Lifetime Limit Width //TODO maybe can be inherited
-localparam  W_DQTAG_NEXT_LEN   =         2; // Deep-Queue Tag Next Length Width           //TODO maybe can be inherited
-
-//// Low-Latency Tag Format
-localparam  W_TAG_RING_TRACKS      = 32; // Tag Ring Tracks, 1 per EPP, 32 EPPs in MBY //TODO make parametrical
-localparam  W_MCE_TAG_RING_TRACKS  =  4; // Tag Ring Tracks, 1 per EPP, 32 EPPs in MBY //TODO make parametrical
-localparam  W_LLT_DST              = 16; // Low-Latency Tag Logical Destination width //FIXME width not final
-localparam  W_LLT_TC               =  4; // Low-Latency Tag EGR Traffic Class width
-localparam  W_LLT_MIRROR_DEST1     =  9; // Low-Latency Tag Mirror Copy Destination Port width
-localparam  W_LLT_MIRROR_DEST2     =  2; // Low-Latency Tag Mirror Copy Destination Port for CP width //FIXME width not final
-localparam  W_LLT_POLICER_IDX      = 14; // Low-Latency Tag Policer Index width //FIXME width not final
-
-
-
-
 `endif
