@@ -2,6 +2,8 @@
 
 %audf = (
    Includes => [
+      "CTECH:cfg/ctech/CTECH_hdl.udf",
+      "CTECH_EXP:cfg/ctech_exp/CTECH_EXP_hdl.udf",
       "cfg/ace/fc_hdl.udf",
    ],
 );
