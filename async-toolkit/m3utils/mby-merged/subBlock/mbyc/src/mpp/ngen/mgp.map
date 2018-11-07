@@ -1,6 +1,8 @@
 // Placeholder
 
 $y = $iteration;
+$x = $y * 2;  // 0,2
+$z = $x + 1;  // 1,3
 
 //-- Break out multi-dimensional arrays.
 \{grp_a$y$_rx0_data_w_ecc[71:0], grp_a$y$_rx1_data_w_ecc[71:0], grp_a$y$_rx2_data_w_ecc[71:0], grp_a$y$_rx3_data_w_ecc[71:0], grp_a$y$_rx4_data_w_ecc[71:0], grp_a$y$_rx5_data_w_ecc[71:0], grp_a$y$_rx6_data_w_ecc[71:0], grp_a$y$_rx7_data_w_ecc[71:0]\}  >> grp_a_rx_data_w_ecc
@@ -64,47 +66,6 @@ egr$y$_mc_table_if0             >> egr_mc_table_if0
 egr$y$_mc_table_if1             >> egr_mc_table_if1                          
 egr$y$_pod_if                   >> egr_pod_if                                
 egr$y$_ppestm_if                >> egr_ppestm_if
-egr$y$_smm_readarb_if0          >> egr_smm_readarb_if0
-egr$y$_smm_readarb_if2          >> egr_smm_readarb_if1
-egr$y$_smm_readarb_if3          >> egr_smm_readarb_if2
-egr$y$_smm_readarb_if4          >> egr_smm_readarb_if3
-egr$y$_smm_readarb_if5          >> egr_smm_readarb_if4
-egr$y$_smm_readarb_if1          >> egr_smm_readarb_if5
-//egr$y$_smm_writearb_if          >> egr_smm_writearb_if                       
-// egr$y$_statsmgmt_if            >> egr_statsmgmt_if                          
-
-// egr$y$_tagring_if0              >> egr_tagring_if0
-// egr$y$_tagring_if1              >> egr_tagring_if1
-// egr$y$_tagring_if2              >> egr_tagring_if2
-// egr$y$_tagring_if3              >> egr_tagring_if3
-// egr$y$_tagring_if4              >> egr_tagring_if4
-// egr$y$_tagring_if5              >> egr_tagring_if5
-// egr$y$_tagring_if6              >> egr_tagring_if6
-// egr$y$_tagring_if7              >> egr_tagring_if7
-// egr$y$_tagring_if8              >> egr_tagring_if8
-// egr$y$_tagring_if9              >> egr_tagring_if9
-// egr$y$_tagring_if10             >> egr_tagring_if10
-// egr$y$_tagring_if11             >> egr_tagring_if11
-// egr$y$_tagring_if12             >> egr_tagring_if12
-// egr$y$_tagring_if13             >> egr_tagring_if13
-// egr$y$_tagring_if14             >> egr_tagring_if14
-// egr$y$_tagring_if15             >> egr_tagring_if15
-// egr$y$_tagring_if16             >> egr_tagring_if16
-// egr$y$_tagring_if17             >> egr_tagring_if17
-// egr$y$_tagring_if18             >> egr_tagring_if18
-// egr$y$_tagring_if19             >> egr_tagring_if19
-// egr$y$_tagring_if20             >> egr_tagring_if20
-// egr$y$_tagring_if21             >> egr_tagring_if21
-// egr$y$_tagring_if22             >> egr_tagring_if22
-// egr$y$_tagring_if23             >> egr_tagring_if23
-// egr$y$_tagring_if24             >> egr_tagring_if24
-// egr$y$_tagring_if25             >> egr_tagring_if25
-// egr$y$_tagring_if26             >> egr_tagring_if26
-// egr$y$_tagring_if27             >> egr_tagring_if27
-// egr$y$_tagring_if28             >> egr_tagring_if28
-// egr$y$_tagring_if29             >> egr_tagring_if29
-// egr$y$_tagring_if30             >> egr_tagring_if30
-// egr$y$_tagring_if31             >> egr_tagring_if31                            
 
 egr$y$_tagring_if0_0            >> egr_tagring_if0_0
 egr$y$_tagring_if0_1            >> egr_tagring_if0_1
@@ -146,46 +107,16 @@ egr$y$_mce_tagring_if3          >> egr_mce_tagring_if3
 igr$y$_vp_tx_pfc_xoff           >> igr_vp_tx_pfc_xoff
 rxppe$y$_ppestm_if              >> rx_ppe_ppe_stm_if
 
-i_mim$y$_wreq_credits_w0        >> i_mim_wreq_credits_w0
-i_mim$y$_wreq_credits_w1        >> i_mim_wreq_credits_w1
-i_mim$y$_wreq_credits_w2        >> i_mim_wreq_credits_w2
-i_mim$y$_wreq_credits_w3        >> i_mim_wreq_credits_w3
-i_mim$y$_wreq_credits_w4        >> i_mim_wreq_credits_w4
-i_mim$y$_wreq_credits_w5        >> i_mim_wreq_credits_w5
-o_mim$y$_wr_data_w0             >> o_mim_wr_data_w0
-o_mim$y$_wr_data_w1             >> o_mim_wr_data_w1
-o_mim$y$_wr_data_w2             >> o_mim_wr_data_w2
-o_mim$y$_wr_data_w3             >> o_mim_wr_data_w3
-o_mim$y$_wr_data_w4             >> o_mim_wr_data_w4
-o_mim$y$_wr_data_w5             >> o_mim_wr_data_w5
-o_mim$y$_wr_seg_ptr_w0          >> o_mim_wr_seg_ptr_w0
-o_mim$y$_wr_seg_ptr_w1          >> o_mim_wr_seg_ptr_w1
-o_mim$y$_wr_seg_ptr_w2          >> o_mim_wr_seg_ptr_w2
-o_mim$y$_wr_seg_ptr_w3          >> o_mim_wr_seg_ptr_w3
-o_mim$y$_wr_seg_ptr_w4          >> o_mim_wr_seg_ptr_w4
-o_mim$y$_wr_seg_ptr_w5          >> o_mim_wr_seg_ptr_w5
-o_mim$y$_wr_sema_w0             >> o_mim_wr_sema_w0
-o_mim$y$_wr_sema_w1             >> o_mim_wr_sema_w1
-o_mim$y$_wr_sema_w2             >> o_mim_wr_sema_w2
-o_mim$y$_wr_sema_w3             >> o_mim_wr_sema_w3
-o_mim$y$_wr_sema_w4             >> o_mim_wr_sema_w4
-o_mim$y$_wr_sema_w5             >> o_mim_wr_sema_w5
-o_mim$y$_wr_wd_sel_w0           >> o_mim_wr_wd_sel_w0
-o_mim$y$_wr_wd_sel_w1           >> o_mim_wr_wd_sel_w1
-o_mim$y$_wr_wd_sel_w2           >> o_mim_wr_wd_sel_w2
-o_mim$y$_wr_wd_sel_w3           >> o_mim_wr_wd_sel_w3
-o_mim$y$_wr_wd_sel_w4           >> o_mim_wr_wd_sel_w4
-o_mim$y$_wr_wd_sel_w5           >> o_mim_wr_wd_sel_w5
-o_mim$y$_wreq_id_w0             >> o_mim_wreq_id_w0
-o_mim$y$_wreq_id_w1             >> o_mim_wreq_id_w1
-o_mim$y$_wreq_id_w2             >> o_mim_wreq_id_w2
-o_mim$y$_wreq_id_w3             >> o_mim_wreq_id_w3
-o_mim$y$_wreq_id_w4             >> o_mim_wreq_id_w4
-o_mim$y$_wreq_id_w5             >> o_mim_wreq_id_w5
-o_mim$y$_wreq_valid_w0          >> o_mim_wreq_valid_w0
-o_mim$y$_wreq_valid_w1          >> o_mim_wreq_valid_w1
-o_mim$y$_wreq_valid_w2          >> o_mim_wreq_valid_w2
-o_mim$y$_wreq_valid_w3          >> o_mim_wreq_valid_w3
-o_mim$y$_wreq_valid_w4          >> o_mim_wreq_valid_w4
-o_mim$y$_wreq_valid_w5          >> o_mim_wreq_valid_w5
+mim$x$_rd0                      >> mim_rd_if0_0
+mim$x$_rd1                      >> mim_rd_if0_1
+mim$x$_rd2                      >> mim_rd_if0_2
+mim$z$_rd0                      >> mim_rd_if1_0
+mim$z$_rd1                      >> mim_rd_if1_1
+mim$z$_rd2                      >> mim_rd_if1_2
+mim$x$_wr0                      >> mim_wreq_0
+mim$x$_wr1                      >> mim_wreq_1
+mim$x$_wr2                      >> mim_wreq_2
+mim$z$_wr0                      >> mim_wreq_3
+mim$z$_wr1                      >> mim_wreq_4
+mim$z$_wr2                      >> mim_wreq_5
 

@@ -19,7 +19,16 @@
 //-----------------------------------------------------------------------------
 
 rx_ppe_igr_if rx_ppe_igr_if_i();
-igr_rx_ppe_if igr_rx_ppe_if_i();
+igr_rx_ppe_if igr_rx_ppe_if_i();           
+
+mim_wr_if     egr_igr_wreq_if_i();
+mim_rd_if     igr_egr_rreq_if_i();
+mim_wr_if     mim_wreq_0_if_i();
+mim_wr_if     mim_wreq_1_if_i();
+mim_wr_if     mim_wreq_2_if_i();
+mim_wr_if     mim_wreq_3_if_i();
+mim_wr_if     mim_wreq_4_if_i();
+mim_wr_if     mim_wreq_5_if_i();
 
 always_comb rx_ppe_igr_if_i.intf0 = 0;
 always_comb rx_ppe_igr_if_i.intf1 = 0;
@@ -52,7 +61,7 @@ igr_top igr_top_i (
    .grp_c_rx_data_w_ecc(eth_bfm_rx_intf_2.data_w_ecc),
    .grp_d_rx_data_w_ecc(eth_bfm_rx_intf_3.data_w_ecc),
    .grp_a_rx_pfc_xoff(eth_bfm_rx_intf_0.pfc_xoff),
-   .grp_b_rx_pfc_xoff(eth_bfm_rx_intf_1.pfc_xoff),
+   .grp_b_rx_pfc_xoff(eth_bfm_rx_intf_1.pfc_xoff),                                                           
    .grp_c_rx_pfc_xoff(eth_bfm_rx_intf_2.pfc_xoff),
    .grp_d_rx_pfc_xoff(eth_bfm_rx_intf_3.pfc_xoff),
    .grp_a_rx_flow_control_tc(eth_bfm_rx_intf_0.flow_control_tc),
@@ -69,5 +78,15 @@ igr_top igr_top_i (
    .vp_rx_flow_control_tc(eth_bfm_rx_intf_4.flow_control_tc),
    .vp_tx_pfc_xoff(eth_bfm_rx_intf_4.pfc_xoff),
    .rx_ppe_igr(rx_ppe_igr_if_i.igr),
-   .igr_rx_ppe(igr_rx_ppe_if_i.igr)
+   .igr_rx_ppe(igr_rx_ppe_if_i.igr),
+   .egr_igr_wreq(egr_igr_wreq_if_i.receive),  
+   .igr_egr_rreq(igr_egr_rreq_if_i.request),                                                 
+   .mim_wreq_0(mim_wreq_0_if_i.request),
+   .mim_wreq_1(mim_wreq_1_if_i.request),
+   .mim_wreq_2(mim_wreq_2_if_i.request),
+   .mim_wreq_3(mim_wreq_3_if_i.request),
+   .mim_wreq_4(mim_wreq_4_if_i.request),
+   .mim_wreq_5(mim_wreq_5_if_i.request)
+   
+   
 );
