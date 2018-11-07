@@ -13,3 +13,6 @@ igr_vp_rx_flow_control_tc   >> vp_rx_flow_control_tc
 igr_vp_tx_pfc_xoff          >> vp_tx_pfc_xoff                        //FIXME should this be [1:0] for 2 VP
 rx_ppe_igr_if               >> rx_ppe_igr
 igr_rx_ppe_if               >> igr_rx_ppe
+
+
+

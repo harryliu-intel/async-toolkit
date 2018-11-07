@@ -5,7 +5,6 @@
 // File          : mby_base_monitor.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 29.10.2018
-// Last modified : 29.10.2018
 //-----------------------------------------------------------------------------
 // Description :
 // Base monitor class for Madison Bay
@@ -13,18 +12,29 @@
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
 // file requires a written license from Intel Corporation.
-//------------------------------------------------------------------------------
-// Modification history :
-// 29.10.2018 : created
+//
+// The source code contained or described herein and all documents related to
+// the source code ("Material") are owned by Intel Corporation or its suppliers
+// or licensors. Title to the Material remains with Intel Corporation or its
+// suppliers and licensors. The Material contains trade secrets and proprietary
+// and confidential information of Intel or its suppliers and licensors. The
+// Material is protected by worldwide copyright and trade secret laws and
+// treaty provisions. No part of the Material may be used, copied, reproduced,
+// modified, published, uploaded, posted, transmitted, distributed, or
+// disclosed in any way without Intel's prior express written permission.
+//
+// No license under any patent, copyright, trade secret or other intellectual
+// property right is granted to or conferred upon you by disclosure or delivery
+// of the Materials, either expressly, by implication, inducement, estoppel or
+// otherwise. Any license under such intellectual property rights must be
+// express and approved by Intel in writing.
+//
 //-----------------------------------------------------------------------------
-
 `ifndef __MBY_BASE_PKG__
 `error "Attempt to include file outside of mby_igr_env_pkg."
 `endif
-
 `ifndef __MBY_BASE_MONITOR__
 `define __MBY_BASE_MONITOR__
-
 //-----------------------------------------------------------------------------
 // CLASS: mby_base_monitor
 //
@@ -77,50 +87,71 @@ class mby_base_monitor
    // -------------------------------------------------------------------------
    // FUNCTION: build_phase()
    //
-   // The vintf is obtained and analysis port is created
+   // The monitor's analysis port is created here.
    //
    // -------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
       // Create the monitor's analysis port
       mon_ap = new("mon_ap", this);
-      // Get virtual interface from config db
-      if(!uvm_config_db #(T_vif)::get(this, "", "vintf", vintf)) begin
-         `uvm_fatal("VIF_ERROR", { "Virtual interface (vintf) must be set for: ", get_full_name() })
-      end
    endfunction : build_phase
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: assign_vif()
+   //
+   // This function is called by the agent once the monitor is created and the
+   // agent has accessed the configuration database to obtain the virtual intf.
+   // This is to reduce the number of config db accesses as it has a toll in
+   // performance.
+   //
+   // ARGUMENTS:
+   //     T_vif vif - A pointer to the virtual interface to be used by the
+   //                 monitor
+   //
+   // -------------------------------------------------------------------------
+   function void assign_vif(T_vif vif);
+      this.vintf = vif;
+   endfunction
+
+   // -------------------------------------------------------------------------
+   // TASK: monitor
+   //
+   // Main monitor task: monitors the interface for valid activity by calling
+   // the virtual interface's 'mon_start' method, creates a new sequence item,
+   // gets the values from the interface and populates the sequence item, clones
+   // it and sends it out through the analysis port.
+   // This is a virtual protected task that can be override in sub-classes.
+   //
+   // -------------------------------------------------------------------------
+   virtual protected task monitor_if();
+      forever begin : main_monitor_thread
+         // Wait for a new transaction to appear
+         vintf.mon_start();
+         // Create the seq_item
+         `uvm_info("monitor_if()", "Creating a new transaction", UVM_DEBUG);
+         mon_item = T_req::type_id::create("mon_item", this);
+         // Get actual data pkt and debug info from the interface
+         vintf.mon_data(mon_item.data_pkt, mon_item.debug_pkt);
+         `uvm_info("monitor_if()::got", mon_item.convert2string(), UVM_MEDIUM);
+         `uvm_info("monitor_if()::got", mon_item.sprint(),         UVM_HIGH);
+         // Write seq_item to analysis port
+         mon_ap.write(mon_item);
+         `uvm_info("monitor_if()", "Sent transaction to the analysis port", UVM_DEBUG);
+      end
+   endtask : monitor_if
 
    // -------------------------------------------------------------------------
    // TASK: run_phase
    //
-   // Main monitor thread: monitors the interface for valid activity by calling
-   // the virtual interface's 'mon_start' method, creates a new sequence item,
-   // gets the values from the interface and populates the sequence item, clones
-   // it and sends it out through the analysis port.
+   // Main monitor thread starts: calls the monitor_if() virtual task
    //
    // -------------------------------------------------------------------------
    task run_phase (uvm_phase phase);
-      string msg;
-      forever begin
-         // Wait for a new transaction to appear
-         vintf.mon_start();
-         `uvm_info(get_full_name(), "Creating a new transaction", UVM_DEBUG);
-
-         // Create the seq_item
-         mon_item = T_req::type_id::create("mon_item", this);
-
-         // Get actual data pkt and debug info from the interface and print debug msgs
-         vintf.mon_data(mon_item.data_pkt, mon_item.debug_pkt);
-         $sformat(msg, "Captured the following data_pkt %h and debug_pkt = %h)",
-                  mon_item.data_pkt, mon_item.debug_pkt);
-         `uvm_info(get_full_name(), msg,               UVM_MEDIUM);
-         `uvm_info(get_full_name(), mon_item.sprint(), UVM_HIGH);
-
-         // Write seq_item to analysis port
-         $cast(cloned_item, mon_item.clone());
-         mon_ap.write(cloned_item);
-         `uvm_info(get_full_name(), "Sent transaction to the analysis port", UVM_DEBUG);
-      end
+      fork
+         begin : monitor_thread
+            monitor_if();
+         end
+      join
   endtask : run_phase
 
 endclass : mby_base_monitor

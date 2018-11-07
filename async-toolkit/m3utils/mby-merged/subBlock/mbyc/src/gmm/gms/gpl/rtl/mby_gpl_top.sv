@@ -43,6 +43,7 @@ module mby_gpl_top
    // CLock and reset
    input                              cclk,
    input                              reset_n,
+   input  mby_tag_ring_t              tag_ring_in [MBY_MAX_NUM_MGP-1:0][1:0] ,
    output mby_gpol_state_bcast_t      gpol_update_bcast_out_left,
    output mby_gpol_state_bcast_t      gpol_update_bcast_out_right
 );

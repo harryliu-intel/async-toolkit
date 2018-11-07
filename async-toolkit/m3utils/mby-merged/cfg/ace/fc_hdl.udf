@@ -45,7 +45,7 @@ my @fc_rtl_liblist = (
     "sva_lib",
     "mby_mgm_lib",
      (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-     $fc_global_vars::IP_STUB_LIB,
+     (&ToolConfig::get_facet('dut') =~ /fc_8|fc_8_no_phy|fc_64_no_phy/) ? $fc_global_vars::IP_STUB_LIB : "",
 );
 my @fc_verif_liblist = (
     "shdv_shared_lib",
@@ -454,7 +454,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -575,7 +574,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -655,7 +653,6 @@ EOF
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -678,4 +675,5 @@ EOF
 $audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+
 

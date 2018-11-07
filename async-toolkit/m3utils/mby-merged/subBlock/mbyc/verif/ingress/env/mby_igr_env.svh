@@ -22,8 +22,13 @@
 //-----------------------------------------------------------------------------
 // Class: mby_igr_env
 //-----------------------------------------------------------------------------
-class mby_igr_env extends mby_igr_base_env;
+class mby_igr_env extends shdv_base_env;
+   // Variable: tb_cfg
+   // static pointer to the testbench configuration class
+   protected mby_igr_tb_cfg tb_cfg;
 
+   // Variable: ti_config
+   // static pointer to the env
    mby_igr_ti_cfg ti_config;
    //protected string ingress_ti_low_path   = "XYZ_tb.u_ingress_ti";
 
@@ -89,7 +94,6 @@ class mby_igr_env extends mby_igr_base_env;
    mby_igr_env_monitor env_monitor;
 
    `uvm_component_utils_begin(mby_igr_env)
-   //`uvm_field_string(ingress_ti_low_path, UVM_ALL_ON)
    `uvm_component_utils_end
 
    //--------------------------------------------------------------------------
@@ -112,6 +116,13 @@ class mby_igr_env extends mby_igr_base_env;
 
       super.build_phase(phase);
 
+      // "get" the testbench configuration object set from the ingress base test
+      uvm_config_db#(mby_igr_tb_cfg)::get(this, "", "igr_tb_cfg", tb_cfg);
+      if(tb_cfg == null) begin
+         //PJP: TODO `uvm_fatal(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!")); // Need to fix this as it currently breaks the fullchip integration.
+         `uvm_warning(get_name(), $sformatf("PJP: mby_igr_env:: tb_cfg is null!"));
+      end
+
       if(uvm_config_object::get(this, "", "ingress_ti_config",tmp_ti_cfg_obj)) begin
          assert($cast(ti_config,tmp_ti_cfg_obj));
       end
@@ -119,11 +130,9 @@ class mby_igr_env extends mby_igr_base_env;
       build_vpt_bfms();
       build_eth_bfms();
 
-      //this.max_run_clocks = 2_000_000_000;
-
       // Env monitor
-      assert($cast(env_monitor, create_component("mby_igr_env_monitor","env_monitor")));
-//PJP      env_monitor.set_monitor_enable(cfg.get_monitors_enabled()); // Uncommment once SHDV is pure UVM.
+      assert($cast(env_monitor, create_component("mby_igr_env_monitor", "env_monitor")));
+//      env_monitor.set_monitor_enable(tb_cfg.get_monitors_enabled()); // PJP: TODO: get_monitors_enabled is a Saola functionkk and I'm not sure of it's usage.  I'm leaving the code here for now to either be deleted later or replaced.
 
       // get global event pool
       ingress_epool = ingress_epool.get_global_pool();
@@ -141,7 +150,7 @@ class mby_igr_env extends mby_igr_base_env;
       connect_eth_bfms();
       uvm_config_db#(igr_env_if_t)::get(this, "", "ingress_if", ingress_if);
       if(ingress_if == null) begin
-         `uvm_fatal(get_name(), $sformatf("PJP: Couldn't find ingress_if"));
+         `uvm_fatal(get_name(), $sformatf("Couldn't find ingress_if"));
       end
 
       if (env_monitor != null) begin
@@ -152,7 +161,7 @@ class mby_igr_env extends mby_igr_base_env;
    //--------------------------------------------------------------------------
    // Function: mby_igr_env end_of_elaboration
    // end_of_elaboration  phase of mby_igr_env
-   // In this pahse we randomize the fuse env
+   // In this phase we randomize the fuse env
    //--------------------------------------------------------------------------
    virtual function void end_of_elaboration_phase (uvm_phase phase);
       super.end_of_elaboration_phase(phase);
@@ -180,14 +189,14 @@ class mby_igr_env extends mby_igr_base_env;
 
    //--------------------------------------------------------------------------
    // Function: build_vpt_bfms
-   // Gets the virtual port interfaces from the configuration database and 
+   // Gets the virtual port interfaces from the configuration database and
    // creates the virtual port Bus Functional Model instances
    //--------------------------------------------------------------------------
    function void build_vpt_bfms();
       foreach(vp_bfms[i]) begin
          // Get the vp_bfm_vif ptrs
          if(!uvm_config_db#(igr_eth_bfm_tx_intf_t)::get(this, "", $sformatf("igr_eth_bfm_tx_vintf%0d", i+4), vp_bfm_tx_vintf[i])) begin
-            `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_intf_t was not successful!")
+            `uvm_fatal(get_name(), $sformatf("Config_DB.get() for ENV's igr_eth_bfm_tx_vintf%0d was not successful!", i+4))
          end
          if(!uvm_config_db#(igr_eth_bfm_rx_intf_t)::get(this, "", $sformatf("igr_eth_bfm_rx_vintf%0d", i+4), vp_bfm_rx_vintf[i])) begin
             `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_intf_t was not successful!")
@@ -286,7 +295,7 @@ class mby_igr_env extends mby_igr_base_env;
 
    //---------------------------------------------------------------------------
    // Task: ingress_im_monitor
-   // Wait for interuppt event and trigger IM
+   // Wait for interrupt event and trigger IM
    // ISR (Interrupt Service Routine) only in IP level
    //---------------------------------------------------------------------------
    task ingress_im_monitor();

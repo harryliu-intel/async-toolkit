@@ -41,11 +41,11 @@ module mby_mesh_ti #( parameter string   RTL_TOP_PATH = "",             // The R
     );
 
     import uvm_pkg::*;
-    import sla_pkg::*;
+//PJP    import sla_pkg::*;
     initial begin
 
         // Set the SHDV tb_intf in the database
-        slu_resource_db#(virtual shdv_base_tb_intf)::add({"env", ".IP_intf"}, shdv_intf, `__FILE__, `__LINE__);
+//PJP        slu_resource_db#(virtual shdv_base_tb_intf)::add({"env", ".IP_intf"}, shdv_intf, `__FILE__, `__LINE__);
         // Set MESH TI Path in the database
         uvm_config_db#(string)::set(null, TB_ENV_PATH, "TI_PATH", $sformatf("%m"));
 

@@ -36,18 +36,9 @@
 
 program mby_mesh_test_lib;
 
-`ifdef XVM
-    import ovm_pkg::*;
-    import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
-    import sla_pkg::*;
     import uvm_pkg::*;
 
     `include "uvm_macros.svh"
-    `include "slu_macros.svh"
 
     import shdv_base_pkg::*;
     import mby_mesh_env_pkg::*;
@@ -60,16 +51,9 @@ program mby_mesh_test_lib;
         string testname;
 
         if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-`ifndef XVM
             $display ("MBY_tb Started Running %s in UVM mode!\n",testname);
         end
         uvm_pkg::run_test(testname);
-`else
-        $display ("MBY_tb Started Running %s in XVM mode!\n",testname);
-    end
-    xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
-
-`endif
 
 end
 

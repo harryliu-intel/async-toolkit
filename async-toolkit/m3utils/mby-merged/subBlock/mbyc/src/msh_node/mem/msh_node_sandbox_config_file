@@ -1,0 +1,9 @@
+$default_logical_path		= $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/*block*/mem
+$default_block_top_path		= $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/*block*/rtl/*block*_top.sv
+$default_block_list_path	= None
+$default_dest_path		= $ENV{'MODEL_ROOT'}/target/mby/mgm_run/*block*
+
+//----------------------------------------------------------------------------------------------------------------
+// Block Name      Logical Path        Block's Top Path      Block's File List Path           Destination Path   -
+//----------------------------------------------------------------------------------------------------------------
+msh          $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/msh_node/mem      $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/msh_node/rtl/mby_msh_node.sv    None   $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/msh_node/sandbox/val/verilog/mgm_run/msh_node
