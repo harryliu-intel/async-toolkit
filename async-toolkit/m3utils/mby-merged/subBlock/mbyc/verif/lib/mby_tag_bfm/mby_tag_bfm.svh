@@ -51,6 +51,10 @@ class mby_tag_bfm extends uvm_component;
    // VARIABLE: tag_agent
    // This is the tag_agent instance, it interfaces with the tag ring. Receives
    // tag transactions from the frame generator and monitors the tag ring intf.
+   // This tag agent is a parameterized mby_base_agent class.
+   // (code starts)
+   //   typedef mby_base_agent#(.T_req(mby_tag_bfm_xaction), .T_vif(mby_tag_bfm_vif)) mby_tag_bfm_agent;
+   // (end)
    mby_tag_bfm_agent tag_agent;
 
    // VARIABLE: frame_gen

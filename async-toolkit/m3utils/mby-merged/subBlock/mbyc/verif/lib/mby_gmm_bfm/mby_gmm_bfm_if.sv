@@ -32,9 +32,94 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_GMM_BFM_IF__
 `define __MBY_GMM_BFM_IF__
+//------------------------------------------------------------------------------
+// INTERFACE: mby_gmm_bfm_pod_if
+//
+// This is the interface that connects to the pod ring (free and dirty pointers)
+//
+//------------------------------------------------------------------------------
+interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
+   import mby_gmm_pkg::*;
 
-interface mby_gmm_bfm_if;
-endinterface : mby_gmm_bfm_if
+   mby_pod_ptr_ring_t intf_data_pkt;
+   logic              intf_debg_pkt;
+
+   localparam DATA_WIDTH = $bits(mby_pod_ptr_ring_t);
+   localparam DEBG_WIDTH = 1;
+
+   //---------------------------------------------------------------------------
+   // Initializing the interface at time 0
+   //---------------------------------------------------------------------------
+   initial begin : initialize_intf
+      intf_data_pkt <= 0;
+   end
+
+   //---------------------------------------------------------------------------
+   // TASK: drive_data
+   //
+   // This task is called by a driver, it implements the necessary protocol to
+   // put valid data on the bus.
+   //
+   // ARGUMENTS:
+   //    logic [DATA_WIDTH-1:0] data_pkt - The data packet to be driven, this is
+   //       usually a struct that contains all the fields of the transaction item.
+   //    logic[DEBG_WIDTH-1:0] debg_pkt  - The debug information (if any is
+   //       needed, can be passed using this argument. This information is not
+   //       part of the actual bus protocol, but extra debug info that can be
+   //       used as part of the verification strategy).
+   //
+   //---------------------------------------------------------------------------
+   task drive_data(logic [DATA_WIDTH-1:0] data_pkt, logic[DEBG_WIDTH-1:0] debg_pkt);
+      @(posedge clk);
+      intf_data_pkt = data_pkt;
+      intf_debg_pkt = debg_pkt;
+   endtask
+
+   //---------------------------------------------------------------------------
+   // TASK: mon_start
+   //
+   // This task is called by a monitor to start the monitor process. This task
+   // should block the forever loop inside the monitor code. A new transaction
+   // item will be created after this task returns.
+   //
+   //---------------------------------------------------------------------------
+   task mon_start();
+      // wait for valid signal
+      wait(intf_data_pkt.valid === 1);
+   endtask
+
+   //---------------------------------------------------------------------------
+   // TASK: mon_data
+   //
+   // This is the main monitor task, it captures the data out of the interface
+   // based on a specific protocol.
+   //
+   // ARGUMENTS:
+   //    output logic [DATA_WIDTH-1:0] data_pkt - The data packet captured at
+   //       the interface. It is a struct that contains all the fields.
+   //    output logic[DEBG_WIDTH-1:0] debg_pkt  - The debug information (if
+   //       any is needed, can be obtained from this argument. This
+   //       information is not part of the actual bus protocol, but extra
+   //       debug info that can be used as part of the verification strategy).
+   //
+   //---------------------------------------------------------------------------
+   task mon_data(output logic [DATA_WIDTH-1:0] data_pkt, output logic[DEBG_WIDTH-1:0] debg_pkt);
+      data_pkt = intf_data_pkt;
+      debg_pkt = intf_debg_pkt;
+   endtask
+
+endinterface : mby_gmm_bfm_pod_if
+
+//------------------------------------------------------------------------------
+// INTERFACE: mby_gmm_bfm_msh_if
+//
+// NYI (Not yet implemented):
+// This is the interface to connect the gmm model to the mesh RTL. Currently
+// this mode of operation has not been implemented as the mesh verification
+// will use a diferent strategy.
+//------------------------------------------------------------------------------
+interface mby_gmm_bfm_msh_if(input logic clk, input logic rst);
+endinterface : mby_gmm_bfm_msh_if
 
 `endif
 

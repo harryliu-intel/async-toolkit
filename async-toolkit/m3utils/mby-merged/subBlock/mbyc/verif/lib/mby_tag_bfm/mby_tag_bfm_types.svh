@@ -44,7 +44,7 @@
 typedef lltformat_t mby_tag_bfm_data_t;
 // Defining the debug type to be a simple logic for now.
 typedef logic mby_tag_bfm_debg_t;
-// This are the modes of operation of the Tag BFM, variable to be included in
+// These are the modes of operation of the Tag BFM, variable to be included in
 // the configuration object.
 typedef enum bit {
    TAG_BFM_IGR_MODE,

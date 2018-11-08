@@ -38,11 +38,13 @@ package mby_gmm_bfm_pkg;
    import uvm_pkg::*;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
+   import mby_gmm_pkg::*;
 
    `include "uvm_macros.svh"
    `include "mby_gmm_bfm_defines.svh"
-   `include "mby_gmm_bfm_xaction.svh"
    `include "mby_gmm_bfm_types.svh"
+   `include "mby_gmm_bfm_pod_xaction.svh"
+   `include "mby_gmm_bfm_msh_xaction.svh"
    `include "mby_gmm_bfm_cfg.svh"
    `include "mby_gmm_bfm.svh"
 

@@ -36,7 +36,7 @@
 `ifndef __MBY_TAG_BFM_CFG__
 `define __MBY_TAG_BFM_CFG__
 //-----------------------------------------------------------------------------
-// CLASS: mby_bfm_cfg_config
+// CLASS: mby_tag_bfm_cfg
 //
 // This is the configuration class used by the tag bfm. It contains fields to
 // control the tag agent's driver/monitor behavior and also to control the

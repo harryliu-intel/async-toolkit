@@ -36,11 +36,11 @@
 `ifndef __MBY_SMM_BFM_CFG__
 `define __MBY_SMM_BFM_CFG__
 //-----------------------------------------------------------------------------
-// CLASS: mby_bfm_cfg_config
+// CLASS: mby_smm_bfm_cfg
 //
-// This is the configuration class used by the smm_bfm. It contains fields to 
+// This is the configuration class used by the smm_bfm. It contains fields to
 // control the gcm agent's driver/monitor behavior and also to control the
-// frame generator capabilities. 
+// frame generator capabilities.
 //
 //-----------------------------------------------------------------------------
 class mby_smm_bfm_cfg extends mby_base_config;
@@ -63,6 +63,6 @@ class mby_smm_bfm_cfg extends mby_base_config;
    function new(string name = "mby_smm_bfm_cfg");
       super.new(name);
    endfunction : new
-   
+
 endclass : mby_smm_bfm_cfg
 `endif
