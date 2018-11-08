@@ -100,7 +100,8 @@ my $minAccurateR=1;
 my $minAccurateC=1e-18;
 my $minAccurateRC=0;
 my $accurateMode=0;
-my %default_voltage = ('ground' => 0, 'power' => 'true', 'reset' => 'true');
+my %default_voltage = ('ground' => 0, 'power' => 'true',
+                       'reset' => 'true', 'start' => 'true', 'delay' => 0);
 my %voltage;
 
 sub dounlink {
@@ -2677,7 +2678,9 @@ USAGE: $0 [options] cell[:env][:node,node,...]
     --default-ground=[$default_voltage{'ground'}] (specify default ground voltage)
     --default-power=[$default_voltage{'power'}] (specify default power voltage)
     --default-reset=[$default_voltage{'reset'}] (specify default reset voltage)
-    --voltage:node=voltage (set voltage for specific ground/power/reset nets)
+    --default-start=[$default_voltage{'start'}] (specify default start voltage)
+    --default-delay=[$default_voltage{'delay'}] (specify default delay voltage)
+    --voltage:node=voltage (set voltage for specific special nets)
 
   Aspice/Alint Options:
     --minCC=[$minCC]  (minimum coupling capacitance for aspice)
@@ -3410,7 +3413,7 @@ sub processOption {
         elsif ($key eq "no-cell-lock")      {$no_cell_lock = $value;}
 
         # power, ground, reset supplies
-        elsif ($key =~ /^default-(power|ground|reset)$/) { $default_voltage{$1} = $value; }
+        elsif ($key =~ /^default-(power|ground|reset|start|delay)$/) { $default_voltage{$1} = $value; }
         elsif ($key =~ /^voltage:(\S+)$/) { $voltage{$1} = $value; }
 
         # unknown option

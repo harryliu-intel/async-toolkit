@@ -50,14 +50,15 @@ my $temp = 25;
 my $sigma_factor = 1;
 my $time           = 20e-9;
 my $slope_time     = 1e-9; # slopes of power supplies and reset
-my $start_time     = 2e-9; # how long to reset circuit
+my $reset_time     = 2e-9; # how long to reset circuit
+my $start_time     = 2e-9; # how long to wait after reset to start circuit
 my $measure_offset = 4e-9; # how much longer to wait before measuring
 my $rc_reduce = 1;
-my $reset_offset = 0;
 my $power_window = "";
 my $env_spice_file = "";
 my $accurate = 0;
-my %default_voltage = ('ground' => 0, 'power' => 'true', 'reset' => 'true');
+my %default_voltage = ('ground' => 0, 'power' => 'true',
+                       'reset' => 'true', 'start' => true, 'delay' => 0);
 my %voltage;
 my %special_net;
 
@@ -75,7 +76,6 @@ sub usage() {
     $usage .= "    --vdd=$vdd\n";
     $usage .= "    --temp=$temp\n";
     $usage .= "    --rc-reduction=$rc_reduce\n";
-    $usage .= "    --_RESET-env-cell-offset=[time in ns ] (offset between cell reset and env reset)\n";
     $usage .= "    --run-time=$time\n";
     $usage .= "    --process-corner=$process_corner\n";
     $usage .= "    --fulcrum-pdk-root=<path> (differs from tech to tech)\n";
@@ -85,7 +85,9 @@ sub usage() {
     $usage .= "    --prs-delay=$prsdelay\n";
     $usage .= "    --prs-max-res=$prsmaxres\n";
     $usage .= "    --prs-min-res=$prsminres\n";
+    $usage .= "    --reset-time=$reset_time\n";
     $usage .= "    --start-time=$start_time\n";
+    $usage .= "    --slope-time=$slope_time\n";
     $usage .= "    --measure-nodes=(, separated list of nodes with full subckt path specified)\n";
     $usage .= "    --power-window=(t1,t2) ( window for power measurements, default is 6ns to run-time)\n";
     $usage .= "    --lve-root-dir=<path> (Where is the lve root?)\n";
@@ -93,9 +95,7 @@ sub usage() {
     $usage .= "    --totem-mode (for running totem dynamic\n";
     $usage .= "    --sigma-factor (to vary corner limits, 0..1)\n";
     $usage .= "    --extra-includes (for files needed for running totem in hsim)\n";
-    $usage .= "    --default-ground=voltage (specify default ground voltage)\n";
-    $usage .= "    --default-power=voltage (specify default power voltage)\n";
-    $usage .= "    --default-reset=voltage (specify default reset voltage)\n";
+    $usage .= "    --default-(ground|power|reset|start|delay)=voltage (specify default voltage)\n";
     $usage .= "    --voltage:node=voltage (set voltage for specific ground/power/reset nets)\n";
     die "$usage";
 }
@@ -136,10 +136,12 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
         $prsmaxres = $value;
     } elsif ($flag eq "prs-min-res") {
         $prsminres = $value;
+    } elsif ($flag eq "reset-time") {
+        $reset_time = $value;
     } elsif ($flag eq "start-time") {
         $start_time = $value;
-    } elsif ($flag eq "_RESET-env-cell-offset") {
-       	$reset_offset = $value;
+    } elsif ($flag eq "slope-time") {
+        $slope_time = $value;
     } elsif ($flag eq "run-time") {
        	$time = $value;
     } elsif ($flag eq "rc-reduction") {
@@ -166,7 +168,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
         $cap_load=$value;
     } elsif ($flag eq "out-nodes") {
         @out_nodes=split(/,/,$value);
-    } elsif ($flag =~ "default-(power|ground|reset)") {
+    } elsif ($flag =~ "default-(power|ground|reset|start|delay)") {
         $default_voltage{$1} = $value;
     } elsif ($flag =~ /^voltage:(\S+)$/) {
         $voltage{$1} = $value;
@@ -341,13 +343,11 @@ if (@out_nodes and $cap_load > 0) {
     }
 }
 
-# handle start time, reset offset, power window
-$time += $start_time;
-my $time_cell=$start_time;
-my $time_env=$start_time;
-if ($reset_offset < 0)  { $time_cell = $time_cell - $reset_offset; }
-else                    { $time_env  = $time_env  + $reset_offset; }
-my $power_window_start = $time_cell + $measure_offset;
+# adjust total run time
+$time += $reset_time + $start_time;
+
+# handle power measurement window
+my $power_window_start = $reset_time + $start_time + $measure_offset;
 my $power_window_stop = $time;
 if($power_window=~/(\d+)\,(\d+)/)  {
     $power_window_start = $1;
@@ -365,7 +365,7 @@ print RUN_FILE<<EOF;
 Vcg    COUPLING_GND 0 0
 EOF
 
-# determine the canonical name of power/ground/reset nets from comments emitted
+# determine the canonical name of special nets from comments emitted
 # by JFlat
 my %canon = ();
 if ($env_spice_file ne "") {
@@ -374,7 +374,7 @@ if ($env_spice_file ne "") {
         if (/^\*\* JFlat:begin/../^\*\* JFlat:end/) {
             last if /^\*\* JFlat:end/;
             chomp;
-            if (/^\*\* JFlat:(ground|power|reset)_net:(.*)/) {
+            if (/^\*\* JFlat:(ground|power|reset|start|delay)_net:(.*)/) {
                 my $type = $1;
                 my @aliases = split /=/, $2;
                 foreach my $alias (@aliases) {
@@ -401,7 +401,7 @@ sub get_voltage {
     return exists($voltage{$name}) ? $voltage{$name} : $default_voltage{$type};
 }
 
-# drive power, ground, and reset using special_net directives from CAST
+# drive special nets using special_net directives from CAST
 foreach my $type ('ground', 'power') {
     unless (defined $special_net{$type}) {
         die "missing ${type}_net directive";
@@ -413,9 +413,24 @@ foreach my $type ('ground', 'power') {
 }
 if (defined $special_net{'reset'}) {
     foreach my $name (sort @{$special_net{'reset'}}) {
-        my $t = $start_time+$slope_time;
+        my $t0 = $reset_time;
+        my $t1 = $t0+$slope_time;
         my $v = get_voltage($name, 'reset');
-        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $start_time 0 $t $v)\n";
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 $v)\n";
+    }
+}
+if (defined $special_net{'start'}) {
+    foreach my $name (sort @{$special_net{'start'}}) {
+        my $t0 = $reset_time+$start_time; 
+        my $t1 = $t0+$slope_time;
+        my $v = get_voltage($name, 'start');
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $t0 0 $t1 $v)\n";
+    }
+}
+if (defined $special_net{'delay'}) {
+    foreach my $name (sort @{$special_net{'delay'}}) {
+        my $v = get_voltage($name, 'delay');
+        print RUN_FILE "V${name} ${name} 0 pwl (0 0 $slope_time $v)\n";
     }
 }
 print RUN_FILE "\n";
