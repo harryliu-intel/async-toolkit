@@ -44,7 +44,6 @@
 /**************************************************/
 /** Fulcrum error codes
  *  \ingroup constStatus
- *  \page statusCodes
  *
  *  These constants are the status code values
  *  returned by most API services as type fm_status.
