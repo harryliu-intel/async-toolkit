@@ -2,7 +2,7 @@
 // Title         : Madison Bay Tag BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_tag_xaction.svh
+// File          : mby_tag_bfm_uc_xaction.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
@@ -33,28 +33,28 @@
 `ifndef __MBY_TAG_BFM_PKG__
 `error "Attempt to include file outside of mby_tag_bfm_pkg."
 `endif
-`ifndef __MBY_TAG_BFM_XACTION__
-`define __MBY_TAG_BFM_XACTION__
+`ifndef __MBY_TAG_BFM_UC_XACTION__
+`define __MBY_TAG_BFM_UC_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_tag_bfm_xaction
+// CLASS: mby_tag_bfm_uc_xaction
 //
-// This is a parameterized class used by mby_base_agent.
+// This is a parameterized class used by the uni-cast tag_agent.
 //
 // PARAMETERS:
-//     T_data     - data type (expecting to be a struct)
-//     T_debug    - set to logic for now
+//     T_data     - mby_tag_bfm_uc_data_t
+//     T_debug    - mby_tag_bfm_uc_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_tag_bfm_xaction extends mby_base_sequence_item
+class mby_tag_bfm_uc_xaction extends mby_base_sequence_item
 #(
-   .T_data (mby_tag_bfm_data_t),
-   .T_debug(mby_tag_bfm_debg_t)
+   .T_data (mby_tag_bfm_uc_data_t),
+   .T_debug(mby_tag_bfm_uc_debg_t)
 );
 
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_tag_bfm_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_tag_bfm_uc_xaction#(T_data, T_data_rsp, T_debug))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -65,7 +65,7 @@ class mby_tag_bfm_xaction extends mby_base_sequence_item
    //     string name - The sequence item name
    //
    // -------------------------------------------------------------------------
-   function new (string name = "mby_tag_bfm_xaction");
+   function new (string name = "mby_tag_bfm_uc_xaction");
       super.new(name);
    endfunction
 
@@ -79,7 +79,7 @@ class mby_tag_bfm_xaction extends mby_base_sequence_item
       string msg_str = "";
       string lns_str = { {8{" -------- "}}, "\n" };
       msg_str = super.convert2string();
-      msg_str = { msg_str, $sformatf("tag_xaction::seg_ptr = %020h\n", this.data_pkt.segment.ptr_handle.seg_ptr) };
+      msg_str = { msg_str, $sformatf("tag_uc_xaction::seg_ptr = %020h\n", this.data_pkt.segment.ptr_handle.seg_ptr) };
       msg_str = { msg_str, lns_str };
       return msg_str;
    endfunction : convert2string
@@ -101,5 +101,5 @@ class mby_tag_bfm_xaction extends mby_base_sequence_item
       // pretty print
    endfunction : do_print
 
-endclass : mby_tag_bfm_xaction
+endclass : mby_tag_bfm_uc_xaction
 `endif

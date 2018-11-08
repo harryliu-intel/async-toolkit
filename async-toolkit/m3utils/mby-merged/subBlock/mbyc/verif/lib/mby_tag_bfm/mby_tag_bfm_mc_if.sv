@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GMM Interface
+// Title         : Madison Bay Tag Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gmm_bfm_if.sv
+// File          : mby_tag_bfm_mc_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Madison Bay GMM interface file
+// Madison Bay Multi-cast tag interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,21 +30,23 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GMM_BFM_IF__
-`define __MBY_GMM_BFM_IF__
+`ifndef __MBY_TAG_BFM_MC_IF__
+`define __MBY_TAG_BFM_MC_IF__
 //------------------------------------------------------------------------------
-// INTERFACE: mby_gmm_bfm_pod_if
+// INTERFACE: mby_tag_bfm_mc_if
 //
-// This is the interface that connects to the pod ring (free and dirty pointers)
+// This is the MBY tag ring interface used by the tag bfm.
 //
 //------------------------------------------------------------------------------
-interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
-   import mby_gmm_pkg::*;
+interface mby_tag_bfm_mc_if(input logic clk, input logic rst);
+   import mby_gmm_pkg::*; // TODO: change this once the lltformat_t is placed in
+                          //       the right place.
 
-   mby_pod_ptr_ring_t intf_data_pkt;
-   logic              intf_debg_pkt;
+   mby_mc_tag_ring_t intf_data_pkt;
+   logic             intf_val_pkt;
+   logic             intf_debg_pkt;
 
-   localparam DATA_WIDTH = $bits(mby_pod_ptr_ring_t);
+   localparam DATA_WIDTH = $bits(mby_mc_tag_ring_t);
    localparam DEBG_WIDTH = 1;
 
    //---------------------------------------------------------------------------
@@ -63,13 +65,13 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
    // ARGUMENTS:
    //    logic [DATA_WIDTH-1:0] data_pkt - The data packet to be driven, this is
    //       usually a struct that contains all the fields of the transaction item.
-   //    logic[DEBG_WIDTH-1:0] debg_pkt  - The debug information (if any is
+   //    logic [DEBG_WIDTH-1:0] debg_pkt - The debug information (if any is
    //       needed, can be passed using this argument. This information is not
    //       part of the actual bus protocol, but extra debug info that can be
    //       used as part of the verification strategy).
    //
    //---------------------------------------------------------------------------
-   task drive_data(logic [DATA_WIDTH-1:0] data_pkt, logic[DEBG_WIDTH-1:0] debg_pkt);
+   task drive_data(logic [DATA_WIDTH-1:0] data_pkt, logic [DEBG_WIDTH-1:0] debg_pkt);
       @(posedge clk);
       intf_data_pkt = data_pkt;
       intf_debg_pkt = debg_pkt;
@@ -85,7 +87,7 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
    //---------------------------------------------------------------------------
    task mon_start();
       // wait for valid signal
-      wait(intf_data_pkt.valid === 1);
+      wait(intf_val_pkt === 1);
    endtask
 
    //---------------------------------------------------------------------------
@@ -97,29 +99,17 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
    // ARGUMENTS:
    //    output logic [DATA_WIDTH-1:0] data_pkt - The data packet captured at
    //       the interface. It is a struct that contains all the fields.
-   //    output logic[DEBG_WIDTH-1:0] debg_pkt  - The debug information (if
+   //    output logic [DEBG_WIDTH-1:0] debg_pkt - The debug information (if
    //       any is needed, can be obtained from this argument. This
    //       information is not part of the actual bus protocol, but extra
    //       debug info that can be used as part of the verification strategy).
    //
    //---------------------------------------------------------------------------
-   task mon_data(output logic [DATA_WIDTH-1:0] data_pkt, output logic[DEBG_WIDTH-1:0] debg_pkt);
+   task mon_data(output logic [DATA_WIDTH-1:0] data_pkt, output logic [DEBG_WIDTH-1:0] debg_pkt);
       data_pkt = intf_data_pkt;
       debg_pkt = intf_debg_pkt;
    endtask
 
-endinterface : mby_gmm_bfm_pod_if
-
-//------------------------------------------------------------------------------
-// INTERFACE: mby_gmm_bfm_msh_if
-//
-// NYI (Not yet implemented):
-// This is the interface to connect the gmm model to the mesh RTL. Currently
-// this mode of operation has not been implemented as the mesh verification
-// will use a diferent strategy.
-//------------------------------------------------------------------------------
-interface mby_gmm_bfm_msh_if(input logic clk, input logic rst);
-endinterface : mby_gmm_bfm_msh_if
+endinterface : mby_tag_bfm_mc_if
 
 `endif
-

@@ -32,20 +32,28 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_TAG_BFM_PKG__
 `define __MBY_TAG_BFM_PKG__
-
+//------------------------------------------------------------------------------
+//
+// PACKAGE: mby_tag_bfm_pkg
+// This is the Madison Bay tag bfm package, currently it depends on the uvm,
+// shdv_base_pkg, mby_base_pkg verification packages and also depends on the
+// gmm rtl package, which includes defines and typedefs for the interfaces and
+// transaction classes of this agent.
+//
+//------------------------------------------------------------------------------
 package mby_tag_bfm_pkg;
 
    import uvm_pkg::*;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
-   import shared_pkg::*;
-   import mby_egr_pkg::*; // TODO: getting the data type definitions from here
-                          //       need to change to shared_pkg, once that's
-                          //       available
+   import mby_gmm_pkg::*; // TODO: getting the data type definitions from here
+                          //       need to change to a common pkg, once that's
+                          //       available (if that ends up being the case).
    `include "uvm_macros.svh"
    `include "mby_tag_bfm_defines.svh"
    `include "mby_tag_bfm_types.svh"
-   `include "mby_tag_bfm_xaction.svh"
+   `include "mby_tag_bfm_uc_xaction.svh"
+   `include "mby_tag_bfm_mc_xaction.svh"
    `include "mby_tag_bfm_cfg.svh"
    `include "mby_tag_bfm_fgen.svh"
    `include "mby_tag_bfm.svh"

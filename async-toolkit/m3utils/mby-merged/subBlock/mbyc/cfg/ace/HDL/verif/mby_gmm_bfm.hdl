@@ -7,7 +7,8 @@ $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
          "src/shared/rtl/mby_gmm_pkg.sv",
-         "verif/lib/mby_gmm_bfm/mby_gmm_bfm_if.sv",
+         "verif/lib/mby_gmm_bfm/mby_gmm_bfm_pod_if.sv",
+         "verif/lib/mby_gmm_bfm/mby_gmm_bfm_msh_if.sv",
          "verif/lib/mby_gmm_bfm/mby_gmm_bfm_pkg.sv",
      ],
 

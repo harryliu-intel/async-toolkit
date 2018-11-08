@@ -35,8 +35,6 @@
 `endif
 `ifndef __MBY_TAG_BFM_FGEN__
 `define __MBY_TAG_BFM_FGEN__
-//`uvm_analysis_imp_decl(_fprt)
-//`uvm_analysis_imp_decl(_frame)
 //-----------------------------------------------------------------------------
 // CLASS: mby_tag_bfm_fgen
 //
@@ -53,6 +51,13 @@
 //
 //-----------------------------------------------------------------------------
 class mby_tag_bfm_fgen extends uvm_component;
+
+   // -------------------------------------------------------------------------
+   //
+   // TODO : This is an empty shell for the frame generator.
+   //        - add analysis port declarations, build, connect and run phases.
+   //
+   // -------------------------------------------------------------------------
 
    // Registering class with the factory
    `uvm_component_utils(mby_tag_bfm_fgen)

@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GMM Bus Functional Model Package
+// Title         : Madison Bay GMM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gmm_bfm_pkg.sv
+// File          : mby_gmm_bfm_msh_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the GMM BFM package file
+// Madison Bay GMM mesh interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,35 +30,18 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GMM_BFM_PKG__
-`define __MBY_GMM_BFM_PKG__
+`ifndef __MBY_GMM_BFM_MSH_IF__
+`define __MBY_GMM_BFM_MSH_IF__
 //------------------------------------------------------------------------------
+// INTERFACE: mby_gmm_bfm_msh_if
 //
-// PACKAGE: mby_gmm_bfm_pkg
-// This is the Madison Bay gmm bfm package, currently it depends on the uvm,
-// shdv_base_pkg, mby_base_pkg verification packages and also depends on the
-// gmm rtl package, which includes defines and typedefs for the interfaces and
-// transaction classes of this agent.
-//
+// NYI (Not yet implemented):
+// This is the interface to connect the gmm model to the mesh RTL. Currently
+// this mode of operation has not been implemented as the mesh verification
+// will use a different strategy.
 //------------------------------------------------------------------------------
-package mby_gmm_bfm_pkg;
-
-   import uvm_pkg::*;
-   import shdv_base_pkg::*;
-   import mby_base_pkg::*;
-   import mby_gmm_pkg::*;
-
-   `include "uvm_macros.svh"
-   `include "mby_gmm_bfm_defines.svh"
-   `include "mby_gmm_bfm_types.svh"
-   `include "mby_gmm_bfm_pod_xaction.svh"
-   `include "mby_gmm_bfm_msh_xaction.svh"
-   `include "mby_gmm_bfm_cfg.svh"
-   `include "mby_gmm_bfm.svh"
-
-endpackage : mby_gmm_bfm_pkg
-
+interface mby_gmm_bfm_msh_if(input logic clk, input logic rst);
+endinterface : mby_gmm_bfm_msh_if
 
 `endif
-
 
