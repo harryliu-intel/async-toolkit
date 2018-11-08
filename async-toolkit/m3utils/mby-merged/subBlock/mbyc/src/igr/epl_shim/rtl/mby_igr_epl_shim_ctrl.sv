@@ -241,7 +241,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop & (qs2_md.sop_pos != 3'b000);  //capture sop md for next segment
           seg0_md.sop  = qs2_md.sop & (qs2_md.sop_pos == 3'b000);
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0            = 32'h8888_8880;
               seg_e            = 3'b001;
@@ -332,7 +332,7 @@ module mby_igr_epl_shim_ctrl
           seg_e         = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0           = 32'h8888_8800;
               seg0_md.eop_pos = 3'd1;
@@ -434,7 +434,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0            = 32'h8888_8000;
               seg0_md.eop_pos = 3'd2;
@@ -541,7 +541,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0            = 32'h8888_0000;
               seg0_md.eop_pos = 3'd3;
@@ -654,7 +654,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0            = 32'h8880_0000;
               seg0_md.eop_pos = 3'd4;
@@ -773,7 +773,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0            = 32'h8800_0000;
               seg0_md.eop_pos = 3'd5;
@@ -898,7 +898,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0            = 32'h8000_0000;
               seg0_md.eop_pos = 3'd6;
@@ -1035,7 +1035,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel0            = 32'h0000_0000;
               seg0_md.eop_pos = 3'd7;
@@ -1182,7 +1182,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop & (qs2_md.sop_pos != 3'b000);  //capture sop md for next segment
           seg1_md.sop  = qs2_md.sop & (qs2_md.sop_pos == 3'b000);
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h8888_8880;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1272,7 +1272,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h8888_8800;
               seg1_md.eop_pos = 3'd1;
@@ -1374,7 +1374,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h8888_8000;
               seg1_md.eop_pos = 3'd2;
@@ -1481,7 +1481,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h8888_0000;
               seg1_md.eop_pos = 3'd3;
@@ -1593,7 +1593,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h8880_0000;
               seg1_md.eop_pos = 3'd4;
@@ -1713,7 +1713,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h8800_0000;
               seg1_md.eop_pos = 3'd5;
@@ -1841,7 +1841,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h8000_0000;
               seg1_md.eop_pos = 3'd6;
@@ -1978,7 +1978,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel1            = 32'h0000_0000;
               seg1_md.eop_pos = 3'd7;
@@ -2126,7 +2126,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop & (qs2_md.sop_pos != 3'b000);  //capture sop md for next segment
           seg2_md.sop  = qs2_md.sop & (qs2_md.sop_pos == 3'b000);
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2            = 32'h8888_8880;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2216,7 +2216,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2            = 32'h8888_8800;
               seg2_md.eop_pos = 3'd1;
@@ -2318,7 +2318,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2            = 32'h8888_8000;
               seg2_md.eop_pos = 3'd2;
@@ -2425,7 +2425,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2            = 32'h8888_0000;
               seg2_md.eop_pos = 3'd3;
@@ -2538,7 +2538,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2            = 32'h8880_0000;
               seg2_md.eop_pos = 3'd4;
@@ -2657,7 +2657,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2           = 32'h8800_0000;
               seg2_md.eop_pos = 3'd5;
@@ -2785,7 +2785,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2           = 32'h8000_0000;
               seg2_md.eop_pos = 3'd6;
@@ -2922,7 +2922,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
+          unique case(1'b1)
            qs2_eflit[0]: begin
               fsel2           = 32'h0000_0000;
               seg2_md.eop_pos = 3'd7;
