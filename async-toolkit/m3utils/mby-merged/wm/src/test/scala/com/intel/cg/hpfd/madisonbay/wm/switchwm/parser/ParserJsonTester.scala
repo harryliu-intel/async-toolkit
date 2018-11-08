@@ -34,7 +34,7 @@ class ParserJsonTester extends FlatSpec with Matchers {
     val expectedHeaderPointersOption = testCase.getListOpt[Map[String, AnyRef]]("out.PA_HDR_PTRS")
     expectedHeaderPointersOption.foreach{expectedHeaderPointers =>
       name should "have correct number of PA_HDR_PTRS" in {
-        expectedHeaderPointers.size shouldEqual parseResult.parserPointers.size
+        expectedHeaderPointers.size shouldEqual parseResult.parserPointers.headerPointers.size
       }
 
       expectedHeaderPointers.foreach { map =>
@@ -43,7 +43,7 @@ class ParserJsonTester extends FlatSpec with Matchers {
         val protocolId = map.getInt("protocol_id")
 
         it should "have correct PA_HDR_PTRS #" + pointerNumber.toString in {
-          val headerPointerUnderTest = parseResult.parserPointers.get(pointerNumber)
+          val headerPointerUnderTest = parseResult.parserPointers.headerPointers.get(pointerNumber)
           headerPointerUnderTest.isEmpty shouldBe false
           headerPointerUnderTest.foreach { headerPointer =>
             headerPointer.offset shouldEqual offset

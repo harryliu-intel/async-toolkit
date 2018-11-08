@@ -2,16 +2,16 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal
 
 import madisonbay.csr.all._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{HeaderPointer, ProtoOffsets}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ProtocolsOffsets
 import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 
 
 class ExtractAction(registerExt: parser_ext_r) {
 
-  def extract(protoOffsets: ProtoOffsets, parserFlags: BitFlags): (ProtoOffsets, BitFlags) = {
-    val fields: ProtoOffsets = registerExt.PROTOCOL_ID() match {
+  def extract(protoOffsets: ProtocolsOffsets, parserFlags: BitFlags): (ProtocolsOffsets, BitFlags) = {
+    val fields: ProtocolsOffsets = registerExt.PROTOCOL_ID() match {
       case ExtractAction.SpecialProtocolId  => protoOffsets
-      case protoId => protoOffsets.updated(registerExt.PTR_NUM().toShort, HeaderPointer(protoId.toInt, registerExt.OFFSET().toInt))
+      case protoId => protoOffsets.updated(registerExt.PTR_NUM().toShort, protoId.toInt, registerExt.OFFSET().toInt)
     }
     val flags: BitFlags = registerExt.FLAG_NUM() match {
       case ExtractAction.FlagNOP  => parserFlags
@@ -41,7 +41,7 @@ object ExtractAction {
   def apply(registerExts: List[parser_ext_r]): List[ExtractAction] =
     List(new ExtractAction(registerExts.head), new ExtractAction(registerExts(OffsetOfNextExtractAction)))
 
-  def extractActions(actions: List[ExtractAction], protoOffsets: ProtoOffsets, packetFlags: BitFlags): (ProtoOffsets, BitFlags) =
+  def extractActions(actions: List[ExtractAction], protoOffsets: ProtocolsOffsets, packetFlags: BitFlags): (ProtocolsOffsets, BitFlags) =
     actions.foldLeft(protoOffsets, packetFlags) { (accumulator, act) => act.extract(accumulator._1, accumulator._2) }
 
 }

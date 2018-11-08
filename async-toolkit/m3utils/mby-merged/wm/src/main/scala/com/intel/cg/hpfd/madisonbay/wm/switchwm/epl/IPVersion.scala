@@ -1,11 +1,12 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
-object IPVersion extends Enumeration  {
+object IPVersion  {
 
-  val IpV4Int = 0x4
-  val IpV6Int = 0x6
+  val IPv4Int = 0x4
+  val IPv6Int = 0x6
 
-  val IPV4: Value = Value(IpV4Int, "IPv4")
-  val IPV6: Value = Value(IpV6Int, "IPv4")
+  sealed trait IPVersion
+  case object IPv4    extends IPVersion
+  case object IPv6    extends IPVersion
 
 }

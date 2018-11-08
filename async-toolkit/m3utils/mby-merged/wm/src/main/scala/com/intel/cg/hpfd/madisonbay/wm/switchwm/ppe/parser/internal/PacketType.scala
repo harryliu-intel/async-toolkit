@@ -1,11 +1,13 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ExtractionIndex, PacketType}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal.KeysExtractor.ExtractionIndex
 import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers.getLower32
 
 object PacketType {
+
+  type PacketType = Int
 
   def derive(csrParser: CsrParser, packetFlags: BitFlags): (PacketType, ExtractionIndex) = {
     val interface = 0

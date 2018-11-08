@@ -2,7 +2,7 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtInt.Implicits
 import PacketHeader.portionSegmentFPP
-import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.IPVersion._
 
 object PacketHeader {
 
@@ -15,10 +15,14 @@ object PacketHeader {
   // Light Packet Processing portion of the header segment (128B)
   val portionSegmentLPP = 128
 
+  implicit def toPacketHeader(packet: Packet): PacketHeader = PacketHeader(packet)
+
+  case class IPv4CorrectCheckSum(outerHeaderBit0: Boolean, innerHeaderBit1: Boolean)
+
 }
 
 
-class PacketHeader(bytes: IndexedSeq[Byte]) {
+class PacketHeader private (val bytes: IndexedSeq[Byte]) extends NetworkPacket {
 
   /**
     * The packetheader  includes the entire packet
@@ -41,25 +45,13 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
 
   def apply(addr: Int): Byte = bytes(addr)
 
-  def getWord(addr: Int): Short =
-    if (addr + 1 > bytes.length) {
-      0.toShort
-    } else if (addr + 1 == bytes.length){
-      bytes(addr).toShort
-    } else {
-      // Packet data is big endian (network order)
-      (((bytes(addr).toInt << 8) & UIntegers.MaskUpper8From16) |     // version from mby_parser.c and rdl
-        (bytes(addr + 1).toInt & UIntegers.MaskLower8)).toShort
-    }
-
-  //def getWord(addr: Int): Short = (((apply(addr + 1).toShort & 0xff) << 8) | (apply(addr).toShort & 0xff)).toShort
-
-  def ipVersion: IPVersion.Value = bytes(0).nib(1) match {
-    case IPVersion.IpV4Int => IPVersion.IPV4
-    case IPVersion.IpV6Int => IPVersion.IPV6
+  def ipVersion: IPVersion = bytes(0).nib(1) match {
+    case IPVersion.IPv4Int => IPv4
+    case IPVersion.IPv6Int => IPv6
+    case any => throw new Exception(s"Expected ip4 or ip6, retrieved: $any")
   }
 
-  def totalLength: Int = getWord(2)
+  def totalLength: Int = getWordSafe(2)
 
   /**
     * Validate Packet Length from Header. Only checked for IPv4 packets.
@@ -68,7 +60,7 @@ class PacketHeader(bytes: IndexedSeq[Byte]) {
     * @return
     */
   def ipv4ihlValidate: Boolean = {
-    require(ipVersion == IPVersion.IPV4)
+    require(ipVersion == IPv4)
     val ipv4_ihl = bytes(0).nib(1)
     val ihlLargeEnough = ipv4_ihl >= 5
     val headerLargeEnough = totalLength >= (4 * ipv4_ihl)

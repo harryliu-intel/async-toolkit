@@ -1,7 +1,7 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.IPV4Util.checksum
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.IPv4Utils.checksum
 import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.ExtByte.Implicits
 import org.scalatest._
 

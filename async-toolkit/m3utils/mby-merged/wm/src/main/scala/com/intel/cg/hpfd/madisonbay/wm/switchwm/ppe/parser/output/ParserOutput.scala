@@ -1,33 +1,25 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import ParserExceptions.ParserException
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{EplRxFlags, Port}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal.ParserValidation
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 
-case class ParserOutput(updatedParserCsr: CsrParser,
-                        rxPort: Port,
-                        pktMeta: Int,
-                        rxFlags: EplRxFlags,
-                        segMetaErr: Boolean,
-                        paAdjSegLegLen: Int,
-                        parserKeys: PacketFields,
-                        parserKeysValid: Boolean,
-                        parserFlags: BitFlags,
-                        parserPointers: ProtoOffsets,
-                        parserPointersValid: Boolean,
-                        parserCsumOk: Boolean,
-                        parserException: Option[ParserException],
-                        drop: Boolean,
-                        packetType: Int
+case class ParserOutput(updatedParserCsr:       CsrParser,
+                        rxPort:                 Port,
+                        adjustedSegmentLength:  Int,
+                        parserKeys:             PacketFields,
+                        parserFlags:            BitFlags,
+                        parserPointers:         ProtocolsOffsets,
+                        parserException:        Option[ParserException],
+                        packetType:             Int,
+                        parserValidation:       ParserValidation
                       ) {
   def simplifiedString: String =
-    s"""ParserOutput(updatedParserCsr=..., rxPort=$rxPort, pktMeta=$pktMeta, rxFlags=$rxFlags, segMetaErr=$segMetaErr, paAdjSegLegLen=$paAdjSegLegLen,
+    s"""ParserOutput(updatedParserCsr=..., $rxPort, adjustedSegmentLength=$adjustedSegmentLength,
        | parserKeys=$parserKeys,
-       | parserKeysValid=$parserKeysValid, parserFlags=${parserFlags.get}, parserPointers=$parserPointers, parserPointersValid=$parserPointersValid,
-       | parserCsumOk=$parserCsumOk, parserException=$parserException, drop=$drop, paPacketType=$packetType)
+       | parserFlags=${parserFlags.get}, parserPointers=$parserPointers
+       | parserException=$parserException, packetType=$packetType, $parserValidation)
      """.stripMargin
 }
-
-

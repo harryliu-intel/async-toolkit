@@ -1,6 +1,8 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.epl
 
-object IPV4Util {
+import com.intel.cg.hpfd.madisonbay.wm.utils.extensions.UIntegers._
+
+object IPv4Utils {
 
   /**
     * Compute 1's complement based IPv4 checksum over an array of bytes
@@ -11,8 +13,8 @@ object IPV4Util {
   def checksum(bytes: Seq[Byte]): Short = {
 
     def foldToShort(x: Int): Short = {
-      val lo = x & 0xffff
-      val hi = (x >> 16) & 0xffff
+      val lo = getLower16(x)
+      val hi = getLower16(x >> 16)
       val folded = lo + hi
       if ((folded >> 16) != 0) {
         foldToShort(folded)
@@ -21,23 +23,23 @@ object IPV4Util {
       }
     }
 
-    def addUnsignedShort(acc: Int, addend: Short): Int = acc + (addend.toInt & 0xffff)
+    def addUnsignedShort(acc: Int, addend: Short): Int = acc + getLower16(addend.toInt)
 
     // sum up the 16-bit words
     val sum = bytes.sliding(2,2).toList.foldLeft(0){
       (acc, byte) =>
         if (byte.length == 1) {
-          acc + (byte.head & 0xFF)
+          acc + getLower8(byte.head)
         } else {
           require(byte.length == 2, "Something wrong if sliding give either 1/2 sized lists")
-          val hibits = (byte.head << 8) & 0xff00
-          val lowbits = byte(1) & 0xff
+          val hibits = getUpper8From16(byte.head << 8)
+          val lowbits = getLower8(byte(1))
           val addend: Int = lowbits + hibits
           addUnsignedShort(acc, addend.toShort)
         }
       }
     // fold the high and low 16 bit components together and bitwise invert the result to get the checksum
-    (~foldToShort(sum) & 0xFFFF).toShort
+    getLower16(~foldToShort(sum)).toShort
   }
 
 }

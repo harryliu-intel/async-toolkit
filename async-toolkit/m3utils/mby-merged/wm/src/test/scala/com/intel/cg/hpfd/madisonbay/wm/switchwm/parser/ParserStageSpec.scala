@@ -4,9 +4,9 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserStageLenses}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ProtoOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ProtocolsOffsets
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.utils.Binary.BinaryInterpolator
 import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
@@ -58,13 +58,13 @@ class ParserStageSpec extends FlatSpec with Matchers {
     } yield ())
     val updatedCsrParser = csrParser.copy(ppeParserMap = updatedParserMap)
 
-    val result: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
+    val result: (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
     result._1.get contains 1 shouldEqual true
     result._1.get contains 2 shouldEqual false
     result._1.get contains 3 shouldEqual false
     result._1.get contains 4 shouldEqual true
 
-    val result2: (BitFlags, ProtoOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
+    val result2: (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
     result2._1.toInt shouldEqual b"10010"
   }
 

@@ -2,9 +2,9 @@ package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.internal
 
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.CsrParser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserExceptions.{AbortParserException, ParserException}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ProtocolsOffsets
 import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 import madisonbay.csr.all._
 
@@ -12,8 +12,8 @@ import scala.annotation.tailrec
 
 class ParserAction(analyzerAction: AnalyzerAction, extractActions: List[ExtractAction], exceptionAction: ExceptionAction) {
 
-  def run(idStage: Int, parserState: ParserState, parserFlags: BitFlags, protoOffsets: Parser.ProtoOffsets)(packetHeader: PacketHeader):
-  (ParserState, BitFlags, Parser.ProtoOffsets, Option[ParserException]) = {
+  def run(idStage: Int, parserState: ParserState, parserFlags: BitFlags, protoOffsets: ProtocolsOffsets)(packetHeader: PacketHeader):
+  (ParserState, BitFlags, ProtocolsOffsets, Option[ParserException]) = {
     val currentOffset = parserState.ptr
     // is there an error condition requiring an abort (i.e. without processing this stage)
     // or is the exception action to do nothing (or mark 'done')

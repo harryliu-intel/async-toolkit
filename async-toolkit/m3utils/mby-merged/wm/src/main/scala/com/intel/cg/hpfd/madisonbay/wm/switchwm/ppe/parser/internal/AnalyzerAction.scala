@@ -14,7 +14,7 @@ class AnalyzerAction(anaW: parser_ana_w_r, anaS: parser_ana_s_r) {
       addWithUShortSaturation(getLower16(inputState.aluOperation.calculate(inputState.w(2))))
 
     val nextW = Array(anaW.NEXT_W0_OFFSET(), anaW.NEXT_W1_OFFSET(), anaW.NEXT_W2_OFFSET()).map(nextOffset =>
-      packetHeader.getWord(baseOffset + getLower16(nextOffset))
+      packetHeader.getWordSafe(baseOffset + getLower16(nextOffset))
     )
 
     val nextState = getLower16(anaS.NEXT_STATE())

@@ -11,8 +11,6 @@ object ppe {
 
   class SourcePortMask(l: Long) {  val bs = BitSet(l.toInt)  }
 
-  type EplRxFlags = Int
-
   class L3Domain(val d: Int) extends AnyVal
 
   class L2Domain(val d: Int) extends AnyVal
