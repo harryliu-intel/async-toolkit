@@ -167,7 +167,12 @@ print "MGM debug : @mbyMgmLibs\n";
                -dependent_libs => [ 'sip_shared_lib', 'mby_mesh_env_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
             },
-
+            mby_mesh_bfm_lib => {
+               -hdl_spec       => [ "subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_bfm.hdl" ],
+               -dependent_libs => [ 'mby_common_lib',
+                                   ],
+               -tag            => "nonsynth+nonlint",
+            },
             mby_base_pkg_lib    => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_base_pkg.hdl' ],
                -dependent_libs  => [ 'shdv_shared_lib' ],
@@ -719,19 +724,22 @@ print "MGM debug : @mbyMgmLibs\n";
                        ],
 
                libs => [
-                  "mby_mesh_ti_lib",
                   "shdv_shared_lib",
                   "svt_ahb_lib",
+                  "sva_lib",
+                  "mby_mgm_lib",
                   "mby_mesh_env_lib",
                   "mby_mesh_tb_lib",
                   "mby_msh_rtl_lib",
                   "mby_msh_node_rtl_lib",
+                  "mby_mesh_ti_lib",
                   "mby_mesh_test_lib",
                   "mby_mesh_tb_top_lib",
                   "mby_jasper_lib",
                   "mby_wm_dpi_lib",
                   "ext_shared_lib",
                   "mby_common_lib",
+                  "mby_mesh_bfm_lib",
                ],
                testcase_globals => {
                     },
