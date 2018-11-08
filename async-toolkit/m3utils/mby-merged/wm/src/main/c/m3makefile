@@ -1,4 +1,4 @@
-SYSTEM_CC = SYSTEM_CC & " -std=gnu99"
+SYSTEM_CC = SYSTEM_CC & " -I../../m3/genviews/src/build_c/mby_c/src -std=gnu99"
 
 h_source ("uint")
 c_source ("uint")
