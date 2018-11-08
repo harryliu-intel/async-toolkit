@@ -26,7 +26,13 @@ object Dependencies {
   lazy val commonDeps = Seq(monocleCore, monocleMacro, shapeless, reflect, scalaTest % "test", scalaCheck % "test")
   lazy val csrDeps = Seq(monocleCore, monocleMacro, scalaTest % "test", scalaCheck % "test")
   lazy val tcpDeps = Seq(shapeless, scalaTest % "test", scalaz)
-  def mainDeps(csrVersion: String) = Seq(fs2, fs2io, csrModel(csrVersion))
+  def mainDeps(csrVersion: String) = Seq(
+    fs2,
+    fs2io,
+    // use test code as dependency
+    csrModel(csrVersion) % "compile->compile;test->test",
+    scalaTest % "test"
+  )
   def whiteModelDeps(csrVersion: String) = Seq(
     scalaTest % "test",
     scalaCheck % "test",

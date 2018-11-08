@@ -34,7 +34,7 @@ object Fs2Application {
         val isa = new InetSocketAddress(serverHostname, serverPort)
 
         for {
-          _        <- Stream.eval(logger.info(s"Server should be started at [$serverHostname:$serverPort]! Enjoy!"))
+          _        <- Stream.eval(logger.info(s"Server should be started at [$serverHostname:$serverPort]! Good luck!"))
           _        <- Stream.bracket(CF.delay(acg))(asyncCg => CF.delay(asyncCg.shutdown))
           resource <- server[F](bind = isa)
           socket   <- Stream.resource(resource)
@@ -84,7 +84,8 @@ object Fs2Application {
         .flatMap(identity)
         .through(messageDispatcher)
         .through(errorHandler)
-        .evalMap(array => socket.write(Chunk.boxed(array)))
+        .flatMap(Stream(_: _*))
+        .to(socket.writes())
 
     def publisherStream: Stream[F,Stream[F,Unit]] =
       egressSocketInfoQ.dequeue
