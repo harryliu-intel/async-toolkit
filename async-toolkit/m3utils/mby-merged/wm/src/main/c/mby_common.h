@@ -5,6 +5,9 @@
 #ifndef MBY_COMMON_H
 #define MBY_COMMON_H
 
+// Includes:
+#include <mby_top_map.h> // header file auto-generated from RDL
+
 // Macros:
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -27,7 +30,7 @@
 
 #define MBY_SEGMENT_LEN          256
 
-#define MBY_N_PARSER_KEYS        80
+#define MBY_N_PARSER_KEYS        parser_extract_cfg_rf_PARSER_EXTRACT_CFG__nd // 80
 #define MBY_N_PARSER_FLGS        48
 #define MBY_N_PARSER_PTRS         8
 

@@ -5,8 +5,6 @@
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
 static mbyFwdPortCfg1 getPortCfg1
 (
     mby_ppe_fwd_misc_map * const fwd_misc,

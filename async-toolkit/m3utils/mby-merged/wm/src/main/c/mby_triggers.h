@@ -12,8 +12,6 @@
 #include "mby_maskgen.h"
 #include "mby_triggers_regs.h"
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
 // Defines:
 #define MBY_TRIGGERS_COUNT  96
 

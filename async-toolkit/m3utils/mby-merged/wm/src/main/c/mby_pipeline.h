@@ -5,7 +5,6 @@
 #ifndef MBY_PIPELINE_H
 #define MBY_PIPELINE_H
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 #include "mby_common.h"
 #include "mby_parser.h"
 #include "mby_mapper.h"

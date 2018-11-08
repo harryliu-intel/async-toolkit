@@ -2,13 +2,11 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
+#include "mby_common.h"
 #include "mby_classifier.h"
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
-#include "mby_common.h"
 
 static mbyArpTable getARPTableEntry
 (

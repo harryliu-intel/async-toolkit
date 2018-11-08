@@ -2,8 +2,6 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
 #include "mby_parser.h"
 
 // Get 16-bit word at given index in the segment data buffer
@@ -57,8 +55,8 @@ static fm_bool checkIPv4Chksum(fm_byte seg_data[MBY_PA_MAX_SEG_LEN],
 
 static void lookUpPtypeTcam
 (
-    parser_ptype_tcam_r const tcam[parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
-    parser_ptype_ram_r  const ram [parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd],
+    parser_ptype_tcam_r const tcam[MBY_PA_PTYPE_ENTRIES],
+    parser_ptype_ram_r  const ram [MBY_PA_PTYPE_ENTRIES],
           fm_uint32     const flags,
           fm_uint16   * const ptype,
           fm_byte     * const extract_idx
@@ -69,7 +67,7 @@ static void lookUpPtypeTcam
     *extract_idx = 0;
 
     // The highest numbered PARSER_PTYPE_TCAM entry has highest precedence
-    for (fm_int i = (parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd  - 1); i >= 0; i--)
+    for (fm_int i = (MBY_PA_PTYPE_ENTRIES  - 1); i >= 0; i--)
     {
         fm_uint32 mask = tcam[i].KEY ^ tcam[i].KEY_INVERT;
 
@@ -305,7 +303,7 @@ void Parser
                     &pa_packet_type,
                     &pa_extract_idx);
 
-    for (fm_uint i = 0; i < parser_extract_cfg_rf_PARSER_EXTRACT_CFG__nd; i++)
+    for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++)
     {
         parser_extract_cfg_r const * const extract_cfg = &(parser_map->PARSER_EXTRACT_CFG[pa_extract_idx][i]);
         fm_byte pa_protocol_id = extract_cfg->PROTOCOL_ID;

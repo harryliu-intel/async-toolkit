@@ -10,8 +10,6 @@
 #include "mby_common.h"
 #include "mby_bitfield.h"
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
 // Defines:
 
 // Enums:

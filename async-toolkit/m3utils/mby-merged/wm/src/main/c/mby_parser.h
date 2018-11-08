@@ -121,12 +121,19 @@
 #define MBY_PARSER_CSUM_CFG_l_VALIDATE_L3_LENGTH                0
 #define MBY_PARSER_CSUM_CFG_h_VALIDATE_L3_LENGTH                1
 
+//efine MBY_PA_ANA_STAGES              32    // 32 stages
+#define MBY_PA_ANA_STAGES              mby_ppe_parser_map_PARSER_ANA_S__nd
+
+//efine MBY_PA_ANA_RULES               16    // 16 rules per stage
+#define MBY_PA_ANA_RULES               parser_ana_s_rf_PARSER_ANA_S__nd
+
+#define MBY_PA_PTYPE_ENTRIES           parser_ptype_tcam_rf_PARSER_PTYPE_TCAM__nd
+
 #define MBY_PA_MAX_SEG_LEN             192
 #define MBY_PA_MAX_PTR_LEN             255
 #define MBY_PA_MAX_DATA_SZ             16384
 #define MBY_PSEUDOHEADER_SIZE          40
-#define MBY_PA_ANA_STAGES              32    // 32 stages
-#define MBY_PA_ANA_RULES               16    // 16 rules per stage
+
 #define MBY_OTR_IPHDR_KEY              42    // Note: if IPv6, add 2
 #define MBY_OTR_IPADDR_KEY             48
 #define MBY_L4CSUM_KEY                 32
