@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay Tag Bus Functional Model Configuration Class
+// Title         : Madison Bay Tag BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_tag_bfm_cfg.svh
+// File          : mby_tag_bfm_mc_xaction.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the configuration class of the tag bfm
+// This is the transaction item used by the tag bfm
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -33,61 +33,28 @@
 `ifndef __MBY_TAG_BFM_PKG__
 `error "Attempt to include file outside of mby_tag_bfm_pkg."
 `endif
-`ifndef __MBY_TAG_BFM_CFG__
-`define __MBY_TAG_BFM_CFG__
+`ifndef __MBY_TAG_BFM_MC_XACTION__
+`define __MBY_TAG_BFM_MC_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_tag_bfm_cfg
+// CLASS: mby_tag_bfm_mc_xaction
 //
-// This is the configuration class used by the tag bfm. It contains fields to
-// control the tag agent's driver/monitor behavior and also to control the
-// frame generator capabilities. This class needs to be randomized specifying
-// the mode of operation (IGR or EGR), the rest of the fields will be
-// constrained based off of that. E.g.
-// (start code)
-//    tag_bfm_cfg.randomize() with { bfm_mode == TAG_BFM_IGR_MODE; }
-// (end)
-// When operating in egress mode, the traffic_mode must be defined too (it
-// can be set to either uni-cast or multi-cast). E.g. for multi-cast:
-// (start code)
-//    tag_bfm_cfg.randomize() with {
-//       bfm_mode     == TAG_BFM_EGR_MODE;
-//       traffic_mode == TAG_BFM_MC_MODE;
-//    }
-// (end)
+// This is a parameterized class used by the multi-cast tag_agent.
+//
+// PARAMETERS:
+//     T_data     - mby_tag_bfm_mc_data_t
+//     T_debug    - mby_tag_bfm_mc_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_tag_bfm_cfg extends mby_base_config;
+class mby_tag_bfm_mc_xaction extends mby_base_sequence_item
+#(
+   .T_data (mby_tag_bfm_mc_data_t),
+   .T_debug(mby_tag_bfm_mc_debg_t)
+);
 
-   // VARIABLE: frame_gen_active
-   // Agent is configured to be active or passive
-   uvm_active_passive_enum frame_gen_active;
-
-   // VARIABLE: bfm_mode
-   // The tag bfm can be configured to be in ingress or egress modes.
-   mby_tag_bfm_mode_t bfm_mode;
-
-   // VARIABLE: traffic_mode
-   // The tag bfm can be configured to be in uni-cast or multi-cast modes.
-   mby_tag_bfm_traffic_mode_t traffic_mode;
-
-   // CONSTRAINT: ingress_constraint
-   // Sets proper values for driver/monitor enables and Uni-cast traffic
-   // mode when operating in ingress mode
-   constraint ingress_constraint {
-      if (bfm_mode == TAG_BFM_IGR_MODE) {
-         monitor_active   == UVM_ACTIVE;
-         driver_active    == UVM_PASSIVE;
-         frame_gen_active == UVM_PASSIVE;
-         traffic_mode     == TAG_BFM_UC_MODE;
-      } else {
-         monitor_active   == UVM_ACTIVE;
-         driver_active    == UVM_ACTIVE;
-         frame_gen_active == UVM_ACTIVE;
-      }
-   }
-
-   // UVM object utils macro
-   `uvm_object_utils(mby_tag_bfm_cfg)
+   // -------------------------------------------------------------------------
+   // Macro for factory registration
+   // -------------------------------------------------------------------------
+  `uvm_object_utils(mby_tag_bfm_mc_xaction#(T_data, T_data_rsp, T_debug))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -95,11 +62,44 @@ class mby_tag_bfm_cfg extends mby_base_config;
    // Constructor
    //
    // ARGUMENTS:
-   //    string name - An identifier for this configuration object.
+   //     string name - The sequence item name
+   //
    // -------------------------------------------------------------------------
-   function new(string name = "mby_tag_bfm_cfg");
+   function new (string name = "mby_tag_bfm_mc_xaction");
       super.new(name);
-   endfunction : new
+   endfunction
 
-endclass : mby_tag_bfm_cfg
+   // -------------------------------------------------------------------------
+   // FUNCTION: convert2string
+   //
+   // Provides a simple way to print out the transaction's basic information
+   //
+   // -------------------------------------------------------------------------
+   virtual function string convert2string();
+      string msg_str = "";
+      string lns_str = { {8{" -------- "}}, "\n" };
+      msg_str = super.convert2string();
+      msg_str = { msg_str, $sformatf("tag_mc_xaction::seg_ptr = %020h\n", this.data_pkt.segment.ptr_handle.seg_ptr) };
+      msg_str = { msg_str, lns_str };
+      return msg_str;
+   endfunction : convert2string
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: do_print
+   //
+   // Print implementation: print and sprint functions use the do_print
+   // function to print out the class, here's where the entire transaction
+   // is written to the std output.
+   //
+   // ARGUMENTS:
+   //    uvm_printer printer - APIs of the uvm_printer class are used to print
+   //    the class information.
+   //
+   // -------------------------------------------------------------------------
+   virtual function void do_print(uvm_printer printer);
+      super.do_print(printer);
+      // pretty print
+   endfunction : do_print
+
+endclass : mby_tag_bfm_mc_xaction
 `endif

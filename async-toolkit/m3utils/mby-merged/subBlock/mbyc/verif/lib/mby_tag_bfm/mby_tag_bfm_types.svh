@@ -39,17 +39,43 @@
 // -------------------------------------------------------------------------
 // Main struct type definitions for TAG BFM
 // -------------------------------------------------------------------------
-typedef lltformat_t mby_tag_bfm_data_t;
-typedef logic       mby_tag_bfm_debg_t;
+// Re-using the mby_tag_ring_t format from the RTL libraries, this will be
+// the main data type of the transaction item used by the uni-cast tag bfm.
+typedef mby_tag_ring_t    mby_tag_bfm_uc_data_t;
+// Re-using the mby_tag_ring_t format from the RTL libraries, this will be
+// the main data type of the transaction item used by the multi-cast tag bfm.
+typedef mby_mc_tag_ring_t mby_tag_bfm_mc_data_t;
+
+// Defining the debug types to be simple logic for now.
+typedef logic mby_tag_bfm_uc_debg_t;
+typedef logic mby_tag_bfm_mc_debg_t;
+
+// These are the modes of operation of the Tag BFM, variable to be included in
+// the configuration object.
+typedef enum bit {
+   TAG_BFM_IGR_MODE,
+   TAG_BFM_EGR_MODE
+} mby_tag_bfm_mode_t;
+// These are the traffic modes of operation of the Tag BFM, variable to be
+// included in the configuration object.
+typedef enum bit {
+   TAG_BFM_UC_MODE,
+   TAG_BFM_MC_MODE
+} mby_tag_bfm_traffic_mode_t;
 
 // -------------------------------------------------------------------------
 // Main class & VIF type definitions for TAG BFM
 // -------------------------------------------------------------------------
-typedef virtual mby_tag_bfm_if mby_tag_bfm_vif;
-typedef class mby_tag_bfm_xaction; // fwd declaration of the transaction class
-typedef mby_base_agent#(.T_req(mby_tag_bfm_xaction), .T_vif(mby_tag_bfm_vif)) mby_tag_bfm_agent;
+// Creating a virtual interface types for uni-cast and multicast
+typedef virtual mby_tag_bfm_uc_if mby_tag_bfm_uc_vif;
+typedef virtual mby_tag_bfm_mc_if mby_tag_bfm_mc_vif;
+// Forward declaration of the transaction classes (in the tag_bfm_pkg
+// these file are compiled before the transaction item.
+typedef class mby_tag_bfm_uc_xaction;
+typedef class mby_tag_bfm_mc_xaction;
+// Defining the uni-cast tag agent as a parameterized base agent.
+typedef mby_base_agent#(.T_req(mby_tag_bfm_uc_xaction), .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
+// Defining the multi-cast tag agent as a parameterized base agent.
+typedef mby_base_agent#(.T_req(mby_tag_bfm_mc_xaction), .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_agent;
 
 `endif
-
-
-
