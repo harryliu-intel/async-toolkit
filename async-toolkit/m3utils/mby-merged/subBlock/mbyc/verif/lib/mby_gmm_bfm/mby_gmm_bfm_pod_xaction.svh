@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay NET_MAN Bus Functional Model Configuration Class
+// Title         : Madison Bay GMM BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_net_man_cfg.svh
+// File          : mby_gmm_bfm_pod_xaction.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the configuration class of the net_man
+// This is the transaction item used by the gmm's pod bfm
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,27 +30,31 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_NET_MAN_PKG__
-`error "Attempt to include file outside of mby_net_man_pkg."
+`ifndef __MBY_GMM_BFM_PKG__
+`error "Attempt to include file outside of mby_gmm_bfm_pkg."
 `endif
-`ifndef __MBY_NET_MAN_CFG__
-`define __MBY_NET_MAN_CFG__
+`ifndef __MBY_GMM_BFM_POD_XACTION__
+`define __MBY_GMM_BFM_POD_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_net_man_cfg
+// CLASS: mby_gmm_bfm_pod_xaction
 //
-// This is the configuration class used by the net_man. It contains fields to
-// control the gcm agent's driver/monitor behavior and also to control the
-// frame generator capabilities.
+// This is a parameterized class used by mby_base_agent.
+//
+// PARAMETERS:
+//     T_data     - data type (expecting to be a struct)
+//     T_debug    - set to logic for now
 //
 //-----------------------------------------------------------------------------
-class mby_net_man_cfg extends mby_base_config;
+class mby_gmm_bfm_pod_xaction extends mby_base_sequence_item
+#(
+   .T_data (),
+   .T_debug()
+);
 
-   // VARIABLE: frame_gen_active
-   // Agent is configured to be active or passive
-   uvm_active_passive_enum frame_gen_active;
-
-   // UVM object utils macro
-   `uvm_object_utils(mby_net_man_cfg)
+   // -------------------------------------------------------------------------
+   // Macro for factory registration
+   // -------------------------------------------------------------------------
+  `uvm_object_utils(mby_gmm_bfm_pod_xaction#(T_data, T_data_rsp, T_debug))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -58,11 +62,38 @@ class mby_net_man_cfg extends mby_base_config;
    // Constructor
    //
    // ARGUMENTS:
-   //    string name - An identifier for this configuration object.
+   //     string name - The sequence item name
+   //
    // -------------------------------------------------------------------------
-   function new(string name = "mby_net_man_cfg");
+   function new (string name = "mby_gmm_bfm_pod_xaction");
       super.new(name);
-   endfunction : new
+   endfunction
 
-endclass : mby_net_man_cfg
+   // -------------------------------------------------------------------------
+   // FUNCTION: convert2string
+   //
+   // Provides a simple way to print out the transaction's basic information
+   //
+   // -------------------------------------------------------------------------
+   virtual function string convert2string();
+   endfunction : convert2string
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: do_print
+   //
+   // Print implementation: print and sprint functions use the do_print
+   // function to print out the class, here's where the entire transaction
+   // is written to the std output.
+   //
+   // ARGUMENTS:
+   //    uvm_printer printer - APIs of the uvm_printer class are used to print
+   //    the class information.
+   //
+   // -------------------------------------------------------------------------
+   virtual function void do_print(uvm_printer printer);
+      super.do_print(printer);
+      // pretty print
+   endfunction : do_print
+
+endclass : mby_gmm_bfm_pod_xaction
 `endif

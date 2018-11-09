@@ -241,8 +241,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop & (qs2_md.sop_pos != 3'b000);  //capture sop md for next segment
           seg0_md.sop  = qs2_md.sop & (qs2_md.sop_pos == 3'b000);
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0            = 32'h8888_8880;
               seg_e            = 3'b001;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -255,9 +254,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+          end //if
+          if(qs2_eflit[1]) begin
               fsel0            = 32'h8888_8810; //FIXME anything to do with FCS_hints???
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
                 4'd3: begin fsel1 = 32'h0000_0002; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
@@ -268,9 +267,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end  //if
+           if(qs2_eflit[2]) begin
               fsel0            = 32'h8888_8210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
                 4'd4: begin fsel1 = 32'h0000_0003; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
@@ -280,9 +279,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h8888_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
                 4'd5: begin fsel1 = 32'h0000_0004; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
@@ -291,9 +290,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0            = 32'h8884_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
                 4'd6: begin fsel1 = 32'h0000_0005; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
@@ -301,39 +300,37 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_0543; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0            = 32'h8854_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
                 4'd7: begin fsel1 = 32'h0000_0006; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
                 4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0            = 32'h8654_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 7 to get here
                 4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0            = 32'h7654_3210;
               nxt_flit         = 5'd08;
-              flit_err =qs2_sop_v & (~qs2_sflit[0]); //If there is a valid Sop and Eop is in flit[7] it has to be in flit[0]
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v & (~qs2_sflit[0]); //If there is a valid Sop and Eop is in flit[7] it has to be in flit[0]
+           end                        
         end //d0
         5'd1: begin
           seg0_we[7:0] = 8'b1111_1110;
           seg_e         = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0           = 32'h8888_8800;
               seg0_md.eop_pos = 3'd1;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -346,9 +343,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+          end
+          if(qs2_eflit[1]) begin
               fsel0           = 32'h8888_8100;
               seg0_md.eop_pos = 3'd2;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -360,9 +357,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+          end
+          if(qs2_eflit[2]) begin
               fsel0           = 32'h8888_2100;
               seg0_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -373,9 +370,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h8883_2100;
               seg0_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -385,9 +382,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0            = 32'h8843_2100;
               seg0_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -396,9 +393,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_0654; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0            = 32'h8543_2100;
               seg0_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
@@ -406,18 +403,18 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0            = 32'h6543_2100;
               seg0_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 7 to get here
                 4'd8: begin fsel1 = 32'h0000_0007; seg1_we[6:0] = 7'b000_0001; nxt_flit = 5'd09; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0            = 32'h6543_2100;
               fsel1            = 32'h8888_8887;
               seg0_md.eop      = 1'b0;
@@ -425,17 +422,15 @@ module mby_igr_epl_shim_ctrl
               seg1_we[7:0]   = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd16;
-              flit_err         =qs2_sop_v; //There should not be a valid Sop 
-            end                         
-          endcase //reverse
+              flit_err         = qs2_sop_v; //There should not be a valid Sop 
+           end                         
         end //d1
         5'd2: begin
           seg0_we[7:0] = 8'b1111_1100;
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0            = 32'h8888_8000;
               seg0_md.eop_pos = 3'd2;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -448,9 +443,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel0            = 32'h8888_1000;
               seg0_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -462,9 +457,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel0            = 32'h8882_1000;
               seg0_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -475,9 +470,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h8832_1000;
               seg0_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -487,9 +482,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0            = 32'h8432_1000;
               seg0_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -498,9 +493,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0            = 32'h5432_1000;
               seg0_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
@@ -508,9 +503,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_0076; seg1_we[6:0] = 7'b000_0011; nxt_flit = 5'd10; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0            = 32'h5432_1000;
               fsel1            = 32'h8888_8886;
               seg0_md.eop      = 1'b0;
@@ -522,9 +517,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop;end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0            = 32'h5432_1000;
               fsel1            = 32'h8888_8876;
               seg0_md.eop      = 1'b0;
@@ -532,17 +527,15 @@ module mby_igr_epl_shim_ctrl
               seg1_we[7:0]    = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd16;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
             end                        
-          endcase //reverse          
         end //d2
         5'd3: begin
           seg0_we[7:0] = 8'b1111_1000;
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0            = 32'h8888_0000;
               seg0_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -555,9 +548,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel0            = 32'h8881_0000;
               seg0_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -569,9 +562,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel0            = 32'h8821_0000;
               seg0_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -582,9 +575,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h8321_0000;
               seg0_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -594,9 +587,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0            = 32'h4321_0000;
               seg0_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -605,9 +598,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_0765; seg1_we[6:0] = 7'b000_0111; nxt_flit = 5'd11; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0            = 32'h4321_0000;
               fsel1            = 32'h8888_8885;
               seg0_md.eop      = 1'b0;
@@ -621,9 +614,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop;end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0            = 32'h4321_0000;
               fsel1            = 32'h8888_8865;
               seg0_md.eop      = 1'b0;
@@ -635,9 +628,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0           = 32'h4321_0000;
               fsel1           = 32'h8888_8765;
               seg0_md.eop     = 1'b0;
@@ -645,17 +638,15 @@ module mby_igr_epl_shim_ctrl
               seg1_we[7:0]    = 8'b1111_1111;
               seg_e           = 3'b011;
               nxt_flit        = 5'd16;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d3          
         5'd4: begin
           seg0_we[7:0] = 8'b1111_0000;
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0            = 32'h8880_0000;
               seg0_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -668,9 +659,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel0            = 32'h8810_0000;
               seg0_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -682,9 +673,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel0            = 32'h8210_0000;
               seg0_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -695,9 +686,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h3210_0000;
               seg0_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -707,9 +698,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0000_7654; seg1_we[6:0] = 7'b000_1111; nxt_flit = 5'd12; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0            = 32'h3210_0000;
               fsel1            = 32'h8888_8884;
               seg0_md.eop      = 1'b0;
@@ -725,9 +716,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0            = 32'h3210_0000;
               fsel1            = 32'h8888_8854;
               seg1_md.eop_pos = 3'd1;
@@ -740,9 +731,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0            = 32'h3210_0000;
               fsel1            = 32'h8888_8654;
               seg0_md.eop      = 1'b0;
@@ -754,9 +745,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0            = 32'h3210_0000;
               fsel1            = 32'h8888_7654;
               seg0_md.eop      = 1'b0;
@@ -764,17 +755,15 @@ module mby_igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd16;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d4
         5'd5: begin
           seg0_we[7:0] = 8'b1110_0000;
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0            = 32'h8800_0000;
               seg0_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -787,9 +776,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel0            = 32'h8100_0000;
               seg0_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -801,9 +790,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel0            = 32'h2100_0000;
               seg0_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -814,9 +803,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0007_6543; seg1_we[6:0] = 7'b001_1111; nxt_flit = 5'd13; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h2100_0000;
               fsel1            = 32'h8888_8883;
               seg1_md.eop_pos = 3'd0;
@@ -833,9 +822,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0           = 32'h2100_0000;
               fsel1           = 32'h8888_8843;
               seg1_md.eop_pos = 3'd1;
@@ -850,9 +839,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0           = 32'h2100_0000;
               fsel1           = 32'h8888_8543;
               seg1_md.eop_pos = 3'd2;
@@ -865,9 +854,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0           = 32'h2100_0000;
               fsel1           = 32'h8888_6543;
               seg0_md.eop     = 1'b0;
@@ -879,9 +868,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0           = 32'h2100_0000;
               fsel1           = 32'h8887_6543;
               seg0_md.eop     = 1'b0;
@@ -889,17 +878,15 @@ module mby_igr_epl_shim_ctrl
               seg1_we[7:0]    = 8'b1111_1111;
               seg_e           = 3'b011;
               nxt_flit        = 5'd16;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d5
         5'd6: begin
           seg0_we[7:0] = 8'b1100_0000;
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0            = 32'h8000_0000;
               seg0_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -912,9 +899,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel0            = 32'h1000_0000;
               seg0_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -926,9 +913,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0076_5432; seg1_we[6:0] = 7'b011_1111; nxt_flit = 5'd14; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel0            = 32'h1000_0000;
               fsel1            = 32'h8888_8882;
               seg0_md.eop      = 1'b0;
@@ -948,9 +935,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h1000_0000;
               fsel1            = 32'h8888_8832;
               seg0_md.eop      = 1'b0;
@@ -968,9 +955,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0            = 32'h1000_0000;
               fsel1            = 32'h8888_8432;
               seg0_md.eop      = 1'b0;
@@ -986,9 +973,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0            = 32'h1000_0000;
               fsel1            = 32'h8888_5432;
               seg0_md.eop      = 1'b0;
@@ -1002,9 +989,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0            = 32'h1000_0000;
               fsel1            = 32'h8886_5432;
               seg0_md.eop      = 1'b0;
@@ -1016,9 +1003,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0            = 32'h1000_0000;
               fsel1            = 32'h8876_5432;
               seg0_md.eop      = 1'b0;
@@ -1026,17 +1013,15 @@ module mby_igr_epl_shim_ctrl
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd16;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d6
         5'd7: begin
           seg0_we[7:0] = 8'b1000_0000;
           seg_e        = 3'b001;
           seg1_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg0_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel0            = 32'h0000_0000;
               seg0_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1049,9 +1034,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel1 = 32'h0765_4321; seg1_we[6:0] = 7'b111_1111; nxt_flit = 5'd15; end
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel0            = 32'h0000_0000;
               fsel1            = 32'h8888_8881;
               seg0_md.eop      = 1'b0;
@@ -1073,9 +1058,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel0            = 32'h0000_0000;
               fsel1            = 32'h8888_8821;
               seg0_md.eop      = 1'b0;
@@ -1095,9 +1080,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel0            = 32'h0000_0000;
               fsel1            = 32'h8888_8321;
               seg0_md.eop      = 1'b0;
@@ -1115,9 +1100,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel0            = 32'h0000_0000;
               fsel1            = 32'h8888_4321;
               seg0_md.eop      = 1'b0;
@@ -1133,9 +1118,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel0            = 32'h0000_0000;
               fsel1            = 32'h8885_4321;
               seg0_md.eop      = 1'b0;
@@ -1149,9 +1134,9 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel0            = 32'h0000_0000;
               fsel1            = 32'h8865_4321;
               seg0_md.eop      = 1'b0;
@@ -1163,18 +1148,17 @@ module mby_igr_epl_shim_ctrl
                             seg1_sop_e = 1'b0; seg2_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel0            = 32'h0000_0000;
               fsel1            = 32'h8765_4321;
               seg1_md.eop_pos = 3'd6;
               seg1_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd16;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d7
 //end of seg0
         5'd8: begin
@@ -1182,8 +1166,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop & (qs2_md.sop_pos != 3'b000);  //capture sop md for next segment
           seg1_md.sop  = qs2_md.sop & (qs2_md.sop_pos == 3'b000);
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h8888_8880;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
                 4'd2: begin fsel2 = 32'h0000_0001; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
@@ -1195,9 +1178,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel1            = 32'h8888_8810; //FIXME anything to do with FCS_hints???
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
                 4'd3: begin fsel2 = 32'h0000_0002; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
@@ -1208,9 +1191,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1            = 32'h8888_8210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
                 4'd4: begin fsel2 = 32'h0000_0003; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
@@ -1220,9 +1203,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1            = 32'h8888_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
                 4'd5: begin fsel2 = 32'h0000_0004; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
@@ -1231,9 +1214,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
             end            
-           qs2_eflit[4]: begin
+           if(qs2_eflit[4]) begin
               fsel1            = 32'h8884_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
                 4'd6: begin fsel2 = 32'h0000_0005; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
@@ -1241,39 +1224,37 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_0543; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1            = 32'h8854_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
                 4'd7: begin fsel2 = 32'h0000_0006; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
                 4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1            = 32'h8654_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 7 to get here
                 4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
             end            
-           qs2_eflit[7]: begin
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h7654_3210;
               nxt_flit         = 5'd16;
-              flit_err =qs2_sop_v & (~qs2_sflit[0]); //If there is a valid Sop and Eop is in flit[7] it has to be in flit[0]
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v & (~qs2_sflit[0]); //If there is a valid Sop and Eop is in flit[7] it has to be in flit[0]
+           end                        
         end //d8
         5'd9: begin
           seg1_we[7:0] = 8'b1111_1110;
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h8888_8800;
               seg1_md.eop_pos = 3'd1;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1286,9 +1267,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel1            = 32'h8888_8100;
               seg1_md.eop_pos = 3'd2;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -1300,9 +1281,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1            = 32'h8888_2100;
               seg1_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -1313,9 +1294,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1            = 32'h8883_2100;
               seg1_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -1325,9 +1306,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel1            = 32'h8843_2100;
               seg1_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -1336,9 +1317,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_0654; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1            = 32'h8543_2100;
               seg1_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
@@ -1346,18 +1327,18 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1            = 32'h6543_2100;
               seg1_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 7 to get here
                 4'd8: begin fsel2 = 32'h0000_0007; seg2_we[6:0] = 7'b000_0001; nxt_flit = 5'd17; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h6543_2100;
               fsel2            = 32'h8888_8887;
               seg1_md.eop      = 1'b0;
@@ -1365,17 +1346,15 @@ module mby_igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd0;
-              flit_err         =qs2_sop_v; //There should not be a valid Sop 
-            end                         
-          endcase //reverse
+              flit_err         = qs2_sop_v; //There should not be a valid Sop 
+           end                         
         end //d9
         5'd10: begin
           seg1_we[7:0] = 8'b1111_1100;
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h8888_8000;
               seg1_md.eop_pos = 3'd2;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1388,9 +1367,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel1            = 32'h8888_1000;
               seg1_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -1402,9 +1381,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1            = 32'h8882_1000;
               seg1_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -1415,9 +1394,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1            = 32'h8832_1000;
               seg1_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -1427,9 +1406,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel1            = 32'h8432_1000;
               seg1_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -1438,9 +1417,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1            = 32'h5432_1000;
               seg1_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
@@ -1448,9 +1427,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_0076; seg2_we[6:0] = 7'b000_0011; nxt_flit = 5'd18; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1           = 32'h5432_1000;
               fsel2           = 32'h8888_8886;
               seg1_md.eop     = 1'b0;
@@ -1462,9 +1441,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h5432_1000;
               fsel2            = 32'h8888_8876;
               seg1_md.eop      = 1'b0;
@@ -1472,17 +1451,15 @@ module mby_igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd0;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse          
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d10
         5'd11: begin
           seg1_we[7:0] = 8'b1111_1000;
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h8888_0000;
               seg1_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1495,9 +1472,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel1            = 32'h8881_0000;
               seg1_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -1509,9 +1486,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1            = 32'h8821_0000;
               seg1_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -1522,9 +1499,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1            = 32'h8321_0000;
               seg1_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -1534,9 +1511,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel1            = 32'h4321_0000;
               seg1_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -1545,9 +1522,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_0765; seg2_we[6:0] = 7'b000_0111; nxt_flit = 5'd19; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1            = 32'h4321_0000;
               fsel2            = 32'h8888_8885;
               seg2_md.eop_pos = 3'd0;
@@ -1560,9 +1537,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1            = 32'h4321_0000;
               fsel2            = 32'h8888_8865;
               seg1_md.eop      = 1'b0;
@@ -1574,9 +1551,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h4321_0000;
               fsel2            = 32'h8888_8765;
               seg1_md.eop      = 1'b0;
@@ -1584,17 +1561,15 @@ module mby_igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd0;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d11          
         5'd12: begin
           seg1_we[7:0] = 8'b1111_0000;
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h8880_0000;
               seg1_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1607,9 +1582,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel1            = 32'h8810_0000;
               seg1_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -1621,9 +1596,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1            = 32'h8210_0000;
               seg1_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -1634,9 +1609,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1            = 32'h3210_0000;
               seg1_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -1646,9 +1621,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0000_7654; seg2_we[6:0] = 7'b000_1111; nxt_flit = 5'd20; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel1            = 32'h3210_0000;
               fsel2            = 32'h8888_8884;
               seg1_md.eop      = 1'b0;
@@ -1664,9 +1639,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1            = 32'h3210_0000;
               fsel2            = 32'h8888_8854;
               seg1_md.eop      = 1'b0;
@@ -1680,9 +1655,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1            = 32'h3210_0000;
               fsel2            = 32'h8888_8654;
               seg1_md.eop      = 1'b0;
@@ -1694,9 +1669,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h3210_0000;
               fsel2            = 32'h8888_7654;
               seg1_md.eop      = 1'b0;
@@ -1704,17 +1679,15 @@ module mby_igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b011;
               nxt_flit         = 5'd0;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d12
         5'd13: begin
           seg1_we[7:0] = 8'b1110_0000;
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h8800_0000;
               seg1_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1727,9 +1700,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel1            = 32'h8100_0000;
               seg1_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -1741,9 +1714,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1            = 32'h2100_0000;
               seg1_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -1754,9 +1727,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0007_6543; seg2_we[6:0] = 7'b001_1111; nxt_flit = 5'd21; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1            = 32'h2100_0000;
               fsel2            = 32'h8888_8883;
               seg1_md.eop      = 1'b0;
@@ -1774,9 +1747,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel1            = 32'h2100_0000;
               fsel2            = 32'h8888_8843;
               seg1_md.eop      = 1'b0;
@@ -1792,9 +1765,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1            = 32'h2100_0000;
               fsel2            = 32'h8888_8543;
               seg1_md.eop      = 1'b0;
@@ -1808,9 +1781,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1            = 32'h2100_0000;
               fsel2            = 32'h8888_6543;
               seg1_md.eop      = 1'b0;
@@ -1822,9 +1795,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h2100_0000;
               fsel2            = 32'h8887_6543;
               seg1_md.eop      = 1'b0;
@@ -1832,17 +1805,15 @@ module mby_igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;
               nxt_flit         = 5'd0;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d13
         5'd14: begin
           seg1_we[7:0] = 8'b1100_0000;
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h8000_0000;
               seg1_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1855,9 +1826,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel1            = 32'h1000_0000;
               seg1_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -1869,9 +1840,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0076_5432; seg2_we[6:0] = 7'b011_1111; nxt_flit = 5'd22; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1           = 32'h1000_0000;
               fsel2           = 32'h8888_8882;
               seg1_md.eop     = 1'b0;
@@ -1891,9 +1862,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1            = 32'h1000_0000;
               fsel2            = 32'h8888_8832;
               seg1_md.eop      = 1'b0;
@@ -1911,9 +1882,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel1           = 32'h1000_0000;
               fsel2           = 32'h8888_8432;
               seg1_md.eop     = 1'b0;
@@ -1929,9 +1900,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1           = 32'h1000_0000;
               fsel2           = 32'h8888_5432;
               seg1_md.eop     = 1'b0;
@@ -1945,9 +1916,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1           = 32'h1000_0000;
               fsel2           = 32'h8886_5432;
               seg1_md.eop     = 1'b0;
@@ -1959,9 +1930,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h1000_0000;
               fsel2            = 32'h8876_5432;
               seg1_md.eop      = 1'b0;
@@ -1969,17 +1940,15 @@ module mby_igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;
               nxt_flit         = 5'd0;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d14
         5'd15: begin
           seg1_we[7:0] = 8'b1000_0000;
           seg_e        = 3'b010;
           seg2_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg1_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel1            = 32'h0000_0000;
               seg1_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -1992,9 +1961,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel2 = 32'h0765_4321; seg2_we[6:0] = 7'b111_1111; nxt_flit = 5'd23; end
                 default: nxt_flit = 5'd16;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
             end
-           qs2_eflit[1]: begin
+           if(qs2_eflit[1]) begin
               fsel1           = 32'h0000_0000;
               fsel2           = 32'h8888_8881;
               seg1_md.eop     = 1'b0;
@@ -2016,9 +1985,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel1           = 32'h0000_0000;
               fsel2           = 32'h8888_8821;
               seg1_md.eop     = 1'b0;
@@ -2038,9 +2007,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel1           = 32'h0000_0000;
               fsel2           = 32'h8888_8321;
               seg1_md.eop     = 1'b0;
@@ -2058,9 +2027,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel1           = 32'h0000_0000;
               fsel2           = 32'h8888_4321;
               seg1_md.eop     = 1'b0;
@@ -2076,9 +2045,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel1           = 32'h0000_0000;
               fsel2           = 32'h8885_4321;
               seg1_md.eop     = 1'b0;
@@ -2092,9 +2061,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel1            = 32'h0000_0000;
               fsel2            = 32'h8865_4321;
               seg1_md.eop      = 1'b0;
@@ -2106,9 +2075,9 @@ module mby_igr_epl_shim_ctrl
                             seg2_sop_e = 1'b0; seg0_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel1            = 32'h0000_0000;
               fsel2            = 32'h8765_4321;
               seg1_md.eop      = 1'b0;
@@ -2116,9 +2085,8 @@ module mby_igr_epl_shim_ctrl
               seg2_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b110;
               nxt_flit         = 5'd0;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d15
 //end of seg1
         5'd16: begin
@@ -2126,8 +2094,7 @@ module mby_igr_epl_shim_ctrl
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop & (qs2_md.sop_pos != 3'b000);  //capture sop md for next segment
           seg2_md.sop  = qs2_md.sop & (qs2_md.sop_pos == 3'b000);
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2            = 32'h8888_8880;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
                 4'd2: begin fsel0 = 32'h0000_0001; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2139,9 +2106,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2            = 32'h8888_8810; //FIXME anything to do with FCS_hints???
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
                 4'd3: begin fsel0 = 32'h0000_0002; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2152,9 +2119,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2            = 32'h8888_8210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
                 4'd4: begin fsel0 = 32'h0000_0003; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2164,9 +2131,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel2            = 32'h8888_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
                 4'd5: begin fsel0 = 32'h0000_0004; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2175,9 +2142,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2            = 32'h8884_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
                 4'd6: begin fsel0 = 32'h0000_0005; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
@@ -2185,39 +2152,37 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_0543; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2            = 32'h8854_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
                 4'd7: begin fsel0 = 32'h0000_0006; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
                 4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel2            = 32'h8654_3210;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 7 to get here
                 4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2            = 32'h7654_3210;
               nxt_flit         = 5'd0;
-              flit_err =qs2_sop_v & (~qs2_sflit[0]); //If there is a valid Sop and Eop is in flit[7] it has to be in flit[0]
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v & (~qs2_sflit[0]); //If there is a valid Sop and Eop is in flit[7] it has to be in flit[0]
+           end                        
         end //d16
         5'd17: begin
           seg2_we[7:0] = 8'b1111_1110;
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2            = 32'h8888_8800;
               seg2_md.eop_pos = 3'd1;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2230,9 +2195,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2            = 32'h8888_8100;
               seg2_md.eop_pos = 3'd2;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -2244,9 +2209,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2            = 32'h8888_2100;
               seg2_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -2257,9 +2222,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel2            = 32'h8883_2100;
               seg2_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -2269,9 +2234,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2            = 32'h8843_2100;
               seg2_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -2280,9 +2245,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_0654; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2            = 32'h8543_2100;
               seg2_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
@@ -2290,18 +2255,18 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel2            = 32'h6543_2100;
               seg2_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 7 to get here
                 4'd8: begin fsel0 = 32'h0000_0007; seg0_we[6:0] = 7'b000_0001; nxt_flit = 5'd01; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2            = 32'h6543_2100;
               fsel0            = 32'h8888_8887;
               seg2_md.eop      = 1'b0;
@@ -2309,17 +2274,15 @@ module mby_igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e            = 3'b101;
               nxt_flit         = 5'd08;
-              flit_err         =qs2_sop_v; //There should not be a valid Sop 
-            end                         
-          endcase //reverse
+              flit_err         = qs2_sop_v; //There should not be a valid Sop 
+           end                         
         end //d17
         5'd18: begin
           seg2_we[7:0] = 8'b1111_1100;
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2            = 32'h8888_8000;
               seg2_md.eop_pos = 3'd2;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2332,9 +2295,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2            = 32'h8888_1000;
               seg2_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -2346,9 +2309,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2            = 32'h8882_1000;
               seg2_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -2359,9 +2322,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel2            = 32'h8832_1000;
               seg2_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -2371,9 +2334,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2            = 32'h8432_1000;
               seg2_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -2382,9 +2345,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2            = 32'h5432_1000;
               seg2_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 6 to get here
@@ -2392,9 +2355,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_0076; seg0_we[6:0] = 7'b000_0011; nxt_flit = 5'd02; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel2            = 32'h5432_1000;
               fsel0            = 32'h8888_8886;
               seg2_md.eop      = 1'b0;
@@ -2406,9 +2369,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2            = 32'h5432_1000;
               fsel0            = 32'h8888_8876;
               seg2_md.eop      = 1'b0;
@@ -2416,17 +2379,15 @@ module mby_igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e            = 3'b101;
               nxt_flit         = 5'd08;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse          
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d18
         5'd19: begin
           seg2_we[7:0] = 8'b1111_1000;
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2            = 32'h8888_0000;
               seg2_md.eop_pos = 3'd3;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2439,9 +2400,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2            = 32'h8881_0000;
               seg2_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -2453,9 +2414,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2            = 32'h8821_0000;
               seg2_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -2466,9 +2427,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel2            = 32'h8321_0000;
               seg2_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -2478,9 +2439,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2            = 32'h4321_0000;
               seg2_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 5 to get here
@@ -2489,9 +2450,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_0765; seg0_we[6:0] = 7'b000_0111; nxt_flit = 5'd03; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2           = 32'h4321_0000;
               fsel0           = 32'h8888_8885;
               seg2_md.eop     = 1'b0;
@@ -2505,9 +2466,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel2            = 32'h4321_0000;
               fsel0            = 32'h8888_8865;
               seg2_md.eop      = 1'b0;
@@ -2519,9 +2480,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2           = 32'h4321_0000;
               fsel0           = 32'h8888_8765;
               seg2_md.eop     = 1'b0;
@@ -2529,17 +2490,15 @@ module mby_igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e           = 3'b101;
               nxt_flit        = 5'd08;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d19          
         5'd20: begin
           seg2_we[7:0] = 8'b1111_0000;
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2            = 32'h8880_0000;
               seg2_md.eop_pos = 3'd4;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2552,9 +2511,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2            = 32'h8810_0000;
               seg2_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -2566,9 +2525,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2            = 32'h8210_0000;
               seg2_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -2579,9 +2538,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
             end
-           qs2_eflit[3]: begin
+           if(qs2_eflit[3]) begin
               fsel2            = 32'h3210_0000;
               seg2_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 4 to get here
@@ -2591,9 +2550,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0000_7654; seg0_we[6:0] = 7'b000_1111; nxt_flit = 5'd04; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2           = 32'h3210_0000;
               fsel0           = 32'h8888_8884;
               seg0_md.eop_pos = 3'd0;
@@ -2608,9 +2567,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2           = 32'h3210_0000;
               fsel0           = 32'h8888_8854;
               seg2_md.eop     = 1'b0;
@@ -2624,9 +2583,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel2            = 32'h3210_0000;
               fsel0            = 32'h8888_8654;
               seg2_md.eop      = 1'b0;
@@ -2638,9 +2597,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2           = 32'h3210_0000;
               fsel0           = 32'h8888_7654;
               seg2_md.eop     = 1'b0;
@@ -2648,17 +2607,15 @@ module mby_igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e           = 3'b101;
               nxt_flit        = 5'd08;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d20
         5'd21: begin
           seg2_we[7:0] = 8'b1110_0000;
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2           = 32'h8800_0000;
               seg2_md.eop_pos = 3'd5;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2671,9 +2628,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2            = 32'h8100_0000;
               seg2_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -2685,9 +2642,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2            = 32'h2100_0000;
               seg2_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 3 to get here
@@ -2698,9 +2655,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0007_6543; seg0_we[6:0] = 7'b001_1111; nxt_flit = 5'd05; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel2           = 32'h2100_0000;
               fsel0           = 32'h8888_8883;
               seg2_md.eop     = 1'b0;
@@ -2718,9 +2675,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2           = 32'h2100_0000;
               fsel0           = 32'h8888_8843;
               seg2_md.eop     = 1'b0;
@@ -2736,9 +2693,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2           = 32'h2100_0000;
               fsel0           = 32'h8888_8543;
               seg2_md.eop     = 1'b0;
@@ -2752,9 +2709,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel2            = 32'h2100_0000;
               fsel0            = 32'h8888_6543;
               seg2_md.eop      = 1'b0;
@@ -2766,9 +2723,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2           = 32'h2100_0000;
               fsel0           = 32'h8887_6543;
               seg2_md.eop     = 1'b0;
@@ -2776,17 +2733,15 @@ module mby_igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e           = 3'b101;
               nxt_flit        = 5'd08;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d21
         5'd22: begin
           seg2_we[7:0] = 8'b1100_0000;
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2           = 32'h8000_0000;
               seg2_md.eop_pos = 3'd6;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2799,9 +2754,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2            = 32'h1000_0000;
               seg2_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 2 to get here
@@ -2813,9 +2768,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0076_5432; seg0_we[6:0] = 7'b011_1111; nxt_flit = 5'd06; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2           = 32'h1000_0000;
               fsel0           = 32'h8888_8882;
               seg2_md.eop     = 1'b0;
@@ -2835,9 +2790,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel2           = 32'h1000_0000;
               fsel0           = 32'h8888_8832;
               seg2_md.eop     = 1'b0;
@@ -2855,9 +2810,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2           = 32'h1000_0000;
               fsel0           = 32'h8888_8432;
               seg2_md.eop     = 1'b0;
@@ -2873,9 +2828,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2           = 32'h1000_0000;
               fsel0           = 32'h8888_5432;
               seg2_md.eop     = 1'b0;
@@ -2889,9 +2844,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
             end            
-           qs2_eflit[6]: begin
+           if(qs2_eflit[6]) begin
               fsel2           = 32'h1000_0000;
               fsel0           = 32'h8886_5432;
               seg2_md.eop     = 1'b0;
@@ -2903,9 +2858,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2            = 32'h1000_0000;
               fsel0            = 32'h8876_5432;
               seg2_md.eop      = 1'b0;
@@ -2913,17 +2868,15 @@ module mby_igr_epl_shim_ctrl
               seg0_we[7:0]     = 8'b1111_1111;
               seg_e            = 3'b101;
               nxt_flit         = 5'd08;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d22
         5'd23: begin
           seg2_we[7:0] = 8'b1000_0000;
           seg_e        = 3'b100;
           seg0_sop_e   = qs2_md.sop;  //capture sop md for next segment
           seg2_md.sop  = 1'b0; //this segment will not have a sop
-          unique case(1'b1) inside
-           qs2_eflit[0]: begin
+          if(qs2_eflit[0]) begin
               fsel2           = 32'h0000_0000;
               seg2_md.eop_pos = 3'd7;
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -2936,9 +2889,9 @@ module mby_igr_epl_shim_ctrl
                 4'd8: begin fsel0 = 32'h0765_4321; seg0_we[6:0] = 7'b111_1111; nxt_flit = 5'd07; end
                 default: nxt_flit = 5'd0;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
-            end
-           qs2_eflit[1]: begin
+              flit_err = qs2_sop_v & (qs2_sflit[0] | ((qs2_cnt_ones > 4'd1) & ~qs2_sflit[1]));
+           end
+           if(qs2_eflit[1]) begin
               fsel2           = 32'h0000_0000;
               fsel0           = 32'h8888_8881;
               seg2_md.eop     = 1'b0;
@@ -2960,9 +2913,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
-            end
-           qs2_eflit[2]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[1:0]) | ((qs2_cnt_ones > 4'd2) & ~qs2_sflit[2]));
+           end
+           if(qs2_eflit[2]) begin
               fsel2           = 32'h0000_0000;
               fsel0           = 32'h8888_8821;
               seg2_md.eop     = 1'b0;
@@ -2982,9 +2935,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
-            end
-           qs2_eflit[3]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[2:0]) | ((qs2_cnt_ones > 4'd3) & ~qs2_sflit[3]));
+           end
+           if(qs2_eflit[3]) begin
               fsel2           = 32'h0000_0000;
               fsel0           = 32'h8888_8321;
               seg2_md.eop     = 1'b0;
@@ -3002,9 +2955,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
-            end            
-           qs2_eflit[4]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[3:0]) | ((qs2_cnt_ones > 4'd4) & ~qs2_sflit[4]));
+           end            
+           if(qs2_eflit[4]) begin
               fsel2           = 32'h0000_0000;
               fsel0           = 32'h8888_4321;
               seg2_md.eop     = 1'b0;
@@ -3020,9 +2973,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
-            end            
-           qs2_eflit[5]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[4:0]) | ((qs2_cnt_ones > 4'd5) & ~qs2_sflit[5]));
+           end            
+           if(qs2_eflit[5]) begin
               fsel2           = 32'h0000_0000;
               fsel0           = 32'h8885_4321;
               seg2_md.eop     = 1'b0;
@@ -3036,9 +2989,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
-            end            
-           qs2_eflit[6]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[5:0]) | ((qs2_cnt_ones > 4'd6) & ~qs2_sflit[6]));
+           end            
+           if(qs2_eflit[6]) begin
               fsel2           = 32'h0000_0000;
               fsel0           = 32'h8865_4321;
               seg2_md.eop     = 1'b0;
@@ -3050,9 +3003,9 @@ module mby_igr_epl_shim_ctrl
                             seg0_sop_e = 1'b0; seg1_sop_e = qs2_md.sop; end  //In this case sop is put into seg2
                 default: nxt_flit = 5'd08;
               endcase //qs2_cnt_ones
-              flit_err =qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
-            end            
-           qs2_eflit[7]: begin
+              flit_err = qs2_sop_v & ((|qs2_sflit[6:0]) | ((qs2_cnt_ones > 4'd7) & ~qs2_sflit[7]));
+           end            
+           if(qs2_eflit[7]) begin
               fsel2           = 32'h0000_0000;
               fsel0           = 32'h8765_4321;
               seg2_md.eop     = 1'b0;
@@ -3060,9 +3013,8 @@ module mby_igr_epl_shim_ctrl
               seg0_we[7:0]    = 8'b1111_1111;
               seg_e           = 3'b101;
               nxt_flit        = 5'd08;
-              flit_err =qs2_sop_v; //There should not be a valid Sop 
-            end                        
-          endcase //reverse
+              flit_err = qs2_sop_v; //There should not be a valid Sop 
+           end                        
         end //d23
 //end of seg2
       endcase //current_flit
@@ -3070,20 +3022,21 @@ module mby_igr_epl_shim_ctrl
 //FIXME add detection of SOP position due to dropped packets.
 //For dropped packet case SOP amy not be in flit0 position due unaligned packed 64B word where
 //packet flits and EOP from a dropped packet occupy flits above the SOP position.
+//So valid filts start at sop_pos.
       else begin  //no EOP so the unaligned flit is full sop should only then be in flits 0, 8, 16
         unique case(current_flit) inside  //FIXME shoud current_flit be a 1-hot vector[23:0]??
           5'd0: begin
-            unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
-              4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
-              4'd2: begin fsel0 = 32'h0000_0010; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd02; end
-              4'd3: begin fsel0 = 32'h0000_0210; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
-              4'd4: begin fsel0 = 32'h0000_3210; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
-              4'd5: begin fsel0 = 32'h0004_3210; seg0_we[7:0] = 8'b0001_1111; nxt_flit = 5'd05; end
-              4'd6: begin fsel0 = 32'h0054_3210; seg0_we[7:0] = 8'b0011_1111; nxt_flit = 5'd06; end
-              4'd7: begin fsel0 = 32'h0654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd07; end
-              4'd8: begin fsel0 = 32'h7654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd08; seg_e = 3'b001; end
-              default: nxt_flit = 5'd00;
-            endcase //qs2_cnt_ones
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                4'd2: begin fsel0 = 32'h0000_0010; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd02; end
+                4'd3: begin fsel0 = 32'h0000_0210; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
+                4'd4: begin fsel0 = 32'h0000_3210; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
+                4'd5: begin fsel0 = 32'h0004_3210; seg0_we[7:0] = 8'b0001_1111; nxt_flit = 5'd05; end
+                4'd6: begin fsel0 = 32'h0054_3210; seg0_we[7:0] = 8'b0011_1111; nxt_flit = 5'd06; end
+                4'd7: begin fsel0 = 32'h0654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd07; end
+                4'd8: begin fsel0 = 32'h7654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd08; seg_e = 3'b001; end
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
           end //d0
           5'd1: begin
             unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
