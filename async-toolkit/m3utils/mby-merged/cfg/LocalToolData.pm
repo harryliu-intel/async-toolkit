@@ -28,6 +28,7 @@ $ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH} = "&get_general_var(std
 $ToolConfig_tools{febe3}{VERSION} = "3.3.08";
 $ToolConfig_tools{febe3}{OTHER}{project_settings}                            = "$MODEL_ROOT/tools/febe/inputs/dc_config.cfg";
 $ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "$MODEL_ROOT/tools/febe/inputs/finalized.cfg";
+$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{file_wait_time}       = "60";
 
 #####################################################
 #    Collage related definitions                    #
