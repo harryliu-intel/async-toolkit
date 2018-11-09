@@ -1,5 +1,3 @@
-import RdlGitHashPlugin.autoImport._
-import sbt.Keys._
 
 // to break current task with C-c
 cancelable in sbt.Global := true
@@ -33,6 +31,7 @@ lazy val csr = (project in file("csr"))
     name := Settings.csrName,
     addCompilerPlugin(Dependencies.scalaMacrosParadise),
     libraryDependencies ++= Dependencies.csrDeps,
+    name := "csr-model",
     version := rdlGitHashShortProjectVersion.value,
     // some imports are unused among generated hierarchy
     scalacOptions -= "-Ywarn-unused:imports",
@@ -113,3 +112,18 @@ addCommandAlias("buildOnNhdk",
     "; root/Compile/doc; root/assembly" +
     "; publishArtifacts"
 )
+val buildOnNhdk = taskKey[Unit]("Build task for nhdk environment.")
+buildOnNhdk := Def.sequential(
+  clean in csr,
+  clean in wmServerDto,
+  clean in root,
+  publishLocal in csr,
+  publishLocal in wmServerDto,
+  update in root,
+  compile in Compile in root,
+  doc in Compile in root,
+  assembly in root,
+  publish in root,
+  publish in csr,
+  publish in wmServerDto
+).value

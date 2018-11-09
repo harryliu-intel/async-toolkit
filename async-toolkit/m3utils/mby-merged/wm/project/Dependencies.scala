@@ -4,6 +4,8 @@ object Dependencies {
 
   lazy val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest
   lazy val scalaCheck = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck
+  lazy val scalaXml = "org.scala-lang.modules" %% "scala-xml" % Versions.scalaXml
+  lazy val scalaParserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % Versions.parserCombinators
   lazy val scopt = "com.github.scopt" %% "scopt" % Versions.scopt
   lazy val shapeless = "com.chuusai" %% "shapeless" % Versions.shapeless
   lazy val reflect = "org.scala-lang" % "scala-reflect" % Versions.reflect

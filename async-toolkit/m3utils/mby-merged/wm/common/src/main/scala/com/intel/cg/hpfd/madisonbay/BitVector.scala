@@ -4,285 +4,328 @@ package com.intel.cg.hpfd.madisonbay
 import scala.math.{min, max}
 import scala.Function.tupled
 import shapeless._
-import com.intel.cg.hpfd.madisonbay.Encode.encode
 
 
 /**
   * Bit container of arbitrary length.
   */
-class BitVector private(val segs: IndexedSeq[Long], val length: Int) { self =>
-  /** Stringifies from LEAST significant bits on the left (logical right).
-    *
-    * The format is: bvec"(bits)"
-    */
-  override def toString: String = {
-    if (length == 0) {
-      s"""bvec"""""
-    }
-    else {
-      val str = (0 until segments - 1).reverse.map(i => segs(i).toBinaryString.reverse.padTo(64, "0").mkString).mkString
-      val lastSeg = segs(segments - 1).toBinaryString.reverse.padTo(lastOccBits, "0").mkString.substring(0, lastOccBits)
-      s"""bvec"$str$lastSeg""""
-    }
-  }
+class BitVector private(val segs: IndexedSeq[Long], val length: Int) extends Equals { self =>
+  import BitVector._
+  import Encode._
+  import Encodable._
 
-  /** Number of Long segments. */
-  def segments: Int = segs.length
+  /*
+   * Standard stuff like comparison, hash etc.
+   */
 
-  /** How many bits from the left (last indexes) are non-significant/free. */
-  def freeBits: Int = segments * 64 - length
-
-  /** How many bits from the right (first indexes) in the last segment are significant/occupied. */
-  protected def lastOccBits: Int = ((64 - freeBits) - 1) % 64 + 1
-
-  /** Occupation mask over the last segment */
-  protected def lastOccMask: Long = (~0L) >> freeBits
-
-  /** Deep copy. Nop, as BitVector is immutable. */
-  override def clone: BitVector = this
-
-  /** Safe segs, returns 0 everywhere not occupied */
-  protected def occSegs(i: Int): Long = {
-    i match {
-      case i if i < 0 => 0L
-      case i if i < segments - 1 => segs(i)
-      case i if i == segments - 1 => segs(i) & lastOccMask
-      case _ => 0L
-    }
-  }
-
-  def canEqual(o: Any): Boolean = o.isInstanceOf[BitVector]
+  override def canEqual(o: Any): Boolean = o.isInstanceOf[BitVector]
   override def equals(o: Any): Boolean = o match {
     case that: BitVector => {
       that.canEqual(this) &&
         (this.length == that.length) &&
-        (0 until length).forall(i => this.occSegs(i) == that.occSegs(i))
+        (this.segs == that.segs)
     }
     case _ => false
   }
 
   override def hashCode(): Int = segs(0).hashCode()
 
-  /** Shifted right segment access. Occupation-compatible.
+  /** Stringifies from LEAST significant bits on the left (logical right).
+    *
+    * The format is: bvec"(bits)"
+    * Example:
+    * {{{
+    *   BitVector(13.toByte).toString == """bvec"10110000""""
+    * }}}
+    */
+  override def toString: String = {
+    if (length == 0) {
+      s"""bvec"""""
+    } else {
+      val toBin = (_: Long).toBinaryString.reverse.padTo(64, "0").mkString
+      val freeBits = segsLen * 64 - length
+      val lastOccBits = ((64 - freeBits) - 1) % 64 + 1
+
+      val str = segs.view.dropRight(1).map(toBin).mkString
+      val lastSeg = toBin(segs.last).substring(0, lastOccBits)
+      s"""bvec"$str$lastSeg""""
+    }
+  }
+
+
+  /*
+   * Length-related.
+   */
+
+  /** Test whenever this bit vector is empty. */
+  def isEmpty(): Boolean = (length == 0)
+
+  /** Number of Long segments. */
+  def segsLen: Int = segs.length
+
+  /** Set length. If needed, pad with zeros. */
+  def ofLength(length: Int): BitVector = {
+    length.compareTo(this.length) match {
+      case 0 => this
+      case i if i < 0 => take(length)
+      case _ /* i > 0 */ => padTo(length)
+    }
+  }
+
+  /** Pad with zeros to a certain length. */
+  def padTo(length: Int): BitVector = {
+    if (length <= this.length) {
+      this
+    } else {
+      this | BitVector.zeros(length)  // naive but simple
+    }
+  }
+
+  /** Pad with ones to a certain length. */
+  def padOnesTo(length: Int): BitVector = {
+    if (length <= this.length) {
+      this
+    } else {
+      this ++ BitVector.ones(length - this.length)  // naive but simple
+    }
+  }
+
+  /** Pad two bit vectors so that they're of equal length, filling the shorter with zeros. */
+  def copad(other: BitVector): (BitVector, BitVector) = {
+    val mlen = this.length max other.length
+    (this.padTo(mlen), other.padTo(mlen))
+  }
+
+  /** Pad two bit vectors so that they're of equal length, filling the shorter one with ones. */
+  def copadOnes(other: BitVector): (BitVector, BitVector) = {
+    val mlen = this.length max other.length
+    (this.padOnesTo(mlen), other.padOnesTo(mlen))
+  }
+
+  /** Trim to a certain length. If it's longer, leave unchanged. */
+  def trimTo(length: Int): BitVector = take(length)
+
+  /** Trim two bit vectors so that they're of equal length. */
+  def cotrim(other: BitVector): (BitVector, BitVector) = {
+    val mlen = this.length min other.length
+    (this.trimTo(mlen), other.trimTo(mlen))
+  }
+
+
+  /*
+   * Segments access-related.
+   */
+
+  /** Safe segs, returns 0 everywhere not occupied */
+  protected def liftSegs(i: Int): Long = {
+    i match {
+      case i if 0 <= i && i < segsLen => segs(i)
+      case _ => 0L
+    }
+  }
+
+  /** Same as shl but shift is guaranteed to be of {{{1 until 64}}}. */
+  protected def justShl(segment: Int, shift: Int): Long = {
+    val left = liftSegs(segment) << shift
+    val right = liftSegs(segment - 1) >>> (64 - shift)
+    left | right
+  }
+
+  /** Shifted binary left (element-wise right). Occupation-compatible.
     *
     * Used for inline shift right of elements.
     */
   protected def shl(segment: Int, shift: Int): Long = {
-    // require(segment >= 0)
-    // require(segment <= segments)  // equal for the last one's overshifted part
-    // require(shift >= 0)
-    // require(shift < 64)
-    if (segment < 0 || segment > segments) {
-      0L
-    }
-    else if (shift == 0) {
-      occSegs(segment)
-    }
-    else {
-      val left = if (segment == segments) {
-        0L
-      } else {
-        occSegs(segment) << shift
-      }
-      val right = if (segment == 0) {
-        0L
-      } else {
-        occSegs(segment - 1) >> (64 - shift)
-      }
-      left | right
+    require(shift >= 0)
+    val shift0 = shift % 64
+    val segment0 = segment - shift / 64
+    if (shift0 == 0) {
+      liftSegs(segment0)
+    } else {
+      justShl(segment0, shift0)
     }
   }
 
   /** Shift right iterator. */
-  protected case class ShlIt(len: Int) extends Iterator[Long] {
-    val shift = len % 64
-    var segment = len / 64
-    def hasNext: Boolean = segment <= segments
+  protected case class ShlIt(shift: Int) extends Iterator[Long] {
+    var segment = 0
+    val maxSegment = BitVector.segsLen(self.length + shift)
+    def hasNext: Boolean = segment < maxSegment
     def next: Long = {
       segment += 1
       shl(segment-1, shift)
     }
   }
 
+  /** Same as shr but shift is guaranteed to be of {{{1 until 64}}}. */
+  protected def justShr(segment: Int, shift: Int): Long = {
+    val left = liftSegs(segment + 1) << (64 - shift)
+    val right = liftSegs(segment) >>> shift
+    left | right
+  }
 
-  /** Shifted left (binary left) segment access.
+  /** Shifted binary right (element-wise left). Occupation-compatible.
     *
     * Occupation-compatible.
     * Loses first `shift` bits.
     */
   protected def shr(segment: Int, shift: Int): Long = {
-    // require(segment >= 0)
-    // require(segment <= segments)  // equal for the last one's overshifted part
-    // require(shift >= 0)
-    // require(shift < 64)
-    if (segment < 0 || segment > segments) {
-      0L
-    }
-    else if (shift == 0) {
-      occSegs(segment)
-    }
-    else {
-      val left = if (segment == segments) {
-        0L
-      } else {
-        occSegs(segment) << (64 - shift)
-      }
-      val right = occSegs(segment) >> shift
-      left | right
-    }
-  }
-
-  /** Concatenate two bit vectors. */
-  def ++(other: BitVector): BitVector = {
-    // conceptually: this | (other >> this.length)
-    if (segments == 0) {
-      other
-    }
-    else {
-      val len = length + other.length
-      val state =
-        if (other.freeBits == 0) { // just copy it too
-          segs ++ other.segs
-        }
-        else {
-          val left = segs.dropRight(1)
-          val center = segs.last | other.shl(0, 64 - freeBits)
-
-          val resSegments = BitVector.segments(len)
-          val rightSegments = resSegments - segments
-          val right = ShlIt(64 - freeBits).drop(1).take(rightSegments)
-
-          (left :+ center) ++ right
-        }
-      BitVector(state, len)
+    require(shift >= 0)
+    val shift0 = shift % 64
+    val segment0 = segment + shift / 64
+    if (shift0 == 0) {
+      liftSegs(segment0)
+    } else {
+      justShr(segment0, shift0)
     }
   }
 
   /** Shift left iterator. */
-  protected case class ShrIt(len: Int) extends Iterator[Long] {
-    val shift = len % 64
-    var segment = len / 64
-    def hasNext: Boolean = segment < segments
+  protected case class ShrIt(shift: Int) extends Iterator[Long] {
+    var segment = 0
+    def hasNext: Boolean = segment < segsLen
     def next: Long = {
       segment += 1
       shr(segment-1, shift)
     }
   }
 
-  /** Add (append) encodable value */
-  def +[E: Encode](el: E): BitVector = this ++ BitVector(el)
 
-  /** Append encodable value */
-  def :+[E: Encode](el: E): BitVector = this ++ BitVector(el)
+  /*
+   * Binary operations
+   */
 
-  /** Prepend encodable value */
-  def +:[E: Encode](el: E): BitVector = BitVector(el) ++ this
-
-  /** Zips two seqs padding the shortest one. */
-  protected def zipLongest(left: IndexedSeq[Long],
-                           right: IndexedSeq[Long],
-                           el0: Long = 0L): IndexedSeq[(Long, Long)] = {
-    val maxLength = max(left.length, right.length)
-    val leftPad = left.padTo(maxLength, el0)
-    val rightPad = right.padTo(maxLength, el0)
-    leftPad zip rightPad
+  /** Pad segs so that they are of the same length. */
+  protected def copadSegs(segs1: IndexedSeq[Long], segs2: IndexedSeq[Long]): (IndexedSeq[Long], IndexedSeq[Long]) = {
+    val mlen = segs1.length max segs2.length
+    (segs1.padTo(mlen, 0L), segs2.padTo(mlen, 0L))  // last segment is already zeroed at unocuppied parts
   }
 
-  /** Combinator helper for two sequences. */
-  protected implicit class Combinator(val left: IndexedSeq[Long]) {
-    def combine(right: IndexedSeq[Long])(el0: Long = 0L)(fn: (Long, Long) => Long): IndexedSeq[Long] = {
-      zipLongest(left, right, el0) map tupled(fn)
-    }
-    def <|>(right: IndexedSeq[Long]): IndexedSeq[Long] = combine(right)(0L)(_ | _)
-    def <^>(right: IndexedSeq[Long]): IndexedSeq[Long] = combine(right)(0L)(_ ^ _)
-    def <&>(right: IndexedSeq[Long]): IndexedSeq[Long] = combine(right)(1L)(_ & _)
-  }
-
-  protected def combinator(fn: (IndexedSeq[Long], IndexedSeq[Long]) => IndexedSeq[Long]): (BitVector, BitVector) => BitVector = {
-    (left: BitVector, right: BitVector) => {
-      val len = max(left.length, right.length)
-      val state = fn(left.segs, right.segs)
-      BitVector(state, len)
-    }
+  /** Combine two BitVectors with Long binary function. */
+  protected def combine(other: BitVector, f: (Long, Long) => Long): BitVector = {
+    val mlen = this.length max other.length
+    val (s1, s2) = copadSegs(this.segs, other.segs)
+    val segs = (s1 zip s2).map { case (i, j) => f(i, j) }
+    BitVector(segs, mlen)
   }
 
   /** Bit alternative.
     *
     * Can make the result longer than either of arguments.
     */
-  def unary_~(): BitVector = new BitVector(segs.map(x => ~x), length)
+  def unary_~(): BitVector = BitVector(segs.map(x => ~x), length)
 
   /** Bit product.
     *
     * Can make the result longer than either of arguments.
     */
-  def &(other: BitVector): BitVector = combinator(_ <&> _)(this, other)
+  def &(other: BitVector): BitVector = combine(other, _ & _)
 
   /** Bit alternative.
     *
     * Can make the result longer than either of arguments.
     */
-  def ^(other: BitVector): BitVector = combinator(_ <^> _)(this, other)
+  def ^(other: BitVector): BitVector = combine(other, _ ^ _)
 
   /** Bit sum.
     *
     * Can make the result longer than either of arguments.
     */
-  def |(other: BitVector): BitVector = combinator(_ <|> _)(this, other)
+  def |(other: BitVector): BitVector =  combine(other, _ | _)
 
-  /** Shortcut, x | (y, offset) == x | (y >> offset) */
-  def |(other: BitVector, offset: Int): BitVector = this | (other >> offset)
+  /** Shortcut, x | el == x | el.toBitVector */
+  def |[E: Encode](el: E): BitVector = this | el.toBitVector
 
-  /** Shortcut, x | el == x | BitVector(el) */
-  def |[E: Encode](el: E): BitVector = this | BitVector(el)
+  /** Shortcut, x | el == x | el.toBitVector */
+  def |[E](el: Encodable[E]): BitVector = this | el.toBitVector
 
-  /** Shortcut, x | (y, offset) == x | (y >> offset) */
-  def |[E: Encode](el: E, offset: Int): BitVector = this | (BitVector(el) >> offset)
-
-  /** Shift right element-wise.
+  /** Shift right element-wise (changes length).
     *
     * Note: Element-wise is the opposite of bit-wise!
     */
   def >>(shift: Int): BitVector = BitVector(ShlIt(shift), length + shift)
 
-  /** Shift left element-wise.
+  /** Shift left element-wise (changes length).
     *
     * Note: Element-wise is the opposite of bit-wise!
     */
-  def <<(shift: Int): BitVector = BitVector(ShrIt(shift), length - shift)
+  def <<(shift: Int): BitVector = {
+    if (shift < length) {
+      BitVector(ShrIt(shift), length - shift)
+    } else {
+      BitVector.empty
+    }
+  }
 
-  /** Rotate right element-wise.
+  /** Shift right element-wise with constant length.
     *
     * Note: Element-wise is the opposite of bit-wise!
     */
   def >>>(shift: Int): BitVector = {
-    val (left, right) = splitAt(length - shift)
-    right ++ left
+    if (shift > length) {
+      BitVector.zeros(length)
+    } else {
+      val sli = slice(0, length-shift)
+      (sli >> shift)
+    }
   }
 
-  /** Rotate left element-wise.
+  /** Shift left element-wise with constant length.
     *
     * Note: Element-wise is the opposite of bit-wise!
     */
   def <<<(shift: Int): BitVector = {
-    val (left, right) = splitAt(shift)
-    right ++ left
+    val zeros = BitVector.zeros(length)
+    if (shift > length) {
+      zeros
+    } else {
+      val sli = slice(shift, length)
+      zeros | sli
+    }
+  }
+
+  /** Sum all arguments into the vector (union-style). */
+  def sumAll(args: Encodable[_]*): BitVector = {
+    args.foldLeft(BitVector.empty)(_ | _)
   }
 
 
+  /*
+   * Container-like operations
+   */
 
-  /** Sum all arguments into the vector (union-style). */
-  def sumAll[P <: Product, L <: HList](args: P)
-                                      (implicit gen: Generic.Aux[P,L],
-                                       el: BitVector.EncodeList[L]): BitVector = {
-    el.sumAll(gen.to(args), this)
+  /** Concatenate two bit vectors. */
+  def ++(other: BitVector): BitVector = this | (other >> this.length)
+
+  /** Concatenate two bit vectors. */
+  def ++:(other: BitVector): BitVector = other | (this >> other.length)
+
+  /** Append all elements of a container of encodables. */
+  def ++(other: Traversable[Encodable[_]]): BitVector = this ++ other.toBitVector
+
+  /** Prepend all elements of a container of encodables. */
+  def ++:(other: Traversable[Encodable[_]]): BitVector = other.toBitVector ++ this
+
+  /** Append encodable value */
+  def :+[E: Encode](el: E): BitVector = this ++ el.toBitVector
+
+  /** Append encodable value */
+  def :+[E](el: Encodable[E]): BitVector = this ++ el.toBitVector
+
+  /** Prepend encodable value */
+  def +:[E: Encode](el: E): BitVector = el.toBitVector ++ this
+
+  /** Prepend encodable value */
+  def +:[E](el: Encodable[E]): BitVector = el.toBitVector ++ this
+
+  /** Append all arguments into subsequent positions in the vector (struct-style). */
+  def appendAll(args: Encodable[_]*): BitVector = {
+    args.foldLeft(BitVector.empty)(_ :+ _)
   }
 
   /** Append all arguments into subsequent positions in the vector (struct-style). */
-  def appendAll[P <: Product, L <: HList](args: P)
-                                         (implicit gen: Generic.Aux[P,L],
-                                          el: BitVector.EncodeList[L]): BitVector = {
-    el.appendAll((gen.to(args), 0), this)
+  def prependAll(args: Encodable[_]*): BitVector = {
+    args.foldLeft(BitVector.empty) { case (st, el) => el +: st }
   }
 
   /** Splits into two arrays at a certain point.
@@ -306,10 +349,19 @@ class BitVector private(val segs: IndexedSeq[Long], val length: Int) { self =>
   }
 
   /** Drops a number of elements from the left. */
-  def drop(number: Int): BitVector = BitVector(ShrIt(number), length - number)
+  def drop(number: Int): BitVector = {
+    require( number >= 0 )
+    require( number <= length )
+    BitVector(ShrIt(number), length - number)
+  }
 
   /** Takes a number of elements from the left. */
-  def take(number: Int): BitVector = BitVector(segs, number)
+  def take(number: Int): BitVector = {
+    require( number >= 0 )
+    require( number <= length )
+    val segNum = BitVector.segsLen(number)
+    BitVector(segs.take(segNum), number)
+  }
 
   /** Pops an encodable value */
   def pop[E: Encode]: (BitVector, E) = {
@@ -318,6 +370,11 @@ class BitVector private(val segs: IndexedSeq[Long], val length: Int) { self =>
     (left, value)
   }
 
+
+  /*
+   * Slicings and extractions
+   */
+
   /** Slices the vector into subvector */
   def slice(from: Int, until: Int): BitVector = {
     require( from >= 0 )
@@ -325,6 +382,23 @@ class BitVector private(val segs: IndexedSeq[Long], val length: Int) { self =>
     require( until <= length )
 
     BitVector(ShrIt(from), until - from)
+  }
+
+  /** Update a slice */
+  def updated(start: Int, value: BitVector): BitVector = {
+    require( start >= 0 )
+    require( start + value.length <= length )
+
+    take(start) ++ value ++ drop(start + value.length)
+  }
+
+  /** Update a slice at range. Vector provided is adjusted. */
+  def updated(range: Range, value: BitVector): BitVector = {
+    require( range.start >= 0 )
+    require( range.last <= length )
+
+    val valRa = value.ofLength(range.last - range.start + 1)
+    take(range.start) ++ valRa ++ drop(range.last)
   }
 
   /** Extracts a subarray */
@@ -340,8 +414,23 @@ class BitVector private(val segs: IndexedSeq[Long], val length: Int) { self =>
     encode[E].fromRaw(bits)
   }
 
+  /** Update an encodable at position */
+  def updated[E: Encode](start: Int, value: E): BitVector = {
+    val bits = encode[E].toRaw(value)
+    updated(start, bits)
+  }
+
+  /** Update an encodable at position */
+  def updated[E](start: Int, en: Encodable[E]): BitVector = updated(start, en.toRaw)
+
   /** Extract an encodable. */
   def extract[E: Encode]: E = extract[E](0)
+
+  /** Update an encodable */
+  def updated[E: Encode](value: E): BitVector = updated(0, value)
+
+  /** Update an encodable */
+  def updated[E](en: Encodable[E]): BitVector = updated(0, en)
 
   /** Extract an encodable at position. */
   def apply[E: Encode](pos: Int): E = extract[E](pos)
@@ -349,80 +438,184 @@ class BitVector private(val segs: IndexedSeq[Long], val length: Int) { self =>
   /** Extract an encodable. */
   def apply[E: Encode]: E = extract[E]
 
+  /** Extract with virtual zero padding */
+  def padExtract[E: Encode](start: Int): E = padTo(start + encode[E].size).extract[E](start)
+
+  /** Extract with virtual zero padding */
+  def padExtract[E: Encode]: E = padExtract[E](0)
+
+  /** Update with virtual zero padding */
+  def padUpdate[E: Encode](start: Int, value: E): BitVector = padTo(start + encode[E].size).updated(start, value)
+
+  /** Update with virtual zero padding */
+  def padUpdate[E: Encode](value: E): BitVector = padUpdate(0, value)
+
+  /** Update with virtual zero padding */
+  def padUpdate[E](start: Int, en: Encodable[E]): BitVector = padTo(start + en.size).updated(start, en)
+
+  /** Update with virtual zero padding */
+  def padUpdate[E](en: Encodable[E]): BitVector = padUpdate(0, en)
+
+  /** Extract Boolean */
+  def toBoolean: Boolean = padExtract[Boolean]
+
+  /** Extract Byte */
+  def toByte: Byte = padExtract[Byte]
+
+  /** Extract Long */
+  def toLong: Long = padExtract[Long]
+
   /** Get raw Long parts. */
   def toRaw: IndexedSeq[Long] = segs
 }
 
+/** Companion object to the BitVector class. */
 object BitVector {
   /** Number of Long segments for particular length. */
-  def segments(length: Int): Int = (length + 63) / 64
-
-  /** Full segments and shift. */
-  def segShift(length: Int): (Int, Int) = (length / 64, length % 64)
-
-  /** Empty vector. */
-  def empty: BitVector = new BitVector(IndexedSeq[Long](), 0)
-
-  /** Uninitialized vector of certain length. */
-  def ofLength(length: Int): BitVector = new BitVector(IndexedSeq.fill(segments(length))(0L), length)
-
-  /** Bit vector filled with zeros. */
-  def zeros(length: Int): BitVector = new BitVector(IndexedSeq.fill(segments(length))(0L), length)
-
-  /** Bit vector filled with ones. */
-  def ones(length: Int): BitVector = new BitVector(IndexedSeq.fill(segments(length))(~0L), length)
-
-  /** From single 64 bit value and length. */
-  def apply(value: Long, length: Int = 64): BitVector = new BitVector(IndexedSeq[Long](value), length)
+  private def segsLen(length: Int): Int = (length + 63) / 64
 
   /** From multiple 64 bit values. */
-  def apply(values: IndexedSeq[Long]): BitVector = new BitVector(values, values.length * 64)
+  // basic constructor, ensures zero-ing of unused bits
+  def apply(values: IndexedSeq[Long], length: Int): BitVector = {
+    require(length >= 0,
+      s"BitVector has to have positive length, found: $length")
+    require(length <= values.length * 64,
+      s"BitVector's length has to be no bigger than its data's bit length, found: $length > ${values.length * 64}")
+    require(length > (values.length - 1) * 64,
+      s"BitVector's length has to be bigger than its data with one element less, found: $length <= ${(values.length - 1) * 64}")
+
+    if (length % 64 == 0) {
+      new BitVector(values, length)
+    } else {
+      val safeBits = length % 64
+      val safeMask = (~0L) >>> (64 - safeBits)
+      val safeLast = values.last & safeMask
+      val safeValues = values.updated(values.length - 1, safeLast)
+      new BitVector(safeValues, length)
+    }
+  }
+
+  /** From multiple 64 bit values. */
+  def apply(values: IndexedSeq[Long]): BitVector = BitVector(values, values.length * 64)
+
+  /** Empty vector. */
+  def empty: BitVector = BitVector(IndexedSeq[Long](), 0)
+
+  /** Empty vector. */
+  def apply(): BitVector = empty
+
+  /** Uninitialized vector of certain length. */
+  def ofLength(length: Int): BitVector = zeros(length)
+
+  /** Bit vector filled with zeros. */
+  def zeros(length: Int): BitVector = {
+    require( length >= 0, "BitVector must have non-negative length" )
+    BitVector(IndexedSeq.fill(segsLen(length))(0L), length)
+  }
+
+  /** Bit vector filled with ones. */
+  def ones(length: Int): BitVector = {
+    require( length >= 0, "BitVector must have non-negative length" )
+    BitVector(IndexedSeq.fill(segsLen(length))(~0L), length)
+  }
+
+  /** Concatenate multiple BitVectors */
+  def concat(args: Traversable[Encodable[_]]*): BitVector = args.map(_.toBitVector).toBitVector
+
+  /** From single 64 bit value and length. */
+  def apply(value: Long, length: Int = 64): BitVector = BitVector(IndexedSeq[Long](value), length)
+
+
+  // List is both Traversable and Product, needs to be listed separately
+  /** From 64 bit values list. */
+  def apply(values: List[Long]): BitVector = BitVector(values.toIndexedSeq)
 
   /** From traversable of 64 bit values and length. */
   def apply(values: Traversable[Long], length: Int): BitVector = {
-    new BitVector(values.takeLen(length).toIndexedSeq, length)
+    BitVector(values.takeLen(length).toIndexedSeq, length)
   }
 
   /** From traversable of 64 bit values. */
-  def apply(values: Traversable[Long]): BitVector = {
-    val state = values.toIndexedSeq
-    new BitVector(state, state.length * 64)
-  }
+  def apply(values: Traversable[Long]): BitVector = BitVector(values.toIndexedSeq)
 
   /** From iterator of 64 bit values and length. */
   def apply(values: Iterator[Long], length: Int): BitVector = {
-    new BitVector(values.takeLen(length).toIndexedSeq, length)
+    val seq = values.takeLen(length).toIndexedSeq
+    BitVector(seq, length)
   }
 
   /** From iterator of 64 bit values. */
   def apply(values: Iterator[Long]): BitVector = {
-    val state = values.toIndexedSeq
-    new BitVector(state, state.length * 64)
+    BitVector(values.toIndexedSeq)
   }
 
-  /** Implicit class for binary string formatter. */
-  implicit class BitVectorStringContext(val sc: StringContext) extends AnyVal {
-    def bvec(): BitVector = {
-      require( sc.parts.length == 1 )
-      val part = sc.parts(0)
-      val length = part.length
-      val segs = BitVector.segments(part.length)
-      val state = (0 until segs) map { i =>
-        val bits = (min(length, (i+1) * 64) - 1) % 64 + 1
-        (0 until bits).foldRight(0L: Long) { case (j, s) =>
-          part(i * 64 + j) match {
-            case '1' => s | (1L << j)
-            case '0' => s
-            case x => { assert(false, s"BitVector stores bits only, encountered character: '$x'"); s }
+
+  /*
+   * String conversions
+   */
+
+  /** From binary string representation */
+  def fromBin(str: String): BitVector = {
+    val state = str.grouped(64).map { ss =>
+      ss.zipWithIndex.foldRight(0L) { case ((ch, i), st) =>
+        ch match {
+          case '1' => st | (1L << i)
+          case '0' => st
+          case _ => {
+            assert(false, s"""BitVector expected binary, encountered character: '$ch' in string "$str"""")
+            st
           }
         }
       }
-      new BitVector(state, length)
     }
+    BitVector(state, str.length)
   }
 
-  /** From value that has an encoding to Long. */
-  def apply[E: Encode](value: E): BitVector = encode[E].toRaw(value)
+  /** From hexal string representation.
+    *
+    * Attention! Order of letters is reversed but the letters themselves should be the same!
+    * {{{
+    *   BitVector.fromHex("7") == BitVector.fromBinary("111")
+    *   BitVector.fromHex("71") == BitVector.fromBinary("11101")
+    * }}}
+    */
+  def fromHex(str: String): BitVector = {
+    val hexLetter = "[a-f]".r
+    val state = str.grouped(16).map { ss =>
+      ss.zipWithIndex.foldRight(0L) { case ((ch, i), st) =>
+        ch match {
+          case _ if ch.isDigit => st | ((ch.toLong - '0'.toLong) << (i*4))
+          case hexLetter() => st | ((ch.toLong - 'a'.toLong + 10L) << (i*4))
+          case _ => {
+            assert(false, s"""BitVector expected hexal, encountered character: '$ch' in string "$str"""")
+            st
+          }
+        }
+      }
+    }
+    BitVector(state, str.length * 4)
+  }
+
+  /** Implicit class for string formatter. */
+  implicit class BitVectorStringContext(val sc: StringContext) extends AnyVal {
+    private def fromStr(fromStr: String => BitVector, args: Encodable[_]*): BitVector = {
+      val vec = sc.parts.zip(args).foldLeft(BitVector.empty) { case (st, (s, a)) =>
+        st ++ fromStr(s) ++ a.toRaw
+      }
+      vec ++ fromStr(sc.parts.last)
+    }
+
+    /** Binary interpolation */
+    def bvec(args: Encodable[_]*): BitVector = fromStr(BitVector.fromBin _, args: _*)
+
+    /** Hex interpolation */
+    def xvec(args: Encodable[_]*): BitVector = fromStr(BitVector.fromHex _, args: _*)
+  }
+
+
+  /*
+   * Compositions (unions, structures)
+   */
 
   /** Create union-style bit vector. */
   def union[P <: Product, L <: HList](args: P)
@@ -431,19 +624,11 @@ object BitVector {
     el.sumAll(gen.to(args), BitVector.empty)
   }
 
-
   /** Create struct-style bit vector. */
   def struct[P <: Product, L <: HList](args: P)
                                       (implicit gen: Generic.Aux[P,L],
                                        el: BitVector.EncodeList[L]): BitVector = {
     el.appendAll((gen.to(args), 0), BitVector.empty)
-  }
-
-  /** From multiple values that have encodings to Long. */
-  def apply[P <: Product, L <: HList](args: P)
-                                     (implicit gen: Generic.Aux[P,L],
-                                      el: BitVector.EncodeList[L]): BitVector = {
-    struct(args)
   }
 
 
@@ -467,7 +652,7 @@ object BitVector {
       def appendAll(tup: (H :: T, Int), state: BitVector): BitVector = {
         val (value, at) = tup
         val newAt = at + en.size
-        val newState = state | (BitVector(value.head), at)
+        val newState = state | (en.toRaw(value.head) >> at)
         me.value.appendAll((value.tail, newAt), newState)
       }
     }
@@ -475,13 +660,30 @@ object BitVector {
 
   /** takeLen and dropLen for Long traversables */
   protected implicit class LenTraversable(val it: Traversable[Long]) {
-    def takeLen(length: Int): Traversable[Long] = it take BitVector.segments(length)
-    def dropLen(length: Int): Traversable[Long] = it drop BitVector.segments(length)
+    def takeLen(length: Int): Traversable[Long] = it take BitVector.segsLen(length)
+    def dropLen(length: Int): Traversable[Long] = it drop BitVector.segsLen(length)
   }
 
   /** takeLen and dropLen for Long iterators */
   protected implicit class LenIterator(val it: Iterator[Long]) {
-    def takeLen(length: Int): Iterator[Long] = it take BitVector.segments(length)
-    def dropLen(length: Int): Iterator[Long] = it drop BitVector.segments(length)
+    def takeLen(length: Int): Iterator[Long] = it take BitVector.segsLen(length)
+    def dropLen(length: Int): Iterator[Long] = it drop BitVector.segsLen(length)
+  }
+
+
+  /*
+   * Extension classes for toBitVector
+   */
+
+  /** Additional methods for traversables of BitVectors */
+  implicit class TravBVec(arg: Traversable[BitVector]) {
+    /** Flatten container to a single BitVector. */
+    def toBitVector(): BitVector = arg.foldLeft(BitVector.empty)(_ ++ _)
+  }
+
+  /** Additional methods for iterators of BitVectors */
+  implicit class ItBVec(arg: Iterator[BitVector]) {
+    /** Flatten container to a single BitVector. */
+    def toBitVector(): BitVector = arg.foldLeft(BitVector.empty)(_ ++ _)
   }
 }

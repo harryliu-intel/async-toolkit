@@ -5,6 +5,8 @@ object Versions {
 
   val scalaTest = "3.0.5"
   val scalaCheck = "1.14.0"
+  val scalaXml = "1.1.0"
+  val parserCombinators = "1.1.0"
   val scopt = "3.7.0"
   val shapeless = "2.3.3"
   val reflect = scalaVersion
