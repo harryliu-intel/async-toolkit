@@ -35,16 +35,29 @@
 `endif
 `ifndef __MBY_TAG_BFM_FGEN__
 `define __MBY_TAG_BFM_FGEN__
-//`uvm_analysis_imp_decl(_fprt)
-//`uvm_analysis_imp_decl(_frame)
 //-----------------------------------------------------------------------------
 // CLASS: mby_tag_bfm_fgen
 //
-// This is the frame generator that is instantiated in the tag bfm. It handles
-// frame reception/generator
+// This is the frame generator that is instantiated in the tag bfm.
+// It gets free ptr xactions from the gmm_bfm, stores those address values in
+// a queue. Gets ethernet xactions from its analysis port and/or generates new
+// ones based on its own configuration. It partitions the ethernet xaction into
+// 256B segments and then again in 64B chunks. Associates each 256B segment
+// with a free ptr
+// from its free ptr queue and calculates the addresses of each of the 64B
+// chunks. Creates an addr/data write xaction per chunk and sends it to its
+// smm analysis port. Creates a new tag xaction with the segment addresses
+// and random metadata and starts it in the tag agent
 //
 //-----------------------------------------------------------------------------
 class mby_tag_bfm_fgen extends uvm_component;
+
+   // -------------------------------------------------------------------------
+   //
+   // TODO : This is an empty shell for the frame generator.
+   //        - add analysis port declarations, build, connect and run phases.
+   //
+   // -------------------------------------------------------------------------
 
    // Registering class with the factory
    `uvm_component_utils(mby_tag_bfm_fgen)

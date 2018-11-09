@@ -12,6 +12,7 @@ $hdl_spec = {
        "src/shared/rtl/mby_msh_pkg.sv",
        "src/shared/interfaces/mby_mem_msh_bank_ram_shell_4096x552_func_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/msh_node/rtl/mby_msh_node_pkg.sv",
        "src/msh_node/rtl/mby_msh_node_defines.vh",
        "src/msh_node/rtl/mby_msh_ctrl.sv",
        "src/msh_node/rtl/mby_msh_arb_weighted.sv",
@@ -22,8 +23,10 @@ $hdl_spec = {
        "src/msh_node/rtl/mby_msh_node.sv",
        "src/msh_node/rtl/mby_msh_rd_dp.sv",
        "src/msh_node/rtl/mby_msh_rd_req.sv",
+       "src/msh_node/rtl/mby_msh_rd_rsp.sv",
        "src/msh_node/rtl/mby_msh_wr_dp.sv",
        "src/msh_node/rtl/mby_msh_wr_req.sv",
+       "src/msh_node/rtl/mby_msh_mem_ctrl.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

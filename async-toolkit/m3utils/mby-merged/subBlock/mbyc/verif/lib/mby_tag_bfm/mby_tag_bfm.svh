@@ -35,6 +35,125 @@
 `endif
 `ifndef __MBY_TAG_BFM__
 `define __MBY_TAG_BFM__
-class mby_tag_bfm;
+//-----------------------------------------------------------------------------
+// CLASS: mby_tag_bfm
+//
+// This is the main tag_bfm class, it is just a container that instantiates and
+// connects the frame generator and the tag agent.
+//
+//-----------------------------------------------------------------------------
+class mby_tag_bfm extends uvm_component;
+
+   // VARIABLE: cfg_obj
+   // The agent's configuration object
+   mby_tag_bfm_cfg cfg_obj;
+
+   // VARIABLE: tag_uc_agent
+   // This is the tag uni-cast agent instance, it interfaces with the tag ring.
+   // Receives tag transactions from the frame generator and monitors the tag
+   // ring intf. This tag agent is a parameterized mby_base_agent class.
+   // typedef mby_base_agent#(.T_req(mby_tag_bfm_uc_xaction), .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
+   mby_tag_bfm_uc_agent tag_uc_agent;
+
+   // VARIABLE: tag_mc_agent
+   // This is the tag multi-cast agent instance, it interfaces with the tag ring.
+   // Receives tag transactions from the frame generator and monitors the tag
+   // ring intf. This tag agent is a parameterized mby_base_agent class.
+   // typedef mby_base_agent#(.T_req(mby_tag_bfm_mc_xaction), .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_agent;
+   mby_tag_bfm_mc_agent tag_mc_agent;
+
+   // VARIABLE: frame_gen
+   // This is the frame generator component. It gets free ptr xactions from
+   // the gmm_bfm, stores those address values in a queue. Gets ethernet xactions
+   // from its analysis port and/or generates new ones based on its own
+   // configuration. It partitions the ethernet xaction into 256B segments and
+   // then again in 64B chunks. Associates each 256B segment with a free ptr
+   // from its free ptr queue and calculates the addresses of each of the 64B
+   // chunks. Creates an addr/data write xaction per chunk and sends it to its
+   // smm analysis port. Creates a new tag xaction with the segment addresses
+   // and random metadata and starts it in the tag agent
+   mby_tag_bfm_fgen frame_gen;
+
+   // -------------------------------------------------------------------------
+   // Macro to register new class type
+   // -------------------------------------------------------------------------
+   `uvm_component_param_utils_begin(mby_tag_bfm)
+   `uvm_component_utils_end
+
+   // -------------------------------------------------------------------------
+   // CONSTRUCTOR: new
+   //
+   // Constructor
+   //
+   // ARGUMENTS:
+   //    string name          - An instance name of the agent.
+   //    uvm_component parent - The agent's parent component pointer.
+   // -------------------------------------------------------------------------
+   function new(string name, uvm_component parent);
+      super.new(name, parent);
+   endfunction : new
+
+   // ------------------------------------------------------------------------
+   // FUNCTION: build_phase
+   //
+   // The tag_agent is created and the configuration object is assigned to it.
+   // When operating in the egress mode, the frame generator is created.
+   //
+   // ------------------------------------------------------------------------
+   function void build_phase(uvm_phase phase);
+      super.build_phase(phase);
+      // ----------------------------------------------------------------------
+      // Creating the proper tag_bfm_agent based on the traffic mode and
+      // assigning configuration object
+      // ----------------------------------------------------------------------
+      if(cfg_obj.traffic_mode == TAG_BFM_UC_MODE) begin
+         tag_uc_agent = mby_tag_bfm_uc_agent::type_id::create("tag_uc_agent", this);
+         tag_uc_agent.cfg_obj = this.cfg_obj;
+         `uvm_info(this.get_full_name(),
+            "Created the uni-cast tag_agent instance and assigned the cfg_obj",
+            UVM_DEBUG)
+      end else begin
+         tag_mc_agent = mby_tag_bfm_mc_agent::type_id::create("tag_mc_agent", this);
+         tag_mc_agent.cfg_obj = this.cfg_obj;
+         `uvm_info(this.get_full_name(),
+            "Created the multi-cast tag_agent instance and assigned the cfg_obj",
+            UVM_DEBUG)
+      end
+      // ----------------------------------------------------------------------
+      // Create the frame_gen only when the bfm is in egress mode
+      // ----------------------------------------------------------------------
+      if(cfg_obj.bfm_mode == TAG_BFM_EGR_MODE) begin
+         frame_gen = mby_tag_bfm_fgen::type_id::create("frame_gen", this);
+         `uvm_info(this.get_full_name(),
+            "Egress mode set, created the frame generator",
+            UVM_DEBUG)
+      end
+   endfunction : build_phase
+
+   // ------------------------------------------------------------------------
+   // FUNCTION: connect_phase
+   //
+   // When operating in the egress mode, the frame generator is connected to
+   // the tag_agent.
+   //
+   // ------------------------------------------------------------------------
+   function void connect_phase(uvm_phase phase);
+      super.connect_phase(phase);
+      // ----------------------------------------------------------------------
+      // Connect the frame_gen only when the bfm is in egress mode
+      // ----------------------------------------------------------------------
+      if(cfg_obj.bfm_mode == TAG_BFM_EGR_MODE) begin
+         // TODO: add the connection(s) here
+         if(cfg_obj.traffic_mode == TAG_BFM_UC_MODE) begin
+            // TODO: add connections to uni-cast agent
+         end else begin
+            // TODO: add connections to multi-cast agent
+         end
+         `uvm_info(this.get_full_name(),
+            "Done connecting the frame generator",
+            UVM_DEBUG)
+      end
+    endfunction : connect_phase
+
 endclass : mby_tag_bfm
 `endif
