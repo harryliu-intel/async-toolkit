@@ -25,8 +25,8 @@ object ProtocolsOffsets {
   object Pointer {
     type PointerNumber = Int
 
-    val PointerOtrL3: PointerNumber = 2
-    val PointerOtrL4: PointerNumber = 3
+    val OuterL3: PointerNumber = 2
+    val OuterL4: PointerNumber = 3
   }
 
   case class HeaderPointer(protocolId: ProtocolId, offset: Int)

@@ -31,7 +31,7 @@ object Parser {
 
     val (paKeysVal, csrExtractedKeys) = KeysExtractor.extractKeys(csrParser, packetHeader, protocolOffsets, extractionIndex)
 
-    val paValidation = ParserValidation.validatePayload(csrExtractedKeys, rxPort, packet, packetHeader, protocolOffsets)
+    val checkSums = ParserValidation.validatePayload(csrExtractedKeys, rxPort, packet, packetHeader, protocolOffsets)
 
     // now we have the flags and the proto-offsets
     // the metadata is the flags + a conversion of the packetheader, proto-offsets, and proto-offset configuration into a field vector
@@ -44,7 +44,7 @@ object Parser {
       parserPointers            = protocolOffsets,
       parserException           = parserExceptionOpt,
       packetType                = packetType,
-      parserValidation          = paValidation
+      checkSums                 = checkSums
     )
   }
 
@@ -85,4 +85,3 @@ object Parser {
   }
 
 }
-
