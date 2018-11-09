@@ -103,6 +103,6 @@ abstract class RdlFieldCompanion[P <: RdlField[P, E]: ClassTag, E] { companion =
     def default: P = companion.apply(companion.resetValue)
     def toRaw(value: P): BitVector = value.en.toRaw(value.value)
     def fromRaw(bits: BitVector): P = companion.apply(en.fromRaw(bits))
-    val size: Int = companion.width
+    def size: Int = companion.width
   }
 }

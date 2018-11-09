@@ -1,6 +1,8 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay
 
+import com.intel.cg.hpfd.madisonbay.Encode.encode
+
 import scala.reflect.ClassTag
 
 
@@ -44,7 +46,7 @@ object Encode {
     require( siz >= 0 )
     require( siz <= 64 )
     new Encode[T] {
-      val size:Int = siz
+      def size: Int = siz
       def default: T = d
       def toRaw(value: T): BitVector = BitVector(to(value), size)
       def fromRaw(bits: BitVector): T = {
@@ -63,7 +65,7 @@ object Encode {
   def apply[T: ClassTag](siz: Int, d: => T)(to: T => BitVector)(from: BitVector => T): Encode[T] = {
     require( siz >= 0 )
     new Encode[T] {
-      val size: Int = siz
+      def size: Int = siz
       def default: T = d
       def toRaw(value: T): BitVector = to(value)
       def fromRaw(bits: BitVector): T = {
@@ -87,6 +89,64 @@ object Encode {
   implicit val encodeInt: Encode[Int] = Encode.simple[Int](32)(_.toLong)(_.toInt)
   implicit val encodeLong: Encode[Long] = Encode.simple[Long](64)(identity)(identity)
 
-  /** rRw bit value with no meaning. */
+  /** raw bit value with no meaning. */
   def encodeRaw(size: Int): Encode[Long] = Encode.simple[Long](size)(identity)(identity)
+
+  /** Encodable extensions */
+  implicit class EncodeToBvec[E: Encode](arg: E) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = encode[E].toRaw(arg)
+  }
+
+  /** Traversable of encodables extensions */
+  implicit class TravEncodeToBVec[E: Encode](arg: Traversable[E]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(x => encode[E].toRaw(x)).toBitVector
+  }
+
+  /** Iterator of encodables extensions */
+  implicit class ItEncodeToBVec[E: Encode](arg: Iterator[E]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(x => encode[E].toRaw(x)).toBitVector
+  }
+}
+
+/** Encodable value with its encoding. Wraps encoding operations. */
+case class Encodable[E](value: E)(implicit val encode: Encode[E]) {
+  def toRaw(): BitVector = encode.toRaw(value)
+  def fromRaw(bits: BitVector): Encodable[E] = copy(value = encode.fromRaw(bits))
+  def default(): Encodable[E] = copy(value = encode.default)
+  def size: Int = encode.size
+}
+object Encodable {
+  /** Automatic conversion. */
+  implicit def fromValue[E: Encode](value: E): Encodable[E] =
+    new Encodable[E](value)(Encode.encode[E])
+
+  implicit def c2c[E: Encode](container: Traversable[E]): Traversable[Encodable[E]] =
+    container.map(x => fromValue(x))
+
+  /** Manual conversion. */
+  implicit class ToEncodable[E](value: E) {
+    def toEncodable(implicit encode: Encode[E]): Encodable[E] = Encodable.fromValue(value)
+  }
+
+  /** Encodable extensions */
+  // to avoid conflict between EncodeToBvec and fromValue.
+  implicit class EncodableToBvec[E](arg: Encodable[E]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.toRaw
+  }
+
+  /** Traversable of encodables extensions */
+  implicit class TravEncodableToBVec(arg: Traversable[Encodable[_]]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(_.toRaw).toBitVector
+  }
+
+  /** Iterator of encodables extensions */
+  implicit class ItEncodableToBVec(arg: Iterator[Encodable[_]]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(_.toRaw).toBitVector
+  }
 }

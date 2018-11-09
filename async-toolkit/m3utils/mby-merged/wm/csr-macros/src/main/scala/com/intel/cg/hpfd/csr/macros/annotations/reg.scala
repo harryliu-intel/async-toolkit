@@ -2,7 +2,7 @@
 package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr._
-import com.intel.cg.hpfd.csr.macros.MacroUtils.{Control, HygienicUnquote}
+import com.intel.cg.hpfd.csr.macros.utils.{Control, Hygiene}
 import com.intel.cg.hpfd.madisonbay.AddressGuard
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
@@ -43,8 +43,7 @@ class reg extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro RegImpl.impl
 }
 
-/** Macro bundle providing implementation for @reg. */
-class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicUnquote { self =>
+class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene { self =>
   import c.universe._
 
   /** Lenses annotation for any generated public case class.
@@ -327,7 +326,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
       val mods = Modifiers(Flag.CASEACCESSOR | Flag.PARAMACCESSOR)
 
       (q"""$mods val $name: $parentComp.$nameClass = $parentComp.$name()""",
-        q"""
+       q"""
           @$lens
           case class $nameClass(value: $encode) extends ..$instParents {
             val range: $rangeTy = $range
@@ -425,8 +424,8 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     *  * field name(range[, hard = hard_access][, soft = soft_access]) [{ props }]
     */
   case class qField(parentTy: TypeName,
-                    var guard: AddressGuard[String] = AddressGuard[String](),
-                    var fields: List[FieldData] = Nil) {
+                     var guard: AddressGuard[String] = AddressGuard[String](),
+                     var fields: List[FieldData] = Nil) {
 
     def unapply(tree: Tree): Option[(TermName, Tree, Tree, qField)] = Option(tree) collect {
       case q"field.$name($details)" => {
@@ -470,7 +469,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
   def serializeImpl(name: TypeName, fields: List[FieldData]): Tree = {
     val bvecCompSym = symbolOf[BitVector].companion
     val li = fields.map(_.name).foldRight(q"$bvecCompSym.empty": Tree) {
-      (f,v) => q"$v | ($f, $f.pos)"
+      (f,v) => q"$v | ($f.toBitVector >> $f.pos)"
     }
     q"..$li"
   }
@@ -486,8 +485,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     val (vals, fnames) = fields.map(extractField).unzip
     val addrRangeCompSy = typeOf[AddressRange].typeSymbol.companion
     val addrCompSy = typeOf[Address].typeSymbol.companion
-    val addr = q"$addrRangeCompSy($addrCompSy(${0.bytes}), ${8.bytes})"  // arbitrary 0..64
-    val constr = q"new $name($addr, ..$fnames)"
+    val constr = q"new $name(range, ..$fnames)"
     q"..$vals; $constr"
   }
 
@@ -499,7 +497,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
     implicit val pos = classDef.pos
     val (name, _mods, body) = extractClassParts(classDef)
     val mods = Modifiers(_mods.flags | Flag.CASE)
-      .mapAnnotations(_ => lens :: _mods.annotations)
+                 .mapAnnotations(_ => lens :: _mods.annotations)
 
     case class State(tree1: Tree,
                      tree2: Tree,
@@ -594,9 +592,12 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
       (a, b.flatMap(_.children))
     }
 
+    val importEncodables = q"""import com.intel.cg.hpfd.madisonbay.Encode._"""
     //TODO: genOpticsLookup --- encaps
     q"""
         $mods class $name(val range: $addrRanTy, ..$fieldsClassImpl) extends $regTy {
+          $importEncodables
+
           val companion: $regCompTy = $cname
 
           def fields: List[${typeOf[RdlField[_, _]]}] = List(..${fields.map(_.name)})
@@ -604,6 +605,8 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
           def serialize: $bvecTy = ${serializeImpl(name, fields)}
         }
         object $cname extends $regCompTy {
+          $importEncodables
+
           val name: String = $sname
 
           def apply(addr: $addrTy): $name = {
@@ -611,7 +614,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with HygienicU
             new $name(range = range)
           }
 
-          def deserialize(vec: $bvecTy): $name = ${deserializeImpl(name, fields)}
+          def deserialize(vec: $bvecTy, range: $addrRanTy): $name = ${deserializeImpl(name, fields)}
 
           ..$fieldsCompImpl
 

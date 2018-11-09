@@ -5,7 +5,7 @@ import com.intel.cg.hpfd.madisonbay.Memory._
 
 import scala.collection.immutable.HashMap
 import scala.reflect.ClassTag
-import monocle.{Optional, Lens}
+import monocle.{Lens, Optional}
 
 
 /** Register as defined in RDL.
@@ -88,7 +88,7 @@ trait RdlRegister[P <: RdlRegister[P]] {
     *
     * Shortcut to calling on companion
     */
-  final def deserialize(bits: BitVector): P = companion.deserialize(bits)
+  final def deserialize(bits: BitVector): P = companion.deserialize(bits, range)
 
   override def toString: String = s"Register $name at $addr"
 }
@@ -135,28 +135,22 @@ abstract class RdlRegisterCompanion[P <: RdlRegister[P] : ClassTag] { companion 
     *
     * Can't be done generically due to unknown field types.
     */
-  def deserialize(bits: BitVector): P
+  def deserialize(bits: BitVector, range: AddressRange): P
 
+  /** Deserialization to some default address. */
+  def deserialize(bits: BitVector): P = deserialize(bits, AddressRange(Address(0), regwidth.toBits))  // arbitrary
 
-  /*def genOpticsLookup[A](me: P,
-                         path: Optional[A, P]): HashMap[Address, Optional[A, BitVector]] = {
-    val stateOptional = Optional[P, BitVector] {
-      reg => Some(reg.serialize)
-    } {
-      newValue => _.companion.deserialize(newValue)
-    }
-    HashMap(me.range.pos -> (path composeOptional stateOptional))
-  }*/
-
-  def _state: Lens[P, BitVector] =
+  /** Whole-register bit state lens */
+  final val _state: Lens[P, BitVector] =
     Lens[P, BitVector] {
       reg => reg.serialize
     } {
-      newValue => _.companion.deserialize(newValue)
+      newValue => _.deserialize(newValue)
     }
 
+  /** Generates lenses from path to register's state. */
   def genOpticsLookup[A](me: P,
                          path: Optional[A, P]): HashMap[Address, Optional[A, BitVector]] = {
-    HashMap(me.range.pos -> (path composeOptional _state.asOptional))
+    HashMap(me.range.pos -> (path composeLens _state))
   }
 }
