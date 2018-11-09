@@ -26,6 +26,8 @@ my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
 		    );
 
 my @models_use = (
+     "CTECH:CTECH_model",
+     "CTECH_EXP:CTECH_EXP_model",
      "eth_port_mby_ec:mby_ec",
      "eth_port_common:common",
 );

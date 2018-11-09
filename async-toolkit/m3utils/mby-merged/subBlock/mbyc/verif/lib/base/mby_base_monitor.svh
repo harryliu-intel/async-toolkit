@@ -53,7 +53,7 @@ class mby_base_monitor
    extends uvm_monitor;
 
    // VARIABLE: mon_ap
-   // Analysis Port
+   // Analysis Port TODO: can it be a fifo instead?
    uvm_analysis_port #(T_req) mon_ap;
 
    // VARIABLE: vintf
@@ -127,15 +127,23 @@ class mby_base_monitor
       forever begin : main_monitor_thread
          // Wait for a new transaction to appear
          vintf.mon_start();
+
          // Create the seq_item
          `uvm_info("monitor_if()", "Creating a new transaction", UVM_DEBUG);
          mon_item = T_req::type_id::create("mon_item", this);
+
          // Get actual data pkt and debug info from the interface
          vintf.mon_data(mon_item.data_pkt, mon_item.debug_pkt);
-         `uvm_info("monitor_if()::got", mon_item.convert2string(), UVM_MEDIUM);
-         `uvm_info("monitor_if()::got", mon_item.sprint(),         UVM_HIGH);
+         if (this.get_report_verbosity_level() < UVM_HIGH) begin
+            `uvm_info("monitor_if()::got: ", mon_item.convert2string(), UVM_MEDIUM);
+         end else begin
+            `uvm_info("monitor_if()::got: ", mon_item.sprint(),         UVM_HIGH);
+         end
+
          // Write seq_item to analysis port
          mon_ap.write(mon_item);
+
+         // TODO: send more info on the seq item?
          `uvm_info("monitor_if()", "Sent transaction to the analysis port", UVM_DEBUG);
       end
    endtask : monitor_if

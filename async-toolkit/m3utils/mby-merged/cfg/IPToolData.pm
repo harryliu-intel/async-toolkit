@@ -59,6 +59,8 @@ $ToolConfig_ips{mby}{OTHER}{LIBS} = [
 ];
 
 push (@{$ToolConfig_ips{mby}{OTHER}{SUB_SCOPES}}, (
+   "CTECH",
+   "CTECH_EXP",
    "vcc_modeling",
    "iosf_sideband_vc",
    "iosf_primary_bfm",
@@ -78,7 +80,33 @@ push (@{$ToolConfig_ips{mby}{OTHER}{SEARCH_PATHS}}, (
    "&get_tool_var(ipconfig/sva_lib_ip,        SEARCH_PATHS)",
 	  "&get_tool_path(ipconfig/SVA_LIB)",
    "&get_tool_var(ipconfig/shdv,              SEARCH_PATHS)",
+   "&get_tool_path(ipconfig/CTECH)",
+   "&get_tool_path(ipconfig/CTECH_EXP)",
 ));
+
+$ToolConfig_ips{CTECH} = {
+   VERSION => "c2v18ww33a_dcg",
+   PATH => "/p/hdk/cad/ctech/&get_tool_version()",
+   OTHER   => {
+      SEARCH_PATHS   => ["&get_tool_path()",],
+   },
+   ENV => {
+      ctech_ROOT => "&get_tool_path()",
+   },
+}; 
+
+$ToolConfig_ips{CTECH_EXP} = {
+   VERSION => "ctech_exp_c2v18ww33a_dcg",
+   PATH => "/p/hdk/cad/ctech/&get_tool_version()",
+   OTHER   => {
+      SEARCH_PATHS   => ["&get_tool_path()",],
+   },
+   ENV => {
+      ctech_exp_ROOT => "&get_tool_path()",
+   },
+}; 
+$ToolConfig_tools{ctech}{PATH} = "&get_tool_path(ipconfig/CTECH)";
+$ToolConfig_tools{ctech}{VERSION} = "&get_tool_version(ipconfig/CTECH)";
 
 $ToolConfig_ips{chassis_pg_vc} = {
    PATH => "$ENV{IP_RELEASES}/ChassisPowerGatingVIP/&get_tool_version()",
