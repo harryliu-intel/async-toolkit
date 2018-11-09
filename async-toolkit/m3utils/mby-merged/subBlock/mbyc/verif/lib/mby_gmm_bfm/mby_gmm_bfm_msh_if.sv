@@ -2,12 +2,12 @@
 // Title         : Madison Bay GMM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gmm_bfm_if.sv
+// File          : mby_gmm_bfm_msh_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Madison Bay GMM interface file
+// Madison Bay GMM mesh interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,11 +30,18 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GMM_BFM_IF__
-`define __MBY_GMM_BFM_IF__
-
-interface mby_gmm_bfm_if;
-endinterface : mby_gmm_bfm_if
+`ifndef __MBY_GMM_BFM_MSH_IF__
+`define __MBY_GMM_BFM_MSH_IF__
+//------------------------------------------------------------------------------
+// INTERFACE: mby_gmm_bfm_msh_if
+//
+// NYI (Not yet implemented):
+// This is the interface to connect the gmm model to the mesh RTL. Currently
+// this mode of operation has not been implemented as the mesh verification
+// will use a different strategy.
+//------------------------------------------------------------------------------
+interface mby_gmm_bfm_msh_if(input logic clk, input logic rst);
+endinterface : mby_gmm_bfm_msh_if
 
 `endif
 
