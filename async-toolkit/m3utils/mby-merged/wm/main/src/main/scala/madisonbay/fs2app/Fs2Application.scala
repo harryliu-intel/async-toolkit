@@ -10,9 +10,10 @@ import java.net.InetSocketAddress
 import java.net.InetAddress
 
 import madisonbay.logger.Logger
+import madisonbay.fs2app.algebra._
 import madisonbay.fs2app.algebra.messages._
 import madisonbay.fs2app.deserialization._
-import madisonbay.fs2app.algebra._
+
 
 import scalaz.MonadError
 import scalaz.StateT

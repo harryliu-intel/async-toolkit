@@ -11,6 +11,7 @@ import fs2.io.tcp.Socket
 import fs2.{ Chunk, Sink, Stream }
 import cats.effect.IO
 import scalaz.MonadError
+import sourcecode.{ File, Line }
 
 import org.scalatest.Matchers
 import org.scalatest.compatible.Assertion
@@ -28,11 +29,11 @@ abstract class IOTestContext[Root] extends Matchers {
   }
 
   implicit val emptyLogger: Logger[IO] = new Logger[IO] {
-    def debug(msg: => String): IO[Unit] = IO.unit
-    def error(msg: => String): IO[Unit] = IO.unit
-    def info(msg: => String): IO[Unit] = IO.unit
-    def warn(msg: => String): IO[Unit] = IO.unit
-    def trace(msg: => String): IO[Unit] = IO.unit
+    def debug(msg: => String)(implicit line: Line, file: File): IO[Unit] = IO.unit
+    def error(msg: => String)(implicit line: Line, file: File): IO[Unit] = IO.unit
+    def info(msg: => String)(implicit line: Line, file: File): IO[Unit] = IO.unit
+    def warn(msg: => String)(implicit line: Line, file: File): IO[Unit] = IO.unit
+    def trace(msg: => String)(implicit line: Line, file: File): IO[Unit] = IO.unit
   }
 
   implicit lazy val serverSocket = new ServerSocket[IO] {
