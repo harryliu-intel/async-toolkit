@@ -179,28 +179,39 @@ class mby_base_driver
       forever begin : main_drive_thread
          // Get the next sequence item from sequencer
          seq_item_port.get_next_item(req);
-         `uvm_info("get_and_drive()::starts driving ",             req.convert2string(), UVM_MEDIUM)
-         `uvm_info("get_and_drive()::starts driving ",             req.sprint(),         UVM_HIGH)
+         if (this.get_report_verbosity_level() < UVM_HIGH) begin
+            `uvm_info("get_and_drive()::starts driving ",          req.convert2string(), UVM_MEDIUM)
+         end else begin
+            `uvm_info("get_and_drive()::starts driving ",          req.sprint(),         UVM_HIGH)
+         end
+
          // Clone the req item and copy id info
          $cast(rsp, req.clone());
          rsp.set_id_info(req);
+
          // Call pre-drive methods (may be defined in a sub-class)
          `uvm_info("get_and_drive()::calling pre_drive callback",  rsp.convert2string(), UVM_DEBUG)
          pre_drive_cb(rsp);
+
          // Call the interface's drive_data task
          `uvm_info("get_and_drive()::calling drive_data",          rsp.convert2string(), UVM_DEBUG)
          drive_data();
+
          // Call post-drive method (may be defined in a sub-class)
          `uvm_info("get_and_drive()::calling post_drive callback", rsp.convert2string(), UVM_DEBUG)
          post_drive_cb(rsp);
+
          // Mark sequence item as done
          `uvm_info("get_and_drive()::setting item done",           rsp.convert2string(), UVM_DEBUG)
          seq_item_port.item_done();
+
          // Send the response back
          if (req.rsp_req || cfg_obj.rsp_req) begin
             `uvm_info("get_and_drive()::sending back a response",  rsp.convert2string(), UVM_DEBUG)
             seq_item_port.put(rsp);
          end
+
+         // Print final debug message
          `uvm_info("get_and_drive()::exiting!",                    rsp.convert2string(), UVM_DEBUG)
       end // main_drive_thread
    endtask : get_and_drive

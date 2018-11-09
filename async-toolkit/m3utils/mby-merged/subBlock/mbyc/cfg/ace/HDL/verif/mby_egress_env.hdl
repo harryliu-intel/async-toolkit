@@ -7,7 +7,7 @@ $hdl_spec = {
 
     # List of specific VERILOG source files
     -vlog_files => [
-         "verif/egress/env/egress_env_pkg.sv",
+         "verif/egress/env/mby_egr_env_pkg.sv",
      ],
 
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)

@@ -26,6 +26,21 @@
       <Active>1</Active>
       <Singleton>0</Singleton>
       <Type>build</Type>
+  </row>
+  <row>
+      <DUT>fc_8_no_phy</DUT>
+      <Stage>vcs</Stage>
+      <Stage_Exec>bman</Stage_Exec>
+      <AdditionalArgs>-s all +s collage +s vcs +s genrtl +s sim_init -mc fc_8_no_phy -variant=fc_8_no_phy -nodelete_flow_data</AdditionalArgs>
+      <XdutStageDep>[mby].[genrtl]</XdutStageDep>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
    </row>
   <row>
       <DUT>mby</DUT>
@@ -65,6 +80,22 @@
       <Stage_Exec>verif/tests/lists/fc.turnin.list</Stage_Exec>
       <AdditionalArgs>-disable_work_area_subdir -model fc</AdditionalArgs>
       <XdutStageDep>[mby].[vcs]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+   <row>
+      <DUT>fc_8_no_phy</DUT>
+      <Stage>fc_boot_basic</Stage>
+      <Stage_Exec>verif/tests/lists/fc.turnin.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model fc_8_no_phy</AdditionalArgs>
+      <XdutStageDep>[fc_8_no_phy].[vcs]</XdutStageDep>
       <PassRate>100</PassRate>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>

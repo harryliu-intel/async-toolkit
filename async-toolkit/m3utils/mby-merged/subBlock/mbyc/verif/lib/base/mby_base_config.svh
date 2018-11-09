@@ -43,6 +43,7 @@ class mby_base_config extends shdv_base_config;
 
    // VARIABLE: driver_active
    // Agent is configured to be active or passive
+   // TODO: add "_is_" e.g. driver_is_active
    uvm_active_passive_enum driver_active;
 
    // VARIABLE: monitor_active
@@ -54,8 +55,7 @@ class mby_base_config extends shdv_base_config;
    bit rsp_req = 0;
 
    // UVM object utils macro
-   `uvm_object_utils_begin(mby_base_config)
-   `uvm_object_utils_end
+   `uvm_object_utils(mby_base_config)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
