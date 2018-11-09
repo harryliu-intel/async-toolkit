@@ -47,8 +47,8 @@
 //-----------------------------------------------------------------------------
 class mby_gmm_bfm_pod_xaction extends mby_base_sequence_item
 #(
-   .T_data (),
-   .T_debug()
+   .T_data (mby_gmm_bfm_pod_data_t),
+   .T_debug(mby_gmm_bfm_pod_debg_t)
 );
 
    // -------------------------------------------------------------------------
