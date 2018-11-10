@@ -45,6 +45,7 @@ my @all_hip_liblist = &get_hip_liblist();
 
 my @fc_rtl_liblist = (
     "sva_lib",
+    "gen_mby_mgm_lib",
     "mby_mgm_lib",
      (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
      (&ToolConfig::get_facet('dut') =~ /fc_8|fc_8_no_phy|fc_64_no_phy/) ? $fc_global_vars::IP_STUB_LIB : "",
@@ -533,6 +534,7 @@ EOF
                   "mby_tb_lib",
                   "mby_rtl_lib",
                   "sva_lib",
+                  "gen_mby_mgm_lib",
                   "mby_mgm_lib",
                   "mby_regflow_lib",
                   "mby_ti_lib",
