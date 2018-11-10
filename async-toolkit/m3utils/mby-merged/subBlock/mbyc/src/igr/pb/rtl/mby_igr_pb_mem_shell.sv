@@ -30,7 +30,7 @@
 
 
 module mby_igr_pb_mem_shell
-  import mby_igr_pkg::*, mby_igr_pb_pkg::*;
+  import mby_igr_pkg::*;
 (
   input logic cclk,
   input logic rst,

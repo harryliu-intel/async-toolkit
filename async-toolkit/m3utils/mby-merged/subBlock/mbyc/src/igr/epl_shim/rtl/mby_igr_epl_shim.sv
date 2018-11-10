@@ -29,7 +29,7 @@
 
 
 module mby_igr_epl_shim 
-  import mby_igr_pkg::*, mby_igr_pb_pkg::*;
+  import mby_igr_pkg::*;
 (
 
   input logic cclk,
