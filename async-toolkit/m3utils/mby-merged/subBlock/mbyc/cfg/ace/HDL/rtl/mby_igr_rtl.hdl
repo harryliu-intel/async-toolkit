@@ -17,7 +17,6 @@ $hdl_spec = {
        "src/shared/interfaces/mim_wr_if.sv",
        "src/shared/interfaces/mim_rd_if.sv",
        "src/igr/rtl/mby_igr_pkg.sv",
-       "src/igr/pb/rtl/mby_igr_pb_pkg.sv",
        "src/igr/rtl/mby_igr_macros.vh",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_ctrl.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_seg.sv",
