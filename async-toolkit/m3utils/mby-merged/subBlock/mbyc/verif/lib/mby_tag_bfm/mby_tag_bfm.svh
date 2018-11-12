@@ -40,12 +40,14 @@
 //
 // This is the main tag_bfm class, it is just a container that instantiates and
 // connects the frame generator and the tag agent.
-//
+// TODO: analyze pros/cons of having this class parameterized instead (param
+//       being the type of agent UC/MC, defaulting to UC).
+//       And then typedef this agent based on that.
 //-----------------------------------------------------------------------------
 class mby_tag_bfm extends uvm_component;
 
    // VARIABLE: cfg_obj
-   // The agent's configuration object
+   // The bfms's configuration object
    mby_tag_bfm_cfg cfg_obj;
 
    // VARIABLE: tag_uc_agent

@@ -54,6 +54,7 @@ package mby_gmm_bfm_pkg;
    `include "mby_gmm_bfm_pod_xaction.svh"
    `include "mby_gmm_bfm_msh_xaction.svh"
    `include "mby_gmm_bfm_cfg.svh"
+   `include "mby_gmm_bfm_pptr_gen.svh"
    `include "mby_gmm_bfm.svh"
 
 endpackage : mby_gmm_bfm_pkg

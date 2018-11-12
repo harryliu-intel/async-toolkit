@@ -43,7 +43,6 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
                           //       the right place.
 
    mby_tag_ring_t intf_data_pkt;
-   logic          intf_val_pkt;
    logic          intf_debg_pkt;
 
    localparam DATA_WIDTH = $bits(mby_tag_ring_t);
@@ -73,8 +72,8 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    //---------------------------------------------------------------------------
    task drive_data(logic [DATA_WIDTH-1:0] data_pkt, logic [DEBG_WIDTH-1:0] debg_pkt);
       @(posedge clk);
-      intf_data_pkt = data_pkt;
-      intf_debg_pkt = debg_pkt;
+      intf_data_pkt <= data_pkt;
+      intf_debg_pkt <= debg_pkt;
    endtask
 
    //---------------------------------------------------------------------------
@@ -87,7 +86,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    //---------------------------------------------------------------------------
    task mon_start();
       // wait for valid signal
-      wait(intf_val_pkt === 1);
+      wait(intf_data_pkt.valid === 1);
    endtask
 
    //---------------------------------------------------------------------------

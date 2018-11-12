@@ -171,3 +171,7 @@ subIP/
 
 # RALF typically generated from RDL or Nebulon output
 *.ralf
+
+# removing Natural docs Menu files
+subBlock/mbyc/verif/doc/Menu.txt
+subBlock/mbyc/verif/doc/Menu_Backup.txt

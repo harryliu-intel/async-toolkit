@@ -45,10 +45,8 @@ class mby_mesh_base_test extends shdv_base_test;
     // Top level ENV
     mby_mesh_env    env;
 
-    `uvm_component_utils_begin(mby_mesh_base_test)
-        `uvm_field_object(cfg,  UVM_DEFAULT)
-        `uvm_field_object(env,      UVM_DEFAULT)
-    `uvm_component_utils_end
+    `uvm_component_utils(mby_mesh_base_test)
+    
 
     //------------------------------------------------------------------------------
     // Constructor: new
