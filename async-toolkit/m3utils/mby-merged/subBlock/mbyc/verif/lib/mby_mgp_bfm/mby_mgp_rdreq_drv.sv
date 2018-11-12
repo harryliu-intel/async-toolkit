@@ -1,100 +1,98 @@
-   
 //----------------------------------------------------------------------------------------
 // Copyright(C) 2016 Intel Corporation, Confidential Information
 //----------------------------------------------------------------------------------------
 // Author:  Dhivya Sankar
 // Project: Madison Bay
-// Description: Mesh read request monitor.
-// The read req monitor monitors read requests on the interface and returns credits. 
-// The requests comprise of opcode and data. 
+// Description: Mesh read request driver.
+// The read req driver drives read requests on the interface. 
 //----------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------
-// Class: mby_mesh_rdreq_mon
+// Class: mby_mgp_rdreq_drv
 //----------------------------------------------------------------------------------------
-class mby_mesh_rdreq_mon  extends uvm_monitor;
-   `uvm_component_utils_begin(mby_mesh_rdreq_mon)
+class mby_mgp_rdreq_drv  extends uvm_driver#(mby_mgp_req_seq_item);
+   `uvm_component_utils_begin(mby_mgp_rdreq_drv)
    `uvm_component_utils_end
      
-   mby_mesh_req_agent_cfg req_agent_cfg;
+   mby_mgp_req_agent_cfg req_agent_cfg;
 
-   mby_mesh_mem_crdt_io  mem_crdt_io;
-   mby_mesh_flow_ctrl    flow_ctrl;
+   mby_mgp_mem_crdt_io  mem_crdt_io;
+   mby_mgp_flow_ctrl    flow_ctrl;
    
    extern function new(string name = "", uvm_component parent = null);
    extern virtual function void build_phase(uvm_phase phase);
    extern virtual function void reset();
    extern virtual function void start();
    extern virtual task run_phase(uvm_phase phase);
-   extern virtual task sample_rdreq();
-   extern virtual task prepare_rqcrdt();
-   extern virtual task drive_rqcrdt();
+   extern virtual task sample_rqcrdt();
+   extern virtual task prepare_rdreq();
+   extern virtual task drive_rdreq();
    
 endclass 
 
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mesh_rdreq_mon::new(string name = "", uvm_component parent = null);
+function mby_mgp_rdreq_drv::new(string name = "", uvm_component parent = null);
    super.new(name, parent);
-endfunction
+endfunction : new
 
 //----------------------------------------------------------------------------------------
 // Method: build
 //----------------------------------------------------------------------------------------
-function void mby_mesh_rdreq_mon::build_phase(uvm_phase phase);
+function void mby_mgp_rdreq_drv::build_phase(uvm_phase phase);
    super.build_phase(phase);
-endfunction
+endfunction : build_phase
    
 //----------------------------------------------------------------------------------------
 // Method: reset
 //----------------------------------------------------------------------------------------
-function void mby_mesh_rdreq_mon::reset();
-endfunction 
+function void mby_mgp_rdreq_drv::reset();
+endfunction : reset
 
 //----------------------------------------------------------------------------------------
 // Method: start
 //----------------------------------------------------------------------------------------
-function void mby_mesh_rdreq_mon::start();
-endfunction 
+function void mby_mgp_rdreq_drv::start();
+endfunction : start
 
 //----------------------------------------------------------------------------------------
 // Method: run
 //----------------------------------------------------------------------------------------
-task mby_mesh_rdreq_mon::run_phase(uvm_phase phase);
+task mby_mgp_rdreq_drv::run_phase(uvm_phase phase);
 
    if (req_agent_cfg.is_active == UVM_ACTIVE) begin
       fork
-         forever @(mem_crdt_io.vif.mst_cb) begin
-            if(!mem_crdt_io.vif.rst) begin
-               sample_rdreq();
-               prepare_rqcrdt();
-               drive_rqcrdt();
+         forever @(mem_crdt_io.op_vif.op_mst_cb) begin
+            if(!mem_crdt_io.op_vif.rst) begin
+               sample_rqcrdt();
+               prepare_rdreq();
+               drive_rdreq();
             end
          end
       join_none
    end 
    
-endtask 
+endtask : run_phase
 
 //----------------------------------------------------------------------------------------
-// Method: sample_rdreq
+// Method: sample_rqcrdt
 //----------------------------------------------------------------------------------------
-task mby_mesh_rdreq_mon::sample_rdreq();
+task mby_mgp_rdreq_drv::sample_rqcrdt();
 
-endtask 
+endtask : sample_rqcrdt
 
 //----------------------------------------------------------------------------------------
 // Method: prepare_rdreq
 //----------------------------------------------------------------------------------------
-task mby_mesh_rdreq_mon::prepare_rqcrdt();
+task mby_mgp_rdreq_drv::prepare_rdreq();
 
-endtask 
+endtask : prepare_rdreq
 
 
 //----------------------------------------------------------------------------------------
-// Method: drive_rqcrdt
+// Method: drive_rdreq
 //----------------------------------------------------------------------------------------
-task mby_mesh_rdreq_mon::drive_rqcrdt();
+task mby_mgp_rdreq_drv::drive_rdreq();
 
-endtask
+endtask : drive_rdreq

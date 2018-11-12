@@ -9,19 +9,19 @@
 //----------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------
-// Class: mby_mesh_wrreq_agent
+// Class: mby_mgp_wrreq_agent
 //----------------------------------------------------------------------------------------
-class mby_mesh_wrreq_agent extends uvm_agent;
+class mby_mgp_wrreq_agent extends uvm_agent;
    
-   mby_mesh_wrreq_drv  wrreq_drv;
-   mby_mesh_wrreq_mon  wrreq_mon;
-   uvm_sequencer#(mby_mesh_wq_seq_item) wrreq_seqr;
+   mby_mgp_wrreq_drv  wrreq_drv;
+   mby_mgp_wrreq_mon  wrreq_mon;
+   uvm_sequencer#(mby_mgp_req_seq_item) wrreq_seqr;
 
-   mby_mesh_req_agent_cfg   req_agent_cfg;
-   mby_mesh_mem_crdt_io     mem_crdt_io;
-   mby_mesh_flow_ctrl       flow_ctrl;
+   mby_mgp_req_agent_cfg   req_agent_cfg;
+   mby_mgp_mem_crdt_io     mem_crdt_io;
+   mby_mgp_flow_ctrl       flow_ctrl;
    
-   `uvm_component_utils(mby_mesh_wrreq_agent)
+   `uvm_component_utils(mby_mgp_wrreq_agent)
    extern function new(string name = "", uvm_component parent = null);
    extern virtual function void build_phase(uvm_phase phase);
    extern virtual function void connect_phase(uvm_phase phase);
@@ -32,14 +32,14 @@ endclass
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mesh_wrreq_agent::new(string name = "", uvm_component parent = null);
+function mby_mgp_wrreq_agent::new(string name = "", uvm_component parent = null);
    super.new(name, parent);
-endfunction
+endfunction : new
 
 //----------------------------------------------------------------------------------------
 // Method: build
 //----------------------------------------------------------------------------------------
-function void mby_mesh_wrreq_agent::build_phase(uvm_phase phase);
+function void mby_mgp_wrreq_agent::build_phase(uvm_phase phase);
    super.build_phase(phase);
 
    if (req_agent_cfg == null) begin
@@ -50,31 +50,33 @@ function void mby_mesh_wrreq_agent::build_phase(uvm_phase phase);
    if (req_agent_cfg.is_active == UVM_ACTIVE) begin
       wrreq_seqr = new("wrreq_seqr", this);
    end
-   wrreq_drv              = mby_mesh_wrreq_drv::type_id::create("wrreq_drv", this);
+   wrreq_drv              = mby_mgp_wrreq_drv::type_id::create("wrreq_drv", this);
    wrreq_drv.req_agent_cfg = req_agent_cfg;
    wrreq_drv.flow_ctrl    = flow_ctrl;
    wrreq_drv.mem_crdt_io  = mem_crdt_io;
 
-   wrreq_mon              = mby_mesh_wrreq_mon::type_id::create("wrreq_mon", this);
+   wrreq_mon              = mby_mgp_wrreq_mon::type_id::create("wrreq_mon", this);
    wrreq_mon.req_agent_cfg = req_agent_cfg;
    wrreq_mon.mem_crdt_io  = mem_crdt_io;
    
-endfunction
+endfunction : build_phase
 
 //----------------------------------------------------------------------------------------
 // Method: connect
 //----------------------------------------------------------------------------------------
-function void mby_mesh_wrreq_agent::connect_phase(uvm_phase phase);
+function void mby_mgp_wrreq_agent::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
-   if (req_agent_cfg.is_active == UVM_ACTIVE)
+   if (req_agent_cfg.is_active == UVM_ACTIVE) begin
       wrreq_drv.seq_item_port.connect(wrreq_seqr.seq_item_export);
-endfunction
+   end
+endfunction : connect_phase
 
 //----------------------------------------------------------------------------------------
 // Method: reset
 //----------------------------------------------------------------------------------------
-function void mby_mesh_wrreq_agent::reset();
+function void mby_mgp_wrreq_agent::reset();
+   wrreq_drv.reset();
    wrreq_mon.reset();
-endfunction
+endfunction : reset
 
 

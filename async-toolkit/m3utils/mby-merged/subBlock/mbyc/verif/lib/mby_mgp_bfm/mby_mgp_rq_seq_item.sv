@@ -8,11 +8,11 @@
 //----------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------
-// Class: mby_mesh_req_seq_item
+// Class: mby_mgp_req_seq_item
 //----------------------------------------------------------------------------------------
-class mby_mesh_req_seq_item extends uvm_sequence_item;
+class mby_mgp_req_seq_item extends uvm_sequence_item;
 
-   `uvm_component_utils(mby_mesh_req_seq_item)
+   `uvm_component_utils(mby_mgp_req_seq_item)
 
    typedef union packed {
       struct packed {
@@ -51,7 +51,7 @@ endclass
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mesh_req_seq_item::new(string name = "");
+function mby_mgp_req_seq_item::new(string name = "");
    super.new(name);
 endfunction 
 
@@ -60,7 +60,7 @@ endfunction
 // Method: pack
 // Convert the req class fields into a physical object.
 //----------------------------------------------------------------------------------------
-function void mby_mesh_req_seq_item::pack(ref physical_t phys);
+function void mby_mgp_req_seq_item::pack(ref physical_t phys);
 
    if (bus_type == OP) begin
       phys.opbus.op_id = op_id;
@@ -82,7 +82,7 @@ endfunction
 // Method: unpack
 // Convert the physical req into an instance of this class.
 //----------------------------------------------------------------------------------------
-function void mby_mesh_req_seq_item::unpack(physical_t phys);
+function void mby_mgp_req_seq_item::unpack(physical_t phys);
 
    if (bus_type == OP) begin
       op_id = phys.opbus.op_id;

@@ -2,7 +2,7 @@
 `ifndef __MBY_MESH_OP_IF__
 `define __MBY_MESH_OP_IF__
 
-interface mby_mesh_op_if (
+interface mby_mgp_op_if (
    input        clk,
    input        rst,
    inout [15:0] op_id,

@@ -8,19 +8,19 @@
 //----------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------
-// Class: mby_mesh_rdrsp_agent
+// Class: mby_mgp_rdrsp_agent
 //----------------------------------------------------------------------------------------
-class mby_mesh_rdrsp_agent extends uvm_agent;
+class mby_mgp_rdrsp_agent extends uvm_agent;
    
-   mby_mesh_rdreq_drv  rdrsp_drv;
-   mby_mesh_rdreq_mon  rdrsp_mon;
-   uvm_sequencer#(mby_mesh_rp_seq_item) rdrsp_seqr;
+   mby_mgp_rdreq_drv  rdrsp_drv;
+   mby_mgp_rdreq_mon  rdrsp_mon;
+   uvm_sequencer#(mby_mgp_req_seq_item) rdrsp_seqr;
 
-   mby_mesh_req_agent_cfg req_agent_cfg;
-   mby_mesh_mem_crdt_io     mem_crdt_io;
-   mby_mesh_flow_ctrl       flow_ctrl;
+   mby_mgp_req_agent_cfg req_agent_cfg;
+   mby_mgp_mem_crdt_io     mem_crdt_io;
+   mby_mgp_flow_ctrl       flow_ctrl;
    
-   `uvm_component_utils(mby_mesh_rdrsp_agent)
+   `uvm_component_utils(mby_mgp_rdrsp_agent)
    extern function new(string name = "", uvm_component parent = null);
    extern virtual function void build_phase(uvm_phase phase);
    extern virtual function void connect_phase(uvm_phase phase);
@@ -31,14 +31,14 @@ endclass
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mesh_rdrsp_agent::new(string name = "", uvm_component parent = null);
+function mby_mgp_rdrsp_agent::new(string name = "", uvm_component parent = null);
    super.new(name, parent);
-endfunction
+endfunction : new
 
 //----------------------------------------------------------------------------------------
 // Method: build
 //----------------------------------------------------------------------------------------
-function void mby_mesh_rdrsp_agent::build_phase(uvm_phase phase);
+function void mby_mgp_rdrsp_agent::build_phase(uvm_phase phase);
    super.build_phase(phase);
 
    if (req_agent_cfg == null) begin
@@ -47,33 +47,34 @@ function void mby_mesh_rdrsp_agent::build_phase(uvm_phase phase);
                            
 
    if (req_agent_cfg.is_active == UVM_ACTIVE) begin
-      rdreq_seqr = new("rdreq_seqr", this);
+      rdrsp_seqr = new("rdreq_seqr", this);
    end
-   rdrsp_drv              = mby_mesh_rdrsp_drv::type_id::create("rdreq_drv", this);
+   rdrsp_drv              = mby_mgp_rdrsp_drv::type_id::create("rdreq_drv", this);
    rdrsp_drv.req_agent_cfg = req_agent_cfg;
    rdrsp_drv.flow_ctrl    = flow_ctrl;
    rdrsp_drv.mem_crdt_io  = mem_crdt_io;
 
-   rdrsp_mon              = mby_mesh_rdrsp_mon::type_id::create("rdreq_mon", this);
+   rdrsp_mon              = mby_mgp_rdrsp_mon::type_id::create("rdreq_mon", this);
    rdrsp_mon.req_agent_cfg = req_agent_cfg;
    rdrsp_mon.mem_crdt_io  = mem_crdt_io;
    
-endfunction
+endfunction : build_phase
 
 //----------------------------------------------------------------------------------------
 // Method: connect
 //----------------------------------------------------------------------------------------
-function void mby_mesh_rdrsp_agent::connect_phase(uvm_phase phase);
+function void mby_mgp_rdrsp_agent::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
    if (req_agent_cfg.is_active == UVM_ACTIVE)
       rdrsp_drv.seq_item_port.connect(rdrsp_seqr.seq_item_export);
-endfunction
+endfunction : connect_phase
 
 //----------------------------------------------------------------------------------------
 // Method: reset
 //----------------------------------------------------------------------------------------
-function void mby_mesh_rdrsp_agent::reset();
+function void mby_mgp_rdrsp_agent::reset();
+   rdrsp_drv.reset();
    rdrsp_mon.reset();
-endfunction
+endfunction : reset 
 
 

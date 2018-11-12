@@ -1,4 +1,4 @@
-interface mby_mesh_data_if (
+interface mby_mgp_data_if (
    input clk,
    input rst,
    inout [511:0] data

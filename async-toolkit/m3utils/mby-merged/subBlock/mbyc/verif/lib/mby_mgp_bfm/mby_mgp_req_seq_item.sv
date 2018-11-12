@@ -3,15 +3,15 @@
 //----------------------------------------------------------------------------------------
 // Author:  Dhivya Sankar
 // Project: Madison Bay
-// Description: The read/write request/response item. The class represents an op structure.
+// Description: The read/write request/response item. The class represents an op/data structure.
 //----------------------------------------------------------------------------------------
+typedef enum bus_type_e;
+//----------------------------------------------------------------------------------------
+// Class: mby_mgp_req_seq_item
+//----------------------------------------------------------------------------------------
+class mby_mgp_req_seq_item extends uvm_sequence_item;
 
-//----------------------------------------------------------------------------------------
-// Class: mby_mesh_req_seq_item
-//----------------------------------------------------------------------------------------
-class mby_mesh_req_seq_item extends uvm_sequence_item;
-
-   `uvm_component_utils(mby_mesh_req_seq_item)
+   `uvm_object_utils(mby_mgp_req_seq_item)
 
    typedef union packed {
       struct packed {
@@ -40,6 +40,7 @@ class mby_mesh_req_seq_item extends uvm_sequence_item;
    rand bit [1:0]  sema;
    rand bit [7:0]  age;
    rand bit [511:0] data;
+   rand bus_type_e bus_type;
 
    extern function new(string name = "");
    extern virtual function void pack(ref physical_t phys);
@@ -50,16 +51,16 @@ endclass
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mesh_req_seq_item::new(string name = "");
+function mby_mgp_req_seq_item::new(string name = "");
    super.new(name);
-endfunction 
+endfunction : new
 
 
 //----------------------------------------------------------------------------------------
 // Method: pack
 // Convert the req class fields into a physical object.
 //----------------------------------------------------------------------------------------
-function void mby_mesh_req_seq_item::pack(ref physical_t phys);
+function void mby_mgp_req_seq_item::pack(ref physical_t phys);
 
    if (bus_type == OP) begin
       phys.opbus.op_id = op_id;
@@ -75,13 +76,13 @@ function void mby_mesh_req_seq_item::pack(ref physical_t phys);
       phys.databus.data = data;
    end
 
-endfunction
+endfunction : pack
 
 //----------------------------------------------------------------------------------------
 // Method: unpack
 // Convert the physical req into an instance of this class.
 //----------------------------------------------------------------------------------------
-function void mby_mesh_req_seq_item::unpack(physical_t phys);
+function void mby_mgp_req_seq_item::unpack(physical_t phys);
 
    if (bus_type == OP) begin
       op_id = phys.opbus.op_id;
@@ -97,4 +98,4 @@ function void mby_mesh_req_seq_item::unpack(physical_t phys);
       data = phys.databus.data;
    end
 
-endfunction
+endfunction : unpack

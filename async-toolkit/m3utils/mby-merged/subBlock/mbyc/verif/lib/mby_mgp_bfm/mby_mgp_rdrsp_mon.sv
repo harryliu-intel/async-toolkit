@@ -1,100 +1,98 @@
-
+   
 //----------------------------------------------------------------------------------------
 // Copyright(C) 2016 Intel Corporation, Confidential Information
 //----------------------------------------------------------------------------------------
 // Author:  Dhivya Sankar
 // Project: Madison Bay
-// Description: Mesh write request driver.
-// The write req driver drives write requests on the interface. They comprise of opcode and
-// data. 
+// Description: Mesh read response monitor.
+// The read rsp monitor monitors read responses on the interface and returns credits. 
 //----------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------
-// Class: mby_mesh_wrreq_drv
+// Class: mby_mgp_rdrsp_mon
 //----------------------------------------------------------------------------------------
-class mby_mesh_wrreq_drv  extends uvm_driver#(mby_mesh_req_seq_item);
-   `uvm_component_utils_begin(mby_mesh_wrreq_drv)
-   `uvm_component_utils_end
-     
-   mby_mesh_req_agent_cfg req_agent_cfg;
+class mby_mgp_rdrsp_mon  extends uvm_monitor;
+   `uvm_component_utils(mby_mgp_rdrsp_mon)
+      
+   mby_mgp_req_agent_cfg req_agent_cfg;
 
-   mby_mesh_mem_crdt_io  mem_crdt_io;
-   mby_mesh_flow_ctrl    flow_ctrl;
+   mby_mgp_mem_crdt_io  mem_crdt_io;
+   mby_mgp_flow_ctrl    flow_ctrl;
    
    extern function new(string name = "", uvm_component parent = null);
    extern virtual function void build_phase(uvm_phase phase);
    extern virtual function void reset();
    extern virtual function void start();
    extern virtual task run_phase(uvm_phase phase);
-   extern virtual task sample_wqcrdt();
-   extern virtual task prepare_wrreq();
-   extern virtual task drive_wrreq();
+   extern virtual task sample_rdrsp();
+   extern virtual task prepare_rpcrdt();
+   extern virtual task drive_rpcrdt();
    
 endclass 
 
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mesh_wrreq_drv::new(string name = "", uvm_component parent = null);
+function mby_mgp_rdrsp_mon::new(string name = "", uvm_component parent = null);
    super.new(name, parent);
-endfunction
+endfunction : new
 
 //----------------------------------------------------------------------------------------
 // Method: build
 //----------------------------------------------------------------------------------------
-function void mby_mesh_wrreq_drv::build_phase(uvm_phase phase);
+function void mby_mgp_rdrsp_mon::build_phase(uvm_phase phase);
    super.build_phase(phase);
-endfunction
+endfunction : build_phase
    
 //----------------------------------------------------------------------------------------
 // Method: reset
 //----------------------------------------------------------------------------------------
-function void mby_mesh_wrreq_drv::reset();
-endfunction 
+function void mby_mgp_rdrsp_mon::reset();
+endfunction : reset
 
 //----------------------------------------------------------------------------------------
 // Method: start
 //----------------------------------------------------------------------------------------
-function void mby_mesh_wrreq_drv::start();
-endfunction 
+function void mby_mgp_rdrsp_mon::start();
+endfunction : start
 
 //----------------------------------------------------------------------------------------
 // Method: run
 //----------------------------------------------------------------------------------------
-task mby_mesh_wrreq_drv::run_phase(uvm_phase phase);
+task mby_mgp_rdrsp_mon::run_phase(uvm_phase phase);
 
    if (req_agent_cfg.is_active == UVM_ACTIVE) begin
       fork
-         forever @(mem_crdt_io.vif.mst_cb) begin
-            if(!mem_crdt_io.vif.rst) begin
-               sample_wqcrdt();
-               prepare_wrreq();
-               drive_wrreq();
+         forever @(mem_crdt_io.op_vif.op_mst_cb) begin
+            if(!mem_crdt_io.op_vif.rst) begin
+               sample_rdrsp();
+               prepare_rpcrdt();
+               drive_rpcrdt();
             end
          end
       join_none
    end 
    
-endtask 
+endtask : run_phase
 
 //----------------------------------------------------------------------------------------
-// Method: sample_wqcrdt
+// Method: sample_rdrsp
 //----------------------------------------------------------------------------------------
-task mby_mesh_wrreq_drv::sample_wqcrdt();
+task mby_mgp_rdrsp_mon::sample_rdrsp();
 
-endtask 
-
-//----------------------------------------------------------------------------------------
-// Method: prepare_wrreq
-//----------------------------------------------------------------------------------------
-task mby_mesh_wrreq_drv::prepare_wrreq();
-
-endtask 
-
+endtask : sample_rdrsp
 
 //----------------------------------------------------------------------------------------
-// Method: drive_wrreq
+// Method: prepare_rpcrdt
 //----------------------------------------------------------------------------------------
-task mby_mesh_wrreq_drv::drive_wrreq();
+task mby_mgp_rdrsp_mon::prepare_rpcrdt();
 
-endtask
+endtask : prepare_rpcrdt
+
+
+//----------------------------------------------------------------------------------------
+// Method: drive_rpcrdt
+//----------------------------------------------------------------------------------------
+task mby_mgp_rdrsp_mon::drive_rpcrdt();
+
+endtask : drive_rpcrdt
