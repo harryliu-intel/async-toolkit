@@ -88,3 +88,48 @@
  )
 )
 
+; copy selected cells given an offset
+(defun CopySelected (xOffset yOffset)
+  SelectedCellList = (geGetSelSet)
+  (foreach SelectedCell SelectedCellList 
+           (dbCopyFig SelectedCell nil (list xOffset:yOffset "R0"))
+           )
+  t
+  )
+
+; find an instance by its name
+(defun FindInst (name @key (CV (geGetEditCellView)))
+  (dbFindAnyInstByName CV name)
+  )
+
+; select an instance by its name
+(defun SelectInst (name @key (CV (geGetEditCellView)))
+  (let (inst)
+    inst = (dbFindAnyInstByName CV name)
+    (when inst (geSelectObject inst))
+    inst
+    )
+  )
+
+; find instances by regular expression
+(defun FindInstRegExp (rex @key (CV (geGetEditCellView)))
+  (let (inst insts)
+    (rexCompile rex)
+    (foreach inst CV->instances
+             (when (rexExecute inst->name) insts = (cons inst insts))
+             )
+    insts
+    )
+  )
+
+; select instances by regular expression
+(defun SelectInstRegExp (rex @key (CV (geGetEditCellView)))
+  (let (inst n)
+    n=0
+    (rexCompile rex)
+    (foreach inst CV->instances
+             (when (rexExecute inst->name) n++ (geSelectObject inst))
+             )
+    n
+    )
+  )

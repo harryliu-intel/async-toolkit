@@ -376,7 +376,7 @@ Where:
         (
          0.0 ) ) )
 
-(defun DensityFactor ( CellView
+(defun DensityFactorTransistors ( CellView
                        ComponentLibCellPairRegExs
                        TransistorLibCellPairRegExs
                        UserUnitsPerMeter
@@ -453,7 +453,7 @@ Where:
                       TransistorLibCellPairs ) ) )
            (let (
                  ( Density
-                   ( DensityFactor
+                   ( DensityFactorTransistors
                      CellView
                      ( append
                        GateLibCellPairRegExs

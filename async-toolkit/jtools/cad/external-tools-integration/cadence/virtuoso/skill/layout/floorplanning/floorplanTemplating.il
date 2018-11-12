@@ -137,3 +137,37 @@ defun( flFloorplanTemplating ( dstCellView srcCellName
     return(t)
   )
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;; Simpler Versions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; template from another cell or view
+(defun TemplateFrom (@key (CV (geGetEditCellView))
+                          (libName nil) (cellName nil) (viewName "floorplan"))
+  (let (fCV finst)
+    (unless libName libName=CV->libName)
+    (unless cellName cellName=CV->cellName)
+    fCV = (dbOpenCellViewByType libName cellName viewName "maskLayout" "r")
+    (unless fCV (error "Can't open %s %s %s\n" libName cellName viewName))
+    (foreach inst CV->instances
+             finst = (dbFindAnyInstByName fCV inst->name)
+             (when finst
+               inst->xy = finst->xy
+               inst->orient = finst->orient
+               inst->status = finst->status
+               )
+             )
+    )
+  t
+  )
+
+; template from another subtype of current cell
+(defun TemplateSubtype (subtype @key (CV (geGetEditCellView)))
+  (let (cellName tCV tinst)
+    cellName = CV->cellName
+    cellName = (cdr (reverse (parseString cellName ".")))
+    cellName = (cons subtype cellName)
+    cellName = (buildString (reverse cellName) ".")
+    (TemplateFrom ?cellName cellName ?CV CV)
+    )
+  CV
+  )
