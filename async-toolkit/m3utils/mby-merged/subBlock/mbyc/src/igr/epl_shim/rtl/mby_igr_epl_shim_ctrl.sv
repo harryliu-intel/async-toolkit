@@ -29,7 +29,7 @@
 
 
 module mby_igr_epl_shim_ctrl 
-  import mby_igr_pkg::*, mby_igr_pb_pkg::*;
+  import mby_igr_pkg::*;
 (
 
   input logic cclk,
@@ -100,10 +100,12 @@ module mby_igr_epl_shim_ctrl
   logic      seg1_sop_e; //SOP in md for segment but segment not written to PB,
   logic      seg2_sop_e; //SOP in md for segment but segment not written to PB,
   
-  logic [7:0]      sflit;  //sop flit
-  logic [7:0]  qs2_sflit;  //sop flit
-  logic [7:0]      eflit;  //eop flit
-  logic [7:0]  qs2_eflit;  //eop flit
+  logic [7:0]        sflit;  //sop flit
+  logic [7:0]      sflit_v;  //sop_pos and sop bit
+  logic [7:0]    qs2_sflit;  //sop flit
+  logic [7:0]  qs2_sflit_v;  //sop_pos and sop bit
+  logic [7:0]        eflit;  //eop flit
+  logic [7:0]    qs2_eflit;  //eop flit
   
   logic [3:0]    cnt_ones;
   logic [3:0] qs2_cnt_ones;
@@ -186,6 +188,7 @@ module mby_igr_epl_shim_ctrl
   assign sop_eop = (i_tsmd.md.sop_pos < i_tsmd.md.eop_pos);
   assign eop_sop = (i_tsmd.md.sop_pos > i_tsmd.md.eop_pos);
   assign sop_v   = (rx_v) & i_tsmd.md.sop;
+  assign sflit_v = sflit[7:0] & {8{sop_v}};
 
 //s2
   assign s2_md = {i_tsmd.md.multi,
@@ -200,15 +203,23 @@ module mby_igr_epl_shim_ctrl
                   i_tsmd.md.sop_pos,
                   i_tsmd.md.tc};
   always_ff @(posedge cclk)qs2_rx_v    <= rx_v;
-  always_ff @(posedge cclk)qs2_cnt_ones <= cnt_ones;
+  always_ff @(posedge cclk)qs2_cnt_ones <= cnt_ones;  //FIXME does this need to be cloned for timing?
   always_ff @(posedge cclk)qs2_eflit   <= eflit;
-  always_ff @(posedge cclk)qs2_sflit   <= sflit;
+  always_ff @(posedge cclk)qs2_sflit   <= sflit;  //used for flit_err detect in eop section FIXME: may not be used
+  always_ff @(posedge cclk)qs2_sflit_v <= sflit_v; //used for align when no eop
   always_ff @(posedge cclk)qs2_sop_eop <= sop_eop;
   always_ff @(posedge cclk)qs2_eop_sop <= eop_sop;
   always_ff @(posedge cclk)qs2_sop_v   <= sop_v;
   
-  always_ff @(posedge cclk) qs2_md <= (rst)? '0: (rx_v)? s2_md: qs2_md;
-  always_ff @(posedge cclk) qs2_ts <= (rst)? '0: (rx_v)? i_tsmd.ts: qs2_ts; 
+  always_ff @(posedge cclk) begin
+    if(rst)       qs2_md <= '0;
+    else if(rx_v) qs2_md <= s2_md;
+  end
+  always_ff @(posedge cclk) begin
+    if(rst)       qs2_ts <= '0;
+    else if(rx_v) qs2_ts <= i_tsmd.ts;
+  end
+  
   always_comb
   begin
     seg0_md = qs2_md;
@@ -3020,25 +3031,94 @@ module mby_igr_epl_shim_ctrl
       endcase //current_flit
       end //if(eop)
 //FIXME add detection of SOP position due to dropped packets.
-//For dropped packet case SOP amy not be in flit0 position due unaligned packed 64B word where
+//For dropped packet case SOP may not be in flit0 position due unaligned packed 64B word where
 //packet flits and EOP from a dropped packet occupy flits above the SOP position.
 //So valid filts start at sop_pos.
-      else begin  //no EOP so the unaligned flit is full sop should only then be in flits 0, 8, 16
+//For vaild filts without EOP or SOP these flits should be flit[0] aligned.
+      else begin  //no EOP so the unaligned flit sop should only then be in flits 0, 8, 16
         unique case(current_flit) inside  //FIXME shoud current_flit be a 1-hot vector[23:0]??
           5'd0: begin
+            if(qs2_sflit_v[0] || (!qs2_sop_v)) begin
               unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
                 4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
-                4'd2: begin fsel0 = 32'h0000_0010; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd02; end
+                4'd2: begin fsel0 = 32'h0000_0010; seg0_we[7:0] = 8'b0000_0011; nxt_flit = 5'd02; end
                 4'd3: begin fsel0 = 32'h0000_0210; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
                 4'd4: begin fsel0 = 32'h0000_3210; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
                 4'd5: begin fsel0 = 32'h0004_3210; seg0_we[7:0] = 8'b0001_1111; nxt_flit = 5'd05; end
                 4'd6: begin fsel0 = 32'h0054_3210; seg0_we[7:0] = 8'b0011_1111; nxt_flit = 5'd06; end
-                4'd7: begin fsel0 = 32'h0654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd07; end
+                4'd7: begin fsel0 = 32'h0654_3210; seg0_we[7:0] = 8'b0111_1111; nxt_flit = 5'd07; end
                 4'd8: begin fsel0 = 32'h7654_3210; seg0_we[7:0] = 8'b1111_1111; nxt_flit = 5'd08; seg_e = 3'b001; end
                 default: nxt_flit = 5'd00;
               endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[1]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0001; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                4'd2: begin fsel0 = 32'h0000_0021; seg0_we[7:0] = 8'b0000_0011; nxt_flit = 5'd02; end
+                4'd3: begin fsel0 = 32'h0000_0321; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
+                4'd4: begin fsel0 = 32'h0000_4321; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
+                4'd5: begin fsel0 = 32'h0005_4321; seg0_we[7:0] = 8'b0001_1111; nxt_flit = 5'd05; end
+                4'd6: begin fsel0 = 32'h0065_4321; seg0_we[7:0] = 8'b0011_1111; nxt_flit = 5'd06; end
+                4'd7: begin fsel0 = 32'h0765_4321; seg0_we[7:0] = 8'b0111_1111; nxt_flit = 5'd07; end
+                //FIXME 4'd8: would be invalid if SOP started in flit1 then flit0 should be eop and aligned in EOP section
+                //having SOP in a non flit[0] position without an EOP before it means the packet with that EOP was dropped in DPC before
+                //being written to PB with md eop cleared and the number of valid flits changed
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit
+            if(qs2_sflit_v[2]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0002; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                4'd2: begin fsel0 = 32'h0000_0032; seg0_we[7:0] = 8'b0000_0011; nxt_flit = 5'd02; end
+                4'd3: begin fsel0 = 32'h0000_0432; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
+                4'd4: begin fsel0 = 32'h0000_5432; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
+                4'd5: begin fsel0 = 32'h0006_5432; seg0_we[7:0] = 8'b0001_1111; nxt_flit = 5'd05; end
+                4'd6: begin fsel0 = 32'h0076_5432; seg0_we[7:0] = 8'b0011_1111; nxt_flit = 5'd06; end
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit
+            if(qs2_sflit_v[3]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0003; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                4'd2: begin fsel0 = 32'h0000_0043; seg0_we[7:0] = 8'b0000_0011; nxt_flit = 5'd02; end
+                4'd3: begin fsel0 = 32'h0000_0543; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
+                4'd4: begin fsel0 = 32'h0000_6543; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
+                4'd5: begin fsel0 = 32'h0007_6543; seg0_we[7:0] = 8'b0001_1111; nxt_flit = 5'd05; end
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit
+            if(qs2_sflit_v[4]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0004; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                4'd2: begin fsel0 = 32'h0000_0054; seg0_we[7:0] = 8'b0000_0011; nxt_flit = 5'd02; end
+                4'd3: begin fsel0 = 32'h0000_0654; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
+                4'd4: begin fsel0 = 32'h0000_7654; seg0_we[7:0] = 8'b0000_1111; nxt_flit = 5'd04; end
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[5]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0005; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                4'd2: begin fsel0 = 32'h0000_0065; seg0_we[7:0] = 8'b0000_0011; nxt_flit = 5'd02; end
+                4'd3: begin fsel0 = 32'h0000_0765; seg0_we[7:0] = 8'b0000_0111; nxt_flit = 5'd03; end
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[6]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0006; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                4'd2: begin fsel0 = 32'h0000_0076; seg0_we[7:0] = 8'b0000_0011; nxt_flit = 5'd02; end
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[7]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel0 = 32'h0000_0007; seg0_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                default: nxt_flit = 5'd00;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
           end //d0
-          5'd1: begin
+          5'd1: begin  // should not see data flits with SOP for this current line
             unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
               4'd1: begin fsel0 = 32'h0000_0000; seg0_we[7:0] = 8'b0000_0010; nxt_flit = 5'd02; end
               4'd2: begin fsel0 = 32'h0000_0100; seg0_we[7:0] = 8'b0000_0110; nxt_flit = 5'd03; end
@@ -3158,17 +3238,85 @@ module mby_igr_epl_shim_ctrl
             endcase //qs2_cnt_ones
           end //d0
           5'd8: begin
-            unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
-              4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
-              4'd2: begin fsel1 = 32'h0000_0010; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd10; end
-              4'd3: begin fsel1 = 32'h0000_0210; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
-              4'd4: begin fsel1 = 32'h0000_3210; seg1_we[7:0] = 8'b0000_1111; nxt_flit = 5'd12; end
-              4'd5: begin fsel1 = 32'h0004_3210; seg1_we[7:0] = 8'b0001_1111; nxt_flit = 5'd13; end
-              4'd6: begin fsel1 = 32'h0054_3210; seg1_we[7:0] = 8'b0011_1111; nxt_flit = 5'd14; end
-              4'd7: begin fsel1 = 32'h0654_3210; seg1_we[7:0] = 8'b1111_1111; nxt_flit = 5'd15; end
-              4'd8: begin fsel1 = 32'h7654_3210; seg1_we[7:0] = 8'b1111_1111; nxt_flit = 5'd16; seg_e = 3'b010; end
-              default: nxt_flit = 5'd08;
-            endcase //qs2_cnt_ones
+            if(qs2_sflit_v[0] || (!qs2_sop_v)) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0000; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+                4'd2: begin fsel1 = 32'h0000_0010; seg1_we[7:0] = 8'b0000_0011; nxt_flit = 5'd10; end
+                4'd3: begin fsel1 = 32'h0000_0210; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
+                4'd4: begin fsel1 = 32'h0000_3210; seg1_we[7:0] = 8'b0000_1111; nxt_flit = 5'd12; end
+                4'd5: begin fsel1 = 32'h0004_3210; seg1_we[7:0] = 8'b0001_1111; nxt_flit = 5'd13; end
+                4'd6: begin fsel1 = 32'h0054_3210; seg1_we[7:0] = 8'b0011_1111; nxt_flit = 5'd14; end
+                4'd7: begin fsel1 = 32'h0654_3210; seg1_we[7:0] = 8'b0111_1111; nxt_flit = 5'd15; end
+                4'd8: begin fsel1 = 32'h7654_3210; seg1_we[7:0] = 8'b1111_1111; nxt_flit = 5'd16; seg_e = 3'b010; end
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[1]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0001; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+                4'd2: begin fsel1 = 32'h0000_0021; seg1_we[7:0] = 8'b0000_0011; nxt_flit = 5'd10; end
+                4'd3: begin fsel1 = 32'h0000_0321; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
+                4'd4: begin fsel1 = 32'h0000_4321; seg1_we[7:0] = 8'b0000_1111; nxt_flit = 5'd12; end
+                4'd5: begin fsel1 = 32'h0005_4321; seg1_we[7:0] = 8'b0001_1111; nxt_flit = 5'd13; end
+                4'd6: begin fsel1 = 32'h0065_4321; seg1_we[7:0] = 8'b0011_1111; nxt_flit = 5'd14; end
+                4'd7: begin fsel1 = 32'h0765_4321; seg1_we[7:0] = 8'b0111_1111; nxt_flit = 5'd15; end
+                //FIXME 4'd8: would be invalid if SOP started in flit1 then flit0 should be eop and aligned in EOP section
+                //having SOP in a non flit[0] position without an EOP before it means the packet with that EOP was dropped in DPC before
+                //being written to PB with md eop cleared and the number of valid flits changed
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[2]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0002; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+                4'd2: begin fsel1 = 32'h0000_0032; seg1_we[7:0] = 8'b0000_0011; nxt_flit = 5'd10; end
+                4'd3: begin fsel1 = 32'h0000_0432; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
+                4'd4: begin fsel1 = 32'h0000_5432; seg1_we[7:0] = 8'b0000_1111; nxt_flit = 5'd12; end
+                4'd5: begin fsel1 = 32'h0006_5432; seg1_we[7:0] = 8'b0001_1111; nxt_flit = 5'd13; end
+                4'd6: begin fsel1 = 32'h0076_5432; seg1_we[7:0] = 8'b0011_1111; nxt_flit = 5'd14; end
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[3]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0003; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+                4'd2: begin fsel1 = 32'h0000_0043; seg1_we[7:0] = 8'b0000_0011; nxt_flit = 5'd10; end
+                4'd3: begin fsel1 = 32'h0000_0543; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
+                4'd4: begin fsel1 = 32'h0000_6543; seg1_we[7:0] = 8'b0000_1111; nxt_flit = 5'd12; end
+                4'd5: begin fsel1 = 32'h0007_6543; seg1_we[7:0] = 8'b0001_1111; nxt_flit = 5'd13; end
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[4]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0004; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+                4'd2: begin fsel1 = 32'h0000_0054; seg1_we[7:0] = 8'b0000_0011; nxt_flit = 5'd10; end
+                4'd3: begin fsel1 = 32'h0000_0654; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
+                4'd4: begin fsel1 = 32'h0000_7654; seg1_we[7:0] = 8'b0000_1111; nxt_flit = 5'd12; end
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[5]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0005; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+                4'd2: begin fsel1 = 32'h0000_0065; seg1_we[7:0] = 8'b0000_0011; nxt_flit = 5'd10; end
+                4'd3: begin fsel1 = 32'h0000_0765; seg1_we[7:0] = 8'b0000_0111; nxt_flit = 5'd11; end
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[6]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0006; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd09; end
+                4'd2: begin fsel1 = 32'h0000_0076; seg1_we[7:0] = 8'b0000_0011; nxt_flit = 5'd10; end
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[7]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel1 = 32'h0000_0007; seg1_we[7:0] = 8'b0000_0001; nxt_flit = 5'd01; end
+                default: nxt_flit = 5'd08;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
           end //d0
           5'd9: begin
             unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
@@ -3290,17 +3438,85 @@ module mby_igr_epl_shim_ctrl
             endcase //qs2_cnt_ones
           end //d0
           5'd16: begin
-            unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
-              4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
-              4'd2: begin fsel2 = 32'h0000_0010; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd18; end
-              4'd3: begin fsel2 = 32'h0000_0210; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
-              4'd4: begin fsel2 = 32'h0000_3210; seg2_we[7:0] = 8'b0000_1111; nxt_flit = 5'd20; end
-              4'd5: begin fsel2 = 32'h0004_3210; seg2_we[7:0] = 8'b0001_1111; nxt_flit = 5'd21; end
-              4'd6: begin fsel2 = 32'h0054_3210; seg2_we[7:0] = 8'b0011_1111; nxt_flit = 5'd22; end
-              4'd7: begin fsel2 = 32'h0654_3210; seg2_we[7:0] = 8'b1111_1111; nxt_flit = 5'd23; end
-              4'd8: begin fsel2 = 32'h7654_3210; seg2_we[7:0] = 8'b1111_1111; nxt_flit =  5'd0; seg_e = 3'b100; end
-              default: nxt_flit = 5'd16;
-            endcase //qs2_cnt_ones
+            if(qs2_sflit_v[0] || (!qs2_sop_v)) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0000; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                4'd2: begin fsel2 = 32'h0000_0010; seg2_we[7:0] = 8'b0000_0011; nxt_flit = 5'd18; end
+                4'd3: begin fsel2 = 32'h0000_0210; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
+                4'd4: begin fsel2 = 32'h0000_3210; seg2_we[7:0] = 8'b0000_1111; nxt_flit = 5'd20; end
+                4'd5: begin fsel2 = 32'h0004_3210; seg2_we[7:0] = 8'b0001_1111; nxt_flit = 5'd21; end
+                4'd6: begin fsel2 = 32'h0054_3210; seg2_we[7:0] = 8'b0011_1111; nxt_flit = 5'd22; end
+                4'd7: begin fsel2 = 32'h0654_3210; seg2_we[7:0] = 8'b0111_1111; nxt_flit = 5'd23; end
+                4'd8: begin fsel2 = 32'h7654_3210; seg2_we[7:0] = 8'b1111_1111; nxt_flit = 5'd00; seg_e = 3'b100; end
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[1]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0001; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                4'd2: begin fsel2 = 32'h0000_0021; seg2_we[7:0] = 8'b0000_0011; nxt_flit = 5'd18; end
+                4'd3: begin fsel2 = 32'h0000_0321; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
+                4'd4: begin fsel2 = 32'h0000_4321; seg2_we[7:0] = 8'b0000_1111; nxt_flit = 5'd20; end
+                4'd5: begin fsel2 = 32'h0005_4321; seg2_we[7:0] = 8'b0001_1111; nxt_flit = 5'd21; end
+                4'd6: begin fsel2 = 32'h0065_4321; seg2_we[7:0] = 8'b0011_1111; nxt_flit = 5'd22; end
+                4'd7: begin fsel2 = 32'h0765_4321; seg2_we[7:0] = 8'b0111_1111; nxt_flit = 5'd23; end
+                //FIXME 4'd8: would be invalid if SOP started in flit1 then flit0 should be eop and aligned in EOP section
+                //having SOP in a non flit[0] position without an EOP before it means the packet with that EOP was dropped in DPC before
+                //being written to PB with md eop cleared and the number of valid flits changed
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[2]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0002; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                4'd2: begin fsel2 = 32'h0000_0032; seg2_we[7:0] = 8'b0000_0011; nxt_flit = 5'd18; end
+                4'd3: begin fsel2 = 32'h0000_0432; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
+                4'd4: begin fsel2 = 32'h0000_5432; seg2_we[7:0] = 8'b0000_1111; nxt_flit = 5'd20; end
+                4'd5: begin fsel2 = 32'h0006_5432; seg2_we[7:0] = 8'b0001_1111; nxt_flit = 5'd21; end
+                4'd6: begin fsel2 = 32'h0076_5432; seg2_we[7:0] = 8'b0011_1111; nxt_flit = 5'd22; end
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[3]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0003; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                4'd2: begin fsel2 = 32'h0000_0043; seg2_we[7:0] = 8'b0000_0011; nxt_flit = 5'd18; end
+                4'd3: begin fsel2 = 32'h0000_0543; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
+                4'd4: begin fsel2 = 32'h0000_6543; seg2_we[7:0] = 8'b0000_1111; nxt_flit = 5'd20; end
+                4'd5: begin fsel2 = 32'h0007_6543; seg2_we[7:0] = 8'b0001_1111; nxt_flit = 5'd21; end
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[4]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0004; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                4'd2: begin fsel2 = 32'h0000_0054; seg2_we[7:0] = 8'b0000_0011; nxt_flit = 5'd18; end
+                4'd3: begin fsel2 = 32'h0000_0654; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
+                4'd4: begin fsel2 = 32'h0000_7654; seg2_we[7:0] = 8'b0000_1111; nxt_flit = 5'd20; end
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[5]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0005; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                4'd2: begin fsel2 = 32'h0000_0065; seg2_we[7:0] = 8'b0000_0011; nxt_flit = 5'd18; end
+                4'd3: begin fsel2 = 32'h0000_0765; seg2_we[7:0] = 8'b0000_0111; nxt_flit = 5'd19; end
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[6]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0006; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                4'd2: begin fsel2 = 32'h0000_0076; seg2_we[7:0] = 8'b0000_0011; nxt_flit = 5'd18; end
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
+            if(qs2_sflit_v[7]) begin
+              unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here
+                4'd1: begin fsel2 = 32'h0000_0007; seg2_we[7:0] = 8'b0000_0001; nxt_flit = 5'd17; end
+                default: nxt_flit = 5'd16;
+              endcase //qs2_cnt_ones
+            end //if qs2_sflit_v
           end //d0
           5'd17: begin
             unique case(qs2_cnt_ones) inside  //qs2_cnt_ones has to be at least 1 to get here

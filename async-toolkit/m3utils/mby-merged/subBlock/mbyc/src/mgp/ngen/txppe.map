@@ -1,6 +1,6 @@
 // Placeholder
 
 sreset                       >> reset
-ahb_txppe$iteration$_if      >> ahb_tx_ppe_if
-glb_txppe$iteration$_if      >> glb_tx_ppe_if
-egr_txppe$iteration$_if      >> egr_tx_ppe_if
+ahb_txppe$iteration          >> ahb_tx_ppe_if
+glb_txppe$iteration          >> glb_tx_ppe_if
+egr_txppe$iteration          >> egr_tx_ppe_if

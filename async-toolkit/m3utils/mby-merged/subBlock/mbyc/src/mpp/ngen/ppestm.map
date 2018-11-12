@@ -2,8 +2,8 @@
 
 sreset             >> reset
 
-rxppe0_ppestm_if   >>  rx_ppe_ppe_stm_if0
-rxppe1_ppestm_if   >>  rx_ppe_ppe_stm_if1
-egr0_ppestm_if     >>  egr_ppe_stm_if0
-egr1_ppestm_if     >>  egr_ppe_stm_if1
+rxppe0_ppestm      >>  rx_ppe_ppe_stm_if0
+rxppe1_ppestm      >>  rx_ppe_ppe_stm_if1
+egr0_ppestm        >>  egr_ppe_stm_if0
+egr1_ppestm        >>  egr_ppe_stm_if1
 

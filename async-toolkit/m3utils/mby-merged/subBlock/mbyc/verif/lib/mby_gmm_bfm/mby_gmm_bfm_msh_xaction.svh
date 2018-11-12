@@ -47,8 +47,8 @@
 //-----------------------------------------------------------------------------
 class mby_gmm_bfm_msh_xaction extends mby_base_sequence_item
 #(
-   .T_data (logic),
-   .T_debug(logic)
+   .T_data (mby_gmm_bfm_msh_data_t),
+   .T_debug(mby_gmm_bfm_msh_debg_t)
 );
 
    // -------------------------------------------------------------------------
