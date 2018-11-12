@@ -75,11 +75,8 @@ function void mby_igr_base_test::build_phase(uvm_phase phase);
 
    randomize_cfg(); // Randomize the testbench config object.
 
-   // "set" the testbench configuration object in the UVM config database.
-   // The testbench env will "get" the config object and distribute it to the
-   // rest of the env.
-   uvm_config_db#(mby_igr_tb_cfg)::set(this, "env", "igr_tb_cfg", cfg);
    env = mby_igr_env::type_id::create("env",this);
+   env.set_tb_cfg(cfg); // Set the testbench configuration object to the environment.
 
    set_type_overrides();
 
