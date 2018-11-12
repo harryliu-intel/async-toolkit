@@ -27,6 +27,13 @@ $hdl_spec = {
        "src/msh_node/rtl/mby_msh_wr_dp.sv",
        "src/msh_node/rtl/mby_msh_wr_req.sv",
        "src/msh_node/rtl/mby_msh_mem_ctrl.sv",
+       "src/msh_node/rtl/mby_msh_arb.sv",
+       "src/msh_node/rtl/mby_msh_cb.sv",
+       "src/msh_node/rtl/mby_msh_cba.sv",
+       "src/msh_node/rtl/mby_msh_cp_rtap.sv",
+       "src/msh_node/rtl/mby_msh_crdts.sv",
+       "src/msh_node/rtl/mby_msh_dp_rtap.sv",
+       "src/msh_node/rtl/mby_msh_fifo.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
