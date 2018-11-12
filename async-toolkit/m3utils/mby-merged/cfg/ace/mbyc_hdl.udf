@@ -21,11 +21,11 @@ my $mby_enable_congruency_elab      = $default_enable_congruency_elab;
 my $mby_enable_xprop_elab           = $default_enable_xprop_elab;
 my $mby_enable_partcomp_elab        = $default_enable_partcomp_elab;
 my $behaveMem = 0;
-my @mbyMgmLibs = ( "target/mby/mgm_run/rtl/".&ToolConfig::get_facet('dut')."_memories_common_rel.hdl",
-	           "target/mby/mgm_run/rtl/".&ToolConfig::get_facet('dut')."_memories_rel.hdl",);
+my @mbyMgmLibs = ( "target/mby/mgm_run/rtl/mby_memories_common_rel.hdl",
+	           "target/mby/mgm_run/rtl/mby_memories_rel.hdl",);
 
-my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/'.&ToolConfig::get_facet('dut').'_memories_tb_rel.hdl',
-                      'target/mby/mgm_run/rtl/'.&ToolConfig::get_facet('dut').'_memories_wrap_rel.hdl',
+my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
+                      'target/mby/mgm_run/rtl/mby_memories_wrap_rel.hdl',
 		    );
 for (my $i = 0; $i < @ARGV; $i++) {
     if ($ARGV[$i] eq "-mby_behave_mem") {

@@ -51,7 +51,7 @@ modport egr(
     output    tx6_data_w_ecc,
     output    tx7_data_w_ecc,
     output       tx_pfc_xoff,
-    input tx_flow_control_tc
+    output tx_flow_control_tc
     );
 
 modport epl(
@@ -71,7 +71,7 @@ modport epl(
     input      tx6_data_w_ecc,
     input      tx7_data_w_ecc,
     input         tx_pfc_xoff,
-    output tx_flow_control_tc
+    input tx_flow_control_tc
     );
     
     
