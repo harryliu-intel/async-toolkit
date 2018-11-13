@@ -208,8 +208,8 @@ static void lpmSearch
     out->hit_valid = st_lookup.hit_valid;
     if (out->hit_valid)
     {
-        // TODO verify alignment in SHM_FWD_TABLE0
-        out->fwd_table0_idx = st_lookup.hit_ptr * 8;
+        // TODO verify alignment in SHM_FWD_TABLE0 - should multiply x 8?
+        out->fwd_table0_idx = st_lookup.hit_ptr;
     }
 }
 
@@ -272,6 +272,9 @@ static void lpmActions
     fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
 )
 {
+    // Memory is organized in block of 2k in the HW so I need 2 indexes
+    fm_uint16 idx0;
+    fm_byte idx1;
 
     assert(searchResult);
     assert(actions);
@@ -283,7 +286,11 @@ static void lpmActions
         return;
 
     // FIXME use profile_id to decide how many actions to read...HOW?
-    fm_uint64 fwd_table_entry = shm_map->FWD_TABLE0[searchResult->fwd_table0_idx][0].DATA;
+
+    idx0 = searchResult->fwd_table0_idx / 256;
+    idx1 = searchResult->fwd_table0_idx % 256;
+
+    fm_uint64 fwd_table_entry = shm_map->FWD_TABLE0[idx0][idx1].DATA;
     actions[1] = fwd_table_entry >> 32 & 0xffffffff;
     actions[0] = fwd_table_entry & 0xffffffff;
 }
