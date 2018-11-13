@@ -65,6 +65,7 @@ glb$y$_txppe1                   >> glb_txppe1
 egr$y$_mc_table0                >> egr_mc_table0                          
 egr$y$_mc_table1                >> egr_mc_table1                          
 egr$y$_pod                      >> egr_pod
+egr$y$_mc_mirror_pod            >> egr_mc_mirror_pod
 egr$y$_ppestm                   >> egr_ppestm
 
 egr$y$_mce_tagring0             >> egr_mce_tagring0
