@@ -7,4 +7,5 @@ mby_mgp [
   foreach $i (0,1) {
      txppe$i of tx_ppe with txppe.map $i
   }
+  rngstp of mby_rngstp with rngstp.map
 ]

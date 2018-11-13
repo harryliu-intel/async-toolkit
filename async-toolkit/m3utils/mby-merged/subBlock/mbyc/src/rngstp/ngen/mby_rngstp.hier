@@ -1,0 +1,10 @@
+//mby_rngstp
+
+mby_rngstp [
+  for ($i =0; $i <16; $i++) {
+     foreach $j (0,1) {
+        $k = ($i *2) + $j;
+        tagring_stop_$i$_$j of mby_tagring_stop with tagring_stop.map $k
+     }
+  }
+]

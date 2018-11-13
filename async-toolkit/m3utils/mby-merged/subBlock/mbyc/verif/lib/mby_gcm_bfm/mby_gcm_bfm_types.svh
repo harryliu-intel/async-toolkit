@@ -35,10 +35,65 @@
 `endif
 `ifndef __MBY_GCM_BFM_TYPES__
 `define __MBY_GCM_BFM_TYPES__
+// -------------------------------------------------------------------------
+// Main struct type definitions for GCM BFM
+// -------------------------------------------------------------------------
+// This is the dequeue type defined in the gmm_pkg.
+typedef mby_unicast_deque_t mby_gcm_bfm_deque_t;
+// For queue the GCM snoops the tag interface and extracts src/dst info from
+// there.
+typedef mby_tag_ring_t mby_gcm_bfm_queue_t;
+// These are the watermark types for the GCM (tx/rx) watermarks
+typedef mby_cm_rx_wm_t mby_gcm_bfm_rx_wm_t;
+typedef mby_cm_tx_wm_t mby_gcm_bfm_tx_wm_t;
+// These are the shared watermark types for the GCM.
+typedef mby_cm_shared_mem_rx_wm_t mby_gcm_bfm_sm_rx_wm_t;
+typedef mby_cm_shared_mem_tx_wm_t mby_gcm_bfm_sm_tx_wm_t;
+// These are the modes of operation of the GCM BFM, variable to be included in
+// the configuration object.
+typedef enum bit {
+   GCM_BFM_IGR_MODE,
+   GCM_BFM_EGR_MODE
+} mby_gcm_bfm_mode_t;
 
-// Type definitions
-typedef virtual mby_gcm_bfm_if mby_gcm_bfm_vif;
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_gcm_bfm_xaction), .T_vif(mby_gcm_bfm_vif)) gcm_bfm_agent;
-   
+// -------------------------------------------------------------------------
+// Main class & VIF type definitions for GCM BFM
+// -------------------------------------------------------------------------
+// Creating a virtual interface types for the GCM.
+typedef virtual mby_gcm_bfm_if mby_gcm_bfm_queue_vif;
+typedef virtual mby_gcm_bfm_if mby_gcm_bfm_deque_vif;
+typedef virtual mby_gcm_bfm_if mby_gcm_bfm_rx_wmark_vif;
+typedef virtual mby_gcm_bfm_if mby_gcm_bfm_tx_wmark_vif;
+typedef virtual mby_gcm_bfm_if mby_gcm_bfm_smem_rx_wmark_vif;
+typedef virtual mby_gcm_bfm_if mby_gcm_bfm_smem_tx_wmark_vif;
+
+// Forward declaration of the transaction class.
+typedef class mby_gcm_bfm_xaction;
+
+// Defining the GCM agents as parameterized base agent classes.
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gcm_bfm_xaction),
+   .T_vif(mby_gcm_bfm_queue_vif))         gcm_queue_bfm_agent;
+
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gcm_bfm_xaction),
+   .T_vif(mby_gcm_bfm_deque_vif))         gcm_deque_bfm_agent;
+
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gcm_bfm_xaction),
+   .T_vif(mby_gcm_bfm_tx_wmark_vif))      gcm_tx_wm_bfm_agent;
+
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gcm_bfm_xaction),
+   .T_vif(mby_gcm_bfm_rx_wmark_vif))      gcm_rx_wm_bfm_agent;
+
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gcm_bfm_xaction),
+   .T_vif(mby_gcm_bfm_smem_tx_wmark_vif)) gcm_tx_smem_wm_bfm_agent;
+
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gcm_bfm_xaction),
+   .T_vif(mby_gcm_bfm_smem_rx_wmark_vif)) gcm_rx_smem_wm_bfm_agent;
 
 `endif
+
