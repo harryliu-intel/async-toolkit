@@ -198,7 +198,7 @@ class mby_base_driver
          drive_data();
 
          // Call post-drive method (may be defined in a sub-class)
-         `uvm_info("get_and_drive()::calling post_drive callback", rsp.convert2string(), UVM_DEBUG)
+         `uvm_info("get_and_drive()::calling post_drive callback", "",                   UVM_DEBUG)
          post_drive_cb(rsp);
 
          // Mark sequence item as done

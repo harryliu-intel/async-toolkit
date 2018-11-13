@@ -71,8 +71,8 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
    //---------------------------------------------------------------------------
    task drive_data(logic [DATA_WIDTH-1:0] data_pkt, logic [DEBG_WIDTH-1:0] debg_pkt);
       @(posedge clk);
-      intf_data_pkt = data_pkt;
-      intf_debg_pkt = debg_pkt;
+      intf_data_pkt <= data_pkt;
+      intf_debg_pkt <= debg_pkt;
    endtask
 
    //---------------------------------------------------------------------------
