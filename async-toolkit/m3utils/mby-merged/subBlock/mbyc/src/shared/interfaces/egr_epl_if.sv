@@ -5,34 +5,41 @@ interface egr_epl_if
   import mby_egr_pkg::*;
 ();
     
-    logic [W_EPL_TX_ECC-1:0]                         tx_ecc;        
-    logic [W_EPL_TX_ENABLE_PORT_NUM-1:0] tx_enable_port_num;
-    logic                                         tx_enable;
-    logic [W_EPL_TX_DATA_VALID-1:0]           tx_data_valid;
-    logic [W_EPL_TX_PORT_NUM-1:0]               tx_port_num;
-    logic                                     tx_valid_resp;
-    logic [W_EPL_TX_METADATA-1:0]               tx_metadata;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx0_data_w_ecc;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx1_data_w_ecc;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx2_data_w_ecc;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx3_data_w_ecc;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx4_data_w_ecc;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx5_data_w_ecc;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx6_data_w_ecc;
-    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx7_data_w_ecc;
-    logic                                       tx_pfc_xoff; 
-    logic [W_EPL_TX_FLOW_CONTROL_TC-1:0] tx_flow_control_tc;
+//    logic [W_EPL_TX_ECC-1:0]                         tx_ecc;        
+//    logic [W_EPL_TX_ENABLE_PORT_NUM-1:0] tx_enable_port_num;
+//    logic                                         tx_enable;
+//    logic [W_EPL_TX_DATA_VALID-1:0]           tx_data_valid;
+//    logic [W_EPL_TX_PORT_NUM-1:0]               tx_port_num;
+//    logic                                     tx_valid_resp;
+//    logic [W_EPL_TX_METADATA-1:0]               tx_metadata;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx0_data_w_ecc;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx1_data_w_ecc;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx2_data_w_ecc;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx3_data_w_ecc;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx4_data_w_ecc;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx5_data_w_ecc;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx6_data_w_ecc;
+//    logic [W_EPL_TX_DATA_W_ECC-1:0]          tx7_data_w_ecc;
+//    logic                                       tx_pfc_xoff; 
+//    logic [W_EPL_TX_FLOW_CONTROL_TC-1:0] tx_flow_control_tc;
   
-//    epl_tx_ecc_t                         tx_ecc;        
-//    epl_tx_enable_port_num_t tx_enable_port_num;
-//    epl_tx_enable_t                   tx_enable;
-//    epl_tx_data_valid_t           tx_data_valid;
-//    epl_tx_port_num_t               tx_port_num;
-//    epl_tx_valid_resp_t           tx_valid_resp;
-//    epl_tx_metadata_t               tx_metadata;
-//    epl_tx_data_w_ecc_t           tx_data_w_ecc;
-//    epl_tx_pfc_xoff_t               tx_pfc_xoff; 
-//    epl_tx_flow_control_tc_t tx_flow_control_tc;
+    epl_tx_ecc_t                         tx_ecc;        
+    epl_tx_enable_port_num_t tx_enable_port_num;
+    epl_tx_enable_t                   tx_enable;
+    epl_tx_data_valid_t           tx_data_valid;
+    epl_tx_port_num_t               tx_port_num;
+    epl_tx_valid_resp_t           tx_valid_resp;
+    epl_tx_metadata_t               tx_metadata;
+    epl_tx_flit_w_ecc_t          tx0_data_w_ecc;
+    epl_tx_flit_w_ecc_t          tx1_data_w_ecc;
+    epl_tx_flit_w_ecc_t          tx2_data_w_ecc;
+    epl_tx_flit_w_ecc_t          tx3_data_w_ecc;
+    epl_tx_flit_w_ecc_t          tx4_data_w_ecc;
+    epl_tx_flit_w_ecc_t          tx5_data_w_ecc;
+    epl_tx_flit_w_ecc_t          tx6_data_w_ecc;
+    epl_tx_flit_w_ecc_t          tx7_data_w_ecc;
+    epl_tx_pfc_xoff_t               tx_pfc_xoff; 
+    epl_tx_flow_control_tc_t tx_flow_control_tc;
     
 modport egr(
     output            tx_ecc,
