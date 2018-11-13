@@ -64,10 +64,6 @@ class mby_base_monitor
    // Monitor sequence item
    T_req mon_item;
 
-   // VARIABLE: cloned_item
-   // Cloned sequence item to send out
-   T_req cloned_item;
-
    // Registering class with the factory
    `uvm_component_utils(mby_base_monitor#(T_req, T_vif))
 

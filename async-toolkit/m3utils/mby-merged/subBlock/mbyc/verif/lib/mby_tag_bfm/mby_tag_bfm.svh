@@ -54,14 +54,16 @@ class mby_tag_bfm extends uvm_component;
    // This is the tag uni-cast agent instance, it interfaces with the tag ring.
    // Receives tag transactions from the frame generator and monitors the tag
    // ring intf. This tag agent is a parameterized mby_base_agent class.
-   // typedef mby_base_agent#(.T_req(mby_tag_bfm_uc_xaction), .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
+   // typedef mby_base_agent#(.T_req(mby_tag_bfm_uc_xaction),
+   //   .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
    mby_tag_bfm_uc_agent tag_uc_agent;
 
    // VARIABLE: tag_mc_agent
    // This is the tag multi-cast agent instance, it interfaces with the tag ring.
    // Receives tag transactions from the frame generator and monitors the tag
    // ring intf. This tag agent is a parameterized mby_base_agent class.
-   // typedef mby_base_agent#(.T_req(mby_tag_bfm_mc_xaction), .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_agent;
+   // typedef mby_base_agent#(.T_req(mby_tag_bfm_mc_xaction),
+   //   .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_agent;
    mby_tag_bfm_mc_agent tag_mc_agent;
 
    // VARIABLE: frame_gen
@@ -143,6 +145,8 @@ class mby_tag_bfm extends uvm_component;
       super.connect_phase(phase);
       // ----------------------------------------------------------------------
       // Connect the frame_gen only when the bfm is in egress mode
+      // When operating in IGR mode, the bmf is just monitoring the tag ring,
+      // so no need to do something here for that mode.
       // ----------------------------------------------------------------------
       if(cfg_obj.bfm_mode == TAG_BFM_EGR_MODE) begin
          // TODO: add the connection(s) here
