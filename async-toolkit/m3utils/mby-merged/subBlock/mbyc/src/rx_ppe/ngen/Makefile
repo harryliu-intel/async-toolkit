@@ -6,6 +6,7 @@ V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
 V_DIRS        = -d=../../parser/rtl \
                 -d=../../classifier/rtl \
+                -d=../../action/rtl \
                 -d=../../shared/rtl \
                 -d=../../shared/interfaces \
                 -d=../rtl

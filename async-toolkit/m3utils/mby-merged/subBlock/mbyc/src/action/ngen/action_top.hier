@@ -1,0 +1,9 @@
+// Action block
+
+action_top [
+  action_shells_wrapper of action_shells_wrapper with action_shells_wrapper.map
+  action_ff_mems of action_ff_mems with action_ff_mems.map
+  action_rf_mems of action_rf_mems with action_rf_mems.map
+  action_sram_mems of action_sram_mems with action_sram_mems.map
+  action_tcam_mems of action_tcam_mems with action_tcam_mems.map
+]
