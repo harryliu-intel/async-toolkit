@@ -14,12 +14,8 @@ igr_vp_tx_pfc_xoff          >> vp_tx_pfc_xoff                        //FIXME sho
 rxppe_igr                   >> rx_ppe_igr
 igr_rxppe                   >> igr_rx_ppe
 
-                            >> o_tag_ring_lltag0
-			    >> o_tag_ring_lltag1
-
 35'b0                       >> i_rx_cm_sm_wm_out
 35'b0                       >> i_rx_cm_wm_out
-
 
 mim0_wr0                    >> mim_wreq_0
 mim0_wr1                    >> mim_wreq_1
