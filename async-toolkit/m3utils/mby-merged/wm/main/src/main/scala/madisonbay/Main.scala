@@ -11,8 +11,10 @@ import madisonbay.logger.Logger
 import madisonbay.logger.io.logback._
 import madisonbay.fs2app.algebra._
 import madisonbay.fs2app.algebra.messages._
+import madisonbay.config.Config
 import madisonbay.fs2app.Fs2Application._
 import madisonbay.fs2app.Fs2DefaultMessageHandler
+import madisonbay.fs2app.ioConfig.IOPureConfigLoader
 
 import com.intel.cg.hpfd.madisonbay.Memory._
 
@@ -38,12 +40,14 @@ object Main extends IOApp {
       .provider()
       .openAsynchronousChannelGroup(nThreads, Executors.defaultThreadFactory())
 
+  implicit val conf = IOPureConfigLoader.load()
   implicit val ss = fs2ServerSocket[IO]
   implicit val ps = fs2PublisherSocket[IO]
   implicit val handler = new Fs2DefaultMessageHandler[IO,mby_top_map]
 
   def program[F[_]:
       Logger:
+      Config:
       Concurrent:
       ConcurrentEffect:
       ServerSocket:
@@ -52,15 +56,17 @@ object Main extends IOApp {
       λ[G[_] => MessageHandler[G,CsrContext[mby_top_map]]]
   ]: F[Unit] = {
     val logger = Logger[F]
+    val config = Config[F]
     for {
-      _      <- logger.info("Creating registers...")
-      address = Address at 0.bytes
-      root    = mby_top_map(address)
-      _      <- logger.info("[DONE]")
-      _      <- logger.info("Creating registers optics...")
-      paths   = mby_top_map.genOpticsLookup(root, Optional.id)
-      _      <- logger.info("[DONE]")
-      _      <- fs2Program[CsrContext[mby_top_map],F](CsrContext(root, paths))
+      firstByte <- config.int("initialAddressInBytes")
+      address    = Address at firstByte.bytes
+      _         <- logger.info(s"Creating registers, starting from $address...")
+      root       = mby_top_map(address)
+      _         <- logger.info("[DONE]")
+      _         <- logger.info("Creating registers optics...")
+      paths      = mby_top_map.genOpticsLookup(root, Optional.id)
+      _         <- logger.info("[DONE]")
+      _         <- fs2Program[CsrContext[mby_top_map],F](CsrContext(root, paths))
     } yield ()
   }
 

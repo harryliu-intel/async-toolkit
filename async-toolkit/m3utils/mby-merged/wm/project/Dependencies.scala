@@ -24,6 +24,7 @@ object Dependencies {
   lazy val sourcecode = "com.lihaoyi" %% "sourcecode" % Versions.sourcecode
   lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging
+  lazy val pureConfig = "com.github.pureconfig" %% "pureconfig" % Versions.pureconfig
   def csrModel(csrVersion: String): ModuleID = "com.intel.cg.hpfd" %% "csr-model" % csrVersion
 
   lazy val csrMacrosDeps = Seq(shapeless, refined)
@@ -48,6 +49,7 @@ object Dependencies {
     sourcecode,
     logback,
     scalaLogging,
+    pureConfig,
     // use test code as dependency
     csrModel(csrVersion) % "compile->compile;test->test",
     scalaTest % "test"

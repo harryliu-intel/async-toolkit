@@ -23,4 +23,5 @@ object Versions {
   val sourcecode = "0.1.4"
   val logback = "1.2.3"
   val scalaLogging = "3.9.0"
+  val pureconfig = "0.10.0"
 }

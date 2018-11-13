@@ -10,10 +10,10 @@ import java.net.InetSocketAddress
 import java.net.InetAddress
 
 import madisonbay.logger.Logger
+import madisonbay.config.Config
 import madisonbay.fs2app.algebra._
 import madisonbay.fs2app.algebra.messages._
 import madisonbay.fs2app.deserialization._
-
 
 import scalaz.MonadError
 import scalaz.StateT
@@ -23,19 +23,20 @@ import java.nio.channels.AsynchronousChannelGroup
 
 object Fs2Application {
 
-  def fs2ServerSocket[F[_]: Logger: ConcurrentEffect: Concurrent]
+  def fs2ServerSocket[F[_]: Logger: ConcurrentEffect: Concurrent: Config]
     (implicit acg: AsynchronousChannelGroup): ServerSocket[F] =
     new ServerSocket[F] {
       def create: Stream[F,Socket[F]] = {
         val CF = Concurrent[F]
         val logger = Logger[F]
-
-        val serverPort = 5888
-        val serverHostname = InetAddress.getLocalHost().getHostName()
-        val isa = new InetSocketAddress(serverHostname, serverPort)
+        val config = Config[F]
 
         for {
-          _        <- Stream.eval(logger.info(s"Server should be started at [$serverHostname:$serverPort]! Good luck!"))
+          port     <- Stream.eval(config.int("server.port"))
+          hostname <- Stream.eval(config.string("server.hostname"))
+          inetAddr  = InetAddress.getByName(hostname)
+          isa       = new InetSocketAddress(inetAddr, port)
+          _        <- Stream.eval(logger.info(s"Server should be started at [$hostname:$port]! Good luck!"))
           _        <- Stream.bracket(CF.delay(acg))(asyncCg => CF.delay(asyncCg.shutdown))
           resource <- server[F](bind = isa)
           socket   <- Stream.resource(resource)
@@ -43,13 +44,16 @@ object Fs2Application {
       }
     }
 
-  def fs2PublisherSocket[F[_]: ConcurrentEffect: Concurrent]
+  def fs2PublisherSocket[F[_]: ConcurrentEffect: Concurrent: Config]
     (implicit acg: AsynchronousChannelGroup): PublisherSocket[F] =
     new PublisherSocket[F] {
       def create(egressSocketInfo: EgressSocketInfo): Stream[F,Socket[F]] = {
         val EgressSocketInfo(hostname, port) = egressSocketInfo
         val clientIsa = new InetSocketAddress(InetAddress.getByName(hostname), port)
-        Stream.resource(client[F](to = clientIsa, noDelay = true))
+        Stream.eval(Config[F].boolean("client.tcpNoDelay"))
+          .flatMap(tcpNoDelay =>
+            Stream.resource(client[F](to = clientIsa, noDelay = tcpNoDelay))
+          )
       }
     }
 
@@ -135,22 +139,24 @@ object Fs2Application {
   def fs2Program[
     RegistersState,
     F[_]:
-      Logger:
-      Concurrent:
-      ConcurrentEffect:
-      ServerSocket:
-      PublisherSocket:
-      λ[G[_] => MonadError[G,Throwable]]:
-      λ[G[_] => MessageHandler[G,RegistersState]]
+        Logger:
+        Config:
+        Concurrent:
+        ConcurrentEffect:
+        ServerSocket:
+        PublisherSocket:
+        λ[G[_] => MonadError[G,Throwable]]:
+        λ[G[_] => MessageHandler[G,RegistersState]]
   ](init: RegistersState): F[Unit] = {
-    val queueSize = 1
+    val config = Config[F]
 
     val stream = for {
-      stateR    <- Stream.eval(Ref.of[F,RegistersState](init))
-      egressQ   <- Stream.eval(Queue.bounded[F,EgressSocketInfo](queueSize))
-      quitS     <- Stream.eval(SignallingRef[F,Boolean](false))
-      app        =  new Application[RegistersState,F](stateR, egressQ, quitS)
-      maxStreams =  10 //scalastyle:ignore magic.number
+      queueSize  <- Stream.eval(config.int("egressSocketInfoQueueSize"))
+      maxStreams <- Stream.eval(config.int("maxParallelStreams"))
+      stateR     <- Stream.eval(Ref.of[F,RegistersState](init))
+      egressQ    <- Stream.eval(Queue.bounded[F,EgressSocketInfo](queueSize))
+      quitS      <- Stream.eval(SignallingRef[F,Boolean](false))
+      app         = new Application[RegistersState,F](stateR, egressQ, quitS)
       _       <- {
         import app._
         (serverStream concurrently publisherStream)

@@ -6,6 +6,7 @@ import madisonbay.fs2app.algebra.{PublisherSocket, ServerSocket}
 import madisonbay.fs2app.algebra.messages._
 import madisonbay.fs2app.algebra.PublisherSocket
 import madisonbay.logger.Logger
+import madisonbay.fs2app.ioConfig.IOPureConfigLoader
 
 import fs2.io.tcp.Socket
 import fs2.{ Chunk, Sink, Stream }
@@ -27,6 +28,8 @@ abstract class IOTestContext[Root] extends Matchers {
     val _ = esi
     true shouldEqual true
   }
+
+  implicit val config = IOPureConfigLoader.load()
 
   implicit val emptyLogger: Logger[IO] = new Logger[IO] {
     def debug(msg: => String)(implicit line: Line, file: File): IO[Unit] = IO.unit
