@@ -307,4 +307,12 @@ class mby_igr_env extends shdv_base_env;
       end
    endtask : ingress_im_monitor
 
+   //--------------------------------------------------------------------------
+   // Function: set_tb_cfg
+   // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
+   // pointer to SLA vsqr
+   //--------------------------------------------------------------------------
+   function void set_tb_cfg(mby_igr_tb_cfg tb_cfg);
+      this.tb_cfg = tb_cfg;
+   endfunction : set_tb_cfg
 endclass : mby_igr_env
