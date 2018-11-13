@@ -7,17 +7,22 @@ Browsable documentation for Madison Bay C Functional Model.
 Documentation of the Madison Bay PPE:
 
 [RxPipeline](@ref RxPipeline):
-* [Parser](@ref Parser)
-* [Mapper](@ref Mapper)
-* [Classifier](@ref Classifier)
-* [Hash](@ref Hash)
-* [Modifier](@ref Modifier)
-* [NextHop](@ref NextHop)
-* [RxStats](@ref RxStats)
 
+* [>>](@ref mbyRxMacToParser)
+[|Parser|](@ref Parser) [>>](@ref mbyParserToMapper)
+[|Mapper|](@ref Mapper) [>>](@ref mbyMapperToClassifier)
+[|Classifier|](@ref Classifier) [>>](@ref mbyClassifierToHash)
+[|Hash|](@ref Hash) [>>](@ref mbyHashToNextHop)
+[|NextHop|](@ref NextHop) [>>](@ref mbyNextHopToMaskGen)
+[|MaskGen|](@ref MaskGen) [>>](@ref mbyMaskGenToTriggers)
+[|Triggers|](@ref Triggers) [>>](@ref mbyTriggersToCongMgmt)
+[|CongMgmt|](@ref CongMgmt) [>>](@ref mbyCongMgmtToRxStats)
+[|RxStats|](@ref RxStats) [>>](@ref mbyRxStatsToRxOut)
 
 [TxPipeline](@ref TxPipeline):
 * Work in progress
+
+Note: the link >> points to the struct used to exchange data between the blocks
 
 ## C Client
 
