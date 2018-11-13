@@ -1,0 +1,20 @@
+// Placeholder
+
+  $j = $iteration %2;
+  $i = ($iteration - $j) /2;
+
+  // print $iteration;
+
+  // From IGR
+  i_tag_ring_lltag$j$         >> i_tagring_lltag
+
+  // To EGR
+  egr_tagring$i$_$j$         >> egr_tagring
+
+  // To/From GMM
+  tagring_in_up_$i$_$j$      >> tagring_in_up
+  tagring_out_up_$i$_$j$     >> tagring_out_up
+
+  tagring_in_dn_$i$_$j$      >> tagring_in_dn
+  tagring_out_dn_$i$_$j$     >> tagring_out_dn
+

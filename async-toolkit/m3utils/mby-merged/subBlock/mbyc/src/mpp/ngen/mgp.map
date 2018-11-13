@@ -67,39 +67,6 @@ egr$y$_mc_table1                >> egr_mc_table1
 egr$y$_pod                      >> egr_pod
 egr$y$_ppestm                   >> egr_ppestm
 
-egr$y$_tagring0_0               >> egr_tagring0_0
-egr$y$_tagring0_1               >> egr_tagring0_1
-egr$y$_tagring1_0               >> egr_tagring1_0
-egr$y$_tagring1_1               >> egr_tagring1_1
-egr$y$_tagring2_0               >> egr_tagring2_0
-egr$y$_tagring2_1               >> egr_tagring2_1
-egr$y$_tagring3_0               >> egr_tagring3_0
-egr$y$_tagring3_1               >> egr_tagring3_1
-egr$y$_tagring4_0               >> egr_tagring4_0
-egr$y$_tagring4_1               >> egr_tagring4_1
-egr$y$_tagring5_0               >> egr_tagring5_0
-egr$y$_tagring5_1               >> egr_tagring5_1
-egr$y$_tagring6_0               >> egr_tagring6_0
-egr$y$_tagring6_1               >> egr_tagring6_1
-egr$y$_tagring7_0               >> egr_tagring7_0
-egr$y$_tagring7_1               >> egr_tagring7_1
-egr$y$_tagring8_0               >> egr_tagring8_0
-egr$y$_tagring8_1               >> egr_tagring8_1
-egr$y$_tagring9_0               >> egr_tagring9_0
-egr$y$_tagring9_1               >> egr_tagring9_1
-egr$y$_tagring10_0              >> egr_tagring10_0
-egr$y$_tagring10_1              >> egr_tagring10_1
-egr$y$_tagring11_0              >> egr_tagring11_0
-egr$y$_tagring11_1              >> egr_tagring11_1
-egr$y$_tagring12_0              >> egr_tagring12_0
-egr$y$_tagring12_1              >> egr_tagring12_1
-egr$y$_tagring13_0              >> egr_tagring13_0
-egr$y$_tagring13_1              >> egr_tagring13_1
-egr$y$_tagring14_0              >> egr_tagring14_0
-egr$y$_tagring14_1              >> egr_tagring14_1
-egr$y$_tagring15_0              >> egr_tagring15_0
-egr$y$_tagring15_1              >> egr_tagring15_1 
-
 egr$y$_mce_tagring0             >> egr_mce_tagring0
 egr$y$_mce_tagring1             >> egr_mce_tagring1
 egr$y$_mce_tagring2             >> egr_mce_tagring2
@@ -120,3 +87,24 @@ mim$z$_wr0                      >> mim1_wr0
 mim$z$_wr1                      >> mim1_wr1
 mim$z$_wr2                      >> mim1_wr2
 
+for ($j =0; $j <16; $j++) {
+ if ($y eq 0) {
+   for ($k =0; $k <2; $k++) {
+      mpp_tagring_in_dn_$j$_$k           >> tagring_in_dn_$j$_$k
+      mpp_tagring_out_up_$j$_$k          >> tagring_out_up_$j$_$k
+      mgp_tagring_up_$j$_$k              >> tagring_in_up_$j$_$k
+      mgp_tagring_dn_$j$_$k              >> tagring_out_dn_$j$_$k
+   }
+ }
+
+ if ($y eq 1) {
+   for ($k =0; $k <2; $k++) {
+      mpp_tagring_in_up_$j$_$k           >> tagring_in_dn_$j$_$k
+      mpp_tagring_out_dn_$j$_$k          >> tagring_out_up_$j$_$k
+      mgp_tagring_dn_$j$_$k              >> tagring_in_up_$j$_$k
+      mgp_tagring_up_$j$_$k              >> tagring_out_dn_$j$_$k
+   }
+ }
+}
+
+\{mpp_id[2:0],1'b$y\}                           >> mgp_id
