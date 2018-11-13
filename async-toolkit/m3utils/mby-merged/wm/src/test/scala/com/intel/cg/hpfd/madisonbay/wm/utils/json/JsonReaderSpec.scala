@@ -1,13 +1,14 @@
 //scalastyle:off
-package com.intel.cg.hpfd.madisonbay.wm.utils
+package com.intel.cg.hpfd.madisonbay.wm.utils.json
 
+import com.intel.cg.hpfd.madisonbay.wm.utils.Loader
+import com.intel.cg.hpfd.madisonbay.wm.utils.json.JsonReader._
 import org.scalatest.{FlatSpec, Matchers}
-import Json._
 
-class JsonSpec extends FlatSpec with Matchers {
+class JsonReaderSpec extends FlatSpec with Matchers {
 
   "Json id of element in nested lists" should "match" in {
-    "abc(3)(5)(8)".matches(Json.PatternListApplyElement) shouldEqual true
+    "abc(3)(5)(8)".matches(JsonReader.PatternListApplyElement) shouldEqual true
   }
 
   val input: String =
@@ -24,7 +25,7 @@ class JsonSpec extends FlatSpec with Matchers {
     """.stripMargin
 
   "Json" should "parse string" in {
-    Json.parse(input).get.get("name") shouldEqual Some("scalars_0")
+    JsonReader.parse(input).get.get("name") shouldEqual Some("scalars_0")
 
     val json: Map[String, Any] = Map(
       "parsers" -> List(

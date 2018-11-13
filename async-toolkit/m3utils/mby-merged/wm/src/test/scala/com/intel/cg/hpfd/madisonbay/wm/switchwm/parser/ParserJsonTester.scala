@@ -7,7 +7,7 @@ import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.utils.Loader
-import com.intel.cg.hpfd.madisonbay.wm.utils.Json.JsonMap
+import com.intel.cg.hpfd.madisonbay.wm.utils.json.JsonReader.JsonMap
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.cg.hpfd.madisonbay.wm.utils.progparser.ParserProgrammer
 

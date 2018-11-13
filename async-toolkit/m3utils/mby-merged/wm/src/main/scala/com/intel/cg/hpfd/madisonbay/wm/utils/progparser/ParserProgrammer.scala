@@ -3,7 +3,7 @@ package com.intel.cg.hpfd.madisonbay.wm.utils.progparser
 import com.intel.cg.hpfd.madisonbay.BitVector
 import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses, ParserStageLenses}
-import com.intel.cg.hpfd.madisonbay.wm.utils.Json.JsonMap
+import com.intel.cg.hpfd.madisonbay.wm.utils.json.JsonReader.JsonMap
 import monocle.function.Index.listIndex
 import monocle.state.all._
 
