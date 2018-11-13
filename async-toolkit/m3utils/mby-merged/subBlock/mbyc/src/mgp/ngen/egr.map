@@ -44,7 +44,7 @@ egr_mce_tagring0   >> mce_tagring_if0
 egr_mce_tagring1   >> mce_tagring_if1
 egr_mce_tagring2   >> mce_tagring_if2
 egr_mce_tagring3   >> mce_tagring_if3
-
+egr_cmring         >> cmring_if
 egr_txppe0         >> tx_ppe_if0
 egr_txppe1         >> tx_ppe_if1
 egr_ppestm         >> ppe_stm_if
