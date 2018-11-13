@@ -44,11 +44,11 @@ class mby_base_config extends shdv_base_config;
    // VARIABLE: driver_active
    // Agent is configured to be active or passive
    // TODO: add "_is_" e.g. driver_is_active
-   uvm_active_passive_enum driver_active;
+   rand uvm_active_passive_enum driver_active;
 
    // VARIABLE: monitor_active
    // Agent is configured to be active or passive
-   uvm_active_passive_enum monitor_active;
+   rand uvm_active_passive_enum monitor_active;
 
    // VARIABLE: rsp_req
    // Responses are required for this agent.

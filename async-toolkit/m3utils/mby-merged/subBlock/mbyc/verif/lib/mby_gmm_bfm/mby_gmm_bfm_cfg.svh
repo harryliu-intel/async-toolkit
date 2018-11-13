@@ -47,19 +47,19 @@ class mby_gmm_bfm_cfg extends mby_base_config;
 
    // VARIABLE: msh_cfg
    // Basic configuration object for the mesh agent.
-   mby_base_config msh_cfg;
+   rand mby_base_config msh_cfg;
 
    // VARIABLE: fpptr_cfg
    // Basic configuration object for the free pod pointer agent.
-   mby_base_config fpptr_cfg;
+   rand mby_base_config fpptr_cfg;
 
    // VARIABLE: dpptr_cfg
    // Basic configuration object for the dirty pod pointer agent.
-   mby_base_config dpptr_cfg;
+   rand mby_base_config dpptr_cfg;
 
    // VARIABLE: bfm_mode
    // This is the GMM bfm mode of operation (igr/egr/msh).
-   mby_gmm_bfm_mode_t bfm_mode;
+   rand mby_gmm_bfm_mode_t bfm_mode;
 
    // CONSTRAINT: gmm_mode_constraint
    // Sets the fpptr/dpptr/msh agent's configuration settings based
