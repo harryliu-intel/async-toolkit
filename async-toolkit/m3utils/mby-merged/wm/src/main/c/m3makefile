@@ -33,6 +33,9 @@ c_source ("mby_lpm_regs")
 h_source ("mby_wcm")
 c_source ("mby_wcm")
 
+h_source ("mby_hash")
+c_source ("mby_hash")
+
 h_source ("mby_nexthop")
 c_source ("mby_nexthop")
 
