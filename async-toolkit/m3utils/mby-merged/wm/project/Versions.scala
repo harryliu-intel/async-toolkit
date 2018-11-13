@@ -20,4 +20,7 @@ object Versions {
   val wmServerDto = applicationVersion
   val scalaz = "7.2.26"
   val jackson = "2.9.7"
+  val sourcecode = "0.1.4"
+  val logback = "1.2.3"
+  val scalaLogging = "3.9.0"
 }

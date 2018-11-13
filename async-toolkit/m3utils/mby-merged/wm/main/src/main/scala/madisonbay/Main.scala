@@ -8,7 +8,7 @@ import monocle.Optional
 import madisonbay.csr._
 import madisonbay.csr.all._
 import madisonbay.logger.Logger
-import madisonbay.logger.io.console._
+import madisonbay.logger.io.logback._
 import madisonbay.fs2app.algebra._
 import madisonbay.fs2app.algebra.messages._
 import madisonbay.fs2app.Fs2Application._
@@ -53,13 +53,13 @@ object Main extends IOApp {
   ]: F[Unit] = {
     val logger = Logger[F]
     for {
-      _      <- logger.trace("Creating registers...")
+      _      <- logger.info("Creating registers...")
       address = Address at 0.bytes
       root    = mby_top_map(address)
-      _      <- logger.trace("[DONE]")
-      _      <- logger.trace("Creating registers optics...")
+      _      <- logger.info("[DONE]")
+      _      <- logger.info("Creating registers optics...")
       paths   = mby_top_map.genOpticsLookup(root, Optional.id)
-      _      <- logger.trace("[DONE]")
+      _      <- logger.info("[DONE]")
       _      <- fs2Program[CsrContext[mby_top_map],F](CsrContext(root, paths))
     } yield ()
   }

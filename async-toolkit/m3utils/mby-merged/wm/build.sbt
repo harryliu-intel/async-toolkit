@@ -34,7 +34,8 @@ lazy val csr = (project in file("csr"))
     name := "csr-model",
     version := rdlGitHashShortProjectVersion.value,
     // some imports are unused among generated hierarchy
-    scalacOptions -= "-Ywarn-unused:imports"
+    scalacOptions -= "-Ywarn-unused:imports",
+    publishArtifact in Test := true
   )
 
 lazy val wmServerDto = (project in file("wm-server-dto"))

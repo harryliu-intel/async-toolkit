@@ -13,6 +13,8 @@ import scalaz.syntax.all._
 import scalaz.std.list._
 import shapeless.Witness
 
+import java.nio.ByteBuffer
+
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
 import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay.BitVector
@@ -82,27 +84,23 @@ class Fs2DefaultMessageHandler[
     program[StateT[F,CsrContext[Root],?]](MS)
   }
 
+  // TODO: write tailRec processing for block data with decode[F]
   def regBlkWrite(i: IosfRegBlkWrite): Transition = {
     val IosfRegBlkWrite(req,data) = i
-    val registerBytesLength = 8
+    val registerBytesLength = BitSize[U64].getBytes
     val startingAddress = merge(req.addr0, req.addr1, req.addr2)
-    val addressesChunks = Stream
-      .iterate(Address at startingAddress.bytes)(_ + registerBytesLength.bytes)
+    val addressesChunks =
+      Stream.iterate(Address at startingAddress.bytes)(_ + registerBytesLength.bytes)
     val dataChunks = Stream(
       data
-        .map(BitVector[Byte])
         .grouped(registerBytesLength)
         .filter(_.size == registerBytesLength)
-        .map(_.reduce(_ ++ _))
+        .map(arr => ByteBuffer.wrap(arr).getLong)
+        .map(BitVector(_))
         .toSeq: _*
     )
-    val header = FmModelMessageHdr(
-      BitSize[FmModelMessageHdr].getBytes + BitSize[IosfRegCompNoData].getBytes,
-      2.shortValue(),
-      FmModelMsgType.Iosf,
-      0.shortValue,
-      0.shortValue
-    )
+    val msgSize = BitSize[FmModelMessageHdr].getBytes + BitSize[IosfRegCompNoData].getBytes
+    val header = FmModelMessageHdr(msgSize, 2, FmModelMsgType.Iosf, 0, 0)
     val iosfNoData = IosfRegCompNoData(
       sai = BitField(1),
       dest = req.source,
@@ -112,7 +110,7 @@ class Fs2DefaultMessageHandler[
       rsvd0 = BitField(0)
     )
     val responseArray = ByteArrayEncoder[FmModelMessageHdr].encode(header) ++
-    ByteArrayEncoder[IosfRegCompNoData].encode(iosfNoData)
+      ByteArrayEncoder[IosfRegCompNoData].encode(iosfNoData)
 
     def kleisliT[G[_]: Logger: scalaz.Monad](S: MonadState[G,CsrContext[Root]])
       (chunk: BitVector, address: Address)
