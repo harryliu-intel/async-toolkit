@@ -48,10 +48,10 @@ object Encode {
     new Encode[T] {
       def size: Int = siz
       def default: T = d
-      def toRaw(value: T): BitVector = BitVector(to(value), siz)
+      def toRaw(value: T): BitVector = BitVector(to(value), size)
       def fromRaw(bits: BitVector): T = {
-        // require(bits.length == siz)
-        from(bits.trimTo(siz).toRaw(0))
+        require(bits.length == siz)
+        from(bits.toRaw(0))
       }
     }
   }
@@ -88,14 +88,6 @@ object Encode {
   implicit val encodeShort: Encode[Short] = Encode.simple[Short](16)(_.toLong)(_.toShort)
   implicit val encodeInt: Encode[Int] = Encode.simple[Int](32)(_.toLong)(_.toInt)
   implicit val encodeLong: Encode[Long] = Encode.simple[Long](64)(identity)(identity)
-
-  /** A dummy class to denote raw bit value (not full Long!).
-    *
-    * Algebraically, it's the "Never" type --- it should have no instances and be only used to mark
-    * "that's not a full Long, that's some raw bits Long". E.g. {{{encode = Raw}}} should result in
-    * {{{en = encodeRaw(...)}}}, which returns {{{Encode[Long]}}}, not {{{Encode[Raw]}}}.
-    */
-  class Raw {}
 
   /** raw bit value with no meaning. */
   def encodeRaw(size: Int): Encode[Long] = Encode.simple[Long](size)(identity)(identity)
