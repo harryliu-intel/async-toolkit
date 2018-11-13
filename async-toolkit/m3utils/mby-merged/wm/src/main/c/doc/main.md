@@ -4,6 +4,8 @@ Browsable documentation for Madison Bay C Functional Model.
 
 ## Pipeline stages
 
+Documentation of the Madison Bay PPE:
+
 [RxPipeline](@ref RxPipeline):
 * [Parser](@ref Parser)
 * [Mapper](@ref Mapper)
@@ -16,6 +18,14 @@ Browsable documentation for Madison Bay C Functional Model.
 
 [TxPipeline](@ref TxPipeline):
 * Work in progress
+
+## C Client
+
+Documentation of the [C client](@ref c_client) that can be used to:
+* Start/stop the functional model
+* Read/write registers
+* Send/receive packets
+
 
 ## Useful links
 
