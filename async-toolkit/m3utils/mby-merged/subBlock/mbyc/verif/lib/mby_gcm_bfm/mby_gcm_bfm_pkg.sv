@@ -32,17 +32,26 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_GCM_BFM_PKG__
 `define __MBY_GCM_BFM_PKG__
-
+//------------------------------------------------------------------------------
+//
+// PACKAGE: mby_gcm_bfm_pkg
+// This is the Madison Bay gcm (global congestion manager) bfm package,
+// currently it depends on the uvm, shdv_base_pkg, mby_base_pkg verification
+// packages and also depends on the gmm rtl package, which includes defines and
+// typedefs for the interfaces and transaction classes of this agent.
+//
+//------------------------------------------------------------------------------
 package mby_gcm_bfm_pkg;
 
    import uvm_pkg::*;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
+   import mby_gmm_pkg::*;
 
    `include "uvm_macros.svh"
    `include "mby_gcm_bfm_defines.svh"
-   `include "mby_gcm_bfm_xaction.svh"
    `include "mby_gcm_bfm_types.svh"
+   `include "mby_gcm_bfm_xaction.svh"
    `include "mby_gcm_bfm_cfg.svh"
    `include "mby_gcm_bfm.svh"
 
