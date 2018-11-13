@@ -169,6 +169,18 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
     val parentMap = parents.flatMap(x => getProps(x)).toMap
     val map = fieldMap ++ parentMap
 
+    /** Get actual type */
+    def getType(): Type = typ match {
+      case Some(ty) if ty != typeOf[Raw] => ty
+      case _ => typeOf[Long]
+    }
+
+    /** Map some function on actual type (not raw!) */
+    def onType[T](f: => T): Option[T] = typ match {
+      case Some(ty) if ty != typeOf[Raw] => Some(f)
+      case _ => None
+    }
+
     /** Get prop by string name. */
     def getProp(name: String): Tree = props(TermName(name))
 
@@ -187,7 +199,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
       */
     def getResetValue: Tree = {
       val enTy = typeOf[Encode[_]]
-      val ty = typ.getOrElse(typeOf[Long])
+      val ty = getType()
       val instTy = appliedType(enTy, ty)
       getPropOr("resetValue", q"implicitly[$instTy].default")
     }
@@ -196,7 +208,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
     def getRawResetValue: Tree = {
       val enTy = typeOf[Encode[_]]
       typ match {
-        case Some(ty) if ty == typeOf[Long] => getResetValue
+        case Some(ty) if ty == typeOf[Long] || ty == typeOf[Raw] => getResetValue
         case Some(ty) => q"implicitly[${tq"${appliedType(enTy, ty)}"}].toRaw($getResetValue)"
         case _ => cAbort("unknown type for field $name")(c.enclosingPosition)
       }
@@ -291,11 +303,11 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
       addUniversalDefaults()
       val finals = takeSpecialProps()
       val encodeTree = asType(finals(TermName("encode")))
-      val (encode, enImpl) = encodeTree match {
+      val (encodeRaw, enImpl) = encodeTree match {
         case tq"Raw" => {
           val enSy = symbolOf[Encode[_]].companion
           val encodeTy = typeOf[Encode[Long]]
-          (typeOf[Long], q"lazy val en: $encodeTy = $enSy.encodeRaw(${range.last - range.start + 1})")
+          (typeOf[Raw], q"lazy val en: $encodeTy = $enSy.encodeRaw(${range.last - range.start + 1})")
         }
         case _ => {
           val encode = c.typecheck(encodeTree, c.TYPEmode).tpe
@@ -303,7 +315,8 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
           (encode, q"lazy val en: $encodeTy = implicitly[$encodeTy]")
         }
       }
-      typ = Some(encode)
+      typ = Some(encodeRaw)
+      val encode = getType()
 
 
       val fieldTy = appliedTypeTree(typeOf[RdlField[_, _]], tq"$nameClass", tq"$encode")
@@ -468,8 +481,13 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
   /** Implements register serialization. */
   def serializeImpl(name: TypeName, fields: List[FieldData]): Tree = {
     val bvecCompSym = symbolOf[BitVector].companion
-    val li = fields.map(_.name).foldRight(q"$bvecCompSym.empty": Tree) {
-      (f,v) => q"$v | ($f.toBitVector >> $f.pos)"
+    val li = fields.foldRight(q"$bvecCompSym.empty": Tree) { (field,v) =>
+      val f = field.name
+      field.onType {
+        q"$v | ($f.toBitVector >> $f.pos)"
+      }.getOrElse {
+        q"$v | ($f.toBitVector.trimTo($f.width) >> $f.pos)"
+      }
     }
     q"..$li"
   }
@@ -480,7 +498,12 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
       val (name, pos) = (field.name, field.range.start)
       val tname = name.toTypeName
       val fname = c.freshName(TermName("_" + name.toString))
-      (q"val $fname = vec.extract[$tname]($pos)", q"$fname": Tree)
+      val tree = field.onType {
+        q"val $fname = vec.extract[$tname]($pos)"
+      }.getOrElse {
+        q"val $fname = vec.extract[$tname]($pos)" // q"val $fname = vec.extract(${field.range}).toLong"
+      }
+      (tree, q"$fname": Tree)
     }
     val (vals, fnames) = fields.map(extractField).unzip
     val addrRangeCompSy = typeOf[AddressRange].typeSymbol.companion
