@@ -99,8 +99,8 @@ class fc_base_test extends fc_test;
         super.start_of_simulation_phase(phase);
         FC::apply_forces.forces_set_by_testbench = 1;
 
-        if($test$plusargs("DIS_SPI_FASTSIM")) begin
-        FC::apply_forces.bypass_spi_desc_ss_ld = 0;
+        if($test$plusargs("IMC_HACK")) begin
+            FC::apply_forces.imc_hack = 1;
         end      
 
     endfunction : start_of_simulation_phase 
