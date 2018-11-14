@@ -64,15 +64,8 @@ glb$y$_txppe0                   >> glb_txppe0
 glb$y$_txppe1                   >> glb_txppe1                         
 egr$y$_mc_table0                >> egr_mc_table0                          
 egr$y$_mc_table1                >> egr_mc_table1                          
-egr$y$_pod                      >> egr_pod
-egr$y$_mc_mirror_pod            >> egr_mc_mirror_pod
 egr$y$_ppestm                   >> egr_ppestm
-egr$y$_cmring                   >> egr_cmring
 
-egr$y$_mce_tagring0             >> egr_mce_tagring0
-egr$y$_mce_tagring1             >> egr_mce_tagring1
-egr$y$_mce_tagring2             >> egr_mce_tagring2
-egr$y$_mce_tagring3             >> egr_mce_tagring3
 igr$y$_vp_tx_pfc_xoff           >> igr_vp_tx_pfc_xoff
 rxppe$y$_ppestm                 >> rxppe_ppestm
 
@@ -89,6 +82,9 @@ mim$z$_wr0                      >> mim1_wr0
 mim$z$_wr1                      >> mim1_wr1
 mim$z$_wr2                      >> mim1_wr2
 
+\{mpp_id[2:0],1'b$y\}                           >> mgp_id
+
+// Tag Ring
 for ($j =0; $j <16; $j++) {
  if ($y eq 0) {
    for ($k =0; $k <2; $k++) {
@@ -109,4 +105,94 @@ for ($j =0; $j <16; $j++) {
  }
 }
 
-\{mpp_id[2:0],1'b$y\}                           >> mgp_id
+// Dequeue Ring
+for ($j =0; $j <8; $j++) {
+ if ($y eq 0) {
+   for ($k =0; $k <2; $k++) {
+      mpp_dqring_in_dn_$j$_$k           >> dqring_in_dn_$j$_$k
+      mpp_dqring_out_up_$j$_$k          >> dqring_out_up_$j$_$k
+      mgp_dqring_up_$j$_$k              >> dqring_in_up_$j$_$k
+      mgp_dqring_dn_$j$_$k              >> dqring_out_dn_$j$_$k
+   }
+ }
+
+ if ($y eq 1) {
+   for ($k =0; $k <2; $k++) {
+      mpp_dqring_in_up_$j$_$k           >> dqring_in_dn_$j$_$k
+      mpp_dqring_out_dn_$j$_$k          >> dqring_out_up_$j$_$k
+      mgp_dqring_dn_$j$_$k              >> dqring_in_up_$j$_$k
+      mgp_dqring_up_$j$_$k              >> dqring_out_dn_$j$_$k
+   }
+ }
+}
+
+// MultiCast Tag Ring
+ if ($y eq 0) {
+   for ($k =0; $k <4; $k++) {
+      mpp_mctagring_in_dn_$k$              >> mctagring_in_dn_$k$
+      mpp_mctagring_out_up_$k$             >> mctagring_out_up_$k$
+      mgp_mctagring_up_$k$                 >> mctagring_in_up_$k$
+      mgp_mctagring_dn_$k$                 >> mctagring_out_dn_$k$
+   }
+ }
+
+ if ($y eq 1) {
+   for ($k =0; $k <4; $k++) {
+      mpp_mctagring_in_up_$k$              >> mctagring_in_dn_$k$   
+      mpp_mctagring_out_dn_$k$             >> mctagring_out_up_$k$   
+      mgp_mctagring_dn_$k$                 >> mctagring_in_up_$k$   
+      mgp_mctagring_up_$k$                 >> mctagring_out_dn_$k$   
+   }
+ }
+
+// Pod Ring
+ if ($y eq 0) {
+      mpp_podring_in_dn                    >> podring_in_dn
+      mpp_podring_out_up                   >> podring_out_up
+      mgp_podring_up                       >> podring_in_up
+      mgp_podring_dn                       >> podring_out_dn
+
+      mpp_podring_stall_in_dn              >> podring_stall_in_dn
+      mpp_podring_stall_out_up             >> podring_stall_out_up
+      mgp_podring_stall_up                 >> podring_stall_in_up
+      mgp_podring_stall_dn                 >> podring_stall_out_dn
+ }
+
+ if ($y eq 1) {
+      mpp_podring_in_up                    >> podring_in_dn   
+      mpp_podring_out_dn                   >> podring_out_up   
+      mgp_podring_dn                       >> podring_in_up   
+      mgp_podring_up                       >> podring_out_dn   
+
+      mpp_podring_stall_in_up              >> podring_stall_in_dn   
+      mpp_podring_stall_out_dn             >> podring_stall_out_up   
+      mgp_podring_stall_dn                 >> podring_stall_in_up   
+      mgp_podring_stall_up                 >> podring_stall_out_dn   
+ }
+
+// Mirror Pod ring
+ if ($y eq 0) {
+      mpp_mrpodring_in_dn                    >> mrpodring_in_dn
+      mpp_mrpodring_out_up                   >> mrpodring_out_up
+      mgp_mrpodring_up                       >> mrpodring_in_up
+      mgp_mrpodring_dn                       >> mrpodring_out_dn
+
+      mpp_mrpodring_stall_in_dn              >> mrpodring_stall_in_dn
+      mpp_mrpodring_stall_out_up             >> mrpodring_stall_out_up
+      mgp_mrpodring_stall_up                 >> mrpodring_stall_in_up
+      mgp_mrpodring_stall_dn                 >> mrpodring_stall_out_dn
+ }
+
+ if ($y eq 1) {
+      mpp_mrpodring_in_up                    >> mrpodring_in_dn   
+      mpp_mrpodring_out_dn                   >> mrpodring_out_up   
+      mgp_mrpodring_dn                       >> mrpodring_in_up   
+      mgp_mrpodring_up                       >> mrpodring_out_dn   
+
+      mpp_mrpodring_stall_in_up              >> mrpodring_stall_in_dn   
+      mpp_mrpodring_stall_out_dn             >> mrpodring_stall_out_up   
+      mgp_mrpodring_stall_dn                 >> mrpodring_stall_in_up   
+      mgp_mrpodring_stall_up                 >> mrpodring_stall_out_dn   
+ }
+
+
