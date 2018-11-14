@@ -32,7 +32,10 @@
 //      <interface name>.<net name>
 //
 
-interface msh_node_dut_if (
+interface msh_node_dut_if
+import mby_msh_pkg::*;
+import mby_msh_node_pkg::*;
+(
    input mclk                                        // mclk is passed in a parameter and becomes part of the interface
 );
 
@@ -43,8 +46,14 @@ interface msh_node_dut_if (
 // DUT inputs  (direction not specified in this interface)
 logic               i_reset;                                // reset
 
+msh_row_wr_req_t    i_eb_wr_req     [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_eb_wr_dbus    [NUM_MSH_PLANES-1:0];
+
+msh_row_rd_req_t    i_eb_rd_req     [NUM_MSH_PLANES-1:0];
 
 // DUT outputs  (direction not specified in this interface)
 
+msh_row_rd_rsp_t    o_wb_rd_rsp     [NUM_MSH_PLANES-1:0];
+msh_dbus_t          o_wb_rd_dbus    [NUM_MSH_PLANES-1:0];
 
 endinterface // msh_node_dut_if

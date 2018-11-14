@@ -54,6 +54,8 @@
 
 module top 
 import mby_msh_pkg::*;
+import mby_msh_node_pkg::*;
+import msh_node_sim_pkg::*;
 ();
 
     logic clk = 0;                              // declare clock
@@ -70,28 +72,27 @@ import mby_msh_pkg::*;
         .mclk(clk)                               // pass clock into this interface to make it part of the interface
     );
 
-logic reset;
 
     // start firing reset immediately to protect reset guarded assertions
     initial dut_if.i_reset = 1'b1;
-    initial reset = 1'b1;
 
     // instantiate DUT (Design Under Test)
-//    mby_msh dut (
-//
-//        // DUT inputs
-//        .mclk       (dut_if.mclk          ),      // The interface instantiated above is connected to the DUT 
-//        .i_reset    (dut_if.i_reset       )      // Note the naming convention i_<???> for inputs.
-//       
-//    );
 
-mby_msh_node msh_node(
+    mby_msh_node msh_node(
 
     
-    .mclk(clk),                                // mesh clock                                 
-    .i_reset(reset)                             // reset
+        .mclk           (clk),
+        .i_reset        (dut_if.i_reset),
 
-);
+        .i_eb_wr_req    (dut_if.i_eb_wr_req),
+        .i_eb_wr_dbus   (dut_if.i_eb_wr_dbus),
+
+        .i_eb_rd_req    (dut_if.i_eb_rd_req),
+
+        .o_wb_rd_rsp    (dut_if.o_wb_rd_rsp),
+        .o_wb_rd_dbus   (dut_if.o_wb_rd_dbus)
+        
+    );
 
     // instantiate testcase
     testcase test(

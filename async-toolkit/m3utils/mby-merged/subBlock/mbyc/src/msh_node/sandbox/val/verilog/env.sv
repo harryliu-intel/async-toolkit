@@ -31,7 +31,7 @@
 
 //`include "id_generator.sv"
 //`include "configuration.sv"
-//`include "inp_driver.sv"
+`include "inp_driver.sv"
 //`include "scoreboard.sv"
 //`include "monitor.sv"
 `include "system_driver.sv"
@@ -46,17 +46,18 @@ class env;
 
     // Declaration of variables that hold handles to env sub-objects.  
     system_driver       sys_drvr;
+    inp_driver          inp_driver;
 
     // declaration of other env variables
-    integer done_cnt;
-    string name; 
+    integer         done_cnt;
+    string          name; 
+    integer         drove_rd_req;
 
 
     function new
     (
    
         virtual msh_node_dut_if     dut_if        // testbench interface
-
     );
 
         name = "env.sv";
@@ -67,8 +68,30 @@ class env;
                                     // to distinguish from another variable with the same name.
 
         sys_drvr    = new(dut_if);
+        inp_driver  = new(dut_if);
+
+        connect();
 
     endfunction
+
+    task connect();
+        $display("(time: %0d) %s: **Connecting Testbench and DUT**", $time, name);
+        // Forking these sub-processes allows them to execute concurrently
+        // with each other and (because of the join_none) to the parent process.
+        // These sub-processes need to execute concurrently because they are driving,
+        // monitoring, and responding to various concurrent events in the simulation.
+        fork
+//            mntr.connect_to_DUT();      // connect the monitor
+              inp_driver.connect_to_DUT_inputs();
+//            foreach (inp_drvrs[i]) begin
+//                // To avoid a race condition (i changing before it is doing being used), 
+//                // each iteration gets it's own j to hold that iteration number.
+//                automatic int j = i;
+//                // connect the input drivers
+//                fork inp_drvrs[j].connect_to_DUT_inputs(); join_none
+//            end // foreach inp_drvrs[i]
+        join_none
+    endtask
 
     // reset the env object
     task reset();
@@ -89,7 +112,24 @@ class env;
             done_cnt = done_cnt + 1;
         end
     endtask
-    
+
+    task drive_stimulus();
+        $display("(time: %0d) %s: **Driving Stimulus**", $time, name);
+        fork inp_driver.drive_reqs(); join_none
+    endtask
+
+    // wait for <delay> cycles after the monitor reports everythign is done
+    task wait_done(integer delay);
+        $display("(time: %0d) %s: **Begin Waiting For Done plus %0d Clocks**", $time, name, delay);
+        done_cnt = 0;
+        while (done_cnt < delay) begin
+            repeat (1) @ (posedge dut_if.mclk);
+            done_cnt = (inp_driver.drv_done) ? done_cnt + 1 : '0;
+//            done_cnt = (mntr.all_done) ? done_cnt + 1 : '0;
+        end
+        $display("(time: %0d) %s: **End Waiting For Done plus %0d Clocks**", $time, name, delay);
+    endtask
+
 endclass
 
 `endif // ENV_SV

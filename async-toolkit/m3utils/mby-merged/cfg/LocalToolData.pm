@@ -251,6 +251,7 @@ $ToolConfig_tools{"mgm"} = {
         BLOCKS => {
             mby => ["parser",
                     "classifier",
+                    "action",
                     "ppe_stm",
                     "igr",
                     "egr",
