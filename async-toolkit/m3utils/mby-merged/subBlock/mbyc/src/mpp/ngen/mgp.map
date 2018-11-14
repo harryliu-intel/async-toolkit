@@ -109,8 +109,8 @@ for ($j =0; $j <16; $j++) {
 for ($j =0; $j <8; $j++) {
  if ($y eq 0) {
    for ($k =0; $k <2; $k++) {
-      mpp_dqring_in_dn_$j$_$k           >> dqring_in_dn_$j$_$k
-      mpp_dqring_out_up_$j$_$k          >> dqring_out_up_$j$_$k
+      mpp_dqring_in_$j$_$k              >> dqring_in_dn_$j$_$k
+                                        >> dqring_out_up_$j$_$k
       mgp_dqring_up_$j$_$k              >> dqring_in_up_$j$_$k
       mgp_dqring_dn_$j$_$k              >> dqring_out_dn_$j$_$k
    }
@@ -118,8 +118,8 @@ for ($j =0; $j <8; $j++) {
 
  if ($y eq 1) {
    for ($k =0; $k <2; $k++) {
-      mpp_dqring_in_up_$j$_$k           >> dqring_in_dn_$j$_$k
-      mpp_dqring_out_dn_$j$_$k          >> dqring_out_up_$j$_$k
+      \{24'b0\}                         >> dqring_in_dn_$j$_$k
+      mpp_dqring_out_$j$_$k          >> dqring_out_up_$j$_$k
       mgp_dqring_dn_$j$_$k              >> dqring_in_up_$j$_$k
       mgp_dqring_up_$j$_$k              >> dqring_out_dn_$j$_$k
    }
@@ -129,8 +129,9 @@ for ($j =0; $j <8; $j++) {
 // MultiCast Tag Ring
  if ($y eq 0) {
    for ($k =0; $k <4; $k++) {
-      mpp_mctagring_in_dn_$k$              >> mctagring_in_dn_$k$
-      mpp_mctagring_out_up_$k$             >> mctagring_out_up_$k$
+      //mpp_mctagring_in_dn_$k$            >> mctagring_in_dn_$k$
+      \{69'b0\}                            >> mctagring_in_dn_$k$
+      mpp_mctagring_out_$k$                >> mctagring_out_up_$k$
       mgp_mctagring_up_$k$                 >> mctagring_in_up_$k$
       mgp_mctagring_dn_$k$                 >> mctagring_out_dn_$k$
    }
@@ -138,8 +139,9 @@ for ($j =0; $j <8; $j++) {
 
  if ($y eq 1) {
    for ($k =0; $k <4; $k++) {
-      mpp_mctagring_in_up_$k$              >> mctagring_in_dn_$k$   
-      mpp_mctagring_out_dn_$k$             >> mctagring_out_up_$k$   
+      mpp_mctagring_in_$k$                 >> mctagring_in_dn_$k$   
+      //mpp_mctagring_out_dn_$k$           >> mctagring_out_up_$k$   
+                                           >> mctagring_out_up_$k$   
       mgp_mctagring_dn_$k$                 >> mctagring_in_up_$k$   
       mgp_mctagring_up_$k$                 >> mctagring_out_dn_$k$   
    }
