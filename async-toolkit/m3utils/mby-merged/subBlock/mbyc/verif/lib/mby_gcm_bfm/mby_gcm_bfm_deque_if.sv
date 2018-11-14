@@ -2,7 +2,7 @@
 // Title         : Madison Bay GCM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_if.sv
+// File          : mby_gcm_bfm_queue_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
@@ -30,11 +30,10 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_IF__
-`define __MBY_GCM_BFM_IF__
+`ifndef __MBY_GCM_BFM_QUEUE_IF__
+`define __MBY_GCM_BFM_QUEUE_IF__
 
-interface mby_gcm_bfm_if;
-endinterface : mby_gcm_bfm_if
+interface mby_gcm_bfm_queue_if;
+endinterface : mby_gcm_bfm_queue_if
 
 `endif
-

@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GCM Bus Functional Model Package
+// Title         : Madison Bay GCM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_pkg.sv
+// File          : mby_gcm_bfm_queue_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the GCM BFM package file
+// Madison Bay GCM interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,37 +30,10 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_PKG__
-`define __MBY_GCM_BFM_PKG__
-//------------------------------------------------------------------------------
-//
-// PACKAGE: mby_gcm_bfm_pkg
-// This is the Madison Bay gcm (global congestion manager) bfm package,
-// currently it depends on the uvm, shdv_base_pkg, mby_base_pkg verification
-// packages and also depends on the gmm rtl package, which includes defines and
-// typedefs for the interfaces and transaction classes of this agent.
-//
-//------------------------------------------------------------------------------
-package mby_gcm_bfm_pkg;
+`ifndef __MBY_GCM_BFM_QUEUE_IF__
+`define __MBY_GCM_BFM_QUEUE_IF__
 
-   import uvm_pkg::*;
-   import shdv_base_pkg::*;
-   import mby_base_pkg::*;
-   import mby_gmm_pkg::*;
-
-   `include "uvm_macros.svh"
-   `include "mby_gcm_bfm_defines.svh"
-   `include "mby_gcm_bfm_types.svh"
-   `include "mby_gcm_bfm_queue_xaction.svh"
-   `include "mby_gcm_bfm_deque_xaction.svh"
-   `include "mby_gcm_bfm_wm_xaction.svh"
-   `include "mby_gcm_bfm_sm_wm_xaction.svh"
-   `include "mby_gcm_bfm_cfg.svh"
-   `include "mby_gcm_bfm.svh"
-
-endpackage : mby_gcm_bfm_pkg
-
+interface mby_gcm_bfm_queue_if;
+endinterface : mby_gcm_bfm_queue_if
 
 `endif
-
-

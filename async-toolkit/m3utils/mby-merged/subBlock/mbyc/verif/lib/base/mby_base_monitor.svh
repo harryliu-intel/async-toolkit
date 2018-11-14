@@ -129,7 +129,7 @@ class mby_base_monitor
          mon_item = T_req::type_id::create("mon_item", this);
 
          // Get actual data pkt and debug info from the interface
-         vintf.mon_data(mon_item.data_pkt, mon_item.debug_pkt);
+         vintf.mon_data(mon_item.data_pkt, mon_item.debg_pkt);
          if (this.get_report_verbosity_level() < UVM_HIGH) begin
             `uvm_info("monitor_if()::got: ", mon_item.convert2string(), UVM_MEDIUM);
          end else begin

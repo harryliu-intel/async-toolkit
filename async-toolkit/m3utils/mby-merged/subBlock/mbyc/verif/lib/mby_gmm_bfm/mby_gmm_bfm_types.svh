@@ -69,9 +69,12 @@ typedef virtual mby_gmm_bfm_msh_if mby_gmm_bfm_msh_vif;
 typedef class mby_gmm_bfm_pod_xaction;
 typedef class mby_gmm_bfm_msh_xaction;
 // Defining the pod agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_gmm_bfm_pod_xaction), .T_vif(mby_gmm_bfm_pod_vif)) pod_agent;
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gmm_bfm_pod_xaction),
+   .T_vif(mby_gmm_bfm_pod_vif)) pod_agent;
 // Defining the mesh agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_gmm_bfm_msh_xaction), .T_vif(mby_gmm_bfm_msh_vif)) msh_agent;
-
+typedef mby_base_pkg::mby_base_agent#(
+   .T_req(mby_gmm_bfm_msh_xaction),
+   .T_vif(mby_gmm_bfm_msh_vif)) msh_agent;
 
 `endif
