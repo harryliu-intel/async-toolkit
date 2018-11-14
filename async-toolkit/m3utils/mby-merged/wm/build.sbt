@@ -58,25 +58,16 @@ lazy val tcp = (project in file("tcp"))
     libraryDependencies ++= Dependencies.tcpDeps
   )
 
-lazy val main = (project in file("main"))
-  .dependsOn(tcp)
-  .enablePlugins(RdlGitHashPlugin)
-  .settings(
-    Settings.commonSettings,
-    addCompilerPlugin(Dependencies.kindProjector),
-    libraryDependencies ++= Dependencies.mainDeps(rdlGitHashShortProjectVersion.value),
-    fork in run := true
-  )
-
 lazy val root = (project in file("."))
-  .dependsOn(common, csrMacros)
+  .dependsOn(common, csrMacros, tcp)
   .enablePlugins(RdlGitHashPlugin)
   .settings(
     Settings.commonSettings,
     name := Settings.rootName,
+    addCompilerPlugin(Dependencies.kindProjector),
     libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
-    mainClass in Compile := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
-    mainClass in assembly := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
+    mainClass in Compile := Some("madisonbay.Main"),
+    mainClass in assembly := Some("madisonbay.Main"),
     assemblyOutputPath in assembly := path,
     fork in run := true
   )
@@ -90,10 +81,10 @@ publishArtifacts := Def.taskDyn {
     Def.task(log.warn("Will not publish artifacts! $USER != npgadmin"))
 }.value
 
-lazy val testAll = "; all common/test csr/test root/test/ main/test tcp/test"
+lazy val testAll = "; all csrMacros/test common/test csr/test root/test tcp/test"
 lazy val cleanAll =
-  "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean tcp/clean main/clean"
-lazy val publishArtifactsLocally = "; csr/publishLocal; wmServerDto/publishLocal"
+  "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean; tcp/clean"
+lazy val publishArtifactsLocally = "; csr/publishLocal"
 lazy val cleanIvyIntelCache =
   s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.csrName}"""" +
   s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.wmServerDtoName}""""

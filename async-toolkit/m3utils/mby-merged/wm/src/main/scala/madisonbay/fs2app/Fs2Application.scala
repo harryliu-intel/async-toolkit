@@ -61,6 +61,7 @@ object Fs2Application {
     RegistersState,
     F[_]:
         Logger:
+        Config:
         ConcurrentEffect:
         Concurrent:
         ServerSocket:
@@ -72,6 +73,7 @@ object Fs2Application {
     quitS: SignallingRef[F,Boolean]) {
 
     val logger = Logger[F]
+    val config = Config[F]
     val serverSocket = ServerSocket[F]
     val publisherSocket = PublisherSocket[F]
     val messageHandler = MessageHandler[F,RegistersState]
@@ -80,7 +82,7 @@ object Fs2Application {
     def serverStream: Stream[F,Stream[F,Unit]] =
       for {
         socket     <- serverSocket.create
-        bufferSize  = 16384 //scalastyle:ignore magic.number
+        bufferSize <- Stream.eval(config.int("server.bufferSize"))
       } yield socket.reads(bufferSize)
         .chunks
         .map(_.toArray)
@@ -157,7 +159,7 @@ object Fs2Application {
       egressQ    <- Stream.eval(Queue.bounded[F,EgressSocketInfo](queueSize))
       quitS      <- Stream.eval(SignallingRef[F,Boolean](false))
       app         = new Application[RegistersState,F](stateR, egressQ, quitS)
-      _       <- {
+      _          <- {
         import app._
         (serverStream concurrently publisherStream)
           .interruptWhen(quitS)

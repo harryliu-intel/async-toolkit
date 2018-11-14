@@ -43,7 +43,14 @@ object Dependencies {
     scalaCheck % "test"
   )
   lazy val tcpDeps = Seq(shapeless, scalaTest % "test", scalaz)
-  def mainDeps(csrVersion: String) = Seq(
+  def whiteModelDeps(csrVersion: String) = Seq(
+    scalaTest % "test",
+    scalaCheck % "test",
+    shapeless,
+    scalaz,
+    monocleCore,
+    monocleState,
+    jackson,
     fs2,
     fs2io,
     sourcecode,
@@ -51,20 +58,7 @@ object Dependencies {
     scalaLogging,
     pureConfig,
     // use test code as dependency
-    csrModel(csrVersion) % "compile->compile;test->test",
-    scalaTest % "test"
-  )
-  def whiteModelDeps(csrVersion: String) = Seq(
-    scalaTest % "test",
-    scalaCheck % "test",
-    scopt,
-    shapeless,
-    csrModel(csrVersion),
-    wmServerDto,
-    scalaz,
-    monocleCore,
-    monocleState,
-    jackson
+    csrModel(csrVersion) % "compile->compile;test->test"
   )
 
 }
