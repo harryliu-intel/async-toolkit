@@ -575,18 +575,20 @@ foreach $i (0..32) {
     >> map_prot_rd_data
     >> map_prot_rd_valid
 
-    >> MAP_REWRITE_CFG_reg_sel
-    >> MAP_REWRITE_STATUS_reg_sel
-    >> map_rewrite_mem_ls_enter
-    >> map_rewrite_rd_adr
-    >> map_rewrite_rd_en
-    >> map_rewrite_wr_adr
-    >> map_rewrite_wr_data
-    >> map_rewrite_wr_en
-    >> map_rewrite_ecc_uncor_err
-    >> map_rewrite_init_done
-    >> map_rewrite_rd_data
-    >> map_rewrite_rd_valid
+foreach $i (0..15) {
+    >> MAP_REWRITE_$i$_CFG_reg_sel
+    >> MAP_REWRITE_$i$_STATUS_reg_sel
+    >> map_rewrite_$i$_mem_ls_enter
+    >> map_rewrite_$i$_rd_adr
+    >> map_rewrite_$i$_rd_en
+    >> map_rewrite_$i$_wr_adr
+    >> map_rewrite_$i$_wr_data
+    >> map_rewrite_$i$_wr_en
+    >> map_rewrite_$i$_ecc_uncor_err
+    >> map_rewrite_$i$_init_done
+    >> map_rewrite_$i$_rd_data
+    >> map_rewrite_$i$_rd_valid
+}
 
     >> MAP_TYPE_CFG_reg_sel
     >> MAP_TYPE_STATUS_reg_sel
