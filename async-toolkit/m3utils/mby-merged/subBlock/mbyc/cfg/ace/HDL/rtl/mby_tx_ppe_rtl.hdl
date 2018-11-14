@@ -39,7 +39,7 @@ $hdl_spec = {
 
 	# Arbitrary VLOG options
 	-vlog_opts => [
-        "+define+INTEL_SVA_OFF",
+        "+define+SVA_LIB_SVA2005",
     ],
 
 };
