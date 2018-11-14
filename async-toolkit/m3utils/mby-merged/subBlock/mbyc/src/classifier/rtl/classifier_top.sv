@@ -31,6 +31,7 @@
 
 module classifier_top (
 input reset, 
+rx_ppe_ppe_stm_if.ppe rx_ppe_ppe_stm_if, 
 par_class_if.classifier par_class_if, 
 //Input List
 input                   cclk                                      

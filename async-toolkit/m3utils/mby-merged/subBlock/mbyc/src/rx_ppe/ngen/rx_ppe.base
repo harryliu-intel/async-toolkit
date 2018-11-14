@@ -4,8 +4,6 @@
 // -------------------------------------------------------------------
 ngen_mod_name
 
-rx_ppe_ppe_stm_if.ppe rx_ppe_ppe_stm_if,
-
 ngen_IO_list
 ngen_IO_end
 
