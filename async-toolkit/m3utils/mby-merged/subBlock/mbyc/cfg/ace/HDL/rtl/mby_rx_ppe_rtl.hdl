@@ -10,10 +10,12 @@ $hdl_spec = {
 	-vlog_files => [
 
 		"src/shared/rtl/shared_pkg.sv",
-		"src/shared/rtl/shared_pkg.sv",
 		"src/shared/rtl/pkt_pkg.sv",
 		"src/shared/rtl/pkt_meta_pkg.sv",
 		"src/shared/rtl/rx_ppe_pkg.sv",
+		"src/parser/rtl/parser_pkg.sv",
+		"src/parser/rtl/classifier_pkg.sv",
+		"src/parser/rtl/action_pkg.sv",
 		"$ASSERT_LIB/SVA_LIB/intel_checkers_pkg.vs",
 		"src/shared/interfaces/ahb_rx_ppe_if.sv",
 		"src/shared/interfaces/glb_rx_ppe_if.sv",
@@ -22,12 +24,15 @@ $hdl_spec = {
 		"src/shared/interfaces/rx_ppe_ppe_stm_if.sv",
 		"src/shared/interfaces/par_class_if.sv",
 
-		"src/parser/rtl/parser_top.sv",
 		"src/rx_ppe/rtl/rx_ppe.sv",
 	],
 
   # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
-	-vlog_lib_dirs => [],
+	-vlog_lib_dirs => [
+		"src/parser/rtl",
+		"src/classifier/rtl",
+		"src/action/rtl",
+    ],
 
  # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
 	-vlog_lib_files => [],
@@ -36,28 +41,23 @@ $hdl_spec = {
 	-vlog_incdirs => [
 		"src/rx_ppe/rtl",
 		"src/parser/rtl",
+		"src/classifier/rtl",
+		"src/action/rtl",
 		"src/shared/rtl",
 		"src/shared/interfaces",
 		"$ASSERT_LIB/SVA_LIB",
 		"target/mby/mgm_run/parser/src",
 		"target/mby/mgm_run/parser/src/mem_wrap",
+		"target/mby/mgm_run/classifier/src",
+		"target/mby/mgm_run/classifier/src/mem_wrap",
+		"target/mby/mgm_run/action/src",
+		"target/mby/mgm_run/action/src/mem_wrap",
 		"target/mby/mgm_run/rtl",
 	],
 
 	# Arbitrary VLOG options
 	-vlog_opts => [
-
-		"+libext+.v+.sv+.vh+.svh+.vs+.vm+.sva",
-		"-full64",
-		"+v2k",
-		"-notice",
-		"-sverilog",
-		"+vcs+lic+wait",
-		"+warn=noUII-L",
-		"-timescale=10ps/10ps",
-		"-debug_pp",
-		"+define+VCSSIM+INTEL_SVA_OFF+MBY_PARSER_BEHAVE_MEMS",
-		"-assert svaext",
-	],
+        "+define+INTEL_SVA_OFF",
+    ],
 
 };
