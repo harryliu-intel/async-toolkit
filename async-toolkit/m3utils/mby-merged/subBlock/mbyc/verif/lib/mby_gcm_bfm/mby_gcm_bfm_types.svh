@@ -63,17 +63,17 @@ typedef enum bit {
 // Main class & VIF type definitions for GCM BFM
 // -------------------------------------------------------------------------
 // Creating a virtual interface types for the GCM.
-typedef virtual mby_gcm_bfm_queue_if mby_gcm_bfm_queue_vif;
-typedef virtual mby_gcm_bfm_if mby_gcm_bfm_deque_vif;
-typedef virtual mby_gcm_bfm_if mby_gcm_bfm_rx_wmark_vif;
-typedef virtual mby_gcm_bfm_if mby_gcm_bfm_smem_rx_wmark_vif;
-typedef virtual mby_gcm_bfm_if mby_gcm_bfm_smem_tx_wmark_vif;
+typedef virtual mby_gcm_bfm_queue_if    mby_gcm_bfm_queue_vif;
+typedef virtual mby_gcm_bfm_deque_if    mby_gcm_bfm_deque_vif;
+typedef virtual mby_gcm_bfm_rx_wm_if    mby_gcm_bfm_rx_wmark_vif;
+typedef virtual mby_gcm_bfm_sm_rx_wm_if mby_gcm_bfm_smem_rx_wmark_vif;
+typedef virtual mby_gcm_bfm_sm_tx_wm_if mby_gcm_bfm_smem_tx_wmark_vif;
 
 // Forward declaration of the transaction classes.
 typedef class mby_gcm_bfm_queue_xaction;
 typedef class mby_gcm_bfm_deque_xaction;
-typedef class mby_gcm_bfm_wm_xaction;
 typedef class mby_gcm_bfm_sm_wm_xaction;
+typedef class mby_gcm_bfm_wm_xaction;
 
 // Defining the GCM agents as parameterized base agent classes.
 // (1) The GCM queue agent, used in IGR mode

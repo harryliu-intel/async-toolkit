@@ -9,6 +9,9 @@ $hdl_spec = {
          "src/shared/rtl/mby_gmm_pkg.sv",
          "verif/lib/mby_gcm_bfm/mby_gcm_bfm_queue_if.sv",
          "verif/lib/mby_gcm_bfm/mby_gcm_bfm_deque_if.sv",
+         "verif/lib/mby_gcm_bfm/mby_gcm_bfm_rx_wm_if.sv",
+         "verif/lib/mby_gcm_bfm/mby_gcm_bfm_sm_rx_wm_if.sv",
+         "verif/lib/mby_gcm_bfm/mby_gcm_bfm_sm_tx_wm_if.sv",
          "verif/lib/mby_gcm_bfm/mby_gcm_bfm_pkg.sv",
      ],
 

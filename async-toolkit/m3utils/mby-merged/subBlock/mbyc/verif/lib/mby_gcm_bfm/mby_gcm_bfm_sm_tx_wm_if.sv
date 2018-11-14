@@ -2,12 +2,12 @@
 // Title         : Madison Bay GCM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_queue_if.sv
+// File          : mby_gcm_bfm_sm_tx_wm_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Madison Bay GCM BFM interface file
+// Madison Bay GCM interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,21 +30,21 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_QUEUE_IF__
-`define __MBY_GCM_BFM_QUEUE_IF__
+`ifndef __MBY_GCM_BFM_SM_TX_WM_IF__
+`define __MBY_GCM_BFM_SM_TX_WM_IF__
 //------------------------------------------------------------------------------
-// INTERFACE: mby_gcm_bfm_queue_if
+// INTERFACE: mby_gcm_bfm_sm_tx_wm_if
 //
-// This is the interface that connects IGR to the GCM (it is really the tag ring)
+// This is the interface that connects the GCM to EGR.
 //
 //------------------------------------------------------------------------------
-interface mby_gcm_bfm_queue_if(input logic clk, input logic rst);
+interface mby_gcm_bfm_sm_tx_wm_if(input logic clk, input logic rst);
    import mby_gmm_pkg::*;
 
-   mby_tag_ring_t intf_data_pkt;
-   logic          intf_debg_pkt;
+   mby_cm_shared_mem_tx_wm_t intf_data_pkt;
+   logic                     intf_debg_pkt;
 
-   localparam DATA_WIDTH = $bits(mby_tag_ring_t);
+   localparam DATA_WIDTH = $bits(mby_cm_shared_mem_tx_wm_t);
    localparam DEBG_WIDTH = 1;
    localparam DLAY_WIDTH = 32;
 
@@ -113,6 +113,6 @@ interface mby_gcm_bfm_queue_if(input logic clk, input logic rst);
       debg_pkt = intf_debg_pkt;
    endtask
 
-endinterface : mby_gcm_bfm_queue_if
+endinterface : mby_gcm_bfm_sm_tx_wm_if
 
 `endif
