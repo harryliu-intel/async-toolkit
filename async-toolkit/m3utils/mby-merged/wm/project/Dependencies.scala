@@ -28,7 +28,12 @@ object Dependencies {
   lazy val spinoco = "com.spinoco" %% "fs2-http" % Versions.spinoco
   def csrModel(csrVersion: String): ModuleID = "com.intel.cg.hpfd" %% "csr-model" % csrVersion
 
-  lazy val csrMacrosDeps = Seq(shapeless, refined)
+  lazy val csrMacrosDeps = Seq(
+    shapeless,
+    refined,
+    scalaTest % "test",
+    scalaCheck % "test"
+  )
   lazy val commonDeps = Seq(
     monocleCore,
     monocleMacro,

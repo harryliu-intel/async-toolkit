@@ -1,5 +1,7 @@
 package com.intel.cg.hpfd.csr.macros.utils
 
+import eu.timepit.refined.W
+
 import scala.reflect.macros.blackbox.Context
 import scala.util.{Try => ErrTry}
 
@@ -40,10 +42,13 @@ trait Typed {
       *
       * Only works if expression can be evaluated at compile-time.
       */
-    def toTypeName(): TypeName = {
+    def toTypeTree(): Tree = {
       val pos = expr.tree.pos
       val value = TypedExpr(expr).eval
-      value.toTypeName
+      val wsym = symbolOf[W.type]
+      val field = TermName(value.toString)
+      val tree = tq"$wsym.$field.T"
+      atPos(pos)(tree)
     }
   }
 

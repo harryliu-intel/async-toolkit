@@ -9,6 +9,7 @@ import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 import com.intel.cg.hpfd.madisonbay.Memory._
+import com.intel.cg.hpfd.madisonbay.Encode._
 import com.intel.cg.hpfd.madisonbay._
 
 

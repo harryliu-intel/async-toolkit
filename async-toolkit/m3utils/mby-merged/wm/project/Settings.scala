@@ -9,6 +9,7 @@ object Settings {
   val csrName = "csr-model"
   val wmServerDtoName = "wm-server-dto"
   val csrMacrosName = "csr-macros"
+  val csrMacroTestsName = "csr-macro-tests"
   val commonName = "common"
   val rootName = "wm"
 

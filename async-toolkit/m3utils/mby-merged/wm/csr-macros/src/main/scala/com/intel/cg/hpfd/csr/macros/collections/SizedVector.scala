@@ -18,6 +18,8 @@ import scalaz.Applicative
   * Size-aware vector version.
   *
   * Can contain any number of elements a vector can (unlike shapeless' Sized).
+  *
+  * To turn on safe (compile-time) indexing, one needs {{{import SizedVector.auto._}}}
   * @param data raw vector
   * @tparam T type of elements
   * @tparam Size size of vector, singleton of {{{Int}}}, should be type-level equivalent of {{{data.length}}}
@@ -39,7 +41,9 @@ case class SizedVector[T, Size <: Int] private (data: Vector[T]) extends Travers
   def inBounds(idx: Int): Boolean = 0 <= idx && idx < length
 
   /** Assert a runtime index is in bounds. */
-  def checkInBounds(idx: Int): Unit = require(inBounds(idx))
+  protected def checkInBounds(idx: Int): Unit = if(!inBounds(idx)) {
+    throw new IndexOutOfBoundsException(s"SizedArray (len: $length) index out of range: $idx")
+  }
 
   /** Safely get element at refined index. */
   def apply(idx: I): T = data.apply(idx)
@@ -165,6 +169,12 @@ object SizedVector {
     */
   def unsafe[T, Size <: Int](vector: Vector[T]): SizedVector[T, Size] = new SizedVector[T, Size](vector)
 
+  /** Runtime-checked constructor. */
+  def checked[T, Size <: Int](vector: Vector[T], size: Size): SizedVector[T, Size] = {
+    require(vector.length == size)
+    unsafe[T, Size](vector)
+  }
+
   /** Produces a sized vector containing the results
     * of some element computation a number of times.
     *
@@ -199,6 +209,12 @@ object SizedVector {
     */
   def apply[T](elements: T*): SomeSizVec[T] = macro Impl.applyImpl[T]
 
+  /** Creates an empty sized array. */
+  def apply[T](): SizedVector[T, W.`0`.T] = empty[T]()
+
+  /** Creates an empty sized array. */
+  def empty[T](): SizedVector[T, W.`0`.T] = new SizedVector[T, W.`0`.T](Vector.empty[T])
+
   /** Typelevel-compiletime-runtime converter. */
   private class Impl(val c: Context) extends Hygiene with Typed {
     /** Context to be used. */
@@ -216,9 +232,18 @@ object SizedVector {
     }
 
     /** Compile-time {{{SizedVector(...)}}}. */
-    def sizVec[T](n: Expr[Int])(vec: Expr[Vector[T]]): Expr[SomeSizVec[T]] = {
-      val sizeName = n.toTypeName
-      val tree = q"$sizVecComp.unsafe[$sizeName]($vec)"
+    def sizVec[T: WeakTypeTag](n: Expr[Int])(vec: Expr[Vector[T]]): Expr[SomeSizVec[T]] = {
+      val sizeName = n.toTypeTree
+      val ty = weakTypeOf[T]
+      val tree = q"$sizVecComp.unsafe[$ty, $sizeName]($vec)"
+      tree.toExpr[SomeSizVec[T]]
+    }
+
+    /** Compile-time {{{SizedVector(...)}}} with a runtime size check. */
+    def checkedSizVec[T: WeakTypeTag](n: Expr[Int])(vec: Expr[Vector[T]]): Expr[SomeSizVec[T]] = {
+      val sizeName = n.toTypeTree
+      val ty = weakTypeOf[T]
+      val tree = q"$sizVecComp.checked[$ty, $sizeName]($vec, $n)"
       tree.toExpr[SomeSizVec[T]]
     }
 
@@ -228,7 +253,7 @@ object SizedVector {
     }
 
     /** Compile-time {{{SizedVector.fill(n)(el)}}}. */
-    def sizVecFill[T](n: Expr[Int])(el: Expr[T]): Expr[SomeSizVec[T]] = {
+    def sizVecFill[T: WeakTypeTag](n: Expr[Int])(el: Expr[T]): Expr[SomeSizVec[T]] = {
       sizVec(n) { vecFill(n)(el) }
     }
 
@@ -238,29 +263,30 @@ object SizedVector {
     }
 
     /** Compile-time {{{SizedVector.tabulate(n)(f)}}}. */
-    def sizVecTab[T](n: Expr[Int])(f: Expr[(Int) => T]): Expr[SomeSizVec[T]] = {
+    def sizVecTab[T: WeakTypeTag](n: Expr[Int])(f: Expr[(Int) => T]): Expr[SomeSizVec[T]] = {
       sizVec(n) { vecTab(n)(f) }
     }
 
     /** {{{SizedVector.fill(n)(el)}}} implementation. */
-    def fillImpl[T](n: Expr[Int])(el: Expr[T]): Expr[SomeSizVec[T]] = {
+    def fillImpl[T: WeakTypeTag](n: Expr[Int])(el: Expr[T]): Expr[SomeSizVec[T]] = {
       sizVecFill(n)(el)
     }
 
     /** {{{SizedVector.fill(n1, n2)(el)}}} implementation. */
-    def fill2Impl[T](n1: Expr[Int], n2: Expr[Int])(el: Expr[T]): Expr[SomeSizVec[SomeSizVec[T]]] = {
+    def fill2Impl[T: WeakTypeTag](n1: Expr[Int], n2: Expr[Int])(el: Expr[T]): Expr[SomeSizVec[SomeSizVec[T]]] = {
       sizVecFill(n1) {
         sizVecFill(n2)(el)
       }
     }
 
     /** {{{SizedVector.tabulate(n)(f)}}} implementation. */
-    def tabulateImpl[T](n: Expr[Int])(f: Expr[Int => T]): Expr[SomeSizVec[T]] = {
+    def tabulateImpl[T: WeakTypeTag](n: Expr[Int])(f: Expr[Int => T]): Expr[SomeSizVec[T]] = {
       sizVecTab(n)(f)
     }
 
     /** {{{SizedVector.tabulate(n1, n2)(f)}}} implementation. */
-    def tabulate2Impl[T](n1: Expr[Int], n2: Expr[Int])(f: Expr[(Int, Int) => T]): Expr[SomeSizVec[SomeSizVec[T]]] = {
+    def tabulate2Impl[T: WeakTypeTag](n1: Expr[Int], n2: Expr[Int])
+                                     (f: Expr[(Int, Int) => T]): Expr[SomeSizVec[SomeSizVec[T]]] = {
       sizVec(n1) {
         vecTab(n1) {
           q"""{ i => ${
@@ -273,11 +299,27 @@ object SizedVector {
     }
 
     /** {{{SizedVector(...)}}} implementation. */
-    def applyImpl[T](elements: Expr[T]*): Expr[SomeSizVec[T]] = {
+    def applyImpl[T: WeakTypeTag](elements: Expr[T]*): Expr[SomeSizVec[T]] = {
       val n = elements.length.toExpr
       sizVec(n) {
         vec(elements: _*)
       }
+    }
+
+    /** Traversable->SizedVector conversion implementation. */
+    def fromTraversableImpl[T: WeakTypeTag](size: Expr[Int]): Expr[SomeSizVec[T]] = {
+      val vecExpr = c.Expr[Vector[T]] {
+        q"${c.prefix.tree}.data.toVector"
+      }
+      checkedSizVec(size)(vecExpr)
+    }
+
+    /** Vector->SizedVector conversion implementation. */
+    def fromVectorImpl[T: WeakTypeTag](size: Expr[Int]): Expr[SomeSizVec[T]] = {
+      val vecExpr = c.Expr[Vector[T]] {
+        q"${c.prefix.tree}.data"
+      }
+      checkedSizVec(size)(vecExpr)
     }
   }
 
@@ -294,5 +336,20 @@ object SizedVector {
           el => v => Try(v.updatedUnsafe(i, el)).getOrElse(v)
         }
     }
+  }
+
+  /** Should be imported to enable compile-time indexing. */
+  val auto = eu.timepit.refined.auto
+
+  /** Traversable convertible to SizedVector */
+  implicit class TravToSizVec[T](val data: Traversable[T]) {
+    /** Convert to SizedVector of the given size. */
+    def toVectorOfSize(size: Int): SomeSizVec[T] = macro Impl.fromTraversableImpl[T]
+  }
+
+  /** Vector convertible to SizedVector */
+  implicit class VecToSizVec[T](val data: Vector[T]) {
+    /** Convert to SizedVector of the given size. */
+    def toSized(size: Int): SomeSizVec[T] = macro Impl.fromVectorImpl[T]
   }
 }

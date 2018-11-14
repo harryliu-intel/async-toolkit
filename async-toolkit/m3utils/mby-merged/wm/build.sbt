@@ -23,6 +23,17 @@ lazy val csrMacros = (project in file("csr-macros"))
     scalacOptions -= "-Ywarn-unused:patvars"
   )
 
+lazy val csrMacroTests = (project in file("csr-macro-tests"))
+  .dependsOn(csrMacros)
+  .settings(
+    Settings.commonSettings,
+    name := Settings.csrMacroTestsName,
+    libraryDependencies ++= Dependencies.csrMacrosDeps,
+    addCompilerPlugin(Dependencies.scalaMacrosParadise),
+    autoCompilerPlugins := true,
+    scalacOptions -= "-Ywarn-unused:patvars"
+  )
+
 lazy val csr = (project in file("csr"))
   .enablePlugins(CsrModula3Plugin, RdlGitHashPlugin)
   .dependsOn(csrMacros)
