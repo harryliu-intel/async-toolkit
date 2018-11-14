@@ -79,7 +79,8 @@ class mby_tag_bfm_mc_xaction extends mby_base_sequence_item
       string msg_str = "";
       string lns_str = { {8{" -------- "}}, "\n" };
       msg_str = super.convert2string();
-      msg_str = { msg_str, $sformatf("tag_mc_xaction::seg_ptr = %020h\n", this.data_pkt.segment.ptr_handle.seg_ptr) };
+      msg_str = { msg_str, $sformatf("tag_mc_xaction::seg_ptr = %020h\n",
+         this.data_pkt.ptr) };
       msg_str = { msg_str, lns_str };
       return msg_str;
    endfunction : convert2string

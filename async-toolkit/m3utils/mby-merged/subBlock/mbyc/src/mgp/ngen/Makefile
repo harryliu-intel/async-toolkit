@@ -8,6 +8,7 @@ V_DIRS        = -d=../../igr/rtl \
                 -d=../../egr/rtl \
                 -d=../../tx_ppe/rtl \
                 -d=../../rx_ppe/rtl \
+                -d=../../rngstp/rtl \
                 -d=../../shared/rtl \
                 -d=../../shared/interfaces \
                 -d=../../../../../target/mby/mgm_run/igr/src \
@@ -20,9 +21,9 @@ V_LIBS        =
 ngen: clean top post
 
 pre:
-	./pre_process.pl
-	$(V2BBOX) -v ./mgp_shells_wrapper_inc.v -n mgp_shells_wrapper -p ../../../target/mby/mgm_run/mgp/src,../../../target/mby/mgm_run/rtl -o mgp_shells_wrapper.sv
-	$(V2BBOX) -v ../../../target/mby/mgm_run/mgp/src/mem_wrap/mgp_ff_mems.v -p ../../../target/mby/mgm_run/mgp/src,../../../target/mby/mgm_run/rtl -o mgp_ff_mems.sv
+	#./pre_process.pl
+	#$(V2BBOX) -v ./mgp_shells_wrapper_inc.v -n mgp_shells_wrapper -p ../../../target/mby/mgm_run/mgp/src,../../../target/mby/mgm_run/rtl -o mgp_shells_wrapper.sv
+	#$(V2BBOX) -v ../../../target/mby/mgm_run/mgp/src/mem_wrap/mgp_ff_mems.v -p ../../../target/mby/mgm_run/mgp/src,../../../target/mby/mgm_run/rtl -o mgp_ff_mems.sv
 
 top:
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)

@@ -41,14 +41,14 @@
 // This is a parameterized class used by mby_base_agent.
 //
 // PARAMETERS:
-//     T_data     - data type (expecting to be a struct, logic for now)
-//     T_debug    - set to logic for now
+//     T_data     - mby_gmm_bfm_msh_data_t
+//     T_debug    - mby_gmm_bfm_msh_debg_t
 //
 //-----------------------------------------------------------------------------
 class mby_gmm_bfm_msh_xaction extends mby_base_sequence_item
 #(
-   .T_data (logic),
-   .T_debug(logic)
+   .T_data (mby_gmm_bfm_msh_data_t),
+   .T_debug(mby_gmm_bfm_msh_debg_t)
 );
 
    // -------------------------------------------------------------------------

@@ -41,14 +41,20 @@
 // -------------------------------------------------------------------------
 // Re-using the pod ptr ring type from the mby_gmm_pkg, this is the main
 // data type used by the pod agents
-typedef mby_pod_ptr_ring_t mby_gmm_bfm_data_t;
-// Defining the debug type to be a simple logic for now.
-typedef logic mby_gmm_bfm_debg_t;
+typedef mby_pod_ptr_ring_t mby_gmm_bfm_pod_data_t;
+// The mesh data type is currently set to logic as the functionality is not
+// yet implemented.
+typedef logic mby_gmm_bfm_msh_data_t;
+// Defining the pod debug type to be a simple logic for now.
+typedef logic mby_gmm_bfm_pod_debg_t;
+// Defining the mesh debug type to be a simple logic for now.
+typedef logic mby_gmm_bfm_msh_debg_t;
 // These are the modes of operation of the GMM BFM, variable to be included in
 // the configuration object.
-typedef enum bit {
+typedef enum bit[1:0] {
    GMM_BFM_IGR_MODE,
-   GMM_BFM_EGR_MODE
+   GMM_BFM_EGR_MODE,
+   GMM_BFM_MSH_MODE
 } mby_gmm_bfm_mode_t;
 
 

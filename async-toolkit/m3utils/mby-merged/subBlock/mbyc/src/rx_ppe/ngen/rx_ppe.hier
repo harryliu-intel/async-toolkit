@@ -3,4 +3,5 @@
 rx_ppe [
   parser_top of parser_top with parser_top.map
   classifier_top of classifier_top with classifier_top.map
+  action_top of action_top with action_top.map
 ]

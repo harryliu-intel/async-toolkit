@@ -70,7 +70,7 @@ typedef enum bit {
 typedef virtual mby_tag_bfm_uc_if mby_tag_bfm_uc_vif;
 typedef virtual mby_tag_bfm_mc_if mby_tag_bfm_mc_vif;
 // Forward declaration of the transaction classes (in the tag_bfm_pkg
-// these file are compiled before the transaction item.
+// these files are compiled before the transaction item.
 typedef class mby_tag_bfm_uc_xaction;
 typedef class mby_tag_bfm_mc_xaction;
 // Defining the uni-cast tag agent as a parameterized base agent.
