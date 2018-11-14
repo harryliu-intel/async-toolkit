@@ -31,11 +31,11 @@ for (int loop=0; loop<loops; loop++) begin
 
     env.reset();                    // reset the DUT and testbench
 //    env.load_stimulus(num_reqs);    // put stimulus in a testbench FIFO
-//    env.drive_stimulus();           // pull stimulus out of testbench FIFO and apply to DUT
-//    env.wait_done(10);              // wait for 10 clocks after done
+    env.drive_stimulus();           // pull stimulus out of testbench FIFO and apply to DUT
+    env.wait_done(10);              // wait for 10 clocks after done
 //    env.final_state_check();        // check for any irregularities in final state of DUT
 //    env.print_cfg();                // print configuration information
 //    env.print_stats();              // print statistics
-    env.wait_delay(100);             // wait for 10 cycles
+    env.wait_delay(10);             // wait for 10 cycles
     $display("---loop%0d end---",loop);
 end
