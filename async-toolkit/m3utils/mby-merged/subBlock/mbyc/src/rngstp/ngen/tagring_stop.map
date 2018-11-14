@@ -3,10 +3,10 @@
   $j = $iteration %2;
   $i = ($iteration - $j) /2;
 
-  // print $iteration;
+  4'd$i                      >> ring_id
 
   // From IGR
-  i_tag_ring_lltag$j$         >> i_tagring_lltag
+  i_tag_ring_lltag$j$        >> i_tagring_lltag
 
   // To EGR
   egr_tagring$i$_$j$         >> egr_tagring

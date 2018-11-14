@@ -7,4 +7,12 @@ mby_rngstp [
         tagring_stop_$i$_$j of mby_tagring_stop with tagring_stop.map $k
      }
   }
+  for ($i =0; $i <4; $i++) {
+     mctagring_stop_$i of mby_mctagring_stop with mctagring_stop.map $i
+  }
+  for ($i =0; $i <8; $i++) {
+     dqring_stop_$i of mby_dqring_stop with dqring_stop.map $i
+  }
+  mrpodring_stop of mby_mrpodring_stop with mrpodring_stop.map
+  podring_stop of mby_podring_stop with podring_stop.map
 ]
