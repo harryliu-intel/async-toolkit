@@ -10,6 +10,9 @@ HTML_TOP    = $(HTML_DIR)/index.html
 # Doxygen compiler:
 DOXYGEN = doxygen
 
+# Project number (from Git):
+export PROJECT_NUMBER = $(shell git describe --always --dirty="-with-uncommitted-changes" --long --tags)
+
 ifeq ($(VERBOSE),1)
 ECHO :=
 else
@@ -19,7 +22,11 @@ endif
 .PHONY: all
 all: url
 
-$(HTML_TOP): $(CONFIG_FILE)
+.PHONY: tag
+tag:
+	@echo "  Tagging as $(PROJECT_NUMBER)"
+
+$(HTML_TOP): $(CONFIG_FILE) tag
 	@echo '  Running doxygen'
 	$(ECHO) $(DOXYGEN) $(CONFIG_FILE)
 
