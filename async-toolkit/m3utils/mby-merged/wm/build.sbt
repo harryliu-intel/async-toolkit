@@ -90,9 +90,9 @@ publishArtifacts := Def.taskDyn {
     Def.task(log.warn("Will not publish artifacts! $USER != npgadmin"))
 }.value
 
-lazy val testAll = "; all common/test csr/test root/test"
+lazy val testAll = "; all common/test csr/test root/test/ main/test tcp/test"
 lazy val cleanAll =
-  "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean"
+  "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean tcp/clean main/clean"
 lazy val publishArtifactsLocally = "; csr/publishLocal; wmServerDto/publishLocal"
 lazy val cleanIvyIntelCache =
   s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.csrName}"""" +

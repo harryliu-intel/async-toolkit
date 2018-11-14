@@ -41,8 +41,8 @@ package object optics {
   @GenOpticsLookup
   case class AddressMap(
     range: AddressRange,
-    @OfSize(2) opticsRegFilesA: List[RegisterFileA],
-    @At(0x68) opticsRegFileB: RegisterFileB
+    @OfSize(2) regFilesA: List[RegisterFileA],
+    @At(0x68) regFileB: RegisterFileB
   )
   @Lenses("_")
   @Initialize
