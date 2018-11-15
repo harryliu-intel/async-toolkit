@@ -30,13 +30,8 @@ module fc_hvl_top #(
     import fc_env_pkg::*;
     import fc_test_pkg::*;
 
-    //-- Temporary local signal as work around for VCS bug 
-    //-- with -debug_all option
-
     `include "hvl_ti_conns.svh"
     //`include "fc_pull_up_down.sv"
-
-    //-- work around for VCS bug with -debug_all option
 
     // -------------------------------------------------------------------------
     // Interface & Test Island
@@ -47,16 +42,25 @@ module fc_hvl_top #(
     // TB Clocks
     // -------------------------------------------------------------------------
     clkgen_if #(.PERIOD(10000), .DELAY(0), .DUTYCYCLE(50)) tb_clk();
-    clkgen_if #(.PERIOD(40000), .DELAY(0), .DUTYCYCLE(50)) xtal_25M_clk();
+    clkgen_if #(.PERIOD(833.333), .DELAY(0), .DUTYCYCLE(50)) tmp_cclk(); //1200MHz
+    clkgen_if #(.PERIOD(1250), .DELAY(0), .DUTYCYCLE(50)) tmp_clk();     //800MHz
+    clkgen_if #(.PERIOD(6400), .DELAY(0), .DUTYCYCLE(50)) ref_clk();     //156.25MHz
+    clkgen_if #(.PERIOD(555.555), .DELAY(0), .DUTYCYCLE(50)) tmp_mclk(); //1800MHz
+
     assign sig_if.tb_clk        = tb_clk.clk;
     assign sig_if.tb_rst_b      = 0; // FIXME: connect this to RTC RST
+
+    assign sig_if.tmp_cclk     = tmp_cclk.clk;
+    assign sig_if.tmp_clk      = tmp_clk.clk;
+    assign sig_if.ref_clk      = ref_clk.clk;
+    assign sig_if.tmp_mclk     = tmp_mclk.clk;
 
     // ------------------------------------------------------------------------
     // TB Forces
     // ------------------------------------------------------------------------
     force_if apply_forces();
 
-    //`include "fc_forces.sv"
+    `include "fc_forces.sv"
 
     //Debug tracker for looking at all IP poks/masks
     //`include "pok_trk.sv"
