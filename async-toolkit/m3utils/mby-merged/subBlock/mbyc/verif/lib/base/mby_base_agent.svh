@@ -90,9 +90,7 @@ class mby_base_agent
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
-   `uvm_component_param_utils_begin(mby_base_agent#(T_req, T_rsp, T_vif))
-   //`uvm_field_object(cfg_obj, UVM_ALL_ON)
-   `uvm_component_utils_end
+   `uvm_component_utils(mby_base_agent#(T_req, T_rsp, T_vif, T_seq, T_drv, T_mon))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
