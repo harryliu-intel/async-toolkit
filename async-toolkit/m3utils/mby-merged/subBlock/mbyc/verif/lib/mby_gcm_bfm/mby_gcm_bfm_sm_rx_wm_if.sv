@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay Tag Interface
+// Title         : Madison Bay GCM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_tag_bfm_uc_if.sv
+// File          : mby_gcm_bfm_sm_rx_wm_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Madison Bay Uni-cast tag interface file
+// Madison Bay GCM interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,22 +30,21 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_TAG_BFM_UC_IF__
-`define __MBY_TAG_BFM_UC_IF__
+`ifndef __MBY_GCM_BFM_SM_RX_WM_IF__
+`define __MBY_GCM_BFM_SM_RX_WM_IF__
 //------------------------------------------------------------------------------
-// INTERFACE: mby_tag_bfm_uc_if
+// INTERFACE: mby_gcm_bfm_sm_rx_wm_if
 //
-// This is the MBY tag ring interface used by the tag bfm.
+// This is the interface that connects the GCM to IGR.
 //
 //------------------------------------------------------------------------------
-interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
-   import mby_gmm_pkg::*; // TODO: change this once the lltformat_t is placed in
-                          //       the right place.
+interface mby_gcm_bfm_sm_rx_wm_if(input logic clk, input logic rst);
+   import mby_gmm_pkg::*;
 
-   mby_tag_ring_t intf_data_pkt;
-   logic          intf_debg_pkt;
+   mby_cm_shared_mem_rx_wm_t intf_data_pkt;
+   logic                     intf_debg_pkt;
 
-   localparam DATA_WIDTH = $bits(mby_tag_ring_t);
+   localparam DATA_WIDTH = $bits(mby_cm_shared_mem_rx_wm_t);
    localparam DEBG_WIDTH = 1;
    localparam DLAY_WIDTH = 32;
 
@@ -69,7 +68,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    //       needed, can be passed using this argument. This information is not
    //       part of the actual bus protocol, but extra debug info that can be
    //       used as part of the verification strategy).
-   //    logic [DLAY_WIDTH-1:0] delay - The transaction item delay property.
+   //    logic [DLAY_WIDTH-1:0] delay    - The transaction item delay property.
    //
    //---------------------------------------------------------------------------
    task drive_data(logic [DATA_WIDTH-1:0] data_pkt,
@@ -90,7 +89,7 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
    //---------------------------------------------------------------------------
    task mon_start();
       // wait for valid signal
-      wait(intf_data_pkt.valid === 1);
+      //wait(intf_data_pkt.valid === 1);
    endtask
 
    //---------------------------------------------------------------------------
@@ -114,7 +113,6 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
       debg_pkt = intf_debg_pkt;
    endtask
 
-endinterface : mby_tag_bfm_uc_if
+endinterface : mby_gcm_bfm_sm_rx_wm_if
 
 `endif
-

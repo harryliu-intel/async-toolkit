@@ -74,7 +74,7 @@ my @fc_collage_build_liblist = (
 # TODO &fc_global_vars::gen_hip_liblist();
 
 my @FC_VLOG_OPTIONS = (
-# TODO   "+define+AXI_ENV_ENABLE",
+    "$ENV{COLLAGE_WORK}/gen/source/rtl/fc_hier_defines_generated.sv"
 );
 
 
