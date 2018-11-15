@@ -14,7 +14,7 @@ $hdl_spec = {
 		"src/shared/rtl/pkt_meta_pkg.sv",
         "src/shared/rtl/rx_ppe_pkg.sv",
 		"src/shared/rtl/tx_ppe_pkg.sv",
-		"$SVA_LIB/SVA_LIB/intel_checkers_pkg.vs",
+		"$SVA_LIB/intel_checkers_pkg.vs",
 		"src/shared/interfaces/ahb_rx_ppe_if.sv",
 		"src/shared/interfaces/glb_rx_ppe_if.sv",
 		"src/shared/interfaces/egr_tx_ppe_if.sv",
@@ -34,7 +34,7 @@ $hdl_spec = {
 		"src/tx_ppe/rtl",
 		"src/shared/rtl",
 		"src/shared/interfaces",
-		"$SVA_LIB/SVA_LIB",
+		"$SVA_LIB",
 	],
 
 	# Arbitrary VLOG options
