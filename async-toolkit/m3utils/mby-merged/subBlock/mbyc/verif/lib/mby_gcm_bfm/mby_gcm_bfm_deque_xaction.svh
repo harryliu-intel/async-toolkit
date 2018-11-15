@@ -2,7 +2,7 @@
 // Title         : Madison Bay GCM BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_xaction.svh
+// File          : mby_gcm_bfm_deque_xaction.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
@@ -33,28 +33,28 @@
 `ifndef __MBY_GCM_BFM_PKG__
 `error "Attempt to include file outside of mby_gcm_bfm_pkg."
 `endif
-`ifndef __MBY_GCM_BFM_XACTION__
-`define __MBY_GCM_BFM_XACTION__
+`ifndef __MBY_GCM_BFM_DEQUE_XACTION__
+`define __MBY_GCM_BFM_DEQUE_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_gcm_bfm_xaction
+// CLASS: mby_gcm_bfm_deque_xaction
 //
 // This is a parameterized class used by mby_base_agent.
 //
 // PARAMETERS:
-//     T_data     - data type (expecting to be a struct)
-//     T_debug    - set to logic for now
+//     T_data     - mby_gcm_bfm_deque_t
+//     T_debug    - mby_gcm_bfm_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_gcm_bfm_xaction extends mby_base_sequence_item
+class mby_gcm_bfm_deque_xaction extends mby_base_sequence_item
 #(
-   .T_data (),
-   .T_debug()
+   .T_data (mby_gcm_bfm_deque_t),
+   .T_debug(mby_gcm_bfm_debg_t)
 );
 
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_gcm_bfm_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_gcm_bfm_deque_xaction#(T_data, T_data_rsp, T_debug))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -65,7 +65,7 @@ class mby_gcm_bfm_xaction extends mby_base_sequence_item
    //     string name - The sequence item name
    //
    // -------------------------------------------------------------------------
-   function new (string name = "mby_gcm_bfm_xaction");
+   function new (string name = "mby_gcm_bfm_deque_xaction");
       super.new(name);
    endfunction
 
@@ -95,5 +95,5 @@ class mby_gcm_bfm_xaction extends mby_base_sequence_item
       // pretty print
    endfunction : do_print
 
-endclass : mby_gcm_bfm_xaction
+endclass : mby_gcm_bfm_deque_xaction
 `endif

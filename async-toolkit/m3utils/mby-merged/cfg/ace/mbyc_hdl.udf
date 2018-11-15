@@ -109,7 +109,6 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_rx_ppe_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_rx_ppe_rtl.hdl', ],
-               -vlog_opts => [ "+define+FIRST_SHELL", ],
                -dependent_libs => ['mby_mgm_lib',],
             },
 
@@ -121,7 +120,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_ppe_stm_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_ppe_stm_rtl.hdl', ],
-               -vlog_opts => [ "+define+FIRST_SHELL", ],
+               -dependent_libs => ['mby_mgm_lib',],
             },
 
             mby_msh_rtl_lib => {

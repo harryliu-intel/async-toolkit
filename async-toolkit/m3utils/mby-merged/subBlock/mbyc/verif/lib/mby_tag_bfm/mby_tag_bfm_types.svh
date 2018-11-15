@@ -74,8 +74,12 @@ typedef virtual mby_tag_bfm_mc_if mby_tag_bfm_mc_vif;
 typedef class mby_tag_bfm_uc_xaction;
 typedef class mby_tag_bfm_mc_xaction;
 // Defining the uni-cast tag agent as a parameterized base agent.
-typedef mby_base_agent#(.T_req(mby_tag_bfm_uc_xaction), .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
+typedef mby_base_agent#(
+   .T_req(mby_tag_bfm_uc_xaction),
+   .T_vif(mby_tag_bfm_uc_vif)) mby_tag_bfm_uc_agent;
 // Defining the multi-cast tag agent as a parameterized base agent.
-typedef mby_base_agent#(.T_req(mby_tag_bfm_mc_xaction), .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_agent;
+typedef mby_base_agent#(
+   .T_req(mby_tag_bfm_mc_xaction),
+   .T_vif(mby_tag_bfm_mc_vif)) mby_tag_bfm_mc_agent;
 
 `endif

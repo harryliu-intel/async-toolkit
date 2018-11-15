@@ -51,7 +51,10 @@ package mby_gcm_bfm_pkg;
    `include "uvm_macros.svh"
    `include "mby_gcm_bfm_defines.svh"
    `include "mby_gcm_bfm_types.svh"
-   `include "mby_gcm_bfm_xaction.svh"
+   `include "mby_gcm_bfm_queue_xaction.svh"
+   `include "mby_gcm_bfm_deque_xaction.svh"
+   `include "mby_gcm_bfm_wm_xaction.svh"
+   `include "mby_gcm_bfm_sm_wm_xaction.svh"
    `include "mby_gcm_bfm_cfg.svh"
    `include "mby_gcm_bfm.svh"
 

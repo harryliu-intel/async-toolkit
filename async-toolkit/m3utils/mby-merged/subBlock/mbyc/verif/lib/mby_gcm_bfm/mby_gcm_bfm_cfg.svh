@@ -39,15 +39,53 @@
 // CLASS: mby_gcm_bfm_cfg
 //
 // This is the configuration class used by the gcm_bfm. It contains fields to
-// control the gcm agent's driver/monitor behavior and also to control the
-// frame generator capabilities.
+// control the GCM agent's driver/monitor behavior.
 //
 //-----------------------------------------------------------------------------
 class mby_gcm_bfm_cfg extends mby_base_config;
 
-   // VARIABLE: frame_gen_active
-   // Agent is configured to be active or passive
-   uvm_active_passive_enum frame_gen_active;
+   // VARIABLE: bfm_mode
+   // This is the GCM bfm mode of operation (igr/egr).
+   rand mby_gcm_bfm_mode_t bfm_mode;
+
+   // VARIABLE: queue_cfg
+   // Basic configuration object for the queue agent.
+   rand mby_base_config queue_cfg;
+
+   // VARIABLE: rx_wm_cfg
+   // Basic configuration object for the rx_wm agent.
+   rand mby_base_config rx_wm_cfg;
+
+   // VARIABLE: rx_sm_wm_cfg
+   // Basic configuration object for the rx_sm_wm agent.
+   rand mby_base_config rx_sm_wm_cfg;
+
+   // VARIABLE: deque_cfg
+   // Basic configuration object for the deque agent.
+   rand mby_base_config deque_cfg;
+
+   // VARIABLE: tx_sm_wm_cfg
+   // Basic configuration object for the tx_sm_wm agent.
+   rand mby_base_config tx_sm_wm_cfg;
+
+   // CONSTRAINT: gmm_mode_constraint
+   // Sets the agents' configuration settings based
+   // on the GCM's bfm_mode
+   constraint gcm_bfm_mode_constraint {
+      if(bfm_mode == GCM_BFM_IGR_MODE) {
+         queue_cfg.driver_active     == UVM_PASSIVE;
+         queue_cfg.monitor_active    == UVM_ACTIVE;
+         rx_wm_cfg.driver_active     == UVM_ACTIVE;
+         rx_wm_cfg.monitor_active    == UVM_ACTIVE;
+         rx_sm_wm_cfg.driver_active  == UVM_ACTIVE;
+         rx_sm_wm_cfg.monitor_active == UVM_ACTIVE;
+      } else if(bfm_mode == GCM_BFM_EGR_MODE) {
+         deque_cfg.driver_active     == UVM_PASSIVE;
+         deque_cfg.monitor_active    == UVM_ACTIVE;
+         tx_sm_wm_cfg.driver_active  == UVM_ACTIVE;
+         tx_sm_wm_cfg.monitor_active == UVM_ACTIVE;
+      }
+   }
 
    // UVM object utils macro
    `uvm_object_utils(mby_gcm_bfm_cfg)
@@ -62,6 +100,11 @@ class mby_gcm_bfm_cfg extends mby_base_config;
    // -------------------------------------------------------------------------
    function new(string name = "mby_gcm_bfm_cfg");
       super.new(name);
+      this.queue_cfg    = new("queue_cfg");
+      this.deque_cfg    = new("deque_cfg");
+      this.rx_wm_cfg    = new("rx_wm_cfg");
+      this.rx_sm_wm_cfg = new("rx_sm_wm_cfg");
+      this.tx_sm_wm_cfg = new("tx_sm_wm_cfg");
    endfunction : new
 
 endclass : mby_gcm_bfm_cfg
