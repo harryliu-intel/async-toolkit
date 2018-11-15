@@ -13,11 +13,13 @@ $hdl_spec = {
 		"src/shared/rtl/pkt_pkg.sv",
 		"src/shared/rtl/pkt_meta_pkg.sv",
 		"src/shared/rtl/rx_ppe_pkg.sv",
+		"src/shared/rtl/mby_egr_pkg.sv",
 		"src/ppe_stm/rtl/ppe_stm_pkg.sv",
 		"$SVA_LIB/SVA_LIB/intel_checkers_pkg.vs",
 		"src/shared/interfaces/egr_ppe_stm_if.sv",
 		"src/shared/interfaces/rx_ppe_ppe_stm_if.sv",
 		"src/shared/interfaces/par_class_if.sv",
+		"src/egr/rtl/egr_mc_table_if.sv",
 
 		"src/ppe_stm/rtl/ppe_stm_top.sv",
 	],
