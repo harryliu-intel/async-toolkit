@@ -5,7 +5,6 @@ import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{Port, TrafficClass, VID}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.{CgrpCondition, SourcePortCondition}
-import com.intel.cgr.hpfd.madisonbay.wm.switchwm.ppe.trigger.TriggerCfg
 
 import scala.collection.immutable.BitSet
 

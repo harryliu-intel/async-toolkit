@@ -1,7 +1,6 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
 import madisonbay.csr.all._
-import com.intel.cgr.hpfd.madisonbay.wm.switchwm.ppe.trigger.TriggerCfg
 
 class Triggers(val ppe_cfg: mby_ppe_rx_top_map) extends IndexedSeq[Trigger] {
 

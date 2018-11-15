@@ -1,4 +1,4 @@
-package com.intel.cgr.hpfd.madisonbay.wm.switchwm.ppe.trigger
+package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
 import madisonbay.csr.all._
 
