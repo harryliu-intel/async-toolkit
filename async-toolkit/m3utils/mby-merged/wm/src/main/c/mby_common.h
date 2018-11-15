@@ -6,6 +6,7 @@
 #define MBY_COMMON_H
 
 // Includes:
+#include <stdlib.h>
 #include <mby_top_map.h> // header file auto-generated from RDL
 
 // Macros:
@@ -63,6 +64,9 @@
 #define MBY_ETYPE_IPv4           0x0800
 #define MBY_ETYPE_IPv6           0x86DD
 #define MBY_ETYPE_MAC_CONTROL    0x8808
+
+#define MBY_DMASK_REGISTERS      5
+#define MBY_MA_TCN_FIFO_CAPACITY 511
 
 #define MAC_ADDR_BYTES           6
 
@@ -270,7 +274,7 @@ typedef struct mbyTriggerResultsStruct
     fm_uint32                           action;
     mbyTriggerActionForwarding          forwardingAction;
     fm_uint16                           destGlort;
-    fm_uint64                           destMask;
+    fm_uint64                           destMask[MBY_DMASK_REGISTERS];
     fm_bool                             filterDestMask;
     mbyTriggerActionTrap                trapAction;
     fm_byte                             cpuCode;
@@ -292,8 +296,6 @@ typedef struct mbyTriggerResultsStruct
     mbyTriggerActionLearning            learningAction;
     fm_bool                             rateLimitAction;
     fm_byte                             rateLimitNum;
-    fm_int                              metadataTrigNum[4];
-    fm_byte                             metadataAction[4];
     fm_byte                             egressL2DomainAction;
     fm_byte                             egressL3DomainAction;
     fm_byte                             qcnValid0;
@@ -340,6 +342,11 @@ fm_status mbyModelWriteCSRMult
     const fm_uint32 byte_addr,
     const fm_int len,
     const fm_uint32 * new_value
+);
+
+fm_int fmRand
+(
+    void
 );
 
 #endif // MBY_COMMON_H

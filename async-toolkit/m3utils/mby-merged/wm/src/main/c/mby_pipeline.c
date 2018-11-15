@@ -58,7 +58,9 @@ void RxPipeline
 
     Triggers   (trig_apply_map,
                 trig_apply_misc_map,
-                trig_usage_map,      &msk2trg, &trg2cgm);
+                trig_usage_map,
+                fwd_misc_map,
+                mapper_map,          &msk2trg, &trg2cgm);
 
     CongMgmt   (cm_apply_map,
                 cm_usage_map,        &trg2cgm, &cgm2rxs);

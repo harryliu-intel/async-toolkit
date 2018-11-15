@@ -1148,12 +1148,15 @@ void MaskGen
     // --------------------------------------------------------------------------------
 
     // Write outputs:
+
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        out->DMASK[i] = dmask; //REVISIT!!!
+
     out->ACTION                 = action;
     out->AMASK                  = amask;
     out->CPU_CODE               = cpu_code;
     out->CPU_TRAP               = cpu_trap;
     out->DA_HIT                 = da_hit;
-    out->DMASK                  = dmask;
     out->DROP_TTL               = drop_ttl;
     out->FCLASS                 = fclass;
     out->FNMASK                 = fnmask;
@@ -1166,6 +1169,7 @@ void MaskGen
     out->L2_DMAC                = l2_dmac;
     out->L2_EDOMAIN             = l2_edomain;
     out->L2_EVID1               = l2_evid1;
+    out->L2_SMAC                = l2_smac;
     out->L3_EDOMAIN             = l3_edomain;
     out->LEARNING_ENABLED       = learning_enabled;
     out->LOGGING_HIT            = logging_hit;
@@ -1195,6 +1199,7 @@ void MaskGen
     out->XCAST                  = xcast;
 
     // Pass thru:
+    out->CGRP_TRIG              = in->CGRP_TRIG;
     out->ECN                    = in->ECN;
     out->EDGLORT                = in->EDGLORT;
     out->IS_TIMEOUT             = in->IS_TIMEOUT;

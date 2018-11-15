@@ -284,36 +284,37 @@ typedef struct mbyNextHopToMaskGenStruct
     mbyTriggerResults  TRIGGERS;             ///< trigger results
 
     // pass-thru:
+    fm_uint32          ACTION;               ///< resolved action
+    fm_uint16          ARP_TABLE_INDEX;
+    fm_byte            CGRP_TRIG;            ///< classifier action triggers
+    fm_bool            CPU_TRAP;             ///< CPU trap
+    mbyMaTable         DA_RESULT;            ///< destination MAC address lookup result
+    fm_bool            DECAP;
     fm_byte            ECN;                  ///< ECN value to use in egress packet
     fm_uint16          EDGLORT;              ///< egress destination glort
-    fm_bool            IS_TIMEOUT;           ///<
+    fm_bool            ENCAP;
+    fm_bool            FLOOD_SET;
+    fm_uint16          IP_MCAST_IDX;         ///< index into the MCAST_VLAN_TABLE
+    fm_bool            IS_TIMEOUT;  
+    fm_uint16          L2_IDOMAIN;           ///<
     fm_uint16          L2_IVLAN1_CNT;        ///< ingress VLAN counter
+    fm_byte            L3_IDOMAIN;
+    fm_uint32          MIRROR0_PROFILE_IDX;  ///< mirror 0 profile index
     mbyMirrorType      MIRTYP;               ///< mirror type
     fm_uint32          MOD_IDX;              ///< index into the MODIFY descriptor tables
     fm_byte            MOD_PROF_IDX;         ///< modify profile index
+    fm_byte            MTU_INDEX;
     fm_bool            OOM;                  ///< out of memory
     mbyParserInfo      PARSER_INFO;          ///< parser info structure
     mbyParserHdrPtrs   PA_HDR_PTRS;          ///< parser header pointers
     fm_bool            PM_ERR;               ///< ECC error on PM
     fm_bool            PM_ERR_NONSOP;        ///<
+    fm_uint32          PRE_RESOLVE_DMASK;    ///< destination mask before action resolution
     fm_byte            QOS_L3_DSCP;          ///< 6-bit QOS Differentiated Services Code Point (DSCP):
     fm_byte          * RX_DATA;              ///< ingress (receive) packet data
     fm_uint64          TAIL_CSUM_LEN;        ///< L4 CSUM related information
     fm_byte            TRAFFIC_CLASS;        ///< traffic class
     fm_byte            TX_TAG;               ///< transmit tag from Classifier
-    fm_uint16          ARP_TABLE_INDEX;
-    fm_bool            ENCAP;
-    fm_bool            DECAP;
-    fm_uint16          L2_IDOMAIN;
-    fm_byte            L3_IDOMAIN;
-    fm_byte            MTU_INDEX;
-    fm_bool            FLOOD_SET;
-    mbyMaTable         DA_RESULT;            ///< destination MAC address lookup result
-    fm_bool            CPU_TRAP;             ///< CPU trap
-    fm_uint32          PRE_RESOLVE_DMASK;    ///< destination mask before action resolution
-    fm_uint32          ACTION;               ///< resolved action
-    fm_uint16          IP_MCAST_IDX;         ///< index into the MCAST_VLAN_TABLE
-    fm_uint32          MIRROR0_PROFILE_IDX;  ///< mirror 0 profile index
 } mbyNextHopToMaskGen;
 
 #endif

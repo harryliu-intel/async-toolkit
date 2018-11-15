@@ -100,10 +100,12 @@ typedef struct mbyHashToNextHopStruct
     fm_uint16          ECMP_HASH;
     fm_uint32          HASH_ROT_A;
     fm_uint32          HASH_ROT_B;
+    fm_uint16          RAW_HASH;
     // pass-thru:
     fm_macaddr         L2_DMAC;
     fm_macaddr         L2_SMAC;
     fm_uint32          ACTION;                 ///> resolved action
+    fm_byte            CGRP_TRIG;              ///> classifier action triggers
     fm_bool            CPU_TRAP;               ///> CPU trap
     fm_uint16          CSGLORT;                ///> 16-bit canonical source GLORT
     fm_bool            DECAP;

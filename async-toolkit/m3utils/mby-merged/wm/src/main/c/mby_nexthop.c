@@ -265,6 +265,7 @@ void NextHop
 
     // Pass thru:
     out->ACTION               = in->ACTION;
+    out->CGRP_TRIG            = in->CGRP_TRIG;
     out->CPU_TRAP             = in->CPU_TRAP;
     out->CSGLORT              = in->CSGLORT;
     out->DROP_TTL             = in->DROP_TTL;
