@@ -35,6 +35,98 @@
 `endif
 `ifndef __MBY_GCM_BFM__
 `define __MBY_GCM_BFM__
-class mby_gcm_bfm;
+//-----------------------------------------------------------------------------
+// CLASS: mby_gcm_bfm
+//
+// This is the main gcm_bfm class, it is just a container that instantiates and
+// connects the different agents.
+//
+//-----------------------------------------------------------------------------
+class mby_gcm_bfm extends uvm_component;
+
+   // VARIABLE: cfg_obj
+   // The bfm's configuration object
+   mby_gcm_bfm_cfg cfg_obj;
+
+   // VARIABLE: queue_agent
+   // This is the queue agent that is connected to the tag ring and monitors
+   // the traffic going from IGR to the GCM
+   gcm_queue_bfm_agent queue_agent;
+
+   // VARIABLE: rx_wm_agent
+   // This is the RX watermark agent that sends watermark information to the
+   // IGR logic.
+   gcm_rx_wm_bfm_agent rx_wm_agent;
+
+   // VARIABLE: rx_sm_wm_agent
+   // This is the RX shared memory watermark agent that sends watermark
+   // information to the IGR logic.
+   gcm_rx_smem_wm_bfm_agent rx_sm_wm_agent;
+
+   // VARIABLE: deque_agent
+   // This is the dequeue agent that connects to the EGR's dequeue interface
+   gcm_deque_bfm_agent deque_agent;
+
+   // VARIABLE: tx_sm_wm_agent
+   // This is the TX shared memory watermark agent that sends watermark
+   // information to the EGR logic.
+   gcm_rx_smem_wm_bfm_agent tx_sm_wm_agent;
+
+
+   // -------------------------------------------------------------------------
+   // Macro to register new class type
+   // -------------------------------------------------------------------------
+   `uvm_component_param_utils_begin(mby_gcm_bfm)
+   `uvm_component_utils_end
+
+   // -------------------------------------------------------------------------
+   // CONSTRUCTOR: new
+   //
+   // Constructor
+   //
+   // ARGUMENTS:
+   //    string name          - An instance name of the bfm.
+   //    uvm_component parent - The bfm's parent component pointer.
+   // -------------------------------------------------------------------------
+   function new(string name, uvm_component parent);
+      super.new(name, parent);
+   endfunction : new
+
+   // ------------------------------------------------------------------------
+   // FUNCTION: build_phase
+   //
+   // The free, dirty and mesh agents are created and the configuration object
+   // is assigned to them.
+   //
+   //
+   // ------------------------------------------------------------------------
+   function void build_phase(uvm_phase phase);
+      super.build_phase(phase);
+      if(cfg_obj.bfm_mode == GCM_BFM_IGR_MODE) begin
+         queue_agent    = gcm_queue_bfm_agent::type_id::create("queue_agent", this);
+         rx_wm_agent    = gcm_rx_wm_bfm_agent::type_id::create("rx_wm_agent", this);
+         rx_sm_wm_agent = gcm_rx_smem_wm_bfm_agent::type_id::create("rx_sm_wm_agent", this);
+      end else if(cfg_obj.bfm_mode == GCM_BFM_EGR_MODE) begin
+         deque_agent    = gcm_deque_bfm_agent::type_id::create("deque_agent", this);
+         tx_sm_wm_agent = gcm_tx_smem_wm_bfm_agent::type_id::create("tx_sm_wm_agent", this);
+      end
+   endfunction
+
+   // ------------------------------------------------------------------------
+   // FUNCTION: connect_phase
+   //
+   // TODO: Connect the pptr_gen to the corresponding agent based on the bfm
+   //       mode.
+   //
+   // ------------------------------------------------------------------------
+   function void connect_phase(uvm_phase phase);
+      super.connect_phase(phase);
+      if(cfg_obj.bfm_mode == GCM_BFM_IGR_MODE) begin
+         // TODO: connect agents to central component (tbd)
+      end else if(cfg_obj.bfm_mode == GCM_BFM_EGR_MODE) begin
+         // TODO: connect agents to central component (tbd)
+      end
+   endfunction
+
 endclass : mby_gcm_bfm
 `endif

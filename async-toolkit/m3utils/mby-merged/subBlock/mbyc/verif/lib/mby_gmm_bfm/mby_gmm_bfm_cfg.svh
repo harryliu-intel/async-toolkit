@@ -102,6 +102,9 @@ class mby_gmm_bfm_cfg extends mby_base_config;
    // -------------------------------------------------------------------------
    function new(string name = "mby_gmm_bfm_cfg");
       super.new(name);
+      this.fpptr_cfg = new("fpptr_cfg");
+      this.dpptr_cfg = new("dpptr_cfg");
+      this.msh_cfg   = new("msh_cfg");
    endfunction : new
 
 endclass : mby_gmm_bfm_cfg

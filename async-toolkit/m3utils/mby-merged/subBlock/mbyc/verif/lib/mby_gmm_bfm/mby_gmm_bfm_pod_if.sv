@@ -46,6 +46,7 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
 
    localparam DATA_WIDTH = $bits(mby_pod_ptr_ring_t);
    localparam DEBG_WIDTH = 1;
+   localparam DLAY_WIDTH = 32;
 
    //---------------------------------------------------------------------------
    // Initializing the interface at time 0
@@ -67,9 +68,12 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
    //       needed, can be passed using this argument. This information is not
    //       part of the actual bus protocol, but extra debug info that can be
    //       used as part of the verification strategy).
+   //    logic [DLAY_WIDTH-1:0] delay    - The transaction item delay property.
    //
    //---------------------------------------------------------------------------
-   task drive_data(logic [DATA_WIDTH-1:0] data_pkt, logic [DEBG_WIDTH-1:0] debg_pkt);
+   task drive_data(logic [DATA_WIDTH-1:0] data_pkt,
+                   logic [DEBG_WIDTH-1:0] debg_pkt,
+                   logic [DLAY_WIDTH-1:0] delay);
       @(posedge clk);
       intf_data_pkt <= data_pkt;
       intf_debg_pkt <= debg_pkt;
@@ -103,7 +107,8 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
    //       debug info that can be used as part of the verification strategy).
    //
    //---------------------------------------------------------------------------
-   task mon_data(output logic [DATA_WIDTH-1:0] data_pkt, output logic [DEBG_WIDTH-1:0] debg_pkt);
+   task mon_data(output logic [DATA_WIDTH-1:0] data_pkt,
+                 output logic [DEBG_WIDTH-1:0] debg_pkt);
       data_pkt = intf_data_pkt;
       debg_pkt = intf_debg_pkt;
    endtask
