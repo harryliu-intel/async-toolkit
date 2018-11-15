@@ -57,8 +57,10 @@ object Dependencies {
     logback,
     scalaLogging,
     pureConfig,
+    csrModel(csrVersion),
     // use test code as dependency
-    csrModel(csrVersion) % "compile->compile;test->test"
+    // "compile->compile;test->test" doesn't work
+    csrModel(csrVersion) % "test" classifier("tests")
   )
 
 }

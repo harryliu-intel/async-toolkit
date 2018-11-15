@@ -52,7 +52,7 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
   )
 
 lazy val tcp = (project in file("tcp"))
-  .dependsOn(common,csrMacros)
+  .dependsOn(common, csrMacros)
   .settings(
     Settings.commonSettings,
     libraryDependencies ++= Dependencies.tcpDeps
@@ -68,6 +68,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
     mainClass in Compile := Some("madisonbay.Main"),
     mainClass in assembly := Some("madisonbay.Main"),
+    test in assembly := {},
     assemblyOutputPath in assembly := path,
     fork in run := true
   )
