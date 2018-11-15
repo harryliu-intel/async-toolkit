@@ -38,8 +38,6 @@ $hdl_spec = {
 	],
 
 	# Arbitrary VLOG options
-	-vlog_opts => [
-        "+define+SVA_LIB_SVA2005",
-    ],
+	-vlog_opts => [],
 
 };
