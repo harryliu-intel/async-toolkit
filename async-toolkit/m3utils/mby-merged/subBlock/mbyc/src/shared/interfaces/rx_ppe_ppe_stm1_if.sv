@@ -28,51 +28,32 @@
 // -------------------------------------------------------------------
 // -- Author : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : Madison Bay
-// -- Description : RX PPE to shared table memory interface
+// -- Description : RX PPE to shared table memory 1 interface
 // --
 // -------------------------------------------------------------------
 
-interface rx_ppe_ppe_stm_if
+interface rx_ppe_ppe_stm1_if
 ();
-logic           [3:0]   tbl0_wen;       //per chunk write enables
-logic   [2:0]   [3:0]   tbl0_ren;       //per port, per chunk read enables (port 0 is LPM, 1-2 are EM)
-logic   [3:0]   [19:0]  tbl0_addr;      //per port address (port 0 is write, 1 is LPM, 2-3 are EM)
-logic           [287:0] tbl0_wdata;     //write data (including ECC bits)
-logic           [143:0] tbl0_lpm_rdata; //LPM port read data (including ECC bits)
-logic   [1:0]   [287:0] tbl0_em_rdata;  //EM ports read data (including ECC bits)
-
-logic           [3:0]   tbl1_wen;       //per chunk write enables
-logic   [1:0]   [3:0]   tbl1_ren;       //per port, per chunk read enables
-logic   [2:0]   [16:0]  tbl1_addr;      //per port address (port 0 is write, 1-2 are EM)
-logic           [287:0] tbl1_wdata;     //write data (including ECC bits)
-logic   [1:0]   [287:0] tbl1_em_rdata;  //EM ports read data (including ECC bits)
+logic           [3:0]   tbl_wen;        //per chunk write enables
+logic   [1:0]   [3:0]   tbl_ren;        //per port, per chunk read enables
+logic   [2:0]   [16:0]  tbl_addr;       //per port address (port 0 is write, 1-2 are EM)
+logic           [287:0] tbl_wdata;      //write data (including ECC bits)
+logic   [1:0]   [287:0] tbl_em_rdata;   //EM ports read data (including ECC bits)
 
 modport ppe(
-    output  tbl0_wen,
-    output  tbl0_ren,
-    output  tbl0_addr,
-    output  tbl0_wdata,
-    input   tbl0_lpm_rdata,
-    input   tbl0_em_rdata,
-    output  tbl1_wen,
-    output  tbl1_ren,
-    output  tbl1_addr,
-    output  tbl1_wdata,
-    input   tbl1_em_rdata
+    output  tbl_wen,
+    output  tbl_ren,
+    output  tbl_addr,
+    output  tbl_wdata,
+    input   tbl_em_rdata
 );
 
 modport stm(
-    input   tbl0_wen,
-    input   tbl0_ren,
-    input   tbl0_addr,
-    input   tbl0_wdata,
-    output  tbl0_lpm_rdata,
-    output  tbl0_em_rdata,
-    input   tbl1_wen,
-    input   tbl1_ren,
-    input   tbl1_addr,
-    input   tbl1_wdata,
-    output  tbl1_em_rdata
+    input   tbl_wen,
+    input   tbl_ren,
+    input   tbl_addr,
+    input   tbl_wdata,
+    output  tbl_em_rdata
 );
 
-endinterface: rx_ppe_ppe_stm_if
+endinterface: rx_ppe_ppe_stm1_if
