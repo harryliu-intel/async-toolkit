@@ -9,11 +9,11 @@
 
 collage_install_ip_kit -ip_name  "mby_gmn" \
                        -kit_name "mby_gmn" \
-                       -src_dir  "$::env(MODEL_ROOT)/tools/collage/gmn/ip_kits" \
+                       -src_dir  $src_kits_root \
                        -dest_dir $install_kits_root
 
 collage_install_ip_kit -ip_name  "mby_gms" \
                        -kit_name "mby_gms" \
-                       -src_dir  "$::env(MODEL_ROOT)/tools/collage/gms/ip_kits" \
+                       -src_dir  $src_kits_root \
                        -dest_dir $install_kits_root
 

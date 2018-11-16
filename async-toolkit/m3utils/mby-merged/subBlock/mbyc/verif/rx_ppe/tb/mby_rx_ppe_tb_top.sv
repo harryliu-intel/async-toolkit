@@ -35,19 +35,8 @@
 
 module mby_rx_ppe_tb_top ();
 
-
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
    import uvm_pkg::*;
-   import sla_pkg::*;
    `include "uvm_macros.svh"
-   `include "slu_macros.svh"
-
 
 // ===============================================
 // Clock block instance

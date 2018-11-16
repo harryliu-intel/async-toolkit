@@ -46,27 +46,18 @@
 
 package mby_rx_ppe_seq_lib;
 
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
    import uvm_pkg::*;
-   import sla_pkg::*;
 
    import shdv_base_pkg::*;
 
    `include "uvm_macros.svh"
-   `include "slu_macros.svh"
 
    `define __INSIDE_MBY_RX_PPE_SEQ_LIB
    `include "mby_rx_ppe_env_base_seq.svh"
-   `include "mby_rx_ppe_power_good_seq.svh"
-   `include "mby_rx_ppe_hard_reset_seq.svh"
-   `include "mby_rx_ppe_warm_reset_seq.svh"
-   `include "mby_rx_ppe_env_cfg_seq.svh"
+//PJP   `include "mby_rx_ppe_power_good_seq.svh"
+//PJP   `include "mby_rx_ppe_hard_reset_seq.svh"
+//PJP   `include "mby_rx_ppe_warm_reset_seq.svh"
+//PJP   `include "mby_rx_ppe_env_cfg_seq.svh"
 
    `undef  __INSIDE_MBY_RX_PPE_SEQ_LIB
 

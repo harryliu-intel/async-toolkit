@@ -2,3 +2,56 @@
 # It should NOT include other connectivity specs
 # See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
 ##############################################################################
+
+# Connect to GMM; connect 1 port to member of struct on another port
+##C mby_gmn_0/tag_ring_out_0_0.parity                         mby_mpp_0/
+##C mby_gmn_0/tag_ring_out_0_0.mirror
+#C mby_gmn_0/tag_ring_out_0_0.dst_tc                         mby_mpp_0/egr0_tagring_if0_0_llt_tc
+##C mby_gmn_0/tag_ring_out_0_0.dst_port_id                    mby_mpp_0/egr0_tagring_if0_0_llt_dst  # width mismatch...
+#C mby_gmn_0/tag_ring_out_0_0.next_len                       mby_mpp_0/egr0_tagring_if0_0_dqtag_next_len
+#C mby_gmn_0/tag_ring_out_0_0.sll                            mby_mpp_0/egr0_tagring_if0_0_dqtag_ssl
+#C mby_gmn_0/tag_ring_out_0_0.src_tc                         mby_mpp_0/egr0_tagring_if0_0_dqtag_src_tc
+#C mby_gmn_0/tag_ring_out_0_0.src_port_id                    mby_mpp_0/egr0_tagring_if0_0_dqtag_src_port
+#C mby_gmn_0/tag_ring_out_0_0.at_egr_rate                    mby_mpp_0/egr0_tagring_if0_0_dqtag_at_egr_rate
+#C mby_gmn_0/tag_ring_out_0_0.multi_copy                     mby_mpp_0/egr0_tagring_if0_0_dqtag_multi_copy
+#C mby_gmn_0/tag_ring_out_0_0.err_xmd                        mby_mpp_0/egr0_tagring_if0_0_dqtag_err_xmd
+#C mby_gmn_0/tag_ring_out_0_0.eop                            mby_mpp_0/egr0_tagring_if0_0_dqtag_eop
+#C mby_gmn_0/tag_ring_out_0_0.length                         mby_mpp_0/egr0_tagring_if0_0_dqtag_length
+#C mby_gmn_0/tag_ring_out_0_0.ptr_toggle                     mby_mpp_0/egr0_tagring_if0_0_dqtag_ptr_toggle
+#C mby_gmn_0/tag_ring_out_0_0.ptr                            mby_mpp_0/egr0_tagring_if0_0_dqtag_ptr
+#C mby_gmn_0/tag_ring_out_0_0.valid                          mby_mpp_0/egr0_tagring_if0_0_lltformat_valid
+### can also connect struct type to struct type, if that's how ports are defined
+#C mby_gmn_0/tag_ring_out_0_0                                mby_mpp_0/egr0_tag_ring_fromgmn_0_0
+
+### connections from MPP to MSH
+### should define variable for num mpp instances and replace values below based on variable
+//;for { set mppdir 0; set mppdirstr wb; set startmppinst 0} {$mppdir<2} {incr mppdir; set mppdirstr eb; set startmppinst 4} {
+//;  for {set mshrow 0; set mppmim 0; set mppinst [expr $startmppinst]} {$mshrow<16} {incr mshrow; set mppmim [expr ($mshrow%4)]; set mppinst [expr ($mshrow/4)+$startmppinst]} {
+//;    for {set port 0} {$port<3} {incr port} {
+### Write ports
+C mby_msh_0/o_igr_${mppdirstr}_wreq_credits[$mshrow][$port]        mby_mpp_$mppinst/mim${mppmim}_wr${port}_mim_wreq_credits
+C mby_mpp_$mppinst/mim${mppmim}_wr${port}_mim_wr_data              mby_msh_0/i_igr_${mppdirstr}_wr_data[$mshrow][$port]
+C mby_mpp_$mppinst/mim${mppmim}_wr${port}_mim_wr_seg_ptr           mby_msh_0/i_igr_${mppdirstr}_wr_seg_ptr[$mshrow][$port]
+C mby_mpp_$mppinst/mim${mppmim}_wr${port}_mim_wr_sema              mby_msh_0/i_igr_${mppdirstr}_wr_sema[$mshrow][$port]   
+C mby_mpp_$mppinst/mim${mppmim}_wr${port}_mim_wr_wd_sel            mby_msh_0/i_igr_${mppdirstr}_wr_wd_sel[$mshrow][$port] 
+C mby_mpp_$mppinst/mim${mppmim}_wr${port}_mim_wreq_id              mby_msh_0/i_igr_${mppdirstr}_wreq_id[$mshrow][$port]
+C mby_mpp_$mppinst/mim${mppmim}_wr${port}_mim_wreq_valid           mby_msh_0/i_igr_${mppdirstr}_wreq_valid[$mshrow][$port]
+### Read Request ports
+C mby_msh_0/o_egr_${mppdirstr}_rreq_credits[$mshrow][$port]        mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_rreq_credits
+C mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_rreq_valid           mby_msh_0/i_egr_${mppdirstr}_rreq_valid[$mshrow][$port]
+C mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_seg_ptr              mby_msh_0/i_egr_${mppdirstr}_seg_ptr[$mshrow][$port]
+C mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_sema                 mby_msh_0/i_egr_${mppdirstr}_sema[$mshrow][$port]
+C mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_wd_sel               mby_msh_0/i_egr_${mppdirstr}_wd_sel[$mshrow][$port]
+C mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_req_id               mby_msh_0/i_egr_${mppdirstr}_req_id[$mshrow][$port]
+### Read Response ports
+C mby_msh_0/o_egr_${mppdirstr}_rrsp_valid[$mshrow][$port]          mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_rrsp_valid
+C mby_msh_0/o_egr_${mppdirstr}_rrsp_dest_block[$mshrow][$port]     mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_rrsp_dest_block
+C mby_msh_0/o_egr_${mppdirstr}_rrsp_req_id[$mshrow][$port]         mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_rrsp_req_id
+C mby_msh_0/o_egr_${mppdirstr}_rd_data[$mshrow][$port]             mby_mpp_$mppinst/mim${mppmim}_rd${port}_mim_rd_data
+//;    }
+//;  }
+//;}
+
+
+## end
+
