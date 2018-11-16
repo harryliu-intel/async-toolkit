@@ -29,7 +29,7 @@
 module pes
 (
     input logic           clk,
-    input logic         rst_n, 
+    input logic        arst_n, 
                                
     //EGR Internal Interfaces  
     pes_txc_if.pes     txc_if, //Packet Egress Scheduler  - Transmit Controller         Interface

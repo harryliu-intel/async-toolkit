@@ -30,7 +30,7 @@
 module mtm
 (
     input logic            clk,
-    input logic          rst_n,
+    input logic         arst_n,
 
     // Internal interfaces
     mtm_pfs_if.mtm      pfs_if,     // MTM provides to PFS

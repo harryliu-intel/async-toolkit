@@ -30,7 +30,7 @@
 module utm
 (
     input logic            clk,
-    input logic          rst_n,
+    input logic         arst_n,
 
     // Internal inferfaces
     dp_if.provider      dpb_if,         // UTM provides to DPB

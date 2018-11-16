@@ -29,7 +29,7 @@
 module txc
 (
     input logic       clk,
-    input logic     rst_n, 
+    input logic    arst_n, 
 
     //EGR Internal Interfaces
     txc_prc_if.txc prc_if, //Transmit Controller      - Packet Read Controller Interface

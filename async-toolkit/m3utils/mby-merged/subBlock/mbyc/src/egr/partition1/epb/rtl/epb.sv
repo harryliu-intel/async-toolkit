@@ -29,7 +29,7 @@
 module epb
 (
     input logic        clk,
-    input logic      rst_n, 
+    input logic     arst_n, 
 
     //EGR Internal Interfaces 
     epb_prc_if.epb  prc_if, //Egress Packet Buffer   - Packet Read Controller       Interface

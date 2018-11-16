@@ -29,7 +29,7 @@
 module prc 
 (
     input logic        clk,
-    input logic      rst_n, 
+    input logic     arst_n, 
 
     //EGR Internal Interfaces    
     dp_if.provider  dpb_if, //Dirty Pointer Interface. Connected with the Dirty Pointer Broker

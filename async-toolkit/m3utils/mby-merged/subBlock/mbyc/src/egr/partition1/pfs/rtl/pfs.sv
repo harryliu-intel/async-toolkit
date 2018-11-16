@@ -30,7 +30,7 @@
 module pfs
 (
     input logic                clk,
-    input logic              rst_n,
+    input logic             arst_n,
 
     // Internal interfaces
     pfs_prc_if.pfs          prc_if,     // PFS provides to PRC

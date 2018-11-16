@@ -30,7 +30,7 @@
 module dpb
 (
     input logic           clk,
-    input logic         rst_n,
+    input logic        arst_n,
 
     // Internal interfaces
     dp_if.dpb          utm_if,      // DPB consumes from UTM

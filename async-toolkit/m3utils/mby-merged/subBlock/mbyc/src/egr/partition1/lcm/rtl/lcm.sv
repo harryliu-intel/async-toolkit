@@ -30,7 +30,7 @@
 module lcm
 (
     input logic            clk,
-    input logic          rst_n,
+    input logic         arst_n,
     
     // Internal interfaces
     lcm_ps_if.lcm       pfs_if,    // LCM provides to PFS

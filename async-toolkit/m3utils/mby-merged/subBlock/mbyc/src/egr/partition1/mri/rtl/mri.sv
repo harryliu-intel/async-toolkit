@@ -29,7 +29,7 @@
 module mri
 (
     input logic       clk,
-    input logic     rst_n, 
+    input logic    arst_n, 
 
     //EGR Internal Interfaces    
     rrs_if.mri rrs_utm_if, //Read Response Interface. Connected with the Unicast Tag Manager
