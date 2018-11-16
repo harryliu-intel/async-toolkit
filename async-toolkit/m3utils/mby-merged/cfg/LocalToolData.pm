@@ -250,7 +250,8 @@ $ToolConfig_tools{"mgm"} = {
     MGM_ARGS => {
         BLOCKS => {
             mby => ["parser",
-                    "classifier",
+                    "class_gpa",
+                    "class_gpb",
                     "action",
                     "ppe_stm",
                     "igr",
