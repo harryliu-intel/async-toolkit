@@ -6,20 +6,17 @@ import com.intel.cg.hpfd.csr.testData.common._
 import com.intel.cg.hpfd.madisonbay.Memory._
 import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
 import fs2.Sink
-
 import madisonbay.csr._
 import madisonbay.tcp._
 import madisonbay.tcp.iosf._
 import madisonbay.fs2app.algebra.messages._
-
 import monocle.Optional
-import scalaz.{ MonadError, StateT }
+import scalaz.{MonadError, StateT}
 import cats.effect.IO
-
 import org.scalatest.compatible.Assertion
 import org.scalatest.{FlatSpec, Matchers}
+import shapeless.{::, HNil}
 
-import shapeless.{HNil, ::}
 
 class Fs2ApplicationTests extends FlatSpec
     with Requests

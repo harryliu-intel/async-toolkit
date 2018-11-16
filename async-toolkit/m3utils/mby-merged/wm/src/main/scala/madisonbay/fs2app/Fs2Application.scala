@@ -2,9 +2,9 @@ package madisonbay
 package fs2app
 
 import fs2._
-import fs2.concurrent.{ Queue, SignallingRef }
+import fs2.concurrent.{Queue, SignallingRef}
 import fs2.io.tcp._
-import cats.effect.{ Concurrent, ConcurrentEffect }
+import cats.effect.{Concurrent, ConcurrentEffect}
 import cats.effect.concurrent.Ref
 import java.net.InetSocketAddress
 import java.net.InetAddress
@@ -14,12 +14,12 @@ import madisonbay.config.Config
 import madisonbay.fs2app.algebra._
 import madisonbay.fs2app.algebra.messages._
 import madisonbay.fs2app.deserialization._
-
 import scalaz.MonadError
 import scalaz.StateT
 import scalaz.syntax.all._
-
 import java.nio.channels.AsynchronousChannelGroup
+
+import madisonbay.fs2app.http.HttpServer
 
 object Fs2Application {
 
@@ -34,9 +34,9 @@ object Fs2Application {
         for {
           port     <- Stream.eval(config.int("server.port"))
           hostname <- Stream.eval(config.string("server.hostname"))
-          inetAddr  = InetAddress.getByName(hostname)
-          isa       = new InetSocketAddress(inetAddr, port)
-          _        <- Stream.eval(logger.info(s"Server should be started at [$hostname:$port]! Good luck!"))
+          inetAddr =  InetAddress.getByName(hostname)
+          isa      =  new InetSocketAddress(inetAddr, port)
+          _        <- Stream.eval(logger.info(s"Tcp server should be started at [$hostname:$port]! Good luck!"))
           _        <- Stream.bracket(CF.delay(acg))(asyncCg => CF.delay(asyncCg.shutdown))
           resource <- server[F](bind = isa)
           socket   <- Stream.resource(resource)
@@ -66,6 +66,7 @@ object Fs2Application {
         Concurrent:
         ServerSocket:
         PublisherSocket:
+        HttpServer:
         λ[G[_] => MonadError[G,Throwable]]:
         λ[G[_] => MessageHandler[G,RegistersState]]
   ](stateR: Ref[F,RegistersState],
@@ -78,6 +79,8 @@ object Fs2Application {
     val publisherSocket = PublisherSocket[F]
     val messageHandler = MessageHandler[F,RegistersState]
     val me = MonadError[F,Throwable]
+
+    def httpStream: Stream[F, Stream[F, Unit]] = HttpServer[F].create
 
     def serverStream: Stream[F,Stream[F,Unit]] =
       for {
@@ -146,6 +149,7 @@ object Fs2Application {
         ConcurrentEffect:
         ServerSocket:
         PublisherSocket:
+        HttpServer:
         λ[G[_] => MonadError[G,Throwable]]:
         λ[G[_] => MessageHandler[G,RegistersState]]
   ](init: RegistersState): F[Unit] = {
@@ -160,7 +164,7 @@ object Fs2Application {
       app         = new Application[RegistersState,F](stateR, egressQ, quitS)
       _          <- {
         import app._
-        (serverStream concurrently publisherStream)
+        (httpStream concurrently serverStream concurrently publisherStream)
           .interruptWhen(quitS)
           .parJoin(maxStreams)
       }

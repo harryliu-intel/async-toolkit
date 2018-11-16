@@ -1,21 +1,20 @@
 package madisonbay
 package fs2app
 
-import fs2.Sink
+import fs2.{Chunk, RaiseThrowable, Sink, Stream}
 import madisonbay.fs2app.algebra.{PublisherSocket, ServerSocket}
 import madisonbay.fs2app.algebra.messages._
-import madisonbay.fs2app.algebra.PublisherSocket
 import madisonbay.logger.Logger
 import madisonbay.fs2app.ioConfig.IOPureConfigLoader
-
 import fs2.io.tcp.Socket
-import fs2.{ Chunk, Sink, Stream }
 import cats.effect.IO
+import madisonbay.fs2app.http.{HttpServer, UriDispatcher}
 import scalaz.MonadError
-import sourcecode.{ File, Line }
-
+import sourcecode.{File, Line}
 import org.scalatest.Matchers
 import org.scalatest.compatible.Assertion
+import spinoco.fs2.http.HttpResponse
+import spinoco.protocol.http.{HttpRequestHeader, HttpStatusCode}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
@@ -85,4 +84,17 @@ abstract class IOTestContext[Root] extends Matchers {
   }
   implicit val mh = new Fs2DefaultMessageHandler[IO, Root]
   implicit val cs = IO.contextShift(ExecutionContext.global)
+
+  implicit lazy val ud = new UriDispatcher[IO] {
+
+    override def processRequest(request: HttpRequestHeader, body: Stream[IO,Byte])
+                               (implicit rt: RaiseThrowable[IO]): HttpResponse[IO] =
+      HttpResponse(HttpStatusCode.Ok).withUtf8Body("unit test")
+
+  }
+
+  implicit lazy val hp = new HttpServer[IO] {
+    override def create: Stream[IO, Stream[IO, Unit]] = Stream.emit(Stream.empty)
+  }
+
 }
