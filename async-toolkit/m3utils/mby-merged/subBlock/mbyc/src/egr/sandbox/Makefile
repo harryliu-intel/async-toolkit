@@ -40,7 +40,6 @@ TRACE_FLAGS  = +notimingchecks +warn=noTFIPC +vcs+vcdpluson +error+999 +vpdfile+
 SIMV_FLAGS   = -assert report=$@.txt+verbose+nopostproc -l $@.log
 
 INCS  = $(SRC)/shared/interfaces
-INCS += ../interfaces
 INCS += ../rtl
 INCS += ../sandbox
 
@@ -62,7 +61,7 @@ VCS_SRC += egr_top_tb.sv
 dve:
 	$(VCS_HOME)/bin/dve -full64
 
-simv: $(VCS_SRC) ../interfaces/* ../rtl/* ../sandbox/*.sv
+simv: $(VCS_SRC) ../rtl/* ../sandbox/*.sv
 	vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) -l build.log
 
 debug: simv

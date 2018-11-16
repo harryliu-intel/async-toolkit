@@ -56,6 +56,10 @@ class mby_base_sequencer
       T_rsp
    );
    // -------------------------------------------------------------------------
+   // Macro to register new class type
+   // -------------------------------------------------------------------------
+   `uvm_component_utils(mby_base_sequencer#(T_req, T_rsp))
+   // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
    //
    // Constructor

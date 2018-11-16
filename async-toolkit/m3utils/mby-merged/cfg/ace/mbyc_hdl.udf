@@ -622,9 +622,10 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_mgm_lib",
                         "mby_igr_rtl_lib",
                         "mby_base_pkg_lib",
-                        "mby_tag_bfm_lib",
-                        "mby_gmm_bfm_lib",
-                        "mby_gcm_bfm_lib",
+                        ## jjgodine: removing bfm library compiles for now
+                        ##  "mby_tag_bfm_lib",
+                        ##  "mby_gmm_bfm_lib",
+                        ##  "mby_gcm_bfm_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
                         "mby_ingress_env_lib",

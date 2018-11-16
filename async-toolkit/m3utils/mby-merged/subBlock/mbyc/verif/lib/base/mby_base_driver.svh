@@ -68,8 +68,7 @@ class mby_base_driver
    // -------------------------------------------------------------------------
    // Macro to register new class type
    // -------------------------------------------------------------------------
-   `uvm_component_param_utils_begin(mby_base_driver#(T_req, T_rsp, T_vif))
-   `uvm_component_utils_end
+   `uvm_component_utils(mby_base_driver#(T_req, T_rsp, T_vif))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
