@@ -102,16 +102,15 @@ object Fs2Application {
     private val emptyResponse: Any => Array[Byte] = _ => Array.empty[Byte]
 
     private def errorHandler: Pipe[F,Array[Byte],Array[Byte]] =
-      _.attempt.evalMap(
-        _.fold(
-          error => logger.error(
+      _.handleErrorWith { error =>
+        Stream.eval(
+          logger.error(
             s"""|Error occured: ${error.getMessage}
                 |${error.getStackTrace().map(_.toString).mkString("\n")}
                 |""".stripMargin
-          ).map(emptyResponse),
-          _.point[F]
-        )
-      )
+          )
+        ).map(emptyResponse)
+      }
 
     private def messageDispatcher: Pipe[F,Message,Array[Byte]] = {
       def stateTransition(stateTransition: StateT[F,RegistersState,Array[Byte]]): F[Array[Byte]] = for {
