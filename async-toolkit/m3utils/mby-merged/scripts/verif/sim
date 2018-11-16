@@ -422,7 +422,7 @@ sub run_bman {
     }
     # customized cmds for FC variants only
     if ($ace_model =~ /(fc_no_phy|fc_8_no_phy|fc_8)$/) {
-        $bman_custom_cmd = "bman -mc mby -s all +s bman.mby.genrtl.genrtl_gen_mby_mgm_lib -enable_incremental_scheduling";
+        $bman_custom_cmd = "bman -mc mby -s all +s bman.mby.genrtl.genrtl_gen_mby_mgm_lib -enable_incremental_scheduling $sched";
         &exit_on_failure(&run_system_cmd("$bman_custom_cmd ; bman -dut $dut_name $compile_flag $ace_model $sched -1c -ace_model_name $ace_model $upf_dut_type -1c- $bman_add_opts $bman_args", "bman PASSED"));
     } else {
         &exit_on_failure(&run_system_cmd("bman -dut $dut_name $compile_flag $ace_model $sched -1c -ace_model_name $ace_model $upf_dut_type -1c- $bman_add_opts $bman_args", "bman PASSED"));

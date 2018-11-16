@@ -31,6 +31,20 @@ $onecfg{Facet} = {
         dut => "mby",
         ace_model_name => "fc",
     },
+    implications => {
+        'ace_model_name=fc_8_no_phy' => {
+            dut => "fc_8_no_phy",
+            ace_model_name  => "fc_8_no_phy",
+        },
+        'ace_model_name=fc_8_phy' => {
+            dut => "fc_8_phy",
+            ace_model_name  => "fc_8_phy",
+        },
+        'ace_model_name=fc_no_phy' => {
+            dut => "fc_no_phy",
+            ace_model_name  => "fc_no_phy",
+        },
+    },
 };
 
 ######################################################################
