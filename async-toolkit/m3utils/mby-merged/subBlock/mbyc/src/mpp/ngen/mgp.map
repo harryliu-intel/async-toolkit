@@ -67,7 +67,8 @@ egr$y$_mc_table1                >> egr_mc_table1
 egr$y$_ppestm                   >> egr_ppestm
 
 igr$y$_vp_tx_pfc_xoff           >> igr_vp_tx_pfc_xoff
-rxppe$y$_ppestm                 >> rxppe_ppestm
+rxppe$y$_ppestm0                >> rxppe_ppestm0
+rxppe$y$_ppestm1                >> rxppe_ppestm1
 
 mim$x$_rd0                      >> mim0_rd0
 mim$x$_rd1                      >> mim0_rd1
