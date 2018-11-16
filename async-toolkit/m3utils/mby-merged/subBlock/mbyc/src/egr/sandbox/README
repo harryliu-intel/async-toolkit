@@ -1,3 +1,6 @@
+# REquired for sandbox to run properly:
+source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh -w $cwd
+osetup vcsmx
 
 # EGR Sandbox usage:
 
