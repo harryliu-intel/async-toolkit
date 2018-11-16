@@ -22,7 +22,7 @@ IMPORT MbyModelC;
 
 <*FATAL Thread.Alerted*>
 
-CONST Usage = "[-ql|-quitlast] [-n[orepl]] [-m[odel] hlp|mby] [-ip|-infopath <info path>] [-if|-infofile <info filename>] [<scheme src> ...] [-reflect]";
+CONST Usage = "[-ql|-quitlast] [-n[orepl]] [-m[odel] hlp|mby] [-ip|-infopath <info path>] [-if|-infofile <info filename>] [-reflect] [<scheme src> ...]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN
