@@ -7,11 +7,9 @@ import scala.collection.immutable.BitSet
 object ppe {
 
 //scalastyle:on
-  class PortIndex(val p: Int) extends AnyVal
+  case class Port(index: Int)
 
   class SourcePortMask(l: Long) {  val bs = BitSet(l.toInt)  }
-
-  type EplRxFlags = Int
 
   class L3Domain(val d: Int) extends AnyVal
 

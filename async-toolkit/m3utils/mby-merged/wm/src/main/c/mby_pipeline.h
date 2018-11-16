@@ -5,7 +5,6 @@
 #ifndef MBY_PIPELINE_H
 #define MBY_PIPELINE_H
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
 #include "mby_common.h"
 #include "mby_parser.h"
 #include "mby_mapper.h"
@@ -23,25 +22,37 @@
 
 void RxPipeline
 (
-    mby_ppe_rx_top_map      * const rx_top_map,
-    mby_shm_map             * const shm_map,
-    mbyRxMacToParser  const * const mac2par,
-    mbyRxStatsToRxOut       * const rxs2rxo
+    mby_ppe_rx_top_map       * const rx_top_map,
+    mby_shm_map              * const shm_map,
+    mbyRxMacToParser   const * const mac2par,
+    mbyRxStatsToRxOut        * const rxs2rxo
 );
 
 void TxPipeline
 (
-    mby_ppe_tx_top_map      * const tx_top_map,
-    mbyTxInToModifier const * const txi2mod,
-    mbyTxStatsToTxMac       * const txs2mac
+    mby_ppe_tx_top_map       * const tx_top_map,
+    mbyTxInToModifier  const * const txi2mod,
+    mbyTxStatsToTxMac        * const txs2mac
 );
 
 // TODO all the following should be moved to the header files corresponding to
 // the C file where the function is actually implemented.
+
+//!
+//! \fn void Parser(mby_ppe_parser_map const * const parser_map,
+//!                 mbyRxMacToParser   const * const in,
+//!                 mbyParserToMapper        * const out)
+//!
+//! \brief Parse the incoming Ethernet packet header and extract info from it.
+//!
+//! \param parser_map Pointer to parser register map (read only).
+//! \param in         Pointer to input structure     (read only).
+//! \param out        Pointer to output structure.
+//!
 void Parser
 (
-    mby_ppe_parser_map          * const parser_map,
-    mbyRxMacToParser const      * const in,
+    mby_ppe_parser_map    const * const parser_map,
+    mbyRxMacToParser      const * const in,
     mbyParserToMapper           * const out
 );
 
@@ -56,7 +67,6 @@ void Classifier
 (
     mby_ppe_cgrp_a_map          * const cgrp_a_map,
     mby_ppe_cgrp_b_map          * const cgrp_b_map,
-    mby_ppe_entropy_map         * const entropy_map,
     mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
@@ -64,7 +74,8 @@ void Classifier
 
 void Hash
 (
-
+    mby_ppe_entropy_map         * const entropy_map,
+    fwd_hashing_cfg_r           * const fwd_hashing_cfg_reg,
     mbyClassifierToHash const   * const in,
     mbyHashToNextHop            * const out
 );
@@ -78,11 +89,11 @@ void NextHop
 
 void MaskGen
 (
-    mby_ppe_fwd_misc_map       * const fwd_misc,
-    mby_ppe_mst_glort_map      * const glort_map,
-    mby_ppe_cm_apply_map       * const cm_apply,
-    mbyNextHopToMaskGen  const * const in,
-    mbyMaskGenToTriggers       * const out
+    mby_ppe_fwd_misc_map        * const fwd_misc,
+    mby_ppe_mst_glort_map       * const glort_map,
+    mby_ppe_cm_apply_map        * const cm_apply,
+    mbyNextHopToMaskGen   const * const in,
+    mbyMaskGenToTriggers        * const out
 );
 
 void Triggers
@@ -90,7 +101,8 @@ void Triggers
     mby_ppe_trig_apply_map      * const trig_apply_map,
     mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
     mby_ppe_trig_usage_map      * const trig_usage_map,
-//  mby_ppe_fwd_misc_map        * const fwd_misc_map,
+    mby_ppe_fwd_misc_map        * const fwd_misc_map,
+    mby_ppe_mapper_map          * const mapper_map,
     mbyMaskGenToTriggers  const * const in,
     mbyTriggersToCongMgmt       * const out
 );

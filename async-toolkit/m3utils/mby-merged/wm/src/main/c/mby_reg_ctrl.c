@@ -389,6 +389,7 @@ static inline fm_bool isAddrMatched(fm_uint32 addr, fm_uint mask, fm_uint result
 		 * matching the correct entry
 		 */
 		// TODO still makes sense for MBY at all?
+#if 0
 		/* 0xFFF3F807, 0x3320000 FFU_HASH_CAM */
 		if (((addr & 0xFFF3F800) == MBY_FFU_HASH_CAM(0,0,0,0)) &&
 		    (mask != 0xFFF3F807))
@@ -397,6 +398,7 @@ static inline fm_bool isAddrMatched(fm_uint32 addr, fm_uint mask, fm_uint result
 			 * FFU_HASH_CAM entry */
 			return FALSE;
 		}
+#endif
 		return TRUE;
 	}
 

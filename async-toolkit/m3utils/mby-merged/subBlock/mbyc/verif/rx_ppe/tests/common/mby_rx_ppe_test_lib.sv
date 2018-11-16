@@ -36,25 +36,16 @@
 
 program mby_rx_ppe_test_lib;
 
-`ifdef XVM
-    import ovm_pkg::*;
-    import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
-    import sla_pkg::*;
-    import uvm_pkg::*;
+   import uvm_pkg::*;
 
     `include "uvm_macros.svh"
-    `include "slu_macros.svh"
 
-    import shdv_base_pkg::*;
-    import mby_rx_ppe_env_pkg::*;
-    import mby_wm_dpi_pkg::* ;
-    import eth_bfm_pkg::*;
-    import mby_ec_bfm_pkg::*;
-    import ec_env_pkg::*;
+   import shdv_base_pkg::*;
+   import mby_rx_ppe_env_pkg::*;
+   import mby_wm_dpi_pkg::* ;
+   import eth_bfm_pkg::*;
+   import mby_ec_bfm_pkg::*;
+   import ec_env_pkg::*;
 
     `define __INSIDE_MBY_RX_PPE_TEST_LIB
     `include "mby_rx_ppe_base_test.svh"
@@ -62,22 +53,14 @@ program mby_rx_ppe_test_lib;
 
     `undef __INSIDE_MBY_RX_PPE_TEST_LIB
 
-    // UVM Start test
-    initial begin
-        string testname;
+   // UVM Start test
+   initial begin
+      string testname;
 
-        if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
-`ifndef XVM
-            $display ("MBY_tb Started Running %s in UVM mode!\n",testname);
-        end
-        uvm_pkg::run_test(testname);
-`else
-        $display ("MBY_tb Started Running %s in XVM mode!\n",testname);
-    end
-    xvm_pkg::run_test("", testname,   xvm::EOP_UVM);
-
-`endif
-
+      if ($value$plusargs("UVM_TESTNAME=%s", testname  )) begin
+         $display ("MBY_tb Started Running %s in UVM mode!\n",testname);
+      end
+      uvm_pkg::run_test(testname);
 end
 
 endprogram

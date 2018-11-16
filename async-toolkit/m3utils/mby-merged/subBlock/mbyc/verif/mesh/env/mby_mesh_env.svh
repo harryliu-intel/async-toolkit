@@ -52,7 +52,6 @@ class mby_mesh_env extends shdv_base_env;
 
 
    `uvm_component_utils_begin(mby_mesh_env)
-       `uvm_field_object  (tb_cfg,                          UVM_ALL_ON)
    `uvm_component_utils_end
 
    //---------------------------------------------------------------------------
@@ -65,8 +64,6 @@ class mby_mesh_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function new(string name = "mby_mesh_env", uvm_component parent = null);
       super.new(name, parent);
-
-      config_type = "mby_mesh_tb_top_cfg";
 
    endfunction : new
 
@@ -117,9 +114,6 @@ class mby_mesh_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
-
-      if( _level == SLA_TOP ) begin
-      end
    endfunction: connect_phase
 
    //---------------------------------------------------------------------------
@@ -131,10 +125,6 @@ class mby_mesh_env extends shdv_base_env;
    //---------------------------------------------------------------------------
    function void end_of_elaboration_phase(uvm_phase phase);
       super.end_of_elaboration_phase(phase);
-
-      if (_level == SLA_TOP) begin
-      end
-
    endfunction: end_of_elaboration_phase
 
    //---------------------------------------------------------------------------

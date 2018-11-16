@@ -43,112 +43,112 @@ typedef class mby_rx_ppe_env;
 
 class mby_rx_ppe_ral_env extends sla_ral_env;
 
-    // Variable: cfg
-    // Handle to the Top Configuration
-    mby_rx_ppe_tb_top_cfg   cfg;
+   // Variable: cfg
+   // Handle to the Top Configuration
+   mby_rx_ppe_tb_top_cfg   cfg;
 
-    `ovm_component_utils(mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env)
+   `ovm_component_utils(mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env)
 
-    // ------------------------------------------------------------------------
-    //  Constructor: new
-    //
-    //  Arguments:
-    //  name     - Rx_ppe TOP RAL environment object name.
-    //  parent   - Component parent object.
-    //  hdl_path - String - HDl Path name.
-    // ------------------------------------------------------------------------
-    function new(string name = "mby_rx_ppe_ral_env", ovm_component parent = null, string hdl_path = "");
-        super.new(name, parent, hdl_path);
-    endfunction: new
+   // ------------------------------------------------------------------------
+   //  Constructor: new
+   //
+   //  Arguments:
+   //  name     - Rx_ppe TOP RAL environment object name.
+   //  parent   - Component parent object.
+   //  hdl_path - String - HDl Path name.
+   // ------------------------------------------------------------------------
+   function new(string name = "mby_rx_ppe_ral_env", ovm_component parent = null, string hdl_path = "");
+      super.new(name, parent, hdl_path);
+   endfunction: new
 
-    // ------------------------------------------------------------------------
-    //  Function: connect
-    //  create the EC RAL environment object.
-    // ------------------------------------------------------------------------
-    virtual function void           connect();
-        mby_rx_ppe_env env;
-        super.connect();
+   // ------------------------------------------------------------------------
+   //  Function: connect
+   //  create the EC RAL environment object.
+   // ------------------------------------------------------------------------
+   virtual function void           connect();
+      mby_rx_ppe_env env;
+      super.connect();
 
-        $cast(env, this.get_slu_tb_env_parent());
-        cfg = env.get_tb_cfg();
+      $cast(env, this.get_slu_tb_env_parent());
+      cfg = env.get_tb_cfg();
 
-        this.set_variant_check(1'b0);
-        this.set_bit_blasting(1);
-        
-    endfunction: connect
+      this.set_variant_check(1'b0);
+      this.set_bit_blasting(1);
 
-    // ------------------------------------------------------------------------
-    //  Function: end_of_elaboration
-    //  Set the Ral sequence type.
-    // ------------------------------------------------------------------------
-    virtual function void end_of_elaboration();
-        super.end_of_elaboration();
-        if (_level == SLA_TOP) begin
-        //set_ral_seq("crk_oc_seq_pkg::crk_ral_csr_chain_seq", "frontdoor");
-        //set_ral_seq("crk_oc_seq_pkg::crk_ral_csr_chain_seq", "FRONTDOOR");
-        end
-    endfunction: end_of_elaboration
+   endfunction: connect
 
-    // ------------------------------------------------------------------------
-    //  Function: set_ral_seq
-    //  Custom function for register frontdoor sequence as all frontdoor sequence
-    //  supports both read and write
-    //
-    //  Arguments:
-    //  seq_name    -  Ral sequence name
-    //  access_type -  Ral Access Type
-    // ------------------------------------------------------------------------
-    virtual function void set_ral_seq(string seq_name, string access_type);
-        slu_tb_env env;
-        bit rc;
+   // ------------------------------------------------------------------------
+   //  Function: end_of_elaboration
+   //  Set the Ral sequence type.
+   // ------------------------------------------------------------------------
+   virtual function void end_of_elaboration();
+      super.end_of_elaboration();
+      if (_level == SLA_TOP) begin
+      //set_ral_seq("crk_oc_seq_pkg::crk_ral_csr_chain_seq", "frontdoor");
+      //set_ral_seq("crk_oc_seq_pkg::crk_ral_csr_chain_seq", "FRONTDOOR");
+      end
+   endfunction: end_of_elaboration
 
-        rc = $cast(env, this.get_parent());
-        `slu_assert(rc, ("%-s : Unable to add sequencer agent to top SLA_TB_ENV", get_type_name()))
+   // ------------------------------------------------------------------------
+   //  Function: set_ral_seq
+   //  Custom function for register frontdoor sequence as all frontdoor sequence
+   //  supports both read and write
+   //
+   //  Arguments:
+   //  seq_name    -  Ral sequence name
+   //  access_type -  Ral Access Type
+   // ------------------------------------------------------------------------
+   virtual function void set_ral_seq(string seq_name, string access_type);
+      slu_tb_env env;
+      bit rc;
 
-        set_frontdoor_seq_type(access_type, "read",  seq_name);
-        set_frontdoor_seq_type(access_type, "write", seq_name);
-    endfunction: set_ral_seq
+      rc = $cast(env, this.get_parent());
+      `slu_assert(rc, ("%-s : Unable to add sequencer agent to top SLA_TB_ENV", get_type_name()))
 
-    // ------------------------------------------------------------------------
-    //  Function: get_addr_val
-    //
-    //  Arguments:
-    //  access_path -  Access Path definition
-    //  r           -  This is the sla_ral_reg
-    // ------------------------------------------------------------------------
-    virtual function sla_ral_addr_t get_addr_val(sla_ral_access_path_t access_path, sla_ral_reg r);
-        if(access_path == "primary") begin
-            // Use space to define how to calculate the address
-            case(r.get_space())
-                "CFG" : return(r.get_space_addr("CFG") | (r.get_func_num() <<16) | (r.get_dev_num() <<19) | (r.get_bus_num() <<24));
-                "MEM" : begin
-                    if(r.base_addr_reg !== null) begin
-                        return(r.get_base_addr_val() + r.get_space_addr("MEM"));
-                    end
-                    else begin                            // Fixed address register don't have BAR
-                        return(r.get_space_addr("MEM"));
-                    end
-                end
-                "IO" :begin
-                    if(r.base_addr_reg !== null) begin    // IO BAR bit 0 is 1. We need to clear the LSB bit of the BAR
-                        sla_ral_data_t tmp_addr;
-                        tmp_addr = r.get_base_addr_val();
-                        tmp_addr[0:0] = 1'b0;              // init with zero the RTE
-                        return (tmp_addr  + r.get_space_addr("IO"));
-                    end
-                    else begin                            // Fixed address register don't have BAR
-                        return(r.get_space_addr("IO"));
-                    end
-                end
-            endcase // case(r.get_space())
-        end
-        else if (access_path == "sideband") begin
-            return(r.get_space_addr("MSG"));
-        end
-        else begin
-            ovm_report_fatal (get_name(), $psprintf("Unsupport access type %s",access_path));
-        end
-    endfunction: get_addr_val
+      set_frontdoor_seq_type(access_type, "read",  seq_name);
+      set_frontdoor_seq_type(access_type, "write", seq_name);
+   endfunction: set_ral_seq
+
+   // ------------------------------------------------------------------------
+   //  Function: get_addr_val
+   //
+   //  Arguments:
+   //  access_path -  Access Path definition
+   //  r           -  This is the sla_ral_reg
+   // ------------------------------------------------------------------------
+   virtual function sla_ral_addr_t get_addr_val(sla_ral_access_path_t access_path, sla_ral_reg r);
+      if(access_path == "primary") begin
+         // Use space to define how to calculate the address
+         case(r.get_space())
+            "CFG" : return(r.get_space_addr("CFG") | (r.get_func_num() <<16) | (r.get_dev_num() <<19) | (r.get_bus_num() <<24));
+            "MEM" : begin
+               if(r.base_addr_reg !== null) begin
+                  return(r.get_base_addr_val() + r.get_space_addr("MEM"));
+               end
+               else begin                            // Fixed address register don't have BAR
+                  return(r.get_space_addr("MEM"));
+               end
+            end
+            "IO" :begin
+               if(r.base_addr_reg !== null) begin    // IO BAR bit 0 is 1. We need to clear the LSB bit of the BAR
+                  sla_ral_data_t tmp_addr;
+                  tmp_addr = r.get_base_addr_val();
+                  tmp_addr[0:0] = 1'b0;              // init with zero the RTE
+                  return (tmp_addr  + r.get_space_addr("IO"));
+               end
+               else begin                            // Fixed address register don't have BAR
+                  return(r.get_space_addr("IO"));
+               end
+            end
+         endcase // case(r.get_space())
+      end
+      else if (access_path == "sideband") begin
+         return(r.get_space_addr("MSG"));
+      end
+      else begin
+         ovm_report_fatal (get_name(), $psprintf("Unsupport access type %s",access_path));
+      end
+   endfunction: get_addr_val
 
 endclass: mby_rx_ppe_ral_env
 

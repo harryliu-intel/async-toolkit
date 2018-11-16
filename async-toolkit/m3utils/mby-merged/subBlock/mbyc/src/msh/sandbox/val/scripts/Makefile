@@ -9,7 +9,8 @@
 # Directories
 ################################################################################
 TBROOT       := $(shell pwd)
-LOGICROOT    ?= $(shell pwd | sed 's/\/sandbox\/val//')
+LOGICROOT    ?= $(shell pwd | sed 's/\/msh\/sandbox\/val//')
+#LOGICROOT    ?= $(shell pwd | sed 's/\/sandbox\/val//')
 #SL2_LIB      ?= $(shell ToolConfig.pl get_tool_var ipconfig/sl2_library INC_PATH)
 #SL2_LIB_IP16 ?= $(shell ToolConfig.pl get_tool_var ipconfig/sl2lib_ip16 INC_PATH)
 #SVA_LIB      ?= $(shell ToolConfig.pl get_tool_var sva_lib INC_PATH)
@@ -18,7 +19,8 @@ SL2_LIB_IP16 ?= /p/hdk/rtl/ip_models/shdk74/sl2lib_ip16/sl2lib_ip16-srvr10nm-lat
 SVA_LIB      ?= /p/hdk/rtl/cad/x86-64_linux26/dt/sva_lib/8.1/SVA_LIB
 VCS_HOME     ?= /p/hdk/rtl/cad/x86-64_linux26/synopsys/vcsmx/L-2016.06-SP2-7
 VCS_TARGET_ARCH ?= suse64
-export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME VCS_TARGET_ARCH
+ASSERT_LIB   ?= /p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64
+export LOGICROOT TBROOT SL2_LIB SL2_LIB_IP16 SVA_LIB VCS_HOME VCS_TARGET_ARCH ASSERT_LIB
 
 ################################################################################
 # Other project-related options
@@ -106,7 +108,7 @@ BUILD_OPTS += -sverilog +systemverilogext+.v+.sv+.svh+.sva -M -Mupdate -PP \
 #              +vcs+lic+wait +notimingcheck -Mdir=$(MDIR) -o $(BINDIR)/simv \
 #              -l $(BINDIR)/compile.log $(BUILD_USER) -bfl $(BINROOT)/$(DUT_FILE_LIST_NAME)
 
-build_%: $(TBROOT)/tests/%.sv
+build_%: mshnode $(TBROOT)/tests/%.sv
 	@# Builds monolithic simulator (RTL + test) in bin/$(BINDIR)/test_<test>
 	@# VCS version set in VCS_HOME
 	@# Mdir set in MDIR
@@ -115,10 +117,16 @@ build_%: $(TBROOT)/tests/%.sv
 	$(VCS_HOME)/bin/vcs $(strip $(BUILD_OPTS)) $(TBROOT)/tests/$*.sv
 	cat $(BINROOT)/*.bfl | $(TBROOT)/scripts/create_rtl_list.pl > $(BINROOT)/rtl_list.tcl
 
+mshnode:
+	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val clean
+	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val mgm_mem
+
+
 .PHONY : clean realclean
 clean:
 	@# Removes $(BINROOT)
 	rm -rf $(BINROOT)
+	$(MAKE) -C $(LOGICROOT)/msh_node/sandbox/val clean
 realclean : clean
 	@# Removes $(RUNROOT) and $(URG_REPORTDIR)
 	rm -rf $(RUNROOT)

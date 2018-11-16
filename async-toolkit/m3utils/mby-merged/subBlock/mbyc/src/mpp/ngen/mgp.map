@@ -1,6 +1,8 @@
 // Placeholder
 
 $y = $iteration;
+$x = $y * 2;  // 0,2
+$z = $x + 1;  // 1,3
 
 //-- Break out multi-dimensional arrays.
 \{grp_a$y$_rx0_data_w_ecc[71:0], grp_a$y$_rx1_data_w_ecc[71:0], grp_a$y$_rx2_data_w_ecc[71:0], grp_a$y$_rx3_data_w_ecc[71:0], grp_a$y$_rx4_data_w_ecc[71:0], grp_a$y$_rx5_data_w_ecc[71:0], grp_a$y$_rx6_data_w_ecc[71:0], grp_a$y$_rx7_data_w_ecc[71:0]\}  >> grp_a_rx_data_w_ecc
@@ -12,7 +14,6 @@ $y = $iteration;
 \{grp_d$y$_rx0_data_w_ecc[71:0], grp_d$y$_rx1_data_w_ecc[71:0], grp_d_rx2$y$_data_w_ecc[71:0], grp_d$y$_rx3_data_w_ecc[71:0], grp_d$y$_rx4_data_w_ecc[71:0], grp_d$y$_rx5_data_w_ecc[71:0], grp_d$y$_rx6_data_w_ecc[71:0], grp_d$y$_rx7_data_w_ecc[71:0]\}  >> grp_d_rx_data_w_ecc
 
 \{igr$y$_vp_rx0_data_w_ecc[71:0], igr$y$_vp_rx1_data_w_ecc[71:0], igr$y$_vp_rx2_data_w_ecc[71:0], igr$y$_vp_rx3_data_w_ecc[71:0], igr$y$_vp_rx4_data_w_ecc[71:0], igr$y$_vp_rx5_data_w_ecc[71:0], igr$y$_vp_rx6_data_w_ecc[71:0], igr$y$_vp_rx7_data_w_ecc[71:0]\}  >> igr_vp_rx_data_w_ecc
-
 
 grp_a$y$_rx_data_valid       >> grp_a_rx_data_valid                
 grp_a$y$_rx_ecc              >> grp_a_rx_ecc                       
@@ -50,26 +51,151 @@ igr$y$_vp_rx_flow_control_tc    >> igr_vp_rx_flow_control_tc
 igr$y$_vp_rx_metadata           >> igr_vp_rx_metadata                        
 igr$y$_vp_rx_port_num           >> igr_vp_rx_port_num                        
 igr$y$_vp_rx_time_stamp         >> igr_vp_rx_time_stamp                      
-egr$y$_ahb_if                   >> egr_ahb_if                                
-ahb$y$_rxppe_if                 >> ahb_rx_ppe_if                         
-ahb$y$_txppe0_if                >> ahb_txppe0_if                         
-ahb$y$_txppe1_if                >> ahb_txppe1_if                         
-grp_a$y                      >> egr_epl0_if                               
-grp_b$y                      >> egr_epl1_if                               
-grp_c$y                      >> egr_epl2_if                               
-grp_d$y                      >> egr_epl3_if                               
-glb$y$_rxppe_if                 >> glb_rx_ppe_if                         
-glb$y$_txppe0_if                >> glb_txppe0_if                         
-glb$y$_txppe1_if                >> glb_txppe1_if                         
-egr$y$_mc_table_if0             >> egr_mc_table_if0                          
-egr$y$_mc_table_if1             >> egr_mc_table_if1                          
-egr$y$_pod_if                   >> egr_pod_if                                
-egr$y$_ppestm_if                >> egr_ppestm_if
-egr$y$_smm_readarb_if           >> egr_smm_readarb_if                        
-egr$y$_smm_writearb_if          >> egr_smm_writearb_if                       
-egr$y$_statsmgmt_if             >> egr_statsmgmt_if                          
-egr$y$_tagring_if               >> egr_tagring_if                            
-egr$y$_vp_if0                   >> egr_vp_if0                                
-egr$y$_vp_if1                   >> egr_vp_if1                                
+egr$y$_ahb                      >> egr_ahb                                   
+ahb$y$_rxppe                    >> ahb_rxppe                            
+ahb$y$_txppe0                   >> ahb_txppe0                            
+ahb$y$_txppe1                   >> ahb_txppe1                            
+grp_a$y                         >> egr_epl0                                  
+grp_b$y                         >> egr_epl1                                  
+grp_c$y                         >> egr_epl2                                  
+grp_d$y                         >> egr_epl3                                  
+glb$y$_rxppe                    >> glb_rxppe                            
+glb$y$_txppe0                   >> glb_txppe0                         
+glb$y$_txppe1                   >> glb_txppe1                         
+egr$y$_mc_table0                >> egr_mc_table0                          
+egr$y$_mc_table1                >> egr_mc_table1                          
+egr$y$_ppestm                   >> egr_ppestm
+
 igr$y$_vp_tx_pfc_xoff           >> igr_vp_tx_pfc_xoff
-rxppe$y$_ppestm_if              >> rx_ppe_ppe_stm_if
+rxppe$y$_ppestm0                >> rxppe_ppestm0
+rxppe$y$_ppestm1                >> rxppe_ppestm1
+
+mim$x$_rd0                      >> mim0_rd0
+mim$x$_rd1                      >> mim0_rd1
+mim$x$_rd2                      >> mim0_rd2
+mim$z$_rd0                      >> mim1_rd0
+mim$z$_rd1                      >> mim1_rd1
+mim$z$_rd2                      >> mim1_rd2
+mim$x$_wr0                      >> mim0_wr0
+mim$x$_wr1                      >> mim0_wr1
+mim$x$_wr2                      >> mim0_wr2
+mim$z$_wr0                      >> mim1_wr0
+mim$z$_wr1                      >> mim1_wr1
+mim$z$_wr2                      >> mim1_wr2
+
+\{mpp_id[2:0],1'b$y\}                           >> mgp_id
+
+// Tag Ring
+for ($j =0; $j <16; $j++) {
+ if ($y eq 0) {
+   for ($k =0; $k <2; $k++) {
+      mpp_tagring_in_dn_$j$_$k           >> tagring_in_dn_$j$_$k
+      mpp_tagring_out_up_$j$_$k          >> tagring_out_up_$j$_$k
+      mgp_tagring_up_$j$_$k              >> tagring_in_up_$j$_$k
+      mgp_tagring_dn_$j$_$k              >> tagring_out_dn_$j$_$k
+   }
+ }
+
+ if ($y eq 1) {
+   for ($k =0; $k <2; $k++) {
+      mpp_tagring_in_up_$j$_$k           >> tagring_in_dn_$j$_$k
+      mpp_tagring_out_dn_$j$_$k          >> tagring_out_up_$j$_$k
+      mgp_tagring_dn_$j$_$k              >> tagring_in_up_$j$_$k
+      mgp_tagring_up_$j$_$k              >> tagring_out_dn_$j$_$k
+   }
+ }
+}
+
+// Dequeue Ring
+for ($j =0; $j <8; $j++) {
+ if ($y eq 0) {
+   for ($k =0; $k <2; $k++) {
+      mpp_dqring_in_$j$_$k              >> dqring_in_dn_$j$_$k
+                                        >> dqring_out_up_$j$_$k
+      mgp_dqring_up_$j$_$k              >> dqring_in_up_$j$_$k
+      mgp_dqring_dn_$j$_$k              >> dqring_out_dn_$j$_$k
+   }
+ }
+
+ if ($y eq 1) {
+   for ($k =0; $k <2; $k++) {
+      \{24'b0\}                         >> dqring_in_dn_$j$_$k
+      mpp_dqring_out_$j$_$k          >> dqring_out_up_$j$_$k
+      mgp_dqring_dn_$j$_$k              >> dqring_in_up_$j$_$k
+      mgp_dqring_up_$j$_$k              >> dqring_out_dn_$j$_$k
+   }
+ }
+}
+
+// MultiCast Tag Ring
+ if ($y eq 0) {
+   for ($k =0; $k <4; $k++) {
+      //mpp_mctagring_in_dn_$k$            >> mctagring_in_dn_$k$
+      \{69'b0\}                            >> mctagring_in_dn_$k$
+      mpp_mctagring_out_$k$                >> mctagring_out_up_$k$
+      mgp_mctagring_up_$k$                 >> mctagring_in_up_$k$
+      mgp_mctagring_dn_$k$                 >> mctagring_out_dn_$k$
+   }
+ }
+
+ if ($y eq 1) {
+   for ($k =0; $k <4; $k++) {
+      mpp_mctagring_in_$k$                 >> mctagring_in_dn_$k$   
+      //mpp_mctagring_out_dn_$k$           >> mctagring_out_up_$k$   
+                                           >> mctagring_out_up_$k$   
+      mgp_mctagring_dn_$k$                 >> mctagring_in_up_$k$   
+      mgp_mctagring_up_$k$                 >> mctagring_out_dn_$k$   
+   }
+ }
+
+// Pod Ring
+ if ($y eq 0) {
+      mpp_podring_in_dn                    >> podring_in_dn
+      mpp_podring_out_up                   >> podring_out_up
+      mgp_podring_up                       >> podring_in_up
+      mgp_podring_dn                       >> podring_out_dn
+
+      mpp_podring_stall_in_dn              >> podring_stall_in_dn
+      mpp_podring_stall_out_up             >> podring_stall_out_up
+      mgp_podring_stall_up                 >> podring_stall_in_up
+      mgp_podring_stall_dn                 >> podring_stall_out_dn
+ }
+
+ if ($y eq 1) {
+      mpp_podring_in_up                    >> podring_in_dn   
+      mpp_podring_out_dn                   >> podring_out_up   
+      mgp_podring_dn                       >> podring_in_up   
+      mgp_podring_up                       >> podring_out_dn   
+
+      mpp_podring_stall_in_up              >> podring_stall_in_dn   
+      mpp_podring_stall_out_dn             >> podring_stall_out_up   
+      mgp_podring_stall_dn                 >> podring_stall_in_up   
+      mgp_podring_stall_up                 >> podring_stall_out_dn   
+ }
+
+// Mirror Pod ring
+ if ($y eq 0) {
+      mpp_mrpodring_in_dn                    >> mrpodring_in_dn
+      mpp_mrpodring_out_up                   >> mrpodring_out_up
+      mgp_mrpodring_up                       >> mrpodring_in_up
+      mgp_mrpodring_dn                       >> mrpodring_out_dn
+
+      mpp_mrpodring_stall_in_dn              >> mrpodring_stall_in_dn
+      mpp_mrpodring_stall_out_up             >> mrpodring_stall_out_up
+      mgp_mrpodring_stall_up                 >> mrpodring_stall_in_up
+      mgp_mrpodring_stall_dn                 >> mrpodring_stall_out_dn
+ }
+
+ if ($y eq 1) {
+      mpp_mrpodring_in_up                    >> mrpodring_in_dn   
+      mpp_mrpodring_out_dn                   >> mrpodring_out_up   
+      mgp_mrpodring_dn                       >> mrpodring_in_up   
+      mgp_mrpodring_up                       >> mrpodring_out_dn   
+
+      mpp_mrpodring_stall_in_up              >> mrpodring_stall_in_dn   
+      mpp_mrpodring_stall_out_dn             >> mrpodring_stall_out_up   
+      mgp_mrpodring_stall_dn                 >> mrpodring_stall_in_up   
+      mgp_mrpodring_stall_up                 >> mrpodring_stall_out_dn   
+ }
+
+

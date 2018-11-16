@@ -1,11 +1,10 @@
 
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger
 
-import com.intel.cg.hpfd.csr.generated._
+import madisonbay.csr.all._
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.PipelineStage
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{PortIndex, TrafficClass, VID}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.{Port, TrafficClass, VID}
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.trigger.Trigger.{CgrpCondition, SourcePortCondition}
-import com.intel.cgr.hpfd.madisonbay.wm.switchwm.ppe.trigger.TriggerCfg
 
 import scala.collection.immutable.BitSet
 
@@ -35,7 +34,7 @@ object Trigger {
     val x: FrameState => Boolean
   }
 
-  class CgrpCondition(apply_map: mby_ppe_trig_apply_map.mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
+  class CgrpCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
 
     val tcc = apply_map.TRIGGER_CONDITION_CGRP(index)
     val condition = MatchCase(apply_map.TRIGGER_CONDITION_CFG(index).MATCH_CGRP().toInt)
@@ -49,10 +48,10 @@ object Trigger {
 
   }
 
-  class SourcePortCondition(apply_map: mby_ppe_trig_apply_map.mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
+  class SourcePortCondition(apply_map: mby_ppe_trig_apply_map, index: Int) extends TriggerCondition {
     lazy val spMask: BitSet =  BitSet.fromBitMask(Array[Long](apply_map.TRIGGER_CONDITION_RX(index).SRC_PORT_MASK()))
     val x: FrameState => Boolean = fs => {
-      spMask.contains(fs.rxPort.p)
+      spMask.contains(fs.rxPort.index)
     }
   }
 
@@ -65,13 +64,13 @@ object Trigger {
   /**
     * Simple case of trigger behaviors defined by a when a precedence group consists of a _single_ trigger
    */
-  class TriggerPipeline(csr: mby_ppe_rx_top_map.mby_ppe_rx_top_map, trigIdx: Int) extends PipelineStage[FrameState, FrameState] {
+  class TriggerPipeline(csr: mby_ppe_rx_top_map, trigIdx: Int) extends PipelineStage[FrameState, FrameState] {
 
     val ta_cfg1 = csr.trig_apply.TRIGGER_ACTION_CFG_1(trigIdx)
     val ta_cfg2 = csr.trig_apply.TRIGGER_ACTION_CFG_2(trigIdx)
 
     // (obviously needs to actually do filtering!
-    def lagFilter(dm: Set[PortIndex]): Set[PortIndex] = dm
+    def lagFilter(dm: Set[Port]): Set[Port] = dm
 
     /**
       * A forwarding action is special, in that it should halt further actions in this precedence groupo

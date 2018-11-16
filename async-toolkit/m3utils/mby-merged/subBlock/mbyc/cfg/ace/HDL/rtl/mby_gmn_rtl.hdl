@@ -1,0 +1,39 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+    ## need to remove the following
+    ## previous files need to be removed from here once there's a shared lib and gmm lib
+       "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_gmm_pkg.sv",
+       "src/gmm/gmn/top/rtl/mby_gmn.sv",
+     ],
+    
+    # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+       "src/shared/interfaces",
+       "src/shared/rtl",
+       "src/gmm/gmn/top/rtl",
+     ],
+    
+    # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+    
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+       "src/shared/interfaces",
+       "src/shared/rtl",
+       "src/gmm/gmn/top/rtl",
+     ],
+    
+    # Arbitrary VLOG options
+    -vlog_opts => [],
+    
+    
+    };
+

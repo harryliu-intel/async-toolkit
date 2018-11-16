@@ -22,11 +22,12 @@ class MACAddress(val addr: Long) extends AnyVal {
     * @see https://securewiki.ith.intel.com/display/25T/PP+Mask+Generation
     * @return
     */
-  def validSource: Boolean = !(
+  def nonValidSource: Boolean =
       (addr == 0) ||
       (addr == 0xffffff) ||
       ((addr & (0x1 << 40)) != 0) // multicast source if bit 40 set
-    )
+
+  def validSource: Boolean = !nonValidSource
 
   override def toString: String = {
     def b(x: Int): String = {

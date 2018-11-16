@@ -1,42 +1,20 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.csr
 
-import com.intel.cg.hpfd.csr.generated._
 import monocle.Optional
 import monocle.function.Index.index
+import madisonbay.csr.all._
 
 object ParserLenses {
 
-  def apply(idStage: Int): ParserLenses = new ParserLenses(idStage)
+  def portCfg(idPort: Int): Optional[mby_ppe_parser_map, parser_port_cfg_r] = mby_ppe_parser_map._PARSER_PORT_CFG composeOptional index(idPort)
 
-}
+  def extractCfg(extract_profile: Int, word: Int): Optional[mby_ppe_parser_map, parser_extract_cfg_r] = mby_ppe_parser_map._PARSER_EXTRACT_CFG composeOptional
+    index(extract_profile) composeLens parser_extract_cfg_rf._PARSER_EXTRACT_CFG composeOptional index(word)
 
-class ParserLenses(idStage: Int) {
+  def ptypeTcam(id: Int, extractionId: Int): Optional[mby_ppe_parser_map, parser_ptype_tcam_r] = mby_ppe_parser_map._PARSER_PTYPE_TCAM composeOptional
+    index(id) composeLens parser_ptype_tcam_rf._PARSER_PTYPE_TCAM composeOptional index(extractionId)
 
-  // key W[0], W[1]
-  def keyW(idRule: Int): Optional[mby_ppe_parser_map.mby_ppe_parser_map, parser_key_w_r.parser_key_w_r] =
-      _keyW composeLens
-        parser_key_w_rf.parser_key_w_rf._PARSER_KEY_W composeOptional
-        index(idRule)
-
-  // key State
-  def keyS(idRule: Int): Optional[mby_ppe_parser_map.mby_ppe_parser_map, parser_key_s_r.parser_key_s_r] =
-      _keyS composeLens
-        parser_key_s_rf.parser_key_s_rf._PARSER_KEY_S composeOptional
-        index(idRule)
-
-  // extract action
-  def actExt(idRule: Int): Optional[mby_ppe_parser_map.mby_ppe_parser_map, parser_ext_r.parser_ext_r] =
-      _actExt composeLens
-        parser_ext_rf.parser_ext_rf._PARSER_EXT composeOptional
-        index(idRule)
-
-  private val _keyW: Optional[mby_ppe_parser_map.mby_ppe_parser_map, parser_key_w_rf.parser_key_w_rf] =
-      mby_ppe_parser_map.mby_ppe_parser_map._PARSER_KEY_W composeOptional index(idStage)
-
-  private val _keyS: Optional[mby_ppe_parser_map.mby_ppe_parser_map, parser_key_s_rf.parser_key_s_rf] =
-      mby_ppe_parser_map.mby_ppe_parser_map._PARSER_KEY_S composeOptional index(idStage)
-
-  private val _actExt: Optional[mby_ppe_parser_map.mby_ppe_parser_map, parser_ext_rf.parser_ext_rf] =
-      mby_ppe_parser_map.mby_ppe_parser_map._PARSER_EXT composeOptional index(idStage)
+  def ptypeRam(id: Int, extractionId: Int): Optional[mby_ppe_parser_map, parser_ptype_ram_r] = mby_ppe_parser_map._PARSER_PTYPE_RAM composeOptional
+    index(id) composeLens parser_ptype_ram_rf._PARSER_PTYPE_RAM composeOptional index(extractionId)
 
 }

@@ -8,729 +8,502 @@
 
 static fm_uint16 lookUpPearsonHash(const fm_uint16 key)
 {
-    static const fm_byte table[] =
+    if (key > 0xfff)
     {
-        11,  7,  4,  6,  0, 10,  3,  5,
-        13, 14,  1,  2, 15, 12,  9,  8,
-         3,  6,  7,  5, 11,  2, 10,  0,
-        12, 15,  1,  4, 14, 13,  9,  8,
-        12,  0,  8, 11, 15,  7, 13,  1,
-         9,  4, 14,  5,  6,  2, 10,  3,
-         8,  3,  9, 15, 13,  7, 11, 14,
-        12,  2,  6,  0,  5, 10,  1,  4,
-         5,  1, 13,  7,  9, 10,  0,  6,
-         3,  8,  4, 11,  2, 12, 15, 14,
-         0, 14, 15,  9,  5, 13, 11,  3,
-         4,  6,  2,  1,  7, 12,  8, 10,
-         8,  0, 10,  1,  3,  7,  4, 11,
-         5, 12,  6, 14, 15, 13,  9,  2,
-         6,  2,  5,  7, 12,  8, 15,  1,
-        14, 11, 10, 13,  9,  0,  4,  3,
-        15,  4,  3,  1, 14, 11, 13,  9,
-        12, 10,  0,  5,  6,  8,  7,  2,
-        11, 15,  2, 13,  7,  1,  5,  4,
-         9,  8,  6,  0, 12,  3, 14, 10,
-         1, 13,  4, 14,  8,  3,  5,  9,
-         0, 11,  7, 10, 15,  6,  2, 12,
-        14,  3,  2, 11,  9, 13,  8,  7,
-         0,  1,  5, 12,  4,  6, 10, 15,
-         4,  7, 14,  9, 11,  8, 13,  2,
-        12, 15, 10,  1,  0,  6,  5,  3,
-         9,  1, 13,  7, 15, 12,  0,  2,
-         5, 14, 11,  4,  3, 10,  6,  8,
-         5,  6, 10, 12, 14,  7,  3, 13,
-         8,  4,  1, 11,  9, 15,  2,  0,
-         8,  5, 12,  7, 15, 11,  6,  9,
-         2,  4, 13,  3,  0, 10,  1, 14,
-         7, 14,  2,  6,  8,  0,  5, 15,
-        13,  3, 10,  9, 12, 11,  1,  4,
-         6, 15, 13,  9,  8,  1, 12,  0,
-         3, 11,  2, 10,  7,  4,  5, 14,
-         5,  4,  2,  8,  7,  6,  9,  0,
-        12,  3, 14, 10, 13, 11,  1, 15,
-         3, 11, 15,  5,  0,  1, 14,  9,
-         2,  8, 13, 10, 12,  7,  4,  6,
-         9,  6, 13, 11,  2,  4,  7,  8,
-         5,  1, 10, 15,  3, 14,  0, 12,
-         2,  4,  5,  9, 14, 12,  7, 10,
-        11,  6,  8,  3,  1, 13, 15,  0,
-         7,  3,  6, 10, 15, 13, 12,  1,
-         5,  4, 11,  8, 14,  2,  9,  0,
-         7,  1, 15,  4,  9, 14,  6,  3,
-        10, 12, 13,  8,  2,  0, 11,  5,
-         5, 15,  1,  0,  9, 14,  4, 10,
-        12,  6,  8,  2, 11,  7, 13,  3,
-         6,  5,  0, 11,  8,  1,  7, 10,
-         4,  3,  2, 13, 12,  9, 15, 14,
-        15,  2,  9,  3,  5,  8,  7,  1,
-         4, 12,  6, 14,  0, 11, 13, 10,
-        11,  2, 15,  6,  1,  5,  4, 14,
-        10,  8,  9, 12, 13,  3,  0,  7,
-         6,  2,  5, 12,  9, 14, 13, 10,
-         7,  0,  1, 11, 15,  4,  3,  8,
-         0,  5,  1,  9,  2,  7, 10, 11,
-        13, 12,  4,  8, 15,  3,  6, 14,
-         5, 15,  3,  9, 10,  2,  0,  6,
-        14, 11,  8,  1, 13,  7,  4, 12,
-         1, 10,  9, 14, 13,  2,  8,  5,
-        15,  7,  4, 12,  6, 11,  3,  0,
-         6,  7, 13, 14,  2,  9, 15,  3,
-        10,  1,  0, 12,  5, 11,  4,  8,
-        15,  0,  4, 11, 12,  1,  8,  5,
-        14,  7, 13,  3,  6, 10,  2,  9,
-        14,  5, 13,  9,  1,  7, 11, 15,
-         3,  0, 12,  8, 10,  4,  6,  2,
-        13,  1, 15, 11,  6,  2,  5,  4,
-         7,  3,  9,  0, 12, 10, 14,  8,
-        10, 15,  8,  0,  1, 11,  6, 12,
-         5, 14,  7,  4,  2,  3, 13,  9,
-        11,  8, 10,  2,  3,  0, 14, 13,
-         7,  1, 15,  5,  4,  6, 12,  9,
-        10,  7,  0,  4,  1, 12,  3,  5,
-        15, 14, 13,  9,  2,  6, 11,  8,
-        12,  5,  6,  1,  7,  8, 13, 11,
-         3, 15,  2, 10,  9,  0,  4, 14,
-         1, 13,  6,  2,  4, 14,  9,  3,
-         0, 12,  5, 11, 15,  8,  7, 10,
-         6,  1, 15,  0, 11,  3,  8, 12,
-        13,  5,  4, 14,  9,  7, 10,  2,
-        14,  8,  0,  6,  9,  7, 15, 10,
-        13,  2,  5,  4,  1, 12,  3, 11,
-         0,  8, 11, 13, 14,  4,  6,  3,
-         9, 10,  5,  2, 12,  1,  7, 15,
-         0, 10, 11,  8, 12, 14,  3, 15,
-         6,  7, 13,  1,  5,  2,  9,  4,
-         0, 12, 13, 15,  5,  4, 10,  2,
-         1,  8,  9,  6, 11, 14,  7,  3,
-        15,  5, 13, 12, 11,  6,  4,  8,
-         0, 14,  2,  1,  7, 10,  9,  3,
-         2,  1,  4, 12,  9, 10,  5,  6,
-        11,  3, 15,  8,  0,  7, 13, 14,
-        10,  2,  5, 11,  1,  4,  3,  6,
-        12, 15, 14,  0,  7, 13,  8,  9,
-         9, 13,  5, 12,  0, 11, 14,  6,
-         7,  8,  1, 10,  3, 15,  4,  2,
-        14,  8,  7,  0,  9,  4, 12,  1,
-        13,  3, 11,  2,  6, 10,  5, 15,
-        13, 10,  7,  5,  6,  1,  3,  0,
-         8, 14,  9,  2, 11,  4, 12, 15,
-         5,  4, 11, 10,  3, 13,  9,  1,
-        15,  2,  7,  6, 14, 12,  8,  0,
-         7, 14,  4,  1, 10,  0, 12, 13,
-         6,  2,  8,  5,  9,  3, 15, 11,
-         2,  6, 14,  0, 10,  4, 15,  8,
-         9,  7,  1, 12,  3,  5, 11, 13,
-         1, 12,  7,  2, 13, 10,  0, 15,
-         4,  6,  3,  5,  9,  8, 11, 14,
-        10, 12, 13,  6,  9, 11, 14,  0,
-         7,  1,  4, 15,  2,  8,  5,  3,
-         0, 12,  2,  5, 13,  9, 10,  4,
-        11,  8,  6,  7, 15,  1, 14,  3,
-         1, 14, 15, 10,  7,  0,  9,  3,
-        11,  5,  4, 12,  6, 13,  2,  8,
-         7,  2, 13,  8, 10,  5, 11,  6,
-         1,  4, 14, 12,  0, 15,  9,  3,
-         6, 12,  9,  0,  5,  2, 15,  4,
-         3,  8, 10,  1, 13, 11, 14,  7,
-        13,  9,  3, 15, 14,  7,  6, 11,
-         8,  0,  2, 10,  1,  4, 12,  5,
-         2,  5, 11,  8,  9,  0, 10, 12,
-        15,  1,  7,  3,  4,  6, 14, 13,
-        14,  1,  9, 13,  7, 11,  3, 15,
-         5, 12,  0,  4,  2,  6, 10,  8,
-         1,  3,  5, 10,  4,  9,  6,  7,
-        13,  8, 15,  2, 12,  0, 14, 11,
-         4,  9,  2,  3,  8,  1,  7,  5,
-        14, 13,  6, 10, 11,  0, 15, 12,
-         5, 14,  3, 10, 11,  6,  1, 12,
-         9,  7,  8,  2, 13,  0, 15,  4,
-        11, 14,  9,  8, 12,  5,  6, 13,
-        15,  7,  1, 10,  0,  2,  3,  4,
-        12,  6,  0,  1, 15,  7, 11, 13,
-        14,  9,  2,  3,  5,  8,  4, 10,
-         4, 12, 13, 10, 11,  2,  3,  7,
-        15,  9, 14,  1,  6,  0,  5,  8,
-        15,  6, 13,  4,  3,  5,  9,  8,
-        12, 14,  0,  7,  2, 11, 10,  1,
-         4, 15,  2,  5, 13,  3,  6, 14,
-         9,  1, 11, 10,  7,  8, 12,  0,
-         0,  5,  8,  1,  4, 13,  7,  9,
-        11, 10, 12,  6,  2,  3, 15, 14,
-         4,  6, 10, 15,  7,  2,  1,  3,
-         0,  8,  9,  5, 12, 11, 13, 14,
-        11, 12, 10,  0,  1,  6, 13, 14,
-         3,  7,  4,  8, 15,  5,  2,  9,
-         4, 13,  3,  2,  9, 10,  6,  0,
-         7, 14,  5,  1, 15,  8, 12, 11,
-        14, 13,  0,  9,  3,  1,  7,  5,
-         6,  2,  8, 10, 11,  4, 12, 15,
-         8,  3,  4,  0, 11,  2, 15,  5,
-         9, 14,  6, 12,  7, 13, 10,  1,
-         6,  1,  7,  2,  5, 15,  4, 10,
-         0, 14, 12, 11,  3, 13,  8,  9,
-        14,  1,  6, 10, 13,  5, 11,  0,
-        15,  8,  4, 12,  3,  2,  9,  7,
-        10, 13,  1, 14, 11, 15,  3,  5,
-         7,  8,  4, 12,  0,  9,  2,  6,
-         7,  6,  8, 13,  3,  1, 12,  9,
-         0,  2,  5,  4, 14, 10, 11, 15,
-         1,  4,  6,  2,  5,  0,  7,  9,
-         3, 11, 10,  8, 12, 15, 13, 14,
-         9,  4,  8,  3, 12, 13,  1,  5,
-         2,  7,  0, 10, 11, 15,  6, 14,
-         2,  9,  4,  3,  6, 14,  0, 10,
-         5,  8, 15, 12,  7, 11,  1, 13,
-         6,  5, 15, 11,  8, 10,  3,  9,
-         1, 12,  0,  2, 14,  4,  7, 13,
-         2,  9,  4, 12, 14,  3,  1, 10,
-         6, 11,  0, 15,  7,  5,  8, 13,
-         9, 11,  3,  1,  0,  7, 10, 14,
-        12, 13,  2,  8,  4, 15,  5,  6,
-        12,  9,  7,  1,  6, 14, 10,  2,
-        11, 13,  4,  0,  8,  5,  3, 15,
-         7,  2,  5,  4,  9, 10,  1, 12,
-        11,  8, 14, 15,  0,  6,  3, 13,
-        12,  9, 14, 15,  3,  7,  4, 10,
-         5,  1,  6, 13,  0,  2, 11,  8,
-        15,  6,  2, 11,  7, 14, 12,  3,
-         8,  9,  5, 13,  1, 10,  0,  4,
-        10,  7,  0,  8, 11,  9, 15, 13,
-        14,  5, 12,  1,  6,  3,  4,  2,
-         0,  7, 14,  3, 11,  9, 10, 13,
-         8,  2, 15,  6,  5,  4, 12,  1,
-         9,  8,  2, 15, 11,  7,  3, 13,
-         5,  4,  0, 10,  1, 12, 14,  6,
-         5, 13,  0,  8,  7,  9,  4,  1,
-         6,  3, 12, 14,  2, 15, 11, 10,
-         1,  3,  5,  6, 12,  8,  9,  4,
-         2, 10,  0, 14, 13, 11, 15,  7,
-         0,  5, 15,  8,  3, 12, 11, 14,
-         7,  4,  2,  9, 13, 10,  6,  1,
-         6, 11, 10,  0, 15,  2,  1,  9,
-         7,  4, 12, 13,  8,  3, 14,  5,
-        11,  5, 12,  1,  4, 15,  6, 10,
-        14,  3, 13,  7,  2,  9,  8,  0,
-        11,  2,  1, 10,  7,  3, 12,  5,
-         4,  0,  8, 13, 14,  6,  9, 15,
-         9,  1, 11, 15, 12,  0, 10,  6,
-         4,  3,  2,  8, 13,  7,  5, 14,
-        11, 10,  2,  0,  3, 12,  8,  7,
-         4,  9,  6,  1, 13, 14, 15,  5,
-        12,  4, 10, 13,  2,  6,  7, 14,
-        11,  3, 15,  1,  0,  8,  5,  9,
-         0, 13,  5,  6,  1, 15,  3,  9,
-        12,  4, 14,  2, 11, 10,  8,  7,
-        13,  1,  6,  5,  9, 12, 10,  3,
-        11, 15,  7,  4,  0,  8, 14,  2,
-        11, 12,  3,  9, 14, 13,  4, 15,
-         8,  7,  1, 10,  2,  5,  6,  0,
-         9, 15,  4, 12, 14,  1,  6, 11,
-         7,  5,  2, 10, 13,  3,  8,  0,
-        10, 13,  6,  1,  5,  2, 12,  0,
-         9,  4,  8, 11, 14, 15,  7,  3,
-        12, 14,  7,  1,  6,  8, 11,  4,
-         9, 13,  5, 10,  3,  2,  0, 15,
-        14, 11,  6,  0, 13,  5,  8,  2,
-         7,  9, 12, 15,  4,  3, 10,  1,
-         4, 14,  6,  3,  1,  2,  5, 13,
-        10,  9, 11, 15,  0,  7, 12,  8,
-         3,  7,  0, 15,  2,  8,  9, 10,
-        11, 14,  6,  1,  4,  5, 13, 12,
-         4,  0, 11,  8,  2,  5,  1, 13,
-        14,  7,  3, 10,  9, 15, 12,  6,
-         4, 12, 14,  1,  2, 11,  0,  5,
-        10,  7,  8, 15,  9, 13,  3,  6,
-         2,  9,  4,  5, 10,  8, 14,  3,
-         7, 13,  1,  6, 12,  0, 11, 15,
-        15,  2, 10,  6,  9,  4, 14,  7,
-         5, 13,  0, 11,  8,  1,  3, 12,
-        10,  3,  4, 11, 13,  2, 15,  6,
-         7,  0,  8, 14, 12,  5,  1,  9,
-         9,  4, 15, 13, 11, 12,  6,  7,
-        14,  1,  5,  2,  0, 10,  3,  8,
-        12, 15,  2,  1, 13,  8,  9,  6,
-         3,  5,  4, 14,  0, 10, 11,  7,
-         6,  9,  3,  0,  8,  7, 11,  5,
-         2, 13, 15, 10, 14, 12,  4,  1,
-        13, 10,  3, 11,  8,  7,  0,  2,
-         4, 15, 14,  6,  9,  5, 12,  1,
-        15, 11,  4,  1, 13,  6,  5,  3,
-         7,  2, 12,  0,  8,  9, 10, 14,
-         4,  8, 13,  9, 10, 14, 11,  3,
-         7,  1,  2,  0, 15,  6, 12,  5,
-         1,  0,  5,  4, 10, 15,  8, 13,
-        12,  9,  3,  6,  7,  2, 14, 11,
-         5,  0,  1,  6, 14, 15, 11,  9,
-         3, 10, 12,  8, 13,  4,  7,  2,
-        10,  8,  2, 13, 12, 14,  1,  3,
-         9, 15,  0,  4,  5,  7, 11,  6,
-         3,  4,  8,  1, 12,  7, 14,  5,
-        11,  2, 10, 13,  0, 15,  9,  6,
-        10,  5,  3,  7, 14,  0,  2,  9,
-        15,  4, 11,  8,  6, 12,  1, 13,
-         1, 13, 15,  8, 14,  2,  9,  7,
-         5,  6, 10,  3,  0,  4, 11, 12,
-        15,  0,  3, 11,  9,  5,  1, 12,
-         2, 13,  6,  8,  7, 10, 14,  4,
-        14,  7,  4, 15, 11, 13,  0,  1,
-         5,  3, 10, 12,  6,  9,  8,  2,
-         2,  0,  1, 13,  9,  4,  6,  7,
-        15, 10, 11,  8,  3, 14,  5, 12,
-         9,  8, 14,  4,  7, 15,  2,  3,
-         0,  5, 11, 10,  1,  6, 13, 12,
-         9, 14,  5,  2,  7,  3,  6, 10,
-         1, 13,  8, 15,  4, 12, 11,  0,
-        11,  8,  9,  2,  0,  4, 13, 14,
-         5,  6,  7, 15, 12, 10,  3,  1,
-         3, 10, 12,  1, 13,  4, 15,  2,
-         8, 11,  0,  7, 14,  6,  5,  9,
-        11,  0, 13,  1,  9, 10,  2, 12,
-        15,  6, 14,  3,  8,  7,  4,  5,
-        12,  7, 14, 15,  2,  3, 11,  1,
-         0,  4, 10,  5,  8, 13,  9,  6,
-         9, 10,  5, 13,  6,  0,  4, 12,
-         1,  7,  8, 15,  3, 14,  2, 11,
-         5,  9,  0,  2,  8,  4, 13,  6,
-        10,  7, 11,  1, 12, 14,  3, 15,
-         0,  7, 15,  2, 10,  3, 14,  6,
-        12, 11,  1,  9,  8,  5,  4, 13,
-         5, 13,  9,  0,  1,  8,  2,  7,
-        11, 14, 10,  6, 15,  3,  4, 12,
-         6, 10,  5,  3,  9, 11, 14,  2,
-         1,  8, 15,  0, 13,  4,  7, 12,
-         2,  4, 10,  6, 12,  3, 11, 15,
-         9, 14, 13,  7,  0,  8,  1,  5,
-         3,  4,  9,  5, 10, 13, 14,  8,
-         2, 11, 15,  6, 12,  0,  1,  7,
-         6, 13, 12, 10,  7,  0,  4,  8,
-         3,  2,  9,  1, 14,  5, 15, 11,
-         5, 13,  1,  3,  8,  2, 11,  0,
-        14, 15,  6, 12,  7,  9,  4, 10,
-         5,  1,  0, 15,  9, 10, 13,  8,
-         6,  7, 14,  2, 12, 11,  4,  3,
-        12,  0,  9, 14,  6,  8,  3, 10,
-        15,  2, 11,  1, 13,  4,  5,  7,
-        14,  3, 12, 10, 13,  5, 15,  6,
-         4,  1,  0,  9, 11,  2,  8,  7,
-        12,  8, 11,  7,  9,  4, 10,  0,
-         2,  5, 14,  6, 15,  1,  3, 13,
-         8, 14, 10,  2,  3, 12,  0,  1,
-        13,  7,  9,  4,  5,  6, 15, 11,
-        13,  0,  2, 15, 14,  5, 10, 11,
-         1,  9, 12,  6,  8,  4,  3,  7,
-         7,  4, 11,  1, 10,  2,  3,  9,
-        15, 14,  5,  6, 13,  0,  8, 12,
-         4,  0,  3, 13, 10, 11,  7, 12,
-         6,  9, 14, 15,  1,  2,  8,  5,
-         7, 13,  5, 15,  3,  9, 12,  4,
-        14,  2,  6,  8, 10, 11,  1,  0,
-         5,  7, 14,  0, 11, 15, 12,  3,
-         6, 13, 10,  2,  1,  4,  8,  9,
-         3, 14,  1,  0, 12,  7,  2,  9,
-        15, 11,  6, 13,  4,  8, 10,  5,
-         3,  4,  8, 15, 14, 12,  6,  5,
-        10,  2,  1,  7, 13,  0,  9, 11,
-         2,  6, 14,  5,  7,  4,  3,  1,
-        11,  9, 13, 10, 15,  8, 12,  0,
-         7,  4,  3, 11,  0,  9, 12, 14,
-         2,  6,  8, 10, 15,  1,  5, 13,
-         0,  7, 11,  6,  1,  4, 15,  5,
-         3, 13, 14, 10,  2, 12,  9,  8,
-        11, 15,  6,  1,  4,  5, 13,  9,
-        12, 14,  0,  7,  3, 10,  8,  2,
-        10, 15,  8,  1, 14,  4, 11,  0,
-         5, 12,  3, 13,  6,  2,  7,  9,
-        15,  7, 13,  2,  0,  3,  9, 14,
-         8, 12, 11,  4,  6,  1, 10,  5,
-         4,  6, 13,  1,  8, 14, 11,  9,
-         0,  2, 15, 12,  3, 10,  7,  5,
-        11, 12, 10,  0,  5, 14, 15,  1,
-         4,  9,  7, 13,  2,  3,  8,  6,
-         4,  3, 15,  6,  8,  2, 12,  9,
-         5, 14, 11,  0, 10,  7,  1, 13,
-        10,  8,  0,  5, 12, 14,  3,  9,
-        11,  4, 13,  2,  7,  6,  1, 15,
-        10,  9, 12,  8, 11,  4,  3, 14,
-         2,  0,  1,  6,  5, 15, 13,  7,
-         1,  6,  7, 10,  8,  0,  3,  5,
-        11, 13, 15,  2,  4, 14,  9, 12,
-         3,  7, 15,  1,  5,  8,  9, 12,
-        13, 11,  4, 14,  2,  0,  6, 10,
-         7,  5, 15, 14, 13,  0,  6, 12,
-         3,  1,  8,  2,  9,  4, 10, 11,
-        13, 15, 14,  1,  0,  9,  4,  7,
-         6, 11, 12,  2,  5,  8,  3, 10,
-        12,  7,  9,  1, 15,  0,  6, 13,
-         5,  4,  2, 11, 10,  3, 14,  8,
-         2,  0,  9,  1, 10,  7, 14, 11,
-         4,  6, 15, 13, 12,  5,  3,  8,
-         4, 11,  1,  2, 15,  7, 10, 14,
-        13,  5, 12,  8,  3,  6,  9,  0,
-        12,  6, 13,  7,  5, 11,  4,  2,
-        15,  0,  3,  9,  1,  8, 10, 14,
-         9,  1, 14,  6, 13,  5, 12,  4,
-         7, 10,  2, 15,  8, 11,  3,  0,
-         7,  3, 15, 10,  1,  5, 13, 11,
-         4,  9,  0, 12, 14,  6,  2,  8,
-        14,  7,  6, 11,  0,  9,  2, 13,
-        15,  5, 10,  4,  1,  3,  8, 12,
-         9, 15, 13, 14,  7,  3,  8,  4,
-         1, 10, 11,  6,  5,  0,  2, 12,
-        11, 12, 14,  4, 13, 15,  6,  5,
-         0,  8,  2,  3,  1, 10,  7,  9,
-        14,  1, 13,  3,  5,  0, 10, 15,
-        12,  2,  6,  9,  4,  7, 11,  8,
-        13,  0,  3,  7,  2,  8,  9, 15,
-        12, 10, 14,  1,  4,  6,  5, 11,
-         4,  5, 15,  7,  3,  6, 10, 11,
-         2,  9, 14,  1, 13, 12,  0,  8,
-         6,  3,  5, 13,  7, 10, 14,  2,
-         0,  4, 12,  1,  8,  9, 15, 11,
-        15, 12, 13, 10, 11,  2,  8,  1,
-         4, 14,  7,  0,  3,  6,  5,  9,
-        10,  9, 11,  4, 12,  0,  3,  1,
-         6, 14,  8,  7, 13,  5,  2, 15,
-         5,  3,  8,  9,  6, 11,  4, 15,
-        13,  7, 14,  2,  1, 12,  0, 10,
-         5,  9, 12, 15,  3,  0,  4, 10,
-        14,  1,  6,  2,  7, 13,  8, 11,
-         8, 15, 11,  4, 14, 12,  9,  3,
-         2,  5,  0,  1,  7, 10, 13,  6,
-         3,  0, 14,  6, 13,  2, 15, 12,
-         9,  7, 11,  4,  5, 10,  8,  1,
-         6, 10, 15, 12,  1,  0, 13,  7,
-         2,  4,  8,  5,  9, 14, 11,  3,
-        15,  6,  2,  5, 13, 11,  7,  4,
-         0,  8,  9,  1,  3, 14, 12, 10,
-         3,  1,  6,  9,  7,  4, 13, 11,
-         8, 14,  5,  2, 12,  0, 10, 15,
-         4,  9, 10, 11,  5,  8,  3,  7,
-        13, 15,  0,  6,  2, 14, 12,  1,
-         0,  5,  9, 12,  1, 10, 14,  6,
-         8, 13, 15,  3,  7, 11,  2,  4,
-         5, 15,  4, 11,  0,  1,  2,  3,
-         8, 10, 14, 13,  6,  9,  7, 12,
-         0,  3,  6, 11,  8,  9, 12,  1,
-         4, 13,  2, 14,  5, 15,  7, 10,
-         9,  2, 10,  7, 14,  4, 13, 11,
-         0,  6, 15, 12,  5,  1,  8,  3,
-         8, 12,  9, 10,  0,  4,  3, 14,
-        11,  1,  2,  5, 15,  7, 13,  6,
-         1,  9,  4, 11,  0,  8,  2, 15,
-         6, 14, 10,  7,  3, 12, 13,  5,
-         5,  0,  7,  3, 14, 11,  1,  9,
-         2,  6, 13, 12,  4, 15, 10,  8,
-         7,  4,  0,  8,  9,  2, 11, 14,
-        13, 12, 10, 15,  5,  6,  3,  1,
-         3,  6, 14,  4, 11, 13,  8, 15,
-         0,  9,  7,  2, 12,  5, 10,  1,
-         8, 10, 11,  7,  4, 14,  9, 12,
-         5,  0,  3, 13,  1,  2,  6, 15,
-         3,  5, 15,  0,  8,  2,  9, 10,
-         1,  6,  4, 11, 13, 12, 14,  7,
-        15,  1,  6,  7,  8, 14,  4, 10,
-        12,  9, 13,  0,  3, 11,  5,  2,
-        12,  5,  4, 15, 13, 10,  0,  9,
-         2, 14,  8, 11,  3,  6,  1,  7,
-         4,  5, 14,  1,  2, 13,  8,  3,
-        12, 11,  9, 10,  6,  0,  7, 15,
-        14, 11, 10,  3, 13,  6,  9,  5,
-        15,  0,  7, 12,  4,  2,  8,  1,
-        11, 14, 15,  9,  3,  7,  6, 10,
-         5,  4,  2, 12,  8, 13,  0,  1,
-         3,  1, 10,  6, 14, 12,  9,  7,
-         0, 15,  8,  5, 11,  4, 13,  2,
-        10, 15,  4,  3,  9, 13,  6,  1,
-         2,  8, 11, 12,  0,  7,  5, 14,
-         8,  9,  7,  6,  2, 11, 14,  4,
-        12, 13,  0,  5,  1,  3, 10, 15,
-         1,  6,  8, 14,  9, 15, 12, 13,
-         2,  5,  4, 11,  7,  0,  3, 10,
-         8, 10,  5,  6, 12, 11,  4,  0,
-        13,  7, 15,  1,  9,  3, 14,  2,
-         5,  1, 14,  9,  6, 10, 11,  2,
-         7, 15, 13,  0, 12,  8,  3,  4,
-        14,  7, 12,  5,  3, 10,  8, 15,
-         2, 11,  4,  1,  6, 13,  9,  0,
-        12,  0,  9,  2,  4,  8, 11,  5,
-        14, 10,  7,  1,  3,  6, 15, 13,
-        10,  8,  2,  5,  6, 13,  4,  0,
-        14, 12,  7,  3, 15,  9, 11,  1,
-         4, 14,  7,  1, 11,  2,  5,  3,
-        10,  0, 15, 13,  6, 12,  9,  8,
-        12,  7, 11,  8,  4, 13,  1,  0,
-         6, 15, 10,  3,  5,  2, 14,  9,
-         9,  4, 11, 13,  3, 14, 10,  8,
-        12,  5,  7,  6,  1,  0,  2, 15,
-        15, 10, 12,  9,  5,  8,  0,  6,
-         2, 14,  1,  7,  4, 11,  3, 13,
-        13, 14,  7,  5,  8,  9,  4, 15,
-        12,  6,  0, 11, 10,  1,  2,  3,
-         2,  3, 13,  4,  5,  1, 11, 12,
-         9,  6, 15, 10,  8,  7, 14,  0,
-        14,  8,  3,  6, 10, 13,  2, 15,
-         0,  4,  7,  9, 12, 11,  5,  1,
-         5,  4,  2,  1,  0,  3,  7, 13,
-        14,  8, 11, 10,  6, 15,  9, 12,
-        14,  7,  1,  3, 13, 12,  6,  8,
-         0,  9,  4, 11,  5,  2, 10, 15,
-        10,  1, 15,  5,  0, 13,  7,  2,
-         6,  9,  8, 12,  4,  3, 11, 14,
-         7,  4, 15,  2, 13, 10,  3, 12,
-         9, 14,  0,  8,  5, 11,  1,  6,
-        15,  7, 11,  6,  4,  0, 14,  2,
-        10,  8,  9,  5,  3, 12,  1, 13,
-         0,  2, 15,  7, 11,  1,  9, 10,
-         5, 14,  6, 12,  8,  3,  4, 13,
-         5,  7,  1, 13, 12,  9,  4, 11,
-         6, 15, 10,  8,  0, 14,  3,  2,
-         6,  1, 14,  3,  8, 10,  4,  5,
-         9, 12, 15, 11,  7,  2,  0, 13,
-         5,  9,  6,  4,  1, 10,  7,  3,
-        12,  0, 15, 13, 14, 11,  2,  8,
-        14,  7,  9,  8, 10,  2, 13,  5,
-         1, 15, 12,  6,  0, 11,  4,  3,
-        10,  0,  8, 11,  3, 15,  1, 14,
-         6,  2,  9,  7,  4, 12, 13,  5,
-         9,  7,  1, 15,  2,  6, 14,  8,
-         5,  3,  0, 12,  4, 11, 13, 10,
-         2,  8,  6,  3, 15,  7, 12,  4,
-        11, 10,  5,  1, 14, 13,  9,  0,
-         8, 10,  1,  6, 13, 11,  2, 14,
-         9,  7, 15,  3,  5,  0, 12,  4,
-         6,  5, 11,  0,  8,  1, 13,  2,
-         4,  7, 15, 10, 12,  3, 14,  9,
-        12, 11,  1,  0,  2,  8,  3,  4,
-         6,  7, 15,  5, 14,  9, 10, 13,
-         1, 15,  4,  5,  8, 13, 11, 12,
-         6,  0,  3,  9,  7,  2, 10, 14,
-        10,  5,  9,  6, 11,  0, 15, 13,
-         3, 12,  7,  2, 14,  1,  8,  4,
-        10,  2,  7, 14,  5,  3,  8, 11,
-        13,  0,  6,  1,  9, 12, 15,  4,
-        13,  6,  8,  5,  9, 14, 11,  7,
-        12,  3, 15,  1, 10,  4,  0,  2,
-         6,  9,  1, 15, 10,  2, 13,  7,
-         4, 11,  0, 12,  8,  5,  3, 14,
-        15, 13, 12,  2, 11, 10,  8,  7,
-         0,  3,  5,  4,  1, 14,  9,  6,
-         3,  9,  4, 13,  1,  0,  2, 11,
-        10,  8,  7,  5, 15,  6, 12, 14,
-         9, 10,  6,  2,  3,  4, 11, 14,
-         8, 15,  0,  1,  7, 13,  5, 12,
-         4,  3,  8,  7,  9, 10,  6, 15,
-         0, 13, 12,  1,  5, 14,  2, 11,
-         9,  8, 14,  1,  4, 15, 13,  5,
-         6,  7,  2,  3,  0, 10, 12, 11
-    };
+        /* "Invalid Pearson hash table key" */
+        // What should happen here? REVISIT!!!
+    }
 
-    if (key > 0xfff) { /* "Invalid Pearson hash table key" */ }
-
-    fm_byte   value  = table[key] & 0xF;
+    fm_byte   value  = ptable[key] & 0xF;
     fm_uint16 result = (key & 0xFF0) | value;
 
     return result;
 }
 
+static mbyClassifierEntropyCfg mbyClsGetEntropyCfg
+(
+    mby_ppe_entropy_map * const entropy_map,
+    fm_byte               const hash_num,
+    fm_byte               const hash_profile
+)
+{
+    mbyClassifierEntropyCfg entropy_cfg = { 0 };
+
+    entropy_hash_cfg1_r const * const entropy_hash_cfg1 = &(entropy_map->ENTROPY_HASH_CFG1[hash_num][hash_profile]);
+    entropy_hash_cfg0_r const * const entropy_hash_cfg0 = &(entropy_map->ENTROPY_HASH_CFG0[hash_num][hash_profile]);
+
+    entropy_cfg.SYMMETRIC        = entropy_hash_cfg1->SYMMETRIC;        // [54:54]
+    entropy_cfg.SYM_PROFILE      = entropy_hash_cfg1->SYM_PROFILE;      // [53:52]
+    entropy_cfg.KEY_MASK_PROFILE = entropy_hash_cfg1->KEY_MASK_PROFILE; // [51:48]
+    entropy_cfg.KEY32_MASK       = entropy_hash_cfg1->KEY_MASK32;       // [47:32]
+    entropy_cfg.KEY16_MASK       = entropy_hash_cfg1->KEY_MASK16;       // [31: 0]
+    entropy_cfg.KEY8_MASK        = entropy_hash_cfg0->KEY_MASK8;        // [31: 0]
+
+    return entropy_cfg;
+}
+
+static mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
+(
+    mby_ppe_entropy_map * const entropy_map,
+    fm_byte               const hash_profile
+)
+{
+    mbyEntropyMetaCfg meta_cfg = { 0 };
+
+    entropy_meta_cfg_r const * const entropy_meta_cfg = &(entropy_map->ENTROPY_META_CFG[hash_profile]);
+
+    fm_uint16 byte_defaults = entropy_meta_cfg->BYTE_DEFAULTS; // [23:12]
+    meta_cfg.HASH_START     = entropy_meta_cfg->HASH_START;    // [11: 6]
+    meta_cfg.HASH_SIZE      = entropy_meta_cfg->HASH_SIZE;     // [ 5: 0]
+
+    for (fm_byte i = 0 ; i < MBY_MOD_META_BYTES ; i++)
+    {
+        meta_cfg.BYTE_DEFAULTS[i] = ( byte_defaults << 2 * i ) & 0x3;
+    }
+
+    return meta_cfg;
+}
+
+static void mbyClsGetEntropyHashSym
+(
+    mby_ppe_entropy_map * const entropy_map,
+    fm_byte               const hash_num,
+    fm_byte               const sym_profile,
+    mbyEntropyHashSym         * hash_sym
+)
+{
+    entropy_hash_sym8_r  const * const entropy_hash_sym8  = &(entropy_map->ENTROPY_HASH_SYM8 [hash_num][sym_profile]);
+    entropy_hash_sym16_r const * const entropy_hash_sym16 = &(entropy_map->ENTROPY_HASH_SYM16[hash_num][sym_profile]);
+    entropy_hash_sym32_r const * const entropy_hash_sym32 = &(entropy_map->ENTROPY_HASH_SYM32[hash_num][sym_profile]);
+
+    hash_sym->KEY8[0][0] = entropy_hash_sym8->PAIR0_KEY0;
+    hash_sym->KEY8[0][1] = entropy_hash_sym8->PAIR0_KEY1;
+    hash_sym->KEY8[1][0] = entropy_hash_sym8->PAIR1_KEY0;
+    hash_sym->KEY8[1][1] = entropy_hash_sym8->PAIR1_KEY1;
+    hash_sym->KEY8[2][0] = entropy_hash_sym8->PAIR2_KEY0;
+    hash_sym->KEY8[2][1] = entropy_hash_sym8->PAIR2_KEY1;
+    hash_sym->KEY8[3][0] = entropy_hash_sym8->PAIR3_KEY0;
+    hash_sym->KEY8[3][1] = entropy_hash_sym8->PAIR3_KEY1;
+    hash_sym->KEY8[4][0] = entropy_hash_sym8->PAIR4_KEY0;
+    hash_sym->KEY8[4][1] = entropy_hash_sym8->PAIR4_KEY1;
+    hash_sym->KEY8[5][0] = entropy_hash_sym8->PAIR5_KEY0;
+    hash_sym->KEY8[5][1] = entropy_hash_sym8->PAIR5_KEY1;
+
+    hash_sym->KEY16[0][0] = entropy_hash_sym16->PAIR0_KEY0;
+    hash_sym->KEY16[0][1] = entropy_hash_sym16->PAIR0_KEY1;
+    hash_sym->KEY16[1][0] = entropy_hash_sym16->PAIR1_KEY0;
+    hash_sym->KEY16[1][1] = entropy_hash_sym16->PAIR1_KEY1;
+    hash_sym->KEY16[2][0] = entropy_hash_sym16->PAIR2_KEY0;
+    hash_sym->KEY16[2][1] = entropy_hash_sym16->PAIR2_KEY1;
+    hash_sym->KEY16[3][0] = entropy_hash_sym16->PAIR3_KEY0;
+    hash_sym->KEY16[3][1] = entropy_hash_sym16->PAIR3_KEY1;
+    hash_sym->KEY16[4][0] = entropy_hash_sym16->PAIR4_KEY0;
+    hash_sym->KEY16[4][1] = entropy_hash_sym16->PAIR4_KEY1;
+    hash_sym->KEY16[5][0] = entropy_hash_sym16->PAIR5_KEY0;
+    hash_sym->KEY16[5][1] = entropy_hash_sym16->PAIR5_KEY1;
+
+    hash_sym->KEY32[0][0] = entropy_hash_sym32->PAIR0_KEY0;
+    hash_sym->KEY32[0][1] = entropy_hash_sym32->PAIR0_KEY1;
+    hash_sym->KEY32[1][0] = entropy_hash_sym32->PAIR1_KEY0;
+    hash_sym->KEY32[1][1] = entropy_hash_sym32->PAIR1_KEY1;
+    hash_sym->KEY32[2][0] = entropy_hash_sym32->PAIR2_KEY0;
+    hash_sym->KEY32[2][1] = entropy_hash_sym32->PAIR2_KEY1;
+    hash_sym->KEY32[3][0] = entropy_hash_sym32->PAIR3_KEY0;
+    hash_sym->KEY32[3][1] = entropy_hash_sym32->PAIR3_KEY1;
+    hash_sym->KEY32[4][0] = entropy_hash_sym32->PAIR4_KEY0;
+    hash_sym->KEY32[4][1] = entropy_hash_sym32->PAIR4_KEY1;
+    hash_sym->KEY32[5][0] = entropy_hash_sym32->PAIR5_KEY0;
+    hash_sym->KEY32[5][1] = entropy_hash_sym32->PAIR5_KEY1;
+    hash_sym->KEY32[6][0] = entropy_hash_sym32->PAIR6_KEY0;
+    hash_sym->KEY32[6][1] = entropy_hash_sym32->PAIR6_KEY1;
+    hash_sym->KEY32[7][0] = entropy_hash_sym32->PAIR7_KEY0;
+    hash_sym->KEY32[7][1] = entropy_hash_sym32->PAIR7_KEY1;
+
+    // PSEUDO-ARRAYS used in ENTROPY_HASH_SYM8/16/32 registers.
+    // for (fm_byte pair = 0; pair < 8 ; pair++)
+    // {
+    //     for (fm_byte key = 0 ; key < 2 ; key++)
+    //     {
+    //         if (pair < 6)
+    //         {
+    //             hash_sym.KEY8 [pair][key] = entropy_hash_sym8->PAIR [pair][key];
+    //             hash_sym.KEY16[pair][key] = entropy_hash_sym16->PAIR[pair][key];
+    //         }
+    //         hash_sym.KEY32[pair][key] = entropy_hash_sym32->PAIR[pair][key];
+    //     }
+    // }
+}
+
+static void mbyClsGetEntropyHashKeyMask
+(
+    mby_ppe_entropy_map * const entropy_map,
+    fm_byte               const hash_num,
+    fm_byte               const key_mask_profile,
+    mbyEntropyHashKeyMask     * hash_key_mask
+)
+{
+    entropy_hash_key_mask_r const * entropy_hash_key_mask;
+    fm_byte key_mask_idx;
+
+    for (fm_byte dw = 0 ; dw < MBY_ENTROPY_HASH_KEY_MASK_DW_NUM ; dw++)
+    {
+        key_mask_idx = ( key_mask_profile * MBY_ENTROPY_HASH_KEY_MASK_DW_NUM ) + dw;
+
+        entropy_hash_key_mask = &(entropy_map->ENTROPY_HASH_KEY_MASK[hash_num][key_mask_idx]);
+
+        hash_key_mask->MASK[dw] = entropy_hash_key_mask->MASK;
+    }
+}
+
+static void selectEntropyHashKeys
+(
+    mbyClassifierEntropyCfg const entropy_cfg,
+    mbyClassifierKeys       const keys,
+    mbyClassifierKeys     * const hash_keys
+)
+{
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
+        hash_keys->key32[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY32_MASK, i, 1)) ? keys.key32[i] : 0;
+
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
+        hash_keys->key16[i] = (FM_GET_UNNAMED_FIELD  (entropy_cfg.KEY16_MASK, i, 1)) ? keys.key16[i] : 0;
+
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8; i++)
+        hash_keys->key8[i]  = (FM_GET_UNNAMED_FIELD64(entropy_cfg.KEY8_MASK,  i, 1)) ? keys.key8 [i] : 0;
+}
+
+void symmetrizeEntropyHash
+(
+    mby_ppe_entropy_map * const entropy_map,
+    fm_byte               const hash_num,
+    fm_byte               const sym_profile,
+    mbyClassifierKeys         * hash_keys
+)
+{
+    // REVISIT!!! This is not supported in code.
+    // The behavior is undefined if any key number appears more than once within a single register
+    // (i.e., indicated as paired more than once).
+    mbyEntropyHashSym hash_sym = { 0 };
+
+    mbyClsGetEntropyHashSym(entropy_map, hash_num, sym_profile, &hash_sym);
+
+    fm_byte id0, id1;
+    fm_byte   key8;
+    fm_uint16 key16;
+    fm_uint32 key32;
+
+    for (fm_byte pair = 0; pair < 8 ; pair++)
+    {
+        if (pair < 6)
+        {
+            // KEY 8
+            id0 = hash_sym.KEY8[pair][0];
+            id1 = hash_sym.KEY8[pair][1];
+            if( id0 != id1 )
+            {
+                key8 = hash_keys->key8[id0] ^ hash_keys->key8[id1];
+                hash_keys->key8[id0] = key8;
+                hash_keys->key8[id1] = key8;
+            }
+            // KEY 16
+            id0 = hash_sym.KEY16[pair][0];
+            id1 = hash_sym.KEY16[pair][1];
+            if( id0 != id1 )
+            {
+                key16 = hash_keys->key16[id0] ^ hash_keys->key16[id1];
+                hash_keys->key16[id0] = key16;
+                hash_keys->key16[id1] = key16;
+            }
+        }
+        // KEY 32
+        id0 = hash_sym.KEY32[pair][0];
+        id1 = hash_sym.KEY32[pair][1];
+        if( id0 != id1 )
+        {
+            key32 = hash_keys->key32[id0] ^ hash_keys->key32[id1];
+            hash_keys->key32[id0] = key32;
+            hash_keys->key32[id1] = key32;
+        }
+    }
+}
+
+static void applyEntropyHashKeyMask
+(
+    mby_ppe_entropy_map * const entropy_map,
+    fm_byte               const hash_num,
+    fm_byte               const key_mask_profile,
+    fm_byte               const hash_bytes[MBY_ENTROPY_HASH_KEY_MASK_BYTES],
+    fm_byte             * const masked_hash_bytes
+)
+{
+    mbyEntropyHashKeyMask hash_key_mask = { 0 };
+
+    mbyClsGetEntropyHashKeyMask(entropy_map, hash_num, key_mask_profile, &hash_key_mask);
+
+    // MBY_CGRP_HASH_KEYS is 192, but 64 Bytes should be used here. <-- REVISIT!!!
+    for (fm_byte dw = 0, i = 0 ; dw < MBY_ENTROPY_HASH_KEY_MASK_DW_NUM, i < MBY_ENTROPY_HASH_KEY_MASK_BYTES ; dw++)
+    {
+        fm_uint64 mask_dw = hash_key_mask.MASK[dw];
+        for (fm_byte byte = 0 ; byte < BYTES_IN_DW ; byte++){
+            masked_hash_bytes[i] = hash_bytes[i] & FM_GET_UNNAMED_FIELD(mask_dw, byte * BYTES_IN_DW, BYTES_IN_DW);
+            i++;
+        }
+    }
+}
+
+static void generateEntropyHash
+(
+    mby_ppe_entropy_map * const entropy_map,
+    mbyClassifierKeys     const keys,
+    fm_byte             * const hash_profile,
+    fm_byte             * const mod_meta,
+    fm_uint32           * const hash0,
+    fm_uint64           * const hash1,
+    fm_uint32           * const hash2
+)
+{
+    fm_uint32 hash_values  [mby_ppe_entropy_map_ENTROPY_HASH_CFG0__nd] = { 0 };
+
+    for (fm_byte hash_num = 0; hash_num < mby_ppe_entropy_map_ENTROPY_HASH_CFG0__n; hash_num++)
+    {
+        // Get ENTROPY_HASH_CFG0/1 register fields:
+        mbyClassifierEntropyCfg entropy_cfg = mbyClsGetEntropyCfg(entropy_map, hash_num, hash_profile[hash_num]);
+
+        // Select hash keys from CLASSIFIER keys:
+        // Based on FS it should be 64 Bytes maximum. Model uses 192 Bytes everywhere... <-- REVISIT!!!
+        // Keys should be packed. <-- REVISIT!!!
+        mbyClassifierKeys hash_keys;
+        selectEntropyHashKeys(entropy_cfg, keys, &hash_keys);
+
+        // Add keys packing into 64 Bytes vector here. <-- REVISIT!!!
+
+        // Hash symmetrization
+        // Should it be done before or after the keys selection? <-- REVISIT!!!
+        if (entropy_cfg.SYMMETRIC)
+        {
+            symmetrizeEntropyHash(entropy_map, hash_num, entropy_cfg.SYM_PROFILE, &hash_keys);
+        }
+
+        // Convert Keys into array of bytes:
+        // Based on FS it should be 64 Bytes maximum. Model uses 192 Bytes everywhere... <-- REVISIT!!!
+        fm_byte hash_bytes[MBY_CGRP_HASH_KEYS] = { 0 };
+        mbyClsConvertKeysToBytes(hash_keys, hash_bytes);
+
+        // Apply hash key mask for the keys:
+        // Based on FS it should be 64 Bytes maximum. Model uses 192 Bytes everywhere... <-- REVISIT!!!
+        fm_byte masked_hash_bytes[MBY_CGRP_HASH_KEYS] = { 0 };
+        applyEntropyHashKeyMask(entropy_map, hash_num, entropy_cfg.KEY_MASK_PROFILE, hash_bytes, masked_hash_bytes);
+
+        // Get hash value from CRC:
+        switch (hash_num)
+        {
+            case 0:
+            {
+                hash_values[hash_num] = mbyCrc32ByteSwap (hash_bytes, MBY_CGRP_HASH_KEYS); // HASH0: CRC-32 (Ethernet)
+                break;
+            }
+            case 1:
+            {
+                hash_values[hash_num] = mbyCrc32CByteSwap(hash_bytes, MBY_CGRP_HASH_KEYS); // HASH1: CRC-32C (iSCSI)
+                break;
+            }
+            case 2:
+            {
+                hash_values[hash_num] = mbyCrc32ByteSwap (hash_bytes, MBY_CGRP_HASH_KEYS); // HASH2: <-- REVISIT!!! Not specified in FS.
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    // ECMP HASH for ARP_TABLE:
+    *hash0 = hash_values[0] & 0xFFFFFF;
+
+    // Populate hash1 for use by the Modifier:
+    mbyEntropyMetaCfg meta_cfg = mbyClsGetEntropyMetaCfg(entropy_map, hash_profile[1]);
+
+    fm_uint64 hash1_default = 0; // local var
+
+    // Apply Defaults to hash1:
+    for (fm_uint i = 0; i < MBY_MOD_META_BYTES; i++)
+    {
+        fm_byte s = meta_cfg.BYTE_DEFAULTS[i];
+
+        if (s < 3)
+        {
+            // hash1_default |= ((fm_uint64)mod_meta[s]) << i * BITS_IN_BYTE;
+            // Which is more clear? Above or below? <-- REVISIT!!!
+            FM_SET_UNNAMED_FIELD64(hash1_default, i * BITS_IN_BYTE, BITS_IN_BYTE, mod_meta[s]);
+        }
+        else
+        {
+            // Is this still accurate? There is additional META3 in MBY. <-- REVISIT!!!
+            // Is this neccessary since it is initialized to 0 before the for loop? <-- REVISIT!!!
+            FM_SET_UNNAMED_FIELD64(hash1_default, i * BITS_IN_BYTE, BITS_IN_BYTE, 0);
+        }
+    }
+
+    // Apply Hash to hash1:
+    fm_uint64 meta_mask = 0;
+    for (fm_uint i = 0; i < 48; i++)
+        if ((i >= meta_cfg.HASH_START) && (i < (meta_cfg.HASH_START + meta_cfg.HASH_SIZE)))
+            meta_mask |= (FM_LITERAL_U64(1) << i);
+
+    // This seems wrong: <-- REVISIT!!!
+    // fm_uint64 meta_hash = (((fm_uint64) hash_values[1]) << 32) | hash_values[1];
+    // This seems good:
+    fm_uint64 meta_hash = (((fm_uint64) hash_values[1]) << meta_cfg.HASH_START) & meta_mask;
+
+    *hash1 = (hash1_default & ~meta_mask) | meta_hash;
+
+    // HASH0 and HASH1 are 32-bits, what about HASH2? <-- REVISIT!!!
+    *hash2 = hash_values[2];
+}
+
 static void getFwdHashingCfg
 (
-          fm_uint32          regs[MBY_REGISTER_ARRAY_SIZE],
-    mbyFwdHashingCfg * const fwd_hashing_cfg
+    fwd_hashing_cfg_r * const fwd_hashing_cfg_reg,
+    mbyFwdHashingCfg  * const fwd_hashing_cfg
 )
 {
-    fm_uint64 fwd_hashing_cfg_reg = 0;
-    mbyModelReadCSR64(regs, MBY_FWD_HASHING_CFG(0), &fwd_hashing_cfg_reg);
-
-    fwd_hashing_cfg->USE_METADATA  = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_METADATA);
-    fwd_hashing_cfg->ECMP_ROTATION = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, ECMP_ROTATION);
-    fwd_hashing_cfg->ROTATION_B    = FM_GET_FIELD64(fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, ROTATION_B);
-    fwd_hashing_cfg->ROTATION_A    = FM_GET_FIELD64(fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, ROTATION_A);
-    fwd_hashing_cfg->USE_VID       = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_VID);
-    fwd_hashing_cfg->USE_VPRI      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_VPRI);
-    fwd_hashing_cfg->USE_TYPE      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_TYPE);
-    fwd_hashing_cfg->USE_SMAC      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_SMAC);
-    fwd_hashing_cfg->USE_DMAC      = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_DMAC);
-    fwd_hashing_cfg->SYMMETRIC     = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, SYMMETRIC);
-    fwd_hashing_cfg->USE_L34       = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_L34);
-    fwd_hashing_cfg->USE_L2_IF_IP  = FM_GET_BIT64  (fwd_hashing_cfg_reg, MBY_FWD_HASHING_CFG, USE_L2_IF_IP);
+    fwd_hashing_cfg->ECMP_ROTATION = fwd_hashing_cfg_reg->ECMP_ROTATION;
+    fwd_hashing_cfg->ROTATION_B    = fwd_hashing_cfg_reg->ROTATION_A;
+    fwd_hashing_cfg->ROTATION_A    = fwd_hashing_cfg_reg->ROTATION_B;
 }
 
-static void fetchL234HashKeys
+static void insertPtable
 (
-    fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_macaddr    l2_dmac,
-    const fm_macaddr    l2_smac,
-    const fm_uint16     l2_etype,
-    const fm_uint16     l2_ivid1,
-    const fm_byte       qos_l2_vpri1,
-    const fm_bool       is_ipv4,
-    const fm_bool       is_ipv6,
-    const fm_uint64     l34_hash,
-    mbyHashKeys * const hash_keys
+    fm_uint16   const raw_hash,
+    fm_uint16 * const final_hash
 )
 {
-    mbyFwdHashingCfg fwd_hashing_cfg;
-    getFwdHashingCfg(regs, &fwd_hashing_cfg);
+    fm_uint16 key   = raw_hash;
 
-    fm_macaddr dmac  = (fwd_hashing_cfg.USE_DMAC) ? l2_dmac : FM_LITERAL_U64(0);
-    fm_macaddr smac  = (fwd_hashing_cfg.USE_SMAC) ? l2_smac : FM_LITERAL_U64(0);
-//  fm_macaddr xor   = (dmac ^ smac) & FM_LITERAL_U64(0xFFFFFFFFFFFF); // unused, why? <--- REVISIT!!!
-    fm_macaddr dmac2 = 0;
-    fm_macaddr smac2 = 0;
-
-    if (fwd_hashing_cfg.SYMMETRIC) {
-        for (fm_uint i = 0, s = 0; i < 6; i++, s += 8) {
-            fm_byte a = (dmac >> s) & 0xFF;
-            fm_byte b = (smac >> s) & 0xFF;
-            dmac2 |= MAX(a, b) << s;
-            smac2 |= MIN(a, b) << s;
-        }
-    } else {
-        dmac2 = dmac;
-        smac2 = smac;
-    }
-
-    for (fm_uint i = 0, s = 40; i < 6; i++, s -= 8) {
-        hash_keys->l234Key[i    ] = (dmac2 >> s) & 0xFF;
-        hash_keys->l234Key[i + 6] = (smac2 >> s) & 0xFF;
-    }
-
-    if (fwd_hashing_cfg.USE_TYPE && (l2_etype >= 0x0600))
-        for (fm_uint i = 0, s = 8; i < 2; i++, s -= 8)
-            hash_keys->l234Key[12 + i] = (l2_etype >> s) & 0xFF;
-
-    fm_uint16 vlan = 0;
-
-    if (fwd_hashing_cfg.USE_VID)
-        vlan = l2_ivid1;
-
-    if (fwd_hashing_cfg.USE_VPRI)
-        vlan |= qos_l2_vpri1 << 12;
-
-    for (fm_uint i = 0, s = 8; i < 2; i++, s -= 8)
-        hash_keys->l234Key[14 + i] = (vlan >> s) & 0xFF;
-
-    // Extract the configuration information and forward it:
-    fm_bool is_ip = is_ipv4 || is_ipv6;
-
-    hash_keys->arpEcmpCfg = fwd_hashing_cfg.ECMP_ROTATION;
-    hash_keys->zeroL2     = is_ip && !fwd_hashing_cfg.USE_L2_IF_IP;
-    hash_keys->zeroL34    = !is_ip;
-    hash_keys->useL34     = fwd_hashing_cfg.USE_L34;
-    hash_keys->rotA       = fwd_hashing_cfg.ROTATION_A;
-    hash_keys->rotB       = fwd_hashing_cfg.ROTATION_B;
-    hash_keys->crc34      = l34_hash;
-
-    // Calculate CRC234:
-    fm_byte  *keys   = &(hash_keys->l234Key[0]);
-    fm_uint   length = sizeof(hash_keys->l234Key);
-    fm_uint   width  = 48;
-
-    fm_uint64 e_hash = ((fm_uint64) mbyCrc32ByteSwap (keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
-    fm_uint64 c_hash = ((fm_uint64) mbyCrc32CByteSwap(keys, length)) & FM_LITERAL_U64(0xFFFFFFFF);
-    fm_uint64 mask   = (FM_LITERAL_U64(1) << width) - FM_LITERAL_U64(1);
-    fm_uint64 crc234 = ((c_hash << 32) | e_hash) & mask;
-
-    hash_keys->crc234 = crc234;
-}
-
-static void calcL234Hash
-(
-    const mbyHashKeys   hash_keys,
-    fm_uint16   * const rot_a_key,
-    fm_uint32   * const rot_a_val,
-    fm_uint16   * const rot_b_key,
-    fm_uint32   * const rot_b_val
-)
-{
-    fm_uint64 hash = (hash_keys.zeroL2) ? FM_LITERAL_U64(0) : hash_keys.crc234;
-
-    if (hash_keys.useL34 && !hash_keys.zeroL34)
-        hash ^= ((hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF)) << 24) |
-                 (hash_keys.crc34 & FM_LITERAL_U64(0xFFFFFF));
-
-    *rot_a_key = hash >> (MIN(hash_keys.rotA, 3) * 12) & FM_LITERAL_U64(0xFFF);
-    *rot_b_key = hash >> (MIN(hash_keys.rotB, 3) * 12) & FM_LITERAL_U64(0xFFF);
-
-    *rot_a_val = lookUpPearsonHash(*rot_a_key);
-    *rot_b_val = lookUpPearsonHash(*rot_b_key);
-}
-
-static void calcL34Hash
-(
-    const mbyHashKeys   hash_keys,
-    fm_byte             arp_hash[16],
-    fm_uint16   * const raw_hash
-
-)
-{
-    fm_uint64 crc34 = hash_keys.crc34;
-    fm_uint64 mask  = FM_LITERAL_U64(0xFFF);
-    fm_uint16 key   = (hash_keys.arpEcmpCfg == 1) ? ((crc34 >> 12) & mask) : (crc34 & mask);
     fm_uint32 val   = lookUpPearsonHash(key);
 
-    *raw_hash = ((val & 0xF) << 8) | ((key >> 4) & 0xFF);
+    *final_hash = ((val & 0xF) << 8) | ((key >> 4) & 0xFF);
+    // Should this 4b be placed as MSB or LSB? <-- REVISIT!!!
+}
 
-    fm_uint32 operand = ((val & 0xF) << 8) | ((key >> 4) & 0xFF);
+static void generateEcmpHash
+(
+    mbyFwdHashingCfg const * const fwd_hashing_cfg,
+    fm_uint32                const hash0,
+    mbyHashKeys            * const hash_keys
+)
+{
+    fm_uint64 mask       = FM_LITERAL_U64(0xFFF);
+    fm_uint16 ecmp_hash  = hash0 >> (fwd_hashing_cfg->ECMP_ROTATION * 12) & mask;
 
+    insertPtable(ecmp_hash, &(hash_keys->ecmp_hash));
+}
+
+static void generateLagHash
+(
+    mbyFwdHashingCfg const * const fwd_hashing_cfg,
+    fm_uint32                const hash2,
+    mbyHashKeys            * const hash_keys
+)
+{
+    fm_uint64 hash = FM_LITERAL_U64(0);
+    fm_uint64 hash_mask = FM_LITERAL_U64(0xFFFFFF);
+    fm_uint64 key_mask  = FM_LITERAL_U64(0xFFF);
+
+    // Is this correct handling of hash2? REVISIT!!!
+    hash ^= ( (hash2 & hash_mask) << 24 )
+            | (hash2 & hash_mask);
+
+    fm_uint16 rot_a_key = ( hash >> (fwd_hashing_cfg->ROTATION_A * 12) ) & key_mask;
+    fm_uint16 rot_b_key = ( hash >> (fwd_hashing_cfg->ROTATION_B * 12) ) & key_mask;
+
+    insertPtable(rot_a_key, &(hash_keys->lag_hashA));
+    insertPtable(rot_b_key, &(hash_keys->lag_hashB));
+}
+
+static void generateOutput
+(
+    mbyFwdHashingCfg const * const fwd_hashing_cfg,
+    fm_uint32                const hash0,
+    fm_uint64                const hash1,
+    fm_uint32                const hash2,
+    mbyHashKeys            * const hash_keys
+)
+{
+    // Calculate ecmp_hash:
+    generateEcmpHash(fwd_hashing_cfg, hash0, hash_keys);
+
+    // Copy hash1 to mod_meta:
+    hash_keys->mod_meta = hash1;
+
+    // Calculate lag_hash:
+    generateLagHash(fwd_hashing_cfg, hash2, hash_keys);
+}
+
+static void calcArpHash
+(
+    fm_uint32   const operand,
+    fm_byte           arp_hash[16]
+)
+{
     for (fm_uint32 i = 0, mult = 16; i < 16; i++, mult = (mult + 1) % 16)
         arp_hash[i] = (mult * operand) >> 12;
 }
 
 void Hash
 (
-    fm_uint32                         regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyClassifierToHash * const in,
-          mbyHashToNextHop    * const out
+    mby_ppe_entropy_map       * const entropy_map,
+    fwd_hashing_cfg_r         * const fwd_hashing_cfg_reg,
+    mbyClassifierToHash const * const in,
+    mbyHashToNextHop          * const out
 )
 {
-    fm_macaddr l2_dmac      = in->L2_DMAC;
-    fm_macaddr l2_smac      = in->L2_SMAC;
-    fm_uint16  l2_etype     = in->L2_ETYPE;
-    fm_uint16  l2_ivid1     = in->L2_IVID1;
-    fm_byte    qos_l2_vpri1 = in->QOS_L2_VPRI1;
-    fm_bool    is_ipv4      = in->IS_IPV4;
-    fm_bool    is_ipv6      = in->IS_IPV6;
-    fm_uint64  l34_hash     = in->L34_HASH;
+    mbyClassifierKeys keys = in->FFU_KEYS;
+    fm_byte hash_profile[MBY_CGRP_HASH_PROFILE_ACTIONS] = { 0 };
+    fm_byte mod_meta[MBY_CGRP_META_ACTIONS]             = { 0 };
 
-    mbyHashKeys hash_keys;
+    for (fm_uint i = 0 ; i < MBY_CGRP_HASH_PROFILE_ACTIONS ; i++)
+        hash_profile[i] = in->HASH_PROFILE[i];
 
-    fetchL234HashKeys
+    for (fm_uint i = 0 ; i < MBY_CGRP_META_ACTIONS ; i++)
+        mod_meta[i] = in->MOD_META[i];
+
+    // Calculate raw hash0, hash1 and hash2:
+    fm_uint32 hash0 = 0;
+    fm_uint64 hash1 = 0;
+    fm_uint32 hash2 = 0;
+    generateEntropyHash
     (
-        regs,
-        l2_dmac,
-        l2_smac,
-        l2_etype,
-        l2_ivid1,
-        qos_l2_vpri1,
-        is_ipv4,
-        is_ipv6,
-        l34_hash,
+        entropy_map,
+        keys,
+        hash_profile,
+        mod_meta,
+        &hash0,
+        &hash1,
+        &hash2
+    );
+
+    // Get Hashing configuration:
+    mbyFwdHashingCfg fwd_hashing_cfg;
+    getFwdHashingCfg(fwd_hashing_cfg_reg, &fwd_hashing_cfg);
+
+    mbyHashKeys hash_keys = { 0 };
+    generateOutput
+    (
+        &fwd_hashing_cfg,
+        hash0,
+        hash1,
+        hash2,
         &hash_keys
     );
 
-    fm_uint16 raw_hash = 0;
+    // Verify if this is needed? <--- REVISIT!!!
+    // Calculate ARP hash:
     fm_byte   arp_hash[16] = { 0 };
-
-    calcL34Hash
+    calcArpHash
     (
-        hash_keys,
-        arp_hash,
-        &raw_hash
-    );
-
-    fm_uint16 rot_a_key = 0;
-    fm_uint32 rot_a_val = 0;
-    fm_uint16 rot_b_key = 0;
-    fm_uint32 rot_b_val = 0;
-
-    calcL234Hash
-    (
-        hash_keys,
-        &rot_a_key,
-        &rot_a_val,
-        &rot_b_key,
-        &rot_b_val
+        hash_keys.ecmp_hash,
+        arp_hash
     );
 
     // Init SV drop
@@ -741,20 +514,21 @@ void Hash
     for (fm_uint i = 0; i < 16; i++)
         out->ARP_HASH[i]         = arp_hash[i];
 
-    out->HASH_KEYS               = hash_keys;
-    out->HASH_ROT_A              = rot_a_val;
-    out->HASH_ROT_A_PTABLE_INDEX = rot_a_key;
-    out->HASH_ROT_B              = rot_b_val;
-    out->HASH_ROT_B_PTABLE_INDEX = rot_b_key;
-    out->L2_DMAC                 = l2_dmac;
-    out->L2_SMAC                 = l2_smac;
-    out->RAW_HASH                = raw_hash;
+    out->HASH_KEYS               = hash_keys; // Is this useful later? <-- REVISIT!!!
+    out->HASH_ROT_A              = hash_keys.lag_hashA;
+    out->HASH_ROT_B              = hash_keys.lag_hashB;
+    out->ECMP_HASH               = hash_keys.ecmp_hash;
     out->SV_DROP                 = sv_drop;
 
     // Pass thru:
-
-    out->FFU_FLAGS               = in->FFU_FLAGS;
-    out->FFU_ROUTE               = in->FFU_ROUTE;
+    // REVISIT!!!
+    /* Not all fields specified in mbyHashToNextHop
+     * are copied from in to out. */
+    out->L2_DMAC                 = in->L2_DMAC;
+    out->L2_SMAC                 = in->L2_SMAC;
+    out->CGRP_FLAGS              = in->CGRP_FLAGS;
+    out->CGRP_ROUTE              = in->CGRP_ROUTE;
+    out->CGRP_TRIG               = in->CGRP_TRIG;
     out->ENCAP                   = in->ENCAP;
     out->DECAP                   = in->DECAP;
     out->DMAC_FROM_IPV6          = in->DMAC_FROM_IPV6;
@@ -763,9 +537,11 @@ void Hash
     out->L3_IDOMAIN              = in->L3_IDOMAIN;
     out->L2_IVID1                = in->L2_IVID1;
     out->LEARN_MODE              = in->LEARN_MODE;
+    out->MOD_PROF_IDX            = in->MOD_PROF_IDX;
     out->PARITY_ERROR            = in->PARITY_ERROR;
     out->PARSER_ERROR            = in->PARSER_ERROR;
     out->PARSER_INFO             = in->PARSER_INFO;
+    out->PA_HDR_PTRS             = in->PA_HDR_PTRS;
     out->PA_L3LEN_ERR            = in->PA_L3LEN_ERR;
     out->RX_DATA                 = in->RX_DATA;
     out->RX_LENGTH               = in->RX_LENGTH;

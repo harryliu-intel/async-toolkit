@@ -104,7 +104,7 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
  * arguments are set to a temporary file.
  * It then waits until the server comes up and connects to it.
  *
- * @param_in	type is a string with the type of server: "scala" or "m3"
+ * @param[in]	type is a string with the type of server: "scala" or "m3"
  *
  * @retval		WM_OK if successful
  */
@@ -246,7 +246,7 @@ int wm_server_stop(void)
 /**
  * wm_connect() - Connect to WM server.
  *
- * @param_in	server_file path of the file created when the model_server is
+ * @param[in]	server_file path of the file created when the model_server is
  * 				started. If NULL, the env variable "SBIOSF_SERVER" is used.
  *
  * @retval	WM_OK if successful.
@@ -327,8 +327,8 @@ int wm_disconnect(void)
 /**
  * wm_reg_read() - Send register read request to model_server.
  *
- * @param_in	addr address of the register.
- * @param_out	val pointer to caller-allocated memory to store the result.
+ * @param[in]	addr address of the register.
+ * @param[out]	val pointer to caller-allocated memory to store the result.
  * @retval		WM_OK if successful
  */
 int wm_reg_read(const uint32_t addr, uint64_t *val)
@@ -365,8 +365,8 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
 /**
  * wm_reg_write() - Send register write request to model server.
  *
- * @param_in	addr address of the register.
- * @param_in	val is the value to be written.
+ * @param[in]	addr address of the register.
+ * @param[in]	val is the value to be written.
  * @retval		WM_OK if successful
  */
 int wm_reg_write(const uint32_t addr, const uint64_t val)
@@ -401,7 +401,7 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
  * Default metadata will be included for compatibility with HLP WM.
  * TODO check if this is the desired behavior.
  *
- * @param_in	pkt is the frame that will be injected in the WM
+ * @param[in]	pkt is the frame that will be injected in the WM
  * @retval		WM_OK if successful
  */
 int wm_pkt_push(const struct wm_pkt *pkt)
@@ -457,7 +457,7 @@ int wm_pkt_push(const struct wm_pkt *pkt)
 
 /* wm_pkt_get() - Receive a frame from the WM
  *
- * @param_out	pkt is a pointer to caller-allocated storage that will contain
+ * @param[out]	pkt is a pointer to caller-allocated storage that will contain
  * 				the frame received from the model
  * @retval		WM_OK if successful
  * @retval		WM_NO_DATA if there are no egress frames on any of the ports.
@@ -530,10 +530,10 @@ int wm_pkt_get(struct wm_pkt *pkt)
 /**
  * iosf_send_receive() - Send IOSF message and wait for response.
  *
- * @param_in	tx_msg caller-allocated buffer with the message to send
- * @param_in	tx_len length of the message to send.
- * @param_out	rx_msg caller-allocated buffer where the response will be stored
- * @param_out	rx_len caller-allocated used to store the length of the reposnse
+ * @param[in]	tx_msg caller-allocated buffer with the message to send
+ * @param[in]	tx_len length of the message to send.
+ * @param[out]	rx_msg caller-allocated buffer where the response will be stored
+ * @param[out]	rx_len caller-allocated used to store the length of the reposnse
  * @retval		WM_OK if successful
  */
 static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
@@ -577,11 +577,11 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 /**
  * wm_receive() - Receive message from model_server socket interface.
  *
- * @param_in	fd of the socket used to receive the data
- * @param_out	msg caller-allocated buffer where the message will be placed.
- * @param_out	len caller-allocated storage where the length will be placed.
- * @param_out	type caller-allocated storage where the type will be placed.
- * @param_out	port caller-allocated storage where teh port will be placed.
+ * @param[in]	fd of the socket used to receive the data
+ * @param[out]	msg caller-allocated buffer where the message will be placed.
+ * @param[out]	len caller-allocated storage where the length will be placed.
+ * @param[out]	type caller-allocated storage where the type will be placed.
+ * @param[out]	port caller-allocated storage where teh port will be placed.
  * @retval		WM_OK if successful
  */
 static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
@@ -647,11 +647,11 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 /**
  * wm_send() - Send generic message to model_server socket interface.
  *
- * @param_in	fd of the socket used to send the data
- * @param_in	msg pointer to the content of the message.
- * @param_in	len the length of the message.
- * @param_in	type the type of the message (e.g. SB-IOSF).
- * @param_in	port the ingress port used when sending traffic to model.
+ * @param[in]	fd of the socket used to send the data
+ * @param[in]	msg pointer to the content of the message.
+ * @param[in]	len the length of the message.
+ * @param[in]	type the type of the message (e.g. SB-IOSF).
+ * @param[in]	port the ingress port used when sending traffic to model.
  * @retval		WM_OK if successful
  */
 static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
@@ -693,9 +693,9 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 /**
  * hex_dump() - Dumps buffer in hex output.
  *
- * @param_in	bytes is the buffer to dump.
- * @param_in	nbytes is the size of the buffer.
- * @param_in	show_ascii whether to append ascii format.
+ * @param[in]	bytes is the buffer to dump.
+ * @param[in]	nbytes is the size of the buffer.
+ * @param[in]	show_ascii whether to append ascii format.
  */
 static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
 {
@@ -743,9 +743,9 @@ static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
  * The fd of the socket is saved in a global variable and it will
  * be reused later on to send all the messages.
  *
- * @param_in	addr_str is the string with the server address.
- * @param_in	port_str is the port where the server is listening.
- * @param_out	server_fd is the caller-alloc storage where the server fd will
+ * @param[in]	addr_str is the string with the server address.
+ * @param[in]	port_str is the port where the server is listening.
+ * @param[out]	server_fd is the caller-alloc storage where the server fd will
  * 				be placed
  */
 static int connect_server(const char *addr_str, const char *port_str, int *server_fd)
@@ -791,11 +791,11 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 
 /* connect_egress() - Establish connection to receive egress frames
  *
- * @param_in	phys_port the switch physical port number
- * @param_in	server_fd is the server socket fd where the request will be sent
- * @param_in	client_fd is the client socket fd that will get the connection
- * @param_in	client_port is the port number of where the client is listening
- * @param_out	egress_fd is the caller-alloc storage where the egress socket fd
+ * @param[in]	phys_port the switch physical port number
+ * @param[in]	server_fd is the server socket fd where the request will be sent
+ * @param[in]	client_fd is the client socket fd that will get the connection
+ * @param[in]	client_port is the port number of where the client is listening
+ * @param[out]	egress_fd is the caller-alloc storage where the egress socket fd
  * 				will be placed
  */
 static int connect_egress(int phys_port, int server_fd, int client_fd,
@@ -836,9 +836,9 @@ static int connect_egress(int phys_port, int server_fd, int client_fd,
  *
  * This socket is mainly used to setup the egress ports
  *
- * @param_out	fd is a pointer to caller-allocated storage in which the fd
+ * @param[out]	fd is a pointer to caller-allocated storage in which the fd
  * 				of the socket will be placed.
- * @param_out	port is a pointer to caller-allocated storage in which the port
+ * @param[out]	port is a pointer to caller-allocated storage in which the port
  * 				number will be placed.
  */
 static int create_client_socket(int *fd, int *port)
@@ -890,9 +890,9 @@ static int create_client_socket(int *fd, int *port)
  *
  * The expected content is in the format: "0:localhost:57548"
  *
- * @param_in	fd is the file pointer to read from.
- * @param_out	host is buffer to store host name.
- * @param_out	port is buffer to store host port number.
+ * @param[in]	fd is the file pointer to read from.
+ * @param[out]	host is buffer to store host name.
+ * @param[out]	port is buffer to store host port number.
  * @retval		WM_OK if successful.
  */
 static int read_host_info(FILE *fd, char *host, char *port)
@@ -943,10 +943,10 @@ static int read_host_info(FILE *fd, char *host, char *port)
 /**
  * wm_read_data() - Reads from a socket with timeout.
  *
- * @param_in	socket is the descriptor to read from.
- * @param_out	data is the buffer to store received data.
- * @param_in	data_size is the size of data buffer.
- * @param_in	timeout_msec is the timeout to return if no response.
+ * @param[in]	socket is the descriptor to read from.
+ * @param[out]	data is the buffer to store received data.
+ * @param[in]	data_size is the size of data buffer.
+ * @param[in]	timeout_msec is the timeout to return if no response.
  * @return		WM_OK if successful
  */
 static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,

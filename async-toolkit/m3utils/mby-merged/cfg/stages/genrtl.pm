@@ -31,7 +31,9 @@ BEGIN {
                 'NEBULON_VHDR_GEN',
                 'VLOG_FILES_GEN',
             ],
-            produces => [ 'VLOG_FILES', 'SVERILOG_FILES', ],    # source 'types' produced
+            # adding 'GENCC_OUT' so collage stage can depend on this genrtl stage; https://hsdes.intel.com/appstore/article/#/2206194695
+            produces => [ 'VLOG_FILES', 'SVERILOG_FILES', 'GENCC_OUT'],    # source 'types' produced
+#            produces => [ 'VLOG_FILES', 'SVERILOG_FILES'],    # source 'types' produced
             use_prebuilt      => 0,    # Run only for libraries in local scope
             dependent_configs => 1,
         }

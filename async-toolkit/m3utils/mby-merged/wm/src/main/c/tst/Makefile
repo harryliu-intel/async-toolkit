@@ -5,6 +5,9 @@ clean:
 	@echo "Cleaning ..."
 	make -C parser clean
 	make -C mapper clean
+	make -C classifier clean
+	make -C exactmatch clean
+	make -C wcm clean
 	make -C nexthop clean
 	make -C maskgen clean
 	make -C rxstats clean
@@ -12,7 +15,7 @@ clean:
 	make -C basic_flood clean
 
 .PHONY: all
-all: test_parser test_mapper test_nexthop test_maskgen test_rxstats test_basic_fwd test_basic_flood
+all: test_parser test_mapper test_exactmatch test_wcm test_nexthop test_maskgen test_rxstats test_basic_fwd test_basic_flood
 
 .PHONY: test_all
 test_all: all
@@ -31,6 +34,16 @@ test_mapper:
 test_classifier:
 	@echo "Testing classifier ..."
 	make -C classifier run
+
+.PHONY: test_exactmatch
+test_exactmatch:
+	@echo "Testing exactmatch ..."
+	make -C exactmatch run
+
+.PHONY: test_wcm
+test_wcm:
+	@echo "Testing wcm ..."
+	make -C wcm run
 
 .PHONY: test_nexthop
 test_nexthop:

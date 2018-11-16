@@ -1,23 +1,25 @@
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.csr
 
-import com.intel.cg.hpfd.csr.generated.mby_top_map
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr.{CsrParser, CsrRxPpe}
+import madisonbay.csr.all._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.Csr._
 import CsrLenses._
 
 trait CsrUpdater[A] {
-  def updated(csr: mby_top_map.mby_top_map, csrNode: A): Csr
+  def updated(csr: mby_top_map, csrNode: A): Csr
 }
 
 object CsrUpdater {
 
   implicit object CsrUpdaterRxPpe extends CsrUpdater[CsrRxPpe] {
-    def updated(csr: mby_top_map.mby_top_map, crsRxPpe: CsrRxPpe): Csr =
-     Csr(rxPpeL(crsRxPpe.idMgp).modify(_ => crsRxPpe.csrRxPpe)(csr))
+    def updated(csr: mby_top_map, crsRxPpe: CsrRxPpe): Csr = Csr(rxPpeL(crsRxPpe.idMgp).modify(_ => crsRxPpe.ppeRxMap)(csr))
   }
 
   implicit object CsrUpdaterParser extends CsrUpdater[CsrParser] {
-    def updated(csr: mby_top_map.mby_top_map, crsParser: CsrParser): Csr =
-      Csr(parserL(crsParser.idMgp).modify(_ => crsParser.csrParser)(csr))
+    def updated(csr: mby_top_map, crsParser: CsrParser): Csr = Csr(parserL(crsParser.idMgp).modify(_ => crsParser.ppeParserMap)(csr))
+  }
+
+  implicit object CsrUpdaterMapper extends CsrUpdater[CsrMapper] {
+    def updated(csr: mby_top_map, csrMapper: CsrMapper): Csr = Csr(mapperL(csrMapper.idMgp).modify(_ => csrMapper.ppeMapperMap)(csr))
   }
 
 }

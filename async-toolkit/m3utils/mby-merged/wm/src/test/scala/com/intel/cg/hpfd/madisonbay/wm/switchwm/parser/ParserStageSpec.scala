@@ -1,14 +1,15 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay.wm.switchwm.parser
 
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserLenses}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.PacketHeader
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.Parser.{ParserState, ProtoOffsets}
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.ParserExceptions.ParserException
+import madisonbay.csr.all._
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserStageLenses}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ParserExceptions.ParserException
 import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser._
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.PacketFlags
-import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.PortIndex
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.parser.output.ProtocolsOffsets
+import com.intel.cg.hpfd.madisonbay.wm.switchwm.ppe.ppe.Port
 import com.intel.cg.hpfd.madisonbay.wm.utils.Binary.BinaryInterpolator
+import com.intel.cg.hpfd.madisonbay.wm.utils.BitFlags
 import monocle.state.all._
 import org.scalatest._
 
@@ -18,39 +19,52 @@ import org.scalatest._
 class ParserStageSpec extends FlatSpec with Matchers {
 
   "Flag 1 and 4" should "unconditionally be set when rule 0 configured as unconditional match" in {
-    val csrParser = Csr().getParser(0).csrParser
+    val csrParser = Csr().getParser(0)
     val idx = 0
-    val pf = PacketFlags()
-    val protoOffset = Parser.EmptyProtoOffsets
-    val noException = Option.empty[ParserException]
-    val ps = ParserState(Array(0,0,0), new AluOperation(0,0), 0, 0)
-    val ph = PacketHeader(Array.ofDim[Byte](79))
-    val ps2 = Parser.initialState(csrParser, ph, new PortIndex(0))
+    val port = Port(0)
+    val pck = Packet(Array.ofDim[Byte](79))
+    val ph = PacketHeader(pck)
+    val pl = ParserStageLenses(idx)
 
-    // TODO: fix that
-    //csr.foreachResetableField(f => f.reset())
+    val parserKeySLmask = pl.keyS(0) composeLens parser_key_s_r._STATE_MASK composeLens parser_key_s_r.STATE_MASK._value
 
-    val pl = ParserLenses(idx)
-    val updatedCsr = CsrLenses.execute(csrParser, for {
-      _ <- pl.keyS(0).mod_(_.STATE_MASK.set(0))
-      _ <- pl.keyS(0).mod_(_.STATE_VALUE.set(0))
-      _ <- pl.keyW(0).mod_(_.W0_MASK.set(0))
-      _ <- pl.keyW(0).mod_(_.W0_VALUE.set(0))
-      _ <- pl.keyW(0).mod_(_.W1_MASK.set(0))
-      _ <- pl.keyW(0).mod_(_.W1_VALUE.set(0))
-      _ <- pl.actExt(0).mod_(_.FLAG_NUM.set(1))
-      _ <- pl.actExt(0).mod_(_.FLAG_VALUE.set(1))
-      _ <- pl.actExt(16).mod_(_.FLAG_NUM.set(4))
-      _ <- pl.actExt(16).mod_(_.FLAG_VALUE.set(1))
+    val parserKeySLvalue = pl.keyS(0) composeLens parser_key_s_r._STATE_VALUE composeLens parser_key_s_r.STATE_VALUE._value
+
+    val parserKeyWLw0mask = pl.keyW(0) composeLens parser_key_w_r._W0_MASK composeLens parser_key_w_r.W0_MASK._value
+
+    val parserKeyWLw0value = pl.keyW(0) composeLens parser_key_w_r._W0_VALUE composeLens parser_key_w_r.W0_VALUE._value
+
+    val parserKeyWLw1mask = pl.keyW(0) composeLens parser_key_w_r._W1_MASK composeLens parser_key_w_r.W1_MASK._value
+
+    val parserKeyWLw1value = pl.keyW(0) composeLens parser_key_w_r._W1_VALUE composeLens parser_key_w_r.W1_VALUE._value
+
+    def parserExtLnum(parserExtRIdx: Int) = pl.actExt(parserExtRIdx) composeLens
+      parser_ext_r._FLAG_NUM composeLens parser_ext_r.FLAG_NUM._value
+
+    def parserExtLvalue(parserExtRIdx: Int) = pl.actExt(parserExtRIdx) composeLens
+      parser_ext_r._FLAG_VALUE composeLens parser_ext_r.FLAG_VALUE._value
+
+    val updatedParserMap = CsrLenses.execute(csrParser.ppeParserMap, for {
+      _ <- parserKeySLmask.assign_(0)
+      _ <- parserKeySLvalue.assign_(0)
+      _ <- parserKeyWLw0mask.assign_(0)
+      _ <- parserKeyWLw0value.assign_(0)
+      _ <- parserKeyWLw1mask.assign_(0)
+      _ <- parserKeyWLw1value.assign_(0)
+      _ <- parserExtLnum(0).assign_(1)
+      _ <- parserExtLvalue(0).assign_(1)
+      _ <- parserExtLnum(16).assign_(4)
+      _ <- parserExtLvalue(16).assign_(1)
     } yield ())
+    val updatedCsrParser = csrParser.copy(ppeParserMap = updatedParserMap)
 
-    val result: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, ph)(idx, ps, pf, protoOffset, exceptionOpt = noException)
+    val result: (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
     result._1.get contains 1 shouldEqual true
     result._1.get contains 2 shouldEqual false
     result._1.get contains 3 shouldEqual false
     result._1.get contains 4 shouldEqual true
 
-    val result2: (PacketFlags, ProtoOffsets, Option[ParserException]) = Parser.applyStage(updatedCsr, ph)(idx, ps2, pf, protoOffset, exceptionOpt = noException)
+    val result2: (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
     result2._1.toInt shouldEqual b"10010"
   }
 

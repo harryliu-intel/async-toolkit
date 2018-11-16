@@ -1,5 +1,3 @@
-import RdlGitHashPlugin.autoImport._
-import sbt.Keys._
 
 // to break current task with C-c
 cancelable in sbt.Global := true
@@ -33,9 +31,11 @@ lazy val csr = (project in file("csr"))
     name := Settings.csrName,
     addCompilerPlugin(Dependencies.scalaMacrosParadise),
     libraryDependencies ++= Dependencies.csrDeps,
+    name := "csr-model",
     version := rdlGitHashShortProjectVersion.value,
     // some imports are unused among generated hierarchy
-    scalacOptions -= "-Ywarn-unused:imports"
+    scalacOptions -= "-Ywarn-unused:imports",
+    publishArtifact in Test := true
   )
 
 lazy val wmServerDto = (project in file("wm-server-dto"))
@@ -52,30 +52,23 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
   )
 
 lazy val tcp = (project in file("tcp"))
-  .dependsOn(common,csrMacros)
+  .dependsOn(common, csrMacros)
   .settings(
     Settings.commonSettings,
     libraryDependencies ++= Dependencies.tcpDeps
   )
 
-lazy val main = (project in file("main"))
-  .dependsOn(tcp)
-  .settings(
-    Settings.commonSettings,
-    addCompilerPlugin(Dependencies.kindProjector),
-    libraryDependencies ++= Dependencies.mainDeps,
-    fork in run := true
-  )
-
 lazy val root = (project in file("."))
-  .dependsOn(common, csrMacros)
+  .dependsOn(common, csrMacros, tcp)
   .enablePlugins(RdlGitHashPlugin)
   .settings(
     Settings.commonSettings,
     name := Settings.rootName,
+    addCompilerPlugin(Dependencies.kindProjector),
     libraryDependencies ++= Dependencies.whiteModelDeps(rdlGitHashShortProjectVersion.value),
-    mainClass in Compile := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
-    mainClass in assembly := Some("com.intel.cg.hpfd.madisonbay.wm.program.Main"),
+    mainClass in Compile := Some("madisonbay.Main"),
+    mainClass in assembly := Some("madisonbay.Main"),
+    test in assembly := {},
     assemblyOutputPath in assembly := path,
     fork in run := true
   )
@@ -89,10 +82,10 @@ publishArtifacts := Def.taskDyn {
     Def.task(log.warn("Will not publish artifacts! $USER != npgadmin"))
 }.value
 
-lazy val testAll = "; all common/test csr/test root/test"
+lazy val testAll = "; all csrMacros/test common/test csr/test root/test tcp/test"
 lazy val cleanAll =
-  "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean"
-lazy val publishArtifactsLocally = "; csr/publishLocal; wmServerDto/publishLocal"
+  "; common/clean; csr/clean; csrMacros/clean; wmServerDto/clean; root/clean; tcp/clean"
+lazy val publishArtifactsLocally = "; csr/publishLocal"
 lazy val cleanIvyIntelCache =
   s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.csrName}"""" +
   s"""; cleanCache "${Settings.intelOrganization}" % "${Settings.wmServerDtoName}""""
@@ -111,3 +104,18 @@ addCommandAlias("buildOnNhdk",
     "; root/Compile/doc; root/assembly" +
     "; publishArtifacts"
 )
+val buildOnNhdk = taskKey[Unit]("Build task for nhdk environment.")
+buildOnNhdk := Def.sequential(
+  clean in csr,
+  clean in wmServerDto,
+  clean in root,
+  publishLocal in csr,
+  publishLocal in wmServerDto,
+  update in root,
+  compile in Compile in root,
+  doc in Compile in root,
+  assembly in root,
+  publish in root,
+  publish in csr,
+  publish in wmServerDto
+).value

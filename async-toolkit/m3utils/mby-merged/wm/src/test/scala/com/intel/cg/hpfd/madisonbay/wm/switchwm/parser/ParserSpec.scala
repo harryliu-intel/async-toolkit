@@ -20,7 +20,7 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class ParserSpec extends FlatSpec with Matchers {
 
-  val csr = Csr().getRxPpe(0).csrRxPpe.parser
+  val csr = Csr().getRxPpe(0).ppeRxMap.parser
 
   // load a 'canonical' image (tbd, how we're going to get this)
 

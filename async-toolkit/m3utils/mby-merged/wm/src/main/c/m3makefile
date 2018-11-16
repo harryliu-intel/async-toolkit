@@ -1,4 +1,7 @@
-SYSTEM_CC = SYSTEM_CC & " -std=gnu99"
+SYSTEM_CC = SYSTEM_CC & " -I../../m3/genviews/src/build_c/mby_c/src -std=gnu99"
+
+h_source ("uint")
+c_source ("uint")
 
 h_source ("mby_common")
 c_source ("mby_common")
@@ -15,8 +18,8 @@ c_source ("mby_mapper")
 h_source ("mby_classifier")
 c_source ("mby_classifier")
 
-h_source ("mby_clsfr_regs")
-c_source ("mby_clsfr_regs")
+h_source ("mby_cgrp_regs")
+c_source ("mby_cgrp_regs")
 
 h_source ("mby_exactmatch")
 c_source ("mby_exactmatch")
@@ -29,6 +32,9 @@ c_source ("mby_lpm_regs")
 
 h_source ("mby_wcm")
 c_source ("mby_wcm")
+
+h_source ("mby_hash")
+c_source ("mby_hash")
 
 h_source ("mby_nexthop")
 c_source ("mby_nexthop")

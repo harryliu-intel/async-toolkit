@@ -28,21 +28,7 @@
 
 module mby_wm_top();
 
-`ifdef XVM
-    import ovm_pkg::*;
-    import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
-    import sla_pkg::*;
-    import uvm_pkg::*;
-
-    `include "uvm_macros.svh"
-    `include "slu_macros.svh"
-
     import mby_wm_dpi_pkg::* ;
-
 
     initial begin
         //Temporary plus arg to enable connection to WM until the WM development is complete.
@@ -52,13 +38,13 @@ module mby_wm_top();
             //Plus arg to choose between "scala" or "M3" WM server.
             //Connects to Scala WM server by default
             if ($value$plusargs("WHITE_MODEL_SERVER=%s", model_server)) begin
-                `uvm_info(get_full_name(), $sformatf("Using %s WM Server",model_server),UVM_FULL)
+                $display("mby_wm_dpi_pkg/mby_wm_top.sv:: Using %s WM Server",model_server);
             end
             if(wm_server_start(model_server)) begin
-                `uvm_error(get_full_name(), "Error while connecting to the WM")
+                $error("mby_wm_dpi_pkg/mby_wm_top.sv:: Error while connecting to the WM");
             end
             else
-                `uvm_info(get_full_name(), $sformatf("Connected to %s WM Server",model_server),UVM_HIGH)
+                $display("mby_wm_dpi_pkg/mby_wm_top.sv:: Connected to %s WM Server",model_server);
         end
 
     end
@@ -67,7 +53,7 @@ module mby_wm_top();
         //Stop the White model server if it was started at the beginning of the test.
         if ($test$plusargs("WHITE_MODEL_EN")) begin
             wm_server_stop();
-            `uvm_info(get_full_name(), $sformatf("Disconnected from WM Server"),UVM_HIGH)
+            $display("mby_wm_dpi_pkg/mby_wm_top.sv:: Disconnected from WM Server");
         end
     end
 

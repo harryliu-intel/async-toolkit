@@ -99,8 +99,9 @@ while($_=shift @ARGV ) {
     } elsif(/^-+dve_debug$/i) {
         $vcs_debug = '-vcs_debug_mode=-debug_access+all';
     } elsif(/^-+partcomp$/i) {
-        $part_comp = '-partcomp_vcs';
-        $vcs_debug = '-vcs_debug_mode=-debug_pp';
+        # MBY has partcomp enabled by default
+#        $part_comp = '-partcomp_vcs';
+#        $vcs_debug = '-vcs_debug_mode=-debug_pp';
     } elsif(/^-+variant=/i) {
         $variant = $_;
     } elsif(/^-+func_replay$/i) {
@@ -274,7 +275,8 @@ sub process_commands {
             } elsif($ace_model =~ /^sigacc$/) {
                 $dut_name = 'sigacc';
                 $test_pkg = '-test_pkg test_pkg';
-            } elsif($ace_model =~ /^fc$/) {
+            } elsif($ace_model =~ /^(fc)$/) {
+                $variant = "-variant=$1";
                 $dut_name = $single_fc_dut ne '' ? $single_fc_dut : "mby";
             } elsif($ace_model =~ /^hc[abt]$/) {
                 $single_fc_dut = 'hcx';
@@ -408,6 +410,7 @@ sub run_system_cmd {
 
 sub run_bman {
     my $build_desc = shift @_;
+    my $bman_custom_cmd = '';
     &failing_exit("ERROR: -m <model> not specified before compile command\n") if($ace_model eq '');
     &log_and_print("Running $build_desc on dut $dut_name with ace model $ace_model\n");
     my $bman_add_opts = (@_ > 0) ? shift @_ : "$bman_debug $func_replay $stf_tp_mode $vcs_debug $part_comp $variant $elab_opts $no_gen_flags $sim_only $tgt_dir $enable_xprop_elab $enable_congruency_elab";
@@ -417,7 +420,13 @@ sub run_bman {
     if ($inc_compile and (($ace_model eq 'fc') or ($ace_model eq 'fc_lite'))) {
         $bman_add_opts = $bman_add_opts . " -s all +s ${dut_name}.vcs.elab_${ace_model} +s ${dut_name}.vcs.vcs_createlib_${ace_model}_seq_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_tests_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_hvl_top_lib +s ${dut_name}.vcs.vcs_createlib_fc_top_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_hdl_top_lib +s ${dut_name}.vcs.vcs_createlib_${ace_model}_env_lib +s sim_init +s collage";
     }
-    &exit_on_failure(&run_system_cmd("bman -dut $dut_name $compile_flag $ace_model $sched -1c -ace_model_name $ace_model $upf_dut_type -1c- $bman_add_opts $bman_args", "bman PASSED"));
+    # customized cmds for FC variants only
+    if ($ace_model =~ /(fc_no_phy|fc_8_no_phy|fc_8)$/) {
+        $bman_custom_cmd = "bman -mc mby -s all +s bman.mby.genrtl.genrtl_gen_mby_mgm_lib -enable_incremental_scheduling $sched";
+        &exit_on_failure(&run_system_cmd("$bman_custom_cmd ; bman -dut $dut_name $compile_flag $ace_model $sched -1c -ace_model_name $ace_model $upf_dut_type -1c- $bman_add_opts $bman_args", "bman PASSED"));
+    } else {
+        &exit_on_failure(&run_system_cmd("bman -dut $dut_name $compile_flag $ace_model $sched -1c -ace_model_name $ace_model $upf_dut_type -1c- $bman_add_opts $bman_args", "bman PASSED"));
+    }
 }
 
 sub run_simbuild_pre_flow {
@@ -480,7 +489,7 @@ sub print_help_message {
   print "   -help               Print this Usage info and exit.\n";
   print "   -dve_debug          Compile VCS with debug enabled for DVE.\n";
   print "   -debug_all          Compile VCS with -debug_all option.\n";
-  print "   -partcomp           Compile VCS with -partcomp option.\n";
+  print "   -partcomp           [NA in MBY since it's enabled by default].\n";
   print "   -variant=<model>    Compile VCS lite model with MBY specific variant\n";
   print "   -func_replay        Compile VCS with replay elements enabled in the func testbench.\n";
   print "   -stf_tp_mode        enable user to use Test port BFM instead of STF BFM.\n";

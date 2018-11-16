@@ -27,7 +27,7 @@ object Settings {
     "-language:higherKinds",         // Allow higher-kinded types
     "-language:implicitConversions", // Allow definition of implicit functions called views
     "-language:postfixOps",          // Enable postfix operators
-    // "-Xfatal-warnings",              // Warnings to compile errors
+    "-Xfatal-warnings",              // Warnings to compile errors
     "-Xlint:unsound-match",          // Pattern match may not be typesafe.
     "-Ypartial-unification",         // Enable partial unification in type constructor inference
     "-Ywarn-infer-any",              // Warn when a type argument is inferred to be `Any`.

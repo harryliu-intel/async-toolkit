@@ -3,7 +3,6 @@ package common::ace_lib_utils;
 use Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(remove_element_from_array ip_to_stub add_ip get_stub_mode get_hsopt);
-my $debug = 0;
 
 sub remove_element_from_array
 {
@@ -13,7 +12,7 @@ sub remove_element_from_array
       my $arr_size = @{$arr};
       my @index_arr;
       my $l_debug = 0;
-      my $dbg = $debug || $l_debug;
+      my $dbg = 0;
  
       my $index = 0; 
       #while (($$arr[$index] ne $element) && ($arr_size > $index) )
@@ -146,12 +145,13 @@ sub add_ip {
     
     if (scalar(@ip_adds) == 0)
     {
-        $ip_adds[0] = "no_stub";
+        $ip_adds[0] = "fc";
     }
     
     chomp(@ip_adds);
     print ("IPs to be added = @ip_adds\n") if ($dbg);
     return (@ip_adds);
+
 }
 
 sub get_stub_mode {
