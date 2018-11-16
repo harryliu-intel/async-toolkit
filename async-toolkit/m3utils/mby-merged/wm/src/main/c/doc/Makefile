@@ -8,7 +8,9 @@ HTML_DIR    = ${OUTPUT_DIR}/html
 HTML_TOP    = $(HTML_DIR)/index.html
 
 # Doxygen compiler:
-DOXYGEN = doxygen
+DOXYGEN_VERSION := 1.8.11
+DOXYGEN_PATH := /usr/intel/pkgs/doxygen/$(DOXYGEN_VERSION)
+DOXYGEN = $(DOXYGEN_PATH)/bin/doxygen
 
 # Project number (from Git):
 export PROJECT_NUMBER = $(shell git describe --always --dirty="-with-uncommitted-changes" --long --tags)
