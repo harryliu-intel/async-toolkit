@@ -1,8 +1,3 @@
-foreach $i (0..19) {
-    >> classifier_wcm_tcam_$i$_to_tcam
-    >> classifier_wcm_tcam_$i$_from_tcam
-}
-
     >>  fary_ffuse_tune_tcam
     >>  fary_pwren_b_tcam
     >>  fary_stm_enable
