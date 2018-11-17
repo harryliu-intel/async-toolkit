@@ -2,6 +2,7 @@
 
 rx_ppe [
   parser_top of parser_top with parser_top.map
-  classifier_top of classifier_top with classifier_top.map
+  class_gpa_top of class_gpa_top with class_gpa_top.map
+  class_gpb_top of class_gpb_top with class_gpb_top.map
   action_top of action_top with action_top.map
 ]

@@ -1,12 +1,12 @@
 // -- Author       : Jon Bagge <jon.bagge@intel.com>
 // -- Project Name : MBY
-// -- Description  : classifier netlist.
+// -- Description  : classifier group B netlist.
 // -------------------------------------------------------------------
 ngen_mod_name
 
 input reset,
 
-par_class_if.classifier par_class_if,
+rx_ppe_ppe_stm1_if.ppe rx_ppe_ppe_stm1_if,
 
 ngen_IO_list
 ngen_IO_end

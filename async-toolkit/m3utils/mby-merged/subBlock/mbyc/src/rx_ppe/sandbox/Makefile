@@ -18,12 +18,15 @@ SIM_DIR = dv/run
 INCS = $(RTL_SRC)/rx_ppe/rtl
 INCS += $(RTL_SRC)/parser/rtl
 INCS += $(RTL_SRC)/classifier/rtl
+INCS += $(RTL_SRC)/action/rtl
 INCS += $(SHARED_SRC)/rtl
 INCS += $(SHARED_SRC)/interfaces
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src
 INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/action/src
+INCS += $(TARGET_SRC)/mby/mgm_run/action/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/rtl
 INCS += $(ASSERT_LIB)/SVA_LIB
 INCS += /p/hdk/cad/ctech/v15ww50e/source/v
@@ -47,6 +50,7 @@ VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/par_class_if.sv
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/parser/src/parser_mem.def
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/classifier/src/classifier_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/action/src/action_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \

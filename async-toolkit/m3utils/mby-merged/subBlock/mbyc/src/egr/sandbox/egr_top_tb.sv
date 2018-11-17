@@ -9,46 +9,57 @@ module egr_top_tb
 ();
     logic clk;
     logic arst_n;
+  
+  mim_wr_if         igr_dirtypod_if(); //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
+  mim_rd_if         igr_cleanpod_if(); //IGR Clean Pod Read Req/Rsp Interface
+
+  mim_rd_if            mim_rd_if0_0(); //MIM Read Request Row0 Plane 0
+  mim_rd_if            mim_rd_if0_1(); //MIM Read Request Row0 Plane 1
+  mim_rd_if            mim_rd_if0_2(); //MIM Read Request Row0 Plane 2
+  mim_rd_if            mim_rd_if1_0(); //MIM Read Request Row1 Plane 0
+  mim_rd_if            mim_rd_if1_1(); //MIM Read Request Row1 Plane 1
+  mim_rd_if            mim_rd_if1_2(); //MIM Read Request Row1 Plane 2
     
     egr_igr_if                   igr_if(); //EGR-IGR Pointer Interface
     egr_pod_if                   pod_if(); //EGR-Pod Ring Interface
+  egr_mc_mirror_pod_if mc_mirror_pod_if(); //EGR-MC Mirror Pod Ring Interface
     egr_ahb_if                   ahb_if(); //EGR-AHB Interface
-    egr_ahb_if                   dfx_if(); //EGR-DFx Interface
     egr_smm_writearb_if smm_writearb_if(); //EGR-SMM_Write_Arb Interface
     egr_smm_readarb_if  smm_readarb_if0(); //EGR-SMM_Read_Arb Interface
     egr_smm_readarb_if  smm_readarb_if1(); //EGR-SMM_Read_Arb Interface
-    egr_tagring_if          tagring_if0();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if1();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if10();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if11();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if12();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if13();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if14();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if15();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if16();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if17();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if18();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if19();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if2();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if20();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if21();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if22();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if23();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if24();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if25();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if26();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if27();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if28();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if29();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if3();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if30();  //EGR-Tag Ring Interface 
-    egr_tagring_if         tagring_if31();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if4();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if5();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if6();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if7();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if8();  //EGR-Tag Ring Interface 
-    egr_tagring_if          tagring_if9();  //EGR-Tag Ring Interface
+
+  egr_tagring_if          tagring_if0_0(); //EGR-Tag Ring Interface MGP  0 0
+  egr_tagring_if          tagring_if0_1(); //EGR-Tag Ring Interface MGP  0 1
+  egr_tagring_if          tagring_if1_0(); //EGR-Tag Ring Interface MGP  1 0
+  egr_tagring_if          tagring_if1_1(); //EGR-Tag Ring Interface MGP  1 1
+  egr_tagring_if          tagring_if2_0(); //EGR-Tag Ring Interface MGP  2 0
+  egr_tagring_if          tagring_if2_1(); //EGR-Tag Ring Interface MGP  2 1
+  egr_tagring_if          tagring_if3_0(); //EGR-Tag Ring Interface MGP  3 0
+  egr_tagring_if          tagring_if3_1(); //EGR-Tag Ring Interface MGP  3 1
+  egr_tagring_if          tagring_if4_0(); //EGR-Tag Ring Interface MGP  4 0
+  egr_tagring_if          tagring_if4_1(); //EGR-Tag Ring Interface MGP  4 1
+  egr_tagring_if          tagring_if5_0(); //EGR-Tag Ring Interface MGP  5 0
+  egr_tagring_if          tagring_if5_1(); //EGR-Tag Ring Interface MGP  5 1
+  egr_tagring_if          tagring_if6_0(); //EGR-Tag Ring Interface MGP  6 0
+  egr_tagring_if          tagring_if6_1(); //EGR-Tag Ring Interface MGP  6 1
+  egr_tagring_if          tagring_if7_0(); //EGR-Tag Ring Interface MGP  7 0
+  egr_tagring_if          tagring_if7_1(); //EGR-Tag Ring Interface MGP  7 1
+  egr_tagring_if          tagring_if8_0(); //EGR-Tag Ring Interface MGP  8 0
+  egr_tagring_if          tagring_if8_1(); //EGR-Tag Ring Interface MGP  8 1
+  egr_tagring_if          tagring_if9_0(); //EGR-Tag Ring Interface MGP  9 0
+  egr_tagring_if          tagring_if9_1(); //EGR-Tag Ring Interface MGP  9 1
+  egr_tagring_if         tagring_if10_0(); //EGR-Tag Ring Interface MGP 10 0
+  egr_tagring_if         tagring_if10_1(); //EGR-Tag Ring Interface MGP 10 1
+  egr_tagring_if         tagring_if11_0(); //EGR-Tag Ring Interface MGP 11 0
+  egr_tagring_if         tagring_if11_1(); //EGR-Tag Ring Interface MGP 11 1
+  egr_tagring_if         tagring_if12_0(); //EGR-Tag Ring Interface MGP 12 0
+  egr_tagring_if         tagring_if12_1(); //EGR-Tag Ring Interface MGP 12 1
+  egr_tagring_if         tagring_if13_0(); //EGR-Tag Ring Interface MGP 13 0
+  egr_tagring_if         tagring_if13_1(); //EGR-Tag Ring Interface MGP 13 1
+  egr_tagring_if         tagring_if14_0(); //EGR-Tag Ring Interface MGP 14 0
+  egr_tagring_if         tagring_if14_1(); //EGR-Tag Ring Interface MGP 14 1
+  egr_tagring_if         tagring_if15_0(); //EGR-Tag Ring Interface MGP 15 0
+  egr_tagring_if         tagring_if15_1(); //EGR-Tag Ring Interface MGP 15 1
                        
     egr_mce_tagring_if  mce_tagring_if0();  //EGR-Tag Ring Interface 
     egr_mce_tagring_if  mce_tagring_if1();  //EGR-Tag Ring Interface 
@@ -64,106 +75,25 @@ module egr_top_tb
     egr_epl_if                  epl_if3(); //EGR-EPL 3 Interface
     egr_mc_table_if        mc_table_if0(); //EGR-MultiCast Shared Table 0 Interface
     egr_mc_table_if        mc_table_if1(); //EGR-MultiCast Shared Table 1 Interface 
+  egr_cmring_if               cmring_if(); //EGR-Congestion Management Ring Interface
 
-    egr_top dut(
-        .clk(clk),
-        .arst_n(arst_n),
-        .igr_if(igr_if.egr),
-        .pod_if(pod_if.egr),
-        .ahb_if(ahb_if.egr),
-        .smm_writearb_if(smm_writearb_if.egr),
-        .smm_readarb_if0           (smm_readarb_if0.egr),                 
-        .smm_readarb_if1           (smm_readarb_if1.egr),                 
-        .tagring_if0               (tagring_if0.egr),                     
-        .tagring_if1               (tagring_if1.egr),                     
-        .tagring_if2               (tagring_if2.egr),                     
-        .tagring_if3               (tagring_if3.egr),                     
-        .tagring_if4               (tagring_if4.egr),                     
-        .tagring_if5               (tagring_if5.egr),                     
-        .tagring_if6               (tagring_if6.egr),                     
-        .tagring_if7               (tagring_if7.egr),                     
-        .tagring_if8               (tagring_if8.egr),                     
-        .tagring_if9               (tagring_if9.egr),                     
-        .tagring_if10              (tagring_if10.egr),                    
-        .tagring_if11              (tagring_if11.egr),                    
-        .tagring_if12              (tagring_if12.egr),                    
-        .tagring_if13              (tagring_if13.egr),                    
-        .tagring_if14              (tagring_if14.egr),                    
-        .tagring_if15              (tagring_if15.egr),                    
-        .tagring_if16              (tagring_if16.egr),                    
-        .tagring_if17              (tagring_if17.egr),                    
-        .tagring_if18              (tagring_if18.egr),                    
-        .tagring_if19              (tagring_if19.egr),                    
-        .tagring_if20              (tagring_if20.egr),                    
-        .tagring_if21              (tagring_if21.egr),                    
-        .tagring_if22              (tagring_if22.egr),                    
-        .tagring_if23              (tagring_if23.egr),                    
-        .tagring_if24              (tagring_if24.egr),                    
-        .tagring_if25              (tagring_if25.egr),                    
-        .tagring_if26              (tagring_if26.egr),                    
-        .tagring_if27              (tagring_if27.egr),                    
-        .tagring_if28              (tagring_if28.egr),                    
-        .tagring_if29              (tagring_if29.egr),                    
-        .tagring_if30              (tagring_if30.egr),                    
-        .tagring_if31              (tagring_if31.egr),                    
-        .mce_tagring_if0           (mce_tagring_if0.egr),                 
-        .mce_tagring_if1           (mce_tagring_if1.egr),                 
-        .mce_tagring_if2           (mce_tagring_if2.egr),                 
-        .mce_tagring_if3           (mce_tagring_if3.egr),        
-        .statsmgmt_if(statsmgmt_if.egr),
-        .tx_ppe_if0(tx_ppe_if0.egr),
-        .tx_ppe_if1(tx_ppe_if1.egr),
-        .ppe_stm_if(ppe_stm_if.egr),
-        .epl_if0(epl_if0.egr),
-        .epl_if1(epl_if1.egr),
-        .epl_if2(epl_if2.egr),
-        .epl_if3(epl_if3.egr),
-        .mc_table_if0(mc_table_if0.egr),
-        .mc_table_if1(mc_table_if1.egr)
-    );
-    
+    egr_top dut(.*);
+    egr_top_tb_tagring tagring_bfm(.*);
+    egr_top_tb_app app_bfm(.*);
+    egr_top_tb_runtime runtime(.*);
+
+always_comb ahb_if.dfxsignal_in = 0;
+always_comb ahb_if.ahb_req_p = 0;
+always_comb ahb_if.ahb_addr = 0;
+always_comb ahb_if.ahb_wr = 0;
+always_comb ahb_if.ahb_wr_data = 0;
+
     egr_dummy_if dummy_if(
-        .clk(clk),
-        .arst_n(arst_n),
         .igr_if(igr_if.igr),
         .pod_if(pod_if.pod_ring),
-        .ahb_if(ahb_if.ahb),
-        .dfx_if(ahb_if.dfx),
         .smm_writearb_if(smm_writearb_if.smm_writearb),
         .smm_readarb_if0           (smm_readarb_if0.smm_readarb),                 
         .smm_readarb_if1           (smm_readarb_if1.smm_readarb),                 
-        .tagring_if0               (tagring_if0.tagring),                     
-        .tagring_if1               (tagring_if1.tagring),                     
-        .tagring_if2               (tagring_if2.tagring),                     
-        .tagring_if3               (tagring_if3.tagring),                     
-        .tagring_if4               (tagring_if4.tagring),                     
-        .tagring_if5               (tagring_if5.tagring),                     
-        .tagring_if6               (tagring_if6.tagring),                     
-        .tagring_if7               (tagring_if7.tagring),                     
-        .tagring_if8               (tagring_if8.tagring),                     
-        .tagring_if9               (tagring_if9.tagring),                     
-        .tagring_if10              (tagring_if10.tagring),                    
-        .tagring_if11              (tagring_if11.tagring),                    
-        .tagring_if12              (tagring_if12.tagring),                    
-        .tagring_if13              (tagring_if13.tagring),                    
-        .tagring_if14              (tagring_if14.tagring),                    
-        .tagring_if15              (tagring_if15.tagring),                    
-        .tagring_if16              (tagring_if16.tagring),                    
-        .tagring_if17              (tagring_if17.tagring),                    
-        .tagring_if18              (tagring_if18.tagring),                    
-        .tagring_if19              (tagring_if19.tagring),                    
-        .tagring_if20              (tagring_if20.tagring),                    
-        .tagring_if21              (tagring_if21.tagring),                    
-        .tagring_if22              (tagring_if22.tagring),                    
-        .tagring_if23              (tagring_if23.tagring),                    
-        .tagring_if24              (tagring_if24.tagring),                    
-        .tagring_if25              (tagring_if25.tagring),                    
-        .tagring_if26              (tagring_if26.tagring),                    
-        .tagring_if27              (tagring_if27.tagring),                    
-        .tagring_if28              (tagring_if28.tagring),                    
-        .tagring_if29              (tagring_if29.tagring),                    
-        .tagring_if30              (tagring_if30.tagring),                    
-        .tagring_if31              (tagring_if31.tagring),                    
         .mce_tagring_if0           (mce_tagring_if0.tagring),                 
         .mce_tagring_if1           (mce_tagring_if1.tagring),                 
         .mce_tagring_if2           (mce_tagring_if2.tagring),                 
@@ -172,31 +102,8 @@ module egr_top_tb
         .tx_ppe_if0(tx_ppe_if0.ppe),
         .tx_ppe_if1(tx_ppe_if1.ppe),
         .ppe_stm_if(ppe_stm_if.stm),
-        .epl_if0(epl_if0.epl),
-        .epl_if1(epl_if1.epl),
-        .epl_if2(epl_if2.epl),
-        .epl_if3(epl_if3.epl),
         .mc_table_if0(mc_table_if0.mc_table),
         .mc_table_if1(mc_table_if1.mc_table)
         );
-    
-initial
-begin
-    arst_n = 1; #5;
-    arst_n = 0; #5;
-    arst_n = 1; #5;
-    #100;
-end
-
-
-initial
-begin
-    for(int i=0; i<10;i++)
-    begin
-        clk = 1; #5;
-        clk = 0; #5;
-    end
-end
-    
 
 endmodule : egr_top_tb
