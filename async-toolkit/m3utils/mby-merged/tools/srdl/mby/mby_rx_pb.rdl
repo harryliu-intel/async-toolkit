@@ -24,14 +24,19 @@ reg rx_pb_port_cfg_r {
   regwidth = 64;
   accesswidth = 64;
 
-<% for (my $i = 0; $i < 16; $i++) { %>
   field {
-    encode = mby_port_cfg_enum;
     AccessType = "RW";
-    desc = "Port <%=$i%> configuration";
+    desc = "Port configurations, the configuration for port i runs from bit 2*i to bit 2*i+1";
     ValRandomize = true;
-  } PORT_<%=$i%> [<%=$i*2+1%>:<%=$i*2%>] = 2'h0;
-<% } %>
+  }  PORT[32];
+//<% for (my $i = 0; $i < 16; $i++) { %>
+//  field {
+//    encode = mby_port_cfg_enum;
+//    AccessType = "RW";
+//    desc = "Port <%=$i%> configuration";
+//    ValRandomize = true;
+//  } PORT_<%=$i%> [<%=$i*2+1%>:<%=$i*2%>] = 2'h0;
+//<% } %>
 
 };
 
