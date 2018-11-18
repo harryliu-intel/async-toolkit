@@ -130,7 +130,7 @@
         <AdditionalArgs></AdditionalArgs>
         <XdutStageDep></XdutStageDep>
         <PassRate></PassRate>
-        <IsGating>1</IsGating>
+        <IsGating>0</IsGating>
         <Turnin>1</Turnin>
         <Release>1</Release>
         <PostRelease>0</PostRelease>
