@@ -28,7 +28,7 @@ reg tx_voq_port_cfg_r {
     AccessType = "RW";
     desc = "Port configurations, the configuration for port i runs from bit 2*i to bit 2*i+1";
     ValRandomize = true;
-  }  PORT[32];
+  }  PORT[31:0];
 
 //<% for (my $i = 0; $i < 16; $i++) { %>
 //  field {
