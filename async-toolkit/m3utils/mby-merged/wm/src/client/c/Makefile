@@ -14,6 +14,8 @@ TARGET_LIB   = lib$(MBY_TCP_CLIENT).so
 TARGET_SAM_O = $(MBY_TCP_CLIENT)_sample.o
 TARGET_SAM   = $(MBY_TCP_CLIENT)_sample
 
+TARGET_ARGS  = -m ../../main/m3/model_server/AMD64_LINUX/models.packetServer
+
 ifeq ($(VERBOSE),1)
 ECHO :=
 else
@@ -62,7 +64,6 @@ ifeq ($(DEBUG),1)
 endif
 
 LDFLAGS  = -shared
-LDFLAGS += -fPIC
 
 .PHONY: all
 all: $(TARGET_DIR) $(TARGET_LIB) $(TARGET_SAM)
@@ -73,7 +74,7 @@ $(TARGET_LIB_O): $(MBY_TCP_CLIENT)_library.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP
 
 $(TARGET_LIB): $(MBY_TCP_CLIENT)_library.o
 	@echo '  Linking library'
-	$(ECHO) $(LD) $(LDFLAGS) -o $@ $^
+	$(ECHO) $(CC) $(LDFLAGS) -o $@ $^
 
 $(TARGET_SAM_O): $(MBY_TCP_CLIENT)_sample.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP_CLIENT)_library.h
 	@echo '  Compiling client'
@@ -81,9 +82,23 @@ $(TARGET_SAM_O): $(MBY_TCP_CLIENT)_sample.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP_
 
 $(TARGET_SAM): $(MBY_TCP_CLIENT)_sample.o $(TARGET_LIB)
 	@echo '  Linking client'
-	$(ECHO) $(LD) $(LDFLAGS) -o $(TARGET_SAM) $(MBY_TCP_CLIENT)_sample.o -L. -l$(MBY_TCP_CLIENT)
+	$(ECHO) $(CC) -o $(TARGET_SAM) $(MBY_TCP_CLIENT)_sample.o -L. -l$(MBY_TCP_CLIENT)
+
+.PHONY: run
+run: $(TARGET_SAM)
+	@echo '  Running $(TARGET_SAM)'
+	./$(TARGET_SAM) $(TARGET_ARGS) 2>&1 | tee run.log
+
+.PHONY: valgrind
+valgrind: $(TARGET_SAM)
+	@echo '  Running $(TARGET_SAM) in Valgrind'
+	valgrind \
+            --track-origins=yes \
+            --leak-check=full \
+            --show-leak-kinds=all \
+	./$(TARGET_SAM) $(TARGET_ARGS) 2>&1 | tee val.log
 
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
-	$(ECHO) $(RM) $(TARGET_LIB_O) $(TARGET_LIB) $(TARGET_SAM_O) $(TARGET_SAM)
+	$(ECHO) $(RM) $(TARGET_LIB_O) $(TARGET_LIB) $(TARGET_SAM_O) $(TARGET_SAM) *.o *.log

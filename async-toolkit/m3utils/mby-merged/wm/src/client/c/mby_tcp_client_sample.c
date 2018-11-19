@@ -29,21 +29,26 @@
 
 #include "mby_tcp_client_library.h"
 
-#define SERVER_PATH "../../main/m3/"
+#define SERVER_PATH "../../main/m3/model_server/AMD64_LINUX"
 #define SERVER_FILE SERVER_PATH "models.packetServer"
 
 void print_help(void);
 int test_regs(void);
 int test_pkts(void);
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	char *model_server_file = SERVER_FILE;
 	char *server_type = NULL;
-	int err;
-	int c;
+	int err = 0;
+	int c = -1;
 
 	/********** Process command line arguments ***********/
+        if (argc < 1) {
+            fprintf(stderr, "Invalid command line\n!");
+            print_help();
+        }
+
 	while ((c = getopt(argc, argv, "s:m:h")) != -1)
 		switch (c) {
 		case 's':
