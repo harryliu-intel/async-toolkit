@@ -7,6 +7,8 @@ LD  = ld
 # Recursive forced remove:
 RM = rm -rf
 
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
 MBY_TCP_CLIENT = mby_tcp_client
 
 TARGET_LIB_O = $(MBY_TCP_CLIENT)_library.o
@@ -64,6 +66,7 @@ ifeq ($(DEBUG),1)
 endif
 
 LDFLAGS  = -shared
+LDFLAGS += -Wl,-rpath,.
 
 .PHONY: all
 all: $(TARGET_DIR) $(TARGET_LIB) $(TARGET_SAM)
@@ -82,7 +85,7 @@ $(TARGET_SAM_O): $(MBY_TCP_CLIENT)_sample.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP_
 
 $(TARGET_SAM): $(MBY_TCP_CLIENT)_sample.o $(TARGET_LIB)
 	@echo '  Linking client'
-	$(ECHO) $(CC) -o $(TARGET_SAM) $(MBY_TCP_CLIENT)_sample.o -L. -l$(MBY_TCP_CLIENT)
+	$(ECHO) $(CC) -o $(TARGET_SAM) $(MBY_TCP_CLIENT)_sample.o -Wl,-rpath,$(ROOT_DIR) -L. -l$(MBY_TCP_CLIENT)
 
 .PHONY: run
 run: $(TARGET_SAM)

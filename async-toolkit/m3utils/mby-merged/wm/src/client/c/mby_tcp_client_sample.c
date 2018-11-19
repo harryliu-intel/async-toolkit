@@ -29,8 +29,8 @@
 
 #include "mby_tcp_client_library.h"
 
-#define SERVER_PATH "../../main/m3/model_server/AMD64_LINUX"
-#define SERVER_FILE SERVER_PATH "models.packetServer"
+// Default path to the server file, can be overidden with -m <path>
+#define SERVER_FILE "../../main/m3/model_server/AMD64_LINUX/models.packetServer"
 
 void print_help(void);
 int test_regs(void);
