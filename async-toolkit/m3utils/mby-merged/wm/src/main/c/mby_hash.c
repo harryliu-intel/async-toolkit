@@ -530,6 +530,7 @@ void Hash
     out->CGRP_FLAGS              = in->CGRP_FLAGS;
     out->CGRP_ROUTE              = in->CGRP_ROUTE;
     out->CGRP_TRIG               = in->CGRP_TRIG;
+    out->CONTENT_ADDR            = in->CONTENT_ADDR;
     out->ENCAP                   = in->ENCAP;
     out->DECAP                   = in->DECAP;
     out->DMAC_FROM_IPV6          = in->DMAC_FROM_IPV6;

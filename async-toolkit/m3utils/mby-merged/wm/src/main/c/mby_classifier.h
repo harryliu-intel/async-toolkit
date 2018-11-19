@@ -28,6 +28,7 @@ typedef struct mbyClassifierToHashStruct
     mbyClassifierFlags CGRP_FLAGS;                                  ///< classifier flags {CAPTURE-TIME, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
     fm_uint32          CGRP_ROUTE;                                  ///< classifier route
     fm_byte            CGRP_TRIG;                                   ///< classifier action triggers
+    fm_uint32          CONTENT_ADDR;                                ///< MOD Content address, expressed in 32B units
     fm_uint16          IDGLORT;                                     ///< 16-bit ingress destination GLORT
     fm_uint16          INNER_L3_LENGTH;                             ///< 16-bit IPv4 datagram length for Inner header
     fm_bool            IS_IPV4;                                     ///< packet is of type IP version 4

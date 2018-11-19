@@ -12,34 +12,69 @@
 
 // Defines:
 
-#define DEFAULT_SEGMENT_BYTES   192
-#define VLAN_TAG_BYTES          4
-#define MIN_EGRESS_BYTES        18
+#define DEFAULT_SEGMENT_BYTES                   192
+#define VLAN_TAG_BYTES                          4
+#define MIN_EGRESS_BYTES                        18
 
-#define MBY_MOD_PROFILE_GROUPS          8
-#define MBY_MOD_FIELD_VECTOR_SIZE       24
-#define MBY_MOD_FIELDS_PER_REG_ENTRY    3
-#define MBY_MOD_COMMAND_PER_GROUP       4
-#define MBY_MOD_PROT_ID_MD_TYPE         253
-#define MBY_MOD_MAX_HDR_REGION          256
+#define MBY_MOD_PROFILE_GROUPS                  8
+#define MBY_MOD_FIELD_VECTOR_SIZE               24
+#define MBY_MOD_FIELDS_PER_REG_ENTRY            3
+#define MBY_MOD_COMMAND_PER_GROUP               4
+#define MBY_MOD_PROT_ID_MD_TYPE                 253
+#define MBY_MOD_MAX_HDR_REGION                  256
+#define MBY_MOD_CNTR_SIZE                       256
+#define MBY_MOD_CONTENT_SIZE                    256
+#define MBY_MOD_MAP_MAX_SINGLE_LUT              3
+#define MBY_MOD_MAP_DUAL_LUT                    4
+#define MBY_MOD_MAP_INS_FLD_LUT_LEN             2
+#define MBY_MOD_CONTENT_ADDR_BLOCK_SIZE         32
+#define MBY_MOD_CONTENT_ENTRY_SIZE              8
+#define MBY_MOD_MAP_VALUES_PER_ENTRY            4
+#define MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY       8
 
-/* Modifier command encoding field byte definition */
-#define MBY_MOD_CMD_l_LEN_MASK          0
-#define MBY_MOD_CMD_h_LEN_MASK          7
-#define MBY_MOD_CMD_l_PROT_ID           8
-#define MBY_MOD_CMD_h_PROT_ID           15
-#define MBY_MOD_CMD_l_OFFSET            8
-#define MBY_MOD_CMD_h_OFFSET            13
-#define MBY_MOD_CMD_b_ALIGNMENT         14
-#define MBY_MOD_CMD_l_LUT               15
-#define MBY_MOD_CMD_h_LUT               17
-#define MBY_MOD_CMD_b_UPDATE            16
-#define MBY_MOD_CMD_b_LUT_MODE          18
-#define MBY_MOD_CMD_b_PROT_DEL          18
-#define MBY_MOD_CMD_l_MODE              18
-#define MBY_MOD_CMD_h_MODE              20
-#define MBY_MOD_CMD_l_TYPE              21
-#define MBY_MOD_CMD_h_TYPE              23
+/* Modifier command encoding field bits definition */
+#define MBY_MOD_CMD_l_LEN_MASK                  0
+#define MBY_MOD_CMD_h_LEN_MASK                  7
+#define MBY_MOD_CMD_l_PROT_ID                   8
+#define MBY_MOD_CMD_h_PROT_ID                   15
+#define MBY_MOD_CMD_l_OFFSET                    8
+#define MBY_MOD_CMD_h_OFFSET                    13
+#define MBY_MOD_CMD_b_ALIGNMENT                 14
+#define MBY_MOD_CMD_l_LUT                       15
+#define MBY_MOD_CMD_h_LUT                       17
+#define MBY_MOD_CMD_b_UPDATE                    16
+#define MBY_MOD_CMD_b_LUT_MODE                  18
+#define MBY_MOD_CMD_b_PROT_DEL                  18
+#define MBY_MOD_CMD_l_MODE                      18
+#define MBY_MOD_CMD_h_MODE                      20
+#define MBY_MOD_CMD_l_TYPE                      21
+#define MBY_MOD_CMD_h_TYPE                      23
+
+/* Modifier profile group encoding bits definition */
+#define MBY_MOD_PROFILE_GROUP_l_OFFSET          0
+#define MBY_MOD_PROFILE_GROUP_h_OFFSET          7
+#define MBY_MOD_PROFILE_GROUP_l_PROT_ID         0
+#define MBY_MOD_PROFILE_GROUP_h_PROT_ID         7
+#define MBY_MOD_PROFILE_GROUP_b_CONFIG          8
+
+#define MBY_MOD_CMD_l_LEN_MASK                  0
+#define MBY_MOD_CMD_h_LEN_MASK                  7
+#define MBY_MOD_CMD_l_PROT_ID                   8
+#define MBY_MOD_CMD_h_PROT_ID                   15
+#define MBY_MOD_CMD_l_OFFSET                    8
+#define MBY_MOD_CMD_h_OFFSET                    13
+#define MBY_MOD_CMD_b_ALIGNMENT                 14
+#define MBY_MOD_CMD_l_LUT                       15
+#define MBY_MOD_CMD_h_LUT                       17
+#define MBY_MOD_CMD_b_UPDATE                    16
+#define MBY_MOD_CMD_b_LUT_MODE                  18
+#define MBY_MOD_CMD_b_PROT_DEL                  18
+#define MBY_MOD_CMD_l_MODE                      18
+#define MBY_MOD_CMD_h_MODE                      20
+#define MBY_MOD_CMD_l_TYPE                      21
+#define MBY_MOD_CMD_h_TYPE                      23
+#define MBY_MOD_CMD_DECREMENT_1B_l_POS          0
+#define MBY_MOD_CMD_DECREMENT_1B_h_POS          3
 
 // Enums:
 
@@ -195,10 +230,21 @@ typedef enum mbyModCmdTypeEnum
 
 } mbyModCmdType;
 
+typedef enum mbyModCmdModeEnum
+{
+    MBY_MOD_CMD_MODE_NOP = 0,
+    MBY_MOD_CMD_MODE_BASIC,
+    MBY_MOD_CMD_MODE_4B_REPLACE,
+    MBY_MOD_CMD_MODE_1B_REPLACE,
+    MBY_MOD_CMD_MODE_1B_XOR,
+    MBY_MOD_CMD_MODE_1B_DECREMENT,
+
+} mbyModCmdMode;
+
 typedef enum mbyModCmdLutModeEnum
 {
-    MBY_MOD_CMD_LUT_DIRECT = 0,
-    MBY_MOD_CMD_LUT_RELATIVE,
+    MBY_MOD_CMD_LUT_MODE_DIRECT = 0,
+    MBY_MOD_CMD_LUT_MODE_RELATIVE,
 
 } mbyModCmdLutMode;
 
@@ -208,6 +254,13 @@ typedef enum mbyModCmdAlignmentEnum
     MBY_MOD_CMD_ALIGN_BOTTOM,
 
 } mbyModCmdAlignment;
+
+typedef enum mbyModCmdSourceEnum
+{
+    MBY_MOD_CMD_SOURCE_CONTENT_REGION = 0,
+    MBY_MOD_CMD_SOURCE_FIELD_CONTAINER,
+
+} mbyModCmdSource;
 
 // Structs:
 
@@ -418,6 +471,7 @@ typedef struct mbyModProfileCmdStruct {
 
 typedef struct mbyModFieldVectorStruct {
     fm_byte                 field[MBY_MOD_FIELD_VECTOR_SIZE];
+    fm_uint                 cur_idx;
 
 } mbyModFieldVector;
 
@@ -425,13 +479,13 @@ typedef struct mbyModCmdInsertStruct {
     fm_byte                 len;
     fm_byte                 prot_id;
     fm_bool                 update;
-    fm_byte                 mode;
+    mbyModCmdMode           mode;
 
 } mbyModCmdInsert;
 
 typedef struct mbyModCmdInsertFldStruct {
     fm_byte                 len_mask;
-    fm_byte                 mode;
+    mbyModCmdMode           mode;
 
 } mbyModCmdInsertFld;
 
@@ -450,7 +504,7 @@ typedef struct mbyModCmdReplaceStruct {
     fm_byte                 len_mask;
     fm_byte                 offset;
     mbyModCmdAlignment      align;
-    fm_byte                 mode;
+    mbyModCmdMode           mode;
 
 } mbyModCmdReplace;
 
@@ -458,11 +512,12 @@ typedef struct mbyModCmdReplaceFldStruct {
     fm_byte                 len_mask;
     fm_byte                 offset;
     mbyModCmdAlignment      align;
-    fm_byte                 mode;
+    mbyModCmdMode           mode;
 
 } mbyModCmdReplaceFld;
 
 typedef struct mbyModCmdReplaceFldLutStruct {
+    fm_byte                 mask;
     fm_byte                 offset;
     mbyModCmdAlignment      align;
     fm_byte                 lut;
@@ -487,15 +542,43 @@ typedef struct mbyModDecCmdStruct {
 
 } mbyModDecCmd;
 
+typedef struct mbyModContentContainerStruct {
+    fm_byte                 content[MBY_MOD_CONTENT_SIZE];
+    fm_uint                 cur_idx;
+
+} mbyModContentContainer;
+
+// profile related metadata
+typedef struct mbyModGroupConfigStruct {
+    fm_bool                 valid;
+    fm_uint                 grp_idx;
+    // Offset coming from packet
+    fm_uint                 pkt_offset;
+    // Size coming from packet
+    fm_uint                 pkt_size;
+    // Offset coming from container
+    fm_uint                 ctnr_offset;
+    // Size coming from container
+    fm_uint                 ctnr_size;
+    /* offset to operate on in current grp, used by insert command */
+    fm_uint                 grp_offset;
+    // Parser header index with related protocol ID and offset
+    fm_int                  pa_hdr_idx;
+
+} mbyModGroupConfig;
+
 typedef struct mbyModProfileActionStruct {
     mbyModProfileGroup      profile_grp;
     mbyModFieldVector       fld_vector;
     mbyModDecCmd            dec_cmd[MBY_MOD_PROFILE_GROUPS][MBY_MOD_COMMAND_PER_GROUP];
-
+    mbyModGroupConfig       grp_list[MBY_MOD_PROFILE_GROUPS];
+    fm_uint32               operating_region;
+    mbyModContentContainer  content_ctnr;
 } mbyModProfileAction;
 
 typedef struct mbyTxInToModifierStruct
 {
+    fm_uint32               CONTENT_ADDR;  // MOD Content address, expressed in 32B units
     fm_bool                 DROP_TTL;      //
     fm_byte                 ECN;           // ECN value to use in egress packet
     fm_uint16               EDGLORT;       // egress destination glort

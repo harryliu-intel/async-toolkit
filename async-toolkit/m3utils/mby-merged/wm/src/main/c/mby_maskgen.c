@@ -1200,6 +1200,7 @@ void MaskGen
 
     // Pass thru:
     out->CGRP_TRIG              = in->CGRP_TRIG;
+    out->CONTENT_ADDR           = in->CONTENT_ADDR;
     out->ECN                    = in->ECN;
     out->EDGLORT                = in->EDGLORT;
     out->IS_TIMEOUT             = in->IS_TIMEOUT;
