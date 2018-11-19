@@ -3,15 +3,32 @@ package madisonbay.wm.switchwm.ppe.mapper
 import madisonbay.wm.switchwm.csr.Csr.CsrMapper
 import madisonbay.wm.switchwm.ppe.mapper.output._
 import madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
+import madisonbay.wm.switchwm.ppe.mapper.internal.ClassifierActionsFiller
+
+import madisonbay.csr.all._
 
 //scalastyle:off magic.number
 object Mapper
 {
+  // TODO move away into some bigger object once even more registers are used
+  case class MapPortDefaultEntry(value: Short, target: Byte)
+  class MapPortDefault(csrs: mby_ppe_mapper_map) {
+
+    def forRxPort(rxPort: Int): List[MapPortDefaultEntry] = {
+      for (singleDefault <- csrs.MAP_PORT_DEFAULT(rxPort).MAP_PORT_DEFAULT) yield
+        {
+          MapPortDefaultEntry(singleDefault.VALUE().toShort, singleDefault.TARGET().toByte)
+        }
+    }
+  }
+
   def runMapper(csrMapper: CsrMapper, parserOutput: ParserOutput): MapperOutput = {
     val _ = (csrMapper, parserOutput)
 
+    val mapPortDefaults = new MapPortDefault(csrMapper.ppeMapperMap)
+
     MapperOutput(classifierActions = ClassifierActions(
-      act24 = Vector.fill[ActionPrecVal](16)(ActionPrecVal(0, 0)),
+      act24 = Vector.tabulate[ActionPrecVal](16)(index => ClassifierActionsFiller.getAct24(mapPortDefaults, parserOutput.rxPort, index)),
       act4 = Vector.fill[ActionPrecVal](26)(ActionPrecVal(0, 0)),
       act1 = Vector.fill[ActionPrecVal](24)(ActionPrecVal(0, 0))
     ),

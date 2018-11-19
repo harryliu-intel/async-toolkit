@@ -8,12 +8,13 @@ import madisonbay.wm.switchwm.ppe.mapper.output.{IndependentVlanLearning, Mapper
 import madisonbay.wm.switchwm.ppe.parser.output.{CheckSums, PacketFields, ParserOutput, ProtocolsOffsets}
 import madisonbay.wm.switchwm.ppe.ppe.Port
 import madisonbay.wm.utils.BitFlags
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers, Ignore}
 import monocle.state.all._
 
 import scala.collection.mutable
 import madisonbay.csr.all._
 
+@Ignore
 class MapperCSpec extends FlatSpec with Matchers {
   case class  MapperTestPacketData private (
                                            srcIp: Int,
@@ -84,7 +85,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
 }
 
   def checkAgainstKeys(packetData: MapperTestPacketData, name: String, mapperOutput: MapperOutput): Unit = {
-    "Parser/" + name should "put source IP into FFU_KEYS" in {
+    "Mapper/" + name should "put source IP into FFU_KEYS" in {
       mapperOutput.classifierKeys.key32(0) shouldEqual packetData.srcIp
     }
 
