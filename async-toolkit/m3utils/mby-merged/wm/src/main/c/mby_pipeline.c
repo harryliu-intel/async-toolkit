@@ -58,7 +58,6 @@ void RxPipeline
 
     Triggers   (trig_apply_map,
                 trig_apply_misc_map,
-                trig_usage_map,
                 fwd_misc_map,
                 mapper_map,          &msk2trg, &trg2cgm);
 
