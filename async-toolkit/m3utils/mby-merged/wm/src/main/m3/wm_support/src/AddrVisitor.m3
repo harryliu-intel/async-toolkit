@@ -3,16 +3,23 @@ MODULE AddrVisitor;
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
-    internal := DefInternal;
+    internal := DefaultInternal;
   END;
 
   Internal = BRANDED Brand & " Internal" OBJECT END;
 
-PROCEDURE DefInternal(<*UNUSED*>t : T;
-                      <*UNUSED*>name, typeName : TEXT;
-                      <*UNUSED*>type : Type;
-                      <*UNUSED*>array : Array;
-                      <*UNUSED*>parent : Internal) : Internal =
-  BEGIN RETURN NEW(Internal) END DefInternal;
+PROCEDURE DefaultInternal(<*UNUSED*>t : T;
+                      name, typeName : TEXT;
+                      type : Type;
+                      array : Array;
+                      parent : Internal) : Internal =
+  BEGIN
+    RETURN NEW(DefInternal,
+               name := name, typeName := typeName,
+               type := type,
+               array := array,
+               parent := parent
+               )
+  END DefaultInternal;
 
 BEGIN END AddrVisitor.

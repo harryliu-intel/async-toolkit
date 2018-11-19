@@ -41,4 +41,6 @@ Module("WxToWr")
 Generic_module("TopoSort")
 Module("TextTopoSort")
 
+Module("AddrVisitor")
+
 library ("wm_support")
