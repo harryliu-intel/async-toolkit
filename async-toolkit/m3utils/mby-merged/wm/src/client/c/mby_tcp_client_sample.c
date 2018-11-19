@@ -26,7 +26,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <mbay_dpi_client.h>
+
+#include "mby_tcp_client_library.h"
 
 #define SERVER_PATH "../../main/m3/"
 #define SERVER_FILE SERVER_PATH "models.packetServer"
@@ -190,7 +191,7 @@ int test_pkts(void)
 	if (err == WM_NO_DATA) {
 		printf("Received EOT as expected\n");
 	} else {
-		printf("Unexpected error code %d - should be WM_NO_DATA %d\n", err, 
+		printf("Unexpected error code %d - should be WM_NO_DATA %d\n", err,
 				WM_NO_DATA);
 		return WM_ERR_RUNTIME;
 	}
@@ -205,4 +206,3 @@ int test_pkts(void)
 
 	return WM_OK;
 }
-

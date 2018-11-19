@@ -1,5 +1,5 @@
 /*****************************************************************************
- * @file	mbay_dpi_client.c
+ * @file	mby_tcp_client.c
  * @brief	Minimal client for reg access through model_server socket
  *
  * INTEL CONFIDENTIAL
@@ -43,14 +43,13 @@
 #include <libgen.h>
 #include <sys/param.h>
 
-#include "mbay_dpi_client.h"
-#include "client_types.h"
+#include "mby_tcp_client_library.h"
 
 /* TODO replace log functions placeholders with improved macros */
 #define LOG_ERROR    printf
 #define LOG_WARNING  printf
 #define LOG_INFO     printf
-#define LOG_DEBUG(x, ...)
+#define LOG_DEBUG(...)
 //#define LOG_DEBUG    printf
 #define LOG_HEX_DUMP(a,b,c)
 //#define LOG_HEX_DUMP hex_dump
@@ -521,7 +520,9 @@ int wm_pkt_get(struct wm_pkt *pkt)
  ****************************************************************************/
 
 /* Timeout for socket read operations in ms */
-#define READ_TIMEOUT 5000
+#ifndef READ_TIMEOUT
+#define READ_TIMEOUT 5000 // default timeout
+#endif
 
 /* TODO what is this? */
 #define NONPOSTED_PORT			0
@@ -1008,4 +1009,3 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 
 	return WM_OK;
 }
-

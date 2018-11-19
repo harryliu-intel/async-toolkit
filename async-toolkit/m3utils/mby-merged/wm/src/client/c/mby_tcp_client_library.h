@@ -23,10 +23,10 @@
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
-#ifndef __MBAY_DPI_CLIENT_H_
-#define __MBAY_DPI_CLIENT_H_
+#ifndef MBY_TCP_CLIENT_LIBRARY_H
+#define MBY_TCP_CLIENT_LIBRARY_H
 
-#include <stdint.h>
+#include "mby_tcp_client_types.h"
 
 /** \defgroup c_client C Client APIs
  *  @{
