@@ -1,0 +1,83 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use File::Spec::Functions qw(catdir);
+use File::Basename qw(dirname);
+use Cwd qw(abs_path);
+use Term::ANSIColor;
+use FileHandle;
+use Expect;
+use Carp;
+
+$ENV{'LD_LIBRARY_PATH'} = '../..';
+
+my @params = ("-m", "../../../../main/m3/model_server/AMD64_LINUX/models.packetServer");
+@params = @ARGV if @ARGV;
+my $path = catdir($ENV{'MODEL_ROOT'}, 'wm/src/client/c/examples/client_regwrite');
+$path = catdir(dirname(dirname(dirname(abs_path($0)))), 'examples/client_regwrite') if not -e $path;
+my $client = Expect->spawn($path, @params) or die colored("Could not start application $path\n", 'bold red');
+my $timeout = 2;
+
+# Wait for application prompt: <0>%
+sub expect_prompt {
+	$client->expect($timeout, '<0>% ') or carp colored("Prompt didn't occure\n",'yellow');
+	return;
+}
+
+# Write the value to the register
+sub write_value {
+	my ($reg, $val) = @_;
+	print $client "write $reg $val\n";
+	expect_prompt;
+	return;
+}
+
+# Read the value from register and compare with the expected one
+sub read_value {
+	my ($reg, $val) = @_;
+
+	print $client "read $reg\n";
+	$client->expect($timeout, '-re', '\-\> (0x[a-f0-9]+)\s') or croak colored("Could not read from register $reg\n",'bold red');
+	expect_prompt;
+
+	my $output = hex(($client->matchlist())[0]);
+	($output == $val) or croak colored("Expected $val, but got $output\n", 'bold red');
+
+	print colored 'Read value correct', 'green';
+	print $client "\n";
+	expect_prompt;
+
+	return;
+}
+
+# Temporary register list
+my @registers = qw(example_a_reg_1
+	example_a_reg_2
+	example_a_reg_3
+	example_b_reg_1
+	example_b_reg_2
+	example_b_reg_3
+	example_c_reg_1
+	example_c_reg_2
+	example_d_reg_1);
+
+my $value = 0xBEEF;
+
+$client->expect($timeout, 'Started/connected') or warn colored("No response from white model, trying to perform test anyway...\n",'yellow');
+
+# Write and read from each register
+foreach my $reg (@registers) {
+	write_value($reg, $value);
+	read_value($reg, $value);
+	++$value;
+
+	print $client "\n";
+	expect_prompt;
+}
+
+# Disconnect
+print $client "quit\n";
+$client->expect($timeout, 'Disconnected') or warn colored("Disconnection failed\n",'yellow');
+
