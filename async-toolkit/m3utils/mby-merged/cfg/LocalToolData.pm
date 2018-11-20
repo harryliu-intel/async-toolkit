@@ -77,9 +77,9 @@ $ToolConfig_tools{nebulon}{VERSION}                                          = '
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
 #####################################################
-$ToolConfig_tools{verdi3}{VERSION}                                          = "N-2017.12-1";
-$ToolConfig_tools{vcs}{VERSION}                                             = "N-2017.12-1";
-$ToolConfig_tools{vcsmx}{VERSION}                                           = "N-2017.12-1";
+$ToolConfig_tools{verdi3}{VERSION}                                          = "N-2017.12-SP2-3";
+$ToolConfig_tools{vcs}{VERSION}                                             = "N-2017.12-SP2-3";
+$ToolConfig_tools{vcsmx}{VERSION}                                           = "N-2017.12-SP2-3";
 $ToolConfig_tools{vcs}{ENV}{VCS_HOME}                                       = '&get_tool_path()';
 
 #####################################################
