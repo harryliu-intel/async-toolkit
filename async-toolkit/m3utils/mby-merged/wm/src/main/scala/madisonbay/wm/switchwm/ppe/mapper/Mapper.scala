@@ -11,14 +11,12 @@ import madisonbay.csr.all._
 object Mapper
 {
   // TODO move away into some bigger object once even more registers are used
-  case class MapPortDefaultEntry(value: Short, target: Byte)
+  case class MapPortDefaultEntry(value: Int, target: Int)
   class MapPortDefault(csrs: mby_ppe_mapper_map) {
 
     def forRxPort(rxPort: Int): List[MapPortDefaultEntry] = {
-      for (singleDefault <- csrs.MAP_PORT_DEFAULT(rxPort).MAP_PORT_DEFAULT) yield
-        {
-          MapPortDefaultEntry(singleDefault.VALUE().toShort, singleDefault.TARGET().toByte)
-        }
+      csrs.MAP_PORT_DEFAULT(rxPort).MAP_PORT_DEFAULT.map(singleDefault =>
+        MapPortDefaultEntry(singleDefault.VALUE().toInt, singleDefault.TARGET().toInt))
     }
   }
 
@@ -29,7 +27,7 @@ object Mapper
 
     MapperOutput(classifierActions = ClassifierActions(
       act24 = Vector.tabulate[ActionPrecVal](16)(index => ClassifierActionsFiller.getAct24(mapPortDefaults, parserOutput.rxPort, index)),
-      act4 = Vector.fill[ActionPrecVal](26)(ActionPrecVal(0, 0)),
+      act4 = Vector.tabulate[ActionPrecVal](26)(index => ClassifierActionsFiller.getAct4(mapPortDefaults, parserOutput.rxPort, index)),
       act1 = Vector.fill[ActionPrecVal](24)(ActionPrecVal(0, 0))
     ),
       classifierKeys = ClassifierKeys(

@@ -8,7 +8,7 @@ import madisonbay.wm.switchwm.ppe.mapper.output.{IndependentVlanLearning, Mapper
 import madisonbay.wm.switchwm.ppe.parser.output.{CheckSums, PacketFields, ParserOutput, ProtocolsOffsets}
 import madisonbay.wm.switchwm.ppe.ppe.Port
 import madisonbay.wm.utils.BitFlags
-import org.scalatest.{FlatSpec, Matchers, Ignore}
+import org.scalatest.{FlatSpec, Ignore, Matchers}
 import monocle.state.all._
 
 import scala.collection.mutable
@@ -176,6 +176,44 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     })
   }
   act4Default()
+
+  def act4DoubleDefault(): Unit = {
+    val targetLens = MapperLenses.portDefaultTargetLens(0, 0)
+    val valueLens = MapperLenses.portDefaultValueLens(0, 0)
+
+    val updatedCsr = CsrLenses.execute(csr.ppeMapperMap, for {
+      _ <- targetLens.assign_(160)
+      _ <- valueLens.assign_(0xfe)
+    } yield ())
+
+    runOnSimpleTcp(CsrMapper(0, updatedCsr), "act4 double default", output => {
+      it should "fill act4 using MAP_PORT_DEFAULT" in {
+        output.classifierActions.act4(0).value shouldEqual 0xe
+        output.classifierActions.act4(1).value shouldEqual 0xf
+      }
+    })
+  }
+  act4DoubleDefault()
+
+  def act4QuadDefault(): Unit = {
+    val targetLens = MapperLenses.portDefaultTargetLens(0, 0)
+    val valueLens = MapperLenses.portDefaultValueLens(0, 0)
+
+    val updatedCsr = CsrLenses.execute(csr.ppeMapperMap, for {
+      _ <- targetLens.assign_(129)
+      _ <- valueLens.assign_(0xabcd)
+    } yield ())
+
+    runOnSimpleTcp(CsrMapper(0, updatedCsr), "act4 quad default", output => {
+      it should "fill act4 using MAP_PORT_DEFAULT" in {
+        output.classifierActions.act4(1).value shouldEqual 0xd
+        output.classifierActions.act4(2).value shouldEqual 0xc
+        output.classifierActions.act4(3).value shouldEqual 0xb
+        output.classifierActions.act4(4).value shouldEqual 0xa
+      }
+    })
+  }
+  act4QuadDefault()
 
   def default0(): Unit = {
     val targetLens = MapperLenses.portDefaultTargetLens(0, 0)
