@@ -1844,7 +1844,10 @@ PROCEDURE GenRegInit(r : RegReg.T; gs : GenState) =
       Debug.Error("Can't handle both specified and unspecified bit fields in a single register: " & r.typeName(gs))
     END;
     gs.mdecl("    CompPath.Debug(path,range);\n");
-    gs.mdecl("    RETURN CompRange.From2(base,at)\n");
+    gs.mdecl("    WITH range = CompRange.From2(base,at) DO\n");
+    gs.mdecl("      (*Debug.Out(CompRange.Format(range));*)\n");
+    gs.mdecl("      RETURN range\n");
+    gs.mdecl("    END\n");
     gs.mdecl("  END %s;\n",iNm);
     gs.mdecl("\n");
   END GenRegInit;
