@@ -140,10 +140,10 @@ class mby_rx_ppe_base_test extends shdv_base_test;
    //------------------------------------------------------------------------------
    virtual function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
-      env.set_test_phase_type("env", "POWER_GOOD_PHASE", "mby_rx_ppe_power_good_seq");   // Specify the Phase to run the Power_Good sequence
-      env.set_test_phase_type("env", "HARD_RESET_PHASE", "mby_rx_ppe_hard_reset_seq");   // Specify the Phase to run the Hard_Reset sequence
-      env.set_test_phase_type("env", "WARM_RESET_PHASE", "mby_rx_ppe_warm_reset_seq");   // Specify the Phase to run the Warm_Reset sequence
-      env.set_test_phase_type("env", "CONFIG_PHASE",     "mby_rx_ppe_env_cfg_seq");
+//PJP      env.set_test_phase_type("env", "POWER_GOOD_PHASE", "mby_rx_ppe_power_good_seq");   // Specify the Phase to run the Power_Good sequence
+//PJP      env.set_test_phase_type("env", "HARD_RESET_PHASE", "mby_rx_ppe_hard_reset_seq");   // Specify the Phase to run the Hard_Reset sequence
+//PJP      env.set_test_phase_type("env", "WARM_RESET_PHASE", "mby_rx_ppe_warm_reset_seq");   // Specify the Phase to run the Warm_Reset sequence
+//PJP      env.set_test_phase_type("env", "CONFIG_PHASE",     "mby_rx_ppe_env_cfg_seq");
    endfunction : connect_phase
 
    //------------------------------------------------------------------------------

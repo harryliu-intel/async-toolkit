@@ -1586,7 +1586,9 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
         TypeHier.Addr =>
         gs.put(Section.IComponents, F("    tab : ARRAY[0..%s+1-1] OF CompAddr.T;\n",
                                       Fmt.Int(ccnt)));
-        gs.put(Section.IComponents, F("    mono := NEW(CompRange.Monotonic).init();\n"));
+      gs.put(Section.IComponents, F("    nonmono := FALSE;\n"));
+      gs.put(Section.IComponents, F("    monomap : REF ARRAY OF CARDINAL;\n"));
+      gs.put(Section.IComponents, F("    min, max: CompAddr.T;\n"));
       |
         TypeHier.Unsafe => (* skip *)
       |
@@ -1842,7 +1844,10 @@ PROCEDURE GenRegInit(r : RegReg.T; gs : GenState) =
       Debug.Error("Can't handle both specified and unspecified bit fields in a single register: " & r.typeName(gs))
     END;
     gs.mdecl("    CompPath.Debug(path,range);\n");
-    gs.mdecl("    RETURN CompRange.From2(base,at)\n");
+    gs.mdecl("    WITH range = CompRange.From2(base,at) DO\n");
+    gs.mdecl("      (*Debug.Out(CompRange.Format(range));*)\n");
+    gs.mdecl("      RETURN range\n");
+    gs.mdecl("    END\n");
     gs.mdecl("  END %s;\n",iNm);
     gs.mdecl("\n");
   END GenRegInit;

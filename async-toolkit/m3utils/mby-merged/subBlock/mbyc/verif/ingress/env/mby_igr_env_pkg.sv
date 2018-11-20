@@ -27,8 +27,7 @@ package mby_igr_env_pkg;
 
    import shdv_base_pkg::*;
    import mby_wm_dpi_pkg::*;
-   import mby_common_pkg::*;
-
+//PJP   import mby_common_pkg::*; 
    import mby_ec_bfm_pkg::*;
 
    `include "uvm_macros.svh"
@@ -39,8 +38,6 @@ package mby_igr_env_pkg;
    `include "mby_igr_env_cfg.svh"
    `include "mby_igr_tb_cfg.svh"
    //PJP`include "mby_igr_ral_env.svh"
-   `include "mby_igr_tb_sequencer.svh"
-   `include "mby_igr_base_env.svh"
    `include "mby_igr_env_monitor.svh"
    `include "mby_igr_env.svh"
    `include "mby_igr_seqlib.sv"

@@ -26,7 +26,6 @@ $hdl_spec = {
         "verif/mby/",
         "verif/mby/seq",
         "verif/mby/ral",
-        "verif/mby/fal",
         "verif/mby/ti",
         "verif/mby/env",
      ],

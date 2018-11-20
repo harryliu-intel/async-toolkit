@@ -1,0 +1,23 @@
+# REquired for sandbox to run properly:
+source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh -w $cwd
+osetup vcsmx
+
+# EGR Sandbox usage:
+
+# Build the sandbox model and run the GK gate test case.
+# Removes all temporary files, leaving only build and run logs.
+make gate
+
+# Build the sandbox model and run the GK gate test case.
+# Generates a trace and leaves all temp files.
+make debug
+
+# Build the model without running a test
+make simv
+
+# Clean up all generated files, including logs and traces
+make clean
+
+# Open DVE to view a trace
+make dve
+

@@ -35,7 +35,7 @@ module mby_igr_epl_shim_seg
   input logic rst,
   input data64_w_ecc_t [0:7]    i_rx_data,
   input epl_ts_t                  i_rx_ts,
-  input epl_md_t                 i_seg_md,
+  input shim_md_t                 i_seg_md,
   input logic                 i_seg_sop_e,
   input shimfsel_t              i_seg_sel,
   input logic [7:0]              i_seg_we,
@@ -116,20 +116,22 @@ module mby_igr_epl_shim_seg
                           (i_seg_sel.s6 == 3'h5)? i_rx_data[5]:
                           (i_seg_sel.s6 == 3'h6)? i_rx_data[6]:
                           (i_seg_sel.s6 == 3'h7)? i_rx_data[7]: data_pad;                          
-  assign rx_data_seg[7] = (i_seg_sel.s6 == 3'h0)? i_rx_data[0]:
-                          (i_seg_sel.s6 == 3'h1)? i_rx_data[1]: 
-                          (i_seg_sel.s6 == 3'h2)? i_rx_data[2]:
-                          (i_seg_sel.s6 == 3'h3)? i_rx_data[3]:
-                          (i_seg_sel.s6 == 3'h4)? i_rx_data[4]:
-                          (i_seg_sel.s6 == 3'h5)? i_rx_data[5]:
-                          (i_seg_sel.s6 == 3'h6)? i_rx_data[6]:
-                          (i_seg_sel.s6 == 3'h7)? i_rx_data[7]: data_pad;
+  assign rx_data_seg[7] = (i_seg_sel.s7 == 3'h0)? i_rx_data[0]:
+                          (i_seg_sel.s7 == 3'h1)? i_rx_data[1]: 
+                          (i_seg_sel.s7 == 3'h2)? i_rx_data[2]:
+                          (i_seg_sel.s7 == 3'h3)? i_rx_data[3]:
+                          (i_seg_sel.s7 == 3'h4)? i_rx_data[4]:
+                          (i_seg_sel.s7 == 3'h5)? i_rx_data[5]:
+                          (i_seg_sel.s7 == 3'h6)? i_rx_data[6]:
+                          (i_seg_sel.s7 == 3'h7)? i_rx_data[7]: data_pad;
 
   generate
   genvar g_i;
     for(g_i=0; g_i<8; g_i++) begin: gen_shim_seg_q
-      always_ff @(posedge cclk)
-        s4q_rx_data_seg[g_i] <= (rst)? data_pad: (i_seg_we[g_i])? rx_data_seg[g_i]: s4q_rx_data_seg[g_i]; 
+      always_ff @(posedge cclk) begin
+        if(rst)                s4q_rx_data_seg[g_i] <= data_pad;
+        else if(i_seg_we[g_i]) s4q_rx_data_seg[g_i] <= rx_data_seg[g_i];
+      end
     end //for
   endgenerate
   

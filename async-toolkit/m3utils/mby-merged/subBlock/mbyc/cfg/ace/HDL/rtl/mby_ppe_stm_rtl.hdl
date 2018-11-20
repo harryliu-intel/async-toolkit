@@ -2,7 +2,7 @@
 #  This is a HDL spec file - it defines the unit and how to compile it.
 #
 #
-my $ASSERT_LIB = "/p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64";
+my $SVA_LIB = &ToolConfig::get_tool_path('ipconfig/sva_lib_ip');
 
 $hdl_spec = {
 
@@ -13,12 +13,15 @@ $hdl_spec = {
 		"src/shared/rtl/pkt_pkg.sv",
 		"src/shared/rtl/pkt_meta_pkg.sv",
 		"src/shared/rtl/rx_ppe_pkg.sv",
-		"$ASSERT_LIB/SVA_LIB/intel_checkers_pkg.vs",
+		"src/shared/rtl/mby_egr_pkg.sv",
+		"src/ppe_stm/rtl/ppe_stm_pkg.sv",
+		"$SVA_LIB/intel_checkers_pkg.vs",
 		"src/shared/interfaces/egr_ppe_stm_if.sv",
-		"src/shared/interfaces/rx_ppe_ppe_stm_if.sv",
+		"src/shared/interfaces/rx_ppe_ppe_stm_if0.sv",
+		"src/shared/interfaces/rx_ppe_ppe_stm_if1.sv",
 		"src/shared/interfaces/par_class_if.sv",
+		"src/shared/interfaces/egr_mc_table_if.sv",
 
-		"src/parser/rtl/parser_top.sv",
 		"src/ppe_stm/rtl/ppe_stm_top.sv",
 	],
 
@@ -31,29 +34,15 @@ $hdl_spec = {
    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
 	-vlog_incdirs => [
 		"src/ppe_stm/rtl",
-		"src/parser/rtl",
 		"src/shared/rtl",
 		"src/shared/interfaces",
-		"$ASSERT_LIB/SVA_LIB",
-		"target/mby/mgm_run/parser/src",
-		"target/mby/mgm_run/parser/src/mem_wrap",
+		"$SVA_LIB",
+		"target/mby/mgm_run/ppe_stm/src",
+		"target/mby/mgm_run/ppe_stm/src/mem_wrap",
 		"target/mby/mgm_run/rtl",
 	],
 
 	# Arbitrary VLOG options
-	-vlog_opts => [
-
-		"+libext+.v+.sv+.vh+.svh+.vs+.vm+.sva",
-		"-full64",
-		"+v2k",
-		"-notice",
-		"-sverilog",
-		"+vcs+lic+wait",
-		"+warn=noUII-L",
-		"-timescale=10ps/10ps",
-		"-debug_pp",
-		"+define+VCSSIM+INTEL_SVA_OFF+MBY_PARSER_BEHAVE_MEMS",
-		"-assert svaext",
-	],
+	-vlog_opts => [],
 
 };

@@ -6,15 +6,19 @@ ngen_mod_name
 
 input reset,
 
-rx_ppe_ppe_stm_if.stm   rx_ppe_ppe_stm_if0,
-rx_ppe_ppe_stm_if.stm   rx_ppe_ppe_stm_if1,
+rx_ppe_ppe_stm0_if.stm   rx_ppe_ppe_stm0_if0,
+rx_ppe_ppe_stm1_if.stm   rx_ppe_ppe_stm1_if0,
+rx_ppe_ppe_stm0_if.stm   rx_ppe_ppe_stm0_if1,
+rx_ppe_ppe_stm1_if.stm   rx_ppe_ppe_stm1_if1,
 egr_ppe_stm_if.stm egr_ppe_stm_if0,
 egr_ppe_stm_if.stm egr_ppe_stm_if1,
+egr_mc_table_if.mc_table mc_table_if0_0,
+egr_mc_table_if.mc_table mc_table_if0_1,
+egr_mc_table_if.mc_table mc_table_if1_0,
+egr_mc_table_if.mc_table mc_table_if1_1,
 
 ngen_IO_list
 ngen_IO_end
-
-`ifndef FIRST_SHELL
 
 ngen_wires
 
@@ -22,7 +26,5 @@ logic reset_n;
 print "assign reset_n = !reset;\n";
 
 ngen_submodules
-
-`endif // FIRST_SHELL
 
 ngen_endmodule

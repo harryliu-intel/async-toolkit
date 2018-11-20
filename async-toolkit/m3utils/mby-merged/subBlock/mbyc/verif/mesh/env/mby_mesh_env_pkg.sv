@@ -37,13 +37,11 @@
 package mby_mesh_env_pkg;
 
    import uvm_pkg::*;
-   import sla_pkg::*;
 
    import shdv_base_pkg::*;
    import mby_common_pkg::*;
 
    `include "uvm_macros.svh"
-   `include "slu_macros.svh"
 
    `define __INSIDE_MBY_MESH_ENV_PKG
 

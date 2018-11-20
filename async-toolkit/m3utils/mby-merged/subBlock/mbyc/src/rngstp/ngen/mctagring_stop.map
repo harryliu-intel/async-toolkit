@@ -1,0 +1,12 @@
+//Placeholder
+
+$y = $iteration;
+
+2'd$y                          >> ring_id
+egr_mce_tagring$y              >> mce_tagring_if
+
+mctagring_in_up_$y             >> mctagring_in_up
+mctagring_out_up_$y            >> mctagring_out_up
+
+mctagring_in_dn_$y             >> mctagring_in_dn
+mctagring_out_dn_$y            >> mctagring_out_dn

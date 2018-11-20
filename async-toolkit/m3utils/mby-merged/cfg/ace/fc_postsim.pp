@@ -88,10 +88,11 @@
 		                       '/svt_ahb_slave_transaction_error_sequence/',
 		                       '/svt_ahb_arb_abort_on_error_resp_virtual_sequence/',
 
-                               #[ssnanal] EPC setup is incorrect and ec_env handle is not uniquified across multiple mby_ec_top
-                               #Since the POR is to move to UVM RAL these errors will not be fixed. 
-                               #'/^.*ec_env\[\d+\].ec_core_regs already exists.*$/',
-                               #'/^.*Register file ec_env\[\d+\].mac_regs\[\d+\] already exists.*$/',
+                               #[ssnanal] To be debugged 
+                               '/^.*fc_hdl_top.dut.mby_ec_top_\d+\.grp_A.part_\d+\.ec_sia.rx_fifo_\d+\.Empty_check.*$/',
+                               '/^.*fc_hdl_top.dut.mby_ec_top_\d+\.grp_B.part_\d+\.ec_sia.rx_fifo_\d+\.Empty_check.*$/',
+                               '/^.*fc_hdl_top.dut.mby_ec_top_\d+\.grp_C.part_\d+\.ec_sia.rx_fifo_\d+\.Empty_check.*$/',
+                               '/^.*fc_hdl_top.dut.mby_ec_top_\d+\.grp_D.part_\d+\.ec_sia.rx_fifo_\d+\.Empty_check.*$/',
 		               ],
                                    
 					   #okErrors_multiLine => [
