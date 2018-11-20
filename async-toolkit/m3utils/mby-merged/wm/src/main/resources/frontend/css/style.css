@@ -1,0 +1,22 @@
+
+body {
+    background: #efefff;
+    background-image: url("img/intel_logo_s.png");
+    background-repeat: no-repeat;
+    color: #000022;
+    font: 9pt Verdana,Arial, _sans normal;
+}
+
+#titlebar {
+    height: 200px;
+    margin-left: 400px;
+    margin-top: 50px;
+    color: #127cc1;
+    font-size: 260%;
+    font-weight: bold;
+}
+
+#content {
+    position: absolute;
+    top: 200px;
+}
