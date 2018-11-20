@@ -275,12 +275,12 @@ $ToolConfig_tools{"mgm"} = {
         MGM_RTL  =>  "&get_tool_path()/rtl",
     },
     ENV_APPEND => {
-     PATH => "&get_tool_path()/bin", 
+     PATH => "&get_tool_path()/bin",
     },
 
     OTHER => {
             LOCAL_ASIC_MEMORIES => "YES",
-    }, 
+    },
 };
 $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_8}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
 $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_no_phy}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
@@ -342,7 +342,7 @@ $ToolConfig_tools{"protobuf"} = {
 };
 
 $ToolConfig_tools{"regs2html"} = {
-    VERSION => "18.05.14",
+    VERSION => "18.05.15",
     PATH => "$ENV{RTL_PROJ_TOOLS}/regs2html/nhdk/&get_tool_version()",
 };
 
