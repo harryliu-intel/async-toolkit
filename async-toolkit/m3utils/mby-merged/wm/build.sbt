@@ -71,7 +71,9 @@ lazy val root = (project in file("."))
     mainClass in assembly := Some("madisonbay.Main"),
     test in assembly := {},
     assemblyOutputPath in assembly := path,
-    fork in run := true
+    fork in run := true,
+    fork in Test := true,
+    javaOptions in Test += s"-Dconfig.file=${baseDirectory.value}/src/main/resources/application.conf"
   )
 
 val publishArtifacts = taskKey[Unit]("Publish artifacts only if current user is npgadmin.")
