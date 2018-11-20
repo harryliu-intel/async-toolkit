@@ -19,7 +19,7 @@ import scalaz.StateT
 import scalaz.syntax.all._
 import java.nio.channels.AsynchronousChannelGroup
 
-import madisonbay.fs2app.http.HttpServer
+import madisonbay.fs2app.http.MbyHttpServer
 
 object Fs2Application {
 
@@ -66,7 +66,7 @@ object Fs2Application {
         Concurrent:
         ServerSocket:
         PublisherSocket:
-        HttpServer:
+        MbyHttpServer:
         λ[G[_] => MonadError[G,Throwable]]:
         λ[G[_] => MessageHandler[G,RegistersState]]
   ](stateR: Ref[F,RegistersState],
@@ -80,7 +80,7 @@ object Fs2Application {
     val messageHandler = MessageHandler[F,RegistersState]
     val me = MonadError[F,Throwable]
 
-    def httpStream: Stream[F, Stream[F, Unit]] = HttpServer[F].create
+    def httpStream: Stream[F, Stream[F, Unit]] = MbyHttpServer[F].create
 
     def serverStream: Stream[F,Stream[F,Unit]] =
       for {
@@ -149,7 +149,7 @@ object Fs2Application {
         ConcurrentEffect:
         ServerSocket:
         PublisherSocket:
-        HttpServer:
+        MbyHttpServer:
         λ[G[_] => MonadError[G,Throwable]]:
         λ[G[_] => MessageHandler[G,RegistersState]]
   ](init: RegistersState): F[Unit] = {

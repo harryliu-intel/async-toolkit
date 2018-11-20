@@ -8,7 +8,7 @@ import madisonbay.logger.Logger
 import madisonbay.fs2app.ioConfig.IOPureConfigLoader
 import fs2.io.tcp.Socket
 import cats.effect.IO
-import madisonbay.fs2app.http.{HttpServer, UriDispatcher}
+import madisonbay.fs2app.http.{MbyHttpServer, UriDispatcher}
 import scalaz.MonadError
 import sourcecode.{File, Line}
 import org.scalatest.Matchers
@@ -93,7 +93,7 @@ abstract class IOTestContext[Root] extends Matchers {
 
   }
 
-  implicit lazy val hp = new HttpServer[IO] {
+  implicit lazy val hp = new MbyHttpServer[IO] {
     override def create: Stream[IO, Stream[IO, Unit]] = Stream.emit(Stream.empty)
   }
 
