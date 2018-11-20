@@ -97,17 +97,17 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 					    int timeout_msec);
 
 /**
- * wm_server_start() - Start the model server.
+ * Start the model server.
  *
- * Fork a new process and run the model server. The infopath and infofile
- * arguments are set to a temporary file.
- * It then waits until the server comes up and connects to it.
+ * Fork a new process and run the model server. The arguments infopath and
+ * infofile are set to a temporary file location.
+ * Then waits until the server comes up and connects to it.
  *
  * @param[in]	type is a string with the type of server: "scala" or "m3"
  *
  * @retval		WM_OK if successful
  */
-int wm_server_start(char *type)
+int wm_server_start(char const * const type)
 {
 	char cmd[500], jar_path[500];
 	char *m3_exec_args[] = {cmd, "-n", "-m", "mby", /* Select the MBY model */
@@ -141,7 +141,7 @@ int wm_server_start(char *type)
 		return WM_ERR_INVALID_ARG;
 	}
 
-	/* TODO remove support for m3 code to cleanup this messy code */
+	/* TODO refactor this code now that m3 has become POR */
 	if (!strcasecmp(type, "scala")) {
 		/* For scala I need to retrieve the java exec path */
 		fd = popen("ToolConfig.pl get_tool_exec java", "r");
@@ -215,7 +215,7 @@ int wm_server_start(char *type)
 }
 
 /**
- * wm_server_stop() - Send shutdown request to model_server.
+ * Send shutdown request to model_server.
  *
  * Send a message to request the shutdown of the server. If a temp file
  * has been created to store the infopath, the file is deleted.
@@ -243,14 +243,16 @@ int wm_server_stop(void)
 }
 
 /**
- * wm_connect() - Connect to WM server.
+ * Connect to the WM server.
+ *
+ * Connects to a model server that is already running in a separate session.
  *
  * @param[in]	server_file path of the file created when the model_server is
  * 				started. If NULL, the env variable "SBIOSF_SERVER" is used.
  *
  * @retval	WM_OK if successful.
  */
-int wm_connect(const char *server_file)
+int wm_connect(char const * const server_file)
 {
 	const char *filename;
 	char serv_addr[256];
@@ -311,7 +313,9 @@ int wm_connect(const char *server_file)
 }
 
 /**
- * wm_disconnect() - Disconnect from WM server.
+ * Disconnect from the WM server.
+ *
+ * Disconnect from the model server leaving it up and running.
  *
  * @retval	WM_OK if successful.
  */
@@ -324,7 +328,9 @@ int wm_disconnect(void)
 }
 
 /**
- * wm_reg_read() - Send register read request to model_server.
+ * Read a 64-bit WM register.
+ *
+ * Send register read request to the model server.
  *
  * @param[in]	addr address of the register.
  * @param[out]	val pointer to caller-allocated memory to store the result.
@@ -362,7 +368,9 @@ int wm_reg_read(const uint32_t addr, uint64_t *val)
 
 
 /**
- * wm_reg_write() - Send register write request to model server.
+ * Write a 64-bit WM register.
+ *
+ * Send register write request to the model server.
  *
  * @param[in]	addr address of the register.
  * @param[in]	val is the value to be written.
@@ -394,11 +402,11 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
 	return err;
 }
 
-/* wm_pkt_push() - Send a frame to the WM
+/* Send a frame to the WM.
  *
- * The frame will be sent as it is without any processing.
+ * The buffer will be sent as it is without any processing.
  * Default metadata will be included for compatibility with HLP WM.
- * TODO check if this is the desired behavior.
+ * \TODO check if this is the desired behavior.
  *
  * @param[in]	pkt is the frame that will be injected in the WM
  * @retval		WM_OK if successful
@@ -454,7 +462,10 @@ int wm_pkt_push(const struct wm_pkt *pkt)
 	return err;
 }
 
-/* wm_pkt_get() - Receive a frame from the WM
+/* Receive a frame from the WM.
+ *
+ * The function will attempt to retrieve an egress frame from the model server.
+ * In case no frames are available, WM_NO_DATA is returned.
  *
  * @param[out]	pkt is a pointer to caller-allocated storage that will contain
  * 				the frame received from the model
@@ -529,7 +540,7 @@ int wm_pkt_get(struct wm_pkt *pkt)
 #define POSTED_PORT				1
 
 /**
- * iosf_send_receive() - Send IOSF message and wait for response.
+ * Send IOSF message and wait for response.
  *
  * @param[in]	tx_msg caller-allocated buffer with the message to send
  * @param[in]	tx_len length of the message to send.
@@ -576,7 +587,7 @@ static int iosf_send_receive(uint8_t *tx_msg, uint32_t tx_len,
 }
 
 /**
- * wm_receive() - Receive message from model_server socket interface.
+ * Receive message from model_server socket interface.
  *
  * @param[in]	fd of the socket used to receive the data
  * @param[out]	msg caller-allocated buffer where the message will be placed.
@@ -646,7 +657,7 @@ static int wm_receive(int fd, uint8_t *msg, uint32_t *len, uint16_t *type,
 }
 
 /**
- * wm_send() - Send generic message to model_server socket interface.
+ * Send generic message to model_server socket interface.
  *
  * @param[in]	fd of the socket used to send the data
  * @param[in]	msg pointer to the content of the message.
@@ -692,7 +703,7 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
 }
 
 /**
- * hex_dump() - Dumps buffer in hex output.
+ * Dumps buffer in hex output.
  *
  * @param[in]	bytes is the buffer to dump.
  * @param[in]	nbytes is the size of the buffer.
@@ -739,7 +750,7 @@ static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
 }
 
 /**
- * connect_main() - Connect to the WM server socket
+ * Connect to the WM server socket
  *
  * The fd of the socket is saved in a global variable and it will
  * be reused later on to send all the messages.
@@ -790,7 +801,8 @@ static int connect_server(const char *addr_str, const char *port_str, int *serve
 	return WM_OK;
 }
 
-/* connect_egress() - Establish connection to receive egress frames
+/**
+ * Establish connection to receive egress frames
  *
  * @param[in]	phys_port the switch physical port number
  * @param[in]	server_fd is the server socket fd where the request will be sent
@@ -833,7 +845,8 @@ static int connect_egress(int phys_port, int server_fd, int client_fd,
 	return WM_OK;
 }
 
-/* create_client_socket() - Create a socket to accept connection from WM
+/**
+ * Create a socket to accept connection from WM
  *
  * This socket is mainly used to setup the egress ports
  *
@@ -887,7 +900,7 @@ static int create_client_socket(int *fd, int *port)
 }
 
 /**
- * read_host_info() - Read host info from model_server file
+ * Read host info from model_server file
  *
  * The expected content is in the format: "0:localhost:57548"
  *
@@ -942,7 +955,7 @@ static int read_host_info(FILE *fd, char *host, char *port)
 }
 
 /**
- * wm_read_data() - Reads from a socket with timeout.
+ * Reads data from a socket with timeout.
  *
  * @param[in]	socket is the descriptor to read from.
  * @param[out]	data is the buffer to store received data.

@@ -36,7 +36,7 @@
 enum wm_error {
 	/** Operation completed correctly */
 	WM_OK = 0,
-	/** No more data is available */
+	/** No egress frame is available */
 	WM_NO_DATA = 1,
 	/** Input argument is invalid */
 	WM_ERR_INVALID_ARG,
@@ -52,10 +52,10 @@ enum wm_error {
 	WM_ERR_RUNTIME
 };
 
-int wm_server_start(char *cmd);
+int wm_server_start(char const * const cmd);
 int wm_server_stop(void);
 
-int wm_connect(const char *server_file);
+int wm_connect(char const * const server_file);
 int wm_disconnect(void);
 
 int wm_reg_write(const uint32_t addr, const uint64_t val);
