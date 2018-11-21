@@ -25,6 +25,7 @@ $hdl_spec = {
 		"src/shared/interfaces/rx_ppe_ppe_stm_if0.sv",
 		"src/shared/interfaces/rx_ppe_ppe_stm_if1.sv",
 		"src/shared/interfaces/par_class_if.sv",
+		"src/shared/interfaces/class_group_if.sv",
 
 		"src/rx_ppe/rtl/rx_ppe.sv",
 	],
