@@ -6,6 +6,8 @@ import madisonbay.wm.switchwm.ppe.parser.output.{PacketFields, ProtocolsOffsets}
 import madisonbay.wm.utils.extensions.UIntegers.getLower32
 import madisonbay.wm.utils.extensions.ExtLong.Implicits
 import madisonbay.csr.all._
+import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys
+import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys.ParserKey
 
 object KeysExtractor {
 
@@ -19,7 +21,7 @@ object KeysExtractor {
     val ext_unknown_protid = countersL composeLens parser_counters_r._EXT_UNKNOWN_PROTID composeLens parser_counters_r.EXT_UNKNOWN_PROTID._value
     val ext_dup_protid = countersL composeLens parser_counters_r._EXT_DUP_PROTID composeLens parser_counters_r.EXT_DUP_PROTID._value
 
-    def modify(actualState: (Map[Int, Short], mby_ppe_parser_map, Int), parserExtractCfgReg: parser_extract_cfg_r) = {
+    def modify(actualState: (Map[ParserKey, Short], mby_ppe_parser_map, Int), parserExtractCfgReg: parser_extract_cfg_r) = {
       val (parserKeys, mbyPpeParserMap, counter) = actualState
 
       val protocolId = parserExtractCfgReg.PROTOCOL_ID().toInt
@@ -36,16 +38,16 @@ object KeysExtractor {
           (parserKeys, next(mbyPpeParserMap), counter + 1)
 
         case (_, h :: Nil) =>
-          (parserKeys.updated(counter, toWordWithOffset(h)), mbyPpeParserMap, counter + 1)
+          (parserKeys.updated(ParserKeys.getConstant(counter), toWordWithOffset(h)), mbyPpeParserMap, counter + 1)
 
         case (_, h :: _) =>
           val next = ext_dup_protid.modify((v: Long) => v.incWithUByteSaturation)
-          (parserKeys.updated(counter, toWordWithOffset(h)), next(mbyPpeParserMap), counter + 1)
+          (parserKeys.updated(ParserKeys.getConstant(counter), toWordWithOffset(h)), next(mbyPpeParserMap), counter + 1)
 
       }
     }
 
-    val (result, updatedParserMap, _) = extractorCsr.foldLeft((Map[Int, Short](), csrParser.ppeParserMap, 0))(modify)
+    val (result, updatedParserMap, _) = extractorCsr.foldLeft((Map[ParserKey, Short](), csrParser.ppeParserMap, 0))(modify)
 
     (PacketFields(result), csrParser.copy(ppeParserMap = updatedParserMap))
   }

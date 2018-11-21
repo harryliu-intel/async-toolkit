@@ -1,11 +1,51 @@
 package madisonbay.wm.switchwm.ppe.parser.defs
 
-object ParserKeys {
+import madisonbay.wm.utils.defs.FlexibleConstantContainer
 
-  val OuterIPv4Header     = 42
-  val OuterIPv6Header     = 44
-  val OuterIpAddress      = 48
-  val L4CheckSum          = 32
-  val L4Length            = 35
+object ParserKeys extends FlexibleConstantContainer[Int] {
+  sealed trait ParserKey extends Element
+  case object OuterDestinationMac0 extends ParserKey {val index = 6}
+  case object OuterDestinationMac1 extends ParserKey {val index = 7}
+  case object OuterDestinationMac2 extends ParserKey {val index = 8}
+  case object OuterSourceMac0      extends ParserKey {val index = 9}
+  case object OuterSourceMac1      extends ParserKey {val index = 10}
+  case object OuterSourceMac2      extends ParserKey {val index = 11}
+  case object OuterEthertype       extends ParserKey {val index = 12}
+  case object OuterVlan1           extends ParserKey {val index = 14}
+  case object OuterVlan2           extends ParserKey {val index = 15}
+  case object OuterL4Source        extends ParserKey {val index = 16}
+  case object OuterL4Destination   extends ParserKey {val index = 17}
+  case object OuterIPv4Header      extends ParserKey {val index = 42}
+  case object OuterIPv6Header      extends ParserKey {val index = 44}
+  case object OuterIpAddress       extends ParserKey {val index = 48}
+  case object L4CheckSum           extends ParserKey {val index = 32}
+  case object L4Length             extends ParserKey {val index = 35}
 
+  type ElementType = ParserKey
+
+  override val definedConstants: List[ParserKey] = List(
+    OuterDestinationMac0,
+    OuterDestinationMac1,
+    OuterDestinationMac2,
+    OuterSourceMac0,
+    OuterSourceMac1,
+    OuterSourceMac2,
+    OuterEthertype,
+    OuterVlan1,
+    OuterVlan2,
+    OuterL4Source,
+    OuterL4Destination,
+    OuterIPv4Header,
+    OuterIPv6Header,
+    OuterIpAddress,
+    L4CheckSum,
+    L4Length)
+
+  case class UnknownParserKey(index: Int) extends ParserKey
+
+  override def wildcard(key: Int): ParserKey = UnknownParserKey(key)
+
+  implicit val ordering: Ordering[ParserKey] = new Ordering[ParserKey] {
+    def compare(a: ParserKey, b: ParserKey): Int = implicitly[Ordering[Int]].compare(a.index, b.index)
+  }
 }

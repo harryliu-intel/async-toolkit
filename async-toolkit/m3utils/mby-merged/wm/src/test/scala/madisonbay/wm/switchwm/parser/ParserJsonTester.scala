@@ -4,6 +4,8 @@ import madisonbay.wm.switchwm.csr.Csr
 import madisonbay.wm.switchwm.csr.Csr.CsrParser
 import madisonbay.wm.switchwm.epl.Packet
 import madisonbay.wm.switchwm.ppe.parser.Parser
+import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys
+import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys.ParserKey
 import madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
 import madisonbay.wm.switchwm.ppe.ppe.Port
 import madisonbay.wm.utils.Loader
@@ -53,7 +55,7 @@ class ParserJsonTester extends FlatSpec with Matchers {
       }
 
       testCase.getListOpt[List[Int]]("out.PA_KEYS").map { keys =>
-        val fields = keys.foldLeft(Map[Int, Short]()) { (acc, pair) => acc + (pair.head -> pair(1).toShort) }
+        val fields = keys.foldLeft(Map[ParserKey, Short]()) { (acc, pair) => acc + (ParserKeys.getConstant(pair.head) -> pair(1).toShort) }
         it should "have correct PA_KEYS" in {
           parseResult.parserKeys.fields shouldEqual fields
         }

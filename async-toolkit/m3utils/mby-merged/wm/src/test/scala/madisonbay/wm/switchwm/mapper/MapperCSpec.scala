@@ -13,6 +13,7 @@ import monocle.state.all._
 
 import scala.collection.mutable
 import madisonbay.csr.all._
+import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys
 
 @Ignore
 class MapperCSpec extends FlatSpec with Matchers {
@@ -81,7 +82,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
   flags += MBY_PA_FLAGS_OTR_L3_V
   flags += MBY_PA_FLAGS_OTR_L4_V
 
-  into.copy(parserKeys = PacketFields(keys.toMap), parserFlags = BitFlags(flags))
+  into.copy(parserKeys = PacketFields(keys.toMap.map{case (k, v) => (ParserKeys.getConstant(k), v)}), parserFlags = BitFlags(flags))
 }
 
   def checkAgainstKeys(packetData: MapperTestPacketData, name: String, mapperOutput: MapperOutput): Unit = {
