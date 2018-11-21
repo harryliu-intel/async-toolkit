@@ -17,14 +17,17 @@ SIM_DIR = dv/run
 
 INCS = $(RTL_SRC)/rx_ppe/rtl
 INCS += $(RTL_SRC)/parser/rtl
-INCS += $(RTL_SRC)/classifier/rtl
+INCS += $(RTL_SRC)/class_gpa/rtl
+INCS += $(RTL_SRC)/class_gpb/rtl
 INCS += $(RTL_SRC)/action/rtl
 INCS += $(SHARED_SRC)/rtl
 INCS += $(SHARED_SRC)/interfaces
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src/mem_wrap
-INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src
-INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpa/src
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpa/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpb/src
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpb/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/action/src
 INCS += $(TARGET_SRC)/mby/mgm_run/action/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/rtl
@@ -46,10 +49,12 @@ VCS_SRC  += $(SHARED_SRC)/interfaces/ahb_rx_ppe_if.sv
 VCS_SRC  += $(SHARED_SRC)/interfaces/glb_rx_ppe_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_rx_ppe_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_igr_if.sv
-VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
+VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm0_if.sv
+VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm1_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/par_class_if.sv
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/parser/src/parser_mem.def
-VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/classifier/src/classifier_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/class_gpa/src/class_gpa_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/class_gpb/src/class_gpb_mem.def
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/action/src/action_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
