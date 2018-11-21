@@ -1,4 +1,6 @@
-
+`include "lib_udp.rdl"
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
 
 /////////////////////////////////////////////////////////////////////////////
 // Read Request Y

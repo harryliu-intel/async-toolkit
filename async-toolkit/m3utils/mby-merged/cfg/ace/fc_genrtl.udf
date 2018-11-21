@@ -35,6 +35,14 @@ my $cmo =  join(":", @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'CMO'}});
                 group => "GENERATE",
             },
         },
+        -en__gen_ral_regflow_lib => {
+            type    => 'BOOLEAN',
+            default => 1,
+            help    => {
+                desc  => "STAGE 'gen_ral_regflow_lib' enable",
+                group => "GENERATE",
+            },
+        },
         -en__gen_mby_wm => {
             type    => 'BOOLEAN',
             default => 1,
@@ -70,6 +78,14 @@ my $cmo =  join(":", @{&ToolConfig::get_tool("mgm")->{'MGM_ARGS'}->{'CMO'}});
                     gen_commands => [
                        "echo 'Running nebulon'",
                        "make -C $ENV{MODEL_ROOT}/tools/srdl/mby",
+                    ],
+                },
+                gen_mesh_regflow_lib => {
+                    enable_config => '<-en__gen_ral_regflow_lib>',
+                    filter        => 'Synthesis',
+                    gen_commands => [
+                       "echo 'Running nebulon for Mesh'",
+                       "make -C $ENV{MODEL_ROOT}/tools/srdl/mby mesh_ral",
                     ],
                 },
                 gen_mby_wm => {

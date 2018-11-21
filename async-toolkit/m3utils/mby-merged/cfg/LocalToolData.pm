@@ -141,6 +141,12 @@ $ToolConfig_tools{cm3} = {
     EXEC => "&get_tool_path()/bin/cm3",
 };
 
+$ToolConfig_tools{multi_gen_ralf} = {
+    VERSION => "",
+    PATH => "$ENV{RTL_PROJ_DBIN}/uvm_ral",
+    EXEC => "&get_tool_path()/multi_gen_ralf_crif.py",
+};
+
 
 $ToolConfig_tools{onesource} = {
    PATH => "/p/hdk/rtl/cad/x86-64_linux30/dt/OneSourceBundle/&get_tool_version()",
