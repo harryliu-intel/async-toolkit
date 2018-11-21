@@ -58,14 +58,15 @@ class ParserStageSpec extends FlatSpec with Matchers {
     } yield ())
     val updatedCsrParser = csrParser.copy(ppeParserMap = updatedParserMap)
 
-    val result: (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
-    result._1.get contains 1 shouldEqual true
-    result._1.get contains 2 shouldEqual false
-    result._1.get contains 3 shouldEqual false
-    result._1.get contains 4 shouldEqual true
+    val (bitFlags, _, _): (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
 
-    val result2: (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
-    result2._1.toInt shouldEqual b"10010"
+    bitFlags.get contains 1 shouldEqual true
+    bitFlags.get contains 2 shouldEqual false
+    bitFlags.get contains 3 shouldEqual false
+    bitFlags.get contains 4 shouldEqual true
+
+    val (bitFlags2, _, _): (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
+    bitFlags2.toInt shouldEqual b"10010"
   }
 
 }

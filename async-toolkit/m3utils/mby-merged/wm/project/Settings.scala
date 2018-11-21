@@ -2,7 +2,8 @@ import sbt.Keys._
 import sbt.librarymanagement.ivy.Credentials
 import sbt.librarymanagement.syntax._
 import sbt.{Def, inThisBuild}
-import org.scalastyle.sbt.ScalastylePlugin.autoImport._
+import scalafix.sbt.ScalafixPlugin.autoImport._
+import sbt.addCompilerPlugin
 
 object Settings {
 
@@ -39,7 +40,8 @@ object Settings {
     "-Ywarn-unused:patvars",         // Warn if a variable bound in a pattern is unused.
     "-Ywarn-unused:privates",        // Warn if a private member is unused.
     "-Ywarn-value-discard",          // Warn when non-Unit expression results are unused.
-    "-Ywarn-dead-code"               // Warn about dead code
+    "-Ywarn-dead-code",              // Warn about dead code
+    "-Yrangepos"                     // Required by scalafix
   )
 
   val testDisabledOpts = Seq(
@@ -60,11 +62,10 @@ object Settings {
     resolvers += artifactoryResolver,
     parallelExecution in Test := false,
     scalacOptions in Compile ++= scalacOpts.toSeq,
-    scalacOptions in Test ++= (scalacOpts diff testDisabledOpts).toSeq
+    scalacOptions in Test ++= (scalacOpts diff testDisabledOpts).toSeq,
+    addCompilerPlugin(scalafixSemanticdb)
   )) ++ Seq(
-    scalastyleFailOnError := true,
-    scalastyleFailOnWarning := true,
-    (compile in Compile) := ((compile in Compile) dependsOn scalastyle.in(Compile).toTask("")).value,
-    (compile in Test) := ((compile in Test) dependsOn scalastyle.in(Test).toTask("")).value
+    (compile in Compile) := ((compile in Compile) dependsOn scalafix.in(Compile).toTask("")).value,
+    (compile in Test) := ((compile in Test) dependsOn scalafix.in(Test).toTask("")).value
   )
 }
