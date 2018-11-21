@@ -232,6 +232,30 @@ $ToolConfig_tools{stage_bman_sgcdc} = {
   VERSION => "&get_tool_version(buildman)",
 };
 
+ 
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "&get_tool_var(stage_bman_sglint,modules)");                                                                    
+$ToolConfig_tools{spyglass_lint}{SUB_TOOLS}{'spyglass'}{EXEC} = "&get_tool_path(spyglass_lint/spyglass)/SPYGLASS_HOME/bin/spyglass";
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_LINT_VER} = "&get_tool_version(spyglass_lint/spyglass)";
+$ToolConfig_tools{spyglass_lint}{ENV}{SPYGLASS_METHODOLOGY_LINT} = '1.06.02.18ww39/rtl_lint/';
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_METHODOLOGY_RTL_LINT} = "$ENV{RTL_PROJ_TOOLS}/spyglass_methodology_lint/master/&get_tool_env_var('spyglass_lint','SPYGLASS_METHODOLOGY_LINT')";
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_METHODOLOGY_RTL_LINT} = "$ENV{RTL_PROJ_TOOLS}/spyglass_methodology_lint/master/&get_tool_env_var('spyglass_lint','SPYGLASS_METHODOLOGY_LINT')";
+
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_LINT_VER}  = "&get_tool_version(spyglass_lint/spyglass)";
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_LINT_VER}  = "&get_tool_version(spyglass_lint/spyglass)";
+
+$ToolConfig_tools{stage_bman_sglint} = {
+  OTHER   => {
+               enable_stage_caching => 0,
+               enable_stage_digest => 0,
+               modules => "&get_tool_path(buildman)/stages/sglint.pm",
+               stage_digest_rules => ["acebuild", "sglint"],
+             },
+  PATH    => "&get_tool_path(buildman)",
+  VERSION => "&get_tool_version(buildman)",
+};
+
+
+
 $ToolConfig_tools{stage_bman_genrtl}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/genrtl.pm";
 $ToolConfig_tools{jasper_utils} = {
   PATH    => "$ENV{RTL_PROJ_TOOLS}/jasper_utils/nhdk/&get_tool_version()",
