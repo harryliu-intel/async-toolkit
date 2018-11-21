@@ -19,8 +19,8 @@ egr_epl3           >> epl_if3
 egr_mc_table0      >> mc_table_if0
 egr_mc_table1      >> mc_table_if1
 
-egr_mctagring      >> tagring_if
-egr_tagring        >> mce_tagring_if
+egr_tagring        >> tagring_if
+egr_mctagring      >> mce_tagring_if
 
 mim0_rd0           >> mim_rd_if0_0
 mim0_rd1           >> mim_rd_if0_1
