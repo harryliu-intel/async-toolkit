@@ -396,6 +396,28 @@ reg wcm_im_r {
     ValRandomize = true;
   } FCMN_SHELL_CTRL_ERR[0:0] = 1'h0;
 };
+// CGRP_B_LPP_CONFIG [0]
+
+reg cgrp_b_lpp_config {
+  shared;
+  HandCoded = true;
+  name = "Sets CGRP_B in LPP Mode"; 
+  desc = "
+  This bit sets the CGRP_B in LPP mode 
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } CGRP_B_LPP_MODE[0:0] = 1'h0;
+};
 
 addrmap mby_ppe_cgrp_b_nested_map {
   name = "mby_nested_b";
