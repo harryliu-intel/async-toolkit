@@ -54,6 +54,8 @@ msh_row_wr_req_t    i_eb_wr_req     [NUM_MSH_PLANES-1:0];
 msh_dbus_t          i_eb_wr_dbus    [NUM_MSH_PLANES-1:0];
 
 msh_row_rd_req_t    i_eb_rd_req     [NUM_MSH_PLANES-1:0];
+msh_row_wr_req_t    i_eb_wr_req     [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_eb_wr_dbus    [NUM_MSH_PLANES-1:0];
 
 // DUT outputs  (direction not specified in this interface)
 

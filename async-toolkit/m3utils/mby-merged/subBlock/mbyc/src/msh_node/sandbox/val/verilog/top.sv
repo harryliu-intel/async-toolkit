@@ -92,6 +92,8 @@ import msh_node_sim_pkg::*;
         .i_eb_wr_dbus   (dut_if.i_eb_wr_dbus),
 
         .i_eb_rd_req    (dut_if.i_eb_rd_req),
+        .i_eb_wr_req    (dut_if.i_eb_wr_req),
+        .i_eb_wr_dbus   (dut_if.i_eb_wr_dbus),
 
         .o_eb_node_col  (dut_if.o_eb_node_col),
         .o_sb_node_row  (dut_if.o_sb_node_row),

@@ -51,11 +51,15 @@ class inp_driver;
 //    integer                 num_reqs;       // number of input requests
     bit                     drv_done;       // set when driver is done
     string                  name;           // input driver name used in $display statements
-    integer                 drove_rd_req;
+    integer                 drove_reqs;
 
      
     mby_msh_pkg::msh_row_rd_req_t    drvr_rd_req_to_dut;
     mby_msh_pkg::msh_row_rd_req_t    drvr_rd_req_to_dut_p1;
+    mby_msh_pkg::msh_row_wr_req_t    drvr_wr_req_to_dut;
+    mby_msh_pkg::msh_row_wr_req_t    drvr_wr_req_to_dut_p1;
+    mby_msh_pkg::msh_dbus_t          drvr_wr_dbus_to_dut;
+    mby_msh_pkg::msh_dbus_t          drvr_wr_dbus_to_dut_p1;
 
 
 
@@ -78,7 +82,7 @@ class inp_driver;
 //        );
 
         clk_cnt = 0;
-        drove_rd_req    = 0;
+        drove_reqs    = 0;
     endfunction
 
     // reset input driver
@@ -87,7 +91,11 @@ class inp_driver;
 //        req_fifo        = {};           // initialize to empty queue
         drvr_rd_req_to_dut = '0;
         drvr_rd_req_to_dut_p1 = '0;
-        drove_rd_req    = 0;
+        drvr_wr_req_to_dut = '0;
+        drvr_wr_req_to_dut_p1 = '0;
+        drvr_wr_dbus_to_dut = '0;
+        drvr_wr_dbus_to_dut_p1 = '0;
+        drove_reqs    = 0;
 
     endtask
 
@@ -98,10 +106,14 @@ class inp_driver;
             clk_cnt++;      // keep track of number of clocks
            
             // get inputs from drive_reqs() task
-            drvr_rd_req_to_dut_p1 <= drvr_rd_req_to_dut;
+            drvr_rd_req_to_dut_p1  <= drvr_rd_req_to_dut;
+            drvr_wr_req_to_dut_p1  <= drvr_wr_req_to_dut;
+            drvr_wr_dbus_to_dut_p1 <= drvr_wr_dbus_to_dut;
 
             // drive DUT inputs 
-            dut_if.i_eb_rd_req[0] = drvr_rd_req_to_dut_p1;
+            dut_if.i_eb_rd_req[0]  = drvr_rd_req_to_dut_p1;
+            dut_if.i_eb_wr_req[0]  = drvr_wr_req_to_dut_p1;
+            dut_if.i_eb_wr_dbus[0] = drvr_wr_dbus_to_dut_p1;
     
         end
     endtask
@@ -126,39 +138,61 @@ class inp_driver;
     // Drive requests into DUT (template)
     task drive_reqs();
 
-        if (!drove_rd_req) begin
+        if (!drove_reqs) begin
+            @(posedge dut_if.mclk);
+
+            drvr_wr_req_to_dut.vld      = 1'b1;
+            drvr_wr_req_to_dut.node_col = '0;
+            drvr_wr_req_to_dut.node_row = '0;
+            drvr_wr_req_to_dut.csr      = '0;
+            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
+            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
+
+            @(posedge dut_if.mclk);
+
+            drvr_wr_req_to_dut.vld      = 1'b0;
+            drvr_wr_req_to_dut.node_col = '0;
+            drvr_wr_req_to_dut.node_row = '0;
+            drvr_wr_req_to_dut.csr      = '0;
+            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
+            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
+
+
+            @(posedge dut_if.mclk);
+
+            drvr_wr_dbus_to_dut.data    = mby_msh_pkg::msh_data_t'('ha5a5);
+            drvr_wr_dbus_to_dut.ecc     = mby_msh_pkg::msh_ecc_t'('h8888);
+
+            @(posedge dut_if.mclk);
+            @(posedge dut_if.mclk);
+            @(posedge dut_if.mclk);
             @(posedge dut_if.mclk);
 
             drvr_rd_req_to_dut.vld      = 1'b1;
-            drvr_rd_req_to_dut.id       = 16'h1;
-//            drvr_rd_req_to_dut.id       = mby_msh_pkg::MSH_ID_WIDTH'h1;
+            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(1);
             drvr_rd_req_to_dut.node_col = '0;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.addr     = 20'ha5;
-//            drvr_rd_req_to_dut.addr = mby_msh_pkg::MSH_NODE_ADDR_WIDTH'ha5;
+            drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
             drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = 8'h42;
-//            drvr_rd_req_to_dut.age      = mby_msh_pkg::MSH_TRANS_AGE_WIDTH'h42;
-
-            drove_rd_req = 1; 
+            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h44);
 
             @(posedge dut_if.mclk);
 
             drvr_rd_req_to_dut.vld      = 1'b0;
-            drvr_rd_req_to_dut.id       = 16'h0;
-//            drvr_rd_req_to_dut.id       = mby_msh_pkg::MSH_ID_WIDTH'h1;
+            drvr_rd_req_to_dut.id       = mby_msh_pkg::msh_rd_id_t'(0);
             drvr_rd_req_to_dut.node_col = '0;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.addr     = 20'h0;
-//            drvr_rd_req_to_dut.addr = mby_msh_pkg::MSH_NODE_ADDR_WIDTH'ha5;
+            drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
             drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
-            drvr_rd_req_to_dut.age      = 8'h0;
-//            drvr_rd_req_to_dut.age      = mby_msh_pkg::MSH_TRANS_AGE_WIDTH'h42;
+            drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
+
+
+            drove_reqs = 1; 
 
         end
 
