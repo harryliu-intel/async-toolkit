@@ -2,15 +2,15 @@ package madisonbay.fs2app.http
 
 import cats.effect.IO
 import fs2.{RaiseThrowable, Stream}
+import madisonbay.frontend.controller.ResourceProvider
+import madisonbay.frontend.viewer.Parameters.UriParameter
 import spinoco.fs2.http.HttpResponse
 import spinoco.protocol.http._
 import spinoco.protocol.mime.{ContentType, MediaType}
-import madisonbay.frontend.{PageGenerator, ResourceProvider}
+import madisonbay.frontend.viewer.PageGenerator
 
 
 object IoUriDispatcher extends UriDispatcher[IO] {
-
-  case class UriParameter(key: String, value: Option[String])
 
   val contentFrontend   = ContentType.TextContent(MediaType.`text/html`, None)
   val contentCss        = ContentType.BinaryContent(MediaType.`text/css`, None)

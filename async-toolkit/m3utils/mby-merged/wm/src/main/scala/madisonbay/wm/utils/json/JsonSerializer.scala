@@ -1,16 +1,20 @@
 package madisonbay.wm.utils.json
 
 import JsonValues.{isValue, toJsonValue}
+import java.lang.reflect.Field
 
-import scala.util.Try
 
 object JsonSerializer {
 
-  def toMap(any: Any, bNameCaseClasses: Boolean = false): Map[String, Any] = {
+  def isInnerCaseClassField(field: Field): Boolean = field.getName == "$outer"
 
-    def isCaseClassField(field: java.lang.reflect.Field): Boolean = field.getName == "$outer"
+  val StandardFieldFilter: (Field, AnyRef) => Boolean = (field, _) => !isInnerCaseClassField(field)
 
-    def isFieldSupported(field: java.lang.reflect.Field): Boolean = !isCaseClassField(field)
+  def toMapStd(value: Any): Map[String, Any] = toMap(value, bNameCaseClasses = false)(StandardFieldFilter)
+
+  def toMapCaseClassNameStd(any: Any): Map[String, Any] = toMap(any, bNameCaseClasses = true)(StandardFieldFilter)
+
+  def toMap(any: Any, bNameCaseClasses: Boolean)(filterField: (Field, AnyRef) => Boolean): Map[String, Any] = {
 
     def isUserCaseClass(ob: Any): Boolean = ob match {
       case _: List[_] => false
@@ -21,13 +25,13 @@ object JsonSerializer {
     def toMapObject(ob: AnyRef): Any = {
       val fields = ob.getClass.getDeclaredFields
       val fieldsSize = fields.size
-      if (fieldsSize == 0 || (fieldsSize == 1 && isCaseClassField(fields.head))) {
+      if (fieldsSize == 0 || (fieldsSize == 1 && isInnerCaseClassField(fields.head))) {
         if (isUserCaseClass(ob))  {ob.toString} else {ob.getClass.getSimpleName}
       } else {
         fields.foldLeft(Map[String, Any]()) { (acc, field) =>
           field.setAccessible(true)
           val value = field.get(ob)
-          if (isFieldSupported(field) && value != null) {
+          if (value != null && filterField(field, value)) {
             val name = if (bNameCaseClasses && isUserCaseClass(value)) {value.getClass.getSimpleName} else {field.getName}
             acc + (name -> recursiveToMap(value))
           } else {
@@ -52,9 +56,5 @@ object JsonSerializer {
     }
 
   }
-
-  def toMapWithCaseClasses(any: Any): Map[String, Any] = toMap(any, bNameCaseClasses = true)
-
-  def toMapTry(any: Any): Try[Map[String, Any]] = Try(toMap(any))
 
 }

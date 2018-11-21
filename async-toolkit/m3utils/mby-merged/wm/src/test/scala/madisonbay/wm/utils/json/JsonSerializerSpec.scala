@@ -1,5 +1,6 @@
 package madisonbay.wm.utils.json
 
+import madisonbay.wm.switchwm.csr.Csr
 import org.scalatest.{FlatSpec, Matchers}
 import madisonbay.wm.utils.json.JsonSerializer._
 
@@ -22,38 +23,38 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
 
   it should "throw exception on AnyVal, String and collections" in {
     assertThrows[IllegalArgumentException] {
-      toMap(5)
+      toMapStd(5)
     }
 
     assertThrows[IllegalArgumentException] {
-      toMap("test")
+      toMapStd("test")
     }
 
     assertThrows[IllegalArgumentException] {
-      toMap(List(1,2,3))
+      toMapStd(List(1,2,3))
     }
   }
 
   it should "convert simple case class" in {
-    toMap(TestClass1(5)) shouldEqual Map("value"->5)
+    toMapStd(TestClass1(5)) shouldEqual Map("value"->5)
   }
 
   it should "convert collections" in {
     val m1 = Map(1->"one", 2->"two")
     val d1 = 0.55
 
-    toMap(new TestClass2(List(1,2,3), m1, d1)) shouldEqual Map("values"->List(1,2,3), "maps"->Map(1->"one", 2->"two"), "myDouble"->0.55)
+    toMapStd(new TestClass2(List(1,2,3), m1, d1)) shouldEqual Map("values"->List(1,2,3), "maps"->Map(1->"one", 2->"two"), "myDouble"->0.55)
   }
 
   it should "convert nested classes" in {
-    toMap(TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0))) shouldEqual Map(
+    toMapStd(TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0))) shouldEqual Map(
       "testClass3"->Map("x"->"test3", "tc1"->Map("value"->3)),
       "testClass2"->Map("values"->List(), "maps"->Map(), "myDouble"->0.0)
       )
   }
 
   it should "convert nested classes with case classes" in {
-    toMapWithCaseClasses(TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0))) shouldEqual Map(
+    toMapCaseClassNameStd(TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0))) shouldEqual Map(
       "TestClass3"->Map("x"->"test3", "TestClass1"->Map("value"->3)),
       "testClass2"->Map("values"->List(), "maps"->Map(), "myDouble"->0.0)
     )
@@ -62,7 +63,7 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
   it should "convert collection of case objects" in {
 
     val flags = Map("flag18"->Flag_abc, "flag24"->Flag_xyz)
-    toMapWithCaseClasses(new AllFlags(ClassFlags(flags), ClassFlagsList(List(Flag_xyz, Flag_abc)))) shouldEqual Map(
+    toMapCaseClassNameStd(new AllFlags(ClassFlags(flags), ClassFlagsList(List(Flag_xyz, Flag_abc)))) shouldEqual Map(
       "ClassFlags"->Map(
         "flags"->Map(
           "flag18"->"Flag_abc",
@@ -72,6 +73,63 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
         "flagsList"->List("Flag_xyz", "Flag_abc")
       )
     )
+  }
+
+  it should "process special field filtering" in {
+
+    val flags = Map("flag18"->Flag_abc, "flag24"->Flag_xyz)
+    val allFlags = new AllFlags(ClassFlags(flags), ClassFlagsList(List(Flag_xyz, Flag_abc)))
+
+    val res = toMap(allFlags, bNameCaseClasses = true) {
+      case (_, _: ClassFlagsList) => false
+      case (field, _) if isInnerCaseClassField(field) => false
+      case _ => true
+    }
+
+    res shouldEqual Map(
+      "ClassFlags"->Map(
+        "flags"->Map(
+          "flag18"->"Flag_abc",
+          "flag24"->"Flag_xyz"
+        )
+      )
+    )
+  }
+
+  it should "filter selected case classes" in {
+
+    val tc = TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0))
+
+    val res = toMap(tc, bNameCaseClasses = true) {
+      case (_, _: TestClass2) => false
+      case (field, _) if isInnerCaseClassField(field) => false
+      case (field, _) if field.getName.endsWith("1") => false
+      case _ => true
+    }
+
+    res shouldEqual Map(
+      "TestClass3"->Map("x"->"test3")
+    )
+  }
+
+  it should "read parser from csr" in {
+
+    val parser = Csr().getParser(0)
+
+    val parserMap = toMap(parser, bNameCaseClasses = false) {
+      case (field, _) if isInnerCaseClassField(field) => false
+      case (field, _) if field.getName == "companion" => false
+      case (field, _) if field.getName.startsWith("bitmap") => false
+      case _ => true
+    }
+
+    JsonReader.getOpt(parserMap, "ppeParserMap.PARSER_PORT_CFG(0).INITIAL_W0_OFFSET.value") shouldEqual Some(0)
+
+    // Export csr tree to json
+    /*import madisonbay.wm.utils.FileService
+    import madisonbay.frontend.model.Model.csrMap
+    FileService.saveJson("src/test/resources/csr.json", csrMap)*/
+
   }
 
 }

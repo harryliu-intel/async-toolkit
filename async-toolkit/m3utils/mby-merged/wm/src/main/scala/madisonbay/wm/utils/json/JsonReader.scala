@@ -1,16 +1,26 @@
 package madisonbay.wm.utils.json
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 import scala.util.Try
 
 object JsonReader {
 
+  val mapper = new ObjectMapper
+  mapper.enable(SerializationFeature.INDENT_OUTPUT)
+  mapper.registerModule(DefaultScalaModule)
+
   def parse(strJson: String): Try[Map[String, Any]] = Try {
-    val mapper = new ObjectMapper
-    mapper.registerModule(DefaultScalaModule)
     mapper.readValue(strJson, classOf[Map[String,Any]])
+  }
+
+  def toJson(value: Map[Symbol, Any]): String = {
+    toJson(value.map { case (k,v) => k.name -> v })
+  }
+
+  def toJson(value: Any): String = {
+    mapper.writeValueAsString(value)
   }
 
   val PatternListApplyElement = "[a-zA-Z_][a-zA-Z_0-9]*([\\(][0-9]+[\\)])+"

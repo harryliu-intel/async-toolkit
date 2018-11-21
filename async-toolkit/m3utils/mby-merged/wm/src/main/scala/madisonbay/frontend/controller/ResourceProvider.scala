@@ -1,4 +1,4 @@
-package madisonbay.frontend
+package madisonbay.frontend.controller
 
 import java.io.File
 import java.nio.file.Files

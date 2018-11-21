@@ -1,7 +1,7 @@
 //scalastyle:off
 package madisonbay.wm.utils.json
 
-import madisonbay.wm.utils.Loader
+import madisonbay.wm.utils.FileService
 import madisonbay.wm.utils.json.JsonReader._
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -66,7 +66,7 @@ class JsonReaderSpec extends FlatSpec with Matchers {
   }
 
   it should "properly load json and extract fields" in {
-    val json = Loader.loadJson("src/test/resources/json/p4_output_test.json").getOrElse(Map())
+    val json = FileService.loadJson("src/test/resources/json/p4_output_test.json").getOrElse(Map())
     json should not equal Map()
 
     getDoubleOpt(json, "double_test") shouldEqual Some(0.5)

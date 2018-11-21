@@ -8,7 +8,7 @@ import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys
 import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys.ParserKey
 import madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
 import madisonbay.wm.switchwm.ppe.ppe.Port
-import madisonbay.wm.utils.Loader
+import madisonbay.wm.utils.FileService
 import madisonbay.wm.utils.json.JsonReader.JsonMap
 import org.scalatest.{FlatSpec, Matchers}
 import madisonbay.wm.utils.progparser.ParserProgrammer
@@ -19,11 +19,11 @@ class ParserJsonTester extends FlatSpec with Matchers {
   val jsonPath = "src/test/resources/json/parser"
   val csr = Csr()
 
-  val testsFromScapy: Map[String, Any] = Loader.loadJson(s"$jsonPath/scapy_packets.json").get
+  val testsFromScapy: Map[String, Any] = FileService.loadJson(s"$jsonPath/scapy_packets.json").get
 
-  val progFromC: Map[String, Any] = Loader.loadJson(s"$jsonPath/program_from_c.json").get
-  val prog2FromC: Map[String, Any] = Loader.loadJson(s"$jsonPath/init_parser_from_c.json").get
-  val testsFromC: Map[String, Any] = Loader.loadJson(s"$jsonPath/tests_from_c.json").get
+  val progFromC: Map[String, Any] = FileService.loadJson(s"$jsonPath/program_from_c.json").get
+  val prog2FromC: Map[String, Any] = FileService.loadJson(s"$jsonPath/init_parser_from_c.json").get
+  val testsFromC: Map[String, Any] = FileService.loadJson(s"$jsonPath/tests_from_c.json").get
 
   val payload = "123456789abcdef"
   testsFromC.getList[Map[String,Any]]("tests").foreach { testCase =>
