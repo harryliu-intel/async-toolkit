@@ -40,9 +40,10 @@ module  mby_igr_pb_ctrl421
   input  dpc_pb_t       i_dpc_pb,
   
   input  logic [3:0]     i_pb_rd,  //read request for PB per logical port
-  input  pb_shell_rdata_t      [PB_BANKS-1:0] i_pb_shell_rdata,       
+  input  pb_shell_rdata_t      [PB_BANKS-1:0] i_pb_shell_rdata,
+  input  pb_shell_rmd_t        [PB_BANKS-1:0] i_pb_shell_rmd,       
   output pb_shell_ctrl_wdata_t [PB_BANKS-1:0] o_pb_shell_ctrl_wdata,
-  
+  output pb_shell_ctrl_wmd_t   [PB_BANKS-1:0] o_pb_shell_ctrl_wmd,
   output dpc_pb_t [PB_BANKS-1:0] o_pb_shim //valid,md,data
 );
 
@@ -75,7 +76,9 @@ module  mby_igr_pb_ctrl421
   logic [PB_BANK_ADRS-1:0]  used_cnt_bnk3;
  
   pb_shell_ctrl_wdata_t [PB_BANKS-1:0] pb_shell_ctrl_wdata;
+  pb_shell_ctrl_wmd_t   [PB_BANKS-1:0] pb_shell_ctrl_wmd;
   pb_shell_rdata_t      [PB_BANKS-1:0] pb_shell_rdata;
+  pb_shell_rmd_t        [PB_BANKS-1:0] pb_shell_rmd;
   dpc_pb_t              [PB_BANKS-1:0] pb_shim;
   dpc_pb_t              [PB_BANKS-1:0] q_pb_shim;
 
@@ -85,6 +88,7 @@ module  mby_igr_pb_ctrl421
   
   assign o_pb_shim = q_pb_shim;
   assign o_pb_shell_ctrl_wdata = pb_shell_ctrl_wdata;
+  assign o_pb_shell_ctrl_wmd   = pb_shell_ctrl_wmd;
 
   generate
     genvar g_bnk;
@@ -108,29 +112,45 @@ module  mby_igr_pb_ctrl421
           pb_shell_ctrl_wdata[g_bnk].rd_en <= '0;
           pb_shell_ctrl_wdata[g_bnk].wr_en <= '0;
           pb_shell_ctrl_wdata[g_bnk].adr   <= '0;
+          pb_shell_ctrl_wmd[g_bnk].rd_en   <= '0;
+          pb_shell_ctrl_wmd[g_bnk].wr_en   <= '0;
+          pb_shell_ctrl_wmd[g_bnk].adr     <= '0;
         end
         else if(shell_mem_we_bnk[g_bnk] || shell_mem_re_bnk[g_bnk]) begin
           pb_shell_ctrl_wdata[g_bnk].rd_en <= shell_mem_re_bnk[g_bnk];
           pb_shell_ctrl_wdata[g_bnk].wr_en <= shell_mem_we_bnk[g_bnk];
           pb_shell_ctrl_wdata[g_bnk].adr   <= shell_mem_adrs_bnk[g_bnk];
+          pb_shell_ctrl_wmd[g_bnk].rd_en   <= shell_mem_re_bnk[g_bnk];
+          pb_shell_ctrl_wmd[g_bnk].wr_en   <= shell_mem_we_bnk[g_bnk];
+          pb_shell_ctrl_wmd[g_bnk].adr     <= shell_mem_adrs_bnk[g_bnk];
         end
       end  
       always_ff @(posedge cclk) begin
-        if(rst)
+        if(rst) begin
           pb_shell_ctrl_wdata[g_bnk].wr_data <= '0;
-        else if(shell_mem_we_bnk[g_bnk])
-          pb_shell_ctrl_wdata[g_bnk].wr_data <= {i_dpc_pb.tsmd,i_dpc_pb.d};
+          pb_shell_ctrl_wmd[g_bnk].wr_data   <= '0;
+        end
+        else if(shell_mem_we_bnk[g_bnk]) begin
+          pb_shell_ctrl_wdata[g_bnk].wr_data <= i_dpc_pb.d;
+          pb_shell_ctrl_wmd[g_bnk].wr_data   <= {10'b0, i_dpc_pb.tsmd}; //FIXME add ecc
+        end
       end
     end //for
+    
 //rd_data frm shell input ffs
     for(g_bnk=0; g_bnk<PB_BANKS; g_bnk++) begin: gen_shell_rdata_ffs
       always_ff @(posedge cclk) begin
-        if(rst) pb_shell_rdata[g_bnk].rd_data <= '0;  //FIXME just reset valid??
+        if(rst) begin
+          pb_shell_rdata[g_bnk].rd_data <= '0;  //FIXME just reset valid??
+          pb_shell_rmd[g_bnk].rd_data   <= '0;  //FIXME just reset valid??
+        end          
         else if(i_pb_shell_rdata[g_bnk].rd_valid) begin
           pb_shell_rdata[g_bnk].rd_data <= i_pb_shell_rdata[g_bnk].rd_data;
+          pb_shell_rmd[g_bnk].rd_data <= i_pb_shell_rmd[g_bnk].rd_data;
         end
       end
       always_ff @(posedge cclk) pb_shell_rdata[g_bnk].rd_valid <= i_pb_shell_rdata[g_bnk].rd_valid;
+      always_ff @(posedge cclk) pb_shell_rmd[g_bnk].rd_valid   <= i_pb_shell_rmd[g_bnk].rd_valid;
     end //for
     
   endgenerate

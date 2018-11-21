@@ -2,7 +2,7 @@
 #  This is a HDL spec file - it defines the unit and how to compile it.
 #
 #
-my $ASSERT_LIB = "/p/hdk/rtl/cad/x86-64_linux30/dt/sva_lib/15.4p5_shOpt64";
+my $SVA_LIB = &ToolConfig::get_tool_path('ipconfig/sva_lib_ip');
 
 $hdl_spec = {
 
@@ -14,7 +14,7 @@ $hdl_spec = {
 		"src/shared/rtl/pkt_meta_pkg.sv",
         "src/shared/rtl/rx_ppe_pkg.sv",
 		"src/shared/rtl/tx_ppe_pkg.sv",
-		"$ASSERT_LIB/SVA_LIB/intel_checkers_pkg.vs",
+		"$SVA_LIB/intel_checkers_pkg.vs",
 		"src/shared/interfaces/ahb_rx_ppe_if.sv",
 		"src/shared/interfaces/glb_rx_ppe_if.sv",
 		"src/shared/interfaces/egr_tx_ppe_if.sv",
@@ -34,12 +34,10 @@ $hdl_spec = {
 		"src/tx_ppe/rtl",
 		"src/shared/rtl",
 		"src/shared/interfaces",
-		"$ASSERT_LIB/SVA_LIB",
+		"$SVA_LIB",
 	],
 
 	# Arbitrary VLOG options
-	-vlog_opts => [
-        "+define+INTEL_SVA_OFF",
-    ],
+	-vlog_opts => [],
 
 };

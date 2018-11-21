@@ -37,7 +37,8 @@ module rx_ppe_tb
 
 igr_rx_ppe_if       igr_rx_ppe_if();
 rx_ppe_igr_if       rx_ppe_igr_if();
-rx_ppe_ppe_stm_if   rx_ppe_ppe_stm_if();
+rx_ppe_ppe_stm0_if  rx_ppe_ppe_stm0_if();
+rx_ppe_ppe_stm1_if  rx_ppe_ppe_stm1_if();
 ahb_rx_ppe_if       ahb_rx_ppe_if();
 glb_rx_ppe_if       glb_rx_ppe_if();
 
@@ -46,7 +47,8 @@ rx_ppe  rx_ppe (
     .reset              (1'b0),
     .igr_rx_ppe_if      (igr_rx_ppe_if),
     .rx_ppe_igr_if      (rx_ppe_igr_if),
-    .rx_ppe_ppe_stm_if  (rx_ppe_ppe_stm_if),
+    .rx_ppe_ppe_stm0_if (rx_ppe_ppe_stm0_if),
+    .rx_ppe_ppe_stm1_if (rx_ppe_ppe_stm1_if),
     .ahb_rx_ppe_if      (ahb_rx_ppe_if),
     .glb_rx_ppe_if      (glb_rx_ppe_if)
 );

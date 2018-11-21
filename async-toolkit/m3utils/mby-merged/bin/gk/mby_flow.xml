@@ -31,7 +31,7 @@
       <DUT>fc_8_no_phy</DUT>
       <Stage>vcs</Stage>
       <Stage_Exec>bman</Stage_Exec>
-      <AdditionalArgs>-s all +s collage +s vcs +s sim_init -mc fc_8_no_phy -variant=fc_8_no_phy -nodelete_flow_data</AdditionalArgs>
+      <AdditionalArgs>-s all +s collage +s vcs +s sim_init -mc fc_8_no_phy -variant=fc_8_no_phy -1c -ace_model_name fc_8_no_phy  -1c- -nodelete_flow_data</AdditionalArgs>
       <XdutStageDep>[mby].[genrtl]</XdutStageDep>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
@@ -122,4 +122,21 @@
       <Singleton>0</Singleton>
       <Type>regress</Type>
    </row>
+       <!-- Make file sandbox testing -->
+    <row>
+        <DUT>mby</DUT>
+        <Stage>sandbox_mby_egr</Stage>
+        <Stage_Exec>subBlock/mbyc/src/egr/sandbox/gk_run_egr_sandbox.csh</Stage_Exec>
+        <AdditionalArgs></AdditionalArgs>
+        <XdutStageDep></XdutStageDep>
+        <PassRate></PassRate>
+        <IsGating>0</IsGating>
+        <Turnin>1</Turnin>
+        <Release>1</Release>
+        <PostRelease>0</PostRelease>
+        <Conditional></Conditional>
+        <Active>1</Active>
+        <Singleton>0</Singleton>
+        <Type>other</Type>
+    </row>
 </data>

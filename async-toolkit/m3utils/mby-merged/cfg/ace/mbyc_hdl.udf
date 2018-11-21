@@ -86,7 +86,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_egr_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
-               -hdl_spec        => [ 'cfg/ace/HDL/rtl/mby_egr_rtl_lib.hdl' ],
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_egr_rtl_lib.hdl' ],
                -dependent_libs  => [ 'mby_mgm_lib', 'sla_lib',],
             },
 
@@ -629,9 +629,10 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_mgm_lib",
                         "mby_igr_rtl_lib",
                         "mby_base_pkg_lib",
-                        "mby_tag_bfm_lib",
-                        "mby_gmm_bfm_lib",
-                        "mby_gcm_bfm_lib",
+                        ## jjgodine: removing bfm library compiles for now
+                        ##  "mby_tag_bfm_lib",
+                        ##  "mby_gmm_bfm_lib",
+                        ##  "mby_gcm_bfm_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
                         "mby_ingress_env_lib",
