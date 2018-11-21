@@ -11,13 +11,16 @@ use FileHandle;
 use Expect;
 use Carp;
 
-$ENV{'LD_LIBRARY_PATH'} = '../..';
 
 my @params = ("-m", "../../../../main/m3/model_server/AMD64_LINUX/models.packetServer");
 @params = @ARGV if @ARGV;
 my $path = catdir($ENV{'MODEL_ROOT'}, 'wm/src/client/c/examples/client_regwrite');
 $path = catdir(dirname(dirname(dirname(abs_path($0)))), 'examples/client_regwrite') if not -e $path;
-my $client = Expect->spawn($path, @params) or die colored("Could not start application $path\n", 'bold red');
+my $reg_file = catdir(dirname($path), 'fpps_reg_table.c');
+my $client = do {
+	local $ENV{'LD_LIBRARY_PATH'} = '../..';
+	Expect->spawn($path, @params) or die colored("Could not start application $path\n", 'bold red')
+};
 my $timeout = 2;
 
 # Wait for application prompt: <0>%
@@ -52,17 +55,23 @@ sub read_value {
 	return;
 }
 
-# Temporary register list
-my @registers = qw(example_a_reg_1
-	example_a_reg_2
-	example_a_reg_3
-	example_b_reg_1
-	example_b_reg_2
-	example_b_reg_3
-	example_c_reg_1
-	example_c_reg_2
-	example_d_reg_1);
+sub get_reg_list {
+	my ($reg_table) = @_;
+	my @registers;
 
+	open my $fh, "<", $reg_table or croak colored("Could not open register table: $reg_table",'bold red');
+
+	while (<$fh>) {
+		if ($_ =~ /\s\{\"(\w+)\".*\}/x) {
+			push @registers, $1;
+		}
+	}
+
+	close $fh;
+	return @registers;
+}
+
+my @registers = get_reg_list($reg_file);
 my $value = 0xBEEF;
 
 $client->expect($timeout, 'Started/connected') or warn colored("No response from white model, trying to perform test anyway...\n",'yellow');
