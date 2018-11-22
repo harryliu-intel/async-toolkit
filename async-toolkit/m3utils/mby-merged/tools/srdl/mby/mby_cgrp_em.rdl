@@ -6,17 +6,25 @@
 reg em_hash_lookup_r {
   shared;
   HandCoded = true;
-  name = "FFU hashing buckets.";
+  name = "Classifer hashing buckets.";
   desc = "
-  In single lookup mode, there is one table using 8K buckets.
-  In split-4K lookup mode,
+  In single lookup mode, there is one table with
   [list]
-  [*] LOOKUP0 = EM_B_LOOKUP[0..4095]
-  [*] LOOKUP1 = EM_B_LOOKUP[4096..8192]
+  [*] 32K buckets in CGRP_A
+  [*] 8K buckets in CGRP_B
   [/list]
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
+  In split mode, the total number of buckets gets 
+  divided between the two halves of the split:[br]
+  In CGRP_A:
+  [list]
+  [*] LOOKUP0 = EM_HASH_LOOKUP[0..16383]
+  [*] LOOKUP1 = EM_HASH_LOOKUP[16384..32767]
+  [/list]
+  In CGRP_B:
+  [list]
+  [*] LOOKUP0 = EM_HASH_LOOKUP[0..4095]
+  [*] LOOKUP1 = EM_HASH_LOOKUP[4096..8191]
+  [/list]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -104,22 +112,22 @@ reg em_hash_cam_r {
   desc = "
   The second index is the entry number, and the third index
   is the word number. The entry format is big-endian. Byte 0 is bits 63..56 of word 0.
-
-  In 64B entry mode, the entry is 64 bytes wide.
-  In 64B mode there is a single action resolution and the 1-2 actions from
-  the highest-numbered matching entry are used.
-  To form a 64B entry, a key 56B or less is padded with 0s to 56B and followed by two actions.
-  In the case of a 60B key, there is only 1 action at EM_HASH_CAM[group][rule][7][31:0].
-
-  In 32B entry mode, EM_HASH_CAM[group][rule][0..3] is the row0 entry,
-  and EM_HASH_CAM[group][rule][4..7] is the row1 entry. The two rows are resolved
-  independently: the 1-2 actions from the highest-numbered matching entry within each row
-  are used. To form a 32B entry, a key 24B or less is padded with 0s to 24B and followed
-  by two actions. In the case of a 28B key in 32B mode, there is only 1 action.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
+  [br][br]
+  In 64B entry mode, the entry is 64 bytes wide. There is a single action resolution 
+  and one or two actions from the highest-numbered matching entry are used.
+  To form a 64B entry, a key 56 bytes or less is padded with zeros to 56B and 
+  followed by up to two actions, or a key may be 60 bytes with only one action at[br]
+  EM_HASH_CAM[mgp][rule][7][31:0].
+  [br][br]
+  In 32B entry mode,[br]
+  EM_HASH_CAM[mgp][rule][0..3][br]
+  is the row0 entry, and[br]
+  EM_HASH_CAM[mgp][rule][4..7][br]
+  is the row1 entry. The two rows are resolved independently: the 1-2 actions from 
+  the highest-numbered matching entry within each row are used. To form a 32B entry, 
+  a key 24 bytes or less is padded with zeros to 24B and followed by two actions,
+  or a key may be 28 bytes with only one action.
+  [br][br]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -145,14 +153,10 @@ regfile em_hash_cam_rf {
 reg em_hash_cam_en_r {
   shared;
   HandCoded = true;
-  name = "Select EM_HASH_CAM scenarios.";
+  name = "Select EM_HASH_CAM packet profiles.";
   desc = "
-  When EM_HASH_CAM_EN[group][row][rule].mask[s] is set, then
-  EM_HASH_CAM[group][rule][row*4 +: 4] is used in scenario s.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
+  When EM_HASH_CAM_EN[mgp][row][rule].mask[p] is set, then
+  EM_HASH_CAM[mgp][rule][row*4+3:row*4] is used in packet profile p.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -162,7 +166,7 @@ reg em_hash_cam_en_r {
   field {
     AccessType = "RW";
     desc = "
-    Select scenarios for this rule. Uses little-endian bit numbering.
+    Select packet profiles for this rule. Uses little-endian bit numbering.
 
            ";
     ValRandomize = true;
