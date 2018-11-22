@@ -1,6 +1,6 @@
 package madisonbay.wm.utils.defs
 
-trait FlexibleConstantContainer[KeyType] {
+abstract class FlexibleConstantContainer[KeyType: Ordering] {
   trait Element {
     val index: KeyType
   }
@@ -12,4 +12,8 @@ trait FlexibleConstantContainer[KeyType] {
   def wildcard(key: KeyType): ElementType
 
   def getConstant(key: KeyType): ElementType = definedConstants.find(_.index == key).getOrElse(wildcard(key))
+
+  implicit val ordering: Ordering[ElementType] = new Ordering[ElementType] {
+    def compare(a: ElementType, b: ElementType): Int = Ordering[KeyType].compare(a.index, b.index)
+  }
 }

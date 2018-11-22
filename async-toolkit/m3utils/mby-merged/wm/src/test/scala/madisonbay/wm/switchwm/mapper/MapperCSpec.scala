@@ -8,14 +8,14 @@ import madisonbay.wm.switchwm.ppe.mapper.output.{IndependentVlanLearning, Mapper
 import madisonbay.wm.switchwm.ppe.parser.output.{CheckSums, PacketFields, ParserOutput, ProtocolsOffsets}
 import madisonbay.wm.switchwm.ppe.ppe.Port
 import madisonbay.wm.utils.BitFlags
-import org.scalatest.{FlatSpec, Ignore, Matchers}
+import org.scalatest.{FlatSpec, Matchers}
 import monocle.state.all._
 
 import scala.collection.mutable
 import madisonbay.csr.all._
+import madisonbay.wm.switchwm.ppe.mapper.defs.{Classifier16BitKeys, Classifier32BitKeys}
 import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys
 
-@Ignore
 class MapperCSpec extends FlatSpec with Matchers {
   case class  MapperTestPacketData private (
                                            srcIp: Int,
@@ -87,31 +87,31 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
 
   def checkAgainstKeys(packetData: MapperTestPacketData, name: String, mapperOutput: MapperOutput): Unit = {
     "Mapper/" + name should "put source IP into FFU_KEYS" in {
-      mapperOutput.classifierKeys.key32(0) shouldEqual packetData.srcIp
+      mapperOutput.classifierKeys.key32(Classifier32BitKeys.getConstant(0)) shouldEqual packetData.srcIp
     }
 
     it should "put destination IP into FFU_KEYS" in {
-      mapperOutput.classifierKeys.key32(0) shouldEqual packetData.dstIp
+      mapperOutput.classifierKeys.key32(Classifier32BitKeys.getConstant(1)) shouldEqual packetData.dstIp
     }
 
     it should "put destination MAC into FFU_KEYS" in {
-      mapperOutput.classifierKeys.key16(6) shouldEqual ((packetData.dstMac >> 32) & 0xFFFF).toShort
-      mapperOutput.classifierKeys.key16(7) shouldEqual ((packetData.dstMac >> 16) & 0xFFFF).toShort
-      mapperOutput.classifierKeys.key16(8) shouldEqual ( packetData.dstMac & 0xFFFF).toShort
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant(6)) shouldEqual ((packetData.dstMac >> 32) & 0xFFFF).toShort
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant(7)) shouldEqual ((packetData.dstMac >> 16) & 0xFFFF).toShort
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant(8)) shouldEqual ( packetData.dstMac & 0xFFFF).toShort
     }
 
     it should "put source MAC into FFU_KEYS" in {
-      mapperOutput.classifierKeys.key16( 9) shouldEqual ((packetData.srcMac >> 32) & 0xFFFF).toShort
-      mapperOutput.classifierKeys.key16(10) shouldEqual ((packetData.srcMac >> 16) & 0xFFFF).toShort
-      mapperOutput.classifierKeys.key16(11) shouldEqual ( packetData.srcMac & 0xFFFF).toShort
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant( 9)) shouldEqual ((packetData.srcMac >> 32) & 0xFFFF).toShort
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant(10)) shouldEqual ((packetData.srcMac >> 16) & 0xFFFF).toShort
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant(11)) shouldEqual ( packetData.srcMac & 0xFFFF).toShort
     }
 
     it should "put source L4 port into FFU_KEYS" in {
-      mapperOutput.classifierKeys.key16(16) shouldEqual packetData.srcL4Port
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant(16)) shouldEqual packetData.srcL4Port
     }
 
     it should "put destination L4 port into FFU_KEYS" in {
-      mapperOutput.classifierKeys.key16(17) shouldEqual packetData.dstL4Port
+      mapperOutput.classifierKeys.key16(Classifier16BitKeys.getConstant(17)) shouldEqual packetData.dstL4Port
     }
   }
 
@@ -227,7 +227,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
 
     runOnSimpleTcp(CsrMapper(0, updatedCsr), "default0", output => {
       it should "fill key16 using MAP_PORT_DEFAULT" in {
-        output.classifierKeys.key16(3) shouldEqual 0xba
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(3)) shouldEqual 0xba
       }
     })
   }
@@ -249,8 +249,8 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, updatedCsr), "RE_KEYS_OUTER_VLAN1", output => {
-      it should "fill key16 using MAP_PORT_DEFAULT" in {
-        output.classifierKeys.key16(MBY_RE_KEYS_OUTER_VLAN1) shouldEqual 0xfef
+      ignore should "fill key16 using MAP_PORT_DEFAULT" in {
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(MBY_RE_KEYS_OUTER_VLAN1)) shouldEqual 0xfef
       }
     })
   }
@@ -267,7 +267,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
 
     runOnSimpleTcp(CsrMapper(0, updatedCsr), "default forced", output => {
       it should "fill key16 using MAP_PORT_DEFAULT" in {
-        output.classifierKeys.key16(12) shouldEqual 0xdede
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(12)) shouldEqual 0xdede
       }
     })
   }
@@ -297,13 +297,13 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "map SMAC", output => {
-      it should "fill key16" in {
-        output.classifierKeys.key16(13) shouldEqual mapped_mac
+      ignore should "fill key16" in {
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(13)) shouldEqual mapped_mac
       }
-      it should "fill classifierProfile" in {
+      ignore should "fill classifierProfile" in {
         output.classifierProfile shouldEqual 0x3
       }
-      it should "fill ipOption" in {
+      ignore should "fill ipOption" in {
         output.ipOption(0) shouldBe true
       }
     })
@@ -320,8 +320,8 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "map Outer Protocol", output => {
-      it should "fill key16" in {
-        output.classifierKeys.key16(13) shouldEqual 5
+      ignore should "fill key16" in {
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(13)) shouldEqual 5
       }
     })
   }
@@ -342,8 +342,8 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     }
 
     runOnSimpleTcp(CsrMapper(0, activateProfile0(evenUpdatedCsr)), "map Outer L4 Destination", output => {
-      it should "fill key16" in {
-        output.classifierKeys.key16(13) shouldEqual 0x1234
+      ignore should "fill key16" in {
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(13)) shouldEqual 0x1234
       }
     })
   }
@@ -355,10 +355,10 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "map Priority Profile", output => {
-      it should "fill priorityProfile" in {
+      ignore should "fill priorityProfile" in {
         output.priorityProfile shouldEqual 0xa
       }
-      it should "set noPriorityEncoding" in {
+      ignore should "set noPriorityEncoding" in {
         output.noPriorityEncoding shouldBe true
       }
     })
@@ -387,7 +387,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "learning mode", output => {
-      it should "set learningMode to IndependentVlanLearning" in {
+      ignore should "set learningMode to IndependentVlanLearning" in {
         output.learningMode shouldEqual IndependentVlanLearning
       }
     })
@@ -400,7 +400,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "ingress VLAN counter", output => {
-      it should "set ingress VLAN counter" in {
+      ignore should "set ingress VLAN counter" in {
         output.l2IngressVlan1Counter shouldEqual 0x805
       }
     })

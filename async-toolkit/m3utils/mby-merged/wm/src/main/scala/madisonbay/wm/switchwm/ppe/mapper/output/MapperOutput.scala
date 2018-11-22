@@ -1,13 +1,16 @@
 package madisonbay.wm.switchwm.ppe.mapper.output
 
+import madisonbay.wm.switchwm.ppe.mapper.defs.Classifier16BitKeys.Classifier16BitKey
+import madisonbay.wm.switchwm.ppe.mapper.defs.Classifier32BitKeys.Classifier32BitKey
+
 sealed trait MapperVlanLearningMode
 case object SharedVlanLearning extends MapperVlanLearningMode // 0
 case object IndependentVlanLearning extends MapperVlanLearningMode // 1
 
 case class ClassifierKeys(
                          // Isn't this PacketFields?...
-                           key32: Vector[Int],
-                           key16: Vector[Short],
+                           key32: Map[Classifier32BitKey, Int],
+                           key16: Map[Classifier16BitKey, Int],
                            key8:  Vector[Byte]
                          )
 
