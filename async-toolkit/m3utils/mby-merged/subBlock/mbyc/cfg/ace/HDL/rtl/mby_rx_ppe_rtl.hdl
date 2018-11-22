@@ -8,11 +8,12 @@ $hdl_spec = {
 
 	# List of specific VERILOG src files
 	-vlog_files => [
-
-		"src/shared/rtl/shared_pkg.sv",
-		"src/shared/rtl/pkt_pkg.sv",
-		"src/shared/rtl/pkt_meta_pkg.sv",
-		"src/shared/rtl/rx_ppe_pkg.sv",
+        "src/shared/rtl/shared_pkg.sv",
+        "src/shared/rtl/hlp/hlp_register_constants_pkg.vh",
+		"src/shared/rtl/hlp/hlp_pkt_pkg.vh",
+		"src/shared/rtl/hlp/hlp_pkt_meta_pkg.vh",
+		"src/shared/rtl/hlp/hlp_pkg.vh",
+        "src/shared/rtl/hlp/hlp_ipp_pkg.vh",
 		"src/parser/rtl/parser_pkg.sv",
 		"src/parser/rtl/class_gpa_pkg.sv",
 		"src/parser/rtl/class_gpb_pkg.sv",
