@@ -1,12 +1,12 @@
-package madisonbay.frontend.viewer
+package madisonbay.iface.frontend.viewer
 
 import madisonbay.wm.utils.json.JsonReader
-import Parameters.{IndexClose, IndexOpen}
+import UriConstants.UriParameter._
 import HtmlDsl._
 
 object CsrView {
 
-  val PathHref = s"/?${Parameters.KeyPath}="
+  val PathHref = s"/?$KeyPath="
 
   def genView(csrTree: Map[String, Any], path: String): List[String] = {
 
@@ -26,7 +26,7 @@ object CsrView {
     case _ :: Nil => ""
     case list =>
       val rootPath = list.dropRight(1).mkString(".")
-      s"${aHref(PathHref + rootPath, "<< Back <<")} $BR $BR"
+      s"${aHref(PathHref + rootPath, "<< Back << ")} $BR $BR"
   }
 
   private def getRegBody(csrTree: Map[String, Any], path: String, uriPath: String): List[String]= JsonReader.getOpt(csrTree, path) match {
@@ -50,6 +50,6 @@ object CsrView {
     case _ => List()
   }
 
-  private def field(key: String, href: String): String = s"$TrTag$TdTag$key:$TdEnd$TdTag$href$TdEnd$TrEnd"
+  private def field(key: String, href: String): String = s"$TrTag$TdTag$key:$TdEnd$TdTag$href$TdEnd$TrEnd$Endl"
 
 }

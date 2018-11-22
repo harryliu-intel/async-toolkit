@@ -1,4 +1,4 @@
-package madisonbay.frontend.viewer
+package madisonbay.iface.frontend.viewer
 
 object HtmlDsl {
 

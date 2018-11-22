@@ -1,27 +1,30 @@
-package madisonbay.frontend.model
+package madisonbay.iface.frontend.model
 
 import madisonbay.wm.switchwm.csr.Csr
 import madisonbay.wm.utils.json.JsonSerializer
 import madisonbay.wm.utils.json.JsonSerializer.isInnerCaseClassField
 
-object Model {
+
+object CsrModel {
 
   val topMapKey = "top_map"
 
-  val csr: Csr = Csr()
+}
 
-  val csrMap: Map[String, Any] = Map(topMapKey -> toCsrMap(csr.topMap))
+class CsrModel(csr: Csr, limitNumberOfNodes: Int) {
 
-  def toCsrMap(obj: Any): Map[String, Any] = {
-    val map = JsonSerializer.toMap(obj, bNameCaseClasses = false) {
+  val csrMap: Map[String, Any] = Map(CsrModel.topMapKey -> toCsrMap(csr.topMap))
+
+  val csrMapToHtml: Map[String, Any] = joinValues(csrMap)
+
+  def toCsrMap(obj: Any): Map[String, Any] =
+    JsonSerializer.toMap(obj, bNameCaseClasses = false) {
       case (field, _) if isInnerCaseClassField(field) => false
       case (field, _) if isInternalField(field.getName) => false
-        // TODO: limit is due to huge register tree
-      case (_, value: Seq[_]) if value.length > 32 => false
+      // limit is due to huge register tree; to disable it, set limitNumberOfNodes <= 0
+      case (_, value: Seq[_]) if limitNumberOfNodes > 0 && value.length > limitNumberOfNodes => false
       case _ => true
     }
-    joinValues(map)
-  }
 
   private def joinValues(map: Map[String, Any]): Map[String, Any] = map.collect {
     case (k, v: Map[_, _]) =>

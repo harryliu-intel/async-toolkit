@@ -21,6 +21,7 @@ import java.nio.channels.spi.AsynchronousChannelProvider
 import java.util.concurrent.Executors
 
 import madisonbay.fs2app.http.MbyHttpServer
+import madisonbay.fs2app.http.dispatcher.IoUriDispatcher
 
 
 object Main extends IOApp {

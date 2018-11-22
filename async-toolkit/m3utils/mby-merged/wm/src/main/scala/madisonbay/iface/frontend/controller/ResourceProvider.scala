@@ -1,4 +1,4 @@
-package madisonbay.frontend.controller
+package madisonbay.iface.frontend.controller
 
 import java.io.File
 import java.nio.file.Files

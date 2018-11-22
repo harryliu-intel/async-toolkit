@@ -127,7 +127,7 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
 
     // Export csr tree to json
     /*import madisonbay.wm.utils.FileService
-    import madisonbay.frontend.model.Model.csrMap
+    import madisonbay.intrfc.frontend.model.Model.csrMap
     FileService.saveJson("src/test/resources/csr.json", csrMap)*/
 
   }
