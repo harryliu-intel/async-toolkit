@@ -17,9 +17,10 @@ $hdl_spec = {
 		"src/ppe_stm/rtl/ppe_stm_pkg.sv",
 		"$SVA_LIB/intel_checkers_pkg.vs",
 		"src/shared/interfaces/egr_ppe_stm_if.sv",
-		"src/shared/interfaces/rx_ppe_ppe_stm_if.sv",
+		"src/shared/interfaces/rx_ppe_ppe_stm_if0.sv",
+		"src/shared/interfaces/rx_ppe_ppe_stm_if1.sv",
 		"src/shared/interfaces/par_class_if.sv",
-		"src/egr/rtl/egr_mc_table_if.sv",
+		"src/shared/interfaces/egr_mc_table_if.sv",
 
 		"src/ppe_stm/rtl/ppe_stm_top.sv",
 	],

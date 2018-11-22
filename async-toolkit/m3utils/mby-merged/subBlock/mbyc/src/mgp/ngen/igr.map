@@ -23,3 +23,6 @@ mim0_wr2                    >> mim_wreq_2
 mim1_wr0                    >> mim_wreq_3
 mim1_wr1                    >> mim_wreq_4
 mim1_wr2                    >> mim_wreq_5
+
+o_tagring_lltag0            >> o_tag_ring_lltag0
+o_tagring_lltag1            >> o_tag_ring_lltag1

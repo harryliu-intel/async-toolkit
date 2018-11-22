@@ -21,11 +21,10 @@ $hdl_spec = {
        "src/msh_node/rtl/mby_msh_mem.sv",
        "src/msh_node/rtl/mby_msh_mem_dp.sv",
        "src/msh_node/rtl/mby_msh_node.sv",
-       "src/msh_node/rtl/mby_msh_rd_dp.sv",
-       "src/msh_node/rtl/mby_msh_rd_req.sv",
-       "src/msh_node/rtl/mby_msh_rd_rsp.sv",
-       "src/msh_node/rtl/mby_msh_wr_dp.sv",
-       "src/msh_node/rtl/mby_msh_wr_req.sv",
+       "src/msh_node/rtl/mby_msh_rd_route.sv",
+       "src/msh_node/rtl/mby_msh_rsp_route.sv",
+       "src/msh_node/rtl/mby_msh_wr_route.sv",
+       "src/msh_node/rtl/mby_msh_req_route.sv",
        "src/msh_node/rtl/mby_msh_mem_ctrl.sv",
        "src/msh_node/rtl/mby_msh_arb.sv",
        "src/msh_node/rtl/mby_msh_cb.sv",
@@ -37,6 +36,7 @@ $hdl_spec = {
        "src/msh_node/rtl/mby_msh_cp_ib.sv",
        "src/msh_node/rtl/mby_msh_dp_ib.sv",
        "src/msh_node/rtl/mby_msh_dp_cba.sv",
+       "src/msh_node/rtl/mby_msh_rd_req_cam.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

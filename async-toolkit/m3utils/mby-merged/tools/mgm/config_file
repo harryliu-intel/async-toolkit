@@ -9,4 +9,4 @@ msh  $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/msh_node/mem      $ENV{'MODEL_ROOT'}/s
 gcm  $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/gmm/gms/gcm/mem  $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/gmm/gms/gcm/rtl/mby_gcm_top.sv  None   Default
 gpm  $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/gmm/gms/gpm/mem  $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/gmm/gms/gpm/rtl/mby_gpm_top.sv  None   Default
 igr  Default                                           $ENV{'MODEL_ROOT'}/subBlock/mbyc/src/igr/rtl/mby_igr_top.sv      None   Default
-
+egr  Default                                           Default                                                          None   Default

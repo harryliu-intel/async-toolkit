@@ -1,0 +1,14 @@
+foreach $i (0..19) {
+    >> class_gpb_wcm_tcam_$i$_to_tcam
+    >> class_gpb_wcm_tcam_$i$_from_tcam
+}
+
+    >>  fary_ffuse_tune_tcam
+    >>  fary_pwren_b_tcam
+    >>  fary_stm_enable
+    >>  fary_stm_hilo
+    >>  fdfx_lbist_test_mode
+    >>  fscan_clkungate
+    >>  fscan_mode
+    >>  fscan_shiften
+    >>  aary_pwren_b_tcam

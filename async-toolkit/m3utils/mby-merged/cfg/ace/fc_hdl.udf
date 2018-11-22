@@ -606,6 +606,7 @@ EOF
                     "dump_filelist_lib.dump_filelist",
                ],
                libs => [
+	          "gen_mby_mgm_lib",
                   @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   "mby_tx_ppe_rtl_lib",
