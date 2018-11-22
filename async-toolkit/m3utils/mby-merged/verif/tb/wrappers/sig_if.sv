@@ -16,7 +16,10 @@ interface sig_if;
     logic ref_clk;
     logic tb_clk;
     logic tb_rst_b;
-    logic lan_powergood_rst_b;   //MST powergood
+    logic lan_powergood_rst_b; 
+    logic tmp_cclk; 
+    logic tmp_clk; 
+    logic tmp_mclk; 
 	
     // -------------------------------------------------------------------------
     // Clock Signals )
@@ -36,14 +39,12 @@ interface sig_if;
     // -------------------------------------------------------------------------
     // Spy Debug Signals
     // -------------------------------------------------------------------------
-    logic gpio_ip_ready;
 
     // ------------------------------------------------------------------------
     // IP enable indication, used by the config object to report statically 
     // disabled IPs
     // ------------------------------------------------------------------------
 
-    event spi_sfdp_dump;
 
     // ------------------------------------------------------------------------
     // Interface signals must only be accessed through interface methods and

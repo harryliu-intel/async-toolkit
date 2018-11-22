@@ -1,0 +1,22 @@
+// -- Author       : Jon Bagge <jon.bagge@intel.com>
+// -- Project Name : MBY
+// -- Description  : action netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input reset,
+
+class_group_if.class_in classb_action_if,
+rx_ppe_igr_if.ppe rx_ppe_igr_if,
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

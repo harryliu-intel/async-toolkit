@@ -1,0 +1,9 @@
+// Classifier group B block
+
+class_gpb_top [
+  class_gpb_shells_wrapper of class_gpb_shells_wrapper with class_gpb_shells_wrapper.map
+  class_gpb_ff_mems of class_gpb_ff_mems with class_gpb_ff_mems.map
+  class_gpb_rf_mems of class_gpb_rf_mems with class_gpb_rf_mems.map
+  class_gpb_sram_mems of class_gpb_sram_mems with class_gpb_sram_mems.map
+  class_gpb_tcam_mems of class_gpb_tcam_mems with class_gpb_tcam_mems.map
+]

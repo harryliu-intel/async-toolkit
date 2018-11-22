@@ -25,11 +25,26 @@ $onecfg{Facet} = {
                     fc_8_no_phy
 
         )],
+	spyglass_mode => [qw( lint dft lp cdc)],
         ace_model_name => [qw( fc fc_no_phy fc_8 fc_8_no_phy fc_effm fc_nlp dft_no_dut dft_rtl_dbg dft_rtl_quick dft_gls_dbg dft_gls_quick )],
     },
     defaults => {
         dut => "mby",
         ace_model_name => "fc",
+    },
+    implications => {
+        'ace_model_name=fc_8_no_phy' => {
+            dut => "fc_8_no_phy",
+            ace_model_name  => "fc_8_no_phy",
+        },
+        'ace_model_name=fc_8_phy' => {
+            dut => "fc_8_phy",
+            ace_model_name  => "fc_8_phy",
+        },
+        'ace_model_name=fc_no_phy' => {
+            dut => "fc_no_phy",
+            ace_model_name  => "fc_no_phy",
+        },
     },
 };
 

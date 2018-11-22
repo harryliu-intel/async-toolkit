@@ -1,0 +1,9 @@
+// Classifier group A block
+
+class_gpa_top [
+  class_gpa_shells_wrapper of class_gpa_shells_wrapper with class_gpa_shells_wrapper.map
+  class_gpa_ff_mems of class_gpa_ff_mems with class_gpa_ff_mems.map
+  class_gpa_rf_mems of class_gpa_rf_mems with class_gpa_rf_mems.map
+  class_gpa_sram_mems of class_gpa_sram_mems with class_gpa_sram_mems.map
+  class_gpa_tcam_mems of class_gpa_tcam_mems with class_gpa_tcam_mems.map
+]

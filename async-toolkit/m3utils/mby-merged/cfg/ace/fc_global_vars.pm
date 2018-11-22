@@ -46,6 +46,7 @@ use lib "$ENV{RTL_PROJ_BIN}/perllib";
 use ToolConfig;
 use Switch;
 use common::ace_lib_utils;
+my $debug = 0;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(get_sip_rtl_libs get_all_sip_rtl_libs get_all_sip_verif_libs get_sip_verif_libs get_all_sip_rtl_vlogopts get_all_sip_verif_vlogopts get_all_sip_elab_opts get_func_simv_opts get_hip_liblist get_all_sip_rtl_synthopts get_top_vrf_vlogopts get_nlp_elab_opts get_nlp_sim_opts);
@@ -67,8 +68,8 @@ my $DENALI =  &ToolConfig::get_tool_path("denali");
 # <<< Hash table whose key defines a list of IP groups supported
 #################################################################
 my %sip_list = (
-    #'boot'       => ['amba','axi','apb','chi', 'igr'],
-    'boot'       => ['igr'],
+    'boot'       => ['imc'], #amba','axi','apb','chi', 'igr'],
+    'igr'        => ['igr'],
     'imc'        => ['imc'],
     'epc'        => ['epc'],
     'mpp'        => ['mpp'],
@@ -90,7 +91,7 @@ my %sip_rtl_libs = (
     'imc'                => [],
 #    'epc'                => [],
     'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
-    'msh'                => ['mby_msh_rtl_lib',],
+    'msh'                => ['mby_msh_rtl_lib', 'mby_msh_node_rtl_lib'],
     'gmm'                => ['mby_gms_rtl_lib', 'mby_gmn_rtl_lib'],
 
 );

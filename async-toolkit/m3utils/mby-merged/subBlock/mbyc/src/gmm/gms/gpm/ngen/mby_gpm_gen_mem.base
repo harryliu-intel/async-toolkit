@@ -1,0 +1,32 @@
+// -- Author       : Copy from Steve Olson <steve.olson@intel.com>
+// -- Project Name : MBY
+// -- Description  : gpm memory wrapper netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input i_reset,
+
+mby_gpm_mem_if.pod_ptr_mem   mem_pod_ptr_0_if,
+mby_gpm_mem_if.pod_ptr_mem   mem_pod_ptr_1_if,
+mby_gpm_mem_if.pod_ptr_mem   mem_pod_ptr_2_if,
+mby_gpm_mem_if.pod_ptr_mem   mem_pod_ptr_3_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_0_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_1_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_2_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_3_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_4_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_5_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_6_if,
+mby_gpm_mem_if.pointers_mem  mem_pointers_7_if,
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !i_reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

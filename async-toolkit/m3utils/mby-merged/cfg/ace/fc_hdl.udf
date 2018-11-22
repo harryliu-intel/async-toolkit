@@ -26,6 +26,8 @@ my @mbyTbMgmLibs = ('target/mby/mgm_run/rtl/mby_memories_tb_rel.hdl',
 		    );
 
 my @models_use = (
+     "CTECH:CTECH_model",
+     "CTECH_EXP:CTECH_EXP_model",
      "eth_port_mby_ec:mby_ec",
      "eth_port_common:common",
 );
@@ -43,9 +45,10 @@ my @all_hip_liblist = &get_hip_liblist();
 
 my @fc_rtl_liblist = (
     "sva_lib",
+    "gen_mby_mgm_lib",
     "mby_mgm_lib",
      (&ToolConfig::get_facet('dut_type') =~ /no_dut/) ? "" : "fc_top_lib",
-     $fc_global_vars::IP_STUB_LIB,
+     (&ToolConfig::get_facet('dut') =~ /fc_8|fc_8_no_phy|fc_64_no_phy/) ? $fc_global_vars::IP_STUB_LIB : "",
 );
 my @fc_verif_liblist = (
     "shdv_shared_lib",
@@ -59,12 +62,19 @@ my @fc_verif_liblist = (
     "fc_tests_lib",
     "fc_seq_lib",
 );
+my @fc_collage_build_liblist = (
+    "msh_collage_build_lib",
+    "mpp_collage_build_lib",
+    "epc_collage_build_lib",
+    "gmn_collage_build_lib",
+    "gms_collage_build_lib",
+);
 
 # TODO &fc_global_vars::gen_liblist();
 # TODO &fc_global_vars::gen_hip_liblist();
 
 my @FC_VLOG_OPTIONS = (
-# TODO   "+define+AXI_ENV_ENABLE",
+    "$ENV{COLLAGE_WORK}/gen/source/rtl/fc_hier_defines_generated.sv"
 );
 
 
@@ -157,14 +167,51 @@ EOF
                     ],
              },
 
+             msh_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_msh.hdl",
+                    ],
+                    -dependent_libs => [ "mby_mgm_lib"],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             mpp_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_mpp.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             epc_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_epc.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             gmn_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_gmn.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+             gms_collage_build_lib => {
+                    -generated => 1,
+                    -hdl_spec => [
+                        "cfg/ace/HDL/collage/collage_build_gms.hdl",
+                    ],
+                    -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
+             },
+
              $fc_global_vars::COLLAGE_LIB => {
                     #-tag      => "nonsynth+nonemu",
                     -generated => 1,
                     -hdl_spec => [
-                        "cfg/ace/HDL/soc_assemble_collage.hdl",
+                        "cfg/ace/HDL/collage/soc_assemble_collage.hdl",
                     ],
                     -vlog_opts => [ "+v2k", "-sverilog", ],
-#                    -dependent_libs => [ "sip_shared_lib"],
+                    -dependent_libs => [ @fc_collage_build_liblist, ],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
              },
 
@@ -173,7 +220,7 @@ EOF
                     -hdl_spec => [
                           "cfg/ace/HDL/rtl/dummy.hdl",
                           "collage/work/soc/gen/stubs/verification/soc_stubs.hdl",
-                          "cfg/ace/HDL/rtl/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
+                          "cfg/ace/HDL/collage/collage_deps_stub.hdl",  # added to resolve missing dependencies from auto-generated soc_stub; ordering is important, this must be following the soc_stubs.hdl line
                     ],
                     -dependent_libs => [
                        "sip_shared_lib",
@@ -291,7 +338,7 @@ EOF
                  -hdl_spec => [
                      "cfg/ace/HDL/rtl/dummy.hdl",
                      "collage/work/soc/gen/source/rtl/soc.hdl",
-                     "cfg/ace/HDL/rtl/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
+                     "cfg/ace/HDL/collage/collage_deps.hdl",  # added to resolve missing dependencies from auto-generated soc; ordering is important, this must be following the soc.hdl line
                  ],
                  -dependent_libs => [$fc_global_vars::COLLAGE_LIB,],
              },
@@ -375,6 +422,7 @@ EOF
                    "-debug_pp ", "-full64 ", "-cm cond+branch+fsm+assert+line+tgl ",
                    "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
                    "$ENV{SAOLA_HOME}/libs/Linux_x86_64/libsla.so", "-kdb", "-lca",
+                   "-config_verbose",
                     @all_sip_elab_opts,
                     @CDN_PCIE_ELAB_OPTS, 
                     "dump_filelist_lib.dump_filelist",
@@ -382,19 +430,12 @@ EOF
 
                top_language => 'SystemVerilog',
 
-               power_intent => {
-                      power_top => 'fc_hdl_top/dut',
-                      ##[RG]
-                      upf_files => ['src/gen/upf/fc_par/mst.sim.upf',],
-                      ## Chaning UPF to hacked file for temporary debug and fixes
-                      #upf_files => ['src/upfGen/temp_HACK/fc_nlp_upf/mst.sim.upf',],
-                      },
-
                pli_libs => [
                    "-hier_rtl_dumper",
                ],
 
                libs => [
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   @fc_rtl_liblist,
                   @fc_verif_liblist,
@@ -416,7 +457,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -470,9 +510,9 @@ EOF
 
                libs => [
                   "mby_mgm_lib",
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   "fc_top_lib",
-                  "generated_collateral_lib",
                   @all_sip_rtl_liblist,
                   @all_hip_liblist,   
                   'dump_filelist_lib',
@@ -489,10 +529,12 @@ EOF
                enable_partcomp_elab    =>  $mby_enable_partcomp_elab,
 
                libs => [
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   "mby_tb_lib",
                   "mby_rtl_lib",
                   "sva_lib",
+                  "gen_mby_mgm_lib",
                   "mby_mgm_lib",
                   "mby_regflow_lib",
                   "mby_ti_lib",
@@ -536,7 +578,6 @@ EOF
                   -test_vlog_files   => [],
                   -test_vlog_incdirs => [
                      "verif/mby",
-                     "verif/mby/fal",
                      "verif/mby/ral",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
@@ -565,6 +606,8 @@ EOF
                     "dump_filelist_lib.dump_filelist",
                ],
                libs => [
+	          "gen_mby_mgm_lib",
+                  @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
                   "mby_tx_ppe_rtl_lib",
                   "mby_ppe_stm_rtl_lib",
@@ -615,7 +658,6 @@ EOF
                   -test_vlog_incdirs => [
                      "verif/mby",
                      "verif/mby/ral",
-                     "verif/mby/fal",
                      "verif/mby/env",
                      "$ENV{OVM_HOME}/src",
                      "$ENV{UVM_HOME}/src",
@@ -638,4 +680,5 @@ EOF
 $audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+
 
