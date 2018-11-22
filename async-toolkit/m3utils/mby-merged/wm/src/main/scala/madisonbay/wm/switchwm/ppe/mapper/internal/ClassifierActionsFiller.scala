@@ -15,10 +15,10 @@ object ClassifierActionsFiller {
       val lowerIndex = act24Lower16DefaultRange.head + index
       val upperIndex = act24Upper8DefaultRange.head + index
 
-      val maybeDefault = for (
-        lower <- defaults.forRxPort(rxPort.index).collectFirst{ case MapPortDefaultEntry(value, `lowerIndex`) => value};
-        higher <- defaults.forRxPort(rxPort.index).collectFirst{ case MapPortDefaultEntry(value, `upperIndex`) => value}
-      ) yield (higher << 16) | lower
+      val maybeDefault = for {
+        lower <- defaults.forRxPort(rxPort.index).collectFirst { case MapPortDefaultEntry(value, `lowerIndex`) => value }
+        higher <- defaults.forRxPort(rxPort.index).collectFirst { case MapPortDefaultEntry(value, `upperIndex`) => value }
+      } yield (higher << 16) | lower
 
       maybeDefault.getOrElse(0)
     })
