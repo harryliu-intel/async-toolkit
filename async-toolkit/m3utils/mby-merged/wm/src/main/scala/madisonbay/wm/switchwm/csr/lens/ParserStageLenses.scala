@@ -1,4 +1,4 @@
-package madisonbay.wm.switchwm.csr
+package madisonbay.wm.switchwm.csr.lens
 
 import madisonbay.csr.all._
 import monocle.Optional

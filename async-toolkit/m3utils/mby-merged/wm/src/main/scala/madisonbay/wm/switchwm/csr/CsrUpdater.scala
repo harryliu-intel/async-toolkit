@@ -2,7 +2,7 @@ package madisonbay.wm.switchwm.csr
 
 import madisonbay.csr.all._
 import madisonbay.wm.switchwm.csr.Csr._
-import CsrLenses._
+import madisonbay.wm.switchwm.csr.lens.CsrLenses._
 
 trait CsrUpdater[A] {
   def updated(csr: mby_top_map, csrNode: A): Csr

@@ -2,7 +2,8 @@ package madisonbay.wm.csr
 
 import madisonbay.csr.all._
 import madisonbay.wm.switchwm.csr.Csr.CsrParser
-import madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserStageLenses}
+import madisonbay.wm.switchwm.csr.lens.{CsrLenses, ParserStageLenses}
+import madisonbay.wm.switchwm.csr.Csr
 import org.scalatest._
 import monocle.state.all._
 

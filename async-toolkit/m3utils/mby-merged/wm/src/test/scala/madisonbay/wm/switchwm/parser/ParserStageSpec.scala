@@ -2,7 +2,8 @@
 package madisonbay.wm.switchwm.parser
 
 import madisonbay.csr.all._
-import madisonbay.wm.switchwm.csr.{Csr, CsrLenses, ParserStageLenses}
+import madisonbay.wm.switchwm.csr.lens.{CsrLenses, ParserStageLenses}
+import madisonbay.wm.switchwm.csr.Csr
 import madisonbay.wm.switchwm.epl.{Packet, PacketHeader}
 import madisonbay.wm.switchwm.ppe.parser.output.ParserExceptions.ParserException
 import madisonbay.wm.switchwm.ppe.parser._

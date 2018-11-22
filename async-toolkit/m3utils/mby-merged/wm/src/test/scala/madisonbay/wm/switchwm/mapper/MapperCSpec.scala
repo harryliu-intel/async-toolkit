@@ -1,7 +1,7 @@
 //scalastyle:off
 package madisonbay.wm.switchwm.mapper
 
-import madisonbay.wm.switchwm.csr.{Csr, CsrLenses, MapperLenses}
+import madisonbay.wm.switchwm.csr.Csr
 import madisonbay.wm.switchwm.csr.Csr.CsrMapper
 import madisonbay.wm.switchwm.ppe.mapper.Mapper
 import madisonbay.wm.switchwm.ppe.mapper.output.{IndependentVlanLearning, MapperOutput}
@@ -13,6 +13,7 @@ import monocle.state.all._
 
 import scala.collection.mutable
 import madisonbay.csr.all._
+import madisonbay.wm.switchwm.csr.lens.{CsrLenses, MapperLenses}
 import madisonbay.wm.switchwm.ppe.mapper.defs.{Classifier16BitKeys, Classifier32BitKeys}
 import madisonbay.wm.switchwm.ppe.parser.defs.ParserKeys
 

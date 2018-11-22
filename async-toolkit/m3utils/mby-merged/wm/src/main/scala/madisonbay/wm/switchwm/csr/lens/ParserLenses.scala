@@ -1,4 +1,4 @@
-package madisonbay.wm.switchwm.csr
+package madisonbay.wm.switchwm.csr.lens
 
 import monocle.Optional
 import monocle.function.Index.index
