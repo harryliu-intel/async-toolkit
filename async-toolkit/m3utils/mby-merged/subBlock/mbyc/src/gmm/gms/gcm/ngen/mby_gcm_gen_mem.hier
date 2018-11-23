@@ -1,0 +1,6 @@
+// Mesh block
+
+mby_gcm_gen_mem [
+  gcm_shells_wrapper of gcm_shells_wrapper with gcm_shells_wrapper.map
+  gcm_ff_mems of gcm_ff_mems with gcm_ff_mems.map
+]

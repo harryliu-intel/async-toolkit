@@ -1,0 +1,52 @@
+// -- Author       : Copy from Steve Olson <steve.olson@intel.com>
+// -- Project Name : MBY
+// -- Description  : GCM memory wrapper netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input i_reset,
+
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_0_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_1_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_2_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_3_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_4_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_5_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_6_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_7_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_8_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_9_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_10_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_11_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_12_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_13_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_14_if,
+mby_gcm_mem_if.rx_uc_mem     mem_rx_uc_15_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_0_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_1_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_2_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_3_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_4_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_5_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_6_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_7_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_8_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_9_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_10_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_11_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_12_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_13_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_14_if,
+mby_gcm_mem_if.rx_mc_mem     mem_rx_mc_15_if,
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !i_reset;\n";
+
+ngen_submodules
+
+ngen_endmodule
