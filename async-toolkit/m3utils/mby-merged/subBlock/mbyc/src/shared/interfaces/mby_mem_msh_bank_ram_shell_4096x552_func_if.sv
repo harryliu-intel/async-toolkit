@@ -32,7 +32,7 @@
 //      <interface name>.<net name>
 //
 
-`include "mby_msh_defines.vh"                                   // include file with `defines 
+`include "mby_msh_node_defines.vh"                             // include file with `defines 
 
 interface mby_mem_msh_bank_ram_shell_4096x552_func_if
 import mby_msh_pkg::*;                                         // import declarations from mby_msh_pkg.sv

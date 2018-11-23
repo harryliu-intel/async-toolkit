@@ -1,0 +1,23 @@
+// -- Author       : Jon Bagge <jon.bagge@intel.com>
+// -- Project Name : MBY
+// -- Description  : classifier group B netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input reset,
+
+class_group_if.class_in classa_classb_if,
+class_group_if.class_out classb_action_if,
+rx_ppe_ppe_stm1_if.ppe rx_ppe_ppe_stm1_if,
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

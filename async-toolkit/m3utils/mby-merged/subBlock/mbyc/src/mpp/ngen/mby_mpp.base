@@ -7,9 +7,10 @@ ngen_mod_name
 ngen_IO_list
 
 ngen_IO_end
-
 import mby_egr_pkg::*;
-import gmm_pkg::*;
+import mby_igr_pkg::*;
+import mby_gmm_pkg::*;
+
 
 ngen_wires
 

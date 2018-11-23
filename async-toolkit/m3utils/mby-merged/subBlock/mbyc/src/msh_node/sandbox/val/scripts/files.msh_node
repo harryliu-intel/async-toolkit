@@ -1,0 +1,16 @@
+// mesh RTL  (mby_msh_node_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
++incdir+$LOGICROOT/msh_node/rtl
+$LOGICROOT/msh_node/rtl/mby_msh_node_pkg.sv
+-y $LOGICROOT/msh_node/rtl
+
+//
+// MGM memory can be generated locally
+//
++incdir+$LOGICROOT/msh_node/sandbox/val/verilog/mgm_run/rtl
++incdir+$LOGICROOT/msh_node/sandbox/val/verilog/mgm_run/msh_node/src
++incdir+$LOGICROOT/msh_node/sandbox/val/verilog/mgm_run/msh_node/src/mem_wrap
+-y $LOGICROOT/msh_node/sandbox/val/verilog/mgm_run/rtl
+-y $LOGICROOT/msh_node/sandbox/val/verilog/mgm_run/msh_node/src
+-y $LOGICROOT/msh_node/sandbox/val/verilog/mgm_run/msh_node/src/mem_wrap
+//$LOGICROOT/msh_node/sandbox/val/verilog/mgm_run/msh_node/src/msh_mem.def
+

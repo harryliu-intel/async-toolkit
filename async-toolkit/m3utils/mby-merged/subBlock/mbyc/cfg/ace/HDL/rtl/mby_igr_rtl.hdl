@@ -9,16 +9,26 @@ $hdl_spec = {
     -vlog_files => [
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_egr_pkg.sv",
+       "src/shared/rtl/mby_gmm_pkg.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/interfaces/igr_rx_ppe_if.sv",
        "src/shared/interfaces/rx_ppe_igr_if.sv",
+       "src/shared/interfaces/mim_wr_if.sv",
+       "src/shared/interfaces/mim_rd_if.sv",
        "src/igr/rtl/mby_igr_pkg.sv",
        "src/igr/rtl/mby_igr_macros.vh",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_ctrl.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_seg.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_segs.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim.sv",
+       "src/igr/dpc/rtl/mby_igr_dpc.sv",
+       "src/igr/dpc/rtl/mby_igr_dpc_wrap.sv",
+       "src/igr/pb/rtl/mby_igr_pb_ctrl421.sv",
+       "src/igr/pb/rtl/mby_igr_pb_mem_shell.sv",
+       "src/igr/pb/rtl/mby_igr_pb.sv",
        "src/igr/rtl/igr_top.sv",
+       "src/igr/itag/rtl/mby_igr_tag.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

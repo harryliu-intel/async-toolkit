@@ -25,61 +25,35 @@ $ToolConfig_tools{'febe3'}{OTHER}{resource_def}                              = "
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'}                 = "&get_tool_version(lintra)";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'}                    = "&get_tool_path(lintra)";
 $ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH} = "&get_general_var(std_linux_libs)";
-$ToolConfig_tools{febe3}{VERSION} = "3.2.18";
+$ToolConfig_tools{febe3}{VERSION} = "3.3.08";
 $ToolConfig_tools{febe3}{OTHER}{project_settings}                            = "$MODEL_ROOT/tools/febe/inputs/dc_config.cfg";
 $ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "$MODEL_ROOT/tools/febe/inputs/finalized.cfg";
+$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{file_wait_time}       = "60";
 
 #####################################################
 #    Collage related definitions                    #
 #####################################################
 $ToolConfig_tools{coretools}{VERSION} = "N-2017.12-SP1-2";
 $ToolConfig_tools{collage}{VERSION} = "4.17";
-$ToolConfig_tools{collage_intf_def}{VERSION} = "3.7.6";
-$ToolConfig_tools{collage_intf_def}{PATH} = "/p/hdk/rtl/cad/x86-64_linux30/intel/collage_intf_def/&get_tool_version('collage_intf_def')";
-$ToolConfig_tools{collage}{ENV}{COLLAGE_INTF_DEF} = "&get_tool_path('collage_intf_def')";
-$ToolConfig_tools{collage}{ENV}{COLLAGE_WORK} = "$MODEL_ROOT/target/&get_facet(dut)/collage/work/soc";
-$ToolConfig_tools{collage}{ENV}{COLLAGE_CFG} = "$MODEL_ROOT/tools/collage/configs";
-$ToolConfig_tools{collage}{ENV}{COLLAGE_DESIGN} = "soc";
-$ToolConfig_tools{collage}{ENV}{CHASSIS_ID} = "config_soc";
 $ToolConfig_tools{collage_utils}->{VERSION} = 'v13ww42a';
+#$ToolConfig_tools{collage_intf_def}{VERSION} = "3.7.6";
+#$ToolConfig_tools{collage_intf_def}{PATH} = "/p/hdk/rtl/cad/x86-64_linux30/intel/collage_intf_def/&get_tool_version('collage_intf_def')";
+#$ToolConfig_tools{collage}{ENV}{COLLAGE_INTF_DEF} = "&get_tool_path('collage_intf_def')";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_DESIGN} = "soc";
 $ToolConfig_tools{collage}{OTHER}{collage_base_dir} = "&get_facet(dut)/collage";
 $ToolConfig_tools{collage}{OTHER}{collage_work_dir} = "work";
-#$ToolConfig_tools{collage}{OTHER}{collage_corekit_dir} = "ip_kits";
 $ToolConfig_tools{collage}{OTHER}{collage_log_dir} = "log";
-##$ToolConfig_tools{collage}{OTHER}{collage_reports_dir} = "reports";
-$ToolConfig_tools{collage}{OTHER}{collage_rtl_dir} = "work/soc/gen/source/rtl";
-$ToolConfig_tools{collage_build_cmd} = { # This is a conditional run of collage. It depends upon: collage_cache_cmd, collage_cmd
-      EXEC => "$MODEL_ROOT/scripts/bin/common/run_collage.pl",
-};
-$ToolConfig_tools{collage_cache_cmd} = { # Can we avoid running collage by copying the output from a central cache?
-    EXEC => q($vte_automation_ROOT/gk/bin/cache.pl -task collage -prj mst -get -alt gen),
-};
-$ToolConfig_tools{collage_cmd} = { # This runs collage, unconditionally
-      EXEC => "rm -rf $MODEL_ROOT/src/gen/collage/*;mkdir -p $MODEL_ROOT/src/gen/collage;&get_tool_path('coretools')/bin/coreAssembler -timeout 5 -shell -x \'source &get_tool_path('collage')/core/common/tcl/collage_init.tcl\' -f $MODEL_ROOT/tools/collage/configs/config_soc/assemble/assembler.soc.tcl",
-};
-#rkoganti.  Updated Flowbee version to fix a bug with deps not working
-# when a stage is default_active off
-$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{VERSION} = "1.01.08";
-$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{PATH} = "$RTL_PROJ_TOOLS/flowbee/master/&get_tool_version(rtltools/flowbee)";
-$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{OTHER}{modules} = [ "&get_tool_path(stage_ace)",
-                              "&get_tool_path(stage_ace_command)",
-                              "&get_tool_path(stage_collage_assemble)",
-                              ];
-$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{OTHER}{default_dut} = "mby";
-$ToolConfig_tools{runtools}{OTHER}{default_dut} = "mby";
+$ToolConfig_tools{collage}{OTHER}{collage_rtl_dir} = "&get_tool_var('collage','collage_work_dir')/&get_tool_env_var('collage','COLLAGE_DESIGN')/gen/source/rtl";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_WORK} = "$MODEL_ROOT/target/&get_tool_var('collage','collage_base_dir')/&get_tool_var('collage','collage_work_dir')/&get_tool_env_var('collage','COLLAGE_DESIGN')";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_CFG} = "$MODEL_ROOT/tools/collage/configs";
+$ToolConfig_tools{collage}{ENV}{CHASSIS_ID} = "config_soc";
+$ToolConfig_tools{collage}{ENV}{COLLAGE_COREKIT_DIR} = "$MODEL_ROOT/target/&get_tool_var('collage','collage_base_dir')/&get_tool_var('collage','collage_corekit_dir')";
 
 $ToolConfig_tools{buildman}{SUB_TOOLS}{collage} = $ToolConfig_tools{collage};
 
-push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_preflow.pm");
-push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/collage_postflow.pm");
-push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "$MODEL_ROOT/cfg/stages/preflow_stage.pm.template");
-$ToolConfig_tools{stage_bman_collage}{OTHER}{pre_flow} = { 
-                                                           "(.default.)" => "collage_preflow",
-                                                         };
-$ToolConfig_tools{stage_bman_collage}{OTHER}{post_flow} = { 
-                                                            "(.default.)" => "collage_postflow",
-                                                          };
-$ToolConfig_tools{buildman}{SUB_TOOLS}{stages}{SUB_TOOLS}{collage_postflow}{OTHER}{relevant_tools} = [qw( collage )];
+$ToolConfig_tools{rtltools}{SUB_TOOLS}{flowbee}{OTHER}{default_dut} = "mby";
+$ToolConfig_tools{runtools}{OTHER}{default_dut} = "mby";
+
 ### End collage related updates ***
 
 #####################################################
@@ -103,9 +77,9 @@ $ToolConfig_tools{nebulon}{VERSION}                                          = '
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
 #####################################################
-$ToolConfig_tools{verdi3}{VERSION}                                          = "N-2017.12-1";
-$ToolConfig_tools{vcs}{VERSION}                                             = "N-2017.12-1";
-$ToolConfig_tools{vcsmx}{VERSION}                                           = "N-2017.12-1";
+$ToolConfig_tools{verdi3}{VERSION}                                          = "N-2017.12-SP2-3";
+$ToolConfig_tools{vcs}{VERSION}                                             = "N-2017.12-SP2-3";
+$ToolConfig_tools{vcsmx}{VERSION}                                           = "N-2017.12-SP2-3";
 $ToolConfig_tools{vcs}{ENV}{VCS_HOME}                                       = '&get_tool_path()';
 
 #####################################################
@@ -117,7 +91,7 @@ $ToolConfig_tools{buildman}{ENV}{UVM_HOME}                                   = "
 $ToolConfig_tools{buildman}{ENV}{SAOLA_HOME}                                 = "&get_tool_path(saola)";
 $ToolConfig_tools{buildman}{ENV}{INTC_LIB_HOME}                              = "&get_tool_path(INTC_LIB_SCOREBOARD)";
 $ToolConfig_tools{buildman}{ENV}{CTECH_LIB_NAME}                             = "CTECH_v_rtl_lib";
-#$ToolConfig_tools{buildman}{ENV}{CTECH_LIB_PATH}                             = "/p/hdk/cad/ctech/v15ww50e";
+$ToolConfig_tools{buildman}{ENV}{CTECH_EXP_LIB_NAME}                         = "CTECH_EXP_v_rtl_lib";
 $ToolConfig_tools{buildman}{ENV}{NEBULON_DIR}                                = "&get_tool_path(nebulon)";
 $ToolConfig_tools{buildman}{ENV}{ACE_HOME}                                   = "&get_tool_path(ace)";
 $ToolConfig_tools{buildman}{ENV}{VCS_TARGET_ARCH}                            = "suse64";
@@ -258,6 +232,30 @@ $ToolConfig_tools{stage_bman_sgcdc} = {
   VERSION => "&get_tool_version(buildman)",
 };
 
+ 
+push(@{$ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{modules}}, "&get_tool_var(stage_bman_sglint,modules)");                                                                    
+$ToolConfig_tools{spyglass_lint}{SUB_TOOLS}{'spyglass'}{EXEC} = "&get_tool_path(spyglass_lint/spyglass)/SPYGLASS_HOME/bin/spyglass";
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_LINT_VER} = "&get_tool_version(spyglass_lint/spyglass)";
+$ToolConfig_tools{spyglass_lint}{ENV}{SPYGLASS_METHODOLOGY_LINT} = '1.06.02.18ww39/rtl_lint/';
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_METHODOLOGY_RTL_LINT} = "$ENV{RTL_PROJ_TOOLS}/spyglass_methodology_lint/master/&get_tool_env_var('spyglass_lint','SPYGLASS_METHODOLOGY_LINT')";
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_METHODOLOGY_RTL_LINT} = "$ENV{RTL_PROJ_TOOLS}/spyglass_methodology_lint/master/&get_tool_env_var('spyglass_lint','SPYGLASS_METHODOLOGY_LINT')";
+
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_LINT_VER}  = "&get_tool_version(spyglass_lint/spyglass)";
+$ToolConfig_tools{runtools}{ENV}{SPYGLASS_LINT_VER}  = "&get_tool_version(spyglass_lint/spyglass)";
+
+$ToolConfig_tools{stage_bman_sglint} = {
+  OTHER   => {
+               enable_stage_caching => 0,
+               enable_stage_digest => 0,
+               modules => "&get_tool_path(buildman)/stages/sglint.pm",
+               stage_digest_rules => ["acebuild", "sglint"],
+             },
+  PATH    => "&get_tool_path(buildman)",
+  VERSION => "&get_tool_version(buildman)",
+};
+
+
+
 $ToolConfig_tools{stage_bman_genrtl}{OTHER}{modules} = "$ENV{MODEL_ROOT}/cfg/stages/genrtl.pm";
 $ToolConfig_tools{jasper_utils} = {
   PATH    => "$ENV{RTL_PROJ_TOOLS}/jasper_utils/nhdk/&get_tool_version()",
@@ -276,11 +274,14 @@ $ToolConfig_tools{"mgm"} = {
     MGM_ARGS => {
         BLOCKS => {
             mby => ["parser",
-                    "classifier",
+                    "class_gpa",
+                    "class_gpb",
+                    "action",
                     "ppe_stm",
                     "igr",
                     "egr",
-                    "gms",
+                    "gcm",
+                    "gpm",
                     "msh",
                    ],
         },
@@ -299,13 +300,16 @@ $ToolConfig_tools{"mgm"} = {
         MGM_RTL  =>  "&get_tool_path()/rtl",
     },
     ENV_APPEND => {
-     PATH => "&get_tool_path()/bin", 
+     PATH => "&get_tool_path()/bin",
     },
 
     OTHER => {
             LOCAL_ASIC_MEMORIES => "YES",
-    }, 
+    },
 };
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_8}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_no_phy}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
+$ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{fc_8_no_phy}  = $ToolConfig_tools{mgm}{MGM_ARGS}{BLOCKS}{mby};
 $ToolConfig_tools{buildman}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
 $ToolConfig_tools{runtools}{ENV}{MGM_ROOT}  = "&get_tool_path(mgm)";
 $ToolConfig_tools{buildman}{ENV}{MGM_TSMC_N7}  = "YES";
@@ -363,7 +367,7 @@ $ToolConfig_tools{"protobuf"} = {
 };
 
 $ToolConfig_tools{"regs2html"} = {
-    VERSION => "18.05.14",
+    VERSION => "18.05.15",
     PATH => "$ENV{RTL_PROJ_TOOLS}/regs2html/nhdk/&get_tool_version()",
 };
 

@@ -1,5 +1,7 @@
-fm_wp.aux
-fm_wp.dvi
-fm_wp.pdf
-fm_wp.ps
-fm_wp.toc
+*.aux
+*.dvi
+*.pdf
+*.ps
+*.toc
+*.lof
+productivity.eps

@@ -1,0 +1,46 @@
+foreach $i (0..15) {
+   1'b0  >> MEM_RX_UC_$i$_CFG_reg_sel
+   1'b0  >> MEM_RX_UC_$i$_STATUS_reg_sel
+
+   mem_rx_uc_$i$_if.rd_adr    >> mem_rx_uc_$i$_rd_adr
+   mem_rx_uc_$i$_if.wr_adr    >> mem_rx_uc_$i$_wr_adr
+   1'b0                       >> mem_rx_uc_$i$_mem_ls_enter
+   mem_rx_uc_$i$_if.rd_en     >> mem_rx_uc_$i$_rd_en
+   mem_rx_uc_$i$_if.wr_data   >> mem_rx_uc_$i$_wr_data
+   mem_rx_uc_$i$_if.wr_en     >> mem_rx_uc_$i$_wr_en
+   mem_rx_uc_$i$_if.rd_data   >> mem_rx_uc_$i$_rd_data
+   mem_rx_uc_$i$_if.rd_valid  >> mem_rx_uc_$i$_rd_valid
+   >> mem_rx_uc_$i$_ecc_uncor_err
+   >> mem_rx_uc_$i$_init_done
+}
+
+foreach $i (0..15) {
+   1'b0  >> MEM_RX_MC_$i$_CFG_reg_sel
+   1'b0  >> MEM_RX_MC_$i$_STATUS_reg_sel
+
+   mem_rx_mc_$i$_if.rd_adr    >> mem_rx_mc_$i$_rd_adr
+   mem_rx_mc_$i$_if.wr_adr    >> mem_rx_mc_$i$_wr_adr
+   mem_rx_mc_$i$_if.rd_en     >> mem_rx_mc_$i$_rd_en
+   mem_rx_mc_$i$_if.wr_data   >> mem_rx_mc_$i$_wr_data
+   mem_rx_mc_$i$_if.wr_en     >> mem_rx_mc_$i$_wr_en
+   mem_rx_mc_$i$_if.rd_data   >> mem_rx_mc_$i$_rd_data
+   mem_rx_mc_$i$_if.rd_valid  >> mem_rx_mc_$i$_rd_valid
+   1'b0                       >> mem_rx_mc_$i$_mem_ls_enter
+   >> mem_rx_mc_$i$_ecc_uncor_err
+   >> mem_rx_mc_$i$_init_done
+}
+
+
+1'b0 >> GCM_ECC_COR_ERR_reg_sel
+1'b0 >> GCM_ECC_UNCOR_ERR_reg_sel
+
+1'b1 >> unified_regs_rd
+'h0  >> unified_regs_wr_data
+     >> gcm_ecc_int
+     >> gcm_init_done
+     >> unified_regs_ack
+     >> unified_regs_rd_data
+
+mclk    >> clk
+reset_n >> reset_n
+
