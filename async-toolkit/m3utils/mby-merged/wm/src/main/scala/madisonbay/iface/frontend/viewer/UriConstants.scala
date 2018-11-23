@@ -6,9 +6,6 @@ object UriConstants {
 
   object UriParameter {
     val KeyPath = "path"
-
-    val IndexOpen = "/"
-    val IndexClose = "-"
   }
 
   object UriSegment {

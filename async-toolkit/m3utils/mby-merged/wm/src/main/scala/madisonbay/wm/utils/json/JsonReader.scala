@@ -24,9 +24,13 @@ object JsonReader {
   }
 
   val PatternListApplyElement = "[a-zA-Z_][a-zA-Z_0-9]*([\\(][0-9]+[\\)])+"
+  val PatternNumber = "[0-9]+"
+
+  val TokenIndex = "#"
+  val TokenReference = "\\."
 
   //scalastyle:off cyclomatic.complexity
-  def getOpt(json: Map[String, Any], path: String): Option[Any] = {
+  def getOpt(json: Map[String, Any], path: List[String]): Option[Any] = {
     def getRec(res: Option[Any], keys: List[String], listIds: List[String]): Option[Any] =
       if (listIds.nonEmpty) {
         res match {
@@ -36,7 +40,7 @@ object JsonReader {
       } else {
         keys match {
           case Nil => res
-          case hKey :: tailKeys if hKey.startsWith("#") => getRec(res, tailKeys, hKey.split("#").toList.tail)
+          case hKey :: tailKeys if hKey.startsWith(TokenIndex) => getRec(res, tailKeys, hKey.split(TokenIndex).toList.tail)
           case hKey :: tailKeys =>
             res match {
               case Some(m: Map[_, _]) => getRec(m.asInstanceOf[Map[String, Any]].get(hKey), tailKeys, List.empty)
@@ -45,23 +49,40 @@ object JsonReader {
             }
         }
       }
-    getRec(Some(json), compilePath(path), List.empty)
+    getRec(Some(json), path, List.empty)
   }
   //scalastyle:on cyclomatic.complexity
 
+  def getOpt(json: Map[String, Any], path: String): Option[Any] = getOpt(json, compilePath(path))
+
+  def getOptFromUri(json: Map[String, Any], uriPath: String): Option[Any] = getOpt(json, compileUriPath(uriPath))
 
   // abc.def(3)(5).ghi(2).jkl  =>  List(abc, def, #3#5, ghi, #2, jkl)
-  def compilePath(path: String): List[String] = path.split("\\.").toList.
+  def compilePath(path: String): List[String] = path.split('.').toList.
     flatMap (s =>
       if (s.matches(PatternListApplyElement)) {
         s.replaceAll("\\)", "").split("\\(").toList match {
-          case name :: ids => List(name, "#" + ids.mkString("#"))
+          case name :: ids => List(name, TokenIndex + ids.mkString(TokenIndex))
           case _ => List(s)
         }
       } else {
         List(s)
       }
     )
+
+  // abc/def/3/5/ghi/2/jkl => List(abc, def, #3#5, ghi, #2, jkl)
+  def compileUriPath(path: String): List[String] = {
+    val (newPath, restIndexes) = path.split('/').foldLeft((List[String](), "")) {
+      case ((result, indexes), element) if element.matches(PatternNumber) => (result, indexes + TokenIndex + element)
+      case ((result, indexes), element) if indexes.nonEmpty => (element :: indexes :: result, "")
+      case ((result, _), element) => (element :: result, "")
+    }
+    if (restIndexes.nonEmpty) {
+      (restIndexes :: newPath).reverse
+    } else {
+      newPath.reverse
+    }
+  }
 
   def getListOpt(json: Map[String, Any], path: String): Option[List[Any]] = getOpt(json, path) match {
     case result@Some(_: List[_]) => result.asInstanceOf[Option[List[Any]]]
