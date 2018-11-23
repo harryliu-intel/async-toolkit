@@ -180,7 +180,7 @@ reg entropy_meta_cfg_r {
      [*] 0: default byte value is FFU_META[0]
      [*] 1: default byte value is FFU_META[1]
      [*] 2: default byte value is FFU_META[2]
-     [*] 3: default byte value is 0.
+     [*] 3: default byte value is FFU_META[3]
      [/list]
 
            ";
