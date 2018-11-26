@@ -23,25 +23,26 @@
 ///  ---------------------------------------------------------------------------------------------------------------------
 ///  -- Author       : Isaac Perez-Andrade
 ///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Unicast Tag Manager (UTM) module. 
+///  -- Description  : Tag Management Unit (TMU) module. 
 ///                    Submodule of the Egress (EGR) partition.
 ///  ------------------------------------------------------------------------------
 
-module utm
+module tmu
 (
-    input logic            clk,
-    input logic         arst_n,
+    input logic                       clk,
+    input logic                     rst_n,
 
     // Internal inferfaces
-    dp_if.provider      dpb_if,         // UTM provides to DPB
-    utm_pfs_if.utm      pfs_if,         // UTM provides to PFS
-    utm_prc_if.utm      prc_if,         // UTM provides to PRC
+    egr_dp_if.requestor            dpb_if, // TMU requests from DPB
+    egr_tmu_pfs_if.tmu             pfs_if, // TMU requests from PFS
+    egr_tmu_prc_if.tmu             prc_if, // TMU requests from PRC
 
-    rrq_if.provider     rrq_mri_if,     // UTM provider requests from MRI
-    rrs_if.consumer     rrs_mri_if,     // UTM consumes responses from MRI
+    egr_rrq_if.requestor       rrq_mri_if, // TMU requests from MRI
+    egr_rrs_if.requestor       rrs_mri_if, // TMU receives responses from MRI
 
     // External interfaces
-    egr_tagring_if.egr  tagring_if
+    egr_tagring_if.egr         tagring_if,
+    egr_mce_tagring_if.egr mce_tagring_if
 );
 
-endmodule : utm
+endmodule : tmu

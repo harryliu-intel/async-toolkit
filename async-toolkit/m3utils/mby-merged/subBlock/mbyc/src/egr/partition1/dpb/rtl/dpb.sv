@@ -23,23 +23,23 @@
 ///  ---------------------------------------------------------------------------------------------------------------------
 ///  -- Author       : Isaac Perez-Andrade
 ///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Dirty Pod Broker (DPB) module. 
+///  -- Description  : Dirty Pointer Broker (DPB) module. 
 ///                    Submodule of the Egress (EGR) partition.
 ///  ------------------------------------------------------------------------------
 
 module dpb
 (
     input logic           clk,
-    input logic        arst_n,
+    input logic         rst_n,
 
     // Internal interfaces
-    dp_if.dpb          utm_if,      // DPB consumes from UTM
-    dp_if.dpb          prc_if,      // DPB consumes from PRC
-    dp_if.dpb          pfs_if,      // DPB consumes from PFS
+    egr_dp_if.dpb      tmu_if,      // DPB provides to TMU
+    egr_dp_if.dpb      prc_if,      // DPB provides to PRC
+    egr_dpb_pfs_if.dpb pfs_if,      // DPB requests to PFS
 
     // External interfaces
-    egr_pod_if.egr     pod_if,
-    mim_wr_if.request  igr_msh_wr_if
+    //TODO interface to IGR Dirty Pod Manager
+    //egr_pod_if.egr     pod_if,
 );
 
 endmodule : dpb

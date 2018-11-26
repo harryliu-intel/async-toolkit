@@ -23,23 +23,20 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Egress Packet Buffer
+// -- Description  : Tag Queuing Unit
 //------------------------------------------------------------------------------
 
-module epb
+module tqu
 (
-    input logic        clk,
-    input logic     arst_n, 
+    input logic             clk,
+    input logic           rst_n, 
 
     //EGR Internal Interfaces 
-    epb_prc_if.epb  prc_if, //Egress Packet Buffer   - Packet Read Controller       Interface
-    epb_txc_if.epb  txc_if, //Egress Packet Buffer   - Transmit Controller          Interface
-    epb_pes_if.epb  pes_if, //Egress Packet Buffer   - Packet Egress Scheduler      Interface
+    egr_prc_tqu_if.tqu   prc_if, // Packet Read Controller   - Transmit Queuing Unit Interface
+    egr_tcu_tqu_if.tqu   tcu_if, // Transmit Controller Unit - Transmit Queunig Unit Interface
 
-    rrs_if.consumer mri_if  //Read Response Interface. Connected with the Mesh Read Interface
-    
-    //EGR External Interfaces
+    egr_rrs_if.requestor mri_if  // Read Response Interface. Connected with the Mesh Read Interface
 
 );
 
-endmodule : epb
+endmodule : tqu

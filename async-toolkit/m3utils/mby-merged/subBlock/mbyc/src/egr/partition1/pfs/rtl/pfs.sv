@@ -29,19 +29,16 @@
 
 module pfs
 (
-    input logic                clk,
-    input logic             arst_n,
+    input logic           clk,
+    input logic         rst_n,
 
     // Internal interfaces
-    pfs_prc_if.pfs          prc_if,     // PFS provides to PRC
-    dp_if.provider          dpb_if,     // PFS provides to DPB
+    egr_dpb_pfs_if.pfs dpb_if, // DPB requests to PFS
+    egr_pfs_prc_if.pfs prc_if, // PFS requests to PRC
+    egr_lcm_pfs_if.pfs lcm_if, // PFS provides to LCM
+    egr_tmu_pfs_if.pfs tmu_if, // PFS provides to TMU
+    egr_tcu_pfs_if.pfs tcu_if, // PFS provides to TMU
 
-    lcm_ps_if.consumer      lcm_if,     // PFS consumes from LCM
-    utm_pfs_if.pfs          utm_if,     // PFS consumes from UTM
-    mtm_pfs_if.pfs          mtm_if      // PFS consumes from MTM 
-
-    // External interfaces
-    // TODO: Define PFC interface coming from either IGR or EPL
 );
 
 endmodule : pfs

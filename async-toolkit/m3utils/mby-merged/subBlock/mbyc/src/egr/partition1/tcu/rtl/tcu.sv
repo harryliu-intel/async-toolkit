@@ -23,27 +23,32 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Transmit Controller
+// -- Description  : Transmit Controller Unit
 //------------------------------------------------------------------------------
 
-module txc
+module tcu
 (
     input logic       clk,
-    input logic    arst_n, 
+    input logic     rst_n, 
 
     //EGR Internal Interfaces
-    txc_prc_if.txc prc_if, //Transmit Controller      - Packet Read Controller Interface
-    
-    epb_txc_if.txc epb_if, //Egress Packet Buffer     - Transmit Controller    Interface
-    pes_txc_if.txc pes_if, //Packet Egress Scheduler  - Transmit Controller    Interface
-    lcm_txc_if.txc lcm_if, //Local Congestion Manager - Transmit Controller    Interface
+    egr_tcu_pfs_if.tcu pfs_if, //Transmit Controller Unit - Packet Fetch Scheduler Interface
+    egr_tcu_tqu_if.tcu tqu_if, //Transmit Controller Unit - Transmit Queuing Unit Interface
 
     //EGR External Interfaces
-    egr_epl_if.egr epl_if0, //TXC - EPL0 Interface
-    egr_epl_if.egr epl_if1, //TXC - EPL1 Interface
-    egr_epl_if.egr epl_if2, //TXC - EPL2 Interface
-    egr_epl_if.egr epl_if3  //TXC - EPL3 Interface
+
+    egr_tx_ppe_if.egr     tx_ppe_if0, //EGR-TxPPE 0 Interface //TODO Check how many interfaces needed
+    egr_tx_ppe_if.egr     tx_ppe_if1, //EGR-TxPPE 1 Interface //TODO Check how many interfaces needed
+    egr_ppe_stm_if.egr    ppe_stm_if, //EGR-PPE Shared Table Memory Interface  //TODO Check how many interfaces needed
+    egr_mc_table_if.egr mc_table_if0, //EGR-MultiCast Shared Table 0 Interface //TODO Check how many interfaces needed
+    egr_mc_table_if.egr mc_table_if1, //EGR-MultiCast Shared Table 1 Interface //TODO Check how many interfaces needed
+    //TODO Interface to ACL TABLE
+
+    egr_epl_if.egr        epl_if0, //TCU - EPL0 Interface
+    egr_epl_if.egr        epl_if1, //TCU - EPL1 Interface
+    egr_epl_if.egr        epl_if2, //TCU - EPL2 Interface
+    egr_epl_if.egr        epl_if3  //TCU - EPL3 Interface
 
 );
 
-endmodule : txc
+endmodule : tcu
