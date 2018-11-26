@@ -40,15 +40,15 @@ void RxPipeline
     mbyCongMgmtToRxStats  cgm2rxs;
 
     // RX pipeline stages:
-    Parser     (parser_map,    mac2par, &par2map);
+    Parser     (parser_map,           mac2par, &par2map);
 
-    Mapper     (mapper_map,   &par2map, &map2cla);
+    Mapper     (mapper_map,          &par2map, &map2cla);
 
     Classifier (cgrp_a_map,
                 cgrp_b_map,
                 shm_map,             &map2cla, &cla2hsh);
 
-    Hash       (entropy_map, &(nexthop_map->FWD_HASHING_CFG), &cla2hsh, &hsh2nxt);
+    Hash       (entropy_map,         &cla2hsh, &hsh2nxt);
 
     NextHop    (nexthop_map,         &hsh2nxt, &nxt2msk);
 

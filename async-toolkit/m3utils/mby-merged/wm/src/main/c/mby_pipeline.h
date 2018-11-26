@@ -59,7 +59,7 @@ void Parser
 void Mapper
 (
     mby_ppe_mapper_map          * const mapper_map,
-    mbyParserToMapper const     * const in,
+    mbyParserToMapper     const * const in,
     mbyMapperToClassifier       * const out
 );
 
@@ -74,16 +74,15 @@ void Classifier
 
 void Hash
 (
-    mby_ppe_entropy_map         * const entropy_map,
-    fwd_hashing_cfg_r           * const fwd_hashing_cfg_reg,
-    mbyClassifierToHash const   * const in,
+    mby_ppe_entropy_map   const * const entropy_map,
+    mbyClassifierToHash   const * const in,
     mbyHashToNextHop            * const out
 );
 
 void NextHop
 (
     mby_ppe_nexthop_map         * const nexthop,
-    mbyHashToNextHop const      * const in,
+    mbyHashToNextHop      const * const in,
     mbyNextHopToMaskGen         * const out
 );
 
@@ -118,21 +117,21 @@ void CongMgmt
 void RxStats
 (
     mby_ppe_rx_stats_map        * const stats_map,
-    mbyCongMgmtToRxStats const  * const in,
+    mbyCongMgmtToRxStats  const * const in,
     mbyRxStatsToRxOut           * const out
 );
 
 void Modifier
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    mbyTxInToModifier const     * const in,
+    mbyTxInToModifier     const * const in,
     mbyModifierToTxStats        * const out
 );
 
 void TxStats
 (
     fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    mbyModifierToTxStats const  * const in,
+    mbyModifierToTxStats  const * const in,
     mbyTxStatsToTxMac           * const out
 );
 

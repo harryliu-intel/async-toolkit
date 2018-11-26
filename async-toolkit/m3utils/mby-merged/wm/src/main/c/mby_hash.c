@@ -22,9 +22,9 @@ static fm_uint16 lookUpPearsonHash(const fm_uint16 key)
 
 static mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 (
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_num,
-    fm_byte               const hash_profile
+    mby_ppe_entropy_map const * const entropy_map,
+    fm_byte                     const hash_num,
+    fm_byte                     const hash_profile
 )
 {
     mbyClassifierEntropyCfg entropy_cfg = { 0 };
@@ -44,8 +44,8 @@ static mbyClassifierEntropyCfg mbyClsGetEntropyCfg
 
 static mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 (
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_profile
+    mby_ppe_entropy_map const * const entropy_map,
+    fm_byte                     const hash_profile
 )
 {
     mbyEntropyMetaCfg meta_cfg = { 0 };
@@ -66,10 +66,10 @@ static mbyEntropyMetaCfg mbyClsGetEntropyMetaCfg
 
 static void mbyClsGetEntropyHashSym
 (
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_num,
-    fm_byte               const sym_profile,
-    mbyEntropyHashSym         * hash_sym
+    mby_ppe_entropy_map const * const entropy_map,
+    fm_byte                     const hash_num,
+    fm_byte                     const sym_profile,
+    mbyEntropyHashSym         * const hash_sym
 )
 {
     entropy_hash_sym8_r  const * const entropy_hash_sym8  = &(entropy_map->ENTROPY_HASH_SYM8 [hash_num][sym_profile]);
@@ -136,10 +136,10 @@ static void mbyClsGetEntropyHashSym
 
 static void mbyClsGetEntropyHashKeyMask
 (
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_num,
-    fm_byte               const key_mask_profile,
-    mbyEntropyHashKeyMask     * hash_key_mask
+    mby_ppe_entropy_map   const * const entropy_map,
+    fm_byte                       const hash_num,
+    fm_byte                       const key_mask_profile,
+    mbyEntropyHashKeyMask       * const hash_key_mask
 )
 {
     entropy_hash_key_mask_r const * entropy_hash_key_mask;
@@ -174,10 +174,10 @@ static void selectEntropyHashKeys
 
 void symmetrizeEntropyHash
 (
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_num,
-    fm_byte               const sym_profile,
-    mbyClassifierKeys         * hash_keys
+    mby_ppe_entropy_map const * const entropy_map,
+    fm_byte                     const hash_num,
+    fm_byte                     const sym_profile,
+    mbyClassifierKeys         * const hash_keys
 )
 {
     // REVISIT!!! This is not supported in code.
@@ -229,11 +229,11 @@ void symmetrizeEntropyHash
 
 static void applyEntropyHashKeyMask
 (
-    mby_ppe_entropy_map * const entropy_map,
-    fm_byte               const hash_num,
-    fm_byte               const key_mask_profile,
-    fm_byte               const hash_bytes[MBY_ENTROPY_HASH_KEY_MASK_BYTES],
-    fm_byte             * const masked_hash_bytes
+    mby_ppe_entropy_map const * const entropy_map,
+    fm_byte                     const hash_num,
+    fm_byte                     const key_mask_profile,
+    fm_byte                     const hash_bytes[MBY_ENTROPY_HASH_KEY_MASK_BYTES],
+    fm_byte                   * const masked_hash_bytes
 )
 {
     mbyEntropyHashKeyMask hash_key_mask = { 0 };
@@ -253,13 +253,13 @@ static void applyEntropyHashKeyMask
 
 static void generateEntropyHash
 (
-    mby_ppe_entropy_map * const entropy_map,
-    mbyClassifierKeys     const keys,
-    fm_byte             * const hash_profile,
-    fm_byte             * const mod_meta,
-    fm_uint32           * const hash0,
-    fm_uint64           * const hash1,
-    fm_uint32           * const hash2
+    mby_ppe_entropy_map const * const entropy_map,
+    mbyClassifierKeys           const keys,
+    fm_byte                   * const hash_profile,
+    fm_byte                   * const mod_meta,
+    fm_uint32                 * const hash0,
+    fm_uint64                 * const hash1,
+    fm_uint32                 * const hash2
 )
 {
     fm_uint32 hash_values  [mby_ppe_entropy_map_ENTROPY_HASH_CFG0__nd] = { 0 };
@@ -363,10 +363,12 @@ static void generateEntropyHash
 
 static void getFwdHashingCfg
 (
-    fwd_hashing_cfg_r * const fwd_hashing_cfg_reg,
-    mbyFwdHashingCfg  * const fwd_hashing_cfg
+    mby_ppe_entropy_map const * const entropy_map,
+    mbyFwdHashingCfg          * const fwd_hashing_cfg
 )
 {
+    entropy_fwd_hashing_cfg_r const * const fwd_hashing_cfg_reg = &(entropy_map->ENTROPY_FWD_HASHING_CFG[0 /* REVISIT!!! */]);
+
     fwd_hashing_cfg->ECMP_ROTATION = fwd_hashing_cfg_reg->ECMP_ROTATION;
     fwd_hashing_cfg->ROTATION_B    = fwd_hashing_cfg_reg->ROTATION_A;
     fwd_hashing_cfg->ROTATION_A    = fwd_hashing_cfg_reg->ROTATION_B;
@@ -452,8 +454,7 @@ static void calcArpHash
 
 void Hash
 (
-    mby_ppe_entropy_map       * const entropy_map,
-    fwd_hashing_cfg_r         * const fwd_hashing_cfg_reg,
+    mby_ppe_entropy_map const * const entropy_map,
     mbyClassifierToHash const * const in,
     mbyHashToNextHop          * const out
 )
@@ -485,7 +486,7 @@ void Hash
 
     // Get Hashing configuration:
     mbyFwdHashingCfg fwd_hashing_cfg;
-    getFwdHashingCfg(fwd_hashing_cfg_reg, &fwd_hashing_cfg);
+    getFwdHashingCfg(entropy_map, &fwd_hashing_cfg);
 
     mbyHashKeys hash_keys = { 0 };
     generateOutput

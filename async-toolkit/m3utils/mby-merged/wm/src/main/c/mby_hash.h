@@ -155,15 +155,6 @@ typedef struct mbyHashToNextHopStruct
 
 } mbyHashToNextHop;
 
-// Functions:
-void Hash
-(
-    mby_ppe_entropy_map       * const entropy_map,
-    fwd_hashing_cfg_r         * const fwd_hashing_cfg_reg,
-    mbyClassifierToHash const * const in,
-    mbyHashToNextHop          * const out
-);
-
 // Consts:
 static const fm_byte ptable[] =
 {
