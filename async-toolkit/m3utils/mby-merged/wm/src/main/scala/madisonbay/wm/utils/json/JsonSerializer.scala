@@ -10,11 +10,16 @@ object JsonSerializer {
 
   val StandardFieldFilter: (Field, AnyRef) => Boolean = (field, _) => !isInnerCaseClassField(field)
 
+  val StandardFieldSpecialTreatment: (Field, AnyRef) => Option[Any] = (_, _) => None
+
   def toMapStd(value: Any): Map[String, Any] = toMap(value, bNameCaseClasses = false)(StandardFieldFilter)
 
   def toMapCaseClassNameStd(any: Any): Map[String, Any] = toMap(any, bNameCaseClasses = true)(StandardFieldFilter)
 
-  def toMap(any: Any, bNameCaseClasses: Boolean)(filterField: (Field, AnyRef) => Boolean): Map[String, Any] = {
+  //scalastyle:off cyclomatic.complexity
+  def toMap(any: Any, bNameCaseClasses: Boolean)(
+    filterField: (Field, AnyRef) => Boolean,
+    specialFieldTreatment: (Field, AnyRef) => Option[Any] = StandardFieldSpecialTreatment): Map[String, Any] = {
 
     def isUserCaseClass(ob: Any): Boolean = ob match {
       case _: List[_] => false
@@ -33,7 +38,10 @@ object JsonSerializer {
           val value = field.get(ob)
           if (value != null && filterField(field, value)) {
             val name = if (bNameCaseClasses && isUserCaseClass(value)) {value.getClass.getSimpleName} else {field.getName}
-            acc + (name -> recursiveToMap(value))
+            specialFieldTreatment(field, value) match {
+              case Some(v) => acc + (name -> v)
+              case None => acc + (name -> recursiveToMap(value))
+            }
           } else {
             acc
           }

@@ -53,6 +53,20 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
       )
   }
 
+  it should "apply special treatment" in {
+    toMap(TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0)), bNameCaseClasses = false)(
+      filterField = StandardFieldFilter,
+      specialFieldTreatment = (field, any) => (field.getName, any) match {
+        case ("x", _) => Some("special x")
+        case (_, _: TestClass2) => Some("tc2 body")
+        case _ => None
+      }
+    ) shouldEqual Map(
+      "testClass3"->Map("x"->"special x", "tc1"->Map("value"->3)),
+      "testClass2"->"tc2 body"
+    )
+  }
+
   it should "convert nested classes with case classes" in {
     toMapCaseClassNameStd(TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0))) shouldEqual Map(
       "TestClass3"->Map("x"->"test3", "TestClass1"->Map("value"->3)),
@@ -92,6 +106,30 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
           "flag18"->"Flag_abc",
           "flag24"->"Flag_xyz"
         )
+      )
+    )
+  }
+
+  it should "provide special treatment for selected fields" in {
+
+    val flags = Map("flag18"->Flag_abc, "flag24"->Flag_xyz)
+    val allFlags = new AllFlags(ClassFlags(flags), ClassFlagsList(List(Flag_xyz, Flag_abc)))
+
+    val res = toMap(allFlags, bNameCaseClasses = true) (filterField = StandardFieldFilter, specialFieldTreatment =
+      (field, v) => (field.getClass.getSimpleName, v) match {
+      case (_, list: ClassFlagsList) => Some(list.flagsList.zipWithIndex.map { case (_, i) => i })
+      case (_, flags: ClassFlags)  => Some(
+        flags.flags.collect {
+          case (k, vmap) => k -> vmap.toString.drop("Flag_".length) }
+        )
+      case _ => None
+    })
+
+    res shouldEqual Map(
+      "ClassFlagsList" -> List(0, 1),
+      "ClassFlags"->Map(
+        "flag18"->"abc",
+        "flag24"->"xyz"
       )
     )
   }
