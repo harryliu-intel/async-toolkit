@@ -56,11 +56,14 @@ $ToolConfig_ips{mby} = {
 ######################################################################
 IPToolDataExtras::import_files("mby", \%ToolConfig_ips);
 
+#[AK]: Commenting out next next few lines- Synopsys UVM ralgen tool fails 
+# with memory dump when LD_LIBRARY_PATH variable is loaded with Cadence VIPCAT
+# library path by default.  
 #Added for Cadence PCIe bfms
-$ToolConfig_ips{mby}{ENV}{LD_LIBRARY_PATH} .=  join(':',
-                                                    "&get_tool_var(denali, DENALI_LIBS)",
-                                                    "&get_tool_var(vipcat, VIPCAT_LIBS)",
-                                                  );
+#$ToolConfig_ips{mby}{ENV}{LD_LIBRARY_PATH} .=  join(':',
+#                                                    "&get_tool_var(denali, DENALI_LIBS)",
+#                                                    "&get_tool_var(vipcat, VIPCAT_LIBS)",
+#                                                  );
 
 my $epl_version = "eth_port-dev-x0-18ww45c";
 
