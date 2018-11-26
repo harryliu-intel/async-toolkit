@@ -271,6 +271,29 @@ reg lpm_subtrie_aptr_r {
   } ACTION_BASE_PTR[18:0] = 19'h0;
 };
 
+// CGRP_A_LPP_CONFIG [0]
+
+reg cgrp_a_lpp_config {
+  shared;
+  HandCoded = true;
+  name = "Sets CGRP_A in LPP Mode"; 
+  desc = "
+  This bit sets the CGRP_A in LPP mode 
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+
+           ";
+    ValRandomize = true;
+  } CGRP_A_LPP_MODE[0:0] = 1'h0;
+};
+
 addrmap mby_ppe_cgrp_a_nested_map {
   name = "mby_nested_a";
   desc = "Classifier group A registers";

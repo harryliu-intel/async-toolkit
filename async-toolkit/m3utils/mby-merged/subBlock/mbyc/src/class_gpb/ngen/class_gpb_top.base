@@ -6,6 +6,8 @@ ngen_mod_name
 
 input reset,
 
+class_group_if.class_in classa_classb_if,
+class_group_if.class_out classb_action_if,
 rx_ppe_ppe_stm1_if.ppe rx_ppe_ppe_stm1_if,
 
 ngen_IO_list

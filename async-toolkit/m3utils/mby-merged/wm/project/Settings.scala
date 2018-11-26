@@ -56,8 +56,8 @@ object Settings {
     credentials += Credentials(
       "Artifactory Realm",
       "ubit-artifactory-or.intel.com",
-      "ddagiel",
-      "APBW9qc5WhKpG6PgYnwcL17wsyz"
+      "kczulko",
+      "AP39GKaJqAVMRm4q5L9ttqeXiH3"
     ),
     resolvers += artifactoryResolver,
     parallelExecution in Test := false,
