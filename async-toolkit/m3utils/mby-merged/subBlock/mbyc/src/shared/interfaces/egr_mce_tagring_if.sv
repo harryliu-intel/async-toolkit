@@ -30,27 +30,16 @@
 /* Up to date in sync with mbay_ring_wires_v02.xlsx last checked on 12-Nov-2018. Using mby_gmm_pkg */
 
 interface egr_mce_tagring_if ();
-  import mby_gmm_pkg::*;
-//  import mby_egr_pkg::*;
-//TODO Cleanup signals    
-//    mce_tag_format_t[W_MCE_TAG_RING_TRACKS-1:0]             mce_tag_format;         
-//    mce_tag_format_valid_t[W_MCE_TAG_RING_TRACKS-1:0] mce_tag_format_valid;
-    
-//    mce_tag_format_t             mce_tag_format;         
-//    mce_tag_format_valid_t mce_tag_format_valid;
-//    logic       mce_tag_format; // FIXME Not Defined
-//    logic mce_tag_format_valid; // FIXME Not Defined
-    mby_mc_tag_ring_t mby_mc_tag_ring;
+    import mby_gmm_pkg::*; 
+    import mby_egr_pkg::*;
+  
+    mby_mc_tag_ring_t mby_mc_tag_ring[W_MCE_TAG_RING_TRACKS-1:0];
 
 modport egr(
-//    input       mce_tag_format,
-//    input mce_tag_format_valid
     input mby_mc_tag_ring
     );
 
 modport tagring(
-//    output       mce_tag_format,
-//    output mce_tag_format_valid
     output mby_mc_tag_ring
     );
     

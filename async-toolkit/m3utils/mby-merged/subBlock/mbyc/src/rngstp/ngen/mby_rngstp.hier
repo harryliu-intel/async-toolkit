@@ -1,15 +1,8 @@
 //mby_rngstp
 
 mby_rngstp [
-  for ($i =0; $i <16; $i++) {
-     foreach $j (0,1) {
-        $k = ($i *2) + $j;
-        tagring_stop_$i$_$j of mby_tagring_stop with tagring_stop.map $k
-     }
-  }
-  for ($i =0; $i <4; $i++) {
-     mctagring_stop_$i of mby_mctagring_stop with mctagring_stop.map $i
-  }
+  tagring_stop of mby_tagring_stop with tagring_stop.map
+  mctagring_stop of mby_mctagring_stop with mctagring_stop.map
   for ($i =0; $i <8; $i++) {
      dqring_stop_$i of mby_dqring_stop with dqring_stop.map $i
   }

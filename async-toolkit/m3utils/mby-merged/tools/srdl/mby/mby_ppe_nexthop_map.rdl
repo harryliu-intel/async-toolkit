@@ -643,56 +643,6 @@ reg ingress_vid_table_r {
   } MEMBERSHIP[16:0] = 17'h00;
 };
 
-reg fwd_hashing_cfg_r {
-  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  shared;
-  name = "Configures hashing of L2/L3/L4 headers for LAG";
-  desc = "This register selects which fields are enabled for inclusion in the calculation of the 
-          hash value used for link aggregation and GLORT lookup.  See the hashing chapter for more
-          details.";
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RSV";
-    desc = "
-      Reserved
-
-           ";
-    ValRandomize = true;
-  } _RSVD1_[63:13] = 51'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-            Specifies one of two 12-bit hash rotations for use in ECMP
-            binning. 
-           ";
-    ValRandomize = true;
-  } ECMP_ROTATION[12:12] = 1'h00;
-  field {
-    AccessType = "RW";
-    desc = "
-            Specifies one of four 12-bit rotations for use as Rotation B.
-           ";
-    ValRandomize = true;
-  } ROTATION_B[11:10] = 2'h01;
-  field {
-    AccessType = "RW";
-    desc = "
-            Specifies one of four 12-bit rotations for use as Rotation A.
-           ";
-    ValRandomize = true;
-  } ROTATION_A[9:8] = 2'h00;
-  field {
-    AccessType = "RSV";
-    desc = "
-      Reserved
-
-           ";
-    ValRandomize = true;
-  } _RSVD0_[7:0] = 8'h0;
-};
 
 reg mtu_table_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -737,6 +687,5 @@ addrmap mby_ppe_nexthop_map {
   nexthop_path_ctrs_r           NH_PATH_CTRS[16384]         ;
   nexthop_group_min_r           NH_GROUP_MIN[512]           ;
   mtu_table_r                   MTU_TABLE[8]                ;
-  fwd_hashing_cfg_r             FWD_HASHING_CFG             ;
 };
 

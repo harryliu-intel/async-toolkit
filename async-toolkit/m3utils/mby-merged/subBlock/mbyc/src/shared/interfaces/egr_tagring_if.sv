@@ -31,23 +31,15 @@
 
 interface egr_tagring_if ();
   import mby_gmm_pkg::*;
-//TODO Cleanup of signals
 
-//    lltformat_t             lltformat;
-//    lltformat_valid_t lltformat_valid;
-    mby_tag_ring_t mby_tag_ring;
+    mby_tag_ring_t mby_tag_ring[MBY_MAX_NUM_MGP-1:0][1:0];
 
 modport egr(
-//    input         lltformat,
-//    input   lltformat_valid 
     input mby_tag_ring
     );
     
 modport tagring(
-//    output         lltformat,
-//    output   lltformat_valid 
     output mby_tag_ring
     );    
-    
     
 endinterface : egr_tagring_if
