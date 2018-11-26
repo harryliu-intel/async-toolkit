@@ -17,7 +17,7 @@ class PcapSpec extends FlatSpec with Matchers {
   val pcapFile: File = new File("src/test/resources/pcap/scapy.pcap")
   s"The file $pcapFile" should s"have one packet in it" in {
     println(System.getenv("PWD"))
-    Pcap.loadPcap(pcapFile).length shouldEqual 1
+    Pcap.loadPcap(pcapFile) should have length 1
   }
 
 }

@@ -61,10 +61,10 @@ class ParserStageSpec extends FlatSpec with Matchers {
 
     val (bitFlags, _, _): (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
 
-    bitFlags.get contains 1 shouldEqual true
-    bitFlags.get contains 2 shouldEqual false
-    bitFlags.get contains 3 shouldEqual false
-    bitFlags.get contains 4 shouldEqual true
+    bitFlags.get should contain (1)
+    bitFlags.get should not contain (2)
+    bitFlags.get should not contain (3)
+    bitFlags.get should contain (4)
 
     val (bitFlags2, _, _): (BitFlags, ProtocolsOffsets, Option[ParserException]) = Parser.applyActions(updatedCsrParser, ph, port)
     bitFlags2.toInt shouldEqual b"10010"

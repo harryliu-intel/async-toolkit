@@ -10,11 +10,11 @@ import madisonbay.wm.switchwm.ppe.parser.output.ParserOutput
 import madisonbay.wm.switchwm.ppe.ppe.Port
 import madisonbay.wm.utils.FileService
 import madisonbay.wm.utils.json.JsonReader.JsonMap
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers, Inspectors}
 import madisonbay.wm.utils.progparser.ParserProgrammer
 
 //scalastyle:off
-class ParserJsonTester extends FlatSpec with Matchers {
+class ParserJsonTester extends FlatSpec with Matchers with Inspectors {
   val parserStr = "Parser"
   val jsonPath = "src/test/resources/json/parser"
   val csr = Csr()
@@ -36,7 +36,7 @@ class ParserJsonTester extends FlatSpec with Matchers {
     val expectedHeaderPointersOption = testCase.getListOpt[Map[String, AnyRef]]("out.PA_HDR_PTRS")
     expectedHeaderPointersOption.foreach{expectedHeaderPointers =>
       name should "have correct number of PA_HDR_PTRS" in {
-        expectedHeaderPointers.size shouldEqual parseResult.parserPointers.headerPointers.size
+        expectedHeaderPointers should have size (parseResult.parserPointers.headerPointers.size)
       }
 
       expectedHeaderPointers.foreach { map =>
@@ -46,7 +46,7 @@ class ParserJsonTester extends FlatSpec with Matchers {
 
         it should "have correct PA_HDR_PTRS #" + pointerNumber.toString in {
           val headerPointerUnderTest = parseResult.parserPointers.headerPointers.get(pointerNumber)
-          headerPointerUnderTest.isEmpty shouldBe false
+          headerPointerUnderTest should be (defined)
           headerPointerUnderTest.foreach { headerPointer =>
             headerPointer.offset shouldEqual offset
             headerPointer.protocolId shouldEqual protocolId

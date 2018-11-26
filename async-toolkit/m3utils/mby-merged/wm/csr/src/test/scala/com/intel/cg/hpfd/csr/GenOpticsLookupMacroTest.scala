@@ -33,7 +33,7 @@ class GenOpticsLookupMacroTest extends PropSpec with PropertyChecks with Matcher
 
       inside(modifiedTopAddressMap) { case AddressMap(_,_,regFileB) =>
         inside(regFileB) { case RegisterFileB(_,_,register) =>
-          register.serialize.extract[Long] shouldEqual expectedValue
+          register.serialize.toLong shouldEqual expectedValue
           register.serialize shouldEqual opticsPath.getOption(modifiedTopAddressMap).value
         }
       }

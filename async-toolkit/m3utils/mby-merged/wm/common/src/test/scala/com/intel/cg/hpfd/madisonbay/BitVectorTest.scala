@@ -4,10 +4,7 @@
 package com.intel.cg.hpfd.madisonbay
 
 import com.intel.cg.hpfd.madisonbay.Encode.encode
-import org.scalatest.{WordSpec, Inspectors, Matchers}
 import org.scalatest.Inspectors.{forAll => _}
-import org.scalatest.prop._
-import org.scalatest.prop.Configuration.{PropertyCheckConfigParam, PropertyCheckConfig}
 import org.scalacheck.{Arbitrary, Gen, Prop, Shrink}
 import org.scalacheck.Arbitrary._
 
