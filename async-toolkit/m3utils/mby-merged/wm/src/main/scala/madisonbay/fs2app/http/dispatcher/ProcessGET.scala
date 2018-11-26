@@ -26,10 +26,10 @@ class ProcessGET(csrModel: CsrModel) extends ProcessRequest {
   def processGetRequest(request: HttpRequestHeader)(implicit rt: RaiseThrowable[IO]): HttpResponse[IO] = {
     val parameters = getParameters(request.query)
 
-    def httpPage = {
-      val page = PageGenerator.mainPage(parameters, csrModel)
-      HttpResponse(HttpStatusCode.Ok).withUtf8Body(page).withContentType(contentFrontend)
-    }
+    def httpPage: HttpResponse[IO] = HttpResponse(HttpStatusCode.Ok).
+        withUtf8Body(PageGenerator.mainPage(parameters, csrModel)).
+        withContentType(contentFrontend)
+
 
     request.path match {
 

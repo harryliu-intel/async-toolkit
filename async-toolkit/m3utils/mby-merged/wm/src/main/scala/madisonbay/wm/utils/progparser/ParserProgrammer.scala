@@ -86,7 +86,9 @@ object ParserProgrammer {
       case "MBY_PARSER_ANA_S" :: _ => readParserVer1(tail, lens_MBY_PARSER_ANA_S(id(line(1)), id(line(2))).set(getBitVector(line(3)))(parser))
       case "MBY_PARSER_EXC" :: _ => readParserVer1(tail, lens_MBY_PARSER_EXC(id(line(1)), id(line(2))).set(getBitVector(line(3)))(parser))
       case "MBY_PARSER_EXT" :: _ => readParserVer1(tail, lens_MBY_PARSER_EXT(id(line(1)), id(line(2))).set(getBitVector(line(3)))(parser))
-      case _ => assert(false, s"unexpected line $line in readProgrammer"); parser
+      case _ =>
+        assert(false, s"unexpected line $line in readProgrammer")
+        parser
     }
   }
 

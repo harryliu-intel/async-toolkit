@@ -7,7 +7,7 @@ import madisonbay.wm.utils.json.JsonSerializer.isInnerCaseClassField
 
 object CsrModel {
 
-  val topMapKey = "top_map"
+  val topMapKey = "mby_top_map"
 
 }
 

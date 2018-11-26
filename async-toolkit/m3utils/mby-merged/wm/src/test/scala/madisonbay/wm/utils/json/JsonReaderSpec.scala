@@ -39,6 +39,8 @@ class JsonReaderSpec extends FlatSpec with Matchers {
     )
 
     getOpt(json, "parsers(1).p2")    shouldEqual Some(List(4,5,6))
+    getOptFromUri(json, "parsers/1/p2")    shouldEqual Some(List(4,5,6))
+
     getListOpt(json, "parsers(1).p2")    shouldEqual Some(List(4,5,6))
     getOpt(json, "parsers(1).p2(2)") shouldEqual Some(6)
     getIntOpt(json, "parsers(1).p2(2)") shouldEqual Some(6)
@@ -48,15 +50,24 @@ class JsonReaderSpec extends FlatSpec with Matchers {
     getStringOpt(json, "headers(0)(0)")    shouldEqual Some("h1")
     getOpt(json, "headers(0)(3).h12")    shouldEqual Some(Map("a"->0))
     getMapOpt(json, "headers(0)(3).h12")    shouldEqual Some(Map("a"->0))
+
     getOpt(json, "headers(0)(3).h12.a")    shouldEqual Some(0)
+    getOptFromUri(json, "headers/0/3/h12/a")    shouldEqual Some(0)
 
     getOpt(json, "parsers(1).p2a")    shouldEqual None
+    getOptFromUri(json, "parsers/1/p2a")    shouldEqual None
+
     getOpt(json, "parsers(-1).p2a")   shouldEqual None
     getOpt(json, "parsers((1).p2a")   shouldEqual None
+    getOptFromUri(json, "parsers//1/p2a")   shouldEqual None
+
     getOpt(json, "parsers.(1)")       shouldEqual None
     getOpt(json, "headers(0)(2)(1)")    shouldEqual None
+    getOptFromUri(json, "headers/0/2/1")    shouldEqual None
+
     getOpt(json, "headers(0)(3).h13")    shouldEqual None
     getOpt(json, "headers(0)(3).h12.a(0)")    shouldEqual None
+    getOptFromUri(json, "headers/0/3/h12/a/0")    shouldEqual None
   }
 
   it should "get paths from json" in {
@@ -76,6 +87,7 @@ class JsonReaderSpec extends FlatSpec with Matchers {
     getOpt(json, "headers(2).name") shouldEqual Some("ethernet")
     getStringOpt(json, "headers(2).name") shouldEqual Some("ethernet")
     getOpt(json, "parsers(0).parse_states(0).parser_ops(0).parameters(0).type") shouldEqual Some("regular")
+    getOptFromUri(json, "parsers/0/parse_states/0/parser_ops/0/parameters/0/type") shouldEqual Some("regular")
   }
 
   it should "read big ints" in {
