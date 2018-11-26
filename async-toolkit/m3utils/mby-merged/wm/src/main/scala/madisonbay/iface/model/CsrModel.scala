@@ -1,4 +1,4 @@
-package madisonbay.iface.frontend.model
+package madisonbay.iface.model
 
 import madisonbay.wm.switchwm.csr.Csr
 import madisonbay.wm.utils.json.JsonSerializer
@@ -7,13 +7,16 @@ import madisonbay.wm.utils.json.JsonSerializer.isInnerCaseClassField
 
 object CsrModel {
 
-  val topMapKey = "mby_top_map"
+  val KeyTopMap: String = Csr().topMap.getClass.getSimpleName
+
+  val KeyValue = "value"
+  val KeyRange = "range"
 
 }
 
 class CsrModel(csr: Csr, limitNumberOfNodes: Int) {
 
-  val csrMap: Map[String, Any] = Map(CsrModel.topMapKey -> toCsrMap(csr.topMap))
+  val csrMap: Map[String, Any] = Map(CsrModel.KeyTopMap -> toCsrMap(csr.topMap))
 
   val csrMapToHtml: Map[String, Any] = joinValues(csrMap)
 
@@ -29,7 +32,7 @@ class CsrModel(csr: Csr, limitNumberOfNodes: Int) {
   private def joinValues(map: Map[String, Any]): Map[String, Any] = map.collect {
     case (k, v: Map[_, _]) =>
       val vmap = v.asInstanceOf[Map[String, Any]]
-      vmap.get("value") match {
+      vmap.get(CsrModel.KeyValue) match {
         case Some(value: Long) => k -> value
         case _ => k -> joinValues(vmap)
       }
@@ -42,7 +45,8 @@ class CsrModel(csr: Csr, limitNumberOfNodes: Int) {
     case (k, v) => k -> v
   }
 
-  private def isInternalField(name: String): Boolean = name.startsWith("bitmap") || name == "companion" ||
-    name == "range" || name == "resetValue"
+  private def isInternalField(name: String): Boolean = name.startsWith("bitmap") ||
+    name == "companion" ||
+    name == "resetValue"
 
 }

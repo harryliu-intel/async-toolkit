@@ -1,7 +1,7 @@
 package madisonbay.iface.frontend.viewer
 
-import madisonbay.iface.frontend.model.CsrModel
-import UriConstants._
+import madisonbay.iface.model.CsrModel
+import madisonbay.iface.UriConstants._
 import madisonbay.iface.frontend.viewer.HtmlDsl._
 
 
@@ -31,7 +31,7 @@ object PageGenerator {
 
   def showCsr(parameters: List[UriParameter], csrModel: CsrModel): List[String] = parameters.find(_.key == UriParameter.KeyPath) match {
     case Some(UriParameter(_, Some(path))) => CsrView.genView(csrModel.csrMapToHtml, path)
-    case _ => CsrView.genView(csrModel.csrMapToHtml, CsrModel.topMapKey)
+    case _ => CsrView.genView(csrModel.csrMapToHtml, CsrModel.KeyTopMap)
   }
 
 }

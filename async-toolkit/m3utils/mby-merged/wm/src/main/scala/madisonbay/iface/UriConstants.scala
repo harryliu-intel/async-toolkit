@@ -1,4 +1,4 @@
-package madisonbay.iface.frontend.viewer
+package madisonbay.iface
 
 object UriConstants {
 

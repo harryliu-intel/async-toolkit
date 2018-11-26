@@ -1,8 +1,9 @@
 package madisonbay.iface.frontend.viewer
 
 import madisonbay.wm.utils.json.JsonReader
-import UriConstants.UriParameter._
+import madisonbay.iface.UriConstants.UriParameter._
 import HtmlDsl._
+import madisonbay.iface.model.CsrModel
 
 object CsrView {
 
@@ -32,7 +33,7 @@ object CsrView {
   }
 
   private def getRegBody(csrTree: Map[String, Any], uriPath: String): List[String]= JsonReader.getOptFromUri(csrTree, uriPath) match {
-    case Some(node: Map[_, _]) => node.asInstanceOf[Map[String, Any]].toList.map {
+    case Some(node: Map[_, _]) => node.asInstanceOf[Map[String, Any]].toList.filterNot { case (key, _) => key == CsrModel.KeyRange }.map {
       case (k, v: Long)     => field(k, v.toString)
 
       case (k, _: Map[_,_]) =>

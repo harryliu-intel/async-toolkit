@@ -1,6 +1,6 @@
 package madisonbay.fs2app.http.dispatcher
 
-import madisonbay.iface.frontend.viewer.UriConstants.UriParameter
+import madisonbay.iface.UriConstants.UriParameter
 import spinoco.protocol.http.Uri
 
 trait ProcessRequest {

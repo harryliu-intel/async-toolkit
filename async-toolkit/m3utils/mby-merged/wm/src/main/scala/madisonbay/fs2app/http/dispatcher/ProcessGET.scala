@@ -3,20 +3,22 @@ package madisonbay.fs2app.http.dispatcher
 import cats.effect.IO
 import fs2.{RaiseThrowable, Stream}
 import madisonbay.iface.frontend.controller.ResourceProvider
-import madisonbay.iface.frontend.model.CsrModel
+import madisonbay.iface.model.CsrModel
 import madisonbay.iface.frontend.viewer.PageGenerator
-import madisonbay.iface.frontend.viewer.UriConstants.UriParameter
-import madisonbay.iface.frontend.viewer.UriConstants.UriSegment.{CssUriPref, ImgUriPref}
+import madisonbay.iface.UriConstants.UriParameter
+import madisonbay.iface.UriConstants.UriSegment.{CssUriPref, ImgUriPref}
 import spinoco.fs2.http.HttpResponse
 import spinoco.protocol.http.{HttpRequestHeader, HttpStatusCode, Uri}
 import spinoco.protocol.mime.{ContentType, MediaType}
 import ProcessGET._
+import madisonbay.iface.rest.{RestDispatcher, RestResponse}
 
 
 object ProcessGET {
-  val contentFrontend   = ContentType.TextContent(MediaType.`text/html`, None)
+  val contentHtml       = ContentType.TextContent(MediaType.`text/html`, None)
   val contentCss        = ContentType.BinaryContent(MediaType.`text/css`, None)
   val contentImgPng     = ContentType.BinaryContent(MediaType.`image/png`, None)
+  val contentJson       = ContentType.TextContent(MediaType.`application/json`, None)
 
   def apply(csrModel: CsrModel): ProcessGET = new ProcessGET(csrModel)
 }
@@ -28,7 +30,7 @@ class ProcessGET(csrModel: CsrModel) extends ProcessRequest {
 
     def httpPage: HttpResponse[IO] = HttpResponse(HttpStatusCode.Ok).
         withUtf8Body(PageGenerator.mainPage(parameters, csrModel)).
-        withContentType(contentFrontend)
+        withContentType(contentHtml)
 
 
     request.path match {
@@ -56,12 +58,24 @@ class ProcessGET(csrModel: CsrModel) extends ProcessRequest {
       val responseOk = HttpResponse(HttpStatusCode.Ok)
       HttpResponse(responseOk.header, effectBody).withContentType(contentImgPng)
 
-    // URI not supported
-    case u =>
-      HttpResponse(HttpStatusCode.Ok).
+    case u => RestDispatcher.processGetUri(uri, parameters, csrModel) match {
+      case RestResponse(false, _, _) =>
+        HttpResponse(HttpStatusCode.Ok).
         withUtf8Body(PageGenerator.processGet(" [Error] Not Supported URI: " :: u, parameters, csrModel)).
-        withContentType(contentFrontend)
-  }
+        withContentType(contentHtml)
 
+      case RestResponse(_, true, None) => HttpResponse(HttpStatusCode.BadRequest)
+
+      case RestResponse(_, false, None) => HttpResponse(HttpStatusCode.Ok)
+
+      case RestResponse(_, true, Some(msg)) => HttpResponse(HttpStatusCode.BadRequest).
+        withUtf8Body(msg).
+        withContentType(contentJson)
+
+      case RestResponse(_, false, Some(msg)) => HttpResponse(HttpStatusCode.Ok).
+        withUtf8Body(msg).
+        withContentType(contentJson)
+    }
+  }
 
 }
