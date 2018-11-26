@@ -8,17 +8,10 @@ $hdl_spec = {
 
 	# List of specific VERILOG src files
 	-vlog_files => [
-
-		"src/shared/rtl/shared_pkg.sv",
-		"src/shared/rtl/pkt_pkg.sv",
-		"src/shared/rtl/pkt_meta_pkg.sv",
-        "src/shared/rtl/rx_ppe_pkg.sv",
-		"src/shared/rtl/tx_ppe_pkg.sv",
-		"$SVA_LIB/intel_checkers_pkg.vs",
+        "src/shared/rtl/shared_pkg.sv",
 		"src/shared/interfaces/ahb_rx_ppe_if.sv",
 		"src/shared/interfaces/glb_rx_ppe_if.sv",
 		"src/shared/interfaces/egr_tx_ppe_if.sv",
-		"src/shared/interfaces/par_class_if.sv",
 
 		"src/tx_ppe/rtl/tx_ppe.sv",
 	],
@@ -31,10 +24,7 @@ $hdl_spec = {
 
    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
 	-vlog_incdirs => [
-		"src/tx_ppe/rtl",
-		"src/shared/rtl",
 		"src/shared/interfaces",
-		"$SVA_LIB",
 	],
 
 	# Arbitrary VLOG options

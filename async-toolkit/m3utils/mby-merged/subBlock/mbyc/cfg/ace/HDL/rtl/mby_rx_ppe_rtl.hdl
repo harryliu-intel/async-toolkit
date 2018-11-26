@@ -8,11 +8,12 @@ $hdl_spec = {
 
 	# List of specific VERILOG src files
 	-vlog_files => [
-
-		"src/shared/rtl/shared_pkg.sv",
-		"src/shared/rtl/pkt_pkg.sv",
-		"src/shared/rtl/pkt_meta_pkg.sv",
-		"src/shared/rtl/rx_ppe_pkg.sv",
+        "src/shared/rtl/shared_pkg.sv",
+        "src/shared/rtl/hlp/hlp_register_constants_pkg.vh",
+		"src/shared/rtl/hlp/hlp_pkt_pkg.vh",
+		"src/shared/rtl/hlp/hlp_pkt_meta_pkg.vh",
+		"src/shared/rtl/hlp/hlp_pkg.vh",
+        "src/shared/rtl/hlp/hlp_ipp_pkg.vh",
 		"src/parser/rtl/parser_pkg.sv",
 		"src/parser/rtl/class_gpa_pkg.sv",
 		"src/parser/rtl/class_gpb_pkg.sv",
@@ -25,6 +26,7 @@ $hdl_spec = {
 		"src/shared/interfaces/rx_ppe_ppe_stm_if0.sv",
 		"src/shared/interfaces/rx_ppe_ppe_stm_if1.sv",
 		"src/shared/interfaces/par_class_if.sv",
+		"src/shared/interfaces/class_group_if.sv",
 
 		"src/rx_ppe/rtl/rx_ppe.sv",
 	],

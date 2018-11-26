@@ -4,7 +4,8 @@ NGEN          = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/ngen_i/ngen_i.pl
 NGEN_FLAGS    = -fi=INTCNOPWR
 V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
-V_DIRS        = -d=../rtl
+V_DIRS        = -d=../rtl \
+                -d=../../shared/interfaces
 V_LIBS        =
 
 .PHONY: ngen pre top post rtl copy clean diff
