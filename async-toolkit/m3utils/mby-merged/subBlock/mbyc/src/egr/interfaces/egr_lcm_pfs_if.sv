@@ -20,27 +20,27 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-///  ---------------------------------------------------------------------------------------------------------------------
-///  -- Author       : Isaac Perez-Andrade
+///  ------------------------------------------------------------------------------
+///  -- Author       : Isaac Perez Andrade
 ///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Packet Read Controller (PRC) interface with 
-///                    Local Congestion Manager (LCM)
+///  -- Description  : Local Congestion Manager (LCM) interface with
+///                    Packet Fetch Scheduler (PFS) 
 ///  ------------------------------------------------------------------------------
 
-interface prc_lcm_if();
+interface egr_lcm_pfs_if();
     // signals
     logic dummy;
-    
-// PRC provides to LCM
-modport prc(
+      
+// LCM requests to PFS
+modport lcm(
     // port list
     output dummy
     );
 
-// LCM consumes from PRC
-modport lcm(
+// PFS provides to LCM
+modport pfs(
     // port list
     input dummy
     );
 
-endinterface : prc_lcm_if
+endinterface : egr_lcm_pfs_if

@@ -23,22 +23,20 @@
 //------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : PES to TXC Interface
-//                   For connecting the Packet Egress Scheduler to the Transmit
-//                   Controller
+// -- Description  : Read Request Interface
+//                   For connecting Read Requestors to the Mesh Read Interface
 //------------------------------------------------------------------------------
 
-interface pes_txc_if ();
+interface egr_rrq_if ();
 
     logic dummy;
 
-modport pes(
+modport requestor(
     output dummy
     );
 
-modport txc(
+modport mri(
     input dummy
     );
 
-endinterface : pes_txc_if
-
+endinterface : egr_rrq_if

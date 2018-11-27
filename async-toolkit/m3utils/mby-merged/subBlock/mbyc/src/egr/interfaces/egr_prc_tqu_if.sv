@@ -23,20 +23,22 @@
 //------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Read Request Interface
-//                   For connecting Read Requesters to the Mesh Read Interface
+// -- Description  : PRC to TQU Interface
+//                   For connecting the Packet Read Controller to
+//                   the Transmit Queuing Unit
 //------------------------------------------------------------------------------
 
-interface rrq_if ();
+interface egr_prc_tqu_if ();
 
     logic dummy;
 
-modport provider(
+modport prc(
     output dummy
     );
 
-modport mri(
+modport tqu(
     input dummy
     );
 
-endinterface : rrq_if
+endinterface : egr_prc_tqu_if
+

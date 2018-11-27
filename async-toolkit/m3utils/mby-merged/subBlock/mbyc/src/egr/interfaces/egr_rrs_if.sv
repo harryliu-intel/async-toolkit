@@ -23,22 +23,21 @@
 //------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : EPB to TXC Interface
-//                   For connecting the Egress Packet Buffer to the Transmit
-//                   Controller
+// -- Description  : Read Response Interface
+//                   For connecting the Mesh Read Interface to the consumers 
+//                   of the responses
 //------------------------------------------------------------------------------
 
-interface epb_txc_if ();
+interface egr_rrs_if ();
 
     logic dummy;
 
-modport epb(
-    output dummy
-    );
-
-modport txc(
+modport requestor(
     input dummy
     );
 
-endinterface : epb_txc_if
+modport mri(
+    output dummy
+    );
 
+endinterface : egr_rrs_if

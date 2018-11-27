@@ -20,30 +20,29 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-///  ---------------------------------------------------------------------------------------------------------------------
+///  ------------------------------------------------------------------------------
 ///  -- Author       : Isaac Perez-Andrade
 ///  -- Project Name : Madison Bay (MBY) 
 ///  -- Description  : Dirty Pod Broker (DPB) interface with
-///                    Unicast Tag Manager (UTM),
+///                    Tag Management Unit (TMU),
 ///                    Packet Read Controller (PRC) and 
-///                    Dirty Pod Broker (DPB) 
 ///  ------------------------------------------------------------------------------
 
-interface dp_if();
+interface egr_dp_if();
     //signals
     logic dummy;
 
-// UTM, PRC and PFS provide to DPB
-modport provider(
+// TMU, PRC request from DPB
+modport requestor(
     //port list
     output dummy
     );
 
-// DPB consumes from UTM, PRC and PFS
+// DPB provides to TMU, PRC
 modport dpb(
     //port list
     input dummy
     );
 
-endinterface : dp_if
+endinterface : egr_dp_if
 

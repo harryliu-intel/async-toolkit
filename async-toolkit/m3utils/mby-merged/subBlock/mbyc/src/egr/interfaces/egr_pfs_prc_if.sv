@@ -20,27 +20,25 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-///  ---------------------------------------------------------------------------------------------------------------------
-///  -- Author       : Isaac Perez-Andrade
-///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Unicast Tag Manager (UTM) interface with 
-///                    Packet Read Controller (PRC) 
-///  ------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// -- Author : Luis Alfonso Maeda-Nunez
+// -- Project Name : Madison Bay (MBY) 
+// -- Description  : PFS to PRC interface
+//                   For connecting the Packet Fetch Scheduler to the Packet 
+//                   Read Controller
+//------------------------------------------------------------------------------
 
-interface utm_prc_if();
-    // signals
+interface egr_pfs_prc_if ();
+
     logic dummy;
 
-// UTM provides to PRC
-modport utm(
-    // port list
+modport pfs(
     output dummy
     );
 
-// PRC consumes from UTM
 modport prc(
-    // port list
     input dummy
     );
 
-endinterface : utm_prc_if
+endinterface : egr_pfs_prc_if
+

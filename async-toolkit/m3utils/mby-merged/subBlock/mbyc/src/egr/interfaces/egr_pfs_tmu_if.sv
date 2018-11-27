@@ -20,25 +20,25 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-//------------------------------------------------------------------------------
-// -- Author : Luis Alfonso Maeda-Nunez
-// -- Project Name : Madison Bay (MBY) 
-// -- Description  : EPB to PRC Interface
-//                   For connecting the Egress Packet Buffer to the Packet 
-//                   Read Controller
-//------------------------------------------------------------------------------
+///  ------------------------------------------------------------------------------
+///  -- Author       : Isaac Perez-Andrade
+///  -- Project Name : Madison Bay (MBY) 
+///  -- Description  : Tag Management Unit (TMU) interface with 
+///                    Packet Fetch Scheduler (PFS)
+///  ------------------------------------------------------------------------------
 
-interface epb_prc_if ();
-
+interface egr_pfs_tmu_if();
+    // signals
     logic dummy;
-
-modport epb(
-    output dummy
-    );
-
-modport prc(
+    
+modport pfs(
+    // port list
     input dummy
     );
 
-endinterface : epb_prc_if
+modport tmu(
+    // port list
+    output dummy
+    );
 
+endinterface : egr_pfs_tmu_if

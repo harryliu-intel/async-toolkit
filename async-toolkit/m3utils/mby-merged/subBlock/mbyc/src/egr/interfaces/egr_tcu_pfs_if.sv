@@ -20,28 +20,25 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-///  ---------------------------------------------------------------------------------------------------------------------
-///  -- Author       : Isaac Perez-Andrade
-///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Local Congestion Manager (LCM) interface with
-///                    Packet Fetch Scheduler (PFS) and 
-///                    Packet Egress Scheduler (PES)
-///  ------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// -- Author : Luis Alfonso Maeda-Nunez
+// -- Project Name : Madison Bay (MBY) 
+// -- Description  : TCU to PFS Interface
+//                   For connecting the Transmit Controller Unit to the 
+//                   Packet Fetch Scheduler
+//------------------------------------------------------------------------------
 
-interface lcm_ps_if();
-    // signals
+interface egr_tcu_pfs_if ();
+
     logic dummy;
-      
-// LCM provides to PFS and PES
-modport lcm(
-    // port list
+
+modport tcu(
     output dummy
     );
 
-// PFS and PES consume from LCM
-modport consumer(
-    // port list
+modport pfs(
     input dummy
     );
 
-endinterface : lcm_ps_if
+endinterface : egr_tcu_pfs_if
+

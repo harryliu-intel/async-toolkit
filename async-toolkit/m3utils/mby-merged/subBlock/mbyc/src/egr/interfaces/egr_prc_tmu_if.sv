@@ -20,27 +20,27 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-///  ---------------------------------------------------------------------------------------------------------------------
+///  ------------------------------------------------------------------------------
 ///  -- Author       : Isaac Perez-Andrade
 ///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Unicast Tag Manager (UTM) interface with 
-///                    Packet Fetch Scheduler (PFS)
+///  -- Description  : Tag Management Unit (TMU) interface with 
+///                    Packet Read Controller (PRC) 
 ///  ------------------------------------------------------------------------------
 
-interface utm_pfs_if();
+interface egr_prc_tmu_if();
     // signals
     logic dummy;
-    
-// UTM provides to PFS
-modport utm(
-    // port list
-    output dummy
-    );
 
-// PFS consumes from UTM
-modport pfs(
+// PRC requests from TMU
+modport prc(
     // port list
     input dummy
     );
 
-endinterface : utm_pfs_if
+// TMU provides to PRC
+modport tmu(
+    // port list
+    output dummy
+    );
+
+endinterface : egr_tmu_prc_if

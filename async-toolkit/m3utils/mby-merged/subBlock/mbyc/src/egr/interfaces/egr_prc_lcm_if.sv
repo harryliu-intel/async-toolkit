@@ -20,25 +20,27 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-//------------------------------------------------------------------------------
-// -- Author : Luis Alfonso Maeda-Nunez
-// -- Project Name : Madison Bay (MBY) 
-// -- Description  : PFS to PRC interface
-//                   For connecting the Packet Fetch Scheduler to the Packet 
-//                   Read Controller
-//------------------------------------------------------------------------------
+///  ---------------------------------------------------------------------------------------------------------------------
+///  -- Author       : Isaac Perez-Andrade
+///  -- Project Name : Madison Bay (MBY) 
+///  -- Description  : Packet Read Controller (PRC) interface with 
+///                    Local Congestion Manager (LCM)
+///  ------------------------------------------------------------------------------
 
-interface pfs_prc_if ();
-
+interface egr_prc_lcm_if();
+    // signals
     logic dummy;
-
-modport pfs(
+    
+// PRC sends segment counts to LCM
+modport prc(
+    // port list
     output dummy
     );
 
-modport prc(
+// LCM receives segment counts from PRC
+modport lcm(
+    // port list
     input dummy
     );
 
-endinterface : pfs_prc_if
-
+endinterface : egr_prc_lcm_if

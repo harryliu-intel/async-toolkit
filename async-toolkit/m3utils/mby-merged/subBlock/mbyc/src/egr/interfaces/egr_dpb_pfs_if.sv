@@ -20,24 +20,28 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-//------------------------------------------------------------------------------
-// -- Author : Luis Alfonso Maeda-Nunez
-// -- Project Name : Madison Bay (MBY) 
-// -- Description  : Read Response Interface
-//                   For connecting the Mesh Read Interface to the consumers 
-//                   of the responses
-//------------------------------------------------------------------------------
+///  ------------------------------------------------------------------------------
+///  -- Author       : Luis Alfonso Maeda Nunez
+///  -- Project Name : Madison Bay (MBY) 
+///  -- Description  : Dirty Pointer Broker (DPB) interface with
+///                    Packet Fetch Scheduler (PFS)
+///  ------------------------------------------------------------------------------
 
-interface rrs_if ();
-
+interface egr_dpb_pfs_if();
+    //signals
     logic dummy;
 
-modport mri(
-    output dummy
-    );
-
-modport consumer(
+// DPB requests from PFS
+modport dpb(
+    //port list
     input dummy
     );
 
-endinterface : rrs_if
+// PFS provides to DPB
+modport pfs(
+    //port list
+    output dummy
+    );
+
+endinterface : egr_dpb_pfs_if
+

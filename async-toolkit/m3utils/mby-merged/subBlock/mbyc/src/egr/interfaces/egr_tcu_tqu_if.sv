@@ -20,34 +20,42 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-// ---------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Transmit Controller Unit
+// -- Description  : TQU to TCU Interface
+//                   For connecting the Transmit Queuing Unit to the Transmit
+//                   Controller Unit
 //------------------------------------------------------------------------------
 
-module tcu
-(
-    input logic       clk,
-    input logic     rst_n, 
+interface egr_tcu_tqu_if ();
 
-    //EGR Internal Interfaces
-    egr_tcu_pfs_if.tcu pfs_if, //Transmit Controller Unit - Packet Fetch Scheduler Interface
-    egr_tcu_tqu_if.tcu tqu_if, //Transmit Controller Unit - Transmit Queuing Unit Interface
+    logic dummy;
+    //TODO data word t            [3:0] //
+    //TODO data ecc??             [3:0] //TODO Discuss ecc bits
+    //TODO data valid             [3:0] //
+    //TODO pop queue t            [3:0] // One per queue: 36 TCU->TQU
+    //TODO data ready t           [3:0] // One per queue: 36 TQU->TCU
+    
+    //TODO metadata t             [3:0] //
+    //TODO metadata ecc?          [3:0] //TODO Discuss ecc bits
+    //TODO metadata valid         [3:0] //
+    //TODO local metadata pop t   [3:0] // One per queue: 36 TCU->TQU
+    //TODO local metadata ready t [3:0] // One per queue: 36 TQU->TCU
+    //TODO local metadata contents??
+    //TODO mesh metadata pop t    [3:0] // One per queue: 36 TCU->TQU
+    //TODO mesh  metadata ready t [3:0] // One per queue: 36 TQU->TCU
+    //TODO mesh  metadata contents??
 
-    //EGR External Interfaces
-    egr_tx_ppe_if.egr     tx_ppe_if0, //EGR-TxPPE 0 Interface //TODO Check how many interfaces needed
-    egr_tx_ppe_if.egr     tx_ppe_if1, //EGR-TxPPE 1 Interface //TODO Check how many interfaces needed
-    egr_ppe_stm_if.egr    ppe_stm_if, //EGR-PPE Shared Table Memory Interface  //TODO Check how many interfaces needed
-    egr_mc_table_if.egr mc_table_if0, //EGR-MultiCast Shared Table 0 Interface //TODO Check how many interfaces needed
-    egr_mc_table_if.egr mc_table_if1, //EGR-MultiCast Shared Table 1 Interface //TODO Check how many interfaces needed
-    //TODO Interface to ACL TABLE
+    //TODO Discuss protocol for syncing given pipeline between blocks
 
-    egr_epl_if.egr        epl_if0, //TCU - EPL0 Interface
-    egr_epl_if.egr        epl_if1, //TCU - EPL1 Interface
-    egr_epl_if.egr        epl_if2, //TCU - EPL2 Interface
-    egr_epl_if.egr        epl_if3  //TCU - EPL3 Interface
+modport tqu(
+    output dummy
+    );
 
-);
+modport tcu(
+    input dummy
+    );
 
-endmodule : tcu
+endinterface : egr_tcu_tqu_if
+
