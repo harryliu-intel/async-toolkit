@@ -2,6 +2,9 @@ package madisonbay.wm.switchwm.ppe.classifier
 
 import com.intel.cg.hpfd.madisonbay.Memory._
 import madisonbay.csr.all._
+import madisonbay.wm.switchwm.ppe.mapper.output._
+import madisonbay.wm.switchwm.ppe.mapper.defs.Classifier16BitKeys
+import madisonbay.wm.switchwm.ppe.mapper.defs.Classifier32BitKeys
 
 import monocle.{ Optional, Traversal }
 import monocle.function.Index._
@@ -285,13 +288,89 @@ class ExactMatchTest extends FlatSpec with Matchers {
     _ <- setFwdTable0Reg(atIndex(0), atIndex(1))(DATA(0x54210000L << 32))
   } yield ()
 
+  def mockedMapperOutput: MapperOutput = {
+    val oneZero = ActionPrecVal(1,0)
+    val oneOne = ActionPrecVal(1,1)
+
+    val classifierActions = ClassifierActions(
+      act24 = Vector.fill(16)(oneZero),
+      act4 = Vector.fill(26)(oneZero)
+        .updated(4, oneOne),
+      act1 = Vector.fill(24)(oneZero)
+        .updated(20, oneOne)
+        .updated(22, oneOne)
+    )
+
+    /*
+    set based on the SQA test
+
+    Frame Header Data:
+    00  11  22  33  44  55  00  01  01  01  01  01  81  00  00  02
+    08  00  45  00  00  14  00  00  00  00  ff  06  cc  45  b0  0a
+    1b  2c  12  34  12  34
+     */
+    val classifierKeys = ClassifierKeys(
+      key32 = Map(
+        Classifier32BitKeys.OuterSourceIp -> 0xB00A1B2C,
+        Classifier32BitKeys.OuterDestiantionIp -> 0x12341234,
+        Classifier32BitKeys.wildcard(4) -> 0x12341234
+      ),
+      key16 = Map(
+        Classifier16BitKeys.OuterDestinationMac0 -> 0x0011,
+        Classifier16BitKeys.OuterDestinationMac1 -> 0x2233,
+        Classifier16BitKeys.OuterDestinationMac2 -> 0x4455,
+
+        Classifier16BitKeys.OuterSourceMac0 -> 0x0001,
+        Classifier16BitKeys.OuterSourceMac1 -> 0x0101,
+        Classifier16BitKeys.OuterSourceMac2 -> 0x0101,
+
+        Classifier16BitKeys.OuterEthertype -> 0x0800,
+        Classifier16BitKeys.OuterVlan1 -> 0x0001,
+        Classifier16BitKeys.OuterVlan2 -> 0x0001,
+        Classifier16BitKeys.OuterL4Source -> 0x0001,
+        Classifier16BitKeys.OuterL4Destination -> 0x0203,
+        Classifier16BitKeys.wildcard(19) -> 0x0203,
+        Classifier16BitKeys.wildcard(31) -> 0x0002
+      ),
+      key8 = Vector.fill(64)(0)
+        .updated(3, 0x11)
+        .updated(6, 0x40)
+        .updated(20, 0xff)
+        .updated(21, 0x06)
+        .updated(23, 0x14)
+        .updated(24, 0x40)
+        .updated(28, 0x01)
+        .updated(29, 0x02)
+        .updated(43, 0x60)
+        .updated(45, 0x02)
+        .updated(55, 0xA1)
+        .updated(56, 0x07)
+        .updated(57, 0xF6)
+        .updated(58, 0xE5)
+        .updated(59, 0xD4)
+        .map(_.toByte)
+    )
+
+    MapperOutput(
+      classifierActions = classifierActions,
+      classifierKeys = classifierKeys,
+      classifierProfile = 0x11, // 17
+      ipOption = Array.empty,
+      priorityProfile = 0,
+      noPriorityEncoding = false,
+      learningMode = SharedVlanLearning,
+      l2IngressVlan1Counter = 0
+    )
+  }
+
+
   it should "clear & initialize required registers" in {
-    val program = for {
+    val initialization = for {
       _ <- initRecipt
       _ <- setRegsRecipt
-    } yield ()
+    } yield mockedMapperOutput
 
-    val result = program.exec(top)
+    val result = initialization.exec(top)
 
     result.mpp.mgp(0).rx_ppe.cgrp_a.EM.HASH_CFG(17).HASH_SIZE_0() shouldEqual 0x6
     result.mpp.mgp(0).rx_ppe.cgrp_a.A.EM_HASH_LOOKUP(0xC).SELECT_1() shouldEqual 0x01
