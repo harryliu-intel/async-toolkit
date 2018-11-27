@@ -73,7 +73,7 @@ object JsonReader {
   // abc/def/3/5/ghi/2/jkl => List(abc, def, #3#5, ghi, #2, jkl)
   def compileUriPath(path: String): List[String] = {
     val (newPath, restIndexes) = path.split('/').foldLeft((List[String](), "")) {
-      case ((result, indexes), element) if element.matches(PatternNumber) => (result, indexes + TokenIndex + element)
+      case ((result, indexes), element) if isInteger(element) => (result, indexes + TokenIndex + element)
       case ((result, indexes), element) if indexes.nonEmpty => (element :: indexes :: result, "")
       case ((result, _), element) => (element :: result, "")
     }
@@ -83,6 +83,8 @@ object JsonReader {
       newPath.reverse
     }
   }
+
+  def isInteger(value: String): Boolean = value.matches(PatternNumber)
 
   def getListOpt(json: Map[String, Any], path: String): Option[List[Any]] = getOpt(json, path) match {
     case result@Some(_: List[_]) => result.asInstanceOf[Option[List[Any]]]

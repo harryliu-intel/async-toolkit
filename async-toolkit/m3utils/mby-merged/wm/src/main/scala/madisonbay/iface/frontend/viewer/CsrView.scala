@@ -24,7 +24,7 @@ object CsrView {
     case Nil => ""
     case _ :: Nil => ""
     case list =>
-      val rootPath = if (list.last.matches(JsonReader.PatternNumber)) {
+      val rootPath = if (JsonReader.isInteger(list.last)) {
         list.dropRight(2).mkString("/")   // if path ends with number drop last key and index
       } else {
         list.dropRight(1).mkString("/")

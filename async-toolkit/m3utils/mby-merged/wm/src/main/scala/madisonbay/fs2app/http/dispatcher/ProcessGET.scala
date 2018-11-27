@@ -59,20 +59,14 @@ class ProcessGET(csrModel: CsrModel) extends ProcessRequest {
       HttpResponse(responseOk.header, effectBody).withContentType(contentImgPng)
 
     case u => RestDispatcher.processGetUri(uri, parameters, csrModel) match {
-      case RestResponse(false, _, _) =>
-        HttpResponse(HttpStatusCode.Ok).
+      case RestResponse(false, _, _, httpStatusCode) =>
+        HttpResponse(httpStatusCode).
         withUtf8Body(PageGenerator.processGet(" [Error] Not Supported URI: " :: u, parameters, csrModel)).
         withContentType(contentHtml)
 
-      case RestResponse(_, true, None) => HttpResponse(HttpStatusCode.BadRequest)
+      case RestResponse(_, _, "", httpStatusCode) => HttpResponse(httpStatusCode)
 
-      case RestResponse(_, false, None) => HttpResponse(HttpStatusCode.Ok)
-
-      case RestResponse(_, true, Some(msg)) => HttpResponse(HttpStatusCode.BadRequest).
-        withUtf8Body(msg).
-        withContentType(contentJson)
-
-      case RestResponse(_, false, Some(msg)) => HttpResponse(HttpStatusCode.Ok).
+      case RestResponse(_, _, msg, httpStatusCode) => HttpResponse(httpStatusCode).
         withUtf8Body(msg).
         withContentType(contentJson)
     }

@@ -14,7 +14,7 @@ object CsrModel {
 
 }
 
-class CsrModel(csr: Csr, limitNumberOfNodes: Int) {
+class CsrModel(val csr: Csr, limitNumberOfNodes: Int) {
 
   val csrMap: Map[String, Any] = Map(CsrModel.KeyTopMap -> toCsrMap(csr.topMap))
 
