@@ -35,20 +35,6 @@ void TxPipeline
     mbyTxStatsToTxMac        * const txs2mac
 );
 
-// TODO all the following should be moved to the header files corresponding to
-// the C file where the function is actually implemented.
-
-//!
-//! \fn void Parser(mby_ppe_parser_map const * const parser_map,
-//!                 mbyRxMacToParser   const * const in,
-//!                 mbyParserToMapper        * const out)
-//!
-//! \brief Parse the incoming Ethernet packet header and extract info from it.
-//!
-//! \param parser_map Pointer to parser register map (read only).
-//! \param in         Pointer to input structure     (read only).
-//! \param out        Pointer to output structure.
-//!
 void Parser
 (
     mby_ppe_parser_map    const * const parser_map,

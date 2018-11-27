@@ -1573,6 +1573,13 @@ static void mapRewrite
     }
 }
 
+/**
+ * Mapper stage implementation.
+ *
+ * @param[in]   parser_map  Pointer to mapper register map (read only).
+ * @param[in]   in          Pointer to input structure     (read only).
+ * @param[out]  out         Pointer to output structure.
+ */
 void Mapper
 (
     mby_ppe_mapper_map          * const mapper_map,
