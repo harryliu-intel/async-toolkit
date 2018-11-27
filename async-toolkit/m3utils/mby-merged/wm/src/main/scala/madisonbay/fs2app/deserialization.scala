@@ -81,16 +81,16 @@ package object deserialization {
       packet          = Packet(port, content)
       items          <- liftS {
         import FmModelDataType._
-        lazy val continuation = result.run(next)
+        lazy val packets = result.eval(next)
         (dataType, next.isEmpty) match {
-          case (PacketMeta, false) => continuation.map { case (_,p) => packet :: p.items }
+          case (PacketMeta, false) => packets.map(packet :: _.items)
           case (PacketMeta, true) => (packet :: Nil).point[F]
           case (other, false) =>
             for {
               _     <- logger.warn(s"Not supported packet [$other]. Will be skipped!")
               _     <- logger.warn(s"For now only ${PacketMeta} is supported.")
               _     <- logger.warn(s"Skipping ->> [${content.size}] <<- bytes of metadata.")
-              elems <- continuation.map { case (_,p) => p.items }
+              elems <- packets.map(_.items)
             } yield elems
           case (_,_) => Nil.point[F]
         }
