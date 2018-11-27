@@ -23,33 +23,31 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Mesh Read Interface
+// -- Description  : Transmit Controller Unit
 //------------------------------------------------------------------------------
 
-module mri
+module tcu
 (
     input logic       clk,
     input logic     rst_n, 
 
-    //EGR Internal Interfaces    
-    egr_rrq_if.mri rrq_cpb_if, //Read Request  Interface. Provides to Clean Pointer Broker
-    egr_rrs_if.mri rrs_cpb_if, //Read Response Interface. Provides to Clean Pointer Broker
-    
-    egr_rrq_if.mri rrq_tmu_if, //Read Request  Interface. Provides to Tag Management Unit 
-    egr_rrs_if.mri rrs_tmu_if, //Read Response Interface. Provides to Tag Management Unit 
-    
-    egr_rrq_if.mri rrq_prc_if, //Read Request  Interface. Provides to Packet Read Controller 
-    egr_rrs_if.mri rrs_tqu_if, //Read Response Interface. Provides to Transmit Queuing Unit 
+    //EGR Internal Interfaces
+    egr_tcu_pfs_if.tcu pfs_if, //Transmit Controller Unit - Packet Fetch Scheduler Interface
+    egr_tcu_tqu_if.tcu tqu_if, //Transmit Controller Unit - Transmit Queuing Unit Interface
 
     //EGR External Interfaces
-    mim_rd_if.request    mim_rd_if0_0, //MRI-MIM Read Interface Row 0 Line 0
-    mim_rd_if.request    mim_rd_if0_1, //MRI-MIM Read Interface Row 0 Line 1
-    mim_rd_if.request    mim_rd_if0_2, //MRI-MIM Read Interface Row 0 Line 2
+    egr_tx_ppe_if.egr     tx_ppe_if0, //EGR-TxPPE 0 Interface //TODO Check how many interfaces needed
+    egr_tx_ppe_if.egr     tx_ppe_if1, //EGR-TxPPE 1 Interface //TODO Check how many interfaces needed
+    egr_ppe_stm_if.egr    ppe_stm_if, //EGR-PPE Shared Table Memory Interface  //TODO Check how many interfaces needed
+    egr_mc_table_if.egr mc_table_if0, //EGR-MultiCast Shared Table 0 Interface //TODO Check how many interfaces needed
+    egr_mc_table_if.egr mc_table_if1, //EGR-MultiCast Shared Table 1 Interface //TODO Check how many interfaces needed
+    //TODO Interface to ACL TABLE
 
-    mim_rd_if.request    mim_rd_if1_0, //MRI-MIM Read Interface Row 1 Line 0
-    mim_rd_if.request    mim_rd_if1_1, //MRI-MIM Read Interface Row 1 Line 1
-    mim_rd_if.request    mim_rd_if1_2  //MRI-MIM Read Interface Row 1 Line 2
-    
+    egr_epl_if.egr        epl_if0, //TCU - EPL0 Interface
+    egr_epl_if.egr        epl_if1, //TCU - EPL1 Interface
+    egr_epl_if.egr        epl_if2, //TCU - EPL2 Interface
+    egr_epl_if.egr        epl_if3  //TCU - EPL3 Interface
+
 );
 
-endmodule : mri
+endmodule : tcu
