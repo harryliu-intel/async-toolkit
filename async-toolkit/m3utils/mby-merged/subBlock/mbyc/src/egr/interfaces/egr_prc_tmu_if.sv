@@ -43,4 +43,4 @@ modport tmu(
     output dummy
     );
 
-endinterface : egr_tmu_prc_if
+endinterface : egr_prc_tmu_if

@@ -37,7 +37,7 @@ module pfs
     egr_pfs_prc_if.pfs prc_if, // PFS requests to PRC
     egr_lcm_pfs_if.pfs lcm_if, // PFS provides to LCM
     egr_tmu_pfs_if.pfs tmu_if, // PFS provides to TMU
-    egr_tcu_pfs_if.pfs tcu_if, // PFS provides to TMU
+    egr_tcu_pfs_if.pfs tcu_if  // PFS provides to TMU
 
 );
 
