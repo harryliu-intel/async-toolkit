@@ -10,23 +10,12 @@ import monocle.{ Optional, Traversal }
 import monocle.function.Index._
 import monocle.function.Each._
 import monocle.state.all._
-import scalaz.State
+import scalaz.{ State, StateT }
+import scalaz.Id._
 
 import org.scalatest.{ FlatSpec, Matchers }
 
 class ExactMatchTest extends FlatSpec with Matchers {
-  lazy val top = mby_top_map(Address at 0.bytes)
-
-  lazy val mpp = mby_mpp_map(Address at 0.bytes) //<- alternative
-
-  lazy val shmMap = top.mpp.shm
-  lazy val cgrpAMap = top.mpp.mgp(0).rx_ppe.cgrp_a
-  lazy val cgrpBMap = top.mpp.mgp(0).rx_ppe.cgrp_b
-
-  lazy val em_hash_lookup_reg = cgrpAMap.A.EM_HASH_LOOKUP
-  lazy val cgrp_em_map = cgrpAMap.EM
-
-  lazy val _ = (mpp, shmMap, cgrpAMap, cgrpBMap, em_hash_lookup_reg, cgrp_em_map)
 
   val cgrpAMapEmO: Optional[mby_top_map, mby_ppe_cgrp_em_map] =
     mby_top_map._mpp composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
@@ -363,17 +352,40 @@ class ExactMatchTest extends FlatSpec with Matchers {
     )
   }
 
+  // lazy val top = mby_top_map(Address at 0.bytes)
 
-  it should "clear & initialize required registers" in {
-    val initialization = for {
-      _ <- initRecipt
-      _ <- setRegsRecipt
-    } yield mockedMapperOutput
+  // lazy val mpp = mby_mpp_map(Address at 0.bytes) //<- alternative
 
-    val result = initialization.exec(top)
+  // lazy val shmMap = top.mpp.shm
+  // lazy val cgrpAMap = top.mpp.mgp(0).rx_ppe.cgrp_a
+  // lazy val cgrpBMap = top.mpp.mgp(0).rx_ppe.cgrp_b
 
-    result.mpp.mgp(0).rx_ppe.cgrp_a.EM.HASH_CFG(17).HASH_SIZE_0() shouldEqual 0x6
-    result.mpp.mgp(0).rx_ppe.cgrp_a.A.EM_HASH_LOOKUP(0xC).SELECT_1() shouldEqual 0x01
-    result.mpp.shm.FWD_TABLE0(0).FWD_TABLE0(0).DATA().toHexString shouldEqual "1234123400000000"
+  // lazy val em_hash_lookup_reg = cgrpAMap.A.EM_HASH_LOOKUP
+  // lazy val cgrp_em_map = cgrpAMap.EM
+
+  ignore should "produce vector of at least one action" in {
+
+    val ms = StateT.stateTMonadState[mby_top_map,Id]
+
+    val program = for {
+      _           <- initRecipt
+      _           <- setRegsRecipt
+      top         <- ms.get
+      cgrpAMap     = top.mpp.mgp(0).rx_ppe.cgrp_a
+      hashLookup   = cgrpAMap.A.EM_HASH_LOOKUP
+      mapperOutput = mockedMapperOutput
+      em           = new ExactMatch(
+        hashLookup,
+        cgrpAMap.EM,
+        top.mpp.shm,
+        mapperOutput.classifierKeys,
+        mapperOutput.classifierProfile,
+        0.toByte // group?? to be fixed!
+      )
+    } yield em()
+
+    val result = program.eval(mby_top_map(Address at 0.bytes))
+
+    result.value should not be empty
   }
 }
