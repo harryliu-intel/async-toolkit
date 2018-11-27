@@ -21,25 +21,23 @@
 ///  must be express and approved by Intel in writing.
 ///
 ///  ---------------------------------------------------------------------------------------------------------------------
-///  -- Author       : Isaac Perez-Andrade
+///  -- Author       : Luis Alfonso Maeda Nunez
 ///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Dirty Pointer Broker (DPB) module. 
+///  -- Description  : Clean Pointer Broker (CPB) module. 
 ///                    Submodule of the Egress (EGR) partition.
 ///  ------------------------------------------------------------------------------
 
-module dpb
+module cpb
 (
     input logic           clk,
     input logic         rst_n,
 
     // Internal interfaces
-    egr_dp_if.dpb      tmu_if,      // DPB provides to TMU
-    egr_dp_if.dpb      prc_if,      // DPB provides to PRC
-    egr_dpb_pfs_if.dpb pfs_if       // DPB requests to PFS
-
+    egr_rrq_if.requestor rrq_if, // CPB requests to MRI
+    egr_rrs_if.requestor rrs_if  // CPB receives responses from MRI
     // External interfaces
-    //TODO interface to IGR Dirty Pod Manager
-    //egr_pod_if.egr     pod_if,
+    //TODO NEW INTERFACE TO IGR CLEAN SEGMENT POINTER CACHE
+
 );
 
-endmodule : dpb
+endmodule : cpb
