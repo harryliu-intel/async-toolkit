@@ -48,7 +48,7 @@ module mri
 
     mim_rd_if.request    mim_rd_if1_0, //MRI-MIM Read Interface Row 1 Line 0
     mim_rd_if.request    mim_rd_if1_1, //MRI-MIM Read Interface Row 1 Line 1
-    mim_rd_if.request    mim_rd_if1_2, //MRI-MIM Read Interface Row 1 Line 2
+    mim_rd_if.request    mim_rd_if1_2  //MRI-MIM Read Interface Row 1 Line 2
     
 );
 
