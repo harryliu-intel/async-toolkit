@@ -8,42 +8,6 @@ egr_pod            >> pod_if
 egr_mc_mirror_pod  >> mc_mirror_pod_if
 egr_ahb            >> ahb_if
 
-egr_tagring0_0     >> tagring_if0_0
-egr_tagring0_1     >> tagring_if0_1
-egr_tagring1_0     >> tagring_if1_0
-egr_tagring1_1     >> tagring_if1_1
-egr_tagring2_0     >> tagring_if2_0
-egr_tagring2_1     >> tagring_if2_1
-egr_tagring3_0     >> tagring_if3_0
-egr_tagring3_1     >> tagring_if3_1
-egr_tagring4_0     >> tagring_if4_0
-egr_tagring4_1     >> tagring_if4_1
-egr_tagring5_0     >> tagring_if5_0
-egr_tagring5_1     >> tagring_if5_1
-egr_tagring6_0     >> tagring_if6_0
-egr_tagring6_1     >> tagring_if6_1
-egr_tagring7_0     >> tagring_if7_0
-egr_tagring7_1     >> tagring_if7_1
-egr_tagring8_0     >> tagring_if8_0
-egr_tagring8_1     >> tagring_if8_1
-egr_tagring9_0     >> tagring_if9_0
-egr_tagring9_1     >> tagring_if9_1
-egr_tagring10_0    >> tagring_if10_0
-egr_tagring10_1    >> tagring_if10_1
-egr_tagring11_0    >> tagring_if11_0
-egr_tagring11_1    >> tagring_if11_1
-egr_tagring12_0    >> tagring_if12_0
-egr_tagring12_1    >> tagring_if12_1
-egr_tagring13_0    >> tagring_if13_0
-egr_tagring13_1    >> tagring_if13_1
-egr_tagring14_0    >> tagring_if14_0
-egr_tagring14_1    >> tagring_if14_1
-egr_tagring15_0    >> tagring_if15_0
-egr_tagring15_1    >> tagring_if15_1 
-egr_mce_tagring0   >> mce_tagring_if0
-egr_mce_tagring1   >> mce_tagring_if1
-egr_mce_tagring2   >> mce_tagring_if2
-egr_mce_tagring3   >> mce_tagring_if3
 egr_cmring         >> cmring_if
 egr_txppe0         >> tx_ppe_if0
 egr_txppe1         >> tx_ppe_if1
@@ -55,6 +19,8 @@ egr_epl3           >> epl_if3
 egr_mc_table0      >> mc_table_if0
 egr_mc_table1      >> mc_table_if1
 
+egr_tagring        >> tagring_if
+egr_mctagring      >> mce_tagring_if
 
 mim0_rd0           >> mim_rd_if0_0
 mim0_rd1           >> mim_rd_if0_1
