@@ -35,7 +35,7 @@ module dpb
     // Internal interfaces
     egr_dp_if.dpb      tmu_if,      // DPB provides to TMU
     egr_dp_if.dpb      prc_if,      // DPB provides to PRC
-    egr_dpb_pfs_if.dpb pfs_if,      // DPB requests to PFS
+    egr_dpb_pfs_if.dpb pfs_if       // DPB requests to PFS
 
     // External interfaces
     //TODO interface to IGR Dirty Pod Manager
