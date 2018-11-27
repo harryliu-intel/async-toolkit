@@ -1,9 +1,8 @@
 //scalastyle:off magic.number
 //scalastyle:off
 // TODO create scalastyle config for test
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
-import com.intel.cg.hpfd.madisonbay.Encode.encode
 import org.scalatest.Inspectors.{forAll => _}
 import org.scalacheck.{Arbitrary, Gen, Prop, Shrink}
 import org.scalacheck.Arbitrary._

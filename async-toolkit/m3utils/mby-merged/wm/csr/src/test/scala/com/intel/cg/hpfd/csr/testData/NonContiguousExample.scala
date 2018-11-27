@@ -1,6 +1,6 @@
 package com.intel.cg.hpfd.csr.testData
 
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 
 //scalastyle:off magic.number
 trait NonContiguousAddressingExample {

@@ -2,10 +2,11 @@
 package com.intel.cg.hpfd.csr
 
 import com.intel.cg.hpfd.csr.testData.AtAddressingExample
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
+import madisonbay.BitVector
+
 import org.scalatest.{FlatSpec, Inside, Matchers}
 import com.intel.cg.hpfd.csr.testData.optics._
-import com.intel.cg.hpfd.madisonbay.BitVector
 import org.scalatest.OptionValues._
 import org.scalatest.prop.Checkers
 import org.scalacheck.Arbitrary._

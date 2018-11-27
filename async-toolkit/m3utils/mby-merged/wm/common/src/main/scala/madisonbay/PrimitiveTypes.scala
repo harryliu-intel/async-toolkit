@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
 import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
 

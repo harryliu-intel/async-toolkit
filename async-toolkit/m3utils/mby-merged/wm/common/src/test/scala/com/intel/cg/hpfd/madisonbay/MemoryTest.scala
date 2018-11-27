@@ -1,14 +1,14 @@
 //scalastyle:off magic.number
 // TODO create scalastyle config for test
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
-import com.intel.cg.hpfd.madisonbay.Memory.{Address, AddressRange, Alignment, Bits, Bytes}
+import madisonbay.memory.{Address, AddressRange, Alignment, Bits, Bytes}
 import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.OptionValues._
 import org.scalacheck.Prop
 import org.scalatest.prop.Checkers
 
-import com.intel.cg.hpfd.madisonbay.Encode.encode
+import Encode.encode
 import org.scalatest.Inspectors.{forAll => _}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary._

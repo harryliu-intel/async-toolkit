@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
 /** Writable by hardware
   *
