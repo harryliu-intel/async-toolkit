@@ -34,8 +34,8 @@ module tmu
 
     // Internal inferfaces
     egr_dp_if.requestor            dpb_if, // TMU requests from DPB
-    egr_tmu_pfs_if.tmu             pfs_if, // TMU requests from PFS
-    egr_tmu_prc_if.tmu             prc_if, // TMU requests from PRC
+    egr_pfs_tmu_if.tmu             pfs_if, // PFS requests from TMU
+    egr_prc_tmu_if.tmu             prc_if, // PRC requests from TMU
 
     egr_rrq_if.requestor       rrq_mri_if, // TMU requests from MRI
     egr_rrs_if.requestor       rrs_mri_if, // TMU receives responses from MRI
