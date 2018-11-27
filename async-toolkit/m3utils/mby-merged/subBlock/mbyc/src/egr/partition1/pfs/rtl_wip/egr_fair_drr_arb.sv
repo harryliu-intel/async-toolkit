@@ -48,36 +48,63 @@
 // --
 //-----------------------------------------------------------------------------
 
-module mby_egr_sch_arb_wrap #(parameter WIDTH=16, TOTAL_QUANTA=100, MAX_COST=160, PAYLOAD=16) (
+module egr_fair_drr_arb #(parameter WIDTH=16, MAX_COST=64, MAX_LATENCY=4) (
     input logic clk, reset,
-    // should assert when there is something to send and only deassert after arb_pop
-    input logic [WIDTH-1:0] arb, // slow
-    input logic [WIDTH-1:0][$clog2(MAX_COST)-1:0] arb_cost, // slow
-    input logic [WIDTH-1:0][PAYLOAD-1:0] arb_payload, // fast
-    // Accepts this entry into the arbiter
-    output logic [WIDTH-1:0] arb_pop, // fast
-    // will assert when there is a winner and deassert after pop
-    output logic [WIDTH-1:0] win, // fast
-    output logic [$clog2(MAX_COST)-1:0] win_cost, // fast
-    output logic [PAYLOAD-1:0] win_payload, // fast
-    // indicates that the winner was accepted
-    input logic pop, // fast
+    input logic [WIDTH-1:0] arb,
+    output logic [WIDTH-1:0] win, // Comb result on arb
+    input logic pop, // May be asserted even if win is 0.
 
-    input logic cfg_shift, cfg_in,
-    output logic cfg_out);
+    input logic [WIDTH-1:0] consume,
+    input logic [$clog2(MAX_COST)-1:0] cost);
 
-logic [WIDTH-1:0][$clog2(TOTAL_QUANTA)-1:0] cfg_weight;
-logic cfg_rr, cfg_rev, cfg_cost;
+localparam CTR_WIDTH = $clog2(MAX_LATENCY*MAX_COST);
 
-always_ff @(posedge clk) if (cfg_shift)
-    {cfg_out, cfg_weight, cfg_rr, cfg_rev, cfg_cost} <=
-        {cfg_weight, cfg_rr, cfg_rev, cfg_cost, cfg_in};
+// FLOPS
+logic [WIDTH-1:0][$clog2(MAX_LATENCY*MAX_COST)-1:0] ctr;
 
-mby_egr_sch_arb #(.WIDTH(WIDTH), .TOTAL_QUANTA(TOTAL_QUANTA), .MAX_COST(MAX_COST), .PAYLOAD(PAYLOAD)) arbiter (
-    .clk, .reset,
-    .arb, .arb_cost, .arb_payload, .arb_pop,
-    .win, .win_cost, .win_payload, .pop,
-    .cfg_weight, .cfg_rr, .cfg_rev, .cfg_cost);
+// Intermediates
+logic [CTR_WIDTH-1:0] all_ctr_fast, all_ctr_fast_rev;
+logic [CTR_WIDTH-1:0] max_ctr_fast_rev, max_ctr_fast;
+logic [CTR_WIDTH-1:0] global_inc, chosen_ctr;
+
+logic do_global_inc;
+
+logic [WIDTH-1:0] has_max_ctr;
+
+always_comb begin
+    all_ctr_fast = {CTR_WIDTH{1'b0}};
+    for (int i = 0; i < WIDTH; i++) if (arb[i])
+        all_ctr_fast |= ctr[i];
+end
+always_comb for (int i = 0; i < CTR_WIDTH; i++)
+    all_ctr_fast_rev[i] = all_ctr_fast[CTR_WIDTH-i-1];
+always_comb max_ctr_fast_rev = all_ctr_fast_rev & ~(all_ctr_fast_rev - 1); // TODO: lint fix
+always_comb for (int i = 0; i < CTR_WIDTH; i++)
+    max_ctr_fast[i] = max_ctr_fast_rev[CTR_WIDTH-i-1];
+always_comb for (int i = 0; i < WIDTH; i++) has_max_ctr[i] = |(max_ctr_fast & ctr[i]);
+
+always_comb begin
+    chosen_ctr = {CTR_WIDTH{1'b1}};
+    for (int i = 0; i < WIDTH; i++)
+        if (consume[i]) chosen_ctr &= ctr[i];
+end
+
+always_comb global_inc = (chosen_ctr >= cost)
+    ? {$clog2(MAX_LATENCY+MAX_COST){1'b0}}
+    : (cost - chosen_ctr);
+
+always_ff @(posedge clk) for (int i = 0; i < WIDTH; i++) begin
+    if (reset || !arb[i]) ctr[i] <= {CTR_WIDTH{1'b0}};
+    else begin
+        case ({consume[i], win[i] & pop})
+            2'b00: ctr[i] <= ctr[i];
+            2'b01: ctr[i] <= ctr[i] + global_inc - MAX_COST;
+            2'b10: ctr[i] <= ctr[i]              + MAX_COST - cost;
+            2'b11: ctr[i] <= ctr[i] + global_inc            - cost;
+        endcase
+    end
+end
+
+always_comb win = (arb & has_max_ctr) & ~((arb & has_max_ctr) - 1); // TODO: lint fix
 
 endmodule
-

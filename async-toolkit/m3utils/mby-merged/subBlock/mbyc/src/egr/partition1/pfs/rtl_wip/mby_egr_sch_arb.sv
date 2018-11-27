@@ -53,15 +53,11 @@ module mby_egr_sch_arb #(parameter WIDTH=16, TOTAL_QUANTA=100, MAX_COST=160, PAY
     // should assert when there is something to send and only deassert after arb_pop
     input logic [WIDTH-1:0] arb, // slow
     input logic [WIDTH-1:0][$clog2(MAX_COST)-1:0] arb_cost, // slow
-    input logic [WIDTH-1:0][PAYLOAD-1:0] arb_payload, // fast
     // Accepts this entry into the arbiter
-    output logic [WIDTH-1:0] arb_pop, // fast
     // will assert when there is a winner and deassert after pop
     output logic [WIDTH-1:0] win, // fast
-    output logic [$clog2(MAX_COST)-1:0] win_cost, // fast
-    output logic [PAYLOAD-1:0] win_payload, // fast
     // indicates that the winner was accepted
-    input logic pop, // fast
+    input logic [WIDTH-1:0] pop, // fast
 
     input logic [WIDTH-1:0][$clog2(TOTAL_QUANTA)-1:0] cfg_weight,
     input logic cfg_rr, cfg_rev, cfg_cost);
@@ -69,7 +65,6 @@ module mby_egr_sch_arb #(parameter WIDTH=16, TOTAL_QUANTA=100, MAX_COST=160, PAY
 logic [WIDTH-1:0] selected, accepted, smart_win, const_one, new_win;
 logic [WIDTH-1:0][$clog2(MAX_COST)-1:0] accepted_cost;
 logic [$clog2(MAX_COST)-1:0] selected_cost;
-logic [PAYLOAD-1:0] selected_payload;
 always_comb begin
     const_one = {WIDTH{1'b0}};
     const_one[0] = 1'b1;
@@ -77,7 +72,6 @@ end
 
 logic [WIDTH-1:0] ready, quanta_ready, min_quanta;
 logic [WIDTH-1:0][$clog2(MAX_COST)-1:0] cost;
-logic [WIDTH-1:0][PAYLOAD-1:0] payload;
 logic [WIDTH-1:0][$clog2(MAX_COST)-1:0] quanta_needed;
 
 logic increment;
@@ -98,7 +92,7 @@ always_comb ready_find = ({ready_rev, ready_rev} & ready_pos) & (~({ready_rev, r
 always_comb ready_find_short = ready_find[0+:WIDTH] | ready_find[WIDTH+:WIDTH];
 always_ff @(posedge clk)
     if (reset || !cfg_rr) ready_pos[WIDTH+:WIDTH] <= {WIDTH{1'b1}};
-    else if (pop || ~|win)
+    else if (|pop || ~|win)
         ready_pos[WIDTH+:WIDTH] <= ready_find_short | (ready_find_short - const_one);
 always_comb ready_pos[0+:WIDTH] = ~ready_pos[WIDTH+:WIDTH];
 
@@ -108,9 +102,9 @@ always_comb ready_pos[0+:WIDTH] = ~ready_pos[WIDTH+:WIDTH];
 
 mby_egr_sch_arb_counter #(.TOTAL_QUANTA(TOTAL_QUANTA), .MAX_COST(MAX_COST), .PAYLOAD(PAYLOAD)) counters[WIDTH-1:0] (
     .clk, .reset,
-    .consume(selected & {WIDTH{pop | ~|win}}),
-    .arb, .arb_cost, .arb_pop, .arb_payload,
-    .ready, .quanta_ready, .cost, .payload, .quanta_needed,
+    .consume(selected & {WIDTH{|pop | ~|win}}),
+    .arb, .arb_cost,
+    .ready, .quanta_ready, .cost, .quanta_needed,
     .increment, .increment_quanta,
     .cfg(cfg_weight), .cfg_cost);
 
@@ -143,21 +137,12 @@ always_comb begin
         if (selected[i])    selected_cost |= cost[i];
 end
 
-always_comb begin
-    selected_payload = {PAYLOAD{1'b0}};
-    for (int i = 0; i < WIDTH; i++)
-        if (selected[i])    selected_payload |= payload[i];
-end
-
 always_ff @(posedge clk)
     if(reset) win <= {WIDTH{1'b0}};
-    else if (pop || ~|win) win <= selected;
+    else if (|pop || ~|win) win <= selected;
 
 always_ff @(posedge clk)
-    if (pop || ~|win) win_cost <= selected_cost;
-
-always_ff @(posedge clk)
-    if (pop || ~|win) win_payload <= selected_payload;
+    if (|pop || ~|win) win_cost <= selected_cost;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Assertions
@@ -177,11 +162,6 @@ always_ff @(posedge clk)
 //     for (int i = 0; i < WIDTH; i++) if (arb_pop[i]) s.cost[i].push_back(arb_cost[i]);
 // end
 // 
-// always_ff @(posedge clk) begin
-//     if (pop) for (int i = 0; i < WIDTH; i++) if (win[i] && pop) s.payload[i].pop_front();
-//     for (int i = 0; i < WIDTH; i++) if (arb_pop[i]) s.payload[i].push_back(arb_payload[i]);
-// end
-// 
 // property no_out_x();
 //     @(posedge clk) disable iff(reset !== 1'b0)
 //     (^win !== 1'bx);
@@ -190,10 +170,6 @@ always_ff @(posedge clk)
 //     @(negedge clk) disable iff(reset !== 1'b0)
 //     win[i] |-> (s.cost[i][0] == win_cost);
 // endproperty
-// property win_payload_good(int i);
-//     @(negedge clk) disable iff(reset !== 1'b0)
-//     win[i] |-> (s.payload[i][0] == win_payload);
-// endproperty
 // 
 // assert property (no_out_x())
 // else $error("ERROR: DRR_ARB has Xs on outputs");
@@ -201,8 +177,6 @@ always_ff @(posedge clk)
 // generate for (genvar i = 0; i < WIDTH; i++) begin : win_assertions
 //     assert property (win_cost_good(i))
 //     else $error("ERROR: DRR_ARB win has incorrect cost");
-//     assert property (win_payload_good(i))
-//     else $error("ERROR: DRR_ARB win has incorrect payload");
 // end
 // endgenerate
 // 
@@ -223,13 +197,10 @@ module mby_egr_sch_arb_counter #(parameter TOTAL_QUANTA=100, MAX_COST=160, PAYLO
     input logic consume,
 
     input logic arb,
-    input logic [$clog2(MAX_COST)-1:0] arb_cost,
-    input logic [PAYLOAD-1:0] arb_payload,
-    output logic arb_pop,
+    input logic [$clog2(MAX_COST)-1:0] cost,
 
     output logic ready, quanta_ready,
     output logic [$clog2(MAX_COST)-1:0] cost,
-    output logic [PAYLOAD-1:0] payload,
     output logic [$clog2(MAX_COST)-1:0] quanta_needed,
 
     input logic increment,
@@ -261,9 +232,7 @@ end
 
 logic [$clog2(MAX_COST)+$clog2(TOTAL_QUANTA):0] credits;
 logic [$clog2(MAX_COST)-1:0] cost_q;
-logic [PAYLOAD-1:0] payload_q;
 
-always_comb arb_pop = !quanta_ready && arb;
 always_comb ready = (arb || quanta_ready) && (skip_count || (!cfg_cost && |credits) || (cost <= credits));
 always_ff @(posedge clk) quanta_ready <= !consume && arb;
 always_ff @(posedge clk)
@@ -295,9 +264,6 @@ end
 
 always_ff @(posedge clk) cost_q <= cost;
 always_comb cost = quanta_ready ? cost_q : arb_cost;
-
-always_ff @(posedge clk) payload_q <= payload;
-always_comb payload = quanta_ready ? payload_q : arb_payload;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Assertions
