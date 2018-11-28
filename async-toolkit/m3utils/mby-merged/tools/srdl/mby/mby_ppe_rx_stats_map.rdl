@@ -42,7 +42,7 @@ enum rx_stats_bank_4_enum {
   VlanIngressDrops   = 4'd10 { desc = "Ingress VLAN boundary violation"; };
   VlanEgressDrops    = 4'd11 { desc = "Egress VLAN boundary violation"; };
   GlortMissDrops     = 4'd12 { desc = "Dropped due to miss in GLORT_TABLE"; };
-  FFUDrops           = 4'd13 { desc = "Dropped due to FFU action"; };
+  FFUDrops           = 4'd13 { desc = "Dropped due to Classifier action"; };
   TriggerDrops       = 4'd14 { desc = "Dropped due to Trigger action"; };
 };
 
@@ -64,7 +64,7 @@ enum rx_stats_bank_5_enum {
   Reserved          =  4'd9 { desc = "Unused and reserved."; };
   TriggerRedirects  = 4'd10 { desc = "Redirected by triggers"; };
   FloodControlDrops = 4'd11 { desc = "Dropped due to DLF flood control"; };
-  GlortForwarded    = 4'd12 { desc = "Forwarded due to FFU/ARP DGLORT rules"; };
+  GlortForwarded    = 4'd12 { desc = "Forwarded due to Classifier/NextHop DGLORT rules"; };
   LoopbackSuppDrops = 4'd13 { desc = "Dropped due to loopback suppress"; };
   OtherDrops        = 4'd14 { desc = "Dropped frame due to one of the following:
                               (a) Reserved multicast DMAC (01-80-C2-00-00-XX), 

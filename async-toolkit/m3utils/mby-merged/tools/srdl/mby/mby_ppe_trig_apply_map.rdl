@@ -21,8 +21,8 @@ enum amask_enum {
   DROP_IV              = 6'd16 { desc = "Drop due to VLAN ingress membership violation. No learning."; };
   DROP_INGRESS_STP_NON_LEARN = 6'd17 { desc = "Drop due to ingress STP check (non-learning state). No learning."; };
   DROP_INGRESS_STP_LEARN = 6'd18 { desc = "Drop due to ingress STP check (learning state)."; };
-  DROP_FFU             = 6'd19 { desc = "Drop due to FFU action. No learning."; };
-  TRAP_FFU             = 6'd20 { desc = "Trap due to FFU action."; };
+  DROP_FFU             = 6'd19 { desc = "Drop due to Classifier action. No learning."; };
+  TRAP_FFU             = 6'd20 { desc = "Trap due to Classifier action."; };
   TRAP_ICMP_TTL        = 6'd21 { desc = "Trap due to TTL &lt;= 1 for ICMP frames."; };
   TRAP_IP_OPTION       = 6'd22 { desc = "Trap IP frames with options."; };
   TRAP_MTU_VIO         = 6'd23 { desc = "Trap due to MTU violation."; };
@@ -36,17 +36,17 @@ enum amask_enum {
   DROP_POLICER         = 6'd31 { desc = "Drop due to policer."; };
   DROP_EGRESS_STP      = 6'd32 { desc = "Drop due to egress STP check."; };
   DROP_LOOPBACK        = 6'd33 { desc = "Drop due to port or VLAN reflection disabled."; };
-  GLORT                = 6'd34 { desc = "FFU/ARP DGLORT forwarded."; };
+  GLORT                = 6'd34 { desc = "Classifier/Nexthop DGLORT forwarded."; };
   FLOOD                = 6'd35 { desc = "Flood due to destination MAC miss in MA_TABLE."; };
   SWITCH_RESERVED_MAC  = 6'd36 { desc = "Switch IEEE reserved MAC address frame."; };
   FORWARD_NORMAL       = 6'd37 { desc = "Forward normally."; };
-  LOG_INGRESS_FFU      = 6'd38 { desc = "Frame copied to the CPU as a result of FFU action."; };
+  LOG_INGRESS_FFU      = 6'd38 { desc = "Frame copied to the CPU as a result of Classifier action."; };
   LOG_RESERVED_MAC     = 6'd39 { desc = "Log IEEE reserved MAC address frame."; };
   LOG_ARP_REDIRECT     = 6'd40 { desc = "Log ARP redirect."; };
   LOG_IP_ICMP          = 6'd41 { desc = "Multicast ICMP frame was copied to the CPU because it's TTL was &lt;= 1."; };
   LOG_IP_TTL           = 6'd42 { desc = "Multicast frame was copied to the CPU because it's TTL was &lt;= 1."; };
   HDR_TIMEOUT          = 6'd43 { desc = "Header was too long to be completely parsed"; };
-  MIRROR_INGRESS_FFU   = 6'd44 { desc = "Frame was mirrored as a result of FFU action"; };
+  MIRROR_INGRESS_FFU   = 6'd44 { desc = "Frame was mirrored as a result of Classifier action"; };
 };
 
   // Enum: TriggerConditionCfg_MatchTx

@@ -29,14 +29,17 @@
 module mri
 (
     input logic       clk,
-    input logic    arst_n, 
+    input logic     rst_n, 
 
     //EGR Internal Interfaces    
-    rrs_if.mri rrs_utm_if, //Read Response Interface. Connected with the Unicast Tag Manager
-    rrs_if.mri rrs_epb_if, //Read Response Interface. Connected with the Egress Packet Buffer
+    egr_rrq_if.mri rrq_cpb_if, //Read Request  Interface. Provides to Clean Pointer Broker
+    egr_rrs_if.mri rrs_cpb_if, //Read Response Interface. Provides to Clean Pointer Broker
     
-    rrq_if.mri rrq_utm_if, //Read Request Interface.  Connected with the Unicast Tag Manager
-    rrq_if.mri rrq_prc_if, //Read Request Interface.  Connected with the Packet Read Controller
+    egr_rrq_if.mri rrq_tmu_if, //Read Request  Interface. Provides to Tag Management Unit 
+    egr_rrs_if.mri rrs_tmu_if, //Read Response Interface. Provides to Tag Management Unit 
+    
+    egr_rrq_if.mri rrq_prc_if, //Read Request  Interface. Provides to Packet Read Controller 
+    egr_rrs_if.mri rrs_tqu_if, //Read Response Interface. Provides to Transmit Queuing Unit 
 
     //EGR External Interfaces
     mim_rd_if.request    mim_rd_if0_0, //MRI-MIM Read Interface Row 0 Line 0
@@ -45,9 +48,8 @@ module mri
 
     mim_rd_if.request    mim_rd_if1_0, //MRI-MIM Read Interface Row 1 Line 0
     mim_rd_if.request    mim_rd_if1_1, //MRI-MIM Read Interface Row 1 Line 1
-    mim_rd_if.request    mim_rd_if1_2, //MRI-MIM Read Interface Row 1 Line 2
+    mim_rd_if.request    mim_rd_if1_2  //MRI-MIM Read Interface Row 1 Line 2
     
-    mim_rd_if.receive igr_cleanpod_if //MRI-IGR IGR Pointer Cache Read interface TODO: define what kind of interface for pods 
 );
 
 endmodule : mri

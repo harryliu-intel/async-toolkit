@@ -508,7 +508,7 @@ reg cm_apply_log_mirror_profile_r {
   field {
     AccessType = "RW";
     desc = "
-            Mirror 0 profile index due to an FFU log action.
+            Mirror 0 profile index due to a Classifier Group log action.
            ";
     ValRandomize = true;
   } FFU[5:0] = 6'h00;

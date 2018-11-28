@@ -1,7 +1,6 @@
 #!/usr/intel/bin/tcsh -f
 setenv MODEL_ROOT `pwd`
-source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh -w $cwd
-osetup vcsmx
+eval `/p/hdk/rtl/proj_tools/onecfg/master/1.02.07/bin/ToolSetup.pl vcsmx`
 cd $MODEL_ROOT/subBlock/mbyc/src/egr/sandbox
 make gate 
 grep -E 'Error|Offending' build.log gate.log

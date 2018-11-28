@@ -1176,12 +1176,29 @@ reg map_profile_key0_r {
   HandCoded = true;
   name = "Packet profile CAM key value 0";
   desc = "
-  Packet profile KEY0 is parser flags.
-  This register provides the key values to compare against. The same format is used for key and key invert. 
+    Packet profile KEY0 is parser flags.
+    This register provides the key values to compare against. The same 
+    format is used for key and key invert. 
+    [br][br]
+    The table below shows the encoded data value stored (Content)
+    based on the Key and KeyInvert values.
 
-  The semantic is identical to that used in the FFU_TCAM register.
+    [code]
+          +-----------------------------------------------------+
+          | KeyInvert    | Key          |        Content        |
+          =======================================================
+          |      0       |      0       |   X (always match)    |
+          +-----------------------------------------------------+
+          |      0       |      1       |           1           |
+          +-----------------------------------------------------+
+          |      1       |      0       |           0           |
+          +-----------------------------------------------------+
+          |      1       |      1       | Always mismatch state |
+          +-----------------------------------------------------+
+    [/code]
 
-  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+    [br][br]
+    The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -1199,8 +1216,8 @@ reg map_profile_key0_r {
   field {
     AccessType = "RW";
     desc = "
-   An error occured in pointer calculation for parser_info, indicating a header length is too small. 
-   ptrs_err=0 in windowed parsing mode.
+    An error occured in pointer calculation for parser_info, indicating 
+    a header length is too small. ptrs_err=0 in windowed parsing mode.
 
            ";
     ValRandomize = true;
@@ -1279,11 +1296,27 @@ reg map_profile_key_invert0_r {
   name = "Packet profile CAM key invert 0";
   desc = "
   Packet profile KEY0 is parser flags.
-  This register selects which key bits to compare. The same format is used for key and key invert. 
+    This register selects which key bits to compare. The same format 
+    is used for key and key invert. 
+    [br][br]
+    The table below shows the encoded data value stored (Content)
+    based on the Key and KeyInvert values.
 
-  The semantic is identical to that used in the FFU_TCAM register.
+    [code]
+          +-----------------------------------------------------+
+          | KeyInvert    | Key          |        Content        |
+          =======================================================
+          |      0       |      0       |   X (always match)    |
+          +-----------------------------------------------------+
+          |      0       |      1       |           1           |
+          +-----------------------------------------------------+
+          |      1       |      0       |           0           |
+          +-----------------------------------------------------+
+          |      1       |      1       | Always mismatch state |
+          +-----------------------------------------------------+
+    [/code]
 
-  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+    The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -1301,8 +1334,9 @@ reg map_profile_key_invert0_r {
   field {
     AccessType = "RW";
     desc = "
-   An error occured in pointer calculation for parser_info, indicating a header length too small 
-   or not having the expected residue mod 4. ptrs_err=0 in windowed parsing mode.
+   An error occured in pointer calculation for parser_info, indicating 
+   a header length too small or not having the expected residue mod 4. 
+   ptrs_err=0 in windowed parsing mode.
 
            ";
     ValRandomize = true;
@@ -1376,11 +1410,28 @@ reg map_profile_key1_r {
   name = "Packet profile CAM key value 1";
   desc = "
   Packet profile KEY1 is mapping.
-  This register provides the key values to compare against. The same format is used for key and key invert. 
+    This register provides the key values to compare against. The same format 
+    is used for key and key invert. 
+    [br][br]
+    The table below shows the encoded data value stored (Content)
+    based on the Key and KeyInvert values.
+    [code]
 
-  The semantic is identical to that used in the FFU_TCAM register.
+          +-----------------------------------------------------+
+          | KeyInvert    | Key          |        Content        |
+          =======================================================
+          |      0       |      0       |   X (always match)    |
+          +-----------------------------------------------------+
+          |      0       |      1       |           1           |
+          +-----------------------------------------------------+
+          |      1       |      0       |           0           |
+          +-----------------------------------------------------+
+          |      1       |      1       | Always mismatch state |
+          +-----------------------------------------------------+
 
-  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+    [/code]
+
+    The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -1477,11 +1528,28 @@ reg map_profile_key_invert1_r {
   name = "Packet profile CAM key invert 1";
   desc = "
   Packet profile KEY1 is mapping.
-  This register selects which key bits to compare. The same format is used for key and key invert. 
+    This register selects which key bits to compare. The same format is 
+    used for key and key invert. 
+    [br][br]
+    The table below shows the encoded data value stored (Content)
+    based on the Key and KeyInvert values.
+    [code]
 
-  The semantic is identical to that used in the FFU_TCAM register.
+          +-----------------------------------------------------+
+          | KeyInvert    | Key          |        Content        |
+          =======================================================
+          |      0       |      0       |   X (always match)    |
+          +-----------------------------------------------------+
+          |      0       |      1       |           1           |
+          +-----------------------------------------------------+
+          |      1       |      0       |           0           |
+          +-----------------------------------------------------+
+          |      1       |      1       | Always mismatch state |
+          +-----------------------------------------------------+
 
-  The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
+    [/code]
+
+    The MAP_PROFILE_ACTION having the same index as the highest-numbered matching key is used. 
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -1580,12 +1648,19 @@ reg map_profile_action_r {
   The packet profile mapper is used for three functions:
 
   [list]
-  [*] For packet profile and key-rewrite generation the mapper produces a packet profile value and key rewrite profile, based on the highest matching rule that has profile_valid=1
-  [*] For trigger ID generation, the mapper produces a downstream trigger ID value, based on the higest matching rule that has trig_valid=1
-  [*] For priority profile selection, the mapper provides input as to how VPRI and DSCP are remapped, based on the highest matching rule that has prios_valid=1
+  [*] For packet profile and key-rewrite generation the mapper produces 
+      a packet profile value and key rewrite profile, based on the highest 
+      matching rule that has profile_valid=1
+  [*] For trigger ID generation, the mapper produces a downstream trigger 
+      ID value, based on the higest matching rule that has trig_valid=1
+  [*] For priority profile selection, the mapper provides input as to how 
+      VPRI and DSCP are remapped, based on the highest matching rule that 
+      has prios_valid=1
   [/list]
 
-  An entry may have multiple valid bits set, allowing the entry to participate in more than one resolution (and thus produce more then one set of outputs).  For example a rule may generate both packet profile and a trigger ID.  
+  An entry may have multiple valid bits set, allowing the entry to participate 
+  in more than one resolution (and thus produce more then one set of outputs).  
+  For example a rule may generate both packet profile and a trigger ID.  
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
