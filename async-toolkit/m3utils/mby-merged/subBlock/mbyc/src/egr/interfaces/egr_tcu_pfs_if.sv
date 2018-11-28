@@ -28,16 +28,19 @@
 //                   Packet Fetch Scheduler
 //------------------------------------------------------------------------------
 
-interface egr_tcu_pfs_if ();
+interface egr_tcu_pfs_if import shared_pkg::*; ();
+localparam PORTS_PER_EPL = 4;
+localparam RX_TC_COUNT = 16;
 
-    logic dummy;
+// indicates that the corresponding tc is blocked
+logic [EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0][RX_TC_COUNT-1:0] pfc;
 
 modport tcu(
-    output dummy
+    output pfc
     );
 
 modport pfs(
-    input dummy
+    input pfc
     );
 
 endinterface : egr_tcu_pfs_if
