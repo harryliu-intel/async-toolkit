@@ -20,36 +20,36 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-// ---------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Mesh Read Interface
+// -- Description  : PFS to PRC interface
+//                   For connecting the Packet Fetch Scheduler to the Packet 
+//                   Read Controller
 //------------------------------------------------------------------------------
 
-module mri
-(
-    input logic       clk,
-    input logic     rst_n, 
+interface egr_pfs_prc_if import shared_pkg::*; ();
 
-    //EGR Internal Interfaces    
-    egr_rrq_if.mri rrq_cpb_if, //Read Request  Interface. Provides to Clean Pointer Broker
-    egr_rrs_if.mri rrs_cpb_if, //Read Response Interface. Provides to Clean Pointer Broker
-    
-    egr_rrq_if.mri rrq_tmu_if, //Read Request  Interface. Provides to Tag Management Unit 
-    egr_rrs_if.mri rrs_tmu_if, //Read Response Interface. Provides to Tag Management Unit 
-    
-    egr_rrq_if.mri rrq_prc_if, //Read Request  Interface. Provides to Packet Read Controller 
-    egr_rrs_if.mri rrs_tqu_if, //Read Response Interface. Provides to Transmit Queuing Unit 
+localparam PORTS_PER_EPL = 4;
+localparam RX_TC_COUNT = 16;
+// PFS tells PRC which queue to pop a packet from.
 
-    //EGR External Interfaces
-    mim_rd_if.request    mim_rd_if0_0, //MRI-MIM Read Interface Row 0 Line 0
-    mim_rd_if.request    mim_rd_if0_1, //MRI-MIM Read Interface Row 0 Line 1
-    mim_rd_if.request    mim_rd_if0_2, //MRI-MIM Read Interface Row 0 Line 2
+// Max rate is 1 per 2 clocks per EPL, so set signals per EPL
+logic [EPL_PER_MGP-1:0] valid; // Indicates that there is a winning packet for the EPL.
+logic [EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0] port; // Indicates the port of the winning packet for the EPL
+logic [EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0] mgp; // Indicates the source MGP of the winning queue
+logic [EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0] tc; // Indicates the TC of the winning queue
+logic [EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0] ready; // Indicates that PFS is accepting a winning packet
 
-    mim_rd_if.request    mim_rd_if1_0, //MRI-MIM Read Interface Row 1 Line 0
-    mim_rd_if.request    mim_rd_if1_1, //MRI-MIM Read Interface Row 1 Line 1
-    mim_rd_if.request    mim_rd_if1_2  //MRI-MIM Read Interface Row 1 Line 2
-    
-);
+modport pfs(
+    output valid, port, mgp, tc,
+    input ready
+    );
 
-endmodule : mri
+modport prc(
+    input valid, port, mgp, tc,
+    output ready
+    );
+
+endinterface : egr_pfs_prc_if
+

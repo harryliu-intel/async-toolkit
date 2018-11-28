@@ -20,36 +20,42 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-// ---------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Mesh Read Interface
+// -- Description  : TQU to TCU Interface
+//                   For connecting the Transmit Queuing Unit to the Transmit
+//                   Controller Unit
 //------------------------------------------------------------------------------
 
-module mri
-(
-    input logic       clk,
-    input logic     rst_n, 
+interface egr_tcu_tqu_if ();
 
-    //EGR Internal Interfaces    
-    egr_rrq_if.mri rrq_cpb_if, //Read Request  Interface. Provides to Clean Pointer Broker
-    egr_rrs_if.mri rrs_cpb_if, //Read Response Interface. Provides to Clean Pointer Broker
+    logic dummy;
+    //TODO data word t            [3:0] //
+    //TODO data ecc??             [3:0] //TODO Discuss ecc bits
+    //TODO data valid             [3:0] //
+    //TODO pop queue t            [3:0] // One per queue: 36 TCU->TQU
+    //TODO data ready t           [3:0] // One per queue: 36 TQU->TCU
     
-    egr_rrq_if.mri rrq_tmu_if, //Read Request  Interface. Provides to Tag Management Unit 
-    egr_rrs_if.mri rrs_tmu_if, //Read Response Interface. Provides to Tag Management Unit 
-    
-    egr_rrq_if.mri rrq_prc_if, //Read Request  Interface. Provides to Packet Read Controller 
-    egr_rrs_if.mri rrs_tqu_if, //Read Response Interface. Provides to Transmit Queuing Unit 
+    //TODO metadata t             [3:0] //
+    //TODO metadata ecc?          [3:0] //TODO Discuss ecc bits
+    //TODO metadata valid         [3:0] //
+    //TODO local metadata pop t   [3:0] // One per queue: 36 TCU->TQU
+    //TODO local metadata ready t [3:0] // One per queue: 36 TQU->TCU
+    //TODO local metadata contents??
+    //TODO mesh metadata pop t    [3:0] // One per queue: 36 TCU->TQU
+    //TODO mesh  metadata ready t [3:0] // One per queue: 36 TQU->TCU
+    //TODO mesh  metadata contents??
 
-    //EGR External Interfaces
-    mim_rd_if.request    mim_rd_if0_0, //MRI-MIM Read Interface Row 0 Line 0
-    mim_rd_if.request    mim_rd_if0_1, //MRI-MIM Read Interface Row 0 Line 1
-    mim_rd_if.request    mim_rd_if0_2, //MRI-MIM Read Interface Row 0 Line 2
+    //TODO Discuss protocol for syncing given pipeline between blocks
 
-    mim_rd_if.request    mim_rd_if1_0, //MRI-MIM Read Interface Row 1 Line 0
-    mim_rd_if.request    mim_rd_if1_1, //MRI-MIM Read Interface Row 1 Line 1
-    mim_rd_if.request    mim_rd_if1_2  //MRI-MIM Read Interface Row 1 Line 2
-    
-);
+modport tqu(
+    output dummy
+    );
 
-endmodule : mri
+modport tcu(
+    input dummy
+    );
+
+endinterface : egr_tcu_tqu_if
+

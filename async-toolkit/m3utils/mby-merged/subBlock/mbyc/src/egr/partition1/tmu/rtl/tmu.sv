@@ -23,23 +23,26 @@
 ///  ---------------------------------------------------------------------------------------------------------------------
 ///  -- Author       : Isaac Perez-Andrade
 ///  -- Project Name : Madison Bay (MBY) 
-///  -- Description  : Dirty Pointer Broker (DPB) module. 
+///  -- Description  : Tag Management Unit (TMU) module. 
 ///                    Submodule of the Egress (EGR) partition.
 ///  ------------------------------------------------------------------------------
 
-module dpb
+module tmu
 (
-    input logic           clk,
-    input logic         rst_n,
+    input logic                       clk,
+    input logic                     rst_n,
 
-    // Internal interfaces
-    egr_dp_if.dpb      tmu_if,      // DPB provides to TMU
-    egr_dp_if.dpb      prc_if,      // DPB provides to PRC
-    egr_dpb_pfs_if.dpb pfs_if       // DPB requests to PFS
+    // Internal inferfaces
+    egr_dp_if.requestor            dpb_if, // TMU requests from DPB
+    egr_pfs_tmu_if.tmu             pfs_if, // PFS requests from TMU
+    egr_prc_tmu_if.tmu             prc_if, // PRC requests from TMU
+
+    egr_rrq_if.requestor       rrq_mri_if, // TMU requests from MRI
+    egr_rrs_if.requestor       rrs_mri_if, // TMU receives responses from MRI
 
     // External interfaces
-    //TODO interface to IGR Dirty Pod Manager
-    //egr_pod_if.egr     pod_if,
+    egr_tagring_if.egr         tagring_if,
+    egr_mce_tagring_if.egr mce_tagring_if
 );
 
-endmodule : dpb
+endmodule : tmu

@@ -29,15 +29,12 @@
 
 module lcm
 (
-    input logic            clk,
-    input logic         arst_n,
+    input logic           clk,
+    input logic         rst_n,
     
     // Internal interfaces
-    lcm_ps_if.lcm       pfs_if,    // LCM provides to PFS
-    lcm_ps_if.lcm       pes_if,    // LCM provides to PES
-    lcm_txc_if.lcm      txc_if,    // LCM provides to TXC
-
-    prc_lcm_if.lcm      prc_if,    // LCM consumes from PRC
+    egr_lcm_pfs_if.lcm pfs_if,    // LCM requests to PFS
+    egr_prc_lcm_if.lcm prc_if,    // PRC requests to LCM
 
     // External interfaces
     egr_cmring_if.egr   cmring_if
