@@ -7,9 +7,9 @@ import madisonbay.iface.frontend.viewer.HtmlDsl._
 
 object PageGenerator {
 
-  def mainPage(parameters: List[UriParameter], csrModel: CsrModel): String = processGet(List(), parameters, csrModel)
+  def mainPage(parameters: List[UriParameter], csrModel: CsrModel): String = genPage(List(), parameters, csrModel)
 
-  def processGet(uriPath: List[String], parameters: List[UriParameter], csrModel: CsrModel): String = uriPath match {
+  def genPage(uriPath: List[String], parameters: List[UriParameter], csrModel: CsrModel): String = uriPath match {
     case Nil  => defaultPage(showCsr(parameters, csrModel))
     case _    => defaultPage(List("GET:", uriPath.mkString("/"), parameters.mkString(",")))
   }

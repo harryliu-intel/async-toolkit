@@ -12,6 +12,13 @@ object RestProcessing {
 
   val KeyMessage = "message"
 
+  def responseMessage(msg: String): String = Try(JsonReader.toJson(Map[String, Any](
+      KeyMessage -> msg
+    ))) match {
+      case Success(value) => value
+      case Failure(ex)    => s"""{"$KeyMessage": $msg, "internal_error:": "${ex.getMessage}" }"""
+    }
+
 }
 
 abstract class RestProcessing {
@@ -22,17 +29,10 @@ abstract class RestProcessing {
 
   def returnJson(result: Map[String, Any]): RestResponse = Try(JsonReader.toJson(result)) match {
 
-    case Success(v) => RestResponse(uriSupported = true, error = false, v, HttpStatusCode.Ok)
+    case Success(v)  => RestResponse(uriSupported = true, error = false, v, HttpStatusCode.Ok, None)
 
-    case Failure(ex) => RestResponse(uriSupported = true, error = true, responseMessage(ex.getMessage), HttpStatusCode.InternalServerError)
+    case Failure(ex) => RestResponse(uriSupported = true, error = true, responseMessage(ex.getMessage), HttpStatusCode.InternalServerError, None)
 
-  }
-
-  def responseMessage(msg: String): String = Try(JsonReader.toJson(Map[String, Any](
-    KeyMessage -> msg
-  ))) match {
-    case Success(value)     => value
-    case Failure(ex)        => s"""{"$KeyMessage": $msg; "internal_error:": "${ex.getMessage}"; }"""
   }
 
 }

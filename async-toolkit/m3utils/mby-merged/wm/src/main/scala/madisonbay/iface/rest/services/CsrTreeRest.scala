@@ -1,12 +1,13 @@
-package madisonbay.iface.rest
+package madisonbay.iface.rest.services
 
 import madisonbay.iface.UriConstants.UriParameter
 import madisonbay.iface.model.CsrModel
 import madisonbay.iface.rest.Constants.Keys._
 import madisonbay.iface.rest.Constants.Types._
+import madisonbay.iface.rest.{RestProcessing, RestResponse}
 import madisonbay.wm.utils.json.{JsonReader, JsonValues}
 import spinoco.protocol.http.HttpStatusCode
-
+import RestProcessing.responseMessage
 
 object CsrTreeRest extends RestProcessing {
 
@@ -29,11 +30,13 @@ object CsrTreeRest extends RestProcessing {
 
       case Some(any) => RestResponse(uriSupported = true, error = true,
         responseMessage(s"URI $path returned not supported value $any"),
-        HttpStatusCode.Forbidden)
+        HttpStatusCode.Forbidden,
+        None)
 
       case None => RestResponse(uriSupported = false, error = false,
         responseMessage(s"URI $path not supported"),
-        HttpStatusCode.NotFound)
+        HttpStatusCode.NotFound,
+        None)
     }
 
   }

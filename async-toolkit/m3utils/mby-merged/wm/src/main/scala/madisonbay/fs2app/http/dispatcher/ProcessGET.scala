@@ -4,72 +4,45 @@ import cats.effect.IO
 import fs2.{RaiseThrowable, Stream}
 import madisonbay.iface.frontend.controller.ResourceProvider
 import madisonbay.iface.model.CsrModel
-import madisonbay.iface.frontend.viewer.PageGenerator
-import madisonbay.iface.UriConstants.UriParameter
-import madisonbay.iface.UriConstants.UriSegment.{CssUriPref, ImgUriPref}
+import madisonbay.iface.UriConstants.UriSegment
 import spinoco.fs2.http.HttpResponse
 import spinoco.protocol.http.{HttpRequestHeader, HttpStatusCode, Uri}
-import spinoco.protocol.mime.{ContentType, MediaType}
-import ProcessGET._
-import madisonbay.iface.rest.{RestDispatcher, RestResponse}
+import ProcessRequest._
+import madisonbay.iface.rest.RestDispatcher
 
 
-object ProcessGET {
-  val contentHtml       = ContentType.TextContent(MediaType.`text/html`, None)
-  val contentCss        = ContentType.BinaryContent(MediaType.`text/css`, None)
-  val contentImgPng     = ContentType.BinaryContent(MediaType.`image/png`, None)
-  val contentJson       = ContentType.TextContent(MediaType.`application/json`, None)
 
-  def apply(csrModel: CsrModel): ProcessGET = new ProcessGET(csrModel)
-}
+class ProcessGET(request: HttpRequestHeader, requestBody: Stream[IO,Byte], csrModel: CsrModel)(implicit rt: RaiseThrowable[IO])
+  extends ProcessRequest(request, requestBody, csrModel)(rt) {
 
-class ProcessGET(csrModel: CsrModel) extends ProcessRequest {
-
-  def processGetRequest(request: HttpRequestHeader)(implicit rt: RaiseThrowable[IO]): HttpResponse[IO] = {
-    val parameters = getParameters(request.query)
-
-    def httpPage: HttpResponse[IO] = HttpResponse(HttpStatusCode.Ok).
-        withUtf8Body(PageGenerator.mainPage(parameters, csrModel)).
-        withContentType(contentHtml)
-
-
+  override def processRequest: ProcessRequestResult = {
     request.path match {
 
-      case Uri.Path(false, _, _)  => httpPage
+      case Uri.Path(false, _, _)  => mainHttpPage
 
-      case Uri.Path(true, _, segments) if segments.isEmpty => httpPage
+      case Uri.Path(true, _, segments) if segments.isEmpty => mainHttpPage
 
-      case Uri.Path(_, _, segments) => processGet(segments.toList, parameters)
+      case Uri.Path(true, _, segments) => processGetUri(segments.toList)
 
     }
   }
 
-  private def processGet(uri: List[String], parameters: List[UriParameter])
-                        (implicit rt: RaiseThrowable[IO]): HttpResponse[IO] = uri match {
-    case CssUriPref :: ImgUriPref :: tail => processGet(ImgUriPref :: tail, parameters)
+  private def processGetUri(uri: List[String]): ProcessRequestResult = uri match {
+    case UriSegment.Css :: UriSegment.Img :: tail => processGetUri(UriSegment.Img :: tail)
 
-    case CssUriPref :: fileName :: Nil =>
+    case UriSegment.Css :: fileName :: Nil =>
       val cssBody = ResourceProvider.getCss(fileName)
-      HttpResponse(HttpStatusCode.Ok).withUtf8Body(cssBody).withContentType(contentCss)
+      ProcessRequestResult(HttpResponse(HttpStatusCode.Ok).withUtf8Body(cssBody).withContentType(contentCss), None)
 
-    case ImgUriPref :: fileName :: Nil if fileName.endsWith(".png") =>
+
+    case UriSegment.Img :: fileName :: Nil if fileName.endsWith(".png") =>
       val imgBody: List[Byte] = ResourceProvider.getImg(fileName)
       val effectBody = Stream[IO,Byte](imgBody: _*)
       val responseOk = HttpResponse(HttpStatusCode.Ok)
-      HttpResponse(responseOk.header, effectBody).withContentType(contentImgPng)
+      ProcessRequestResult(HttpResponse(responseOk.header, effectBody).withContentType(contentImgPng), None)
 
-    case u => RestDispatcher.processGetUri(uri, parameters, csrModel) match {
-      case RestResponse(false, _, _, httpStatusCode) =>
-        HttpResponse(httpStatusCode).
-        withUtf8Body(PageGenerator.processGet(" [Error] Not Supported URI: " :: u, parameters, csrModel)).
-        withContentType(contentHtml)
+    case _ => processRestResponse(uri, RestDispatcher.processGetUri(uri, parameters, csrModel))
 
-      case RestResponse(_, _, "", httpStatusCode) => HttpResponse(httpStatusCode)
-
-      case RestResponse(_, _, msg, httpStatusCode) => HttpResponse(httpStatusCode).
-        withUtf8Body(msg).
-        withContentType(contentJson)
-    }
   }
 
 }
