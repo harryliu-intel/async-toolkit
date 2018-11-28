@@ -1,2 +1,4 @@
 Module Name,Unit,Block Name,Ports,Inferred Type,Freq[Mhz],Lines,Width,Protection,Total Signature Bits,Write Segment Size,Instantiations,Init,Interleaving,Protection Resolution,Write Segment W/O Signature Size,Width W/O Signature,Type,Words|Number of Rules, Bits/Word,Bit Enable|Slice Enable,Folded,Column Mux,Redundancy,Rows,Columns,Total Instances,Name
-mem_msh_bank_ram_shell_4096x552,msh_bank_ram,msh,1rw,SRAM,1800,4096,552,None,0,552,1,No,1,,552,552,SRAM,4096,69,0,0,0,0,1,1,8,
+mem_msh_bank_ram_shell_4096x552,msh_bank_ram,msh,1rw,SRAM,1800,4096,552,None,0,552,1,No,1,,552,552,SRAM,4096,69,0,0,0,0,1,1,8,saduls0g4l1p4096x69m4b4w0c0p1d0l2rm3sdrw01
+mem_igr_pb0_data_ram_shell_1024x576,igr_pb0_data_ram,igr,1rw,SRAM,1225,1024,576,None,0,576,4,No,1,,576,576,SRAM,1024,72,1,1,4,0,1,8,32,saduls0g4l1p1024x72m4b4w0c0p0d0l2rm3sdrw01
+mem_igr_pb0_md_ram_shell_1024x72,igr_pb0_md_ram,igr,1rw,SRAM,1225,1024,72,None,0,72,4,No,1,,72,72,SRAM,1024,72,1,1,4,0,1,1,4,saduls0g4l1p1024x72m4b4w0c0p0d0l2rm3sdrw01

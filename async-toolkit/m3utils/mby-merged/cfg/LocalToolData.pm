@@ -290,7 +290,7 @@ $ToolConfig_tools{"mgm"} = {
         #REPORT_DIR => "$ENV{MODEL_ROOT}/target/mgm/rtl",
         PREFIX => "mby",
 	CMO  => [
-	    "/tmp/dummy"
+	    "/nfs/sc/disks/sc_mby_00005/kits/tr3/",
 	    ],
     },
     EXEC => "&get_tool_path()/bin/mgm",

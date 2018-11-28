@@ -15,7 +15,9 @@ BUILD_OPTS += -timescale=1ps/1ps
 # Use Fake Mem for speedy simulation
 BUILD_OPTS += +define+FAKE_MEM
 BUILD_OPTS += +define+MBY_MSH_BEHAVE_MEMS
-BUILD_OPTS += +define+MBY_BEHAVE_MEMS
+# BUILD_OPTS += +define+MBY_BEHAVE_MEMS
+# BUILD_OPTS += +define+INTEL_SIMONLY
+ 
 
 # FPGA builds use smaller memories
 #BUILD_OPTS += +define+FPGA

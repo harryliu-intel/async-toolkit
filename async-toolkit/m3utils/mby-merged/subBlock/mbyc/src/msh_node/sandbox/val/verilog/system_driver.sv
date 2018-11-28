@@ -49,10 +49,20 @@ class system_driver;
         dut_if.msreset = 1;
         dut_if.i_eb_node_col = 0;   // eventually should be set via knob 
         dut_if.i_sb_node_row = 0;   // eventually should be set via knob
+        $readmemh ("../../tests/mem_bank_0.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_0.behave_mem.sram);
+        $readmemh ("../../tests/mem_bank_1.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_1.behave_mem.sram);
+        $readmemh ("../../tests/mem_bank_2.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_2.behave_mem.sram);
+        $readmemh ("../../tests/mem_bank_3.txt",top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_3.behave_mem.sram);
+        // If the MGM BFM model has INTEL_SIMONLY set, the following task call is available
+        //  top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_0.memory_init("../../tests/mem_bank_0.txt");
+        //  top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_1.memory_init("../../tests/mem_bank_1.txt");
+        //  top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_2.memory_init("../../tests/mem_bank_2.txt");
+        //  top.msh_node.mby_msh_gen_mem.msh_sram_mems.msh_wrap_mem_msh_bank_ram_shell_4096x552_3.memory_init("../../tests/mem_bank_3.txt");
         repeat (50) @(posedge dut_if.mclk);
         dut_if.mhreset = 0;
         dut_if.msreset = 0;
         repeat (50) @(posedge dut_if.mclk);
+        // Initialize mesh memories
     endtask
 
 endclass
