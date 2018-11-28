@@ -61,6 +61,7 @@ $COLLAGE_LIB = (&ToolConfig::get_facet("dut_type") eq "upf") ? "soc_collage_asse
 
 # for Cadance PCIe BFMs
 my $DENALI =  &ToolConfig::get_tool_path("denali");
+my $VIPCAT =  &ToolConfig::get_tool_path("vipcat");
 
 
 #################################################################
@@ -290,6 +291,7 @@ my %sip_elab_opts = (
                         "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
                         "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
                         "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
+                        "-LDFLAGS \'-L ${VIPCAT}/tools.lnx86/lib/64bit\'",
                         "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
                         "-P ${DENALI}/verilog/cdnsv.tab",
                         "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",

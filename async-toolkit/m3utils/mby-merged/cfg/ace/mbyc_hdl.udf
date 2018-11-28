@@ -10,7 +10,7 @@ my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc
 my $sva_lib              = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
 
 # for Cadance PCIe BFMs
-my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+my $DENALI =  &ToolConfig::get_tool_path('denali');
 
 
 my $default_enable_congruency_elab  = 1;

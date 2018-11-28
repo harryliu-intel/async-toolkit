@@ -80,6 +80,7 @@ my @FC_VLOG_OPTIONS = (
 
 # gerards - for Cadence PCIe
 my $DENALI =  &ToolConfig::ToolConfig_get_tool_path("denali");
+my $VIPCAT =  &ToolConfig::ToolConfig_get_tool_path("vipcat");
 my @CDN_PCIE_VLOG_OPTS = (
     "-full64 -sverilog -ucli -LDFLAGS -Wl,-E",
     "+define+DENALI_SV_VCS -lca -ntb_opts svp",
@@ -94,6 +95,7 @@ my @CDN_PCIE_ELAB_OPTS = (
     "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
     "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
     "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
+    "-LDFLAGS \'-L ${VIPCAT}/tools.lnx86/lib/64bit\'",
     "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
     "-P ${DENALI}/verilog/cdnsv.tab",
     "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",
