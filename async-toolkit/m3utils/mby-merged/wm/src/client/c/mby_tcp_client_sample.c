@@ -1,6 +1,6 @@
 /*****************************************************************************
  * @file	client_sample.c
- * @brief	Sample code for mbay_dpi_client library
+ * @brief	Sample code for mby_tcp_client_library
  *
  * INTEL CONFIDENTIAL
  * Copyright 2018 Intel Corporation.  All Rights Reserved.
