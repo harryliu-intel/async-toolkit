@@ -1,0 +1,6 @@
+//gms_par block 
+
+mby_gms_par [
+  gms of mby_gms_top with gms.map
+  gms_brko of mby_gms_brko with gms_brko.map
+]
