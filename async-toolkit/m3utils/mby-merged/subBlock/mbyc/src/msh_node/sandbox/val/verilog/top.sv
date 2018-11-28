@@ -88,8 +88,6 @@ import msh_node_sim_pkg::*;
 
         .i_eb_node_col  (dut_if.i_eb_node_col),
         .i_sb_node_row  (dut_if.i_sb_node_row),
-        .i_eb_wr_req    (dut_if.i_eb_wr_req),
-        .i_eb_wr_dbus   (dut_if.i_eb_wr_dbus),
 
         .i_eb_rd_req    (dut_if.i_eb_rd_req),
         .i_eb_wr_req    (dut_if.i_eb_wr_req),
@@ -98,8 +96,21 @@ import msh_node_sim_pkg::*;
         .o_eb_node_col  (dut_if.o_eb_node_col),
         .o_sb_node_row  (dut_if.o_sb_node_row),
         .o_wb_rd_rsp    (dut_if.o_wb_rd_rsp),
-        .o_wb_rd_dbus   (dut_if.o_wb_rd_dbus)
+        .o_wb_rd_dbus   (dut_if.o_wb_rd_dbus),
         
+// Temporary - drive unused for now
+        .i_nb_wr_req    (dut_if.i_nb_wr_req),
+        .i_nb_wr_dbus   (dut_if.i_nb_wr_dbus),
+        .i_nb_rd_req    (dut_if.i_nb_rd_req),
+
+        .i_sb_wr_req    (dut_if.i_sb_wr_req),
+        .i_sb_wr_dbus   (dut_if.i_sb_wr_dbus),
+        .i_sb_rd_req    (dut_if.i_sb_rd_req),
+
+        .i_wb_wr_req    (dut_if.i_wb_wr_req),
+        .i_wb_wr_dbus   (dut_if.i_wb_wr_dbus),
+        .i_wb_rd_req    (dut_if.i_wb_rd_req)
+
     );
 
     // instantiate testcase

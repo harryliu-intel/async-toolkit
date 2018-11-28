@@ -62,6 +62,9 @@ class inp_driver;
     mby_msh_pkg::msh_dbus_t          drvr_wr_dbus_to_dut_p1;
 
 
+    mby_msh_pkg::msh_row_rd_req_t    drvr_null_rd_req_to_dut;
+    mby_msh_pkg::msh_row_wr_req_t    drvr_null_wr_req_to_dut;
+    mby_msh_pkg::msh_dbus_t          drvr_null_wr_dbus_to_dut;
 
     function new(
 
@@ -95,7 +98,13 @@ class inp_driver;
         drvr_wr_req_to_dut_p1 = '0;
         drvr_wr_dbus_to_dut = '0;
         drvr_wr_dbus_to_dut_p1 = '0;
+
         drove_reqs    = 0;
+
+// Temporary - drive zeros to the unused ports
+        drvr_null_rd_req_to_dut = '0;
+        drvr_null_wr_req_to_dut = '0;
+        drvr_null_wr_dbus_to_dut = '0;
 
     endtask
 
@@ -114,6 +123,38 @@ class inp_driver;
             dut_if.i_eb_rd_req[0]  = drvr_rd_req_to_dut_p1;
             dut_if.i_eb_wr_req[0]  = drvr_wr_req_to_dut_p1;
             dut_if.i_eb_wr_dbus[0] = drvr_wr_dbus_to_dut_p1;
+
+// Temporary - drive null to unused ports
+            dut_if.i_nb_rd_req[0]  = drvr_null_rd_req_to_dut;
+            dut_if.i_nb_wr_req[0]  = drvr_null_wr_req_to_dut;
+            dut_if.i_nb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
+
+            dut_if.i_sb_rd_req[0]  = drvr_null_rd_req_to_dut;
+            dut_if.i_sb_wr_req[0]  = drvr_null_wr_req_to_dut;
+            dut_if.i_sb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
+
+            // dut_if.i_eb_rd_req[0]  = drvr_null_rd_req_to_dut;
+            // dut_if.i_eb_wr_req[0]  = drvr_null_wr_req_to_dut;
+            // dut_if.i_eb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
+            dut_if.i_wb_rd_req[0]  = drvr_null_rd_req_to_dut;
+            dut_if.i_wb_wr_req[0]  = drvr_null_wr_req_to_dut;
+            dut_if.i_wb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
+
+            dut_if.i_nb_rd_req[1]  = drvr_null_rd_req_to_dut;
+            dut_if.i_nb_wr_req[1]  = drvr_null_wr_req_to_dut;
+            dut_if.i_nb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
+
+            dut_if.i_sb_rd_req[1]  = drvr_null_rd_req_to_dut;
+            dut_if.i_sb_wr_req[1]  = drvr_null_wr_req_to_dut;
+            dut_if.i_sb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
+
+            dut_if.i_eb_rd_req[1]  = drvr_null_rd_req_to_dut;
+            dut_if.i_eb_wr_req[1]  = drvr_null_wr_req_to_dut;
+            dut_if.i_eb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
+
+            dut_if.i_wb_rd_req[1]  = drvr_null_rd_req_to_dut;
+            dut_if.i_wb_wr_req[1]  = drvr_null_wr_req_to_dut;
+            dut_if.i_wb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
     
         end
     endtask

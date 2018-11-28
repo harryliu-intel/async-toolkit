@@ -50,12 +50,21 @@ logic               msreset;                                // reset
 msh_col_t           i_eb_node_col;
 msh_row_t           i_sb_node_row;
 
-msh_row_wr_req_t    i_eb_wr_req     [NUM_MSH_PLANES-1:0];
-msh_dbus_t          i_eb_wr_dbus    [NUM_MSH_PLANES-1:0];
+msh_col_rd_req_t    i_nb_rd_req     [NUM_MSH_PLANES-1:0];
+msh_col_wr_req_t    i_nb_wr_req     [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_nb_wr_dbus    [NUM_MSH_PLANES-1:0];
+
+msh_col_rd_req_t    i_sb_rd_req     [NUM_MSH_PLANES-1:0];
+msh_col_wr_req_t    i_sb_wr_req     [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_sb_wr_dbus    [NUM_MSH_PLANES-1:0];
 
 msh_row_rd_req_t    i_eb_rd_req     [NUM_MSH_PLANES-1:0];
 msh_row_wr_req_t    i_eb_wr_req     [NUM_MSH_PLANES-1:0];
 msh_dbus_t          i_eb_wr_dbus    [NUM_MSH_PLANES-1:0];
+
+msh_row_rd_req_t    i_wb_rd_req     [NUM_MSH_PLANES-1:0];
+msh_row_wr_req_t    i_wb_wr_req     [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_wb_wr_dbus    [NUM_MSH_PLANES-1:0];
 
 // DUT outputs  (direction not specified in this interface)
 
