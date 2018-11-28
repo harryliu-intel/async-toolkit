@@ -49,8 +49,8 @@ reg em_hash_lookup_r {
   field {
     AccessType = "RW";
     desc = "
-    selects 'more' hash bits.
-    * bucket_hash[i] = more_hash[select[i]]
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
 
            ";
     ValRandomize = true;
@@ -58,8 +58,8 @@ reg em_hash_lookup_r {
   field {
     AccessType = "RW";
     desc = "
-    selects 'more' hash bits.
-    * bucket_hash[i] = more_hash[select[i]]
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
 
            ";
     ValRandomize = true;
@@ -67,8 +67,8 @@ reg em_hash_lookup_r {
   field {
     AccessType = "RW";
     desc = "
-    selects 'more' hash bits.
-    * bucket_hash[i] = more_hash[select[i]]
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
 
            ";
     ValRandomize = true;
@@ -76,8 +76,8 @@ reg em_hash_lookup_r {
   field {
     AccessType = "RW";
     desc = "
-    selects 'more' hash bits.
-    * bucket_hash[i] = more_hash[select[i]]
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
 
            ";
     ValRandomize = true;
@@ -85,8 +85,8 @@ reg em_hash_lookup_r {
   field {
     AccessType = "RW";
     desc = "
-    selects 'more' hash bits.
-    * bucket_hash[i] = more_hash[select[i]]
+    selects 'more' hash bits:[br]
+    bucket_hash[i] = more_hash[select[i]]
 
            ";
     ValRandomize = true;
@@ -185,18 +185,14 @@ reg em_key_sel0_r {
   HandCoded = true;
   name = "Configures hash value calculation";
   desc = "
-  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
-
-  This register is indexed first by hash number 0..1, then by scenario.
-
-  Before matching, the selected (Key32, Key16, Key8) are compacted
+  Configure how the exact match hash functions (hash0,hash1) should be calculated.
+  [br][br]
+  This register is indexed first by hash number 0..1, then by packet profile.
+  [br][br]
+  Before matching, the selected keys are compacted
   in big endian form. If the result is an odd number of bytes,
-  a padding 0 byte is added.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
-           ";
+  a zero padding byte is added.
+         ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -205,8 +201,8 @@ reg em_key_sel0_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key8s to participate in hashing and matching. 
-     Key8Mask[i] selects key8[i].
+     Selects the KEY8s to participate in hashing and matching:[br]
+     KEY8_MASK[i] selects KEY8[i].
 
            ";
     ValRandomize = true;
@@ -225,17 +221,13 @@ reg em_key_sel1_r {
   HandCoded = true;
   name = "Configures hash value calculation";
   desc = "
-  Configure how the FFU Group Hash hashes (hash0,hash1) should be calculated.
-
-  This register is indexed first by hash number 0..1, then by scenario.
-
-  Before matching, the selected (Key32, Key16, Key8) are compacted
+  Configure how the exact match hash functions (hash0,hash1) should be calculated.
+  [br][br]
+  This register is indexed first by hash number 0..1, then by packet profile.
+  [br][br]
+  Before matching, the selected keys are compacted
   in big endian form. If the result is an odd number of bytes,
-  a padding 0 byte is added.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
+  a zero padding byte is added.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -245,7 +237,7 @@ reg em_key_sel1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects one of 16 128 bit masks stored in EM_KEY_MASK to 
+     Selects one of sixteen 128-bit masks stored in EM_KEY_MASK to 
      apply to the key during comparison.
            ";
     ValRandomize = true;
@@ -253,8 +245,8 @@ reg em_key_sel1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key32s to participate in hashing and matching. 
-     Key32Mask[i] selects key32[i].
+     Selects the KEY32s to participate in hashing and matching:[br]
+     KEY32_MASK[i] selects KEY32[i].
 
            ";
     ValRandomize = true;
@@ -262,8 +254,8 @@ reg em_key_sel1_r {
   field {
     AccessType = "RW";
     desc = "
-     Selects FFU key16s to participate in hashing and matching. 
-     Key16Mask[i] selects key16[i].
+     Selects the KEY16s to participate in hashing and matching:[br]
+     KEY16_MASK[i] selects KEY16[i].
 
            ";
     ValRandomize = true;
@@ -283,11 +275,11 @@ reg em_key_mask_r {
   name = "Hash key bit mask";
   desc = "
   Provides a 128 bit hash key mask for each of 16 hash key profiles.
-  Indexed first by hash number, then by:
+  Indexed first by hash number (0..1), then by:
   [code]
   (KEY_MASK_SEL * 2) + DW
-  where there are 2 DWs per profile (128 bits)
   [/code]
+  where there are 2 DWs per profile (128 bits)
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -316,17 +308,13 @@ regfile em_key_mask_rf {
 reg em_hash_miss_r {
   shared;
   HandCoded = true;
-  name = "Provides two hash-miss actions for each hashtable row.";
+  name = "Provides two hash-miss actions for each hash table row.";
   desc = "
-  EM_HASH_MISS[r][scenario] provides 2 actions for row r=0..1.
-
+  EM_HASH_MISS[r][profile] provides 2 actions for row r=0..1.
+  [br][br]
   If there is no key match in ENTRY_RAM or CAM, then both actions are taken.
   The format of the action is the same as EM_ACTION,
   HASH_ENTRY_RAM, and EM_HASH_CAM.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -354,18 +342,14 @@ regfile em_hash_miss_rf {
 
 
 
-// EM_HASH_CFG[0..63]
+// HASH_CFG[0..63]
 
 reg em_hash_cfg_r {
   shared;
   HandCoded = true;
-  name = "Configure FFU hashing";
+  name = "Configure exact match hashing";
   desc = "
-  This register is indexed by the scenario.
-  
-  Noted that per-group above explicitly implies only FFU groups 0..1.  
-  While these registers exist for FFU group 2, none of them should be 
-  written by software and should be considered reserved
+  This register is indexed by the packet profile.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -375,16 +359,18 @@ reg em_hash_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     Define lookup (or entry) modes : split 4K (0) or one 8K (1).
-                                      32B      (0) or 64B    (1).
-
+     Define lookup (or entry) modes:
+     [list]
+     [*] 0: Split mode (32B per entry)
+     [*] 1: Non-split mode (64B per entry)
+     [/list]
            ";
     ValRandomize = true;
   } MODE[46:46] = 1'h0;
   field {
     AccessType = "RW";
     desc = "
-     Start of hash table.
+     Start of hash table.[br]
      Must be a multiple of 2^hash_size[ROW].
 
            ";
@@ -393,7 +379,7 @@ reg em_hash_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     Start of hash table.
+     Start of hash table.[br]
      Must be a multiple of 2^hash_size[ROW].
 
            ";
@@ -402,10 +388,10 @@ reg em_hash_cfg_r {
   field {
     AccessType = "RW";
     desc = "
-     Number of hash bits to use in lookup address calculation.
-
-     * lookup_ptr = base_ptr[ROW] + hash % 2^hash_size[ROW]
-
+     Number of hash bits to use in lookup address calculation:
+     [br][br]
+     lookup_ptr = base_ptr[ROW] + hash % 2^hash_size[ROW]
+     [br][br]
      For example, hash_size=10 yields a table with 1024 buckets.
 
            ";
@@ -415,9 +401,9 @@ reg em_hash_cfg_r {
     AccessType = "RW";
     desc = "
      Number of hash bits to use in lookup address calculation.
-
-     * lookup_ptr = base_ptr[ROW] + hash % 2^hash_size[ROW]
-
+     [br][br]
+     lookup_ptr = base_ptr[ROW] + hash % 2^hash_size[ROW]
+     [br][br]
      For example, hash_size=10 yields a table with 1024 buckets.
 
            ";
@@ -429,8 +415,8 @@ reg em_hash_cfg_r {
      Size of each entry, given as a multiple of 4B.
      The entry size must be a multiple of 4 in the range 8..64.
      The entry bytes following the padded key are actions.
-
-     Set entry_size[r]==0 to disable row r lookups in this scenario.
+     [br][br]
+     Set entry_size[r]==0 to disable row r lookups for this packet profile.
 
            ";
     ValRandomize = true;
@@ -441,8 +427,8 @@ reg em_hash_cfg_r {
      Size of each entry, given as a multiple of 4B.
      The entry size must be a multiple of 4 in the range 8..64.
      The entry bytes following the padded key are actions.
-
-     Set entry_size[r]==0 to disable row r lookups in this scenario.
+     [br][br]
+     Set entry_size[r]==0 to disable row r lookups for this packet profile.
 
            ";
     ValRandomize = true;
@@ -453,7 +439,7 @@ reg em_hash_cfg_r {
 
 addrmap mby_ppe_cgrp_em_map {
   name = "mby_em";
-  desc = "Classifier EM registers";
+  desc = "Classifier Exact Match registers";
   Space = "MSG";
   Opcode = "MEM-SB";
   No_IOSF_Primary = true;

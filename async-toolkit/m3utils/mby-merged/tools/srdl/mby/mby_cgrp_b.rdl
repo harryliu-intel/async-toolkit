@@ -134,8 +134,8 @@ reg wcm_tcam_cfg_r {
   HandCoded = true;
   name = "Configures TCAM slice";
   desc = "
-    Configure each slice behavior for each scenario.
-    This register is indexed first by slice, then by scenario.
+    Configure each slice behavior for each packet profile.
+    This register is indexed first by slice, then by packet profile.
     It provides configuration for the cascading and mux selection.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
@@ -147,7 +147,7 @@ reg wcm_tcam_cfg_r {
     AccessType = "RW";
     desc = "
         Specifies the validity of 64-rule chunks.  ChunkMask[0] enables rules 0..63,
-        ChunkMask[1] enables rules 64..127, etc.  Used to create smaller per-scenario tables.
+        ChunkMask[1] enables rules 64..127, etc.  Used to create smaller per-profile tables.
 
            ";
     ValRandomize = true;
@@ -236,14 +236,14 @@ regfile wcm_tcam_cfg_rf {
 
 
 
-// WCM_ACTION_CFG_EN[0..23]
+// WCM_ACTION_CFG_EN[0..63]
 
 reg wcm_action_cfg_en_r {
   shared;
   HandCoded = true;
   name = "Configures action RAM Enable bits source.";
   desc = "
-  This register is indexed by scenario.
+  This register is indexed by packet profile.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -267,7 +267,7 @@ reg wcm_action_cfg_r {
   HandCoded = true;
   name = "Configures action RAM Enable bits source.";
   desc = "
-  This register is indexed by scenario.
+  This register is indexed by packet profile.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
