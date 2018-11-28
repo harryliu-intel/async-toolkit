@@ -80,7 +80,7 @@ TOP_TEMPLATE=top_template
 
 # test: $(TEST_TARG)
 # 	$(TEST_TARG)
-mains: mby_mains hlp_mains model_server
+mains: mby_mains hlp_mains model_server doc
 
 # provide a mechanism to force rebuild on meta update
 META_VERSION_F=meta.version.$(METAVERSION)
@@ -186,6 +186,8 @@ $(MODEL_SERVER): $(WM_NET_LIB) $(WM_SUPPORT) $(HLPLIB) $(MBYLIB) $(MBY_C_LIB)
 
 model_server: $(MODEL_SERVER)
 
+doc:
+	$(MAKE) -C $(MBY_C_ROOT)/doc
 
 $(TEST_TARG): $(GENVIEWS)
 	pushd $(GENVIEWS_ROOT)/src && ./test.sh
@@ -198,6 +200,7 @@ clean:
 	rm -rf $(MODEL_SERVER_ROOT)/src/mby_struct
 	rm -rf $(MODEL_SERVER_ROOT)/src/wm_meta_common
 	rm -rf $(WM_NET_ROOT)/scala_generated
+	$(MAKE) -C $(MBY_C_ROOT)/doc clean
 	find . -name $(OS_TARG) | xargs rm -rf
 	find ../c -name $(OS_TARG) | xargs rm -rf
 	rm -f $(TOP)

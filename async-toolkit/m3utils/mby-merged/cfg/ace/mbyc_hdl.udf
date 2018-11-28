@@ -350,7 +350,7 @@ print "MGM debug : @mbyMgmLibs\n";
                -dependent_libs => [ 'shdv_shared_lib'],
                -tag            => "nonsynth",
                -elab_opts => [
-                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mbay_dpi_client.c ",
+                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c ",
                ],
             },
 

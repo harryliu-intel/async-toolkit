@@ -1,8 +1,13 @@
 package com.intel.cg.hpfd.csr.macros.annotations
 
+import com.intel.cg.hpfd.csr.macros.utils.{Control, Hygiene}
+import com.intel.cg.hpfd.madisonbay.Memory.AddressRange
+
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.macros._
+
+import monocle.Optional
 
 class OfSize(val length: Int) extends StaticAnnotation
 class At(val address: Long) extends StaticAnnotation
@@ -38,12 +43,12 @@ class Initialize extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro InitializeImpl.impl
 }
 
-class InitializeImpl(val c: whitebox.Context) extends LiftableAnnotations {
+class InitializeImpl(val c: whitebox.Context) extends LiftableAnnotations with Control with Hygiene {
   import c.universe._
 
   val nextAddressSuffix = "NextFreeAddress"
 
-  case class ArgumentContext(nextAddressName: TermName, argumentName: TermName, quoteFun: (TermName, c.Tree) => c.Tree)
+  case class ArgumentContext(nextAddressName: TermName, argumentName: TermName, quoteFun: (TermName, Tree) => Tree)
 
   /**
     * Takes address value of either
@@ -52,50 +57,51 @@ class InitializeImpl(val c: whitebox.Context) extends LiftableAnnotations {
     *  '@' (aka absolute to local scope)
     * from rdl definition
     */
-  private def obtainAddress(annotations: RdlAnnotations, prevAddress: TermName): c.Tree = {
+  private def obtainAddress(annotations: RdlAnnotations, prevAddress: TermName): Tree = {
     import annotations._
     at.map(a => q"address + ${a.address}.bytes")
-      .orElse(modulo.map(mod => q"${prevAddress}.alignTo(Alignment(${mod.address}.bytes))"))
+      .orElse(modulo.map(mod => q"$prevAddress.alignTo(Alignment(${mod.address}.bytes))"))
       .getOrElse(q"$prevAddress")
   }
 
-  private def generateCodeForList(tname: c.TermName, tpt: c.Tree, annotations: RdlAnnotations): ArgumentContext = {
+  private def generateCodeForList(tname: TermName, tpt: Tree, annotations: RdlAnnotations): ArgumentContext = {
     import annotations._
     val nextAddressName = TermName(s"$tname$nextAddressSuffix")
-    val AppliedTypeTree(Ident(TypeName(_)), List(Select(Ident(packageId), typeId))) = tpt
+    val (termId, typeId) = tpt.toTermTypePair
     // TODO: change me!
     val listLength: Int = ofSize.map(_.length).getOrElse(1) // we are already in the context where 'OfSize' is present
     val inc = increment.address
 
-    lazy val nextFreeAddress: c.Tree = if (inc == 0) q"child.range.lim" else q"child.range.pos + ${inc}.bytes"
+    lazy val nextFreeAddress: Tree = if (inc == 0) q"child.range.lim" else q"child.range.pos + $inc.bytes"
 
-    def quoteFun(prevAddress: TermName, continuation: c.Tree): c.Tree =
+    def quoteFun(prevAddress: TermName, continuation: Tree): Tree =
       q"""
         val initialAddress: Address = ${obtainAddress(annotations, prevAddress)}
-        val (_, result @ lastChild :: _) = (1 to ${listLength}).foldLeft((initialAddress, List.empty[${packageId.toTermName}.${typeId.toTypeName}])) {
+        val (_, result @ lastChild :: _) = (1 to $listLength).foldLeft((initialAddress, List.empty[$typeId])) {
            case ((nextAddress, res), _) =>
-             val child = ${packageId.toTermName}.${typeId.toTermName}.apply(nextAddress)
+             val child = $termId.apply(nextAddress)
              ($nextFreeAddress, child :: res)
         }
-        val ($nextAddressName, ${tname.toTermName}) = (lastChild.range.lim, result.reverse)
+        val ($nextAddressName, $tname) = (lastChild.range.lim, result.reverse)
         $continuation
       """
 
     ArgumentContext(nextAddressName = nextAddressName, argumentName = tname.toTermName, quoteFun = quoteFun)
   }
 
-  private def generateCodeForSingleElement(tname: c.TermName, tpt: c.Tree, annotations: RdlAnnotations): ArgumentContext = {
+  private def generateCodeForSingleElement(tname: TermName, tpt: Tree, annotations: RdlAnnotations): ArgumentContext = {
     val nextAddress = TermName(s"$tname$nextAddressSuffix")
-    val Select(Ident(packageTermName: TermName), classTypeName: TypeName) = tpt
+
+    val (termId, typeId) = tpt.toTermTypePair
 
     /**
       * In case of '@' rdl modifier, we have the current scope address - it is simply referenced
       * by its name - 'address'
       */
-    def quoteFun(prevAddress: TermName, continuation: c.Tree) =
+    def quoteFun(prevAddress: TermName, continuation: Tree) =
       q"""
-        val ($nextAddress, ${tname.toTermName}) = {
-          val child = $packageTermName.${classTypeName.toTermName}(
+        val ($nextAddress, $tname) = {
+          val child = $termId(
             ${obtainAddress(annotations, prevAddress)}
           )
           (child.range.lim, child)
@@ -110,39 +116,41 @@ class InitializeImpl(val c: whitebox.Context) extends LiftableAnnotations {
     * Pattern match over all possible modifiers like @At, @Modulo, @Increment, @OfSize
     * TODO: Add Rdl specific validation like "@ and %= are mutually exclusive
     */
-  private def toRdlAnnotations(lt: List[c.Tree]): RdlAnnotations =
+  private def toRdlAnnotations(lt: List[Tree]): RdlAnnotations =
     lt.foldLeft(RdlAnnotations(None, None, None)) {
       /*op: (Tree, mods) => B)*/
       case (a @ RdlAnnotations(None, _, _, _), q"${ofSize: OfSize}") => a.copy(ofSize = Some(ofSize))
       case (a @ RdlAnnotations(_, None, _, _), q"${at: At}") => a.copy(at = Some(at))
       case (a @ RdlAnnotations(_, _, None, _), q"${modulo: Modulo}") => a.copy(modulo = Some(modulo))
       case (a, q"${inc: Increment}") => a.copy(increment = inc)
-      case (_, other) => c.abort(other.pos, "Found unexpected annotation")
+      case (_, other) => cAbort(other.pos, "Found unexpected annotation")
     }
 
   // TODO: get rid of (Address | AddressRange) hardcodes, maybe more validation
-  def generateApplyMethod(tpname: c.Name, params: List[ValDef]): c.Tree = {
-    val (_, otherParams) = params match {
-      case (h @ q"$_ val range: AddressRange = $expr") :: th :: t  => (h, th :: t)
-      case _ => c.abort(wrappingPos(params), "This macro expects that case class' constructor is of following shape: (range: AddressRange, ...)")
+  def generateApplyMethod(tpname: TypeName, params: List[ValDef]): Tree = {
+    implicit val pos = wrappingPos(params)
+    val otherParams = params match {
+      case q"$_ val range: ${_: AliasOf[AddressRange]} = $_" :: tail => tail
+      case _ => cAbort("macro @Initialize expects case class' constructor to be of shape: (range: AddressRange, ...)")
     }
 
     val results = otherParams.map {
-      case q"${Modifiers(_,_,annotations)} val $tname: $tpt = $_" =>
-        val annots = toRdlAnnotations(annotations)
-        // TODO: naive condition...
-        val codeGenerator = if (annots.ofSize.isDefined) generateCodeForList _ else generateCodeForSingleElement _
-        codeGenerator(tname,tpt,annots)
+      case q"$mods val $tname: $tpt = $_" =>
+        val annots = toRdlAnnotations(mods.annotations)
+        tpt match {
+          case tq"$_[$tpt]" => generateCodeForList(tname, tpt, annots)
+          case _ => generateCodeForSingleElement(tname, tpt, annots)
+        }
       case other =>
-        c.abort(other.pos, "Unknown element. Expected case class' constructor argument here.")
+        cAbort(other.pos, "Unknown element. Expected case class' constructor argument here.")
     }
 
     val lastAddressName = results.last.nextAddressName
     val constructorArgs = q"AddressRange(address, $lastAddressName)" :: results.map(r => q"${r.argumentName}")
     val creationExpression = q"${tpname.toTermName}(..$constructorArgs)"
 
-    val resultRecipt: TermName => c.Tree =
-      results.foldRight((_: TermName) => creationExpression){
+    val resultRecipt: TermName => Tree =
+      results.foldRight((_: TermName) => creationExpression) {
         case (ArgumentContext(nextAddrName, _, quoteFun), continuation) =>
           termName => quoteFun(termName, continuation(nextAddrName))
       }
@@ -154,31 +162,39 @@ class InitializeImpl(val c: whitebox.Context) extends LiftableAnnotations {
      """
   }
 
-  def impl(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def impl(annottees: Expr[Any]*): Expr[Any] = {
     val input = annottees.map(_.tree).toList
 
+    implicit val pos = wrappingPos(input)
     val output = input match {
-      case (classDef @ q"$_ class $tpname[..$_] $_(...$ctorParams) extends { ..$_ } with ..$_ { $_ => ..$_ }")
+      case q"${cls: ClassDef}" :: _ if !cls.mods.hasFlag(Flag.CASE) =>
+        cAbort("only case classes allowed in @Initialize")
+
+      // Sadly, ClassDef only knows its type parameters, not constructor parameters;
+      // they are available via `def <init>` on it's template body list.
+      case q"$_ class $_[..$_] $_(...$ctorParams) extends { ..$_ } with ..$_ { $_ => ..$_ }" :: _
+        if ctorParams.length > 1 => cAbort("only single parameter list classes allowed in @Initialize")
+
+      case (classDef @ q"$_ class $tpname[..$_] $_(..$ctorParams) extends { ..$_ } with ..$_ { $_ => ..$_ }")
         :: q"$objMods object $objName extends { ..$objEarlyDefs } with ..$objParents { $objSelf => ..$objDefs }"
         :: Nil =>
         q"""
          $classDef
          $objMods object $objName extends { ..$objEarlyDefs} with ..$objParents { $objSelf =>
-           ${generateApplyMethod(tpname, ctorParams.head)}
+           ${generateApplyMethod(tpname, ctorParams)}
            ..$objDefs
          }
          """
-      case (classDef @ q"$_ class ${tpname: c.Name}[..$_] $_(...$ctorParams) extends { ..$_ } with ..$_ { $_ => ..$_ }")
+      case (classDef @ q"$_ class $tpname[..$_] $_(..$ctorParams) extends { ..$_ } with ..$_ { $_ => ..$_ }")
         :: Nil =>
-        val name = tpname.toTermName
+        val objName = tpname.toTermName
         q"""
          $classDef
-         object $name {
-            ${generateApplyMethod(tpname, ctorParams.head)}
+         object $objName {
+           ${generateApplyMethod(tpname, ctorParams)}
          }
          """
-      case other => c.abort(wrappingPos(other), "Only case class declarations can be annotated with @Initialize")
-
+      case _ => cAbort("only case class declarations can be annotated with @Initialize")
     }
     c.Expr[Any](output)
   }

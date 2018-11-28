@@ -545,7 +545,7 @@ EOF
                   "mby_env_lib",
                   "mby_jasper_lib",
                   "gen_mby_regflow_lib",
-                  "gen_mby_wm",
+                  # "gen_mby_wm", # Temporarily disable Scala build to avoid failures
                   "gen_mby_wm_m3",
                   "mby_test_lib",
                   "mby_wm_dpi_lib",
