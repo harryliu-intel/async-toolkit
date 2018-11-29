@@ -3,7 +3,10 @@ package com.intel.cg.hpfd.madisonbay
 
 import com.intel.cg.hpfd.madisonbay.Memory._
 
-//TODO: regwidth, accesswidth, alignment --- all are instance-specific, in fact
+import scala.collection.immutable.HashMap
+import scala.reflect.ClassTag
+import monocle.{Lens, Optional}
+
 
 /** Register as defined in RDL.
   *
@@ -11,9 +14,6 @@ import com.intel.cg.hpfd.madisonbay.Memory._
   * all of register's alignments should be expressed as literals of bits, bytes or plain integers.
   */
 trait RdlRegister[P <: RdlRegister[P]] {
-  /** Internal raw (bit) state shared by all fields. */
-  val state: Long
-
   /** Range the register occupies.
     *
     * As given per Addressing.
@@ -36,64 +36,21 @@ trait RdlRegister[P <: RdlRegister[P]] {
     *
     * Should be no greater than 64 bits (machine word size).
     */
-  val regwidth: Alignment = 8.bytes.toAlignment
+  final def regwidth: Alignment = companion.regwidth
 
   /** Access width as defined by RDL standard (as "accesswidth")
     *
     * Defaults to [[regwidth]].
     * For each if its fields, {{{ _.range }}} should fit in {{{ 0 until accesswidth }}}
     */
-  val accesswidth: Alignment = regwidth
+  final def accesswidth: Alignment = companion.regwidth
 
   /** Access width as defined by RDL standard (as "alignment")
     *
     * When using [[com.intel.cg.hpfd.csr.macros.annotations.reg]] it should be specified without {{{ Some }}}
     * ({{{ None }}} is equivalent of "not specified at declaration side")
     */
-  val alignment: Option[Alignment] = None
-
-  /** Raw, unsafe deep copy. */
-  def rawCopy(range: AddressRange = range, state: Long = state): P
-
-  /** Deep copy with address altered. **/
-  final def copy(addr: Address): P = companion.apply(addr, state)
-
-  /** Deep copy with address range and/or state changed.
-    *
-    * Overridable for performance.
-    */
-  def copy(range: AddressRange = range, state: Long = state): P = {
-    if (range != this.range) {
-      companion.apply(range.pos, state)
-    }
-    else {
-      rawCopy(range, state)
-    }
-  }
-
-  /** Copy with state altered. */
-  def copy(newState: Long): P = rawCopy(range, newState)
-
-  /** Deep copy **/
-  final def copy(): P = rawCopy(range, state)
-
-  /** Read raw value. */
-  final def read: Long = state
-
-  /** Write raw value. */
-  final def write(value: Long): P = copy(value)
-
-  /** Read raw value at certain range.
-    *
-    * @note Unsafe, doesn't check the range.
-    */
-  final def read(range: Range): Long = (state >> range.start) & ((1L << range.size) - 1L)
-
-  /** Write raw value at certain range.
-    *
-    * @note Unsafe, doesn't check the range.
-    */
-  def write(range: Range, value: Long): P = write(RdlRegister.writeState(state, range, value))
+  final def alignment: Option[Alignment] = companion.alignment
 
   /** Efficient reset of all fields.
     * @return register after reset
@@ -104,49 +61,96 @@ trait RdlRegister[P <: RdlRegister[P]] {
     *
     * Defaults to implementor's RDL name.
     */
-  val name: String
+  final def name: String = companion.name
+
+  /** Description as defined by RDL standard (as "desc") */
+  final def desc: String = companion.desc
 
   /** Companion object. */
   val companion: RdlRegisterCompanion[P]
 
-  override def toString: String = s"Register $name at $addr with value $state"
-}
-object RdlRegister {
-  /** State after write at certain range.
+  /** Type-erasured list of all fields in this register.
     *
-    * @note Unsafe, doesn't check the range.
+    * Useful for best-try operations on fields, as well as serialization/deserialization.
     */
-  def writeState(state: Long, range: Range, value: Long): Long = {
-    val mask = ~(((1L << range.size) - 1L) << range.start)
-    (state & mask) | (value << range.start)
-  }
+  def fields: List[RdlField[_, _]]
 
-  /** Example implementor */
-  class Example(val state: Long = 0xDEADBEEFl) extends RdlRegister[Example] {
-    val range: AddressRange = AddressRange(Address(0.bits), 64.bits)
-    val name = "RdlRegExample"
-    val companion = Example
-    def rawCopy(range: AddressRange = range, state: Long = state) = new Example(state)
-  }
-  object Example extends RdlRegisterCompanion[Example] {
-    def apply(addr: Address) = new Example()
-    def apply(addr: Address, state: Long) = new Example(state)
-  }
+  /** How to serialize given register.
+    *
+    * Typeful equivalent of:
+    * {{{
+    *   fields.foldRight(BitVector.ofLength(regwidth))((f,v) => v | (f, f.start))
+    * }}}
+    */
+  def serialize(): BitVector
+
+  /** How to deserialize given register.
+    *
+    * Shortcut to calling on companion
+    */
+  final def deserialize(bits: BitVector): P = companion.deserialize(bits, range)
+
+  override def toString: String = s"Register $name at $addr"
 }
 
-trait RdlRegisterCompanion[P <: RdlRegister[P]] {
-  /** Constructor from full address and state information. */
-  def apply(addr: Address, state: Long): P
-
+abstract class RdlRegisterCompanion[P <: RdlRegister[P] : ClassTag] { companion =>
   /** Reset constructor. */
   def apply(addr: Address): P
 
-  /** Default for [[RdlRegister]]'s regwidth. */
+  /** Instances' name */
+  val name: String
+
+  /** Instances' description */
+  val desc: String = ""
+
+  /** Instances' regwidth. */
   val regwidth: Alignment = 8.bytes.toAlignment
 
-  /** Default for [[RdlRegister]]'s accesswidth. */
+  /** Instances' accesswidth. */
   val accesswidth: Alignment = regwidth
 
-  /** Default for [[RdlRegister]]'s alignment. */
+  /** Instances' alignment. */
   val alignment: Option[Alignment] = None
+
+  /** Encoding for this register type. */
+  implicit val encodeDefault: Encode[P] = encode(companion.regwidth.toLong.toInt)
+
+  /** Encode when width is overrode (e.g. by Addressing). */
+  def encode(width: Int): Encode[P] = new Encode[P] {
+    override val size = width
+    def default: P = companion.apply(Address(0.bits))  // arbitrary
+    def toRaw(value: P): BitVector = value.serialize()
+    def fromRaw(bits: BitVector): P = companion.deserialize(bits)
+  }
+
+  /** How to deserialize given register.
+    *
+    * The semantic is close to the following:
+    * {{{
+    *   val field1 = bits.extract[field1]
+    *   val field2 = bits.extract[field2]
+    *   ...
+    *   apply(field1, field2, ...)
+    * }}}
+    *
+    * Can't be done generically due to unknown field types.
+    */
+  def deserialize(bits: BitVector, range: AddressRange): P
+
+  /** Deserialization to some default address. */
+  def deserialize(bits: BitVector): P = deserialize(bits, AddressRange(Address(0), regwidth.toBits))  // arbitrary
+
+  /** Whole-register bit state lens */
+  final val _state: Lens[P, BitVector] =
+    Lens[P, BitVector] {
+      reg => reg.serialize
+    } {
+      newValue => _.deserialize(newValue)
+    }
+
+  /** Generates lenses from path to register's state. */
+  def genOpticsLookup[A](me: P,
+                         path: Optional[A, P]): HashMap[Address, Optional[A, BitVector]] = {
+    HashMap(me.range.pos -> (path composeLens _state))
+  }
 }

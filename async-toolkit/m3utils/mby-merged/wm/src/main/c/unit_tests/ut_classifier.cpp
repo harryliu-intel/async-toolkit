@@ -54,17 +54,17 @@ TEST_F(ClassifierTests, DummyTest) {
 TEST_F(ClassifierTests, getTcamCfg) {
 	fm_byte group = 0;
 	fm_byte slice = 1;
-	fm_byte scenario = 2;
+	fm_byte profile = 2;
 	mbyClassifierTcamCfg tcam_cfg;
 
 	// Prepare the register space
 	// TODO use a dedicated function to write the register?
-	fm_uint32 tcam_cfg_addr = MBY_FFU_TCAM_CFG(group, slice, scenario, 0) / 4;
+	fm_uint32 tcam_cfg_addr = MBY_FFU_TCAM_CFG(group, slice, profile, 0) / 4;
 	regs[tcam_cfg_addr] = ~0x0;
 	regs[tcam_cfg_addr + 1] = ~0x0;
 
 	// Call the function and verify the output
-	getTcamCfg(regs, group, slice, scenario, &tcam_cfg);
+	getTcamCfg(regs, group, slice, profile, &tcam_cfg);
 	EXPECT_EQ(tcam_cfg.CHUNK_MASK, 0xffff);
 	EXPECT_EQ(tcam_cfg.START_COMPARE, 0x1);
 	EXPECT_EQ(tcam_cfg.START_SET, 0x1);
@@ -75,8 +75,8 @@ TEST_F(ClassifierTests, getTcamCfg) {
 	EXPECT_EQ(tcam_cfg.SELECT3, 0x7f);
 
 	// Register in not init so all the vars are expected to be 0
-	scenario += 1;
-	getTcamCfg(regs, group, slice, scenario, &tcam_cfg);
+	profile += 1;
+	getTcamCfg(regs, group, slice, profile, &tcam_cfg);
 	EXPECT_EQ(tcam_cfg.CHUNK_MASK, 0x0);
 	EXPECT_EQ(tcam_cfg.START_COMPARE, 0x0);
 	EXPECT_EQ(tcam_cfg.START_SET, 0x0);

@@ -3,1330 +3,973 @@
 // Copyright (C) 2018 Intel Corporation
 #include "mby_modifier.h"
 #include "mby_crc32.h"
+#include "mby_parser.h"
+#include <assert.h>
 
-static void getModRegCfgData
+static void initProfAct
 (
-    fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32       tx_port,
-    mbyModRegData * const r
+    mby_shm_map         * const shm_map,
+    fm_uint32                   rx_length,
+    fm_uint32                   content_addr,
+    mbyModProfileAction * const prof_act
 )
 {
-    fm_uint64 mod_per_port_cfg1_reg = 0;
-    mbyModelReadCSR64(regs, MBY_MOD_PER_PORT_CFG1(tx_port, 0), &mod_per_port_cfg1_reg);
+    prof_act->operating_region     = (rx_length <= MBY_MOD_MAX_HDR_REGION) ? rx_length : MBY_MOD_MAX_HDR_REGION;
+    prof_act->fld_vector.cur_idx   = 0;
+    prof_act->content_ctnr.cur_idx = 0;
 
-    r->modPerPortCfg1.ENABLE_VLAN_UPDATE      = FM_GET_BIT64  (mod_per_port_cfg1_reg, MBY_MOD_PER_PORT_CFG1, ENABLE_VLAN_UPDATE);
-    r->modPerPortCfg1.VID2_MAP_INDEX          = FM_GET_FIELD64(mod_per_port_cfg1_reg, MBY_MOD_PER_PORT_CFG1, VID2_MAP_INDEX);
-    r->modPerPortCfg1.LOOPBACK_SUPPRESS_GLORT = FM_GET_FIELD64(mod_per_port_cfg1_reg, MBY_MOD_PER_PORT_CFG1, LOOPBACK_SUPPRESS_GLORT);
-    r->modPerPortCfg1.LOOPBACK_SUPPRESS_MASK  = FM_GET_FIELD64(mod_per_port_cfg1_reg, MBY_MOD_PER_PORT_CFG1, LOOPBACK_SUPPRESS_MASK);
+    /* Read content data. Content address is in 32B blocks, FWD_TABLE_MOD.DATA is 8B. */
+    fm_uint idx_1       = (content_addr * (MBY_MOD_CONTENT_ADDR_BLOCK_SIZE / MBY_MOD_CONTENT_ENTRY_SIZE)) /
+                          fwd_table_mod_rf_FWD_TABLE_MOD__nd;
+    fm_uint idx_2       = (content_addr * (MBY_MOD_CONTENT_ADDR_BLOCK_SIZE / MBY_MOD_CONTENT_ENTRY_SIZE)) %
+                          fwd_table_mod_rf_FWD_TABLE_MOD__nd;
+    fm_uint content_idx = 0;
 
-    fm_uint64 mod_per_port_cfg2_reg = 0;
-    mbyModelReadCSR64(regs, MBY_MOD_PER_PORT_CFG2(tx_port, 0), &mod_per_port_cfg2_reg);
+    for (fm_uint i = 0; i < (MBY_MOD_CONTENT_SIZE / MBY_MOD_CONTENT_ENTRY_SIZE); i++)
+    {
+        for (fm_uint j = 0; j < MBY_MOD_CONTENT_ENTRY_SIZE; j++)
+            prof_act->content_ctnr.content[content_idx++] =
+                FM_GET_UNNAMED_FIELD(shm_map->FWD_TABLE_MOD[idx_1][idx_2].DATA, j * 8, 8);
 
-    r->modPerPortCfg2.ENABLE_DMAC_ROUTING     = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_DMAC_ROUTING);
-    r->modPerPortCfg2.ENABLE_SMAC_ROUTING     = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_SMAC_ROUTING);
-    r->modPerPortCfg2.ENABLE_TTL_DECREMENT    = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_TTL_DECREMENT);
-    r->modPerPortCfg2.ENABLE_ECN_MODIFICATION = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_ECN_MODIFICATION);
-    r->modPerPortCfg2.VLAN2_E_TYPE            = FM_GET_FIELD64(mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, VLAN2_E_TYPE);
-    r->modPerPortCfg2.VLAN1_E_TYPE            = FM_GET_FIELD64(mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, VLAN1_E_TYPE);
-    r->modPerPortCfg2.ENABLE_DEI2_UPDATE      = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_DEI2_UPDATE);
-    r->modPerPortCfg2.ENABLE_DEI1_UPDATE      = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_DEI1_UPDATE);
-    r->modPerPortCfg2.ENABLE_PCP2_UPDATE      = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_PCP2_UPDATE);
-    r->modPerPortCfg2.ENABLE_PCP1_UPDATE      = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, ENABLE_PCP1_UPDATE);
-    r->modPerPortCfg2.VID2_FIRST              = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, VID2_FIRST);
-    r->modPerPortCfg2.VLAN_TAGGING            = FM_GET_FIELD64(mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, VLAN_TAGGING);
-    r->modPerPortCfg2.MIN_FRAME_SIZE          = FM_GET_BIT64  (mod_per_port_cfg2_reg, MBY_MOD_PER_PORT_CFG2, MIN_FRAME_SIZE);
+        idx_2++;
+        if (idx_2 == fwd_table_mod_rf_FWD_TABLE_MOD__nd)
+        {
+            idx_1++;
+            idx_2 = 0;
+        }
+    }
 }
 
-static void calcIngressCRC
+static mbyModProfileGroup getProfileGroup
 (
-    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32           rx_length,
-    const fm_byte     * const rx_packet,
-    mbyModControlData * const c
-)
+    mby_ppe_modify_map * const mod_map,
+    fm_byte                    mod_prof_idx)
 {
-    fm_uint32 ingress_crc = 0;
-    for (fm_uint i = 0; i < 4; i++)
-        ingress_crc |= rx_packet[rx_length - 4 + i] << (i * 8);
+    mbyModProfileGroup prof_grp;
 
-    // calculate good ingress crc
-    fm_uint32 good_ingress_crc = mbyCrc32(rx_packet, rx_length-4);
+    prof_grp.group[0] = 0; // The 1st group is always treated as starting at packet offset zero.
+    prof_grp.group[1] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_1;
+    prof_grp.group[2] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_2;
+    prof_grp.group[3] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_3;
+    prof_grp.group[4] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_4;
+    prof_grp.group[5] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_5;
+    prof_grp.group[6] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_6;
+    prof_grp.group[7] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_7;
 
-    // calculate ingress crc error differential
-    fm_uint32 crc_ingress_diff = good_ingress_crc ^ ingress_crc;
-
-    if (crc_ingress_diff != 0) { /* Ingress packet has bad CRC */ }
-
-    c->crc_ingress_diff = crc_ingress_diff;
+    return prof_grp;
 }
 
-static void unpackPacket
+static mbyModProfileField getProfileField
 (
-    const fm_uint32	  rx_length,
-    const fm_byte * const rx_packet,
-    const mbyParserInfo   parser_info,
-    mbyChunkedSeg * const chunked_seg
+    mby_ppe_modify_map * const mod_map,
+    fm_byte                    mod_prof_idx
 )
 {
-    // OTR ETH:
-    fm_uint32 otr_l2_len = (parser_info.otr_l2_len > 5)
-        ? 5 // "WARNING: parser_info.otr_l2_len overrun 30B otr_l2 chunk segment"
-        : parser_info.otr_l2_len;
+    mbyModProfileField prof_fld;
 
-    fm_uint32 idx = 0;
-
-    if (otr_l2_len > 0) {
-        for (fm_uint i = 0; i < 6; i++, idx++)
-            chunked_seg->otr_dmac[i] = rx_packet[idx];
-        for (fm_uint i = 0; i < 6; i++, idx++)
-            chunked_seg->otr_smac[i] = rx_packet[idx];
-        chunked_seg->n_otr_tag = (otr_l2_len - 1);
-        for (fm_uint i = 0; i < (4*chunked_seg->n_otr_tag); i++, idx++)
-            chunked_seg->otr_tags[i] = rx_packet[idx];
-        // Etype:
-        for (fm_uint i = 0; i < 2; i++, idx++)
-            chunked_seg->otr_et[i] = rx_packet[idx];
+    for (fm_uint i = 0; i < (MBY_MOD_FIELD_VECTOR_SIZE / MBY_MOD_FIELDS_PER_REG_ENTRY); i++)
+    {
+        prof_fld.protocol_id[i * 3 + 0] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].PROTOCOL_ID_0;
+        prof_fld.offset     [i * 3 + 0] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].OFFSET_0;
+        prof_fld.protocol_id[i * 3 + 1] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].PROTOCOL_ID_1;
+        prof_fld.offset     [i * 3 + 1] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].OFFSET_1;
+        prof_fld.protocol_id[i * 3 + 2] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].PROTOCOL_ID_2;
+        prof_fld.offset     [i * 3 + 2] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].OFFSET_2;
     }
 
-    // OTR MPLS:
-    chunked_seg->n_otr_mpls = (parser_info.otr_mpls_len > 7)
-        ? 7 // "WARNING: parser_info.otr_mpls_len overrun 28B otr_mpls chunk segment
-        : parser_info.otr_mpls_len;
+    return prof_fld;
+}
 
-    chunked_seg->n_otr_mpls_pre = parser_info.otr_mpls_len;
-    for (fm_uint i = 0; i < (4 * chunked_seg->n_otr_mpls); i++, idx++)
-        chunked_seg->otr_mpls[i] = rx_packet[idx];
+static mbyModProfileCmd getProfileCommand
+(
+    mby_ppe_modify_map * const mod_map,
+    fm_byte                    mod_prof_idx
+)
+{
+    mbyModProfileCmd prof_cmd;
 
-    fm_uint32 tmp_idx = idx;
-    for (fm_uint i = (4 * chunked_seg->n_otr_mpls); i < 28; i++, tmp_idx++)
-        chunked_seg->otr_mpls[i] = rx_packet[tmp_idx];
-
-    // OTR L3:
-    chunked_seg->otr_ip_size = (parser_info.otr_l3_len > 14)
-        ? 14 // WARNING: parser_info.otr_l3_len overrun 56B otr_l3 chunk segment
-        : parser_info.otr_l3_len;
-
-    chunked_seg->otr_l3_v6 = parser_info.otr_l3_v6;
-    for (fm_uint i = 0; i < (4 * chunked_seg->otr_ip_size); i++, idx++)
-        chunked_seg->otr_ip[i] = rx_packet[idx];
-
-    // OTR L4:
-    if (parser_info.otr_l4_udp && parser_info.otr_l4_tcp) { /* WARNING: cannot both be true */ }
-
-    chunked_seg->otr_udp_v = parser_info.otr_l4_udp;
-    chunked_seg->otr_tcp_v = parser_info.otr_l4_tcp;
-
-    if (chunked_seg->otr_udp_v)
+    for (fm_uint i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
     {
-        fm_uint32 otr_tun_len = (parser_info.otr_tun_len > 18)
-            ? 18 // WARNING: parser_info.otr_tun_len overrun 80B combined otr_l4+tunnel_opt chunk segments"
-            : parser_info.otr_tun_len;
+        prof_cmd.cmd[i][0] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2].CMD_0;
+        prof_cmd.cmd[i][1] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2].CMD_1;
+        prof_cmd.cmd[i][2] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2 + 1].CMD_0;
+        prof_cmd.cmd[i][3] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2 + 1].CMD_1;
+    }
 
-        for (fm_uint i = 0; i < (8 + otr_tun_len*4); i++, idx++)
-            if (i < 40)
-                chunked_seg->otr_l4[i]     = rx_packet[idx];
+    return prof_cmd;
+}
+
+static void extractFields
+(
+    fm_byte            const * const rx_data,
+    mbyParserHdrPtrs   const * const pa_hdr_ptrs,
+    mbyModProfileField const * const prof_fld,
+    fm_uint                          operating_region,
+    mbyModFieldVector        * const fld_vector
+)
+{
+    for (fm_uint i = 0; i < MBY_MOD_FIELD_VECTOR_SIZE; i++)
+    {
+        fld_vector->field[i] = 0;
+
+        if (prof_fld->protocol_id[i] < MBY_MOD_PROT_ID_MD_TYPE)
+        {
+            for (fm_uint j = 0; j < MBY_N_PARSER_PTRS; j++)
+            {
+                if ((pa_hdr_ptrs->PROT_ID[j] != MBY_PA_PROT_ID_NOP) &
+                    (pa_hdr_ptrs->PROT_ID[j] == prof_fld->protocol_id[i]))
+                {
+                    fm_uint idx = pa_hdr_ptrs->OFFSET[j] + prof_fld->offset[i];
+                    if(idx < operating_region) {
+                        fld_vector->field[i] = rx_data[idx];
+                        break;
+                    }
+                }
+            }
+        }
+        /* Metadata fields should be handled in else clause <--REVISIT!!! */
+    }
+}
+
+static void decodeCommand
+(
+    fm_uint32 cmd,
+    mbyModDecCmd * const dec_cmd
+)
+{
+    mbyModCmdType cmd_type = FM_GET_FIELD64(cmd, MBY_MOD_CMD, TYPE);
+    switch (cmd_type)
+    {
+        case MBY_MOD_CMD_TYPE_NOP:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_NOP;
+            break;
+        case MBY_MOD_CMD_TYPE_INSERT:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_INSERT;
+            dec_cmd->field.insrt.len                = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.insrt.prot_id            = FM_GET_FIELD64(cmd, MBY_MOD_CMD, PROT_ID);
+            dec_cmd->field.insrt.update             = FM_GET_BIT64  (cmd, MBY_MOD_CMD, UPDATE);
+            dec_cmd->field.insrt.mode               = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_INSERT_FIELD:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_INSERT_FIELD;
+            dec_cmd->field.insrt_fld.len_mask       = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.insrt_fld.mode           = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_INSERT_FIELD_LUT:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_INSERT_FIELD_LUT;
+            dec_cmd->field.insrt_fld_lut.lut        = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LUT);
+            dec_cmd->field.insrt_fld_lut.lut_mode   = FM_GET_BIT64  (cmd, MBY_MOD_CMD, LUT_MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_DELETE:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_DELETE;
+            dec_cmd->field.del.prot_del             = FM_GET_BIT64  (cmd, MBY_MOD_CMD, PROT_DEL);
+            break;
+        case MBY_MOD_CMD_TYPE_REPLACE:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_REPLACE;
+            dec_cmd->field.replace.len_mask         = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.replace.offset           = FM_GET_FIELD64(cmd, MBY_MOD_CMD, OFFSET);
+            dec_cmd->field.replace.align            = FM_GET_BIT64  (cmd, MBY_MOD_CMD, ALIGNMENT);
+            dec_cmd->field.replace.mode             = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_REPLACE_FIELD:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_REPLACE_FIELD;
+            dec_cmd->field.replace_fld.len_mask     = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.replace_fld.offset       = FM_GET_FIELD64(cmd, MBY_MOD_CMD, OFFSET);
+            dec_cmd->field.replace_fld.align        = FM_GET_BIT64  (cmd, MBY_MOD_CMD, ALIGNMENT);
+            dec_cmd->field.replace_fld.mode         = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_REPLACE_FIELD_LUT:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_REPLACE_FIELD_LUT;
+            dec_cmd->field.replace_fld_lut.offset   = FM_GET_FIELD64(cmd, MBY_MOD_CMD, OFFSET);
+            dec_cmd->field.replace_fld_lut.align    = FM_GET_BIT64  (cmd, MBY_MOD_CMD, ALIGNMENT);
+            dec_cmd->field.replace_fld_lut.lut      = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LUT);
+            dec_cmd->field.replace_fld_lut.lut_mode = FM_GET_BIT64  (cmd, MBY_MOD_CMD, LUT_MODE);
+            break;
+        default:
+            /* Command type not recognized. */
+            dec_cmd->type = MBY_MOD_CMD_TYPE_NOP;
+            break;
+    }
+}
+
+static void lookupProfile
+(
+    mby_ppe_modify_map        * const mod_map,
+    fm_byte                   * const rx_data,
+    mbyParserHdrPtrs    const * const pa_hdr_ptrs,
+    fm_byte                           mod_prof_idx,
+    mbyModProfileAction       * const prof_act
+)
+{
+    mbyModProfileField prof_fld;
+    mbyModProfileCmd   prof_cmd;
+
+    prof_act->profile_grp = getProfileGroup(mod_map, mod_prof_idx);
+    prof_fld              = getProfileField(mod_map, mod_prof_idx);
+    prof_cmd              = getProfileCommand(mod_map, mod_prof_idx);
+
+    extractFields(rx_data, pa_hdr_ptrs, &prof_fld, prof_act->operating_region, &prof_act->fld_vector);
+
+    for (fm_uint grp = 0; grp < MBY_MOD_PROFILE_GROUPS; grp++)
+    {
+        for (fm_uint idx = 0; idx < MBY_MOD_COMMAND_PER_GROUP; idx++)
+        {
+            decodeCommand(prof_cmd.cmd[grp][idx], &(prof_act->dec_cmd[grp][idx]));
+        }
+    }
+}
+
+static void decodeProfileGroups
+(
+    const mbyTxInToModifier  * const in,
+    mbyModProfileGroup * const prof_grp,
+    mbyModGroupConfig  * const grp_list
+)
+{
+    /* Group 0 is always treated as starting at packet offset zero. */
+    fm_uint grp_idx = 0;
+
+    grp_list[grp_idx  ].valid      = 1;
+    grp_list[grp_idx  ].grp_idx    = 0;
+    grp_list[grp_idx  ].pa_hdr_idx = 0;
+    grp_list[grp_idx++].pkt_offset = 0;
+
+    for (int grp = 1; grp < MBY_MOD_PROFILE_GROUPS; grp++)
+    {
+        /* If CONFIG bit is 0, use offset associated with protocol ID.
+         * If CONFIG bit is 1, offset is relative to the previous group.
+         */
+        fm_bool use_prot_id = !FM_GET_BIT(prof_grp->group[grp], MBY_MOD_PROFILE_GROUP, CONFIG);
+
+        if (use_prot_id)
+        {
+            fm_byte prot_id = FM_GET_FIELD64(prof_grp->group[grp], MBY_MOD_PROFILE_GROUP, PROT_ID);
+            if(prot_id != MBY_PA_PROT_ID_NOP)
+            {
+                for (fm_int pa_hdr_idx = 0; pa_hdr_idx < MBY_N_PARSER_PTRS; pa_hdr_idx++)
+                {
+                    if (in->PA_HDR_PTRS.PROT_ID[pa_hdr_idx] == prot_id)
+                    {
+                        grp_list[grp_idx  ].valid      = 1;
+                        grp_list[grp_idx  ].grp_idx    = grp;
+                        grp_list[grp_idx  ].pa_hdr_idx = pa_hdr_idx;
+                        grp_list[grp_idx++].pkt_offset = in->PA_HDR_PTRS.OFFSET[pa_hdr_idx];
+
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            assert(grp_idx > 0);
+
+            fm_byte offset = FM_GET_FIELD64(prof_grp->group[grp], MBY_MOD_PROFILE_GROUP, OFFSET);
+
+            grp_list[grp_idx++].valid      = 1;
+            grp_list[grp_idx  ].pkt_offset = grp_list[grp_idx - 1].pkt_offset + offset;
+            grp_list[grp_idx  ].grp_idx    = grp;
+            grp_list[grp_idx  ].pa_hdr_idx = grp_list[grp_idx - 1].pa_hdr_idx;
+        }
+    }
+}
+
+static void setProfileGroupSizes
+(
+    fm_uint32                 operating_region,
+    mbyModGroupConfig * const grp_list
+)
+{
+    fm_uint ctnr_offset = 0;
+    fm_int i;
+
+    for (i = 0; i < (MBY_MOD_PROFILE_GROUPS - 1); i++)
+    {
+        if (grp_list[i].valid)
+        {
+            /* Allocate output container offsets and sizes. */
+            if (grp_list[i + 1].valid)
+            {
+                grp_list[i].pkt_size  = grp_list[i + 1].pkt_offset - grp_list[i].pkt_offset;
+                grp_list[i].ctnr_size = grp_list[i].pkt_size;
+            }
             else
-                chunked_seg->tun_opt[i-40] = rx_packet[idx];
+            {
+                grp_list[i].pkt_size  = operating_region - grp_list[i].pkt_offset;
+                grp_list[i].ctnr_size = grp_list[i].pkt_size;
+            }
 
-        // it is not l4 hdr size, you can think of it is the tunnel hdr len in l4 chunk and tunnel chunk
-        chunked_seg->tun_size_in_l4_chunk = (otr_tun_len < 8) ? otr_tun_len : 8;
-        chunked_seg->tun_opt_size         = (otr_tun_len < 8) ? 0           : otr_tun_len - 8;
+            grp_list[i].ctnr_offset = ctnr_offset;
+            ctnr_offset            += grp_list[i].ctnr_size;
+        }
+        else
+        {
+            break;
+        }
     }
-    else if (chunked_seg->otr_tcp_v)
+
+    /* Set for last group. */
+    if (grp_list[i].valid)
     {
-        for (fm_uint i = 0; i < 18; i++, idx++)
-            chunked_seg->otr_l4[i] = rx_packet[idx];
+        grp_list[i].pkt_size  = operating_region - grp_list[i].pkt_offset;
+        grp_list[i].ctnr_size = grp_list[i].pkt_size;
     }
-    else if (parser_info.otr_tun_len) // any tunnel protocol following L3 immediately
-    {
-        fm_uint32 otr_tun_len = (parser_info.otr_tun_len > 18)
-            ? 18 // WARNING: parser_info.otr_tun_len overrun 80B combined otr_l4+tunnel_opt chunk segments
-            : parser_info.otr_tun_len;
-
-        for (fm_uint i = 0; i < (otr_tun_len * 4); i++, idx++)
-            if (i < 40)
-                chunked_seg->otr_l4[i]     = rx_packet[idx];
-            else
-                chunked_seg->tun_opt[i-40] = rx_packet[idx];
-
-        chunked_seg->tun_size_in_l4_chunk = (otr_tun_len < 10) ? otr_tun_len : 10;
-        chunked_seg->tun_opt_size         = (otr_tun_len < 10) ? 0           : otr_tun_len - 10;
-    }
-
-    // Inner:
-    fm_uint32 inr_l2_len = (parser_info.inr_l2_len > 5)
-        ? 5 // WARNING: parser_info.inr_l2_len overrun 30B inr_l2 chunk segment
-        : parser_info.inr_l2_len;
-
-    if (inr_l2_len > 0)
-    {
-        // ETH:
-        chunked_seg->inr_l2_v = 1;
-        for (fm_uint i = 0; i < 6; i++, idx++)
-            chunked_seg->inr_dmac[i] = rx_packet[idx];
-        for (fm_uint i = 0; i < 6; i++, idx++)
-            chunked_seg->inr_smac[i] = rx_packet[idx];
-        // VLAN & Custom Tags
-        chunked_seg->n_inr_tag = parser_info.inr_l2_len - 1;
-        for (fm_uint i = 0; i < (4 * chunked_seg->n_inr_tag); i++, idx++)
-            chunked_seg->inr_tags[i] = rx_packet[idx];
-        // Etype:
-        for (fm_uint i = 0; i < 2; i++, idx++)
-            chunked_seg->inr_et[i] = rx_packet[idx];
-        // INR MPLS:
-        chunked_seg->n_inr_mpls = (parser_info.inr_mpls_len > 7)
-            ? 7 // WARNING: parser_info.inr_mpls_len overrun 28B inr_mpls chunk segment
-            : parser_info.inr_mpls_len;
-        for (int i = 0; i < (4 * chunked_seg->n_inr_mpls); i++, idx++)
-            chunked_seg->inr_mpls[i] = rx_packet[idx];
-    }
-
-    // Should this be conditional on something?! <-- REVISIT!!!
-    {
-        // INR L3:
-        chunked_seg->inr_ip_size = (parser_info.inr_l3_len > 14)
-            ? 14 // WARNING: parser_info.inr_l3_len overrun 56B inr_l3 chunk segment
-            : parser_info.inr_l3_len;
-
-        chunked_seg->inr_l3_v6 = parser_info.inr_l3_v6;
-        for (fm_uint i = 0; i < (chunked_seg->inr_ip_size * 4); i++, idx++)
-            chunked_seg->inr_ip[i] = rx_packet[idx];
-
-        // INR L4:
-        if (parser_info.inr_l4_udp && parser_info.inr_l4_tcp) { /* WARNING: cannot both be true! */ }
-
-        chunked_seg->inr_udp_v = parser_info.inr_l4_udp;
-        chunked_seg->inr_tcp_v = parser_info.inr_l4_tcp;
-
-        if (parser_info.inr_l4_udp)
-            for (fm_uint i = 0; i < 8; i++, idx++)
-                chunked_seg->inr_l4[i] = rx_packet[idx];
-
-        if (parser_info.inr_l4_tcp)
-            for (fm_uint i = 0; i < 18; i++, idx++)
-                chunked_seg->inr_l4[i] = rx_packet[idx];
-    }
-
-    chunked_seg->payload_start = idx;
-    chunked_seg->payload_size  = rx_length - idx;
 }
 
-static void packPacket
+static void checkGroupMonotonic(mbyModGroupConfig * const grp_list)
+{
+    fm_uint prev_pkt_offset  = 0;
+    fm_uint prev_grp_idx     = 0;
+    fm_uint prev_ctnr_offset = 0;
+
+    for (int i = 0 ; i < MBY_MOD_PROFILE_GROUPS ; i++)
+    {
+        if (grp_list[i].valid)
+        {
+            if (i == 0)
+            {
+                assert(grp_list[i].grp_idx     == prev_grp_idx);
+                assert(grp_list[i].pkt_offset  == prev_pkt_offset);
+                assert(grp_list[i].ctnr_offset == prev_ctnr_offset);
+            }
+            else
+            {
+                assert(grp_list[i].grp_idx     >  prev_grp_idx);
+                assert(grp_list[i].pkt_offset  >= prev_pkt_offset); // whether a group size can be 0
+                assert(grp_list[i].ctnr_offset >= prev_ctnr_offset);
+            }
+        }
+        prev_pkt_offset  = grp_list[i].pkt_offset;
+        prev_grp_idx     = grp_list[i].grp_idx;
+        prev_ctnr_offset = grp_list[i].ctnr_offset;
+    }
+}
+
+static void buildProfileGroupList
 (
-    const fm_bool                   no_modify,
-    const fm_uint32                 rx_length,
-    const fm_byte           * const rx_packet,
-    const mbyModControlData * const ctrl_data,
-    const mbyChunkedSeg     * const chunked_seg,
-    fm_uint32	            * const tx_length,
-    fm_byte                         tx_packet[MBY_MAX_PACKET_SIZE]
+    mbyTxInToModifier   const * const in,
+    mbyModProfileAction       * const prof_act
 )
 {
-    // initialize index into TX packet buffer:
-    fm_uint32 idx = 0;
+    mbyModGroupConfig grp_list[MBY_MOD_PROFILE_GROUPS];
 
-    if (!ctrl_data->isWindowParsing && !no_modify)
+    for (fm_int i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
     {
-        // FTAG:
-        if (chunked_seg->ftag_v)
-            for (fm_uint i = 0; i < 8; i++, idx++)
-                tx_packet[idx] = chunked_seg->ftag[i];
-
-        // OTR ETH:
-        for (fm_uint i = 0; i < MAC_ADDR_BYTES; i++, idx++)
-            tx_packet[idx] = chunked_seg->otr_dmac[i];
-
-        for (fm_uint i = 0; i < MAC_ADDR_BYTES; i++, idx++)
-            tx_packet[idx] = chunked_seg->otr_smac[i];
-
-        // VLAN & Custom Tags:
-        for (fm_uint i = 0; ((i < (4 * chunked_seg->n_otr_tag)) && (i < 16)); i++, idx++)
-            tx_packet[idx] = chunked_seg->otr_tags[i];
-
-        // Etype:
-        for (fm_uint i = 0; i < 2; i++, idx++)
-            tx_packet[idx] = chunked_seg->otr_et[i];
-
-        // OTR MPLS:
-        for (fm_uint i = 0; i < (4 * chunked_seg->n_otr_mpls); i++, idx++)
-            tx_packet[idx] = chunked_seg->otr_mpls[i];
-
-        // OTR IP:
-        for (fm_uint i = 0; i < (4 * chunked_seg->otr_ip_size); i++, idx++)
-            tx_packet[idx] = chunked_seg->otr_ip[i];
-
-        // Layer 4:
-        if (chunked_seg->otr_udp_v)
-        {
-            for (fm_uint i = 0; i < ((4 * chunked_seg->tun_size_in_l4_chunk) + 8uL); i++, idx++)
-                tx_packet[idx] = chunked_seg->otr_l4[i];
-
-            for (fm_uint i = 0; i < (4 * chunked_seg->tun_opt_size); i++, idx++)
-                tx_packet[idx] = chunked_seg->tun_opt[i];
-        }
-        else if (chunked_seg->otr_tcp_v)
-        {
-            for (fm_uint i = 0; i < 18; i++, idx++)
-                tx_packet[idx] = chunked_seg->otr_l4[i];
-        }
-        else if (chunked_seg->tun_size_in_l4_chunk || chunked_seg->tun_opt_size)
-        {
-            for (fm_uint i = 0; i < (4 * chunked_seg->tun_size_in_l4_chunk); i++, idx++)
-                tx_packet[idx] = chunked_seg->otr_l4[i];
-
-            for (fm_uint i = 0; i < (4 * chunked_seg->tun_opt_size); i++, idx++)
-                tx_packet[idx] = chunked_seg->tun_opt[i];
-        }
-
-        // Inner:
-        if (chunked_seg->inr_l2_v)
-        {
-            // ETH:
-            for (fm_uint i = 0; i < MAC_ADDR_BYTES; i++, idx++)
-                tx_packet[idx] = chunked_seg->inr_dmac[i];
-
-            for (fm_uint i = 0; i < MAC_ADDR_BYTES; i++, idx++)
-                tx_packet[idx] = chunked_seg->inr_smac[i];
-
-            // VLAN & Custom Tags:
-            for (fm_uint i = 0; i < (4 * chunked_seg->n_inr_tag); i++, idx++)
-                tx_packet[idx] = chunked_seg->inr_tags[i];
-
-            // Etype:
-            for (fm_uint i = 0; i < 2; i++, idx++)
-                tx_packet[idx] = chunked_seg->inr_et[i];
-
-            // INR MPLS:
-            for (fm_uint i = 0; i < (4 * chunked_seg->n_inr_mpls); i++, idx++)
-                tx_packet[idx] = chunked_seg->inr_mpls[i];
-        }
-
-        // Should this be conditional on something?! <-- REVISIT!!!
-        {
-            // IP:
-            for (fm_uint i = 0; i < (4 * chunked_seg->inr_ip_size); i++, idx++)
-                tx_packet[idx] = chunked_seg->inr_ip[i];
-
-            if (chunked_seg->inr_udp_v)
-                for (fm_uint i = 0; i < 8; i++, idx++)
-                    tx_packet[idx] = chunked_seg->inr_l4[i];
-
-            if (chunked_seg->inr_tcp_v)
-                for (fm_uint i = 0; i < 18; i++, idx++)
-                    tx_packet[idx] = chunked_seg->inr_l4[i];
-        }
+        grp_list[i].valid       = 0;
+        grp_list[i].grp_idx     = 0;
+        grp_list[i].pkt_offset  = 0;
+        grp_list[i].pkt_size    = 0;
+        grp_list[i].ctnr_offset = 0;
+        grp_list[i].ctnr_size   = 0;
+        grp_list[i].grp_offset  = 0;
+        grp_list[i].pa_hdr_idx  = -1;
     }
 
-    // Payload:
-    if (no_modify) {
-        *tx_length = rx_length;
-        for (fm_uint i = 0; i < rx_length; i++, idx++)
-      	    tx_packet[idx] = rx_packet[i];
+    decodeProfileGroups(in, &(prof_act->profile_grp), grp_list);
+
+    setProfileGroupSizes(prof_act->operating_region, grp_list);
+
+    checkGroupMonotonic(grp_list);
+
+    for (fm_int i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
+        prof_act->grp_list[i] = grp_list[i];
+}
+
+static void adjustGrpOffset
+(
+    fm_uint                   idx,
+    mbyModGroupConfig * const grp_list,
+    fm_int                    len
+)
+{
+    for (int i = idx + 1 ; i < MBY_MOD_PROFILE_GROUPS ; i++)
+    {
+        if (grp_list[i].valid)
+            grp_list[i].ctnr_offset += len;
+        else
+            break;
+    }
+}
+
+static void copyFromTo
+(
+    fm_byte * const from,
+    fm_uint         from_offset,
+    fm_byte * const to,
+    fm_uint         to_offset,
+    fm_byte         bitmask,
+    fm_uint         len
+)
+{
+    for (fm_uint i = 0; i < len; i++)
+        to[to_offset + i] = from[from_offset + i] & bitmask;
+}
+
+void updateCtnrIdx(fm_uint * idx, fm_uint delta, fm_uint boundary)
+{
+    if ((*idx + delta) < boundary)
+        *idx += delta;
+}
+
+static fm_uint16 lookupModMap
+(
+    mby_ppe_modify_map * const mod_map,
+    fm_byte                    lut,
+    mbyModCmdLutMode           lm,
+    mbyModFieldVector  * const fld_vector
+)
+{
+    fm_uint16  value = 0;
+
+    if (lut <= MBY_MOD_MAP_MAX_SINGLE_LUT)
+    {
+        fm_byte idx_mask_len     = mod_map->MOD_MAP_CFG[lut].IDX_MASK_LEN;
+        fm_byte idx_shift_right  = mod_map->MOD_MAP_CFG[lut].IDX_SHIFT_RIGHT;
+        fm_byte base_mask_len    = mod_map->MOD_MAP_CFG[lut].BASE_MASK_LEN;
+        fm_byte base_shift_right = mod_map->MOD_MAP_CFG[lut].BASE_SHIFT_RIGHT;
+        fm_uint16 output_mask    = mod_map->MOD_MAP_CFG[lut].OUTPUT_MASK;
+        fm_byte output_shift     = mod_map->MOD_MAP_CFG[lut].OUTPUT_SHIFT;
+        fm_uint16 idx            = 0;
+        fm_uint16 base           = 0;
+
+        if (lm == MBY_MOD_CMD_LUT_MODE_DIRECT)
+        {
+            idx = (fld_vector->field[fld_vector->cur_idx] << 8) | fld_vector->field[fld_vector->cur_idx + 1];
+            updateCtnrIdx(&(fld_vector->cur_idx), 2, MBY_MOD_FIELD_VECTOR_SIZE - 1);
+
+            idx = idx >> idx_shift_right;
+            idx = idx & ((1 << idx_mask_len) - 1);
+            idx = idx & 0x7ff; /* MOD_MAP reg is 2K entries */
+        }
+        else
+        {
+            idx  = (fld_vector->field[fld_vector->cur_idx    ] << 8) | fld_vector->field[fld_vector->cur_idx + 1];
+            base = (fld_vector->field[fld_vector->cur_idx + 2] << 8) | fld_vector->field[fld_vector->cur_idx + 3];
+            updateCtnrIdx(&(fld_vector->cur_idx), 4, MBY_MOD_FIELD_VECTOR_SIZE - 1);
+
+            idx  = idx >> idx_shift_right;
+            idx  = idx & ((1 << idx_mask_len) - 1);
+            base = base >> base_shift_right;
+            base = base & ((1 << base_mask_len) - 1);
+            idx = (idx + base) & 0x7ff;  /* MOD_MAP reg is 2K entries */
+        }
+
+        switch (idx % MBY_MOD_MAP_VALUES_PER_ENTRY) {
+        case 0:
+            value = mod_map->MOD_MAP[lut][idx / MBY_MOD_MAP_VALUES_PER_ENTRY].VALUE0;
+            break;
+        case 1:
+            value = mod_map->MOD_MAP[lut][idx / MBY_MOD_MAP_VALUES_PER_ENTRY].VALUE1;
+            break;
+        case 2:
+            value = mod_map->MOD_MAP[lut][idx / MBY_MOD_MAP_VALUES_PER_ENTRY].VALUE2;
+            break;
+        case 3:
+            value = mod_map->MOD_MAP[lut][idx / MBY_MOD_MAP_VALUES_PER_ENTRY].VALUE3;
+            break;
+        }
+
+        value = value << output_shift;
+        value = value & output_mask;
+    }
+    else if (lut == MBY_MOD_MAP_DUAL_LUT)
+    {
+        fm_byte idx0_mask_len    = mod_map->MOD_MAP_DUAL_CFG.IDX0_MASK_LEN;
+        fm_byte idx0_shift_right = mod_map->MOD_MAP_DUAL_CFG.IDX0_SHIFT_RIGHT;
+        fm_byte idx1_mask_len    = mod_map->MOD_MAP_DUAL_CFG.IDX1_MASK_LEN;
+        fm_byte idx1_shift_right = mod_map->MOD_MAP_DUAL_CFG.IDX1_SHIFT_RIGHT;
+        fm_uint16 output_mask    = mod_map->MOD_MAP_DUAL_CFG.OUTPUT_MASK;
+        fm_byte output_shift     = mod_map->MOD_MAP_DUAL_CFG.OUTPUT_SHIFT;
+
+        fm_uint16 idx0 = (fld_vector->field[fld_vector->cur_idx] << 8) | fld_vector->field[fld_vector->cur_idx + 1];
+        fm_uint16 idx1 = fld_vector->field[fld_vector->cur_idx + 2];
+        updateCtnrIdx(&(fld_vector->cur_idx), 3, MBY_MOD_FIELD_VECTOR_SIZE - 1);
+
+        idx0 = idx0 >> idx0_shift_right;
+        idx0 = idx0 & ((1 << idx0_mask_len) - 1);
+        idx0 = idx0 & 0x3ff;  /* MOD_MAP_DUAL reg is 1K entries */
+        idx1 = idx1 >> idx1_shift_right;
+        idx1 = idx1 & ((1 << idx1_shift_right) - 1);
+
+        switch(idx1 % MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY)
+        {
+        case 0:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE0;
+            break;
+        case 1:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE1;
+            break;
+        case 2:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE2;
+            break;
+        case 3:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE3;
+            break;
+        case 4:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE4;
+            break;
+        case 5:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE5;
+            break;
+        case 6:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE6;
+            break;
+        case 7:
+            value = mod_map->MOD_MAP_DUAL[idx0][idx1 / MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY].VALUE7;
+            break;
+        }
+
+        value = value << output_shift;
+        value = value & output_mask;
+    }
+
+    return value;
+}
+
+static fm_uint16 getContainerOffset(mbyModGroupConfig * const grp,
+                                    fm_byte                   offset,
+                                    mbyModCmdAlignment        alignment)
+{
+    fm_uint16 result = 0;
+
+    if (alignment == MBY_MOD_CMD_ALIGN_TOP)
+        result = grp->ctnr_offset + offset + (grp->ctnr_size - grp->pkt_size);
+    else if (alignment == MBY_MOD_CMD_ALIGN_BOTTOM)
+        result = grp->ctnr_size + grp->ctnr_offset - offset - 1;
+
+    return result;
+}
+
+static void performInsert(mbyParserHdrPtrs       * const pa_hdr_ptrs,
+                          mbyModCmdInsert        * const cmd,
+                          mbyModGroupConfig      * const grp_list,
+                          fm_int                         grp_list_idx,
+                          fm_byte                * const grp_ctnr,
+                          mbyModContentContainer * const content_ctnr)
+{
+    mbyModGroupConfig * const grp = &(grp_list[grp_list_idx]);
+
+    fm_uint insert_len = 0;
+
+    if(cmd->mode == MBY_MOD_CMD_MODE_BASIC)
+        insert_len = cmd->len;
+
+    adjustGrpOffset(grp_list_idx, grp_list, insert_len);
+    grp->ctnr_size += insert_len;
+
+    assert(insert_len <= (grp->ctnr_size - grp->pkt_size - grp->grp_offset));
+
+    fm_byte mask = 0xff;
+    copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+
+    updateCtnrIdx(&content_ctnr->cur_idx, insert_len, MBY_MOD_CONTENT_SIZE - 1);
+
+    grp->grp_offset += insert_len;
+
+    /* Insert/Adjust protocol ID. */
+    fm_int pa_hdr_idx = grp->pa_hdr_idx;
+
+    if (cmd->prot_id != MBY_PA_PROT_ID_NOP)
+    {
+        for (fm_int i = MBY_N_PARSER_PTRS - 1; i >= pa_hdr_idx + 1; i--)
+        {
+            if (pa_hdr_ptrs->PROT_ID[i - 1] != MBY_PA_PROT_ID_NOP)
+            {
+                pa_hdr_ptrs->PROT_ID     [i]  = pa_hdr_ptrs->PROT_ID     [i - 1];
+                pa_hdr_ptrs->OFFSET_VALID[i]  = pa_hdr_ptrs->OFFSET_VALID[i - 1];
+                pa_hdr_ptrs->OFFSET      [i]  = pa_hdr_ptrs->OFFSET      [i - 1];
+                pa_hdr_ptrs->OFFSET      [i] += insert_len;
+            }
+        }
+
+        pa_hdr_ptrs->PROT_ID[pa_hdr_idx] = cmd->prot_id;
     } else {
-        for (fm_uint i = 0; i < chunked_seg->payload_size; i++, idx++)
-            tx_packet[idx] = rx_packet[chunked_seg->payload_start + i];
-        *tx_length = idx;
+        for (fm_int i = pa_hdr_idx + 1; i < MBY_N_PARSER_PTRS; i++)
+            if (pa_hdr_ptrs->PROT_ID[i] != MBY_PA_PROT_ID_NOP)
+                pa_hdr_ptrs->OFFSET[i] += insert_len;
     }
 }
 
-static fm_bool isWindowParsing
-(
-    const mbyParserInfo parser_info
-)
+static void performInsertField(mbyParserHdrPtrs   * const pa_hdr_ptrs,
+                               mbyModCmdInsertFld * const cmd,
+                               mbyModGroupConfig  * const grp_list,
+                               fm_int                     grp_list_idx,
+                               fm_byte            * const grp_ctnr,
+                               mbyModFieldVector  * const fld_vector)
 {
-    fm_bool is_win =
-        parser_info.otr_l2_len     == 0 &&
-        parser_info.otr_l2_vlan1   == 0 &&
-        parser_info.otr_l2_vlan2   == 0 &&
-        parser_info.otr_l2_v2first == 0 &&
-        parser_info.otr_mpls_len   == 0 &&
-        parser_info.otr_l3_len     == 0 &&
-        parser_info.otr_l3_v6      == 0 &&
-        parser_info.otr_l4_udp     == 0 &&
-        parser_info.otr_l4_tcp     == 0 &&
-        parser_info.otr_tun_len    == 0 &&
-        parser_info.inr_l2_len     == 0 &&
-        parser_info.inr_l2_vlan1   == 0 &&
-        parser_info.inr_l2_vlan2   == 0 &&
-        parser_info.inr_l2_v2first == 0 &&
-        parser_info.inr_mpls_len   == 0 &&
-        parser_info.inr_l3_len     == 0 &&
-        parser_info.inr_l3_v6      == 0 &&
-        parser_info.inr_l4_udp     == 0 &&
-        parser_info.inr_l4_tcp     == 0 ;
+    mbyModGroupConfig * const grp = &(grp_list[grp_list_idx]);
 
-    return is_win;
+    fm_uint insert_len = 0;
+
+    if(cmd->mode == MBY_MOD_CMD_MODE_BASIC)
+        insert_len = cmd->len_mask;
+
+    adjustGrpOffset(grp_list_idx, grp_list, insert_len);
+    grp->ctnr_size += insert_len;
+
+    assert(insert_len <= (grp->ctnr_size - grp->pkt_size - grp->grp_offset));
+
+    fm_byte mask = 0xff;
+    copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, grp->ctnr_offset + grp->grp_offset, mask, insert_len);
+
+    updateCtnrIdx(&fld_vector->cur_idx, insert_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
+
+    grp->grp_offset += insert_len;
+
+    /* Adjust offsets. */
+    fm_int pa_hdr_idx = grp->pa_hdr_idx;
+
+    for (fm_int i = pa_hdr_idx + 1; i < MBY_N_PARSER_PTRS; i++)
+        if (pa_hdr_ptrs->PROT_ID[i] != MBY_PA_PROT_ID_NOP)
+            pa_hdr_ptrs->OFFSET[i] += insert_len;
 }
 
-static void initControl
-(
-    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyParserInfo       parser_info,
-    const fm_bool             no_modify,
-    const fm_uint16           l2_evid1,
-    const fm_uint16           edglort,
-    const mbyMirrorType       mirtyp,
-    const fm_byte             qos_l3_dscp,
-    const fm_byte             ecn,
-    const fm_bool             mark_routed,
-    const fm_uint32           mod_idx,
-    const fm_uint32           rx_length,
-    const fm_uint32           tx_length_in,
-    const fm_uint64           tail_csum_len,
-    const mbyChunkedSeg       chunked_seg,
-    mbyModControlData * const ctrl_data
-)
+static void performInsertFieldLut(mby_ppe_modify_map    * const mod_map,
+                                  mbyParserHdrPtrs      * const pa_hdr_ptrs,
+                                  mbyModCmdInsertFldLut * const cmd,
+                                  mbyModGroupConfig     * const grp_list,
+                                  fm_int                        grp_list_idx,
+                                  fm_byte               * const grp_ctnr,
+                                  mbyModFieldVector     * const fld_vector)
 {
-    mbyModControlData c;
+    mbyModGroupConfig * const grp = &(grp_list[grp_list_idx]);
 
-    // Ingress flow 2nd pass window parsing packet: passing through
-    c.isWindowParsing = (isWindowParsing(parser_info) && !no_modify);
+    /* For insert field with lookup, output region is always 16b. */
+    fm_uint insert_len = MBY_MOD_MAP_INS_FLD_LUT_LEN;
 
-    c.dvStatus              = IS_OK;
-    c.isMarkerPkt           = 0;
-    c.evidA                 = l2_evid1;
-    c.dglortA               = edglort;
-    c.isMirror              = ((mirtyp == MBY_MIRTYPE_MIR0) || (mirtyp == MBY_MIRTYPE_MIR1));
-    c.mirrorTrunc           = 0;
-    c.rx_n_tag              = 0;
-    c.otrL3Modified         = 0;
-    c.otrL4Modified         = 0;
-    c.internalDS            = (qos_l3_dscp << 2) | (ecn & 0x03);
-    c.isInterLSR            = 0;
-    c.skipDscp              = 0;
-    c.skipTtl               = 0;
-    c.ecn_tx_drop           = 0;
-    c.timeout_tx_drop       = 0;
-    c.non_cm_tx_drop        = 0;
-    c.cancelled_tx_disp     = 0;
-    c.cancel_drop_on_marker = 0;
-    c.ecn_mark              = 0;
+    adjustGrpOffset(grp_list_idx, grp_list, insert_len);
+    grp->ctnr_size += insert_len;
 
-#if 0
-    FM_CLEAR(c.mplsData);  // skipping MPLS for now <-- REVISIT!!!
-#endif
+    assert(insert_len <= (grp->ctnr_size - grp->pkt_size - grp->grp_offset));
 
-    // Grabbing l3Idx for checksum updates:
-    if (chunked_seg.otr_ip_size > 0)
-        c.l3Idx =
-             8 * chunked_seg.ftag_v +
-            14 +
-             4 * chunked_seg.n_otr_tag +
-             4 * chunked_seg.n_otr_mpls;
+    fm_uint16 value = lookupModMap(mod_map, cmd->lut, cmd->lut_mode, fld_vector);
 
-    if (chunked_seg.otr_udp_v | chunked_seg.otr_tcp_v)
-        c.l4Idx =
-             8 * chunked_seg.ftag_v +
-            14 +
-             4 * chunked_seg.n_otr_tag +
-             4 * chunked_seg.n_otr_mpls +
-             4 * chunked_seg.otr_ip_size;
+    grp_ctnr[grp->ctnr_offset + grp->grp_offset]     = (value >> 8) & 0xff;
+    grp_ctnr[grp->ctnr_offset + grp->grp_offset + 1] = value & 0xff;
 
-    c.routeA               = mark_routed;
-    c.vlanSwitched         = 0;
-    c.loopbackSuppressDrop = 0;
-    c.numVlans             = 0;
+    grp->grp_offset += insert_len;
 
-    if (parser_info.otr_l2_vlan1)
-        c.numVlans++;
+    /* Adjust offsets. */
+    fm_int pa_hdr_idx = grp->pa_hdr_idx;
 
-    if (parser_info.otr_l2_vlan2)
-        c.numVlans++;
-
-    c.rxVlan1         = 0;
-    c.rxVlan2         = 0;
-    c.rxV2first       = 0;
-    c.txVlan1         = 0;
-    c.txVlan2         = 0;
-    c.preserveVlan1   = 0;
-    c.preserveVlan2   = 0;
-    c.txVpri1         = 0;
-    c.txVpri2         = 0;
-    c.txVid2          = 0;
-    c.txVid2          = 0;
-    c.evidB           = 0;
-    c.modIdx          = mod_idx;
-    c.encap           = 0;
-    c.decap           = 0;
-    c.bytesAdded      = 0;
-
-    c.egressSeg0Bytes = (rx_length < DEFAULT_SEGMENT_BYTES) ? rx_length : DEFAULT_SEGMENT_BYTES;
-    c.refcnt_tx_len   = tx_length_in;
-    c.intr_occured    = 0;
-
-    c.tail_len = (((tail_csum_len >> 16) & 0x3FFF) < DEFAULT_SEGMENT_BYTES)
-        ? 0 : (((tail_csum_len >> 16) & 0x3FFF) - DEFAULT_SEGMENT_BYTES);
-
-    fm_uint64 mod_im_reg = 0;
-    mbyModelReadCSR64(regs, MBY_MOD_IM(0), &mod_im_reg);
-    c.mod_im = FM_GET_UNNAMED_FIELD64(mod_im_reg, 0, 63);
-
-    // calculate the correct ingress L3 total length for incremental len update
-    c.igL3TotalLen =
-        chunked_seg.otr_ip_size  *  4 + chunked_seg.otr_tcp_v            * 18 +
-        chunked_seg.otr_udp_v    *  8 + chunked_seg.tun_size_in_l4_chunk *  4 +
-        chunked_seg.tun_opt_size *  4 + chunked_seg.inr_l2_v             * 14 +
-        chunked_seg.n_inr_tag    *  4 + chunked_seg.n_inr_mpls           *  4 +
-        chunked_seg.inr_ip_size  *  4 + chunked_seg.inr_udp_v            *  8 +
-        chunked_seg.inr_tcp_v    * 18 + chunked_seg.payload_size         -  4 ;
-
-    if (chunked_seg.otr_l3_v6)
-        c.igL3TotalLen -= 40;
-
-    // get Rx L2 tags:
-    for (fm_uint i = 0; i < (VLAN_TAG_BYTES * 4); i++)
-        c.rx_tags[i] = chunked_seg.otr_tags[i];
-
-    c.rx_n_tag  = chunked_seg.n_otr_tag;
-    c.rxVlan1   = parser_info.otr_l2_vlan1;
-    c.rxVlan2   = parser_info.otr_l2_vlan2;
-    c.rxV2first = parser_info.otr_l2_v2first;
-
-    // copy final struct:
-    *ctrl_data = c;
+    for (fm_int i = pa_hdr_idx + 1; i < MBY_N_PARSER_PTRS; i++)
+        if (pa_hdr_ptrs->PROT_ID[i] != MBY_PA_PROT_ID_NOP)
+            pa_hdr_ptrs->OFFSET[i] += insert_len;
 }
 
-static void dropAndLog
-(
-          fm_uint32           regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_byte             drop_disp,
-    const mbyMarkerFlag       marker_flag,
-    const mbyDropFlag         drop_flag,
-    const mbyDropErrCode      drop_code,
-    const mbyIntrErrCode      intr_disp,
-    fm_uint16         * const tx_disp,
-    fm_bool           * const tx_drop,
-    mbyDropErrCode    * const tx_reasoncode,
-    mbyModControlData * const ctrl_data
-)
+static void performDelete(mbyParserHdrPtrs  * const pa_hdr_ptrs,
+                          mbyModCmdDelete   * const cmd,
+                          mbyModGroupConfig * const grp_list,
+                          fm_int                    grp_idx)
 {
-    if ((drop_disp < *tx_disp) && (marker_flag != MARKER) &&
-        ((drop_disp != DISP_MODERRORDROP) || (drop_flag == DROP)))
-        *tx_disp = drop_disp;
+    mbyModGroupConfig * const grp = &(grp_list[grp_idx]);
 
-    if (((ctrl_data->mod_im >> intr_disp) != 1) &&
-        ((drop_code < *tx_reasoncode) || (*tx_reasoncode == 0)))
-        *tx_reasoncode = drop_code;
+    fm_uint delete_len = (grp->pkt_size > MBY_MOD_MAX_HDR_REGION) ? MBY_MOD_MAX_HDR_REGION : grp->pkt_size;
 
-    // update flag if not already set:
-    *tx_drop = *tx_drop || ((marker_flag != MARKER) && (drop_flag == DROP));
+    adjustGrpOffset(grp_idx, grp_list, -delete_len);
+    grp->ctnr_size -= delete_len;
+    grp->pkt_size  -= delete_len;
 
-    if (drop_flag == DROP)
+    /* Delete/Adjust protocol ID. */
+    fm_int pa_hdr_idx = grp->pa_hdr_idx;
+
+    if (cmd->prot_del)
     {
-        if (marker_flag == MARKER)
+        fm_int i;
+        for (i = pa_hdr_idx; i < MBY_N_PARSER_PTRS - 1; i++)
         {
-            if      (drop_disp == DISP_ECNDROP)
-                ctrl_data->ecn_tx_drop = TRUE;
-            else if (drop_disp == DISP_TIMEOUTDROP)
-                ctrl_data->timeout_tx_drop = TRUE;
-            else
-                ctrl_data->non_cm_tx_drop = TRUE;
+            pa_hdr_ptrs->PROT_ID     [i]  = pa_hdr_ptrs->PROT_ID     [i + 1];
+            pa_hdr_ptrs->OFFSET_VALID[i]  = pa_hdr_ptrs->OFFSET_VALID[i + 1];
+            pa_hdr_ptrs->OFFSET      [i]  = pa_hdr_ptrs->OFFSET      [i + 1];
+            pa_hdr_ptrs->OFFSET      [i] -= delete_len;
         }
-        else
-        {
-            ctrl_data->cancel_drop_on_marker = TRUE;
-            if (drop_disp < ctrl_data->cancelled_tx_disp)
-                ctrl_data->cancelled_tx_disp = drop_disp;
-        }
-    }
 
-    // interrupt prediction. Only valid for single-step tests
-    if (intr_disp != INTR_DISREGARD_ERR)
-    {
-        fm_uint64 mod_im_reg = 0;
-        mbyModelReadCSR64(regs, MBY_MOD_IM(0), &mod_im_reg);
-
-        fm_uint64 ip = FM_GET_UNNAMED_FIELD64(mod_im_reg, 0, 63);
-        ip |= FM_LITERAL_U64(1) << intr_disp;
-        FM_SET_UNNAMED_FIELD64(mod_im_reg, 0, 63, ip);
-
-        mbyModelWriteCSR64(regs, MBY_MOD_IM(0), mod_im_reg);
-
-        if (!((ctrl_data->mod_im) >> intr_disp & 0x1))
-            ctrl_data->intr_occured = TRUE;
+        pa_hdr_ptrs->PROT_ID[MBY_N_PARSER_PTRS] = MBY_PA_PROT_ID_NOP;
+    } else {
+        for (fm_int i = pa_hdr_idx + 1; i < MBY_N_PARSER_PTRS; i++)
+            if (pa_hdr_ptrs->PROT_ID[i] != MBY_PA_PROT_ID_NOP)
+                pa_hdr_ptrs->OFFSET[i] -= delete_len;
     }
 }
 
-static void dropPacket
-(
-    fm_uint32                 regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_uint32           rx_length,
-    const fm_bool             drop_ttl,
-    const fm_bool             is_timeout,
-    const fm_bool             out_of_mem,
-    const fm_bool             pm_err,
-    const fm_bool             pm_err_nonsop,
-    const fm_bool             saf_error,
-    fm_uint16         * const tx_disp,
-    fm_bool           * const tx_drop,
-    mbyDropErrCode    * const tx_reasoncode,
-    mbyModControlData * const ctrl_data
-)
+static void performReplace(mbyModCmdReplace       * const cmd,
+                           mbyModGroupConfig      * const grp,
+                           fm_byte                * const grp_ctnr,
+                           mbyModContentContainer * const content_ctnr)
 {
-    const fm_bool is_marker    = ctrl_data->isMarkerPkt;
-    const fm_bool is_mirror    = ctrl_data->isMirror;
-    const fm_bool mirror_trunc = ctrl_data->mirrorTrunc;
+    assert(grp->pkt_size != 0);
 
-    const mbyMarkerFlag marker_flag = ((is_marker) ? MARKER : NOMARKER);
+    fm_byte ctnr_offset = getContainerOffset(grp, cmd->offset, cmd->align);
+    fm_byte replace_len = 0;
+    fm_byte bitmask     = 0;
+    fm_bool skip_copy   = FALSE;
 
-    // L2 Modifications:
-    ctrl_data->cancelled_tx_disp = DISP_UCAST;
-
-//>  *seg_meta_err = FALSE; <-- FIXME!!!
-
-    if (ctrl_data->routeA && !is_mirror && drop_ttl && !(*tx_drop))
-        dropAndLog(regs, DISP_TTL1DROP,     marker_flag, DROP, ERR_TTL_0, INTR_TTL1_DROP,
-                   tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-
-    if (ctrl_data->loopbackSuppressDrop && !(*tx_drop))
-        dropAndLog(regs, DISP_LOOPBACKDROP, marker_flag, DROP, ERR_NONE, INTR_LPBK_DROP, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-
-    if (is_timeout)
-        dropAndLog(regs, DISP_TIMEOUTDROP,  marker_flag, DROP, ERR_NONE, INTR_TIMEOUT_DROP, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-
-    if (out_of_mem && !mirror_trunc) // HLP logic for this was quizzical, so simplified <-- REVISIT!!!
-        dropAndLog(regs, DISP_OOMTRUNC, NOMARKER, NODROP, ERR_NONE, INTR_DISREGARD_ERR, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-    else if (((rx_length > DEFAULT_SEGMENT_BYTES) || pm_err_nonsop) && !mirror_trunc)
-        dropAndLog(regs, DISP_TXERROR,  NOMARKER, NODROP, ERR_NONE, INTR_DISREGARD_ERR, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-
-    if (saf_error)
+    switch(cmd->mode)
     {
-        if (is_marker)
-            dropAndLog(regs, DISP_TXERRORDROP,   NOMARKER, DROP, ERR_NONE, INTR_TX_ERR_DROP,     tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-        else
-            dropAndLog(regs, DISP_MARKERERRDROP, NOMARKER, DROP, ERR_NONE, INTR_MARKER_ERR_DROP, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
+    case MBY_MOD_CMD_MODE_BASIC:
+        replace_len = cmd->len_mask;
+        bitmask     = 0xff;
+        break;
+/* Should be updated according to changes in spec <--REVISIT!!!
+    case MBY_MOD_CMD_MODE_4B_REPLACE:
+        break;
+*/
+    case MBY_MOD_CMD_MODE_1B_REPLACE:
+        replace_len = 1;
+        bitmask     = cmd->len_mask;
+        break;
+    case MBY_MOD_CMD_MODE_1B_XOR:
+        bitmask   = cmd->len_mask;
+        fm_byte C = content_ctnr->content[content_ctnr->cur_idx];
+        fm_byte H = grp_ctnr[ctnr_offset];
+        H         = (H^C) & bitmask;
+
+        updateCtnrIdx(&content_ctnr->cur_idx, 1, MBY_MOD_CONTENT_SIZE - 1);
+
+        grp_ctnr[ctnr_offset] = H;
+
+        skip_copy = TRUE;
+        break;
+    case MBY_MOD_CMD_MODE_1B_DECREMENT:
+        bitmask   = cmd->len_mask;
+        grp_ctnr[ctnr_offset] = content_ctnr->content[content_ctnr->cur_idx] & bitmask;
+        grp_ctnr[ctnr_offset]--;
+
+        updateCtnrIdx(&content_ctnr->cur_idx, 1, MBY_MOD_CONTENT_SIZE - 1);
+
+        skip_copy = TRUE;
+        break;
+
+    default:
+        skip_copy = TRUE;
+        break;
     }
 
-    if (pm_err)
+    if (!skip_copy)
     {
-        if (!is_marker)
-            dropAndLog(regs, DISP_TXECCDROP,     NOMARKER, DROP, ERR_NONE, INTR_TX_ECC_DROP,     tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-        else
-            dropAndLog(regs, DISP_MARKERERRDROP, NOMARKER, DROP, ERR_NONE, INTR_MARKER_ERR_DROP, tx_disp, tx_drop, tx_reasoncode, ctrl_data);
+        copyFromTo(content_ctnr->content, content_ctnr->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len);
+
+        updateCtnrIdx(&content_ctnr->cur_idx, replace_len, MBY_MOD_CONTENT_SIZE - 1);
     }
 }
 
-#if 0
-static void updateVlan
-(
-    const fm_uint16                 l2_ivid1,
-    const mbyModRegData     * const reg_data,
-          mbyModControlData * const ctrl_data
-)
+static void performReplaceField(mbyModCmdReplaceFld * const cmd,
+                                mbyModGroupConfig   * const grp,
+                                fm_byte             * const grp_ctnr,
+                                mbyModFieldVector   * const fld_vector)
 {
-    fm_uint16  rxVlan1Type    = 0;
-    fm_uint16  rxVlan2Type    = 0;
-    fm_byte    rxVpri1        = 0;
-    fm_byte    rxVpri2        = 0;
-    fm_uint16  rxVid1         = 0;
-    fm_uint16  rxVid2         = 0;
+    assert(grp->pkt_size != 0);
 
-    fm_uint16  modVid1MapAddr = 0;
-    fm_uint16  modVid2MapAddr = 0;
-    fm_uint16  modVlanTagAddr = 0;
+    fm_byte ctnr_offset = getContainerOffset(grp, cmd->offset, cmd->align);
+    fm_byte replace_len = 0;
+    fm_byte bitmask     = 0;
+    fm_bool skip_copy   = FALSE;
 
-    fm_byte    newVpri1       = 0;
-    fm_byte    newVpri2       = 0;
-    fm_uint16  newVid1        = 0;
-    fm_uint16  newVid2        = 0;
-    fm_bool    vtag           = 0;
-
-
-    // enable vlan update:
-    fm_uint16 evid_b = (reg_data.modPerPortCfg1.ENABLE_VLAN_UPDATE) ? ctrl_data->evidA : l2_ivid1;
-
-    // grab rx vlan data:
-    if (ctrl_data->numVlans == 1)
+    switch(cmd->mode)
     {
-        fm_uint16 vlan_type = (((fm_uint16) ctrl_data->rx_tags[0]) << 8)         | ctrl_data->rx_tags[1];
-        fm_byte   vlan_pri  = ctrl_data->rx_tags[2] >> 4;
-        fm_uint16 vlan_id   = (((fm_uint16)(ctrl_data->rx_tags[2] & 0x0F)) << 8) | ctrl_data->rx_tags[3];
+    case MBY_MOD_CMD_MODE_BASIC:
+        replace_len = cmd->len_mask;
+        bitmask     = 0xff;
+        break;
+/* Should be updated according to changes in spec <--REVISIT!!!
+    case MBY_MOD_CMD_MODE_4B_REPLACE:
+        break;
+*/
+    case MBY_MOD_CMD_MODE_1B_REPLACE:
+        replace_len = 1;
+        bitmask     = cmd->len_mask;
+        break;
+    case MBY_MOD_CMD_MODE_1B_XOR:
+        bitmask   = cmd->len_mask;
+        fm_byte F = fld_vector->field[fld_vector->cur_idx];
+        fm_byte H = grp_ctnr[ctnr_offset];
+        H         = (H^F) & bitmask;
 
-        if (ctrl_data->rxVlan1) {
-            rxVlan1Type = vlan_type;
-            rxVpri1     = vlan_pri;
-            rxVid1      = vlan_id;
-        } else {
-            rxVlan2Type = vlan_type;
-            rxVpri2     = vlan_pri;
-            rxVid2      = vlan_id;
-        }
-    }
-    else if (ctrl_data->numVlans == 2)
-    {
-        if (state->PARSER_INFO.otr_l2_v2first)
-        {
-            rxVlan2Type = ctrl_data->rx_tags[0];
-            rxVlan2Type <<= 8;
-            rxVlan2Type |= (fm_uint16) ctrl_data->rx_tags[1];
-            rxVpri2 = ctrl_data->rx_tags[2] >> 4;
-            rxVid2 = (ctrl_data->rx_tags[2] & 0x0F);
-            rxVid2 <<= 8;
-            rxVid2 |= (fm_uint16) ctrl_data->rx_tags[3];
-            rxVlan1Type = ctrl_data->rx_tags[4];
-            rxVlan1Type <<= 8;
-            rxVlan1Type |= (fm_uint16) ctrl_data->rx_tags[5];
-            rxVpri1 = ctrl_data->rx_tags[6] >> 4;
-            rxVid1 = (ctrl_data->rx_tags[6] & 0x0F);
-            rxVid1 <<= 8;
-            rxVid1 |= (fm_uint16) ctrl_data->rx_tags[7];
+        updateCtnrIdx(&fld_vector->cur_idx, 1, MBY_MOD_FIELD_VECTOR_SIZE - 1);
 
-        }
-        else
-        {
-            rxVlan1Type = ctrl_data->rx_tags[0];
-            rxVlan1Type <<= 8;
-            rxVlan1Type |= (fm_uint16) ctrl_data->rx_tags[1];
-            rxVpri1 = ctrl_data->rx_tags[2] >> 4;
-            rxVid1 = (ctrl_data->rx_tags[2] & 0x0F);
-            rxVid1 <<= 8;
-            rxVid1 |= (fm_uint16) ctrl_data->rx_tags[3];
-            rxVlan2Type = ctrl_data->rx_tags[4];
-            rxVlan2Type <<= 8;
-            rxVlan2Type |= (fm_uint16) ctrl_data->rx_tags[5];
-            rxVpri2 = ctrl_data->rx_tags[6] >> 4;
-            rxVid2 = (ctrl_data->rx_tags[6] & 0x0F);
-            rxVid2 <<= 8;
-            rxVid2 |= (fm_uint16) ctrl_data->rx_tags[7];
-        }
+        grp_ctnr[ctnr_offset] = H;
+
+        skip_copy = TRUE;
+        break;
+    case MBY_MOD_CMD_MODE_1B_DECREMENT:
+        bitmask   = cmd->len_mask;
+        grp_ctnr[ctnr_offset] = fld_vector->field[fld_vector->cur_idx] & bitmask;
+        grp_ctnr[ctnr_offset]--;
+
+        updateCtnrIdx(&fld_vector->cur_idx, 1, MBY_MOD_FIELD_VECTOR_SIZE - 1);
+
+        skip_copy = TRUE;
+        break;
+
+    default:
+        skip_copy = TRUE;
+        break;
     }
 
-    /* VLAN tag lookups: */
-    modVid1MapAddr = evid_b;
-    modVid2MapAddr = evid_b;
-    modVlanTagAddr = evid_b;
-
-    ctrl_data->evidB = evid_b;
-
-    switch (reg_data->modPerPortCfg1.VID2_MAP_INDEX)
+    if (!skip_copy)
     {
-        case HLP_MOD_PER_PORT_CFG1_VID2_MAP_INDEX_VID:
-            break;
-        case HLP_MOD_PER_PORT_CFG1_VID2_MAP_INDEX_SGLORT:
-            modVid2MapAddr = state->SGLORT & 0xFFF;
-            break;
-        case HLP_MOD_PER_PORT_CFG1_VID2_MAP_INDEX_DGLORT:
-            modVid2MapAddr = ctrl_data->dglortA & 0xFFF;
-            break;
-        defualt:
-            PRINT2(modDisplayVerbose, key, "vid2MapIndex = %0d (UNDEFINED!!)\n",
-                reg_data->modPerPortCfg1.VID2_MAP_INDEX);
-            break;
+        copyFromTo(fld_vector->field, fld_vector->cur_idx, grp_ctnr, ctnr_offset, bitmask, replace_len);
+
+        updateCtnrIdx(&fld_vector->cur_idx, replace_len, MBY_MOD_FIELD_VECTOR_SIZE - 1);
     }
+}
 
-    fm_uint64 *rdval = (fm_uint64 *) FM_MODEL_GET_REG_PTR(model, HLP_MOD_VID1_MAP(modVid1MapAddr, 0));
-    newVid1 = FM_GET_FIELD64(*rdval, HLP_MOD_VID1_MAP, VID);
-    rdval = (fm_uint64 *) FM_MODEL_GET_REG_PTR(model, HLP_MOD_VLAN_TAG(modVlanTagAddr, 0));
+static void performReplaceFieldLut(mby_ppe_modify_map     * const mod_map,
+                                mbyModCmdReplaceFldLut * const cmd,
+                                mbyModGroupConfig      * const grp,
+                                fm_byte                * const grp_ctnr,
+                                mbyModFieldVector      * const fld_vector)
+{
+    assert(grp->pkt_size != 0);
 
-    fm_uint64  temp64;
-    temp64 = FM_GET_FIELD64(*rdval, HLP_MOD_VLAN_TAG, TAG);
-    vtag = ((temp64 >> state->TX_PORT) & 0x01);
+    fm_byte  ctnr_offset  = getContainerOffset(grp, cmd->offset, cmd->align);
+    fm_int16 bitmask      = cmd->mask;
+    fm_uint16 value       = lookupModMap(mod_map, cmd->lut, cmd->lut_mode, fld_vector);
+    grp_ctnr[ctnr_offset] = ((value & 0xFF) & bitmask) & 0xff;
+}
 
-    rdval = (fm_uint64 *) FM_MODEL_GET_REG_PTR(model, HLP_MOD_VID2_MAP(modVid2MapAddr, 0));
-    newVid2 = FM_GET_FIELD64(*rdval, HLP_MOD_VID2_MAP, VID);
+static void performCmds(mby_ppe_modify_map  * const mod_map,
+                        fm_byte             * const rx_data,
+                        mbyModProfileAction * const prof_act,
+                        mbyParserHdrPtrs    * const pa_hdr_ptrs,
+                        fm_byte             * const grp_ctnr,
+                        fm_uint             * const pkt_index)
+{
+    fm_bool deleted = 0;
 
-    ctrl_data->txVid1  = newVid1;
-    ctrl_data->txVid2  = newVid2;
-
-    // TODO, if leave-as-rx should we use rxvid also as final vid?
-    ExtractPriorityProfile(key, model, r, c);
-
-    newVpri1 = GetVPRI(model, 1, state->QOS_L2_VPRI1, ctrl_data->priority_profile, key);
-    newVpri2 = GetVPRI(model, 2, state->QOS_L2_VPRI1, ctrl_data->priority_profile, key);
-
-    // EAS Step 2a : Update VLAN Fields, Non-mirrored and non-special frames:
-    if (!ctrl_data->isMirror)
+    for (int i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
     {
-        /* figure out what action will be taken on each vlan */
-        if (state->TX_TAG == HLP_MODEL_INSERT)
+        if (prof_act->grp_list[i].valid)
         {
-            dropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
+            mbyModGroupConfig * const grp = &(prof_act->grp_list[i]);
 
-            ctrl_data->txVlan1 = (ctrl_data->txVid1 != 0);
-            ctrl_data->txVlan2 = (ctrl_data->txVid2 != 0);
-            ctrl_data->preserveVlan1 = (ctrl_data->rxVlan1) != 0;
-            ctrl_data->preserveVlan2 = (ctrl_data->rxVlan2) != 0;
+            /* Copy packet data to container before executing any commands for given group. */
+            fm_byte mask = 0xff;
+            copyFromTo(rx_data, grp->pkt_offset, grp_ctnr, grp->ctnr_offset, mask, grp->pkt_size);
+            *pkt_index += grp->pkt_size;
 
-            ctrl_data->numVlans += 2;
-            PRINT2(modDisplayVerbose, key, "state->TX_TAG = %0d (vid1/vid2 = INSERT, if "
-                "txVid1/txVid2 != 0); any RX'd tags will also be transmitted\n",
-                state->TX_TAG);
-        }
-        else if (state->TX_TAG == HLP_MODEL_DELETE)
-        {
-            PRINT2(modDisplayVerbose, key, "state->TX_TAG = %0d (vid1/vid2 = DELETE); no "
-                "new or RX'd tags will be transmitted\n",
-                state->TX_TAG);
+            fm_uint grp_idx = grp->grp_idx;
+            deleted = 0;
 
-            dropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-
-            if(!(ctrl_data->rxVlan1 && ctrl_data->rxVlan2)) {
-                PRINT2(modDisplayVerbose, key, "MISCONFIG: L2 tag can't delete, ipp route\n");
-                DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, state->NO_MODIFY, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-            }
-            ctrl_data->numVlans = 0;
-        }
-        else if (state->TX_TAG == HLP_MODEL_UPDATE_ADD)
-        {
-            DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-            ctrl_data->txVlan1 = (ctrl_data->txVid1 != 0);
-            ctrl_data->txVlan2 = (ctrl_data->txVid2 != 0);
-            PRINT2(modDisplayVerbose, key, "state->TX_TAG = %0d (vid1/vid2 = UPDATE or "
-                "ADD, if txVid1/txVid2 != 0); if txVlan1 or txVlan2, new "
-                "tag data will be used\n",
-                state->TX_TAG);
-            if (!ctrl_data->rxVlan1 && ctrl_data->txVlan1)
-                ctrl_data->numVlans++;
-            if (!ctrl_data->rxVlan2 && ctrl_data->txVlan2)
-                ctrl_data->numVlans++;
-        }
-        else
-        {   /* TX_TAG == HLP_MODEL_NORMAL_TAGGING */
-            PRINT2(modDisplayVerbose, key, "state->TX_TAG = %0d (NORMAL TAGGING)\n", state->TX_TAG);
-            PRINT2(modDisplayVerbose, key, "PTAG = %0d\n", reg_data->modPerPortCfg2.VLAN_TAGGING);
-            PRINT2(modDisplayVerbose, key, "VTAG = %0d\n", vtag);
-
-            /* note that some ptag/vtag combo's are (intentionally) duplicates;
-             *  this is coded per the table in EAS, in the effort to make
-             *  maintenance easier if one combo changes and another does not */
-            switch (reg_data->modPerPortCfg2.VLAN_TAGGING)
+            for (int cmd_idx = 0; cmd_idx < MBY_MOD_COMMAND_PER_GROUP; cmd_idx++)
             {
-                case 5:
-                    ctrl_data->txVid1  = rxVid1;
-                    ctrl_data->txVid2  = rxVid2;
-                    ctrl_data->txVlan1 = (ctrl_data->rxVlan1 != 0);
-                    ctrl_data->txVlan2 = (ctrl_data->rxVlan2 != 0);
-                    PRINT2(modDisplayVerbose, key, "vid1 = leave-as-rx, vid2 = leave-as-rx\n");
+                switch (prof_act->dec_cmd[grp_idx][cmd_idx].type)
+                {
+                case MBY_MOD_CMD_TYPE_NOP:
+                    /* No operation. */
                     break;
-                case 0:
-                    if (vtag == 0) { /*X similar operation*/
-                        /* leave-as-rx allows tag to transmit even if txVid2 == 0 */
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-
-                        ctrl_data->txVid2  = rxVid2;
-                        ctrl_data->txVlan2 = (ctrl_data->rxVlan2 != 0);
-                        PRINT2(modDisplayVerbose, key, "vid1 = delete, vid2 = leave-as-rx\n");
-                        if(!ctrl_data->rxVlan1) {
-                            PRINT2(modDisplayVerbose, key, "MISCONFIG: L2 tag can't delete, ipp route\n");
-                            DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, state->NO_MODIFY, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-                        }
-                        else {
-                            ctrl_data->numVlans--;
-                        }
-                    }
-                    else {
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-                        ctrl_data->txVid2  = rxVid2;
-                        ctrl_data->txVlan1 = (ctrl_data->txVid1 != 0);
-                        ctrl_data->txVlan2 = (ctrl_data->rxVlan2 != 0);
-                        if(!ctrl_data->rxVlan1 && ctrl_data->txVlan1)
-                            ctrl_data->numVlans++;
-                        PRINT2(modDisplayVerbose, key, "vid1 = update-or-add (if txVid1 != 0), vid2 = leave-as-rx\n");
-                    }
+                case MBY_MOD_CMD_TYPE_INSERT:
+                    performInsert(pa_hdr_ptrs, &(prof_act->dec_cmd[grp_idx][cmd_idx].field.insrt),
+                                  prof_act->grp_list, grp_idx, grp_ctnr, &prof_act->content_ctnr);
+                        break;
+                case MBY_MOD_CMD_TYPE_INSERT_FIELD:
+                    performInsertField(pa_hdr_ptrs, &(prof_act->dec_cmd[grp_idx][cmd_idx].field.insrt_fld),
+                                       prof_act->grp_list, grp_idx, grp_ctnr, &prof_act->fld_vector);
                     break;
-                case 1:
-                    if (vtag == 0) {
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-
-                        ctrl_data->txVid2  = rxVid2;
-                        ctrl_data->txVlan2 = (ctrl_data->rxVlan2 != 0);
-                        PRINT2(modDisplayVerbose, key, "vid1 = delete, vid2 = leave-as-rx\n");
-                        if(!ctrl_data->rxVlan1) {
-                            PRINT2(modDisplayVerbose, key, "MISCONFIG: L2 tag can't delete, ipp route\n");
-                            DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, state->NO_MODIFY, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-                        }
-                        else {
-                            ctrl_data->numVlans--;
-                        }
-                    }
-                    else
-                    {
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-                        ctrl_data->txVlan2 = (ctrl_data->txVid2 != 0);
-                        PRINT2(modDisplayVerbose, key, "vid1 = delete, vid2 = update-or-add (if txVid2 != 0)\n");
-                        if(!ctrl_data->rxVlan1) {
-                            PRINT2(modDisplayVerbose, key, "MISCONFIG: L2 tag can't delete, ipp route\n");
-                            DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, state->NO_MODIFY, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-                        }
-                        else {
-                            ctrl_data->numVlans--;
-                        }
-                        if(!ctrl_data->rxVlan2 && ctrl_data->txVlan2)
-                            ctrl_data->numVlans++;
-                    }
+                case MBY_MOD_CMD_TYPE_INSERT_FIELD_LUT:
+                    performInsertFieldLut(mod_map, pa_hdr_ptrs, &(prof_act->dec_cmd[grp_idx][cmd_idx].field.insrt_fld_lut),
+                                          prof_act->grp_list, grp_idx, grp_ctnr, &prof_act->fld_vector);
                     break;
-                case 2:
-                    if (vtag == 0) {
-                        // TODO is possible 4 cstum tags comes in?
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-                        ctrl_data->txVid2  = rxVid2;
-                        ctrl_data->txVlan1 = (ctrl_data->txVid1 != 0);
-                        ctrl_data->txVlan2 = (ctrl_data->rxVlan2 != 0);
-                        if(!ctrl_data->rxVlan1 && ctrl_data->txVlan1)
-                            ctrl_data->numVlans++;
-                        PRINT2(modDisplayVerbose, key, "vid1 = update-or-add (if txVid1" "!= 0), vid2 = leave-as-rx\n");
-                    }
-                    else {
-
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-                        ctrl_data->txVlan1 = (ctrl_data->txVid1 != 0);
-                        ctrl_data->txVlan2 = (ctrl_data->txVid2 != 0);
-                        if(!ctrl_data->rxVlan1 && ctrl_data->txVlan1)
-                            ctrl_data->numVlans++;
-                        if(!ctrl_data->rxVlan2 && ctrl_data->txVlan2)
-                            ctrl_data->numVlans++;
-                        PRINT2(modDisplayVerbose, key, "vid1 = update-or-add (if txVid1" "!= 0), vid2 = update-or-add (if txVid2 != 0)\n");
-                    }
+                case MBY_MOD_CMD_TYPE_DELETE:
+                    performDelete(pa_hdr_ptrs, &(prof_act->dec_cmd[grp_idx][cmd_idx].field.del),
+                                  prof_act->grp_list, grp_idx);
                     break;
-                case 3:
-                    if (vtag == 0) {
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-                        ctrl_data->txVlan2 = (ctrl_data->txVid2 != 0);
-                        PRINT2(modDisplayVerbose, key, "vid1 = delete, vid2 = " "update-or-add (if txVid2 != 0)\n");
-                        if(!ctrl_data->rxVlan1) {
-                            PRINT2(modDisplayVerbose, key, "MISCONFIG: L2 tag can't delete, ipp route\n");
-                            DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, state->NO_MODIFY, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-                        }
-                        else {
-                            ctrl_data->numVlans--;
-                        }
-                        if(!ctrl_data->rxVlan2 && ctrl_data->txVlan2)
-                            ctrl_data->numVlans++;
-                    }
-                    else {
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-                        ctrl_data->txVlan1 = (ctrl_data->txVid1 != 0);
-                        ctrl_data->txVlan2 = (ctrl_data->txVid2 != 0);
-                        if(!ctrl_data->rxVlan1 && ctrl_data->txVlan1)
-                            ctrl_data->numVlans++;
-                        if(!ctrl_data->rxVlan2 && ctrl_data->txVlan2)
-                            ctrl_data->numVlans++;
-                        PRINT2(modDisplayVerbose, key, "vid1 = update-or-add (if txVid1"
-                            "!= 0), vid2 = update-or-add (if txVid2 != 0)\n");
-                    }
+                case MBY_MOD_CMD_TYPE_REPLACE:
+                    if(grp->pkt_size != 0)
+                        performReplace(&(prof_act->dec_cmd[grp_idx][cmd_idx].field.replace), grp,
+                                       grp_ctnr, &prof_act->content_ctnr);
                     break;
-                case 4:
-                    if (vtag == 0)
-                    {
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-                        PRINT2(modDisplayVerbose, key, "vid1 = delete, vid2 = delete\n");
-                        if(!(ctrl_data->rxVlan1 && ctrl_data->rxVlan2)) {
-                            PRINT2(modDisplayVerbose, key, "MISCONFIG: L2 tag can't delete, ipp route\n");
-                            DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, state->NO_MODIFY, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-                        }
-                        ctrl_data->numVlans = 0;
-                    }
-                    else {
-                        DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, DROP, LOG, !ctrl_data->isWindowParsing, ERR_VLAN_TAG_FULL, INTR_U_INSERT_VLAN_IPP);
-                        ctrl_data->txVlan1 = (ctrl_data->txVid1 != 0);
-                        PRINT2(modDisplayVerbose, key, "vid1 = update-or-add (if "
-                            "txVid1 != 0), vid2 = delete\n");
-                        if(!ctrl_data->rxVlan2) {
-                            PRINT2(modDisplayVerbose, key, "MISCONFIG: L2 tag can't delete, ipp route\n");
-                            DropAndLog(key, model, c, DISP_MODERRORDROP, ctrl_data->isMarkerPkt, NODROP, LOG, state->NO_MODIFY, ERR_VLAN_TAG_EMPTY, INTR_U_REMOVE_VLAN_IPP);
-                        }
-                        else {
-                            ctrl_data->numVlans--;
-                        }
-                        if(!ctrl_data->rxVlan1 && ctrl_data->txVlan1)
-                            ctrl_data->numVlans++;
-                    }
+                case MBY_MOD_CMD_TYPE_REPLACE_FIELD:
+                    if(grp->pkt_size != 0)
+                        performReplaceField(&(prof_act->dec_cmd[grp_idx][cmd_idx].field.replace_fld), grp,
+                                            grp_ctnr, &prof_act->fld_vector);
                     break;
-                default:
-                    PRINT2(modDisplayVerbose, key, "ptag = %0d (UNDEFINED!!)\n",
-                        reg_data->modPerPortCfg2.VLAN_TAGGING);
+                case MBY_MOD_CMD_TYPE_REPLACE_FIELD_LUT:
+                    if(grp->pkt_size != 0)
+                        performReplaceFieldLut(mod_map, &(prof_act->dec_cmd[grp_idx][cmd_idx].field.replace_fld_lut),
+                                               grp, grp_ctnr, &prof_act->fld_vector);
                     break;
+                default :
+                    /* Nothing to be done here. */
+                    break;
+                }
             }
         }
     }
-
-    if (!ctrl_data->isMirror)
-    {
-        /* VPRI Updates (step 2a and 2c) */
-        ctrl_data->txVpri1 = 0;
-        ctrl_data->txVpri2 = 0;
-        if ((ctrl_data->rxVlan1) && (state->TX_TAG != HLP_MODEL_INSERT) &&
-            (reg_data->modPerPortCfg2.ENABLE_PCP1_UPDATE == 0))
-        {
-            ctrl_data->txVpri1 |= (rxVpri1 & 0x0E);
-            PRINT2(modDisplayVerbose, key, "txVpri1 PCP (bits 3:1) set to rxVpri1 PCP "
-                "because ingress VLAN1 present and enablePcp1Update = 0\n");
-        }
-        //FIXME:
-        /*else if ((state->PARSER_INFO.ftag_v > 0) &&
-                 (r.modPerPortCfg2.ENABLE_PCP1_UPDATE == 0))
-        {
-            txVpri1 |= (rxFtagVpri & 0x0E);
-            PRINT(key, "txVpri1 PCP (bits 3:1) set to rxFtagVpri "
-                "PCP because ingress FTAG present and enablePcp1Update = 0\n");
-        }*/
-        else
-        {
-            ctrl_data->txVpri1 |= (newVpri1 & 0x0E);
-            PRINT2(modDisplayVerbose, key, "txVpri1 PCP (bits 3:1) set to newVpri1 "
-                "PCP (from map)\n");
-        }
-
-        if ((ctrl_data->rxVlan1) && (state->TX_TAG != HLP_MODEL_INSERT) &&
-            (reg_data->modPerPortCfg2.ENABLE_DEI1_UPDATE == 0))
-        {
-            ctrl_data->txVpri1 = ((ctrl_data->txVpri1) & 0xFE) | (rxVpri1 & 0x01);
-            PRINT2(modDisplayVerbose, key, "txVpri1 DEI (bit 0) set to rxVpri1 DEI "
-                "because ingress VLAN1 present and enableDei1Update = 0\n");
-        }
-        //FIXME:
-        /*else if ((state->PARSER_INFO.ftag_v > 0) &&
-                 (r.modPerPortCfg2.ENABLE_DEI1_UPDATE == 0))
-        {
-            txVpri1 = (txVpri1 & 0xFE) | (rxFtagVpri & 0x01);
-            PRINT2(modDisplayVerbose, key, "txVpri1 DEI (bit 0) set to rxFtagVpri DEI "
-                "because ingress FTAG present and enableDei1Update = 0\n");
-        }*/
-        else
-        {
-            ctrl_data->txVpri1 = (ctrl_data->txVpri1 & 0xFE) | (newVpri1 & 0x01);
-            PRINT2(modDisplayVerbose, key, "txVpri1 DEI (bit 0) set to newVpri1 DEI "
-                "(from map)\n");
-        }
-
-        if ((ctrl_data->rxVlan2) && (state->TX_TAG != HLP_MODEL_INSERT) &&
-            (reg_data->modPerPortCfg2.ENABLE_PCP2_UPDATE == 0))
-        {
-            ctrl_data->txVpri2 |= (rxVpri2 & 0x0E);
-            PRINT2(modDisplayVerbose, key, "txVpri2 PCP (bits 3:1) set to rxVpri2 PCP "
-                "because ingress VLAN2 present and enablePcp2Update = 0\n");
-        }
-        else
-        {
-            ctrl_data->txVpri2 |= (newVpri2 & 0x0E);
-            PRINT2(modDisplayVerbose, key, "txVpri2 PCP (bits 3:1) set to newVpri2 "
-                "PCP (from map)\n");
-        }
-
-        if ((ctrl_data->rxVlan2) && (state->TX_TAG != HLP_MODEL_INSERT) &&
-            (reg_data->modPerPortCfg2.ENABLE_DEI2_UPDATE == 0))
-        {
-            ctrl_data->txVpri2 = (ctrl_data->txVpri2 & 0xFE) | (rxVpri2 & 0x01);
-            PRINT2(modDisplayVerbose, key, "txVpri2 DEI (bit 0) set to rxVpri2 DEI "
-                "because ingress VLAN2 present and enableDei2Update = 0\n");
-        }
-        else
-        {
-            ctrl_data->txVpri2 = (ctrl_data->txVpri2 & 0xFE) | (newVpri2 & 0x01);
-            PRINT2(modDisplayVerbose, key, "txVpri2 DEI (bit 0) set to newVpri2 DEI "
-                "(from map)\n");
-        }
-    }
-}
-#endif
-
-static void updateMacAddrIPP
-(
-    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
-    const fm_byte               tx_tag,
-    const fm_byte               otr_l2_len,
-    const fm_bool               no_modify,
-    const fm_macaddr            l2_dmac,
-    const mbyModRegData * const reg_data,
-    fm_uint16           * const tx_disp,
-    fm_bool             * const tx_drop,
-    mbyDropErrCode      * const tx_reasoncode,
-    mbyModControlData   * const ctrl_data,
-    mbyChunkedSeg       * const chunked_seg
-)
-{
-    ctrl_data->isRoutable = ctrl_data->routeA && (tx_tag == MBY_NORMAL_TAGGING) && !(ctrl_data->isMirror);
-
-    if (!ctrl_data->isMirror)
-    {
-        fm_bool   modify_dmac = (ctrl_data->isRoutable && reg_data->modPerPortCfg2.ENABLE_DMAC_ROUTING);
-        fm_bool   modify_smac = (ctrl_data->isRoutable && reg_data->modPerPortCfg2.ENABLE_SMAC_ROUTING);
-        fm_bool   marker_flag = (ctrl_data->isMarkerPkt) ? MARKER : NOMARKER;
-
-        if ((modify_dmac || modify_smac) && (otr_l2_len == 0) && !no_modify)
-        {
-            dropAndLog(regs, DISP_MODERRORDROP, marker_flag, NODROP, ERR_OTR_MAC, INTR_OTR_MAC_NONEXIST,
-                       tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-        }
-
-        if (modify_dmac)
-        {
-            for (fm_uint i = 0, bit_offset = 40; i < MAC_ADDR_BYTES; i++, bit_offset -= 8)
-                chunked_seg->otr_dmac[i] = ((fm_byte) ((l2_dmac >> bit_offset) & 0xff));
-        }
-
-        if (modify_smac)
-        {
-            fm_macaddr mod_router_smac_reg = 0;
-            mbyModelReadCSR64(regs, MBY_MOD_ROUTER_SMAC(ctrl_data->l3_domain, 0), &mod_router_smac_reg);
-            fm_uint64 l2_smac = FM_GET_FIELD64(mod_router_smac_reg, MBY_MOD_ROUTER_SMAC, SMAC);
-
-            for (fm_uint i = 0, bit_offset = 40; i < MAC_ADDR_BYTES; i++, bit_offset -= 8)
-            	chunked_seg->otr_smac[i] = ((fm_byte) ((l2_smac >> bit_offset) & 0xff));
-        }
-    }
 }
 
-void doMiscOps
-(
-    fm_uint32                   regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyModRegData * const reg_data,
-    const fm_uint32             rx_length,
-    const fm_uint32             tx_stats_last_len,
-    fm_uint32           * const tx_length_inout,
-    fm_byte                     tx_packet[MBY_MAX_PACKET_SIZE],
-    fm_uint16           * const tx_disp,
-    fm_bool             * const tx_drop,
-    mbyDropErrCode      * const tx_reasoncode,
-    fm_uint32           * const tx_stats_length,
-    mbyModControlData   * const ctrl_data
-)
+static fm_uint32 packPacket(mbyModProfileAction * const prof_act,
+                            fm_uint32                   rx_length,
+                            fm_byte             * const grp_ctnr,
+                            fm_byte             * const rx_data,
+                            fm_byte             * const tx_data,
+                            fm_uint32                   pkt_index,
+                            fm_uint32                   max_pkt_size)
 {
-    fm_uint32 tx_length = *tx_length_inout; // local var
+    assert(max_pkt_size >= (rx_length - pkt_index + prof_act->operating_region));
 
-    if (tx_length >= rx_length)
-    {
-        fm_uint32 bytes_added      = tx_length - rx_length;
-        ctrl_data->bytesAdded      = bytes_added;
-        ctrl_data->egressSeg0Bytes = (rx_length >= 192) ? (192 + bytes_added) : tx_length;
-    }
-    else
-    {
-        fm_uint32 bytes_deleted    = rx_length - tx_length;
-        ctrl_data->bytesAdded      = 0x80 | bytes_deleted; // MS bit set to flag negative value
-        ctrl_data->egressSeg0Bytes = (rx_length >= 192) ? (192 - bytes_deleted): tx_length;
-    }
+    fm_uint tx_length = 0;
 
-    if (ctrl_data->mirrorTrunc)
+    for (fm_uint i = 0; i < MBY_MOD_PROFILE_GROUPS; i++)
     {
-        fm_byte crc_idx =
-            (rx_length >= (DEFAULT_SEGMENT_BYTES + 4)) ? 4 :
-            (rx_length == (DEFAULT_SEGMENT_BYTES + 3)) ? 3 :
-            (rx_length == (DEFAULT_SEGMENT_BYTES + 2)) ? 2 :
-            (rx_length == (DEFAULT_SEGMENT_BYTES + 1)) ? 1 : 0;
-
-        if (crc_idx != 0)
+        if (prof_act->grp_list[i].valid)
         {
-            tx_length = DEFAULT_SEGMENT_BYTES + crc_idx;
-
-            if (ctrl_data->bytesAdded != 0)
+            for (fm_uint j = 0; j < prof_act->grp_list[i].ctnr_size; j++)
             {
-                if (ctrl_data->bytesAdded & 0x80)
-                    tx_length -= ctrl_data->bytesAdded & 0x7F; // bytes deleted
-                else
-                    tx_length += ctrl_data->bytesAdded;
+                fm_uint offset = prof_act->grp_list[i].ctnr_offset;
+                tx_data[tx_length++] = grp_ctnr[offset + j];
             }
-
-            // when pkt is larger than 192, we add crc to sop seg when
-            // trunc, so stats need to be adjusted:
-            ctrl_data->egressSeg0Bytes = tx_length; // truncating frame
         }
     }
 
-    // calculate good egress crc
-    ctrl_data->crc_egress = mbyCrc32(tx_packet, tx_length - 4);
+    for (fm_uint i = 0; i < (rx_length - pkt_index); i++)
+        tx_data[tx_length++] = rx_data[i + pkt_index];
 
-    // apply ingress crc error differential onto egress crc
-    // use recalculated egress CRC instead of incremental update for mirror
-    // trunc frame, that is how RTL behaves now
-    if (!ctrl_data->mirrorTrunc)
-        ctrl_data->crc_egress ^= ctrl_data->crc_ingress_diff;
-
-    for (fm_uint i = 0; i < 4; i++)
-        tx_packet[tx_length - 4 + i] = (ctrl_data->crc_egress >> (i * 8)) & 0xFF;
-
-    fm_bool marker_flag = (ctrl_data->isMarkerPkt) ? MARKER : NOMARKER;
-
-    if (tx_length < MIN_EGRESS_BYTES)
-        dropAndLog(regs, DISP_MODERRORDROP, marker_flag, DROP, ERR_SEG_S_18, INTR_SMALLER_18B,
-                   tx_disp, tx_drop, tx_reasoncode, ctrl_data);
-
-    fm_bool is_min_frame = reg_data->modPerPortCfg2.MIN_FRAME_SIZE && (tx_length < 64);
-
-    ctrl_data->refcntSeg0Bytes = (is_min_frame) ? 64 : ctrl_data->egressSeg0Bytes;
-    ctrl_data->refcnt_tx_len   = (is_min_frame) ? 64 : tx_length;
-
-    // Update lengths:
-    *tx_length_inout = tx_length;
-    *tx_stats_length = (!ctrl_data->mirrorTrunc && !tx_drop)
-        ? (ctrl_data->egressSeg0Bytes + tx_stats_last_len) : ctrl_data->refcnt_tx_len;
+    return tx_length;
 }
 
 void Modifier
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyTxInToModifier     * const in,
-          mbyModifierToTxStats  * const out
+    mby_ppe_modify_map         * const mod_map,
+    mby_shm_map                * const shm_map,
+    mbyTxInToModifier    const * const in,
+    mbyModifierToTxStats       * const out,
+    fm_int                             max_pkt_size
 )
 {
     // Read inputs:
-    const fm_bool         drop_ttl          = in->DROP_TTL;
-    const fm_byte         ecn               = in->ECN;
-    const fm_uint16       edglort           = in->EDGLORT;
-    const fm_uint32       fnmask            = in->FNMASK;        // forwarding normal mask
-    const fm_bool         is_timeout        = in->IS_TIMEOUT;
-    const fm_macaddr      l2_dmac           = in->L2_DMAC;
-    const fm_uint16       l2_evid1          = in->L2_EVID1;
-    const fm_bool         mark_routed       = in->MARK_ROUTED;
-    const mbyMirrorType   mirtyp            = in->MIRTYP;
-    const fm_uint32       mod_idx           = in->MOD_IDX;
-    const fm_bool         no_modify         = in->NO_MODIFY;  // skip most of modifications in Modifier
-    const fm_bool         out_of_mem        = in->OOM;
-    const mbyParserInfo   parser_info       = in->PARSER_INFO;
-    const fm_bool         pm_err            = in->PM_ERR;
-    const fm_bool         pm_err_nonsop     = in->PM_ERR_NONSOP;
-    const fm_byte         qos_l3_dscp       = in->QOS_L3_DSCP;
-    const fm_uint32       rx_length         = in->RX_LENGTH;  // ingress packet data length [bytes]
-    const fm_byte * const rx_packet         = in->RX_DATA;    // packet RX data
-    const fm_bool         saf_error         = in->SAF_ERROR;
-    const fm_uint64       tail_csum_len     = in->TAIL_CSUM_LEN;
-    const fm_byte * const tx_data_in        = in->TX_DATA;
-    const fm_bool         tx_drop_in        = in->TX_DROP;
-    const fm_uint32       tx_stats_last_len = 0; // was: in->TX_STATS_LAST_LEN; <--- FIXME!!!
-    const fm_byte         tx_tag            = in->TX_TAG;
-    const fm_byte         xcast             = in->XCAST;
+    fm_uint32                   content_addr = in->CONTENT_ADDR;
+    fm_uint32                   fnmask       = in->FNMASK;
+    fm_byte                     mod_prof_idx = in->MOD_PROF_IDX;
+    mbyParserHdrPtrs            pa_hdr_ptrs  = in->PA_HDR_PTRS;
+    fm_byte             * const rx_data      = in->RX_DATA;
+    fm_uint32                   rx_length    = in->RX_LENGTH;
 
-    // Initialize:
-    fm_bool         tx_drop         = tx_drop_in;
-    fm_uint16       tx_disp         = (xcast == 2) ? DISP_BCAST : (xcast == 1) ? DISP_MCAST : DISP_UCAST;
-    fm_byte * const tx_packet       = (fm_byte *) tx_data_in;
-    fm_uint32       tx_length       = 0;
-    fm_uint32       tx_stats_length = 0;
-    mbyDropErrCode  tx_reasoncode   = ERR_NONE;
-    fm_bool         no_pri_enc      = !((parser_info.otr_l2_vlan1 > 0) || (parser_info.otr_mpls_len > 0) || (parser_info.otr_l3_len > 0));
+    fm_byte                     grp_ctnr[MBY_MOD_CNTR_SIZE];
+    fm_uint                     pkt_idx   = 0;
+    mbyModProfileAction         prof_act;
+    fm_byte             * const tx_data   = out->TX_DATA;
+    fm_uint32                   tx_length = 0;
+    fm_uint32                   tx_port   = 0;
 
     // Select egress port:
-    fm_uint32 tx_port = 0;
-
     for (fm_uint i = 0; i < 24; i++)
         if (fnmask & (1uL << i)) {
             tx_port = i;
             break;
         }
 
-    // Unpack RX packet into chunked segment:
-    mbyChunkedSeg chunked_seg = { 0 };
-    unpackPacket
-    (
-        rx_length,
-        rx_packet,
-        parser_info,
-        &chunked_seg
-    );
+    initProfAct(shm_map, rx_length, content_addr, &prof_act);
 
-    // Read registered config data:
-    mbyModRegData reg_data;
+    lookupProfile(mod_map, rx_data, &pa_hdr_ptrs, mod_prof_idx, &prof_act);
 
-    getModRegCfgData
-    (
-        regs,
-        tx_port,
-        &reg_data
-    );
+    buildProfileGroupList(in, &prof_act);
 
-    // Initialize control data:
-    mbyModControlData ctrl_data;
+    performCmds(mod_map, rx_data, &prof_act, &pa_hdr_ptrs, grp_ctnr, &pkt_idx);
 
-    calcIngressCRC
-    (
-        regs,
-        rx_length,
-        rx_packet,
-        &ctrl_data
-    );
-
-    initControl
-    (
-        regs,
-        parser_info,
-        no_modify,
-        l2_evid1,
-        edglort,
-        mirtyp,
-        qos_l3_dscp,
-        ecn,
-        mark_routed,
-        mod_idx,
-        rx_length,
-        tx_length,
-        tail_csum_len,
-        chunked_seg,
-        &ctrl_data
-    );
-
-    // Drop packet, if needed:
-    dropPacket
-    (
-        regs,
-        rx_length,
-        drop_ttl,
-        is_timeout,
-        out_of_mem,
-        pm_err,
-        pm_err_nonsop,
-        saf_error,
-        &tx_disp,
-        &tx_drop,
-        &tx_reasoncode,
-        &ctrl_data
-    );
-
-#ifdef ENABLE_VLAN // skipping for now <-- REVISIT!!!
-    updateVlan(l2_evid1, &reg_data, &ctrl_data);
-#endif
-
-    // Update DMAC/SMAC:
-    updateMacAddrIPP
-    (
-        regs,
-        tx_tag,
-        parser_info.otr_l2_len,
-        no_modify,
-        l2_dmac,
-        &reg_data,
-        &tx_disp,
-        &tx_drop,
-        &tx_reasoncode,
-        &ctrl_data,
-        &chunked_seg
-    );
-
-#ifdef ENABLE_VLAN // skipping for now <-- REVISIT!!!
-    updateVlanIPP(key, model, &reg_data, &ctrl_data, &chunked_seg);
-#endif
-
-    packPacket
-    (
-        no_modify,
-        rx_length,
-        rx_packet,
-        &ctrl_data,
-        &chunked_seg,
-        &tx_length,
-        tx_packet
-    );
-
-    doMiscOps
-    (
-        regs,
-        &reg_data,
-        rx_length,
-        tx_stats_last_len,
-        &tx_length,
-        tx_packet,
-        &tx_disp,
-        &tx_drop,
-        &tx_reasoncode,
-        &tx_stats_length,
-        &ctrl_data
-    );
+    tx_length = packPacket(&prof_act, rx_length, grp_ctnr, rx_data, tx_data, pkt_idx, max_pkt_size);
 
     // Write outputs:
-
-    out->NO_PRI_ENC      = no_pri_enc; // is this output still needed? <-- REVISIT!!!
-    out->TX_DATA         = tx_packet;
-    out->TX_DISP         = tx_disp;
-    out->TX_LENGTH       = tx_length;
-    out->TX_PORT         = tx_port;
-    out->TX_STATS_LENGTH = tx_stats_length;
+    out->TX_LENGTH = tx_length;
+    out->TX_PORT   = tx_port;
 }

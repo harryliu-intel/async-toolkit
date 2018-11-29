@@ -349,11 +349,11 @@ module RDL
                                :entries1  => 1)
       each_reg_info() do |ri|
         rg_inst = ri.rg_inst
-        rg_inst.addr_incr = 1<<Math.log2(rg_inst.type_defn.regwidth/8).ceil
-        prev_incr  = (1<<Math.log2(rg_prev.inst_size).ceil) * rg_prev.addr_incr
-        prev_incr *= (1<<Math.log2(rg_prev.entries1).ceil) if rg_prev.entries1 > 1
-        this_incr  = (1<<Math.log2(rg_inst.inst_size).ceil) * rg_inst.addr_incr
-        this_incr *= (1<<Math.log2(ri.entries1).ceil) if ri.entries1 > 1
+        rg_inst.addr_incr = 1 << Math.log2(rg_inst.type_defn.regwidth/8).ceil
+        prev_incr  = (1 << Math.log2(rg_prev.inst_size).ceil) * rg_prev.addr_incr
+        prev_incr *= (1 << Math.log2(rg_prev.entries1).ceil) if rg_prev.entries1 > 1
+        this_incr  = (1 << Math.log2(rg_inst.inst_size).ceil) * rg_inst.addr_incr
+        this_incr *= (1 << Math.log2(ri.entries1).ceil) if ri.entries1 > 1
         if ri.first
           rg_inst.addr_base = 0
         elsif ri.entries1 > 1

@@ -36,6 +36,7 @@ $hdl_spec = {
         "src/egr/interfaces/egr_prc_tqu_if.sv",
         "src/egr/interfaces/egr_rrq_if.sv",
         "src/egr/interfaces/egr_rrs_if.sv",
+        "src/egr/interfaces/egr_rrs_id_if.sv",
         "src/egr/interfaces/egr_tcu_pfs_if.sv",
         "src/egr/interfaces/egr_tcu_tqu_if.sv",
 

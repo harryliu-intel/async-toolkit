@@ -1,63 +1,66 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay
 
-import java.util.TreeMap
-
 import com.intel.cg.hpfd.madisonbay.Memory._
 
-import scala.collection.JavaConverters._
 import scala.collection.breakOut
 import scala.collection.immutable.SortedMap
 
-
-case class AddressOverlap(first: AddressRange, second: AddressRange) extends Exception
 
 /** Guards non-overlapping of address ranges.
   *
   * V --- value type, defaults to String
   */
-class AddressGuard[V] {
-  type K = AddressRange
+class AddressGuard[+V] private (val map: SortedMap[AddressRange, V]) {
+  import AddressGuard._
 
-  var map = new TreeMap[K,V]((x,y) => x.pos.compare(y.pos))
-
-  def +=(ar: K, el: V) {
-    val lb = map.floorKey(ar)
-    val hb = map.ceilingKey(ar)
-    // ..b c..d e..
-    if( !(lb == null || (lb.lim <= ar.pos)) ) { throw new AddressOverlap(lb, ar) }
-    if( !(hb == null || (ar.lim <= hb.pos)) ) { throw new AddressOverlap(ar, hb) }
-    val _ = map.put(ar, el)
-  }
-
-  def +=(tup: (K,V)) {
-    val (ar, el) = tup
-    this += (ar, el)
-  }
-
-  def ++=(src: Traversable[(K,V)]) {
-    for(el <- src) {
-      this += el
+  /** Try to add a single element.
+    * @param key address range to be added
+    * @param value corresponding value
+    * @return Some for success, None for failure
+    */
+  def tryAdd[V1 >: V](key: K, value: V1): GuardResult[V1] = {
+    val left = map.to(key).lastOption.map(_._1)
+    val right = map.from(key).headOption.map(_._1)
+    val pairOp = (left, right) match {
+      case (Some(lb), _) if lb.lim > key.pos => Left(lb)
+      case (_, Some(hb)) if key.lim > hb.pos => Left(hb)
+      case _ => Right((key, value))
     }
+    pairOp.map(x => new AddressGuard(map + x))
   }
 
-  def length: Int = map.size()
+  /** Shortcut */
+  def tryAdd[V1 >: V](pair: (K, V1)): GuardResult[V1] = {
+    val (key, value) = pair
+    tryAdd(key, value)
+  }
+
+  /** Try adding all elements in collection. */
+  def tryAddAll[V1 >: V](src: Traversable[(K, V1)]): GuardResult[V1] = {
+    src.view.foldRight(Right(this): GuardResult[V1])((el, guard) => guard.flatMap(_.tryAdd(el)))
+  }
+
+  def length: Int = map.size
 
   def pos: Address = map.firstKey.pos
   def lim: Address = map.lastKey.lim
   def width: Bits = lim - pos
   def range = AddressRange(pos, width)
 
-  /** Converts to a plain address map. */
-  def toAddrMap: SortedMap[Address, V] = map.asScala.map { case(ar, el) => (ar.pos, el) } (breakOut)
+  /** Converts to an address map. */
+  def toAddrMap: SortedMap[K, V] = map
 }
 object AddressGuard {
-  def apply[V]() = new AddressGuard[V]
+  type K = AddressRange
 
-  def apply[V](el: (AddressRange, V), rest: (AddressRange, V)*): AddressGuard[V] = {
-    val guard = AddressGuard[V]()
-    guard += el
-    guard ++= rest
-    guard
+  type GuardResult[V] = Either[AddressRange, AddressGuard[V]]
+
+  def rangeOrdering[V]: Ordering[AddressRange] = Ordering.by[AddressRange, Address](_.pos)
+
+  def apply[V]() = new AddressGuard(SortedMap.empty[K, V](rangeOrdering))
+
+  def apply[V](elements: (AddressRange, V)*): AddressGuard[V] = {
+    new AddressGuard(SortedMap[K, V](elements: _*)(rangeOrdering))
   }
 }

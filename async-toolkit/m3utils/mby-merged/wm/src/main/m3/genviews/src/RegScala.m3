@@ -577,11 +577,12 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package com.intel.cg.hpfd.csr.generated\n");
+    gs.main("package madisonbay.csr\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
     gs.main("import com.intel.cg.hpfd.csr.macros.annotations.reg\n");
+    gs.main("import monocle.macros.Lenses\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("object %s {\n", myTn);
+    gs.main("trait %s_instance {\n", myTn);
     gs.main("@reg class %s {\n", myTn);
     (*
     gs.main("case class %s(addr: Address, state: Long) extends RdlRegister[%s] {\n", myTn, myTn);
@@ -682,7 +683,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     myTn := rf.typeName(gs);
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package com.intel.cg.hpfd.csr.generated\n");
+    gs.main("package madisonbay.csr\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
@@ -690,7 +691,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     gs.main("import com.intel.cg.hpfd.csr.macros.annotations._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
 
-    gs.main("object %s {\n", myTn);
+    gs.main("trait %s_instance {\n", myTn);
 
     gs.main("  @Initialize\n");
     gs.main("  @Lenses(\"_\")\n");
@@ -700,7 +701,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
-        gs.main(",\n    @OfSize(%s) %s: List[%s.%s]", Int(ArrSz(c.array)), IdiomName(c.nm), tn, tn);
+        gs.main(",\n    @OfSize(%s) %s: List[all.%s]", Int(ArrSz(c.array)), IdiomName(c.nm), tn);
       END
     END;
     gs.main("\n  )\n");
@@ -726,12 +727,12 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     myTn := map.typeName(gs);  
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
-    gs.main("package com.intel.cg.hpfd.csr.generated\n");
+    gs.main("package madisonbay.csr\n");
     gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
     gs.main("import monocle.macros.Lenses\n");
     gs.main("import com.intel.cg.hpfd.csr.macros.annotations._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
-    gs.main("object %s {\n", myTn);
+    gs.main("trait %s_instance {\n", myTn);
     gs.main("  @Lenses(\"_\")\n");
     gs.main("  @GenOpticsLookup\n");
     gs.main("  @Initialize\n");
@@ -741,9 +742,9 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
       WITH c  = map.children.get(i),
            tn = ComponentTypeName(c.comp,gs) DO
         IF (c.array = NIL) THEN
-          gs.main(",\n    %s: %s.%s", IdiomName(c.nm), tn, tn)
+          gs.main(",\n    %s: all.%s", IdiomName(c.nm), tn)
         ELSE
-          gs.main(",\n    @OfSize(%s) %s: List[%s.%s]", Int(ArrSz(c.array)), IdiomName(c.nm), tn, tn)
+          gs.main(",\n    @OfSize(%s) %s: List[all.%s]", Int(ArrSz(c.array)), IdiomName(c.nm), tn)
         END
       END
     END;

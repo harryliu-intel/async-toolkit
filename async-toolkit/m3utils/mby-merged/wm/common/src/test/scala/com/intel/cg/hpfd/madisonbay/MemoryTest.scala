@@ -4,180 +4,305 @@ package com.intel.cg.hpfd.madisonbay
 
 import com.intel.cg.hpfd.madisonbay.Memory.{Address, AddressRange, Alignment, Bits, Bytes}
 import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.OptionValues._
 import org.scalacheck.Prop
 import org.scalatest.prop.Checkers
 
-class MemoryTest extends FlatSpec with Matchers with Checkers{
+import com.intel.cg.hpfd.madisonbay.Encode.encode
+import org.scalatest.Inspectors.{forAll => _}
+import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Arbitrary._
 
-  "toLong in Bits" should "return number of bits as long" in {
-    check(Prop.forAll((n: Long) => Bits(n).toLong == n))
-  }
+import scala.math._
 
-  "toBits in Bits" should "return number of bits as Bits" in {
-    check(Prop.forAll((n: Long) => Bits(n).toBits == Bits(n)))
-  }
+class MemoryTest extends CommonSpec {
 
-  "tryBytes in Bits" should "return None if there is less than 8 bits" in {
-    val bits = Bits(7)
-    bits.tryBytes should equal(None)
-  }
-  it should "return number of whole bytes as Bytes if there is at least 8 bits" in {
-    val bits = Bits(8)
-    bits.tryBytes should equal(Some(Bytes(1)))
-  }
+  val genBits: Gen[Bits] = arbitrary[Long].map(Bits.apply _)
+  implicit lazy val arbBits: Arbitrary[Bits] = Arbitrary(genBits)
 
-  "nextPower in Bits" should "return 1 for 1 bit" in {
-    val bits = Bits(1)
-    bits.nextPower should equal(Bits(1))
-  }
-  it should "return 2 for 2 bits" in {
-    val bits = Bits(2)
-    bits.nextPower should equal(Bits(2))
-  }
-  it should "return 4 for 3 bits" in {
-    val bits = Bits(3)
-    bits.nextPower should equal(Bits(4))
-  }
-
-  "fullBytes in Bits" should "return 0 as Byte if there is less than 8 bits" in {
-    val bits = Bits(7)
-    bits.fullBytes should equal(Bytes(0))
-  }
-  it should "return number of whole bytes as Bytes if there is at least 8 bits" in {
-    val bits = Bits(8)
-    bits.fullBytes should equal(Bytes(1))
-  }
-
-  "isPower in Bits" should "return True if number of bits is 1" in {
-    val bits = Bits(1)
-    bits.isPower should equal(true)
-  }
-  it should "return True if number of bits is 2" in {
-    val bits = Bits(2)
-    bits.isPower should equal(true)
-  }
-  it should "return False if number of bits is not power of 2" in {
-    val bits = Bits(3)
-    bits.isPower should equal(false)
-  }
-
-  "plus(+) in Bits" should "sum bits of two Bits objects" in {
-    check(Prop.forAll((n: Long, m:Long) => Bits(n) + Bits(m) == Bits(n + m)))
-  }
-
-  "minus(-) in Bits" should "subtract bits of two Bits objects" in {
-    check(Prop.forAll((n: Long, m:Long) => Bits(n) - Bits(m) == Bits(n-m)))
-  }
-
-  "slash(/) in Bits" should "return floor of Bits division" in {
-    val bits = Bits(10)
-    val bits2 = Bits(6)
-    bits / bits2 should equal(1)
-  }
-  it should "throw ArithmeticException while dividing by 0" in {
-    val bits = Bits(1)
-    val bits2 = Bits(0)
-    an [ArithmeticException] should be thrownBy bits/bits2
-  }
-
-  "mod(%) in Bits" should "return mod of Bits division as Bits" in {
-    val bits = Bits(10)
-    val bits2 = Bits(6)
-    bits % bits2 should equal(Bits(4))
-  }
-
-  "compare in Bits" should "return 1 if first op has more bits" in {
-    val bits = Bits(10)
-    val bits2 = Bits(6)
-    bits compare bits2 should equal(1)
-  }
-  it should "return 0 if both ops have the same number of bits" in {
-    val bits = Bits(1)
-    val bits2 = Bits(1)
-    bits compare bits2 should equal(0)
-  }
-  it should "return -1 if second op has more bits" in {
-    val bits = Bits(1)
-    val bits2 = Bits(5)
-    bits compare bits2 should equal(-1)
-  }
-
-  "tryAlignment in Bytes" should "return Alignment if there is 2 pow N bytes" in {
-    val bytes = Bytes(1)
-    bytes.tryAlignment should equal(Some(Alignment(bytes)))
-  }
-  it should "return None otherwise" in {
-    val bytes = Bytes(3)
-    bytes.tryAlignment should equal(None)
-  }
-
-  "bits in Address" should "return number of bits offset from full words" in {
-    val a = Address(Bits(65))
-    a.bits should equal(Bits(1))
-  }
-
-  "toBits in Address" should "return number of all owned bits" in {
-    val a = Address(Bits(65))
-    a.toBits should equal(Bits(65))
-  }
-
-  "plus(+) in Address" should "add bytes to Address" in {
-    val address = Address(Bits(2))
-    val bytes = Bytes(2)
-    val sum = address + bytes
-    sum.toBits should equal(Bits(18))
-  }
-  it should "add bits to Address" in {
-    val address = Address(Bits(2))
-    val bits = Bits(2)
-    val sum = address + bits
-    sum.toBits should equal(Bits(4))
-  }
-
-  "minus(-) in Address" should "subtract bytes from address" in {
-    val address = Address(1, Bits(0))
-    val bytes = Bytes(1)
-    val sub = address - bytes
-    sub.toBits should equal(Bits(56))
-  }
-  it should "subtract bits from address" in {
-    val address = Address(Bits(2))
-    val bits = Bits(2)
-    val sum = address + bits
-    sum.toBits should equal(Bits(4))
-  }
-
-  "mod(%) in Address" should "return the reminder of bits division" in {
-    val address = Address(1, Bits(1))
-    val bits = Bits(5)
-    address % bits should equal(Bits(0))
-  }
-  it should "throw ArithmeticException if second op has 0 bits" in {
-    val address = Address(1,Bits(1))
-    val bits = Bits(0)
-    an [ArithmeticException] should be thrownBy address % bits
-  }
-
-  "alignTo(Align) in Address" should "align address to block of size 2 pow N" in {
-    val address = Address(1, Bits(1))
-    val al = Alignment(Bytes(4))
-    val modA = address alignTo al
-    modA.bits should equal(Bits(32))
-  }
-
-  "AddressRange" should "throw IllegalArgumentException if created with range <= 0" in {
-    an [IllegalArgumentException] should be thrownBy AddressRange(Address(Bits(4)),Bits(0))
-  }
-  it should "throw IllegalArgumentException if created with first address param <= second address param" in {
-    an [IllegalArgumentException] should be thrownBy AddressRange(Address(Bits(4)),Address(Bits(0)))
-  }
-
-  "placeReg in AddressRange" should "return properly aligned address range" in {
-    val ar = AddressRange.placeReg(Address(Bits(17)), Alignment(Bytes(2)))
-    ar.pos.toBits should equal(Bits(32))
-    ar.width should equal(Bits(16))
-  }
+  def pow2(n: Int): Long = (0 to n).foldLeft(1L) { (st, _) => st*2 }
 
 
+  "Bits" can {
+    "toBits (to self)" in {
+      forAll { (n: Long) =>
+        Bits(n).toBits should equal (Bits(n))
+      }
+    }
 
+    "toLong" in {
+      forAll { (n: Long) =>
+        Bits(n).toLong should equal (n)
+      }
+    }
+
+    "tryBytes" should {
+      "for full bytes, return Some" in {
+        forAll { (n: Long) =>
+          whenever (Long.MinValue / 8 < n && n < Long.MaxValue  / 8) {
+            Bits(n * 8).tryBytes.value should equal (Bytes(n))
+          }
+        }
+      }
+
+      "otherwise, return None" in {
+        forAll { (n: Long) =>
+          whenever (n % 8 != 0) {
+            Bits(n).tryBytes should be (empty)
+          }
+        }
+      }
+    }
+
+    "fullBytes" should {
+      "given full bytes, return them" in {
+        forAll { (n: Long) =>
+          whenever (Long.MinValue / 8 < n && n < Long.MaxValue  / 8) {
+            Bits(n * 8).fullBytes should equal (Bytes(n))
+          }
+        }
+      }
+
+      "otherwise, return closest lower number of full bytes" in {
+        forAll { (n: Long) =>
+          whenever (Long.MinValue / 8 < n && n < Long.MaxValue  / 8) {
+            forAll ((Gen.choose(1, 7), "x")) { x =>
+              val nx = n * 8 + signum(n) * x
+              Bits(nx).fullBytes should equal(Bytes(n))
+            }
+          }
+        }
+      }
+    }
+
+    "isPower" should {
+      "given power of 2, return true" in {
+        forAll ((Gen.choose(1, 60), "n")) { n =>
+          val p = pow2(n)
+          Bits(p).isPower should equal (true)
+        }
+      }
+
+      "otherwise, return false" in {
+        forAll ((Gen.choose(1, 60), "n")) { n =>
+          val p = pow2(n)
+          forAll ((Gen.choose(p / 2 + 1, p - 1), "p0")) { p0 =>
+            Bits(p0).isPower should equal (false)
+          }
+        }
+      }
+    }
+
+    "nextPower" should {
+      "given power of 2, return itself" in {
+        forAll ((Gen.choose(1, 60), "n")) { n =>
+          val p = pow2(n)
+          Bits(p).nextPower should equal (Bits(p))
+        }
+      }
+
+      "otherwise, return closest higher power of 2" in {
+        forAll ((Gen.choose(2, 60), "n")) { n =>
+          val p = pow2(n)
+          forAll ((Gen.choose(p / 2 + 1, p - 1), "p0")) { p0 =>
+            Bits(p0).nextPower should equal (Bits(p))
+          }
+        }
+      }
+    }
+
+    "be summed (+)" in {
+      forAll { (n: Int, m: Int) =>
+        (Bits(n) + Bits(m)) should equal (Bits(n.toLong + m.toLong))
+      }
+    }
+
+    "be subtracted (-)" in {
+      forAll { (n: Int, m: Int) =>
+        (Bits(n) - Bits(m)) should equal (Bits(n.toLong - m.toLong))
+      }
+    }
+
+    "be divided (/)" should {
+      "when denominator is not zero, return integer" in {
+        forAll { (n: Long, m: Long) =>
+          whenever(m != 0) {
+            (Bits(n) / Bits(m)) should equal (n / m)
+          }
+        }
+      }
+
+      "otherwise, throw ArithmeticException" in {
+        forAll { (n: Long) =>
+          an [ArithmeticException] should be thrownBy Bits(n) / Bits(0)
+        }
+      }
+    }
+
+    "produce a shift (%)" which {
+      "when denominator is not zero, is Bits" in {
+        forAll { (n: Long, m: Long) =>
+          whenever(m != 0) {
+            (Bits(n) % Bits(m)) should equal (Bits(n % m))
+          }
+        }
+      }
+
+      "otherwise, throws ArithmeticException instead" in {
+        forAll { (n: Long) =>
+          an [ArithmeticException] should be thrownBy Bits(n) % Bits(0)
+        }
+      }
+    }
+
+    "be compared (as numbers)" in {
+      forAll { (n: Long, m: Long) =>
+        Bits(n) compare Bits(m) should equal (n compare m)
+      }
+    }
+  }
+
+  "Bytes" can {
+    "tryAlignment" which {
+      "given power of 2, returns Some[Alignment]" in {
+        forAll ((Gen.choose(1, 60), "n")) { n =>
+          val p = pow2(n)
+          Bytes(p).tryAlignment.value should equal (Alignment(p))
+        }
+      }
+    }
+
+    "otherwise, return None" in {
+      forAll ((Gen.choose(2, 60), "n")) { n =>
+        val p = pow2(n)
+        forAll ((Gen.choose(p / 2 + 1, p - 1), "p0")) { p0 =>
+          Bytes(p0).tryAlignment should be (empty)
+        }
+      }
+    }
+  }
+
+  "Address" can {
+    "bits (offset from full words)" in {
+      forAll { (n: Long) =>
+        whenever (n >= 0) {
+          Address(Bits(n)).bits should equal(Bits(n % 64))
+        }
+      }
+    }
+
+    "toBits (number of all owned bits)" in {
+      forAll { (n: Long) =>
+        whenever (n >= 0) {
+          Address(Bits(n)).toBits should equal (Bits(n))
+        }
+      }
+    }
+
+    "be done shift (+)" which is {
+      "by Bits" in {
+        forAll { (n: Int, m: Int) =>
+          whenever (n >= 0 && n.toLong + m.toLong >= 0) {
+            val shifted = Address(Bits(n)) + Bits(m)
+            val result = Address(Bits(n.toLong + m.toLong))
+            shifted should equal (result)
+          }
+        }
+      }
+
+      "by Bytes" in {
+        forAll { (n: Int, m: Int) =>
+          whenever (n >= 0 && n.toLong + m.toLong * 8 >= 0) {
+            val shifted = Address(Bits(n)) + Bytes(m)
+            val result = Address(Bits(n.toLong + m.toLong * 8))
+            shifted should equal (result)
+          }
+        }
+      }
+    }
+
+    "be done reverse shift (-)" which is  {
+      "by Bits" in {
+        forAll { (n: Int, m: Int) =>
+          whenever (n >= 0 && n.toLong - m.toLong >= 0) {
+            val shifted = Address(Bits(n)) - Bits(m)
+            val result = Address(Bits(n.toLong - m.toLong))
+            shifted should equal (result)
+          }
+        }
+      }
+
+      "by Bytes" in {
+        forAll { (n: Int, m: Int) =>
+          whenever (n >= 0 && n.toLong - m.toLong * 8 >= 0) {
+            val shifted = Address(Bits(n)) - Bytes(m)
+            val result = Address(Bits(n.toLong - m.toLong * 8))
+            shifted should equal (result)
+          }
+        }
+      }
+    }
+
+
+    "produce a shift (%)" which {
+      "when denominator is not zero, is Bits" in {
+        forAll { (n: Long, m: Long) =>
+          whenever (n >= 0 && m != 0) {
+            (Address(Bits(n)) % Bits(m)) should equal (Bits(n % m))
+          }
+        }
+      }
+
+      "otherwise, throws ArithmeticException instead" in {
+        forAll { (n: Long) =>
+          whenever (n >= 0) {
+            an[ArithmeticException] should be thrownBy Address(Bits(n)) % Bits(0)
+          }
+        }
+      }
+    }
+
+    "be aligned to Alignment" in {
+      forAll ((arbitrary[Int], "n"), (Gen.choose(1, 57), "m")) { (n, m) =>
+        whenever (n >= 0) {
+          val p = pow2(m)
+          val al = Alignment(p)
+          val p0 = p * 8
+          val res = if (n % p0 == 0) { n } else { n + (p0 - n % p0) }
+          (Address(Bits(n)) alignTo al) should equal (Address(res))
+        }
+      }
+    }
+
+    "AddressRange" should {
+      "fail when created with range <= 0" in {
+        forAll { (n: Long, m: Long) =>
+          whenever (n >= 0 && m <= 0) {
+            an[IllegalArgumentException] should be thrownBy AddressRange(Address(Bits(n)), Bits(m))
+          }
+        }
+      }
+
+      "fail when created with first address > one-after-last address" in {
+        forAll { (n: Int, m: Int) =>
+          whenever (n >= 0 && m > 0) {
+            an [IllegalArgumentException] should be thrownBy AddressRange(Address(Bits(n+m)), Address(Bits(n)))
+          }
+        }
+      }
+
+      "by created via placeReg (properly aligned range)" in {
+        forAll ((arbitrary[Int], "n"), (Gen.choose(1, 57), "m")) { (n, m) =>
+          whenever (n >= 0) {
+            val p = pow2(m)
+            val addr = Address(Bits(n))
+            val al = Alignment(p)
+            val pos = addr alignTo al
+            val width = Bits(8 * p)
+            AddressRange.placeReg(addr, al) should equal (AddressRange(pos, width))
+          }
+        }
+      }
+    }
+  }
 }
