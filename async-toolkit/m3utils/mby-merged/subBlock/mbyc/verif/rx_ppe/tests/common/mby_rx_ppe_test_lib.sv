@@ -45,7 +45,7 @@ program mby_rx_ppe_test_lib;
    import mby_wm_dpi_pkg::* ;
    import eth_bfm_pkg::*;
    import mby_ec_bfm_pkg::*;
-   import ec_env_pkg::*;
+ //  import ec_env_pkg::*;
 
     `define __INSIDE_MBY_RX_PPE_TEST_LIB
     `include "mby_rx_ppe_base_test.svh"

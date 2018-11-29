@@ -44,7 +44,7 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",             // The
    );
 
    import uvm_pkg::*;
-   import ec_env_pkg::*;
+ //  import ec_env_pkg::*;
 
    initial begin
       // Set MC TI Path in the database

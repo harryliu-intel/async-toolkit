@@ -56,23 +56,23 @@ class mby_rx_ppe_env extends shdv_base_env;
 
    // Variable:  eth_cdi_bfm
    // MAC Client BFM agent
-   ec_env_defines::mby_ec_bfm_t eth_cdi_bfm;
+   //ec_env_defines::mby_ec_bfm_t eth_cdi_bfm;
 
    // Variable:  cdi_tx_io
    // MAC Client BFM io policy
-   ec_env_defines::cdi_tx_io_t eth_cdi_tx_io;
+   //ec_env_defines::cdi_tx_io_t eth_cdi_tx_io;
 
    // Variable:  cdi_rx_io
    // MAC Client BFM io policy
-   ec_env_defines::cdi_rx_io_t eth_cdi_rx_io;
+   //ec_env_defines::cdi_rx_io_t eth_cdi_rx_io;
 
    // Variable:  cdi_tx_vintf
    // MAC Client BFM virtual interface
-   ec_env_defines::cdi_tx_vintf_t cdi_tx_vintf;
+   //ec_env_defines::cdi_tx_vintf_t cdi_tx_vintf;
 
    // Variable:  cdi_rx_vintf
    // MAC Client BFM virtual interface
-   ec_env_defines::cdi_rx_vintf_t cdi_rx_vintf;
+   //ec_env_defines::cdi_rx_vintf_t cdi_rx_vintf;
 
    `uvm_component_utils_begin(mby_rx_ppe_env)
       `uvm_field_object  (tb_cfg,                          UVM_ALL_ON)
@@ -130,13 +130,14 @@ class mby_rx_ppe_env extends shdv_base_env;
       if(!uvm_config_db#(virtual mby_rx_ppe_tb_if)::get(this, "", "mby_rx_ppe_tb_if", tb_vif)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
       end
-
+/*
       if(!uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_tx_vintf was not successful!")
       end
       if(!uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
       end
+*/
 
 //PJP      $cast(tb_ral,ral);
 //PJP      if(tb_ral == null) begin
@@ -152,7 +153,7 @@ class mby_rx_ppe_env extends shdv_base_env;
    //  Build and configure Eth_bfm.
    //---------------------------------------------------------------------------
    function void build_eth_bfm();
-
+/*
       eth_cdi_bfm                    = ec_env_defines::mby_ec_bfm_t::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
       eth_cdi_bfm.cfg.mode           = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
       eth_cdi_bfm.cfg.port_speed     = {eth_bfm_pkg::SPEED_400G,                                           // Configure speed.
@@ -162,11 +163,13 @@ class mby_rx_ppe_env extends shdv_base_env;
 
       //eth_cdi_bfm.cfg.num_ports = 4;                                                                  // Configure num_ports.
       eth_cdi_bfm.cfg.sop_alignment = 67;
+
+*/
       //eth_cdi_bfm.cfg.ack_delay = 0;
       //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
 
-      eth_cdi_tx_io = ec_env_defines::cdi_tx_io_t::type_id::create("eth_cdi_tx_io", this);
-      eth_cdi_rx_io = ec_env_defines::cdi_rx_io_t::type_id::create("eth_cdi_rx_io", this);
+      //eth_cdi_tx_io = ec_env_defines::cdi_tx_io_t::type_id::create("eth_cdi_tx_io", this);
+      //eth_cdi_rx_io = ec_env_defines::cdi_rx_io_t::type_id::create("eth_cdi_rx_io", this);
 
    endfunction : build_eth_bfm
 
@@ -179,9 +182,9 @@ class mby_rx_ppe_env extends shdv_base_env;
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
 
-      eth_cdi_tx_io.set_vintf(cdi_tx_vintf);
-      eth_cdi_rx_io.set_vintf(cdi_rx_vintf);
-      eth_cdi_bfm.set_io(eth_cdi_tx_io, eth_cdi_rx_io);   // Set the IO Policy in the CDI BFM
+      //eth_cdi_tx_io.set_vintf(cdi_tx_vintf);
+      //eth_cdi_rx_io.set_vintf(cdi_rx_vintf);
+      //eth_cdi_bfm.set_io(eth_cdi_tx_io, eth_cdi_rx_io);   // Set the IO Policy in the CDI BFM
 //PJP      void'(this.add_sequencer("eth_agent", "tx0", eth_cdi_bfm.tx.frame_sequencer[0]));
 //PJP      void'(this.add_sequencer("eth_agent", "tx1", eth_cdi_bfm.tx.frame_sequencer[1]));
 //PJP      void'(this.add_sequencer("eth_agent", "tx2", eth_cdi_bfm.tx.frame_sequencer[2]));
