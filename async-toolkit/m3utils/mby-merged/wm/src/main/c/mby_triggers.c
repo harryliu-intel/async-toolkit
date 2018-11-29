@@ -58,14 +58,14 @@ static fm_bool evaluateTrigger
     fm_uint64                   action_mask;
     fm_uint64                   action_mask2;
 
-    cond_cfg       = mbyTrigGetConditionCfg                 (trig_apply_map, trig);
-    cond_cgrp      = mbyTrigGetConditionCGRP                (trig_apply_map, trig);
-    cond_param     = mbyTrigGetConditionParam               (trig_apply_map, trig);
-    cond_glort     = mbyTrigGetConditionGlort               (trig_apply_map, trig);
-    cond_rx        = mbyTrigGetConditionRx                  (trig_apply_map, trig);
-    direct_map_ctx = mbyTriggerDirectMapCtrlCtxReadOperation(trig_apply_map, trig);
-    cond_amask1    = mbyTrigGetConditionAmask1              (trig_apply_map, trig);
-    cond_amask2    = mbyTrigGetConditionAmask2              (trig_apply_map, trig);
+    cond_cfg       = mbyTrigGetConditionCfg    (trig_apply_map, trig);
+    cond_cgrp      = mbyTrigGetConditionCGRP   (trig_apply_map, trig);
+    cond_param     = mbyTrigGetConditionParam  (trig_apply_map, trig);
+    cond_glort     = mbyTrigGetConditionGlort  (trig_apply_map, trig);
+    cond_rx        = mbyTrigGetConditionRx     (trig_apply_map, trig);
+    direct_map_ctx = mbyTrigGetDirectMapCtrlCtx(trig_apply_map, trig);
+    cond_amask1    = mbyTrigGetConditionAmask1 (trig_apply_map, trig);
+    cond_amask2    = mbyTrigGetConditionAmask2 (trig_apply_map, trig);
 
     //This code doesn't match RTL. So DV should not enable WM for matchRandom tests
     trig_lfsr0 = FM_GET_UNNAMED_FIELD(fmRand(), 0, 24);
@@ -101,7 +101,7 @@ static fm_bool evaluateTrigger
              (                cond_cfg.MATCH_DEST_GLORT == 2 ) );
 
     /* Match on EgressDomainValue. */
-    egress_domain = ((l3_edomain & 0x3f) << 9) | (l2_edomain & 0xff);
+    egress_domain = ((l3_edomain & 0x3f) << 8) | (l2_edomain & 0xff);
     egress_domain_hit = ( (egress_domain                  & cond_param.EGRESS_DOMAIN_MASK) ==
                           (cond_param.EGRESS_DOMAIN_VALUE & cond_param.EGRESS_DOMAIN_MASK) );
     hit &= ( ( !egress_domain_hit && cond_cfg.MATCH_EGRESS_DOMAIN == 0 ) ||
@@ -261,9 +261,6 @@ static void applyPrecedenceResolution
 
     if ( hi->egressL2DomainAction > lo->egressL2DomainAction )
         lo->egressL2DomainAction = hi->egressL2DomainAction;
-
-    if ( hi->noModifyAction > lo->noModifyAction)
-        lo->noModifyAction = hi->noModifyAction;
 }
 
 static void resolveTriggers
@@ -493,17 +490,19 @@ static void applyTriggers
         results->rateLimitNum = actions->newRateLimitNum;
 
     /* store the action in the triggerResults channel */
-   results->egressL3DomainAction = actions->egressL3DomainAction;
+    results->egressL3DomainAction = actions->egressL3DomainAction;
+
+    if( actions->egressL3DomainAction == MBY_TRIG_ACTION_EGRESS_L3DOMAIN_ALWAYS_UPDATE)
+        results->update_l3_domain = 1;
 
     /* store the action in the triggerResults channel */
     results->egressL2DomainAction = actions->egressL2DomainAction;
 
+    if( actions->egressL2DomainAction == MBY_TRIG_ACTION_EGRESS_L2DOMAIN_ALWAYS_UPDATE)
+        results->update_l2_domain = 1;
+
     /* store the action in the triggerResults channel */
     results->policerAction = actions->policerAction;
-
-    /* store the action in the triggerResults channel */
-    results->noModifyAction = actions->noModifyAction;
-
 }
 
 static void triggersStatsUpdate
@@ -588,7 +587,6 @@ void Triggers
 (
     mby_ppe_trig_apply_map            * const trig_apply_map,
     mby_ppe_trig_apply_misc_map       * const trig_apply_misc_map,
-    mby_ppe_trig_usage_map            * const trig_usage_map,
     mby_ppe_fwd_misc_map              * const fwd_misc_map,
     mby_ppe_mapper_map                * const mapper_map,
     mbyMaskGenToTriggers        const * const in,
@@ -621,7 +619,6 @@ void Triggers
     fm_byte           const mirror1_profile_v         = in->MIRROR1_PROFILE_V;
     fm_bool                 learning_enabled          = in->LEARNING_ENABLED;
     /* no_modify action comes from triggers. */
-    fm_bool                 no_modify                 = FALSE;
     fm_bool                 hit;
     fm_uint64               hit_mask_hi               = FM_LITERAL_U64(0);
     fm_uint64               hit_mask_lo               = FM_LITERAL_U64(0);
@@ -700,8 +697,6 @@ void Triggers
         hit_mask_lo
     );
 
-    no_modify = results.noModifyAction;
-
     // events and interrupts
     fm_uint64 trig_ip_lo                       = trig_apply_misc_map->TRIGGER_IP[0].PENDING;
     trig_ip_lo                                |= ((FM_LITERAL_U64(1) << 48) - 1) & trig_hit_mask_resolved_lo;
@@ -767,16 +762,19 @@ void Triggers
         out->DMASK[i] = results.destMask[i];
 
     out->ACTION              = results.action;
+    out->CPU_CODE            = results.cpuCode;
     out->IDGLORT             = results.destGlort;
     out->L2_EVID1            = results.vlan;
     out->MIRROR0_PROFILE_IDX = results.mirror0ProfileIdx;
     out->MIRROR0_PROFILE_V   = results.mirror0ProfileV;
     out->MIRROR1_PROFILE_IDX = results.mirror1ProfileIdx;
     out->MIRROR1_PROFILE_V   = results.mirror1ProfileV;
-    out->NO_MODIFY           = no_modify;
+    out->TRAP_CODE           = results.trapCode;
     out->QOS_TC              = results.TC;
+    out->UPDATE_L2_DOMAIN    = results.update_l2_domain;
+    out->UPDATE_L3_DOMAIN    = results.update_l3_domain;
     // Pass thru:
-    out->ACTION              = in->ACTION;
+    out->CONTENT_ADDR        = in->CONTENT_ADDR;
     out->DROP_TTL            = in->DROP_TTL;
     out->ECN                 = in->ECN;
     out->EDGLORT             = in->EDGLORT;
@@ -790,7 +788,6 @@ void Triggers
     out->MIRTYP              = in->MIRTYP;
     out->MOD_IDX             = in->MOD_IDX;
     out->MOD_PROF_IDX        = in->MOD_PROF_IDX;
-    out->NO_MODIFY           = no_modify;
     out->OOM                 = in->OOM;
     out->PARSER_INFO         = in->PARSER_INFO;
     out->PA_HDR_PTRS         = in->PA_HDR_PTRS;

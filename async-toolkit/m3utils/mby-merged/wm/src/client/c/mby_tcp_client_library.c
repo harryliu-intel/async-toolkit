@@ -59,14 +59,14 @@
  */
 static int wm_server_fd;
 
-/* FD of the socket used to recevive connections from model_server.
+/* FD of the socket used to receive connections from model_server.
  * For example, it is used to accept connections for egress ports.
  */
 static int wm_client_fd;
 static int wm_client_port;
 
 /* FD used to get egress traffic from WM ports */
-static int wm_egress_fd;
+static int wm_egress_fd[NUM_PORTS];
 
 /* Temporary file used for models.packetServer */
 #define TMP_FILE_TEMPLATE   "/tmp/models.packetServer.XXXXXX"
@@ -300,13 +300,19 @@ int wm_connect(char const * const server_file)
 	if (err)
 		return err;
 
-	wm_egress_fd = -1;
 
 	for (i = 0; i < NUM_PORTS; ++i) {
-		err = connect_egress(i, wm_server_fd, wm_client_fd, wm_client_port,
-							 &wm_egress_fd);
-		if (err)
-			return err;
+          wm_egress_fd[i] = -1;
+          err = connect_egress(i,
+                               wm_server_fd,
+                               wm_client_fd,
+                               wm_client_port,
+                              &wm_egress_fd[i]);
+
+          printf("Connected wm_client_port %d to fd %d\n",
+                 wm_client_port, wm_egress_fd[i]);
+          if (err)
+            return err;
 	}
 
 	return WM_OK;
@@ -322,7 +328,7 @@ int wm_connect(char const * const server_file)
 int wm_disconnect(void)
 {
 	close(wm_client_fd);
-	close(wm_egress_fd);
+	for (int i=0; i<NUM_PORTS; ++i) close(wm_egress_fd[i]);
 	close(wm_server_fd);
 	return WM_OK;
 }
@@ -472,14 +478,15 @@ int wm_pkt_push(const struct wm_pkt *pkt)
  * @retval		WM_OK if successful
  * @retval		WM_NO_DATA if there are no egress frames on any of the ports.
  */
-int wm_pkt_get(struct wm_pkt *pkt)
+int wm_pkt_get(int phys_port, struct wm_pkt *pkt)
 {
 	uint8_t msg[MAX_MSG_LEN];
 	uint32_t msg_len;
 	uint16_t type;
 	int err;
+        int efd = wm_egress_fd[phys_port];
 
-	if (wm_egress_fd == -1) {
+	if (efd == -1) {
 		LOG_ERROR("Socket not initialized, call wm_connect()\n");
 		return WM_ERR_RUNTIME;
 	}
@@ -489,7 +496,7 @@ int wm_pkt_get(struct wm_pkt *pkt)
 		return WM_ERR_INVALID_ARG;
 	}
 
-	err = wm_receive(wm_egress_fd, msg, &msg_len, &type, &(pkt->port));
+	err = wm_receive(efd, msg, &msg_len, &type, &(pkt->port));
 	if (err)
 		return err;
 
@@ -837,6 +844,9 @@ static int connect_egress(int phys_port, int server_fd, int client_fd,
 	if (*egress_fd == -1)
 		*egress_fd = accept(client_fd, NULL, NULL);
 
+        printf("accepted phys_port=%d server_fd=%d client_fd=%d client_port=%d egress_fd=%d\n",
+               phys_port, server_fd, client_fd, client_port, *egress_fd);
+
 	if(*egress_fd  < 0) {
 		LOG_ERROR("Error accepting connection for egress port %d: %s\n",
 				phys_port, strerror(errno));
@@ -1001,6 +1011,7 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 
 	while (num_retries) {
 		n = read(socket, data, data_len);
+                printf("wm_read_data got %d bytes\n",n);
 		if (n == -1) {
 			LOG_ERROR("Error while reading data from socket %s\n",
 					strerror(errno));

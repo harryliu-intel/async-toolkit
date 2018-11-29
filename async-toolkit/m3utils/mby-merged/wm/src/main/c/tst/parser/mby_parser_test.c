@@ -12,13 +12,15 @@
 
 void initRegs
 (
-    mby_ppe_rx_top_map * const rx_top_map
+    mby_ppe_rx_top_map * const rx_top_map,
+    mby_ppe_tx_top_map * const tx_top_map
 )
 {
     // Initialize model registers
     mby_init_common_regs
     (
-        rx_top_map
+        rx_top_map,
+        tx_top_map
     );
 }
 
@@ -179,10 +181,12 @@ int main()
     }
 
     mby_ppe_rx_top_map rx_top_map;
+    mby_ppe_tx_top_map tx_top_map;
 
     initRegs
     (
-        &rx_top_map
+        &rx_top_map,
+        &tx_top_map
     );
 
 #if 1

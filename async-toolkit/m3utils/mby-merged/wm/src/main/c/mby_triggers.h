@@ -21,6 +21,7 @@
 typedef struct mbyTriggersToCongMgmtSruct
 {
     fm_uint32               ACTION;                     ///< resolved action
+    fm_byte                 CPU_CODE;                   ///< cpu code
     fm_uint16               IDGLORT;                    ///< 16-bit ingress destination GLORT
     fm_uint16               L2_EVID1;                   ///< 12-bit egress VLAN ID
     fm_bool                 LEARNING_ENABLED;           ///< learning enabled status within action codes
@@ -28,9 +29,12 @@ typedef struct mbyTriggersToCongMgmtSruct
     fm_byte                 MIRROR0_PROFILE_V;          ///< mirror 0 profile valid
     fm_uint32               MIRROR1_PROFILE_IDX;        ///< mirror 1 profile index
     fm_byte                 MIRROR1_PROFILE_V;          ///< mirror 1 profile valid
-    fm_bool                 NO_MODIFY;                  ///< skip most of modifications in Modifier
+    fm_byte                 TRAP_CODE;                  ///< trap code
     fm_byte                 QOS_TC;                     ///< 4-bit switch priority
+    fm_bool                 UPDATE_L2_DOMAIN;           ///< l2domain update flag
+    fm_bool                 UPDATE_L3_DOMAIN;           ///< l3domain update flag
     // pass-thru:
+    fm_uint32               CONTENT_ADDR;               ///< MOD Content address, expressed in 32B units
     fm_uint64               DMASK[MBY_DMASK_REGISTERS]; ///< 258-bit destination mask
     fm_bool                 DROP_TTL;
     fm_byte                 ECN;                        ///< ECN value to use in egress packet

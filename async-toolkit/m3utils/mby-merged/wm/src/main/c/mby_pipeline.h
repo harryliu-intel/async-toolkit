@@ -31,8 +31,10 @@ void RxPipeline
 void TxPipeline
 (
     mby_ppe_tx_top_map       * const tx_top_map,
+    mby_shm_map              * const shm_map,
     mbyTxInToModifier  const * const txi2mod,
-    mbyTxStatsToTxMac        * const txs2mac
+    mbyTxStatsToTxMac        * const txs2mac,
+    fm_int                           max_pkt_size
 );
 
 void Parser
@@ -85,7 +87,6 @@ void Triggers
 (
     mby_ppe_trig_apply_map      * const trig_apply_map,
     mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
-    mby_ppe_trig_usage_map      * const trig_usage_map,
     mby_ppe_fwd_misc_map        * const fwd_misc_map,
     mby_ppe_mapper_map          * const mapper_map,
     mbyMaskGenToTriggers  const * const in,
@@ -109,9 +110,11 @@ void RxStats
 
 void Modifier
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    mby_ppe_modify_map          * const mod_map,
+    mby_shm_map                 * const shm_map,
     mbyTxInToModifier     const * const in,
-    mbyModifierToTxStats        * const out
+    mbyModifierToTxStats        * const out,
+    fm_int                              max_pkt_size
 );
 
 void TxStats
