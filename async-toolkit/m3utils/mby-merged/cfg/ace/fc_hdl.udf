@@ -196,6 +196,7 @@ EOF
                     -hdl_spec => [
                         "cfg/ace/HDL/collage/collage_build_gmn.hdl",
                     ],
+                    -dependent_libs => [ "mby_mgm_lib"],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
              },
              gms_collage_build_lib => {
@@ -203,6 +204,7 @@ EOF
                     -hdl_spec => [
                         "cfg/ace/HDL/collage/collage_build_gms.hdl",
                     ],
+                    -dependent_libs => [ "mby_mgm_lib"],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
              },
 
