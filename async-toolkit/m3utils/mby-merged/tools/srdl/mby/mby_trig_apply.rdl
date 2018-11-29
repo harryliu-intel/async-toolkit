@@ -267,31 +267,23 @@ reg trigger_condition_param_r {
 
            ";
     ValRandomize = true;
-  } _RSVD3_[63:59] = 5'h0;
+  } _RSVD2_[63:60] = 4'h0;
   field {
     AccessType = "RW";
     desc = "
             Mask (AND) the egress domain value associated with the packet before comparison.
            ";
     ValRandomize = true;
-  } EGRESS_DOMAIN_MASK[58:45] = 14'h0;
-  field {
-    AccessType = "RSV";
-    desc = "
-      Reserved
-
-           ";
-    ValRandomize = true;
-  } _RSVD2_[44:44] = 1'h0;
+  } EGRESS_DOMAIN_MASK[59:45] = 15'h0;
   field {
     AccessType = "RW";
     desc = "
-            Value to match against the egress domain value {egress_l3_domain (6b), 
-            egress_l2_domain (8b)} associated with the packet after applying mask.
+            Value to match against the egress domain value {egress_l3_domain (6b), egress_l2_domain (9b)}
+            associated with the packet after applying mask.
             EgressDomainValue == EgressDomainMask & {egress_l3_domain, egress_l2_domain}
            ";
     ValRandomize = true;
-  } EGRESS_DOMAIN_VALUE[43:30] = 14'h0;
+  } EGRESS_DOMAIN_VALUE[44:30] = 15'h0;
   field {
     AccessType = "RSV";
     desc = "

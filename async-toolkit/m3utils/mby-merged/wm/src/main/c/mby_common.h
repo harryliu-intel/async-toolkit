@@ -301,8 +301,7 @@ typedef struct mbyTriggerResultsStruct
     fm_byte                             qcnValid0;
     fm_byte                             qcnValid1;
     fm_byte                             policerAction;
-    fm_bool                             update_l2_domain;
-    fm_bool                             update_l3_domain;
+    fm_byte                             noModifyAction;
 
 } mbyTriggerResults;
 
