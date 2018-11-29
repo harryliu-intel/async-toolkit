@@ -82,34 +82,94 @@ import msh_node_sim_pkg::*;
     mby_msh_node msh_node(
 
     
-        .mclk           (clk),
-        .mhreset        (dut_if.mhreset),
-        .msreset        (dut_if.msreset),
+        .mclk                           (clk),
+        .mhreset                        (dut_if.mhreset),
+        .msreset                        (dut_if.msreset),
 
-        .i_eb_node_col  (dut_if.i_eb_node_col),
-        .i_sb_node_row  (dut_if.i_sb_node_row),
+        .i_eb_node_col                  (dut_if.i_eb_node_col),
+        .i_sb_node_row                  (dut_if.i_sb_node_row),
 
-        .i_eb_rd_req    (dut_if.i_eb_rd_req),
-        .i_eb_wr_req    (dut_if.i_eb_wr_req),
-        .i_eb_wr_dbus   (dut_if.i_eb_wr_dbus),
+        .i_nb_wr_req                    (dut_if.i_nb_wr_req),
+        .i_sb_wr_req                    (dut_if.i_sb_wr_req),
+        .i_eb_wr_req                    (dut_if.i_eb_wr_req),
+        .i_wb_wr_req                    (dut_if.i_wb_wr_req),
 
-        .o_eb_node_col  (dut_if.o_eb_node_col),
-        .o_sb_node_row  (dut_if.o_sb_node_row),
-        .o_wb_rd_rsp    (dut_if.o_wb_rd_rsp),
-        .o_wb_rd_dbus   (dut_if.o_wb_rd_dbus),
-        
-// Temporary - drive unused for now
-        .i_nb_wr_req    (dut_if.i_nb_wr_req),
-        .i_nb_wr_dbus   (dut_if.i_nb_wr_dbus),
-        .i_nb_rd_req    (dut_if.i_nb_rd_req),
+        .i_nb_wr_dbus                   (dut_if.i_nb_wr_dbus),
+        .i_sb_wr_dbus                   (dut_if.i_sb_wr_dbus),
+        .i_eb_wr_dbus                   (dut_if.i_eb_wr_dbus),
+        .i_wb_wr_dbus                   (dut_if.i_wb_wr_dbus),
 
-        .i_sb_wr_req    (dut_if.i_sb_wr_req),
-        .i_sb_wr_dbus   (dut_if.i_sb_wr_dbus),
-        .i_sb_rd_req    (dut_if.i_sb_rd_req),
+        .i_nb_rd_req                    (dut_if.i_nb_rd_req),
+        .i_sb_rd_req                    (dut_if.i_sb_rd_req),
+        .i_eb_rd_req                    (dut_if.i_eb_rd_req),
+        .i_wb_rd_req                    (dut_if.i_wb_rd_req),
 
-        .i_wb_wr_req    (dut_if.i_wb_wr_req),
-        .i_wb_wr_dbus   (dut_if.i_wb_wr_dbus),
-        .i_wb_rd_req    (dut_if.i_wb_rd_req)
+        .i_nb_rd_rsp                    (dut_if.i_nb_rd_rsp),
+        .i_sb_rd_rsp                    (dut_if.i_sb_rd_rsp),
+        .i_eb_rd_rsp                    (dut_if.i_eb_rd_rsp),
+        .i_wb_rd_rsp                    (dut_if.i_wb_rd_rsp),
+
+        .i_nb_rd_dbus                   (dut_if.i_nb_rd_dbus),
+        .i_sb_rd_dbus                   (dut_if.i_sb_rd_dbus),
+        .i_eb_rd_dbus                   (dut_if.i_eb_rd_dbus),
+        .i_wb_rd_dbus                   (dut_if.i_wb_rd_dbus),
+
+        .i_nb_crdt_rtn_for_sb_wr_req    (dut_if.i_nb_crdt_rtn_for_sb_wr_req),
+        .i_sb_crdt_rtn_for_nb_wr_req    (dut_if.i_sb_crdt_rtn_for_nb_wr_req),
+        .i_eb_crdt_rtns_for_wb_wr_reqs  (dut_if.i_eb_crdt_rtns_for_wb_wr_reqs),
+        .i_wb_crdt_rtns_for_eb_wr_reqs  (dut_if.i_wb_crdt_rtns_for_eb_wr_reqs),
+
+        .i_nb_crdt_rtn_for_sb_rd_req    (dut_if.i_nb_crdt_rtn_for_sb_rd_req),
+        .i_sb_crdt_rtn_for_nb_rd_req    (dut_if.i_sb_crdt_rtn_for_nb_rd_req),
+        .i_eb_crdt_rtns_for_wb_rd_reqs  (dut_if.i_eb_crdt_rtns_for_wb_rd_reqs),
+        .i_wb_crdt_rtns_for_eb_rd_reqs  (dut_if.i_wb_crdt_rtns_for_eb_rd_reqs),
+
+        .i_nb_crdt_rtn_for_sb_rd_rsp    (dut_if.i_nb_crdt_rtn_for_sb_rd_rsp),
+        .i_sb_crdt_rtn_for_nb_rd_rsp    (dut_if.i_sb_crdt_rtn_for_nb_rd_rsp),
+        .i_eb_crdt_rtn_for_wb_rd_rsp    (dut_if.i_eb_crdt_rtn_for_wb_rd_rsp),
+        .i_wb_crdt_rtn_for_eb_rd_rsp    (dut_if.i_wb_crdt_rtn_for_eb_rd_rsp),
+
+        // outputs
+   
+        .o_nb_wr_req                    (dut_if.o_nb_wr_req),
+        .o_sb_wr_req                    (dut_if.o_sb_wr_req),
+        .o_eb_wr_req                    (dut_if.o_eb_wr_req),
+        .o_wb_wr_req                    (dut_if.o_wb_wr_req),
+
+        .o_nb_wr_dbus                   (dut_if.o_nb_wr_dbus),
+        .o_sb_wr_dbus                   (dut_if.o_sb_wr_dbus),
+        .o_eb_wr_dbus                   (dut_if.o_eb_wr_dbus),
+        .o_wb_wr_dbus                   (dut_if.o_wb_wr_dbus),
+
+        .o_nb_rd_req                    (dut_if.o_nb_rd_req),
+        .o_sb_rd_req                    (dut_if.o_sb_rd_req),
+        .o_eb_rd_req                    (dut_if.o_eb_rd_req),
+        .o_wb_rd_req                    (dut_if.o_wb_rd_req),
+
+        .o_nb_rd_rsp                    (dut_if.o_nb_rd_rsp),
+        .o_sb_rd_rsp                    (dut_if.o_sb_rd_rsp),
+        .o_eb_rd_rsp                    (dut_if.o_eb_rd_rsp),
+        .o_wb_rd_rsp                    (dut_if.o_wb_rd_rsp),
+
+        .o_nb_rd_dbus                   (dut_if.o_nb_rd_dbus),
+        .o_sb_rd_dbus                   (dut_if.o_sb_rd_dbus),
+        .o_eb_rd_dbus                   (dut_if.o_eb_rd_dbus),
+        .o_wb_rd_dbus                   (dut_if.o_wb_rd_dbus),
+
+        .o_nb_crdt_rtn_for_sb_wr_req    (dut_if.o_nb_crdt_rtn_for_sb_wr_req),
+        .o_sb_crdt_rtn_for_nb_wr_req    (dut_if.o_sb_crdt_rtn_for_nb_wr_req),
+        .o_eb_crdt_rtns_for_wb_wr_reqs  (dut_if.o_eb_crdt_rtns_for_wb_wr_reqs),
+        .o_wb_crdt_rtns_for_eb_wr_reqs  (dut_if.o_wb_crdt_rtns_for_eb_wr_reqs),
+                                                                                          
+        .o_nb_crdt_rtn_for_sb_rd_req    (dut_if.o_nb_crdt_rtn_for_sb_rd_req),
+        .o_sb_crdt_rtn_for_nb_rd_req    (dut_if.o_sb_crdt_rtn_for_nb_rd_req),
+        .o_eb_crdt_rtns_for_wb_rd_reqs  (dut_if.o_eb_crdt_rtns_for_wb_rd_reqs),
+        .o_wb_crdt_rtns_for_eb_rd_reqs  (dut_if.o_wb_crdt_rtns_for_eb_rd_reqs),
+                                                                                          
+        .o_nb_crdt_rtn_for_sb_rd_rsp    (dut_if.o_nb_crdt_rtn_for_sb_rd_rsp),
+        .o_sb_crdt_rtn_for_nb_rd_rsp    (dut_if.o_sb_crdt_rtn_for_nb_rd_rsp),
+        .o_eb_crdt_rtn_for_wb_rd_rsp    (dut_if.o_eb_crdt_rtn_for_wb_rd_rsp),
+        .o_wb_crdt_rtn_for_eb_rd_rsp    (dut_if.o_wb_crdt_rtn_for_eb_rd_rsp)
 
     );
 

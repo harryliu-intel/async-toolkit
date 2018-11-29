@@ -62,10 +62,6 @@ class inp_driver;
     mby_msh_pkg::msh_dbus_t          drvr_wr_dbus_to_dut_p1;
 
 
-    mby_msh_pkg::msh_row_rd_req_t    drvr_null_rd_req_to_dut;
-    mby_msh_pkg::msh_row_wr_req_t    drvr_null_wr_req_to_dut;
-    mby_msh_pkg::msh_dbus_t          drvr_null_wr_dbus_to_dut;
-
     function new(
 
 //        tmpl_pkg::enc_inp_t     iport, 
@@ -101,11 +97,6 @@ class inp_driver;
 
         drove_reqs    = 0;
 
-// Temporary - drive zeros to the unused ports
-        drvr_null_rd_req_to_dut = '0;
-        drvr_null_wr_req_to_dut = '0;
-        drvr_null_wr_dbus_to_dut = '0;
-
     endtask
 
     // connect signal defined in input driver to DUT interface
@@ -113,48 +104,63 @@ class inp_driver;
         forever begin
             @(posedge dut_if.mclk);
             clk_cnt++;      // keep track of number of clocks
-           
+          
+            
             // get inputs from drive_reqs() task
+            
             drvr_rd_req_to_dut_p1  <= drvr_rd_req_to_dut;
             drvr_wr_req_to_dut_p1  <= drvr_wr_req_to_dut;
             drvr_wr_dbus_to_dut_p1 <= drvr_wr_dbus_to_dut;
 
             // drive DUT inputs 
-            dut_if.i_eb_rd_req[0]  = drvr_rd_req_to_dut_p1;
+
+            dut_if.i_nb_wr_req[0]   = '0;
+            dut_if.i_nb_wr_dbus[0]  = '0;
+            dut_if.i_nb_rd_req[0]   = '0;
+            dut_if.i_nb_rd_rsp[0]   = '0;
+            dut_if.i_nb_rd_dbus[0]  = '0;
+
+            dut_if.i_sb_wr_req[0]  = '0;
+            dut_if.i_sb_wr_dbus[0] = '0;
+            dut_if.i_sb_rd_req[0]   = '0;
+            dut_if.i_sb_rd_rsp[0]   = '0;
+            dut_if.i_sb_rd_dbus[0]  = '0;
+
             dut_if.i_eb_wr_req[0]  = drvr_wr_req_to_dut_p1;
             dut_if.i_eb_wr_dbus[0] = drvr_wr_dbus_to_dut_p1;
+            dut_if.i_eb_rd_req[0]  = drvr_rd_req_to_dut_p1;
+            dut_if.i_eb_rd_rsp[0]   = '0;
+            dut_if.i_eb_rd_dbus[0]  = '0;
 
-// Temporary - drive null to unused ports
-            dut_if.i_nb_rd_req[0]  = drvr_null_rd_req_to_dut;
-            dut_if.i_nb_wr_req[0]  = drvr_null_wr_req_to_dut;
-            dut_if.i_nb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
+            dut_if.i_wb_wr_req[0]  = '0;
+            dut_if.i_wb_wr_dbus[0] = '0;
+            dut_if.i_wb_rd_req[0]   = '0;
+            dut_if.i_wb_rd_rsp[0]   = '0;
+            dut_if.i_wb_rd_dbus[0]  = '0;
 
-            dut_if.i_sb_rd_req[0]  = drvr_null_rd_req_to_dut;
-            dut_if.i_sb_wr_req[0]  = drvr_null_wr_req_to_dut;
-            dut_if.i_sb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
+            dut_if.i_nb_wr_req[1]  = '0;
+            dut_if.i_nb_wr_dbus[1] = '0;
+            dut_if.i_nb_rd_req[1]   = '0;
+            dut_if.i_nb_rd_rsp[1]   = '0;
+            dut_if.i_nb_rd_dbus[1]  = '0;
 
-            // dut_if.i_eb_rd_req[0]  = drvr_null_rd_req_to_dut;
-            // dut_if.i_eb_wr_req[0]  = drvr_null_wr_req_to_dut;
-            // dut_if.i_eb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
-            dut_if.i_wb_rd_req[0]  = drvr_null_rd_req_to_dut;
-            dut_if.i_wb_wr_req[0]  = drvr_null_wr_req_to_dut;
-            dut_if.i_wb_wr_dbus[0] = drvr_null_wr_dbus_to_dut;
+            dut_if.i_sb_wr_req[1]  = '0;
+            dut_if.i_sb_wr_dbus[1] = '0;
+            dut_if.i_sb_rd_req[1]   = '0;
+            dut_if.i_sb_rd_rsp[1]   = '0;
+            dut_if.i_sb_rd_dbus[1]  = '0;
 
-            dut_if.i_nb_rd_req[1]  = drvr_null_rd_req_to_dut;
-            dut_if.i_nb_wr_req[1]  = drvr_null_wr_req_to_dut;
-            dut_if.i_nb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
+            dut_if.i_eb_wr_req[1]  = '0;
+            dut_if.i_eb_wr_dbus[1] = '0;
+            dut_if.i_eb_rd_req[1]   = '0;
+            dut_if.i_eb_rd_rsp[1]   = '0;
+            dut_if.i_eb_rd_dbus[1]  = '0;
 
-            dut_if.i_sb_rd_req[1]  = drvr_null_rd_req_to_dut;
-            dut_if.i_sb_wr_req[1]  = drvr_null_wr_req_to_dut;
-            dut_if.i_sb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
-
-            dut_if.i_eb_rd_req[1]  = drvr_null_rd_req_to_dut;
-            dut_if.i_eb_wr_req[1]  = drvr_null_wr_req_to_dut;
-            dut_if.i_eb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
-
-            dut_if.i_wb_rd_req[1]  = drvr_null_rd_req_to_dut;
-            dut_if.i_wb_wr_req[1]  = drvr_null_wr_req_to_dut;
-            dut_if.i_wb_wr_dbus[1] = drvr_null_wr_dbus_to_dut;
+            dut_if.i_wb_wr_req[1]  = '0;
+            dut_if.i_wb_wr_dbus[1] = '0;
+            dut_if.i_wb_rd_req[1]   = '0;
+            dut_if.i_wb_rd_rsp[1]   = '0;
+            dut_if.i_wb_rd_dbus[1]  = '0;
     
         end
     endtask

@@ -50,28 +50,94 @@ logic               msreset;                                // reset
 msh_col_t           i_eb_node_col;
 msh_row_t           i_sb_node_row;
 
-msh_col_rd_req_t    i_nb_rd_req     [NUM_MSH_PLANES-1:0];
-msh_col_wr_req_t    i_nb_wr_req     [NUM_MSH_PLANES-1:0];
-msh_dbus_t          i_nb_wr_dbus    [NUM_MSH_PLANES-1:0];
+msh_col_wr_req_t i_nb_wr_req  [NUM_MSH_PLANES-1:0];    // incoming northbound write request 
+msh_col_wr_req_t i_sb_wr_req  [NUM_MSH_PLANES-1:0];    // incoming southbound write request 
+msh_row_wr_req_t i_eb_wr_req  [NUM_MSH_PLANES-1:0];    // incoming eastbound write request 
+msh_row_wr_req_t i_wb_wr_req  [NUM_MSH_PLANES-1:0];    // incoming westbound write request 
 
-msh_col_rd_req_t    i_sb_rd_req     [NUM_MSH_PLANES-1:0];
-msh_col_wr_req_t    i_sb_wr_req     [NUM_MSH_PLANES-1:0];
-msh_dbus_t          i_sb_wr_dbus    [NUM_MSH_PLANES-1:0];
+msh_dbus_t       i_nb_wr_dbus [NUM_MSH_PLANES-1:0];    // incoming northbound write data bus 
+msh_dbus_t       i_sb_wr_dbus [NUM_MSH_PLANES-1:0];    // incoming southbound write data bus 
+msh_dbus_t       i_eb_wr_dbus [NUM_MSH_PLANES-1:0];    // incoming eastbound write data bus 
+msh_dbus_t       i_wb_wr_dbus [NUM_MSH_PLANES-1:0];    // incoming westbound write data bus 
 
-msh_row_rd_req_t    i_eb_rd_req     [NUM_MSH_PLANES-1:0];
-msh_row_wr_req_t    i_eb_wr_req     [NUM_MSH_PLANES-1:0];
-msh_dbus_t          i_eb_wr_dbus    [NUM_MSH_PLANES-1:0];
+msh_col_rd_req_t i_nb_rd_req  [NUM_MSH_PLANES-1:0];    // incoming northbound read request 
+msh_col_rd_req_t i_sb_rd_req  [NUM_MSH_PLANES-1:0];    // incoming southbound read request 
+msh_row_rd_req_t i_eb_rd_req  [NUM_MSH_PLANES-1:0];    // incoming eastbound read request 
+msh_row_rd_req_t i_wb_rd_req  [NUM_MSH_PLANES-1:0];    // incoming westbound read request 
 
-msh_row_rd_req_t    i_wb_rd_req     [NUM_MSH_PLANES-1:0];
-msh_row_wr_req_t    i_wb_wr_req     [NUM_MSH_PLANES-1:0];
-msh_dbus_t          i_wb_wr_dbus    [NUM_MSH_PLANES-1:0];
+msh_col_rd_rsp_t i_nb_rd_rsp  [NUM_MSH_PLANES-1:0];    // incoming northbound read response 
+msh_col_rd_rsp_t i_sb_rd_rsp  [NUM_MSH_PLANES-1:0];    // incoming southbound read response 
+msh_row_rd_rsp_t i_eb_rd_rsp  [NUM_MSH_PLANES-1:0];    // incoming eastbound read response 
+msh_row_rd_rsp_t i_wb_rd_rsp  [NUM_MSH_PLANES-1:0];    // incoming westbound read response 
+
+msh_dbus_t       i_nb_rd_dbus [NUM_MSH_PLANES-1:0];    // incoming northbound read data bus 
+msh_dbus_t       i_sb_rd_dbus [NUM_MSH_PLANES-1:0];    // incoming southbound read data bus 
+msh_dbus_t       i_eb_rd_dbus [NUM_MSH_PLANES-1:0];    // incoming eastbound read data bus 
+msh_dbus_t       i_wb_rd_dbus [NUM_MSH_PLANES-1:0];    // incoming westbound read data bus 
+
+    // credit returns for the corresponding incoming messages
+logic            i_sb_crdt_rtn_for_nb_wr_req   [NUM_MSH_PLANES-1:0];
+logic            i_nb_crdt_rtn_for_sb_wr_req   [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  i_wb_crdt_rtns_for_eb_wr_reqs [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  i_eb_crdt_rtns_for_wb_wr_reqs [NUM_MSH_PLANES-1:0];
+
+logic            i_sb_crdt_rtn_for_nb_rd_req   [NUM_MSH_PLANES-1:0];
+logic            i_nb_crdt_rtn_for_sb_rd_req   [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  i_wb_crdt_rtns_for_eb_rd_reqs [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  i_eb_crdt_rtns_for_wb_rd_reqs [NUM_MSH_PLANES-1:0];
+
+logic            i_sb_crdt_rtn_for_nb_rd_rsp   [NUM_MSH_PLANES-1:0];
+logic            i_nb_crdt_rtn_for_sb_rd_rsp   [NUM_MSH_PLANES-1:0];
+logic            i_wb_crdt_rtn_for_eb_rd_rsp   [NUM_MSH_PLANES-1:0];
+logic            i_eb_crdt_rtn_for_wb_rd_rsp   [NUM_MSH_PLANES-1:0];
+
+
 
 // DUT outputs  (direction not specified in this interface)
 
-msh_col_t           o_eb_node_col;
-msh_row_t           o_sb_node_row;
+msh_col_t        o_eb_node_col;                        // the column number for the next node to the east 
+msh_row_t        o_sb_node_row;                        // the row number for the next node to the south 
 
-msh_row_rd_rsp_t    o_wb_rd_rsp     [NUM_MSH_PLANES-1:0];
-msh_dbus_t          o_wb_rd_dbus    [NUM_MSH_PLANES-1:0];
+msh_col_wr_req_t o_nb_wr_req  [NUM_MSH_PLANES-1:0];    // outgoing northbound write request 
+msh_col_wr_req_t o_sb_wr_req  [NUM_MSH_PLANES-1:0];    // outgoing southbound write request 
+msh_row_wr_req_t o_eb_wr_req  [NUM_MSH_PLANES-1:0];    // outgoing eastbound write request 
+msh_row_wr_req_t o_wb_wr_req  [NUM_MSH_PLANES-1:0];    // outgoing westbound write request 
+
+msh_dbus_t       o_nb_wr_dbus [NUM_MSH_PLANES-1:0];    // outgoing northbound write data bus 
+msh_dbus_t       o_sb_wr_dbus [NUM_MSH_PLANES-1:0];    // outgoing southbound write data bus 
+msh_dbus_t       o_eb_wr_dbus [NUM_MSH_PLANES-1:0];    // outgoing eastbound write data bus 
+msh_dbus_t       o_wb_wr_dbus [NUM_MSH_PLANES-1:0];    // outgoing westbound write data bus 
+
+msh_col_rd_req_t o_nb_rd_req  [NUM_MSH_PLANES-1:0];    // outgoing northbound read request 
+msh_col_rd_req_t o_sb_rd_req  [NUM_MSH_PLANES-1:0];    // outgoing southbound read request 
+msh_row_rd_req_t o_eb_rd_req  [NUM_MSH_PLANES-1:0];    // outgoing eastbound read request 
+msh_row_rd_req_t o_wb_rd_req  [NUM_MSH_PLANES-1:0];    // outgoing westbound read request 
+
+msh_col_rd_rsp_t o_nb_rd_rsp  [NUM_MSH_PLANES-1:0];    // outgoing northbound read response 
+msh_col_rd_rsp_t o_sb_rd_rsp  [NUM_MSH_PLANES-1:0];    // outgoing southbound read response 
+msh_row_rd_rsp_t o_eb_rd_rsp  [NUM_MSH_PLANES-1:0];    // outgoing eastbound read response 
+msh_row_rd_rsp_t o_wb_rd_rsp  [NUM_MSH_PLANES-1:0];    // outgoing westbound read response 
+
+msh_dbus_t       o_nb_rd_dbus [NUM_MSH_PLANES-1:0];    // outgoing northbound read data bus 
+msh_dbus_t       o_sb_rd_dbus [NUM_MSH_PLANES-1:0];    // outgoing southbound read data bus 
+msh_dbus_t       o_eb_rd_dbus [NUM_MSH_PLANES-1:0];    // outgoing eastbound read data bus 
+msh_dbus_t       o_wb_rd_dbus [NUM_MSH_PLANES-1:0];    // outgoing westbound read data bus 
+
+// credit returns for the corresponding incoming messages
+logic            o_sb_crdt_rtn_for_nb_wr_req   [NUM_MSH_PLANES-1:0];
+logic            o_nb_crdt_rtn_for_sb_wr_req   [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  o_wb_crdt_rtns_for_eb_wr_reqs [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  o_eb_crdt_rtns_for_wb_wr_reqs [NUM_MSH_PLANES-1:0];
+
+logic            o_sb_crdt_rtn_for_nb_rd_req   [NUM_MSH_PLANES-1:0];
+logic            o_nb_crdt_rtn_for_sb_rd_req   [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  o_wb_crdt_rtns_for_eb_rd_reqs [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t  o_eb_crdt_rtns_for_wb_rd_reqs [NUM_MSH_PLANES-1:0];
+
+logic            o_sb_crdt_rtn_for_nb_rd_rsp   [NUM_MSH_PLANES-1:0];
+logic            o_nb_crdt_rtn_for_sb_rd_rsp   [NUM_MSH_PLANES-1:0];
+logic            o_wb_crdt_rtn_for_eb_rd_rsp   [NUM_MSH_PLANES-1:0];
+logic            o_eb_crdt_rtn_for_wb_rd_rsp   [NUM_MSH_PLANES-1:0];
+
 
 endinterface // msh_node_dut_if
