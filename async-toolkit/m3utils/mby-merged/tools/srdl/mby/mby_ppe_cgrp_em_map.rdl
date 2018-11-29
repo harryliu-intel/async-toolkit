@@ -360,6 +360,30 @@ reg em_hash_cfg_r {
   field {
     AccessType = "RW";
     desc = "
+     For the high half of split mode only, selects which hash
+     function to use:
+     [list]
+     [*] 0: Hash0 - CRC32
+     [*] 1: Hash1 - CRC32C
+     [/list]
+           ";
+    ValRandomize = true;
+  } HASH_HI[48:48] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     For non-split mode, and for the low half of split mode, selects which hash
+     function to use:
+     [list]
+     [*] 0: Hash0 - CRC32
+     [*] 1: Hash1 - CRC32C
+     [/list]
+           ";
+    ValRandomize = true;
+  } HASH_LO[47:47] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
      Define lookup (or entry) modes:
      [list]
      [*] 0: Split mode (32B per entry)
@@ -452,5 +476,5 @@ addrmap mby_ppe_cgrp_em_map {
   em_key_sel1_rf            KEY_SEL1[2]      ;
   em_key_mask_rf            KEY_MASK[2]      ;
   em_hash_miss_rf           HASH_MISS[2]     ;
-  em_hash_cfg_r             HASH_CFG[64]     ;
+  em_hash_cfg_r             EM_HASH_CFG[64]  ;
 };
