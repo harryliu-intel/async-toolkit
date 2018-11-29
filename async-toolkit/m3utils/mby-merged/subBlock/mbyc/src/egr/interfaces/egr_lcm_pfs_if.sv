@@ -28,19 +28,24 @@
 ///  ------------------------------------------------------------------------------
 
 interface egr_lcm_pfs_if();
+    // Local parameters
+    localparam N_EPL    = 4;
+    localparam N_EPL_LP = 4;
+    localparam N_UC_TOQ = 1;
+
     // signals
-    logic dummy;
+    logic [N_EPL-1:0][N_EPL_LP-1:0][N_UC_TOQ-1:0] aqm_toq_drops;
       
 // LCM requests to PFS
 modport lcm(
     // port list
-    output dummy
+    output aqm_toq_drops
     );
 
 // PFS provides to LCM
 modport pfs(
     // port list
-    input dummy
+    input aqm_toq_drops
     );
 
 endinterface : egr_lcm_pfs_if
