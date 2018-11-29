@@ -14,8 +14,10 @@ import spinoco.protocol.http.{HttpMethod, HttpRequestHeader, HttpStatusCode}
 
 object IoUriDispatcher extends UriDispatcher[IO] with LazyLogging {
 
+  val LimitNumberOfNodes = 64
+
   // TODO: use state from fs2app
-  var csrModel = new CsrModel(Csr(), limitNumberOfNodes = 64)
+  var csrModel = new CsrModel(Csr(), limitNumberOfNodes = LimitNumberOfNodes)
 
   override def processRequest(request: HttpRequestHeader, body: Stream[IO,Byte])
                              (implicit rt: RaiseThrowable[IO]): HttpResponse[IO] = {
