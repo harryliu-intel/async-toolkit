@@ -287,6 +287,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_uint32          ACTION;               ///< resolved action
     fm_uint16          ARP_TABLE_INDEX;
     fm_byte            CGRP_TRIG;            ///< classifier action triggers
+    fm_uint32          CONTENT_ADDR;         ///< MOD Content address, expressed in 32B units
     fm_bool            CPU_TRAP;             ///< CPU trap
     mbyMaTable         DA_RESULT;            ///< destination MAC address lookup result
     fm_bool            DECAP;
@@ -295,7 +296,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_bool            ENCAP;
     fm_bool            FLOOD_SET;
     fm_uint16          IP_MCAST_IDX;         ///< index into the MCAST_VLAN_TABLE
-    fm_bool            IS_TIMEOUT;  
+    fm_bool            IS_TIMEOUT;
     fm_uint16          L2_IDOMAIN;           ///<
     fm_uint16          L2_IVLAN1_CNT;        ///< ingress VLAN counter
     fm_byte            L3_IDOMAIN;

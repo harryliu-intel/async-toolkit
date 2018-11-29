@@ -31,6 +31,7 @@ typedef struct mbyTriggersToCongMgmtSruct
     fm_bool                 NO_MODIFY;                  ///< skip most of modifications in Modifier
     fm_byte                 QOS_TC;                     ///< 4-bit switch priority
     // pass-thru:
+    fm_uint32               CONTENT_ADDR;               ///< MOD Content address, expressed in 32B units
     fm_uint64               DMASK[MBY_DMASK_REGISTERS]; ///< 258-bit destination mask
     fm_bool                 DROP_TTL;
     fm_byte                 ECN;                        ///< ECN value to use in egress packet

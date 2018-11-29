@@ -31,8 +31,10 @@ void RxPipeline
 void TxPipeline
 (
     mby_ppe_tx_top_map       * const tx_top_map,
+    mby_shm_map              * const shm_map,
     mbyTxInToModifier  const * const txi2mod,
-    mbyTxStatsToTxMac        * const txs2mac
+    mbyTxStatsToTxMac        * const txs2mac,
+    fm_int                           max_pkt_size
 );
 
 void Parser
@@ -109,9 +111,11 @@ void RxStats
 
 void Modifier
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
+    mby_ppe_modify_map          * const mod_map,
+    mby_shm_map                 * const shm_map,
     mbyTxInToModifier     const * const in,
-    mbyModifierToTxStats        * const out
+    mbyModifierToTxStats        * const out,
+    fm_int                              max_pkt_size
 );
 
 void TxStats

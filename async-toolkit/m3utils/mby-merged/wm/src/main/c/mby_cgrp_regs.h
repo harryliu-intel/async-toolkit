@@ -194,6 +194,12 @@
 
 #define MBY_WCM_ACTION_CFG_INDEX_WIDTH        5
 
+/* Bit number MOD_PROFILE action fields. */
+#define MBY_CGRP_ACTION_MOD_PROFILE_l_IDX    0
+#define MBY_CGRP_ACTION_MOD_PROFILE_h_IDX    5
+#define MBY_CGRP_ACTION_MOD_PROFILE_l_ADDR   6
+#define MBY_CGRP_ACTION_MOD_PROFILE_h_ADDR   23
+
 // Enums:
 
 typedef enum mbyClassifierActionEntryTypeEnum

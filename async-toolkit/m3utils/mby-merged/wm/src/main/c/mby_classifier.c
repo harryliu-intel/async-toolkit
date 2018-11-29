@@ -451,14 +451,19 @@ static void transformActions
     fm_byte                  * const mod_meta,
     fm_byte                  * const ffu_trig,
     fm_uint32                * const policer_action,
-    fm_byte                  * const mod_prof_idx
+    fm_byte                  * const mod_prof_idx,
+    fm_uint32                * const content_addr
 )
 {
-    *decap        = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val >> 1) & 0x1;
-    *encap        =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val       & 0x1;
-    *mod_idx      = (actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val >> 2) & 0xFFFF;
-    *mod_prof_idx =  actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val       & 0x3F;
-    *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP   ].val;
+    fm_uint32 mod_prof_act_val = actions.act24[MBY_CGRP_ACTION_MOD_PROFILE].val;
+
+    *decap        = (mod_prof_act_val >> 1) & 0x1;
+    *encap        =  mod_prof_act_val       & 0x1;
+    *mod_idx      = (mod_prof_act_val >> 2) & 0xFFFF;
+    *mod_prof_idx = FM_GET_FIELD(mod_prof_act_val, MBY_CGRP_ACTION_MOD_PROFILE, IDX);
+    *content_addr = FM_GET_FIELD(mod_prof_act_val, MBY_CGRP_ACTION_MOD_PROFILE, ADDR);
+
+    *mpls_pop     =  actions.act4 [MBY_CGRP_ACTION_MPLS_POP].val;
 
     *sglort = 0;
     FM_SET_UNNAMED_FIELD64(*sglort,  0,  8, keys.key8[(MBY_RE_KEYS_SGLORT - MBY_RE_KEYS_GENERAL_8B)*2 + 1]);
@@ -686,6 +691,7 @@ void Classifier
     fm_byte            hash_profile[MBY_CGRP_HASH_PROFILE_ACTIONS] = { 0 };
     fm_byte            mod_meta[MBY_CGRP_META_ACTIONS]             = { 0 };
     fm_uint32          policer_action[MBY_CGRP_POL_ACTIONS]        = { 0 };
+    fm_uint32          content_addr    = 0;
 
     transformActions
     (
@@ -722,7 +728,8 @@ void Classifier
         mod_meta,
         &ffu_trig,
         policer_action,
-        &mod_prof_idx
+        &mod_prof_idx,
+        &content_addr
     );
 
     // Write outputs:
@@ -735,6 +742,7 @@ void Classifier
     out->CGRP_FLAGS      = cgrp_flags;
     out->CGRP_ROUTE      = cgrp_route;
     out->CGRP_TRIG       = ffu_trig;
+    out->CONTENT_ADDR    = content_addr;
     out->IDGLORT         = idglort;
     out->INNER_L3_LENGTH = inner_l3_length;
     out->IS_IPV4         = is_ipv4;

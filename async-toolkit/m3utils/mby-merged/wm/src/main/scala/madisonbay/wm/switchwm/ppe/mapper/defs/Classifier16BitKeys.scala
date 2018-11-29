@@ -18,6 +18,7 @@ object Classifier16BitKeys extends FlexibleConstantContainer[Int] {
   case object OuterSourceMac2            extends Classifier16BitKey {val index = 11}
 
   case object OuterEthertype             extends Classifier16BitKey {val index = 12}
+  case object MappedNibbles0             extends Classifier16BitKey {val index = 13}
   case object OuterVlan1                 extends Classifier16BitKey {val index = 14}
   case object OuterVlan2                 extends Classifier16BitKey {val index = 15}
   case object OuterL4Source              extends Classifier16BitKey {val index = 16}
@@ -35,6 +36,7 @@ object Classifier16BitKeys extends FlexibleConstantContainer[Int] {
     OuterSourceMac0,
     OuterSourceMac1,
     OuterSourceMac2,
+    MappedNibbles0,
     OuterEthertype,
     OuterVlan1,
     OuterVlan2,
