@@ -127,6 +127,7 @@ typedef enum mbyRxStatsBk3Enum
 typedef struct mbyRxStatsToRxOutStruct
 {
     // pass-thru:
+    fm_uint32               CONTENT_ADDR;  ///< MOD Content address, expressed in 32B units
     fm_bool                 DROP_TTL;
     fm_byte                 ECN;           ///< ECN value to use in egress packet
     fm_uint16               EDGLORT;       ///< egress destination glort

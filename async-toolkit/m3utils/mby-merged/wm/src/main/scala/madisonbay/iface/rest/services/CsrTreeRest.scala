@@ -1,28 +1,19 @@
-package madisonbay.iface.rest
+package madisonbay.iface.rest.services
 
+import madisonbay.iface.UriConstants.UriParameter
 import madisonbay.iface.model.CsrModel
+import madisonbay.iface.rest.Constants.Keys._
+import madisonbay.iface.rest.Constants.Types._
+import madisonbay.iface.rest.{RestProcessing, RestResponse}
 import madisonbay.wm.utils.json.{JsonReader, JsonValues}
+import spinoco.protocol.http.HttpStatusCode
+import RestProcessing.responseMessage
 
-import scala.util.{Failure, Success, Try}
+object CsrTreeRest extends RestProcessing {
 
-object CsrRest {
+  def processGetRequest(uri: List[String], parameters: List[UriParameter], csrModel: CsrModel): RestResponse = {
 
-  val KeyValue  = "value"
-  val KeyValues = "values"
-  val KeyType   = "type"
-  val KeyUri    = "uri"
-  val KeyKeys   = "keys"
-  val KeySize   = "size"
-
-  val TypeList  = "list"
-  val TypeMap   = "map"
-
-  val TypeRegister      = "register"
-  val TypeRegisterField = "registerField"
-
-  def processGetRequest(uri: List[String], csrModel: CsrModel): RestResponse = {
-
-    val path = uri.mkString("/")
+    val path = uriPath(uri)
 
     JsonReader.getOptFromUri(csrModel.csrMap, path) match {
 
@@ -35,23 +26,19 @@ object CsrRest {
         val notNestedValue = csrNodeView(result, path, fromList = true)
         returnJson(notNestedValue)
 
-      case Some(value) if JsonValues.isValue(value) =>
-        val singleValue: Map[String, Any] = Map(
-          KeyType -> TypeRegisterField,
-          KeyValue -> value
-        )
-        returnJson(singleValue)
+      case Some(value) if JsonValues.isValue(value) => returnJson(restResponseValue(value))
 
-      case Some(any) => RestResponse(uriSupported = true, error = true, Some(s"URI $path returned not supported value $any"))
+      case Some(any) => RestResponse(uriSupported = true, error = true,
+        responseMessage(s"URI $path returned not supported value $any"),
+        HttpStatusCode.Forbidden,
+        None)
 
-      case None => RestResponse(uriSupported = false, error = false, Some(s"URI $path not supported"))
+      case None => RestResponse(uriSupported = false, error = false,
+        responseMessage(s"URI $path not supported"),
+        HttpStatusCode.NotFound,
+        None)
     }
 
-  }
-
-  private def returnJson(result: Map[String, Any]): RestResponse = Try(JsonReader.toJson(result)) match {
-    case Success(v) => RestResponse(uriSupported = true, error = false, Some(v))
-    case Failure(ex) => RestResponse(uriSupported = true, error = true, Some(ex.getMessage))
   }
 
   private def csrNodeView(node: Map[String, Any], path: String, fromList: Boolean): Map[String, Any] = {
@@ -89,5 +76,10 @@ object CsrRest {
       result
     }
   }
+
+  def restResponseValue(value: Any): Map[String, Any] = Map(
+      KeyType -> TypeRegisterField,
+      KeyValue -> value
+    )
 
 }

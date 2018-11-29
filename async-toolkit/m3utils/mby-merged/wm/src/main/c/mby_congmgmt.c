@@ -17,6 +17,7 @@ void CongMgmt
 
     // Pass thru:
     out->ACTION            = in->ACTION;
+    out->CONTENT_ADDR      = in->CONTENT_ADDR;
     out->DROP_TTL          = in->DROP_TTL;
     out->ECN               = in->ECN;
     out->EDGLORT           = in->EDGLORT;
