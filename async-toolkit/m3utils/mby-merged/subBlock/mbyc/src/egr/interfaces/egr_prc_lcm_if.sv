@@ -28,19 +28,31 @@
 ///  ------------------------------------------------------------------------------
 
 interface egr_prc_lcm_if();
+    // Local Parameters
+    localparam N_EPL = 4;
+
+    // Typedefs
+    typedef logic   [7:0] toq_sel_t;
+    typedef logic  [10:0] tiq_sel_t;
     // signals
-    logic dummy;
+    logic     [N_EPL-1:0] dequeue_req;
+    toq_sel_t [N_EPL-1:0] dequeue_toq_sel;
+    tiq_sel_t [N_EPL-1:0] dequeue_tiq_sel;
     
 // PRC sends segment counts to LCM
 modport prc(
     // port list
-    output dummy
+    output dequeue_req,
+    output dequeue_toq_sel,
+    output dequeue_tiq_sel
     );
 
 // LCM receives segment counts from PRC
 modport lcm(
     // port list
-    input dummy
+    input dequeue_req,
+    input dequeue_toq_sel,
+    input dequeue_tiq_sel
     );
 
 endinterface : egr_prc_lcm_if

@@ -28,20 +28,29 @@
 ///                    Packet Read Controller (PRC) and 
 ///  ------------------------------------------------------------------------------
 
-interface egr_dp_if();
+interface egr_dp_if #(parameter N_PAR_PTRS = 1)();
+    // Import EGR package
+    import mby_egr_pkg::*;
+    
     //signals
-    logic dummy;
+    logic                                stall;
+    logic        [N_PAR_PTRS-1:0] ptr_rel_reqs;
+    seg_handle_t [N_PAR_PTRS-1:0]     seg_ptrs;
 
 // TMU, PRC request from DPB
 modport requestor(
     //port list
-    output dummy
+    input         stall,
+    output ptr_rel_reqs,
+    output     seg_ptrs
     );
 
 // DPB provides to TMU, PRC
 modport dpb(
     //port list
-    input dummy
+    output        stall,
+    input  ptr_rel_reqs,
+    input      seg_ptrs
     );
 
 endinterface : egr_dp_if
