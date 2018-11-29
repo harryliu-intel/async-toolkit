@@ -28,8 +28,10 @@ TYPE
   T <: Public;
 
   Public = OBJECT
+    sharedSocket : BOOLEAN;
   METHODS
-    init(infoPath : Pathname.T := ".";
+    init(sharedSocket : BOOLEAN;
+         infoPath : Pathname.T := ".";
          factory : UpdaterFactory.T := NIL;
          quitOnLastClientExit := FALSE;
          infoFileName : Pathname.T := DefInfoFileName) : T;
@@ -42,6 +44,10 @@ TYPE
 
     pushPacket(READONLY hdr : FmModelMessageHdr.T; pkt : Pkt.T);
     (* for the WM to push out a packet on the wire *)
+
+    sendPacketEot();
+    (* for the WM to push a PacketEot on every writer
+       (normally in this usage, there is only one writer) *)
 
     (****** abstract methods, implement in child type: ******)
     
