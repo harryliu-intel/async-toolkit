@@ -38,7 +38,8 @@ module mri
     egr_rrq_if.mri rrq_tmu_if, //Read Request  Interface. Provides to Tag Management Unit 
     egr_rrs_if.mri rrs_tmu_if, //Read Response Interface. Provides to Tag Management Unit 
     
-    egr_rrq_if.mri rrq_prc_if, //Read Request  Interface. Provides to Packet Read Controller 
+    egr_rrq_if.mri rrq_prc_if0, //Read Request  Interface. Provides to Packet Read Controller EPL 0,1
+    egr_rrq_if.mri rrq_prc_if1, //Read Request  Interface. Provides to Packet Read Controller EPL 2,3
     egr_rrs_if.mri rrs_tqu_if, //Read Response Interface. Provides to Transmit Queuing Unit 
 
     //EGR External Interfaces
