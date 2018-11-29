@@ -49,7 +49,7 @@ import shared_pkg::*;
 );
 
 //input prc_if.qsel[MGP_COUNT-1:0][MGP_PORT_CNT-1:0][15:0]
-assign prc_if.tag = tagring_if[0][1:0];
+//assign prc_if.tag = tagring_if[0][1:0];
 
 //input pfs_if.pop     [EPL_PER_MGP-1:0]
 //input pfs_if.pop_port[EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0]
