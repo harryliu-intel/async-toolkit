@@ -28,19 +28,22 @@
 ///  ------------------------------------------------------------------------------
 
 interface egr_prc_tmu_if();
-    // signals
-    logic dummy;
+  import shared_pkg::*;
+  import mby_gmm_pkg::*;
+
+    mby_tag_ring_t [1:0] tag;//temp use of tag_ring - bits can be removed
+    logic [MGP_COUNT-1:0][MGP_PORT_CNT-1:0][15:0] qsel;//one-hot - [MGP][VP,EGR][TCG] - Best bit order?
 
 // PRC requests from TMU
 modport prc(
-    // port list
-    input dummy
+    input  tag,
+    output qsel
     );
 
 // TMU provides to PRC
 modport tmu(
-    // port list
-    output dummy
+    input  qsel,
+    output tag
     );
 
 endinterface : egr_prc_tmu_if
