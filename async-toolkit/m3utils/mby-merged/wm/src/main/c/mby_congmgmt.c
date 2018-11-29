@@ -32,6 +32,7 @@ void CongMgmt
     out->MIRTYP            = in->MIRTYP;
     out->MOD_IDX           = in->MOD_IDX;
     out->MOD_PROF_IDX      = in->MOD_PROF_IDX;
+    out->NO_MODIFY         = in->NO_MODIFY;
     out->OOM               = in->OOM;
     out->PARSER_INFO       = in->PARSER_INFO;
     out->PA_HDR_PTRS       = in->PA_HDR_PTRS;

@@ -3,7 +3,7 @@ package madisonbay.iface.rest.services
 import madisonbay.iface.UriConstants.{UriParameter, UriSegment}
 import madisonbay.iface.model.CsrModel
 import madisonbay.iface.rest.Constants.{Keys, Types}
-import madisonbay.iface.rest.RestResponse
+import madisonbay.iface.rest.{RestProcessing, RestResponse}
 import madisonbay.wm.utils.json.JsonReader
 import spinoco.protocol.http.HttpStatusCode
 import RestProcessing.responseMessage
@@ -24,7 +24,8 @@ object CsrAddressRest extends RestProcessing {
         responseMessage(s"Value under address $address bytes not found"), HttpStatusCode.NotFound, None)
     }
 
-    case _ => returnStdNotSupported(uriPath(uri))
+    case _ => RestResponse(uriSupported = false, error = false,
+      responseMessage(s"URI ${uriPath(uri)} not supported"), HttpStatusCode.NotFound, None)
 
   }
 
