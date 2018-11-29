@@ -131,6 +131,9 @@ import msh_node_sim_pkg::*;
 
         // outputs
    
+        .o_eb_node_col                  (dut_if.o_eb_node_col),
+        .o_sb_node_row                  (dut_if.o_sb_node_row),
+
         .o_nb_wr_req                    (dut_if.o_nb_wr_req),
         .o_sb_wr_req                    (dut_if.o_sb_wr_req),
         .o_eb_wr_req                    (dut_if.o_eb_wr_req),
