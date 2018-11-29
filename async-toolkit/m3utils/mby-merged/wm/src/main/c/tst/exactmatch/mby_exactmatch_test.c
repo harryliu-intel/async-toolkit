@@ -167,7 +167,7 @@ static void set_EM_HASH_CAM_EN
     fm_uint64             const mask
 )
 {
-    em_hash_cam_en_r * const em_hash_cam_en = &(cgrp_em_map->HASH_CAM_EN[rule][row]);
+    em_hash_cam_en_r * const em_hash_cam_en = &(cgrp_em_map->HASH_CAM_EN[row][rule]);
 
     em_hash_cam_en->MASK = mask;
 }

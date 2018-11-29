@@ -114,6 +114,7 @@ typedef struct mbyHashToNextHopStruct
     fm_bool            ENCAP;
     mbyClassifierFlags CGRP_FLAGS;             ///> flags {TX_TAG, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
     fm_uint32          CGRP_ROUTE;
+    fm_uint32          CONTENT_ADDR;           ///> MOD Content address, expressed in 32B units
     fm_bool            GLORT_CAM_MISS;         ///> GLORT lookup resulted in a miss flag
     fm_uint32          GLORT_DMASK;            ///> 24-bit GLORT-based destination mask
     fm_uint16          IP_MCAST_IDX;           ///> index into the MCAST_VLAN_TABLE

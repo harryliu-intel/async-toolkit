@@ -478,7 +478,7 @@ reg map_domain_action1_r {
 
 
 
-// MAP_DOMAIN_PROFILE[0..511]
+// MAP_DOMAIN_PROFILE[0..255]
 
 reg map_domain_profile_r {
   shared;
@@ -1875,7 +1875,7 @@ addrmap mby_ppe_mapper_map {
   map_domain_tcam_r          MAP_DOMAIN_TCAM[4096]         @0x10000 += 16;
   map_domain_action0_r       MAP_DOMAIN_ACTION0[4096]      @0x20000 += 8;
   map_domain_action1_r       MAP_DOMAIN_ACTION1[4096]      @0x28000 += 8;
-  map_domain_profile_r       MAP_DOMAIN_PROFILE[512]       @0x30000 += 8;
+  map_domain_profile_r       MAP_DOMAIN_PROFILE[256]       @0x30000 += 8;
   map_port_r                 MAP_PORT[18]                  @0x31000 += 8;
   map_mac_r                  MAP_MAC[96]                   @0x31800 += 16;
   map_prot_r                 MAP_PROT[8]                   @0x32200 += 8;

@@ -32,10 +32,11 @@ module tqu
     input logic           rst_n, 
 
     //EGR Internal Interfaces 
-    egr_prc_tqu_if.tqu   prc_if, // Packet Read Controller   - Transmit Queuing Unit Interface
-    egr_tcu_tqu_if.tqu   tcu_if, // Transmit Controller Unit - Transmit Queunig Unit Interface
+    egr_prc_tqu_if.tqu   prc_if,  // Packet Read Controller   - Transmit Queuing Unit Interface
+    egr_tcu_tqu_if.tqu   tcu_if,  // Transmit Controller Unit - Transmit Queunig Unit Interface
 
-    egr_rrs_if.requestor mri_if  // Read Response Interface. Connected with the Mesh Read Interface
+    egr_rrs_if.requestor mri_if0, // Read Response Interface. Gives service to EPL 0,1
+    egr_rrs_if.requestor mri_if1  // Read Response Interface. Gives service to EPL 2,3
 
 );
 

@@ -28,16 +28,44 @@
 //                   of the responses
 //------------------------------------------------------------------------------
 
-interface egr_rrs_if ();
+interface egr_rrs_if #(parameter N_RRSPS = 3)();
+    import mby_egr_pkg::*;
+    import shared_pkg::*;
 
-    logic dummy;
+////////////////// PARAMS AND STRUCTS
+//TODO Merge signals with rrq_if in package
+// Service try_put_pkt_rreq
+localparam W_CLIENT_ID  = 3; // Read Request client sel (CPB, 2xPRC[2], TDB) (3)
+localparam W_DATA_WD_ID = 9; // Data Word ID (9)
 
+typedef struct packed {
+    logic [W_CLIENT_ID-1:0]   client_id; // [12:10] Client ID selector
+    logic                         spare; // [9]     Spare bits (for 13 bit req id)
+    logic [W_DATA_WD_ID-1:0] data_wd_id; // [8:0]   Data Word ID
+} req_id_t;
+
+////////////////// SIGNALS
+// Service try_put_word_rreq
+req_id_t    [N_RRSPS-1:0]    rrsp_wd_id; // Read Response Word ID
+data_word_t [N_RRSPS-1:0]       rrsp_wd; // Read Response Word
+logic       [N_RRSPS-1:0] rrsp_wd_valid; // Read Response Word Valid
+logic       [N_RRSPS-1:0] rrsp_wd_stall; // Read Response Word Stall
+
+////////////////// MODPORTS
+// Requestor of mesh read services
 modport requestor(
-    input dummy
+    input     rrsp_wd_id,
+    input        rrsp_wd,
+    input  rrsp_wd_valid,
+    output rrsp_wd_stall
     );
 
+// Provider of mesh read services
 modport mri(
-    output dummy
+    output    rrsp_wd_id,
+    output       rrsp_wd,
+    output rrsp_wd_valid,
+    input  rrsp_wd_stall
     );
 
 endinterface : egr_rrs_if
