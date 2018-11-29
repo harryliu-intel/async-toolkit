@@ -40,7 +40,8 @@ module mri
     
     egr_rrq_if.mri rrq_prc_if0, //Read Request  Interface. Provides to Packet Read Controller EPL 0,1
     egr_rrq_if.mri rrq_prc_if1, //Read Request  Interface. Provides to Packet Read Controller EPL 2,3
-    egr_rrs_if.mri rrs_tqu_if, //Read Response Interface. Provides to Transmit Queuing Unit 
+    egr_rrs_if.mri rrs_tqu_if0, //Read Response Interface. Provides to Transmit Queuing Unit EPL 0,1
+    egr_rrs_if.mri rrs_tqu_if1, //Read Response Interface. Provides to Transmit Queuing Unit EPL 2,3
 
     //EGR External Interfaces
     mim_rd_if.request    mim_rd_if0_0, //MRI-MIM Read Interface Row 0 Line 0
