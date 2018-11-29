@@ -39,8 +39,8 @@ void initOutput
         out->PA_FLAGS[i] = 0;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
-        out->PA_PTRS      [i] = 0;
-        out->PA_PTRS_VALID[i] = FALSE;
+        out->PA_HDR_PTRS.OFFSET      [i] = 0;
+        out->PA_HDR_PTRS.OFFSET_VALID[i] = FALSE;
     }
 
     out->PA_CSUM_OK         = 0;
@@ -110,7 +110,7 @@ void prepareData
         par2map_ref->PA_FLAGS[i] = test_struct.out.PA_FLAGS[i];
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++)
-        par2map_ref->PA_PTRS[i] = test_struct.out.PA_PTRS[i];
+        par2map_ref->PA_HDR_PTRS.OFFSET[i] = test_struct.out.PA_HDR_PTRS.OFFSET[i];
 }
 
 fm_uint compareValues(mbyParserToMapper * const out, mbyParserToMapper * const out_ref)
@@ -129,7 +129,7 @@ fm_uint compareValues(mbyParserToMapper * const out, mbyParserToMapper * const o
             fails++;
 
     for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++)
-        if (out->PA_PTRS[i] != out_ref->PA_PTRS[i])
+        if (out->PA_HDR_PTRS.OFFSET[i] != out_ref->PA_HDR_PTRS.OFFSET[i])
             fails++;
 
     return fails;

@@ -5,6 +5,10 @@
 #ifndef MBY_COMMON_H
 #define MBY_COMMON_H
 
+// Includes:
+#include <stdlib.h>
+#include <mby_top_map.h> // header file auto-generated from RDL
+
 // Macros:
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -27,27 +31,28 @@
 
 #define MBY_SEGMENT_LEN          256
 
-#define MBY_N_PARSER_KEYS        80
+#define MBY_N_PARSER_KEYS        parser_extract_cfg_rf_PARSER_EXTRACT_CFG__nd // 80
 #define MBY_N_PARSER_FLGS        48
 #define MBY_N_PARSER_PTRS         8
 
-// TODO consider replace FFU acronym since it's never used in MBY specs
-// Changes to these constants must be reflected also in mbyLpmKeyMasks
-#define MBY_FFU_KEY8             64
-#define MBY_FFU_KEY16            32
-#define MBY_FFU_KEY32            16
+// Changes to these constants must be reflected also in mbyLpmKeySels
+#define MBY_CGRP_KEY8            64
+#define MBY_CGRP_KEY16           32
+#define MBY_CGRP_KEY32           16
 
-#define MBY_FFU_KEY16_BASE       0
-#define MBY_FFU_KEY8_BASE        ( MBY_FFU_KEY16_BASE + MBY_FFU_KEY16 )
-#define MBY_FFU_KEY32_BASE       ( MBY_FFU_KEY8_BASE  + MBY_FFU_KEY8 )
+#define MBY_CGRP_KEY16_BASE      0
+#define MBY_CGRP_KEY8_BASE       ( MBY_CGRP_KEY16_BASE + MBY_CGRP_KEY16 )
+#define MBY_CGRP_KEY32_BASE      ( MBY_CGRP_KEY8_BASE  + MBY_CGRP_KEY8 )
 
-#define MBY_FFU_KEYS             ( MBY_FFU_KEY8 + MBY_FFU_KEY16   + MBY_FFU_KEY32   )
-#define MBY_FFU_HASH_KEYS        ( MBY_FFU_KEY8 + MBY_FFU_KEY16*2 + MBY_FFU_KEY32*4 )
-#define MBY_FFU_ACT24            16
-#define MBY_FFU_ACT4             26
-#define MBY_FFU_ACT1             24
-#define MBY_FFU_REMAP_ACTIONS     8
-#define MBY_FFU_POL_ACTIONS       4  // MBY_FFU_ACTION_POLICER[0..3]
+#define MBY_CGRP_KEYS                 ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16   + MBY_CGRP_KEY32   )
+#define MBY_CGRP_HASH_KEYS            ( MBY_CGRP_KEY8 + MBY_CGRP_KEY16*2 + MBY_CGRP_KEY32*4 )
+#define MBY_CGRP_ACT24                16
+#define MBY_CGRP_ACT4                 26
+#define MBY_CGRP_ACT1                 24
+#define MBY_CGRP_REMAP_ACTIONS         8
+#define MBY_CGRP_POL_ACTIONS           4  // MBY_CGRP_ACTION_POLICER[0..3]
+#define MBY_CGRP_HASH_PROFILE_ACTIONS  3  // MBY_CGRP_ACTION_HASH_PROFILE[0..2] == ECMP, MOD, LAG
+#define MBY_CGRP_META_ACTIONS          4  // MBY_CGRP_ACTION_META[0..3]
 
 #define MBY_PROT_TCP              6
 #define MBY_PROT_UDP             17
@@ -59,6 +64,9 @@
 #define MBY_ETYPE_IPv4           0x0800
 #define MBY_ETYPE_IPv6           0x86DD
 #define MBY_ETYPE_MAC_CONTROL    0x8808
+
+#define MBY_DMASK_REGISTERS      5
+#define MBY_MA_TCN_FIFO_CAPACITY 511
 
 #define MAC_ADDR_BYTES           6
 
@@ -213,26 +221,33 @@ typedef struct mbyParserInfoStruct
 
 } mbyParserInfo;
 
+typedef struct mbyParserHdrPtrsStruct
+{
+    fm_byte                 OFFSET      [MBY_N_PARSER_PTRS]; // offsets to data of interest within packet
+    fm_bool                 OFFSET_VALID[MBY_N_PARSER_PTRS]; // parser offset valid flags
+    fm_byte                 PROT_ID     [MBY_N_PARSER_PTRS]; // parser protocol IDs
+} mbyParserHdrPtrs;
+
 typedef struct mbyClassifierKeysStruct
 {
-    fm_uint32               key32[MBY_FFU_KEY32];
-    fm_uint16               key16[MBY_FFU_KEY16];
-    fm_byte                 key8 [MBY_FFU_KEY8 ];
+    fm_uint32               key32[MBY_CGRP_KEY32];
+    fm_uint16               key16[MBY_CGRP_KEY16];
+    fm_byte                 key8 [MBY_CGRP_KEY8 ];
 
 } mbyClassifierKeys;
 
 typedef struct mbyActionPrecValStruct
 {
-    fm_byte                 prec : 3; // 3b field
+    fm_byte                 prec; // 3b field
     fm_uint32               val;  // act24.val is 24b, act4.val is 4b, act1.val is 1b
 
 } mbyActionPrecVal;
 
 typedef struct mbyClassifierActionsStruct
 {
-    mbyActionPrecVal        act24[MBY_FFU_ACT24];
-    mbyActionPrecVal        act4 [MBY_FFU_ACT4 ];
-    mbyActionPrecVal        act1 [MBY_FFU_ACT1 ];
+    mbyActionPrecVal        act24[MBY_CGRP_ACT24];
+    mbyActionPrecVal        act4 [MBY_CGRP_ACT4 ];
+    mbyActionPrecVal        act1 [MBY_CGRP_ACT1 ];
 
 } mbyClassifierActions;
 
@@ -259,7 +274,7 @@ typedef struct mbyTriggerResultsStruct
     fm_uint32                           action;
     mbyTriggerActionForwarding          forwardingAction;
     fm_uint16                           destGlort;
-    fm_uint64                           destMask;
+    fm_uint64                           destMask[MBY_DMASK_REGISTERS];
     fm_bool                             filterDestMask;
     mbyTriggerActionTrap                trapAction;
     fm_byte                             cpuCode;
@@ -281,8 +296,6 @@ typedef struct mbyTriggerResultsStruct
     mbyTriggerActionLearning            learningAction;
     fm_bool                             rateLimitAction;
     fm_byte                             rateLimitNum;
-    fm_int                              metadataTrigNum[4];
-    fm_byte                             metadataAction[4];
     fm_byte                             egressL2DomainAction;
     fm_byte                             egressL3DomainAction;
     fm_byte                             qcnValid0;
@@ -329,6 +342,11 @@ fm_status mbyModelWriteCSRMult
     const fm_uint32 byte_addr,
     const fm_int len,
     const fm_uint32 * new_value
+);
+
+fm_int fmRand
+(
+    void
 );
 
 #endif // MBY_COMMON_H

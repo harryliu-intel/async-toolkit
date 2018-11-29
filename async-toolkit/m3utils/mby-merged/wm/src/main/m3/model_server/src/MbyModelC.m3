@@ -5,7 +5,7 @@ IMPORT mby_top_map_addr AS MapAddr;
 IMPORT ServerPacket AS Pkt;
 IMPORT FmModelMessageHdr;
 IMPORT FmModelConstants;
-IMPORT MbyModelServer;
+IMPORT MbyModelServer, MbyModelServerExt;
 IMPORT Debug;
 IMPORT MbyParserStage;
 IMPORT BaseModelStage;
@@ -27,11 +27,11 @@ IMPORT SortedIntUpdaterTbl AS AddrUpdaterTbl;
    be prefixed Mby...  we should considering moving it out into a
    more generically named module at some point *)
 
-PROCEDURE HandlePacket(server           : MbyModelServer.T;
-                       READONLY readA   : Map.T;
-                       READONLY updateA : MapAddr.Update;
-                       READONLY hdr     : FmModelMessageHdr.T;
-                       pkt              : Pkt.T) =
+PROCEDURE HandlePacketNormal(server           : MbyModelServer.T;
+                             READONLY readA   : Map.T;
+                             READONLY updateA : MapAddr.Update;
+                             READONLY hdr     : FmModelMessageHdr.T;
+                             pkt              : Pkt.T) =
   VAR
     cPkt : UNTRACED REF ARRAY OF CHAR;
   BEGIN
@@ -44,8 +44,33 @@ PROCEDURE HandlePacket(server           : MbyModelServer.T;
     FINALLY
       DISPOSE(cPkt)
     END
-  END HandlePacket;
+  END HandlePacketNormal;
 
+PROCEDURE HandlePacketReflect(server           : MbyModelServer.T;
+                              <*UNUSED*>READONLY readA   : Map.T;
+                              <*UNUSED*>READONLY updateA : MapAddr.Update;
+                              READONLY hdr     : FmModelMessageHdr.T;
+                              pkt              : Pkt.T) =
+  BEGIN
+    server.pushPacket(hdr, pkt)
+  END HandlePacketReflect;
+
+PROCEDURE HandlePacket(serverP          : MbyModelServer.T;
+                       READONLY readA   : Map.T;
+                       READONLY updateA : MapAddr.Update;
+                       READONLY hdr     : FmModelMessageHdr.T;
+                       pkt : Pkt.T) =
+  VAR
+    server : MbyModelServerExt.T := serverP;
+  BEGIN
+    IF server.reflect THEN
+      HandlePacketReflect(serverP, readA, updateA, hdr, pkt)
+    ELSE
+      HandlePacketNormal(serverP, readA, updateA, hdr, pkt)
+    END
+  END HandlePacket;
+    
+  
 VAR
   rp, wp : UNTRACED REF ADDRESS := NEW(UNTRACED REF ADDRESS);
   

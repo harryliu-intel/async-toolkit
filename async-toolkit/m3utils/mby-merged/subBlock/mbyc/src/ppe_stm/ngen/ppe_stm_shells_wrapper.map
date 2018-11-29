@@ -39,6 +39,29 @@ foreach $i (0..79) {
     >> ppe_stm_mod_tbl_$i$_rd_data
     >> ppe_stm_mod_tbl_$i$_rd_valid
 }
+    >> PPE_STM_L3MC_TBL_CFG_reg_sel
+    >> PPE_STM_L3MC_TBL_STATUS_reg_sel
+    >> ppe_stm_l3mc_tbl_adr
+    >> ppe_stm_l3mc_tbl_mem_ls_enter
+    >> ppe_stm_l3mc_tbl_rd_en
+    >> ppe_stm_l3mc_tbl_wr_data
+    >> ppe_stm_l3mc_tbl_wr_en
+    >> ppe_stm_l3mc_tbl_ecc_uncor_err
+    >> ppe_stm_l3mc_tbl_init_done
+    >> ppe_stm_l3mc_tbl_rd_data
+    >> ppe_stm_l3mc_tbl_rd_valid
+
+    >> PPE_STM_SHCP_TBL_CFG_reg_sel
+    >> PPE_STM_SHCP_TBL_STATUS_reg_sel
+    >> ppe_stm_shcp_tbl_adr
+    >> ppe_stm_shcp_tbl_mem_ls_enter
+    >> ppe_stm_shcp_tbl_rd_en
+    >> ppe_stm_shcp_tbl_wr_data
+    >> ppe_stm_shcp_tbl_wr_en
+    >> ppe_stm_shcp_tbl_ecc_uncor_err
+    >> ppe_stm_shcp_tbl_init_done
+    >> ppe_stm_shcp_tbl_rd_data
+    >> ppe_stm_shcp_tbl_rd_valid
 
     >> PPE_STM_ECC_COR_ERR_reg_sel
     >> PPE_STM_ECC_UNCOR_ERR_reg_sel

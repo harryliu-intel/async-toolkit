@@ -1,6 +1,8 @@
 //scalastyle:off
 package com.intel.cg.hpfd.madisonbay
 
+import com.intel.cg.hpfd.madisonbay.Encode.encode
+
 import scala.reflect.ClassTag
 
 
@@ -11,25 +13,23 @@ import scala.reflect.ClassTag
 abstract class Encode[T: ClassTag] {
   /** Default (reset) value.
     *
-    * Could be computable.
-    * Overridable for fields with the said encoding.
+    * Could be computable or overrode by "higher" (from Lens' perspective) type.
     */
   def default: T
 
-  /** Conversion to raw machine word. */
-  def toRaw(t: T): Long
+  /** Conversion to raw bits. */
+  def toRaw(value: T): BitVector
 
-  /** Conversion from raw machine word. */
-  def fromRaw(l: Long): T
+  /** Conversion from raw bits. */
+  def fromRaw(bits: BitVector): T
 
-  /** Minimal size of the field. */
-  val minSize: Int
-
-  /** Maximal size of the field.
+  /** Size in bits.
     *
-    * Should be no smaller, and in many cases equal, to minSize.
+    * Could be overrode by a "higher" (from Lens' perspective) type,
+    * but care should be taken. In practice, only Raw (corresponding to Long)
+    * encoding should be overrode.
     */
-  val maxSize: Int
+  def size: Int
 
   /** Underlying type's stringification. */
   final def typeStr: String = s"${implicitly[ClassTag[T]]}"
@@ -41,34 +41,112 @@ object Encode {
   /** Shortcut for {{{ implicitly[Encode[E]] }}}. */
   def encode[E: Encode]: Encode[E] = implicitly[Encode[E]]
 
-  /** General encoding constructor */
-  def apply[T: ClassTag](mi: Int, ma: Int, d: => T)(to: T => Long)(from: Long => T): Encode[T] = new Encode[T] {
-    def default: T = d
-    def toRaw(t: T): Long = to(t)
-    def fromRaw(l: Long): T = from(l)
-    val minSize = mi
-    val maxSize = ma
+  /** Simplified encoding constructor using single raw word. */
+  def simple[T: ClassTag](siz: Int, d: => T)(to: T => Long)(from: Long => T): Encode[T] = {
+    require( siz >= 0 )
+    require( siz <= 64 )
+    new Encode[T] {
+      def size: Int = siz
+      def default: T = d
+      def toRaw(value: T): BitVector = BitVector(to(value), size)
+      def fromRaw(bits: BitVector): T = {
+        require(bits.length == siz)
+        from(bits.toRaw(0))
+      }
+    }
   }
 
-  /** Simplified encoding constructor */
-  def apply[T: ClassTag](size: Int, d: => T)(to: T => Long)(from: Long => T): Encode[T] = new Encode[T] {
-    def default: T = d
-    def toRaw(t: T): Long = to(t)
-    def fromRaw(l: Long): T = from(l)
-    val minSize = size
-    val maxSize = size
+  /** Simplified encoding constructor using single raw word, default value from 0L. */
+  def simple[T: ClassTag](siz: Int)(to: T => Long)(from: Long => T): Encode[T] = {
+    simple(siz, from(0L))(to)(from)
+  }
+
+  /** Encoding constructor using any number of raw bits. */
+  def apply[T: ClassTag](siz: Int, d: => T)(to: T => BitVector)(from: BitVector => T): Encode[T] = {
+    require( siz >= 0 )
+    new Encode[T] {
+      def size: Int = siz
+      def default: T = d
+      def toRaw(value: T): BitVector = to(value)
+      def fromRaw(bits: BitVector): T = {
+        require(bits.length == siz)
+        from(bits)
+      }
+    }
+  }
+
+  /** Encoding constructor using any number of raw bits, default value from zero BitVector. */
+  def apply[T: ClassTag](siz: Int)(to: T => BitVector)(from: BitVector => T): Encode[T] = {
+    apply(siz, from(BitVector.zeros(siz)))(to)(from)
   }
 
   // enums
-  implicit val encodeBoolean = Encode(1, 1, false)(if (_) 1L else 0L)(_ != 0)
+  implicit val encodeBoolean: Encode[Boolean] = Encode.simple[Boolean](1)(if (_) 1L else 0L)(_ != 0)
 
   // integers
-  implicit val encodeByte = Encode(1, 8, 0.toByte)(_.toLong)(_.toByte)
-  implicit val encodeShort = Encode(1, 16, 0.toShort)(_.toLong)(_.toShort)
-  implicit val encodeInt = Encode(1, 32, 0)(_.toLong)(_.toShort)
-  implicit val encodeLong = Encode(1, 64, 0x00l)(x => x)(x => x)
+  implicit val encodeByte: Encode[Byte] = Encode.simple[Byte](8)(_.toLong)(_.toByte)
+  implicit val encodeShort: Encode[Short] = Encode.simple[Short](16)(_.toLong)(_.toShort)
+  implicit val encodeInt: Encode[Int] = Encode.simple[Int](32)(_.toLong)(_.toInt)
+  implicit val encodeLong: Encode[Long] = Encode.simple[Long](64)(identity)(identity)
 
-  // floating points
-  implicit val encodeFloat = Encode(32, 0.0f)(_.toLong)(_.toFloat)
-  implicit val encodeDouble = Encode(64, 0.0d)(_.toLong)(_.toDouble)
+  /** raw bit value with no meaning. */
+  def encodeRaw(size: Int): Encode[Long] = Encode.simple[Long](size)(identity)(identity)
+
+  /** Encodable extensions */
+  implicit class EncodeToBvec[E: Encode](arg: E) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = encode[E].toRaw(arg)
+  }
+
+  /** Traversable of encodables extensions */
+  implicit class TravEncodeToBVec[E: Encode](arg: Traversable[E]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(x => encode[E].toRaw(x)).toBitVector
+  }
+
+  /** Iterator of encodables extensions */
+  implicit class ItEncodeToBVec[E: Encode](arg: Iterator[E]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(x => encode[E].toRaw(x)).toBitVector
+  }
+}
+
+/** Encodable value with its encoding. Wraps encoding operations. */
+case class Encodable[E](value: E)(implicit val encode: Encode[E]) {
+  def toRaw(): BitVector = encode.toRaw(value)
+  def fromRaw(bits: BitVector): Encodable[E] = copy(value = encode.fromRaw(bits))
+  def default(): Encodable[E] = copy(value = encode.default)
+  def size: Int = encode.size
+}
+object Encodable {
+  /** Automatic conversion. */
+  implicit def fromValue[E: Encode](value: E): Encodable[E] =
+    new Encodable[E](value)(Encode.encode[E])
+
+  implicit def c2c[E: Encode](container: Traversable[E]): Traversable[Encodable[E]] =
+    container.map(x => fromValue(x))
+
+  /** Manual conversion. */
+  implicit class ToEncodable[E](value: E) {
+    def toEncodable(implicit encode: Encode[E]): Encodable[E] = Encodable.fromValue(value)
+  }
+
+  /** Encodable extensions */
+  // to avoid conflict between EncodeToBvec and fromValue.
+  implicit class EncodableToBvec[E](arg: Encodable[E]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.toRaw
+  }
+
+  /** Traversable of encodables extensions */
+  implicit class TravEncodableToBVec(arg: Traversable[Encodable[_]]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(_.toRaw).toBitVector
+  }
+
+  /** Iterator of encodables extensions */
+  implicit class ItEncodableToBVec(arg: Iterator[Encodable[_]]) {
+    /** Convert to a BitVector */
+    def toBitVector(): BitVector = arg.map(_.toRaw).toBitVector
+  }
 }

@@ -35,7 +35,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 7967,
         .PA_KEYS[11] = 7967,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Unicast DMAC"
 },
@@ -55,7 +55,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 48093,
         .PA_KEYS[11] = 61183,
         .PA_KEYS[12] = 43690,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Unicast SMAC"
 },
@@ -75,7 +75,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 21845,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Multicast DMAC"
 },
@@ -95,7 +95,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 21845,
         .PA_KEYS[11] = 5461,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Multicast SMAC"
 },
@@ -115,7 +115,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Broadcast DMAC"
 },
@@ -135,7 +135,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 65535,
         .PA_KEYS[11] = 65535,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Broadcast SMAC"
 },
@@ -155,7 +155,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet zero-DMAC"
 },
@@ -175,7 +175,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 0,
         .PA_KEYS[11] = 0,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet zero-SMAC"
 },
@@ -194,7 +194,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 0,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet zero Ethertype"
 },
@@ -214,7 +214,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet 64 length"
 },
@@ -234,7 +234,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32768,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet 128 length"
 },
@@ -254,7 +254,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 34824,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Flow Control"
 },
@@ -274,7 +274,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35045,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet MACSEC"
 },
@@ -294,7 +294,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 2054,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet ARP"
 },
@@ -314,7 +314,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 32821,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Reverse ARP"
 },
@@ -334,7 +334,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35020,
-        .PA_PTRS[2] = 0
+        .PA_HDR_PTRS.OFFSET[2] = 0
     },
     .name = "L2 Ethernet LLDP"
 },
@@ -354,7 +354,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35078,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet FCoE"
 },
@@ -374,7 +374,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35092,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet FCoE Init"
 },
@@ -394,7 +394,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 2114,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Wake on Lan"
 },
@@ -414,7 +414,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 35063,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet PTP"
 },
@@ -434,7 +434,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 34915,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet PPPoE DS"
 },
@@ -454,7 +454,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 34916,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet PPPoE SS"
 },
@@ -474,7 +474,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 61937,
         .PA_KEYS[11] = 61937,
         .PA_KEYS[12] = 8947,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet PPPoE DS"
 },
@@ -497,7 +497,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 10922,
         .PA_KEYS[31] = 10922,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Vlan 0xAAA 0x2"
 },
@@ -520,7 +520,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 21845,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Vlan 0x555 0x5"
 },
@@ -543,7 +543,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 0,
         .PA_KEYS[31] = 0,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet VLAN Priority Tagged (zero-VID) zero-pri"
 },
@@ -566,7 +566,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 4096,
         .PA_KEYS[31] = 4096,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet VLAN Priority Tagged (zero-VID) non-zero-pri"
 },
@@ -589,7 +589,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 61439,
         .PA_KEYS[31] = 61439,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Vlan 0xFFF 0xE"
 },
@@ -612,7 +612,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 32768,
         .PA_KEYS[14] = 4097,
         .PA_KEYS[31] = 4097,
-        .PA_PTRS[0] = 0
+        .PA_HDR_PTRS.OFFSET[0] = 0
     },
     .name = "L2 Ethernet Vlan 0x001 0x1 - Invalid CFI"
 },
@@ -664,8 +664,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 36
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 36
     },
     .name = "L2 PBB IPv6 Unknown NH"
 },
@@ -720,9 +720,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 36,
-        .PA_PTRS[7] = 76
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 36,
+        .PA_HDR_PTRS.OFFSET[7] = 76
     },
     .name = "L2 PBB IPv6"
 },
@@ -778,10 +778,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 36,
-        .PA_PTRS[6] = 40,
-        .PA_PTRS[7] = 80
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 36,
+        .PA_HDR_PTRS.OFFSET[6] = 40,
+        .PA_HDR_PTRS.OFFSET[7] = 80
     },
     .name = "L2 PBB 1 MPLS MCAST/IPv6"
 },
@@ -827,10 +827,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 36,
-        .PA_PTRS[6] = 44,
-        .PA_PTRS[7] = 64
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 36,
+        .PA_HDR_PTRS.OFFSET[6] = 44,
+        .PA_HDR_PTRS.OFFSET[7] = 64
     },
     .name = "L2 PBB 2 MPLS MCAST/IPv4"
 },
@@ -861,8 +861,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 21845,
         .PA_KEYS[18] = 34888,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 36
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 36
     },
     .name = "L2 PBB 3 MPLS MCAST"
 },
@@ -893,8 +893,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 21845,
         .PA_KEYS[18] = 34887,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 36
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 36
     },
     .name = "L2 PBB 3 MPLS UCAST"
 },
@@ -927,8 +927,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[18] = 34888,
         .PA_KEYS[20] = 65285,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 40
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 40
     },
     .name = "L2 PBB VLAN TAG A"
 },
@@ -961,8 +961,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[18] = 34887,
         .PA_KEYS[20] = 65285,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 40
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 40
     },
     .name = "L2 PBB VLAN TAG B"
 },
@@ -995,8 +995,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[18] = 34984,
         .PA_KEYS[20] = 65285,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 38
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 38
     },
     .name = "L2 PBB VLAN1 (default rule)"
 },
@@ -1053,9 +1053,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 40,
-        .PA_PTRS[7] = 80
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 40,
+        .PA_HDR_PTRS.OFFSET[7] = 80
     },
     .name = "L2 PBB VLAN1/IPv6"
 },
@@ -1102,9 +1102,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 40,
-        .PA_PTRS[7] = 60
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 40,
+        .PA_HDR_PTRS.OFFSET[7] = 60
     },
     .name = "L2 PBB VLAN1/IPv4"
 },
@@ -1164,9 +1164,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 44,
-        .PA_PTRS[7] = 84
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 44,
+        .PA_HDR_PTRS.OFFSET[7] = 84
     },
     .name = "L2 PBB VLAN1/VLAN2 TAG A/IPv6"
 },
@@ -1225,9 +1225,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 44,
-        .PA_PTRS[7] = 84
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 44,
+        .PA_HDR_PTRS.OFFSET[7] = 84
     },
     .name = "L2 PBB VLAN1/VLAN2 TAG B/IPv6"
 },
@@ -1276,9 +1276,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 44,
-        .PA_PTRS[7] = 64
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 44,
+        .PA_HDR_PTRS.OFFSET[7] = 64
     },
     .name = "L2 PBB VLAN1/VLAN2/IPv4"
 },
@@ -1313,8 +1313,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[20] = 65285,
         .PA_KEYS[21] = 4660,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 44
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 44
     },
     .name = "L2 PBB VLAN1/VLAN2/MPLS UCAST"
 },
@@ -1349,8 +1349,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[20] = 65285,
         .PA_KEYS[21] = 4660,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[5] = 44
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[5] = 44
     },
     .name = "L2 PBB VLAN1/VLAN2/MPLS MCAST"
 },
@@ -1385,8 +1385,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[20] = 65285,
         .PA_KEYS[21] = 4660,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 42
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 42
     },
     .name = "L2 PBB VLAN1/VLAN2/Unknown (default rule)"
 },
@@ -1412,7 +1412,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 21845,
         .PA_KEYS[15] = 10922,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2"
 },
@@ -1437,7 +1437,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 21845,
         .PA_KEYS[15] = 10922,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ TAG1_A and TAG2_B matched"
 },
@@ -1464,7 +1464,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 10922,
         .PA_KEYS[15] = 21845,
         .PA_KEYS[31] = 10922,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ vlan2first - TAG2_B and TAG1_A matched"
 },
@@ -1490,7 +1490,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 10922,
         .PA_KEYS[15] = 21845,
         .PA_KEYS[31] = 10922,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ vlan2first - TAG2_A and TAG1_B matched"
 },
@@ -1517,7 +1517,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 8192,
         .PA_KEYS[15] = 21845,
         .PA_KEYS[31] = 8192,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ vlan2first Priority Tagged (zero-VID1) - TAG2_A and TAG1_B matched"
 },
@@ -1544,7 +1544,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 8192,
         .PA_KEYS[15] = 21845,
         .PA_KEYS[31] = 8192,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ vlan2first Priority Tagged (zero-VID1) - TAG2_B and TAG1_A matched"},
 */
@@ -1573,7 +1573,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 10922,
         .PA_KEYS[15] = 21845,
         .PA_KEYS[31] = 10922,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ 0xAAA 0x2 0x555 0x5"
 },
@@ -1600,7 +1600,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 0,
         .PA_KEYS[15] = 65535,
         .PA_KEYS[31] = 0,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ Priority Tagged (zero-VID1) 0xFFF 0xF"
 },
@@ -1627,7 +1627,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 0,
         .PA_KEYS[15] = 65535,
         .PA_KEYS[31] = 0,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ Priority Tagged (zero-VID1) Ethtype1=0x8100 0xFFF 0xF"
 },
@@ -1653,7 +1653,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 65535,
         .PA_KEYS[15] = 0,
         .PA_KEYS[31] = 65535,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L2 Ethernet QinQ 0xFFF 0xF 0x0 0x0"
 },
@@ -1688,8 +1688,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[14] = 0,
         .PA_KEYS[15] = 65535,
         .PA_KEYS[31] = 0,
-        .PA_PTRS[4] = 26,
-        .PA_PTRS[6] = 40
+        .PA_HDR_PTRS.OFFSET[4] = 26,
+        .PA_HDR_PTRS.OFFSET[6] = 40
     },
     .name = "L2 Ethernet QinQ with PBB vlan2first Priority-Tagged (VID1=0)"
 },
@@ -1713,7 +1713,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 33024,
         .PA_KEYS[14] = 21845,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[2] = 18
+        .PA_HDR_PTRS.OFFSET[2] = 18
     },
     .name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG1 configured and matched (TAG_1A)"
 },
@@ -1737,7 +1737,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 33024,
         .PA_KEYS[14] = 21845,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[2] = 18
+        .PA_HDR_PTRS.OFFSET[2] = 18
     },
     .name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG1 configured and matched (TAG1_B)"
 },
@@ -1760,7 +1760,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[11] = 56814,
         .PA_KEYS[12] = 33024,
         .PA_KEYS[15] = 21845,
-        .PA_PTRS[2] = 18
+        .PA_HDR_PTRS.OFFSET[2] = 18
     },
     .name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG2 configured and matched (TAG2_A)"
 },
@@ -1783,7 +1783,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[11] = 56814,
         .PA_KEYS[12] = 33024,
         .PA_KEYS[15] = 21845,
-        .PA_PTRS[2] = 18
+        .PA_HDR_PTRS.OFFSET[2] = 18
     },
     .name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - only TAG2 configured and matched (TAG2_B)"
 },
@@ -1804,7 +1804,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[10] = 48076,
         .PA_KEYS[11] = 56814,
         .PA_KEYS[12] = 34984,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "L2 Ethernet QinQ 0x555 0x5 0xAAA 0x2 - no VLAN tags configured"},
 */
@@ -1838,8 +1838,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "L3 IPv4 untagged"
 },
@@ -1871,8 +1871,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "L3 IPv4 Fragmented 1st"
 },
@@ -1904,8 +1904,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "L3 IPv4 Fragmented 2nd"
 },
@@ -1939,8 +1939,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38
     },
     .name = "L3 IPv4 VLAN 0xAAA 0xA"
 },
@@ -1975,8 +1975,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38
     },
     .name = "L3 IPv4 VLAN Vid1Eth=0x8100 Priority-Tagged (VID=0) 0xA"
 },
@@ -2011,8 +2011,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38
     },
     .name = "L3 IPv4 Fragmented VLAN 0xAAA 0xA"
 },
@@ -2047,8 +2047,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38
     },
     .name = "L3 IPv4 Fragmented 2nd VLAN 0xAAA 0xA"
 },
@@ -2085,8 +2085,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42
     },
     .name = "L3 IPv4 QinQ 0xAAA 0xA 0x123 0x3"
 },
@@ -2125,8 +2125,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42
     },
     .name = "L3 IPv4 QinQ vlan2first Priority-Tagged (VID=0)"},
 */
@@ -2167,8 +2167,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42
     },
     .name = "L3 IPv4 Fragmented 1st QinQ"
 },
@@ -2206,8 +2206,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42
     },
     .name = "L3 IPv4 Fragmented 2nd QinQ"
 },
@@ -2230,8 +2230,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 34887,
         .PA_KEYS[24] = 43690,
         .PA_KEYS[25] = 45055,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 18
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 18
     },
     .name = "MPLS Unicast "
 },
@@ -2254,8 +2254,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[12] = 34888,
         .PA_KEYS[24] = 43690,
         .PA_KEYS[25] = 45055,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 18
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 18
     },
     .name = "MPLS Multicast "
 },
@@ -2280,8 +2280,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[25] = 44799,
         .PA_KEYS[26] = 48059,
         .PA_KEYS[27] = 48622,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "MPLS Unicast 2 labels"
 },
@@ -2308,8 +2308,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[27] = 48366,
         .PA_KEYS[28] = 52428,
         .PA_KEYS[29] = 52189,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26
     },
     .name = "MPLS Unicast 3 labels"
 },
@@ -2338,8 +2338,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[29] = 51933,
         .PA_KEYS[30] = 56797,
         .PA_KEYS[31] = 55756,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 30
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 30
     },
     .name = "MPLS Unicast 4 labels"
 },
@@ -2370,8 +2370,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[31] = 55500,
         .PA_KEYS[32] = 61166,
         .PA_KEYS[33] = 59323,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "MPLS Unicast 5 labels"
 },
@@ -2404,8 +2404,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[33] = 59067,
         .PA_KEYS[34] = 65535,
         .PA_KEYS[35] = 62890,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 38
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 38
     },
     .name = "MPLS Unicast 6 labels"
 },
@@ -2431,8 +2431,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[24] = 43690,
         .PA_KEYS[25] = 45055,
         .PA_KEYS[31] = 42325,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "MPLS Unicast VLAN 0x555 0xA"
 },
@@ -2458,8 +2458,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[24] = 43690,
         .PA_KEYS[25] = 45055,
         .PA_KEYS[31] = 42325,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "MPLS Multicast VLAN 0x555 0xA"
 },
@@ -2488,8 +2488,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[24] = 43690,
         .PA_KEYS[25] = 45055,
         .PA_KEYS[31] = 42325,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 26
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 26
     },
     .name = "MPLS Unicast QinQ 0xAAA 0x5 0xFFF 0x0"
 },
@@ -2523,8 +2523,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[29] = 51933,
         .PA_KEYS[30] = 56797,
         .PA_KEYS[31] = 55756,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 38
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 38
     },
     .name = "MPLS Multicast QinQ 0x101 0x1 0x111 0x2"
 },
@@ -2560,8 +2560,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[29] = 51933,
         .PA_KEYS[30] = 56797,
         .PA_KEYS[31] = 55756,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 38
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 38
     },
     .name = "MPLS Multicast QinQ vlan2first Priority-Tagged (VID1=0)"
 },
@@ -2591,8 +2591,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[24] = 43690,
         .PA_KEYS[25] = 45055,
         .PA_KEYS[31] = 0,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 26
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 26
     },
     .name = "MPLS Unicast QinQ vlan2first Priority-Tagged (VID1=0)"},
 */
@@ -2628,8 +2628,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[33] = 59067,
         .PA_KEYS[34] = 0,
         .PA_KEYS[35] = 28842,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 38
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 38
     },
     .name = "MPLS Unicast 7 labels - 6 labels validated"
 },
@@ -2667,8 +2667,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[33] = 59067,
         .PA_KEYS[34] = 0,
         .PA_KEYS[35] = 28842,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 46
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 46
     },
     .name = "MPLS Unicast 7 labels - 6 labels validated with QinQ"
 },
@@ -2706,9 +2706,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 65022,
         .PA_KEYS[50] = 64251,
         .PA_KEYS[51] = 64765,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 46
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 46
     },
     .name = "IPv4 over MPLS 3 labels"
 },
@@ -2747,9 +2747,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 65022,
         .PA_KEYS[50] = 64251,
         .PA_KEYS[51] = 64765,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 46
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 46
     },
     .name = "IPv4 1st frag. over MPLS 3 labels"
 },
@@ -2788,9 +2788,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 65022,
         .PA_KEYS[50] = 64251,
         .PA_KEYS[51] = 64765,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 46
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 46
     },
     .name = "IPv4 2nd frag. over MPLS 3 labels"
 },
@@ -2831,9 +2831,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 65022,
         .PA_KEYS[50] = 64251,
         .PA_KEYS[51] = 64765,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 50
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 50
     },
     .name = "IPv4 over MPLS 3 labels over VLAN"
 },
@@ -2877,9 +2877,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 65022,
         .PA_KEYS[50] = 64251,
         .PA_KEYS[51] = 64765,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "IPv4 over MPLS 3 labels over QinQ"
 },
@@ -2933,9 +2933,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 66
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 66
     },
     .name = "IPv6 over MPLS 3 labels"
 },
@@ -2992,9 +2992,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 70
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 70
     },
     .name = "IPv6 over MPLS 3 labels and VLAN"
 },
@@ -3054,9 +3054,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 74
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 74
     },
     .name = "IPv6 over MPLS 3 labels and QinQ"
 },
@@ -3112,8 +3112,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr Fragmented over MPLS 3 labels and QinQ"
 },
@@ -3170,9 +3170,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 0,
         .PA_KEYS[65] = 513,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 74
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 74
     },
     .name = "IPv6 ExHdr ESP over MPLS 3 labels and QinQ"
 },
@@ -3228,9 +3228,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr NoNextHDR over MPLS 3 labels and QinQ"
 },
@@ -3290,9 +3290,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 43707,
         .PA_KEYS[65] = 52445,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 82
     },
     .name = "IPv6 ExHdr ESP over 1st Fragmented/MPLS(3)/QinQ"
 },
@@ -3348,8 +3348,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr ESP over fragmented/MPLS(3)/QinQ"
 },
@@ -3408,9 +3408,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr GRE over Fragmented/MPLS(3)/QinQ"
 },
@@ -3472,9 +3472,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr UDP over Fragmented/MPLS(3)/QinQ"
 },
@@ -3535,9 +3535,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr TCP over Fragmented/MPLS(3)/QinQ"
 },
@@ -3599,9 +3599,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr SCTP over Fragmented/MPLS(3)/QinQ"
 },
@@ -3658,9 +3658,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr ICMP over Fragmented/MPLS(3)/QinQ"
 },
@@ -3730,11 +3730,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82,
-        .PA_PTRS[6] = 82,
-        .PA_PTRS[7] = 102
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82,
+        .PA_HDR_PTRS.OFFSET[6] = 82,
+        .PA_HDR_PTRS.OFFSET[7] = 102
     },
     .name = "IPv6 ExHdr IPv4/UDP over Fragmented/MPLS(3)/QinQ"
 },
@@ -3814,11 +3814,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82,
-        .PA_PTRS[6] = 82,
-        .PA_PTRS[7] = 122
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82,
+        .PA_HDR_PTRS.OFFSET[6] = 82,
+        .PA_HDR_PTRS.OFFSET[7] = 122
     },
     .name = "IPv6 ExHdr IPv6/UDP over Fragmented/MPLS(3)/QinQ"
 },
@@ -3874,8 +3874,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr non fragmented, nh fragmented"
 },
@@ -3933,9 +3933,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 15104,
         .PA_KEYS[65] = 513,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 82
     },
     .name = "IPv6 ExHdr non gragmented, nh esp"
 },
@@ -3996,9 +3996,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr non fragmented, nh sctp"
 },
@@ -4056,9 +4056,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr non fragmented, nh gre"
 },
@@ -4119,9 +4119,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr non fragmented, nh UDP"
 },
@@ -4181,9 +4181,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr non fragmented, nh TCP"
 },
@@ -4239,9 +4239,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 82
     },
     .name = "IPv6 ExHdr non fragmented, nh icmp"
 },
@@ -4296,8 +4296,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr non fragmented, nh ip6"
 },
@@ -4352,8 +4352,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr non fragmented, nh ip4"
 },
@@ -4408,8 +4408,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr non fragmented, unknown protocol"
 },
@@ -4469,9 +4469,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 43707,
         .PA_KEYS[65] = 52445,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 90
     },
     .name = "IPv6 nh 0x99, nh 1st frag, nh ESP"
 },
@@ -4528,8 +4528,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh frag, nh ESP"
 },
@@ -4588,9 +4588,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh frag, nh gre"
 },
@@ -4652,9 +4652,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh frag, nh udp"
 },
@@ -4715,9 +4715,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh frag, nh tcp"
 },
@@ -4779,9 +4779,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh frag, nh SCTP"
 },
@@ -4838,9 +4838,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh frag, nh ICMP"
 },
@@ -4910,11 +4910,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90,
-        .PA_PTRS[6] = 90,
-        .PA_PTRS[7] = 110
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90,
+        .PA_HDR_PTRS.OFFSET[6] = 90,
+        .PA_HDR_PTRS.OFFSET[7] = 110
     },
     .name = "IPv6 nh 0x99, nh frag, nh IPv4/UDP"
 },
@@ -4994,11 +4994,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90,
-        .PA_PTRS[6] = 90,
-        .PA_PTRS[7] = 130
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90,
+        .PA_HDR_PTRS.OFFSET[6] = 90,
+        .PA_HDR_PTRS.OFFSET[7] = 130
     },
     .name = "IPv6 nh 0x99, nh frag, nh IPv6/UDP"
 },
@@ -5054,9 +5054,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh frag, no next header"
 },
@@ -5112,8 +5112,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh frag, nh 0x99"
 },
@@ -5169,8 +5169,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh non 1st frag, nh 0x99"
 },
@@ -5225,9 +5225,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh 0x98, no next header"
 },
@@ -5283,8 +5283,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh fragmented"
 },
@@ -5342,9 +5342,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 90
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh esp"
 },
@@ -5405,9 +5405,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh sctp"
 },
@@ -5465,9 +5465,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh gre"
 },
@@ -5528,9 +5528,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh UDP"
 },
@@ -5590,9 +5590,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh TCP"
 },
@@ -5648,9 +5648,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 90
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 90
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh icmp"
 },
@@ -5705,8 +5705,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh ip6"
 },
@@ -5761,8 +5761,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh ip4"
 },
@@ -5817,8 +5817,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, unknown protocol"
 },
@@ -5878,9 +5878,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 43707,
         .PA_KEYS[65] = 52445,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 1st frag, nh ESP"
 },
@@ -5937,8 +5937,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh ESP"
 },
@@ -5997,9 +5997,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh gre"
 },
@@ -6061,9 +6061,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh udp"
 },
@@ -6124,9 +6124,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh tcp"
 },
@@ -6188,9 +6188,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh SCTP"
 },
@@ -6247,9 +6247,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh ICMP"
 },
@@ -6319,11 +6319,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98,
-        .PA_PTRS[6] = 98,
-        .PA_PTRS[7] = 118
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98,
+        .PA_HDR_PTRS.OFFSET[6] = 98,
+        .PA_HDR_PTRS.OFFSET[7] = 118
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh IPv4/UDP"
 },
@@ -6403,11 +6403,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98,
-        .PA_PTRS[6] = 98,
-        .PA_PTRS[7] = 138
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98,
+        .PA_HDR_PTRS.OFFSET[6] = 98,
+        .PA_HDR_PTRS.OFFSET[7] = 138
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh IPv6/UDP"
 },
@@ -6463,9 +6463,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, no next header"
 },
@@ -6521,8 +6521,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh frag, nh 0x99"
 },
@@ -6578,8 +6578,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh non 1st frag, nh 0x99"
 },
@@ -6634,9 +6634,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, no next header"
 },
@@ -6692,8 +6692,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97 nh fragmented"
 },
@@ -6751,9 +6751,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh esp"
 },
@@ -6814,9 +6814,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh sctp"
 },
@@ -6874,9 +6874,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh gre"
 },
@@ -6937,9 +6937,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh UDP"
 },
@@ -6999,9 +6999,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh TCP"
 },
@@ -7057,9 +7057,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 98
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 98
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh icmp"
 },
@@ -7114,8 +7114,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh ip6"
 },
@@ -7170,8 +7170,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh ip4"
 },
@@ -7226,8 +7226,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, unknown protocol"
 },
@@ -7287,9 +7287,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 43707,
         .PA_KEYS[65] = 52445,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, 0x97, nh 1st frag, nh ESP"
 },
@@ -7346,8 +7346,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh ESP"
 },
@@ -7406,9 +7406,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh gre"
 },
@@ -7470,9 +7470,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh udp"
 },
@@ -7533,9 +7533,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh tcp"
 },
@@ -7597,9 +7597,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh SCTP"
 },
@@ -7656,9 +7656,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh ICMP"
 },
@@ -7728,11 +7728,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106,
-        .PA_PTRS[6] = 106,
-        .PA_PTRS[7] = 126
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106,
+        .PA_HDR_PTRS.OFFSET[6] = 106,
+        .PA_HDR_PTRS.OFFSET[7] = 126
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh IPv4/UDP"
 },
@@ -7812,11 +7812,11 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106,
-        .PA_PTRS[6] = 106,
-        .PA_PTRS[7] = 146
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106,
+        .PA_HDR_PTRS.OFFSET[6] = 106,
+        .PA_HDR_PTRS.OFFSET[7] = 146
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh IPv6/UDP"
 },
@@ -7872,9 +7872,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, no next header"
 },
@@ -7930,8 +7930,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh frag, nh 0x99"
 },
@@ -7987,8 +7987,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh non 1st frag, nh 0x99"
 },
@@ -8043,9 +8043,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, no next header"
 },
@@ -8103,9 +8103,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[7] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh esp"
 },
@@ -8166,9 +8166,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh sctp"
 },
@@ -8226,9 +8226,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh gre"
 },
@@ -8289,9 +8289,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh UDP"
 },
@@ -8351,9 +8351,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh TCP"
 },
@@ -8409,9 +8409,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 106
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 106
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh icmp"
 },
@@ -8466,8 +8466,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh ip6"
 },
@@ -8522,8 +8522,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh ip4"
 },
@@ -8578,8 +8578,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, unknown protocol"
 },
@@ -8620,9 +8620,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T over IPv4"
 },
@@ -8666,9 +8666,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38,
-        .PA_PTRS[7] = 46
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38,
+        .PA_HDR_PTRS.OFFSET[7] = 46
     },
     .name = "NAT-T over IPv4 with VLAN"
 },
@@ -8715,9 +8715,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42,
-        .PA_PTRS[7] = 50
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42,
+        .PA_HDR_PTRS.OFFSET[7] = 50
     },
     .name = "NAT-T over IPv4 with QinQ"
 },
@@ -8768,9 +8768,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54,
-        .PA_PTRS[7] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54,
+        .PA_HDR_PTRS.OFFSET[7] = 62
     },
     .name = "L4 NAT-T over IPv6"
 },
@@ -8824,9 +8824,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 58,
-        .PA_PTRS[7] = 66
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 58,
+        .PA_HDR_PTRS.OFFSET[7] = 66
     },
     .name = "NAT-T over IPv6 with VLAN"
 },
@@ -8883,9 +8883,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[7] = 70
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 70
     },
     .name = "NAT-T over IPv6 with QinQ"
 },
@@ -8933,10 +8933,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 46,
-        .PA_PTRS[7] = 54
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 46,
+        .PA_HDR_PTRS.OFFSET[7] = 54
     },
     .name = "NAT-T over IPv4 over MPLS 3 labels"
 },
@@ -8987,10 +8987,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 50,
-        .PA_PTRS[7] = 58
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 50,
+        .PA_HDR_PTRS.OFFSET[7] = 58
     },
     .name = "NAT-T IPv4 over MPLS 3 labels over VLAN"
 },
@@ -9044,10 +9044,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 54,
-        .PA_PTRS[7] = 62
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 54,
+        .PA_HDR_PTRS.OFFSET[7] = 62
     },
     .name = "NAT-T over IPv4 over MPLS 3 labels over QinQ"
 },
@@ -9105,10 +9105,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 66,
-        .PA_PTRS[7] = 74
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 66,
+        .PA_HDR_PTRS.OFFSET[7] = 74
     },
     .name = "NAT-T over IPv6 over MPLS 3 labels"
 },
@@ -9169,10 +9169,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 70,
-        .PA_PTRS[7] = 78
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 70,
+        .PA_HDR_PTRS.OFFSET[7] = 78
     },
     .name = "NAT-T over IPv6 over MPLS 3 labels and VLAN"
 },
@@ -9236,10 +9236,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 74,
-        .PA_PTRS[7] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 74,
+        .PA_HDR_PTRS.OFFSET[7] = 82
     },
     .name = "NAT-T over IPv6 over MPLS 3 labels and QinQ"
 },
@@ -9280,9 +9280,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 258,
         .PA_KEYS[65] = 772,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "ESP over NAT-T over IPv4"
 },
@@ -9326,9 +9326,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38,
-        .PA_PTRS[7] = 46
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38,
+        .PA_HDR_PTRS.OFFSET[7] = 46
     },
     .name = "ESP over NAT-T over IPv4 with VLAN"
 },
@@ -9375,9 +9375,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42,
-        .PA_PTRS[7] = 50
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42,
+        .PA_HDR_PTRS.OFFSET[7] = 50
     },
     .name = "ESP over NAT-T over IPv4 with QinQ"
 },
@@ -9421,10 +9421,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38,
-        .PA_PTRS[7] = 46
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38,
+        .PA_HDR_PTRS.OFFSET[7] = 46
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(1)"
 },
@@ -9470,10 +9470,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42,
-        .PA_PTRS[7] = 50
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42,
+        .PA_HDR_PTRS.OFFSET[7] = 50
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(2)"
 },
@@ -9521,10 +9521,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 46,
-        .PA_PTRS[7] = 54
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 46,
+        .PA_HDR_PTRS.OFFSET[7] = 54
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(3)"
 },
@@ -9574,10 +9574,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 50,
-        .PA_PTRS[7] = 58
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 50,
+        .PA_HDR_PTRS.OFFSET[7] = 58
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(4)"
 },
@@ -9624,10 +9624,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42,
-        .PA_PTRS[7] = 50
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42,
+        .PA_HDR_PTRS.OFFSET[7] = 50
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(1) with VLAN"
 },
@@ -9676,10 +9676,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 46,
-        .PA_PTRS[7] = 54
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 46,
+        .PA_HDR_PTRS.OFFSET[7] = 54
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(2) with VLAN"
 },
@@ -9730,10 +9730,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 50,
-        .PA_PTRS[7] = 58
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 50,
+        .PA_HDR_PTRS.OFFSET[7] = 58
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(3) with VLAN"
 },
@@ -9785,10 +9785,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 54,
-        .PA_PTRS[7] = 62
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 54,
+        .PA_HDR_PTRS.OFFSET[7] = 62
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(4) with VLAN"
 },
@@ -9838,10 +9838,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 46,
-        .PA_PTRS[7] = 54
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 46,
+        .PA_HDR_PTRS.OFFSET[7] = 54
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(1) with QinQ"
 },
@@ -9893,10 +9893,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 50,
-        .PA_PTRS[7] = 58
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 50,
+        .PA_HDR_PTRS.OFFSET[7] = 58
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(2) with QinQ"
 },
@@ -9950,10 +9950,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 54,
-        .PA_PTRS[7] = 62
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 54,
+        .PA_HDR_PTRS.OFFSET[7] = 62
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(3) with QinQ"
 },
@@ -10008,10 +10008,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 64765,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 38,
-        .PA_PTRS[3] = 58,
-        .PA_PTRS[7] = 66
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 38,
+        .PA_HDR_PTRS.OFFSET[3] = 58,
+        .PA_HDR_PTRS.OFFSET[7] = 66
     },
     .name = "ESP over NAT-T over IPv4 over MPLS(4) with QinQ"
 },
@@ -10062,9 +10062,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54,
-        .PA_PTRS[7] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54,
+        .PA_HDR_PTRS.OFFSET[7] = 62
     },
     .name = "ESP over NAT-T over IPv6"
 },
@@ -10118,9 +10118,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 58,
-        .PA_PTRS[7] = 66
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 58,
+        .PA_HDR_PTRS.OFFSET[7] = 66
     },
     .name = "ESP over NAT-T over IPv6 with VLAN"
 },
@@ -10177,9 +10177,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[7] = 70
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 70
     },
     .name = "ESP over NAT-T over IPv6 with QinQ"
 },
@@ -10233,10 +10233,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 58,
-        .PA_PTRS[7] = 66
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 58,
+        .PA_HDR_PTRS.OFFSET[7] = 66
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(1)"
 },
@@ -10292,10 +10292,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[7] = 70
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 70
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(2)"
 },
@@ -10353,10 +10353,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 66,
-        .PA_PTRS[7] = 74
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 66,
+        .PA_HDR_PTRS.OFFSET[7] = 74
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(3)"
 },
@@ -10416,10 +10416,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 14,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 70,
-        .PA_PTRS[7] = 78
+        .PA_HDR_PTRS.OFFSET[1] = 14,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 70,
+        .PA_HDR_PTRS.OFFSET[7] = 78
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(4)"
 },
@@ -10476,10 +10476,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[7] = 70
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 70
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(1) with VLAN"
 },
@@ -10538,10 +10538,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 66,
-        .PA_PTRS[7] = 74
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 66,
+        .PA_HDR_PTRS.OFFSET[7] = 74
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(2) with VLAN"
 },
@@ -10602,10 +10602,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 70,
-        .PA_PTRS[7] = 78
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 70,
+        .PA_HDR_PTRS.OFFSET[7] = 78
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(3) with VLAN"
 },
@@ -10667,10 +10667,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 18,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 74,
-        .PA_PTRS[7] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 18,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 74,
+        .PA_HDR_PTRS.OFFSET[7] = 82
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(4) with VLAN"
 },
@@ -10730,10 +10730,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 26,
-        .PA_PTRS[3] = 66,
-        .PA_PTRS[7] = 74
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 26,
+        .PA_HDR_PTRS.OFFSET[3] = 66,
+        .PA_HDR_PTRS.OFFSET[7] = 74
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(1) with QinQ"
 },
@@ -10795,10 +10795,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 30,
-        .PA_PTRS[3] = 70,
-        .PA_PTRS[7] = 78
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 30,
+        .PA_HDR_PTRS.OFFSET[3] = 70,
+        .PA_HDR_PTRS.OFFSET[7] = 78
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(2) with QinQ"
 },
@@ -10862,10 +10862,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34,
-        .PA_PTRS[3] = 74,
-        .PA_PTRS[7] = 82
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34,
+        .PA_HDR_PTRS.OFFSET[3] = 74,
+        .PA_HDR_PTRS.OFFSET[7] = 82
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(3) with QinQ"
 },
@@ -10930,10 +10930,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 3855,
         .PA_KEYS[65] = 3855,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 38,
-        .PA_PTRS[3] = 78,
-        .PA_PTRS[7] = 86
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 38,
+        .PA_HDR_PTRS.OFFSET[3] = 78,
+        .PA_HDR_PTRS.OFFSET[7] = 86
     },
     .name = "ESP over NAT-T over IPv6 over MPLS(4) with QinQ"
 },
@@ -10969,8 +10969,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "TCP over IPv4"
 },
@@ -11009,8 +11009,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38
     },
     .name = "TCP over IPv4 with VLAN"
 },
@@ -11052,8 +11052,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42
     },
     .name = "TCP over IPv4 with QinQ"
 },
@@ -11099,8 +11099,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "TCP over IPv6"
 },
@@ -11149,8 +11149,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 58
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 58
     },
     .name = "TCP over IPv6 with VLAN"
 },
@@ -11202,8 +11202,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "TCP over IPv6 with QinQ"
 },
@@ -11240,8 +11240,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "UDP over IPv4"
 },
@@ -11281,8 +11281,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38
     },
     .name = "UDP over IPv4 with VLAN"
 },
@@ -11325,8 +11325,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42
     },
     .name = "UDP over IPv4 with QinQ"
 },
@@ -11373,8 +11373,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "UDP over IPv6"
 },
@@ -11424,8 +11424,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 58
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 58
     },
     .name = "UDP over IPv6 with VLAN"
 },
@@ -11478,8 +11478,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "UDP over IPv6 with QinQ"
 },
@@ -11516,8 +11516,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "SCTP over IPv4"
 },
@@ -11557,8 +11557,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 38
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 38
     },
     .name = "SCTP over IPv4 with VLAN"
 },
@@ -11601,8 +11601,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 42
     },
     .name = "SCTP over IPv4 with QinQ"
 },
@@ -11649,8 +11649,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "SCTP over IPv6"
 },
@@ -11700,8 +11700,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 18,
-        .PA_PTRS[3] = 58
+        .PA_HDR_PTRS.OFFSET[2] = 18,
+        .PA_HDR_PTRS.OFFSET[3] = 58
     },
     .name = "SCTP over IPv6 with VLAN"
 },
@@ -11754,8 +11754,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "SCTP over IPv6 with QinQ"
 },
@@ -11800,10 +11800,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[6] = 34,
-        .PA_PTRS[7] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[6] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 54
     },
     .name = "IPv4 over IPv4"
 },
@@ -11848,10 +11848,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[6] = 34,
-        .PA_PTRS[7] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[6] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 54
     },
     .name = "IPv4/TCP over IPv4"
 },
@@ -11896,10 +11896,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[6] = 34,
-        .PA_PTRS[7] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[6] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 54
     },
     .name = "IPv4/SCTP over IPv4"
 },
@@ -11954,10 +11954,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[6] = 34,
-        .PA_PTRS[7] = 74
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[6] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 74
     },
     .name = "IPv6 over IPv4"
 },
@@ -11989,8 +11989,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 46052,
         .PA_KEYS[50] = 4660,
         .PA_KEYS[51] = 22136,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "ICMP over IPv4"
 },
@@ -12021,8 +12021,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 46052,
         .PA_KEYS[50] = 4660,
         .PA_KEYS[51] = 22136,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "IGMP over IPv4"
 },
@@ -12056,8 +12056,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 46052,
         .PA_KEYS[50] = 4660,
         .PA_KEYS[51] = 22136,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "GRE over IPv4"
 },
@@ -12090,8 +12090,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 46052,
         .PA_KEYS[50] = 4660,
         .PA_KEYS[51] = 22136,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "ESP-fragment over IPv4"
 },
@@ -12126,9 +12126,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 22136,
         .PA_KEYS[64] = 17664,
         .PA_KEYS[65] = 20,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 34
     },
     .name = "ESP over IPv4"
 },
@@ -12189,10 +12189,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[6] = 62,
-        .PA_PTRS[7] = 82
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[6] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 82
     },
     .name = "IPv4 over IPv6"
 },
@@ -12263,10 +12263,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[6] = 62,
-        .PA_PTRS[7] = 102
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[6] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 102
     },
     .name = "IPv6 over IPv6"
 },
@@ -12334,9 +12334,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[6] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[6] = 62
     },
     .name = "IPv6/IP over IPv6"
 },
@@ -12407,10 +12407,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[6] = 62,
-        .PA_PTRS[7] = 102
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[6] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 102
     },
     .name = "IPv6/No Next Hdr over IPv6"
 },
@@ -12481,10 +12481,10 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62,
-        .PA_PTRS[6] = 62,
-        .PA_PTRS[7] = 102
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62,
+        .PA_HDR_PTRS.OFFSET[6] = 62,
+        .PA_HDR_PTRS.OFFSET[7] = 102
     },
     .name = "IPv6/TCP over IPv6"
 },
@@ -12532,8 +12532,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "ICMP over IPv6"
 },
@@ -12583,8 +12583,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "GRE over IPv6"
 },
@@ -12631,8 +12631,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "NO NEXT HDR over IPv6"
 },
@@ -12677,7 +12677,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[68] = 10281,
         .PA_KEYS[69] = 10795,
         .PA_KEYS[70] = 11309,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "DI L2 (even length) up to rule 4B (partial)"
 },
@@ -12722,7 +12722,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[69] = 10795,
         .PA_KEYS[70] = 11309,
         .PA_KEYS[71] = 11823,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "DI L2 (even length) up to rule 4B (full)"
 },
@@ -12773,7 +12773,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[75] = 13879,
         .PA_KEYS[76] = 14393,
         .PA_KEYS[77] = 14907,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "DI L2 (even length) up to rule 5A (partial)"
 },
@@ -12826,7 +12826,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 14907,
         .PA_KEYS[78] = 15421,
         .PA_KEYS[79] = 15935,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "DI L2 (even length) up to rule 5A (full)"
 },
@@ -12891,7 +12891,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 14907,
         .PA_KEYS[78] = 15421,
         .PA_KEYS[79] = 15935,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "DI L2 full vector"
 },
@@ -12938,8 +12938,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[68] = 6169,
         .PA_KEYS[69] = 6683,
         .PA_KEYS[70] = 7197,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L3 IPv4 unknown protocol (even length) up to rule 4B (partial)"
 },
@@ -13007,8 +13007,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 5655,
         .PA_KEYS[78] = 6169,
         .PA_KEYS[79] = 6683,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L3 IPv4 IGMP (full)"
 },
@@ -13076,8 +13076,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L3 IPv4 unknown protocol full vector"
 },
@@ -13151,8 +13151,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 UDP full vector"
 },
@@ -13209,8 +13209,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[72] = 8225,
         .PA_KEYS[73] = 8739,
         .PA_KEYS[74] = 9253,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 UDP (even length) up to rule 5A (partial)"
 },
@@ -13250,8 +13250,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 TCP (even length) up to rule 1b (partial)"
 },
@@ -13292,8 +13292,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 TCP (even length) up to rule 1b (full)"
 },
@@ -13335,8 +13335,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 TCP (even length) up to rule 2A (partial)"
 },
@@ -13409,8 +13409,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 TCP full vector"
 },
@@ -13455,8 +13455,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 SCTP (even length) up to rule 2B (partial)"
 },
@@ -13502,8 +13502,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 SCTP (even length) up to rule 2B (full)"
 },
@@ -13577,8 +13577,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 SCTP full vector"
 },
@@ -13647,8 +13647,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 11309,
         .PA_KEYS[78] = 11823,
         .PA_KEYS[79] = 12337,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34
     },
     .name = "DI L4 IPv4 ICMP full vector"
 },
@@ -13699,8 +13699,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
         .PA_KEYS[64] = 4113,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "DI L3 IPv6 unknown protocol (even length) up to rule 3A (partial)"
 },
@@ -13768,8 +13768,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "DI L3 IPv6 unknown protocol full vector"
 },
@@ -13832,8 +13832,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[69] = 6683,
         .PA_KEYS[70] = 7197,
         .PA_KEYS[71] = 7711,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "DI L4 IPv6 TCP (even length) up to rule 4B (full)"
 },
@@ -13906,8 +13906,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "DI L4 IPv6 TCP full vector"
 },
@@ -13974,8 +13974,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[72] = 8225,
         .PA_KEYS[73] = 8739,
         .PA_KEYS[74] = 9253,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "DI L4 IPv6 UDP (even length) up to rule 5A (partial)"
 },
@@ -14049,8 +14049,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "DI L4 IPv6 UDP full vector"
 },
@@ -14124,8 +14124,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 10795,
         .PA_KEYS[78] = 11309,
         .PA_KEYS[79] = 11823,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 54
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 54
     },
     .name = "DI L4 IPv6 SCTP (even length) up to rule 5B (full)"
 },
@@ -14200,8 +14200,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 11309,
         .PA_KEYS[78] = 11823,
         .PA_KEYS[79] = 12337,
-        .PA_PTRS[2] = 22,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 22,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "DI L4 IPv6 ICMP"
 },
@@ -14272,8 +14272,8 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 11309,
         .PA_KEYS[78] = 11823,
         .PA_KEYS[79] = 12337,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 62
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 62
     },
     .name = "DI L4 IPv6 ICMP over ExHdr Fragmented"
 },
@@ -14343,7 +14343,7 @@ struct TestData passing_tests[] = {
         .PA_KEYS[77] = 6683,
         .PA_KEYS[78] = 7197,
         .PA_KEYS[79] = 7711,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "DI L3 IPv6 Fragmented (even length) up to rule 5B (full)"
 },
@@ -14384,9 +14384,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4501"
 },
@@ -14427,9 +14427,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4502"
 },
@@ -14470,9 +14470,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4503"
 },
@@ -14513,9 +14513,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4504"
 },
@@ -14556,9 +14556,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4505"
 },
@@ -14599,9 +14599,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4506"
 },
@@ -14642,9 +14642,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4507"
 },
@@ -14685,9 +14685,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4508"
 },
@@ -14728,9 +14728,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4509"
 },
@@ -14771,9 +14771,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4510"
 },
@@ -14814,9 +14814,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4511"
 },
@@ -14857,9 +14857,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4512"
 },
@@ -14900,9 +14900,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4513"
 },
@@ -14943,9 +14943,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4514"
 },
@@ -14986,9 +14986,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4515"
 },
@@ -15029,9 +15029,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4516"
 },
@@ -15072,9 +15072,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4517"
 },
@@ -15115,9 +15115,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4518"
 },
@@ -15158,9 +15158,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4519"
 },
@@ -15201,9 +15201,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4520"
 },
@@ -15244,9 +15244,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4521"
 },
@@ -15287,9 +15287,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4522"
 },
@@ -15330,9 +15330,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4523"
 },
@@ -15373,9 +15373,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4524"
 },
@@ -15416,9 +15416,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4525"
 },
@@ -15459,9 +15459,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4526"
 },
@@ -15502,9 +15502,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4527"
 },
@@ -15545,9 +15545,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4528"
 },
@@ -15588,9 +15588,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4529"
 },
@@ -15631,9 +15631,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4530"
 },
@@ -15674,9 +15674,9 @@ struct TestData passing_tests[] = {
         .PA_KEYS[51] = 65534,
         .PA_KEYS[64] = 1,
         .PA_KEYS[65] = 515,
-        .PA_PTRS[2] = 14,
-        .PA_PTRS[3] = 34,
-        .PA_PTRS[7] = 42
+        .PA_HDR_PTRS.OFFSET[2] = 14,
+        .PA_HDR_PTRS.OFFSET[3] = 34,
+        .PA_HDR_PTRS.OFFSET[7] = 42
     },
     .name = "L4 NAT-T Port Range 4531"}
 
@@ -15714,7 +15714,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[12] = 35047,
         .PA_KEYS[14] = 21845,
         .PA_KEYS[31] = 21845,
-        .PA_PTRS[4] = 22
+        .PA_HDR_PTRS.OFFSET[4] = 22
     },
     .name = "L2 Ethernet VLAN with PBB"
 },
@@ -15766,9 +15766,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 36,
-        .PA_PTRS[7] = 76
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 36,
+        .PA_HDR_PTRS.OFFSET[7] = 76
     },
     .name = "L2 PBB IPv6 No next hdr"
 },
@@ -15810,9 +15810,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 65022,
         .PA_KEYS[66] = 64251,
         .PA_KEYS[67] = 64765,
-        .PA_PTRS[4] = 22,
-        .PA_PTRS[6] = 36,
-        .PA_PTRS[7] = 56
+        .PA_HDR_PTRS.OFFSET[4] = 22,
+        .PA_HDR_PTRS.OFFSET[6] = 36,
+        .PA_HDR_PTRS.OFFSET[7] = 56
     },
     .name = "L2 PBB IPv4"
 },
@@ -15845,7 +15845,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[14] = 65535,
         .PA_KEYS[15] = 0,
         .PA_KEYS[31] = 65535,
-        .PA_PTRS[4] = 26
+        .PA_HDR_PTRS.OFFSET[4] = 26
     },
     .name = "L2 Ethernet QinQ with PBB"
 },
@@ -15887,7 +15887,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 14
+        .PA_HDR_PTRS.OFFSET[2] = 14
     },
     .name = "L3 IPv6 untagged"
 },
@@ -15932,7 +15932,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 18
+        .PA_HDR_PTRS.OFFSET[2] = 18
     },
     .name = "L3 IPv6 VLAN 0xAAA 0x7"
 },
@@ -15980,7 +15980,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L3 IPv6 QinQ 0x555 0x1 0xFFF 0x5"
 },
@@ -16029,7 +16029,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[2] = 22
+        .PA_HDR_PTRS.OFFSET[2] = 22
     },
     .name = "L3 IPv6 QinQ vlan2first Priority-Tagged (VID1=0)"
 },
@@ -16085,8 +16085,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr 1st Fragmented over MPLS 3 labels and QinQ"
 },
@@ -16141,8 +16141,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr Routing  over MPLS 3 labels and QinQ"
 },
@@ -16197,8 +16197,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr Dest Opt over MPLS 3 labels and QinQ"
 },
@@ -16253,8 +16253,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr AH  over MPLS 3 labels and QinQ"
 },
@@ -16310,8 +16310,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr 1st & last Frag. over MPLS 3 labels and QinQ"
 },
@@ -16366,8 +16366,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 ExHdr non fragmented, no next header"
 },
@@ -16423,8 +16423,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[61] = 2,
         .PA_KEYS[62] = 40961,
         .PA_KEYS[63] = 1,
-        .PA_PTRS[1] = 22,
-        .PA_PTRS[2] = 34
+        .PA_HDR_PTRS.OFFSET[1] = 22,
+        .PA_HDR_PTRS.OFFSET[2] = 34
     },
     .name = "IPv6 nh 0x99, nh 0x98, nh 0x97, nh 0x96, nh fragmented"
 },
@@ -16441,7 +16441,7 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_FLAGS[23] = 1,
         .PA_KEYS[16] = 8192,
         .PA_KEYS[17] = 2048,
-        .PA_PTRS[3] = 0
+        .PA_HDR_PTRS.OFFSET[3] = 0
     },
     .name = "GRE (no following protocol)"
 },
@@ -16472,9 +16472,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4"
 },
@@ -16505,9 +16505,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 Fragmented 1st"
 },
@@ -16538,9 +16538,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 Fragmented 2nd"
 },
@@ -16571,9 +16571,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with VLAN"
 },
@@ -16604,9 +16604,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with QinQ"
 },
@@ -16637,9 +16637,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with MPLS"
 },
@@ -16670,9 +16670,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with MPLS(2)"
 },
@@ -16703,9 +16703,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with MPLS(3)"
 },
@@ -16736,9 +16736,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with MPLS(4)"
 },
@@ -16769,9 +16769,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with MPLS(4) & VLAN"
 },
@@ -16802,9 +16802,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "GRE over ESP over NAT-T over IPv4 with MPLS(4) & QinQ"
 },
@@ -16845,9 +16845,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6"
 },
@@ -16888,9 +16888,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with VLAN"
 },
@@ -16931,9 +16931,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with QinQ"
 },
@@ -16974,9 +16974,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with MPLS"
 },
@@ -17017,9 +17017,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with MPLS(2)"
 },
@@ -17060,9 +17060,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with MPLS(3)"
 },
@@ -17103,9 +17103,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with MPLS(4)"
 },
@@ -17146,9 +17146,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with MPLS(4) & VLAN"
 },
@@ -17189,9 +17189,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "GRE over ESP over NAT-T over IPv6 with MPLS(4) & QinQ"
 },
@@ -17222,9 +17222,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "TCP over IPv4 and GRE"
 },
@@ -17255,9 +17255,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "TCP over IPv4 and GRE with MPLS(4) & VLAN"
 },
@@ -17288,9 +17288,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "TCP over IPv4 and GRE with MPLS(4) & QinQ"
 },
@@ -17331,9 +17331,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "TCP over IPv6 and GRE"
 },
@@ -17374,9 +17374,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "TCP over IPv6 and GRE with MPLS(4) and VLAN"
 },
@@ -17417,9 +17417,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "TCP over IPv6 and GRE with MPLS(4) and QinQ"
 },
@@ -17460,9 +17460,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[77] = 2,
         .PA_KEYS[78] = 40961,
         .PA_KEYS[79] = 1,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 48
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 48
     },
     .name = "SCTP over IPv6 and GRE with MPLS(4) and QinQ"
 },
@@ -17493,9 +17493,9 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[3] = 0,
-        .PA_PTRS[6] = 8,
-        .PA_PTRS[7] = 28
+        .PA_HDR_PTRS.OFFSET[3] = 0,
+        .PA_HDR_PTRS.OFFSET[6] = 8,
+        .PA_HDR_PTRS.OFFSET[7] = 28
     },
     .name = "SCTP over IPv4 and GRE with MPLS(4) & QinQ"
 },
@@ -17534,10 +17534,10 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[2] = 0,
-        .PA_PTRS[3] = 20,
-        .PA_PTRS[6] = 20,
-        .PA_PTRS[7] = 40
+        .PA_HDR_PTRS.OFFSET[2] = 0,
+        .PA_HDR_PTRS.OFFSET[3] = 20,
+        .PA_HDR_PTRS.OFFSET[6] = 20,
+        .PA_HDR_PTRS.OFFSET[7] = 40
     },
     .name = "IPv4 over IPv4"
 },
@@ -17577,10 +17577,10 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[65] = 1,
         .PA_KEYS[66] = 16215,
         .PA_KEYS[67] = 65534,
-        .PA_PTRS[2] = 0,
-        .PA_PTRS[3] = 20,
-        .PA_PTRS[6] = 20,
-        .PA_PTRS[7] = 40
+        .PA_HDR_PTRS.OFFSET[2] = 0,
+        .PA_HDR_PTRS.OFFSET[3] = 20,
+        .PA_HDR_PTRS.OFFSET[6] = 20,
+        .PA_HDR_PTRS.OFFSET[7] = 40
     },
     .name = "IPv4 over IPv4 fragmented first"
 },
@@ -17606,8 +17606,8 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
         .PA_KEYS[49] = 1,
         .PA_KEYS[50] = 16215,
         .PA_KEYS[51] = 65534,
-        .PA_PTRS[2] = 0,
-        .PA_PTRS[3] = 20
+        .PA_HDR_PTRS.OFFSET[2] = 0,
+        .PA_HDR_PTRS.OFFSET[3] = 20
     },
     .name = "IPv4 over IPv4 fragmented"
 },
@@ -17626,6 +17626,6 @@ struct TestData failing_tests[TEST_FAIL_MAX] = {
     .name = "Window Parsing - unsupported protocol (0x66)"
 }
 */
-};
 
+};
 #endif

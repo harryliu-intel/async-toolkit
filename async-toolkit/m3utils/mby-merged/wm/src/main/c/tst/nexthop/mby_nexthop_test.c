@@ -38,22 +38,22 @@ static void nexthop_test_setup
 {
     if(test_data_in->glort_routed)
     {
-        FM_SET_FIELD(hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, DGLORT, test_data_in->dglort);
+        FM_SET_FIELD(hashToNextHop->CGRP_ROUTE, MBY_CGRP_ROUTE, DGLORT, test_data_in->dglort);
     }
     else
     {
         /* Set hashToNextHop. */
-        FM_SET_BIT  (hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, ARP_ROUTE, !test_data_in->glort_routed);
-        FM_SET_FIELD(hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, ARP_INDEX, test_data_in->arp_index);
-        FM_SET_BIT  (hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, GROUP_TYPE, test_data_in->group_type);
-        FM_SET_FIELD(hashToNextHop->FFU_ROUTE, MBY_FFU_ROUTE, GROUP_SIZE, test_data_in->group_size);
+        FM_SET_BIT  (hashToNextHop->CGRP_ROUTE, MBY_CGRP_ROUTE, ARP_ROUTE, !test_data_in->glort_routed);
+        FM_SET_FIELD(hashToNextHop->CGRP_ROUTE, MBY_CGRP_ROUTE, ARP_INDEX, test_data_in->arp_index);
+        FM_SET_BIT  (hashToNextHop->CGRP_ROUTE, MBY_CGRP_ROUTE, GROUP_TYPE, test_data_in->group_type);
+        FM_SET_FIELD(hashToNextHop->CGRP_ROUTE, MBY_CGRP_ROUTE, GROUP_SIZE, test_data_in->group_size);
 
         hashToNextHop->ARP_HASH[test_data_in->group_size] = test_data_in->arp_hash;
-        hashToNextHop->RAW_HASH                           = test_data_in->raw_hash;
+        hashToNextHop->ECMP_HASH                           = test_data_in->ecmp_hash;
 
         fm_byte sel_hash = (test_data_in->group_type == 0) ?
                     test_data_in->arp_hash :
-                    ((test_data_in->raw_hash << test_data_in->group_size) >> 12);
+                    ((test_data_in->ecmp_hash << test_data_in->group_size) >> 12);
         fm_uint16 arp_tbl_idx  = (test_data_in->arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
 
         /* Set registers. */

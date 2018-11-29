@@ -22,7 +22,7 @@
 ##
 ##------------------------------------------------------------------------------
 ## Author      : Michael Roberts <michael.d.roberts@intel.com>
-## Project     : Madison Bay 
+## Project     : Madison Bay
 ##------------------------------------------------------------------------------
 
 export SNPSLMD_LICENSE_FILE := $(shell getLf synopsys/vcs)
@@ -64,9 +64,9 @@ libs           =  $(UVM_HOME)/src \
                   $(OVM_HOME)/src \
                   $(XVM_HOME)/src \
                   +incdir+$(SAOLA_HOME)/verilog \
-                  +incdir+$(SAOLA_HOME)/verilog_uvm  
-                  
-intfs          =  
+                  +incdir+$(SAOLA_HOME)/verilog_uvm
+
+intfs          =
 
 pkgs           =  $(UVM_HOME)/src/uvm_pkg.sv \
                   $(UVM_HOME)/src/dpi/uvm_dpi.cc \
@@ -75,18 +75,18 @@ pkgs           =  $(UVM_HOME)/src/uvm_pkg.sv \
                   $(SAOLA_HOME)/verilog/sla_pkg.sv \
                   $(sandboxdir)/$(model)_dpi_pkg.sv \
                   $(sandboxdir)/$(model)_test_pkg.sv \
-                  $(SAOLA_HOME)/libs/Linux_x86_64/libsla.so 
-                  
-                  
-                  
+                  $(SAOLA_HOME)/libs/Linux_x86_64/libsla.so
+
+
+
 mods           = $(sandboxdir)/$(model)_tb_top.sv
 
-progs          = $(sandboxdir)/$(model)_prog.sv 
-                  
+progs          = $(sandboxdir)/$(model)_prog.sv
+
 
 tbs            =  $(mods)
 
-c_files       =  $(dpiclient)/mbay_dpi_client.c
+c_files       =  $(dpiclient)/mby_tcp_client_library.c
 
 vlog_opts_all  =  -l comp.log \
                   -full64 \
@@ -157,6 +157,6 @@ clean:
 	-rm -rf $(repodir)/target/$(model)
 	-rm -rf $(resultsdir)
 	$(MAKE) -C $(m3_root) clean
-      
+
 
 -include $(targetdir)/$(model).dep

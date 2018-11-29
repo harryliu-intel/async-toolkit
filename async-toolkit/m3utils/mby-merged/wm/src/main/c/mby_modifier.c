@@ -3,7 +3,10 @@
 // Copyright (C) 2018 Intel Corporation
 #include "mby_modifier.h"
 #include "mby_crc32.h"
+#include "mby_parser.h"
 
+/* Leave this commented code for now <-- REVISIT!!! */
+#if 0
 static void getModRegCfgData
 (
     fm_uint32             regs[MBY_REGISTER_ARRAY_SIZE],
@@ -1151,15 +1154,184 @@ void doMiscOps
     *tx_stats_length = (!ctrl_data->mirrorTrunc && !tx_drop)
         ? (ctrl_data->egressSeg0Bytes + tx_stats_last_len) : ctrl_data->refcnt_tx_len;
 }
+#endif
+
+static mbyModProfileGroup getProfileGroup(mby_ppe_modify_map * const mod_map,
+                                          fm_byte                    mod_prof_idx)
+{
+    mbyModProfileGroup prof_grp;
+
+    prof_grp.group[0] = 0; // The 1st group is always treated as starting at packet offset zero.
+    prof_grp.group[1] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_1;
+    prof_grp.group[2] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_2;
+    prof_grp.group[3] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_3;
+    prof_grp.group[4] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_4;
+    prof_grp.group[5] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_5;
+    prof_grp.group[6] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_6;
+    prof_grp.group[7] = mod_map->MOD_PROFILE_GROUP[mod_prof_idx].GROUP_7;
+
+    return prof_grp;
+}
+
+static mbyModProfileField getProfileField(mby_ppe_modify_map * const mod_map,
+                                          fm_byte                    mod_prof_idx)
+{
+    mbyModProfileField prof_fld;
+
+    for (fm_uint i = 0 ; i < (MBY_MOD_FIELD_VECTOR_SIZE / MBY_MOD_FIELDS_PER_REG_ENTRY); i++)
+    {
+        prof_fld.protocol_id[i * 3 + 0] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].PROTOCOL_ID_0;
+        prof_fld.offset     [i * 3 + 0] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].OFFSET_0;
+        prof_fld.protocol_id[i * 3 + 1] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].PROTOCOL_ID_1;
+        prof_fld.offset     [i * 3 + 1] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].OFFSET_1;
+        prof_fld.protocol_id[i * 3 + 2] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].PROTOCOL_ID_2;
+        prof_fld.offset     [i * 3 + 2] = mod_map->MOD_PROFILE_FIELD[mod_prof_idx][i].OFFSET_2;
+    }
+
+    return prof_fld;
+}
+
+static mbyModProfileCmd getProfileCommand(mby_ppe_modify_map * const mod_map,
+                                          fm_byte                    mod_prof_idx)
+{
+    mbyModProfileCmd prof_cmd;
+
+    for (fm_uint i = 0 ; i < MBY_MOD_PROFILE_GROUPS ; i++)
+    {
+        prof_cmd.cmd[i][0] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2].CMD_0;
+        prof_cmd.cmd[i][1] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2].CMD_1;
+        prof_cmd.cmd[i][2] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2 + 1].CMD_0;
+        prof_cmd.cmd[i][3] = mod_map->MOD_PROFILE_COMMAND[mod_prof_idx][i * 2 + 1].CMD_1;
+    }
+
+    return prof_cmd;
+}
+
+static void extractFields(mbyTxInToModifier  const * const in,
+                          mbyModProfileField const * const prof_fld,
+                          mbyModFieldVector        * const fld_vector)
+{
+    fm_uint max_len = (in->RX_LENGTH <= MBY_MOD_MAX_HDR_REGION) ? in->RX_LENGTH : MBY_MOD_MAX_HDR_REGION;
+    for (fm_uint i = 0 ; i < MBY_MOD_FIELD_VECTOR_SIZE ; i++)
+    {
+        fld_vector->field[i] = 0;
+
+        if (prof_fld->protocol_id[i] < MBY_MOD_PROT_ID_MD_TYPE)
+        {
+            for (fm_uint j = 0 ; j < MBY_N_PARSER_PTRS ; j++)
+            {
+                if ((in->PA_HDR_PTRS.PROT_ID[j] != MBY_PA_PROT_ID_NOP) &
+                    (in->PA_HDR_PTRS.PROT_ID[j] == prof_fld->protocol_id[i]))
+                {
+                    fm_uint idx = in->PA_HDR_PTRS.OFFSET[j] + prof_fld->offset[i];
+                    if(idx < max_len) {
+                        fld_vector->field[i] = in->RX_DATA[idx];
+                        break;
+                    }
+                }
+            }
+        }
+        /* Metadata fields should be handled in else clause <--REVISIT!!! */
+    }
+}
+
+static void decodeCommand(fm_uint32 cmd,
+                          mbyModDecCmd * const dec_cmd)
+{
+    mbyModCmdType cmd_type = FM_GET_FIELD64(cmd, MBY_MOD_CMD, TYPE);
+    switch (cmd_type)
+    {
+        case MBY_MOD_CMD_TYPE_NOP:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_NOP;
+            break;
+        case MBY_MOD_CMD_TYPE_INSERT:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_INSERT;
+            dec_cmd->field.insrt.len                = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.insrt.prot_id            = FM_GET_FIELD64(cmd, MBY_MOD_CMD, PROT_ID);
+            dec_cmd->field.insrt.update             = FM_GET_BIT64  (cmd, MBY_MOD_CMD, UPDATE);
+            dec_cmd->field.insrt.mode               = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_INSERT_FIELD:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_INSERT_FIELD;
+            dec_cmd->field.insrt_fld.len_mask       = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.insrt_fld.mode           = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_INSERT_FIELD_LUT:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_INSERT_FIELD_LUT;
+            dec_cmd->field.insrt_fld_lut.lut        = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LUT);
+            dec_cmd->field.insrt_fld_lut.lut_mode   = FM_GET_BIT64  (cmd, MBY_MOD_CMD, LUT_MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_DELETE:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_DELETE;
+            dec_cmd->field.del.prot_del             = FM_GET_BIT64  (cmd, MBY_MOD_CMD, PROT_DEL);
+            break;
+        case MBY_MOD_CMD_TYPE_REPLACE:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_REPLACE;
+            dec_cmd->field.replace.len_mask         = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.replace.offset           = FM_GET_FIELD64(cmd, MBY_MOD_CMD, OFFSET);
+            dec_cmd->field.replace.align            = FM_GET_BIT64  (cmd, MBY_MOD_CMD, ALIGNMENT);
+            dec_cmd->field.replace.mode             = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_REPLACE_FIELD:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_REPLACE_FIELD;
+            dec_cmd->field.replace_fld.len_mask     = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LEN_MASK);
+            dec_cmd->field.replace_fld.offset       = FM_GET_FIELD64(cmd, MBY_MOD_CMD, OFFSET);
+            dec_cmd->field.replace_fld.align        = FM_GET_BIT64  (cmd, MBY_MOD_CMD, ALIGNMENT);
+            dec_cmd->field.replace_fld.mode         = FM_GET_FIELD64(cmd, MBY_MOD_CMD, MODE);
+            break;
+        case MBY_MOD_CMD_TYPE_REPLACE_FIELD_LUT:
+            dec_cmd->type = MBY_MOD_CMD_TYPE_REPLACE_FIELD_LUT;
+            dec_cmd->field.replace_fld_lut.offset   = FM_GET_FIELD64(cmd, MBY_MOD_CMD, OFFSET);
+            dec_cmd->field.replace_fld_lut.align    = FM_GET_BIT64  (cmd, MBY_MOD_CMD, ALIGNMENT);
+            dec_cmd->field.replace_fld_lut.lut      = FM_GET_FIELD64(cmd, MBY_MOD_CMD, LUT);
+            dec_cmd->field.replace_fld_lut.lut_mode = FM_GET_BIT64  (cmd, MBY_MOD_CMD, LUT_MODE);
+            break;
+        default:
+            /* Command type not recognized. */
+            dec_cmd->type = MBY_MOD_CMD_TYPE_NOP;
+            break;
+    }
+}
+
+static void lookupProfile(      mby_ppe_modify_map  * const mod_map,
+                          const mbyTxInToModifier   * const in,
+                                fm_byte                     mod_prof_idx,
+                                mbyModProfileAction * const prof_act)
+{
+    mbyModProfileField prof_fld;
+    mbyModProfileCmd   prof_cmd;
+
+    prof_act->profile_grp = getProfileGroup(mod_map, mod_prof_idx);
+    prof_fld              = getProfileField(mod_map, mod_prof_idx);
+    prof_cmd              = getProfileCommand(mod_map, mod_prof_idx);
+
+    extractFields(in, &prof_fld, &prof_act->fld_vector);
+
+    for (fm_uint grp = 0 ; grp < MBY_MOD_PROFILE_GROUPS ; grp++)
+    {
+        for (fm_uint idx = 0 ; idx < MBY_MOD_COMMAND_PER_GROUP ; idx++)
+        {
+            decodeCommand(prof_cmd.cmd[grp][idx], &(prof_act->dec_cmd[grp][idx]));
+        }
+    }
+}
 
 void Modifier
 (
-    fm_uint32                           regs[MBY_REGISTER_ARRAY_SIZE],
-    const mbyTxInToModifier     * const in,
-          mbyModifierToTxStats  * const out
+    mby_ppe_modify_map         * const mod_map,
+    mbyTxInToModifier    const * const in,
+    mbyModifierToTxStats       * const out
 )
 {
     // Read inputs:
+    fm_byte mod_prof_idx = in->MOD_PROF_IDX;
+
+    mbyModProfileAction prof_act;
+
+    lookupProfile(mod_map, in, mod_prof_idx, &prof_act);
+
+    /* Leave this commented code for now <-- REVISIT!!! */
+#if 0
     const fm_bool         drop_ttl          = in->DROP_TTL;
     const fm_byte         ecn               = in->ECN;
     const fm_uint16       edglort           = in->EDGLORT;
@@ -1329,4 +1501,5 @@ void Modifier
     out->TX_LENGTH       = tx_length;
     out->TX_PORT         = tx_port;
     out->TX_STATS_LENGTH = tx_stats_length;
+#endif
 }
