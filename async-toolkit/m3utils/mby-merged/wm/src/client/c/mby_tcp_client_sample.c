@@ -160,17 +160,22 @@ int test_pkts(void)
 	struct wm_pkt rx_pkt;
 	unsigned int i;
 	int err;
+        int phys_port = 1;
 
-	tx_pkt.port = 1;
+	tx_pkt.port = phys_port;
 	tx_pkt.len = sizeof(tx_pkt_data);
 	memcpy(tx_pkt.data, tx_pkt_data, sizeof(tx_pkt_data));
+        printf("sleeping a bit\n");
+        sleep(5);
+        printf("Pushing packet\n");
 	err = wm_pkt_push(&tx_pkt);
 	if (err) {
 		printf("Error sending traffic: %d\n", err);
 		return err;
 	}
 
-	err = wm_pkt_get(&rx_pkt);
+        printf("Getting packet\n");
+	err = wm_pkt_get(phys_port, &rx_pkt);
 	if (err) {
 		printf("Error receiving traffic: %d\n", err);
 		return err;
@@ -192,7 +197,7 @@ int test_pkts(void)
 		return WM_ERR_RUNTIME;
 	}
 
-	err = wm_pkt_get(&rx_pkt);
+	err = wm_pkt_get(phys_port, &rx_pkt);
 	if (err == WM_NO_DATA) {
 		printf("Received EOT as expected\n");
 	} else {
@@ -201,7 +206,7 @@ int test_pkts(void)
 		return WM_ERR_RUNTIME;
 	}
 
-	err = wm_pkt_get(&rx_pkt);
+	err = wm_pkt_get(phys_port, &rx_pkt);
 	if (err != WM_NO_DATA && err != WM_OK) {
 		printf("Did not receive anything from WM as expected\n");
 	} else {

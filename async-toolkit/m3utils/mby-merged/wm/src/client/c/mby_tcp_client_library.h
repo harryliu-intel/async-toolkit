@@ -71,7 +71,7 @@ struct wm_pkt {
 };
 
 int wm_pkt_push(const struct wm_pkt *pkt);
-int wm_pkt_get(struct wm_pkt *pkt);
+int wm_pkt_get(int phys_port, struct wm_pkt *pkt);
 
 /** @}*/
 #endif /* __MBAY_DPI_CLIENT_H_ */
