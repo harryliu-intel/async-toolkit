@@ -11,6 +11,7 @@ trait ByteArrayEncoder[T] {
 
 object ByteArrayEncoder {
   //scalastyle:off magic.number
+  implicit val id: ByteArrayEncoder[Array[Byte]] = identity
   implicit val u8bae: ByteArrayEncoder[U8] = Array(_)
   implicit val u16bae: ByteArrayEncoder[U16] = u16 =>
     ByteBuffer.allocate(2).putShort(u16).array()

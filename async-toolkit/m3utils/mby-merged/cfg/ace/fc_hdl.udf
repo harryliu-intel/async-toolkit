@@ -80,6 +80,7 @@ my @FC_VLOG_OPTIONS = (
 
 # gerards - for Cadence PCIe
 my $DENALI =  &ToolConfig::ToolConfig_get_tool_path("denali");
+my $VIPCAT =  &ToolConfig::ToolConfig_get_tool_path("vipcat");
 my @CDN_PCIE_VLOG_OPTS = (
     "-full64 -sverilog -ucli -LDFLAGS -Wl,-E",
     "+define+DENALI_SV_VCS -lca -ntb_opts svp",
@@ -94,6 +95,7 @@ my @CDN_PCIE_ELAB_OPTS = (
     "-CFLAGS \'-DDENALI_SV_VCS=1 -I../ -I/usr/local/include -I${DENALI} -I${DENALI}/ddvapi -O2 -c\'",
     "-CFLAGS \'-DCDN_UVC_USING_INTELLIGEN -DDSN_USE_DYNAMIC_C_INTERFACE\'",
     "-LDFLAGS \'-L ${DENALI}/lib -L ${DENALI}/verilog\'",  # gerards 
+    "-LDFLAGS \'-L ${VIPCAT}/tools.lnx86/lib/64bit\'",
     "-LDFLAGS \'-rdynamic ${DENALI}/verilog/libcdnsv.so\'",
     "-P ${DENALI}/verilog/cdnsv.tab",
     "-LDFLAGS \'-rdynamic ${DENALI}/lib/libviputil.so\'",
@@ -194,6 +196,7 @@ EOF
                     -hdl_spec => [
                         "cfg/ace/HDL/collage/collage_build_gmn.hdl",
                     ],
+                    -dependent_libs => [ "mby_mgm_lib"],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
              },
              gms_collage_build_lib => {
@@ -201,6 +204,7 @@ EOF
                     -hdl_spec => [
                         "cfg/ace/HDL/collage/collage_build_gms.hdl",
                     ],
+                    -dependent_libs => [ "mby_mgm_lib"],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
              },
 
@@ -543,7 +547,7 @@ EOF
                   "mby_env_lib",
                   "mby_jasper_lib",
                   "gen_mby_regflow_lib",
-                  "gen_mby_wm",
+                  # "gen_mby_wm", # Temporarily disable Scala build to avoid failures
                   "gen_mby_wm_m3",
                   "mby_test_lib",
                   "mby_wm_dpi_lib",

@@ -20,6 +20,9 @@ build/
 # VS Code settings files
 .vscode/*
 
+# Gerrit command-line tool
+.gitreview
+
 # BMAN generated files
 target
 results

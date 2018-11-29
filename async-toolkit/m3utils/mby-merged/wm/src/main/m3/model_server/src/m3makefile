@@ -43,6 +43,7 @@ module ("MbyModelC") % C version of MbyModel
 
 Generic_module("BaseModelServer")
 module("MbyModelServer")
+interface ("MbyModelServerExt")
 
 interface("BaseModelStage")
 module("Metadata")

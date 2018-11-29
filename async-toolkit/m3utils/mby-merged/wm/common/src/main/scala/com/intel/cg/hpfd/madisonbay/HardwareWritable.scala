@@ -4,7 +4,7 @@ package com.intel.cg.hpfd.madisonbay
   *
   * Applied to fields which can be generically written to by the hardware, allows writes of any value.
   */
-trait HardwareWritable[P <: RdlRegister[P], A] { this: RdlField[P, A] =>
-  def set(value: A): P = write(value)
-  def modify(f: A => A): P = write(f(read()))
+trait HardwareWritable[P <: RdlField[P, E], E] { this: RdlField[P, E] =>
+  def set(value: E): P = write(value)
+  def modify(f: E => E): P = write(f(read()))
 }

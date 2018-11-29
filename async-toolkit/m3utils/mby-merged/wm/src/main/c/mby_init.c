@@ -2228,8 +2228,8 @@ void mby_init_common_regs
         lpbk_sup->GLORT      = 0xFFFF;
     }
 
-    for (fm_uint i = 0; i < MBY_FFU_TCAM_CFG_ENTRIES_1; i++)
-        for (fm_uint j = 0; j < MBY_FFU_TCAM_ENTRIES_0; j++)
+    for (fm_uint i = 0; i < mby_ppe_cgrp_b_nested_map_WCM_TCAM__n; i++)
+        for (fm_uint j = 0; j < wcm_tcam_rf_WCM_TCAM__n; j++)
         {
             wcm_tcam_r * wcm_tcam_entry    = &(rx_top_map->cgrp_b.B.WCM_TCAM[i][j]);
             wcm_tcam_entry->KEY            = 0xffffffff;
