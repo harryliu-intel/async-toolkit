@@ -1,0 +1,20 @@
+`include "lib_udp.rdl"
+`include "mby_ip.rdl"
+
+`include "mby_mesh_row.rdl"
+`include "mby_freepointer.rdl"
+`include "mby_mce.rdl"
+
+addrmap mby_freepointer_top_map {
+	mby_freepointer_fifo_map fifo[85];
+};
+
+// Globals = mesh, amba, tag ring, etc.
+addrmap mby_globals_map {
+  name = "mby_globals_map";
+  desc = "MBY Globals";
+  mby_mesh_row_map        mesh[16];
+  mby_freepointer_top_map freepointer;
+  //mby_amba_top_map        amba;
+};
+

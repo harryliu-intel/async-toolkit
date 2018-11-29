@@ -1,91 +1,14 @@
 `include "lib_udp.rdl"
 `include "mby_ip.rdl"
 
-`include "mby_ppe_parser_map.rdl"
-`include "mby_ppe_mapper_map.rdl"
-`include "mby_cgrp_em.rdl"
-`include "mby_cgrp_a.rdl"
-`include "mby_cgrp_b.rdl"
-`include "mby_nexthop.rdl"
-`include "mby_policers.rdl"
-`include "mby_entropy.rdl"
-`include "mby_cm_apply.rdl"
-`include "mby_cm_usage.rdl"
-`include "mby_fwd_misc.rdl"
-`include "mby_mst_glort.rdl"
-`include "mby_trig_apply.rdl"
-`include "mby_trig_apply_misc.rdl"
-`include "mby_trig_usage.rdl"
-`include "mby_rx_stats.rdl"
-`include "mby_modify.rdl"
-`include "mby_shm.rdl"
-`include "mby_mesh_row.rdl"
-`include "mby_rx_voq.rdl"
-`include "mby_tx_voq.rdl"
-`include "mby_rx_pb.rdl"
-`include "mby_tx_pb.rdl"
-`include "mby_freepointer.rdl"
-`include "mby_mce.rdl"
+`include "mby_globals_map.rdl"
+`include "mby_mpp_map.rdl"
 
-addrmap mby_ppe_rx_top_map {
-  mby_ppe_parser_map            parser;
-  mby_ppe_mapper_map            mapper;
-  mby_ppe_cgrp_a_map            cgrp_a;
-  mby_ppe_cgrp_b_map            cgrp_b;
-  mby_ppe_entropy_map           entropy;
-  mby_ppe_nexthop_map           nexthop;
-  mby_ppe_fwd_misc_map          fwd_misc;
-  mby_ppe_mst_glort_map         mst_glort;
-  mby_ppe_policers_map          policers;
-  mby_ppe_rx_stats_map          stats;
-  mby_ppe_cm_apply_map          cm_apply;
-  mby_ppe_cm_usage_map          cm_usage;
-  mby_ppe_trig_apply_map        trig_apply;
-  mby_ppe_trig_apply_misc_map   trig_apply_misc;
-  mby_ppe_trig_usage_map        trig_usage;
-};
-
-addrmap mby_ppe_tx_top_map {
-  mby_ppe_modify_map            modify;
-};
-
-addrmap mby_freepointer_top_map {
-	mby_freepointer_fifo_map fifo[85];
-};
-
-// MGP = 1.6T hiearchy
-addrmap mby_mgp_top_map {
-  name = "mby_mgp_top_map";
-  desc = "MeGaPort (1.6T)";
-  mby_ppe_rx_top_map            rx_ppe;
-  mby_rx_voq_map                rx_voq;
-  mby_rx_pb_map                 rx_pb;
-  mby_ppe_tx_top_map            tx_ppe;
-  mby_tx_voq_map                tx_voq;
-  mby_tx_pb_map                 tx_pb;
-};
-
-// MPP = 3.2T hiearchy
-addrmap mby_mpp_map {
-  name = "mby_mpp_map";
-  desc = "MegaPort Pair (3.2T)";
-  mby_mgp_top_map mgp[2];
-  mby_shm_map     shm;
-};
-
-// Globals = mesh, amba, tag ring, etc.
-addrmap mby_globals_map {
-  name = "mby_globals_map";
-  desc = "MBY Globals";
-  mby_mesh_row_map        mesh[16];
-  mby_freepointer_top_map freepointer;
-  //mby_amba_top_map        amba;
-};
 
 // top = MPP + globals.
 // Eventually this will be 8 MPPs.
 // (Today let's not make Nebulon take 3 hours to run).
 addrmap mby_top_map {
-  mby_mpp_map     mpp;
   mby_globals_map globals;
+  mby_mpp_map     mpp[1]    @0x20000 += 0x100000;
 };
