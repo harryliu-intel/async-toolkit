@@ -62,8 +62,8 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",             // The
       // Set the SHDV tb_intf in the database
 //PJP      slu_resource_db#(virtual shdv_base_tb_intf)::add({"env", ".IP_intf"}, shdv_intf, `__FILE__, `__LINE__);
 
-      uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::set(uvm_root::get(), TB_ENV_PATH, "cdi_tx_vintf" , cdi_tx_intf);
-      uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::set(uvm_root::get(), TB_ENV_PATH, "cdi_rx_vintf" , cdi_rx_intf);
+//      uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::set(uvm_root::get(), TB_ENV_PATH, "cdi_tx_vintf" , cdi_tx_intf);
+//      uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::set(uvm_root::get(), TB_ENV_PATH, "cdi_rx_vintf" , cdi_rx_intf);
 
    end
 
