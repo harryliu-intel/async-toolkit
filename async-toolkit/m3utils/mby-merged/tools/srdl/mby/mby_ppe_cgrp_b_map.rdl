@@ -1,6 +1,8 @@
+`include "lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
+`include "mby_ppe_cgrp_em_map.rdl"
 // WCM_TCAM[0..19,0..1023]
 
 reg wcm_tcam_r {

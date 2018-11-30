@@ -1,6 +1,6 @@
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
-
+`include "lib_udp.rdl"
 
 
 // ENTROPY_HASH_CFG0[0..2][0..63]
