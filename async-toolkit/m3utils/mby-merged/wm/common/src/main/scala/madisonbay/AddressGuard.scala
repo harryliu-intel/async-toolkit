@@ -1,7 +1,7 @@
 //scalastyle:off
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 
 import scala.collection.breakOut
 import scala.collection.immutable.SortedMap

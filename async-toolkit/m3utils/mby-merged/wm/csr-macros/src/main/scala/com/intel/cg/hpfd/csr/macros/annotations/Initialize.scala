@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr.macros.utils.{Control, Hygiene}
-import com.intel.cg.hpfd.madisonbay.Memory.AddressRange
+import madisonbay.memory.AddressRange
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros

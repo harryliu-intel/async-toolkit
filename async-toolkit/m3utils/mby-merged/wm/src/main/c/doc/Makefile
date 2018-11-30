@@ -2,15 +2,14 @@
 
 # Copyright (C) 2018 Intel Corporation
 
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/../ToolVersions.mk
+
 CONFIG_FILE = doxygen.cfg
 OUTPUT_DIR  = doxygen-output
 HTML_DIR    = ${OUTPUT_DIR}/html
 HTML_TOP    = $(HTML_DIR)/index.html
-
-# Doxygen compiler:
-DOXYGEN_VERSION := 1.8.11
-DOXYGEN_PATH := /usr/intel/pkgs/doxygen/$(DOXYGEN_VERSION)
-DOXYGEN = $(DOXYGEN_PATH)/bin/doxygen
 
 # Project number (from Git):
 export PROJECT_NUMBER = $(shell git describe --always --dirty="-with-uncommitted-changes" --long --tags)
@@ -30,7 +29,7 @@ tag:
 
 $(HTML_TOP): $(CONFIG_FILE) tag
 	@echo '  Running doxygen'
-	$(ECHO) $(DOXYGEN) $(CONFIG_FILE)
+	$(ECHO) $(DOX) $(CONFIG_FILE)
 
 .PHONY: url
 url: $(HTML_TOP)
@@ -40,4 +39,4 @@ url: $(HTML_TOP)
 .PHONY: clean
 clean:
 	@echo '  Cleaning doxygen output dir'
-	$(ECHO) rm -rf $(HTML_DIR)
+	$(ECHO) $(RM) $(HTML_DIR)

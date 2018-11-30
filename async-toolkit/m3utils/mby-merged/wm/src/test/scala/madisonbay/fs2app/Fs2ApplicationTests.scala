@@ -3,8 +3,8 @@ package madisonbay.fs2app
 import com.intel.cg.hpfd.csr.testData.AtAddressingExample
 import com.intel.cg.hpfd.csr.testData.optics._
 import com.intel.cg.hpfd.csr.testData.common._
-import com.intel.cg.hpfd.madisonbay.Memory._
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.memory._
+import madisonbay.PrimitiveTypes._
 import fs2.Sink
 import madisonbay.csr._
 import madisonbay.tcp._
