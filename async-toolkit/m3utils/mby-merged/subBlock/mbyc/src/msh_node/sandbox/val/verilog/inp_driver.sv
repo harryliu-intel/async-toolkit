@@ -58,8 +58,8 @@ class inp_driver;
     mby_msh_pkg::msh_row_rd_req_t    drvr_rd_req_to_dut_p1;
     mby_msh_pkg::msh_row_wr_req_t    drvr_wr_req_to_dut;
     mby_msh_pkg::msh_row_wr_req_t    drvr_wr_req_to_dut_p1;
-    mby_msh_pkg::msh_dbus_t          drvr_wr_dbus_to_dut;
-    mby_msh_pkg::msh_dbus_t          drvr_wr_dbus_to_dut_p1;
+    mby_msh_pkg::msh_data_t          drvr_wr_data_to_dut;
+    mby_msh_pkg::msh_data_t          drvr_wr_data_to_dut_p1;
 
 
     function new(
@@ -92,8 +92,8 @@ class inp_driver;
         drvr_rd_req_to_dut_p1 = '0;
         drvr_wr_req_to_dut = '0;
         drvr_wr_req_to_dut_p1 = '0;
-        drvr_wr_dbus_to_dut = '0;
-        drvr_wr_dbus_to_dut_p1 = '0;
+        drvr_wr_data_to_dut = '0;
+        drvr_wr_data_to_dut_p1 = '0;
 
         drove_reqs    = 0;
 
@@ -110,57 +110,57 @@ class inp_driver;
             
             drvr_rd_req_to_dut_p1  <= drvr_rd_req_to_dut;
             drvr_wr_req_to_dut_p1  <= drvr_wr_req_to_dut;
-            drvr_wr_dbus_to_dut_p1 <= drvr_wr_dbus_to_dut;
+            drvr_wr_data_to_dut_p1 <= drvr_wr_data_to_dut;
 
             // drive DUT inputs 
 
             dut_if.i_nb_wr_req[0]   = '0;
-            dut_if.i_nb_wr_dbus[0]  = '0;
+            dut_if.i_nb_wr_data[0]  = '0;
             dut_if.i_nb_rd_req[0]   = '0;
             dut_if.i_nb_rd_rsp[0]   = '0;
-            dut_if.i_nb_rd_dbus[0]  = '0;
+            dut_if.i_nb_rd_data[0]  = '0;
 
             dut_if.i_sb_wr_req[0]  = '0;
-            dut_if.i_sb_wr_dbus[0] = '0;
+            dut_if.i_sb_wr_data[0] = '0;
             dut_if.i_sb_rd_req[0]   = '0;
             dut_if.i_sb_rd_rsp[0]   = '0;
-            dut_if.i_sb_rd_dbus[0]  = '0;
+            dut_if.i_sb_rd_data[0]  = '0;
 
             dut_if.i_eb_wr_req[0]  = drvr_wr_req_to_dut_p1;
-            dut_if.i_eb_wr_dbus[0] = drvr_wr_dbus_to_dut_p1;
+            dut_if.i_eb_wr_data[0] = drvr_wr_data_to_dut_p1;
             dut_if.i_eb_rd_req[0]  = drvr_rd_req_to_dut_p1;
             dut_if.i_eb_rd_rsp[0]   = '0;
-            dut_if.i_eb_rd_dbus[0]  = '0;
+            dut_if.i_eb_rd_data[0]  = '0;
 
             dut_if.i_wb_wr_req[0]  = '0;
-            dut_if.i_wb_wr_dbus[0] = '0;
+            dut_if.i_wb_wr_data[0] = '0;
             dut_if.i_wb_rd_req[0]   = '0;
             dut_if.i_wb_rd_rsp[0]   = '0;
-            dut_if.i_wb_rd_dbus[0]  = '0;
+            dut_if.i_wb_rd_data[0]  = '0;
 
             dut_if.i_nb_wr_req[1]  = '0;
-            dut_if.i_nb_wr_dbus[1] = '0;
+            dut_if.i_nb_wr_data[1] = '0;
             dut_if.i_nb_rd_req[1]   = '0;
             dut_if.i_nb_rd_rsp[1]   = '0;
-            dut_if.i_nb_rd_dbus[1]  = '0;
+            dut_if.i_nb_rd_data[1]  = '0;
 
             dut_if.i_sb_wr_req[1]  = '0;
-            dut_if.i_sb_wr_dbus[1] = '0;
+            dut_if.i_sb_wr_data[1] = '0;
             dut_if.i_sb_rd_req[1]   = '0;
             dut_if.i_sb_rd_rsp[1]   = '0;
-            dut_if.i_sb_rd_dbus[1]  = '0;
+            dut_if.i_sb_rd_data[1]  = '0;
 
             dut_if.i_eb_wr_req[1]  = '0;
-            dut_if.i_eb_wr_dbus[1] = '0;
+            dut_if.i_eb_wr_data[1] = '0;
             dut_if.i_eb_rd_req[1]   = '0;
             dut_if.i_eb_rd_rsp[1]   = '0;
-            dut_if.i_eb_rd_dbus[1]  = '0;
+            dut_if.i_eb_rd_data[1]  = '0;
 
             dut_if.i_wb_wr_req[1]  = '0;
-            dut_if.i_wb_wr_dbus[1] = '0;
+            dut_if.i_wb_wr_data[1] = '0;
             dut_if.i_wb_rd_req[1]   = '0;
             dut_if.i_wb_rd_rsp[1]   = '0;
-            dut_if.i_wb_rd_dbus[1]  = '0;
+            dut_if.i_wb_rd_data[1]  = '0;
     
         end
     endtask
@@ -207,8 +207,7 @@ class inp_driver;
 
             @(posedge dut_if.mclk);
 
-            drvr_wr_dbus_to_dut.data    = mby_msh_pkg::msh_data_t'('ha5a5);
-            drvr_wr_dbus_to_dut.ecc     = mby_msh_pkg::msh_ecc_t'('h8888);
+            drvr_wr_data_to_dut    = mby_msh_pkg::msh_data_t'('ha5a5);
 
             @(posedge dut_if.mclk);
             @(posedge dut_if.mclk);
