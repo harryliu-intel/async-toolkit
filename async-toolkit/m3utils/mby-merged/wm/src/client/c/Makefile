@@ -4,7 +4,7 @@
 
 # Tool versions:
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-include ${ROOT_DIR}/../../main/c/MakeTools.mk
+include ${ROOT_DIR}/../../main/c/ToolVersions.mk
 
 MBY_TCP_CLIENT = mby_tcp_client
 

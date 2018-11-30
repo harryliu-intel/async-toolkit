@@ -9,7 +9,6 @@ import spinoco.protocol.http.HttpStatusCode
 object RestDispatcher {
 
   def processGetUri(uri: List[String], parameters: List[UriParameter], csrModel: CsrModel): RestResponse = {
-
     uri match {
       case CsrModel.KeyTopMap :: _ => CsrTreeRest.processGetRequest(uri, parameters, csrModel)
 
@@ -25,7 +24,7 @@ object RestDispatcher {
 
       case UriSegment.Address :: _ => CsrAddressRest.processGetRequest(uri, parameters, csrModel)
 
-      case UriSegment.Parser :: _ => ParserRest.processPostJson(uri, jsonMap, csrModel)
+      case UriSegment.App :: UriSegment.Parser :: tail => ParserRest.processPostJson(tail, jsonMap, csrModel)
 
         // TODO: demo only
       case "test" :: "div" :: Nil => testForDemo(jsonMap)

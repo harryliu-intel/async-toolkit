@@ -24,43 +24,50 @@ object ParserRest extends RestProcessing {
 
   def processPostJson(uri: List[String], jsonMap: Map[String, Any], csrModel: CsrModel): RestResponse = uri match {
 
-    case UriSegment.Parser :: Nil => processPacket(jsonMap, csrModel)
+    case id :: Nil => processPacket(id, jsonMap, csrModel)
 
-    case UriSegment.Parser :: UriSegment.Programmer :: Nil => programParser(jsonMap, csrModel)
+    case id :: UriSegment.Programmer :: Nil => programParser(id, jsonMap, csrModel)
 
     case _ => returnStdNotSupported(uriPath(uri))
   }
 
-  private def processPacket(jsonMap: Map[String, Any], csrModel: CsrModel): RestResponse = {
-    (jsonMap.getStringOpt("parse.packet"), jsonMap.getIntOpt("parse.port")) match {
+  private def processPacket(id: String, jsonMap: Map[String, Any], csrModel: CsrModel): RestResponse = csrModel.idMgpOpt(id) match {
+    case Some(idMgp) =>
+      (jsonMap.getStringOpt("parse.packet"), jsonMap.getIntOpt("parse.port")) match {
 
-      case (Some(packet), Some(port)) if Packet.strHexToPacketOpt(packet).isDefined =>
-        val csrParserMap = CsrParser(0, csrModel.csr.getParser(0).ppeParserMap)
-        val parserOutput = Parser.parse(csrParserMap, Packet.strHexToPacket(packet), Port(port))
-        Try(JsonSerializer.toMap(parserOutput, bNameCaseClasses = false) {
-          case (field, _) if isInnerCaseClassField(field) => false
-          case (field, _) if field.getName == "updatedParserCsr" => false
-          case _ => true
-        }) match {
-          case Success(resultJson) => returnJson(resultJson)
-          case Failure(exception)  => returnInternalServerError(exception.getMessage)
-        }
+        case (Some(packet), Some(port)) if Packet.strHexToPacketOpt(packet).isDefined =>
+          val csrParserMap = CsrParser(idMgp, csrModel.csr.getParser(idMgp).ppeParserMap)
+          val parserOutput = Parser.parse(csrParserMap, Packet.strHexToPacket(packet), Port(port))
+          Try(JsonSerializer.toMap(parserOutput, bNameCaseClasses = false) {
+            case (field, _) if isInnerCaseClassField(field) => false
+            case (field, _) if field.getName == "updatedParserCsr" => false
+            case _ => true
+          }) match {
+            case Success(resultJson) => returnJson(resultJson)
+            case Failure(exception)  => returnInternalServerError(exception.getMessage)
+          }
 
 
-      case _ => returnJson(Map(RestProcessing.KeyMessage -> "Wrong input format"))
-    }
+        case _ => returnJson(Map(RestProcessing.KeyMessage -> "Wrong input format"))
+      }
+
+    case None => returnJson(Map(RestProcessing.KeyMessage -> s"Wrong mgp index $id"))
   }
 
-  private def programParser(jsonMap: Map[String, Any], csrModel: CsrModel): RestResponse = {
-    val parserMap = ParserProgrammer.readVer2(jsonMap, csrModel.csr)
-    val csrParser = CsrParser(0, parserMap)
-    val updatedCsr = new CsrModel(csrModel.csr.updated(csrParser), IoUriDispatcher.LimitNumberOfNodes)
-    RestResponse(
-      uriSupported = true,
-      error = false,
-      responseMessage(s"Parser successfully programmed"),
-      HttpStatusCode.Ok,
-      Some(updatedCsr))
-  }
+  private def programParser(id: String, jsonMap: Map[String, Any], csrModel: CsrModel): RestResponse = csrModel.idMgpOpt(id) match {
+    case Some(idMgp) =>
+      val parserMap = ParserProgrammer.readVer2(jsonMap, csrModel.csr)
+      val csrParser = CsrParser(idMgp, parserMap)
+      val updatedCsr = new CsrModel(csrModel.csr.updated(csrParser), IoUriDispatcher.LimitNumberOfNodes)
+      RestResponse(
+        uriSupported = true,
+        error = false,
+        responseMessage(s"Parser successfully programmed"),
+        HttpStatusCode.Ok,
+        Some(updatedCsr))
+
+    case None => returnJson(Map(RestProcessing.KeyMessage -> s"Wrong mgp index $id"))
+
+   }
 
 }

@@ -1,8 +1,8 @@
-package madisonbay.iface.frontend.viewer
+package madisonbay.iface.htmlgui.viewer
 
 import madisonbay.iface.model.CsrModel
 import madisonbay.iface.UriConstants._
-import madisonbay.iface.frontend.viewer.HtmlDsl._
+import madisonbay.iface.htmlgui.viewer.HtmlDsl._
 
 
 object PageGenerator {

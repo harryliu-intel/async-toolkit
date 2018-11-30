@@ -1,4 +1,4 @@
-package madisonbay.iface.frontend.viewer
+package madisonbay.iface.htmlgui.viewer
 
 import madisonbay.wm.utils.json.JsonReader
 import madisonbay.iface.UriConstants.UriParameter._
