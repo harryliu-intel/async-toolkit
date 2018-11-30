@@ -72,7 +72,7 @@ PROCEDURE SendPacketEot(t : T) =
     pusher : DataPusher.T;
     iter := t.pushers.iterate();
     pkt := NEW(Pkt.T).init();
-    hdr := FmModelMessageHdr.T { 0,
+    hdr := FmModelMessageHdr.T { FmModelMessageHdr.Length,
                                  VersionNumber,
                                  FmModelMsgType.T.PacketEot,
                                  0,
@@ -94,14 +94,12 @@ PROCEDURE PushPacket(t : T; READONLY hdrP : FmModelMessageHdr.T; pkt : Pkt.T) =
   BEGIN
     (* the reverse of DecodeTlvPacket here *)
 
-    hdr.msgLength := pkt.size(); (* this is a little screwy, it really
-                                    should be further down (and
-                                    include the inner header), but the
-                                    layering doesn't seem right in the
-                                    client *)
-
     WrNet.PutU32G(pkt, Pkt.End.Front, pkt.size());
     FmModelDataType.WriteE(pkt, Pkt.End.Front, FmModelDataType.T.Packet);
+
+    hdr.msgLength := pkt.size() + FmModelMessageHdr.Length;
+    (* this is a little screwy, the length accounts for the length of the
+       FmModelMessageHdr.T *)
 
     FmModelMessageHdr.WriteE(pkt, Pkt.End.Front, hdr);
     WITH hadIt = t.egressPorts.get(hdr.port, pusher) DO
@@ -590,7 +588,11 @@ TYPE
   END;
 
 PROCEDURE DPEC(dp : MyDataPusher) =
-  VAR x : DataPusher.T; BEGIN
+  VAR
+    x : DataPusher.T;
+  BEGIN
+    Debug.Out(F("Shutting down DataPusher: TCPport %s host %s phys_port %s",
+                Int(dp.getPort()), dp.getHostname(), Int(dp.port)));
     LOCK dp.t.mu DO
       IF dp.t.sharedSocket THEN
         VAR
