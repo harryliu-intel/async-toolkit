@@ -1,8 +1,8 @@
 package madisonbay.wm.switchwm.csr
 
-import com.intel.cg.hpfd.madisonbay.BitVector
+import madisonbay.BitVector
 import madisonbay.csr.all._
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 import madisonbay.wm.switchwm.csr.Csr.Initial.topMap
 import madisonbay.wm.switchwm.csr.Csr._
 import monocle.Optional

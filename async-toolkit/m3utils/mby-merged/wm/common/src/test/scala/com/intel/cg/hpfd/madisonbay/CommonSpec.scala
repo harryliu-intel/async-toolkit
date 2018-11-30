@@ -1,4 +1,4 @@
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
 import org.scalatest.{WordSpec, Inspectors, Matchers}
 import org.scalatest.Inspectors.{forAll => _}

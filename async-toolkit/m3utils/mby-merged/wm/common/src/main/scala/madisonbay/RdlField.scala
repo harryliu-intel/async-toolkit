@@ -1,6 +1,6 @@
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
-import com.intel.cg.hpfd.madisonbay.Encode.encode
+import madisonbay.Encode.encode
 
 import scala.reflect.ClassTag
 
