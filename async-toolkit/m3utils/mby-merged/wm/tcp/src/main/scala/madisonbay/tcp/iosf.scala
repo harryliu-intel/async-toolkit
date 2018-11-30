@@ -1,6 +1,6 @@
 package madisonbay.tcp
 
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 import shapeless.{ CNil, Generic, HList, Lazy, :+: }
 import shapeless.ops.coproduct.Inject
 import scalaz.MonadError

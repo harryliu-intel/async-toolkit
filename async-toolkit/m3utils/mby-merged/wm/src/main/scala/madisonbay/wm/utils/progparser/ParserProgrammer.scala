@@ -1,6 +1,6 @@
 package madisonbay.wm.utils.progparser
 
-import com.intel.cg.hpfd.madisonbay.BitVector
+import madisonbay.BitVector
 import madisonbay.csr.all._
 import madisonbay.wm.switchwm.csr.lens.{CsrLenses, ParserLenses, ParserStageLenses}
 import madisonbay.wm.switchwm.csr.Csr

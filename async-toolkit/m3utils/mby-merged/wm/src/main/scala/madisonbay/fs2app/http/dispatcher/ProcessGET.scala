@@ -2,7 +2,7 @@ package madisonbay.fs2app.http.dispatcher
 
 import cats.effect.IO
 import fs2.{RaiseThrowable, Stream}
-import madisonbay.iface.frontend.controller.ResourceProvider
+import madisonbay.iface.htmlgui.controller.ResourceProvider
 import madisonbay.iface.model.CsrModel
 import madisonbay.iface.UriConstants.UriSegment
 import spinoco.fs2.http.HttpResponse

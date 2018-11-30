@@ -2,14 +2,13 @@ package madisonbay.iface.rest
 
 import madisonbay.iface.UriConstants.{UriParameter, UriSegment}
 import madisonbay.iface.model.CsrModel
-import madisonbay.iface.rest.services.{CsrAddressRest, CsrTreeRest}
+import madisonbay.iface.rest.services.{CsrAddressRest, CsrTreeRest, ParserRest, RestProcessing}
 import madisonbay.wm.utils.json.JsonReader
 import spinoco.protocol.http.HttpStatusCode
 
 object RestDispatcher {
 
   def processGetUri(uri: List[String], parameters: List[UriParameter], csrModel: CsrModel): RestResponse = {
-
     uri match {
       case CsrModel.KeyTopMap :: _ => CsrTreeRest.processGetRequest(uri, parameters, csrModel)
 
@@ -24,6 +23,8 @@ object RestDispatcher {
       case CsrModel.KeyTopMap :: _ => CsrTreeRest.processGetRequest(uri, parameters, csrModel)
 
       case UriSegment.Address :: _ => CsrAddressRest.processGetRequest(uri, parameters, csrModel)
+
+      case UriSegment.App :: UriSegment.Parser :: tail => ParserRest.processPostJson(tail, jsonMap, csrModel)
 
         // TODO: demo only
       case "test" :: "div" :: Nil => testForDemo(jsonMap)

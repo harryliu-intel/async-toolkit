@@ -15,7 +15,7 @@ import madisonbay.fs2app.Fs2Application._
 import madisonbay.fs2app.Fs2DefaultMessageHandler
 import madisonbay.fs2app.http._
 import madisonbay.fs2app.ioConfig.IOPureConfigLoader
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 import java.nio.channels.AsynchronousChannelGroup
 import java.nio.channels.spi.AsynchronousChannelProvider
 import java.util.concurrent.Executors
