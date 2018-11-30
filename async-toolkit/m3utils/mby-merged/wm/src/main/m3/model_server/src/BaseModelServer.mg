@@ -27,13 +27,14 @@ PROCEDURE ResetChip(t : T) =
     MapAddr.Reset(t.h.read, t.h.update);
   END ResetChip;
 
-PROCEDURE Init(t : T;
-               infoPath : Pathname.T;
-               factory : UpdaterFactory.T;
-               quitLast : BOOLEAN;
-               infoFile : Pathname.T) : Super =
+PROCEDURE Init(t            : T;
+               sharedSocket : BOOLEAN;
+               infoPath     : Pathname.T;
+               factory      : UpdaterFactory.T;
+               quitLast     : BOOLEAN;
+               infoFile     : Pathname.T) : Super =
   BEGIN
-    EVAL Super.init(t, infoPath, factory, quitLast, infoFile);
+    EVAL Super.init(t, sharedSocket, infoPath, factory, quitLast, infoFile);
     Debug.Out(F("Creating %s ...",Map.Brand));
     t.h := NEW(MapAddr.H).init(CompAddr.Zero, factory);
     RETURN t

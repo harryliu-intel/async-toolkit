@@ -1,6 +1,7 @@
 INTERFACE DataPusher;
 IMPORT ServerPacket;
 IMPORT IP, Thread;
+IMPORT Word, Refany;
 
 TYPE
   T <: Public;
@@ -11,8 +12,14 @@ TYPE
     push(packet : ServerPacket.T);
     forceExit();
     exitCallback();
+    getPort() : IP.Port;
+    getHostname() : TEXT;
   END;
 
 CONST Brand = "DataPusher";
 
+PROCEDURE Hash(t : T) : Word.T; (* for generics *)
+
+CONST Equal = Refany.Equal;
+      
 END DataPusher.

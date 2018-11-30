@@ -4,6 +4,7 @@ IMPORT ServerPacket AS Pkt;
 IMPORT ConnRW;
 IMPORT Debug;
 FROM Fmt IMPORT Int, F;
+IMPORT Text, Word;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -21,7 +22,16 @@ REVEAL
     exitCallback := NullCallback;
     forceExit    := ForceExit;
     push         := Push;
+    getPort      := GetPort;
+    getHostname  := GetHostname;
   END;
+
+PROCEDURE GetPort(t : T) : IP.Port = BEGIN RETURN t.port END GetPort;
+
+PROCEDURE GetHostname(t : T) : TEXT = BEGIN RETURN t.hostname END GetHostname;
+
+PROCEDURE Hash(t : T) : Word.T =
+  BEGIN RETURN Word.Plus(t.port, Text.Hash(t.hostname)) END Hash;
 
 PROCEDURE Init(t        : T;
                hostname : TEXT;

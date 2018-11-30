@@ -1,3 +1,5 @@
+DEBUG = 1
+VERBOSE = 1
 # C/C++ compiler:
 CC = gcc
 
