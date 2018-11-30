@@ -18,6 +18,10 @@ $hdl_spec = {
        "src/shared/interfaces/mim_rd_if.sv",
        "src/igr/rtl/mby_igr_pkg.sv",
        "src/igr/rtl/mby_igr_macros.vh",
+       "src/igr/interfaces/pre_post_ppe_tag_info_if.sv",
+       "src/igr/interfaces/pre_post_ppe_partial_data_if.sv",
+       "src/igr/interfaces/pre_post_ppe_sop_if.sv",
+       "src/igr/interfaces/pre_post_ppe_wr_data_if.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_ctrl.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_seg.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_segs.sv",
@@ -29,6 +33,11 @@ $hdl_spec = {
        "src/igr/pb/rtl/mby_igr_pb.sv",
        "src/igr/rtl/mby_igr_top.sv",
        "src/igr/itag/rtl/mby_igr_tag.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_ppe.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_epl.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_arb.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_id_list.sv",
+       "src/igr/post_ppe/rtl/mby_igr_post_ppe.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
