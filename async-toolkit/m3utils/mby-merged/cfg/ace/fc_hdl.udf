@@ -162,6 +162,9 @@ EOF
 
              clkstub_rtl_lib => {
                     -vlog_files => [
+                        "src/rtl/clkstub/AW_sync.sv",
+                        "src/rtl/clkstub/AW_width_scale.sv",
+                        "src/rtl/clkstub/parclk_gpreg_v2.sv",
                         "src/rtl/clkstub/mby_parclk.sv",
                         "src/rtl/clkstub/pll_stub.sv",
                         "src/rtl/clkstub/xtal_rcvr.sv",
