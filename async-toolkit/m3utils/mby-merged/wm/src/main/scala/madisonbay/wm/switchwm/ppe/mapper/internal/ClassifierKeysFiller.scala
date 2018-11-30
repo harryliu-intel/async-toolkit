@@ -37,7 +37,7 @@ object ClassifierKeysFiller {
   /** Gets a single 16-bit Classifier keys based of Parser keys and/or defaults. */
   def getKey16(mappingRegisters: MappingRegisters, mapRewrite: MapRewrite, profileAction: MapProfileAction,
                defaults: MapPortDefault, rxPort: Port, parserKeys: PacketFields,
-               key: Classifier16BitKey): Option[Int] = {
+               key: Classifier16BitKey): Option[Short] = {
     import Classifier16BitKeys._
     val classifierKeysToParserKeys = Map[Classifier16BitKey, List[ParserKey]](
       InnerSourceMac0      -> List(ParserKeys.InnerSourceMac0),
@@ -60,7 +60,7 @@ object ClassifierKeysFiller {
     // TODO mappings and others...
 
     classifierKeysToParserKeys.get(key).flatMap(assembleFromParserKeys(defaults, rxPort, parserKeys, _, 0)).
-      map(value => rewrite16BitKey(mappingRegisters, mapRewrite, profileAction, key, parserKeys, value))
+      map(value => rewrite16BitKey(mappingRegisters, mapRewrite, profileAction, key, parserKeys, value.toShort))
   }
 
   /**
@@ -102,7 +102,7 @@ object ClassifierKeysFiller {
 
   def rewrite16BitKey(mappingRegisters: MappingRegisters, mapRewrite: MapRewrite,  profileAction: MapProfileAction,
                       classifierKey: Classifier16BitKey, parserKeys: PacketFields,
-                      initialValue: Int): Int = {
+                      initialValue: Short): Short = {
     // TODO most of it can be probably generalized with key8 once we support it anyhow
     if (key16RewritableNibbles.contains(classifierKey.index)) {
       // TODO comment this
@@ -118,7 +118,8 @@ object ClassifierKeysFiller {
             val (oneRewrite, index) = next
             val nibbleInWord = index % 4
 
-            NibbleMapper.mapNibbleInIfApplicable(mappingRegisters, parserKeys, oneRewrite, nibbleInWord, returnValue)
+            val result = NibbleMapper.mapNibbleInIfApplicable(mappingRegisters, parserKeys, oneRewrite, nibbleInWord, returnValue)
+            result.toShort
           }
         }
         case None => initialValue
