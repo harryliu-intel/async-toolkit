@@ -1,5 +1,5 @@
 /*****************************************************************************
- * @file	mbay_dpi_client.h
+ * @file	mby_tcp_client_library.h
  * @brief	Minimal client for reg access through model_server socket
  *
  * INTEL CONFIDENTIAL
