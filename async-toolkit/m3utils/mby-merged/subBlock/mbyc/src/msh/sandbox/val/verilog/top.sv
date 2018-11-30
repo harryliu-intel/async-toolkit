@@ -92,12 +92,12 @@ mby_msh msh(
 
     
     .cclk(clk),                                // core clock
-    .chreset(chreset),                         // core hard reset
-    .csreset(csreset),                         // core soft reset
+    .chreset(dut_if.chreset),                  // core hard reset
+    .csreset(dut_if.csreset),                  // core soft reset
 
     .mclk(clk),                                // mesh clock
-    .mhreset(mhreset),                         // mesh hard reset
-    .msreset(msreset)                          // mesh soft reset
+    .mhreset(dut_if.mhreset),                  // mesh hard reset
+    .msreset(dut_if.msreset)                   // mesh soft reset
 
 );
 

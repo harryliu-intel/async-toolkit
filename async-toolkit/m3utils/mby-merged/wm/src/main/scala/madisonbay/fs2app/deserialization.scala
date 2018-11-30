@@ -13,7 +13,7 @@ import madisonbay.tcp._
 import madisonbay.tcp.iosf._
 import madisonbay.fs2app.algebra.messages._
 
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 
 package object deserialization {
   // DST stands for 'Deserialization StateT'

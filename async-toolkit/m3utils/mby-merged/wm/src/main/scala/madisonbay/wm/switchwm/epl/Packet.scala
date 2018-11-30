@@ -1,5 +1,7 @@
 package madisonbay.wm.switchwm.epl
 
+import scala.util.Try
+
 case class Packet(bytes: IndexedSeq[Byte]) extends NetworkPacket
 
 object Packet {
@@ -10,5 +12,7 @@ object Packet {
     toArray
 
   def strHexToPacket(packetData: String): Packet = Packet(strHexToBytesArray(packetData))
+
+  def strHexToPacketOpt(packetData: String): Option[Packet] = Try(strHexToPacket(packetData)).toOption
 
 }

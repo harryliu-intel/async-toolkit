@@ -15,9 +15,9 @@ import shapeless.Witness
 
 import java.nio.ByteBuffer
 
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
-import com.intel.cg.hpfd.madisonbay.Memory._
-import com.intel.cg.hpfd.madisonbay.BitVector
+import madisonbay.PrimitiveTypes._
+import madisonbay.memory._
+import madisonbay.BitVector
 
 class Fs2DefaultMessageHandler[
   F[_]: λ[G[_] => MonadError[G,Throwable]]: Logger,

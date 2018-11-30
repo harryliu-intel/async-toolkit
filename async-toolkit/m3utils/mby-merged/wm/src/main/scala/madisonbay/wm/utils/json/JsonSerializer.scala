@@ -22,9 +22,10 @@ object JsonSerializer {
     specialFieldTreatment: (Field, AnyRef) => Option[Any] = StandardFieldSpecialTreatment): Map[String, Any] = {
 
     def isUserCaseClass(ob: Any): Boolean = ob match {
-      case _: List[_] => false
-      case _: Product => true
-      case _          => false
+      case _: List[_]   => false
+      case _: Option[_] => false
+      case _: Product   => true
+      case _            => false
     }
 
     def toMapObject(ob: AnyRef): Any = {
@@ -51,6 +52,7 @@ object JsonSerializer {
 
     def recursiveToMap(el: Any): Any = el match {
       case v if isValue(v)      => toJsonValue(el)
+      case opt: Option[_] if opt.isEmpty => Map[String, Any]()
       case map: Map[_, _]       => map.collect { case (k, v) => k -> recursiveToMap(v) }
       case col: Traversable[_]  => toJsonValue(col.map(recursiveToMap))
       case ob: AnyRef           => toMapObject(ob)

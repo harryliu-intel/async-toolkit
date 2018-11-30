@@ -14,6 +14,8 @@ object UriConstants {
 
     val Address     = "address"
 
+    val App         = "app"
+
     val RxPpe       = "rx_ppe"
     val Pipe        = "pipe"
     val Parser      = "parser"
