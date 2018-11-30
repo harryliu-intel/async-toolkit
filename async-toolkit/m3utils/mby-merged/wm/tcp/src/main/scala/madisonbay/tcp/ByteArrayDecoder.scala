@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 import scala.reflect._
 
 import com.intel.cg.hpfd.csr.macros.SizedArray
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 import scalaz.MonadError
 import scalaz.StateT
 import scalaz.syntax.all._

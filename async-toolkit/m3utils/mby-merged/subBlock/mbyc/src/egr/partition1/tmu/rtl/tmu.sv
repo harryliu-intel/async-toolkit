@@ -48,25 +48,25 @@ import shared_pkg::*;
     egr_mce_tagring_if.egr mce_tagring_if  //[3:0]
 );
 
+
+assign prc_if.tag = tagring_if.mby_tag_ring[0][1:0];
 //input prc_if.qsel[MGP_COUNT-1:0][MGP_PORT_CNT-1:0][15:0]
-//assign prc_if.tag = tagring_if[0][1:0];
 
 //input pfs_if.pop     [EPL_PER_MGP-1:0]
 //input pfs_if.pop_port[EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0]
 //input pfs_if.pop_tc  [EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0]
 //input pfs_if.pop_mgp [EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0] 
-//assign pfs_if.queue_valid = ;//[EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0][RX_TC_COUNT-1:0][MGP_COUNT-1:0] to [MGP][VP,EGR][TCG]
-//assign pfs_if.update = ;//[EPL_PER_MGP-1:0]
-//assign pfs_if.update_port = ;//[EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0]
-//assign pfs_if.update_tc = ;//[EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0]
-//assign pfs_if.update_mgp = ;//[EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0]
-//assign pfs_if.update_length = ;//[EPL_PER_MGP-1:0][6:0](in 64B incs)
+
+//pfs_if.queue_valid = [EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0][RX_TC_COUNT-1:0][MGP_COUNT-1:0]
+assign pfs_if.queue_valid[0][0][0][0] = tagring_if.mby_tag_ring[0][0].valid && !pfs_if.pop[0];
+assign pfs_if.update = 4'h0;//[EPL_PER_MGP-1:0]
+assign pfs_if.update_port = '0;//[EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0]
+assign pfs_if.update_tc = '0;//[EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0]
+assign pfs_if.update_mgp = '0;//[EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0]
+assign pfs_if.update_length = '0;//[EPL_PER_MGP-1:0][6:0](in 64B incs)
 
 
-
-
-//{valid, eop_in_buf, length}
-logic [15:0][7:0][9:0] hoq_info0; //From IGR MGP0
+//logic [15:0][15:0][15:0] eop_in_buf;
 //Segment counters per VOQ to Egress Scheduler
 logic [15:0][7:0][19:0] seg_uc_count0; //From IGR MGP0
 //Fewer gates to add 4 100G counters together for 400G, or have four extra 7b conters?  

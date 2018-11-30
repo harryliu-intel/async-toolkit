@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 import fs2.{RaiseThrowable, Stream}
 import madisonbay.fs2app.http.dispatcher.ProcessRequest.{ProcessRequestResult, contentHtml, contentJson}
 import madisonbay.iface.UriConstants.UriParameter
-import madisonbay.iface.frontend.viewer.PageGenerator
+import madisonbay.iface.htmlgui.viewer.PageGenerator
 import madisonbay.iface.model.CsrModel
 import madisonbay.iface.rest.RestResponse
 import spinoco.fs2.http.HttpResponse

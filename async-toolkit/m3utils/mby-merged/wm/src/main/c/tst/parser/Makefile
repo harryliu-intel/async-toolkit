@@ -1,7 +1,15 @@
+# -*- mode:Makefile -*-
+
+# Copyright (C) 2018 Intel Corporation
+
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/../../ToolVersions.mk
+
 SRC_DIR = ../..
 TST_DIR = .
 
-INC_DIR = ../../../c                                  # uint.h
+INC_DIR  = ../../../c                                  # uint.h
 INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
 
 INCLUDES  = -I$(SRC_DIR)
@@ -14,20 +22,11 @@ SOURCES += $(SRC_DIR)/mby_bitfield.c
 SOURCES += $(SRC_DIR)/mby_parser.c
 SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
 SOURCES += $(SRC_DIR)/mby_init.c
-
-
 SOURCES += $(TST_DIR)/mby_parser_test.c
-
 
 OBJECTS = $(SOURCES:.c=.o)
 
 TARGET = mby_parser_test
-
-# C compiler:
-CC = gcc
-
-# Linker:
-LD  = ld
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -65,26 +64,26 @@ DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
 .PHONY: all
 all: $(TARGET)
 
-$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h $(SRC_DIR)/mby_init.h 
-$(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
-$(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
-$(SRC_DIR)/mby_parser.o    : $(SRC_DIR)/mby_parser.c     $(SRC_DIR)/mby_parser.h
-$(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
-$(SRC_DIR)/mby_init.o      : $(SRC_DIR)/mby_init.c       $(SRC_DIR)/mby_init.h
+$(TST_DIR)/mby_parser_test.o : $(TST_DIR)/mby_parser_test.c $(TST_DIR)/mby_parser_test.h $(SRC_DIR)/mby_parser.h $(SRC_DIR)/mby_crc32.h $(SRC_DIR)/mby_common.h $(SRC_DIR)/mby_init.h
+$(SRC_DIR)/mby_common.o      : $(SRC_DIR)/mby_common.c      $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/mby_crc32.o       : $(SRC_DIR)/mby_crc32.c       $(SRC_DIR)/mby_crc32.h
+$(SRC_DIR)/mby_bitfield.o    : $(SRC_DIR)/mby_bitfield.c    $(SRC_DIR)/mby_bitfield.h
+$(SRC_DIR)/mby_parser.o      : $(SRC_DIR)/mby_parser.c      $(SRC_DIR)/mby_parser.h
+$(SRC_DIR)/mby_reg_ctrl.o    : $(SRC_DIR)/mby_reg_ctrl.c    $(SRC_DIR)/mby_reg_ctrl.h
+$(SRC_DIR)/mby_init.o        : $(SRC_DIR)/mby_init.c        $(SRC_DIR)/mby_init.h
 
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
-	$(ECHO) rm -f $(DELFILES)
+	$(ECHO) $(RM) $(DELFILES)
 
 %.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $< 
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 $(TARGET): $(OBJECTS)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 .PHONY: run
 run: $(TARGET)
@@ -95,7 +94,7 @@ run: $(TARGET)
 .PHONY: valgrind
 valgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Valgrind'
-	valgrind \
+	$(VAL) \
             --track-origins=yes \
             --leak-check=full \
             --show-leak-kinds=all \
@@ -104,7 +103,7 @@ valgrind: $(TARGET)
 .PHONY: callgrind
 callgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Cachegrind'
-	valgrind \
+	$(VAL) \
             --tool=callgrind \
             --verbose \
             --dump-every-bb=12500000000 \

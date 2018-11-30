@@ -1,6 +1,6 @@
 package madisonbay.wm.switchwm.ppe.classifier
 
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 import madisonbay.csr.all._
 import madisonbay.wm.switchwm.ppe.mapper.output._
 import madisonbay.wm.switchwm.ppe.mapper.defs.Classifier16BitKeys

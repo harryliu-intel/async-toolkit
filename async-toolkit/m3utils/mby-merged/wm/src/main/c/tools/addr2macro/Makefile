@@ -1,3 +1,11 @@
+# -*- mode:Makefile -*-
+
+# Copyright (C) 2018 Intel Corporation
+
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/../../ToolVersions.mk
+
 TARGET = addr2macro
 CXXFLAGS = -std=c++11
 
@@ -8,9 +16,9 @@ CXXFLAGS += -O3
 endif
 
 $(TARGET): regs.h main.cpp
-	$(CXX) $(CXXFLAGS) main.cpp -o $(TARGET)
+	$(GPP) $(CXXFLAGS) main.cpp -o $(TARGET)
 
 clean:
-	rm $(TARGET)
+	$(RM) $(TARGET)
 
 .PHONY: clean

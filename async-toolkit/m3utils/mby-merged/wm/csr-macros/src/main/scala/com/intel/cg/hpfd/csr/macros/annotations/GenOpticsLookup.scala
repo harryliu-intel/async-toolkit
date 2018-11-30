@@ -1,8 +1,8 @@
 package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr.macros.utils.{Control, Hygiene}
-import com.intel.cg.hpfd.madisonbay.BitVector
-import com.intel.cg.hpfd.madisonbay.Memory.{Address, AddressRange}
+import madisonbay.BitVector
+import madisonbay.memory.{Address, AddressRange}
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
