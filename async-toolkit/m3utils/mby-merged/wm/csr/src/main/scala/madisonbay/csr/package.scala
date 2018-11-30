@@ -4,8 +4,7 @@ package madisonbay
 import monocle.Optional
 import scala.collection.immutable.HashMap
 
-import com.intel.cg.hpfd.madisonbay.BitVector
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 
 /** Provides classes and associated objects for interfacing the configuration and status registers
   *

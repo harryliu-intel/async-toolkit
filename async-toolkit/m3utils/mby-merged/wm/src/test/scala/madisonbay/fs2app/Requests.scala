@@ -4,7 +4,7 @@ package fs2app
 import madisonbay.tcp._
 import madisonbay.tcp.iosf._
 
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 
 import shapeless.{::, HNil}
 

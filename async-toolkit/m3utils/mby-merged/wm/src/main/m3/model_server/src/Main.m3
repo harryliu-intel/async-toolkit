@@ -29,8 +29,10 @@ PROCEDURE DoUsage() : TEXT =
     RETURN Params.Get(0) & ": usage: " & Usage
   END DoUsage;
 
-TYPE   Models     =                      {  Hlp,   Mby  };
-CONST  ModelNames = ARRAY Models OF TEXT { "hlp", "mby" };
+TYPE   Models     =                          {  Hlp,   Mby  };
+CONST  ModelNames = ARRAY Models OF TEXT     { "hlp", "mby" };
+       ModelDefSharedSocket =
+                    ARRAY Models OF BOOLEAN  { FALSE, TRUE };
        
 VAR
   modelServer : ModelServer.T;
@@ -41,6 +43,7 @@ VAR
   model := Models.Hlp;
   doRepl : BOOLEAN;
   doReflect : BOOLEAN;
+  sharedSocket : BOOLEAN;
 BEGIN
   (* command-line args: *)
   TRY
@@ -69,6 +72,7 @@ BEGIN
           FOR i := FIRST(Models) TO LAST(Models) DO
             IF Text.Equal(modelStr, ModelNames[i]) THEN
               model := i;
+              sharedSocket := ModelDefSharedSocket[i];
               success := TRUE
             END
           END;
@@ -77,6 +81,13 @@ BEGIN
           END
         END
       END;
+
+      IF pp.keywordPresent("-nonsharedsocket") THEN
+        sharedSocket := FALSE
+      ELSIF pp.keywordPresent("-sharedsocket") THEN
+        sharedSocket := TRUE
+      END;
+      
       
       pp.skipParsed();
       WITH nFiles = NUMBER(pp.arg^) - pp.next DO
@@ -98,7 +109,8 @@ BEGIN
     Models.Hlp =>
     modelServer := NEW(HlpModelServer.T,
                        setupChip := HlpModel.SetupHlp)
-    .init(infoPath := infoPath,
+    .init(sharedSocket,
+          infoPath := infoPath,
           infoFileName := infoFile,
           quitOnLastClientExit := quitOnLast,
           factory := NEW(UnsafeUpdaterFactory.T).init())
@@ -107,7 +119,8 @@ BEGIN
     modelServer := NEW(MbyModelServerExt.T,
                        setupChip := MbyModel.SetupMby,
                        reflect := doReflect)
-    .init(infoPath := infoPath,
+    .init(sharedSocket,
+          infoPath := infoPath,
           infoFileName := infoFile,
           quitOnLastClientExit := quitOnLast,
           factory := MbyModelC.GetUpdaterFactory())

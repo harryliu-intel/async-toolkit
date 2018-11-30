@@ -1,7 +1,7 @@
 //scalastyle:off
 package madisonbay.tcp
 import com.intel.cg.hpfd.csr.macros.SizedArray
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 import org.scalatest.{FlatSpec, Matchers}
 import scala.reflect._
 import eu.timepit.refined.W

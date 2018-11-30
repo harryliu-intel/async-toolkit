@@ -3,8 +3,8 @@
 package com.intel.cg.hpfd.csr.testData
 
 import com.intel.cg.hpfd.csr.macros.annotations._
-import com.intel.cg.hpfd.madisonbay.BitVector
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.BitVector
+import madisonbay.memory._
 
 import scala.collection.immutable.HashMap
 import monocle.Optional

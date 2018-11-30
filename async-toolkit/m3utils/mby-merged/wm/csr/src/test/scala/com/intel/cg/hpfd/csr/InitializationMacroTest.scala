@@ -8,7 +8,7 @@ import com.intel.cg.hpfd.csr.testData.{
   AllAddressingExample,
   NonContiguousAddressingExample
 }
-import com.intel.cg.hpfd.madisonbay.Memory._
+import madisonbay.memory._
 import org.scalatest.{FlatSpec, Matchers}
 import scala.language.postfixOps
 

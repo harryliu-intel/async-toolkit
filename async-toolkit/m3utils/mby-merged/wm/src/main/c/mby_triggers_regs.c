@@ -35,8 +35,8 @@ mbyTriggerConditionParam mbyTrigGetConditionParam
 {
     mbyTriggerConditionParam param_cfg;
 
-    param_cfg.EGRESS_DOMAIN_MASK  = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_MASK;  // [59:45]
-    param_cfg.EGRESS_DOMAIN_VALUE = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_VALUE; // [44:30]
+    param_cfg.EGRESS_DOMAIN_MASK  = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_MASK;  // [58:45]
+    param_cfg.EGRESS_DOMAIN_VALUE = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].EGRESS_DOMAIN_VALUE; // [43:30]
     param_cfg.ROUTED_MASK         = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].ROUTED_MASK;         // [25:24]
     param_cfg.FRAME_CLASS_MASK    = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].FRAME_CLASS_MASK;    // [23:21]
     param_cfg.TC                  = trig_apply_map->TRIGGER_CONDITION_PARAM[trig].TC;                  // [20:18]
@@ -112,7 +112,7 @@ mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
     return amask2_cond;
 }
 
-mbyTriggerDirectMapCtx mbyTriggerDirectMapCtrlCtxReadOperation
+mbyTriggerDirectMapCtx mbyTrigGetDirectMapCtrlCtx
 (
     mby_ppe_trig_apply_map * const trig_apply_map,
     fm_byte                  const trig
@@ -120,25 +120,16 @@ mbyTriggerDirectMapCtx mbyTriggerDirectMapCtrlCtxReadOperation
 {
     mbyTriggerDirectMapCtx direct_map_ctx;
 
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_ID     = MBY_TRIGGER_DIRECT_MAP_CTRL_REG_ID_TRIGGER_CONDITION_TX;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_SUB_ID = 0;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_INDX   = trig;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.STATUS     = MBY_TRIGGER_DIRECT_MAP_CTRL_STATUS_SUCCESSFUL;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.OP_TYPE    = MBY_TRIGGER_DIRECT_MAP_CTRL_OP_TYPE_READ;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL   = 1;
-
-    direct_map_ctx.DEST_PORT_MASK[0] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX0.DEST_PORT_MASK;
-    direct_map_ctx.DEST_PORT_MASK[1] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX1.DEST_PORT_MASK;
-    direct_map_ctx.DEST_PORT_MASK[2] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX2.DEST_PORT_MASK;
-    direct_map_ctx.DEST_PORT_MASK[3] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX3.DEST_PORT_MASK;
     direct_map_ctx.DEST_PORT_MASK[4] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX4.DEST_PORT_MASK;
-
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL   = 0;
+    direct_map_ctx.DEST_PORT_MASK[3] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX3.DEST_PORT_MASK;
+    direct_map_ctx.DEST_PORT_MASK[2] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX2.DEST_PORT_MASK;
+    direct_map_ctx.DEST_PORT_MASK[1] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX1.DEST_PORT_MASK;
+    direct_map_ctx.DEST_PORT_MASK[0] = trig_apply_map->TRIGGER_DIRECT_MAP_CTX0.DEST_PORT_MASK;
 
     return direct_map_ctx;
 }
 
-static mbyTriggerDirectMapAdm mbyTriggerDirectMapCtrlAdmReadOperation
+static mbyTriggerDirectMapAdm mbyTrigGetDirectMapCtrlAdm
 (
     mby_ppe_trig_apply_map * const trig_apply_map,
     fm_byte                  const trig
@@ -146,26 +137,17 @@ static mbyTriggerDirectMapAdm mbyTriggerDirectMapCtrlAdmReadOperation
 {
     mbyTriggerDirectMapAdm direct_map_adm;
 
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_ID     = MBY_TRIGGER_DIRECT_MAP_CTRL_REG_ID_TRIGGER_ACTION_DMASK;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_SUB_ID = 0;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_INDX   = trig;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.STATUS     = MBY_TRIGGER_DIRECT_MAP_CTRL_STATUS_SUCCESSFUL;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.OP_TYPE    = MBY_TRIGGER_DIRECT_MAP_CTRL_OP_TYPE_READ;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL   = 1;
-
-    direct_map_adm.NEW_DEST_MASK[0] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM0.NEW_DEST_MASK;
-    direct_map_adm.NEW_DEST_MASK[1] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM1.NEW_DEST_MASK;
-    direct_map_adm.NEW_DEST_MASK[2] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM2.NEW_DEST_MASK;
-    direct_map_adm.NEW_DEST_MASK[3] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM3.NEW_DEST_MASK;
     direct_map_adm.NEW_DEST_MASK[4] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM4.NEW_DEST_MASK;
+    direct_map_adm.NEW_DEST_MASK[3] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM3.NEW_DEST_MASK;
+    direct_map_adm.NEW_DEST_MASK[2] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM2.NEW_DEST_MASK;
+    direct_map_adm.NEW_DEST_MASK[1] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM1.NEW_DEST_MASK;
+    direct_map_adm.NEW_DEST_MASK[0] = trig_apply_map->TRIGGER_DIRECT_MAP_ADM0.NEW_DEST_MASK;
     direct_map_adm.FILTER_DEST_MASK = trig_apply_map->TRIGGER_DIRECT_MAP_ADM4.FILTER_DEST_MASK;
-
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL   = 0;
 
     return direct_map_adm;
 }
 
-static mbyTriggerDirectMapAdr mbyTriggerDirectMapCtrlAdrReadOperation
+static mbyTriggerDirectMapAdr mbyTrigGetDirectMapCtrlAdr
 (
     mby_ppe_trig_apply_map * const trig_apply_map,
     fm_byte                  const trig
@@ -173,20 +155,11 @@ static mbyTriggerDirectMapAdr mbyTriggerDirectMapCtrlAdrReadOperation
 {
     mbyTriggerDirectMapAdr direct_map_adr;
 
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_ID     = MBY_TRIGGER_DIRECT_MAP_CTRL_REG_ID_TRIGGER_ACTION_DROP;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_SUB_ID = 0;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.REG_INDX   = trig;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.STATUS     = MBY_TRIGGER_DIRECT_MAP_CTRL_STATUS_SUCCESSFUL;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.OP_TYPE    = MBY_TRIGGER_DIRECT_MAP_CTRL_OP_TYPE_READ;
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL   = 1;
-
-    direct_map_adr.DROP_MASK[0] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR0.DROP_MASK;
-    direct_map_adr.DROP_MASK[1] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR1.DROP_MASK;
-    direct_map_adr.DROP_MASK[2] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR2.DROP_MASK;
-    direct_map_adr.DROP_MASK[3] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR3.DROP_MASK;
     direct_map_adr.DROP_MASK[4] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR4.DROP_MASK;
-
-    trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL   = 0;
+    direct_map_adr.DROP_MASK[3] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR3.DROP_MASK;
+    direct_map_adr.DROP_MASK[2] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR2.DROP_MASK;
+    direct_map_adr.DROP_MASK[1] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR1.DROP_MASK;
+    direct_map_adr.DROP_MASK[0] = trig_apply_map->TRIGGER_DIRECT_MAP_ADR0.DROP_MASK;
 
     return direct_map_adr;
 }
@@ -208,7 +181,6 @@ mbyTriggerActions mbyTriggerGetActions
     trig_actions.egressL2DomainAction = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].EGRESS_L2_DOMAIN_ACTION; // [17:17]
     trig_actions.egressL3DomainAction = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].EGRESS_L3_DOMAIN_ACTION; // [18:18]
     trig_actions.policerAction        = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].POLICER_ACTION;          // [19:19]
-    trig_actions.noModifyAction       = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].NO_MODIFY_ACTION;        // [20:20]
     trig_actions.mirroringAction0     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION0;       // [22:21]
     trig_actions.mirroringAction1     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION1;       // [24:23]
     trig_actions.mirroringAction2     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].MIRRORING_ACTION2;       // [26:25]
@@ -220,7 +192,7 @@ mbyTriggerActions mbyTriggerGetActions
     trig_actions.trapCode             = trig_apply_map->TRIGGER_ACTION_CFG_2[trig].TRAP_CODE;      // [21:19]
     trig_actions.filterDestMask       = trig_apply_map->TRIGGER_DIRECT_MAP_ADM4.FILTER_DEST_MASK;  // [ 1: 0]
 
-    mbyTriggerDirectMapAdm direct_map_adm  = mbyTriggerDirectMapCtrlAdmReadOperation(trig_apply_map, trig);
+    mbyTriggerDirectMapAdm direct_map_adm  = mbyTrigGetDirectMapCtrlAdm(trig_apply_map, trig);
     if (trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL == 0 && trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.STATUS == 0)
     {
         trig_actions.filterDestMask = direct_map_adm.FILTER_DEST_MASK;
@@ -235,7 +207,7 @@ mbyTriggerActions mbyTriggerGetActions
     trig_actions.mirrorProfileIndex2  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX2; // [17:12]
     trig_actions.mirrorProfileIndex3  = trig_apply_map->TRIGGER_ACTION_MIRROR[trig].MIRROR_PROFILE_INDEX3; // [18:23]
 
-    mbyTriggerDirectMapAdr direct_map_adr  = mbyTriggerDirectMapCtrlAdrReadOperation(trig_apply_map, trig);
+    mbyTriggerDirectMapAdr direct_map_adr  = mbyTrigGetDirectMapCtrlAdr(trig_apply_map, trig);
     if (trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.GO_COMPL == 0 && trig_apply_map->TRIGGER_DIRECT_MAP_CTRL.STATUS == 0)
     {
         for(fm_int i = 0; i < 5; i++)

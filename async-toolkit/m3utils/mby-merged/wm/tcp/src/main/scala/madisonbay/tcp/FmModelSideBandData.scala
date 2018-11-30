@@ -1,6 +1,6 @@
 package madisonbay.tcp
 
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 import com.intel.cg.hpfd.csr.macros.SizedArray
 import eu.timepit.refined.W
 
