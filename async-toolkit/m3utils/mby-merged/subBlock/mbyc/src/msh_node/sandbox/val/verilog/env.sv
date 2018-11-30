@@ -82,6 +82,7 @@ class env;
         // monitoring, and responding to various concurrent events in the simulation.
         fork
 //            mntr.connect_to_DUT();      // connect the monitor
+              inp_driver.reset();
               inp_driver.connect_to_DUT_inputs();
 //            foreach (inp_drvrs[i]) begin
 //                // To avoid a race condition (i changing before it is doing being used), 
