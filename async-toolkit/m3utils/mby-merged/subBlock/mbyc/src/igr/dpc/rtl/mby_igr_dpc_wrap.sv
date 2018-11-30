@@ -63,15 +63,15 @@ module mby_igr_dpc_wrap
   input data64_w_ecc_t [0:7]  grp_c_rx_data_w_ecc, //src:EPL
   input data64_w_ecc_t [0:7]  grp_d_rx_data_w_ecc, //src:EPL
 
-  input logic                 grp_a_rx_pfc_xoff, //src:EPL
-  input logic                 grp_b_rx_pfc_xoff, //src:EPL
-  input logic                 grp_c_rx_pfc_xoff, //src:EPL
-  input logic                 grp_d_rx_pfc_xoff, //src:EPL
+  output logic [3:0]           grp_a_tx_pfc_xoff, //dst:EPL
+  output logic [3:0]           grp_b_tx_pfc_xoff, //dst:EPL
+  output logic [3:0]           grp_c_tx_pfc_xoff, //dst:EPL
+  output logic [3:0]           grp_d_tx_pfc_xoff, //dst:EPL
 
-  input logic [2:0]           grp_a_rx_flow_control_tc, //src:EPL
-  input logic [2:0]           grp_b_rx_flow_control_tc, //src:EPL
-  input logic [2:0]           grp_c_rx_flow_control_tc, //src:EPL
-  input logic [2:0]           grp_d_rx_flow_control_tc, //src:EPL
+  output logic              grp_a_tx_pfc_tc_sync, //dst:EPL
+  output logic              grp_b_tx_pfc_tc_sync, //dst:EPL
+  output logic              grp_c_tx_pfc_tc_sync, //dst:EPL
+  output logic              grp_d_tx_pfc_tc_sync, //dst:EPL
 
   
 // EPL I/O from MBY FS Dataplane Interface signals.
@@ -109,8 +109,8 @@ module mby_igr_dpc_wrap
     .rx_md(grp_a_rx_metadata),
     .rx_ts(grp_a_rx_time_stamp),  
     .rx_data(grp_a_rx_data_w_ecc),
-    .rx_pfc_xoff(grp_a_rx_pfc_xoff),  
-    .rx_flow_control_tc(grp_a_rx_flow_control_tc),
+    .tx_pfc_xoff(grp_a_rx_pfc_xoff),  
+    .tx_pfc_tc_sync(grp_a_rx_flow_control_tc),
     .o_dpc_pb_p0(o_dpc_pb0_p0),
     .o_dpc_pb_p1(o_dpc_pb0_p1),
     .o_dpc_pb_p2(o_dpc_pb0_p2),
@@ -127,8 +127,8 @@ module mby_igr_dpc_wrap
     .rx_md(grp_b_rx_metadata),
     .rx_ts(grp_b_rx_time_stamp),  
     .rx_data(grp_b_rx_data_w_ecc),
-    .rx_pfc_xoff(grp_b_rx_pfc_xoff),  
-    .rx_flow_control_tc(grp_b_rx_flow_control_tc),
+    .tx_pfc_xoff(grp_b_rx_pfc_xoff),  
+    .tx_pfc_tc_sync(grp_b_rx_flow_control_tc),
     .o_dpc_pb_p0(o_dpc_pb1_p0),
     .o_dpc_pb_p1(o_dpc_pb1_p1),
     .o_dpc_pb_p2(o_dpc_pb1_p2),
@@ -145,8 +145,8 @@ module mby_igr_dpc_wrap
     .rx_md(grp_c_rx_metadata),
     .rx_ts(grp_c_rx_time_stamp),  
     .rx_data(grp_c_rx_data_w_ecc),
-    .rx_pfc_xoff(grp_c_rx_pfc_xoff),  
-    .rx_flow_control_tc(grp_c_rx_flow_control_tc),
+    .tx_pfc_xoff(grp_c_rx_pfc_xoff),  
+    .tx_pfc_tc_sync(grp_c_rx_flow_control_tc),
     .o_dpc_pb_p0(o_dpc_pb2_p0),
     .o_dpc_pb_p1(o_dpc_pb2_p1),
     .o_dpc_pb_p2(o_dpc_pb2_p2),
@@ -163,8 +163,8 @@ module mby_igr_dpc_wrap
     .rx_md(grp_d_rx_metadata),
     .rx_ts(grp_d_rx_time_stamp),  
     .rx_data(grp_d_rx_data_w_ecc),
-    .rx_pfc_xoff(grp_d_rx_pfc_xoff),  
-    .rx_flow_control_tc(grp_d_rx_flow_control_tc),
+    .tx_pfc_xoff(grp_d_rx_pfc_xoff),  
+    .tx_pfc_tc_sync(grp_d_rx_flow_control_tc),
     .o_dpc_pb_p0(o_dpc_pb3_p0),
     .o_dpc_pb_p1(o_dpc_pb3_p1),
     .o_dpc_pb_p2(o_dpc_pb3_p2),
