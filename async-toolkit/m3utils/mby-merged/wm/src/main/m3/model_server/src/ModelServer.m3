@@ -592,8 +592,25 @@ TYPE
 PROCEDURE DPEC(dp : MyDataPusher) =
   VAR x : DataPusher.T; BEGIN
     LOCK dp.t.mu DO
-      IF dp.t.egressPorts.delete(dp.port,x) THEN
-        <*ASSERT x=dp*>
+      IF dp.t.sharedSocket THEN
+        VAR
+          iter := dp.t.egressPorts.iterate();
+          p : DataPusher.T;
+          port : INTEGER;
+        BEGIN
+          WHILE iter.next(port, p) DO
+            IF p = dp THEN
+              EVAL dp.t.egressPorts.delete(port, p);
+              (* table was modified, must restart iterator *)
+              iter := dp.t.egressPorts.iterate()
+            END
+          END;
+          EVAL dp.t.pushers.delete(dp)
+        END
+      ELSE
+        IF dp.t.egressPorts.delete(dp.port,x) THEN
+          <*ASSERT x=dp*>
+        END
       END
     END
   END DPEC;
