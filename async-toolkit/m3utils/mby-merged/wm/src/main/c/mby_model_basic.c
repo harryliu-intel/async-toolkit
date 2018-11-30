@@ -12,9 +12,9 @@ mby_top_map_Setup     (const mby_top_map       *r,
 {
   printf("Hello from the mby_top_map_Setup!\n");
 
-  printf("field is %d\n", r->mpp.mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
-  write_field(w->mpp.mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR, 12);
-  printf("field is %d\n", r->mpp.mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
+  printf("field is %d\n", r->mpp[0].mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
+  write_field(w->mpp[0].mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR, 12);
+  printf("field is %d\n", r->mpp[0].mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
 }
 
 void
@@ -24,11 +24,11 @@ mby_top_map_SendPacket(const mby_top_map       *r,
                        unsigned char           *packet,
                        unsigned int             length)
 {
-  // mbyParser(&(r->mpp.mgp[0].rx_ppe.parser), &mac2par, &par2map);
-  // mbyMapper(&(r->mpp.mgp[0].rx_ppe.mapper), &par2map, &map2cla, &par2mod);
+  // mbyParser(&(r->mpp[0].mgp[0].rx_ppe.parser), &mac2par, &par2map);
+  // mbyMapper(&(r->mpp[0].mgp[0].rx_ppe.mapper), &par2map, &map2cla, &par2mod);
 
-  mby_ppe_rx_top_map const * const rx_top_map = &(r->mpp.mgp[0].rx_ppe);
-  mby_shm_map        const * const shm_map    = &(r->mpp.shm);
+  mby_ppe_rx_top_map const * const rx_top_map = &(r->mpp[0].mgp[0].rx_ppe);
+  mby_shm_map        const * const shm_map    = &(r->mpp[0].shm);
 
   // Input struct:
   mbyRxMacToParser mac2par;
