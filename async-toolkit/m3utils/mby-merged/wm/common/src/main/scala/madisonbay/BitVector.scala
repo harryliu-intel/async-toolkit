@@ -1,5 +1,5 @@
 //scalastyle:off
-package com.intel.cg.hpfd.madisonbay
+package madisonbay
 
 import scala.math.{min, max}
 import scala.Function.tupled

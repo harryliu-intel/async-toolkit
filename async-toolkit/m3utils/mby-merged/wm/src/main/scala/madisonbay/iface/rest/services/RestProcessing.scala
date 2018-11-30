@@ -1,10 +1,11 @@
-package madisonbay.iface.rest
+package madisonbay.iface.rest.services
 
 import madisonbay.iface.UriConstants.UriParameter
 import madisonbay.iface.model.CsrModel
+import madisonbay.iface.rest.RestResponse
+import madisonbay.iface.rest.services.RestProcessing._
 import madisonbay.wm.utils.json.JsonReader
 import spinoco.protocol.http.HttpStatusCode
-import RestProcessing._
 
 import scala.util.{Failure, Success, Try}
 
@@ -34,5 +35,20 @@ abstract class RestProcessing {
     case Failure(ex) => RestResponse(uriSupported = true, error = true, responseMessage(ex.getMessage), HttpStatusCode.InternalServerError, None)
 
   }
+
+  def returnStdNotSupported(path: String): RestResponse = RestResponse(
+    uriSupported = false,
+    error = false,
+    responseMessage(s"URI $path not supported"),
+    HttpStatusCode.NotFound,
+    None)
+
+  def returnInternalServerError(msg: String): RestResponse = RestResponse(
+    uriSupported = true,
+    error = true,
+    s"""{"$KeyMessage": "$msg"}""",
+    HttpStatusCode.InternalServerError,
+    None
+  )
 
 }

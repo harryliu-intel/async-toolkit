@@ -40,7 +40,8 @@ localparam W_EOP_WD_LEN = $clog2(W_WORD); // 64 possible lengths (6)
 localparam W_TAG_MD     = 4;              // Tag Mdata bits: SLL, ERR, XMD, MC/UC (4)
 localparam W_PKT_ID     = 9;              // Packet ID (9)
 localparam N_MAX_LP     = 4;              // Max Number of Logic Ports (4)
-localparam W_DTQ_SEL    = $clog2(MGP_TC_CNT*N_MAX_LP); // Data Transmit Queue select (6)
+localparam N_DTQ        = MGP_TC_CNT*N_MAX_LP; // Data Transmit Queue (36)
+localparam W_DTQ_SEL    = $clog2(N_DTQ);  // Data Transmit Queue select (6)
 
 typedef struct packed {
     logic                 ctrl_type; // [21]    Type of control word: 0: metadata. 1: header
@@ -56,6 +57,8 @@ typedef struct packed {
     logic                peek_pop; // DTQ Ctrl operation. 0:Peek. 1:Pop
     logic                     req; // DTQ Ctrl Request
 } dtq_ctrl_pull_t;
+
+typedef logic [N_DTQ-1:0] dtq_ctrl_ready_t; // DTQ Metadata (Control) Ready signals
 
 //Service dtq_data_pull
 localparam N_MAX_PKT_WORDS = 160; // Jumbo packet size in words (160)
@@ -73,15 +76,19 @@ typedef struct packed {
     logic                     req; // DTQ Request
 } dtq_data_pull_t;
 
+typedef logic [N_DTQ-1:0] dtq_data_ready_t; // DTQ Data Ready signals
+
 ////////////////// SIGNALS
 // Service dtq_ctrl_pull
 dtq_ctrl_pull_t  [EPL_PER_MGP-1:0]   dtq_ctrl_pull; // TCU DTQ Control Pull Request
+dtq_ctrl_ready_t [EPL_PER_MGP-1:0]  dtq_ctrl_ready; // TCU DTQ Control (Metadata) Ready
 ctrl_mdata_t     [EPL_PER_MGP-1:0]      ctrl_mdata; // TQU Control Word Metadata
 data_word_t      [EPL_PER_MGP-1:0]       ctrl_word; // TQU Control Word Data
 logic            [EPL_PER_MGP-1:0] ctrl_word_valid; // TQU Control Word Valid
 
 //Service dtq_data_pull
 dtq_data_pull_t  [EPL_PER_MGP-1:0]   dtq_data_pull; // TQU DTQ Data Pull Request
+dtq_data_ready_t [EPL_PER_MGP-1:0]  dtq_data_ready; // TCU DTQ Data Ready
 pkt_word_mdata_t [EPL_PER_MGP-1:0]  pkt_word_mdata; // TQU Pkt Word Metadata
 data_word_t      [EPL_PER_MGP-1:0]        pkt_word; // TQU Pkt Data Word
 logic            [EPL_PER_MGP-1:0] data_word_valid; // TQU Data Word Valid
@@ -92,11 +99,13 @@ logic            [EPL_PER_MGP-1:0] data_word_valid; // TQU Data Word Valid
 modport tcu(
     //Service dtq_ctrl_pull
     output  dtq_ctrl_pull,
+    input  dtq_ctrl_ready,
     input      ctrl_mdata,
     input       ctrl_word,
     input ctrl_word_valid,
     //Service dtq_data_pull
     output  dtq_data_pull,
+    input  dtq_data_ready,
     input  pkt_word_mdata,
     input        pkt_word,
     input data_word_valid
@@ -106,11 +115,13 @@ modport tcu(
 modport tqu(
     //Service dtq_ctrl_pull
     input    dtq_ctrl_pull,
+    output  dtq_ctrl_ready,
     output      ctrl_mdata,
     output       ctrl_word,
     output ctrl_word_valid,
     //Service dtq_data_pull
     input    dtq_data_pull,
+    output  dtq_data_ready,
     output  pkt_word_mdata,
     output        pkt_word,
     output data_word_valid

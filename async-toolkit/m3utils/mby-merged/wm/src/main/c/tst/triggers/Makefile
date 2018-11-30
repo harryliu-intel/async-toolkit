@@ -1,3 +1,11 @@
+# -*- mode:Makefile -*-
+
+# Copyright (C) 2018 Intel Corporation
+
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/../../ToolVersions.mk
+
 SRC_DIR  = ../..
 TST_DIR  = .
 
@@ -15,19 +23,11 @@ SOURCES += $(SRC_DIR)/mby_bitfield.c
 SOURCES += $(SRC_DIR)/mby_triggers.c
 SOURCES += $(SRC_DIR)/mby_triggers_regs.c
 SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
-
-
 SOURCES += $(TST_DIR)/mby_triggers_test.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
 TARGET = mby_triggers_test
-
-# C compiler:
-CC = gcc
-
-# Linker:
-LD  = ld
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -77,15 +77,15 @@ $(TST_DIR)/mby_triggers_test.o : $(TST_DIR)/mby_triggers_test.c $(SRC_DIR)/mby_t
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
-	$(ECHO) rm -f $(DELFILES)
+	$(ECHO) $(RM) $(DELFILES)
 
 %.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 $(TARGET): $(OBJECTS)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 .PHONY: run
 run: $(TARGET)
@@ -96,7 +96,7 @@ run: $(TARGET)
 .PHONY: valgrind
 valgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Valgrind'
-	valgrind \
+	$(VAL) \
             --track-origins=yes \
             --leak-check=full \
             --show-leak-kinds=all \
@@ -105,7 +105,7 @@ valgrind: $(TARGET)
 .PHONY: callgrind
 callgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Cachegrind'
-	valgrind \
+	$(VAL) \
             --tool=callgrind \
             --verbose \
             --dump-every-bb=12500000000 \
