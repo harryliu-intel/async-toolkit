@@ -41,9 +41,9 @@ module pfs import shared_pkg::*;
 );
 
 // Intermediate values in arbitration
-logic [EPL_PER_MGP-1:0][tmu_if.RX_TC_COUNT-1:0][MGP_COUNT-1:0] blocked, available, winner;
-logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0][tmu_if.RX_TC_COUNT-1:0][MGP_COUNT-1:0] winner_q;
-logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0][tmu_if.RX_TC_COUNT-1:0] pfc;
+logic [EPL_PER_MGP-1:0][tmu_if.TX_TC_COUNT-1:0][MGP_COUNT-1:0] blocked, available, winner;
+logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0][tmu_if.TX_TC_COUNT-1:0][MGP_COUNT-1:0] winner_q;
+logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0][tmu_if.TX_TC_COUNT-1:0] pfc;
 
 // Port being operated on for each EPL
 logic [EPL_PER_MGP-1:0][$clog2(tmu_if.PORTS_PER_EPL)-1:0] port, next_port;
@@ -51,7 +51,7 @@ logic [EPL_PER_MGP-1:0][$clog2(tmu_if.PORTS_PER_EPL)-1:0] port, next_port;
 // Winners for each port
 logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0] valid; // Indicates that there is a winning packet for the port.
 logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0][$clog2(MGP_COUNT)-1:0] mgp; // Indicates the source MGP of the winning queue
-logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0][$clog2(tmu_if.RX_TC_COUNT)-1:0] tc; // Indicates the TC of the winning queue
+logic [EPL_PER_MGP-1:0][tmu_if.PORTS_PER_EPL-1:0][$clog2(tmu_if.TX_TC_COUNT)-1:0] tc; // Indicates the TC of the winning queue
 
 // Port select counters
 // TODO: This assumes all EPLs are configured for 4 ports (all <= 100G mode)
@@ -65,7 +65,7 @@ always_ff @(posedge clk)
 always_ff @(posedge clk) pfc <= tcu_if.pfc;
 always_comb
     for (int i = 0; i < EPL_PER_MGP; i++)
-        for (int j = 0; j < tmu_if.RX_TC_COUNT; j++)
+        for (int j = 0; j < tmu_if.TX_TC_COUNT; j++)
             blocked[i][j] = {MGP_COUNT{pfc}};
 
 // These queues are considered in arbitration
@@ -74,7 +74,7 @@ always_comb for (int i = 0; i < EPL_PER_MGP; i++)
 
 // FIXME: simple find first
 always_comb for (int i = 0; i < EPL_PER_MGP; i++)
-    winner[i] = available[i] & ~(available[i] - { {(tmu_if.RX_TC_COUNT*MGP_COUNT-1){1'b0}}, 1'b1});
+    winner[i] = available[i] & ~(available[i] - { {(tmu_if.TX_TC_COUNT*MGP_COUNT-1){1'b0}}, 1'b1});
 
 
 always_ff @(posedge clk) for (int i = 0; i < EPL_PER_MGP; i++) begin
@@ -92,7 +92,7 @@ always_ff @(posedge clk) for (int i = 0; i < EPL_PER_MGP; i++) begin
         valid[i][next_port[i]] <= |winner[i];
         mgp[i][next_port[i]] <= 0;
         tc[i][next_port[i]] <= 0;
-        for (int j = 0; j < tmu_if.RX_TC_COUNT; j++) begin
+        for (int j = 0; j < tmu_if.TX_TC_COUNT; j++) begin
             if (|winner[i][j]) tc[i][next_port[i]] <= j;
             for (int k = 0; k < MGP_COUNT; k++)
                 if (winner[i][j][k]) mgp[i][next_port[i]] <= k;
@@ -106,6 +106,8 @@ always_comb for (int i = 0; i < EPL_PER_MGP; i++) begin
     prc_if.port[i]  =  port[i];
     prc_if.mgp[i]   =   mgp[i][port[i]];
     prc_if.tc[i]    =    tc[i][port[i]];
+    // TODO: I don't have a good story for this yet
+    prc_if.dtq[i]   = 0;
 
     tmu_if.pop_port[i] = port[i];
     tmu_if.pop_mgp[i ] =  mgp[i][port[i]];
