@@ -13,14 +13,18 @@ import sbt.Path.{relativeTo, flat}
 import sbt.{AutoPlugin, Def, File, Level, file, taskKey}
 import sbt.io.syntax._
 import sbt.io.FileFilter._
+import sbt.io.PathFinder
 import sbt.Compile
 
+import java.io.PrintWriter
 import sys.process._
 
 object CsrModula3Plugin extends AutoPlugin {
 
   private val m3Path = "src/main/m3"
   private val m3BuildPath = s"$m3Path/genviews/src/build/mby"
+  private val csrObject = "all"
+  private val csrObjectPath = s"$m3BuildPath/src/$csrObject.scala"
 
   object autoImport {
     lazy val csrCodeGeneration = taskKey[Seq[File]]("Modula3 csr registers code generation")
@@ -28,6 +32,42 @@ object CsrModula3Plugin extends AutoPlugin {
   }
 
   import autoImport._
+
+// Function that generates the CSR object declaration and returns
+  // it as a StringBuffer
+  def generateCsrObject(files: PathFinder): String = {
+    // Obtain traits from file names
+    val suffix = "_instance"
+    val (_, fileNames) = files.pair(file => Option(file.toString().split("/").last)).unzip
+    val h :: t = fileNames
+      .filterNot(_ == s"$csrObject.scala")
+      .map(_.split("\\.")(0) + suffix)
+      .toList
+
+    s"""|package madisonbay
+        |package csr
+        |
+        |package object $csrObject extends $h
+        |${t.sorted.map(name => s"  with $name").mkString("\n")}
+        |""".stripMargin
+  }
+
+  // Generic function that creates a file basing on the return value of a
+  // generator function, which returns the expected content of the file.
+  // The return value of generator (StringBuffer) is directly written to the file.
+  def generateFile[T](path: String, input: T)(f: T => String): File = {
+    val csrFile = new File(path)
+    val fileContent: String = f(input)
+
+    val pw = new PrintWriter(csrFile)
+    try {
+      pw.write(fileContent)
+    } finally {
+      pw.close()
+    }
+
+    csrFile
+  }
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
     csrCodeGeneration := {
@@ -41,6 +81,10 @@ object CsrModula3Plugin extends AutoPlugin {
       require(targetDir.isDirectory, s"$targetDir not a directory")
 
       val generatedScalaFiles = targetDir ** "*.scala"
+
+      val csrFile = generateFile(csrObjectPath, generatedScalaFiles)(generateCsrObject)
+      require(csrFile.isFile, s"$csrFile file not generated")
+
       logger.info("Generation DONE")
       generatedScalaFiles.getPaths.map(new File(_))
     },

@@ -230,8 +230,10 @@ static fm_bool maskgen_test_verify
     if (maskgenToTriggers->STORE_TRAP_ACTION != test_data_out->store_trap_action)
         return FALSE;
 
-    if (maskgenToTriggers->DMASK != test_data_out->dmask)
-        return FALSE;
+    //REVISIT!!!! dmask is changed, we need to fix test
+    for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+        if (maskgenToTriggers->DMASK[i] != test_data_out->dmask)
+            return FALSE;
 
     if (maskgenToTriggers->ACTION != test_data_out->action)
         return FALSE;

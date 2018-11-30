@@ -12,94 +12,69 @@
 
 // Defines:
 
-#define DEFAULT_SEGMENT_BYTES   192
-#define VLAN_TAG_BYTES          4
-#define MIN_EGRESS_BYTES        18
+#define DEFAULT_SEGMENT_BYTES                   192
+#define VLAN_TAG_BYTES                          4
+#define MIN_EGRESS_BYTES                        18
 
-/******** MOD_BASE *******/
-#define MBY_MOD_BASE                                            (0x4000000)
-#define MBY_MOD_SIZE                                            (0x0800000)
+#define MBY_MOD_PROFILE_GROUPS                  8
+#define MBY_MOD_FIELD_VECTOR_SIZE               24
+#define MBY_MOD_FIELDS_PER_REG_ENTRY            3
+#define MBY_MOD_COMMAND_PER_GROUP               4
+#define MBY_MOD_PROT_ID_MD_TYPE                 253
+#define MBY_MOD_MAX_HDR_REGION                  256
+#define MBY_MOD_CNTR_SIZE                       256
+#define MBY_MOD_CONTENT_SIZE                    256
+#define MBY_MOD_MAP_MAX_SINGLE_LUT              3
+#define MBY_MOD_MAP_DUAL_LUT                    4
+#define MBY_MOD_MAP_INS_FLD_LUT_LEN             2
+#define MBY_MOD_CONTENT_ADDR_BLOCK_SIZE         32
+#define MBY_MOD_CONTENT_ENTRY_SIZE              8
+#define MBY_MOD_MAP_VALUES_PER_ENTRY            4
+#define MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY       8
 
-#define MBY_MOD_PER_PORT_CFG1_WIDTH                             2
-#define MBY_MOD_PER_PORT_CFG1_ENTRIES                           24
-#define MBY_MOD_PER_PORT_CFG1(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0118400) + (MBY_MOD_BASE))
+/* Modifier command encoding field bits definition */
+#define MBY_MOD_CMD_l_LEN_MASK                  0
+#define MBY_MOD_CMD_h_LEN_MASK                  7
+#define MBY_MOD_CMD_l_PROT_ID                   8
+#define MBY_MOD_CMD_h_PROT_ID                   15
+#define MBY_MOD_CMD_l_OFFSET                    8
+#define MBY_MOD_CMD_h_OFFSET                    13
+#define MBY_MOD_CMD_b_ALIGNMENT                 14
+#define MBY_MOD_CMD_l_LUT                       15
+#define MBY_MOD_CMD_h_LUT                       17
+#define MBY_MOD_CMD_b_UPDATE                    16
+#define MBY_MOD_CMD_b_LUT_MODE                  18
+#define MBY_MOD_CMD_b_PROT_DEL                  18
+#define MBY_MOD_CMD_l_MODE                      18
+#define MBY_MOD_CMD_h_MODE                      20
+#define MBY_MOD_CMD_l_TYPE                      21
+#define MBY_MOD_CMD_h_TYPE                      23
 
-#define MBY_MOD_PER_PORT_CFG1_l_LOOPBACK_SUPPRESS_GLORT         19
-#define MBY_MOD_PER_PORT_CFG1_h_LOOPBACK_SUPPRESS_GLORT         34
-#define MBY_MOD_PER_PORT_CFG1_l_LOOPBACK_SUPPRESS_MASK          3
-#define MBY_MOD_PER_PORT_CFG1_h_LOOPBACK_SUPPRESS_MASK          18
-#define MBY_MOD_PER_PORT_CFG1_l_VID2_MAP_INDEX                  1
-#define MBY_MOD_PER_PORT_CFG1_h_VID2_MAP_INDEX                  2
-#define MBY_MOD_PER_PORT_CFG1_b_ENABLE_VLAN_UPDATE              0
+/* Modifier profile group encoding bits definition */
+#define MBY_MOD_PROFILE_GROUP_l_OFFSET          0
+#define MBY_MOD_PROFILE_GROUP_h_OFFSET          7
+#define MBY_MOD_PROFILE_GROUP_l_PROT_ID         0
+#define MBY_MOD_PROFILE_GROUP_h_PROT_ID         7
+#define MBY_MOD_PROFILE_GROUP_b_CONFIG          8
 
-#define MBY_MOD_PER_PORT_CFG2_WIDTH                             2
-#define MBY_MOD_PER_PORT_CFG2_ENTRIES                           24
-#define MBY_MOD_PER_PORT_CFG2(index, word)                      ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0118500) + (MBY_MOD_BASE))
-
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_PCP1_UPDATE              16
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_PCP2_UPDATE              15
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_DEI1_UPDATE              14
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_DEI2_UPDATE              13
-#define MBY_MOD_PER_PORT_CFG2_l_VLAN1_E_TYPE                    11
-#define MBY_MOD_PER_PORT_CFG2_h_VLAN1_E_TYPE                    12
-#define MBY_MOD_PER_PORT_CFG2_l_VLAN2_E_TYPE                    9
-#define MBY_MOD_PER_PORT_CFG2_h_VLAN2_E_TYPE                    10
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_DMAC_ROUTING             8
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_SMAC_ROUTING             7
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_TTL_DECREMENT            6
-#define MBY_MOD_PER_PORT_CFG2_b_ENABLE_ECN_MODIFICATION         5
-#define MBY_MOD_PER_PORT_CFG2_b_VID2_FIRST                      4
-#define MBY_MOD_PER_PORT_CFG2_l_VLAN_TAGGING                    1
-#define MBY_MOD_PER_PORT_CFG2_h_VLAN_TAGGING                    3
-#define MBY_MOD_PER_PORT_CFG2_b_MIN_FRAME_SIZE                  0
-
-#define MBY_MOD_ROUTER_SMAC_WIDTH                               2
-#define MBY_MOD_ROUTER_SMAC_ENTRIES                             64
-#define MBY_MOD_ROUTER_SMAC(index, word)                        ((0x0000008) * ((index) - 0) + ((word)*4)+ (0x0118600) + (MBY_MOD_BASE))
-
-#define MBY_MOD_ROUTER_SMAC_l_SMAC                              0
-#define MBY_MOD_ROUTER_SMAC_h_SMAC                              47
-
-#define MBY_MOD_IM_WIDTH                                        2
-#define MBY_MOD_IM(word)                                        (((word)*4) + (0x0120210) + (MBY_MOD_BASE))
-
-#define MBY_MOD_IM_b_ECN_DROP                                   36
-#define MBY_MOD_IM_b_TTL1_DROP                                  35
-#define MBY_MOD_IM_b_LOOPBACK_DROP                              34
-#define MBY_MOD_IM_b_TIMEOUT_DROP                               33
-#define MBY_MOD_IM_b_L3_LEN_L4_CSUM_ERROR_MARK                  32
-#define MBY_MOD_IM_b_L4_CSUM_ERROR_DROP                         31
-#define MBY_MOD_IM_b_L3_LEN_ERROR_DROP                          30
-#define MBY_MOD_IM_b_MARKER_ERROR_DROP                          29
-#define MBY_MOD_IM_b_TX_ERROR_DROP                              28
-#define MBY_MOD_IM_b_TX_ECC_DROP                                27
-#define MBY_MOD_IM_b_INNER_L4_NONEXIST                          26
-#define MBY_MOD_IM_b_OUTER_L4_NONEXIST                          25
-#define MBY_MOD_IM_b_INNER_IP_NONEXIST                          24
-#define MBY_MOD_IM_b_OUTER_IP_NONEXIST                          23
-#define MBY_MOD_IM_b_INNER_MAC_NONEXIST                         22
-#define MBY_MOD_IM_b_OUTER_MAC_NONEXIST                         21
-#define MBY_MOD_IM_b_SIZE_ERROR_MIN                             20
-#define MBY_MOD_IM_b_SIZE_ERROR_MAX                             19
-#define MBY_MOD_IM_b_PKT_LEN_UPDATE                             18
-#define MBY_MOD_IM_b_TTL_DEC_BELOW0                             17
-#define MBY_MOD_IM_b_TTLDS_SRC_NONEXIST                         16
-#define MBY_MOD_IM_b_TTLDS_TGT_NONEXIST                         15
-#define MBY_MOD_IM_b_INNER_IP_MISMATCH                          14
-#define MBY_MOD_IM_b_OUTER_IP_MISMATCH                          13
-#define MBY_MOD_IM_b_MPLS_POP_EMPTY                             12
-#define MBY_MOD_IM_b_POP_ELI_EMPTY                              11
-#define MBY_MOD_IM_b_POP_AL_EMPTY                               10
-#define MBY_MOD_IM_b_MPLS_PUSH_FULL                             9
-#define MBY_MOD_IM_b_PUSH_ELI_FULL                              8
-#define MBY_MOD_IM_b_PUSH_AL_FULL                               7
-#define MBY_MOD_IM_b_INNER_TAG_EMPTY                            6
-#define MBY_MOD_IM_b_OUTER_TAG_EMPTY                            5
-#define MBY_MOD_IM_b_VLAN_TAG_EMPTY                             4
-#define MBY_MOD_IM_b_INNER_TAG_FULL                             3
-#define MBY_MOD_IM_b_OUTER_TAG_FULL                             2
-#define MBY_MOD_IM_b_VLAN_TAG_FULL                              1
-#define MBY_MOD_IM_b_MEM_ERROR                                  0
+#define MBY_MOD_CMD_l_LEN_MASK                  0
+#define MBY_MOD_CMD_h_LEN_MASK                  7
+#define MBY_MOD_CMD_l_PROT_ID                   8
+#define MBY_MOD_CMD_h_PROT_ID                   15
+#define MBY_MOD_CMD_l_OFFSET                    8
+#define MBY_MOD_CMD_h_OFFSET                    13
+#define MBY_MOD_CMD_b_ALIGNMENT                 14
+#define MBY_MOD_CMD_l_LUT                       15
+#define MBY_MOD_CMD_h_LUT                       17
+#define MBY_MOD_CMD_b_UPDATE                    16
+#define MBY_MOD_CMD_b_LUT_MODE                  18
+#define MBY_MOD_CMD_b_PROT_DEL                  18
+#define MBY_MOD_CMD_l_MODE                      18
+#define MBY_MOD_CMD_h_MODE                      20
+#define MBY_MOD_CMD_l_TYPE                      21
+#define MBY_MOD_CMD_h_TYPE                      23
+#define MBY_MOD_CMD_DECREMENT_1B_l_POS          0
+#define MBY_MOD_CMD_DECREMENT_1B_h_POS          3
 
 // Enums:
 
@@ -241,6 +216,51 @@ typedef enum mbyDispCodeEnum
     DISP_MCAST          =  15      // 13
 
 } mbyDispCode;
+
+typedef enum mbyModCmdTypeEnum
+{
+    MBY_MOD_CMD_TYPE_NOP = 0,
+    MBY_MOD_CMD_TYPE_INSERT,
+    MBY_MOD_CMD_TYPE_INSERT_FIELD,
+    MBY_MOD_CMD_TYPE_INSERT_FIELD_LUT,
+    MBY_MOD_CMD_TYPE_DELETE,
+    MBY_MOD_CMD_TYPE_REPLACE,
+    MBY_MOD_CMD_TYPE_REPLACE_FIELD,
+    MBY_MOD_CMD_TYPE_REPLACE_FIELD_LUT,
+
+} mbyModCmdType;
+
+typedef enum mbyModCmdModeEnum
+{
+    MBY_MOD_CMD_MODE_NOP = 0,
+    MBY_MOD_CMD_MODE_BASIC,
+    MBY_MOD_CMD_MODE_4B_REPLACE,
+    MBY_MOD_CMD_MODE_1B_REPLACE,
+    MBY_MOD_CMD_MODE_1B_XOR,
+    MBY_MOD_CMD_MODE_1B_DECREMENT,
+
+} mbyModCmdMode;
+
+typedef enum mbyModCmdLutModeEnum
+{
+    MBY_MOD_CMD_LUT_MODE_DIRECT = 0,
+    MBY_MOD_CMD_LUT_MODE_RELATIVE,
+
+} mbyModCmdLutMode;
+
+typedef enum mbyModCmdAlignmentEnum
+{
+    MBY_MOD_CMD_ALIGN_TOP = 0,
+    MBY_MOD_CMD_ALIGN_BOTTOM,
+
+} mbyModCmdAlignment;
+
+typedef enum mbyModCmdSourceEnum
+{
+    MBY_MOD_CMD_SOURCE_CONTENT_REGION = 0,
+    MBY_MOD_CMD_SOURCE_FIELD_CONTAINER,
+
+} mbyModCmdSource;
 
 // Structs:
 
@@ -433,8 +453,132 @@ typedef struct mbyChunkedSegStruct
 
 } mbyChunkedSeg;
 
+typedef struct mbyModProfileGroupStruct {
+    fm_uint16               group[MBY_MOD_PROFILE_GROUPS]; // group[0] will never be populated
+
+} mbyModProfileGroup;
+
+typedef struct mbyModProfileFieldStruct {
+    fm_byte                 protocol_id[MBY_MOD_FIELD_VECTOR_SIZE];
+    fm_uint16               offset     [MBY_MOD_FIELD_VECTOR_SIZE];
+
+} mbyModProfileField;
+
+typedef struct mbyModProfileCmdStruct {
+    fm_uint32               cmd[MBY_MOD_PROFILE_GROUPS][MBY_MOD_COMMAND_PER_GROUP];
+
+} mbyModProfileCmd;
+
+typedef struct mbyModFieldVectorStruct {
+    fm_byte                 field[MBY_MOD_FIELD_VECTOR_SIZE];
+    fm_uint                 cur_idx;
+
+} mbyModFieldVector;
+
+typedef struct mbyModCmdInsertStruct {
+    fm_byte                 len;
+    fm_byte                 prot_id;
+    fm_bool                 update;
+    mbyModCmdMode           mode;
+
+} mbyModCmdInsert;
+
+typedef struct mbyModCmdInsertFldStruct {
+    fm_byte                 len_mask;
+    mbyModCmdMode           mode;
+
+} mbyModCmdInsertFld;
+
+typedef struct mbyModCmdInsertFldLutStruct {
+    fm_byte                 lut;
+    mbyModCmdLutMode        lut_mode;
+
+} mbyModCmdInsertFldLut;
+
+typedef struct mbyModCmdDeleteStruct {
+    fm_bool                 prot_del;
+
+} mbyModCmdDelete;
+
+typedef struct mbyModCmdReplaceStruct {
+    fm_byte                 len_mask;
+    fm_byte                 offset;
+    mbyModCmdAlignment      align;
+    mbyModCmdMode           mode;
+
+} mbyModCmdReplace;
+
+typedef struct mbyModCmdReplaceFldStruct {
+    fm_byte                 len_mask;
+    fm_byte                 offset;
+    mbyModCmdAlignment      align;
+    mbyModCmdMode           mode;
+
+} mbyModCmdReplaceFld;
+
+typedef struct mbyModCmdReplaceFldLutStruct {
+    fm_byte                 mask;
+    fm_byte                 offset;
+    mbyModCmdAlignment      align;
+    fm_byte                 lut;
+    mbyModCmdLutMode        lut_mode;
+
+} mbyModCmdReplaceFldLut;
+
+typedef union mbyModCmdFieldStruct {
+    mbyModCmdInsert         insrt;
+    mbyModCmdInsertFld      insrt_fld;
+    mbyModCmdInsertFldLut   insrt_fld_lut;
+    mbyModCmdDelete         del;
+    mbyModCmdReplace        replace;
+    mbyModCmdReplaceFld     replace_fld;
+    mbyModCmdReplaceFldLut  replace_fld_lut;
+
+} mbyModCmdField;
+
+typedef struct mbyModDecCmdStruct {
+    mbyModCmdType           type;
+    mbyModCmdField          field;
+
+} mbyModDecCmd;
+
+typedef struct mbyModContentContainerStruct {
+    fm_byte                 content[MBY_MOD_CONTENT_SIZE];
+    fm_uint                 cur_idx;
+
+} mbyModContentContainer;
+
+// profile related metadata
+typedef struct mbyModGroupConfigStruct {
+    fm_bool                 valid;
+    fm_uint                 grp_idx;
+    // Offset coming from packet
+    fm_uint                 pkt_offset;
+    // Size coming from packet
+    fm_uint                 pkt_size;
+    // Offset coming from container
+    fm_uint                 ctnr_offset;
+    // Size coming from container
+    fm_uint                 ctnr_size;
+    /* offset to operate on in current grp, used by insert command */
+    fm_uint                 grp_offset;
+    // Parser header index with related protocol ID and offset
+    fm_int                  pa_hdr_idx;
+
+} mbyModGroupConfig;
+
+typedef struct mbyModProfileActionStruct {
+    mbyModProfileGroup      profile_grp;
+    mbyModFieldVector       fld_vector;
+    mbyModDecCmd            dec_cmd[MBY_MOD_PROFILE_GROUPS][MBY_MOD_COMMAND_PER_GROUP];
+    mbyModGroupConfig       grp_list[MBY_MOD_PROFILE_GROUPS];
+    fm_uint32               operating_region;
+    mbyModContentContainer  content_ctnr;
+} mbyModProfileAction;
+
 typedef struct mbyTxInToModifierStruct
 {
+    fm_uint32               CONTENT_ADDR;  // MOD Content address, expressed in 32B units
     fm_bool                 DROP_TTL;      //
     fm_byte                 ECN;           // ECN value to use in egress packet
     fm_uint16               EDGLORT;       // egress destination glort
@@ -445,9 +589,11 @@ typedef struct mbyTxInToModifierStruct
     fm_bool                 MARK_ROUTED;   //
     mbyMirrorType           MIRTYP;        // mirror type
     fm_uint32               MOD_IDX;       // index into the MODIFY descriptor tables
+    fm_byte                 MOD_PROF_IDX;  // modify profile index
     fm_bool                 NO_MODIFY;     // skip most of modifications in Modifier
     fm_bool                 OOM;           // out of memory
     mbyParserInfo           PARSER_INFO;   //
+    mbyParserHdrPtrs        PA_HDR_PTRS;   // parser header pointers
     fm_bool                 PM_ERR;        // ECC error on PM
     fm_bool                 PM_ERR_NONSOP; //
     fm_byte                 QOS_L3_DSCP;   // 6-bit QOS Differentiated Services Code Point (DSCP)

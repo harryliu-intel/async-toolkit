@@ -27,7 +27,7 @@ $hdl_spec = {
        "src/igr/pb/rtl/mby_igr_pb_ctrl421.sv",
        "src/igr/pb/rtl/mby_igr_pb_mem_shell.sv",
        "src/igr/pb/rtl/mby_igr_pb.sv",
-       "src/igr/rtl/igr_top.sv",
+       "src/igr/rtl/mby_igr_top.sv",
        "src/igr/itag/rtl/mby_igr_tag.sv",
      ],
     

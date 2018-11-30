@@ -31,7 +31,7 @@ class LpmTests : public testing::Test {
 		StrictMock<Mock_mbyLpmGetTcamSubtrie> mock_getTcamSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrie> mock_getSubtrie;
 		StrictMock<Mock_mbyLpmGetSubtrieStore> mock_getSubtrieStore;
-		StrictMock<Mock_mbyLpmGetKeySels> mock_getKeyMasks;
+		StrictMock<Mock_mbyLpmGetKeySels> mock_getKeySels;
 
 		struct mbyLpmStaticFuncs f;
 
@@ -51,44 +51,100 @@ class LpmTests : public testing::Test {
 /* =============== Key generation tests ==================== */
 
 #define PROFILE_ID 0x10
-#define KEY8_IDX 25
-#define KEY8_VAL 0xfc
-#define KEY16_IDX 7
-#define KEY16_VAL 0xabcd
-#define KEY32_IDX 13
-#define KEY32_VAL 0x87654321
 
-TEST_F(LpmTests, KeyGenSingle) {
+#define MD_KEY8_IDX 12
+#define MD_KEY8_VAL 0x3d
+#define MD_KEY16_IDX 9
+#define MD_KEY16_VAL 0x3435
+
+#define ADDR_KEY8_IDX 25
+#define ADDR_KEY8_VAL 0xfc
+#define ADDR_KEY16_IDX 7
+#define ADDR_KEY16_VAL 0xabcd
+#define ADDR_KEY32_IDX 13
+#define ADDR_KEY32_VAL 0x87654321
+
+#define LPM_KEY_LEN 20
+
+static void configureKeys(mbyLpmKeySels *key_sels,
+						  mbyClassifierKeysStruct *keys)
+{
+	key_sels->md_key16_sel 	 = 0x1 << MD_KEY16_IDX;
+	key_sels->addr_key8_sel  = 0x1 << ADDR_KEY8_IDX;
+	key_sels->addr_key16_sel = 0x1 << ADDR_KEY16_IDX;
+	key_sels->addr_key32_sel = 0x1 << ADDR_KEY32_IDX;
+	for (int i = 0; i < MBY_LPM_KEY_MAX_BYTES_LEN; ++i)
+		key_sels->key_mask[i] = 0xff;
+
+	keys->key16[MD_KEY16_IDX]   = MD_KEY16_VAL;
+	keys->key8[ADDR_KEY8_IDX]   = ADDR_KEY8_VAL;
+	keys->key16[ADDR_KEY16_IDX] = ADDR_KEY16_VAL;
+	keys->key32[ADDR_KEY32_IDX] = ADDR_KEY32_VAL;
+}
+
+TEST_F(LpmTests, KeyGenSimple) {
 
     mbyLpmKeySels key_sels  = {0};
-	key_sels.addr_key8_mask  = 0x1 << KEY8_IDX;
-	key_sels.addr_key16_mask = 0x1 << KEY16_IDX;
-	key_sels.addr_key32_mask = 0x1 << KEY32_IDX;
-
 	mbyClassifierKeysStruct keys = {0};
-	keys.key8[KEY8_IDX]   = KEY8_VAL;
-	keys.key16[KEY16_IDX] = KEY16_VAL;
-	keys.key32[KEY32_IDX] = KEY32_VAL;
+	configureKeys(&key_sels, &keys);
 
-	mbyLpmKey lpmKey;
-
-	EXPECT_FUNCTION_CALL(mock_getKeyMasks, (NULL, PROFILE_ID, _))
+	EXPECT_FUNCTION_CALL(mock_getKeySels, (NULL, PROFILE_ID, _))
 		.Times(1)
 		.WillRepeatedly(SetArgPointee<2>(key_sels));
 
+	mbyLpmKey lpmKey;
 	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
 
-	EXPECT_EQ(lpmKey.key[0], KEY8_VAL);
-	EXPECT_EQ(lpmKey.key[1], KEY16_VAL & 0xff);
-	EXPECT_EQ(lpmKey.key[2], (KEY16_VAL >> 8) & 0xff);
-	EXPECT_EQ(lpmKey.key[3], KEY32_VAL & 0xff);
-	EXPECT_EQ(lpmKey.key[4], (KEY32_VAL >> 8) & 0xff);
-	EXPECT_EQ(lpmKey.key[5], (KEY32_VAL >> 16) & 0xff);
-	EXPECT_EQ(lpmKey.key[6], (KEY32_VAL >> 24) & 0xff);
-	EXPECT_EQ(lpmKey.key[7], 0x0);
-	EXPECT_EQ(lpmKey.key_len, 8 + 16 + 32);
+	// Packed meta-data - starting from key MSB
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 1], (MD_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 2], MD_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 3], 0x0);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 4], 0x0);
+	// Packed address
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 5], (ADDR_KEY32_VAL >> 24) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 6], (ADDR_KEY32_VAL >> 16) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 7], (ADDR_KEY32_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 8], ADDR_KEY32_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 9], (ADDR_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -10], ADDR_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -11], ADDR_KEY8_VAL);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -12], 0x0);
+
+	EXPECT_EQ(lpmKey.key_len, 16 + 16 + 8 + 16 + 32);
 }
 
+// This is exactly like the test above, but uses also the key mask
+TEST_F(LpmTests, KeyGenMasked) {
+
+    mbyLpmKeySels key_sels  = {0};
+	mbyClassifierKeysStruct keys = {0};
+	configureKeys(&key_sels, &keys);
+	key_sels.key_mask[LPM_KEY_LEN - 8] = 0x0;
+
+	EXPECT_FUNCTION_CALL(mock_getKeySels, (NULL, PROFILE_ID, _))
+		.Times(1)
+		.WillRepeatedly(SetArgPointee<2>(key_sels));
+
+	mbyLpmKey lpmKey;
+	f._lpmGenerateKey(NULL, &keys, PROFILE_ID, &lpmKey);
+
+	// Packed meta-data - starting from key MSB
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 1], (MD_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 2], MD_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 3], 0x0);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 4], 0x0);
+	// Packed address
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 5], (ADDR_KEY32_VAL >> 24) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 6], (ADDR_KEY32_VAL >> 16) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 7], (ADDR_KEY32_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 8], 0x0);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN - 9], (ADDR_KEY16_VAL >> 8) & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -10], ADDR_KEY16_VAL & 0xff);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -11], ADDR_KEY8_VAL);
+	EXPECT_EQ(lpmKey.key[LPM_KEY_LEN -12], 0x0);
+
+	EXPECT_EQ(lpmKey.key_len, 16 + 16 + 8 + 16 + 32);
+}
 
 
 /* =============== LPM TCAM tests ==================== */
@@ -99,7 +155,7 @@ static const mbyLpmTcamEntry entry_key = {TCAM_TEST_KEY, ~(fm_uint32)TCAM_TEST_K
 TEST_F(LpmTests, TcamEmptyTest) {
 
 	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
-		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
+		.Times(mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
 		.WillRepeatedly(SetArgPointee<2>(entry_inv));
 
 	mbyLpmTcamLookup lookup = {TCAM_TEST_KEY, FALSE, 0};
@@ -111,7 +167,7 @@ TEST_F(LpmTests, TcamEmptyTest) {
 TEST_F(LpmTests, TcamSingleMatchTest) {
 
 	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
-		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
+		.Times(mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
 		.WillOnce(SetArgPointee<2>(entry_inv))
 		.WillOnce(SetArgPointee<2>(entry_key))
 		.WillRepeatedly(SetArgPointee<2>(entry_inv));
@@ -126,7 +182,7 @@ TEST_F(LpmTests, TcamSingleMatchTest) {
 TEST_F(LpmTests, TcamMultiMatchTest) {
 
 	EXPECT_FUNCTION_CALL(mock_getTcamEntry, (NULL, _, _))
-		.Times(MBY_REG_SIZE(LPM_MATCH_TCAM))
+		.Times(mby_ppe_cgrp_a_nested_map_LPM_MATCH_TCAM__n)
 		.WillOnce(SetArgPointee<2>(entry_inv))
 		.WillOnce(SetArgPointee<2>(entry_key)) // match but lower priority
 		.WillOnce(SetArgPointee<2>(entry_inv))

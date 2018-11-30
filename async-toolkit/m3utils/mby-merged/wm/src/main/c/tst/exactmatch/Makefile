@@ -1,3 +1,11 @@
+# -*- mode:Makefile -*-
+
+# Copyright (C) 2018 Intel Corporation
+
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/../../ToolVersions.mk
+
 SRC_DIR  = ../..
 TST_DIR  = .
 
@@ -11,26 +19,14 @@ INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
 SOURCES  = $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
-SOURCES += $(SRC_DIR)/mby_lpm.c
-SOURCES += $(SRC_DIR)/mby_lpm_regs.c
-SOURCES += $(SRC_DIR)/mby_wcm.c
 SOURCES += $(SRC_DIR)/mby_exactmatch.c
-SOURCES += $(SRC_DIR)/mby_clsfr_regs.c
-SOURCES += $(SRC_DIR)/mby_classifier.c
+SOURCES += $(SRC_DIR)/mby_cgrp_regs.c
 SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
-SOURCES += $(SRC_DIR)/mby_mapper.c
-
 SOURCES += $(TST_DIR)/mby_exactmatch_test.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
 TARGET = mby_exactmatch_test
-
-# C compiler:
-CC = gcc
-
-# Linker:
-LD  = ld
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -68,43 +64,39 @@ DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
 .PHONY: all
 all: $(TARGET)
 
+$(TST_DIR)/mby_exactmatch_test.o : $(TST_DIR)/mby_exactmatch_test.c $(SRC_DIR)/mby_exactmatch.h $(SRC_DIR)/mby_common.h
+
 $(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
 $(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
-$(SRC_DIR)/mby_lpm.o       : $(SRC_DIR)/mby_lpm.c        $(SRC_DIR)/mby_lpm.h
-$(SRC_DIR)/mby_lpm_regs.o  : $(SRC_DIR)/mby_lpm_regs.c   $(SRC_DIR)/mby_lpm_regs.h
-$(SRC_DIR)/mby_wcm.o       : $(SRC_DIR)/mby_wcm.c        $(SRC_DIR)/mby_wcm.h
 $(SRC_DIR)/mby_exactmatch.o: $(SRC_DIR)/mby_exactmatch.c $(SRC_DIR)/mby_exactmatch.h
-$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_clsfr_regs.c $(SRC_DIR)/mby_clsfr_regs.h
-$(SRC_DIR)/mby_classifier.o: $(SRC_DIR)/mby_classifier.c $(SRC_DIR)/mby_classifier.h
+$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_cgrp_regs.c $(SRC_DIR)/mby_cgrp_regs.h
 $(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
-$(SRC_DIR)/mby_mapper.o    : $(SRC_DIR)/mby_mapper.c     $(SRC_DIR)/mby_mapper.h
 
-$(TST_DIR)/mby_exactmatch_test.o : $(TST_DIR)/mby_exactmatch_test.c $(SRC_DIR)/mby_exactmatch.h $(SRC_DIR)/mby_common.h
 
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
-	$(ECHO) rm -f $(DELFILES)
+	$(ECHO) $(RM) $(DELFILES)
 
 %.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 $(TARGET): $(OBJECTS)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 .PHONY: run
 run: $(TARGET)
 	@echo '  Running $(TARGET)'
 	@/usr/bin/time --format='Ran for %e seconds.' \
-            $(TARGET) | tee run.log
+            ./$(TARGET) | tee run.log
 
 .PHONY: valgrind
 valgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Valgrind'
-	valgrind \
+	$(VAL) \
             --track-origins=yes \
             --leak-check=full \
             --show-leak-kinds=all \
@@ -113,7 +105,7 @@ valgrind: $(TARGET)
 .PHONY: callgrind
 callgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Cachegrind'
-	valgrind \
+	$(VAL) \
             --tool=callgrind \
             --verbose \
             --dump-every-bb=12500000000 \

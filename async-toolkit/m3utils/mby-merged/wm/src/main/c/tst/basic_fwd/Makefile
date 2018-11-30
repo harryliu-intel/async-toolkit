@@ -1,3 +1,11 @@
+# -*- mode:Makefile -*-
+
+# Copyright (C) 2018 Intel Corporation
+
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/../../ToolVersions.mk
+
 SRC_DIR = ../..
 TST_DIR = .
 
@@ -17,11 +25,12 @@ SOURCES += $(SRC_DIR)/mby_lpm.c
 SOURCES += $(SRC_DIR)/mby_lpm_regs.c
 SOURCES += $(SRC_DIR)/mby_wcm.c
 SOURCES += $(SRC_DIR)/mby_exactmatch.c
-SOURCES += $(SRC_DIR)/mby_clsfr_regs.c
+SOURCES += $(SRC_DIR)/mby_cgrp_regs.c
 SOURCES += $(SRC_DIR)/mby_classifier.c
 SOURCES += $(SRC_DIR)/mby_hash.c
 SOURCES += $(SRC_DIR)/mby_nexthop.c
 SOURCES += $(SRC_DIR)/mby_maskgen.c
+SOURCES += $(SRC_DIR)/mby_triggers_regs.c
 SOURCES += $(SRC_DIR)/mby_triggers.c
 SOURCES += $(SRC_DIR)/mby_congmgmt.c
 SOURCES += $(SRC_DIR)/mby_rxstats.c
@@ -38,12 +47,6 @@ SOURCES += $(TST_DIR)/borrowed/mby_srv_utils.c
 OBJECTS = $(SOURCES:.c=.o)
 
 TARGET = mby_basic_fwd_test
-
-# C compiler:
-CC = gcc
-
-# Linker:
-LD  = ld
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -90,7 +93,7 @@ $(SRC_DIR)/mby_lpm.o       : $(SRC_DIR)/mby_lpm.c        $(SRC_DIR)/mby_lpm.h
 $(SRC_DIR)/mby_lpm_regs.o  : $(SRC_DIR)/mby_lpm_regs.c   $(SRC_DIR)/mby_lpm_regs.h
 $(SRC_DIR)/mby_wcm.o       : $(SRC_DIR)/mby_wcm.c        $(SRC_DIR)/mby_wcm.h
 $(SRC_DIR)/mby_exactmatch.o: $(SRC_DIR)/mby_exactmatch.c $(SRC_DIR)/mby_exactmatch.h
-$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_clsfr_regs.c $(SRC_DIR)/mby_clsfr_regs.h
+$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_cgrp_regs.c $(SRC_DIR)/mby_cgrp_regs.h
 $(SRC_DIR)/mby_classifier.o: $(SRC_DIR)/mby_classifier.c $(SRC_DIR)/mby_classifier.h
 $(SRC_DIR)/mby_hash.o      : $(SRC_DIR)/mby_hash.c       $(SRC_DIR)/mby_hash.h
 $(SRC_DIR)/mby_nexthop.o   : $(SRC_DIR)/mby_nexthop.c    $(SRC_DIR)/mby_nexthop.h
@@ -113,15 +116,15 @@ $(TST_DIR)/mby_basic_fwd_test.o     : $(TST_DIR)/mby_basic_fwd_test.c
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
-	$(ECHO) rm -f $(DELFILES)
+	$(ECHO) $(RM) $(DELFILES)
 
 %.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 $(TARGET): $(OBJECTS)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(CC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
 
 .PHONY: run
 run: $(TARGET)
@@ -132,7 +135,7 @@ run: $(TARGET)
 .PHONY: valgrind
 valgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Valgrind'
-	valgrind \
+	$(VAL) \
             --track-origins=yes \
             --leak-check=full \
             --show-leak-kinds=all \
@@ -141,7 +144,7 @@ valgrind: $(TARGET)
 .PHONY: callgrind
 callgrind: $(TARGET)
 	@echo '  Running $(TARGET) in Cachegrind'
-	valgrind \
+	$(VAL) \
             --tool=callgrind \
             --verbose \
             --dump-every-bb=12500000000 \

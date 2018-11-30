@@ -2,7 +2,7 @@ package madisonbay.tcp
 
 import com.intel.cg.hpfd.csr.macros.SizedArray
 import eu.timepit.refined.W
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 
 case class FmModelMsgAttr(
   Type: FmModelAttrType.Value,

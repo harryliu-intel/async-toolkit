@@ -36,6 +36,10 @@ module ("DataPusher")
 table ("IntDataPusher", "Integer", "DataPusher")
 table ("CardByte", "Cardinal", "Byte")
 
+mkSet("DataPusher", "DataPusher")
+mkSetDef("DataPusher", "DataPusher")
+table("DataPusherRef", "DataPusher", "Refany")
+
 module ("HlpModel")
 %module ("MbyModel") % pure Modula-3 version of MbyModel
 interface ("MbyModel")
@@ -43,6 +47,7 @@ module ("MbyModelC") % C version of MbyModel
 
 Generic_module("BaseModelServer")
 module("MbyModelServer")
+interface ("MbyModelServerExt")
 
 interface("BaseModelStage")
 module("Metadata")

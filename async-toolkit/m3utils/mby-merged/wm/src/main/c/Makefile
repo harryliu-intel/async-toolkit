@@ -2,6 +2,10 @@
 
 # Copyright (C) 2018 Intel Corporation
 
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/ToolVersions.mk
+
 INC_DIR1 = .
 INC_DIR2 = ../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
 
@@ -14,7 +18,7 @@ SOURCES += mby_parser.c
 SOURCES += mby_mapper.c
 SOURCES += mby_lpm_regs.c
 SOURCES += mby_lpm.c
-SOURCES += mby_clsfr_regs.c
+SOURCES += mby_cgrp_regs.c
 SOURCES += mby_wcm.c
 SOURCES += mby_exactmatch.c
 SOURCES += mby_classifier.c
@@ -33,13 +37,6 @@ SOURCES += mby_errors.c
 SOURCES += mby_init.c
 
 OBJECTS = $(SOURCES:.c=.o)
-
-# C/C++ compiler:
-CC = gcc
-GPP = g++
-
-# Linker:
-LD  = ld
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -81,7 +78,7 @@ mby_bitfield.o      : mby_bitfield.c 	   mby_bitfield.h
 mby_common.o        : mby_common.c                          mby_common.h mby_bitfield.h
 mby_parser.o        : mby_parser.c     	   mby_parser.h     mby_common.h mby_bitfield.h
 mby_mapper.o        : mby_mapper.c     	   mby_mapper.h     mby_common.h mby_bitfield.h
-mby_clsfr_regs.o    : mby_clsfr_regs.c 	   mby_clsfr_regs.h mby_common.h mby_bitfield.h
+mby_clsfr_regs.o    : mby_cgrp_regs.c 	   mby_cgrp_regs.h  mby_common.h mby_bitfield.h
 mby_lpm_regs.o      : mby_lpm_regs.c   	   mby_lpm_regs.h   mby_common.h mby_bitfield.h
 mby_lpm.o           : mby_lpm.c        	   mby_lpm.h        mby_common.h mby_bitfield.h
 mby_wcm.o           : mby_wcm.c        	   mby_wcm.h        mby_common.h mby_bitfield.h
@@ -115,17 +112,16 @@ mby_init.o       : mby_init.c       mby_init.h
 
 %.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 libmbymodel.so: $(OBJECTS) mby_model.o
 	@echo '  Linking' $@
-	$(ECHO) $(CC) -shared -o $@ $^
+	$(ECHO) $(GCC) -shared -o $@ $^
 
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
-	$(ECHO) rm -f $(DELFILES)
-
+	$(ECHO) $(RM) $(DELFILES)
 
 # ========================== Unit testing ==================================
 
@@ -151,7 +147,7 @@ DELFILES += unit_tests/*.so unit_tests/*.o unit_tests/*.exe model_server/msrv
 
 unit_tests/%.so:
 	@echo '  Linking UT shared lib' $@
-	$(ECHO) $(CC) -shared -o $@ $^
+	$(ECHO) $(GCC) -shared -o $@ $^
 
 unit_tests/%.o: unit_tests/%.cpp
 	@echo '  Compiling UT' $<

@@ -2,13 +2,11 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "../m3/genviews/src/build_c/mby_c/src/mby_top_map.h"
-
+#include "mby_common.h"
 #include "mby_classifier.h"
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
-#include "mby_common.h"
 
 static mbyArpTable getARPTableEntry
 (
@@ -143,8 +141,8 @@ void NextHop
 )
 {
     // Read inputs:
-    const mbyClassifierFlags ffu_flags   = in->FFU_FLAGS;
-    const fm_uint32          ffu_route   = in->FFU_ROUTE;
+    const mbyClassifierFlags cgrp_flags  = in->CGRP_FLAGS;
+    const fm_uint32          cgrp_route  = in->CGRP_ROUTE;
           fm_bool            encap       = in->ENCAP;
           fm_bool            decap       = in->DECAP;
     const fm_macaddr         dmac_ipv6   = in->DMAC_FROM_IPV6;
@@ -157,19 +155,19 @@ void NextHop
           fm_uint16          l2_edomain  = in->L2_IDOMAIN;
           fm_byte            l3_edomain  = in->L3_IDOMAIN;
     const fm_bool            learn_mode  = in->LEARN_MODE;
-    const fm_uint16          raw_hash    = in->RAW_HASH;
+    const fm_uint16          ecmp_hash   = in->ECMP_HASH;
     const fm_byte * const    arp_hash    = in->ARP_HASH; // [16]
           fm_bool            trap_igmp   = in->TRAP_IGMP;
     const fm_uint32          rx_port     = in->RX_PORT;
 
-    fm_bool   no_route     = ffu_flags.no_route;
-    fm_bool   group_type   = FM_GET_BIT  (ffu_route, MBY_FFU_ROUTE, GROUP_TYPE);
-    fm_byte   group_size   = FM_GET_FIELD(ffu_route, MBY_FFU_ROUTE, GROUP_SIZE);
-    fm_uint16 arp_index    = FM_GET_FIELD(ffu_route, MBY_FFU_ROUTE, ARP_INDEX) & 0x3fff; // 14-bits
-    fm_bool   glort_routed = !FM_GET_BIT (ffu_route, MBY_FFU_ROUTE, ARP_ROUTE);
-    fm_uint16 dglort       = FM_GET_FIELD(ffu_route, MBY_FFU_ROUTE, DGLORT);
-    fm_bool   flood_set    = (glort_routed) ? FM_GET_BIT  (ffu_route, MBY_FFU_ROUTE, FLOODSET) : 0;
-    fm_byte   sel_hash     = (group_type == 0) ? arp_hash[group_size] : ((raw_hash << group_size) >> 12);
+    fm_bool   no_route     = cgrp_flags.no_route;
+    fm_bool   group_type   = FM_GET_BIT  (cgrp_route, MBY_CGRP_ROUTE, GROUP_TYPE);
+    fm_byte   group_size   = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, GROUP_SIZE);
+    fm_uint16 arp_index    = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, ARP_INDEX) & 0x3fff; // 14-bits
+    fm_bool   glort_routed = !FM_GET_BIT (cgrp_route, MBY_CGRP_ROUTE, ARP_ROUTE);
+    fm_uint16 dglort       = FM_GET_FIELD(cgrp_route, MBY_CGRP_ROUTE, DGLORT);
+    fm_bool   flood_set    = (glort_routed) ? FM_GET_BIT  (cgrp_route, MBY_CGRP_ROUTE, FLOODSET) : 0;
+    fm_byte   sel_hash     = (group_type == 0) ? arp_hash[group_size] : ((ecmp_hash << group_size) >> 12);
     fm_uint16 arp_tbl_idx  = (arp_index + sel_hash) & (MBY_ARP_TABLE_ENTRIES - 1);
     fm_uint16 idglort      = 0;
     fm_bool   mark_routed  = !glort_routed && !no_route;
@@ -266,38 +264,42 @@ void NextHop
     out->TRAP_IGMP            = trap_igmp;
 
     // Pass thru:
-    out->ACTION                 = in->ACTION;
-    out->CPU_TRAP               = in->CPU_TRAP;
-    out->CSGLORT                = in->CSGLORT;
-    out->DROP_TTL               = in->DROP_TTL;
-    out->FFU_FLAGS              = in->FFU_FLAGS;
-    out->GLORT_DMASK            = in->GLORT_DMASK;
-    out->HASH_ROT_A             = in->HASH_ROT_A;
-    out->HASH_ROT_B             = in->HASH_ROT_B;
-    out->IP_MCAST_IDX           = in->IP_MCAST_IDX;
-    out->IS_IPV4                = in->IS_IPV4;
-    out->IS_IPV6                = in->IS_IPV6;
-    out->L2_ETYPE               = in->L2_ETYPE;
-    out->MIRROR0_PROFILE_IDX    = in->MIRROR0_PROFILE_IDX;
-    out->MTU_VIOLATION          = in->MTU_VIOLATION;
-    out->NO_LEARN               = in->NO_LEARN;
-    out->OPERATOR_ID            = in->OPERATOR_ID;
-    out->PARITY_ERROR           = in->PARITY_ERROR;
-    out->PARSER_ERROR           = in->PARSER_ERROR;
-    out->PARSER_INFO            = in->PARSER_INFO;
-    out->PARSER_WINDOW_V        = in->PARSER_WINDOW_V;
-    out->PA_DROP                = in->PA_DROP;
-    out->PA_L3LEN_ERR           = in->PA_L3LEN_ERR;
-    out->PRE_RESOLVE_DMASK      = in->PRE_RESOLVE_DMASK;
-    out->QOS_SWPRI              = in->QOS_SWPRI;
-    out->RX_DATA                = in->RX_DATA;
-    out->RX_LENGTH              = in->RX_LENGTH;
-    out->RX_MIRROR              = in->RX_MIRROR;
-    out->SA_HIT                 = in->SA_HIT;
-    out->SA_RESULT              = in->SA_RESULT;
-    out->SEG_META_ERR           = in->SEG_META_ERR;
-    out->SV_DROP                = in->SV_DROP;
-    out->TRAP_ICMP              = in->TRAP_ICMP;
-    out->TRAP_IP_OPTIONS        = in->TRAP_IP_OPTIONS;
-    out->TRIGGERS               = in->TRIGGERS;
+    out->ACTION               = in->ACTION;
+    out->CGRP_TRIG            = in->CGRP_TRIG;
+    out->CONTENT_ADDR         = in->CONTENT_ADDR;
+    out->CPU_TRAP             = in->CPU_TRAP;
+    out->CSGLORT              = in->CSGLORT;
+    out->DROP_TTL             = in->DROP_TTL;
+    out->CGRP_FLAGS           = in->CGRP_FLAGS;
+    out->GLORT_DMASK          = in->GLORT_DMASK;
+    out->HASH_ROT_A           = in->HASH_ROT_A;
+    out->HASH_ROT_B           = in->HASH_ROT_B;
+    out->IP_MCAST_IDX         = in->IP_MCAST_IDX;
+    out->IS_IPV4              = in->IS_IPV4;
+    out->IS_IPV6              = in->IS_IPV6;
+    out->L2_ETYPE             = in->L2_ETYPE;
+    out->MIRROR0_PROFILE_IDX  = in->MIRROR0_PROFILE_IDX;
+    out->MOD_PROF_IDX         = in->MOD_PROF_IDX;
+    out->MTU_VIOLATION        = in->MTU_VIOLATION;
+    out->NO_LEARN             = in->NO_LEARN;
+    out->OPERATOR_ID          = in->OPERATOR_ID;
+    out->PARITY_ERROR         = in->PARITY_ERROR;
+    out->PARSER_ERROR         = in->PARSER_ERROR;
+    out->PARSER_INFO          = in->PARSER_INFO;
+    out->PARSER_WINDOW_V      = in->PARSER_WINDOW_V;
+    out->PA_DROP              = in->PA_DROP;
+    out->PA_HDR_PTRS          = in->PA_HDR_PTRS;
+    out->PA_L3LEN_ERR         = in->PA_L3LEN_ERR;
+    out->PRE_RESOLVE_DMASK    = in->PRE_RESOLVE_DMASK;
+    out->QOS_TC               = in->QOS_TC;
+    out->RX_DATA              = in->RX_DATA;
+    out->RX_LENGTH            = in->RX_LENGTH;
+    out->RX_MIRROR            = in->RX_MIRROR;
+    out->SA_HIT               = in->SA_HIT;
+    out->SA_RESULT            = in->SA_RESULT;
+    out->SEG_META_ERR         = in->SEG_META_ERR;
+    out->SV_DROP              = in->SV_DROP;
+    out->TRAP_ICMP            = in->TRAP_ICMP;
+    out->TRAP_IP_OPTIONS      = in->TRAP_IP_OPTIONS;
+    out->TRIGGERS             = in->TRIGGERS;
 }

@@ -83,3 +83,14 @@ fm_status mbyModelWriteCSR64(fm_uint32 regs[MBY_REGISTER_ARRAY_SIZE],
 
     return (addr_vld) ? FM_OK : FM_FAIL;
 }
+
+/* Support functions to build the MBY model as a standalone library */
+fm_int fmRand(void)
+{
+    fm_uint rand_seed = 1;
+    fm_int randResult;
+
+    randResult = rand_r(&rand_seed);
+
+    return randResult;
+}

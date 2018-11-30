@@ -2,7 +2,7 @@ package madisonbay.tcp
 
 import com.intel.cg.hpfd.csr.macros.SizedArray
 import shapeless.{HNil, HList, ::, Lazy, Generic}
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 import java.nio.ByteBuffer
 
 trait ByteArrayEncoder[T] {
@@ -11,6 +11,7 @@ trait ByteArrayEncoder[T] {
 
 object ByteArrayEncoder {
   //scalastyle:off magic.number
+  implicit val id: ByteArrayEncoder[Array[Byte]] = identity
   implicit val u8bae: ByteArrayEncoder[U8] = Array(_)
   implicit val u16bae: ByteArrayEncoder[U16] = u16 =>
     ByteBuffer.allocate(2).putShort(u16).array()

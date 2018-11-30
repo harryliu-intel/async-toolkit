@@ -20,7 +20,7 @@ void setEmKeySel0
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_uint32             const lookup,  // a.k.a. hash number
-    fm_byte               const profile, // a.k.a. scenario
+    fm_byte               const profile, // a.k.a. packet profile ID
     fm_uint32             const key8_mask
 )
 {
@@ -36,7 +36,7 @@ void setEmKeySel1
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_uint32             const lookup,  // a.k.a. hash number
-    fm_byte               const profile, // a.k.a. scenario
+    fm_byte               const profile, // a.k.a. packet profile ID
     fm_uint32             const key16_mask,
     fm_uint16             const key32_mask,
     fm_byte               const key_mask_sel
@@ -61,7 +61,7 @@ void setEmKeySel1
 void setEmHashCfg
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_byte               const profile, // a.k.a. scenario
+    fm_byte               const profile, // a.k.a. packet profile ID
     fm_byte               const mode,
     fm_uint16             const base_ptrs  [2],
     fm_byte               const hash_sizes [2],
@@ -93,7 +93,7 @@ void setEmHashCfg
 void setEmHashCamEn
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_byte               const profile,  // a.k.a. scenario
+    fm_byte               const profile,  // a.k.a. packet profile ID
     fm_uint32             const row,
     fm_uint32             const rule
 )
@@ -139,7 +139,7 @@ void setEmHashMiss
 (
     mby_ppe_cgrp_em_map * const cgrp_em_map,
     fm_uint32             const row,        // row = [0 .. 1]
-    fm_byte               const profile,    // a.k.a. scenario
+    fm_byte               const profile,    // a.k.a. packet profile ID
     fm_uint32             const actions[2]  // 2 actions per row
 )
 {
@@ -232,8 +232,7 @@ void setSharedTableMem
 void initRegs
 (
     mby_ppe_cgrp_a_map  * const cgrp_a_map,
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
-    mby_ppe_entropy_map * const entropy_map
+    mby_ppe_cgrp_b_map  * const cgrp_b_map
 )
 {
     // <initialize registers here>
@@ -246,31 +245,31 @@ void initDefaultInputs
 {
     mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(map2cla->FFU_PROFILE);
     fm_bool              * const ip_option   =   map2cla->IP_OPTION;
     mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
     fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
 
     // mbyClassifierActions:
-    for (fm_uint i = 0; i < MBY_FFU_ACT24; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         actions_in->act24[i].prec = 0;
         actions_in->act24[i].val  = 0;
     }
-    for (fm_uint i = 0; i < MBY_FFU_ACT4; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
         actions_in->act4[i].prec  = 0;
         actions_in->act4[i].val   = 0;
     }
-    for (fm_uint i = 0; i < MBY_FFU_ACT1; i++) {
+    for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
         actions_in->act1[i].prec  = 0;
         actions_in->act1[i].val   = 0;
     }
 
     // mbyClassifierKeys:
-    for (fm_uint i = 0; i < MBY_FFU_KEY32; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++)
         keys->key32[i] = 0;
-    for (fm_uint i = 0; i < MBY_FFU_KEY16; i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
         keys->key16[i] = 0;
-    for (fm_uint i = 0; i < MBY_FFU_KEY8;  i++)
+    for (fm_uint i = 0; i < MBY_CGRP_KEY8;  i++)
         keys->key8 [i] = 0;
 
     // fm_byte:
@@ -312,7 +311,7 @@ void initInputs
 {
     mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(map2cla->FFU_PROFILE);
     fm_bool              * const ip_option   =   map2cla->IP_OPTION;
     mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
     fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
@@ -326,7 +325,7 @@ void initInputs
         initDefaultInputs(map2cla);
         break;
     default:
-        printf("Unsupported test scenario -- exiting!\n");
+        printf("Unsupported scenario -- exiting!\n");
         exit(-1);
     }
 }
@@ -353,7 +352,6 @@ void allocMem
 (
     mby_ppe_cgrp_a_map  **cgrp_a_map,
     mby_ppe_cgrp_b_map  **cgrp_b_map,
-    mby_ppe_entropy_map **entropy_map,
     mby_shm_map         **shm_map
 )
 {
@@ -369,12 +367,6 @@ void allocMem
         exit(-1);
     }
 
-    *entropy_map = malloc(sizeof(mby_ppe_entropy_map));
-    if (*entropy_map == NULL) {
-        printf("Could not allocate heap memory for entropy map -- exiting!\n");
-        exit(-1);
-    }
-
     *shm_map = malloc(sizeof(mby_shm_map));
     if (*shm_map == NULL) {
         printf("Could not allocate heap memory for shared memory map -- exiting!\n");
@@ -386,16 +378,13 @@ void freeMem
 (
     mby_ppe_cgrp_a_map  * const cgrp_a_map,
     mby_ppe_cgrp_b_map  * const cgrp_b_map,
-    mby_ppe_entropy_map * const entropy_map,
     mby_shm_map         * const shm_map
 )
 {
-    free( cgrp_a_map);
-    free( cgrp_b_map);
-    free(entropy_map);
-    free(    shm_map);
+    free(cgrp_a_map);
+    free(cgrp_b_map);
+    free(shm_map);
 }
-
 
 void updateTestStats
 (
@@ -446,7 +435,6 @@ fm_status testWildCardMatch
 (
     mby_ppe_cgrp_a_map    * const cgrp_a_map,
     mby_ppe_cgrp_b_map    * const cgrp_b_map,
-    mby_ppe_entropy_map   * const entropy_map,
     mby_shm_map           * const shm_map,
     mbyMapperToClassifier * const in,
     mbyClassifierToHash   * const out
@@ -458,7 +446,7 @@ fm_status testWildCardMatch
 
     mbyClassifierActions * const actions_in  = &(in->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(in->FFU_KEYS);
-    fm_byte              * const scenario_in = &(in->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(in->FFU_PROFILE);
     fm_bool              * const ip_option   =   in->IP_OPTION;
     mbyParserInfo        * const parser_info = &(in->PARSER_INFO);
     fm_byte              * const pri_profile = &(in->PRIORITY_PROFILE);
@@ -471,7 +459,6 @@ fm_status testWildCardMatch
     (
         cgrp_a_map,
         cgrp_b_map,
-        entropy_map,
         shm_map,
         in,
         out
@@ -488,7 +475,6 @@ fm_status testExactMatch
 (
     mby_ppe_cgrp_a_map    * const cgrp_a_map,
     mby_ppe_cgrp_b_map    * const cgrp_b_map,
-    mby_ppe_entropy_map   * const entropy_map,
     mby_shm_map           * const shm_map,
     mbyMapperToClassifier * const in,
     mbyClassifierToHash   * const out
@@ -518,7 +504,7 @@ fm_status testExactMatch
 
     mbyClassifierActions * const actions_in  = &(in->FFU_ACTIONS);
     mbyClassifierKeys    * const keys        = &(in->FFU_KEYS);
-    fm_byte              * const scenario_in = &(in->FFU_SCENARIO);
+    fm_byte              * const scenario_in = &(in->FFU_PROFILE);
     fm_bool              * const ip_option   =   in->IP_OPTION;
     mbyParserInfo        * const parser_info = &(in->PARSER_INFO);
     fm_byte              * const pri_profile = &(in->PRIORITY_PROFILE);
@@ -529,7 +515,7 @@ fm_status testExactMatch
 
     // Init key selects:
     fm_uint32 lookup       = 0; // a.k.a. hash number
-    fm_uint32 profile      = 0; // a.k.a. scenario
+    fm_uint32 profile      = 0; // a.k.a. packet profile ID
     fm_uint32 key8_mask    = 0;
     fm_uint32 key16_mask   = 0;
     fm_uint16 key32_mask   = 0;
@@ -591,7 +577,6 @@ fm_status testExactMatch
     (
         cgrp_a_map,
         cgrp_b_map,
-        entropy_map,
         shm_map,
         in,
         out
@@ -610,10 +595,9 @@ int main (void)
 {
     mby_ppe_cgrp_a_map   *cgrp_a_map = NULL;
     mby_ppe_cgrp_b_map   *cgrp_b_map = NULL;
-    mby_ppe_entropy_map *entropy_map = NULL;
     mby_shm_map             *shm_map = NULL;
 
-    allocMem(&cgrp_a_map, &cgrp_b_map, &entropy_map, &shm_map);
+    allocMem(&cgrp_a_map, &cgrp_b_map, &shm_map);
 
     mbyMapperToClassifier map2cla = { 0 };
     mbyClassifierToHash   cla2hsh = { 0 };
@@ -627,19 +611,19 @@ int main (void)
     // --------------------------------------------------------------------------------
     // Wild Card Match (WCM) Test
     // --------------------------------------------------------------------------------
-    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, shm_map, &map2cla, &cla2hsh);
     updateTestStats("Wild Card Match (WCM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
     // Exact Match (EM) Test
     // --------------------------------------------------------------------------------
-    test_status = testExactMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+    test_status = testExactMatch(cgrp_a_map, cgrp_b_map, shm_map, &map2cla, &cla2hsh);
     updateTestStats("Exact Match (EM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
     // Longest Prefix Match (LPM) Test
     // --------------------------------------------------------------------------------
-    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, shm_map, &map2cla, &cla2hsh);
     updateTestStats("Longest Prefix Match (LPM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
@@ -647,7 +631,7 @@ int main (void)
     fm_bool tests_passed = reportTestStats(num_tests, num_passed);
 
     // Free up memory:
-    freeMem(cgrp_a_map, cgrp_b_map, entropy_map, shm_map);
+    freeMem(cgrp_a_map, cgrp_b_map, shm_map);
 
     int rv = (tests_passed) ? 0 : -1;
 

@@ -16,7 +16,7 @@ typedef struct mby_nh_test_data_in_struct
     fm_byte         group_size;
     fm_byte         arp_hash;
     fm_uint16       arp_tbl_idx;
-    fm_uint16       raw_hash;
+    fm_uint16       ecmp_hash;
 
     /* Next Hop register data. */
     mbyArpEntryType entry_type; // 1 = MAC entry, 0 - Glort Entry
@@ -116,7 +116,7 @@ nh_test_data nexthop_tests[] =
             .arp_index        = 0xBF,
             .group_type       = 1,
             .group_size       = 4,
-            .raw_hash         = 0x400,
+            .ecmp_hash        = 0x400,
             .arp_tbl_idx      = (0xBF + ((0x400 << 4) >> 12)) & (MBY_ARP_TABLE_ENTRIES - 1),//arp_tbl_idx = 0xC3
             .entry_type       = MBY_ARP_TYPE_MAC,
             .dmac             = 0x0022446688aa,
@@ -150,7 +150,7 @@ nh_test_data nexthop_tests[] =
             .arp_index        = 0xEF2,
             .group_type       = 1,
             .group_size       = 8,
-            .raw_hash         = 0xFF,
+            .ecmp_hash        = 0xFF,
             .arp_tbl_idx      = (0xEF2 + ((0xFF << 8) >> 12)) & (MBY_ARP_TABLE_ENTRIES - 1),//arp_tbl_idx = 0xF01
             .entry_type       = MBY_ARP_TYPE_MAC,
             .dmac             = 0x003377fedcba,

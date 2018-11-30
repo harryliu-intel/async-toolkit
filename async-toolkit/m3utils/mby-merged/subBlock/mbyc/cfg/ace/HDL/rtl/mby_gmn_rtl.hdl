@@ -11,7 +11,10 @@ $hdl_spec = {
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/shared_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
+       "src/shared/rtl/mby_egr_pkg.sv",
+       "src/igr/rtl/mby_igr_pkg.sv",
        "src/gmm/gmn/top/rtl/mby_gmn.sv",
+       "src/gmm/gmn/top/rtl/mby_gmn_par.sv",
        "src/gmm/gmn/gpl/rtl/mby_gpl_top.sv",
      ],
     
@@ -31,7 +34,10 @@ $hdl_spec = {
        "src/shared/interfaces",
        "src/shared/rtl",
        "src/gmm/gmn/top/rtl",
-       "src/gmm/gmn/gpl/rtl", 
+       "src/gmc/gmn/gpl/rtl", 
+       "src/igr/rtl/",
+       "target/mby/mgm_run/igr/src",
+       "target/mby/mgm_run/rtl",
      ],
     
     # Arbitrary VLOG options
