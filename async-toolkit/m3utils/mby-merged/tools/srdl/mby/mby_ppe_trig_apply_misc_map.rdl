@@ -1,6 +1,7 @@
 // INTEL TOP SECRET
 // Copyright 2014-2018 Intel Corporation. All Rights Reserved.
 //
+`include "lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 

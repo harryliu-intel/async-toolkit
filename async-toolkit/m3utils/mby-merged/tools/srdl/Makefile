@@ -53,6 +53,7 @@ GENPG_ARGS      := -copyrightpath ${MODEL_ROOT}/src/txt/intelcopyright.txt -bits
 GENPG_EXEC      := $(shell ToolConfig.pl get_tool_path meta)/bin/genpg
 GENPG           := $(GENPG_EXEC) $(GENPG_ARGS)
 
+MULTI_GEN_RALF  := $(shell ToolConfig.pl get_tool_exec multi_gen_ralf)
 
 # Input files
 TOP_MAP         := $(BLK)_top_map
@@ -209,7 +210,7 @@ $(RESULTS_SUBBLOCK)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
 	cp $(TMPDIR)/output/crif/$(notdir $@) $@
 
 %.ralf: %_crif.xml
-	cd $(dir $@) && multi_gen_ralf_crif.py -i $< -o .ralf --bytes 0 
+	cd $(dir $@) && $(MULTI_GEN_RALF) -i $< -o .ralf --bytes 0 
 ral_%.sv: %.ralf
 	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(notdir $(basename $<)) -o $(basename $@) $<
 	@echo Generated $@
