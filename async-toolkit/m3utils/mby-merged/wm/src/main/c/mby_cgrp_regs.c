@@ -6,8 +6,8 @@
 
 mbyClassifierHashLookup mbyClsGetEmHashLookupEntry
 (
-    em_hash_lookup_r * const em_hash_lookup_reg,
-    fm_uint16          const lookup_ptr
+    em_hash_lookup_r const * const em_hash_lookup_reg,
+    fm_uint16                const lookup_ptr
 )
 {
     mbyClassifierHashLookup lookup_entry;
@@ -27,9 +27,9 @@ mbyClassifierHashLookup mbyClsGetEmHashLookupEntry
 
 mbyClassifierKeyMaskCfg mbyClsGetEmKeyMaskCfg
 (
-    mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_byte               const hash_num,
-    fm_byte               const profile
+    mby_ppe_cgrp_em_map const * const cgrp_em_map,
+    fm_byte                     const hash_num,
+    fm_byte                     const profile
 )
 {
     mbyClassifierKeyMaskCfg key_mask_cfg;
@@ -44,8 +44,8 @@ mbyClassifierKeyMaskCfg mbyClsGetEmKeyMaskCfg
 
 mbyClassifierHashCfg mbyClsGetEmHashCfg
 (
-    mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_byte               const profile
+    mby_ppe_cgrp_em_map const * const cgrp_em_map,
+    fm_byte                     const profile
 )
 {
     mbyClassifierHashCfg hash_cfg;
@@ -65,9 +65,9 @@ mbyClassifierHashCfg mbyClsGetEmHashCfg
 
 fm_uint64 mbyClsGetEmHashCamEntry
 (
-    mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_uint32             const entry,
-    fm_uint32             const word
+    mby_ppe_cgrp_em_map const * const cgrp_em_map,
+    fm_uint32                   const entry,
+    fm_uint32                   const word
 )
 {
     em_hash_cam_r const * const em_a_hash_cam = &(cgrp_em_map->HASH_CAM[entry][word]);
@@ -79,9 +79,9 @@ fm_uint64 mbyClsGetEmHashCamEntry
 
 fm_uint64 mbyClsGetEmHashCamMask
 (
-    mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_uint32             const row,
-    fm_uint32             const rule
+    mby_ppe_cgrp_em_map const * const cgrp_em_map,
+    fm_uint32                   const row,
+    fm_uint32                   const rule
 )
 {
 
@@ -94,9 +94,9 @@ fm_uint64 mbyClsGetEmHashCamMask
 
 fm_uint64 mbyClsGetEmAShmEntry
 (
-    mby_shm_map * const shm_map,
-    fm_uint16     const block,
-    fm_uint16     const cell
+    mby_shm_map const * const shm_map,
+    fm_uint16           const block,
+    fm_uint16           const cell
 )
 {
     fwd_table0_r const * const fwd_table0 = &(shm_map->FWD_TABLE0[block][cell]);
@@ -108,9 +108,9 @@ fm_uint64 mbyClsGetEmAShmEntry
 
 fm_uint64 mbyClsGetEmBShmEntry
 (
-    mby_shm_map * const shm_map,
-    fm_uint16     const block,
-    fm_uint16     const cell
+    mby_shm_map const * const shm_map,
+    fm_uint16           const block,
+    fm_uint16           const cell
 )
 {
     fwd_table1_r const * const fwd_table1 = &(shm_map->FWD_TABLE1[block][cell]);
@@ -122,11 +122,11 @@ fm_uint64 mbyClsGetEmBShmEntry
 
 void mbyClsGetEmHashMissActions
 (
-    mby_ppe_cgrp_em_map * const cgrp_em_map,
-    mbyClassifierHashCfg  const hash_cfg,
-    fm_uint32             const hash_num,
-    fm_byte               const profile,
-    fm_uint32                 * hash_actions
+    mby_ppe_cgrp_em_map   const * const cgrp_em_map,
+    mbyClassifierHashCfg          const hash_cfg,
+    fm_uint32                     const hash_num,
+    fm_byte                       const profile,
+    fm_uint32                   *       hash_actions
 )
 {
     em_hash_miss_r const * const em_hash_miss   = &(cgrp_em_map->HASH_MISS[hash_num][profile]);
@@ -144,9 +144,9 @@ void mbyClsGetEmHashMissActions
 
 mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 (
-    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    fm_byte                     const slice,
-    fm_byte                     const profile
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    fm_byte                           const slice,
+    fm_byte                           const profile
 )
 {
     mbyClassifierTcamCfg tcam_cfg;
@@ -166,9 +166,9 @@ mbyClassifierTcamCfg mbyClsGetWcmTcamCfg
 
 mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 (
-    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    fm_byte                     const slice,
-    fm_uint16                   const index
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    fm_byte                           const slice,
+    fm_uint16                         const index
 )
 {
     mbyClassifierTcamEntry tcam_entry;
@@ -186,9 +186,9 @@ mbyClassifierTcamEntry mbyClsGetWcmTcamEntry
 
 mbyClassifierActionCfg mbyClsGetWcmActionCfg
 (
-    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    fm_byte                     const profile,
-    fm_byte                     const ram_num
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    fm_byte                           const profile,
+    fm_byte                           const ram_num
 )
 {
     mbyClassifierActionCfg action_cfg;
@@ -206,10 +206,10 @@ mbyClassifierActionCfg mbyClsGetWcmActionCfg
 
 fm_uint32 mbyClsGetWcmActionEntry
 (
-    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    fm_byte                     const ram_num,
-    fm_uint32                   const hit_index,
-    fm_uint32                   const action
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    fm_byte                           const ram_num,
+    fm_uint32                         const hit_index,
+    fm_uint32                         const action
 )
 {
     wcm_action_r const * const wcm_action = &(cgrp_b_map->WCM_ACTION[ram_num][hit_index]);
