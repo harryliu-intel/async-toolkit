@@ -123,7 +123,7 @@ PROCEDURE DoContainer(t : T; c : RegContainer.T; lev : CARDINAL) =
 
 PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL) =
   BEGIN
-    t.put(F("(%s", c.nm),lev);
+    t.put(F("(child %s", c.nm),lev);
     INC(lev);
     IF c.array # NIL THEN
       t.put(F("(array %s ", Int(BigInt.ToInteger(c.array.n.x))),lev);

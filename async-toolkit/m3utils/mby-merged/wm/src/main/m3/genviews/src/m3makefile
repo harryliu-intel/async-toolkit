@@ -75,8 +75,10 @@ interface("RegCGenState")
 
 implementation ("Main")
 
-
 SchemeStubs ("FieldData")
+SchemeStubs ("Text")
+SchemeStubs ("Wr")
+SchemeStubs ("AtomRefTbl")
 
 ExportSchemeStubs("genviews")
 importSchemeStubs()              % import ALL scheme stubs
