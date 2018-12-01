@@ -6,8 +6,8 @@
 
 mbyTriggerConditionCfg mbyTrigGetConditionCfg
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerConditionCfg cond_cfg;
@@ -29,8 +29,8 @@ mbyTriggerConditionCfg mbyTrigGetConditionCfg
 
 mbyTriggerConditionParam mbyTrigGetConditionParam
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerConditionParam param_cfg;
@@ -47,8 +47,8 @@ mbyTriggerConditionParam mbyTrigGetConditionParam
 
 mbyTriggerConditionCGRP mbyTrigGetConditionCGRP
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerConditionCGRP cgrp_cond;
@@ -61,8 +61,8 @@ mbyTriggerConditionCGRP mbyTrigGetConditionCGRP
 
 mbyTriggerConditionGlort mbyTrigGetConditionGlort
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerConditionGlort glort_cond;
@@ -75,8 +75,8 @@ mbyTriggerConditionGlort mbyTrigGetConditionGlort
 
 mbyTriggerConditionRx mbyTrigGetConditionRx
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerConditionRx rx_cond;
@@ -88,8 +88,8 @@ mbyTriggerConditionRx mbyTrigGetConditionRx
 
 mbyTriggerConditionAmask1 mbyTrigGetConditionAmask1
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerConditionAmask1 amask1_cond;
@@ -101,8 +101,8 @@ mbyTriggerConditionAmask1 mbyTrigGetConditionAmask1
 
 mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerConditionAmask2 amask2_cond;
@@ -114,8 +114,8 @@ mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
 
 mbyTriggerDirectMapCtx mbyTrigGetDirectMapCtrlCtx
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerDirectMapCtx direct_map_ctx;
@@ -131,8 +131,8 @@ mbyTriggerDirectMapCtx mbyTrigGetDirectMapCtrlCtx
 
 static mbyTriggerDirectMapAdm mbyTrigGetDirectMapCtrlAdm
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerDirectMapAdm direct_map_adm;
@@ -149,8 +149,8 @@ static mbyTriggerDirectMapAdm mbyTrigGetDirectMapCtrlAdm
 
 static mbyTriggerDirectMapAdr mbyTrigGetDirectMapCtrlAdr
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerDirectMapAdr direct_map_adr;
@@ -166,8 +166,8 @@ static mbyTriggerDirectMapAdr mbyTrigGetDirectMapCtrlAdr
 
 mbyTriggerActions mbyTriggerGetActions
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
     mbyTriggerActions trig_actions;

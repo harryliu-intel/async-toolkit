@@ -62,37 +62,37 @@ typedef struct mbyLpmSubtrieStoreStruct
 
 void mbyLpmGetKeySels
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_byte                  const profile_id,
-    mbyLpmKeySels          * const key_sels
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_byte                    const profile_id,
+    mbyLpmKeySels            * const key_sels
 );
 
 void mbyLpmGetTcamEntry
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    const fm_uint16                index,
-    mbyLpmTcamEntry        * const tcam_entry
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    const fm_uint16                  index,
+    mbyLpmTcamEntry          * const tcam_entry
 );
 
 void mbyLpmGetTcamSubtrie
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    const fm_uint16                index,
-    mbyLpmSubtrie          * const tcam_subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    const fm_uint16                  index,
+    mbyLpmSubtrie            * const tcam_subtrie
 );
 
 void mbyLpmGetSubtrie
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    const fm_uint16                index,
-    mbyLpmSubtrie          * const subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    const fm_uint16                  index,
+    mbyLpmSubtrie            * const subtrie
 );
 
 void mbyLpmGetSubtrieStore
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    const fm_uint16                index,
-    mbyLpmSubtrieStore     * const st_store
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    const fm_uint16                  index,
+    mbyLpmSubtrieStore       * const st_store
 );
 
 #endif /* MYB_LPM_REGS_H */
