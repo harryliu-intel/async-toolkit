@@ -462,8 +462,8 @@ reg flood_glort_table_r {
   field {
     AccessType = "RW";
     desc = "
-            Defines the glort to use when flooding multicast frames if the FFU 
-            does not already provide a flood glort. For DLF flood control, set 
+            Defines the glort to use when flooding multicast frames if the Classifier
+            and NextHop don't already provide a flood glort. For DLF flood control, set 
             to a glort with a zero destination mask.
            ";
     ValRandomize = true;
@@ -471,8 +471,8 @@ reg flood_glort_table_r {
   field {
     AccessType = "RW";
     desc = "
-            Defines the glort to use when flooding unicast frames if the FFU 
-            does not already provide a flood glort. For DLF flood control, set 
+            Defines the glort to use when flooding unicast frames if the Classifier
+            and NextHop don't already provide a flood glort. For DLF flood control, set 
             to a glort with a zero destination mask.
            ";
     ValRandomize = true;
