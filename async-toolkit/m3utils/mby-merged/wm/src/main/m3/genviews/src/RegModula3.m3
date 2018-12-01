@@ -58,12 +58,13 @@ TYPE
     put  := PutGS;
   END;
 
-TYPE ProcType = { Csr, Range, Reset };
+TYPE ProcType = { Csr, Range, Reset, Visit };
 
 CONST DeclFmt = ARRAY ProcType OF TEXT {
   "PROCEDURE %s(VAR t : %s; READONLY a : %s; VAR op : CsrOp.T)",
   "PROCEDURE %s(READONLY a : %s) : CompRange.T",
-  "PROCEDURE %s(READONLY t : %s; READONLY u : %s)"
+  "PROCEDURE %s(READONLY t : %s; READONLY u : %s)",
+  "PROCEDURE %s(READONLY a : %s; v : AddrVisitor.T; array : AddrVisitor.Array; parent : AddrVisitor.Internal)"
   };
 (* we could extend this pattern to other procedure definitions ... *)
   
@@ -94,7 +95,7 @@ PROCEDURE DefProc(gs     : GenState;
         .imain(DeclFmt[ofType] & ";\n", pnm, ttn, atn);
       END
     |
-      ProcType.Range =>
+      ProcType.Range, ProcType.Visit =>
       gs.mdecl(DeclFmt[ofType] & " = \n", pnm, atn);
       IF intf THEN gs
         .imain(DeclFmt[ofType] & ";\n", pnm, atn);
@@ -172,6 +173,8 @@ PROCEDURE PutGS(gs : GenState; sec : Section; txt : TEXT) =
                  T.  It also allows for "software writes" using
                  regular memory addressing with the addresses per the
                  RDL definitions used.
+
+     Visit : visit the internals and fields of the A record
 
      The two interfaces appear in the code as "RW.R" (for the XXX_map.i3)
      and "RW.W" (for the XXX_map_addr.i3).
@@ -656,7 +659,8 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
     (* last, generate procedures to deal with the top-level type *)
     CASE gs.th OF
       TypeHier.Addr =>
-      GenAddrmapInit(map, gs)
+      GenAddrmapInit(map, gs);
+      GenAddrmapVisit(map, gs)
     |
       TypeHier.Unsafe =>
       GenAddrmapXInit(map, gs)
@@ -715,6 +719,130 @@ PROCEDURE GenAddrmapInit(map : RegAddrmap.T; gs : GenState) =
     gs.mdecl("\n");
   END GenAddrmapInit;
 
+  (**********************************************************************)
+
+PROCEDURE GenAddrmapVisit(map : RegAddrmap.T; gs : GenState) =
+  VAR
+    qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Addr];
+    pnm : TEXT;
+  BEGIN
+    EVAL gs.i3imports.insert("AddrVisitor");
+    EVAL gs.m3imports.insert("AddrVisitor");
+
+    gs.imain("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.imain("PROCEDURE Visit(READONLY a : %s; v : AddrVisitor.T; array : AddrVisitor.Array := NIL; parent : AddrVisitor.Internal := NIL);\n",
+             MainTypeName[gs.th]);
+    
+    gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.mdecl("PROCEDURE Visit(READONLY a : %s; v : AddrVisitor.T; array : AddrVisitor.Array := NIL; parent : AddrVisitor.Internal := NIL) =",
+             MainTypeName[gs.th]);
+    gs.mdecl("  (* %s:%s *)\n",ThisFile(),Fmt.Int(ThisLine()));
+    gs.mdecl("  VAR\n");
+    gs.mdecl("     internal : AddrVisitor.Internal;\n");
+    gs.mdecl("  BEGIN\n");
+    gs.mdecl("    internal := v.internal(\"%s\", \"\", AddrVisitor.Type.Addrmap, array, parent);\n", map.nm);
+    FOR i := 0 TO map.children.size()-1 DO
+      GenChildVisit(map.children.get(i), gs, FALSE)
+    END;
+    gs.mdecl("  END Visit;\n");
+    gs.mdecl("\n");
+
+    FOR i := 0 TO map.children.size()-1 DO
+      IF FALSE THEN
+        Debug.Out("Trying " & ComponentResetName(map.children.get(i).comp, gs))
+      END;
+      GenCompProc(map.children.get(i).comp, gs, ProcType.Visit)
+    END
+  END GenAddrmapVisit;
+  
+PROCEDURE GenChildVisit(e          : RegChild.T;
+                       gs         : GenState;
+                       skipArc := FALSE) =
+  VAR
+    childArc : TEXT;
+  BEGIN
+    (* special case for array with only one child is that it is NOT
+       a record *)
+    IF skipArc THEN
+      childArc := "";
+    ELSE
+      childArc := "." & IdiomName(e.nm,debug := FALSE);
+    END;
+
+    IF doDebug THEN
+      Debug.Out("GenChildVisit " & e.nm & " -> \"" & childArc & "\"")
+    END;
+    
+    WITH rnm = ComponentVisitName(e.comp,gs) DO
+      IF e.array = NIL THEN
+        gs.mdecl("    %s(a%s,v,NIL,internal);\n", rnm, childArc);
+      ELSE
+      
+        gs.mdecl("    VAR array := NEW(AddrVisitor.Array, sz := %s); BEGIN\n",
+                 BigInt.Format(e.array.n.x));
+        gs.mdecl("      %s\n",FmtArrFor(e.array));
+        gs.mdecl("        array.idx := i;\n");
+        gs.mdecl("        %s(a%s[i],v,array,internal);\n", rnm, childArc);
+        gs.mdecl("      END\n");
+        gs.mdecl("    END;\n")
+      END
+    END
+  END GenChildVisit;
+
+PROCEDURE GenRegfileVisit(rf : RegRegfile.T; gs : GenState) =
+  VAR
+    pnm : TEXT;
+  BEGIN
+    IF NOT gs.defProc(rf, ProcType.Visit, pnm) THEN RETURN END;
+    
+    gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.mdecl("  VAR\n");
+    gs.mdecl("     internal : AddrVisitor.Internal;\n");
+    gs.mdecl("  BEGIN\n");
+    gs.mdecl("    internal := v.internal(\"%s\", \"\", AddrVisitor.Type.Regfile, array, parent);\n", rf.nm);
+
+    (* chew through the children and reset each in turn *)
+    
+    FOR i := 0 TO rf.children.size()-1 DO
+      GenChildVisit(rf.children.get(i), gs, rf.children.size()=1)
+    END;
+    gs.mdecl("  END %s;\n",pnm);
+    gs.mdecl("\n");
+    FOR i := 0 TO rf.children.size()-1 DO
+      GenCompProc(rf.children.get(i).comp, gs, ProcType.Visit)
+    END;
+  END GenRegfileVisit;
+
+PROCEDURE GenRegVisit(r : RegReg.T; gs : GenState) =
+  VAR
+    pnm : TEXT;
+  BEGIN
+    IF doDebug THEN
+      Debug.Out("GenRegVisit: " & ComponentName[ProcType.Visit](r,gs));
+    END;
+    IF NOT gs.defProc(r, ProcType.Visit, pnm) THEN RETURN END;
+
+    gs.mdecl("  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
+    gs.mdecl("  VAR\n");
+    gs.mdecl("     internal : AddrVisitor.Internal;\n");
+    gs.mdecl("  BEGIN\n");
+    gs.mdecl("    internal := v.internal(\"%s\", \"\", AddrVisitor.Type.Reg, array, parent);\n", r.nm);
+    FOR i := 0 TO r.fields.size()-1 DO
+      WITH f  = r.fields.get(i),
+           nm = f.name(debug := FALSE) DO
+        gs.mdecl("    v.field(\"%s\",a.%s,%s,%s,internal);\n",
+            f.name(debug := FALSE),
+            f.name(debug := FALSE),
+            Fmt.Int(f.lsb),
+            Fmt.Int(f.width))
+      END
+    END;
+    gs.mdecl("  END %s;\n",pnm);
+    gs.mdecl("\n");
+  END GenRegVisit;
+
+  (**********************************************************************)
+  
 PROCEDURE GenAddrmapXInit(map : RegAddrmap.T; gs : GenState) =
   VAR
     qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Read];
@@ -1158,6 +1286,16 @@ PROCEDURE GenCompProc(c     : RegComponent.T;
         RegRegfile.T => GenRegfileReset(c, gs)
       |
         RegReg.T     => GenRegReset    (c, gs)
+      ELSE
+        <*ASSERT FALSE*>
+      END
+    |   ProcType.Visit =>
+      TYPECASE c OF
+        RegAddrmap.T => (* skip, generated in its own file *)
+      |
+        RegRegfile.T => GenRegfileVisit(c, gs)
+      |
+        RegReg.T     => GenRegVisit    (c, gs)
       ELSE
         <*ASSERT FALSE*>
       END
@@ -1943,6 +2081,16 @@ PROCEDURE ComponentInitName(c : RegComponent.T; gs : GenState) : TEXT =
     END
   END ComponentInitName;
 
+PROCEDURE ComponentVisitName(c : RegComponent.T; gs : GenState) : TEXT =
+  BEGIN
+    TYPECASE c OF
+      RegAddrmap.T(a) =>
+      RETURN a.intfName(gs) & ".Visit" 
+    ELSE
+      RETURN "Visit_" & c.typeName(gs)
+    END
+  END ComponentVisitName;
+
 PROCEDURE ComponentCsrName(c : RegComponent.T; gs : GenState) : TEXT =
   VAR
     gsC := NEW(GenState, init := InitGS).init(gs);
@@ -1987,7 +2135,8 @@ CONST
                                               gs : GenState) : TEXT
   { ComponentCsrName,
     ComponentRangeName,
-    ComponentResetName };
+    ComponentResetName,
+    ComponentVisitName };
 
   (**********************************************************************)
   

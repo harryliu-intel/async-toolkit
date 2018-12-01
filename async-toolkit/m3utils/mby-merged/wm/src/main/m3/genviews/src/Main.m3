@@ -9,18 +9,19 @@ IMPORT TextSetDef;
 IMPORT RegAddrmap;
 IMPORT Pathname;
 IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC;
+IMPORT GenViewsScheme;
 IMPORT Text;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala|c]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c|scheme]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
-TYPE Lang = { M3, Scala, C };
+TYPE Lang = { M3, Scala, C, Scheme };
 
-CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c" };
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -72,6 +73,8 @@ BEGIN
     Lang.Scala => gv := NEW(GenViewsScala.T)
   |
     Lang.C     => gv := NEW(GenViewsC.T)
+  |
+    Lang.Scheme => gv := NEW(GenViewsM3.T)
   END;  
 
   EVAL lexer.setRd(rd);
@@ -89,5 +92,10 @@ BEGIN
     tgtmap := gv.decorate(rdlTgt, "").comp
   END;
 
-  gv.gen(tgtmap, outDir)
+  CASE lang OF
+    Lang.Scheme =>
+    NEW(GenViewsScheme.T).gen(tgtmap, outDir)
+  ELSE
+    gv.gen(tgtmap, outDir)
+  END
 END Main.

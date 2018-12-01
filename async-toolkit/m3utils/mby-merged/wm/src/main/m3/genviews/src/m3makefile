@@ -33,6 +33,7 @@ generic_module("GenViews")
 module ("GenViewsM3")
 module ("GenViewsScala")
 module ("GenViewsC")
+module ("GenViewsScheme")
 
 module ("DecoratedComponentDef")
 
