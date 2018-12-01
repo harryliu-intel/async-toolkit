@@ -9,7 +9,12 @@ lazy val common = (project in file("common"))
     Settings.commonSettings,
     name := Settings.commonName,
     libraryDependencies ++= Dependencies.commonDeps,
-    scalacOptions -= "-Ywarn-unused:patvars"
+    scalacOptions -= "-Ywarn-unused:patvars",
+    unmanagedSources.in(Compile, scalafix) := unmanagedSources.in(Compile).value.filterNot(file => Set(
+      "RdlRegister.scala",
+      "AddressGuard.scala",
+      "BitVector.scala"
+    ).contains(file.getName))
   )
 
 lazy val csrMacros = (project in file("csr-macros"))
@@ -17,6 +22,21 @@ lazy val csrMacros = (project in file("csr-macros"))
   .settings(
     Settings.commonSettings,
     name := Settings.csrMacrosName,
+    libraryDependencies ++= Dependencies.csrMacrosDeps,
+    addCompilerPlugin(Dependencies.scalaMacrosParadise),
+    autoCompilerPlugins := true,
+    scalacOptions -= "-Ywarn-unused:patvars",
+    unmanagedSources.in(Compile, scalafix) := unmanagedSources.in(Compile).value.filterNot(file => Set(
+      "SizedArray.scala",
+      "reg.scala"
+    ).contains(file.getName))
+  )
+
+lazy val csrMacroTests = (project in file("csr-macro-tests"))
+  .dependsOn(csrMacros)
+  .settings(
+    Settings.commonSettings,
+    name := Settings.csrMacroTestsName,
     libraryDependencies ++= Dependencies.csrMacrosDeps,
     addCompilerPlugin(Dependencies.scalaMacrosParadise),
     autoCompilerPlugins := true,
@@ -35,7 +55,11 @@ lazy val csr = (project in file("csr"))
     version := rdlGitHashShortProjectVersion.value,
     // some imports are unused among generated hierarchy
     scalacOptions -= "-Ywarn-unused:imports",
-    publishArtifact in Test := true
+    publishArtifact in Test := true,
+    publishArtifact in packageDoc in Test := false,
+    unmanagedSources.in(Test, scalafix) := unmanagedSources.in(Test).value.filterNot(file => Set(
+      "package.scala"
+    ).contains(file.getName))
   )
 
 lazy val wmServerDto = (project in file("wm-server-dto"))
@@ -43,9 +67,6 @@ lazy val wmServerDto = (project in file("wm-server-dto"))
   .dependsOn(common)
   .settings(
     Settings.commonSettings,
-    // TODO: to be removed
-    scalastyleFailOnError := false,
-    scalastyleFailOnWarning := false,
     name := Settings.wmServerDtoName,
     // some imports are unused for generated classes
     scalacOptions -= "-Ywarn-unused:imports"
@@ -70,7 +91,16 @@ lazy val root = (project in file("."))
     mainClass in assembly := Some("madisonbay.Main"),
     test in assembly := {},
     assemblyOutputPath in assembly := path,
-    fork in run := true
+    fork in run := true,
+    fork in Test := true,
+    javaOptions in Test += s"-Dconfig.file=${baseDirectory.value}/src/main/resources/application.conf",
+    unmanagedSources.in(Compile, scalafix) := unmanagedSources.in(Compile).value.filterNot(file => Set(
+      "JsonSerializer.scala",
+      "Triggers.scala",
+      "ExtractAction.scala",
+      "FieldVector.scala",
+      "IoUriDispatcher.scala"
+    ).contains(file.getName))
   )
 
 val publishArtifacts = taskKey[Unit]("Publish artifacts only if current user is npgadmin.")

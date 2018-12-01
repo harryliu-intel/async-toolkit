@@ -17,18 +17,26 @@ SIM_DIR = dv/run
 
 INCS = $(RTL_SRC)/rx_ppe/rtl
 INCS += $(RTL_SRC)/parser/rtl
-INCS += $(RTL_SRC)/classifier/rtl
+INCS += $(RTL_SRC)/parser/rtl/hlp
+INCS += $(RTL_SRC)/parser/rtl/hlp/tmp
+INCS += $(RTL_SRC)/class_gpa/rtl
+INCS += $(RTL_SRC)/class_gpb/rtl
 INCS += $(RTL_SRC)/action/rtl
 INCS += $(SHARED_SRC)/rtl
+INCS += $(SHARED_SRC)/rtl/hlp
 INCS += $(SHARED_SRC)/interfaces
+INCS += $(SHARED_SRC)/sva/hlp
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src
 INCS += $(TARGET_SRC)/mby/mgm_run/parser/src/mem_wrap
-INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src
-INCS += $(TARGET_SRC)/mby/mgm_run/classifier/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpa/src
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpa/src/mem_wrap
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpb/src
+INCS += $(TARGET_SRC)/mby/mgm_run/class_gpb/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/action/src
 INCS += $(TARGET_SRC)/mby/mgm_run/action/src/mem_wrap
 INCS += $(TARGET_SRC)/mby/mgm_run/rtl
 INCS += $(ASSERT_LIB)/SVA_LIB
+INCS += $(RTL_SRC)/parser/sva/hlp
 INCS += /p/hdk/cad/ctech/v15ww50e/source/v
 
 VCS_INC = $(addprefix +incdir+,$(INCS))
@@ -37,24 +45,32 @@ VCS_LIB = $(addprefix -y ,$(INCS))
 VCS_LIB += $(addprefix -y ,$(DV_SRC))
 
 VCS_SRC  =	$(SHARED_SRC)/rtl/shared_pkg.sv
-VCS_SRC  +=	$(SHARED_SRC)/rtl/pkt_pkg.sv
-VCS_SRC  +=	$(SHARED_SRC)/rtl/pkt_meta_pkg.sv
-VCS_SRC  +=	$(SHARED_SRC)/rtl/rx_ppe_pkg.sv
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_register_constants_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_meta_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkg.vh
+VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_ipp_pkg.vh
 VCS_SRC  +=	$(ASSERT_LIB)/SVA_LIB/intel_checkers.vs
 VCS_SRC  += $(ASSERT_LIB)/SVA_LIB/intel_checkers_pkg.vs
+VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_register_struct.vh
+VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_crc_pkg.vh
+VCS_SRC  += $(SHARED_SRC)/rtl/hlp/hlp_csum_pkg.vh
+VCS_SRC  += $(RTL_SRC)/parser/rtl/hlp/hlp_pa_pkg.vh
 VCS_SRC  += $(SHARED_SRC)/interfaces/ahb_rx_ppe_if.sv
 VCS_SRC  += $(SHARED_SRC)/interfaces/glb_rx_ppe_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/igr_rx_ppe_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_igr_if.sv
-VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm_if.sv
+VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm0_if.sv
+VCS_SRC  +=	$(SHARED_SRC)/interfaces/rx_ppe_ppe_stm1_if.sv
 VCS_SRC  +=	$(SHARED_SRC)/interfaces/par_class_if.sv
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/parser/src/parser_mem.def
-VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/classifier/src/classifier_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/class_gpa/src/class_gpa_mem.def
+VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/class_gpb/src/class_gpb_mem.def
 VCS_SRC  += $(TARGET_SRC)/mby/mgm_run/action/src/action_mem.def
 
 VCS_FLAGS = -full64 +v2k -sverilog -notice +vcs+lic+wait +warn=noUII-L \
     -timescale=10ps/10ps -debug_pp +libext+.v+.sv+.vh+.svh+.vs+.vm+.sva \
-    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASSIFIER_BEHAVE_MEMS \
+    -assert svaext +define+VCSSIM+MBY_PARSER_BEHAVE_MEMS+MBY_CLASSIFIER_BEHAVE_MEMS+JMB \
     -Mdir=$(SIM_DIR)/csrc -o $(SIM_DIR)/$@
 
 default: ppe_stm

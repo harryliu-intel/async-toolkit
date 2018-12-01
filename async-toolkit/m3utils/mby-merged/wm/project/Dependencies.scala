@@ -25,9 +25,15 @@ object Dependencies {
   lazy val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
   lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging
   lazy val pureConfig = "com.github.pureconfig" %% "pureconfig" % Versions.pureconfig
+  lazy val spinoco = "com.spinoco" %% "fs2-http" % Versions.spinoco
   def csrModel(csrVersion: String): ModuleID = "com.intel.cg.hpfd" %% "csr-model" % csrVersion
 
-  lazy val csrMacrosDeps = Seq(shapeless, refined)
+  lazy val csrMacrosDeps = Seq(
+    shapeless,
+    refined,
+    scalaTest % "test",
+    scalaCheck % "test"
+  )
   lazy val commonDeps = Seq(
     monocleCore,
     monocleMacro,
@@ -57,6 +63,7 @@ object Dependencies {
     logback,
     scalaLogging,
     pureConfig,
+    spinoco,
     csrModel(csrVersion),
     // use test code as dependency
     // "compile->compile;test->test" doesn't work

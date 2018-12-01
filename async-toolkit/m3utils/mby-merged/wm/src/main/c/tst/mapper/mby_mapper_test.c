@@ -221,10 +221,51 @@ static int simple_tcp_act4_default_test_check(const mbyMapperToClassifier* in)
     return 1;
 }
 
+static void simple_tcp_act4_double_default_test_setup
+(
+    mby_ppe_mapper_map * const mapper_map,
+    mbyParserToMapper * inout
+)
+{
+    map_port_default_r * port_def = &(mapper_map->MAP_PORT_DEFAULT[0][0]);
+    port_def->TARGET              = 160;
+    port_def->VALUE               = 0xfe;
+}
+
+static int simple_tcp_act4_double_default_test_check(const mbyMapperToClassifier * in)
+{
+    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act4[0].val == 0xe, "act4[0]");
+    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act4[1].val == 0xf, "act4[1]");
+
+    return 1;
+}
+
+static void simple_tcp_act4_quad_default_test_setup
+(
+    mby_ppe_mapper_map * const mapper_map,
+    mbyParserToMapper * inout
+)
+{
+    map_port_default_r * port_def = &(mapper_map->MAP_PORT_DEFAULT[0][0]);
+    port_def->TARGET              = 129;
+    port_def->VALUE               = 0xabcd;
+}
+
+static int simple_tcp_act4_quad_default_test_check(const mbyMapperToClassifier * in)
+{
+    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act4[1].val == 0xd, "act4[1]");
+    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act4[2].val == 0xc, "act4[2]");
+    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act4[3].val == 0xb, "act4[3]");
+    MAPPER_TEST_ASSERT(in->FFU_ACTIONS.act4[4].val == 0xa, "act4[4]");
+
+    return 1;
+}
+
+
 static void simple_tcp_default0_test_setup
 (
     mby_ppe_mapper_map * const mapper_map,
-    mbyParserToMapper* inout
+    mbyParserToMapper * inout
 )
 {
     map_port_default_r * port_def = &(mapper_map->MAP_PORT_DEFAULT[0][0]);
@@ -464,6 +505,8 @@ int main()
     SIMPLE_TCP_TEST(basic,               fails); tests++;
     SIMPLE_TCP_TEST(act24_default,       fails); tests++;
     SIMPLE_TCP_TEST(act4_default,        fails); tests++;
+    SIMPLE_TCP_TEST(act4_double_default, fails); tests++;
+    SIMPLE_TCP_TEST(act4_quad_default,   fails); tests++;
     SIMPLE_TCP_TEST(default0,            fails); tests++;
     SIMPLE_TCP_TEST(RE_KEYS_OUTER_VLAN1, fails); tests++;
     SIMPLE_TCP_TEST(default_forced,      fails); tests++;

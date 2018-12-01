@@ -80,12 +80,20 @@ static void lookUpPtypeTcam
     }
 }
 
-// Parse the incoming packet and extracts useful fields from it
+/**
+ * Parser stage implementation.
+ *
+ * Parse the incoming Ethernet packet header and extract info from it.
+ *
+ * @param[in]   parser_map  Pointer to parser register map (read only).
+ * @param[in]   in          Pointer to input structure     (read only).
+ * @param[out]  out         Pointer to output structure.
+ */
 void Parser
 (
-    mby_ppe_parser_map      * const parser_map,
-    mbyRxMacToParser  const * const in,
-    mbyParserToMapper       * const out
+    mby_ppe_parser_map const * const parser_map,
+    mbyRxMacToParser   const * const in,
+    mbyParserToMapper        * const out
 )
 {
     // Read inputs:

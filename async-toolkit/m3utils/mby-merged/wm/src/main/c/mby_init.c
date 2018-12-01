@@ -2113,7 +2113,8 @@ static void init_parser_regs
 
 void mby_init_common_regs
 (
-    mby_ppe_rx_top_map * const rx_top_map
+    mby_ppe_rx_top_map * const rx_top_map,
+    mby_ppe_tx_top_map * const tx_top_map
 )
 {
     init_parser_regs
@@ -2238,4 +2239,26 @@ void mby_init_common_regs
             wcm_tcam_entry->KEY_TOP_INVERT = 0xff;
         }
 
+    for (fm_uint i = 0; i < mby_ppe_modify_map_MOD_PROFILE_FIELD__nd; i++)
+    {
+        for (fm_uint j = 0; j < (MBY_MOD_FIELD_VECTOR_SIZE / MBY_MOD_FIELDS_PER_REG_ENTRY); j++)
+        {
+            mod_profile_field_r * mod_profile_field = &(tx_top_map->modify.MOD_PROFILE_FIELD[i][j]);
+            mod_profile_field->PROTOCOL_ID_0        = MBY_PA_PROT_ID_NOP;
+            mod_profile_field->PROTOCOL_ID_1        = MBY_PA_PROT_ID_NOP;
+            mod_profile_field->PROTOCOL_ID_2        = MBY_PA_PROT_ID_NOP;
+        }
+    }
+
+    for (fm_uint i = 0; i < mby_ppe_modify_map_MOD_PROFILE_GROUP__nd; i++)
+    {
+        mod_profile_group_r * mod_profile_group = &(tx_top_map->modify.MOD_PROFILE_GROUP[i]);
+        mod_profile_group->GROUP_1              = MBY_PA_PROT_ID_NOP;
+        mod_profile_group->GROUP_2              = MBY_PA_PROT_ID_NOP;
+        mod_profile_group->GROUP_3              = MBY_PA_PROT_ID_NOP;
+        mod_profile_group->GROUP_4              = MBY_PA_PROT_ID_NOP;
+        mod_profile_group->GROUP_5              = MBY_PA_PROT_ID_NOP;
+        mod_profile_group->GROUP_6              = MBY_PA_PROT_ID_NOP;
+        mod_profile_group->GROUP_7              = MBY_PA_PROT_ID_NOP;
+    }
 }

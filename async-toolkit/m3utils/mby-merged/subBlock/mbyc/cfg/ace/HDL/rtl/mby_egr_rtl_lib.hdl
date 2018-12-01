@@ -14,22 +14,56 @@ $hdl_spec = {
        "src/shared/interfaces/egr_tx_ppe_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/mby_egr_pkg.sv",
+    ## EGR External Interfaces   
        "src/shared/interfaces/egr_epl_if.sv",
        "src/shared/interfaces/mim_rd_if.sv",
        "src/shared/interfaces/mim_wr_if.sv",
-       "src/egr/rtl/egr_ahb_if.sv",
-       "src/egr/rtl/egr_mc_table_if.sv",
-       "src/egr/rtl/egr_pod_if.sv",
-       "src/egr/rtl/egr_mc_mirror_pod_if.sv",
-       "src/egr/rtl/egr_tagring_if.sv",
-       "src/egr/rtl/egr_cmring_if.sv",
-       "src/egr/rtl/egr_mce_tagring_if.sv",
+       "src/shared/interfaces/egr_ahb_if.sv",
+       "src/shared/interfaces/egr_mc_table_if.sv",
+       "src/shared/interfaces/egr_pod_if.sv",
+       "src/shared/interfaces/egr_mc_mirror_pod_if.sv",
+       "src/shared/interfaces/egr_tagring_if.sv",
+       "src/shared/interfaces/egr_cmring_if.sv",
+       "src/shared/interfaces/egr_mce_tagring_if.sv",
+    ## EGR Internal Interfaces
+        "src/egr/interfaces/dp_if.sv",
+        "src/egr/interfaces/epb_pes_if.sv",
+        "src/egr/interfaces/epb_prc_if.sv",
+        "src/egr/interfaces/epb_txc_if.sv",
+        "src/egr/interfaces/lcm_ps_if.sv",
+        "src/egr/interfaces/lcm_txc_if.sv",
+        "src/egr/interfaces/mtm_pfs_if.sv",
+        "src/egr/interfaces/mtm_prc_if.sv",
+        "src/egr/interfaces/pes_txc_if.sv",
+        "src/egr/interfaces/pfs_prc_if.sv",
+        "src/egr/interfaces/prc_lcm_if.sv",
+        "src/egr/interfaces/rrq_if.sv",
+        "src/egr/interfaces/rrs_if.sv",
+        "src/egr/interfaces/txc_prc_if.sv",
+        "src/egr/interfaces/utm_pfs_if.sv",
+        "src/egr/interfaces/utm_prc_if.sv",
+    ## EGR Internal Blocks
+        "src/egr/partition1/dpb/rtl/dpb.sv",
+        "src/egr/partition1/epb/rtl/epb.sv",
+        "src/egr/partition1/lcm/rtl/lcm.sv",
+        "src/egr/partition1/mri/rtl/mri.sv",
+        "src/egr/partition1/mtm/rtl/mtm.sv",
+        "src/egr/partition1/pes/rtl/pes.sv",
+        "src/egr/partition1/pfs/rtl/pfs.sv",
+        "src/egr/partition1/prc/rtl/prc.sv",
+        "src/egr/partition1/txc/rtl/txc.sv",
+        "src/egr/partition1/utm/rtl/utm.sv",
+        "src/egr/etag/rtl/mby_egr_tag.sv",
+    ## EGR TOP
        "src/egr/rtl/egr_top.sv",
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
-     "src/mby/rtl",
+     "src/egr/rtl",
+     "target/mby/mgm_run/egr/src",
+     "target/mby/mgm_run/egr/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -37,7 +71,10 @@ $hdl_spec = {
     
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-     "src/mby/rtl",
+     "src/egr/rtl",
+     "target/mby/mgm_run/egr/src",
+     "target/mby/mgm_run/egr/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
      ],
     
     # Arbitrary VLOG options

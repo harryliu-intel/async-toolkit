@@ -1,0 +1,9 @@
+$NEBULON/include/rtlgen_pkg_v12.vh
++incdir+$NEBULON/include
+
+$MBY_SRC/shared/rtl/shared_pkg.sv
+$MBY_SRC/shared/rtl/mby_gmm_pkg.sv
+$MBY_SRC/gmm/gms/top/rtl/mby_gms_pkg.sv
+-y $MBY_SRC/gmm/gms/mce/rtl
+-y .
+top.sv

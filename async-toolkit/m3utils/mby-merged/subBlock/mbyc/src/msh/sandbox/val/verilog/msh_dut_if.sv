@@ -41,7 +41,10 @@ interface msh_dut_if (
 
 
 // DUT inputs  (direction not specified in this interface)
-logic               i_reset;                                // reset
+logic               chreset;                                // core hard reset
+logic               csreset;                                // core soft reset
+logic               mhreset;                                // mesh hard reset
+logic               msreset;                                // mesh soft reset
 
 
 // DUT outputs  (direction not specified in this interface)

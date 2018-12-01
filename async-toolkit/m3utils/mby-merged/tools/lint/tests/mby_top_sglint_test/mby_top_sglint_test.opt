@@ -1,0 +1,38 @@
+# Options passed to the SpyGlass Tool
+
+{
+    
+    use lib "$ENV{RTL_PROJ_BIN}/perllib";
+    use ToolConfig;
+    use lib "$ENV{MODEL_ROOT}/src/mgm_run/rtl";
+    #    use icm_sa_man_sg_libs;
+    #print "Zenya : @icm_sa_man_sg_libs::memory_libs \n";
+    #my $libList = &ToolConfig::get_tool_var('spyglass','liblist_file');
+    %opts = (
+        -static_check_top => "fc_top_lib.soc",
+        -static_check_tools     => [ "spyglass", ],
+        -static_check_cfg_file  => "$ENV{MODEL_ROOT}/tools/spyglass_lint/ace_static_check_lint.cfg",
+        -spyglass_post_process_modes => "AceSpyglass_default",
+        -spyglass_goals        => ["lint/SpyglassConvergedLintSOC",], 
+#        -spyglass_goals         => ["lint/FEBE_1.0-mixed",],
+#        -spyglass_goals   => ["flg/elab_only-mixed"],
+        #-ok_error => ["/test_multi_line_okerror/"],
+        -ok_error => ['/\s+0 Errors/',
+                      '/\s+0 Fatals/'
+        ],
+        #-spyglass_libr_files => [ 
+        #     @icm_sa_man_sg_libs::memory_libs, 
+        #],
+        
+        -spyglass_exe_opts => [   
+             ## added lib files for spyglass
+             #"read_file -type sourcelist $libList",
+             "set_option sgsyn_loop_limit 17000",
+             "set_option prefer_tech_lib yes",
+        ],
+        
+        );
+};  
+
+
+

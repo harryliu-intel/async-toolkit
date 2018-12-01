@@ -1,0 +1,6 @@
+// Mesh block
+
+mby_gpm_gen_mem [
+  gpm_shells_wrapper of gpm_shells_wrapper with gpm_shells_wrapper.map
+  gpm_sram_mems of gpm_sram_mems with gpm_sram_mems.map
+]

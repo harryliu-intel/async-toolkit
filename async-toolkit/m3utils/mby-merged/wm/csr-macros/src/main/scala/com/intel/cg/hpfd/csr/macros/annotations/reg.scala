@@ -3,13 +3,13 @@ package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr._
 import com.intel.cg.hpfd.csr.macros.utils.{Control, Hygiene}
-import com.intel.cg.hpfd.madisonbay.AddressGuard
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
-import com.intel.cg.hpfd.madisonbay.Memory._
-import com.intel.cg.hpfd.madisonbay._
+import madisonbay.memory._
+import madisonbay.Encode._
+import madisonbay._
 
 
 /** Macro creating [[RdlRegister register classes]], used as a modifier similar to case.
@@ -592,7 +592,7 @@ class RegImpl(val c: Context) extends Control with LiftableMemory with Hygiene {
       (a, b.flatMap(_.children))
     }
 
-    val importEncodables = q"""import com.intel.cg.hpfd.madisonbay.Encode._"""
+    val importEncodables = q"""import madisonbay.Encode._"""
     //TODO: genOpticsLookup --- encaps
     q"""
         $mods class $name(val range: $addrRanTy, ..$fieldsClassImpl) extends $regTy {

@@ -285,6 +285,7 @@ EOF
             default => [
                 #"/p/com/flows/spyglass_methodology/1.0.10/ace_static_check.cfg",
                 "$ENV{MODEL_ROOT}/tools/lint/ace_static_check.lintra.cfg",
+		"$ENV{MODEL_ROOT}/tools/spyglass_lint/ace_static_check_lint.cfg",
             ],
         },
 

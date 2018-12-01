@@ -1,0 +1,146 @@
+foreach $i (0..15) {
+   1'b0                             >> RX_UC_CNT_$i$_CFG_reg_sel
+   1'b0                             >> RX_UC_CNT_$i$_STATUS_reg_sel
+   rx_uc_cnt_if.rx_uc_cnt_rd_adr[$i$]         >> rx_uc_cnt_$i$_rd_adr
+   rx_uc_cnt_if.rx_uc_cnt_wr_adr[$i$]         >> rx_uc_cnt_$i$_wr_adr
+   rx_uc_cnt_if.rx_uc_cnt_rd_en[$i$]          >> rx_uc_cnt_$i$_rd_en
+   rx_uc_cnt_if.rx_uc_cnt_wr_data[$i$]        >> rx_uc_cnt_$i$_wr_data
+   rx_uc_cnt_if.rx_uc_cnt_wr_en[$i$]          >> rx_uc_cnt_$i$_wr_en
+   rx_uc_cnt_if.rx_uc_cnt_wr_bwe[$i$]         >> rx_uc_cnt_$i$_wr_bwe
+   rx_uc_cnt_if.rx_uc_cnt_rd_data[$i$]        >> rx_uc_cnt_$i$_rd_data
+   rx_uc_cnt_if.rx_uc_cnt_rd_valid[$i$]       >> rx_uc_cnt_$i$_rd_valid
+                                              >> rx_uc_cnt_$i$_ecc_uncor_err
+                                              >> rx_uc_cnt_$i$_init_done
+   1'b0                                       >> rx_uc_cnt_$i$_mem_ls_enter
+   
+   1'b0                             >> RX_UC_WM_$i$_CFG_reg_sel
+   1'b0                             >> RX_UC_WM_$i$_STATUS_reg_sel
+   rx_uc_wm_if.rx_uc_wm_adr[$i$]             >> rx_uc_wm_$i$_adr
+   rx_uc_wm_if.rx_uc_wm_rd_en[$i$]           >> rx_uc_wm_$i$_rd_en
+   rx_uc_wm_if.rx_uc_wm_wr_data[$i$]         >> rx_uc_wm_$i$_wr_data
+   rx_uc_wm_if.rx_uc_wm_wr_en[$i$]           >> rx_uc_wm_$i$_wr_en
+   rx_uc_wm_if.rx_uc_wm_rd_data[$i$]         >> rx_uc_wm_$i$_rd_data
+   rx_uc_wm_if.rx_uc_wm_rd_valid[$i$]        >> rx_uc_wm_$i$_rd_valid
+                                              >> rx_uc_wm_$i$_ecc_uncor_err
+                                              >> rx_uc_wm_$i$_init_done
+   1'b0                                       >> rx_uc_wm_$i$_mem_ls_enter
+}
+
+foreach $i (0..15) {
+   1'b0                             >> RX_MC_CNT_$i$_CFG_reg_sel
+   1'b0                             >> RX_MC_CNT_$i$_STATUS_reg_sel
+   rx_mc_cnt_if.rx_mc_cnt_rd_adr  [$i$]       >> rx_mc_cnt_$i$_rd_adr
+   rx_mc_cnt_if.rx_mc_cnt_wr_adr  [$i$]       >> rx_mc_cnt_$i$_wr_adr
+   rx_mc_cnt_if.rx_mc_cnt_rd_en   [$i$]       >> rx_mc_cnt_$i$_rd_en
+   rx_mc_cnt_if.rx_mc_cnt_wr_data [$i$]       >> rx_mc_cnt_$i$_wr_data
+   rx_mc_cnt_if.rx_mc_cnt_wr_en   [$i$]       >> rx_mc_cnt_$i$_wr_en
+   rx_mc_cnt_if.rx_mc_cnt_rd_data [$i$]       >> rx_mc_cnt_$i$_rd_data
+   rx_mc_cnt_if.rx_mc_cnt_rd_valid[$i$]       >> rx_mc_cnt_$i$_rd_valid
+   1'b0                                       >> rx_mc_cnt_$i$_mem_ls_enter
+                                              >> rx_mc_cnt_$i$_ecc_uncor_err
+                                              >> rx_mc_cnt_$i$_init_done
+   
+   1'b0                             >> RX_MC_WM_$i$_CFG_reg_sel
+   1'b0                             >> RX_MC_WM_$i$_STATUS_reg_sel
+   rx_mc_wm_if.rx_mc_wm_adr  [$i$]            >> rx_mc_wm_$i$_adr
+   rx_mc_wm_if.rx_mc_wm_rd_en   [$i$]         >> rx_mc_wm_$i$_rd_en
+   rx_mc_wm_if.rx_mc_wm_wr_data [$i$]         >> rx_mc_wm_$i$_wr_data
+   rx_mc_wm_if.rx_mc_wm_wr_en   [$i$]         >> rx_mc_wm_$i$_wr_en
+   rx_mc_wm_if.rx_mc_wm_rd_data [$i$]         >> rx_mc_wm_$i$_rd_data
+   rx_mc_wm_if.rx_mc_wm_rd_valid[$i$]         >> rx_mc_wm_$i$_rd_valid
+   1'b0                                       >> rx_mc_wm_$i$_mem_ls_enter
+                                              >> rx_mc_wm_$i$_ecc_uncor_err
+                                              >> rx_mc_wm_$i$_init_done
+}
+
+1'b0                             >> RX_MC_SM_CNT_CFG_reg_sel
+1'b0                             >> RX_MC_SM_CNT_STATUS_reg_sel
+rx_mc_sm_cnt_if.rx_mc_sm_cnt_rd_adr      >> rx_mc_sm_cnt_rd_adr
+rx_mc_sm_cnt_if.rx_mc_sm_cnt_wr_adr      >> rx_mc_sm_cnt_wr_adr
+rx_mc_sm_cnt_if.rx_mc_sm_cnt_rd_en       >> rx_mc_sm_cnt_rd_en
+rx_mc_sm_cnt_if.rx_mc_sm_cnt_wr_data     >> rx_mc_sm_cnt_wr_data
+rx_mc_sm_cnt_if.rx_mc_sm_cnt_wr_en       >> rx_mc_sm_cnt_wr_en
+rx_mc_sm_cnt_if.rx_mc_sm_cnt_rd_data     >> rx_mc_sm_cnt_rd_data
+rx_mc_sm_cnt_if.rx_mc_sm_cnt_rd_valid    >> rx_mc_sm_cnt_rd_valid
+1'b0                                     >> rx_mc_sm_cnt_mem_ls_enter
+                                         >> rx_mc_sm_cnt_ecc_uncor_err
+                                         >> rx_mc_sm_cnt_init_done
+
+1'b0                             >> RX_MC_SM_WM_CFG_reg_sel
+1'b0                             >> RX_MC_SM_WM_STATUS_reg_sel
+rx_mc_sm_wm_if.rx_mc_sm_wm_adr           >> rx_mc_sm_wm_adr
+rx_mc_sm_wm_if.rx_mc_sm_wm_rd_en         >> rx_mc_sm_wm_rd_en
+rx_mc_sm_wm_if.rx_mc_sm_wm_wr_data       >> rx_mc_sm_wm_wr_data
+rx_mc_sm_wm_if.rx_mc_sm_wm_wr_en         >> rx_mc_sm_wm_wr_en
+rx_mc_sm_wm_if.rx_mc_sm_wm_rd_data       >> rx_mc_sm_wm_rd_data
+rx_mc_sm_wm_if.rx_mc_sm_wm_rd_valid      >> rx_mc_sm_wm_rd_valid
+1'b0                                     >> rx_mc_sm_wm_mem_ls_enter
+                                         >> rx_mc_sm_wm_ecc_uncor_err
+                                         >> rx_mc_sm_wm_init_done
+
+
+1'b0                             >> RX_UC_SM_CNT_CFG_reg_sel
+1'b0                             >> RX_UC_SM_CNT_STATUS_reg_sel
+rx_uc_sm_cnt_if.rx_uc_sm_cnt_rd_adr         >> rx_uc_sm_cnt_rd_adr
+rx_uc_sm_cnt_if.rx_uc_sm_cnt_wr_adr         >> rx_uc_sm_cnt_wr_adr
+rx_uc_sm_cnt_if.rx_uc_sm_cnt_rd_en          >> rx_uc_sm_cnt_rd_en
+rx_uc_sm_cnt_if.rx_uc_sm_cnt_wr_data        >> rx_uc_sm_cnt_wr_data
+rx_uc_sm_cnt_if.rx_uc_sm_cnt_wr_en          >> rx_uc_sm_cnt_wr_en
+rx_uc_sm_cnt_if.rx_uc_sm_cnt_rd_data        >> rx_uc_sm_cnt_rd_data
+rx_uc_sm_cnt_if.rx_uc_sm_cnt_rd_valid       >> rx_uc_sm_cnt_rd_valid
+                                            >> rx_uc_sm_cnt_ecc_uncor_err
+                                            >> rx_uc_sm_cnt_init_done
+1'b0                                        >> rx_uc_sm_cnt_mem_ls_enter
+
+1'b0                             >> RX_UC_SM_WM_CFG_reg_sel
+1'b0                             >> RX_UC_SM_WM_STATUS_reg_sel
+rx_uc_sm_wm_if.rx_uc_sm_wm_adr             >> rx_uc_sm_wm_adr
+rx_uc_sm_wm_if.rx_uc_sm_wm_rd_en           >> rx_uc_sm_wm_rd_en
+rx_uc_sm_wm_if.rx_uc_sm_wm_wr_data         >> rx_uc_sm_wm_wr_data
+rx_uc_sm_wm_if.rx_uc_sm_wm_wr_en           >> rx_uc_sm_wm_wr_en
+rx_uc_sm_wm_if.rx_uc_sm_wm_rd_data         >> rx_uc_sm_wm_rd_data
+rx_uc_sm_wm_if.rx_uc_sm_wm_rd_valid        >> rx_uc_sm_wm_rd_valid
+                                           >> rx_uc_sm_wm_ecc_uncor_err
+                                           >> rx_uc_sm_wm_init_done
+1'b0                                       >> rx_uc_sm_wm_mem_ls_enter
+
+
+1'b0                             >> TX_UC_SM_CNT_CFG_reg_sel
+1'b0                             >> TX_UC_SM_CNT_STATUS_reg_sel
+tx_uc_sm_cnt_if.tx_uc_sm_cnt_rd_adr         >> tx_uc_sm_cnt_rd_adr
+tx_uc_sm_cnt_if.tx_uc_sm_cnt_wr_adr         >> tx_uc_sm_cnt_wr_adr
+tx_uc_sm_cnt_if.tx_uc_sm_cnt_rd_en          >> tx_uc_sm_cnt_rd_en
+tx_uc_sm_cnt_if.tx_uc_sm_cnt_wr_data        >> tx_uc_sm_cnt_wr_data
+tx_uc_sm_cnt_if.tx_uc_sm_cnt_wr_en          >> tx_uc_sm_cnt_wr_en
+tx_uc_sm_cnt_if.tx_uc_sm_cnt_rd_data        >> tx_uc_sm_cnt_rd_data
+tx_uc_sm_cnt_if.tx_uc_sm_cnt_rd_valid       >> tx_uc_sm_cnt_rd_valid
+                                            >> tx_uc_sm_cnt_ecc_uncor_err
+                                            >> tx_uc_sm_cnt_init_done
+1'b0                                        >> tx_uc_sm_cnt_mem_ls_enter
+
+1'b0                             >> TX_UC_SM_WM_CFG_reg_sel
+1'b0                             >> TX_UC_SM_WM_STATUS_reg_sel
+tx_uc_sm_wm_if.tx_uc_sm_wm_adr              >> tx_uc_sm_wm_adr
+tx_uc_sm_wm_if.tx_uc_sm_wm_rd_en            >> tx_uc_sm_wm_rd_en
+tx_uc_sm_wm_if.tx_uc_sm_wm_wr_data          >> tx_uc_sm_wm_wr_data
+tx_uc_sm_wm_if.tx_uc_sm_wm_wr_en            >> tx_uc_sm_wm_wr_en
+tx_uc_sm_wm_if.tx_uc_sm_wm_rd_data          >> tx_uc_sm_wm_rd_data
+tx_uc_sm_wm_if.tx_uc_sm_wm_rd_valid         >> tx_uc_sm_wm_rd_valid
+                                            >> tx_uc_sm_wm_ecc_uncor_err
+                                            >> tx_uc_sm_wm_init_done
+1'b0                                        >> tx_uc_sm_wm_mem_ls_enter
+
+
+1'b0 >> GCM_ECC_COR_ERR_reg_sel
+1'b0 >> GCM_ECC_UNCOR_ERR_reg_sel
+
+1'b1 >> unified_regs_rd
+'h0  >> unified_regs_wr_data
+     >> gcm_ecc_int
+     >> gcm_init_done
+     >> unified_regs_ack
+     >> unified_regs_rd_data
+
+mclk    >> clk
+reset_n >> reset_n
+

@@ -14,7 +14,7 @@ IMPORT OSError, FileWr;
 IMPORT NetError;
 IMPORT FmModelMsgType;
 IMPORT RdNet, WrNet;
-FROM NetTypes IMPORT U8, U32;
+FROM NetTypes IMPORT U8, U16, U32;
 IMPORT Text;
 IMPORT NetContext;
 IMPORT FmModelMsgVersionHdr;
@@ -26,6 +26,7 @@ IMPORT FmModelSetEgressInfoHdr;
 IMPORT FmModelConstants;
 IMPORT FmModelPortLinkState;
 IMPORT DataPusher, IntDataPusherTbl;
+IMPORT DataPusherSet, DataPusherSetDef;
 IMPORT Byte;
 IMPORT FmModelDataType;
 IMPORT FmModelSideBandData;
@@ -51,17 +52,41 @@ REVEAL
     listener             : Listener := NIL;
     infoPath             : Pathname.T;
     egressPorts          : IntDataPusherTbl.T;
+    pushers              : DataPusherSet.T; (* only used in shared mode *)
     portLinkState        : ARRAY [0..FmModelConstants.NPhysPorts-1] OF Byte.T;
     mu                   : MUTEX; (* protects egressPorts, portLinkState *)
     quitOnLastClientExit : BOOLEAN;
     infoFile             : Pathname.T;
     updaterFactory       : UpdaterFactory.T;
   OVERRIDES
-    init       := Init;
-    listenFork := ListenFork;
-    pushPacket := PushPacket;
+    init          := Init;
+    listenFork    := ListenFork;
+    pushPacket    := PushPacket;
+    sendPacketEot := SendPacketEot;
   END;
 
+PROCEDURE SendPacketEot(t : T) =
+  CONST
+    VersionNumber = 2; (* where does this really come from? *)
+  VAR
+    pusher : DataPusher.T;
+    iter := t.pushers.iterate();
+    pkt := NEW(Pkt.T).init();
+    hdr := FmModelMessageHdr.T { FmModelMessageHdr.Length,
+                                 VersionNumber,
+                                 FmModelMsgType.T.PacketEot,
+                                 0,
+                                 LAST(U16) (* any *)
+    };
+  BEGIN
+    FmModelMessageHdr.WriteE(pkt, Pkt.End.Front, hdr);
+    WHILE iter.next(pusher) DO
+      Debug.Out("SendPacketEOT : sending EOT");
+      Pkt.DebugOut(pkt);
+      pusher.push(pkt)
+    END
+  END SendPacketEot;
+  
 PROCEDURE PushPacket(t : T; READONLY hdrP : FmModelMessageHdr.T; pkt : Pkt.T) =
   VAR
     pusher : DataPusher.T;
@@ -69,14 +94,12 @@ PROCEDURE PushPacket(t : T; READONLY hdrP : FmModelMessageHdr.T; pkt : Pkt.T) =
   BEGIN
     (* the reverse of DecodeTlvPacket here *)
 
-    hdr.msgLength := pkt.size(); (* this is a little screwy, it really
-                                    should be further down (and
-                                    include the inner header), but the
-                                    layering doesn't seem right in the
-                                    client *)
-
     WrNet.PutU32G(pkt, Pkt.End.Front, pkt.size());
     FmModelDataType.WriteE(pkt, Pkt.End.Front, FmModelDataType.T.Packet);
+
+    hdr.msgLength := pkt.size() + FmModelMessageHdr.Length;
+    (* this is a little screwy, the length accounts for the length of the
+       FmModelMessageHdr.T *)
 
     FmModelMessageHdr.WriteE(pkt, Pkt.End.Front, hdr);
     WITH hadIt = t.egressPorts.get(hdr.port, pusher) DO
@@ -188,12 +211,17 @@ PROCEDURE WriteInfo(dirPath, fileName : Pathname.T; port : IP.Port)
     END
   END WriteInfo;
   
-PROCEDURE Init(t : T;
-               infoPath : Pathname.T;
-               factory : UpdaterFactory.T;
+PROCEDURE Init(t                    : T;
+               sharedSocket         : BOOLEAN;
+               infoPath             : Pathname.T;
+               factory              : UpdaterFactory.T;
                quitOnLastClientExit : BOOLEAN;
-               infoFile : Pathname.T) : T =
+               infoFile             : Pathname.T) : T =
   BEGIN
+    t.sharedSocket := sharedSocket;
+    IF sharedSocket THEN
+      t.pushers := NEW(DataPusherSetDef.T).init()
+    END;
     t.mu := NEW(MUTEX);
     t.infoFile := infoFile;
     t.quitOnLastClientExit := quitOnLastClientExit;
@@ -355,7 +383,10 @@ PROCEDURE HandlePacket(<*UNUSED*>m  : MsgHandler;
         Debug.Out(F("DecodeTlvPacket returned sbData=%s pkt follows",
                     FmModelSideBandData.Format(sbData)));
         Pkt.DebugOut(inst.sp);
-        inst.t.handlePacket(hdr, inst.sp) (* do we need to duplicate here? *)
+        inst.t.handlePacket(hdr, inst.sp); (* do we need to duplicate here? *)
+        IF inst.t.sharedSocket THEN 
+          inst.t.sendPacketEot() (* signal end of packet handling *)
+        END
       END
     END;
     <*ASSERT cx.rem=0*>
@@ -446,38 +477,107 @@ PROCEDURE HandleSetEgressInfo(<*UNUSED*>m  : MsgHandler;
                               VAR cx       : NetContext.T;
                               inst         : Instance)
   RAISES { Rd.EndOfFile, Rd.Failure }=
-  VAR
-    dp : DataPusher.T;
   BEGIN
     <*ASSERT hdr.type = FmModelMsgType.T.SetEgressInfo*>
     WITH  eiHdr    = FmModelSetEgressInfoHdr.ReadC(inst.rd, cx),
           remBytes = cx.rem,
-          hostname = GetStringC(inst.rd, remBytes, cx),
-          disable  = eiHdr.tcpPort = FmModelConstants.SocketPortDisable DO
+          hostname = GetStringC(inst.rd, remBytes, cx) DO
       Debug.Out(F("Received %s, hostname=%s, forPort=%s",
                   FmModelSetEgressInfoHdr.Format(eiHdr),
                   hostname,
                   Int(hdr.port)));
+
       LOCK inst.t.mu DO
-        IF inst.t.egressPorts.delete(hdr.port,dp) THEN
-          Debug.Out("Shutting down egress port " & Int(hdr.port));
-          dp.forceExit();
-        END;
-        IF NOT disable THEN
-          Debug.Out(F("Opening link for %s to %s:%s",
-                      Int(hdr.port),
-                      hostname,
-                      Int(eiHdr.tcpPort)));
-          WITH newPusher = NEW(MyDataPusher,
-                               t    := inst.t,
-                               port := hdr.port).init(hostname,
-                                                      eiHdr.tcpPort) DO
-            EVAL inst.t.egressPorts.put(hdr.port, newPusher)
-          END
+        CASE inst.t.sharedSocket OF
+          FALSE => HandleSetEgressInfoNonShared(inst.t,
+                                                hdr.port,
+                                                hostname,
+                                                eiHdr.tcpPort)
+        |
+          TRUE  => HandleSetEgressInfoShared   (inst.t,
+                                                hdr.port,
+                                                hostname,
+                                                eiHdr.tcpPort)
         END
       END
     END
   END HandleSetEgressInfo;
+
+PROCEDURE HandleSetEgressInfoNonShared(t        : T;
+                                       port     : U16;
+                                       hostname : TEXT;
+                                       tcpPort  : IP.Port) =
+  (* t.mu is locked *)
+  VAR
+    dp : DataPusher.T;
+    portTbl := t.egressPorts;
+    disable := tcpPort = FmModelConstants.SocketPortDisable;
+  BEGIN
+    IF portTbl.delete(port, dp) THEN
+      Debug.Out("Shutting down egress port " & Int(port));
+      dp.forceExit();
+    END;
+    IF NOT disable THEN
+      Debug.Out(F("Opening link for %s to %s:%s",
+                  Int(port),
+                  hostname,
+                  Int(tcpPort)));
+      WITH newPusher = NEW(MyDataPusher,
+                           t       := t,
+                           port    := port).init(hostname, tcpPort) DO
+        EVAL portTbl.put(port, newPusher)
+      END
+    END
+  END HandleSetEgressInfoNonShared;
+
+PROCEDURE HandleSetEgressInfoShared(t        : T;
+                                    port     : U16;
+                                    hostname : TEXT;
+                                    tcpPort  : IP.Port) =
+  (* t.mu is locked *)
+
+  PROCEDURE HaveIt(VAR pusher : DataPusher.T) : BOOLEAN =
+    VAR
+      iter := t.pushers.iterate();
+      p : DataPusher.T;
+    BEGIN
+      WHILE iter.next(p) DO
+        IF Text.Equal(hostname, p.getHostname()) AND p.getPort() = tcpPort THEN
+          pusher := p;
+          RETURN TRUE
+        END
+      END;
+      RETURN FALSE
+    END HaveIt;
+    
+  VAR
+    odp, ndp : DataPusher.T;
+    portTbl := t.egressPorts;
+    disable := tcpPort = FmModelConstants.SocketPortDisable;
+  BEGIN
+    IF portTbl.delete(port, odp) THEN
+      Debug.Out("Shutting down egress port " & Int(port))
+    END;
+    IF NOT disable THEN
+      IF HaveIt(ndp) THEN
+        Debug.Out(F("Reusing link for %s to %s:%s",
+                    Int(port),
+                    hostname,
+                    Int(tcpPort)));
+      ELSE
+        Debug.Out(F("Opening link for %s to %s:%s",
+                    Int(port),
+                    hostname,
+                    Int(tcpPort)));
+        ndp := NEW(MyDataPusher,
+                   t       := t,
+                   port    := port).init(hostname, tcpPort);
+        EVAL t.pushers.insert(ndp)
+      END;
+      EVAL portTbl.put(port, ndp)
+    END
+  END HandleSetEgressInfoShared;  
+
 
 TYPE
   MyDataPusher = DataPusher.T OBJECT
@@ -488,10 +588,31 @@ TYPE
   END;
 
 PROCEDURE DPEC(dp : MyDataPusher) =
-  VAR x : DataPusher.T; BEGIN
+  VAR
+    x : DataPusher.T;
+  BEGIN
+    Debug.Out(F("Shutting down DataPusher: TCPport %s host %s phys_port %s",
+                Int(dp.getPort()), dp.getHostname(), Int(dp.port)));
     LOCK dp.t.mu DO
-      IF dp.t.egressPorts.delete(dp.port,x) THEN
-        <*ASSERT x=dp*>
+      IF dp.t.sharedSocket THEN
+        VAR
+          iter := dp.t.egressPorts.iterate();
+          p : DataPusher.T;
+          port : INTEGER;
+        BEGIN
+          WHILE iter.next(port, p) DO
+            IF p = dp THEN
+              EVAL dp.t.egressPorts.delete(port, p);
+              (* table was modified, must restart iterator *)
+              iter := dp.t.egressPorts.iterate()
+            END
+          END;
+          EVAL dp.t.pushers.delete(dp)
+        END
+      ELSE
+        IF dp.t.egressPorts.delete(dp.port,x) THEN
+          <*ASSERT x=dp*>
+        END
       END
     END
   END DPEC;

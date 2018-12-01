@@ -578,7 +578,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package madisonbay.csr\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
+    gs.main("import madisonbay.memory._\n");
     gs.main("import com.intel.cg.hpfd.csr.macros.annotations.reg\n");
     gs.main("import monocle.macros.Lenses\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -684,9 +684,9 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package madisonbay.csr\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.Memory.ImplicitConversions._\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._\n");
+    gs.main("import madisonbay.memory._\n");
+    gs.main("import madisonbay.memory.ImplicitConversions._\n");
+    gs.main("import madisonbay.PrimitiveTypes._\n");
     gs.main("import monocle.macros.Lenses\n");
     gs.main("import com.intel.cg.hpfd.csr.macros.annotations._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));
@@ -728,7 +728,7 @@ PROCEDURE GenAddrmap(map     : RegAddrmap.T; gsF : RegGenState.T)
   BEGIN
     IF NOT gs.newSymbol(myTn) THEN RETURN END;
     gs.main("package madisonbay.csr\n");
-    gs.main("import com.intel.cg.hpfd.madisonbay.Memory._\n");
+    gs.main("import madisonbay.memory._\n");
     gs.main("import monocle.macros.Lenses\n");
     gs.main("import com.intel.cg.hpfd.csr.macros.annotations._\n");
     gs.main("\n// %s:%s\n", ThisFile(), Fmt.Int(ThisLine()));

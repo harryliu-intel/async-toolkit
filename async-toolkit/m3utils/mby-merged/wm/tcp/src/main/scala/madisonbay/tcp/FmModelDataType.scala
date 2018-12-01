@@ -4,7 +4,7 @@ import java.io.EOFException
 
 //scalastyle:off magic.number
 object FmModelDataType extends Enumeration {
-  val Length = 1;
+  val Length = 1
 
   val Packet = Value(160, "Packet")
   val SbId = Value(161, "SbId")

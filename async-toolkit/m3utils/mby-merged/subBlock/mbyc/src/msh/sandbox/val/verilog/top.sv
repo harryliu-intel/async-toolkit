@@ -73,7 +73,10 @@ import mby_msh_pkg::*;
 logic reset;
 
     // start firing reset immediately to protect reset guarded assertions
-    initial dut_if.i_reset = 1'b1;
+    initial dut_if.chreset = 1'b1;
+    initial dut_if.csreset = 1'b1;
+    initial dut_if.mhreset = 1'b1;
+    initial dut_if.msreset = 1'b1;
     initial reset = 1'b1;
 
     // instantiate DUT (Design Under Test)
@@ -88,8 +91,13 @@ logic reset;
 mby_msh msh(
 
     
-    .mclk(clk),                                // mesh clock                                 
-    .i_reset(reset)                             // reset
+    .cclk(clk),                                // core clock
+    .chreset(chreset),                         // core hard reset
+    .csreset(csreset),                         // core soft reset
+
+    .mclk(clk),                                // mesh clock
+    .mhreset(mhreset),                         // mesh hard reset
+    .msreset(msreset)                          // mesh soft reset
 
 );
 

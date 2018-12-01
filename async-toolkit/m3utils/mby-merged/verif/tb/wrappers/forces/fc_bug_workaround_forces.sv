@@ -155,7 +155,17 @@ end
 
         force `mby_gmn_0.reset_n  = 1;
         force `mby_gms_0.reset_n  = 1;
-        force `mby_msh_0.i_reset  = 1;
+// JMCCORMI:  reset signal names changed in mesh.  There are now 4 active high
+// reset signals:  
+//      chreset - core hard reset
+//      csreset - core soft reset
+//      mhreset - mesh hard reset
+//      msreset - mesh soft reset
+// From the looks of this file, we are all over the place right now with
+// reset.  Hopefully someone will come up with a plan for reset that makes
+// this all more consistent.  
+//
+//        force `mby_msh_0.i_reset  = 1;   
     end
 end      
 

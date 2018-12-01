@@ -33,7 +33,8 @@
 // -------------------------------------------------------------------
 
 interface par_class_if
-import rx_ppe_pkg::*;
+import hlp_pkg::*;
+import hlp_ipp_pkg::*;
 ();
 imn_rpl_bkwd_t  rpl_bkwd;       //Management status from downstream blocks
 imn_rpl_frwd_t  rpl_frwd;       //Managment to downstream blocks

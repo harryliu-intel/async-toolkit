@@ -1,0 +1,44 @@
+foreach $i (0..3) {
+   1'b0  >> MEM_POD_PTR_$i$_CFG_reg_sel
+   1'b0  >> MEM_POD_PTR_$i$_STATUS_reg_sel
+
+   mem_pod_ptr_$i$_if.adr       >> mem_pod_ptr_$i$_adr
+   mem_pod_ptr_$i$_if.rd_en     >> mem_pod_ptr_$i$_rd_en
+   mem_pod_ptr_$i$_if.wr_data   >> mem_pod_ptr_$i$_wr_data
+   mem_pod_ptr_$i$_if.wr_en     >> mem_pod_ptr_$i$_wr_en
+   mem_pod_ptr_$i$_if.rd_data   >> mem_pod_ptr_$i$_rd_data
+   mem_pod_ptr_$i$_if.rd_valid  >> mem_pod_ptr_$i$_rd_valid
+   1'b0                         >> mem_pod_ptr_$i$_mem_ls_enter
+   >> mem_pod_ptr_$i$_ecc_uncor_err
+   >> mem_pod_ptr_$i$_init_done
+}
+
+foreach $i (0..7) {
+   1'b0  >> MEM_POINTERS_$i$_CFG_reg_sel
+   1'b0  >> MEM_POINTERS_$i$_STATUS_reg_sel
+
+   mem_pointers_$i$_if.adr       >> mem_pointers_$i$_adr
+   mem_pointers_$i$_if.rd_en     >> mem_pointers_$i$_rd_en
+   mem_pointers_$i$_if.wr_data   >> mem_pointers_$i$_wr_data
+   mem_pointers_$i$_if.wr_en     >> mem_pointers_$i$_wr_en
+   mem_pointers_$i$_if.wr_bwe    >> mem_pointers_$i$_wr_bwe
+   mem_pointers_$i$_if.rd_data   >> mem_pointers_$i$_rd_data
+   mem_pointers_$i$_if.rd_valid  >> mem_pointers_$i$_rd_valid
+   1'b0                          >> mem_pointers_$i$_mem_ls_enter
+   >> mem_pointers_$i$_ecc_uncor_err
+   >> mem_pointers_$i$_init_done
+}
+
+1'b0 >> GPM_ECC_COR_ERR_reg_sel
+1'b0 >> GPM_ECC_UNCOR_ERR_reg_sel
+
+1'b1 >> unified_regs_rd
+'h0  >> unified_regs_wr_data
+     >> gpm_ecc_int
+     >> gpm_init_done
+     >> unified_regs_ack
+     >> unified_regs_rd_data
+
+mclk    >> clk
+reset_n >> reset_n
+

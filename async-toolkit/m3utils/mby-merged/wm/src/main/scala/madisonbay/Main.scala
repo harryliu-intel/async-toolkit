@@ -4,7 +4,6 @@ import cats.effect._
 import cats.syntax.all._
 import scalaz.MonadError
 import monocle.Optional
-
 import madisonbay.csr._
 import madisonbay.csr.all._
 import madisonbay.logger.Logger
@@ -14,14 +13,16 @@ import madisonbay.fs2app.algebra.messages._
 import madisonbay.config.Config
 import madisonbay.fs2app.Fs2Application._
 import madisonbay.fs2app.Fs2DefaultMessageHandler
+import madisonbay.fs2app.http._
 import madisonbay.fs2app.ioConfig.IOPureConfigLoader
-
-import com.intel.cg.hpfd.madisonbay.Memory._
-
+import madisonbay.memory._
 import java.nio.channels.AsynchronousChannelGroup
 import java.nio.channels.spi.AsynchronousChannelProvider
-
 import java.util.concurrent.Executors
+
+import madisonbay.fs2app.http.MbyHttpServer
+import madisonbay.fs2app.http.dispatcher.IoUriDispatcher
+
 
 object Main extends IOApp {
 
@@ -40,10 +41,12 @@ object Main extends IOApp {
       .provider()
       .openAsynchronousChannelGroup(nThreads, Executors.defaultThreadFactory())
 
-  implicit val conf = IOPureConfigLoader.load()
-  implicit val ss = fs2ServerSocket[IO]
-  implicit val ps = fs2PublisherSocket[IO]
-  implicit val handler = new Fs2DefaultMessageHandler[IO,mby_top_map]
+  implicit val conf     = IOPureConfigLoader.load()
+  implicit val ss       = fs2ServerSocket[IO]
+  implicit val ps       = fs2PublisherSocket[IO]
+  implicit val handler  = new Fs2DefaultMessageHandler[IO,mby_top_map]
+  implicit val ud       = IoUriDispatcher
+  implicit val hp       = fs2HttpStream[IO]
 
   def program[F[_]:
       Logger:
@@ -52,6 +55,7 @@ object Main extends IOApp {
       ConcurrentEffect:
       ServerSocket:
       PublisherSocket:
+      MbyHttpServer:
       λ[G[_] => MonadError[G,Throwable]]:
       λ[G[_] => MessageHandler[G,CsrContext[mby_top_map]]]
   ]: F[Unit] = {
