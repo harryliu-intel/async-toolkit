@@ -43,4 +43,8 @@ Module("TextTopoSort")
 
 Module("AddrVisitor")
 
+Interface ("ContainerData")
+Interface ("FieldData")
+Sequence ("FieldData", "FieldData")
+
 library ("wm_support")

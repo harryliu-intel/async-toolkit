@@ -9,11 +9,19 @@ IMPORT Debug;
 IMPORT ParseParams;
 IMPORT Stdio, Text;
 IMPORT Params;
-IMPORT RefSeq;
 IMPORT CompRange;
-IMPORT FileWr, Wr, Pickle;
+IMPORT FileWr, Wr, Pickle2 AS Pickle;
+(*IMPORT BigInt;*)
+IMPORT Word;
+IMPORT ContainerData, FieldData;
+IMPORT FieldDataSeq;
+FROM ContainerData IMPORT Pos, Neg;
 
-CONST Usage = "[-m[odel] hlp|mby]";
+CONST TE = Text.Equal;
+
+(* currently limited to 64-bit addresses *)
+
+CONST Usage = "[-m[odel] hlp|mby] [-o -|<filename>]";
 TYPE   Models     =                          {  Hlp,   Mby  };
 CONST  ModelNames = ARRAY Models OF TEXT     { "hlp", "mby" };
 
@@ -24,29 +32,18 @@ PROCEDURE DoUsage() : TEXT =
 
 TYPE
   MyVisitor = AddrVisitor.T OBJECT
-    fields : RefSeq.T;
+    nxtField    : Pos :=  0;
+    nxtInternal : Neg := -1;
+    fields : FieldDataSeq.T;
+    maxAddr := CompAddr.Zero;
   OVERRIDES
     internal := MakeInternal;
     field    := MakeField;
   END;
 
-TYPE Neg = [ FIRST(INTEGER) .. -1 ];
-     Pos = CARDINAL;
-
-VAR nxtField    : Pos :=  0;
-VAR nxtInternal : Neg := -1;
-
 TYPE
-  Internal = AddrVisitor.Internal OBJECT
-    id : Neg;
-    up : Internal;
-  END;
-
-  Field = OBJECT
-    id : Pos;
-    up : Internal;
-    at : CompRange.T;
-  END;
+  Internal = ContainerData.T;
+  Field    = FieldData.T;
 
 PROCEDURE MakeInternal(v        : MyVisitor;
                        name, tn : TEXT;
@@ -55,8 +52,10 @@ PROCEDURE MakeInternal(v        : MyVisitor;
                        parent   : AddrVisitor.Internal)
   : AddrVisitor.Internal =
   BEGIN
-    WITH res = NEW(Internal, id := nxtInternal, up := parent) DO
-      DEC(nxtInternal);
+    WITH res = NEW(Internal,
+                   id := v.nxtInternal,
+                   up := parent) DO
+      DEC(v.nxtInternal);
       RETURN res
     END
   END MakeInternal;
@@ -66,9 +65,25 @@ PROCEDURE MakeField(v          : MyVisitor;
                     at         : CompRange.T;
                     lsb, width : CARDINAL;
                     parent     : AddrVisitor.Internal) =
+  VAR
+    upId := FIRST(Neg);
   BEGIN
-    WITH res = NEW(Field, id := nxtField, at := at, up := parent) DO
-      INC(nxtField);
+    IF parent # NIL THEN upId := NARROW(parent, Internal).id END;
+    
+    WITH (*byte = BigInt.Add(BigInt.Mul(BigInt.New(at.pos.word), Eight),
+                           BigInt.New(at.pos.bit DIV 8)),*)
+         byte = Word.Plus(Word.Times(at.pos.word, 8), at.pos.bit DIV 8),
+                             
+         lsb  = at.pos.bit MOD 8,
+         res = Field {
+                   id := v.nxtField,
+                   byte := byte,
+                   lsb := lsb,
+                   wid := width,
+                   up := upId } DO
+      (*NARROW(parent,Internal).children.addhi(res);*)
+      INC(v.nxtField);
+      v.maxAddr := CompAddr.Max(v.maxAddr, CompRange.Lim(at));
       v.fields.addhi(res)
     END
   END MakeField;
@@ -77,10 +92,16 @@ VAR
   map : MemoryMap.T;
   base := CompAddr.T { 0, 0 };
   model := Models.Mby;
+  ofn := "mapfields.out";
+  wr : Wr.T;
 BEGIN
   (* command-line args: *)
   TRY
     WITH pp = NEW(ParseParams.T).init(Stdio.stderr) DO
+      IF pp.keywordPresent("-o") THEN
+        ofn := pp.getNext()
+      END;
+      
       IF pp.keywordPresent("-model") OR pp.keywordPresent("-m") THEN
         VAR
           modelStr := pp.getNext();
@@ -104,6 +125,12 @@ BEGIN
     ParseParams.Error => Debug.Error("Command-line params wrong:\n" & DoUsage())
   END;
 
+  IF TE(ofn, "-") THEN
+    wr := Stdio.stdout
+  ELSE
+    wr := FileWr.Open(ofn)
+  END;
+  
   Debug.Out("Building address map...");
   CASE model OF
     Models.Hlp => map := NEW(HlpMapAddr.H).init(base)
@@ -112,12 +139,21 @@ BEGIN
   END;
 
   Debug.Out("Visiting address map...");
-  WITH v = NEW(MyVisitor, fields := NEW(RefSeq.T).init()) DO
+  WITH v = NEW(MyVisitor, fields := NEW(FieldDataSeq.T).init()) DO
     map.visit(v);
-  
-    Debug.Out("Writing address map...");
-    WITH wr = FileWr.Open("mapfields.out") DO
-      Pickle.Write(wr, v.fields);
+
+    Debug.Out("Fields  " & Fmt.Int(v.nxtField));
+    Debug.Out("Parents " & Fmt.Int(-v.nxtInternal));
+    Debug.Out("MaxAddr " & CompAddr.Format(v.maxAddr, bytes := TRUE));
+
+    Debug.Out("Converting address map...");
+    WITH a = NEW(REF ARRAY OF Field, v.fields.size()) DO
+      FOR i := FIRST(a^) TO LAST(a^) DO
+        a[i] := v.fields.get(i);
+      END;
+
+      Debug.Out("Writing address map...");
+      Pickle.Write(wr, a);
       Wr.Close(wr)
     END
   END

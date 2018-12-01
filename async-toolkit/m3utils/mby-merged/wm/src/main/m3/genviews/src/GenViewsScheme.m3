@@ -7,9 +7,10 @@ IMPORT Debug;
 FROM Fmt IMPORT F, Int;
 IMPORT Text;
 IMPORT BigInt;
+IMPORT FieldData, Rd, Pickle2;
 
 REVEAL
-  T = GenViews.T BRANDED OBJECT
+  T = Public BRANDED OBJECT
   METHODS
     put(txt : TEXT; lev : CARDINAL) := Put;
   OVERRIDES
@@ -34,7 +35,14 @@ PROCEDURE Spaces(lev : CARDINAL) : TEXT =
   END Spaces;
   
 PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
+  VAR
+    a : REF ARRAY OF FieldData.T := NIL;
   BEGIN
+    IF t.fieldAddrRd # NIL THEN
+      Debug.Out("Reading field data...");
+      a := Pickle2.Read(t.fieldAddrRd);
+      Rd.Close(t.fieldAddrRd)
+    END;
     DoContainer(t, tgtmap, 0)
   END Gen;
 

@@ -11,10 +11,11 @@ IMPORT Pathname;
 IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC;
 IMPORT GenViewsScheme;
 IMPORT Text;
+IMPORT Rd, FileRd;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala|c|scheme]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
@@ -32,6 +33,7 @@ VAR
   outDir : Pathname.T := "build/src";
   gv : GenViews.T;
   lang := Lang.M3;
+  fieldAddrRd : Rd.T := NIL;
   
 BEGIN
   (* command-line args: *)
@@ -56,6 +58,28 @@ BEGIN
           IF NOT success THEN
             Debug.Error("Unsupported target language : " & langT & "\n" & DoUsage())
           END;
+        END
+      END;
+
+      IF lang = Lang.Scheme THEN
+        IF pp.keywordPresent("-f") THEN
+          WITH ifn = pp.getNext() DO
+            IF TE(ifn, "-") THEN
+              fieldAddrRd := Stdio.stdin
+            ELSE
+              fieldAddrRd := FileRd.Open(ifn)
+            END
+          END
+        END
+      END;
+
+      IF pp.keywordPresent("-i") THEN
+        WITH ifn = pp.getNext() DO
+          IF TE(ifn, "-") THEN
+            rd := Stdio.stdin
+          ELSE
+            rd := FileRd.Open(ifn)
+          END
         END
       END;
       
@@ -94,7 +118,7 @@ BEGIN
 
   CASE lang OF
     Lang.Scheme =>
-    NEW(GenViewsScheme.T).gen(tgtmap, outDir)
+    NEW(GenViewsScheme.T, fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
   ELSE
     gv.gen(tgtmap, outDir)
   END
