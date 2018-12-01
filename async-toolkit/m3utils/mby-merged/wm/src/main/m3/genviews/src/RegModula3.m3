@@ -722,9 +722,6 @@ PROCEDURE GenAddrmapInit(map : RegAddrmap.T; gs : GenState) =
   (**********************************************************************)
 
 PROCEDURE GenAddrmapVisit(map : RegAddrmap.T; gs : GenState) =
-  VAR
-    qmtn := MapIntfNameRW(map, RW.R) & "." & MainTypeName[TypeHier.Addr];
-    pnm : TEXT;
   BEGIN
     EVAL gs.i3imports.insert("AddrVisitor");
     EVAL gs.m3imports.insert("AddrVisitor");
@@ -831,10 +828,10 @@ PROCEDURE GenRegVisit(r : RegReg.T; gs : GenState) =
       WITH f  = r.fields.get(i),
            nm = f.name(debug := FALSE) DO
         gs.mdecl("    v.field(\"%s\",a.%s,%s,%s,internal);\n",
-            f.name(debug := FALSE),
-            f.name(debug := FALSE),
-            Fmt.Int(f.lsb),
-            Fmt.Int(f.width))
+                 nm,
+                 nm,
+                 Fmt.Int(f.lsb),
+                 Fmt.Int(f.width))
       END
     END;
     gs.mdecl("  END %s;\n",pnm);
@@ -1097,8 +1094,6 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
                             F("    read   : %s;\n",qmtn));
     gs.put(Section.IMaintype, "    update : U;\n");
     gs.put(Section.IMaintype, "    a      : A;\n");
-    gs.put(Section.IMaintype, "  METHODS\n");
-    gs.put(Section.IMaintype, "    init(base : CompAddr.T; factory : UpdaterFactory.T := NIL) : H;\n");
     gs.put(Section.IMaintype, "  END;\n");
     gs.put(Section.IMaintype, "\n");
     gs.put(Section.IMaintype, "  CONST DoUnsafeWrite = TRUE;\n");
@@ -1115,6 +1110,7 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
            "    x : X;\n" & 
            "  OVERRIDES\n" &
            "    init := InitH;\n" &
+           "    visit := VisitH;\n" &
            "  END;\n" &
            "\n"                 
     );
@@ -1152,8 +1148,9 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
     gs.mdecl(
            "  (* %s:%s *)\n", ThisFile(), Fmt.Int(ThisLine()));
     EVAL gs.m3imports.insert("UnsafeUpdaterFactory");
+    EVAL gs.m3imports.insert("MemoryMap");
     gs.mdecl(
-           "PROCEDURE InitH(h : H; base : CompAddr.T; factory : UpdaterFactory.T) : H =\n" &
+           "PROCEDURE InitH(h : H; base : CompAddr.T; factory : UpdaterFactory.T) : MemoryMap.T =\n" &
            "  VAR\n" &
            "    range : CompRange.T;\n"&
            "  BEGIN\n" &
@@ -1167,6 +1164,17 @@ PROCEDURE GenAddrmapGlobal(map : RegAddrmap.T; gs : GenState) =
            "  END InitH;\n" &
            "\n"
     );
+
+    EVAL gs.m3imports.insert("AddrVisitor");
+
+    gs.mdecl(
+           "PROCEDURE VisitH(h : H; v : AddrVisitor.T) =\n" &
+           "  BEGIN\n" &
+           "    Visit(h.a, v, NIL, NIL)\n" &
+           "  END VisitH;\n" &
+           "\n"
+    );
+
   END GenAddrmapGlobal;
 
 PROCEDURE GenAddrmapCsr(map : RegAddrmap.T; gs : GenState) =

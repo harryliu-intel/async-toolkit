@@ -1,11 +1,9 @@
 MODULE Scribble EXPORTS Main;
-IMPORT mby_top_map AS Map;
 IMPORT mby_top_map_addr AS MapAddr;
 IMPORT IO;
 IMPORT CompAddr;
 IMPORT Fmt;
 IMPORT Debug;
-IMPORT RTName;
 IMPORT Random;
 IMPORT Word;
 IMPORT CsrOp;
@@ -24,7 +22,7 @@ PROCEDURE DoReset() =
   END DoReset;
 
 VAR
-  map  := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
+  map : MapAddr.H := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
   rand := NEW(Random.Default).init();
 
   time0, time1 : Time.T;
