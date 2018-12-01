@@ -1,8 +1,8 @@
 `include "lib_udp.rdl"
 `include "mby_ip.rdl"
 
-`include "mby_mesh_row.rdl"
-`include "mby_freepointer.rdl"
+`include "mby_mesh_row_map.rdl"
+`include "mby_freepointer_fifo_map.rdl"
 `include "mby_mce.rdl"
 
 addrmap mby_freepointer_top_map {

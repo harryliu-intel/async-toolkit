@@ -28,21 +28,19 @@
 
 module prc 
 (
-    input logic        clk,
-    input logic     arst_n, 
+    input logic             clk,
+    input logic           rst_n, 
 
     //EGR Internal Interfaces    
-    dp_if.provider  dpb_if, //Dirty Pointer Interface. Connected with the Dirty Pointer Broker
-    prc_lcm_if.prc  lcm_if, //Packet Read Controller - Local Congestion Manager Interface
-    rrq_if.provider mri_if, //Read Request Interface.  Connected with the Mesh Read Interface
-
-    mtm_prc_if.prc  mtm_if, //Multicast Tag Manager  - Packet Read Controller   Interface
-    utm_prc_if.prc  utm_if, //Unicast Tag Manager    - Packet Read Controller   Interface
-    pfs_prc_if.prc  pfs_if, //Packet Fetch Scheduler - Packet Read Controller   Interface
-    epb_prc_if.prc  epb_if, //Egress Packet Buffer   - Packet Read Controller   Interface
-    txc_prc_if.prc  txc_if  //Transmit Controller    - Packet Read Controller   Interface
-    
-    //EGR External Interfaces
+    egr_dp_if.requestor   dpb_if, //Dirty Pointer Interface. Requests from the Dirty Pointer Broker
+    egr_prc_lcm_if.prc    lcm_if, //Packet Read Controller - Local Congestion Manager Interface
+    egr_prc_tmu_if.prc    tmu_if, //Packet Read Controller - Tag Management Unit      Interface
+    egr_pfs_prc_if.prc    pfs_if, //Packet Fetch Scheduler - Packet Read Controller   Interface
+    egr_rrq_if.requestor mri_if0, //Read Request Interface.  Gives service to EPL 0,1
+    egr_rrq_if.requestor mri_if1, //Read Request Interface.  Gives service to EPL 2,3
+    egr_rrs_id_if.requestor rrs_id_mri_if0, //Read Response ID Interface 0. Gives service to EPL0,1
+    egr_rrs_id_if.requestor rrs_id_mri_if1, //Read Response ID Interface 1. Gives service to EPL2,3
+    egr_prc_tqu_if.prc    tqu_if  //Transmit Queuing Unit  - Packet Read Controller   Interface
 
 );
 

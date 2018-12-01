@@ -141,6 +141,12 @@ $ToolConfig_tools{cm3} = {
     EXEC => "&get_tool_path()/bin/cm3",
 };
 
+$ToolConfig_tools{multi_gen_ralf} = {
+    VERSION => "",
+    PATH => "$ENV{RTL_PROJ_DBIN}/uvm_ral",
+    EXEC => "&get_tool_path()/multi_gen_ralf_crif.py",
+};
+
 
 $ToolConfig_tools{onesource} = {
    PATH => "/p/hdk/rtl/cad/x86-64_linux30/dt/OneSourceBundle/&get_tool_version()",
@@ -290,7 +296,8 @@ $ToolConfig_tools{"mgm"} = {
         #REPORT_DIR => "$ENV{MODEL_ROOT}/target/mgm/rtl",
         PREFIX => "mby",
 	CMO  => [
-	    "/tmp/dummy"
+	    "/tmp/dummy",
+	    "/nfs/sc/disks/sc_mby_00005/kits/tr3/",
 	    ],
     },
     EXEC => "&get_tool_path()/bin/mgm",
@@ -375,19 +382,21 @@ $ToolConfig_tools{"regs2html"} = {
 $ToolConfig_tools{cdn_vip_root} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
                                   PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()",
                                 };
-$ToolConfig_tools{vipcat} = { PATH => "&get_tool_path(cdn_vip_root)",
+$ToolConfig_tools{vipcat} = { VERSION => '&get_tool_version(cdn_vip_root)',
+                              PATH => "&get_tool_path(cdn_vip_root)",
                               OTHER => {
                                  CDS_ARCH => "lnx86",
                                  VIPCAT_LIBS => "&get_tool_path(cdn_vip_root)/tools.lnx86/lib/64bit",
                               },
+                              ENV_APPEND => {
+                                 LD_LIBRARY_PATH => "&get_tool_var(denali, DENALI_LIBS):&get_tool_var(vipcat, VIPCAT_LIBS)",
+                              },
                             };
-$ToolConfig_tools{denali} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
-                            #VERSION => '&get_tool_version(cdn_vip_root)',
-                              PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()/tools/denali_64bit",
-                              #PATH    => "&get_tool_path(cdn_vip_root)/tools/denali_64bit",
+$ToolConfig_tools{denali} = { VERSION => '&get_tool_version(cdn_vip_root)',
+                              PATH    => "&get_tool_path(cdn_vip_root)/tools/denali_64bit",
                               OTHER => {
                                 DENALI_LIBS => "&get_tool_path()/verilog",
-                                VIPCAT_LIBS => "&get_tool_path()/tools.lnx86/lib/64bit",
+                                VIPCAT_LIBS => "&get_tool_var(vipcat, VIPCAT_LIBS)",
                               },
                             };
 #VIPCAT update

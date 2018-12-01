@@ -1,6 +1,6 @@
 # vim: noai : ts=4 : sw=4 : ft=perl
 
-my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+my $DENALI =  &ToolConfig::get_tool_path('denali');
 
 
 $hdl_spec = {
