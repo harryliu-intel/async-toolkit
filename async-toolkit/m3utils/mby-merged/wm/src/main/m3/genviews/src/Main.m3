@@ -34,6 +34,7 @@ VAR
   gv : GenViews.T;
   lang := Lang.M3;
   fieldAddrRd : Rd.T := NIL;
+  scmFiles : REF ARRAY OF TEXT;
   
 BEGIN
   (* command-line args: *)
@@ -84,6 +85,16 @@ BEGIN
       END;
       
       pp.skipParsed();
+
+      IF lang = Lang.Scheme THEN
+        WITH nFiles = NUMBER(pp.arg^) - pp.next DO
+          scmFiles := NEW(REF ARRAY OF TEXT, nFiles);
+          FOR i := 0 TO nFiles-1 DO
+            scmFiles[i] := pp.getNext()
+          END
+        END;
+      END;
+      
       pp.finish()
     END;
     IF tgtmapNm = NIL THEN RAISE ParseParams.Error END
@@ -118,7 +129,9 @@ BEGIN
 
   CASE lang OF
     Lang.Scheme =>
-    NEW(GenViewsScheme.T, fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
+    NEW(GenViewsScheme.T,
+        scmFiles := scmFiles,
+        fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
   ELSE
     gv.gen(tgtmap, outDir)
   END
