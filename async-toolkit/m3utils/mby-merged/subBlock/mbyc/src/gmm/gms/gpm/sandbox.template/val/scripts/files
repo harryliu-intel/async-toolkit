@@ -1,0 +1,5 @@
+
+-file $LOGICROOT/sandbox/val/scripts/files.template
+-file $LOGICROOT/sandbox/val/scripts/files.common
+
+$LOGICROOT/sandbox/val/verilog/top.sv

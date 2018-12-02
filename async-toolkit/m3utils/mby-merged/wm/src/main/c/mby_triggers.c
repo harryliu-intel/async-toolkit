@@ -7,34 +7,36 @@
 
 static inline void incrementTrigCounter
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 )
 {
+    mby_ppe_trig_apply_map * const trig_apply = trig_apply_map;
+
     fm_uint64 trig_count = trig_apply_map->TRIGGER_STATS[trig].COUNT; // [63:0]
     trig_count = (trig_count == FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF)) ? 0 : trig_count + 1;
 
     //REVISIT!!!! necessary for model_server use of write_field() function
-    trig_apply_map->TRIGGER_STATS[trig].COUNT = trig_count;
+    trig_apply->TRIGGER_STATS[trig].COUNT = trig_count;
 
 }
 
 static fm_bool evaluateTrigger
 (
-    mby_ppe_trig_apply_map      * const trig_apply_map,
-    fm_int                        const trig,
-    fm_bool                       const learn_en,
-    fm_uint16                     const l2_evid1,
-    fm_byte                       const cgrp_trig,
-    fm_byte                       const qos_tc,
-    fm_uint16                     const idglort,
-    fm_byte                       const l3_edomain,
-    fm_byte                       const l2_edomain,
-    fm_byte                       const fclass,
-    fm_bool                       const mark_routed,
-    fm_uint64             const * const dmask,
-    fm_uint32                     const rx_port,
-    fm_uint64                     const amask
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_int                         const trig,
+    fm_bool                        const learn_en,
+    fm_uint16                      const l2_evid1,
+    fm_byte                        const cgrp_trig,
+    fm_byte                        const qos_tc,
+    fm_uint16                      const idglort,
+    fm_byte                        const l3_edomain,
+    fm_byte                        const l2_edomain,
+    fm_byte                        const fclass,
+    fm_bool                        const mark_routed,
+    fm_uint64              const * const dmask,
+    fm_uint32                      const rx_port,
+    fm_uint64                      const amask
 )
 {
     mbyTriggerConditionCfg      cond_cfg;
@@ -265,12 +267,12 @@ static void applyPrecedenceResolution
 
 static void resolveTriggers
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_uint64                const hit_mask_hi,
-    fm_uint64                const hit_mask_lo,
-    fm_uint64              * const trig_hit_mask_resolved_lo,
-    fm_int64               * const trig_hit_mask_resolved_hi,
-    mbyTriggerActions      * const lo
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_uint64                      const hit_mask_hi,
+    fm_uint64                      const hit_mask_lo,
+    fm_uint64                    * const trig_hit_mask_resolved_lo,
+    fm_int64                     * const trig_hit_mask_resolved_hi,
+    mbyTriggerActions            * const lo
 )
 {
     mbyTriggerActions hi;
@@ -507,11 +509,11 @@ static void applyTriggers
 
 static void triggersStatsUpdate
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_uint64              * const trig_hit_mask_resolved_lo,
-    fm_int64               * const trig_hit_mask_resolved_hi,
-    fm_uint64                const hitMaskHi,
-    fm_uint64                const hitMaskLo
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_uint64                    * const trig_hit_mask_resolved_lo,
+    fm_int64                     * const trig_hit_mask_resolved_hi,
+    fm_uint64                      const hitMaskHi,
+    fm_uint64                      const hitMaskLo
 )
 {
     for (fm_int i = 0; i < MBY_TRIGGERS_COUNT; i++)
@@ -530,14 +532,14 @@ static void triggersStatsUpdate
 
 static void tcnFifo
 (
-    mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
-    mby_ppe_fwd_misc_map        * const fwd_misc_map,
-    mby_ppe_mapper_map          * const mapper_map,
-    fm_bool                       const learning_enabled,
-    fm_macaddr                    const l2_smac,
-    fm_uint16                     const l2_evid1,
-    fm_byte                       const l2_edomain,
-    fm_uint32                     const rx_port
+    mby_ppe_trig_apply_misc_map const * const trig_apply_misc_map,
+    mby_ppe_fwd_misc_map        const * const fwd_misc_map,
+    mby_ppe_mapper_map          const * const mapper_map,
+    fm_bool                             const learning_enabled,
+    fm_macaddr                          const l2_smac,
+    fm_uint16                           const l2_evid1,
+    fm_byte                             const l2_edomain,
+    fm_uint32                           const rx_port
 )
 {
     fm_uint64 head           = trig_apply_misc_map->MA_TCN_PTR_HEAD.HEAD;
@@ -548,47 +550,51 @@ static void tcnFifo
     fm_uint64 wm             = trig_apply_misc_map->MA_TCN_WM[rx_port].WM;
     fm_bool   dequeue        = trig_apply_misc_map->MA_TCN_DEQUEUE.READY;
 
+    // Workaround to drop the const qualifier <-- REVISIT
+    mby_ppe_trig_apply_misc_map * const trig_apply_misc = trig_apply_misc_map;
+    mby_ppe_fwd_misc_map        * const fwd_misc = fwd_misc_map;
+
     if(learning_enabled && port_learning && port_l2_domain && usage < wm)
     {
         if((tail + 1) % (MBY_MA_TCN_FIFO_CAPACITY + 1) == head)
         {
-            trig_apply_misc_map->MA_TCN_IP.TCN_OVERFLOW = 1;
+            trig_apply_misc->MA_TCN_IP.TCN_OVERFLOW = 1;
         }
         else
         {
-            trig_apply_misc_map->MA_TCN_FIFO_0[tail].MAC_ADDRESS = l2_smac;
-            trig_apply_misc_map->MA_TCN_FIFO_0[tail].PORT        = rx_port;
-            trig_apply_misc_map->MA_TCN_FIFO_1[tail].L2_DOMAIN   = l2_edomain;
-            trig_apply_misc_map->MA_TCN_FIFO_1[tail].VID         = l2_evid1;
+            trig_apply_misc->MA_TCN_FIFO_0[tail].MAC_ADDRESS = l2_smac;
+            trig_apply_misc->MA_TCN_FIFO_0[tail].PORT        = rx_port;
+            trig_apply_misc->MA_TCN_FIFO_1[tail].L2_DOMAIN   = l2_edomain;
+            trig_apply_misc->MA_TCN_FIFO_1[tail].VID         = l2_evid1;
 
             tail = (tail + 1) % (MBY_MA_TCN_FIFO_CAPACITY + 1);
-            trig_apply_misc_map->MA_TCN_PTR_TAIL.TAIL     = tail;
-            trig_apply_misc_map->MA_TCN_IP.PENDING_EVENTS = 1;
+            trig_apply_misc->MA_TCN_PTR_TAIL.TAIL     = tail;
+            trig_apply_misc->MA_TCN_IP.PENDING_EVENTS = 1;
         }
     }
 
     if(dequeue)
     {
-        trig_apply_misc_map->MA_TCN_DATA_0.MAC_ADDRESS = trig_apply_misc_map->MA_TCN_FIFO_0[head].MAC_ADDRESS;
-        trig_apply_misc_map->MA_TCN_DATA_0.PORT        = trig_apply_misc_map->MA_TCN_FIFO_0[head].PORT;
-        trig_apply_misc_map->MA_TCN_DATA_1.L2_DOMAIN   = trig_apply_misc_map->MA_TCN_FIFO_1[head].L2_DOMAIN;
-        trig_apply_misc_map->MA_TCN_DATA_1.VID         = trig_apply_misc_map->MA_TCN_FIFO_1[head].VID;
+        trig_apply_misc->MA_TCN_DATA_0.MAC_ADDRESS = trig_apply_misc_map->MA_TCN_FIFO_0[head].MAC_ADDRESS;
+        trig_apply_misc->MA_TCN_DATA_0.PORT        = trig_apply_misc_map->MA_TCN_FIFO_0[head].PORT;
+        trig_apply_misc->MA_TCN_DATA_1.L2_DOMAIN   = trig_apply_misc_map->MA_TCN_FIFO_1[head].L2_DOMAIN;
+        trig_apply_misc->MA_TCN_DATA_1.VID         = trig_apply_misc_map->MA_TCN_FIFO_1[head].VID;
 
         head = (head + 1) % (MBY_MA_TCN_FIFO_CAPACITY + 1);
-        trig_apply_misc_map->MA_TCN_DEQUEUE.READY = 0;
+        trig_apply_misc->MA_TCN_DEQUEUE.READY = 0;
     }
 
-    if ((trig_apply_misc_map->MA_TCN_IP.PENDING_EVENTS & ~trig_apply_misc_map->MA_TCN_IM.PENDING_EVENTS) ||
-        (trig_apply_misc_map->MA_TCN_IP.TCN_OVERFLOW   & ~trig_apply_misc_map->MA_TCN_IM.TCN_OVERFLOW  ))
-        fwd_misc_map ->FWD_IP.MA_TCN = 1;
+    if ((trig_apply_misc->MA_TCN_IP.PENDING_EVENTS & ~trig_apply_misc_map->MA_TCN_IM.PENDING_EVENTS) ||
+        (trig_apply_misc->MA_TCN_IP.TCN_OVERFLOW   & ~trig_apply_misc_map->MA_TCN_IM.TCN_OVERFLOW  ))
+        fwd_misc->FWD_IP.MA_TCN = 1;
 }
 
 void Triggers
 (
-    mby_ppe_trig_apply_map            * const trig_apply_map,
-    mby_ppe_trig_apply_misc_map       * const trig_apply_misc_map,
-    mby_ppe_fwd_misc_map              * const fwd_misc_map,
-    mby_ppe_mapper_map                * const mapper_map,
+    mby_ppe_trig_apply_map      const * const trig_apply_map,
+    mby_ppe_trig_apply_misc_map const * const trig_apply_misc_map,
+    mby_ppe_fwd_misc_map        const * const fwd_misc_map,
+    mby_ppe_mapper_map          const * const mapper_map,
     mbyMaskGenToTriggers        const * const in,
     mbyTriggersToCongMgmt             * const out
 )
@@ -697,10 +703,13 @@ void Triggers
         hit_mask_lo
     );
 
+    mby_ppe_trig_apply_misc_map * const trig_apply_misc = trig_apply_misc_map;
+    mby_ppe_fwd_misc_map        * const fwd_misc = fwd_misc_map;
+
     // events and interrupts
     fm_uint64 trig_ip_lo                       = trig_apply_misc_map->TRIGGER_IP[0].PENDING;
     trig_ip_lo                                |= ((FM_LITERAL_U64(1) << 48) - 1) & trig_hit_mask_resolved_lo;
-    trig_apply_misc_map->TRIGGER_IP[0].PENDING = trig_ip_lo;
+    trig_apply_misc->TRIGGER_IP[0].PENDING = trig_ip_lo;
 
     fm_uint64 trig_ip_hi     = trig_apply_misc_map->TRIGGER_IP[1].PENDING;
     fm_uint64 new_trig_ip_hi = 0;
@@ -716,7 +725,7 @@ void Triggers
                             36,
                             ((FM_LITERAL_U64(1) << 36) - 1) & trig_hit_mask_resolved_hi);
     trig_ip_hi                                |= new_trig_ip_hi;
-    trig_apply_misc_map->TRIGGER_IP[1].PENDING = trig_ip_hi;
+    trig_apply_misc->TRIGGER_IP[1].PENDING = trig_ip_hi;
 
     /* propagate trigger interrupts to FWD_IP and GLOBAL_INTERRUPT regs */
     fm_uint64 trig_im_lo = FM_LITERAL_U64(0);
@@ -724,7 +733,7 @@ void Triggers
     trig_im_lo           = trig_apply_misc_map->TRIGGER_IM[0].MASK;
     trig_im_hi           = trig_apply_misc_map->TRIGGER_IM[1].MASK;
 
-    fwd_misc_map->FWD_IP.TRIGGER = (((trig_ip_hi & ~trig_im_hi) != 0) |
+    fwd_misc->FWD_IP.TRIGGER = (((trig_ip_hi & ~trig_im_hi) != 0) |
                                                   ((trig_ip_lo & ~trig_im_lo) != 0));
 
     // <--- REVISIT!!!! global_interrupt

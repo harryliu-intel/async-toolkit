@@ -58,3 +58,6 @@
 ##################################################################
 
 
+## temp connection
+Ci   /PWRGOOD              xtal_rcvr/lan_pwrgood_rst_b
+

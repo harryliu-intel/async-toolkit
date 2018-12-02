@@ -9,9 +9,9 @@
 
 void mbyLpmGetKeySels
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_byte                  const profile_id,
-    mbyLpmKeySels          * const key_sels
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_byte                    const profile_id,
+    mbyLpmKeySels            * const key_sels
 )
 {
     assert(profile_id < 64);
@@ -32,9 +32,9 @@ void mbyLpmGetKeySels
 
 void mbyLpmGetTcamEntry
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmTcamEntry        * const tcam_entry
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmTcamEntry          * const tcam_entry
 )
 {
     lpm_match_tcam_r const * lpm_match_tcam;
@@ -50,9 +50,9 @@ void mbyLpmGetTcamEntry
 
 void mbyLpmGetTcamSubtrie
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmSubtrie          * const tcam_subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmSubtrie            * const tcam_subtrie
 )
 {
     lpm_match_action_r const * lpm_match_action;
@@ -69,9 +69,9 @@ void mbyLpmGetTcamSubtrie
 
 void mbyLpmGetSubtrie
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmSubtrie          * const subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmSubtrie            * const subtrie
 )
 {
     lpm_subtrie_cptr_r const * lpm_subtrie_cptr;
@@ -89,15 +89,16 @@ void mbyLpmGetSubtrie
 
 void mbyLpmGetSubtrieStore
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmSubtrieStore     * const st_store
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmSubtrieStore       * const st_store
 )
 {
     assert(index < mby_ppe_cgrp_a_nested_map_LPM_SUBTRIE_BITMAPS__nd);
     assert(st_store);
 
-    lpm_subtrie_bitmaps_rf *lpm_subtrie_bitmaps = &(cgrp_a_map->A.LPM_SUBTRIE_BITMAPS[index]);
+    lpm_subtrie_bitmaps_rf const * lpm_subtrie_bitmaps;
+    lpm_subtrie_bitmaps = &(cgrp_a_map->A.LPM_SUBTRIE_BITMAPS[index]);
 
     for (fm_uint i = 0; i < MBY_LPM_BITMAP_SIZE; ++i)
         st_store->prefix_bitmap[i] = lpm_subtrie_bitmaps[i]->BITMAP;

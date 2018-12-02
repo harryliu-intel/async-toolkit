@@ -41,15 +41,15 @@ module mby_igr_dpc
   input  data64_w_ecc_t [0:7]                rx_data,  
   input  epl_md_t                              rx_md,
   input  epl_ts_t                              rx_ts,  
-  input  logic                           rx_pfc_xoff,  
-  input  logic [2:0]              rx_flow_control_tc,
+  output logic [3:0]                     tx_pfc_xoff, //[3]=port3,[2]=port2,[1]=port1,[0]=port0
+  output logic                        tx_pfc_tc_sync, //tc0 sync pulse to tx mac
   output dpc_pb_t                     o_dpc_pb_p0,
   output dpc_pb_t                     o_dpc_pb_p1,    
   output dpc_pb_t                     o_dpc_pb_p2,    
   output dpc_pb_t                     o_dpc_pb_p3    
 );
 
-
+  logic                                  q_rst;
   logic [7:0]                       qs1_rx_ecc;
   logic [1:0]                  qs1_rx_port_num;
   logic [3:0]                      s1_port_num;  //onehot ddecode q1_rx_port_num
@@ -60,24 +60,24 @@ module mby_igr_dpc
   logic                       qs2_or_rx_data_v;    
   epl_md_t                           qs1_rx_md;
   dpc_md_t                           s1_dpc_md;
-  dpc_md_t                           qs2_dpc_md_p0;
-  dpc_md_t                           qs2_dpc_md_p1;
-  dpc_md_t                           qs2_dpc_md_p2;
-  dpc_md_t                           qs2_dpc_md_p3;
+  dpc_md_t                       qs2_dpc_md_p0;
+  dpc_md_t                       qs2_dpc_md_p1;
+  dpc_md_t                       qs2_dpc_md_p2;
+  dpc_md_t                       qs2_dpc_md_p3;
   epl_ts_t                           qs1_rx_ts;
   epl_ts_t                       qs2_dpc_ts_p0;
   epl_ts_t                       qs2_dpc_ts_p1;
   epl_ts_t                       qs2_dpc_ts_p2;
   epl_ts_t                       qs2_dpc_ts_p3;
   data64_w_ecc_t [0:7]             qs1_rx_data;
-  data64_w_ecc_t [0:7]             qs2_rx_data_p0;
-  data64_w_ecc_t [0:7]             qs2_rx_data_p1;
-  data64_w_ecc_t [0:7]             qs2_rx_data_p2;
-  data64_w_ecc_t [0:7]             qs2_rx_data_p3;
+  data64_w_ecc_t [0:7]          qs2_rx_data_p0;
+  data64_w_ecc_t [0:7]          qs2_rx_data_p1;
+  data64_w_ecc_t [0:7]          qs2_rx_data_p2;
+  data64_w_ecc_t [0:7]          qs2_rx_data_p3;
   data64_w_ecc_t [0:7]           rx_data_align;
-  logic                        qs1_rx_pfc_xoff;  
-  logic [2:0]           qs1_rx_flow_control_tc;
-
+  logic [7:0]                  qs1_pfc_tc_sync;  // free-running shift register. [0] is sync pulse every eighth clk to tx mac for tc[0].
+  logic                       qs2_pfc_tc_sync0;
+  logic                                tc_sync;
 //outputs start here
   assign o_dpc_pb_p0.v     = qs2_port_v[0];
   assign o_dpc_pb_p0.tsmd  = {qs2_dpc_ts_p0, qs2_dpc_md_p0};
@@ -90,8 +90,16 @@ module mby_igr_dpc
   assign o_dpc_pb_p2.d     = qs2_rx_data_p2;
   assign o_dpc_pb_p3.v     = qs2_port_v[3];
   assign o_dpc_pb_p3.tsmd  = {qs2_dpc_ts_p3, qs2_dpc_md_p3};
-  assign o_dpc_pb_p3.d     = qs2_rx_data_p3;  
-//outputs finish here     
+  assign o_dpc_pb_p3.d     = qs2_rx_data_p3;
+
+  assign tx_pfc_tc_sync    = qs2_pfc_tc_sync0;
+// port strobe for pfc xoff, this must be sync'd with tx_pfc_tc_sync. exapmle tx_pfc_xoff[0]=1 when tx_pfc_tc_sync=1 then port0:tc0 pfc to tx mac
+// tx_pfc_xoff[0]=1 1 clk after tx_pfc_tc_sync=1 then port0:tc1 pfc to tx mac, tx_pfc_xoff[0]=1  when tx_pfc_tc_sync=1 and 1 clk after tx_pfc_tc_sync=1 then port0:tc0,tc1 pfc to tx mac
+//see HSD 2007752976
+  assign tx_pfc_xoff       = 4'h0; //FIXME drive this with per port TC strobes 
+//outputs finish here
+
+  always_ff @(posedge cclk) q_rst <= rst;
   
 //EPL input buffers interface to partition so no clk gating
   always_ff @(posedge cclk) qs1_rx_ecc             <= rx_ecc;
@@ -99,8 +107,14 @@ module mby_igr_dpc
   always_ff @(posedge cclk) qs1_rx_data_v          <= rx_data_v;
   always_ff @(posedge cclk) qs1_rx_md              <= rx_md;
   always_ff @(posedge cclk) qs1_rx_ts              <= rx_ts;
-  always_ff @(posedge cclk) qs1_rx_pfc_xoff        <= rx_pfc_xoff;
-  always_ff @(posedge cclk) qs1_rx_flow_control_tc <= rx_flow_control_tc;
+  
+//pfc tc sync
+  assign tc_sync = ((~ rst) & q_rst) | qs1_pfc_tc_sync[7]; 
+  always_ff @(posedge cclk) begin
+    if(rst) qs1_pfc_tc_sync <= '0;
+    else    qs1_pfc_tc_sync <= {qs1_pfc_tc_sync[6:0], tc_sync};
+  end
+  always_ff @(posedge cclk) qs2_pfc_tc_sync0 <= qs1_pfc_tc_sync[0];
   
 //desigmware count_ones
   parameter width = 8;  //used by function
