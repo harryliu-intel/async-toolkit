@@ -12,6 +12,9 @@ TYPE
   END;
 
   AP = REF ARRAY OF T;
+
+PROCEDURE ArrayGet(a : AP; idx : CARDINAL) : T;
+PROCEDURE ArraySize(a : AP) : CARDINAL;
   
 CONST Brand = "FieldData";
 

@@ -1,5 +1,10 @@
 (require-modules "basic-defs" "display" "hashtable" "m3")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; helpers for error messages and the like
+;;
+
 (define (symbol-string-append . x)
    (apply string-append
           (map (lambda (s) 
@@ -16,7 +21,6 @@
   (string->symbol (apply symbol-string-append x))
   )
 
-
 (define (error-append . x)
   (let ((txt (apply symbol-string-append x)))
     (if (> (Text.Length txt) 1024)
@@ -24,6 +28,11 @@
         txt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; examples for test & debug
+;;
+
+(define some-field '(field INITIAL_W0_OFFSET 56 8))
 
 (define some-reg
   '(reg parser_port_cfg_r
@@ -86,6 +95,7 @@
 ;; consistency is not the hobgoblin of little minds when it is not foolish
 ;; we tag every object
 ;;
+
 (define (get-tag obj) (car obj))
 
 (define *tag-assert-failed* '())
@@ -107,20 +117,24 @@
 (define assert-reg       (make-asserter 'reg      ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; HO functions
+;;
 
-(define (child-get-name c)
-  (assert-child c)
-  (cadr c))
-
-(define (child-get-contents c)
-  (assert-child c)
-  (caddr c))
-
-(define (child-sum what c)
-  ;;(assert-child c)
-  (gen-sum what (child-get-contents c)))
+(define (get-unique proc lst tag)
+  ;; get the unique member of the list lst s.t.
+  ;; (eq? (proc member) tag)
+  (let loop ((p lst))
+    (cond ((null? p)
+           (error
+            (error-append "No member matching : " tag " : " (stringify lst))))
+          ((eq? tag (proc (car p))) (car p))
+          (else (loop (cdr p))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; a (generic) container type (regfile or addrmap)
+;;
 
 (define (container-get-type c)
   (assert-container c)
@@ -139,7 +153,33 @@
   (accumulate + 0 (map (lambda(ch)(child-sum what ch))
                        (container-get-children c))))
 
+(define (container-get-child c cn)
+  (let ((children (container-get-children c)))
+    (child-get-contents (get-unique child-get-name children cn))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; children of a container type
+;;
+
+(define (child-get-name c)
+  (assert-child c)
+  (cadr c))
+
+(define (child-get-contents c)
+  (assert-child c)
+  (caddr c))
+
+(define (child-get-children c) (list (child-get-contents c)))
+
+(define (child-sum what c)
+  ;;(assert-child c)
+  (gen-sum what (child-get-contents c)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; fields (children of a reg)
+;;
 
 (define (field-get-name f)
   (assert-field f)
@@ -157,7 +197,14 @@
   ;;(assert-field f)
   ((eval (symbol-append 'field-get- what)) f))
 
+(define field-sum field-get)
+
+(define (field-get-children f) '())
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; reg handling (regs can exist in containers or arrays and contain only fields)
+;;
 
 (define (reg-get-type r)
   (assert-reg r)
@@ -166,6 +213,8 @@
 (define (reg-get-fields r)
   (assert-reg r)
   (cddr r))
+
+(define reg-get-children reg-get-fields)
 
 (define (reg-get-fields-before r fn)
   ;; get fields before a named field, unless fn is null, in which case get all
@@ -193,9 +242,23 @@
                    (lambda(f)(field-get what f))
                    (reg-get-fields-before r fn)))
   )
-  
+
+(define (reg-get-field r fn)
+  (let ((fields (reg-get-fields r)))
+    (get-unique field-get-name fields fn)))
+
+(define (reg-get-child r fn)
+  ;; this is a bit weird but fully consistent
+  ;; the point here is that we don't want the field, because every other
+  ;; get-child consumes the tagged part.  Since we are at the leaf we
+  ;; are left with '()
+  ;; but we still want the side-effect of asserting the field exists...
+  (cdr (list (reg-get-field r fn))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; arrays : can contain containers or regs
+;;
 
 (define (array-get-length a)
   (assert-array a)
@@ -205,16 +268,58 @@
   (assert-array a)
   (caddr a))
 
+(define (array-get-children a) (list (array-get-elem a)))
+
 (define (array-sum what a)
   ;;(assert-array a)
   (* (array-get-length a) (gen-sum what (array-get-elem a))))
 
+(define (array-get-child a idx)
+  (assert-array a)
+  (cond ((not (number? idx))
+         (error (error-append "index not a number : " (stringify idx))))
+        ((or (< idx 0) (>= idx (array-get-length a)))
+         (error (error-append "index out of range : " (stringify idx) " : " (stringify a))))
+        (else (array-get-elem a))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; absolutely generic functions (generic over both query and type)
+;;
 
 (define (gen-sum what obj)
   (let* ((tag    (get-tag obj))
          (summer (eval (symbol-append tag '-sum))))
     (summer what obj)))
 
-    
+(define (get-child obj cn)
+  (let* ((tag (get-tag obj))
+         (finder (eval (symbol-append tag '-get-child))))
+    (finder obj cn)))
+
+(define *last-get-children-arg* '())
+
+(define (get-children obj)
+  (set! *last-get-children-arg* obj)
+  (let* ((tag (get-tag obj))
+         (getter (eval (symbol-append tag '-get-children))))
+    (getter obj)))
+  
         
+(define (treesum what t)
+  (let ((children (get-children t)))
+    (cond ((null? children) (list (gen-sum what t)))
+
+          (else (let ((csum (map (lambda(c)(treesum what c)) children)))
+                  (list
+
+                   (*
+                    (if (eq? 'array (car t))
+                        (array-get-length t)
+                        1 ;; not an array -- a plain sum
+                        )
+                    (apply + (map car csum)))
+                   
+                   csum)))
+          
+          )))
