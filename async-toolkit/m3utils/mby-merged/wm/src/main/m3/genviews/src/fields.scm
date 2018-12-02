@@ -305,7 +305,6 @@
          (getter (eval (symbol-append tag '-get-children))))
     (getter obj)))
   
-        
 (define (treesum what t)
   (let ((children (get-children t)))
     (cond ((null? children) (list (gen-sum what t)))
@@ -323,3 +322,21 @@
                    csum)))
           
           )))
+
+;; working structure
+(define size-tree (treesum 'nfields the-map))
+
+;; first child of map
+(define (fc m)(car (get-children m)))
+
+;; first child of address tree
+(define tl caadr)
+
+;; iterate HOF
+(define (iter f n x)
+  (if (= 0 n) x (iter f (- n 1) (f x))))
+
+;;(iter tl 11 size-tree)
+
+;;(iter fc 11 the-map)
+
