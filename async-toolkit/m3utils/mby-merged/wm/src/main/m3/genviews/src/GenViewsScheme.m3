@@ -46,21 +46,26 @@ PROCEDURE Spaces(lev : CARDINAL) : TEXT =
 PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
   VAR
     a : REF ARRAY OF FieldData.T := NIL;
+    b : REF ARRAY OF CARDINAL := NIL;
   BEGIN
     t.wx := Wx.New();
     IF t.fieldAddrRd # NIL THEN
       Debug.Out("Reading field data...");
       a := Pickle2.Read(t.fieldAddrRd);
+      b := Pickle2.Read(t.fieldAddrRd);
       Rd.Close(t.fieldAddrRd)
     END;
     DoContainer(t, tgtmap, 0);
     WITH txt = Wx.ToText(t.wx) DO
       Debug.Out("Producing\n"&txt);
-      RunScheme(t, a, txt);
+      RunScheme(t, a, b, txt);
     END;
   END Gen;
 
-PROCEDURE RunScheme(t : T; a : REF ARRAY OF FieldData.T; prog : TEXT) =
+PROCEDURE RunScheme(t : T;
+                    a : REF ARRAY OF FieldData.T;
+                    b : REF ARRAY OF CARDINAL;
+                    prog : TEXT) =
   VAR
     env := NEW(SchemeNavigatorEnvironment.T).initEmpty();
     m : SchemeObject.T;
@@ -72,8 +77,9 @@ PROCEDURE RunScheme(t : T; a : REF ARRAY OF FieldData.T; prog : TEXT) =
       m := schemeIn.read()
     END;
     
-    EVAL env.define(Atom.FromText("the-addresses"),a);
-    EVAL env.define(Atom.FromText("the-map"),      m);
+    EVAL env.define(Atom.FromText("the-addresses"), a);
+    EVAL env.define(Atom.FromText("the-map"),       m);
+    EVAL env.define(Atom.FromText("the-tree"),      b);
     
     WITH arr = NEW(REF ARRAY OF Pathname.T, NUMBER(t.scmFiles^)+1) DO
       arr[0] := "require";

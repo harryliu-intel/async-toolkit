@@ -16,6 +16,7 @@ IMPORT Word;
 IMPORT ContainerData, FieldData;
 IMPORT FieldDataSeq;
 FROM ContainerData IMPORT Pos, Neg;
+IMPORT CardSeq;
 
 CONST TE = Text.Equal;
 
@@ -35,6 +36,7 @@ TYPE
     nxtField    : Pos :=  0;
     nxtInternal : Neg := -1;
     fields : FieldDataSeq.T;
+    internals : CardSeq.T;
     maxAddr := CompAddr.Zero;
   OVERRIDES
     internal := MakeInternal;
@@ -55,6 +57,15 @@ PROCEDURE MakeInternal(v        : MyVisitor;
     WITH res = NEW(Internal,
                    id := v.nxtInternal,
                    up := parent) DO
+      IF -v.nxtInternal # v.internals.size() THEN
+        Debug.Error(Fmt.F("-v.nxtInternal = %s # v.internals.size() = %s",
+                          Fmt.Int(-v.nxtInternal), Fmt.Int(v.internals.size())))
+      END;
+      IF parent = NIL THEN
+        v.internals.addhi(0)
+      ELSE
+        v.internals.addhi(-NARROW(parent,Internal).id)
+      END;
       DEC(v.nxtInternal);
       RETURN res
     END
@@ -139,21 +150,31 @@ BEGIN
   END;
 
   Debug.Out("Visiting address map...");
-  WITH v = NEW(MyVisitor, fields := NEW(FieldDataSeq.T).init()) DO
+  WITH v = NEW(MyVisitor,
+               fields := NEW(FieldDataSeq.T).init(),
+               internals := NEW(CardSeq.T).init()) DO
+    v.internals.addhi(0); (* this is the root *)
     map.visit(v);
 
     Debug.Out("Fields  " & Fmt.Int(v.nxtField));
     Debug.Out("Parents " & Fmt.Int(-v.nxtInternal));
     Debug.Out("MaxAddr " & CompAddr.Format(v.maxAddr, bytes := TRUE));
 
-    Debug.Out("Converting address map...");
-    WITH a = NEW(REF ARRAY OF Field, v.fields.size()) DO
+    Debug.Out("Converting address map and tree...");
+    WITH a = NEW(REF ARRAY OF Field, v.fields.size()),
+         b = NEW(REF ARRAY OF CARDINAL, v.internals.size()) DO
       FOR i := FIRST(a^) TO LAST(a^) DO
         a[i] := v.fields.get(i);
       END;
 
+      FOR i := FIRST(b^) TO LAST(b^) DO
+        b[i] := v.internals.get(i)
+      END;
+
       Debug.Out("Writing address map...");
       Pickle.Write(wr, a);
+      Debug.Out("Writing internal tree...");
+      Pickle.Write(wr, b);
       Wr.Close(wr)
     END
   END
