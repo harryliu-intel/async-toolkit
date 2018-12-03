@@ -259,17 +259,19 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
   RE_KEYS_OUTER_VLAN1()
 
   def default_forced(): Unit = {
+    val expectedValue = 0xdede
+
     val targetLens = MapperLenses.portDefaultTargetLens(0, 3)
     val valueLens = MapperLenses.portDefaultValueLens(0, 3)
 
     val updatedCsr = CsrLenses.execute(csr.ppeMapperMap, for {
       _ <- targetLens.assign_(80)
-      _ <- valueLens.assign_(0xdede)
+      _ <- valueLens.assign_(expectedValue)
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, updatedCsr), "default forced", output => {
       it should "fill key16 using MAP_PORT_DEFAULT" in {
-        output.classifierKeys.key16(Classifier16BitKeys.getConstant(12)) shouldEqual 0xdede
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(12)) shouldEqual expectedValue.toShort
       }
     })
   }
