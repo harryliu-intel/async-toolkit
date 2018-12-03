@@ -27,73 +27,11 @@
         (string-append (Text.Sub txt 0 1024) "...")
         txt)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; examples for test & debug
-;;
-
-(define some-field '(field INITIAL_W0_OFFSET 56 8))
-
-(define some-reg
-  '(reg parser_port_cfg_r
-        (field INITIAL_W0_OFFSET 56 8)
-        (field INITIAL_W1_OFFSET 48 8)
-        (field INITIAL_W2_OFFSET 40 8)
-        (field INITIAL_PTR 32 8)
-        (field INITIAL_STATE 16 16)
-        (field INITIAL_OP_MASK 4 12)
-        (field INITIAL_OP_ROT 0 4)
-        )
-  )
-
-(define some-array `(array 16 ,some-reg))
-
-(define some-2d-array `(array 256 ,some-array))
-
-(define some-child ' (child EM_HASH_LOOKUP
-                          (array 32768 
-                            (reg em_hash_lookup_r
-                              (field PTR 64 20)
-                              (field RSVD1_ 52 12)
-                              (field SELECT_4 48 4)
-                              (field SELECT_3 44 4)
-                              (field SELECT_2 40 4)
-                              (field SELECT_1 36 4)
-                              (field SELECT_0 32 4)
-                              (field MASK 0 32)
-                            )
-                          )
-                          )
-  )
-
-(define some-container
-  '(container addrmap mby_ppe_cgrp_em_map
-              (child A
-                     (reg xxx
-                          (field STUFF 0 64)
-                          )
-                     )
-              (child B
-                     (array 32 
-                            (container regfile b_rf
-                                       (child BB
-                                              (array 8 
-                                                     (reg bb_r
-                                                          (field DATA 0 64)
-                                                          )
-                                                     )
-                                              )
-                                       )
-                            )
-                     )
-              )
-  )
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; consistency is not the hobgoblin of little minds when it is not foolish
-;; we tag every object
+;; --->we tag every object
 ;;
 
 (define (get-tag obj) (car obj))
@@ -320,11 +258,39 @@
                     (apply + (map car csum)))
                    
                    csum)))
-          
           )))
 
-;; working structure
-(define size-tree (treesum 'nfields the-map))
+(define (vertex-op op t)
+  (let ((children (get-children t)))
+    (cond ((null? children) (list #f))
+
+          (else
+           (let ((down (map (lambda(c)(vertex-op op c)) children)))
+             (list (op t) down)))
+          )))
+
+(define (zip a-lst b-lst) (map cons a-lst b-lst))
+
+(define get-tree-children cadr)
+
+(define i (lambda(x)x))
+
+(define (vertex-op2 op t u)
+  (let ((t-children (get-children t))
+        (u-children (get-tree-children u))
+        )
+    (cond ((null? t-children) (list #f))
+
+          (else
+           (let ((down (map (lambda(c)(vertex-op2 op (car c) (cadr c)))
+                            (zip t-children u-children))))
+             (list (op t) down)))
+          )))
+
+(define (make-array-size-tree t)
+  (vertex-op
+   (lambda(c) (if (eq? 'array (get-tag c)) (array-get-length c) #f))
+   t))
 
 ;; first child of map
 (define (fc m)(car (get-children m)))
@@ -336,7 +302,40 @@
 (define (iter f n x)
   (if (= 0 n) x (iter f (- n 1) (f x))))
 
-;;(iter tl 11 size-tree)
+;;
+(define (tree-accum t)
+  ;; sum to the right at every level of tree
+  (define (helper p n)
+    (cond ((null? p) '())
+          
+          ((null? (cdar p))
+           (cons (list n)
+                 (helper (cdr p) (+ n (caar p)))))
+          
+          (else
+           (cons (list n (helper (cadar p) n))
+                 (helper (cdr p) (+ n (caar p)))))
+          )
+    )
+  (car (helper (list t) 0)))
 
-;;(iter fc 11 the-map)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                           
+(define (atom? x) (and (not (pair? x)) (not (null? x))))
 
+(define (tree-iso? a b)
+  (cond ((and (null? a) (null? b)) #t)
+
+        ((and (pair? a) (pair? b))
+         (and (tree-iso? (car a) (car b))
+              (tree-iso? (cdr a) (cdr b))))
+
+        ((and (atom? a) (atom? b)) #t)
+
+        (else #f)
+
+        ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(load "examples.scm")
