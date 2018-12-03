@@ -23,47 +23,31 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : Tag Queuing Unit
+// -- Description  : TQU Read Response Receiver
 //------------------------------------------------------------------------------
 
-module tqu
+module tqu_rrsp_rcv
     import egr_int_pkg::*;
 (
     input logic             clk,
     input logic           rst_n, 
 
-    //EGR Internal Interfaces 
-    egr_prc_tqu_if.tqu   prc_if,  // Packet Read Controller   - Transmit Queuing Unit Interface
-    egr_tcu_tqu_if.tqu   tcu_if,  // Transmit Controller Unit - Transmit Queunig Unit Interface
+    egr_rrs_if.requestor mri_if, // Read Response Interface. Gives service to 2 EPLs
 
-    egr_rrs_if.requestor mri_if0, // Read Response Interface. Gives service to EPL 0,1
-    egr_rrs_if.requestor mri_if1  // Read Response Interface. Gives service to EPL 2,3
-
+    output logic       wd_valid [N_EPL_PER_EPP],
+    output data_word_t     word [N_EPL_PER_EPP],
+    output dtq_sel_t    dtq_sel [N_EPL_PER_EPP],
+    output logic      word_type [N_EPL_PER_EPP]  // Word type: 0:Metadata(Control) 1:Data
 );
 
-logic       wd_valid [N_EPP_PER_MGP][N_EPL_PER_EPP];
-data_word_t     word [N_EPP_PER_MGP][N_EPL_PER_EPP];
-dtq_sel_t    dtq_sel [N_EPP_PER_MGP][N_EPL_PER_EPP]; 
+
+//modport requestor(
+//    input     rrsp_wd_id,
+//    input        rrsp_wd,
+//    input  rrsp_wd_valid,
+//    output rrsp_wd_stall
+//    );
 
 
-tqu_rrsp_rcv tqu_rrsp_rcv0(
-    .clk      (     clk   ),
-    .rst_n    (   rst_n   ), 
-    .mri_if   ( mri_if0   ), 
-    .wd_valid (wd_valid[0]), 
-    .word     (    word[0]),
-    .dtq_sel  ( dtq_sel[0])
 
-
-);
-
-tqu_rrsp_rcv tqu_rrsp_rcv1(
-    .clk      (     clk   ),
-    .rst_n    (   rst_n   ), 
-    .mri_if   ( mri_if1   ), 
-    .wd_valid (wd_valid[1]), 
-    .word     (    word[1]),
-    .dtq_sel  ( dtq_sel[1])
-);
-
-endmodule : tqu
+endmodule : tqu_rrsp_rcv
