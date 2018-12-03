@@ -2212,8 +2212,8 @@ void mby_init_common_regs
     }
 
     for (fm_uint i = 0; i < 64; i++) {
-        em_hash_cfg_r * const em_a_hash_cfg = &(rx_top_map->cgrp_a.EM.EM_HASH_CFG[i]);
-        em_hash_cfg_r * const em_b_hash_cfg = &(rx_top_map->cgrp_b.EM.EM_HASH_CFG[i]);
+        em_hash_cfg_r * const em_a_hash_cfg = &(rx_top_map->cgrp_a.EM.HASH_CFG[i]);
+        em_hash_cfg_r * const em_b_hash_cfg = &(rx_top_map->cgrp_b.EM.HASH_CFG[i]);
 
         em_a_hash_cfg->ENTRY_SIZE_0 = 0;
         em_a_hash_cfg->ENTRY_SIZE_1 = 0;

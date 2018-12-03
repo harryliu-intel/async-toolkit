@@ -150,7 +150,7 @@ static void init_EM_HASH_CAM_REG
 {
     for (fm_uint entry = 0 ; entry < mby_ppe_cgrp_em_map_HASH_CAM__n ; entry++)
     {
-        for(fm_uint word = 0 ; word < em_hash_cam_rf_EM_HASH_CAM__n ; word++)
+        for(fm_uint word = 0 ; word < em_hash_cam_rf_HASH_CAM__n ; word++)
         {
             set_EM_HASH_CAM(cgrp_em_map, entry, word, (fm_uint64)0x0000000000000000);
         }
@@ -179,7 +179,7 @@ static void init_EM_HASH_CAM_EN_REG
 {
     for (fm_uint row = 0 ; row < mby_ppe_cgrp_em_map_HASH_CAM_EN__n ; row++)
     {
-        for(fm_uint rule = 0 ; rule < em_hash_cam_en_rf_EM_HASH_CAM_EN__n ; rule++)
+        for(fm_uint rule = 0 ; rule < em_hash_cam_en_rf_HASH_CAM_EN__n ; rule++)
         {
             set_EM_HASH_CAM_EN(cgrp_em_map, row, rule, (fm_uint64)0x0000000000000000);
         }
@@ -208,7 +208,7 @@ static void init_EM_KEY_SEL0_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL0__n ; hash++)
     {
-        for(fm_uint profile = 0 ; profile < em_key_sel0_rf_EM_KEY_SEL0__n ; profile++)
+        for(fm_uint profile = 0 ; profile < em_key_sel0_rf_KEY_SEL0__n ; profile++)
         {
             set_EM_KEY_SEL0(cgrp_em_map, hash, profile, 0x00000000);
         }
@@ -241,7 +241,7 @@ static void init_EM_KEY_SEL1_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL1__n ; hash++)
     {
-        for (fm_uint profile = 0 ; profile < em_key_sel1_rf_EM_KEY_SEL1__n ; profile++)
+        for (fm_uint profile = 0 ; profile < em_key_sel1_rf_KEY_SEL1__n ; profile++)
         {
             set_EM_KEY_SEL1(cgrp_em_map, hash, profile,
                 (uint4)0x0,
@@ -275,7 +275,7 @@ static void init_EM_KEY_MASK_REG
 )
 {
     fm_uint dw__n = 2;
-    fm_uint key_mask_sel__n = em_key_mask_rf_EM_KEY_MASK__n / dw__n; // <-- 16?? hash key profiles number REVISIT!!!
+    fm_uint key_mask_sel__n = em_key_mask_rf_KEY_MASK__n / dw__n; // <-- 16?? hash key profiles number REVISIT!!!
 
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_MASK__n ; hash++)
     {
@@ -313,7 +313,7 @@ static void init_EM_HASH_MISS_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_HASH_MISS__n ; hash++)
     {
-        for (fm_uint profile = 0 ; profile < em_hash_miss_rf_EM_HASH_MISS__n ; profile++)
+        for (fm_uint profile = 0 ; profile < em_hash_miss_rf_HASH_MISS__n ; profile++)
         {
             set_EM_HASH_MISS(cgrp_em_map, hash, profile, (uint32)0x00000000, (uint32)0x00000000);
         }
@@ -335,7 +335,7 @@ static void set_EM_HASH_CFG
     fm_byte               const entry_size_1
 )
 {
-    em_hash_cfg_r * const em_hash_cfg = &(cgrp_em_map->EM_HASH_CFG[profile]);
+    em_hash_cfg_r * const em_hash_cfg = &(cgrp_em_map->HASH_CFG[profile]);
 
     em_hash_cfg->MODE         = mode;
     em_hash_cfg->BASE_PTR_0   = base_ptr_0;
@@ -351,7 +351,7 @@ static void init_EM_HASH_CFG_REG
     mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint profile = 0 ; profile < mby_ppe_cgrp_em_map_EM_HASH_CFG__n ; profile++)
+    for (fm_uint profile = 0 ; profile < mby_ppe_cgrp_em_map_HASH_CFG__n ; profile++)
     {
         set_EM_HASH_CFG(cgrp_em_map, profile,
             FALSE,

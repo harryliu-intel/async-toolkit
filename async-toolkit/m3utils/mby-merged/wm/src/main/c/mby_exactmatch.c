@@ -192,7 +192,7 @@ static fm_bool checkCamHits
 
         // Build Cam Key
         fm_uint key_idx = 0;
-        for (fm_uint j = 0; j < em_hash_cam_rf_EM_HASH_CAM__n; j++)
+        for (fm_uint j = 0; j < em_hash_cam_rf_HASH_CAM__n; j++)
         {
             fm_bool hashn_32b = ( ((hash_num == 0) && (j < 4)) || ((hash_num == 1) && (j >= 4)) );
 
