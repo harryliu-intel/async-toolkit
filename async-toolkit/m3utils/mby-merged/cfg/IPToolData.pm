@@ -68,6 +68,7 @@ push (@{$ToolConfig_ips{mby}{OTHER}{SUB_SCOPES}}, (
    "ip_ccu_vc",
    "chassis_reset",
    "shdv",
+   "shrtl",
 ));
 
 push (@{$ToolConfig_ips{mby}{OTHER}{SEARCH_PATHS}}, (
@@ -80,6 +81,7 @@ push (@{$ToolConfig_ips{mby}{OTHER}{SEARCH_PATHS}}, (
    "&get_tool_var(ipconfig/sva_lib_ip,        SEARCH_PATHS)",
 	  "&get_tool_path(ipconfig/SVA_LIB)",
    "&get_tool_var(ipconfig/shdv,              SEARCH_PATHS)",
+   "&get_tool_var(ipconfig/shrtl,             SEARCH_PATHS)",
    "&get_tool_path(ipconfig/CTECH)",
    "&get_tool_path(ipconfig/CTECH_EXP)",
 ));
@@ -199,6 +201,15 @@ $ToolConfig_ips{fdo_tools} = {
    OTHER   => {
       SEARCH_PATHS   => ["&get_tool_path()",],
       IMPORT         => ["cfg/shdv_IPToolData.pm",],
+   },
+};
+
+$ToolConfig_ips{shrtl} = {
+   PATH => "$ENV{IP_MODELS}/shrtl/&get_tool_version()",
+   VERSION => "shrtl-dev-x0-18ww48a",
+   OTHER   => {
+      SEARCH_PATHS   => ["&get_tool_path()",],
+      IMPORT         => ["cfg/shrtl_IPToolData.pm",],
    },
 };
 

@@ -6,28 +6,28 @@
 
 void RxPipeline
 (
-    mby_ppe_rx_top_map      * const rx_top_map,
-    mby_shm_map             * const shm_map,
-    mbyRxMacToParser  const * const mac2par,
-    mbyRxStatsToRxOut       * const rxs2rxo
+    mby_ppe_rx_top_map const * const rx_top_map,
+    mby_shm_map        const * const shm_map,
+    mbyRxMacToParser   const * const mac2par,
+    mbyRxStatsToRxOut        * const rxs2rxo
 )
 {
     // Register map structs:
-    mby_ppe_parser_map          * const parser_map          = &(rx_top_map->parser);
-    mby_ppe_mapper_map          * const mapper_map          = &(rx_top_map->mapper);
-    mby_ppe_cgrp_a_map          * const cgrp_a_map          = &(rx_top_map->cgrp_a);
-    mby_ppe_cgrp_b_map          * const cgrp_b_map          = &(rx_top_map->cgrp_b);
-    mby_ppe_entropy_map         * const entropy_map         = &(rx_top_map->entropy);
-    mby_ppe_nexthop_map         * const nexthop_map         = &(rx_top_map->nexthop);
-    mby_ppe_fwd_misc_map        * const fwd_misc_map        = &(rx_top_map->fwd_misc);
-    mby_ppe_mst_glort_map       * const mst_glort_map       = &(rx_top_map->mst_glort);
-    mby_ppe_policers_map        * const policers_map        = &(rx_top_map->policers);
-    mby_ppe_trig_apply_map      * const trig_apply_map      = &(rx_top_map->trig_apply);
-    mby_ppe_trig_apply_misc_map * const trig_apply_misc_map = &(rx_top_map->trig_apply_misc);
-    mby_ppe_trig_usage_map      * const trig_usage_map      = &(rx_top_map->trig_usage);
-    mby_ppe_cm_apply_map        * const cm_apply_map        = &(rx_top_map->cm_apply);
-    mby_ppe_cm_usage_map        * const cm_usage_map        = &(rx_top_map->cm_usage);
-    mby_ppe_rx_stats_map        * const stats_map           = &(rx_top_map->stats);
+    mby_ppe_parser_map          const * const parser_map          = &(rx_top_map->parser);
+    mby_ppe_mapper_map          const * const mapper_map          = &(rx_top_map->mapper);
+    mby_ppe_cgrp_a_map          const * const cgrp_a_map          = &(rx_top_map->cgrp_a);
+    mby_ppe_cgrp_b_map          const * const cgrp_b_map          = &(rx_top_map->cgrp_b);
+    mby_ppe_entropy_map         const * const entropy_map         = &(rx_top_map->entropy);
+    mby_ppe_nexthop_map         const * const nexthop_map         = &(rx_top_map->nexthop);
+    mby_ppe_fwd_misc_map        const * const fwd_misc_map        = &(rx_top_map->fwd_misc);
+    mby_ppe_mst_glort_map       const * const mst_glort_map       = &(rx_top_map->mst_glort);
+    mby_ppe_policers_map        const * const policers_map        = &(rx_top_map->policers);
+    mby_ppe_trig_apply_map      const * const trig_apply_map      = &(rx_top_map->trig_apply);
+    mby_ppe_trig_apply_misc_map const * const trig_apply_misc_map = &(rx_top_map->trig_apply_misc);
+    mby_ppe_trig_usage_map      const * const trig_usage_map      = &(rx_top_map->trig_usage);
+    mby_ppe_cm_apply_map        const * const cm_apply_map        = &(rx_top_map->cm_apply);
+    mby_ppe_cm_usage_map        const * const cm_usage_map        = &(rx_top_map->cm_usage);
+    mby_ppe_rx_stats_map        const * const stats_map           = &(rx_top_map->stats);
 
     // Intermediate structs:
     mbyParserToMapper     par2map;
@@ -69,15 +69,15 @@ void RxPipeline
 
 void TxPipeline
 (
-    mby_ppe_tx_top_map      * const tx_top_map,
-    mby_shm_map             * const shm_map,
-    mbyTxInToModifier const * const txi2mod,
-    mbyTxStatsToTxMac       * const txs2mac,
-    fm_int                          max_pkt_size
+    mby_ppe_tx_top_map const * const tx_top_map,
+    mby_shm_map        const * const shm_map,
+    mbyTxInToModifier  const * const txi2mod,
+    mbyTxStatsToTxMac        * const txs2mac,
+    fm_int                           max_pkt_size
 )
 {
     // Register map structs:
-    mby_ppe_modify_map      * const modify_map = &(tx_top_map->modify);
+    mby_ppe_modify_map const * const modify_map = &(tx_top_map->modify);
 
     // Intermediate struct. Setting TX_DATA will be fixed with tx stats <--REVISIT!!!
     mbyModifierToTxStats mod2txs;

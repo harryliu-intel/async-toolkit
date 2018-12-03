@@ -26,13 +26,13 @@
 
 void mbyMatchExact // i.e. look up EM hash
 (
-    em_hash_lookup_r        * const em_hash_lookup_reg,
-    mby_ppe_cgrp_em_map     * const cgrp_em_map,
-    mby_shm_map             * const shm_map,
-    mbyClassifierKeys const * const keys,
-    fm_byte                   const profile,
-    fm_byte                   const group,
-    fm_uint32                       actions[MBY_EM_MAX_ACTIONS_NUM] // = the list of action entries to action resolution
+    em_hash_lookup_r    const * const em_hash_lookup_reg,
+    mby_ppe_cgrp_em_map const * const cgrp_em_map,
+    mby_shm_map         const * const shm_map,
+    mbyClassifierKeys   const * const keys,
+    fm_byte                     const profile,
+    fm_byte                     const group,
+    fm_uint32                         actions[MBY_EM_MAX_ACTIONS_NUM] // = the list of action entries to action resolution
 );
 
 #endif /* MBY_EXACTMATCH_H */
