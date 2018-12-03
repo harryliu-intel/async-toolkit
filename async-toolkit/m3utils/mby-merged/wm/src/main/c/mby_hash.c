@@ -427,7 +427,7 @@ void Hash
     mbyHashToNextHop          * const out
 )
 {
-    mbyClassifierKeys keys = in->FFU_KEYS;
+    mbyClassifierKeys keys = in->CLASSIFIER_KEYS;
     fm_byte hash_profile[MBY_CGRP_HASH_PROFILE_ACTIONS] = { 0 };
     fm_byte mod_meta[MBY_CGRP_META_ACTIONS]             = { 0 };
 
