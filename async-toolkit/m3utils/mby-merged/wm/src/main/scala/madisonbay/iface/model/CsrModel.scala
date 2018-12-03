@@ -4,6 +4,8 @@ import madisonbay.wm.switchwm.csr.Csr
 import madisonbay.wm.utils.json.JsonSerializer
 import madisonbay.wm.utils.json.JsonSerializer.isInnerCaseClassField
 
+import scala.util.{Success, Try}
+
 
 object CsrModel {
 
@@ -14,13 +16,20 @@ object CsrModel {
 
 }
 
-class CsrModel(csr: Csr, limitNumberOfNodes: Int) {
+class CsrModel(val csr: Csr, limitNumberOfNodes: Int) {
 
   val csrMap: Map[String, Any] = Map(CsrModel.KeyTopMap -> toCsrMap(csr.topMap))
 
   val csrMapToHtml: Map[String, Any] = joinValues(csrMap)
 
-  def toCsrMap(obj: Any): Map[String, Any] =
+  def idMgpOpt(id: Int): Option[Int] = if (id >=0 && id < csr.topMap.mpp.mgp.length) { Some(id) } else { None }
+
+  def idMgpOpt(id: String): Option[Int] = Try(id.toInt) match {
+    case Success(idMgp) => idMgpOpt(idMgp)
+    case _ => None
+  }
+
+  private def toCsrMap(obj: Any): Map[String, Any] =
     JsonSerializer.toMap(obj, bNameCaseClasses = false) {
       case (field, _) if isInnerCaseClassField(field) => false
       case (field, _) if isInternalField(field.getName) => false

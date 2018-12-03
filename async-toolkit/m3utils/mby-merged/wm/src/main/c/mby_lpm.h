@@ -50,23 +50,23 @@ typedef struct mbyLpmSubtrieLookupStruct
 
 void mbyMatchLpm
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    mby_shm_map                * const shm_map,
-    mbyClassifierKeys    const * const keys,
-    fm_byte                            profile_id,
-    fm_uint32                          actions[4]
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    mby_shm_map        const * const shm_map,
+    mbyClassifierKeys  const * const keys,
+    fm_byte                          profile_id,
+    fm_uint32                        actions[4]
 );
 
 //#ifdef UNIT_TEST
 struct mbyLpmStaticFuncs {
-    void    (*_lookUpLpmTcam)(mby_ppe_cgrp_a_map * const, mbyLpmTcamLookup * const);
+    void    (*_lookUpLpmTcam)(mby_ppe_cgrp_a_map const * const, mbyLpmTcamLookup * const);
     fm_bool (*_getBitIn64BitsArray)(fm_uint64 const * const, fm_byte);
     fm_byte (*_countOneIn64BitsArray)(fm_uint64 const * const, fm_byte);
     fm_bool (*_getSubtriePrefixNode)(mbyLpmSubtrieStore const * const, fm_byte);
     fm_bool (*_getSubtrieChildNode)(mbyLpmSubtrieStore const * const, fm_byte);
-    void    (*_exploreSubtrie)(mby_ppe_cgrp_a_map * const cgrp_a_map, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
-    void    (*_lpmSearch)(mby_ppe_cgrp_a_map * const, mbyLpmKey const * const, mbyLpmSearchResult * const);
-    void    (*_lpmGenerateKey)(mby_ppe_cgrp_a_map * const, mbyClassifierKeys const * const, fm_byte, mbyLpmKey * const);
+    void    (*_exploreSubtrie)(mby_ppe_cgrp_a_map const * const cgrp_a_map, mbyLpmSubtrie const * const, mbyLpmSubtrieLookup * const);
+    void    (*_lpmSearch)(mby_ppe_cgrp_a_map const * const, mbyLpmKey const * const, mbyLpmSearchResult * const);
+    void    (*_lpmGenerateKey)(mby_ppe_cgrp_a_map const * const, mbyClassifierKeys const * const, fm_byte, mbyLpmKey * const);
 };
 
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs);

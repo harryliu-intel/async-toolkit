@@ -41,7 +41,7 @@ module TB_IGR_TOP
   data64_w_ecc_t [0:7]       grp_b_rx_data_w_ecc = '0;
   data64_w_ecc_t [0:7]       grp_c_rx_data_w_ecc = '0;
   data64_w_ecc_t [0:7]       grp_d_rx_data_w_ecc = '0;
- 
+  
   logic                        grp_a_rx_pfc_xoff = '0;
   logic                        grp_b_rx_pfc_xoff = '0;
   logic                        grp_c_rx_pfc_xoff = '0;
@@ -51,6 +51,17 @@ module TB_IGR_TOP
   logic [2:0]           grp_b_rx_flow_control_tc = '0;
   logic [2:0]           grp_c_rx_flow_control_tc = '0;
   logic [2:0]           grp_d_rx_flow_control_tc = '0;
+
+ 
+//  logic [3:0]                  grp_a_rx_pfc_xoff;
+//  logic [3:0]                  grp_b_tx_pfc_xoff;
+//  logic [3:0]                  grp_c_tx_pfc_xoff;
+//  logic [3:0]                  grp_d_tx_pfc_xoff;
+  
+//  logic                     grp_a_tx_pfc_tc_sync;
+//  logic                     grp_b_tx_pfc_tc_sync;
+//  logic                     grp_c_tx_pfc_tc_sync;
+//  logic                     grp_d_tx_pfc_tc_sync;
 
   logic [7:0]                       vp_rx_ecc = '0;
   logic [1:0]                  vp_rx_port_num = '0;
@@ -64,10 +75,21 @@ module TB_IGR_TOP
   
   igr_rx_ppe_if     igr_rx_ppe();
   rx_ppe_igr_if     rx_ppe_igr();
+  
   assign igr_rx_ppe.intf0_ack = '0;
   assign igr_rx_ppe.intf1_ack = '0;
   assign rx_ppe_igr.intf0 = '0;
   assign rx_ppe_igr.intf1 = '0;
+  
+  mim_wr_if    egr_igr_wreq();
+  mim_rd_if    igr_egr_rreq();  
+  mim_wr_if    mim_wreq_0();
+  mim_wr_if    mim_wreq_1();
+  mim_wr_if    mim_wreq_2();
+  mim_wr_if    mim_wreq_3();
+  mim_wr_if    mim_wreq_4();
+  mim_wr_if    mim_wreq_5();
+
 
 initial
 begin
@@ -77,7 +99,7 @@ forever
 end
 
 
-igr_top
+mby_igr_top
   top(
   // Clock.
   .cclk(cclk),
@@ -115,7 +137,7 @@ igr_top
   .grp_b_rx_data_w_ecc(grp_b_rx_data_w_ecc),
   .grp_c_rx_data_w_ecc(grp_c_rx_data_w_ecc),
   .grp_d_rx_data_w_ecc(grp_d_rx_data_w_ecc),
- 
+
   .grp_a_rx_pfc_xoff(grp_a_rx_pfc_xoff),
   .grp_b_rx_pfc_xoff(grp_b_rx_pfc_xoff),
   .grp_c_rx_pfc_xoff(grp_c_rx_pfc_xoff),
@@ -125,6 +147,16 @@ igr_top
   .grp_b_rx_flow_control_tc(grp_b_rx_flow_control_tc),
   .grp_c_rx_flow_control_tc(grp_c_rx_flow_control_tc),
   .grp_d_rx_flow_control_tc(grp_d_rx_flow_control_tc),
+
+//  .grp_a_tx_pfc_xoff(grp_a_tx_pfc_xoff),
+//  .grp_b_tx_pfc_xoff(grp_b_tx_pfc_xoff),
+//  .grp_c_tx_pfc_xoff(grp_c_tx_pfc_xoff),
+//  .grp_d_tx_pfc_xoff(grp_d_tx_pfc_xoff),
+  
+//  .grp_a_tx_pfc_tc_sync(grp_a_tx_pfc_tc_sync),
+//  .grp_b_tx_pfc_tc_sync(grp_b_tx_pfc_tc_sync),
+//  .grp_c_tx_pfc_tc_sync(grp_c_tx_pfc_tc_sync),
+//  .grp_d_tx_pfc_tc_sync(grp_d_tx_pfc_tc_sync),
   
   .vp_rx_ecc(vp_rx_ecc),
   .vp_rx_port_num(vp_rx_port_num),
@@ -139,104 +171,35 @@ igr_top
   
   .igr_rx_ppe(igr_rx_ppe),
   .rx_ppe_igr(rx_ppe_igr),
+  
+  .o_tag_ring_lltag0(),
+  .o_tag_ring_lltag1(),
 
   // Egress Interface ///////////////////////////////////////////////////////////
 
   // Dirty pointer Write port
-/*  input  logic */                     .i_egr_wreq_valid('0), 
-/*  input  logic [W_SEG_PTR-1:0] */     .i_egr_wr_seg_ptr('0), //[19:0]
-/*  input  logic [W_WD_SEL-1:0] */      .i_egr_wr_wd_sel('0),  //[ 2:0]
-/*  input  logic [W_REQ_ID-1:0]  */     .i_egr_wreq_id('0),    //[12:0]
-/*  input  logic [MSH_DATA_WIDTH-1:0] */ .i_egr_wr_data('0),    // 64*8
-  
-// Assume IGR has some kind of ACK for buffer space  
-/*  output logic [W_XACT_CREDITS-1:0] */ .o_egr_wreq_credits(), // temp value
-  
-  
-  // Pointer cache read/rsp
+  .egr_igr_wreq(egr_igr_wreq),
 
-/*  output logic */                    .o_egr_rreq_valid(),
-/*  output logic [W_SEG_PTR-1:0] */   .o_egr_seg_ptr(),      //[19:0]
-/*  output logic [W_SEMA-1:0] */      .o_egr_sema(),         //[ 3:0]
-/*  output logic [W_WD_SEL-1:0] */    .o_egr_wd_sel(),       //[ 2:0]
-/*  output logic [W_REQ_ID-1:0] */    .o_egr_req_id(),       //[12:0]
-    
-/*  input  logic [W_XACT_CREDITS-1:0] */ .i_egr_rreq_credits('0), // temp value   
+  // Pointer cache read/rsp  
+  .igr_egr_rreq(igr_egr_rreq),
   
-  
-/*  input  logic  */                       .i_egr_rrsp_valid('0),
-/*  input  logic [W_RRSP_DEST_BLOCK-1:0] */ .i_egr_rrsp_dest_block('0),  //[2:0]
-/*  input  logic [W_REQ_ID-1:0] */         .i_egr_rrsp_req_id('0),      //[12:0]
-/*  input  logic [MSH_DATA_WIDTH-1:0] */   .i_egr_rd_data('0),          //64 x 8
-
-  
+ 
 // Mesh Interface (MIM block) /////////////////////////////////////////////////
                         
-  // Write port 0
-/*  output logic  */                    .o_mim_wreq_valid_w0(), 
-/*  output logic [W_SEG_PTR-1:0] */     .o_mim_wr_seg_ptr_w0(), //[19:0]
-/*  output logic [W_SEMA-1:0] */        .o_mim_wr_sema_w0(),    //[ 3:0]
-/*  output logic [W_WD_SEL-1:0] */      .o_mim_wr_wd_sel_w0(),  //[ 2:0]
-/*  output logic [W_REQ_ID-1:0] */      .o_mim_wreq_id_w0(),    //[12:0]
-/*  output logic [MSH_DATA_WIDTH-1:0] */ .o_mim_wr_data_w0(),    // 64*8
-         
-/*  input  logic [W_XACT_CREDITS-1:0] */ .i_mim_wreq_credits_w0('0), // temp value
+                        
+  // Write mesh row 0                     
+  .mim_wreq_0(mim_wreq_0),
+  .mim_wreq_1(mim_wreq_1),
+  .mim_wreq_2(mim_wreq_2),
   
-  
-  // Write port 1
-/*  output logic */                     .o_mim_wreq_valid_w1(), 
-/*  output logic [W_SEG_PTR-1:0] */     .o_mim_wr_seg_ptr_w1(), //[19:0]
-/*  output logic [W_SEMA-1:0] */        .o_mim_wr_sema_w1(),    //[ 3:0]
-/*  output logic [W_WD_SEL-1:0] */      .o_mim_wr_wd_sel_w1(),  //[ 2:0]
-/*  output logic [W_REQ_ID-1:0] */      .o_mim_wreq_id_w1(),    //[12:0]
-/*  output logic [MSH_DATA_WIDTH-1:0] */ .o_mim_wr_data_w1(),    // 64*8
-         
-/*  input  logic [W_XACT_CREDITS-1:0] */ .i_mim_wreq_credits_w1('0), // temp value
-  
-  
-  // Write port 2
-/*  output logic */                     .o_mim_wreq_valid_w2(), 
-/*  output logic [W_SEG_PTR-1:0] */     .o_mim_wr_seg_ptr_w2(), //[19:0]
-/*  output logic [W_SEMA-1:0] */         .o_mim_wr_sema_w2(),    //[ 3:0]
-/*  output logic [W_WD_SEL-1:0] */      .o_mim_wr_wd_sel_w2(),  //[ 2:0]
-/*  output logic [W_REQ_ID-1:0] */      .o_mim_wreq_id_w2(),    //[12:0]
-/*  output logic [MSH_DATA_WIDTH-1:0] */ .o_mim_wr_data_w2(),    // 64*8
-         
-/*  input  logic [W_XACT_CREDITS-1:0] */ .i_mim_wreq_credits_w2('0), // temp value
-  
-  
-  // Write port 3
-/*  output logic */                     .o_mim_wreq_valid_w3(), 
-/*  output logic [W_SEG_PTR-1:0] */     .o_mim_wr_seg_ptr_w3(), //[19:0]
-/*  output logic [W_SEMA-1:0] */        .o_mim_wr_sema_w3(),    //[ 3:0]
-/*  output logic [W_WD_SEL-1:0] */      .o_mim_wr_wd_sel_w3(),  //[ 2:0]
-/*  output logic [W_REQ_ID-1:0] */      .o_mim_wreq_id_w3(),    //[12:0]
-/*  output logic [MSH_DATA_WIDTH-1:0] */ .o_mim_wr_data_w3(),    // 64*8
-         
-/*  input  logic [W_XACT_CREDITS-1:0] */ .i_mim_wreq_credits_w3('0), // temp value
-  
-  
-  // Write port 4
-/*  output logic */                     .o_mim_wreq_valid_w4(), 
-/*  output logic [W_SEG_PTR-1:0] */     .o_mim_wr_seg_ptr_w4(), //[19:0]
-/*  output logic [W_SEMA-1:0] */        .o_mim_wr_sema_w4(),    //[ 3:0]
-/*  output logic [W_WD_SEL-1:0] */      .o_mim_wr_wd_sel_w4(),  //[ 2:0]
-/*  output logic [W_REQ_ID-1:0] */      .o_mim_wreq_id_w4(),    //[12:0]
-/*  output logic [MSH_DATA_WIDTH-1:0] */ .o_mim_wr_data_w4(),    // 64*8
-         
-/*  input  logic [W_XACT_CREDITS-1:0] */ .i_mim_wreq_credits_w4('0), // temp value
-  
-  
-  // Write port 5
-/*  output logic  */                    .o_mim_wreq_valid_w5(), 
-/*  output logic [W_SEG_PTR-1:0] */      .o_mim_wr_seg_ptr_w5(), //[19:0]
-/*  output logic [W_SEMA-1:0] */        .o_mim_wr_sema_w5(),    //[ 3:0]
-/*  output logic [W_WD_SEL-1:0] */      .o_mim_wr_wd_sel_w5(),  //[ 2:0]
-/*  output logic [W_REQ_ID-1:0] */      .o_mim_wreq_id_w5(),    //[12:0]
-/*  output logic [MSH_DATA_WIDTH-1:0] */ .o_mim_wr_data_w5(),    // 64*8
-         
-/*  input  logic [W_XACT_CREDITS-1:0] */ .i_mim_wreq_credits_w5('0) // temp value
-  
+  // Write mesh row 1
+  .mim_wreq_3(mim_wreq_3),
+  .mim_wreq_4(mim_wreq_4),
+  .mim_wreq_5(mim_wreq_5),
+
+// Global Congestion (GCM) Management interface
+  .i_rx_cm_wm_out('0),    // RX watermark
+  .i_rx_cm_sm_wm_out('0)  // Shared watermark 
 
 );
 

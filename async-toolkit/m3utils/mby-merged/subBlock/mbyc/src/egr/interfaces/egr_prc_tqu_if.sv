@@ -29,15 +29,34 @@
 //------------------------------------------------------------------------------
 
 interface egr_prc_tqu_if ();
+    import shared_pkg::*;
+    
+    localparam N_MAX_LP     = 4;
+    localparam W_DTQ_SEL    = $clog2(MGP_TC_CNT*N_MAX_LP);
+    localparam N_EPL        = 4;
 
-    logic dummy;
+    typedef logic [W_DTQ_SEL-1:0] dtq_sel_t; 
 
-modport prc(
-    output dummy
-    );
+    logic     [N_EPL-1:0]   ctl_valid;
+    dtq_sel_t [N_EPL-1:0] dtq_sel_ctl;
+    
+    logic     [N_EPL-1:0]   data_valid;
+    dtq_sel_t [N_EPL-1:0] dtq_sel_data;
 
 modport tqu(
-    input dummy
+    output    ctl_valid,
+    output  dtq_sel_ctl,
+
+    output   data_valid,
+    output dtq_sel_data
+    );
+
+modport prc(
+    input    ctl_valid,
+    input  dtq_sel_ctl,
+
+    input   data_valid,
+    input dtq_sel_data
     );
 
 endinterface : egr_prc_tqu_if

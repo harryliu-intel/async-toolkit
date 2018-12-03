@@ -2,7 +2,7 @@ package madisonbay.tcp
 
 import com.intel.cg.hpfd.csr.macros.SizedArray
 import shapeless.{HNil, HList, ::, Lazy, Generic}
-import com.intel.cg.hpfd.madisonbay.PrimitiveTypes._
+import madisonbay.PrimitiveTypes._
 import java.nio.ByteBuffer
 
 trait ByteArrayEncoder[T] {

@@ -1,13 +1,10 @@
-# C/C++ compiler:
-CC = gcc
+# -*- mode:Makefile -*-
 
-# Linker:
-LD  = ld
+# Copyright (C) 2018 Intel Corporation
 
-# Recursive forced remove:
-RM = rm -rf
-
+# Tool versions:
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/../../main/c/ToolVersions.mk
 
 MBY_TCP_CLIENT = mby_tcp_client
 
@@ -73,19 +70,19 @@ all: $(TARGET_DIR) $(TARGET_LIB) $(TARGET_SAM)
 
 $(TARGET_LIB_O): $(MBY_TCP_CLIENT)_library.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP_CLIENT)_library.h
 	@echo '  Compiling library'
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 $(TARGET_LIB): $(MBY_TCP_CLIENT)_library.o
 	@echo '  Linking library'
-	$(ECHO) $(CC) $(LDFLAGS) -o $@ $^
+	$(ECHO) $(GCC) $(LDFLAGS) -o $@ $^
 
 $(TARGET_SAM_O): $(MBY_TCP_CLIENT)_sample.c $(MBY_TCP_CLIENT)_types.h $(MBY_TCP_CLIENT)_library.h
 	@echo '  Compiling client'
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 $(TARGET_SAM): $(MBY_TCP_CLIENT)_sample.o $(TARGET_LIB)
 	@echo '  Linking client'
-	$(ECHO) $(CC) -o $(TARGET_SAM) $(MBY_TCP_CLIENT)_sample.o -Wl,-rpath,$(ROOT_DIR) -L. -l$(MBY_TCP_CLIENT)
+	$(ECHO) $(GCC) -o $(TARGET_SAM) $(MBY_TCP_CLIENT)_sample.o -Wl,-rpath,$(ROOT_DIR) -L. -l$(MBY_TCP_CLIENT)
 
 .PHONY: run
 run: $(TARGET_SAM)
@@ -95,7 +92,7 @@ run: $(TARGET_SAM)
 .PHONY: valgrind
 valgrind: $(TARGET_SAM)
 	@echo '  Running $(TARGET_SAM) in Valgrind'
-	valgrind \
+	$(VAL) \
             --track-origins=yes \
             --leak-check=full \
             --show-leak-kinds=all \

@@ -29,18 +29,18 @@
 
 interface egr_dpb_pfs_if();
     //signals
-    logic dummy;
+    logic stall;
 
 // DPB requests from PFS
 modport dpb(
     //port list
-    input dummy
+    output stall
     );
 
 // PFS provides to DPB
 modport pfs(
     //port list
-    output dummy
+    input stall
     );
 
 endinterface : egr_dpb_pfs_if

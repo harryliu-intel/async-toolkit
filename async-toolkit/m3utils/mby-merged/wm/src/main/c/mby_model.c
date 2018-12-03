@@ -32,7 +32,7 @@ fm_status mby_init_regs(const fm_uint32 sw)
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-        mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe));
+        mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe), &(top_map.mpp.mgp[0].tx_ppe));
     }
     return sts;
 }
@@ -149,7 +149,9 @@ fm_status mbyReceivePacket
         // Top CSR map for tile 0 transmit pipeline:
         // TODO use the pipeline associated to the specific egress port
         mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp.mgp[0].tx_ppe);
+        mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
         // Input struct:
+        txi2mod.CONTENT_ADDR  = rxs2rxo.CONTENT_ADDR;
         txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
         txi2mod.ECN           = rxs2rxo.ECN;
         txi2mod.EDGLORT       = rxs2rxo.EDGLORT;
@@ -181,7 +183,7 @@ fm_status mbyReceivePacket
         mbyTxStatsToTxMac txs2mac;
 
         // Call RX pipeline:
-        TxPipeline(tx_top_map, &txi2mod, &txs2mac);
+        TxPipeline(tx_top_map, shm_map, &txi2mod, &txs2mac, max_pkt_size);
 
         // Populate output:
         *port   = txs2mac.TX_PORT;

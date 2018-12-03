@@ -54,12 +54,6 @@ typedef enum
 
 typedef enum
 {
-	MBY_TRIG_ACTION_NOMODIFY_NONE = 0,
-	MBY_TRIG_ACTION_NOMODIFY_DO_NOT_MODIFY
-} mbyTriggerActionNoModify;
-
-typedef enum
-{
     MBY_TRIG_ACTION_TYPE_FORWARD = 0,
     MBY_TRIG_ACTION_TYPE_TRAP,
     MBY_TRIG_ACTION_TYPE_MIRROR,
@@ -225,66 +219,62 @@ typedef struct mbyTriggerActionsStruct
 
     /** TRIGGERS policer action */
 	mbyTriggerActionPolicer             policerAction;
-
-    /** TRIGGERS noModify action */
-    mbyTriggerActionNoModify            noModifyAction;
-
 } mbyTriggerActions;
 
 // Functions:
 
 mbyTriggerConditionCfg mbyTrigGetConditionCfg
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionParam mbyTrigGetConditionParam
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionCGRP mbyTrigGetConditionCGRP
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionGlort mbyTrigGetConditionGlort
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionRx mbyTrigGetConditionRx
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionAmask1 mbyTrigGetConditionAmask1
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
-mbyTriggerDirectMapCtx mbyTriggerDirectMapCtrlCtxReadOperation
+mbyTriggerDirectMapCtx mbyTrigGetDirectMapCtrlCtx
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerActions mbyTriggerGetActions
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 #endif /* MBY_TRIGGERS_H */

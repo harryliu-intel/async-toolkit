@@ -28,6 +28,7 @@ package object http {
           isa       = new InetSocketAddress(inetAddr, port)
           _         <- Stream.eval(logger.info(s"Http server should be started at [$hostname:$port]! Good luck!"))
         } yield HttpServer[F](
+          receiveBufferSize = 16 * 1024 * 1024,
           bindTo = isa,
           service = httpService,
           requestFailure = handleFs2RequestParseError _,

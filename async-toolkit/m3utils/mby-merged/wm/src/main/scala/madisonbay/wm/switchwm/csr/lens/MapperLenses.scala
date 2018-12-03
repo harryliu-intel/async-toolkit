@@ -1,8 +1,10 @@
 package madisonbay.wm.switchwm.csr.lens
 
 import madisonbay.csr.all._
-import monocle.Optional
+import monocle.{Optional, Traversal}
 import monocle.function.Index.index
+import monocle.function.Each.each
+
 
 object MapperLenses {
   def portDefaultTargetLens(port: Int, entry: Int): Optional[mby_ppe_mapper_map, Long] = portDefaultLens(port, entry) composeLens
@@ -22,6 +24,8 @@ object MapperLenses {
   def profileActionProfileValidLens(entry: Int): Optional[mby_ppe_mapper_map, Long] = profileActionLens(entry) composeLens
     map_profile_action_r._PROFILE_VALID composeLens map_profile_action_r.PROFILE_VALID._value
 
+  def profileActionProfileTraversal: Traversal[mby_ppe_mapper_map, map_profile_action_r] = mby_ppe_mapper_map._MAP_PROFILE_ACTION composeTraversal each
+
   private def profileActionLens(entry: Int) = mby_ppe_mapper_map._MAP_PROFILE_ACTION composeOptional index(entry)
 
   def macMacLens(entry: Int): Optional[mby_ppe_mapper_map, Long] = macLens(entry) composeLens map_mac_r._MAC composeLens map_mac_r.MAC._value
@@ -31,8 +35,9 @@ object MapperLenses {
 
   def mapRewriteSrcId(output: Int, nibble: Int): Optional[mby_ppe_mapper_map, Long] = mapRewriteLens(output, nibble) composeLens
     map_rewrite_r._SRC_ID composeLens map_rewrite_r.SRC_ID._value
-  private def mapRewriteLens(output: Int, nibble: Int) = mby_ppe_mapper_map._MAP_REWRITE composeOptional
-    index(output) composeLens map_rewrite_rf._MAP_REWRITE composeOptional index(nibble)
+  def mapRewriteForProfileLens(output: Int): Optional[mby_ppe_mapper_map, map_rewrite_rf] = mby_ppe_mapper_map._MAP_REWRITE composeOptional index(output)
+  private def mapRewriteLens(output: Int, nibble: Int) = mapRewriteForProfileLens(output) composeLens
+    map_rewrite_rf._MAP_REWRITE composeOptional index(nibble)
 
   def mapProtProtLens(entry: Int): Optional[mby_ppe_mapper_map, Long] = mapProtLens(entry) composeLens
     map_prot_r._PROT composeLens map_prot_r.PROT._value

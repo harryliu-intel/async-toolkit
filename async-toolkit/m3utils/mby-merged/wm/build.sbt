@@ -98,7 +98,8 @@ lazy val root = (project in file("."))
       "JsonSerializer.scala",
       "Triggers.scala",
       "ExtractAction.scala",
-      "FieldVector.scala"
+      "FieldVector.scala",
+      "IoUriDispatcher.scala"
     ).contains(file.getName))
   )
 

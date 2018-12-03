@@ -108,7 +108,8 @@ BUILD_OPTS += -sverilog +systemverilogext+.v+.sv+.svh+.sva -M -Mupdate -PP \
 #              +vcs+lic+wait +notimingcheck -Mdir=$(MDIR) -o $(BINDIR)/simv \
 #              -l $(BINDIR)/compile.log $(BUILD_USER) -bfl $(BINROOT)/$(DUT_FILE_LIST_NAME)
 
-build_%: mshnode $(TBROOT)/tests/%.sv
+#build_%: mshnode $(TBROOT)/tests/%.sv
+build_%: $(TBROOT)/tests/%.sv
 	@# Builds monolithic simulator (RTL + test) in bin/$(BINDIR)/test_<test>
 	@# VCS version set in VCS_HOME
 	@# Mdir set in MDIR

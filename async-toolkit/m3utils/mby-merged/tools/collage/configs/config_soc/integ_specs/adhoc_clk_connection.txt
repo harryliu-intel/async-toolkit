@@ -4,6 +4,7 @@
 # See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
 ##############################################################################
 
+<<<<<<< HEAD
 ## This is temp, using xtal_rcvr; these refclks need to go to serdes phy (in EPC)
 Ci   /HSS_REFCLK_DP[0]     xtal_rcvr/xtal_in
 
@@ -27,11 +28,3 @@ C   mby_parclk/mac_eclk     mby_ec_top_${mppindx}/pclk
 
 # imc clocks - aclk, sclk, pclk
 # other?
-
-##############################################################################
-# Text editor settings
-# Local Variables:
-# mode: conf
-# End:
-# vim: set expandtab tabstop=2 shiftwidth=2 softtabstop=2 :
-

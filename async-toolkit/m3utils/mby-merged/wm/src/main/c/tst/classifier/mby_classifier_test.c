@@ -232,8 +232,7 @@ void setSharedTableMem
 void initRegs
 (
     mby_ppe_cgrp_a_map  * const cgrp_a_map,
-    mby_ppe_cgrp_b_map  * const cgrp_b_map,
-    mby_ppe_entropy_map * const entropy_map
+    mby_ppe_cgrp_b_map  * const cgrp_b_map
 )
 {
     // <initialize registers here>
@@ -353,7 +352,6 @@ void allocMem
 (
     mby_ppe_cgrp_a_map  **cgrp_a_map,
     mby_ppe_cgrp_b_map  **cgrp_b_map,
-    mby_ppe_entropy_map **entropy_map,
     mby_shm_map         **shm_map
 )
 {
@@ -369,12 +367,6 @@ void allocMem
         exit(-1);
     }
 
-    *entropy_map = malloc(sizeof(mby_ppe_entropy_map));
-    if (*entropy_map == NULL) {
-        printf("Could not allocate heap memory for entropy map -- exiting!\n");
-        exit(-1);
-    }
-
     *shm_map = malloc(sizeof(mby_shm_map));
     if (*shm_map == NULL) {
         printf("Could not allocate heap memory for shared memory map -- exiting!\n");
@@ -386,16 +378,13 @@ void freeMem
 (
     mby_ppe_cgrp_a_map  * const cgrp_a_map,
     mby_ppe_cgrp_b_map  * const cgrp_b_map,
-    mby_ppe_entropy_map * const entropy_map,
     mby_shm_map         * const shm_map
 )
 {
-    free( cgrp_a_map);
-    free( cgrp_b_map);
-    free(entropy_map);
-    free(    shm_map);
+    free(cgrp_a_map);
+    free(cgrp_b_map);
+    free(shm_map);
 }
-
 
 void updateTestStats
 (
@@ -446,7 +435,6 @@ fm_status testWildCardMatch
 (
     mby_ppe_cgrp_a_map    * const cgrp_a_map,
     mby_ppe_cgrp_b_map    * const cgrp_b_map,
-    mby_ppe_entropy_map   * const entropy_map,
     mby_shm_map           * const shm_map,
     mbyMapperToClassifier * const in,
     mbyClassifierToHash   * const out
@@ -471,7 +459,6 @@ fm_status testWildCardMatch
     (
         cgrp_a_map,
         cgrp_b_map,
-        entropy_map,
         shm_map,
         in,
         out
@@ -488,7 +475,6 @@ fm_status testExactMatch
 (
     mby_ppe_cgrp_a_map    * const cgrp_a_map,
     mby_ppe_cgrp_b_map    * const cgrp_b_map,
-    mby_ppe_entropy_map   * const entropy_map,
     mby_shm_map           * const shm_map,
     mbyMapperToClassifier * const in,
     mbyClassifierToHash   * const out
@@ -591,7 +577,6 @@ fm_status testExactMatch
     (
         cgrp_a_map,
         cgrp_b_map,
-        entropy_map,
         shm_map,
         in,
         out
@@ -610,10 +595,9 @@ int main (void)
 {
     mby_ppe_cgrp_a_map   *cgrp_a_map = NULL;
     mby_ppe_cgrp_b_map   *cgrp_b_map = NULL;
-    mby_ppe_entropy_map *entropy_map = NULL;
     mby_shm_map             *shm_map = NULL;
 
-    allocMem(&cgrp_a_map, &cgrp_b_map, &entropy_map, &shm_map);
+    allocMem(&cgrp_a_map, &cgrp_b_map, &shm_map);
 
     mbyMapperToClassifier map2cla = { 0 };
     mbyClassifierToHash   cla2hsh = { 0 };
@@ -627,19 +611,19 @@ int main (void)
     // --------------------------------------------------------------------------------
     // Wild Card Match (WCM) Test
     // --------------------------------------------------------------------------------
-    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, shm_map, &map2cla, &cla2hsh);
     updateTestStats("Wild Card Match (WCM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
     // Exact Match (EM) Test
     // --------------------------------------------------------------------------------
-    test_status = testExactMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+    test_status = testExactMatch(cgrp_a_map, cgrp_b_map, shm_map, &map2cla, &cla2hsh);
     updateTestStats("Exact Match (EM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
     // Longest Prefix Match (LPM) Test
     // --------------------------------------------------------------------------------
-    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, entropy_map, shm_map, &map2cla, &cla2hsh);
+    test_status = testWildCardMatch(cgrp_a_map, cgrp_b_map, shm_map, &map2cla, &cla2hsh);
     updateTestStats("Longest Prefix Match (LPM)", test_status, &num_tests, &num_passed);
 
     // --------------------------------------------------------------------------------
@@ -647,7 +631,7 @@ int main (void)
     fm_bool tests_passed = reportTestStats(num_tests, num_passed);
 
     // Free up memory:
-    freeMem(cgrp_a_map, cgrp_b_map, entropy_map, shm_map);
+    freeMem(cgrp_a_map, cgrp_b_map, shm_map);
 
     int rv = (tests_passed) ? 0 : -1;
 

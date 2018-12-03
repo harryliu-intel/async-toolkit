@@ -1,0 +1,9 @@
+// gpm tb source
+// (gpm_sim_pkg.sv listed here explictly so it doesn't have to be included
+// everywhere) 
++incdir+$LOGICROOT/gmm/gms/gpm/sandbox/val/verilog
+$LOGICROOT/gmm/gms/gpm/sandbox/val/verilog/gpm_sim_pkg.sv
+
+
+// template tb interface and top
+-y $LOGICROOT/gmm/gms/gpm/sandbox/val/verilog

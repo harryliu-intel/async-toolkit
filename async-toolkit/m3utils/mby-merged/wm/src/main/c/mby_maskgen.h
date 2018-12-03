@@ -568,6 +568,7 @@ typedef struct mbyMaskGenToTriggersStruct
     fm_byte           XCAST;                                  ///< indicate Unicast, Multicast, or Broadcast
     // pass-thru:
     fm_byte           CGRP_TRIG;                              ///< classifier action triggers
+    fm_uint32         CONTENT_ADDR;                           ///< MOD Content address, expressed in 32B units
     fm_byte           ECN;                                    ///< ECN value to use in egress packet
     fm_uint16         EDGLORT;                                ///< egress destination glort
     fm_bool           IS_TIMEOUT;

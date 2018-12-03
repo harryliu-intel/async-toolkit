@@ -29,7 +29,7 @@
 
 interface egr_pfs_tmu_if import shared_pkg::*; ();
 localparam PORTS_PER_EPL = 4;
-localparam RX_TC_COUNT = 16;
+localparam TX_TC_COUNT = 8;
 // signals
 
 // If TMU presents a queue as valid, it is always allowed to be popped.
@@ -37,19 +37,19 @@ localparam RX_TC_COUNT = 16;
 // If there is only one packet on a queue, que_valid should be cleared on the clock after pop.
 
 // Indicates that there is a packet at the head of this queue.
-logic [EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0][RX_TC_COUNT-1:0][MGP_COUNT-1:0] queue_valid;
+logic [EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0][TX_TC_COUNT-1:0][MGP_COUNT-1:0] queue_valid;
 
 // For each EPL, pop a specified queue.
 logic [EPL_PER_MGP-1:0] pop;
 logic [EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0] pop_port;
-logic [EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0] pop_tc;
+logic [EPL_PER_MGP-1:0][$clog2(TX_TC_COUNT)-1:0] pop_tc;
 logic [EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0] pop_mgp;
 
 // For each EPL, update the deficit counters for the specified queue.
 // This should be fixed latency after pop for small packets.
 logic [EPL_PER_MGP-1:0] update;
 logic [EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0] update_port;
-logic [EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0] update_tc;
+logic [EPL_PER_MGP-1:0][$clog2(TX_TC_COUNT)-1:0] update_tc;
 logic [EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0] update_mgp;
 logic [EPL_PER_MGP-1:0][6:0] update_length; // the actual length (in multiples of 64 bytes)
 

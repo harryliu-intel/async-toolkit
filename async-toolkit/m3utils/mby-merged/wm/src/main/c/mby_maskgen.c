@@ -7,8 +7,8 @@
 
 static mbyFwdPortCfg1 getPortCfg1
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_uint32              port // RX port
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_uint32                    const port // RX port
 )
 {
     mbyFwdPortCfg1 cfg;
@@ -24,8 +24,8 @@ static mbyFwdPortCfg1 getPortCfg1
 
 static mbyFwdPortCfg2 getPortCfg2
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_uint16              l2_edomain
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_uint16                    const l2_edomain
 )
 {
     mbyFwdPortCfg2 cfg;
@@ -39,7 +39,7 @@ static mbyFwdPortCfg2 getPortCfg2
 
 static mbyFwdSysCfg1 getSysCfg1
 (
-    mby_ppe_fwd_misc_map * const fwd_misc
+    mby_ppe_fwd_misc_map const * const fwd_misc
 )
 {
     mbyFwdSysCfg1 cfg;
@@ -57,7 +57,7 @@ static mbyFwdSysCfg1 getSysCfg1
 
 static mbyFwdSysCfgRouter getSysCfgRouter
 (
-    mby_ppe_fwd_misc_map * const fwd_misc
+    mby_ppe_fwd_misc_map const * const fwd_misc
 )
 {
     mbyFwdSysCfgRouter cfg;
@@ -72,8 +72,8 @@ static mbyFwdSysCfgRouter getSysCfgRouter
 
 static mbyFwdLagCfg getLagCfg
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_uint32              port
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_uint32                    const port
 )
 {
     mbyFwdLagCfg cfg;
@@ -90,8 +90,8 @@ static mbyFwdLagCfg getLagCfg
 
 static mbyGlortCam getGlortCamEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_byte                 cam_index
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_byte                             cam_index
 )
 {
     mbyGlortCam cam_entry;
@@ -106,8 +106,8 @@ static mbyGlortCam getGlortCamEntry
 
 static mbyGlortDestTable getGlortDestTableEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_uint16               table_index
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_uint16                           table_index
 )
 {
     mbyGlortDestTable table_entry;
@@ -128,8 +128,8 @@ static mbyGlortDestTable getGlortDestTableEntry
 
 static mbyGlortRam getGlortRamEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_byte                 ram_index
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_byte                       const ram_index
 )
 {
     mbyGlortRam ram_entry;
@@ -149,13 +149,13 @@ static mbyGlortRam getGlortRamEntry
 
 static mbyEgressVidTable getEvidTableEntry
 (
-    mby_ppe_mst_glort_map * const mst_glort,
-    fm_uint16                     vid
+    mby_ppe_mst_glort_map const * const mst_glort,
+    fm_uint16                           vid
 )
 {
     mbyEgressVidTable entry;
 
-    egress_vid_table_r * const vid_table = &(mst_glort->EGRESS_VID_TABLE[vid][0]);
+    egress_vid_table_r const * const vid_table = &(mst_glort->EGRESS_VID_TABLE[vid][0]);
 
     entry.MEMBERSHIP = vid_table->MEMBERSHIP;
 
@@ -164,9 +164,9 @@ static mbyEgressVidTable getEvidTableEntry
 
 static fm_status lookUpRamEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_uint16               idglort,
-    mbyGlortRam           * const glort_ram
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_uint16                     const idglort,
+    mbyGlortRam                 * const glort_ram
 )
 {
     fm_bool cam_hit = FALSE;
@@ -208,13 +208,13 @@ static fm_status lookUpRamEntry
 
 static void lookUpDestEntry
 (
-    mby_ppe_mst_glort_map * const glort_map,
-    const fm_uint16               idglort,
-    const fm_bool                 strict_glort_routing,
-    const fm_uint32               hash_rot_a,
-    const fm_uint32               hash_rot_b,
-    const mbyGlortRam             glort_ram,
-    mbyGlortDestTable     * const glort_dest_table
+    mby_ppe_mst_glort_map const * const glort_map,
+    fm_uint16                     const idglort,
+    fm_bool                       const strict_glort_routing,
+    fm_uint32                     const hash_rot_a,
+    fm_uint32                     const hash_rot_b,
+    mbyGlortRam                   const glort_ram,
+    mbyGlortDestTable           * const glort_dest_table
 )
 {
     fm_uint16 length_a   = (glort_ram.RANGE_SUB_INDEX_A >> 4) & 0xF;
@@ -240,8 +240,8 @@ static void lookUpDestEntry
 
 static fm_bool isCpuMacAddress
 (
-    mby_ppe_fwd_misc_map * const fwd_misc,
-    const fm_macaddr mac_addr
+    mby_ppe_fwd_misc_map const * const fwd_misc,
+    fm_macaddr                   const mac_addr
 )
 {
     fm_macaddr cpu_mac_addr = 0;
@@ -257,9 +257,9 @@ static fm_bool isCpuMacAddress
 static void resolveAction
 (
     // inputs:
-    const fm_uint64   pri_amask,
-    const fm_uint32   glort_dmask,
-    const fm_byte     trap_tc,
+    fm_uint64  const pri_amask,
+    fm_uint32  const glort_dmask,
+    fm_byte    const trap_tc,
     // inouts:
     fm_uint64 * const amask,
     fm_uint32 * const dmask,
@@ -558,11 +558,11 @@ static fm_byte getMacAction
 
 void MaskGen
 (
-    mby_ppe_fwd_misc_map       * const fwd_misc,
-    mby_ppe_mst_glort_map      * const glort_map,
-    mby_ppe_cm_apply_map       * const cm_apply,
-    const mbyNextHopToMaskGen  * const in,
-          mbyMaskGenToTriggers * const out
+    mby_ppe_fwd_misc_map  const * const fwd_misc,
+    mby_ppe_mst_glort_map const * const glort_map,
+    mby_ppe_cm_apply_map  const * const cm_apply,
+    mbyNextHopToMaskGen   const * const in,
+    mbyMaskGenToTriggers        * const out
 )
 {
     // Read inputs:
@@ -657,7 +657,7 @@ void MaskGen
 
     /* Perform ingress forwarding ID lookup. */
     mbyStpState l2_ifid1_state = MBY_STP_STATE_DISABLE;
-    ingress_mst_table_r * const ingress_mst_table = &(glort_map->INGRESS_MST_TABLE[l2_ivid1]);
+    ingress_mst_table_r const * const ingress_mst_table = &(glort_map->INGRESS_MST_TABLE[l2_ivid1]);
     l2_ifid1_state = getIfid1(rx_port, ingress_mst_table);
 
     fm_bool l2_ifid1_learn   = ((l2_ifid1_state == MBY_STP_STATE_LEARNING) ||
@@ -1200,6 +1200,7 @@ void MaskGen
 
     // Pass thru:
     out->CGRP_TRIG              = in->CGRP_TRIG;
+    out->CONTENT_ADDR           = in->CONTENT_ADDR;
     out->ECN                    = in->ECN;
     out->EDGLORT                = in->EDGLORT;
     out->IS_TIMEOUT             = in->IS_TIMEOUT;

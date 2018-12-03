@@ -16,7 +16,7 @@ interface sig_if;
     logic ref_clk;
     logic tb_clk;
     logic tb_rst_b;
-    logic lan_powergood_rst_b; 
+    logic powergood; 
     logic tmp_cclk; 
     logic tmp_clk; 
     logic tmp_mclk; 

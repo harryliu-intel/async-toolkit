@@ -32,6 +32,20 @@ end
 // Info : Placeholder for IMC driven clocks and resets 
 // --------------------------------------------------------
 `INITIAL begin
+
+    force `soc.PWRGOOD = `HVL_TOP.fc_sig_if.powergood;
+    force `soc.HSS_REFCLK_DN[0] = `HVL_TOP.fc_sig_if.ref_clk;
+    force `soc.HSS_REFCLK_DN[1] = `HVL_TOP.fc_sig_if.ref_clk;
+    force `soc.HSS_REFCLK_DN[2] = `HVL_TOP.fc_sig_if.ref_clk;
+    force `soc.HSS_REFCLK_DN[3] = `HVL_TOP.fc_sig_if.ref_clk;
+    force `soc.HSS_REFCLK_DP[0] = !`HVL_TOP.fc_sig_if.ref_clk;
+    force `soc.HSS_REFCLK_DP[1] = !`HVL_TOP.fc_sig_if.ref_clk;
+    force `soc.HSS_REFCLK_DP[2] = !`HVL_TOP.fc_sig_if.ref_clk;
+    force `soc.HSS_REFCLK_DP[3] = !`HVL_TOP.fc_sig_if.ref_clk;
+
+
+    
+/*
     if (apply_forces.imc_hack) begin
         $display("Apply forces for IMC Workaround");
 
@@ -170,5 +184,6 @@ end
 //
 //        force `mby_msh_0.i_reset  = 1;   
     end
+*/
 end      
 

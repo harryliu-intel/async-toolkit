@@ -1,0 +1,6 @@
++incdir+$LOGICROOT/gmm/gms/top/rtl
+-y $LOGICROOT/gmm/gms/top/rtl
+$LOGICROOT/gmm/gms/top/rtl/mby_gms_pkg.sv
+
++incdir+$LOGICROOT/gmm/gms/gpm/rtl
+-y $LOGICROOT/gmm/gms/gpm/rtl

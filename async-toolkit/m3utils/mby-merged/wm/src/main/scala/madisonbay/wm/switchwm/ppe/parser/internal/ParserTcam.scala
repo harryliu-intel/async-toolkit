@@ -4,7 +4,7 @@ import madisonbay.wm.switchwm.ppe.parser.Parser.ParserState
 import madisonbay.wm.switchwm.util.Tcam
 import madisonbay.wm.switchwm.util.Tcam.TcamQuery
 import madisonbay.wm.utils.extensions.UIntegers.getLower16
-import com.intel.cg.hpfd.madisonbay.{HardwareReadable, RdlField}
+import madisonbay.{HardwareReadable, RdlField}
 import madisonbay.csr.all._
 
 /**

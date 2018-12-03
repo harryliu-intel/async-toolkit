@@ -2,6 +2,10 @@
 
 # Copyright (C) 2018 Intel Corporation
 
+# Tool versions:
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+include ${ROOT_DIR}/ToolVersions.mk
+
 INC_DIR1 = .
 INC_DIR2 = ../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
 
@@ -34,13 +38,6 @@ SOURCES += mby_init.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
-# C/C++ compiler:
-CC = gcc
-GPP = g++
-
-# Linker:
-LD  = ld
-
 ifeq ($(VERBOSE),1)
 ECHO :=
 else
@@ -59,6 +56,7 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
+CFLAGS += -Wno-error=discarded-qualifiers # only warning until we move to write_field
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O0 -g -ggdb3
@@ -115,17 +113,16 @@ mby_init.o       : mby_init.c       mby_init.h
 
 %.o: %.c
 	@echo '  Compiling' $<
-	$(ECHO) $(CC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
 libmbymodel.so: $(OBJECTS) mby_model.o
 	@echo '  Linking' $@
-	$(ECHO) $(CC) -shared -o $@ $^
+	$(ECHO) $(GCC) -shared -o $@ $^
 
 .PHONY: clean
 clean:
 	@echo '  Cleaning'
-	$(ECHO) rm -f $(DELFILES)
-
+	$(ECHO) $(RM) $(DELFILES)
 
 # ========================== Unit testing ==================================
 
@@ -151,7 +148,7 @@ DELFILES += unit_tests/*.so unit_tests/*.o unit_tests/*.exe model_server/msrv
 
 unit_tests/%.so:
 	@echo '  Linking UT shared lib' $@
-	$(ECHO) $(CC) -shared -o $@ $^
+	$(ECHO) $(GCC) -shared -o $@ $^
 
 unit_tests/%.o: unit_tests/%.cpp
 	@echo '  Compiling UT' $<

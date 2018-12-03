@@ -235,22 +235,23 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
   default0()
 
   def RE_KEYS_OUTER_VLAN1(): Unit = {
-    val targetOne = MapperLenses.portDefaultTargetLens(0, 1)
-    val valueOne = MapperLenses.portDefaultValueLens(0, 1)
+    // TODO verify this behavior or add protection against overcofiguring
+    //val targetOne = MapperLenses.portDefaultTargetLens(0, 1)
+    //val valueOne = MapperLenses.portDefaultValueLens(0, 1)
     val targetTwo = MapperLenses.portDefaultTargetLens(0, 2)
     val valueTwo = MapperLenses.portDefaultValueLens(0, 2)
 
     val MBY_RE_KEYS_OUTER_VLAN1 = 14
 
     val updatedCsr = CsrLenses.execute(csr.ppeMapperMap, for {
-      _ <- targetOne.assign_(MBY_RE_KEYS_OUTER_VLAN1)
-      _ <- valueOne.assign_(0)
+      //_ <- targetOne.assign_(MBY_RE_KEYS_OUTER_VLAN1)
+      //_ <- valueOne.assign_(0)
       _ <- targetTwo.assign_(MBY_RE_KEYS_OUTER_VLAN1)
       _ <- valueTwo.assign_(0xfef)
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, updatedCsr), "RE_KEYS_OUTER_VLAN1", output => {
-      ignore should "fill key16 using MAP_PORT_DEFAULT" in {
+      it should "fill key16 using MAP_PORT_DEFAULT" in {
         output.classifierKeys.key16(Classifier16BitKeys.getConstant(MBY_RE_KEYS_OUTER_VLAN1)) shouldEqual 0xfef
       }
     })
@@ -298,10 +299,10 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
     } yield ())
 
     runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "map SMAC", output => {
-      ignore should "fill key16" in {
+      it should "fill key16" in {
         output.classifierKeys.key16(Classifier16BitKeys.getConstant(13)) shouldEqual mapped_mac
       }
-      ignore should "fill classifierProfile" in {
+      it should "fill classifierProfile" in {
         output.classifierProfile shouldEqual 0x3
       }
       ignore should "fill ipOption" in {

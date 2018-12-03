@@ -91,9 +91,9 @@ static void lookUpPtypeTcam
  */
 void Parser
 (
-    mby_ppe_parser_map      * const parser_map,
-    mbyRxMacToParser  const * const in,
-    mbyParserToMapper       * const out
+    mby_ppe_parser_map const * const parser_map,
+    mbyRxMacToParser   const * const in,
+    mbyParserToMapper        * const out
 )
 {
     // Read inputs:
