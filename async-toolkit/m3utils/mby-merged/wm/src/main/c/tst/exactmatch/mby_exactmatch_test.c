@@ -335,7 +335,7 @@ static void set_EM_HASH_CFG
     fm_byte               const entry_size_1
 )
 {
-    em_hash_cfg_r * const em_hash_cfg = &(cgrp_em_map->HASH_CFG[profile]);
+    em_hash_cfg_r * const em_hash_cfg = &(cgrp_em_map->EM_HASH_CFG[profile]);
 
     em_hash_cfg->MODE         = mode;
     em_hash_cfg->BASE_PTR_0   = base_ptr_0;
@@ -351,7 +351,7 @@ static void init_EM_HASH_CFG_REG
     mby_ppe_cgrp_em_map * const cgrp_em_map
 )
 {
-    for (fm_uint profile = 0 ; profile < mby_ppe_cgrp_em_map_HASH_CFG__n ; profile++)
+    for (fm_uint profile = 0 ; profile < mby_ppe_cgrp_em_map_EM_HASH_CFG__n ; profile++)
     {
         set_EM_HASH_CFG(cgrp_em_map, profile,
             FALSE,

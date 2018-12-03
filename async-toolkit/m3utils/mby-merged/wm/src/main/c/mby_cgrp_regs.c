@@ -50,7 +50,7 @@ mbyClassifierHashCfg mbyClsGetEmHashCfg
 {
     mbyClassifierHashCfg hash_cfg;
 
-    em_hash_cfg_r const * const em_hash_cfg = &(cgrp_em_map->HASH_CFG[profile]);
+    em_hash_cfg_r const * const em_hash_cfg = &(cgrp_em_map->EM_HASH_CFG[profile]);
 
     hash_cfg.mode          = em_hash_cfg->MODE;
     hash_cfg.base_ptr[0]   = em_hash_cfg->BASE_PTR_0;
