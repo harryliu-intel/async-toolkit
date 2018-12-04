@@ -1,0 +1,18 @@
++incdir+$LOGICROOT/gmm/gms/gcm/rtl
++incdir+$LOGICROOT/gmm/gms/top/rtl
+-y $LOGICROOT/gmm/gms/gcm/rtl
+-y $LOGICROOT/gmm/gms/top/rtl
+$LOGICROOT/gmm/gms/top/rtl/mby_gms_pkg.sv
+$LOGICROOT/gmm/gms/gcm/rtl/mby_gcm_pkg.sv
+
+//
+// MGM memory can be generated locally
+//
++incdir+$LOGICROOT/../../../target/mby/mgm_run/rtl
++incdir+$LOGICROOT/../../../target/mby/mgm_run/gcm/src
++incdir+$LOGICROOT/../../../target/mby/mgm_run/gcm/src/mem_wrap
+-y $LOGICROOT/../../../target/mby/mgm_run/rtl
+-y $LOGICROOT/../../../target/mby/mgm_run/gcm/src
+-y $LOGICROOT/../../../target/mby/mgm_run/gcm/src/mem_wrap
+//$LOGICROOT/gmm/gms/gcm/sandbox/val/verilog/mgm_run/gcm/src/gcm_mem.def
+

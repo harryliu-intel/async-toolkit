@@ -39,6 +39,12 @@ class fc_powergood_seq extends fc_base_seq;
         `uvm_info(get_name(), "fc_powergood_seq started", UVM_MEDIUM);
 
         //pmu_mmr.SBI_IP_MSG_EN_0.write(.status(sla_status), .val(32'h00000C40),.access_path("axi_slu"), .parent_seq(this));
+        //TODO: temp driving this in sequence. The powergood will be driven as part of IMC powergood sequence once its ready.
+        fc_sig_if.powergood = 0;
+        #20ns;
+        fc_sig_if.powergood = 1;
+
+        #2us;
 
         `uvm_info(get_name(), "fc_powergood_seq ends", UVM_MEDIUM);
     endtask

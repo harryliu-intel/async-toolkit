@@ -57,12 +57,12 @@ proc soc_specify_subsystem {} {
 ################################################################
 # Complete adhoc connectivity
 proc soc_complete_connections {} {
+  collage_process_conn_file -merge_conn -file ${::soc_integ_specs_dir}/adhoc_temporary.txt
   collage_process_conn_file -merge_conn -file ${::soc_integ_specs_dir}/adhoc_clk_connection.txt
   collage_process_conn_file -merge_conn -file ${::soc_integ_specs_dir}/adhoc_dfx_connection.txt
   collage_process_conn_file -merge_conn -file ${::soc_integ_specs_dir}/adhoc_soc_connection.txt
   collage_process_conn_file -merge_conn -file ${::soc_integ_specs_dir}/adhoc_pm_connection.txt
   collage_process_conn_file -merge_conn -file ${::soc_integ_specs_dir}/soc_resets.txt
-  collage_process_conn_file -merge_conn -file ${::soc_integ_specs_dir}/adhoc_temporary.txt
 
   #same as above lines, filename is subsytem/global_adhoc_connection.txt
   #should contain IP connections to globals
