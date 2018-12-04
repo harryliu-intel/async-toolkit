@@ -1,21 +1,20 @@
 package madisonbay.wm.switchwm.ppe.classifier
 
-import madisonbay.BitVector
+import madisonbay.wm.utils.extensions.UIntegers._
 import madisonbay.csr.all._
 import madisonbay.tcp.ByteArrayEncoder // TODO: tcp attacks pipeline logic xD
 import madisonbay.wm.switchwm.ppe.mapper.output.ClassifierKeys
 import madisonbay.wm.utils.defs.FlexibleConstantContainer
+import madisonbay.BitVector
 import shapeless.tag
 import shapeless.tag.@@
 
 object types {
   trait ProfileTag
   trait HashNumTag
-  trait GroupTag
 
   type Profile = Byte @@ ProfileTag
   type HashNum = Int @@ HashNumTag
-  type Group = Byte @@ GroupTag
 }
 import types._
 
@@ -25,7 +24,13 @@ object ExactMatchMode extends Enumeration {
   val Split = Value(0) // MBY_CGRP_HASH_ENTRY_MODE_32B
   val NonSplit = Value(1) // MBY_CGRP_HASH_ENTRY_MODE_64B
 }
+object ClassifierGroup extends Enumeration {
+  type ClassifierGroup = Value
 
+  val GroupA = Value(0)
+  val GroupB = Value(1)
+}
+case class EmHash(idx: Short, more: Short)
 case class Actions(value: Vector[Int])
 case class KeyMaskConfig(
   keyMaskSel: em_key_sel1_r.KEY_MASK_SEL,
@@ -51,7 +56,7 @@ final class ExactMatch(
   val shmMap: mby_shm_map,
   val classifierKeys: ClassifierKeys,
   val profile: Profile,
-  val group: Group
+  val group: ClassifierGroup.ClassifierGroup
 ) extends Function0[Actions] {
 
   private def maskClassifierKeys(keyMaskConfig: KeyMaskConfig): ClassifierKeys = {
@@ -107,20 +112,46 @@ final class ExactMatch(
       .take(MBY_CGRP_HASH_KEYS)
   }
 
+  private def calculateHash(hashNum: HashNum, keys: Array[Byte], group: ClassifierGroup.ClassifierGroup): EmHash = {
+    import madisonbay.wm.switchwm.crc._
+
+    val crcFunction = if (hashNum == 0) mbyCrc32ByteSwap _ else mbyCrc32CByteSwap _
+    // TODO: below mask can be done as (lookup.size - 1)
+    val mask: Short = if (group.equals(ClassifierGroup.GroupA)) 0x7fff else 0x1fff
+    val hash: Int = crcFunction(keys)
+
+    EmHash(
+      idx = (hash & mask).toShort,
+      more = getUpper16From32(hash.toLong).toShort
+    )
+  }
+
+  private def calculateLookupPtr(hashNum: HashNum, hashIdx: Short, hashCfg: em_hash_cfg_r): Short = {
+    // This code is coproduct jealous
+    val hashSize = if (hashNum == 0) hashCfg.HASH_SIZE_0() else hashCfg.HASH_SIZE_1()
+    val lookupStartIdx: Short = (if (hashNum == 1) lookup.size/2 else 0).toShort
+
+    val lookupBasePtr = if (hashNum == 0) hashCfg.BASE_PTR_0() else hashCfg.BASE_PTR_1()
+    val bucketTableIdx = hashIdx % (1 << hashSize.toInt)
+
+    (lookupStartIdx + lookupBasePtr + bucketTableIdx).toShort
+  }
+
   override def apply: Actions = {
 
-    val hashConfig = cgrpEmMap.HASH_CFG(profile)
+    val hashConfig: em_hash_cfg_r = cgrpEmMap.HASH_CFG(profile)
     val splitMode = ExactMatchMode(hashConfig.MODE().toInt)
 
     def loop(items: List[HashNum], results: Actions): Actions  = items match {
       case _ :: Nil if splitMode == ExactMatchMode.NonSplit => results
       case _ :: Nil if hashConfig.ENTRY_SIZE_1 == 0 => results
-      case _ :: (remaining @ (_ :: Nil)) if hashConfig.ENTRY_SIZE_0 == 0 =>
-        loop(remaining, results)
+      case _ :: (remaining @ (_ :: Nil)) if hashConfig.ENTRY_SIZE_0 == 0 => loop(remaining, results)
       case hashNum :: _ =>
         val keyMaskConfig = KeyMaskConfig(cgrpEmMap, hashNum, profile)
         val maskedClassifierKeys = maskClassifierKeys(keyMaskConfig)
-        val _ = performKeyCompaction(maskedClassifierKeys, keyMaskConfig)
+        val packagedKeys = performKeyCompaction(maskedClassifierKeys, keyMaskConfig)
+        val hash = calculateHash(hashNum, packagedKeys, group)
+        val _ = calculateLookupPtr(hashNum, hash.idx, hashConfig)
         results
       case _ => results
     }

@@ -381,7 +381,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
         top.mpp.shm,
         mapperOutput.classifierKeys,
         tag[ProfileTag][Byte](mapperOutput.classifierProfile),
-        tag[GroupTag][Byte](0.toByte) // group?? to be fixed!
+        ClassifierGroup.GroupA // group?? to be fixed!
       )
     } yield em()
 
