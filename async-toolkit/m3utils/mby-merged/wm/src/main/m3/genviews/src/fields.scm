@@ -84,7 +84,7 @@
 
 (define (container-get-children-names c)
   ;;(assert-container c)
-  (map get-child-name (container-get-children c)))
+  (map child-get-name (container-get-children c)))
 
 (define (container-sum what c)
   ;;(assert-container c)
@@ -94,6 +94,10 @@
 (define (container-get-child c cn)
   (let ((children (container-get-children c)))
     (child-get-contents (get-unique child-get-name children cn))))
+
+(define (container-get-child-by-cnt c i)
+  (let ((children (container-get-children c)))
+    (child-get-contents (nth children i))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -154,6 +158,8 @@
 
 (define reg-get-children reg-get-fields)
 
+(define (reg-get-children-names r) (map cadr (reg-get-children r)))
+
 (define (reg-get-fields-before r fn)
   ;; get fields before a named field, unless fn is null, in which case get all
   (define (helper rest)
@@ -193,6 +199,11 @@
   ;; but we still want the side-effect of asserting the field exists...
   (cdr (list (reg-get-field r fn))))
 
+(define (reg-get-child-by-cnt r i)
+  ;; as above
+  (let ((children (reg-get-children r)))
+    (cdr (list (nth children i)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; arrays : can contain containers or regs
@@ -208,6 +219,8 @@
 
 (define (array-get-children a) (list (array-get-elem a)))
 
+(define (array-get-children-names a) (array-get-length a))
+
 (define (array-sum what a)
   ;;(assert-array a)
   (* (array-get-length a) (gen-sum what (array-get-elem a))))
@@ -219,6 +232,8 @@
         ((or (< idx 0) (>= idx (array-get-length a)))
          (error (error-append "index out of range : " (stringify idx) " : " (stringify a))))
         (else (array-get-elem a))))
+
+(define array-get-child-by-cnt array-get-child)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -235,6 +250,20 @@
          (finder (eval (symbol-append tag '-get-child))))
     (finder obj cn)))
 
+(define (get-children-names obj)
+  ;; this function has a funny spec
+  ;; for a container, it returns the list of names of children
+  ;; for an array, it returns a number, the size of the array
+  ;; (all arrays here are zero-based)
+  (let* ((tag (get-tag obj))
+         (lister (eval (symbol-append tag '-get-children-names))))
+    (lister obj)))
+
+(define (get-child-by-cnt obj cn)
+  (let* ((tag (get-tag obj))
+         (finder (eval (symbol-append tag '-get-child-by-cnt))))
+    (finder obj cn)))
+
 (define *last-get-children-arg* '())
 
 (define (get-children obj)
@@ -248,7 +277,7 @@
     (cond ((null? children) (list (gen-sum what t)))
 
           (else (let ((csum (map (lambda(c)(treesum what c)) children)))
-                  (list
+                  (cons
 
                    (*
                     (if (eq? 'array (car t))
@@ -266,7 +295,7 @@
 
           (else
            (let ((down (map (lambda(c)(vertex-op op c)) children)))
-             (list (op t) down)))
+             (cons (op t) down)))
           )))
 
 (define (zip a-lst b-lst) (map cons a-lst b-lst))
@@ -296,28 +325,34 @@
 (define (fc m)(car (get-children m)))
 
 ;; first child of address tree
-(define tl caadr)
+(define tl cadr)
 
 ;; iterate HOF
 (define (iter f n x)
   (if (= 0 n) x (iter f (- n 1) (f x))))
 
 ;;
+
+
 (define (tree-accum t)
   ;; sum to the right at every level of tree
-  (define (helper p n)
+ (define (helper p n)
     (cond ((null? p) '())
           
-          ((null? (cdar p))
-           (cons (list n)
-                 (helper (cdr p) (+ n (caar p)))))
+          ((null? (cdr p))
+           (list n))
           
           (else
-           (cons (list n (helper (cadar p) n))
-                 (helper (cdr p) (+ n (caar p)))))
+           (cons n
+                 (let loop ((pp   (cdr p))
+                            (i    n))
+                   (if (null? pp)
+                       '()
+                       (cons (helper (car pp) i)
+                             (loop (cdr pp) (+ i (caar pp))))))))
           )
     )
-  (car (helper (list t) 0)))
+ (helper t 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                            
@@ -337,5 +372,58 @@
         ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-by-sequence getter in seq)
+  (let loop ((z     in)
+             (p     seq)
+             (last '()))
+    (if (null? p)
+        last
+        (let ((this (getter z (car p))))
+          (loop this (cdr p) this)))))
+
+(define (get-by-cnt-sequence tree seq)  ;; for struct tree
+  (get-by-sequence get-child-by-cnt tree seq))
+
+(define (get-aux-child-by-cnt x n)
+  (nth (cdr x) n))
+
+(define (get-aux-by-cnt-sequence auxtree seq) ;; for aux tree
+  (car (get-by-sequence get-aux-child-by-cnt auxtree seq)))
+   
+(define (get-index x lst)
+  (if (number? lst)
+      (if (number? x) x (error (error-append "not a number : " (stringify x))))
+      
+      (let loop ((p lst)
+                 (i 0))
+        (cond ((null? p) (error (error-append
+                                 "not found : "
+                                 (stringify x) " : " (stringify lst))))
+              ((eq? (car p) x) i)
+              (else (loop (cdr p) (+ i 1)))))))
+
+(define (cnt-sequence-by-name in names)
+  (let loop ((p in)
+             (n names))
+    (if (null? n)
+        '()
+        (let* ((q (get-children-names p))
+               (i (get-index (car n) q)))
+          (cons i (loop (get-child-by-cnt p i) (cdr n)))))))
+        
+(define (name-by-cnt-sequence in seq)
+  (let loop ((p in)
+             (n seq))
+    (if (null? n)
+        '()
+        (let* ((i (car n))
+               (q (get-children-names p)))
+          (cons
+           (if (number? q) i (nth q i))
+           (loop (get-child-by-cnt p i) (cdr n)))))))
+        
+
+              
 
 (load "examples.scm")
