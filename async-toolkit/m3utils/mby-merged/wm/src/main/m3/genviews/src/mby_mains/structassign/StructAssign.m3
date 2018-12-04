@@ -8,7 +8,7 @@ IMPORT Debug;
 IMPORT RTName;
 
 VAR
-  map := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
+  map : MapAddr.H := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
   
 BEGIN
   IO.Put(Fmt.Int(CompAddr.initCount) & " fields have been address initialized.\n");

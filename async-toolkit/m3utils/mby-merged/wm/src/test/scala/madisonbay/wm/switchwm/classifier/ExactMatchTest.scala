@@ -12,6 +12,7 @@ import monocle.function.Each._
 import monocle.state.all._
 import scalaz.{ State, StateT }
 import scalaz.Id._
+import shapeless.tag
 
 import org.scalatest.{ FlatSpec, Matchers }
 
@@ -364,7 +365,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
   // lazy val cgrp_em_map = cgrpAMap.EM
 
   ignore should "produce vector of at least one action" in {
-
+    import types._
     val ms = StateT.stateTMonadState[mby_top_map,Id]
 
     val program = for {
@@ -379,8 +380,8 @@ class ExactMatchTest extends FlatSpec with Matchers {
         cgrpAMap.EM,
         top.mpp.shm,
         mapperOutput.classifierKeys,
-        mapperOutput.classifierProfile,
-        0.toByte // group?? to be fixed!
+        tag[ProfileTag][Byte](mapperOutput.classifierProfile),
+        tag[GroupTag][Byte](0.toByte) // group?? to be fixed!
       )
     } yield em()
 

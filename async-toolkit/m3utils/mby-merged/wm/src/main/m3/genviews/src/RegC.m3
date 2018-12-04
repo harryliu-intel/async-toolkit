@@ -74,6 +74,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
           DefTypes(wr);
           *)
           Wr.PutText(wr, "#include \"uint.h\"\n");
+          Wr.PutText(wr, "typedef uint32 field_id;\n");
           FOR i := 0 TO seq.size()-1 DO
             Debug.Out(F("Emit wx[%s]",seq.get(i)));
             VAR
@@ -247,11 +248,32 @@ PROCEDURE PutXDecls(gs : GenState; xDecls : TextSeq.T) =
   END PutXDecls;
 
 TYPE
-  Variant = RECORD ptr, sfx : TEXT END;
+  Variant = RECORD ptr : FieldType;  sfx : TEXT END;
+  FieldType = { UInt, Pointer, Id };
 
 CONST
-  Phases = ARRAY OF Variant { Variant {  "",       "" },
-                              Variant { "*", "__addr" } };
+  Phases = ARRAY OF Variant { Variant { FieldType.UInt,       "" },
+                              Variant { FieldType.Pointer, "__addr" }(*,
+                              Variant { FieldType.Id, "__api" }*) };
+
+PROCEDURE FmtFieldType(baseType : TEXT; ft : FieldType) : TEXT =
+  BEGIN
+    CASE ft OF
+      FieldType.UInt => RETURN baseType
+    |
+      FieldType.Pointer => RETURN baseType
+    |
+      FieldType.Id => RETURN "field_id"
+    END
+  END FmtFieldType;
+
+PROCEDURE FmtFieldModifier(ft : FieldType) : TEXT =
+  CONST
+    Modifier = ARRAY FieldType OF TEXT { "", "*", "" };
+  BEGIN
+    RETURN Modifier[ft]
+  END FmtFieldModifier;
+  
 
 PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
@@ -270,7 +292,10 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
           WITH f  = r.fields.get(i),
                nm = f.name(debug := FALSE),
                tn = F("uint%s", Int(f.width)) DO
-            gs.main("  %s %s%s;\n", tn, v.ptr, nm);
+            gs.main("  %s %s%s;\n",
+                    FmtFieldType(tn,v.ptr),
+                    FmtFieldModifier(v.ptr),
+                    nm);
             IF p = FIRST(Phases) THEN
               FmtConstant(xDecls, Int(f.width), F("%s_%s", myTn, nm), "n");
               xDecls.addhi(F("typedef %s %s_%s_t;\n", tn, myTn, nm))

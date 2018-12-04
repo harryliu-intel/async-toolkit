@@ -1,6 +1,10 @@
 import ("libm3")
 import ("rdlparse")
 import ("wm_support")
+import ("mscheme")
+import ("modula3scheme")
+import ("netobj")
+import ("sstubgen")
 
 module ("RegField")
 interface ("RegReg")
@@ -33,6 +37,7 @@ generic_module("GenViews")
 module ("GenViewsM3")
 module ("GenViewsScala")
 module ("GenViewsC")
+module ("GenViewsScheme")
 
 module ("DecoratedComponentDef")
 
@@ -69,5 +74,13 @@ interface("RegCGenState")
 %module("TextTopoSort")
 
 implementation ("Main")
+
+SchemeStubs ("FieldData")
+SchemeStubs ("Text")
+SchemeStubs ("Wr")
+SchemeStubs ("AtomRefTbl")
+
+ExportSchemeStubs("genviews")
+importSchemeStubs()              % import ALL scheme stubs
 
 program ("genviews")
