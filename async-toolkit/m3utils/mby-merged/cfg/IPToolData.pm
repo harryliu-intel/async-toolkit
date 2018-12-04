@@ -68,6 +68,7 @@ push (@{$ToolConfig_ips{mby}{OTHER}{SUB_SCOPES}}, (
    "ip_ccu_vc",
    "chassis_reset",
    "shdv",
+   "shrtl",
 ));
 
 push (@{$ToolConfig_ips{mby}{OTHER}{SEARCH_PATHS}}, (
@@ -80,6 +81,7 @@ push (@{$ToolConfig_ips{mby}{OTHER}{SEARCH_PATHS}}, (
    "&get_tool_var(ipconfig/sva_lib_ip,        SEARCH_PATHS)",
 	  "&get_tool_path(ipconfig/SVA_LIB)",
    "&get_tool_var(ipconfig/shdv,              SEARCH_PATHS)",
+   "&get_tool_var(ipconfig/shrtl,             SEARCH_PATHS)",
    "&get_tool_path(ipconfig/CTECH)",
    "&get_tool_path(ipconfig/CTECH_EXP)",
 ));
@@ -202,6 +204,15 @@ $ToolConfig_ips{fdo_tools} = {
    },
 };
 
+$ToolConfig_ips{shrtl} = {
+   PATH => "$ENV{IP_MODELS}/shrtl/&get_tool_version()",
+   VERSION => "shrtl-dev-x0-18ww48a",
+   OTHER   => {
+      SEARCH_PATHS   => ["&get_tool_path()",],
+      IMPORT         => ["cfg/shrtl_IPToolData.pm",],
+   },
+};
+
 $ToolConfig_ips{VTE_TR_UVM} = {
     VERSION => "vte-tr-uvm-18ww38a1",
     PATH    => "$ENV{IP_RELEASES}/vte-tr-uvm/&get_tool_version()",
@@ -213,28 +224,5 @@ $ToolConfig_ips{VTE_TR_UVM} = {
     },
 };
 
-
-# for Cadence PCIe BFMs
-$ToolConfig_ips{cdn_vip_root} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
-                                  PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()",
-                                };
-$ToolConfig_ips{vipcat} = { PATH => "&get_tool_path(cdn_vip_root)",
-                              OTHER => {
-                                 CDS_ARCH => "lnx86",
-                                 VIPCAT_LIBS => "&get_tool_path(cdn_vip_root)/tools.lnx86/lib/64bit",
-                              },
-                            };
-$ToolConfig_ips{denali} = { VERSION => 'vipcat_11.30.057-08_Aug_2018_10_14_18',
-                            #VERSION => '&get_tool_version(cdn_vip_root)',
-                              PATH    => "$ENV{RTL_CAD_ROOT}/cadence/vipcat/&get_tool_version()/tools/denali_64bit",
-                              #PATH    => "&get_tool_path(cdn_vip_root)/tools/denali_64bit",
-                              OTHER => {
-                                DENALI_LIBS => "&get_tool_path()/verilog",
-                                VIPCAT_LIBS => "&get_tool_path()/tools.lnx86/lib/64bit",
-                              },
-                            };
-#VIPCAT update
-$ToolConfig_tools{buildman}{ENV}{CDN_VIP_ROOT} = "&get_tool_path(cdn_vip_root)";
-$ToolConfig_tools{buildman}{ENV}{DENALI} = "&get_tool_path(denali)";
 
 1;

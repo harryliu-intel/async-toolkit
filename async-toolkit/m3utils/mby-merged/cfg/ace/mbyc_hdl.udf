@@ -10,7 +10,7 @@ my $MBY_IOSF_SB_VC_ROOT  = &ToolConfig::get_tool_path('ipconfig/iosf_sideband_vc
 my $sva_lib              = &ToolConfig::get_tool_path('ipconfig/SVA_LIB') . "/SVA_LIB";
 
 # for Cadance PCIe BFMs
-my $DENALI =  &ToolConfig::get_tool_path('ipconfig/denali');
+my $DENALI =  &ToolConfig::get_tool_path('denali');
 
 
 my $default_enable_congruency_elab  = 1;
@@ -169,9 +169,15 @@ print "MGM debug : @mbyMgmLibs\n";
 
 
             ### Verif libs
+            
+            gen_mesh_regflow_lib => {
+                    -generated => 1,
+                    -gen_config => "mby::gen_mesh_regflow_lib",
+                    -tools => ["-vcs_createlib"],
+            },
 
             mby_mesh_env_lib => {
-               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_env.hdl' ],
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_env.hdl','gen_mesh_regflow_lib' ],
                -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib' ],
                -tag             => "nonsynth",
             },
@@ -772,6 +778,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "ext_shared_lib",
                   "mby_common_lib",
                   "mby_mgp_bfm_lib",
+                  "gen_mesh_regflow_lib",
                ],
                testcase_globals => {
                     },

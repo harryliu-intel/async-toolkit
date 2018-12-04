@@ -8,10 +8,10 @@
 #################################################################################
 
 set inst_name "mby_gmn_0"
-set mod_name "mby_gmn"
+set mod_name "mby_gmn_par"
 collage_instantiate_component $mod_name -name $inst_name -noauto -use_hier
 set inst_name "mby_gms_0"
-set mod_name "mby_gms"
+set mod_name "mby_gms_par"
 collage_instantiate_component $mod_name -name $inst_name -noauto -use_hier
 
 #

@@ -1,0 +1,8 @@
+TRACE      = 0
+TRACESTART = 0
+TRACEMEMON = 1
+ASSERT     = 1
+FCOV       = 1
+CCOV       = 1
+SEED       = $(TIMESTAMP)
+HEARTBEAT  = 10000

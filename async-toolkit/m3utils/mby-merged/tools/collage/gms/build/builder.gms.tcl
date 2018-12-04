@@ -2,16 +2,16 @@
 # IP info settings
 ###########################################################################
 
-set ::collage_ip_info::ip_name "mby_gms"
-set ::collage_ip_info::ip_top_module_name "mby_gms"
+set ::collage_ip_info::ip_name "mby_gms_par"
+set ::collage_ip_info::ip_top_module_name "mby_gms_par"
 set ::collage_ip_info::ip_version "1.0"
 set ::collage_ip_info::ip_intent_sp ""
 # update this pointer once we can use non-temp shell
-set ::collage_ip_info::ip_rtl_inc_dirs "$::env(MODEL_ROOT)/subBlock/mbyc/src/gmm/gms/rtl"
+set ::collage_ip_info::ip_rtl_inc_dirs "$::env(MODEL_ROOT)/subBlock/mbyc/src/gmm/gms/rtl $::env(MODEL_ROOT)/target/mby/mgm_run/igr/src $::env(MODEL_ROOT)/target/mby/mgm_run/rtl"
 
 set ::collage_ip_info::ip_input_language SystemVerilog
 
-set ::collage_ip_info::ip_input_files "$::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/mby_gmm_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/shared_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/gmm/gms/top/rtl/mby_gms.sv"
+set ::collage_ip_info::ip_input_files "$::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/shared_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/mby_egr_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/igr/rtl/mby_igr_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/shared/rtl/mby_gmm_pkg.sv $::env(MODEL_ROOT)/subBlock/mbyc/src/gmm/gms/top/rtl/mby_gms_par.sv"
 
 set ::collage_ip_info::ip_plugin_dir "" ; # Directories - space separated list - with tcl plugin files
 set ::collage_ip_info::ip_ifc_def_hook "gms_create_ifc_instances" ; # Set this to procedure to add IP interfaces - defined below

@@ -1,0 +1,396 @@
+<% use security; %>
+<% my %Security_Props = security::GetSecurityInfo(); %>
+`include "lib_udp.rdl"
+
+
+// ENTROPY_HASH_CFG0[0..2][0..63]
+
+reg entropy_hash_cfg0_r {
+  shared;
+  HandCoded = true;
+  name = "Configures hash value calculation";
+  desc = "
+  Configure how each of the 3 hash values (hash0/1/2) should be calculated.
+  Indexed first by hash number, then by hash profile.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects Classifier KEY8s to be included in the hash calculation.
+     key_mask8[i] selects key8[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
+
+           ";
+    ValRandomize = true;
+  } KEY_MASK8[31:0] = 32'h0;
+};
+regfile entropy_hash_cfg0_rf {
+  entropy_hash_cfg0_r ENTROPY_HASH_CFG0[64] += 8;
+};
+
+
+reg entropy_fwd_hashing_cfg_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  name = "Configures hashing of L2/L3/L4 headers for LAG";
+  desc = "This register selects which fields are enabled for inclusion in the calculation of the 
+          hash value used for link aggregation and GLORT lookup.  See the hashing chapter for more
+          details.";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD1_[63:13] = 51'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+            Specifies one of two 12-bit hash rotations for use in ECMP
+            binning. 
+           ";
+    ValRandomize = true;
+  } ECMP_ROTATION[12:12] = 1'h00;
+  field {
+    AccessType = "RW";
+    desc = "
+            Specifies one of four 12-bit rotations for use as Rotation B.
+           ";
+    ValRandomize = true;
+  } ROTATION_B[11:10] = 2'h01;
+  field {
+    AccessType = "RW";
+    desc = "
+            Specifies one of four 12-bit rotations for use as Rotation A.
+           ";
+    ValRandomize = true;
+  } ROTATION_A[9:8] = 2'h00;
+  field {
+    AccessType = "RSV";
+    desc = "
+      Reserved
+
+           ";
+    ValRandomize = true;
+  } _RSVD0_[7:0] = 8'h0;
+};
+
+
+// ENTROPY_HASH_CFG1[0..2][0..63]
+
+reg entropy_hash_cfg1_r {
+  shared;
+  HandCoded = true;
+  name = "Configures hash value calculation";
+  desc = "
+  Configure how each of the 3 hash values (hash0/1/2) should be calculated.
+  Indexed first by hash number, then by hash profile.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Enable symmetrization according to profile indicated by sym_profile
+
+           ";
+    ValRandomize = true;
+  } SYMMETRIC[54:54] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects key symmetrization profile to use if symmetric is set
+
+           ";
+    ValRandomize = true;
+  } SYM_PROFILE[53:52] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects the hash key mask profile to apply to the selected
+     KEY8s, KEY16s and KEY32s.
+
+           ";
+    ValRandomize = true;
+  } KEY_MASK_PROFILE[51:48] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects Classifier KEY32s to be included in the hash calculation.
+     key_mask32[i] selects key32[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
+
+           ";
+    ValRandomize = true;
+  } KEY_MASK32[47:32] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects Classifier KEY16s to be included in the hash calculation.
+     key_mask16[i] selects key16[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
+
+           ";
+    ValRandomize = true;
+  } KEY_MASK16[31:0] = 32'h0;
+};
+regfile entropy_hash_cfg1_rf {
+  entropy_hash_cfg1_r ENTROPY_HASH_CFG1[64] += 8;
+};
+
+
+
+// ENTROPY_META_CFG[0..63]
+
+reg entropy_meta_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Configures packing of Modify Metadata.";
+  desc = "
+  Configure how to pack FFU_META and hash1 into mod_meta.
+  This register is indexed by HASH_PROF[1] (the FFU action).
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Controls default setting for each metadata byte.
+     Byte_Defaults[b*2 +: 2] controls byte b.
+     The values are interpreted as follows:
+     [list]
+     [*] 0: default byte value is FFU_META[0]
+     [*] 1: default byte value is FFU_META[1]
+     [*] 2: default byte value is FFU_META[2]
+     [*] 3: default byte value is FFU_META[3]
+     [/list]
+
+           ";
+    ValRandomize = true;
+  } BYTE_DEFAULTS[23:12] = 12'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Location (0..47) to start inserting hash1 into mod_meta.
+     Hardware does not rotate the hash, but does a simple mask insertion.
+
+           ";
+    ValRandomize = true;
+  } HASH_START[11:6] = 6'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Number of bits to copy from hash1 into mod_meta.
+
+           ";
+    ValRandomize = true;
+  } HASH_SIZE[5:0] = 6'h0;
+};
+
+
+// ENTROPY_HASH_SYM8[0..2][0..3]
+
+reg entropy_hash_sym8_r {
+  shared;
+  HandCoded = true;
+  name = "Specify pairs of KEY8s to symmetricize.";
+  desc = "
+  Indexed first by entropy hash numnber (hash0, hash1 or hash2), then
+  by symmetrization profile number. The symmetrization profile to be used is indicated
+  per hash profile in ENTROPY_HASH_CFG1.
+  [br][br]
+  Up to 6 pairs of KEY8s may be symmetricized.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Each 10 bits identifies two KEY8s that are to be symmetricized. The 5 
+     least significant bits of a key pair are the index for one KEY8 in the 
+     pair and the 5 most significant bits of a key pair are the index for 
+     the other KEY8 in the pair. Thus:[br]
+     [list]
+     [*] key_pairs[4:0] = One key's index for pair 1
+     [*] key_pairs[9:5] = Other key's index for pair 1
+     [*] key_pairs[14:10] = One key's index for pair 2
+     [*] key_pairs[19:15] = Other key's index for pair 2
+     [*] ...
+     [*] key_pairs[54:50] = One key's index for pair 6
+     [*] key_pairs[59:55] = Other key's index for pair 6
+     [/list]
+     Indicate unused key pairs by setting both key indexes in the pair to zero.
+           ";
+    ValRandomize = true;
+  } KEY_PAIRS[59:0] = 60'h0;
+};
+regfile entropy_hash_sym8_rf {
+  entropy_hash_sym8_r ENTROPY_HASH_SYM8[4] += 8;
+};
+
+
+
+// ENTROPY_HASH_SYM16[0..2][0..3]
+
+reg entropy_hash_sym16_r {
+  shared;
+  HandCoded = true;
+  name = "Specify pairs of KEY16s to symmetricize.";
+  desc = "
+  Indexed first by entropy hash numnber (hash0, hash1 or hash2), then
+  by symmetrization profile number. The symmetrization profile to be used is indicated
+  per hash profile in ENTROPY_HASH_CFG1.
+  [br][br]
+  Up to 6 pairs of KEY16s may be symmetricized.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Each 10 bits identifies two KEY16s that are to be symmetricized. The 5 
+     least significant bits of a key pair are the index for one KEY16 in the 
+     pair and the 5 most significant bits of a key pair are the index for 
+     the other KEY16 in the pair. Thus:[br]
+     [list]
+     [*] key_pairs[4:0] = One key's index for pair 1
+     [*] key_pairs[9:5] = Other key's index for pair 1
+     [*] key_pairs[14:10] = One key's index for pair 2
+     [*] key_pairs[19:15] = Other key's index for pair 2
+     [*] ...
+     [*] key_pairs[54:50] = One key's index for pair 6
+     [*] key_pairs[59:55] = Other key's index for pair 6
+     [/list]
+     Indicate unused key pairs by setting both key indexes in the pair to zero.
+           ";
+    ValRandomize = true;
+  } KEY_PAIRS[59:0] = 60'h0;
+};
+regfile entropy_hash_sym16_rf {
+  entropy_hash_sym16_r ENTROPY_HASH_SYM16[4] += 8;
+};
+
+
+
+// ENTROPY_HASH_SYM32[0..2][0..3]
+
+reg entropy_hash_sym32_r {
+  shared;
+  HandCoded = true;
+  name = "Specify pairs of KEY32s to symmetricize.";
+  desc = "
+  Indexed first by entropy hash numnber (hash0, hash1 or hash2), then
+  by symmetrization profile number. The symmetrization profile to be used is indicated
+  per hash profile in ENTROPY_HASH_CFG1.
+  [br][br]
+  Up to 8 pairs of KEY32s may be symmetricized.  
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Each 8 bits identifies two KEY32s that are to be symmetricized. The 4 
+     least significant bits of a key pair are the index for one KEY32 in the 
+     pair and the 4 most significant bits of a key pair are the index for 
+     the other KEY32 in the pair. Thus:[br]
+     [list]
+     [*] key_pairs[3:0] = One key's index for pair 1
+     [*] key_pairs[7:4] = Other key's index for pair 1
+     [*] key_pairs[11:8] = One key's index for pair 2
+     [*] key_pairs[15:12] = Other key's index for pair 2
+     [*] ...
+     [*] key_pairs[59,:56] = One key's index for pair 8
+     [*] key_pairs[63:60] = Other key's index for pair 8
+     [/list]
+     Indicate unused key pairs by setting both key indexes in the pair to zero.
+           ";
+    ValRandomize = true;
+  } KEY_PAIRS[63:0] = 64'h0;
+};
+regfile entropy_hash_sym32_rf {
+  entropy_hash_sym32_r ENTROPY_HASH_SYM32[4] += 8;
+};
+
+
+
+// ENTROPY_HASH_KEY_MASK[0..2][0..128]
+
+reg entropy_hash_key_mask_r {
+  shared;
+  HandCoded = true;
+  name = "Hash key bit mask";
+  desc = "
+  Provides a 64 byte hash key mask for each of 16 hash key profiles.
+  Indexed first by hash number, then by:
+  [code]
+  (KEY_MASK_PROFILE * 8) + DW
+  where there are 8 DWs per profile (64 bytes)
+  [/code]
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Mask of 64 bits out of the 64 bytes of KEY8s, KEY16s
+     and KEY32s selected by ENTROPY_HASH_CFGn per hash profile. 
+     Indicates which bits are included in the hash calculation.
+
+           ";
+    ValRandomize = true;
+  } MASK[63:0] = 64'h0;
+};
+regfile entropy_hash_key_mask_rf {
+  entropy_hash_key_mask_r ENTROPY_HASH_KEY_MASK[128] += 8;
+};
+
+
+
+// Begin reg2rdl addrmap section
+
+addrmap mby_ppe_entropy_map {
+  name = "mby_entropy";
+  desc = "Entropy Generator Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  entropy_hash_cfg0_rf       ENTROPY_HASH_CFG0[3]          ;
+  entropy_hash_cfg1_rf       ENTROPY_HASH_CFG1[3]          ;
+  entropy_meta_cfg_r         ENTROPY_META_CFG[64]          ;
+  entropy_hash_sym8_rf       ENTROPY_HASH_SYM8[3]          ;
+  entropy_hash_sym16_rf      ENTROPY_HASH_SYM16[3]         ;
+  entropy_hash_sym32_rf      ENTROPY_HASH_SYM32[3]         ;
+  entropy_hash_key_mask_rf   ENTROPY_HASH_KEY_MASK[3]      ;
+  entropy_fwd_hashing_cfg_r  ENTROPY_FWD_HASHING_CFG[64]   ;
+}; // final size: 0xe00 <= 0x1000 = 8<<9

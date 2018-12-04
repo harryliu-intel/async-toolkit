@@ -1,8 +1,8 @@
 Ram Type                    <REGULAR, ROM, TCAM>    = REGULAR
 Ram Ports                   <1rw, 1r1w, 2rw>        = 1rw
 Ram Lines Number            <Integer Number>        = 2048
-Ram Data Width              <Integer Number>        = 72
-Ram Protection Type         <ECC, Parity, None>     = None
+Ram Data Width              <Integer Number>        = 64
+Ram Protection Type         <ECC, Parity, None>     = ECC
 Memory clock name A         <Write Clock Name>      = cclk
 Ram Clear-On-Reset          <Yes, Number, No, LL>   = No
 Memory Instances            <Integer Number>        = 80

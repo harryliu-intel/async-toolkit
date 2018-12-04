@@ -1,0 +1,5 @@
+//gmn_par block 
+
+mby_gmn_par [
+  gmn of mby_gmn with gmn.map
+]

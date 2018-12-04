@@ -33,25 +33,26 @@
 // -------------------------------------------------------------------
 
 interface par_class_if
+import shared_pkg::*;
 import hlp_pkg::*;
 import hlp_ipp_pkg::*;
 ();
-imn_rpl_bkwd_t  rpl_bkwd;       //Management status from downstream blocks
-imn_rpl_frwd_t  rpl_frwd;       //Managment to downstream blocks
+imn_rpl_bkwd_t      rpl_bkwd;       //Management status from downstream blocks
+imn_rpl_frwd_t      rpl_frwd;       //Managment to downstream blocks
 
-parser_out_t    parser_out;     //Parser results
-logic           parser_out_v;   //Parser results valid
+parser_out_t        parser_out;     //Parser results
+logic               parser_out_v;   //Parser results valid
 
-tail_info_t     o_tail_info;    //Tail info
-logic           o_tail_info_v;  //Tail info valid
+igr_rx_ppe_tail_t   tail_info;      //Tail info
+logic               tail_info_v;    //Tail info valid
 
 modport parser(
     input   rpl_bkwd,
     output  rpl_frwd,
     output  parser_out,
     output  parser_out_v,
-    output  o_tail_info,
-    output  o_tail_info_v
+    output  tail_info,
+    output  tail_info_v
 );
 
 modport classifier(
@@ -59,8 +60,8 @@ modport classifier(
     input   rpl_frwd,
     input   parser_out,
     input   parser_out_v,
-    input   o_tail_info,
-    input   o_tail_info_v
+    input   tail_info,
+    input   tail_info_v
 );
 
 endinterface: par_class_if
