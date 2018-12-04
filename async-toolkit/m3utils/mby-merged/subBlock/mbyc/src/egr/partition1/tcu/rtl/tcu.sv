@@ -50,13 +50,27 @@ module tcu
     egr_epl_if.egr        epl_if3  //TCU - EPL3 Interface
 
 );
-
+//modport tcu(
+//    //Service dtq_ctrl_pull
+//    output  dtq_ctrl_pull,
+//    input  dtq_ctrl_ready,
+//    input      ctrl_mdata,
+//    input       ctrl_word,
+//    input ctrl_word_valid,
+//    //Service dtq_data_pull
+//    output  dtq_data_pull,
+//    input  dtq_data_ready,
+//    input  pkt_word_mdata,
+//    input        pkt_word,
+//    input data_word_valid
+//    );
+tqu_if.ctrl_word
 //                   EPL
 //                    |  LP
 //                    |  |  TC 
 //                    |  |  |
 //                    V  V  V
-tqu_if.dtq_data_ready[0][0][0];
+tqu_if.dtq_data_ready[0][0][0]
 
 
 endmodule : tcu
