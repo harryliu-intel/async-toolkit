@@ -41,6 +41,11 @@ import mby_igr_pkg::*, shared_pkg::*;
 //Input List
  input                             cclk, 
  input                             rst, // synchronized warm reset 
+ input [4:0]                       i_free_ptr_valid,                         
+ input [4:0][19:0]                 i_free_seg_ptr,                           
+ input [4:0][3:0]                  i_free_sema,                              
+ input igr_pkt_id_t [1:0]          i_return_id,                              
+ input [1:0]                       i_return_id_valid,                        
  input shim_pb_data_t              i_shim_pb_data_p0[3:0],
  input shim_pb_data_t              i_shim_pb_data_p1[3:0],
  input shim_pb_data_t              i_shim_pb_data_p2[3:0],
@@ -125,6 +130,7 @@ import mby_igr_pkg::*, shared_pkg::*;
  output [W_SEG_PTR-1:0][1:0]       o_drop_seg_ptr, //[19:0] 
  output [1:0]                      o_drop_seg_valid, 
  output [W_SEMA-1:0][1:0]          o_drop_sema, 
+ output [4:0]                      o_free_ptr_req,
  output [7:0]                      o_port_id, // FIXME -- what is this for?  ring_tag_t also has src & dst ports 
  output [95:0]                     o_post_ppe_tag_at_rate0, 
  output [95:0]                     o_post_ppe_tag_at_rate1, 
@@ -248,18 +254,24 @@ mby_igr_pre_ppe    mby_igr_pre_ppe(
 /* input  logic                    [2:0][3:0] */ .i_shim_pb_v_p1     (i_shim_pb_v_p1),                  
 /* input  logic                    [2:0][3:0] */ .i_shim_pb_v_p2     (i_shim_pb_v_p2),                  
 /* input  logic                    [2:0][3:0] */ .i_shim_pb_v_p3     (i_shim_pb_v_p3),                  
-/* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp0_fpp     (pdata_lpp0_fpp),                  
-/* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp1         (pdata_lpp1),                      
-/* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp0_fpp (sop_mdata_lpp0_fpp),              
-/* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp1     (sop_mdata_lpp1),                  
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl0      (tag_info_epl0),                   
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl1      (tag_info_epl1),                   
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl2      (tag_info_epl2),                   
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl3      (tag_info_epl3),                   
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_vp        (tag_info_vp),                     
-/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_0          (wr_data_0),                       
-/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_1          (wr_data_1),                       
-/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_2          (wr_data_2));                       
+/* input  logic                         [4:0] */ .i_free_ptr_valid   (i_free_ptr_valid),              
+/* output logic                         [4:0] */ .o_free_ptr_req     (o_free_ptr_req),                
+/* input  logic                   [4:0][19:0] */ .i_free_seg_ptr     (i_free_seg_ptr),                
+/* input  logic                    [4:0][3:0] */ .i_free_sema        (i_free_sema),                   
+/* input  logic                    [1:0][0:0] */ .i_return_id        (i_return_id),                   
+/* input  logic                         [1:0] */ .i_return_id_valid  (i_return_id_valid),             
+/* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp0_fpp     (pdata_lpp0_fpp),                
+/* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp1         (pdata_lpp1),                    
+/* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp0_fpp (sop_mdata_lpp0_fpp),            
+/* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp1     (sop_mdata_lpp1),                
+/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl0      (tag_info_epl0),                 
+/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl1      (tag_info_epl1),                 
+/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl2      (tag_info_epl2),                 
+/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl3      (tag_info_epl3),                 
+/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_vp        (tag_info_vp),                   
+/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_0          (wr_data_0),                     
+/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_1          (wr_data_1),                     
+/* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_2          (wr_data_2));                     
 // End of module mby_igr_pre_ppe from mby_igr_pre_ppe
 
 

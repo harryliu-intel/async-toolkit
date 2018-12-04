@@ -94,6 +94,13 @@ import igr_sim_pkg::*;
       .i_shim_pb_v_p1                          ( dut_if.i_shim_pb_v_p1 ),
       .i_shim_pb_v_p2                          ( dut_if.i_shim_pb_v_p2 ),
       .i_shim_pb_v_p3                          ( dut_if.i_shim_pb_v_p3 ),
+
+      .i_free_ptr_valid                        ( dut_if.i_free_ptr_valid ),              
+      .i_free_seg_ptr                          ( dut_if.i_free_seg_ptr ),                
+      .i_free_sema                             ( dut_if.i_free_sema ),                   
+      .i_return_id                             ( dut_if.i_return_id ),                   
+      .i_return_id_valid                       ( dut_if.i_return_id_valid ),             
+
       .egr_igr_wreq_mim_wreq_valid             ( dut_if.egr_igr_wreq_mim_wreq_valid ),
       .egr_igr_wreq_mim_wr_seg_ptr             ( dut_if.egr_igr_wreq_mim_wr_seg_ptr ),
       .egr_igr_wreq_mim_wr_sema                ( dut_if.egr_igr_wreq_mim_wr_sema ),
@@ -115,6 +122,8 @@ import igr_sim_pkg::*;
       .rx_ppe_igr_intf1                        ( dut_if.rx_ppe_igr_intf1 ),
 
               // outputs
+      .o_free_ptr_req                          ( dut_if.o_free_ptr_req ),                
+
       .igr_rx_ppe_intf0_tail                   ( dut_if.igr_rx_ppe_intf0_tail ),
       .igr_rx_ppe_intf0_head                   ( dut_if.igr_rx_ppe_intf0_head ),
       .igr_rx_ppe_intf1_tail                   ( dut_if.igr_rx_ppe_intf1_tail ),

@@ -36,7 +36,7 @@
 //`include "scoreboard.sv"
 //`include "configuration.sv"
 //`include "stimulus.sv"
-import mby_igr_pkg::*, shared_pkg::*;
+import mby_igr_pkg::*, mby_egr_pkg::*, shared_pkg::*;
 
 class inp_driver;
 
@@ -67,6 +67,10 @@ class inp_driver;
     logic [2:0]                i_shim_pb_v_p1[3:0];  
     logic [2:0]                i_shim_pb_v_p2[3:0];  
     logic [2:0]                i_shim_pb_v_p3[3:0];
+    logic [3:0]                i_free_ptr_valid;
+    logic [3:0]                o_free_ptr_req;
+    seg_ptr_t [3:0]            i_free_seg_ptr;
+    sema_t    [3:0]            i_free_sema;
     
 
     function new(
@@ -108,6 +112,9 @@ class inp_driver;
             i_shim_pb_v_p1[i]    = '0; 
             i_shim_pb_v_p2[i]    = '0; 
             i_shim_pb_v_p3[i]    = '0; 
+            i_free_ptr_valid[i]  = '0;
+            i_free_seg_ptr[i]    = '0;
+            i_free_sema[i]       = '0;
         end
     endtask
 
@@ -130,6 +137,9 @@ class inp_driver;
             dut_if.i_shim_pb_v_p1    <= i_shim_pb_v_p1   ; 
             dut_if.i_shim_pb_v_p2    <= i_shim_pb_v_p2   ; 
             dut_if.i_shim_pb_v_p3    <= i_shim_pb_v_p3   ; 
+            dut_if.i_free_ptr_valid  <= i_free_ptr_valid;
+            dut_if.i_free_seg_ptr    <= i_free_seg_ptr;
+            dut_if.i_free_sema       <= i_free_sema;
 
           //  drvr_rd_req_to_dut_p1  <= drvr_rd_req_to_dut;
           //  drvr_wr_req_to_dut_p1  <= drvr_wr_req_to_dut;
@@ -165,11 +175,20 @@ class inp_driver;
         if (!drove_reqs) begin
             repeat (10) @(posedge dut_if.clk);
 
-            i_shim_pb_v_p0[0] = 1'b1;
-            @(posedge dut_if.clk);
-            i_shim_pb_v_p0[0] = 1'b0;
-            
+            i_free_ptr_valid          = 4'b0001;
+            i_free_seg_ptr[0]         = 20'h11111;
+            i_free_sema[0]            = 4'b1010;
 
+
+            i_shim_pb_v_p0[0]         = 1'b1;
+            i_shim_pb_data_p0[0].seg0 = {8{72'ha5}};
+            i_shim_pb_md_p0[0]        = shim_pb_md_t'('h123456);
+            i_shim_pb_md_p0[0].md0.md.sop = 1'b1;
+
+            @(posedge dut_if.clk);
+            i_shim_pb_v_p0[0]         = 1'b0;
+            i_shim_pb_data_p0[0].seg0 = {8{72'h00}};
+            i_shim_pb_md_p0[0]        = shim_pb_md_t'('h0);
   
             drove_reqs = 1; 
 

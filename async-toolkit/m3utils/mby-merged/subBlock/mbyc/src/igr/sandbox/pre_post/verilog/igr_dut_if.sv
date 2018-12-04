@@ -58,6 +58,13 @@ logic               rst;                                // reset
  logic [2:0]                i_shim_pb_v_p1[3:0];  
  logic [2:0]                i_shim_pb_v_p2[3:0];  
  logic [2:0]                i_shim_pb_v_p3[3:0];
+ logic [4:0]                i_free_ptr_valid;
+ logic [4:0]                o_free_ptr_req;
+ seg_ptr_t [4:0]            i_free_seg_ptr;
+ sema_t    [4:0]            i_free_sema;
+
+ igr_pkt_id_t [1:0]         i_return_id;
+ logic [1:0]                i_return_id_valid;
 
 //Interface List
  igr_rx_ppe_tail_t          igr_rx_ppe_intf0_tail; // Blasted Interface igr_rx_ppe_if.igr igr_rx_ppe
