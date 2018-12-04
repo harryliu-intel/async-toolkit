@@ -64,13 +64,13 @@ module tcu
 //    input        pkt_word,
 //    input data_word_valid
 //    );
-tqu_if.ctrl_word
-//                   EPL
-//                    |  LP
-//                    |  |  TC 
-//                    |  |  |
-//                    V  V  V
-tqu_if.dtq_data_ready[0][0][0]
+//tqu_if.ctrl_word
+//                     EPL
+//                      |  LP
+//                      |  |  TC 
+//                      |  |  |
+//                      V  V  V
+//tqu_if.dtq_data_ready[0][0][0]
 
 
 endmodule : tcu
