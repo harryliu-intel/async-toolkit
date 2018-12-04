@@ -52,6 +52,7 @@ $hdl_spec = {
         "src/egr/partition1/tmu/rtl/tmu.sv",
         #"src/egr/partition1/tmu/rtl/mby_egr_tag.sv",
         "src/egr/partition1/tqu/rtl/tqu.sv",
+        "src/egr/partition1/tqu/rtl/tqu_rrsp_rcv.sv",
     ## EGR TOP
        "src/egr/rtl/egr_top.sv",
      ],
