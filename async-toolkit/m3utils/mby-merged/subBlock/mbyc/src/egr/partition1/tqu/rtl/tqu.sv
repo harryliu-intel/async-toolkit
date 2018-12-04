@@ -27,6 +27,7 @@
 //------------------------------------------------------------------------------
 
 module tqu
+    import egr_int_pkg::*;
 (
     input logic             clk,
     input logic           rst_n, 
@@ -39,5 +40,35 @@ module tqu
     egr_rrs_if.requestor mri_if1  // Read Response Interface. Gives service to EPL 2,3
 
 );
+
+logic       wd_valid [N_EPP_PER_MGP][N_EPL_PER_EPP];
+data_word_t     word [N_EPP_PER_MGP][N_EPL_PER_EPP];
+dtq_sel_t    dtq_sel [N_EPP_PER_MGP][N_EPL_PER_EPP]; 
+
+
+tqu_rrsp_rcv tqu_rrsp_rcv0(
+    .clk      (     clk   ),
+    .rst_n    (   rst_n   ), 
+    .mri_if   ( mri_if0   ), 
+    .wd_valid (wd_valid[0]), 
+    .word     (    word[0]),
+    .dtq_sel  ( dtq_sel[0])
+);
+
+tqu_rrsp_rcv tqu_rrsp_rcv1(
+    .clk      (     clk   ),
+    .rst_n    (   rst_n   ), 
+    .mri_if   ( mri_if1   ), 
+    .wd_valid (wd_valid[1]), 
+    .word     (    word[1]),
+    .dtq_sel  ( dtq_sel[1])
+);
+
+// 4 Packet Buffers
+ 
+ 
+// 4 tqu_fifos
+//tcu_if
+
 
 endmodule : tqu

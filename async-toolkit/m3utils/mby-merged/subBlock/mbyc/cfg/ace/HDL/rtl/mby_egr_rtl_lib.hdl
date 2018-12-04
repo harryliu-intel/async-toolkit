@@ -14,6 +14,7 @@ $hdl_spec = {
        "src/shared/interfaces/egr_tx_ppe_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/mby_egr_pkg.sv",
+       "src/egr/rtl/egr_int_pkg.sv",
     ## EGR External Interfaces   
        "src/shared/interfaces/egr_epl_if.sv",
        "src/shared/interfaces/mim_rd_if.sv",
@@ -51,6 +52,7 @@ $hdl_spec = {
         "src/egr/partition1/tmu/rtl/tmu.sv",
         #"src/egr/partition1/tmu/rtl/mby_egr_tag.sv",
         "src/egr/partition1/tqu/rtl/tqu.sv",
+        "src/egr/partition1/tqu/rtl/tqu_rrsp_rcv.sv",
     ## EGR TOP
        "src/egr/rtl/egr_top.sv",
      ],

@@ -121,7 +121,7 @@ class mby_base_sequence_item
    // -------------------------------------------------------------------------
    virtual function void do_print(uvm_printer printer);
       super.do_print(printer);
-      // pretty print the configuration object
+      // pretty print the sequence object
    endfunction : do_print
 
 
