@@ -29,7 +29,7 @@
 /**************************************************************
  * File Name    : egr_tcu_pkt_scheduler.sv
  * Author Name  : John Lo
- * Description  : tcg_req  : used by tcu_wdrr_sm for req-gnt protocol. 
+ * Description  : tcg_req  : used by tcu_dwrr_sm for req-gnt protocol. 
  *                tcg_empty: used by tcu_ledger for snapshot, replenish time.
  *                
  * Parent Module: 
@@ -45,7 +45,7 @@
 module egr_tcu_pkt_scheduler (
   // pkt_mod_if
   output logic [`TOT_TC-1:0]                              tcg_gnt    , 
-  input  logic [`TOT_TC-1:0]                              tcg_req    , // used by tcu_wdrr_sm for req-gnt protocol. 
+  input  logic [`TOT_TC-1:0]                              tcg_req    , // used by tcu_dwrr_sm for req-gnt protocol. 
   input  logic [`TOT_TC-1:0]                              tcg_empty  , // used by tcu_ledger for snapshot, replenish time. 
   input  logic [`TOT_TC-1:0]                              tcg_ren    , 
   // csr_if
@@ -117,8 +117,8 @@ module egr_tcu_pkt_scheduler (
   
   // 9 pg arbiters
   generate  
-    for (pg=0; pg < `TOT_PG ; pg=pg+1) begin : PG_WDRR_GEN
-      egr_tcu_wdrr  egr_tcu_wdrr  
+    for (pg=0; pg < `TOT_PG ; pg=pg+1) begin : PG_DWRR_GEN
+      egr_tcu_dwrr  egr_tcu_dwrr  
       (.grant    (pg_grant  [pg]) // o                               
       ,.gnt      (pg_gnt    [pg]) // o [`TOT_TC-1:0]                 
       ,.req      (pg_req    [pg]) // i [`TOT_TC-1:0]                 
@@ -130,13 +130,13 @@ module egr_tcu_pkt_scheduler (
       ,.reset_n  (reset_n       ) // i                               
       ,.clk      (clk           ) // i                               
       );
-    end : PG_WDRR_GEN
+    end : PG_DWRR_GEN
   endgenerate
 
   // winner arbiter
   assign  win_req   = pg_grant;
   assign  win_empty = '0;       // all 9 pg will participate in snapshot and replenish. 
-  egr_tcu_wdrr  egr_tcu_wdrr_win        
+  egr_tcu_dwrr  egr_tcu_dwrr_win        
   (.grant    (win_grant  ) // o , used as status only.                   
   ,.gnt      (win_gnt    ) // o [`TOT_PG-1:0]                 
   ,.req      (win_req    ) // i [`TOT_PG-1:0]                 

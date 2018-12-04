@@ -35,7 +35,7 @@
  * Interface Mod: many
  * Date Created : 2018-11-29
  *
- * WDRR/DRR Algorithm:
+ * DWRR/DRR Algorithm:
  * 1.	After POR, wait for at least one of TC to assert ~empty (ready) 
  *      than take a snap shot of the participating TC's. 
  *      Do not let the late coming TC¿s participate in arbitration 
@@ -55,7 +55,7 @@
  * Note 1: If all TC[8:0] quanta is 0. The above Algorithm is reduced to simple RR.
  * Note 2: If TC is empty, its associated DC is reset to 0.
  * Note 3: Reset statemachine state to GNT7 and set deficit_cnt_ok to 1
- *         will reduce wdrr to sp (strick priority) algorithm.
+ *         will reduce dwrr to sp (strick priority) algorithm.
  * Note 4: GNT8 has the lowest priority in default sp_mode.
  ***************************************************************/
 
@@ -107,7 +107,7 @@ module egr_tcu_tqu_ctrl_sm
   statetype		nx_state;
 
   // begin egr_tcu_tqu_ctrl_sm sp_top
-  always_comb begin : TCU_WDRR_SM_COMB
+  always_comb begin : TCU_DWRR_SM_COMB
     nx_state = state;
     gnt      = '0   ;
     case (state)                                                                              
@@ -203,9 +203,9 @@ module egr_tcu_tqu_ctrl_sm
 	else                                 begin nx_state = state;               end
       default:                               begin nx_state = GNT7; gnt    = '0  ; end    
     endcase
-  end : TCU_WDRR_SM_COMB
+  end : TCU_DWRR_SM_COMB
 
-  always_ff @(posedge clk) begin : TCU_WDRR_SM_SEQ
+  always_ff @(posedge clk) begin : TCU_DWRR_SM_SEQ
     if (!reset_n) begin
       state <= GNT7;
     end
@@ -226,7 +226,7 @@ module egr_tcu_tqu_ctrl_sm
     else begin
       state <= nx_state;
     end
-  end : TCU_WDRR_SM_SEQ
+  end : TCU_DWRR_SM_SEQ
 
   assign  grant = |gnt; 
 
