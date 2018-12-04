@@ -51,4 +51,12 @@ module tcu
 
 );
 
+//                   EPL
+//                    |  LP
+//                    |  |  TC 
+//                    |  |  |
+//                    V  V  V
+tqu_if.dtq_data_ready[0][0][0];
+
+
 endmodule : tcu
