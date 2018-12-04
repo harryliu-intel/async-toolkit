@@ -6,58 +6,74 @@
 (define some-field '(field INITIAL_W0_OFFSET 56 8))
 
 (define some-reg
-  '(reg parser_port_cfg_r
-        (field INITIAL_W0_OFFSET 56 8)
-        (field INITIAL_W1_OFFSET 48 8)
-        (field INITIAL_W2_OFFSET 40 8)
-        (field INITIAL_PTR 32 8)
-        (field INITIAL_STATE 16 16)
-        (field INITIAL_OP_MASK 4 12)
-        (field INITIAL_OP_ROT 0 4)
-        )
+  '(cont POL_DIRECT_MAP_POL1
+         (field CTOK_HI 40 24)
+         (field _RSVD1_ 37 3)
+         (field CTOK_LO 24 13)
+         (field _RSVD0_ 4 20)
+         (field CFG 0 4)
+         )
   )
 
-(define some-array `(array 16 ,some-reg))
+(define some-hier2
+  `(cont hier ,some-reg )
+  )
+         
 
-(define some-2d-array `(array 256 ,some-array))
-
-(define some-child ' (child EM_HASH_LOOKUP
-                          (array 32768 
-                            (reg em_hash_lookup_r
-                              (field PTR 64 20)
-                              (field RSVD1_ 52 12)
-                              (field SELECT_4 48 4)
-                              (field SELECT_3 44 4)
-                              (field SELECT_2 40 4)
-                              (field SELECT_1 36 4)
-                              (field SELECT_0 32 4)
-                              (field MASK 0 32)
-                            )
-                          )
+(define some-array '(cont GLORT_CAM
+                          (array 64 
+                                 (field KEY_INVERT 16 16)
+                                 (field KEY 0 16)
+                                 )
                           )
   )
 
-(define some-container
-  '(container addrmap mby_ppe_cgrp_em_map
-              (child A
-                     (reg xxx
-                          (field STUFF 0 64)
-                          )
-                     )
-              (child B
-                     (array 32 
-                            (container regfile b_rf
-                                       (child BB
-                                              (array 8 
-                                                     (reg bb_r
-                                                          (field DATA 0 64)
-                                                          )
-                                                     )
-                                              )
-                                       )
-                            )
-                     )
+(define some-2d-array '(cont EGRESS_MST_TABLE
+                             (array 4096 
+                                    (array 5 
+                                           (field FORWARDING 0 64)
+                                           )
+                                    )
+                             )
+  )
+
+(define some-hier
+           '(cont policers
+              (cont POL_DIRECT_MAP_CTRL
+                (field GO_COMPL 63 1)
+                (field STATUS 62 1)
+                (field OP_TYPE 61 1)
+                (field _RSVD0_ 48 13)
+                (field REG_ID 40 8)
+                (field REG_SUB_ID 32 8)
+                (field REG_INDX 0 32)
               )
+              (cont POL_DIRECT_MAP_CTR0
+                (field DATA_CNTB 0 44)
+              )
+              (cont POL_DIRECT_MAP_CTR1
+                (field DATA_CNTP 0 36)
+              )
+              (cont POL_CFG
+                (array 2 
+                  (array 16 
+                    (field _RSVD2_ 23 41)
+                    (field UNPOLICE_DROP_CM 22 1)
+                    (field UNPOLICE_DROP_PRECM 21 1)
+                    (field CREDIT_FRAME_ERR 20 1)
+                    (field CREDIT_L3_LEN_ERR 19 1)
+                    (field _RSVD1_ 17 2)
+                    (field CB 16 1)
+                    (field CF 15 1)
+                    (field COLOR_SELECT 14 1)
+                    (field PRECEDENCE 13 1)
+                    (field DEBIT_MODE 12 1)
+                    (field L3_LEN_MODE 11 1)
+                    (field _RSVD0_ 0 11)
+                  )
+                )
+              )
+            )
   )
 
 ;; working structure
@@ -71,24 +87,6 @@
 
 ;;(iter fc 11 the-map)
 
-(define hx
-  '(16117
-    (112 (112 (7 (1) (1) (1) (1) (1) (1) (1))))
-    (128 (128 (8 (1) (1) (1) (1) (1) (1) (1) (1))))
-    (1 (1 (1)))
-    (1 (1 (1)))
-    (2048 (2048 (64 (64 (64 (4 (1) (1) (1) (1)))))))
-    (1024 (1024 (32 (32 (32 (2 (1) (1)))))))
-    (2048 (2048 (64 (64 (64 (4 (1) (1) (1) (1)))))))
-    (1536 (1536 (48 (48 (48 (3 (1) (1) (1)))))))
-    (1024 (1024 (32 (32 (32 (2 (1) (1)))))))
-    (5120 (5120 (160 (160 (160 (5 (1) (1) (1) (1) (1)))))))
-    (256 (256 (128 (128 (128 (2 (1) (1)))))))
-    (256 (256 (128 (128 (128 (2 (1) (1)))))))
-    (2560 (2560 (160 (160 (160 (2 (1) (1)))))))
-    (3 (3 (1) (1) (1)))
-    )
-  )
 
 (define hy '(7 (1) (1) (1) (1) (1) (1) (1))   )
 

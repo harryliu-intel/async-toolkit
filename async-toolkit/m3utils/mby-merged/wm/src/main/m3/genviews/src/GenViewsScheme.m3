@@ -16,6 +16,7 @@ IMPORT SchemeM3;
 FROM SchemeReadLine IMPORT MainLoop;
 IMPORT ReadLine;
 IMPORT TextRd, SchemeObject, SchemeInputPort;
+IMPORT RegComponent;
 
 REVEAL
   T = Public BRANDED OBJECT
@@ -55,16 +56,18 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       b := Pickle2.Read(t.fieldAddrRd);
       Rd.Close(t.fieldAddrRd)
     END;
-    DoContainer(t, tgtmap, 0);
+    t.put(F("(cont %s",tgtmap.nm), 0);
+    DoContainer(t, tgtmap, 1);
+    t.put(")",0);
     WITH txt = Wx.ToText(t.wx) DO
       Debug.Out("Producing\n"&txt);
       RunScheme(t, a, b, txt);
     END;
   END Gen;
 
-PROCEDURE RunScheme(t : T;
-                    a : REF ARRAY OF FieldData.T;
-                    b : REF ARRAY OF CARDINAL;
+PROCEDURE RunScheme(t    : T;
+                    a    : REF ARRAY OF FieldData.T;
+                    b    : REF ARRAY OF CARDINAL;
                     prog : TEXT) =
   VAR
     env := NEW(SchemeNavigatorEnvironment.T).initEmpty();
@@ -108,29 +111,74 @@ PROCEDURE RunScheme(t : T;
     END
   END RunScheme;
 
-PROCEDURE DoContainer(t : T; c : RegContainer.T; lev : CARDINAL) =
+PROCEDURE DoContainer(t : T;
+                      c : RegContainer.T;
+                      lev : CARDINAL) =
+  VAR
+    skipArc : BOOLEAN;
   BEGIN
     <*ASSERT c # NIL*>
     VAR tn : TEXT; BEGIN
       TYPECASE c OF
-        RegAddrmap.T => tn := "addrmap"
+        RegAddrmap.T =>
+        tn := "addrmap";
+        skipArc := FALSE
       |
-        RegRegfile.T => tn := "regfile"
+        RegRegfile.T =>
+        tn := "regfile";
+        skipArc := c.children.size() = 1
       ELSE
         <*ASSERT FALSE*>
       END;
-      t.put(F("(container %s %s",tn, c.nm), lev)
+      (*t.put(F("(container %s %s",tn, c.nm), lev)*)
     END;
     FOR i := 0 TO c.children.size()-1 DO
-      DoChild(t, c.children.get(i), lev+1)
+      DoChild(t, c.children.get(i), lev (*+1*), skipArc )
     END;
-    t.put(")", lev)
+    (*t.put(")", lev)*)
   END DoContainer;
 
-PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL) =
+PROCEDURE HasNoFurtherArcs(c : RegComponent.T) : BOOLEAN =
   BEGIN
-    t.put(F("(child %s", c.nm),lev);
-    INC(lev);
+    TYPECASE c OF
+      RegReg.T  =>
+      RETURN TRUE (* it's a register, so we have done the last arc *)
+    |
+      RegContainer.T(container) =>
+      (* recursively go down and ensure every level has only one child,
+         and the recursion bottoms in a register *)
+      RETURN
+        container.children.size()=1 AND
+        HasNoFurtherArcs(container.children.get(0).comp)
+    ELSE
+      <*ASSERT FALSE*>
+    END    
+  END HasNoFurtherArcs;
+  
+PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
+  VAR
+    tag : TEXT;
+  BEGIN
+    (* this is very tricky and a bit inconsistent, but it comes from
+       the syntax of C-like languages ... :
+
+       if the thing we are processing is a possibly multi-dimensional register,
+       that is, an array of an array of.....of an array of registers,
+       we need to report the type as "reg".  It is only ever reported
+       as a container if it has any non-skip-arcs left. *)
+
+    <*ASSERT NOT ISTYPE(c.comp, RegField.T)*>
+    IF HasNoFurtherArcs(c.comp) THEN
+      tag := "cont" (*"reg"*)
+    ELSE
+      tag := "cont" (*"cont"*)
+    END;
+    
+    IF NOT skipArc THEN
+      t.put(F("(%s %s", tag, c.nm),lev);
+      INC(lev)
+    END;
+    
     IF c.array # NIL THEN
       t.put(F("(array %s ", Int(BigInt.ToInteger(c.array.n.x))),lev);
       INC(lev)
@@ -152,8 +200,10 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL) =
       DEC(lev);
       t.put(F(")"),lev)
     END;
-    DEC(lev);
-    t.put(F(")"),lev)
+    IF NOT skipArc THEN
+      DEC(lev);
+      t.put(F(")"),lev)
+    END
   END DoChild;
 
 PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL) =
@@ -169,11 +219,11 @@ PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL) =
 
 PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL) =
   BEGIN
-    t.put("(reg " & r.nm, lev);
+    (*t.put("(@reg@ " (*& r.nm*), lev);*)
     FOR i := 0 TO r.fields.size()-1 DO
-      DoField(t, r.fields.get(i), lev+1)
+      DoField(t, r.fields.get(i), lev(*+1*))
     END;
-    t.put(")", lev)
+    (*t.put(")", lev)*)
   END DoReg;
 
 BEGIN END GenViewsScheme.
