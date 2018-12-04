@@ -4,7 +4,7 @@
 # See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
 ##############################################################################
 
-<<<<<<< HEAD
+
 ## This is temp, using xtal_rcvr; these refclks need to go to serdes phy (in EPC)
 Ci   /HSS_REFCLK_DP[0]     xtal_rcvr/xtal_in
 
