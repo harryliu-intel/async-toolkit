@@ -8,8 +8,8 @@
 
 static mbyMapPortCfg getPortCfg
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port
 )
 {
     mbyMapPortCfg port_cfg;
@@ -24,9 +24,9 @@ static mbyMapPortCfg getPortCfg
 
 static mbyMapPortDefaults getPortDefaults
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port,
-    fm_byte   const            entry
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port,
+    fm_byte                    const entry
 )
 {
     mbyMapPortDefaults port_defaults;
@@ -40,8 +40,8 @@ static mbyMapPortDefaults getPortDefaults
 
 static fm_byte getPort
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port
 )
 {
     fm_byte port = 0;
@@ -53,8 +53,8 @@ static fm_byte getPort
 
 static mbyMapProt getProt
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            entry
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const entry
 )
 {
     mbyMapProt prot;
@@ -68,8 +68,8 @@ static mbyMapProt getProt
 
 static mbyMapDomainProfile getDomainProfile
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            l2_domain
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const l2_domain
 )
 {
     mbyMapDomainProfile domain_profile;
@@ -82,8 +82,8 @@ static mbyMapDomainProfile getDomainProfile
 
 static mbyMapDomainAction0 getDomainAction0
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            index
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const index
 )
 {
     mbyMapDomainAction0 domain_action;
@@ -105,8 +105,8 @@ static mbyMapDomainAction0 getDomainAction0
 
 static mbyMapDomainAction1 getDomainAction1
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            index
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const index
 )
 {
     mbyMapDomainAction1 domain_action;
@@ -122,8 +122,8 @@ static mbyMapDomainAction1 getDomainAction1
 
 static mbyMapDomainTcam getDomainTcamEntry
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            index
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const index
 )
 {
     mbyMapDomainTcam cam_entry;
@@ -146,8 +146,8 @@ static mbyMapDomainTcam getDomainTcamEntry
 
 static mbyMapMac getMac
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            entry
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const entry
 )
 {
     mbyMapMac mac;
@@ -343,12 +343,12 @@ static void realignKeys
     }
 }
 
-static fm_uint32 lookUpDomainTcam
+static fm_uint32 lookupDomainTcam
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port,
-    fm_uint16 const            pa_keys [MBY_N_PARSER_KEYS],
-    fm_bool   const            pa_flags[MBY_N_PARSER_FLGS]
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port,
+    fm_uint16                  const pa_keys [MBY_N_PARSER_KEYS],
+    fm_bool                    const pa_flags[MBY_N_PARSER_FLGS]
 )
 {
 
@@ -395,13 +395,13 @@ static fm_uint32 lookUpDomainTcam
 
 static void insertDefaults
 (
-    mby_ppe_mapper_map   * const mapper_map,
-    const fm_uint32              rx_port,
-    const mbyMapPortCfg          port_cfg,
-    mbyClassifierActions * const ffu_actions,
-    mbyClassifierKeys    * const ffu_keys,
-    fm_uint16                    realigned_keys    [MBY_N_REALIGN_KEYS],
-    fm_bool                      realigned_keys_vld[MBY_N_REALIGN_KEYS])
+    mby_ppe_mapper_map   const * const mapper_map,
+    fm_uint32                    const rx_port,
+    mbyMapPortCfg                const port_cfg,
+    mbyClassifierActions       * const ffu_actions,
+    mbyClassifierKeys          * const ffu_keys,
+    fm_uint16                          realigned_keys    [MBY_N_REALIGN_KEYS],
+    fm_bool                            realigned_keys_vld[MBY_N_REALIGN_KEYS])
 {
     for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
         ffu_actions->act24[i].prec = 1;
@@ -567,13 +567,13 @@ static void insertDefaults
 
 static void getTcFromPriSource
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_bool   const            pa_flags[MBY_N_PARSER_FLGS],
-    fm_uint32 const            domain_index,
-    fm_uint16 const            realigned_keys[MBY_N_REALIGN_KEYS],
-    fm_byte   const            pri_profile,
-    fm_bool            * const no_pri_enc,
-    fm_byte            * const traffic_class
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_bool                    const pa_flags[MBY_N_PARSER_FLGS],
+    fm_uint32                  const domain_index,
+    fm_uint16                  const realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_byte                    const pri_profile,
+    fm_bool                  * const no_pri_enc,
+    fm_byte                  * const traffic_class
 )
 {
     mbyMapDomainAction0 domain_action0 = getDomainAction0(mapper_map, domain_index);
@@ -633,33 +633,33 @@ static void getTcFromPriSource
 
 static void mapScalar
 (
-    mby_ppe_mapper_map   * const mapper_map,
-    fm_uint32     const          rx_port,
-    mbyMapPortCfg const          port_cfg,
-    fm_bool       const          pa_ex_parsing_done,
-    fm_bool       const          pa_ex_trunc_header,
-    fm_bool       const          pa_ex_depth_exceed,
-    fm_bool       const          pa_csum_ok,
-    fm_bool       const          pa_flags[MBY_N_PARSER_FLGS],
-    fm_byte       const          pa_ptrs [MBY_N_PARSER_PTRS],
-    fm_uint16     const          realigned_keys[MBY_N_REALIGN_KEYS],
-    fm_bool       const          is_ipv4[MBY_N_IS_IP_BITS],
-    fm_bool       const          is_ipv6[MBY_N_IS_IP_BITS],
-    fm_uint32     const          domain_index,
-    fm_bool       const          ihl_ok,
-    fm_bool       const          ihl_fits,
-    mbyClassifierActions * const ffu_actions,
-    mbyMapProfKey0       * const map_prof_key0,
-    mbyMapProfKey1       * const map_prof_key1,
-    mbyMappedKey         * const mapped_key,
-    fm_byte              * const pri_profile,
-    fm_bool              * const no_pri_enc,
-    fm_byte              * const traffic_class,
-    fm_byte              * const operator_id,
-    fm_uint16            * const l2_domain,
-    fm_byte              * const l3_domain,
-    fm_bool              * const learn_mode,
-    fm_uint16            * const l2_ivlan1_cnt
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port,
+    mbyMapPortCfg              const port_cfg,
+    fm_bool                    const pa_ex_parsing_done,
+    fm_bool                    const pa_ex_trunc_header,
+    fm_bool                    const pa_ex_depth_exceed,
+    fm_bool                    const pa_csum_ok,
+    fm_bool                    const pa_flags[MBY_N_PARSER_FLGS],
+    fm_byte                    const pa_ptrs [MBY_N_PARSER_PTRS],
+    fm_uint16                  const realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_bool                    const is_ipv4[MBY_N_IS_IP_BITS],
+    fm_bool                    const is_ipv6[MBY_N_IS_IP_BITS],
+    fm_uint32                  const domain_index,
+    fm_bool                    const ihl_ok,
+    fm_bool                    const ihl_fits,
+    mbyClassifierActions     * const ffu_actions,
+    mbyMapProfKey0           * const map_prof_key0,
+    mbyMapProfKey1           * const map_prof_key1,
+    mbyMappedKey             * const mapped_key,
+    fm_byte                  * const pri_profile,
+    fm_bool                  * const no_pri_enc,
+    fm_byte                  * const traffic_class,
+    fm_byte                  * const operator_id,
+    fm_uint16                * const l2_domain,
+    fm_byte                  * const l3_domain,
+    fm_bool                  * const learn_mode,
+    fm_uint16                * const l2_ivlan1_cnt
 )
 {
     // initialize
@@ -974,17 +974,17 @@ static void encodeLength
 
 static void getParserInfo
 (
-    mby_ppe_mapper_map      * const mapper_map,
-    mbyMapperToClassifier   * const out,
-    const fm_uint32                 rx_port,
-    const fm_byte                   pa_adj_seg_len,
-    const fm_bool                   pa_flags      [MBY_N_PARSER_FLGS],
-    const fm_byte                   pa_ptrs       [MBY_N_PARSER_PTRS],
-    const fm_bool                   pa_ptrs_valid [MBY_N_PARSER_PTRS],
-    const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
-    const fm_bool                   is_ipv6       [MBY_N_IS_IP_BITS],
-    mbyMapProfKey0          * const map_prof_key0,
-    mbyParserInfo           * const parser_info
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyMapperToClassifier       * const out,
+    fm_uint32                     const rx_port,
+    fm_byte                       const pa_adj_seg_len,
+    fm_bool                       const pa_flags      [MBY_N_PARSER_FLGS],
+    fm_byte                       const pa_ptrs       [MBY_N_PARSER_PTRS],
+    fm_bool                       const pa_ptrs_valid [MBY_N_PARSER_PTRS],
+    fm_uint16                     const realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_bool                       const is_ipv6       [MBY_N_IS_IP_BITS],
+    mbyMapProfKey0              * const map_prof_key0,
+    mbyParserInfo               * const parser_info
 )
 {
     fm_byte outerProt = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8);
@@ -1209,14 +1209,14 @@ static void getParserInfo
 
 static void getProfile
 (
-    mby_ppe_mapper_map      * const mapper_map,
-    mbyMapperToClassifier   * const out,
-    fm_uint16 const                 realigned_keys[MBY_N_REALIGN_KEYS],
-    mbyMapProfKey0 const            key0,
-    mbyMapProfKey1 const            key1,
-    mbyClassifierActions    * const ffu_actions,
-    mbyMapProfAction        * const map_prof_action,
-    fm_byte                 * const ffu_profile
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyMapperToClassifier       * const out,
+    fm_uint16                     const realigned_keys[MBY_N_REALIGN_KEYS],
+    mbyMapProfKey0                const key0,
+    mbyMapProfKey1                const key1,
+    mbyClassifierActions        * const ffu_actions,
+    mbyMapProfAction            * const map_prof_action,
+    fm_byte                     * const ffu_profile
 )
 {
     // initialize struct:
@@ -1441,24 +1441,24 @@ static void rewriteSourceNybble
 
 static void mapRewrite
 (
-    mby_ppe_mapper_map    * const mapper_map,
-    mbyMapperToClassifier * const out,
-    fm_bool const                 pa_ex_parsing_done,
-    fm_bool const                 pa_ex_trunc_header,
-    fm_bool const                 pa_ex_depth_exceed,
-    fm_bool const                 pa_flags           [MBY_N_PARSER_FLGS],
-    fm_uint16 const               realigned_keys     [MBY_N_REALIGN_KEYS],
-    fm_bool const                 realigned_keys_vld [MBY_N_REALIGN_KEYS],
-    fm_bool const                 is_ipv6            [MBY_N_IS_IP_BITS],
-    fm_byte const                 ffu_profile,
-    mbyMapProfAction const        map_prof_action,
-    mbyMapProfKey0 const          map_prof_key0,
-    mbyMappedKey const            mapped_key,
-    fm_byte const                 pri_profile,
-    fm_bool                       ip_option[2],
-    fm_bool               * const parser_error,
-    mbyClassifierActions  * const ffu_actions,
-    mbyClassifierKeys     * const ffu_keys
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyMapperToClassifier       * const out,
+    fm_bool                       const pa_ex_parsing_done,
+    fm_bool                       const pa_ex_trunc_header,
+    fm_bool                       const pa_ex_depth_exceed,
+    fm_bool                       const pa_flags           [MBY_N_PARSER_FLGS],
+    fm_uint16                     const realigned_keys     [MBY_N_REALIGN_KEYS],
+    fm_bool                       const realigned_keys_vld [MBY_N_REALIGN_KEYS],
+    fm_bool                       const is_ipv6            [MBY_N_IS_IP_BITS],
+    fm_byte                       const ffu_profile,
+    mbyMapProfAction              const map_prof_action,
+    mbyMapProfKey0                const map_prof_key0,
+    mbyMappedKey                  const mapped_key,
+    fm_byte                       const pri_profile,
+    fm_bool                             ip_option[2],
+    fm_bool                     * const parser_error,
+    mbyClassifierActions        * const ffu_actions,
+    mbyClassifierKeys           * const ffu_keys
 )
 {
     // Rewrite Keys
@@ -1582,8 +1582,8 @@ static void mapRewrite
  */
 void Mapper
 (
-    mby_ppe_mapper_map          * const mapper_map,
-    mbyParserToMapper const     * const in,
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyParserToMapper     const * const in,
     mbyMapperToClassifier       * const out
 )
 {
@@ -1641,7 +1641,7 @@ void Mapper
     );
 
     fm_uint32 domain_index =
-    lookUpDomainTcam
+    lookupDomainTcam
     (
         mapper_map,
         rx_port,

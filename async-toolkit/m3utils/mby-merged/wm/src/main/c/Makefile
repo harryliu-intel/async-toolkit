@@ -56,6 +56,7 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
+CFLAGS += -Wno-error=discarded-qualifiers # only warning until we move to write_field
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O0 -g -ggdb3

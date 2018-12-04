@@ -53,7 +53,7 @@ module  mby_igr_pb_ctrl421
   logic [PB_BANKS-1:0] r_bnk, nxt_r_bnk;
   logic                wr_e;
   logic                rd_e;
-  logic                rbnkiswbnk;
+  logic                rbnkeqwbnk;
   logic [PB_BANKS-1:0] w_adrs_bnk_inc;
   logic [PB_BANKS-1:0] r_adrs_bnk_inc;
   logic [11:0] fifo_dpth4, fifo_dpth2, fifo_dpth1, fifo_dpth;
@@ -142,13 +142,20 @@ module  mby_igr_pb_ctrl421
       always_ff @(posedge cclk) begin
         if(rst) begin
           pb_shell_rdata[g_bnk].rd_data <= '0;  //FIXME just reset valid??
-          pb_shell_rmd[g_bnk].rd_data   <= '0;  //FIXME just reset valid??
         end          
         else if(i_pb_shell_rdata[g_bnk].rd_valid) begin
           pb_shell_rdata[g_bnk].rd_data <= i_pb_shell_rdata[g_bnk].rd_data;
+        end
+      end
+      always_ff @(posedge cclk) begin
+        if(rst) begin
+          pb_shell_rmd[g_bnk].rd_data   <= '0;  //FIXME just reset valid??
+        end          
+        else if(i_pb_shell_rmd[g_bnk].rd_valid) begin
           pb_shell_rmd[g_bnk].rd_data <= i_pb_shell_rmd[g_bnk].rd_data;
         end
       end
+      
       always_ff @(posedge cclk) pb_shell_rdata[g_bnk].rd_valid <= i_pb_shell_rdata[g_bnk].rd_valid;
       always_ff @(posedge cclk) pb_shell_rmd[g_bnk].rd_valid   <= i_pb_shell_rmd[g_bnk].rd_valid;
     end //for
@@ -223,10 +230,10 @@ module  mby_igr_pb_ctrl421
     fifo_used_full = (fifo_used_cnt == fifo_dpth);
     
     wr_e           = i_dpc_pb.v & (~ fifo_used_full);
-    rbnkiswbnk     = (r_bnk == w_bnk);
+    rbnkeqwbnk     = (r_bnk == w_bnk);
 //FIXME rd_e is currently 400G port0, needed for all ports and rates per port
     rd_e           = i_pb_rd[0] & (~ fifo_used_mt) &
-                     (((~ wr_e) & rbnkiswbnk) | (~ rbnkiswbnk));
+                     (((~ wr_e) & rbnkeqwbnk) | (~ rbnkeqwbnk));
 
      
     fifo_used_cnt_e = wr_e ^ rd_e;
@@ -284,14 +291,14 @@ module  mby_igr_pb_ctrl421
       pb_shim[0].v =  pb_shell_rdata[0].rd_valid | pb_shell_rdata[1].rd_valid |
                       pb_shell_rdata[2].rd_valid | pb_shell_rdata[3].rd_valid;
       //FIXME correct size and ecc for tsmd
-      pb_shim[0].tsmd = ({62{pb_shell_rdata[0].rd_valid}} & pb_shell_rdata[0].rd_data[637:576]) |
-                        ({62{pb_shell_rdata[1].rd_valid}} & pb_shell_rdata[1].rd_data[637:576]) |
-                        ({62{pb_shell_rdata[2].rd_valid}} & pb_shell_rdata[2].rd_data[637:576]) |
-                        ({62{pb_shell_rdata[3].rd_valid}} & pb_shell_rdata[3].rd_data[637:576]);
-      pb_shim[0].d =    ({576{pb_shell_rdata[0].rd_valid}} & pb_shell_rdata[0].rd_data[575:0]) |
-                        ({576{pb_shell_rdata[1].rd_valid}} & pb_shell_rdata[1].rd_data[575:0]) |
-                        ({576{pb_shell_rdata[2].rd_valid}} & pb_shell_rdata[2].rd_data[575:0]) |
-                        ({576{pb_shell_rdata[3].rd_valid}} & pb_shell_rdata[3].rd_data[575:0]);
+      pb_shim[0].tsmd = ({(PB_SHELL_MD_W-10){pb_shell_rmd[0].rd_valid}} & pb_shell_rmd[0].rd_data) |
+                        ({(PB_SHELL_MD_W-10){pb_shell_rmd[1].rd_valid}} & pb_shell_rmd[1].rd_data) |
+                        ({(PB_SHELL_MD_W-10){pb_shell_rmd[2].rd_valid}} & pb_shell_rmd[2].rd_data) |
+                        ({(PB_SHELL_MD_W-10){pb_shell_rmd[3].rd_valid}} & pb_shell_rmd[3].rd_data);
+      pb_shim[0].d =    ({PB_SHELL_DATA_W{pb_shell_rdata[0].rd_valid}} & pb_shell_rdata[0].rd_data) |
+                        ({PB_SHELL_DATA_W{pb_shell_rdata[1].rd_valid}} & pb_shell_rdata[1].rd_data) |
+                        ({PB_SHELL_DATA_W{pb_shell_rdata[2].rd_valid}} & pb_shell_rdata[2].rd_data) |
+                        ({PB_SHELL_DATA_W{pb_shell_rdata[3].rd_valid}} & pb_shell_rdata[3].rd_data);
               
     end //if 400G port
     

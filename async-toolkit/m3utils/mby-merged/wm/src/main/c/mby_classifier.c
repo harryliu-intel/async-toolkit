@@ -583,9 +583,9 @@ static void transformActions
 
 void Classifier
 (
-    mby_ppe_cgrp_a_map          * const cgrp_a_map,
-    mby_ppe_cgrp_b_map          * const cgrp_b_map,
-    mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
+    mby_ppe_cgrp_a_map    const * const cgrp_a_map,
+    mby_ppe_cgrp_b_map    const * const cgrp_b_map,
+    mby_shm_map           const * const shm_map, // shared memory (forwarding tables)
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
 )

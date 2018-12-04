@@ -19,8 +19,8 @@ PROCEDURE HandlePacket(ipkt : Pkt.T;
   BEGIN
     (* purpose of this routine is to map the records *)
     HandlePacketInt(ipkt,
-                    h.read  .Mpp.Mgp[indices.MgpIdx].RxPpe.Parser,
-                    h.update.Mpp.Mgp[indices.MgpIdx].RxPpe.Parser,
+                    h.read  .Mpp[0].Mgp[indices.MgpIdx].RxPpe.Parser,
+                    h.update.Mpp[0].Mgp[indices.MgpIdx].RxPpe.Parser,
                     imd,
                     out)
   END HandlePacket;
