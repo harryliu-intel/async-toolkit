@@ -53,8 +53,6 @@ tqu_rrsp_rcv tqu_rrsp_rcv0(
     .wd_valid (wd_valid[0]), 
     .word     (    word[0]),
     .dtq_sel  ( dtq_sel[0])
-
-
 );
 
 tqu_rrsp_rcv tqu_rrsp_rcv1(
@@ -65,5 +63,12 @@ tqu_rrsp_rcv tqu_rrsp_rcv1(
     .word     (    word[1]),
     .dtq_sel  ( dtq_sel[1])
 );
+
+// 4 Packet Buffers
+ 
+ 
+// 4 tqu_fifos
+//tcu_if
+
 
 endmodule : tqu
