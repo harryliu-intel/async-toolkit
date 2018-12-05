@@ -22,10 +22,11 @@
 
 void RxPipeline
 (
-    mby_ppe_rx_top_map const * const rx_top_map,
-    mby_shm_map        const * const shm_map,
-    mbyRxMacToParser   const * const mac2par,
-    mbyRxStatsToRxOut        * const rxs2rxo
+    mby_ppe_rx_top_map       const * const rx_top_map,
+    mby_ppe_rx_top_map__addr const * const rx_top_map_w,
+    mby_shm_map              const * const shm_map,
+    mbyRxMacToParser         const * const mac2par,
+    mbyRxStatsToRxOut              * const rxs2rxo
 );
 
 void TxPipeline
@@ -69,9 +70,10 @@ void Hash
 
 void NextHop
 (
-    mby_ppe_nexthop_map   const * const nexthop,
-    mbyHashToNextHop      const * const in,
-    mbyNextHopToMaskGen         * const out
+    mby_ppe_nexthop_map       const * const nexthop,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    mbyHashToNextHop          const * const in,
+    mbyNextHopToMaskGen             * const out
 );
 
 void MaskGen
