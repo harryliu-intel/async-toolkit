@@ -40,10 +40,11 @@ interface pre_ppe_header_if ();
     logic                          eop_valid; 
     igr_pkt_id_t                   eop_pkt_id;
     sop_md_t                       eop_md;  
-    logic [IGR_PPE_DATA_WIDTH-1:0] data0; 
-    logic [IGR_PPE_ECC_WIDTH-1:0]  ecc0;
-    logic [IGR_PPE_DATA_WIDTH-1:0] data1; 
-    logic [IGR_PPE_ECC_WIDTH-1:0]  ecc1;
+    shim_pb_data_t                 sop_data;    // 3 x 64B + ECC
+
+    seg_ptr_t                      wr_seg_ptr; //[19:0]
+    sema_t                         wr_sema;    //[ 3:0]
+
     
 modport src (
              input  sop_ack,
@@ -54,10 +55,9 @@ modport src (
              output eop_valid,
              output eop_pkt_id,
              output eop_md,
-             output data0,
-             output ecc0,
-             output data1,
-             output ecc1
+             output sop_data,
+             output wr_seg_ptr,
+             output wr_sema
              
     );
 
@@ -70,10 +70,9 @@ modport dest (
              input eop_valid,
              input eop_pkt_id,
              input eop_md,
-             input data0,
-             input ecc0,
-             input data1,
-             input ecc1
+             input sop_data,
+             input wr_seg_ptr,
+             input wr_sema
     );
 
 endinterface : pre_ppe_header_if

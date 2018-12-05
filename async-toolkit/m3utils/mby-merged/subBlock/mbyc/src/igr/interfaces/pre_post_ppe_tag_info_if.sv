@@ -31,6 +31,7 @@
 interface pre_post_ppe_tag_info_if ();
   import mby_igr_pkg::*, shared_pkg::*, mby_egr_pkg::*;
 
+    logic            ack; 
     logic            valid; 
     igr_pkt_id_t     pkt_id;
     eop_md_t         md;  
@@ -38,6 +39,7 @@ interface pre_post_ppe_tag_info_if ();
     sema_t           wr_sema;    //[ 3:0]
     
 modport src (
+                 input  ack,
                  output valid,
                  output pkt_id,
                  output md,
@@ -46,11 +48,12 @@ modport src (
     );
 
 modport dest (
-                 input valid,
-                 input pkt_id,
-                 input md,
-                 input wr_seg_ptr,
-                 input wr_sema
+                 output ack,
+                 input  valid,
+                 input  pkt_id,
+                 input  md,
+                 input  wr_seg_ptr,
+                 input  wr_sema
     );
 
 endinterface : pre_post_ppe_tag_info_if

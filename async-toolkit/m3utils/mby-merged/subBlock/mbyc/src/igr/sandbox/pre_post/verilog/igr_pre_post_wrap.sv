@@ -143,10 +143,7 @@ pre_post_ppe_partial_data_if     pdata_lpp0_fpp();
 pre_post_ppe_partial_data_if     pdata_lpp1();
 pre_post_ppe_sop_if              sop_mdata_lpp0_fpp();
 pre_post_ppe_sop_if              sop_mdata_lpp1();
-pre_post_ppe_tag_info_if         tag_info_epl0();
-pre_post_ppe_tag_info_if         tag_info_epl1();
-pre_post_ppe_tag_info_if         tag_info_epl2();
-pre_post_ppe_tag_info_if         tag_info_epl3();
+pre_post_ppe_tag_info_if         tag_info_epl[NUM_EPLS-1:0]();
 pre_post_ppe_tag_info_if         tag_info_vp();
 pre_post_ppe_wr_data_if          wr_data_0();
 pre_post_ppe_wr_data_if          wr_data_1();
@@ -264,10 +261,7 @@ mby_igr_pre_ppe    mby_igr_pre_ppe(
 /* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp1         (pdata_lpp1),                    
 /* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp0_fpp (sop_mdata_lpp0_fpp),            
 /* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp1     (sop_mdata_lpp1),                
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl0      (tag_info_epl0),                 
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl1      (tag_info_epl1),                 
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl2      (tag_info_epl2),                 
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl3      (tag_info_epl3),                 
+/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl       (tag_info_epl),                 
 /* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_vp        (tag_info_vp),                   
 /* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_0          (wr_data_0),                     
 /* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_1          (wr_data_1),                     
@@ -291,10 +285,7 @@ mby_igr_post_ppe    mby_igr_post_ppe(
 /* Interface pre_post_ppe_partial_data_if.src */ .pdata_lpp1                (pdata_lpp1),                             
 /* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp0_fpp        (sop_mdata_lpp0_fpp),                     
 /* Interface pre_post_ppe_sop_if.src          */ .sop_mdata_lpp1            (sop_mdata_lpp1),                         
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl0             (tag_info_epl0),                          
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl1             (tag_info_epl1),                          
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl2             (tag_info_epl2),                          
-/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl3             (tag_info_epl3),                          
+/* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_epl              (tag_info_epl),                          
 /* Interface pre_post_ppe_tag_info_if.src     */ .tag_info_vp               (tag_info_vp),                            
 /* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_0                 (wr_data_0),                              
 /* Interface pre_post_ppe_wr_data_if.src      */ .wr_data_1                 (wr_data_1),                              
