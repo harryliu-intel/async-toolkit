@@ -119,13 +119,14 @@ VAR
   upSeq          := NEW(UpdaterSeq.T).init();
   addrUpdaterTbl := NEW(AddrUpdaterTbl.Default).init();
   
-PROCEDURE BuildCallback(addr : ADDRESS) =
+PROCEDURE BuildCallback(addr : ADDRESS; wid : INTEGER) =
   BEGIN
     WITH w = LOOPHOLE(addr,Word.T) DO
       IF FALSE THEN
         Debug.Out("BuildCallback " & Fmt.Unsigned(w))
       END;
       WITH up = NARROW(upSeq.get(addrSeq.size()),MyUpdater) DO
+        <*ASSERT wid = up.w*>
         up.caddr := addr;
         WITH hadIt = addrUpdaterTbl.put(w, up) DO <*ASSERT NOT hadIt*> END
       END;
