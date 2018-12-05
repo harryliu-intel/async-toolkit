@@ -26,8 +26,9 @@
 // -- Description  : Tag Queuing Unit
 //------------------------------------------------------------------------------
 
-module tqu
+module tqu 
     import egr_int_pkg::*;
+    #(parameter N_RRSPS = 3)
 (
     input logic             clk,
     input logic           rst_n, 
@@ -37,38 +38,103 @@ module tqu
     egr_tcu_tqu_if.tqu   tcu_if,  // Transmit Controller Unit - Transmit Queunig Unit Interface
 
     egr_rrs_if.requestor mri_if0, // Read Response Interface. Gives service to EPL 0,1
-    egr_rrs_if.requestor mri_if1  // Read Response Interface. Gives service to EPL 2,3
+    egr_rrs_if.requestor mri_if1,  // Read Response Interface. Gives service to EPL 2,3
+
+    //Data Buffer
+    //Control Memory Bank
+    output pkt_buf_addr_t     pkt_buf_ctrl_addr, //o
+    output logic             pkt_buf_ctrl_rd_en, //o
+    output logic             pkt_buf_ctrl_wr_en, //o
+    output data_word_t    pkt_buf_ctrl_word_out, //o
+    input  data_word_t     pkt_buf_ctrl_word_in, //i
+                                                 
+    //Data Memory Bank                           
+    output pkt_buf_addr_t     pkt_buf_data_addr, //o
+    output logic             pkt_buf_data_rd_en, //o
+    output logic             pkt_buf_data_wr_en, //o
+    output data_word_t    pkt_buf_data_word_out, //o
+    input  data_word_t     pkt_buf_data_word_in  //i
 
 );
-
-logic       wd_valid [N_EPP_PER_MGP][N_EPL_PER_EPP];
-data_word_t     word [N_EPP_PER_MGP][N_EPL_PER_EPP];
-dtq_sel_t    dtq_sel [N_EPP_PER_MGP][N_EPL_PER_EPP]; 
-
-
-tqu_rrsp_rcv tqu_rrsp_rcv0(
-    .clk      (     clk   ),
-    .rst_n    (   rst_n   ), 
-    .mri_if   ( mri_if0   ), 
-    .wd_valid (wd_valid[0]), 
-    .word     (    word[0]),
-    .dtq_sel  ( dtq_sel[0])
-);
-
-tqu_rrsp_rcv tqu_rrsp_rcv1(
-    .clk      (     clk   ),
-    .rst_n    (   rst_n   ), 
-    .mri_if   ( mri_if1   ), 
-    .wd_valid (wd_valid[1]), 
-    .word     (    word[1]),
-    .dtq_sel  ( dtq_sel[1])
-);
-
-// 4 Packet Buffers
- 
- 
-// 4 tqu_fifos
-//tcu_if
+//        input   logic                           .clk     (clk)                     ,
+//        input   logic   [MEM_ADR_WIDTH-1:0]     .address (                ,
+//        input   logic                           .rd_en   (                ,
+//        input   logic   [MEM_WR_EN_WIDTH-1:0]   .wr_en   (                ,
+//        input   logic   [      MEM_WIDTH-1:0]   .data_in (                ,
+//        output  logic   [      MEM_WIDTH-1:0]   .data_out(
 
 
+//req_id_t    [N_RRSPS-1:0]    rrsp_wd_id; // Read Response Word ID
+//data_word_t [N_RRSPS-1:0]       rrsp_wd; // Read Response Word
+//logic       [N_RRSPS-1:0] rrsp_wd_valid; // Read Response Word Valid
+//logic       [N_RRSPS-1:0] rrsp_wd_stall; // Read Response Word Stall
+//input     rrsp_wd_id,
+//input        rrsp_wd,
+//input  rrsp_wd_valid,
+//output rrsp_wd_stall
+
+//FIRST PACKET LOGIC
+//RRS data registers
+data_wd_id_t rrsp_data_wd_id;
+data_wd_id_t rrsp_data_wd_id_reg;
+data_word_t  rrsp_data_word;
+data_word_t  rrsp_ctrl_word_reg;
+data_word_t  rrsp_data_word_reg;
+
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) rrsp_data_wd_id_reg <= '0;
+    else begin
+        rrsp_data_wd_id_reg <= rrsp_data_wd_id;
+    end
+
+assign rrsp_data_wd_id = mri_if0.rrsp_wd_valid[0] ? 
+                         mri_if0.rrsp_wd_id[0].data_wd_id : 
+                         rrsp_data_wd_id_reg;
+
+
+//Stall outputs
+assign mri_if0.rrsp_wd_stall[1] = '1;
+assign mri_if0.rrsp_wd_stall[2] = '1;
+assign mri_if1.rrsp_wd_stall[0] = '1;
+assign mri_if1.rrsp_wd_stall[1] = '1;
+assign mri_if1.rrsp_wd_stall[2] = '1;
+
+
+  
+
+//logic       wd_valid [N_EPP_PER_MGP][N_EPL_PER_EPP];
+//data_word_t     word [N_EPP_PER_MGP][N_EPL_PER_EPP];
+//dtq_sel_t    dtq_sel [N_EPP_PER_MGP][N_EPL_PER_EPP]; 
+//
+//
+//tqu_rrsp_rcv tqu_rrsp_rcv0(
+//    .clk      (     clk   ),
+//    .rst_n    (   rst_n   ), 
+//    .mri_if   ( mri_if0   ), 
+//    .wd_valid (wd_valid[0]), 
+//    .word     (    word[0]),
+//    .dtq_sel  ( dtq_sel[0])
+//);
+//
+//tqu_rrsp_rcv tqu_rrsp_rcv1(
+//    .clk      (     clk   ),
+//    .rst_n    (   rst_n   ), 
+//    .mri_if   ( mri_if1   ), 
+//    .wd_valid (wd_valid[1]), 
+//    .word     (    word[1]),
+//    .dtq_sel  ( dtq_sel[1])
+//);
+//
+//// 4 Packet Buffers
+////tcu_if
+//    ////Buffer interface
+//    //Service dtq_ctrl_pull
+//    dtq_sel_t        buf_dtq_ctrl_sel,
+//    logic           buf_dtq_ctrl_read,
+//    data_word_t     buf_dtq_ctrl_word,
+//    dtq_ready_t    buf_dtq_ctrl_ready,
+//    //Service dtq_data_pull
+//    dtq_sel_t          dtq_data_sel,
+//
 endmodule : tqu
