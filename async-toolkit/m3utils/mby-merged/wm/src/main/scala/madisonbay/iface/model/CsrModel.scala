@@ -22,7 +22,7 @@ class CsrModel(val csr: Csr, limitNumberOfNodes: Int) {
 
   val csrMapToHtml: Map[String, Any] = joinValues(csrMap)
 
-  def idMgpOpt(id: Int): Option[Int] = if (id >=0 && id < csr.topMap.mpp.mgp.length) { Some(id) } else { None }
+  def idMgpOpt(id: Int): Option[Int] = if (id >=0 && id < csr.topMap.mpp(0).mgp.length) { Some(id) } else { None }
 
   def idMgpOpt(id: String): Option[Int] = Try(id.toInt) match {
     case Success(idMgp) => idMgpOpt(idMgp)

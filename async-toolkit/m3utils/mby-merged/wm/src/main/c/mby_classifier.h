@@ -56,7 +56,7 @@ typedef struct mbyClassifierToHashStruct
     fm_byte            TTL_CTRL;                                    ///< controls update of TTL field of egress packet
     fm_byte            TX_TAG;                                      ///< transmit tag
     // pass-thru:
-    mbyClassifierKeys  FFU_KEYS;                                    ///< classifier TCAM lookup keys
+    mbyClassifierKeys  CLASSIFIER_KEYS;                             ///< classifier TCAM lookup keys
     fm_bool            LEARN_MODE;                                  ///< learn mode: 0=SVL, 1=IVL
     fm_uint16          L2_IDOMAIN;                                  ///< ingress L2 domain
     fm_byte            L3_IDOMAIN;                                  ///< ingress L3 domain

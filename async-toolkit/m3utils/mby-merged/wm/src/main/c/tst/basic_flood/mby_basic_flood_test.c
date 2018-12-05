@@ -48,8 +48,8 @@ inline static int checkOk (const char * test, const fm_status status)
 fm_status init()
 {
     // TODO verify if that's all that we need
-    mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe), &(top_map.mpp.mgp[0].tx_ppe));
-    basic_flood_init(&(top_map.mpp.mgp[0].rx_ppe));
+    mby_init_common_regs(&(top_map.mpp[0].mgp[0].rx_ppe), &(top_map.mpp[0].mgp[0].tx_ppe));
+    basic_flood_init(&(top_map.mpp[0].mgp[0].rx_ppe));
 
     return FM_OK;
 }
@@ -75,14 +75,14 @@ fm_status check
     }
 
     // Check RX counters
-    rx_stats_bank_frame_r * const bank_frame = &(top_map.mpp.mgp[0].rx_ppe.stats.RX_STATS_BANK_FRAME[bank][index]);
+    rx_stats_bank_frame_r * const bank_frame = &(top_map.mpp[0].mgp[0].rx_ppe.stats.RX_STATS_BANK_FRAME[bank][index]);
 
     if (bank_frame->FRAME_COUNTER != 1) {
         printf("Frame counter is invalid\n");
         return FM_FAIL;
     }
 
-    rx_stats_bank_byte_r * const bank_byte = &(top_map.mpp.mgp[0].rx_ppe.stats.RX_STATS_BANK_BYTE[bank][index]);
+    rx_stats_bank_byte_r * const bank_byte = &(top_map.mpp[0].mgp[0].rx_ppe.stats.RX_STATS_BANK_BYTE[bank][index]);
 
     if (bank_byte->BYTE_COUNTER != exp_packet_len) {
         printf("Byte counter is invalid\n");
@@ -109,8 +109,8 @@ static fm_status sendPacket
         // Top CSR map for tile 0 receive pipeline:
         // TODO use the pipeline associated to the specific ingress port
 
-        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp.mgp[0].rx_ppe);
-        mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
+        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp[0].mgp[0].rx_ppe);
+        mby_shm_map        * const shm_map    = &(top_map.mpp[0].shm);
 
         // Input struct:
         mbyRxMacToParser mac2par;
@@ -141,8 +141,8 @@ static fm_status receivePacket
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-       mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp.mgp[0].tx_ppe);
-       mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
+       mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp[0].mgp[0].tx_ppe);
+       mby_shm_map        * const shm_map    = &(top_map.mpp[0].shm);
 
         // Input struct:
         mbyTxInToModifier txi2mod;
