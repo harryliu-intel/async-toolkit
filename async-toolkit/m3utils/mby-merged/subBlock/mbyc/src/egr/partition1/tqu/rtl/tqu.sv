@@ -83,6 +83,8 @@ localparam FST_PKT_LEN   = FST_PKT_CTRL_LEN + FST_PKT_DATA_LEN; //1 Ctrl + 1 Dat
 
 logic                       ctrl_wr_en;
 logic                       ctrl_rd_en;
+logic                       data_wr_en;
+logic                       data_rd_en;
 
 ////////////////////////////////
 //// RRS data registers ////////
@@ -143,8 +145,10 @@ assign rrsp_ctrl_ready = ((mri_if0.rrsp_wd_valid[0]) &&
 
 assign rrsp_data_ready = ((mri_if0.rrsp_wd_valid[0]) && 
                             (mri_if0.rrsp_wd_id[0].data_wd_id.word_type==WORD_TYPE_DATA)) ? 
-                         '1 : 
-                         rrsp_data_ready_reg;
+                         '1 :
+                         ((data_wr_en) ?
+                         '0 :
+                         rrsp_data_ready_reg);
 
 assign word_counter = mri_if0.rrsp_wd_valid[0] ?
                       word_counter_reg + 1     :
@@ -202,50 +206,50 @@ assign pkt_buf_ctrl_rd_ptr = '0;
 //// Packet Buffer /////////////
 //// Packet Buffer Data ////////
 ////////////////////////////////
-/*pkt_buf_addr_t     pkt_buf_ctrl_wr_ptr;
-pkt_buf_addr_t pkt_buf_ctrl_wr_ptr_reg;
-pkt_buf_addr_t     pkt_buf_ctrl_rd_ptr;
-pkt_buf_addr_t pkt_buf_ctrl_rd_ptr_reg;
+pkt_buf_addr_t     pkt_buf_data_wr_ptr;
+pkt_buf_addr_t pkt_buf_data_wr_ptr_reg;
+pkt_buf_addr_t     pkt_buf_data_rd_ptr;
+pkt_buf_addr_t pkt_buf_data_rd_ptr_reg;
 
 always_ff @(posedge clk, negedge rst_n)
     if(!rst_n) begin
-        pkt_buf_ctrl_wr_ptr_reg <= '0;
+        pkt_buf_data_wr_ptr_reg <= '0;
     end
     else begin
-        pkt_buf_ctrl_wr_ptr_reg <= pkt_buf_ctrl_wr_ptr;
+        pkt_buf_data_wr_ptr_reg <= pkt_buf_data_wr_ptr;
     end
 
-assign pkt_buf_ctrl_wr_ptr = ctrl_wr_en ? 
-                             pkt_buf_ctrl_wr_ptr_reg + 1 : 
-                             pkt_buf_ctrl_wr_ptr_reg;
+assign pkt_buf_data_wr_ptr = data_wr_en ? 
+                             pkt_buf_data_wr_ptr_reg + 1 : 
+                             pkt_buf_data_wr_ptr_reg;
 
-assign pkt_buf_ctrl_addr = (ctrl_rd_en ? 
-                            pkt_buf_ctrl_rd_ptr_reg : 
-                            (ctrl_wr_en ? 
-                                pkt_buf_ctrl_wr_ptr_reg : 
+assign pkt_buf_data_addr = (data_rd_en ? 
+                            pkt_buf_data_rd_ptr_reg : 
+                            (data_wr_en ? 
+                                pkt_buf_data_wr_ptr_reg : 
                                 '0));
 
-assign ctrl_wr_en = ctrl_rd_en ? 
+assign data_wr_en = data_rd_en ? 
                     '0 : 
-                    ((rrsp_ctrl_ready_reg) && (rrsp_data_wd_id_reg.word_type==WORD_TYPE_CTRL));
+                    ((rrsp_data_ready_reg) && (rrsp_data_wd_id_reg.word_type==WORD_TYPE_DATA));
 
-assign pkt_buf_ctrl_wr_en = ctrl_wr_en;
+assign pkt_buf_data_wr_en = data_wr_en;
 
-assign pkt_buf_ctrl_word_out = ctrl_wr_en ? rrsp_data_word_reg : '0;
+assign pkt_buf_data_word_out = data_wr_en ? rrsp_data_word_reg : '0;
 
 ///////////// For test
 always_ff @(posedge clk, negedge rst_n)
     if(!rst_n) begin
-        pkt_buf_ctrl_rd_ptr_reg <= '0;
+        pkt_buf_data_rd_ptr_reg <= '0;
     end
     else begin
-        pkt_buf_ctrl_rd_ptr_reg <= pkt_buf_ctrl_rd_ptr;
+        pkt_buf_data_rd_ptr_reg <= pkt_buf_data_rd_ptr;
     end
 
-assign ctrl_rd_en = '0;
-assign pkt_buf_ctrl_rd_ptr = '0;
+assign data_rd_en = '0;
+assign pkt_buf_data_rd_ptr = '0;
 ///////////// End For Test
-*/
+
 ////////////////////////////////
 //// TCU FIFO Pull /////////////
 ////////////////////////////////
@@ -254,6 +258,19 @@ pkt_buf_stateflag_t pkt_buf_data_valid_flags;
 pkt_buf_stateflag_t pkt_buf_data_sop_flags;
 pkt_buf_stateflag_t pkt_buf_data_eop_flags;
 
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_ctrl_valid_flags <= '0; 
+        pkt_buf_data_valid_flags <= '0; 
+        pkt_buf_data_sop_flags <= '0; 
+        pkt_buf_data_eop_flags <= '0; 
+    end
+    else begin
+        pkt_buf_ctrl_valid_flags <= '0; 
+        pkt_buf_data_valid_flags <= '0; 
+        pkt_buf_data_sop_flags <= '0; 
+        pkt_buf_data_eop_flags <= '0; 
+    end
 
 
 
