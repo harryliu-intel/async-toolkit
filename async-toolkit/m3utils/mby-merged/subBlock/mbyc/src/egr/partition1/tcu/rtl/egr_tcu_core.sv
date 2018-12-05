@@ -43,21 +43,22 @@
 
 module egr_tcu_core (
   // epl_if
-  output logic [`TOT_EPL-1:0][7:0]          tx_ecc,         
-  output logic [`TOT_EPL-1:0][7:0]          tx_data_valid,      
-  output logic [`TOT_EPL-1:0][1:0]          tx_port_num,          
-  output logic [`TOT_EPL-1:0]               tx_valid_resp, 
-  output logic [`TOT_EPL-1:0][23:0]         tx_metadata,        
-  output logic [`TOT_EPL-1:0][71:0]         tx0_data_w_ecc, 
-  output logic [`TOT_EPL-1:0][71:0]         tx1_data_w_ecc,  
-  output logic [`TOT_EPL-1:0][71:0]         tx2_data_w_ecc, 
-  output logic [`TOT_EPL-1:0][71:0]         tx3_data_w_ecc, 
-  output logic [`TOT_EPL-1:0][71:0]         tx4_data_w_ecc, 
-  output logic [`TOT_EPL-1:0][71:0]         tx5_data_w_ecc, 
-  output logic [`TOT_EPL-1:0][71:0]         tx6_data_w_ecc, 
-  output logic [`TOT_EPL-1:0][71:0]         tx7_data_w_ecc, 
+  output logic [`TOT_EPL-1:0][7:0]          tx_ecc            , 
+  output logic [`TOT_EPL-1:0][7:0]          tx_data_valid     , 
+  output logic [`TOT_EPL-1:0][1:0]          tx_port_num       , 
+  output logic [`TOT_EPL-1:0]               tx_valid_resp     , 
+  output logic [`TOT_EPL-1:0][23:0]         tx_metadata       , 
+  output logic [`TOT_EPL-1:0][71:0]         tx0_data_w_ecc    , 
+  output logic [`TOT_EPL-1:0][71:0]         tx1_data_w_ecc    , 
+  output logic [`TOT_EPL-1:0][71:0]         tx2_data_w_ecc    , 
+  output logic [`TOT_EPL-1:0][71:0]         tx3_data_w_ecc    , 
+  output logic [`TOT_EPL-1:0][71:0]         tx4_data_w_ecc    , 
+  output logic [`TOT_EPL-1:0][71:0]         tx5_data_w_ecc    , 
+  output logic [`TOT_EPL-1:0][71:0]         tx6_data_w_ecc    , 
+  output logic [`TOT_EPL-1:0][71:0]         tx7_data_w_ecc    , 
   input  logic [`TOT_EPL-1:0][1:0]          tx_enable_port_num, 
-  input  logic [`TOT_EPL-1:0]               tx_enable,     
+  input  logic [`TOT_EPL-1:0]               tx_enable         , 
+  // wdrr  
   output logic [`TOT_EPL-1:0]               buf_ren_port0, // to packet scheduler
   output logic [`TOT_EPL-1:0]               buf_ren_port1, // to packet scheduler
   output logic [`TOT_EPL-1:0]               buf_ren_port2, // to packet scheduler
