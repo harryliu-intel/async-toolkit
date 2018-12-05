@@ -18,13 +18,17 @@ object CsrTreeRest extends RestProcessing {
     JsonReader.getOptFromUri(csrModel.csrMap, path) match {
 
       case Some(value: Map[_, _]) =>
-        val notNestedValue = csrNodeView(value.asInstanceOf[Map[String, Any]], path, fromList = false)
+        val notNestedValue = csrNodeView(value.asInstanceOf[Map[String, Any]], path)
         returnJson(notNestedValue)
 
       case Some(value: List[_]) =>
-        val result: Map[String, Any] = Map(KeyValues -> value)
-        val notNestedValue = csrNodeView(result, path, fromList = true)
-        returnJson(notNestedValue)
+        val result: Map[String, Any] = Map(
+            CsrModel.KeyType -> TypeList,
+            KeyUri -> ("/" + path),
+            KeySize -> value.length,
+            KeyKeys -> value.zipWithIndex.map { case (_, index) => s"/$path/$index" }
+          )
+        returnJson(result)
 
       case Some(value) if JsonValues.isValue(value) => returnJson(restResponseValue(value))
 
@@ -38,8 +42,7 @@ object CsrTreeRest extends RestProcessing {
 
   }
 
-  private def csrNodeView(node: Map[String, Any], path: String, fromList: Boolean): Map[String, Any] = {
-    val result = node.collect {
+  private def csrNodeView(node: Map[String, Any], path: String): Map[String, Any] = node.collect {
       case (k, v: Map[_, _]) if v.asInstanceOf[Map[String, Any]].contains(CsrModel.KeyValue) =>
         k -> (v.asInstanceOf[Map[String, Any]] + (CsrModel.KeyType -> CsrModel.TypeRegisterField))
 
@@ -52,22 +55,13 @@ object CsrTreeRest extends RestProcessing {
 
       case (k, v: List[_]) => k -> Map[String, Any](
         CsrModel.KeyType -> TypeList,
-        KeyUri -> ( if (fromList) { "/" + path} else {s"/$path/$k"} ),
+        KeyUri -> s"/$path/$k",
         KeySize -> v.length,
-        KeyKeys ->  (
-          if (fromList) {
-            v.zipWithIndex.map { case (_, index) => s"/$path/$index" }
-          } else  {
-            v.zipWithIndex.map { case (_, index) => s"/$path/$k/$index" }
-          }
-          )
+        KeyKeys -> v.zipWithIndex.map { case (_, index) => s"/$path/$k/$index" }
       )
 
       case (k, v) => k -> v
     }
-
-    result
-  }
 
   def restResponseValue(value: Any): Map[String, Any] = Map(
       CsrModel.KeyType -> CsrModel.TypeRegisterField,
