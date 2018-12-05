@@ -8,3 +8,5 @@ egr_tcu_dwrr.sv
 egr_tcu_pkt_scheduler.sv
 egr_tcu_epl_scheduler.sv
 egr_tcu_epl_shim.sv
+egr_tcu_core.sv
+
