@@ -27,10 +27,6 @@
 ///                    Submodule of the Egress (EGR) partition.
 ///  ------------------------------------------------------------------------------
 
-`include "shared_pkg.sv"
-`include "mby_gmm_pkg.sv"
-`include "mby_egr_pkg.sv"
-
 module pfs import shared_pkg::*;
 (
     input logic           clk,
