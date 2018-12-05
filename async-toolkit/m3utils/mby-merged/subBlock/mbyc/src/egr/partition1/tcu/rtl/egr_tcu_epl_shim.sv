@@ -45,7 +45,7 @@ module egr_tcu_epl_shim (
   // epl_if  	
   input  logic [1:0]                    tx_enable_port_num, // Indicator of logical port associated with the tx_enable signal.
   input  logic                          tx_enable,          // Indicator of whether EPL is ready to accept tx data.
-  output logic                          tx_data_valid_resp, // tx_enable response for EPL credit.
+  output logic                          tx_valid_resp,      // tx_enable response for EPL credit.
   output logic [1:0]                    tx_port_num,        // Indicator of logical port the data and metadata is associated with for each EPL TX channel                   
   output logic [23:0]                   tx_metadata,        // Per Fllit metadata
                                         //     18 -- PTP Snap   Timestamp snap when SoP is being transmitted
@@ -281,24 +281,24 @@ module egr_tcu_epl_shim (
   /***** glue logic *****/
   always_ff @ (posedge clk) 
     if (!reset_n) begin
-      tx_enable_port_num_d      <= 1'b0;
-      tx_enable_d          <= 1'b0;
-      tx_data_valid_resp        <= 1'b0;
-      x1port_4ch  <= '0;
-      x2port_2ch  <= '0;
-      x4port_1ch  <= '0;
-      x3port_12ch <= '0;
-      x3port_21ch <= '0;
+      tx_enable_port_num_d <= '0;
+      tx_enable_d          <= '0;
+      tx_valid_resp        <= '0;
+      x1port_4ch           <= '0;
+      x2port_2ch           <= '0;
+      x4port_1ch           <= '0;
+      x3port_12ch          <= '0;
+      x3port_21ch          <= '0;
     end  
     else begin
-      tx_enable_port_num_d      <= tx_enable_port_num;
+      tx_enable_port_num_d <= tx_enable_port_num;
       tx_enable_d          <= tx_enable;
-      tx_data_valid_resp        <= tx_enable_d;
-      x1port_4ch  <= port_config[3:0] == 4'h0;
-      x2port_2ch  <= port_config[3:0] == 4'h1;
-      x4port_1ch  <= port_config[3:0] == 4'h2;
-      x3port_12ch <= port_config[3:0] == 4'h3;
-      x3port_21ch <= port_config[3:0] == 4'h4;
+      tx_valid_resp        <= tx_enable_d;
+      x1port_4ch           <= port_config[3:0] == 4'h0;
+      x2port_2ch           <= port_config[3:0] == 4'h1;
+      x4port_1ch           <= port_config[3:0] == 4'h2;
+      x3port_12ch          <= port_config[3:0] == 4'h3;
+      x3port_21ch          <= port_config[3:0] == 4'h4;
     end
 
     assign  tx0_data_w_ecc = tx_data_w_ecc[0],

@@ -43,13 +43,11 @@
 
 module egr_tcu_core (
   // epl_if
-  input  logic [`TOT_EPL-1:0][1:0]          tx_enable_port_num, 
-  input  logic [`TOT_EPL-1:0]               tx_enable,     
-  output logic [`TOT_EPL-1:0]               tx_data_valid_resp, 
-  output logic [`TOT_EPL-1:0][1:0]          tx_port_num,          
-  output logic [`TOT_EPL-1:0][23:0]         tx_metadata,        
   output logic [`TOT_EPL-1:0][7:0]          tx_ecc,         
   output logic [`TOT_EPL-1:0][7:0]          tx_data_valid,      
+  output logic [`TOT_EPL-1:0][1:0]          tx_port_num,          
+  output logic [`TOT_EPL-1:0]               tx_valid_resp, 
+  output logic [`TOT_EPL-1:0][23:0]         tx_metadata,        
   output logic [`TOT_EPL-1:0][71:0]         tx0_data_w_ecc, 
   output logic [`TOT_EPL-1:0][71:0]         tx1_data_w_ecc,  
   output logic [`TOT_EPL-1:0][71:0]         tx2_data_w_ecc, 
@@ -58,6 +56,8 @@ module egr_tcu_core (
   output logic [`TOT_EPL-1:0][71:0]         tx5_data_w_ecc, 
   output logic [`TOT_EPL-1:0][71:0]         tx6_data_w_ecc, 
   output logic [`TOT_EPL-1:0][71:0]         tx7_data_w_ecc, 
+  input  logic [`TOT_EPL-1:0][1:0]          tx_enable_port_num, 
+  input  logic [`TOT_EPL-1:0]               tx_enable,     
   output logic [`TOT_EPL-1:0]               buf_ren_port0, // to packet scheduler
   output logic [`TOT_EPL-1:0]               buf_ren_port1, // to packet scheduler
   output logic [`TOT_EPL-1:0]               buf_ren_port2, // to packet scheduler
@@ -93,7 +93,7 @@ module egr_tcu_core (
   // egr_tcu_epl
 //  logic [`TOT_EPL-1:0][1:0]                    tx_enable_port_num;   // i
 //  logic [`TOT_EPL-1:0]                         tx_enable;       // i
-//  logic [`TOT_EPL-1:0]                         tx_data_valid_resp ;  // o
+//  logic [`TOT_EPL-1:0]                         tx_valid_resp ;  // o
 //  logic [`TOT_EPL-1:0][1:0]                    tx_port_num;          // o
 //  logic [`TOT_EPL-1:0][23:0]                   tx_metadata;          // o
 //  logic [`TOT_EPL-1:0][7:0]                    tx_ecc;               // o
@@ -155,7 +155,7 @@ module egr_tcu_core (
       egr_tcu_epl_shim  egr_tcu_epl_shim
       (.tx_enable_port_num   (tx_enable_port_num [epl])  
       ,.tx_enable            (tx_enable          [epl])      
-      ,.tx_data_valid_resp   (tx_data_valid_resp [epl])
+      ,.tx_valid_resp        (tx_valid_resp      [epl])
       ,.tx_port_num          (tx_port_num        [epl])        
       ,.tx_metadata          (tx_metadata        [epl])        
       ,.tx_ecc               (tx_ecc             [epl])          
@@ -201,21 +201,21 @@ module egr_tcu_core (
 
     for (epl=0; epl< `TOT_EPL ; epl=epl+1) begin : FOUR_EPL_SCHEDULER_GEN
       egr_tcu_epl_scheduler  egr_tcu_epl_scheduler 
-      (.tcg_gnt     (tcg_gnt[epl]    ) // o  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
-      ,.tcg_req     (tcg_req[epl]    ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
-      ,.tcg_empty   (tcg_empty[epl]  ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
-      ,.tcg_ren     (tcg_ren[epl]    ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
-      ,.win_grant   (win_grant[epl]  ) // o  [`TOT_EPL-1:0][`TOT_LP-1:0]                                            
-      ,.win_gnt     (win_gnt[epl]    ) // o  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0]                               
+      (.tcg_gnt     (tcg_gnt    [epl]) // o  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
+      ,.tcg_req     (tcg_req    [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
+      ,.tcg_empty   (tcg_empty  [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
+      ,.tcg_ren     (tcg_ren    [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_TC-1:0]                               
+      ,.win_grant   (win_grant  [epl]) // o  [`TOT_EPL-1:0][`TOT_LP-1:0]                                            
+      ,.win_gnt     (win_gnt    [epl]) // o  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0]                               
       ,.win_quantum (win_quantum[epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0][`QM_WIDTH-1:0]                
       ,.win_sp_mode (win_sp_mode[epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0]                                            
-      ,.win_sp_top  (win_sp_top[epl] ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`SP_WIDTH-1:0]                             
-      ,.cfg_pg_tcg  (cfg_pg_tcg[epl] ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0][`TOT_TC-1:0]                  
-      ,.pg_quantum  (pg_quantum[epl] ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0][`TOT_TC-1:0][`QM_WIDTH-1:0]   
-      ,.pg_sp_mode  (pg_sp_mode[epl] ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0]                               
-      ,.pg_sp_top   (pg_sp_top[epl]  ) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0][`SP_WIDTH-1:0]                
+      ,.win_sp_top  (win_sp_top [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`SP_WIDTH-1:0]                             
+      ,.cfg_pg_tcg  (cfg_pg_tcg [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0][`TOT_TC-1:0]                  
+      ,.pg_quantum  (pg_quantum [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0][`TOT_TC-1:0][`QM_WIDTH-1:0]   
+      ,.pg_sp_mode  (pg_sp_mode [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0]                               
+      ,.pg_sp_top   (pg_sp_top  [epl]) // i  [`TOT_EPL-1:0][`TOT_LP-1:0][`TOT_PG-1:0][`SP_WIDTH-1:0]                
       ,.reset_n     (reset_n         ) // i 	                                  
-      ,.clk         (clk             )  // i 	                                  
+      ,.clk         (clk             ) // i 	                                  
       );
     end : FOUR_EPL_SCHEDULER_GEN
   endgenerate
