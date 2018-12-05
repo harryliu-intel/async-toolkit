@@ -95,7 +95,7 @@ tqu dut(
 ////////////////////////////////
 //// MEMORIES //////////////////
 ////////////////////////////////
-mby_mgm_1rw_behave #( .MEM_WIDTH(W_WORD_BITS),
+mby_mgm_1rw_behave #( .MEM_WIDTH(  W_WORD_BITS),
                       .MEM_DEPTH(TQU_BUF_DEPTH)
 )
 tqu_ctrl_buf
@@ -132,11 +132,35 @@ mby_sandbox_runtime runtime(.clk(clk), .rst_n(arst_n));
 ////////////////////////////////
 initial
 begin
+    rrs_tqu_mri_if0.rrsp_wd_id    = '0;
+    rrs_tqu_mri_if0.rrsp_wd       = '0;
+    rrs_tqu_mri_if0.rrsp_wd_valid = '0;
+    rrs_tqu_mri_if1.rrsp_wd_id    = '0;
+    rrs_tqu_mri_if1.rrsp_wd       = '0;
+    rrs_tqu_mri_if1.rrsp_wd_valid = '0;
     @(posedge clk);
     @(posedge clk);
     @(posedge clk);
-    @(posedge rst_n);
+    @(posedge arst_n);
     @(posedge clk);
+    @(posedge clk);
+    rrs_tqu_mri_if0.rrsp_wd_id[0].client_id = CLIENT_PRC_TQU0_0;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.word_type = WORD_TYPE_CTRL;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.epl   = 0;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_lp = 0;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_tc = 0;
+    rrs_tqu_mri_if0.rrsp_wd[0] = {'0,32'h12345678};
+    rrs_tqu_mri_if0.rrsp_wd_valid[0] = '1;
+    @(posedge clk);
+    rrs_tqu_mri_if0.rrsp_wd_id[0].client_id = CLIENT_PRC_TQU0_0;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.word_type = WORD_TYPE_DATA;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.epl   = 0;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_lp = 0;
+    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_tc = 0;
+    rrs_tqu_mri_if0.rrsp_wd[0] = {'0,32'haabbccdd};
+    rrs_tqu_mri_if0.rrsp_wd_valid[0] = '1;
+    @(posedge clk);
+    rrs_tqu_mri_if0.rrsp_wd_valid[0] = '0;
 
 end
 

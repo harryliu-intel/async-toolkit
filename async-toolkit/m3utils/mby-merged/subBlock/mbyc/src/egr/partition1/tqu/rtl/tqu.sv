@@ -54,7 +54,6 @@ module tqu
     output logic             pkt_buf_data_wr_en, //o
     output data_word_t    pkt_buf_data_word_out, //o
     input  data_word_t     pkt_buf_data_word_in  //i
-
 );
 //        input   logic                           .clk     (clk)                     ,
 //        input   logic   [MEM_ADR_WIDTH-1:0]     .address (                ,
@@ -74,13 +73,15 @@ module tqu
 //output rrsp_wd_stall
 
 //FIRST PACKET LOGIC
-//RRS data registers
-data_wd_id_t rrsp_data_wd_id;
-data_wd_id_t rrsp_data_wd_id_reg;
-data_word_t  rrsp_data_word;
-data_word_t  rrsp_ctrl_word_reg;
-data_word_t  rrsp_data_word_reg;
+localparam FST_PKT_CTRL_LEN = 1;  //One word packet metadata for first packet
+localparam FST_PKT_DATA_LEN = 1;  //One word packet data for first packet
+localparam FST_PKT_LEN   = FST_PKT_CTRL_LEN + FST_PKT_DATA_LEN; //1 Ctrl + 1 Data words for first packet
 
+//RRS data registers
+data_wd_id_t     rrsp_data_wd_id;
+data_wd_id_t rrsp_data_wd_id_reg;
+data_word_t       rrsp_data_word;
+data_word_t   rrsp_data_word_reg;
 
 always_ff @(posedge clk, negedge rst_n)
     if(!rst_n) rrsp_data_wd_id_reg <= '0;
@@ -92,8 +93,55 @@ assign rrsp_data_wd_id = mri_if0.rrsp_wd_valid[0] ?
                          mri_if0.rrsp_wd_id[0].data_wd_id : 
                          rrsp_data_wd_id_reg;
 
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) rrsp_data_word_reg <= '0;
+    else begin
+        rrsp_data_word_reg <= rrsp_data_word;
+    end
+
+assign rrsp_data_word = mri_if0.rrsp_wd_valid[0] ? 
+                         mri_if0.rrsp_wd[0] : 
+                         rrsp_data_word_reg;
+
+//RRS to Packet Buffer
+logic rrsp_ctrl_ready;
+logic rrsp_ctrl_ready_reg;
+logic rrsp_data_ready;
+logic rrsp_data_ready_reg;
+logic [$clog2(FST_PKT_LEN):0] word_counter;
+logic [$clog2(FST_PKT_LEN):0] word_counter_reg;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        rrsp_ctrl_ready_reg <= '0;
+        rrsp_data_ready_reg <= '0;
+        word_counter_reg    <= '0;
+    end
+    else begin
+        rrsp_ctrl_ready_reg <= rrsp_ctrl_ready;
+        rrsp_data_ready_reg <= rrsp_data_ready;
+        word_counter_reg    <= word_counter;
+    end
+
+assign rrsp_ctrl_ready = ((mri_if0.rrsp_wd_valid[0]) && 
+                            (mri_if0.rrsp_wd_id[0].data_wd_id.word_type==WORD_TYPE_CTRL)) ? 
+                         '1 : 
+                         rrsp_ctrl_ready_reg;
+
+assign rrsp_data_ready = ((mri_if0.rrsp_wd_valid[0]) && 
+                            (mri_if0.rrsp_wd_id[0].data_wd_id.word_type==WORD_TYPE_DATA)) ? 
+                         '1 : 
+                         rrsp_data_ready_reg;
+
+assign word_counter = mri_if0.rrsp_wd_valid[0] ?
+                      word_counter_reg + 1     :
+                      word_counter_reg;
 
 //Stall outputs
+logic rrsp_data_stall;
+
+assign rrsp_data_stall          = word_counter_reg==FST_PKT_LEN;
+assign mri_if0.rrsp_wd_stall[0] = rrsp_data_stall;
 assign mri_if0.rrsp_wd_stall[1] = '1;
 assign mri_if0.rrsp_wd_stall[2] = '1;
 assign mri_if1.rrsp_wd_stall[0] = '1;
