@@ -422,6 +422,7 @@ static void transformActions
     mbyClassifierActions       const actions,
     mbyClassifierMuxedAction   const muxed_action,
     fm_bool                    const ip_option[2],
+    fm_bool                    const outer_mpls_v,
     mbyParserInfo              const parser_info,
     fm_bool                  * const decap,
     fm_bool                  * const encap,
@@ -507,7 +508,7 @@ static void transformActions
 
     fm_bool is_ttl01 = (muxed_action.ttl01 & 1) || ((muxed_action.ttl01 >> 1) & 1);
 
-    *drop_ttl = is_ttl01 && (*is_ipv4 || *is_ipv6);
+    *drop_ttl = is_ttl01 && (*is_ipv4 || *is_ipv6 || outer_mpls_v);
 
     *trap_icmp = drop_ttl &&
         ((*is_ipv4 && (ip_prot == MBY_PROT_ICMPv4)) || (*is_ipv6 && (ip_prot == MBY_PROT_ICMPv6)));
@@ -591,12 +592,13 @@ void Classifier
 )
 {
     // Read inputs from the Mapper:
-    mbyClassifierActions  const actions_in        = in->FFU_ACTIONS;
-    mbyClassifierKeys     const keys_in           = in->FFU_KEYS;
-    fm_byte               const packet_profile_in = in->FFU_PROFILE;
+    mbyClassifierActions  const actions_in        = in->CLASSIFIER_ACTIONS;
+    mbyClassifierKeys     const keys_in           = in->CLASSIFIER_KEYS;
+    fm_byte               const packet_profile_in = in->PACKET_PROFILE;
     fm_bool       const * const ip_option         = in->IP_OPTION;
     mbyParserInfo         const parser_info       = in->PARSER_INFO;
     fm_byte               const pri_profile       = in->PRIORITY_PROFILE;
+    fm_bool               const outer_mpls_v      = in->OTR_MPLS_V;
 
     fm_byte              packet_profile = packet_profile_in;
     mbyClassifierActions actions        = actions_in;
@@ -699,6 +701,7 @@ void Classifier
         actions,
         muxed_action,
         ip_option,
+        outer_mpls_v,
         parser_info,
         &decap,
         &encap,
@@ -777,7 +780,7 @@ void Classifier
     out->TX_TAG          = cgrp_flags.tx_tag;
 
     // Pass thru:
-    out->FFU_KEYS        = in->FFU_KEYS;
+    out->CLASSIFIER_KEYS = in->CLASSIFIER_KEYS;
     out->LEARN_MODE      = in->LEARN_MODE;
     out->L2_IDOMAIN      = in->L2_IDOMAIN;
     out->L3_IDOMAIN      = in->L3_IDOMAIN;

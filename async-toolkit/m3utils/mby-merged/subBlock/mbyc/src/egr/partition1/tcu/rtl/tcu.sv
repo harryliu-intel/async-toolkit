@@ -27,6 +27,7 @@
 //------------------------------------------------------------------------------
 
 module tcu
+    import egr_int_pkg::*;
 (
     input logic       clk,
     input logic     rst_n, 

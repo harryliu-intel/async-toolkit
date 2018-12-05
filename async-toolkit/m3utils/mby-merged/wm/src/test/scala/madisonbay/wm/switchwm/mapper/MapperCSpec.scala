@@ -126,7 +126,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       dstL4Port = 0xA456.toShort
     )
 
-    val empty = ParserOutput(Csr().getParser(0), Port(0), 0, PacketFields(), BitFlags(), ProtocolsOffsets(),
+    val empty = ParserOutput(Csr().getParser(0, 0), Port(0), 0, PacketFields(), BitFlags(), ProtocolsOffsets(),
       None, 0, CheckSums(None, drop = false))
 
     val updated = loadPaKeys(simpleTcp, empty)
@@ -138,7 +138,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
   }
 
 
-  val csr = Csr().getMapper(0)
+  val csr = Csr().getMapper(0, 0)
   runOnSimpleTcp(csr, "Simple TCP", _ => ())
 
   def act24Default(): Unit = {
@@ -154,7 +154,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- valueTwo.assign_(0xff)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, updatedCsr), "act24 default", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, updatedCsr), "act24 default", output => {
       it should "fill act24 using MAP_PORT_DEFAULT" in {
         output.classifierActions.act24(0).value shouldEqual 0xffabcd
       }
@@ -171,7 +171,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- valueLens.assign_(0xb)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, updatedCsr), "act4 default", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, updatedCsr), "act4 default", output => {
       it should "fill act4 using MAP_PORT_DEFAULT" in {
         output.classifierActions.act4(0).value shouldEqual 0xb
       }
@@ -188,7 +188,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- valueLens.assign_(0xfe)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, updatedCsr), "act4 double default", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, updatedCsr), "act4 double default", output => {
       it should "fill act4 using MAP_PORT_DEFAULT" in {
         output.classifierActions.act4(0).value shouldEqual 0xe
         output.classifierActions.act4(1).value shouldEqual 0xf
@@ -206,7 +206,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- valueLens.assign_(0xabcd)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, updatedCsr), "act4 quad default", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, updatedCsr), "act4 quad default", output => {
       it should "fill act4 using MAP_PORT_DEFAULT" in {
         output.classifierActions.act4(1).value shouldEqual 0xd
         output.classifierActions.act4(2).value shouldEqual 0xc
@@ -226,7 +226,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- valueLens.assign_(0xba)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, updatedCsr), "default0", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, updatedCsr), "default0", output => {
       it should "fill key16 using MAP_PORT_DEFAULT" in {
         output.classifierKeys.key16(Classifier16BitKeys.getConstant(3)) shouldEqual 0xba
       }
@@ -250,7 +250,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- valueTwo.assign_(0xfef)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, updatedCsr), "RE_KEYS_OUTER_VLAN1", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, updatedCsr), "RE_KEYS_OUTER_VLAN1", output => {
       it should "fill key16 using MAP_PORT_DEFAULT" in {
         output.classifierKeys.key16(Classifier16BitKeys.getConstant(MBY_RE_KEYS_OUTER_VLAN1)) shouldEqual 0xfef
       }
@@ -259,17 +259,19 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
   RE_KEYS_OUTER_VLAN1()
 
   def default_forced(): Unit = {
+    val expectedValue = 0xdede
+
     val targetLens = MapperLenses.portDefaultTargetLens(0, 3)
     val valueLens = MapperLenses.portDefaultValueLens(0, 3)
 
     val updatedCsr = CsrLenses.execute(csr.ppeMapperMap, for {
       _ <- targetLens.assign_(80)
-      _ <- valueLens.assign_(0xdede)
+      _ <- valueLens.assign_(expectedValue)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, updatedCsr), "default forced", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, updatedCsr), "default forced", output => {
       it should "fill key16 using MAP_PORT_DEFAULT" in {
-        output.classifierKeys.key16(Classifier16BitKeys.getConstant(12)) shouldEqual 0xdede
+        output.classifierKeys.key16(Classifier16BitKeys.getConstant(12)) shouldEqual expectedValue.toShort
       }
     })
   }
@@ -298,7 +300,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- MapperLenses.mapRewriteSrcId(0, 1).assign_(SOURCE_MAP_OUTER_SMAC_H)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "map SMAC", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, activateProfile0(updatedCsr)), "map SMAC", output => {
       it should "fill key16" in {
         output.classifierKeys.key16(Classifier16BitKeys.getConstant(13)) shouldEqual mapped_mac
       }
@@ -321,7 +323,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- MapperLenses.mapRewriteSrcId(0, 0).assign_(SOURCE_MAP_OUTER_PROT)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "map Outer Protocol", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, activateProfile0(updatedCsr)), "map Outer Protocol", output => {
       ignore should "fill key16" in {
         output.classifierKeys.key16(Classifier16BitKeys.getConstant(13)) shouldEqual 5
       }
@@ -343,7 +345,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       MapperLenses.mapRewriteSrcId(0, i).set(SOURCE_MAP_OUTER_L4_DST_H - i)(runningCsr)
     }
 
-    runOnSimpleTcp(CsrMapper(0, activateProfile0(evenUpdatedCsr)), "map Outer L4 Destination", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, activateProfile0(evenUpdatedCsr)), "map Outer L4 Destination", output => {
       ignore should "fill key16" in {
         output.classifierKeys.key16(Classifier16BitKeys.getConstant(13)) shouldEqual 0x1234
       }
@@ -356,7 +358,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- MapperLenses.mapDomainProfilePriorityProfileLens(0).assign_(0xa)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "map Priority Profile", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, activateProfile0(updatedCsr)), "map Priority Profile", output => {
       ignore should "fill priorityProfile" in {
         output.priorityProfile shouldEqual 0xa
       }
@@ -375,7 +377,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- MapperLenses.mapDomainAction0PriSource(0).assign_(TC_SOURCE_DSCP << 6)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "set noPriorityEncoding to false", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, activateProfile0(updatedCsr)), "set noPriorityEncoding to false", output => {
       it should "set noPriorityEncoding to false" in {
         output.noPriorityEncoding shouldBe false
       }
@@ -388,7 +390,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- MapperLenses.mapDomainAction0LearnMode(0).assign_(1)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "learning mode", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, activateProfile0(updatedCsr)), "learning mode", output => {
       ignore should "set learningMode to IndependentVlanLearning" in {
         output.learningMode shouldEqual IndependentVlanLearning
       }
@@ -401,7 +403,7 @@ def loadPaKeys(packetData: MapperTestPacketData, into: ParserOutput): ParserOutp
       _ <- MapperLenses.mapDomainAction1VlanCounter(0).assign_(0x805)
     } yield ())
 
-    runOnSimpleTcp(CsrMapper(0, activateProfile0(updatedCsr)), "ingress VLAN counter", output => {
+    runOnSimpleTcp(CsrMapper(0, 0, activateProfile0(updatedCsr)), "ingress VLAN counter", output => {
       ignore should "set ingress VLAN counter" in {
         output.l2IngressVlan1Counter shouldEqual 0x805
       }

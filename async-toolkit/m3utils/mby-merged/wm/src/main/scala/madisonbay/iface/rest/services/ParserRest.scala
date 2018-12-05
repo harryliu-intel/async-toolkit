@@ -20,6 +20,8 @@ import scala.util.{Try, Success, Failure}
 
 object ParserRest extends RestProcessing {
 
+  val idMpp = 0
+
   def processGetRequest(uri: List[String], parameters: List[UriParameter], csrModel: CsrModel): RestResponse = ???
 
   def processPostJson(uri: List[String], jsonMap: Map[String, Any], csrModel: CsrModel): RestResponse = uri match {
@@ -36,7 +38,7 @@ object ParserRest extends RestProcessing {
       (jsonMap.getStringOpt("parse.packet"), jsonMap.getIntOpt("parse.port")) match {
 
         case (Some(packet), Some(port)) if Packet.strHexToPacketOpt(packet).isDefined =>
-          val csrParserMap = CsrParser(idMgp, csrModel.csr.getParser(idMgp).ppeParserMap)
+          val csrParserMap = CsrParser(idMpp, idMgp, csrModel.csr.getParser(idMpp, idMgp).ppeParserMap)
           val parserOutput = Parser.parse(csrParserMap, Packet.strHexToPacket(packet), Port(port))
           Try(JsonSerializer.toMap(parserOutput, bNameCaseClasses = false) {
             case (field, _) if isInnerCaseClassField(field) => false
@@ -57,7 +59,7 @@ object ParserRest extends RestProcessing {
   private def programParser(id: String, jsonMap: Map[String, Any], csrModel: CsrModel): RestResponse = csrModel.idMgpOpt(id) match {
     case Some(idMgp) =>
       val parserMap = ParserProgrammer.readVer2(jsonMap, csrModel.csr)
-      val csrParser = CsrParser(idMgp, parserMap)
+      val csrParser = CsrParser(idMpp, idMgp, parserMap)
       val updatedCsr = new CsrModel(csrModel.csr.updated(csrParser), IoUriDispatcher.LimitNumberOfNodes)
       RestResponse(
         uriSupported = true,
