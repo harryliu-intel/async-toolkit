@@ -7,6 +7,9 @@
 #include <string.h>
 #include "mby_lpm.h"
 
+/* Size of the memory bank used to store the LPM structs = 512 */
+#define MBY_LPM_MEM_BANK_SIZE lpm_subtrie_aptr_rf_LPM_SUBTRIE_APTR__n
+
 static void lookupLpmTcam
 (
     mby_ppe_cgrp_a_map const * const cgrp_a_map,
@@ -115,6 +118,8 @@ static void exploreSubtrie
     fm_byte key = st_lookup->key[0];
     mbyLpmSubtrieStore st_store;
     fm_byte node_idx = 0;
+    fm_uint16 entry_idx;
+    fm_uint16 bank_idx;
     fm_byte level = 0;
     fm_bool node_val;
     fm_bool key_bit;
@@ -122,7 +127,11 @@ static void exploreSubtrie
     // The key can't be longer than 16B: 20B total key len - 4B tcam key len
 //T:assert(st_lookup->key_len < 16 * 8);
 
-    mbyLpmGetSubtrieStore(cgrp_a_map, subtrie->root_ptr, &st_store);
+    /* Splits the index into 2 since the register space matches the HW
+     * implementation, i.e. 48 memory banks of 512 items each */
+    bank_idx  = subtrie->root_ptr / MBY_LPM_MEM_BANK_SIZE;
+    entry_idx = subtrie->root_ptr % MBY_LPM_MEM_BANK_SIZE;
+    mbyLpmGetSubtrieStore(cgrp_a_map, bank_idx, entry_idx, &st_store);
 
     do
     {
@@ -154,15 +163,19 @@ static void exploreSubtrie
 
     if (node_val)
     {
+        fm_byte child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
+
+        /* Splits the index into 2 since the register space matches the HW
+         * implementation, i.e. 48 memory banks of 512 items each */
+        fm_uint16 st_idx    = subtrie->child_base_ptr + child_idx;
+        fm_uint16 bank_idx  = st_idx / MBY_LPM_MEM_BANK_SIZE;
+        fm_uint16 entry_idx = st_idx % MBY_LPM_MEM_BANK_SIZE;
+
         mbyLpmSubtrie child_subtrie;
-        fm_byte child_idx;
 
-        child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
-
-        mbyLpmGetSubtrie(cgrp_a_map, subtrie->child_base_ptr + child_idx, &child_subtrie);
-
+        /* Move key to the next 8b and recursively explore the next subtrie */
+        mbyLpmGetSubtrie(cgrp_a_map, bank_idx, entry_idx, &child_subtrie);
         st_lookup->key = &(st_lookup->key[-1]);
-
         exploreSubtrie(cgrp_a_map, &child_subtrie, st_lookup);
     }
 }
