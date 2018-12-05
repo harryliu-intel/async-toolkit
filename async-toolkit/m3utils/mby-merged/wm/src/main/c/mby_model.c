@@ -32,7 +32,7 @@ fm_status mby_init_regs(const fm_uint32 sw)
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-        mby_init_common_regs(&(top_map.mpp.mgp[0].rx_ppe), &(top_map.mpp.mgp[0].tx_ppe));
+        mby_init_common_regs(&(top_map.mpp[0].mgp[0].rx_ppe), &(top_map.mpp[0].mgp[0].tx_ppe));
     }
     return sts;
 }
@@ -114,8 +114,8 @@ fm_status mbySendPacket
     {
         // Top CSR map for tile 0 receive pipeline:
         // TODO use the pipeline associated to the specific ingress port
-        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp.mgp[0].rx_ppe);
-        mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
+        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp[0].mgp[0].rx_ppe);
+        mby_shm_map        * const shm_map    = &(top_map.mpp[0].shm);
         // Input struct:
         mbyRxMacToParser mac2par;
 
@@ -148,8 +148,8 @@ fm_status mbyReceivePacket
     {
         // Top CSR map for tile 0 transmit pipeline:
         // TODO use the pipeline associated to the specific egress port
-        mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp.mgp[0].tx_ppe);
-        mby_shm_map        * const shm_map    = &(top_map.mpp.shm);
+        mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp[0].mgp[0].tx_ppe);
+        mby_shm_map        * const shm_map    = &(top_map.mpp[0].shm);
         // Input struct:
         txi2mod.CONTENT_ADDR  = rxs2rxo.CONTENT_ADDR;
         txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;

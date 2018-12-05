@@ -2261,4 +2261,20 @@ void mby_init_common_regs
         mod_profile_group->GROUP_6              = MBY_PA_PROT_ID_NOP;
         mod_profile_group->GROUP_7              = MBY_PA_PROT_ID_NOP;
     }
+
+    for (fm_int i = 0 ; i < mby_ppe_mapper_map_MAP_DOMAIN_TCAM__nd; i++)
+    {
+        map_domain_tcam_r * const map_domain_tcam = &(rx_top_map->mapper.MAP_DOMAIN_TCAM[i]);
+
+        map_domain_tcam->PORT_KEY_INVERT   = 0x3ffff;
+        map_domain_tcam->VID2_VALID_INVERT = 1;;
+        map_domain_tcam->VID2_KEY_INVERT   = 0xfff;
+        map_domain_tcam->VID1_VALID_INVERT = 1;
+        map_domain_tcam->VID1_KEY_INVERT   = 0xfff;
+        map_domain_tcam->PORT_KEY          = 0x3ffff;
+        map_domain_tcam->VID2_VALID        = 1;
+        map_domain_tcam->VID2_KEY          = 0xfff;
+        map_domain_tcam->VID1_VALID        = 1;
+        map_domain_tcam->VID1_KEY          = 0xfff;
+    }
 }

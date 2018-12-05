@@ -11,15 +11,15 @@ trait CsrUpdater[A] {
 object CsrUpdater {
 
   implicit object CsrUpdaterRxPpe extends CsrUpdater[CsrRxPpe] {
-    def updated(csr: mby_top_map, crsRxPpe: CsrRxPpe): Csr = Csr(rxPpeL(crsRxPpe.idMgp).modify(_ => crsRxPpe.ppeRxMap)(csr))
+    def updated(csr: mby_top_map, crsRxPpe: CsrRxPpe): Csr = Csr(rxPpeL(crsRxPpe.idMpp, crsRxPpe.idMgp).modify(_ => crsRxPpe.ppeRxMap)(csr))
   }
 
   implicit object CsrUpdaterParser extends CsrUpdater[CsrParser] {
-    def updated(csr: mby_top_map, crsParser: CsrParser): Csr = Csr(parserL(crsParser.idMgp).modify(_ => crsParser.ppeParserMap)(csr))
+    def updated(csr: mby_top_map, crsParser: CsrParser): Csr = Csr(parserL(crsParser.idMpp, crsParser.idMgp).modify(_ => crsParser.ppeParserMap)(csr))
   }
 
   implicit object CsrUpdaterMapper extends CsrUpdater[CsrMapper] {
-    def updated(csr: mby_top_map, csrMapper: CsrMapper): Csr = Csr(mapperL(csrMapper.idMgp).modify(_ => csrMapper.ppeMapperMap)(csr))
+    def updated(csr: mby_top_map, csrMapper: CsrMapper): Csr = Csr(mapperL(csrMapper.idMpp, csrMapper.idMgp).modify(_ => csrMapper.ppeMapperMap)(csr))
   }
 
 }

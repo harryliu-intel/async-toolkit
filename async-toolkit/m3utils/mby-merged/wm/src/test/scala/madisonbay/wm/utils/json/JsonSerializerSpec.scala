@@ -152,7 +152,7 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
 
   it should "read parser from csr" in {
 
-    val parser = Csr().getParser(0)
+    val parser = Csr().getParser(0, 0)
 
     val parserMap = toMap(parser, bNameCaseClasses = false) {
       case (field, _) if isInnerCaseClassField(field) => false

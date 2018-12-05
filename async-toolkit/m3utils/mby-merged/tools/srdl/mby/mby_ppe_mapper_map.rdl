@@ -591,6 +591,113 @@ reg map_mac_r {
 };
 
 
+// MAP_IP_LO[0..15]
+
+reg map_ip_lo_r {
+  shared;
+  HandCoded = true;
+  name = "Configures low 64-bit key of 128-bit to 4-bit IP address mapping.";
+  desc = "
+        Configures low 64-bit key of 128-bit to 4-bit IP address mapping.
+        [br][br]
+        For IPv4, set to all zeros and use MAP_IP_HI.IP_HI[63:32] for the address prefix key.
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Low 64 bits of IP address prefix key.  Ignored bits must be set to 0.
+
+           ";
+    ValRandomize = true;
+  } IP_LO[63:0] = 64'h0;
+};
+
+
+// MAP_IP_HI[0..15]
+
+reg map_ip_hi_r {
+  shared;
+  HandCoded = true;
+  name = "Configures high 64-bit key of 128-bit to 4-bit IP address mapping";
+  desc = "
+         Configures high 64-bit key of 128-bit to 4-bit IP address mapping
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        High 64 bits of IP address prefix key. For IPv4, only bits 63:32 are used.
+        Ignored bits must be set to 0.
+
+           ";
+    ValRandomize = true;
+  } IP_HI[63:0] = 64'h0;
+};
+
+
+// MAP_IP_CFG[0..15]
+
+reg map_ip_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Configures 128-bit to 4-bit IP address mapping";
+  desc = "
+           ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+        Ignore (128 - MATCH_LENGTH) many LSB bits when matching
+
+           ";
+    ValRandomize = true;
+  } MATCH_LENGTH[18:11] = 8'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        [list]
+        [*] bit 0 = entry valid for outer DIP
+        [*] bit 1 = entry valid for outer SIP
+        [*] bit 2 = entry valid for inner DIP
+        [*] bit 3 = entry valid for inner SIP
+        [/list]
+
+           ";
+    ValRandomize = true;
+  } VALID[10:7] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        4-bit mapped IP address
+
+           ";
+    ValRandomize = true;
+  } MAP_IP[6:3] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        2-bit value to feed into packet profile CAM
+
+           ";
+    ValRandomize = true;
+  } IP_PROFILE[2:1] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+        [list]
+        [*] If set, header must be ipv6 to match.
+        [*] If clear, header must be ipv4 to match.
+        [/list]
+
+           ";
+    ValRandomize = true;
+  } IS_IPV6[0:0] = 1'h0;
+};
+
 
 // MAP_PROT[0..7]
 
@@ -1878,6 +1985,9 @@ addrmap mby_ppe_mapper_map {
   map_domain_profile_r       MAP_DOMAIN_PROFILE[256]       @0x30000 += 8;
   map_port_r                 MAP_PORT[18]                  @0x31000 += 8;
   map_mac_r                  MAP_MAC[96]                   @0x31800 += 16;
+  map_ip_lo_r                MAP_IP_LO[16]                 @0x32080 += 8;
+  map_ip_hi_r                MAP_IP_HI[16]                 @0x32100 += 8;
+  map_ip_cfg_r               MAP_IP_CFG[16]                @0x32180 += 8;
   map_prot_r                 MAP_PROT[8]                   @0x32200 += 8;
   map_l4_src_r               MAP_L4_SRC[64]                @0x32400 += 8;
   map_l4_dst_r               MAP_L4_DST[64]                @0x32600 += 8;
