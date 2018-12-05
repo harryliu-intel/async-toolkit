@@ -35,18 +35,18 @@ interface egr_tcu_tqu_if ();
 
 ////////////////// SIGNALS
 // Service dtq_ctrl_pull
-dtq_ctrl_pull_t  [EPL_PER_MGP-1:0]   dtq_ctrl_pull; // TCU DTQ Control Pull Request
-dtq_ctrl_ready_t [EPL_PER_MGP-1:0]  dtq_ctrl_ready; // TCU DTQ Control (Metadata) Ready
-ctrl_mdata_t     [EPL_PER_MGP-1:0]      ctrl_mdata; // TQU Control Word Metadata
-data_word_t      [EPL_PER_MGP-1:0]       ctrl_word; // TQU Control Word Data
-logic            [EPL_PER_MGP-1:0] ctrl_word_valid; // TQU Control Word Valid
+dtq_ctrl_pull_t  [EPL_PER_MGP-1:0]   dtq_ctrl_pull; // TCU DTQ Control Pull Request (2LP_SELx4TC_SEL+2=10b)
+dtq_ready_t      [EPL_PER_MGP-1:0]  dtq_ctrl_ready; // TCU DTQ Control (Pkt Metadata) Ready (4LPx9TC=36b)
+ctrl_mdata_t     [EPL_PER_MGP-1:0]      ctrl_mdata; // TQU Control Word Metadata (22b)
+data_word_t      [EPL_PER_MGP-1:0]       ctrl_word; // TQU Control Word Data (64B)
+logic            [EPL_PER_MGP-1:0] ctrl_word_valid; // TQU Control Word Valid (1b)
 
 //Service dtq_data_pull
-dtq_data_pull_t  [EPL_PER_MGP-1:0]   dtq_data_pull; // TQU DTQ Data Pull Request
-dtq_data_ready_t [EPL_PER_MGP-1:0]  dtq_data_ready; // TCU DTQ Data Ready
-pkt_word_mdata_t [EPL_PER_MGP-1:0]  pkt_word_mdata; // TQU Pkt Word Metadata
-data_word_t      [EPL_PER_MGP-1:0]        pkt_word; // TQU Pkt Data Word
-logic            [EPL_PER_MGP-1:0] data_word_valid; // TQU Data Word Valid
+dtq_data_pull_t  [EPL_PER_MGP-1:0]   dtq_data_pull; // TQU DTQ Data Pull Request (2LP_SELx4TC_SEL+2=10b)
+dtq_ready_t      [EPL_PER_MGP-1:0]  dtq_data_ready; // TCU DTQ Data Ready (4LPx9TC=36b)
+pkt_word_mdata_t [EPL_PER_MGP-1:0]  pkt_word_mdata; // TQU Pkt Word Metadata (10b)
+data_word_t      [EPL_PER_MGP-1:0]        pkt_word; // TQU Pkt Data Word (64B)
+logic            [EPL_PER_MGP-1:0] data_word_valid; // TQU Data Word Valid (1b)
 
 
 ////////////////// MODPORTS
