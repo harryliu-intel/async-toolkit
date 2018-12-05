@@ -44,7 +44,7 @@ package mby_rx_ppe_env_pkg;
 
    import mby_common_pkg::*;
    import mby_ec_bfm_pkg::*;
-   import ec_env_pkg::*;
+   //import ec_env_pkg::*;
 
    `include "uvm_macros.svh"
 

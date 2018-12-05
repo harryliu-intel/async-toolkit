@@ -7,13 +7,13 @@ import madisonbay.wm.switchwm.csr.Csr
 import org.scalatest._
 import monocle.state.all._
 
-//scalastyle:off magic.number
+
 class CsrSpec extends FlatSpec with Matchers {
 
   "csr " should " produce new csr with updated parser " in {
 
     val csr = Csr()
-    val parser = csr.getParser(0)
+    val parser = csr.getParser(0, 0)
 
     val idStage = 0
     val idRule = 0
@@ -26,11 +26,11 @@ class CsrSpec extends FlatSpec with Matchers {
       _ <- svL.assign_(6)
       } yield ())
 
-    val updatedCsr = csr.updated(CsrParser(parser.idMgp, updatedParser))
+    val updatedCsr = csr.updated(CsrParser(parser.idMpp, parser.idMgp, updatedParser))
 
     val keyS = updatedCsr.
       topMap.
-      mpp.
+      mpp(parser.idMpp).
       mgp(parser.idMgp).
       rx_ppe.
       parser.

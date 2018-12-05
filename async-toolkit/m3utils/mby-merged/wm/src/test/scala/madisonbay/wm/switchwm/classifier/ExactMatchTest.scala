@@ -12,29 +12,30 @@ import monocle.function.Each._
 import monocle.state.all._
 import scalaz.{ State, StateT }
 import scalaz.Id._
+import shapeless.tag
 
 import org.scalatest.{ FlatSpec, Matchers }
 
 class ExactMatchTest extends FlatSpec with Matchers {
 
   val cgrpAMapEmO: Optional[mby_top_map, mby_ppe_cgrp_em_map] =
-    mby_top_map._mpp composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
+    mby_top_map._mpp composeOptional index(0) composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
     mby_mgp_top_map._rx_ppe composeLens mby_ppe_rx_top_map._cgrp_a composeLens
     mby_ppe_cgrp_a_map._EM
 
   val cgrpBMapEmO: Optional[mby_top_map, mby_ppe_cgrp_em_map] =
-    mby_top_map._mpp composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
+    mby_top_map._mpp composeOptional index(0) composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
     mby_mgp_top_map._rx_ppe composeLens mby_ppe_rx_top_map._cgrp_b composeLens
     mby_ppe_cgrp_b_map._EM
 
   def topMapToAEmHashLookupT(bucket: Traversal[List[em_hash_lookup_r], em_hash_lookup_r]): Traversal[mby_top_map, em_hash_lookup_r] =
-    mby_top_map._mpp composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
+    mby_top_map._mpp composeOptional index(0) composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
     mby_mgp_top_map._rx_ppe composeLens mby_ppe_rx_top_map._cgrp_a composeLens
     mby_ppe_cgrp_a_map._A composeLens
     mby_ppe_cgrp_a_nested_map._EM_HASH_LOOKUP composeTraversal bucket
 
   val topMapToBEmHashLookupT: Traversal[mby_top_map, em_hash_lookup_r] =
-    mby_top_map._mpp composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
+    mby_top_map._mpp composeOptional index(0) composeLens mby_mpp_map._mgp composeOptional index(0) composeLens
     mby_mgp_top_map._rx_ppe composeLens mby_ppe_rx_top_map._cgrp_b composeLens
     mby_ppe_cgrp_b_map._B composeLens
     mby_ppe_cgrp_b_nested_map._EM_HASH_LOOKUP composeTraversal each
@@ -184,7 +185,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
     block: Traversal[List[fwd_table0_rf], fwd_table0_rf],
     cell: Traversal[List[fwd_table0_r], fwd_table0_r]
   )(data: fwd_table0_r.DATA): State[mby_top_map, Unit] = {
-    val topMapToFwdTable0 = mby_top_map._mpp composeLens mby_mpp_map._shm composeLens 
+    val topMapToFwdTable0 = mby_top_map._mpp composeOptional index(0) composeLens mby_mpp_map._shm composeLens
       mby_shm_map._FWD_TABLE0 composeTraversal block composeLens
       fwd_table0_rf._FWD_TABLE0 composeTraversal cell composeLens
       fwd_table0_r._DATA
@@ -193,7 +194,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
   }
 
   private def setFwdTable1Reg: State[mby_top_map, Unit] = {
-    val topMapToFwdTable1 = mby_top_map._mpp composeLens mby_mpp_map._shm composeLens
+    val topMapToFwdTable1 = mby_top_map._mpp composeOptional index(0) composeLens mby_mpp_map._shm composeLens
       mby_shm_map._FWD_TABLE1 composeTraversal each composeLens
       fwd_table1_rf._FWD_TABLE1 composeTraversal each composeLens
     fwd_table1_r._DATA
@@ -364,23 +365,23 @@ class ExactMatchTest extends FlatSpec with Matchers {
   // lazy val cgrp_em_map = cgrpAMap.EM
 
   ignore should "produce vector of at least one action" in {
-
+    import types._
     val ms = StateT.stateTMonadState[mby_top_map,Id]
 
     val program = for {
       _           <- initRecipt
       _           <- setRegsRecipt
       top         <- ms.get
-      cgrpAMap     = top.mpp.mgp(0).rx_ppe.cgrp_a
+      cgrpAMap     = top.mpp(0).mgp(0).rx_ppe.cgrp_a
       hashLookup   = cgrpAMap.A.EM_HASH_LOOKUP
       mapperOutput = mockedMapperOutput
       em           = new ExactMatch(
         hashLookup,
         cgrpAMap.EM,
-        top.mpp.shm,
+        top.mpp(0).shm,
         mapperOutput.classifierKeys,
-        mapperOutput.classifierProfile,
-        0.toByte // group?? to be fixed!
+        tag[ProfileTag][Byte](mapperOutput.classifierProfile),
+        ClassifierGroup.GroupA // group?? to be fixed!
       )
     } yield em()
 

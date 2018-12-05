@@ -222,44 +222,44 @@
           .grp_d1_serdes_sia_rclk       (``DUT_PATH``.mby_ec_top_``IDX``.grp_D.part_1.serdes_sia_rclk), \
           .grp_d1_sia_serdes_tx_dat     (``DUT_PATH``.mby_ec_top_``IDX``.grp_D.part_1.sia_serdes_tx_dat), \
           .grp_d1_serdes_sia_dclk       (``DUT_PATH``.mby_ec_top_``IDX``.grp_D.part_1.serdes_sia_dclk), \
-          .grp_a0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_n_lx), \
-          .grp_a0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_p_lx), \
-          .grp_a0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_n_lx), \
-          .grp_a0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_p_lx), \
-          .grp_a1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_n_lx), \
-          .grp_a1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_p_lx), \
-          .grp_a1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_n_lx), \
-          .grp_a1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_tx_p_lx), \
-          .grp_b0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_n_lx), \
-          .grp_b0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_p_lx), \
-          .grp_b0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_n_lx), \
-          .grp_b0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_tx_p_lx), \
-          .grp_b1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_n_lx), \
-          .grp_b1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_p_lx), \
-          .grp_b1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_n_lx), \
-          .grp_b1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_tx_p_lx), \
-          .grp_c0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_n_lx), \
-          .grp_c0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_p_lx), \
-          .grp_c0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_n_lx), \
-          .grp_c0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_tx_p_lx), \
-          .grp_c1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_n_lx), \
-          .grp_c1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_p_lx), \
-          .grp_c1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_n_lx), \
-          .grp_c1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_tx_p_lx), \
-          .grp_d0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_n_lx), \
-          .grp_d0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_p_lx), \
-          .grp_d0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_n_lx), \
-          .grp_d0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_tx_p_lx), \
-          .grp_d1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_n_lx), \
-          .grp_d1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_p_lx), \
-          .grp_d1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_n_lx), \
-          .grp_d1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_tx_p_lx), \
+          .grp_a0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_n), \
+          .grp_a0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_rx_p), \
+          .grp_a0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_tx_n), \
+          .grp_a0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_serdes_tx_p), \
+          .grp_a1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_n), \
+          .grp_a1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_rx_p), \
+          .grp_a1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_tx_n), \
+          .grp_a1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_a1_serdes_tx_p), \
+          .grp_b0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_n), \
+          .grp_b0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_rx_p), \
+          .grp_b0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_tx_n), \
+          .grp_b0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b0_serdes_tx_p), \
+          .grp_b1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_n), \
+          .grp_b1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_rx_p), \
+          .grp_b1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_tx_n), \
+          .grp_b1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_b1_serdes_tx_p), \
+          .grp_c0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_n), \
+          .grp_c0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_rx_p), \
+          .grp_c0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_tx_n), \
+          .grp_c0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c0_serdes_tx_p), \
+          .grp_c1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_n), \
+          .grp_c1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_rx_p), \
+          .grp_c1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_tx_n), \
+          .grp_c1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_c1_serdes_tx_p), \
+          .grp_d0_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_n), \
+          .grp_d0_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_rx_p), \
+          .grp_d0_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_tx_n), \
+          .grp_d0_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d0_serdes_tx_p), \
+          .grp_d1_serdes_rx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_n), \
+          .grp_d1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_p), \
+          .grp_d1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_tx_n), \
+          .grp_d1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_tx_p), \
           .serdes_ref_clk_n             (), \
           .serdes_ref_clk_p             (), \
           .cclk                         (``DUT_PATH``.mby_ec_top_``IDX``.cclk), \
           .mclk                         (), \
           .pclk                         (), \
-          .powergood_rst_n              (``DUT_PATH``.mby_ec_top_``IDX``.powergood_rst_n), \
+          .powergood_rst_n              (), \
           .hreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.hreset_n), \
           .sreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.sreset_n) \
     ); \

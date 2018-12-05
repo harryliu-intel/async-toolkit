@@ -9,18 +9,20 @@ IMPORT TextSetDef;
 IMPORT RegAddrmap;
 IMPORT Pathname;
 IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC;
+IMPORT GenViewsScheme;
 IMPORT Text;
+IMPORT Rd, FileRd;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala|c]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
-TYPE Lang = { M3, Scala, C };
+TYPE Lang = { M3, Scala, C, Scheme };
 
-CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c" };
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -31,6 +33,8 @@ VAR
   outDir : Pathname.T := "build/src";
   gv : GenViews.T;
   lang := Lang.M3;
+  fieldAddrRd : Rd.T := NIL;
+  scmFiles : REF ARRAY OF TEXT;
   
 BEGIN
   (* command-line args: *)
@@ -57,8 +61,40 @@ BEGIN
           END;
         END
       END;
+
+      IF lang = Lang.Scheme THEN
+        IF pp.keywordPresent("-f") THEN
+          WITH ifn = pp.getNext() DO
+            IF TE(ifn, "-") THEN
+              fieldAddrRd := Stdio.stdin
+            ELSE
+              fieldAddrRd := FileRd.Open(ifn)
+            END
+          END
+        END
+      END;
+
+      IF pp.keywordPresent("-i") THEN
+        WITH ifn = pp.getNext() DO
+          IF TE(ifn, "-") THEN
+            rd := Stdio.stdin
+          ELSE
+            rd := FileRd.Open(ifn)
+          END
+        END
+      END;
       
       pp.skipParsed();
+
+      IF lang = Lang.Scheme THEN
+        WITH nFiles = NUMBER(pp.arg^) - pp.next DO
+          scmFiles := NEW(REF ARRAY OF TEXT, nFiles);
+          FOR i := 0 TO nFiles-1 DO
+            scmFiles[i] := pp.getNext()
+          END
+        END;
+      END;
+      
       pp.finish()
     END;
     IF tgtmapNm = NIL THEN RAISE ParseParams.Error END
@@ -72,6 +108,8 @@ BEGIN
     Lang.Scala => gv := NEW(GenViewsScala.T)
   |
     Lang.C     => gv := NEW(GenViewsC.T)
+  |
+    Lang.Scheme => gv := NEW(GenViewsM3.T)
   END;  
 
   EVAL lexer.setRd(rd);
@@ -89,5 +127,12 @@ BEGIN
     tgtmap := gv.decorate(rdlTgt, "").comp
   END;
 
-  gv.gen(tgtmap, outDir)
+  CASE lang OF
+    Lang.Scheme =>
+    NEW(GenViewsScheme.T,
+        scmFiles := scmFiles,
+        fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
+  ELSE
+    gv.gen(tgtmap, outDir)
+  END
 END Main.
