@@ -15,6 +15,7 @@ $hdl_spec = {
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/egr/rtl/egr_int_pkg.sv",
+       "src/mems/rtl/mby_mgm_1rw_behave.v",
     ## EGR External Interfaces   
        "src/shared/interfaces/egr_epl_if.sv",
        "src/shared/interfaces/mim_rd_if.sv",
@@ -52,7 +53,7 @@ $hdl_spec = {
         "src/egr/partition1/tmu/rtl/tmu.sv",
         #"src/egr/partition1/tmu/rtl/mby_egr_tag.sv",
         "src/egr/partition1/tqu/rtl/tqu.sv",
-        "src/egr/partition1/tqu/rtl/tqu_rrsp_rcv.sv",
+        #"src/egr/partition1/tqu/rtl/tqu_rrsp_rcv.sv",
     ## EGR TOP
        "src/egr/rtl/egr_top.sv",
      ],
@@ -77,7 +78,20 @@ $hdl_spec = {
      ],
     
     # Arbitrary VLOG options
-    -vlog_opts => [],
+    -vlog_opts => [
+      "+libext+.v+.sv+.vh+.svh+.vs+.vm+.sva",
+		  "-full64",
+		  "+v2k",
+		  "-notice",
+		  "-sverilog",
+		  "+vcs+lic+wait",
+		  "+warn=noUII-L",
+		  "-timescale=10ps/10ps",
+		  "-debug_pp",
+		  "+define+VCSSIM",
+		  "+define+INTEL_SVA_OFF",
+		  "-assert svaext",
+		],
     
     
     };
