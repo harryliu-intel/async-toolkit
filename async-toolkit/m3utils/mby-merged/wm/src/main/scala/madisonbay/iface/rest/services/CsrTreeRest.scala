@@ -41,10 +41,9 @@ object CsrTreeRest extends RestProcessing {
   private def csrNodeView(node: Map[String, Any], path: String, fromList: Boolean): Map[String, Any] = {
     val result = node.collect {
       case (k, v: Map[_, _]) if v.asInstanceOf[Map[String, Any]].contains(CsrModel.KeyValue) =>
-        k -> (v.asInstanceOf[Map[String, Any]] + (KeyType -> TypeRegisterField))
+        k -> (v.asInstanceOf[Map[String, Any]] + (CsrModel.KeyType -> CsrModel.TypeRegisterField))
 
       case (k, v: Map[_, _]) => k -> Map[String, Any](
-        KeyType -> TypeMap,
         KeyUri -> s"/$path/$k",
         KeyKeys -> v.asInstanceOf[Map[String, Any]].keys.foldLeft(Map[String, Any]()) {
           case (acc, key) => acc.updated(key, s"/$path/$k/$key")
@@ -52,7 +51,7 @@ object CsrTreeRest extends RestProcessing {
       )
 
       case (k, v: List[_]) => k -> Map[String, Any](
-        KeyType -> TypeList,
+        CsrModel.KeyType -> TypeList,
         KeyUri -> ( if (fromList) { "/" + path} else {s"/$path/$k"} ),
         KeySize -> v.length,
         KeyKeys ->  (
@@ -67,15 +66,11 @@ object CsrTreeRest extends RestProcessing {
       case (k, v) => k -> v
     }
 
-    if (result.contains(CsrModel.KeyRange)) {
-      result + (KeyType -> TypeRegister)
-    } else {
-      result
-    }
+    result
   }
 
   def restResponseValue(value: Any): Map[String, Any] = Map(
-      KeyType -> TypeRegisterField,
+      CsrModel.KeyType -> CsrModel.TypeRegisterField,
       KeyValue -> value
     )
 
