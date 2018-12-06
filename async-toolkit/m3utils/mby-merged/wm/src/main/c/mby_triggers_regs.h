@@ -225,56 +225,56 @@ typedef struct mbyTriggerActionsStruct
 
 mbyTriggerConditionCfg mbyTrigGetConditionCfg
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionParam mbyTrigGetConditionParam
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionCGRP mbyTrigGetConditionCGRP
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionGlort mbyTrigGetConditionGlort
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionRx mbyTrigGetConditionRx
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionAmask1 mbyTrigGetConditionAmask1
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerConditionAmask2 mbyTrigGetConditionAmask2
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerDirectMapCtx mbyTrigGetDirectMapCtrlCtx
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 mbyTriggerActions mbyTriggerGetActions
 (
-    mby_ppe_trig_apply_map * const trig_apply_map,
-    fm_byte                  const trig
+    mby_ppe_trig_apply_map const * const trig_apply_map,
+    fm_byte                        const trig
 );
 
 #endif /* MBY_TRIGGERS_H */

@@ -1,0 +1,6 @@
+// IGR block
+
+mby_igr_gen_mem [
+  igr_shells_wrapper of igr_shells_wrapper with igr_shells_wrapper.map
+  igr_sram_mems of igr_sram_mems with igr_sram_mems.map
+]

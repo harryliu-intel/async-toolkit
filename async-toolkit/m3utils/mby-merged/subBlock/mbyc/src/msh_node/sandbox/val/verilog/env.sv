@@ -32,8 +32,8 @@
 //`include "id_generator.sv"
 //`include "configuration.sv"
 `include "inp_driver.sv"
-//`include "scoreboard.sv"
-//`include "monitor.sv"
+`include "scoreboard.sv"
+`include "monitor.sv"
 `include "system_driver.sv"
 
 // An env object is instantiated in a testcase
@@ -47,6 +47,12 @@ class env;
     // Declaration of variables that hold handles to env sub-objects.  
     system_driver       sys_drvr;
     inp_driver          inp_driver;
+
+
+    //-hz:
+      monitor		mntr;
+      scoreboard	sb;
+
 
     // declaration of other env variables
     integer         done_cnt;
@@ -70,6 +76,9 @@ class env;
         sys_drvr    = new(dut_if);
         inp_driver  = new(dut_if);
 
+        sb  = new();
+        mntr  = new(dut_if, sb);
+
         connect();
 
     endfunction
@@ -81,7 +90,10 @@ class env;
         // These sub-processes need to execute concurrently because they are driving,
         // monitoring, and responding to various concurrent events in the simulation.
         fork
-//            mntr.connect_to_DUT();      // connect the monitor
+//-hz:
+              mntr.connect_to_DUT();      // connect the monitor
+
+              inp_driver.reset();
               inp_driver.connect_to_DUT_inputs();
 //            foreach (inp_drvrs[i]) begin
 //                // To avoid a race condition (i changing before it is doing being used), 
@@ -99,6 +111,8 @@ class env;
         fork begin
             $display("(time: %0d) %s: **Resetting**", $time, name);
             fork sys_drvr.reset();  join_none
+            fork mntr.reset();      join_none
+            fork sb.reset();        join_none
             wait fork;                              // wait for all the processes forked by parent process 
         end join  
     endtask
@@ -124,8 +138,9 @@ class env;
         done_cnt = 0;
         while (done_cnt < delay) begin
             repeat (1) @ (posedge dut_if.mclk);
+//-hz:
             done_cnt = (inp_driver.drv_done) ? done_cnt + 1 : '0;
-//            done_cnt = (mntr.all_done) ? done_cnt + 1 : '0;
+//          done_cnt = (mntr.all_done) ? done_cnt + 1 : '0;
         end
         $display("(time: %0d) %s: **End Waiting For Done plus %0d Clocks**", $time, name, delay);
     endtask

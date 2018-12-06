@@ -8,8 +8,8 @@
 
 static mbyMapPortCfg getPortCfg
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port
 )
 {
     mbyMapPortCfg port_cfg;
@@ -24,9 +24,9 @@ static mbyMapPortCfg getPortCfg
 
 static mbyMapPortDefaults getPortDefaults
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port,
-    fm_byte   const            entry
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port,
+    fm_byte                    const entry
 )
 {
     mbyMapPortDefaults port_defaults;
@@ -40,8 +40,8 @@ static mbyMapPortDefaults getPortDefaults
 
 static fm_byte getPort
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port
 )
 {
     fm_byte port = 0;
@@ -53,8 +53,8 @@ static fm_byte getPort
 
 static mbyMapProt getProt
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            entry
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const entry
 )
 {
     mbyMapProt prot;
@@ -68,8 +68,8 @@ static mbyMapProt getProt
 
 static mbyMapDomainProfile getDomainProfile
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            l2_domain
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const l2_domain
 )
 {
     mbyMapDomainProfile domain_profile;
@@ -82,8 +82,8 @@ static mbyMapDomainProfile getDomainProfile
 
 static mbyMapDomainAction0 getDomainAction0
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            index
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const index
 )
 {
     mbyMapDomainAction0 domain_action;
@@ -105,8 +105,8 @@ static mbyMapDomainAction0 getDomainAction0
 
 static mbyMapDomainAction1 getDomainAction1
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            index
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const index
 )
 {
     mbyMapDomainAction1 domain_action;
@@ -122,8 +122,8 @@ static mbyMapDomainAction1 getDomainAction1
 
 static mbyMapDomainTcam getDomainTcamEntry
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            index
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const index
 )
 {
     mbyMapDomainTcam cam_entry;
@@ -146,8 +146,8 @@ static mbyMapDomainTcam getDomainTcamEntry
 
 static mbyMapMac getMac
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            entry
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const entry
 )
 {
     mbyMapMac mac;
@@ -160,6 +160,52 @@ static mbyMapMac getMac
     mac.IGNORE_LENGTH = map_mac->IGNORE_LENGTH;
     mac.MAC           = map_mac->MAC;
     return mac;
+}
+
+static mbyMapIpCfg getIpCfg
+(
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const entry
+)
+{
+    mbyMapIpCfg ip_cfg;
+
+    map_ip_cfg_r const * const cfg = &(mapper_map->MAP_IP_CFG[entry]);
+
+    ip_cfg.MATCH_LENGTH = cfg->MATCH_LENGTH;
+    ip_cfg.VALID        = cfg->VALID;
+    ip_cfg.MAP_IP       = cfg->MAP_IP;
+    ip_cfg.IP_PROFILE   = cfg->IP_PROFILE;
+    ip_cfg.IS_IPV6      = cfg->IS_IPV6;
+    return ip_cfg;
+}
+
+static mbyMapIpLo getIpLo
+(
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const entry
+)
+{
+    mbyMapIpLo ip_lo;
+
+    map_ip_lo_r const * const ip = &(mapper_map->MAP_IP_LO[entry]);
+
+    ip_lo.IP_LO = ip->IP_LO;
+    return ip_lo;
+}
+
+static mbyMapIpHi getIpHi
+(
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const entry
+)
+{
+    mbyMapIpHi ip_hi;
+
+    map_ip_hi_r const * const ip = &(mapper_map->MAP_IP_HI[entry]);
+
+    ip_hi.IP_HI = ip->IP_HI;
+    return ip_hi;
 }
 
 // --------------------------------------------------------------------------------
@@ -343,12 +389,12 @@ static void realignKeys
     }
 }
 
-static fm_uint32 lookUpDomainTcam
+static fm_uint32 lookupDomainTcam
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_uint32 const            rx_port,
-    fm_uint16 const            pa_keys [MBY_N_PARSER_KEYS],
-    fm_bool   const            pa_flags[MBY_N_PARSER_FLGS]
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port,
+    fm_uint16                  const pa_keys [MBY_N_PARSER_KEYS],
+    fm_bool                    const pa_flags[MBY_N_PARSER_FLGS]
 )
 {
 
@@ -360,29 +406,29 @@ static fm_uint32 lookUpDomainTcam
     fm_uint32 tcam_idx = 0; // TCAM miss (no match)
 
     // The highest numbered DOMAIN_CAM entry has highest precedence
-    for (fm_int i = (MBY_MAP_DOMAIN_TCAM_ENTRIES - 1); i >= 0; i--)
+    for (fm_int i = (mby_ppe_mapper_map_MAP_DOMAIN_TCAM__nd - 1); i >= 0; i--)
     {
         fm_uint32 index = i; // conv. to unsigned
-        mbyMapDomainTcam domainTcam = getDomainTcamEntry(mapper_map, index);
-        fm_byte   maskPort      = domainTcam.PORT_KEY   ^ domainTcam.PORT_KEY_INVERT;
-        fm_byte   maskVid1Valid = domainTcam.VID1_VALID ^ domainTcam.VID1_VALID_INVERT;
-        fm_uint16 maskVid1      = domainTcam.VID1_KEY   ^ domainTcam.VID1_KEY_INVERT;
-        fm_byte   maskVid2Valid = domainTcam.VID2_VALID ^ domainTcam.VID2_VALID_INVERT;
-        fm_uint16 maskVid2      = domainTcam.VID2_KEY   ^ domainTcam.VID2_KEY_INVERT;
+        mbyMapDomainTcam domain_tcam = getDomainTcamEntry(mapper_map, index);
+        fm_byte   maskPort      = domain_tcam.PORT_KEY   ^ domain_tcam.PORT_KEY_INVERT;
+        fm_byte   maskVid1Valid = domain_tcam.VID1_VALID ^ domain_tcam.VID1_VALID_INVERT;
+        fm_uint16 maskVid1      = domain_tcam.VID1_KEY   ^ domain_tcam.VID1_KEY_INVERT;
+        fm_byte   maskVid2Valid = domain_tcam.VID2_VALID ^ domain_tcam.VID2_VALID_INVERT;
+        fm_uint16 maskVid2      = domain_tcam.VID2_KEY   ^ domain_tcam.VID2_KEY_INVERT;
 
         // conditions for a TCAM hit:
-        fm_bool c0 = (((domainTcam.PORT_KEY    & domainTcam.PORT_KEY_INVERT) == 0) &&
-                      (((1 << rx_port) & maskPort) & (domainTcam.PORT_KEY & maskPort)));
-        fm_bool c1 = (((domainTcam.VID1_VALID & domainTcam.VID1_VALID_INVERT) == 0) &&
-                      ((vid1Valid & maskVid1Valid) == (domainTcam.VID1_VALID & maskVid1Valid)));
-        fm_bool c2 = (((domainTcam.VID1_KEY    & domainTcam.VID1_KEY_INVERT) == 0) &&
-                      ((vid1 & maskVid1) == (domainTcam.VID1_KEY & maskVid1)));
-        fm_bool c3 = (((domainTcam.VID2_VALID  & domainTcam.VID2_VALID_INVERT) == 0) &&
-                      ((vid2Valid & maskVid2Valid) == (domainTcam.VID2_VALID & maskVid2Valid)));
-        fm_bool c4 = (((domainTcam.VID2_KEY    & domainTcam.VID2_KEY_INVERT)   == 0) &&
-                      ((vid2 & maskVid2) == (domainTcam.VID2_KEY & maskVid2)));
-        fm_bool c5 = ((FM_GET_UNNAMED_FIELD(domainTcam._RSVD0_, 0, 6) == 0) &&
-                      (FM_GET_UNNAMED_FIELD(domainTcam._RSVD1_, 0, 6) == 0));
+        fm_bool c0 = (((domain_tcam.PORT_KEY    & domain_tcam.PORT_KEY_INVERT) == 0) &&
+                      ( (((1 << rx_port) & maskPort) & (domain_tcam.PORT_KEY & maskPort)) ||
+                       !(((1 << rx_port) & maskPort) & (domain_tcam.PORT_KEY_INVERT & maskPort))));
+        fm_bool c1 = (((domain_tcam.VID1_VALID  & domain_tcam.VID1_VALID_INVERT) == 0) &&
+                      ((vid1Valid & maskVid1Valid) == (domain_tcam.VID1_VALID & maskVid1Valid)));
+        fm_bool c2 = (((domain_tcam.VID1_KEY    & domain_tcam.VID1_KEY_INVERT) == 0) &&
+                      ((vid1 & maskVid1) == (domain_tcam.VID1_KEY & maskVid1)));
+        fm_bool c3 = (((domain_tcam.VID2_VALID  & domain_tcam.VID2_VALID_INVERT) == 0) &&
+                      ((vid2Valid & maskVid2Valid) == (domain_tcam.VID2_VALID & maskVid2Valid)));
+        fm_bool c4 = (((domain_tcam.VID2_KEY    & domain_tcam.VID2_KEY_INVERT)   == 0) &&
+                      ((vid2 & maskVid2) == (domain_tcam.VID2_KEY & maskVid2)));
+        fm_bool c5 = ((domain_tcam._RSVD0_ == 0) && (domain_tcam._RSVD1_ == 0));
 
         if (c0 && c1 && c2 && c3 && c4 && c5) {
             tcam_idx = index; // TCAM hit
@@ -395,26 +441,27 @@ static fm_uint32 lookUpDomainTcam
 
 static void insertDefaults
 (
-    mby_ppe_mapper_map   * const mapper_map,
-    const fm_uint32              rx_port,
-    const mbyMapPortCfg          port_cfg,
-    mbyClassifierActions * const ffu_actions,
-    mbyClassifierKeys    * const ffu_keys,
-    fm_uint16                    realigned_keys    [MBY_N_REALIGN_KEYS],
-    fm_bool                      realigned_keys_vld[MBY_N_REALIGN_KEYS])
+    mby_ppe_mapper_map   const * const mapper_map,
+    fm_uint32                    const rx_port,
+    mbyMapPortCfg                const port_cfg,
+    mbyClassifierActions       * const classifier_actions,
+    mbyClassifierKeys          * const classifier_keys,
+    fm_uint16                          realigned_keys    [MBY_N_REALIGN_KEYS],
+    fm_bool                            realigned_keys_vld[MBY_N_REALIGN_KEYS]
+)
 {
     for (fm_uint i = 0; i < MBY_CGRP_ACT24; i++) {
-        ffu_actions->act24[i].prec = 1;
-        ffu_actions->act24[i].val = 0;
+        classifier_actions->act24[i].prec = 1;
+        classifier_actions->act24[i].val = 0;
     }
 
     for (fm_uint i = 0; i < MBY_CGRP_ACT4; i++) {
-        ffu_actions->act4[i].prec = 1;
-        ffu_actions->act4[i].val = 0;
+        classifier_actions->act4[i].prec = 1;
+        classifier_actions->act4[i].val = 0;
     }
     for (fm_uint i = 0; i < MBY_CGRP_ACT1; i++) {
-        ffu_actions->act1[i].prec = 1;
-        ffu_actions->act1[i].val = 0;
+        classifier_actions->act1[i].prec = 1;
+        classifier_actions->act1[i].val = 0;
     }
 
     // Clear SGLORT and DGLORT
@@ -422,7 +469,7 @@ static void insertDefaults
     realigned_keys[MBY_RE_KEYS_DGLORT] = 0;
 
     // Apply defaults on keys
-    for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
+    for (fm_uint i = 0; i < map_port_default_rf_MAP_PORT_DEFAULT__nd; i++)
     {
         fm_uint32 entry = i; // conv. to unsigned
         mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, entry);
@@ -459,33 +506,33 @@ static void insertDefaults
     if (realigned_keys_vld[MBY_RE_KEYS_OUTER_IP_DS_FLOW])
     {
         fm_uint32 un0 = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_DS_FLOW], 10, 4);
-        FM_SET_UNNAMED_FIELD(ffu_actions->act4[MBY_CGRP_ACTION_DSCP_LOW].val, 0, 4, un0);
+        FM_SET_UNNAMED_FIELD(classifier_actions->act4[MBY_CGRP_ACTION_DSCP_LOW].val, 0, 4, un0);
 
         fm_uint32 un1 = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_DS_FLOW], 14, 2);
-        FM_SET_UNNAMED_FIELD(ffu_actions->act4[MBY_CGRP_ACTION_DSCP_HIGH].val, 0, 2, un1);
+        FM_SET_UNNAMED_FIELD(classifier_actions->act4[MBY_CGRP_ACTION_DSCP_HIGH].val, 0, 2, un1);
     }
 
     // Set VPRI/VID actions
     if (realigned_keys_vld[MBY_RE_KEYS_OUTER_VLAN1])
     {
         fm_uint32 un0 = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1], 12, 4);
-        ffu_actions->act4[MBY_CGRP_ACTION_VPRI_LOW].val = un0;
+        classifier_actions->act4[MBY_CGRP_ACTION_VPRI_LOW].val = un0;
 
         fm_uint32 un1 = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1], 12, 4); // 12? <-- REVISIT!!!
-        ffu_actions->act4[MBY_CGRP_ACTION_VPRI_HIGH].val = un1;
+        classifier_actions->act4[MBY_CGRP_ACTION_VPRI_HIGH].val = un1;
 
         fm_uint32 un2 = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1],  0, 4);
-        ffu_actions->act4[MBY_CGRP_ACTION_VID_LOW].val = un2;
+        classifier_actions->act4[MBY_CGRP_ACTION_VID_LOW].val = un2;
 
         fm_uint32 un3 = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1],  4, 4);
-        ffu_actions->act4[MBY_CGRP_ACTION_VID_MID].val = un3;
+        classifier_actions->act4[MBY_CGRP_ACTION_VID_MID].val = un3;
 
         fm_uint32 un4 = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_VLAN1],  8, 4);
-        ffu_actions->act4[MBY_CGRP_ACTION_VID_HIGH].val = un4;
+        classifier_actions->act4[MBY_CGRP_ACTION_VID_HIGH].val = un4;
     }
 
     // Apply defaults on actions
-    for (fm_uint i = 0; i < MBY_MAP_PORT_DEFAULT_ENTRIES_0; i++)
+    for (fm_uint i = 0; i < map_port_default_rf_MAP_PORT_DEFAULT__nd; i++)
     {
         fm_uint32 entry = i; // conv. to unsigned
         mbyMapPortDefaults port_defaults = getPortDefaults(mapper_map, rx_port, entry);
@@ -498,14 +545,14 @@ static void insertDefaults
              (target >= MBY_DEFAULT_TARGET_ACT24_L_L) &&
              ((target - MBY_DEFAULT_TARGET_ACT24_L_L) < MBY_CGRP_ACT24)) {
             fm_uint32 un0 = port_defaults.VALUE;
-            FM_SET_UNNAMED_FIELD(ffu_actions->act24[target - 96].val, 0, 16, un0);
+            FM_SET_UNNAMED_FIELD(classifier_actions->act24[target - 96].val, 0, 16, un0);
         }
         else if ( (target <= MBY_DEFAULT_TARGET_ACT24_U_H) &&
                   (target >= MBY_DEFAULT_TARGET_ACT24_U_L) &&
                   ((target - MBY_DEFAULT_TARGET_ACT24_U_L) < MBY_CGRP_ACT24)) {
             // target 112...121 matches upper act24[0...10]
             fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, 0, 8);
-            FM_SET_UNNAMED_FIELD(ffu_actions->act24[target - 112].val, 16, 8, un0);
+            FM_SET_UNNAMED_FIELD(classifier_actions->act24[target - 112].val, 16, 8, un0);
         }
         else if ( (target <= MBY_DEFAULT_TARGET_ACT4_4_H) &&
                   (target >= MBY_DEFAULT_TARGET_ACT4_4_L) &&
@@ -513,7 +560,7 @@ static void insertDefaults
             for (fm_uint j = 0; j < 4; j++) {
                 if ((target - MBY_DEFAULT_TARGET_ACT4_4_L + j) < MBY_CGRP_ACT4) {
                     fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, j * 4, 4);
-                    ffu_actions->act4[target - MBY_DEFAULT_TARGET_ACT4_4_L + j].val = un0;
+                    classifier_actions->act4[target - MBY_DEFAULT_TARGET_ACT4_4_L + j].val = un0;
                 }
             }
         }
@@ -523,7 +570,7 @@ static void insertDefaults
             for (fm_uint j = 0; j < 2; j++) {
                 if ((target - MBY_DEFAULT_TARGET_ACT4_2_L + j) < MBY_CGRP_ACT4) {
                     fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, j * 4, 4);
-                    ffu_actions->act4[target - MBY_DEFAULT_TARGET_ACT4_2_L + j].val = un0;
+                    classifier_actions->act4[target - MBY_DEFAULT_TARGET_ACT4_2_L + j].val = un0;
                 }
             }
         }
@@ -531,12 +578,12 @@ static void insertDefaults
              (target >= MBY_DEFAULT_TARGET_ACT4_1_L)  &&
              ((target - MBY_DEFAULT_TARGET_ACT4_1_L) < MBY_CGRP_ACT4)) {
             fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, 0, 4);
-            ffu_actions->act4[target - MBY_DEFAULT_TARGET_ACT4_1_L].val = un0;
+            classifier_actions->act4[target - MBY_DEFAULT_TARGET_ACT4_1_L].val = un0;
         }
         else if ( target == MBY_DEFAULT_TARGET_ACT1_FLAGS) {
             for (fm_uint j = 0; j < 16; j++) {
                 fm_uint32 un0 = FM_GET_UNNAMED_FIELD(port_defaults.VALUE, j, 1);
-                ffu_actions->act1[j].val = un0;
+                classifier_actions->act1[j].val = un0;
             }
         }
     }
@@ -546,34 +593,34 @@ static void insertDefaults
         realigned_keys_vld[MBY_RE_KEYS_SGLORT] = 1;
     }
 
-    // Set FFU keys from realigned_keys
+    // Set classifier keys from realigned_keys
 
     // KEY16
     for (fm_uint i = 0; i < MBY_CGRP_KEY16; i++)
-         ffu_keys->key16[i] = realigned_keys[i];
+        classifier_keys->key16[i] = realigned_keys[i];
 
     // KEY8
     for (fm_uint i = 0; i < MBY_CGRP_KEY8; i += 2) {
-        ffu_keys->key8[i  ] = FM_GET_UNNAMED_FIELD(realigned_keys[(i >> 1) + MBY_RE_KEYS_GENERAL_8B], 8, 8);
-        ffu_keys->key8[i+1] = FM_GET_UNNAMED_FIELD(realigned_keys[(i >> 1) + MBY_RE_KEYS_GENERAL_8B], 0, 8);
+        classifier_keys->key8[i  ] = FM_GET_UNNAMED_FIELD(realigned_keys[(i >> 1) + MBY_RE_KEYS_GENERAL_8B], 8, 8);
+        classifier_keys->key8[i+1] = FM_GET_UNNAMED_FIELD(realigned_keys[(i >> 1) + MBY_RE_KEYS_GENERAL_8B], 0, 8);
     }
 
     // KEY32
     for (fm_uint i = 0; i < MBY_CGRP_KEY32; i++) {
-        FM_SET_UNNAMED_FIELD(ffu_keys->key32[i], 16, 16, realigned_keys[i * 2 + MBY_RE_KEYS_OUTER_SIP]);
-        FM_SET_UNNAMED_FIELD(ffu_keys->key32[i],  0, 16, realigned_keys[i * 2 + MBY_RE_KEYS_OUTER_SIP + 1]);
+        FM_SET_UNNAMED_FIELD(classifier_keys->key32[i], 16, 16, realigned_keys[i * 2 + MBY_RE_KEYS_OUTER_SIP]);
+        FM_SET_UNNAMED_FIELD(classifier_keys->key32[i],  0, 16, realigned_keys[i * 2 + MBY_RE_KEYS_OUTER_SIP + 1]);
     }
 }
 
 static void getTcFromPriSource
 (
-    mby_ppe_mapper_map * const mapper_map,
-    fm_bool   const            pa_flags[MBY_N_PARSER_FLGS],
-    fm_uint32 const            domain_index,
-    fm_uint16 const            realigned_keys[MBY_N_REALIGN_KEYS],
-    fm_byte   const            pri_profile,
-    fm_bool            * const no_pri_enc,
-    fm_byte            * const traffic_class
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_bool                    const pa_flags[MBY_N_PARSER_FLGS],
+    fm_uint32                  const domain_index,
+    fm_uint16                  const realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_byte                    const pri_profile,
+    fm_bool                  * const no_pri_enc,
+    fm_byte                  * const traffic_class
 )
 {
     mbyMapDomainAction0 domain_action0 = getDomainAction0(mapper_map, domain_index);
@@ -631,44 +678,107 @@ static void getTcFromPriSource
     *no_pri_enc    = np;
 }
 
+static void processIpMapping
+(
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint16                  const realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_byte                          ip_key,
+    fm_byte                          exp_valid_flag,
+    fm_byte                          ip_scenario_bit,
+    fm_bool                    const is_ipv4[MBY_N_IS_IP_BITS],
+    fm_bool                    const is_ipv6[MBY_N_IS_IP_BITS],
+    mbyMapProfKey1           * const map_prof_key1,
+    mbyMappedKey             * const mapped_key
+)
+{
+    fm_uint64 hdr_ip_hi  = 0L;
+    fm_uint64 hdr_ip_low = 0L;
+
+    FM_SET_UNNAMED_FIELD64(hdr_ip_hi, 0,  16, realigned_keys[ip_key + 3]);
+    FM_SET_UNNAMED_FIELD64(hdr_ip_hi, 16, 16, realigned_keys[ip_key + 2]);
+    FM_SET_UNNAMED_FIELD64(hdr_ip_hi, 32, 16, realigned_keys[ip_key + 1]);
+    FM_SET_UNNAMED_FIELD64(hdr_ip_hi, 48, 16, realigned_keys[ip_key    ]);
+
+    FM_SET_UNNAMED_FIELD64(hdr_ip_low, 0,  16, realigned_keys[ip_key + 7]);
+    FM_SET_UNNAMED_FIELD64(hdr_ip_low, 16, 16, realigned_keys[ip_key + 6]);
+    FM_SET_UNNAMED_FIELD64(hdr_ip_low, 32, 16, realigned_keys[ip_key + 5]);
+    FM_SET_UNNAMED_FIELD64(hdr_ip_low, 48, 16, realigned_keys[ip_key + 4]);
+
+    for (int i = mby_ppe_mapper_map_MAP_IP_CFG__nd - 1; i >= 0; i--)
+    {
+        fm_uint32 entry = i; // conf. to unsigned
+        mbyMapIpCfg ip_cfg = getIpCfg(mapper_map, entry);
+
+        if (!(ip_cfg.VALID & exp_valid_flag))
+            continue;
+
+        if( (!ip_cfg.IS_IPV6 && is_ipv6[0]) || (ip_cfg.IS_IPV6 && is_ipv4[0]) )
+            continue;
+
+        fm_byte ignore_len  = 128 - ip_cfg.MATCH_LENGTH;
+
+        fm_uint64 lo_mask = ignore_len < 64 ? (FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << ignore_len) : 0;
+        fm_uint64 hi_mask = ignore_len > 64 ?
+                ( (ignore_len == 128) ? 0 :
+                 FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF) << (ignore_len - 64) ) :
+                 FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF);
+
+        mbyMapIpLo map_ip_lo = getIpLo(mapper_map, entry);
+        mbyMapIpHi map_ip_hi = getIpHi(mapper_map, entry);
+
+        if ((map_ip_lo.IP_LO == (hdr_ip_low & lo_mask)) &&
+            (map_ip_hi.IP_HI == (hdr_ip_hi  & hi_mask)))
+        {
+            mapped_key->MAP_OUTER_SIP = ip_cfg.MAP_IP;
+            /* drive to profile */
+            FM_SET_UNNAMED_FIELD(map_prof_key1->IP_SCENARIO, ip_scenario_bit,
+                                 MBY_MAP_IP_PROF_BITS_PER_IP, ip_cfg.IP_PROFILE);
+            break;
+        }
+    }
+}
+
 static void mapScalar
 (
-    mby_ppe_mapper_map   * const mapper_map,
-    fm_uint32     const          rx_port,
-    mbyMapPortCfg const          port_cfg,
-    fm_bool       const          pa_ex_parsing_done,
-    fm_bool       const          pa_ex_trunc_header,
-    fm_bool       const          pa_ex_depth_exceed,
-    fm_bool       const          pa_csum_ok,
-    fm_bool       const          pa_flags[MBY_N_PARSER_FLGS],
-    fm_byte       const          pa_ptrs [MBY_N_PARSER_PTRS],
-    fm_uint16     const          realigned_keys[MBY_N_REALIGN_KEYS],
-    fm_bool       const          is_ipv4[MBY_N_IS_IP_BITS],
-    fm_bool       const          is_ipv6[MBY_N_IS_IP_BITS],
-    fm_uint32     const          domain_index,
-    fm_bool       const          ihl_ok,
-    fm_bool       const          ihl_fits,
-    mbyClassifierActions * const ffu_actions,
-    mbyMapProfKey0       * const map_prof_key0,
-    mbyMapProfKey1       * const map_prof_key1,
-    mbyMappedKey         * const mapped_key,
-    fm_byte              * const pri_profile,
-    fm_bool              * const no_pri_enc,
-    fm_byte              * const traffic_class,
-    fm_byte              * const operator_id,
-    fm_uint16            * const l2_domain,
-    fm_byte              * const l3_domain,
-    fm_bool              * const learn_mode,
-    fm_uint16            * const l2_ivlan1_cnt
+    mby_ppe_mapper_map const * const mapper_map,
+    fm_uint32                  const rx_port,
+    mbyMapPortCfg              const port_cfg,
+    fm_bool                    const pa_ex_parsing_done,
+    fm_bool                    const pa_ex_trunc_header,
+    fm_bool                    const pa_ex_depth_exceed,
+    fm_bool                    const pa_csum_ok,
+    fm_bool                    const pa_flags[MBY_N_PARSER_FLGS],
+    fm_byte                    const pa_ptrs [MBY_N_PARSER_PTRS],
+    fm_uint16                  const packet_type,
+    fm_uint16                  const realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_bool                    const is_ipv4[MBY_N_IS_IP_BITS],
+    fm_bool                    const is_ipv6[MBY_N_IS_IP_BITS],
+    fm_uint32                  const domain_index,
+    fm_bool                    const ihl_ok,
+    fm_bool                    const ihl_fits,
+    mbyClassifierActions     * const classifier_actions,
+    mbyMapProfKey0           * const map_prof_key0,
+    mbyMapProfKey1           * const map_prof_key1,
+    mbyMappedKey             * const mapped_key,
+    fm_byte                  * const pri_profile,
+    fm_bool                  * const no_pri_enc,
+    fm_byte                  * const traffic_class,
+    fm_byte                  * const operator_id,
+    fm_uint16                * const l2_domain,
+    fm_byte                  * const l3_domain,
+    fm_bool                  * const learn_mode,
+    fm_uint16                * const l2_ivlan1_cnt
 )
 {
     // initialize
     mapped_key->MAP_INNER_PROT = 0;
     mapped_key->MAP_OUTER_PROT = 0;
-    mapped_key->MAP_PORT = getPort(mapper_map, rx_port);
+    mapped_key->MAP_PORT       = getPort(mapper_map, rx_port);
+
+    map_prof_key1->PTYPE = packet_type;
 
     // Compress PROT to 3 bits, highest index match wins
-    for (fm_uint i = 0; i < MBY_MAP_PROT_ENTRIES; i++)
+    for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_PROT__nd; i++)
     {
         fm_uint32 prot_entry = i;
         mbyMapProt prot = getProt(mapper_map, prot_entry);
@@ -690,7 +800,7 @@ static void mapScalar
     fm_bool oDmacMulticast = isMulticastMacAddress(key_mac);
     fm_bool oDmacBroadcast = isBroadcastMacAddress(key_mac);
 
-    for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
+    for (fm_int i = mby_ppe_mapper_map_MAP_MAC__nd - 1; i >= 0; i--)
     {
         fm_uint32 entry = i; // conf. to unsigned
         mbyMapMac mac = getMac(mapper_map, entry);
@@ -709,7 +819,7 @@ static void mapScalar
     FM_SET_UNNAMED_FIELD64(key_mac, 16, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC + 1]);
     FM_SET_UNNAMED_FIELD64(key_mac, 32, 16, realigned_keys[MBY_RE_KEYS_OUTER_SMAC    ]);
 
-    for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
+    for (fm_int i = mby_ppe_mapper_map_MAP_MAC__nd - 1; i >= 0; i--)
     {
         fm_uint32 entry = i; // conf. to unsigned
         mbyMapMac mac = getMac(mapper_map, entry);
@@ -729,7 +839,7 @@ static void mapScalar
         FM_SET_UNNAMED_FIELD64(key_mac, 16, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC + 1]);
         FM_SET_UNNAMED_FIELD64(key_mac, 32, 16, realigned_keys[MBY_RE_KEYS_INNER_DMAC    ]);
 
-        for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
+        for (fm_int i = mby_ppe_mapper_map_MAP_MAC__nd - 1; i >= 0; i--)
         {
             fm_uint32 entry = i; // conf. to unsigned
             mbyMapMac mac = getMac(mapper_map, entry);
@@ -747,7 +857,7 @@ static void mapScalar
         FM_SET_UNNAMED_FIELD64(key_mac, 16, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 1]);
         FM_SET_UNNAMED_FIELD64(key_mac, 32, 16, realigned_keys[MBY_RE_KEYS_INNER_SMAC + 0]);
 
-        for (fm_int i = MBY_MAP_MAC_ENTRIES - 1; i >= 0; i--)
+        for (fm_int i = mby_ppe_mapper_map_MAP_MAC__nd - 1; i >= 0; i--)
         {
             fm_uint32 entry = i; // conf. to unsigned
             mbyMapMac mac = getMac(mapper_map, entry);
@@ -760,13 +870,75 @@ static void mapScalar
         }
     }
 
+    if (pa_flags[MBY_PA_FLAGS_OTR_L3_V])
+    {
+        /* Compress outer SIP to 4 bits */
+        processIpMapping
+        (
+            mapper_map,
+            realigned_keys,
+            MBY_RE_KEYS_OUTER_SIP,
+            MBY_MAP_OUTER_SIP_VALID,
+            MBY_MAP_IP_PROF_OUT_SIP_BIT,
+            is_ipv4,
+            is_ipv6,
+            map_prof_key1,
+            mapped_key
+        );
+
+        /* Compress outer DIP to 4 bits */
+        processIpMapping
+        (
+            mapper_map,
+            realigned_keys,
+            MBY_RE_KEYS_OUTER_DIP,
+            MBY_MAP_OUTER_DIP_VALID,
+            MBY_MAP_IP_PROF_OUT_DIP_BIT,
+            is_ipv4,
+            is_ipv6,
+            map_prof_key1,
+            mapped_key
+        );
+    }
+
+    if (pa_flags[MBY_PA_FLAGS_INR_L3_V])
+    {
+        /* Compress inner SIP to 4 bits */
+        processIpMapping
+        (
+            mapper_map,
+            realigned_keys,
+            MBY_RE_KEYS_INNER_SIP,
+            MBY_MAP_INNER_SIP_VALID,
+            MBY_MAP_IP_PROF_INN_SIP_BIT,
+            is_ipv4,
+            is_ipv6,
+            map_prof_key1,
+            mapped_key
+        );
+
+        /* Compress inner DIP to 4 bits */
+        processIpMapping
+        (
+            mapper_map,
+            realigned_keys,
+            MBY_RE_KEYS_INNER_DIP,
+            MBY_MAP_INNER_DIP_VALID,
+            MBY_MAP_IP_PROF_INN_DIP_BIT,
+            is_ipv4,
+            is_ipv6,
+            map_prof_key1,
+            mapped_key
+        );
+    }
+
     // Map outer L4 SRC ports
     if (pa_flags[MBY_PA_FLAGS_OTR_L4_V])
     {
         fm_uint32 temp = realigned_keys[MBY_RE_KEYS_OUTER_L4SRC];
         mapped_key->MAP_OUTER_L4_SRC = realigned_keys[MBY_RE_KEYS_OUTER_L4SRC];
 
-        for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_SRC__nd; i++)
         {
             fm_uint32 curr_l4_src = mapper_map->MAP_L4_SRC[i].MAP_L4_SRC;
             fm_byte   valid       = mapper_map->MAP_L4_SRC[i].VALID;
@@ -774,7 +946,7 @@ static void mapScalar
             fm_uint32 curr_map    = mapper_map->MAP_L4_SRC[i].L4_SRC;
             if ((valid & 1) && (mapped_key->MAP_OUTER_PROT == curr_prot))
             {
-                fm_bool next_ok = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+                fm_bool next_ok = ((i + 1) != mby_ppe_mapper_map_MAP_L4_SRC__nd);
                 fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].L4_SRC   : 0;
                 fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].MAP_PROT : 0;
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
@@ -789,7 +961,7 @@ static void mapScalar
         fm_uint32 temp = realigned_keys[MBY_RE_KEYS_INNER_L4SRC];
         mapped_key->MAP_INNER_L4_SRC = realigned_keys[MBY_RE_KEYS_INNER_L4SRC];
 
-        for (fm_uint i = 0; i < MBY_MAP_L4_SRC_ENTRIES; i++)
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_SRC__nd; i++)
         {
             fm_uint32 curr_l4_src = mapper_map->MAP_L4_SRC[i].MAP_L4_SRC;
             fm_byte   valid       = mapper_map->MAP_L4_SRC[i].VALID;
@@ -797,7 +969,7 @@ static void mapScalar
             fm_uint32 curr_map    = mapper_map->MAP_L4_SRC[i].L4_SRC;
             if (((valid >> 1) & 1) && (mapped_key->MAP_INNER_PROT == curr_prot))
             {
-                fm_bool next_ok   = ((i + 1) != MBY_MAP_L4_SRC_ENTRIES);
+                fm_bool next_ok   = ((i + 1) != mby_ppe_mapper_map_MAP_L4_SRC__nd);
                 fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].L4_SRC   : 0;
                 fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_SRC[i+1].MAP_PROT : 0;
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
@@ -812,7 +984,7 @@ static void mapScalar
         fm_uint32 temp = realigned_keys[MBY_RE_KEYS_OUTER_L4DST];
         mapped_key->MAP_OUTER_L4_DST = realigned_keys[MBY_RE_KEYS_OUTER_L4DST];
 
-        for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_DST__nd; i++)
         {
             fm_uint32 curr_l4_dst = mapper_map->MAP_L4_DST[i].MAP_L4_DST;
             fm_byte   valid       = mapper_map->MAP_L4_DST[i].VALID;
@@ -820,7 +992,7 @@ static void mapScalar
             fm_uint32 curr_map    = mapper_map->MAP_L4_DST[i].L4_DST;
             if ((valid & 1) && (mapped_key->MAP_OUTER_PROT == curr_prot))
             {
-                fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+                fm_bool   next_ok   = ((i + 1) != mby_ppe_mapper_map_MAP_L4_DST__nd);
                 fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_DST[i+1].L4_DST   : 0;
                 fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_DST[i+1].MAP_PROT : 0;
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_OUTER_PROT != next_prot) || (temp < next_map)))
@@ -835,7 +1007,7 @@ static void mapScalar
         fm_uint32 temp = realigned_keys[MBY_RE_KEYS_INNER_L4DST];
         mapped_key->MAP_INNER_L4_DST = realigned_keys[MBY_RE_KEYS_INNER_L4DST];
 
-        for (fm_uint i = 0; i < MBY_MAP_L4_DST_ENTRIES; i++)
+        for (fm_uint i = 0; i < mby_ppe_mapper_map_MAP_L4_DST__nd; i++)
         {
             fm_uint32 curr_l4_dst = mapper_map->MAP_L4_DST[i].MAP_L4_DST;
             fm_byte   valid       = mapper_map->MAP_L4_DST[i].VALID;
@@ -843,7 +1015,7 @@ static void mapScalar
             fm_uint32 curr_map    = mapper_map->MAP_L4_DST[i].L4_DST;
             if (((valid >> 1) & 1) && (mapped_key->MAP_INNER_PROT == curr_prot))
             {
-                fm_bool   next_ok   = ((i + 1) != MBY_MAP_L4_DST_ENTRIES);
+                fm_bool   next_ok   = ((i + 1) != mby_ppe_mapper_map_MAP_L4_DST__nd);
                 fm_uint32 next_map  = (next_ok) ? mapper_map->MAP_L4_DST[i+1].L4_DST   : 0;
                 fm_uint32 next_prot = (next_ok) ? mapper_map->MAP_L4_DST[i+1].MAP_PROT : 0;
                 if ((curr_map <= temp) && (next_ok || (mapped_key->MAP_INNER_PROT != next_prot) || (temp < next_map)))
@@ -857,6 +1029,7 @@ static void mapScalar
     FM_SET_UNNAMED_FIELD(map_prof_key0->EX, 1, 1, pa_ex_trunc_header);
     FM_SET_UNNAMED_FIELD(map_prof_key0->EX, 2, 1, pa_ex_depth_exceed);
 
+#if 0
     fm_bool ip_fits = FALSE;
     ip_fits = pa_flags[MBY_PA_FLAGS_OTR_L3_V] && pa_flags[MBY_PA_FLAGS_OTR_L4_V] &&
         ((pa_ptrs[MBY_PA_PTRS_OTR_L4_PTR] - pa_ptrs[MBY_PA_PTRS_OTR_L3_PTR]) <= 56);
@@ -865,7 +1038,7 @@ static void mapScalar
     ip_fits = pa_flags[MBY_PA_FLAGS_INR_L3_V] & pa_flags[MBY_PA_FLAGS_INR_L4_V] &
         ((pa_ptrs[MBY_PA_PTRS_INR_L4_PTR] - pa_ptrs[MBY_PA_PTRS_INR_L3_PTR]) <= 56);
     FM_SET_UNNAMED_FIELD(map_prof_key0->IP_FITS, 1, 1, ip_fits);
-
+#endif
     map_prof_key0->IHL_OK   = ihl_ok;
     map_prof_key0->IHL_FITS = ihl_fits;
 
@@ -900,7 +1073,7 @@ static void mapScalar
     map_prof_key1->L2_DOMAIN = *l2_domain;
     map_prof_key1->L3_DOMAIN = *l3_domain;
 
-    ffu_actions->act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val = domain_action0.LEARN_EN;
+    classifier_actions->act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val = domain_action0.LEARN_EN;
 
     *learn_mode = domain_action0.LEARN_MODE;
 
@@ -915,7 +1088,7 @@ static void mapScalar
         traffic_class
     );
 
-    ffu_actions->act4[MBY_CGRP_ACTION_TC].val = *traffic_class;
+    classifier_actions->act4[MBY_CGRP_ACTION_TC].val = *traffic_class;
 
     mbyMapDomainAction1 domain_action1 = getDomainAction1(mapper_map, domain_index);
     fm_uint16 l2Policer           = domain_action1.L2_POLICER;
@@ -928,19 +1101,19 @@ static void mapScalar
 
     if (l2Policer != 0) {
         // if l2_policer is nonzero, then the default POLICER[0] action is (bank=0, index=l2_policer).
-        ffu_actions->act24[MBY_CGRP_ACTION_POLICER0].val = 0;
-        FM_SET_UNNAMED_FIELD(ffu_actions->act24[MBY_CGRP_ACTION_POLICER0].val, 23,  1, 1);
-        FM_SET_UNNAMED_FIELD(ffu_actions->act24[MBY_CGRP_ACTION_POLICER0].val, 20,  3, l2_color_cfg);
-        FM_SET_UNNAMED_FIELD(ffu_actions->act24[MBY_CGRP_ACTION_POLICER0].val,  0, 12, (l2Policer & 0xFFF));
+        classifier_actions->act24[MBY_CGRP_ACTION_POLICER0].val = 0;
+        FM_SET_UNNAMED_FIELD(classifier_actions->act24[MBY_CGRP_ACTION_POLICER0].val, 23,  1, 1);
+        FM_SET_UNNAMED_FIELD(classifier_actions->act24[MBY_CGRP_ACTION_POLICER0].val, 20,  3, l2_color_cfg);
+        FM_SET_UNNAMED_FIELD(classifier_actions->act24[MBY_CGRP_ACTION_POLICER0].val,  0, 12, (l2Policer & 0xFFF));
     }
 
     if (l3Policer != 0) {
         // if l3_policer is nonzero, then the default POLICER[1] action is (bank=5, index=l3_policer).
-        ffu_actions->act24[MBY_CGRP_ACTION_POLICER1].val = 0;
-        FM_SET_UNNAMED_FIELD(ffu_actions->act24[MBY_CGRP_ACTION_POLICER1].val, 23,  1, 1);
-        FM_SET_UNNAMED_FIELD(ffu_actions->act24[MBY_CGRP_ACTION_POLICER1].val,  0, 12, (l3Policer & 0xFFF));
-        FM_SET_UNNAMED_FIELD(ffu_actions->act24[MBY_CGRP_ACTION_POLICER1].val, 20,  3, l3_color_cfg);
-        FM_SET_UNNAMED_FIELD(ffu_actions->act24[MBY_CGRP_ACTION_POLICER1].val, 16,  4, 5);
+        classifier_actions->act24[MBY_CGRP_ACTION_POLICER1].val = 0;
+        FM_SET_UNNAMED_FIELD(classifier_actions->act24[MBY_CGRP_ACTION_POLICER1].val, 23,  1, 1);
+        FM_SET_UNNAMED_FIELD(classifier_actions->act24[MBY_CGRP_ACTION_POLICER1].val,  0, 12, (l3Policer & 0xFFF));
+        FM_SET_UNNAMED_FIELD(classifier_actions->act24[MBY_CGRP_ACTION_POLICER1].val, 20,  3, l3_color_cfg);
+        FM_SET_UNNAMED_FIELD(classifier_actions->act24[MBY_CGRP_ACTION_POLICER1].val, 16,  4, 5);
     }
 }
 
@@ -974,17 +1147,17 @@ static void encodeLength
 
 static void getParserInfo
 (
-    mby_ppe_mapper_map      * const mapper_map,
-    mbyMapperToClassifier   * const out,
-    const fm_uint32                 rx_port,
-    const fm_byte                   pa_adj_seg_len,
-    const fm_bool                   pa_flags      [MBY_N_PARSER_FLGS],
-    const fm_byte                   pa_ptrs       [MBY_N_PARSER_PTRS],
-    const fm_bool                   pa_ptrs_valid [MBY_N_PARSER_PTRS],
-    const fm_uint16                 realigned_keys[MBY_N_REALIGN_KEYS],
-    const fm_bool                   is_ipv6       [MBY_N_IS_IP_BITS],
-    mbyMapProfKey0          * const map_prof_key0,
-    mbyParserInfo           * const parser_info
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyMapperToClassifier       * const out,
+    fm_uint32                     const rx_port,
+    fm_byte                       const pa_adj_seg_len,
+    fm_bool                       const pa_flags      [MBY_N_PARSER_FLGS],
+    fm_byte                       const pa_ptrs       [MBY_N_PARSER_PTRS],
+    fm_bool                       const pa_ptrs_valid [MBY_N_PARSER_PTRS],
+    fm_uint16                     const realigned_keys[MBY_N_REALIGN_KEYS],
+    fm_bool                       const is_ipv6       [MBY_N_IS_IP_BITS],
+    mbyMapProfKey0              * const map_prof_key0,
+    mbyParserInfo               * const parser_info
 )
 {
     fm_byte outerProt = FM_GET_UNNAMED_FIELD(realigned_keys[MBY_RE_KEYS_OUTER_IP_TTL_PROT], 0, 8);
@@ -1209,14 +1382,14 @@ static void getParserInfo
 
 static void getProfile
 (
-    mby_ppe_mapper_map      * const mapper_map,
-    mbyMapperToClassifier   * const out,
-    fm_uint16 const                 realigned_keys[MBY_N_REALIGN_KEYS],
-    mbyMapProfKey0 const            key0,
-    mbyMapProfKey1 const            key1,
-    mbyClassifierActions    * const ffu_actions,
-    mbyMapProfAction        * const map_prof_action,
-    fm_byte                 * const ffu_profile
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyMapperToClassifier       * const out,
+    fm_uint16                     const realigned_keys[MBY_N_REALIGN_KEYS],
+    mbyMapProfKey0                const key0,
+    mbyMapProfKey1                const key1,
+    mbyClassifierActions        * const classifier_actions,
+    mbyMapProfAction            * const map_prof_action,
+    fm_byte                     * const packet_profile
 )
 {
     // initialize struct:
@@ -1235,7 +1408,7 @@ static void getProfile
     fm_byte trigIdx    = 0;
     fm_byte priosIdx   = 0;
 
-    for (fm_int i = MBY_MAP_PROFILE_KEY0_ENTRIES - 1; i >= 0; i--)
+    for (fm_int i = mby_ppe_mapper_map_MAP_PROFILE_KEY0__nd - 1; i >= 0; i--)
     {
         map_profile_key0_r        profKey0   = mapper_map->MAP_PROFILE_KEY0        [i];
         map_profile_key_invert0_r profMask0  = mapper_map->MAP_PROFILE_KEY_INVERT0 [i];
@@ -1259,6 +1432,9 @@ static void getProfile
             continue;
 
         if (((~key0.FLAGS)          & profKey0.FLAGS)          || (key0.FLAGS          & profMask0.FLAGS))
+            continue;
+
+        if (((~key1.PTYPE)          & profKey1.PTYPE)          || (key1.PTYPE          & profMask1.PTYPE))
             continue;
 
         if (((~key1.L2_DOMAIN)      & profKey1.L2_DOMAIN)      || (key1.L2_DOMAIN      & profMask1.L2_DOMAIN))
@@ -1310,11 +1486,11 @@ static void getProfile
             break;
     }
 
-    *ffu_profile = map_prof_action->PROFILE;
+    *packet_profile = map_prof_action->PROFILE;
 
-    // Set Scenario action
+    // Set profile action
     for (fm_uint i = 0; i < 6; i++)
-        ffu_actions->act1[MBY_CGRP_ACTION_PROFILE0 + i].val = ((*ffu_profile) >> i) & 1;
+        classifier_actions->act1[MBY_CGRP_ACTION_PROFILE0 + i].val = ((*packet_profile) >> i) & 1;
 }
 
 static void rewriteSourceNybble
@@ -1324,12 +1500,13 @@ static void rewriteSourceNybble
     const fm_bool             pa_ex_depth_exceed,
     const fm_bool             pa_flags[MBY_N_PARSER_FLGS],
     const fm_bool             is_ipv6[MBY_N_IS_IP_BITS],
+    const fm_uint16           packet_type,
     const mbyMappedKey        mapped_key,
     const mbyMapProfKey0      map_prof_key0,
     const fm_uint32           nybble_idx,
     const fm_uint32           source_id,
-    const fm_byte             ffu_profile,
-    mbyClassifierKeys * const ffu_keys
+    const fm_byte             packet_profile,
+    mbyClassifierKeys * const classifier_keys
 )
 {
     fm_uint32 key_idx = 0;
@@ -1390,12 +1567,12 @@ static void rewriteSourceNybble
         val |= (pa_flags[((SOURCE_PA_FLAGS_H - source_id) * 4) + 2] << 2);
         val |= (pa_flags[((SOURCE_PA_FLAGS_H - source_id) * 4) + 3] << 3);
     }
-    else if (source_id == SOURCE_FFU_PROFILE_L)
-        /* only 6 bits */
-        val = (ffu_profile & 0x3F) >> 4;
-    else if (source_id == SOURCE_FFU_PROFILE_H)
-        /* only 6 bits */
-        val = (ffu_profile & 0x3F) >> 0;
+    else if (source_id == SOURCE_PACKET_PROFILE_L)
+        /* only 4 bits */
+        val = (packet_profile & 0x3F) >> 4;
+    else if (source_id == SOURCE_PACKET_PROFILE_H)
+        /* only 4 bits */
+        val = (packet_profile & 0x3F) >> 0;
     else if (source_id == SOURCE_MAP_INNER_PROT)
         val = mapped_key.MAP_INNER_PROT;
     else if (source_id == SOURCE_MAP_INNER_DMAC_H)
@@ -1425,46 +1602,51 @@ static void rewriteSourceNybble
     {
         FM_SET_UNNAMED_FIELD64(val, 0, 1, is_ipv6[1]);
         FM_SET_UNNAMED_FIELD64(val, 1, 1, is_ipv6[0]);
-        val |= (map_prof_key0.IP_FITS & 0x3) << 2;
+        //val |= (map_prof_key0.IHL_FITS & 0x3) << 2;
+    }
+    else if (source_id >= SOURCE_PTYPE_L && source_id <= SOURCE_PTYPE_H)
+    {
+        FM_SET_UNNAMED_FIELD(val, (SOURCE_PTYPE_H - source_id) * 4, 4, packet_type);
     }
     else
     {
         // unhandled source_id
     }
 
-    if        (nybble_idx < 8) {
-        FM_SET_UNNAMED_FIELD(ffu_keys->key16[key_idx], key_off, 4, val);
+    if (nybble_idx < 8) {
+        FM_SET_UNNAMED_FIELD(classifier_keys->key16[key_idx], key_off, 4, val);
     } else if (nybble_idx <= 31) {
-        FM_SET_UNNAMED_FIELD(ffu_keys->key8[ key_idx], key_off, 4, val);
+        FM_SET_UNNAMED_FIELD(classifier_keys->key8[ key_idx], key_off, 4, val);
     }
 }
 
 static void mapRewrite
 (
-    mby_ppe_mapper_map    * const mapper_map,
-    mbyMapperToClassifier * const out,
-    fm_bool const                 pa_ex_parsing_done,
-    fm_bool const                 pa_ex_trunc_header,
-    fm_bool const                 pa_ex_depth_exceed,
-    fm_bool const                 pa_flags           [MBY_N_PARSER_FLGS],
-    fm_uint16 const               realigned_keys     [MBY_N_REALIGN_KEYS],
-    fm_bool const                 realigned_keys_vld [MBY_N_REALIGN_KEYS],
-    fm_bool const                 is_ipv6            [MBY_N_IS_IP_BITS],
-    fm_byte const                 ffu_profile,
-    mbyMapProfAction const        map_prof_action,
-    mbyMapProfKey0 const          map_prof_key0,
-    mbyMappedKey const            mapped_key,
-    fm_byte const                 pri_profile,
-    fm_bool                       ip_option[2],
-    fm_bool               * const parser_error,
-    mbyClassifierActions  * const ffu_actions,
-    mbyClassifierKeys     * const ffu_keys
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyMapperToClassifier       * const out,
+    fm_bool                       const pa_ex_parsing_done,
+    fm_bool                       const pa_ex_trunc_header,
+    fm_bool                       const pa_ex_depth_exceed,
+    fm_bool                       const pa_flags           [MBY_N_PARSER_FLGS],
+    fm_uint16                     const packet_type,
+    fm_uint16                     const realigned_keys     [MBY_N_REALIGN_KEYS],
+    fm_bool                       const realigned_keys_vld [MBY_N_REALIGN_KEYS],
+    fm_bool                       const is_ipv6            [MBY_N_IS_IP_BITS],
+    fm_byte                       const packet_profile,
+    mbyMapProfAction              const map_prof_action,
+    mbyMapProfKey0                const map_prof_key0,
+    mbyMappedKey                  const mapped_key,
+    fm_byte                       const pri_profile,
+    fm_bool                             ip_option[2],
+    fm_bool                     * const parser_error,
+    mbyClassifierActions        * const classifier_actions,
+    mbyClassifierKeys           * const classifier_keys
 )
 {
     // Rewrite Keys
     if (map_prof_action.PROFILE_VALID)
     {
-        for (fm_uint i = 0; i < MBY_MAP_REWRITE_ENTRIES_0; i++)
+        for (fm_uint i = 0; i < map_rewrite_rf_MAP_REWRITE__nd; i++)
         {
             fm_byte   j = map_prof_action.REWRITE_PROFILE;
             fm_byte   source_id = mapper_map->MAP_REWRITE[j][i].SRC_ID;
@@ -1477,12 +1659,13 @@ static void mapRewrite
                 pa_ex_depth_exceed,
                 pa_flags,
                 is_ipv6,
+                packet_type,
                 mapped_key,
                 map_prof_key0,
                 nybble_idx,
                 source_id,
-                ffu_profile,
-                ffu_keys
+                packet_profile,
+                classifier_keys
             );
         }
     }
@@ -1496,15 +1679,15 @@ static void mapRewrite
 
         // trig and ip_option mask
         for (fm_uint i = 0; i < 8; i++)
-            ffu_actions->act1[MBY_CGRP_ACTION_TRIGGER0 + i].val = (map_prof_action.PROFILE_TRIG >> i) & 1;
+            classifier_actions->act1[MBY_CGRP_ACTION_TRIGGER0 + i].val = (map_prof_action.PROFILE_TRIG >> i) & 1;
 
         otr_l3_len = 0;
         inr_l3_len = 0;
 
-        FM_SET_UNNAMED_FIELD64(otr_l3_len, 0, 8, ffu_keys->key8[MBY_CGRP_KEY8_OUTER_LEN+1]);
-        FM_SET_UNNAMED_FIELD64(otr_l3_len, 8, 8, ffu_keys->key8[MBY_CGRP_KEY8_OUTER_LEN]);
-        FM_SET_UNNAMED_FIELD64(inr_l3_len, 0, 8, ffu_keys->key8[MBY_CGRP_KEY8_INNER_LEN+1]);
-        FM_SET_UNNAMED_FIELD64(inr_l3_len, 8, 8, ffu_keys->key8[MBY_CGRP_KEY8_INNER_LEN]);
+        FM_SET_UNNAMED_FIELD64(otr_l3_len, 0, 8, classifier_keys->key8[MBY_CGRP_KEY8_OUTER_LEN+1]);
+        FM_SET_UNNAMED_FIELD64(otr_l3_len, 8, 8, classifier_keys->key8[MBY_CGRP_KEY8_OUTER_LEN]);
+        FM_SET_UNNAMED_FIELD64(inr_l3_len, 0, 8, classifier_keys->key8[MBY_CGRP_KEY8_INNER_LEN+1]);
+        FM_SET_UNNAMED_FIELD64(inr_l3_len, 8, 8, classifier_keys->key8[MBY_CGRP_KEY8_INNER_LEN]);
 
         otr_opt_flags = (pa_flags[MBY_PA_FLAGS_OTR_L3_V] && !is_ipv6[0] && (otr_l3_len > 20)) ? (1 << 6) : 0;
         inr_opt_flags = (pa_flags[MBY_PA_FLAGS_INR_L3_V] && !is_ipv6[1] && (inr_l3_len > 20)) ? (1 << 6) : 0;
@@ -1523,52 +1706,52 @@ static void mapRewrite
     {
         if (map_prof_action.VPRI_TGT & 0x4)
         {
-            fm_byte vpri = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_CGRP_KEY16_OUTER_VLAN1], 12, 4);
+            fm_byte vpri = FM_GET_UNNAMED_FIELD(classifier_keys->key16[MBY_CGRP_KEY16_OUTER_VLAN1], 12, 4);
             fm_uint64 vpri_by_vpri = mapper_map->MAP_VPRI[pri_profile].VPRI_BY_VPRI;
             fm_byte   map_vpri     = FM_GET_UNNAMED_FIELD64(vpri_by_vpri, vpri * 4, 4);
-            ffu_actions->act4[MBY_CGRP_ACTION_VPRI_LOW ].val = map_vpri;
-            ffu_actions->act4[MBY_CGRP_ACTION_VPRI_HIGH].val = map_vpri;
+            classifier_actions->act4[MBY_CGRP_ACTION_VPRI_LOW ].val = map_vpri;
+            classifier_actions->act4[MBY_CGRP_ACTION_VPRI_HIGH].val = map_vpri;
         }
 
         if (map_prof_action.VPRI_TGT & 0x1)
         {
-            fm_byte vpri = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_CGRP_KEY16_OUTER_VLAN1], 12, 4);
+            fm_byte vpri = FM_GET_UNNAMED_FIELD(classifier_keys->key16[MBY_CGRP_KEY16_OUTER_VLAN1], 12, 4);
             fm_uint64 vpri_by_vpri = mapper_map->MAP_VPRI[pri_profile].VPRI_BY_VPRI;
             fm_byte   map_vpri     = FM_GET_UNNAMED_FIELD64(vpri_by_vpri, vpri * 4, 4);
-            FM_SET_UNNAMED_FIELD(ffu_keys->key16[MBY_CGRP_KEY16_OUTER_VLAN1], 12, 4, map_vpri)
+            FM_SET_UNNAMED_FIELD(classifier_keys->key16[MBY_CGRP_KEY16_OUTER_VLAN1], 12, 4, map_vpri)
         }
 
         if (map_prof_action.VPRI_TGT & 0x2)
         {
-            fm_byte vpri = FM_GET_UNNAMED_FIELD(ffu_keys->key16[MBY_CGRP_KEY16_INNER_VLAN1], 12, 4);
+            fm_byte vpri = FM_GET_UNNAMED_FIELD(classifier_keys->key16[MBY_CGRP_KEY16_INNER_VLAN1], 12, 4);
             fm_uint64 vpri_by_vpri = mapper_map->MAP_VPRI[pri_profile].VPRI_BY_VPRI;
             fm_byte   map_vpri     = FM_GET_UNNAMED_FIELD64(vpri_by_vpri, vpri * 4, 4);
-            FM_SET_UNNAMED_FIELD(ffu_keys->key16[MBY_CGRP_KEY16_INNER_VLAN1], 12, 4, map_vpri);
+            FM_SET_UNNAMED_FIELD(classifier_keys->key16[MBY_CGRP_KEY16_INNER_VLAN1], 12, 4, map_vpri);
         }
 
         if (map_prof_action.DSCP_TGT & 0x4)
         {
-            fm_byte dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
+            fm_byte dscp = FM_GET_UNNAMED_FIELD(classifier_keys->key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
             fm_byte indx = ((pri_profile << 6) | dscp);
             fm_byte map_dscp = mapper_map->MAP_DSCP_TC[indx].DSCP;
-            ffu_actions->act4[MBY_CGRP_ACTION_DSCP_LOW ].val =  map_dscp & 0xF;
-            ffu_actions->act4[MBY_CGRP_ACTION_DSCP_HIGH].val = (map_dscp >> 4);
+            classifier_actions->act4[MBY_CGRP_ACTION_DSCP_LOW ].val =  map_dscp & 0xF;
+            classifier_actions->act4[MBY_CGRP_ACTION_DSCP_HIGH].val = (map_dscp >> 4);
         }
 
         if (map_prof_action.DSCP_TGT & 0x1)
         {
-            fm_byte dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
+            fm_byte dscp = FM_GET_UNNAMED_FIELD(classifier_keys->key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6);
             fm_byte indx = ((pri_profile << 6) | dscp);
             fm_byte map_dscp = mapper_map->MAP_DSCP_TC[indx].DSCP;
-            FM_SET_UNNAMED_FIELD(ffu_keys->key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6, map_dscp);
+            FM_SET_UNNAMED_FIELD(classifier_keys->key8[MBY_CGRP_KEY8_OUTER_DS], 2, 6, map_dscp);
         }
 
         if (map_prof_action.DSCP_TGT & 0x2)
         {
-            fm_byte dscp = FM_GET_UNNAMED_FIELD(ffu_keys->key8[MBY_CGRP_KEY8_INNER_DS], 2, 6);
+            fm_byte dscp = FM_GET_UNNAMED_FIELD(classifier_keys->key8[MBY_CGRP_KEY8_INNER_DS], 2, 6);
             fm_byte indx = ((pri_profile << 6) | dscp);
             fm_byte map_dscp = mapper_map->MAP_DSCP_TC[indx].DSCP;
-            FM_SET_UNNAMED_FIELD(ffu_keys->key8[MBY_CGRP_KEY8_INNER_DS], 2, 6, map_dscp);
+            FM_SET_UNNAMED_FIELD(classifier_keys->key8[MBY_CGRP_KEY8_INNER_DS], 2, 6, map_dscp);
         }
     }
 }
@@ -1582,8 +1765,8 @@ static void mapRewrite
  */
 void Mapper
 (
-    mby_ppe_mapper_map          * const mapper_map,
-    mbyParserToMapper const     * const in,
+    mby_ppe_mapper_map    const * const mapper_map,
+    mbyParserToMapper     const * const in,
     mbyMapperToClassifier       * const out
 )
 {
@@ -1600,6 +1783,7 @@ void Mapper
     const fm_byte   * const pa_ptrs            = in->PA_HDR_PTRS.OFFSET;       // [MBY_N_PARSER_PTRS]
     const fm_bool   * const pa_ptrs_valid      = in->PA_HDR_PTRS.OFFSET_VALID; // [MBY_N_PARSER_PTRS]
     const fm_uint32         rx_port            = in->RX_PORT;
+    const fm_uint16         packet_type        = in->PA_PACKET_TYPE;
 
     // Outer MPLS valid flag for use in the Classifier:
     fm_bool otr_mpls_v = pa_flags[MBY_PA_FLAGS_OTR_MPLS_V];
@@ -1627,7 +1811,6 @@ void Mapper
     fm_bool ihl_ok   = FALSE;
     fm_bool ihl_fits = FALSE;
 
-    // TODO: Realign keys stage will probably be removed when spec provide more details.
     realignKeys
     (
         pa_keys,
@@ -1641,7 +1824,7 @@ void Mapper
     );
 
     fm_uint32 domain_index =
-    lookUpDomainTcam
+    lookupDomainTcam
     (
         mapper_map,
         rx_port,
@@ -1649,16 +1832,16 @@ void Mapper
         pa_flags
     );
 
-    mbyClassifierActions ffu_actions = { 0 };
-    mbyClassifierKeys    ffu_keys    = { 0 };
+    mbyClassifierActions classifier_actions = { 0 };
+    mbyClassifierKeys    classifier_keys    = { 0 };
 
     insertDefaults
     (
         mapper_map,
         rx_port,
         port_cfg,
-        &ffu_actions,
-        &ffu_keys,
+        &classifier_actions,
+        &classifier_keys,
         realigned_keys,
         realigned_keys_vld
     );
@@ -1687,13 +1870,14 @@ void Mapper
         pa_csum_ok,
         pa_flags,
         pa_ptrs,
+        packet_type,
         realigned_keys,
         is_ipv4,
         is_ipv6,
         domain_index,
         ihl_ok,
         ihl_fits,
-        &ffu_actions,
+        &classifier_actions,
         &map_prof_key0,
         &map_prof_key1,
         &mapped_key,
@@ -1725,7 +1909,7 @@ void Mapper
     );
 
     mbyMapProfAction map_prof_action = { 0 };
-    fm_byte ffu_profile = 0;
+    fm_byte packet_profile = 0;
 
     getProfile
     (
@@ -1734,9 +1918,9 @@ void Mapper
         realigned_keys,
         map_prof_key0,
         map_prof_key1,
-        &ffu_actions,
+        &classifier_actions,
         &map_prof_action,
-        &ffu_profile
+        &packet_profile
     );
 
     fm_bool ip_option[2] = { FALSE };
@@ -1750,46 +1934,47 @@ void Mapper
         pa_ex_trunc_header,
         pa_ex_depth_exceed,
         pa_flags,
+        packet_type,
         realigned_keys,
         realigned_keys_vld,
         is_ipv6,
-        ffu_profile,
+        packet_profile,
         map_prof_action,
         map_prof_key0,
         mapped_key,
         pri_profile,
         ip_option,
         &parser_error,
-        &ffu_actions,
-        &ffu_keys
+        &classifier_actions,
+        &classifier_keys
     );
 
     // Write outputs:
 
-    out->FFU_ACTIONS      = ffu_actions;
-    out->FFU_KEYS         = ffu_keys;
-    out->FFU_PROFILE      = ffu_profile;
-    out->IP_OPTION[0]     = ip_option[0];
-    out->IP_OPTION[1]     = ip_option[1];
-    out->L2_IDOMAIN       = l2_domain;
-    out->L2_IVLAN1_CNT    = l2_ivlan1_cnt;
-    out->L3_IDOMAIN       = l3_domain;
-    out->LEARN_MODE       = learn_mode;
-    out->NO_PRI_ENC       = no_pri_enc;
-    out->NAD              = nad;
-    out->OTR_MPLS_V       = otr_mpls_v;
-    out->PARSER_ERROR     = parser_error;
-    out->PARSER_INFO      = parser_info;
-    out->PRIORITY_PROFILE = pri_profile;
-    out->RX_PORT          = rx_port;
-    out->TRAFFIC_CLASS    = traffic_class;
+    out->CLASSIFIER_ACTIONS = classifier_actions;
+    out->CLASSIFIER_KEYS    = classifier_keys;
+    out->PACKET_PROFILE     = packet_profile;
+    out->IP_OPTION[0]       = ip_option[0];
+    out->IP_OPTION[1]       = ip_option[1];
+    out->L2_IDOMAIN         = l2_domain;
+    out->L2_IVLAN1_CNT      = l2_ivlan1_cnt;
+    out->L3_IDOMAIN         = l3_domain;
+    out->LEARN_MODE         = learn_mode;
+    out->NO_PRI_ENC         = no_pri_enc;
+    out->NAD                = nad;
+    out->OTR_MPLS_V         = otr_mpls_v;
+    out->PARSER_ERROR       = parser_error;
+    out->PARSER_INFO        = parser_info;
+    out->PRIORITY_PROFILE   = pri_profile;
+    out->RX_PORT            = rx_port;
+    out->TRAFFIC_CLASS      = traffic_class;
 
     // Pass thru:
 
-    out->PARITY_ERROR     = FALSE; // parked at 0 <-- REVISIT!!!
-    out->PA_DROP          = in->PA_DROP;
-    out->PA_HDR_PTRS      = in->PA_HDR_PTRS;
-    out->PA_L3LEN_ERR     = in->PA_L3LEN_ERR;
-    out->RX_DATA          = in->RX_DATA;
-    out->RX_LENGTH        = in->RX_LENGTH;
+    out->PARITY_ERROR       = FALSE; // parked at 0 <-- REVISIT!!!
+    out->PA_DROP            = in->PA_DROP;
+    out->PA_HDR_PTRS        = in->PA_HDR_PTRS;
+    out->PA_L3LEN_ERR       = in->PA_L3LEN_ERR;
+    out->RX_DATA            = in->RX_DATA;
+    out->RX_LENGTH          = in->RX_LENGTH;
 }

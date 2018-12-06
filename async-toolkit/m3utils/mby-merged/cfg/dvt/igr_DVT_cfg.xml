@@ -1,0 +1,53 @@
+%dvtcfg = (
+    -dut               => "mby",
+    -model_root        => "$ENV{MODEL_ROOT}", # used to create projects softlink
+    -eclipsespace      => "/tmp/$ENV{USER}/dvt_eclipsespace",
+    -workspace         => "/tmp/$ENV{USER}/$ENV{MODEL_ROOT}/dvt_workspace",
+    -waiversfile       => "$ENV{MODEL_ROOT}/cfg/dvt/igr_waivers.xml",
+    -options           => [
+                          "-lang vlog", # Required: Specifies your project nature is Verilog/SystemVerilog
+                          "-perspective VLOG", # Startup with this perspective
+                          "-heap_size 8G", # Default heap size. Increase as needed for our project.
+                          ],
+    -build_rtl_libs    => [
+                          # regex filter these libraries from the .build file (makes the project smaller with faster startup)
+                          #        '.*rtl_lib$',
+                          #        '.*_rtl_.*',
+                          ],
+    -build_preinclude  => [
+                          # Here you enter options you want at the top of your .build files
+                          "+dvt_disable_checks+UNDECLARED_IDENTIFIER", ## jjgodine test
+                          "+dvt_full_compile_checks+OFF",              ## jjgodine test
+                          "+dvt_file_compile_timeout+120", # 120sec timeout
+                          "+dvt_build_log_to_file+false",
+                          "+define+SHDV_DISABLE_SAOLA",
+                          ],
+    -build_postinclude => [
+                          # Here you enter options you want at the bottom of your .build files
+                          # This is not commonly used except for Test-Out-Model (TOM) projects
+                          ],
+    -exclude           => {
+                          -name                => [
+                                                  # Here you can exclude dirs by name and anywhere there is a match it will be excluded
+                                                  "aceroot",
+                                                  "regression",
+                                                  "GATEKEEPER",
+                                                  "MockTurnin*",
+                                                  "results",
+                                                  "target*",
+                                                  ],
+                          -projectRelativePath => [
+                                                  # Here you can exclude specific dirs relative to the project root
+                                                  "subIP",
+                                                  "tools",
+                                                  "scripts",
+                                                  ".git_hooks",
+                                                  "bin",
+                                                  #"subBlock",
+                                                  ],
+                          },
+    -map               => {
+                          # Here you can add links to the project Project View
+                          # <link_name> => "<target_path>",
+                          },
+);

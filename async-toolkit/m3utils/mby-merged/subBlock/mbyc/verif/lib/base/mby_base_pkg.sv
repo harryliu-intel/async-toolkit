@@ -32,7 +32,16 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_BASE_PKG__
 `define __MBY_BASE_PKG__
-
+//------------------------------------------------------------------------------
+//
+// PACKAGE: mby_base_pkg
+// This is the Madison Bay base agent package, currently it depends on the uvm,
+// and shdv_base_pkg verification packages. It defines a base agent, which
+// is a parameterized class that can be used to create simple agents quickly.
+// Image:
+//    (see ./mby_base_pkg.png)
+//
+//------------------------------------------------------------------------------
 package mby_base_pkg;
 
    import uvm_pkg::*;

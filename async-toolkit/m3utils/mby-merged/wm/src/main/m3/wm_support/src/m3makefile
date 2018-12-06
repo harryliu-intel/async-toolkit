@@ -12,7 +12,7 @@ Sequence ("CompRange", "CompRange")
 Sequence ("CompAddr", "CompAddr")
 Module ("CompPath")
 Module ("CompMemory")
-Interface ("MemoryMap")
+Module ("MemoryMap")
 
 Module ("CompMemoryListener")
 List ("CompMemoryListener","CompMemoryListener")
@@ -40,5 +40,11 @@ Module("WxToWr")
 
 Generic_module("TopoSort")
 Module("TextTopoSort")
+
+Module("AddrVisitor")
+
+Interface ("ContainerData")
+Module ("FieldData")
+Sequence ("FieldData", "FieldData")
 
 library ("wm_support")

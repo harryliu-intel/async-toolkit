@@ -57,10 +57,10 @@ static mbyWcmKeyInfo selectWcmKey
 
 static void lookUpWcmTcam
 (
-    mby_ppe_cgrp_b_nested_map  * const cgrp_b_map,
-    fm_byte              const slice,
-    fm_uint16            const chunk_mask,
-    mbyWcmKeyInfo      * const wcm_key_info
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    fm_byte                           const slice,
+    fm_uint16                         const chunk_mask,
+    mbyWcmKeyInfo                   * const wcm_key_info
 )
 {
     for (fm_uint i = 0; i < wcm_tcam_rf_WCM_TCAM__n; i++)
@@ -92,12 +92,12 @@ static void lookUpWcmTcam
     }
 }
 
-static void lookUpWcmTcamCascade
+static void lookupWcmTcamCascade
 (
-    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    mbyClassifierKeys const   * const keys,
-    fm_byte                     const packet_profile,
-    mbyClassifierHitInfo              tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n]
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    mbyClassifierKeys         const * const keys,
+    fm_byte                           const packet_profile,
+    mbyClassifierHitInfo                    tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n]
 )
 {
     // --------------------------------------------------------------------------------
@@ -177,10 +177,10 @@ static void lookUpWcmTcamCascade
 
 static void wcmActions
 (
-    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    fm_byte                     const packet_profile,
-    mbyClassifierHitInfo              tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n],
-    fm_uint32                         actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    fm_byte                           const packet_profile,
+    mbyClassifierHitInfo                    tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n],
+    fm_uint32                               actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     for (fm_uint ram_num = 0; ram_num < mby_ppe_cgrp_b_nested_map_WCM_ACTION__n; ram_num++)
@@ -204,10 +204,10 @@ static void wcmActions
 
 void mbyMatchWildcard
 (
-    mby_ppe_cgrp_b_nested_map * const cgrp_b_map,
-    mbyClassifierKeys const   * const keys,
-    fm_byte                     const packet_profile,
-    fm_uint32                         actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
+    mby_ppe_cgrp_b_nested_map const * const cgrp_b_map,
+    mbyClassifierKeys         const * const keys,
+    fm_byte                           const packet_profile,
+    fm_uint32                               actions[MBY_WCM_MAX_ACTIONS_NUM] // = the list of action_entry
 )
 {
     mbyClassifierHitInfo tcam_hit_info[mby_ppe_cgrp_b_nested_map_WCM_TCAM_CFG__n];
@@ -219,7 +219,7 @@ void mbyMatchWildcard
     }
 
     // Get hit index for each tcam slice:
-    lookUpWcmTcamCascade(cgrp_b_map, keys, packet_profile, tcam_hit_info);
+    lookupWcmTcamCascade(cgrp_b_map, keys, packet_profile, tcam_hit_info);
 
     // Get the list of action_entry from action RAMs based on tcam hit index per slice:
     wcmActions(cgrp_b_map, packet_profile, tcam_hit_info, actions);

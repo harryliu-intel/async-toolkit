@@ -167,15 +167,15 @@ static void getEmHashHitActions
 
 static fm_bool checkCamHits
 (
-    mby_ppe_cgrp_em_map * const cgrp_em_map,
-    fm_bool               const split_mode,
-    fm_byte               const group,
-    fm_uint               const hash_num,
-    fm_byte               const profile,
-    fm_byte               const packed_keys[MBY_CGRP_HASH_KEYS],
-    fm_byte               const key_size,
-    fm_byte               const max_hash_actions_num,
-    fm_uint32                   hash_actions[MBY_EM_MAX_ACTIONS_NUM]
+    mby_ppe_cgrp_em_map const * const cgrp_em_map,
+    fm_bool                     const split_mode,
+    fm_byte                     const group,
+    fm_uint                     const hash_num,
+    fm_byte                     const profile,
+    fm_byte                     const packed_keys[MBY_CGRP_HASH_KEYS],
+    fm_byte                     const key_size,
+    fm_byte                     const max_hash_actions_num,
+    fm_uint32                         hash_actions[MBY_EM_MAX_ACTIONS_NUM]
 )
 {
     fm_byte max_hash_entry_size = split_mode
@@ -192,7 +192,7 @@ static fm_bool checkCamHits
 
         // Build Cam Key
         fm_uint key_idx = 0;
-        for (fm_uint j = 0; j < em_hash_cam_rf_EM_HASH_CAM__n; j++)
+        for (fm_uint j = 0; j < em_hash_cam_rf_HASH_CAM__n; j++)
         {
             fm_bool hashn_32b = ( ((hash_num == 0) && (j < 4)) || ((hash_num == 1) && (j >= 4)) );
 
@@ -258,14 +258,14 @@ static fm_bool checkCamHits
 
 static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
 (
-    mby_shm_map             * const shm_map, // shared memory (forwarding tables)
-    fm_byte                   const group,
-    fm_uint32                 const hash_num,
-    mbyClassifierHashLookup   const bucket,
-    mbyClassifierHashCfg      const hash_cfg,
-    fm_uint16                 const hash_more,
-    fm_byte                         hash_lookup_key[MBY_CGRP_MAX_HASH_ENTRY_SIZE],
-    fm_bool                 * const lookup_data_ok
+    mby_shm_map             const * const shm_map, // shared memory (forwarding tables)
+    fm_byte                         const group,
+    fm_uint32                       const hash_num,
+    mbyClassifierHashLookup         const bucket,
+    mbyClassifierHashCfg            const hash_cfg,
+    fm_uint16                       const hash_more,
+    fm_byte                               hash_lookup_key[MBY_CGRP_MAX_HASH_ENTRY_SIZE],
+    fm_bool                       * const lookup_data_ok
 )
 {
     fm_byte bucket_hash = 0;
@@ -359,16 +359,16 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
 
 static fm_bool checkLookupHits
 (
-    mby_shm_map           * const shm_map,
-    fm_byte                 const group,
-    fm_uint                 const hash_num,
-    fm_byte                 const profile,
-    fm_byte                 const packed_keys[MBY_CGRP_HASH_KEYS],
-    fm_byte                 const key_size,
-    mbyClassifierHashLookup const bucket,
-    mbyClassifierHashCfg    const hash_cfg,
-    fm_uint16               const hash_more,
-    fm_uint32                     hash_actions[MBY_EM_MAX_ACTIONS_NUM]
+    mby_shm_map             const  * const shm_map,
+    fm_byte                          const group,
+    fm_uint                          const hash_num,
+    fm_byte                          const profile,
+    fm_byte                          const packed_keys[MBY_CGRP_HASH_KEYS],
+    fm_byte                          const key_size,
+    mbyClassifierHashLookup          const bucket,
+    mbyClassifierHashCfg             const hash_cfg,
+    fm_uint16                        const hash_more,
+    fm_uint32                              hash_actions[MBY_EM_MAX_ACTIONS_NUM]
 
 )
 {
@@ -406,13 +406,13 @@ static fm_bool checkLookupHits
 
 void mbyMatchExact // i.e. look up EM hash
 (
-    em_hash_lookup_r        * const em_hash_lookup_reg,
-    mby_ppe_cgrp_em_map     * const cgrp_em_map,
-    mby_shm_map             * const shm_map,
-    mbyClassifierKeys const * const keys,
-    fm_byte                   const profile,
-    fm_byte                   const group,
-    fm_uint32                       actions[MBY_EM_MAX_ACTIONS_NUM] // = the list of action entries to action resolution
+    em_hash_lookup_r    const * const em_hash_lookup_reg,
+    mby_ppe_cgrp_em_map const * const cgrp_em_map,
+    mby_shm_map         const * const shm_map,
+    mbyClassifierKeys   const * const keys,
+    fm_byte                     const profile,
+    fm_byte                     const group,
+    fm_uint32                         actions[MBY_EM_MAX_ACTIONS_NUM] // = the list of action entries to action resolution
 )
 {
     // In split mode are 2 lookups: hash_num = 0 and hash_num = 1

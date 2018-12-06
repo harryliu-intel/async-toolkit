@@ -150,7 +150,7 @@ static void init_EM_HASH_CAM_REG
 {
     for (fm_uint entry = 0 ; entry < mby_ppe_cgrp_em_map_HASH_CAM__n ; entry++)
     {
-        for(fm_uint word = 0 ; word < em_hash_cam_rf_EM_HASH_CAM__n ; word++)
+        for(fm_uint word = 0 ; word < em_hash_cam_rf_HASH_CAM__n ; word++)
         {
             set_EM_HASH_CAM(cgrp_em_map, entry, word, (fm_uint64)0x0000000000000000);
         }
@@ -179,7 +179,7 @@ static void init_EM_HASH_CAM_EN_REG
 {
     for (fm_uint row = 0 ; row < mby_ppe_cgrp_em_map_HASH_CAM_EN__n ; row++)
     {
-        for(fm_uint rule = 0 ; rule < em_hash_cam_en_rf_EM_HASH_CAM_EN__n ; rule++)
+        for(fm_uint rule = 0 ; rule < em_hash_cam_en_rf_HASH_CAM_EN__n ; rule++)
         {
             set_EM_HASH_CAM_EN(cgrp_em_map, row, rule, (fm_uint64)0x0000000000000000);
         }
@@ -208,7 +208,7 @@ static void init_EM_KEY_SEL0_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL0__n ; hash++)
     {
-        for(fm_uint profile = 0 ; profile < em_key_sel0_rf_EM_KEY_SEL0__n ; profile++)
+        for(fm_uint profile = 0 ; profile < em_key_sel0_rf_KEY_SEL0__n ; profile++)
         {
             set_EM_KEY_SEL0(cgrp_em_map, hash, profile, 0x00000000);
         }
@@ -241,7 +241,7 @@ static void init_EM_KEY_SEL1_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_SEL1__n ; hash++)
     {
-        for (fm_uint profile = 0 ; profile < em_key_sel1_rf_EM_KEY_SEL1__n ; profile++)
+        for (fm_uint profile = 0 ; profile < em_key_sel1_rf_KEY_SEL1__n ; profile++)
         {
             set_EM_KEY_SEL1(cgrp_em_map, hash, profile,
                 (uint4)0x0,
@@ -275,7 +275,7 @@ static void init_EM_KEY_MASK_REG
 )
 {
     fm_uint dw__n = 2;
-    fm_uint key_mask_sel__n = em_key_mask_rf_EM_KEY_MASK__n / dw__n; // <-- 16?? hash key profiles number REVISIT!!!
+    fm_uint key_mask_sel__n = em_key_mask_rf_KEY_MASK__n / dw__n; // <-- 16?? hash key profiles number REVISIT!!!
 
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_KEY_MASK__n ; hash++)
     {
@@ -313,7 +313,7 @@ static void init_EM_HASH_MISS_REG
 {
     for (fm_uint hash = 0 ; hash < mby_ppe_cgrp_em_map_HASH_MISS__n ; hash++)
     {
-        for (fm_uint profile = 0 ; profile < em_hash_miss_rf_EM_HASH_MISS__n ; profile++)
+        for (fm_uint profile = 0 ; profile < em_hash_miss_rf_HASH_MISS__n ; profile++)
         {
             set_EM_HASH_MISS(cgrp_em_map, hash, profile, (uint32)0x00000000, (uint32)0x00000000);
         }
@@ -521,9 +521,9 @@ static void initInputs
     mbyMapperToClassifier * const map2cla
 )
 {
-    mbyClassifierActions * const actions_in     = &(map2cla->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys           = &(map2cla->FFU_KEYS);
-    fm_byte              * const packet_profile = &(map2cla->FFU_PROFILE);
+    mbyClassifierActions * const actions_in     = &(map2cla->CLASSIFIER_ACTIONS);
+    mbyClassifierKeys    * const keys           = &(map2cla->CLASSIFIER_KEYS);
+    fm_byte              * const packet_profile = &(map2cla->PACKET_PROFILE);
 
     init_actions(actions_in);
     init_keys(keys);
@@ -608,44 +608,44 @@ static void setInputs_basic
     08  00  45  00  00  14  00  00  00  00  ff  06  cc  45  b0  0a
     1b  2c  12  34  12  34
     */
-    map2cla->FFU_KEYS.key32[0]  = 0xB00A1B2C;
-    map2cla->FFU_KEYS.key32[1]  = 0x12341234;
-    map2cla->FFU_KEYS.key32[4]  = 0x12341234;
-    map2cla->FFU_KEYS.key16[6]  = 0x0011;
-    map2cla->FFU_KEYS.key16[7]  = 0x2233;
-    map2cla->FFU_KEYS.key16[8]  = 0x4455;
-    map2cla->FFU_KEYS.key16[9]  = 0x0001;
-    map2cla->FFU_KEYS.key16[10] = 0x0101;
-    map2cla->FFU_KEYS.key16[11] = 0x0101;
-    map2cla->FFU_KEYS.key16[12] = 0x0800;
-    map2cla->FFU_KEYS.key16[13] = 0x0001;
-    map2cla->FFU_KEYS.key16[14] = 0x0001;
-    map2cla->FFU_KEYS.key16[15] = 0x0001;
-    map2cla->FFU_KEYS.key16[16] = 0x0001;
-    map2cla->FFU_KEYS.key16[17] = 0x0203;
-    map2cla->FFU_KEYS.key16[19] = 0x0203;
-    map2cla->FFU_KEYS.key16[31] = 0x0002;
-    map2cla->FFU_KEYS.key8[3]   = 0x11;
-    map2cla->FFU_KEYS.key8[6]   = 0x40;
-    map2cla->FFU_KEYS.key8[20]  = 0xff;
-    map2cla->FFU_KEYS.key8[21]  = 0x06;
-    map2cla->FFU_KEYS.key8[23]  = 0x14;
-    map2cla->FFU_KEYS.key8[25]  = 0x40;
-    map2cla->FFU_KEYS.key8[28]  = 0x01;
-    map2cla->FFU_KEYS.key8[29]  = 0x02;
-    map2cla->FFU_KEYS.key8[43]  = 0x60;
-    map2cla->FFU_KEYS.key8[45]  = 0x02;
-    map2cla->FFU_KEYS.key8[55]  = 0xa1;
-    map2cla->FFU_KEYS.key8[56]  = 0x07;
-    map2cla->FFU_KEYS.key8[57]  = 0xf6;
-    map2cla->FFU_KEYS.key8[58]  = 0xe5;
-    map2cla->FFU_KEYS.key8[59]  = 0xd4;
+    map2cla->CLASSIFIER_KEYS.key32[0]  = 0xB00A1B2C;
+    map2cla->CLASSIFIER_KEYS.key32[1]  = 0x12341234;
+    map2cla->CLASSIFIER_KEYS.key32[4]  = 0x12341234;
+    map2cla->CLASSIFIER_KEYS.key16[6]  = 0x0011;
+    map2cla->CLASSIFIER_KEYS.key16[7]  = 0x2233;
+    map2cla->CLASSIFIER_KEYS.key16[8]  = 0x4455;
+    map2cla->CLASSIFIER_KEYS.key16[9]  = 0x0001;
+    map2cla->CLASSIFIER_KEYS.key16[10] = 0x0101;
+    map2cla->CLASSIFIER_KEYS.key16[11] = 0x0101;
+    map2cla->CLASSIFIER_KEYS.key16[12] = 0x0800;
+    map2cla->CLASSIFIER_KEYS.key16[13] = 0x0001;
+    map2cla->CLASSIFIER_KEYS.key16[14] = 0x0001;
+    map2cla->CLASSIFIER_KEYS.key16[15] = 0x0001;
+    map2cla->CLASSIFIER_KEYS.key16[16] = 0x0001;
+    map2cla->CLASSIFIER_KEYS.key16[17] = 0x0203;
+    map2cla->CLASSIFIER_KEYS.key16[19] = 0x0203;
+    map2cla->CLASSIFIER_KEYS.key16[31] = 0x0002;
+    map2cla->CLASSIFIER_KEYS.key8[3]   = 0x11;
+    map2cla->CLASSIFIER_KEYS.key8[6]   = 0x40;
+    map2cla->CLASSIFIER_KEYS.key8[20]  = 0xff;
+    map2cla->CLASSIFIER_KEYS.key8[21]  = 0x06;
+    map2cla->CLASSIFIER_KEYS.key8[23]  = 0x14;
+    map2cla->CLASSIFIER_KEYS.key8[25]  = 0x40;
+    map2cla->CLASSIFIER_KEYS.key8[28]  = 0x01;
+    map2cla->CLASSIFIER_KEYS.key8[29]  = 0x02;
+    map2cla->CLASSIFIER_KEYS.key8[43]  = 0x60;
+    map2cla->CLASSIFIER_KEYS.key8[45]  = 0x02;
+    map2cla->CLASSIFIER_KEYS.key8[55]  = 0xa1;
+    map2cla->CLASSIFIER_KEYS.key8[56]  = 0x07;
+    map2cla->CLASSIFIER_KEYS.key8[57]  = 0xf6;
+    map2cla->CLASSIFIER_KEYS.key8[58]  = 0xe5;
+    map2cla->CLASSIFIER_KEYS.key8[59]  = 0xd4;
 
-    map2cla->FFU_ACTIONS.act4[4].val  = 1;
-    map2cla->FFU_ACTIONS.act1[20].val = 1;
-    map2cla->FFU_ACTIONS.act1[22].val = 1;
+    map2cla->CLASSIFIER_ACTIONS.act4[4].val  = 1;
+    map2cla->CLASSIFIER_ACTIONS.act1[20].val = 1;
+    map2cla->CLASSIFIER_ACTIONS.act1[22].val = 1;
 
-    map2cla->FFU_PROFILE = 0x11; // 17
+    map2cla->PACKET_PROFILE = 0x11; // 17
 }
 
 static void simple_exactmatch_basic_test_setup
@@ -700,7 +700,7 @@ static int run_on_simple_exactmatch
     mbyMapperToClassifier map2cla = { 0 };
 
     mbyMapperToClassifier const * const in  = &map2cla;
-    mbyClassifierActions * const actions_out = &(map2cla.FFU_ACTIONS);
+    mbyClassifierActions * const actions_out = &(map2cla.CLASSIFIER_ACTIONS);
     setup(cgrp_a_map, cgrp_b_map, shm_map, &map2cla);
     fm_uint32 actions[MBY_EM_MAX_ACTIONS_NUM] = { 0 };
 
@@ -709,8 +709,8 @@ static int run_on_simple_exactmatch
         cgrp_a_map->A.EM_HASH_LOOKUP,
         &(cgrp_a_map->EM),
         shm_map,
-        &(in->FFU_KEYS),
-        in->FFU_PROFILE,
+        &(in->CLASSIFIER_KEYS),
+        in->PACKET_PROFILE,
         MBY_CLA_GROUP_A,
         actions
     );

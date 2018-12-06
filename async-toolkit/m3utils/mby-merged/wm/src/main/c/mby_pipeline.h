@@ -22,16 +22,17 @@
 
 void RxPipeline
 (
-    mby_ppe_rx_top_map       * const rx_top_map,
-    mby_shm_map              * const shm_map,
-    mbyRxMacToParser   const * const mac2par,
-    mbyRxStatsToRxOut        * const rxs2rxo
+    mby_ppe_rx_top_map       const * const rx_top_map,
+    mby_ppe_rx_top_map__addr const * const rx_top_map_w,
+    mby_shm_map              const * const shm_map,
+    mbyRxMacToParser         const * const mac2par,
+    mbyRxStatsToRxOut              * const rxs2rxo
 );
 
 void TxPipeline
 (
-    mby_ppe_tx_top_map       * const tx_top_map,
-    mby_shm_map              * const shm_map,
+    mby_ppe_tx_top_map const * const tx_top_map,
+    mby_shm_map        const * const shm_map,
     mbyTxInToModifier  const * const txi2mod,
     mbyTxStatsToTxMac        * const txs2mac,
     fm_int                           max_pkt_size
@@ -46,16 +47,16 @@ void Parser
 
 void Mapper
 (
-    mby_ppe_mapper_map          * const mapper_map,
+    mby_ppe_mapper_map    const * const mapper_map,
     mbyParserToMapper     const * const in,
     mbyMapperToClassifier       * const out
 );
 
 void Classifier
 (
-    mby_ppe_cgrp_a_map          * const cgrp_a_map,
-    mby_ppe_cgrp_b_map          * const cgrp_b_map,
-    mby_shm_map                 * const shm_map, // shared memory (forwarding tables)
+    mby_ppe_cgrp_a_map    const * const cgrp_a_map,
+    mby_ppe_cgrp_b_map    const * const cgrp_b_map,
+    mby_shm_map           const * const shm_map, // shared memory (forwarding tables)
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
 );
@@ -69,49 +70,50 @@ void Hash
 
 void NextHop
 (
-    mby_ppe_nexthop_map         * const nexthop,
-    mbyHashToNextHop      const * const in,
-    mbyNextHopToMaskGen         * const out
+    mby_ppe_nexthop_map       const * const nexthop,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    mbyHashToNextHop          const * const in,
+    mbyNextHopToMaskGen             * const out
 );
 
 void MaskGen
 (
-    mby_ppe_fwd_misc_map        * const fwd_misc,
-    mby_ppe_mst_glort_map       * const glort_map,
-    mby_ppe_cm_apply_map        * const cm_apply,
+    mby_ppe_fwd_misc_map  const * const fwd_misc,
+    mby_ppe_mst_glort_map const * const glort_map,
+    mby_ppe_cm_apply_map  const * const cm_apply,
     mbyNextHopToMaskGen   const * const in,
     mbyMaskGenToTriggers        * const out
 );
 
 void Triggers
 (
-    mby_ppe_trig_apply_map      * const trig_apply_map,
-    mby_ppe_trig_apply_misc_map * const trig_apply_misc_map,
-    mby_ppe_fwd_misc_map        * const fwd_misc_map,
-    mby_ppe_mapper_map          * const mapper_map,
-    mbyMaskGenToTriggers  const * const in,
-    mbyTriggersToCongMgmt       * const out
+    mby_ppe_trig_apply_map      const * const trig_apply_map,
+    mby_ppe_trig_apply_misc_map const * const trig_apply_misc_map,
+    mby_ppe_fwd_misc_map        const * const fwd_misc_map,
+    mby_ppe_mapper_map          const * const mapper_map,
+    mbyMaskGenToTriggers        const * const in,
+    mbyTriggersToCongMgmt             * const out
 );
 
 void CongMgmt
 (
-    mby_ppe_cm_apply_map        * const cm_apply_map,
-    mby_ppe_cm_usage_map        * const cm_usage_map,
+    mby_ppe_cm_apply_map  const * const cm_apply_map,
+    mby_ppe_cm_usage_map  const * const cm_usage_map,
     mbyTriggersToCongMgmt const * const in,
     mbyCongMgmtToRxStats        * const out
 );
 
 void RxStats
 (
-    mby_ppe_rx_stats_map        * const stats_map,
+    mby_ppe_rx_stats_map  const * const stats_map,
     mbyCongMgmtToRxStats  const * const in,
     mbyRxStatsToRxOut           * const out
 );
 
 void Modifier
 (
-    mby_ppe_modify_map          * const mod_map,
-    mby_shm_map                 * const shm_map,
+    mby_ppe_modify_map    const * const mod_map,
+    mby_shm_map           const * const shm_map,
     mbyTxInToModifier     const * const in,
     mbyModifierToTxStats        * const out,
     fm_int                              max_pkt_size

@@ -117,7 +117,7 @@ PROCEDURE NextPower(q : CARDINAL) : CARDINAL =
 PROCEDURE Format(t : T; bytes : BOOLEAN := FALSE) : TEXT =
   BEGIN
     IF bytes THEN
-      RETURN F("{ word %s , bit %s }", Int(t.word * Base + t.bit DIV 8), Int(t.bit MOD 8))
+      RETURN F("{ byte %s , bit %s }", Int(t.word * Base + t.bit DIV 8), Int(t.bit MOD 8))
     ELSE
       RETURN F("{ word %s , bit %s }", Int(t.word), Int(t.bit))
     END

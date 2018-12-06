@@ -7,10 +7,13 @@
 #include <string.h>
 #include "mby_lpm.h"
 
-static void lookUpLpmTcam
+/* Size of the memory bank used to store the LPM structs = 512 */
+#define MBY_LPM_MEM_BANK_SIZE lpm_subtrie_aptr_rf_LPM_SUBTRIE_APTR__n
+
+static void lookupLpmTcam
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    mbyLpmTcamLookup   * const tcam_lookup
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    mbyLpmTcamLookup         * const tcam_lookup
 )
 {
     fm_uint16 tcam_index = 0;
@@ -93,9 +96,9 @@ static fm_bool getSubtrieChildNode
 
 static void exploreSubtrie
 (
-    mby_ppe_cgrp_a_map  * const cgrp_a_map,
-    mbyLpmSubtrie const * const subtrie,
-    mbyLpmSubtrieLookup * const st_lookup
+    mby_ppe_cgrp_a_map  const * const cgrp_a_map,
+    mbyLpmSubtrie       const * const subtrie,
+    mbyLpmSubtrieLookup       * const st_lookup
 )
 {
     /* Exploration steps
@@ -115,6 +118,8 @@ static void exploreSubtrie
     fm_byte key = st_lookup->key[0];
     mbyLpmSubtrieStore st_store;
     fm_byte node_idx = 0;
+    fm_uint16 entry_idx;
+    fm_uint16 bank_idx;
     fm_byte level = 0;
     fm_bool node_val;
     fm_bool key_bit;
@@ -122,7 +127,11 @@ static void exploreSubtrie
     // The key can't be longer than 16B: 20B total key len - 4B tcam key len
 //T:assert(st_lookup->key_len < 16 * 8);
 
-    mbyLpmGetSubtrieStore(cgrp_a_map, subtrie->root_ptr, &st_store);
+    /* Splits the index into 2 since the register space matches the HW
+     * implementation, i.e. 48 memory banks of 512 items each */
+    bank_idx  = subtrie->root_ptr / MBY_LPM_MEM_BANK_SIZE;
+    entry_idx = subtrie->root_ptr % MBY_LPM_MEM_BANK_SIZE;
+    mbyLpmGetSubtrieStore(cgrp_a_map, bank_idx, entry_idx, &st_store);
 
     do
     {
@@ -154,15 +163,19 @@ static void exploreSubtrie
 
     if (node_val)
     {
+        fm_byte child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
+
+        /* Splits the index into 2 since the register space matches the HW
+         * implementation, i.e. 48 memory banks of 512 items each */
+        fm_uint16 st_idx    = subtrie->child_base_ptr + child_idx;
+        fm_uint16 bank_idx  = st_idx / MBY_LPM_MEM_BANK_SIZE;
+        fm_uint16 entry_idx = st_idx % MBY_LPM_MEM_BANK_SIZE;
+
         mbyLpmSubtrie child_subtrie;
-        fm_byte child_idx;
 
-        child_idx = countOneIn64BitsArray(st_store.child_bitmap, node_idx);
-
-        mbyLpmGetSubtrie(cgrp_a_map, subtrie->child_base_ptr + child_idx, &child_subtrie);
-
+        /* Move key to the next 8b and recursively explore the next subtrie */
+        mbyLpmGetSubtrie(cgrp_a_map, bank_idx, entry_idx, &child_subtrie);
         st_lookup->key = &(st_lookup->key[-1]);
-
         exploreSubtrie(cgrp_a_map, &child_subtrie, st_lookup);
     }
 }
@@ -170,9 +183,9 @@ static void exploreSubtrie
 // Internal LPM function that takes the processed key as an argument
 static void lpmSearch
 (
-    mby_ppe_cgrp_a_map * const cgrp_a_map,
-    mbyLpmKey    const * const in,
-    mbyLpmSearchResult * const out
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    mbyLpmKey          const * const in,
+    mbyLpmSearchResult       * const out
 )
 {
     mbyLpmTcamLookup          tcam_lookup;
@@ -189,7 +202,7 @@ static void lpmSearch
                       (in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 3] << 8)  |
                       in->key[MBY_LPM_KEY_MAX_BYTES_LEN - 4];
 
-    lookUpLpmTcam(cgrp_a_map, &tcam_lookup);
+    lookupLpmTcam(cgrp_a_map, &tcam_lookup);
 
     if (!tcam_lookup.hit_valid)
     {
@@ -215,7 +228,7 @@ static void lpmSearch
 
 static void lpmGenerateKey
 (
-    mby_ppe_cgrp_a_map         * const cgrp_a_map,
+    mby_ppe_cgrp_a_map   const * const cgrp_a_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     mbyLpmKey                  * const lpmKey
@@ -266,10 +279,10 @@ static void lpmGenerateKey
 
 static void lpmActions
 (
-    mby_shm_map                * const shm_map,
-    fm_byte                            profile_id,
-    mbyLpmSearchResult   const * const searchResult,
-    fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
+    mby_shm_map        const * const shm_map,
+    fm_byte                          profile_id,
+    mbyLpmSearchResult const * const searchResult,
+    fm_uint32                        actions[MBY_LPM_MAX_ACTIONS_NUM]
 )
 {
     // Memory is organized in block of 2k in the HW so I need 2 indexes
@@ -297,8 +310,8 @@ static void lpmActions
 
 void mbyMatchLpm
 (
-    mby_ppe_cgrp_a_map         * const cgrp_a_map,
-    mby_shm_map                * const shm_map,
+    mby_ppe_cgrp_a_map   const * const cgrp_a_map,
+    mby_shm_map          const * const shm_map,
     mbyClassifierKeys    const * const keys,
     fm_byte                            profile_id,
     fm_uint32                          actions[MBY_LPM_MAX_ACTIONS_NUM]
@@ -317,7 +330,7 @@ void mbyMatchLpm
 //#ifdef UNIT_TEST
 void mbyGetLpmStaticFuncs(struct mbyLpmStaticFuncs *funcs)
 {
-        funcs->_lookUpLpmTcam         = lookUpLpmTcam;
+        funcs->_lookUpLpmTcam         = lookupLpmTcam;
         funcs->_getBitIn64BitsArray   = getBitIn64BitsArray;
         funcs->_countOneIn64BitsArray = countOneIn64BitsArray;
         funcs->_getSubtriePrefixNode  = getSubtriePrefixNode;

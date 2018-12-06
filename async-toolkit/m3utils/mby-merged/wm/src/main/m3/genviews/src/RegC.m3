@@ -74,6 +74,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
           DefTypes(wr);
           *)
           Wr.PutText(wr, "#include \"uint.h\"\n");
+          Wr.PutText(wr, "typedef uint32 field_id;\n");
           FOR i := 0 TO seq.size()-1 DO
             Debug.Out(F("Emit wx[%s]",seq.get(i)));
             VAR
@@ -107,7 +108,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
                        intfNm, intfNm));
       Wr.PutText(wr, F("\nvoid\n%s_Setup(const %s *r, const %s__addr *w);\n", intfNm, intfNm, intfNm));
       Wr.PutText(wr, F("\nvoid\n%s_SendPacket(const %s *r, const %s__addr *w, int port, unsigned char *packet, unsigned int length);\n", intfNm, intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid %s_build(void (*f)(void *)); /* called from Modula-3 */\n", intfNm));
+      Wr.PutText(wr, F("\nvoid %s_build(void (*f)(void *, int)); /* called from Modula-3 */\n", intfNm));
       Wr.PutText(wr, F("#endif /* !%s_main_INCLUDED */\n", intfNm));
       Wr.Close(wr)
     END;
@@ -117,7 +118,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
          wr = FileWr.Open(path) DO
       Wr.PutText(wr, F("INTERFACE %s_c;\n\n", intfNm));
       Wr.PutText(wr, F("IMPORT Ctypes;\n"));
-      Wr.PutText(wr, F("TYPE CallBackProc = PROCEDURE(addr : ADDRESS);\n\n"));
+      Wr.PutText(wr, F("TYPE CallBackProc = PROCEDURE(addr : ADDRESS; wid : INTEGER);\n\n"));
       Wr.PutText(wr, F("<*EXTERNAL %s_build*>\n", intfNm));
       Wr.PutText(wr, F("PROCEDURE BuildMain(cb : CallBackProc; rp : ADDRESS; wp : ADDRESS);\n\n"));
       Wr.PutText(wr, F("<*EXTERNAL %s_Setup*>\n", intfNm));
@@ -134,7 +135,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
       Wr.PutText(wr, F("#include \"%s.h\"\n", intfNm));
       Wr.PutText(wr, F("#include <stdlib.h>\n\n"));     
       Wr.PutText(wr, F("void\n"));
-      Wr.PutText(wr, F("%s_build(void (*f)(void *), void **rp, void **wp)\n", intfNm));
+      Wr.PutText(wr, F("%s_build(void (*f)(void *, int), void **rp, void **wp)\n", intfNm));
       Wr.PutText(wr, F("{\n"));
       Wr.PutText(wr, F("  %s       *r;\n", intfNm));
       Wr.PutText(wr, F("  %s__addr *w;\n\n", intfNm));
@@ -247,11 +248,32 @@ PROCEDURE PutXDecls(gs : GenState; xDecls : TextSeq.T) =
   END PutXDecls;
 
 TYPE
-  Variant = RECORD ptr, sfx : TEXT END;
+  Variant = RECORD ptr : FieldType;  sfx : TEXT END;
+  FieldType = { UInt, Pointer, Id };
 
 CONST
-  Phases = ARRAY OF Variant { Variant {  "",       "" },
-                              Variant { "*", "__addr" } };
+  Phases = ARRAY OF Variant { Variant { FieldType.UInt,       "" },
+                              Variant { FieldType.Pointer, "__addr" }(*,
+                              Variant { FieldType.Id, "__api" }*) };
+
+PROCEDURE FmtFieldType(baseType : TEXT; ft : FieldType) : TEXT =
+  BEGIN
+    CASE ft OF
+      FieldType.UInt => RETURN baseType
+    |
+      FieldType.Pointer => RETURN baseType
+    |
+      FieldType.Id => RETURN "field_id"
+    END
+  END FmtFieldType;
+
+PROCEDURE FmtFieldModifier(ft : FieldType) : TEXT =
+  CONST
+    Modifier = ARRAY FieldType OF TEXT { "", "*", "" };
+  BEGIN
+    RETURN Modifier[ft]
+  END FmtFieldModifier;
+  
 
 PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
@@ -270,7 +292,10 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
           WITH f  = r.fields.get(i),
                nm = f.name(debug := FALSE),
                tn = F("uint%s", Int(f.width)) DO
-            gs.main("  %s %s%s;\n", tn, v.ptr, nm);
+            gs.main("  %s %s%s;\n",
+                    FmtFieldType(tn,v.ptr),
+                    FmtFieldModifier(v.ptr),
+                    nm);
             IF p = FIRST(Phases) THEN
               FmtConstant(xDecls, Int(f.width), F("%s_%s", myTn, nm), "n");
               xDecls.addhi(F("typedef %s %s_%s_t;\n", tn, myTn, nm))
@@ -366,7 +391,7 @@ PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
     FOR p := FIRST(Phases) TO LAST(Phases) DO
       gs.main("  %s%s *p%s,\n", myTn, Phases[p].sfx, Int(ORD(p)));
     END;
-    gs.main("  void (*f)(void *)\n");
+    gs.main("  void (*f)(void *, int)\n");
     gs.main(")");
   END GenProto;
 
@@ -389,7 +414,7 @@ PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
       WITH f  = r.fields.get(i),
            nm = f.name(debug := FALSE) DO
         gs.main("  p1->%s = &(p0->%s);\n", nm, nm);
-        gs.main("  f(&(p0->%s));\n",nm)
+        gs.main("  f(&(p0->%s),%s);\n",nm, Int(f.width))
       END
     END;
     gs.main("}\n\n")

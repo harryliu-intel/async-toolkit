@@ -9,9 +9,9 @@
 
 void mbyLpmGetKeySels
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_byte                  const profile_id,
-    mbyLpmKeySels          * const key_sels
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_byte                    const profile_id,
+    mbyLpmKeySels            * const key_sels
 )
 {
     assert(profile_id < 64);
@@ -32,9 +32,9 @@ void mbyLpmGetKeySels
 
 void mbyLpmGetTcamEntry
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmTcamEntry        * const tcam_entry
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmTcamEntry          * const tcam_entry
 )
 {
     lpm_match_tcam_r const * lpm_match_tcam;
@@ -50,9 +50,9 @@ void mbyLpmGetTcamEntry
 
 void mbyLpmGetTcamSubtrie
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmSubtrie          * const tcam_subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const index,
+    mbyLpmSubtrie            * const tcam_subtrie
 )
 {
     lpm_match_action_r const * lpm_match_action;
@@ -69,17 +69,19 @@ void mbyLpmGetTcamSubtrie
 
 void mbyLpmGetSubtrie
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmSubtrie          * const subtrie
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const bank_index,
+    fm_uint16                  const entry_index,
+    mbyLpmSubtrie            * const subtrie
 )
 {
     lpm_subtrie_cptr_r const * lpm_subtrie_cptr;
 
-    assert(index < mby_ppe_cgrp_a_nested_map_LPM_SUBTRIE_CPTR__nd);
+    assert(bank_index < mby_ppe_cgrp_a_nested_map_LPM_SUBTRIE_CPTR__n);
+    assert(entry_index < lpm_subtrie_cptr_rf_LPM_SUBTRIE_CPTR__n);
     assert(subtrie);
 
-    lpm_subtrie_cptr        = &(cgrp_a_map->A.LPM_SUBTRIE_CPTR[index]);
+    lpm_subtrie_cptr        = &(cgrp_a_map->A.LPM_SUBTRIE_CPTR[bank_index][entry_index]);
 
     subtrie->child_ptr_len  = lpm_subtrie_cptr->CHILD_PTR_LEN;
     subtrie->child_base_ptr = lpm_subtrie_cptr->CHILD_BASE_PTR;
@@ -89,22 +91,30 @@ void mbyLpmGetSubtrie
 
 void mbyLpmGetSubtrieStore
 (
-    mby_ppe_cgrp_a_map     * const cgrp_a_map,
-    fm_uint16                const index,
-    mbyLpmSubtrieStore     * const st_store
+    mby_ppe_cgrp_a_map const * const cgrp_a_map,
+    fm_uint16                  const bank_index,
+    fm_uint16                  const entry_index,
+    mbyLpmSubtrieStore       * const st_store
 )
 {
-    assert(index < mby_ppe_cgrp_a_nested_map_LPM_SUBTRIE_BITMAPS__nd);
+    assert(bank_index < mby_ppe_cgrp_a_nested_map_LPM_SUBTRIE_APTR__n);
+    assert(entry_index < lpm_subtrie_aptr_rf_LPM_SUBTRIE_APTR__n);
     assert(st_store);
 
-    lpm_subtrie_bitmaps_rf *lpm_subtrie_bitmaps = &(cgrp_a_map->A.LPM_SUBTRIE_BITMAPS[index]);
+    lpm_subtrie_bitmaps_rf const * lpm_subtrie_bitmaps;
+    lpm_subtrie_bitmaps = &(cgrp_a_map->A.LPM_SUBTRIE_BITMAPS[bank_index]);
 
-    for (fm_uint i = 0; i < MBY_LPM_BITMAP_SIZE; ++i)
-        st_store->prefix_bitmap[i] = lpm_subtrie_bitmaps[i]->BITMAP;
+    for (fm_uint16 i = 0; i < MBY_LPM_BITMAP_SIZE; ++i)
+    {
+        fm_uint16 bm_index = (entry_index * MBY_LPM_COLUMN_SIZE) + i;
+        st_store->prefix_bitmap[i] = lpm_subtrie_bitmaps[bm_index]->BITMAP;
+    }
+    for (fm_uint16 i = 0; i < MBY_LPM_BITMAP_SIZE; ++i)
+    {
+        fm_uint16 bm_index = (entry_index * MBY_LPM_COLUMN_SIZE) + i + MBY_LPM_BITMAP_SIZE;
+        st_store->child_bitmap[i] = lpm_subtrie_bitmaps[bm_index]->BITMAP;
+    }
 
-    for (fm_uint i = 0; i < MBY_LPM_BITMAP_SIZE; ++i)
-        st_store->child_bitmap[i]  = lpm_subtrie_bitmaps[i + MBY_LPM_BITMAP_SIZE]->BITMAP;
-
-    st_store->action_base_ptr = cgrp_a_map->A.LPM_SUBTRIE_APTR[index].ACTION_BASE_PTR;
+    st_store->action_base_ptr = cgrp_a_map->A.LPM_SUBTRIE_APTR[bank_index][entry_index].ACTION_BASE_PTR;
 }
 

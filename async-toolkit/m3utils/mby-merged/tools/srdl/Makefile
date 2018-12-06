@@ -53,6 +53,7 @@ GENPG_ARGS      := -copyrightpath ${MODEL_ROOT}/src/txt/intelcopyright.txt -bits
 GENPG_EXEC      := $(shell ToolConfig.pl get_tool_path meta)/bin/genpg
 GENPG           := $(GENPG_EXEC) $(GENPG_ARGS)
 
+MULTI_GEN_RALF  := $(shell ToolConfig.pl get_tool_exec multi_gen_ralf)
 
 # Input files
 TOP_MAP         := $(BLK)_top_map
@@ -208,11 +209,33 @@ $(RESULTS_SUBBLOCK)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
 	$(NEBULON) -sv_no_sai_checks -crif -expand_handcoded_arrays -maximize_crif -input $< -timeout 60000 -out_dir $(TMPDIR) -log_file $@.log
 	cp $(TMPDIR)/output/crif/$(notdir $@) $@
 
-%.ralf: %_crif.xml
-	cd $(dir $@) && multi_gen_ralf_crif.py -i $< -o .ralf --bytes 0 
+#%.ralf.done: %_crif.xml
+#	cd $(dir $@) && $(MULTI_GEN_RALF) -i $< -o .ralf -output_dir $@/out --bytes 0
+#	touch $@ 
+	
+%.ralf.done: %_crif.xml
+	$(eval TMPDIR = $(shell mktemp -d))
+	cp $^  $(TMPDIR)
+	cd $(TMPDIR) && $(MULTI_GEN_RALF) -i $< -o .ralf --bytes 0
+	rm -rf $(basename $@)_out
+	mkdir $(basename $@)_out
+	cp $(TMPDIR)/*.ralf $(basename $@)_out
+	touch $@ 
+	
+%.allral.done: %.ralf.done
+	$(MAKE) -C $(basename $<)_out -f $(MODEL_ROOT)/tools/srdl/Makefile.ral allral
+	touch $@
+
+	
+#ral_%.sv: %.ralf.done
+#	$(MODEL_ROOT)/tools/srdl/scripts/uvm_ral_gen.tcsh --dir $(dir $^/out)
+#	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(notdir $(basename $<)) -o $(basename $@) $<
+#	@echo Generated $@
 ral_%.sv: %.ralf
 	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(notdir $(basename $<)) -o $(basename $@) $<
 	@echo Generated $@
+
+allral: $(addsuffix .sv,$(basename $(addprefix ral_,$(wildcard *.ralf))))
 
 # Need dependency on only one output file, since command for nebulon_all generates everything
 nebulon_all: $(RAL_ENV)
@@ -220,7 +243,7 @@ nebulon_all: $(RAL_ENV)
 ral_env: $(RAL_ENV)
 
 wmd: $(ALL_RDL)
-	cd $(MODEL_ROOT)/verif/wm && make -f Makefile.registers build
+	cd $( MODEL_ROOT)/verif/wm && make -f Makefile.registers build
 
 xml: $(RESULTSXMLFILE)
 
