@@ -25,7 +25,7 @@ void setEmKeySel0
 )
 {
     assert (lookup  < mby_ppe_cgrp_em_map_KEY_SEL0__n); // [0 ..  1]
-    assert (profile <   em_key_sel0_rf_EM_KEY_SEL0__n); // [0 .. 63]
+    assert (profile <   em_key_sel0_rf_KEY_SEL0__n); // [0 .. 63]
 
     em_key_sel0_r * const em_key_sel0 = &(cgrp_em_map->KEY_SEL0[lookup][profile]);
 
@@ -43,7 +43,7 @@ void setEmKeySel1
 )
 {
     assert (lookup       <        mby_ppe_cgrp_em_map_KEY_SEL1__n); // [0 ..  1]
-    assert (profile      <          em_key_sel1_rf_EM_KEY_SEL1__n); // [0 .. 63]
+    assert (profile      <          em_key_sel1_rf_KEY_SEL1__n); // [0 .. 63]
     assert (key32_mask   <  (1uL << em_key_sel1_r_KEY32_MASK__n));
     assert (key_mask_sel <  (1uL << em_key_sel1_r_KEY_MASK_SEL__n));
 
@@ -68,7 +68,7 @@ void setEmHashCfg
     fm_byte               const entry_sizes[2]
 )
 {
-    assert (profile < em_key_sel0_rf_EM_KEY_SEL0__n);
+    assert (profile < em_key_sel0_rf_KEY_SEL0__n);
     assert (mode    < (1uL << em_hash_cfg_r_MODE__n));
     for (fm_uint i = 0; i < 2; i++) {
         assert (base_ptrs  [i] < (1uL << em_hash_cfg_r_BASE_PTR_0__n));
@@ -99,7 +99,7 @@ void setEmHashCamEn
 )
 {
     assert (row     <  mby_ppe_cgrp_em_map_HASH_CAM_EN__n); // [0 ..  1]
-    assert (rule    < em_hash_cam_en_rf_EM_HASH_CAM_EN__n); // [0 .. 31]
+    assert (rule    < em_hash_cam_en_rf_HASH_CAM_EN__n); // [0 .. 31]
     assert (profile < 64);                                  // [0 .. 63]
 
     em_hash_cam_en_r * const em_hash_cam_en = &(cgrp_em_map->HASH_CAM_EN[row][rule]);
@@ -123,7 +123,7 @@ void setEmHashCam
 {
     // EM_B_HASH_CAM[0..31,0..7]
     assert (entry_num < mby_ppe_cgrp_em_map_HASH_CAM__n); // [0 .. 31]
-    assert (word_num  <   em_hash_cam_rf_EM_HASH_CAM__n); // [0 ..  7]
+    assert (word_num  <   em_hash_cam_rf_HASH_CAM__n); // [0 ..  7]
 
     em_hash_cam_r * const em_hash_cam = &(cgrp_em_map->HASH_CAM[entry_num][word_num]);
 
@@ -144,7 +144,7 @@ void setEmHashMiss
 )
 {
     assert (row     < mby_ppe_cgrp_em_map_HASH_MISS__n); // [0 ..  1]
-    assert (profile <  em_hash_miss_rf_EM_HASH_MISS__n); // [0 .. 63]
+    assert (profile <  em_hash_miss_rf_HASH_MISS__n); // [0 .. 63]
 
     em_hash_miss_r * const em_hash_miss = &(cgrp_em_map->HASH_MISS[row][profile]);
 

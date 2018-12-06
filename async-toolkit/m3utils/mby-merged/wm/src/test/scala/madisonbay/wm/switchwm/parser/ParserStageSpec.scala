@@ -20,7 +20,7 @@ import org.scalatest._
 class ParserStageSpec extends FlatSpec with Matchers {
 
   "Flag 1 and 4" should "unconditionally be set when rule 0 configured as unconditional match" in {
-    val csrParser = Csr().getParser(0)
+    val csrParser = Csr().getParser(0, 0)
     val idx = 0
     val port = Port(0)
     val pck = Packet(Array.ofDim[Byte](79))

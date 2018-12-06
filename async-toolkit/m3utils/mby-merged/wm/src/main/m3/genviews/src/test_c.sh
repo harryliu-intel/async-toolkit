@@ -30,5 +30,8 @@ for file in ${files}; do
 	cat work/intermediate02.rdl | (cd ${WD} ; perl) > work/intermediate03.rdl
 	mkdir -p build_c/mby_c/src
 	../AMD64_LINUX/genviews -L c -top ${top_map} -o build_c/mby_c/src < work/intermediate03.rdl
+	cd build_c/mby_c/src
+	cm3 -x
+	cd -
 done
 

@@ -90,12 +90,12 @@ class ParserJsonTester extends FlatSpec with Matchers with Inspectors {
 
   def parseFromCConfig(packet: Packet, port: Int): ParserOutput = {
     val parserMap = ParserProgrammer.readVer1(progFromC, csr)
-    Parser.parse(CsrParser(0, parserMap), packet, Port(port))
+    Parser.parse(CsrParser(0, 0, parserMap), packet, Port(port))
   }
 
   def parseFromCConfig2(packet: Packet, port: Int): ParserOutput = {
     val parserMap = ParserProgrammer.readVer2(prog2FromC, csr)
-    Parser.parse(CsrParser(0, parserMap), packet, Port(port))
+    Parser.parse(CsrParser(0, 0, parserMap), packet, Port(port))
   }
 
 }

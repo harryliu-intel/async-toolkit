@@ -10,7 +10,7 @@ object RxPpe {
 
   def process(csr: Csr, port: Port, idMgp: Int, packetBytes: Array[Byte]): Array[Byte] = {
     val packet = Epl.process(packetBytes)
-    val parserOutput = Parser.parse(csr.getParser(idMgp), packet, port)
+    val parserOutput = Parser.parse(csr.getParser(0, idMgp), packet, port)
     val csrAfterParse = csr.updated(parserOutput.updatedParserCsr)
     csrAfterParse.topMap
     packetBytes

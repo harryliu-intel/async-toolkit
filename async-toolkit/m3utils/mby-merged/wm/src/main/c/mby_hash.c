@@ -76,62 +76,30 @@ static void mbyClsGetEntropyHashSym
     entropy_hash_sym16_r const * const entropy_hash_sym16 = &(entropy_map->ENTROPY_HASH_SYM16[hash_num][sym_profile]);
     entropy_hash_sym32_r const * const entropy_hash_sym32 = &(entropy_map->ENTROPY_HASH_SYM32[hash_num][sym_profile]);
 
-    hash_sym->KEY8[0][0] = entropy_hash_sym8->PAIR0_KEY0;
-    hash_sym->KEY8[0][1] = entropy_hash_sym8->PAIR0_KEY1;
-    hash_sym->KEY8[1][0] = entropy_hash_sym8->PAIR1_KEY0;
-    hash_sym->KEY8[1][1] = entropy_hash_sym8->PAIR1_KEY1;
-    hash_sym->KEY8[2][0] = entropy_hash_sym8->PAIR2_KEY0;
-    hash_sym->KEY8[2][1] = entropy_hash_sym8->PAIR2_KEY1;
-    hash_sym->KEY8[3][0] = entropy_hash_sym8->PAIR3_KEY0;
-    hash_sym->KEY8[3][1] = entropy_hash_sym8->PAIR3_KEY1;
-    hash_sym->KEY8[4][0] = entropy_hash_sym8->PAIR4_KEY0;
-    hash_sym->KEY8[4][1] = entropy_hash_sym8->PAIR4_KEY1;
-    hash_sym->KEY8[5][0] = entropy_hash_sym8->PAIR5_KEY0;
-    hash_sym->KEY8[5][1] = entropy_hash_sym8->PAIR5_KEY1;
+    fm_uint64 key_pairs8  = FM_GET_UNNAMED_FIELD64(entropy_hash_sym8->KEY_PAIRS,  0, entropy_hash_sym8_r_KEY_PAIRS__nd);  //60b
+    fm_uint64 key_pairs16 = FM_GET_UNNAMED_FIELD64(entropy_hash_sym16->KEY_PAIRS, 0, entropy_hash_sym16_r_KEY_PAIRS__nd); //60b
+    fm_uint64 key_pairs32 = entropy_hash_sym32->KEY_PAIRS;                                                                //64b
 
-    hash_sym->KEY16[0][0] = entropy_hash_sym16->PAIR0_KEY0;
-    hash_sym->KEY16[0][1] = entropy_hash_sym16->PAIR0_KEY1;
-    hash_sym->KEY16[1][0] = entropy_hash_sym16->PAIR1_KEY0;
-    hash_sym->KEY16[1][1] = entropy_hash_sym16->PAIR1_KEY1;
-    hash_sym->KEY16[2][0] = entropy_hash_sym16->PAIR2_KEY0;
-    hash_sym->KEY16[2][1] = entropy_hash_sym16->PAIR2_KEY1;
-    hash_sym->KEY16[3][0] = entropy_hash_sym16->PAIR3_KEY0;
-    hash_sym->KEY16[3][1] = entropy_hash_sym16->PAIR3_KEY1;
-    hash_sym->KEY16[4][0] = entropy_hash_sym16->PAIR4_KEY0;
-    hash_sym->KEY16[4][1] = entropy_hash_sym16->PAIR4_KEY1;
-    hash_sym->KEY16[5][0] = entropy_hash_sym16->PAIR5_KEY0;
-    hash_sym->KEY16[5][1] = entropy_hash_sym16->PAIR5_KEY1;
+    fm_byte key8_start  = 0;
+    fm_byte key16_start = 0;
+    fm_byte key32_start = 0;
 
-    hash_sym->KEY32[0][0] = entropy_hash_sym32->PAIR0_KEY0;
-    hash_sym->KEY32[0][1] = entropy_hash_sym32->PAIR0_KEY1;
-    hash_sym->KEY32[1][0] = entropy_hash_sym32->PAIR1_KEY0;
-    hash_sym->KEY32[1][1] = entropy_hash_sym32->PAIR1_KEY1;
-    hash_sym->KEY32[2][0] = entropy_hash_sym32->PAIR2_KEY0;
-    hash_sym->KEY32[2][1] = entropy_hash_sym32->PAIR2_KEY1;
-    hash_sym->KEY32[3][0] = entropy_hash_sym32->PAIR3_KEY0;
-    hash_sym->KEY32[3][1] = entropy_hash_sym32->PAIR3_KEY1;
-    hash_sym->KEY32[4][0] = entropy_hash_sym32->PAIR4_KEY0;
-    hash_sym->KEY32[4][1] = entropy_hash_sym32->PAIR4_KEY1;
-    hash_sym->KEY32[5][0] = entropy_hash_sym32->PAIR5_KEY0;
-    hash_sym->KEY32[5][1] = entropy_hash_sym32->PAIR5_KEY1;
-    hash_sym->KEY32[6][0] = entropy_hash_sym32->PAIR6_KEY0;
-    hash_sym->KEY32[6][1] = entropy_hash_sym32->PAIR6_KEY1;
-    hash_sym->KEY32[7][0] = entropy_hash_sym32->PAIR7_KEY0;
-    hash_sym->KEY32[7][1] = entropy_hash_sym32->PAIR7_KEY1;
+    for (fm_byte pair = 0; pair < MBY_ENTROPY_HASH_SYM_KEY_NUM_MAX ; pair++)
+    {
+        for (fm_byte key = 0 ; key < MBY_ENTROPY_HASH_SYM_KEYS_IN_PAIR ; key++)
+        {
+            if (pair < MBY_ENTROPY_HASH_SYM_KEY8_NUM)
+                hash_sym->KEY8 [pair][key] = FM_GET_UNNAMED_FIELD(key_pairs8,  key8_start,  MBY_ENTROPY_HASH_SYM_KEY8_WIDTH);
+            if (pair < MBY_ENTROPY_HASH_SYM_KEY16_NUM)
+                hash_sym->KEY16[pair][key] = FM_GET_UNNAMED_FIELD(key_pairs16, key16_start, MBY_ENTROPY_HASH_SYM_KEY16_WIDTH);
+            if (pair < MBY_ENTROPY_HASH_SYM_KEY32_NUM)
+                hash_sym->KEY32[pair][key] = FM_GET_UNNAMED_FIELD(key_pairs32, key32_start, MBY_ENTROPY_HASH_SYM_KEY32_WIDTH);
 
-    // PSEUDO-ARRAYS used in ENTROPY_HASH_SYM8/16/32 registers.
-    // for (fm_byte pair = 0; pair < 8 ; pair++)
-    // {
-    //     for (fm_byte key = 0 ; key < 2 ; key++)
-    //     {
-    //         if (pair < 6)
-    //         {
-    //             hash_sym.KEY8 [pair][key] = entropy_hash_sym8->PAIR [pair][key];
-    //             hash_sym.KEY16[pair][key] = entropy_hash_sym16->PAIR[pair][key];
-    //         }
-    //         hash_sym.KEY32[pair][key] = entropy_hash_sym32->PAIR[pair][key];
-    //     }
-    // }
+            key8_start  += MBY_ENTROPY_HASH_SYM_KEY8_WIDTH;
+            key16_start += MBY_ENTROPY_HASH_SYM_KEY16_WIDTH;
+            key32_start += MBY_ENTROPY_HASH_SYM_KEY32_WIDTH;
+        }
+    }
 }
 
 static void mbyClsGetEntropyHashKeyMask
@@ -459,7 +427,7 @@ void Hash
     mbyHashToNextHop          * const out
 )
 {
-    mbyClassifierKeys keys = in->FFU_KEYS;
+    mbyClassifierKeys keys = in->CLASSIFIER_KEYS;
     fm_byte hash_profile[MBY_CGRP_HASH_PROFILE_ACTIONS] = { 0 };
     fm_byte mod_meta[MBY_CGRP_META_ACTIONS]             = { 0 };
 
