@@ -36,7 +36,15 @@ import axi2ibus_pkg::*;
             LOG2_FWD_TBL0_MEM_SIZE  = 12,   //Width of forwarding table 0 address bus output
             FWD_TBL0_RPORTS         = 6,    //Number of read ports in forwarding table 0
             FWD_TBL0_ADDR_WIDTH     = 20,   //Width of address in a forwarding table 0 RAM
-            FWD_TBL0_WDATA_WIDTH    = 72    //Width of write data for forwarding table 0
+            FWD_TBL0_WDATA_WIDTH    = 72,   //Width of write data for forwarding table 0
+            FWD_TBL1_BANKS          = 16,   //Number of banks in forwarding table 1
+            FWD_TBL1_CHUNKS         = 4,    //Number of chunks in forwarding table 1
+            FWD_TBL1_RDATA_WIDTH    = 72,   //Width of read data for forwarding table 1
+            FWD_TBL1_MEM_SIZE       = 2047, //Number of entries in each memory in forwarding table 1
+            LOG2_FWD_TBL1_MEM_SIZE  = 11,   //Width of forwarding table 1 address bus output
+            FWD_TBL1_RPORTS         = 4,    //Number of read ports in forwarding table 1
+            FWD_TBL1_ADDR_WIDTH     = 17,   //Width of address in a forwarding table 1 RAM
+            FWD_TBL1_WDATA_WIDTH    = 72    //Width of write data for forwarding table 1
 )
 (
     input   logic                                                                           cclk,
@@ -47,6 +55,13 @@ import axi2ibus_pkg::*;
     output  logic   [FWD_TBL0_BANKS-1:0] [FWD_TBL0_CHUNKS-1:0]                              o_q_fwd_tbl0_wen,
     output  logic   [FWD_TBL0_BANKS-1:0] [FWD_TBL0_CHUNKS-1:0] [LOG2_FWD_TBL0_MEM_SIZE-1:0] o_fwd_tbl0_addr,
     output  logic   [FWD_TBL0_CHUNKS-1:0] [FWD_TBL0_WDATA_WIDTH-1:0]                        o_q_fwd_tbl0_wdata,
+
+    input   logic   [FWD_TBL1_BANKS-1:0] [FWD_TBL1_CHUNKS-1:0] [FWD_TBL1_RDATA_WIDTH-1:0]   i_fwd_tbl1_rdata,
+
+    output  logic   [FWD_TBL1_BANKS-1:0] [FWD_TBL1_CHUNKS-1:0]                              o_q_fwd_tbl1_ren,
+    output  logic   [FWD_TBL1_BANKS-1:0] [FWD_TBL1_CHUNKS-1:0]                              o_q_fwd_tbl1_wen,
+    output  logic   [FWD_TBL1_BANKS-1:0] [FWD_TBL1_CHUNKS-1:0] [LOG2_FWD_TBL1_MEM_SIZE-1:0] o_fwd_tbl1_addr,
+    output  logic   [FWD_TBL1_CHUNKS-1:0] [FWD_TBL1_WDATA_WIDTH-1:0]                        o_q_fwd_tbl1_wdata,
 
     input   ibus_ctrl_t                                                                     i_ibus_ctrl,
     output  ibus_resp_t                                                                     o_ibus_resp,
@@ -73,11 +88,21 @@ logic   [FWD_TBL0_RPORTS-1:0] [FWD_TBL0_CHUNKS-1:0]                             
 logic   [FWD_TBL0_RPORTS-1:0] [FWD_TBL0_ADDR_WIDTH-1:0]                         q_fwd_tbl0_raddr;   //Per port, forwarding table 0 read address
 logic   [FWD_TBL0_RPORTS-1:0]                                                   fwd_tbl0_rvalid;    //Per port forwarding table 0 read valid
 logic   [FWD_TBL0_RPORTS-1:0] [1:0]                                             fwd_tbl0_raddr;     //Per port, forwarding table 0 read address
-logic   [FWD_TBL0_RPORTS-1:0] [FWD_TBL0_CHUNKS-1:0] [FWD_TBL0_RDATA_WIDTH-1:0]  fwd_tbl0_rdata;     //Per port per chunk forwarding table read data
+logic   [FWD_TBL0_RPORTS-1:0] [FWD_TBL0_CHUNKS-1:0] [FWD_TBL0_RDATA_WIDTH-1:0]  fwd_tbl0_rdata;     //Per port per chunk forwarding table 0 read data
+
+logic   [FWD_TBL1_RPORTS-1:0] [FWD_TBL1_CHUNKS-1:0]                             q_fwd_tbl1_ren;     //Per port, per chunk forwarding table 1 read enable
+logic   [FWD_TBL1_RPORTS-1:0] [FWD_TBL1_ADDR_WIDTH-1:0]                         q_fwd_tbl1_raddr;   //Per port, forwarding table 1 read address
+logic   [FWD_TBL1_RPORTS-1:0]                                                   fwd_tbl1_rvalid;    //Per port forwarding table 1 read valid
+logic   [FWD_TBL1_RPORTS-1:0] [1:0]                                             fwd_tbl1_raddr;     //Per port, forwarding table 1 read address
+logic   [FWD_TBL1_RPORTS-1:0] [FWD_TBL1_CHUNKS-1:0] [FWD_TBL1_RDATA_WIDTH-1:0]  fwd_tbl1_rdata;     //Per port per chunk forwarding table 1 read data
 
 logic   [FWD_TBL0_CHUNKS-1:0]                               q_fwd_tbl0_wen;     //Per chunk forwarding table 0 write enable
 logic   [FWD_TBL0_ADDR_WIDTH-1:0]                           q_fwd_tbl0_waddr;   //Forwarding table 0 write address
-logic   [FWD_TBL0_CHUNKS-1:0] [FWD_TBL0_WDATA_WIDTH-1:0]    q_fwd_tbl0_wdata;   //Per chunk forwarding table write data
+logic   [FWD_TBL0_CHUNKS-1:0] [FWD_TBL0_WDATA_WIDTH-1:0]    q_fwd_tbl0_wdata;   //Per chunk forwarding table 0 write data
+
+logic   [FWD_TBL1_CHUNKS-1:0]                               q_fwd_tbl1_wen;     //Per chunk forwarding table 1 write enable
+logic   [FWD_TBL1_ADDR_WIDTH-1:0]                           q_fwd_tbl1_waddr;   //Forwarding table 1 write address
+logic   [FWD_TBL1_CHUNKS-1:0] [FWD_TBL1_WDATA_WIDTH-1:0]    q_fwd_tbl1_wdata;   //Per chunk forwarding table 1 write data
 
 always_ff @(posedge cclk) begin //{
     q_fwd_tbl0_ren[(FWD_TBL0_RPORTS/2)-1:0]     <= rx_ppe_ppe_stm0_if0.tbl_ren;
@@ -137,6 +162,46 @@ always_ff @(posedge cclk) begin //{
             default: rx_ppe_ppe_stm0_if1.tbl_em_rdata[1]    <= {fwd_tbl0_rdata[5][2],fwd_tbl0_rdata[5][1],fwd_tbl0_rdata[5][0],fwd_tbl0_rdata[5][3]};
         endcase //}
     end //}
+
+    q_fwd_tbl1_ren[(FWD_TBL1_RPORTS/2)-1:0]     <= rx_ppe_ppe_stm1_if0.tbl_ren;
+    q_fwd_tbl1_raddr[(FWD_TBL1_RPORTS/2)-1:0]   <= rx_ppe_ppe_stm1_if0.tbl_raddr;
+    rx_ppe_ppe_stm1_if0.tbl_em_rvalid           <= fwd_tbl1_rvalid[1:0];
+    if(fwd_tbl1_rvalid[0]) begin //{
+        case(fwd_tbl1_raddr[0]) //{
+            2'h0: rx_ppe_ppe_stm1_if0.tbl_em_rdata[0]       <= {fwd_tbl1_rdata[0][3],fwd_tbl1_rdata[0][2],fwd_tbl1_rdata[0][1],fwd_tbl1_rdata[0][0]};
+            2'h1: rx_ppe_ppe_stm1_if0.tbl_em_rdata[0]       <= {fwd_tbl1_rdata[0][0],fwd_tbl1_rdata[0][3],fwd_tbl1_rdata[0][2],fwd_tbl1_rdata[0][1]};
+            2'h2: rx_ppe_ppe_stm1_if0.tbl_em_rdata[0]       <= {fwd_tbl1_rdata[0][1],fwd_tbl1_rdata[0][0],fwd_tbl1_rdata[0][3],fwd_tbl1_rdata[0][2]};
+            default: rx_ppe_ppe_stm1_if0.tbl_em_rdata[0]    <= {fwd_tbl1_rdata[0][2],fwd_tbl1_rdata[0][1],fwd_tbl1_rdata[0][0],fwd_tbl1_rdata[0][3]};
+        endcase //}
+    end //}
+    if(fwd_tbl1_rvalid[1]) begin //{
+        case(fwd_tbl1_raddr[1]) //{
+            2'h0: rx_ppe_ppe_stm1_if0.tbl_em_rdata[1]       <= {fwd_tbl1_rdata[1][3],fwd_tbl1_rdata[1][2],fwd_tbl1_rdata[1][1],fwd_tbl1_rdata[1][0]};
+            2'h1: rx_ppe_ppe_stm1_if0.tbl_em_rdata[1]       <= {fwd_tbl1_rdata[1][0],fwd_tbl1_rdata[1][3],fwd_tbl1_rdata[1][2],fwd_tbl1_rdata[1][1]};
+            2'h2: rx_ppe_ppe_stm1_if0.tbl_em_rdata[1]       <= {fwd_tbl1_rdata[1][1],fwd_tbl1_rdata[1][0],fwd_tbl1_rdata[1][3],fwd_tbl1_rdata[1][2]};
+            default: rx_ppe_ppe_stm1_if0.tbl_em_rdata[1]    <= {fwd_tbl1_rdata[1][2],fwd_tbl1_rdata[1][1],fwd_tbl1_rdata[1][0],fwd_tbl1_rdata[1][3]};
+        endcase //}
+    end //}
+
+    q_fwd_tbl1_ren[FWD_TBL1_RPORTS-1:(FWD_TBL1_RPORTS/2)]   <= rx_ppe_ppe_stm1_if1.tbl_ren;
+    q_fwd_tbl1_raddr[FWD_TBL1_RPORTS-1:(FWD_TBL1_RPORTS/2)] <= rx_ppe_ppe_stm1_if1.tbl_raddr;
+    rx_ppe_ppe_stm1_if1.tbl_em_rvalid                       <= fwd_tbl1_rvalid[3:2];
+    if(fwd_tbl0_rvalid[2]) begin //{
+        case(fwd_tbl1_raddr[2]) //{
+            2'h0: rx_ppe_ppe_stm1_if1.tbl_em_rdata[0]       <= {fwd_tbl1_rdata[2][3],fwd_tbl1_rdata[2][2],fwd_tbl1_rdata[2][1],fwd_tbl1_rdata[2][0]};
+            2'h1: rx_ppe_ppe_stm1_if1.tbl_em_rdata[0]       <= {fwd_tbl1_rdata[2][0],fwd_tbl1_rdata[2][3],fwd_tbl1_rdata[2][2],fwd_tbl1_rdata[2][1]};
+            2'h2: rx_ppe_ppe_stm1_if1.tbl_em_rdata[0]       <= {fwd_tbl1_rdata[2][1],fwd_tbl1_rdata[2][0],fwd_tbl1_rdata[2][3],fwd_tbl1_rdata[2][2]};
+            default: rx_ppe_ppe_stm1_if1.tbl_em_rdata[0]    <= {fwd_tbl1_rdata[2][2],fwd_tbl1_rdata[2][1],fwd_tbl1_rdata[2][0],fwd_tbl1_rdata[2][3]};
+        endcase //}
+    end //}
+    if(fwd_tbl1_rvalid[3]) begin //{
+        case(fwd_tbl1_raddr[3]) //{
+            2'h0: rx_ppe_ppe_stm1_if1.tbl_em_rdata[1]       <= {fwd_tbl1_rdata[3][3],fwd_tbl1_rdata[3][2],fwd_tbl1_rdata[3][1],fwd_tbl1_rdata[3][0]};
+            2'h1: rx_ppe_ppe_stm1_if1.tbl_em_rdata[1]       <= {fwd_tbl1_rdata[3][0],fwd_tbl1_rdata[3][3],fwd_tbl1_rdata[3][2],fwd_tbl1_rdata[3][1]};
+            2'h2: rx_ppe_ppe_stm1_if1.tbl_em_rdata[1]       <= {fwd_tbl1_rdata[3][1],fwd_tbl1_rdata[3][0],fwd_tbl1_rdata[3][3],fwd_tbl1_rdata[3][2]};
+            default: rx_ppe_ppe_stm1_if1.tbl_em_rdata[1]    <= {fwd_tbl1_rdata[3][2],fwd_tbl1_rdata[3][1],fwd_tbl1_rdata[3][0],fwd_tbl1_rdata[3][3]};
+        endcase //}
+    end //}
 end //}
 
 ppe_stm_wrap #(
@@ -165,6 +230,34 @@ ppe_stm_wrap #(
     .o_q_raddr  (fwd_tbl0_raddr),
     .o_q_rdata  (fwd_tbl0_rdata),
     .o_q_wdata  (o_q_fwd_tbl0_wdata)
+);
+
+ppe_stm_wrap #(
+    .BANKS          (FWD_TBL1_BANKS),
+    .CHUNKS         (FWD_TBL1_CHUNKS),
+    .RDATA_WIDTH    (FWD_TBL1_RDATA_WIDTH),
+    .MEM_SIZE       (FWD_TBL1_MEM_SIZE),
+    .RPORTS         (FWD_TBL1_RPORTS),
+    .ADDR_WIDTH     (FWD_TBL1_ADDR_WIDTH),
+    .WDATA_WIDTH    (FWD_TBL1_WDATA_WIDTH),
+    .LOG2_MEM_SIZE  (LOG2_FWD_TBL1_MEM_SIZE)
+) shm_fwd_tbl1 (
+    .cclk           (cclk),
+
+    .i_ren      (q_fwd_tbl1_ren),
+    .i_raddr    (q_fwd_tbl1_raddr),
+    .i_rdata    (i_fwd_tbl1_rdata),
+    .i_wen      (q_fwd_tbl1_wen),
+    .i_waddr    (q_fwd_tbl1_waddr),
+    .i_wdata    (q_fwd_tbl1_wdata),
+
+    .o_q_ren    (o_q_fwd_tbl1_ren),
+    .o_q_wen    (o_q_fwd_tbl1_wen),
+    .o_addr     (o_fwd_tbl1_addr),
+    .o_q_rvalid (fwd_tbl1_rvalid),
+    .o_q_raddr  (fwd_tbl1_raddr),
+    .o_q_rdata  (fwd_tbl1_rdata),
+    .o_q_wdata  (o_q_fwd_tbl1_wdata)
 );
 
 endmodule // ppe_stm_logic
