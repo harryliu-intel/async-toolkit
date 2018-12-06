@@ -6,18 +6,21 @@
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 include ${ROOT_DIR}/../../ToolVersions.mk
 
-INC_DIR = ../../../c                                  # uint.h
-INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+# uint.h
+INC_DIR = ../../../c
+# mby_top_map.h
+TOPMAP_DIR = ../../../m3/genviews/src/build_c/mby_c/src
 
 SRC_DIR = ../..
 TST_DIR = .
 
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
-INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
+INCLUDES += -I$(INC_DIR) -I$(TOPMAP_DIR)
 
 SOURCES  = $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
+SOURCES += $(TOPMAP_DIR)/mby_top_map.c
 SOURCES += $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_nexthop.c
 SOURCES += $(TST_DIR)/mby_nexthop_test.c
@@ -43,6 +46,7 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
+CFLAGS += -Wno-error=discarded-qualifiers # only warning until we move to write_field
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O -g -ggdb3
@@ -52,6 +56,7 @@ endif
 
 DEFINES   = -D_GNU_SOURCE
 DEFINES  += -D_FM_ARCH_x86_64
+DEFINES  += -DC_TEST_BUILD
 ifeq ($(DEBUG),1)
 endif
 
@@ -64,6 +69,7 @@ all: $(TARGET)
 
 $(SRC_DIR)/mby_common.o       : $(SRC_DIR)/mby_common.c $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_bitfield.o     : $(SRC_DIR)/mby_bitfield.c $(SRC_DIR)/mby_bitfield.h $(SRC_DIR)/mby_common.h
+$(TOPMAP_DIR)/mby_top_map.o   : $(TOPMAP_DIR)/mby_top_map.c $(TOPMAP_DIR)/mby_top_map.h
 $(SRC_DIR)/mby_nexthop.o      : $(SRC_DIR)/mby_nexthop.c $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h
 $(TST_DIR)/mby_nexthop_test.o : $(TST_DIR)/mby_nexthop_test.c $(TST_DIR)/mby_nexthop_test.h $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h
 

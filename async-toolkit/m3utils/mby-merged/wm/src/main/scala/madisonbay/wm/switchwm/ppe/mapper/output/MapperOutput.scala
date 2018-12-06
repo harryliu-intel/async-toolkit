@@ -10,7 +10,7 @@ case object IndependentVlanLearning extends MapperVlanLearningMode // 1
 case class ClassifierKeys(
                          // Isn't this PacketFields?...
                            key32: Map[Classifier32BitKey, Int],
-                           key16: Map[Classifier16BitKey, Int],
+                           key16: Map[Classifier16BitKey, Short],
                            key8:  Vector[Byte]
                          )
 

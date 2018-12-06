@@ -93,7 +93,7 @@ object ParserProgrammer {
   }
 
   def readVer1(fromJson: Map[String, Any], csr: Csr): mby_ppe_parser_map =
-    readParserVer1(fromJson.getList[List[Any]]("input"), csr.getRxPpe(0).ppeRxMap.parser)
+    readParserVer1(fromJson.getList[List[Any]]("input"), csr.getRxPpe(0, 0).ppeRxMap.parser)
 
   @tailrec
   private def readParserCfgVer2(lines: List[Map[String, Any]], parser: mby_ppe_parser_map): mby_ppe_parser_map = lines match {
@@ -234,7 +234,7 @@ object ParserProgrammer {
 
     val parserAfterCfgRead = readParserCfgVer2(
         fromJson.getList[Map[String,Any]]("input.PARSER_PORT_CFG"),
-        csr.getRxPpe(0).ppeRxMap.parser
+        csr.getRxPpe(0, 0).ppeRxMap.parser
     )
 
     val parserAfterStages = readParserStagesVer2(fromJson.getList[Map[String, Any]]("input.stages"), parserAfterCfgRead)
