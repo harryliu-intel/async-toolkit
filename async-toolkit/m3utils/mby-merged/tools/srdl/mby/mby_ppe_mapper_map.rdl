@@ -1978,7 +1978,7 @@ addrmap mby_ppe_mapper_map {
 
   map_port_cfg_r             MAP_PORT_CFG[18]              @0x0 += 8;
   map_port_default_rf        MAP_PORT_DEFAULT[18]          @0x200 += 64;
-  map_len_limit_r            MAP_LEN_LIMIT[18]             @0x1100 += 8;
+//  map_len_limit_r            MAP_LEN_LIMIT[18]             @0x1100 += 8;
   map_domain_tcam_r          MAP_DOMAIN_TCAM[4096]         @0x10000 += 16;
   map_domain_action0_r       MAP_DOMAIN_ACTION0[4096]      @0x20000 += 8;
   map_domain_action1_r       MAP_DOMAIN_ACTION1[4096]      @0x28000 += 8;
