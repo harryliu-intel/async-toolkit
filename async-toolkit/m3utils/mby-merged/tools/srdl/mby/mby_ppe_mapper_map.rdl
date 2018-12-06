@@ -107,59 +107,59 @@ regfile map_port_default_rf {
 
 
 // MAP_LEN_LIMIT[0..17]
-
-reg map_len_limit_r {
-  shared;
-  HandCoded = true;
-  name = "parser_info length limits";
-  desc = "
-    Indexed by logical rx port. This register controls how many 4B tags (or labels)
-    Modify can add versus how many can be removed.
-           ";
-  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
-  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
-  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
-  regwidth = 64;
-  accesswidth = 64;
-  field {
-    AccessType = "RW";
-    desc = "
-      Outer L2 length limit. The datapath is unable to pop more than otr_l2_len_limit outer L2 tags,
-      or to push more than (4-otr_l2_len_limit) outer L2 tags.
-
-           ";
-    ValRandomize = true;
-  } OTR_L2_LEN_LIMIT[11:9] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-      Inner L2 length limit. The datapath is unable to pop more than inr_l2_len_limit inner L2 tags,
-      or to push more than (4-inr_l2_len_limit) inner L2 tags.
-
-           ";
-    ValRandomize = true;
-  } INR_L2_LEN_LIMIT[8:6] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-      Outer MPLS length limit. The datapath is unable to pop more than otr_mpls_len_limit outer
-      MPLS labels, or to push more than (7-otr_mpls_len_limit) outer MPLS labels.
-
-           ";
-    ValRandomize = true;
-  } OTR_MPLS_LEN_LIMIT[5:3] = 3'h0;
-  field {
-    AccessType = "RW";
-    desc = "
-      Inner MPLS length limit. The datapath is unable to pop more than inr_mpls_len_limit inner
-      MPLS labels, or to push more than (7-inr_mpls_len_limit) inner MPLS labels.
-
-           ";
-    ValRandomize = true;
-  } INR_MPLS_LEN_LIMIT[2:0] = 3'h0;
-};
-
-
+//
+////reg map_len_limit_r {
+//  shared;
+//  HandCoded = true;
+//  name = "parser_info length limits";
+//  desc = "
+//    Indexed by logical rx port. This register controls how many 4B tags (or labels)
+//    Modify can add versus how many can be removed.
+//           ";
+//  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+//  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+//  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+//  regwidth = 64;
+//  accesswidth = 64;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//      Outer L2 length limit. The datapath is unable to pop more than otr_l2_len_limit outer L2 tags,
+//      or to push more than (4-otr_l2_len_limit) outer L2 tags.
+//
+//           ";
+//    ValRandomize = true;
+//  } OTR_L2_LEN_LIMIT[11:9] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//      Inner L2 length limit. The datapath is unable to pop more than inr_l2_len_limit inner L2 tags,
+//      or to push more than (4-inr_l2_len_limit) inner L2 tags.
+//
+//           ";
+//    ValRandomize = true;
+//  } INR_L2_LEN_LIMIT[8:6] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//      Outer MPLS length limit. The datapath is unable to pop more than otr_mpls_len_limit outer
+//      MPLS labels, or to push more than (7-otr_mpls_len_limit) outer MPLS labels.
+//
+//           ";
+//    ValRandomize = true;
+//  } OTR_MPLS_LEN_LIMIT[5:3] = 3'h0;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//      Inner MPLS length limit. The datapath is unable to pop more than inr_mpls_len_limit inner
+//      MPLS labels, or to push more than (7-inr_mpls_len_limit) inner MPLS labels.
+//
+//           ";
+//    ValRandomize = true;
+//  } INR_MPLS_LEN_LIMIT[2:0] = 3'h0;
+//};
+//
+//
 
 // MAP_DOMAIN_TCAM[0..4095]
 
