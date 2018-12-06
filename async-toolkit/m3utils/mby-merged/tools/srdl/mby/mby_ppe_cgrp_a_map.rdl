@@ -187,15 +187,25 @@ reg lpm_match_action_r {
   } ROOT_PTR[15:0] = 16'h0;
 };
 
+
+// LPM_SUBTRIE_BITMAPS[0..47][0..4095]
+
 reg lpm_subtrie_bitmaps_r {
   shared;
   HandCoded = true;
   name = "Sub-trie storage for LPM";
   desc = "
-            Contains the prefix and child presence bitmaps for each subtrie.
-            This register is indexed first by subtrie number, and then by
-            columns 0..7, representing the 255b of prefix bitmap (columns 0..3) and 256b of
-            child presence bitmap (columns 4..7).
+    Contains the prefix and child presence bitmaps for each subtrie.
+    [br][br]
+    The first index is the bank number. Software should take care
+    to allocate entries that could be accessed within a single cycle to different
+    banks. The second index breaks down as follows:
+    [list]
+    [*] Bits 2:0 of the index represent the column number, with column 0-3 being
+        the 256b of prefix bitmap and columns 4-7 being the 256b of child
+        presence bitmap
+    [*] Bits 11:3 of the index represent the subtrie number within the bank
+    [/list]
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -211,8 +221,11 @@ reg lpm_subtrie_bitmaps_r {
   } BITMAP[63:0] = 64'h0;
 };
 regfile lpm_subtrie_bitmaps_rf {
-  lpm_subtrie_bitmaps_r LPM_SUBTRIE_BITMAPS[8] += 8;
+  lpm_subtrie_bitmaps_r LPM_SUBTRIE_BITMAPS[4096] += 8;
 };
+
+
+// LPM_SUBTRIE_CPTR[0..47][0..511]
 
 reg lpm_subtrie_cptr_r {
   shared;
@@ -221,6 +234,10 @@ reg lpm_subtrie_cptr_r {
   desc = "
             Contains the list of child pointers associated with the given subtrie
             as well as the new CHILD_BASE_PTR for each of those child subtries.
+            [br][br]
+            The first index is the bank number. Software should take care
+            to allocate entries that could be accessed within a single cycle to different
+            banks. The second index is sized to provide the total number of entries.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -249,6 +266,12 @@ reg lpm_subtrie_cptr_r {
     ValRandomize = true;
   } SUBTRIE_PTR[15:0] = 16'h0;
 };
+regfile lpm_subtrie_cptr_rf {
+  lpm_subtrie_cptr_r LPM_SUBTRIE_CPTR[512] += 8;
+};
+
+
+// LPM_SUBTRIE_APTR[0..47][0..511]
 
 reg lpm_subtrie_aptr_r {
   shared;
@@ -257,6 +280,10 @@ reg lpm_subtrie_aptr_r {
   desc = "
             Contains the ACTION_BASE_PTR for each subtrie.  This references a
             pointer into SHM_FWD_TABLE0.
+            [br][br]
+            The first index is the bank number. Software should take care
+            to allocate entries that could be accessed within a single cycle to different
+            banks. The second index is sized to provide the total number of entries.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -271,6 +298,9 @@ reg lpm_subtrie_aptr_r {
            ";
     ValRandomize = true;
   } ACTION_BASE_PTR[18:0] = 19'h0;
+};
+regfile lpm_subtrie_aptr_rf {
+  lpm_subtrie_aptr_r LPM_SUBTRIE_APTR[512] += 8;
 };
 
 // CGRP_A_LPP_CONFIG [0]
@@ -306,9 +336,9 @@ addrmap mby_ppe_cgrp_a_nested_map {
 
   em_hash_lookup_r            EM_HASH_LOOKUP[32768]; // 32k
 
-  lpm_subtrie_aptr_r          LPM_SUBTRIE_APTR[24576];
-  lpm_subtrie_cptr_r          LPM_SUBTRIE_CPTR[24576];
-  lpm_subtrie_bitmaps_rf      LPM_SUBTRIE_BITMAPS[24576];
+  lpm_subtrie_aptr_rf         LPM_SUBTRIE_APTR[48];
+  lpm_subtrie_cptr_rf         LPM_SUBTRIE_CPTR[48];
+  lpm_subtrie_bitmaps_rf      LPM_SUBTRIE_BITMAPS[48];
   lpm_match_tcam_r            LPM_MATCH_TCAM[512];
   lpm_match_action_r          LPM_MATCH_ACTION[512];
   lpm_key_mask_rf             LPM_KEY_MASK[64];
