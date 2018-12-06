@@ -170,6 +170,12 @@ print "MGM debug : @mbyMgmLibs\n";
 
             ### Verif libs
             
+            gen_rx_ppe_regflow_lib => {
+                    -generated => 1,
+                    -gen_config => "mby::gen_rx_ppe_regflow_lib",
+                    -tools => ["-vcs_createlib"],
+            },
+
             gen_mesh_regflow_lib => {
                     -generated => 1,
                     -gen_config => "mby::gen_mesh_regflow_lib",
@@ -557,6 +563,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_jasper_lib",
                   "mby_wm_dpi_lib",
                   "mby_common_lib",
+                 # "gen_rx_ppe_regflow_lib",
                ],
                testcase_globals => {
                    #      -enabled_post_process_modes => "mby_test, rx_ppe",
