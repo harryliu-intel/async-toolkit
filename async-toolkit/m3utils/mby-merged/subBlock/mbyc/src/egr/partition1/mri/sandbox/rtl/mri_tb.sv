@@ -126,11 +126,6 @@ begin
     mim_rd_if0_0.mim_rrsp_req_id = req_id;
     mim_rd_if0_0.mim_rd_data = {'0,32'h1234_5678};
     @(posedge clk);
-    mim_rd_if0_0.mim_rrsp_valid = 0;
-    @(posedge clk);
-    @(posedge clk);
-    @(posedge clk);
-    @(posedge clk);
     req_id.data_wd_id.word_type = WORD_TYPE_DATA;
     mim_rd_if0_0.mim_rrsp_req_id = req_id;
     mim_rd_if0_0.mim_rd_data = {'0,32'haabb_ccdd};
@@ -143,77 +138,44 @@ begin
     @(posedge clk);
 end
 
-
-
-
-//initial
-//begin
-//    rrs_tqu_mri_if0.rrsp_wd_id    = '0;
-//    rrs_tqu_mri_if0.rrsp_wd       = '0;
-//    rrs_tqu_mri_if0.rrsp_wd_valid = '0;
-//    rrs_tqu_mri_if1.rrsp_wd_id    = '0;
-//    rrs_tqu_mri_if1.rrsp_wd       = '0;
-//    rrs_tqu_mri_if1.rrsp_wd_valid = '0;
-//    @(posedge clk);
-//    @(posedge clk);
-//    @(posedge clk);
-//    @(posedge arst_n);
-//    @(posedge clk);
-//    @(posedge clk);
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].client_id = CLIENT_PRC_TQU0_0;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.word_type = WORD_TYPE_DATA;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.epl   = 0;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_lp = 0;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_tc = 0;
-//    rrs_tqu_mri_if0.rrsp_wd[0] = {'0,32'h12345678};
-//    rrs_tqu_mri_if0.rrsp_wd_valid[0] = '1;
-//    @(posedge clk);
-//    rrs_tqu_mri_if0.rrsp_wd_valid[0] = '0;
-//    @(posedge clk);
-//    @(posedge clk);
-//    @(posedge clk);
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].client_id = CLIENT_PRC_TQU0_0;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.word_type = WORD_TYPE_CTRL;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.epl   = 0;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_lp = 0;
-//    rrs_tqu_mri_if0.rrsp_wd_id[0].data_wd_id.tx_tc = 0;
-//    rrs_tqu_mri_if0.rrsp_wd[0] = {'0,32'haabbccdd};
-//    rrs_tqu_mri_if0.rrsp_wd_valid[0] = '1;
-//    @(posedge clk);
-//    rrs_tqu_mri_if0.rrsp_wd_valid[0] = '0;
-//    @(posedge clk);
-//end
-//
-//initial 
-//begin
-//    tcu_tqu_if.dtq_ctrl_pull = '0;
-//    @(posedge arst_n);
-//    do
-//        @(posedge clk);
-//    while(tcu_tqu_if.dtq_ctrl_ready[0][0][0]=='0);
-//    @(posedge clk);
-//    @(posedge clk);
-//    tcu_tqu_if.dtq_ctrl_pull[0].dtq_sel  = '0;
-//    tcu_tqu_if.dtq_ctrl_pull[0].peek_pop = '0;
-//    tcu_tqu_if.dtq_ctrl_pull[0].req      = '1;
-//    wait(tcu_tqu_if.ctrl_word_valid[0]==1); #2;
-//    $display("Ctrl Data: %x",tcu_tqu_if.ctrl_word);
-//end
-//
-//initial 
-//begin
-//    tcu_tqu_if.dtq_data_pull = '0;
-//    @(posedge arst_n);
-//    do
-//        @(posedge clk);
-//    while(tcu_tqu_if.dtq_data_ready[0][0][0]=='0);
-//    @(posedge clk);
-//    @(posedge clk);
-//    tcu_tqu_if.dtq_data_pull[0].dtq_sel  = '0;
-//    tcu_tqu_if.dtq_data_pull[0].peek_pop = '0;
-//    tcu_tqu_if.dtq_data_pull[0].req      = '1;
-//    wait(tcu_tqu_if.data_word_valid[0]==1); #2;
-//    $display("Data Word: %x",tcu_tqu_if.pkt_word);
-//end
+initial
+begin
+    rrq_prc_mri_if0.wd_rreq_valid = 0;
+    rrq_prc_mri_if0.wd_rreq = 0;
+    @(posedge arst_n);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    rrq_prc_mri_if0.wd_rreq[0].seg_handle.seg_ptr          = 3;
+    rrq_prc_mri_if0.wd_rreq[0].seg_handle.sema             = 4'b1111;
+    rrq_prc_mri_if0.wd_rreq[0].wd_sel                      = 0;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.client_id            = CLIENT_PRC_TQU0_0;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.word_type = WORD_TYPE_DATA;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.epl       = 0;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.tx_lp     = 0;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.tx_tc     = 0;
+    rrq_prc_mri_if0.wd_rreq_valid[0] = 1;
+    @(posedge clk);
+    rrq_prc_mri_if0.wd_rreq[0].seg_handle.seg_ptr          = 3;
+    rrq_prc_mri_if0.wd_rreq[0].seg_handle.sema             = 4'b1111;
+    rrq_prc_mri_if0.wd_rreq[0].wd_sel                      = 1;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.client_id            = CLIENT_PRC_TQU0_0;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.word_type = WORD_TYPE_CTRL;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.epl       = 0;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.tx_lp     = 0;
+    rrq_prc_mri_if0.wd_rreq[0].req_id.data_wd_id.tx_tc     = 0;
+    rrq_prc_mri_if0.wd_rreq_valid[0] = 1;
+    @(posedge clk);
+    rrq_prc_mri_if0.wd_rreq_valid[0] = 0;
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
+end
 
 endmodule : mri_tb

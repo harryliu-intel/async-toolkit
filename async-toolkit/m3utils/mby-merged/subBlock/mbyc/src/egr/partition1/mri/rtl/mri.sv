@@ -154,4 +154,49 @@ rrsp_fifo_req_id0_0
 );
 
 
+////////////////////////////////////////////
+////////// READ REQUESTS ///////////////////
+////////////////////////////////////////////
+logic rreq_fifo_pop;
+logic rreq_fifo_pop_reg;
+logic rreq_empty;
+logic rreq_empty_reg;
+wd_rreq_t wd_rreq;
+
+assign mim_rd_if0_0.mim_seg_ptr = wd_rreq.seg_handle.seg_ptr;
+assign mim_rd_if0_0.mim_sema    = wd_rreq.seg_handle.sema;
+assign mim_rd_if0_0.mim_wd_sel  = wd_rreq.wd_sel;
+assign mim_rd_if0_0.mim_req_id  = wd_rreq.req_id;
+
+always_ff @(posedge clk, negedge rst_n) begin
+    if(!rst_n) begin
+        rreq_fifo_pop_reg <= '0;
+        rreq_empty_reg <= '0;
+    end
+    else begin
+        rreq_fifo_pop_reg <= rreq_fifo_pop;
+        rreq_empty_reg <= rreq_empty;
+    end
+end
+
+assign rreq_fifo_pop = (rreq_empty_reg==0)&&(rreq_empty==0);
+assign mim_rd_if0_0.mim_rreq_valid  = rreq_fifo_pop;
+
+mby_mgm_fifo #(.WIDTH($bits(wd_rreq)),
+               .ADD_L(W_RRSP_ADD_L)
+)
+rreq_fifo_req_id0_0
+(
+    .clk       (clk),
+    .rst_n     (rst_n),
+    .d_out     (wd_rreq),
+    .d_in      (rrq_prc_if0.wd_rreq[0]),
+    .rd        (rreq_fifo_pop),
+    .wr        (rrq_prc_if0.wd_rreq_valid[0]),
+    .empty     (rreq_empty),
+    .full      (),
+    .state_cnt ()
+);
+
+
 endmodule : mri
