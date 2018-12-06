@@ -1,9 +1,9 @@
-/* 
-   fm_alos_debughash.c 
+/*
+   fm_alos_debughash.c
 
  */
 
-/* old copyright notice below -- code has been EXTENSIVELY modified 
+/* old copyright notice below -- code has been EXTENSIVELY modified
    from the original */
 
 /*************************************************************************
@@ -48,7 +48,7 @@
 #endif
 
 typedef struct hashtable_bucket_t {
-  void *data; 
+  void *data;
   struct hashtable_bucket_t *next;
 } hashtable_bucket_t;
 
@@ -108,7 +108,7 @@ hashtable_init_(unsigned  (*hash_func  )(const void *),
   res->buckets = allocator(nbuckets * sizeof(void *));
   memset(res->buckets, 0, nbuckets * sizeof(void *));
   res->nbuckets  = nbuckets;
-  
+
   res->hash_func = hash_func;
   res->comp_func = comp_func;
   res->alloc     = allocator;
@@ -125,7 +125,7 @@ hashtable_init(unsigned  (*hash_func  )(const void *),
 {
   return hashtable_init_(hash_func, comp_func, allocator, deallocator, 2);
 }
-                
+
 static void
 hashtable_rehash(hashtable_t *hhp, int nbuckets)
 {
@@ -139,13 +139,13 @@ hashtable_rehash(hashtable_t *hhp, int nbuckets)
   {
     hashtable_iterator_t *iter = hashtable_iterate(hhp);
     void *elem;
-    
+
     while (hashtable_iterator_next(iter, &elem))
       hashtable_put(newtab, elem);
 
     hhp->dealloc(iter);
   }
-  
+
   hashtable_destroy(hhp);
   *hhp = *newtab;
   hhp->dealloc(newtab);
@@ -166,14 +166,14 @@ hashtable_destroy(hashtable_t *hhp)
       hhp->dealloc(q); /* dealloc record we just left */
     }
   }
-  
+
   hhp->dealloc(hhp->buckets);
 }
 
 static float
 hashtable_ave_depth(hashtable_t *h)
-{  
-  return ((double)h->nentries) / ((double)h->nbuckets); 
+{
+  return ((double)h->nentries) / ((double)h->nbuckets);
 }
 
 void
@@ -190,7 +190,7 @@ hashtable_put(hashtable_t *h, void *data)
   ++(h->nentries);
 
   if(hashtable_ave_depth(h) > 2.0)
-    hashtable_rehash(h,h->nbuckets*2); 
+    hashtable_rehash(h,h->nbuckets*2);
 }
 
 int
@@ -217,7 +217,7 @@ hashtable_del(hashtable_t *h, void *search, void (*destructor)(void *))
   unsigned idx = hv % h->nbuckets;
 
   struct hashtable_bucket_t **hbpp = &(h->buckets[idx]);
-  
+
   /* pretty nasty to handle the head of the list */
   /* a sentinel would be cleaner but requires more code elsewhere */
   while(*hbpp) {
@@ -232,7 +232,7 @@ hashtable_del(hashtable_t *h, void *search, void (*destructor)(void *))
 }
 
 struct hashtable_iterator_t {
-  /* data structure invariant (to be maintained by users of this struct): 
+  /* data structure invariant (to be maintained by users of this struct):
      the fields of this structure indicate the NEXT element to return. */
   hashtable_t         *h;  /* parent hash table */
   int                  li; /* list index */
@@ -259,11 +259,11 @@ hashtable_iterator_next(hashtable_iterator_t *iter, void **elem)
       iter->p = iter->p->next;
       return 1;
     }
-    
+
     /* iter->p is NULL */
 
     ++iter->li;
-    
+
     if (iter->li == iter->h->nbuckets) return 0;
 
     iter->p = iter->h->buckets[iter->li];
@@ -271,7 +271,7 @@ hashtable_iterator_next(hashtable_iterator_t *iter, void **elem)
 }
 
 /* ---------------------------------------------------------------------- */
-              
+
 #ifdef DEBUGHASH_TEST_MAIN
 
 /* test program below this line */
@@ -282,7 +282,7 @@ typedef struct testhash_t {
   int   idx;
 } testhash_t;
 
-unsigned 
+unsigned
 testhash(const void *x)
 {
   /* check name for equality -- only */
@@ -290,7 +290,7 @@ testhash(const void *x)
   return hashtable_hash_string(q->nm);
 }
 
-unsigned 
+unsigned
 testcomp(const void *x, const void *y)
 {
   const testhash_t *q = x, *r = y;
@@ -305,12 +305,12 @@ main(int argc, char **argv)
   const int num=5000;
   const int nincr=20;
   int i;
-  
+
   for(i=0; i<num; ++i) {
     char nm[2];
     nm[0] = (char)i;
     nm[1] = '\000';
-    
+
     rec = malloc(sizeof(testhash_t));
     rec->nm = strdup(nm);
     rec->val = 0;
@@ -323,7 +323,7 @@ main(int argc, char **argv)
   printf("hashtable_size %d\n", hashtable_size(tbl));
   assert(hashtable_size(tbl) == num);
 
-  
+
   for (i=0; i<nincr; ++i) {
     hashtable_iterator_t *iter=hashtable_iterate(tbl);
     void *vp;
