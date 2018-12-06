@@ -32,7 +32,6 @@
  *
  *************************************************************************/
 
-#include <fm_sdk_int.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -40,12 +39,10 @@
    cc -I<path to include file> -D DEBUGHASH_TEST_MAIN fm_alos_debughash.c
 */
 
-#ifdef DEBUGHASH_TEST_MAIN
-# include <assert.h>
-# define __USE_BSD /* for strdup */
-# include <stdio.h>
-# include "fm_alos_debughash.h"
-#endif
+#include <assert.h>
+#include <stdio.h>
+#include <mby_common.h>
+#include "fm_alos_debughash.h"
 
 typedef struct hashtable_bucket_t {
   void *data;

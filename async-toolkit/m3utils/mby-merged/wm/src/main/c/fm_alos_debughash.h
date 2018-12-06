@@ -6,6 +6,9 @@
 #ifndef _FM_ALOS_DEBUGHASH_H
 #define _FM_ALOS_DEBUGHASH_H
 
+
+#include <stddef.h>
+
 typedef struct hashtable_t hashtable_t;
 
 /* generic hash table code.

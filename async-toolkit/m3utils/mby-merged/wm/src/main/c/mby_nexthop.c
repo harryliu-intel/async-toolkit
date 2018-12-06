@@ -53,11 +53,7 @@ static void setARPUsedEntry
     fm_uint64 used_value = nexthop->NH_USED[arp_tbl_idx >> 6].USED;
 
     used_value |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
-#ifndef C_TEST_BUILD
-     write_field(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED, used_value);
-#else
-    *(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED) = used_value;
-#endif
+    write_field(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED, used_value);
 }
 
 
