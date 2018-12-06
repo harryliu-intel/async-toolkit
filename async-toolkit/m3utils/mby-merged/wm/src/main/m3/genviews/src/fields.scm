@@ -342,6 +342,9 @@
 (define (get-aux-child-by-cnt x n)
   (nth (cdr x) n))
 
+(define (get-aux-children-by-cnt x n)
+  (head n (cdr x)))
+
 (define (get-aux-by-cnt-sequence auxtree seq) ;; for aux tree
   (car (get-by-sequence get-aux-child-by-cnt auxtree seq)))
    
