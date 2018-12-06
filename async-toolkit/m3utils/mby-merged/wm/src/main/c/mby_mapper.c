@@ -1759,6 +1759,8 @@ static void mapRewrite
 /**
  * Mapper stage implementation.
  *
+ * See: [Mapper HAS](https://securewiki.ith.intel.com/display/25T/RX-PPE+Mapper)
+ *
  * @param[in]   parser_map  Pointer to mapper register map (read only).
  * @param[in]   in          Pointer to input structure     (read only).
  * @param[out]  out         Pointer to output structure.
