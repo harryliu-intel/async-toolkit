@@ -308,6 +308,14 @@
     )
  (helper t 0))
 
+(define (aux-treemap op t)
+  (cond ((null? t) '())
+
+        ((pair? t) (cons (aux-treemap op (car t))
+                         (aux-treemap op (cdr t))))
+
+        (else (op t))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                            
 (define (atom? x) (and (not (pair? x)) (not (null? x))))

@@ -4,7 +4,7 @@ IMPORT AddrVisitor;
 IMPORT mby_top_map_addr AS MbyMapAddr;
 IMPORT hlp_top_map_addr AS HlpMapAddr;
 IMPORT CompAddr;
-IMPORT Fmt;
+IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Debug;
 IMPORT ParseParams;
 IMPORT Stdio, Text;
@@ -71,6 +71,8 @@ PROCEDURE MakeInternal(v        : MyVisitor;
     END
   END MakeInternal;
 
+VAR doDebug := Debug.DebugThis("fieldvisitor");
+    
 PROCEDURE MakeField(v          : MyVisitor;
                     nm         : TEXT;
                     at         : CompRange.T;
@@ -79,6 +81,9 @@ PROCEDURE MakeField(v          : MyVisitor;
   VAR
     upId := FIRST(Neg);
   BEGIN
+    IF doDebug THEN
+      Debug.Out(F("nm %s @ %s", nm, CompRange.Format(at)))
+    END;
     IF parent # NIL THEN upId := NARROW(parent, Internal).id END;
     
     WITH (*byte = BigInt.Add(BigInt.Mul(BigInt.New(at.pos.word), Eight),
