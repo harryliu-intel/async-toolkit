@@ -2,7 +2,7 @@ package madisonbay.iface.rest.services
 
 import madisonbay.iface.UriConstants.{UriParameter, UriSegment}
 import madisonbay.iface.model.CsrModel
-import madisonbay.iface.rest.Constants.{Keys, Types}
+import madisonbay.iface.rest.Constants.Keys
 import madisonbay.iface.rest.RestResponse
 import madisonbay.wm.utils.json.JsonReader
 import spinoco.protocol.http.HttpStatusCode
@@ -15,7 +15,7 @@ object CsrAddressRest extends RestProcessing {
     case UriSegment.Address :: address :: Nil if JsonReader.isInteger(address) => csrModel.csr.getRegister(address.toLong) match {
 
       case Some(value) => returnJson(Map(
-        Keys.KeyType -> Types.TypeRegister,
+        CsrModel.KeyType -> CsrModel.TypeRegister,
         Keys.KeyValue -> value.toLong,
         Keys.KeyRawValue -> value.toRaw
         ))

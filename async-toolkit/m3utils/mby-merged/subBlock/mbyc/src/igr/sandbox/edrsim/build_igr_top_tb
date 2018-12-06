@@ -1,5 +1,5 @@
 vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior_final +vcs+lic+wait -V -timescale=1ps/1ps \
-+lint \
++lint=all \
 +define+SYTB_OFF +libext+.v+.sv+.vh+.svh+.vs+.vm \
 +vcs+vcdpluson +define+VCSSIM -assert svaext +define+FAKE_MEM \
 +warn=noUII-L \
@@ -43,7 +43,6 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../epl_shim/rtl/mby_igr_epl_shim_segs.sv \
 ../../epl_shim/rtl/mby_igr_epl_shim.sv \
 ../../dpc/rtl/mby_igr_dpc.sv \
-../../dpc/rtl/mby_igr_dpc_wrap.sv \
 -y ../../../../../../target/mby/mgm_run/igr/src \
 -y ../../../../../../target/mby/mgm_run/igr/src/mem_wrap \
 -y ../../../../../../target/mby/mgm_run/rtl \
@@ -53,5 +52,9 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../pb/rtl/mby_igr_pb_mem_shell.sv \
 ../../pb/rtl/mby_igr_pb.sv \
 ../../itag/rtl/mby_igr_tag.sv \
+../../pbb/rtl/mby_igr_dpc_wrap.sv \
+../../pbb/rtl/mby_igr_pb_wrap.sv \
+../../pbb/rtl/mby_igr_shim_wrap.sv \
+../../pbb/rtl/mby_igr_pbb.sv \
 ../../rtl/mby_igr_top.sv \
 ./tb_igr_top.sv
