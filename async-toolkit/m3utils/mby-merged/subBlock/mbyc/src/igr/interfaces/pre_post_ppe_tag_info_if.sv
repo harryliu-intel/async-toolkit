@@ -20,34 +20,41 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-// ---------------------------------------------------------------------------------------------------------------------
-// -- Author : Luis Alfonso Maeda-Nunez
+//------------------------------------------------------------------------------
+// -- Author : Scott Greenfield
 // -- Project Name : Madison Bay (MBY) 
-// -- Description  : TQU Read Response Receiver
+// -- Description  : 
+//                   
+//                   
 //------------------------------------------------------------------------------
 
-module tqu_rrsp_rcv
-    import egr_int_pkg::*;
-(
-    input logic             clk,
-    input logic           rst_n, 
+interface pre_post_ppe_tag_info_if ();
+  import mby_igr_pkg::*, shared_pkg::*, mby_egr_pkg::*;
 
-    egr_rrs_if.requestor mri_if, // Read Response Interface. Gives service to 2 EPLs
+    logic            ack; 
+    logic            valid; 
+    igr_pkt_id_t     pkt_id;
+    eop_md_t         md;  
+    seg_ptr_t        wr_seg_ptr; //[19:0]
+    sema_t           wr_sema;    //[ 3:0]
+    
+modport src (
+                 input  ack,
+                 output valid,
+                 output pkt_id,
+                 output md,
+                 output wr_seg_ptr,
+                 output wr_sema
+    );
 
-    output logic       wd_valid [N_EPL_PER_EPP],
-    output data_word_t     word [N_EPL_PER_EPP],
-    output dtq_sel_t    dtq_sel [N_EPL_PER_EPP],
-    output logic      word_type [N_EPL_PER_EPP]  // Word type: 0:Metadata(Control) 1:Data
-);
+modport dest (
+                 output ack,
+                 input  valid,
+                 input  pkt_id,
+                 input  md,
+                 input  wr_seg_ptr,
+                 input  wr_sema
+    );
 
+endinterface : pre_post_ppe_tag_info_if
 
-//modport requestor(
-//    input     rrsp_wd_id,
-//    input        rrsp_wd,
-//    input  rrsp_wd_valid,
-//    output rrsp_wd_stall
-//    );
-
-
-
-endmodule : tqu_rrsp_rcv

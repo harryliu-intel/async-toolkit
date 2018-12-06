@@ -25,8 +25,9 @@ mby_top_map_SendPacket(mby_top_map       const * r,
                        unsigned int              length)
 {
     // Register/Memory Maps:
-    mby_ppe_rx_top_map const * const rx_top_map = &(r->mpp[0].mgp[0].rx_ppe);
-    mby_shm_map        const * const shm_map    = &(r->mpp[0].shm);
+    mby_ppe_rx_top_map       const * const rx_top_map   = &(r->mpp[0].mgp[0].rx_ppe);
+    mby_ppe_rx_top_map__addr const * const rx_top_map_w = &(w->mpp[0].mgp[0].rx_ppe);
+    mby_shm_map              const * const shm_map      = &(r->mpp[0].shm);
 
     // Input struct:
     mbyRxMacToParser mac2par;
@@ -40,5 +41,5 @@ mby_top_map_SendPacket(mby_top_map       const * r,
     mac2par.RX_PORT   = (fm_uint32) port;
 
     // Call RX pipeline:
-    RxPipeline(rx_top_map, shm_map, &mac2par, &rxs2rxo);
+    RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
 }

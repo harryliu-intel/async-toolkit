@@ -6,14 +6,17 @@ osetup vcsmx
 
 # Build the sandbox model and run the GK gate test case.
 # Removes all temporary files, leaving only build and run logs.
-make gate
+make gate           # Build sandbox for EGR Top
+make gate dut=<dut> # Build sandbox for <dut> e.g. dut=prc, dut=tqu, etc.
 
 # Build the sandbox model and run the GK gate test case.
 # Generates a trace and leaves all temp files.
-make debug
+make debug           # Build sandbox for EGR Top
+make debug dut=<dut> # Build sandbox for <dut> e.g. dut=prc, dut=tqu, etc.
 
 # Build the model without running a test
-make simv
+make simv           # Build model for EGR Top
+make simv dut=<dut> # Build model for <dut> e.g. dut=prc, dut=tqu, etc.
 
 # Clean up all generated files, including logs and traces
 make clean
@@ -21,3 +24,4 @@ make clean
 # Open DVE to view a trace
 make dve
 
+# Note: "make <command> dut=<dut>" assumes testbench is on the path egr/partition1/<dut>/sandbox/rtl/<dut>_tb.sv

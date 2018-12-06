@@ -7,6 +7,8 @@
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
+// TODO is there a better way to include this? REVISIT
+#include "../m3/model_server/src/model_c_write.h" // pull in write_field
 
 static mbyArpTable getARPTableEntry
 (
@@ -43,16 +45,19 @@ static mbyArpTable getARPTableEntry
 
 static void setARPUsedEntry
 (
-    mby_ppe_nexthop_map const * const nexthop,
-    fm_uint32                   const arp_tbl_idx
+    mby_ppe_nexthop_map       const * const nexthop,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    fm_uint32                         const arp_tbl_idx
 )
 {
-    nexthop_used_r * const nh_used = &(nexthop->NH_USED[arp_tbl_idx >> 6]);
+    fm_uint64 used_value = nexthop->NH_USED[arp_tbl_idx >> 6].USED;
 
-    fm_uint64 used_value = nh_used->USED;
-    used_value          |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
-    // Cannot write this field directly, use write_field instead <-- REVISIT!!
-    nh_used->USED        = used_value;
+    used_value |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
+#ifndef C_TEST_BUILD
+     write_field(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED, used_value);
+#else
+    *(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED) = used_value;
+#endif
 }
 
 
@@ -136,9 +141,10 @@ static void lookUpL2
 
 void NextHop
 (
-    mby_ppe_nexthop_map const * const nexthop,
-    mbyHashToNextHop    const * const in,
-    mbyNextHopToMaskGen       * const out
+    mby_ppe_nexthop_map       const * const nexthop,
+    mby_ppe_nexthop_map__addr const * const nexthop_w,
+    mbyHashToNextHop          const * const in,
+    mbyNextHopToMaskGen             * const out
 )
 {
     // Read inputs:
@@ -204,7 +210,7 @@ void NextHop
         mod_index  = (arp_table.ModIdx >> 2) & 0xFFFF;
         decap      = (arp_table.ModIdx >> 1) & 0x1;
         encap      =  arp_table.ModIdx       & 0x1;
-        setARPUsedEntry(nexthop, arp_tbl_idx);
+        setARPUsedEntry(nexthop, nexthop_w, arp_tbl_idx);
     }
 
     // l2Lookup is temporary placed in nexthop - will be moved to Exact Match table <-- REVISIT!!!

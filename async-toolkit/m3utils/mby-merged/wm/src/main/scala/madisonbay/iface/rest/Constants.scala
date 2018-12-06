@@ -8,7 +8,6 @@ object Constants {
     val KeyHexValue         = "hexValue"
     val KeyRawValue         = "rawValue"
     val KeyValues           = "values"
-    val KeyType             = "type"
     val KeyUri              = "uri"
     val KeyKeys             = "keys"
     val KeySize             = "size"
@@ -17,8 +16,6 @@ object Constants {
   object Types {
     val TypeList            = "list"
     val TypeMap             = "map"
-    val TypeRegister        = "register"
-    val TypeRegisterField   = "registerField"
   }
 
 }

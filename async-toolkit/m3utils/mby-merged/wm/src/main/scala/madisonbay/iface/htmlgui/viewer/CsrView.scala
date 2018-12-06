@@ -47,6 +47,8 @@ object CsrView {
           }.mkString(", ")
         field(k, "[" + elements + "]")
 
+      case (CsrModel.KeyType, value: String) => field("type", value)
+
       case (k, _) => s"unsupported key $k $BR"
     }
 

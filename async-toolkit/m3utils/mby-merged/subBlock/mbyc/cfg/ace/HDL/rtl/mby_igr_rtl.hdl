@@ -2,7 +2,10 @@
 #  This is a HDL spec file - it defines the unit and how to compile it.
 #
 #
+use ToolConfig;
 
+my $SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+my $VCS_HOME       = $ENV{VCS_HOME};
 
 $hdl_spec = {
     # List of specific VERILOG src files
@@ -18,6 +21,11 @@ $hdl_spec = {
        "src/shared/interfaces/mim_rd_if.sv",
        "src/igr/rtl/mby_igr_pkg.sv",
        "src/igr/rtl/mby_igr_macros.vh",
+       "src/igr/interfaces/pre_post_ppe_tag_info_if.sv",
+       "src/igr/interfaces/pre_post_ppe_partial_data_if.sv",
+       "src/igr/interfaces/pre_post_ppe_sop_if.sv",
+       "src/igr/interfaces/pre_post_ppe_wr_data_if.sv",
+       "src/igr/interfaces/pre_ppe_header_if.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_ctrl.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_seg.sv",
        "src/igr/epl_shim/rtl/mby_igr_epl_shim_segs.sv",
@@ -33,7 +41,19 @@ $hdl_spec = {
        "src/igr/pbb/rtl/mby_igr_pbb.sv",
        "src/igr/rtl/mby_igr_top.sv",
        "src/igr/itag/rtl/mby_igr_tag.sv",
-     ],
+       "src/igr/pre_ppe/rtl/mby_igr_pre_ppe.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_epl.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_arb.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_id_list.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_ctrl.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_header.sv",
+       "$SHRTL/src/fifo/rtl/shrtl_flop_fifo.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_port.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_wdata.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_wrarb.sv",
+       "src/igr/pre_ppe/rtl/mby_igr_pre_wrmux.sv",
+       "src/igr/post_ppe/rtl/mby_igr_post_ppe.sv",
+    ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
@@ -41,6 +61,7 @@ $hdl_spec = {
      "target/mby/mgm_run/igr/src",
      "target/mby/mgm_run/igr/src/mem_wrap",
      "target/mby/mgm_run/rtl",
+     "$VCS_HOME/packages/sva_cg"
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -53,6 +74,9 @@ $hdl_spec = {
      "target/mby/mgm_run/igr/src",
      "target/mby/mgm_run/igr/src/mem_wrap",
      "target/mby/mgm_run/rtl",
+     "$SHRTL/src/common/rtl",   
+     "$SHRTL/src/fifo/rtl",   
+     "$VCS_HOME/packages/sva_cg"
      ],
     
     # Arbitrary VLOG options
