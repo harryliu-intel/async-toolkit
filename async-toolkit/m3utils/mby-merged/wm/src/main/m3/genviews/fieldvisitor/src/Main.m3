@@ -139,6 +139,7 @@ BEGIN
   IF TE(ofn, "-") THEN
     wr := Stdio.stdout
   ELSE
+    Debug.Out("Writing to " & ofn);
     wr := FileWr.Open(ofn)
   END;
   
@@ -171,9 +172,9 @@ BEGIN
         b[i] := v.internals.get(i)
       END;
 
-      Debug.Out("Writing address map...");
+      Debug.Out("Writing address map... " & Fmt.Int(NUMBER(a^)));
       Pickle.Write(wr, a);
-      Debug.Out("Writing internal tree...");
+      Debug.Out("Writing internal tree... " & Fmt.Int(NUMBER(b^)));
       Pickle.Write(wr, b);
       Wr.Close(wr)
     END

@@ -91,3 +91,54 @@
 (define hy '(7 (1) (1) (1) (1) (1) (1) (1))   )
 
 (define (trunc-stringify x)  (error-append (stringify x)))
+
+(define (array-marker a)
+  (if (eq? (get-tag a) 'array) (cadr a) #f))
+
+(define (zip-trees a b)
+ ;; (if (not (tree-iso? a b)) (error "not tree-iso"))
+  (cond ((null? a) '())
+        ((atom? a) (cons a b))
+        (else (cons (zip-trees (car a) (car b))
+                    (zip-trees (cdr a) (cdr b))))))
+
+(define (nuller x) '())
+
+(define (build-zip t)
+  (zip-trees (treemap array-marker t)
+             (zip-trees (treesum 'nfields t) (treemap nuller t))))
+
+(define some-zip (build-zip some-array))
+
+(define (zip-array? z)
+  (let ((as (caadr z)))
+    (and (car as) (/ (cadr as) (car as)))))
+
+(define (get-zip-seq-offset z seq)
+  (let loop ((p 0)
+             (s seq)
+             (q z))
+    ;;(dis "p " (stringify p) " s " (stringify s) " q " (stringify q) dnl)
+    (cond ((null? s) p)
+          ((zip-array? q) =>
+           (lambda (m) (loop (+ p (* (car s) m))
+                             (cdr s)
+                             (get-aux-child-by-cnt q 0))))
+          (else (loop (+ p (accumulate + 0
+                            (map cadar
+                                 (get-aux-children-by-cnt q (car s)))))
+                      (cdr s)
+                      (get-aux-child-by-cnt q (car s)))))))
+  
+(define zz (build-zip the-map))
+
+(cnt-sequence-by-name the-map '(mpp 0 shm FWD_TABLE0 1 0 DATA))
+
+(dis "length of the-addresses " (FieldData.ArraySize the-addresses) dnl)
+
+(FieldData.ArrayGet the-addresses
+                    (get-zip-seq-offset
+                     zz
+                     (cnt-sequence-by-name
+                      the-map
+                      '(mpp 0 shm FWD_TABLE_MOD 639 255 DATA))))
