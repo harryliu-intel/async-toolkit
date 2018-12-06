@@ -142,8 +142,8 @@ $ToolConfig_tools{cm3} = {
 };
 
 $ToolConfig_tools{multi_gen_ralf} = {
-    VERSION => "",
-    PATH => "$ENV{RTL_PROJ_DBIN}/uvm_ral",
+    VERSION => "18.01.02",
+    PATH => "$ENV{RTL_PROJ_TOOLS}/uvm_ral/nhdk/&get_tool_version()",
     EXEC => "&get_tool_path()/multi_gen_ralf_crif.py",
 };
 
