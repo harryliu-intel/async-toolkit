@@ -8,6 +8,7 @@ IMPORT Thread;
 IMPORT Debug;
 IMPORT Time;
 IMPORT Word;
+IMPORT Params;
 
 VAR
   x : Map.T;
@@ -21,10 +22,12 @@ PROCEDURE P(READONLY z : Map.T; READONLY a : MapAddr.A) =
     IO.Put("Hi!\n")
   END P;
 
-CONST Writes = 1 * 1000  * 1000;
+CONST Writes = 1 * 100  * 1000;
 
 BEGIN
+  IO.Put(Params.Get(0) & " : integrity and performance check\n");
   P(x,y);
+  IO.Put("Building model " & Map.Brand & "...\n");
   VAR
     map : MapAddr.H := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
     start1, stop1 : Time.T;
@@ -32,6 +35,7 @@ BEGIN
     start3, stop3 : Time.T;
     qq : Word.T := 0;
   BEGIN
+    IO.Put("done.\n");
     IO.Put(Fmt.Int(CompAddr.initCount) & " fields have been address initialized.\n");
     <*ASSERT map # NIL*>
 

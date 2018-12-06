@@ -30,25 +30,31 @@
 `define MONITOR_SV
 
 `include "scoreboard.sv"
-`include "configuration.sv"
+//-hz:
+//`include "configuration.sv"
 `include "inp_driver.sv"
 
 // simulation signals from DUT  (DUT signals can be accessed using . separate full path to signal) 
-`define TEMPLATE_PATH   top.dut
-`define OUTP_ARB_BIDS   `TEMPLATE_PATH.tmpl_arb.outp_arb_bids_arb
-`define OUTP_ARB_GNTS   `TEMPLATE_PATH.tmpl_arb.outp_arb_gnts_arb
-`define INP_SECTION     `TEMPLATE_PATH.inp_section
-`define INP_FIFO_FULL   inp_flop_fifo.full 
+`define NODE_PATH   top.msh_node
+`define MEM_CTRL   `NODE_PATH.ctrl.mem_ctrl
 
 class monitor;
 
-    localparam FIFO_DEPTH  = tmpl_pkg::FIFO_DEPTH;
-    localparam NUM_INPUTS  = tmpl_pkg::NUM_INPUTS;
-    localparam NUM_OUTPUTS = tmpl_pkg::NUM_OUTPUTS;
+//-hz:
+//  localparam FIFO_DEPTH  = tmpl_pkg::FIFO_DEPTH;
+//  localparam NUM_INPUTS  = tmpl_pkg::NUM_INPUTS;
+//  localparam NUM_OUTPUTS = tmpl_pkg::NUM_OUTPUTS;
+    localparam FIFO_DEPTH  = 80;
+    localparam NUM_INPUTS  = 4;
+    localparam NUM_OUTPUTS = 4;
 
-    virtual tmpl_dut_if     dut_if;
+//-hz:
+//  virtual tmpl_dut_if     dut_if;
+    virtual msh_node_dut_if     dut_if;      
+
     scoreboard              sb;
-    configuration           cfg;
+//-hz:
+//  configuration           cfg;
     inp_driver              inp_drvr        [NUM_INPUTS-1:0];
 
     bit                     sb_done;
@@ -64,16 +70,18 @@ class monitor;
     integer                 stat_num_arb_conflicts;
 
     function new(
-        virtual tmpl_dut_if dut_if,
-        scoreboard          sb,
-        configuration       cfg,
-        inp_driver          inp_drvr [NUM_INPUTS-1:0]
+        virtual msh_node_dut_if dut_if,
+        scoreboard          sb
+//-hz:
+//      configuration       cfg,
+//      inp_driver          inp_drvr [NUM_INPUTS-1:0]
     );
 
         this.dut_if         = dut_if;
         this.sb             = sb;
-        this.cfg            = cfg;
-        this.inp_drvr       = inp_drvr;
+//-hz:
+//      this.cfg            = cfg;
+//      this.inp_drvr       = inp_drvr;
 
         name                    = "monitor.sv";
         clk_cnt                 = 0;
@@ -86,35 +94,48 @@ class monitor;
 
     task connect_to_DUT();
         forever begin
-            @(negedge dut_if.clk) // sample on negedge
+            @(negedge dut_if.mclk) // sample on negedge
 
             // tell scoreboard about inputs driven to DUT
-            foreach (dut_if.i_reqs[i])
-                if (dut_if.i_reqs[i].vld)
-                    sb.req_in_notification(i, dut_if.i_reqs[i]);
+
+	   if (dut_if.o_wb_rd_rsp[0].vld) 
+                    sb.wb_p0_rsp_out_notification(dut_if.o_wb_rd_rsp[0]);
+
+//-hz:
+//          foreach (dut_if.i_reqs[i])
+//              if (dut_if.i_reqs[i].vld)
+//                  sb.req_in_notification(i, dut_if.i_reqs[i]);
+//
+//          foreach (dut_if.i_eb_rd_req[i])
+//              if (dut_if.i_eb_rd_req[i].vld)
+//                  sb.req_in_notification(i, dut_if.i_eb_rd_req[i]);
 
             // tell scoreboard about arbitration bids 
-            foreach (`OUTP_ARB_BIDS[o])     // bids come from observation of DUT signals
-                if (|`OUTP_ARB_BIDS[o])
-                    sb.arb_bid_notification(o, `OUTP_ARB_BIDS[o], `OUTP_ARB_GNTS[o]);
+//          foreach (`OUTP_ARB_BIDS[o])     // bids come from observation of DUT signals
+//              if (|`OUTP_ARB_BIDS[o])
+//                  sb.arb_bid_notification(o, `OUTP_ARB_BIDS[o], `OUTP_ARB_GNTS[o]);
 
             // count arbitration conflicts
-            foreach (`OUTP_ARB_BIDS[o,i])
-                if ((`OUTP_ARB_BIDS[o][i] == 1'b1) &&
-                    (`OUTP_ARB_GNTS[o][i] != 1'b1)   )
-                    stat_num_arb_conflicts++;
+//          foreach (`OUTP_ARB_BIDS[o,i])
+//              if ((`OUTP_ARB_BIDS[o][i] == 1'b1) &&
+//                  (`OUTP_ARB_GNTS[o][i] != 1'b1)   )
+//                  stat_num_arb_conflicts++;
 
             // tell scoreboard about outputs driven by DUT
-            foreach (dut_if.o_reqs[o])
-                if (dut_if.o_reqs[o].vld)
-                    sb.req_out_notification(o, dut_if.o_reqs[o]);
+//          foreach (dut_if.o_reqs[o])
+//              if (dut_if.o_reqs[o].vld)
+//                  sb.req_out_notification(o, dut_if.o_reqs[o]);
 
 
             clk_cnt++;
 
-            sb_done = sb.all_empty();      // scoreboard has no unmatched qflits
-            foreach (inp_drvr[i]) inp_drv_done[i] = inp_drvr[i].drv_done;
-            if (&inp_drv_done && sb_done) all_done = 1;
+//-hz:
+//          sb_done = sb.all_empty();      // scoreboard has no unmatched qflits
+            if (dut_if.o_wb_rd_rsp[0].vld) 
+                sb_done = 1;
+
+//          foreach (inp_drvr[i]) inp_drv_done[i] = inp_drvr[i].drv_done;
+//          if (&inp_drv_done && sb_done) all_done = 1;
 
 `ifdef HEARTBEAT_ON
             if ((clk_cnt % heartbeat)==0) $display($time," %s  Heart Beat...", name);
@@ -129,7 +150,7 @@ class monitor;
 
     task final_state_check();
         begin
-            @(negedge dut_if.clk) // sample on negedge
+            @(negedge dut_if.mclk) // sample on negedge
 
             // check that FIFOs are empty
            
@@ -142,6 +163,8 @@ class monitor;
 //                        $finish;
 //                    end
 
+//-hz:
+/*
                 for (int e=1; e <= FIFO_DEPTH; e++) begin
                     if (top.dut.inp_section[0].rtinfo_fifo.full[e] != 0) begin
                         $display("ERROR:  (time: %0d)  FINAL STATE CHECK FAILURE:  input FIFO %0d not empty", $time, 0);
@@ -164,6 +187,8 @@ class monitor;
                         $finish;
                     end
                 end
+*/ // -hz:
+            $display("-hz: inside monitor:  (time: %0d)  rsp.vld =  %0d ", $time, dut_if.o_wb_rd_rsp[0].vld);
 
         end
     endtask

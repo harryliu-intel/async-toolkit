@@ -10,7 +10,9 @@ object JsonSerializer {
 
   val StandardFieldFilter: (Field, AnyRef) => Boolean = (field, _) => !isInnerCaseClassField(field)
 
-  val StandardFieldSpecialTreatment: (Field, AnyRef) => Option[Any] = (_, _) => None
+  val StandardFieldSpecialTreatment: (Map[String, Any], Field, AnyRef) => (Map[String, Any], Option[Any]) = (acc, _, _) => (acc, None)
+
+  val StandardObjectTreatment: (Map[String, Any], Any) => Map[String, Any] = (result, _) => result
 
   def toMapStd(value: Any): Map[String, Any] = toMap(value, bNameCaseClasses = false)(StandardFieldFilter)
 
@@ -19,7 +21,9 @@ object JsonSerializer {
   //scalastyle:off cyclomatic.complexity
   def toMap(any: Any, bNameCaseClasses: Boolean)(
     filterField: (Field, AnyRef) => Boolean,
-    specialFieldTreatment: (Field, AnyRef) => Option[Any] = StandardFieldSpecialTreatment): Map[String, Any] = {
+    specialFieldTreatment: (Map[String, Any], Field, AnyRef) => (Map[String, Any], Option[Any]) = StandardFieldSpecialTreatment,
+    objectTreatment: (Map[String, Any], Any) => Map[String, Any] = StandardObjectTreatment)
+  : Map[String, Any] = {
 
     def isUserCaseClass(ob: Any): Boolean = ob match {
       case _: List[_]   => false
@@ -28,25 +32,26 @@ object JsonSerializer {
       case _            => false
     }
 
-    def toMapObject(ob: AnyRef): Any = {
-      val fields = ob.getClass.getDeclaredFields
+    def toMapObject(obj: AnyRef): Any = {
+      val fields = obj.getClass.getDeclaredFields
       val fieldsSize = fields.size
       if (fieldsSize == 0 || (fieldsSize == 1 && isInnerCaseClassField(fields.head))) {
-        if (isUserCaseClass(ob))  {ob.toString} else {ob.getClass.getSimpleName}
+        if (isUserCaseClass(obj))  {obj.toString} else {obj.getClass.getSimpleName}
       } else {
-        fields.foldLeft(Map[String, Any]()) { (acc, field) =>
+        val result = fields.foldLeft(Map[String, Any]()) { (acc, field) =>
           field.setAccessible(true)
-          val value = field.get(ob)
+          val value = field.get(obj)
           if (value != null && filterField(field, value)) {
             val name = if (bNameCaseClasses && isUserCaseClass(value)) {value.getClass.getSimpleName} else {field.getName}
-            specialFieldTreatment(field, value) match {
-              case Some(v) => acc + (name -> v)
-              case None => acc + (name -> recursiveToMap(value))
+            specialFieldTreatment(acc, field, value) match {
+              case (actResult, Some(v)) => actResult + (name -> v)
+              case (actResult, None) => actResult + (name -> recursiveToMap(value))
             }
           } else {
             acc
           }
         }
+        objectTreatment(result, obj)
       }
     }
 
