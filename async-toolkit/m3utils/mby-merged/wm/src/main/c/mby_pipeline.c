@@ -6,10 +6,11 @@
 
 void RxPipeline
 (
-    mby_ppe_rx_top_map const * const rx_top_map,
-    mby_shm_map        const * const shm_map,
-    mbyRxMacToParser   const * const mac2par,
-    mbyRxStatsToRxOut        * const rxs2rxo
+    mby_ppe_rx_top_map       const * const rx_top_map,
+    mby_ppe_rx_top_map__addr const * const rx_top_map_w,
+    mby_shm_map              const * const shm_map,
+    mbyRxMacToParser         const * const mac2par,
+    mbyRxStatsToRxOut              * const rxs2rxo
 )
 {
     // Register map structs:
@@ -19,6 +20,7 @@ void RxPipeline
     mby_ppe_cgrp_b_map          const * const cgrp_b_map          = &(rx_top_map->cgrp_b);
     mby_ppe_entropy_map         const * const entropy_map         = &(rx_top_map->entropy);
     mby_ppe_nexthop_map         const * const nexthop_map         = &(rx_top_map->nexthop);
+    mby_ppe_nexthop_map__addr   const * const nexthop_map_w       = &(rx_top_map_w->nexthop);
     mby_ppe_fwd_misc_map        const * const fwd_misc_map        = &(rx_top_map->fwd_misc);
     mby_ppe_mst_glort_map       const * const mst_glort_map       = &(rx_top_map->mst_glort);
     mby_ppe_policers_map        const * const policers_map        = &(rx_top_map->policers);
@@ -40,7 +42,7 @@ void RxPipeline
     mbyCongMgmtToRxStats  cgm2rxs;
 
     // RX pipeline stages:
-    Parser     (parser_map,           mac2par, &par2map);
+    Parser     (parser_map,          mac2par, &par2map);
 
     Mapper     (mapper_map,          &par2map, &map2cla);
 
@@ -50,7 +52,8 @@ void RxPipeline
 
     Hash       (entropy_map,         &cla2hsh, &hsh2nxt);
 
-    NextHop    (nexthop_map,         &hsh2nxt, &nxt2msk);
+    NextHop    (nexthop_map,
+                nexthop_map_w,       &hsh2nxt, &nxt2msk);
 
     MaskGen    (fwd_misc_map,
                 mst_glort_map,

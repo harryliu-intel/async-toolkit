@@ -56,10 +56,10 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
   it should "apply special treatment" in {
     toMap(TestClass4(TestClass3("test3", TestClass1(3)), new TestClass2(List(), Map(), 0.0)), bNameCaseClasses = false)(
       filterField = StandardFieldFilter,
-      specialFieldTreatment = (field, any) => (field.getName, any) match {
-        case ("x", _) => Some("special x")
-        case (_, _: TestClass2) => Some("tc2 body")
-        case _ => None
+      specialFieldTreatment = (acc, field, any) => (field.getName, any) match {
+        case ("x", _) => (acc, Some("special x"))
+        case (_, _: TestClass2) => (acc, Some("tc2 body"))
+        case _ => (acc, None)
       }
     ) shouldEqual Map(
       "testClass3"->Map("x"->"special x", "tc1"->Map("value"->3)),
@@ -116,13 +116,13 @@ class JsonSerializerSpec extends FlatSpec with Matchers {
     val allFlags = new AllFlags(ClassFlags(flags), ClassFlagsList(List(Flag_xyz, Flag_abc)))
 
     val res = toMap(allFlags, bNameCaseClasses = true) (filterField = StandardFieldFilter, specialFieldTreatment =
-      (field, v) => (field.getClass.getSimpleName, v) match {
-      case (_, list: ClassFlagsList) => Some(list.flagsList.zipWithIndex.map { case (_, i) => i })
-      case (_, flags: ClassFlags)  => Some(
+      (acc, field, v) => (field.getClass.getSimpleName, v) match {
+      case (_, list: ClassFlagsList) => (acc, Some(list.flagsList.zipWithIndex.map { case (_, i) => i }))
+      case (_, flags: ClassFlags)  => (acc, Some(
         flags.flags.collect {
           case (k, vmap) => k -> vmap.toString.drop("Flag_".length) }
-        )
-      case _ => None
+        ))
+      case _ => (acc, None)
     })
 
     res shouldEqual Map(
