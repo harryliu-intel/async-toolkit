@@ -142,8 +142,23 @@
                            zz
                            (cnt-sequence-by-name
                             the-map
-                            '(mpp 0 shm FWD_TABLE_MOD 639 255 DATA))))
+                            '(mpp 0 shm FWD_TABLE_MOD 9 16383 DATA))))
       ) dnl)
 
-;; average width of field (including space)
-(* 8 (/ (+ (cdr (assoc 'byte lst)) (/ (cdr (assoc 'wid lst)) 8)) (+ (cdr (assoc 'id lst)) 1)))
+(define last-entry (FieldData.ArrayGet the-addresses
+                                       (- (FieldData.ArraySize the-addresses)
+                                          1)))
+  
+;; average width of field (including space) -- in bits
+(define ave-width
+  (* 8 (/ (+ (cdr (assoc 'byte last-entry))
+             (/ (cdr (assoc 'wid last-entry)) 8))
+          (+ (cdr (assoc 'id last-entry)) 1)))
+  )
+
+(dis "average width of fields " ave-width " bits" dnl)
+
+(define (fielddata->lsb fd)
+  (+ (* 8 (cdr (assoc 'byte fd)))
+     (cdr (assoc 'lsb fd))))
+
