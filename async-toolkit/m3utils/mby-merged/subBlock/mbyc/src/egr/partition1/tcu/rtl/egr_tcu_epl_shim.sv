@@ -57,7 +57,7 @@ module egr_tcu_epl_shim (
                                         //      7 -- SOP        Start of Packet 
                                         //    6:4 -- SOP Pos    Flit containing SOP 
                                         //    3:0 -- TC         TC As described in MAC Receive Traffic Classes Undefined if no SOP in clock cycle
-  output logic [7:0]                    tx_ecc,         // ECC for non-data TX buses except flow control i.e. (data_valid[7:0],metadata[23:0]} 
+  output logic [7:0]                    tx_ecc,       // <-- removed, wiki 2108-12-05 
   output logic [7:0]                    tx_data_valid,      // Indicator of which flits (blocks of 8 bytes) contain valid data. 
   output logic [71:0]                   tx0_data_w_ecc, // Transmit data bus is 8 flits with ECC protection:[71:64] = ECC covers Tx data [63:0] 
   output logic [71:0]                   tx1_data_w_ecc, // NOTE:   SOP is always placed in the lowest flit. 
