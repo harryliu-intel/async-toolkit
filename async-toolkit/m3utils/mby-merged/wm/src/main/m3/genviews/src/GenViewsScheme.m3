@@ -55,7 +55,7 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       a := Pickle2.Read(t.fieldAddrRd);
       Debug.Out("size of a : " & Int(NUMBER(a^)));
       b := Pickle2.Read(t.fieldAddrRd);
-      Debug.Out("size of b : " & Int(NUMBER(a^)));
+      Debug.Out("size of b : " & Int(NUMBER(b^)));
       Rd.Close(t.fieldAddrRd)
     END;
     t.put(F("(cont %s",tgtmap.nm), 0);
