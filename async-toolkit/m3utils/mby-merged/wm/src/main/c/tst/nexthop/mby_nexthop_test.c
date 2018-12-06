@@ -140,7 +140,7 @@ static fm_bool nexthop_test_verify
     return TRUE;
 }
 
-static void empty(void *v) {
+static void empty(void *v, int i) {
     return;
 }
 
