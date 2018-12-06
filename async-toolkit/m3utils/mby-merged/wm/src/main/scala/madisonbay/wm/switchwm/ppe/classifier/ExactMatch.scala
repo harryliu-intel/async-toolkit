@@ -40,12 +40,12 @@ case class KeyMaskConfig(
 )
 object KeyMaskConfig {
   def apply(map: mby_ppe_cgrp_em_map, hashNum: HashNum, profile: Profile): KeyMaskConfig = {
-    val emKeySel1 = map.KEY_SEL1(hashNum).EM_KEY_SEL1(profile)
+    val emKeySel1 = map.KEY_SEL1(hashNum).KEY_SEL1(profile)
     KeyMaskConfig(
       emKeySel1.KEY_MASK_SEL,
       emKeySel1.KEY32_MASK,
       emKeySel1.KEY16_MASK,
-      map.KEY_SEL0(hashNum).EM_KEY_SEL0(profile).KEY8_MASK
+      map.KEY_SEL0(hashNum).KEY_SEL0(profile).KEY8_MASK
     )
   }
 }
