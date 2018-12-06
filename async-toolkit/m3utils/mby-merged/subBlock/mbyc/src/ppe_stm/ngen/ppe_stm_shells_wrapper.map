@@ -1,15 +1,24 @@
+$x=0;
+$y=0;
 foreach $i (0..191) {
+    q_fwd_tbl0_ren[$x][$y]          >> ppe_stm_fwd_tbl0_$i$_rd_en
+    q_fwd_tbl0_wen[$x][$y]          >> ppe_stm_fwd_tbl0_$i$_wr_en
+    fwd_tbl0_addr[$x][$y]           >> ppe_stm_fwd_tbl0_$i$_adr
+    fwd_tbl0_rdata[$x][$y][71:0]    >> ppe_stm_fwd_tbl0_$i$_rd_data
+    q_fwd_tbl0_wdata[$y][71:0]      >> ppe_stm_fwd_tbl0_$i$_wr_data
+    if($y == 3) {
+        $x=$x+1;
+        $y=0;
+    }
+    else {
+        $y=$y+1;
+    }
     >> PPE_STM_FWD_TBL0_$i$_CFG_reg_sel
     >> PPE_STM_FWD_TBL0_$i$_STATUS_reg_sel
-    >> ppe_stm_fwd_tbl0_$i$_adr
     >> ppe_stm_fwd_tbl0_$i$_mem_ls_enter
-    >> ppe_stm_fwd_tbl0_$i$_rd_en
-    >> ppe_stm_fwd_tbl0_$i$_wr_data
-    >> ppe_stm_fwd_tbl0_$i$_wr_en
+    >> ppe_stm_fwd_tbl0_$i$_rd_valid
     >> ppe_stm_fwd_tbl0_$i$_ecc_uncor_err
     >> ppe_stm_fwd_tbl0_$i$_init_done
-    >> ppe_stm_fwd_tbl0_$i$_rd_data
-    >> ppe_stm_fwd_tbl0_$i$_rd_valid
 }
 
 foreach $i (0..63) {
