@@ -44,8 +44,8 @@
 module egr_tcu_epl_shim (
   // epl_if  	
   input  logic [1:0]                    tx_enable_port_num, // Indicator of logical port associated with the tx_enable signal.
-  input  logic                          tx_data_enable,     // Indicator of whether EPL is ready to accept tx data.
-  output logic                          tx_data_valid_resp ,// tx_data_enable response for EPL credit.
+  input  logic                          tx_enable,          // Indicator of whether EPL is ready to accept tx data.
+  output logic                          tx_valid_resp,      // tx_enable response for EPL credit.
   output logic [1:0]                    tx_port_num,        // Indicator of logical port the data and metadata is associated with for each EPL TX channel                   
   output logic [23:0]                   tx_metadata,        // Per Fllit metadata
                                         //     18 -- PTP Snap   Timestamp snap when SoP is being transmitted
@@ -57,7 +57,7 @@ module egr_tcu_epl_shim (
                                         //      7 -- SOP        Start of Packet 
                                         //    6:4 -- SOP Pos    Flit containing SOP 
                                         //    3:0 -- TC         TC As described in MAC Receive Traffic Classes Undefined if no SOP in clock cycle
-  output logic [7:0]                    tx_ecc,         // ECC for non-data TX buses except flow control i.e. (data_valid[7:0],metadata[23:0]} 
+  output logic [7:0]                    tx_ecc,       // <-- removed, wiki 2108-12-05 
   output logic [7:0]                    tx_data_valid,      // Indicator of which flits (blocks of 8 bytes) contain valid data. 
   output logic [71:0]                   tx0_data_w_ecc, // Transmit data bus is 8 flits with ECC protection:[71:64] = ECC covers Tx data [63:0] 
   output logic [71:0]                   tx1_data_w_ecc, // NOTE:   SOP is always placed in the lowest flit. 
@@ -103,7 +103,7 @@ module egr_tcu_epl_shim (
 
  
   logic [1:0]                    tx_enable_port_num_d ;
-  logic                          tx_data_enable_d     ; 
+  logic                          tx_enable_d          ; 
   logic                          x1port_4ch           ; // TDM tx_port_num  0 ...
   logic                          x2port_2ch           ; // TDM tx_port_num  0,2 ...
   logic                          x4port_1ch           ; // TDM tx_port_num  0,1,2,3 ...
@@ -147,7 +147,7 @@ module egr_tcu_epl_shim (
           nx_state          = x1port_4ch ? TDM_SLOT0 : TDM_SLOT1;
           // 
           nx_state          = TDM_SLOT0;
-          buf_ren_port0     = tx_data_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
+          buf_ren_port0     = tx_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
           nx_tx_data_valid  = tx_data_valid_port0; // 8bits 
           nx_tx_port_num    = PORT0;
           nx_tx_metadata    = tx_metadata_port0;  
@@ -158,7 +158,7 @@ module egr_tcu_epl_shim (
       TDM_SLOT1: begin
           nx_state          = TDM_SLOT2;
         if (x2port_2ch | x3port_12ch | x3port_21ch) begin
-          buf_ren_port2     = tx_data_enable_d && (tx_enable_port_num_d==PORT2) && tc_rdy_port2;
+          buf_ren_port2     = tx_enable_d && (tx_enable_port_num_d==PORT2) && tc_rdy_port2;
           nx_tx_data_valid  = tx_data_valid_port2; // 8bits
           nx_tx_port_num    = PORT2;
           nx_tx_metadata    = tx_metadata_port2;  
@@ -167,7 +167,7 @@ module egr_tcu_epl_shim (
           port_num_err      = tx_enable_port_num_d!=PORT2; 
         end // if (x2port_2ch)
         else if (x4port_1ch) begin
-          buf_ren_port1     = tx_data_enable_d && (tx_enable_port_num_d==PORT1) && tc_rdy_port1;
+          buf_ren_port1     = tx_enable_d && (tx_enable_port_num_d==PORT1) && tc_rdy_port1;
           nx_tx_data_valid  = tx_data_valid_port1; // 8bits
           nx_tx_port_num    = PORT1;
           nx_tx_metadata    = tx_metadata_port1;  
@@ -176,7 +176,7 @@ module egr_tcu_epl_shim (
           port_num_err      = tx_enable_port_num_d!=PORT1; 
         end // if (x4port_1ch)
         else  begin
-          buf_ren_port0     = tx_data_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
+          buf_ren_port0     = tx_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
           nx_tx_data_valid  = tx_data_valid_port0; // 8bits 
           nx_tx_port_num    = PORT0;
           nx_tx_metadata    = tx_metadata_port0;  
@@ -188,7 +188,7 @@ module egr_tcu_epl_shim (
       TDM_SLOT2: begin
           nx_state          = TDM_SLOT3;
         if (x2port_2ch | x3port_21ch) begin
-          buf_ren_port0     = tx_data_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
+          buf_ren_port0     = tx_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
           nx_tx_data_valid  = tx_data_valid_port0; // 8bits
           nx_tx_port_num    = PORT0;
           nx_tx_metadata    = tx_metadata_port0;  
@@ -197,7 +197,7 @@ module egr_tcu_epl_shim (
           port_num_err      = tx_enable_port_num_d!=PORT0; 
         end
         else if (x4port_1ch) begin
-          buf_ren_port2     = tx_data_enable_d && (tx_enable_port_num_d==PORT2) && tc_rdy_port2;
+          buf_ren_port2     = tx_enable_d && (tx_enable_port_num_d==PORT2) && tc_rdy_port2;
           nx_tx_data_valid  = tx_data_valid_port2; // 8bits
           nx_tx_port_num    = PORT2;
           nx_tx_metadata    = tx_metadata_port2;  
@@ -206,7 +206,7 @@ module egr_tcu_epl_shim (
           port_num_err      = tx_enable_port_num_d!=PORT2; 
         end // if (x4port_1ch)
         else if (x3port_12ch) begin
-          buf_ren_port1     = tx_data_enable_d && (tx_enable_port_num_d==PORT1) && tc_rdy_port1;
+          buf_ren_port1     = tx_enable_d && (tx_enable_port_num_d==PORT1) && tc_rdy_port1;
           nx_tx_data_valid  = tx_data_valid_port1; // 8bits
           nx_tx_port_num    = PORT1;
           nx_tx_metadata    = tx_metadata_port1;  
@@ -215,7 +215,7 @@ module egr_tcu_epl_shim (
           port_num_err      = tx_enable_port_num_d!=PORT1; 
         end // if (x4port_1ch)
         else  begin
-          buf_ren_port0     = tx_data_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
+          buf_ren_port0     = tx_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
           nx_tx_data_valid  = tx_data_valid_port0; // 8bits 
           nx_tx_port_num    = PORT0;
           nx_tx_metadata    = tx_metadata_port0;  
@@ -227,7 +227,7 @@ module egr_tcu_epl_shim (
       TDM_SLOT3: begin
           nx_state          = TDM_SLOT0;
         if (x2port_2ch | x3port_12ch) begin
-          buf_ren_port2     = tx_data_enable_d && (tx_enable_port_num_d==PORT2) && tc_rdy_port2;
+          buf_ren_port2     = tx_enable_d && (tx_enable_port_num_d==PORT2) && tc_rdy_port2;
           nx_tx_data_valid  = tx_data_valid_port2; // 8bits
           nx_tx_port_num    = PORT2;
           nx_tx_metadata    = tx_metadata_port2;  
@@ -236,7 +236,7 @@ module egr_tcu_epl_shim (
           port_num_err      = tx_enable_port_num_d!=PORT2; 
         end
         else if (x4port_1ch | x3port_21ch) begin
-          buf_ren_port3     = tx_data_enable_d && (tx_enable_port_num_d==PORT3) && tc_rdy_port3;
+          buf_ren_port3     = tx_enable_d && (tx_enable_port_num_d==PORT3) && tc_rdy_port3;
           nx_tx_data_valid  = tx_data_valid_port3; // 8bits
           nx_tx_port_num    = PORT3;
           nx_tx_metadata    = tx_metadata_port3;  
@@ -245,7 +245,7 @@ module egr_tcu_epl_shim (
           port_num_err      = tx_enable_port_num_d!=PORT3; 
         end // if (x4port_1ch)
         else  begin
-          buf_ren_port0     = tx_data_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
+          buf_ren_port0     = tx_enable_d && (tx_enable_port_num_d==PORT0) && tc_rdy_port0;
           nx_tx_data_valid  = tx_data_valid_port0; // 8bits 
           nx_tx_port_num    = PORT0;
           nx_tx_metadata    = tx_metadata_port0;  
@@ -281,24 +281,24 @@ module egr_tcu_epl_shim (
   /***** glue logic *****/
   always_ff @ (posedge clk) 
     if (!reset_n) begin
-      tx_enable_port_num_d      <= 1'b0;
-      tx_data_enable_d          <= 1'b0;
-      tx_data_valid_resp        <= 1'b0;
-      x1port_4ch  <= '0;
-      x2port_2ch  <= '0;
-      x4port_1ch  <= '0;
-      x3port_12ch <= '0;
-      x3port_21ch <= '0;
+      tx_enable_port_num_d <= '0;
+      tx_enable_d          <= '0;
+      tx_valid_resp        <= '0;
+      x1port_4ch           <= '0;
+      x2port_2ch           <= '0;
+      x4port_1ch           <= '0;
+      x3port_12ch          <= '0;
+      x3port_21ch          <= '0;
     end  
     else begin
-      tx_enable_port_num_d      <= tx_enable_port_num;
-      tx_data_enable_d          <= tx_data_enable;
-      tx_data_valid_resp        <= tx_data_enable_d;
-      x1port_4ch  <= port_config[3:0] == 4'h0;
-      x2port_2ch  <= port_config[3:0] == 4'h1;
-      x4port_1ch  <= port_config[3:0] == 4'h2;
-      x3port_12ch <= port_config[3:0] == 4'h3;
-      x3port_21ch <= port_config[3:0] == 4'h4;
+      tx_enable_port_num_d <= tx_enable_port_num;
+      tx_enable_d          <= tx_enable;
+      tx_valid_resp        <= tx_enable_d;
+      x1port_4ch           <= port_config[3:0] == 4'h0;
+      x2port_2ch           <= port_config[3:0] == 4'h1;
+      x4port_1ch           <= port_config[3:0] == 4'h2;
+      x3port_12ch          <= port_config[3:0] == 4'h3;
+      x3port_21ch          <= port_config[3:0] == 4'h4;
     end
 
     assign  tx0_data_w_ecc = tx_data_w_ecc[0],

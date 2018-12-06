@@ -11,14 +11,14 @@ end_of_line = lf
 insert_final_newline = true
 
 # 4 spaces indentation
-[*.{c,h}]
+[*.{cpp,c,h}]
 indent_style = space
 indent_size = 4
 
 # Ruby scripts only use 2 spaces
 [*.rb]
 indent_style = space
-indent_size = 2 2 
+indent_size = 2 2
 
 # Tab indentation (no size specified)
 [Makefile]

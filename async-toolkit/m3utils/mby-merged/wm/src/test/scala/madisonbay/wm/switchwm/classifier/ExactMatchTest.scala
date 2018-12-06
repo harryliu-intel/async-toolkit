@@ -69,7 +69,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
     val topMapToCamData: Traversal[mby_top_map, em_hash_cam_r.DATA] =
       topMapToCgrpEmMapO composeLens
       mby_ppe_cgrp_em_map._HASH_CAM composeTraversal each composeLens
-      em_hash_cam_rf._EM_HASH_CAM composeTraversal each composeLens em_hash_cam_r._DATA
+      em_hash_cam_rf._HASH_CAM composeTraversal each composeLens em_hash_cam_r._DATA
 
     topMapToCamData.assign_(em_hash_cam_r.DATA(0))
   }
@@ -80,7 +80,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
     val topMapToEmHashCamEnMask =
       topMapToCgrpEmMapO composeLens
       mby_ppe_cgrp_em_map._HASH_CAM_EN composeTraversal each composeLens
-      em_hash_cam_en_rf._EM_HASH_CAM_EN composeTraversal each composeLens em_hash_cam_en_r._MASK
+      em_hash_cam_en_rf._HASH_CAM_EN composeTraversal each composeLens em_hash_cam_en_r._MASK
 
     topMapToEmHashCamEnMask.assign_(em_hash_cam_en_r.MASK(0))
   }
@@ -96,7 +96,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
       topMapToCgrpEmMapO composeLens
       mby_ppe_cgrp_em_map._KEY_SEL0 composeTraversal
       hash composeLens
-      em_key_sel0_rf._EM_KEY_SEL0 composeTraversal
+      em_key_sel0_rf._KEY_SEL0 composeTraversal
       packetProfile composeLens em_key_sel0_r._KEY8_MASK
 
     topMapToEmKeySel0Key8Mask.assign_(value)
@@ -115,7 +115,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
       topMapToCgrpEmMapO composeLens
       mby_ppe_cgrp_em_map._KEY_SEL1 composeTraversal
       hash composeLens
-      em_key_sel1_rf._EM_KEY_SEL1 composeTraversal profile
+      em_key_sel1_rf._KEY_SEL1 composeTraversal profile
 
     import madisonbay.csr.all.em_key_sel1_r._
     for {
@@ -131,7 +131,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
     val topMapToEmKeyMask =
       topMapToCgrpEmMapO composeLens
       mby_ppe_cgrp_em_map._KEY_MASK composeTraversal each composeLens
-      em_key_mask_rf._EM_KEY_MASK composeTraversal each composeLens
+      em_key_mask_rf._KEY_MASK composeTraversal each composeLens
       em_key_mask_r._MASK
 
     // TODO: to be fixed with C
@@ -144,7 +144,7 @@ class ExactMatchTest extends FlatSpec with Matchers {
     val topMapToEmHashMiss =
       topMapToCgrpEmMapO composeLens
       mby_ppe_cgrp_em_map._HASH_MISS composeTraversal each composeLens
-      em_hash_miss_rf._EM_HASH_MISS composeTraversal each
+      em_hash_miss_rf._HASH_MISS composeTraversal each
 
     import madisonbay.csr.all.em_hash_miss_r._
     for {

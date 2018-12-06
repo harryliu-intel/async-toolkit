@@ -3,7 +3,7 @@
 
 
 
-// FWD_TABLE0[0..3071][0..255]
+// FWD_TABLE0[0..47][0..16383]
 
 reg fwd_table0_r {
   shared;
@@ -11,6 +11,10 @@ reg fwd_table0_r {
   name = "Shared table for CGRP_A";
   desc = "
     Entry storage table for LPM and EM_A.
+    [br][br]
+    The first index is the bank number. Software should take care
+    to allocate entries that could be accessed within a single cycle to different
+    banks. The second index is sized to provide a total of 6MB.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -26,10 +30,10 @@ reg fwd_table0_r {
   } DATA[63:0] = 64'h0;
 };
 regfile fwd_table0_rf {
-  fwd_table0_r FWD_TABLE0[256] += 8;
+  fwd_table0_r FWD_TABLE0[16384] += 8;
 };
 
-// FWD_TABLE1[0..511][0..255]
+// FWD_TABLE1[0..15][0..8191]
 
 reg fwd_table1_r {
   shared;
@@ -37,6 +41,10 @@ reg fwd_table1_r {
   name = "Shared table for CGRP_B";
   desc = "
     Entry storage table for EM_B.
+    [br][br]
+    The first index is the bank number. Software should take care
+    to allocate entries that could be accessed within a single cycle to different
+    banks. The second index is sized to provide a total of 1MB.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -52,10 +60,10 @@ reg fwd_table1_r {
   } DATA[63:0] = 64'h0;
 };
 regfile fwd_table1_rf {
-  fwd_table1_r FWD_TABLE1[256] += 8;
+  fwd_table1_r FWD_TABLE1[8192] += 8;
 };
 
-// FWD_TABLE_MOD[0..639][0..255]
+// FWD_TABLE_MOD[0..9][0..16383]
 
 reg fwd_table_mod_r {
   shared;
@@ -63,6 +71,10 @@ reg fwd_table_mod_r {
   name = "Shared table for packet modifier context memory";
   desc = "
     Entry storage table for modify content entries.
+    [br][br]
+    The first index is the bank number. Software should take care
+    to allocate entries that could be accessed within a single cycle to different
+    banks. The second index is sized to provide a total of 1280KB.
            ";
   Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
@@ -78,7 +90,7 @@ reg fwd_table_mod_r {
   } DATA[63:0] = 64'h0;
 };
 regfile fwd_table_mod_rf {
-  fwd_table1_r FWD_TABLE_MOD[256] += 8;
+  fwd_table_mod_r FWD_TABLE_MOD[16384] += 8;
 };
 
 
@@ -92,7 +104,7 @@ addrmap mby_shm_map {
   No_IOSF_Primary = true;
   addressing = fullalign;
 
-  fwd_table0_rf       FWD_TABLE0[3072];
-  fwd_table1_rf       FWD_TABLE1[512];
-  fwd_table_mod_rf    FWD_TABLE_MOD[640];
+  fwd_table0_rf       FWD_TABLE0[48];
+  fwd_table1_rf       FWD_TABLE1[16];
+  fwd_table_mod_rf    FWD_TABLE_MOD[10];
 }; 

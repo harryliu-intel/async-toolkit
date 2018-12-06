@@ -48,22 +48,45 @@ import shared_pkg::*;
     egr_mce_tagring_if.egr mce_tagring_if  //[3:0]
 );
 
+logic qvalid;
 
-assign prc_if.tag = tagring_if.mby_tag_ring[0][1:0];
-//input prc_if.qsel[MGP_COUNT-1:0][MGP_PORT_CNT-1:0][15:0]
+//This only works for a single 64B packet
+always_ff @(posedge clk) qvalid <= tagring_if.mby_tag_ring[0][0].valid;//Add reset
 
 //input pfs_if.pop     [EPL_PER_MGP-1:0]
 //input pfs_if.pop_port[EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0]
 //input pfs_if.pop_tc  [EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0]
 //input pfs_if.pop_mgp [EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0] 
 
+always_ff @(posedge clk) begin 
 //pfs_if.queue_valid = [EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0][RX_TC_COUNT-1:0][MGP_COUNT-1:0]
-assign pfs_if.queue_valid[0][0][0][0] = tagring_if.mby_tag_ring[0][0].valid && !pfs_if.pop[0];
+  pfs_if.queue_valid[3:1] <= 1536'h0;
+  pfs_if.queue_valid[0][3:1] <= 384'h0;
+  pfs_if.queue_valid[0][0][7:1] <= 112'h0;
+  pfs_if.queue_valid[0][0][0][15:1] <= 15'h0;
+  //Array Initialization required to make VCS happy
+
+  if (!tagring_if.mby_tag_ring[0][0].valid)//In place of reset
+      pfs_if.queue_valid[0][0][0][0] <= 1'b0;
+  else if (tagring_if.mby_tag_ring[0][0].valid && !qvalid)//Set only on 1st packet
+      pfs_if.queue_valid[0][0][0][0] <= 1'b1;
+  else if (pfs_if.pop[0])
+      pfs_if.queue_valid[0][0][0][0] <= 1'b0;
+end
 assign pfs_if.update = 4'h0;//[EPL_PER_MGP-1:0]
 assign pfs_if.update_port = '0;//[EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0]
 assign pfs_if.update_tc = '0;//[EPL_PER_MGP-1:0][$clog2(RX_TC_COUNT)-1:0]
 assign pfs_if.update_mgp = '0;//[EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0]
 assign pfs_if.update_length = '0;//[EPL_PER_MGP-1:0][6:0](in 64B incs)
+
+always_ff @(posedge clk) begin 
+  if (pfs_if.pop[0])
+      prc_if.tag[0] <= tagring_if.mby_tag_ring[0][0];     
+  else 
+      prc_if.tag[0] <= '0;
+end
+assign prc_if.tag[1] = '0;
+//input prc_if.qsel[MGP_COUNT-1:0][MGP_PORT_CNT-1:0][15:0]
 
 
 //logic [15:0][15:0][15:0] eop_in_buf;
