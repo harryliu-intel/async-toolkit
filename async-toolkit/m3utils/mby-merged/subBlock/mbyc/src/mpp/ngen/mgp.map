@@ -198,4 +198,48 @@ for ($j =0; $j <8; $j++) {
       mgp_mrpodring_stall_up                 >> mrpodring_stall_out_dn   
  }
 
+// Global Policer Ring
+for ($j =0; $j <8; $j++) {
+ if ($y eq 0) {
+   for ($k =0; $k <2; $k++) {
+      mpp_gpolring_in_$j$_$k              >> gpolring_in_dn_$j$_$k
+      mgp_gpolring_dn_$j$_$k              >> gpolring_out_dn_$j$_$k
+
+      \{26'b0\}                           >> gpolring_in_up_$j$_$k
+                                          >> gpolring_out_up_$j$_$k
+   }
+ }
+  // Flipped MGP, use up to go down
+ if ($y eq 1) {
+   for ($k =0; $k <2; $k++) {
+      \{26'b0\}                           >> gpolring_in_dn_$j$_$k
+                                          >> gpolring_out_dn_$j$_$k
+
+      mgp_gpolring_dn_$j$_$k              >> gpolring_in_up_$j$_$k
+      mpp_gpolring_out_$j$_$k             >> gpolring_out_up_$j$_$k
+   }
+ }
+}
+
+// Global Policer Update Ring
+ if ($y eq 0) {
+   for ($k =0; $k <2; $k++) {
+      mpp_gpolring_update_in_$k          >> gpolring_update_in_dn_$k
+      mgp_gpolring_update_dn_$k          >> gpolring_update_out_dn_$k
+
+      \{107'b0\}                         >> gpolring_update_in_up_$k
+                                         >> gpolring_update_out_up_$k
+   }
+ }
+  // Flipped MGP, use up to go down
+ if ($y eq 1) {
+   for ($k =0; $k <2; $k++) {
+      \{107'b0\}                         >> gpolring_update_in_dn_$k
+                                         >> gpolring_update_out_dn_$k
+
+      mgp_gpolring_update_dn_$k          >> gpolring_update_in_up_$k
+      mpp_gpolring_update_out_$k         >> gpolring_update_out_up_$k
+   }
+}
+
 
