@@ -148,7 +148,7 @@ rrsp_fifo_req_id0_0
     .d_in      (mim_rd_if0_0.mim_rrsp_req_id),
     .rd        (fifo_pop),
     .wr        (mim_rd_if0_0.mim_rrsp_valid),
-    .empty     (fifo_empty),
+    .empty     (),
     .full      (),
     .state_cnt ()
 );
