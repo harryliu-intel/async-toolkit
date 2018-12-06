@@ -21,33 +21,45 @@
 ///  must be express and approved by Intel in writing.
 ///
 // ---------------------------------------------------------------------------------------------------------------------
-// -- Author : Luis Alfonso Maeda-Nunez
-// -- Project Name : Madison Bay (MBY) 
-// -- Description  : TQU Read Response Receiver
-//------------------------------------------------------------------------------
+// -- Author : Edward C. Ross <edward.c.ross@intel.com>
+// -- Project Name : Madison Bay (MBY)
+// -- Description  : PB MetaData memory interface 
+// ---------------------------------------------------------------------------------------------------------------------
 
-module tqu_rrsp_rcv
-    import egr_int_pkg::*;
-(
-    input logic             clk,
-    input logic           rst_n, 
-
-    egr_rrs_if.requestor mri_if, // Read Response Interface. Gives service to 2 EPLs
-
-    output logic       wd_valid [N_EPL_PER_EPP],
-    output data_word_t     word [N_EPL_PER_EPP],
-    output dtq_sel_t    dtq_sel [N_EPL_PER_EPP],
-    output logic      word_type [N_EPL_PER_EPP]  // Word type: 0:Metadata(Control) 1:Data
-);
+// This is a connectivity only interface and thus is just a named bundle of nets that can be passed around as a group 
+// to save typing.  Anywhere an interface is defined, individual nets in the interface can be referenced as follows:    
+//
+//      <interface name>.<net name>
+//
 
 
-//modport requestor(
-//    input     rrsp_wd_id,
-//    input        rrsp_wd,
-//    input  rrsp_wd_valid,
-//    output rrsp_wd_stall
-//    );
+interface mby_igr_pb_md_if
+import mby_igr_pkg::*;                                         // import declarations from mby_igr_pkg.sv
+();
 
+    logic                    wr_en;
+    logic                    rd_en;
+    logic[PB_BANK_ADRS-1:0]  adr;
+    logic[PB_SHELL_MD_W-1:0] wr_data;
+    logic                    rd_valid;
+    logic[PB_SHELL_MD_W-1:0] rd_data;
 
+    modport mem (
+       input  wr_en,
+       input  rd_en,
+       input  adr,
+       input  wr_data,
+       output rd_valid,
+       output rd_data
+    );
 
-endmodule : tqu_rrsp_rcv
+    modport rtl (
+       output wr_en,
+       output rd_en,
+       output adr,
+       output wr_data,
+       input  rd_valid,
+       input  rd_data
+    );
+
+endinterface // mby_igr_pb_md_if

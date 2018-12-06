@@ -46,3 +46,41 @@
 `define  SP_TOP7          `SP_WIDTH'h7
 `define  SP_TOP8          `SP_WIDTH'h8
 //
+`define  CTRL_MDATA_W            22
+`define  CTRL_WORD_W       
+`define  PKT_WORD_MDATA_W        10
+// /nfs/sc/disks/sc_mby_00056/lojohn/mby-mby-x0/subBlock/mbyc/src/shared/rtl/mby_egr_pkg.sv
+`define  W_BYTE                      8 // Byte Size
+`define  W_WORD                     64 // Bytes per Word
+`define  W_WORD_BITS   `W_BYTE*`W_WORD // Bits per Word
+`define  W_FLIT                     64 // EPL data flit width
+`define  N_FLIT                      8 // EPL data number of flits
+`define  W_SEG_PTR                  20 // Segment Pointer Size
+`define  W_SEMA                      4 // Semaphore Bits Size
+`define  W_WD_SEL                    2 // Segment Word Selector Size
+//
+`define   W_TX_TC_SEL                4
+`define   W_LP_SEL                   2
+`define   W_DTQ_SEL                  6
+
+// localparam W_TX_TC_SEL  = $clog2(N_TX_TC);        // Data Transmit TC Select (4)
+// localparam W_LP_SEL     = $clog2(N_MAX_LP);       // Data Transmit Logic Port Select (2)
+// localparam W_DTQ_SEL    = $clog2(N_DTQ);          // Data Transmit Queue select (6)
+// typedef logic [W_LP_SEL-1:0][W_TX_TC_SEL-1:0] dtq_sel_t; //DTQ Select Type (select LP and TC)
+// typedef logic [N_MAX_LP-1:0][N_TX_TC-1:0]   dtq_ready_t; //DTQ Ready  Type
+// 
+//  // logic [
+// typedef struct packed {
+//     dtq_sel_t dtq_sel; // DTQ Ctrl select
+//     logic    peek_pop; // DTQ Ctrl operation. 0:Peek. 1:Pop
+//     logic         req; // DTQ Ctrl Request
+// } dtq_ctrl_pull_t;
+// typedef struct packed {
+//     dtq_sel_t dtq_sel; // DTQ Data select
+//     logic    peek_pop; // DTQ operation. 0:Peek. 1:Pop
+//     logic         req; // DTQ Request
+// } dtq_data_pull_t;
+// 
+
+
+

@@ -3,11 +3,19 @@
 # Set it to a different relative path for including Make.fxr
 # from Makefiles in other directories
 
+# tb top
+VCS_SRC  = rtl/egr_top_tb.sv
+ifdef dut
+    ifneq ($(dut),"egr_top")
+        VCS_SRC  = ../partition1/$(dut)/sandbox/rtl/$(dut)_tb.sv
+    endif
+endif
+
 SRC = ../..
 
 include $(SRC)/shared/sandbox/Make.mby
 
-# VCS_DEFS += +define+VCSSIM
+VCS_DEFS += +define+VCSSIM +define+INTEL_SVA_OFF
 
 VCS_FLAGS += $(VCS_DEFS)
 
@@ -23,13 +31,14 @@ INCS += $(SRC)/egr/partition1/prc/rtl
 INCS += $(SRC)/egr/partition1/tcu/rtl
 INCS += $(SRC)/egr/partition1/tmu/rtl
 INCS += $(SRC)/egr/partition1/tqu/rtl
+INCS += $(SRC)/mems/rtl/
 
 VCS_INC = $(addprefix +incdir+,$(INCS))
 BUILD_DEP = $(addsuffix /*,$(INCS))
 VCS_LIB = $(addprefix -y ,$(INCS))
 
-# tb top
-VCS_SRC  = rtl/egr_top_tb.sv
+## tb top
+#VCS_SRC  = rtl/egr_top_tb.sv
 
 .PHONY: debug gate clean
 

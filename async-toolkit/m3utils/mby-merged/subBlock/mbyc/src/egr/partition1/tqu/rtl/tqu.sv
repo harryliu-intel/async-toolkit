@@ -20,14 +20,15 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-// ---------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
 // -- Description  : Tag Queuing Unit
 //------------------------------------------------------------------------------
 
-module tqu
+module tqu 
     import egr_int_pkg::*;
+    #(parameter N_RRSPS = 3)
 (
     input logic             clk,
     input logic           rst_n, 
@@ -37,38 +38,404 @@ module tqu
     egr_tcu_tqu_if.tqu   tcu_if,  // Transmit Controller Unit - Transmit Queunig Unit Interface
 
     egr_rrs_if.requestor mri_if0, // Read Response Interface. Gives service to EPL 0,1
-    egr_rrs_if.requestor mri_if1  // Read Response Interface. Gives service to EPL 2,3
+    egr_rrs_if.requestor mri_if1,  // Read Response Interface. Gives service to EPL 2,3
 
+    //Data Buffer
+    //Control Memory Bank
+    output pkt_buf_addr_t     pkt_buf_ctrl_addr, //o
+    output logic             pkt_buf_ctrl_rd_en, //o
+    output logic             pkt_buf_ctrl_wr_en, //o
+    output data_word_t    pkt_buf_ctrl_word_out, //o
+    input  data_word_t     pkt_buf_ctrl_word_in, //i
+                                                 
+    //Data Memory Bank                           
+    output pkt_buf_addr_t     pkt_buf_data_addr, //o
+    output logic             pkt_buf_data_rd_en, //o
+    output logic             pkt_buf_data_wr_en, //o
+    output data_word_t    pkt_buf_data_word_out, //o
+    input  data_word_t     pkt_buf_data_word_in  //i
 );
-
-logic       wd_valid [N_EPP_PER_MGP][N_EPL_PER_EPP];
-data_word_t     word [N_EPP_PER_MGP][N_EPL_PER_EPP];
-dtq_sel_t    dtq_sel [N_EPP_PER_MGP][N_EPL_PER_EPP]; 
-
-
-tqu_rrsp_rcv tqu_rrsp_rcv0(
-    .clk      (     clk   ),
-    .rst_n    (   rst_n   ), 
-    .mri_if   ( mri_if0   ), 
-    .wd_valid (wd_valid[0]), 
-    .word     (    word[0]),
-    .dtq_sel  ( dtq_sel[0])
-);
-
-tqu_rrsp_rcv tqu_rrsp_rcv1(
-    .clk      (     clk   ),
-    .rst_n    (   rst_n   ), 
-    .mri_if   ( mri_if1   ), 
-    .wd_valid (wd_valid[1]), 
-    .word     (    word[1]),
-    .dtq_sel  ( dtq_sel[1])
-);
-
-// 4 Packet Buffers
- 
- 
-// 4 tqu_fifos
-//tcu_if
+//        input   logic                           .clk     (clk)                     ,
+//        input   logic   [MEM_ADR_WIDTH-1:0]     .address (                ,
+//        input   logic                           .rd_en   (                ,
+//        input   logic   [MEM_WR_EN_WIDTH-1:0]   .wr_en   (                ,
+//        input   logic   [      MEM_WIDTH-1:0]   .data_in (                ,
+//        output  logic   [      MEM_WIDTH-1:0]   .data_out(
 
 
+//req_id_t    [N_RRSPS-1:0]    rrsp_wd_id; // Read Response Word ID
+//data_word_t [N_RRSPS-1:0]       rrsp_wd; // Read Response Word
+//logic       [N_RRSPS-1:0] rrsp_wd_valid; // Read Response Word Valid
+//logic       [N_RRSPS-1:0] rrsp_wd_stall; // Read Response Word Stall
+//input     rrsp_wd_id,
+//input        rrsp_wd,
+//input  rrsp_wd_valid,
+//output rrsp_wd_stall
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+////////// FIRST PACKET LOGIC //////////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+localparam FST_PKT_CTRL_LEN = 1;  //One word packet metadata for first packet
+localparam FST_PKT_DATA_LEN = 1;  //One word packet data for first packet
+localparam FST_PKT_LEN   = FST_PKT_CTRL_LEN + FST_PKT_DATA_LEN; //1 Ctrl + 1 Data words for first packet
+
+logic                       ctrl_wr_en;
+logic                       ctrl_rd_en;
+logic                       data_wr_en;
+logic                       data_rd_en;
+
+////////////////////////////////
+//// RRS data registers ////////
+////////////////////////////////
+data_wd_id_t     rrsp_data_wd_id;
+data_wd_id_t rrsp_data_wd_id_reg;
+data_word_t       rrsp_data_word;
+data_word_t   rrsp_data_word_reg;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) rrsp_data_wd_id_reg <= '0;
+    else begin
+        rrsp_data_wd_id_reg <= rrsp_data_wd_id;
+    end
+
+assign rrsp_data_wd_id = mri_if0.rrsp_wd_valid[0] ? 
+                         mri_if0.rrsp_wd_id[0].data_wd_id : 
+                         rrsp_data_wd_id_reg;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) rrsp_data_word_reg <= '0;
+    else begin
+        rrsp_data_word_reg <= rrsp_data_word;
+    end
+
+assign rrsp_data_word = mri_if0.rrsp_wd_valid[0] ? 
+                         mri_if0.rrsp_wd[0] : 
+                         rrsp_data_word_reg;
+
+////////////////////////////////
+//// RRS Received //////////////
+////////////////////////////////
+logic rrsp_ctrl_ready;
+logic rrsp_ctrl_ready_reg;
+logic rrsp_data_ready;
+logic rrsp_data_ready_reg;
+logic [$clog2(FST_PKT_LEN):0] word_counter;
+logic [$clog2(FST_PKT_LEN):0] word_counter_reg;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        rrsp_ctrl_ready_reg <= '0;
+        rrsp_data_ready_reg <= '0;
+        word_counter_reg    <= '0;
+    end
+    else begin
+        rrsp_ctrl_ready_reg <= rrsp_ctrl_ready;
+        rrsp_data_ready_reg <= rrsp_data_ready;
+        word_counter_reg    <= word_counter;
+    end
+
+assign rrsp_ctrl_ready = ((mri_if0.rrsp_wd_valid[0]) && 
+                            (mri_if0.rrsp_wd_id[0].data_wd_id.word_type==WORD_TYPE_CTRL)) ? 
+                         '1 : 
+                         ((ctrl_wr_en) ?  
+                         '0 : 
+                         rrsp_ctrl_ready_reg);
+
+assign rrsp_data_ready = ((mri_if0.rrsp_wd_valid[0]) && 
+                            (mri_if0.rrsp_wd_id[0].data_wd_id.word_type==WORD_TYPE_DATA)) ? 
+                         '1 :
+                         ((data_wr_en) ?
+                         '0 :
+                         rrsp_data_ready_reg);
+
+assign word_counter = mri_if0.rrsp_wd_valid[0] ?
+                      word_counter_reg + 1     :
+                      word_counter_reg;
+
+////////////////////////////////
+//// Packet Buffer /////////////
+//// Packet Buffer Control /////
+////////////////////////////////
+pkt_buf_addr_t     pkt_buf_ctrl_wr_ptr;
+pkt_buf_addr_t pkt_buf_ctrl_wr_ptr_reg;
+pkt_buf_addr_t     pkt_buf_ctrl_rd_ptr;
+pkt_buf_addr_t pkt_buf_ctrl_rd_ptr_reg;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_ctrl_wr_ptr_reg <= '0;
+    end
+    else begin
+        pkt_buf_ctrl_wr_ptr_reg <= pkt_buf_ctrl_wr_ptr;
+    end
+
+assign pkt_buf_ctrl_wr_ptr = ctrl_wr_en ? 
+                             pkt_buf_ctrl_wr_ptr_reg + 1 : 
+                             pkt_buf_ctrl_wr_ptr_reg;
+
+assign pkt_buf_ctrl_addr = (ctrl_rd_en ? 
+                            pkt_buf_ctrl_rd_ptr_reg : 
+                            (ctrl_wr_en ? 
+                                pkt_buf_ctrl_wr_ptr_reg : 
+                                '0));
+
+assign ctrl_wr_en = ctrl_rd_en ? 
+                    '0 : 
+                    ((rrsp_ctrl_ready_reg) && (rrsp_data_wd_id_reg.word_type==WORD_TYPE_CTRL));
+
+assign pkt_buf_ctrl_wr_en = ctrl_wr_en;
+
+assign pkt_buf_ctrl_word_out = ctrl_wr_en ? rrsp_data_word_reg : '0;
+
+
+////////////////////////////////
+//// Packet Buffer /////////////
+//// Packet Buffer Data ////////
+////////////////////////////////
+pkt_buf_addr_t     pkt_buf_data_wr_ptr;
+pkt_buf_addr_t pkt_buf_data_wr_ptr_reg;
+pkt_buf_addr_t     pkt_buf_data_rd_ptr;
+pkt_buf_addr_t pkt_buf_data_rd_ptr_reg;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_data_wr_ptr_reg <= '0;
+    end
+    else begin
+        pkt_buf_data_wr_ptr_reg <= pkt_buf_data_wr_ptr;
+    end
+
+assign pkt_buf_data_wr_ptr = data_wr_en ? 
+                             pkt_buf_data_wr_ptr_reg + 1 : 
+                             pkt_buf_data_wr_ptr_reg;
+
+assign pkt_buf_data_addr = (data_rd_en ? 
+                            pkt_buf_data_rd_ptr_reg : 
+                            (data_wr_en ? 
+                                pkt_buf_data_wr_ptr_reg : 
+                                '0));
+
+assign data_wr_en = data_rd_en ? 
+                    '0 : 
+                    ((rrsp_data_ready_reg) && (rrsp_data_wd_id_reg.word_type==WORD_TYPE_DATA));
+
+assign pkt_buf_data_wr_en = data_wr_en;
+
+assign pkt_buf_data_word_out = data_wr_en ? rrsp_data_word_reg : '0;
+
+////////////////////////////////
+//// TCU FIFO Pull Ctrl ////////
+////////////////////////////////
+
+//Fifo Pull Control FSM
+enum bit[2:0]
+        {CTRL_IDLE =3'b001,
+         CTRL_READY=3'b010,
+         CTRL_PULL =3'b100
+        } fifo_pull_ctrl_fsm_state, fifo_pull_ctrl_fsm_next;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        fifo_pull_ctrl_fsm_state <= CTRL_IDLE; 
+    end
+    else begin
+        fifo_pull_ctrl_fsm_state <= fifo_pull_ctrl_fsm_next; 
+    end
+
+always_comb begin : fifo_pull_ctrl_fsm
+    fifo_pull_ctrl_fsm_next = fifo_pull_ctrl_fsm_state;
+    unique case (fifo_pull_ctrl_fsm_state)
+        CTRL_IDLE: 
+            if(pkt_buf_ctrl_rd_ptr_reg < pkt_buf_ctrl_wr_ptr_reg)
+                fifo_pull_ctrl_fsm_next = CTRL_READY;
+        CTRL_READY:
+            if(tcu_if.dtq_ctrl_pull[0].req)
+                fifo_pull_ctrl_fsm_next = CTRL_PULL;
+        CTRL_PULL:
+            fifo_pull_ctrl_fsm_next = CTRL_IDLE;
+    endcase
+end
+
+assign tcu_if.dtq_ctrl_ready = {'0,fifo_pull_ctrl_fsm_state==CTRL_READY};
+
+//Fifo Pull Control Read Ptr
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_ctrl_rd_ptr_reg <= '0;
+    end
+    else begin
+        pkt_buf_ctrl_rd_ptr_reg <= pkt_buf_ctrl_rd_ptr;
+    end
+
+assign ctrl_rd_en = ((fifo_pull_ctrl_fsm_state==CTRL_READY) && (tcu_if.dtq_ctrl_pull[0].req));
+assign pkt_buf_ctrl_rd_ptr = (ctrl_rd_en) ? 
+                              pkt_buf_ctrl_rd_ptr_reg + 1:
+                              pkt_buf_ctrl_rd_ptr_reg;
+assign pkt_buf_ctrl_rd_en = ctrl_rd_en;
+
+assign tcu_if.ctrl_mdata = '0;
+
+assign tcu_if.ctrl_word[0] = (fifo_pull_ctrl_fsm_state==CTRL_PULL) ?
+                           pkt_buf_ctrl_word_in : '0;
+assign tcu_if.ctrl_word[1] = '0;
+assign tcu_if.ctrl_word[2] = '0;
+assign tcu_if.ctrl_word[3] = '0;
+
+assign tcu_if.ctrl_word_valid = {'0,fifo_pull_ctrl_fsm_state==CTRL_PULL};
+
+
+
+////////////////////////////////
+//// TCU FIFO Pull Data ////////
+////////////////////////////////
+
+//Fifo Pull Data FSM 
+enum bit[2:0]
+        {DATA_IDLE =3'b001,
+         DATA_READY=3'b010,
+         DATA_PULL =3'b100
+        } fifo_pull_data_fsm_state, fifo_pull_data_fsm_next;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        fifo_pull_data_fsm_state <= DATA_IDLE; 
+    end
+    else begin
+        fifo_pull_data_fsm_state <= fifo_pull_data_fsm_next; 
+    end
+
+always_comb begin : fifo_pull_data_fsm
+    fifo_pull_data_fsm_next = fifo_pull_data_fsm_state;
+    unique case (fifo_pull_data_fsm_state)
+        DATA_IDLE: 
+            if(pkt_buf_data_rd_ptr_reg < pkt_buf_data_wr_ptr_reg)
+                fifo_pull_data_fsm_next = DATA_READY;
+        DATA_READY:
+            if(tcu_if.dtq_data_pull[0].req)
+                fifo_pull_data_fsm_next = DATA_PULL;
+        DATA_PULL:
+            fifo_pull_data_fsm_next = DATA_IDLE;
+    endcase
+end
+
+assign tcu_if.dtq_data_ready = {'0,fifo_pull_data_fsm_state==DATA_READY};
+
+//Fifo Pull Data Read Ptr
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_data_rd_ptr_reg <= '0;
+    end
+    else begin
+        pkt_buf_data_rd_ptr_reg <= pkt_buf_data_rd_ptr;
+    end
+
+assign data_rd_en = ((fifo_pull_data_fsm_state==DATA_READY) && (tcu_if.dtq_data_pull[0].req));
+assign pkt_buf_data_rd_ptr = (data_rd_en) ? 
+                              pkt_buf_data_rd_ptr_reg + 1:
+                              pkt_buf_data_rd_ptr_reg;
+assign pkt_buf_data_rd_en = data_rd_en;
+
+assign tcu_if.pkt_word_mdata = '0;
+
+assign tcu_if.pkt_word[0] = (fifo_pull_data_fsm_state==DATA_PULL) ?
+                           pkt_buf_data_word_in : '0;
+assign tcu_if.pkt_word[1] = '0;
+assign tcu_if.pkt_word[2] = '0;
+assign tcu_if.pkt_word[3] = '0;
+
+assign tcu_if.data_word_valid = {'0,fifo_pull_data_fsm_state==DATA_PULL};
+
+
+//    //Control Memory Bank
+//    output pkt_buf_addr_t     pkt_buf_ctrl_addr, //o
+//    output logic             pkt_buf_ctrl_rd_en, //o
+//    output logic             pkt_buf_ctrl_wr_en, //o
+//    output data_word_t    pkt_buf_ctrl_word_out, //o
+//    input  data_word_t     pkt_buf_ctrl_word_in, //i
+
+////////////////////////////////
+//// Pkt Buffer Flags //////////
+////////////////////////////////
+
+pkt_buf_stateflag_t pkt_buf_ctrl_valid_flags_reg;
+pkt_buf_stateflag_t pkt_buf_ctrl_valid_flags;
+pkt_buf_stateflag_t pkt_buf_data_valid_flags_reg;
+pkt_buf_stateflag_t pkt_buf_data_valid_flags;
+pkt_buf_stateflag_t pkt_buf_data_sop_flags_reg;
+pkt_buf_stateflag_t pkt_buf_data_sop_flags;
+pkt_buf_stateflag_t pkt_buf_data_eop_flags_reg;
+pkt_buf_stateflag_t pkt_buf_data_eop_flags;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_ctrl_valid_flags_reg <= '0; 
+        pkt_buf_data_valid_flags_reg <= '0; 
+        pkt_buf_data_sop_flags_reg   <= '0; 
+        pkt_buf_data_eop_flags_reg   <= '0; 
+    end
+    else begin
+        pkt_buf_ctrl_valid_flags_reg <= pkt_buf_ctrl_valid_flags; 
+        pkt_buf_data_valid_flags_reg <= pkt_buf_data_valid_flags; 
+        pkt_buf_data_sop_flags_reg   <=   pkt_buf_data_sop_flags; 
+        pkt_buf_data_eop_flags_reg   <=   pkt_buf_data_eop_flags; 
+    end
+
+assign pkt_buf_ctrl_valid_flags = '0; //TODO Values activate with arriving rrsp
+assign pkt_buf_data_valid_flags = '0; //TODO Values activate with arriving rrsp
+assign pkt_buf_data_sop_flags   = '0; //TODO Values activate with arriving rrsp
+assign pkt_buf_data_eop_flags   = '0; //TODO Values activate with arriving rrsp
+
+////////////////////////////////
+//// Stall outputs /////////////
+////////////////////////////////
+
+logic rrsp_data_stall;
+
+assign rrsp_data_stall          = word_counter_reg==FST_PKT_LEN;
+assign mri_if0.rrsp_wd_stall[0] = rrsp_data_stall;
+assign mri_if0.rrsp_wd_stall[1] = '1;
+assign mri_if0.rrsp_wd_stall[2] = '1;
+assign mri_if1.rrsp_wd_stall[0] = '1;
+assign mri_if1.rrsp_wd_stall[1] = '1;
+assign mri_if1.rrsp_wd_stall[2] = '1;
+
+
+  
+
+//logic       wd_valid [N_EPP_PER_MGP][N_EPL_PER_EPP];
+//data_word_t     word [N_EPP_PER_MGP][N_EPL_PER_EPP];
+//dtq_sel_t    dtq_sel [N_EPP_PER_MGP][N_EPL_PER_EPP]; 
+//
+//
+//tqu_rrsp_rcv tqu_rrsp_rcv0(
+//    .clk      (     clk   ),
+//    .rst_n    (   rst_n   ), 
+//    .mri_if   ( mri_if0   ), 
+//    .wd_valid (wd_valid[0]), 
+//    .word     (    word[0]),
+//    .dtq_sel  ( dtq_sel[0])
+//);
+//
+//tqu_rrsp_rcv tqu_rrsp_rcv1(
+//    .clk      (     clk   ),
+//    .rst_n    (   rst_n   ), 
+//    .mri_if   ( mri_if1   ), 
+//    .wd_valid (wd_valid[1]), 
+//    .word     (    word[1]),
+//    .dtq_sel  ( dtq_sel[1])
+//);
+//
+//// 4 Packet Buffers
+////tcu_if
+//    ////Buffer interface
+//    //Service dtq_ctrl_pull
+//    dtq_sel_t        buf_dtq_ctrl_sel,
+//    logic           buf_dtq_ctrl_read,
+//    data_word_t     buf_dtq_ctrl_word,
+//    dtq_ready_t    buf_dtq_ctrl_ready,
+//    //Service dtq_data_pull
+//    dtq_sel_t          dtq_data_sel,
+//
 endmodule : tqu
