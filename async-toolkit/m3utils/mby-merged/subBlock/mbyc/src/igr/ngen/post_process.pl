@@ -13,7 +13,7 @@ open(TF, ">./mby_igr_gen_mem.sv") || die "can't open output file\n";
 
 while (<SF>) {
    $str = $_;
-   if ($str =~ /^logic         igr_pb*_if;/) {
+   if ($str =~ /^logic         igr_pb.*_if;/) {
    } else {
      printf TF ("%s",$_);
    }
