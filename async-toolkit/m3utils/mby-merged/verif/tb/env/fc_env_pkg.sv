@@ -79,7 +79,7 @@ package fc_env_pkg;
 
     // EPC 
     `ifdef EPC_ENV_ENABLE
-        import mby_ec_top_env_pkg::*;
+        import mby_ec_env_pkg::*;
         `include "epc_integ_env.svh"
     `endif // EPC_ENV_ENABLE
 

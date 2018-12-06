@@ -139,16 +139,23 @@ static fm_bool nexthop_test_verify
 
     return TRUE;
 }
+
+static void empty(void *v) {
+    return;
+}
+
 static void nexthop_run_test(nh_test_data * const test_data)
 {
-    mby_ppe_nexthop_map nexthop_map;
-    mbyHashToNextHop    hashToNextHop = { 0 };
-    mbyNextHopToMaskGen out  = { 0 };
-    fm_bool             pass = FALSE;
+    mby_ppe_nexthop_map       nexthop_map;
+    mby_ppe_nexthop_map__addr nexthop_map_w;
+    mbyHashToNextHop          hashToNextHop = { 0 };
+    mbyNextHopToMaskGen       out  = { 0 };
+    fm_bool                   pass = FALSE;
 
+    mby_ppe_nexthop_map__init(&nexthop_map, &nexthop_map_w, empty);
     nexthop_test_setup(&nexthop_map, &hashToNextHop, &(test_data->in));
 
-    NextHop(&nexthop_map, &hashToNextHop, &out);
+    NextHop(&nexthop_map, &nexthop_map_w, &hashToNextHop, &out);
 
     pass = nexthop_test_verify(&nexthop_map, &(test_data->in), &out, &(test_data->out));
 
