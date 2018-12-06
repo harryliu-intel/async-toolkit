@@ -2088,10 +2088,9 @@ public final class NetGraph {
                         if (node.gate == null) {
                             node.gate = inst;
                         } else {
-                            throw new RuntimeException
-                                ("A gate of type " + node.gate.getType() + 
-                                 " already attached to " + node.name + 
-                                 ", cannot attach a gate of type " + subName);
+                            System.err.println("A gate of type " + node.gate.getType() + 
+                                               " already attached to " + node.name + 
+                                               ", ignoring gate of type " + subName);
                         }
                     }
                 }
