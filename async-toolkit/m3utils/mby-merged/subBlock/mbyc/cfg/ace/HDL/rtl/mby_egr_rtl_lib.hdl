@@ -16,6 +16,7 @@ $hdl_spec = {
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/egr/rtl/egr_int_pkg.sv",
        "src/mems/rtl/mby_mgm_1rw_behave.v",
+       "src/mems/rtl/mby_mgm_fifo.v",
     ## EGR External Interfaces   
        "src/shared/interfaces/egr_epl_if.sv",
        "src/shared/interfaces/mim_rd_if.sv",
