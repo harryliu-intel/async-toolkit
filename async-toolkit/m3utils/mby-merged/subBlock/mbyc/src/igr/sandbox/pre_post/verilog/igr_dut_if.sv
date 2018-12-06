@@ -46,18 +46,18 @@ import mby_igr_pkg::*, shared_pkg::*;
 logic               rst;                                // reset
 
 
- shim_pb_data_t             i_shim_pb_data_p0[3:0];
- shim_pb_data_t             i_shim_pb_data_p1[3:0];
- shim_pb_data_t             i_shim_pb_data_p2[3:0];
- shim_pb_data_t             i_shim_pb_data_p3[3:0];
- shim_pb_md_t               i_shim_pb_md_p0[3:0];
- shim_pb_md_t               i_shim_pb_md_p1[3:0];
- shim_pb_md_t               i_shim_pb_md_p2[3:0];
- shim_pb_md_t               i_shim_pb_md_p3[3:0];
- logic [2:0]                i_shim_pb_v_p0[3:0];  
- logic [2:0]                i_shim_pb_v_p1[3:0];  
- logic [2:0]                i_shim_pb_v_p2[3:0];  
- logic [2:0]                i_shim_pb_v_p3[3:0];
+ shim_pb_data_t [3:0]       i_shim_pb_data_p0;
+ shim_pb_data_t [3:0]       i_shim_pb_data_p1;
+ shim_pb_data_t [3:0]       i_shim_pb_data_p2;
+ shim_pb_data_t [3:0]       i_shim_pb_data_p3;
+ shim_pb_md_t   [3:0]       i_shim_pb_md_p0;
+ shim_pb_md_t   [3:0]       i_shim_pb_md_p1;
+ shim_pb_md_t   [3:0]       i_shim_pb_md_p2;
+ shim_pb_md_t   [3:0]       i_shim_pb_md_p3;
+ logic [3:0][2:0]           i_shim_pb_v_p0;  
+ logic [3:0][2:0]           i_shim_pb_v_p1;  
+ logic [3:0][2:0]           i_shim_pb_v_p2;  
+ logic [3:0][2:0]           i_shim_pb_v_p3;
  logic [4:0]                i_free_ptr_valid;
  logic [4:0]                o_free_ptr_req;
  seg_ptr_t [4:0]            i_free_seg_ptr;

@@ -144,7 +144,7 @@ reg em_hash_cam_r {
   } DATA[63:0] = 64'h0;
 };
 regfile em_hash_cam_rf {
-  em_hash_cam_r EM_HASH_CAM[8] += 8;
+  em_hash_cam_r HASH_CAM[8] += 8;
 };
 
 
@@ -174,7 +174,7 @@ reg em_hash_cam_en_r {
   } MASK[63:0] = 64'h0;
 };
 regfile em_hash_cam_en_rf {
-  em_hash_cam_en_r EM_HASH_CAM_EN[32] += 8;
+  em_hash_cam_en_r HASH_CAM_EN[32] += 8;
 };
 
 
@@ -210,7 +210,7 @@ reg em_key_sel0_r {
   } KEY8_MASK[31:0] = 32'h0;
 };
 regfile em_key_sel0_rf {
-  em_key_sel0_r EM_KEY_SEL0[64] += 8;
+  em_key_sel0_r KEY_SEL0[64] += 8;
 };
 
 
@@ -263,7 +263,7 @@ reg em_key_sel1_r {
   } KEY16_MASK[31:0] = 32'h0;
 };
 regfile em_key_sel1_rf {
-  em_key_sel1_r EM_KEY_SEL1[64] += 8;
+  em_key_sel1_r KEY_SEL1[64] += 8;
 };
 
 
@@ -298,7 +298,7 @@ reg em_key_mask_r {
   } MASK[63:0] = 64'h0;
 };
 regfile em_key_mask_rf {
-  em_key_mask_r EM_KEY_MASK[32] += 8;
+  em_key_mask_r KEY_MASK[32] += 8;
 };
 
 
@@ -338,7 +338,7 @@ reg em_hash_miss_r {
   } ACTION0[31:0] = 32'h0;
 };
 regfile em_hash_miss_rf {
-  em_hash_miss_r EM_HASH_MISS[64] += 8;
+  em_hash_miss_r HASH_MISS[64] += 8;
 };
 
 
@@ -357,6 +357,30 @@ reg em_hash_cfg_r {
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
   regwidth = 64;
   accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     For the high half of split mode only, selects which hash
+     function to use:
+     [list]
+     [*] 0: Hash0 - CRC32
+     [*] 1: Hash1 - CRC32C
+     [/list]
+           ";
+    ValRandomize = true;
+  } HASH_HI[48:48] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     For non-split mode, and for the low half of split mode, selects which hash
+     function to use:
+     [list]
+     [*] 0: Hash0 - CRC32
+     [*] 1: Hash1 - CRC32C
+     [/list]
+           ";
+    ValRandomize = true;
+  } HASH_LO[47:47] = 1'h0;
   field {
     AccessType = "RW";
     desc = "

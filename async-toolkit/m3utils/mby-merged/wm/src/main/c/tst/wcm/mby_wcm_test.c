@@ -302,9 +302,9 @@ static void initInputs
     mbyMapperToClassifier * const map2cla
 )
 {
-    mbyClassifierActions * const actions_in        = &(map2cla->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys              = &(map2cla->FFU_KEYS);
-    fm_byte              * const packet_profile_in = &(map2cla->FFU_PROFILE);
+    mbyClassifierActions * const actions_in        = &(map2cla->CLASSIFIER_ACTIONS);
+    mbyClassifierKeys    * const keys              = &(map2cla->CLASSIFIER_KEYS);
+    fm_byte              * const packet_profile_in = &(map2cla->PACKET_PROFILE);
 
     init_actions(actions_in);
     init_keys(keys);
@@ -324,43 +324,43 @@ static void setInputs_ipv4_frame
     00  14  00  00  00  00  05  11  70  ca  aa  bb  cc  dd  11  aa
     bb  cc
     */
-    map2cla->FFU_KEYS.key32[ 0] = 0xAABBCCDD;
-    map2cla->FFU_KEYS.key32[ 1] = 0x11AABBCC;
-    map2cla->FFU_KEYS.key32[ 4] = 0x11AABBCC;
-    map2cla->FFU_KEYS.key16[ 6] = 0x12;
-    map2cla->FFU_KEYS.key16[ 7] = 0x3456;
-    map2cla->FFU_KEYS.key16[ 8] = 0x7890;
-    map2cla->FFU_KEYS.key16[ 9] = 0x7;
-    map2cla->FFU_KEYS.key16[10] = 0x809;
-    map2cla->FFU_KEYS.key16[11] = 0xA0B;
-    map2cla->FFU_KEYS.key16[12] = 0x800;
-    map2cla->FFU_KEYS.key16[13] = 0x1;
-    map2cla->FFU_KEYS.key16[14] = 0x1;
-    map2cla->FFU_KEYS.key16[15] = 0x1;
-    map2cla->FFU_KEYS.key16[16] = 0x1;
-    map2cla->FFU_KEYS.key16[17] = 0x203;
-    map2cla->FFU_KEYS.key16[19] = 0x203;
-    map2cla->FFU_KEYS.key8 [ 3] = 0x10;
-    map2cla->FFU_KEYS.key8 [ 6] = 0x4;
-    map2cla->FFU_KEYS.key8 [ 7] = 0x5;
-    map2cla->FFU_KEYS.key8 [20] = 0x5;
-    map2cla->FFU_KEYS.key8 [21] = 0x11;
-    map2cla->FFU_KEYS.key8 [23] = 0x14;
-    map2cla->FFU_KEYS.key8 [25] = 0x40;
-    map2cla->FFU_KEYS.key8 [28] = 0x1;
-    map2cla->FFU_KEYS.key8 [29] = 0x1;
-    map2cla->FFU_KEYS.key8 [45] = 0x1;
-    map2cla->FFU_KEYS.key8 [55] = 0xa1;
-    map2cla->FFU_KEYS.key8 [56] = 0x7;
-    map2cla->FFU_KEYS.key8 [57] = 0xf6;
-    map2cla->FFU_KEYS.key8 [58] = 0xe5;
-    map2cla->FFU_KEYS.key8 [59] = 0xd4;
+    map2cla->CLASSIFIER_KEYS.key32[ 0] = 0xAABBCCDD;
+    map2cla->CLASSIFIER_KEYS.key32[ 1] = 0x11AABBCC;
+    map2cla->CLASSIFIER_KEYS.key32[ 4] = 0x11AABBCC;
+    map2cla->CLASSIFIER_KEYS.key16[ 6] = 0x12;
+    map2cla->CLASSIFIER_KEYS.key16[ 7] = 0x3456;
+    map2cla->CLASSIFIER_KEYS.key16[ 8] = 0x7890;
+    map2cla->CLASSIFIER_KEYS.key16[ 9] = 0x7;
+    map2cla->CLASSIFIER_KEYS.key16[10] = 0x809;
+    map2cla->CLASSIFIER_KEYS.key16[11] = 0xA0B;
+    map2cla->CLASSIFIER_KEYS.key16[12] = 0x800;
+    map2cla->CLASSIFIER_KEYS.key16[13] = 0x1;
+    map2cla->CLASSIFIER_KEYS.key16[14] = 0x1;
+    map2cla->CLASSIFIER_KEYS.key16[15] = 0x1;
+    map2cla->CLASSIFIER_KEYS.key16[16] = 0x1;
+    map2cla->CLASSIFIER_KEYS.key16[17] = 0x203;
+    map2cla->CLASSIFIER_KEYS.key16[19] = 0x203;
+    map2cla->CLASSIFIER_KEYS.key8 [ 3] = 0x10;
+    map2cla->CLASSIFIER_KEYS.key8 [ 6] = 0x4;
+    map2cla->CLASSIFIER_KEYS.key8 [ 7] = 0x5;
+    map2cla->CLASSIFIER_KEYS.key8 [20] = 0x5;
+    map2cla->CLASSIFIER_KEYS.key8 [21] = 0x11;
+    map2cla->CLASSIFIER_KEYS.key8 [23] = 0x14;
+    map2cla->CLASSIFIER_KEYS.key8 [25] = 0x40;
+    map2cla->CLASSIFIER_KEYS.key8 [28] = 0x1;
+    map2cla->CLASSIFIER_KEYS.key8 [29] = 0x1;
+    map2cla->CLASSIFIER_KEYS.key8 [45] = 0x1;
+    map2cla->CLASSIFIER_KEYS.key8 [55] = 0xa1;
+    map2cla->CLASSIFIER_KEYS.key8 [56] = 0x7;
+    map2cla->CLASSIFIER_KEYS.key8 [57] = 0xf6;
+    map2cla->CLASSIFIER_KEYS.key8 [58] = 0xe5;
+    map2cla->CLASSIFIER_KEYS.key8 [59] = 0xd4;
 
-    map2cla->FFU_ACTIONS.act4[ 4].val = 1;
-    map2cla->FFU_ACTIONS.act1[20].val = 1;
-    map2cla->FFU_ACTIONS.act1[22].val = 1;
+    map2cla->CLASSIFIER_ACTIONS.act4[ 4].val = 1;
+    map2cla->CLASSIFIER_ACTIONS.act1[20].val = 1;
+    map2cla->CLASSIFIER_ACTIONS.act1[22].val = 1;
 
-    map2cla->FFU_PROFILE = 16;
+    map2cla->PACKET_PROFILE = 16;
 }
 
 static void simple_wcm_basic_test_setup
@@ -530,15 +530,15 @@ static int run_on_simple_wcm
     mbyMapperToClassifier map2cla = { 0 };
 
     mbyMapperToClassifier const * const in          = &map2cla;
-    mbyClassifierActions        * const actions_out = &(map2cla.FFU_ACTIONS);
+    mbyClassifierActions        * const actions_out = &(map2cla.CLASSIFIER_ACTIONS);
     setup(cgrp_b_map, &map2cla);
     fm_uint32 actions[MBY_WCM_MAX_ACTIONS_NUM] = { 0 };
 
     mbyMatchWildcard
     (
         cgrp_b_map,
-        &(in->FFU_KEYS),
-        in->FFU_PROFILE,
+        &(in->CLASSIFIER_KEYS),
+        in->PACKET_PROFILE,
         actions
     );
 

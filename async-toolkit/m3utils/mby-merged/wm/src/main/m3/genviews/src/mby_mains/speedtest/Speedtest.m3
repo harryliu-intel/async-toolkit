@@ -26,7 +26,7 @@ CONST Writes = 1 * 1000  * 1000;
 BEGIN
   P(x,y);
   VAR
-    map := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
+    map : MapAddr.H := NEW(MapAddr.H).init(CompAddr.T { 0, 0 });
     start1, stop1 : Time.T;
     start2, stop2 : Time.T;
     start3, stop3 : Time.T;

@@ -55,18 +55,19 @@ class inp_driver;
     integer                 drove_reqs;
 
      
-    shim_pb_data_t             i_shim_pb_data_p0[3:0];
-    shim_pb_data_t             i_shim_pb_data_p1[3:0];
-    shim_pb_data_t             i_shim_pb_data_p2[3:0];
-    shim_pb_data_t             i_shim_pb_data_p3[3:0];
-    shim_pb_md_t               i_shim_pb_md_p0[3:0];
-    shim_pb_md_t               i_shim_pb_md_p1[3:0];
-    shim_pb_md_t               i_shim_pb_md_p2[3:0];
-    shim_pb_md_t               i_shim_pb_md_p3[3:0];
-    logic [2:0]                i_shim_pb_v_p0[3:0];  
-    logic [2:0]                i_shim_pb_v_p1[3:0];  
-    logic [2:0]                i_shim_pb_v_p2[3:0];  
-    logic [2:0]                i_shim_pb_v_p3[3:0];
+    shim_pb_data_t [3:0]       i_shim_pb_data_p0;
+    shim_pb_data_t [3:0]       i_shim_pb_data_p1;
+    shim_pb_data_t [3:0]       i_shim_pb_data_p2;
+    shim_pb_data_t [3:0]       i_shim_pb_data_p3;
+    shim_pb_md_t   [3:0]       i_shim_pb_md_p0;
+    shim_pb_md_t   [3:0]       i_shim_pb_md_p1;
+    shim_pb_md_t   [3:0]       i_shim_pb_md_p2;
+    shim_pb_md_t   [3:0]       i_shim_pb_md_p3;
+    logic [3:0][2:0]           i_shim_pb_v_p0;  
+    logic [3:0][2:0]           i_shim_pb_v_p1;  
+    logic [3:0][2:0]           i_shim_pb_v_p2;  
+    logic [3:0][2:0]           i_shim_pb_v_p3;
+    
     logic [3:0]                i_free_ptr_valid;
     logic [3:0]                o_free_ptr_req;
     seg_ptr_t [3:0]            i_free_seg_ptr;
@@ -100,21 +101,21 @@ class inp_driver;
         drv_done        = 1'b0;
 //        req_fifo        = {};           // initialize to empty queue
         for(int i=0; i<4; i++) begin
-            i_shim_pb_data_p0[i] = '0; 
-            i_shim_pb_data_p1[i] = '0; 
-            i_shim_pb_data_p2[i] = '0; 
-            i_shim_pb_data_p3[i] = '0; 
-            i_shim_pb_md_p0[i]   = '0; 
-            i_shim_pb_md_p1[i]   = '0; 
-            i_shim_pb_md_p2[i]   = '0; 
-            i_shim_pb_md_p3[i]   = '0; 
-            i_shim_pb_v_p0[i]    = '0; 
-            i_shim_pb_v_p1[i]    = '0; 
-            i_shim_pb_v_p2[i]    = '0; 
-            i_shim_pb_v_p3[i]    = '0; 
-            i_free_ptr_valid[i]  = '0;
-            i_free_seg_ptr[i]    = '0;
-            i_free_sema[i]       = '0;
+            i_shim_pb_data_p0[i] = shim_pb_data_t'('0); 
+            i_shim_pb_data_p1[i] = shim_pb_data_t'('0); 
+            i_shim_pb_data_p2[i] = shim_pb_data_t'('0); 
+            i_shim_pb_data_p3[i] = shim_pb_data_t'('0); 
+            i_shim_pb_md_p0[i]   = shim_pb_md_t'('0); 
+            i_shim_pb_md_p1[i]   = shim_pb_md_t'('0); 
+            i_shim_pb_md_p2[i]   = shim_pb_md_t'('0); 
+            i_shim_pb_md_p3[i]   = shim_pb_md_t'('0); 
+            i_shim_pb_v_p0[i]    = 3'h0; 
+            i_shim_pb_v_p1[i]    = 3'h0; 
+            i_shim_pb_v_p2[i]    = 3'h0; 
+            i_shim_pb_v_p3[i]    = 3'h0; 
+            i_free_ptr_valid[i]  = 1'b0;
+            i_free_seg_ptr[i]    = seg_ptr_t'('0);
+            i_free_sema[i]       = sema_t'('0);
         end
     endtask
 
@@ -180,13 +181,13 @@ class inp_driver;
             i_free_sema[0]            = 4'b1010;
 
 
-            i_shim_pb_v_p0[0]         = 1'b1;
+            i_shim_pb_v_p0[0][0]      = 1'b1;
             i_shim_pb_data_p0[0].seg0 = {8{72'ha5}};
             i_shim_pb_md_p0[0]        = shim_pb_md_t'('h123456);
             i_shim_pb_md_p0[0].md0.md.sop = 1'b1;
 
             @(posedge dut_if.clk);
-            i_shim_pb_v_p0[0]         = 1'b0;
+            i_shim_pb_v_p0[0][0]      = 1'b0;
             i_shim_pb_data_p0[0].seg0 = {8{72'h00}};
             i_shim_pb_md_p0[0]        = shim_pb_md_t'('h0);
   
@@ -214,7 +215,7 @@ class inp_driver;
 
     // figure out if input driver is done or not
     function bit something_to_do();
-        something_to_do = 0;
+        something_to_do = 1'b0;
 //        if (req_fifo.size() != 0) something_to_do = 1;
 //        if (drvr_req_to_dut.vld || drvr_req_to_dut_p1.vld) something_to_do = 1;
 //        return something_to_do;

@@ -15,17 +15,18 @@ $LOGICROOT/shared/rtl/shared_pkg.sv
 -y $LOGICROOT/shared/interfaces
 
 // memory wrappers
-$SL2_LIB_IP16/shrtl_lmemc/verilog/shrtl_lmemc_pkg.vh
--y      $SL2_LIB_IP16/shrtl_lmemc/verilog
-+incdir+$SL2_LIB_IP16/shrtl_lmemc/verilog
--y      $SL2_LIB_IP16/shrtl_lmemc/verilog_behavioral
-+incdir+$SL2_LIB_IP16/shrtl_lmemc/verilog_behavioral
--y      $SL2_LIB_IP16/shrtl_ctech/behavioral
-+incdir+$SL2_LIB_IP16/shrtl_ctech/behavioral
+//  $SL2_LIB_IP16/shrtl_lmemc/verilog/shrtl_lmemc_pkg.vh
+//  -y      $SL2_LIB_IP16/shrtl_lmemc/verilog
+//  +incdir+$SL2_LIB_IP16/shrtl_lmemc/verilog
+//  -y      $SL2_LIB_IP16/shrtl_lmemc/verilog_behavioral
+//  +incdir+$SL2_LIB_IP16/shrtl_lmemc/verilog_behavioral
+//  -y      $SL2_LIB_IP16/shrtl_ctech/behavioral
+//  +incdir+$SL2_LIB_IP16/shrtl_ctech/behavioral
 
-// sl2_lib common
-+incdir+$SL2_LIB/shrtl_common/verilog
--y $SL2_LIB/shrtl_common/verilog
++incdir+$SHRTL/src/common/rtl
++incdir+$SHRTL/src/fifo/rtl
+-y $SHRTL/src/common/rtl
+-y $SHRTL/src/fifo/rtl
 
 // ecc
 //-y $SL2_LIB/shrtl_ecc/verilog

@@ -37,45 +37,39 @@ module  mby_igr_pb
   input  logic  cclk,
   input  logic  rst,  // synchronized warm reset
 
-  input logic [1:0] port0_rate,  //00=off,01=100G,10=200G,11=400G                  any port_rate
-  input logic [1:0] port1_rate,  //00=off,01=100G,10=200G,11=400G only       100G: if port0=400 or port0=200 then should be 00
-  input logic [1:0] port2_rate,  //00=off,01=100G,10=200G,11=400G only 200G, 100G: if port0=400 then should be 00  
-  input logic [1:0] port3_rate,  //00=off,01=100G,10=200G,11=400G only       100G: if port0=400 or port2=200 then should be 00
+  input pb_port_cfg_t i_pb_port_cfg,  //00=off,01=100G,10=200G,11=400G                  any port_rate
+
   
   // dpc interface
   input   dpc_pb_t  i_dpc_pb_p0,  //valid,md,data
   input   dpc_pb_t  i_dpc_pb_p1,  //valid,md,data
   input   dpc_pb_t  i_dpc_pb_p2,  //valid,md,data
   input   dpc_pb_t  i_dpc_pb_p3,  //valid,md,data
-  input logic [3:0] i_pb_rd_p0,  //logical port PB read request
-  input logic [3:0] i_pb_rd_p1,  //logical port PB read request 
-  input logic [3:0] i_pb_rd_p2,  //logical port PB read request 
-  input logic [3:0] i_pb_rd_p3,   //logical port PB read request
+  input logic [3:0] i_pb_rd,  //logical port PB read request
+
 //to from sram mem wrapper
-  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_igr_pb0_data_ram_0_from_mem,   
-  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_igr_pb0_data_ram_1_from_mem,   
-  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_igr_pb0_data_ram_2_from_mem,   
-  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_igr_pb0_data_ram_3_from_mem,
-  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_igr_pb0_md_ram_0_from_mem,   
-  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_igr_pb0_md_ram_1_from_mem,   
-  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_igr_pb0_md_ram_2_from_mem,   
-  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_igr_pb0_md_ram_3_from_mem,
+  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_pb_data_ram_0_from_mem,   
+  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_pb_data_ram_1_from_mem,   
+  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_pb_data_ram_2_from_mem,   
+  input logic [`MBY_IGR_IGR_PB0_DATA_RAM_FROM_MEM_WIDTH-1:0] i_igr_pb_data_ram_3_from_mem,
+  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_pb_md_ram_0_from_mem,   
+  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_pb_md_ram_1_from_mem,   
+  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_pb_md_ram_2_from_mem,   
+  input logic [`MBY_IGR_IGR_PB0_MD_RAM_FROM_MEM_WIDTH-1:0]   i_igr_pb_md_ram_3_from_mem,
    
-  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_igr_pb0_data_ram_0_to_mem,   
-  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_igr_pb0_data_ram_1_to_mem,   
-  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_igr_pb0_data_ram_2_to_mem,   
-  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_igr_pb0_data_ram_3_to_mem,
-  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_igr_pb0_md_ram_0_to_mem,   
-  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_igr_pb0_md_ram_1_to_mem,   
-  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_igr_pb0_md_ram_2_to_mem,   
-  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_igr_pb0_md_ram_3_to_mem,
+  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_pb_data_ram_0_to_mem,   
+  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_pb_data_ram_1_to_mem,   
+  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_pb_data_ram_2_to_mem,   
+  output logic  [`MBY_IGR_IGR_PB0_DATA_RAM_TO_MEM_WIDTH-1:0] o_igr_pb_data_ram_3_to_mem,
+  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_pb_md_ram_0_to_mem,   
+  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_pb_md_ram_1_to_mem,   
+  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_pb_md_ram_2_to_mem,   
+  output logic  [`MBY_IGR_IGR_PB0_MD_RAM_TO_MEM_WIDTH-1:0]   o_igr_pb_md_ram_3_to_mem,
 
 
     //shim interface
-  output   dpc_pb_t [PB_BANKS-1:0]  o_pb_shim_p0,  //valid,md,data
-  output   dpc_pb_t [PB_BANKS-1:0]  o_pb_shim_p1,  //valid,md,data
-  output   dpc_pb_t [PB_BANKS-1:0]  o_pb_shim_p2,  //valid,md,data
-  output   dpc_pb_t [PB_BANKS-1:0]  o_pb_shim_p3  //valid,md,data
+  output   dpc_pb_t [PB_BANKS-1:0]  o_pb_shim  //valid,md,data
+
 
 );
 
@@ -94,37 +88,37 @@ module  mby_igr_pb
   
   
 //FIXME add clkgating
-  always_ff @(posedge cclk) o_igr_igr_pb0_data_ram_0_to_mem <= tom_pb_data_mem_bus_p0[0]; 
-  always_ff @(posedge cclk) o_igr_igr_pb0_data_ram_1_to_mem <= tom_pb_data_mem_bus_p0[1]; 
-  always_ff @(posedge cclk) o_igr_igr_pb0_data_ram_2_to_mem <= tom_pb_data_mem_bus_p0[2]; 
-  always_ff @(posedge cclk) o_igr_igr_pb0_data_ram_3_to_mem <= tom_pb_data_mem_bus_p0[3]; 
+  always_ff @(posedge cclk) o_igr_pb_data_ram_0_to_mem <= tom_pb_data_mem_bus_p0[0]; 
+  always_ff @(posedge cclk) o_igr_pb_data_ram_1_to_mem <= tom_pb_data_mem_bus_p0[1]; 
+  always_ff @(posedge cclk) o_igr_pb_data_ram_2_to_mem <= tom_pb_data_mem_bus_p0[2]; 
+  always_ff @(posedge cclk) o_igr_pb_data_ram_3_to_mem <= tom_pb_data_mem_bus_p0[3]; 
 
-  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[0] <= i_igr_igr_pb0_data_ram_0_from_mem; 
-  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[1] <= i_igr_igr_pb0_data_ram_1_from_mem; 
-  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[2] <= i_igr_igr_pb0_data_ram_2_from_mem; 
-  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[3] <= i_igr_igr_pb0_data_ram_3_from_mem; 
+  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[0] <= i_igr_pb_data_ram_0_from_mem; 
+  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[1] <= i_igr_pb_data_ram_1_from_mem; 
+  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[2] <= i_igr_pb_data_ram_2_from_mem; 
+  always_ff @(posedge cclk) frm_pb_data_mem_bus_p0[3] <= i_igr_pb_data_ram_3_from_mem; 
   
-  always_ff @(posedge cclk) o_igr_igr_pb0_md_ram_0_to_mem <= tom_pb_md_mem_bus_p0[0]; 
-  always_ff @(posedge cclk) o_igr_igr_pb0_md_ram_1_to_mem <= tom_pb_md_mem_bus_p0[1]; 
-  always_ff @(posedge cclk) o_igr_igr_pb0_md_ram_2_to_mem <= tom_pb_md_mem_bus_p0[2]; 
-  always_ff @(posedge cclk) o_igr_igr_pb0_md_ram_3_to_mem <= tom_pb_md_mem_bus_p0[3]; 
+  always_ff @(posedge cclk) o_igr_pb_md_ram_0_to_mem <= tom_pb_md_mem_bus_p0[0]; 
+  always_ff @(posedge cclk) o_igr_pb_md_ram_1_to_mem <= tom_pb_md_mem_bus_p0[1]; 
+  always_ff @(posedge cclk) o_igr_pb_md_ram_2_to_mem <= tom_pb_md_mem_bus_p0[2]; 
+  always_ff @(posedge cclk) o_igr_pb_md_ram_3_to_mem <= tom_pb_md_mem_bus_p0[3]; 
 
-  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[0] <= i_igr_igr_pb0_md_ram_0_from_mem; 
-  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[1] <= i_igr_igr_pb0_md_ram_1_from_mem; 
-  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[2] <= i_igr_igr_pb0_md_ram_2_from_mem; 
-  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[3] <= i_igr_igr_pb0_md_ram_3_from_mem; 
+  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[0] <= i_igr_pb_md_ram_0_from_mem; 
+  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[1] <= i_igr_pb_md_ram_1_from_mem; 
+  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[2] <= i_igr_pb_md_ram_2_from_mem; 
+  always_ff @(posedge cclk) frm_pb_md_mem_bus_p0[3] <= i_igr_pb_md_ram_3_from_mem; 
  
   mby_igr_pb_ctrl421 pb_ctrl_p0(
    .cclk(cclk),
    .rst(rst),
-   .i_port_rate(port0_rate),
+   .i_port_rate(i_pb_port_cfg.p0),
    .i_dpc_pb(i_dpc_pb_p0),
-   .i_pb_rd(i_pb_rd_p0),
+   .i_pb_rd(i_pb_rd),
    .i_pb_shell_rdata(pb_shell_rdata_p0),
    .i_pb_shell_rmd(pb_shell_rmd_p0),
    .o_pb_shell_ctrl_wdata(pb_shell_ctrl_wdata_p0),
    .o_pb_shell_ctrl_wmd(pb_shell_ctrl_wmd_p0),
-   .o_pb_shim(o_pb_shim_p0)
+   .o_pb_shim(o_pb_shim)
   );
   
   mby_igr_pb_mem_shell pb_mem_shell_0(
