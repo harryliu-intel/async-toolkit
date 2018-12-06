@@ -136,9 +136,14 @@
 
 (dis "length of the-addresses " (FieldData.ArraySize the-addresses) dnl)
 
-(FieldData.ArrayGet the-addresses
-                    (get-zip-seq-offset
-                     zz
-                     (cnt-sequence-by-name
-                      the-map
-                      '(mpp 0 shm FWD_TABLE_MOD 639 255 DATA))))
+(dis (stringify
+      (FieldData.ArrayGet the-addresses
+                          (get-zip-seq-offset
+                           zz
+                           (cnt-sequence-by-name
+                            the-map
+                            '(mpp 0 shm FWD_TABLE_MOD 639 255 DATA))))
+      ) dnl)
+
+;; average width of field (including space)
+(* 8 (/ (+ (cdr (assoc 'byte lst)) (/ (cdr (assoc 'wid lst)) 8)) (+ (cdr (assoc 'id lst)) 1)))
