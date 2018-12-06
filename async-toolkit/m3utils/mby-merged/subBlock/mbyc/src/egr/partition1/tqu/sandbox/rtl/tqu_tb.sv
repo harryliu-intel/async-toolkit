@@ -165,7 +165,39 @@ begin
     rrs_tqu_mri_if0.rrsp_wd_valid[0] = '1;
     @(posedge clk);
     rrs_tqu_mri_if0.rrsp_wd_valid[0] = '0;
+    @(posedge clk);
+end
 
+initial 
+begin
+    tcu_tqu_if.dtq_ctrl_pull = '0;
+    @(posedge arst_n);
+    do
+        @(posedge clk);
+    while(tcu_tqu_if.dtq_ctrl_ready[0][0][0]=='0);
+    @(posedge clk);
+    @(posedge clk);
+    tcu_tqu_if.dtq_ctrl_pull[0].dtq_sel  = '0;
+    tcu_tqu_if.dtq_ctrl_pull[0].peek_pop = '0;
+    tcu_tqu_if.dtq_ctrl_pull[0].req      = '1;
+    wait(tcu_tqu_if.ctrl_word_valid[0]==1); #2;
+    $display("Ctrl Data: %x",tcu_tqu_if.ctrl_word);
+end
+
+initial 
+begin
+    tcu_tqu_if.dtq_data_pull = '0;
+    @(posedge arst_n);
+    do
+        @(posedge clk);
+    while(tcu_tqu_if.dtq_data_ready[0][0][0]=='0);
+    @(posedge clk);
+    @(posedge clk);
+    tcu_tqu_if.dtq_data_pull[0].dtq_sel  = '0;
+    tcu_tqu_if.dtq_data_pull[0].peek_pop = '0;
+    tcu_tqu_if.dtq_data_pull[0].req      = '1;
+    wait(tcu_tqu_if.data_word_valid[0]==1); #2;
+    $display("Data Word: %x",tcu_tqu_if.pkt_word);
 end
 
 endmodule : tqu_tb

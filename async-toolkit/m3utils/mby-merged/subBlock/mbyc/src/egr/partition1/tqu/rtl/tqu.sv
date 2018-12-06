@@ -20,7 +20,7 @@
 ///  estoppel or otherwise. Any license under such intellectual property rights
 ///  must be express and approved by Intel in writing.
 ///
-// ---------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // -- Author : Luis Alfonso Maeda-Nunez
 // -- Project Name : Madison Bay (MBY) 
 // -- Description  : Tag Queuing Unit
@@ -189,18 +189,6 @@ assign pkt_buf_ctrl_wr_en = ctrl_wr_en;
 
 assign pkt_buf_ctrl_word_out = ctrl_wr_en ? rrsp_data_word_reg : '0;
 
-///////////// For test
-always_ff @(posedge clk, negedge rst_n)
-    if(!rst_n) begin
-        pkt_buf_ctrl_rd_ptr_reg <= '0;
-    end
-    else begin
-        pkt_buf_ctrl_rd_ptr_reg <= pkt_buf_ctrl_rd_ptr;
-    end
-
-assign ctrl_rd_en = '0;
-assign pkt_buf_ctrl_rd_ptr = '0;
-///////////// End For Test
 
 ////////////////////////////////
 //// Packet Buffer /////////////
@@ -237,7 +225,104 @@ assign pkt_buf_data_wr_en = data_wr_en;
 
 assign pkt_buf_data_word_out = data_wr_en ? rrsp_data_word_reg : '0;
 
-///////////// For test
+////////////////////////////////
+//// TCU FIFO Pull Ctrl ////////
+////////////////////////////////
+
+//Fifo Pull Control FSM
+enum bit[2:0]
+        {CTRL_IDLE =3'b001,
+         CTRL_READY=3'b010,
+         CTRL_PULL =3'b100
+        } fifo_pull_ctrl_fsm_state, fifo_pull_ctrl_fsm_next;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        fifo_pull_ctrl_fsm_state <= CTRL_IDLE; 
+    end
+    else begin
+        fifo_pull_ctrl_fsm_state <= fifo_pull_ctrl_fsm_next; 
+    end
+
+always_comb begin : fifo_pull_ctrl_fsm
+    fifo_pull_ctrl_fsm_next = fifo_pull_ctrl_fsm_state;
+    unique case (fifo_pull_ctrl_fsm_state)
+        CTRL_IDLE: 
+            if(pkt_buf_ctrl_rd_ptr_reg < pkt_buf_ctrl_wr_ptr_reg)
+                fifo_pull_ctrl_fsm_next = CTRL_READY;
+        CTRL_READY:
+            if(tcu_if.dtq_ctrl_pull[0].req)
+                fifo_pull_ctrl_fsm_next = CTRL_PULL;
+        CTRL_PULL:
+            fifo_pull_ctrl_fsm_next = CTRL_IDLE;
+    endcase
+end
+
+assign tcu_if.dtq_ctrl_ready = {'0,fifo_pull_ctrl_fsm_state==CTRL_READY};
+
+//Fifo Pull Control Read Ptr
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_ctrl_rd_ptr_reg <= '0;
+    end
+    else begin
+        pkt_buf_ctrl_rd_ptr_reg <= pkt_buf_ctrl_rd_ptr;
+    end
+
+assign ctrl_rd_en = ((fifo_pull_ctrl_fsm_state==CTRL_READY) && (tcu_if.dtq_ctrl_pull[0].req));
+assign pkt_buf_ctrl_rd_ptr = (ctrl_rd_en) ? 
+                              pkt_buf_ctrl_rd_ptr_reg + 1:
+                              pkt_buf_ctrl_rd_ptr_reg;
+assign pkt_buf_ctrl_rd_en = ctrl_rd_en;
+
+assign tcu_if.ctrl_mdata = '0;
+
+assign tcu_if.ctrl_word[0] = (fifo_pull_ctrl_fsm_state==CTRL_PULL) ?
+                           pkt_buf_ctrl_word_in : '0;
+assign tcu_if.ctrl_word[1] = '0;
+assign tcu_if.ctrl_word[2] = '0;
+assign tcu_if.ctrl_word[3] = '0;
+
+assign tcu_if.ctrl_word_valid = {'0,fifo_pull_ctrl_fsm_state==CTRL_PULL};
+
+
+
+////////////////////////////////
+//// TCU FIFO Pull Data ////////
+////////////////////////////////
+
+//Fifo Pull Data FSM 
+enum bit[2:0]
+        {DATA_IDLE =3'b001,
+         DATA_READY=3'b010,
+         DATA_PULL =3'b100
+        } fifo_pull_data_fsm_state, fifo_pull_data_fsm_next;
+
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        fifo_pull_data_fsm_state <= DATA_IDLE; 
+    end
+    else begin
+        fifo_pull_data_fsm_state <= fifo_pull_data_fsm_next; 
+    end
+
+always_comb begin : fifo_pull_data_fsm
+    fifo_pull_data_fsm_next = fifo_pull_data_fsm_state;
+    unique case (fifo_pull_data_fsm_state)
+        DATA_IDLE: 
+            if(pkt_buf_data_rd_ptr_reg < pkt_buf_data_wr_ptr_reg)
+                fifo_pull_data_fsm_next = DATA_READY;
+        DATA_READY:
+            if(tcu_if.dtq_data_pull[0].req)
+                fifo_pull_data_fsm_next = DATA_PULL;
+        DATA_PULL:
+            fifo_pull_data_fsm_next = DATA_IDLE;
+    endcase
+end
+
+assign tcu_if.dtq_data_ready = {'0,fifo_pull_data_fsm_state==DATA_READY};
+
+//Fifo Pull Data Read Ptr
 always_ff @(posedge clk, negedge rst_n)
     if(!rst_n) begin
         pkt_buf_data_rd_ptr_reg <= '0;
@@ -246,32 +331,21 @@ always_ff @(posedge clk, negedge rst_n)
         pkt_buf_data_rd_ptr_reg <= pkt_buf_data_rd_ptr;
     end
 
-assign data_rd_en = '0;
-assign pkt_buf_data_rd_ptr = '0;
-///////////// End For Test
+assign data_rd_en = ((fifo_pull_data_fsm_state==DATA_READY) && (tcu_if.dtq_data_pull[0].req));
+assign pkt_buf_data_rd_ptr = (data_rd_en) ? 
+                              pkt_buf_data_rd_ptr_reg + 1:
+                              pkt_buf_data_rd_ptr_reg;
+assign pkt_buf_data_rd_en = data_rd_en;
 
-////////////////////////////////
-//// TCU FIFO Pull /////////////
-////////////////////////////////
-pkt_buf_stateflag_t pkt_buf_ctrl_valid_flags;
-pkt_buf_stateflag_t pkt_buf_data_valid_flags;
-pkt_buf_stateflag_t pkt_buf_data_sop_flags;
-pkt_buf_stateflag_t pkt_buf_data_eop_flags;
+assign tcu_if.pkt_word_mdata = '0;
 
-always_ff @(posedge clk, negedge rst_n)
-    if(!rst_n) begin
-        pkt_buf_ctrl_valid_flags <= '0; 
-        pkt_buf_data_valid_flags <= '0; 
-        pkt_buf_data_sop_flags <= '0; 
-        pkt_buf_data_eop_flags <= '0; 
-    end
-    else begin
-        pkt_buf_ctrl_valid_flags <= '0; 
-        pkt_buf_data_valid_flags <= '0; 
-        pkt_buf_data_sop_flags <= '0; 
-        pkt_buf_data_eop_flags <= '0; 
-    end
+assign tcu_if.pkt_word[0] = (fifo_pull_data_fsm_state==DATA_PULL) ?
+                           pkt_buf_data_word_in : '0;
+assign tcu_if.pkt_word[1] = '0;
+assign tcu_if.pkt_word[2] = '0;
+assign tcu_if.pkt_word[3] = '0;
 
+assign tcu_if.data_word_valid = {'0,fifo_pull_data_fsm_state==DATA_PULL};
 
 
 //    //Control Memory Bank
@@ -281,8 +355,37 @@ always_ff @(posedge clk, negedge rst_n)
 //    output data_word_t    pkt_buf_ctrl_word_out, //o
 //    input  data_word_t     pkt_buf_ctrl_word_in, //i
 
+////////////////////////////////
+//// Pkt Buffer Flags //////////
+////////////////////////////////
 
+pkt_buf_stateflag_t pkt_buf_ctrl_valid_flags_reg;
+pkt_buf_stateflag_t pkt_buf_ctrl_valid_flags;
+pkt_buf_stateflag_t pkt_buf_data_valid_flags_reg;
+pkt_buf_stateflag_t pkt_buf_data_valid_flags;
+pkt_buf_stateflag_t pkt_buf_data_sop_flags_reg;
+pkt_buf_stateflag_t pkt_buf_data_sop_flags;
+pkt_buf_stateflag_t pkt_buf_data_eop_flags_reg;
+pkt_buf_stateflag_t pkt_buf_data_eop_flags;
 
+always_ff @(posedge clk, negedge rst_n)
+    if(!rst_n) begin
+        pkt_buf_ctrl_valid_flags_reg <= '0; 
+        pkt_buf_data_valid_flags_reg <= '0; 
+        pkt_buf_data_sop_flags_reg   <= '0; 
+        pkt_buf_data_eop_flags_reg   <= '0; 
+    end
+    else begin
+        pkt_buf_ctrl_valid_flags_reg <= pkt_buf_ctrl_valid_flags; 
+        pkt_buf_data_valid_flags_reg <= pkt_buf_data_valid_flags; 
+        pkt_buf_data_sop_flags_reg   <=   pkt_buf_data_sop_flags; 
+        pkt_buf_data_eop_flags_reg   <=   pkt_buf_data_eop_flags; 
+    end
+
+assign pkt_buf_ctrl_valid_flags = '0; //TODO Values activate with arriving rrsp
+assign pkt_buf_data_valid_flags = '0; //TODO Values activate with arriving rrsp
+assign pkt_buf_data_sop_flags   = '0; //TODO Values activate with arriving rrsp
+assign pkt_buf_data_eop_flags   = '0; //TODO Values activate with arriving rrsp
 
 ////////////////////////////////
 //// Stall outputs /////////////
