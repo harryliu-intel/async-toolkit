@@ -31,3 +31,12 @@ endif
 
 # File/Dir Remove:
 RM = /bin/rm -rf
+
+# Archive:
+AR = /usr/bin/ar -c -r -s
+
+# Symbolic Link:
+LN = /bin/ln -s
+
+# Make Dir:
+MKDIR = /bin/mkdir

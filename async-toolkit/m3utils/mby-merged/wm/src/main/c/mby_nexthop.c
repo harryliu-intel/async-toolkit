@@ -7,8 +7,7 @@
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
-// TODO is there a better way to include this? REVISIT
-#include "../m3/model_server/src/model_c_write.h" // pull in write_field
+#include <model_c_write.h> // write_field()
 
 static mbyArpTable getARPTableEntry
 (
