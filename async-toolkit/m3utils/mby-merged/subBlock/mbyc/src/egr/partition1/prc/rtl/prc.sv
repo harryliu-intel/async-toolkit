@@ -56,6 +56,20 @@ import shared_pkg::EPL_PER_MGP;
     egr_prc_tqu_if.prc              tqu_if  //Transmit Queuing Unit  - Packet Read Controller   Interface
 
 );
+
+///////////////////////////////////////////////////////////////////////////////
+// JMG: TEMP CODE FOR FIRST_PACKET
+// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+always_comb begin
+    tmu_if.qsel = {(16*17*16){1'b0}};
+    tmu_if.qsel[0][0][0] = pfs_if.valid[0] && pfs_if.ready[0];
+end
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// JMG: END TEMP CODE FOR FIRST_PACKET
+///////////////////////////////////////////////////////////////////////////////
+
 // Local parameters
 localparam PORTS_PER_EPL             = 4;
 localparam TX_TC_COUNT               = 8;
@@ -160,19 +174,19 @@ always_comb begin : next_state
 
     for(int i=0; i<2; i++)begin
 
-            mri_if0.wd_rreq[0].seg_handle.seg_ptr            = '0;
+            mri_if0.wd_rreq[i].seg_handle.seg_ptr            = '0;
 
-            mri_if0.wd_rreq[0].seg_handle.sema               = '0;
-            mri_if0.wd_rreq[0].wd_sel                        = '0;
-            mri_if0.wd_rreq[0].req_id.client_id              = CLIENT_PRC_TQU0_0;
+            mri_if0.wd_rreq[i].seg_handle.sema               = '0;
+            mri_if0.wd_rreq[i].wd_sel                        = '0;
+            mri_if0.wd_rreq[i].req_id.client_id              = CLIENT_PRC_TQU0_0;
 
-            mri_if0.wd_rreq[0].req_id.data_wd_id.word_type   = WORD_TYPE_DATA;
-            mri_if0.wd_rreq[0].req_id.data_wd_id.epl         = '0;
-            mri_if0.wd_rreq[0].req_id.data_wd_id.tx_lp       = '0;
-            mri_if0.wd_rreq[0].req_id.data_wd_id.tx_tc       = '0;
+            mri_if0.wd_rreq[i].req_id.data_wd_id.word_type   = WORD_TYPE_DATA;
+            mri_if0.wd_rreq[i].req_id.data_wd_id.epl         = '0;
+            mri_if0.wd_rreq[i].req_id.data_wd_id.tx_lp       = '0;
+            mri_if0.wd_rreq[i].req_id.data_wd_id.tx_tc       = '0;
 
-            mri_if0.wd_rreq[0].service_class                 = '0;
-            mri_if0.wd_rreq[0].mc                            = '0;
+            mri_if0.wd_rreq[i].service_class                 = '0;
+            mri_if0.wd_rreq[i].mc                            = '0;
     end
     
     case(state_r)
@@ -215,7 +229,7 @@ always_comb begin : next_state
         WORD_FETCH_DATA: begin
             state     = WORD_FETCH_CTRL;
 
-            mri_if0.wd_rreq[0].seg_handle.seg_ptr            = '1;
+            mri_if0.wd_rreq[0].seg_handle.seg_ptr            = tmu_if.tag[0].ptr;
 
             mri_if0.wd_rreq[0].seg_handle.sema               = '1;
             mri_if0.wd_rreq[0].wd_sel                        = 0;
@@ -235,10 +249,10 @@ always_comb begin : next_state
         WORD_FETCH_CTRL: begin
             state     = WAIT_FETCH_REQ;
 
-            mri_if0.wd_rreq[0].seg_handle.seg_ptr            = '1;
+            mri_if0.wd_rreq[0].seg_handle.seg_ptr            = tmu_if.tag[0].ptr;
 
             mri_if0.wd_rreq[0].seg_handle.sema               = '1;
-            mri_if0.wd_rreq[0].wd_sel                        = 0;
+            mri_if0.wd_rreq[0].wd_sel                        = 1;
             mri_if0.wd_rreq[0].req_id.client_id              = CLIENT_PRC_TQU0_0;
 
             mri_if0.wd_rreq[0].req_id.data_wd_id.word_type   = WORD_TYPE_CTRL;

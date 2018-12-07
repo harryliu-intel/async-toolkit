@@ -1,7 +1,7 @@
-# SRC is the relative path from the including Makefile to Make.fxr
-# Set to the current directory for this Makefile
-# Set it to a different relative path for including Make.fxr
-# from Makefiles in other directories
+
+ifndef SHRTL
+    SHRTL := $(shell ToolConfig.pl get_tool_path ipconfig/shrtl )
+endif
 
 SRC = ../..
 
@@ -43,7 +43,7 @@ INCS  = $(SRC)/shared/interfaces
 INCS += $(SRC)/shared/rtl
 INCS += $(SRC)/shared/sandbox/rtl
 
-.PHONY: dve
+.PHONY: dve print_env
 
 dve:
 	$(VCS_HOME)/bin/dve -full64

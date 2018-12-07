@@ -89,7 +89,7 @@ my %sip_list = (
 # SIP rtl lib should contain only synthesizable code (SYNTH related )
 my %sip_rtl_libs = (
     'boot'               => ['clkstub_rtl_lib'],
-    'imc'                => [],
+    'imc'                => ['imc_rtl_lib'],
 #    'epc'                => [],
     'mpp'                => ['mby_tx_ppe_rtl_lib', 'mby_ppe_stm_rtl_lib', 'mby_igr_rtl_lib', 'mby_egr_rtl_lib', 'mby_mgp_rtl_lib', 'mby_rx_ppe_rtl_lib', 'mby_mpp_rtl_lib'],
     'msh'                => ['mby_msh_rtl_lib', 'mby_msh_node_rtl_lib'],
@@ -208,7 +208,7 @@ sub gen_liblist {
 # <<< SIP VERIF LIBRARIES
 #############################################################
 my %sip_verif_libs = (
-    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_env_lib",
+    'boot'               => ["mby_ingress_ti_lib", "mby_ingress_env_lib", "mby_ec_env_lib", "mby_base_pkg_lib", "mby_tag_bfm_lib"
                              ],
 );
 

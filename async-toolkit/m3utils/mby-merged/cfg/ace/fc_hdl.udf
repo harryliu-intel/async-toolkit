@@ -171,13 +171,17 @@ EOF
                         "src/rtl/clkstub/clk_mux_2to1_glitchfree.sv",
                     ],
              },
+             imc_rtl_lib => {
+                    -vlog_files => [
+                        "src/rtl/imcstub/mby_syscon.sv",
+                    ],
+             },
 
              msh_collage_build_lib => {
                     -generated => 1,
                     -hdl_spec => [
                         "cfg/ace/HDL/collage/collage_build_msh.hdl",
                     ],
-                    -dependent_libs => [ "mby_mgm_lib"],
                     -tools => [ "-vcs_createlib", "-socfusegen", "-gen_subip", "-gen_testlist", "-dutconnect", "-sb_decode_gen", "-vtpsim_connect", "-gen_spf_files", "-gen_dft_testlist",],
              },
              mpp_collage_build_lib => {

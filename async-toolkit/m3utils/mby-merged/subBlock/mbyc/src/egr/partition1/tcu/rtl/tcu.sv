@@ -72,5 +72,36 @@ module tcu
 //                      V  V  V
 //tqu_if.dtq_data_ready[0][0][0]
 
+///////////////////////////////////////////////////////////////////////////////
+// JMG: TEMP CODE FOR FIRST_PACKET
+// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+always_comb pfs_if.pfc = 0;
+always_comb begin
+    tqu_if.dtq_ctrl_pull = 0;
+    tqu_if.dtq_ctrl_pull[0] = tqu_if.dtq_ctrl_ready;
+    tqu_if.dtq_data_pull = 0;
+    tqu_if.dtq_data_pull[0] = tqu_if.dtq_data_ready;
+    
+    epl_if0.tx_data_valid = 0;
+    epl_if1.tx_data_valid = 0;
+    epl_if2.tx_data_valid = 0;
+    epl_if3.tx_data_valid = 0;
+    
+    epl_if0.tx_data_valid[0] = tqu_if.data_word_valid[0];
+    epl_if0.tx_data_valid[0] = tqu_if.data_word_valid[0];
+    epl_if0.tx0_data_w_ecc.data = tqu_if.pkt_word[0][0*8+:8];
+    epl_if0.tx1_data_w_ecc.data = tqu_if.pkt_word[0][1*8+:8];
+    epl_if0.tx2_data_w_ecc.data = tqu_if.pkt_word[0][2*8+:8];
+    epl_if0.tx3_data_w_ecc.data = tqu_if.pkt_word[0][3*8+:8];
+    epl_if0.tx4_data_w_ecc.data = tqu_if.pkt_word[0][4*8+:8];
+    epl_if0.tx5_data_w_ecc.data = tqu_if.pkt_word[0][5*8+:8];
+    epl_if0.tx6_data_w_ecc.data = tqu_if.pkt_word[0][6*8+:8];
+    epl_if0.tx7_data_w_ecc.data = tqu_if.pkt_word[0][7*8+:8];
+end
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// JMG: END TEMP CODE FOR FIRST_PACKET
+///////////////////////////////////////////////////////////////////////////////
 
 endmodule : tcu

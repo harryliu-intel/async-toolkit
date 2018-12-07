@@ -8,4 +8,5 @@ mby_rngstp [
   }
   mrpodring_stop of mby_mrpodring_stop with mrpodring_stop.map
   podring_stop of mby_podring_stop with podring_stop.map
+  gpolring_stop of mby_gpolring_stop with gpolring_stop.map
 ]

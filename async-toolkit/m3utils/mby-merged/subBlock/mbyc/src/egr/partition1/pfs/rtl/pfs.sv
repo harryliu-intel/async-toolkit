@@ -83,7 +83,8 @@ always_ff @(posedge clk) for (int i = 0; i < EPL_PER_MGP; i++) begin
     tmu_if.pop[i] <= 0;
 
     // Clear valid on ready
-    if (!rst_n || prc_if.ready[i][port[i]]) valid[i][port[i]] <= 1'b0;
+    if (!rst_n) valid[i] <= 4'b0;
+    else if (prc_if.ready[i][port[i]]) valid[i][port[i]] <= 1'b0;
 
     // Select next winner
     if (!valid[i][next_port[i]] || ((port[i] == next_port[i]) && prc_if.ready[i][port[i]])) begin

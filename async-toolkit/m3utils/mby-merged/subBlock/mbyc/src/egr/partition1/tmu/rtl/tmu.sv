@@ -80,10 +80,11 @@ assign pfs_if.update_mgp = '0;//[EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0]
 assign pfs_if.update_length = '0;//[EPL_PER_MGP-1:0][6:0](in 64B incs)
 
 always_ff @(posedge clk) begin 
-  if (pfs_if.pop[0])
-      prc_if.tag[0] <= tagring_if.mby_tag_ring[0][0];     
-  else 
-      prc_if.tag[0] <= '0;
+  if (prc_if.qsel[0][0][0]) begin
+      prc_if.tag[0] <= tagring_if.mby_tag_ring[0][0];
+      prc_if.tag[0].valid <= 1'b1;
+  end else 
+      prc_if.tag[0].valid <= '0;
 end
 assign prc_if.tag[1] = '0;
 //input prc_if.qsel[MGP_COUNT-1:0][MGP_PORT_CNT-1:0][15:0]
