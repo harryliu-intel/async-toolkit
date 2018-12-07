@@ -84,21 +84,6 @@
 #define MBY_CGRP_HASH_ENTRY_MODE_32B   0
 #define MBY_CGRP_HASH_ENTRY_MODE_64B   1
 
-/* Bit number for fields of FFU_SLICE_SRAM.RouteData */
-/* Bit numbers when RouteType==GLORT */
-#define MBY_CGRP_ROUTE_l_DGLORT        0
-#define MBY_CGRP_ROUTE_h_DGLORT        15
-#define MBY_CGRP_ROUTE_b_FLOODSET      16
-#define MBY_CGRP_ROUTE_b_GLORT_FWD     17
-
-/* Bit numbers when RouteType==ARP */
-#define MBY_CGRP_ROUTE_l_ARP_INDEX     0
-#define MBY_CGRP_ROUTE_h_ARP_INDEX     15
-#define MBY_CGRP_ROUTE_l_GROUP_SIZE    16
-#define MBY_CGRP_ROUTE_h_GROUP_SIZE    19
-#define MBY_CGRP_ROUTE_b_GROUP_TYPE    20
-#define MBY_CGRP_ROUTE_b_ARP_ROUTE     21
-
 /* Bit number for FFU Flags */
 #define MBY_CGRP_FLAGS_b_DROP          0
 #define MBY_CGRP_FLAGS_b_TRAP          1
@@ -215,20 +200,6 @@ typedef enum mbyClassifierFwdSubtypeEnum
     MBY_FWD_SUBTYPE_ROUTE_ARP
 
 } mbyClassifierFwdSubtype;
-
-typedef enum mbyClassifierFwdArpRouteTypeEnum
-{
-    MBY_FWD_ARP_ROUTE_TYPE_SINGLE = 0,
-    MBY_FWD_ARP_ROUTE_TYPE_GROUP
-
-} mbyClassifierFwdArpRouteType;
-
-typedef enum mbyClassifierFwdForwardedTypeEnum
-{
-    MBY_FWD_FID_FORWARDED = 0,
-    MBY_FWD_GLORT_FORWARDED
-
-} mbyClassifierFwdForwardedType;
 
 typedef enum mbyClassifierActionEntryTypeEnum
 {

@@ -11,12 +11,6 @@
 
 // Defines:
 
-#define MBY_ARP_VLAN_BASE                   (0x3700000)
-#define MBY_ARP_VLAN_SIZE                   (0x0020000)
-
-#define MBY_FWD_HASHING_CFG_WIDTH           2
-#define MBY_FWD_HASHING_CFG(word)           (((word)*4) + (0x0051880) + (MBY_ARP_VLAN_BASE))
-
 #define MBY_FWD_HASHING_CFG_b_USE_METADATA  13
 #define MBY_FWD_HASHING_CFG_b_ECMP_ROTATION 12
 #define MBY_FWD_HASHING_CFG_l_ROTATION_B    10
