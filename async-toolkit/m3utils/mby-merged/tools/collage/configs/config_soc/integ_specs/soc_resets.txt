@@ -57,9 +57,6 @@
 #
 ##################################################################
 
-
-## temp connection
-Ci   /PWRGOOD              xtal_rcvr/lan_pwrgood_rst_b
 # also tmp dummy syscon connections
 Ci   /PWRGOOD              mby_syscon/pwrgood_rst_n
 ## for each mpp/epc
