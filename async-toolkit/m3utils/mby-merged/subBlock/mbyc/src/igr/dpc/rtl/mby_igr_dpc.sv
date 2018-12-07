@@ -38,7 +38,7 @@ module mby_igr_dpc
   input  logic [7:0]                          rx_ecc,
   input  logic [1:0]                     rx_port_num,  
   input  logic [7:0]                       rx_data_v,
-  input  data64_w_ecc_t [0:7]                rx_data,  
+  input  logic [63:0][0:7]                   rx_data,  
   input  epl_md_t                              rx_md,
   input  epl_ts_t                              rx_ts,  
   output logic [3:0]                     tx_pfc_xoff, //[3]=port3,[2]=port2,[1]=port1,[0]=port0
@@ -69,12 +69,12 @@ module mby_igr_dpc
   epl_ts_t                       qs2_dpc_ts_p1;
   epl_ts_t                       qs2_dpc_ts_p2;
   epl_ts_t                       qs2_dpc_ts_p3;
-  data64_w_ecc_t [0:7]             qs1_rx_data;
-  data64_w_ecc_t [0:7]          qs2_rx_data_p0;
-  data64_w_ecc_t [0:7]          qs2_rx_data_p1;
-  data64_w_ecc_t [0:7]          qs2_rx_data_p2;
-  data64_w_ecc_t [0:7]          qs2_rx_data_p3;
-  data64_w_ecc_t [0:7]           rx_data_align;
+  logic [63:0][0:7]             qs1_rx_data;
+  logic [63:0][0:7]          qs2_rx_data_p0;
+  logic [63:0][0:7]          qs2_rx_data_p1;
+  logic [63:0][0:7]          qs2_rx_data_p2;
+  logic [63:0][0:7]          qs2_rx_data_p3;
+  logic [63:0][0:7]           rx_data_align;
   logic [7:0]                  qs1_pfc_tc_sync;  // free-running shift register. [0] is sync pulse every eighth clk to tx mac for tc[0].
   logic                       qs2_pfc_tc_sync0;
   logic                                tc_sync;
