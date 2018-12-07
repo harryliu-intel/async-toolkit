@@ -151,6 +151,9 @@ foreach my $port (0..$MAX_PORT) {
 	send_packet($port, @packet);
 	receive_packet($port, @packet);
 	receive_packet($EOT);
+
+	print {$client} "\n";
+	expect_prompt;
 }
 
 # Disconnect
