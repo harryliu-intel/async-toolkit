@@ -7,8 +7,10 @@ ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 include ${ROOT_DIR}/ToolVersions.mk
 
 SRC_DIR1 = .
-SRC_DIR2 = ../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
-SRC_DIR3 = ../m3/model_server/src                # model_c_write.h
+# mby_top_map.h
+SRC_DIR2 = ../m3/genviews/src/build_c/mby_c/src
+# model_c_write.h
+SRC_DIR3 = ../m3/model_server/src
 
 INCLUDES = -I$(SRC_DIR1) -I$(SRC_DIR2) -I$(SRC_DIR3)
 
@@ -63,7 +65,6 @@ CFLAGS  = -std=gnu99
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -Werror
-CFLAGS += -Wno-error=unused-result  # downgrade to warning instead of error
 CFLAGS += -Wno-long-long
 CFLAGS += -Wno-missing-field-initializers
 CFLAGS += -Wno-unused
@@ -71,7 +72,6 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
-CFLAGS += -Wno-error=discarded-qualifiers # only warning until we move to write_field
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O0 -g -ggdb3
