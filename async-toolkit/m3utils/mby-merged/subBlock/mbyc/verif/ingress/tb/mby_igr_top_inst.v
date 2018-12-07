@@ -86,7 +86,10 @@ mby_igr_top igr_top_i (
    .mim_wreq_2(mim_wreq_2_if_i.request),
    .mim_wreq_3(mim_wreq_3_if_i.request),
    .mim_wreq_4(mim_wreq_4_if_i.request),
-   .mim_wreq_5(mim_wreq_5_if_i.request)
-   
+   .mim_wreq_5(mim_wreq_5_if_i.request),
+   .o_gpolring0(),
+   .o_gpolring1(),
+   .i_gpolring_update0('0),   
+   .i_gpolring_update1('0)   
    
 );
