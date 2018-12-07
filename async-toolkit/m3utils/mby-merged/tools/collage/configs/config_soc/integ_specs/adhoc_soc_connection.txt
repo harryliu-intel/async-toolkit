@@ -3,6 +3,10 @@
 # See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
 ##############################################################################
 
+# pll en/lock connection
+C   mby_syscon/pll_en        mby_parclk/pll_en1
+C   mby_parclk/core_pll_lock mby_syscon/pll_lock
+
 # Connect to GMM; connect 1 port to member of struct on another port
 ##C mby_gmn_0/tag_ring_out_0_0.parity                         mby_mpp_0/
 ##C mby_gmn_0/tag_ring_out_0_0.mirror
