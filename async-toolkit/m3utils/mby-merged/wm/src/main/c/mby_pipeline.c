@@ -78,11 +78,12 @@ void RxPipeline
 
 void TxPipeline
 (
-    mby_ppe_tx_top_map const * const tx_top_map,
-    mby_shm_map        const * const shm_map,
-    mbyTxInToModifier  const * const txi2mod,
-    mbyTxStatsToTxMac        * const txs2mac,
-    fm_int                           max_pkt_size
+    mby_ppe_tx_top_map       const * const tx_top_map,
+    mby_ppe_tx_top_map__addr const * const tx_top_map_w,
+    mby_shm_map              const * const shm_map,
+    mbyTxInToModifier        const * const txi2mod,
+    mbyTxStatsToTxMac              * const txs2mac,
+    fm_uint32                        const max_pkt_size
 )
 {
     // Register map structs:
