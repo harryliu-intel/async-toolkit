@@ -106,22 +106,29 @@ module  mby_igr_pb_ctrl421
       always_ff @(posedge cclk) q_pb_shim[g_bnk].v <= pb_shim[g_bnk].v;
     end //for
 
-    for(g_bnk=0; g_bnk<PB_BANKS; g_bnk++) begin: gen_pb2shell  
+    for(g_bnk=0; g_bnk<PB_BANKS; g_bnk++) begin: gen_pb2shell
+    
       always_ff @(posedge cclk) begin
-        if(rst) begin
+        if(rst)begin
           pb_shell_ctrl_wdata[g_bnk].rd_en <= '0;
           pb_shell_ctrl_wdata[g_bnk].wr_en <= '0;
-          pb_shell_ctrl_wdata[g_bnk].adr   <= '0;
           pb_shell_ctrl_wmd[g_bnk].rd_en   <= '0;
           pb_shell_ctrl_wmd[g_bnk].wr_en   <= '0;
+        end
+        else begin
+          pb_shell_ctrl_wdata[g_bnk].rd_en <= shell_mem_re_bnk[g_bnk];
+          pb_shell_ctrl_wdata[g_bnk].wr_en <= shell_mem_we_bnk[g_bnk];
+          pb_shell_ctrl_wmd[g_bnk].rd_en   <= shell_mem_re_bnk[g_bnk];
+          pb_shell_ctrl_wmd[g_bnk].wr_en   <= shell_mem_we_bnk[g_bnk];
+        end
+      end
+      always_ff @(posedge cclk) begin
+        if(rst) begin
+          pb_shell_ctrl_wdata[g_bnk].adr   <= '0;
           pb_shell_ctrl_wmd[g_bnk].adr     <= '0;
         end
         else if(shell_mem_we_bnk[g_bnk] || shell_mem_re_bnk[g_bnk]) begin
-          pb_shell_ctrl_wdata[g_bnk].rd_en <= shell_mem_re_bnk[g_bnk];
-          pb_shell_ctrl_wdata[g_bnk].wr_en <= shell_mem_we_bnk[g_bnk];
           pb_shell_ctrl_wdata[g_bnk].adr   <= shell_mem_adrs_bnk[g_bnk];
-          pb_shell_ctrl_wmd[g_bnk].rd_en   <= shell_mem_re_bnk[g_bnk];
-          pb_shell_ctrl_wmd[g_bnk].wr_en   <= shell_mem_we_bnk[g_bnk];
           pb_shell_ctrl_wmd[g_bnk].adr     <= shell_mem_adrs_bnk[g_bnk];
         end
       end  
