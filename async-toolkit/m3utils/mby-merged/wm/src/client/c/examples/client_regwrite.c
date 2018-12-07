@@ -46,6 +46,7 @@
 #define PREV_IDX(idx) (((idx) - 1 + MAX_CLI_HIST) % MAX_CLI_HIST)
 
 #define MAX_BUF		1024
+#define COMMAND_ARGS	128
 #define BACKSPACE		'\b'
 #define BELL			'\a'
 
@@ -455,6 +456,9 @@ static int parse_line(char *line, int len, char *command, int *argc, char **argv
 
     token = strtok(NULL, delim);
     while (token) {
+        if ((*argc) >= COMMAND_ARGS)
+            return ERR_BUFFER_FULL;
+
         strcpy(argv[(*argc)++], token);
         token = strtok(NULL, delim);
     }
@@ -547,19 +551,22 @@ static void complete_command(struct connection *con)
     char name[MAX_BUF + 1];
     const char* cur_name;
     void* it = NULL;
-    char* argv[32];
+    char* argv[COMMAND_ARGS];
     int argc = 0;
     int matches;
     int len;
     int cnt;
+    int err;
 
-    for(cnt = 0; cnt<32; ++cnt)
+    for(cnt = 0; cnt < COMMAND_ARGS; ++cnt)
         argv[cnt] = (char*)malloc((MAX_BUF + 1) * sizeof(char));
 
     for(cnt = 0; cnt<(int)fpps_reg_table_size; ++cnt)
         proposals[cnt] = (char*)malloc((MAX_BUF + 1) * sizeof(char));
 
-    parse_line(con->buf, con->pcur, command, &argc, argv);
+    err = parse_line(con->buf, con->pcur, command, &argc, argv);
+    if (err)
+        fd_print(con, "error %d\n", err);
 
     if (con->debug) {
         fd_print(con, "\ncommand: \"%s\" ", command);
@@ -628,7 +635,7 @@ static void complete_command(struct connection *con)
         move_cursor_back(con);
     }
 
-    for(cnt = 0; cnt<32; ++cnt)
+    for(cnt = 0; cnt < COMMAND_ARGS; ++cnt)
         free(argv[cnt]);
 
     for(cnt = 0; cnt<(int)fpps_reg_table_size; ++cnt)
@@ -844,7 +851,7 @@ int pkt_receive(struct connection *con, int argc, char **argv)
         fd_print(con, "Error receiving traffic: %d\n", err);
         return err;
     } else if (err == WM_NO_DATA) {
-        fd_print(con, "EOT received\n");
+        fd_print(con, "EOT packet received\n");
         return WM_OK;
     }
 
@@ -854,7 +861,7 @@ int pkt_receive(struct connection *con, int argc, char **argv)
         return ERR_BUFFER_FULL;
 
     for(i = 0; i < rx_pkt.len; ++i)
-        fd_print(con, " %2X", rx_pkt.data[i]);
+        fd_print(con, " 0x%02X", rx_pkt.data[i]);
 
     fd_print(con, "\n");
 
@@ -869,7 +876,7 @@ int client_process(struct connection *con)
     bool show_prompt = true;
     struct termios options;
     struct sigaction act;
-    char* argv[32];
+    char* argv[COMMAND_ARGS];
     char esc_seq;
     int argc = 0;
     int err;
@@ -877,7 +884,7 @@ int client_process(struct connection *con)
     int cnt;
     char c;
 
-    for(cnt = 0; cnt<32; ++cnt)
+    for(cnt = 0; cnt < COMMAND_ARGS; ++cnt)
         argv[cnt] = (char*)malloc((MAX_BUF + 1) * sizeof(char));
 
     con->fd = STDOUT_FILENO;
@@ -1005,7 +1012,12 @@ int client_process(struct connection *con)
         if (len > 0) {
             err = parse_line(con->buf, con->blen, command, &argc, argv);
 
-            if (err || !strcmp(command, ""))
+            if (err) {
+                fd_print(con, "Could not parse the command, error %d\n", err);
+                continue;
+            }
+
+            if (!strcmp(command, ""))
                 continue;
 
             if (con->debug) {
@@ -1032,7 +1044,7 @@ int client_process(struct connection *con)
 
     tcsetattr(con->fd, TCSANOW, &old_options);
 
-    for(cnt = 0; cnt<32; ++cnt)
+    for(cnt = 0; cnt < COMMAND_ARGS; ++cnt)
         free(argv[cnt]);
 
     return WM_OK;
