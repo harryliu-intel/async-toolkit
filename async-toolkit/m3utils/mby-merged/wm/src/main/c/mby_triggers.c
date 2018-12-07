@@ -22,6 +22,28 @@ static inline void incrementTrigCounter
 
 }
 
+/**
+ * Triggers Match Conditions and random matching
+ * Specified [match conditions] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerMatchConditions)
+ * and [random matching] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-RandomMatching)
+ *
+ * @param[in] trig_apply_map Trigger Registers map
+ * @param[in] trig           Trigger number
+ * @param[in] learn_en       LEARNING_ENABLED coming from MaskGen stage
+ * @param[in] l2_evid1       L2_EVID1 coming from MaskGen stage
+ * @param[in] cgrp_trig      CGRP_TRIG coming from MaskGen stage
+ * @param[in] qos_tc         QOS_TC coming from MaskGen stage
+ * @param[in] idglort        IDGLORT coming from MaskGen stage
+ * @param[in] l3_edomain     L3_SMAC coming from MaskGen stage
+ * @param[in] l2_edomain     L2_SMAC coming from MaskGen stage
+ * @param[in] fclass         FCLASS coming from MaskGen stage
+ * @param[in] mark_routed    MARK_ROUTED coming from MaskGen stage
+ * @param[in] dmask          DMASK coming from MaskGen stage
+ * @param[in] rx_port        RX_PORT coming from MaskGen stage
+ * @param[in] amask          AMASK coming from MaskGen stage
+ *
+ * \return True if all of the conditions are matched, false if not
+ */
 static fm_bool evaluateTrigger
 (
     mby_ppe_trig_apply_map const * const trig_apply_map,
@@ -266,6 +288,18 @@ static void applyPrecedenceResolution
         lo->egressL2DomainAction = hi->egressL2DomainAction;
 }
 
+/**
+ * Configurable Trigger Precedence and action resolution
+ * Specified [trigger precedence] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-ConfigurableTriggerPrecedence)
+ * and [action resolution] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerActionResolution)
+ *
+ * @param[in]  trig_apply_map            Trigger Registers map
+ * @param[in]  hit_mask_hi               Matched trigges from 64 - 95
+ * @param[in]  hit_mask_lo               Matched trigges from 0  - 63
+ * @param[out] trig_hit_mask_resolved_lo Output with fired triggers from 0  - 63
+ * @param[out] trig_hit_mask_resolved_hi Output with fired triggers from 64 - 95
+ * @param[out] lo                        Output with actions
+ */
 static void resolveTriggers
 (
     mby_ppe_trig_apply_map const * const trig_apply_map,
@@ -313,6 +347,28 @@ static void resolveTriggers
     }
 }
 
+/**
+ * Trigger Actions
+ * Specified [here] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerActions)
+ *
+ * @param[in]  actions               Actions that are the result of the resolveTriggers function
+ * @param[out] results               Actions to apply to the frame
+ * @param[in]  action                ACTION coming from MaskGen stage
+ * @param[in]  dmask                 Pointer to array with DMASK coming from MaskGen stage
+ * @param[in]  pre_resolve_action    PRE_RESOLVE_ACTION coming from MaskGen stage
+ * @param[in]  pre_resolve_dmask     Pointer to array with PRE_RESOLVE_DMASK coming from MaskGen stage
+ * @param[in]  pre_resolve_dglort    PRE_RESOLVE_DGLORT coming from MaskGen stage
+ * @param[in]  idglort               IDGLORT coming from MaskGen stage
+ * @param[in]  qcn_mirror0_profile_v QCN_MIRROR0_PROFILE_V coming from MaskGen stage
+ * @param[in]  qcn_mirror1_profile_v QCN_MIRROR1_PROFILE_V coming from MaskGen stage
+ * @param[in]  mirror0_profile_idx   MIRROR0_PROFILE_IDX coming from MaskGen stage
+ * @param[in]  mirror0_profile_v     MIRROR0_PROFILE_V coming from MaskGen stage
+ * @param[in]  mirror1_profile_idx   MIRROR1_PROFILE_IDX coming from MaskGen stage
+ * @param[in]  mirror1_profile_v     MIRROR1_PROFILE_V coming from MaskGen stage
+ * @param[in]  qos_tc                QOS_TC coming from MaskGen stage
+ * @param[in]  l2_evid1              L2_EVID1 coming from MaskGen stage
+ * @param[out] learning_enabled      Output depends on learning action
+ */
 static void applyTriggers
 (
     mbyTriggerActions       * const actions,
@@ -340,6 +396,8 @@ static void applyTriggers
     mbyTriggerActionMetadata actionMetadata;
     fm_byte                  PKT_META_CPY[32];
     fm_uint32              * actionMetadataMask;
+    fm_bool                  is_pre_resolve_dmask = FALSE;
+    fm_bool                  action_drop_trig = FALSE;
 
     results->filterDestMask = TRUE;
 
@@ -349,14 +407,17 @@ static void applyTriggers
     switch (actions->forwardingAction)
     {
         case MBY_TRIG_ACTION_FORWARDING_FORWARD:
-            if ( pre_resolve_dmask != 0 )
+            for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+                is_pre_resolve_dmask = (pre_resolve_dmask[i] != 0);
+
+            if ( is_pre_resolve_dmask )
             {
                 dglort = (pre_resolve_dglort    & ~actions->newDestGlortMask) |
                          (actions->newDestGlort & actions->newDestGlortMask);
                 results->destGlort = dglort;
                 for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                     results->destMask[i] = pre_resolve_dmask[i];
-                results->action    = action;
+                results->action    = pre_resolve_action;
             }
             else
             {
@@ -372,32 +433,28 @@ static void applyTriggers
                      (actions->newDestGlort & actions->newDestGlortMask);
             results->destGlort      = dglort;
             for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+            {
                 results->destMask[i] = actions->newDestMask[i];
+                action_drop_trig     = (results->destMask[i] == 0);
+            }
             results->filterDestMask = actions->filterDestMask;
-
-            if ( results->destMask == 0)
-                results->action = MBY_ACTION_DROP_TRIG;
-
-            else
-                results->action = MBY_ACTION_REDIRECT_TRIG;
-
+            results->action         = (action_drop_trig) ? MBY_ACTION_DROP_TRIG : MBY_ACTION_REDIRECT_TRIG;
             break;
 
         case MBY_TRIG_ACTION_FORWARDING_DROP:
             results->destGlort = idglort;
             for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+            {
                 results->destMask[i]  = dmask[i] & ~actions->dropMask[i];
-            if ( ( dmask != 0 ) && ( results->destMask == 0 ) )
-                results->action = MBY_ACTION_DROP_TRIG;
-            else
-                results->action = action;
+                action_drop_trig      = ( ( dmask[i] != 0 ) && ( results->destMask[i] == 0 ) );
+            }
+            results->action = (action_drop_trig) ? MBY_ACTION_DROP_TRIG : action;
             break;
 
         default:
             results->destGlort = idglort;
             for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                 results->destMask[i]  = dmask[i];
-
             results->action    = action;
             break;
     }
@@ -418,9 +475,13 @@ static void applyTriggers
         case MBY_TRIG_ACTION_TRAP_REVERT: /* do not trap or log */
             if ( action == MBY_ACTION_TRAP )
             {
-                for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                    results->destMask[i] = pre_resolve_dmask[i];
                 results->action = pre_resolve_action;
+                for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+                {
+                    results->destMask[i] = pre_resolve_dmask[i];
+                    action_drop_trig     = (results->destMask[i] == 0);
+                }
+
                 if ( actions->forwardingAction == MBY_TRIG_ACTION_FORWARDING_REDIRECT )
                     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                         results->destMask[i] = actions->newDestMask[i];
@@ -428,7 +489,7 @@ static void applyTriggers
                     MBY_TRIG_ACTION_FORWARDING_DROP )
                     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                         results->destMask[i] &= ~actions->dropMask[i];
-                if ( results->destMask == 0 )
+                if ( action_drop_trig )
                     results->action = MBY_ACTION_DROP_TRIG;
             }
             break;
@@ -451,12 +512,27 @@ static void applyTriggers
         results->qcnValid0 = 0;
     }
     else if (actions->mirroringAction0 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/
-          results->mirror0ProfileV = 0;
+        results->mirror0ProfileV = 0;
 
     else/* no change in mirroring disposition; leave mirrors as they are */
     {
         results->mirror0ProfileV   = mirror0_profile_v;
         results->mirror0ProfileIdx = mirror0_profile_idx;
+    }
+
+    if (actions->mirroringAction1 == MBY_TRIG_ACTION_MIRRORING_MIRROR) /* actions for mirrors */
+    {
+        results->mirror1ProfileV   = 1;
+        results->mirror1ProfileIdx = actions->mirrorProfileIndex1;
+        results->qcnValid1 = 0;
+    }
+    else if (actions->mirroringAction1 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/
+        results->mirror1ProfileV = 0;
+
+    else/* no change in mirroring disposition; leave mirrors as they are */
+    {
+        results->mirror1ProfileV   = mirror1_profile_v;
+        results->mirror1ProfileIdx = mirror1_profile_idx;
     }
 
     /* store the action in the triggerResults channel */
@@ -508,6 +584,17 @@ static void applyTriggers
     results->policerAction = actions->policerAction;
 }
 
+/**
+ * Trigger Counters
+ * Specified [here] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerCountersandInterrupts)
+ *
+ * @param[in]     trig_apply_map            Trigger Registers map
+ * @param[output] trig_apply_map_w          Trigger Registers write map
+ * @param[in]     trig_hit_mask_resolved_lo Fired triggers from 0  - 63
+ * @param[in]     trig_hit_mask_resolved_hi Fired triggers from 64 - 95
+ * @param[in]     hitMaskHi                 Matched trigges from 64 - 95
+ * @param[in]     hitMaskLo                 Matched trigges from 0  - 63
+ */
 static void triggersStatsUpdate
 (
     mby_ppe_trig_apply_map       const * const trig_apply_map,
@@ -532,6 +619,21 @@ static void triggersStatsUpdate
     }
 }
 
+/**
+ * TCN FIFO
+ * Specified [here] (https://securewiki.ith.intel.com/display/25T/MBY+PP+TCN+FIFO)
+ *
+ * @param[in]     trig_apply_misc_map   Trigger Registers map
+ * @param[output] trig_apply_misc_map_w Trigger Registers write map
+ * @param[in]     fwd_misc_map          Miscellaneous Registers in FWD map
+ * @param[out]    fwd_misc_map_w        Miscellaneous Registers in FWD write map
+ * @param[in]     mapper_map            Mapper Registers Set map
+ * @param[in]     learn_en              LEARNING_ENABLED coming from MaskGen stage
+ * @param[in]     l2_smac               L2_SMAC coming from MaskGen stage
+ * @param[in]     l2_evid1              L2_EVID1 coming from MaskGen stage
+ * @param[in]     l2_edomain            L2_EDOMAIN coming from MaskGen stage
+ * @param[in]     rx_port               RX_PORT coming from MaskGen stage
+ */
 static void tcnFifo
 (
     mby_ppe_trig_apply_misc_map       const * const trig_apply_misc_map,
@@ -644,11 +746,11 @@ void Triggers
                     trig_apply_map,
                     i,
                     learn_en,
-                    l3_edomain,
                     l2_evid1,
                     cgrp_trig,
                     qos_tc,
                     idglort,
+                    l3_edomain,
                     l2_edomain,
                     fclass,
                     mark_routed,
