@@ -6,23 +6,22 @@
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 include ${ROOT_DIR}/../../ToolVersions.mk
 
-# uint.h
-INC_DIR = ../../../c
-# mby_top_map.h
-TOPMAP_DIR = ../../../m3/genviews/src/build_c/mby_c/src
+INC_DIR  = ../../../c                                 # uint.h
+SRC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src # mby_top_map.h
+SRC_DIR3 = ../../../m3/model_server/src               # model_c_write.h
 
 SRC_DIR = ../..
 TST_DIR = .
 
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
-INCLUDES += -I$(INC_DIR) -I$(TOPMAP_DIR)
+INCLUDES += -I$(INC_DIR) -I$(SRC_DIR2) -I$(SRC_DIR3)
 
 SOURCES  = $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
-SOURCES += $(SRC_DIR)/fm_alos_debughash.c
-SOURCES += $(SRC_DIR)/mby_write_field.c
-SOURCES += $(TOPMAP_DIR)/mby_top_map.c
+# SOURCES += $(SRC_DIR)/fm_alos_debughash.c
+# SOURCES += $(SRC_DIR)/mby_write_field.c
+# SOURCES += $(SRC_DIR2)/mby_top_map.c
 SOURCES += $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_nexthop.c
 SOURCES += $(TST_DIR)/mby_nexthop_test.c
@@ -71,10 +70,12 @@ all: $(TARGET)
 $(SRC_DIR)/mby_common.o       : $(SRC_DIR)/mby_common.c $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_bitfield.o     : $(SRC_DIR)/mby_bitfield.c $(SRC_DIR)/mby_bitfield.h $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/fm_alos_debughash.o: $(SRC_DIR)/fm_alos_debughash.c $(SRC_DIR)/fm_alos_debughash.h
-$(SRC_DIR)/mby_write_field.o  : $(SRC_DIR)/mby_write_field.c $(SRC_DIR)/mby_write_field.h
-$(TOPMAP_DIR)/mby_top_map.o   : $(TOPMAP_DIR)/mby_top_map.c $(TOPMAP_DIR)/mby_top_map.h
+$(SRC_DIR2)/mby_top_map.o     : $(SRC_DIR2)/mby_top_map.c $(SRC_DIR2)/mby_top_map.h
 $(SRC_DIR)/mby_nexthop.o      : $(SRC_DIR)/mby_nexthop.c $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h
 $(TST_DIR)/mby_nexthop_test.o : $(TST_DIR)/mby_nexthop_test.c $(TST_DIR)/mby_nexthop_test.h $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h
+
+${BLD_DIR}/model_c_write.o    : $(SRC_DIR3)/model_c_write.c $(SRC_DIR3)/model_c_write.h
+$(SRC_DIR)/mby_write_field.o  : $(SRC_DIR)/mby_write_field.c $(SRC_DIR)/mby_write_field.h
 
 .PHONY: clean
 clean:

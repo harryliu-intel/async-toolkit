@@ -715,7 +715,7 @@ static int run_on_simple_exactmatch
         shm_map,
         &(in->CLASSIFIER_KEYS),
         in->PACKET_PROFILE,
-        MBY_CLA_GROUP_A,
+        MBY_CGRP_A,
         actions
     );
 

@@ -3,7 +3,7 @@
 # Copyright (C) 2018 Intel Corporation
 
 .PHONY: all
-all: test_parser test_mapper test_exactmatch test_wcm test_nexthop test_maskgen test_triggers test_rxstats test_basic_fwd test_basic_flood
+all: test_parser test_mapper test_exactmatch test_wcm test_maskgen test_triggers test_rxstats test_basic_fwd test_basic_flood
 
 .PHONY: test_all
 test_all: all

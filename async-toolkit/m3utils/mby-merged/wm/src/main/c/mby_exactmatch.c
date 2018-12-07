@@ -93,7 +93,7 @@ static void calculateHash(
         mbyCrc32CByteSwap(hash_bytes, MBY_CGRP_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
 
     // for EM_A lookup size is 32768, for E_B lookup size is 8192
-    fm_uint16 hash_mask  = (group == MBY_CLA_GROUP_A) ? 0x7fff : 0x1fff;
+    fm_uint16 hash_mask  = (group == MBY_CGRP_A) ? 0x7fff : 0x1fff;
 
     *hash_index = hash & hash_mask;
     *hash_more  = (hash >> 16) & 0xffff;
@@ -110,7 +110,7 @@ static fm_uint16 calculateLookupPtr(
 
     // Start from the 2nd half of the bucket table if hash_num is 1 in split mode
     if (hash_num == 1)
-        lookup_start_index = (group == MBY_CLA_GROUP_A)
+        lookup_start_index = (group == MBY_CGRP_A)
             ? mby_ppe_cgrp_a_nested_map_EM_HASH_LOOKUP__n / 2
             : mby_ppe_cgrp_b_nested_map_EM_HASH_LOOKUP__n / 2;
 
@@ -286,7 +286,7 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
 
     fm_uint32 hash_lookup_addr = (bucket.PTR + offset * hash_cfg.entry_size[hash_num]) * 4;
 
-    fm_bool   group_A    = group == MBY_CLA_GROUP_A;
+    fm_bool   group_A    = group == MBY_CGRP_A;
     fm_bool   mode_32b   = (hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_32B); // split_mode
     fm_byte   start_bit  = ((mode_32b) ? 5 : 6);
     fm_uint16 line       = FM_GET_UNNAMED_FIELD(hash_lookup_addr, start_bit, 14);

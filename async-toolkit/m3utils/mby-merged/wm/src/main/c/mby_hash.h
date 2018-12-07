@@ -117,8 +117,8 @@ typedef struct mbyHashToNextHopStruct
     fm_bool            DROP_TTL;               ///> packet should be dropped
     fm_bool            ENCAP;
     mbyClassifierFlags CGRP_FLAGS;             ///> flags {TX_TAG, RX_MIRROR, NO_ROUTE, LOG, TRAP, DROP}
-    fm_uint32          CGRP_ROUTE;
     fm_uint32          CONTENT_ADDR;           ///> MOD Content address, expressed in 32B units
+    fm_uint32          FWD;
     fm_bool            GLORT_CAM_MISS;         ///> GLORT lookup resulted in a miss flag
     fm_uint32          GLORT_DMASK;            ///> 24-bit GLORT-based destination mask
     fm_uint16          IP_MCAST_IDX;           ///> index into the MCAST_VLAN_TABLE
@@ -129,10 +129,10 @@ typedef struct mbyHashToNextHopStruct
     fm_uint16          L2_IVID1;
     fm_byte            L3_IDOMAIN;
     fm_bool            LEARN_MODE;
+    fm_bool            LEARN_NOTIFY;           ///> learning is enabled flag
     fm_uint32          MIRROR0_PROFILE_IDX;    ///> mirror 0 profile index
     fm_byte            MOD_PROF_IDX;           ///> modify profile index
     fm_bool            MTU_VIOLATION;          ///> packet violates the MTU
-    fm_bool            NO_LEARN;               ///> learning is diabled flag
     fm_byte            OPERATOR_ID;            ///> 4-bit operator ID
     fm_bool            PARITY_ERROR;           ///> memory parity error flag
     fm_bool            PARSER_ERROR;           ///> header parse error flag
