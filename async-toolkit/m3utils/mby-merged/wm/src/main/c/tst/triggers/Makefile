@@ -9,17 +9,21 @@ include ${ROOT_DIR}/../../ToolVersions.mk
 SRC_DIR  = ../..
 TST_DIR  = .
 
-INC_DIR  = ../../../c                                  # uint.h
-INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+INC_DIR = ../../../c
+# mby_top_map.h
+TOPMAP_DIR = ../../../m3/genviews/src/build_c/mby_c/src
 
 INCLUDES  = -I$(SRC_DIR)
 INCLUDES += -I$(TST_DIR)
 INCLUDES += -I$(TST_DIR)/../common
-INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
+INCLUDES += -I$(INC_DIR) -I$(TOPMAP_DIR)
 
 SOURCES  = $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
+SOURCES += $(SRC_DIR)/fm_alos_debughash.c
+SOURCES += $(SRC_DIR)/mby_write_field.c
+SOURCES += $(TOPMAP_DIR)/mby_top_map.c
 SOURCES += $(SRC_DIR)/mby_triggers.c
 SOURCES += $(SRC_DIR)/mby_triggers_regs.c
 SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
@@ -68,6 +72,9 @@ all: $(TARGET)
 $(SRC_DIR)/mby_common.o    		: $(SRC_DIR)/mby_common.c     		$(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_crc32.o     		: $(SRC_DIR)/mby_crc32.c      		$(SRC_DIR)/mby_crc32.h
 $(SRC_DIR)/mby_bitfield.o  		: $(SRC_DIR)/mby_bitfield.c   		$(SRC_DIR)/mby_bitfield.h
+$(SRC_DIR)/fm_alos_debughash.o: $(SRC_DIR)/fm_alos_debughash.c $(SRC_DIR)/fm_alos_debughash.h
+$(SRC_DIR)/mby_write_field.o  : $(SRC_DIR)/mby_write_field.c $(SRC_DIR)/mby_write_field.h
+$(TOPMAP_DIR)/mby_top_map.o   : $(TOPMAP_DIR)/mby_top_map.c $(TOPMAP_DIR)/mby_top_map.h
 $(SRC_DIR)/mby_triggers.o  		: $(SRC_DIR)/mby_triggers.c   		$(SRC_DIR)/mby_triggers.h
 $(SRC_DIR)/mby_triggers_regs.o  : $(SRC_DIR)/mby_triggers_regs.c   	$(SRC_DIR)/mby_triggers_regs.h
 $(SRC_DIR)/mby_reg_ctrl.o  		: $(SRC_DIR)/mby_reg_ctrl.c   		$(SRC_DIR)/mby_reg_ctrl.h
