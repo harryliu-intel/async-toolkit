@@ -7,8 +7,8 @@ spar_cell_list =
    "lib.bd.convert.qdi.QDI_TO_BD_CTRL.0"
 
    ; gen 4 controller components
-   "lib.util.widget.SPLIT_EDGE.0"
-   "lib.util.widget.STD_SPLIT_EDGE.0"
+   "lib.util.widget.DIVERTER.0"
+   "lib.util.widget.STD_DIVERTER.0"
 
    ; TOP_HALO (physical only but very common)
    "globals.TOP_HALO.n"
