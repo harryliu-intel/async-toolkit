@@ -34,29 +34,29 @@
 
 interface rx_ppe_ppe_stm0_if
 ();
-logic   [2:0]   [3:0]   tbl_ren;        //per port, per chunk read enables (port 0 is LPM, 1-2 are EM)
-logic   [2:0]   [19:0]  tbl_raddr;      //per port read address (port 0 is LPM, 1-2 are EM)
-logic                   tbl_lpm_rvalid; //LPM port read valid
-logic           [143:0] tbl_lpm_rdata;  //LPM port read data (including ECC bits)
-logic   [1:0]           tbl_em_rvalid;  //EM ports read valid
-logic   [1:0]   [287:0] tbl_em_rdata;   //EM ports read data (including ECC bits)
+logic   [2:0]   [3:0]   ren;        //per port, per chunk read enables (port 0 is LPM, 1-2 are EM)
+logic   [2:0]   [19:0]  raddr;      //per port read address (port 0 is LPM, 1-2 are EM)
+logic                   lpm_rvalid; //LPM port read valid
+logic           [143:0] lpm_rdata;  //LPM port read data (including ECC bits)
+logic   [1:0]           em_rvalid;  //EM ports read valid
+logic   [1:0]   [287:0] em_rdata;   //EM ports read data (including ECC bits)
 
 modport ppe(
-    output  tbl_ren,
-    output  tbl_raddr,
-    input   tbl_lpm_rvalid,
-    input   tbl_lpm_rdata,
-    input   tbl_em_rvalid,
-    input   tbl_em_rdata
+    output  ren,
+    output  raddr,
+    input   lpm_rvalid,
+    input   lpm_rdata,
+    input   em_rvalid,
+    input   em_rdata
 );
 
 modport stm(
-    input   tbl_ren,
-    input   tbl_raddr,
-    output  tbl_lpm_rvalid,
-    output  tbl_lpm_rdata,
-    output  tbl_em_rvalid,
-    output  tbl_em_rdata
+    input   ren,
+    input   raddr,
+    output  lpm_rvalid,
+    output  lpm_rdata,
+    output  em_rvalid,
+    output  em_rdata
 );
 
 endinterface: rx_ppe_ppe_stm0_if

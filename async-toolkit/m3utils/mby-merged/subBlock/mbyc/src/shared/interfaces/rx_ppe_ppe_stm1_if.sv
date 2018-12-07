@@ -34,23 +34,23 @@
 
 interface rx_ppe_ppe_stm1_if
 ();
-logic   [1:0]   [3:0]   tbl_ren;        //per port, per chunk read enables
-logic   [1:0]   [16:0]  tbl_raddr;      //per port read address
-logic   [1:0]           tbl_em_rvalid;  //EM ports read valid
-logic   [1:0]   [287:0] tbl_em_rdata;   //EM ports read data (including ECC bits)
+logic   [1:0]   [3:0]   ren;        //per port, per chunk read enables
+logic   [1:0]   [16:0]  raddr;      //per port read address
+logic   [1:0]           em_rvalid;  //EM ports read valid
+logic   [1:0]   [287:0] em_rdata;   //EM ports read data (including ECC bits)
 
 modport ppe(
-    output  tbl_ren,
-    output  tbl_raddr,
-    input   tbl_em_rvalid,
-    input   tbl_em_rdata
+    output  ren,
+    output  raddr,
+    input   em_rvalid,
+    input   em_rdata
 );
 
 modport stm(
-    input   tbl_ren,
-    input   tbl_raddr,
-    output  tbl_em_rvalid,
-    output  tbl_em_rdata
+    input   ren,
+    input   raddr,
+    output  em_rvalid,
+    output  em_rdata
 );
 
 endinterface: rx_ppe_ppe_stm1_if

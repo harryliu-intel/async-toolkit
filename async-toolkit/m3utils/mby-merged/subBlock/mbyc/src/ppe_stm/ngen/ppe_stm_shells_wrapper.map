@@ -44,17 +44,26 @@ foreach $i (0..63) {
     >> ppe_stm_fwd_tbl1_$i$_rd_valid
 }
 
+$x=0;
+$y=0;
 foreach $i (0..79) {
+    q_mod_tbl_ren[$x][$y]          >> ppe_stm_mod_tbl_$i$_rd_en
+    q_mod_tbl_wen[$x][$y]          >> ppe_stm_mod_tbl_$i$_wr_en
+    mod_tbl_addr[$x][$y][10:0]     >> ppe_stm_mod_tbl_$i$_adr
+    mod_tbl_rdata[$x][$y][71:0]    >> ppe_stm_mod_tbl_$i$_rd_data
+    q_mod_tbl_wdata[$y][71:0]      >> ppe_stm_mod_tbl_$i$_wr_data
+    if($y == 7) {
+        $x=$x+1;
+        $y=0;
+    }
+    else {
+        $y=$y+1;
+    }
     >> PPE_STM_MOD_TBL_$i$_CFG_reg_sel
     >> PPE_STM_MOD_TBL_$i$_STATUS_reg_sel
-    >> ppe_stm_mod_tbl_$i$_adr
     >> ppe_stm_mod_tbl_$i$_mem_ls_enter
-    >> ppe_stm_mod_tbl_$i$_rd_en
-    >> ppe_stm_mod_tbl_$i$_wr_data
-    >> ppe_stm_mod_tbl_$i$_wr_en
     >> ppe_stm_mod_tbl_$i$_ecc_uncor_err
     >> ppe_stm_mod_tbl_$i$_init_done
-    >> ppe_stm_mod_tbl_$i$_rd_data
     >> ppe_stm_mod_tbl_$i$_rd_valid
 }
     >> PPE_STM_L3MC_TBL_CFG_reg_sel
