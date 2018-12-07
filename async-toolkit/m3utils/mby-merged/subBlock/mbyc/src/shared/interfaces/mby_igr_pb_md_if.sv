@@ -33,16 +33,14 @@
 //
 
 
-interface mby_igr_pb_md_if
-import mby_igr_pkg::*;                                         // import declarations from mby_igr_pkg.sv
-();
+interface mby_igr_pb_md_if ();
 
-    logic                    wr_en;
-    logic                    rd_en;
-    logic[PB_BANK_ADRS-1:0]  adr;
-    logic[PB_SHELL_MD_W-1:0] wr_data;
-    logic                    rd_valid;
-    logic[PB_SHELL_MD_W-1:0] rd_data;
+    logic                                 wr_en;
+    logic                                 rd_en;
+    logic[mby_igr_pkg::PB_BANK_ADRS-1:0]  adr;
+    logic[mby_igr_pkg::PB_SHELL_MD_W-1:0] wr_data;
+    logic                                 rd_valid;
+    logic[mby_igr_pkg::PB_SHELL_MD_W-1:0] rd_data;
 
     modport mem (
        input  wr_en,
