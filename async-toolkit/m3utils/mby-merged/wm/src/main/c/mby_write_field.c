@@ -1,7 +1,8 @@
-/*
+/**
  * C implementation of write_field()
  *
  * To be used during the stage tests when the m3 server is not running.
+ * See also: https://securewiki.ith.intel.com/display/MBYFM/MBY+FM+Registers
  */
 
 #include <assert.h>
