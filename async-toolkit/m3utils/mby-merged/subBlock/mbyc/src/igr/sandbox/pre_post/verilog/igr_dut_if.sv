@@ -74,6 +74,10 @@ logic               rst;                                // reset
  igr_rx_ppe_head_t          igr_rx_ppe_intf1_head; 
  logic                      igr_rx_ppe_intf1_ack; 
 
+ rx_ppe_igr_t               rx_ppe_igr_intf0; // Blasted Interface rx_ppe_igr_if.igr rx_ppe_igr
+ rx_ppe_igr_t               rx_ppe_igr_intf1; 
+
+
  logic                      egr_igr_wreq_mim_wreq_valid; // Blasted Interface mim_wr_if.receive egr_igr_wreq
  logic [20-1:0]             egr_igr_wreq_mim_wr_seg_ptr; 
  logic [4-1:0]              egr_igr_wreq_mim_wr_sema; 
@@ -130,9 +134,6 @@ logic               rst;                                // reset
  logic [(8*64)-1:0]         mim_wreq_5_mim_wr_data; 
  logic [1-1:0]              mim_wreq_5_mim_wreq_credits; 
 
-
-  rx_ppe_igr_t                rx_ppe_igr_intf0; // Blasted Interface rx_ppe_igr_if.igr rx_ppe_igr
-  rx_ppe_igr_t                rx_ppe_igr_intf1; 
 
 
  logic [W_SEG_PTR-1:0][1:0]       o_drop_seg_ptr; //[19:0] 
