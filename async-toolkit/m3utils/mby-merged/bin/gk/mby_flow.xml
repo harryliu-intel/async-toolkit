@@ -16,7 +16,7 @@
       <DUT>mby</DUT>
       <Stage>vcs</Stage>
       <Stage_Exec>bman</Stage_Exec>
-      <AdditionalArgs>-s all +s collage +s vcs -mc fc,rx_ppe,mesh,igr +s sim_init +s vclp +s dvt -nodelete_flow_data +define+INSTANTIATE_HIERDUMP -enable_hier_dump</AdditionalArgs>
+      <AdditionalArgs>-s all +s collage +s vcs -mc fc,rx_ppe,mesh,igr +s sim_init +s vclp +s dvt -nodelete_flow_data -vlog_opts +define+INSTANTIATE_HIERDUMP -enable_hier_dump</AdditionalArgs>
       <XdutStageDep>[mby].[genrtl]</XdutStageDep>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
