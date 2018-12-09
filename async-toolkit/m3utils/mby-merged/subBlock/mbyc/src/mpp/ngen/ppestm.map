@@ -13,3 +13,6 @@ egr0_mc_table0  >> mc_table_if0_0
 egr0_mc_table1  >> mc_table_if0_1
 egr1_mc_table0  >> mc_table_if1_0
 egr1_mc_table1  >> mc_table_if1_1
+
+    >> i_ibus_ctrl
+    >> o_ibus_resp
