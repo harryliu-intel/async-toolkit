@@ -27,58 +27,24 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-// Class: mby_rx_ppe_dut_cfg
+// Class: mby_rx_ppe_mapper_cfg
 //
 // This is the configuration object to control RX_PPE DUT configuration.
 //
 
-`ifndef __MBY_RX_PPE_DUT_CFG_GUARD
-`define __MBY_RX_PPE_DUT_CFG_GUARD
+`ifndef __MBY_RX_PPE_MAPPER_CFG_GUARD
+`define __MBY_RX_PPE_MAPPER_CFG_GUARD
 
 `ifndef __INSIDE_MBY_RX_PPE_ENV_PKG
 `error "Attempt to include file outside of mby_rx_ppe_env_pkg."
 `endif
 
-class mby_rx_ppe_dut_cfg extends shdv_base_config;
+class mby_rx_ppe_mapper_cfg extends shdv_base_config;
 
-   // Variable: reset_type
-   // Definition of the RESET type
-   reset_type_e                     reset_type ;
-   
-   // Variable: parser_cfg
-   rand mby_rx_ppe_parser_cfg       parser_cfg;
-   
-   // Variable: mapper_cfg
-   rand mby_rx_ppe_mapper_cfg       mapper_cfg;
-   
-   // Variable: lpm_cfg
-   rand mby_rx_ppe_lpm_cfg          lpm_cfg;
-   
-   // Variable: em_cfg
-   rand mby_rx_ppe_em_cfg           em_cfg;
-   
-   // Variable: wcm_cfg
-   rand mby_rx_ppe_wcm_cfg          wcm_cfg;
-   
-   // Variable: hash_cfg
-   rand mby_rx_ppe_hash_cfg         hash_cfg;
-   
-   // Variable: policer_cfg
-   rand mby_rx_ppe_policer_cfg      policer_cfg;
-   
-   // Variable: nexthop_cfg
-   rand mby_rx_ppe_nexthop_cfg      nexthop_cfg;
-   
-   // Variable: maskgen_cfg
-   rand mby_rx_ppe_maskgen_cfg      maskgen_cfg;
-   
-   // Variable: triggers_cfg
-   rand mby_rx_ppe_triggers_cfg     triggers_cfg;
-   
+   // Variables
 
 
-   `uvm_object_utils_begin(mby_rx_ppe_dut_cfg)
-      `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
+   `uvm_object_utils_begin(mby_rx_ppe_mapper_cfg)
    `uvm_object_utils_end
 
 
@@ -88,23 +54,10 @@ class mby_rx_ppe_dut_cfg extends shdv_base_config;
    // Constructor.
    //
    // Arguments:
-   //    string name - mby_rx_ppe_dut_cfg object name
+   //    string name - mby_rx_ppe_mapper_cfg object name
    //---------------------------------------------------------------------------
-   function new( string name = "mby_rx_ppe_dut_cfg");
+   function new( string name = "mby_rx_ppe_mapper_cfg");
       super.new(name);
-      
-      parser_cfg   = mby_rx_ppe_parser_cfg::type_id::create("parser_cfg");
-      mapper_cfg   = mby_rx_ppe_mapper_cfg::type_id::create("mapper_cfg");
-      lpm_cfg      = mby_rx_ppe_lpm_cfg::type_id::create("lpm_cfg");
-      em_cfg       = mby_rx_ppe_em_cfg::type_id::create("em_cfg");
-      wcm_cfg      = mby_rx_ppe_wcm_cfg::type_id::create("wcm_cfg");
-      
-      hash_cfg     = mby_rx_ppe_hash_cfg::type_id::create("hash_cfg");
-      policer_cfg  = mby_rx_ppe_policer_cfg::type_id::create("policer_cfg");
-      nexthop_cfg  = mby_rx_ppe_nexthop_cfg::type_id::create("nexthop_cfg");
-      maskgen_cfg  = mby_rx_ppe_maskgen_cfg::type_id::create("maskgen_cfg");
-      triggers_cfg = mby_rx_ppe_triggers_cfg::type_id::create("triggers_cfg");
-      
 
    endfunction: new
 
@@ -125,6 +78,6 @@ class mby_rx_ppe_dut_cfg extends shdv_base_config;
    endfunction: post_randomize
 
 
-endclass: mby_rx_ppe_dut_cfg
+endclass: mby_rx_ppe_mapper_cfg
 
-`endif // __MBY_RX_PPE_DUT_CFG_GUARD
+`endif // __MBY_RX_PPE_MAPPER_CFG_GUARD
