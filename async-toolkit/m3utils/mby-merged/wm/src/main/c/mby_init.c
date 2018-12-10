@@ -2182,12 +2182,6 @@ void mby_init_common_regs
         map_port_default->TARGET = 0x2c;
         map_port_default->VALUE  = 0;
 
-        map_len_limit_r * const map_len_limit = &(rx_top_map->mapper.MAP_LEN_LIMIT[i]);
-        map_len_limit->INR_MPLS_LEN_LIMIT = 0x5;
-        map_len_limit->OTR_MPLS_LEN_LIMIT = 0x5;
-        map_len_limit->INR_L2_LEN_LIMIT   = 0x2;
-        map_len_limit->OTR_L2_LEN_LIMIT   = 0x2;
-
         map_port_cfg_r * const map_port_cfg = &(rx_top_map->mapper.MAP_PORT_CFG[i]);
         map_port_cfg->PORT_PROFILE      = 0x0;
         map_port_cfg->DEFAULT_SGLORT_EN = 0x1;
