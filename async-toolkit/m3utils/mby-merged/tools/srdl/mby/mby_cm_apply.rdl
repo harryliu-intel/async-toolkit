@@ -513,7 +513,29 @@ reg cm_apply_log_mirror_profile_r {
   } FFU[5:0] = 6'h00;
 };
 
-reg cm_apply_mirror_profile_table_r {
+//reg cm_apply_mirror_profile_table_r {
+//  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+//  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+//  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+//  shared;
+//  HandCoded = true;
+//  name = "Mirror profile entries for frame handler";
+//  desc = "
+//  Mirror profile entries for frame handler
+//         ";
+//  regwidth = 64;
+//  accesswidth = 64;
+//  field {
+//    AccessType = "RW";
+//    desc = "
+//            Destination port for the mirror profile entry
+//           ";
+//    ValRandomize = true;
+//  } PORT[4:0] = 5'h00;
+//};
+
+
+reg mirror_ecmp_dmask0 {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -531,8 +553,100 @@ reg cm_apply_mirror_profile_table_r {
             Destination port for the mirror profile entry
            ";
     ValRandomize = true;
-  } PORT[4:0] = 5'h00;
+  } Mirror_port_mask0[63:0] = 64'b0;
 };
+
+
+reg mirror_ecmp_dmask1 {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask1[63:0] = 64'b0;
+};
+
+
+reg mirror_ecmp_dmask2 {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask2[63:0] = 64'b0;
+};
+
+reg mirror_ecmp_dmask3 {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask3[63:0] = 64'b0;
+};
+
+
+reg mirror_ecmp_dmask4 {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Mirror profile entries for frame handler";
+  desc = "
+  Mirror profile entries for frame handler
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            Destination port for the mirror profile entry
+           ";
+    ValRandomize = true;
+  } Mirror_port_mask4[0] = 1'b0;
+};
+
+
+
+
+
 
 reg cm_apply_qcn_cfg_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -623,7 +737,12 @@ addrmap mby_ppe_cm_apply_map {
   cm_apply_tx_tc_state_rf               CM_APPLY_TX_TC_STATE[64]              ;
   cm_apply_tx_tc_qcn_wm_threshold_rf    CM_APPLY_TX_TC_QCN_WM_THRESHOLD[64]   ;
   cm_apply_rx_smp_state_rf              CM_APPLY_RX_SMP_STATE[32]             ;
-  cm_apply_mirror_profile_table_r       CM_APPLY_MIRROR_PROFILE_TABLE[64]     ;
+//   cm_apply_mirror_profile_table_r       CM_APPLY_MIRROR_PROFILE_TABLE[64]     ;
+  mirror_ecmp_dmask0                    MIRROR_ECMP_DMASK0[64];
+  mirror_ecmp_dmask1                    MIRROR_ECMP_DMASK1[64];
+  mirror_ecmp_dmask2                    MIRROR_ECMP_DMASK2[64];
+  mirror_ecmp_dmask3                    MIRROR_ECMP_DMASK3[64];
+  mirror_ecmp_dmask4                    MIRROR_ECMP_DMASK4[64];
   cm_apply_drop_count_r                 CM_APPLY_DROP_COUNT[32]               ;
   cm_apply_loopback_suppress_r          CM_APPLY_LOOPBACK_SUPPRESS[32]        ;
   cm_apply_softdrop_cfg_r               CM_APPLY_SOFTDROP_CFG[8]              ;
