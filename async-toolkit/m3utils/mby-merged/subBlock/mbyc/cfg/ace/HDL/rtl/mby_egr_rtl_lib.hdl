@@ -73,6 +73,7 @@ $hdl_spec = {
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
      "src/egr/rtl",
+     "src/egr/tcu/rtl",
      "target/mby/mgm_run/egr/src",
      "target/mby/mgm_run/egr/src/mem_wrap",
      "target/mby/mgm_run/rtl",
