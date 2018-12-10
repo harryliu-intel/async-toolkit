@@ -7,6 +7,9 @@
 # It should NOT include any connectivity specs
 #################################################################################
 
+## temp dummy syscon to drive synch deassertion of reset
+collage_import_component -component "mby_syscon" -files $::env(MODEL_ROOT)/src/rtl/imcstub/mby_syscon.sv -name "mby_syscon" -use_hier
+
 #set inst_name "<ip instance name>1"
 #set mod_name "<module name>"
 #collage_instantiate_component $mod_name -name $inst_name -noauto -use_hier

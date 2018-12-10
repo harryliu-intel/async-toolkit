@@ -170,6 +170,12 @@ print "MGM debug : @mbyMgmLibs\n";
 
             ### Verif libs
             
+            gen_rx_ppe_regflow_lib => {
+                    -generated => 1,
+                    -gen_config => "mby::gen_rx_ppe_regflow_lib",
+                    -tools => ["-vcs_createlib"],
+            },
+
             gen_mesh_regflow_lib => {
                     -generated => 1,
                     -gen_config => "mby::gen_mesh_regflow_lib",
@@ -231,7 +237,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_wm_dpi_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_wm_dpi_lib', 'mby_tag_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -256,7 +262,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_egress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib', 'mby_tag_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -557,6 +563,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_jasper_lib",
                   "mby_wm_dpi_lib",
                   "mby_common_lib",
+                 # "gen_rx_ppe_regflow_lib",
                ],
                testcase_globals => {
                    #      -enabled_post_process_modes => "mby_test, rx_ppe",
@@ -629,7 +636,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_igr_rtl_lib",
                         "mby_base_pkg_lib",
                         ## jjgodine: removing bfm library compiles for now
-                        ##  "mby_tag_bfm_lib",
+                        "mby_tag_bfm_lib",
                         ##  "mby_gmm_bfm_lib",
                         ##  "mby_gcm_bfm_lib",
                         "mby_ingress_tb_lib",
@@ -698,6 +705,8 @@ print "MGM debug : @mbyMgmLibs\n";
                    "gen_mby_mgm_lib",
                    "mby_egr_rtl_lib",
                    "mby_rtl_lib",
+                   "mby_base_pkg_lib",
+                   "mby_tag_bfm_lib",
                    "mby_egress_tb_lib",
                    "mby_egress_ti_lib",
                    "mby_egress_env_lib",

@@ -6,12 +6,15 @@ class request_record;
 
     integer                 id;
     integer                 req_in_time;
-    tmpl_pkg::req_in_t      req_in;
+//-hz:
+//  tmpl_pkg::req_in_t      req_in;
     integer                 arb_win_time;
     integer                 num_bids;
-    tmpl_pkg::inp_t         losers;
+//-hz:
+//  tmpl_pkg::inp_t         losers;
     integer                 req_out_time;
-    tmpl_pkg::req_out_t     req_out;
+//-hz:
+//  tmpl_pkg::req_out_t     req_out;
 
     string                  name;
 

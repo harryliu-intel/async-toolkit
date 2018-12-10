@@ -64,6 +64,8 @@ class mby_egr_env extends mby_egr_base_env;
    // MAC Client BFM virtual interface
    egr_eth_bfm_rx_intf_t eth_bfm_rx_vintf[`NUM_EPLS_PER_EGR];
 
+   mby_tag_bfm_pkg::mby_tag_bfm tag_bfm;
+    
    // Variable: env_monitor
    // egress env event monitor
    mby_egr_env_monitor env_monitor;
@@ -103,6 +105,8 @@ class mby_egr_env extends mby_egr_base_env;
       end
 
       build_eth_bfms();
+      build_tag_bfm();
+      
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
@@ -187,6 +191,14 @@ class mby_egr_env extends mby_egr_base_env;
    endfunction : build_eth_bfms
 
 
+function void build_tag_bfm();
+    tag_bfm = mby_tag_bfm_pkg::mby_tag_bfm::type_id::create("tag_bfm", this);
+    tag_bfm.cfg_obj.bfm_mode = TAG_BFM_EGR_MODE;
+    tag_bfm.cfg_obj.driver_active = UVM_PASSIVE;
+    tag_bfm.cfg_obj.frame_gen_active = UVM_PASSIVE;
+    tag_bfm.cfg_obj.monitor_active = UVM_PASSIVE;
+    tag_bfm.cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
+endfunction : build_tag_bfm
    //--------------------------------------------------------------------------
    // Function: connect_eth_bfms
    // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
