@@ -6,6 +6,7 @@
 #include <mby_pipeline.h>
 
 #include <mby_top_map.h>
+#include <mby_write_field.h>
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -140,10 +141,6 @@ static fm_bool nexthop_test_verify
     return TRUE;
 }
 
-static void empty(void *v) {
-    return;
-}
-
 static void nexthop_run_test(nh_test_data * const test_data)
 {
     mby_ppe_nexthop_map       nexthop_map;
@@ -152,7 +149,7 @@ static void nexthop_run_test(nh_test_data * const test_data)
     mbyNextHopToMaskGen       out  = { 0 };
     fm_bool                   pass = FALSE;
 
-    mby_ppe_nexthop_map__init(&nexthop_map, &nexthop_map_w, empty);
+    mby_ppe_nexthop_map__init(&nexthop_map, &nexthop_map_w, mby_field_init_cb);
     nexthop_test_setup(&nexthop_map, &hashToNextHop, &(test_data->in));
 
     NextHop(&nexthop_map, &nexthop_map_w, &hashToNextHop, &out);

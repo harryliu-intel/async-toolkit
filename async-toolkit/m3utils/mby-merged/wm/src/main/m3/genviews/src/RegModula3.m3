@@ -1957,7 +1957,6 @@ PROCEDURE GenRegInit(r : RegReg.T; gs : GenState) =
     gs.mdecl("    at  := range.pos;\n");
     gs.mdecl("    x.tab[c] := at; INC(c);\n");
 
-    SortFieldsIfAllSpecified(r.fields);
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f = r.fields.get(i) DO
         <*ASSERT f.width # RegField.Unspecified*>
@@ -1997,25 +1996,6 @@ PROCEDURE GenRegInit(r : RegReg.T; gs : GenState) =
     gs.mdecl("  END %s;\n",iNm);
     gs.mdecl("\n");
   END GenRegInit;
-
-PROCEDURE SortFieldsIfAllSpecified(seq : RegFieldSeq.T) =
-  VAR
-    arr : REF ARRAY OF RegField.T;
-  BEGIN
-    FOR i := 0 TO seq.size()-1 DO
-      IF seq.get(i).lsb = RegField.Unspecified THEN
-        RETURN (* can't sort *)
-      END
-    END;
-    arr := NEW(REF ARRAY OF RegField.T, seq.size());
-    FOR i := 0 TO seq.size()-1 DO
-      arr[i] := seq.get(i)
-    END;
-    RegFieldArraySort.Sort(arr^);
-    FOR i := 0 TO seq.size()-1 DO
-      seq.put(i,arr[i])
-    END
-  END SortFieldsIfAllSpecified;
 
 PROCEDURE GenRegXInit(r : RegReg.T; gs : GenState) =
   VAR

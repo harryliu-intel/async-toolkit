@@ -71,14 +71,14 @@ void mbyLpmGetKeySels
 void mbyLpmGetTcamEntry
 (
     mby_ppe_cgrp_a_map const * const cgrp_a_map,
-    const fm_uint16                  index,
+    fm_uint16                  const index,
     mbyLpmTcamEntry          * const tcam_entry
 );
 
 void mbyLpmGetTcamSubtrie
 (
     mby_ppe_cgrp_a_map const * const cgrp_a_map,
-    const fm_uint16                  index,
+    fm_uint16                  const index,
     mbyLpmSubtrie            * const tcam_subtrie
 );
 
@@ -93,8 +93,8 @@ void mbyLpmGetSubtrie
 void mbyLpmGetSubtrieStore
 (
     mby_ppe_cgrp_a_map const * const cgrp_a_map,
-    const fm_uint16                  bank_index,
-    const fm_uint16                  entry_index,
+    fm_uint16                  const bank_index,
+    fm_uint16                  const entry_index,
     mbyLpmSubtrieStore       * const st_store
 );
 
