@@ -582,11 +582,23 @@ static void transformActions
         policer_action[i] = actions.act24[i].val;
 }
 
+/**
+ * Classifier stage implementation.
+ *
+ * High-level classifier including EM, WMC and LPM.
+ * See: [Classifier HAS](https://securewiki.ith.intel.com/display/25T/RX-PPE+Classifier)
+ *
+ * @param[in]   cgrp_a_map  Pointer to classifier group A map (read only).
+ * @param[in]   cgrp_b_map  Pointer to classifier group B map (read only).
+ * @param[in]   shm_map     Pointer to shared memory map used for forwarding table (read only).
+ * @param[in]   in          Pointer to input structure (read only).
+ * @param[out]  out         Pointer to output structure.
+ */
 void Classifier
 (
     mby_ppe_cgrp_a_map    const * const cgrp_a_map,
     mby_ppe_cgrp_b_map    const * const cgrp_b_map,
-    mby_shm_map           const * const shm_map, // shared memory (forwarding tables)
+    mby_shm_map           const * const shm_map,
     mbyMapperToClassifier const * const in,
     mbyClassifierToHash         * const out
 )
