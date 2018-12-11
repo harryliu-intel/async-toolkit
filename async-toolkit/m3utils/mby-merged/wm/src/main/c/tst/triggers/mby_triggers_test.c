@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include <mby_top_map.h>
+#include <mby_write_field.h>
 
 #include <mby_common.h>
 #include <mby_pipeline.h>
@@ -480,15 +481,25 @@ static int runOnSimpleTrigger
     run_on_simple_trigger_check_fn check
 )
 {
-    mby_ppe_trig_apply_map      trig_apply_map      = { 0 };
-    mby_ppe_trig_apply_misc_map trig_apply_misc_map = { 0 };
-    mby_ppe_fwd_misc_map        fwd_misc_map        = { 0 };
-    mby_ppe_mapper_map          mapper_map          = { 0 };
+    mby_ppe_trig_apply_map            trig_apply_map        = { 0 };
+    mby_ppe_trig_apply_misc_map       trig_apply_misc_map   = { 0 };
+    mby_ppe_fwd_misc_map              fwd_misc_map          = { 0 };
+    mby_ppe_mapper_map                mapper_map            = { 0 };
+
+    mby_ppe_trig_apply_map__addr      trig_apply_map_w      = { 0 };
+    mby_ppe_trig_apply_misc_map__addr trig_apply_misc_map_w = { 0 };
+    mby_ppe_fwd_misc_map__addr        fwd_misc_map_w        = { 0 };
 
     mbyMaskGenToTriggers  gen2trig          = { 0 };
     mbyTriggersToCongMgmt trig2con          = { 0 };
     mbyMaskGenToTriggers  const * const in  = &gen2trig;
     mbyTriggersToCongMgmt       * const out = &trig2con;
+
+    mby_ppe_trig_apply_map__init(&trig_apply_map, &trig_apply_map_w,
+                                 mby_field_init_cb);
+    mby_ppe_trig_apply_misc_map__init(&trig_apply_misc_map, &trig_apply_misc_map_w,
+                                      mby_field_init_cb);
+    mby_ppe_fwd_misc_map__init(&fwd_misc_map, &fwd_misc_map_w, mby_field_init_cb);
 
     setup
     (
@@ -501,8 +512,11 @@ static int runOnSimpleTrigger
     Triggers
     (
         &trig_apply_map,
+        &trig_apply_map_w,
         &trig_apply_misc_map,
+        &trig_apply_misc_map_w,
         &fwd_misc_map,
+        &fwd_misc_map_w,
         &mapper_map,
         in,
         out

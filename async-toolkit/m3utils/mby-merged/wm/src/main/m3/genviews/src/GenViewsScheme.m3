@@ -53,7 +53,9 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
     IF t.fieldAddrRd # NIL THEN
       Debug.Out("Reading field data...");
       a := Pickle2.Read(t.fieldAddrRd);
+      Debug.Out("size of a : " & Int(NUMBER(a^)));
       b := Pickle2.Read(t.fieldAddrRd);
+      Debug.Out("size of b : " & Int(NUMBER(b^)));
       Rd.Close(t.fieldAddrRd)
     END;
     t.put(F("(cont %s",tgtmap.nm), 0);
