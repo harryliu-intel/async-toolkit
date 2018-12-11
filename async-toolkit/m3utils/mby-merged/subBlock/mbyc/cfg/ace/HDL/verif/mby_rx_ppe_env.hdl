@@ -30,6 +30,17 @@ $hdl_spec = {
         "verif/rx_ppe/ral",
         "verif/rx_ppe/ti",
         "verif/rx_ppe/env",
+	"verif/rx_ppe/env/parser_cfg",
+	"verif/rx_ppe/env/mapper_cfg",
+	"verif/rx_ppe/env/lpm_cfg",
+	"verif/rx_ppe/env/em_cfg",
+	"verif/rx_ppe/env/wcm_cfg",
+	"verif/rx_ppe/env/hash_cfg",
+	"verif/rx_ppe/env/nexthop_cfg",
+	"verif/rx_ppe/env/policer_cfg",
+	"verif/rx_ppe/env/maskgen_cfg",
+	"verif/rx_ppe/env/triggers_cfg",
+	
     ],
 
     # Arbitrary VLOG options

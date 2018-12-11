@@ -1,4 +1,3 @@
-
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -28,50 +27,56 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Package:    mby_rx_ppe_env_pkg
+// Class: mby_rx_ppe_lpm_cfg
 //
-//   This is the main Env Package file. Holds all Environment files that will be included in RX_PPE env.
+// This is the configuration object to control RX_PPE DUT configuration.
+//
+
+`ifndef __MBY_RX_PPE_LPM_CFG_GUARD
+`define __MBY_RX_PPE_LPM_CFG_GUARD
+
+`ifndef __INSIDE_MBY_RX_PPE_ENV_PKG
+`error "Attempt to include file outside of mby_rx_ppe_env_pkg."
+`endif
+
+class mby_rx_ppe_lpm_cfg extends shdv_base_config;
+
+   // Variable
+
+   `uvm_object_utils_begin(mby_rx_ppe_lpm_cfg)
+   `uvm_object_utils_end
 
 
-`ifndef __MBY_RX_PPE_ENV_PKG_GUARD
-`define __MBY_RX_PPE_ENV_PKG_GUARD
+   //---------------------------------------------------------------------------
+   // Constructor: new
+   //
+   // Constructor.
+   //
+   // Arguments:
+   //    string name - mby_rx_ppe_lpm_cfg object name
+   //---------------------------------------------------------------------------
+   function new( string name = "mby_rx_ppe_lpm_cfg");
+      super.new(name);
 
-package mby_rx_ppe_env_pkg;
+   endfunction: new
 
-   import uvm_pkg::*;
+   //---------------------------------------------------------------------------
+   // Function: pre_randomize
+   //---------------------------------------------------------------------------
+   function void pre_randomize();
+      super.pre_randomize();
+   endfunction: pre_randomize
 
-   import shdv_base_pkg::*;
+   //---------------------------------------------------------------------------
+   // Function: post_randomize
+   // Collect Plusargs here, then push down cfg changes to any bfm/IP
+   //---------------------------------------------------------------------------
+   function void post_randomize();
+      super.post_randomize();
 
-   import mby_common_pkg::*;
-   import mby_ec_bfm_pkg::*;
-   //import ec_env_pkg::*;
+   endfunction: post_randomize
 
-   `include "uvm_macros.svh"
 
-   `define __INSIDE_MBY_RX_PPE_ENV_PKG
+endclass: mby_rx_ppe_lpm_cfg
 
-   `include "mby_rx_ppe_defines.svh"
-   `include "mby_rx_ppe_env_cfg.svh"
-   
-   `include "mby_rx_ppe_parser_cfg.svh"
-   `include "mby_rx_ppe_mapper_cfg.svh"
-   `include "mby_rx_ppe_lpm_cfg.svh"
-   `include "mby_rx_ppe_em_cfg.svh"
-   `include "mby_rx_ppe_wcm_cfg.svh"
-   `include "mby_rx_ppe_hash_cfg.svh"
-   `include "mby_rx_ppe_policer_cfg.svh"
-   `include "mby_rx_ppe_nexthop_cfg.svh"
-   `include "mby_rx_ppe_maskgen_cfg.svh"
-   `include "mby_rx_ppe_triggers_cfg.svh"   
-   `include "mby_rx_ppe_dut_cfg.svh"
-   
-   `include "mby_rx_ppe_tb_top_cfg.svh"
-//PJP   `include "mby_rx_ppe_ral_env.svh"
-   `include "mby_rx_ppe_env.svh"
-
-    `undef  __INSIDE_MBY_RX_PPE_ENV_PKG
-
-endpackage: mby_rx_ppe_env_pkg
-
-`endif // __MBY_RX_PPE_ENV_PKG_GUARD
-
+`endif // __MBY_RX_PPE_LPM_CFG_GUARD
