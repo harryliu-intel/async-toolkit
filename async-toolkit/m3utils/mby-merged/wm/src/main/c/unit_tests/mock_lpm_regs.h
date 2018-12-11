@@ -2,7 +2,8 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include <cmock/cmock.h>
+//#include <cmock/cmock.h>
+#include <cmocka.h>
 
 extern "C" {
 #include "mby_lpm_regs.h"
