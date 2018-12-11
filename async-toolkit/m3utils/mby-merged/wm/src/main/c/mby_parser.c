@@ -84,6 +84,7 @@ static void lookUpPtypeTcam
  * Parser stage implementation.
  *
  * Parse the incoming Ethernet packet header and extract info from it.
+ * See: [Parser HAS](https://securewiki.ith.intel.com/display/25T/RX-PPE+Parser)
  *
  * @param[in]   parser_map  Pointer to parser register map (read only).
  * @param[in]   in          Pointer to input structure     (read only).

@@ -4,7 +4,9 @@ Browsable documentation for Madison Bay C Functional Model.
 
 ## Pipeline stages
 
-Documentation of the Madison Bay PPE:
+Documentation of the Madison Bay RX and TX PPE.
+
+Note: the link >> points to the struct used to exchange data between the blocks.
 
 [RxPipeline](@ref RxPipeline):
 
@@ -20,21 +22,24 @@ Documentation of the Madison Bay PPE:
 [|RxStats|](@ref RxStats) [>>](@ref mbyRxStatsToRxOut)
 
 [TxPipeline](@ref TxPipeline):
-* Work in progress
 
-Note: the link >> points to the struct used to exchange data between the blocks
+* [>>](@ref mbyTxInToModifier)
+[|Modifier|](@ref Modifier) [>>](@ref mbyModifierToTxStats)
+[|TxStats|](@ref TxStats) [>>](@ref mbyTxStatsToTxMac)
+
 
 ## C Client
 
 Documentation of the [C client](@ref c_client) that can be used to:
-* Start/stop the functional model
-* Read/write registers
-* Send/receive packets
+* [Start](@ref wm_server_start)/[stop](@ref wm_server_stop) the functional model
+* [Read](@ref wm_reg_read)/[write](@ref wm_reg_write) registers
+* [Send](@ref wm_pkt_push)/[receive](@ref wm_pkt_get) [packets](@ref wm_pkt)
 
 
 ## Useful links
 
 * [MBY FM Jira Wiki](https://securewiki.ith.intel.com/display/MBYFM/) 
+* [MBY FM Register Doc](https://madisonbay.intel.com/mby-mby-x0-latest/target/GenRTL/regflow/mby/mby_reg_doc.html) 
 
 ## Organization
 

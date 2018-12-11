@@ -68,6 +68,7 @@ BEGIN
             IF TE(ifn, "-") THEN
               fieldAddrRd := Stdio.stdin
             ELSE
+              Debug.Out("Opening fieldAddrRd: " & ifn);
               fieldAddrRd := FileRd.Open(ifn)
             END
           END
