@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GMM BFM Transaction item
+// Title         : Madison Bay GPM BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gmm_bfm_msh_xaction.svh
+// File          : mby_gpm_bfm_msh_xaction.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the transaction item used by the gmm's msh bfm
+// This is the transaction item used by the gpm's msh bfm
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,31 +30,31 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GMM_BFM_PKG__
-`error "Attempt to include file outside of mby_gmm_bfm_pkg."
+`ifndef __MBY_GPM_BFM_PKG__
+`error "Attempt to include file outside of mby_gpm_bfm_pkg."
 `endif
-`ifndef __MBY_GMM_BFM_MSH_XACTION__
-`define __MBY_GMM_BFM_MSH_XACTION__
+`ifndef __MBY_GPM_BFM_MSH_XACTION__
+`define __MBY_GPM_BFM_MSH_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_gmm_bfm_msh_xaction
+// CLASS: mby_gpm_bfm_msh_xaction
 //
 // This is a parameterized class used by mby_base_agent.
 //
 // PARAMETERS:
-//     T_data     - mby_gmm_bfm_msh_data_t
-//     T_debug    - mby_gmm_bfm_msh_debg_t
+//     T_data     - mby_gpm_bfm_msh_data_t
+//     T_debug    - mby_gpm_bfm_msh_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_gmm_bfm_msh_xaction extends mby_base_sequence_item
+class mby_gpm_bfm_msh_xaction extends mby_base_sequence_item
 #(
-   .T_data (mby_gmm_bfm_msh_data_t),
-   .T_debug(mby_gmm_bfm_msh_debg_t)
+   .T_data (mby_gpm_bfm_msh_data_t),
+   .T_debug(mby_gpm_bfm_msh_debg_t)
 );
 
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_gmm_bfm_msh_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_gpm_bfm_msh_xaction#(T_data, T_data_rsp, T_debug))
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -65,7 +65,7 @@ class mby_gmm_bfm_msh_xaction extends mby_base_sequence_item
    //     string name - The sequence item name
    //
    // -------------------------------------------------------------------------
-   function new (string name = "mby_gmm_bfm_msh_xaction");
+   function new (string name = "mby_gpm_bfm_msh_xaction");
       super.new(name);
    endfunction
 
@@ -95,5 +95,5 @@ class mby_gmm_bfm_msh_xaction extends mby_base_sequence_item
       // pretty print
    endfunction : do_print
 
-endclass : mby_gmm_bfm_msh_xaction
+endclass : mby_gpm_bfm_msh_xaction
 `endif
