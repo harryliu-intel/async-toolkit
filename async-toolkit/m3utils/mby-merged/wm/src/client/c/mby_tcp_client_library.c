@@ -1,6 +1,6 @@
 /*****************************************************************************
- * @file        mby_tcp_client.c
- * @brief       Minimal client for reg access through model_server socket
+ * @file	mby_tcp_client_library.c
+ * @brief	Minimal client for reg access through model_server socket
  *
  * INTEL CONFIDENTIAL
  * Copyright 2018 Intel Corporation.  All Rights Reserved.

@@ -34,6 +34,7 @@ Ci  /HSS_REFCLK_DN[3]   mby_ec_top_7/i_serdes_refclk_n
 
 ## Connect PLL clock outputs to SS clks
 C   mby_parclk/msh_mclk     mby_msh_0/mclk
+C   mby_parclk/core_cclk    mby_msh_0/cclk
 C   mby_parclk/core_cclk    mby_gmn_0/cclk
 C   mby_parclk/core_cclk    mby_gms_0/cclk
 //;for {set mppindx 0} {$mppindx<8} {incr mppindx} {

@@ -6,4 +6,5 @@ class_gpb_top [
   class_gpb_rf_mems of class_gpb_rf_mems with class_gpb_rf_mems.map
   class_gpb_sram_mems of class_gpb_sram_mems with class_gpb_sram_mems.map
   class_gpb_tcam_mems of class_gpb_tcam_mems with class_gpb_tcam_mems.map
+  class_gpb_func_logic of class_gpb_func_logic with class_gpb_func_logic.map
 ]

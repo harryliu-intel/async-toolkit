@@ -414,7 +414,7 @@ PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
       WITH f  = r.fields.get(i),
            nm = f.name(debug := FALSE) DO
         gs.main("  p1->%s = &(p0->%s);\n", nm, nm);
-        gs.main("  f(&(p0->%s),%s);\n",nm, Int(f.width))
+        gs.main("  f(&(p0->%s),%s); /* @%s */\n",nm, Int(f.width), Int(f.lsb))
       END
     END;
     gs.main("}\n\n")

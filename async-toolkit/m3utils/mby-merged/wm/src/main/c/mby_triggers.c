@@ -5,22 +5,45 @@
 #include "mby_maskgen.h"
 #include "mby_triggers.h"
 
+// TODO is there a better way to include this? REVISIT
+#include "../m3/model_server/src/model_c_write.h" // pull in write_field
+
 static inline void incrementTrigCounter
 (
-    mby_ppe_trig_apply_map const * const trig_apply_map,
-    fm_byte                        const trig
+    mby_ppe_trig_apply_map       const * const trig_apply_map,
+    mby_ppe_trig_apply_map__addr const * const trig_apply_map_w,
+    fm_byte                              const trig
 )
 {
-    mby_ppe_trig_apply_map * const trig_apply = trig_apply_map;
-
     fm_uint64 trig_count = trig_apply_map->TRIGGER_STATS[trig].COUNT; // [63:0]
     trig_count = (trig_count == FM_LITERAL_U64(0xFFFFFFFFFFFFFFFF)) ? 0 : trig_count + 1;
 
-    //REVISIT!!!! necessary for model_server use of write_field() function
-    trig_apply->TRIGGER_STATS[trig].COUNT = trig_count;
+    write_field(trig_apply_map_w->TRIGGER_STATS[trig].COUNT, trig_count);
 
 }
 
+/**
+ * Triggers Match Conditions and random matching
+ * Specified [match conditions] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerMatchConditions)
+ * and [random matching] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-RandomMatching)
+ *
+ * @param[in] trig_apply_map Trigger Registers map
+ * @param[in] trig           Trigger number
+ * @param[in] learn_en       LEARNING_ENABLED coming from MaskGen stage
+ * @param[in] l2_evid1       L2_EVID1 coming from MaskGen stage
+ * @param[in] cgrp_trig      CGRP_TRIG coming from MaskGen stage
+ * @param[in] qos_tc         QOS_TC coming from MaskGen stage
+ * @param[in] idglort        IDGLORT coming from MaskGen stage
+ * @param[in] l3_edomain     L3_SMAC coming from MaskGen stage
+ * @param[in] l2_edomain     L2_SMAC coming from MaskGen stage
+ * @param[in] fclass         FCLASS coming from MaskGen stage
+ * @param[in] mark_routed    MARK_ROUTED coming from MaskGen stage
+ * @param[in] dmask          DMASK coming from MaskGen stage
+ * @param[in] rx_port        RX_PORT coming from MaskGen stage
+ * @param[in] amask          AMASK coming from MaskGen stage
+ *
+ * \return True if all of the conditions are matched, false if not
+ */
 static fm_bool evaluateTrigger
 (
     mby_ppe_trig_apply_map const * const trig_apply_map,
@@ -265,6 +288,18 @@ static void applyPrecedenceResolution
         lo->egressL2DomainAction = hi->egressL2DomainAction;
 }
 
+/**
+ * Configurable Trigger Precedence and action resolution
+ * Specified [trigger precedence] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-ConfigurableTriggerPrecedence)
+ * and [action resolution] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerActionResolution)
+ *
+ * @param[in]  trig_apply_map            Trigger Registers map
+ * @param[in]  hit_mask_hi               Matched trigges from 64 - 95
+ * @param[in]  hit_mask_lo               Matched trigges from 0  - 63
+ * @param[out] trig_hit_mask_resolved_lo Output with fired triggers from 0  - 63
+ * @param[out] trig_hit_mask_resolved_hi Output with fired triggers from 64 - 95
+ * @param[out] lo                        Output with actions
+ */
 static void resolveTriggers
 (
     mby_ppe_trig_apply_map const * const trig_apply_map,
@@ -312,6 +347,28 @@ static void resolveTriggers
     }
 }
 
+/**
+ * Trigger Actions
+ * Specified [here] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerActions)
+ *
+ * @param[in]  actions               Actions that are the result of the resolveTriggers function
+ * @param[out] results               Actions to apply to the frame
+ * @param[in]  action                ACTION coming from MaskGen stage
+ * @param[in]  dmask                 Pointer to array with DMASK coming from MaskGen stage
+ * @param[in]  pre_resolve_action    PRE_RESOLVE_ACTION coming from MaskGen stage
+ * @param[in]  pre_resolve_dmask     Pointer to array with PRE_RESOLVE_DMASK coming from MaskGen stage
+ * @param[in]  pre_resolve_dglort    PRE_RESOLVE_DGLORT coming from MaskGen stage
+ * @param[in]  idglort               IDGLORT coming from MaskGen stage
+ * @param[in]  qcn_mirror0_profile_v QCN_MIRROR0_PROFILE_V coming from MaskGen stage
+ * @param[in]  qcn_mirror1_profile_v QCN_MIRROR1_PROFILE_V coming from MaskGen stage
+ * @param[in]  mirror0_profile_idx   MIRROR0_PROFILE_IDX coming from MaskGen stage
+ * @param[in]  mirror0_profile_v     MIRROR0_PROFILE_V coming from MaskGen stage
+ * @param[in]  mirror1_profile_idx   MIRROR1_PROFILE_IDX coming from MaskGen stage
+ * @param[in]  mirror1_profile_v     MIRROR1_PROFILE_V coming from MaskGen stage
+ * @param[in]  qos_tc                QOS_TC coming from MaskGen stage
+ * @param[in]  l2_evid1              L2_EVID1 coming from MaskGen stage
+ * @param[out] learning_enabled      Output depends on learning action
+ */
 static void applyTriggers
 (
     mbyTriggerActions       * const actions,
@@ -339,6 +396,8 @@ static void applyTriggers
     mbyTriggerActionMetadata actionMetadata;
     fm_byte                  PKT_META_CPY[32];
     fm_uint32              * actionMetadataMask;
+    fm_bool                  is_pre_resolve_dmask = FALSE;
+    fm_bool                  action_drop_trig = FALSE;
 
     results->filterDestMask = TRUE;
 
@@ -348,14 +407,17 @@ static void applyTriggers
     switch (actions->forwardingAction)
     {
         case MBY_TRIG_ACTION_FORWARDING_FORWARD:
-            if ( pre_resolve_dmask != 0 )
+            for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+                is_pre_resolve_dmask = (pre_resolve_dmask[i] != 0);
+
+            if ( is_pre_resolve_dmask )
             {
                 dglort = (pre_resolve_dglort    & ~actions->newDestGlortMask) |
                          (actions->newDestGlort & actions->newDestGlortMask);
                 results->destGlort = dglort;
                 for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                     results->destMask[i] = pre_resolve_dmask[i];
-                results->action    = action;
+                results->action    = pre_resolve_action;
             }
             else
             {
@@ -371,32 +433,28 @@ static void applyTriggers
                      (actions->newDestGlort & actions->newDestGlortMask);
             results->destGlort      = dglort;
             for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+            {
                 results->destMask[i] = actions->newDestMask[i];
+                action_drop_trig     = (results->destMask[i] == 0);
+            }
             results->filterDestMask = actions->filterDestMask;
-
-            if ( results->destMask == 0)
-                results->action = MBY_ACTION_DROP_TRIG;
-
-            else
-                results->action = MBY_ACTION_REDIRECT_TRIG;
-
+            results->action         = (action_drop_trig) ? MBY_ACTION_DROP_TRIG : MBY_ACTION_REDIRECT_TRIG;
             break;
 
         case MBY_TRIG_ACTION_FORWARDING_DROP:
             results->destGlort = idglort;
             for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+            {
                 results->destMask[i]  = dmask[i] & ~actions->dropMask[i];
-            if ( ( dmask != 0 ) && ( results->destMask == 0 ) )
-                results->action = MBY_ACTION_DROP_TRIG;
-            else
-                results->action = action;
+                action_drop_trig      = ( ( dmask[i] != 0 ) && ( results->destMask[i] == 0 ) );
+            }
+            results->action = (action_drop_trig) ? MBY_ACTION_DROP_TRIG : action;
             break;
 
         default:
             results->destGlort = idglort;
             for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                 results->destMask[i]  = dmask[i];
-
             results->action    = action;
             break;
     }
@@ -417,9 +475,13 @@ static void applyTriggers
         case MBY_TRIG_ACTION_TRAP_REVERT: /* do not trap or log */
             if ( action == MBY_ACTION_TRAP )
             {
-                for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
-                    results->destMask[i] = pre_resolve_dmask[i];
                 results->action = pre_resolve_action;
+                for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
+                {
+                    results->destMask[i] = pre_resolve_dmask[i];
+                    action_drop_trig     = (results->destMask[i] == 0);
+                }
+
                 if ( actions->forwardingAction == MBY_TRIG_ACTION_FORWARDING_REDIRECT )
                     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                         results->destMask[i] = actions->newDestMask[i];
@@ -427,7 +489,7 @@ static void applyTriggers
                     MBY_TRIG_ACTION_FORWARDING_DROP )
                     for(fm_uint i = 0; i < MBY_DMASK_REGISTERS; i++)
                         results->destMask[i] &= ~actions->dropMask[i];
-                if ( results->destMask == 0 )
+                if ( action_drop_trig )
                     results->action = MBY_ACTION_DROP_TRIG;
             }
             break;
@@ -450,12 +512,27 @@ static void applyTriggers
         results->qcnValid0 = 0;
     }
     else if (actions->mirroringAction0 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/
-          results->mirror0ProfileV = 0;
+        results->mirror0ProfileV = 0;
 
     else/* no change in mirroring disposition; leave mirrors as they are */
     {
         results->mirror0ProfileV   = mirror0_profile_v;
         results->mirror0ProfileIdx = mirror0_profile_idx;
+    }
+
+    if (actions->mirroringAction1 == MBY_TRIG_ACTION_MIRRORING_MIRROR) /* actions for mirrors */
+    {
+        results->mirror1ProfileV   = 1;
+        results->mirror1ProfileIdx = actions->mirrorProfileIndex1;
+        results->qcnValid1 = 0;
+    }
+    else if (actions->mirroringAction1 == MBY_TRIG_ACTION_MIRRORING_CANCEL) /* existing mirror canceled*/
+        results->mirror1ProfileV = 0;
+
+    else/* no change in mirroring disposition; leave mirrors as they are */
+    {
+        results->mirror1ProfileV   = mirror1_profile_v;
+        results->mirror1ProfileIdx = mirror1_profile_idx;
     }
 
     /* store the action in the triggerResults channel */
@@ -507,13 +584,25 @@ static void applyTriggers
     results->policerAction = actions->policerAction;
 }
 
+/**
+ * Trigger Counters
+ * Specified [here] (https://securewiki.ith.intel.com/display/25T/RX-PPE+Triggers#RX-PPETriggers-TriggerCountersandInterrupts)
+ *
+ * @param[in]     trig_apply_map            Trigger Registers map
+ * @param[output] trig_apply_map_w          Trigger Registers write map
+ * @param[in]     trig_hit_mask_resolved_lo Fired triggers from 0  - 63
+ * @param[in]     trig_hit_mask_resolved_hi Fired triggers from 64 - 95
+ * @param[in]     hitMaskHi                 Matched trigges from 64 - 95
+ * @param[in]     hitMaskLo                 Matched trigges from 0  - 63
+ */
 static void triggersStatsUpdate
 (
-    mby_ppe_trig_apply_map const * const trig_apply_map,
-    fm_uint64                    * const trig_hit_mask_resolved_lo,
-    fm_int64                     * const trig_hit_mask_resolved_hi,
-    fm_uint64                      const hitMaskHi,
-    fm_uint64                      const hitMaskLo
+    mby_ppe_trig_apply_map       const * const trig_apply_map,
+    mby_ppe_trig_apply_map__addr const * const trig_apply_map_w,
+    fm_uint64                          * const trig_hit_mask_resolved_lo,
+    fm_int64                           * const trig_hit_mask_resolved_hi,
+    fm_uint64                            const hitMaskHi,
+    fm_uint64                            const hitMaskLo
 )
 {
     for (fm_int i = 0; i < MBY_TRIGGERS_COUNT; i++)
@@ -522,24 +611,41 @@ static void triggersStatsUpdate
         {
             if ( (hitMaskLo & (FM_LITERAL_U64(1) << i)) != 0 )
                 if ( (*trig_hit_mask_resolved_lo & (FM_LITERAL_U64(1) << i)) )
-                    incrementTrigCounter(trig_apply_map, i);
+                    incrementTrigCounter(trig_apply_map, trig_apply_map_w, i);
         } else
             if ( (hitMaskHi & (FM_LITERAL_U64(1) << (i - 64))) != 0 )
                 if ( (*trig_hit_mask_resolved_hi & (FM_LITERAL_U64(1) << (i - 64))) )
-                    incrementTrigCounter(trig_apply_map, i);
+                    incrementTrigCounter(trig_apply_map, trig_apply_map_w, i);
     }
 }
 
+/**
+ * TCN FIFO
+ * Specified [here] (https://securewiki.ith.intel.com/display/25T/MBY+PP+TCN+FIFO)
+ *
+ * @param[in]     trig_apply_misc_map   Trigger Registers map
+ * @param[output] trig_apply_misc_map_w Trigger Registers write map
+ * @param[in]     fwd_misc_map          Miscellaneous Registers in FWD map
+ * @param[out]    fwd_misc_map_w        Miscellaneous Registers in FWD write map
+ * @param[in]     mapper_map            Mapper Registers Set map
+ * @param[in]     learn_en              LEARNING_ENABLED coming from MaskGen stage
+ * @param[in]     l2_smac               L2_SMAC coming from MaskGen stage
+ * @param[in]     l2_evid1              L2_EVID1 coming from MaskGen stage
+ * @param[in]     l2_edomain            L2_EDOMAIN coming from MaskGen stage
+ * @param[in]     rx_port               RX_PORT coming from MaskGen stage
+ */
 static void tcnFifo
 (
-    mby_ppe_trig_apply_misc_map const * const trig_apply_misc_map,
-    mby_ppe_fwd_misc_map        const * const fwd_misc_map,
-    mby_ppe_mapper_map          const * const mapper_map,
-    fm_bool                             const learning_enabled,
-    fm_macaddr                          const l2_smac,
-    fm_uint16                           const l2_evid1,
-    fm_byte                             const l2_edomain,
-    fm_uint32                           const rx_port
+    mby_ppe_trig_apply_misc_map       const * const trig_apply_misc_map,
+    mby_ppe_trig_apply_misc_map__addr const * const trig_apply_misc_map_w,
+    mby_ppe_fwd_misc_map              const * const fwd_misc_map,
+    mby_ppe_fwd_misc_map__addr        const * const fwd_misc_map_w,
+    mby_ppe_mapper_map                const * const mapper_map,
+    fm_bool                                   const learning_enabled,
+    fm_macaddr                                const l2_smac,
+    fm_uint16                                 const l2_evid1,
+    fm_byte                                   const l2_edomain,
+    fm_uint32                                 const rx_port
 )
 {
     fm_uint64 head           = trig_apply_misc_map->MA_TCN_PTR_HEAD.HEAD;
@@ -550,53 +656,52 @@ static void tcnFifo
     fm_uint64 wm             = trig_apply_misc_map->MA_TCN_WM[rx_port].WM;
     fm_bool   dequeue        = trig_apply_misc_map->MA_TCN_DEQUEUE.READY;
 
-    // Workaround to drop the const qualifier <-- REVISIT
-    mby_ppe_trig_apply_misc_map * const trig_apply_misc = trig_apply_misc_map;
-    mby_ppe_fwd_misc_map        * const fwd_misc = fwd_misc_map;
-
     if(learning_enabled && port_learning && port_l2_domain && usage < wm)
     {
         if((tail + 1) % (MBY_MA_TCN_FIFO_CAPACITY + 1) == head)
         {
-            trig_apply_misc->MA_TCN_IP.TCN_OVERFLOW = 1;
+            write_field(trig_apply_misc_map_w->MA_TCN_IP.TCN_OVERFLOW, 1);
         }
         else
         {
-            trig_apply_misc->MA_TCN_FIFO_0[tail].MAC_ADDRESS = l2_smac;
-            trig_apply_misc->MA_TCN_FIFO_0[tail].PORT        = rx_port;
-            trig_apply_misc->MA_TCN_FIFO_1[tail].L2_DOMAIN   = l2_edomain;
-            trig_apply_misc->MA_TCN_FIFO_1[tail].VID         = l2_evid1;
+            write_field(trig_apply_misc_map_w->MA_TCN_FIFO_0[tail].MAC_ADDRESS, l2_smac);
+            write_field(trig_apply_misc_map_w->MA_TCN_FIFO_0[tail].PORT,        rx_port);
+            write_field(trig_apply_misc_map_w->MA_TCN_FIFO_1[tail].L2_DOMAIN,   l2_edomain);
+            write_field(trig_apply_misc_map_w->MA_TCN_FIFO_1[tail].VID,         l2_evid1);
 
             tail = (tail + 1) % (MBY_MA_TCN_FIFO_CAPACITY + 1);
-            trig_apply_misc->MA_TCN_PTR_TAIL.TAIL     = tail;
-            trig_apply_misc->MA_TCN_IP.PENDING_EVENTS = 1;
+            write_field(trig_apply_misc_map_w->MA_TCN_PTR_TAIL.TAIL,     tail);
+            write_field(trig_apply_misc_map_w->MA_TCN_IP.PENDING_EVENTS, 1);
         }
     }
 
     if(dequeue)
     {
-        trig_apply_misc->MA_TCN_DATA_0.MAC_ADDRESS = trig_apply_misc_map->MA_TCN_FIFO_0[head].MAC_ADDRESS;
-        trig_apply_misc->MA_TCN_DATA_0.PORT        = trig_apply_misc_map->MA_TCN_FIFO_0[head].PORT;
-        trig_apply_misc->MA_TCN_DATA_1.L2_DOMAIN   = trig_apply_misc_map->MA_TCN_FIFO_1[head].L2_DOMAIN;
-        trig_apply_misc->MA_TCN_DATA_1.VID         = trig_apply_misc_map->MA_TCN_FIFO_1[head].VID;
+        write_field(trig_apply_misc_map_w->MA_TCN_DATA_0.MAC_ADDRESS, trig_apply_misc_map->MA_TCN_FIFO_0[head].MAC_ADDRESS);
+        write_field(trig_apply_misc_map_w->MA_TCN_DATA_0.PORT,        trig_apply_misc_map->MA_TCN_FIFO_0[head].PORT);
+        write_field(trig_apply_misc_map_w->MA_TCN_DATA_1.L2_DOMAIN,   trig_apply_misc_map->MA_TCN_FIFO_1[head].L2_DOMAIN);
+        write_field(trig_apply_misc_map_w->MA_TCN_DATA_1.VID,         trig_apply_misc_map->MA_TCN_FIFO_1[head].VID);
 
         head = (head + 1) % (MBY_MA_TCN_FIFO_CAPACITY + 1);
-        trig_apply_misc->MA_TCN_DEQUEUE.READY = 0;
+        write_field(trig_apply_misc_map_w->MA_TCN_DEQUEUE.READY, 0);
     }
 
-    if ((trig_apply_misc->MA_TCN_IP.PENDING_EVENTS & ~trig_apply_misc_map->MA_TCN_IM.PENDING_EVENTS) ||
-        (trig_apply_misc->MA_TCN_IP.TCN_OVERFLOW   & ~trig_apply_misc_map->MA_TCN_IM.TCN_OVERFLOW  ))
-        fwd_misc->FWD_IP.MA_TCN = 1;
+    if ((trig_apply_misc_map->MA_TCN_IP.PENDING_EVENTS & ~trig_apply_misc_map->MA_TCN_IM.PENDING_EVENTS) ||
+        (trig_apply_misc_map->MA_TCN_IP.TCN_OVERFLOW   & ~trig_apply_misc_map->MA_TCN_IM.TCN_OVERFLOW  ))
+        write_field(fwd_misc_map_w->FWD_IP.MA_TCN, 1);
 }
 
 void Triggers
 (
-    mby_ppe_trig_apply_map      const * const trig_apply_map,
-    mby_ppe_trig_apply_misc_map const * const trig_apply_misc_map,
-    mby_ppe_fwd_misc_map        const * const fwd_misc_map,
-    mby_ppe_mapper_map          const * const mapper_map,
-    mbyMaskGenToTriggers        const * const in,
-    mbyTriggersToCongMgmt             * const out
+    mby_ppe_trig_apply_map            const * const trig_apply_map,
+    mby_ppe_trig_apply_map__addr      const * const trig_apply_map_w,
+    mby_ppe_trig_apply_misc_map       const * const trig_apply_misc_map,
+    mby_ppe_trig_apply_misc_map__addr const * const trig_apply_misc_map_w,
+    mby_ppe_fwd_misc_map              const * const fwd_misc_map,
+    mby_ppe_fwd_misc_map__addr        const * const fwd_misc_map_w,
+    mby_ppe_mapper_map                const * const mapper_map,
+    mbyMaskGenToTriggers              const * const in,
+    mbyTriggersToCongMgmt                   * const out
 )
 {
     // Read inputs from the MaskGen:
@@ -641,11 +746,11 @@ void Triggers
                     trig_apply_map,
                     i,
                     learn_en,
-                    l3_edomain,
                     l2_evid1,
                     cgrp_trig,
                     qos_tc,
                     idglort,
+                    l3_edomain,
                     l2_edomain,
                     fclass,
                     mark_routed,
@@ -697,35 +802,28 @@ void Triggers
     triggersStatsUpdate
     (
         trig_apply_map,
+        trig_apply_map_w,
         &trig_hit_mask_resolved_lo,
         &trig_hit_mask_resolved_hi,
         hit_mask_hi,
         hit_mask_lo
     );
 
-    mby_ppe_trig_apply_misc_map * const trig_apply_misc = trig_apply_misc_map;
-    mby_ppe_fwd_misc_map        * const fwd_misc = fwd_misc_map;
-
     // events and interrupts
-    fm_uint64 trig_ip_lo                       = trig_apply_misc_map->TRIGGER_IP[0].PENDING;
-    trig_ip_lo                                |= ((FM_LITERAL_U64(1) << 48) - 1) & trig_hit_mask_resolved_lo;
-    trig_apply_misc->TRIGGER_IP[0].PENDING = trig_ip_lo;
+    fm_uint64 trig_ip_lo = trig_apply_misc_map->TRIGGER_IP[0].PENDING;
+    trig_ip_lo          |= ((FM_LITERAL_U64(1) << 48) - 1) & trig_hit_mask_resolved_lo;
+    write_field(trig_apply_misc_map_w->TRIGGER_IP[0].PENDING, trig_ip_lo);
 
     fm_uint64 trig_ip_hi     = trig_apply_misc_map->TRIGGER_IP[1].PENDING;
     fm_uint64 new_trig_ip_hi = 0;
 
     /*take upper 16 bits of resolved_hit_lo*/
-    FM_SET_UNNAMED_FIELD64(new_trig_ip_hi,
-                            0,
-                            16,
-                            trig_hit_mask_resolved_lo >> 48);
+    FM_SET_UNNAMED_FIELD64(new_trig_ip_hi, 0, 16, trig_hit_mask_resolved_lo >> 48);
     /*take lower 36 bits of resolved_hit_hi*/
-    FM_SET_UNNAMED_FIELD64(new_trig_ip_hi,
-                            (64 - 48),
-                            36,
-                            ((FM_LITERAL_U64(1) << 36) - 1) & trig_hit_mask_resolved_hi);
-    trig_ip_hi                                |= new_trig_ip_hi;
-    trig_apply_misc->TRIGGER_IP[1].PENDING = trig_ip_hi;
+    FM_SET_UNNAMED_FIELD64(new_trig_ip_hi, (64 - 48), 36,
+                           ((FM_LITERAL_U64(1) << 36) - 1) & trig_hit_mask_resolved_hi);
+    trig_ip_hi |= new_trig_ip_hi;
+    write_field(trig_apply_misc_map_w->TRIGGER_IP[1].PENDING, trig_ip_hi);
 
     /* propagate trigger interrupts to FWD_IP and GLOBAL_INTERRUPT regs */
     fm_uint64 trig_im_lo = FM_LITERAL_U64(0);
@@ -733,8 +831,8 @@ void Triggers
     trig_im_lo           = trig_apply_misc_map->TRIGGER_IM[0].MASK;
     trig_im_hi           = trig_apply_misc_map->TRIGGER_IM[1].MASK;
 
-    fwd_misc->FWD_IP.TRIGGER = (((trig_ip_hi & ~trig_im_hi) != 0) |
-                                                  ((trig_ip_lo & ~trig_im_lo) != 0));
+    write_field(fwd_misc_map_w->FWD_IP.TRIGGER,
+                (((trig_ip_hi & ~trig_im_hi) != 0) | ((trig_ip_lo & ~trig_im_lo) != 0)));
 
     // <--- REVISIT!!!! global_interrupt
     /*
@@ -758,7 +856,9 @@ void Triggers
     tcnFifo
     (
         trig_apply_misc_map,
+        trig_apply_misc_map_w,
         fwd_misc_map,
+        fwd_misc_map_w,
         mapper_map,
         learning_enabled,
         l2_smac,
