@@ -4,7 +4,7 @@ IMPORT AddrVisitor;
 IMPORT mby_top_map_addr AS MbyMapAddr;
 IMPORT hlp_top_map_addr AS HlpMapAddr;
 IMPORT CompAddr;
-IMPORT Fmt;
+IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT Debug;
 IMPORT ParseParams;
 IMPORT Stdio, Text;
@@ -71,6 +71,8 @@ PROCEDURE MakeInternal(v        : MyVisitor;
     END
   END MakeInternal;
 
+VAR doDebug := Debug.DebugThis("fieldvisitor");
+    
 PROCEDURE MakeField(v          : MyVisitor;
                     nm         : TEXT;
                     at         : CompRange.T;
@@ -79,6 +81,9 @@ PROCEDURE MakeField(v          : MyVisitor;
   VAR
     upId := FIRST(Neg);
   BEGIN
+    IF doDebug THEN
+      Debug.Out(F("nm %s @ %s", nm, CompRange.Format(at)))
+    END;
     IF parent # NIL THEN upId := NARROW(parent, Internal).id END;
     
     WITH (*byte = BigInt.Add(BigInt.Mul(BigInt.New(at.pos.word), Eight),
@@ -139,6 +144,7 @@ BEGIN
   IF TE(ofn, "-") THEN
     wr := Stdio.stdout
   ELSE
+    Debug.Out("Writing to " & ofn);
     wr := FileWr.Open(ofn)
   END;
   
@@ -171,9 +177,9 @@ BEGIN
         b[i] := v.internals.get(i)
       END;
 
-      Debug.Out("Writing address map...");
+      Debug.Out("Writing address map... " & Fmt.Int(NUMBER(a^)));
       Pickle.Write(wr, a);
-      Debug.Out("Writing internal tree...");
+      Debug.Out("Writing internal tree... " & Fmt.Int(NUMBER(b^)));
       Pickle.Write(wr, b);
       Wr.Close(wr)
     END
