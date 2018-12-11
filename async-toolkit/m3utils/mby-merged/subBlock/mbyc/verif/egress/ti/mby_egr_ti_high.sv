@@ -40,6 +40,8 @@ module mby_egr_ti_high #(
    ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_2
    ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_3
    ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_3
+   ,mby_tag_bfm_uc_if tag_bfm_intf_0
+   ,mby_tag_bfm_uc_if tag_bfm_intf_1
   );
 
    import uvm_pkg::*;
@@ -61,6 +63,8 @@ module mby_egr_ti_high #(
                       ,.eth_bfm_rx_intf_2 (eth_bfm_rx_intf_2)
                       ,.eth_bfm_tx_intf_3 (eth_bfm_tx_intf_3)
                       ,.eth_bfm_rx_intf_3 (eth_bfm_rx_intf_3)
+                      ,.tag_bfm_intf_0 (tag_bfm_intf_0)
+                      ,.tag_bfm_intf_1 (tag_bfm_intf_1)
                      );
 
 endmodule : mby_egr_ti_high
