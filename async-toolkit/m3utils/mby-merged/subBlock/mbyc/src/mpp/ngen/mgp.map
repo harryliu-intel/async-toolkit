@@ -5,44 +5,41 @@ $x = $y * 2;  // 0,2
 $z = $x + 1;  // 1,3
 
 //-- Break out multi-dimensional arrays.
-\{grp_a$y$_rx0_data_w_ecc[71:0], grp_a$y$_rx1_data_w_ecc[71:0], grp_a$y$_rx2_data_w_ecc[71:0], grp_a$y$_rx3_data_w_ecc[71:0], grp_a$y$_rx4_data_w_ecc[71:0], grp_a$y$_rx5_data_w_ecc[71:0], grp_a$y$_rx6_data_w_ecc[71:0], grp_a$y$_rx7_data_w_ecc[71:0]\}  >> grp_a_rx_data_w_ecc
+\{grp_a$y$_rx0_data[63:0], grp_a$y$_rx1_data[63:0], grp_a$y$_rx2_data[63:0], grp_a$y$_rx3_data[63:0], grp_a$y$_rx4_data[63:0], grp_a$y$_rx5_data[63:0], grp_a$y$_rx6_data[63:0], grp_a$y$_rx7_data[63:0]\}  >> grp_a_rx_data
 
-\{grp_b$y$_rx0_data_w_ecc[71:0], grp_b$y$_rx1_data_w_ecc[71:0], grp_b$y$_rx2_data_w_ecc[71:0], grp_b$y$_rx3_data_w_ecc[71:0], grp_b$y$_rx4_data_w_ecc[71:0], grp_b$y$_rx5_data_w_ecc[71:0], grp_b$y$_rx6_data_w_ecc[71:0], grp_b$y$_rx7_data_w_ecc[71:0]\}  >> grp_b_rx_data_w_ecc
+\{grp_b$y$_rx0_data[63:0], grp_b$y$_rx1_data[63:0], grp_b$y$_rx2_data[63:0], grp_b$y$_rx3_data[63:0], grp_b$y$_rx4_data[63:0], grp_b$y$_rx5_data[63:0], grp_b$y$_rx6_data[63:0], grp_b$y$_rx7_data[63:0]\}  >> grp_b_rx_data
 
-\{grp_c$y$_rx0_data_w_ecc[71:0], grp_c$y$_rx1_data_w_ecc[71:0], grp_c$y$_rx2_data_w_ecc[71:0], grp_c$y$_rx3_data_w_ecc[71:0], grp_c$y$_rx4_data_w_ecc[71:0], grp_c$y$_rx5_data_w_ecc[71:0], grp_c$y$_rx6_data_w_ecc[71:0], grp_c$y$_rx7_data_w_ecc[71:0]\}  >> grp_c_rx_data_w_ecc
+\{grp_c$y$_rx0_data[63:0], grp_c$y$_rx1_data[63:0], grp_c$y$_rx2_data[63:0], grp_c$y$_rx3_data[63:0], grp_c$y$_rx4_data[63:0], grp_c$y$_rx5_data[63:0], grp_c$y$_rx6_data[63:0], grp_c$y$_rx7_data[63:0]\}  >> grp_c_rx_data
 
-\{grp_d$y$_rx0_data_w_ecc[71:0], grp_d$y$_rx1_data_w_ecc[71:0], grp_d_rx2$y$_data_w_ecc[71:0], grp_d$y$_rx3_data_w_ecc[71:0], grp_d$y$_rx4_data_w_ecc[71:0], grp_d$y$_rx5_data_w_ecc[71:0], grp_d$y$_rx6_data_w_ecc[71:0], grp_d$y$_rx7_data_w_ecc[71:0]\}  >> grp_d_rx_data_w_ecc
+\{grp_d$y$_rx0_data[63:0], grp_d$y$_rx1_data[63:0], grp_d_rx2$y$_data[63:0], grp_d$y$_rx3_data[63:0], grp_d$y$_rx4_data[63:0], grp_d$y$_rx5_data[63:0], grp_d$y$_rx6_data[63:0], grp_d$y$_rx7_data[63:0]\}  >> grp_d_rx_data
 
 \{igr$y$_vp_rx0_data_w_ecc[71:0], igr$y$_vp_rx1_data_w_ecc[71:0], igr$y$_vp_rx2_data_w_ecc[71:0], igr$y$_vp_rx3_data_w_ecc[71:0], igr$y$_vp_rx4_data_w_ecc[71:0], igr$y$_vp_rx5_data_w_ecc[71:0], igr$y$_vp_rx6_data_w_ecc[71:0], igr$y$_vp_rx7_data_w_ecc[71:0]\}  >> igr_vp_rx_data_w_ecc
 
-grp_a$y$_rx_data_valid       >> grp_a_rx_data_valid                
-grp_a$y$_rx_ecc              >> grp_a_rx_ecc                       
-grp_a$y$_rx_flow_control_tc  >> grp_a_rx_flow_control_tc           
-grp_a$y$_rx_metadata         >> grp_a_rx_metadata                  
-grp_a$y$_rx_pfc_xoff         >> grp_a_rx_pfc_xoff                  
-grp_a$y$_rx_port_num         >> grp_a_rx_port_num                  
-grp_a$y$_rx_time_stamp       >> grp_a_rx_time_stamp                
-grp_b$y$_rx_data_valid       >> grp_b_rx_data_valid                
-grp_b$y$_rx_ecc              >> grp_b_rx_ecc                       
-grp_b$y$_rx_flow_control_tc  >> grp_b_rx_flow_control_tc           
-grp_b$y$_rx_metadata         >> grp_b_rx_metadata                  
-grp_b$y$_rx_pfc_xoff         >> grp_b_rx_pfc_xoff                  
-grp_b$y$_rx_port_num         >> grp_b_rx_port_num                  
-grp_b$y$_rx_time_stamp       >> grp_b_rx_time_stamp                
-grp_c$y$_rx_data_valid       >> grp_c_rx_data_valid                
-grp_c$y$_rx_ecc              >> grp_c_rx_ecc                       
-grp_c$y$_rx_flow_control_tc  >> grp_c_rx_flow_control_tc           
-grp_c$y$_rx_metadata         >> grp_c_rx_metadata                  
-grp_c$y$_rx_pfc_xoff         >> grp_c_rx_pfc_xoff                  
-grp_c$y$_rx_port_num         >> grp_c_rx_port_num                  
-grp_c$y$_rx_time_stamp       >> grp_c_rx_time_stamp                
-grp_d$y$_rx_data_valid       >> grp_d_rx_data_valid                
-grp_d$y$_rx_ecc              >> grp_d_rx_ecc                       
-grp_d$y$_rx_flow_control_tc  >> grp_d_rx_flow_control_tc           
-grp_d$y$_rx_metadata         >> grp_d_rx_metadata                  
-grp_d$y$_rx_pfc_xoff         >> grp_d_rx_pfc_xoff                  
-grp_d$y$_rx_port_num         >> grp_d_rx_port_num                  
-grp_d$y$_rx_time_stamp       >> grp_d_rx_time_stamp                
+grp_a$y$_rx_data_valid            >> grp_a_rx_data_valid                
+\{grp_a$y$_rx_metadata[23:0]\}    >> grp_a_rx_metadata                  
+grp_a$y$_rx_port_num              >> grp_a_rx_port_num                  
+\{grp_a$y$_rx_time_stamp[39:0]\}  >> grp_a_rx_time_stamp                
+grp_b$y$_rx_data_valid            >> grp_b_rx_data_valid                
+\{grp_b$y$_rx_metadata[23:0]\}    >> grp_b_rx_metadata                  
+grp_b$y$_rx_port_num              >> grp_b_rx_port_num                  
+\{grp_b$y$_rx_time_stamp[39:0]\}  >> grp_b_rx_time_stamp                
+grp_c$y$_rx_data_valid            >> grp_c_rx_data_valid                
+\{grp_c$y$_rx_metadata[23:0]\}    >> grp_c_rx_metadata                  
+grp_c$y$_rx_port_num              >> grp_c_rx_port_num                  
+\{grp_c$y$_rx_time_stamp[39:0]\}  >> grp_c_rx_time_stamp                
+grp_d$y$_rx_data_valid            >> grp_d_rx_data_valid                
+\{grp_d$y$_rx_metadata[23:0]\}      >> grp_d_rx_metadata                  
+grp_d$y$_rx_port_num              >> grp_d_rx_port_num                  
+\{grp_d$y$_rx_time_stamp[39:0]\}  >> grp_d_rx_time_stamp                
+
+grp_a$y$_tx_pfc_xoff         >> grp_a_tx_pfc_xoff                  
+grp_b$y$_tx_pfc_xoff         >> grp_b_tx_pfc_xoff                  
+grp_c$y$_tx_pfc_xoff         >> grp_c_tx_pfc_xoff                  
+grp_d$y$_tx_pfc_xoff         >> grp_d_tx_pfc_xoff                  
+grp_a$y$_tx_pfc_tc_sync      >> grp_a_tx_pfc_tc_sync
+grp_b$y$_tx_pfc_tc_sync      >> grp_b_tx_pfc_tc_sync
+grp_c$y$_tx_pfc_tc_sync      >> grp_c_tx_pfc_tc_sync
+grp_d$y$_tx_pfc_tc_sync      >> grp_d_tx_pfc_tc_sync
 
 igr$y$_vp_cpp_rx_metadata       >> igr_vp_cpp_rx_metadata                    
 igr$y$_vp_rx_data_valid         >> igr_vp_rx_data_valid                      
