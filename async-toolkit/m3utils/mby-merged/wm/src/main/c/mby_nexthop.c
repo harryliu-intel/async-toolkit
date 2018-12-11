@@ -7,8 +7,7 @@
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
-// TODO is there a better way to include this? REVISIT
-#include "../m3/model_server/src/model_c_write.h" // pull in write_field
+#include <model_c_write.h> // write_field()
 
 static mbyArpTable getARPTableEntry
 (
@@ -53,11 +52,7 @@ static void setARPUsedEntry
     fm_uint64 used_value = nexthop->NH_USED[arp_tbl_idx >> 6].USED;
 
     used_value |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
-#ifndef C_TEST_BUILD
-     write_field(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED, used_value);
-#else
-    *(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED) = used_value;
-#endif
+    write_field(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED, used_value);
 }
 
 

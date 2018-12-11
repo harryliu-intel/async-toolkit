@@ -23,6 +23,7 @@
         #-spyglass_libr_files => [ 
         #     @icm_sa_man_sg_libs::memory_libs, 
         #],
+        -spyglass_bbox_modules_files  => ["tools/lint/bb.txt",],
         
         -spyglass_exe_opts => [   
              ## added lib files for spyglass
