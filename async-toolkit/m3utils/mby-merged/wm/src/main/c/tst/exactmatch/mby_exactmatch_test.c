@@ -370,14 +370,15 @@ static void init_EM_HASH_CFG_REG
 static void set_FWD_TABLE0
 (
     mby_shm_map * const shm_map,
-    fm_uint i,
-    fm_uint j,
-    fm_uint64 data
+    fm_uint32     const i,
+    fm_uint32     const j,
+    fm_uint64     const data
 )
 {
-    fwd_table0_r * const fwd_table0 = &(shm_map->FWD_TABLE0[i][j]);
-
-    fwd_table0->DATA = data;
+    if ((i < mby_shm_map_FWD_TABLE0__nd) && (j < fwd_table0_rf_FWD_TABLE0__nd)) {
+        fwd_table0_r * const fwd_table0 = &(shm_map->FWD_TABLE0[i][j]);
+        fwd_table0->DATA = data;
+    }
 }
 
 static void init_FWD_TABLE0_REG
@@ -385,13 +386,14 @@ static void init_FWD_TABLE0_REG
     mby_shm_map * const shm_map
 )
 {
-    for (fm_uint i = 0 ; i < 3072 ; i++)
-    {
-        for (fm_uint j = 0 ; j < 256 ; j++)
-        {
-            set_FWD_TABLE0(shm_map, i, j, (uint64)0x0000000000000000);
-        }
-    }
+    // FWD_TABLE0[I][J]:
+    //
+    //   I =   mby_shm_map_FWD_TABLE0__nd
+    //   J = fwd_table0_rf_FWD_TABLE0__nd
+    //
+    for (fm_uint32 i = 0 ; i < mby_shm_map_FWD_TABLE0__nd; i++)
+        for (fm_uint32 j = 0 ; j < fwd_table0_rf_FWD_TABLE0__nd; j++)
+            set_FWD_TABLE0(shm_map, i, j, 0uLL);
 }
 
 // FWD_TABLE1
@@ -399,14 +401,15 @@ static void init_FWD_TABLE0_REG
 static void set_FWD_TABLE1
 (
     mby_shm_map * const shm_map,
-    fm_uint i,
-    fm_uint j,
-    fm_uint64 data
+    fm_uint32     const i,
+    fm_uint32     const j,
+    fm_uint64     const data
 )
 {
-    fwd_table1_r * const fwd_table1 = &(shm_map->FWD_TABLE1[i][j]);
-
-    fwd_table1->DATA = data;
+    if ((i < mby_shm_map_FWD_TABLE1__nd) && (j < fwd_table1_rf_FWD_TABLE1__nd)) {
+        fwd_table1_r * const fwd_table1 = &(shm_map->FWD_TABLE1[i][j]);
+        fwd_table1->DATA = data;
+    }
 }
 
 static void init_FWD_TABLE1_REG
@@ -414,13 +417,14 @@ static void init_FWD_TABLE1_REG
     mby_shm_map * const shm_map
 )
 {
-    for (fm_uint i = 0 ; i < 512 ; i++)
-    {
-        for (fm_uint j = 0 ; j < 256 ; j++)
-        {
-            set_FWD_TABLE1(shm_map, i, j, (uint64)0x0000000000000000);
-        }
-    }
+    // FWD_TABLE1[I][J]:
+    //
+    //   I =   mby_shm_map_FWD_TABLE1__nd
+    //   J = fwd_table0_rf_FWD_TABLE1__nd
+    //
+    for (fm_uint32 i = 0 ; i < mby_shm_map_FWD_TABLE1__nd; i++)
+        for (fm_uint32 j = 0 ; j < fwd_table1_rf_FWD_TABLE1__nd; j++)
+            set_FWD_TABLE1(shm_map, i, j, 0uLL);
 }
 
 static void cpy_actions
