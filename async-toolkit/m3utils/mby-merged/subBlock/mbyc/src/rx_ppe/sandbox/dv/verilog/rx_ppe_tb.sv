@@ -35,6 +35,39 @@
 module rx_ppe_tb
 ();
 
+localparam CCLK_PERIOD = 816ps;
+
+logic           cclk;
+int             cclk_cnt;
+logic           reset;
+logic   [31:0]  start_dumping;
+
+//Clock Generator
+initial begin //{
+    cclk = 0;
+    cclk_cnt = 0;
+    #(4 * CCLK_PERIOD);
+    forever cclk = #(CCLK_PERIOD/2) ~cclk;
+end //}
+
+initial $value$plusargs("start_dumping=%d",start_dumping);
+
+always @(posedge cclk) begin //{
+    cclk_cnt <= cclk_cnt + 1;
+end //}
+
+always_ff @(posedge cclk) begin //{
+    if(cclk_cnt == start_dumping) begin //{
+        $vcdpluson();
+        $vcdplusmemon();
+    end //}
+
+    if(cclk_cnt == 2000) begin //{
+        $display("Simulation PASSED\n");
+        $finish;
+    end //}
+end //}
+
 igr_rx_ppe_if       igr_rx_ppe_if();
 rx_ppe_igr_if       rx_ppe_igr_if();
 rx_ppe_ppe_stm0_if  rx_ppe_ppe_stm0_if();
@@ -42,9 +75,28 @@ rx_ppe_ppe_stm1_if  rx_ppe_ppe_stm1_if();
 ahb_rx_ppe_if       ahb_rx_ppe_if();
 glb_rx_ppe_if       glb_rx_ppe_if();
 
+//Reset
+always @(posedge cclk) begin //{
+    if(cclk_cnt == 5) reset <= 1'b0;
+    else if(cclk_cnt == 10) reset <= 1'b1;
+    else if(cclk_cnt == 15) reset <= 1'b0;
+
+//Temporary forces for TCAM errors
+    force rx_ppe.parser_top.reset_n = 1'b0;
+    force rx_ppe.class_gpa_top.reset_n = 1'b0;
+    force rx_ppe.action_top.reset_n = 1'b0;
+end //}
+
+igr_dr igr_dr (
+    .cclk           (cclk),
+    .cclk_cnt       (cclk_cnt),
+    .igr_rx_ppe_if  (igr_rx_ppe_if),
+    .rx_ppe_igr_if  (rx_ppe_igr_if)
+);
+
 rx_ppe  rx_ppe (
-    .cclk               (1'b0),
-    .reset              (1'b0),
+    .cclk               (cclk),
+    .reset              (reset),
     .igr_rx_ppe_if      (igr_rx_ppe_if),
     .rx_ppe_igr_if      (rx_ppe_igr_if),
     .rx_ppe_ppe_stm0_if (rx_ppe_ppe_stm0_if),
