@@ -102,7 +102,7 @@ class mby_smm_bfm extends uvm_component;
       igr_wr_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
       
       egr_rd_req_agent = smm_bfm_row_rd_req_agent::type_id::create("egr_rd_req_agent", this);
-      uvm_config_db#(mby_base_config)::set(this, "igr_rd_req_agent", "cfg_obj", egr_rd_req_cfg_obj);
+      uvm_config_db#(mby_base_config)::set(this, "egr_rd_req_agent", "cfg_obj", egr_rd_req_cfg_obj);
       egr_rd_req_agent.cfg_obj = this.egr_rd_req_cfg_obj;
       egr_rd_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
       egr_rd_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
