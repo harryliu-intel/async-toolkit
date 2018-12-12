@@ -134,11 +134,27 @@ class mby_mesh_base_test extends shdv_base_test;
     //------------------------------------------------------------------------------
     virtual function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-//PJP        env.set_test_phase_type("env", "POWER_GOOD_PHASE", "mby_mesh_power_good_seq");   // Specify the Phase to run the Power_Good sequence
-//PJP        env.set_test_phase_type("env", "HARD_RESET_PHASE", "mby_mesh_hard_reset_seq");   // Specify the Phase to run the Hard_Reset sequence
-//PJP        env.set_test_phase_type("env", "WARM_RESET_PHASE", "mby_mesh_warm_reset_seq");   // Specify the Phase to run the Warm_Reset sequence
-//PJP        env.set_test_phase_type("env", "CONFIG_PHASE",     "mby_mesh_env_cfg_seq");
+        set_default_sequences();
+
     endfunction : connect_phase
+
+    //-----------------------------------------------------------------------------
+    // Function: set_default_sequences()
+    //-----------------------------------------------------------------------------
+    virtual function void set_default_sequences();
+
+   // Set up default cold reset sequence
+   //PJP: TODO Uncomment the following code once reset and configuration sequences are developed.
+/*
+   uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence", igr_env_pkg::mby_igr_hard_reset_seq::type_id::get());
+   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence.min_random_count", 1);
+   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence.max_random_count", 1);
+
+
+   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.main_phase", "default_sequence.min_random_count", 1);
+   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.main_phase", "default_sequence.max_random_count", 1);
+*/
+   endfunction : set_default_sequences
 
     //------------------------------------------------------------------------------
     // Function: randomize_cfg()

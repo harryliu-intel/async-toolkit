@@ -12,5 +12,5 @@
 
 parameter NUM_PLANES = 2;
 
-typedef enum {INPUT, OUTPUT} port_type_e;
+typedef enum {ROW, COL} port_type_e; 
 typedef enum {OP, DATA} bus_type_e;
