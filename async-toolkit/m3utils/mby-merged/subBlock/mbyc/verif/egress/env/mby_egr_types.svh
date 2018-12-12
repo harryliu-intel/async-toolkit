@@ -22,6 +22,7 @@
 
 `define NUM_EPLS_PER_EGR  4
 `define NUM_PORTS_PER_EPL 4
+`define NUM_TAG_PORTS 2
 
 typedef virtual mby_egr_env_if                                   egr_env_if_t;
 
