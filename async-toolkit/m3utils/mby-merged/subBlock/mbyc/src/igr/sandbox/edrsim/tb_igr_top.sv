@@ -12,10 +12,6 @@ module TB_IGR_TOP
   // Unsynchronized warm reset.
   logic                               rst= '0;
   
-  logic [7:0]                       grp_a_rx_ecc = '0;
-  logic [7:0]                       grp_b_rx_ecc = '0;
-  logic [7:0]                       grp_c_rx_ecc = '0;
-  logic [7:0]                       grp_d_rx_ecc = '0;
   
   logic [1:0]                  grp_a_rx_port_num = '0;
   logic [1:0]                  grp_b_rx_port_num = '0;
@@ -32,36 +28,25 @@ module TB_IGR_TOP
   epl_md_t                     grp_c_rx_metadata = '0;
   epl_md_t                     grp_d_rx_metadata = '0;
 
-  epl_ts_t                   grp_a_rx_time_stamp = '0;
-  epl_ts_t                   grp_b_rx_time_stamp = '0;
-  epl_ts_t                   grp_c_rx_time_stamp = '0;
-  epl_ts_t                   grp_d_rx_time_stamp = '0;
+  logic [EPL_IGR_TS_W-1:0]                   grp_a_rx_time_stamp = '0;
+  logic [EPL_IGR_TS_W-1:0]                   grp_b_rx_time_stamp = '0;
+  logic [EPL_IGR_TS_W-1:0]                   grp_c_rx_time_stamp = '0;
+  logic [EPL_IGR_TS_W-1:0]                   grp_d_rx_time_stamp = '0;
    
-  data64_w_ecc_t [0:7]       grp_a_rx_data_w_ecc = '0;
-  data64_w_ecc_t [0:7]       grp_b_rx_data_w_ecc = '0;
-  data64_w_ecc_t [0:7]       grp_c_rx_data_w_ecc = '0;
-  data64_w_ecc_t [0:7]       grp_d_rx_data_w_ecc = '0;
+  logic [0:7][63:0]      grp_a_rx_data = '0;
+  logic [0:7][63:0]      grp_b_rx_data = '0;
+  logic [0:7][63:0]      grp_c_rx_data = '0;
+  logic [0:7][63:0]      grp_d_rx_data = '0;
   
-  logic                        grp_a_rx_pfc_xoff = '0;
-  logic                        grp_b_rx_pfc_xoff = '0;
-  logic                        grp_c_rx_pfc_xoff = '0;
-  logic                        grp_d_rx_pfc_xoff = '0;
-  
-  logic [2:0]           grp_a_rx_flow_control_tc = '0;
-  logic [2:0]           grp_b_rx_flow_control_tc = '0;
-  logic [2:0]           grp_c_rx_flow_control_tc = '0;
-  logic [2:0]           grp_d_rx_flow_control_tc = '0;
-
  
-//  logic [3:0]                  grp_a_rx_pfc_xoff;
-//  logic [3:0]                  grp_b_tx_pfc_xoff;
-//  logic [3:0]                  grp_c_tx_pfc_xoff;
-//  logic [3:0]                  grp_d_tx_pfc_xoff;
-  
-//  logic                     grp_a_tx_pfc_tc_sync;
-//  logic                     grp_b_tx_pfc_tc_sync;
-//  logic                     grp_c_tx_pfc_tc_sync;
-//  logic                     grp_d_tx_pfc_tc_sync;
+  logic [3:0]                  grp_a_tx_pfc_xoff;
+  logic [3:0]                  grp_b_tx_pfc_xoff;
+  logic [3:0]                  grp_c_tx_pfc_xoff;
+  logic [3:0]                  grp_d_tx_pfc_xoff;
+  logic                     grp_a_tx_pfc_tc_sync;
+  logic                     grp_b_tx_pfc_tc_sync;
+  logic                     grp_c_tx_pfc_tc_sync;
+  logic                     grp_d_tx_pfc_tc_sync;
 
   logic [7:0]                       vp_rx_ecc = '0;
   logic [1:0]                  vp_rx_port_num = '0;
@@ -108,11 +93,6 @@ mby_igr_top
       
 // EPL I/O from MBY FS Dataplane Interface signals.
   //EPL0
-  .grp_a_rx_ecc(grp_a_rx_ecc),
-  .grp_b_rx_ecc(grp_b_rx_ecc),
-  .grp_c_rx_ecc(grp_c_rx_ecc),
-  .grp_d_rx_ecc(grp_d_rx_ecc),
-
   .grp_a_rx_port_num(grp_a_rx_port_num),
   .grp_b_rx_port_num(grp_b_rx_port_num),
   .grp_c_rx_port_num(grp_c_rx_port_num),
@@ -133,30 +113,20 @@ mby_igr_top
   .grp_c_rx_time_stamp(grp_c_rx_time_stamp),
   .grp_d_rx_time_stamp(grp_d_rx_time_stamp),
   
-  .grp_a_rx_data_w_ecc(grp_a_rx_data_w_ecc),
-  .grp_b_rx_data_w_ecc(grp_b_rx_data_w_ecc),
-  .grp_c_rx_data_w_ecc(grp_c_rx_data_w_ecc),
-  .grp_d_rx_data_w_ecc(grp_d_rx_data_w_ecc),
+  .grp_a_rx_data(grp_a_rx_data),
+  .grp_b_rx_data(grp_b_rx_data),
+  .grp_c_rx_data(grp_c_rx_data),
+  .grp_d_rx_data(grp_d_rx_data),
 
-  .grp_a_rx_pfc_xoff(grp_a_rx_pfc_xoff),
-  .grp_b_rx_pfc_xoff(grp_b_rx_pfc_xoff),
-  .grp_c_rx_pfc_xoff(grp_c_rx_pfc_xoff),
-  .grp_d_rx_pfc_xoff(grp_d_rx_pfc_xoff),
+  .grp_a_tx_pfc_xoff(grp_a_tx_pfc_xoff),
+  .grp_b_tx_pfc_xoff(grp_b_tx_pfc_xoff),
+  .grp_c_tx_pfc_xoff(grp_c_tx_pfc_xoff),
+  .grp_d_tx_pfc_xoff(grp_d_tx_pfc_xoff),
   
-  .grp_a_rx_flow_control_tc(grp_a_rx_flow_control_tc),
-  .grp_b_rx_flow_control_tc(grp_b_rx_flow_control_tc),
-  .grp_c_rx_flow_control_tc(grp_c_rx_flow_control_tc),
-  .grp_d_rx_flow_control_tc(grp_d_rx_flow_control_tc),
-
-//  .grp_a_tx_pfc_xoff(grp_a_tx_pfc_xoff),
-//  .grp_b_tx_pfc_xoff(grp_b_tx_pfc_xoff),
-//  .grp_c_tx_pfc_xoff(grp_c_tx_pfc_xoff),
-//  .grp_d_tx_pfc_xoff(grp_d_tx_pfc_xoff),
-  
-//  .grp_a_tx_pfc_tc_sync(grp_a_tx_pfc_tc_sync),
-//  .grp_b_tx_pfc_tc_sync(grp_b_tx_pfc_tc_sync),
-//  .grp_c_tx_pfc_tc_sync(grp_c_tx_pfc_tc_sync),
-//  .grp_d_tx_pfc_tc_sync(grp_d_tx_pfc_tc_sync),
+  .grp_a_tx_pfc_tc_sync(grp_a_tx_pfc_tc_sync),
+  .grp_b_tx_pfc_tc_sync(grp_b_tx_pfc_tc_sync),
+  .grp_c_tx_pfc_tc_sync(grp_c_tx_pfc_tc_sync),
+  .grp_d_tx_pfc_tc_sync(grp_d_tx_pfc_tc_sync),
   
   .vp_rx_ecc(vp_rx_ecc),
   .vp_rx_port_num(vp_rx_port_num),

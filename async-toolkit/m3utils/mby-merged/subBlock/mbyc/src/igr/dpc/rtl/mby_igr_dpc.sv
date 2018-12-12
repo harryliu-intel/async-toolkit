@@ -38,7 +38,7 @@ module mby_igr_dpc
   input  logic [7:0]                          rx_ecc,
   input  logic [1:0]                     rx_port_num,  
   input  logic [7:0]                       rx_data_v,
-  input  logic [63:0][0:7]                   rx_data,  
+  input  logic [0:7][63:0]                   rx_data,  
   input  epl_md_t                              rx_md,
   input  epl_ts_t                              rx_ts,  
   output logic [3:0]                     tx_pfc_xoff, //[3]=port3,[2]=port2,[1]=port1,[0]=port0
@@ -69,28 +69,32 @@ module mby_igr_dpc
   epl_ts_t                       qs2_dpc_ts_p1;
   epl_ts_t                       qs2_dpc_ts_p2;
   epl_ts_t                       qs2_dpc_ts_p3;
-  logic [63:0][0:7]             qs1_rx_data;
-  logic [63:0][0:7]          qs2_rx_data_p0;
-  logic [63:0][0:7]          qs2_rx_data_p1;
-  logic [63:0][0:7]          qs2_rx_data_p2;
-  logic [63:0][0:7]          qs2_rx_data_p3;
-  logic [63:0][0:7]           rx_data_align;
+  logic [0:7][63:0]             qs1_rx_data;
+  logic [0:7][63:0]          qs2_rx_data_p0;
+  logic [0:7][63:0]          qs2_rx_data_p1;
+  logic [0:7][63:0]          qs2_rx_data_p2;
+  logic [0:7][63:0]          qs2_rx_data_p3;
+  logic [0:7][63:0]           rx_data_align;
   logic [7:0]                  qs1_pfc_tc_sync;  // free-running shift register. [0] is sync pulse every eighth clk to tx mac for tc[0].
   logic                       qs2_pfc_tc_sync0;
   logic                                tc_sync;
 //outputs start here
   assign o_dpc_pb_p0.v     = qs2_port_v[0];
   assign o_dpc_pb_p0.tsmd  = {qs2_dpc_ts_p0, qs2_dpc_md_p0};
-  assign o_dpc_pb_p0.d     = qs2_rx_data_p0;
+  assign o_dpc_pb_p0.d     = {{8'h0,qs2_rx_data_p0[0]}, {8'h0,qs2_rx_data_p0[1]},{8'h0,qs2_rx_data_p0[2]},{8'h0,qs2_rx_data_p0[3]},{8'h0,qs2_rx_data_p0[4]},
+                              {8'h0,qs2_rx_data_p0[5]}, {8'h0,qs2_rx_data_p0[6]},{8'h0,qs2_rx_data_p0[7]}};
   assign o_dpc_pb_p1.v     = qs2_port_v[1];
   assign o_dpc_pb_p1.tsmd  = {qs2_dpc_ts_p1, qs2_dpc_md_p1};
-  assign o_dpc_pb_p1.d     = qs2_rx_data_p1;
+  assign o_dpc_pb_p1.d     = {{8'h0,qs2_rx_data_p1[0]}, {8'h0,qs2_rx_data_p1[1]},{8'h0,qs2_rx_data_p1[2]},{8'h0,qs2_rx_data_p1[3]},{8'h0,qs2_rx_data_p1[4]},
+                              {8'h0,qs2_rx_data_p1[5]}, {8'h0,qs2_rx_data_p1[6]},{8'h0,qs2_rx_data_p1[7]}};
   assign o_dpc_pb_p2.v     = qs2_port_v[2];
   assign o_dpc_pb_p2.tsmd  = {qs2_dpc_ts_p2, qs2_dpc_md_p2};
-  assign o_dpc_pb_p2.d     = qs2_rx_data_p2;
+  assign o_dpc_pb_p2.d     = {{8'h0,qs2_rx_data_p2[0]}, {8'h0,qs2_rx_data_p2[1]},{8'h0,qs2_rx_data_p2[2]},{8'h0,qs2_rx_data_p2[3]},{8'h0,qs2_rx_data_p2[4]},
+                              {8'h0,qs2_rx_data_p2[5]}, {8'h0,qs2_rx_data_p2[6]},{8'h0,qs2_rx_data_p2[7]}};
   assign o_dpc_pb_p3.v     = qs2_port_v[3];
   assign o_dpc_pb_p3.tsmd  = {qs2_dpc_ts_p3, qs2_dpc_md_p3};
-  assign o_dpc_pb_p3.d     = qs2_rx_data_p3;
+  assign o_dpc_pb_p3.d     = {{8'h0,qs2_rx_data_p3[0]}, {8'h0,qs2_rx_data_p3[1]},{8'h0,qs2_rx_data_p3[2]},{8'h0,qs2_rx_data_p3[3]},{8'h0,qs2_rx_data_p3[4]},
+                              {8'h0,qs2_rx_data_p3[5]}, {8'h0,qs2_rx_data_p3[6]},{8'h0,qs2_rx_data_p3[7]}};
 
   assign tx_pfc_tc_sync    = qs2_pfc_tc_sync0;
 // port strobe for pfc xoff, this must be sync'd with tx_pfc_tc_sync. exapmle tx_pfc_xoff[0]=1 when tx_pfc_tc_sync=1 then port0:tc0 pfc to tx mac
