@@ -223,7 +223,7 @@ $(RESULTS_SUBBLOCK)/%_rtl.hdl: $(RESULTS_SUBBLOCK)/%_crif.xml
 %.ralf.done: %_crif.xml
 	$(eval TMPDIR = $(shell mktemp -d))
 	cp $^  $(TMPDIR)
-	cd $(TMPDIR) && $(MULTI_GEN_RALF) -i $< -o .ralf --bytes 0
+	cd $(TMPDIR) && $(MULTI_GEN_RALF) -i $< -o .ralf --bytes 0 -b 1
 	rm -rf $(basename $@)_out
 	mkdir $(basename $@)_out
 	cp $(TMPDIR)/*.ralf $(basename $@)_out

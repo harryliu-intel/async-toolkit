@@ -23,7 +23,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Kaleem Sheriff
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -44,6 +44,37 @@ class mby_rx_ppe_dut_cfg extends shdv_base_config;
    // Variable: reset_type
    // Definition of the RESET type
    reset_type_e                     reset_type ;
+   
+   // Variable: parser_cfg
+   rand mby_rx_ppe_parser_cfg       parser_cfg;
+   
+   // Variable: mapper_cfg
+   rand mby_rx_ppe_mapper_cfg       mapper_cfg;
+   
+   // Variable: lpm_cfg
+   rand mby_rx_ppe_lpm_cfg          lpm_cfg;
+   
+   // Variable: em_cfg
+   rand mby_rx_ppe_em_cfg           em_cfg;
+   
+   // Variable: wcm_cfg
+   rand mby_rx_ppe_wcm_cfg          wcm_cfg;
+   
+   // Variable: hash_cfg
+   rand mby_rx_ppe_hash_cfg         hash_cfg;
+   
+   // Variable: policer_cfg
+   rand mby_rx_ppe_policer_cfg      policer_cfg;
+   
+   // Variable: nexthop_cfg
+   rand mby_rx_ppe_nexthop_cfg      nexthop_cfg;
+   
+   // Variable: maskgen_cfg
+   rand mby_rx_ppe_maskgen_cfg      maskgen_cfg;
+   
+   // Variable: triggers_cfg
+   rand mby_rx_ppe_triggers_cfg     triggers_cfg;
+   
 
 
    `uvm_object_utils_begin(mby_rx_ppe_dut_cfg)
@@ -61,6 +92,19 @@ class mby_rx_ppe_dut_cfg extends shdv_base_config;
    //---------------------------------------------------------------------------
    function new( string name = "mby_rx_ppe_dut_cfg");
       super.new(name);
+      
+      parser_cfg   = mby_rx_ppe_parser_cfg::type_id::create("parser_cfg");
+      mapper_cfg   = mby_rx_ppe_mapper_cfg::type_id::create("mapper_cfg");
+      lpm_cfg      = mby_rx_ppe_lpm_cfg::type_id::create("lpm_cfg");
+      em_cfg       = mby_rx_ppe_em_cfg::type_id::create("em_cfg");
+      wcm_cfg      = mby_rx_ppe_wcm_cfg::type_id::create("wcm_cfg");
+      
+      hash_cfg     = mby_rx_ppe_hash_cfg::type_id::create("hash_cfg");
+      policer_cfg  = mby_rx_ppe_policer_cfg::type_id::create("policer_cfg");
+      nexthop_cfg  = mby_rx_ppe_nexthop_cfg::type_id::create("nexthop_cfg");
+      maskgen_cfg  = mby_rx_ppe_maskgen_cfg::type_id::create("maskgen_cfg");
+      triggers_cfg = mby_rx_ppe_triggers_cfg::type_id::create("triggers_cfg");
+      
 
    endfunction: new
 
