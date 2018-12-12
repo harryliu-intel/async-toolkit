@@ -115,10 +115,112 @@ class mby_rx_ppe_env_cfg_seq extends shdv_base_config_seq;
       `uvm_info(get_name(), "MplexTop Env Configuration Sequence", UVM_MEDIUM);
 
       $value$plusargs("CONFIG_ACCESS_TYPE=%s", access_type);
+      
+      //Configure DUT here..
 
-   //Configure DUT here..
+      config_parser();
+      config_mapper();
+      config_lpm();
+      config_em();
+      config_wcm();
+      
+      config_hash();
+      config_policer();
+      config_nexthop();
+      config_maskgen();
+      config_triggers();
 
    endtask : body
+
+   //------------------------------------------------------------------------------
+   //  Task: config_parser
+   //  Configures PARSER DUT.
+   //------------------------------------------------------------------------------
+   task config_parser();
+      `uvm_info(get_name(), "config_parser", UVM_MEDIUM);
+
+   endtask : config_parser
+
+   //------------------------------------------------------------------------------
+   //  Task: config_mapper
+   //  Configures MAPPER DUT.
+   //------------------------------------------------------------------------------
+   task config_mapper();
+      `uvm_info(get_name(), "config_mapper", UVM_MEDIUM);
+
+   endtask : config_mapper
+
+   //------------------------------------------------------------------------------
+   //  Task: config_lpm
+   //  Configures LPM DUT.
+   //------------------------------------------------------------------------------
+   task config_lpm();
+      `uvm_info(get_name(), "config_lpm", UVM_MEDIUM);
+
+   endtask : config_lpm
+
+   //------------------------------------------------------------------------------
+   //  Task: config_em
+   //  Configures EM DUT.
+   //------------------------------------------------------------------------------
+   task config_em();
+      `uvm_info(get_name(), "config_em", UVM_MEDIUM);
+
+   endtask : config_em
+   
+   //------------------------------------------------------------------------------
+   //  Task: config_wcm
+   //  Configures WCM DUT.
+   //------------------------------------------------------------------------------
+   task config_wcm();
+      `uvm_info(get_name(), "config_wcm", UVM_MEDIUM);
+
+   endtask : config_wcm
+
+   //------------------------------------------------------------------------------
+   //  Task: config_hash
+   //  Configures HASH DUT.
+   //------------------------------------------------------------------------------
+   task config_hash();
+      `uvm_info(get_name(), "config_hash", UVM_MEDIUM);
+
+   endtask : config_hash
+
+   //------------------------------------------------------------------------------
+   //  Task: config_policer
+   //  Configures POLICER DUT.
+   //------------------------------------------------------------------------------
+   task config_policer();
+      `uvm_info(get_name(), "config_policer", UVM_MEDIUM);
+
+   endtask : config_policer
+
+   //------------------------------------------------------------------------------
+   //  Task: config_nexthop
+   //  Configures NEXTHOP DUT.
+   //------------------------------------------------------------------------------
+   task config_nexthop();
+      `uvm_info(get_name(), "config_nexthop", UVM_MEDIUM);
+
+   endtask : config_nexthop
+
+   //------------------------------------------------------------------------------
+   //  Task: config_maskgen
+   //  Configures MASKGEN DUT.
+   //------------------------------------------------------------------------------
+   task config_maskgen();
+      `uvm_info(get_name(), "config_maskgen", UVM_MEDIUM);
+
+   endtask : config_maskgen
+   
+   //------------------------------------------------------------------------------
+   //  Task: config_triggers
+   //  Configures TRIGGERS DUT.
+   //------------------------------------------------------------------------------
+   task config_triggers();
+      `uvm_info(get_name(), "config_triggers", UVM_MEDIUM);
+
+   endtask : config_triggers
 
 endclass : mby_rx_ppe_env_cfg_seq
 

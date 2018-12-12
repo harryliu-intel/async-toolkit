@@ -21,6 +21,7 @@ IMPORT Thread;
 IMPORT Pathname;
 IMPORT FS;
 IMPORT DecoratedComponentDef;
+IMPORT RegFieldArraySort;
 
 CONST Brand = "GenViews(" & Tgt.Brand & ")";
       
@@ -225,6 +226,25 @@ PROCEDURE AllocRegfile(c         : RdlComponentDef.T) : RegRegfile.T =
     RETURN regf
   END AllocRegfile;
 
+PROCEDURE SortFieldsIfAllSpecified(seq : RegFieldSeq.T) =
+  VAR
+    arr : REF ARRAY OF RegField.T;
+  BEGIN
+    FOR i := 0 TO seq.size()-1 DO
+      IF seq.get(i).lsb = RegField.Unspecified THEN
+        RETURN (* can't sort *)
+      END
+    END;
+    arr := NEW(REF ARRAY OF RegField.T, seq.size());
+    FOR i := 0 TO seq.size()-1 DO
+      arr[i] := seq.get(i)
+    END;
+    RegFieldArraySort.Sort(arr^);
+    FOR i := 0 TO seq.size()-1 DO
+      seq.put(i,arr[i])
+    END
+  END SortFieldsIfAllSpecified;
+
 PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
   VAR
     props := c.list.propTab;
@@ -265,6 +285,7 @@ PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
       END;
       p := p.tail
     END;
+    SortFieldsIfAllSpecified(fields);
     reg.fields := fields;
     RETURN reg
   END AllocReg;

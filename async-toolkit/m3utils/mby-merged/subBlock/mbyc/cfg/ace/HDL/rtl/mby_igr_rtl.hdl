@@ -12,6 +12,7 @@ $hdl_spec = {
     -vlog_files => [
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_rx_metadata_pkg.sv",
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib

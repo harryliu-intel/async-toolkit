@@ -24,12 +24,10 @@ $ToolConfig_tools{flowbee}{OTHER}{default_dut}                               = "
 $ToolConfig_tools{'febe3'}{OTHER}{resource_def}                              = "$ENV{MODEL_ROOT}/cfg/resource.xml";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'}                 = "&get_tool_version(lintra)";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'}                    = "&get_tool_path(lintra)";
-$ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH} = 
-"$MODEL_ROOT/target/&get_facet(dut)/vcs_lib/&get_tool_version('vcs')_suse64/fc/fc.simv";
-#"&get_general_var(std_linux_libs)";
 $ToolConfig_tools{febe3}{VERSION} = "3.3.08";
 $ToolConfig_tools{febe3}{OTHER}{project_settings}                            = "$MODEL_ROOT/tools/febe/inputs/dc_config.cfg";
 $ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "$MODEL_ROOT/tools/febe/inputs/finalized.cfg";
+$ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH}                     = ""; 
 $ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{file_wait_time}       = "60";
 
 #####################################################
@@ -290,6 +288,7 @@ $ToolConfig_tools{"mgm"} = {
                     "egr",
                     "gcm",
                     "gpm",
+                    "mce",
                     "msh",
                    ],
         },
