@@ -73,7 +73,10 @@ module mby_igr_tb ();
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (ingress_reset, ingress_clock);
   mby_ec_cdi_tx_intf eth_bfm_tx_intf_4 (ingress_reset, ingress_clock);
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_4 (ingress_reset, ingress_clock);
-
+    
+  mby_tag_bfm_uc_if tag_bfm_intf_0 (ingress_reset, ingress_clock);
+  mby_tag_bfm_uc_if tag_bfm_intf_1 (ingress_reset, ingress_clock);
+    
   assign eth_bfm_tx_intf_0.enable = 1;
   assign eth_bfm_tx_intf_1.enable = 1;
   assign eth_bfm_tx_intf_2.enable = 1;
