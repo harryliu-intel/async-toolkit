@@ -31,5 +31,7 @@ typedef mby_ec_bfm_pkg::mby_ec_cdi_rx_io                         egr_eth_bfm_rx_
 typedef virtual mby_ec_cdi_tx_intf                               egr_eth_bfm_tx_intf_t;
 typedef virtual mby_ec_cdi_rx_intf                               egr_eth_bfm_rx_intf_t;
 
+typedef mby_smm_bfm_pkg::mby_smm_bfm                             mby_smm_bfm_t;
+
 `endif // MBY_EGR_TYPES_SV
 

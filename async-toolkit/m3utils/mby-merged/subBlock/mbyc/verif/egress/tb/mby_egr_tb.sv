@@ -100,6 +100,27 @@ module mby_egr_tb ();
   assign egress_if.clock    = egress_clock;
 
 
+  //================================================
+  //rbernal
+  //Temporal stuff to validate smm_bfm
+  //================================================
+  mby_smm_bfm_row_wr_req_if memwr_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
+  mby_smm_bfm_row_rd_req_if memrd_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
+
+  logic [19:0] w_seg_ptr;
+  logic [1:0] w_wd_sel;
+
+  smm_row_mwr_reqs row_mwr_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mwr_req(memwr_req_if),.o_wr_seg_ptr(w_seg_ptr),.o_wr_wd_sel(w_wd_sel));
+  smm_row_mrd_reqs row_mrd_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mrd_req(memrd_req_if),.i_rd_seg_ptr(w_seg_ptr),.i_rd_wd_sel(w_wd_sel));
+
+
+  initial
+     begin:mwr_gen_connection_to_msh_bfm
+        uvm_config_db #(virtual mby_smm_bfm_row_wr_req_if)::set(null, "uvm_test_top.env.smm_bfm.igr_wr_req_agent", "vintf", memwr_req_if);
+        uvm_config_db #(virtual mby_smm_bfm_row_rd_req_if)::set(null, "uvm_test_top.env.smm_bfm.egr_rd_req_agent", "vintf", memrd_req_if);
+     end
+
+
   // ===============================================
   // Test Island instance
   // ===============================================
