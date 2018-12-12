@@ -1,0 +1,7 @@
+// mce mem wrapper
+
+mby_mce_gen_mem [
+    mce_shells_wrapper of mce_shells_wrapper with mce_shells_wrapper.map
+    mce_sram_mems      of mce_sram_mems      with mce_sram_mems.map
+    mce_rf_mems        of mce_rf_mems        with mce_rf_mems.map
+]

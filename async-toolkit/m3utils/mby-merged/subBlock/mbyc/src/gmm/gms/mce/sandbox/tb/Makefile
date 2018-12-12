@@ -13,14 +13,16 @@ TEST    ?= doa
 # Base build and run flags
 BASEVCSFLAGS += -sverilog +libext+.sv+.v+.vs+.vp -l vcs.log -timescale=1ns/1ps -debug_pp +vcs+vcdpluson \
                 +vcs+lic+wait -xlrm uniq_prior_final -xprop=xprop.cfg +notimingchecks +define+VCSSIM \
-                +warn=noUII-L
+                +warn=noUII-L -assert svaext
 BASERUNFLAGS += -l $(TEST).log +vpdfile+$(TEST).vpd +ntb_random_seed$(if $(SEED),=$(SEED),_automatic) \
                 -assert nopostproc +test=$(TEST)
 
 ################################################################################
 # Exported vars for "files" files, mainly used for base directory paths
 NEBULON ?= $(shell ToolConfig.pl get_tool_path nebulon)
+SVA_LIB ?= $(shell ToolConfig.pl get_tool_path ipconfig/SVA_LIB)/SVA_LIB
 MBY_SRC ?= $(MODEL_ROOT)/subBlock/mbyc/src
+MGM     ?= $(MODEL_ROOT)/target/mby/mgm_run
 .EXPORT_ALL_VARIABLES:
 
 ################################################################################
@@ -37,7 +39,7 @@ run: simv
 	@(grep -q -i -P '(error|fatal|fail)' $(TEST).log && (echo FAIL) || (echo PASS)) | tee -a $(TEST).log
 
 clean:
-	rm -rf $(wildcard csrc simv* *.log ucli.key *.vpd ##* unifiedInference.log xprop.log)
+	rm -rf $(wildcard csrc simv* *.log ucli.key *.vpd ##* unifiedInference.log xprop.log vc_hdrs.h)
 
 ################################################################################
 # Targets for Makefile debug

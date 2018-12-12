@@ -20,6 +20,8 @@ INCLUDES += -I$(INC_DIR) -I$(TOPMAP_DIR)
 
 SOURCES  = $(SRC_DIR)/mby_crc32.c
 SOURCES += $(SRC_DIR)/mby_bitfield.c
+SOURCES += $(SRC_DIR)/fm_alos_debughash.c
+SOURCES += $(SRC_DIR)/mby_write_field.c
 SOURCES += $(TOPMAP_DIR)/mby_top_map.c
 SOURCES += $(SRC_DIR)/mby_common.c
 SOURCES += $(SRC_DIR)/mby_nexthop.c
@@ -56,7 +58,6 @@ endif
 
 DEFINES   = -D_GNU_SOURCE
 DEFINES  += -D_FM_ARCH_x86_64
-DEFINES  += -DC_TEST_BUILD
 ifeq ($(DEBUG),1)
 endif
 
@@ -69,6 +70,8 @@ all: $(TARGET)
 
 $(SRC_DIR)/mby_common.o       : $(SRC_DIR)/mby_common.c $(SRC_DIR)/mby_common.h
 $(SRC_DIR)/mby_bitfield.o     : $(SRC_DIR)/mby_bitfield.c $(SRC_DIR)/mby_bitfield.h $(SRC_DIR)/mby_common.h
+$(SRC_DIR)/fm_alos_debughash.o: $(SRC_DIR)/fm_alos_debughash.c $(SRC_DIR)/fm_alos_debughash.h
+$(SRC_DIR)/mby_write_field.o  : $(SRC_DIR)/mby_write_field.c $(SRC_DIR)/mby_write_field.h
 $(TOPMAP_DIR)/mby_top_map.o   : $(TOPMAP_DIR)/mby_top_map.c $(TOPMAP_DIR)/mby_top_map.h
 $(SRC_DIR)/mby_nexthop.o      : $(SRC_DIR)/mby_nexthop.c $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h
 $(TST_DIR)/mby_nexthop_test.o : $(TST_DIR)/mby_nexthop_test.c $(TST_DIR)/mby_nexthop_test.h $(SRC_DIR)/mby_nexthop.h $(SRC_DIR)/mby_common.h

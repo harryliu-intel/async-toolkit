@@ -32,6 +32,8 @@ $hdl_spec = {
        "src/gmm/gms/mce/rtl",
        "target/mby/mgm_run/gcm/src",
        "target/mby/mgm_run/gcm/src/mem_wrap",
+       "target/mby/mgm_run/mce/src",
+       "target/mby/mgm_run/mce/src/mem_wrap",
        "target/mby/mgm_run/rtl",
      ],
     
@@ -49,6 +51,7 @@ $hdl_spec = {
        "src/igr/rtl/",
        "target/mby/mgm_run/igr/src",
        "target/mby/mgm_run/gcm/src",
+       "target/mby/mgm_run/mce/src",
        "target/mby/mgm_run/gcm/src/mem_wrap",
        "target/mby/mgm_run/rtl",
        "src/gmm/gms/gpl/rtl",
