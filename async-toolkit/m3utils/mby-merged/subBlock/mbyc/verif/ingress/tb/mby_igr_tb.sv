@@ -127,8 +127,6 @@ module mby_igr_tb ();
                    ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
                    ,.eth_bfm_tx_intf_4   (eth_bfm_tx_intf_4)
                    ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_4)
-                   ,.tag_bfm_intf_0 (tag_bfm_intf_0)
-                   ,.tag_bfm_intf_1 (tag_bfm_intf_1)
                   );
 
 `include "std_ace_util.vic"

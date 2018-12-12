@@ -86,9 +86,9 @@ mby_igr_top igr_top_i (
    .mim_wreq_2(mim_wreq_2_if_i.request),
    .mim_wreq_3(mim_wreq_3_if_i.request),
    .mim_wreq_4(mim_wreq_4_if_i.request),
-   .mim_wreq_5(mim_wreq_5_if_i.request),
-   .o_tag_ring_lltag0(tag_bfm_intf0),
-   .o_tag_ring_lltag1(tag_bfm_intf1)
+   .mim_wreq_5(mim_wreq_5_if_i.request)
+   //.o_tag_ring_lltag0(tag_bfm_intf_0.intf_data_pkt),
+   //.o_tag_ring_lltag1(tag_bfm_intf_1.intf_data_pkt)
    
    
 );
