@@ -261,14 +261,14 @@ class mby_igr_env extends shdv_base_env;
 
         foreach(tag_bfm[i]) begin
             // Get the eth_bfm_vif ptrs
-            if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
-                `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
-            end
+           // if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
+           //     `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
+           // end
        
             tag_bfm[i] = mby_tag_bfm::type_id::create($sformatf("tag_bfm%0d",i), this);
             tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_IGR_MODE;
             tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
-            //tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
+            tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
         end
 
     //tag_bfm.cfg_obj.
