@@ -9,11 +9,11 @@ $LOGICROOT/msh_node/rtl/mby_msh_node_pkg.sv
 +incdir+$LOGICROOT/mems/rtl
 +incdir+$LOGICROOT/mems/msh_node/src
 +incdir+$LOGICROOT/mems/src/mem_wrap
-+incdir+$LOGICROOT/csrs/msh/output/chdr
-+incdir+$LOGICROOT/csrs/msh/output/sverilog
++incdir+$LOGICROOT/csrs/mby/output/chdr
++incdir+$LOGICROOT/csrs/mby/output/sverilog
 -y $LOGICROOT/mems/rtl
 -y $LOGICROOT/mems/msh_node/src
 -y $LOGICROOT/mems/msh_node/src/mem_wrap
--y $LOGICROOT/csrs/msh/output/chdr
--y $LOGICROOT/csrs/msh/output/sverilog
+-y $LOGICROOT/csrs/mby/output/chdr
+-y $LOGICROOT/csrs/mby/output/sverilog
 
