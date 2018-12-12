@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GMM pod pointer generator class
+// Title         : Madison Bay GPM pod pointer generator class
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gmm_bfm_pptr_gen.svh
+// File          : mby_gpm_bfm_pptr_gen.svh
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
@@ -30,16 +30,16 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GMM_BFM_PKG__
-`error "Attempt to include file outside of mby_gmm_bfm_pkg."
+`ifndef __MBY_GPM_BFM_PKG__
+`error "Attempt to include file outside of mby_gpm_bfm_pkg."
 `endif
-`ifndef __MBY_GMM_BFM_PPTR_GEN__
-`define __MBY_GMM_BFM_PPTR_GEN__
+`ifndef __MBY_GPM_BFM_PPTR_GEN__
+`define __MBY_GPM_BFM_PPTR_GEN__
 //-----------------------------------------------------------------------------
-// CLASS: mby_gmm_bfm_pptr_gen
+// CLASS: mby_gpm_bfm_pptr_gen
 //
 // The pod pointer generator is the component that interfaces with all the
-// agents in the gmm_bfm. This generator has three modes of operation too:
+// agents in the gpm_bfm. This generator has three modes of operation too:
 // ingress, mesh and egress.
 //
 // When operating in ingress mode, a process will be creating random addresses
@@ -67,7 +67,7 @@
 // 'convert' the dirty pointers into clean free pointers and eventually
 // send them out again in port (5).
 //-----------------------------------------------------------------------------
-class mby_gmm_bfm_pptr_gen extends uvm_component;
+class mby_gpm_bfm_pptr_gen extends uvm_component;
 
    //--------------------------------------------------------------------------
    //
@@ -78,10 +78,10 @@ class mby_gmm_bfm_pptr_gen extends uvm_component;
 
    // VARIABLE: cfg_obj
    // The bfm's configuration object
-   mby_gmm_bfm_cfg cfg_obj;
+   mby_gpm_bfm_cfg cfg_obj;
 
    // Registering class with the factory
-   `uvm_component_utils(mby_gmm_bfm_pptr_gen)
+   `uvm_component_utils(mby_gpm_bfm_pptr_gen)
 
    //--------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -96,5 +96,5 @@ class mby_gmm_bfm_pptr_gen extends uvm_component;
       super.new(name, parent);
    endfunction : new
 
-endclass : mby_gmm_bfm_pptr_gen
+endclass : mby_gpm_bfm_pptr_gen
 `endif
