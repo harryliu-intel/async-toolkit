@@ -7,6 +7,7 @@ $hdl_spec = {
 
     # List of specific VERILOG source files
     -vlog_files => [
+ #      "verif/rx_ppe/ral/mby_rx_ppe_reg_pkg.sv",
        "verif/rx_ppe/env/mby_rx_ppe_env_pkg.sv",
        "verif/rx_ppe/seq/mby_rx_ppe_seq_lib.sv",
     ],
