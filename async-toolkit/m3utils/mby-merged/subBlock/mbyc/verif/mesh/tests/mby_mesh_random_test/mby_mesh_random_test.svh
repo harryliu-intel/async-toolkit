@@ -32,7 +32,7 @@
 
 `ifndef MBY_MESH_RANDOM_TEST__SV
 `define MBY_MESH_RANDOM_TEST__SV
-
+typedef class mby_mesh_random_seq;
 class mby_mesh_random_test extends mby_mesh_base_test;
 
     `uvm_component_utils(mby_mesh_random_test)
@@ -63,13 +63,76 @@ class mby_mesh_random_test extends mby_mesh_base_test;
     //  phase - uvm_phase object.
     //------------------------------------------------------------------------------
     function void connect_phase(uvm_phase phase);
-        super.connect_phase(phase);
-//PJP        env.set_test_phase_type("env", "USER_DATA_PHASE", "mby_mesh_random_seq");
+       super.connect_phase(phase);
+       // Specifying main phase sequence
+       uvm_config_db#(uvm_object_wrapper)::set(this,
+        "env.mby_mesh_tb_sequencer.main_phase",
+         "default_sequence", mby_mesh_random_seq::type_id::get());
     endfunction : connect_phase
+    
+       //---------------------------------------------------------------------------
+   // Function: set_default_sequences()
+   //---------------------------------------------------------------------------
+   function void set_default_sequences();
+      super.set_default_sequences();
+      `uvm_info("::set_default_sequences", "Setting phase sequences", UVM_NONE)
 
+      // Specifying reset phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.reset_phase",
+         "default_sequence",
+         mby_mesh_seq_lib::mby_mesh_hard_reset_seq::type_id::get());
+/*
+      // Specifying post_reset phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.post_reset_phase",
+         "default_sequence",
+         mby_mesh_post_reset_seq::type_id::get());
+
+      // Specifying configure phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.configure_phase",
+         "default_sequence",
+         mby_mesh_cfg_seq::type_id::get());
+
+      // Specifying shutdown phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.shutdown_phase",
+         "default_sequence",
+         mby_mesh_flush_seq::type_id::get());
+*/
+      // Specifying main phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.main_phase",
+         "default_sequence",
+         mby_mesh_random_seq::type_id::get());
+   endfunction : set_default_sequences
+
+   //---------------------------------------------------------------------------
+   // Function: start_of_simulation_phase()
+   //
+   // Updates the uvm report server to use MBY's report server
+   //
+   //---------------------------------------------------------------------------
+   function void start_of_simulation_phase( uvm_phase phase );
+      super.start_of_simulation_phase( phase );
+ 
+      `uvm_info("start_of_simulation_phase()", "Exiting start_of_sim phase", UVM_NONE)
+   endfunction: start_of_simulation_phase
+
+   //---------------------------------------------------------------------------
+   // Task: run_phase()
+   //
+   // Prints out a message to identify start of run phase
+   //---------------------------------------------------------------------------
+   task run_phase(uvm_phase phase);
+      phase.raise_objection(this);
+      `uvm_info("::run_phase()", "Starting run phase", UVM_NONE)
+      phase.drop_objection(this);
+   endtask : run_phase
 endclass : mby_mesh_random_test
 
-class mby_mesh_random_seq extends uvm_sequence; //PJP mby_mesh_seq_lib::mby_mesh_env_base_seq;
+class mby_mesh_random_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
 
     `uvm_object_utils(mby_mesh_random_seq)
 
@@ -80,6 +143,9 @@ class mby_mesh_random_seq extends uvm_sequence; //PJP mby_mesh_seq_lib::mby_mesh
     //------------------------------------------------------------------------------
     function new (string name="mby_mesh_random_seq");
         super.new (name);
+        this.set_automatic_phase_objection(1);
+      `uvm_info(this.get_name(), ("mby_mesh_random_seq::new"), UVM_LOW)
+        
     endfunction :  new
 
     //------------------------------------------------------------------------------
@@ -88,15 +154,17 @@ class mby_mesh_random_seq extends uvm_sequence; //PJP mby_mesh_seq_lib::mby_mesh
     //------------------------------------------------------------------------------
     task body ();
         int count;
+
+        this.set_name("mby_mesh_random_seq");
+ 
         `uvm_info(get_name(), "mby_mesh_random_seq is running!", UVM_MEDIUM);
-        #500;
-/* PJP TEMPORARY
-        repeat(50) begin
+         #500;
+
+        repeat(5000) begin
             @(posedge vif.fab_clk);
             count++;
-            `uvm_info(get_name(), $sformatf("mby_mesh_random_seq: clock edge %0d",count), UVM_FULL);
+            `uvm_info(get_name(), $sformatf("mby_mesh_random_seq: clock edge %0d",count), UVM_NONE);
         end
-*/
 
     endtask
 
