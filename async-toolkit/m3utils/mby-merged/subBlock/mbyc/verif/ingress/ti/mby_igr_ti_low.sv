@@ -40,8 +40,6 @@ module mby_igr_ti_low #(
     ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_3
     ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_4
     ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_4
-    ,mby_tag_bfm_uc_if   tag_bfm_intf_0
-    ,mby_tag_bfm_uc_if   tag_bfm_intf_1
    );
 
    import uvm_pkg::*;
@@ -62,8 +60,8 @@ module mby_igr_ti_low #(
       uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf3" , eth_bfm_rx_intf_3);
       uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_tx_vintf4" , eth_bfm_tx_intf_4);
       uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "igr_eth_bfm_rx_vintf4" , eth_bfm_rx_intf_4);
-      uvm_config_db#(virtual mby_tag_bfm_uc_if)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "tag_bfm_vintf0" , tag_bfm_intf_0);
-      uvm_config_db#(virtual mby_tag_bfm_uc_if)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "tag_bfm_vintf1" , tag_bfm_intf_1);
+      //uvm_config_db#(virtual mby_tag_bfm_uc_if)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "tag_bfm_vintf0" , tag_bfm_intf_0);
+      //uvm_config_db#(virtual mby_tag_bfm_uc_if)::set(uvm_root::get(), $sformatf("%s*",IP_ENV), "tag_bfm_vintf1" , tag_bfm_intf_1);
    end
 
    mby_igr_ti_cfg ti_config;
