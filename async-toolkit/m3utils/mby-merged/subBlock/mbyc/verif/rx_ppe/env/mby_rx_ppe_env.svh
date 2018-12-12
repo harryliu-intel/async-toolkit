@@ -53,6 +53,7 @@ class mby_rx_ppe_env extends shdv_base_env;
    // Variable:  tb_ral
    // Protected Top Level rx_ppe RAL env handle.
 //PJP   protected mby_rx_ppe_ral_env                                tb_ral;
+//  mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk                      tb_ral;
 
    // Variable:  eth_cdi_bfm
    // MAC Client BFM agent
@@ -144,6 +145,7 @@ class mby_rx_ppe_env extends shdv_base_env;
 //PJP         `ovm_fatal(get_name(),"Unable to acquire handle to TB RAL!");
 //PJP      end
 
+//      build_ral();
       build_eth_bfm();
 
    endfunction: build_phase
@@ -173,6 +175,28 @@ class mby_rx_ppe_env extends shdv_base_env;
 
    endfunction : build_eth_bfm
 
+   //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds Rx_PPE register model.
+   //
+   //---------------------------------------------------------------------------
+/*   virtual function void build_ral();
+
+      // Check if ral is set by FC
+      if (!uvm_config_db#(mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk)::get(this, "", "rx_ppe_ral", tb_ral)) begin
+         tb_ral = mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
+         tb_ral.lock_model();
+
+         uvm_config_db#(mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk)::set(this, "*", "rx_ppe_ral", tb_ral);
+
+         // Build the Adapter's based on agt's active
+        
+      end
+      
+   endfunction: build_ral
+*/   
    //---------------------------------------------------------------------------
    //  Function: connect_phase
    //  Connects different BFM interfaces and Scoreboard

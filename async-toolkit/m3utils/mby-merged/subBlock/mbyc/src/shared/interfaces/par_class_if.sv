@@ -41,7 +41,10 @@ imn_rpl_bkwd_t      rpl_bkwd;       //Management status from downstream blocks
 imn_rpl_frwd_t      rpl_frwd;       //Managment to downstream blocks
 
 parser_out_t        parser_out;     //Parser results
-logic               parser_out_v;   //Parser results valid
+logic   [1:0]       parser_out_v;   //Parser results valid
+
+igr_rx_ppe_md_t     if0_md;         //Interface 0 metadata
+igr_rx_ppe_md_t     if1_md;         //Interface 1 metadata
 
 igr_rx_ppe_tail_t   tail_info;      //Tail info
 logic               tail_info_v;    //Tail info valid
@@ -51,6 +54,8 @@ modport parser(
     output  rpl_frwd,
     output  parser_out,
     output  parser_out_v,
+    output  if0_md,
+    output  if1_md,
     output  tail_info,
     output  tail_info_v
 );
@@ -60,6 +65,8 @@ modport classifier(
     input   rpl_frwd,
     input   parser_out,
     input   parser_out_v,
+    input   if0_md,
+    input   if1_md,
     input   tail_info,
     input   tail_info_v
 );
