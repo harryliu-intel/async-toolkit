@@ -48,6 +48,7 @@ VCS_LIB = $(addprefix -y ,$(INCS))
 VCS_LIB += $(addprefix -y ,$(DV_SRC))
 
 VCS_SRC  =	$(SHARED_SRC)/rtl/shared_pkg.sv
+VCS_SRC  +=	$(SHARED_SRC)/rtl/mby_rx_metadata_pkg.sv
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_register_constants_pkg.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_pkg.vh
 VCS_SRC  +=	$(SHARED_SRC)/rtl/hlp/hlp_pkt_meta_pkg.vh

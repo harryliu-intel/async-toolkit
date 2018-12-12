@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GMM Bus Functional Model Defines
+// Title         : Madison Bay GPM Bus Functional Model Defines
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gmm_bfm_defines.sv
+// File          : mby_gpm_bfm_defines.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// These are the GMM BFM definitions
+// These are the GPM BFM definitions
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,10 +30,10 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GMM_BFM_PKG__
-`error "Attempt to include file outside of mby_gmm_bfm_pkg."
+`ifndef __MBY_GPM_BFM_PKG__
+`error "Attempt to include file outside of mby_gpm_bfm_pkg."
 `endif
-`ifndef __MBY_GMM_BFM_DEFINES__
-`define __MBY_GMM_BFM_DEFINES__
+`ifndef __MBY_GPM_BFM_DEFINES__
+`define __MBY_GPM_BFM_DEFINES__
 // Definitions & local parameters
 `endif

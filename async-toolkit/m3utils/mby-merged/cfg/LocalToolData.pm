@@ -290,6 +290,7 @@ $ToolConfig_tools{"mgm"} = {
                     "egr",
                     "gcm",
                     "gpm",
+                    "mce",
                     "msh",
                    ],
         },
