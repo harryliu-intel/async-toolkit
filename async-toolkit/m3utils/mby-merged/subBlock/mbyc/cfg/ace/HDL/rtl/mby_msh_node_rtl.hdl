@@ -45,6 +45,8 @@ $hdl_spec = {
      "target/mby/mgm_run/msh/src",
      "target/mby/mgm_run/msh/src/mem_wrap",
      "target/mby/mgm_run/rtl",
+     "target/GenRTL/regflow/msh/output/chdr",
+     "target/GenRTL/regflow/msh/output/sverilog",
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -56,6 +58,8 @@ $hdl_spec = {
      "target/mby/mgm_run/msh/src",
      "target/mby/mgm_run/msh/src/mem_wrap",
      "target/mby/mgm_run/rtl",
+     "target/GenRTL/regflow/msh/output/chdr",
+     "target/GenRTL/regflow/msh/output/sverilog",
      ],
     
     # Arbitrary VLOG options
