@@ -80,7 +80,7 @@ module mby_rx_ppe_tb_top ();
    assign cdi_rx_intf.data            = cdi_tx_intf.data;
    assign cdi_rx_intf.pfc_xoff        = cdi_tx_intf.pfc_xoff;
    //assign cdi_rx_intf.au_credits      = cdi_tx_intf.au_credits; // PJP: TODO: au_credits no longer exists in the rx_intf. Not sure what needs to be fixed, commenting out for now.
-   assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc;
+   //assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc; // MJ: TODO: flow_control_tc was removed.
    assign cdi_tx_intf.enable          = 1;
 
 
