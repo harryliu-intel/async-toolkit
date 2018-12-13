@@ -30,33 +30,48 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_SMM_BFM_PKG__
-`error "Attempt to include file outside of mby_smm_bfm_pkg."
-`endif
-`ifndef __MBY_SMM_BFM_TYPES__
-`define __MBY_SMM_BFM_TYPES__
+//`ifndef __MBY_SMM_BFM_PKG__
+//`error "Attempt to include file outside of mby_smm_bfm_pkg."
+//`endif
+`ifndef __MBY_SMM_BFM_IF_TYPES__
+`define __MBY_SMM_BFM_IF_TYPES__
 
 // -------------------------------------------------------------------------
-// Main class & VIF type definitions for TAG BFM
+// Main struct type definitions for SMM BFM
 // -------------------------------------------------------------------------
-// Creating a virtual interface types for wr_req & rd_req/rd_rsp
-typedef virtual mby_smm_bfm_row_wr_req_if mby_smm_bfm_row_wr_req_vif;
-typedef virtual mby_smm_bfm_row_rd_req_if mby_smm_bfm_row_rd_req_vif;
+// Re-using the defined types from the RTL pkg libraries: subBlock/mbyc/src/shared/rtl/mby_msh_pkg.sv  
+// The struct format defined here is a literaly coppy from the Mesh West Side Interface from: subBlock/mbyc/src/msh/rtl/mby_msh.sv 
 
-// Forward declaration of the transaction classes (in the smm_bfm_pkg
-// these file are compiled before the transaction item.
-typedef class mby_smm_bfm_row_wr_req_xaction;
-typedef class mby_smm_bfm_row_rd_req_xaction;
+typedef struct packed {  // Copy of: subBlock/mbyc/src/shared/interfaces/mim_wr_if.sv
+  logic                         mim_wreq_valid;
+  logic [W_SEG_PTR-1:0]         mim_wr_seg_ptr; //[19:0]
+  logic [W_SEMA-1:0]            mim_wr_sema;    //[ 3:0]
+  logic [W_WD_SEL-1:0]          mim_wr_wd_sel;  //[ 2:0]
+  logic [W_REQ_ID-1:0]          mim_wreq_id;    //[12:0]
+  logic [W_WORD_BITS-1:0]       mim_wr_data;    // 64*8
 
-// Defining the wr_req & rd_req/rd_rsp agents as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_smm_bfm_row_wr_req_xaction), .T_vif(mby_smm_bfm_row_wr_req_vif)) smm_bfm_row_wr_req_agent;
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_smm_bfm_row_rd_req_xaction), .T_vif(mby_smm_bfm_row_rd_req_vif)) smm_bfm_row_rd_req_agent;
+  logic [W_XACT_CREDITS-1:0]    mim_wreq_credits; // temp value   
+} mby_smm_bfm_row_wr_req_t;
 
-typedef class mby_smm_bfm_mwr_req;
-typedef class mby_smm_bfm_mrd_req;
-typedef class mby_smm_bfm_mem_node;
-typedef mby_smm_bfm_mwr_req#(.T_req(mby_smm_bfm_row_wr_req_xaction)) smm_bfm_mwr_req;
-typedef mby_smm_bfm_mrd_req#(.T_req(mby_smm_bfm_row_rd_req_xaction)) smm_bfm_mrd_req;
-typedef mby_smm_bfm_mem_node#(.ADDR_WIDTH(MSH_NODE_ADDR_WIDTH),.DATA_WIDTH(MSH_DATA_WIDTH)) smm_bfm_mem_node;
+typedef struct packed {   // Copy of: subBlock/mbyc/src/shared/interfaces/mim_rd_if.sv
+  logic                         mim_rreq_valid;
+  logic [W_SEG_PTR-1:0]         mim_seg_ptr;      //[19:0]
+  logic [W_SEMA-1:0]            mim_sema;         //[ 3:0]
+  logic [W_WD_SEL-1:0]          mim_wd_sel;       //[ 2:0]
+  logic [W_REQ_ID-1:0]          mim_req_id;       //[12:0]
+
+  logic [W_XACT_CREDITS-1:0]    mim_rreq_credits; // temp value   
+
+  logic                         mim_rrsp_valid;
+  logic [W_RRSP_DEST_BLOCK-1:0] mim_rrsp_dest_block;  //[2:0]
+  logic [W_REQ_ID-1:0]          mim_rrsp_req_id;      //[12:0]
+  logic [W_WORD_BITS-1:0]       mim_rd_data;          //64 x 8    
+} mby_smm_bfm_row_rd_req_t;
+
+
+
+// Defining the debug types to be simple logic for now.
+typedef logic mby_smm_bfm_row_wr_req_debg_t;
+typedef logic mby_smm_bfm_row_rd_req_debg_t;
 
 `endif

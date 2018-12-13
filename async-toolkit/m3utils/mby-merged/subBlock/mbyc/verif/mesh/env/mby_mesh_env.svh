@@ -49,7 +49,10 @@ class mby_mesh_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
    virtual   mby_mesh_tb_if                                tb_vif;
-
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm;
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm;
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm;
+   mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm;
 
    `uvm_component_utils_begin(mby_mesh_env)
    `uvm_component_utils_end
@@ -104,8 +107,29 @@ class mby_mesh_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
       end
 
+      build_mgp_bfm();
    endfunction: build_phase
 
+   //---------------------------------------------------------------------------
+   //  Function: build_mgp_bfm
+   //  Build the 4 mgp bfms and assign interfaces and cfg objects. 
+   //---------------------------------------------------------------------------
+   function void build_mgp_bfm();
+      eb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("eb_mgp_bfm", this);
+      wb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("wb_mgp_bfm", this);
+      nb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("nb_mgp_bfm", this);
+      sb_mgp_bfm = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create("sb_mgp_bfm", this);
+      
+      eb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
+      eb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
+      wb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
+      wb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
+      nb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
+      nb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
+      sb_mgp_bfm.mst_agent_cfg = tb_cfg.env_cfg.mst_agent_cfg;
+      sb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
+   endfunction: build_mgp_bfm
+   
    //---------------------------------------------------------------------------
    //  Function: connect_phase
    //  Connects different BFM interfaces and Scoreboard

@@ -31,7 +31,7 @@ function mby_mgp_agent_cfg::new (string name = "");
 
    super.new(name);
    req_agent_cfg = mby_mgp_req_agent_cfg::type_id::create("req_agent_cfg");
-   
+   req_agent_cfg.is_active = is_active;
 endfunction : new
 
 
