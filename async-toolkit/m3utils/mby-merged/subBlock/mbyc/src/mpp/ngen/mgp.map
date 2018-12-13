@@ -11,7 +11,7 @@ $z = $x + 1;  // 1,3
 
 \{grp_c$y$_rx0_data[63:0], grp_c$y$_rx1_data[63:0], grp_c$y$_rx2_data[63:0], grp_c$y$_rx3_data[63:0], grp_c$y$_rx4_data[63:0], grp_c$y$_rx5_data[63:0], grp_c$y$_rx6_data[63:0], grp_c$y$_rx7_data[63:0]\}  >> grp_c_rx_data
 
-\{grp_d$y$_rx0_data[63:0], grp_d$y$_rx1_data[63:0], grp_d_rx2$y$_data[63:0], grp_d$y$_rx3_data[63:0], grp_d$y$_rx4_data[63:0], grp_d$y$_rx5_data[63:0], grp_d$y$_rx6_data[63:0], grp_d$y$_rx7_data[63:0]\}  >> grp_d_rx_data
+\{grp_d$y$_rx0_data[63:0], grp_d$y$_rx1_data[63:0], grp_d$y$_rx2_data[63:0], grp_d$y$_rx3_data[63:0], grp_d$y$_rx4_data[63:0], grp_d$y$_rx5_data[63:0], grp_d$y$_rx6_data[63:0], grp_d$y$_rx7_data[63:0]\}  >> grp_d_rx_data
 
 \{igr$y$_vp_rx0_data_w_ecc[71:0], igr$y$_vp_rx1_data_w_ecc[71:0], igr$y$_vp_rx2_data_w_ecc[71:0], igr$y$_vp_rx3_data_w_ecc[71:0], igr$y$_vp_rx4_data_w_ecc[71:0], igr$y$_vp_rx5_data_w_ecc[71:0], igr$y$_vp_rx6_data_w_ecc[71:0], igr$y$_vp_rx7_data_w_ecc[71:0]\}  >> igr_vp_rx_data_w_ecc
 
