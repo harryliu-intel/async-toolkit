@@ -36,6 +36,8 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../../shared/rtl/mby_egr_pkg.sv \
 ../../rtl/mby_igr_pkg.sv \
 ../../../shared/rtl/mby_gmm_pkg.sv \
+../../../shared/rtl/mby_egr_pkg.sv \
+../../../shared/rtl/mby_rx_metadata_pkg.sv \
 ../../../shared/interfaces/igr_rx_ppe_if.sv \
 ../../../shared/interfaces/rx_ppe_igr_if.sv \
 ../../../shared/interfaces/mim_rd_if.sv \
