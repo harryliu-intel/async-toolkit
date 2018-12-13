@@ -12,6 +12,7 @@ while (<$infile_fh>) {
       print $outfile_fh "import mby_igr_pkg::*;\n";
       print $outfile_fh "import mby_egr_pkg::*;\n";
       print $outfile_fh "import mby_gmm_pkg::*;\n";
+      print $outfile_fh "import shared_pkg::*;\n";
       print $outfile_fh "(\n";
    }
    #elsif ($_ =~ m/^logic\w*[68:0][1:0] ;/) {
