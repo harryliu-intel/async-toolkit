@@ -45,7 +45,6 @@ class mby_mesh_dut_cfg extends shdv_base_config;
     // Definition of the RESET type
     reset_type_e                     reset_type ;
 
-
     `uvm_object_utils_begin(mby_mesh_dut_cfg)
         `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
     `uvm_object_utils_end
@@ -61,7 +60,7 @@ class mby_mesh_dut_cfg extends shdv_base_config;
     //---------------------------------------------------------------------------
     function new( string name = "mby_mesh_dut_cfg");
         super.new(name);
-       
+  
     endfunction: new
 
     //---------------------------------------------------------------------------

@@ -34,14 +34,14 @@ interface mby_mesh_tb_if();
 
     logic hard_reset;
 
-    logic warm_reset;
+//    logic warm_reset;
 
     logic fab_clk;
     
     initial begin
         power_good_reset     = 0;
         hard_reset           = 0;
-        warm_reset           = 0;
+//        warm_reset           = 0;
     end
     
 endinterface

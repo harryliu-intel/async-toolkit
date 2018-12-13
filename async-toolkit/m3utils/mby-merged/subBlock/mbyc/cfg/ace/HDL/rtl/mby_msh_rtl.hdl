@@ -2,6 +2,10 @@
 #  This is a HDL spec file - it defines the unit and how to compile it.
 #
 #
+use ToolConfig;
+
+my $SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+my $VCS_HOME       = $ENV{VCS_HOME};
 
 
 $hdl_spec = {
@@ -16,7 +20,23 @@ $hdl_spec = {
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/msh/rtl/mby_msh_defines.vh",
        "src/msh/rtl/mby_msh.sv",
+       "$SHRTL/src/common/rtl/shrtl_nbits_pkg.vh",                             
+       "$SHRTL/src/fifo/rtl/shrtl_async_flop_fifo.sv",
+       "$SHRTL/src/fifo/rtl/shrtl_flop_fifo.sv",
+       "$SHRTL/src/common/rtl/shrtl_flop_ram.sv",
+       "$SHRTL/src/sync/rtl/shrtl_sync.sv",
+      # "$SHRTL/src/sync/rtl/shrtl_lib_sync2.sv",
+       "$SHRTL/src/sync/rtl/shrtl_cdc_mux.sv",
+       "$SHRTL/src/sync/rtl/shrtl_sync_pipe.sv",
+       "$SHRTL/src/fifo/rtl/shrtl_async_fifo_ctrl.sv",           
        "src/mim/rtl/mby_mim.sv",
+       "src/mim/rtl/mby_mim_wr.sv",
+       "src/mim/rtl/mby_mim_wr_cdc.sv",
+       "src/mim/rtl/mby_mim_rdreq.sv",
+       "src/mim/rtl/mby_mim_rdreq_cdc.sv",
+       "src/mim/rtl/mby_mim_rdrsp.sv",
+       "src/mim/rtl/mby_mim_rdrsp_cdc.sv", 
+
      ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
@@ -25,6 +45,8 @@ $hdl_spec = {
      "target/mby/mgm_run/msh/src",
      "target/mby/mgm_run/msh/src/mem_wrap",
      "target/mby/mgm_run/rtl",
+     "$VCS_HOME/packages/sva",
+     "$VCS_HOME/packages/sva_cg",
      ],
     
     # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
@@ -38,6 +60,9 @@ $hdl_spec = {
      "target/mby/mgm_run/msh/src",
      "target/mby/mgm_run/msh/src/mem_wrap",
      "target/mby/mgm_run/rtl",
+     "$SHRTL/src/common/rtl",
+     "$VCS_HOME/packages/sva",
+     "$VCS_HOME/packages/sva_cg",
      ],
     
     # Arbitrary VLOG options
