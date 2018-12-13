@@ -52,10 +52,14 @@ module mby_egr_tb ();
   // ===============================================
   // DUT RTL instance
   // ===============================================
+  mby_tag_bfm_uc_if tag_bfm_intf_0 (egress_reset, egress_clock);
+  mby_tag_bfm_uc_if tag_bfm_intf_1 (egress_reset, egress_clock);
+   
 `include "mby_egr_top_inst.v"
 
   // Parameters for interfaces
 `include "mby_egr_params.sv"
+
 
   // ===============================================
   // Interfaces instance
@@ -70,6 +74,10 @@ module mby_egr_tb ();
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_2 (egress_reset, egress_clock);
   mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (egress_reset, egress_clock);
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (egress_reset, egress_clock);
+
+
+
+   
 
   assign eth_bfm_tx_intf_0.enable = 1;
   assign eth_bfm_tx_intf_1.enable = 1;
@@ -135,6 +143,8 @@ module mby_egr_tb ();
                    ,.eth_bfm_rx_intf_2   (eth_bfm_rx_intf_2)
                    ,.eth_bfm_tx_intf_3   (eth_bfm_tx_intf_3)
                    ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
+                   ,.tag_bfm_intf_0 (tag_bfm_intf_0)
+                   ,.tag_bfm_intf_1 (tag_bfm_intf_1)
                   );
 
 `include "std_ace_util.vic"

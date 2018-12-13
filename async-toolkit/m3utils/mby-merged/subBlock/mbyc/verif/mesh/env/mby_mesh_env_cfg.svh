@@ -49,6 +49,8 @@ class mby_mesh_env_cfg extends shdv_base_config;
    `uvm_object_utils_begin(mby_mesh_env_cfg)
    `uvm_object_utils_end
 
+   rand mby_mgp_bfm_pkg::mby_mgp_agent_cfg mst_agent_cfg;
+   rand mby_mgp_bfm_pkg::mby_mgp_agent_cfg slv_agent_cfg;
    //---------------------------------------------------------------------------
    // Constructor: new
    //
@@ -59,6 +61,8 @@ class mby_mesh_env_cfg extends shdv_base_config;
    //---------------------------------------------------------------------------
    function new( string name = "mby_mesh_env_cfg");
       super.new(name);
+      mst_agent_cfg = mby_mgp_bfm_pkg::mby_mgp_agent_cfg::type_id::create("mst_agent_cfg");
+      slv_agent_cfg = mby_mgp_bfm_pkg::mby_mgp_agent_cfg::type_id::create("slv_agent_cfg");
    endfunction: new
 
    //---------------------------------------------------------------------------
