@@ -36,6 +36,6 @@ for (int loop=0; loop<loops; loop++) begin
 //    env.final_state_check();        // check for any irregularities in final state of DUT
 //    env.print_cfg();                // print configuration information
 //    env.print_stats();              // print statistics
-    env.wait_delay(10);             // wait for 10 cycles
+    env.wait_delay(200);             // wait for 10 cycles
     $display("---loop%0d end---",loop);
 end

@@ -32,6 +32,8 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +incdir+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/common/rtl \
 /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/fifo/rtl/shrtl_flop_fifo.sv \
 ../../../shared/rtl/shared_pkg.sv \
+../../../shared/rtl/mby_rx_metadata_pkg.sv \
+../../../shared/rtl/mby_egr_pkg.sv \
 ../../rtl/mby_igr_pkg.sv \
 ../../../shared/rtl/mby_gmm_pkg.sv \
 ../../../shared/rtl/mby_egr_pkg.sv \
@@ -47,6 +49,7 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../interfaces/pre_ppe_header_if.sv \
 -y ../../pre_ppe/rtl \
 -y ../../post_ppe/rtl \
+-y ../pre_post/verilog \
 ../../epl_shim/rtl/mby_igr_epl_shim_ctrl.sv \
 ../../epl_shim/rtl/mby_igr_epl_shim_seg.sv \
 ../../epl_shim/rtl/mby_igr_epl_shim_segs.sv \
