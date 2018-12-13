@@ -3,7 +3,7 @@
 rm simv
 rm simv.daidir/.vcs.timestamp
 
-#setenv SHARED_RTL `ToolConfig.pl get_tool_path ipconfig/sl2_library`
+setenv SHRTL `ToolConfig.pl get_tool_path ipconfig/shrtl`
 #setenv IP16 `ToolConfig.pl get_tool_path ipconfig/sl2lib_ip16`
 #setenv IP16 /nfs/site/disks/sdg74_mod_fhdk16_0001/sl2lib_ip16/sl2lib_ip16-srvr10nm-16ww27c
 #setenv CTECH_LIB `ToolConfig.pl get_tool_path ipconfig/ctech`
