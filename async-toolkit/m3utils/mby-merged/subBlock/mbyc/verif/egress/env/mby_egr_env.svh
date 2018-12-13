@@ -68,6 +68,11 @@ class mby_egr_env extends mby_egr_base_env;
 
    mby_tag_bfm_pkg::mby_tag_bfm_uc_vif tag_bfm_intf[`NUM_TAG_PORTS];
 
+   // Shared Memory Mesh (SMM) Instance
+   mby_smm_bfm_t   smm_bfm;
+   mby_smm_bfm_cfg smm_bfm_igr_wr_req_cfg;
+   mby_smm_bfm_cfg smm_bfm_egr_rd_req_cfg;
+
    // Variable: env_monitor
    // egress env event monitor
    mby_egr_env_monitor env_monitor;
@@ -108,7 +113,8 @@ class mby_egr_env extends mby_egr_base_env;
 
       build_eth_bfms();
       build_tag_bfm();
-
+      build_smm_bfm();
+      
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
@@ -196,8 +202,6 @@ class mby_egr_env extends mby_egr_base_env;
 
 
    function void build_tag_bfm();
-
-
       foreach(tag_bfm[i]) begin
          // Get the eth_bfm_vif ptrs
          if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
@@ -210,8 +214,21 @@ class mby_egr_env extends mby_egr_base_env;
          tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
          tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
       end
-
    endfunction : build_tag_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: build_smm_bfm
+   // Builds the instance of the SMM BFM 
+   //--------------------------------------------------------------------------
+   function void build_smm_bfm();
+      smm_bfm                    = mby_smm_bfm_t::type_id::create("smm_bfm", this);
+      smm_bfm_igr_wr_req_cfg     = new("smm_bfm_igr_wr_req_cfg");
+      smm_bfm.igr_wr_req_cfg_obj = smm_bfm_igr_wr_req_cfg;
+      smm_bfm_egr_rd_req_cfg     = new("smm_bfm_egr_rd_req_cfg");
+      smm_bfm.egr_rd_req_cfg_obj = smm_bfm_egr_rd_req_cfg;
+   endfunction : build_smm_bfm
+
+
    //--------------------------------------------------------------------------
    // Function: connect_eth_bfms
    // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer

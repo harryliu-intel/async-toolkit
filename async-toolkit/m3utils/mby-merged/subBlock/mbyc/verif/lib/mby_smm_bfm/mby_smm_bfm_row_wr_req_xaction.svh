@@ -2,12 +2,12 @@
 // Title         : Madison Bay SMM BFM Transaction item
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_xaction.svh
-// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// File          : mby_smm_bfm_row_wr_req_xaction.svh
+// Author        : Roman Bernal <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the transaction item used by the gcm bfm
+// This is the transaction item used by the smm bfm
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -33,28 +33,26 @@
 `ifndef __MBY_SMM_BFM_PKG__
 `error "Attempt to include file outside of mby_smm_bfm_pkg."
 `endif
-`ifndef __MBY_SMM_BFM_XACTION__
-`define __MBY_SMM_BFM_XACTION__
+`ifndef __MBY_SMM_BFM_ROW_WR_REQ_XACTION__
+`define __MBY_SMM_BFM_ROW_WR_REQ_XACTION__
 //-----------------------------------------------------------------------------
-// CLASS: mby_smm_bfm_xaction
+// CLASS: mby_smm_bfm_row_wr_req_xaction
 //
 // This is a parameterized class used by mby_base_agent.
 //
 // PARAMETERS:
 //     T_data     - data type (expecting to be a struct)
-//     T_debug    - set to logic for now
 //
 //-----------------------------------------------------------------------------
-class mby_smm_bfm_xaction extends mby_base_sequence_item
+class mby_smm_bfm_row_wr_req_xaction extends mby_base_sequence_item
 #(
-   .T_data (),
-   .T_debug()
+   .T_data (mby_smm_bfm_row_wr_req_t)
 );
 
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_smm_bfm_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_smm_bfm_row_wr_req_xaction)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -65,7 +63,7 @@ class mby_smm_bfm_xaction extends mby_base_sequence_item
    //     string name - The sequence item name
    //
    // -------------------------------------------------------------------------
-   function new (string name = "mby_smm_bfm_xaction");
+   function new (string name = "mby_smm_bfm_row_wr_req_xaction");
       super.new(name);
    endfunction
 
@@ -76,6 +74,13 @@ class mby_smm_bfm_xaction extends mby_base_sequence_item
    //
    // -------------------------------------------------------------------------
    virtual function string convert2string();
+      string msg_str = "";
+      string lns_str = { {8{" -------- "}}, "\n" };
+      msg_str = super.convert2string();
+      msg_str = { msg_str, $sformatf("row_wr_req_xaction::seg_ptr=%05h -:- wr_data=%0128h\n",
+         this.data_pkt.mim_wr_seg_ptr, this.data_pkt.mim_wr_data) };
+      msg_str = { msg_str, lns_str };
+      return msg_str;
    endfunction : convert2string
 
    // -------------------------------------------------------------------------
@@ -92,8 +97,7 @@ class mby_smm_bfm_xaction extends mby_base_sequence_item
    // -------------------------------------------------------------------------
    virtual function void do_print(uvm_printer printer);
       super.do_print(printer);
-      // pretty print
    endfunction : do_print
 
-endclass : mby_smm_bfm_xaction
+endclass : mby_smm_bfm_row_wr_req_xaction
 `endif
