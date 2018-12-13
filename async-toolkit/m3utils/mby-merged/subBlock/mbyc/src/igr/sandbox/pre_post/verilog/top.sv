@@ -118,7 +118,7 @@ import igr_sim_pkg::*;
       .mim_wreq_4_mim_wreq_credits             ( dut_if.mim_wreq_4_mim_wreq_credits ),
       .mim_wreq_5_mim_wreq_credits             ( dut_if.mim_wreq_5_mim_wreq_credits ),
 
-      .rx_ppe_igr_intf0                        ( dut_if.rx_ppe_igr_intf1 ),
+      .rx_ppe_igr_intf0                        ( dut_if.rx_ppe_igr_intf0 ),
       .rx_ppe_igr_intf1                        ( dut_if.rx_ppe_igr_intf1 ),
 
               // outputs

@@ -27,7 +27,7 @@
 // ---------------------------------------------------------------------------------------------------------------------
 
 module rx_ppe_bfm
-  import mby_igr_pkg::*, mby_egr_pkg::*, shared_pkg::*;
+  import mby_igr_pkg::*, mby_egr_pkg::*, mby_rx_metadata_pkg::*, shared_pkg::*;
   (
    input cclk, 
    input rst,
@@ -51,45 +51,72 @@ module rx_ppe_bfm
 
     rx_ppe_igr_t tmp;
 
-//  typedef struct packed {
-//      logic   [122:0]                 reserved;
-//      logic   [3:0]                   packet_type;
-//      logic   [23:0]                  mod_profile;
-//      logic   [19:0]                  mod_md;
-//      logic   [11:0]                  ivid;
-//      logic   [11:0]                  evid;
-//      logic   [3:0]                   vpri;
-//      logic   [1:0]                   tx_tag;
-//      logic   [3:0]                   tag_flags;      //parser flags
-//      logic   [47:0]                  dmac;
-//      logic   [7:0]                   rx_port;        //source port
-//      logic   [5:0]                   l3d;            //L3 domain
-//      logic   [IGR_PPE_TS_WIDTH-1:0]  igr_ts;         //Ingress timestamp
-//      logic   [7:0]                   l3_mcgrpid;
-//      logic                           tx_drop;
-//      logic   [5:0]                   dscp;
-//      logic   [3:0]                   ttl_ctl;
-//      logic   [1:0]                   ecn_val;
-//      logic                           aqm_mark_en;
-//      logic   [63:0]                  hdr_ptr;
-//      logic   [63:0]                  hdr_ptr_offset;
-//  } rx_ppe_igr_port_md_t;
-//  
-//  typedef union packed {
-//      rx_ppe_igr_cpp_md_t     cpp_md;     //CPP metadata
-//      rx_ppe_igr_port_md_t    port_md;    //Normal port metadata
-//  } rx_ppe_igr_md_t;
-//  
-//  typedef struct packed {
-//      rx_ppe_igr_md_t                         md;             //metadata
-//      logic   [$clog2(POLICER_CNT)-1:0]       policer_idx;    //Policer index
-//      logic   [$clog2(MGP_TC_CNT)-1:0]        tc;             //Egress TC
-//      logic   [$clog2(MGP_PORT_CNT)-1:0]      port;           //egress port ID
-//      logic   [2:0]                           pkt_type;       //one hot packet type indication, bit2:INT, bit1:CPP, bit0:normal
-//      logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;             //header segment packet ID
-//      logic                                   valid;          //valid
-//  } rx_ppe_igr_t;
-//  
+
+  // from shared/rtl/mby_rx_metadata_pkg.sv  
+  //   typedef enum logic [3:0] {
+  //      MC          = 4'h0,              // MC.
+  //      UC          = 4'h1,              // UC.
+  //      MIRROR_MC   = 4'h2,              // Mirror MC.
+  //      MIRROR_UC   = 4'h3,              // Mirror UC.
+  //      INT_MC      = 4'h4,              // INT MC.
+  //      INT_UC      = 4'h5,              // INT UC.
+  //      VP_MC       = 4'h8,              // Virtual Port MC
+  //      VP_UC       = 4'h9               // Virtual Port UC
+  //   } pkt_type_t;                    // UC, Mirror, INT, VP
+  //   
+  //    
+  //   typedef struct packed {
+  //      offset_hdr_ptrs_t             offset_hdr_ptrs;            
+  //      protocol_id_hdr_ptrs_t        protocol_id_hdr_ptrs;       
+  //      aqm_quantized_val_t           aqm_quantized_val;          
+  //      logic                         aqm_mark_en;            // Active Queue Management Enable
+  //      ecn_val_t                     ecn_val;                    
+  //      ttl_ctl_t                     ttl_ctl;                    
+  //      dscp_t                        dscp;                       
+  //      logic                         tx_drop;                // Ingress indicates to Egress to drop the frame
+  //      mirror_port_mod_profile_idx_t mirror_port_mod_profile_idx1;  
+  //      mirror_port_mod_profile_idx_t mirror_port_mod_profile_idx2;  
+  //      tag_flags_t                   tag_flags;                  
+  //      tx_tag_t                      tx_tag;                     
+  //      vpri_t                        vpri;                           
+  //      nh_egr_negh_table_idx_t       nh_egr_negh_table_idx;              
+  //      l2d_t                         l2d;                            
+  //      ivid_t                        ivid;                           
+  //      logic                         route_flag;             // Indicate to Modify the packet should be routed (from Nexthop)
+  //      mod_metadata_t                mod_metadata;                   
+  //      mod_profile_t                 mod_profile;                        
+  //      pkt_type_t                    pkt_type;           
+  //   } unicast_meta_t;          
+  //    
+  //   typedef struct packed {
+  //      logic [`MD_MSB-`UC_SIZE:0]   reserved;
+  //      unicast_meta_t               unicast_meta;                
+  //   } uc_meta_t;               
+  //
+  //   typedef union packed {
+  //      uc_meta_t                     uc_meta;
+  //      mc_meta_t                     mc_meta;
+  //      uc_telemetry_meta_t           uc_telemetry_meta;
+  //      mc_telemetry_meta_t           mc_telemetry_meta;
+  //      uc_vport_meta_t               uc_vport_meta;
+  //      mc_vport_meta_t               mc_vport_meta;      
+  //      uc_int_meta_t                 uc_int_meta;
+  //      mc_int_meta_t                 mc_int_meta;      
+  //   } ppe_no_pt_meta_data_t;
+  //
+  //   typedef struct packed {
+  //      ppe_no_pt_meta_data_t         md;
+  //      pkt_type_t                    pkt_type;           
+  //   } ppe_meta_data_t;
+  //
+  //   typedef struct packed {
+  //      ppe_meta_data_t                         md;             //metadata
+  //      logic   [$clog2(POLICER_CNT)-1:0]       policer_idx;    //Policer index
+  //      logic   [$clog2(MGP_TC_CNT)-1:0]        tc;             //Egress TC
+  //      logic   [$clog2(MBY_PORT_CNT)-1:0]      port;           //egress port ID
+  //      logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;             //header segment packet ID
+  //      logic                                   valid;          //valid
+  //   } rx_ppe_igr_t;
 
     always_comb begin
         tmp = '0;
@@ -98,14 +125,32 @@ module rx_ppe_bfm
         //            be randomized, or looked up from randomized data in inp_driver
         tmp.valid       = intf0_queue[PIPE_DEPTH-1].valid;
         tmp.id          = intf0_queue[PIPE_DEPTH-1].md.id;
-        tmp.pkt_type    = 3'b001; 
-        tmp.port        = 8'hAB;   // FIXME -- rx_ppe_igr_t has 5 bits, shouldn't be using MGP_PORT_CNT for this
+        tmp.port        = 9'hAB;
         tmp.tc          = 4'h1;
-        tmp.policer_idx = 12'h000;
-        tmp.md.port_md.packet_type = 4'b0000;
-        tmp.md.port_md.rx_port = 8'h00; // FIXME -- I might have rx_port in upper bits of ID, but that would be redundant
-        tmp.md.port_md.tx_drop = 1'b0;
+        tmp.policer_idx = 12'hfed;
+        tmp.md.pkt_type = UC;
+        //tmp.md.port_md.rx_port = 8'h00; // FIXME -- I might have rx_port in upper bits of ID, but that would be redundant
+        //tmp.md.port_md.tx_drop = 1'b0;
         
+        tmp.md.md.uc_meta.unicast_meta.offset_hdr_ptrs              = 64'h1122334455667788;
+        tmp.md.md.uc_meta.unicast_meta.protocol_id_hdr_ptrs         = 64'haabbccddeeff0011;       
+        tmp.md.md.uc_meta.unicast_meta.aqm_quantized_val            = 4'h0;          
+        tmp.md.md.uc_meta.unicast_meta.aqm_mark_en                  = '0; 
+        tmp.md.md.uc_meta.unicast_meta.ecn_val                      = '0;                    
+        tmp.md.md.uc_meta.unicast_meta.ttl_ctl                      = 4'hf;                    
+        tmp.md.md.uc_meta.unicast_meta.dscp                         = 6'h0;                       
+        tmp.md.md.uc_meta.unicast_meta.tx_drop                      = 1'b0;     
+        tmp.md.md.uc_meta.unicast_meta.mirror_port_mod_profile_idx1 = 6'h0;  
+        tmp.md.md.uc_meta.unicast_meta.mirror_port_mod_profile_idx2 = 6'h0;  
+        tmp.md.md.uc_meta.unicast_meta.tag_flags                    = '0;                  
+        tmp.md.md.uc_meta.unicast_meta.tx_tag                       = '0;                     
+        tmp.md.md.uc_meta.unicast_meta.vpri                         = '0;
+        tmp.md.md.uc_meta.unicast_meta.nh_egr_negh_table_idx        = 14'h3344;              
+        tmp.md.md.uc_meta.unicast_meta.l2d                          = '0;
+        tmp.md.md.uc_meta.unicast_meta.ivid                         = 12'habc;
+        tmp.md.md.uc_meta.unicast_meta.route_flag                   = '0;  
+        tmp.md.md.uc_meta.unicast_meta.mod_metadata                 = 20'h12345;
+        tmp.md.md.uc_meta.unicast_meta.mod_profile                  = 24'h123456;
         
     end
     
@@ -117,6 +162,7 @@ module rx_ppe_bfm
             intf0_queue = {PIPE_DEPTH{igr_rx_ppe_head_t'('0)}};
     
             rx_ppe_igr_intf0 <= rx_ppe_igr_t'('0);
+            rx_ppe_igr_intf1 <= rx_ppe_igr_t'('0);
 
         end else begin
 
@@ -129,29 +175,12 @@ module rx_ppe_bfm
 
             rx_ppe_igr_intf0 <= tmp;
             
+            rx_ppe_igr_intf1 <= rx_ppe_igr_t'('0);
 
         end
         
     end
   
-
-  
-//typedef struct packed {
-//    vp_cpp_rx_md_t                          cpp_md; //Cport metadata
-//    logic   [IGR_PPE_TS_WIDTH-1:0]          ts;     //header segment timestamp
-//    logic   [$clog2(MGP_TC_CNT)-1:0]        tc;     //header segment TC
-//    logic   [$clog2(MGP_PORT_CNT)-1:0]      port;   //header segment incoming port ID
-//    logic   [$clog2(MGP_PKT_ID_CNT)-1:0]    id;     //header segment packet ID
-//} igr_rx_ppe_md_t;
-
-//  typedef struct packed {
-//    igr_rx_ppe_md_t                     md;     //header segment metadata
-//    logic   [IGR_PPE_ECC_WIDTH-1:0]     ecc;    //header segment ECC
-//    logic   [IGR_PPE_DATA_WIDTH-1:0]    data;   //header segment data
-//    logic                               valid;  //header segment valid
-// } igr_rx_ppe_head_t;
-   
-
 
     
 endmodule // rx_ppe_bfm

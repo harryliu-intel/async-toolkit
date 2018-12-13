@@ -59,3 +59,6 @@ repeat(10)
   grp_a_rx_data_valid <= 8'b0000_0000; 
      repeat(100)
   @(posedge cclk);
+
+
+  repeat(1000)  @(posedge cclk);

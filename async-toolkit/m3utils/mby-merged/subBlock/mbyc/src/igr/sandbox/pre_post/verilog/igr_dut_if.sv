@@ -33,7 +33,7 @@
 //
 
 interface igr_dut_if
-import mby_igr_pkg::*, shared_pkg::*;
+import mby_igr_pkg::*, mby_rx_metadata_pkg::*, shared_pkg::*;
 (
    input clk                                        // clk is passed in a parameter and becomes part of the interface
 );

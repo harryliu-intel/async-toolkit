@@ -215,7 +215,11 @@ class inp_driver;
 
 
             i_shim_pb_v_p0[0][0]      = 1'b1;
-            i_shim_pb_data_p0[0].seg0 = {8{72'ha5}};
+
+            for( int i=0; i<8; i++ ) begin
+                i_shim_pb_data_p0[0].seg0[i] = 72'(i+1);
+            end
+
             i_shim_pb_md_p0[0]        = shim_pb_md_t'('h123456);
             i_shim_pb_md_p0[0].md0.md.sop = 1'b1;
 
