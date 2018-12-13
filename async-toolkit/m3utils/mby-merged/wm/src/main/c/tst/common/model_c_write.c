@@ -12,7 +12,7 @@
 #include <mby_top_map.h>
 #include "fm_alos_debughash.h"
 #include "fm_types.h"
-#include "mby_write_field.h"
+#include "model_c_write.h"
 
 #define LOG(...)
 
@@ -120,7 +120,3 @@ void write_field(void *addr, unsigned long value)
         *u64addr = value;
     }
 }
-
-
-
-
