@@ -1,8 +1,2 @@
 // Placeholder
 
-// Temp until IGR ports are added.
-
-26'b0             >> i_gpolring0
-26'b0             >> i_gpolring1
-                  >> o_gpolring_update0
-                  >> o_gpolring_update1

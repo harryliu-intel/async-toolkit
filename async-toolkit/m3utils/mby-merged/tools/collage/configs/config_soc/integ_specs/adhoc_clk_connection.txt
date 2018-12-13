@@ -40,7 +40,7 @@ C   mby_parclk/core_cclk    mby_gms_0/cclk
 //;for {set mppindx 0} {$mppindx<8} {incr mppindx} {
 C   mby_parclk/core_cclk    mby_mpp_${mppindx}/cclk
 C   mby_parclk/core_cclk    mby_ec_top_${mppindx}/cclk
-C   mby_parclk/mac_eclk     mby_ec_top_${mppindx}/pclk
+C   mby_parclk/mac_eclk     mby_ec_top_${mppindx}/eclk
 //;}
 
 # imc clocks - aclk, sclk, pclk
