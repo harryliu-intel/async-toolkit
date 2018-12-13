@@ -91,5 +91,7 @@ mby_igr_top igr_top_i (
    .o_gpolring1(),
    .i_gpolring_update0('0),   
    .i_gpolring_update1('0)   
-   
+   //.o_tag_ring_lltag0(tag_bfm_intf_0.intf_data_pkt),
+   //.o_tag_ring_lltag1(tag_bfm_intf_1.intf_data_pkt)
+      
 );

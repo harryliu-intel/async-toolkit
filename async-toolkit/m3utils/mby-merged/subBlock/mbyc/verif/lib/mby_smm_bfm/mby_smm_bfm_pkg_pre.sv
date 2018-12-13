@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay SMM Interface
+// Title         : Madison Bay SMM Bus Functional Model Package
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_if.sv
+// File          : mby_smm_bfm_pkg.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Madison Bay SMM interface file
+// This is the SMM BFM package file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,11 +30,26 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_SMM_BFM_IF__
-`define __MBY_SMM_BFM_IF__
+`ifndef __MBY_SMM_BFM_PKG_PRE__
+`define __MBY_SMM_BFM_PKG_PRE__
 
-interface mby_smm_bfm_if;
-endinterface : mby_smm_bfm_if
+package mby_smm_bfm_pkg_pre;
+
+   import uvm_pkg::*;
+   import shdv_base_pkg::*;
+   import mby_base_pkg::*;
+   import shared_pkg::*;
+   import mby_msh_pkg::*;
+   import mby_egr_pkg::*; // TODO: getting the data type definitions from here
+                          //       need to change to shared_pkg, once that's
+                          //       available
+
+   `include "uvm_macros.svh"
+   `include "mby_smm_bfm_if_types.svh"
+
+endpackage : mby_smm_bfm_pkg_pre
+
 
 `endif
+
 

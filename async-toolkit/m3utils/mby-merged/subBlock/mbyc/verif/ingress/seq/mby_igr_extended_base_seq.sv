@@ -24,13 +24,27 @@
 class mby_igr_extended_base_seq extends mby_igr_env_base_seq;
 
    `uvm_object_utils(mby_igr_extended_base_seq)
-
+   mby_igr_env    env;
+    
    //---------------------------------------------------------------------------
    // Function: new
    //---------------------------------------------------------------------------
    function new(input string name = "mby_igr_extended_base_seq",
                uvm_sequencer_base sequencer=null, uvm_sequence parent_seq=null);
       super.new(name /*, sequencer, parent_seq*/);
+      env = mby_igr_env::get_igr_env();
    endfunction
-
+   
+   //---------------------------------------------------------------------------
+   // Function: wait_n
+   //
+   // This function will cause a delay of n cycles
+   //
+   // ARGUMENTS:
+   //   int n - number of cycles to wait for
+   //---------------------------------------------------------------------------
+   task wait_n(int n);
+       repeat(n) @(posedge this.env.ingress_if.clock);
+   endtask : wait_n
+   
 endclass : mby_igr_extended_base_seq

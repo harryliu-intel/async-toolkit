@@ -93,7 +93,11 @@ class mby_igr_env extends shdv_base_env;
     // ingress env event monitor
     mby_igr_env_monitor env_monitor;
 
-    mby_tag_bfm_pkg::mby_tag_bfm tag_bfm;
+    mby_tag_bfm_pkg::mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
+
+    mby_tag_bfm_pkg::mby_tag_bfm_uc_vif tag_bfm_intf[`NUM_TAG_PORTS];
+
+
 
     `uvm_component_utils_begin(mby_igr_env)
     `uvm_component_utils_end
@@ -254,10 +258,20 @@ class mby_igr_env extends shdv_base_env;
     // Creates the tag_bfm using the factory
     //--------------------------------------------------------------------------
     function void build_tag_bfm();
-        tag_bfm = mby_tag_bfm::type_id::create("tag_bfm", this);
-        tag_bfm.cfg_obj.bfm_mode = TAG_BFM_IGR_MODE;
-        tag_bfm.cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
-        //tag_bfm.cfg_obj.
+
+        foreach(tag_bfm[i]) begin
+            // Get the eth_bfm_vif ptrs
+           // if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
+           //     `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
+           // end
+       
+            tag_bfm[i] = mby_tag_bfm::type_id::create($sformatf("tag_bfm%0d",i), this);
+            tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_IGR_MODE;
+            tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
+            tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
+        end
+
+    //tag_bfm.cfg_obj.
     endfunction: build_tag_bfm
 
     //--------------------------------------------------------------------------
@@ -299,8 +313,9 @@ class mby_igr_env extends shdv_base_env;
     // adds sequencer
     //--------------------------------------------------------------------------
     function void connect_tag_bfm();
-        //TODO: ogarcia1 no sequencer for now, until we get the interfaces 
-       // add_sequencer("tag_bfm", "tag_uc_agent", tag_bfm.tag_uc_agent.sequencer);
+        foreach(tag_bfm[i])begin
+            tag_bfm[i].tag_uc_agent.vintf = tag_bfm_intf[i];
+        end
     endfunction: connect_tag_bfm
 
 
