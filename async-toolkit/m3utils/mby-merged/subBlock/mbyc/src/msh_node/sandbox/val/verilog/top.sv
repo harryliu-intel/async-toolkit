@@ -176,10 +176,28 @@ import msh_node_sim_pkg::*;
 
     );
 
+
+
+
     // instantiate testcase
-    testcase test(
-        dut_if                                    // pass interface dut_if into testcase
-    );
+
+  testcase test(
+      dut_if,
+      // -hz: 12/7/2018:
+      mby_msh_node.msh_mem_bank_if[0],
+      mby_msh_node.msh_mem_bank_if[1],
+      mby_msh_node.msh_mem_bank_if[2],
+      mby_msh_node.msh_mem_bank_if[3]
+  );
+
+
+
+
+//-hz: 12/6/2018:
+//  logic check_rd_rsp;
+//  assign check_rd_rsp = test.env.mntr.check_rd_rsp;
+
+
 
 endmodule
 

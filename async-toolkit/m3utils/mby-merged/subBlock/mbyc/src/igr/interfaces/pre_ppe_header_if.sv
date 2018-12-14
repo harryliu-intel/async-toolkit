@@ -39,7 +39,7 @@ interface pre_ppe_header_if ();
     epl_ts_t                       sop_ts;
     logic                          eop_valid; 
     igr_pkt_id_t                   eop_pkt_id;
-    sop_md_t                       eop_md;  
+    eop_md_t                       eop_md;  
     shim_pb_data_t                 sop_data;    // 3 x 64B + ECC
 
     seg_ptr_t                      wr_seg_ptr; //[19:0]

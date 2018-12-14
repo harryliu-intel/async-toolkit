@@ -63,7 +63,7 @@ class mby_base_sequence_item
 
    // VARIABLE: debg_pkt
    // Struct that contains debug data of this transaction.
-   rand T_debug debug_pkt;
+   rand T_debug debg_pkt;
 
    // VARIABLE: rsp_req
    // Response is required for this request.
