@@ -51,9 +51,26 @@ assign tagring_if.mby_tag_ring[0] = tag_bfm_intf_0.intf_data_pkt;
 assign tagring_if.mby_tag_ring[1] = tag_bfm_intf_1.intf_data_pkt;
 
 
+always_comb ahb_if.dfxsignal_in = 0;
+always_comb ahb_if.ahb_req_p = 0;
+always_comb ahb_if.ahb_addr = 0;
+always_comb ahb_if.ahb_wr = 0;
+always_comb ahb_if.ahb_wr_data = 0;
+
+
+
+always_ff @(posedge egress_clock) epl_if0.tx_enable_port_num <= egress_reset ? (epl_if0.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if0.tx_enable = 1'b1;
+always_ff @(posedge egress_clock) epl_if1.tx_enable_port_num <= egress_reset ? (epl_if1.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if1.tx_enable = 1'b1;
+always_ff @(posedge egress_clock) epl_if2.tx_enable_port_num <= egress_reset ? (epl_if2.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if2.tx_enable = 1'b1;
+always_ff @(posedge egress_clock) epl_if3.tx_enable_port_num <= egress_reset ? (epl_if3.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if3.tx_enable = 1'b1;
+
 egr_top egress (
-   .clk   (egress_primary_clock),
-   .arst_n (egress_primary_reset),
+   .clk   (egress_clock),
+   .arst_n (~egress_reset),
    .igr_dirtypod_if(igr_dirtypod_if), //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
    .igr_cleanpod_if(igr_cleanpod_if), //IGR Clean Pod Read Req/Rsp Interface
    .pod_if(pod_if), //EGR-Pod Ring Interface

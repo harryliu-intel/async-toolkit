@@ -40,13 +40,13 @@
 //------------------------------------------------------------------------------
 interface mby_tag_bfm_mc_if(input logic clk, input logic rst);
    import mby_gmm_pkg::*; // TODO: change this once the mby_mc_tag_ring_t
-                          //       is placed in the right place.
+   import shared_pkg::*;  //       is placed in the right place.
 
    mby_mc_tag_ring_t intf_data_pkt;
    logic             intf_val_pkt;
    logic             intf_debg_pkt;
 
-   localparam DATA_WIDTH = $bits(mby_mc_tag_ring_t);
+   localparam DATA_WIDTH = 68;//$bits(intf_data_pkt);
    localparam DEBG_WIDTH = 1;
    localparam DLAY_WIDTH = 32;
 

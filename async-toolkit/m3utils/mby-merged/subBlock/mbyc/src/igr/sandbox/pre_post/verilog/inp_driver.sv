@@ -74,6 +74,24 @@ class inp_driver;
     sema_t    [3:0]            i_free_sema;
     
 
+    shim_pb_data_t [3:0]       shim_pb_data_p0_ff;
+    shim_pb_data_t [3:0]       shim_pb_data_p1_ff;
+    shim_pb_data_t [3:0]       shim_pb_data_p2_ff;
+    shim_pb_data_t [3:0]       shim_pb_data_p3_ff;
+    shim_pb_md_t   [3:0]       shim_pb_md_p0_ff;
+    shim_pb_md_t   [3:0]       shim_pb_md_p1_ff;
+    shim_pb_md_t   [3:0]       shim_pb_md_p2_ff;
+    shim_pb_md_t   [3:0]       shim_pb_md_p3_ff;
+    logic [3:0][2:0]           shim_pb_v_p0_ff;  
+    logic [3:0][2:0]           shim_pb_v_p1_ff;  
+    logic [3:0][2:0]           shim_pb_v_p2_ff;  
+    logic [3:0][2:0]           shim_pb_v_p3_ff;
+    
+    logic [3:0]                free_ptr_valid_ff;
+    seg_ptr_t [3:0]            free_seg_ptr_ff;
+    sema_t    [3:0]            free_sema_ff;
+
+
     function new(
 
 //        tmpl_pkg::enc_inp_t     iport, 
@@ -126,21 +144,21 @@ class inp_driver;
             clk_cnt++;      // keep track of number of clocks
            
             // get inputs from drive_reqs() task
-            dut_if.i_shim_pb_data_p0 <= i_shim_pb_data_p0; 
-            dut_if.i_shim_pb_data_p1 <= i_shim_pb_data_p1; 
-            dut_if.i_shim_pb_data_p2 <= i_shim_pb_data_p2; 
-            dut_if.i_shim_pb_data_p3 <= i_shim_pb_data_p3; 
-            dut_if.i_shim_pb_md_p0   <= i_shim_pb_md_p0  ; 
-            dut_if.i_shim_pb_md_p1   <= i_shim_pb_md_p1  ; 
-            dut_if.i_shim_pb_md_p2   <= i_shim_pb_md_p2  ; 
-            dut_if.i_shim_pb_md_p3   <= i_shim_pb_md_p3  ; 
-            dut_if.i_shim_pb_v_p0    <= i_shim_pb_v_p0   ; 
-            dut_if.i_shim_pb_v_p1    <= i_shim_pb_v_p1   ; 
-            dut_if.i_shim_pb_v_p2    <= i_shim_pb_v_p2   ; 
-            dut_if.i_shim_pb_v_p3    <= i_shim_pb_v_p3   ; 
-            dut_if.i_free_ptr_valid  <= i_free_ptr_valid;
-            dut_if.i_free_seg_ptr    <= i_free_seg_ptr;
-            dut_if.i_free_sema       <= i_free_sema;
+            shim_pb_data_p0_ff <= i_shim_pb_data_p0; 
+            shim_pb_data_p1_ff <= i_shim_pb_data_p1; 
+            shim_pb_data_p2_ff <= i_shim_pb_data_p2; 
+            shim_pb_data_p3_ff <= i_shim_pb_data_p3; 
+            shim_pb_md_p0_ff   <= i_shim_pb_md_p0  ; 
+            shim_pb_md_p1_ff   <= i_shim_pb_md_p1  ; 
+            shim_pb_md_p2_ff   <= i_shim_pb_md_p2  ; 
+            shim_pb_md_p3_ff   <= i_shim_pb_md_p3  ; 
+            shim_pb_v_p0_ff    <= i_shim_pb_v_p0   ; 
+            shim_pb_v_p1_ff    <= i_shim_pb_v_p1   ; 
+            shim_pb_v_p2_ff    <= i_shim_pb_v_p2   ; 
+            shim_pb_v_p3_ff    <= i_shim_pb_v_p3   ; 
+            free_ptr_valid_ff  <= i_free_ptr_valid;
+            free_seg_ptr_ff    <= i_free_seg_ptr;
+            free_sema_ff       <= i_free_sema;
 
           //  drvr_rd_req_to_dut_p1  <= drvr_rd_req_to_dut;
           //  drvr_wr_req_to_dut_p1  <= drvr_wr_req_to_dut;
@@ -150,6 +168,21 @@ class inp_driver;
           //  dut_if.i_eb_rd_req[0]  = drvr_rd_req_to_dut_p1;
           //  dut_if.i_eb_wr_req[0]  = drvr_wr_req_to_dut_p1;
           //  dut_if.i_eb_wr_dbus[0] = drvr_wr_dbus_to_dut_p1;
+            dut_if.i_shim_pb_data_p0 = shim_pb_data_p0_ff; 
+            dut_if.i_shim_pb_data_p1 = shim_pb_data_p1_ff; 
+            dut_if.i_shim_pb_data_p2 = shim_pb_data_p2_ff; 
+            dut_if.i_shim_pb_data_p3 = shim_pb_data_p3_ff; 
+            dut_if.i_shim_pb_md_p0   = shim_pb_md_p0_ff  ; 
+            dut_if.i_shim_pb_md_p1   = shim_pb_md_p1_ff  ; 
+            dut_if.i_shim_pb_md_p2   = shim_pb_md_p2_ff  ; 
+            dut_if.i_shim_pb_md_p3   = shim_pb_md_p3_ff  ; 
+            dut_if.i_shim_pb_v_p0    = shim_pb_v_p0_ff   ; 
+            dut_if.i_shim_pb_v_p1    = shim_pb_v_p1_ff   ; 
+            dut_if.i_shim_pb_v_p2    = shim_pb_v_p2_ff   ; 
+            dut_if.i_shim_pb_v_p3    = shim_pb_v_p3_ff   ; 
+            dut_if.i_free_ptr_valid  = free_ptr_valid_ff;
+            dut_if.i_free_seg_ptr    = free_seg_ptr_ff;
+            dut_if.i_free_sema       = free_sema_ff;
     
         end
     endtask
@@ -182,7 +215,11 @@ class inp_driver;
 
 
             i_shim_pb_v_p0[0][0]      = 1'b1;
-            i_shim_pb_data_p0[0].seg0 = {8{72'ha5}};
+
+            for( int i=0; i<8; i++ ) begin
+                i_shim_pb_data_p0[0].seg0[i] = 72'(i+1);
+            end
+
             i_shim_pb_md_p0[0]        = shim_pb_md_t'('h123456);
             i_shim_pb_md_p0[0].md0.md.sop = 1'b1;
 

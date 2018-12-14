@@ -2,7 +2,7 @@
 //  `include "mby_rp_inq_pkg.sv"
 
 module TB_IGR_TOP
-  import mby_igr_pkg::*, shared_pkg::*;
+  import mby_igr_pkg::*, mby_rx_metadata_pkg::*,shared_pkg::*;
 (
 
 );
@@ -61,11 +61,43 @@ module TB_IGR_TOP
   igr_rx_ppe_if     igr_rx_ppe();
   rx_ppe_igr_if     rx_ppe_igr();
   
-  assign igr_rx_ppe.intf0_ack = '0;
-  assign igr_rx_ppe.intf1_ack = '0;
-  assign rx_ppe_igr.intf0 = '0;
-  assign rx_ppe_igr.intf1 = '0;
-  
+  igr_rx_ppe_tail_t          igr_rx_ppe_intf0_tail; // Blasted Interface igr_rx_ppe_if.igr igr_rx_ppe
+  igr_rx_ppe_head_t          igr_rx_ppe_intf0_head; 
+  logic                       igr_rx_ppe_intf0_ack; 
+  igr_rx_ppe_tail_t          igr_rx_ppe_intf1_tail; 
+  igr_rx_ppe_head_t          igr_rx_ppe_intf1_head; 
+  logic                       igr_rx_ppe_intf1_ack; 
+
+  rx_ppe_igr_t                rx_ppe_igr_intf0; // Blasted Interface rx_ppe_igr_if.igr rx_ppe_igr
+  rx_ppe_igr_t                rx_ppe_igr_intf1; 
+
+    assign igr_rx_ppe_intf0_tail = igr_rx_ppe.intf0_tail;
+    assign igr_rx_ppe_intf0_head = igr_rx_ppe.intf0_head;
+    assign igr_rx_ppe.intf0_ack = igr_rx_ppe_intf0_ack;
+    assign igr_rx_ppe_intf1_tail = igr_rx_ppe.intf1_tail;
+    assign igr_rx_ppe_intf1_head = igr_rx_ppe.intf1_head;
+    assign igr_rx_ppe.intf1_ack = igr_rx_ppe_intf1_ack;
+
+    assign rx_ppe_igr.intf0 = rx_ppe_igr_t'(rx_ppe_igr_intf0);
+    assign rx_ppe_igr.intf1 = rx_ppe_igr_t'(rx_ppe_igr_intf1);
+
+    rx_ppe_bfm  rx_ppe
+      (
+      .cclk                                    ( cclk ),
+      .rst                                     ( rst ),
+
+      .igr_rx_ppe_intf0_ack                    ( igr_rx_ppe_intf0_ack ),
+      .igr_rx_ppe_intf1_ack                    ( igr_rx_ppe_intf1_ack ),
+      .igr_rx_ppe_intf0_tail                   ( igr_rx_ppe_intf0_tail ),
+      .igr_rx_ppe_intf0_head                   ( igr_rx_ppe_intf0_head ),
+      .igr_rx_ppe_intf1_tail                   ( igr_rx_ppe_intf1_tail ),
+      .igr_rx_ppe_intf1_head                   ( igr_rx_ppe_intf1_head ),
+      .rx_ppe_igr_intf0                        ( rx_ppe_igr_intf0 ),
+      .rx_ppe_igr_intf1                        ( rx_ppe_igr_intf1 )
+
+       );
+    
+
   mim_wr_if    egr_igr_wreq();
   mim_rd_if    igr_egr_rreq();  
   mim_wr_if    mim_wreq_0();
@@ -169,7 +201,13 @@ mby_igr_top
 
 // Global Congestion (GCM) Management interface
   .i_rx_cm_wm_out('0),    // RX watermark
-  .i_rx_cm_sm_wm_out('0)  // Shared watermark 
+  .i_rx_cm_sm_wm_out('0),  // Shared watermark
+  
+  // global policer IGR
+  .o_gpolring0(),
+  .o_gpolring1(),
+  .i_gpolring_update0('0),
+  .i_gpolring_update1('0)
 
 );
 

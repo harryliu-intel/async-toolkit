@@ -24,6 +24,6 @@ vcs +vpdupdate +vpdfilesize+500 -M -Mupdate -PP \
      -debug_pp \
      -sverilog
 
-#simv +vpddrivers -l sim_log.txt -gui      
+simv +vpddrivers -l sim_log.txt -gui      
 #simv +vpddrivers -l sim_log.txt +vcs+lic+wait     
      
