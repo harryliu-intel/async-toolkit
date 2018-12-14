@@ -49,6 +49,11 @@ class mby_rx_ppe_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to rx_ppe Testbench.
    virtual   mby_rx_ppe_tb_if                                  tb_vif;
+   
+   // Variable:  tb_ral
+   // Handle to mesh RAL.
+   //TODO: Uncomment this once RAL is built.
+   //mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk                      tb_ral;
 
    // Variable:  eth_bfms
    // MAC Client BFM agent
@@ -122,6 +127,7 @@ class mby_rx_ppe_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
       end
 
+//TODO: Uncomment this after RDL is updated.
 //      build_ral();
       build_eth_bfm();
 
