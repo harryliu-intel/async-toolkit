@@ -70,7 +70,7 @@ always_comb epl_if3.tx_enable = 1'b1;
 
 egr_top egress (
    .clk   (egress_clock),
-   .arst_n (egress_reset),
+   .arst_n (~egress_reset),
    .igr_dirtypod_if(igr_dirtypod_if), //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
    .igr_cleanpod_if(igr_cleanpod_if), //IGR Clean Pod Read Req/Rsp Interface
    .pod_if(pod_if), //EGR-Pod Ring Interface
