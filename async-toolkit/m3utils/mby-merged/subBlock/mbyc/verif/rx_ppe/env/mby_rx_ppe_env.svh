@@ -58,6 +58,7 @@ class mby_rx_ppe_env extends shdv_base_env;
    // MAC Client BFM virtual interface
    rx_ppe_eth_bfm_rx_intf_t                                    eth_bfm_rx_vintf;//[`NUM_EPLS_PER_RX_PPE]; //just 1 EPL for RX_PPE env
 
+   //TODO: Added IO policty for INTF0 & INTF1 
    //eth_bfm parser io
 
 
@@ -122,7 +123,6 @@ class mby_rx_ppe_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
       end
 
-//      build_ral();
       build_eth_bfm();
 
    endfunction: build_phase
@@ -135,8 +135,8 @@ class mby_rx_ppe_env extends shdv_base_env;
 
       // Create the bfm instances
       eth_bfm                   =  rx_ppe_eth_bfm_t::type_id::create("rx_ppe_eth_bfm", this);
-      eth_bfm.cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
-      eth_bfm.cfg.port_speed    = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
+      eth_bfm.cfg.mode          =  eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
+      eth_bfm.cfg.port_speed    =  {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
                                     eth_bfm_pkg::SPEED_OFF,
                                     eth_bfm_pkg::SPEED_OFF,
                                     eth_bfm_pkg::SPEED_OFF};
@@ -145,29 +145,7 @@ class mby_rx_ppe_env extends shdv_base_env;
       eth_bfm.cfg.sop_alignment = 8;
 
    endfunction : build_eth_bfm
-
-   //---------------------------------------------------------------------------
-   //  Function: build_ral
-   //  Builds Rx_PPE register model.
-   //
-   //---------------------------------------------------------------------------
-/*   virtual function void build_ral();
-
-      // Check if ral is set by FC
-      if (!uvm_config_db#(mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk)::get(this, "", "rx_ppe_ral", tb_ral)) begin
-         tb_ral = mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk::type_id::create("tb_ral");
-         tb_ral.build();
-         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
-         tb_ral.lock_model();
-
-         uvm_config_db#(mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk)::set(this, "*", "rx_ppe_ral", tb_ral);
-
-         // Build the Adapter's based on agt's active
-        
-      end
-      
-   endfunction: build_ral
-*/   
+ 
    //---------------------------------------------------------------------------
    //  Function: connect_phase
    //  Connects different BFM interfaces and Scoreboard

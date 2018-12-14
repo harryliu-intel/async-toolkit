@@ -197,8 +197,8 @@ module mby_rx_ppe_tb_top ();
    ) rx_ppe_ti(
       .mby_rx_ppe_tb_if               (rx_ppe_tb_if),
       .shdv_intf                      (shdv_intf),
-      .cdi_tx_intf                    (cdi_tx_intf),
-      .cdi_rx_intf                    (cdi_rx_intf)
+      .eth_bfm_tx_vintf               (cdi_tx_intf),
+      .eth_bfm_rx_vintf               (cdi_rx_intf)
 
    );
 
