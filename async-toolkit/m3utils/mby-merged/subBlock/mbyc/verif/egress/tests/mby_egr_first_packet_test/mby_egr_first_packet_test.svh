@@ -26,7 +26,7 @@ class mby_egr_tag_seq extends mby_egr_extended_base_seq;
    //---------------------------------------------------------------------------
    virtual task body();
       this.set_name("mby_egr_tag_seq");
-      wait_n(20);
+      wait_n(22);
       
     
 
