@@ -514,7 +514,8 @@ static int run_on_simple_exactmatch
     mbyClassifierActions        * const actions_out = &(map2cla.CLASSIFIER_ACTIONS);
 
     mby_ppe_cgrp_a_map__init(cgrp_a_map, cgrp_a_map_w, mby_field_init_cb);
-    mby_ppe_cgrp_b_map__init(cgrp_b_map, cgrp_b_map_w, mby_field_init_cb);
+    // No need to initalialize maps that are not used
+    // mby_ppe_cgrp_b_map__init(cgrp_b_map, cgrp_b_map_w, mby_field_init_cb);
     mby_shm_map__init(shm_map, shm_map_w, mby_field_init_cb);
 
     setup(cgrp_a_map_w, cgrp_b_map_w, shm_map_w, &map2cla);
