@@ -8,10 +8,31 @@
 +lint=TFIPC-L
 +lint=PCWM
 
+//use ToolConfig;
 
-../../shared/rtl/mby_msh_pkg.sv
-../../shared/rtl/shared_pkg.sv
-../../egr/rtl/mby_egr_pkg.sv
+//$SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+
++define+SHRTL_LIB_MODEL
+
++incdir+$SHRTL/src/common/rtl
+
+../../shared/rtl/mby_msh_pkg.sv                
+../../shared/rtl/shared_pkg.sv                                                                                  
+../../shared/rtl/mby_egr_pkg.sv
+$SHRTL/src/common/rtl/shrtl_nbits_pkg.vh                             
+$SHRTL/src/fifo/rtl/shrtl_async_flop_fifo.sv
+$SHRTL/src/fifo/rtl/shrtl_flop_fifo.sv
+$SHRTL/src/common/rtl/shrtl_flop_ram.sv
+$SHRTL/src/sync/rtl/shrtl_sync.sv
+$SHRTL/src/sync/rtl/shrtl_lib_sync2.sv
+$SHRTL/src/fifo/rtl/shrtl_async_fifo_ctrl.sv
+../rtl/mby_mim_wr_cdc.sv   
+../rtl/mby_mim_wr.sv   
+../rtl/mby_mim_rdreq_cdc.sv   
+../rtl/mby_mim_rdreq.sv   
+../rtl/mby_mim_rdrsp_cdc.sv   
+../rtl/mby_mim_rdrsp.sv   
 ../rtl/mby_mim.sv   
+tb_mby_mim.sv   
 
 

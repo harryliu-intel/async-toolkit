@@ -1,7 +1,7 @@
-
-ifndef SHRTL
-    SHRTL := $(shell ToolConfig.pl get_tool_path ipconfig/shrtl )
-endif
+# SRC is the relative path from the including Makefile to Make.fxr
+# Set to the current directory for this Makefile
+# Set it to a different relative path for including Make.fxr
+# from Makefiles in other directories
 
 SRC = ../..
 
@@ -17,7 +17,7 @@ VCS_FLAGS += -assert svaext+dve+disable_cover+enable_diag+filter_past
 
 #upgrade warning to error on no module instance, FEBE errors out if NMIN
 VCS_FLAGS += -error=NMIN:1
-
+VCS_FLAGS += +vcs+loopdetect            # Illegal assignment to enum variable
 VCS_FLAGS += -error=ENUMASSIGN          # Illegal assignment to enum variable
 VCS_FLAGS += -error=ICTA-SI             # Incompatible complex type
 VCS_FLAGS += -error=SV-SELS             # Smaller enum label size
@@ -43,7 +43,7 @@ INCS  = $(SRC)/shared/interfaces
 INCS += $(SRC)/shared/rtl
 INCS += $(SRC)/shared/sandbox/rtl
 
-.PHONY: dve print_env
+.PHONY: dve
 
 dve:
 	$(VCS_HOME)/bin/dve -full64
