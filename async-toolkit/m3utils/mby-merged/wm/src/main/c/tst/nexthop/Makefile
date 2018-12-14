@@ -53,9 +53,9 @@ CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
 
 ifeq ($(DEBUG),1)
-CFLAGS += -O -g -ggdb3
+CFLAGS += -O0 -g -ggdb3
 else
-CFLAGS += -O
+CFLAGS += -O1
 endif
 
 DEFINES   = -D_GNU_SOURCE

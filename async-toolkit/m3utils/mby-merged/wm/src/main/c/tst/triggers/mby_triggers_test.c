@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
 #include <string.h>
 #include <assert.h>
 
-#include <mby_top_map.h>
-#include <mby_write_field.h>
-
 #include <mby_common.h>
 #include <mby_pipeline.h>
+
+#include <mby_top_map.h>
+#include <model_c_write.h> // write_field()
 
 #define MBY_PHYSICAL_SOURCE_PORTS         17
 

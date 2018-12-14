@@ -2,32 +2,37 @@
 
 # Copyright (C) 2018 Intel Corporation
 
-# Tool versions:
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-include ${ROOT_DIR}/../../ToolVersions.mk
 
-SRC_DIR = ${ROOT_DIR}/../..
-TST_DIR = ${ROOT_DIR}
-MAP_DIR = ${ROOT_DIR}/../../../m3/genviews/src/build_c/mby_c/src # mby_top_map.h
+COM_DIR = ../common
+C_DIR   = ../../../c
+M3_DIR  = ../../../m3
+MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
 
-INCLUDES  = -I$(SRC_DIR)
-INCLUDES += -I$(TST_DIR)
+# Tool versions:
+include ${C_DIR}/ToolVersions.mk
+
+INCLUDES  = -I.
+INCLUDES += -I$(COM_DIR)
 INCLUDES += -I$(MAP_DIR)
+INCLUDES += -I$(C_DIR)
 
-SOURCES  = $(SRC_DIR)/mby_common.c
-SOURCES += $(SRC_DIR)/mby_crc32.c
-SOURCES += $(SRC_DIR)/mby_bitfield.c
-SOURCES += $(SRC_DIR)/fm_alos_debughash.c
-SOURCES += $(SRC_DIR)/mby_triggers.c
-SOURCES += $(SRC_DIR)/mby_triggers_regs.c
-SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
-SOURCES += $(SRC_DIR)/mby_write_field.c
-SOURCES += $(TST_DIR)/mby_triggers_test.c
-SOURCES += $(MAP_DIR)/mby_top_map.c
+SOURCES = mby_triggers_test.c
 
-OBJECTS = $(SOURCES:.c=.o)
+# Build dir:
+OS_TARG = AMD64_LINUX
+BLD_DIR = $(OS_TARG)
+BLD_DTS = ${BLD_DIR}/.time_stamp
 
-TARGET = mby_triggers_test
+OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
+
+# Functional Model (a.k.a. White Model) static library:
+FM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
+
+# Common test static library (includes write_field() function):
+COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
+
+TARGET   = ${BLD_DIR}/mby_triggers_test
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -60,34 +65,28 @@ endif
 
 LDFLAGS =
 
-DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
+DELFILES = $(BLD_DIR) *.o *.so *.log
 
 .PHONY: all
-all: $(TARGET)
+all: $(BLD_DTS) $(OBJECTS) $(TARGET)
 
-$(SRC_DIR)/mby_common.o        : $(SRC_DIR)/mby_common.c        $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_crc32.o         : $(SRC_DIR)/mby_crc32.c         $(SRC_DIR)/mby_crc32.h
-$(SRC_DIR)/mby_bitfield.o      : $(SRC_DIR)/mby_bitfield.c      $(SRC_DIR)/mby_bitfield.h
-$(SRC_DIR)/fm_alos_debughash.o : $(SRC_DIR)/fm_alos_debughash.c $(SRC_DIR)/fm_alos_debughash.h
-$(SRC_DIR)/mby_reg_ctrl.o      : $(SRC_DIR)/mby_reg_ctrl.c      $(SRC_DIR)/mby_reg_ctrl.h
-$(SRC_DIR)/mby_triggers.o      : $(SRC_DIR)/mby_triggers.c      $(SRC_DIR)/mby_triggers.h
-$(SRC_DIR)/mby_triggers_regs.o : $(SRC_DIR)/mby_triggers_regs.c $(SRC_DIR)/mby_triggers_regs.h
-$(SRC_DIR)/mby_write_field.o   : $(SRC_DIR)/mby_write_field.c   $(SRC_DIR)/mby_write_field.h
-$(TST_DIR)/mby_triggers_test.o : $(TST_DIR)/mby_triggers_test.c $(SRC_DIR)/mby_triggers.h $(SRC_DIR)/mby_common.h
-$(MAP_DIR)/mby_top_map.o       : $(MAP_DIR)/mby_top_map.c       $(MAP_DIR)/mby_top_map.h
+$(BLD_DTS):
+	@echo '  Creating build directory'
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
 
-.PHONY: clean
-clean:
-	@echo '  Cleaning'
-	$(ECHO) $(RM) $(DELFILES)
-
-%.o: %.c
+${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-$(TARGET): $(OBJECTS)
+# Added dependencies:
+${BLD_DIR}/mby_triggers_test.o: \
+        $(BLD_DTS) Makefile \
+        mby_triggers_test.c \
+        $(C_DIR)/mby_triggers.h $(C_DIR)/mby_common.h
+
+$(TARGET): $(BLD_DTS) $(OBJECTS) $(FM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(FM_LIB) $(COM_LIB)
 
 .PHONY: run
 run: $(TARGET)
@@ -112,3 +111,23 @@ callgrind: $(TARGET)
             --verbose \
             --dump-every-bb=12500000000 \
 	$(TARGET) 2>&1 | tee /cal.log
+
+.PHONY: clean
+clean:
+	@echo '  Cleaning'
+	$(ECHO) $(RM) $(DELFILES)
+
+.PHONY: show_sources
+show_sources:
+	@echo 'SOURCES :'
+	@$(foreach i, $(SOURCES), echo $(i);)
+
+.PHONY: show_includes
+show_includes:
+	@echo 'INCLUDES :'
+	@$(foreach i, $(INCLUDES), echo $(i);)
+
+.PHONY: show_objects
+show_objects:
+	@echo 'OBJECTS :'
+	@$(foreach i, $(OBJECTS), echo $(i);)

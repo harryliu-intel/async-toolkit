@@ -148,7 +148,7 @@ $(LIB_SHARED): $(OBJECTS)
 	@echo '  Creating shared library'
 	$(ECHO) $(GCC) -shared -o $@ $^
 
-libs: $(LIBRARIES)
+libs: $(BLD_DTS) $(LIBRARIES)
 
 .PHONY: clean
 clean:

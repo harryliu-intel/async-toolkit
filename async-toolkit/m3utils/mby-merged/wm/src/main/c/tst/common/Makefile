@@ -23,6 +23,7 @@ SOURCES += model_c_write.c
 # Build dir:
 OS_TARG = AMD64_LINUX
 BLD_DIR = $(OS_TARG)
+BLD_DTS = ${BLD_DIR}/.time_stamp
 
 OBJECTS = $(addprefix ${BLD_DIR}/,$(notdir $(SOURCES:.c=.o)))
 
@@ -63,13 +64,11 @@ endif
 DELFILES = $(BLD_DIR) *.o *.so *.so.5
 
 .PHONY: all
-all: $(BLD_DIR) $(OBJECTS) $(LIBRARIES)
+all: $(BLD_DTS) $(OBJECTS) $(LIBRARIES)
 
-# write_field() used by C tests:
-${BLD_DIR}/uint.o:              ${C_DIR}/uint.c ${C_DIR}/uint.h
-${BLD_DIR}/fm_alos_debughash.o: ${C_DIR}/fm_alos_debughash.c ${C_DIR}/fm_alos_debughash.h
-${BLD_DIR}/mby_top_map.o:       ${MAP_DIR}/mby_top_map.c ${MAP_DIR}/mby_top_map.h
-${BLD_DIR}/model_c_write.o:     model_c_write.c model_c_write.h ${C_DIR}/fm_types.h ${C_DIR}/fm_alos_debughash.c
+$(BLD_DTS):
+	@echo '  Creating build directory'
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
 
 ${BLD_DIR}/%.o: ${C_DIR}/%.c
 	@echo '  Compiling' $<
@@ -83,16 +82,18 @@ ${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-$(BLD_DIR):
-	@echo '  Creating build directory'
-	$(ECHO) $(MKDIR) $@
+# write_field() used by C tests:
+${BLD_DIR}/uint.o:              $(BLD_DTS) Makefile ${C_DIR}/uint.c ${C_DIR}/uint.h
+${BLD_DIR}/fm_alos_debughash.o: $(BLD_DTS) Makefile ${C_DIR}/fm_alos_debughash.c ${C_DIR}/fm_alos_debughash.h
+${BLD_DIR}/mby_top_map.o:       $(BLD_DTS) Makefile ${MAP_DIR}/mby_top_map.c ${MAP_DIR}/mby_top_map.h
+${BLD_DIR}/model_c_write.o:     $(BLD_DTS) Makefile model_c_write.c model_c_write.h ${C_DIR}/fm_types.h ${C_DIR}/fm_alos_debughash.c
 
-$(LIB_STATIC): $(OBJECTS)
+$(LIB_STATIC): $(BLD_DTS) $(OBJECTS)
 	@echo '  Creating static library'
 	$(ECHO) $(AR) $@ $^
 	$(ECHO) $(RANLIB) $@
 
-libs: $(LIBRARIES)
+libs: $(BLD_DTS) $(LIBRARIES)
 
 .PHONY: clean
 clean:
