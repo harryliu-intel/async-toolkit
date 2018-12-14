@@ -7,7 +7,8 @@
 
 reg mesh_arb_rreq_y_r {
   shared;
-  HandCoded = true;
+  // DefaultValRTLSignal = "mby_top.mesh_top.mesh_node.%FIELD_NAME%";
+  // HandCoded = true;
   name = "Arbitration weights for vertical read request bus";
   desc = "
     Indicates the proportion of cycles allocated to each arbiter input.
@@ -56,7 +57,7 @@ reg mesh_arb_rreq_y_r {
 
 reg mesh_arb_wreq_y_r {
   shared;
-  HandCoded = true;
+  // HandCoded = true;
   name = "Arbitration weights for vertical write request bus";
   desc = "
     Indicates the proportion of cycles allocated to each arbiter input.
@@ -103,7 +104,7 @@ reg mesh_arb_wreq_y_r {
 
 reg mesh_arb_rrsp_y_r {
   shared;
-  HandCoded = true;
+  // HandCoded = true;
   name = "Arbitration weights for vertical read response bus";
   desc = "
     Indicates the proportion of cycles allocated to each arbiter input.
@@ -161,7 +162,7 @@ reg mesh_arb_rrsp_y_r {
 
 reg mesh_arb_rrsp_x_r {
   shared;
-  HandCoded = true;
+  // HandCoded = true;
   name = "Arbitration weights for horizontal read response bus";
   desc = "
     Indicates the proportion of cycles allocated to each arbiter input.

@@ -1,7 +1,8 @@
 // mesh RTL  (mby_igr_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
 +incdir+$LOGICROOT/igr/rtl
-$LOGICROOT/igr/rtl/mby_igr_pkg.sv
 $LOGICROOT/shared/rtl/mby_egr_pkg.sv
+$LOGICROOT/igr/rtl/mby_igr_pkg.sv
+$LOGICROOT/shared/rtl/mby_rx_metadata_pkg.sv
 -y $LOGICROOT/igr/rtl
 -y $LOGICROOT/igr/pre_ppe/rtl
 -y $LOGICROOT/igr/post_ppe/rtl
