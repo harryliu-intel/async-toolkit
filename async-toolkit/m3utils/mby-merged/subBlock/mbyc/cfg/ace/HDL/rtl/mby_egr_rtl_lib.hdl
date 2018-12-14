@@ -44,17 +44,17 @@ $hdl_spec = {
         "src/egr/interfaces/egr_tcu_tqu_if.sv",
 
     ## EGR Internal Blocks
-        "src/egr/partition1/cpb/rtl/cpb.sv",
-        "src/egr/partition1/dpb/rtl/dpb.sv",
-        "src/egr/partition1/lcm/rtl/lcm.sv",
-        "src/egr/partition1/mri/rtl/mri.sv",
-        "src/egr/partition1/pfs/rtl/pfs.sv",
-        "src/egr/partition1/prc/rtl/prc.sv",
-        "src/egr/partition1/tcu/rtl/tcu.sv",
-        "src/egr/partition1/tmu/rtl/tmu.sv",
-        #"src/egr/partition1/tmu/rtl/mby_egr_tag.sv",
-        "src/egr/partition1/tqu/rtl/tqu.sv",
-        #"src/egr/partition1/tqu/rtl/tqu_rrsp_rcv.sv",
+        "src/egr/cpb/rtl/egr_cpb.sv",
+        "src/egr/dpb/rtl/egr_dpb.sv",
+        "src/egr/lcm/rtl/egr_lcm.sv",
+        "src/egr/mri/rtl/egr_mri.sv",
+        "src/egr/pfs/rtl/egr_pfs.sv",
+        "src/egr/prc/rtl/egr_prc.sv",
+        "src/egr/tcu/rtl/egr_tcu.sv",
+        "src/egr/tmu/rtl/egr_tmu.sv",
+        #"src/egr/tmu/rtl/mby_egr_tag.sv",
+        "src/egr/tqu/rtl/egr_tqu.sv",
+        #"src/egr/tqu/rtl/tqu_rrsp_rcv.sv",
     ## EGR TOP
        "src/egr/rtl/egr_top.sv",
      ],
@@ -62,6 +62,7 @@ $hdl_spec = {
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
     -vlog_lib_dirs => [
      "src/egr/rtl",
+     "src/egr/tcu/rtl",
      "target/mby/mgm_run/egr/src",
      "target/mby/mgm_run/egr/src/mem_wrap",
      "target/mby/mgm_run/rtl",
@@ -73,6 +74,7 @@ $hdl_spec = {
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
      "src/egr/rtl",
+     "src/egr/tcu/rtl",
      "target/mby/mgm_run/egr/src",
      "target/mby/mgm_run/egr/src/mem_wrap",
      "target/mby/mgm_run/rtl",

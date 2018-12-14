@@ -159,7 +159,7 @@ class mby_base_driver
    virtual protected task drive_data();
       vintf.drive_data(
          rsp.data_pkt ,
-         rsp.debug_pkt,
+         rsp.debg_pkt,
          rsp.delay
       );
    endtask : drive_data

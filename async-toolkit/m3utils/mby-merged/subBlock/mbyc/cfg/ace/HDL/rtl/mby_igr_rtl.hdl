@@ -12,6 +12,7 @@ $hdl_spec = {
     -vlog_files => [
     ## need to remove the following
        "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_rx_metadata_pkg.sv",
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/shared/rtl/mby_gmm_pkg.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
@@ -53,6 +54,11 @@ $hdl_spec = {
        "src/igr/pre_ppe/rtl/mby_igr_pre_wrarb.sv",
        "src/igr/pre_ppe/rtl/mby_igr_pre_wrmux.sv",
        "src/igr/post_ppe/rtl/mby_igr_post_ppe.sv",
+       "src/igr/post_ppe/rtl/mby_igr_post_header.sv",
+       "src/igr/post_ppe/rtl/mby_igr_post_merge.sv",
+       "src/igr/post_ppe/rtl/mby_igr_post_tag_arb.sv",
+       "src/igr/post_ppe/rtl/mby_igr_post_tag_seq.sv",
+       "src/igr/post_ppe/rtl/mby_igr_write_queue.sv"
     ],
     
     # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)

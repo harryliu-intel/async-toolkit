@@ -24,7 +24,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Nathan Mai
+//   Author(s)     : Nathan Mai, Kaleem Sheriff
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -52,7 +52,19 @@ package mby_rx_ppe_env_pkg;
    `include "mby_rx_ppe_types.svh"
    `include "mby_rx_ppe_defines.svh"
    `include "mby_rx_ppe_env_cfg.svh"
+   
+   `include "mby_rx_ppe_parser_cfg.svh"
+   `include "mby_rx_ppe_mapper_cfg.svh"
+   `include "mby_rx_ppe_lpm_cfg.svh"
+   `include "mby_rx_ppe_em_cfg.svh"
+   `include "mby_rx_ppe_wcm_cfg.svh"
+   `include "mby_rx_ppe_hash_cfg.svh"
+   `include "mby_rx_ppe_policer_cfg.svh"
+   `include "mby_rx_ppe_nexthop_cfg.svh"
+   `include "mby_rx_ppe_maskgen_cfg.svh"
+   `include "mby_rx_ppe_triggers_cfg.svh"   
    `include "mby_rx_ppe_dut_cfg.svh"
+   
    `include "mby_rx_ppe_tb_top_cfg.svh"
 //PJP   `include "mby_rx_ppe_ral_env.svh"
    `include "mby_rx_ppe_env.svh"

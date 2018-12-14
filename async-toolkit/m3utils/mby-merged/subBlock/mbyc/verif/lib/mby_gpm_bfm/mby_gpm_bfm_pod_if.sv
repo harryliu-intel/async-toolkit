@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GMM Interface
+// Title         : Madison Bay GPM Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gmm_bfm_pod_if.sv
+// File          : mby_gpm_bfm_pod_if.sv
 // Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
-// Madison Bay GMM pod interface file
+// Madison Bay GPM pod interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,15 +30,15 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GMM_BFM_POD_IF__
-`define __MBY_GMM_BFM_POD_IF__
+`ifndef __MBY_GPM_BFM_POD_IF__
+`define __MBY_GPM_BFM_POD_IF__
 //------------------------------------------------------------------------------
-// INTERFACE: mby_gmm_bfm_pod_if
+// INTERFACE: mby_gpm_bfm_pod_if
 //
 // This is the interface that connects to the pod ring (free and dirty pointers)
 //
 //------------------------------------------------------------------------------
-interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
+interface mby_gpm_bfm_pod_if(input logic clk, input logic rst);
    import mby_gmm_pkg::*;
 
    mby_pod_ptr_ring_t intf_data_pkt;
@@ -113,7 +113,7 @@ interface mby_gmm_bfm_pod_if(input logic clk, input logic rst);
       debg_pkt = intf_debg_pkt;
    endtask
 
-endinterface : mby_gmm_bfm_pod_if
+endinterface : mby_gpm_bfm_pod_if
 
 `endif
 

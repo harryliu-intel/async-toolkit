@@ -6,10 +6,13 @@
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 include ${ROOT_DIR}/ToolVersions.mk
 
-INC_DIR1 = .
-INC_DIR2 = ../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+SRC_DIR1 = .
+# mby_top_map.h
+SRC_DIR2 = ../m3/genviews/src/build_c/mby_c/src
+# model_c_write.h
+SRC_DIR3 = ../m3/model_server/src
 
-INCLUDES = -I$(INC_DIR1) -I$(INC_DIR2)
+INCLUDES = -I$(SRC_DIR1) -I$(SRC_DIR2) -I$(SRC_DIR3)
 
 SOURCES += mby_crc32.c
 SOURCES += mby_bitfield.c
@@ -31,12 +34,26 @@ SOURCES += mby_congmgmt.c
 SOURCES += mby_rxstats.c
 SOURCES += mby_modifier.c
 SOURCES += mby_txstats.c
-SOURCES += mby_pipeline.c
+
 SOURCES += mby_reg_ctrl.c
+SOURCES += mby_pipeline.c
 SOURCES += mby_errors.c
 SOURCES += mby_init.c
 
-OBJECTS = $(SOURCES:.c=.o)
+SOURCES += mby_model.c       # used by C tests
+SOURCES += mby_model_basic.c # used by M3 model server
+
+# Build dir:
+OS_TARG = AMD64_LINUX
+BLD_DIR = $(OS_TARG)
+
+OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
+
+# Libraries:
+LIB_NAME    = mby_c_model
+LIB_STATIC  = ${BLD_DIR}/lib${LIB_NAME}.a
+LIB_SHARED  = ${BLD_DIR}/lib${LIB_NAME}.so
+LIBRARIES   = $(LIB_STATIC) $(LIB_SHARED)
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -48,7 +65,6 @@ CFLAGS  = -std=gnu99
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -Werror
-CFLAGS += -Wno-error=unused-result  # downgrade to warning instead of error
 CFLAGS += -Wno-long-long
 CFLAGS += -Wno-missing-field-initializers
 CFLAGS += -Wno-unused
@@ -56,7 +72,6 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
-CFLAGS += -Wno-error=discarded-qualifiers # only warning until we move to write_field
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O0 -g -ggdb3
@@ -69,55 +84,63 @@ DEFINES  += -D_FM_ARCH_x86_64
 ifeq ($(DEBUG),1)
 endif
 
-DELFILES  = $(OBJECTS) *.o *.so
+DELFILES  = $(OBJECTS) $(BLD_DIR) $(LIBRARIES) *.o *.so *.so.5
 
 .PHONY: all
-all: $(OBJECTS)
+all: $(BLD_DIR) $(OBJECTS) $(LIBRARIES)
 
-mby_errors.o        : mby_errors.c     	   mby_errors.h
-mby_bitfield.o      : mby_bitfield.c 	   mby_bitfield.h
-mby_common.o        : mby_common.c                          mby_common.h mby_bitfield.h
-mby_parser.o        : mby_parser.c     	   mby_parser.h     mby_common.h mby_bitfield.h
-mby_mapper.o        : mby_mapper.c     	   mby_mapper.h     mby_common.h mby_bitfield.h
-mby_clsfr_regs.o    : mby_cgrp_regs.c 	   mby_cgrp_regs.h  mby_common.h mby_bitfield.h
-mby_lpm_regs.o      : mby_lpm_regs.c   	   mby_lpm_regs.h   mby_common.h mby_bitfield.h
-mby_lpm.o           : mby_lpm.c        	   mby_lpm.h        mby_common.h mby_bitfield.h
-mby_wcm.o           : mby_wcm.c        	   mby_wcm.h        mby_common.h mby_bitfield.h
-mby_exactmatch.o    : mby_exactmatch.c 	   mby_exactmatch.h mby_common.h mby_bitfield.h
-mby_classifier.o    : mby_classifier.c 	   mby_classifier.h mby_common.h mby_bitfield.h
-mby_hash.o          : mby_hash.c       	   mby_hash.h       mby_common.h mby_bitfield.h
-mby_nexthop.o       : mby_nexthop.c    	   mby_nexthop.h    mby_common.h mby_bitfield.h
-mby_maskgen.o       : mby_maskgen.c    	   mby_maskgen.h    mby_common.h mby_bitfield.h
-mby_triggers_regs.o : mby_triggers_regs.c  mby_triggers.h   mby_common.h mby_bitfield.h
-mby_triggers.o      : mby_triggers.c   	   mby_triggers.h   mby_common.h mby_bitfield.h
-mby_congmgmt.o      : mby_congmgmt.c   	   mby_congmgmt.h   mby_common.h mby_bitfield.h
-mby_rxstats.o       : mby_rxstats.c    	   mby_rxstats.h    mby_common.h mby_bitfield.h
-mby_modifier.o      : mby_modifier.c   	   mby_modifier.h   mby_common.h mby_bitfield.h
-mby_txstats.o       : mby_txstats.c    	   mby_txstats.h    mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_errors.o        : mby_errors.c     	   mby_errors.h
+${BLD_DIR}/mby_crc32.o         : mby_crc32.c               mby_crc32.h
+${BLD_DIR}/mby_bitfield.o      : mby_bitfield.c 	                                  mby_bitfield.h
+${BLD_DIR}/mby_common.o        : mby_common.c                                mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_parser.o        : mby_parser.c     	   mby_parser.h      mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_mapper.o        : mby_mapper.c     	   mby_mapper.h      mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_cgrp_regs.o     : mby_cgrp_regs.c           mby_cgrp_regs.h   mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_clsfr_regs.o    : mby_cgrp_regs.c 	   mby_cgrp_regs.h   mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_lpm_regs.o      : mby_lpm_regs.c   	   mby_lpm_regs.h    mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_lpm.o           : mby_lpm.c        	   mby_lpm.h         mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_wcm.o           : mby_wcm.c        	   mby_wcm.h         mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_exactmatch.o    : mby_exactmatch.c 	   mby_exactmatch.h  mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_classifier.o    : mby_classifier.c 	   mby_classifier.h  mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_hash.o          : mby_hash.c       	   mby_hash.h        mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_nexthop.o       : mby_nexthop.c    	   mby_nexthop.h     mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_maskgen.o       : mby_maskgen.c    	   mby_maskgen.h     mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_triggers_regs.o : mby_triggers_regs.c       mby_triggers.h    mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_triggers.o      : mby_triggers.c   	   mby_triggers.h    mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_congmgmt.o      : mby_congmgmt.c   	   mby_congmgmt.h    mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_rxstats.o       : mby_rxstats.c    	   mby_rxstats.h     mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_modifier.o      : mby_modifier.c   	   mby_modifier.h    mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_txstats.o       : mby_txstats.c    	   mby_txstats.h     mby_common.h mby_bitfield.h
+${BLD_DIR}/mby_pipeline.o      : mby_pipeline.c            mby_pipeline.h
+${BLD_DIR}/mby_reg_ctrl.o      : mby_reg_ctrl.c            mby_reg_ctrl.h
+${BLD_DIR}/mby_model.o         : mby_model.c               mby_model.h
+${BLD_DIR}/mby_model_basic.o   : mby_model_basic.c         mby_model_basic.h
+${BLD_DIR}/mby_errors.o        : mby_errors.c              mby_errors.h      mby_model.h
+${BLD_DIR}/mby_init.o          : mby_init.c                mby_init.h
 
-PIPELINE_STAGES += mby_parser.o
-PIPELINE_STAGES += mby_mapper.o
-PIPELINE_STAGES += mby_clsfr_regs.o mby_lpm.o mby_lpm_regs.o mby_wcm.o mby_exactmatch.o mby_classifier.o
-PIPELINE_STAGES += mby_hash.o
-PIPELINE_STAGES += mby_nexthop.o
-PIPELINE_STAGES += mby_maskgen.o
-PIPELINE_STAGES += mby_triggers_regs.o mby_triggers.o
-PIPELINE_STAGES += mby_rxstats.o
-PIPELINE_STAGES += mby_modifier.o
-PIPELINE_STAGES += mby_txstats.o
+# write_field() used by M3 model_server:
+${BLD_DIR}/model_c_write.o     : $(SRC_DIR3)/model_c_write.c $(SRC_DIR3)/model_c_write.h
 
-mby_pipeline.o   : mby_pipeline.c   mby_pipeline.h   $(PIPELINE_STAGES)
-mby_reg_ctrl.o   : mby_reg_ctrl.c   mby_reg_ctrl.h
-mby_model.o      : mby_model.c      mby_model.h      mby_pipeline.o
-mby_init.o       : mby_init.c       mby_init.h
+# write_field() used by C tests:
+${BLD_DIR}/mby_write_field.o   : mby_write_field.c mby_write_field.h
 
-%.o: %.c
+${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-libmbymodel.so: $(OBJECTS) mby_model.o
-	@echo '  Linking' $@
+$(BLD_DIR):
+	@echo '  Creating build directory' $@
+	$(ECHO) $(MKDIR) $@
+
+$(LIB_STATIC): $(OBJECTS)
+	@echo '  Creating static library' $@
+	$(ECHO) $(AR) $@ $^
+
+$(LIB_SHARED): $(OBJECTS)
+	@echo '  Creating shared library' $@
 	$(ECHO) $(GCC) -shared -o $@ $^
+
+libs: $(LIBRARIES)
 
 .PHONY: clean
 clean:
@@ -144,7 +167,7 @@ UT_BINARIES += unit_tests/ut_lpm.exe
 unit_tests/liblpm.so: mby_lpm.o mby_lpm_regs.o mby_bitfield.o mby_common.o
 unit_tests/ut_lpm.exe: unit_tests/ut_lpm.o unit_tests/mock_lpm_regs.o unit_tests/liblpm.so
 
-DELFILES += unit_tests/*.so unit_tests/*.o unit_tests/*.exe model_server/msrv
+DELFILES += unit_tests/*.so unit_tests/*.o unit_tests/*.exe
 
 unit_tests/%.so:
 	@echo '  Linking UT shared lib' $@

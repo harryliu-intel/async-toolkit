@@ -5,5 +5,5 @@ parser_top [
   parser_ff_mems of parser_ff_mems with parser_ff_mems.map
 //  parser_rf_mems of parser_rf_mems with parser_rf_mems.map
   parser_tcam_mems of parser_tcam_mems with parser_tcam_mems.map
-  parser_logical of parser_logical with parser_logical.map
+  parser_func_logic of parser_func_logic with parser_func_logic.map
 ]

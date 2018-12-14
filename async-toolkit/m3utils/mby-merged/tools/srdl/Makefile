@@ -205,9 +205,16 @@ $(RESULTSXMLFILE) $(RAL_ENV) $(CRIF_FILE) $(SV_FILE): $(ALL_RDL) $(PREREQS)
 
 $(RESULTS_SUBBLOCK)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
 	$(eval TMPDIR = $(shell mktemp -d))
+	$(eval BLKNAME = $(basename $<))	
 	mkdir -p $(dir $@)
-	$(NEBULON) -sv_no_sai_checks -crif -expand_handcoded_arrays -maximize_crif -input $< -timeout 60000 -out_dir $(TMPDIR) -log_file $@.log
+	$(NEBULON) -sv_no_sai_checks -sverilog -crif -expand_handcoded_arrays -maximize_crif -input $< -timeout 60000 -out_dir $(TMPDIR) -log_file $@.log
+	mkdir -p $(RESULTS_SUBBLOCK)/$(BLKNAME)
+	cp $(TMPDIR)/output/sverilog/* $(RESULTS_SUBBLOCK)/$(BLKNAME)
 	cp $(TMPDIR)/output/crif/$(notdir $@) $@
+
+$(RESULTS_SUBBLOCK)/%_rtl.hdl: $(RESULTS_SUBBLOCK)/%_crif.xml
+#generate rtl registers.hdl here
+
 
 #%.ralf.done: %_crif.xml
 #	cd $(dir $@) && $(MULTI_GEN_RALF) -i $< -o .ralf -output_dir $@/out --bytes 0
@@ -216,7 +223,7 @@ $(RESULTS_SUBBLOCK)/%_crif.xml: %.rdl $(ALL_RDL) $(PREREQS)
 %.ralf.done: %_crif.xml
 	$(eval TMPDIR = $(shell mktemp -d))
 	cp $^  $(TMPDIR)
-	cd $(TMPDIR) && $(MULTI_GEN_RALF) -i $< -o .ralf --bytes 0
+	cd $(TMPDIR) && $(MULTI_GEN_RALF) -i $< -o .ralf --bytes 0 -b 1
 	rm -rf $(basename $@)_out
 	mkdir $(basename $@)_out
 	cp $(TMPDIR)/*.ralf $(basename $@)_out

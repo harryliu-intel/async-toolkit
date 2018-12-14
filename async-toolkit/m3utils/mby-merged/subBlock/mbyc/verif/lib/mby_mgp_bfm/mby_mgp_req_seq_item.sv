@@ -16,17 +16,19 @@ class mby_mgp_req_seq_item extends uvm_sequence_item;
    typedef union packed {
       struct packed {
          logic [15:0] op_id;
-         logic        ps;
-         logic [3:0]  py;
-         logic [2:0]  mx;
-         logic [3:0]  my;
-         logic [13:0] addr;
-         logic [1:0]  sema;
+         logic        valid;        
+         logic [2:0]  node_col;
+         logic [3:0]  node_row;
+         logic [39:0] addr;
+         logic        sema_vld;
+         logic        sema_val;
          logic [7:0]  age;
-      } opbus;
+         logic [501:0] dummy;
+      } rdrow_opbus;
 
       struct packed {
          logic [511:0] data;
+         logic [63:0] ecc;
       } databus;
 
    }physical_t;
@@ -40,6 +42,7 @@ class mby_mgp_req_seq_item extends uvm_sequence_item;
    rand bit [1:0]  sema;
    rand bit [7:0]  age;
    rand bit [511:0] data;
+   rand bit [459:0] dummy;
    rand bus_type_e bus_type;
 
    extern function new(string name = "");
@@ -61,7 +64,7 @@ endfunction : new
 // Convert the req class fields into a physical object.
 //----------------------------------------------------------------------------------------
 function void mby_mgp_req_seq_item::pack(ref physical_t phys);
-
+/*
    if (bus_type == OP) begin
       phys.opbus.op_id = op_id;
       phys.opbus.ps    = ps;
@@ -71,11 +74,12 @@ function void mby_mgp_req_seq_item::pack(ref physical_t phys);
       phys.opbus.addr  = addr;
       phys.opbus.sema  = sema;
       phys.opbus.age   = age;
+      phys.opbus.dummy = 0;
    end
    else if (bus_type == DATA) begin
       phys.databus.data = data;
    end
-
+*/
 endfunction : pack
 
 //----------------------------------------------------------------------------------------
@@ -83,7 +87,7 @@ endfunction : pack
 // Convert the physical req into an instance of this class.
 //----------------------------------------------------------------------------------------
 function void mby_mgp_req_seq_item::unpack(physical_t phys);
-
+/*
    if (bus_type == OP) begin
       op_id = phys.opbus.op_id;
       ps    = phys.opbus.ps;
@@ -93,9 +97,10 @@ function void mby_mgp_req_seq_item::unpack(physical_t phys);
       addr  = phys.opbus.addr;
       sema  = phys.opbus.sema;
       age   = phys.opbus.age;
+      dummy = 0;
    end
    else if (bus_type == DATA) begin
       data = phys.databus.data;
    end
-
+*/
 endfunction : unpack

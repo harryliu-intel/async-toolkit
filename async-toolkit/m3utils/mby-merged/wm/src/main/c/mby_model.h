@@ -1,4 +1,3 @@
-
 // -*- mode:c -*-
 
 // Copyright (C) 2018 Intel Corporation
@@ -9,47 +8,65 @@
 #include "mby_common.h"
 
 /* Public interfaces exposed by the MBY functional model */
-fm_status mbyResetModel(const fm_uint32 sw);
+fm_status mbyResetModel
+(
+    mby_top_map__addr const * const w
+);
 
-fm_status mby_init_regs(const fm_uint32 sw);
+fm_status mbyInitRegs
+(
+    mby_top_map__addr const * const w
+);
+
+fm_status mbyTopMapSetup
+(
+    mby_top_map       const * const r,
+    mby_top_map__addr const * const w
+);
 
 fm_status mbyReadReg
 (
-    const fm_uint32   sw,
-    const fm_uint32   addr,
-    fm_uint64 * const val
-);
-
-fm_status mbyWriteRegMult
-(
-    const fm_uint32 sw,
-    const fm_uint32 addr,
-    const fm_int len,
-    const fm_uint32 * const val
+    mby_top_map       const * const r,
+    fm_uint32               * const port,
+    fm_uint32                 const addr,
+    fm_uint64               * const val
 );
 
 fm_status mbyWriteReg
 (
-    const fm_uint32 sw,
-    const fm_uint32 addr,
-    const fm_uint64 val
+    mby_top_map__addr const * const w,
+    fm_uint32               * const port,
+    fm_uint32                 const addr,
+    fm_uint64                 const val
+);
+
+fm_status mbyWriteRegMult
+(
+    mby_top_map       const * const r,
+    mby_top_map__addr const * const w,
+    fm_uint32               * const port,
+    fm_uint32                 const addr,
+    fm_uint64         const * const val,
+    fm_uint32                 const len
 );
 
 fm_status mbySendPacket
 (
-    const fm_uint32         sw,
-    const fm_uint32         port,
-    const fm_byte   * const packet,
-    const fm_uint32         length
+    mby_top_map       const * const r,
+    mby_top_map__addr const * const w,
+    fm_uint32                 const port,
+    fm_byte           const * const packet,
+    fm_uint32                 const length
 );
 
 fm_status mbyReceivePacket
 (
-    const fm_uint32         sw,
-    fm_uint32       * const port,
-    fm_byte         * const packet,
-    fm_uint32       * const length,
-    const fm_uint32         max_pkt_size
+    mby_top_map       const * const r,
+    mby_top_map__addr const * const w,
+    fm_uint32                 const max_pkt_size,
+    fm_uint32               * const port,
+    fm_byte                 * const packet,
+    fm_uint32               * const length
 );
 
 #endif /* _MBY_MODEL_H_ */

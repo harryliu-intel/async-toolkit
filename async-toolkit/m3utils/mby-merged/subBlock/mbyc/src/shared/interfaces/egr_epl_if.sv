@@ -49,62 +49,59 @@ interface egr_epl_if
 //    logic                                       tx_pfc_xoff; 
 //    logic [W_EPL_TX_FLOW_CONTROL_TC-1:0] tx_flow_control_tc;
   
-    epl_tx_ecc_t                         tx_ecc;        
     epl_tx_enable_port_num_t tx_enable_port_num;
     epl_tx_enable_t                   tx_enable;
     epl_tx_data_valid_t           tx_data_valid;
     epl_tx_port_num_t               tx_port_num;
     epl_tx_valid_resp_t           tx_valid_resp;
     epl_tx_metadata_t               tx_metadata;
-    epl_tx_flit_w_ecc_t          tx0_data_w_ecc;
-    epl_tx_flit_w_ecc_t          tx1_data_w_ecc;
-    epl_tx_flit_w_ecc_t          tx2_data_w_ecc;
-    epl_tx_flit_w_ecc_t          tx3_data_w_ecc;
-    epl_tx_flit_w_ecc_t          tx4_data_w_ecc;
-    epl_tx_flit_w_ecc_t          tx5_data_w_ecc;
-    epl_tx_flit_w_ecc_t          tx6_data_w_ecc;
-    epl_tx_flit_w_ecc_t          tx7_data_w_ecc;
-    epl_tx_pfc_xoff_t               tx_pfc_xoff; 
-    epl_tx_flow_control_tc_t tx_flow_control_tc;
+    epl_tx_flit_t                      tx0_data;
+    epl_tx_flit_t                      tx1_data;
+    epl_tx_flit_t                      tx2_data;
+    epl_tx_flit_t                      tx3_data;
+    epl_tx_flit_t                      tx4_data;
+    epl_tx_flit_t                      tx5_data;
+    epl_tx_flit_t                      tx6_data;
+    epl_tx_flit_t                      tx7_data;
+    logic [3:0]                     rx_pfc_xoff; // one wire per logical port 
+    logic                        rx_pfc_tc_sync;
     
 modport egr(
-    output            tx_ecc,
     input tx_enable_port_num,
     input          tx_enable,
     output     tx_data_valid,
     output       tx_port_num,
     output     tx_valid_resp,
     output       tx_metadata,
-    output    tx0_data_w_ecc,
-    output    tx1_data_w_ecc,
-    output    tx2_data_w_ecc,
-    output    tx3_data_w_ecc,
-    output    tx4_data_w_ecc,
-    output    tx5_data_w_ecc,
-    output    tx6_data_w_ecc,
-    output    tx7_data_w_ecc,
-    output       tx_pfc_xoff,
-    output tx_flow_control_tc
+    output          tx0_data,
+    output          tx1_data,
+    output          tx2_data,
+    output          tx3_data,
+    output          tx4_data,
+    output          tx5_data,
+    output          tx6_data,
+    output          tx7_data,
+    input        rx_pfc_xoff,
+    input     rx_pfc_tc_sync
     );
 
 modport epl(
-    input              tx_ecc,
     output tx_enable_port_num,
     output          tx_enable,
     input       tx_data_valid,
     input         tx_port_num,
     input       tx_valid_resp,
     input         tx_metadata,
-    input      tx0_data_w_ecc,
-    input      tx1_data_w_ecc,
-    input      tx2_data_w_ecc,
-    input      tx3_data_w_ecc,
-    input      tx4_data_w_ecc,
-    input      tx5_data_w_ecc,
-    input      tx6_data_w_ecc,
-    input      tx7_data_w_ecc,
-    input         tx_pfc_xoff,
-    input tx_flow_control_tc
+    input            tx0_data,
+    input            tx1_data,
+    input            tx2_data,
+    input            tx3_data,
+    input            tx4_data,
+    input            tx5_data,
+    input            tx6_data,
+    input            tx7_data,
+    output        rx_pfc_xoff,
+    output     rx_pfc_tc_sync
     );
     
     

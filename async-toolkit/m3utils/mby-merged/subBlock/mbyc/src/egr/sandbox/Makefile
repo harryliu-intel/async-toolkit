@@ -7,7 +7,7 @@
 VCS_SRC  = rtl/egr_top_tb.sv
 ifdef dut
     ifneq ($(dut),"egr_top")
-        VCS_SRC  = ../partition1/$(dut)/sandbox/rtl/$(dut)_tb.sv
+        VCS_SRC  = ../$(dut)/sandbox/rtl/$(dut)_tb.sv
     endif
 endif
 
@@ -19,21 +19,22 @@ VCS_DEFS += +define+VCSSIM +define+INTEL_SVA_OFF
 
 VCS_FLAGS += $(VCS_DEFS)
 
-INCS += ../rtl
+INCS += $(SRC)/egr/rtl
 INCS += ../interfaces
 INCS += rtl
-INCS += ../partition1/cpb/rtl
-INCS += ../partition1/dpb/rtl
-INCS += ../partition1/lcm/rtl
-INCS += ../partition1/mri/rtl
-INCS += ../partition1/pfs/rtl
-INCS += ../partition1/prc/rtl
-INCS += ../partition1/tcu/rtl
-INCS += ../partition1/tmu/rtl
-INCS += ../partition1/tqu/rtl
-INCS += ../../mems/rtl/
+INCS += $(SRC)/egr/cpb/rtl
+INCS += $(SRC)/egr/dpb/rtl
+INCS += $(SRC)/egr/lcm/rtl
+INCS += $(SRC)/egr/mri/rtl
+INCS += $(SRC)/egr/pfs/rtl
+INCS += $(SRC)/egr/prc/rtl
+INCS += $(SRC)/egr/tcu/rtl
+INCS += $(SRC)/egr/tmu/rtl
+INCS += $(SRC)/egr/tqu/rtl
+INCS += $(SRC)/mems/rtl/
 
 VCS_INC = $(addprefix +incdir+,$(INCS))
+BUILD_DEP = $(addsuffix /*,$(INCS))
 VCS_LIB = $(addprefix -y ,$(INCS))
 
 ## tb top
@@ -41,7 +42,7 @@ VCS_LIB = $(addprefix -y ,$(INCS))
 
 .PHONY: debug gate clean
 
-simv: $(VCS_SRC) ../rtl/* rtl/*
+simv: $(VCS_SRC) $(BUILD_DEP)
 	vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) -l build.log
 
 debug: simv
@@ -49,8 +50,8 @@ debug: simv
 
 gate: simv
 	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
-	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog *.vpd
+	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog .synopsys_dve_rebuild.tcl *.vpd
 
 clean:
-	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog *.vpd *.log
+	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog .synopsys_dve_rebuild.tcl *.vpd *.log
 

@@ -30,18 +30,16 @@
 
 interface egr_pfs_prc_if import shared_pkg::*; ();
 
-localparam PORTS_PER_EPL = 4;
-localparam TX_TC_COUNT = 8;
 localparam DATA_TRANSMIT_QUEUE_COUNT = 8;
 // PFS tells PRC which queue to pop a packet from.
 
 // Max rate is 1 per 2 clocks per EPL, so set signals per EPL
 logic [EPL_PER_MGP-1:0] valid; // Indicates that there is a winning packet for the EPL.
-logic [EPL_PER_MGP-1:0][$clog2(PORTS_PER_EPL)-1:0] port; // Indicates the port of the winning packet for the EPL
+logic [EPL_PER_MGP-1:0][$clog2(N_MAX_LP_PER_EPL)-1:0] port; // Indicates the port of the winning packet for the EPL
 logic [EPL_PER_MGP-1:0][$clog2(MGP_COUNT)-1:0] mgp; // Indicates the source MGP of the winning queue
-logic [EPL_PER_MGP-1:0][$clog2(TX_TC_COUNT)-1:0] tc; // Indicates the TC of the winning queue
+logic [EPL_PER_MGP-1:0][$clog2(MGP_TC_CNT)-1:0] tc; // Indicates the TC of the winning queue
 logic [EPL_PER_MGP-1:0][$clog2(DATA_TRANSMIT_QUEUE_COUNT)-1:0] dtq; // Indicates the data transmit queue of the winning queue
-logic [EPL_PER_MGP-1:0][PORTS_PER_EPL-1:0][DATA_TRANSMIT_QUEUE_COUNT-1:0] ready; // Indicates that PFS is accepting a winning packet
+logic [EPL_PER_MGP-1:0][N_MAX_LP_PER_EPL-1:0][DATA_TRANSMIT_QUEUE_COUNT-1:0] ready; // Indicates that PFS is accepting a winning packet
 
 modport pfs(
     output valid, port, mgp, tc, dtq,
