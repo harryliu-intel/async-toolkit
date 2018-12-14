@@ -8,11 +8,9 @@
 // Includes:
 #include <stdlib.h>
 #include <mby_top_map.h> // header file auto-generated from RDL
+#include <sys/param.h>   // MIN/MAX C macros
 
 // Macros:
-
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define isBroadcastMacAddress(addr) ( (addr) == FM_LITERAL_U64(0xFFFFFFFFFFFF))
 #define   isUnicastMacAddress(addr) (((addr) &  FM_LITERAL_U64(0x010000000000)) == 0)
