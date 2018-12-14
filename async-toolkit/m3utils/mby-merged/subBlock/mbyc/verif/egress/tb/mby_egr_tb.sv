@@ -52,8 +52,8 @@ module mby_egr_tb ();
   // ===============================================
   // DUT RTL instance
   // ===============================================
-  mby_tag_bfm_uc_if tag_bfm_intf_0 (egress_reset, egress_clock);
-  mby_tag_bfm_uc_if tag_bfm_intf_1 (egress_reset, egress_clock);
+  mby_tag_bfm_uc_if tag_bfm_intf_0 (egress_clock, egress_reset);
+  mby_tag_bfm_uc_if tag_bfm_intf_1 (egress_clock, egress_reset);
    
 `include "mby_egr_top_inst.v"
 
