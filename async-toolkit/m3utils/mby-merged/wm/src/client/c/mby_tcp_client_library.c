@@ -526,6 +526,47 @@ int wm_pkt_get(struct wm_pkt *pkt)
   return WM_OK;
 }
 
+
+int wm_parser(mbyRxMacToParser const * const in,
+              mbyParserToMapper      * const out)
+{
+
+    printf("Received %d bytes on port %d", in->RX_LENGTH, in->RX_PORT);
+    hex_dump(in->RX_DATA, in->RX_LENGTH, 0);
+
+    // Write outputs with totally random values:
+    out->PA_ADJ_SEG_LEN     = 0x1234;
+    out->PA_CSUM_OK         = 0x1;
+    out->PA_DROP            = 0x0;
+    out->PA_EX_DEPTH_EXCEED = 0x1;
+    out->PA_EX_PARSING_DONE = 0x0;
+    out->PA_EX_STAGE        = 0xaa;
+    out->PA_EX_TRUNC_HEADER = 0x1;
+
+    for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
+        out->PA_FLAGS[i] = 0x1;
+
+    for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
+        out->PA_KEYS      [i] = 0xe3;
+        out->PA_KEYS_VALID[i] = 0x1;
+    }
+
+    out->PA_L3LEN_ERR       = 0x1;
+    out->PA_PACKET_TYPE     = 0xabcd;
+
+    for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
+        out->PA_HDR_PTRS.OFFSET      [i] = 0x78;
+        out->PA_HDR_PTRS.OFFSET_VALID[i] = 0x1;
+        out->PA_HDR_PTRS.PROT_ID     [i] = 0x45;
+    }
+
+    out->RX_DATA            = in->RX_DATA;
+    out->RX_PORT            = in->RX_PORT;
+    out->RX_LENGTH          = in->RX_LENGTH;
+
+    return WM_OK;
+}
+
 /*****************************************************************************
  *************************** Auxiliary functions *****************************
  ****************************************************************************/
