@@ -192,7 +192,7 @@ UT_CFLAGS += -O0 -g -ggdb3
 
 UT_BINARIES += unit_tests/ut_lpm.exe
 
-unit_tests/liblpm.so: mby_lpm.o mby_lpm_regs.o mby_bitfield.o mby_common.o
+unit_tests/liblpm.so: ${BLD_DIR}/mby_lpm.o ${BLD_DIR}/mby_lpm_regs.o ${BLD_DIR}/mby_bitfield.o ${BLD_DIR}/mby_common.o
 unit_tests/ut_lpm.exe: unit_tests/ut_lpm.o unit_tests/mock_lpm_regs.o unit_tests/liblpm.so
 
 DELFILES += unit_tests/*.so unit_tests/*.o unit_tests/*.exe
