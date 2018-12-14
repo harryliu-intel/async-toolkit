@@ -80,9 +80,12 @@ ${BLD_DIR}/%.o: %.c
 
 # Added dependencies:
 ${BLD_DIR}/mby_triggers_test.o: \
-        $(BLD_DTS) Makefile \
+        $(BLD_DTS) \
+        Makefile \
         mby_triggers_test.c \
-        $(C_DIR)/mby_triggers.h $(C_DIR)/mby_common.h
+        $(C_DIR)/mby_triggers.h \
+        ${C_DIR}/mby_pipeline.h \
+        $(C_DIR)/mby_common.h
 
 $(TARGET): $(BLD_DTS) $(OBJECTS) $(FM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)

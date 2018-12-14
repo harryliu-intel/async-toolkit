@@ -80,9 +80,13 @@ ${BLD_DIR}/%.o: %.c
 
 # Added dependencies:
 ${BLD_DIR}/mby_nexthop_test.o: \
-        $(BLD_DTS) Makefile \
-        mby_nexthop_test.c mby_nexthop_test.h \
-        $(C_DIR)/mby_nexthop.h $(C_DIR)/mby_common.h
+        $(BLD_DTS) \
+        Makefile \
+        mby_nexthop_test.c \
+        mby_nexthop_test.h \
+        ${C_DIR}/mby_nexthop.h \
+        ${C_DIR}/mby_pipeline.h \
+        ${C_DIR}/mby_common.h
 
 $(TARGET): $(BLD_DTS) $(OBJECTS) $(FM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
