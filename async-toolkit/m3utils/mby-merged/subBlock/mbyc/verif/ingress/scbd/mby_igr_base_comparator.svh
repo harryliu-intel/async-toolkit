@@ -1,13 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GCM Bus Functional Model Package
+// Title         : Madison Bay IGR Base Comparator
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_pkg.sv
-// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
-// Created       : 01.11.2018
+// File          : mby_igr_base_comparator.svh
+// Author        : ricardo.a.alfaro.gomez  <raalfaro@ichips.intel.com>
+// 2ry contact   : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Created       : 12.12.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the GCM BFM package file
+// This is the main igr_base_comparator class
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,38 +31,32 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_PKG__
-`define __MBY_GCM_BFM_PKG__
-//------------------------------------------------------------------------------
-//
-// PACKAGE: mby_gcm_bfm_pkg
-// This is the Madison Bay gcm (global congestion manager) bfm package,
-// currently it depends on the uvm, shdv_base_pkg, mby_base_pkg verification
-// packages and also depends on the gmm rtl package, which includes defines and
-// typedefs for the interfaces and transaction classes of this agent.
-//
-//------------------------------------------------------------------------------
-package mby_gcm_bfm_pkg;
-
-   import uvm_pkg::*;
-   import shdv_base_pkg::*;
-   import mby_base_pkg::*;
-   import mby_gmm_pkg::*;
-   import shared_pkg::*;
-
-   `include "uvm_macros.svh"
-   `include "mby_gcm_bfm_defines.svh"
-   `include "mby_gcm_bfm_types.svh"
-   `include "mby_gcm_bfm_queue_xaction.svh"
-   `include "mby_gcm_bfm_deque_xaction.svh"
-   `include "mby_gcm_bfm_wm_xaction.svh"
-   `include "mby_gcm_bfm_sm_wm_xaction.svh"
-   `include "mby_gcm_bfm_cfg.svh"
-   `include "mby_gcm_bfm.svh"
-
-endpackage : mby_gcm_bfm_pkg
-
-
+`ifndef __MBY_IGR_SCBD_PKG__
+`error "Attempt to include file outside of mby_igr_scbd_pkg."
 `endif
+`ifndef __MBY_IGR_BASE_COMPARATOR__
+`define __MBY_IGR_BASE_COMPARATOR__
+//------------------------------------------------------------------------------
+// CLASS: igr_base_comparator
+//
+// This is the main igr_base_comparator class. This class implements the common 
+// functionality across different igr comparators types.
+//
+//------------------------------------------------------------------------------
+class mby_igr_base_comparator extends uvm_component;
+    `uvm_component_utils(mby_igr_base_comparator)
+    //---------------------------------------------------------------------------
+    // CONSTRUCTOR: new
+    //
+    // Constructor.
+    //
+    // ARGUMENTS:
+    //    string name          - An instance name of the comparator
+    //    uvm_component parent - The comparator's parent component pointer.
+    //---------------------------------------------------------------------------
+    function new (string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction
+endclass
 
-
+`endif // __MBY_IGR_BASE_COMPARATOR__

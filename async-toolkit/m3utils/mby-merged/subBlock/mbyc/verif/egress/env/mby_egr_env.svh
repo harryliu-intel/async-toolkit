@@ -111,7 +111,7 @@ class mby_egr_env extends mby_egr_base_env;
          assert($cast(ti_config,tmp_ti_cfg_obj));
       end
 
-      build_eth_bfms();
+      //build_eth_bfms();
       build_tag_bfm();
       build_smm_bfm();
       
@@ -132,7 +132,7 @@ class mby_egr_env extends mby_egr_base_env;
    function void connect_phase(uvm_phase phase);
       uvm_object temp;
       super.connect_phase(phase);
-      connect_eth_bfms();
+      //connect_eth_bfms();
       connect_tag_bfms();
       
       uvm_config_db#(egr_env_if_t)::get(this, "", "egress_if", egress_if);
@@ -207,11 +207,13 @@ class mby_egr_env extends mby_egr_base_env;
          if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
             `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
          end
+         uvm_config_db #(virtual mby_tag_bfm_uc_if)::set(null, $sformatf("uvm_test_top.env.tag_bfm_%0d.tag_uc_agent",i), "vintf", tag_bfm_intf[i]);
+         
          tag_bfm[i] = mby_tag_bfm_pkg::mby_tag_bfm::type_id::create($sformatf("tag_bfm_%0d",i), this);
          tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_EGR_MODE;
-         tag_bfm[i].cfg_obj.driver_active = UVM_PASSIVE;
-         tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
-         tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
+         tag_bfm[i].cfg_obj.driver_active = UVM_ACTIVE;
+         //tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
+         //tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
          tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
       end
    endfunction : build_tag_bfm
@@ -256,7 +258,7 @@ class mby_egr_env extends mby_egr_base_env;
    //--------------------------------------------------------------------------
    function void connect_tag_bfms();
       foreach(tag_bfm[i])begin
-         uvm_config_db #(virtual mby_tag_bfm_uc_if)::set(null, $sformatf("uvm_test_top.env.tag_bfm_%0d.igr_wr_req_agent",i), "vintf", tag_bfm_intf[i]);
+         add_sequencer($sformatf("tag_bfm_%0d", i), $sformatf("tag_bfm_uc_%0d", i), tag_bfm[i].tag_uc_agent.sequencer);
          tag_bfm[i].tag_uc_agent.vintf = tag_bfm_intf[i];
       end
    endfunction: connect_tag_bfms

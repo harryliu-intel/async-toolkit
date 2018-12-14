@@ -1,13 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay GCM Bus Functional Model Package
+// Title         : Madison Bay EGR E2E Scoreboard Package
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_gcm_bfm_pkg.sv
-// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
-// Created       : 01.11.2018
+// File          : mby_egr_scbd_pkg.sv
+// Author        : ricardo.a.alfaro.gomez  <raalfaro@ichips.intel.com>
+// 2ry contact   : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Created       : 12.12.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the GCM BFM package file
+// This is the EGR E2E Scoreboard package file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,37 +31,30 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_GCM_BFM_PKG__
-`define __MBY_GCM_BFM_PKG__
+`ifndef __MBY_EGR_SCBD_PKG__
+`define __MBY_EGR_SCBD_PKG__
 //------------------------------------------------------------------------------
 //
-// PACKAGE: mby_gcm_bfm_pkg
-// This is the Madison Bay gcm (global congestion manager) bfm package,
-// currently it depends on the uvm, shdv_base_pkg, mby_base_pkg verification
-// packages and also depends on the gmm rtl package, which includes defines and
-// typedefs for the interfaces and transaction classes of this agent.
+// PACKAGE: mby_egr_scbd_pkg
+// This is the Madison Bay egr scbd package, currently it depends on the uvm,
+// shdv_base_pkg and mby_base_pkg verification packages.
 //
 //------------------------------------------------------------------------------
-package mby_gcm_bfm_pkg;
+package mby_egr_scbd_pkg;
 
-   import uvm_pkg::*;
-   import shdv_base_pkg::*;
-   import mby_base_pkg::*;
-   import mby_gmm_pkg::*;
-   import shared_pkg::*;
+    import uvm_pkg::*;
+    import shdv_base_pkg::*;
+    import mby_base_pkg::*;
 
-   `include "uvm_macros.svh"
-   `include "mby_gcm_bfm_defines.svh"
-   `include "mby_gcm_bfm_types.svh"
-   `include "mby_gcm_bfm_queue_xaction.svh"
-   `include "mby_gcm_bfm_deque_xaction.svh"
-   `include "mby_gcm_bfm_wm_xaction.svh"
-   `include "mby_gcm_bfm_sm_wm_xaction.svh"
-   `include "mby_gcm_bfm_cfg.svh"
-   `include "mby_gcm_bfm.svh"
+    `include "uvm_macros.svh"
+//TODO:    `include "mby_egr_base_scbd_xaction.svh"
+    `include "mby_egr_base_predictor.svh"
+    `include "mby_egr_base_comparator.svh"
+    `include "mby_egr_base_scbd.svh"
 
-endpackage : mby_gcm_bfm_pkg
+    `include "mby_egr_e2e_scbd.svh"
 
+endpackage : mby_egr_scbd_pkg
 
 `endif
 

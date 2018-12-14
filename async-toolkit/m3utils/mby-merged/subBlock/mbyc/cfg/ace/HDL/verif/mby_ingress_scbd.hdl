@@ -4,13 +4,10 @@
 #
 
 $hdl_spec = {
+
     # List of specific VERILOG source files
     -vlog_files => [
-         "src/shared/rtl/shared_pkg.sv",
-	 "src/shared/rtl/mby_gmm_pkg.sv",
-         "verif/lib/mby_gpm_bfm/mby_gpm_bfm_pod_if.sv",
-         "verif/lib/mby_gpm_bfm/mby_gpm_bfm_msh_if.sv",
-         "verif/lib/mby_gpm_bfm/mby_gpm_bfm_pkg.sv",
+     "verif/ingress/scbd/mby_igr_scbd_pkg.sv",
      ],
 
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
@@ -22,11 +19,12 @@ $hdl_spec = {
 
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-         "$ENV{UVM_HOME}/src",
-         "verif/lib/mby_gpm_bfm",
+     "$ENV{UVM_HOME}/src",
+     "verif/ingress/scbd",
      ],
 
     # Arbitrary VLOG options
     # -vlog_opts => ['-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',]
 
 };
+

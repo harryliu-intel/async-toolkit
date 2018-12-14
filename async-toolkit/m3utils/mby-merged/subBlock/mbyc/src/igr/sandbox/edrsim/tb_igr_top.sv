@@ -201,7 +201,13 @@ mby_igr_top
 
 // Global Congestion (GCM) Management interface
   .i_rx_cm_wm_out('0),    // RX watermark
-  .i_rx_cm_sm_wm_out('0)  // Shared watermark 
+  .i_rx_cm_sm_wm_out('0),  // Shared watermark
+  
+  // global policer IGR
+  .o_gpolring0(),
+  .o_gpolring1(),
+  .i_gpolring_update0('0),
+  .i_gpolring_update1('0)
 
 );
 
