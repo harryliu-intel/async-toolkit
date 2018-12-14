@@ -43,9 +43,9 @@
 ;;
 
 (define (get-tag obj)
-  (case (car obj)
+  (case (caar obj)
     ((cont) 'container)
-    (else (car obj))))
+    (else (caar obj))))
 
 (define *tag-assert-failed* '())
 
@@ -89,11 +89,11 @@
 
 (define (container-get-children c)
   (assert-container c)
-  (cddr c))
+  (cdr c))
 
 (define (container-get-name c)
   (assert-container c)
-  (cadr c))
+  (cadar c))
 
 (define (children-get-children-names children)
   ;; the skipArc rule is here...
@@ -111,12 +111,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+;; reg header
+;;
+
+(define (regheader-get-children r) '())
+
+(define (regheader-sum what r) 0)
+
+(define (isnt-regheader? x) (not (eq? 'regheader (get-tag x))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;; fields (children of a reg)
 ;;
 
 (define (field-get-name f)
   (assert-field f)
-  (cadr f))
+  (cadar f))
 
 (define (field-get-nfields f)
   (assert-field f)
@@ -141,11 +152,11 @@
 
 (define (array-get-length a)
   (assert-array a)
-  (cadr a))
+  (cadar a))
 
 (define (array-get-elem a) ;; returns a list
   (assert-array a)
-  (cddr a))
+  (cdr a))
 
 (define (array-get-children a)
   (array-get-elem a)
@@ -186,7 +197,7 @@
               ((or (< cn 0) (>= cn (array-get-length (car children))))
                (error (error-append "index out of range : " (stringify cn) " : " (stringify (car children)))))
               (else
-               (cons 'cont (cons '*elem* (array-get-elem (car children))))))
+               (cons '(cont *elem*) (array-get-elem (car children)))))
 
           (get-unique get-name children cn))))
  
@@ -215,6 +226,12 @@
          (lister (eval (symbol-append tag '-get-children-names))))
     (lister obj)))
 
+(define (gen-sum what obj)
+  (let* ((tag (get-tag obj))
+         (summer (eval (symbol-append tag '-sum))))
+    (summer what obj)))
+              
+
 (define *last-get-children-arg* '())
 
 (define (get-children obj)
@@ -222,16 +239,18 @@
   (let* ((tag (get-tag obj))
          (getter (eval (symbol-append tag '-get-children))))
     (getter obj)))
+
+(define get-children cdr)
   
 (define (treesum what t)
   (let ((children (get-children t)))
-    (cond ((null? children) (list (field-sum what t)))
+    (cond ((null? children) (list (gen-sum what t)))
 
           (else (let ((csum (map (lambda(c)(treesum what c)) children)))
                   (cons
 
                    (*
-                    (if (eq? 'array (car t))
+                    (if (eq? 'array (get-tag t))
                         (array-get-length t)
                         1 ;; not an array -- a plain sum
                         )
@@ -308,7 +327,7 @@
     )
  (helper t 0))
 
-(define (aux-treemap op t)
+(define (aux-treemap-old op t)
   (cond ((null? t) '())
 
         ((pair? t) (cons (aux-treemap op (car t))
@@ -316,16 +335,24 @@
 
         (else (op t))))
 
+(define (aux-treemap op t)
+  (cond ((null? t) '())
+        (else (cons (op (car t)) (map (lambda(u)(aux-treemap op u)) (cdr t))))))
+
+(define (make-tagger tag)
+  (lambda (x)(cons tag x)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                            
 (define (atom? x) (and (not (pair? x)) (not (null? x))))
 
 (define (tree-iso? a b)
+  ;; we now ignore the car, that is where node data is stored
+  ;; all that matters is that the cdr is (recursively) isomorphic
   (cond ((and (null? a) (null? b)) #t)
 
         ((and (pair? a) (pair? b))
-         (and (tree-iso? (car a) (car b))
-              (tree-iso? (cdr a) (cdr b))))
+         (tree-iso? (cdr a) (cdr b))) 
 
         ((and (atom? a) (atom? b)) #t)
 
@@ -373,9 +400,12 @@
              (n names))
     (if (null? n)
         '()
-        (let* ((q (get-children-names p))
-               (i (get-index (car n) q)))
-          (cons i (loop (get-child-by-cnt p i) (cdr n)))))))
+        (begin
+;;          (dis (error-append "p : " (stringify p)) dnl)
+        
+          (let* ((q (get-children-names p))
+                 (i (get-index (car n) q)))
+            (cons i (loop (get-child-by-cnt p i) (cdr n))))))))
         
 (define (name-by-cnt-sequence in seq)
   (let loop ((p in)
