@@ -23,7 +23,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Nathan Mai
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -50,29 +50,17 @@ class mby_rx_ppe_env extends shdv_base_env;
    // Interface handle to rx_ppe Testbench.
    virtual   mby_rx_ppe_tb_if                                  tb_vif;
 
-   // Variable:  tb_ral
-   // Protected Top Level rx_ppe RAL env handle.
-//PJP   protected mby_rx_ppe_ral_env                                tb_ral;
 
-   // Variable:  eth_cdi_bfm
+   // Variable:  eth_bfms
    // MAC Client BFM agent
-   //ec_env_defines::mby_ec_bfm_t eth_cdi_bfm;
+   rx_ppe_eth_bfm_t                                            eth_bfm; //ned 1 bf for both LPP & FPP
 
-   // Variable:  cdi_tx_io
-   // MAC Client BFM io policy
-   //ec_env_defines::cdi_tx_io_t eth_cdi_tx_io;
-
-   // Variable:  cdi_rx_io
-   // MAC Client BFM io policy
-   //ec_env_defines::cdi_rx_io_t eth_cdi_rx_io;
-
-   // Variable:  cdi_tx_vintf
+   // Variable:  eth_bfm_rx_vintf
    // MAC Client BFM virtual interface
-   //ec_env_defines::cdi_tx_vintf_t cdi_tx_vintf;
+   rx_ppe_eth_bfm_rx_intf_t                                    eth_bfm_rx_vintf;//[`NUM_EPLS_PER_RX_PPE]; //just 1 EPL for RX_PPE env
 
-   // Variable:  cdi_rx_vintf
-   // MAC Client BFM virtual interface
-   //ec_env_defines::cdi_rx_vintf_t cdi_rx_vintf;
+   //eth_bfm parser io
+
 
    `uvm_component_utils_begin(mby_rx_ppe_env)
       `uvm_field_object  (tb_cfg,                          UVM_ALL_ON)
@@ -130,19 +118,10 @@ class mby_rx_ppe_env extends shdv_base_env;
       if(!uvm_config_db#(virtual mby_rx_ppe_tb_if)::get(this, "", "mby_rx_ppe_tb_if", tb_vif)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
       end
-/*
-      if(!uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::get(this, "", "cdi_tx_vintf", cdi_tx_vintf)) begin
-         `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_tx_vintf was not successful!")
-      end
-      if(!uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::get(this, "", "cdi_rx_vintf", cdi_rx_vintf)) begin
+
+      if(!uvm_config_db#(rx_ppe_eth_bfm_rx_intf_t)::get(this, "", "eth_bfm_rx_vintf", eth_bfm_rx_vintf)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
       end
-*/
-
-//PJP      $cast(tb_ral,ral);
-//PJP      if(tb_ral == null) begin
-//PJP         `ovm_fatal(get_name(),"Unable to acquire handle to TB RAL!");
-//PJP      end
 
       build_eth_bfm();
 
@@ -153,23 +132,17 @@ class mby_rx_ppe_env extends shdv_base_env;
    //  Build and configure Eth_bfm.
    //---------------------------------------------------------------------------
    function void build_eth_bfm();
-/*
-      eth_cdi_bfm                    = ec_env_defines::mby_ec_bfm_t::type_id::create("eth_cdi_bfm", this); // Create the bfm instance
-      eth_cdi_bfm.cfg.mode           = eth_bfm_pkg::MODE_MASTER;                                           // Configure as MASTER
-      eth_cdi_bfm.cfg.port_speed     = {eth_bfm_pkg::SPEED_400G,                                           // Configure speed.
-         eth_bfm_pkg::SPEED_OFF,
-         eth_bfm_pkg::SPEED_OFF,
-         eth_bfm_pkg::SPEED_OFF};
 
-      //eth_cdi_bfm.cfg.num_ports = 4;                                                                  // Configure num_ports.
-      eth_cdi_bfm.cfg.sop_alignment = 67;
-
-*/
-      //eth_cdi_bfm.cfg.ack_delay = 0;
-      //eth_cdi_bfm.cfg.enable_to_data_tx_delay = 0;
-
-      //eth_cdi_tx_io = ec_env_defines::cdi_tx_io_t::type_id::create("eth_cdi_tx_io", this);
-      //eth_cdi_rx_io = ec_env_defines::cdi_rx_io_t::type_id::create("eth_cdi_rx_io", this);
+      // Create the bfm instances
+      eth_bfm                   =  rx_ppe_eth_bfm_t::type_id::create("rx_ppe_eth_bfm", this);
+      eth_bfm.cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
+      eth_bfm.cfg.port_speed    = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
+                                    eth_bfm_pkg::SPEED_OFF,
+                                    eth_bfm_pkg::SPEED_OFF,
+                                    eth_bfm_pkg::SPEED_OFF};
+      //eth_bfms.cfg.port_lanes    = {4,0,0,0};                                           // Configure num_ports.
+      eth_bfm.cfg.group_size    = 8;
+      eth_bfm.cfg.sop_alignment = 8;
 
    endfunction : build_eth_bfm
 
@@ -182,13 +155,9 @@ class mby_rx_ppe_env extends shdv_base_env;
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
 
-      //eth_cdi_tx_io.set_vintf(cdi_tx_vintf);
-      //eth_cdi_rx_io.set_vintf(cdi_rx_vintf);
+      //eth_cdi_rx_io.set_vintf(eth_bfm_rx_vintf);
       //eth_cdi_bfm.set_io(eth_cdi_tx_io, eth_cdi_rx_io);   // Set the IO Policy in the CDI BFM
-//PJP      void'(this.add_sequencer("eth_agent", "tx0", eth_cdi_bfm.tx.frame_sequencer[0]));
-//PJP      void'(this.add_sequencer("eth_agent", "tx1", eth_cdi_bfm.tx.frame_sequencer[1]));
-//PJP      void'(this.add_sequencer("eth_agent", "tx2", eth_cdi_bfm.tx.frame_sequencer[2]));
-//PJP      void'(this.add_sequencer("eth_agent", "tx3", eth_cdi_bfm.tx.frame_sequencer[3]));
+
 
    endfunction: connect_phase
 
@@ -198,7 +167,7 @@ class mby_rx_ppe_env extends shdv_base_env;
    //
    //  Arguments:
    //  phase - uvm_phase object.
-   //---------------------------------------------------------------------------
+   //------------------------------------------------------------------------4---
    function void end_of_elaboration_phase(uvm_phase phase);
       super.end_of_elaboration_phase(phase);
 
@@ -229,14 +198,6 @@ class mby_rx_ppe_env extends shdv_base_env;
    function mby_rx_ppe_tb_top_cfg get_tb_cfg();
       return tb_cfg;
    endfunction : get_tb_cfg
-
-   //---------------------------------------------------------------------------
-   // Function: get_tb_ral()
-   // Returns object handle to rx_ppe RAL env (mby_rx_ppe_ral_env)
-   //---------------------------------------------------------------------------
-//PJP   function mby_rx_ppe_ral_env get_tb_ral();
-//PJP      return tb_ral;
-//PJP   endfunction : get_tb_ral
 
 endclass
 

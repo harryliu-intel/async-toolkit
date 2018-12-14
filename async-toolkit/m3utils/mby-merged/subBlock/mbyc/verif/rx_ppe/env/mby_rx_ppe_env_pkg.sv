@@ -24,7 +24,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Nathan Mai
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -41,21 +41,22 @@ package mby_rx_ppe_env_pkg;
    import uvm_pkg::*;
 
    import shdv_base_pkg::*;
-
+   import mby_wm_dpi_pkg::*;
    import mby_common_pkg::*;
    import mby_ec_bfm_pkg::*;
-   //import ec_env_pkg::*;
 
    `include "uvm_macros.svh"
 
    `define __INSIDE_MBY_RX_PPE_ENV_PKG
 
+   `include "mby_rx_ppe_types.svh"
    `include "mby_rx_ppe_defines.svh"
    `include "mby_rx_ppe_env_cfg.svh"
    `include "mby_rx_ppe_dut_cfg.svh"
    `include "mby_rx_ppe_tb_top_cfg.svh"
 //PJP   `include "mby_rx_ppe_ral_env.svh"
    `include "mby_rx_ppe_env.svh"
+
 
     `undef  __INSIDE_MBY_RX_PPE_ENV_PKG
 
