@@ -22,6 +22,7 @@ SOURCES = mby_nexthop_test.c
 # Build dir:
 OS_TARG = AMD64_LINUX
 BLD_DIR = $(OS_TARG)
+BLD_DTS = ${BLD_DIR}/.time_stamp
 
 OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
 
@@ -31,7 +32,7 @@ FM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
 # Common test static library (includes write_field() function):
 COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
 
-TARGET   = mby_nexthop_test
+TARGET   = ${BLD_DIR}/mby_nexthop_test
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -50,7 +51,6 @@ CFLAGS += -pedantic-errors
 CFLAGS += -fPIC
 CFLAGS += -Wno-variadic-macros
 CFLAGS += -Wno-override-init
-CFLAGS += -Wno-error=discarded-qualifiers # only warning until we move to write_field
 
 ifeq ($(DEBUG),1)
 CFLAGS += -O -g -ggdb3
@@ -68,19 +68,23 @@ LDFLAGS =
 DELFILES = $(BLD_DIR) *.o *.so *.log
 
 .PHONY: all
-all: $(BLD_DIR) $(OBJECTS) $(TARGET)
+all: $(BLD_DTS) $(OBJECTS) $(TARGET)
 
-$(BLD_DIR):
+$(BLD_DTS):
 	@echo '  Creating build directory'
-	$(ECHO) $(MKDIR) $@
-
-${BLD_DIR}/mby_nexthop_test.o: mby_nexthop_test.c mby_nexthop_test.h $(C_DIR)/mby_nexthop.h $(C_DIR)/mby_common.h
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
 
 ${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-$(TARGET): $(OBJECTS) $(COM_LIB)
+# Added dependencies:
+${BLD_DIR}/mby_nexthop_test.o: \
+        $(BLD_DTS) Makefile \
+        mby_nexthop_test.c mby_nexthop_test.h \
+        $(C_DIR)/mby_nexthop.h $(C_DIR)/mby_common.h
+
+$(TARGET): $(BLD_DTS) $(OBJECTS) $(FM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
 	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(FM_LIB) $(COM_LIB)
 

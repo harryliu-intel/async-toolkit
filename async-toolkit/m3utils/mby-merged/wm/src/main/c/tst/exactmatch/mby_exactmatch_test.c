@@ -9,15 +9,13 @@
 #include <mby_mapper.h>
 
 #include <mby_top_map.h>
-#include <mby_write_field.h>
-
+#include <model_c_write.h> // write_field()
 #include <mby_common.h>
 #include <mby_pipeline.h>
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
 #define COLOR_RESET   "\x1b[0m"
-
 
 #define SIMPLE_EXACTMATCH_TEST(name, fails) {if (!run_on_simple_exactmatch(simple_exactmatch_ ## name ## _test_setup, \
                 simple_exactmatch_ ## name ## _test_check)) pass(#name); else {++fails; fail(#name);} }

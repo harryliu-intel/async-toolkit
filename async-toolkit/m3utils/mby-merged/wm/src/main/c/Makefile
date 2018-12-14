@@ -2,7 +2,6 @@
 
 # Copyright (C) 2018 Intel Corporation
 
-
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 C_DIR   = .
@@ -51,6 +50,7 @@ SOURCES += mby_model_basic.c
 # Build dir:
 OS_TARG = AMD64_LINUX
 BLD_DIR = $(OS_TARG)
+BLD_DTS = ${BLD_DIR}/.time_stamp
 
 OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
 
@@ -94,44 +94,45 @@ endif
 DELFILES = $(BLD_DIR) *.o *.so *.log
 
 .PHONY: all
-all: $(BLD_DIR) $(OBJECTS) $(LIBRARIES)
+all: $(BLD_DTS) $(OBJECTS) $(LIBRARIES)
 
-${BLD_DIR}/mby_errors.o        : mby_errors.c        mby_errors.h
-${BLD_DIR}/mby_crc32.o         : mby_crc32.c         mby_crc32.h
-${BLD_DIR}/mby_bitfield.o      : mby_bitfield.c                                       mby_bitfield.h
-${BLD_DIR}/mby_common.o        : mby_common.c        mby_common.h                     mby_bitfield.h
-${BLD_DIR}/mby_parser.o        : mby_parser.c        mby_parser.h      mby_common.h   mby_bitfield.h
-${BLD_DIR}/mby_mapper.o        : mby_mapper.c        mby_mapper.h      mby_common.h   mby_bitfield.h
-${BLD_DIR}/mby_cgrp_regs.o     : mby_cgrp_regs.c     mby_cgrp_regs.h   mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_clsfr_regs.o    : mby_cgrp_regs.c     mby_cgrp_regs.h   mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_lpm_regs.o      : mby_lpm_regs.c      mby_lpm_regs.h    mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_lpm.o           : mby_lpm.c           mby_lpm.h         mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_wcm.o           : mby_wcm.c           mby_wcm.h         mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_exactmatch.o    : mby_exactmatch.c    mby_exactmatch.h  mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_classifier.o    : mby_classifier.c    mby_classifier.h  mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_hash.o          : mby_hash.c          mby_hash.h        mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_nexthop.o       : mby_nexthop.c       mby_nexthop.h     mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_maskgen.o       : mby_maskgen.c       mby_maskgen.h     mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_triggers_regs.o : mby_triggers_regs.c mby_triggers.h    mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_triggers.o      : mby_triggers.c      mby_triggers.h    mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_congmgmt.o      : mby_congmgmt.c      mby_congmgmt.h    mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_rxstats.o       : mby_rxstats.c       mby_rxstats.h     mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_modifier.o      : mby_modifier.c      mby_modifier.h    mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_txstats.o       : mby_txstats.c       mby_txstats.h     mby_common.h 	 mby_bitfield.h
-${BLD_DIR}/mby_pipeline.o      : mby_pipeline.c      mby_pipeline.h
-${BLD_DIR}/mby_reg_ctrl.o      : mby_reg_ctrl.c      mby_reg_ctrl.h
-${BLD_DIR}/mby_model.o         : mby_model.c         mby_model.h
-${BLD_DIR}/mby_model_basic.o   : mby_model_basic.c   mby_model_basic.h
-${BLD_DIR}/mby_errors.o        : mby_errors.c        mby_errors.h      mby_model.h
-${BLD_DIR}/mby_init.o          : mby_init.c          mby_init.h
-
-$(BLD_DIR):
+$(BLD_DTS):
 	@echo '  Creating build directory'
-	$(ECHO) $(MKDIR) $@
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
 
 ${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
+
+# Added dependencies:
+${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_errors.h
+${BLD_DIR}/mby_crc32.o         : $(BLD_DTS) Makefile mby_crc32.c         mby_crc32.h
+${BLD_DIR}/mby_bitfield.o      : $(BLD_DTS) Makefile mby_bitfield.c                                      mby_bitfield.h
+${BLD_DIR}/mby_common.o        : $(BLD_DTS) Makefile mby_common.c        mby_common.h                    mby_bitfield.h
+${BLD_DIR}/mby_parser.o        : $(BLD_DTS) Makefile mby_parser.c        mby_parser.h      mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_mapper.o        : $(BLD_DTS) Makefile mby_mapper.c        mby_mapper.h      mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_cgrp_regs.o     : $(BLD_DTS) Makefile mby_cgrp_regs.c     mby_cgrp_regs.h   mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_clsfr_regs.o    : $(BLD_DTS) Makefile mby_cgrp_regs.c     mby_cgrp_regs.h   mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_lpm_regs.o      : $(BLD_DTS) Makefile mby_lpm_regs.c      mby_lpm_regs.h    mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_lpm.o           : $(BLD_DTS) Makefile mby_lpm.c           mby_lpm.h         mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_wcm.o           : $(BLD_DTS) Makefile mby_wcm.c           mby_wcm.h         mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_exactmatch.o    : $(BLD_DTS) Makefile mby_exactmatch.c    mby_exactmatch.h  mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_classifier.o    : $(BLD_DTS) Makefile mby_classifier.c    mby_classifier.h  mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_hash.o          : $(BLD_DTS) Makefile mby_hash.c          mby_hash.h        mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_nexthop.o       : $(BLD_DTS) Makefile mby_nexthop.c       mby_nexthop.h     mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_maskgen.o       : $(BLD_DTS) Makefile mby_maskgen.c       mby_maskgen.h     mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_triggers_regs.o : $(BLD_DTS) Makefile mby_triggers_regs.c mby_triggers.h    mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_triggers.o      : $(BLD_DTS) Makefile mby_triggers.c      mby_triggers.h    mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_congmgmt.o      : $(BLD_DTS) Makefile mby_congmgmt.c      mby_congmgmt.h    mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_rxstats.o       : $(BLD_DTS) Makefile mby_rxstats.c       mby_rxstats.h     mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_modifier.o      : $(BLD_DTS) Makefile mby_modifier.c      mby_modifier.h    mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_txstats.o       : $(BLD_DTS) Makefile mby_txstats.c       mby_txstats.h     mby_common.h  mby_bitfield.h
+${BLD_DIR}/mby_pipeline.o      : $(BLD_DTS) Makefile mby_pipeline.c      mby_pipeline.h
+${BLD_DIR}/mby_reg_ctrl.o      : $(BLD_DTS) Makefile mby_reg_ctrl.c      mby_reg_ctrl.h
+${BLD_DIR}/mby_model.o         : $(BLD_DTS) Makefile mby_model.c         mby_model.h
+${BLD_DIR}/mby_model_basic.o   : $(BLD_DTS) Makefile mby_model_basic.c   mby_model_basic.h
+${BLD_DIR}/mby_errors.o        : $(BLD_DTS) Makefile mby_errors.c        mby_errors.h      mby_model.h
+${BLD_DIR}/mby_init.o          : $(BLD_DTS) Makefile mby_init.c          mby_init.h
 
 $(LIB_M3EXPT): $(OBJECTS)
 	@echo   '  Creating M3 library exports file'
