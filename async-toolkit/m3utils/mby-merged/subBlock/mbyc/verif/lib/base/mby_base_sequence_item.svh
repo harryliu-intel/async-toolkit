@@ -61,9 +61,9 @@ class mby_base_sequence_item
    // Struct that contains all the data items of the response.
    T_data_rsp resp_pkt;
 
-   // VARIABLE: debg_pkt
+   // VARIABLE: debug_pkt
    // Struct that contains debug data of this transaction.
-   rand T_debug debg_pkt;
+   rand T_debug debug_pkt;
 
    // VARIABLE: rsp_req
    // Response is required for this request.
