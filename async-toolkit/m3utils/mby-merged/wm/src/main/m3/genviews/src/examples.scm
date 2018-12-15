@@ -310,6 +310,73 @@
   #t
   )
 
+(define (compile-roffset-c ot nm port)
+  (define (helper b t sp)
+    (let ((ind (make-spaces (* 4 (+ 1 sp)))))
+      (cond
+       ((null? (cdr t)) ;; no children
+        (dis ind "seq->d["sp"] = -1;" dnl
+             ind "return a;" dnl
+             port
+        ))
+       
+       ((has-array-child? t) ;; child is array
+        (let* ((child  (cadr t))
+               (aspec  (cdar child))
+               (stride (if (null? (cdr aspec)) "0xc0edbabe" (cdr aspec)))
+               (size   (car aspec))
+               )
+          (dis ind "{ /* array */" dnl
+               ind "  const chipaddr_t stride=ADDR_LITERAL("stride");" dnl
+               ind "  const unsigned long idx = (a / stride) >= "size" ? ("size"-1):(a/stride);" dnl
+               ind "  seq->d["sp"] = idx;" dnl
+               
+               ind "  a -= idx * stride;" dnl
+               port )
+          (helper b child (+ 1 sp))
+          (dis ind "}" dnl
+               port)
+          ))
+
+       (else ;; non-array 
+        (dis ind "{ /*nonarray */" dnl
+             ind "  if(0) {}" dnl
+             port)
+        (let loop ((p     0)
+                   (c     (cdr t)))
+          (if (not (null? c))
+              (begin
+                (if (null? (cdr c))
+                    (dis ind "  else {" dnl
+                         port)
+                    (dis ind "  else if(a < " (caaadr c)") {" dnl
+                         port)
+                    )
+                (dis ind "    seq->d["sp"] = "p";" dnl
+                     ind "    a -= " (caaar c) ";" dnl
+                     port)
+                (helper (+ b (caaar c)) (car c) (+ 1 sp))
+                (dis ind "  }" dnl port)
+                (loop (+ p 1) (cdr c)))
+              )
+          )
+        (dis ind "}" dnl
+             port)
+        )
+       
+       );;dnoc
+      );;tel
+    );; helper
+  
+  (dis "chipaddr_t" dnl nm"(chipaddr_t a, seqtype_t *seq)" dnl
+       "{" dnl
+       port)
+  (helper 0 ot 0)
+  (dis "}" dnl
+       port)
+  #t
+  )
+  
 (define symbols (make-symbol-set 100))
 
 (define (make-number-hash-table size) (make-hash-table size identity))
@@ -349,12 +416,10 @@
   #t
   )
 
-
 (define (dump-sizes port)
   (map (lambda(q)(make-c-siz-constant q port)) (sizes 'keys))
   #t
   )
-
 
 (define (compile-child-arc-c nt nm port)
   (define *arcarray-cnt* 0)
@@ -373,7 +438,6 @@
                nm))
             ((equal? (caar p) names) (cdar p))
             (else (loop (cdr p))))))
-     
 
   (define defer-port (TextWr.New))
   
@@ -457,10 +521,22 @@
       (dis "chipaddr_t "nm"(const seqtype_t *);" dnl qqq)
       )
 
+    (dis "*** compiling reverse chip address offset tree..." dnl)
+    (let ((nm "addr2ragged"))
+      (compile-roffset-c the-chip-offset-tree nm ppp)
+      (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
+      )
+
     (dis "*** compiling in order field offset tree..." dnl)
     (let ((nm "ragged2inorderid"))
       (compile-offset-c the-fields-offset-tree nm ppp)
       (dis "long "nm"(const seqtype_t *);" dnl qqq)
+      )
+
+    (dis "*** compiling reverse in order field offset tree..." dnl)
+    (let ((nm "inorderid2ragged"))
+      (compile-roffset-c the-fields-offset-tree nm ppp)
+      (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
       )
 
     (dis "*** setting up static symbols..." dnl)
