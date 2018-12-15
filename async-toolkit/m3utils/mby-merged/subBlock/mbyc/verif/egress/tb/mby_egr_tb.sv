@@ -118,8 +118,8 @@ module mby_egr_tb ();
   logic [19:0] w_seg_ptr;
   logic [1:0] w_wd_sel;
 
-  smm_row_mwr_reqs row_mwr_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mwr_req(memwr_req_if),.o_wr_seg_ptr(w_seg_ptr),.o_wr_wd_sel(w_wd_sel));
-  smm_row_mrd_reqs row_mrd_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mrd_req(memrd_req_if),.i_rd_seg_ptr(w_seg_ptr),.i_rd_wd_sel(w_wd_sel));
+  //smm_row_mwr_reqs row_mwr_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mwr_req(memwr_req_if),.o_wr_seg_ptr(w_seg_ptr),.o_wr_wd_sel(w_wd_sel));
+  //smm_row_mrd_reqs row_mrd_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mrd_req(memrd_req_if),.i_rd_seg_ptr(w_seg_ptr),.i_rd_wd_sel(w_wd_sel));
 
 
   initial
@@ -145,6 +145,9 @@ module mby_egr_tb ();
                    ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
                    ,.tag_bfm_intf_0 (tag_bfm_intf_0)
                    ,.tag_bfm_intf_1 (tag_bfm_intf_1)
+                   ,.memrd_req_if (memrd_req_if)
+                   ,.memwr_req_if (memwr_req_if)
+                   
                   );
 
 `include "std_ace_util.vic"
