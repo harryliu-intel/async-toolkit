@@ -103,7 +103,12 @@
 
 ;; make offset tree
 
-(define (get-stride-bits array-spec addresses)
+(define (make-address-getter addresses)
+  (lambda(x)
+    (fielddata->lsb
+     (FieldData.ArrayGet addresses x))))
+
+(define (get-stride-bits array-spec indexer)
   ;; given a spec as follows
   ;; (base-addr elems . size)
   ;; compute element stride in bits
@@ -113,14 +118,12 @@
               (field-stride (/ (cddr array-spec)
                                (cadr array-spec)))
               (stride-field (+ zeroth-field field-stride))
-              (zeroth-bit (fielddata->lsb
-                           (FieldData.ArrayGet addresses zeroth-field)))
-              (stride-bit (fielddata->lsb
-                           (FieldData.ArrayGet addresses stride-field))))
+              (zeroth-bit (indexer zeroth-field))
+              (stride-bit (indexer stride-field)))
         (- stride-bit zeroth-bit))
       '()))
 
-(define (make-offset-tree accum-tree array-tree fields-tree addresses)
+(define (make-offset-tree accum-tree array-tree fields-tree indexer)
   ;;
   ;; format of an elem here is
   ;; (<offset> #f)
@@ -128,13 +131,15 @@
   ;; (<offset> <elems> . <bits-stride>)
   ;;     -- offset from parent, # of elements, stride in bits
   ;;
+  ;; indexer is a procedure of one argument that maps the in-order
+  ;; field index to a linear index in some space
+  ;;
   (define (helper p b)
     (if (null? p)
         '()
-        (let ((this-addr
-               (fielddata->lsb (FieldData.ArrayGet addresses (caar p)))))
+        (let ((this-addr (indexer (caar p))))
           (cons (cons (- this-addr b)
-                      (cons (cadar p) (get-stride-bits (car p) addresses))
+                      (cons (cadar p) (get-stride-bits (car p) indexer))
                       )
                 (map (lambda(ff)(helper ff this-addr)) (cdr p))))))
 
@@ -231,15 +236,21 @@
 
 (dis "average width of fields " ave-width " bits" dnl)
 
-(define the-offset-tree
+(define the-chip-offset-tree
   (make-offset-tree the-accum-tree
                     the-array-tree
                     fields-tree
-                    the-addresses))
+                    (make-address-getter the-addresses)))
+
+(define the-fields-offset-tree
+  (make-offset-tree the-accum-tree
+                    the-array-tree
+                    fields-tree
+                    identity))
 
 ;; the following should give the same answer
 
-(compute-offset-from-seq the-offset-tree '(1 0 0 0 0 0 0))
+(compute-offset-from-seq the-chip-offset-tree '(1 0 0 0 0 0 0))
 
 (fielddata->lsb (FieldData.ArrayGet the-addresses
                                     (get-zip-seq-offset zz '(1 0 0 0 0 0 0))))
@@ -258,9 +269,9 @@
                  )
             (dis ind "{ /* array */" dnl
                  ind "  int idx = seq->d["sp"];" dnl
-                 ind "  if (idx == -1) return arr + "b"L;" dnl
+                 ind "  if (idx == -1) return arr + ADDR_LITERAL("b");" dnl
                  ind "  assert(idx >= 0 && idx < "size");" dnl
-                 ind "  arr += idx * "stride"L;" dnl
+                 ind "  arr += idx * ADDR_LITERAL("stride");" dnl
                  port )
             (helper b child (+ 1 sp))
             (dis ind "}" dnl
@@ -269,7 +280,7 @@
           (begin
             (dis ind "{ /*nonarray */" dnl
                  ind "  switch(seq->d["sp"]) {" dnl
-                 ind "    case -1: return arr + "b"L; break;" dnl
+                 ind "    case -1: return arr + ADDR_LITERAL("b"); break;" dnl
                  port)
             (let loop ((p     0)
                        (c     (cdr t)))
@@ -289,9 +300,9 @@
           )
       )
     )
-  (dis "long "nm"(const seqtype_t *seq)" dnl
+  (dis "chipaddr_t" dnl nm"(const seqtype_t *seq)" dnl
        "{" dnl
-       "   long arr=0L;" dnl
+       "   chipaddr_t arr=ADDR_LITERAL(0);" dnl
        port)
   (helper 0 ot 0)
   (dis "}" dnl
@@ -299,13 +310,173 @@
   #t
   )
 
+(define symbols (make-symbol-set 100))
+
+(define (make-number-hash-table size) (make-hash-table size identity))
+
+(define (make-number-set size)
+  (make-set (lambda()(make-number-hash-table size))))
+
+(define sizes (make-number-set 100))
+
+(define (record-symbols)
+  (treemap
+   (lambda(x)
+     (let ((nm (get-name x)))
+       (cond ((number? nm) (sizes   'insert! nm))
+             ((symbol? nm) (symbols 'insert! nm))
+             (else (error (error-append " : " (stringify nm)))))))
+   the-map))
+
+(define (make-c-sym-constant sym port)
+  (dis "static const char       symbol_" sym "[]     = \"" sym "\";" dnl
+       "static const arc_t      symbol_arc_" sym "   =  { symbol_" sym ", NULL };" dnl
+       port
+       )
+  #t
+  )
+
+(define (dump-symbols port)
+  (map (lambda(s)(make-c-sym-constant s port)) (symbols 'keys))
+  #t
+  )
+
+(define (make-c-siz-constant sz port)
+  (dis "static const arrayarc_t size_"sz"         = { " sz " };" dnl
+       "static const arc_t      size_arc_"sz"     = { NULL, &size_"sz" };" dnl
+       "static const arc_t     *size_arc_"sz"_a[] = { &size_arc_"sz", NULL };" dnl
+       port)
+  #t
+  )
+
+
+(define (dump-sizes port)
+  (map (lambda(q)(make-c-siz-constant q port)) (sizes 'keys))
+  #t
+  )
+
+
+(define (compile-child-arc-c nt nm port)
+  (define *arcarray-cnt* 0)
+
+  (define sym-arcarray-mem '()) ;; memoization-memory
+
+  (define (make-sym-arcarray names)
+    (let loop ((p sym-arcarray-mem))
+      (cond ((null? p)
+             (let ((nm (string-append "syms_arc_" *arcarray-cnt* "_a")))
+               (dis "static const arc_t     *"nm"[] = { " port)
+               (map (lambda(sym)(dis "&symbol_arc_" sym ", " port)) names)
+               (dis "NULL };" dnl port)
+               (set! *arcarray-cnt* (+ 1 *arcarray-cnt*))
+               (set! sym-arcarray-mem (cons (cons names nm) sym-arcarray-mem))
+               nm))
+            ((equal? (caar p) names) (cdar p))
+            (else (loop (cdr p))))))
+     
+
+  (define defer-port (TextWr.New))
+  
+  (define (has-array-child? q)
+    (and (cdr q)
+         (= 1 (length (cdr q)))
+         (number? (caadr q))))
+  
+  (define (helper t sp)
+    (let ((ind (make-spaces (* 2 (+ 1 sp)))))
+      (if (has-array-child? t)
+          (let* ((child  (cadr t))
+                 (size   (caadr t))
+                 )
+            (dis ind "{ /* array */" dnl
+                 ind "  int idx = seq->d["sp"];" dnl
+                 ind "  if (idx == -1) return size_arc_"size"_a;" dnl
+                 ind "  assert(idx >= 0 && idx < "size");" dnl
+                 defer-port )
+            (helper child (+ 1 sp))
+            (dis ind "}" dnl
+                 defer-port)
+            )
+          (begin
+            (dis ind "{ /*nonarray */" dnl
+                 ind "  switch(seq->d["sp"]) {" dnl
+                 ind "    case -1: return "
+                 (make-sym-arcarray (map car (cdr t)))
+                 "; break;" dnl
+                 defer-port)
+            (let loop ((p     0)
+                       (c     (cdr t)))
+              (if (not (null? c))
+                  (begin
+                    (dis ind "    case " p":" dnl
+                         defer-port)
+                    (helper (car c) (+ 1 sp))
+                    (loop (+ p 1) (cdr c)))
+                  )
+              )
+            (dis ind "    default: assert(0); break;" dnl
+                 ind "  }" dnl
+                 ind "}" dnl
+                 defer-port)
+            )
+          )
+      )
+    )
+  (dis "const arc_t **" dnl nm"(const seqtype_t *seq)" dnl
+       "{" dnl
+       defer-port)
+  (helper nt 0)
+  (dis "}" dnl
+       defer-port)
+  (dis (TextWr.ToText defer-port) port)
+  #t
+  )
+
+(define name-tree (treemap get-name the-map))
+
 (define (doit)
-  (let ((ppp (FileWr.Open "hohum.c")))
-    (dis "#include <assert.h>" dnl
+  (let ((qqq (FileWr.Open "hohum.h"))
+        (ppp (FileWr.Open "hohum.c")))
+    (dis "*** building C code..." dnl)
+
+    (dis "#include \"hohum.h\"" dnl
+         "#include <assert.h>" dnl
          "#include \"seqtype.h\"" dnl
          dnl
          ppp)
-    (compile-offset-c the-offset-tree "f" ppp)
+
+    (dis "#ifndef _HOHUM_H" dnl 
+         "#define _HOHUM_H" dnl
+         "#include \"seqtype.h\"" dnl
+
+         qqq)
+    
+    (dis "*** compiling chip address offset tree..." dnl)
+    (let ((nm "ragged2addr"))
+      (compile-offset-c the-chip-offset-tree nm ppp)
+      (dis "chipaddr_t "nm"(const seqtype_t *);" dnl qqq)
+      )
+
+    (dis "*** compiling in order field offset tree..." dnl)
+    (let ((nm "ragged2inorderid"))
+      (compile-offset-c the-fields-offset-tree nm ppp)
+      (dis "long "nm"(const seqtype_t *);" dnl qqq)
+      )
+
+    (dis "*** setting up static symbols..." dnl)
+    (record-symbols)
+    (dump-symbols ppp)
+    (dump-sizes ppp)
+
+    (dis "*** compiling names tree..." dnl)
+    (let ((nm "ragged2arcs"))
+      (compile-child-arc-c name-tree nm ppp)
+      (dis "const arc_t **"nm"(const seqtype_t *);" dnl qqq)
+      )
+
+    (dis "#endif" dnl qqq)
     (Wr.Close ppp)
+    (Wr.Close qqq)
     )
   )
+
