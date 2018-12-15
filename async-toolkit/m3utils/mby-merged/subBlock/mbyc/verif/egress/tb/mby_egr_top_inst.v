@@ -51,9 +51,41 @@ assign tagring_if.mby_tag_ring[0] = tag_bfm_intf_0.intf_data_pkt;
 assign tagring_if.mby_tag_ring[1] = tag_bfm_intf_1.intf_data_pkt;
 
 
+
+assign memrd_req_if.intf_data_pkt.mim_rreq_valid = mim_rd_if0_0.mim_rreq_valid ;
+assign memrd_req_if.intf_data_pkt.mim_seg_ptr = mim_rd_if0_0.mim_seg_ptr;
+assign memrd_req_if.intf_data_pkt.mim_sema = mim_rd_if0_0.mim_sema;
+assign memrd_req_if.intf_data_pkt.mim_req_id = mim_rd_if0_0.mim_req_id;
+assign memrd_req_if.intf_data_pkt.mim_wd_sel = mim_rd_if0_0.mim_wd_sel;
+
+assign mim_rd_if0_0.mim_rd_data = memrd_req_if.intf_data_pkt.mim_rd_data;
+assign mim_rd_if0_0.mim_rreq_credits = memrd_req_if.intf_data_pkt.mim_rreq_credits;
+assign mim_rd_if0_0.mim_rrsp_dest_block = memrd_req_if.intf_data_pkt.mim_rrsp_dest_block;
+assign mim_rd_if0_0.mim_rrsp_req_id = memrd_req_if.intf_data_pkt.mim_rrsp_req_id;
+assign mim_rd_if0_0.mim_rrsp_valid = memrd_req_if.intf_data_pkt.mim_rrsp_valid;
+
+
+
+always_comb ahb_if.dfxsignal_in = 0;
+always_comb ahb_if.ahb_req_p = 0;
+always_comb ahb_if.ahb_addr = 0;
+always_comb ahb_if.ahb_wr = 0;
+always_comb ahb_if.ahb_wr_data = 0;
+
+
+
+always_ff @(posedge egress_clock) epl_if0.tx_enable_port_num <= egress_reset ? (epl_if0.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if0.tx_enable = 1'b1;
+always_ff @(posedge egress_clock) epl_if1.tx_enable_port_num <= egress_reset ? (epl_if1.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if1.tx_enable = 1'b1;
+always_ff @(posedge egress_clock) epl_if2.tx_enable_port_num <= egress_reset ? (epl_if2.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if2.tx_enable = 1'b1;
+always_ff @(posedge egress_clock) epl_if3.tx_enable_port_num <= egress_reset ? (epl_if3.tx_enable_port_num + 2'b1) : 2'b0;
+always_comb epl_if3.tx_enable = 1'b1;
+
 egr_top egress (
-   .clk   (egress_primary_clock),
-   .arst_n (egress_primary_reset),
+   .clk   (egress_clock),
+   .arst_n (~egress_reset),
    .igr_dirtypod_if(igr_dirtypod_if), //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
    .igr_cleanpod_if(igr_cleanpod_if), //IGR Clean Pod Read Req/Rsp Interface
    .pod_if(pod_if), //EGR-Pod Ring Interface
@@ -66,7 +98,6 @@ egr_top egress (
    .mim_rd_if1_0(mim_rd_if1_0), //MIM Read Request Row1 Plane 0
    .mim_rd_if1_1(mim_rd_if1_1), //MIM Read Request Row1 Plane 1
    .mim_rd_if1_2(mim_rd_if1_2), //MIM Read Request Row1 Plane 2
-
    .tagring_if(tagring_if), //EGR-Tag Ring Interface MGP
    .mce_tagring_if(mce_tagring_if), //EGR-Tag Ring Interface
    .cmring_if(cmring_if), //EGR-Congestion Management Ring Interface

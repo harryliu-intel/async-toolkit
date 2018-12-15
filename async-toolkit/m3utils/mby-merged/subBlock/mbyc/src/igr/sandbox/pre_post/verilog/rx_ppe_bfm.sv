@@ -139,11 +139,11 @@ module rx_ppe_bfm
         tmp.md.md.uc_meta.unicast_meta.ecn_val                      = '0;                    
         tmp.md.md.uc_meta.unicast_meta.ttl_ctl                      = 4'hf;                    
         tmp.md.md.uc_meta.unicast_meta.dscp                         = 6'h0;                       
-        tmp.md.md.uc_meta.unicast_meta.tx_drop                      = 1'b0;     
+//edr        tmp.md.md.uc_meta.unicast_meta.tx_drop                      = 1'b0;     
         tmp.md.md.uc_meta.unicast_meta.mirror_port_mod_profile_idx1 = 6'h0;  
         tmp.md.md.uc_meta.unicast_meta.mirror_port_mod_profile_idx2 = 6'h0;  
         tmp.md.md.uc_meta.unicast_meta.tag_flags                    = '0;                  
-        tmp.md.md.uc_meta.unicast_meta.tx_tag                       = '0;                     
+//edr        tmp.md.md.uc_meta.unicast_meta.tx_tag                       = '0;                     
         tmp.md.md.uc_meta.unicast_meta.vpri                         = '0;
         tmp.md.md.uc_meta.unicast_meta.nh_egr_negh_table_idx        = 14'h3344;              
         tmp.md.md.uc_meta.unicast_meta.l2d                          = '0;
