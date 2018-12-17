@@ -353,10 +353,10 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_wm_dpi_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_wm_dpi.hdl', ],
-               -dependent_libs => [ 'shdv_shared_lib'],
+               -dependent_libs => [ 'shdv_shared_lib','gen_mby_wm_m3'],
                -tag            => "nonsynth",
                -elab_opts => [
-                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c ",
+                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c -I$ENV{MODEL_ROOT}/wm/src/main/m3/genviews/src/build_c/mby_c/src/ -I$ENV{MODEL_ROOT}/wm/src/main/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c ",
                ],
             },
 
@@ -546,8 +546,8 @@ print "MGM debug : @mbyMgmLibs\n";
                   ##"mby_regflow_lib",
                   ##"gen_mby_regflow_lib",
                   ##"gen_mby_wm",
-                  ##"gen_mby_wm_m3",
-                        "gen_mby_mgm_lib",
+                  "gen_mby_wm_m3",
+                  "gen_mby_mgm_lib",
                   "mby_rx_ppe_ti_lib",
                   "shdv_shared_lib",
                   "svt_ahb_lib",
