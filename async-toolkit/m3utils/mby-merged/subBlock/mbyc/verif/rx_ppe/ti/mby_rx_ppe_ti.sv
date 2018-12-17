@@ -24,7 +24,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//  Author        : Akshay Kotian
+//  Author        : Nathan Mai
 //  Project       : Madison Bay
 //  Description   : rx_ppe Test Island.This module will hold all the shared TB content between the IP and
 //                  the integration level.
@@ -38,13 +38,12 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",             // The
    (
       mby_rx_ppe_tb_if  mby_rx_ppe_tb_if,
 
-      shdv_base_tb_intf shdv_intf,
-      mby_ec_cdi_tx_intf  cdi_tx_intf,
-      mby_ec_cdi_rx_intf  cdi_rx_intf
+      shdv_base_tb_intf   shdv_intf,
+      mby_ec_cdi_tx_intf  eth_bfm_tx_vintf, 
+      mby_ec_cdi_rx_intf  eth_bfm_rx_vintf
    );
 
    import uvm_pkg::*;
- //  import ec_env_pkg::*;
 
    initial begin
       // Set MC TI Path in the database
@@ -59,11 +58,9 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",             // The
       // Set the MC_TB_IF in the database
       uvm_config_db#(virtual mby_rx_ppe_tb_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_rx_ppe_tb_if", mby_rx_ppe_tb_if);
 
-      // Set the SHDV tb_intf in the database
-//PJP      slu_resource_db#(virtual shdv_base_tb_intf)::add({"env", ".IP_intf"}, shdv_intf, `__FILE__, `__LINE__);
+      uvm_config_db#(virtual mby_ec_cdi_tx_intf)::set(uvm_root::get(), TB_ENV_PATH, "eth_bfm_tx_vintf" , eth_bfm_tx_vintf);
 
-//      uvm_config_db#(ec_env_defines::cdi_tx_vintf_t)::set(uvm_root::get(), TB_ENV_PATH, "cdi_tx_vintf" , cdi_tx_intf);
-//      uvm_config_db#(ec_env_defines::cdi_rx_vintf_t)::set(uvm_root::get(), TB_ENV_PATH, "cdi_rx_vintf" , cdi_rx_intf);
+      uvm_config_db#(virtual mby_ec_cdi_rx_intf)::set(uvm_root::get(), TB_ENV_PATH, "eth_bfm_rx_vintf" , eth_bfm_rx_vintf);
 
    end
 

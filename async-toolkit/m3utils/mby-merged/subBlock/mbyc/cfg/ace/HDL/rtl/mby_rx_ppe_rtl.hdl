@@ -38,6 +38,8 @@ $hdl_spec = {
 		"src/class_gpa/rtl",
 		"src/class_gpb/rtl",
 		"src/action/rtl",
+      "src/action/rtl/trigger",
+      "src/action/rtl/trigger/hlp"
     ],
 
  # List of verilog library src files ( corresponds with the VLOG '-v' parameter)

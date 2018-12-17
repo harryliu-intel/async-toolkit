@@ -1,2 +1,3 @@
-egress_alive_test  -seed 160c66a2
+#egress_alive_test  -seed 160c66a2
+mby_egr_first_packet_test 
 
