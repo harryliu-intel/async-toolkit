@@ -19,8 +19,6 @@ INCLUDES += -I$(C_DIR)
 
 SOURCES  = mby_basic_fwd_test.c
 SOURCES += mby_basic_fwd_init.c
-SOURCES += borrowed/mby_srv_errno.c
-SOURCES += borrowed/mby_srv_utils.c
 
 # Build dir:
 OS_TARG = AMD64_LINUX
@@ -30,7 +28,7 @@ BLD_DTS = ${BLD_DIR}/.time_stamp
 OBJECTS = $(addprefix ${BLD_DIR}/,$(notdir $(SOURCES:.c=.o)))
 
 # Functional Model (a.k.a. White Model) static library:
-FM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
+WM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
 
 # Common test static library (includes write_field() function):
 COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
@@ -81,10 +79,6 @@ ${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-${BLD_DIR}/%.o: borrowed/%.c
-	@echo '  Compiling' $<
-	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
-
 # Added dependencies:
 ${BLD_DIR}/mby_basic_fwd_test.o: \
         $(BLD_DTS) \
@@ -99,21 +93,9 @@ ${BLD_DIR}/mby_basic_fwd_init.o: \
         mby_basic_fwd_init.c \
         mby_basic_fwd_init.h
 
-${BLD_DIR}/mby_srv_errno.o: \
-        $(BLD_DTS) \
-        Makefile \
-        borrowed/mby_srv_errno.c \
-        borrowed/mby_srv_errno.h
-
-${BLD_DIR}/mby_srv_utils.o: \
-        $(BLD_DTS) \
-        Makefile \
-        borrowed/mby_srv_utils.c \
-        borrowed/mby_srv_utils.h
-
-$(TARGET): $(BLD_DTS) $(OBJECTS) $(FM_LIB) $(COM_LIB)
+$(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(FM_LIB) $(COM_LIB)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 
 .PHONY: run
 run: $(TARGET)

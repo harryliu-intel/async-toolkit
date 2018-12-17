@@ -27,7 +27,7 @@ BLD_DTS = ${BLD_DIR}/.time_stamp
 OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
 
 # Functional Model (a.k.a. White Model) static library:
-FM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
+WM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
 
 # Common test static library (includes write_field() function):
 COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
@@ -91,9 +91,9 @@ ${BLD_DIR}/mby_parser_test.o: \
         ${C_DIR}/mby_init.h \
         ${C_DIR}/mby_reg_ctrl.h
 
-$(TARGET): $(BLD_DTS) $(OBJECTS) $(FM_LIB) $(COM_LIB)
+$(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(FM_LIB) $(COM_LIB)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 
 .PHONY: run
 run: $(TARGET)
