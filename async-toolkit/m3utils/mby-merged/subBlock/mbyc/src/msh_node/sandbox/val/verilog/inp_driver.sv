@@ -53,7 +53,6 @@ class inp_driver;
     string                  name;           // input driver name used in $display statements
     integer                 drove_reqs;
 
-     
     mby_msh_pkg::msh_row_rd_req_t    drvr_rd_req_to_dut;
     mby_msh_pkg::msh_row_rd_req_t    drvr_rd_req_to_dut_p1;
     mby_msh_pkg::msh_row_wr_req_t    drvr_wr_req_to_dut;
@@ -69,18 +68,25 @@ class inp_driver;
     mby_msh_pkg::mshnd_addr_t	adr_5;
     mby_msh_pkg::mshnd_addr_t	adr_6;
 
+    mby_msh_pkg::mshnd_addr_t	wadr;	// wr adr
+    mby_msh_pkg::msh_data_t     wdata;	// wr data
+    mby_msh_pkg::msh_rd_id_t	rid;	// rd req id
+
+    integer  knob_inp_req_num;
 
     function new(
 
 //        tmpl_pkg::enc_inp_t     iport, 
-        virtual msh_node_dut_if     dut_if
+        virtual msh_node_dut_if     dut_if,
+	integer  knob_inp_req_num
 //        configuration           cfg
 
     );
 
-//        this.iport  = iport;
         this.dut_if = dut_if;
 //        this.cfg    = cfg;
+
+	this.knob_inp_req_num = knob_inp_req_num;
 
         name        = "inp_driver.sv";
 //        stim = new(
@@ -90,6 +96,9 @@ class inp_driver;
 
         clk_cnt = 0;
         drove_reqs    = 0;
+
+        // $display("(time: %0d) %s: Display knob_inp_req_num = ", $time, name, knob_inp_req_num);
+
     endfunction
 
     // reset input driver
@@ -197,6 +206,9 @@ class inp_driver;
 //
 //    endtask
 //
+
+
+/*
     // Drive requests into DUT (template)
     task drive_reqs();
 
@@ -606,6 +618,95 @@ class inp_driver;
 
         drv_done = 1'b1;
     endtask
+*/
+
+
+    // Drive requests into DUT (template)
+    task drive_reqs();
+
+        if (!drove_reqs) begin
+
+            @(posedge dut_if.mclk);
+
+
+            drvr_wr_req_to_dut.node_col = '0;
+            drvr_wr_req_to_dut.node_row = '0;
+            drvr_wr_req_to_dut.csr      = '0;
+            drvr_rd_req_to_dut.sema_vld = 1'b0;
+            drvr_rd_req_to_dut.sema_val = 1'b0;
+
+
+            for (integer req_loop = 0; req_loop < knob_inp_req_num; req_loop++) begin
+
+	       wadr = $urandom();
+	       wdata = $urandom();
+ 	       rid = $urandom();
+
+               // wr req, wr data:
+
+               @(posedge dut_if.mclk);
+               drvr_wr_req_to_dut.vld      = 1'b1;
+               drvr_wr_req_to_dut.addr     = wadr;
+               drvr_wr_req_to_dut.age      = $urandom();
+
+               @(posedge dut_if.mclk);
+               drvr_wr_req_to_dut.vld      = 1'b0;
+
+               @(posedge dut_if.mclk);
+               drvr_wr_data_to_dut    = wdata;
+
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+            
+               // rd req
+               @(posedge dut_if.mclk);
+               drvr_rd_req_to_dut.vld      = 1'b1;
+               drvr_rd_req_to_dut.id       = rid;
+               drvr_rd_req_to_dut.addr     = wadr;
+               drvr_rd_req_to_dut.age      = $urandom();
+
+               @(posedge dut_if.mclk);
+               drvr_rd_req_to_dut.vld      = 1'b0;
+
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+               @(posedge dut_if.mclk);
+
+               $display("(time: %0d) %s: ** (req num = %0d) ** ", $time, name, req_loop);
+
+            end		// end loop 
+ 
+            drove_reqs = 1;
+
+        end
+
+        $display("(time: %0d) %s: ** Done Driving Requests to Inputs ** ", $time, name);
+
+        @(posedge dut_if.mclk);
+
+        drv_done = 1'b1;
+    endtask
+
+
 
     // figure out if input driver is done or not
     function bit something_to_do();
