@@ -530,6 +530,7 @@ int wm_pkt_get(struct wm_pkt *pkt)
 int wm_parser(mbyRxMacToParser const * const in,
               mbyParserToMapper      * const out)
 {
+    fm_uint i;
 
     printf("Received %d bytes on port %d", in->RX_LENGTH, in->RX_PORT);
     hex_dump(in->RX_DATA, in->RX_LENGTH, 0);
@@ -543,10 +544,10 @@ int wm_parser(mbyRxMacToParser const * const in,
     out->PA_EX_STAGE        = 0xaa;
     out->PA_EX_TRUNC_HEADER = 0x1;
 
-    for (fm_uint i = 0; i < MBY_N_PARSER_FLGS; i++)
+    for (i = 0; i < MBY_N_PARSER_FLGS; i++)
         out->PA_FLAGS[i] = 0x1;
 
-    for (fm_uint i = 0; i < MBY_N_PARSER_KEYS; i++) {
+    for (i = 0; i < MBY_N_PARSER_KEYS; i++) {
         out->PA_KEYS      [i] = 0xe3;
         out->PA_KEYS_VALID[i] = 0x1;
     }
@@ -554,7 +555,7 @@ int wm_parser(mbyRxMacToParser const * const in,
     out->PA_L3LEN_ERR       = 0x1;
     out->PA_PACKET_TYPE     = 0xabcd;
 
-    for (fm_uint i = 0; i < MBY_N_PARSER_PTRS; i++) {
+    for (i = 0; i < MBY_N_PARSER_PTRS; i++) {
         out->PA_HDR_PTRS.OFFSET      [i] = 0x78;
         out->PA_HDR_PTRS.OFFSET_VALID[i] = 0x1;
         out->PA_HDR_PTRS.PROT_ID     [i] = 0x45;
