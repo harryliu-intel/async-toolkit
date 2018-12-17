@@ -51,7 +51,11 @@ program testcase (                  // a program is a system verilog testbench e
         .mem_if_0	(mem_if_0),	// -hz: 12/7/2018
         .mem_if_1	(mem_if_1),
         .mem_if_2	(mem_if_2),
-        .mem_if_3	(mem_if_3)
+        .mem_if_3	(mem_if_3),
+
+	// num of input request
+	.knob_inp_req_num (25)
+
     );
 
     // testcase execution
@@ -70,12 +74,6 @@ program testcase (                  // a program is a system verilog testbench e
         $finish();                          // ca  the final procedure (if it exists) and exits the simulation
 
     end // initial
-
-
-//-hz: 12/6/2018
-  //logic check_rd_rsp;
-  //assign check_rd_rsp = env.mntr.check_rd_rsp;
-
 
 
 endprogram // testcase
