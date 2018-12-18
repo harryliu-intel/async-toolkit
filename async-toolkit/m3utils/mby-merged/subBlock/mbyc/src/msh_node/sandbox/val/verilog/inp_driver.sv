@@ -193,6 +193,7 @@ class inp_driver;
             drvr_wr_req_to_dut.node_row = '0;
             drvr_wr_req_to_dut.csr      = '0;
             drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
+            drvr_wr_req_to_dut.sema_val = '0; 
             drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
 
             @(posedge dut_if.mclk);
@@ -202,6 +203,7 @@ class inp_driver;
             drvr_wr_req_to_dut.node_row = '0;
             drvr_wr_req_to_dut.csr      = '0;
             drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
+            drvr_wr_req_to_dut.sema_val = '0;
             drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
 
@@ -220,7 +222,6 @@ class inp_driver;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
             drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h44);
 
@@ -232,7 +233,6 @@ class inp_driver;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
             drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
