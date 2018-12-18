@@ -39,13 +39,14 @@
 //
 //------------------------------------------------------------------------------
 interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
+   import shared_pkg::*;
    import mby_gmm_pkg::*; // TODO: change this once the lltformat_t is placed in
                           //       the right place.
 
    mby_tag_ring_t intf_data_pkt;
    logic          intf_debg_pkt;
 
-   localparam DATA_WIDTH = $bits(mby_tag_ring_t);
+   localparam DATA_WIDTH = 64;//$bits(intf_data_pkt);
    localparam DEBG_WIDTH = 1;
    localparam DLAY_WIDTH = 32;
 
@@ -78,6 +79,9 @@ interface mby_tag_bfm_uc_if(input logic clk, input logic rst);
       @(posedge clk);
       intf_data_pkt <= data_pkt;
       intf_debg_pkt <= debg_pkt;
+      @(posedge clk)
+      intf_data_pkt.valid <= 0;
+      intf_debg_pkt <= 0;
    endtask
 
    //---------------------------------------------------------------------------

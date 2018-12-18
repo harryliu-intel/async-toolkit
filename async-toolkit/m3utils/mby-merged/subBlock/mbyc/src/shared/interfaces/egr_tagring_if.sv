@@ -31,8 +31,9 @@
 
 interface egr_tagring_if ();
   import mby_gmm_pkg::*;
+  import shared_pkg::*;
 
-    mby_tag_ring_t [MBY_MAX_NUM_MGP-1:0][1:0] mby_tag_ring;
+  mby_tag_ring_t [MBY_MAX_NUM_MGP-1:0][1:0] mby_tag_ring;
 
 modport egr(
     input mby_tag_ring

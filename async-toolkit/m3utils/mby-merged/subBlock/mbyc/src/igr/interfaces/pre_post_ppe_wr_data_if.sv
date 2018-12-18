@@ -35,7 +35,7 @@ interface pre_post_ppe_wr_data_if ();
     seg_ptr_t             wr_seg_ptr; //[19:0]
     sema_t                wr_sema;    //[ 3:0]
     wd_sel_t              wd_sel;     //[ 2:0]
-    data64_w_ecc_t [7:0]  data_ecc;   // (64 + 8) *8
+    data64_w_ecc_t [0:7]  data_ecc;   // (64 + 8) *8
 
     
 modport src (

@@ -40,6 +40,7 @@
 //------------------------------------------------------------------------------
 interface mby_gcm_bfm_queue_if(input logic clk, input logic rst);
    import mby_gmm_pkg::*;
+   import shared_pkg::*;
 
    mby_tag_ring_t intf_data_pkt;
    logic          intf_debg_pkt;

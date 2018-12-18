@@ -40,9 +40,16 @@
 class env;
 
 
-    virtual msh_node_dut_if dut_if;     // interface used in objects have to be declared as "virtual" 
+    virtual msh_node_dut_if dut_if; // interface used in objects have to be declared as "virtual" 
                                     //  - this may be because interfaces may default to being created at compile time 
                                     //  - and objects and their variables are created at run time.  
+
+    // -hz: 12/7/2018:
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0;
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1;
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2;
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3;
+
 
     // Declaration of variables that hold handles to env sub-objects.  
     system_driver       sys_drvr;
@@ -63,7 +70,13 @@ class env;
     function new
     (
    
-        virtual msh_node_dut_if     dut_if        // testbench interface
+        virtual msh_node_dut_if     dut_if ,        // testbench interface
+	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0,	// -hz: 12/7/2018
+	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1,
+        virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2,
+	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3,
+   	// num of req to input
+        integer  knob_inp_req_num
     );
 
         name = "env.sv";
@@ -73,15 +86,25 @@ class env;
                                     // "this.<variable>" explicitly references a class variable when the need arises 
                                     // to distinguish from another variable with the same name.
 
+        //-hz: 12/7/2018
+        this.mem_if_0 = mem_if_0;
+        this.mem_if_1 = mem_if_1;
+        this.mem_if_2 = mem_if_2;
+        this.mem_if_3 = mem_if_3;
+
+
         sys_drvr    = new(dut_if);
-        inp_driver  = new(dut_if);
+        inp_driver  = new(dut_if, knob_inp_req_num);
 
         sb  = new();
-        mntr  = new(dut_if, sb);
+        mntr  = new(dut_if, mem_if_0, mem_if_1, mem_if_2, mem_if_3, sb);
 
         connect();
 
     endfunction
+
+
+
 
     task connect();
         $display("(time: %0d) %s: **Connecting Testbench and DUT**", $time, name);

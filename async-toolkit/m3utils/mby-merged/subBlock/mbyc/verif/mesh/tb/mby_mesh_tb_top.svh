@@ -51,7 +51,8 @@ module mby_mesh_tb_top();
 
    initial begin
 
-      fabric_clk_gen.period     = 833333fs;
+      //fabric_clk_gen.period     = 833333fs;
+      fabric_clk_gen.period     = 555555fs;
       fabric_clk_gen.jitter     = 0ps;
 
    end
@@ -168,5 +169,13 @@ module mby_mesh_tb_top();
    // MBY Mesh Dut
    // ===============================================
    // ===============================================
-
+   
+   mby_msh_node msh_node_top (
+       .mclk             (mesh_tb_if.fab_clk),
+       .mhreset         (mesh_tb_if.hard_reset),
+       .i_eb_node_col    (0),
+       .i_sb_node_row    (0)
+       
+       );
+   
 endmodule

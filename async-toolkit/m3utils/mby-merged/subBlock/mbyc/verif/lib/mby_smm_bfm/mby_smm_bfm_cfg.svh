@@ -3,7 +3,7 @@
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
 // File          : mby_smm_bfm_cfg.svh
-// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Author        : Roman Bernal  <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
@@ -39,18 +39,17 @@
 // CLASS: mby_smm_bfm_cfg
 //
 // This is the configuration class used by the smm_bfm. It contains fields to
-// control the gcm agent's driver/monitor behavior and also to control the
-// frame generator capabilities.
-//
+// control the smm agent's driver/monitor behavior.
 //-----------------------------------------------------------------------------
 class mby_smm_bfm_cfg extends mby_base_config;
-
-   // VARIABLE: frame_gen_active
-   // Agent is configured to be active or passive
-   uvm_active_passive_enum frame_gen_active;
-
-   // UVM object utils macro
    `uvm_object_utils(mby_smm_bfm_cfg)
+
+   // CONSTRAINT: smm_bfm_constraint
+   // Sets proper values for driver/monitor enables
+   constraint egress_constraint {
+      monitor_active   == UVM_ACTIVE;
+      driver_active    == UVM_ACTIVE;
+   }
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new

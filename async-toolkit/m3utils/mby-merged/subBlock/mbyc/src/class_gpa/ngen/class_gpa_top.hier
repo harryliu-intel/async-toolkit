@@ -6,4 +6,5 @@ class_gpa_top [
   class_gpa_rf_mems of class_gpa_rf_mems with class_gpa_rf_mems.map
   class_gpa_sram_mems of class_gpa_sram_mems with class_gpa_sram_mems.map
   class_gpa_tcam_mems of class_gpa_tcam_mems with class_gpa_tcam_mems.map
+  class_gpa_func_logic of class_gpa_func_logic with class_gpa_func_logic.map
 ]

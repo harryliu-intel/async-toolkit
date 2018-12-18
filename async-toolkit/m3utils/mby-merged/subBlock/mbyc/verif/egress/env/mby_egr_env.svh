@@ -64,8 +64,18 @@ class mby_egr_env extends mby_egr_base_env;
    // MAC Client BFM virtual interface
    egr_eth_bfm_rx_intf_t eth_bfm_rx_vintf[`NUM_EPLS_PER_EGR];
 
-   mby_tag_bfm_pkg::mby_tag_bfm tag_bfm;
-    
+   mby_tag_bfm_pkg::mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
+
+   mby_tag_bfm_pkg::mby_tag_bfm_uc_vif tag_bfm_intf[`NUM_TAG_PORTS];
+   
+   mby_smm_bfm_pkg::mby_smm_bfm_row_rd_req_vif smm_bfm_intf;
+   
+
+   // Shared Memory Mesh (SMM) Instance
+   mby_smm_bfm_t   smm_bfm;
+   mby_smm_bfm_cfg smm_bfm_igr_wr_req_cfg;
+   mby_smm_bfm_cfg smm_bfm_egr_rd_req_cfg;
+
    // Variable: env_monitor
    // egress env event monitor
    mby_egr_env_monitor env_monitor;
@@ -104,9 +114,10 @@ class mby_egr_env extends mby_egr_base_env;
          assert($cast(ti_config,tmp_ti_cfg_obj));
       end
 
-      build_eth_bfms();
+      //build_eth_bfms();
       build_tag_bfm();
-      
+      build_smm_bfm();
+
 
       // Env monitor
       assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
@@ -124,7 +135,10 @@ class mby_egr_env extends mby_egr_base_env;
    function void connect_phase(uvm_phase phase);
       uvm_object temp;
       super.connect_phase(phase);
-      connect_eth_bfms();
+      //connect_eth_bfms();
+      connect_tag_bfms();
+      connect_smm_bfm();
+      
       uvm_config_db#(egr_env_if_t)::get(this, "", "egress_if", egress_if);
       if(egress_if == null) begin
          `uvm_fatal(get_name(), $sformatf("Couldn't find egress_if"));
@@ -179,9 +193,9 @@ class mby_egr_env extends mby_egr_base_env;
          eth_bfms[i]                   = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
          eth_bfms[i].cfg.mode          = eth_bfm_pkg::MODE_SLAVE;                            // Configure as SLAVE
          eth_bfms[i].cfg.port_speed    = {eth_bfm_pkg::SPEED_400G,                            // Configure speed.
-                                          eth_bfm_pkg::SPEED_OFF,
-                                          eth_bfm_pkg::SPEED_OFF,
-                                          eth_bfm_pkg::SPEED_OFF};
+            eth_bfm_pkg::SPEED_OFF,
+            eth_bfm_pkg::SPEED_OFF,
+            eth_bfm_pkg::SPEED_OFF};
          //eth_bfms[i].cfg.port_lanes    = {4,0,0,0};                                           // Configure num_ports.
          eth_bfms[i].cfg.group_size    = 8;
          eth_bfms[i].cfg.sop_alignment = 8;
@@ -191,14 +205,39 @@ class mby_egr_env extends mby_egr_base_env;
    endfunction : build_eth_bfms
 
 
-function void build_tag_bfm();
-    tag_bfm = mby_tag_bfm_pkg::mby_tag_bfm::type_id::create("tag_bfm", this);
-    tag_bfm.cfg_obj.bfm_mode = TAG_BFM_EGR_MODE;
-    tag_bfm.cfg_obj.driver_active = UVM_PASSIVE;
-    tag_bfm.cfg_obj.frame_gen_active = UVM_PASSIVE;
-    tag_bfm.cfg_obj.monitor_active = UVM_PASSIVE;
-    tag_bfm.cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
-endfunction : build_tag_bfm
+   function void build_tag_bfm();
+      foreach(tag_bfm[i]) begin
+         // Get the eth_bfm_vif ptrs
+         if(!uvm_config_db#(mby_tag_bfm_uc_vif)::get(this, "", $sformatf("tag_bfm_vintf%0d",i), tag_bfm_intf[i])) begin
+            `uvm_fatal(get_name(),$sformatf("Config_DB.get() for ENV's tag_bfm_intf%0d was not successful!", i))
+         end
+         uvm_config_db #(virtual mby_tag_bfm_uc_if)::set(null, $sformatf("uvm_test_top.env.tag_bfm_%0d.tag_uc_agent",i), "vintf", tag_bfm_intf[i]);
+
+         tag_bfm[i] = mby_tag_bfm_pkg::mby_tag_bfm::type_id::create($sformatf("tag_bfm_%0d",i), this);
+         tag_bfm[i].cfg_obj.bfm_mode = TAG_BFM_EGR_MODE;
+         tag_bfm[i].cfg_obj.driver_active = UVM_ACTIVE;
+         //tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
+         //tag_bfm[i].cfg_obj.monitor_active = UVM_PASSIVE;
+         tag_bfm[i].cfg_obj.traffic_mode = TAG_BFM_UC_MODE;
+      end
+   endfunction : build_tag_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: build_smm_bfm
+   // Builds the instance of the SMM BFM
+   //--------------------------------------------------------------------------
+   function void build_smm_bfm();
+   /*   if(!uvm_config_db#(mby_smm_bfm_row_rd_req_if)::get(this, "", "smm_bfm_vintf", smm_bfm_intf)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's smm_bfm_intf was not successful!")
+      end */
+      smm_bfm                    = mby_smm_bfm_t::type_id::create("smm_bfm", this);
+      smm_bfm_igr_wr_req_cfg     = new("smm_bfm_igr_wr_req_cfg");
+      smm_bfm.igr_wr_req_cfg_obj = smm_bfm_igr_wr_req_cfg;
+      smm_bfm_egr_rd_req_cfg     = new("smm_bfm_egr_rd_req_cfg");
+      smm_bfm.egr_rd_req_cfg_obj = smm_bfm_egr_rd_req_cfg;
+   endfunction : build_smm_bfm
+
+
    //--------------------------------------------------------------------------
    // Function: connect_eth_bfms
    // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
@@ -220,13 +259,36 @@ endfunction : build_tag_bfm
    // Egress ENV functions / tasks
    //////////////////////////////////////////////////////////////////////////////
 
+   //--------------------------------------------------------------------------
+   // Function: connect_tag_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_tag_bfms();
+      foreach(tag_bfm[i])begin
+         add_sequencer($sformatf("tag_bfm_%0d", i), $sformatf("tag_bfm_uc_%0d", i), tag_bfm[i].tag_uc_agent.sequencer);
+         tag_bfm[i].tag_uc_agent.vintf = tag_bfm_intf[i];
+      end
+   endfunction: connect_tag_bfms
+
+
+   //--------------------------------------------------------------------------
+   // Function: connect_tag_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_smm_bfm();
+
+      add_sequencer("smm_bfm", "smm_bfm_wr_req", smm_bfm.igr_wr_req_agent.sequencer);
+   //   smm_bfm.egr_rd_req_agent.vintf = ;
+   endfunction: connect_smm_bfm
+
+
    //---------------------------------------------------------------------------
    // Function: get_egr_env
    // Returns pointer to self
    //---------------------------------------------------------------------------
-  static function mby_egr_env get_egr_env();
-    return _mby_egr_env;
-  endfunction : get_egr_env
+   static function mby_egr_env get_egr_env();
+      return _mby_egr_env;
+   endfunction : get_egr_env
 
    //////////////////////////////////////////////////////////////////////////////
    // Egress ENV Specific functions / tasks
