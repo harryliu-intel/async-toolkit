@@ -22,6 +22,7 @@
 
 `define NUM_EPLS_PER_EGR  4
 `define NUM_PORTS_PER_EPL 4
+`define NUM_TAG_PORTS 2
 
 typedef virtual mby_egr_env_if                                   egr_env_if_t;
 
@@ -30,6 +31,8 @@ typedef mby_ec_bfm_pkg::mby_ec_cdi_tx_io                         egr_eth_bfm_tx_
 typedef mby_ec_bfm_pkg::mby_ec_cdi_rx_io                         egr_eth_bfm_rx_io_t;
 typedef virtual mby_ec_cdi_tx_intf                               egr_eth_bfm_tx_intf_t;
 typedef virtual mby_ec_cdi_rx_intf                               egr_eth_bfm_rx_intf_t;
+
+typedef mby_smm_bfm_pkg::mby_smm_bfm                             mby_smm_bfm_t;
 
 `endif // MBY_EGR_TYPES_SV
 

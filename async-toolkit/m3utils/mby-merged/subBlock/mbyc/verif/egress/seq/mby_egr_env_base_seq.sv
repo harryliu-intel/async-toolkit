@@ -30,7 +30,8 @@ class mby_egr_env_base_seq extends mby_base_seq;
 
   `uvm_object_utils(mby_egr_env_base_seq)
 //PJP  `uvm_declare_p_sequencer(slu_sequencer)
-
+  mby_egr_env env;
+   
 //PJP  sla_ral_env ral;
 
    //-----------------------------------------------------------------------------
@@ -40,6 +41,23 @@ class mby_egr_env_base_seq extends mby_base_seq;
       super.new(name);
 //PJP    `slu_assert($cast(ral, sla_ral_env::get_ptr()),
 //PJP                ("Unable to get handle to RAL."))
+      env = mby_egr_env::get_egr_env();
    endfunction : new
+
+
+
+   
+   //---------------------------------------------------------------------------
+   // Function: wait_n
+   //
+   // This function will cause a delay of n cycles
+   //
+   // ARGUMENTS:
+   //   int n - number of cycles to wait for
+   //---------------------------------------------------------------------------
+   task wait_n(int n);
+       repeat(n) @(posedge this.env.egress_if.clock);
+   endtask : wait_n
+   
 
 endclass // mby_egr_env_base_seq

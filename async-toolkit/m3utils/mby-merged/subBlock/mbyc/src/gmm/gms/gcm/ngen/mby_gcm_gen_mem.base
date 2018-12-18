@@ -6,16 +6,16 @@ ngen_mod_name
 
 input i_reset,
 
-mby_gcm_mem_if.rx_uc_cnt            rx_uc_cnt_if,
-mby_gcm_mem_if.rx_uc_wm             rx_uc_wm_if,
-mby_gcm_mem_if.rx_mc_cnt            rx_mc_cnt_if,
-mby_gcm_mem_if.rx_mc_wm             rx_mc_wm_if,
-mby_gcm_mem_if.rx_uc_sm_cnt         rx_uc_sm_cnt_if,
-mby_gcm_mem_if.rx_uc_sm_wm          rx_uc_sm_wm_if,
-mby_gcm_mem_if.rx_mc_sm_cnt         rx_mc_sm_cnt_if,
-mby_gcm_mem_if.rx_mc_sm_wm          rx_mc_sm_wm_if,
-mby_gcm_mem_if.tx_uc_sm_cnt         tx_uc_sm_cnt_if,
-mby_gcm_mem_if.tx_uc_sm_wm          tx_uc_sm_wm_if,
+mby_mem_1r1w_if.mem      rx_uc_cnt_if   ,
+mby_mem_1rw_if.mem      rx_uc_wm_if    ,
+mby_mem_1r1w_if.mem      rx_mc_cnt_if   ,
+mby_mem_1rw_if.mem      rx_mc_wm_if    ,
+mby_mem_1r1w_if.mem      rx_uc_sm_cnt_if,
+mby_mem_1rw_if.mem      rx_uc_sm_wm_if ,
+mby_mem_1r1w_if.mem      rx_mc_sm_cnt_if,
+mby_mem_1rw_if.mem      rx_mc_sm_wm_if ,
+mby_mem_1r1w_if.mem      tx_uc_sm_cnt_if,
+mby_mem_1rw_if.mem      tx_uc_sm_wm_if ,
 
 ngen_IO_list
 ngen_IO_end

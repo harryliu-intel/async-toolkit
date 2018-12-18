@@ -62,7 +62,7 @@ endfunction : start
 task mby_mgp_rdrsp_mon::run_phase(uvm_phase phase);
 
    if (req_agent_cfg.is_active == UVM_ACTIVE) begin
-      fork
+ /*     fork
          forever @(mem_crdt_io.op_vif.op_mst_cb) begin
             if(!mem_crdt_io.op_vif.rst) begin
                sample_rdrsp();
@@ -70,7 +70,7 @@ task mby_mgp_rdrsp_mon::run_phase(uvm_phase phase);
                drive_rpcrdt();
             end
          end
-      join_none
+      join_none*/
    end 
    
 endtask : run_phase

@@ -1,0 +1,6 @@
+// igr_pre_post_wrap
+
+igr_pre_post_wrap [
+  mby_igr_pre_ppe  of mby_igr_pre_ppe  with pre_ppe.map
+  mby_igr_post_ppe of mby_igr_post_ppe with post_ppe.map
+]

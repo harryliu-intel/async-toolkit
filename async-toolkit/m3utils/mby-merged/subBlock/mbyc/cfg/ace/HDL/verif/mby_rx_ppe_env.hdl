@@ -7,6 +7,7 @@ $hdl_spec = {
 
     # List of specific VERILOG source files
     -vlog_files => [
+ #      "verif/rx_ppe/ral/mby_rx_ppe_reg_pkg.sv",
        "verif/rx_ppe/env/mby_rx_ppe_env_pkg.sv",
        "verif/rx_ppe/seq/mby_rx_ppe_seq_lib.sv",
     ],
@@ -29,9 +30,23 @@ $hdl_spec = {
         "verif/rx_ppe/ral",
         "verif/rx_ppe/ti",
         "verif/rx_ppe/env",
+	"verif/rx_ppe/env/parser_cfg",
+	"verif/rx_ppe/env/mapper_cfg",
+	"verif/rx_ppe/env/lpm_cfg",
+	"verif/rx_ppe/env/em_cfg",
+	"verif/rx_ppe/env/wcm_cfg",
+	"verif/rx_ppe/env/hash_cfg",
+	"verif/rx_ppe/env/nexthop_cfg",
+	"verif/rx_ppe/env/policer_cfg",
+	"verif/rx_ppe/env/maskgen_cfg",
+	"verif/rx_ppe/env/triggers_cfg",
+	
     ],
 
-    # Arbitrary VLOG options
-    #    -vlog_opts => ['-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',]
+# Arbitrary VLOG options
+    -vlog_opts => [
+#       '-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',
+        "+define+ETH_BFM_USES_PKTLIB",
+    ],
 
 };

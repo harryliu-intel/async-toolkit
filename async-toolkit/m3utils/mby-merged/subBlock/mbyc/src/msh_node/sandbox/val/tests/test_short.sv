@@ -30,7 +30,12 @@
 `include "env.sv"                   // defines most of the testbench
 
 program testcase (                  // a program is a system verilog testbench entry point
-    msh_node_dut_if dut_if               // mesh DUT interface 
+    msh_node_dut_if dut_if,               // mesh DUT interface 
+    //-hz: 12/7/2018
+    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0, // defined in shared/interfaces
+    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1, // under subBlock/mbyc/src
+    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2,
+    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3
 );     
 
 
@@ -42,7 +47,14 @@ program testcase (                  // a program is a system verilog testbench e
     
     env env = new(
 
-        .dut_if                         (dut_if   )       // pass in the interface
+        .dut_if         (dut_if  ) ,      // pass in the interface
+        .mem_if_0	(mem_if_0),	// -hz: 12/7/2018
+        .mem_if_1	(mem_if_1),
+        .mem_if_2	(mem_if_2),
+        .mem_if_3	(mem_if_3),
+
+	// num of input request
+	.knob_inp_req_num (25)
 
     );
 
@@ -62,5 +74,6 @@ program testcase (                  // a program is a system verilog testbench e
         $finish();                          // ca  the final procedure (if it exists) and exits the simulation
 
     end // initial
+
 
 endprogram // testcase

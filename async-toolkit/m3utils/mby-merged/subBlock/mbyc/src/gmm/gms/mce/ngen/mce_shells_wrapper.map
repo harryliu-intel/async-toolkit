@@ -1,0 +1,43 @@
+my %mems = (group_table => 4, refcnt => 16, cur_segptr => 1, mc_reorder_buf => 1, mirror_reorder_buf => 1);
+for $mem (keys %mems) {
+    for($i=0, $size=$mems{$mem}; $i<$mems{$mem}; $i++) {
+        my $mem_uc = uc $mem;
+        my $istr = $size==1 ? "" : "_$i";
+
+        1'b0 >> $mem_uc$$istr$_CFG_reg_sel
+        1'b0 >> $mem_uc$$istr$_STATUS_reg_sel
+
+        1'b0 >> $mem$$istr$_mem_ls_enter
+             >> $mem$$istr$_ecc_uncor_err
+             >> $mem$$istr$_init_done
+
+        if($mem eq "group_table" or $mem eq "refcnt") { // SRAMs
+            $mem$_if.adr[$i]    >> $mem$$istr$_adr
+        } else { // RFs
+            $mem$_if.rd_adr[$i] >> $mem$$istr$_rd_adr
+            $mem$_if.wr_adr[$i] >> $mem$$istr$_wr_adr
+        }
+
+        if($mem eq "refcnt") {
+            '0 >> $mem$$istr$_wr_bwe //TODO: mby_mem_1rw_if.sv: wr_bwe
+        }
+
+        $mem$_if.rd_en[$i]    >> $mem$$istr$_rd_en
+        $mem$_if.wr_en[$i]    >> $mem$$istr$_wr_en
+        $mem$_if.wr_data[$i]  >> $mem$$istr$_wr_data
+        $mem$_if.rd_valid[$i] >> $mem$$istr$_rd_valid
+        $mem$_if.rd_data[$i]  >> $mem$$istr$_rd_data
+    }
+}
+
+1'b0 >> MCE_ECC_COR_ERR_reg_sel
+1'b0 >> MCE_ECC_UNCOR_ERR_reg_sel
+
+1'b1 >> unified_regs_rd
+'h0  >> unified_regs_wr_data
+     >> mce_ecc_int
+     >> mce_init_done
+     >> unified_regs_ack
+     >> unified_regs_rd_data
+
+cclk >> clk
