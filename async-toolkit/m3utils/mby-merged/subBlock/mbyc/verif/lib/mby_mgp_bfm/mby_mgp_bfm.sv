@@ -14,6 +14,8 @@ class mby_mgp_bfm extends uvm_component;
 
     `uvm_component_utils(mby_mgp_bfm)
 
+   mby_mgp_agent_cfg mst_agent_cfg;
+   mby_mgp_agent_cfg slv_agent_cfg;
    mby_mgp_agent mgp_mst_agent;
    mby_mgp_agent mgp_slv_agent;
 
@@ -38,12 +40,13 @@ endfunction : new
 function void mby_mgp_bfm::build_phase(uvm_phase phase);
    super.build_phase(phase);
 
-   if (bfm_cfg == null) begin
-      `uvm_fatal(get_name(), "build: mesh bfm configuration handle is null.")
-   end
-
    mgp_mst_agent = mby_mgp_agent::type_id::create("mgp_mst_agent", this);
    mgp_slv_agent = mby_mgp_agent::type_id::create("mgp_slv_agent", this);
+    
+   mst_agent_cfg.is_active = UVM_ACTIVE;
+   slv_agent_cfg.is_active = UVM_PASSIVE;
+   mgp_mst_agent.mgp_agent_cfg = mst_agent_cfg;
+   mgp_slv_agent.mgp_agent_cfg = slv_agent_cfg;
 
 endfunction : build_phase
 

@@ -1,0 +1,1 @@
+rx_ppe +vcs+lic+wait +ntb_random_seed=2875591401 +vpdfile+rx_ppe.vpd +start_dumping=0 | tee run_seed.log

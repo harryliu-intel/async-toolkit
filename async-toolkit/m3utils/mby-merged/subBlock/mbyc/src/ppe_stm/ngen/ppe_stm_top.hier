@@ -1,6 +1,31 @@
 // PPE shared table memory block
 
 ppe_stm_top [
+  ppe_stm_logic of ppe_stm_logic with ppe_stm_logic.map \
+    #(.FWD_TBL0_BANKS(48), \
+      .FWD_TBL0_CHUNKS(4), \
+      .FWD_TBL0_RDATA_WIDTH(72), \
+      .FWD_TBL0_MEM_SIZE(4096), \
+      .LOG2_FWD_TBL0_MEM_SIZE(12), \
+      .FWD_TBL0_RPORTS(6), \
+      .FWD_TBL0_ADDR_WIDTH(20), \
+      .FWD_TBL0_WDATA_WIDTH(72), \
+      .FWD_TBL1_BANKS(16), \
+      .FWD_TBL1_CHUNKS(4), \
+      .FWD_TBL1_RDATA_WIDTH(72), \
+      .FWD_TBL1_MEM_SIZE(2047), \
+      .LOG2_FWD_TBL1_MEM_SIZE(11), \
+      .FWD_TBL1_RPORTS(4), \
+      .FWD_TBL1_ADDR_WIDTH(17), \
+      .FWD_TBL1_WDATA_WIDTH(72), \
+      .MOD_TBL_BANKS(10), \
+      .MOD_TBL_CHUNKS(8), \
+      .MOD_TBL_RDATA_WIDTH(72), \
+      .MOD_TBL_MEM_SIZE(2047), \
+      .LOG2_MOD_TBL_MEM_SIZE(11), \
+      .MOD_TBL_RPORTS(4), \
+      .MOD_TBL_ADDR_WIDTH(18), \
+      .MOD_TBL_WDATA_WIDTH(72))
   ppe_stm_shells_wrapper of ppe_stm_shells_wrapper with ppe_stm_shells_wrapper.map
   ppe_stm_sram_mems of ppe_stm_sram_mems with ppe_stm_sram_mems.map
 ]

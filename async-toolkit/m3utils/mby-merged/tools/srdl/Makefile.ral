@@ -1,0 +1,7 @@
+SHELL := /usr/intel/bin/tcsh
+
+ral_%.sv: %.ralf
+	eval $(shell $(RTL_PROJ_BIN)/ToolSetup.pl vcsmx) && ralgen -uvm -full64 -t $(notdir $(basename $<)) -o $(basename $@) $<
+	@echo Generated $@
+
+allral: $(addsuffix .sv,$(basename $(addprefix ral_,$(wildcard *.ralf))))

@@ -34,25 +34,22 @@
 
 interface egr_ppe_stm_if
 ();
-logic           [7:0]   wen;    //per chunk write enables
 logic   [1:0]   [7:0]   ren;    //per port, per chunk read enables
-logic   [2:0]   [17:0]  addr;   //per port address (port 0 is write, 1-2 are read)
-logic           [575:0] wdata;  //write data (including ECC bits)
+logic   [2:0]   [17:0]  raddr;  //per port read address
+logic   [1:0]           rvalid; //read data valid
 logic   [1:0]   [575:0] rdata;  //read data (including ECC bits)
 
 modport egr(
-    output  wen,
     output  ren,
-    output  addr,
-    output  wdata,
+    output  raddr,
+    input   rvalid,
     input   rdata
 );
 
 modport stm(
-    input   wen,
     input   ren,
-    input   addr,
-    input   wdata,
+    input   raddr,
+    output  rvalid,
     output  rdata
 );
 

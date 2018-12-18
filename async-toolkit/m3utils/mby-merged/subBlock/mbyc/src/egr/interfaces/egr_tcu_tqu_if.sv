@@ -31,67 +31,22 @@
 * 
 */
 interface egr_tcu_tqu_if ();
-    import mby_egr_pkg::*;
-    import shared_pkg::*;
-
-////////////////// PARAMS AND STRUCTS
-// Service dtq_ctrl_pull
-localparam W_EOP_WD_LEN = $clog2(W_WORD); // 64 possible lengths (6)
-localparam W_TAG_MD     = 4;              // Tag Mdata bits: SLL, ERR, XMD, MC/UC (4)
-localparam W_PKT_ID     = 9;              // Packet ID (9)
-localparam N_MAX_LP     = 4;              // Max Number of Logic Ports (4)
-localparam N_DTQ        = MGP_TC_CNT*N_MAX_LP; // Data Transmit Queue (36)
-localparam W_DTQ_SEL    = $clog2(N_DTQ);  // Data Transmit Queue select (6)
-
-typedef struct packed {
-    logic                 ctrl_type; // [21]    Type of control word: 0: metadata. 1: header
-    logic                       eoh; // [20]    End of Header bit for control word
-    logic                       eop; // [19]    EOP bit for control word
-    logic [W_EOP_WD_LEN-1:0] length; // [18:13] Number of valid bytes in EOP word
-    logic [W_TAG_MD-1:0]  tag_mdata; // [12:9]  Tag Metadata bits
-    logic [W_PKT_ID-1:0]     pkt_id; // [8:0]   Packet ID
-} ctrl_mdata_t;
-
-typedef struct packed {
-    logic [W_DTQ_SEL-1:0] dtq_sel; // DTQ Ctrl select
-    logic                peek_pop; // DTQ Ctrl operation. 0:Peek. 1:Pop
-    logic                     req; // DTQ Ctrl Request
-} dtq_ctrl_pull_t;
-
-typedef logic [N_DTQ-1:0] dtq_ctrl_ready_t; // DTQ Metadata (Control) Ready signals
-
-//Service dtq_data_pull
-localparam N_MAX_PKT_WORDS = 160; // Jumbo packet size in words (160)
-localparam W_PKT_LEN_WDS = $clog2(N_MAX_PKT_WORDS); // Packet length in words (8)
-
-typedef struct packed {
-    logic                        eop; // [9]   EOP bit
-    logic               length_valid; // [8]   Length valid when sending length and not eop
-    logic [W_PKT_LEN_WDS-1:0] length; // [7:0] Number of packet words (eop==0) or bytes in eop word (eop==1)
-} pkt_word_mdata_t;
-
-typedef struct packed {
-    logic [W_DTQ_SEL-1:0] dtq_sel; // DTQ select
-    logic                peek_pop; // DTQ operation. 0:Peek. 1:Pop
-    logic                     req; // DTQ Request
-} dtq_data_pull_t;
-
-typedef logic [N_DTQ-1:0] dtq_data_ready_t; // DTQ Data Ready signals
+    import egr_int_pkg::*;
 
 ////////////////// SIGNALS
 // Service dtq_ctrl_pull
-dtq_ctrl_pull_t  [EPL_PER_MGP-1:0]   dtq_ctrl_pull; // TCU DTQ Control Pull Request
-dtq_ctrl_ready_t [EPL_PER_MGP-1:0]  dtq_ctrl_ready; // TCU DTQ Control (Metadata) Ready
-ctrl_mdata_t     [EPL_PER_MGP-1:0]      ctrl_mdata; // TQU Control Word Metadata
-data_word_t      [EPL_PER_MGP-1:0]       ctrl_word; // TQU Control Word Data
-logic            [EPL_PER_MGP-1:0] ctrl_word_valid; // TQU Control Word Valid
+dtq_ctrl_pull_t  [EPL_PER_MGP-1:0]   dtq_ctrl_pull; // TCU DTQ Control Pull Request (2LP_SELx4TC_SEL+2=10b)
+dtq_ready_t      [EPL_PER_MGP-1:0]  dtq_ctrl_ready; // TCU DTQ Control (Pkt Metadata) Ready (4LPx9TC=36b)
+ctrl_mdata_t     [EPL_PER_MGP-1:0]      ctrl_mdata; // TQU Control Word Metadata (22b)
+data_word_t      [EPL_PER_MGP-1:0]       ctrl_word; // TQU Control Word Data (64B)
+logic            [EPL_PER_MGP-1:0] ctrl_word_valid; // TQU Control Word Valid (1b)
 
 //Service dtq_data_pull
-dtq_data_pull_t  [EPL_PER_MGP-1:0]   dtq_data_pull; // TQU DTQ Data Pull Request
-dtq_data_ready_t [EPL_PER_MGP-1:0]  dtq_data_ready; // TCU DTQ Data Ready
-pkt_word_mdata_t [EPL_PER_MGP-1:0]  pkt_word_mdata; // TQU Pkt Word Metadata
-data_word_t      [EPL_PER_MGP-1:0]        pkt_word; // TQU Pkt Data Word
-logic            [EPL_PER_MGP-1:0] data_word_valid; // TQU Data Word Valid
+dtq_data_pull_t  [EPL_PER_MGP-1:0]   dtq_data_pull; // TQU DTQ Data Pull Request (2LP_SELx4TC_SEL+2=10b)
+dtq_ready_t      [EPL_PER_MGP-1:0]  dtq_data_ready; // TCU DTQ Data Ready (4LPx9TC=36b)
+pkt_word_mdata_t [EPL_PER_MGP-1:0]  pkt_word_mdata; // TQU Pkt Word Metadata (10b)
+data_word_t      [EPL_PER_MGP-1:0]        pkt_word; // TQU Pkt Data Word (64B)
+logic            [EPL_PER_MGP-1:0] data_word_valid; // TQU Data Word Valid (1b)
 
 
 ////////////////// MODPORTS

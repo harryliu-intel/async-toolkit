@@ -34,6 +34,14 @@ Optional: Setup VCS environment stuff:  Run:
 
     osetup vcsmx
 
+Note: if setnhdk -w $cwd gives you the error:
+    -E- You have more than 16 (17) UNIX groups, please wash out at least 1 irrelevant groups to be able to run Setup
+
+    In the Unix environment, use the tool "xwashmgr" and select some not needed groups from the left hand pane (for example soc73, shdk73, and soc73proc) and hit the arrow to move them into the right pane.
+    This will eliminate them from the groups that pop up on all unix sessions.  Note it may take a while to see the effect, as it has to be copied to all of the compute environments.
+    You will need to kill all of the existing xterm windows and restart them to get the new groups.
+
+
 
 ==================================================================================
 Clone a Repo

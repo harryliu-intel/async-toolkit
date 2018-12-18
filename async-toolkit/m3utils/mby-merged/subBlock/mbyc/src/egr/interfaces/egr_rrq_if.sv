@@ -28,27 +28,7 @@
 //------------------------------------------------------------------------------
 
 interface egr_rrq_if #(parameter N_RREQS = 1)();
-    import mby_egr_pkg::*;
-    import shared_pkg::*;
-
-////////////////// PARAMS AND STRUCTS
-// Service try_put_pkt_rreq
-localparam W_CLIENT_ID  = 3; // Read Request client sel (CPB, 2xPRC[2], TDB) (3)
-localparam W_DATA_WD_ID = 9; // Data Word ID (9)
-
-typedef struct packed {
-    logic [W_CLIENT_ID-1:0]   client_id; // [12:10] Client ID selector
-    logic                         spare; // [9]     Spare bits (for 13 bit req id)
-    logic [W_DATA_WD_ID-1:0] data_wd_id; // [8:0]   Data Word ID
-} req_id_t;
-
-typedef struct packed {
-    seg_handle_t seg_handle; // [40:17] Segment Pointer handle w/ semaphores
-    wd_sel_t         wd_sel; // [16:15] Word select
-    req_id_t         req_id; // [14:2]  Request ID w/client id and packet id
-    logic     service_class; // [1]     Service class: 0: SAF, 1: VCT
-    logic                mc; // [0]     Multicast bit
-} wd_rreq_t;
+    import egr_int_pkg::*;
 
 ////////////////// SIGNALS
 // Service try_put_word_rreq
