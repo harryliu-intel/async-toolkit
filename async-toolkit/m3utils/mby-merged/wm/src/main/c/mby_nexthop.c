@@ -144,7 +144,7 @@ void NextHop
 {
     // Read inputs:
     const mbyClassifierFlags cgrp_flags  = in->CGRP_FLAGS;
-    const fm_uint32          cgrp_route  = in->CGRP_ROUTE;
+    const fm_uint32          cgrp_route  = in->FWD;
           fm_bool            encap       = in->ENCAP;
           fm_bool            decap       = in->DECAP;
     const fm_macaddr         dmac_ipv6   = in->DMAC_FROM_IPV6;
@@ -283,7 +283,7 @@ void NextHop
     out->MIRROR0_PROFILE_IDX  = in->MIRROR0_PROFILE_IDX;
     out->MOD_PROF_IDX         = in->MOD_PROF_IDX;
     out->MTU_VIOLATION        = in->MTU_VIOLATION;
-    out->NO_LEARN             = in->NO_LEARN;
+    out->LEARN_NOTIFY         = in->LEARN_NOTIFY;
     out->OPERATOR_ID          = in->OPERATOR_ID;
     out->PARITY_ERROR         = in->PARITY_ERROR;
     out->PARSER_ERROR         = in->PARSER_ERROR;

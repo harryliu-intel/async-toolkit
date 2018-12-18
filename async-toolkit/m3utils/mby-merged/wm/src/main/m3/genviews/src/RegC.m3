@@ -311,9 +311,6 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
     PutXDecls(gs, xDecls)
   END GenRegStruct;
 
-  (* the way this is coded, GenRegfile and GenAddrmap could be merged into
-     one routine, viz., GenContainer *)
-
 PROCEDURE SkipArcP(c : RegContainer.T) : BOOLEAN =
   BEGIN RETURN ISTYPE(c, RegRegfile.T) AND c.children.size() = 1 END SkipArcP;
   
