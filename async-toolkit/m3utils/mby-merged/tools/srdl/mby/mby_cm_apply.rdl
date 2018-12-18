@@ -640,7 +640,7 @@ reg mirror_ecmp_dmask4 {
             Destination port for the mirror profile entry
            ";
     ValRandomize = true;
-  } Mirror_port_mask4[0] = 1'b0;
+  } Mirror_port_mask4[0:0] = 1'h0;
 };
 
 
