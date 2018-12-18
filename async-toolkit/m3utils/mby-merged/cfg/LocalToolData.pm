@@ -72,7 +72,7 @@ $ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "
 #####################################################
 #    Configure Environment variables for Nebulon    #
 #####################################################
-$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww24.4';
+$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww49.4';
 
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
