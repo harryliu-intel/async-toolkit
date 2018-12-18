@@ -47,12 +47,15 @@ module mby_mesh_tb_top();
    // ===============================================
 
    logic         fabric_clk;                             // Fabric Clock - 1.2 Ghz
+   logic         mclk; 
    shdv_clk_gen  fabric_clk_gen(fabric_clk);
+   shdv_clk_gen  mclk_gen(mclk);
 
    initial begin
 
-      //fabric_clk_gen.period     = 833333fs;
-      fabric_clk_gen.period     = 555555fs;
+      mclk_gen.period           = 555555fs; //1.8 GHz mesh clock
+      mclk_gen.jitter           = 0ps;
+      fabric_clk_gen.period     = 833333fs; //1.2 GHz core clock
       fabric_clk_gen.jitter     = 0ps;
 
    end
@@ -70,11 +73,12 @@ module mby_mesh_tb_top();
 
  
    assign mesh_tb_if.fab_clk  = fabric_clk;
+   assign mesh_tb_if.mclk     = mclk;
 
    shdv_base_tb_intf shdv_intf();
 
    assign   shdv_intf.ref_clk   = mesh_tb_if.fab_clk; 
-   assign   shdv_intf.ref_rst   = mesh_tb_if.hard_reset;
+   assign   shdv_intf.ref_rst   = mesh_tb_if.chard_reset;
 
    //-----------------------------------------------------------------------------
    // Verification Test Island
@@ -169,13 +173,12 @@ module mby_mesh_tb_top();
    // MBY Mesh Dut
    // ===============================================
    // ===============================================
-   
-   mby_msh_node msh_node_top (
+
+   mby_msh msh(
+       .cclk             (mesh_tb_if.mclk),
        .mclk             (mesh_tb_if.fab_clk),
-       .mhreset         (mesh_tb_if.hard_reset),
-       .i_eb_node_col    (0),
-       .i_sb_node_row    (0)
+       .chreset          (mesh_tb_if.chard_reset),
+       .mhreset          (mesh_tb_if.mhard_reset)
        
        );
-   
 endmodule

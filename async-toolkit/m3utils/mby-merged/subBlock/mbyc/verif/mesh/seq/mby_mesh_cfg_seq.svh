@@ -1,3 +1,4 @@
+
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 
 //------------------------------------------------------------------------------
@@ -27,55 +28,48 @@
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Class:    mby_mesh_env_cfg_seq
+//   Class:  mby_mesh_env_base_seq
 //
-//   This is the Mesh ENV Config sequence file.
+//   This is the Mesh base seq extended from MBY Base seq which is in-turn extended 
+//   from shdv_base_seq. This sequence class has methods to setup mesh env object handle 
+//   and methods to perform register access both for RTL.
+//
+//  All the sequences in mesh env will extend from this base sequence to inherit its
+//  functionality.  
 
-`ifndef __MBY_MESH_ENV_CFG_SEQ_GUARD
-`define __MBY_MESH_ENV_CFG_SEQ_GUARD
+
+`ifndef __MBY_MESH_CFG_SEQ_GUARD
+`define __MBY_MESH_CFG_SEQ_GUARD
 
 `ifndef __INSIDE_MBY_MESH_SEQ_LIB
 `error "Attempt to include file outside of mby_mesh_seq_lib."
 `endif
 
-class mby_mesh_env_cfg_seq extends shdv_base_config_seq;
+class mby_mesh_cfg_seq extends shdv_base_configure_sequence; 
 
+    // Variable: dut_cfg
+    // Mesh dut cfg.
+    mby_mesh_env_pkg::mby_mesh_dut_cfg     dut_cfg;
 
-    `uvm_object_utils(mby_mesh_env_cfg_seq)
-    `uvm_declare_p_sequencer(slu_sequencer)
-
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------
     //  Constructor: new
-    //  New Mesh env Config Sequence Object.
-    //  Gets handle to the Mesh ENV.
-    //
     //  Arguments:
-    //  string name  - Mesh env config sequence object name.
-    //------------------------------------------------------------------------------
-    function new(input string name = "mby_mesh_warm_reset_seq");
-        super.new(name);
-    endfunction: new
+    //  string name   - Mesh env base sequence object name.
+    // ------------------------------------------------------------------------
+    function new(string name = "mby_mesh_cfg_seq");
+        super.new();
 
-    //------------------------------------------------------------------------------
-    //  Function: sm_config
-    //  This finction calls the "allocate_mem" function which allocates memory
-    //  address space for exclusive use.
-    //------------------------------------------------------------------------------
-    virtual function void sm_config();
-        sm.ag.allocate_mem(ag_result, "MMIO_LOW", 32'h2_0000, "GBE_MEM_LOW",32'h1_FFFF);
-    endfunction
+    endfunction : new
 
-    //------------------------------------------------------------------------------
-    //  Task: body
-    //  Configures Mesh DUT.
-    //------------------------------------------------------------------------------
-    virtual task     body();
-        `uvm_info(get_name(), "MeshTop Env Configuration Sequence", UVM_MEDIUM);
+    //---------------------------------------------------------------------------
+    // Task: body
+    //
+    // Main task of configure sequence.  
+    //---------------------------------------------------------------------------
+    virtual task body();
+      `uvm_info(get_name(), "configure sequence started", UVM_LOW)
+    endtask
+ 
+endclass : mby_mesh_cfg_seq
 
-    //Configure DUT here..
-
-    endtask : body
-
-endclass : mby_mesh_env_cfg_seq
-
-`endif // __MBY_MESH_ENV_CFG_SEQ_GUARD
+`endif 

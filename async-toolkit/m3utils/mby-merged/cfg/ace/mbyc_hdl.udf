@@ -208,7 +208,7 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             mby_mgp_bfm_lib => {
                -hdl_spec       => [ "subBlock/mbyc/cfg/ace/HDL/verif/mby_mgp_bfm.hdl" ],
-               -dependent_libs => [ 'mby_common_lib',
+               -dependent_libs => [ 'mby_common_lib', 'shdv_shared_lib', 
                                    ],
                -tag            => "nonsynth+nonlint",
             },
@@ -806,7 +806,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_msh_node_rtl_lib",
                   "mby_mesh_ti_lib",
                   "mby_mesh_test_lib",
-                  "mby_mesh_tb_top_lib",
                   "mby_jasper_lib",
                   "mby_wm_dpi_lib",
                   "ext_shared_lib",
