@@ -91,6 +91,12 @@ ${BLD_DIR}/mby_parser_test.o: \
         ${C_DIR}/mby_init.h \
         ${C_DIR}/mby_reg_ctrl.h
 
+$(WM_LIB):
+	make -C ${C_DIR}
+
+$(COM_LIB):
+	make -C ${COM_DIR}
+
 $(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
 	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(WM_LIB) $(COM_LIB)

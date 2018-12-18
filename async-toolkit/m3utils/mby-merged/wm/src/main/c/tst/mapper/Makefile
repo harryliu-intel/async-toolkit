@@ -82,6 +82,12 @@ ${BLD_DIR}/mby_mapper_test.o: \
         mby_mapper_test.c $(C_DIR)/mby_mapper.h \
         $(C_DIR)/mby_common.h
 
+$(WM_LIB):
+	make -C ${C_DIR}
+
+$(COM_LIB):
+	make -C ${COM_DIR}
+
 $(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
 	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(WM_LIB) $(COM_LIB)
