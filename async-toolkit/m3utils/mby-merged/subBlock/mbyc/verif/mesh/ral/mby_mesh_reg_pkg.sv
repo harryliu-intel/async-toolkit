@@ -9,7 +9,7 @@
 // The source code contained or described herein and all documents related to
 // the source code ("Material") are owned by Intel Corporation or its suppliers
 // or licensors. Title to the Material remains with Intel Corporation or its
-// suppliers and licensors. The Material contains trade secrets and proprietary
+// suppliers and licensorsg tar. The Material contains trade secrets and proprietary
 // and confidential information of Intel or its suppliers and licensors.  The
 // Material is protected by worldwide copyright and trade secret laws and
 // treaty provisions. No part of the Material may be used, copied, reproduced,
@@ -27,31 +27,13 @@
 //   Project       :
 //------------------------------------------------------------------------------
 
-package mby_rx_ppe_reg_pkg;
+package mby_mesh_reg_pkg;
 
    import uvm_pkg::*;
    `include "uvm_macros.svh"
 
-   `include "ral_parser.sv"
-   `include "ral_mapper.sv"
-   `include "ral_EM.sv"
-   `include "ral_A.sv"     
-   `include "ral_B.sv"     
-//  `include "ral_cgrp_a.sv" // ral_EM and ral_A forms cgrp_a_map
-//  `include "ral_cgrp_b.sv" // ral_EM and ral_B forms cgrp_b_map
-   `include "ral_nexthop.sv"
-   `include "ral_policers.sv"
-   `include "ral_entropy.sv"
-   `include "ral_cm_apply.sv"
-   `include "ral_cm_usage.sv"
-   `include "ral_fwd_misc.sv"
-   `include "ral_mst_glort.sv"
-   `include "ral_trig_apply.sv"
-   `include "ral_trig_apply_misc.sv"
-   `include "ral_trig_usage.sv"
-   `include "ral_stats.sv"
+   `include "ral_mby_mesh_row_map.sv"
 
+   `include "mby_mesh_reg_blk.sv"
 
-   `include "mby_rx_ppe_reg_blk.sv"
-
-endpackage: mby_rx_ppe_reg_pkg
+endpackage: mby_mesh_reg_pkg
