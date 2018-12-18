@@ -35,6 +35,12 @@
 interface msh_node_dut_if
 import mby_msh_pkg::*;
 import mby_msh_node_pkg::*;
+#(
+
+    parameter int NUM_MSH_ROWS    = MAX_NUM_MSH_ROWS,               // number of mesh rows
+    parameter int NUM_MSH_COLS    = MAX_NUM_MSH_COLS                // number of mesh columns
+
+)
 (
    input mclk                                        // mclk is passed in a parameter and becomes part of the interface
 );

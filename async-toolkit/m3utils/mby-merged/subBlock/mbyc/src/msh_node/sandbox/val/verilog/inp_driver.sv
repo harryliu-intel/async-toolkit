@@ -221,9 +221,18 @@ class inp_driver;
             drvr_wr_req_to_dut.node_col = '0;
             drvr_wr_req_to_dut.node_row = '0;
             drvr_wr_req_to_dut.csr      = '0;
+<<<<<<< HEAD
+            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
+            drvr_wr_req_to_dut.sema_val = '0; 
+            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
+||||||| merged common ancestors
+            drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h33);
+            drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h55);
+=======
          // drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h10);
             drvr_wr_req_to_dut.addr     = adr_1;
             drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h51);
+>>>>>>> 5f35c9fd9da8518ade9e64379f06b8e469242b15
 
             @(posedge dut_if.mclk);
 
@@ -232,6 +241,7 @@ class inp_driver;
             drvr_wr_req_to_dut.node_row = '0;
             drvr_wr_req_to_dut.csr      = '0;
             drvr_wr_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
+            drvr_wr_req_to_dut.sema_val = '0;
             drvr_wr_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
             @(posedge dut_if.mclk);
@@ -253,7 +263,6 @@ class inp_driver;
             drvr_rd_req_to_dut.csr      = '0;
          // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h10);
             drvr_rd_req_to_dut.addr     = adr_1;
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h15);
 
@@ -265,7 +274,6 @@ class inp_driver;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
             drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
@@ -323,7 +331,6 @@ class inp_driver;
             drvr_rd_req_to_dut.csr      = '0;
          // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h20);
             drvr_rd_req_to_dut.addr     = adr_2;
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h25);
             @(posedge dut_if.mclk);
@@ -334,7 +341,6 @@ class inp_driver;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
             drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
@@ -392,7 +398,6 @@ class inp_driver;
             drvr_rd_req_to_dut.csr      = '0;
          // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h30);
             drvr_rd_req_to_dut.addr     = adr_3;
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h35);
             @(posedge dut_if.mclk);
@@ -403,7 +408,6 @@ class inp_driver;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
             drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
@@ -564,7 +568,6 @@ class inp_driver;
             drvr_rd_req_to_dut.csr      = '0;
          // drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'('h60);
             drvr_rd_req_to_dut.addr     = adr_6;
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'('h65);
             @(posedge dut_if.mclk);
@@ -575,7 +578,6 @@ class inp_driver;
             drvr_rd_req_to_dut.node_row = '0;
             drvr_rd_req_to_dut.csr      = '0;
             drvr_rd_req_to_dut.addr     = mby_msh_pkg::mshnd_addr_t'(0);
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
             drvr_rd_req_to_dut.age      = mby_msh_pkg::msh_trans_age_t'(0);
 
@@ -632,7 +634,6 @@ class inp_driver;
             drvr_wr_req_to_dut.node_col = '0;
             drvr_wr_req_to_dut.node_row = '0;
             drvr_wr_req_to_dut.csr      = '0;
-            drvr_rd_req_to_dut.sema_vld = 1'b0;
             drvr_rd_req_to_dut.sema_val = 1'b0;
 
 

@@ -37,6 +37,7 @@
 //`include "configuration.sv"
 //`include "stimulus.sv"
 
+import msh_sim_pkg::*;
 import mby_msh_pkg::*;
 import mby_egr_pkg::*;
 class inp_driver;
