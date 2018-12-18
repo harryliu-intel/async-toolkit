@@ -43,6 +43,7 @@ sig_Text =[]
 ngenPath=os.path.join(path,"ngen")
 makePath=os.path.join(ngenPath,"Makefile")
 inclPath=os.path.join(ngenPath,"../rtl/mby_"+module_name+"_if_inst.sv")
+m_ifPath=os.path.join(ngenPath,"../rtl/mby_"+module_name+"_memory_if.sv")
 basePath=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.base")
 hierPath=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.hier")
 sig_Path=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.sig")
@@ -62,20 +63,102 @@ except OSError:
 else:  
     print ("## Successfully created the directory %s" % ngenPath)
 
-def create_if_include(names, Ports, Insta, Lines,DataW):
-    with io.open(inclPath,"w") as if_inst:
+def create_if_include(num, names, Ports, Insta, Lines,DataW):
+    if (num==0):
+        with io.open(inclPath,"w") as if_inst:
+            L= len(names)
+            for ii in range(L):
+                If_include.append("mby_mem_"+Ports[ii]+"_if    #(.W_DATA("+DataW[ii]+"),    .W_DEEP("+Lines[ii]+"),   .W_INST("+Insta[ii]+") )    "+names[ii]+"_if();\n")
+            if_inst.writelines(If_include)
+    else:
+        with io.open(m_ifPath,"w") as block_mem_if:
+            L=len(names)
+            block_mem_if.write("interface mby_"+module_name+"_memory_if (); \n\n")
+            block_mem_if.write("modport cln( \n")
+            for ii in range(L):
+                Cln_ModportText1r1w= [
+                "output "+names[ii]+"_rd_adr   , \n",
+                "output "+names[ii]+"_wr_adr   , \n",
+                "output "+names[ii]+"_rd_en    , \n",
+                "output "+names[ii]+"_wr_data  , \n",
+                "output "+names[ii]+"_wr_en    , \n",
+                "input  "+names[ii]+"_rd_data  , \n",
+                "input  "+names[ii]+"_rd_valid , \n",
+                "\n"
+                ]
+                #print(Cln_ModportText1r1w ) 
+                Cln_ModportText1rw= [
+                "output "+names[ii]+"_adr      , \n",
+                "output "+names[ii]+"_rd_en    , \n",
+                "output "+names[ii]+"_wr_data  , \n",
+                "output "+names[ii]+"_wr_en    , \n",
+                "input  "+names[ii]+"_rd_data  , \n",
+                "input  "+names[ii]+"_rd_valid , \n",
+                "\n"
+                ]
+                print(Cln_ModportText1rw ) 
+                print("Port Type: "+ Ports[ii])
+
+                if (Ports[ii]=="1r1w"):
+                    tempText = Cln_ModportText1r1w
+                elif(Ports[ii]=="1rw"):
+                    tempText = Cln_ModportText1rw
+                else:
+                    tempText =""
+                    print("Review logical file on RAM port")
+                block_mem_if.writelines(tempText)
+            block_mem_if.write(");\n\n")
+            tempText=""
+
+            block_mem_if.write("modport mem(\n")
+            for ii in range(L):
+                Mem_ModportText1r1w= [
+                "input  "+names[ii]+"_rd_adr   , \n",
+                "input  "+names[ii]+"_wr_adr   , \n",
+                "input  "+names[ii]+"_rd_en    , \n",
+                "input  "+names[ii]+"_wr_data  , \n",
+                "input  "+names[ii]+"_wr_en    , \n",
+                "output "+names[ii]+"_rd_data  , \n",
+                "output "+names[ii]+"_rd_valid , \n",
+                "\n"
+                ]
+                
+                Mem_ModportText1rw= [
+                "input  "+names[ii]+"_adr      , \n",
+                "input  "+names[ii]+"_rd_en    , \n",
+                "input  "+names[ii]+"_wr_data  , \n",
+                "input  "+names[ii]+"_wr_en    , \n",
+                "output "+names[ii]+"_rd_data  , \n",
+                "output "+names[ii]+"_rd_valid , \n",
+                "\n"
+                ]
+
+                if (Ports[ii]=="1r1w"):
+                    tempText = Mem_ModportText1r1w
+                elif(Ports[ii]=="1rw"):
+                    tempText = Mem_ModportText1rw
+                else:
+                    tempText =""
+                    print("Review logical file on RAM port")
+                block_mem_if.writelines(tempText)
+                tempText=""
+            block_mem_if.write(");\n\n")
+            block_mem_if.write("endinterface \n")
+         
+def createSigFile(num, names):
+    if (num==0):
         L= len(names)
-        for ii in range(L):
-            If_include.append("mby_mem_"+Ports[ii]+"_if    #(.W_DATA("+DataW[ii]+"),    .W_DEEP("+Lines[ii]+"),   .W_INST("+Insta[ii]+") )    "+names[ii]+"_if();\n")
-        if_inst.writelines(If_include)
-    
-def createSigFile(names):
-    L= len(names)
-    with io.open(sig_Path, "w") as sigFile:
-        for it in range(L):
-            sig_Text.append(names[it]+"_if      interface\n;\n")
-        sigFile.write("i_reset logic\n;\nreset_n logic\n\tno_pins\n;\n")
-        sigFile.writelines(sig_Text) 
+        with io.open(sig_Path, "w") as sigFile:
+            for it in range(L):
+                sig_Text.append(names[it]+"_if      interface\n;\n")
+            sigFile.write("i_reset logic\n;\nreset_n logic\n\tno_pins\n;\n")
+            sigFile.writelines(sig_Text)
+    else:
+        with io.open(sig_Path, "w") as sigFile:
+            sig_Text.append(module_name+"_mem_if      interface\n;\n")
+            sigFile.write("i_reset logic\n;\nreset_n logic\n\tno_pins\n;\n")
+            sigFile.writelines(sig_Text) 
+
 
 def parsingImplemReport(module_name,path,ff_Path,rf_Path,sr_Path):
     makeText = []
@@ -127,84 +210,159 @@ def parsingImplemReport(module_name,path,ff_Path,rf_Path,sr_Path):
         preP.writelines(prePText) 
     return makeText       
 
-def create_blockShellsWrapper(wrapper_name,names,Ports,Insta,WrRes):
-    with io.open(wrapper_name,"w") as wrapperfile:
-        L=len(names)
+def create_MapFileForShellsWrapper(num, wrapper_name,names,Ports,Insta,WrRes):
+    if (num==0):
+        with io.open(wrapper_name,"w") as wrapperfile:
+            L=len(names)
+            for ii in range(L):
+                for tt in range(int(Insta[ii])):
+                    if (int(Insta[ii]) > 1):
+                        tempvar= "_"+str(tt)
+                    else:
+                        tempvar= ""
+                    if (WrRes[ii]==0):
+                        bweText = ""
+                    else:
+                        bweText = "                                             >> "+names[ii]+tempvar+"_wr_bwe\n"
+    
+                    WrapperText1r1w= [
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_CFG_reg_sel\n",
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_STATUS_reg_sel\n",
+                    names[ii]+"_if.rd_adr   "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_adr\n",
+                    names[ii]+"_if.wr_adr   "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_adr\n",
+                    names[ii]+"_if.rd_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_en\n",
+                    names[ii]+"_if.wr_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_data\n",
+                    names[ii]+"_if.wr_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_en\n",
+                    bweText, 
+                    names[ii]+"_if.rd_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_data\n",
+                    names[ii]+"_if.rd_valid "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_valid\n",
+                    "                                             >> "+names[ii]+tempvar+"_ecc_uncor_err\n",
+                    "                                             >> "+names[ii]+tempvar+"_init_done\n",
+                    "1'b0                                         >> "+names[ii]+tempvar+"_mem_ls_enter\n",
+                    "\n"
+                    ]
+                    
+                    WrapperText1rw= [
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_CFG_reg_sel\n",
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_STATUS_reg_sel\n",
+                    names[ii]+"_if.adr      "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_adr\n",
+                    names[ii]+"_if.rd_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_en\n",
+                    names[ii]+"_if.wr_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_data\n",
+                    names[ii]+"_if.wr_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_en\n",
+                    bweText, 
+                    names[ii]+"_if.rd_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_data\n",
+                    names[ii]+"_if.rd_valid "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_valid\n",
+                    "                                             >> "+names[ii]+tempvar+"_ecc_uncor_err\n",
+                    "                                             >> "+names[ii]+tempvar+"_init_done\n",
+                    "1'b0                                         >> "+names[ii]+tempvar+"_mem_ls_enter\n",
+                    "\n"
+                    ]
+    
+                    if (Ports[ii]=="1r1w"):
+                        tempText = WrapperText1r1w
+                    elif(Ports[ii]=="1rw"):
+                        tempText = WrapperText1rw
+                    else:
+                        tempText =""
+                        print("Review logical file on RAM port")
+                    wrapperfile.writelines(tempText)
+                    tempText=""
+            EndingText =[  
+            "1'b0 >> "+module_name.upper()+"_ECC_COR_ERR_reg_sel\n",
+            "1'b0 >> "+module_name.upper()+"_ECC_UNCOR_ERR_reg_sel\n",
+            "\n",
+            "1'b1 >> unified_regs_rd\n",
+            "'h0  >> unified_regs_wr_data\n",
+            "     >> "+module_name+"_ecc_int\n",
+            "     >> "+module_name+"_init_done\n",
+            "     >> unified_regs_ack\n",
+            "     >> unified_regs_rd_data\n",
+            "\n",
+            "cclk    >> clk\n",
+            "reset_n >> reset_n\n"
+            ]
+            wrapperfile.writelines(EndingText)
+    else:
+        with io.open(wrapper_name,"w") as wrapperfile:
+            L=len(names)
+            for ii in range(L):
+                for tt in range(int(Insta[ii])):
+                    if (int(Insta[ii]) > 1):
+                        tempvar= "_"+str(tt)
+                    else:
+                        tempvar= ""
+                    if (WrRes[ii]==0):
+                        bweText = ""
+                    else:
+                        bweText = "                                             >> "+names[ii]+tempvar+"_wr_bwe\n"
+
+                    WrapperText1r1w= [
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_CFG_reg_sel\n",
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_STATUS_reg_sel\n",
+                    module_name+"_mem_if."+names[ii]+"_rd_adr   "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_rd_adr\n",
+                    module_name+"_mem_if."+names[ii]+"_wr_adr   "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_wr_adr\n",
+                    module_name+"_mem_if."+names[ii]+"_rd_en    "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_rd_en\n",
+                    module_name+"_mem_if."+names[ii]+"_wr_data  "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_wr_data\n",
+                    module_name+"_mem_if."+names[ii]+"_wr_en    "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_wr_en\n",
+                    bweText, 
+                    module_name+"_mem_if."+names[ii]+"_rd_data  "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_rd_data\n",
+                    module_name+"_mem_if."+names[ii]+"_rd_valid "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_rd_valid\n",
+                    "                                             >> "+names[ii]+tempvar+"_ecc_uncor_err\n",
+                    "                                             >> "+names[ii]+tempvar+"_init_done\n",
+                    "1'b0                                         >> "+names[ii]+tempvar+"_mem_ls_enter\n",
+                    "\n"
+                    ]
+                    
+                    WrapperText1rw= [
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_CFG_reg_sel\n",
+                    "1'b0                                         >> "+names[ii].upper()+tempvar+"_STATUS_reg_sel\n",
+                    module_name+"_mem_if."+names[ii]+"_adr      "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_adr\n",
+                    module_name+"_mem_if."+names[ii]+"_rd_en    "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_rd_en\n",
+                    module_name+"_mem_if."+names[ii]+"_wr_data  "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_wr_data\n",
+                    module_name+"_mem_if."+names[ii]+"_wr_en    "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_wr_en\n",
+                    bweText, 
+                    module_name+"_mem_if."+names[ii]+"_rd_data  "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_rd_data\n",
+                    module_name+"_mem_if."+names[ii]+"_rd_valid "+"["+str(tt)+"]         >> "+names[ii]+tempvar+"_rd_valid\n",
+                    "                                             >> "+names[ii]+tempvar+"_ecc_uncor_err\n",
+                    "                                             >> "+names[ii]+tempvar+"_init_done\n",
+                    "1'b0                                         >> "+names[ii]+tempvar+"_mem_ls_enter\n",
+                    "\n"
+                    ]
+
+                    if (Ports[ii]=="1r1w"):
+                        tempText = WrapperText1r1w
+                    elif(Ports[ii]=="1rw"):
+                        tempText = WrapperText1rw
+                    else:
+                        tempText =""
+                        print("Review logical file on RAM port")
+                    wrapperfile.writelines(tempText)
+                    tempText=""
+            EndingText =[  
+            "1'b0 >> "+module_name.upper()+"_ECC_COR_ERR_reg_sel\n",
+            "1'b0 >> "+module_name.upper()+"_ECC_UNCOR_ERR_reg_sel\n",
+            "\n",
+            "1'b1 >> unified_regs_rd\n",
+            "'h0  >> unified_regs_wr_data\n",
+            "     >> "+module_name+"_ecc_int\n",
+            "     >> "+module_name+"_init_done\n",
+            "     >> unified_regs_ack\n",
+            "     >> unified_regs_rd_data\n",
+            "\n",
+            "cclk    >> clk\n",
+            "reset_n >> reset_n\n"
+            ]
+            wrapperfile.writelines(EndingText)
+
+
+def createIFBase_f(num, names,Ports):
+    if (num==0):
+        L= len(names)
         for ii in range(L):
-            for tt in range(int(Insta[ii])):
-                if (int(Insta[ii]) > 1):
-                    tempvar= "_"+str(tt)
-                else:
-                    tempvar= ""
-                if (WrRes[ii]==0):
-                    bweText = ""
-                else:
-                    bweText = "                                             >> "+names[ii]+tempvar+"_wr_bwe\n"
+            IfBaseName.append("mby_mem_"+Ports[ii]+"_if.mem       "+names[ii]+"_if,\n")
+    else:
+        IfBaseName.append("mby_"+module_name+"_memory_if.mem      "+module_name+"_mem_if,\n")
 
-                WrapperText1r1w= [
-                "1'b0                                         >> "+names[ii].upper()+tempvar+"_CFG_reg_sel\n",
-                "1'b0                                         >> "+names[ii].upper()+tempvar+"_STATUS_reg_sel\n",
-                names[ii]+"_if.rd_adr   "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_adr\n",
-                names[ii]+"_if.wr_adr   "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_adr\n",
-                names[ii]+"_if.rd_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_en\n",
-                names[ii]+"_if.wr_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_data\n",
-                names[ii]+"_if.wr_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_en\n",
-                bweText, 
-                names[ii]+"_if.rd_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_data\n",
-                names[ii]+"_if.rd_valid "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_valid\n",
-                "                                             >> "+names[ii]+tempvar+"_ecc_uncor_err\n",
-                "                                             >> "+names[ii]+tempvar+"_init_done\n",
-                "1'b0                                         >> "+names[ii]+tempvar+"_mem_ls_enter\n",
-                "\n"
-                ]
-                
-                WrapperText1rw= [
-                "1'b0                                         >> "+names[ii].upper()+tempvar+"_CFG_reg_sel\n",
-                "1'b0                                         >> "+names[ii].upper()+tempvar+"_STATUS_reg_sel\n",
-                names[ii]+"_if.adr      "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_adr\n",
-                names[ii]+"_if.rd_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_en\n",
-                names[ii]+"_if.wr_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_data\n",
-                names[ii]+"_if.wr_en    "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_wr_en\n",
-                bweText, 
-                names[ii]+"_if.rd_data  "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_data\n",
-                names[ii]+"_if.rd_valid "+"["+str(tt)+"]      >> "+names[ii]+tempvar+"_rd_valid\n",
-                "                                             >> "+names[ii]+tempvar+"_ecc_uncor_err\n",
-                "                                             >> "+names[ii]+tempvar+"_init_done\n",
-                "1'b0                                         >> "+names[ii]+tempvar+"_mem_ls_enter\n",
-                "\n"
-                ]
-
-                if (Ports[ii]=="1r1w"):
-                    tempText = WrapperText1r1w
-                elif(Ports[ii]=="1rw"):
-                    tempText = WrapperText1rw
-                else:
-                    tempText =""
-                    print("Review logical file on RAM port")
-                wrapperfile.writelines(tempText)
-                tempText=""
-        EndingText =[  
-        "1'b0 >> "+module_name.upper()+"_ECC_COR_ERR_reg_sel\n",
-        "1'b0 >> "+module_name.upper()+"_ECC_UNCOR_ERR_reg_sel\n",
-        "\n",
-        "1'b1 >> unified_regs_rd\n",
-        "'h0  >> unified_regs_wr_data\n",
-        "     >> "+module_name+"_ecc_int\n",
-        "     >> "+module_name+"_init_done\n",
-        "     >> unified_regs_ack\n",
-        "     >> unified_regs_rd_data\n",
-        "\n",
-        "mclk    >> clk\n",
-        "reset_n >> reset_n\n"
-        ]
-        wrapperfile.writelines(EndingText)
-
-
-def createIFBase_f(names,Ports):
-    L= len(names)
-    for ii in range(L):
-        IfBaseName.append("mby_mem_"+Ports[ii]+"_if.mem       "+names[ii]+"_if,\n")
-          
 def createBasefile(basefile_name,module_name):
     with io.open(basefile_name,"w") as basefile:
         textfile0 = [
@@ -304,14 +462,15 @@ for filename in os.listdir(memoPath):
 TextList=parsingImplemReport(module_name,reportPath,ffPath,rfPath,srPath)
 st = os.stat(prePPath)
 os.chmod(prePPath, st.st_mode | stat.S_IEXEC)
-createIFBase_f(names,Ports)
-createSigFile(names)
-create_blockShellsWrapper(wrapPath,names, Ports, Insta,WrRes)
+num=1
+createIFBase_f(num,names,Ports)
+createSigFile(num,names)
+create_MapFileForShellsWrapper(num, wrapPath,names, Ports, Insta,WrRes)
 createMakefile(makePath, module_name,TextList)
 time.sleep(0.1)
 createBasefile(basePath, module_name) 
 print("## Creating file:"+inclPath+" that could be included for memory interface instances\n")
-create_if_include(names, Ports, Insta, Lines,DataW)
+create_if_include(num, names, Ports, Insta, Lines,DataW)
 os.chdir(ngenPath)
 print("## Running Make in ngen directory ##\n")
 os.system("make")
