@@ -58,6 +58,10 @@ class mby_mesh_env_base_seq extends shdv_base_sequence;
     // Variable: vif
     // Handle to Mesh Tb interface.
     virtual mby_mesh_tb_if                 vif;
+   
+    // Variable: ral
+    // Handle to Mesh RAL.
+    mby_mesh_reg_pkg::mby_mesh_reg_blk     ral;
 
     // ------------------------------------------------------------------------
     //  Constructor: new
@@ -80,6 +84,7 @@ class mby_mesh_env_base_seq extends shdv_base_sequence;
 
         this.env    = temp_env;
         vif         = temp_env.get_tb_vif();
+        ral         = temp_env.get_tb_ral();
     endfunction : set_env
  
 endclass : mby_mesh_env_base_seq
