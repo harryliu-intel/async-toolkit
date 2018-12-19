@@ -53,6 +53,10 @@ class mby_mesh_env extends shdv_base_env;
    mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm;
    mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm;
    mby_mgp_bfm_pkg::mby_mgp_bfm                            sb_mgp_bfm;
+   
+   // Variable:  tb_ral
+   // Handle to mesh RAL.
+   mby_mesh_reg_pkg::mby_mesh_reg_blk                      tb_ral;
 
    `uvm_component_utils_begin(mby_mesh_env)
    `uvm_component_utils_end
@@ -108,6 +112,7 @@ class mby_mesh_env extends shdv_base_env;
       end
 
       build_mgp_bfm();
+      build_ral();
    endfunction: build_phase
 
    //---------------------------------------------------------------------------
@@ -130,6 +135,27 @@ class mby_mesh_env extends shdv_base_env;
       sb_mgp_bfm.slv_agent_cfg = tb_cfg.env_cfg.slv_agent_cfg;
    endfunction: build_mgp_bfm
    
+   //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds Mesh register model.
+   //
+   //---------------------------------------------------------------------------
+   virtual function void build_ral();
+
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+         tb_ral = mby_mesh_reg_pkg::mby_mesh_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         //TODO: Update the base addr.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
+         tb_ral.lock_model();
+         tb_ral.set_hdl_path_root("mby_mesh_tb_top.msh_node_top");
+
+       // Build the Adapter's based on agt's active        
+      end
+      
+   endfunction: build_ral
+      
    //---------------------------------------------------------------------------
    //  Function: connect_phase
    //  Connects different BFM interfaces and Scoreboard
@@ -176,6 +202,22 @@ class mby_mesh_env extends shdv_base_env;
    function mby_mesh_tb_top_cfg get_tb_cfg();
       return tb_cfg;
    endfunction : get_tb_cfg
+   
+   //---------------------------------------------------------------------------
+   // Function: get_tb_ral()
+   // Returns object handle to mesh ral (mby_mesh_reg_blk)
+   //---------------------------------------------------------------------------
+   function mby_mesh_reg_pkg::mby_mesh_reg_blk get_tb_ral();
+      return tb_ral;
+   endfunction : get_tb_ral
+   
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to mesh ral (mby_mesh_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+   function set_tb_ral(mby_mesh_reg_pkg::mby_mesh_reg_blk ral);
+      tb_ral = ral;
+   endfunction : set_tb_ral
 
 endclass
 

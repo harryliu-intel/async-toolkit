@@ -49,6 +49,11 @@ class mby_rx_ppe_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to rx_ppe Testbench.
    virtual   mby_rx_ppe_tb_if                                  tb_vif;
+   
+   // Variable:  tb_ral
+   // Handle to mesh RAL.
+   //TODO: Uncomment this once RAL is built.
+   //mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk                      tb_ral;
 
    // Variable:  eth_bfms
    // MAC Client BFM agent
@@ -123,6 +128,8 @@ class mby_rx_ppe_env extends shdv_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's cdi_rx_vintf was not successful!")
       end
 
+//TODO: Uncomment this after RDL is updated.
+//    build_ral();
       build_eth_bfm();
 
    endfunction: build_phase
@@ -145,8 +152,29 @@ class mby_rx_ppe_env extends shdv_base_env;
       eth_bfm.cfg.sop_alignment = 8;
 
    endfunction : build_eth_bfm
- 
+
    //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds Rx_PPE register model.
+   //
+   //---------------------------------------------------------------------------
+/*   virtual function void build_ral();
+
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+         tb_ral = mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         //TODO: Update register map base address.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h4000);
+         tb_ral.lock_model();
+
+        // Build the Adapter's based on agt's active
+        
+      end
+      
+   endfunction: build_ral
+*/   
+  //---------------------------------------------------------------------------
    //  Function: connect_phase
    //  Connects different BFM interfaces and Scoreboard
    //  Arguments:
@@ -198,6 +226,23 @@ class mby_rx_ppe_env extends shdv_base_env;
    function mby_rx_ppe_tb_top_cfg get_tb_cfg();
       return tb_cfg;
    endfunction : get_tb_cfg
+
+   //---------------------------------------------------------------------------
+   // Function: get_tb_ral()
+   // Returns object handle to rx_ppe RAL  (mby_rx_ppe_reg_blk)
+   //---------------------------------------------------------------------------
+//   function mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk get_tb_ral();
+//      return tb_ral;
+//   endfunction : get_tb_ral
+
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to rx_ppe ral (mby_rx_ppe_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+//   function set_tb_ral(mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk ral);
+//      tb_ral = ral;
+//   endfunction : set_tb_ral
+
 
 endclass
 
