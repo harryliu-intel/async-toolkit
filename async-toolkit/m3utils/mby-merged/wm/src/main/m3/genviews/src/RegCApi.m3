@@ -4,7 +4,6 @@ IMPORT RegReg, RegGenState, RegRegfile, RegAddrmap;
 IMPORT OSError, Thread, Wr;
 IMPORT Pathname, RegCGenState;
 IMPORT Wx;
-IMPORT BigInt;
 FROM Compiler IMPORT ThisFile, ThisLine;
 IMPORT Fmt;
 FROM Fmt IMPORT Int, F;
@@ -21,9 +20,7 @@ FROM GenCUtils IMPORT FmtConstant, PutXDecls, FmtArrSz, Variant, FieldType,
 
 TYPE CGPhase = RegCGenState.Phase;
 
-<*FATAL BigInt.OutOfRange*>
-
-VAR doDebug := Debug.DebugThis("REGC");
+VAR doDebug := Debug.DebugThis("REGCAPI");
 
 REVEAL
   T = GenViewsCApi.Compiler BRANDED Brand OBJECT
@@ -88,72 +85,12 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
       END
     END;
 
-    WITH fn = intfNm & "_main.h",
-         path = dirPath & "/" & fn,
-         wr = FileWr.Open(path) DO
-      Wr.PutText(wr, F("#ifndef %s_main_INCLUDED\n#define %s_main_INCLUDED\n\n",
-                       intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid\n%s_Setup(const %s *r, const %s__addr *w);\n", intfNm, intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid\n%s_SendPacket(const %s *r, const %s__addr *w, int port, unsigned char *packet, unsigned int length);\n", intfNm, intfNm, intfNm));
-      Wr.PutText(wr, F("\nvoid %s_build(void (*f)(void *, int)); /* called from Modula-3 */\n", intfNm));
-      Wr.PutText(wr, F("#endif /* !%s_main_INCLUDED */\n", intfNm));
-      Wr.Close(wr)
-    END;
-
-    WITH fn = intfNm & "_c.i3",
-         path = dirPath & "/" & fn,
-         wr = FileWr.Open(path) DO
-      Wr.PutText(wr, F("INTERFACE %s_c;\n\n", intfNm));
-      Wr.PutText(wr, F("IMPORT Ctypes;\n"));
-      Wr.PutText(wr, F("TYPE CallBackProc = PROCEDURE(addr : ADDRESS; wid : INTEGER);\n\n"));
-      Wr.PutText(wr, F("<*EXTERNAL %s_build*>\n", intfNm));
-      Wr.PutText(wr, F("PROCEDURE BuildMain(cb : CallBackProc; rp : ADDRESS; wp : ADDRESS);\n\n"));
-      Wr.PutText(wr, F("<*EXTERNAL %s_Setup*>\n", intfNm));
-      Wr.PutText(wr, F("PROCEDURE Setup(r, w : Ctypes.void_star);\n\n"));
-      Wr.PutText(wr, F("<*EXTERNAL %s_SendPacket*>\n", intfNm));
-      Wr.PutText(wr, F("PROCEDURE SendPacket(r, w : Ctypes.void_star; port : Ctypes.int; packet : Ctypes.char_star; length : Ctypes.unsigned_int);\n\n"));
-      Wr.PutText(wr, F("END %s_c.\n", intfNm));
-      Wr.Close(wr)
-    END;
-
-    WITH fn = intfNm & "_build.c",
-         path = dirPath & "/" & fn,
-         wr = FileWr.Open(path) DO
-      Wr.PutText(wr, F("#include \"%s.h\"\n", intfNm));
-      Wr.PutText(wr, F("#include <stdlib.h>\n\n"));     
-      Wr.PutText(wr, F("void\n"));
-      Wr.PutText(wr, F("%s_build(void (*f)(void *, int), void **rp, void **wp)\n", intfNm));
-      Wr.PutText(wr, F("{\n"));
-      Wr.PutText(wr, F("  %s       *r;\n", intfNm));
-      Wr.PutText(wr, F("  %s__addr *w;\n\n", intfNm));
-      Wr.PutText(wr, F("  r = (%s       *)malloc(sizeof(%s      ));\n", intfNm, intfNm));
-      Wr.PutText(wr, F("  w = (%s__addr *)malloc(sizeof(%s__addr));\n\n", intfNm, intfNm));
-      Wr.PutText(wr, F("  *rp = r;\n"));
-      Wr.PutText(wr, F("  *wp = w;\n"));
-      Wr.PutText(wr, F("  %s__init(r, w, f);\n", intfNm));
-      Wr.PutText(wr, F("}\n"));
-      Wr.Close(wr)
-    END;
-    
-    WITH fn = "m3makefile",
-         path = dirPath & "/" & fn,
-         wr = FileWr.Open(path) DO
-      Wr.PutText(wr, F("SYSTEM_CC = SYSTEM_CC & \" -I../../../../../../c -std=gnu99\"\n"));
-      Wr.PutText(wr, F("import(\"libm3\")\n"));
-      Wr.PutText(wr, F("c_source(\"%s\")\n",intfNm));
-      Wr.PutText(wr, F("c_source(\"%s_build\")\n",intfNm));
-      Wr.PutText(wr, F("Interface(\"%s_c\")\n", intfNm));
-      Wr.PutText(wr, F("library(\"%s_cmodel\")\n",intfNm));
-      Wr.Close(wr)
-    END;
-    
   END Write;
 
   (**********************************************************************)
 
 CONST
-  Phases = ARRAY OF Variant { Variant { FieldType.UInt,       "" },
-                              Variant { FieldType.Pointer, "__addr" } };
+  Phases = ARRAY OF Variant { Variant { FieldType.UInt,       "" } };
 
 PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
@@ -182,6 +119,7 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
             END
           END
         END;
+        gs.main("  uint8 __sync;\n");
         gs.main("} %s%s;\n\n", myTn, v.sfx)
       END
     END;
@@ -237,7 +175,10 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
             gs.noteDep(tn);
           END
         END;
-        IF NOT skipArc THEN gs.main("} %s%s;\n\n", myTn, v.sfx) END;
+        IF NOT skipArc THEN
+          gs.main("  uint8 __sync;");
+          gs.main("} %s%s;\n\n", myTn, v.sfx)
+        END;
       END
     END;
     GenProto(rf, gs);
@@ -257,21 +198,23 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
 
 PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
   RAISES { } =
+  CONST
+    const = ""; (* or "const" *)
   VAR
     gs : RegCGenState.T := genState;
     myTn := r.typeName(gs);
   BEGIN
-    gs.main("\nvoid\n%s__init(\n", myTn);
+    gs.main("\n %s void *\n%s__getptr(\n", const, myTn);
     FOR p := FIRST(Phases) TO LAST(Phases) DO
-      gs.main("  %s%s *p%s,\n", myTn, Phases[p].sfx, Int(ORD(p)));
+      gs.main("  %s %s%s *p%s,\n", const, myTn, Phases[p].sfx, Int(ORD(p)));
     END;
-    gs.main("  void (*f)(void *, int)\n");
+    gs.main("  const int *rp\n");
     gs.main(")");
   END GenProto;
 
   (**********************************************************************)
 
-PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
+PROCEDURE GenRegGetptr(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   VAR
     gs : RegCGenState.T := genState;
@@ -283,18 +226,19 @@ PROCEDURE GenRegInit(r : RegReg.T; genState : RegGenState.T)
 
     GenProto(r, genState);
     gs.main("{\n");
+    gs.main("  switch(0) {");
     
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f  = r.fields.get(i),
            nm = f.name(debug := FALSE) DO
-        gs.main("  p1->%s = &(p0->%s);\n", nm, nm);
-        gs.main("  f(&(p0->%s),%s); /* @%s */\n",nm, Int(f.width), Int(f.lsb))
+        gs.main("    case %s: return &(p0->%s); break;", Int(i), nm);
       END
     END;
+    gs.main("  }");
     gs.main("}\n\n")
-  END GenRegInit;
+  END GenRegGetptr;
 
-PROCEDURE GenContainerInit(rf       : RegContainer.T;
+PROCEDURE GenContainerGetptr(rf       : RegContainer.T;
                            genState : RegGenState.T) 
   RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
   VAR
@@ -306,19 +250,20 @@ PROCEDURE GenContainerInit(rf       : RegContainer.T;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
     GenProto(rf, gs);
     gs.main("{\n");
+    gs.main("  if (*rp==-1) return p0;\n");
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp, gs),
            nm = IdiomName(c.nm,FALSE) DO
         IF skipArc THEN
           <*ASSERT i=0*>
-          gs.main("  for (int i=0; i<%s; ++i)\n", Int(ArrSz(c.array)));
-          gs.main("    %s__init(&((*p0)[i]),&((*p1)[i]),f);\n", tn)
+          gs.main("  return %s__getptr(&((*p0)[*rp]),rp+1);\n", tn)
         ELSIF c.array = NIL THEN
-          gs.main("  %s__init(&(p0->%s),&(p1->%s),f);\n", tn, nm, nm)
+          gs.main("  if (*rp==%s) return %s__getptr(&(p0->%s),rp+1);\n",
+                  Int(i), tn, nm)
         ELSE
-          gs.main("  for (int i=0; i<%s; ++i)\n", Int(ArrSz(c.array)));
-          gs.main("    %s__init(&(p0->%s[i]),&(p1->%s[i]),f);\n", tn, nm, nm)
+          gs.main("  if (*rp==%s) return %s__getptr(&(p0->%s[*rp]),rp+1);\n",
+                  Int(i), tn, nm)
         END
       END
     END;
@@ -329,7 +274,7 @@ PROCEDURE GenContainerInit(rf       : RegContainer.T;
         c.comp.generate(gs)
       END
     END;
-  END GenContainerInit;
+  END GenContainerGetptr;
 
   (**********************************************************************)
 
@@ -339,7 +284,7 @@ PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
     CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenRegStruct(r, genState)
     |
-      1 =>  GenRegInit(r, genState)
+      1 =>  GenRegGetptr(r, genState)
     END
   END GenReg;
 
@@ -349,7 +294,7 @@ PROCEDURE GenAddrmap(r : RegAddrmap.T; genState : RegGenState.T)
     CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenContainerStruct(r, genState)
     |
-      1 =>  GenContainerInit(r, genState)
+      1 =>  GenContainerGetptr(r, genState)
     END
   END GenAddrmap;
 
@@ -359,7 +304,7 @@ PROCEDURE GenRegfile(r : RegRegfile.T; genState : RegGenState.T)
     CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenContainerStruct(r, genState)
     |
-      1 =>  GenContainerInit(r, genState)
+      1 =>  GenContainerGetptr(r, genState)
     END
   END GenRegfile;
 

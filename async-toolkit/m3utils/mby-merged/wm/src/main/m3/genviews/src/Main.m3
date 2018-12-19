@@ -15,7 +15,7 @@ IMPORT Rd, FileRd;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala|c|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c[-api]|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
