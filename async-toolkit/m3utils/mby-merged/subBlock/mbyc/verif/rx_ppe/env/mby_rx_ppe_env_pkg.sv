@@ -49,8 +49,8 @@ package mby_rx_ppe_env_pkg;
 
    `define __INSIDE_MBY_RX_PPE_ENV_PKG
 
-   `include "mby_rx_ppe_types.svh"
    `include "mby_rx_ppe_defines.svh"
+   `include "mby_rx_ppe_types.svh"
    `include "mby_rx_ppe_env_cfg.svh"
    
    `include "mby_rx_ppe_parser_cfg.svh"
@@ -67,6 +67,9 @@ package mby_rx_ppe_env_pkg;
    
    `include "mby_rx_ppe_tb_top_cfg.svh"
 //PJP   `include "mby_rx_ppe_ral_env.svh"
+   //FIXME: There should be one object file per object.  This is a stand-in until the objects are scoped
+   `include "mby_rx_ppe_objects.svh"
+   `include "mby_rx_ppe_sb.svh"
    `include "mby_rx_ppe_env.svh"
 
 
