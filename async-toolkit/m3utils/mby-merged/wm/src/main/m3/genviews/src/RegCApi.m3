@@ -59,7 +59,6 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
           *)
           Wr.PutText(wr, "#include <assert.h>\n");
           Wr.PutText(wr, "#include \"uint.h\"\n");
-          Wr.PutText(wr, "typedef uint32 field_id;\n");
           FOR i := 0 TO seq.size()-1 DO
             Debug.Out(F("Emit wx[%s]",seq.get(i)));
             VAR
@@ -126,6 +125,8 @@ PROCEDURE GenRegStruct(r : RegReg.T; genState : RegGenState.T)
     END;
     GenProto(r, gs);
     gs.main(";\n\n");
+    GenSyncProto(r, gs);
+    gs.main(";\n\n");
 
     PutXDecls(gs, xDecls)
   END GenRegStruct;
@@ -184,6 +185,8 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
     END;
     GenProto(rf, gs);
     gs.main(";\n\n");
+    GenSyncProto(rf, gs);
+    gs.main(";\n\n");
 
     PutXDecls(gs, xDecls);
     
@@ -227,7 +230,10 @@ PROCEDURE GenRegGetptr(r : RegReg.T; genState : RegGenState.T)
 
     GenProto(r, genState);
     gs.main("{\n");
-    gs.main("  switch(0) {\n");
+    gs.main("  switch(*rp) {\n");
+    gs.main("    case -1:\n");
+    gs.main("      return p0;\n");
+    gs.main("      break;\n");
     
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f  = r.fields.get(i),
@@ -297,13 +303,110 @@ PROCEDURE GenContainerGetptr(rf       : RegContainer.T;
 
   (**********************************************************************)
 
+PROCEDURE GenSyncProto(  r : RegComponent.T; genState : RegGenState.T)
+  RAISES { } =
+  VAR
+    gs : RegCGenState.T := genState;
+    myTn := r.typeName(gs);
+  BEGIN
+    gs.main("\nconst uint8 *\n%s__sync(\n", myTn);
+    FOR p := FIRST(Phases) TO LAST(Phases) DO
+      gs.main("  const %s%s *p%s,\n", myTn, Phases[p].sfx, Int(ORD(p)));
+    END;
+    gs.main("  const int *rp\n");
+    gs.main(")");
+  END GenSyncProto;
+
+  (**********************************************************************)
+
+PROCEDURE GenRegSync(r : RegReg.T; genState : RegGenState.T)
+  RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
+  VAR
+    gs : RegCGenState.T := genState;
+    myTn := r.typeName(gs) & "__sync";
+
+  BEGIN
+    IF NOT gs.newSymbol(myTn) THEN RETURN END;
+    gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
+
+    GenSyncProto(r, genState);
+    gs.main("{\n");
+    gs.main("  switch(*rp) {\n");
+    gs.main("    case -1:\n");
+    gs.main("      return &(p0->__sync);\n");
+    gs.main("      break;\n");
+    gs.main("    default:\n");
+    gs.main("      assert(0);\n");
+    gs.main("  }\n");
+    gs.main("}\n\n")
+  END GenRegSync;
+
+PROCEDURE GenContainerSync(rf       : RegContainer.T;
+                           genState : RegGenState.T) 
+  RAISES { Wr.Failure, Thread.Alerted, OSError.E } =
+  VAR
+    gs : RegCGenState.T := genState;
+    myTn := rf.typeName(gs) & "__sync";
+    skipArc := rf.skipArc();
+  BEGIN
+    IF NOT gs.newSymbol(myTn) THEN RETURN END;
+    gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
+    GenSyncProto(rf, gs);
+    gs.main("{\n");
+    gs.main("  switch(*rp){\n");
+    gs.main("    case -1:\n");
+    IF skipArc THEN
+      gs.main("      assert(0); /* p0 is an array */\n")
+    ELSE
+      gs.main("      return &(p0->__sync); /* p0 is not an array */\n")
+    END;
+    gs.main("      break;\n");
+    FOR i := 0 TO rf.children.size()-1 DO
+      WITH c  = rf.children.get(i),
+           tn = ComponentTypeName(c.comp, gs),
+           nm = IdiomName(c.nm,FALSE) DO
+        IF skipArc THEN
+          <*ASSERT i=0*>
+          gs.main("    default:\n");
+          gs.main("      assert(0 <= *rp && *rp < %s);\n", Int(ArrSz(c.array)));
+          gs.main("      %s__sync(&((*p0)[*rp]),rp+1);\n", tn);
+        ELSIF c.array = NIL THEN
+          gs.main("    case %s:\n",Int(i));
+          gs.main("      return %s__sync(&(p0->%s),rp+1);\n", tn, nm)
+        ELSE
+          gs.main("    case %s:\n", Int(i));
+          gs.main("      assert(*rp<%s);\n", Int(ArrSz(c.array)));
+          gs.main("      return %s__sync(&(p0->%s[*rp]),rp+1);\n",
+                  tn, nm);
+        END;
+        gs.main("      break;\n");
+      END
+    END;
+    IF NOT skipArc THEN
+      gs.main("    default:\n");
+      gs.main("      assert(0);\n");
+      gs.main("      break;\n");
+    END;
+    gs.main("  }\n");
+    gs.main("}\n\n");
+    FOR i := 0 TO rf.children.size()-1 DO
+      WITH c = rf.children.get(i) DO
+        <*ASSERT c.comp # NIL*>
+        c.comp.generate(gs)
+      END
+    END;
+  END GenContainerSync;
+
+  (**********************************************************************)
+
 PROCEDURE GenReg(r : RegReg.T; genState : RegGenState.T)
   RAISES { OSError.E, Thread.Alerted, Wr.Failure } =
   BEGIN
     CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenRegStruct(r, genState)
     |
-      1 =>  GenRegGetptr(r, genState)
+      1 =>  GenRegGetptr(r, genState);
+            GenRegSync(r, genState)
     END
   END GenReg;
 
@@ -313,7 +416,8 @@ PROCEDURE GenAddrmap(r : RegAddrmap.T; genState : RegGenState.T)
     CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenContainerStruct(r, genState)
     |
-      1 =>  GenContainerGetptr(r, genState)
+      1 =>  GenContainerGetptr(r, genState);
+            GenContainerSync(r, genState)
     END
   END GenAddrmap;
 
@@ -323,7 +427,8 @@ PROCEDURE GenRegfile(r : RegRegfile.T; genState : RegGenState.T)
     CASE NARROW(genState, RegCGenState.T).phase OF
       0 =>  GenContainerStruct(r, genState)
     |
-      1 =>  GenContainerGetptr(r, genState)
+      1 =>  GenContainerGetptr(r, genState);
+            GenContainerSync(r, genState)
     END
   END GenRegfile;
 
