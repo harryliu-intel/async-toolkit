@@ -1,7 +1,6 @@
-INTERFACE RegC;
+INTERFACE RegCApi;
 IMPORT RegCompiler;
 IMPORT GenViews;
-IMPORT RegComponent, RegGenState;
 IMPORT GenCUtils;
 
 CONST Brand = "RegC";
@@ -14,7 +13,7 @@ TYPE Phase = { P };
 
 CONST
   PhaseNames = ARRAY Phase OF TEXT { "Gen" };
-
-CONST ComponentTypeName = GenCUtils.ComponentTypeName;
   
-END RegC.
+CONST ComponentTypeName = GenCUtils.ComponentTypeName;
+
+END RegCApi.
