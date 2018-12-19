@@ -29,9 +29,12 @@ package mby_igr_env_pkg;
    import mby_wm_dpi_pkg::*;
 //PJP   import mby_common_pkg::*; 
    import mby_ec_bfm_pkg::*;
-
+   import mby_tag_bfm_pkg::*;
+    
+    
    `include "uvm_macros.svh"
 
+//   `include "mby_tag_bfm.svh"
    `include "mby_igr_types.svh"
    `include "mby_igr_ti_cfg.svh"
    `include "mby_igr_dut_cfg.svh"
@@ -41,6 +44,7 @@ package mby_igr_env_pkg;
    `include "mby_igr_env_monitor.svh"
    `include "mby_igr_env.svh"
    `include "mby_igr_seqlib.sv"
+   
 
 endpackage // igr_env_pkg
 

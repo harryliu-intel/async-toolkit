@@ -9,6 +9,9 @@ M3_DIR  = ../m3
 MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
 SRV_DIR = ${M3_DIR}/model_server/src
 
+# set default value of DEBUG to 1
+include ../../make/Make_c.defs
+
 # Tool versions:
 include ${C_DIR}/ToolVersions.mk
 

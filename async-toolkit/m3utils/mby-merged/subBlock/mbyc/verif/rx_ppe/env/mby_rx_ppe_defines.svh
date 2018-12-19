@@ -23,7 +23,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Nathan Mai
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 

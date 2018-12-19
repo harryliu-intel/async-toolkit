@@ -15,6 +15,7 @@ $hdl_spec = {
        "src/shared/interfaces/egr_tx_ppe_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/igr/rtl/mby_igr_pkg.sv",
+       "src/rngstp/rtl/mby_gpolring_stop.sv",
        "src/rngstp/rtl/mby_dqring_stop.sv",
        "src/rngstp/rtl/mby_mctagring_stop.sv",
        "src/rngstp/rtl/mby_mrpodring_stop.sv",

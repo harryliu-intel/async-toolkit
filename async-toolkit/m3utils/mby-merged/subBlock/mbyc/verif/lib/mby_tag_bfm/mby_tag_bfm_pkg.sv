@@ -47,7 +47,7 @@ package mby_tag_bfm_pkg;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
    import mby_gmm_pkg::*; // TODO: getting the data type definitions from here
-                          //       need to change to a common pkg, once that's
+   import shared_pkg::*;  //       need to change to a common pkg, once that's
                           //       available (if that ends up being the case).
    `include "uvm_macros.svh"
    `include "mby_tag_bfm_defines.svh"

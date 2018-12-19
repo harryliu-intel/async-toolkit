@@ -17,7 +17,7 @@ VCS_FLAGS += -assert svaext+dve+disable_cover+enable_diag+filter_past
 
 #upgrade warning to error on no module instance, FEBE errors out if NMIN
 VCS_FLAGS += -error=NMIN:1
-
+VCS_FLAGS += +vcs+loopdetect            # Illegal assignment to enum variable
 VCS_FLAGS += -error=ENUMASSIGN          # Illegal assignment to enum variable
 VCS_FLAGS += -error=ICTA-SI             # Incompatible complex type
 VCS_FLAGS += -error=SV-SELS             # Smaller enum label size

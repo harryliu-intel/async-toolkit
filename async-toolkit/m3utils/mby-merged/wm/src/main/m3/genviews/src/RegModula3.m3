@@ -511,7 +511,9 @@ PROCEDURE GenChildInit(e          : RegChild.T;
           END
         ELSE
           (* fullalign given, stride not given, mod not given, at not given *)
-          (* make a throwaway "first" and "second", measure distance between,
+          (* make a throwaway "first" and "second", 
+             measure distance between,
+             multiply by size,
              then align at to that and proceed *)
           gs.mdecl("      VAR first, second : CompRange.T; BEGIN\n");
           
@@ -522,7 +524,8 @@ PROCEDURE GenChildInit(e          : RegChild.T;
                                  ComponentInitName(e.comp,gs),
                                  childArc);
           gs.mdecl("        <*ASSERT first # second*>\n");
-          gs.mdecl("        WITH len = CompAddr.DeltaBytes(CompRange.Lim(second),CompRange.Lim(first)) DO\n");
+          gs.mdecl("        WITH len = %s*\n", BigInt.Format(e.array.n.x));
+          gs.mdecl("                   CompAddr.DeltaBytes(CompRange.Lim(second),CompRange.Lim(first)) DO\n");
           gs.mdecl("          at := CompAddr.ModAlign(at, CompAddr.NextPower(len));\n");
           gs.mdecl("          q := at\n");
           gs.mdecl("        END\n");

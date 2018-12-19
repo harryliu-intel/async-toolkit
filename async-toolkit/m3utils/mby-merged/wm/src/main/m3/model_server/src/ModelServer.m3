@@ -371,8 +371,12 @@ PROCEDURE HandlePacket(<*UNUSED*>m  : MsgHandler;
   VAR
     sbData : FmModelSideBandData.T;
   BEGIN
-    Debug.Out("HandlePacket hdr=" & FmModelMessageHdr.Format(hdr));
+    Debug.Out(F("HandlePacket inst.sp.size()=%s hdr=%s",
+                Fmt.Int(inst.sp.size()), FmModelMessageHdr.Format(hdr)));
     <*ASSERT hdr.type = FmModelMsgType.T.Packet*>
+
+    EVAL inst.sp.init(); (* clear out any crud from here *)
+    
     FOR i := 0 TO cx.rem-1 DO
       inst.sp.addhi(RdNet.GetU8C(inst.rd, cx));
     END;

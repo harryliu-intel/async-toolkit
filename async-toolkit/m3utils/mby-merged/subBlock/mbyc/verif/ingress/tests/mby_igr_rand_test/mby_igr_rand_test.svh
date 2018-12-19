@@ -64,6 +64,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
       // raise objection by default
       this.set_automatic_phase_objection(1);
       `uvm_info(this.get_name(), ("mby_igr_eth_simple_seq::new"), UVM_LOW)
+      
    endfunction : new
 
    //---------------------------------------------------------------------------
@@ -72,10 +73,10 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
    virtual task body();
       int count[4] = {0,0,0,0};
       this.set_name("mby_igr_eth_simple_seq");
-
+      wait_n(15);
       `uvm_info("TST", ("Starting eth simple sequence..."), UVM_LOW)
       foreach(los_sequencers[i]) begin
-         assert($cast(los_sequencers[i], 
+         assert($cast(los_sequencers[i],
             shdv_base_pkg::shdv_base_tb_sequencer::pick_sequencer($sformatf("eth_bfm_%0d_rx0", i))))
          else begin
             `uvm_error(get_name(), $sformatf("Could not get a pointer to the sequencer%0d", i));
@@ -85,6 +86,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
          los_frames[i] = eth_frame::type_id::create($sformatf("los_frames_%0d", i));
          los_frames[i].set_item_context(this, los_sequencers[i]);
       end
+      `uvm_info("TST", ("Done getting sequencer pointers..."), UVM_LOW)
       foreach(los_frames[i]) begin
          automatic int auto_i = i;
          fork
@@ -116,6 +118,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
       end
 
       wait fork;
+      wait_n(20);
    endtask
 
 endclass : mby_igr_eth_simple_seq

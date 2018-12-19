@@ -24,7 +24,7 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-//   Author        : Akshay Kotian
+//   Author        : Nathan Mai
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
@@ -72,14 +72,15 @@ module mby_rx_ppe_tb_top ();
 
    mby_ec_cdi_tx_intf cdi_tx_intf (rx_ppe_tb_if.hard_reset, rx_ppe_tb_if.fab_clk);
    mby_ec_cdi_rx_intf cdi_rx_intf (rx_ppe_tb_if.hard_reset, rx_ppe_tb_if.fab_clk);
-   assign cdi_rx_intf.ecc             = cdi_tx_intf.ecc;
+   //assign cdi_rx_intf.ecc             = cdi_tx_intf.ecc;           // MJ: TODO: ecc was removed
    assign cdi_rx_intf.port_num        = cdi_tx_intf.port_num;
    assign cdi_rx_intf.data_valid      = cdi_tx_intf.data_valid;
    assign cdi_rx_intf.metadata        = cdi_tx_intf.metadata;
-   assign cdi_rx_intf.data_w_ecc      = cdi_tx_intf.data_w_ecc;
+   //assign cdi_rx_intf.data_w_ecc      = cdi_tx_intf.data_w_ecc;  // MJ: TODO: ecc was removed
+   assign cdi_rx_intf.data            = cdi_tx_intf.data;
    assign cdi_rx_intf.pfc_xoff        = cdi_tx_intf.pfc_xoff;
    //assign cdi_rx_intf.au_credits      = cdi_tx_intf.au_credits; // PJP: TODO: au_credits no longer exists in the rx_intf. Not sure what needs to be fixed, commenting out for now.
-   assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc;
+   //assign cdi_rx_intf.flow_control_tc = cdi_tx_intf.flow_control_tc; // MJ: TODO: flow_control_tc was removed.
    assign cdi_tx_intf.enable          = 1;
 
 
@@ -196,8 +197,8 @@ module mby_rx_ppe_tb_top ();
    ) rx_ppe_ti(
       .mby_rx_ppe_tb_if               (rx_ppe_tb_if),
       .shdv_intf                      (shdv_intf),
-      .cdi_tx_intf                    (cdi_tx_intf),
-      .cdi_rx_intf                    (cdi_rx_intf)
+      .eth_bfm_tx_vintf               (cdi_tx_intf),
+      .eth_bfm_rx_vintf               (cdi_rx_intf)
 
    );
 
