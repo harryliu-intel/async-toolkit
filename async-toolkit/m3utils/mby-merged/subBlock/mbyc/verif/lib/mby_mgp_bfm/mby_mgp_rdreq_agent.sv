@@ -47,18 +47,19 @@ function void mby_mgp_rdreq_agent::build_phase(uvm_phase phase);
    end
                            
 
-   if (req_agent_cfg.is_active == UVM_ACTIVE) begin
+   if (req_agent_cfg.driver_enable) begin
       rdreq_seqr = new("rdreq_seqr", this);
-   end
-   rdreq_drv              = mby_mgp_rdreq_drv::type_id::create("rdreq_drv", this);
-   rdreq_drv.req_agent_cfg = req_agent_cfg;
-   rdreq_drv.flow_ctrl    = flow_ctrl;
-   rdreq_drv.mem_crdt_io  = mem_crdt_io;
-
-   rdreq_mon              = mby_mgp_rdreq_mon::type_id::create("rdreq_mon", this);
-   rdreq_mon.req_agent_cfg = req_agent_cfg;
-   rdreq_mon.mem_crdt_io  = mem_crdt_io;
    
+      rdreq_drv              = mby_mgp_rdreq_drv::type_id::create("rdreq_drv", this);
+      rdreq_drv.req_agent_cfg = req_agent_cfg;
+      rdreq_drv.flow_ctrl    = flow_ctrl;
+      rdreq_drv.mem_crdt_io  = mem_crdt_io;
+   end
+   if (req_agent_cfg.monitor_enable) begin
+      rdreq_mon              = mby_mgp_rdreq_mon::type_id::create("rdreq_mon", this);
+      rdreq_mon.req_agent_cfg = req_agent_cfg;
+      rdreq_mon.mem_crdt_io  = mem_crdt_io;
+   end
 endfunction : build_phase
 
 //----------------------------------------------------------------------------------------
@@ -66,7 +67,7 @@ endfunction : build_phase
 //----------------------------------------------------------------------------------------
 function void mby_mgp_rdreq_agent::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
-   if (req_agent_cfg.is_active == UVM_ACTIVE) begin
+   if (req_agent_cfg.driver_enable) begin
       rdreq_drv.seq_item_port.connect(rdreq_seqr.seq_item_export);
    end
 endfunction : connect_phase
@@ -75,8 +76,12 @@ endfunction : connect_phase
 // Method: reset
 //----------------------------------------------------------------------------------------
 function void mby_mgp_rdreq_agent::reset();
-   rdreq_drv.reset();
-   rdreq_mon.reset();
+   if (req_agent_cfg.driver_enable) begin
+      rdreq_drv.reset();
+   end
+   if (req_agent_cfg.monitor_enable) begin
+      rdreq_mon.reset();
+   end
 endfunction : reset
 
 

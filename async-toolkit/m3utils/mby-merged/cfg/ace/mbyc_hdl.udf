@@ -191,13 +191,13 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_mesh_ti_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_ti.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib', 'mby_mgp_bfm_lib' ],
                -tag            => "nonsynth",
             },
 
             mby_mesh_tb_lib  => {
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
                -tag             => "nonsynth",
             },
 

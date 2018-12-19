@@ -46,18 +46,19 @@ function void mby_mgp_rdrsp_agent::build_phase(uvm_phase phase);
    end
                            
 
-   if (req_agent_cfg.is_active == UVM_ACTIVE) begin
+   if (req_agent_cfg.driver_enable) begin
       rdrsp_seqr = new("rdreq_seqr", this);
-   end
-   rdrsp_drv              = mby_mgp_rdrsp_drv::type_id::create("rdreq_drv", this);
-   rdrsp_drv.req_agent_cfg = req_agent_cfg;
-   rdrsp_drv.flow_ctrl    = flow_ctrl;
-   rdrsp_drv.mem_crdt_io  = mem_crdt_io;
-
-   rdrsp_mon              = mby_mgp_rdrsp_mon::type_id::create("rdreq_mon", this);
-   rdrsp_mon.req_agent_cfg = req_agent_cfg;
-   rdrsp_mon.mem_crdt_io  = mem_crdt_io;
    
+      rdrsp_drv              = mby_mgp_rdrsp_drv::type_id::create("rdreq_drv", this);
+      rdrsp_drv.req_agent_cfg = req_agent_cfg;
+      rdrsp_drv.flow_ctrl    = flow_ctrl;
+      rdrsp_drv.mem_crdt_io  = mem_crdt_io;
+   end
+   if (req_agent_cfg.monitor_enable) begin
+      rdrsp_mon              = mby_mgp_rdrsp_mon::type_id::create("rdreq_mon", this);
+      rdrsp_mon.req_agent_cfg = req_agent_cfg;
+      rdrsp_mon.mem_crdt_io  = mem_crdt_io;
+   end
 endfunction : build_phase
 
 //----------------------------------------------------------------------------------------
@@ -65,16 +66,21 @@ endfunction : build_phase
 //----------------------------------------------------------------------------------------
 function void mby_mgp_rdrsp_agent::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
-   if (req_agent_cfg.is_active == UVM_ACTIVE)
+   if (req_agent_cfg.driver_enable) begin
       rdrsp_drv.seq_item_port.connect(rdrsp_seqr.seq_item_export);
+   end
 endfunction : connect_phase
 
 //----------------------------------------------------------------------------------------
 // Method: reset
 //----------------------------------------------------------------------------------------
 function void mby_mgp_rdrsp_agent::reset();
-   rdrsp_drv.reset();
-   rdrsp_mon.reset();
+   if (req_agent_cfg.driver_enable) begin
+      rdrsp_drv.reset();
+   end
+   if (req_agent_cfg.monitor_enable) begin
+      rdrsp_mon.reset();
+   end
 endfunction : reset 
 
 
