@@ -144,44 +144,44 @@ class inp_driver;
             dut_if.i_nb_rd_rsp[0]   = '0;
             dut_if.i_nb_rd_data[0]  = '0;
 
-            dut_if.i_sb_wr_req[0]  = '0;
-            dut_if.i_sb_wr_data[0] = '0;
+            dut_if.i_sb_wr_req[0]   = '0;
+            dut_if.i_sb_wr_data[0]  = '0;
             dut_if.i_sb_rd_req[0]   = '0;
             dut_if.i_sb_rd_rsp[0]   = '0;
             dut_if.i_sb_rd_data[0]  = '0;
 
-            dut_if.i_eb_wr_req[0]  = drvr_wr_req_to_dut_p1;
-            dut_if.i_eb_wr_data[0] = drvr_wr_data_to_dut_p1;
-            dut_if.i_eb_rd_req[0]  = drvr_rd_req_to_dut_p1;
+            dut_if.i_eb_wr_req[0]   = drvr_wr_req_to_dut_p1;
+            dut_if.i_eb_wr_data[0]  = drvr_wr_data_to_dut_p1;
+            dut_if.i_eb_rd_req[0]   = drvr_rd_req_to_dut_p1;
             dut_if.i_eb_rd_rsp[0]   = '0;
             dut_if.i_eb_rd_data[0]  = '0;
 
-            dut_if.i_wb_wr_req[0]  = '0;
-            dut_if.i_wb_wr_data[0] = '0;
+            dut_if.i_wb_wr_req[0]   = '0;
+            dut_if.i_wb_wr_data[0]  = '0;
             dut_if.i_wb_rd_req[0]   = '0;
             dut_if.i_wb_rd_rsp[0]   = '0;
             dut_if.i_wb_rd_data[0]  = '0;
 
-            dut_if.i_nb_wr_req[1]  = '0;
-            dut_if.i_nb_wr_data[1] = '0;
+            dut_if.i_nb_wr_req[1]   = '0;
+            dut_if.i_nb_wr_data[1]  = '0;
             dut_if.i_nb_rd_req[1]   = '0;
             dut_if.i_nb_rd_rsp[1]   = '0;
             dut_if.i_nb_rd_data[1]  = '0;
 
-            dut_if.i_sb_wr_req[1]  = '0;
-            dut_if.i_sb_wr_data[1] = '0;
+            dut_if.i_sb_wr_req[1]   = '0;
+            dut_if.i_sb_wr_data[1]  = '0;
             dut_if.i_sb_rd_req[1]   = '0;
             dut_if.i_sb_rd_rsp[1]   = '0;
             dut_if.i_sb_rd_data[1]  = '0;
 
-            dut_if.i_eb_wr_req[1]  = '0;
-            dut_if.i_eb_wr_data[1] = '0;
+            dut_if.i_eb_wr_req[1]   = '0;
+            dut_if.i_eb_wr_data[1]  = '0;
             dut_if.i_eb_rd_req[1]   = '0;
             dut_if.i_eb_rd_rsp[1]   = '0;
             dut_if.i_eb_rd_data[1]  = '0;
 
-            dut_if.i_wb_wr_req[1]  = '0;
-            dut_if.i_wb_wr_data[1] = '0;
+            dut_if.i_wb_wr_req[1]   = '0;
+            dut_if.i_wb_wr_data[1]  = '0;
             dut_if.i_wb_rd_req[1]   = '0;
             dut_if.i_wb_rd_rsp[1]   = '0;
             dut_if.i_wb_rd_data[1]  = '0;

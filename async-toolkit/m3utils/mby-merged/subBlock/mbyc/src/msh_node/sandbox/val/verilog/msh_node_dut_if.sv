@@ -148,7 +148,7 @@ logic            o_eb_crdt_rtn_for_wb_rd_rsp   [NUM_MSH_PLANES-1:0];
 
 //mem if:
 
-mby_mem_msh_bank_ram_shell_4096x552_func_if msh_mem_bank_if[(NUM_MSH_NODE_MEM_BANKS - 1):0]();
+mby_mem_msh_bank_ram_shell_4096x532_func_if msh_mem_bank_if[(NUM_MSH_NODE_MEM_BANKS - 1):0]();
 
 
 endinterface // msh_node_dut_if

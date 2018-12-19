@@ -53,8 +53,8 @@
 // A module is a top-level-module if is defined but never instantiated
 
 module top 
-import msh_sim_pkg::*;
 import mby_msh_pkg::*;
+import msh_sim_pkg::*;
 ();
 
     logic clk = 0;                              // declare clock

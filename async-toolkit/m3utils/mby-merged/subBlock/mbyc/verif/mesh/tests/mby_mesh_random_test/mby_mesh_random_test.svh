@@ -154,18 +154,33 @@ class mby_mesh_random_seq extends mby_mesh_seq_lib::mby_mesh_env_base_seq;
     //------------------------------------------------------------------------------
     task body ();
         int count;
+        uvm_reg_data_t read_data;
+        uvm_status_e status;
+        uvm_path_e access_type = UVM_BACKDOOR;
+        uvm_reg_map mesh_reg_map = ral.mesh_reg_map;
 
         this.set_name("mby_mesh_random_seq");
  
         `uvm_info(get_name(), "mby_mesh_random_seq is running!", UVM_MEDIUM);
          #500;
+       
+       //AK: Comment out the RAL access until the RDL is ready for backdoor access.
+       // for( int idx=0; idx <8 ; idx++) begin
+       //    ral.mesh_row.MESH_ARB_WREQ_Y[idx].write(status, '1, access_type, mesh_reg_map );
+       // end       
 
         repeat(5000) begin
             @(posedge vif.fab_clk);
             count++;
             `uvm_info(get_name(), $sformatf("mby_mesh_random_seq: clock edge %0d",count), UVM_NONE);
         end
-
+        
+       //for( int idx=0; idx <8 ; idx++) begin
+       //   ral.mesh_row.MESH_ARB_WREQ_Y[0].read(status,read_data,access_type, mesh_reg_map);
+       //   `uvm_info(get_name(), $sformatf("mby_mesh_random_seq: read data: %0h",read_data), UVM_HIGH);
+       //end   
+        
+       
     endtask
 
 endclass : mby_mesh_random_seq

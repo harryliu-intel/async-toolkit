@@ -28,8 +28,8 @@
 
 package msh_sim_pkg;
 
-parameter NUM_MSH_ROWS = MAX_NUM_MSH_ROWS;
-parameter NUM_MSH_COLS = MAX_NUM_MSH_COLS;
+parameter NUM_MSH_ROWS = 16;
+parameter NUM_MSH_COLS = 8;
 
 //-----------------------------------------------------------------------------
 // simple typedefs
