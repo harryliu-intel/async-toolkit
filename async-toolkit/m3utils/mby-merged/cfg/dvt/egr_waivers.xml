@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE waivers PUBLIC "-//DVT//waivers" "waivers.dtd" >
+<waivers version="1">
+	<waiver name="dw1" severity="DISABLED">
+		<match path="/nfs/site/disks/ccdo.soc.cad_root.1/cad/x86-64_linux26/synopsys/designware/O-2018.06/vip/svt/ethernet_svt/O-2018.06/ethernet_monitor_svt/sverilog/src/vcs/svt_ethernet_monitor_common.svp" message="EXTEND_CLASS: Extending non existing class 'svt_bfm_shell_assistant'"/>
+	</waiver>
+	<waiver name="dw2" severity="DISABLED">
+		<match path="/p/hdk/rtl/cad/x86-64_linux30/synopsys/designware/O-2018.06/src/verilog/vcs/svt_ethernet_mac_chk_decode_logic.vih" message="SYSTEM_VERILOG_2012: Cannot open `include file &quot;svt_ethernet_mac_chk_global_var.vihp&quot;"/>
+	</waiver>
+	<waiver name="dw3" severity="DISABLED">
+		<match path="/p/hdk/rtl/cad/x86-64_linux30/synopsys/designware/O-2018.06/src/verilog/vcs/svt_ethernet_10g_multilane_xsbi_pcs_snd_sm.vih" message="UNDECLARED_IDENTIFIER: Identifier 'packet_id' is not a member of 'tx_encoder'"/>
+	</waiver>
+</waivers>

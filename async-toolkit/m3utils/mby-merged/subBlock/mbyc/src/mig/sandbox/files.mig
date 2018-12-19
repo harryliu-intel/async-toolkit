@@ -1,0 +1,3 @@
+// this file is used by msh sandbox build to specify files needed to build MIG
+$LOGICROOT/mig/rtl/mby_mig.sv
+

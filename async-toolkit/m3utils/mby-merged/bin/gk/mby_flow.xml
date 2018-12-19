@@ -16,13 +16,27 @@
       <DUT>mby</DUT>
       <Stage>vcs</Stage>
       <Stage_Exec>bman</Stage_Exec>
-      <AdditionalArgs>-s all +s collage +s vcs -mc fc,rx_ppe,mesh,igr +s sim_init +s vclp +s dvt -nodelete_flow_data</AdditionalArgs>
+      <AdditionalArgs>-s all +s collage +s vcs -mc fc,rx_ppe,mesh,igr,egr +s sim_init +s vclp +s dvt -nodelete_flow_data  -vlog_opts +define+INSTANTIATE_HIERDUMP</AdditionalArgs>
       <XdutStageDep>[mby].[genrtl]</XdutStageDep>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
       <Release>1</Release>
       <PostRelease>0</PostRelease>
       <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
+  </row>
+  <row>
+      <DUT>mby</DUT>
+      <Stage>flg_2stages_check</Stage>
+      <Stage_Exec>febe</Stage_Exec>
+      <AdditionalArgs>-s all +s tophiergen,v2k_prep,soc.flg_v2k</AdditionalArgs>                                                                                    
+      <XdutStageDep>[mby].[vcs]</XdutStageDep>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
       <Active>1</Active>
       <Singleton>0</Singleton>
       <Type>build</Type>
@@ -47,7 +61,7 @@
       <Stage>mesh_turnin_test</Stage>
       <Stage_Exec>subBlock/mbyc/verif/mesh/reglist/turnin.list</Stage_Exec>
       <AdditionalArgs>-disable_work_area_subdir -model mesh </AdditionalArgs>
-      <XdutStageDep>[mby].[vcs]</XdutStageDep>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
       <PassRate>100</PassRate>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
@@ -63,7 +77,7 @@
       <Stage>rx_ppe_turnin_test</Stage>
       <Stage_Exec>subBlock/mbyc/verif/rx_ppe/reglist/turnin.list</Stage_Exec>
       <AdditionalArgs>-disable_work_area_subdir -model rx_ppe </AdditionalArgs>
-      <XdutStageDep>[mby].[vcs]</XdutStageDep>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
       <PassRate>100</PassRate>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
@@ -79,7 +93,23 @@
       <Stage>ingress_turnin_test</Stage>
       <Stage_Exec>subBlock/mbyc/verif/ingress/reglist/level0.list</Stage_Exec>
       <AdditionalArgs>-disable_work_area_subdir -model igr </AdditionalArgs>
-      <XdutStageDep>[mby].[vcs]</XdutStageDep>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+   <row>
+      <DUT>mby</DUT>
+      <Stage>egress_turnin_test</Stage>
+      <Stage_Exec>subBlock/mbyc/verif/egress/reglist/level0.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model egr </AdditionalArgs>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
       <PassRate>100</PassRate>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
@@ -95,7 +125,7 @@
       <Stage>fc_boot_basic</Stage>
       <Stage_Exec>verif/tests/lists/fc.turnin.list</Stage_Exec>
       <AdditionalArgs>-disable_work_area_subdir -model fc</AdditionalArgs>
-      <XdutStageDep>[mby].[vcs]</XdutStageDep>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
       <PassRate>100</PassRate>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
@@ -130,7 +160,7 @@
         <AdditionalArgs></AdditionalArgs>
         <XdutStageDep></XdutStageDep>
         <PassRate></PassRate>
-        <IsGating>0</IsGating>
+        <IsGating>1</IsGating>
         <Turnin>1</Turnin>
         <Release>1</Release>
         <PostRelease>0</PostRelease>

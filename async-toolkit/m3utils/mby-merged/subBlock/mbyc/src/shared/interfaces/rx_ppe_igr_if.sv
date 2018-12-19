@@ -33,7 +33,7 @@
 // -------------------------------------------------------------------
 
 interface rx_ppe_igr_if
-import shared_pkg::*;
+import mby_rx_metadata_pkg::*;
 ();
 rx_ppe_igr_t    intf0;      //Interface 0
 rx_ppe_igr_t    intf1;      //Interface 1

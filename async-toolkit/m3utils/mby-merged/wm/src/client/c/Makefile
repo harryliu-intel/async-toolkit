@@ -8,6 +8,8 @@ include ${ROOT_DIR}/../../main/c/ToolVersions.mk
 
 MBY_TCP_CLIENT = mby_tcp_client
 
+include ../../make/Make_c.defs
+
 TARGET_LIB_O = $(MBY_TCP_CLIENT)_library.o
 TARGET_LIB   = lib$(MBY_TCP_CLIENT).so
 TARGET_SAM_O = $(MBY_TCP_CLIENT)_sample.o

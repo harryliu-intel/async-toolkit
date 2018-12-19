@@ -32,21 +32,34 @@
 //`include "id_generator.sv"
 //`include "configuration.sv"
 `include "inp_driver.sv"
-//`include "scoreboard.sv"
-//`include "monitor.sv"
+`include "scoreboard.sv"
+`include "monitor.sv"
 `include "system_driver.sv"
 
 // An env object is instantiated in a testcase
 class env;
 
 
-    virtual msh_node_dut_if dut_if;     // interface used in objects have to be declared as "virtual" 
+    virtual msh_node_dut_if dut_if; // interface used in objects have to be declared as "virtual" 
                                     //  - this may be because interfaces may default to being created at compile time 
                                     //  - and objects and their variables are created at run time.  
+
+    // -hz: 12/7/2018:
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0;
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1;
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2;
+    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3;
+
 
     // Declaration of variables that hold handles to env sub-objects.  
     system_driver       sys_drvr;
     inp_driver          inp_driver;
+
+
+    //-hz:
+      monitor		mntr;
+      scoreboard	sb;
+
 
     // declaration of other env variables
     integer         done_cnt;
@@ -57,7 +70,13 @@ class env;
     function new
     (
    
-        virtual msh_node_dut_if     dut_if        // testbench interface
+        virtual msh_node_dut_if     dut_if ,        // testbench interface
+	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0,	// -hz: 12/7/2018
+	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1,
+        virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2,
+	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3,
+   	// num of req to input
+        integer  knob_inp_req_num
     );
 
         name = "env.sv";
@@ -67,12 +86,25 @@ class env;
                                     // "this.<variable>" explicitly references a class variable when the need arises 
                                     // to distinguish from another variable with the same name.
 
+        //-hz: 12/7/2018
+        this.mem_if_0 = mem_if_0;
+        this.mem_if_1 = mem_if_1;
+        this.mem_if_2 = mem_if_2;
+        this.mem_if_3 = mem_if_3;
+
+
         sys_drvr    = new(dut_if);
-        inp_driver  = new(dut_if);
+        inp_driver  = new(dut_if, knob_inp_req_num);
+
+        sb  = new();
+        mntr  = new(dut_if, mem_if_0, mem_if_1, mem_if_2, mem_if_3, sb);
 
         connect();
 
     endfunction
+
+
+
 
     task connect();
         $display("(time: %0d) %s: **Connecting Testbench and DUT**", $time, name);
@@ -81,7 +113,9 @@ class env;
         // These sub-processes need to execute concurrently because they are driving,
         // monitoring, and responding to various concurrent events in the simulation.
         fork
-//            mntr.connect_to_DUT();      // connect the monitor
+//-hz:
+              mntr.connect_to_DUT();      // connect the monitor
+
               inp_driver.reset();
               inp_driver.connect_to_DUT_inputs();
 //            foreach (inp_drvrs[i]) begin
@@ -100,6 +134,8 @@ class env;
         fork begin
             $display("(time: %0d) %s: **Resetting**", $time, name);
             fork sys_drvr.reset();  join_none
+            fork mntr.reset();      join_none
+            fork sb.reset();        join_none
             wait fork;                              // wait for all the processes forked by parent process 
         end join  
     endtask
@@ -125,8 +161,9 @@ class env;
         done_cnt = 0;
         while (done_cnt < delay) begin
             repeat (1) @ (posedge dut_if.mclk);
+//-hz:
             done_cnt = (inp_driver.drv_done) ? done_cnt + 1 : '0;
-//            done_cnt = (mntr.all_done) ? done_cnt + 1 : '0;
+//          done_cnt = (mntr.all_done) ? done_cnt + 1 : '0;
         end
         $display("(time: %0d) %s: **End Waiting For Done plus %0d Clocks**", $time, name, delay);
     endtask

@@ -12,8 +12,8 @@
 //----------------------------------------------------------------------------------------
 class mby_mgp_rdrsp_agent extends uvm_agent;
    
-   mby_mgp_rdreq_drv  rdrsp_drv;
-   mby_mgp_rdreq_mon  rdrsp_mon;
+   mby_mgp_rdrsp_drv  rdrsp_drv;
+   mby_mgp_rdrsp_mon  rdrsp_mon;
    uvm_sequencer#(mby_mgp_req_seq_item) rdrsp_seqr;
 
    mby_mgp_req_agent_cfg req_agent_cfg;

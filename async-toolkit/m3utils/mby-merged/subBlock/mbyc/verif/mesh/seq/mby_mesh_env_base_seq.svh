@@ -45,7 +45,11 @@
 `error "Attempt to include file outside of mby_mesh_seq_lib."
 `endif
 
-class mby_mesh_env_base_seq extends mby_common_pkg::mby_base_seq;
+class mby_mesh_env_base_seq extends shdv_base_sequence; 
+
+    // Variable: shdv_env
+    // Protected shdv_base_env
+    protected shdv_base_env                env;
 
     // Variable: dut_cfg
     // Mesh dut cfg.
@@ -62,33 +66,22 @@ class mby_mesh_env_base_seq extends mby_common_pkg::mby_base_seq;
     // ------------------------------------------------------------------------
     function new(string name = "mby_mesh_env_base_seq");
         super.new();
-        set_cfg(slu_tb_env::get_top_tb_env());
+        set_env (shdv_base_env::get_top_tb_env());
     endfunction : new
 
     // ------------------------------------------------------------------------
-    // Function : set_cfg
-    // Sets the handle to the dut_cfg and tb vif. 
+    //  Function: set_env
+    //  Arguments: shdv_base_env 
     // ------------------------------------------------------------------------
-    virtual function void set_cfg(slu_tb_env tb_env);
+    function void set_env(shdv_base_env tb_env);
+       mby_mesh_env_pkg::mby_mesh_env temp_env;
 
-        mby_mesh_env_pkg::mby_mesh_env temp_env;
-        mby_mesh_env_pkg::mby_mesh_tb_top_cfg temp_tb_cfg;
-        bit stat;
+        $cast(temp_env,tb_env);
 
-        stat = $cast(temp_env,tb_env);
-        if(!stat) begin
-            `uvm_fatal(get_name(), "Cast of sla_tb_env failed");
-        end
-        if(temp_env == null) begin
-            `uvm_fatal(get_name(), "Could not fetch sla_tb_env handle!!!");
-        end
-
-        temp_tb_cfg  = temp_env.get_tb_cfg();
-        this.dut_cfg = temp_tb_cfg.dut_cfg;
-        this.vif     = temp_env.get_tb_vif();
-
-    endfunction : set_cfg
-
+        this.env    = temp_env;
+        vif         = temp_env.get_tb_vif();
+    endfunction : set_env
+ 
 endclass : mby_mesh_env_base_seq
 
 `endif // __MBY_MESH_ENV_BASE_SEQ_GUARD
