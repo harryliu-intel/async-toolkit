@@ -11,8 +11,10 @@
 `define epc_conn(FC_ENV_PATH, DUT_PATH, IDX) \
     \
     mby_ec_top_ti #( \
+        .TYPE("dut"), \
         .RTL_TOP_PATH(``"DUT_PATH``.mby_ec_top_``IDX``"), \
-        .TB_ENV_PATH(``"FC_ENV_PATH``.epc_subenv.epc_env_inst_``IDX``") \
+        .TB_ENV_PATH(``"FC_ENV_PATH``.epc_subenv.epc_env_inst_``IDX``"), \
+        .ENDPOINT_ID(``IDX``) \
     ) u_epc_ti_``IDX`` ( \
           .grp_a0_tx_data_valid         (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx_data_valid), \
           .grp_a0_tx0_data              (``DUT_PATH``.mby_ec_top_``IDX``.grp_a0_tx0_data), \
@@ -350,10 +352,10 @@
           .grp_d1_serdes_rx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_rx_p), \
           .grp_d1_serdes_tx_n_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_tx_n), \
           .grp_d1_serdes_tx_p_lx        (``DUT_PATH``.mby_ec_top_``IDX``.grp_d1_serdes_tx_p), \
-          .serdes_ref_clk_n             (), \
-          .serdes_ref_clk_p             (), \
+          .serdes_ref_clk_n             (``DUT_PATH``.mby_ec_top_``IDX``.i_serdes_refclk_n), \
+          .serdes_ref_clk_p             (``DUT_PATH``.mby_ec_top_``IDX``.i_serdes_refclk_p), \
           .cclk                         (``DUT_PATH``.mby_ec_top_``IDX``.cclk), \
-          .eclk                         (), \
+          .eclk                         (``DUT_PATH``.mby_ec_top_``IDX``.eclk), \
           .hreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.hreset_n), \
           .reset                        (), \
           .sreset_n                     (``DUT_PATH``.mby_ec_top_``IDX``.sreset_n) \
