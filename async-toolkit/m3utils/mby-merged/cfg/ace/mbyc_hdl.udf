@@ -236,6 +236,12 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag             => "nonsynth",
             },
 
+            mby_pbr_bfm_lib    => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_pbr_bfm.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
+               -tag             => "nonsynth",
+            },
+
             mby_gcm_bfm_lib    => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gcm_bfm.hdl' ],
                -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
@@ -660,6 +666,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         ## jjgodine: removing bfm library compiles for now
                         "mby_tag_bfm_lib",
                         "mby_gpm_bfm_lib",
+                        "mby_pbr_bfm_lib",
                         ##  "mby_gcm_bfm_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
