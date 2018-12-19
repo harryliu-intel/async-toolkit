@@ -32,12 +32,54 @@
 
 
 module mby_mesh_ti #( parameter string   RTL_TOP_PATH = "",             // The RTL path to the top level EC IP RTL Block
-        parameter string   TB_ENV_PATH = "uvm_test_top.env"          // The hierarchy path to the environment class
+        parameter string TB_ENV_PATH = "uvm_test_top.env"          // The hierarchy path to the environment class
     )
     (
-        mby_mesh_tb_if  mby_mesh_tb_if,
-
-        shdv_base_tb_intf shdv_intf
+        mby_mesh_tb_if     mby_mesh_tb_if,
+        shdv_base_tb_intf  shdv_intf,
+        //MGP --> Msh write op
+        mby_mgp_mim_op_if    mby_mgp_mim_wr_op_wb_if,
+        mby_mgp_mim_op_if    mby_mgp_mim_wr_op_eb_if,
+        //MGP --> Msh Rd op
+        mby_mgp_mim_op_if    mby_mgp_mim_rd_op_wb_if,
+        mby_mgp_mim_op_if    mby_mgp_mim_rd_op_eb_if,
+        //MGP --> Msh Rsp op
+        mby_mgp_mim_op_if    mby_mgp_mim_rsp_op_wb_if,
+        mby_mgp_mim_op_if    mby_mgp_mim_rsp_op_eb_if,
+        //MGP --> Msh write data
+        mby_mgp_mim_data_if  mby_mgp_mim_wr_data_wb_if,
+        mby_mgp_mim_data_if  mby_mgp_mim_wr_data_eb_if,
+        //MGP --> Msh Rsp data
+        mby_mgp_mim_data_if  mby_mgp_mim_rsp_data_wb_if,
+        mby_mgp_mim_data_if  mby_mgp_mim_rsp_data_eb_if,
+        //MIG --> Msh write op
+        mby_gmm_mig_op_if    mby_gmm_mig_wr_op_sb_if_0,
+        mby_gmm_mig_op_if    mby_gmm_mig_wr_op_sb_if_1,
+        mby_gmm_mig_op_if    mby_gmm_mig_wr_op_sb_if_2,
+        mby_gmm_mig_op_if    mby_gmm_mig_wr_op_nb_if_0,
+        //MIG --> Msh read op
+        mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_0,
+        mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_1,
+        mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_2,
+        mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_3,
+        mby_gmm_mig_op_if    mby_gmm_mig_rd_op_nb_if_0,
+        //MIG --> Msh res op
+        mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_0,
+        mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_1,
+        mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_2,
+        mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_3,
+        mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_nb_if_0,
+        //MIG --> Msh write data
+        mby_gmm_mig_data_if    mby_gmm_mig_wr_data_sb_if_0,
+        mby_gmm_mig_data_if    mby_gmm_mig_wr_data_sb_if_1,
+        mby_gmm_mig_data_if    mby_gmm_mig_wr_data_sb_if_2,
+        mby_gmm_mig_data_if    mby_gmm_mig_wr_data_nb_if_0,
+        //MIG --> Msh res data
+        mby_gmm_mig_data_if    mby_gmm_mig_rsp_data_sb_if_0,
+        mby_gmm_mig_data_if    mby_gmm_mig_rsp_data_sb_if_1,
+        mby_gmm_mig_data_if    mby_gmm_mig_rsp_data_sb_if_2,
+        mby_gmm_mig_data_if    mby_gmm_mig_rsp_data_sb_if_3,
+        mby_gmm_mig_data_if    mby_gmm_mig_rsp_data_nb_if_0
     );
 
     import uvm_pkg::*;
@@ -52,7 +94,49 @@ module mby_mesh_ti #( parameter string   RTL_TOP_PATH = "",             // The R
         // Set the MESH_TB_IF in the database
         uvm_config_db#(virtual mby_mesh_tb_if)::set(uvm_root::get(), TB_ENV_PATH , "mby_mesh_tb_if", mby_mesh_tb_if);
 
-        
+        uvm_config_db#(virtual mby_mgp_mim_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_wr_op_wb_if" , mby_mgp_mim_wr_op_wb_if);
+        uvm_config_db#(virtual mby_mgp_mim_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_wr_op_eb_if" , mby_mgp_mim_wr_op_eb_if);
+
+        uvm_config_db#(virtual mby_mgp_mim_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_rd_op_wb_if" , mby_mgp_mim_rd_op_wb_if);
+        uvm_config_db#(virtual mby_mgp_mim_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_rd_op_eb_if" , mby_mgp_mim_rd_op_eb_if);
+
+        uvm_config_db#(virtual mby_mgp_mim_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_rsp_op_wb_if" , mby_mgp_mim_rsp_op_wb_if);
+        uvm_config_db#(virtual mby_mgp_mim_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_rsp_op_eb_if" , mby_mgp_mim_rsp_op_eb_if);
+
+        uvm_config_db#(virtual mby_mgp_mim_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_wr_data_wb_if" , mby_mgp_mim_wr_data_wb_if);
+        uvm_config_db#(virtual mby_mgp_mim_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_wr_data_eb_if" , mby_mgp_mim_wr_data_eb_if);
+
+        uvm_config_db#(virtual mby_mgp_mim_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_rsp_data_wb_if" , mby_mgp_mim_rsp_data_wb_if);
+        uvm_config_db#(virtual mby_mgp_mim_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_mgp_mim_rsp_data_eb_if" , mby_mgp_mim_rsp_data_eb_if);
+
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_op_sb_if_0" , mby_gmm_mig_wr_op_sb_if_0);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_op_sb_if_1" , mby_gmm_mig_wr_op_sb_if_1);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_op_sb_if_2" , mby_gmm_mig_wr_op_sb_if_2);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_op_nb_if_0" , mby_gmm_mig_wr_op_nb_if_0);
+
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rd_op_sb_if_0" , mby_gmm_mig_rd_op_sb_if_0);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rd_op_sb_if_1" , mby_gmm_mig_rd_op_sb_if_1);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rd_op_sb_if_2" , mby_gmm_mig_rd_op_sb_if_2);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rd_op_sb_if_3" , mby_gmm_mig_rd_op_sb_if_3);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rd_op_nb_if_0" , mby_gmm_mig_rd_op_nb_if_0);
+
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_op_sb_if_0" , mby_gmm_mig_rsp_op_sb_if_0);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_op_sb_if_1" , mby_gmm_mig_rsp_op_sb_if_1);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_op_sb_if_2" , mby_gmm_mig_rsp_op_sb_if_2);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_op_sb_if_3" , mby_gmm_mig_rsp_op_sb_if_3);
+        uvm_config_db#(virtual mby_gmm_mig_op_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_op_nb_if_0" , mby_gmm_mig_rsp_op_nb_if_0);
+
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_data_sb_if_0" , mby_gmm_mig_wr_data_sb_if_0);
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_data_sb_if_1" , mby_gmm_mig_wr_data_sb_if_1);
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_data_sb_if_2" , mby_gmm_mig_wr_data_sb_if_2);
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_wr_data_nb_if_0" , mby_gmm_mig_wr_data_nb_if_0);
+
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_data_sb_if_0" , mby_gmm_mig_rsp_data_sb_if_0);
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_data_sb_if_1" , mby_gmm_mig_rsp_data_sb_if_1);
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_data_sb_if_2" , mby_gmm_mig_rsp_data_sb_if_2);
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_data_sb_if_3" , mby_gmm_mig_rsp_data_sb_if_3);
+        uvm_config_db#(virtual mby_gmm_mig_data_if)::set(uvm_root::get(),TB_ENV_PATH , "mby_gmm_mig_rsp_data_nb_if_0" , mby_gmm_mig_rsp_data_nb_if_0);
+
     end
 
 endmodule

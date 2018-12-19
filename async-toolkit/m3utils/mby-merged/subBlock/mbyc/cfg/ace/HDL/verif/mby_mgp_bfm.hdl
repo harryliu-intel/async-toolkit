@@ -9,6 +9,10 @@ $hdl_spec = {
          "verif/lib/mby_mgp_bfm/mby_mgp_bfm_pkg.sv",
          "verif/lib/mby_mgp_bfm/mby_mgp_op_if.sv",
          "verif/lib/mby_mgp_bfm/mby_mgp_data_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_mgp_mim_op_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_mgp_mim_data_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_gmm_mig_op_if.sv",
+         "verif/lib/mby_mgp_bfm/mby_gmm_mig_data_if.sv",
      ],
 
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)

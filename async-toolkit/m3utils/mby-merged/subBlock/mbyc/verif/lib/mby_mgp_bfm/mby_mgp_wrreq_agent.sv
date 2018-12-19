@@ -47,18 +47,19 @@ function void mby_mgp_wrreq_agent::build_phase(uvm_phase phase);
    end
                            
 
-   if (req_agent_cfg.is_active == UVM_ACTIVE) begin
+   if (req_agent_cfg.driver_enable) begin
       wrreq_seqr = new("wrreq_seqr", this);
-   end
-   wrreq_drv              = mby_mgp_wrreq_drv::type_id::create("wrreq_drv", this);
-   wrreq_drv.req_agent_cfg = req_agent_cfg;
-   wrreq_drv.flow_ctrl    = flow_ctrl;
-   wrreq_drv.mem_crdt_io  = mem_crdt_io;
-
-   wrreq_mon              = mby_mgp_wrreq_mon::type_id::create("wrreq_mon", this);
-   wrreq_mon.req_agent_cfg = req_agent_cfg;
-   wrreq_mon.mem_crdt_io  = mem_crdt_io;
    
+      wrreq_drv              = mby_mgp_wrreq_drv::type_id::create("wrreq_drv", this);
+      wrreq_drv.req_agent_cfg = req_agent_cfg;
+      wrreq_drv.flow_ctrl    = flow_ctrl;
+      wrreq_drv.mem_crdt_io  = mem_crdt_io;
+   end
+   if (req_agent_cfg.monitor_enable) begin
+      wrreq_mon              = mby_mgp_wrreq_mon::type_id::create("wrreq_mon", this);
+      wrreq_mon.req_agent_cfg = req_agent_cfg;
+      wrreq_mon.mem_crdt_io  = mem_crdt_io;
+   end
 endfunction : build_phase
 
 //----------------------------------------------------------------------------------------
@@ -66,7 +67,7 @@ endfunction : build_phase
 //----------------------------------------------------------------------------------------
 function void mby_mgp_wrreq_agent::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
-   if (req_agent_cfg.is_active == UVM_ACTIVE) begin
+   if (req_agent_cfg.driver_enable) begin
       wrreq_drv.seq_item_port.connect(wrreq_seqr.seq_item_export);
    end
 endfunction : connect_phase
@@ -75,8 +76,12 @@ endfunction : connect_phase
 // Method: reset
 //----------------------------------------------------------------------------------------
 function void mby_mgp_wrreq_agent::reset();
-   wrreq_drv.reset();
-   wrreq_mon.reset();
+   if (req_agent_cfg.driver_enable) begin
+      wrreq_drv.reset();
+   end
+   if (req_agent_cfg.monitor_enable) begin
+      wrreq_mon.reset();
+   end
 endfunction : reset
 
 

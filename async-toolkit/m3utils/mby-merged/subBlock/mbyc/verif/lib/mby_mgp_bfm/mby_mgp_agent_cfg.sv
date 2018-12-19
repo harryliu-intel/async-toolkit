@@ -13,14 +13,13 @@ typedef class mby_mgp_req_agent_cfg;
 class mby_mgp_agent_cfg extends uvm_object;
 
    `uvm_object_utils(mby_mgp_agent_cfg)
-   typedef uvm_active_passive_enum act_psv_e;
-   uvm_active_passive_enum is_active = UVM_ACTIVE;
+   bit driver_enable = 1;
+   bit monitor_enable = 1; 
 
    rand mby_mgp_req_agent_cfg req_agent_cfg;
    
-   
    extern function new(string name = "");
-   
+
 
 endclass 
 
@@ -31,7 +30,6 @@ function mby_mgp_agent_cfg::new (string name = "");
 
    super.new(name);
    req_agent_cfg = mby_mgp_req_agent_cfg::type_id::create("req_agent_cfg");
-   req_agent_cfg.is_active = is_active;
-endfunction : new
 
+endfunction : new
 

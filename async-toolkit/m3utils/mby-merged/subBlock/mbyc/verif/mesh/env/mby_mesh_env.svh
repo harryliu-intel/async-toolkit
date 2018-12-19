@@ -49,6 +49,18 @@ class mby_mesh_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
    virtual   mby_mesh_tb_if                                tb_vif;
+   virtual   mby_mgp_mim_op_if                             mby_mgp_mim_wr_op_wb_if;
+   virtual   mby_mgp_mim_op_if                             mby_mgp_mim_rd_op_wb_if;
+   virtual   mby_mgp_mim_op_if                             mby_mgp_mim_rsp_op_wb_if;
+   virtual   mby_mgp_mim_op_if                             mby_mgp_mim_wr_op_eb_if;
+   virtual   mby_mgp_mim_op_if                             mby_mgp_mim_rd_op_eb_if;
+   virtual   mby_mgp_mim_op_if                             mby_mgp_mim_rsp_op_eb_if;
+   virtual   mby_mgp_mim_data_if                           mby_mgp_mim_wr_data_wb_if;
+   virtual   mby_mgp_mim_data_if                           mby_mgp_mim_wr_data_eb_if;
+   virtual   mby_mgp_mim_data_if                           mby_mgp_mim_rsp_data_wb_if;
+   virtual   mby_mgp_mim_data_if                           mby_mgp_mim_rsp_data_eb_if;
+
+
    mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm;
    mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm;
    mby_mgp_bfm_pkg::mby_mgp_bfm                            nb_mgp_bfm;
@@ -108,6 +120,46 @@ class mby_mesh_env extends shdv_base_env;
 
 
       if(!uvm_config_db#(virtual mby_mesh_tb_if)::get(this, "", "mby_mesh_tb_if", tb_vif)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_op_if)::get(this, "", "mby_mgp_mim_wr_op_wb_if", mby_mgp_mim_wr_op_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_op_if)::get(this, "", "mby_mgp_mim_rd_op_wb_if", mby_mgp_mim_rd_op_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_op_if)::get(this, "", "mby_mgp_mim_rsp_op_wb_if", mby_mgp_mim_rsp_op_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_op_if)::get(this, "", "mby_mgp_mim_wr_op_eb_if", mby_mgp_mim_wr_op_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_op_if)::get(this, "", "mby_mgp_mim_rd_op_eb_if", mby_mgp_mim_rd_op_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_op_if)::get(this, "", "mby_mgp_mim_rsp_op_eb_if", mby_mgp_mim_rsp_op_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_data_if)::get(this, "", "mby_mgp_mim_wr_data_eb_if", mby_mgp_mim_wr_data_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_data_if)::get(this, "", "mby_mgp_mim_rsp_data_eb_if", mby_mgp_mim_rsp_data_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_data_if)::get(this, "", "mby_mgp_mim_wr_data_wb_if", mby_mgp_mim_wr_data_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_data_if)::get(this, "", "mby_mgp_mim_rsp_data_wb_if", mby_mgp_mim_rsp_data_wb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's TB_IF was not successful!")
       end
 

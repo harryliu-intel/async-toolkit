@@ -60,7 +60,7 @@ endfunction : start
 //----------------------------------------------------------------------------------------
 task mby_mgp_rdrsp_drv::run_phase(uvm_phase phase);
 
-   if (req_agent_cfg.is_active == UVM_ACTIVE) begin
+   if (req_agent_cfg.driver_enable) begin
 /*      fork
          forever @(mem_crdt_io.op_vif.op_mst_cb) begin
             if(!mem_crdt_io.op_vif.rst) begin

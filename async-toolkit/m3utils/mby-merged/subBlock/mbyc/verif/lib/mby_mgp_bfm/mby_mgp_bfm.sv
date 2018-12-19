@@ -43,8 +43,16 @@ function void mby_mgp_bfm::build_phase(uvm_phase phase);
    mgp_mst_agent = mby_mgp_agent::type_id::create("mgp_mst_agent", this);
    mgp_slv_agent = mby_mgp_agent::type_id::create("mgp_slv_agent", this);
     
-   mst_agent_cfg.is_active = UVM_ACTIVE;
-   slv_agent_cfg.is_active = UVM_PASSIVE;
+   mst_agent_cfg.driver_enable  = 1;
+   mst_agent_cfg.monitor_enable = 1;
+   slv_agent_cfg.driver_enable  = 0;
+   slv_agent_cfg.monitor_enable = 1;
+    
+   mst_agent_cfg.req_agent_cfg.driver_enable  = 1;
+   mst_agent_cfg.req_agent_cfg.monitor_enable = 1;
+   slv_agent_cfg.req_agent_cfg.driver_enable  = 0;
+   slv_agent_cfg.req_agent_cfg.monitor_enable = 1;
+    
    mgp_mst_agent.mgp_agent_cfg = mst_agent_cfg;
    mgp_slv_agent.mgp_agent_cfg = slv_agent_cfg;
 
