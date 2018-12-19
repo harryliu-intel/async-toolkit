@@ -12,9 +12,6 @@
 
 // Defines:
 
-#define MBY_STATS_IN_REGS     mby_ppe_rx_stats_map * const stats_map
-#define MBY_STATS_IN_REGS_P                                stats_map
-
 /******** RX_STATS_BASE *******/
 #define MBY_RX_STATS_BASE                                       (0x3F18000)
 #define MBY_RX_STATS_SIZE                                       (0x0020000)
