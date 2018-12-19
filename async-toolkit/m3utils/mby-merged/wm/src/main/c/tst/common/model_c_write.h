@@ -6,4 +6,6 @@ void mby_field_init_cb(void *field, int size);
 
 void write_field(void *field, unsigned long value);
 
+void mby_free_fields_table();
+
 #endif /* _MBY_WRITE_FIELD_H_ */

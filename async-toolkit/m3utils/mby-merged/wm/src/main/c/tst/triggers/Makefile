@@ -110,6 +110,7 @@ valgrind: $(TARGET)
             --track-origins=yes \
             --leak-check=full \
             --show-leak-kinds=all \
+            --show-reachable=yes \
 	$(TARGET) 2>&1 | tee val.log
 
 .PHONY: callgrind

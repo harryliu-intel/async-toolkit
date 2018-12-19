@@ -61,7 +61,7 @@ void RxPipeline
     MaskGen    (fwd_misc_map,
                 mst_glort_map,
                 cm_apply_map,        &nxt2msk, &msk2trg);
-
+#if 0
     Triggers   (trig_apply_map,
                 trig_apply_map_w,
                 trig_apply_misc_map,
@@ -74,6 +74,7 @@ void RxPipeline
                 cm_usage_map,        &trg2cgm, &cgm2rxs);
 
     RxStats    (stats_map,           &cgm2rxs,  rxs2rxo);
+#endif
 }
 
 void TxPipeline
