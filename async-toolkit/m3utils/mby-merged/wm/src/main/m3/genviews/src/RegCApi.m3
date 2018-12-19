@@ -57,6 +57,7 @@ PROCEDURE Write(t : T; dirPath : Pathname.T; <*UNUSED*>phase : Phase)
           (*
           DefTypes(wr);
           *)
+          Wr.PutText(wr, "#include <assert.h>\n");
           Wr.PutText(wr, "#include \"uint.h\"\n");
           Wr.PutText(wr, "typedef uint32 field_id;\n");
           FOR i := 0 TO seq.size()-1 DO
@@ -199,14 +200,14 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
 PROCEDURE GenProto(  r : RegComponent.T; genState : RegGenState.T)
   RAISES { } =
   CONST
-    const = ""; (* or "const" *)
+    const = ""; (* or "const " *)
   VAR
     gs : RegCGenState.T := genState;
     myTn := r.typeName(gs);
   BEGIN
-    gs.main("\n %s void *\n%s__getptr(\n", const, myTn);
+    gs.main("\n%svoid *\n%s__getptr(\n", const, myTn);
     FOR p := FIRST(Phases) TO LAST(Phases) DO
-      gs.main("  %s %s%s *p%s,\n", const, myTn, Phases[p].sfx, Int(ORD(p)));
+      gs.main("  %s%s%s *p%s,\n", const, myTn, Phases[p].sfx, Int(ORD(p)));
     END;
     gs.main("  const int *rp\n");
     gs.main(")");
@@ -226,15 +227,19 @@ PROCEDURE GenRegGetptr(r : RegReg.T; genState : RegGenState.T)
 
     GenProto(r, genState);
     gs.main("{\n");
-    gs.main("  switch(0) {");
+    gs.main("  switch(0) {\n");
     
     FOR i := 0 TO r.fields.size()-1 DO
       WITH f  = r.fields.get(i),
            nm = f.name(debug := FALSE) DO
-        gs.main("    case %s: return &(p0->%s); break;", Int(i), nm);
+        gs.main("    case %s:\n",Int(i));
+        gs.main("      return &(p0->%s);\n",nm);
+        gs.main("      break;\n");
       END
     END;
-    gs.main("  }");
+    gs.main("    default:\n");
+    gs.main("      assert(0);\n");
+    gs.main("  }\n");
     gs.main("}\n\n")
   END GenRegGetptr;
 
@@ -250,23 +255,37 @@ PROCEDURE GenContainerGetptr(rf       : RegContainer.T;
     gs.main("\n/* %s:%s */\n", ThisFile(), Fmt.Int(ThisLine()));
     GenProto(rf, gs);
     gs.main("{\n");
-    gs.main("  if (*rp==-1) return p0;\n");
+    gs.main("  switch(*rp){\n");
+    gs.main("    case -1:\n");
+    gs.main("      return p0;\n");
+    gs.main("      break;\n");
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c  = rf.children.get(i),
            tn = ComponentTypeName(c.comp, gs),
            nm = IdiomName(c.nm,FALSE) DO
         IF skipArc THEN
           <*ASSERT i=0*>
-          gs.main("  return %s__getptr(&((*p0)[*rp]),rp+1);\n", tn)
+          gs.main("    default:\n");
+          gs.main("      assert(0 <= *rp && *rp < %s);\n", Int(ArrSz(c.array)));
+          gs.main("      %s__getptr(&((*p0)[*rp]),rp+1);\n", tn);
         ELSIF c.array = NIL THEN
-          gs.main("  if (*rp==%s) return %s__getptr(&(p0->%s),rp+1);\n",
-                  Int(i), tn, nm)
+          gs.main("    case %s:\n",Int(i));
+          gs.main("      return %s__getptr(&(p0->%s),rp+1);\n", tn, nm)
         ELSE
-          gs.main("  if (*rp==%s) return %s__getptr(&(p0->%s[*rp]),rp+1);\n",
-                  Int(i), tn, nm)
-        END
+          gs.main("    case %s:\n", Int(i));
+          gs.main("      assert(*rp<%s);\n", Int(ArrSz(c.array)));
+          gs.main("      return %s__getptr(&(p0->%s[*rp]),rp+1);\n",
+                  tn, nm);
+        END;
+        gs.main("      break;\n");
       END
     END;
+    IF NOT skipArc THEN
+      gs.main("    default:\n");
+      gs.main("      assert(0);\n");
+      gs.main("      break;\n");
+    END;
+    gs.main("  }\n");
     gs.main("}\n\n");
     FOR i := 0 TO rf.children.size()-1 DO
       WITH c = rf.children.get(i) DO
