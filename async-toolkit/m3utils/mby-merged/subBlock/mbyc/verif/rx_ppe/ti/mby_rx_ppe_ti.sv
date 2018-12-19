@@ -31,9 +31,10 @@
 //------------------------------------------------------------------------------
 
 
-module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",             // The RTL path to the top level EC IP RTL Block
-      parameter string   TB_ENV_PATH = "uvm_test_top.env",          // The hierarchy path to the environment class
-      parameter mby_rx_ppe_env_pkg::mby_rx_ppe_defines::rx_ppe_topology_e TOPOLOGY =  mby_rx_ppe_env_pkg::mby_rx_ppe_defines::RX_PPE_FULL
+module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",                    // The RTL path to the top level EC IP RTL Block
+                        parameter string   TB_ENV_PATH  = "uvm_test_top.env",    // The hierarchy path to the environment class
+                        //FIXME: LNS: update to arrayed test islands
+                        parameter mby_rx_ppe_env_pkg::mby_rx_ppe_topology_e TOPOLOGY =  mby_rx_ppe_env_pkg::PARSER
    )
    (
       mby_rx_ppe_tb_if  mby_rx_ppe_tb_if,

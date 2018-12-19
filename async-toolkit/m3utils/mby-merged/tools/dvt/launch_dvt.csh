@@ -3,7 +3,7 @@
 ###########################
 # Set default values here #
 ###########################
-set DVT_VERSION=18.01.07-e46
+set DVT_VERSION=18.01.39-e46
 set RUN_DVT=1
 set BMAN=0
 set HEAP_SIZE="4G"
@@ -111,13 +111,17 @@ endif
 
 if ($?CLEAN_DVT) then
 	$MKDIR -p .dvt
-	$CP -f target/$DUT/dvt/models/$MODEL/*.build .dvt/
+	$CP -f target/$DUT/dvt/models/*/*.build .dvt/
     set COMMAND = "-eclipsespace /tmp/$USER/dvt_eclipsespace \
                -workspace $WORKSPACE \
                createProject $MODEL_ROOT \
                -lang vlog \
                -perspective VLOG \
-               -exclude 'name=aceroot' \
+               -exclude name=aceroot \
+               -exclude name=GATEKEEPER \
+               -exclude name=regression \
+               -exclude name=target \
+               -exclude name=subBlock \
                -force"
 else
     set COMMAND = "-eclipsespace /tmp/$USER/dvt_eclipsespace \
