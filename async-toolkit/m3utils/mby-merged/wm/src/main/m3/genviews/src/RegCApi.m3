@@ -431,14 +431,4 @@ PROCEDURE ArrSz(a : RdlArray.Single) : CARDINAL =
     END
   END ArrSz;
   
-PROCEDURE ComponentTypeName(c : RegComponent.T; gs : GenState) : TEXT =
-  BEGIN
-    TYPECASE c OF
-      RegAddrmap.T(a) =>
-      RETURN a.intfName(gs) 
-    ELSE
-      RETURN c.typeName(gs)
-    END
-  END ComponentTypeName;
-
 BEGIN END RegCApi.
