@@ -21,8 +21,8 @@ class scoreboard;
 
 
 
-logic[551:0]	wr_req_in_fifo[$];	// wdata
-logic[551:0]	data_fromQ;
+logic[531:0]	wr_req_in_fifo[$];	// wdata
+logic[531:0]	data_fromQ;
 
 
 //-hz:
@@ -55,7 +55,7 @@ logic[551:0]	data_fromQ;
 
 
 // -hz: 12/7/2018: check mem_bank0 wr:
-    function mem_bank0_wr_notification(logic[11:0] adr, logic[551:0] wdata);
+    function mem_bank0_wr_notification(logic[11:0] adr, logic[531:0] wdata);
 //    $display("(time: %0d) %s: WRITE at MEM BANK 0: adr= 'h%0h, wdata= 'h%0h", $time, name, adr, wdata);
       if ((adr != 'h33) || (wdata != 'ha5a5)) begin
    // if ((adr != 'h30) || (wdata != 'ha5a5)) begin  // <- make an wrong expectation on purpose on adr ('h30)
@@ -81,7 +81,7 @@ logic[551:0]	data_fromQ;
 
 
 // -hz: 12/10/2018: check mem_bank0 rd data:
-    function mem_bank0_rd_data_notification(logic[551:0] rdata);
+    function mem_bank0_rd_data_notification(logic[531:0] rdata);
       if (rdata != 'ha5a5) begin
    // if (rdata != 'h5555) begin  // <- make an wrong expectation on purpose on data ('h5555)
       	$display("ERROR: (time: %0d) %s: READ DATA at MEM BANK 0 IS NOT CORRECT (wdata='h%0h)", 
@@ -118,12 +118,12 @@ logic[551:0]	data_fromQ;
 
 //-hz: 12/11/2018: push wr to fifo:
 
-//  function mem_bank0_req_in_notification(logic[11:0] adr, logic[551:0] wdata);
+//  function mem_bank0_req_in_notification(logic[11:0] adr, logic[531:0] wdata);
 //      wr_req_in_fifo.push_back(wdata);
 //      $display("(time: %0d) %s: Push Wdata to Q : adr=%0h, wdata=%0h", $time, name, adr, wdata);
 //  endfunction
 
-    function eb_p0_wr_req_in_notification(logic[551:0] wdata);
+    function eb_p0_wr_req_in_notification(logic[531:0] wdata);
         wr_req_in_fifo.push_back(wdata);
         $display("(time: %0d) %s: Push Wdata to Q : wdata=%0h", $time, name, wdata);
     endfunction
@@ -132,7 +132,7 @@ logic[551:0]	data_fromQ;
 
     // 12/11/2018: check rd data against wr fifo:
 
-    function wb_p0_check_rd_data_notification(logic[551:0] rdata);
+    function wb_p0_check_rd_data_notification(logic[531:0] rdata);
 	data_fromQ = wr_req_in_fifo.pop_front();
         $display("(time: %0d) %s: Pop data from Q : data=%0h", $time, name, data_fromQ);
 

@@ -42,8 +42,16 @@
 
 class mby_rx_ppe_tb_top_cfg extends shdv_base_config;
 
-   // Topology/Test Island items
-   mby_rx_ppe_defines::rx_ppe_topology_e topology = mby_rx_ppe_defines::RX_PPE_FULL;;
+   // Topology -- see comments in mby_rx_ppe_defines.svh
+   //int topology [mby_rx_ppe_defines::rx_ppe_topology_e_num];
+   rx_ppe_topology_array_t topology;
+
+   // indicates, for each block, whether there's to be a scoreboard after it
+   // From topology & scoreboards, it can be determined which agents are to be created and whether to enable their monitors/drivers
+   // TODO: LNS: determine whether naming this variable "scoreboards" is confusing re: mby_rx_ppe_env.scoreboards[] of same name
+   // LNS: note that the following line produces elaborator error as described in myb_rx_ppe_defines.svh
+   //int scoreboards[mby_rx_ppe_topology_e_num];
+   int scoreboards[`MBY_RX_PPE_TOPOLOGY_E_NUM];
 
    // Variable: ral_type
    // Definition of the RAL type
@@ -71,13 +79,13 @@ class mby_rx_ppe_tb_top_cfg extends shdv_base_config;
 
 
    `uvm_object_utils_begin(mby_rx_ppe_tb_top_cfg)
-      `uvm_field_string(ti_path,                                                      UVM_DEFAULT)
-      `uvm_field_string(rtl_top_path,                                                 UVM_DEFAULT)
-      `uvm_field_string(ral_type,                                                     UVM_DEFAULT)
-      `uvm_field_enum  (reset_type_e,                  reset_type,                    UVM_DEFAULT)
-      `uvm_field_enum  (mby_rx_ppe_defines::rx_ppe_topology_e, topology,              UVM_DEFAULT)
-      `uvm_field_object(dut_cfg,                                                      UVM_DEFAULT)
-      `uvm_field_object(env_cfg,                                                      UVM_DEFAULT)
+      `uvm_field_string    (ti_path                                                     , UVM_DEFAULT)
+      `uvm_field_string    (rtl_top_path                                                , UVM_DEFAULT)
+      `uvm_field_string    (ral_type                                                    , UVM_DEFAULT)
+      `uvm_field_enum      (reset_type_e                 , reset_type                   , UVM_DEFAULT)
+      `uvm_field_sarray_int(topology                                                    , UVM_DEFAULT)
+      `uvm_field_object    (dut_cfg                                                     , UVM_DEFAULT)
+      `uvm_field_object    (env_cfg                                                     , UVM_DEFAULT)
    `uvm_object_utils_end
 
 
@@ -134,11 +142,13 @@ class mby_rx_ppe_tb_top_cfg extends shdv_base_config;
    //---------------------------------------------------------------------------
    // Function: get_tb_topology
    // Returns:
-   // rx_ppe_topology_e - Value indicating the rx_ppe Testbench Topology.
+   // mby_rx_ppe_topology_e - Value indicating the rx_ppe Testbench Topology.
    //---------------------------------------------------------------------------
-   function mby_rx_ppe_defines::rx_ppe_topology_e get_tb_topology();
+   //function mby_rx_ppe_defines::rx_ppe_topology_e get_tb_topology();
+   function rx_ppe_topology_array_t get_tb_topology();
       return topology;
    endfunction : get_tb_topology
+
 
 endclass: mby_rx_ppe_tb_top_cfg
 

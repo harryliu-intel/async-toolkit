@@ -53,7 +53,7 @@ class mby_smm_bfm_mwr_req
 
    T_req mem_req;
    
-   smm_bfm_mem_node  mesh_ptr[NUM_MSH_ROWS-1:0][NUM_MSH_COLS-1:0];
+   smm_bfm_mem_node  mesh_ptr[MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0];
     
    logic [13:0]  addr;
    logic [3:0]   node_row;
@@ -77,9 +77,9 @@ class mby_smm_bfm_mwr_req
       super.new(name, parent);
    endfunction : new
 
-   function void set_mesh_ptr(smm_bfm_mem_node  mem_nodes_ptr[NUM_MSH_ROWS-1:0][NUM_MSH_COLS-1:0]);
-      for(int row_idx=0 ; row_idx<NUM_MSH_ROWS; row_idx++) begin
-         for(int col_idx=0 ; col_idx<NUM_MSH_COLS; col_idx++) begin
+   function void set_mesh_ptr(smm_bfm_mem_node  mem_nodes_ptr[MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0]);
+      for(int row_idx=0 ; row_idx<MAX_NUM_MSH_ROWS; row_idx++) begin
+         for(int col_idx=0 ; col_idx<MAX_NUM_MSH_COLS; col_idx++) begin
             this.mesh_ptr[row_idx][col_idx] = mem_nodes_ptr[row_idx][col_idx];
          end
       end
