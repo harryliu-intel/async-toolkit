@@ -536,7 +536,7 @@ reg cm_apply_log_mirror_profile_r {
 //};
 
 
-reg mirror_ecmp_dmask0 {
+reg mirror_ecmp_dmask0_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -558,7 +558,7 @@ reg mirror_ecmp_dmask0 {
 };
 
 
-reg mirror_ecmp_dmask1 {
+reg mirror_ecmp_dmask1_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -580,7 +580,7 @@ reg mirror_ecmp_dmask1 {
 };
 
 
-reg mirror_ecmp_dmask2 {
+reg mirror_ecmp_dmask2_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -601,7 +601,7 @@ reg mirror_ecmp_dmask2 {
   } Mirror_port_mask2[63:0] = 64'b0;
 };
 
-reg mirror_ecmp_dmask3 {
+reg mirror_ecmp_dmask3_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -623,7 +623,7 @@ reg mirror_ecmp_dmask3 {
 };
 
 
-reg mirror_ecmp_dmask4 {
+reg mirror_ecmp_dmask4_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -739,11 +739,11 @@ addrmap mby_ppe_cm_apply_map {
   cm_apply_tx_tc_qcn_wm_threshold_rf    CM_APPLY_TX_TC_QCN_WM_THRESHOLD[64]   ;
   cm_apply_rx_smp_state_rf              CM_APPLY_RX_SMP_STATE[32]             ;
 //   cm_apply_mirror_profile_table_r       CM_APPLY_MIRROR_PROFILE_TABLE[64]     ;
-  mirror_ecmp_dmask0                    MIRROR_ECMP_DMASK0[64];
-  mirror_ecmp_dmask1                    MIRROR_ECMP_DMASK1[64];
-  mirror_ecmp_dmask2                    MIRROR_ECMP_DMASK2[64];
-  mirror_ecmp_dmask3                    MIRROR_ECMP_DMASK3[64];
-  mirror_ecmp_dmask4                    MIRROR_ECMP_DMASK4[64];
+  mirror_ecmp_dmask0_r                  MIRROR_ECMP_DMASK0[64];
+  mirror_ecmp_dmask1_r                  MIRROR_ECMP_DMASK1[64];
+  mirror_ecmp_dmask2_r                  MIRROR_ECMP_DMASK2[64];
+  mirror_ecmp_dmask3_r                  MIRROR_ECMP_DMASK3[64];
+  mirror_ecmp_dmask4_r                  MIRROR_ECMP_DMASK4[64];
   cm_apply_drop_count_r                 CM_APPLY_DROP_COUNT[32]               ;
   cm_apply_loopback_suppress_r          CM_APPLY_LOOPBACK_SUPPRESS[32]        ;
   cm_apply_softdrop_cfg_r               CM_APPLY_SOFTDROP_CFG[8]              ;
