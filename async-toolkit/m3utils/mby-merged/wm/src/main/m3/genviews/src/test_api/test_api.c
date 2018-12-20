@@ -176,6 +176,7 @@ test_print_ragged(void)
 
     for (const char **s=seq; *s; ++s)
       printf("%s", *s);
+    
     printf("\n");
   }
 }
@@ -213,7 +214,40 @@ test_time_ragged(void)
   gettimeofday(&tv1,NULL);
   print_time_delta(&tv0,&tv1,"test_time_ragged", ops);
 }
+
+void
+test_api_struct(void)
+{
+  mby_top_map *map;
+  size_t mapsiz = sizeof(mby_top_map);
+
+  printf("mby_top_map is %ld bytes.\n", mapsiz);
   
+  map = malloc(mapsiz);
+
+  for (int i=0; i<100*1000; ++i) {
+    chipaddr_t a=random() % (1000*1000*10), rem;
+    seqtype_t rp;
+    void *localptr;
+    long localoff;
+    const char *seq[MAXDEPTH];
+
+    rem = addr2ragged(a, &rp);
+    localptr = mby_top_map__getptr(map, rp.d);
+    localoff = (const char *)localptr-(const char *)map;
+      
+    printf("addr=%#10lx ragged=", a);
+    print_ragged(&rp);
+    printf(" rem=%ld localoff=%#lx nm=", rem, localoff);
+
+    ragged2nameseq(&rp, seq);
+
+    for (const char **s=seq; *s; ++s)
+      printf("%s", *s);
+    
+    printf("\n");
+  }
+}
 
 int
 main(int argc, char **argv)
@@ -251,8 +285,10 @@ main(int argc, char **argv)
   
 #if 0
   test_print_ragged();
-#endif
   test_time_ragged();
+#endif
+
+  test_api_struct();
 
   return 0;
 }
