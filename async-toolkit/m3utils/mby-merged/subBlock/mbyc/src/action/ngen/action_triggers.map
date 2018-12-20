@@ -4,10 +4,12 @@ reset >> rst_n
 '0 >> i_mgmt
 1'b0 >> i_mgmt_v
 1'b0 >> i_trig_v
+'0 >> i_trig
 '0 >> i_parser_pkt_meta
 1'b0 >> i_parser_pkt_meta_v
 '0 >> o_mgmt
 1'b0 >> o_mgmt_v
 1'b0 >> o_trig_intr
 1'b0 >> o_trig_v
+'0 >> o_trig
 
