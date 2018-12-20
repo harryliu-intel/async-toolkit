@@ -8,7 +8,8 @@
 
 #include <sys/time.h>
 
-#include "hohum.h"
+#include "ragged2arcs.h"
+#include "addr2ragged.h"
 #include "mby_top_map.h"
 #include "seqtype.h"
 
@@ -35,10 +36,10 @@ print_ragged(const seqtype_t *s)
 int
 inc_ragged_last(seqtype_t *seq)
 {
-  /* UNTESTED CODE */
+  /* XXX UNTESTED CODE */
   /* increment ragged in the last valid position */
   const arc_t **arcs;
-  int p;
+  int p=0;
   
   while(seq->d[p] != -1) ++p;
   /* p points to end marker */
@@ -57,12 +58,26 @@ inc_ragged_last(seqtype_t *seq)
     return 0;                /* at the last index already */
 }
 
-#define MATCH_NONE       0
-#define MATCH_PARTIAL    1
-#define MATCH_COMPLETE   2
+#define MATCH_NONE       0 /* mismatch                                   */
+#define MATCH_PARTIAL    1 /* match a partial path (higher level match)  */
+#define MATCH_COMPLETE   2 /* complete match -- matches a specific field */
 
 int
 name2ragged(const char *name, seqtype_t *seq_a)
+/* 
+   convert a single dotted, arrayed name to a ragged index
+
+   ex. a.b.c[14][32].x.y.z
+
+   if z is a field then MATCH_COMPLETE is returned
+
+   if z is not a field, then MATCH_PARTIAL is returned
+
+   if the string does not match anything
+   OR an array index is out of bounds
+   OR a syntax error exists in the string (ex. a.b[3.d]4),
+   then MATCH_NONE is returned
+*/
 {
   seqtype_t qqq, *seq=&qqq;
   const char *p=name;
@@ -175,6 +190,7 @@ test_print_ragged(void)
 
     for (const char **s=seq; *s; ++s)
       printf("%s", *s);
+    
     printf("\n");
   }
 }
@@ -204,7 +220,7 @@ test_time_ragged(void)
   struct timeval tv0, tv1;
   gettimeofday(&tv0,NULL);
   for (int i=0; i<ops; ++i) {
-    chipaddr_t a=random() % 1000*1000, rem;
+    chipaddr_t a=random() % (1000*1000), rem;
     seqtype_t rp;
 
     rem = addr2ragged(a, &rp);
@@ -212,7 +228,40 @@ test_time_ragged(void)
   gettimeofday(&tv1,NULL);
   print_time_delta(&tv0,&tv1,"test_time_ragged", ops);
 }
+
+void
+test_api_struct(void)
+{
+  mby_top_map *map;
+  size_t mapsiz = sizeof(mby_top_map);
+
+  printf("mby_top_map is %ld bytes.\n", mapsiz);
   
+  map = malloc(mapsiz);
+
+  for (int i=0; i<100*1000; ++i) {
+    chipaddr_t a=random() % (1000*1000*10), rem;
+    seqtype_t rp;
+    void *localptr;
+    long localoff;
+    const char *seq[MAXDEPTH];
+
+    rem = addr2ragged(a, &rp);
+    localptr = mby_top_map__getptr(map, rp.d);
+    localoff = (const char *)localptr-(const char *)map;
+      
+    printf("addr=%#10lx ragged=", a);
+    print_ragged(&rp);
+    printf(" rem=%ld localoff=%#lx nm=", rem, localoff);
+
+    ragged2nameseq(&rp, seq);
+
+    for (const char **s=seq; *s; ++s)
+      printf("%s", *s);
+    
+    printf("\n");
+  }
+}
 
 int
 main(int argc, char **argv)
@@ -250,8 +299,10 @@ main(int argc, char **argv)
   
 #if 0
   test_print_ragged();
-#endif
   test_time_ragged();
+#endif
+
+  test_api_struct();
 
   return 0;
 }
