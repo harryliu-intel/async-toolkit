@@ -35,6 +35,7 @@ print_ragged(const seqtype_t *s)
 int
 inc_ragged_last(seqtype_t *seq)
 {
+  /* UNTESTED CODE */
   /* increment ragged in the last valid position */
   const arc_t **arcs;
   int p;
