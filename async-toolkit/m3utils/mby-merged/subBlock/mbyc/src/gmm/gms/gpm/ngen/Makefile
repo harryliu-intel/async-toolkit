@@ -1,37 +1,34 @@
-BLOCK         = mby_gpm_gen_mem
-DIFF         := $(if $(DISPLAY),tkdiff,diff -w)
-NGEN          = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/ngen_i/ngen_i.pl
-NGEN_FLAGS    = -fi=INTCNOPWR
-V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
+PAR         = gpm
+BLOCK       = mby_$(PAR)_gen_mem
+DIFF        = $(if $(DISPLAY),tkdiff,diff -w)
+NGEN        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/ngen_i/ngen_i.pl
+NGEN_FLAGS  = -fi=INTCNOPWR
+V2BBOX      = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
-V_DIRS        = -d=../gcm/rtl
-V_LIBS        =
+V_DIRS      = -d=../rtl
+V_LIBS      =
+MGM_RUN     = $(MODEL_ROOT)/target/mby/mgm_run
 
-.PHONY: ngen pre top rtl copy post clean diff
+.PHONY: ngen pre top rtl copy clean diff
 
-ngen: clean pre top post
+ngen: clean pre top
 
 pre:
 	./pre_process.pl
-	$(V2BBOX) -v ./gpm_shells_wrapper_inc.v -n gpm_shells_wrapper -p ../../../../../../../target/mby/mgm_run/gpm/src,../../../../../../../target/mby/mgm_run/rtl -o gpm_shells_wrapper.v
-	$(V2BBOX) -v ../../../../../../../target/mby/mgm_run/gpm/src/mem_wrap/gpm_sram_mems.v -p ../../../../../../../target/mby/mgm_run/gpm/src,../../../../../../../target/mby/mgm_run/rtl -o gpm_sram_mems.v
-	#$(V2BBOX) -v ../../../../../../target/mby/mgm_run/gpm/src/mem_wrap/gpm_ff_mems.v -p ../../../../../../target/mby/mgm_run/gpm/src,../../../../../../target/mby/mgm_run/rtl -o gpm_ff_mems.v
+	$(V2BBOX) -v $(PAR)_shells_wrapper_inc.v -n $(PAR)_shells_wrapper -p $(MGM_RUN)/$(PAR)/src,$(MGM_RUN)/rtl -o $(PAR)_shells_wrapper.v
+	$(V2BBOX) -v $(MGM_RUN)/$(PAR)/src/mem_wrap/$(PAR)_ff_mems.v -p $(MGM_RUN)/$(PAR)/src,$(MGM_RUN)/rtl -o $(PAR)_ff_mems.v
+	$(V2BBOX) -v $(MGM_RUN)/$(PAR)/src/mem_wrap/$(PAR)_sram_mems.v -p $(MGM_RUN)/$(PAR)/src,$(MGM_RUN)/rtl -o $(PAR)_sram_mems.v
 
-top:
+top: pre
 	@$(NGEN) $(NGEN_FLAGS) $(V_DIRS) $(V_LIBS) $(BLOCK)
-
-post:
-	./post_process.pl
-	rm -f gpm_shells_wrapper_inc.v
-	rm -f gpm_shells_wrapper.v
-	rm -f gpm_sram_mems.v
+	#rm -f *.v
 
 rtl copy:
 	cp ngen/$(BLOCK).sv ../rtl/$(BLOCK).sv
 
 clean:
 	@echo "Cleaning $(BLOCK)"
-	@rm -rf $(wildcard ngen gpm_shells_wrapper_inc.v gpm_shells_wrapper.v gpm_sram_mems.v)
+	#rm -rf $(wildcard ngen *.v *.sv *.tmp)
 
 diff:
 	@echo "Making a difference..." # one byte at a time

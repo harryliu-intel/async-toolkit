@@ -45,10 +45,10 @@ class env;
                                     //  - and objects and their variables are created at run time.  
 
     // -hz: 12/7/2018:
-    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0;
-    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1;
-    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2;
-    virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3;
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0;
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1;
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2;
+    virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3;
 
 
     // Declaration of variables that hold handles to env sub-objects.  
@@ -71,10 +71,10 @@ class env;
     (
    
         virtual msh_node_dut_if     dut_if ,        // testbench interface
-	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0,	// -hz: 12/7/2018
-	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1,
-        virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2,
-	virtual mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3,
+	virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0,	// -hz: 12/7/2018
+	virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1,
+        virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2,
+	virtual mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3,
    	// num of req to input
         integer  knob_inp_req_num
     );

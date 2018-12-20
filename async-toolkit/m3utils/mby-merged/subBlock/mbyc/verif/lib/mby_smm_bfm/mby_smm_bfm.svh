@@ -62,7 +62,7 @@ class mby_smm_bfm extends uvm_component;
    //smm_bfm_col_rd_req_agent gmm_rd_req_agent;
    //smm_bfm_col_rd_req_agent mce_rd_req_agent;
 
-   smm_bfm_mem_node  mem_mesh[NUM_MSH_ROWS-1:0][NUM_MSH_COLS-1:0];
+   smm_bfm_mem_node  mem_mesh[MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0];
    smm_bfm_mwr_req   mwr_req;
    smm_bfm_mrd_req   mrd_req;
    
@@ -107,8 +107,8 @@ class mby_smm_bfm extends uvm_component;
       egr_rd_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
       egr_rd_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
       
-      for(int row_idx=0 ; row_idx<NUM_MSH_ROWS; row_idx++) begin
-         for(int col_idx=0 ; col_idx<NUM_MSH_COLS; col_idx++) begin
+      for(int row_idx=0 ; row_idx<MAX_NUM_MSH_ROWS; row_idx++) begin
+         for(int col_idx=0 ; col_idx<MAX_NUM_MSH_COLS; col_idx++) begin
             mem_mesh[row_idx][col_idx] = smm_bfm_mem_node::type_id::create($sformatf("mem_node%d%d",row_idx,col_idx), this);
          end
       end
