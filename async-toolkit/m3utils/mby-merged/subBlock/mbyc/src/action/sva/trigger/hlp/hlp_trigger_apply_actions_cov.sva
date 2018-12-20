@@ -1,0 +1,64 @@
+//------------------------------------------------------------------------------
+//
+//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Covergroup Definitions
+
+
+covergroup hlp_actions_inputs_grp
+  @(posedge clk iff (rst_n && i_trig_v && i_actions.v));
+
+  cp_trap_action_tnum:                  coverpoint i_actions.trap_action_tnum            { bins value[]  =  {[0:95]}; }
+  cp_tc_action_tnum:                    coverpoint i_actions.tc_action_tnum              { bins value[]  =  {[0:95]}; }
+  cp_vlan_action_tnum:                  coverpoint i_actions.vlan_action_tnum            { bins value[]  =  {[0:95]}; }
+  cp_limit_action_tnum:                 coverpoint i_actions.rate_limit_action_tnum      { bins value[]  =  {[0:95]}; }
+  cp_forwarding_action_tnum:            coverpoint i_actions.forwarding_action_tnum      { bins value[]  =  {[0:95]}; }
+  cp_mirror0_action_tnum:               coverpoint i_actions.mirroring_action0_tnum      { bins value[]  =  {[0:95]}; }
+  cp_mirror1_action_tnum:               coverpoint i_actions.mirroring_action1_tnum      { bins value[]  =  {[0:95]}; }
+
+  cp_forwarding_action:                 coverpoint i_actions.forwarding_action;
+  cp_non_zero_dmask:                    coverpoint (trig_in.pre_resolve_dst_mask!='0);
+  cp_forwarding_zero_dmask:             cross i_actions.forwarding_action, cp_non_zero_dmask;
+
+  cp_trap_action:                       coverpoint i_actions.trap_action;
+  cp_mirror0_action:                    coverpoint i_actions.mirroring_action0;
+  cp_mirror1_action:                    coverpoint i_actions.mirroring_action1;
+  cp_tc_action:                         coverpoint i_actions.tc_action;
+  cp_vlan_action:                       coverpoint i_actions.vlan_action;
+  cp_learning_action:                   coverpoint i_actions.learning_action;
+  cp_limit_action:                      coverpoint i_actions.rate_limit_action;
+  cp_el2domain_action:                  coverpoint i_actions.el2_domain_action;
+  cp_el3domain_action:                  coverpoint i_actions.el3_domain_action;
+  cp_policer_action:                    coverpoint i_actions.policer_action;
+  cp_metadata_action0:                  coverpoint i_actions.metadata_action[0];
+  cp_metadata_action1:                  coverpoint i_actions.metadata_action[1];
+  cp_metadata_action2:                  coverpoint i_actions.metadata_action[2];
+  cp_metadata_action3:                  coverpoint i_actions.metadata_action[3];
+  
+endgroup
+
+
+
+
+
+`HLP_PLUSARGS_COV_GRP_NEW(hlp_actions_inputs_grp)

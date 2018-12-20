@@ -24,10 +24,11 @@
 //
 //------------------------------------------------------------------------------
 //   Author        : Nathan Mai
+//                 : Lewis Sternberg
 //   Project       : Madison Bay
 //------------------------------------------------------------------------------
 
-//   Defines : mby_rx_ppe_defines
+//   Defines : types useful to mby_rx_ppe testbench
 //
 //  This file contain any PARAMETERS or Defines.  Also contains Topology
 //  configuration ENUM.
@@ -39,34 +40,58 @@
 `error "Attempt to include file outside of mby_rx_ppe_env_pkg."
 `endif
 
-
-class mby_rx_ppe_defines extends uvm_object;
-
-   // Enumeration: rx_ppe_topology_e
-   // Definition of different rx_ppe TB topologies.
-   //    -UNK_TOPO          -Used to detect integration error
-   //    -RX_PPE_FULL       -Complete RX PPE pipeline Testbench
-
-   typedef enum int {
-      UNK_TOPO           = 0,
-      RX_PPE_FULL        = 1
-   } rx_ppe_topology_e ;
+// LNS: encapsulating this as a class prevents vcs from being able to use mby_rx_ppe_topology_e_num as an array size
 
 
-   `uvm_object_utils(mby_rx_ppe_env_pkg::mby_rx_ppe_defines)
+// Enumeration: mby_rx_ppe_topology_e
+// Used to identify the blocks to be instantiated in RTL & in the testbench
+// For example, if the MAPPER block *alone* is instantiated:
+//              cfg.topology[MAPPER] will be 1 -- all other cfg.stages[*] will be 0
+//              scoreboard[MAPPER]   will be created for the post-mapper scoreboard
+//              agent[PARSER]        will be created with its driver enabled to drive the mapper RTL
+//              agent[MAPPER]        will be created with its monitor enabled to pass the mapper RTL output to scoreboard[MAPPER]
+//
 
-   //---------------------------------------------------------------------------
-   //  Constructor: new
-   //  Collect any plusargs and re-configure variables from default, if used.
-   //  Arguments:
-   //  name   - MC Defines object name.
-   //---------------------------------------------------------------------------
-   function       new(string name = "mby_rx_ppe_defines");
-      super.new(name);
-   //  $value$plusargs("DISABLE_END2END_FRAME_SB=%d",  disable_end2end_frame_sb);
+//TODO:delete this comment when no longer needed
+// LNS: for the record, this had been:
+//   typedef enum int {
+//      UNK_TOPO           = 0,
+//      RX_PPE_FULL        = 1
+//   } rx_ppe_topology_e ;
+// 
 
-   endfunction: new
+// TODO: LNS: I'm not so sure about the latter stages -- review is needed
+typedef enum int {
+   PARSER            = 0,
+   MAPPER            = 1,
+   CLASSIFIER        = 2,
+   POLICER           = 3,
+   HASH              = 4,
+   NEXT_HOP_LOOKUP   = 5,
+   MASK_GEN          = 6,
+   TRIGGERS          = 7,
+   CONGESTION_MGT    = 8,
+   TELEMETRY         = 9,
+   MIRRORS_MCAST     = 10,
+   METADATA_GEN      = 11,
+   MGMT_INT          = 12
+} mby_rx_ppe_topology_e ;
 
-endclass: mby_rx_ppe_defines
+// Per the SV LRM:
+//    "The num method returns the number of elements in the given enumeration."
+// However, I've yet to get this to work, thus:
+const integer mby_rx_ppe_topology_e_num = 13;
+// the above, when used in mby_rx_ppe_tb_top_cfg thus:
+//   int topology [mby_rx_ppe_topology_e_num];
+// produces:
+// -I-:Error-[TCF-CETE] Cannot evaluate the expression
+// -I-:/nfs/site/disks/sc_mby_00072/lnstern/mby/work_root/mby-mby-x0/subBlock/mbyc/verif/rx_ppe/env/mby_rx_ppe_tb_top_cfg.svh, 47
+// -I-:"(mby_rx_ppe_topology_e_num + (~1'sd0))"
+// -I-:  Cannot evaluate the expression in right dimension bound.
+// -I-:  The expression must be compile time constant.
+// 
+//stupid annoying work-around:
+`define MBY_RX_PPE_TOPOLOGY_E_NUM  13
+
 
 `endif // __MBY_RX_PPE_DEFINES_GUARD
