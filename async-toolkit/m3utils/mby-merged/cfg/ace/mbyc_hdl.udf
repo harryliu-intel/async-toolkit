@@ -375,7 +375,7 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag            => "nonsynth",
             },
 
-	    mby_test_lib => {
+            mby_test_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_test.hdl', ],
                -dependent_libs => [ 'sip_shared_lib', 'mby_env_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
@@ -386,7 +386,10 @@ print "MGM debug : @mbyMgmLibs\n";
                -dependent_libs => [ 'shdv_shared_lib'],
                -tag            => "nonsynth",
                -elab_opts => [
-                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c ",
+                  '-CFLAGS "-D VCS"',
+                  '-CFLAGS "-std=gnu99"',
+                  "-CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"",
+                  "$ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c",
                ],
             },
 

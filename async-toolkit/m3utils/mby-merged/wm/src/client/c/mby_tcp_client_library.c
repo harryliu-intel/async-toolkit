@@ -1009,26 +1009,25 @@ static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
   int cnt=0;
   const uint8_t *lim = bytes + nbytes;
   const uint8_t *b, *p=bytes;
-  int g, i;
 
   do {
-    printf("%02x: ",(unsigned)(p-bytes));
+    printf("%02x: ", (unsigned)(p-bytes));
     b = p;
     if (show_ascii) {
-      for (g = 0; g < line_groups; ++g) {
-        for (i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
+      for (int g = 0; g < line_groups; ++g) {
+        for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
           fprintf(fp, "%c", p == lim ? ' ' : printable(*p));
         fprintf(fp, " ");
       }
       fprintf(fp, "| ");
       p = b;
     }
-    for (g = 0; g < line_groups; ++g) {
-      for (i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
+    for (int g = 0; g < line_groups; ++g) {
+      for (int i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
         fprintf(fp, p == lim ? "   " : " %02x", p == lim? 0xbeef : *p);
       fprintf(fp, " ");
     }
     fprintf(fp, "\n");
-  } while (p!=lim);
+  } while (p != lim);
 }
 
