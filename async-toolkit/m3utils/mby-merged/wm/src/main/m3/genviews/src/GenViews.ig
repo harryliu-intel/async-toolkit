@@ -1,11 +1,12 @@
 GENERIC INTERFACE GenViews(Tgt);
-IMPORT GenViews AS Super;
 IMPORT OSError, Wr, Thread, Pathname;
 
-TYPE T <: Super.T;
+TYPE T <: Tgt.Gen;
 
 TYPE
-  Compiler = Tgt.Public OBJECT METHODS
+  Compiler = Tgt.Public OBJECT
+    gv : T;
+  METHODS
     write(dirPath : Pathname.T; phase : Tgt.Phase)
       RAISES { OSError.E, Wr.Failure, Thread.Alerted };
   END;

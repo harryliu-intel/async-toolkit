@@ -590,7 +590,7 @@ void MaskGen
     const fm_byte            l3_edomain_in        = in->L3_EDOMAIN;
     const fm_bool            mark_routed          = in->MARK_ROUTED;
     const fm_bool            mtu_violation        = in->MTU_VIOLATION;
-    const fm_bool            no_learn             = in->NO_LEARN;
+    const fm_bool            learn_notify         = in->LEARN_NOTIFY;
     const fm_byte            operator_id          = in->OPERATOR_ID;
     const fm_bool            parity_error         = in->PARITY_ERROR;
     const fm_bool            parser_window_v      = in->PARSER_WINDOW_V;
@@ -654,6 +654,7 @@ void MaskGen
 
     // --------------------------------------------------------------------------------
     // Learning:
+    ///> Learning might need to be moved to Triggers <-- REVISIT!!!
 
     /* Perform ingress forwarding ID lookup. */
     mbyStpState l2_ifid1_state = MBY_STP_STATE_DISABLE;
@@ -662,7 +663,8 @@ void MaskGen
 
     fm_bool l2_ifid1_learn   = ((l2_ifid1_state == MBY_STP_STATE_LEARNING) ||
                                 (l2_ifid1_state == MBY_STP_STATE_FORWARD));
-    fm_bool learning_allowed = port_cfg1.LEARNING_ENABLE && !no_learn && l2_ifid1_learn;
+    // Below "&& !learn_notify" to be clarified. This should be learn_notify without negation <-- REVISIT!!!
+    fm_bool learning_allowed = port_cfg1.LEARNING_ENABLE && !learn_notify && l2_ifid1_learn;
     fm_bool l2_smac_is_cpu;
     l2_smac_is_cpu = isCpuMacAddress(fwd_misc, l2_smac);
     fm_bool l2_smac_is_zero  = (l2_smac == 0);

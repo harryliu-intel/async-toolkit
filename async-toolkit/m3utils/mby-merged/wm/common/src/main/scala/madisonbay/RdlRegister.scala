@@ -93,6 +93,10 @@ trait RdlRegister[P <: RdlRegister[P]] {
   override def toString: String = s"Register $name at $addr"
 }
 
+/** Type-agnostic access to RdlRegister's data. */
+case class RdlRegisterAccess[A](width: Alignment, optic: Optional[A, BitVector])
+
+/** Based class for RdlRegister's implementors' companion objects. */
 abstract class RdlRegisterCompanion[P <: RdlRegister[P] : ClassTag] { companion =>
   /** Reset constructor. */
   def apply(addr: Address): P
@@ -148,9 +152,13 @@ abstract class RdlRegisterCompanion[P <: RdlRegister[P] : ClassTag] { companion 
       newValue => _.deserialize(newValue)
     }
 
-  /** Generates lenses from path to register's state. */
+  /** Generates lenses from path to register's state.
+    *
+    * The map's values are: registers' sizes and optics to it.
+    */
   def genOpticsLookup[A](me: P,
-                         path: Optional[A, P]): HashMap[Address, Optional[A, BitVector]] = {
-    HashMap(me.range.pos -> (path composeLens _state))
+                         path: Optional[A, P]): HashMap[Address, RdlRegisterAccess[A]] = {
+    val width = accesswidth   //TODO: should depend on alignment strategy
+    HashMap(me.range.pos -> RdlRegisterAccess[A](width = width, optic = (path composeLens _state)))
   }
 }

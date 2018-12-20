@@ -1,33 +1,505 @@
-foreach $i (0..3) {
-   1'b0  >> MEM_POD_PTR_$i$_CFG_reg_sel
-   1'b0  >> MEM_POD_PTR_$i$_STATUS_reg_sel
+1'b0                                         >> SEGPTR_0_CFG_reg_sel
+1'b0                                         >> SEGPTR_0_STATUS_reg_sel
+segptr_if.adr      [0]      >> segptr_0_adr
+segptr_if.rd_en    [0]      >> segptr_0_rd_en
+segptr_if.wr_data  [0]      >> segptr_0_wr_data
+segptr_if.wr_en    [0]      >> segptr_0_wr_en
+                                             >> segptr_0_wr_bwe
+segptr_if.rd_data  [0]      >> segptr_0_rd_data
+segptr_if.rd_valid [0]      >> segptr_0_rd_valid
+                                             >> segptr_0_ecc_uncor_err
+                                             >> segptr_0_init_done
+1'b0                                         >> segptr_0_mem_ls_enter
 
-   mem_pod_ptr_$i$_if.adr       >> mem_pod_ptr_$i$_adr
-   mem_pod_ptr_$i$_if.rd_en     >> mem_pod_ptr_$i$_rd_en
-   mem_pod_ptr_$i$_if.wr_data   >> mem_pod_ptr_$i$_wr_data
-   mem_pod_ptr_$i$_if.wr_en     >> mem_pod_ptr_$i$_wr_en
-   mem_pod_ptr_$i$_if.rd_data   >> mem_pod_ptr_$i$_rd_data
-   mem_pod_ptr_$i$_if.rd_valid  >> mem_pod_ptr_$i$_rd_valid
-   1'b0                         >> mem_pod_ptr_$i$_mem_ls_enter
-   >> mem_pod_ptr_$i$_ecc_uncor_err
-   >> mem_pod_ptr_$i$_init_done
-}
+1'b0                                         >> SEGPTR_1_CFG_reg_sel
+1'b0                                         >> SEGPTR_1_STATUS_reg_sel
+segptr_if.adr      [1]      >> segptr_1_adr
+segptr_if.rd_en    [1]      >> segptr_1_rd_en
+segptr_if.wr_data  [1]      >> segptr_1_wr_data
+segptr_if.wr_en    [1]      >> segptr_1_wr_en
+                                             >> segptr_1_wr_bwe
+segptr_if.rd_data  [1]      >> segptr_1_rd_data
+segptr_if.rd_valid [1]      >> segptr_1_rd_valid
+                                             >> segptr_1_ecc_uncor_err
+                                             >> segptr_1_init_done
+1'b0                                         >> segptr_1_mem_ls_enter
 
-foreach $i (0..7) {
-   1'b0  >> MEM_POINTERS_$i$_CFG_reg_sel
-   1'b0  >> MEM_POINTERS_$i$_STATUS_reg_sel
+1'b0                                         >> SEGPTR_2_CFG_reg_sel
+1'b0                                         >> SEGPTR_2_STATUS_reg_sel
+segptr_if.adr      [2]      >> segptr_2_adr
+segptr_if.rd_en    [2]      >> segptr_2_rd_en
+segptr_if.wr_data  [2]      >> segptr_2_wr_data
+segptr_if.wr_en    [2]      >> segptr_2_wr_en
+                                             >> segptr_2_wr_bwe
+segptr_if.rd_data  [2]      >> segptr_2_rd_data
+segptr_if.rd_valid [2]      >> segptr_2_rd_valid
+                                             >> segptr_2_ecc_uncor_err
+                                             >> segptr_2_init_done
+1'b0                                         >> segptr_2_mem_ls_enter
 
-   mem_pointers_$i$_if.adr       >> mem_pointers_$i$_adr
-   mem_pointers_$i$_if.rd_en     >> mem_pointers_$i$_rd_en
-   mem_pointers_$i$_if.wr_data   >> mem_pointers_$i$_wr_data
-   mem_pointers_$i$_if.wr_en     >> mem_pointers_$i$_wr_en
-   mem_pointers_$i$_if.wr_bwe    >> mem_pointers_$i$_wr_bwe
-   mem_pointers_$i$_if.rd_data   >> mem_pointers_$i$_rd_data
-   mem_pointers_$i$_if.rd_valid  >> mem_pointers_$i$_rd_valid
-   1'b0                          >> mem_pointers_$i$_mem_ls_enter
-   >> mem_pointers_$i$_ecc_uncor_err
-   >> mem_pointers_$i$_init_done
-}
+1'b0                                         >> SEGPTR_3_CFG_reg_sel
+1'b0                                         >> SEGPTR_3_STATUS_reg_sel
+segptr_if.adr      [3]      >> segptr_3_adr
+segptr_if.rd_en    [3]      >> segptr_3_rd_en
+segptr_if.wr_data  [3]      >> segptr_3_wr_data
+segptr_if.wr_en    [3]      >> segptr_3_wr_en
+                                             >> segptr_3_wr_bwe
+segptr_if.rd_data  [3]      >> segptr_3_rd_data
+segptr_if.rd_valid [3]      >> segptr_3_rd_valid
+                                             >> segptr_3_ecc_uncor_err
+                                             >> segptr_3_init_done
+1'b0                                         >> segptr_3_mem_ls_enter
+
+1'b0                                         >> SEGPTR_4_CFG_reg_sel
+1'b0                                         >> SEGPTR_4_STATUS_reg_sel
+segptr_if.adr      [4]      >> segptr_4_adr
+segptr_if.rd_en    [4]      >> segptr_4_rd_en
+segptr_if.wr_data  [4]      >> segptr_4_wr_data
+segptr_if.wr_en    [4]      >> segptr_4_wr_en
+                                             >> segptr_4_wr_bwe
+segptr_if.rd_data  [4]      >> segptr_4_rd_data
+segptr_if.rd_valid [4]      >> segptr_4_rd_valid
+                                             >> segptr_4_ecc_uncor_err
+                                             >> segptr_4_init_done
+1'b0                                         >> segptr_4_mem_ls_enter
+
+1'b0                                         >> SEGPTR_5_CFG_reg_sel
+1'b0                                         >> SEGPTR_5_STATUS_reg_sel
+segptr_if.adr      [5]      >> segptr_5_adr
+segptr_if.rd_en    [5]      >> segptr_5_rd_en
+segptr_if.wr_data  [5]      >> segptr_5_wr_data
+segptr_if.wr_en    [5]      >> segptr_5_wr_en
+                                             >> segptr_5_wr_bwe
+segptr_if.rd_data  [5]      >> segptr_5_rd_data
+segptr_if.rd_valid [5]      >> segptr_5_rd_valid
+                                             >> segptr_5_ecc_uncor_err
+                                             >> segptr_5_init_done
+1'b0                                         >> segptr_5_mem_ls_enter
+
+1'b0                                         >> SEGPTR_6_CFG_reg_sel
+1'b0                                         >> SEGPTR_6_STATUS_reg_sel
+segptr_if.adr      [6]      >> segptr_6_adr
+segptr_if.rd_en    [6]      >> segptr_6_rd_en
+segptr_if.wr_data  [6]      >> segptr_6_wr_data
+segptr_if.wr_en    [6]      >> segptr_6_wr_en
+                                             >> segptr_6_wr_bwe
+segptr_if.rd_data  [6]      >> segptr_6_rd_data
+segptr_if.rd_valid [6]      >> segptr_6_rd_valid
+                                             >> segptr_6_ecc_uncor_err
+                                             >> segptr_6_init_done
+1'b0                                         >> segptr_6_mem_ls_enter
+
+1'b0                                         >> SEGPTR_7_CFG_reg_sel
+1'b0                                         >> SEGPTR_7_STATUS_reg_sel
+segptr_if.adr      [7]      >> segptr_7_adr
+segptr_if.rd_en    [7]      >> segptr_7_rd_en
+segptr_if.wr_data  [7]      >> segptr_7_wr_data
+segptr_if.wr_en    [7]      >> segptr_7_wr_en
+                                             >> segptr_7_wr_bwe
+segptr_if.rd_data  [7]      >> segptr_7_rd_data
+segptr_if.rd_valid [7]      >> segptr_7_rd_valid
+                                             >> segptr_7_ecc_uncor_err
+                                             >> segptr_7_init_done
+1'b0                                         >> segptr_7_mem_ls_enter
+
+1'b0                                         >> SEGPTR_8_CFG_reg_sel
+1'b0                                         >> SEGPTR_8_STATUS_reg_sel
+segptr_if.adr      [8]      >> segptr_8_adr
+segptr_if.rd_en    [8]      >> segptr_8_rd_en
+segptr_if.wr_data  [8]      >> segptr_8_wr_data
+segptr_if.wr_en    [8]      >> segptr_8_wr_en
+                                             >> segptr_8_wr_bwe
+segptr_if.rd_data  [8]      >> segptr_8_rd_data
+segptr_if.rd_valid [8]      >> segptr_8_rd_valid
+                                             >> segptr_8_ecc_uncor_err
+                                             >> segptr_8_init_done
+1'b0                                         >> segptr_8_mem_ls_enter
+
+1'b0                                         >> SEGPTR_9_CFG_reg_sel
+1'b0                                         >> SEGPTR_9_STATUS_reg_sel
+segptr_if.adr      [9]      >> segptr_9_adr
+segptr_if.rd_en    [9]      >> segptr_9_rd_en
+segptr_if.wr_data  [9]      >> segptr_9_wr_data
+segptr_if.wr_en    [9]      >> segptr_9_wr_en
+                                             >> segptr_9_wr_bwe
+segptr_if.rd_data  [9]      >> segptr_9_rd_data
+segptr_if.rd_valid [9]      >> segptr_9_rd_valid
+                                             >> segptr_9_ecc_uncor_err
+                                             >> segptr_9_init_done
+1'b0                                         >> segptr_9_mem_ls_enter
+
+1'b0                                         >> SEGPTR_10_CFG_reg_sel
+1'b0                                         >> SEGPTR_10_STATUS_reg_sel
+segptr_if.adr      [10]      >> segptr_10_adr
+segptr_if.rd_en    [10]      >> segptr_10_rd_en
+segptr_if.wr_data  [10]      >> segptr_10_wr_data
+segptr_if.wr_en    [10]      >> segptr_10_wr_en
+                                             >> segptr_10_wr_bwe
+segptr_if.rd_data  [10]      >> segptr_10_rd_data
+segptr_if.rd_valid [10]      >> segptr_10_rd_valid
+                                             >> segptr_10_ecc_uncor_err
+                                             >> segptr_10_init_done
+1'b0                                         >> segptr_10_mem_ls_enter
+
+1'b0                                         >> SEGPTR_11_CFG_reg_sel
+1'b0                                         >> SEGPTR_11_STATUS_reg_sel
+segptr_if.adr      [11]      >> segptr_11_adr
+segptr_if.rd_en    [11]      >> segptr_11_rd_en
+segptr_if.wr_data  [11]      >> segptr_11_wr_data
+segptr_if.wr_en    [11]      >> segptr_11_wr_en
+                                             >> segptr_11_wr_bwe
+segptr_if.rd_data  [11]      >> segptr_11_rd_data
+segptr_if.rd_valid [11]      >> segptr_11_rd_valid
+                                             >> segptr_11_ecc_uncor_err
+                                             >> segptr_11_init_done
+1'b0                                         >> segptr_11_mem_ls_enter
+
+1'b0                                         >> SEGPTR_12_CFG_reg_sel
+1'b0                                         >> SEGPTR_12_STATUS_reg_sel
+segptr_if.adr      [12]      >> segptr_12_adr
+segptr_if.rd_en    [12]      >> segptr_12_rd_en
+segptr_if.wr_data  [12]      >> segptr_12_wr_data
+segptr_if.wr_en    [12]      >> segptr_12_wr_en
+                                             >> segptr_12_wr_bwe
+segptr_if.rd_data  [12]      >> segptr_12_rd_data
+segptr_if.rd_valid [12]      >> segptr_12_rd_valid
+                                             >> segptr_12_ecc_uncor_err
+                                             >> segptr_12_init_done
+1'b0                                         >> segptr_12_mem_ls_enter
+
+1'b0                                         >> SEGPTR_13_CFG_reg_sel
+1'b0                                         >> SEGPTR_13_STATUS_reg_sel
+segptr_if.adr      [13]      >> segptr_13_adr
+segptr_if.rd_en    [13]      >> segptr_13_rd_en
+segptr_if.wr_data  [13]      >> segptr_13_wr_data
+segptr_if.wr_en    [13]      >> segptr_13_wr_en
+                                             >> segptr_13_wr_bwe
+segptr_if.rd_data  [13]      >> segptr_13_rd_data
+segptr_if.rd_valid [13]      >> segptr_13_rd_valid
+                                             >> segptr_13_ecc_uncor_err
+                                             >> segptr_13_init_done
+1'b0                                         >> segptr_13_mem_ls_enter
+
+1'b0                                         >> SEGPTR_14_CFG_reg_sel
+1'b0                                         >> SEGPTR_14_STATUS_reg_sel
+segptr_if.adr      [14]      >> segptr_14_adr
+segptr_if.rd_en    [14]      >> segptr_14_rd_en
+segptr_if.wr_data  [14]      >> segptr_14_wr_data
+segptr_if.wr_en    [14]      >> segptr_14_wr_en
+                                             >> segptr_14_wr_bwe
+segptr_if.rd_data  [14]      >> segptr_14_rd_data
+segptr_if.rd_valid [14]      >> segptr_14_rd_valid
+                                             >> segptr_14_ecc_uncor_err
+                                             >> segptr_14_init_done
+1'b0                                         >> segptr_14_mem_ls_enter
+
+1'b0                                         >> SEGPTR_15_CFG_reg_sel
+1'b0                                         >> SEGPTR_15_STATUS_reg_sel
+segptr_if.adr      [15]      >> segptr_15_adr
+segptr_if.rd_en    [15]      >> segptr_15_rd_en
+segptr_if.wr_data  [15]      >> segptr_15_wr_data
+segptr_if.wr_en    [15]      >> segptr_15_wr_en
+                                             >> segptr_15_wr_bwe
+segptr_if.rd_data  [15]      >> segptr_15_rd_data
+segptr_if.rd_valid [15]      >> segptr_15_rd_valid
+                                             >> segptr_15_ecc_uncor_err
+                                             >> segptr_15_init_done
+1'b0                                         >> segptr_15_mem_ls_enter
+
+1'b0                                         >> SEGPTR_16_CFG_reg_sel
+1'b0                                         >> SEGPTR_16_STATUS_reg_sel
+segptr_if.adr      [16]      >> segptr_16_adr
+segptr_if.rd_en    [16]      >> segptr_16_rd_en
+segptr_if.wr_data  [16]      >> segptr_16_wr_data
+segptr_if.wr_en    [16]      >> segptr_16_wr_en
+                                             >> segptr_16_wr_bwe
+segptr_if.rd_data  [16]      >> segptr_16_rd_data
+segptr_if.rd_valid [16]      >> segptr_16_rd_valid
+                                             >> segptr_16_ecc_uncor_err
+                                             >> segptr_16_init_done
+1'b0                                         >> segptr_16_mem_ls_enter
+
+1'b0                                         >> SEGPTR_17_CFG_reg_sel
+1'b0                                         >> SEGPTR_17_STATUS_reg_sel
+segptr_if.adr      [17]      >> segptr_17_adr
+segptr_if.rd_en    [17]      >> segptr_17_rd_en
+segptr_if.wr_data  [17]      >> segptr_17_wr_data
+segptr_if.wr_en    [17]      >> segptr_17_wr_en
+                                             >> segptr_17_wr_bwe
+segptr_if.rd_data  [17]      >> segptr_17_rd_data
+segptr_if.rd_valid [17]      >> segptr_17_rd_valid
+                                             >> segptr_17_ecc_uncor_err
+                                             >> segptr_17_init_done
+1'b0                                         >> segptr_17_mem_ls_enter
+
+1'b0                                         >> SEGPTR_18_CFG_reg_sel
+1'b0                                         >> SEGPTR_18_STATUS_reg_sel
+segptr_if.adr      [18]      >> segptr_18_adr
+segptr_if.rd_en    [18]      >> segptr_18_rd_en
+segptr_if.wr_data  [18]      >> segptr_18_wr_data
+segptr_if.wr_en    [18]      >> segptr_18_wr_en
+                                             >> segptr_18_wr_bwe
+segptr_if.rd_data  [18]      >> segptr_18_rd_data
+segptr_if.rd_valid [18]      >> segptr_18_rd_valid
+                                             >> segptr_18_ecc_uncor_err
+                                             >> segptr_18_init_done
+1'b0                                         >> segptr_18_mem_ls_enter
+
+1'b0                                         >> SEGPTR_19_CFG_reg_sel
+1'b0                                         >> SEGPTR_19_STATUS_reg_sel
+segptr_if.adr      [19]      >> segptr_19_adr
+segptr_if.rd_en    [19]      >> segptr_19_rd_en
+segptr_if.wr_data  [19]      >> segptr_19_wr_data
+segptr_if.wr_en    [19]      >> segptr_19_wr_en
+                                             >> segptr_19_wr_bwe
+segptr_if.rd_data  [19]      >> segptr_19_rd_data
+segptr_if.rd_valid [19]      >> segptr_19_rd_valid
+                                             >> segptr_19_ecc_uncor_err
+                                             >> segptr_19_init_done
+1'b0                                         >> segptr_19_mem_ls_enter
+
+1'b0                                         >> SEGPTR_20_CFG_reg_sel
+1'b0                                         >> SEGPTR_20_STATUS_reg_sel
+segptr_if.adr      [20]      >> segptr_20_adr
+segptr_if.rd_en    [20]      >> segptr_20_rd_en
+segptr_if.wr_data  [20]      >> segptr_20_wr_data
+segptr_if.wr_en    [20]      >> segptr_20_wr_en
+                                             >> segptr_20_wr_bwe
+segptr_if.rd_data  [20]      >> segptr_20_rd_data
+segptr_if.rd_valid [20]      >> segptr_20_rd_valid
+                                             >> segptr_20_ecc_uncor_err
+                                             >> segptr_20_init_done
+1'b0                                         >> segptr_20_mem_ls_enter
+
+1'b0                                         >> SEGPTR_21_CFG_reg_sel
+1'b0                                         >> SEGPTR_21_STATUS_reg_sel
+segptr_if.adr      [21]      >> segptr_21_adr
+segptr_if.rd_en    [21]      >> segptr_21_rd_en
+segptr_if.wr_data  [21]      >> segptr_21_wr_data
+segptr_if.wr_en    [21]      >> segptr_21_wr_en
+                                             >> segptr_21_wr_bwe
+segptr_if.rd_data  [21]      >> segptr_21_rd_data
+segptr_if.rd_valid [21]      >> segptr_21_rd_valid
+                                             >> segptr_21_ecc_uncor_err
+                                             >> segptr_21_init_done
+1'b0                                         >> segptr_21_mem_ls_enter
+
+1'b0                                         >> SEGPTR_22_CFG_reg_sel
+1'b0                                         >> SEGPTR_22_STATUS_reg_sel
+segptr_if.adr      [22]      >> segptr_22_adr
+segptr_if.rd_en    [22]      >> segptr_22_rd_en
+segptr_if.wr_data  [22]      >> segptr_22_wr_data
+segptr_if.wr_en    [22]      >> segptr_22_wr_en
+                                             >> segptr_22_wr_bwe
+segptr_if.rd_data  [22]      >> segptr_22_rd_data
+segptr_if.rd_valid [22]      >> segptr_22_rd_valid
+                                             >> segptr_22_ecc_uncor_err
+                                             >> segptr_22_init_done
+1'b0                                         >> segptr_22_mem_ls_enter
+
+1'b0                                         >> SEGPTR_23_CFG_reg_sel
+1'b0                                         >> SEGPTR_23_STATUS_reg_sel
+segptr_if.adr      [23]      >> segptr_23_adr
+segptr_if.rd_en    [23]      >> segptr_23_rd_en
+segptr_if.wr_data  [23]      >> segptr_23_wr_data
+segptr_if.wr_en    [23]      >> segptr_23_wr_en
+                                             >> segptr_23_wr_bwe
+segptr_if.rd_data  [23]      >> segptr_23_rd_data
+segptr_if.rd_valid [23]      >> segptr_23_rd_valid
+                                             >> segptr_23_ecc_uncor_err
+                                             >> segptr_23_init_done
+1'b0                                         >> segptr_23_mem_ls_enter
+
+1'b0                                         >> SEGPTR_24_CFG_reg_sel
+1'b0                                         >> SEGPTR_24_STATUS_reg_sel
+segptr_if.adr      [24]      >> segptr_24_adr
+segptr_if.rd_en    [24]      >> segptr_24_rd_en
+segptr_if.wr_data  [24]      >> segptr_24_wr_data
+segptr_if.wr_en    [24]      >> segptr_24_wr_en
+                                             >> segptr_24_wr_bwe
+segptr_if.rd_data  [24]      >> segptr_24_rd_data
+segptr_if.rd_valid [24]      >> segptr_24_rd_valid
+                                             >> segptr_24_ecc_uncor_err
+                                             >> segptr_24_init_done
+1'b0                                         >> segptr_24_mem_ls_enter
+
+1'b0                                         >> SEGPTR_25_CFG_reg_sel
+1'b0                                         >> SEGPTR_25_STATUS_reg_sel
+segptr_if.adr      [25]      >> segptr_25_adr
+segptr_if.rd_en    [25]      >> segptr_25_rd_en
+segptr_if.wr_data  [25]      >> segptr_25_wr_data
+segptr_if.wr_en    [25]      >> segptr_25_wr_en
+                                             >> segptr_25_wr_bwe
+segptr_if.rd_data  [25]      >> segptr_25_rd_data
+segptr_if.rd_valid [25]      >> segptr_25_rd_valid
+                                             >> segptr_25_ecc_uncor_err
+                                             >> segptr_25_init_done
+1'b0                                         >> segptr_25_mem_ls_enter
+
+1'b0                                         >> SEGPTR_26_CFG_reg_sel
+1'b0                                         >> SEGPTR_26_STATUS_reg_sel
+segptr_if.adr      [26]      >> segptr_26_adr
+segptr_if.rd_en    [26]      >> segptr_26_rd_en
+segptr_if.wr_data  [26]      >> segptr_26_wr_data
+segptr_if.wr_en    [26]      >> segptr_26_wr_en
+                                             >> segptr_26_wr_bwe
+segptr_if.rd_data  [26]      >> segptr_26_rd_data
+segptr_if.rd_valid [26]      >> segptr_26_rd_valid
+                                             >> segptr_26_ecc_uncor_err
+                                             >> segptr_26_init_done
+1'b0                                         >> segptr_26_mem_ls_enter
+
+1'b0                                         >> SEGPTR_27_CFG_reg_sel
+1'b0                                         >> SEGPTR_27_STATUS_reg_sel
+segptr_if.adr      [27]      >> segptr_27_adr
+segptr_if.rd_en    [27]      >> segptr_27_rd_en
+segptr_if.wr_data  [27]      >> segptr_27_wr_data
+segptr_if.wr_en    [27]      >> segptr_27_wr_en
+                                             >> segptr_27_wr_bwe
+segptr_if.rd_data  [27]      >> segptr_27_rd_data
+segptr_if.rd_valid [27]      >> segptr_27_rd_valid
+                                             >> segptr_27_ecc_uncor_err
+                                             >> segptr_27_init_done
+1'b0                                         >> segptr_27_mem_ls_enter
+
+1'b0                                         >> SEGPTR_28_CFG_reg_sel
+1'b0                                         >> SEGPTR_28_STATUS_reg_sel
+segptr_if.adr      [28]      >> segptr_28_adr
+segptr_if.rd_en    [28]      >> segptr_28_rd_en
+segptr_if.wr_data  [28]      >> segptr_28_wr_data
+segptr_if.wr_en    [28]      >> segptr_28_wr_en
+                                             >> segptr_28_wr_bwe
+segptr_if.rd_data  [28]      >> segptr_28_rd_data
+segptr_if.rd_valid [28]      >> segptr_28_rd_valid
+                                             >> segptr_28_ecc_uncor_err
+                                             >> segptr_28_init_done
+1'b0                                         >> segptr_28_mem_ls_enter
+
+1'b0                                         >> SEGPTR_29_CFG_reg_sel
+1'b0                                         >> SEGPTR_29_STATUS_reg_sel
+segptr_if.adr      [29]      >> segptr_29_adr
+segptr_if.rd_en    [29]      >> segptr_29_rd_en
+segptr_if.wr_data  [29]      >> segptr_29_wr_data
+segptr_if.wr_en    [29]      >> segptr_29_wr_en
+                                             >> segptr_29_wr_bwe
+segptr_if.rd_data  [29]      >> segptr_29_rd_data
+segptr_if.rd_valid [29]      >> segptr_29_rd_valid
+                                             >> segptr_29_ecc_uncor_err
+                                             >> segptr_29_init_done
+1'b0                                         >> segptr_29_mem_ls_enter
+
+1'b0                                         >> SEGPTR_30_CFG_reg_sel
+1'b0                                         >> SEGPTR_30_STATUS_reg_sel
+segptr_if.adr      [30]      >> segptr_30_adr
+segptr_if.rd_en    [30]      >> segptr_30_rd_en
+segptr_if.wr_data  [30]      >> segptr_30_wr_data
+segptr_if.wr_en    [30]      >> segptr_30_wr_en
+                                             >> segptr_30_wr_bwe
+segptr_if.rd_data  [30]      >> segptr_30_rd_data
+segptr_if.rd_valid [30]      >> segptr_30_rd_valid
+                                             >> segptr_30_ecc_uncor_err
+                                             >> segptr_30_init_done
+1'b0                                         >> segptr_30_mem_ls_enter
+
+1'b0                                         >> SEGPTR_31_CFG_reg_sel
+1'b0                                         >> SEGPTR_31_STATUS_reg_sel
+segptr_if.adr      [31]      >> segptr_31_adr
+segptr_if.rd_en    [31]      >> segptr_31_rd_en
+segptr_if.wr_data  [31]      >> segptr_31_wr_data
+segptr_if.wr_en    [31]      >> segptr_31_wr_en
+                                             >> segptr_31_wr_bwe
+segptr_if.rd_data  [31]      >> segptr_31_rd_data
+segptr_if.rd_valid [31]      >> segptr_31_rd_valid
+                                             >> segptr_31_ecc_uncor_err
+                                             >> segptr_31_init_done
+1'b0                                         >> segptr_31_mem_ls_enter
+
+1'b0                                         >> PODPTR_0_CFG_reg_sel
+1'b0                                         >> PODPTR_0_STATUS_reg_sel
+podptr_if.adr      [0]      >> podptr_0_adr
+podptr_if.rd_en    [0]      >> podptr_0_rd_en
+podptr_if.wr_data  [0]      >> podptr_0_wr_data
+podptr_if.wr_en    [0]      >> podptr_0_wr_en
+podptr_if.rd_data  [0]      >> podptr_0_rd_data
+podptr_if.rd_valid [0]      >> podptr_0_rd_valid
+                                             >> podptr_0_ecc_uncor_err
+                                             >> podptr_0_init_done
+1'b0                                         >> podptr_0_mem_ls_enter
+
+1'b0                                         >> PODPTR_1_CFG_reg_sel
+1'b0                                         >> PODPTR_1_STATUS_reg_sel
+podptr_if.adr      [1]      >> podptr_1_adr
+podptr_if.rd_en    [1]      >> podptr_1_rd_en
+podptr_if.wr_data  [1]      >> podptr_1_wr_data
+podptr_if.wr_en    [1]      >> podptr_1_wr_en
+podptr_if.rd_data  [1]      >> podptr_1_rd_data
+podptr_if.rd_valid [1]      >> podptr_1_rd_valid
+                                             >> podptr_1_ecc_uncor_err
+                                             >> podptr_1_init_done
+1'b0                                         >> podptr_1_mem_ls_enter
+
+1'b0                                         >> PODPTR_2_CFG_reg_sel
+1'b0                                         >> PODPTR_2_STATUS_reg_sel
+podptr_if.adr      [2]      >> podptr_2_adr
+podptr_if.rd_en    [2]      >> podptr_2_rd_en
+podptr_if.wr_data  [2]      >> podptr_2_wr_data
+podptr_if.wr_en    [2]      >> podptr_2_wr_en
+podptr_if.rd_data  [2]      >> podptr_2_rd_data
+podptr_if.rd_valid [2]      >> podptr_2_rd_valid
+                                             >> podptr_2_ecc_uncor_err
+                                             >> podptr_2_init_done
+1'b0                                         >> podptr_2_mem_ls_enter
+
+1'b0                                         >> PODPTR_3_CFG_reg_sel
+1'b0                                         >> PODPTR_3_STATUS_reg_sel
+podptr_if.adr      [3]      >> podptr_3_adr
+podptr_if.rd_en    [3]      >> podptr_3_rd_en
+podptr_if.wr_data  [3]      >> podptr_3_wr_data
+podptr_if.wr_en    [3]      >> podptr_3_wr_en
+podptr_if.rd_data  [3]      >> podptr_3_rd_data
+podptr_if.rd_valid [3]      >> podptr_3_rd_valid
+                                             >> podptr_3_ecc_uncor_err
+                                             >> podptr_3_init_done
+1'b0                                         >> podptr_3_mem_ls_enter
+
+1'b0                                         >> PODPTR_DIRTY_0_CFG_reg_sel
+1'b0                                         >> PODPTR_DIRTY_0_STATUS_reg_sel
+podptr_dirty_if.rd_adr   [0]      >> podptr_dirty_0_rd_adr
+podptr_dirty_if.wr_adr   [0]      >> podptr_dirty_0_wr_adr
+podptr_dirty_if.rd_en    [0]      >> podptr_dirty_0_rd_en
+podptr_dirty_if.wr_data  [0]      >> podptr_dirty_0_wr_data
+podptr_dirty_if.wr_en    [0]      >> podptr_dirty_0_wr_en
+podptr_dirty_if.rd_data  [0]      >> podptr_dirty_0_rd_data
+podptr_dirty_if.rd_valid [0]      >> podptr_dirty_0_rd_valid
+                                             >> podptr_dirty_0_ecc_uncor_err
+                                             >> podptr_dirty_0_init_done
+1'b0                                         >> podptr_dirty_0_mem_ls_enter
+
+1'b0                                         >> PODPTR_DIRTY_1_CFG_reg_sel
+1'b0                                         >> PODPTR_DIRTY_1_STATUS_reg_sel
+podptr_dirty_if.rd_adr   [1]      >> podptr_dirty_1_rd_adr
+podptr_dirty_if.wr_adr   [1]      >> podptr_dirty_1_wr_adr
+podptr_dirty_if.rd_en    [1]      >> podptr_dirty_1_rd_en
+podptr_dirty_if.wr_data  [1]      >> podptr_dirty_1_wr_data
+podptr_dirty_if.wr_en    [1]      >> podptr_dirty_1_wr_en
+podptr_dirty_if.rd_data  [1]      >> podptr_dirty_1_rd_data
+podptr_dirty_if.rd_valid [1]      >> podptr_dirty_1_rd_valid
+                                             >> podptr_dirty_1_ecc_uncor_err
+                                             >> podptr_dirty_1_init_done
+1'b0                                         >> podptr_dirty_1_mem_ls_enter
+
+1'b0                                         >> PODPTR_CLEAN_CFG_reg_sel
+1'b0                                         >> PODPTR_CLEAN_STATUS_reg_sel
+podptr_clean_if.rd_adr   [0]      >> podptr_clean_rd_adr
+podptr_clean_if.wr_adr   [0]      >> podptr_clean_wr_adr
+podptr_clean_if.rd_en    [0]      >> podptr_clean_rd_en
+podptr_clean_if.wr_data  [0]      >> podptr_clean_wr_data
+podptr_clean_if.wr_en    [0]      >> podptr_clean_wr_en
+podptr_clean_if.rd_data  [0]      >> podptr_clean_rd_data
+podptr_clean_if.rd_valid [0]      >> podptr_clean_rd_valid
+                                             >> podptr_clean_ecc_uncor_err
+                                             >> podptr_clean_init_done
+1'b0                                         >> podptr_clean_mem_ls_enter
 
 1'b0 >> GPM_ECC_COR_ERR_reg_sel
 1'b0 >> GPM_ECC_UNCOR_ERR_reg_sel
@@ -41,4 +513,3 @@ foreach $i (0..7) {
 
 mclk    >> clk
 reset_n >> reset_n
-

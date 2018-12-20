@@ -12,7 +12,7 @@
 #include <mby_top_map.h>
 #include "fm_alos_debughash.h"
 #include "fm_types.h"
-#include "mby_write_field.h"
+#include "model_c_write.h"
 
 #define LOG(...)
 
@@ -29,7 +29,7 @@ static unsigned field_hash(const void *f)
     field_t *field = (field_t *) f;
     /* Addrs are likely contiguous so I use lower bits as hash */
     fm_uint64 addr = (fm_uint64) field->addr;
-    return (unsigned) (addr & 0xffff);
+    return (unsigned) (addr * 0x9e3779b9);
 }
 
 /* Compare two field_t and returns != 0 if they are equal */
@@ -120,7 +120,3 @@ void write_field(void *addr, unsigned long value)
         *u64addr = value;
     }
 }
-
-
-
-
