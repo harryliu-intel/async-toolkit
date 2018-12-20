@@ -8,7 +8,8 @@
 
 #include <sys/time.h>
 
-#include "hohum.h"
+#include "ragged2arcs.h"
+#include "addr2ragged.h"
 #include "mby_top_map.h"
 #include "seqtype.h"
 
@@ -204,7 +205,7 @@ test_time_ragged(void)
   struct timeval tv0, tv1;
   gettimeofday(&tv0,NULL);
   for (int i=0; i<ops; ++i) {
-    chipaddr_t a=random() % 1000*1000, rem;
+    chipaddr_t a=random() % (1000*1000), rem;
     seqtype_t rp;
 
     rem = addr2ragged(a, &rp);

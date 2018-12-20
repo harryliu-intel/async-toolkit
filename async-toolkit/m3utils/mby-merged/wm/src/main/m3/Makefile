@@ -39,6 +39,7 @@ GENVIEWS_TARGDIR=$(GENVIEWS_ROOT)/$(OS_TARG)
 GENVIEWS=$(GENVIEWS_TARGDIR)/genviews
 SCALA_GEN=foo
 C_GEN=bar
+SCM_GEN=boo
 
 STRUCTGEN_ROOT=structgen
 STRUCTGEN_TARGDIR=$(STRUCTGEN_ROOT)/$(OS_TARG)
@@ -165,6 +166,17 @@ cgen: $(C_GEN)
 
 $(MBY_C_LIB): $(C_GEN)
 	make -C ../c all
+
+$(SCM_GEN): $(MBY_POSTPROC) $(GENVIEWS)
+	mkdir -p $(MBY_BUILD_SCM_ROOT)/src
+	$(GENVIEWS_TARGDIR)/genviews -L scm -top mby_top_map -o $(MBY_BUILD_SCM_ROOT)/src < $<
+# have to run the field visitor somewhere
+# then build the API as well
+
+scmgen: $(SCM_GEN)
+
+$(MBY_CAPI_LIB): $(SCM_GEN)
+	echo
 
 $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	mkdir -p work

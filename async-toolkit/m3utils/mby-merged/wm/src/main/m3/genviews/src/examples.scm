@@ -498,61 +498,90 @@
 
 (define name-tree (treemap get-name the-map))
 
-(define (doit)
-  (let ((qqq (FileWr.Open "hohum.h"))
-        (ppp (FileWr.Open "hohum.c")))
-    (dis "*** building C code..." dnl)
+(define *api-dir* "test_api/")
 
-    (dis "#include \"hohum.h\"" dnl
+(define (open-c-files pfx)
+  (let ((ifsym (string-append "_" (TextUtils.ToUpper pfx) "_H"))
+        (res
+         (cons (FileWr.Open (string-append *api-dir* pfx ".h"))
+               (FileWr.Open (string-append *api-dir* pfx ".c")))))
+    (dis "#include \""pfx".h\"" dnl
          "#include <assert.h>" dnl
          "#include \"seqtype.h\"" dnl
          dnl
-         ppp)
+         (cdr res))
 
-    (dis "#ifndef _HOHUM_H" dnl 
-         "#define _HOHUM_H" dnl
+    (dis "#ifndef "ifsym dnl 
+         "#define "ifsym dnl
          "#include \"seqtype.h\"" dnl
 
-         qqq)
+         (car res))
+    res))
+
+(define (close-c-files files)
+  (dis "#endif" dnl (car files))
+  (Wr.Close (car files))
+  (Wr.Close (cdr files)))
     
+
+(define (doit)
+  (let ((qqq '())
+        (ppp '()))
+
+    (define (open pfx)
+      (let ((q (open-c-files pfx)))
+        (set! qqq (car q))
+        (set! ppp (cdr q))))
+
+    (define (close)
+      (close-c-files (cons qqq ppp)))
+    
+    (dis "*** building C code..." dnl)
+
     (dis "*** compiling chip address offset tree..." dnl)
     (let ((nm "ragged2addr"))
+      (open nm)
       (compile-offset-c the-chip-offset-tree nm ppp)
       (dis "chipaddr_t "nm"(const seqtype_t *);" dnl qqq)
+      (close)
       )
 
     (dis "*** compiling reverse chip address offset tree..." dnl)
     (let ((nm "addr2ragged"))
+      (open nm)
       (compile-roffset-c the-chip-offset-tree nm ppp)
       (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
+      (close)
       )
 
     (dis "*** compiling in order field offset tree..." dnl)
     (let ((nm "ragged2inorderid"))
+      (open nm)
       (compile-offset-c the-fields-offset-tree nm ppp)
       (dis "long "nm"(const seqtype_t *);" dnl qqq)
+      (close)
       )
 
     (dis "*** compiling reverse in order field offset tree..." dnl)
     (let ((nm "inorderid2ragged"))
+      (open nm)
       (compile-roffset-c the-fields-offset-tree nm ppp)
       (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
+      (close)
       )
 
     (dis "*** setting up static symbols..." dnl)
-    (record-symbols)
-    (dump-symbols ppp)
-    (dump-sizes ppp)
-
-    (dis "*** compiling names tree..." dnl)
     (let ((nm "ragged2arcs"))
+      (open nm)
+      (record-symbols)
+      (dump-symbols ppp)
+      (dump-sizes ppp)
+
+      (dis "*** compiling names tree..." dnl)
       (compile-child-arc-c name-tree nm ppp)
       (dis "const arc_t **"nm"(const seqtype_t *);" dnl qqq)
+      (close)
       )
-
-    (dis "#endif" dnl qqq)
-    (Wr.Close ppp)
-    (Wr.Close qqq)
     )
-  )
+)
 
