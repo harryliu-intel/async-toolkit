@@ -58,9 +58,9 @@ inc_ragged_last(seqtype_t *seq)
     return 0;                /* at the last index already */
 }
 
-#define MATCH_NONE       0
-#define MATCH_PARTIAL    1
-#define MATCH_COMPLETE   2
+#define MATCH_NONE       0 /* mismatch                                   */
+#define MATCH_PARTIAL    1 /* match a partial path (higher level match)  */
+#define MATCH_COMPLETE   2 /* complete match -- matches a specific field */
 
 int
 name2ragged(const char *name, seqtype_t *seq_a)
