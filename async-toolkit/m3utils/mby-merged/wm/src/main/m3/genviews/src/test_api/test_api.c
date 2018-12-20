@@ -64,6 +64,20 @@ inc_ragged_last(seqtype_t *seq)
 
 int
 name2ragged(const char *name, seqtype_t *seq_a)
+/* 
+   convert a single dotted, arrayed name to a ragged index
+
+   ex. a.b.c[14][32].x.y.z
+
+   if z is a field then MATCH_COMPLETE is returned
+
+   if z is not a field, then MATCH_PARTIAL is returned
+
+   if the string does not match anything
+   OR an array index is out of bounds
+   OR a syntax error exists in the string (ex. a.b[3.d]4),
+   then MATCH_NONE is returned
+*/
 {
   seqtype_t qqq, *seq=&qqq;
   const char *p=name;
