@@ -4,7 +4,7 @@ package madisonbay
 import monocle.Optional
 import scala.collection.immutable.HashMap
 
-import madisonbay.memory._
+import madisonbay.memory.Address
 
 /** Provides classes and associated objects for interfacing the configuration and status registers
   *
@@ -30,5 +30,5 @@ package object csr {
     *  CsrContext(root, paths)
     * }}}
     */
-  case class CsrContext[A](root: A, paths: HashMap[Address, Optional[A, BitVector]])
+  case class CsrContext[A](root: A, paths: HashMap[Address, RdlRegisterAccess[A]])
 }

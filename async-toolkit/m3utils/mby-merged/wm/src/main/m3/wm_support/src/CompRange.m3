@@ -42,7 +42,7 @@ PROCEDURE PlaceReg(at          : CompAddr.T;
       <*ASSERT CompAddr.NextPower(alignment) = alignment*>
       lo := CompAddr.ModAlign(lo, alignment DIV 8)
     END;
-    RETURN T { lo, CompAddr.PlusBits(lo, regwidth) }
+    RETURN From2(lo, CompAddr.PlusBits(lo, regwidth))
   END PlaceReg;
 
 PROCEDURE Lim(x : T) : CompAddr.T =

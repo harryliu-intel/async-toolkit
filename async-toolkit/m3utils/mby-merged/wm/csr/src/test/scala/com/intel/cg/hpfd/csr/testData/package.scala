@@ -3,12 +3,13 @@
 package com.intel.cg.hpfd.csr.testData
 
 import com.intel.cg.hpfd.csr.macros.annotations._
-import madisonbay.BitVector
+import madisonbay.{BitVector, RdlRegisterAccess}
 import madisonbay.memory._
 
 import scala.collection.immutable.HashMap
 import monocle.Optional
 import monocle.macros.Lenses
+
 
 package object common {
   @Lenses("_")
@@ -23,14 +24,15 @@ package object common {
     def apply(address: Address): Register =
       Register(AddressRange.placeReg(address, Alignment(8 bytes)).pos, 0xDEADBEEF)
 
-    def genOpticsLookup[A](me: Register, path: Optional[A, Register]): HashMap[Address, Optional[A, BitVector]] = {
+    def genOpticsLookup[A](me: Register,
+                           path: Optional[A, Register]): HashMap[Address, RdlRegisterAccess[A]] = {
       val valueOpt = Optional[Register, BitVector] {
         r => Some(r.serialize)
       } {
         newValue => _.companion.deserialize(newValue)
       }
 
-      HashMap(me.range.pos -> (path composeOptional valueOpt))
+      HashMap(me.range.pos -> RdlRegisterAccess[A](width = Alignment(8 bytes), optic = (path composeOptional valueOpt)))
     }
   }
 }
