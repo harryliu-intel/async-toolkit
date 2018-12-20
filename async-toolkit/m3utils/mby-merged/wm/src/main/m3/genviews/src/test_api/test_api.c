@@ -36,10 +36,10 @@ print_ragged(const seqtype_t *s)
 int
 inc_ragged_last(seqtype_t *seq)
 {
-  /* UNTESTED CODE */
+  /* XXX UNTESTED CODE */
   /* increment ragged in the last valid position */
   const arc_t **arcs;
-  int p;
+  int p=0;
   
   while(seq->d[p] != -1) ++p;
   /* p points to end marker */
