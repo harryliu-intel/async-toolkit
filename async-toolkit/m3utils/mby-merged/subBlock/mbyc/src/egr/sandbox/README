@@ -2,6 +2,10 @@
 source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh -w $cwd
 osetup vcsmx
 
+# Running this will prevent the Makefile from running ToolConfig every time.
+# This is not necessary if you are not noticing the Makefile running slowly.
+setenv SHRTL `ToolConfig.pl get_tool_path ipconfig/shrtl`
+
 # EGR Sandbox usage:
 
 # Build the sandbox model and run the GK gate test case.
