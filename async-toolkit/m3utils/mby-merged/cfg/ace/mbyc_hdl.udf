@@ -183,9 +183,9 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             
             mby_mesh_env_lib => {
-               -hdl_spec        => [ 'target/GenRTL/regflow/mby/subblock/mby_mesh_ral.hdl',
+               -hdl_spec        => [# 'target/GenRTL/regflow/mby/subblock/mby_mesh_ral.hdl',
                                      'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_env.hdl',],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mgp_bfm_lib', 'gen_mesh_regflow_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mgp_bfm_lib',  ],
                -tag             => "nonsynth",
             },
 
@@ -819,7 +819,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "ext_shared_lib",
                   "mby_common_lib",
                   "mby_mgp_bfm_lib",
-                  "gen_mesh_regflow_lib",
+                 # "gen_mesh_regflow_lib",
                ],
                testcase_globals => {
                     },

@@ -1,4 +1,5 @@
 build
 build_scala
 build_c
+build_c_api
 work

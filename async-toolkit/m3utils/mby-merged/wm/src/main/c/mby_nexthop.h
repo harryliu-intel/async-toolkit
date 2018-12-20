@@ -263,7 +263,7 @@ typedef struct mbyNextHopToMaskGenStruct
     fm_byte            L3_EDOMAIN;           ///< egress L3 domain
     fm_bool            MARK_ROUTED;          ///<
     fm_bool            MTU_VIOLATION;        ///< packet violates the MTU
-    fm_bool            NO_LEARN;             ///< learning is diabled flag
+    fm_bool            LEARN_NOTIFY;         ///< learning is enabled flag
     fm_byte            OPERATOR_ID;          ///< 4-bit operator ID
     fm_bool            PARITY_ERROR;         ///< memory parity error flag
     fm_bool            PARSER_WINDOW_V;      ///< parser window valid flag

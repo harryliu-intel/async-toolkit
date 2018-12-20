@@ -1,17 +1,11 @@
 #!/usr/bin/env perl 
+open(SF, "$ENV{'MODEL_ROOT'}/target/mby/mgm_run/gpm/src/gpm_shells_wrapper.v") || die "can't open input file
+";
+open(TF, ">./gpm_shells_wrapper_inc.v") || die "can't open output file
+";
 
-# -------------------------------------------------------------------
-# --                      Intel Proprietary
-# --              Copyright (C) 2013 Intel Corporation
-# --                    All Rights Reserved
-# -------------------------------------------------------------------
-# Function: Pre process the Ngen output file for this block.
-# Copied from: Jon Bagge jon.bagge@intel.com
-#--------------------------------------------------------------------            
-open(SF, "../../../../../../../target/mby/mgm_run/gpm/src/gpm_shells_wrapper.v") || die "can't open input file\n";
-open(TF, ">./gpm_shells_wrapper_inc.v") || die "can't open output file\n";
-
-print TF "`include        \"gpm_mem.def\"\n";
+print TF "`include        \"gpm_mem.def\"
+";
 while (<SF>) {
    printf TF ("%s",$_);
 }

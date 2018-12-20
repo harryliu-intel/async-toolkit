@@ -93,7 +93,7 @@ static void calculateHash(
         mbyCrc32CByteSwap(hash_bytes, MBY_CGRP_HASH_KEYS) ; // HASH1: CRC-32C (iSCSI)
 
     // for EM_A lookup size is 32768, for E_B lookup size is 8192
-    fm_uint16 hash_mask  = (group == MBY_CLA_GROUP_A) ? 0x7fff : 0x1fff;
+    fm_uint16 hash_mask  = (group == MBY_CGRP_A) ? 0x7fff : 0x1fff;
 
     *hash_index = hash & hash_mask;
     *hash_more  = (hash >> 16) & 0xffff;
@@ -110,7 +110,7 @@ static fm_uint16 calculateLookupPtr(
 
     // Start from the 2nd half of the bucket table if hash_num is 1 in split mode
     if (hash_num == 1)
-        lookup_start_index = (group == MBY_CLA_GROUP_A)
+        lookup_start_index = (group == MBY_CGRP_A)
             ? mby_ppe_cgrp_a_nested_map_EM_HASH_LOOKUP__n / 2
             : mby_ppe_cgrp_b_nested_map_EM_HASH_LOOKUP__n / 2;
 
@@ -286,17 +286,18 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
 
     fm_uint32 hash_lookup_addr = (bucket.PTR + offset * hash_cfg.entry_size[hash_num]) * 4;
 
-    fm_bool   group_A    = group == MBY_CLA_GROUP_A;
-    fm_bool   mode_32b   = (hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_32B); // split_mode
-    fm_byte   start_bit  = ((mode_32b) ? 5 : 6);
+    fm_bool   is_CGRP_A  = group == MBY_CGRP_A;
+    fm_bool   mode_32b   = hash_cfg.mode == MBY_CGRP_HASH_ENTRY_MODE_32B; // split_mode
+    fm_byte   start_bit  = mode_32b ? 5 : 6;
     fm_uint16 line       = FM_GET_UNNAMED_FIELD(hash_lookup_addr, start_bit, 14);
     fm_byte   start_byte = FM_GET_UNNAMED_FIELD(hash_lookup_addr, 0, 5);
-    fm_uint32 entry_idx0 = (line*4 + start_byte/8);
-    fm_uint32 entry_idx1 = ((hash_lookup_addr/8) & 0xFFFF);
-    fm_uint32 entry_idx  = (mode_32b) ? entry_idx1 : entry_idx0;
-    fm_uint   max_bytes  = (mode_32b) ? (MBY_CGRP_MAX_HASH_ENTRY_SIZE / 2) : MBY_CGRP_MAX_HASH_ENTRY_SIZE;
+    fm_uint32 entry_idx0 = (line << 2) + (start_byte >> 3);
+    fm_uint32 entry_idx1 = (hash_lookup_addr >> 3) & 0xFFFF;
+    fm_uint32 entry_idx  = mode_32b ? entry_idx1 : entry_idx0;
+    fm_uint   max_bytes  = mode_32b ? (MBY_CGRP_MAX_HASH_ENTRY_SIZE / 2) : MBY_CGRP_MAX_HASH_ENTRY_SIZE;
+
     // How to access SHM in split mode? How to use rd_lookup_num? <-- REVISIT!!!
-    fm_bool   rd_lookup_num = (mode_32b) ? 0 : FM_GET_UNNAMED_FIELD(hash_lookup_addr, 5, 1);
+    fm_bool   rd_lookup_num = mode_32b ? 0 : FM_GET_UNNAMED_FIELD(hash_lookup_addr, 5, 1);
 
     if (!mode_32b) // reassign start_byte to 6b to indicate its position in 64B
         start_byte = FM_GET_UNNAMED_FIELD(hash_lookup_addr, 0, 6);
@@ -317,13 +318,13 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
 
         if (mode_32b)
         {
-            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
+            hash_entry = is_CGRP_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
 
             entry_idx++;
         }
         else if (rd_lookup_num == 0) // && mode_64b
         {
-            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
+            hash_entry = is_CGRP_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
 
             if ((entry_idx % 4) == 3) {
                 rd_lookup_num = 1;
@@ -334,7 +335,7 @@ static void getEmHashShmData // How to fetch correct DATA from SHM in MBY?
         }
         else // rd_lookup_num == 1 && mode_64b
         {
-            hash_entry = group_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
+            hash_entry = is_CGRP_A ? mbyClsGetEmAShmEntry(shm_map, block, cell) : mbyClsGetEmBShmEntry(shm_map, block, cell);
 
             if ((entry_idx % 4) == 3)
                 rd_lookup_num = 0;

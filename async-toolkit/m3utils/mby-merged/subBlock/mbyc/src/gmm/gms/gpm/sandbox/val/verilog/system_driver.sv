@@ -45,9 +45,9 @@ class system_driver;
 
     // Reset system
     task reset();
-        dut_if.reset_n = 0;
+        dut_if.hreset = 1;
         repeat (50) @(posedge dut_if.clk);
-        dut_if.reset_n = 1;
+        dut_if.hreset = 0;
         repeat (50) @(posedge dut_if.clk);
     endtask
 

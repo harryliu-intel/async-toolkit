@@ -8,21 +8,21 @@ IMPORT Debug;
 IMPORT TextSetDef;
 IMPORT RegAddrmap;
 IMPORT Pathname;
-IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC;
+IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC, GenViewsCApi;
 IMPORT GenViewsScheme;
 IMPORT Text;
 IMPORT Rd, FileRd;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala|c|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c[-api]|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
-TYPE Lang = { M3, Scala, C, Scheme };
+TYPE Lang = { M3, Scala, C, Scheme, CApi };
 
-CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme" };
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme", "c-api" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -109,6 +109,8 @@ BEGIN
     Lang.Scala => gv := NEW(GenViewsScala.T)
   |
     Lang.C     => gv := NEW(GenViewsC.T)
+  |
+    Lang.CApi  => gv := NEW(GenViewsCApi.T)
   |
     Lang.Scheme => gv := NEW(GenViewsM3.T)
   END;  
