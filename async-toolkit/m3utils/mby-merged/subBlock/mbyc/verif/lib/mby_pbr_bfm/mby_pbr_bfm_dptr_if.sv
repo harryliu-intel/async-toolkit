@@ -1,13 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay SMM Bus Functional Model Package
+// Title         : Madison Bay PBR Interface
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_pkg.sv
-// Author        : Roman Bernal <r.bernal@intel.com>
-// Created       : 01.11.2018
+// File          : mby_pbr_bfm_dptr_if.sv
+// Author        : ricardo.a.alfaro.gomez  <raalfaro@ichips.intel.com>
+// 2ry contact   : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Created       : 12.19.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the SMM BFM package file
+// Madison Bay PBR mesh interface file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,35 +31,15 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_SMM_BFM_PKG__
-`define __MBY_SMM_BFM_PKG__
-
-package mby_smm_bfm_pkg;
-
-   import uvm_pkg::*;
-   import shdv_base_pkg::*;
-   import mby_base_pkg::*;
-   import shared_pkg::*;
-   //import mby_igr_pkg::*;
-   import mby_msh_pkg::*;
-   import mby_egr_pkg::*;
-   import mby_smm_bfm_pkg_pre::*;
-
-   `include "uvm_macros.svh"
-   `include "mby_smm_bfm_defines.svh"
-   `include "mby_smm_bfm_types.svh"
-   `include "mby_smm_bfm_cfg.svh"
-   `include "mby_smm_bfm_rdrsp_seq.svh"
-   `include "mby_smm_bfm_mem_node.svh"
-   `include "mby_smm_bfm_mwr_req.svh"
-   `include "mby_smm_bfm_mrd_req.svh"
-   `include "mby_smm_bfm_row_wr_req_xaction.svh"
-   `include "mby_smm_bfm_row_rd_req_xaction.svh"
-   `include "mby_smm_bfm.svh"
-
-endpackage : mby_smm_bfm_pkg
-
+`ifndef __MBY_PBR_BFM_DPTR_IF__
+`define __MBY_PBR_BFM_DPTR_IF__
+//------------------------------------------------------------------------------
+// INTERFACE: mby_pbr_bfm_dptr_if
+//
+// NYI (Not yet implemented):
+// This is the interface to connect the pbr model to the IGR/EGR RTL.
+//------------------------------------------------------------------------------
+interface mby_pbr_bfm_dptr_if(input logic clk, input logic rst);
+endinterface : mby_pbr_bfm_dptr_if
 
 `endif
-
-
