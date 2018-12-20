@@ -1073,6 +1073,9 @@ static void mapScalar
     map_prof_key1->L2_DOMAIN = *l2_domain;
     map_prof_key1->L3_DOMAIN = *l3_domain;
 
+    ///> This is not the right usage.
+    ///> Action (flag) LEARN_NOTIFY should be set by CGRP_B:EM
+    ///> [RX-PPEActions-Table3-1bActionFieldMappings](https://securewiki.ith.intel.com/display/25T/RX-PPE+Actions#RX-PPEActions-Table3-1bActionFieldMappings)
     classifier_actions->act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val = domain_action0.LEARN_EN;
 
     *learn_mode = domain_action0.LEARN_MODE;

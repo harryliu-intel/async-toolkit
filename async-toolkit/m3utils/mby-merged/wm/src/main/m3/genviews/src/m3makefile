@@ -6,11 +6,11 @@ import ("modula3scheme")
 import ("netobj")
 import ("sstubgen")
 
-module ("RegField")
+module    ("RegField")
 interface ("RegReg")
 interface ("RegRegfile")
 interface ("RegAddrmap")
-interface ("RegContainer")
+module    ("RegContainer")
 
 sequence("RegField", "RegField")
 sequence("RegReg", "RegReg")
@@ -37,6 +37,7 @@ generic_module("GenViews")
 module ("GenViewsM3")
 module ("GenViewsScala")
 module ("GenViewsC")
+module ("GenViewsCApi")
 module ("GenViewsScheme")
 
 module ("DecoratedComponentDef")
@@ -62,11 +63,24 @@ interface("RegScalaGenState")
 
 %%%%%%%%%%%%%%%%%%%%%%  C output  %%%%%%%%%%%%%%%%%%%%%%%%
 
+module   ("GenCUtils")
+
+%%%%%%%%%%%%%%%%%%%%%%  C-FM output  %%%%%%%%%%%%%%%%%%%%%%%%
+
 module   ("RegC")
 module   ("RegCConstants")
 module   ("RegCNaming")
 interface("RegCGenerators")
-interface("RegCGenState")
+module   ("RegCGenState")
+
+
+%%%%%%%%%%%%%%%%%%%%%%  C-API output  %%%%%%%%%%%%%%%%%%%%%%%%
+
+module   ("RegCApi")
+%module   ("RegCConstants") % reuse
+%module   ("RegCNaming")    % reuse
+interface("RegCApiGenerators") 
+%interface("RegCGenState") % reuse
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

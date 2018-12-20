@@ -49,9 +49,12 @@ mesh_ral: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done mby_mesh_ral.hdl
 
 mby_mesh_ral.hdl: $(RESULTS_SUBBLOCK)/mby_mesh_row_map.allral.done
 	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_mesh_row_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral $@ 
-	echo "mesh ral.hdl generated"
+	cp $(RESULTS_SUBBLOCK)/mby_mesh_row_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/mesh/ral/
+	echo "mesh ral generated"
 	
 mby_ppe_rx_ral.hdl: $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.allral.done
 	$(MODEL_ROOT)/tools/srdl/ral_make_hdl.pl --dir target/GenRTL/regflow/mby/subblock/mby_ppe_rx_top_map.ralf_out/ --model_root $(MODEL_ROOT) --filename_ral $@
+	cp $(RESULTS_SUBBLOCK)/mby_ppe_rx_top_map.ralf_out/*.sv $(MODEL_ROOT)/subBlock/mbyc/verif/rx_ppe/ral/
+	echo "RX PPE ral generated"
 # genrdl: $(SHELL_CTL_RDL)
 

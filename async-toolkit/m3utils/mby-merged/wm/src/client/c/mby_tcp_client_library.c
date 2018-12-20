@@ -49,10 +49,10 @@
 #define LOG_ERROR    printf
 #define LOG_WARNING  printf
 #define LOG_INFO     printf
-#define LOG_DEBUG(...)
-//#define LOG_DEBUG    printf
-#define LOG_HEX_DUMP(a,b,c)
-//#define LOG_HEX_DUMP hex_dump
+//#define LOG_DEBUG(...)
+#define LOG_DEBUG    printf
+//#define LOG_HEX_DUMP(a,b,c)
+#define LOG_HEX_DUMP hex_dump
 
 /* FD of the socket used to send commands to the model_server.
  * For example, it is used to send IOSF messages or inject traffic.
@@ -402,6 +402,8 @@ int wm_reg_write(const uint32_t addr, const uint64_t val)
   return err;
 }
 
+
+
 /* Send a frame to the WM.
  *
  * The buffer will be sent as it is without any processing.
@@ -453,6 +455,12 @@ int wm_pkt_push(const struct wm_pkt *pkt)
   off += WM_DATA_LENGTH_SIZE;
   memcpy(msg + off, pkt->data, pkt->len);
   msg_len = off + pkt->len;
+
+  if (1) {
+    printf("wm_pkt_push msg 0x%p pkt->len %d off %d msg_len %d\n",
+           msg, pkt->len, off, msg_len);
+    LOG_HEX_DUMP(msg, msg_len, 1);
+  }
 
   err = wm_send(wm_server_fd, msg, msg_len, MODEL_MSG_PACKET, pkt->port);
   if (err) {
@@ -700,53 +708,6 @@ static int wm_send(int fd, const uint8_t *msg, uint32_t len, uint16_t type,
   }
 
   return WM_OK;
-}
-
-/**
- * Dumps buffer in hex output.
- *
- * @param[in]   bytes is the buffer to dump.
- * @param[in]   nbytes is the size of the buffer.
- * @param[in]   show_ascii whether to append ascii format.
- */
-static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
-{
-  char line[128];
-  int linebytes;
-  int cnt;
-  int j;
-  int l;
-
-  cnt = 0;
-  do {
-    linebytes = (nbytes > 16) ? 16 : nbytes;
-
-    sprintf(line, "%02x:", cnt);
-    l = strlen(line);
-
-    for (j = 0; j < linebytes; j++) {
-      sprintf(line + l, " %02x", bytes[cnt + j]);
-      l = strlen(line);
-    }
-
-    if (show_ascii) {
-      sprintf(line + l, "    ");
-      l = strlen(line);
-
-      for (j = 0; j < linebytes; j++) {
-        if ((bytes[cnt + j] < 0x20) ||
-            (bytes[cnt + j] > 0x7e))
-          sprintf(line + l, ".");
-        else
-          sprintf(line + l, "%c", bytes[cnt + j]);
-        l = strlen(line);
-      }
-    }
-    printf("%s\n", line);
-    cnt += linebytes;
-    nbytes -= linebytes;
-
-  } while (nbytes > 0);
 }
 
 /**
@@ -1022,3 +983,52 @@ static int wm_read_data(int socket, uint8_t *data, uint32_t data_len,
 
   return WM_OK;
 }
+
+static uint8_t printable(const uint8_t byte)
+{
+  if ((byte < 0x20) ||
+      (byte > 0x7e))
+    return '.';
+  else
+    return byte;
+}
+
+/**
+ * Dumps buffer in hex output.
+ *
+ * @param[in]   bytes is the buffer to dump.
+ * @param[in]   nbytes is the size of the buffer.
+ * @param[in]   show_ascii whether to append ascii format.
+ */
+static void hex_dump(const uint8_t *bytes, int nbytes, char show_ascii)
+{
+  FILE *fp=stdout;
+  const int group_bytes = 4;
+  const int line_groups = 2;
+  int linebytes;
+  int cnt=0;
+  const uint8_t *lim = bytes + nbytes;
+  const uint8_t *b, *p=bytes;
+  int g, i;
+
+  do {
+    printf("%02x: ",(unsigned)(p-bytes));
+    b = p;
+    if (show_ascii) {
+      for (g = 0; g < line_groups; ++g) {
+        for (i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
+          fprintf(fp, "%c", p == lim ? ' ' : printable(*p));
+        fprintf(fp, " ");
+      }
+      fprintf(fp, "| ");
+      p = b;
+    }
+    for (g = 0; g < line_groups; ++g) {
+      for (i = 0; i < group_bytes; ++i, p = (p==lim) ? lim : p+1  )
+        fprintf(fp, p == lim ? "   " : " %02x", p == lim? 0xbeef : *p);
+      fprintf(fp, " ");
+    }
+    fprintf(fp, "\n");
+  } while (p!=lim);
+}
+

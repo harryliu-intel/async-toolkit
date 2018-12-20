@@ -183,9 +183,9 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             
             mby_mesh_env_lib => {
-               -hdl_spec        => [ 'target/GenRTL/regflow/mby/subblock/mby_mesh_ral.hdl',
+               -hdl_spec        => [# 'target/GenRTL/regflow/mby/subblock/mby_mesh_ral.hdl',
                                      'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_env.hdl',],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mgp_bfm_lib', 'gen_mesh_regflow_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mgp_bfm_lib',  ],
                -tag             => "nonsynth",
             },
 
@@ -232,6 +232,12 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_gpm_bfm_lib    => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gpm_bfm.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
+               -tag             => "nonsynth",
+            },
+
+            mby_pbr_bfm_lib    => {
+               -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_pbr_bfm.hdl' ],
                -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
                -tag             => "nonsynth",
             },
@@ -660,6 +666,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         ## jjgodine: removing bfm library compiles for now
                         "mby_tag_bfm_lib",
                         "mby_gpm_bfm_lib",
+                        "mby_pbr_bfm_lib",
                         ##  "mby_gcm_bfm_lib",
                         "mby_ingress_tb_lib",
                         "mby_ingress_ti_lib",
@@ -812,7 +819,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "ext_shared_lib",
                   "mby_common_lib",
                   "mby_mgp_bfm_lib",
-                  "gen_mesh_regflow_lib",
+                 # "gen_mesh_regflow_lib",
                ],
                testcase_globals => {
                     },
