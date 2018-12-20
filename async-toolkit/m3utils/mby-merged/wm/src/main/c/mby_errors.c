@@ -12,7 +12,7 @@
  *                  MD5 HASH OF SOURCE IS b80d7bc819d010e63c4e6121146a8e3d.
  *
  * INTEL CONFIDENTIAL
- * Copyright 2005 - 2011 Intel Corporation. All Rights Reserved. 
+ * Copyright 2005 - 2011 Intel Corporation. All Rights Reserved.
  *
  * The source code contained or described herein and all documents related
  * to the source code ("Material") are owned by Intel Corporation or its
@@ -26,13 +26,14 @@
  * express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or 
+ * property right is granted to or conferred upon you by disclosure or
  * delivery of the Materials, either expressly, by implication, inducement,
  * estoppel or otherwise. Any license under such intellectual property rights
  * must be express and approved by Intel in writing.
  *****************************************************************************/
 
 #include <string.h>
+#include "mby_errors.h"
 #include "mby_model.h"
 
 /*****************************************************************************
@@ -821,7 +822,7 @@ static const char *const fmErrorStrings[] =
  *
  * \desc            Returns the error string for a given error code.
  *
- * \param[in]       err is the error code to translate. 
+ * \param[in]       err is the error code to translate.
  *
  *
  * \return          The corresponding error string or an error message if

@@ -8,6 +8,7 @@
 #include <mby_init.h>
 #include <mby_parser.h>
 #include <mby_pipeline.h>
+#include <model_c_write.h> // write_field()
 
 #include "mby_basic_fwd_init.h"
 
@@ -27,7 +28,8 @@
 const int send_sw = 0;
 const int send_port = 2;
 
-static mby_top_map top_map;
+static mby_top_map       top_map;
+static mby_top_map__addr top_map_addr;
 
 static mbyRxStatsToRxOut rxs2rxo;
 
@@ -47,6 +49,7 @@ inline static int checkOk (const char * test, const fm_status status)
 
 fm_status init(fm_uint32 fwd_port, fm_macaddr dmac)
 {
+    mby_top_map__init(&top_map, &top_map_addr, mby_field_init_cb);
     // TODO verify if that's all that we need
     mby_init_common_regs(&(top_map.mpp[0].mgp[0].rx_ppe), &(top_map.mpp[0].mgp[0].tx_ppe));
     basic_fwd_init(&(top_map.mpp[0].mgp[0].rx_ppe), fwd_port, dmac);
@@ -107,8 +110,9 @@ static fm_status sendPacket
         // Top CSR map for tile 0 receive pipeline:
         // TODO use the pipeline associated to the specific ingress port
 
-        mby_ppe_rx_top_map * const rx_top_map = &(top_map.mpp[0].mgp[0].rx_ppe);
-        mby_shm_map        * const shm_map    = &(top_map.mpp[0].shm);
+        mby_ppe_rx_top_map       const * const rx_top_map   = &(top_map.mpp[0].mgp[0].rx_ppe);
+        mby_ppe_rx_top_map__addr const * const rx_top_map_w = &(top_map_addr.mpp[0].mgp[0].rx_ppe);
+        mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
 
         // Input struct:
         mbyRxMacToParser mac2par;
@@ -119,7 +123,7 @@ static fm_status sendPacket
         mac2par.RX_PORT   = (fm_uint32) port;
 
         // Call RX pipeline:
-        RxPipeline(rx_top_map, shm_map, &mac2par, &rxs2rxo);
+        RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
     }
     return sts;
 }
@@ -139,8 +143,9 @@ static fm_status receivePacket
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-       mby_ppe_tx_top_map * const tx_top_map = &(top_map.mpp[0].mgp[0].tx_ppe);
-       mby_shm_map        * const shm_map    = &(top_map.mpp[0].shm);
+        mby_ppe_tx_top_map       const * const tx_top_map   = &(top_map.mpp[0].mgp[0].tx_ppe);
+        mby_ppe_tx_top_map__addr const * const tx_top_map_w = &(top_map_addr.mpp[0].mgp[0].tx_ppe);
+        mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
 
         // Input struct:
         mbyTxInToModifier txi2mod;
@@ -176,7 +181,7 @@ static fm_status receivePacket
         txs2mac.TX_DATA = packet; //points at provided buffer
 
         // Call RX pipeline:
-        TxPipeline(tx_top_map, shm_map, &txi2mod, &txs2mac, MBY_MAX_PACKET_SIZE);
+        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &txi2mod, &txs2mac, MBY_MAX_PACKET_SIZE);
 
         // Populate output:
         *port   = txs2mac.TX_PORT;
