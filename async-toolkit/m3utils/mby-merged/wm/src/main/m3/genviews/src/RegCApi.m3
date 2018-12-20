@@ -273,7 +273,7 @@ PROCEDURE GenContainerGetptr(rf       : RegContainer.T;
           <*ASSERT i=0*>
           gs.main("    default:\n");
           gs.main("      assert(0 <= *rp && *rp < %s);\n", Int(ArrSz(c.array)));
-          gs.main("      %s__getptr(&((*p0)[*rp]),rp+1);\n", tn);
+          gs.main("      return %s__getptr(&((*p0)[*rp]),rp+1);\n", tn);
         ELSIF c.array = NIL THEN
           gs.main("    case %s:\n",Int(i));
           gs.main("      return %s__getptr(&(p0->%s),rp+1);\n", tn, nm)
@@ -369,7 +369,7 @@ PROCEDURE GenContainerSync(rf       : RegContainer.T;
           <*ASSERT i=0*>
           gs.main("    default:\n");
           gs.main("      assert(0 <= *rp && *rp < %s);\n", Int(ArrSz(c.array)));
-          gs.main("      %s__sync(&((*p0)[*rp]),rp+1);\n", tn);
+          gs.main("      return %s__sync(&((*p0)[*rp]),rp+1);\n", tn);
         ELSIF c.array = NIL THEN
           gs.main("    case %s:\n",Int(i));
           gs.main("      return %s__sync(&(p0->%s),rp+1);\n", tn, nm)

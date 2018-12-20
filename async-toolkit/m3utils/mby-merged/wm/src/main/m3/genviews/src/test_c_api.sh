@@ -39,3 +39,7 @@ for file in ${files}; do
 	cd -
 done
 
+cd test_api
+make clean
+make
+
