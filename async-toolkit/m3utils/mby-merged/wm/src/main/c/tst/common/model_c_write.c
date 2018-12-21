@@ -67,7 +67,7 @@ void mby_field_init_cb(void *addr, int size)
         return;
     }
 
-    /* TODO where should I free the memory? */
+    /* To free the memory, call mby_free_fields_table() */
     field = malloc(sizeof(field_t));
     assert(field);
     field->addr = addr;
@@ -119,4 +119,21 @@ void write_field(void *addr, unsigned long value)
         fm_uint64 *u64addr = (fm_uint64 *)addr;
         *u64addr = value;
     }
+}
+
+void mby_free_fields_table()
+{
+    assert(fields_table);
+
+    hashtable_iterator_t *iter = hashtable_iterate(fields_table);
+
+    void *elem = NULL;
+    while (hashtable_iterator_next(iter, &elem))
+        free(elem);
+
+    free(iter);
+
+    hashtable_destroy(fields_table);
+
+    free(fields_table);
 }

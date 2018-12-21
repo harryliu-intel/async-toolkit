@@ -178,7 +178,7 @@ PROCEDURE GenContainerStruct(rf       : RegContainer.T;
           END
         END;
         IF NOT skipArc THEN
-          gs.main("  uint8 __sync;");
+          gs.main("  uint8 __sync;\n");
           gs.main("} %s%s;\n\n", myTn, v.sfx)
         END;
       END
@@ -278,7 +278,11 @@ PROCEDURE GenContainerGetptr(rf       : RegContainer.T;
           gs.main("    case %s:\n",Int(i));
           gs.main("      return %s__getptr(&(p0->%s),rp+1);\n", tn, nm)
         ELSE
+          (* this is a bit tricky, a regular array within the struct.
+             if we end here, we return the base of the whole array,
+             else we index into the array and recurse *)
           gs.main("    case %s:\n", Int(i));
+          gs.main("      if (*++rp==-1) return &(p0->%s);\n", nm);
           gs.main("      assert(*rp<%s);\n", Int(ArrSz(c.array)));
           gs.main("      return %s__getptr(&(p0->%s[*rp]),rp+1);\n",
                   tn, nm);
