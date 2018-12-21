@@ -191,13 +191,13 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_mesh_ti_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_ti.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mesh_env_lib', 'mby_mgp_bfm_lib' ],
                -tag            => "nonsynth",
             },
 
             mby_mesh_tb_lib  => {
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -208,7 +208,7 @@ print "MGM debug : @mbyMgmLibs\n";
             },
             mby_mgp_bfm_lib => {
                -hdl_spec       => [ "subBlock/mbyc/cfg/ace/HDL/verif/mby_mgp_bfm.hdl" ],
-               -dependent_libs => [ 'mby_common_lib',
+               -dependent_libs => [ 'mby_common_lib', 'shdv_shared_lib', 
                                    ],
                -tag            => "nonsynth+nonlint",
             },
@@ -375,7 +375,7 @@ print "MGM debug : @mbyMgmLibs\n";
                -tag            => "nonsynth",
             },
 
-	    mby_test_lib => {
+            mby_test_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_test.hdl', ],
                -dependent_libs => [ 'sip_shared_lib', 'mby_env_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
@@ -386,7 +386,10 @@ print "MGM debug : @mbyMgmLibs\n";
                -dependent_libs => [ 'shdv_shared_lib'],
                -tag            => "nonsynth",
                -elab_opts => [
-                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c ",
+                  '-CFLAGS "-D VCS"',
+                  '-CFLAGS "-std=gnu99"',
+                  "-CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"",
+                  "$ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c",
                ],
             },
 
@@ -458,9 +461,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_rx_ppe_env_lib => {
                -hdl_spec       => [#'target/GenRTL/regflow/mby/subblock/mby_ppe_rx_ral.hdl',
                                    'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_env.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'ec_ti_lib', 'mby_ec_bfm_lib',
-                                   # 'gen_rx_ppe_regflow_lib'
-                                    ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_wm_dpi_lib', 'mby_common_lib', 'ec_ti_lib', 'mby_ec_bfm_lib'],
                -tag            => "nonsynth",
               # -tools          => ["-sglp_createlib",],
             },
@@ -813,7 +814,6 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_msh_node_rtl_lib",
                   "mby_mesh_ti_lib",
                   "mby_mesh_test_lib",
-                  "mby_mesh_tb_top_lib",
                   "mby_jasper_lib",
                   "mby_wm_dpi_lib",
                   "ext_shared_lib",

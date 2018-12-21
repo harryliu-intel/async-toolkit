@@ -43,8 +43,6 @@ class mby_smm_bfm extends uvm_component;
 
    // VARIABLE: igr_wr_req_cfg_obj, igr_wr_req_cfg_obj
    // The bfm's mwr/mrd request configuration objects
-   mby_smm_bfm_cfg igr_wr_req_cfg_obj;
-   mby_smm_bfm_cfg egr_rd_req_cfg_obj;
 
    // VARIABLE: igr_wr_req_agent, egr_rd_req_agent 
    // These are the Mesh BFM Agent Instances interfacing with the Ingress and Egress respectively for Write/Read Request Transactions.
@@ -95,15 +93,17 @@ class mby_smm_bfm extends uvm_component;
    // ------------------------------------------------------------------------
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
+      
+      // Not  really used these config objects yet, but compilation will complain if they aren't defined
       igr_wr_req_agent = smm_bfm_row_wr_req_agent::type_id::create("igr_wr_req_agent", this);
-      uvm_config_db#(mby_base_config)::set(this, "igr_wr_req_agent", "cfg_obj", igr_wr_req_cfg_obj);
-      igr_wr_req_agent.cfg_obj = this.igr_wr_req_cfg_obj;
+      igr_wr_req_agent.cfg_obj = new("smm_bfm_igr_wr_req_cfg");
+      uvm_config_db#(mby_base_config)::set(this, "igr_wr_req_agent", "cfg_obj", igr_wr_req_agent.cfg_obj);
       igr_wr_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
       igr_wr_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
       
       egr_rd_req_agent = smm_bfm_row_rd_req_agent::type_id::create("egr_rd_req_agent", this);
-      uvm_config_db#(mby_base_config)::set(this, "egr_rd_req_agent", "cfg_obj", egr_rd_req_cfg_obj);
-      egr_rd_req_agent.cfg_obj = this.egr_rd_req_cfg_obj;
+      egr_rd_req_agent.cfg_obj = new("smm_bfm_egr_rd_req_cfg");
+      uvm_config_db#(mby_base_config)::set(this, "egr_rd_req_agent", "cfg_obj", egr_rd_req_agent.cfg_obj);
       egr_rd_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
       egr_rd_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
       
@@ -114,9 +114,9 @@ class mby_smm_bfm extends uvm_component;
       end
 
       mwr_req         = smm_bfm_mwr_req::type_id::create("mwr_req", this);
-      mwr_req.set_mesh_ptr(mem_mesh);       
+      mwr_req.set_mesh_ptr(mem_mesh);
       mrd_req         = smm_bfm_mrd_req::type_id::create("mrd_req", this);
-      mrd_req.set_mesh_ptr(mem_mesh);       
+      mrd_req.set_mesh_ptr(mem_mesh);
 
       mrd_req.set_agent_ptr(egr_rd_req_agent);
    endfunction : build_phase

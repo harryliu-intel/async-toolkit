@@ -21,8 +21,9 @@
 #define MBY_MOD_FIELDS_PER_REG_ENTRY            3
 #define MBY_MOD_COMMAND_PER_GROUP               4
 #define MBY_MOD_PROT_ID_MD_TYPE                 253
-#define MBY_MOD_MAX_HDR_REGION                  256
-#define MBY_MOD_CNTR_SIZE                       256
+#define MBY_MOD_OPERATING_REGION_MAX            192
+#define MBY_MOD_OPERATION_SIZE_MAX              128
+#define MBY_MOD_CTNR_SIZE                       320
 #define MBY_MOD_CONTENT_SIZE                    256
 #define MBY_MOD_MAP_MAX_SINGLE_LUT              3
 #define MBY_MOD_MAP_DUAL_LUT                    4
@@ -31,19 +32,25 @@
 #define MBY_MOD_CONTENT_ENTRY_SIZE              8
 #define MBY_MOD_MAP_VALUES_PER_ENTRY            4
 #define MBY_MOD_MAP_DUAL_VALUES_PER_ENTRY       8
+#define MBY_MOD_CMD_FLD_1B_OPERATION            8
 
 /* Modifier command encoding field bits definition */
-#define MBY_MOD_CMD_l_LEN_MASK                  0
-#define MBY_MOD_CMD_h_LEN_MASK                  7
+#define MBY_MOD_CMD_l_LEN_MASK_8B               0
+#define MBY_MOD_CMD_h_LEN_MASK_8B               7
+#define MBY_MOD_CMD_l_LEN_MASK_16B              0
+#define MBY_MOD_CMD_h_LEN_MASK_16B              15
 #define MBY_MOD_CMD_l_PROT_ID                   8
 #define MBY_MOD_CMD_h_PROT_ID                   15
 #define MBY_MOD_CMD_l_OFFSET                    8
 #define MBY_MOD_CMD_h_OFFSET                    13
 #define MBY_MOD_CMD_b_ALIGNMENT                 14
+#define MBY_MOD_CMD_b_LUT_MODE                  14
 #define MBY_MOD_CMD_l_LUT                       15
 #define MBY_MOD_CMD_h_LUT                       17
-#define MBY_MOD_CMD_b_UPDATE                    16
-#define MBY_MOD_CMD_b_LUT_MODE                  18
+#define MBY_MOD_CMD_b_S                         16
+#define MBY_MOD_CMD_b_M                         16
+#define MBY_MOD_CMD_l_SHIFT                     16
+#define MBY_MOD_CMD_h_SHIFT                     17
 #define MBY_MOD_CMD_b_PROT_DEL                  18
 #define MBY_MOD_CMD_l_MODE                      18
 #define MBY_MOD_CMD_h_MODE                      20
@@ -57,24 +64,11 @@
 #define MBY_MOD_PROFILE_GROUP_h_PROT_ID         7
 #define MBY_MOD_PROFILE_GROUP_b_CONFIG          8
 
-#define MBY_MOD_CMD_l_LEN_MASK                  0
-#define MBY_MOD_CMD_h_LEN_MASK                  7
-#define MBY_MOD_CMD_l_PROT_ID                   8
-#define MBY_MOD_CMD_h_PROT_ID                   15
-#define MBY_MOD_CMD_l_OFFSET                    8
-#define MBY_MOD_CMD_h_OFFSET                    13
-#define MBY_MOD_CMD_b_ALIGNMENT                 14
-#define MBY_MOD_CMD_l_LUT                       15
-#define MBY_MOD_CMD_h_LUT                       17
-#define MBY_MOD_CMD_b_UPDATE                    16
-#define MBY_MOD_CMD_b_LUT_MODE                  18
-#define MBY_MOD_CMD_b_PROT_DEL                  18
-#define MBY_MOD_CMD_l_MODE                      18
-#define MBY_MOD_CMD_h_MODE                      20
-#define MBY_MOD_CMD_l_TYPE                      21
-#define MBY_MOD_CMD_h_TYPE                      23
-#define MBY_MOD_CMD_DECREMENT_1B_l_POS          0
-#define MBY_MOD_CMD_DECREMENT_1B_h_POS          3
+/* Modifier "Insert field mask" encoding bits definition. */
+#define MBY_MOD_CMD_INS_FLD_MASK_l_POS          0
+#define MBY_MOD_CMD_INS_FLD_MASK_h_POS          3
+#define MBY_MOD_CMD_INS_FLD_MASK_l_LEN          4
+#define MBY_MOD_CMD_INS_FLD_MASK_h_LEN          7
 
 // Enums:
 
@@ -232,12 +226,15 @@ typedef enum mbyModCmdTypeEnum
 
 typedef enum mbyModCmdModeEnum
 {
-    MBY_MOD_CMD_MODE_NOP = 0,
-    MBY_MOD_CMD_MODE_BASIC,
+    MBY_MOD_CMD_MODE_BASIC = 0,
+    MBY_MOD_CMD_MODE_ZEROES,
     MBY_MOD_CMD_MODE_4B_REPLACE,
     MBY_MOD_CMD_MODE_1B_REPLACE,
     MBY_MOD_CMD_MODE_1B_XOR,
-    MBY_MOD_CMD_MODE_1B_DECREMENT,
+    MBY_MOD_CMD_MODE_1B_2B_DECREMENT,
+    MBY_MOD_CMD_MODE_2B_COMB_INSERT,
+    MBY_MOD_CMD_MODE_1B_INSERT
+
 
 } mbyModCmdMode;
 
@@ -261,6 +258,18 @@ typedef enum mbyModCmdSourceEnum
     MBY_MOD_CMD_SOURCE_FIELD_CONTAINER,
 
 } mbyModCmdSource;
+
+typedef enum mbyModInsFldShiftEnum
+{
+    MBY_MOD_CMD_INS_FLD_SHIFT_NONE = 0,
+
+    MBY_MOD_CMD_INS_FLD_SHIFT_2_LEFT,
+
+    MBY_MOD_CMD_INS_FLD_SHIFT_2_RIGHT,
+
+    MBY_MOD_CMD_INS_FLD_SHIFT_4_RIGHT
+
+} mbyModInsFldShift;
 
 // Structs:
 
@@ -478,20 +487,23 @@ typedef struct mbyModFieldVectorStruct {
 typedef struct mbyModCmdInsertStruct {
     fm_byte                 len;
     fm_byte                 prot_id;
-    fm_bool                 update;
+    mbyModCmdSource         source;
+    fm_bool                 mult_hdr_insrt;
     mbyModCmdMode           mode;
 
 } mbyModCmdInsert;
 
 typedef struct mbyModCmdInsertFldStruct {
-    fm_byte                 len_mask;
+    fm_uint16               len_mask;
+    fm_byte                 shift;
     mbyModCmdMode           mode;
 
 } mbyModCmdInsertFld;
 
 typedef struct mbyModCmdInsertFldLutStruct {
-    fm_byte                 lut;
     mbyModCmdLutMode        lut_mode;
+    fm_byte                 lut;
+    mbyModCmdMode           mode;
 
 } mbyModCmdInsertFldLut;
 
@@ -519,9 +531,9 @@ typedef struct mbyModCmdReplaceFldStruct {
 typedef struct mbyModCmdReplaceFldLutStruct {
     fm_byte                 mask;
     fm_byte                 offset;
-    mbyModCmdAlignment      align;
-    fm_byte                 lut;
     mbyModCmdLutMode        lut_mode;
+    fm_byte                 lut;
+    mbyModCmdMode           mode;
 
 } mbyModCmdReplaceFldLut;
 
@@ -551,6 +563,8 @@ typedef struct mbyModContentContainerStruct {
 // profile related metadata
 typedef struct mbyModGroupConfigStruct {
     fm_bool                 valid;
+    /* Specifies whether group was demarcated using protocol ID */
+    fm_bool                 dem_by_prot_id;
     fm_uint                 grp_idx;
     // Offset coming from packet
     fm_uint                 pkt_offset;
