@@ -8,13 +8,16 @@
 typedef class mby_mgp_req_agent_cfg;
    
 //----------------------------------------------------------------------------------------
-// Class: mby_mgp_agent_cfg
+// Class: mby_mgp_bfm_cfg
 //----------------------------------------------------------------------------------------
-class mby_mgp_agent_cfg extends uvm_object;
+class mby_mgp_bfm_cfg extends uvm_object;
 
-   `uvm_object_utils(mby_mgp_agent_cfg)
+   `uvm_object_utils(mby_mgp_bfm_cfg)
+
    bit driver_enable = 1;
-   bit monitor_enable = 1; 
+   bit monitor_enable = 1;
+
+   bus_type_e bus_type;
 
    rand mby_mgp_req_agent_cfg req_agent_cfg;
    
@@ -26,10 +29,11 @@ endclass
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mgp_agent_cfg::new (string name = "");
+function mby_mgp_bfm_cfg::new (string name = "");
 
    super.new(name);
-   req_agent_cfg = mby_mgp_req_agent_cfg::type_id::create("req_agent_cfg");
 
+   req_agent_cfg = mby_mgp_req_agent_cfg::type_id::create("req_agent_cfg");
+   
 endfunction : new
 

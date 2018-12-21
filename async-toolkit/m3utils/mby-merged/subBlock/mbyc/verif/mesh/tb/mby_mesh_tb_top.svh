@@ -50,6 +50,9 @@ module mby_mesh_tb_top();
    logic         mclk; 
    shdv_clk_gen  fabric_clk_gen(fabric_clk);
    shdv_clk_gen  mclk_gen(mclk);
+   wire          tb_reset;
+   wire          ref_clk;
+   
 
    initial begin
 
@@ -70,7 +73,7 @@ module mby_mesh_tb_top();
    string       str;
 
    mby_mesh_tb_if mesh_tb_if();
-
+ 
  
    assign mesh_tb_if.fab_clk  = fabric_clk;
    assign mesh_tb_if.mclk     = mclk;
@@ -79,51 +82,31 @@ module mby_mesh_tb_top();
 
    assign   shdv_intf.ref_clk   = mesh_tb_if.fab_clk; 
    assign   shdv_intf.ref_rst   = mesh_tb_if.chard_reset;
+
+   assign ref_clk  = fabric_clk;
+   assign tb_reset = mesh_tb_if.chard_reset;
    
-   //MGP --> Msh write op
-   mby_mgp_mim_op_if    mby_mgp_mim_wr_op_wb_if();
-   mby_mgp_mim_op_if    mby_mgp_mim_wr_op_eb_if();
-   //MGP --> Msh Rd op
-   mby_mgp_mim_op_if    mby_mgp_mim_rd_op_wb_if();
-   mby_mgp_mim_op_if    mby_mgp_mim_rd_op_eb_if();
-   //MGP --> Msh Rsp op
-   mby_mgp_mim_op_if    mby_mgp_mim_rsp_op_wb_if();
-   mby_mgp_mim_op_if    mby_mgp_mim_rsp_op_eb_if();
-   //MGP --> Msh write data
-   mby_mgp_mim_data_if  mby_mgp_mim_wr_data_wb_if();
-   mby_mgp_mim_data_if  mby_mgp_mim_wr_data_eb_if();
-   //MGP --> Msh Rsp data
-   mby_mgp_mim_data_if  mby_mgp_mim_rsp_data_wb_if();
-   mby_mgp_mim_data_if  mby_mgp_mim_rsp_data_eb_if();
-   //MIG --> Msh write op
-   mby_gmm_mig_op_if    mby_gmm_mig_wr_op_sb_if_0();
-   mby_gmm_mig_op_if    mby_gmm_mig_wr_op_sb_if_1();
-   mby_gmm_mig_op_if    mby_gmm_mig_wr_op_sb_if_2();
-   mby_gmm_mig_op_if    mby_gmm_mig_wr_op_nb_if_0();
-   //MIG --> Msh read op
-   mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_0();
-   mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_1();
-   mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_2();
-   mby_gmm_mig_op_if    mby_gmm_mig_rd_op_sb_if_3();
-   mby_gmm_mig_op_if    mby_gmm_mig_rd_op_nb_if_0();
-   //MIG --> Msh res op
-   mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_0();
-   mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_1();
-   mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_2();
-   mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_sb_if_3();
-   mby_gmm_mig_op_if    mby_gmm_mig_rsp_op_nb_if_0();
-   //MIG --> Msh write data
-   mby_gmm_mig_data_if  mby_gmm_mig_wr_data_sb_if_0();
-   mby_gmm_mig_data_if  mby_gmm_mig_wr_data_sb_if_1();
-   mby_gmm_mig_data_if  mby_gmm_mig_wr_data_sb_if_2();
-   mby_gmm_mig_data_if  mby_gmm_mig_wr_data_nb_if_0();
-   //MIG --> Msh res data
-   mby_gmm_mig_data_if  mby_gmm_mig_rsp_data_sb_if_0();
-   mby_gmm_mig_data_if  mby_gmm_mig_rsp_data_sb_if_1();
-   mby_gmm_mig_data_if  mby_gmm_mig_rsp_data_sb_if_2();
-   mby_gmm_mig_data_if  mby_gmm_mig_rsp_data_sb_if_3();
-   mby_gmm_mig_data_if  mby_gmm_mig_rsp_data_nb_if_0();
-   
+   //MGP --> Msh write wb
+   mby_mgp_mim_if    req_wb_if(
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_id           (),
+      .seg_ptr          (),
+      .wd_sel           (),
+      .valid            (),
+      .sema             ()
+   );
+
+   //MGP --> Msh write eb
+   mby_mgp_mim_if    req_eb_if(
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_id           (),
+      .seg_ptr          (),
+      .wd_sel           (),
+      .valid            (),
+      .sema             ()
+   );
 
    //-----------------------------------------------------------------------------
    // Verification Test Island
@@ -132,45 +115,9 @@ module mby_mesh_tb_top();
    ) mesh_ti(
        .mby_mesh_tb_if               (mesh_tb_if),
        .shdv_intf                    (shdv_intf),
-       .mby_mgp_mim_wr_op_wb_if      (mby_mgp_mim_wr_op_wb_if),
-       .mby_mgp_mim_wr_op_eb_if      (mby_mgp_mim_wr_op_eb_if),
-       .mby_mgp_mim_rd_op_wb_if      (mby_mgp_mim_rd_op_wb_if),
-       .mby_mgp_mim_rd_op_eb_if      (mby_mgp_mim_rd_op_eb_if),
-       .mby_mgp_mim_rsp_op_wb_if     (mby_mgp_mim_rsp_op_wb_if),
-       .mby_mgp_mim_rsp_op_eb_if     (mby_mgp_mim_rsp_op_eb_if),
-       .mby_mgp_mim_wr_data_wb_if    (mby_mgp_mim_wr_data_wb_if),
-       .mby_mgp_mim_wr_data_eb_if    (mby_mgp_mim_wr_data_eb_if),
-       .mby_mgp_mim_rsp_data_wb_if   (mby_mgp_mim_rsp_data_wb_if),
-       .mby_mgp_mim_rsp_data_eb_if   (mby_mgp_mim_rsp_data_eb_if),
-       //MIG --> Msh write op
-       .mby_gmm_mig_wr_op_sb_if_0    (mby_gmm_mig_wr_op_sb_if_0),
-       .mby_gmm_mig_wr_op_sb_if_1    (mby_gmm_mig_wr_op_sb_if_1),
-       .mby_gmm_mig_wr_op_sb_if_2    (mby_gmm_mig_wr_op_sb_if_2),
-       .mby_gmm_mig_wr_op_nb_if_0    (mby_gmm_mig_wr_op_nb_if_0),
-       //MIG --> Msh read op
-       .mby_gmm_mig_rd_op_sb_if_0    (mby_gmm_mig_rd_op_sb_if_0),
-       .mby_gmm_mig_rd_op_sb_if_1    (mby_gmm_mig_rd_op_sb_if_1),
-       .mby_gmm_mig_rd_op_sb_if_2    (mby_gmm_mig_rd_op_sb_if_2),
-       .mby_gmm_mig_rd_op_sb_if_3    (mby_gmm_mig_rd_op_sb_if_3),
-       .mby_gmm_mig_rd_op_nb_if_0    (mby_gmm_mig_rd_op_nb_if_0),
-       //MIG --> Msh res op
-       .mby_gmm_mig_rsp_op_sb_if_0    (mby_gmm_mig_rsp_op_sb_if_0),
-       .mby_gmm_mig_rsp_op_sb_if_1    (mby_gmm_mig_rsp_op_sb_if_1),
-       .mby_gmm_mig_rsp_op_sb_if_2    (mby_gmm_mig_rsp_op_sb_if_2),
-       .mby_gmm_mig_rsp_op_sb_if_3    (mby_gmm_mig_rsp_op_sb_if_3),
-       .mby_gmm_mig_rsp_op_nb_if_0    (mby_gmm_mig_rsp_op_nb_if_0),
-       //MIG --> Msh write da        
-       .mby_gmm_mig_wr_data_sb_if_0  (mby_gmm_mig_wr_data_sb_if_0),
-       .mby_gmm_mig_wr_data_sb_if_1  (mby_gmm_mig_wr_data_sb_if_1),
-       .mby_gmm_mig_wr_data_sb_if_2  (mby_gmm_mig_wr_data_sb_if_2),
-       .mby_gmm_mig_wr_data_nb_if_0  (mby_gmm_mig_wr_data_nb_if_0),
-       //MIG --> Msh res data        
-       .mby_gmm_mig_rsp_data_sb_if_0  (mby_gmm_mig_rsp_data_sb_if_0),
-       .mby_gmm_mig_rsp_data_sb_if_1  (mby_gmm_mig_rsp_data_sb_if_1),
-       .mby_gmm_mig_rsp_data_sb_if_2  (mby_gmm_mig_rsp_data_sb_if_2),
-       .mby_gmm_mig_rsp_data_sb_if_3  (mby_gmm_mig_rsp_data_sb_if_3),
-       .mby_gmm_mig_rsp_data_nb_if_0  (mby_gmm_mig_rsp_data_nb_if_0)
-
+       .req_eb_if                    (req_eb_if),
+       .req_wb_if                    (req_wb_if)
+ 
    );
   
    //////////////////////////////////////////////
@@ -256,13 +203,14 @@ module mby_mesh_tb_top();
    // MBY Mesh Dut
    // ===============================================
    // ===============================================
-
+ 
+   
    mby_msh #(.NUM_MSH_ROWS(3) , .NUM_MSH_COLS(3)) msh(
        .cclk                  (mesh_tb_if.mclk),
        .mclk                  (mesh_tb_if.fab_clk),
        .chreset               (mesh_tb_if.chard_reset),
        .mhreset               (mesh_tb_if.mhard_reset),
-       .i_igr_eb_wreq_valid   (mby_mgp_mim_wr_op_eb_if.)
-       
+       .i_igr_eb_wreq_valid   (req_eb_if.valid),
+       .i_igr_wb_wreq_valid   (req_wb_if.valid)
        );
 endmodule

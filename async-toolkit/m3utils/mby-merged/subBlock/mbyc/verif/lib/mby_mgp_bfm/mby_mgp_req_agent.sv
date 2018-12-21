@@ -3,25 +3,25 @@
 //----------------------------------------------------------------------------------------
 // Author:  Dhivya Sankar
 // Project: Madison Bay
-// Description: The wrreq_agent class.
-// The agent drives write requests and monitors requests/credits coming
+// Description: The mesh req_agent class.
+// The agent drives read requests and monitors requests/credits coming
 // out from the dut.
 //----------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------
-// Class: mby_mgp_wrreq_agent
+// Class: mby_mgp_req_agent
 //----------------------------------------------------------------------------------------
-class mby_mgp_wrreq_agent extends uvm_agent;
+class mby_mgp_req_agent extends uvm_agent;
    
-   mby_mgp_wrreq_drv  wrreq_drv;
-   mby_mgp_wrreq_mon  wrreq_mon;
-   uvm_sequencer#(mby_mgp_req_seq_item) wrreq_seqr;
+   mby_mgp_req_drv  req_drv;
+   mby_mgp_req_mon  req_mon;
+   uvm_sequencer#(mby_mgp_req_seq_item) req_seqr;
 
    mby_mgp_req_agent_cfg   req_agent_cfg;
    mby_mgp_mem_crdt_io     mem_crdt_io;
    mby_mgp_flow_ctrl       flow_ctrl;
    
-   `uvm_component_utils(mby_mgp_wrreq_agent)
+   `uvm_component_utils(mby_mgp_req_agent)
    extern function new(string name = "", uvm_component parent = null);
    extern virtual function void build_phase(uvm_phase phase);
    extern virtual function void connect_phase(uvm_phase phase);
@@ -32,14 +32,14 @@ endclass
 //----------------------------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------------------------
-function mby_mgp_wrreq_agent::new(string name = "", uvm_component parent = null);
+function mby_mgp_req_agent::new(string name = "", uvm_component parent = null);
    super.new(name, parent);
 endfunction : new
 
 //----------------------------------------------------------------------------------------
 // Method: build
 //----------------------------------------------------------------------------------------
-function void mby_mgp_wrreq_agent::build_phase(uvm_phase phase);
+function void mby_mgp_req_agent::build_phase(uvm_phase phase);
    super.build_phase(phase);
 
    if (req_agent_cfg == null) begin
@@ -48,39 +48,39 @@ function void mby_mgp_wrreq_agent::build_phase(uvm_phase phase);
                            
 
    if (req_agent_cfg.driver_enable) begin
-      wrreq_seqr = new("wrreq_seqr", this);
+      req_seqr = new("req_seqr", this);
    
-      wrreq_drv              = mby_mgp_wrreq_drv::type_id::create("wrreq_drv", this);
-      wrreq_drv.req_agent_cfg = req_agent_cfg;
-      wrreq_drv.flow_ctrl    = flow_ctrl;
-      wrreq_drv.mem_crdt_io  = mem_crdt_io;
+      req_drv                 = mby_mgp_req_drv::type_id::create("req_drv", this);
+      req_drv.req_agent_cfg   = req_agent_cfg;
+      req_drv.flow_ctrl       = flow_ctrl;
+      req_drv.mem_crdt_io     = mem_crdt_io;
    end
    if (req_agent_cfg.monitor_enable) begin
-      wrreq_mon              = mby_mgp_wrreq_mon::type_id::create("wrreq_mon", this);
-      wrreq_mon.req_agent_cfg = req_agent_cfg;
-      wrreq_mon.mem_crdt_io  = mem_crdt_io;
+      req_mon                 = mby_mgp_req_mon::type_id::create("req_mon", this);
+      req_mon.req_agent_cfg   = req_agent_cfg;
+      req_mon.mem_crdt_io     = mem_crdt_io;
    end
 endfunction : build_phase
 
 //----------------------------------------------------------------------------------------
 // Method: connect
 //----------------------------------------------------------------------------------------
-function void mby_mgp_wrreq_agent::connect_phase(uvm_phase phase);
+function void mby_mgp_req_agent::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
    if (req_agent_cfg.driver_enable) begin
-      wrreq_drv.seq_item_port.connect(wrreq_seqr.seq_item_export);
+      req_drv.seq_item_port.connect(req_seqr.seq_item_export);
    end
 endfunction : connect_phase
 
 //----------------------------------------------------------------------------------------
 // Method: reset
 //----------------------------------------------------------------------------------------
-function void mby_mgp_wrreq_agent::reset();
+function void mby_mgp_req_agent::reset();
    if (req_agent_cfg.driver_enable) begin
-      wrreq_drv.reset();
+      req_drv.reset();
    end
    if (req_agent_cfg.monitor_enable) begin
-      wrreq_mon.reset();
+      req_mon.reset();
    end
 endfunction : reset
 
