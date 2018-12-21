@@ -3,9 +3,24 @@
       <DUT>mby</DUT>
       <Stage>genrtl</Stage>
       <Stage_Exec>bman</Stage_Exec>
-      <AdditionalArgs>-mc mby,mesh -s all +s genrtl -nodelete_flow_data</AdditionalArgs>
+      <AdditionalArgs>-mc mesh -s all +s genrtl -nodelete_flow_data</AdditionalArgs>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
+   </row>
+   <row>
+      <!-- Note * genrtl_mby is only run during Release * Does NOT run during Turnin -->
+      <DUT>mby</DUT>
+      <Stage>genrtl_mby</Stage>
+      <Stage_Exec>bman</Stage_Exec>
+      <AdditionalArgs>-mc mby -s all +s genrtl_gen_mby_regflow_lib -nodelete_flow_data</AdditionalArgs>
+      <XdutStageDep>[mby].[genrtl]</XdutStageDep>
+      <IsGating>1</IsGating>
+      <Turnin>0</Turnin>
       <Release>1</Release>
       <PostRelease>0</PostRelease>
       <Active>1</Active>
@@ -17,7 +32,7 @@
       <Stage>vcs</Stage>
       <Stage_Exec>bman</Stage_Exec>
       <AdditionalArgs>-s all +s collage +s vcs -mc fc,rx_ppe,mesh,igr,egr +s sim_init +s vclp +s dvt -nodelete_flow_data  -vlog_opts +define+INSTANTIATE_HIERDUMP</AdditionalArgs>
-      <XdutStageDep>[mby].[genrtl]</XdutStageDep>
+      <XdutStageDep>[mby].[genrtl] [mby].[genrtl_mby]</XdutStageDep>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
       <Release>1</Release>
@@ -46,7 +61,7 @@
       <Stage>vcs</Stage>
       <Stage_Exec>bman</Stage_Exec>
       <AdditionalArgs>-s all +s collage +s vcs +s sim_init -mc fc_8_no_phy -variant=fc_8_no_phy -1c -ace_model_name fc_8_no_phy  -1c- -nodelete_flow_data</AdditionalArgs>
-      <XdutStageDep>[mby].[genrtl]</XdutStageDep>
+      <XdutStageDep>[mby].[genrtl] [mby].[genrtl_mby]</XdutStageDep>
       <IsGating>1</IsGating>
       <Turnin>1</Turnin>
       <Release>1</Release>
