@@ -86,7 +86,7 @@ ${BLD_DIR}/%.o: %.c
 ${BLD_DIR}/uint.o:              $(BLD_DTS) Makefile ${C_DIR}/uint.c ${C_DIR}/uint.h
 ${BLD_DIR}/fm_alos_debughash.o: $(BLD_DTS) Makefile ${C_DIR}/fm_alos_debughash.c ${C_DIR}/fm_alos_debughash.h
 ${BLD_DIR}/mby_top_map.o:       $(BLD_DTS) Makefile ${MAP_DIR}/mby_top_map.c ${MAP_DIR}/mby_top_map.h
-${BLD_DIR}/model_c_write.o:     $(BLD_DTS) Makefile model_c_write.c model_c_write.h ${C_DIR}/fm_types.h ${C_DIR}/fm_alos_debughash.c
+${BLD_DIR}/model_c_write.o:     $(BLD_DTS) Makefile model_c_write.c model_c_write.h ${C_DIR}/fm_types.h ${C_DIR}/fm_alos_debughash.h
 
 $(LIB_STATIC): $(BLD_DTS) $(OBJECTS)
 	@echo '  Creating static library'

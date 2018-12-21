@@ -142,18 +142,33 @@ class mby_mesh_base_test extends shdv_base_test;
     // Function: set_default_sequences()
     //-----------------------------------------------------------------------------
     virtual function void set_default_sequences();
-
-   // Set up default cold reset sequence
-   //PJP: TODO Uncomment the following code once reset and configuration sequences are developed.
+        
+        
+      // Specifying reset phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.reset_phase",
+         "default_sequence",
+         mby_mesh_seq_lib::mby_mesh_hard_reset_seq::type_id::get());
 /*
-   uvm_config_db#(uvm_object_wrapper)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence", igr_env_pkg::mby_igr_hard_reset_seq::type_id::get());
-   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence.min_random_count", 1);
-   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.reset_phase", "default_sequence.max_random_count", 1);
-
-
-   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.main_phase", "default_sequence.min_random_count", 1);
-   uvm_config_db#(int unsigned)::set(this, "env.mby_igr_tb_sequencer.main_phase", "default_sequence.max_random_count", 1);
+      // Specifying post_reset phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.post_reset_phase",
+         "default_sequence",
+         mby_mesh_post_reset_seq::type_id::get());
 */
+      // Specifying configure phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.configure_phase",
+         "default_sequence",
+         mby_mesh_seq_lib::mby_mesh_cfg_seq::type_id::get());
+
+      // Specifying shutdown phase sequence
+      uvm_config_db#(uvm_object_wrapper)::set(this,
+         "env.tb_seqr.shutdown_phase",
+         "default_sequence",
+         mby_mesh_seq_lib::mby_mesh_shutdown_seq::type_id::get());
+
+
    endfunction : set_default_sequences
 
     //------------------------------------------------------------------------------
