@@ -1,6 +1,5 @@
 GENERIC MODULE GenViews(Tgt, TgtNaming, TgtGenerators, TgtConstants);
 
-IMPORT GenViews AS Super;
 IMPORT Debug; 
 FROM Fmt IMPORT F;
 IMPORT RTName;
@@ -26,7 +25,7 @@ IMPORT RegFieldArraySort;
 CONST Brand = "GenViews(" & Tgt.Brand & ")";
       
 REVEAL
-  T = Super.T BRANDED Brand OBJECT
+  T = Tgt.Gen BRANDED Brand OBJECT
   OVERRIDES
     decorate := Decorate;
     gen      := DoIt;
@@ -290,10 +289,11 @@ PROCEDURE AllocReg(c     : RdlComponentDef.T) : RegReg.T =
     RETURN reg
   END AllocReg;
 
-PROCEDURE DoIt(<*UNUSED*>t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
+PROCEDURE DoIt(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
   VAR
     r : Compiler := NEW(Tgt.T).init(tgtmap);
   BEGIN
+    r.gv := t;
     FOR i := FIRST(Tgt.Phase) TO LAST(Tgt.Phase) DO
       TRY
         TRY

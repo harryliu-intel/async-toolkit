@@ -80,7 +80,8 @@ mem_mem_EPL_MDATA_shell_240x32,mem_EPL_MDATA,egr,1r1w,RF,1225,240,39,ECC,7,39,4,
 mem_mem_pod_ptr_shell_2048x30,mem_pod_ptr,gpm,1rw,SRAM,1225,2048,37,ECC,7,37,4,No,1,30,30,30,SRAM,2048,,0,0,0,0,1,1,1,
 mem_mem_pointers_shell_1024x2208,mem_pointers,gpm,1rw,SRAM,1225,1024,2352,ECC,144,147,8,No,1,138,138,2208,SRAM,1024,,0,0,0,0,1,1,1,
 mem_mirror_reorder_buf_shell_150x448,mirror_reorder_buf,mce,1r1w,RF,1225,150,458,ECC,10,458,1,No,1,448,448,448,RF,150,,0,0,0,0,1,1,1,
-mem_msh_bank_ram_shell_4096x552,msh_bank_ram,msh,1rw,SRAM,1800,4096,552,None,0,552,1,No,1,,552,552,SRAM,4096,69,0,0,0,0,1,1,8,saduls0g4l1p4096x69m4b4w0c0p1d0l2rm3sdrw01
+mem_msh_bank_ram_shell_4096x532,msh_bank_ram,msh,1rw,SRAM,1800,4096,532,None,0,532,4,No,1,,532,532,SRAM,4096,133,0,0,0,0,1,1,4,saduls0g4l1p4096x133m4b4w0c0p0d0l2rm3sdrw01
+mem_msh_bank_ram_shell_4096x552,msh_bank_ram,msh,1rw,SRAM,1800,4096,552,None,0,552,1,No,1,,552,552,SRAM,4096, 69,0,0,0,0,1,1,8,saduls0g4l1p4096x69m4b4w0c0p1d0l2rm3sdrw01
 mem_nh_config_shell_1x64,nh_config,action,1r1w,FLOPS,1225,1,72,ECC,8,72,1,No,1,64,64,64,FLOPS,1,,0,0,0,0,1,1,1,
 mem_nh_flood_glort_table_shell_256x64,nh_flood_glort_table,action,1rw,RF,1225,256,72,ECC,8,72,1,No,1,64,64,64,RF,256,,0,0,0,0,1,1,1,
 mem_nh_fwd_hashing_cfg_shell_1x64,nh_fwd_hashing_cfg,action,1r1w,FLOPS,1225,1,72,ECC,8,72,1,No,1,64,64,64,FLOPS,1,,0,0,0,0,1,1,1,

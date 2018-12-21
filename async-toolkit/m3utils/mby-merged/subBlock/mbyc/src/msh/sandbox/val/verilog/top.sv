@@ -54,6 +54,7 @@
 
 module top 
 import mby_msh_pkg::*;
+import msh_sim_pkg::*;
 ();
 
     logic clk = 0;                              // declare clock
@@ -66,7 +67,10 @@ import mby_msh_pkg::*;
                 clk = ~clk;                     //  invert the clock
 
     // instantiate DUT interface
-    msh_dut_if dut_if (
+    msh_dut_if #(
+        .NUM_MSH_ROWS(NUM_MSH_ROWS),
+        .NUM_MSH_COLS(NUM_MSH_COLS)
+    ) dut_if (
         .mclk(clk)                               // pass clock into this interface to make it part of the interface
     );
 
@@ -88,7 +92,12 @@ logic reset;
 //       
 //    );
 
-mby_msh msh(
+mby_msh #(
+
+    .NUM_MSH_ROWS(NUM_MSH_ROWS),
+    .NUM_MSH_COLS(NUM_MSH_COLS)
+
+) msh (
 
     
     .cclk(clk),                                // core clock

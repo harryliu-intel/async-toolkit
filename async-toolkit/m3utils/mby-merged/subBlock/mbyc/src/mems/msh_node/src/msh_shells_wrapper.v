@@ -27,22 +27,22 @@ module msh_shells_wrapper // Parameters
    input                                 [12-1:0] msh_bank_ram_0_adr                      ,   
    input                                          msh_bank_ram_0_mem_ls_enter             ,   
    input                                          msh_bank_ram_0_rd_en                    ,   
-   input                                [552-1:0] msh_bank_ram_0_wr_data                  ,   
+   input                                [532-1:0] msh_bank_ram_0_wr_data                  ,   
    input                                          msh_bank_ram_0_wr_en                    ,   
    input                                 [12-1:0] msh_bank_ram_1_adr                      ,   
    input                                          msh_bank_ram_1_mem_ls_enter             ,   
    input                                          msh_bank_ram_1_rd_en                    ,   
-   input                                [552-1:0] msh_bank_ram_1_wr_data                  ,   
+   input                                [532-1:0] msh_bank_ram_1_wr_data                  ,   
    input                                          msh_bank_ram_1_wr_en                    ,   
    input                                 [12-1:0] msh_bank_ram_2_adr                      ,   
    input                                          msh_bank_ram_2_mem_ls_enter             ,   
    input                                          msh_bank_ram_2_rd_en                    ,   
-   input                                [552-1:0] msh_bank_ram_2_wr_data                  ,   
+   input                                [532-1:0] msh_bank_ram_2_wr_data                  ,   
    input                                          msh_bank_ram_2_wr_en                    ,   
    input                                 [12-1:0] msh_bank_ram_3_adr                      ,   
    input                                          msh_bank_ram_3_mem_ls_enter             ,   
    input                                          msh_bank_ram_3_rd_en                    ,   
-   input                                [552-1:0] msh_bank_ram_3_wr_data                  ,   
+   input                                [532-1:0] msh_bank_ram_3_wr_data                  ,   
    input                                          msh_bank_ram_3_wr_en                    ,   
    input [`MBY_MSH_MSH_BANK_RAM_FROM_MEM_WIDTH-1:0] msh_msh_bank_ram_0_from_mem             ,   
    input [`MBY_MSH_MSH_BANK_RAM_FROM_MEM_WIDTH-1:0] msh_msh_bank_ram_1_from_mem             ,   
@@ -56,19 +56,19 @@ module msh_shells_wrapper // Parameters
 
   output                                          msh_bank_ram_0_ecc_uncor_err            ,   
   output                                          msh_bank_ram_0_init_done                ,   
-  output                                [552-1:0] msh_bank_ram_0_rd_data                  ,   
+  output                                [532-1:0] msh_bank_ram_0_rd_data                  ,   
   output                                          msh_bank_ram_0_rd_valid                 ,   
   output                                          msh_bank_ram_1_ecc_uncor_err            ,   
   output                                          msh_bank_ram_1_init_done                ,   
-  output                                [552-1:0] msh_bank_ram_1_rd_data                  ,   
+  output                                [532-1:0] msh_bank_ram_1_rd_data                  ,   
   output                                          msh_bank_ram_1_rd_valid                 ,   
   output                                          msh_bank_ram_2_ecc_uncor_err            ,   
   output                                          msh_bank_ram_2_init_done                ,   
-  output                                [552-1:0] msh_bank_ram_2_rd_data                  ,   
+  output                                [532-1:0] msh_bank_ram_2_rd_data                  ,   
   output                                          msh_bank_ram_2_rd_valid                 ,   
   output                                          msh_bank_ram_3_ecc_uncor_err            ,   
   output                                          msh_bank_ram_3_init_done                ,   
-  output                                [552-1:0] msh_bank_ram_3_rd_data                  ,   
+  output                                [532-1:0] msh_bank_ram_3_rd_data                  ,   
   output                                          msh_bank_ram_3_rd_valid                 ,   
   output                                          msh_ecc_int                             ,   
   output                                          msh_init_done                           ,   
@@ -96,7 +96,7 @@ genvar iter;
 
 // Instances
 
-mby_mem_msh_bank_ram_shell_4096x552  mby_mem_msh_bank_ram_shell_4096x552_0(
+mby_mem_msh_bank_ram_shell_4096x532  mby_mem_msh_bank_ram_shell_4096x532_0(
         .clk(clk),
         .reset_n(reset_n),
         .adr(msh_bank_ram_0_adr),
@@ -114,7 +114,7 @@ mby_mem_msh_bank_ram_shell_4096x552  mby_mem_msh_bank_ram_shell_4096x552_0(
         .mem_ls_enter(msh_bank_ram_0_mem_ls_enter)
 );
 
-mby_mem_msh_bank_ram_shell_4096x552  mby_mem_msh_bank_ram_shell_4096x552_1(
+mby_mem_msh_bank_ram_shell_4096x532  mby_mem_msh_bank_ram_shell_4096x532_1(
         .clk(clk),
         .reset_n(reset_n),
         .adr(msh_bank_ram_1_adr),
@@ -132,7 +132,7 @@ mby_mem_msh_bank_ram_shell_4096x552  mby_mem_msh_bank_ram_shell_4096x552_1(
         .mem_ls_enter(msh_bank_ram_1_mem_ls_enter)
 );
 
-mby_mem_msh_bank_ram_shell_4096x552  mby_mem_msh_bank_ram_shell_4096x552_2(
+mby_mem_msh_bank_ram_shell_4096x532  mby_mem_msh_bank_ram_shell_4096x532_2(
         .clk(clk),
         .reset_n(reset_n),
         .adr(msh_bank_ram_2_adr),
@@ -150,7 +150,7 @@ mby_mem_msh_bank_ram_shell_4096x552  mby_mem_msh_bank_ram_shell_4096x552_2(
         .mem_ls_enter(msh_bank_ram_2_mem_ls_enter)
 );
 
-mby_mem_msh_bank_ram_shell_4096x552  mby_mem_msh_bank_ram_shell_4096x552_3(
+mby_mem_msh_bank_ram_shell_4096x532  mby_mem_msh_bank_ram_shell_4096x532_3(
         .clk(clk),
         .reset_n(reset_n),
         .adr(msh_bank_ram_3_adr),

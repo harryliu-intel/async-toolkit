@@ -17,7 +17,7 @@ class request_record;
 //  tmpl_pkg::req_out_t     req_out;
 
     logic[11:0]		adr;
-    logic[551:0]	wdata;
+    logic[531:0]	wdata;
 
     string                  name;
 
