@@ -55,9 +55,9 @@ class mby_rx_ppe_env_base_seq extends uvm_sequence; //PJP: mby_common_pkg::mby_b
    // rx_ppe environment cfg.
    mby_rx_ppe_env_pkg::mby_rx_ppe_tb_top_cfg  cfg;
 
-   // Variable: ral
-   // rx_ppe RAL env.
-//PJP   mby_rx_ppe_env_pkg::mby_rx_ppe_ral_env     ral;
+   // Variable:  tb_ral
+   // Handle to RX PPE RAL.
+   mby_rx_ppe_reg_pkg::mby_rx_ppe_reg_blk     ral;
 
    // Variable: vif
    // Handle to rx_ppe Tb interface.
