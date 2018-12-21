@@ -25,7 +25,8 @@ class mby_mgp_bfm extends uvm_component;
 
    mby_mgp_bfm_cfg  bfm_cfg;
 
-   virtual mby_mgp_mim_if req_vif;
+   virtual mby_mgp_mim_req_if req_vif;
+   virtual mby_mgp_mim_rsp_if rsp_vif;
    
    extern function new(string name = "", uvm_component parent);
    extern virtual function void build_phase(uvm_phase phase);
@@ -35,7 +36,7 @@ class mby_mgp_bfm extends uvm_component;
    extern virtual function void start();
    extern virtual task run_phase(uvm_phase phase);
    extern virtual function void assign_cfg(mby_mgp_bfm_cfg bfm_cfg);
-   extern virtual function void assign_vi(virtual mby_mgp_mim_if req_if);
+   extern virtual function void assign_vi(virtual mby_mgp_mim_req_if req_if,virtual mby_mgp_mim_rsp_if rsp_if );
    
 
 endclass 
@@ -130,8 +131,9 @@ endfunction
 //----------------------------------------------------------------------------------------
 // Method: assign_vi
 //----------------------------------------------------------------------------------------
-function void mby_mgp_bfm::assign_vi(virtual mby_mgp_mim_if req_if);
+function void mby_mgp_bfm::assign_vi(virtual mby_mgp_mim_req_if req_if, virtual mby_mgp_mim_rsp_if rsp_if);
       
    req_vif = req_if;
+   rsp_vif  = rsp_if;
    
 endfunction : assign_vi

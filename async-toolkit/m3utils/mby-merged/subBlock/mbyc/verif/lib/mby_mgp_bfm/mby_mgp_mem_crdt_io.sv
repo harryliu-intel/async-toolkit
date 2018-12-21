@@ -15,7 +15,8 @@ class mby_mgp_mem_crdt_io  extends uvm_component;
    `uvm_component_utils(mby_mgp_mem_crdt_io)
   
 
-   virtual mby_mgp_mim_if op_vif;
+   virtual mby_mgp_mim_req_if req_vif;
+   virtual mby_mgp_mim_req_if rsp_vif;
 
    uvm_analysis_port#(uvm_object) mon_op_port;
    uvm_analysis_port#(uvm_object) mon_data_port;

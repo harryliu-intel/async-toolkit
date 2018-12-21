@@ -87,7 +87,7 @@ module mby_mesh_tb_top();
    assign tb_reset = mesh_tb_if.chard_reset;
    
    //MGP --> Msh write wb
-   mby_mgp_mim_if    req_wb_if(
+   mby_mgp_mim_req_if    req_wb_if(
       .cclk             (ref_clk),
       .reset            (tb_reset),
       .req_id           (),
@@ -98,7 +98,7 @@ module mby_mesh_tb_top();
    );
 
    //MGP --> Msh write eb
-   mby_mgp_mim_if    req_eb_if(
+   mby_mgp_mim_req_if    req_eb_if(
       .cclk             (ref_clk),
       .reset            (tb_reset),
       .req_id           (),
@@ -106,6 +106,23 @@ module mby_mesh_tb_top();
       .wd_sel           (),
       .valid            (),
       .sema             ()
+   );
+
+   mby_mgp_mim_rsp_if    rsp_wb_if(
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_id           (),
+      .rrsp_dest_blk    (),
+      .data             ()
+   );
+
+   //MGP --> Msh write eb
+   mby_mgp_mim_rsp_if    rsp_eb_if(
+      .cclk             (ref_clk),
+      .reset            (tb_reset),
+      .req_id           (),
+      .rrsp_dest_blk    (),
+      .data             ()
    );
 
    //-----------------------------------------------------------------------------
@@ -116,7 +133,9 @@ module mby_mesh_tb_top();
        .mby_mesh_tb_if               (mesh_tb_if),
        .shdv_intf                    (shdv_intf),
        .req_eb_if                    (req_eb_if),
-       .req_wb_if                    (req_wb_if)
+       .req_wb_if                    (req_wb_if),
+       .rsp_eb_if                    (rsp_eb_if),
+       .rsp_wb_if                    (rsp_wb_if)
  
    );
   
@@ -211,6 +230,28 @@ module mby_mesh_tb_top();
        .chreset               (mesh_tb_if.chard_reset),
        .mhreset               (mesh_tb_if.mhard_reset),
        .i_igr_eb_wreq_valid   (req_eb_if.valid),
-       .i_igr_wb_wreq_valid   (req_wb_if.valid)
+       .i_igr_eb_wr_seg_ptr   (req_eb_if.seg_ptr),
+       .i_igr_eb_wr_sema      (req_eb_if.sema),
+       .i_igr_eb_wr_wd_sel    (req_eb_if.wd_sel),
+       .i_igr_eb_wreq_id      (req_eb_if.req_id),
+       .i_igr_eb_wr_data      (req_eb_if.data),
+       .i_igr_wb_wreq_valid   (req_wb_if.valid),
+       .i_igr_wb_wr_seg_ptr   (req_wb_if.seg_ptr),
+       .i_igr_wb_wr_sema      (req_wb_if.sema),
+       .i_igr_wb_wr_wd_sel    (req_wb_if.wd_sel),
+       .i_igr_wb_wreq_id      (req_wb_if.req_id),
+       .i_igr_wb_wr_data      (req_wb_if.data),
+       .i_egr_eb_rreq_valid   (req_eb_if.valid),
+       .i_egr_eb_seg_ptr      (req_eb_if.seg_ptr),
+       .i_egr_eb_sema         (req_eb_if.sema),
+       .i_egr_eb_wd_sel       (req_eb_if.wd_sel),
+       .i_egr_eb_req_id       (req_eb_if.req_id),
+       .i_egr_wb_rreq_valid   (req_wb_if.valid),
+       .i_egr_wb_seg_ptr      (req_wb_if.seg_ptr),
+       .i_egr_wb_sema         (req_wb_if.sema),
+       .i_egr_wb_wd_sel       (req_wb_if.wd_sel),
+       .i_egr_wb_req_id       (req_wb_if.req_id)
+			   
+
        );
 endmodule

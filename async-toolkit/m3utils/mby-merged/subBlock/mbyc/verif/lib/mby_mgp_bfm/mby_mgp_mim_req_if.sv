@@ -1,10 +1,9 @@
 
-`ifndef __MBY_MGP_MIM_IF__
-`define __MBY_MGP_MIM_IF__
-`include "mby_mgp_defines.svh"
+`ifndef __MBY_MGP_MIM_REQ_IF__
+`define __MBY_MGP_MIM_REQ_IF__
+import mby_mgp_bfm_pkg::*;
 
-
-interface mby_mgp_mim_if (
+interface mby_mgp_mim_req_if (
      input  reset,
      input  cclk,
      inout  [W_REQ_ID-1:0]       req_id[NUM_MSH_ROWS][NUM_MSH_ROW_PORTS],
@@ -15,7 +14,7 @@ interface mby_mgp_mim_if (
      inout  [MSH_DATA_WIDTH-1:0] data[NUM_MSH_ROWS][NUM_MSH_ROW_PORTS]
      ) ;
 
-   clocking op_mst_cb @(posedge cclk);
+   clocking req_mst_cb @(posedge cclk);
       default input #1step output #1step;
       output  req_id;
       output  seg_ptr;
@@ -24,7 +23,7 @@ interface mby_mgp_mim_if (
       output valid;
    endclocking
 
-   clocking op_slv_cb @(posedge cclk);
+   clocking req_slv_cb @(posedge cclk);
       default input #1step output #1step;
       input  req_id;
       input  seg_ptr;
@@ -33,8 +32,8 @@ interface mby_mgp_mim_if (
       input valid;
    endclocking
 
-   modport op_mst (clocking op_mst_cb);
-   modport op_slv (clocking op_slv_cb);
+   modport req_mst (clocking req_mst_cb);
+   modport req_slv (clocking req_slv_cb);
 
 endinterface
 `endif
