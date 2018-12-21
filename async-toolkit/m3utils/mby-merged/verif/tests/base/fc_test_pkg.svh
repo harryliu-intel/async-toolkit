@@ -13,15 +13,8 @@ package fc_test_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
-    
-`ifdef XVM
-   import ovm_pkg::*;
-   import xvm_pkg::*;
-   `include "ovm_macros.svh"
-   `include "sla_macros.svh"
-`endif
-
-import sla_pkg::*;
+    import sla_pkg::*;
+    `include "sla_macros.svh"
     `include "sla_defines.svh"
     `include "slu_macros.svh"
 

@@ -134,7 +134,6 @@ EOF
         -enable_debussy       => { default => 1 },
         -save_run_scripts     => { default => 1 },
         -set_test_plusarg_to_testname => {default => '1'},
-        -name_of_test_plusarg => {default => "UVM_TESTNAME"},
 
         # This cleans old log files from the test results
         -pre_clean_test => { default => 1, },
@@ -307,8 +306,12 @@ EOF
                 "+libext+.v+.sv",
                 "-timescale=1ps/1fs",
                 "-sverilog",
-                "+define+OVM+UVM+XVM",
+                "+define+DO_NOT_USE_RAL",
+                "+define+SLA_FUSE_IS_UVM",
+                "+define+UVM_REGEX_NO_DPI",
+                "+define+UVM",
                 "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",
+                "+define+UVM_PACKER_MAX_BYTES=1500000",
                 "-lca",
                 "+define+MROOT_SPACE_SIGNAL_NAME=mrs",
                 "+define+IOSFTRKCHK_NO_DEPENDENCIES"

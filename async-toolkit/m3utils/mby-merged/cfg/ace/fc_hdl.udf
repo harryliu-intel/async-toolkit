@@ -259,7 +259,6 @@ EOF
                  -vlog_opts => [
                      @FC_VLOG_OPTIONS,
                      @all_sip_verif_vlogopts,
-                     "+define+XVM",                       
                  ],
                  -tag => "nonsynth",
              },
