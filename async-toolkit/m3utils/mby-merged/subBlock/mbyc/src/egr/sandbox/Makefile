@@ -1,7 +1,5 @@
-# SRC is the relative path from the including Makefile to Make.fxr
-# Set to the current directory for this Makefile
-# Set it to a different relative path for including Make.fxr
-# from Makefiles in other directories
+
+# Prevent Make from setting implicit rules for files that look like c/cpp.
 
 # tb top
 VCS_SRC  = rtl/egr_top_tb.sv
@@ -11,6 +9,12 @@ ifdef dut
     endif
 endif
 
+ifndef SHRTL
+$(warning SHRTL is not set. For better performance, use $ setenv SHRTL `ToolConfig.pl get_tool_path ipconfig/shrtl`)
+SHRTL ?= $(shell ToolConfig.pl get_tool_path ipconfig/shrtl)
+endif
+
+# SRC is the relative path from the including Makefile
 SRC = ../..
 
 include $(SRC)/shared/sandbox/Make.mby
@@ -20,7 +24,7 @@ VCS_DEFS += +define+VCSSIM +define+INTEL_SVA_OFF
 VCS_FLAGS += $(VCS_DEFS)
 
 INCS += $(SRC)/egr/rtl
-INCS += ../interfaces
+INCS += $(SRC)/egr/interfaces
 INCS += rtl
 INCS += $(SRC)/egr/cpb/rtl
 INCS += $(SRC)/egr/dpb/rtl
@@ -31,11 +35,22 @@ INCS += $(SRC)/egr/prc/rtl
 INCS += $(SRC)/egr/tcu/rtl
 INCS += $(SRC)/egr/tmu/rtl
 INCS += $(SRC)/egr/tqu/rtl
-INCS += $(SRC)/mems/rtl/
+INCS += $(SRC)/egr/cpb/interfaces
+INCS += $(SRC)/egr/dpb/interfaces
+INCS += $(SRC)/egr/lcm/interfaces
+INCS += $(SRC)/egr/mri/interfaces
+INCS += $(SRC)/egr/pfs/interfaces
+INCS += $(SRC)/egr/prc/interfaces
+INCS += $(SRC)/egr/tcu/interfaces
+INCS += $(SRC)/egr/tmu/interfaces
+INCS += $(SRC)/egr/tqu/interfaces
+INCS += $(SRC)/egr/rtl/mem
+INCS += $(SRC)/mems/rtl
+INCS += $(SHRTL)/src/common/rtl
 
-VCS_INC = $(addprefix +incdir+,$(INCS))
 BUILD_DEP = $(addsuffix /*,$(INCS))
 VCS_LIB = $(addprefix -y ,$(INCS))
+VCS_INC = $(addprefix +incdir+,$(INCS))
 
 ## tb top
 #VCS_SRC  = rtl/egr_top_tb.sv
@@ -54,4 +69,7 @@ gate: simv
 
 clean:
 	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog .synopsys_dve_rebuild.tcl *.vpd *.log
+
+%:
+	;
 

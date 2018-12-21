@@ -45,6 +45,7 @@ program mby_mesh_test_lib;
 
     `include "mby_mesh_base_test.svh"
     `include "mby_mesh_random_test.svh"
+    `include "mby_mesh_first_pkt_test.svh"
 
     // UVM Start test
     initial begin

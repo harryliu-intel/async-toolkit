@@ -170,7 +170,7 @@ mbyTriggerActions mbyTriggerGetActions
     fm_byte                        const trig
 )
 {
-    mbyTriggerActions trig_actions;
+    mbyTriggerActions trig_actions = { 0 };
 
     trig_actions.forwardingAction     = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].FORWARDING_ACTION;       // [ 1: 0]
     trig_actions.trapAction           = trig_apply_map->TRIGGER_ACTION_CFG_1[trig].TRAP_ACTION;             // [ 3: 2]

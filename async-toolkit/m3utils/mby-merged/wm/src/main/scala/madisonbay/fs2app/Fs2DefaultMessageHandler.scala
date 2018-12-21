@@ -57,7 +57,7 @@ class Fs2DefaultMessageHandler[
           s"Trying to read register at address [$address] based on $i"
         )
         value                  <- paths.get(address)
-          .flatMap(_.getOption(root))
+          .flatMap(_.optic.getOption(root))
           .map(_.extract[Long])
           .fold(registerNotFoundAt[G,Long](address))(l => GME.pure(l))
         header = FmModelMessageHdr(
@@ -120,7 +120,7 @@ class Fs2DefaultMessageHandler[
         _                      <- Logger[G].trace(s"Writing [$chunk] data into [$address].")
         CsrContext(root, paths) = init
         nextRoot               <- paths.get(address).fold(registerNotFoundAt[G,Root](address)) {
-          _.modifyF(_ => chunk.point[G])(root)
+          _.optic.modifyF(_ => chunk.point[G])(root)
         }
         _                      <- S.put(CsrContext(nextRoot,paths))
       } yield ()

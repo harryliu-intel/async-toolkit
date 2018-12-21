@@ -121,7 +121,6 @@ if ($?CLEAN_DVT) then
                -exclude name=GATEKEEPER \
                -exclude name=regression \
                -exclude name=target \
-               -exclude name=subBlock \
                -force"
 else
     set COMMAND = "-eclipsespace /tmp/$USER/dvt_eclipsespace \
