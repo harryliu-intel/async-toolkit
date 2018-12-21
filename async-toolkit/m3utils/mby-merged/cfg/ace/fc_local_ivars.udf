@@ -134,6 +134,7 @@ EOF
         -enable_debussy       => { default => 1 },
         -save_run_scripts     => { default => 1 },
         -set_test_plusarg_to_testname => {default => '1'},
+        -name_of_test_plusarg => {default => "UVM_TESTNAME"},
 
         # This cleans old log files from the test results
         -pre_clean_test => { default => 1, },
