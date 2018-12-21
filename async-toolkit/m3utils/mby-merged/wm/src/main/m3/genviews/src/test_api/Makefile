@@ -1,4 +1,5 @@
-CFLAGS=-O6 -g -c -I.. -I../build_c_api/mby_c/src -I../../../../c -std=c99 -Wall -ansi -pedantic
+#CFLAGS=-O6 -g -c -I.. -I../build_c_api/mby_c/src -I../../../../c -std=c99 -Wall  -pedantic 
+CFLAGS= -g -c -I.. -I../build_c_api/mby_c/src -I../../../../c -std=c99 -Wall  -pedantic 
 
 test_api: hohum.o mby_top_map.o test_api.o seqtype.o
 	cc -o $@ $^

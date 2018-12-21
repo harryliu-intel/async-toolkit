@@ -1,13 +1,14 @@
 //-----------------------------------------------------------------------------
-// Title         : Madison Bay SMM Bus Functional Model Package
+// Title         : Madison Bay PBR Bus Functional Model Package
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
-// File          : mby_smm_bfm_pkg.sv
-// Author        : Roman Bernal <r.bernal@intel.com>
-// Created       : 01.11.2018
+// File          : mby_pbr_bfm_pkg.sv
+// Author        : ricardo.a.alfaro.gomez  <raalfaro@ichips.intel.com>
+// 2ry contact   : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Created       : 12.19.2018
 //-----------------------------------------------------------------------------
 // Description :
-// This is the SMM BFM package file
+// This is the PBR BFM package file
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -30,33 +31,33 @@
 // express and approved by Intel in writing.
 //
 //------------------------------------------------------------------------------
-`ifndef __MBY_SMM_BFM_PKG__
-`define __MBY_SMM_BFM_PKG__
-
-package mby_smm_bfm_pkg;
+`ifndef __MBY_PBR_BFM_PKG__
+`define __MBY_PBR_BFM_PKG__
+//------------------------------------------------------------------------------
+//
+// PACKAGE: mby_pbr_bfm_pkg
+// This is the Madison Bay pbr bfm package, currently it depends on the uvm,
+// shdv_base_pkg, mby_base_pkg verification packages and also depends on the
+// gmm rtl package, which includes defines and typedefs for the interfaces and
+// transaction classes of this agent.
+//
+//------------------------------------------------------------------------------
+package mby_pbr_bfm_pkg;
 
    import uvm_pkg::*;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
-   import shared_pkg::*;
-   //import mby_igr_pkg::*;
-   import mby_msh_pkg::*;
-   import mby_egr_pkg::*;
-   import mby_smm_bfm_pkg_pre::*;
+   import mby_gmm_pkg::*;
 
    `include "uvm_macros.svh"
-   `include "mby_smm_bfm_defines.svh"
-   `include "mby_smm_bfm_types.svh"
-   `include "mby_smm_bfm_cfg.svh"
-   `include "mby_smm_bfm_rdrsp_seq.svh"
-   `include "mby_smm_bfm_mem_node.svh"
-   `include "mby_smm_bfm_mwr_req.svh"
-   `include "mby_smm_bfm_mrd_req.svh"
-   `include "mby_smm_bfm_row_wr_req_xaction.svh"
-   `include "mby_smm_bfm_row_rd_req_xaction.svh"
-   `include "mby_smm_bfm.svh"
+   `include "mby_pbr_bfm_defines.svh"
+   `include "mby_pbr_bfm_types.svh"
+   `include "mby_pbr_bfm_cptr_xaction.svh"
+   `include "mby_pbr_bfm_dptr_xaction.svh"
+   `include "mby_pbr_bfm_cfg.svh"
+   `include "mby_pbr_bfm.svh"
 
-endpackage : mby_smm_bfm_pkg
+endpackage : mby_pbr_bfm_pkg
 
 
 `endif

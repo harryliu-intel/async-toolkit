@@ -4,10 +4,13 @@
 #
 
 $hdl_spec = {
-
     # List of specific VERILOG source files
     -vlog_files => [
-     "verif/mesh/tests/common/mby_mesh_test_lib.sv",
+         "src/shared/rtl/shared_pkg.sv",
+     "src/shared/rtl/mby_gmm_pkg.sv",
+         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_cptr_if.sv",
+         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_dptr_if.sv",
+         "verif/lib/mby_pbr_bfm/mby_pbr_bfm_pkg.sv",
      ],
 
     # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
@@ -19,14 +22,8 @@ $hdl_spec = {
 
     # List of include directories. Corresponds with the VLOG '+incdir+' parameter
     -vlog_incdirs => [
-     "$ENV{SAOLA_HOME}/verilog",
-     "$ENV{SAOLA_HOME}/verilog_uvm",
-     "$ENV{UVM_HOME}/src",
-     "$ENV{OVM_HOME}/src",
-     "$ENV{ACE_HOME}/lib/Verilog",
-     "verif/mesh/tests/common",
-     "verif/mesh/tests/mby_mesh_random_test",
-     "verif/mesh/tests/mby_mesh_first_pkt_test",
+         "$ENV{UVM_HOME}/src",
+         "verif/lib/mby_pbr_bfm",
      ],
 
     # Arbitrary VLOG options
