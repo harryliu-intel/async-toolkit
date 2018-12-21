@@ -33,6 +33,7 @@ void RxPipeline
     mby_ppe_cm_apply_map              const * const cm_apply_map          = &(rx_top_map->cm_apply);
     mby_ppe_cm_usage_map              const * const cm_usage_map          = &(rx_top_map->cm_usage);
     mby_ppe_rx_stats_map              const * const stats_map             = &(rx_top_map->stats);
+    mby_ppe_rx_stats_map__addr        const * const stats_map_w           = &(rx_top_map_w->stats);
 
     // Intermediate structs:
     mbyParserToMapper     par2map;
@@ -73,7 +74,8 @@ void RxPipeline
     CongMgmt   (cm_apply_map,
                 cm_usage_map,        &trg2cgm, &cgm2rxs);
 
-    RxStats    (stats_map,           &cgm2rxs,  rxs2rxo);
+    RxStats    (stats_map,
+                stats_map_w,         &cgm2rxs,  rxs2rxo);
 }
 
 void TxPipeline
