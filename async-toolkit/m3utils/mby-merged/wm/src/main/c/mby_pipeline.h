@@ -31,11 +31,12 @@ void RxPipeline
 
 void TxPipeline
 (
-    mby_ppe_tx_top_map const * const tx_top_map,
-    mby_shm_map        const * const shm_map,
-    mbyTxInToModifier  const * const txi2mod,
-    mbyTxStatsToTxMac        * const txs2mac,
-    fm_int                           max_pkt_size
+    mby_ppe_tx_top_map       const * const tx_top_map,
+    mby_ppe_tx_top_map__addr const * const tx_top_map_w,
+    mby_shm_map              const * const shm_map,
+    mbyTxInToModifier        const * const txi2mod,
+    mbyTxStatsToTxMac              * const txs2mac,
+    fm_uint32                        const max_pkt_size
 );
 
 void Parser
@@ -87,12 +88,15 @@ void MaskGen
 
 void Triggers
 (
-    mby_ppe_trig_apply_map      const * const trig_apply_map,
-    mby_ppe_trig_apply_misc_map const * const trig_apply_misc_map,
-    mby_ppe_fwd_misc_map        const * const fwd_misc_map,
-    mby_ppe_mapper_map          const * const mapper_map,
-    mbyMaskGenToTriggers        const * const in,
-    mbyTriggersToCongMgmt             * const out
+    mby_ppe_trig_apply_map            const * const trig_apply_map,
+    mby_ppe_trig_apply_map__addr      const * const trig_apply_map_w,
+    mby_ppe_trig_apply_misc_map       const * const trig_apply_misc_map,
+    mby_ppe_trig_apply_misc_map__addr const * const trig_apply_misc_map_w,
+    mby_ppe_fwd_misc_map              const * const fwd_misc_map,
+    mby_ppe_fwd_misc_map__addr        const * const fwd_misc_map_w,
+    mby_ppe_mapper_map                const * const mapper_map,
+    mbyMaskGenToTriggers              const * const in,
+    mbyTriggersToCongMgmt                   * const out
 );
 
 void CongMgmt
@@ -105,9 +109,10 @@ void CongMgmt
 
 void RxStats
 (
-    mby_ppe_rx_stats_map  const * const stats_map,
-    mbyCongMgmtToRxStats  const * const in,
-    mbyRxStatsToRxOut           * const out
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    mbyCongMgmtToRxStats       const * const in,
+    mbyRxStatsToRxOut                * const out
 );
 
 void Modifier

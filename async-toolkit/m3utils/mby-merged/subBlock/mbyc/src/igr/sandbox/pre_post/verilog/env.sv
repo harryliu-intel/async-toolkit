@@ -46,7 +46,8 @@ class env;
 
     // Declaration of variables that hold handles to env sub-objects.  
     system_driver       sys_drvr;
-    inp_driver          inp_driver;
+    inp_driver          inp_driver;    // FIXME -- for pre_ppe/post_ppe, this should be 1 inp_driver per input port
+                                       //          possibly dynamic based on testcase port config
 
     // declaration of other env variables
     integer         done_cnt;
@@ -121,7 +122,7 @@ class env;
         fork inp_driver.drive_reqs(); join_none
     endtask
 
-    // wait for <delay> cycles after the monitor reports everythign is done
+    // wait for <delay> cycles after the monitor reports everything is done
     task wait_done(integer delay);
         $display("(time: %0d) %s: **Begin Waiting For Done plus %0d Clocks**", $time, name, delay);
         done_cnt = 0;

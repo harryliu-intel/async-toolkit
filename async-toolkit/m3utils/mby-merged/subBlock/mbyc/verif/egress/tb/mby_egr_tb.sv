@@ -52,10 +52,14 @@ module mby_egr_tb ();
   // ===============================================
   // DUT RTL instance
   // ===============================================
+  mby_tag_bfm_uc_if tag_bfm_intf_0 (egress_clock, egress_reset);
+  mby_tag_bfm_uc_if tag_bfm_intf_1 (egress_clock, egress_reset);
+   
 `include "mby_egr_top_inst.v"
 
   // Parameters for interfaces
 `include "mby_egr_params.sv"
+
 
   // ===============================================
   // Interfaces instance
@@ -70,6 +74,10 @@ module mby_egr_tb ();
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_2 (egress_reset, egress_clock);
   mby_ec_cdi_tx_intf eth_bfm_tx_intf_3 (egress_reset, egress_clock);
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (egress_reset, egress_clock);
+
+
+
+   
 
   assign eth_bfm_tx_intf_0.enable = 1;
   assign eth_bfm_tx_intf_1.enable = 1;
@@ -100,6 +108,27 @@ module mby_egr_tb ();
   assign egress_if.clock    = egress_clock;
 
 
+  //================================================
+  //rbernal
+  //Temporal stuff to validate smm_bfm
+  //================================================
+  mby_smm_bfm_row_wr_req_if memwr_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
+  mby_smm_bfm_row_rd_req_if memrd_req_if(.clk(egress_if.clock),.rst(egress_if.reset));
+
+  logic [19:0] w_seg_ptr;
+  logic [1:0] w_wd_sel;
+
+  //smm_row_mwr_reqs row_mwr_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mwr_req(memwr_req_if),.o_wr_seg_ptr(w_seg_ptr),.o_wr_wd_sel(w_wd_sel));
+  //smm_row_mrd_reqs row_mrd_reqs(.mesh_clk(egress_if.clock),.mesh_rst(egress_if.reset),.mrd_req(memrd_req_if),.i_rd_seg_ptr(w_seg_ptr),.i_rd_wd_sel(w_wd_sel));
+
+
+  initial
+     begin:mwr_gen_connection_to_msh_bfm
+        uvm_config_db #(virtual mby_smm_bfm_row_wr_req_if)::set(null, "uvm_test_top.env.smm_bfm.igr_wr_req_agent", "vintf", memwr_req_if);
+        uvm_config_db #(virtual mby_smm_bfm_row_rd_req_if)::set(null, "uvm_test_top.env.smm_bfm.egr_rd_req_agent", "vintf", memrd_req_if);
+     end
+
+
   // ===============================================
   // Test Island instance
   // ===============================================
@@ -114,6 +143,11 @@ module mby_egr_tb ();
                    ,.eth_bfm_rx_intf_2   (eth_bfm_rx_intf_2)
                    ,.eth_bfm_tx_intf_3   (eth_bfm_tx_intf_3)
                    ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
+                   ,.tag_bfm_intf_0 (tag_bfm_intf_0)
+                   ,.tag_bfm_intf_1 (tag_bfm_intf_1)
+                   ,.memrd_req_if (memrd_req_if)
+                   ,.memwr_req_if (memwr_req_if)
+                   
                   );
 
 `include "std_ace_util.vic"

@@ -25,10 +25,13 @@ program mby_egr_test_lib;
   import mby_egr_env_pkg::*;
   import eth_bfm_pkg::*;
   import mby_ec_bfm_pkg::*;
+  import mby_tag_bfm_pkg::*;
 
 `include "uvm_macros.svh"
 `include "mby_egr_base_test.svh"
 `include "mby_egr_rand_test.svh"
+`include "mby_egr_first_packet_test.svh"
+
 
    // UVM Start test
    initial begin

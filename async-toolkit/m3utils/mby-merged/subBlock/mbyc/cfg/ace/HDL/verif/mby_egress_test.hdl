@@ -26,6 +26,7 @@ $hdl_spec = {
      "$ENV{ACE_HOME}/lib/Verilog",
      "verif/egress/tests/common",
      "verif/egress/tests/mby_egr_rand_test",
+     "verif/egress/tests/mby_egr_first_packet_test",
      "verif/egress/tests/mby_egr_lintra_test",
      ],
 

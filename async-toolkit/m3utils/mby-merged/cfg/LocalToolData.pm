@@ -24,10 +24,10 @@ $ToolConfig_tools{flowbee}{OTHER}{default_dut}                               = "
 $ToolConfig_tools{'febe3'}{OTHER}{resource_def}                              = "$ENV{MODEL_ROOT}/cfg/resource.xml";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'VERSION'}                 = "&get_tool_version(lintra)";
 $ToolConfig_tools{'febe3'}{'SUB_TOOLS'}{'lintra'}{'PATH'}                    = "&get_tool_path(lintra)";
-$ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH} = "&get_general_var(std_linux_libs)";
 $ToolConfig_tools{febe3}{VERSION} = "3.3.08";
 $ToolConfig_tools{febe3}{OTHER}{project_settings}                            = "$MODEL_ROOT/tools/febe/inputs/dc_config.cfg";
 $ToolConfig_tools{febe3}{OTHER}{container_settings}                          = "$MODEL_ROOT/tools/febe/inputs/finalized.cfg";
+$ToolConfig_tools{runtools}{ENV_APPEND}{LD_LIBRARY_PATH}                     = ""; 
 $ToolConfig_tools{buildman}{SUB_TOOLS}{flowbee}{OTHER}{file_wait_time}       = "60";
 
 #####################################################
@@ -72,7 +72,7 @@ $ToolConfig_tools{runtools}{OTHER}{repo_trex_output}                         = "
 #####################################################
 #    Configure Environment variables for Nebulon    #
 #####################################################
-$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww24.4';
+$ToolConfig_tools{nebulon}{VERSION}                                          = 'd18ww49.4';
 
 #####################################################
 #    Configure Environment variables for VCS/VERDI  #
@@ -288,6 +288,7 @@ $ToolConfig_tools{"mgm"} = {
                     "egr",
                     "gcm",
                     "gpm",
+                    "mce",
                     "msh",
                    ],
         },
@@ -296,7 +297,6 @@ $ToolConfig_tools{"mgm"} = {
         #REPORT_DIR => "$ENV{MODEL_ROOT}/target/mgm/rtl",
         PREFIX => "mby",
 	CMO  => [
-	    "/tmp/dummy",
 	    "/nfs/sc/disks/sc_mby_00005/kits/tr3/",
 	    ],
     },

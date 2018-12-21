@@ -36,7 +36,7 @@
 // ------------------------------------------------------------------- 
 
 module igr_pre_post_wrap 
-import mby_igr_pkg::*, shared_pkg::*;
+import mby_igr_pkg::*, mby_rx_metadata_pkg::*, shared_pkg::*;
 (
 //Input List
  input                             cclk, 

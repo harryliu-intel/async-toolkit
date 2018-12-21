@@ -1,7 +1,7 @@
-#include <stdio.h>
+#include <stdio.h> // printf()
 #include <mby_top_map.h>
 #include <mby_top_map_main.h>
-#include "../m3/model_server/src/model_c_write.h" // pull in write_field
+#include <model_c_write.h> // write_field()
 #include "mby_pipeline.h"
 
 // we implement the interface required of us by the model_server
@@ -13,7 +13,9 @@ mby_top_map_Setup     (mby_top_map       const * r,
     printf("Hello from the mby_top_map_Setup!\n");
 
     printf("field is %d\n", r->mpp[0].mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
+
     write_field(w->mpp[0].mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR, 12);
+
     printf("field is %d\n", r->mpp[0].mgp[0].rx_ppe.parser.PARSER_PORT_CFG[7].INITIAL_PTR);
 }
 

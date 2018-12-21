@@ -1,7 +1,7 @@
 package com.intel.cg.hpfd.csr.macros.annotations
 
 import com.intel.cg.hpfd.csr.macros.utils.{Control, Hygiene}
-import madisonbay.BitVector
+import madisonbay.{BitVector, RdlRegisterAccess}
 import madisonbay.memory.{Address, AddressRange}
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
@@ -9,6 +9,7 @@ import scala.language.experimental.macros
 import scala.reflect.macros._
 
 import monocle.Optional
+
 
 @compileTimeOnly("enable macro paradise to expand macro annotations")
 class GenOpticsLookup extends StaticAnnotation {
@@ -50,10 +51,10 @@ class GenOpticsLookupImpl(val c: whitebox.Context) extends Control with Hygiene 
     val bvecTy = typeOf[BitVector]
     val addressTy = typeOf[Address]
     val opTpTy = appliedTypeTree(symbolOf[Optional[_, _]], tq"A", tq"$tpname")
-    val opBvecTy = appliedTypeTree(symbolOf[Optional[_, _]], tq"A", tq"$bvecTy")
-    val hashMapTy = appliedTypeTree(typeOf[HashMap[_, _]], tq"$addressTy", opBvecTy)
+    val accTy = appliedTypeTree(symbolOf[RdlRegisterAccess[_]], tq"A")
+    val hashMapTy = appliedTypeTree(typeOf[HashMap[_, _]], tq"$addressTy", accTy)
     val hashMapComp = symbolOf[HashMap[_, _]].companion
-    val hashMapConstr = q"$hashMapComp.apply[$addressTy, $opBvecTy]()"
+    val hashMapConstr = q"$hashMapComp.apply[$addressTy, $accTy]()"
 
     val results: List[Tree] = params.map {
       // ignore AddressRange

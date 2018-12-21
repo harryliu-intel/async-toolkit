@@ -2,31 +2,37 @@
 
 # Copyright (C) 2018 Intel Corporation
 
-# Tool versions:
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-include ${ROOT_DIR}/../../ToolVersions.mk
 
-SRC_DIR  = ../..
-TST_DIR  = .
+COM_DIR = ../common
+C_DIR   = ../../../c
+M3_DIR  = ../../../m3
+MAP_DIR = ${M3_DIR}/genviews/src/build_c/mby_c/src
 
-INC_DIR  = ../../../c                                  # uint.h
-INC_DIR2 = ../../../m3/genviews/src/build_c/mby_c/src  # mby_top_map.h
+# Tool versions:
+include ${C_DIR}/ToolVersions.mk
 
-INCLUDES  = -I$(SRC_DIR)
-INCLUDES += -I$(TST_DIR)
-INCLUDES += -I$(INC_DIR) -I$(INC_DIR2)
+INCLUDES  = -I.
+INCLUDES += -I$(COM_DIR)
+INCLUDES += -I$(MAP_DIR)
+INCLUDES += -I$(C_DIR)
 
-SOURCES  = $(SRC_DIR)/mby_common.c
-SOURCES += $(SRC_DIR)/mby_crc32.c
-SOURCES += $(SRC_DIR)/mby_bitfield.c
-SOURCES += $(SRC_DIR)/mby_exactmatch.c
-SOURCES += $(SRC_DIR)/mby_cgrp_regs.c
-SOURCES += $(SRC_DIR)/mby_reg_ctrl.c
-SOURCES += $(TST_DIR)/mby_exactmatch_test.c
+SOURCES += mby_exactmatch_test.c
 
-OBJECTS = $(SOURCES:.c=.o)
+# Build dir:
+OS_TARG = AMD64_LINUX
+BLD_DIR = $(OS_TARG)
+BLD_DTS = ${BLD_DIR}/.time_stamp
 
-TARGET = mby_exactmatch_test
+OBJECTS = $(addprefix ${BLD_DIR}/,$(SOURCES:.c=.o))
+
+# Functional Model (a.k.a. White Model) static library:
+WM_LIB   = ${C_DIR}/${BLD_DIR}/libmby_c_model.a
+
+# Common test static library (includes write_field() function):
+COM_LIB  = ${COM_DIR}/${BLD_DIR}/libmodel_c_write.a
+
+TARGET = ${BLD_DIR}/mby_exactmatch_test
 
 ifeq ($(VERBOSE),1)
 ECHO :=
@@ -59,33 +65,34 @@ endif
 
 LDFLAGS =
 
-DELFILES  =  *.o *.log $(OBJECTS) $(TARGET)
+DELFILES = $(BLD_DIR) *.o *.so *.log
 
 .PHONY: all
-all: $(TARGET)
+all: $(BLD_DTS) $(OBJECTS) $(TARGET)
 
-$(TST_DIR)/mby_exactmatch_test.o : $(TST_DIR)/mby_exactmatch_test.c $(SRC_DIR)/mby_exactmatch.h $(SRC_DIR)/mby_common.h
+$(BLD_DTS):
+	@echo '  Creating build directory'
+	$(ECHO) $(MKDIR) $(BLD_DIR) && touch ${BLD_DTS}
 
-$(SRC_DIR)/mby_common.o    : $(SRC_DIR)/mby_common.c     $(SRC_DIR)/mby_common.h
-$(SRC_DIR)/mby_crc32.o     : $(SRC_DIR)/mby_crc32.c      $(SRC_DIR)/mby_crc32.h
-$(SRC_DIR)/mby_bitfield.o  : $(SRC_DIR)/mby_bitfield.c   $(SRC_DIR)/mby_bitfield.h
-$(SRC_DIR)/mby_exactmatch.o: $(SRC_DIR)/mby_exactmatch.c $(SRC_DIR)/mby_exactmatch.h
-$(SRC_DIR)/mby_clsfr_regs.o: $(SRC_DIR)/mby_cgrp_regs.c $(SRC_DIR)/mby_cgrp_regs.h
-$(SRC_DIR)/mby_reg_ctrl.o  : $(SRC_DIR)/mby_reg_ctrl.c   $(SRC_DIR)/mby_reg_ctrl.h
-
-
-.PHONY: clean
-clean:
-	@echo '  Cleaning'
-	$(ECHO) $(RM) $(DELFILES)
-
-%.o: %.c
+${BLD_DIR}/%.o: %.c
 	@echo '  Compiling' $<
 	$(ECHO) $(GCC) -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) -c $<
 
-$(TARGET): $(OBJECTS)
+# Added dependencies:
+${BLD_DIR}/mby_exactmatch_test.o: \
+    $(BLD_DTS) Makefile \
+    mby_exactmatch_test.c \
+    $(C_DIR)/mby_exactmatch.h $(C_DIR)/mby_common.h
+
+$(WM_LIB):
+	make -C ${C_DIR}
+
+$(COM_LIB):
+	make -C ${COM_DIR}
+
+$(TARGET): $(BLD_DTS) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 	@echo '  Linking' $(TARGET)
-	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS)
+	$(ECHO) $(GCC) $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(WM_LIB) $(COM_LIB)
 
 .PHONY: run
 run: $(TARGET)
@@ -110,3 +117,23 @@ callgrind: $(TARGET)
             --verbose \
             --dump-every-bb=12500000000 \
 	$(TARGET) 2>&1 | tee /cal.log
+
+.PHONY: clean
+clean:
+	@echo '  Cleaning'
+	$(ECHO) $(RM) $(DELFILES)
+
+.PHONY: show_sources
+show_sources:
+	@echo 'SOURCES :'
+	@$(foreach i, $(SOURCES), echo $(i);)
+
+.PHONY: show_includes
+show_includes:
+	@echo 'INCLUDES :'
+	@$(foreach i, $(INCLUDES), echo $(i);)
+
+.PHONY: show_objects
+show_objects:
+	@echo 'OBJECTS :'
+	@$(foreach i, $(OBJECTS), echo $(i);)

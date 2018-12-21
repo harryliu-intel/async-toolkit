@@ -1,8 +1,10 @@
 INTERFACE RegModula3;
 IMPORT RegCompiler;
+IMPORT GenViews;
 
 TYPE Public = RegCompiler.T;
      T      <: Public;
+     Gen    = GenViews.T;
 
 TYPE
   TypeHier = { Read, Addr, Unsafe, Update };

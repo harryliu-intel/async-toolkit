@@ -307,8 +307,12 @@ EOF
                 "+libext+.v+.sv",
                 "-timescale=1ps/1fs",
                 "-sverilog",
-                "+define+OVM+UVM+XVM",
+                "+define+DO_NOT_USE_RAL",
+                "+define+SLA_FUSE_IS_UVM",
+                "+define+UVM_REGEX_NO_DPI",
+                "+define+UVM",
                 "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",
+                "+define+UVM_PACKER_MAX_BYTES=1500000",
                 "-lca",
                 "+define+MROOT_SPACE_SIGNAL_NAME=mrs",
                 "+define+IOSFTRKCHK_NO_DEPENDENCIES"
@@ -326,6 +330,14 @@ EOF
         ### Leave it empty to enable DVT on all models
         -dvt_models => {
             default => [
+                "mby",
+                "fc",
+                "rx_ppe",
+                "mplex_np_nphy",
+                "igr",
+                "egr",
+                "mesh",
+                "gms",
             ],
         },
 
@@ -339,6 +351,8 @@ EOF
                 ### These you always want
                 "+dvt_build_log_to_file+false", # Don't create the build log
                 "+dvt_file_compile_timeout+90", # 90sec timeout
+
+		"-uvm",
 
                 ### Uncomment these only for large SOC sized projects
                 #"+dvt_disable_checks+UNDECLARED_IDENTIFIER",
@@ -385,8 +399,8 @@ EOF
         ### The <model>.build file will be filtered and a <model>_full.build file is available with all library content
         -dvt_lib_regex => {
             default => [
-                #'.*rtl_lib$', # Removes all libraries that end with 'rtl_lib'
-                #'.*_rtl_.*', # Removes all libraries that contain '_rtl_'
+                '.*rtl_lib$', # Removes all libraries that end with 'rtl_lib'
+                '.*_rtl_.*', # Removes all libraries that contain '_rtl_'
             ],
         },
     },
