@@ -55,7 +55,7 @@ package mby_common_pkg;
    //SSN `include "mby_ral_user_object.svh"
    //SSN `include "mby_ral_base_sequence.svh"
    //SSN `include "mby_ral_ahb_access.sv"
-   //SSN `include "mby_base_seq.svh"
+   `include "mby_base_seq.svh"
 
    `undef  __INSIDE_MBY_COMMON_PKG
 
