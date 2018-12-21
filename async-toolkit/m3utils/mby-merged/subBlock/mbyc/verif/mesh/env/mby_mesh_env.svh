@@ -49,10 +49,12 @@ class mby_mesh_env extends shdv_base_env;
    // Variable:  tb_vif
    // Interface handle to mesh Testbench.
    virtual   mby_mesh_tb_if                                tb_vif;
-   virtual   mby_mgp_mim_req_if                                req_wb_if;
-   virtual   mby_mgp_mim_req_if                                req_eb_if;
-   virtual   mby_mgp_mim_rsp_if                                rsp_wb_if;
-   virtual   mby_mgp_mim_rsp_if                                rsp_eb_if;
+   virtual   mby_mgp_mim_req_if                            rreq_wb_if;
+   virtual   mby_mgp_mim_req_if                            rreq_eb_if;
+   virtual   mby_mgp_mim_req_if                            wreq_wb_if;
+   virtual   mby_mgp_mim_req_if                            wreq_eb_if;
+   virtual   mby_mgp_mim_rsp_if                            rsp_wb_if;
+   virtual   mby_mgp_mim_rsp_if                            rsp_eb_if;
 
    mby_mgp_bfm_pkg::mby_mgp_bfm                            wb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
    mby_mgp_bfm_pkg::mby_mgp_bfm                            eb_mgp_bfm[mby_mgp_bfm_pkg::NUM_MSH_ROWS];
@@ -117,10 +119,17 @@ class mby_mesh_env extends shdv_base_env;
       end
 
       
-      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "mby_mgp_mim_req_if", req_eb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "mby_mgp_mim_req_if", rreq_eb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
       end
-      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "mby_mgp_mim_req_if", req_wb_if)) begin
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "mby_mgp_mim_req_if", rreq_wb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      end
+
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "mby_mgp_mim_req_if", wreq_eb_if)) begin
+         `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
+      end
+      if(!uvm_config_db#(virtual mby_mgp_mim_req_if)::get(this, "", "mby_mgp_mim_req_if", wreq_wb_if)) begin
          `uvm_fatal(get_name(),"Config_DB.get() for Mesh Interface was not successful!")
       end
 
@@ -148,9 +157,9 @@ class mby_mesh_env extends shdv_base_env;
 	 wb_mgp_bfm[idx] = mby_mgp_bfm_pkg::mby_mgp_bfm::type_id::create($sformatf("wb_mgp_bfm%0d", idx), this);
 
 	 eb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
-	 eb_mgp_bfm[idx].assign_vi(req_eb_if, rsp_eb_if);
+	 eb_mgp_bfm[idx].assign_vi(rreq_eb_if, wreq_eb_if, rsp_eb_if);
 	 wb_mgp_bfm[idx].assign_cfg(tb_cfg.env_cfg.bfm_cfg);
-	 wb_mgp_bfm[idx].assign_vi(req_wb_if, rsp_wb_if);
+	 wb_mgp_bfm[idx].assign_vi(rreq_wb_if, wreq_wb_if, rsp_wb_if);
 
       end
 /*

@@ -16,16 +16,17 @@ class mby_mgp_bfm extends uvm_component;
 
    `uvm_component_utils(mby_mgp_bfm)
 
-   mby_mgp_req_agent rdreq_agent[NUM_PLANES];
-   mby_mgp_req_agent wrreq_agent[NUM_PLANES];
-   mby_mgp_req_agent rdrsp_agent[NUM_PLANES];
+   mby_mgp_req_agent rdreq_agent[NUM_MSH_ROW_PORTS];
+   mby_mgp_req_agent wrreq_agent[NUM_MSH_ROW_PORTS];
+   mby_mgp_req_agent rdrsp_agent[NUM_MSH_ROW_PORTS];
 
    mby_mgp_flow_ctrl   flow_ctrl;
    mby_mgp_mem_crdt_io mem_crdt_io;
 
    mby_mgp_bfm_cfg  bfm_cfg;
 
-   virtual mby_mgp_mim_req_if req_vif;
+   virtual mby_mgp_mim_req_if rdreq_vif;
+   virtual mby_mgp_mim_req_if wrreq_vif;
    virtual mby_mgp_mim_rsp_if rsp_vif;
    
    extern function new(string name = "", uvm_component parent);
@@ -36,7 +37,7 @@ class mby_mgp_bfm extends uvm_component;
    extern virtual function void start();
    extern virtual task run_phase(uvm_phase phase);
    extern virtual function void assign_cfg(mby_mgp_bfm_cfg bfm_cfg);
-   extern virtual function void assign_vi(virtual mby_mgp_mim_req_if req_if,virtual mby_mgp_mim_rsp_if rsp_if );
+   extern virtual function void assign_vi(virtual mby_mgp_mim_req_if rreq_if, virtual mby_mgp_mim_req_if wreq_if, virtual mby_mgp_mim_rsp_if rsp_if );
    
 
 endclass 
@@ -131,9 +132,13 @@ endfunction
 //----------------------------------------------------------------------------------------
 // Method: assign_vi
 //----------------------------------------------------------------------------------------
-function void mby_mgp_bfm::assign_vi(virtual mby_mgp_mim_req_if req_if, virtual mby_mgp_mim_rsp_if rsp_if);
+function void mby_mgp_bfm::assign_vi(virtual mby_mgp_mim_req_if rreq_if, virtual mby_mgp_mim_req_if wreq_if, virtual mby_mgp_mim_rsp_if rsp_if);
       
-   req_vif = req_if;
-   rsp_vif  = rsp_if;
+   rdreq_vif = rreq_if;
+   wrreq_vif = wreq_if;
+   rsp_vif   = rsp_if;
+
+  
    
 endfunction : assign_vi
+
