@@ -243,9 +243,9 @@ void initDefaultInputs
     mbyMapperToClassifier * const map2cla
 )
 {
-    mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_PROFILE);
+    mbyClassifierActions * const actions_in  = &(map2cla->CLASSIFIER_ACTIONS);
+    mbyClassifierKeys    * const keys        = &(map2cla->CLASSIFIER_KEYS);
+    fm_byte              * const pkt_profile_in = &(map2cla->PACKET_PROFILE);
     fm_bool              * const ip_option   =   map2cla->IP_OPTION;
     mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
     fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
@@ -273,7 +273,7 @@ void initDefaultInputs
         keys->key8 [i] = 0;
 
     // fm_byte:
-    *scenario_in = 0;
+    *pkt_profile_in = 0;
 
     // fm_bool:
     *ip_option = FALSE;
@@ -309,12 +309,12 @@ void initInputs
     mbyMapperToClassifier * const map2cla
 )
 {
-    mbyClassifierActions * const actions_in  = &(map2cla->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys        = &(map2cla->FFU_KEYS);
-    fm_byte              * const scenario_in = &(map2cla->FFU_PROFILE);
-    fm_bool              * const ip_option   =   map2cla->IP_OPTION;
-    mbyParserInfo        * const parser_info = &(map2cla->PARSER_INFO);
-    fm_byte              * const pri_profile = &(map2cla->PRIORITY_PROFILE);
+    mbyClassifierActions * const actions_in     = &(map2cla->CLASSIFIER_ACTIONS);
+    mbyClassifierKeys    * const keys           = &(map2cla->CLASSIFIER_KEYS);
+    fm_byte              * const pkt_profile_in = &(map2cla->PACKET_PROFILE);
+    fm_bool              * const ip_option      =   map2cla->IP_OPTION;
+    mbyParserInfo        * const parser_info    = &(map2cla->PARSER_INFO);
+    fm_byte              * const pri_profile    = &(map2cla->PRIORITY_PROFILE);
 
     switch (test_num)
     {
@@ -444,12 +444,12 @@ fm_status testWildCardMatch
 
     initDefaultInputs(in);
 
-    mbyClassifierActions * const actions_in  = &(in->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys        = &(in->FFU_KEYS);
-    fm_byte              * const scenario_in = &(in->FFU_PROFILE);
-    fm_bool              * const ip_option   =   in->IP_OPTION;
-    mbyParserInfo        * const parser_info = &(in->PARSER_INFO);
-    fm_byte              * const pri_profile = &(in->PRIORITY_PROFILE);
+    mbyClassifierActions * const actions_in     = &(in->CLASSIFIER_ACTIONS);
+    mbyClassifierKeys    * const keys           = &(in->CLASSIFIER_KEYS);
+    fm_byte              * const pkt_profile_in = &(in->PACKET_PROFILE);
+    fm_bool              * const ip_option      =   in->IP_OPTION;
+    mbyParserInfo        * const parser_info    = &(in->PARSER_INFO);
+    fm_byte              * const pri_profile    = &(in->PRIORITY_PROFILE);
 
     // Initialize registers:
 
@@ -502,12 +502,12 @@ fm_status testExactMatch
 
     initDefaultInputs(in);
 
-    mbyClassifierActions * const actions_in  = &(in->FFU_ACTIONS);
-    mbyClassifierKeys    * const keys        = &(in->FFU_KEYS);
-    fm_byte              * const scenario_in = &(in->FFU_PROFILE);
-    fm_bool              * const ip_option   =   in->IP_OPTION;
-    mbyParserInfo        * const parser_info = &(in->PARSER_INFO);
-    fm_byte              * const pri_profile = &(in->PRIORITY_PROFILE);
+    mbyClassifierActions * const actions_in     = &(in->CLASSIFIER_ACTIONS);
+    mbyClassifierKeys    * const keys           = &(in->CLASSIFIER_KEYS);
+    fm_byte              * const pkt_profile_in = &(in->PACKET_PROFILE);
+    fm_bool              * const ip_option      =   in->IP_OPTION;
+    mbyParserInfo        * const parser_info    = &(in->PARSER_INFO);
+    fm_byte              * const pri_profile    = &(in->PRIORITY_PROFILE);
 
     // --------------------------------------------------------------------------------
     // Initialize registers:

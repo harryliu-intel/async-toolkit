@@ -6,7 +6,8 @@ V2BBOX        = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl
 
 V_DIRS        = -d=../rtl \
                 -d=../../shared/interfaces \
-                -d=../../shared/rtl
+                -d=../../shared/rtl \
+					 -d=../../shared/rtl/hlp
 V_LIBS        =
 
 .PHONY: ngen pre top post rtl copy clean diff

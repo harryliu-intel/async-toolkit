@@ -193,12 +193,13 @@ module mby_rx_ppe_tb_top ();
 // Verification Test Island
 //-----------------------------------------------------------------------------
    mby_rx_ppe_ti #(
-      .TOPOLOGY(mby_rx_ppe_env_pkg::mby_rx_ppe_defines::RX_PPE_FULL)
+      //FIXME: LNS: update to arrayed test islands
+      .TOPOLOGY(mby_rx_ppe_env_pkg::PARSER)
    ) rx_ppe_ti(
       .mby_rx_ppe_tb_if               (rx_ppe_tb_if),
       .shdv_intf                      (shdv_intf),
-      .cdi_tx_intf                    (cdi_tx_intf),
-      .cdi_rx_intf                    (cdi_rx_intf)
+      .eth_bfm_tx_vintf               (cdi_tx_intf),
+      .eth_bfm_rx_vintf               (cdi_rx_intf)
 
    );
 

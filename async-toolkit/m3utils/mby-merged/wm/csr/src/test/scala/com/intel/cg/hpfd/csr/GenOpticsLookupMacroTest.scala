@@ -25,17 +25,19 @@ class GenOpticsLookupMacroTest extends PropSpec with PropertyChecks with Matcher
     forAll { (expectedValue: Long) =>
       val topAddressMap = AddressMap(initialAddress)
 
-      val opticsPath = AddressMap
+      val access = AddressMap
         .genOpticsLookup(topAddressMap, optionalId)
         .get(lastRegisterAddress)
         .value
 
-      val modifiedTopAddressMap = opticsPath.set(BitVector(expectedValue))(topAddressMap)
+      access.width shouldEqual Alignment(8 bytes)
+
+      val modifiedTopAddressMap = access.optic.set(BitVector(expectedValue))(topAddressMap)
 
       inside(modifiedTopAddressMap) { case AddressMap(_,_,regFileB) =>
         inside(regFileB) { case RegisterFileB(_,_,register) =>
           register.serialize.toLong shouldEqual expectedValue
-          register.serialize shouldEqual opticsPath.getOption(modifiedTopAddressMap).value
+          register.serialize shouldEqual access.optic.getOption(modifiedTopAddressMap).value
         }
       }
     }

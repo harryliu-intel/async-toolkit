@@ -77,7 +77,7 @@
 #define MBY_CGRP_REMAP_h_SET8_1B_MASK      7
 
 #define MBY_CGRP_REMAP_l_SET1_16B_INDEX     16
-#define MBY_CGRP_REMAP_h_SET1_16B_INDEX     23
+#define MBY_CGRP_REMAP_h_SET1_16B_INDEX     23 // or 22? <-- REVISIT!!!
 #define MBY_CGRP_REMAP_l_SET1_16B_VALUE     0
 #define MBY_CGRP_REMAP_h_SET1_16B_VALUE     15
 
@@ -201,6 +201,33 @@
 #define MBY_CGRP_ACTION_MOD_PROFILE_h_ADDR   23
 
 // Enums:
+
+typedef enum mbyClassifierEmBLearnNotifyEnum
+{
+    MBY_LEARN_NOTIFY_SMAC_HIT = 0,
+    MBY_LEARN_NOTIFY_SMAC_MISS
+} mbyClassifierEmBLearnNotify;
+
+typedef enum mbyClassifierFwdSubtypeEnum
+{
+    MBY_FWD_SUBTYPE_FWD_GLORT = 0,
+    MBY_FWD_SUBTYPE_ROUTE_ARP
+
+} mbyClassifierFwdSubtype;
+
+typedef enum mbyClassifierFwdArpRouteTypeEnum
+{
+    MBY_FWD_ARP_ROUTE_TYPE_SINGLE = 0,
+    MBY_FWD_ARP_ROUTE_TYPE_GROUP
+
+} mbyClassifierFwdArpRouteType;
+
+typedef enum mbyClassifierFwdForwardedTypeEnum
+{
+    MBY_FWD_FID_FORWARDED = 0,
+    MBY_FWD_GLORT_FORWARDED
+
+} mbyClassifierFwdForwardedType;
 
 typedef enum mbyClassifierActionEntryTypeEnum
 {
@@ -428,20 +455,6 @@ typedef struct mbyClassifierHashCfgStruct
 
 } mbyClassifierHashCfg;
 
-typedef struct mbyMplsMuxExpDsStruct
-{
-    fm_byte   DSCP;
-    fm_byte   ECN;
-    fm_byte   TC;
-
-} mbyMplsMuxExpDs;
-
-typedef struct mbyMplsMuxDscpTc
-{
-    fm_byte   TC;
-
-} mbyMplsMuxDscpTc;
-
 typedef struct mbyClassifierActionCfgStruct
 {
     fm_bool   enable; // 1b field
@@ -451,14 +464,16 @@ typedef struct mbyClassifierActionCfgStruct
 
 typedef struct mbyClassifierMuxedActionStruct
 {
-    fm_byte   ecn;
-    fm_bool   aqm_mark_en;
-    fm_byte   tc;
-    fm_byte   ttl_ctrl;
-    fm_byte   ttl01;
+    fm_byte   dscp_ctl;    //  4b field
+    fm_byte   ttl_ctl;     //  3b field
+    fm_byte   tc_ctl;      //  4b field
+    fm_byte   ecn_ctl;     //  4b field
     fm_byte   dscp;
-    fm_byte   vpri;
-    fm_bool   route;
+    fm_byte   ttl01;
+    fm_byte   tc;
+    fm_byte   ecn;
+//NOT_USED? aqm_mark_en <-- REVISIT!!!
+    fm_bool   aqm_mark_en;
 
 } mbyClassifierMuxedAction;
 
@@ -469,9 +484,28 @@ typedef struct mbyClassifierFlags
     fm_bool   log;
     fm_bool   no_route;
     fm_bool   rx_mirror;
-    fm_byte   tx_tag;
+    fm_byte   tx_tag;  // 2b field
+    fm_byte   trigger; // 8b field
+    fm_byte   profile; // 6b field
+    fm_bool   learn_notify;
 
 } mbyClassifierFlags;
+
+typedef struct mbyClassifierFunctionsStruct
+{
+    mbyClassifierMuxedAction muxed_action;                   // { ECN, TC, TTL, DSCP }
+    fm_uint16 vid;                                           // 12b field
+    fm_byte   vpri;                                          //  4b field
+    fm_byte   dscp;                                          //  8b field
+    fm_byte   tc;                                            //  4b field
+    fm_byte   hash_profile  [MBY_CGRP_HASH_PROFILE_ACTIONS]; // 3 x  6b fields
+    fm_byte   mod_meta      [MBY_CGRP_META_ACTIONS];         // 4 x  8b fields
+    fm_uint32 fwd;                                           // 22b field
+    fm_uint32 policer_action[MBY_CGRP_POLICER_ACTIONS];      // 4 x 24b fields
+    fm_uint32 mod_profile;                                   // 24b field
+    fm_uint32 remap         [MBY_CGRP_REMAP_ACTIONS];        // 8 x 24b fields
+    fm_uint32 used;                                          // 24b field
+} mbyClassifierFunctions;
 
 typedef struct mbyIppRxTagStruct
 {

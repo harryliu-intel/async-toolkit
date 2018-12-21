@@ -511,7 +511,9 @@ PROCEDURE GenChildInit(e          : RegChild.T;
           END
         ELSE
           (* fullalign given, stride not given, mod not given, at not given *)
-          (* make a throwaway "first" and "second", measure distance between,
+          (* make a throwaway "first" and "second", 
+             measure distance between,
+             multiply by size,
              then align at to that and proceed *)
           gs.mdecl("      VAR first, second : CompRange.T; BEGIN\n");
           
@@ -522,7 +524,8 @@ PROCEDURE GenChildInit(e          : RegChild.T;
                                  ComponentInitName(e.comp,gs),
                                  childArc);
           gs.mdecl("        <*ASSERT first # second*>\n");
-          gs.mdecl("        WITH len = CompAddr.DeltaBytes(CompRange.Lim(second),CompRange.Lim(first)) DO\n");
+          gs.mdecl("        WITH len = %s*\n", BigInt.Format(e.array.n.x));
+          gs.mdecl("                   CompAddr.DeltaBytes(CompRange.Lim(second),CompRange.Lim(first)) DO\n");
           gs.mdecl("          at := CompAddr.ModAlign(at, CompAddr.NextPower(len));\n");
           gs.mdecl("          q := at\n");
           gs.mdecl("        END\n");
@@ -1022,7 +1025,6 @@ PROCEDURE GenChildUpdateInit(e          : RegChild.T;
 PROCEDURE GenRegfileUpdateInit(rf : RegRegfile.T; gs : GenState) =
   VAR
     iNm := ComponentInitName(rf, gs);
-    skipArc := rf.children.size() = 1;
     utn := ComponentTypeNameInHier(rf, gs, TypeHier.Update);
     atn := ComponentTypeNameInHier(rf, gs, TypeHier.Addr);
     xtn := ComponentTypeNameInHier(rf, gs, TypeHier.Unsafe);
@@ -1038,7 +1040,7 @@ PROCEDURE GenRegfileUpdateInit(rf : RegRegfile.T; gs : GenState) =
     gs.mdecl("  BEGIN\n");
 
     FOR i := 0 TO rf.children.size()-1 DO
-      GenChildUpdateInit(rf.children.get(i), gs, skipArc)
+      GenChildUpdateInit(rf.children.get(i), gs, rf.skipArc())
     END;
     gs.mdecl("  END %s;\n",iNm);
     gs.mdecl("\n");
@@ -1778,7 +1780,6 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
  PROCEDURE GenRegfileInit(rf : RegRegfile.T; gs : GenState) =
   VAR
     iNm := ComponentInitName(rf, gs);
-    skipArc := rf.children.size() = 1;
   BEGIN
     gs.mdecl(
            
@@ -1790,7 +1791,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     gs.mdecl("  VAR\n");
     gs.mdecl("    base := at;\n");
     gs.mdecl("    mono := NEW(CompRange.Monotonic).init();\n");
-    IF skipArc THEN
+    IF rf.skipArc() THEN
       gs.mdecl("  BEGIN\n");
     ELSE
       gs.mdecl("    c := 0;\n");
@@ -1807,9 +1808,9 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
       GenChildInit(rf.children.get(i),
                    gs,
                    GetAddressingProp(rf),
-                   skipArc := skipArc);
+                   skipArc := rf.skipArc());
     END;
-    IF NOT skipArc THEN BuildTab(gs, iNm) END;
+    IF NOT rf.skipArc() THEN BuildTab(gs, iNm) END;
 
     gs.mdecl("    RETURN CompRange.From2(base,at)\n");
     gs.mdecl("  END %s;\n",iNm);
@@ -1821,7 +1822,6 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
     iNm := ComponentInitName(rf, gs);
     atn := ComponentTypeNameInHier(rf, gs, TypeHier.Addr);
     ttn := ComponentTypeNameInHier(rf, gs, TypeHier.Read);
-    skipArc := rf.children.size() = 1;
   BEGIN
     gs.mdecl(
            
@@ -1842,7 +1842,7 @@ PROCEDURE GenRegfile(rf       : RegRegfile.T;
       *)
       GenChildXInit(rf.children.get(i),
                    gs,
-                   skipArc := skipArc);
+                   skipArc := rf.skipArc());
     END;
 
     gs.mdecl("  END %s;\n",iNm);

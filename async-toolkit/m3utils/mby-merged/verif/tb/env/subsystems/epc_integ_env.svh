@@ -19,6 +19,9 @@ class epc_integ_env extends subsystem_base_env;
    
    // epc env
    mby_ec_top_env       epc_env_inst[`NUM_EPC];
+
+   // epc cfg
+   mby_ec_top_env_cfg   epc_env_cfg_inst[`NUM_EPC];
  
    //
    // constructor
@@ -68,6 +71,18 @@ class epc_integ_env extends subsystem_base_env;
          epc_env_inst[i] = mby_ec_top_env::type_id::create($sformatf("epc_env_inst_%0d", i), this);
 //         epc_env_inst[i].set_level(SLA_SUB); // TODO: Need to replace this with a uvm_env is_active set via the uvm resource database.
          `uvm_info(get_name(),  $sformatf("build_epc_env: epc_env_inst[%0d] created",i),UVM_MEDIUM)
+
+         epc_env_cfg_inst[i] = mby_ec_top_env_cfg::type_id::create($sformatf("epc_env_cfg_inst_%0d", i), this);
+         `uvm_info(get_name(),  $sformatf("build_epc_env: epc_env_cfg_inst[%0d] created",i),UVM_MEDIUM)
+
+         epc_env_cfg_inst[i].endpoint_type = "dut";
+         //epc_env_cfg_inst[i].is_bfm_enabled = 1; //drive pkt from CDI BFM
+         //epc_env_cfg_inst[i].dut_mode = eth_port_env_pkg::ENABLE_MAC;
+
+         //Randomize the cfg and pass it to the env
+         epc_env_cfg_inst[i].randomize();
+
+         epc_env_inst[i].set_env_cfg(epc_env_cfg_inst[i]);
      end
 
      // pass-in the IP3 reg_model from FC regmodel

@@ -32,10 +32,10 @@
 program testcase (                  // a program is a system verilog testbench entry point
     msh_node_dut_if dut_if,               // mesh DUT interface 
     //-hz: 12/7/2018
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_0, // defined in shared/interfaces
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_1, // under subBlock/mbyc/src
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_2,
-    mby_mem_msh_bank_ram_shell_4096x552_func_if mem_if_3
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0, // defined in shared/interfaces
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1, // under subBlock/mbyc/src
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2,
+    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3
 );     
 
 
@@ -51,7 +51,11 @@ program testcase (                  // a program is a system verilog testbench e
         .mem_if_0	(mem_if_0),	// -hz: 12/7/2018
         .mem_if_1	(mem_if_1),
         .mem_if_2	(mem_if_2),
-        .mem_if_3	(mem_if_3)
+        .mem_if_3	(mem_if_3),
+
+	// num of input request
+	.knob_inp_req_num (25)
+
     );
 
     // testcase execution
@@ -70,12 +74,6 @@ program testcase (                  // a program is a system verilog testbench e
         $finish();                          // ca  the final procedure (if it exists) and exits the simulation
 
     end // initial
-
-
-//-hz: 12/6/2018
-  //logic check_rd_rsp;
-  //assign check_rd_rsp = env.mntr.check_rd_rsp;
-
 
 
 endprogram // testcase

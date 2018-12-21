@@ -164,7 +164,7 @@ $(C_GEN): $(MBY_POSTPROC) $(GENVIEWS)
 cgen: $(C_GEN)
 
 $(MBY_C_LIB): $(C_GEN)
-	cd ../c && $(CM3) -x # make -C ../c all # <-- FIXME!!!
+	make -C ../c all
 
 $(HLPLIB): $(HLP_TOP_RDL) $(GENVIEWS)
 	mkdir -p work
