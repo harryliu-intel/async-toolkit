@@ -496,7 +496,7 @@ void Hash
     out->L2_DMAC                 = in->L2_DMAC;
     out->L2_SMAC                 = in->L2_SMAC;
     out->CGRP_FLAGS              = in->CGRP_FLAGS;
-    out->CGRP_ROUTE              = in->CGRP_ROUTE;
+    out->FWD                     = in->FWD;
     out->CGRP_TRIG               = in->CGRP_TRIG;
     out->CONTENT_ADDR            = in->CONTENT_ADDR;
     out->ENCAP                   = in->ENCAP;
@@ -507,6 +507,7 @@ void Hash
     out->L3_IDOMAIN              = in->L3_IDOMAIN;
     out->L2_IVID1                = in->L2_IVID1;
     out->LEARN_MODE              = in->LEARN_MODE;
+    out->LEARN_NOTIFY            = in->LEARN_NOTIFY;
     out->MOD_PROF_IDX            = in->MOD_PROF_IDX;
     out->PARITY_ERROR            = in->PARITY_ERROR;
     out->PARSER_ERROR            = in->PARSER_ERROR;

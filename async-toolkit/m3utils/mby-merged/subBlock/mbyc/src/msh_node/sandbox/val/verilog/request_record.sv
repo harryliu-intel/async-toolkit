@@ -4,32 +4,38 @@
 
 class request_record;
 
-    integer                 id;
-    integer                 req_in_time;
+//  integer                 id;
+//  integer                 req_in_time;
 //-hz:
 //  tmpl_pkg::req_in_t      req_in;
-    integer                 arb_win_time;
-    integer                 num_bids;
+//  integer                 arb_win_time;
+//  integer                 num_bids;
 //-hz:
 //  tmpl_pkg::inp_t         losers;
-    integer                 req_out_time;
+//  integer                 req_out_time;
 //-hz:
 //  tmpl_pkg::req_out_t     req_out;
+
+    logic[11:0]		adr;
+    logic[531:0]	wdata;
 
     string                  name;
 
     function new();
         name           = "request_record.sv";
-        id             = -1;
-        req_in_time    = -1;
-        req_in         = '0;
-        arb_win_time   = -1;
-        num_bids       = 0;
-        losers         = '0;
-        req_out_time   = -1;
-        req_out        = '0;
+//      id             = -1;
+//      req_in_time    = -1;
+//      req_in         = '0;
+//      arb_win_time   = -1;
+//      num_bids       = 0;
+//      losers         = '0;
+//      req_out_time   = -1;
+//      req_out        = '0;
+	adr		= '0;
+	wdata		= '0;
     endfunction
 
+/*
     task print(string prepend);
         $display("%s\tREQUEST RECORD (id = %0d):",  prepend, id);
         $display("%s\t\treq_in_time     = %0d",     prepend, req_in_time);
@@ -44,6 +50,7 @@ class request_record;
         $display("%s\t\treq_out.inp     = %0d",     prepend, req_out.inp);
         $display("%s\t\treq_out.data    = %0d",     prepend, req_out.data);
     endtask
+*/
 
 endclass
 

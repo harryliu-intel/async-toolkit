@@ -3,7 +3,7 @@
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
 // File          : mby_smm_bfm_defines.sv
-// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Author        : Roman Bernal <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
@@ -36,9 +36,29 @@
 `ifndef __MBY_SMM_BFM_TYPES__
 `define __MBY_SMM_BFM_TYPES__
 
-// Type definitions
-typedef virtual mby_smm_bfm_if mby_smm_bfm_vif;
-typedef mby_base_pkg::mby_base_agent#(.T_req(mby_smm_bfm_xaction), .T_vif(mby_smm_bfm_vif)) smm_bfm_agent;
-   
+// -------------------------------------------------------------------------
+// Main class & VIF type definitions for TAG BFM
+// -------------------------------------------------------------------------
+// Creating a virtual interface types for wr_req & rd_req/rd_rsp
+typedef virtual mby_smm_bfm_row_wr_req_if mby_smm_bfm_row_wr_req_vif;
+typedef virtual mby_smm_bfm_row_rd_req_if mby_smm_bfm_row_rd_req_vif;
+
+// Forward declaration of the transaction classes (in the smm_bfm_pkg
+// these file are compiled before the transaction item.
+typedef class mby_smm_bfm_row_wr_req_xaction;
+typedef class mby_smm_bfm_row_rd_req_xaction;
+
+// Defining the wr_req & rd_req/rd_rsp agents as a parameterized base agent.
+typedef mby_base_pkg::mby_base_agent#(.T_req(mby_smm_bfm_row_wr_req_xaction), .T_vif(mby_smm_bfm_row_wr_req_vif)) smm_bfm_row_wr_req_agent;
+typedef mby_base_pkg::mby_base_agent#(.T_req(mby_smm_bfm_row_rd_req_xaction), .T_vif(mby_smm_bfm_row_rd_req_vif)) smm_bfm_row_rd_req_agent;
+
+typedef class mby_smm_bfm_mwr_req;
+typedef class mby_smm_bfm_mrd_req;
+typedef class mby_smm_bfm_mem_node;
+typedef class mby_smm_bfm_rdrsp_seq;
+typedef mby_smm_bfm_rdrsp_seq#(.T_req(mby_smm_bfm_row_rd_req_xaction)) smm_bfm_rdrsp_seq;
+typedef mby_smm_bfm_mwr_req#(.T_req(mby_smm_bfm_row_wr_req_xaction)) smm_bfm_mwr_req;
+typedef mby_smm_bfm_mrd_req#(.T_req(mby_smm_bfm_row_rd_req_xaction)) smm_bfm_mrd_req;
+typedef mby_smm_bfm_mem_node#(.ADDR_WIDTH(MSH_NODE_ADDR_WIDTH),.DATA_WIDTH(MSH_DATA_WIDTH)) smm_bfm_mem_node;
 
 `endif

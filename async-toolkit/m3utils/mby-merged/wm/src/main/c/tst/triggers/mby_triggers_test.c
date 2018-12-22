@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
 #include <string.h>
 #include <assert.h>
 
-#include <mby_top_map.h>
-
 #include <mby_common.h>
 #include <mby_pipeline.h>
+
+#include <mby_top_map.h>
+#include <model_c_write.h> // write_field()
 
 #define MBY_PHYSICAL_SOURCE_PORTS         17
 
@@ -480,15 +480,25 @@ static int runOnSimpleTrigger
     run_on_simple_trigger_check_fn check
 )
 {
-    mby_ppe_trig_apply_map      trig_apply_map      = { 0 };
-    mby_ppe_trig_apply_misc_map trig_apply_misc_map = { 0 };
-    mby_ppe_fwd_misc_map        fwd_misc_map        = { 0 };
-    mby_ppe_mapper_map          mapper_map          = { 0 };
+    mby_ppe_trig_apply_map            trig_apply_map        = { 0 };
+    mby_ppe_trig_apply_misc_map       trig_apply_misc_map   = { 0 };
+    mby_ppe_fwd_misc_map              fwd_misc_map          = { 0 };
+    mby_ppe_mapper_map                mapper_map            = { 0 };
+
+    mby_ppe_trig_apply_map__addr      trig_apply_map_w      = { 0 };
+    mby_ppe_trig_apply_misc_map__addr trig_apply_misc_map_w = { 0 };
+    mby_ppe_fwd_misc_map__addr        fwd_misc_map_w        = { 0 };
 
     mbyMaskGenToTriggers  gen2trig          = { 0 };
     mbyTriggersToCongMgmt trig2con          = { 0 };
     mbyMaskGenToTriggers  const * const in  = &gen2trig;
     mbyTriggersToCongMgmt       * const out = &trig2con;
+
+    mby_ppe_trig_apply_map__init(&trig_apply_map, &trig_apply_map_w,
+                                 mby_field_init_cb);
+    mby_ppe_trig_apply_misc_map__init(&trig_apply_misc_map, &trig_apply_misc_map_w,
+                                      mby_field_init_cb);
+    mby_ppe_fwd_misc_map__init(&fwd_misc_map, &fwd_misc_map_w, mby_field_init_cb);
 
     setup
     (
@@ -501,8 +511,11 @@ static int runOnSimpleTrigger
     Triggers
     (
         &trig_apply_map,
+        &trig_apply_map_w,
         &trig_apply_misc_map,
+        &trig_apply_misc_map_w,
         &fwd_misc_map,
+        &fwd_misc_map_w,
         &mapper_map,
         in,
         out
@@ -536,6 +549,9 @@ int main(void)
     printf(" %2d/%2d - Triggers tests\n" COLOR_RESET, passes, tests);
 
     printf("--------------------------------------------------------------------------------\n");
+
+    // Free up hash table allocated by model_c_write.c:
+    mby_free_fields_table();
 
     int rv = (fails == 0) ? 0 : -1;
 

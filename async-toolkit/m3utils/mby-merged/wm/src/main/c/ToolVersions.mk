@@ -29,5 +29,17 @@ ifeq (,$(wildcard $(DOX)))
 DOX = doxygen
 endif
 
+# Make Dir:
+MKDIR = /bin/mkdir
+
+# Symbolic Link:
+LN = /bin/ln -s
+
 # File/Dir Remove:
 RM = /bin/rm -rf
+
+# Archive:
+AR = /usr/bin/ar -c -r -s
+
+# Ranlib (generate index to archive):
+RANLIB = /usr/bin/ranlib

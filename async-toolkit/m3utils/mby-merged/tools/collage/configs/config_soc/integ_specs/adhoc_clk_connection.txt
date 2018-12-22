@@ -7,25 +7,40 @@
 # temp dummysyscon clk connection
 C   mby_parclk/core_cclk    mby_syscon/clk
 
-## This is temp, using xtal_rcvr; these refclks need to go to serdes phy (in EPC)
-Ci  /HSS_REFCLK_DP[0]       xtal_rcvr/xtal_in
+## This is temp refclk_rcvr; these refclks need to go to serdes phy (in EPC)
+Ci  /HSS_REFCLK_DP[0]       eth_refclk_rcvr/refclk_p
+Ci  /HSS_REFCLK_DN[0]       eth_refclk_rcvr/refclk_n
+## Also temp, having refclk_rcvr drive pll refclk; refclk will come from a serdes phy (EPC)
+C   eth_refclk_rcvr/ref_clk       mby_parclk/ref_clk
 
-## unused for now
-O   /HSS_REFCLK_DP[1]
-O   /HSS_REFCLK_DP[2]
-O   /HSS_REFCLK_DP[3]
-
-## Also temp, having xtal_rcvr drive pll refclk; refclk will come from a serdes phy (EPC)
-C   xtal_rcvr/ref_clk       mby_parclk/ref_clk
+## temp, not sure if these go direct to EPC or supposed to go through some other IO buffer first
+## also, which EPC they connect to will be determined by circuit/SD folks, need input
+Ci  /HSS_REFCLK_DP[0]   mby_ec_top_0/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[0]   mby_ec_top_0/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[0]   mby_ec_top_1/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[0]   mby_ec_top_1/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[1]   mby_ec_top_2/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[1]   mby_ec_top_2/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[1]   mby_ec_top_3/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[1]   mby_ec_top_3/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[2]   mby_ec_top_4/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[2]   mby_ec_top_4/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[2]   mby_ec_top_5/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[2]   mby_ec_top_5/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[3]   mby_ec_top_6/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[3]   mby_ec_top_6/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[3]   mby_ec_top_7/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[3]   mby_ec_top_7/i_serdes_refclk_n
 
 ## Connect PLL clock outputs to SS clks
 C   mby_parclk/msh_mclk     mby_msh_0/mclk
+C   mby_parclk/core_cclk    mby_msh_0/cclk
 C   mby_parclk/core_cclk    mby_gmn_0/cclk
 C   mby_parclk/core_cclk    mby_gms_0/cclk
 //;for {set mppindx 0} {$mppindx<8} {incr mppindx} {
 C   mby_parclk/core_cclk    mby_mpp_${mppindx}/cclk
 C   mby_parclk/core_cclk    mby_ec_top_${mppindx}/cclk
-C   mby_parclk/mac_eclk     mby_ec_top_${mppindx}/pclk
+C   mby_parclk/mac_eclk     mby_ec_top_${mppindx}/eclk
 //;}
 
 # imc clocks - aclk, sclk, pclk

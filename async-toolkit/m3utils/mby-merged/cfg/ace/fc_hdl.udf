@@ -160,18 +160,18 @@ EOF
          # Define all the libraries which could be compiled
          libs => {
 
-             clkstub_rtl_lib => {
+             mby_parclk_rtl_lib => {
                     -vlog_files => [
                         "src/rtl/clkstub/AW_sync.sv",
                         "src/rtl/clkstub/AW_width_scale.sv",
                         "src/rtl/clkstub/parclk_gpreg_v2.sv",
                         "src/rtl/clkstub/mby_parclk.sv",
                         "src/rtl/clkstub/pll_stub.sv",
-                        "src/rtl/clkstub/xtal_rcvr.sv",
+                        "src/rtl/clkstub/refclk_rcvr.sv",
                         "src/rtl/clkstub/clk_mux_2to1_glitchfree.sv",
                     ],
              },
-             imc_rtl_lib => {
+             mby_imc_rtl_lib => {
                     -vlog_files => [
                         "src/rtl/imcstub/mby_syscon.sv",
                     ],
@@ -259,7 +259,6 @@ EOF
                  -vlog_opts => [
                      @FC_VLOG_OPTIONS,
                      @all_sip_verif_vlogopts,
-                     "+define+XVM",                       
                  ],
                  -tag => "nonsynth",
              },
@@ -553,7 +552,7 @@ EOF
                   "svt_ahb_lib",
                   "mby_env_lib",
                   "mby_jasper_lib",
-                  "gen_mby_regflow_lib",
+                  "gen_mby_regflow_lib", #dahendri - temp disable until Nebulon RT improves
                   # "gen_mby_wm", # Temporarily disable Scala build to avoid failures
                   "gen_mby_wm_m3",
                   "mby_test_lib",

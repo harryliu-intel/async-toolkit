@@ -30,8 +30,9 @@
 /* Up to date in sync with mbay_ring_wires_v02.xlsx last checked on 12-Nov-2018. Using mby_gmm_pkg */
 
 interface egr_mce_tagring_if ();
-    import mby_gmm_pkg::*; 
+    import mby_gmm_pkg::*;
     import mby_egr_pkg::*;
+    import shared_pkg::*; 
   
     mby_mc_tag_ring_t mby_mc_tag_ring[W_MCE_TAG_RING_TRACKS-1:0];
 

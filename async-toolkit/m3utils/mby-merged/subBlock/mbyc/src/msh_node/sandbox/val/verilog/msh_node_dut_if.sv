@@ -35,6 +35,12 @@
 interface msh_node_dut_if
 import mby_msh_pkg::*;
 import mby_msh_node_pkg::*;
+#(
+
+    parameter int NUM_MSH_ROWS    = MAX_NUM_MSH_ROWS,               // number of mesh rows
+    parameter int NUM_MSH_COLS    = MAX_NUM_MSH_COLS                // number of mesh columns
+
+)
 (
    input mclk                                        // mclk is passed in a parameter and becomes part of the interface
 );
@@ -138,6 +144,11 @@ logic            o_sb_crdt_rtn_for_nb_rd_rsp   [NUM_MSH_PLANES-1:0];
 logic            o_nb_crdt_rtn_for_sb_rd_rsp   [NUM_MSH_PLANES-1:0];
 logic            o_wb_crdt_rtn_for_eb_rd_rsp   [NUM_MSH_PLANES-1:0];
 logic            o_eb_crdt_rtn_for_wb_rd_rsp   [NUM_MSH_PLANES-1:0];
+
+
+//mem if:
+
+mby_mem_msh_bank_ram_shell_4096x532_func_if msh_mem_bank_if[(NUM_MSH_NODE_MEM_BANKS - 1):0]();
 
 
 endinterface // msh_node_dut_if

@@ -1073,6 +1073,9 @@ static void mapScalar
     map_prof_key1->L2_DOMAIN = *l2_domain;
     map_prof_key1->L3_DOMAIN = *l3_domain;
 
+    ///> This is not the right usage.
+    ///> Action (flag) LEARN_NOTIFY should be set by CGRP_B:EM
+    ///> [RX-PPEActions-Table3-1bActionFieldMappings](https://securewiki.ith.intel.com/display/25T/RX-PPE+Actions#RX-PPEActions-Table3-1bActionFieldMappings)
     classifier_actions->act1[MBY_CGRP_ACTION_LEARN_NOTIFY].val = domain_action0.LEARN_EN;
 
     *learn_mode = domain_action0.LEARN_MODE;
@@ -1122,21 +1125,16 @@ static void encodeLength
     const fm_byte   hdr_len,
     const fm_bool   hdr_valid,
     const fm_byte   min,
-    const fm_byte   max,
     const fm_byte   offset,
     const fm_bool   fits,
     fm_bool * const ptrs_err,
     fm_byte * const len
 )
 {
-    if ((max < min) || (max < offset)) { /* WARNING: max is less than min, or max is less than offset */ }
-
     *len = 0; // default
 
     if (!fits || (*ptrs_err) || !hdr_valid)
         ;
-    else if (hdr_len > max)
-        *len  = ((max >> 2) & 0x3f) - ((offset >> 2) & 0x3f);
     else if (hdr_len < min)
         *ptrs_err = TRUE;
     else if ((hdr_len & 3) != (offset & 3))
@@ -1197,6 +1195,7 @@ static void getParserInfo
             next_hdr_start = ptrs[i];
     }
 
+#if 0
     /* The parser always sets pr.ptrs[OTR_L3] to indicate the end of the MPLS
        stack (either BOS or the point where the parser has decided to stop
        looking deeper in the MPLS stack).
@@ -1219,7 +1218,7 @@ static void getParserInfo
 
     hdr_len_limit[MBY_PA_INFO_OTR_L4]   = (tcp[0]) ? MBY_L4_TCP_MIN_SIZE : MBY_OTR_TUN_LEN_LIMIT * 4;
     hdr_len_limit[MBY_PA_INFO_INR_L4]   = (tcp[1]) ? MBY_L4_TCP_MIN_SIZE : MBY_L4_MIN_SIZE;
-
+#endif
     fm_bool fits = TRUE;
     fm_bool ptrs_err = FALSE;
 
@@ -1229,7 +1228,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_OTR_L2],
         hdr_valid[MBY_PA_INFO_OTR_L2],
         14,
-        hdr_len_limit[MBY_PA_INFO_OTR_L2],
         10,
         fits,
         &ptrs_err,
@@ -1249,7 +1247,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_OTR_MPLS],
         hdr_valid[MBY_PA_INFO_OTR_MPLS],
         0,
-        hdr_len_limit[MBY_PA_INFO_OTR_MPLS],
         0,
         fits,
         &ptrs_err,
@@ -1266,7 +1263,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_OTR_L3],
         hdr_valid[MBY_PA_INFO_OTR_L3],
         20,
-        hdr_len_limit[MBY_PA_INFO_OTR_L3],
         0,
         fits,
         &ptrs_err,
@@ -1290,7 +1286,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_OTR_L4],
         hdr_valid[MBY_PA_INFO_OTR_L4],
         otr_l4_min,
-        hdr_len_limit[MBY_PA_INFO_OTR_L4],
         otr_l4_offset,
         fits,
         &ptrs_err,
@@ -1310,7 +1305,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_INR_L2],
         hdr_valid[MBY_PA_INFO_INR_L2],
         14,
-        hdr_len_limit[MBY_PA_INFO_INR_L2],
         10,
         fits,
         &ptrs_err,
@@ -1330,7 +1324,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_INR_MPLS],
         hdr_valid[MBY_PA_INFO_INR_MPLS],
         0,
-        hdr_len_limit[MBY_PA_INFO_INR_MPLS],
         0,
         fits,
         &ptrs_err,
@@ -1346,7 +1339,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_INR_L3],
         hdr_valid[MBY_PA_INFO_INR_L3],
         20,
-        hdr_len_limit[MBY_PA_INFO_INR_L3],
         0,
         fits,
         &ptrs_err,
@@ -1367,7 +1359,6 @@ static void getParserInfo
         hdr_len[MBY_PA_INFO_INR_L4],
         hdr_valid[MBY_PA_INFO_INR_L4],
         min_size,
-        hdr_len_limit[MBY_PA_INFO_INR_L4],
         0,
         fits,
         &ptrs_err,
@@ -1758,6 +1749,8 @@ static void mapRewrite
 
 /**
  * Mapper stage implementation.
+ *
+ * See: [Mapper HAS](https://securewiki.ith.intel.com/display/25T/RX-PPE+Mapper)
  *
  * @param[in]   parser_map  Pointer to mapper register map (read only).
  * @param[in]   in          Pointer to input structure     (read only).

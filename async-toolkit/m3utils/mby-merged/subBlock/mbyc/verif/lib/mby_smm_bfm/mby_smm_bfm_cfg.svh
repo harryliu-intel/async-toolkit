@@ -3,7 +3,7 @@
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
 // File          : mby_smm_bfm_cfg.svh
-// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Author        : Roman Bernal  <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
@@ -39,17 +39,33 @@
 // CLASS: mby_smm_bfm_cfg
 //
 // This is the configuration class used by the smm_bfm. It contains fields to
-// control the gcm agent's driver/monitor behavior and also to control the
-// frame generator capabilities.
-//
+// control the smm agent's driver/monitor behavior.
 //-----------------------------------------------------------------------------
 class mby_smm_bfm_cfg extends mby_base_config;
+   // TODO ;   WIP: Mesh Configuration Options - Profile based latencies.
+   //          Different delay types: good condition, congestion levels (low, medium, high, super high), write lost,
+   
+   // TODO :   add plusargs to let the test select the profile.
 
-   // VARIABLE: frame_gen_active
-   // Agent is configured to be active or passive
-   uvm_active_passive_enum frame_gen_active;
+   // VARIABLE: mrd_req_rsp_delay_min
+   //    Defines the lower limit for memory read request/response delay randomization.
+   int mrd_req_rsp_delay_min     = 8;
+   
+   // VARIABLE: mrd_req_rsp_delay_max
+   //    Defines the upper limit for memory read request/response delay randomization.
+   int mrd_req_rsp_delay_max     = 64;
+   
+   // VARIABLE: mrd_req_rsp_delay_extra
+   //    Defines the extra clocks added to memory read request/response delay randomization.
+   int mrd_req_rsp_delay_extra   = 0;
 
-   // UVM object utils macro
+   // CONSTRAINT: smm_bfm_constraint
+   // Sets proper values for driver/monitor enables
+   constraint egress_constraint {
+      monitor_active   == UVM_ACTIVE;
+      driver_active    == UVM_ACTIVE;
+   }
+
    `uvm_object_utils(mby_smm_bfm_cfg)
 
    // -------------------------------------------------------------------------

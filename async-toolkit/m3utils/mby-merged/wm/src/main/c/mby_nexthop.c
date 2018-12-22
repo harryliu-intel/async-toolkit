@@ -7,8 +7,7 @@
 #include "mby_hash.h"
 #include "mby_nexthop.h"
 #include "mby_maskgen.h"
-// TODO is there a better way to include this? REVISIT
-#include "../m3/model_server/src/model_c_write.h" // pull in write_field
+#include <model_c_write.h> // write_field()
 
 static mbyArpTable getARPTableEntry
 (
@@ -53,11 +52,7 @@ static void setARPUsedEntry
     fm_uint64 used_value = nexthop->NH_USED[arp_tbl_idx >> 6].USED;
 
     used_value |= (FM_LITERAL_U64(1) << (arp_tbl_idx & 0x3f));
-#ifndef C_TEST_BUILD
-     write_field(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED, used_value);
-#else
-    *(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED) = used_value;
-#endif
+    write_field(nexthop_w->NH_USED[arp_tbl_idx >> 6].USED, used_value);
 }
 
 
@@ -149,7 +144,7 @@ void NextHop
 {
     // Read inputs:
     const mbyClassifierFlags cgrp_flags  = in->CGRP_FLAGS;
-    const fm_uint32          cgrp_route  = in->CGRP_ROUTE;
+    const fm_uint32          cgrp_route  = in->FWD;
           fm_bool            encap       = in->ENCAP;
           fm_bool            decap       = in->DECAP;
     const fm_macaddr         dmac_ipv6   = in->DMAC_FROM_IPV6;
@@ -288,7 +283,7 @@ void NextHop
     out->MIRROR0_PROFILE_IDX  = in->MIRROR0_PROFILE_IDX;
     out->MOD_PROF_IDX         = in->MOD_PROF_IDX;
     out->MTU_VIOLATION        = in->MTU_VIOLATION;
-    out->NO_LEARN             = in->NO_LEARN;
+    out->LEARN_NOTIFY         = in->LEARN_NOTIFY;
     out->OPERATOR_ID          = in->OPERATOR_ID;
     out->PARITY_ERROR         = in->PARITY_ERROR;
     out->PARSER_ERROR         = in->PARSER_ERROR;

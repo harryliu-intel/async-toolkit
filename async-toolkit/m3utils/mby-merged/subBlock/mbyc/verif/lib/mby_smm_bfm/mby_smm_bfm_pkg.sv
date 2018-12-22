@@ -3,7 +3,7 @@
 // Project       : Madison Bay
 //-----------------------------------------------------------------------------
 // File          : mby_smm_bfm_pkg.sv
-// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Author        : Roman Bernal <r.bernal@intel.com>
 // Created       : 01.11.2018
 //-----------------------------------------------------------------------------
 // Description :
@@ -38,12 +38,22 @@ package mby_smm_bfm_pkg;
    import uvm_pkg::*;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
+   import shared_pkg::*;
+   //import mby_igr_pkg::*;
+   import mby_msh_pkg::*;
+   import mby_egr_pkg::*;
+   import mby_smm_bfm_pkg_pre::*;
 
    `include "uvm_macros.svh"
    `include "mby_smm_bfm_defines.svh"
-   `include "mby_smm_bfm_xaction.svh"
    `include "mby_smm_bfm_types.svh"
    `include "mby_smm_bfm_cfg.svh"
+   `include "mby_smm_bfm_rdrsp_seq.svh"
+   `include "mby_smm_bfm_mem_node.svh"
+   `include "mby_smm_bfm_mwr_req.svh"
+   `include "mby_smm_bfm_mrd_req.svh"
+   `include "mby_smm_bfm_row_wr_req_xaction.svh"
+   `include "mby_smm_bfm_row_rd_req_xaction.svh"
    `include "mby_smm_bfm.svh"
 
 endpackage : mby_smm_bfm_pkg

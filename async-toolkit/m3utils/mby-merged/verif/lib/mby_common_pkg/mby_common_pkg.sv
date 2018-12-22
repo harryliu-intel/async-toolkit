@@ -39,13 +39,7 @@
 
 package mby_common_pkg;
 
-`ifdef XVM
-    import ovm_pkg::*;
-    import xvm_pkg::*;
-   `include "ovm_macros.svh"
    `include "sla_macros.svh"
-`endif
-
     import uvm_pkg::*;
     import sla_pkg::*;
 
@@ -58,9 +52,9 @@ package mby_common_pkg;
    `include "slu_macros.svh"
 
    `define __INSIDE_MBY_COMMON_PKG
-   `include "mby_ral_user_object.svh"
-   `include "mby_ral_base_sequence.svh"
-   `include "mby_ral_ahb_access.sv"
+   //SSN `include "mby_ral_user_object.svh"
+   //SSN `include "mby_ral_base_sequence.svh"
+   //SSN `include "mby_ral_ahb_access.sv"
    `include "mby_base_seq.svh"
 
    `undef  __INSIDE_MBY_COMMON_PKG

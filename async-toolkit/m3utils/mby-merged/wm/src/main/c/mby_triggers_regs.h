@@ -103,7 +103,6 @@ typedef struct _mbyTriggerConditionParam
 {
   fm_uint16                     EGRESS_DOMAIN_MASK;
   fm_uint16                     EGRESS_DOMAIN_VALUE;
-  fm_byte                       FTYPE_MASK;
   fm_byte                       ROUTED_MASK;
   fm_byte                       FRAME_CLASS_MASK;
   fm_byte                       TC;

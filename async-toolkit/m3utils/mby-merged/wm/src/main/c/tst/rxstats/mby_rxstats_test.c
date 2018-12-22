@@ -6,6 +6,7 @@
 #include <mby_reg_ctrl.h>
 
 #include <mby_top_map.h>
+#include <model_c_write.h> // write_field()
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -127,14 +128,17 @@ static fm_bool rxstats_test_verify
 
 static void rxstats_run_test(rxstats_test_data * const test_data)
 {
-    mby_ppe_rx_stats_map stats_map = { 0 };
+    mby_ppe_rx_stats_map       stats_map   = { 0 };
+    mby_ppe_rx_stats_map__addr stats_map_w = { 0 };
 
     mbyCongMgmtToRxStats congMgmtToRxStats = { 0 };
     mbyRxStatsToRxOut    out               = { 0 };
 
+    mby_ppe_rx_stats_map__init(&stats_map, &stats_map_w, mby_field_init_cb);
+
     rxstats_test_setup(&congMgmtToRxStats, &(test_data->in));
 
-    RxStats(&stats_map, &congMgmtToRxStats, &out);
+    RxStats(&stats_map, &stats_map_w, &congMgmtToRxStats, &out);
 
     fm_bool pass = rxstats_test_verify(&stats_map, test_data->in.rx_length, &(test_data->out));
 

@@ -48,17 +48,22 @@ interface gpm_dut_if
     //localparam NUM_OUTPUTS = tmpl_pkg::NUM_OUTPUTS;
 
     // DUT inputs  (direction not specified in this interface)
-    logic reset_n;
+    logic                sreset;
+    logic                hreset;
 
     // pod pointer ring interface
-    mby_pod_ptr_ring_t  i_pod_ring_left;
-    mby_pod_ptr_ring_t  i_pod_ring_right;
-    mby_pod_ptr_ring_t  o_pod_ring_left;
-    mby_pod_ptr_ring_t  o_pod_ring_right;
+    mby_pod_ptr_ring_t   pod_ring_left;
+    mby_pod_ptr_ring_t   pod_ring_right;
+    mby_pod_ptr_ring_t   pod_ring_left;
+    mby_pod_ptr_ring_t   pod_ring_right;
 
     // Signal from GPM to egress to stall egress from injecting a new dirty pod
-    logic               o_pod_ring_stall_left;
-    logic               o_pod_ring_stall_right;
+    logic                pod_ring_stall_left;
+    logic                pod_ring_stall_right;
+
+    mby_seg_ptr_w_rmw_t  mce_seg_ptr;
+    logic                mce_seg_ptr_valid;
+    logic                mce_seg_ptr_stall;
 
 endinterface : gpm_dut_if
 `endif // GPM_DUT_IF_SV

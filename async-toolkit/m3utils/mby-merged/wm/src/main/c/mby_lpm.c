@@ -7,8 +7,9 @@
 #include <string.h>
 #include "mby_lpm.h"
 
-/* Size of the memory bank used to store the LPM structs = 512 */
-#define MBY_LPM_MEM_BANK_SIZE lpm_subtrie_aptr_rf_LPM_SUBTRIE_APTR__n
+/* Size of the HW memory banks are reflected in RDL */
+#define MBY_LPM_MEM_BANK_SIZE lpm_subtrie_aptr_rf_LPM_SUBTRIE_APTR__nd
+#define MBY_FWD_TABLE0_BANK_SIZE fwd_table0_rf_FWD_TABLE0__nd
 
 static void lookupLpmTcam
 (
@@ -285,9 +286,8 @@ static void lpmActions
     fm_uint32                        actions[MBY_LPM_MAX_ACTIONS_NUM]
 )
 {
-    // Memory is organized in block of 2k in the HW so I need 2 indexes
-    fm_uint16 idx0;
-    fm_byte idx1;
+    fm_uint16 entry_idx;
+    fm_uint16 bank_idx;
 
     assert(searchResult);
     assert(actions);
@@ -300,10 +300,10 @@ static void lpmActions
 
     // FIXME use profile_id to decide how many actions to read...HOW?
 
-    idx0 = searchResult->fwd_table0_idx / 256;
-    idx1 = searchResult->fwd_table0_idx % 256;
+    bank_idx = searchResult->fwd_table0_idx / MBY_FWD_TABLE0_BANK_SIZE;
+    entry_idx = searchResult->fwd_table0_idx % MBY_FWD_TABLE0_BANK_SIZE;
 
-    fm_uint64 fwd_table_entry = shm_map->FWD_TABLE0[idx0][idx1].DATA;
+    fm_uint64 fwd_table_entry = shm_map->FWD_TABLE0[bank_idx][entry_idx].DATA;
     actions[1] = fwd_table_entry >> 32 & 0xffffffff;
     actions[0] = fwd_table_entry & 0xffffffff;
 }

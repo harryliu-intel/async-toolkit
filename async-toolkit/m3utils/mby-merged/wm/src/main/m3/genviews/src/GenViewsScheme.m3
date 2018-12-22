@@ -53,10 +53,12 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
     IF t.fieldAddrRd # NIL THEN
       Debug.Out("Reading field data...");
       a := Pickle2.Read(t.fieldAddrRd);
+      Debug.Out("size of a : " & Int(NUMBER(a^)));
       b := Pickle2.Read(t.fieldAddrRd);
+      Debug.Out("size of b : " & Int(NUMBER(b^)));
       Rd.Close(t.fieldAddrRd)
     END;
-    t.put(F("(cont %s",tgtmap.nm), 0);
+    t.put(F("((cont %s)",tgtmap.nm), 0);
     DoContainer(t, tgtmap, 1);
     t.put(")",0);
     WITH txt = Wx.ToText(t.wx) DO
@@ -110,23 +112,19 @@ PROCEDURE RunScheme(t    : T;
       END
     END
   END RunScheme;
-
-PROCEDURE DoContainer(t : T;
-                      c : RegContainer.T;
+  
+PROCEDURE DoContainer(t   : T;
+                      c   : RegContainer.T;
                       lev : CARDINAL) =
   VAR
-    skipArc : BOOLEAN;
+    skipArc := c.skipArc();
   BEGIN
     <*ASSERT c # NIL*>
     VAR tn : TEXT; BEGIN
       TYPECASE c OF
-        RegAddrmap.T =>
-        tn := "addrmap";
-        skipArc := FALSE
+        RegAddrmap.T => tn := "addrmap"
       |
-        RegRegfile.T =>
-        tn := "regfile";
-        skipArc := c.children.size() = 1
+        RegRegfile.T => tn := "regfile"
       ELSE
         <*ASSERT FALSE*>
       END;
@@ -175,13 +173,23 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
     END;
     
     IF NOT skipArc THEN
-      t.put(F("(%s %s", tag, c.nm),lev);
+      t.put(F("((%s %s)", tag, c.nm),lev);
       INC(lev)
     END;
     
     IF c.array # NIL THEN
-      t.put(F("(array %s ", Int(BigInt.ToInteger(c.array.n.x))),lev);
-      INC(lev)
+      VAR extras := ""; BEGIN
+        TYPECASE c.comp OF
+          RegReg.T(reg) => extras := F(" (regheader %s)",reg.nm)
+        ELSE
+          (* skip *)
+        END;
+        t.put(F("((array %s%s)",
+                Int(BigInt.ToInteger(c.array.n.x)),
+                extras),
+              lev);
+        INC(lev)
+      END
     END;
       
     WITH ccomp = c.comp DO
@@ -214,12 +222,14 @@ PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL) =
     IF f.width = RegField.Unspecified THEN
       Debug.Warning("Unspecified width in field " & f.nm)
     END;
-    t.put(F("(field %s %s %s)", f.nm, Int(f.lsb), Int(f.width)),lev)
+    t.put(F("((field %s %s %s))", f.nm, Int(f.lsb), Int(f.width)),lev)
   END DoField;
 
 PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL) =
   BEGIN
-    (*t.put("(@reg@ " (*& r.nm*), lev);*)
+(*
+    t.put(F("(regheader %s)", r.nm), lev);
+*)
     FOR i := 0 TO r.fields.size()-1 DO
       DoField(t, r.fields.get(i), lev(*+1*))
     END;

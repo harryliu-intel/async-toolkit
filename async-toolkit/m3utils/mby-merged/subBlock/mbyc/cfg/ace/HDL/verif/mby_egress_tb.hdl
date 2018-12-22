@@ -6,6 +6,8 @@
 $hdl_spec = {
     # List of specific VERILOG source files
     -vlog_files => [
+         "subBlock/mbyc/verif/lib/mby_smm_bfm/tb/smm_mwr_reqs_gen.sv",
+         "subBlock/mbyc/verif/lib/mby_smm_bfm/tb/smm_mrd_reqs_gen.sv",
          "verif/egress/tb/mby_egr_tb.sv",
      ],
 
@@ -22,6 +24,7 @@ $hdl_spec = {
          "verif/egress/ti",
          "verif/egress/tb",
          "verif/egress/tests",
+         "subBlock/mbyc/verif/lib/mby_smm_bfm/tb/",
          "src/egr/rtl",
          "$ENV{SAOLA_HOME}/verilog",
          "$ENV{SAOLA_HOME}/verilog_uvm",

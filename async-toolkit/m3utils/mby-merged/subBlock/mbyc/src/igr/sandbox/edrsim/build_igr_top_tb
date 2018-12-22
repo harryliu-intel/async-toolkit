@@ -2,6 +2,8 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +define+SYTB_OFF +libext+.v+.sv+.vh+.svh+.vs+.vm \
 +vcs+vcdpluson +define+VCSSIM -assert svaext +define+FAKE_MEM \
 +warn=noUII-L \
++lint=noPCTI-L \
++lint=none \
 +notimingchecks \
 +define+HIERREF \
 +define+VFU_CLUSTER \
@@ -32,6 +34,8 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 +incdir+/p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/common/rtl \
 /p/hdk/rtl/ip_models/nhdk/shrtl/shrtl-dev-x0-18ww48a/src/fifo/rtl/shrtl_flop_fifo.sv \
 ../../../shared/rtl/shared_pkg.sv \
+../../../shared/rtl/mby_rx_metadata_pkg.sv \
+../../../shared/rtl/mby_egr_pkg.sv \
 ../../rtl/mby_igr_pkg.sv \
 ../../../shared/rtl/mby_gmm_pkg.sv \
 ../../../shared/rtl/mby_egr_pkg.sv \
@@ -46,23 +50,24 @@ vcs +v2k -R -V -debug_all -full64 -sverilog +libverbose -notice -xlrm uniq_prior
 ../../interfaces/pre_ppe_header_if.sv \
 -y ../../pre_ppe/rtl \
 -y ../../post_ppe/rtl \
-../../epl_shim/rtl/mby_igr_epl_shim_ctrl.sv \
-../../epl_shim/rtl/mby_igr_epl_shim_seg.sv \
-../../epl_shim/rtl/mby_igr_epl_shim_segs.sv \
-../../epl_shim/rtl/mby_igr_epl_shim.sv \
-../../dpc/rtl/mby_igr_dpc.sv \
+-y ../pre_post/verilog \
+../../pbb/rtl/mby_igr_align_ctrl.sv \
+../../pbb/rtl/mby_igr_align_wrd.sv \
+../../pbb/rtl/mby_igr_align_wrds.sv \
+../../pbb/rtl/mby_igr_align.sv \
+../../pbb/rtl/mby_igr_dpc.sv \
+../../itag/rtl/mby_igr_tag.sv \
 -y ../../../../../../target/mby/mgm_run/igr/src \
 -y ../../../../../../target/mby/mgm_run/igr/src/mem_wrap \
 -y ../../../../../../target/mby/mgm_run/rtl \
-../../pb/rtl/mby_igr_pb_ctrl421.sv \
+../../pbb/rtl/mby_igr_pb_ctrl421.sv \
 ../../../../../../target/mby/mgm_run/igr/src/mby_mem_igr_pb0_data_ram_shell_1024x576.v \
 ../../../../../../target/mby/mgm_run/igr/src/mby_mem_igr_pb0_md_ram_shell_1024x72.v \
-../../pb/rtl/mby_igr_pb_mem_shell.sv \
-../../pb/rtl/mby_igr_pb.sv \
-../../itag/rtl/mby_igr_tag.sv \
+../../pbb/rtl/mby_igr_pb_mem_shell.sv \
+../../pbb/rtl/mby_igr_pb.sv \
 ../../pbb/rtl/mby_igr_dpc_wrap.sv \
 ../../pbb/rtl/mby_igr_pb_wrap.sv \
-../../pbb/rtl/mby_igr_shim_wrap.sv \
+../../pbb/rtl/mby_igr_align_wrap.sv \
 ../../pbb/rtl/mby_igr_pbb.sv \
 ../../rtl/mby_igr_top.sv \
 ./tb_igr_top.sv
