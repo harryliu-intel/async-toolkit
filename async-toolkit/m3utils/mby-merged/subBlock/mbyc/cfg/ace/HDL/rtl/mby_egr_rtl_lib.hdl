@@ -42,6 +42,7 @@ $hdl_spec = {
         "src/egr/interfaces/egr_rrs_id_if.sv",
         "src/egr/interfaces/egr_tcu_pfs_if.sv",
         "src/egr/interfaces/egr_tcu_tqu_if.sv",
+        "src/egr/interfaces/egr_tcu_hdr_mod_mem_if.sv",
 
     ## EGR Internal Blocks
         "src/egr/cpb/rtl/egr_cpb.sv",
