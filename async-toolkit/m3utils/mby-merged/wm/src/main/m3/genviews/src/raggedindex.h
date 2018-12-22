@@ -1,5 +1,5 @@
-#ifndef _SEQTYPE_H
-#define _SEQTYPE_H
+#ifndef _RAGGEDINDEX_H
+#define _RAGGEDINDEX_H
 
 #define MAXDEPTH 32
 
@@ -7,9 +7,9 @@
 
 typedef struct {
   int d[MAXDEPTH]; /* terminated by -1 */
-} seqtype_t;
+} raggedindex_t;
 
-void init_seqtype(seqtype_t *p); /* sets p->d[0] to -1 */
+void init_raggedindex(raggedindex_t *p); /* sets p->d[0] to -1 */
 
 /* the memory address */
 
@@ -35,4 +35,4 @@ typedef struct {
 # define NULL ((void *)0)
 #endif
 
-#endif /* !_SEQTYPE_H */
+#endif /* !_RAGGEDINDEX_H */

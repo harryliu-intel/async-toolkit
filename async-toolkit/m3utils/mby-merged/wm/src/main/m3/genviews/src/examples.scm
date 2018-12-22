@@ -325,7 +325,7 @@
           )
       )
     )
-  (dis "chipaddr_t" dnl nm"(const seqtype_t *seq)" dnl
+  (dis "chipaddr_t" dnl nm"(const raggedindex_t *seq)" dnl
        "{" dnl
        "   chipaddr_t arr=ADDR_LITERAL(0);" dnl
        port)
@@ -393,7 +393,7 @@
       );;tel
     );; helper
   
-  (dis "chipaddr_t" dnl nm"(chipaddr_t a, seqtype_t *seq)" dnl
+  (dis "chipaddr_t" dnl nm"(chipaddr_t a, raggedindex_t *seq)" dnl
        "{" dnl
        port)
   (helper 0 ot 0)
@@ -511,7 +511,7 @@
           )
       )
     )
-  (dis "const arc_t **" dnl nm"(const seqtype_t *seq)" dnl
+  (dis "const arc_t **" dnl nm"(const raggedindex_t *seq)" dnl
        "{" dnl
        defer-port)
   (helper nt 0)
@@ -532,13 +532,13 @@
                (FileWr.Open (string-append *api-dir* pfx ".c")))))
     (dis "#include \""pfx".h\"" dnl
          "#include <assert.h>" dnl
-         "#include \"seqtype.h\"" dnl
+         "#include \"raggedindex.h\"" dnl
          dnl
          (cdr res))
 
     (dis "#ifndef "ifsym dnl 
          "#define "ifsym dnl
-         "#include \"seqtype.h\"" dnl
+         "#include \"raggedindex.h\"" dnl
 
          (car res))
     res))
@@ -571,7 +571,7 @@
     (let ((nm "ragged2addr"))
       (open nm)
       (compile-offset-c the-chip-offset-tree nm c-formatter ppp)
-      (dis "chipaddr_t "nm"(const seqtype_t *);" dnl qqq)
+      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl qqq)
       (close)
       )
 
@@ -579,7 +579,7 @@
     (let ((nm "addr2ragged"))
       (open nm)
       (compile-roffset-c the-chip-offset-tree nm c-formatter ppp)
-      (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
       (close)
       )
 
@@ -587,7 +587,7 @@
     (let ((nm "ragged2inorderid"))
       (open nm)
       (compile-offset-c the-fields-offset-tree nm c-formatter ppp)
-      (dis "long "nm"(const seqtype_t *);" dnl qqq)
+      (dis "long "nm"(const raggedindex_t *);" dnl qqq)
       (close)
       )
 
@@ -595,7 +595,7 @@
     (let ((nm "inorderid2ragged"))
       (open nm)
       (compile-roffset-c the-fields-offset-tree nm c-formatter ppp)
-      (dis "chipaddr_t "nm"(chipaddr_t, seqtype_t *);" dnl qqq)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
       (close)
       )
 
@@ -608,7 +608,7 @@
 
       (dis "*** compiling names tree..." dnl)
       (compile-child-arc-c name-tree nm ppp)
-      (dis "const arc_t **"nm"(const seqtype_t *);" dnl qqq)
+      (dis "const arc_t **"nm"(const raggedindex_t *);" dnl qqq)
       (close)
       )
     )

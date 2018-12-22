@@ -1,7 +1,7 @@
-#include "seqtype.h"
+#include "raggedindex.h"
 
 void
-init_seqtype(seqtype_t *p)
+init_raggedindex(raggedindex_t *p)
 {
   p->d[0] = -1;
 }

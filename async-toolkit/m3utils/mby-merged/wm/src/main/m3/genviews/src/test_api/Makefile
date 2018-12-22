@@ -18,11 +18,11 @@ AUTOGEN=addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
 	ragged2inorderid.o
 
 
-test_api: $(AUTOGEN) mby_top_map.o test_api.o seqtype.o
+test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
 	cc -o $@ $^
 
-seqtype.o: ../seqtype.c ../seqtype.h
-	cc $(CFLAGS) ../seqtype.c
+raggedindex.o: ../raggedindex.c ../raggedindex.h
+	cc $(CFLAGS) ../raggedindex.c
 
 mby_top_map.o: ../build_c_api/mby_c/src/mby_top_map.h ../build_c_api/mby_c/src/mby_top_map.c
 	cc $(CFLAGS) ../build_c_api/mby_c/src/mby_top_map.c

@@ -11,10 +11,10 @@
 #include "ragged2arcs.h"
 #include "addr2ragged.h"
 #include "mby_top_map.h"
-#include "seqtype.h"
+#include "raggedindex.h"
 
 void
-print_ragged(const seqtype_t *s)
+print_ragged(const raggedindex_t *s)
 {
   int i=0;
   printf("(");
@@ -34,7 +34,7 @@ print_ragged(const seqtype_t *s)
   } while(0)
 
 int
-inc_ragged_last(seqtype_t *seq)
+inc_ragged_last(raggedindex_t *seq)
 {
   /* XXX UNTESTED CODE */
   /* increment ragged in the last valid position */
@@ -63,7 +63,7 @@ inc_ragged_last(seqtype_t *seq)
 #define MATCH_COMPLETE   2 /* complete match -- matches a specific field */
 
 int
-name2ragged(const char *name, seqtype_t *seq_a)
+name2ragged(const char *name, raggedindex_t *seq_a)
 /* 
    convert a single dotted, arrayed name to a ragged index
 
@@ -79,7 +79,7 @@ name2ragged(const char *name, seqtype_t *seq_a)
    then MATCH_NONE is returned
 */
 {
-  seqtype_t qqq, *seq=&qqq;
+  raggedindex_t qqq, *seq=&qqq;
   const char *p=name;
   const arc_t **arcs;
   int k;
@@ -150,9 +150,9 @@ name2ragged(const char *name, seqtype_t *seq_a)
 
 
 void
-ragged2nameseq(const seqtype_t *s, const char **seq)
+ragged2nameseq(const raggedindex_t *s, const char **seq)
 {
-  seqtype_t ss;
+  raggedindex_t ss;
   int i = 0;
 
   while(s->d[i] != -1) {
@@ -179,7 +179,7 @@ test_print_ragged(void)
 {
   for (int i=0; i<1000*100; ++i) {
     chipaddr_t a=random() % 1000*1000*10, rem;
-    seqtype_t rp;
+    raggedindex_t rp;
     const char *seq[MAXDEPTH];
 
     rem = addr2ragged(a, &rp);
@@ -221,7 +221,7 @@ test_time_ragged(void)
   gettimeofday(&tv0,NULL);
   for (int i=0; i<ops; ++i) {
     chipaddr_t a=random() % (1000*1000), rem;
-    seqtype_t rp;
+    raggedindex_t rp;
 
     rem = addr2ragged(a, &rp);
   }
@@ -241,7 +241,7 @@ test_api_struct(void)
 
   for (int i=0; i<100*1000; ++i) {
     chipaddr_t a=random() % (1000*1000*10), rem;
-    seqtype_t rp;
+    raggedindex_t rp;
     void *localptr;
     long localoff;
     const char *seq[MAXDEPTH];
@@ -266,10 +266,10 @@ test_api_struct(void)
 int
 main(int argc, char **argv)
 {
-  seqtype_t s;
+  raggedindex_t s;
   const arc_t **arcs;
 
-  init_seqtype(&s);
+  init_raggedindex(&s);
   arcs = ragged2arcs(&s);
 
   {
@@ -285,8 +285,8 @@ main(int argc, char **argv)
   }
 
   {
-    seqtype_t seq;
-    init_seqtype(&seq);
+    raggedindex_t seq;
+    init_raggedindex(&seq);
     const char *tgt =
       ".mpp[0].mgp[0].rx_ppe.mapper.MAP_DOMAIN_ACTION1[3668].L3_POLICER";
     
