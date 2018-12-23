@@ -591,6 +591,72 @@
           
           (c-formatter x)))))
 
+
+(define (build-hostptr-stuff)
+  (let ((qqq '())
+        (ppp '()))
+
+    (define (open pfx)
+      (let ((q (open-c-files pfx)))
+        (set! qqq (car q))
+        (set! ppp (cdr q))))
+
+    (define (close)
+      (close-c-files (cons qqq ppp)))
+  (open "hostptr")
+  (let* ((twr (TextWr.New))
+         (decls (TextWr.New))
+         (inits (TextWr.New))
+         (xfmt (make-c-expr-formatter decls inits))
+         )
+    
+    (dis "*** compiling host offset tree..." dnl)
+    (let ((nm "ragged2ptr"))
+      (compile-offset-c the-host-offset-tree nm xfmt twr)
+      (dis "long "nm"(const raggedindex_t *);" dnl qqq)
+      )
+    
+    (dis "*** compiling reverse host offset tree..." dnl)
+    (let ((nm "ptr2ragged"))
+      (compile-roffset-c the-host-offset-tree nm xfmt twr)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
+      )
+    
+    (dis "#include <malloc.h>" dnl
+         "#include \"inorderid2ragged.h\"" dnl
+         "#include \"mby_top_map.h\"" dnl
+         dnl ppp)
+    (dis (TextWr.ToText decls) ppp)
+    
+    (dis dnl
+         "static mby_top_map *proto;" dnl dnl ppp)
+    (dis dnl
+         "static chipaddr_t get_ptr_value(const chipaddr_t inorder)"dnl
+         "{" dnl
+         "  raggedindex_t ra;" dnl
+         dnl
+         "  inorderid2ragged(inorder, &ra);" dnl
+         "  return (chipaddr_t)mby_top_map__getptr(proto, ra.d);" dnl
+         "}" dnl
+         dnl ppp
+         )
+    (dis "void init_hostptr(void);" dnl qqq)
+    (dis "void" dnl
+         "init_hostptr(void)" dnl
+         "{" dnl
+         "  proto = malloc(sizeof(mby_top_map));" dnl
+         dnl
+         ppp)
+    (dis (TextWr.ToText inits) ppp)
+    (dis "  free(proto);" dnl
+         "}" dnl dnl
+         ppp)
+    (dis (TextWr.ToText twr) ppp)
+    )
+  (close)
+  )
+  )
+
 (define (doit)
   (let ((qqq '())
         (ppp '()))
@@ -652,56 +718,7 @@
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    (open "hostptr")
-    (let* ((twr (TextWr.New))
-           (decls (TextWr.New))
-           (inits (TextWr.New))
-           (xfmt (make-c-expr-formatter decls inits))
-           )
-      
-      (dis "*** compiling host offset tree..." dnl)
-      (let ((nm "ragged2ptr"))
-        (compile-offset-c the-host-offset-tree nm xfmt twr)
-        (dis "long "nm"(const raggedindex_t *);" dnl qqq)
-        )
-      
-      (dis "*** compiling reverse host offset tree..." dnl)
-      (let ((nm "ptr2ragged"))
-        (compile-roffset-c the-host-offset-tree nm xfmt twr)
-        (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
-        )
-
-      (dis "#include <malloc.h>" dnl
-           "#include \"inorderid2ragged.h\"" dnl
-           "#include \"mby_top_map.h\"" dnl
-           dnl ppp)
-      (dis (TextWr.ToText decls) ppp)
-
-      (dis dnl
-           "static mby_top_map *proto;" dnl dnl ppp)
-      (dis dnl
-           "static chipaddr_t get_ptr_value(const chipaddr_t inorder)"dnl
-           "{" dnl
-           "  raggedindex_t ra;" dnl
-           dnl
-           "  inorderid2ragged(inorder, &ra);" dnl
-           "  return (chipaddr_t)mby_top_map__getptr(proto, ra.d);" dnl
-           "}" dnl
-           dnl ppp
-           )
-      (dis "void" dnl
-           "init_hostptr(void)" dnl
-           "{" dnl
-           "  proto = malloc(sizeof(mby_top_map));" dnl
-           dnl
-           ppp)
-      (dis (TextWr.ToText inits) ppp)
-      (dis "  free(proto);" dnl
-           "}" dnl dnl
-           ppp)
-      (dis (TextWr.ToText twr) ppp)
-      )
-    (close)
+    (build-hostptr-stuff)
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

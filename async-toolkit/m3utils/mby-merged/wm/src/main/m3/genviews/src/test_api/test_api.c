@@ -12,6 +12,7 @@
 #include "addr2ragged.h"
 #include "mby_top_map.h"
 #include "raggedindex.h"
+#include "hostptr.h"
 
 void
 print_ragged(const raggedindex_t *s)
@@ -243,16 +244,17 @@ test_api_struct(void)
     chipaddr_t a=random() % (1000*1000*10), rem;
     raggedindex_t rp;
     void *localptr;
-    long localoff;
+    long localoff, localcalc;
     const char *seq[MAXDEPTH];
 
     rem = addr2ragged(a, &rp);
     localptr = mby_top_map__getptr(map, rp.d);
     localoff = (const char *)localptr-(const char *)map;
+    localcalc = (long)(const char *)ragged2ptr(&rp);
       
     printf("addr=%#10lx ragged=", a);
     print_ragged(&rp);
-    printf(" rem=%ld localoff=%#lx nm=", rem, localoff);
+    printf(" rem=%ld localoff=%#lx localcalc=%#lx nm=", rem, localoff, localcalc);
 
     ragged2nameseq(&rp, seq);
 
@@ -301,7 +303,7 @@ main(int argc, char **argv)
   test_print_ragged();
   test_time_ragged();
 #endif
-
+  init_hostptr();
   test_api_struct();
 
   return 0;
