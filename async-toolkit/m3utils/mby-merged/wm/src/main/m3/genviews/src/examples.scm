@@ -551,7 +551,45 @@
 (define (c-formatter x)
   (cond ((number? x) (string-append (stringify x) "UL"))
         ((atom? x) x)
+        (else (error (error-append "attempting to write to C : " x)))))
+
+(define (format-c-expr x)
+  (cond ((and (list? x)
+              (eq? (car x) 'promise))
+         (string-append "get_ptr_value(" (stringify (cadr x)) ")"))
+        
+        ((list? x)
+         (string-append
+          "("
+          (format-c-expr (cadr x))
+          (stringify (car x))
+          (format-c-expr (caddr x))
+          ")"))
+
         (else (stringify x))))
+         
+
+(define (make-c-expr-formatter wr0 wr1)
+  (let ((mem '())
+        (n 0)
+        )
+    (lambda(x)
+      (if (pair? x)
+
+          (let ((have-it (assoc x mem)))
+            (if have-it
+                (cdr have-it)
+                (let ((new-var (string-append "const" (stringify n))))
+                  (set! n (+ n 1))
+                  (dis "static chipaddr_t " new-var ";" dnl wr0)
+                  (dis "  " new-var " = " (format-c-expr x) ";" dnl wr1)
+                  (set! mem (cons (cons x new-var) mem))
+                  new-var
+                  )
+                )
+            )
+          
+          (c-formatter x)))))
 
 (define (doit)
   (let ((qqq '())
@@ -611,6 +649,64 @@
       (dis "const arc_t **"nm"(const raggedindex_t *);" dnl qqq)
       (close)
       )
-    )
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (open "hostptr")
+    (let* ((twr (TextWr.New))
+           (decls (TextWr.New))
+           (inits (TextWr.New))
+           (xfmt (make-c-expr-formatter decls inits))
+           )
+      
+      (dis "*** compiling host offset tree..." dnl)
+      (let ((nm "ragged2ptr"))
+        (compile-offset-c the-host-offset-tree nm xfmt twr)
+        (dis "long "nm"(const raggedindex_t *);" dnl qqq)
+        )
+      
+      (dis "*** compiling reverse host offset tree..." dnl)
+      (let ((nm "ptr2ragged"))
+        (compile-roffset-c the-host-offset-tree nm xfmt twr)
+        (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
+        )
+
+      (dis "#include <malloc.h>" dnl
+           "#include \"inorderid2ragged.h\"" dnl
+           "#include \"mby_top_map.h\"" dnl
+           dnl ppp)
+      (dis (TextWr.ToText decls) ppp)
+
+      (dis dnl
+           "static mby_top_map *proto;" dnl dnl ppp)
+      (dis dnl
+           "static chipaddr_t get_ptr_value(const chipaddr_t inorder)"dnl
+           "{" dnl
+           "  raggedindex_t ra;" dnl
+           dnl
+           "  inorderid2ragged(inorder, &ra);" dnl
+           "  return (chipaddr_t)mby_top_map__getptr(proto, ra.d);" dnl
+           "}" dnl
+           dnl ppp
+           )
+      (dis "void" dnl
+           "init_hostptr(void)" dnl
+           "{" dnl
+           "  proto = malloc(sizeof(mby_top_map));" dnl
+           dnl
+           ppp)
+      (dis (TextWr.ToText inits) ppp)
+      (dis "  free(proto);" dnl
+           "}" dnl dnl
+           ppp)
+      (dis (TextWr.ToText twr) ppp)
+      )
+    (close)
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+   )
+
+
 )
 

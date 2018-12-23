@@ -6,7 +6,7 @@ CFLAGS=
 #CFLAGS+= -O6
 CFLAGS+= -g
 CFLAGS+= $(INCLUDES)
-CFLAGS+= -std=c99 -Wall -pedantic
+CFLAGS+= -std=c99 -Wall -pedantic -Werror
 CFLAGS+= -c $(CINCLUDES)
 
 #
@@ -15,7 +15,7 @@ CFLAGS+= -c $(CINCLUDES)
 #
 
 AUTOGEN=addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
-	ragged2inorderid.o
+	ragged2inorderid.o hostptr.o
 
 
 test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
