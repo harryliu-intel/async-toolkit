@@ -1,6 +1,6 @@
 interface egr_tcu_hdr_mod_mem_if #(
 parameter W_DATA = 512,     // Data width
-parameter W_DEEP =  36,     // Address width
+parameter W_DEEP =  72,     // Address width
 parameter W_CHNK =  64,     // Number of chunks when you use data write resolution, useful, when you want to write sections of a large data width
 parameter W_INST =  48      // Number of instances of this memory
     ) ();
