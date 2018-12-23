@@ -81,6 +81,11 @@ TOP_TEMPLATE=top_template
 
 # test: $(TEST_TARG)
 # 	$(TEST_TARG)
+
+.PHONY: all
+all: mains
+
+.PHONY: mains
 mains: mby_mains hlp_mains model_server doc
 
 # provide a mechanism to force rebuild on meta update

@@ -16,7 +16,7 @@ $hdl_spec = {
        "src/shared/rtl/mby_msh_pkg.sv",
        "src/shared/rtl/mby_egr_pkg.sv",
        "src/shared/rtl/shared_pkg.sv",
-       "src/shared/interfaces/mby_mem_msh_bank_ram_shell_4096x552_func_if.sv",
+       "src/shared/interfaces/mby_mem_msh_bank_ram_shell_4096x532_func_if.sv",
     ## previous files need to be removed from here once there's a shared lib and gmm lib
        "src/msh/rtl/mby_msh_defines.vh",
        "src/msh/rtl/mby_msh.sv",

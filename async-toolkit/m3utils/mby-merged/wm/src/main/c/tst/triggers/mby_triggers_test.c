@@ -550,6 +550,9 @@ int main(void)
 
     printf("--------------------------------------------------------------------------------\n");
 
+    // Free up hash table allocated by model_c_write.c:
+    mby_free_fields_table();
+
     int rv = (fails == 0) ? 0 : -1;
 
     return rv;

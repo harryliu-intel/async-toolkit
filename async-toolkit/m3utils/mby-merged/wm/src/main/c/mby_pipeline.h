@@ -109,9 +109,10 @@ void CongMgmt
 
 void RxStats
 (
-    mby_ppe_rx_stats_map  const * const stats_map,
-    mbyCongMgmtToRxStats  const * const in,
-    mbyRxStatsToRxOut           * const out
+    mby_ppe_rx_stats_map       const * const stats_map,
+    mby_ppe_rx_stats_map__addr const * const stats_map_w,
+    mbyCongMgmtToRxStats       const * const in,
+    mbyRxStatsToRxOut                * const out
 );
 
 void Modifier

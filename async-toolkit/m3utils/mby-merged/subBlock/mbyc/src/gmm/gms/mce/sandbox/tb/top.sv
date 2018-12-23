@@ -6,6 +6,8 @@ import mby_gms_pkg::*;
 // DUT interfaces
 logic                                                cclk;
 logic                                                reset_n;
+logic                                                hreset;
+logic                                                sreset;
 logic [MBY_MAX_NUM_MGP-1:0]                          i_mc_deep_q_wr = 0;
 logic [MBY_MAX_NUM_MGP-1:0][MBY_PORTID_IN_MGP_MSB:0] i_mc_deep_q_rx_port_id = 0;
 logic [MBY_MAX_NUM_MGP-1:0]                          i_mirror_deep_q_wr = 0;

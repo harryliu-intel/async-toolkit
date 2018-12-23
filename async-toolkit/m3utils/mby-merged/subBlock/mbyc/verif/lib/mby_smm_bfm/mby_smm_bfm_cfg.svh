@@ -42,7 +42,22 @@
 // control the smm agent's driver/monitor behavior.
 //-----------------------------------------------------------------------------
 class mby_smm_bfm_cfg extends mby_base_config;
-   `uvm_object_utils(mby_smm_bfm_cfg)
+   // TODO ;   WIP: Mesh Configuration Options - Profile based latencies.
+   //          Different delay types: good condition, congestion levels (low, medium, high, super high), write lost,
+   
+   // TODO :   add plusargs to let the test select the profile.
+
+   // VARIABLE: mrd_req_rsp_delay_min
+   //    Defines the lower limit for memory read request/response delay randomization.
+   int mrd_req_rsp_delay_min     = 8;
+   
+   // VARIABLE: mrd_req_rsp_delay_max
+   //    Defines the upper limit for memory read request/response delay randomization.
+   int mrd_req_rsp_delay_max     = 64;
+   
+   // VARIABLE: mrd_req_rsp_delay_extra
+   //    Defines the extra clocks added to memory read request/response delay randomization.
+   int mrd_req_rsp_delay_extra   = 0;
 
    // CONSTRAINT: smm_bfm_constraint
    // Sets proper values for driver/monitor enables
@@ -50,6 +65,8 @@ class mby_smm_bfm_cfg extends mby_base_config;
       monitor_active   == UVM_ACTIVE;
       driver_active    == UVM_ACTIVE;
    }
+
+   `uvm_object_utils(mby_smm_bfm_cfg)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new

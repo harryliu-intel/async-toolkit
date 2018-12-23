@@ -73,8 +73,6 @@ class mby_egr_env extends mby_egr_base_env;
 
    // Shared Memory Mesh (SMM) Instance
    mby_smm_bfm_t   smm_bfm;
-   mby_smm_bfm_cfg smm_bfm_igr_wr_req_cfg;
-   mby_smm_bfm_cfg smm_bfm_egr_rd_req_cfg;
 
    // Variable: env_monitor
    // egress env event monitor
@@ -231,10 +229,6 @@ class mby_egr_env extends mby_egr_base_env;
          `uvm_fatal(get_name(),"Config_DB.get() for ENV's smm_bfm_intf was not successful!")
       end */
       smm_bfm                    = mby_smm_bfm_t::type_id::create("smm_bfm", this);
-      smm_bfm_igr_wr_req_cfg     = new("smm_bfm_igr_wr_req_cfg");
-      smm_bfm.igr_wr_req_cfg_obj = smm_bfm_igr_wr_req_cfg;
-      smm_bfm_egr_rd_req_cfg     = new("smm_bfm_egr_rd_req_cfg");
-      smm_bfm.egr_rd_req_cfg_obj = smm_bfm_egr_rd_req_cfg;
    endfunction : build_smm_bfm
 
 
