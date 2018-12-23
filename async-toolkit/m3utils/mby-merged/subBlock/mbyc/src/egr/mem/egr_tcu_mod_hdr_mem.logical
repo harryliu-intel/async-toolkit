@@ -1,6 +1,6 @@
 Ram Type                    <REGULAR, ROM, TCAM>    = RF 
 Ram Ports                   <1rw, 1r1w, 2rw>        = 1r1w
-Ram Lines Number            <Integer Number>        = 36
+Ram Lines Number            <Integer Number>        = 72
 Ram Data Width              <Integer Number>        = 512 
 Ram Protection Type         <ECC, Parity, None>     = ECC
 Post Chk ECC Sample         <Yes, CLKG, No>         = Yes
