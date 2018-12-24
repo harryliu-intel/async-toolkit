@@ -16,6 +16,9 @@ sequence("RegField", "RegField")
 sequence("RegReg", "RegReg")
 sequence("RegRegfile", "RegRegfile")
 
+interface ("RegFieldAccess")
+interface ("IntelAccessType")
+
 table("TextReg", "Text", "RegReg")
 
 generic_interface("RegGenerators")

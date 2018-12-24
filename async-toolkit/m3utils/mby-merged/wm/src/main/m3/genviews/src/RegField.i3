@@ -9,6 +9,7 @@ TYPE
   T = RegComponent.T OBJECT
     width, lsb := Unspecified;
     defVal : RdlNum.T := NIL;
+    reserved : BOOLEAN;
   METHODS
     name(debug := TRUE) : TEXT;
     (* if debug is set to TRUE the identifier shall include a comment

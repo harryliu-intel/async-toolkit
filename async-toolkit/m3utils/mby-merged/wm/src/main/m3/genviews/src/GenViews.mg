@@ -43,9 +43,12 @@ PROCEDURE AllocFields(c : RdlComponentDef.T) : RegFieldSeq.T =
     p := c.anonInstElems.list;
     WHILE p # NIL DO
       WITH i = p.head,
-           f = NEW(RegField.T, name := TgtNaming.FieldName) DO
+           f = NEW(RegField.T,
+                   name := TgtNaming.FieldName
+                   ) DO
         f.nm := i.id;
         f.defVal := i.eq;
+        f.reserved := FALSE;
         IF i.array = NIL THEN
           f.width := 1
         ELSE
