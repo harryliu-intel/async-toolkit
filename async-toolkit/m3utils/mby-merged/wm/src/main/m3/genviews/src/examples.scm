@@ -123,7 +123,12 @@
   (define def (make-do '-))
   (if (equal? a b) 0 (def a b)))
 
-(define do+ (make-do '+))
+;;(define do+ (make-do '+))
+(define (do+ a b)
+  (define def (make-do '+))
+  (cond ((equal? a '0) b)
+        ((equal? b '0) a)
+        (else (def a b))))
       
 (define (get-stride-bits array-spec indexer)
   ;; given a spec as follows
@@ -579,9 +584,9 @@
           (let ((have-it (assoc x mem)))
             (if have-it
                 (cdr have-it)
-                (let ((new-var (string-append "const" (stringify n))))
+                (let ((new-var (string-append "hostptr_const" (stringify n))))
                   (set! n (+ n 1))
-                  (dis "static chipaddr_t " new-var ";" dnl wr0)
+                  (dis "chipaddr_t " new-var ";" dnl wr0)
                   (dis "  " new-var " = " (format-c-expr x) ";" dnl wr1)
                   (set! mem (cons (cons x new-var) mem))
                   new-var
@@ -593,113 +598,129 @@
 
 
 (define (build-hostptr-stuff)
-  (let ((qqq '())
-        (ppp '()))
+  (let ((h-stream '())
+        (c-stream '())
+        (decls (TextWr.New))
+        (inits (TextWr.New))
+        (*setup-name* "hostptr_setup"))
 
     (define (open pfx)
       (let ((q (open-c-files pfx)))
-        (set! qqq (car q))
-        (set! ppp (cdr q))))
+        (set! h-stream (car q))
+        (set! c-stream (cdr q))))
 
     (define (close)
-      (close-c-files (cons qqq ppp)))
-  (open "hostptr")
-  (let* ((twr (TextWr.New))
-         (decls (TextWr.New))
-         (inits (TextWr.New))
+      (close-c-files (cons h-stream c-stream)))
+    
+  (let* (
          (xfmt (make-c-expr-formatter decls inits))
          )
     
     (dis "*** compiling host offset tree..." dnl)
     (let ((nm "ragged2ptr"))
-      (compile-offset-c the-host-offset-tree nm xfmt twr)
-      (dis "long "nm"(const raggedindex_t *);" dnl qqq)
+      (open nm)
+      (dis "#include \"hostptr_setup.h\"" dnl
+           dnl c-stream)
+      
+      (compile-offset-c the-host-offset-tree nm xfmt c-stream)
+      (dis "long "nm"(const raggedindex_t *);" dnl h-stream)
+      (close)
       )
     
     (dis "*** compiling reverse host offset tree..." dnl)
     (let ((nm "ptr2ragged"))
-      (compile-roffset-c the-host-offset-tree nm xfmt twr)
-      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
+      (open nm)
+      (dis "#include \"hostptr_setup.h\"" dnl
+           dnl c-stream)
+      
+      (compile-roffset-c the-host-offset-tree nm xfmt c-stream)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl h-stream)
+      (close)
       )
-    
-    (dis "#include <malloc.h>" dnl
-         "#include \"inorderid2ragged.h\"" dnl
-         "#include \"mby_top_map.h\"" dnl
-         dnl ppp)
-    (dis (TextWr.ToText decls) ppp)
-    
-    (dis dnl
-         "static mby_top_map *proto;" dnl dnl ppp)
-    (dis dnl
-         "static chipaddr_t get_ptr_value(const chipaddr_t inorder)"dnl
-         "{" dnl
-         "  raggedindex_t ra;" dnl
-         dnl
-         "  inorderid2ragged(inorder, &ra);" dnl
-         "  return (chipaddr_t)mby_top_map__getptr(proto, ra.d);" dnl
-         "}" dnl
-         dnl ppp
-         )
-    (dis "void init_hostptr(void);" dnl qqq)
-    (dis "void" dnl
-         "init_hostptr(void)" dnl
-         "{" dnl
-         "  proto = malloc(sizeof(mby_top_map));" dnl
-         dnl
-         ppp)
-    (dis (TextWr.ToText inits) ppp)
-    (dis "  free(proto);" dnl
-         "}" dnl dnl
-         ppp)
-    (dis (TextWr.ToText twr) ppp)
     )
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (open *setup-name*)
+  (dis (TextWr.ToText decls) h-stream)
+
+  (dis "#include <malloc.h>" dnl
+       "#include \"inorderid2ragged.h\"" dnl
+       "#include \"mby_top_map.h\"" dnl
+       "#include \"hostptr_setup.h\"" dnl
+       dnl c-stream)
+  (dis dnl
+       "static mby_top_map *proto;" dnl dnl c-stream)
+  (dis dnl
+       "static chipaddr_t" dnl
+       "get_ptr_value(const chipaddr_t inorder)"dnl
+       "{" dnl
+       "  raggedindex_t ra;" dnl
+       dnl
+       "  inorderid2ragged(inorder, &ra);" dnl
+       "  return (chipaddr_t)mby_top_map__getptr(proto, ra.d);" dnl
+       "}" dnl
+       dnl c-stream
+       )
+  
+  (dis "void init_hostptr(void);" dnl h-stream)
+  (dis "void" dnl
+       "init_hostptr(void)" dnl
+       "{" dnl
+       "  proto = malloc(sizeof(mby_top_map));" dnl
+       dnl
+       c-stream)
+  (dis (TextWr.ToText inits) c-stream)
+  (dis "  free(proto);" dnl
+       "}" dnl dnl
+       c-stream)
   (close)
   )
   )
 
 (define (doit)
-  (let ((qqq '())
-        (ppp '()))
+  (let ((h-stream '())
+        (c-stream '()))
 
     (define (open pfx)
       (let ((q (open-c-files pfx)))
-        (set! qqq (car q))
-        (set! ppp (cdr q))))
+        (set! h-stream (car q))
+        (set! c-stream (cdr q))))
 
     (define (close)
-      (close-c-files (cons qqq ppp)))
+      (close-c-files (cons h-stream c-stream)))
     
     (dis "*** building C code..." dnl)
 
     (dis "*** compiling chip address offset tree..." dnl)
     (let ((nm "ragged2addr"))
       (open nm)
-      (compile-offset-c the-chip-offset-tree nm c-formatter ppp)
-      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl qqq)
+      (compile-offset-c the-chip-offset-tree nm c-formatter c-stream)
+      (dis "chipaddr_t "nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
 
     (dis "*** compiling reverse chip address offset tree..." dnl)
     (let ((nm "addr2ragged"))
       (open nm)
-      (compile-roffset-c the-chip-offset-tree nm c-formatter ppp)
-      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
+      (compile-roffset-c the-chip-offset-tree nm c-formatter c-stream)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl h-stream)
       (close)
       )
 
     (dis "*** compiling in order field offset tree..." dnl)
     (let ((nm "ragged2inorderid"))
       (open nm)
-      (compile-offset-c the-fields-offset-tree nm c-formatter ppp)
-      (dis "long "nm"(const raggedindex_t *);" dnl qqq)
+      (compile-offset-c the-fields-offset-tree nm c-formatter c-stream)
+      (dis "long "nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
 
     (dis "*** compiling reverse in order field offset tree..." dnl)
     (let ((nm "inorderid2ragged"))
       (open nm)
-      (compile-roffset-c the-fields-offset-tree nm c-formatter ppp)
-      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl qqq)
+      (compile-roffset-c the-fields-offset-tree nm c-formatter c-stream)
+      (dis "chipaddr_t "nm"(chipaddr_t, raggedindex_t *);" dnl h-stream)
       (close)
       )
 
@@ -707,12 +728,12 @@
     (let ((nm "ragged2arcs"))
       (open nm)
       (record-symbols)
-      (dump-symbols ppp)
-      (dump-sizes ppp)
+      (dump-symbols c-stream)
+      (dump-sizes c-stream)
 
       (dis "*** compiling names tree..." dnl)
-      (compile-child-arc-c name-tree nm ppp)
-      (dis "const arc_t **"nm"(const raggedindex_t *);" dnl qqq)
+      (compile-child-arc-c name-tree nm c-stream)
+      (dis "const arc_t **"nm"(const raggedindex_t *);" dnl h-stream)
       (close)
       )
 

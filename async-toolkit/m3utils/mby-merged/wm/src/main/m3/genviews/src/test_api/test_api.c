@@ -12,7 +12,9 @@
 #include "addr2ragged.h"
 #include "mby_top_map.h"
 #include "raggedindex.h"
-#include "hostptr.h"
+#include "ragged2ptr.h"
+#include "ptr2ragged.h"
+#include "hostptr_setup.h"
 
 void
 print_ragged(const raggedindex_t *s)

@@ -17,7 +17,7 @@ PATHSPEC="--path ${WD}:${NEBULON}/include"
 REGSET=mby
 GENDIR=build_scm/${REGSET}/src
 METASCMDIR=${METAROOT}/meta/src
-ARITH=${METASCMDIR/algebra.scm ${METASCMDIR}/calculus.scm
+ARITH="${METASCMDIR}/algebra.scm ${METASCMDIR}/calculus.scm"
 
 rm -rf ${GENDIR} || true
 mkdir -p ${GENDIR}

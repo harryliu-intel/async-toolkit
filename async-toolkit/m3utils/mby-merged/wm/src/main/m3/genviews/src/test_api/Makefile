@@ -15,7 +15,8 @@ CFLAGS+= -c $(CINCLUDES)
 #
 
 AUTOGEN=addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
-	ragged2inorderid.o hostptr.o
+	ragged2inorderid.o\
+	hostptr_setup.o	ragged2ptr.o ptr2ragged.o
 
 
 test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
