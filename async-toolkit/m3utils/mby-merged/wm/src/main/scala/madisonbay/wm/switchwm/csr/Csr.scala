@@ -1,11 +1,11 @@
 package madisonbay.wm.switchwm.csr
 
-import madisonbay.BitVector
+import monocle.Optional
+import madisonbay.{BitVector, RdlRegisterAccess}
 import madisonbay.csr.all._
 import madisonbay.memory._
 import madisonbay.wm.switchwm.csr.Csr.Initial.topMap
 import madisonbay.wm.switchwm.csr.Csr._
-import monocle.Optional
 
 object Csr {
 
@@ -13,7 +13,8 @@ object Csr {
     val topMap: mby_top_map = mby_top_map(Address(0, 0 bits))
   }
 
-  val paths: Map[Address, Optional[mby_top_map, BitVector]] = mby_top_map.genOpticsLookup(topMap, Optional.id)
+  val paths: Map[Address, RdlRegisterAccess[mby_top_map]] =
+    mby_top_map.genOpticsLookup(topMap, Optional.id)
 
   def apply(): Csr = new Csr(topMap)
 
@@ -33,7 +34,8 @@ class Csr(csr: mby_top_map) {
 
   def topMap: mby_top_map = csr
 
-  def getRegister(address: Address): Option[BitVector] = Csr.paths.get(address).flatMap(_.getOption(csr))
+  def getRegister(address: Address): Option[BitVector] =
+    Csr.paths.get(address).flatMap(_.optic.getOption(csr))
 
   def getRegister(address: Long): Option[BitVector] = getRegister(Address at address.bytes)
 

@@ -232,7 +232,7 @@ sub process_commands {
 #            &run_bman("csh -f scripts/verif/dft/dvt_launcher.csh", '');
         } elsif(/^-+clean$/i) {
             &log_and_print("Cleaning generated directories\n");
-            my $system_cmd = "rm -rf target regression";
+            my $system_cmd = "rm -rf target regression results";
             &log_and_print("Running system command: $system_cmd\n");
             system($system_cmd);
         } elsif(/^-+clean_t$/i) {

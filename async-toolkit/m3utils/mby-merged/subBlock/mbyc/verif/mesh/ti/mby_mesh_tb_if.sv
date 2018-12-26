@@ -32,15 +32,17 @@ interface mby_mesh_tb_if();
 
     logic power_good_reset;
 
-    logic hard_reset;
-
+    logic chard_reset;
+    logic mhard_reset;
 //    logic warm_reset;
 
     logic fab_clk;
+    logic mclk;
     
     initial begin
         power_good_reset     = 0;
-        hard_reset           = 0;
+        chard_reset           = 0;
+        mhard_reset           = 0;
 //        warm_reset           = 0;
     end
     

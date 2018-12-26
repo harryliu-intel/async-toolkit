@@ -152,6 +152,72 @@ regfile entropy_hash_cfg1_rf {
 };
 
 
+// ENTROPY_HASH_CFG2[0..2][0..63]
+
+reg entropy_hash_cfg2_r {
+  shared;
+  HandCoded = true;
+  name = "Configures hash value calculation";
+  desc = "
+  Configure how each of the 3 hash values (hash0/1/2) should be calculated.
+  Indexed first by hash number, then by hash profile.
+           ";
+  Security_PolicyGroup = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+     Enable symmetrization according to profile indicated by sym_profile
+
+           ";
+    ValRandomize = true;
+  } SYMMETRIC[54:54] = 1'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects key symmetrization profile to use if symmetric is set
+
+           ";
+    ValRandomize = true;
+  } SYM_PROFILE[53:52] = 2'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects the hash key mask profile to apply to the selected
+     KEY8s, KEY16s and KEY32s.
+
+           ";
+    ValRandomize = true;
+  } KEY_MASK_PROFILE[51:48] = 4'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects Classifier KEY32s to be included in the hash calculation.
+     key_mask32[i] selects key32[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
+
+           ";
+    ValRandomize = true;
+  } KEY_MASK32[47:32] = 16'h0;
+  field {
+    AccessType = "RW";
+    desc = "
+     Selects Classifier KEY16s to be included in the hash calculation.
+     key_mask16[i] selects key16[i]. The total number of KEY8s, KEY16s
+     and KEY32s selected must not exceed 64 bytes.
+
+           ";
+    ValRandomize = true;
+  } KEY_MASK16[31:0] = 32'h0;
+};
+regfile entropy_hash_cfg2_rf {
+  entropy_hash_cfg2_r ENTROPY_HASH_CFG2[64] += 8;
+};
+
+
 
 // ENTROPY_META_CFG[0..63]
 
@@ -387,6 +453,7 @@ addrmap mby_ppe_entropy_map {
 
   entropy_hash_cfg0_rf       ENTROPY_HASH_CFG0[3]          ;
   entropy_hash_cfg1_rf       ENTROPY_HASH_CFG1[3]          ;
+  entropy_hash_cfg2_rf       ENTROPY_HASH_CFG2[3]          ;
   entropy_meta_cfg_r         ENTROPY_META_CFG[64]          ;
   entropy_hash_sym8_rf       ENTROPY_HASH_SYM8[3]          ;
   entropy_hash_sym16_rf      ENTROPY_HASH_SYM16[3]         ;

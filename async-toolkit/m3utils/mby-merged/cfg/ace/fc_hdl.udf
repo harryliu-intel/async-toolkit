@@ -259,7 +259,6 @@ EOF
                  -vlog_opts => [
                      @FC_VLOG_OPTIONS,
                      @all_sip_verif_vlogopts,
-                     "+define+XVM",                       
                  ],
                  -tag => "nonsynth",
              },
@@ -552,7 +551,7 @@ EOF
                   "svt_ahb_lib",
                   "mby_env_lib",
                   "mby_jasper_lib",
-                  # "gen_mby_regflow_lib", #dahendri - temp disable until Nebulon RT improves
+                  "gen_mby_regflow_lib", #dahendri - temp disable until Nebulon RT improves
                   # "gen_mby_wm", # Temporarily disable Scala build to avoid failures
                   "gen_mby_wm_m3",
                   "mby_test_lib",
