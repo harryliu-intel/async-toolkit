@@ -16,8 +16,13 @@ sequence("RegField", "RegField")
 sequence("RegReg", "RegReg")
 sequence("RegRegfile", "RegRegfile")
 
-interface ("RegFieldAccess")
+interface ("ParseError")
+
+generic_module("Lookup")
+
+module ("RegFieldAccess")
 interface ("IntelAccessType")
+module ("IntelAccessTypeLookup")
 
 table("TextReg", "Text", "RegReg")
 

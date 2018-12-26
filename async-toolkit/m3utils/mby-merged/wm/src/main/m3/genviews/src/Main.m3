@@ -12,6 +12,7 @@ IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC, GenViewsCApi;
 IMPORT GenViewsScheme;
 IMPORT Text;
 IMPORT Rd, FileRd;
+IMPORT ParseError;
 
 CONST TE = Text.Equal;
 
@@ -127,7 +128,13 @@ BEGIN
     IF rdlTgt = NIL THEN
       Debug.Error("Top symbol not found")
     END;
-    tgtmap := gv.decorate(rdlTgt, "").comp
+    TRY
+      tgtmap := gv.decorate(rdlTgt, "", "").comp
+    EXCEPT
+      ParseError.E(txt) =>
+      Debug.Error("While processing \"" & tgtmapNm & "\" : ParseError.E : " &
+        txt)
+    END
   END;
 
   CASE lang OF

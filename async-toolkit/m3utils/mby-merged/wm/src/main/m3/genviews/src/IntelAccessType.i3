@@ -5,7 +5,7 @@ FROM RegFieldAccess IMPORT NA, R, W, RW;
 
 TYPE
   T = RECORD
-    accessType      : TEXT;
+    nm              : TEXT;
     rdlAccess       : RegFieldAccess.T;
     reserved        : BOOLEAN;
     clearOnRead     : BOOLEAN;
@@ -15,11 +15,14 @@ TYPE
   Access = RegFieldAccess.T;
 
 CONST
-  Brand = "RegFieldAccessIntel";
-  f = FALSE; t = TRUE;
+  Brand   = "IntelAccessType";
+  UDPName = "AccessType";
 
 CONST
-  NebulonAccessTypes = ARRAY OF T {
+  f = FALSE; t = TRUE;
+  
+CONST
+  Map = ARRAY OF T {
                        (* SW HW *)
   T { "R"      , Access { R , R  }, f, f },
   T { "RW/P"   , Access { RW, RW }, f, f },
