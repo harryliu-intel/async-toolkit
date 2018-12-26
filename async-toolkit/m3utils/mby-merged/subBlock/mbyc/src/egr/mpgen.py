@@ -34,6 +34,8 @@ import sys
 import re
 import argparse
 import glob
+from shutil import copy2
+import subprocess
 
 # ##################################################
 # Class
@@ -397,6 +399,47 @@ def get_mem_data(list_logical,path):
             Insta.append(InstaMatched.group(1))
     return([Ports,Lines,DataW,Insta,WrRes])
 
+# ##################################################
+# copy_logicals
+# 
+# ##################################################
+def copy_logicals(list_logicals,dst):
+    # Create ngen output directory
+    if not(os.path.isdir(dst)):
+        try:      
+            os.makedirs(dst)
+        except OSError:  
+            print ("## Creation of %s failed" % dst)
+        else:  
+            print ("## Successfully created %s" % dst)
+    
+    for src in list_logicals:
+        print_info(("Copying %s to %s")%(src,dst)) 
+        copy2(src, dst)
+
+def print_info(msg):
+    print("========================================")
+    print(("========== %s")%(msg))
+    print("========================================")
+
+
+# #i################################################
+# run_mgm
+# 
+# ##################################################
+def run_mgm(module_name, path, list_logicals):
+    # Define path for logical files 
+    dst_path = path + "/" + module_name + "/mem/"
+    # Copy logicals for this client
+    copy_logicals(list_logicals,dst_path) 
+    # Debug info
+    print_info(("Calling mgm for %s")%(module_name)) 
+    # mgm command to run
+    cmd = ("mgm -c %s -cnfg $MODEL_ROOT/tools/mgm/config_file -includes $MODEL_ROOT/tools/mgm/blocks_inclusion -apr_struct $MODEL_ROOT/tools/mgm/apr_structure -csv $MODEL_ROOT/tools/mgm/mby_physical_params.csv -unique mby -clk $MODEL_ROOT/tools/mgm/clk_file -rprt_dir $MODEL_ROOT/target/mby/mgm_run/rtl -relative_path_from $MODEL_ROOT")%(module_name)
+    # Run mgm
+    subprocess.run(cmd, shell=True)
+    # Delete temp logical files
+    subprocess.call(("rm -rf %s")%(dst_path),shell=True)
 
 # ##################################################
 # main
@@ -414,6 +457,9 @@ path=os.getcwd()
 
 # Get a list of logical files
 [list_logicals, names] = get_logicals(path, module_name)
+
+# Run mgm
+run_mgm(module_name, path, list_logicals)
 
 Ports=[]
 Lines=[]
@@ -450,42 +496,8 @@ if not(os.path.isdir(ngenPath)):
     else:  
         print ("## Successfully created %s" % ngenPath)
 
-#print("MEMOPATH IS " + memoPath)
-#for filename in os.listdir(memoPath):
-#    if (filename.endswith(".logical")):
-#        filename_c=os.path.join(memoPath,filename)
-#        P_logicalname = r"(.+).logical"
-#        LnameMatched   = re.search(P_logicalname,filename) # Search for logical name
-#        names.append(LnameMatched.group(1))
-#        with io.open(filename_c, "r") as logical:
-#            data=logical.read(1000) # Reduce the amount of line read
-#            P_RamPorts      = r"Ram Ports.+=[\s\t]*(1r1w|1rw|2r2w)"
-#            P_Lines         = r"Ram Lines Number.+=[\s\t]*(\d{1,9})"
-#            P_DataW         = r"Ram Data Width.+=[\s\t]*(\d{1,9})"
-#            P_WrRes         = r"Ram Write Resolution.+=[\t\s]*(\d{1,9})"
-#            P_Insta         = r"Memory Instances.+=[\s\t]*(\d{1,9})"
-#            PortsMatched   = re.search(P_RamPorts,data) # Search for ports types
-#            LinesMatched   = re.search(P_Lines,data) # Search for number of lines
-#            DataWMatched   = re.search(P_DataW,data) # Search for number of lines
-#            WrResMatched   = re.search(P_WrRes,data) # Search for number of lines
-#            InstaMatched   = re.search(P_Insta,data) # Search for number of lines
-#            if (WrResMatched is not None):
-#                if (WrResMatched.group(1)==DataWMatched.group(1)):
-#                    WrRes.append(0)
-#                else:
-#                    WrRes.append(1)
-#            else:
-#                    WrRes.append(0)
-#            Ports.append(PortsMatched.group(1))
-#            Lines.append(LinesMatched.group(1))
-#            DataW.append(DataWMatched.group(1))
-#            Insta.append(InstaMatched.group(1))
-#    else:
-#        print ("WARNING: file "+filename+" is not a logical file\n")
 
 [Ports, Lines, DataW, Insta, WrRes] = get_mem_data(list_logicals,path)
-#names = list_logicals
-
 
 
 TextList=parsingImplemReport(module_name,reportPath,ffPath,rfPath,srPath)
