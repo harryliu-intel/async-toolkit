@@ -10,9 +10,6 @@ $hdl_spec = {
 # No UVM_INCLUDES define being declared.   Useing the next line to include UVM macros and other files..
          #"$ENV{UVM_INCLUDES}",
          "$ENV{UVM_HOME}/src",
-         "$ENV{OVM_HOME}/src",
-         "$ENV{SAOLA_HOME}/verilog",
-         "$ENV{SAOLA_HOME}/verilog_uvm",
 
          "verif/lib/svt_axi_bfm",
          "$snps_svt_path/src/sverilog/vcs",

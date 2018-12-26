@@ -172,7 +172,6 @@ EOF
                 "-vopt",
                 "-dpioutoftheblue 1",             # TODO - Need to try to remove
                 "-permit_unmatched_virtual_intf", # TODO - Need to try to remove
-                "-sv_lib $ENV{SAOLA_HOME}/libs/mti/Linux_x86_64/libsla",
             ],
         },
         mby => {
@@ -258,18 +257,20 @@ EOF
             -implicit_runmode_libs => { default => ["mby::RunModes"], },
             -code_coverage_mode    => { default => "cov_mode_a", },
             -skip_test_elab        => { default => ['perl'], },
-            -test_run_copy_files   => {
-                default =>
-                  [ "$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so", ]
-                      },
            
             -test_elab_opts => {
                 default => [
-                    "-lca", "-kdb", "-debug_access+all",
-                    "-sverilog",      "-override_timescale=1ps/1ps",
-                    "./libsla.so",    "-Xkeyopt=uvm",
-                    "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
-                    "-liblist_work",  "-liblist_nocelldiff",
+                    "-lca",
+                    "-kdb",
+                    "-debug_access+all",
+                    "-sverilog",
+                    "-override_timescale=1ps/1ps",
+                    "-Xkeyopt=uvm",
+                    "-Xkeyopt=iComp",
+                    "-Xkeyopt=iRun",
+                    "-Xkeyopt=rtopt",
+                    "-liblist_work",
+                    "-liblist_nocelldiff",
                 ],
                 clear_default => 1,
             },
@@ -293,7 +294,6 @@ EOF
             default => [
                 "-lca", "-kdb", "-debug_access+all",
                 "-sverilog",      "-override_timescale=1ps/1fs",
-                #"$ENV{SAOLA_HOME}/libs/$saola_platform/libsla.so",    "-Xkeyopt=uvm",
                 "-Xkeyopt=iComp", "-Xkeyopt=iRun", "-Xkeyopt=rtopt",
                 "-liblist_work",  "-liblist_nocelldiff",
                 "+warn=noFCICIO", # Removes note from log file: Note-[FCICIO] Instance coverage is ON
@@ -317,7 +317,6 @@ EOF
                 "+define+MROOT_SPACE_SIGNAL_NAME=mrs",
                 "+define+IOSFTRKCHK_NO_DEPENDENCIES"
                 ,    #2012WW46r121114 primary IOSF compliance
-                "+define+SLA_SOCFUSEGEN2",
                 "+define+INSTANTIATE_NOVAS",
                 "+define+MODEL_ROOT=$ENV{MODEL_ROOT}", 
 

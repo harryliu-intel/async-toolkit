@@ -39,17 +39,13 @@
 
 package mby_common_pkg;
 
-   `include "sla_macros.svh"
-    import uvm_pkg::*;
-    import sla_pkg::*;
+   import uvm_pkg::*;
 
-    import shdv_base_pkg::*;
-    import mby_wm_dpi_pkg::* ;
-    import svt_ahb_bfm_pkg::*;
+   import shdv_base_pkg::*;
+   import mby_wm_dpi_pkg::* ;
+   import svt_ahb_bfm_pkg::*;
    
-
    `include "uvm_macros.svh"
-   `include "slu_macros.svh"
 
    `define __INSIDE_MBY_COMMON_PKG
    //SSN `include "mby_ral_user_object.svh"
