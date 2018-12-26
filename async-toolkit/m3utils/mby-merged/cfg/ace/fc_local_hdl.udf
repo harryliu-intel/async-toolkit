@@ -16,8 +16,13 @@
             #############################################################
             # SIP shared libraries (not reusable)
             #############################################################
+            sla_lib => {
+                -hdl_spec      => ["cfg/ace/HDL/verif/sla.hdl"],
+                -tag           => "nonsynth",
+            },
             shdv_shared_lib => {
-                -sub_libs      => [ "shdv_lib",
+                -sub_libs      => [ "sla_lib",
+                                    "shdv_lib",
                 ],
             },
             ext_shared_lib => {
