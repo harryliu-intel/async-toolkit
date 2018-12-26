@@ -27,12 +27,14 @@ CONST
   T { "R"      , Access { R , R  }, f, f },
   T { "RW/P"   , Access { RW, RW }, f, f },
   T { "RO/C"   , Access { R , RW }, f, t },
+  T { "RO/C/V" , Access { R , RW }, f, t }, (* HLP only *)
   T { "RW/1S/V", Access { RW, RW }, f, f },
   T { "RW/V"   , Access { RW, RW }, f, f },
   T { "RSV"    , Access { R , NA }, t, f },
   T { "RO/V"   , Access { R , RW }, f, f },
   T { "RW/1C/V", Access { RW, RW }, f, f },
   T { "RO"     , Access { R , R  }, f, f },
+  T { "WO"     , Access { W , R  }, f, f }, (* HLP only *)
   T { "RW"     , Access { RW, R  }, f, f }
   };
 
