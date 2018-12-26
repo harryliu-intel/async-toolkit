@@ -45,7 +45,7 @@
 #define NEXT_IDX(idx) (((idx) + 1) % MAX_CLI_HIST)
 #define PREV_IDX(idx) (((idx) - 1 + MAX_CLI_HIST) % MAX_CLI_HIST)
 
-#define MAX_BUF		1024
+#define MAX_BUF	    	1024
 #define COMMAND_ARGS	128
 #define BACKSPACE		'\b'
 #define BELL			'\a'
@@ -378,9 +378,10 @@ static int help_handler(struct connection *con, int argc, char **argv)
         return WM_OK;
     }
 
-    for(i=0; i<argc; ++i) {
+    for(i = 0; i < argc; ++i) {
         cmd = get_cmd(argv[i]);
-        fd_print(con, "%s %s\t%s\n",cmd->name, cmd->args, cmd->help);
+        if (cmd)
+            fd_print(con, "%s %s\t%s\n",cmd->name, cmd->args, cmd->help);
     }
 
     return WM_OK;
@@ -411,17 +412,18 @@ static int print_cmd_help(struct connection *con, char* command)
     return WM_OK;
 }
 
-static int print_reg_help(struct connection *con, char* command)
+static int print_reg_help(struct connection *con, char* regname)
 {
-    struct command *cmd;
+    const struct fpps_reg_entry *reg;
     int len;
 
     len = con->blen;
     con->buf[len] = '\0';
 
-    if(command && strcmp(command, "")) {
-        cmd = get_cmd(command);
-        fd_print(con, "%s\n", cmd->args);
+    if(regname && strcmp(regname, "")) {
+        reg = get_reg(regname);
+        if (reg)
+            fd_print(con, "-> %s\n", reg->addr);
     } else {
         fd_print(con, "\n");
         help_handler(con, 0, NULL);
@@ -441,10 +443,11 @@ static int parse_line(char *line, int len, char *command, int *argc, char **argv
     char *token;
     *argc = 0;
 
-    if(!len)
-        len = MAX_BUF;
+    //we need at least one byte for NULL character
+    if(!len || len >= (int)sizeof(temp_line))
+        len = sizeof(temp_line) - 1;
 
-    strncpy(temp_line, line, len);
+    memcpy(temp_line, line, len);
     temp_line[len] = '\0';
 
     strcpy(command, "");
@@ -511,7 +514,11 @@ static int match_name(const char* name, char **proposals, const char* (*get_next
     }
 
     first_cnt = cnt;
-    strcpy(temp_name, name);
+
+    //we need a space to add a null character at least in the first
+    //loop iteration
+    strncpy(temp_name, name, sizeof(temp_name) - 2);
+    temp_name[sizeof(temp_name) - 2] = '\0';
 
     //add one letter per iteration until the matches number is the same
     do {
@@ -528,8 +535,11 @@ static int match_name(const char* name, char **proposals, const char* (*get_next
             cur_name = get_next_name(&it);
         }
 
-    } while (cnt >= first_cnt);
+    //we found fewer matches than the first time, terminate the loop
+    } while (cnt >= first_cnt && len < MAX_BUF);
 
+    //remove the last char, now we have all common letters of proposals
+    //that can be added to the given name
     temp_name[--len] = '\0';
 
     //some letters added - return a partial match
@@ -548,20 +558,25 @@ static void complete_command(struct connection *con)
     const char* (*get_next_name_function)(void**);
     char* proposals[fpps_reg_table_size];
     char command[MAX_BUF + 1];
+    char* argv[COMMAND_ARGS];
     char name[MAX_BUF + 1];
     const char* cur_name;
     void* it = NULL;
-    char* argv[COMMAND_ARGS];
+    unsigned cnt;
     int argc = 0;
     int matches;
     int len;
-    int cnt;
     int err;
+
+    if (!fpps_reg_table_size) {
+        fd_print(con, "error - register table empty\n");
+        return;
+    }
 
     for(cnt = 0; cnt < COMMAND_ARGS; ++cnt)
         argv[cnt] = (char*)malloc((MAX_BUF + 1) * sizeof(char));
 
-    for(cnt = 0; cnt<(int)fpps_reg_table_size; ++cnt)
+    for(cnt = 0; cnt < fpps_reg_table_size; ++cnt)
         proposals[cnt] = (char*)malloc((MAX_BUF + 1) * sizeof(char));
 
     err = parse_line(con->buf, con->pcur, command, &argc, argv);
@@ -578,19 +593,22 @@ static void complete_command(struct connection *con)
     if(argc) {
         get_next_name_function = get_next_reg_name;
         print_help_function = print_reg_help;
-        strcpy(name, argv[argc - 1]);
+        strncpy(name, argv[argc - 1], sizeof(name) - 1);
+        name[sizeof(name) - 1] = '\0';
     }
     else {
         get_next_name_function = get_next_cmd_name;
         print_help_function = print_cmd_help;
-        strcpy(name, command);
+        strncpy(name, command, sizeof(name) - 1);
+        name[sizeof(name) - 1] = '\0';
     }
 
     matches = match_name(name, proposals, get_next_name_function);
     if (con->debug)
         fd_print(con, "\nmatches: %d ", matches);
 
-    //return only for registers
+    //return only for registers (no reg found, don't
+    //print all of them)
     if(argc && matches < 0)
         return;
 
@@ -609,7 +627,7 @@ static void complete_command(struct connection *con)
     } else if (matches > 0) {
         //just print possible matches
         fd_print(con, "\n");
-        for(cnt = 0; cnt < matches; ++cnt)
+        for(cnt = 0; cnt < (unsigned) matches; ++cnt)
             fd_print(con, " %s", proposals[cnt]);
 
         fd_print(con, "\n");
@@ -638,7 +656,7 @@ static void complete_command(struct connection *con)
     for(cnt = 0; cnt < COMMAND_ARGS; ++cnt)
         free(argv[cnt]);
 
-    for(cnt = 0; cnt<(int)fpps_reg_table_size; ++cnt)
+    for(cnt = 0; cnt < fpps_reg_table_size; ++cnt)
         free(proposals[cnt]);
 }
 
