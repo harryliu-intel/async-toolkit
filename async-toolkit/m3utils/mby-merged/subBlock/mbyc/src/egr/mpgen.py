@@ -114,7 +114,7 @@ def get_logicals(path,module_name):
     list_logicals = glob.glob(path + "/mem/*"+module_name+"*.logical")
     if len(list_logicals) == 0:
         names = []
-        print_info("Warning: No logical files were found.")
+        #print_info("Warning: No logical files were found.")
     else:
         names = [logical.replace(path+"/mem/","").replace(".logical","") for logical in list_logicals]
     return (list_logicals, names)
@@ -417,9 +417,9 @@ def mk_dir(path):
         try:      
             os.makedirs(path)
         except OSError:  
-            print ("## Creation of %s failed" % path)
+            print_info ("## Creation of %s failed" % path)
         else:  
-            print ("## Successfully created %s" %path)
+            print_info ("## Successfully created %s" %path)
 
 # ##################################################
 # copy_logicals
@@ -432,6 +432,10 @@ def copy_logicals(list_logicals,dst):
         print_info(("Copying %s to %s")%(src,dst)) 
         copy2(src, dst)
 
+# ##################################################
+# print_info 
+# 
+# ##################################################
 def print_info(msg):
     print("========================================")
     print(("========== %s")%(msg))
@@ -462,6 +466,18 @@ def run_mgm(module_name, path, list_logicals, isTop):
         # Delete temp logical files
         subprocess.call(("rm -rf %s")%(dst_path),shell=True)
 
+# #################################################
+# rename_module
+# 
+# ##################################################
+def rename_module(module_name):
+    str_find = "mby_"+module_name+"_gen_mem"
+    str_replace = "egr_"+module_name+"_mem"
+    file_name = "rtl/mem/"+str_find + ".sv"
+    os.system(("sed -i s/%s/%s/g %s")%(str_find,str_replace,file_name))
+    os.system(("mv %s rtl/mem/%s.sv")%(file_name,str_replace))
+    os.system(("mv rtl/mem/mby_%s_if_inst.sv rtl/mem/egr_%s_if_inst.sv")%(module_name,module_name))
+
 # ##################################################
 # main
 # 
@@ -471,12 +487,13 @@ def run_mgm(module_name, path, list_logicals, isTop):
 # module_name = get_args()
 
 module_list = ["cpb","dpb","etag","lcm","mri","pfs","prc","tcu","tdb","tmu","tqu"]
-
+#module_list = ["cpb","prc"]
+top = "egr"
 # Get current working directory
 path=os.getcwd()
 
 for module_name in module_list:
-    print(("Searching for %s")%(module_name))
+    print_info(("Searching for %s")%(module_name))
     # Check if given block name exists
     [module_exists, isTop] = check_block_path(path,module_name)
     if module_exists:
@@ -520,17 +537,8 @@ for module_name in module_list:
             
             # Create ngen output directory
             mk_dir(ngenPath)
-            #if not(os.path.isdir(ngenPath)):
-            #    try:      
-            #        os.makedirs(ngenPath)
-            #    except OSError:  
-            #        print ("## Creation of %s failed" % ngenPath)
-            #    else:  
-            #        print ("## Successfully created %s" % ngenPath)
-            
             
             [Ports, Lines, DataW, Insta, WrRes] = get_mem_data(list_logicals,path)
-            
             
             TextList=parsingImplemReport(module_name,reportPath,ffPath,rfPath,srPath)
             st = os.stat(prePPath)
@@ -547,6 +555,11 @@ for module_name in module_list:
             print("## Running Make in ngen directory ##\n")
             os.system("make")
             os.system("make rtl copy")
+            os.chdir(path)
+            # Rename some files and sv modules
+            # for example:
+            # change mby_cpb_gen_mem to egr_cpb_gen_mem
+            rename_module(module_name)
         else:
             print_info(("No logical files were found for %s")%(module_name))
     else:
