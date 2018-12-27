@@ -93,11 +93,18 @@ def get_args():
 
 def check_block_path(path,module_name):
     isTop = True
+    module_exists = True
     if(os.path.isdir(path + "/" + module_name)):
         isTop = False
-    elif not(path.endswith(module_name)):
-        sys.exit('Error: Please provide name of top-level module or sub-module')   
-    return([path,isTop])
+        module_exists = True
+    elif path.endswith(module_name):
+        isTop = True
+        module_exists = True
+    else:
+        isTop = False
+        module_exists = False
+        print_info(('Warning: %s not found. Please provide name of top-level module or sub-module')%(module_name))   
+    return([module_exists,isTop])
 
 # ##################################################
 # get_logicals
@@ -106,7 +113,8 @@ def check_block_path(path,module_name):
 def get_logicals(path,module_name):
     list_logicals = glob.glob(path + "/mem/*"+module_name+"*.logical")
     if len(list_logicals) == 0:
-        sys.exit("Error: No logical files were found.")
+        names = []
+        print_info("Warning: No logical files were found.")
     else:
         names = [logical.replace(path+"/mem/","").replace(".logical","") for logical in list_logicals]
     return (list_logicals, names)
@@ -175,7 +183,7 @@ def parsingImplemReport(module_name,path,ff_Path,rf_Path,sr_Path):
                     "\n",
                     "mby_"+module_name+"_gen_mem[\n",
                     module_name+"_shells_wrapper of "+module_name+"_shells_wrapper with "+module_name+"_shells_wrapper.map\n"
-                        ]
+                    ]
         print("## Found memories in "+path+";")                        
         print("Number of FF mems:", len(FF_Matched))
         print("Number of RF mems:", len(RF_Matched))
@@ -328,7 +336,7 @@ def createMakefile(makefile_name,module_name,makeText):
         "NGEN_FLAGS  = -fi=INTCNOPWR\n",
         "V2BBOX      = /p/hdk/rtl/proj_tools/sl2_tools/latest/scripts/v2bbox.pl\n",
         "\n",
-        "V_DIRS      = -d=../rtl\n",
+        "V_DIRS      = -d=../rtl/mem\n",
         "V_LIBS      =\n",
         "MGM_RUN     = $(MODEL_ROOT)/target/mby/mgm_run\n",
         "\n",
@@ -346,7 +354,7 @@ def createMakefile(makefile_name,module_name,makeText):
         "	rm -f *.v\n",
         "\n",
         "rtl copy:\n",
-        "	cp ngen/$(BLOCK).sv ../rtl/$(BLOCK).sv\n",
+        "	cp ngen/$(BLOCK).sv ../rtl/mem/$(BLOCK).sv\n",
         "\n",
         "clean:\n",
         "	@echo \"Cleaning $(BLOCK)\"\n",
@@ -400,19 +408,26 @@ def get_mem_data(list_logical,path):
     return([Ports,Lines,DataW,Insta,WrRes])
 
 # ##################################################
+# mk_dir
+# 
+# ##################################################i
+def mk_dir(path):
+    # Create directory
+    if not(os.path.isdir(path)):
+        try:      
+            os.makedirs(path)
+        except OSError:  
+            print ("## Creation of %s failed" % path)
+        else:  
+            print ("## Successfully created %s" %path)
+
+# ##################################################
 # copy_logicals
 # 
 # ##################################################
 def copy_logicals(list_logicals,dst):
-    # Create ngen output directory
-    if not(os.path.isdir(dst)):
-        try:      
-            os.makedirs(dst)
-        except OSError:  
-            print ("## Creation of %s failed" % dst)
-        else:  
-            print ("## Successfully created %s" % dst)
-    
+
+    mk_dir(dst)
     for src in list_logicals:
         print_info(("Copying %s to %s")%(src,dst)) 
         copy2(src, dst)
@@ -427,19 +442,25 @@ def print_info(msg):
 # run_mgm
 # 
 # ##################################################
-def run_mgm(module_name, path, list_logicals):
-    # Define path for logical files 
-    dst_path = path + "/" + module_name + "/mem/"
-    # Copy logicals for this client
-    copy_logicals(list_logicals,dst_path) 
-    # Debug info
-    print_info(("Calling mgm for %s")%(module_name)) 
+def run_mgm(module_name, path, list_logicals, isTop):
     # mgm command to run
     cmd = ("mgm -c %s -cnfg $MODEL_ROOT/tools/mgm/config_file -includes $MODEL_ROOT/tools/mgm/blocks_inclusion -apr_struct $MODEL_ROOT/tools/mgm/apr_structure -csv $MODEL_ROOT/tools/mgm/mby_physical_params.csv -unique mby -clk $MODEL_ROOT/tools/mgm/clk_file -rprt_dir $MODEL_ROOT/target/mby/mgm_run/rtl -relative_path_from $MODEL_ROOT")%(module_name)
+    
+    # Define path for logical files 
+    if not isTop:
+        dst_path = path + "/" + module_name + "/mem/"
+        # Copy logicals for this client
+        copy_logicals(list_logicals,dst_path) 
+    
+    
+    # Debug info
+    print_info(("Calling mgm for %s")%(module_name)) 
+
     # Run mgm
     subprocess.run(cmd, shell=True)
-    # Delete temp logical files
-    subprocess.call(("rm -rf %s")%(dst_path),shell=True)
+    if not isTop:
+        # Delete temp logical files
+        subprocess.call(("rm -rf %s")%(dst_path),shell=True)
 
 # ##################################################
 # main
@@ -447,70 +468,86 @@ def run_mgm(module_name, path, list_logicals):
 # ##################################################
 
 # Get name to append to output files
-module_name = get_args()
+# module_name = get_args()
+
+module_list = ["cpb","dpb","etag","lcm","mri","pfs","prc","tcu","tdb","tmu","tqu"]
 
 # Get current working directory
 path=os.getcwd()
 
-# Check if given block name exists
-[path, isTop] = check_block_path(path,module_name)
-
-# Get a list of logical files
-[list_logicals, names] = get_logicals(path, module_name)
-
-# Run mgm
-run_mgm(module_name, path, list_logicals)
-
-Ports=[]
-Lines=[]
-DataW=[]
-WrRes=[]
-Insta=[]
-
-IfBaseName =[]
-If_include =[]
-MapWrapper =[]
-sig_Text =[]
-
-ngenPath=os.path.join(path,"ngen_mem")
-makePath=os.path.join(ngenPath,"Makefile")
-inclPath=os.path.join(ngenPath,"../rtl/mby_"+module_name+"_if_inst.sv")
-basePath=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.base")
-hierPath=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.hier")
-sig_Path=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.sig")
-prePPath=os.path.join(ngenPath,"pre_process.pl")
-wrapPath=os.path.join(ngenPath,module_name+"_shells_wrapper.map")
-ffPath=os.path.join(ngenPath,module_name+"_ff_mems.map")
-srPath=os.path.join(ngenPath,module_name+"_sram_mems.map")
-rfPath=os.path.join(ngenPath,module_name+"_rf_mems.map")
-memoPath=os.path.join(path,"mem")
-reportPath = os.path.join(os.environ['MODEL_ROOT'],"target/mby/mgm_run/"+module_name+"/reports/"+module_name+"_mem_imp.report")
-print("## MGM PAR reports dir:",reportPath,"\n")
-
-# Create ngen output directory
-if not(os.path.isdir(ngenPath)):
-    try:      
-        os.makedirs(ngenPath)
-    except OSError:  
-        print ("## Creation of %s failed" % ngenPath)
-    else:  
-        print ("## Successfully created %s" % ngenPath)
-
-
-[Ports, Lines, DataW, Insta, WrRes] = get_mem_data(list_logicals,path)
-
-
-TextList=parsingImplemReport(module_name,reportPath,ffPath,rfPath,srPath)
-st = os.stat(prePPath)
-os.chmod(prePPath, st.st_mode | stat.S_IEXEC)
-createIFBase_f(names,Ports)
-createSigFile(names)
-create_blockShellsWrapper(wrapPath,names, Ports, Insta,WrRes)
-createMakefile(makePath, module_name,TextList)
-time.sleep(0.1)
-createBasefile(basePath, module_name) 
-print("## Creating file:"+inclPath+" that could be included for memory interface instances\n")
-create_if_include(names, Ports, Insta, Lines,DataW)
-os.chdir(ngenPath)
-print("## Running Make in ngen directory ##\n")
-os.system("make")
+for module_name in module_list:
+    print(("Searching for %s")%(module_name))
+    # Check if given block name exists
+    [module_exists, isTop] = check_block_path(path,module_name)
+    if module_exists:
+        # Get a list of logical files
+        [list_logicals, names] = get_logicals(path, module_name)
+        if len(list_logicals)>0:
+            # Run mgm
+            run_mgm(module_name, path, list_logicals, isTop)
+            
+            Ports=[]
+            Lines=[]
+            DataW=[]
+            WrRes=[]
+            Insta=[]
+            
+            IfBaseName =[]
+            If_include =[]
+            MapWrapper =[]
+            sig_Text =[]
+            
+            if isTop:
+                prefix_name = module_name
+            else:
+                prefix_name = "egr_" + module_name
+            
+            
+            ngenPath=os.path.join(path,"ngen_mem")
+            makePath=os.path.join(ngenPath,"Makefile")
+            inclPath=os.path.join(ngenPath,"../rtl/mem/mby_"+module_name+"_if_inst.sv")
+            basePath=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.base")
+            hierPath=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.hier")
+            sig_Path=os.path.join(ngenPath,"mby_"+module_name+"_gen_mem.sig")
+            prePPath=os.path.join(ngenPath,"pre_process.pl")
+            wrapPath=os.path.join(ngenPath,module_name+"_shells_wrapper.map")
+            ffPath=os.path.join(ngenPath,module_name+"_ff_mems.map")
+            srPath=os.path.join(ngenPath,module_name+"_sram_mems.map")
+            rfPath=os.path.join(ngenPath,module_name+"_rf_mems.map")
+            memoPath=os.path.join(path,"mem")
+            reportPath = os.path.join(os.environ['MODEL_ROOT'],"target/mby/mgm_run/"+module_name+"/reports/"+module_name+"_mem_imp.report")
+            print("## MGM PAR reports dir:",reportPath,"\n")
+            
+            # Create ngen output directory
+            mk_dir(ngenPath)
+            #if not(os.path.isdir(ngenPath)):
+            #    try:      
+            #        os.makedirs(ngenPath)
+            #    except OSError:  
+            #        print ("## Creation of %s failed" % ngenPath)
+            #    else:  
+            #        print ("## Successfully created %s" % ngenPath)
+            
+            
+            [Ports, Lines, DataW, Insta, WrRes] = get_mem_data(list_logicals,path)
+            
+            
+            TextList=parsingImplemReport(module_name,reportPath,ffPath,rfPath,srPath)
+            st = os.stat(prePPath)
+            os.chmod(prePPath, st.st_mode | stat.S_IEXEC)
+            createIFBase_f(names,Ports)
+            createSigFile(names)
+            create_blockShellsWrapper(wrapPath,names, Ports, Insta,WrRes)
+            createMakefile(makePath, module_name,TextList)
+            time.sleep(0.1)
+            createBasefile(basePath, module_name) 
+            print("## Creating file:"+inclPath+" that could be included for memory interface instances\n")
+            create_if_include(names, Ports, Insta, Lines,DataW)
+            os.chdir(ngenPath)
+            print("## Running Make in ngen directory ##\n")
+            os.system("make")
+            os.system("make rtl copy")
+        else:
+            print_info(("No logical files were found for %s")%(module_name))
+    else:
+        print_info(("Skipping %s ")%(module_name))
