@@ -66,9 +66,9 @@ def get_args():
     parser = argparse.ArgumentParser(description='Create memory files and wrappers using generic interfaces.')
     
     # Block name
-    parser.add_argument('-b', '--block', type=str, nargs=1, required=False, help='Block name.')
+    parser.add_argument('-b', '--block', type=str, nargs='+', required=True, default=["all"],help='Block name.')
     parser.add_argument('-t', '--top', type=str, nargs=1, required=False, default=["egr"], help='Top-level block name.')
-    parser.add_argument('-r', '--runmgm', type=str2bool, nargs=1, required=False, default=["True"], help='Choose whether to run mgm as part of the flow.')
+    parser.add_argument('-r', '--runmgm', type=str2bool, nargs=1, required=False, default=["False"], help='Choose whether to run mgm as part of the flow.')
 
     # Parse arguments
     args = parser.parse_args()
@@ -77,7 +77,11 @@ def get_args():
     #module_name = args.block[0]
     top_name = args.top[0]
     runmgm = args.runmgm[0]
-    return(top_name,runmgm)
+    if "all"  in args.block:
+        module_list = ["cpb","dpb","etag","lcm","mri","pfs","prc","tcu","tdb","tmu","tqu"]
+    else:
+        module_list = args.block
+    return(top_name,module_list,runmgm)
 
 # ##################################################
 # check_block_path
@@ -491,10 +495,10 @@ def rename_module(top_name,module_name):
 # ##################################################
 
 # Get name to append to output files
-[top_name,runmgm] = get_args()
-print(runmgm)
+[top_name,module_list,runmgm] = get_args()
+print(module_list)
 #module_list = ["cpb","dpb","etag","lcm","mri","pfs","prc","tcu","tdb","tmu","tqu"]
-module_list = ["cpb","prc"]
+#module_list = ["cpb","prc"]
 # Get current working directory
 path=os.getcwd()
 
