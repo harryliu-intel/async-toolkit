@@ -8,9 +8,6 @@ $hdl_spec = {
 
     -vlog_incdirs => [
          "$ENV{UVM_HOME}/src",
-         "$ENV{OVM_HOME}/src",
-         "$ENV{SAOLA_HOME}/verilog",
-         "$ENV{SAOLA_HOME}/verilog_uvm",
 
          "$vte_tr_uvm_path/VIPs/dummy_host_1/env/",
          "$vte_tr_uvm_path/VIPs/dummy_host_2/env/",
@@ -32,8 +29,6 @@ $hdl_spec = {
          "$vte_tr_uvm_path/ip1_uvm/verif/tb/env/ip1_reg_pkg.sv",
          "$vte_tr_uvm_path/ip1_uvm/verif/tb/env/ip1_uvm_pkg.sv",
 
-         #"$vte_tr_uvm_path/ip2_slu/verif/tb/env/ip2_sla_pkg.sv",
-
          "$vte_tr_uvm_path/ip3_uvm/verif/tb/top/ip3_tb_intf.sv",
          "$vte_tr_uvm_path/ip3_uvm/verif/tb/env/ral/ip3_uvm_reg_pkg.sv",
          "$vte_tr_uvm_path/ip3_uvm/verif/tb/env/ip3_uvm_env_pkg.sv",
@@ -42,8 +37,6 @@ $hdl_spec = {
 
     -vlog_opts => [
          "-sverilog",
-         "+define+OVM",
-         "+define+XVM",
          "+define+UVM",
          "+define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR",
 		   "+define+UVM_NO_DEPRECATED",
