@@ -3,7 +3,7 @@ CINCLUDES=-I.. -I../build_c_api/mby_c/src -I../../../../c
 
 CFLAGS=
 
-#CFLAGS+= -O6
+CFLAGS+= -O6
 CFLAGS+= -g
 CFLAGS+= $(INCLUDES)
 CFLAGS+= -std=c99 -Wall -pedantic -Werror
@@ -18,9 +18,9 @@ AUTOGEN=addr2ragged.o inorderid2ragged.o ragged2addr.o ragged2arcs.o\
 	ragged2inorderid.o\
 	hostptr_setup.o	ragged2ptr.o ptr2ragged.o
 
+all: test_api test_exceptions
 
 test_api: $(AUTOGEN) mby_top_map.o test_api.o raggedindex.o
-	cc -o $@ $^
 
 raggedindex.o: ../raggedindex.c ../raggedindex.h
 	cc $(CFLAGS) ../raggedindex.c
@@ -30,3 +30,5 @@ mby_top_map.o: ../build_c_api/mby_c/src/mby_top_map.h ../build_c_api/mby_c/src/m
 
 clean:
 	/bin/rm -f test_api *.o *~
+
+test_exceptions: ies_exception.o test_exceptions.o

@@ -19,23 +19,23 @@ CONST
   UDPName = "AccessType";
 
 CONST
-  f = FALSE; t = TRUE;
-  
+  No = FALSE; Yes = TRUE;
+
 CONST
   Map = ARRAY OF T {
                        (* SW HW *)
-  T { "R"      , Access { R , R  }, f, f },
-  T { "RW/P"   , Access { RW, RW }, f, f },
-  T { "RO/C"   , Access { R , RW }, f, t },
-  T { "RO/C/V" , Access { R , RW }, f, t }, (* HLP only *)
-  T { "RW/1S/V", Access { RW, RW }, f, f },
-  T { "RW/V"   , Access { RW, RW }, f, f },
-  T { "RSV"    , Access { R , NA }, t, f },
-  T { "RO/V"   , Access { R , RW }, f, f },
-  T { "RW/1C/V", Access { RW, RW }, f, f },
-  T { "RO"     , Access { R , R  }, f, f },
-  T { "WO"     , Access { W , R  }, f, f }, (* HLP only *)
-  T { "RW"     , Access { RW, R  }, f, f }
+  T { "R"      , Access { R , R  }, No , No  }, (* mistake -- to be removed *)
+  T { "RW/P"   , Access { RW, RW }, No , No  }, (* should this be { R, RW }? *)
+  T { "RO/C"   , Access { R , RW }, No , Yes },
+  T { "RO/C/V" , Access { R , RW }, No , Yes }, (* HLP only *)
+  T { "RW/1S/V", Access { RW, RW }, No , No  },
+  T { "RW/V"   , Access { RW, RW }, No , No  },
+  T { "RSV"    , Access { R , NA }, Yes, No  },
+  T { "RO/V"   , Access { R , RW }, No , No  },
+  T { "RW/1C/V", Access { RW, RW }, No , No  },
+  T { "RO"     , Access { R , R  }, No , No  },
+  T { "WO"     , Access {  W, R  }, No , No  }, (* HLP only *)
+  T { "RW"     , Access { RW, R  }, No , No  }
   };
 
 END IntelAccessType.
