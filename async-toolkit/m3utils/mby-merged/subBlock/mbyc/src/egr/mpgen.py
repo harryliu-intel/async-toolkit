@@ -35,6 +35,7 @@ import re
 import argparse
 import glob
 from shutil import copy2
+from distutils import dir_util
 import subprocess
 
 # ##################################################
@@ -49,8 +50,13 @@ class MyParser(argparse.ArgumentParser):
 # ##################################################
 # Functions
 # ##################################################
-
-    
+def str2bool(b):
+    if b.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif b.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
 # ##################################################
 # get_args
 # 
@@ -60,23 +66,18 @@ def get_args():
     parser = argparse.ArgumentParser(description='Create memory files and wrappers using generic interfaces.')
     
     # Block name
-    parser.add_argument('-b', '--block', type=str, nargs=1, required=True, help='Block name.')
+    parser.add_argument('-b', '--block', type=str, nargs=1, required=False, help='Block name.')
+    parser.add_argument('-t', '--top', type=str, nargs=1, required=False, default=["egr"], help='Top-level block name.')
+    parser.add_argument('-r', '--runmgm', type=str2bool, nargs=1, required=False, default=["True"], help='Choose whether to run mgm as part of the flow.')
 
     # Parse arguments
     args = parser.parse_args()
 
     # Store arguments in user-friendly variable names
-    # Assign module name to either top or sub
-    #if args.b == None :
-    #    sys.exit('Error: Please provide name of top-level module or sub-module')
-    #else:
-    #    if args.top == None:
-    #        module_name = args.sub[0]
-    #    elif args.sub == None:
-    #        module_name = args.top[0]
-    module_name = args.block[0]
-
-    return(module_name)
+    #module_name = args.block[0]
+    top_name = args.top[0]
+    runmgm = args.runmgm[0]
+    return(top_name,runmgm)
 
 # ##################################################
 # check_block_path
@@ -417,9 +418,9 @@ def mk_dir(path):
         try:      
             os.makedirs(path)
         except OSError:  
-            print_info ("## Creation of %s failed" % path)
+            print_info ("Creation of %s failed" % path)
         else:  
-            print_info ("## Successfully created %s" %path)
+            print_info ("Successfully created %s" %path)
 
 # ##################################################
 # copy_logicals
@@ -470,13 +471,19 @@ def run_mgm(module_name, path, list_logicals, isTop):
 # rename_module
 # 
 # ##################################################
-def rename_module(module_name):
+def rename_module(top_name,module_name):
     str_find = "mby_"+module_name+"_gen_mem"
-    str_replace = "egr_"+module_name+"_mem"
+    str_replace = top_name + "_"+module_name+"_mem"
     file_name = "rtl/mem/"+str_find + ".sv"
+    
+    print_info(("Replacing %s with %s in %s")%(str_find,str_replace,file_name))
     os.system(("sed -i s/%s/%s/g %s")%(str_find,str_replace,file_name))
+
+    print_info(("Renaming %s to rtl/mem/%s")%(file_name,str_replace+".sv"))
     os.system(("mv %s rtl/mem/%s.sv")%(file_name,str_replace))
-    os.system(("mv rtl/mem/mby_%s_if_inst.sv rtl/mem/egr_%s_if_inst.sv")%(module_name,module_name))
+    
+    print_info(("Renaming rtl/mem/mby_%s_if_inst.sv to rtl/mem/%s_%s_if_inst.sv")%(module_name,top_name,module_name))
+    os.system(("mv rtl/mem/mby_%s_if_inst.sv rtl/mem/%s_%s_if_inst.sv")%(module_name,top_name,module_name))
 
 # ##################################################
 # main
@@ -484,11 +491,10 @@ def rename_module(module_name):
 # ##################################################
 
 # Get name to append to output files
-# module_name = get_args()
-
-module_list = ["cpb","dpb","etag","lcm","mri","pfs","prc","tcu","tdb","tmu","tqu"]
-#module_list = ["cpb","prc"]
-top = "egr"
+[top_name,runmgm] = get_args()
+print(runmgm)
+#module_list = ["cpb","dpb","etag","lcm","mri","pfs","prc","tcu","tdb","tmu","tqu"]
+module_list = ["cpb","prc"]
 # Get current working directory
 path=os.getcwd()
 
@@ -501,7 +507,14 @@ for module_name in module_list:
         [list_logicals, names] = get_logicals(path, module_name)
         if len(list_logicals)>0:
             # Run mgm
-            run_mgm(module_name, path, list_logicals, isTop)
+            if runmgm:
+                run_mgm(module_name, path, list_logicals, isTop)
+
+            # MGM output directory
+            target_path = os.environ["MODEL_ROOT"] + "/target/mby/mgm_run/" + module_name
+
+            # Copy mgm output to <top_name>/rtl/mem
+            dir_util.copy_tree(target_path,path+"/rtl/mem/"+module_name)
             
             Ports=[]
             Lines=[]
@@ -534,6 +547,8 @@ for module_name in module_list:
             memoPath=os.path.join(path,"mem")
             reportPath = os.path.join(os.environ['MODEL_ROOT'],"target/mby/mgm_run/"+module_name+"/reports/"+module_name+"_mem_imp.report")
             print("## MGM PAR reports dir:",reportPath,"\n")
+
+
             
             # Create ngen output directory
             mk_dir(ngenPath)
@@ -559,7 +574,7 @@ for module_name in module_list:
             # Rename some files and sv modules
             # for example:
             # change mby_cpb_gen_mem to egr_cpb_gen_mem
-            rename_module(module_name)
+            rename_module(top_name,module_name)
         else:
             print_info(("No logical files were found for %s")%(module_name))
     else:
