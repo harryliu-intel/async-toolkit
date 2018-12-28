@@ -68,7 +68,7 @@ def get_args():
     # Block name
     parser.add_argument('-b', '--block', type=str, nargs='+', required=True, default=["all"],help='Block name.')
     parser.add_argument('-t', '--top', type=str, nargs=1, required=False, default=["egr"], help='Top-level block name.')
-    parser.add_argument('-r', '--runmgm', type=str2bool, nargs=1, required=False, default=["False"], help='Choose whether to run mgm as part of the flow.')
+    parser.add_argument('-r', '--runmgm', required=False, action='store_true', help='Choose whether to run mgm as part of the flow.')
 
     # Parse arguments
     args = parser.parse_args()
@@ -76,7 +76,7 @@ def get_args():
     # Store arguments in user-friendly variable names
     #module_name = args.block[0]
     top_name = args.top[0]
-    runmgm = args.runmgm[0]
+    runmgm = args.runmgm
     if "all"  in args.block:
         module_list = ["cpb","dpb","etag","lcm","mri","pfs","prc","tcu","tdb","tmu","tqu"]
     else:
