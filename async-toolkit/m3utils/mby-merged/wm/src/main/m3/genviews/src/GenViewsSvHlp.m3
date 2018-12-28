@@ -15,6 +15,8 @@ IMPORT CardSeq;
 IMPORT BigIntSeq;
 IMPORT Word;
 IMPORT RdlPredefProperty;
+IMPORT RefSeq;
+IMPORT RdlArray;
 
 <*FATAL Thread.Alerted*>
 <*FATAL BigInt.OutOfRange*>
@@ -424,6 +426,97 @@ PROCEDURE BigPow2(n : CARDINAL) : BigInt.T =
     END;
     RETURN bigPow2.get(n)
   END BigPow2;
+
+TYPE
+  Type = OBJECT
+    sz : CARDINAL;
+    comp : RegComponent.T;
+  END;
+
+  Array = Type OBJECT
+    elem : Type;
+  END;
+
+  Struct = Type OBJECT
+    fields : RefSeq.T;
+  END;
+
+PROCEDURE ToType(c : RegComponent.T) : Type =
+  BEGIN
+    TYPECASE c OF
+      RegContainer.T => RETURN ContainerType(c)
+    |
+      RegReg.T       => RETURN RegType(c)
+    |
+      RegField.T     => <*ASSERT FALSE*> (* right? *)
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END ToType;
+
+PROCEDURE ContainerType(c : RegContainer.T) : Type =
+  VAR
+    skipArc := c.skipArc();
+  BEGIN
+    IF skipArc THEN
+      VAR
+        chld := c.children.get(0);
+        down := ChildType(chld, skipArc);
+      BEGIN
+        RETURN NEW(Array,
+                   comp := c,
+                   sz   := BigInt.ToInteger(
+                               NARROW(chld.array,RdlArray.Single).n.x) *                                       down.sz,
+                   elem := down)
+      END
+    ELSE
+      VAR
+        seq := NEW(RefSeq.T).init();
+        sz := 0;
+      BEGIN
+        FOR i := 0 TO c.children.size()-1 DO
+          VAR
+            chld := c.children.get(i);
+            ct := ChildType(chld, skipArc);
+          BEGIN
+            IF chld.array # NIL THEN
+              ct := NEW(Array,
+                        comp := chld.comp,
+                        sz :=  BigInt.ToInteger(
+                                 NARROW(chld.array,RdlArray.Single).n.x) *
+                                 ct.sz,
+                        elem := ct)
+            END;
+            seq.addhi(ct);
+            INC(sz, ct.sz);
+            RETURN NEW(Struct, sz := sz, comp := c, fields := seq)
+          END
+        END
+      END
+    END;
+  END ContainerType;
+
+PROCEDURE ChildType(c : RegChild.T; skipArc : BOOLEAN) : Type =
+  BEGIN
+    <*ASSERT NOT ISTYPE(c.comp, RegField.T)*>
+    RETURN ToType(c.comp)
+  END ChildType;
+  
+
+PROCEDURE RegType(c : RegReg.T) : Type =
+  VAR
+    seq := NEW(RefSeq.T).init();
+  BEGIN
+    FOR i := 0 TO c.fields.size()-1 DO
+      seq.addhi(NEW(Type, sz := 1, comp := c.fields.get(i)))
+    END;
+    
+    RETURN NEW(Struct,
+               sz      := c.fields.size(),
+               comp    := c,
+               fields  := seq)
+  END RegType;
+  
   
 BEGIN
   bigPow2.addhi(BigInt.One) (* 2^0 = 1 *)
