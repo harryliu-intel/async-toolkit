@@ -47,6 +47,7 @@ module ("GenViewsScala")
 module ("GenViewsC")
 module ("GenViewsCApi")
 module ("GenViewsScheme")
+module ("GenViewsSvHlp")
 
 module ("DecoratedComponentDef")
 

@@ -9,6 +9,7 @@ IMPORT TextSetDef;
 IMPORT RegAddrmap;
 IMPORT Pathname;
 IMPORT GenViews, GenViewsM3, GenViewsScala, GenViewsC, GenViewsCApi;
+IMPORT GenViewsSvHlp;
 IMPORT GenViewsScheme;
 IMPORT Text;
 IMPORT Rd, FileRd;
@@ -16,14 +17,14 @@ IMPORT ParseError;
 
 CONST TE = Text.Equal;
 
-CONST Usage = "-top <top map name> [-L|-language m3|scala|c[-api]|scheme] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
+CONST Usage = "-top <top map name> [-L|-language m3|scala|c[-api]|scheme|sv-hlp] [-f -|<field-addr-file>] [-i -|<rdl-file>]";
 
 PROCEDURE DoUsage() : TEXT =
   BEGIN RETURN Params.Get(0) & ": usage: " & Usage END DoUsage;
 
-TYPE Lang = { M3, Scala, C, Scheme, CApi };
+TYPE Lang = { M3, Scala, C, Scheme, CApi, SvHlp };
 
-CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme", "c-api" };
+CONST LangNames = ARRAY Lang OF TEXT { "m3", "scala", "c", "scheme", "c-api", "sv-hlp" };
   
 VAR
   lexer  := NEW(rdlLexExt.T, userDefProperties := NEW(TextSetDef.T).init());
@@ -63,7 +64,7 @@ BEGIN
         END
       END;
 
-      IF lang = Lang.Scheme THEN
+      IF lang IN SET OF Lang { Lang.Scheme, Lang.SvHlp } THEN
         IF pp.keywordPresent("-f") THEN
           WITH ifn = pp.getNext() DO
             IF TE(ifn, "-") THEN
@@ -114,6 +115,8 @@ BEGIN
     Lang.CApi  => gv := NEW(GenViewsCApi.T)
   |
     Lang.Scheme => gv := NEW(GenViewsM3.T)
+  |
+    Lang.SvHlp => gv := NEW(GenViewsM3.T)
   END;  
 
   EVAL lexer.setRd(rd);
@@ -141,6 +144,10 @@ BEGIN
     Lang.Scheme =>
     NEW(GenViewsScheme.T,
         scmFiles := scmFiles,
+        fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
+  |
+    Lang.SvHlp =>
+    NEW(GenViewsSvHlp.T,
         fieldAddrRd := fieldAddrRd).gen(tgtmap, outDir)
   ELSE
     gv.gen(tgtmap, outDir)
