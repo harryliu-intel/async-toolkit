@@ -10,5 +10,5 @@ Memory clock name B         <Write Clock Name>      = cclk
 Ram Clear-On-Reset          <Yes, Number, No, LL>   = No
 Memory Instances            <Integer Number>        = 32
 Ram Fast Clock Frequency    <Real Number>           = 1225
-Disable Suffix              <Yes, No>               = Yes
+Disable Suffix              <Yes, No>               = Both
 
