@@ -488,15 +488,15 @@ reg glort_direct_map_dst4_r {
             RXQ_MCAST_DEST_TABLE.
            ";
     ValRandomize = true;
-  } IP_MULTICAST_INDEX[13:2] = 12'h00;
+  } IP_MULTICAST_INDEX[12:1] = 12'h00;
   field {
     AccessType = "RW";
     desc = "
-            Contains bits 256..257 of the 258-bit destination port mask (not 
+            Contains bits 256.. of the 257-bit destination port mask (not 
             including logged or mirrored copies of the packet).
            ";
     ValRandomize = true;
-  } DEST_MASK[1:0] = 2'h00;
+  } DEST_MASK[0:0] = 1'h0;
 };
 
 
