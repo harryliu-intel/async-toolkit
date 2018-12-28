@@ -7,7 +7,10 @@ CFLAGS=
 CFLAGS+= -g
 CFLAGS+= $(INCLUDES)
 CFLAGS+= -std=c99 -Wall -pedantic -Werror
+
+# TODO : we have warnings from -Wextra to fix
 #CFLAGS+= -Wextra
+
 CFLAGS+= -c $(CINCLUDES)
 
 #
