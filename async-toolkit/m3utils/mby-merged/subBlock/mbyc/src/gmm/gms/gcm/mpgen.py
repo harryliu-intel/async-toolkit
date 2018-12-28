@@ -238,7 +238,7 @@ class mpgen():
                     HierText.append(self.module_name+"_rf_mems of "+self.module_name+"_rf_mems with "+self.module_name+"_rf_mems.map\n")
                     makeText.append("	$(V2BBOX) -v $(MGM_RUN)/$(PAR)/src/mem_wrap/$(PAR)_rf_mems.v -p $(MGM_RUN)/$(PAR)/src,$(MGM_RUN)/rtl -o $(PAR)_rf_mems.v\n")
             if (len(SR_Matched)>0):
-                with io.open(self.sr_Path, "w") as srMap:
+                with io.open(self.sr_path, "w") as srMap:
                     srMap.write("1'b1 >>  car_raw_lan_power_good_with_byprst\n")
                     HierText.append(self.module_name+"_sram_mems of "+self.module_name+"_sram_mems with "+self.module_name+"_sram_mems.map\n")
                     makeText.append("	$(V2BBOX) -v $(MGM_RUN)/$(PAR)/src/mem_wrap/$(PAR)_sram_mems.v -p $(MGM_RUN)/$(PAR)/src,$(MGM_RUN)/rtl -o $(PAR)_sram_mems.v\n")
