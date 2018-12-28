@@ -24,6 +24,9 @@
     ies_pop_exception_handler(&(q));                                      \
   } while(0)
 
+#define IES_EXRETURN(q,retval)                                            \
+  do { ies_pop_exception_handler(&(q)); return (retval); } while(0)
+
 /* usage of above macros
 
   ies_exception_context_t q;
@@ -38,6 +41,9 @@
   <except-statement> may if desired re-raise the exception
 
   exceptions are raised with ies_raise_exception
+
+  return statements are disallowed within try-statement and except-statement;
+  return may be effected with IES_EXRETURN(q,<retval>)
 
   if underlying implementation provides thread-local storage (TLS) with
   __thread, and malloc/free are re-entrant, then the implementation is also 
@@ -87,7 +93,7 @@ void ies_pop_exception_handler(ies_exception_context_t *ctx);
 extern __thread ies_exception_context_t *__ies_exception_top;
 
 void *ies_ex_alloc(size_t size);
-/* like malloc, but automatically reclaimed on exception */
+/* like malloc, but automatically reclaimed on exception or block exit */
 
 void  ies_ex_destroy(void *p);
 /* free matching ies_ex_alloc */
