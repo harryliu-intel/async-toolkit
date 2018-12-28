@@ -2,13 +2,27 @@ INTERFACE RegComponent;
 IMPORT RegGenState;
 IMPORT OSError, Thread, Wr;
 IMPORT RdlPropertySymtab;
+IMPORT ParseError;
+IMPORT RdlPredefProperty;
 
 TYPE
-  T = BRANDED Brand OBJECT
+  T <: Public;
+
+  Public = OBJECT
     nm    : TEXT;
     path  : TEXT;
     props : RdlPropertySymtab.T;
   METHODS
+    (*******  T defines these  *******)
+
+    getRdlTextProperty(propNm : TEXT) : TEXT RAISES { ParseError.E };
+    (* NIL if not def'd *)
+
+    getRdlPredefProperty(prop : RdlPredefProperty.T) : TEXT
+      RAISES { ParseError.E };
+    
+    (*******  abstract methods below -- override  *******)
+    
     typeName(state : RegGenState.T) : TEXT;
     (* in cases it makes sense to declare a type *)
     

@@ -32,7 +32,10 @@ for file in ${files}; do
 	${PERLFE} < work/intermediate01.rdl > work/intermediate02.rdl
 	cat work/intermediate02.rdl | (cd ${WD} ; perl) > work/intermediate03.rdl
 	mkdir -p ${GENDIR}
-	../AMD64_LINUX/genviews -L scheme -top ${top_map} -o ${GENDIR} -f ../fieldvisitor/src/mapfields.out -i work/intermediate03.rdl  ${ARGS}
+	../AMD64_LINUX/genviews -L scheme -top ${top_map} -o ${GENDIR} -f ../fieldvisitor/src/mby.mapfields -i work/intermediate03.rdl  ${ARGS}
 done
 
-
+cd test_api
+if [ "X${ARGS}" != "X" ]; then
+	./BUILD
+fi

@@ -22,8 +22,6 @@ IMPORT FS;
 IMPORT DecoratedComponentDef;
 IMPORT RegFieldArraySort;
 IMPORT ParseError;
-IMPORT RdlPropertySymtab, RdlProperty, RdlPropertyAssignRhs,
-       RdlPropertyRvalueConstant, RdlPredefProperty;
 IMPORT RegFieldAccess, IntelAccessType, IntelAccessTypeLookup;
 IMPORT Text;
 
@@ -40,8 +38,7 @@ REVEAL
 
   <*FATAL Thread.Alerted*>
 
-PROCEDURE ApplyFieldProperties(props : RdlPropertySymtab.T;
-                               VAR f : RegField.T) : BOOLEAN
+PROCEDURE ApplyFieldProperties(VAR f : RegField.T) : BOOLEAN
   RAISES { ParseError.E } =
   (* returns TRUE if field has access rules associated *)
   VAR
@@ -56,51 +53,29 @@ PROCEDURE ApplyFieldProperties(props : RdlPropertySymtab.T;
        another way is using Intel AccessType annotation *)
     FOR i := FIRST(RegFieldAccess.Master) TO LAST(RegFieldAccess.Master) DO
       (* look for stated property *)
-      WITH p = RegFieldAccess.MasterProperty[i],
-           v = props.lookup(RdlProperty.Make(RdlPredefProperty.Names[p])) DO
-        IF v # NIL THEN
+      WITH p   = RegFieldAccess.MasterProperty[i],
+           str = f.getRdlPredefProperty(p) DO
+        IF str # NIL THEN
           gotRdlProps := TRUE;
-          TYPECASE v.rhs OF
-            RdlPropertyAssignRhs.Const(const) =>
-            TYPECASE const.const OF
-              RdlPropertyRvalueConstant.Str(str) =>
-              f.access[i] := RegFieldAccess.Parse(str.str)
-            ELSE
-              RAISE ParseError.E ("Wrong type of RHS of property assign : RDL sw/hw access")
-            END
-          ELSE
-            RAISE ParseError.E ("Wrong kind of RHS of property assign : RDL sw/hw access")
+          f.access[i] := RegFieldAccess.Parse(str)
+        END
+      END
+    END;
+
+    WITH str = f.getRdlTextProperty(IntelAccessType.UDPName) DO
+      IF str # NIL THEN
+        WITH at = IntelAccessTypeLookup.Parse(Unquote(str)) DO
+          gotIntelProps := TRUE;
+          IF gotRdlProps THEN
+            IF at.rdlAccess # f.access THEN
+              RAISE ParseError.E("RDL / IntelAccessType mismatch")
+            END;
+            f.access := at.rdlAccess
           END
         END
       END
     END;
 
-    WITH v = props.lookup(RdlProperty.Make(IntelAccessType.UDPName)) DO
-      IF v # NIL THEN
-        TYPECASE v.rhs OF
-          RdlPropertyAssignRhs.Const(const) =>
-          TYPECASE const.const OF
-            RdlPropertyRvalueConstant.Str(str) =>
-            WITH at = IntelAccessTypeLookup.Parse(Unquote(str.str)) DO
-              gotIntelProps := TRUE;
-              IF gotRdlProps THEN
-                IF at.rdlAccess # f.access THEN
-                  RAISE ParseError.E("RDL / IntelAccessType mismatch")
-                END;
-                f.access := at.rdlAccess
-              END
-            END
-          ELSE
-            RAISE ParseError.E ("Wrong type of RHS of property assign : " &
-                  IntelAccessType.UDPName)
-          END
-        ELSE
-          RAISE ParseError.E ("Wrong kind of RHS of property assign : " &
-                IntelAccessType.UDPName)
-        END
-      END(*IF*)
-    END(*WITH*);
-    
     RETURN gotRdlProps OR gotIntelProps
   END ApplyFieldProperties;
       
@@ -113,20 +88,22 @@ PROCEDURE AllocFields(c  : RdlComponentDef.T;
     last : TEXT := "(NIL)";
   BEGIN
     TRY
+    <*ASSERT c.type = RdlComponentDefType.T.field*>
     <*ASSERT c.id # NIL*> (* now ANONYMOUS-smth...? *)
     <*ASSERT c.anonInstElems # NIL*>
     p := c.anonInstElems.list;
     WHILE p # NIL DO
       VAR i := p.head;
           f := NEW(RegField.T,
-                   name := TgtNaming.FieldName
+                   name  := TgtNaming.FieldName,
+                   props := c.list.propTab
           );
       BEGIN
         f.nm := i.id;
         last := f.nm;
         f.defVal := i.eq;
 
-        IF NOT ApplyFieldProperties(c.list.propTab, f) THEN
+        IF NOT ApplyFieldProperties(f) THEN
           Debug.Warning("field " & hn & "->" & f.nm & " doesnt have access rules associated with it")
         END;
         

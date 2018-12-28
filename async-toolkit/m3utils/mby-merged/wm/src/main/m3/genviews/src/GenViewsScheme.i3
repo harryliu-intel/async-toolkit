@@ -1,13 +1,12 @@
 INTERFACE GenViewsScheme;
+IMPORT GenViewsSvHlp;
 IMPORT GenViews;
-IMPORT Rd;
 IMPORT Pathname;
 
 TYPE
   T <: Public;
 
-  Public = GenViews.T OBJECT
-    fieldAddrRd : Rd.T;
+  Public = GenViewsSvHlp.Public OBJECT
     scmFiles : REF ARRAY OF Pathname.T;
   END;
 
