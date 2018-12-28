@@ -55,7 +55,7 @@ reg fwd_lag_cfg_r {
 };
 
 
-reg fwd_port_cfg_1_r {
+reg fwd_port_cfg_0_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
   Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
   Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
@@ -73,7 +73,7 @@ reg fwd_port_cfg_1_r {
             If 1, source MAC addresses from this port will be learned.
            ";
     ValRandomize = true;
-  } LEARNING_ENABLE[25:25] = 1'h01;
+  } LEARNING_ENABLE[1:1] = 1'h01;
   field {
     AccessType = "RW";
     desc = "
@@ -81,7 +81,22 @@ reg fwd_port_cfg_1_r {
             a VLAN boundary violation and the packet is dropped.
            ";
     ValRandomize = true;
-  } FILTER_VLAN_INGRESS[24:24] = 1'h01;
+  } FILTER_VLAN_INGRESS[0:0] = 1'h01;
+};
+
+
+reg fwd_port_cfg_1_0_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination bitmask per source port.";
+  desc = "
+          A destination mask ANDed with the glort destination mask result.
+         ";
+  regwidth = 64;
+  accesswidth = 64;
   field {
     AccessType = "RW";
     desc = "
@@ -89,8 +104,117 @@ reg fwd_port_cfg_1_r {
             on every frame.
            ";
     ValRandomize = true;
-  } DESTINATION_MASK[23:0] = 24'h0ffffff;
+  } DESTINATION_MASK[63:0] = 64'hffffffffffffffff;
 };
+
+reg fwd_port_cfg_1_1_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination bitmask per source port.";
+  desc = "
+          A destination mask ANDed with the glort destination mask result.
+          DESTINATION_MASK[127:64] = 64'hffffffffffffffff;
+          
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            A vector for each port i, a bit for each port j.  Always applied 
+            on every frame.
+           ";
+    ValRandomize = true;
+  } DESTINATION_MASK[63:0] = 64'hffffffffffffffff;
+};
+
+reg fwd_port_cfg_1_2_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination bitmask per source port.";
+  desc = "
+          A destination mask ANDed with the glort destination mask result.
+          DESTINATION_MASK[191:128] = 64'hffffffffffffffff;
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            A vector for each port i, a bit for each port j.  Always applied 
+            on every frame.
+           ";
+    ValRandomize = true;
+  } DESTINATION_MASK[63:0] = 64'hffffffffffffffff;
+};
+
+
+reg fwd_port_cfg_1_3_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination bitmask per source port.";
+  desc = "
+          A destination mask ANDed with the glort destination mask result.
+          DESTINATION_MASK[255:192] = 64'hffffffffffffffff;
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            A vector for each port i, a bit for each port j.  Always applied 
+            on every frame.
+           ";
+    ValRandomize = true;
+  } DESTINATION_MASK[63:0] = 64'hffffffffffffffff;
+};
+
+
+reg fwd_port_cfg_1_4_r {
+  Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
+  Security_ReadAccess_Str  = <%=$Security_Props{'MBY_PG1_RAC_AGENTS'}%>;
+  Security_WriteAccess_Str = <%=$Security_Props{'MBY_PG1_WAC_AGENTS'}%>;
+  shared;
+  HandCoded = true;
+  name = "Destination bitmask per source port.";
+  desc = "
+          A destination mask ANDed with the glort destination mask result.
+          DESTINATION_MASK[256:256] = 64'hffffffffffffffff;
+         ";
+  regwidth = 64;
+  accesswidth = 64;
+  field {
+    AccessType = "RW";
+    desc = "
+            A vector for each port i, a bit for each port j.  Always applied 
+            on every frame.
+           ";
+    ValRandomize = true;
+  } DESTINATION_MASK[0:0] = 1'h1;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 reg fwd_port_cfg_2_r {
   Security_PolicyGroup     = <%=$Security_Props{'MBY_PG1'}%>;
@@ -1069,15 +1193,20 @@ addrmap mby_ppe_fwd_misc_map {
 
   fwd_port_cfg_2_r             FWD_PORT_CFG_2[256]           @0x00000 += 8;
   fwd_lag_cfg_r                FWD_LAG_CFG[17]               @0x01000 += 8;
-  fwd_port_cfg_1_r             FWD_PORT_CFG_1[17]            @0x01100 += 8;
-  fwd_sys_cfg_1_r              FWD_SYS_CFG_1                  @0x01200;
-  fwd_cpu_mac_r                FWD_CPU_MAC                    @0x01208;
-  fwd_sys_cfg_router_r         FWD_SYS_CFG_ROUTER             @0x01210;
-  fwd_rx_mirror_cfg_r          FWD_RX_MIRROR_CFG              @0x01218;
-  fwd_qcn_mirror_cfg_r         FWD_QCN_MIRROR_CFG             @0x01220;
-  fwd_ieee_reserved_mac_action_r        FWD_IEEE_RESERVED_MAC_ACTION        @0x01230;
-  fwd_ieee_reserved_mac_trap_priority_r FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY @0x01340;
-  fwd_ieee_reserved_mac_cfg_r           FWD_IEEE_RESERVED_MAC_CFG           @0x01350;
-  fwd_ip_r                              FWD_IP                              @0x01360;
-  fwd_im_r                              FWD_IM                              @0x01370;
+  fwd_port_cfg_0_r             FWD_PORT_CFG_0[17]            @0x01100 += 8;
+  fwd_port_cfg_1_0_r           FWD_PORT_CFG_1_0[17]          @0x01200 += 8;
+  fwd_port_cfg_1_1_r           FWD_PORT_CFG_1_1[17]          @0x01300 += 8;
+  fwd_port_cfg_1_2_r           FWD_PORT_CFG_1_2[17]          @0x01400 += 8;
+  fwd_port_cfg_1_3_r           FWD_PORT_CFG_1_3[17]          @0x01500 += 8;
+  fwd_port_cfg_1_4_r           FWD_PORT_CFG_1_4[17]          @0x01600 += 8;
+  fwd_sys_cfg_1_r              FWD_SYS_CFG_1                  @0x01700;
+  fwd_cpu_mac_r                FWD_CPU_MAC                    @0x01708;
+  fwd_sys_cfg_router_r         FWD_SYS_CFG_ROUTER             @0x01710;
+  fwd_rx_mirror_cfg_r          FWD_RX_MIRROR_CFG              @0x01718;
+  fwd_qcn_mirror_cfg_r         FWD_QCN_MIRROR_CFG             @0x01720;
+  fwd_ieee_reserved_mac_action_r        FWD_IEEE_RESERVED_MAC_ACTION        @0x01730;
+  fwd_ieee_reserved_mac_trap_priority_r FWD_IEEE_RESERVED_MAC_TRAP_PRIORITY @0x01840;
+  fwd_ieee_reserved_mac_cfg_r           FWD_IEEE_RESERVED_MAC_CFG           @0x01850;
+  fwd_ip_r                              FWD_IP                              @0x01860;
+  fwd_im_r                              FWD_IM                              @0x01870;
 };
