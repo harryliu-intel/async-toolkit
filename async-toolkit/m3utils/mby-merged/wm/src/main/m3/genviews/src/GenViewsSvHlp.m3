@@ -7,8 +7,14 @@ IMPORT Text;
 IMPORT BigInt;
 IMPORT FieldData, Rd, Pickle2;
 IMPORT Wx;
-
+IMPORT TextUtils;
 IMPORT RegComponent;
+IMPORT Thread;
+
+<*FATAL Thread.Alerted*>
+<*FATAL BigInt.OutOfRange*>
+
+CONST TE = Text.Equal;
 
 REVEAL
   T = Public BRANDED OBJECT
@@ -35,7 +41,21 @@ PROCEDURE Spaces(lev : CARDINAL) : TEXT =
     END;
     RETURN Text.FromChars(a^)
   END Spaces;
-  
+
+TYPE
+  Arc = OBJECT
+    up  : Arc;
+  END;
+
+  ArrayArc = Arc OBJECT
+    sz : CARDINAL;
+  END;
+
+  NameArc = Arc OBJECT
+    idx : CARDINAL;
+    nm  : TEXT;
+  END;
+
 PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
   VAR
     a : REF ARRAY OF FieldData.T := NIL;
@@ -51,7 +71,7 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
       Rd.Close(t.fieldAddrRd)
     END;
     t.put(F("((cont %s)",tgtmap.nm), 0);
-    DoContainer(t, tgtmap, 1);
+    DoContainer(t, tgtmap, 1, NIL);
     t.put(")",0);
     WITH txt = Wx.ToText(t.wx) DO
       Debug.Out("Producing\n"&txt);
@@ -60,7 +80,8 @@ PROCEDURE Gen(t : T; tgtmap : RegAddrmap.T; outDir : Pathname.T) =
 
 PROCEDURE DoContainer(t   : T;
                       c   : RegContainer.T;
-                      lev : CARDINAL) =
+                      lev : CARDINAL;
+                      pfx : Arc) =
   VAR
     skipArc := c.skipArc();
   BEGIN
@@ -73,12 +94,20 @@ PROCEDURE DoContainer(t   : T;
       ELSE
         <*ASSERT FALSE*>
       END;
-      (*t.put(F("(container %s %s",tn, c.nm), lev)*)
     END;
     FOR i := 0 TO c.children.size()-1 DO
-      DoChild(t, c.children.get(i), lev (*+1*), skipArc )
+      VAR chld := c.children.get(i);
+          arc : Arc;
+      BEGIN        
+        IF chld.array # NIL THEN
+          arc := NEW(ArrayArc, sz := BigInt.ToInteger(chld.array.n.x))
+        ELSE
+          arc := NEW(NameArc, idx := i, nm := HlpName(pfx, chld))
+        END;
+        arc.up := pfx;
+        DoChild(t, chld, lev, pfx, skipArc)
+      END
     END;
-    (*t.put(")", lev)*)
   END DoContainer;
 
 PROCEDURE HasNoFurtherArcs(c : RegComponent.T) : BOOLEAN =
@@ -98,7 +127,11 @@ PROCEDURE HasNoFurtherArcs(c : RegComponent.T) : BOOLEAN =
     END    
   END HasNoFurtherArcs;
   
-PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
+PROCEDURE DoChild(t       : T;
+                  c       : RegChild.T;
+                  lev     : CARDINAL;
+                  pfx     : Arc;
+                  skipArc : BOOLEAN) =
   VAR
     tag : TEXT;
   BEGIN
@@ -139,9 +172,9 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
       
     WITH ccomp = c.comp DO
       TYPECASE ccomp OF
-        RegContainer.T => DoContainer(t, ccomp, lev)
+        RegContainer.T => DoContainer(t, ccomp, lev, pfx)
       |
-        RegReg.T => DoReg(t, ccomp, lev)
+        RegReg.T => DoReg(t, ccomp, lev, pfx)
       |
         RegField.T => <*ASSERT FALSE*> (* right? *)
       ELSE
@@ -159,7 +192,7 @@ PROCEDURE DoChild(t : T; c : RegChild.T; lev : CARDINAL; skipArc : BOOLEAN) =
     END
   END DoChild;
 
-PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL) =
+PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL; pfx : Arc) =
   BEGIN
     IF f.lsb = RegField.Unspecified THEN
       Debug.Warning("Unspecified LSB in field " & f.nm)
@@ -170,15 +203,45 @@ PROCEDURE DoField(t : T; f : RegField.T; lev : CARDINAL) =
     t.put(F("((field %s %s %s))", f.nm, Int(f.lsb), Int(f.width)),lev)
   END DoField;
 
-PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL) =
+PROCEDURE DoReg(t : T; r : RegReg.T; lev : CARDINAL; pfx : Arc) =
   BEGIN
-(*
-    t.put(F("(regheader %s)", r.nm), lev);
-*)
     FOR i := 0 TO r.fields.size()-1 DO
-      DoField(t, r.fields.get(i), lev(*+1*))
+      DoField(t, r.fields.get(i), lev, pfx)
     END;
-    (*t.put(")", lev)*)
   END DoReg;
 
+PROCEDURE HlpName(pfx : Arc; chld : RegChild.T) : TEXT =
+  VAR
+    hn := chld.comp.getRdlTextProperty("HlpName");
+    xsep := "";
+  BEGIN
+    IF hn = NIL OR TE(hn, "") THEN
+      hn := chld.nm
+    ELSIF Text.GetChar(hn, 1) = '/' THEN
+      pfx := NIL;
+      hn := Text.Sub(hn,1)
+    END;
+    hn := TextUtils.Replace(hn, "$", chld.nm);
+    IF ISTYPE(chld.comp, RegField.T) THEN
+      xsep := "_"
+    END;
+    hn := FormatNameArcsOnly(pfx) & xsep & hn;
+    RETURN hn
+  END HlpName;
+
+PROCEDURE FormatNameArcsOnly(p : Arc) : TEXT =
+  VAR
+    res := "";
+  BEGIN
+    WHILE p # NIL DO
+      TYPECASE p OF
+        NameArc(q) => res := q.nm & "_" & res
+      ELSE
+        (* skip *)
+      END;
+      p := p.up
+    END;
+    RETURN res
+  END FormatNameArcsOnly;
+  
 BEGIN END GenViewsSvHlp.
