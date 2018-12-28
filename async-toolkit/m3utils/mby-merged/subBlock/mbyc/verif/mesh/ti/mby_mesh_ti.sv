@@ -35,7 +35,6 @@ module mby_mesh_ti #( parameter string   RTL_TOP_PATH = "",             // The R
     )
     (
         mby_mesh_tb_if     mby_mesh_tb_if,
-        shdv_base_tb_intf  shdv_intf,
         mby_mgp_mim_if     req_eb_if,
         mby_mgp_mim_if     req_wb_if
     );

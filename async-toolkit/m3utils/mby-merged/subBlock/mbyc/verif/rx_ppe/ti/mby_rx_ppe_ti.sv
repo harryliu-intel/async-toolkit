@@ -38,8 +38,6 @@ module mby_rx_ppe_ti #( parameter string   RTL_TOP_PATH = "",                   
    )
    (
       mby_rx_ppe_tb_if  mby_rx_ppe_tb_if,
-
-      shdv_base_tb_intf   shdv_intf,
       mby_ec_cdi_tx_intf  eth_bfm_tx_vintf, 
       mby_ec_cdi_rx_intf  eth_bfm_rx_vintf
    );

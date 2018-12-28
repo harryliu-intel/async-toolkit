@@ -78,11 +78,6 @@ module mby_mesh_tb_top();
    assign mesh_tb_if.fab_clk  = fabric_clk;
    assign mesh_tb_if.mclk     = mclk;
 
-   shdv_base_tb_intf shdv_intf();
-
-   assign   shdv_intf.ref_clk   = mesh_tb_if.fab_clk; 
-   assign   shdv_intf.ref_rst   = mesh_tb_if.chard_reset;
-
    assign ref_clk  = fabric_clk;
    assign tb_reset = mesh_tb_if.chard_reset;
    
@@ -114,7 +109,6 @@ module mby_mesh_tb_top();
    mby_mesh_ti #(
    ) mesh_ti(
        .mby_mesh_tb_if               (mesh_tb_if),
-       .shdv_intf                    (shdv_intf),
        .req_eb_if                    (req_eb_if),
        .req_wb_if                    (req_wb_if)
  
