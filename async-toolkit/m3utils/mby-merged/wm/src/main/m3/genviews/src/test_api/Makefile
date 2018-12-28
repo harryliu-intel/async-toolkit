@@ -7,6 +7,7 @@ CFLAGS=
 CFLAGS+= -g
 CFLAGS+= $(INCLUDES)
 CFLAGS+= -std=c99 -Wall -pedantic -Werror
+#CFLAGS+= -Wextra
 CFLAGS+= -c $(CINCLUDES)
 
 #
