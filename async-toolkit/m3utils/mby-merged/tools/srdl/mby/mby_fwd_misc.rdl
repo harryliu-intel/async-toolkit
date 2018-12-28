@@ -164,7 +164,7 @@ reg fwd_sys_cfg_1_r {
             Defines disposition for frames that exceed MTU size allowed on the
             egress VLAN (only applicable for routed frames). If this bit is 
             set, then the frames that exceed the MTU size are trapped to the 
-            CPU. If this bit is cleared, then the frames are forwarded normally.
+            CPU. If this bit is cleared, then the frames are discarded silently. 
            ";
     ValRandomize = true;
   } TRAP_MTU_VIOLATIONS[0:0] = 1'h01;
